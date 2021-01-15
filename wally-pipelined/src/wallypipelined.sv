@@ -55,7 +55,10 @@
 module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   input  logic            clk, reset, 
   output logic [XLEN-1:0] WriteDataM, DataAdrM, 
-  output logic [1:0]      MemRWM);
+  output logic [1:0]      MemRWM,
+  input  logic [31:0]     GPIOPinsIn,
+  output logic [31:0]     GPIOPinsOut, GPIOPinsEn
+);
 
   logic [XLEN-1:0] PCF, ReadDataM;
   logic [31:0] InstrF;
@@ -71,5 +74,5 @@ module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
 
   imem #(XLEN) imem(PCF, InstrF, InstrAccessFaultF);
   dmem #(XLEN) dmem(clk, reset, MemRWM, ByteMaskM, DataAdrM, WriteDataM, ReadDataM,
-    DataAccessFaultM, TimerIntM, SwIntM);
+    DataAccessFaultM, TimerIntM, SwIntM, GPIOPinsIn, GPIOPinsOut, GPIOPinsEn);
 endmodule

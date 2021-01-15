@@ -34,27 +34,33 @@ module dmem #(parameter XLEN=32) (
   input  logic [XLEN-1:0] AdrM, WdM,
   output logic [XLEN-1:0] RdM,
   output logic            AccessFaultM,
-  output logic            TimerIntM, SwIntM);
+  output logic            TimerIntM, SwIntM,
+  input  logic [31:0] GPIOPinsIn,
+  output logic [31:0] GPIOPinsOut, GPIOPinsEn);
   
-  logic [XLEN-1:0] RdTimM, RdClintM;
-  logic            TimEnM, ClintEnM;
+  logic [XLEN-1:0] RdTimM, RdCLINTM, RdGPIOM;
+  logic            TimEnM, CLINTEnM, GPIOEnM;
 
   // Address decoding
+  // *** need to check top bits
   assign TimEnM = AdrM[31] & ~(|AdrM[30:19]); // 0x80000000 - 0x8007FFFF  *** check top bits too
-  assign ClintEnM = ~(|AdrM[XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
+  assign CLINTEnM = ~(|AdrM[XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
+  assign GPIOEnM = (AdrM[31:8] == 24'h10012); // 0x10012000-0x100120FF
 
   // tightly integrated memory
   dtim #(XLEN) dtim(clk, MemRWM & {2{TimEnM}}, ByteMaskM, AdrM[18:0], WdM, RdTimM);
 
   // memory-mapped I/O peripherals
-  clint #(XLEN) clint(clk, reset, MemRWM & {2{ClintEnM}}, ByteMaskM, AdrM[15:0], WdM, RdClintM,
+  clint #(XLEN) clint(clk, reset, MemRWM & {2{CLINTEnM}}, ByteMaskM, AdrM[15:0], WdM, RdCLINTM,
     TimerIntM, SwIntM);
+  gpio #(XLEN) gpio(clk, reset, MemRWM & {2{GPIOEnM}}, ByteMaskM, AdrM[7:0], WdM, RdGPIOM,
+    GPIOPinsIn, GPIOPinsOut, GPIOPinsEn);
 
   // *** add cache and interface to external memory & other peripherals
   
   // merge reads
-  assign RdM = RdTimM | RdClintM;
-  assign AccessFaultM = ~(|TimEnM | ClintEnM);
+  assign RdM = RdTimM | RdCLINTM | RdGPIOM;
+  assign AccessFaultM = ~(|TimEnM | CLINTEnM | GPIOEnM);
 
 endmodule
 

@@ -37,7 +37,7 @@ module gpio #(parameter XLEN=32) (
   input  logic [31:0]     GPIOPinsIn,
   output logic [31:0]     GPIOPinsOut, GPIOPinsEn);
 
-  logic [31:0] INPUT_VAL INPUT_EN, OUTPUT_EN, OUTPUT_VAL;
+  logic [31:0] INPUT_VAL, INPUT_EN, OUTPUT_EN, OUTPUT_VAL;
  
   logic [XLEN-1:0] read, write;
   logic [15:0] entry;
