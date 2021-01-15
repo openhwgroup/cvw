@@ -231,8 +231,13 @@ string tests32i[] = {
     end
   string signame, memfilename;
 
+  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+
   // instantiate device to be tested
-  wallypipelined #(XLEN, MISA, ZCSR, ZCOUNTERS) dut(clk, reset, WriteData, DataAdr, MemRW);
+  wallypipelined #(XLEN, MISA, ZCSR, ZCOUNTERS) dut(
+    clk, reset, WriteData, DataAdr, MemRW, 
+    GPIOPinsIn, GPIOPinsOut, GPIOPinsEn
+  ); 
 
   // Track names of instructions
   instrTrackerTB #(XLEN) it(clk, reset, dut.hart.dp.FlushE,
