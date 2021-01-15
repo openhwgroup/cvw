@@ -1,0 +1,13 @@
+// riscvfullpipelined.sv
+
+
+
+`include "wally-macros.sv"
+
+
+
+
+
+
+
+

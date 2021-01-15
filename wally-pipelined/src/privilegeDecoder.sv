@@ -1,0 +1,54 @@
+///////////////////////////////////////////
+// privilegeDecoder.sv
+//
+// Written: David_Harris@hmc.edu 9 January 2021
+// Modified: 
+//
+// Purpose: Decode Privileged & related instructions 
+//          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+///////////////////////////////////////////
+
+`include "wally-macros.sv"
+
+module privilegeDecoder #(parameter MISA=0) (
+  input  logic [31:20] InstrM,
+  input  logic         PrivilegedM, IllegalInstrFaultInM, IllegalCSRAccessM,
+  input  logic [1:0]   PrivilegeModeW, 
+  input  logic         STATUS_TSR,
+  output logic         IllegalInstrFaultM,
+  output logic         uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
+
+  logic IllegalPrivilegedInstrM;
+
+  // xRET defined in Privileged Spect 3.2.2
+  assign uretM =      PrivilegedM & (InstrM[31:20] == 12'b000000000010) & `N_SUPPORTED; 
+  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED && 
+                      PrivilegeModeW[0] & ~STATUS_TSR; 
+  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) && (PrivilegeModeW == `M_MODE);
+
+  assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
+  assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);
+  assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
+  assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001);
+  assign IllegalPrivilegedInstrM = PrivilegedM & ~(uretM|sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
+  assign IllegalInstrFaultM = IllegalInstrFaultInM | IllegalPrivilegedInstrM | IllegalCSRAccessM;
+
+  // *** initially, wfi and sfencevma are nop
+  // *** zfenci extension?
+endmodule
