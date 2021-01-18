@@ -5,6 +5,9 @@
 # Converts an executable file to a series of 32-bit hex instructions
 # to read into a Verilog simulation with $readmemh
 
+use File::stat;
+use IO::Handle;
+
 if ($#ARGV == -1) {
     die("Usage: $0 executable_file");
 }
@@ -13,74 +16,91 @@ if ($#ARGV == -1) {
 my @memfilebytes = (0)*16384*4;
 my $maxaddress = 0;
 
+STDOUT->autoflush(1);
+print ("Processing $#ARGV memfiles: ");
+my $frac = $#ARGV/10;
 for(my $i=0; $i<=$#ARGV; $i++) {
+    if ($i % $frac == 0) { print ("$i ") };
     my $fname = $ARGV[$i];
 #    print "fname = $fname";
     my $ofile = $fname.".objdump";
     my $memfile = $fname.".memfile";
 
-    open(FILE, $ofile) || die("Can't read $ofile");
-    my $mode = 0; # parse for code
-    my $address;
-
- # initialize to all zeros;
-    for (my $i=0; $i < 65536*4; $i++) {
-        $memfilebytes[$i] = "00";
+    my $needsprocessing = 0;
+    if (!-e $memfile) { $needsprocessing = 1; } # create memfile if it doesn't exist
+    else {
+        my $osb = stat($ofile) || die("Can't stat $ofile");
+        my $msb = stat($memfile) || die("Can't stat $memfile");
+        my $otime = $osb->mtime;
+        my $mtime = $msb->mtime;
+        if ($otime > $mtime) { $needsprocessing = 1; } # is memfile out of date?
     }
 
-    while(<FILE>) {
-        if ($mode == 0) { # Parse code
-#	    print("Examining $_\n");
-	    if (/^\s*(\S\S\S\S\S\S\S\S):\s+(\S+)\s+/) {
-                $address = &fixadr($1);
-                my $instr = $2;
-                my $len = length($instr);
-                for (my $i=0; $i<$len/2; $i++) {
-                    $memfilebytes[$address+$i] = substr($instr, $len-2-2*$i, 2);
-                }
-#                print ("address $address $instr\n");
-	    }
-            if (/Disassembly of section .data:/) { $mode = 1;}
-        } elsif ($mode == 1) { # Parse data segment
-            if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
-                $address = &fixadr($1);
-#		print "addresss $address maxaddress $maxaddress\n";
-		if ($address > $maxaddress) { $maxaddress = $address; }
-                my $line = $2;
-                # merge chunks with spaces
-                $line =~ s/(\S)\s(\S)/$1$2/g;
-                # strip off comments
-                $line =~ /^(\S*)/;
-                $payload = $1;
-                &emitData($address, $payload);
+    if ($needsprocessing == 1) {
+        open(FILE, $ofile) || die("Can't read $ofile");
+        my $mode = 0; # parse for code
+        my $address;
+
+    # initialize to all zeros;
+        for (my $i=0; $i < 65536*4; $i++) {
+            $memfilebytes[$i] = "00";
+        }
+
+        while(<FILE>) {
+            if ($mode == 0) { # Parse code
+    #	    print("Examining $_\n");
+            if (/^\s*(\S\S\S\S\S\S\S\S):\s+(\S+)\s+/) {
+                    $address = &fixadr($1);
+                    my $instr = $2;
+                    my $len = length($instr);
+                    for (my $i=0; $i<$len/2; $i++) {
+                        $memfilebytes[$address+$i] = substr($instr, $len-2-2*$i, 2);
+                    }
+    #                print ("address $address $instr\n");
             }
-            if (/Disassembly of section .riscv.attributes:/) { $mode = 2; }
+                if (/Disassembly of section .data:/) { $mode = 1;}
+            } elsif ($mode == 1) { # Parse data segment
+                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
+                    $address = &fixadr($1);
+    #		print "addresss $address maxaddress $maxaddress\n";
+            if ($address > $maxaddress) { $maxaddress = $address; }
+                    my $line = $2;
+                    # merge chunks with spaces
+                    $line =~ s/(\S)\s(\S)/$1$2/g;
+                    # strip off comments
+                    $line =~ /^(\S*)/;
+                    $payload = $1;
+                    &emitData($address, $payload);
+                }
+                if (/Disassembly of section .riscv.attributes:/) { $mode = 2; }
+            }
+        }
+        close(FILE);
+        $maxaddress += 32; # pad some zeros at the end
+
+        # print to memory file
+        if ($fname =~ /rv32/) {
+        open(MEMFILE, ">$memfile") || die("Can't write $memfile");
+        for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
+            for ($j=3; $j>=0; $j--) {
+            print MEMFILE "$memfilebytes[$i+$j]";
+            }
+            print MEMFILE "\n";
+        }
+        close(MEMFILE);
+        } else {
+        open(MEMFILE, ">$memfile") || die("Can't write $memfile");
+        for (my $i=0; $i<= $maxaddress; $i = $i + 8) {
+            for ($j=7; $j>=0; $j--) {
+            print MEMFILE "$memfilebytes[$i+$j]";
+            }
+            print MEMFILE "\n";
+        }
+        close(MEMFILE);
         }
     }
-    close(FILE);
-    $maxaddress += 32; # pad some zeros at the end
-
-    # print to memory file
-    if ($fname =~ /rv32/) {
-	open(MEMFILE, ">$memfile") || die("Can't write $memfile");
-	for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
-	    for ($j=3; $j>=0; $j--) {
-		print MEMFILE "$memfilebytes[$i+$j]";
-	    }
-	    print MEMFILE "\n";
-	}
-	close(MEMFILE);
-    } else {
-	open(MEMFILE, ">$memfile") || die("Can't write $memfile");
-	for (my $i=0; $i<= $maxaddress; $i = $i + 8) {
-	    for ($j=7; $j>=0; $j--) {
-		print MEMFILE "$memfilebytes[$i+$j]";
-	    }
-	    print MEMFILE "\n";
-	}
-	close(MEMFILE);
-    }
 }
+print("\n");
 
 sub emitData {
     # print the data portion of the ELF into a memroy file, including 0s for empty stuff
