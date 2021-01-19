@@ -32,9 +32,9 @@ module datapath #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   output logic [XLEN-1:0] PCF,
   input  logic [31:0] InstrF,
   // Decode stage signals
-  output logic [6:0]  opD,
-  output logic [2:0]	funct3D, 
-  output logic        funct7b5D,
+  output logic [6:0]  OpD,
+  output logic [2:0]	Funct3D, 
+  output logic        Funct7b5D,
   input  logic        StallD, FlushD,
   input  logic [2:0]  ImmSrcD,
   input  logic        LoadStallD, // for performance counter
@@ -48,14 +48,14 @@ module datapath #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   input  logic        TargetSrcE, 
   output logic [2:0]  FlagsE,
   // Memory stage signals
-  input  logic         FlushM,
+  input  logic        FlushM,
   input  logic [1:0]  MemRWM,
   input  logic        CSRWriteM, PrivilegedM, 
   input  logic        InstrAccessFaultM, IllegalInstrFaultM,
   input  logic        TimerIntM, ExtIntM, SwIntM,
   output logic        InstrMisalignedFaultM,
   input  logic [2:0]  Funct3M,
-  output logic [XLEN-1:0] WriteDataExtM, ALUResultM,
+  output logic [XLEN-1:0] WriteDataM, ALUResultM,
   input  logic [XLEN-1:0] ReadDataM,
   output logic [7:0]  ByteMaskM,
   output logic        RetM, TrapM,
@@ -88,13 +88,13 @@ module datapath #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   logic [XLEN-1:0] PreSrcAE, SrcAE, SrcBE;
   logic [XLEN-1:0] ALUResultE;
   logic [XLEN-1:0] WriteDataE;
-  logic [XLEN-1:0] TargetBaseE, PCTargetE;
+  logic [XLEN-1:0] TargetBaseE;
   // Memory stage signals
   logic [31:0]     InstrM;
   logic [XLEN-1:0] PCM;
   logic [XLEN-1:0] SrcAM;
   logic [XLEN-1:0] ReadDataExtM;
-  logic [XLEN-1:0] WriteDataM;
+  logic [XLEN-1:0] WriteDataFullM;
   logic [XLEN-1:0] CSRReadValM;
   logic [XLEN-1:0] PrivilegedNextPCM;
   logic            LoadMisalignedFaultM, LoadAccessFaultM;
@@ -110,25 +110,23 @@ module datapath #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
   // Fetch stage pipeline register and logic; also Ex stage for branches
-  pclogic #(XLEN, MISA) pclogic(clk, reset, StallF, PCSrcE, 
-                          InstrF, ExtImmE, TargetBaseE, RetM, TrapM, PrivilegedNextPCM, PCF, PCPlus2or4F, 
-                          InstrMisalignedFaultM, InstrMisalignedAdrM);
+  pclogic #(XLEN, MISA) pclogic(.*);
 
   // Decode stage pipeline register and logic
   flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrD);
   flopenrc #(XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
   flopenrc #(XLEN) PCPlus2or4DReg(clk, reset, FlushD, ~StallD, PCPlus2or4F, PCPlus2or4D);
    
-  instrDecompress #(XLEN, MISA) decomp(InstrD, InstrDecompD, IllegalCompInstrD);
-  assign opD       = InstrDecompD[6:0];
-  assign funct3D   = InstrDecompD[14:12];
-  assign funct7b5D = InstrDecompD[30];
+  instrDecompress #(XLEN, MISA) decomp(.*);
+  assign OpD       = InstrDecompD[6:0];
+  assign Funct3D   = InstrDecompD[14:12];
+  assign Funct7b5D = InstrDecompD[30];
   assign Rs1D      = InstrDecompD[19:15];
   assign Rs2D      = InstrDecompD[24:20];
   assign RdD       = InstrDecompD[11:7];
 	
   regfile #(XLEN) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, RD1D, RD2D);
-  extend  #(XLEN) ext(InstrDecompD[31:7], ImmSrcD, ExtImmD);
+  extend  #(XLEN) ext(.InstrDecompD(InstrDecompD[31:7]), .*);
  
   // Execute stage pipeline register and logic
   floprc #(XLEN) RD1EReg(clk, reset, FlushE, RD1D, RD1E);
@@ -150,25 +148,15 @@ module datapath #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   // Memory stage pipeline register
   floprc #(XLEN) SrcAMReg(clk, reset, FlushM, SrcAE, SrcAM);
   floprc #(XLEN) ALUResultMReg(clk, reset, FlushM, ALUResultE, ALUResultM);
-  floprc #(XLEN) WriteDataMReg(clk, reset, FlushM, WriteDataE, WriteDataM);
+  floprc #(XLEN) WriteDataMReg(clk, reset, FlushM, WriteDataE, WriteDataFullM);
   floprc #(XLEN) PCMReg(clk, reset, FlushM, PCE, PCM);
   flopr  #(32)   InstrMReg(clk, reset, FlushM ? nop : InstrE, InstrM);
   floprc #(5)    RdMEg(clk, reset, FlushM, RdE, RdM);
   
-  memdp #(XLEN) memdp(
-    MemRWM, ReadDataM, ALUResultM, Funct3M, ReadDataExtM, WriteDataM, WriteDataExtM, ByteMaskM, 
-    DataAccessFaultM, LoadMisalignedFaultM, LoadAccessFaultM, StoreMisalignedFaultM, StoreAccessFaultM);
+  memdp #(XLEN) memdp(.AdrM(ALUResultM), .*);
   
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
-  privileged #(XLEN, MISA, ZCSR, ZCOUNTERS) priv(
-    clk, reset, CSRWriteM, SrcAM, InstrM, PCM, 
-    CSRReadValM, PrivilegedNextPCM, RetM, TrapM,
-    InstrValidW, FloatRegWriteW, LoadStallD, PrivilegedM, 
-    InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
-    LoadMisalignedFaultM, LoadAccessFaultM, StoreMisalignedFaultM, StoreAccessFaultM,
-    TimerIntM, ExtIntM, SwIntM,
-    InstrMisalignedAdrM, ALUResultM,
-    SetFflagsM, FRM_REGW);
+  privileged #(XLEN, MISA, ZCSR, ZCOUNTERS) priv(.IllegalInstrFaultInM(IllegalInstrFaultM), .*);
 
   // Writeback stage pipeline register and logic
   floprc #(XLEN) ALUResultWReg(clk, reset, FlushW, ALUResultM, ALUResultW);

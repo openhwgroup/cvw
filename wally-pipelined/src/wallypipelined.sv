@@ -68,11 +68,8 @@ module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   logic        ExtIntM = 0; // not yet connected
    
   // instantiate processor and memories
-  wallypipelinedhart #(XLEN, MISA, ZCSR, ZCOUNTERS) hart(
-    clk, reset, PCF, InstrF, MemRWM, ByteMaskM, DataAdrM, 
-    WriteDataM, ReadDataM, TimerIntM, ExtIntM, SwIntM, InstrAccessFaultF, DataAccessFaultM);
+  wallypipelinedhart #(XLEN, MISA, ZCSR, ZCOUNTERS) hart(.ALUResultM(DataAdrM), .*);
 
-  imem #(XLEN) imem(PCF, InstrF, InstrAccessFaultF);
-  dmem #(XLEN) dmem(clk, reset, MemRWM, ByteMaskM, DataAdrM, WriteDataM, ReadDataM,
-    DataAccessFaultM, TimerIntM, SwIntM, GPIOPinsIn, GPIOPinsOut, GPIOPinsEn);
+  imem #(XLEN) imem(.AdrF(PCF), .*);
+  dmem #(XLEN) dmem(.AdrM(DataAdrM), .*);
 endmodule

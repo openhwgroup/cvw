@@ -54,9 +54,8 @@ module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
 //  logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW;
 
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
-  logic IllegalCSRAccess, IllegalInstrFaultM;
+  logic IllegalCSRAccessM, IllegalInstrFaultM;
 
-  logic SwInt, TimerInt, ExtInt;
   logic BreakpointFaultM, EcallFaultM;
   logic InstrPageFaultM, LoadPageFaultM, StorePageFaultM;
   logic MTrapM, STrapM, UTrapM; 
@@ -67,13 +66,10 @@ module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
   logic [11:0] MIP_REGW, MIE_REGW;
 
   // track the current privilege level
-  privilegeModeReg #(XLEN, MISA) pmr (clk, reset, mretM, sretM, uretM, TrapM, 
-    STATUS_MPP, STATUS_SPP, MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
-    CauseM, NextPrivilegeModeM, PrivilegeModeW);
+  privilegeModeReg #(XLEN, MISA) pmr (.*);
 
   // decode privileged instructions
-  privilegeDecoder #(MISA) pmd(InstrM[31:20], PrivilegedM, IllegalInstrFaultInM, IllegalCSRAccess, PrivilegeModeW, STATUS_TSR,
-                               IllegalInstrFaultM, uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
+  privilegeDecoder #(MISA) pmd(.InstrM(InstrM[31:20]), .*);
   
   // Extract exceptions by name and handle them 
   assign BreakpointFaultM = ebreakM; // could have other causes too
@@ -81,35 +77,10 @@ module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
   assign InstrPageFaultM = 0;
   assign LoadPageFaultM = 0;
   assign StorePageFaultM = 0;
-  trap #(XLEN, MISA) trap(clk, reset, InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
-    BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
-    LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
-    LoadPageFaultM, StorePageFaultM,
-    mretM, sretM, uretM, PrivilegeModeW, NextPrivilegeModeM,
-    MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-    MIP_REGW, MIE_REGW, STATUS_MIE, STATUS_SIE,
-    InstrMisalignedAdrM, ALUResultM, InstrM,
-    TrapM, MTrapM, STrapM, UTrapM, RetM,
-    PrivilegedNextPCM, CauseM, NextFaultMtvalM
-//    MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-  );
+  trap #(XLEN, MISA) trap(.*);
 
   // Control and Status Registers
-  csr #(XLEN, MISA, ZCSR, ZCOUNTERS) csr(clk, reset, 
-    InstrM, PCM, SrcAM,
-    CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
-    TimerIntM, ExtIntM, SwIntM,
-    InstrValidW, FloatRegWriteW, LoadStallD,
-    NextPrivilegeModeM, PrivilegeModeW,
-    CauseM, NextFaultMtvalM,
-    STATUS_MPP, STATUS_SPP, STATUS_TSR,
-    MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-    MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW,
-    MIP_REGW, MIE_REGW, STATUS_MIE, STATUS_SIE,
-    SetFflagsM, FRM_REGW,
-//    MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-    CSRReadValM, IllegalCSRAccess
-  );
+  csr #(XLEN, MISA, ZCSR, ZCOUNTERS) csr(.*);
 endmodule
 
 

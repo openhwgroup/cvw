@@ -37,9 +37,9 @@ module wallypipelinedhart #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) 
   input  logic            InstrAccessFaultF,
   input  logic            DataAccessFaultM);
 
-  logic [6:0]  opD;
-  logic [2:0]  funct3D;
-  logic        funct7b5D;
+  logic [2:0]  Funct3D;
+  logic        Funct7b5D;
+  logic [6:0]  OpD;
   logic [2:0]  ImmSrcD;
   logic        IllegalCompInstrD;
   logic [2:0]  FlagsE;
@@ -61,40 +61,21 @@ module wallypipelinedhart #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) 
 
   logic [1:0]  ForwardAE, ForwardBE;
   logic        StallF, StallD, FlushD, FlushE, FlushM, FlushW;
-  logic        PrivilegedChangePCM, TrapM;
+  logic        RetM, TrapM;
 
   logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
   logic       TargetSrcE;
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
-  
-  controller c(clk, reset,
-               opD, funct3D, funct7b5D, ImmSrcD,
-               StallD, FlushD, IllegalCompInstrD,
-               FlushE, FlagsE, PCSrcE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, MemReadE,
-               FlushM, MemRWM, CSRWriteM, PrivilegedM, IllegalInstrFaultM, Funct3M, RegWriteM, 
-			         FlushW, RegWriteW, ResultSrcW, InstrValidW, CSRWritePendingDEM,
-               InstrAccessFaultF, InstrAccessFaultM);
-
-  datapath #(XLEN, MISA, ZCSR, ZCOUNTERS) 
-           dp(clk, reset,
-              StallF, PCF, InstrF, 
-			        opD, funct3D, funct7b5D, StallD, FlushD, ImmSrcD, LoadStallD, IllegalCompInstrD,
-			        FlushE, ForwardAE, ForwardBE, PCSrcE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, FlagsE,
-              FlushM, MemRWM, CSRWriteM, PrivilegedM, InstrAccessFaultM, IllegalInstrFaultM, 
-              TimerIntM, ExtIntM, SwIntM, InstrMisalignedFaultM,
-              Funct3M, WriteDataM, ALUResultM, ReadDataM, ByteMaskM, PrivilegedChangePCM, TrapM, 
-              SetFflagsM, DataAccessFaultM,
-              FlushW, RegWriteW, ResultSrcW, InstrValidW, FloatRegWriteW, FRM_REGW,
-              Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW);
+           
+  controller c(.*);
+  datapath #(XLEN, MISA, ZCSR, ZCOUNTERS) dp(.*);
+  hazard  hz(.*);	
 
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW
   assign SetFflagsM = 0;
   assign FloatRegWriteW = 0;
-
-  hazard  hz(Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-             PCSrcE, MemReadE, RegWriteM, RegWriteW, CSRWritePendingDEM, PrivilegedChangePCM, TrapM,
-             ForwardAE, ForwardBE, StallF, StallD, FlushD, FlushE, FlushM, FlushW, LoadStallD);			 
+             
 endmodule
