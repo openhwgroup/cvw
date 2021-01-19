@@ -71,6 +71,8 @@ module csrs #(parameter XLEN=64, MISA=0,
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC);
       assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
       assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
+      assign WriteSIEM = CSRSWriteM && (CSRAdrM == SIE);
+      assign WriteSIPM = CSRSWriteM && (CSRAdrM == SIP);
       assign WriteSSCRATCHM = CSRSWriteM && (CSRAdrM == SSCRATCH);
       assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC));
       assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE));
@@ -117,9 +119,14 @@ module csrs #(parameter XLEN=64, MISA=0,
       end
     end else begin
       assign WriteSSTATUSM = 0;
+      assign WriteSIPM = 0;
+      assign WriteSIEM = 0;
       assign CSRSReadValM = 0;
       assign SEPC_REGW = 0;
       assign STVEC_REGW = 0;
+      assign SEDELEG_REGW = 0;
+      assign SIDELEG_REGW = 0;
+      assign SCOUNTEREN_REGW = 0;
       assign IllegalCSRSAccessM = 1;
     end
   endgenerate

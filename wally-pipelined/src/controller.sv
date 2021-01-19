@@ -75,7 +75,7 @@ module controller(
   logic       InstrValidE, InstrValidM;
   logic       PrivilegedD, PrivilegedE;
   logic       InstrAccessFaultD, InstrAccessFaultE;
-  logic       IllegalInstrFaultD, IllegalInstrMergedD, IllegalInstrFaultE;
+  logic       IllegalInstrFaultD, IllegalInstrFaultE;
   logic [18:0] ControlsD;
   logic        PreIllegalInstrFaultD;
   logic        aluc3D;

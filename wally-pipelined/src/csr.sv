@@ -95,6 +95,16 @@ module csr #(parameter XLEN = 64, MISA = 0, ZCSR = 1, ZCOUNTERS = 1) (
       assign CSRSWriteM = CSRWriteM && (PrivilegeModeW[0]);
       assign CSRUWriteM = CSRWriteM;  
 
+      csri #(XLEN, MISA) csri(.*);
+      csrsr #(XLEN, MISA) csrsr(.*);
+      csrc #(XLEN, ZCOUNTERS) counters(.*);
+      csrm #(XLEN, MISA) csrm(.*); // Machine Mode CSRs
+      csrs #(XLEN, MISA) csrs(.*);
+      csrn #(XLEN, MISA) csrn(.CSRNWriteM(CSRUWriteM), .*);  // User Mode Exception Registers
+      csru #(XLEN, MISA) csru(.*); // Floating Point Flags are part of User MOde
+
+/*
+
       csri #(XLEN, MISA) csri(
         clk, reset, CSRMWriteM, CSRSWriteM, CSRAdrM, ExtIntM, TimerIntM, SwIntM,
         MIDELEG_REGW, MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, CSRWriteValM);
@@ -146,6 +156,7 @@ module csr #(parameter XLEN = 64, MISA = 0, ZCSR = 1, ZCOUNTERS = 1) (
         clk, reset, CSRUWriteM, CSRAdrM,  
         CSRWriteValM, CSRUReadValM, SetFflagsM, FRM_REGW, IllegalCSRUAccessM
       ); 
+      */
 
       // merge CSR Reads
       assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 

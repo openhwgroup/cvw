@@ -28,22 +28,20 @@
 
 module clint #(parameter XLEN=32) (
   input  logic            clk, reset, 
-  input  logic [1:0]      MemRWM,
-  input  logic [7:0]      ByteMaskM,
+  input  logic [1:0]      MemRWclintM,
   input  logic [15:0]     AdrM, 
-  input  logic [XLEN-1:0] WdM,
-  output logic [XLEN-1:0] RdM,
+  input  logic [XLEN-1:0] MaskedWriteDataM,
+  output logic [XLEN-1:0] RdCLINTM,
   output logic            TimerIntM, SwIntM);
 
   logic [63:0] MTIMECMP, MTIME;
   logic        MSIP;
 
-  logic [XLEN-1:0] read, write;
   logic [15:0] entry;
   logic            memread, memwrite;
 
-  assign memread  = MemRWM[1];
-  assign memwrite = MemRWM[0];
+  assign memread  = MemRWclintM[1];
+  assign memwrite = MemRWclintM[0];
   
   // word aligned reads
   generate
@@ -59,20 +57,11 @@ module clint #(parameter XLEN=32) (
     if (XLEN==64) begin
       always_comb begin
         case(entry)
-          16'h0000: read = {63'b0, MSIP};
-          16'h4000: read = MTIMECMP;
-          16'hBFF8: read = MTIME;
-          default:  read = 0;
+          16'h0000: RdCLINTM = {63'b0, MSIP};
+          16'h4000: RdCLINTM = MTIMECMP;
+          16'hBFF8: RdCLINTM = MTIME;
+          default:  RdCLINTM = 0;
         endcase
-        write=read;
-        if (ByteMaskM[0]) write[7:0]   = WdM[7:0];
-        if (ByteMaskM[1]) write[15:8]  = WdM[15:8];
-        if (ByteMaskM[2]) write[23:16] = WdM[23:16];
-        if (ByteMaskM[3]) write[31:24] = WdM[31:24];
-	      if (ByteMaskM[4]) write[39:32] = WdM[39:32];
-	      if (ByteMaskM[5]) write[47:40] = WdM[47:40];
-      	if (ByteMaskM[6]) write[55:48] = WdM[55:48];
-	      if (ByteMaskM[7]) write[63:56] = WdM[63:56];
       end 
       always_ff @(posedge clk or posedge reset) 
         if (reset) begin
@@ -80,27 +69,22 @@ module clint #(parameter XLEN=32) (
           MTIME <= 0;
           // MTIMECMP is not reset
         end else begin
-          if (entry == 16'h0000) MSIP <= write[0];
-          if (entry == 16'h4000) MTIMECMP <= write;
+          if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
+          if (entry == 16'h4000) MTIMECMP <= MaskedWriteDataM;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-          if (entry == 16'hBFF8) MTIME <= write;
+          if (entry == 16'hBFF8) MTIME <= MaskedWriteDataM;
           else MTIME <= MTIME + 1;
         end
     end else begin // 32-bit
       always_comb begin
         case(entry)
-          16'h0000: read = {31'b0, MSIP};
-          16'h4000: read = MTIMECMP[31:0];
-          16'h4004: read = MTIMECMP[63:32];
-          16'hBFF8: read = MTIME[31:0];
-          16'hBFFC: read = MTIME[63:32];
-          default:  read = 0;
+          16'h0000: RdCLINTM = {31'b0, MSIP};
+          16'h4000: RdCLINTM = MTIMECMP[31:0];
+          16'h4004: RdCLINTM = MTIMECMP[63:32];
+          16'hBFF8: RdCLINTM = MTIME[31:0];
+          16'hBFFC: RdCLINTM = MTIME[63:32];
+          default:  RdCLINTM = 0;
         endcase
-        write=read;
-        if (ByteMaskM[0]) write[7:0]   = WdM[7:0];
-        if (ByteMaskM[1]) write[15:8]  = WdM[15:8];
-        if (ByteMaskM[2]) write[23:16] = WdM[23:16];
-        if (ByteMaskM[3]) write[31:24] = WdM[31:24];
       end 
       always_ff @(posedge clk or posedge reset) 
         if (reset) begin
@@ -108,19 +92,16 @@ module clint #(parameter XLEN=32) (
           MTIME <= 0;
           // MTIMECMP is not reset
         end else begin
-          if (entry == 16'h0000) MSIP <= write[0];
-          if (entry == 16'h4000) MTIMECMP[31:0] <= write;
-          if (entry == 16'h4004) MTIMECMP[63:32] <= write;
+          if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
+          if (entry == 16'h4000) MTIMECMP[31:0] <= MaskedWriteDataM;
+          if (entry == 16'h4004) MTIMECMP[63:32] <= MaskedWriteDataM;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-          if (entry == 16'hBFF8) MTIME[31:0] <= write;
-          else if (entry == 16'hBFFC) MTIME[63:32]<= write;
+          if (entry == 16'hBFF8) MTIME[31:0] <= MaskedWriteDataM;
+          else if (entry == 16'hBFFC) MTIME[63:32]<= MaskedWriteDataM;
           else MTIME <= MTIME + 1;
         end
     end
   endgenerate
-
-  // read
-  assign RdM = memread ? read: 0;
 
   // Software interrupt when MSIP is set
   assign SwIntM = MSIP;

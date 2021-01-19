@@ -234,6 +234,7 @@ string tests32i[] = {
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
 
   // instantiate device to be tested
+  assign GPIOPinsIn = 0;
   wallypipelined #(XLEN, MISA, ZCSR, ZCOUNTERS) dut(
     clk, reset, WriteData, DataAdr, MemRW, 
     GPIOPinsIn, GPIOPinsOut, GPIOPinsEn

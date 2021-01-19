@@ -31,8 +31,8 @@ module memdp #(parameter XLEN=32) (
   input  logic [XLEN-1:0] AdrM,
   input  logic [2:0]      Funct3M,
   output logic [XLEN-1:0] ReadDataExtM,
-  input  logic [XLEN-1:0] WriteDataM,
-  output logic [XLEN-1:0] WriteDataExtM,
+  input  logic [XLEN-1:0] WriteDataFullM,
+  output logic [XLEN-1:0] WriteDataM,
   output logic [7:0]      ByteMaskM,
   input  logic            DataAccessFaultM,
   output logic            LoadMisalignedFaultM, LoadAccessFaultM,
@@ -40,7 +40,7 @@ module memdp #(parameter XLEN=32) (
                   
   logic [7:0]  bytM;
   logic [15:0] HalfwordM;
-  logic        UnalignedM, AccessFaultM;
+  logic        UnalignedM;
   
   generate
     if (XLEN == 64) begin
@@ -109,11 +109,11 @@ module memdp #(parameter XLEN=32) (
       // Handle subword writes
       always_comb 
       case(Funct3M)
-        3'b000:  WriteDataExtM = {8{WriteDataM[7:0]}};  // sb
-        3'b001:  WriteDataExtM = {4{WriteDataM[15:0]}}; // sh
-        3'b010:  WriteDataExtM = {2{WriteDataM[31:0]}}; // sw
-        3'b011:  WriteDataExtM = WriteDataM;            // sw
-        default: WriteDataExtM = 64'b0;
+        3'b000:  WriteDataM = {8{WriteDataFullM[7:0]}};  // sb
+        3'b001:  WriteDataM = {4{WriteDataFullM[15:0]}}; // sh
+        3'b010:  WriteDataM = {2{WriteDataFullM[31:0]}}; // sw
+        3'b011:  WriteDataM = WriteDataFullM;            // sw
+        default: WriteDataM = 64'b0;
       endcase
      
     end else begin // 32-bit
@@ -160,10 +160,10 @@ module memdp #(parameter XLEN=32) (
       // Handle subword writes
       always_comb 
       case(Funct3M)
-        3'b000:  WriteDataExtM = {4{WriteDataM[7:0]}};  // sb
-        3'b001:  WriteDataExtM = {2{WriteDataM[15:0]}}; // sh
-        3'b010:  WriteDataExtM = WriteDataM;            // sw
-        default: WriteDataExtM = 32'b0;
+        3'b000:  WriteDataM = {4{WriteDataFullM[7:0]}};  // sb
+        3'b001:  WriteDataM = {2{WriteDataFullM[15:0]}}; // sh
+        3'b010:  WriteDataM = WriteDataFullM;            // sw
+        default: WriteDataM = 32'b0;
       endcase
     end
   endgenerate

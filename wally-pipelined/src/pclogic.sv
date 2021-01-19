@@ -42,16 +42,29 @@ module pclogic #(parameter XLEN=64, MISA=0) (
   logic [XLEN-1:0] ResetVector = {{(XLEN-32){1'b0}}, 32'h80000000};
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
+  logic [XLEN-3:0] PCPlusUpperF;
+  logic        CompressedF;
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
   assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
 
-  assign PCTargetE = ExtImmE + TargetBaseE;
+  assign  PCTargetE = ExtImmE + TargetBaseE;
   mux3    #(XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, ResetVector, PCF);
-  pcadder #(XLEN) pcadd(PCF, InstrF, PCPlus2or4F);   
+
+  // pcadder
+  // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
+  assign CompressedF = (InstrF[1:0] != 2'b11); // is it a 16-bit compressed instruction?
+  assign PCPlusUpperF = PCF[XLEN-1:2] + 1; // add 4 to PC
+  
+  // choose PC+2 or PC+4
+  always_comb
+    if (CompressedF) // add 2
+      if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
+      else        PCPlus2or4F = {PCF[XLEN-1:2], 2'b10};
+    else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
   // Misaligned PC logic
 

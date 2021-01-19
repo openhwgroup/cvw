@@ -36,21 +36,19 @@ module csrn #(parameter XLEN=64, MISA=0,
   UTVAL = 12'h043,
   UIP = 12'h044) (
     input  logic clk, reset, 
-    input  logic CSRUWriteM, UTrapM,
+    input  logic CSRNWriteM, UTrapM,
     input  logic [11:0] CSRAdrM,
     input  logic [XLEN-1:0] resetExceptionVector,
     input  logic [XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
     input  logic [XLEN-1:0] CSRWriteValM,
-    output logic [XLEN-1:0] CSRUReadValM, UEPC_REGW, UTVEC_REGW, 
+    output logic [XLEN-1:0] CSRNReadValM, UEPC_REGW, UTVEC_REGW, 
     input  logic [11:0]     UIP_REGW, UIE_REGW, 
     output logic            WriteUIPM, WriteUIEM,
     output logic            WriteUSTATUSM,
-    output logic            IllegalCSRUAccessM
+    output logic            IllegalCSRNAccessM
   );
 
   logic [XLEN-1:0] zero = 0;
-
-  // *** add floating point CSRs here.  Maybe move stuff below to csrn to support reading
 
   // User mode CSRs below only needed when user mode traps are supported
   generate  
@@ -62,13 +60,13 @@ module csrn #(parameter XLEN=64, MISA=0,
       logic [XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
       
       // Write enables
-      assign WriteUSTATUSM = CSRUWriteM && (CSRAdrM == USTATUS);
-      assign WriteUTVECM = CSRUWriteM && (CSRAdrM == UTVEC);
-      assign WriteUIPM = CSRUWriteM && (CSRAdrM == UIP);
-      assign WriteUIEM = CSRUWriteM && (CSRAdrM == UIE);
-      assign WriteUEPCM = UTrapM | (CSRUWriteM && (CSRAdrM == UEPC));
-      assign WriteUCAUSEM = UTrapM | (CSRUWriteM && (CSRAdrM == UCAUSE));
-      assign WriteUTVALM = UTrapM | (CSRUWriteM && (CSRAdrM == UTVAL));
+      assign WriteUSTATUSM = CSRNWriteM && (CSRAdrM == USTATUS);
+      assign WriteUTVECM = CSRNWriteM && (CSRAdrM == UTVEC);
+      assign WriteUIPM = CSRNWriteM && (CSRAdrM == UIP);
+      assign WriteUIEM = CSRNWriteM && (CSRAdrM == UIE);
+      assign WriteUEPCM = UTrapM | (CSRNWriteM && (CSRAdrM == UEPC));
+      assign WriteUCAUSEM = UTrapM | (CSRNWriteM && (CSRAdrM == UCAUSE));
+      assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL));
 
       // CSRs
       flopenl #(XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, resetExceptionVector, UTVEC_REGW);
@@ -81,28 +79,30 @@ module csrn #(parameter XLEN=64, MISA=0,
 
       // CSR Reads
       always_comb begin
-        IllegalCSRUAccessM = 0;
+        IllegalCSRNAccessM = 0;
         case (CSRAdrM) 
-          USTATUS:   CSRUReadValM = USTATUS_REGW;
-          UTVEC:     CSRUReadValM = UTVEC_REGW;
-          UIP:       CSRUReadValM = {{(XLEN-12){1'b0}}, UIP_REGW};
-          UIE:       CSRUReadValM = {{(XLEN-12){1'b0}}, UIE_REGW};
-          USCRATCH:  CSRUReadValM = USCRATCH_REGW;
-          UEPC:      CSRUReadValM = UEPC_REGW;
-          UCAUSE:    CSRUReadValM = UCAUSE_REGW;
-          UTVAL:     CSRUReadValM = UTVAL_REGW;
+          USTATUS:   CSRNReadValM = USTATUS_REGW;
+          UTVEC:     CSRNReadValM = UTVEC_REGW;
+          UIP:       CSRNReadValM = {{(XLEN-12){1'b0}}, UIP_REGW};
+          UIE:       CSRNReadValM = {{(XLEN-12){1'b0}}, UIE_REGW};
+          USCRATCH:  CSRNReadValM = USCRATCH_REGW;
+          UEPC:      CSRNReadValM = UEPC_REGW;
+          UCAUSE:    CSRNReadValM = UCAUSE_REGW;
+          UTVAL:     CSRNReadValM = UTVAL_REGW;
           default: begin
-                     CSRUReadValM = 0; 
-                     IllegalCSRUAccessM = 1;
+                     CSRNReadValM = 0; 
+                     IllegalCSRNAccessM = 1;
           end         
         endcase
       end
     end else begin // if not supported
       assign WriteUSTATUSM = 0;
-      assign CSRUReadValM = 0;
+      assign WriteUIPM = 0;
+      assign WriteUIEM = 0;
+      assign CSRNReadValM = 0;
       assign UEPC_REGW = 0;
       assign UTVEC_REGW = 0;
-      assign IllegalCSRUAccessM = 1;
+      assign IllegalCSRNAccessM = 1;
     end
   endgenerate
 endmodule
