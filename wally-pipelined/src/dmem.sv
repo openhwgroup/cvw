@@ -44,7 +44,12 @@ module dmem #(parameter XLEN=32) (
   logic [1:0]      MemRWdtimM, MemRWclintM, MemRWgpioM;
 
   // Address decoding
-  assign TimEnM = ~(|AdrM[XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x80000000 - 0x8007FFFF  *** check top bits too
+  generate
+    if (XLEN == 64)
+      assign TimEnM = ~(|AdrM[XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x000...80000000 - 0x000...8007FFFF
+    else
+      assign TimEnM = AdrM[31] & ~(|AdrM[30:19]); // 0x80000000 - 0x8007FFFF
+  endgenerate
   assign CLINTEnM = ~(|AdrM[XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
   assign GPIOEnM = (AdrM[31:8] == 24'h10012); // 0x10012000-0x100120FF
 
