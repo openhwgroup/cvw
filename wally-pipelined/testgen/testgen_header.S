@@ -1,6 +1,6 @@
-
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Adapted from Imperas RISCV-TEST_SUITE
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 // files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
@@ -30,8 +30,9 @@ RV_COMPLIANCE_CODE_BEGIN
 
 	# ---------------------------------------------------------------------------------------------
 
-	RVTEST_IO_WRITE_STR(x31, "# Test group 1\n")
+	#RVTEST_IO_WRITE_STR(x31, "# Test group 1\n")
 
 
     # address for test results
     la x6, test_1_res
+		
