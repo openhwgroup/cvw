@@ -29,15 +29,15 @@ def computeExpected(a, b, test):
   #  exit(1)
 
 def randRegs():
-  reg1 = randint(1,32)
-  reg2 = randint(1,32)
-  reg3 = randint(1,32) 
+  reg1 = randint(1,31)
+  reg2 = randint(1,31)
+  reg3 = randint(1,31) 
   if (reg1 == 6 or reg2 == 6 or reg3 == 6 or reg1 == reg2):
     return randRegs()
   else:
       return reg1, reg2, reg3
 
-def writeVector(a,b):
+def writeVector(a, b, storecmd):
   global testnum
   expected = computeExpected(a, b, test)
   expected = expected % 2**xlen # drop carry if necessary
@@ -50,10 +50,13 @@ def writeVector(a,b):
   lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
   lines = lines + "li x" + str(reg2) + ", MASK_XLEN(" + formatstr.format(b) + ")\n"
   lines = lines + test + " x" + str(reg3) + ", x" + str(reg1) + ", x" + str(reg2) + "\n"
-  lines = lines + "sd x" + str(reg3) + ", " + str(8*testnum) + "(x6)\n"
+  lines = lines + storecmd + " x" + str(reg3) + ", " + str(wordsize*testnum) + "(x6)\n"
   lines = lines + "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg3) +", "+formatstr.format(expected)+")\n"
   f.write(lines)
-  line = formatstr.format(expected)+"\n"
+  if (xlen == 32):
+    line = formatrefstr.format(expected)+"\n"
+  else:
+    line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
   r.write(line)
   testnum = testnum+1
 
@@ -74,6 +77,13 @@ seed(0) # make tests reproducible
 for xlen in xlens:
   formatstrlen = str(int(xlen/4))
   formatstr = "0x{:0" + formatstrlen + "x}" # format as xlen-bit hexadecimal number
+  formatrefstr = "{:08x}" # format as xlen-bit hexadecimal number with no leading 0x
+  if (xlen == 32):
+    storecmd = "sw"
+    wordsize = 4
+  else:
+    storecmd = "sd"
+    wordsize = 8
   for test in tests:
     corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
             2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1]
@@ -101,11 +111,11 @@ for xlen in xlens:
     # print directed and random test vectors
     for a in corners:
       for b in corners:
-        writeVector(a, b)
+        writeVector(a, b, storecmd)
     for i in range(0,numrand):
       a = getrandbits(xlen)
       b = getrandbits(xlen)
-      writeVector(a, b)
+      writeVector(a, b, storecmd)
 
 
     # print footer
@@ -114,8 +124,9 @@ for xlen in xlens:
       f.write(line)
 
     # Finish
-    line = ".fill " + str(testnum) + ", 8, -1\n"
-    f.write(line)
+    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
+    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
+    f.write(lines)
     f.close()
     r.close()
 
