@@ -40,52 +40,52 @@ view wave
 add wave /testbench_busybear/clk
 add wave /testbench_busybear/reset
 add wave -divider
-add wave -hex /testbench_busybear/dut/hart/dp/PCF
-add wave -hex /testbench_busybear/dut/hart/dp/InstrF
-add wave /testbench_busybear/InstrFName
-#add wave -hex /testbench_busybear/dut/hart/dp/PCD
-add wave -hex /testbench_busybear/dut/hart/dp/InstrD
-add wave /testbench_busybear/InstrDName
-add wave -divider
-#add wave -hex /testbench_busybear/dut/hart/dp/PCE
-#add wave -hex /testbench_busybear/dut/hart/dp/InstrE
-add wave /testbench_busybear/InstrEName
-add wave -hex /testbench_busybear/dut/hart/dp/SrcAE
-add wave -hex /testbench_busybear/dut/hart/dp/SrcBE
-add wave -hex /testbench_busybear/dut/hart/dp/ALUResultE
-add wave /testbench_busybear/dut/hart/dp/PCSrcE
-add wave -divider
-#add wave -hex /testbench_busybear/dut/hart/dp/PCM
-#add wave -hex /testbench_busybear/dut/hart/dp/InstrM
-add wave /testbench_busybear/InstrMName
-add wave /testbench_busybear/dut/dmem/dtim/memwrite
-add wave -hex /testbench_busybear/dut/dmem/AdrM
-add wave -hex /testbench_busybear/dut/dmem/WriteDataM
-add wave -divider
-add wave -hex /testbench_busybear/dut/hart/dp/PCW
-#add wave -hex /testbench_busybear/dut/hart/dp/InstrW
-add wave /testbench_busybear/InstrWName
-add wave /testbench_busybear/dut/hart/dp/RegWriteW
-add wave -hex /testbench_busybear/dut/hart/dp/ResultW
-add wave -hex /testbench_busybear/dut/hart/dp/RdW
-add wave -divider
-#add ww
-add wave -hex -r /testbench_busybear/*
-
--- Set Wave Output Items 
-TreeUpdate [SetDefaultTree]
-WaveRestoreZoom {0 ps} {100 ps}
-configure wave -namecolwidth 250
-configure wave -valuecolwidth 120
-configure wave -justifyvalue left
-configure wave -signalnamewidth 0
-configure wave -snapdistance 10
-configure wave -datasetprefix 0
-configure wave -rowmargin 4
-configure wave -childrowmargin 2
-set DefaultRadix hexadecimal
-
--- Run the Simulation 
-#run 1000
-run -all
-#quit
+add wave -hex /testbench_busybear/dut/dp/PCF
+add wave -hex /testbench_busybear/dut/dp/InstrF
+#add wave /testbench_busybear/InstrFName
+##add wave -hex /testbench_busybear/dut/dp/PCD
+#add wave -hex /testbench_busybear/dut/dp/InstrD
+#add wave /testbench_busybear/InstrDName
+#add wave -divider
+##add wave -hex /testbench_busybear/dut/dp/PCE
+##add wave -hex /testbench_busybear/dut/dp/InstrE
+#add wave /testbench_busybear/InstrEName
+#add wave -hex /testbench_busybear/dut/dp/SrcAE
+#add wave -hex /testbench_busybear/dut/dp/SrcBE
+#add wave -hex /testbench_busybear/dut/dp/ALUResultE
+#add wave /testbench_busybear/dut/dp/PCSrcE
+#add wave -divider
+##add wave -hex /testbench_busybear/dut/dp/PCM
+##add wave -hex /testbench_busybear/dut/dp/InstrM
+#add wave /testbench_busybear/InstrMName
+#add wave /testbench_busybear/dut/dmem/dtim/memwrite
+#add wave -hex /testbench_busybear/dut/dmem/AdrM
+#add wave -hex /testbench_busybear/dut/dmem/WriteDataM
+#add wave -divider
+#add wave -hex /testbench_busybear/dut/dp/PCW
+##add wave -hex /testbench_busybear/dut/dp/InstrW
+#add wave /testbench_busybear/InstrWName
+#add wave /testbench_busybear/dut/dp/RegWriteW
+#add wave -hex /testbench_busybear/dut/dp/ResultW
+#add wave -hex /testbench_busybear/dut/dp/RdW
+#add wave -divider
+##add ww
+#add wave -hex -r /testbench_busybear/*
+#
+#-- Set Wave Output Items 
+#TreeUpdate [SetDefaultTree]
+#WaveRestoreZoom {0 ps} {100 ps}
+#configure wave -namecolwidth 250
+#configure wave -valuecolwidth 120
+#configure wave -justifyvalue left
+#configure wave -signalnamewidth 0
+#configure wave -snapdistance 10
+#configure wave -datasetprefix 0
+#configure wave -rowmargin 4
+#configure wave -childrowmargin 2
+#set DefaultRadix hexadecimal
+#
+#-- Run the Simulation 
+run 100
+#run -all
+##quit
