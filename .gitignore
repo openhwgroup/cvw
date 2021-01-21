@@ -1,0 +1,5 @@
+**/work
+
+#vsim work files to ignore
+transcript
+vsim.wlf

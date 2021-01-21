@@ -20,5 +20,7 @@
 `define S_MODE (2'b01)
 `define U_MODE (2'b00)
 
+//PC reset value
+`define PC_RESET_VALUE (32'h00001000)
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */

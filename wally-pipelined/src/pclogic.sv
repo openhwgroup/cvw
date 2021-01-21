@@ -39,7 +39,7 @@ module pclogic #(parameter XLEN=64, MISA=0) (
   logic [XLEN-1:0] UnalignedPCNextF, PCNextF, PCTargetE;
 //  logic [XLEN-1:0] ResetVector = 'h100;
 //  logic [XLEN-1:0] ResetVector = 'he4;
-  logic [XLEN-1:0] ResetVector = {{(XLEN-32){1'b0}}, 32'h80000000};
+  logic [XLEN-1:0] ResetVector = {{(XLEN-32){1'b0}}, `PC_RESET_VALUE };
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
   logic [XLEN-3:0] PCPlusUpperF;
