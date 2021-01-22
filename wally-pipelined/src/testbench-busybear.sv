@@ -24,6 +24,33 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
     begin
       reset <= 1; # 22; reset <= 0;
     end
+  
+  // read instr trace file
+  integer data_file, scan_file;
+  integer read_data;
+  initial begin
+    data_file = $fopen("busybear-testgen/parsed.txt", "r");
+    if (data_file == 0) begin
+      $display("file couldn't be opened");
+      $stop;
+    end 
+   //   scan_file = $fscanf(data_file, "%x\n", read_data);
+   //   $display("%x", read_data);
+
+   //   scan_file = $fscanf(data_file, "%s\n", read_data);
+   //   $display("%s", read_data);
+   //   //if (!$feof(data_file)) begin
+   //   //  $display(read_data);
+   //   //end
+   // end
+  end
+
+  always @(PCF) begin
+    //$display("%x", PCF);
+    scan_file = $fscanf(data_file, "%x\n", InstrF);
+    //$display("%x", InstrF);
+  end
+
 
   // generate clock to sequence tests
   always
