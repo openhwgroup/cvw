@@ -3,3 +3,4 @@
 #vsim work files to ignore
 transcript
 vsim.wlf
+wally-pipelined/wlft*
