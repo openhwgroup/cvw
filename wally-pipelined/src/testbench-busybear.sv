@@ -44,10 +44,22 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
    //   //end
    // end
   end
+  logic [63:0] rfExpected[31:1];
+  logic [63:0] pcExpected;
 
   always @(PCF) begin
     //$display("%x", PCF);
     scan_file = $fscanf(data_file, "%x\n", InstrF);
+    for(int i=1; i < 32; i++) begin
+      scan_file = $fscanf(data_file, "%x\n", rfExpected[i]);
+    end
+    scan_file = $fscanf(data_file, "%x\n", pcExpected);
+    //check things!
+    if (PCF != pcExpected) begin
+      $display("PC does not equal PC expected: %x, %x", PCF, pcExpected);
+    end
+
+
     //$display("%x", InstrF);
   end
 

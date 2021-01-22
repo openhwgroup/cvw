@@ -40,8 +40,43 @@ view wave
 add wave /testbench_busybear/clk
 add wave /testbench_busybear/reset
 add wave -divider
+add wave -hex /testbench_busybear/pcExpected
 add wave -hex /testbench_busybear/dut/dp/PCF
 add wave -hex /testbench_busybear/dut/dp/InstrF
+add wave -divider
+# registers!
+add wave -hex /testbench_busybear/rfExpected
+add wave -hex /testbench_busybear/dut/dp/regf/rf[1]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[2]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[3]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[4]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[5]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[6]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[7]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[8]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[9]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[10]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[11]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[12]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[13]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[14]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[15]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[16]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[17]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[18]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[19]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[20]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[21]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[22]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[23]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[24]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[25]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[26]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[27]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[28]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[29]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[30]
+add wave -hex /testbench_busybear/dut/dp/regf/rf[31]
 #add wave /testbench_busybear/InstrFName
 ##add wave -hex /testbench_busybear/dut/dp/PCD
 #add wave -hex /testbench_busybear/dut/dp/InstrD
