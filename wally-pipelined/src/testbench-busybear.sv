@@ -81,8 +81,8 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
       scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
       // check things!
       if (rf[j*64+63 -: 64] != rfExpected[j]) begin
-        $display("%t ps: rf[%i] does not equal rf expected: %x, %x", $time, j, rf[j*64+63 -: 64], rfExpected[j]);
-        $stop;
+        $display("%t ps: rf[%0d] does not equal rf expected: %x, %x", $time, j, rf[j*64+63 -: 64], rfExpected[j]);
+    //    $stop;
       end
     end
   end
@@ -103,7 +103,7 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
     //check things!
     if (PCF != pcExpected) begin
       $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
-      $stop;
+    //  $stop;
     end
   end
 
