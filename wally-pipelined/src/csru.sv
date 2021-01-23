@@ -25,17 +25,17 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csru #(parameter XLEN=64, MISA=0,
+module csru #(parameter 
   FFLAGS = 12'h001,
   FRM = 12'h002,
   FCSR = 12'h003) (
     input  logic clk, reset, 
     input  logic CSRUWriteM,
     input  logic [11:0] CSRAdrM,
-    input  logic [XLEN-1:0] CSRWriteValM,
-    output logic [XLEN-1:0] CSRUReadValM,  
+    input  logic [`XLEN-1:0] CSRWriteValM,
+    output logic [`XLEN-1:0] CSRUReadValM,  
     input  logic [4:0]      SetFflagsM,
     output logic [2:0]      FRM_REGW,
     output logic            IllegalCSRUAccessM
@@ -66,9 +66,9 @@ module csru #(parameter XLEN=64, MISA=0,
       always_comb begin
         IllegalCSRUAccessM = 0;
         case (CSRAdrM) 
-          FFLAGS:    CSRUReadValM = {{(XLEN-5){1'b0}}, FFLAGS_REGW};
-          FRM:       CSRUReadValM = {{(XLEN-3){1'b0}}, FRM_REGW};
-          FCSR:      CSRUReadValM = {{(XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
+          FFLAGS:    CSRUReadValM = {{(`XLEN-5){1'b0}}, FFLAGS_REGW};
+          FRM:       CSRUReadValM = {{(`XLEN-3){1'b0}}, FRM_REGW};
+          FCSR:      CSRUReadValM = {{(`XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
           default: begin
                      CSRUReadValM = 0; 
                      IllegalCSRUAccessM = 1;

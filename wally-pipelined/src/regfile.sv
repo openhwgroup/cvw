@@ -23,16 +23,16 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module regfile #(parameter XLEN=32) (
+module regfile (
   input  logic            clk, reset,
   input  logic            we3, 
   input  logic [ 4:0]     a1, a2, a3, 
-  input  logic [XLEN-1:0] wd3, 
-  output logic [XLEN-1:0] rd1, rd2);
+  input  logic [`XLEN-1:0] wd3, 
+  output logic [`XLEN-1:0] rd1, rd2);
 
-  logic [XLEN-1:0] rf[31:1];
+  logic [`XLEN-1:0] rf[31:1];
   integer i;
 
   // three ported register file

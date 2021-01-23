@@ -23,22 +23,22 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module testbench #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOUNTERS = 1)();
+module testbench();
   logic        clk;
   logic        reset;
 
-  logic [XLEN-1:0] WriteData, DataAdr;
+  logic [`XLEN-1:0] WriteData, DataAdr;
   logic [1:0]      MemRW;
 
   int test, i, errors, totalerrors;
   logic [31:0] sig32[0:10000];
-  logic [XLEN-1:0] signature[0:10000];
-  logic [XLEN-1:0] testadr;
+  logic [`XLEN-1:0] signature[0:10000];
+  logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  logic [XLEN-1:0] meminit;
+  logic [`XLEN-1:0] meminit;
   string tests64ic[] = '{
 
                      "rv64ic/I-C-ADD-01", "3000",
@@ -224,7 +224,7 @@ string tests32i[] = {
   
   // pick tests based on modes supported
   initial 
-    if (XLEN == 64) begin // RV64
+    if (`XLEN == 64) begin // RV64
       tests = {tests64i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests64ic};
       else                       tests = {tests, tests64iNOc};
@@ -240,13 +240,13 @@ string tests32i[] = {
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
-  wallypipelined #(XLEN, MISA, ZCSR, ZCOUNTERS) dut(
+  wallypipelined dut(
     clk, reset, WriteData, DataAdr, MemRW, 
     GPIOPinsIn, GPIOPinsOut, GPIOPinsEn, UARTSin, UARTSout
   ); 
 
   // Track names of instructions
-  instrTrackerTB #(XLEN) it(clk, reset, dut.hart.dp.FlushE,
+  instrTrackerTB it(clk, reset, dut.hart.dp.FlushE,
                 dut.hart.dp.InstrDecompD, dut.hart.dp.InstrE,
                 dut.hart.dp.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
@@ -258,7 +258,7 @@ string tests32i[] = {
       totalerrors = 0;
       testadr = 0;
       // fill memory with defined values to reduce Xs in simulation
-      if (XLEN == 32) meminit = 32'hFEDC0123;
+      if (`XLEN == 32) meminit = 32'hFEDC0123;
       else meminit = 64'hFEDCBA9876543210;
       for (i=0; i<=65535; i = i+1) begin
         //dut.imem.RAM[i] = meminit;
@@ -294,7 +294,7 @@ string tests32i[] = {
         $readmemh(signame, sig32);
         i = 0;
         while (i < 10000) begin
-          if (XLEN == 32) begin
+          if (`XLEN == 32) begin
             signature[i] = sig32[i];
             i = i+1;
           end else begin
@@ -306,7 +306,7 @@ string tests32i[] = {
         // Check errors
         i = 0;
         errors = 0;
-        if (XLEN == 32)
+        if (`XLEN == 32)
           testadr = tests[test+1].atohex()/4;
         else
           testadr = tests[test+1].atohex()/8;
@@ -319,7 +319,7 @@ string tests32i[] = {
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*XLEN/8, dut.dmem.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*`XLEN/8, dut.dmem.dtim.RAM[testadr+i], signature[i]);
             end
           end
           i = i + 1;
@@ -350,7 +350,7 @@ endmodule
 /* verilator lint_on STMTDLY */
 /* verilator lint_on WIDTH */
 
-module instrTrackerTB #(parameter XLEN=32) (
+module instrTrackerTB(
   input  logic            clk, reset, FlushE,
   input  logic [31:0]     InstrD,
   input  logic [31:0]     InstrE, InstrM,

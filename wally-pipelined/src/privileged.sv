@@ -24,16 +24,16 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
+module privileged (
   input  logic clk, reset,
   input  logic        CSRWriteM,
-  input  logic [XLEN-1:0] SrcAM,
+  input  logic [`XLEN-1:0] SrcAM,
   input  logic [31:0] InstrM,
-  input  logic [XLEN-1:0] PCM,
-  output logic [XLEN-1:0] CSRReadValM,
-  output logic [XLEN-1:0] PrivilegedNextPCM,
+  input  logic [`XLEN-1:0] PCM,
+  output logic [`XLEN-1:0] CSRReadValM,
+  output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic RetM, TrapM,
   input  logic InstrValidW, FloatRegWriteW, LoadStallD,
   input  logic PrivilegedM,
@@ -41,16 +41,16 @@ module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
   input  logic LoadMisalignedFaultM, LoadAccessFaultM,
   input  logic StoreMisalignedFaultM, StoreAccessFaultM,
   input  logic TimerIntM, ExtIntM, SwIntM,
-  input  logic [XLEN-1:0] InstrMisalignedAdrM, ALUResultM,
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM,
   input  logic [4:0]      SetFflagsM,
   output logic [2:0]      FRM_REGW
 );
 
   logic [1:0] NextPrivilegeModeM, PrivilegeModeW;
 
-  logic [XLEN-1:0] CauseM, NextFaultMtvalM;
-  logic [XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
-  logic [XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
+  logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
+  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
+  logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
 //  logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW;
 
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
@@ -66,10 +66,10 @@ module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
   logic [11:0] MIP_REGW, MIE_REGW;
 
   // track the current privilege level
-  privilegeModeReg #(XLEN, MISA) pmr (.*);
+  privilegeModeReg pmr(.*);
 
   // decode privileged instructions
-  privilegeDecoder #(MISA) pmd(.InstrM(InstrM[31:20]), .*);
+  privilegeDecoder pmd(.InstrM(InstrM[31:20]), .*);
   
   // Extract exceptions by name and handle them 
   assign BreakpointFaultM = ebreakM; // could have other causes too
@@ -77,10 +77,10 @@ module privileged #(parameter XLEN=32, MISA = 0, ZCSR = 1, ZCOUNTERS = 1)(
   assign InstrPageFaultM = 0;
   assign LoadPageFaultM = 0;
   assign StorePageFaultM = 0;
-  trap #(XLEN, MISA) trap(.*);
+  trap trap(.*);
 
   // Control and Status Registers
-  csr #(XLEN, MISA, ZCSR, ZCOUNTERS) csr(.*);
+  csr csr(.*);
 endmodule
 
 

@@ -24,9 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module trap #(parameter XLEN=32, MISA=0) (
+module trap (
   input  logic            clk, reset, 
   input  logic            InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
   input  logic            BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
@@ -34,13 +34,13 @@ module trap #(parameter XLEN=32, MISA=0) (
   input  logic            LoadPageFaultM, StorePageFaultM,
   input  logic            mretM, sretM, uretM,
   input  logic [1:0]      PrivilegeModeW, NextPrivilegeModeM,
-  input  logic [XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
+  input  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
   input  logic [11:0]     MIP_REGW, MIE_REGW,
   input  logic            STATUS_MIE, STATUS_SIE,
-  input  logic [XLEN-1:0] InstrMisalignedAdrM, ALUResultM, 
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM, 
   input  logic [31:0]     InstrM,
   output logic            TrapM, MTrapM, STrapM, UTrapM, RetM,
-  output logic [XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
+  output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
 );
@@ -76,18 +76,18 @@ module trap #(parameter XLEN=32, MISA=0) (
   // Exceptions are of lower priority than all interrupts (3.1.9)
   always_comb
     if      (reset)                 CauseM = 0; // hard reset 3.3
-    else if (PendingIntsM[11])      CauseM = (1 << (XLEN-1)) + 11; // Machine External Int
-    else if (PendingIntsM[3])       CauseM = (1 << (XLEN-1)) + 3;  // Machine Sw Int
-    else if (PendingIntsM[7])       CauseM = (1 << (XLEN-1)) + 7;  // Machine Timer Int
-    else if (PendingIntsM[9])       CauseM = (1 << (XLEN-1)) + 9;  // Supervisor External Int
-    else if (PendingIntsM[1])       CauseM = (1 << (XLEN-1)) + 1;  // Supervisor Sw Int
-    else if (PendingIntsM[5])       CauseM = (1 << (XLEN-1)) + 5;  // Supervisor Timer Int
+    else if (PendingIntsM[11])      CauseM = (1 << (`XLEN-1)) + 11; // Machine External Int
+    else if (PendingIntsM[3])       CauseM = (1 << (`XLEN-1)) + 3;  // Machine Sw Int
+    else if (PendingIntsM[7])       CauseM = (1 << (`XLEN-1)) + 7;  // Machine Timer Int
+    else if (PendingIntsM[9])       CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int
+    else if (PendingIntsM[1])       CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int
+    else if (PendingIntsM[5])       CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int
     else if (InstrPageFaultM)       CauseM = 12;
     else if (InstrAccessFaultM)     CauseM = 1;
     else if (InstrMisalignedFaultM) CauseM = 0;
     else if (IllegalInstrFaultM)    CauseM = 2;
     else if (BreakpointFaultM)      CauseM = 3;
-    else if (EcallFaultM)           CauseM = {{(XLEN-2){1'b0}}, PrivilegeModeW} + 8;
+    else if (EcallFaultM)           CauseM = {{(`XLEN-2){1'b0}}, PrivilegeModeW} + 8;
     else if (LoadMisalignedFaultM)  CauseM = 4;
     else if (StoreMisalignedFaultM) CauseM = 6;
     else if (LoadPageFaultM)        CauseM = 13;
@@ -112,6 +112,6 @@ module trap #(parameter XLEN=32, MISA=0) (
     else if (InstrPageFaultM)       NextFaultMtvalM = 0; // *** implement
     else if (LoadPageFaultM)        NextFaultMtvalM = ALUResultM;
     else if (StorePageFaultM)       NextFaultMtvalM = ALUResultM;
-    else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(XLEN-32){1'b0}}, InstrM};
+    else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
     else                            NextFaultMtvalM = 0;
 endmodule

@@ -23,18 +23,18 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module dtim #(parameter XLEN=32) (
+module dtim (
   input  logic            clk, 
   input  logic [1:0]      MemRWdtimM,
   input  logic [7:0]      ByteMaskM,
   input  logic [18:0]     AdrM, 
-  input  logic [XLEN-1:0] WriteDataM,
-  output logic [XLEN-1:0] RdTimM);
+  input  logic [`XLEN-1:0] WriteDataM,
+  output logic [`XLEN-1:0] RdTimM);
 
-  logic [XLEN-1:0] RAM[0:65535];
-  logic [XLEN-1:0] write;
+  logic [`XLEN-1:0] RAM[0:65535];
+  logic [`XLEN-1:0] write;
   logic [15:0] entry;
   logic            memread, memwrite;
 
@@ -43,7 +43,7 @@ module dtim #(parameter XLEN=32) (
   
   // word aligned reads
   generate
-    if (XLEN==64)
+    if (`XLEN==64)
       assign #2 entry = AdrM[18:3];
     else
       assign #2 entry = AdrM[17:2]; 
@@ -56,7 +56,7 @@ module dtim #(parameter XLEN=32) (
   // from dmem
   generate
 
-    if (XLEN==64) begin
+    if (`XLEN==64) begin
       always_comb begin
         write=RdTimM;
         if (ByteMaskM[0]) write[7:0]   = WriteDataM[7:0];

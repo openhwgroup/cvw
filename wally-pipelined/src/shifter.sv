@@ -23,7 +23,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
 module shifter #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] a,
@@ -31,7 +31,7 @@ module shifter #(parameter WIDTH=32) (
   input  logic        right, arith, w64,
   output logic [WIDTH-1:0] y);
 
-  // The best shifter architecture differs based on XLEN.
+  // The best shifter architecture differs based on `XLEN.
   // for RV32, only 32-bit shifts are needed.  These are 
   // most efficiently implemented with a funnel shifter.  
   // For RV64, 32 and 64-bit shifts are needed, with sign
