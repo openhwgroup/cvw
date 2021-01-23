@@ -24,9 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csrm #(parameter XLEN=64, MISA=0,
+module csrm #(parameter 
   // Machine CSRs
   MVENDORID = 12'hF11,
   MARCHID = 12'hF12,
@@ -64,30 +64,31 @@ module csrm #(parameter XLEN=64, MISA=0,
     input  logic clk, reset, 
     input  logic CSRMWriteM, MTrapM,
     input  logic [11:0] CSRAdrM,
-    input  logic [XLEN-1:0] resetExceptionVector,
-    input  logic [XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
-    input  logic [XLEN-1:0] CSRWriteValM,
-    output logic [XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
+    input  logic [`XLEN-1:0] resetExceptionVector,
+    input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
+    input  logic [`XLEN-1:0] CSRWriteValM,
+    output logic [`XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
     output logic [31:0]     MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-    output logic [XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, 
+    output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, 
     input  logic [11:0]     MIP_REGW, MIE_REGW,
     output logic            WriteMIPM, WriteMIEM,
     output logic            WriteMSTATUSM,
     output logic            IllegalCSRMAccessM
   );
 
-  logic [XLEN-1:0] MISA_REGW;
-  logic [XLEN-1:0] MSCRATCH_REGW,MCAUSE_REGW, MTVAL_REGW;
-  logic [XLEN-1:0] zero = 0;
+  logic [`XLEN-1:0] MISA_REGW;
+  logic [`XLEN-1:0] MSCRATCH_REGW,MCAUSE_REGW, MTVAL_REGW;
+  logic [`XLEN-1:0] zero = 0;
   logic [31:0]     allones = {32{1'b1}};
-  logic [XLEN-1:0] MEDELEG_MASK = ~(zero | 1'b1 << 11); // medeleg[11] hardwired to zero per Privileged Spec 3.1.8
-  logic [XLEN-1:0] MIDELEG_MASK = {{(XLEN-12){1'b0}}, 12'h222}; // only allow delegating interrupts to supervisor mode
+  logic [`XLEN-1:0] MEDELEG_MASK = ~(zero | 1'b1 << 11); // medeleg[11] hardwired to zero per Privileged Spec 3.1.8
+  logic [`XLEN-1:0] MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}; // only allow delegating interrupts to supervisor mode
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+  logic [25:0]     MISAbits = `MISA;
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
-  assign MISA_REGW = {(XLEN == 32 ? 2'b01 : 2'b10), {(XLEN-28){1'b0}}, MISA[25:0]};
+  assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, MISAbits};
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS);
@@ -104,23 +105,23 @@ module csrm #(parameter XLEN=64, MISA=0,
   assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
 
   // CSRs
-  flopenl #(XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, resetExceptionVector, MTVEC_REGW);
+  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, resetExceptionVector, MTVEC_REGW);
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
-      flopenl #(XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, zero, MEDELEG_REGW);
-      flopenl #(XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK, zero, MIDELEG_REGW);
+      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, zero, MEDELEG_REGW);
+      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK, zero, MIDELEG_REGW);
     end else begin
       assign MEDELEG_REGW = 0;
       assign MIDELEG_REGW = 0;
     end
   endgenerate
 
-//  flopenl #(XLEN) MIPreg(clk, reset, WriteMIPM, CSRWriteValM, zero, MIP_REGW);
-//  flopenl #(XLEN) MIEreg(clk, reset, WriteMIEM, CSRWriteValM, zero, MIE_REGW);
-  flopenr #(XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
-  flopenr #(XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
-  flopenl #(XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, zero, MCAUSE_REGW); 
-  flopenr #(XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
+//  flopenl #(`XLEN) MIPreg(clk, reset, WriteMIPM, CSRWriteValM, zero, MIP_REGW);
+//  flopenl #(`XLEN) MIEreg(clk, reset, WriteMIEM, CSRWriteValM, zero, MIE_REGW);
+  flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
+  flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
+  flopenl #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, zero, MCAUSE_REGW); 
+  flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
   flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], allones, MCOUNTEREN_REGW);
   flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], allones, MCOUNTINHIBIT_REGW);
   
@@ -139,14 +140,14 @@ module csrm #(parameter XLEN=64, MISA=0,
       MTVEC:     CSRMReadValM = MTVEC_REGW;
       MEDELEG:   CSRMReadValM = MEDELEG_REGW;
       MIDELEG:   CSRMReadValM = MIDELEG_REGW;
-      MIP:       CSRMReadValM = {{(XLEN-12){1'b0}}, MIP_REGW};
-      MIE:       CSRMReadValM = {{(XLEN-12){1'b0}}, MIE_REGW};
+      MIP:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW};
+      MIE:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW};
       MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;
       MEPC:      CSRMReadValM = MEPC_REGW;
       MCAUSE:    CSRMReadValM = MCAUSE_REGW;
       MTVAL:     CSRMReadValM = MTVAL_REGW;
-      MCOUNTEREN:CSRMReadValM = {{(XLEN-32){1'b0}}, MCOUNTEREN_REGW};
-      MCOUNTINHIBIT:CSRMReadValM = {{(XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
+      MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+      MCOUNTINHIBIT:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
       default: begin
                  CSRMReadValM = 0;
                  IllegalCSRMAccessM = 1;

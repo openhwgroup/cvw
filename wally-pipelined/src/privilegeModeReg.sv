@@ -24,20 +24,20 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module privilegeModeReg #(parameter XLEN=32, MISA=0) (
+module privilegeModeReg (
   input  logic       clk, reset,
   input  logic       mretM, sretM, uretM, TrapM,
   input  logic [1:0] STATUS_MPP, 
   input  logic       STATUS_SPP,
-  input  logic [XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, CauseM,
+  input  logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, CauseM,
   output logic [1:0] NextPrivilegeModeM, PrivilegeModeW);
 
   logic md, sd;
   // get bits of DELEG registers based on CAUSE
-  assign md = CauseM[XLEN-1] ? MIDELEG_REGW[CauseM[4:0]] : MEDELEG_REGW[CauseM[4:0]];
-  assign sd = CauseM[XLEN-1] ? SIDELEG_REGW[CauseM[4:0]] : SEDELEG_REGW[CauseM[4:0]]; // depricated
+  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[4:0]] : MEDELEG_REGW[CauseM[4:0]];
+  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[4:0]] : SEDELEG_REGW[CauseM[4:0]]; // depricated
   
   always_comb
     if      (reset) NextPrivilegeModeM = `M_MODE; // Privilege resets to 11 (Machine Mode)

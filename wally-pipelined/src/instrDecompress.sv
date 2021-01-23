@@ -23,9 +23,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module instrDecompress #(parameter XLEN=32, MISA=1) (
+module instrDecompress (
   input  logic [31:0]     InstrD,
   output logic [31:0]     InstrDecompD,
   output logic            IllegalCompInstrD);
@@ -89,18 +89,18 @@ module instrDecompress #(parameter XLEN=32, MISA=1) (
                       end
             5'b00001: InstrDecompD = {immCLD, rs1p, 3'b011, rdp, 7'b0000111}; // c.fld
             5'b00010: InstrDecompD = {immCL, rs1p, 3'b010, rdp, 7'b0000011}; // c.lw
-            5'b00011: if (XLEN==32)
+            5'b00011: if (`XLEN==32)
                         InstrDecompD = {immCL, rs1p, 3'b010, rdp, 7'b0000111}; // c.flw
                       else
                         InstrDecompD = {immCLD, rs1p, 3'b011, rdp, 7'b0000011}; // c.ld;
             5'b00101: InstrDecompD = {immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100111}; // c.fsd
             5'b00110: InstrDecompD = {immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100011}; // c.sw
-            5'b00111: if (XLEN==32)
+            5'b00111: if (`XLEN==32)
                         InstrDecompD = {immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100111}; // c.fsw
                       else
                         InstrDecompD = {immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100011}; //c.sd
             5'b01000: InstrDecompD = {immCI, rds1, 3'b000, rds1, 7'b0010011}; // c.addi
-            5'b01001: if (XLEN==32) 
+            5'b01001: if (`XLEN==32) 
                         InstrDecompD = {immCJ, 5'b00001, 7'b1101111}; // c.jal
                       else
                         InstrDecompD = {immCI, rds1, 3'b000, rds1, 7'b0011011}; // c.addiw
@@ -124,7 +124,7 @@ module instrDecompress #(parameter XLEN=32, MISA=1) (
                           InstrDecompD = {7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011}; // c.or
                         else // if (instr16[6:5] == 2'b11) 
                           InstrDecompD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
-                      else if (instr16[12:10] == 3'b111 && XLEN > 32)
+                      else if (instr16[12:10] == 3'b111 && `XLEN > 32)
                         if (instr16[6:5] == 2'b00)
                           InstrDecompD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
                         else if (instr16[6:5] == 2'b01)
@@ -143,7 +143,7 @@ module instrDecompress #(parameter XLEN=32, MISA=1) (
             5'b10000: InstrDecompD = {6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011}; // c.slli
             5'b10001: InstrDecompD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111}; // c.fldsp
             5'b10010: InstrDecompD = {immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011}; // c.lwsp
-            5'b10011: if (XLEN == 32)
+            5'b10011: if (`XLEN == 32)
                         InstrDecompD = {immCILSP, 5'b00010, 3'b010, rds1, 7'b0000111}; // c.flwsp
                       else 
                         InstrDecompD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000011}; // c.ldsp
@@ -162,7 +162,7 @@ module instrDecompress #(parameter XLEN=32, MISA=1) (
                           InstrDecompD = {7'b0000000, rs2, rds1, 3'b000, rds1, 7'b0110011}; // c.add
             5'b10101: InstrDecompD = {immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100111}; // c.fsdsp
             5'b10110: InstrDecompD = {immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100011}; // c.swsp
-            5'b10111: if (XLEN==32)
+            5'b10111: if (`XLEN==32)
                         InstrDecompD = {immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100111}; // c.fswsp
                       else
                         InstrDecompD = {immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100011}; // c.sdsp

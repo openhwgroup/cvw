@@ -23,7 +23,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
 module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] a, b,

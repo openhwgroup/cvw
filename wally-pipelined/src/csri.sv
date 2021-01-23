@@ -24,9 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csri #(parameter XLEN=64, MISA=0,
+module csri #(parameter 
   // Machine CSRs
   MIE = 12'h304,
   MIP = 12'h344,
@@ -36,15 +36,15 @@ module csri #(parameter XLEN=64, MISA=0,
     input  logic            CSRMWriteM, CSRSWriteM,
     input  logic [11:0]     CSRAdrM,
     input  logic            ExtIntM, TimerIntM, SwIntM,
-    input  logic [XLEN-1:0] MIDELEG_REGW,
+    input  logic [`XLEN-1:0] MIDELEG_REGW,
     output logic [11:0]     MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
-    input  logic [XLEN-1:0] CSRWriteValM
+    input  logic [`XLEN-1:0] CSRWriteValM
   );
 
   logic [11:0]     IntInM, IP_REGW, IE_REGW;
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
-  logic [XLEN-1:0] zero = 0;
+  logic [`XLEN-1:0] zero = 0;
 
   // Determine which interrupts need to be set
   // assumes no N-mode user interrupts
