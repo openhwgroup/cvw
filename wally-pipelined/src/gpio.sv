@@ -53,7 +53,12 @@ module gpio #(parameter XLEN=32) (
       assign #2 entry = {AdrM[7:2], 2'b00}; 
   endgenerate
   
-  assign INPUT_VAL = GPIOPinsIn & INPUT_EN;
+  generate 
+    if (`GPIO_LOOPBACK_TEST) // connect OUT to IN for loopback testing
+      assign INPUT_VAL = GPIOPinsOut & INPUT_EN & OUTPUT_EN;
+    else
+      assign INPUT_VAL = GPIOPinsIn & INPUT_EN;
+  endgenerate
   assign GPIOPinsOut = OUTPUT_VAL;
   assign GPIOPinsEn = OUTPUT_EN;
 
