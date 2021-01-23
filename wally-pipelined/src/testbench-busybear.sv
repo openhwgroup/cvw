@@ -81,7 +81,8 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
       scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
       // check things!
       if (rf[j*64+63 -: 64] != rfExpected[j]) begin
-        $display("rf[%i] does not equal rf expected: %x, %x", j, rf[j*64+63 -: 64], rfExpected[j]);
+        $display("%t ps: rf[%i] does not equal rf expected: %x, %x", $time, j, rf[j*64+63 -: 64], rfExpected[j]);
+        $stop;
       end
     end
   end
@@ -101,10 +102,19 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
     scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
     //check things!
     if (PCF != pcExpected) begin
-      $display("PC does not equal PC expected: %x, %x", PCF, pcExpected);
+      $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
+      $stop;
     end
   end
 
+  // Track names of instructions
+  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
+  logic [31:0] InstrW;
+  instrNameDecTB dec(InstrF, InstrFName);
+  instrTrackerTB #(XLEN) it(clk, reset, dut.dp.FlushE,
+                dut.dp.InstrDecompD, dut.dp.InstrE,
+                dut.dp.InstrM,  InstrW,
+                InstrDName, InstrEName, InstrMName, InstrWName);
 
   // generate clock to sequence tests
   always
