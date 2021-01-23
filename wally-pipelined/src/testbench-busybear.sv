@@ -15,6 +15,10 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM, SwIntM; // from CLINT
   logic        ExtIntM = 0; // not yet connected
+
+  // for now, seem to need these to be zero until we get a better idea
+  assign InstrAccessFaultF = 0;
+  assign DataAccessFaultM = 0;
    
   // instantiate processor and memories
   wallypipelinedhart #(XLEN, MISA, ZCSR, ZCOUNTERS) dut(.ALUResultM(DataAdrM), .*);
@@ -101,7 +105,7 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
     // then expected PC value
     scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
     //check things!
-    if (PCF != pcExpected) begin
+    if (PCF !== pcExpected) begin
       $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
     //  $stop;
     end
