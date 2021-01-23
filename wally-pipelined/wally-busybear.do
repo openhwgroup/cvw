@@ -77,14 +77,14 @@ add wave -hex /testbench_busybear/dut/dp/regf/rf[28]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[29]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[30]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[31]
-#add wave /testbench_busybear/InstrFName
+add wave /testbench_busybear/InstrFName
 ##add wave -hex /testbench_busybear/dut/dp/PCD
 #add wave -hex /testbench_busybear/dut/dp/InstrD
-#add wave /testbench_busybear/InstrDName
+add wave /testbench_busybear/InstrDName
 #add wave -divider
 ##add wave -hex /testbench_busybear/dut/dp/PCE
 ##add wave -hex /testbench_busybear/dut/dp/InstrE
-#add wave /testbench_busybear/InstrEName
+add wave /testbench_busybear/InstrEName
 #add wave -hex /testbench_busybear/dut/dp/SrcAE
 #add wave -hex /testbench_busybear/dut/dp/SrcBE
 #add wave -hex /testbench_busybear/dut/dp/ALUResultE
@@ -92,14 +92,14 @@ add wave -hex /testbench_busybear/dut/dp/regf/rf[31]
 #add wave -divider
 ##add wave -hex /testbench_busybear/dut/dp/PCM
 ##add wave -hex /testbench_busybear/dut/dp/InstrM
-#add wave /testbench_busybear/InstrMName
+add wave /testbench_busybear/InstrMName
 #add wave /testbench_busybear/dut/dmem/dtim/memwrite
 #add wave -hex /testbench_busybear/dut/dmem/AdrM
 #add wave -hex /testbench_busybear/dut/dmem/WriteDataM
 #add wave -divider
 #add wave -hex /testbench_busybear/dut/dp/PCW
 ##add wave -hex /testbench_busybear/dut/dp/InstrW
-#add wave /testbench_busybear/InstrWName
+add wave /testbench_busybear/InstrWName
 #add wave /testbench_busybear/dut/dp/RegWriteW
 #add wave -hex /testbench_busybear/dut/dp/ResultW
 #add wave -hex /testbench_busybear/dut/dp/RdW
