@@ -24,9 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csrn #(parameter XLEN=64, MISA=0,
+module csrn #(parameter 
   USTATUS     =12'h000,
   UIE = 12'h004,
   UTVEC = 12'h005,
@@ -38,17 +38,17 @@ module csrn #(parameter XLEN=64, MISA=0,
     input  logic clk, reset, 
     input  logic CSRNWriteM, UTrapM,
     input  logic [11:0] CSRAdrM,
-    input  logic [XLEN-1:0] resetExceptionVector,
-    input  logic [XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
-    input  logic [XLEN-1:0] CSRWriteValM,
-    output logic [XLEN-1:0] CSRNReadValM, UEPC_REGW, UTVEC_REGW, 
+    input  logic [`XLEN-1:0] resetExceptionVector,
+    input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
+    input  logic [`XLEN-1:0] CSRWriteValM,
+    output logic [`XLEN-1:0] CSRNReadValM, UEPC_REGW, UTVEC_REGW, 
     input  logic [11:0]     UIP_REGW, UIE_REGW, 
     output logic            WriteUIPM, WriteUIEM,
     output logic            WriteUSTATUSM,
     output logic            IllegalCSRNAccessM
   );
 
-  logic [XLEN-1:0] zero = 0;
+  logic [`XLEN-1:0] zero = 0;
 
   // User mode CSRs below only needed when user mode traps are supported
   generate  
@@ -56,8 +56,8 @@ module csrn #(parameter XLEN=64, MISA=0,
       logic WriteUTVECM;
       logic WriteUSCRATCHM, WriteUEPCM;
       logic WriteUCAUSEM, WriteUTVALM;
-      logic [XLEN-1:0] UEDELEG_REGW, UIDELEG_REGW, UIP_REGW, UIE_REGW;
-      logic [XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
+      logic [`XLEN-1:0] UEDELEG_REGW, UIDELEG_REGW, UIP_REGW, UIE_REGW;
+      logic [`XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
       
       // Write enables
       assign WriteUSTATUSM = CSRNWriteM && (CSRAdrM == USTATUS);
@@ -69,13 +69,13 @@ module csrn #(parameter XLEN=64, MISA=0,
       assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL));
 
       // CSRs
-      flopenl #(XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, resetExceptionVector, UTVEC_REGW);
-      // flopenl #(XLEN) UIPreg(clk, reset, WriteUIPM, CSRWriteValM, zero, UIP_REGW);
-      // flopenl #(XLEN) UIEreg(clk, reset, WriteUIEM, CSRWriteValM, zero, UIE_REGW);
-      flopenr #(XLEN) USCRATCHreg(clk, reset, WriteUSCRATCHM, CSRWriteValM, USCRATCH_REGW);
-      flopenr #(XLEN) UEPCreg(clk, reset, WriteUEPCM, NextEPCM, UEPC_REGW); 
-      flopenr #(XLEN) UCAUSEreg(clk, reset, WriteUCAUSEM, NextCauseM, UCAUSE_REGW); 
-      flopenr #(XLEN) UTVALreg(clk, reset, WriteUTVALM, NextMtvalM, UTVAL_REGW);
+      flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, resetExceptionVector, UTVEC_REGW);
+      // flopenl #(`XLEN) UIPreg(clk, reset, WriteUIPM, CSRWriteValM, zero, UIP_REGW);
+      // flopenl #(`XLEN) UIEreg(clk, reset, WriteUIEM, CSRWriteValM, zero, UIE_REGW);
+      flopenr #(`XLEN) USCRATCHreg(clk, reset, WriteUSCRATCHM, CSRWriteValM, USCRATCH_REGW);
+      flopenr #(`XLEN) UEPCreg(clk, reset, WriteUEPCM, NextEPCM, UEPC_REGW); 
+      flopenr #(`XLEN) UCAUSEreg(clk, reset, WriteUCAUSEM, NextCauseM, UCAUSE_REGW); 
+      flopenr #(`XLEN) UTVALreg(clk, reset, WriteUTVALM, NextMtvalM, UTVAL_REGW);
 
       // CSR Reads
       always_comb begin
@@ -83,8 +83,8 @@ module csrn #(parameter XLEN=64, MISA=0,
         case (CSRAdrM) 
           USTATUS:   CSRNReadValM = USTATUS_REGW;
           UTVEC:     CSRNReadValM = UTVEC_REGW;
-          UIP:       CSRNReadValM = {{(XLEN-12){1'b0}}, UIP_REGW};
-          UIE:       CSRNReadValM = {{(XLEN-12){1'b0}}, UIE_REGW};
+          UIP:       CSRNReadValM = {{(`XLEN-12){1'b0}}, UIP_REGW};
+          UIE:       CSRNReadValM = {{(`XLEN-12){1'b0}}, UIE_REGW};
           USCRATCH:  CSRNReadValM = USCRATCH_REGW;
           UEPC:      CSRNReadValM = UEPC_REGW;
           UCAUSE:    CSRNReadValM = UCAUSE_REGW;

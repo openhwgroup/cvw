@@ -23,16 +23,16 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module memdp #(parameter XLEN=32) (
+module memdp (
   input  logic [1:0]      MemRWM,
-  input  logic [XLEN-1:0] ReadDataM,
-  input  logic [XLEN-1:0] AdrM,
+  input  logic [`XLEN-1:0] ReadDataM,
+  input  logic [`XLEN-1:0] AdrM,
   input  logic [2:0]      Funct3M,
-  output logic [XLEN-1:0] ReadDataExtM,
-  input  logic [XLEN-1:0] WriteDataFullM,
-  output logic [XLEN-1:0] WriteDataM,
+  output logic [`XLEN-1:0] ReadDataExtM,
+  input  logic [`XLEN-1:0] WriteDataFullM,
+  output logic [`XLEN-1:0] WriteDataM,
   output logic [7:0]      ByteMaskM,
   input  logic            DataAccessFaultM,
   output logic            LoadMisalignedFaultM, LoadAccessFaultM,
@@ -43,7 +43,7 @@ module memdp #(parameter XLEN=32) (
   logic        UnalignedM;
   
   generate
-    if (XLEN == 64) begin
+    if (`XLEN == 64) begin
       // bytMe mux
       always_comb
       case(AdrM[2:0])

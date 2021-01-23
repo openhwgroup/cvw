@@ -25,15 +25,15 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module uart #(parameter XLEN=32) (
+module uart (
   input  logic            clk, reset, 
   input  logic [1:0]      MemRWgpioM,
   input  logic [7:0]      ByteMaskM,
-  input  logic [XLEN-1:0] AdrM, 
-  input  logic [XLEN-1:0] MaskedWriteDataM,
-  output logic [XLEN-1:0] RdUARTM,
+  input  logic [`XLEN-1:0] AdrM, 
+  input  logic [`XLEN-1:0] MaskedWriteDataM,
+  output logic [`XLEN-1:0] RdUARTM,
   input  logic            SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
   output logic            SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
   output logic            OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);         // to CPU
@@ -50,7 +50,7 @@ module uart #(parameter XLEN=32) (
   assign A = AdrM[2:0];
 
   generate
-    if (XLEN == 64) begin
+    if (`XLEN == 64) begin
       always_comb begin
 /*        RdUARTM = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
         case (AdrM[2:0])

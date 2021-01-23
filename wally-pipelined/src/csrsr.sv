@@ -24,15 +24,15 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csrsr #(parameter XLEN=64, MISA = 0)(
+module csrsr (
   input  logic clk, reset,
   input  logic WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, TrapM, FloatRegWriteW,
   input  logic [1:0] NextPrivilegeModeM, PrivilegeModeW,
   input  logic mretM, sretM, uretM,
-  input  logic [XLEN-1:0] CSRWriteValM,
-  output logic [XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
+  input  logic [`XLEN-1:0] CSRWriteValM,
+  output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
   output logic [1:0] STATUS_MPP,
   output logic       STATUS_SPP, STATUS_TSR,
   output logic       STATUS_MIE, STATUS_SIE
@@ -47,7 +47,7 @@ module csrsr #(parameter XLEN=64, MISA = 0)(
   // Lower privilege status registers are a subset of the full status register
   // *** consider adding MBE, SBE, UBE fields later from 20210108 draft spec
   generate
-    if (XLEN==64) begin// RV64
+    if (`XLEN==64) begin// RV64
       assign MSTATUS_REGW = {STATUS_SD, 27'b0, STATUS_SXL, STATUS_UXL, 9'b0,
                             STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                             STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,

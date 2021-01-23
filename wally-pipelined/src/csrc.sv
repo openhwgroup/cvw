@@ -24,9 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csrc #(parameter XLEN=64, ZCOUNTERS = 1,
+module csrc #(parameter 
   MCYCLE = 12'hB00,
 //  MTIME = 12'hB01, // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
  // MTIMECMP = 12'hB21, // not specified in privileged spec.  Move to CLINT
@@ -67,9 +67,9 @@ module csrc #(parameter XLEN=64, ZCOUNTERS = 1,
     input  logic InstrValidW, LoadStallD, CSRMWriteM,
     input  logic [11:0] CSRAdrM,
     input  logic [1:0] PrivilegeModeW,
-    input  logic [XLEN-1:0] CSRWriteValM,
+    input  logic [`XLEN-1:0] CSRWriteValM,
     input  logic [31:0] MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-    output logic [XLEN-1:0] CSRCReadValM,
+    output logic [`XLEN-1:0] CSRCReadValM,
     output logic            IllegalCSRCAccessM
   );
 
@@ -80,9 +80,9 @@ module csrc #(parameter XLEN=64, ZCOUNTERS = 1,
       logic [63:0] HPMCOUNTER3_REGW, HPMCOUNTER4_REGW; // add more performance counters here if desired
       logic [63:0] CYCLEPlusM, TIMEPlusM, INSTRETPlusM;
       logic [63:0] HPMCOUNTER3PlusM, HPMCOUNTER4PlusM;
-    //  logic [XLEN-1:0] NextTIMEM;
-      logic [XLEN-1:0] NextCYCLEM, NextINSTRETM;
-      logic [XLEN-1:0] NextHPMCOUNTER3M, NextHPMCOUNTER4M;
+    //  logic [`XLEN-1:0] NextTIMEM;
+      logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
+      logic [`XLEN-1:0] NextHPMCOUNTER3M, NextHPMCOUNTER4M;
       logic        WriteTIMEM, WriteTIMECMPM, WriteCYCLEM, WriteINSTRETM;
       logic        WriteHPMCOUNTER3M, WriteHPMCOUNTER4M;
       logic [4:0]  CounterNumM;
@@ -101,15 +101,15 @@ module csrc #(parameter XLEN=64, ZCOUNTERS = 1,
       assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidW & ~MCOUNTINHIBIT_REGW[2]};
       assign HPMCOUNTER3PlusM = HPMCOUNTER3_REGW + {63'b0, LoadStallD & ~MCOUNTINHIBIT_REGW[3]}; // count load stalls
       assign HPMCOUNTER4PlusM = HPMCOUNTER4_REGW + {63'b0, 1'b0 & ~MCOUNTINHIBIT_REGW[4]}; // change to count signals
-      assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[XLEN-1:0];
-    //  assign NextTIMEM = WriteTIMEM ? CSRWriteValM : TIMEPlusM[XLEN-1:0];
-      assign NextINSTRETM = WriteINSTRETM ? CSRWriteValM : INSTRETPlusM[XLEN-1:0];
-      assign NextHPMCOUNTER3M = WriteHPMCOUNTER3M ? CSRWriteValM : HPMCOUNTER3PlusM[XLEN-1:0]; 
-      assign NextHPMCOUNTER4M = WriteHPMCOUNTER4M ? CSRWriteValM : HPMCOUNTER4PlusM[XLEN-1:0];
+      assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[`XLEN-1:0];
+    //  assign NextTIMEM = WriteTIMEM ? CSRWriteValM : TIMEPlusM[`XLEN-1:0];
+      assign NextINSTRETM = WriteINSTRETM ? CSRWriteValM : INSTRETPlusM[`XLEN-1:0];
+      assign NextHPMCOUNTER3M = WriteHPMCOUNTER3M ? CSRWriteValM : HPMCOUNTER3PlusM[`XLEN-1:0]; 
+      assign NextHPMCOUNTER4M = WriteHPMCOUNTER4M ? CSRWriteValM : HPMCOUNTER4PlusM[`XLEN-1:0];
 
       // Write / update counters
       // Only the Machine mode versions of the counter CSRs are writable
-        if (XLEN==64) begin// 64-bit counters
+        if (`XLEN==64) begin// 64-bit counters
     //      flopr   #(64) TIMEreg(clk, reset,  WriteTIMEM ? CSRWriteValM : TIME_REGW + 1, TIME_REGW); // may count off a different clock***
     //      flopenr #(64) TIMECMPreg(clk, reset, WriteTIMECMPM, CSRWriteValM, TIMECMP_REGW);
           flopr   #(64) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW);
@@ -119,8 +119,8 @@ module csrc #(parameter XLEN=64, ZCOUNTERS = 1,
         end else begin // 32-bit low and high counters
           logic  WriteTIMEHM, WriteTIMECMPHM, WriteCYCLEHM, WriteINSTRETHM;
           logic  WriteHPMCOUNTER3HM, WriteHPMCOUNTER4HM;
-          logic  [XLEN-1:0] NextCYCLEHM, NextTIMEHM, NextINSTRETHM;
-          logic  [XLEN-1:0] NextHPMCOUNTER3HM, NextHPMCOUNTER4HM;
+          logic  [`XLEN-1:0] NextCYCLEHM, NextTIMEHM, NextINSTRETHM;
+          logic  [`XLEN-1:0] NextHPMCOUNTER3HM, NextHPMCOUNTER4HM;
 
           // Write Enables
     //      assign WriteTIMEHM = CSRMWriteM && (CSRAdrM == MTIMEH);
@@ -160,7 +160,7 @@ module csrc #(parameter XLEN=64, ZCOUNTERS = 1,
     
       // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
       assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
-        if (XLEN==64) // 64-bit counter reads
+        if (`XLEN==64) // 64-bit counter reads
           always_comb 
             if (PrivilegeModeW == `M_MODE || 
                 MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin

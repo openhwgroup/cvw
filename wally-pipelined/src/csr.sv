@@ -24,43 +24,43 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module csr #(parameter XLEN = 64, MISA = 0, ZCSR = 1, ZCOUNTERS = 1) (
+module csr (
   input  logic clk, reset,
   input  logic [31:0] InstrM, 
-  input  logic [XLEN-1:0] PCM, SrcAM,
+  input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic            CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic            TimerIntM, ExtIntM, SwIntM,
   input  logic            InstrValidW, FloatRegWriteW, LoadStallD,
   input  logic [1:0]      NextPrivilegeModeM, PrivilegeModeW,
-  input  logic [XLEN-1:0] CauseM, NextFaultMtvalM,
+  input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
   output logic [1:0]      STATUS_MPP,
   output logic            STATUS_SPP, STATUS_TSR,
-  output logic [XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  output logic [XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
+  output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
+  output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
   output logic [11:0]     MIP_REGW, MIE_REGW,
   output logic            STATUS_MIE, STATUS_SIE,
   input  logic [4:0]      SetFflagsM,
   output logic [2:0]      FRM_REGW, 
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-  output logic [XLEN-1:0] CSRReadValM,
+  output logic [`XLEN-1:0] CSRReadValM,
   output logic            IllegalCSRAccessM
 );
 
-  logic [XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM;
-  logic [XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
+  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM;
+  logic [`XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
  
-  logic [XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW;
+  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW;
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM;
 
-  logic [XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
+  logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
-  logic [XLEN-1:0] zero = 0;
-  logic [XLEN-1:0] resetExceptionVector = {{(XLEN-32){1'b0}}, 32'h80000000}; // initial exception vector at reset
+  logic [`XLEN-1:0] zero = 0;
+  logic [`XLEN-1:0] resetExceptionVector = {{(`XLEN-32){1'b0}}, 32'h80000000}; // initial exception vector at reset
 
   logic [11:0] CSRAdrM;
   logic [11:0] SIP_REGW, SIE_REGW;
@@ -72,7 +72,7 @@ module csr #(parameter XLEN = 64, MISA = 0, ZCSR = 1, ZCOUNTERS = 1) (
       // modify CSRs
       always_comb begin
         // Choose either rs1 or uimm[4:0] as source
-        CSRSrcM = InstrM[14] ? {{(XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
+        CSRSrcM = InstrM[14] ? {{(`XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
         // Compute AND/OR modification
         CSRRWM = CSRSrcM;
         CSRRSM = CSRReadValM | CSRSrcM;
@@ -88,75 +88,20 @@ module csr #(parameter XLEN = 64, MISA = 0, ZCSR = 1, ZCOUNTERS = 1) (
       // write CSRs
       assign CSRAdrM = InstrM[31:20];
       assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
-      assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[XLEN-1:1], 1'b0} : {UnalignedNextEPCM[XLEN-1:2], 2'b00}; // 3.1.15 alignment
+      assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
       assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
       assign NextMtvalM = TrapM? NextFaultMtvalM : CSRWriteValM;
       assign CSRMWriteM = CSRWriteM && (PrivilegeModeW == `M_MODE);
       assign CSRSWriteM = CSRWriteM && (PrivilegeModeW[0]);
       assign CSRUWriteM = CSRWriteM;  
 
-      csri #(XLEN, MISA) csri(.*);
-      csrsr #(XLEN, MISA) csrsr(.*);
-      csrc #(XLEN, ZCOUNTERS) counters(.*);
-      csrm #(XLEN, MISA) csrm(.*); // Machine Mode CSRs
-      csrs #(XLEN, MISA) csrs(.*);
-      csrn #(XLEN, MISA) csrn(.CSRNWriteM(CSRUWriteM), .*);  // User Mode Exception Registers
-      csru #(XLEN, MISA) csru(.*); // Floating Point Flags are part of User MOde
-
-/*
-
-      csri #(XLEN, MISA) csri(
-        clk, reset, CSRMWriteM, CSRSWriteM, CSRAdrM, ExtIntM, TimerIntM, SwIntM,
-        MIDELEG_REGW, MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, CSRWriteValM);
-
-      csrsr #(XLEN, MISA) csrsr(
-        clk, reset, 
-        WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, TrapM, FloatRegWriteW,
-        NextPrivilegeModeM, PrivilegeModeW,
-        mretM, sretM, uretM,
-        CSRWriteValM,
-        MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
-        STATUS_MPP, STATUS_SPP, STATUS_TSR, STATUS_MIE, STATUS_SIE);
-
-      csrc #(XLEN, ZCOUNTERS) counters(
-        clk, reset, 
-        InstrValidW, LoadStallD, CSRMWriteM, CSRAdrM, PrivilegeModeW, CSRWriteValM,
-        MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-        CSRCReadValM, IllegalCSRCAccessM);
-
-      // Machine Mode CSRs
-      csrm #(XLEN, MISA) csrm(
-        clk, reset, 
-        CSRMWriteM, MTrapM, CSRAdrM,  
-        resetExceptionVector, 
-        NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW,
-        CSRWriteValM, CSRMReadValM, MEPC_REGW, MTVEC_REGW, MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-        MEDELEG_REGW, MIDELEG_REGW, MIP_REGW, MIE_REGW, WriteMIPM, WriteMIEM, WriteMSTATUSM, IllegalCSRMAccessM
-      );
-
-      csrs #(XLEN, MISA) csrs(
-        clk, reset, 
-        CSRSWriteM, STrapM, CSRAdrM,  
-        resetExceptionVector, 
-        NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW,
-        CSRWriteValM, CSRSReadValM, SEPC_REGW, STVEC_REGW, SCOUNTEREN_REGW, 
-        SEDELEG_REGW, SIDELEG_REGW, SIP_REGW, SIE_REGW, WriteSIPM, WriteSIEM, WriteSSTATUSM, IllegalCSRSAccessM
-      );
-
-      csrn #(XLEN, MISA) csrn( // User Mode Exception Registers
-        clk, reset, 
-        CSRUWriteM, UTrapM, CSRAdrM,  
-        resetExceptionVector, 
-        NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW,
-        CSRWriteValM, CSRNReadValM, UEPC_REGW, UTVEC_REGW, 
-        UIP_REGW, UIE_REGW, WriteUIPM, WriteUIEM, WriteUSTATUSM, IllegalCSRNAccessM
-      ); 
-
-      csru #(XLEN, MISA) csru( // Floating Point Flags are part of User MOde
-        clk, reset, CSRUWriteM, CSRAdrM,  
-        CSRWriteValM, CSRUReadValM, SetFflagsM, FRM_REGW, IllegalCSRUAccessM
-      ); 
-      */
+      csri  csri(.*);
+      csrsr csrsr(.*);
+      csrc  counters(.*);
+      csrm  csrm(.*); // Machine Mode CSRs
+      csrs  csrs(.*);
+      csrn  csrn(.CSRNWriteM(CSRUWriteM), .*);  // User Mode Exception Registers
+      csru  csru(.*); // Floating Point Flags are part of User MOde
 
       // merge CSR Reads
       assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 
