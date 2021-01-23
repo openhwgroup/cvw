@@ -57,7 +57,9 @@ module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   output logic [XLEN-1:0] WriteDataM, DataAdrM, 
   output logic [1:0]      MemRWM,
   input  logic [31:0]     GPIOPinsIn,
-  output logic [31:0]     GPIOPinsOut, GPIOPinsEn
+  output logic [31:0]     GPIOPinsOut, GPIOPinsEn,
+  input  logic            UARTSin,
+  output logic            UARTSout
 );
 
   logic [XLEN-1:0] PCF, ReadDataM;

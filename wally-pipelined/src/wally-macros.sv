@@ -20,5 +20,14 @@
 `define S_MODE (2'b01)
 `define U_MODE (2'b00)
 
+// Test modes
+
+// Tie GPIO outputs back to inputs
+`define GPIO_LOOPBACK_TEST 0
+
+
+// Hardware configuration
+`define UART_PRESCALE 1
+
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
