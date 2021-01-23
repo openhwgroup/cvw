@@ -23,16 +23,16 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module wallypipelinedhart #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
+module wallypipelinedhart (
   input  logic            clk, reset,
-  output logic [XLEN-1:0] PCF,
+  output logic [`XLEN-1:0] PCF,
   input  logic [31:0]     InstrF,
   output logic [1:0]      MemRWM,
   output logic [7:0]      ByteMaskM,
-  output logic [XLEN-1:0] ALUResultM, WriteDataM,
-  input  logic [XLEN-1:0] ReadDataM,
+  output logic [`XLEN-1:0] ALUResultM, WriteDataM,
+  input  logic [`XLEN-1:0] ReadDataM,
   input  logic            TimerIntM, ExtIntM, SwIntM,
   input  logic            InstrAccessFaultF,
   input  logic            DataAccessFaultM);
@@ -70,8 +70,8 @@ module wallypipelinedhart #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) 
   logic       FloatRegWriteW;
            
   controller c(.*);
-  datapath #(XLEN, MISA, ZCSR, ZCOUNTERS) dp(.*);
-  hazard  hz(.*);	
+  datapath   dp(.*);
+  hazard     hz(.*);	
 
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW

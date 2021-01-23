@@ -23,16 +23,16 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
 // *** need idiom to map onto cache RAM with byte writes
 // *** and use memread signal to reduce power when reads aren't needed
-module dmem #(parameter XLEN=32) (
+module dmem (
   input  logic            clk, reset,
   input  logic [1:0]      MemRWM,
   input  logic [7:0]      ByteMaskM,
-  input  logic [XLEN-1:0] AdrM, WriteDataM,
-  output logic [XLEN-1:0] ReadDataM,
+  input  logic [`XLEN-1:0] AdrM, WriteDataM,
+  output logic [`XLEN-1:0] ReadDataM,
   output logic            DataAccessFaultM,
   output logic            TimerIntM, SwIntM,
   input  logic [31:0]     GPIOPinsIn,
@@ -40,47 +40,47 @@ module dmem #(parameter XLEN=32) (
   input  logic            UARTSin,
   output logic            UARTSout);
   
-  logic [XLEN-1:0] MaskedWriteDataM;
-  logic [XLEN-1:0] RdTimM, RdCLINTM, RdGPIOM, RdUARTM;
+  logic [`XLEN-1:0] MaskedWriteDataM;
+  logic [`XLEN-1:0] RdTimM, RdCLINTM, RdGPIOM, RdUARTM;
   logic            TimEnM, CLINTEnM, GPIOEnM, UARTEnM;
   logic [1:0]      MemRWdtimM, MemRWclintM, MemRWgpioM;
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
 
   // Address decoding
   generate
-    if (XLEN == 64)
-      assign TimEnM = ~(|AdrM[XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x000...80000000 - 0x000...8007FFFF
+    if (`XLEN == 64)
+      assign TimEnM = ~(|AdrM[`XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x000...80000000 - 0x000...8007FFFF
     else
       assign TimEnM = AdrM[31] & ~(|AdrM[30:19]); // 0x80000000 - 0x8007FFFF
   endgenerate
-  assign CLINTEnM = ~(|AdrM[XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
+  assign CLINTEnM = ~(|AdrM[`XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
   assign GPIOEnM = (AdrM[31:8] == 24'h10012); // 0x10012000-0x100120FF
-  assign UARTEnM = ~(|AdrM[XLEN-1:29]) & AdrM[28] & ~(|AdrM[27:3]); // 0x10000000-0x10000007
+  assign UARTEnM = ~(|AdrM[`XLEN-1:29]) & AdrM[28] & ~(|AdrM[27:3]); // 0x10000000-0x10000007
 
   assign MemRWdtimM  = MemRWM & {2{TimEnM}};
   assign MemRWclintM = MemRWM & {2{CLINTEnM}};
   assign MemRWgpioM  = MemRWM & {2{GPIOEnM}};
 
   // tightly integrated memory
-  dtim #(XLEN) dtim(.AdrM(AdrM[18:0]), .*);
+  dtim dtim(.AdrM(AdrM[18:0]), .*);
 
   // memory-mapped I/O peripherals
-  clint #(XLEN) clint(.AdrM(AdrM[15:0]), .*);
-  gpio #(XLEN) gpio(.AdrM(AdrM[7:0]), .*); // *** may want to add GPIO interrupts
-  uart #(XLEN) uart(.TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
-                    .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
-                    .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
+  clint clint(.AdrM(AdrM[15:0]), .*);
+  gpio gpio(.AdrM(AdrM[7:0]), .*); // *** may want to add GPIO interrupts
+  uart uart(.TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
+            .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
+            .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
 
   // *** add cache and interface to external memory & other peripherals
   
   // merge reads
-  assign ReadDataM = ({XLEN{TimEnM}} & RdTimM) | ({XLEN{CLINTEnM}} & RdCLINTM) | ({XLEN{GPIOEnM}} & RdGPIOM);
+  assign ReadDataM = ({`XLEN{TimEnM}} & RdTimM) | ({`XLEN{CLINTEnM}} & RdCLINTM) | ({`XLEN{GPIOEnM}} & RdGPIOM);
   assign DataAccessFaultM = ~(|TimEnM | CLINTEnM | GPIOEnM);
 
   // byte masking
    // write each byte based on the byte mask
   generate
-    if (XLEN==64) begin
+    if (`XLEN==64) begin
       always_comb begin
         MaskedWriteDataM=ReadDataM;
         if (ByteMaskM[0]) MaskedWriteDataM[7:0]   = WriteDataM[7:0];

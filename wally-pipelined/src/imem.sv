@@ -23,19 +23,19 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module imem #(parameter XLEN=32) (
-  input  logic [XLEN-1:0] AdrF,
+module imem (
+  input  logic [`XLEN-1:0] AdrF,
   output logic [31:0] InstrF,
   output logic        InstrAccessFaultF);
 
-  logic [XLEN-1:0] RAM[0:65535];
+  logic [`XLEN-1:0] RAM[0:65535];
   logic [15:0] adrbits;
-  logic [XLEN-1:0] rd, rd2;
+  logic [`XLEN-1:0] rd, rd2;
       
   generate
-    if (XLEN==32) assign adrbits = AdrF[17:2];
+    if (`XLEN==32) assign adrbits = AdrF[17:2];
     else          assign adrbits = AdrF[18:3];
   endgenerate
 
@@ -47,13 +47,13 @@ module imem #(parameter XLEN=32) (
   // could be optimized to only stall when the instruction wrapping is 32 bits
   assign #2 rd2 = RAM[adrbits+1];
   generate 
-    if (XLEN==32) begin
+    if (`XLEN==32) begin
       assign InstrF = AdrF[1] ? {rd2[15:0], rd[31:16]} : rd;
       assign InstrAccessFaultF = ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF
     end else begin
       assign InstrF = AdrF[2] ? (AdrF[1] ? {rd2[15:0], rd[63:48]} : rd[63:32])
                           : (AdrF[1] ? rd[47:16] : rd[31:0]);
-      assign InstrAccessFaultF = (|AdrF[XLEN-1:32]) | ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF]
+      assign InstrAccessFaultF = (|AdrF[`XLEN-1:32]) | ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF]
     end
   endgenerate
 endmodule

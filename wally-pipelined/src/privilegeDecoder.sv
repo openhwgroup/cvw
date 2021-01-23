@@ -24,9 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module privilegeDecoder #(parameter MISA=0) (
+module privilegeDecoder (
   input  logic [31:20] InstrM,
   input  logic         PrivilegedM, IllegalInstrFaultInM, IllegalCSRAccessM,
   input  logic [1:0]   PrivilegeModeW, 

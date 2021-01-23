@@ -23,26 +23,26 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module pclogic #(parameter XLEN=64, MISA=0) (
+module pclogic (
   input  logic            clk, reset,
   input  logic            StallF, PCSrcE, 
   input  logic [31:0]     InstrF,
-  input  logic [XLEN-1:0] ExtImmE, TargetBaseE,
+  input  logic [`XLEN-1:0] ExtImmE, TargetBaseE,
   input  logic            RetM, TrapM, 
-  input  logic [XLEN-1:0] PrivilegedNextPCM, 
-  output logic [XLEN-1:0] PCF, PCPlus2or4F,
+  input  logic [`XLEN-1:0] PrivilegedNextPCM, 
+  output logic [`XLEN-1:0] PCF, PCPlus2or4F,
   output logic            InstrMisalignedFaultM,
-  output logic [XLEN-1:0] InstrMisalignedAdrM);
+  output logic [`XLEN-1:0] InstrMisalignedAdrM);
 
-  logic [XLEN-1:0] UnalignedPCNextF, PCNextF, PCTargetE;
-//  logic [XLEN-1:0] ResetVector = 'h100;
-//  logic [XLEN-1:0] ResetVector = 'he4;
-  logic [XLEN-1:0] ResetVector = {{(XLEN-32){1'b0}}, 32'h80000000};
+  logic [`XLEN-1:0] UnalignedPCNextF, PCNextF, PCTargetE;
+//  logic [`XLEN-1:0] ResetVector = 'h100;
+//  logic [`XLEN-1:0] ResetVector = 'he4;
+  logic [`XLEN-1:0] ResetVector = {{(`XLEN-32){1'b0}}, 32'h80000000};
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
-  logic [XLEN-3:0] PCPlusUpperF;
+  logic [`XLEN-3:0] PCPlusUpperF;
   logic        CompressedF;
 
   assign PrivilegedChangePCM = RetM | TrapM;
@@ -50,20 +50,20 @@ module pclogic #(parameter XLEN=64, MISA=0) (
   assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
 
   assign  PCTargetE = ExtImmE + TargetBaseE;
-  mux3    #(XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
-  assign  PCNextF = {UnalignedPCNextF[XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, ResetVector, PCF);
+  mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
+  assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, ResetVector, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
   assign CompressedF = (InstrF[1:0] != 2'b11); // is it a 16-bit compressed instruction?
-  assign PCPlusUpperF = PCF[XLEN-1:2] + 1; // add 4 to PC
+  assign PCPlusUpperF = PCF[`XLEN-1:2] + 1; // add 4 to PC
   
   // choose PC+2 or PC+4
   always_comb
     if (CompressedF) // add 2
       if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
-      else        PCPlus2or4F = {PCF[XLEN-1:2], 2'b10};
+      else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
   // Misaligned PC logic
@@ -78,7 +78,7 @@ module pclogic #(parameter XLEN=64, MISA=0) (
   // pipeline misaligned faults to M stage
   assign BranchMisalignedFaultE = misaligned & PCSrcE; // E-stage (Branch/Jump) misaligned
   flopr #(1) InstrMisalginedReg(clk, reset, BranchMisalignedFaultE, BranchMisalignedFaultM);
-  flopr #(XLEN) InstrMisalignedAdrReg(clk, reset, PCNextF, InstrMisalignedAdrM);
+  flopr #(`XLEN) InstrMisalignedAdrReg(clk, reset, PCNextF, InstrMisalignedAdrM);
   assign TrapMisalignedFaultM = misaligned & PrivilegedChangePCM;
   assign InstrMisalignedFaultM = BranchMisalignedFaultM; // | TrapMisalignedFaultM; *** put this back in without causing a cyclic path
   

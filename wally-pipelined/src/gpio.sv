@@ -25,15 +25,15 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module gpio #(parameter XLEN=32) (
+module gpio (
   input  logic            clk, reset, 
   input  logic [1:0]      MemRWgpioM,
   input  logic [7:0]      ByteMaskM,
   input  logic [7:0]      AdrM, 
-  input  logic [XLEN-1:0] MaskedWriteDataM,
-  output logic [XLEN-1:0] RdGPIOM,
+  input  logic [`XLEN-1:0] MaskedWriteDataM,
+  output logic [`XLEN-1:0] RdGPIOM,
   input  logic [31:0]     GPIOPinsIn,
   output logic [31:0]     GPIOPinsOut, GPIOPinsEn);
 
@@ -47,7 +47,7 @@ module gpio #(parameter XLEN=32) (
   
   // word aligned reads
   generate
-    if (XLEN==64)
+    if (`XLEN==64)
       assign #2 entry = {AdrM[7:3], 3'b000};
     else
       assign #2 entry = {AdrM[7:2], 2'b00}; 
@@ -64,7 +64,7 @@ module gpio #(parameter XLEN=32) (
 
   // register access
   generate
-    if (XLEN==64) begin
+    if (`XLEN==64) begin
       always_comb begin
         case(entry)
           8'h00: RdGPIOM = {INPUT_EN, INPUT_VAL};

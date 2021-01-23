@@ -50,11 +50,11 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
+module wallypipelined (
   input  logic            clk, reset, 
-  output logic [XLEN-1:0] WriteDataM, DataAdrM, 
+  output logic [`XLEN-1:0] WriteDataM, DataAdrM, 
   output logic [1:0]      MemRWM,
   input  logic [31:0]     GPIOPinsIn,
   output logic [31:0]     GPIOPinsOut, GPIOPinsEn,
@@ -62,7 +62,7 @@ module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   output logic            UARTSout
 );
 
-  logic [XLEN-1:0] PCF, ReadDataM;
+  logic [`XLEN-1:0] PCF, ReadDataM;
   logic [31:0] InstrF;
   logic [7:0]  ByteMaskM;
   logic        InstrAccessFaultF, DataAccessFaultM;
@@ -70,8 +70,8 @@ module wallypipelined #(parameter XLEN=32, MISA=0, ZCSR = 1, ZCOUNTERS = 1) (
   logic        ExtIntM = 0; // not yet connected
    
   // instantiate processor and memories
-  wallypipelinedhart #(XLEN, MISA, ZCSR, ZCOUNTERS) hart(.ALUResultM(DataAdrM), .*);
+  wallypipelinedhart hart(.ALUResultM(DataAdrM), .*);
 
-  imem #(XLEN) imem(.AdrF(PCF), .*);
-  dmem #(XLEN) dmem(.AdrM(DataAdrM), .*);
+  imem imem(.AdrF(PCF), .*);
+  dmem dmem(.AdrM(DataAdrM), .*);
 endmodule
