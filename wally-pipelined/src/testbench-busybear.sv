@@ -37,15 +37,6 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
       $display("file couldn't be opened");
       $stop;
     end 
-   //   scan_file = $fscanf(data_file, "%x\n", read_data);
-   //   $display("%x", read_data);
-
-   //   scan_file = $fscanf(data_file, "%s\n", read_data);
-   //   $display("%s", read_data);
-   //   //if (!$feof(data_file)) begin
-   //   //  $display(read_data);
-   //   //end
-   // end
   end
 
   // read register trace file
@@ -98,16 +89,37 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
     end
   end
 
+  logic speculative, nextSpec;
+  initial begin
+    speculative = 0;
+    nextSpec = 0;
+  end
 
   always @(PCF) begin
-    // first read instruction
-    scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
-    // then expected PC value
-    scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
-    //check things!
-    if (PCF !== pcExpected) begin
-      $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
-    //  $stop;
+    speculative <= nextSpec;
+    if (speculative) begin
+      speculative <= (PCF != pcExpected);
+    end
+    if (~speculative) begin
+      // first read instruction
+      scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
+      // then expected PC value
+      scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
+      // are we at a branch/jump?
+      case (InstrF[6:0]) //todo: add C versions of these
+        7'b1101111, //JAL
+        7'b1100111, //JALR
+        7'b1100011: //B
+          nextSpec <= 1;
+        default:
+          nextSpec <= 0;
+      endcase
+
+      //check things!
+      if ((~nextSpec) && (PCF !== pcExpected)) begin
+        $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
+      //  $stop;
+      end
     end
   end
 
