@@ -1,15 +1,15 @@
-`include "wally-macros.sv"
+`include "wally-config.vh"
 
-module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOUNTERS = 1)();
+module testbench_busybear();
 
   logic            clk, reset;
-  logic [XLEN-1:0] WriteDataM, DataAdrM;
+  logic [`XLEN-1:0] WriteDataM, DataAdrM;
   logic [1:0]      MemRWM;
   logic [31:0]     GPIOPinsIn;
   logic [31:0]     GPIOPinsOut, GPIOPinsEn;
 
   // instantiate device to be tested
-  logic [XLEN-1:0] PCF, ReadDataM;
+  logic [`XLEN-1:0] PCF, ReadDataM;
   logic [31:0] InstrF;
   logic [7:0]  ByteMaskM;
   logic        InstrAccessFaultF, DataAccessFaultM;
@@ -21,7 +21,7 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
   assign DataAccessFaultM = 0;
    
   // instantiate processor and memories
-  wallypipelinedhart #(XLEN, MISA, ZCSR, ZCOUNTERS) dut(.ALUResultM(DataAdrM), .*);
+  wallypipelinedhart #(.PCSTART('h1000)) dut(.ALUResultM(DataAdrM), .*);
 
   // initialize test
   initial
@@ -127,7 +127,7 @@ module testbench_busybear #(parameter XLEN=64, MISA=32'h00000104, ZCSR = 1, ZCOU
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   instrNameDecTB dec(InstrF, InstrFName);
-  instrTrackerTB #(XLEN) it(clk, reset, dut.dp.FlushE,
+  instrTrackerTB it(clk, reset, dut.dp.FlushE,
                 dut.dp.InstrDecompD, dut.dp.InstrE,
                 dut.dp.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);

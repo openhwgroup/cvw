@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module wallypipelinedhart (
+module wallypipelinedhart #(parameter PCSTART = 32'h80000000) (
   input  logic            clk, reset,
   output logic [`XLEN-1:0] PCF,
   input  logic [31:0]     InstrF,
@@ -70,7 +70,7 @@ module wallypipelinedhart (
   logic       FloatRegWriteW;
            
   controller c(.*);
-  datapath   dp(.*);
+  datapath #(PCSTART) dp(.*);
   hazard     hz(.*);	
 
   // add FPU here, with SetFflagsM, FRM_REGW
