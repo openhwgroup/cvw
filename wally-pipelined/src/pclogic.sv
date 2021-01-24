@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module pclogic (
+module pclogic #(parameter PCSTART) (
   input  logic            clk, reset,
   input  logic            StallF, PCSrcE, 
   input  logic [31:0]     InstrF,
@@ -39,7 +39,7 @@ module pclogic (
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF, PCTargetE;
 //  logic [`XLEN-1:0] ResetVector = 'h100;
 //  logic [`XLEN-1:0] ResetVector = 'he4;
-  logic [`XLEN-1:0] ResetVector = {{(`XLEN-32){1'b0}}, 32'h80000000};
+  logic [`XLEN-1:0] ResetVector = {{(`XLEN-32){1'b0}}, PCSTART};
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
   logic [`XLEN-3:0] PCPlusUpperF;
