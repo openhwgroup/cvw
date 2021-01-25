@@ -1,1 +1,1 @@
-verilator --lint-only -Isrc src/*.sv
+verilator --lint-only -Iconfig/rv64ic src/*.sv
