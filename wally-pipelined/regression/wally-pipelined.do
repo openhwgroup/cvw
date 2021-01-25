@@ -26,7 +26,7 @@ vlib work
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog src/*.sv -suppress 2583
+vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals

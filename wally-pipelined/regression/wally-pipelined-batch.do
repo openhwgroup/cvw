@@ -10,9 +10,9 @@
 
 # Use this wally-pipelined.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-pipelined.do
+#     do wally-pipelined.do ../config/rv64ic
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-pipelined.do -c
+#     vsim -c -do wally-pipelined.do ../config/rv64ic
 # (omit the "-c" to see the GUI while running from the shell)
 
 onbreak {resume}
@@ -27,7 +27,8 @@ vlib work
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog src/*.sv -suppress 2583
+#vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583
+vlog +incdir+$1 ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals

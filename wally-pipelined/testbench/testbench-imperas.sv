@@ -1,10 +1,11 @@
 ///////////////////////////////////////////
-// testbench.sv
+// testbench-imperas.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
 // Purpose: Wally Testbench and helper modules
+//          Applies test programs from the Imperas suite
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -265,7 +266,7 @@ string tests32i[] = {
        // dut.dmem.RAM[i] = meminit;
       end
       // read test vectors into memory
-      memfilename = {"../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
+      memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.dmem.dtim.RAM);
       reset = 1; # 22; reset = 0;
@@ -290,7 +291,7 @@ string tests32i[] = {
         end
 
         // read signature, reformat in 64 bits if necessary
-        signame = {"../imperas-riscv-tests/work/", tests[test], ".signature.output"};
+        signame = {"../../imperas-riscv-tests/work/", tests[test], ".signature.output"};
         $readmemh(signame, sig32);
         i = 0;
         while (i < 10000) begin
@@ -337,7 +338,7 @@ string tests32i[] = {
           $stop;
         end
         else begin
-          memfilename = {"../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
+          memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
           $readmemh(memfilename, dut.imem.RAM);
           $readmemh(memfilename, dut.dmem.dtim.RAM);
           $display("Read memfile %s", memfilename);
