@@ -52,7 +52,7 @@ module uart (
   generate
     if (`XLEN == 64) begin
       always_comb begin
-/*        RdUARTM = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
+        RdUARTM = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
         case (AdrM[2:0])
           3'b000: Din = MaskedWriteDataM[7:0];
           3'b001: Din = MaskedWriteDataM[15:8];
@@ -62,7 +62,7 @@ module uart (
           3'b101: Din = MaskedWriteDataM[47:40];
           3'b110: Din = MaskedWriteDataM[55:48];
           3'b111: Din = MaskedWriteDataM[63:56];
-        endcase */
+        endcase 
       end 
     end else begin // 32-bit
       always_comb begin
