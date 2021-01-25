@@ -13,7 +13,7 @@ module testbench_busybear();
   logic [31:0] InstrF;
   logic [7:0]  ByteMaskM;
   logic        InstrAccessFaultF, DataAccessFaultM;
-  logic        TimerIntM, SwIntM; // from CLINT
+  logic        TimerIntM = 0, SwIntM = 0; // from CLINT
   logic        ExtIntM = 0; // not yet connected
 
   // for now, seem to need these to be zero until we get a better idea
@@ -50,10 +50,20 @@ module testbench_busybear();
   end
 
   // read memreads trace file
-  integer data_file_mem, scan_file_mem;
+  integer data_file_memR, scan_file_memR;
   initial begin
-    data_file_mem = $fopen("busybear-testgen/parsedMemRead.txt", "r");
-    if (data_file_mem == 0) begin
+    data_file_memR = $fopen("busybear-testgen/parsedMemRead.txt", "r");
+    if (data_file_memR == 0) begin
+      $display("file couldn't be opened");
+      $stop;
+    end 
+  end
+  
+  // read memwrite trace file
+  integer data_file_memW, scan_file_memW;
+  initial begin
+    data_file_memW = $fopen("busybear-testgen/parsedMemWrite.txt", "r");
+    if (data_file_memW == 0) begin
       $display("file couldn't be opened");
       $stop;
     end 
@@ -74,6 +84,10 @@ module testbench_busybear();
     for(int j=1; j<32; j++) begin
       // read 31 integer registers
       scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
+      if($feof(data_file_rf)) begin
+        $display("no more rf data to read");
+        $stop;
+      end
       // check things!
       if (rf[j*64+63 -: 64] != rfExpected[j]) begin
         $display("%t ps: rf[%0d] does not equal rf expected: %x, %x", $time, j, rf[j*64+63 -: 64], rfExpected[j]);
@@ -83,9 +97,21 @@ module testbench_busybear();
   end
 
   // this might need to change
-  always @(MemRWM or DataAdrM) begin
-    if (MemRWM != 0) begin
-      scan_file_mem = $fscanf(data_file_mem, "%x\n", ReadDataM);
+  always @(MemRWM[1] or DataAdrM) begin
+    if (MemRWM[1]) begin
+      scan_file_memR = $fscanf(data_file_memR, "%x\n", ReadDataM);
+    end
+  end
+
+  logic [`XLEN-1:0] writeDataExpected;
+  // this might need to change
+  always @(WriteDataM or DataAdrM or ByteMaskM) begin
+    if (MemRWM[0]) begin
+      $display("!!!!");
+      scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
+      if (writeDataExpected != WriteDataM) begin
+        $display("%t ps: WriteDataM does not equal WriteDataExpected: %x, %x", $time, WriteDataM, writeDataExpected);
+      end
     end
   end
 
@@ -95,16 +121,26 @@ module testbench_busybear();
     nextSpec = 0;
   end
 
+  integer instrs;
+  initial begin
+    instrs = 0;
+  end 
   always @(PCF) begin
     speculative <= nextSpec;
     if (speculative) begin
-      speculative <= (PCF != pcExpected);
+      nextSpec <= (PCF != pcExpected);
     end
     if (~speculative) begin
       // first read instruction
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
+      $display("loaded %0d instructions", instrs);
+      instrs += 1;
+      if($feof(data_file_PC)) begin
+        $display("no more PC data to read");
+        $stop;
+      end
       // are we at a branch/jump?
       case (InstrF[6:0]) //todo: add C versions of these
         7'b1101111, //JAL
