@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module datapath #(parameter PCSTART = 32'h80000000) (
+module datapath (
   input logic clk, reset,
   // Fetch stage signals
   input  logic        StallF,
@@ -110,7 +110,7 @@ module datapath #(parameter PCSTART = 32'h80000000) (
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
   // Fetch stage pipeline register and logic; also Ex stage for branches
-  pclogic #(PCSTART) pclogic(.*);
+  pclogic pclogic(.*);
 
   // Decode stage pipeline register and logic
   flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrD);

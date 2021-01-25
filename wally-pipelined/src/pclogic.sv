@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module pclogic #(parameter PCSTART) (
+module pclogic (
   input  logic            clk, reset,
   input  logic            StallF, PCSrcE, 
   input  logic [31:0]     InstrF,
@@ -37,9 +37,6 @@ module pclogic #(parameter PCSTART) (
   output logic [`XLEN-1:0] InstrMisalignedAdrM);
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF, PCTargetE;
-//  logic [`XLEN-1:0] ResetVector = 'h100;
-//  logic [`XLEN-1:0] ResetVector = 'he4;
-  logic [`XLEN-1:0] ResetVector = {{(`XLEN-32){1'b0}}, PCSTART};
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
   logic [`XLEN-3:0] PCPlusUpperF;
@@ -52,7 +49,7 @@ module pclogic #(parameter PCSTART) (
   assign  PCTargetE = ExtImmE + TargetBaseE;
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, ResetVector, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
