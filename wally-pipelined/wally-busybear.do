@@ -46,6 +46,10 @@ add wave -hex /testbench_busybear/dut/dp/InstrF
 add wave -divider
 # registers!
 add wave -hex /testbench_busybear/rfExpected
+add wave -hex /testbench_busybear/MemRWM[0]
+add wave -hex /testbench_busybear/MemRWM[1]
+add wave -hex /testbench_busybear/ByteMaskM
+add wave -hex /testbench_busybear/WriteDataM
 add wave -hex /testbench_busybear/dut/dp/regf/rf[1]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[2]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[3]
@@ -87,7 +91,7 @@ add wave -hex /testbench_busybear/dut/dp/PCE
 add wave /testbench_busybear/InstrEName
 #add wave -hex /testbench_busybear/dut/dp/SrcAE
 #add wave -hex /testbench_busybear/dut/dp/SrcBE
-#add wave -hex /testbench_busybear/dut/dp/ALUResultE
+add wave -hex /testbench_busybear/dut/dp/ALUResultE
 #add wave /testbench_busybear/dut/dp/PCSrcE
 #add wave -divider
 add wave -hex /testbench_busybear/dut/dp/PCM
@@ -121,6 +125,6 @@ add wave /testbench_busybear/InstrWName
 #set DefaultRadix hexadecimal
 #
 #-- Run the Simulation 
-run 300
+run 700
 #run -all
 ##quit
