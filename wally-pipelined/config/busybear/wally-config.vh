@@ -54,6 +54,9 @@
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
 
+// Address space
+`define RESET_VECTOR 64'h0000000000001000
+
 // Test modes
 
 // Tie GPIO outputs back to inputs

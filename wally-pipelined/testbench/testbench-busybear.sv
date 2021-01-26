@@ -21,7 +21,7 @@ module testbench_busybear();
   assign DataAccessFaultM = 0;
    
   // instantiate processor and memories
-  wallypipelinedhart #(.PCSTART('h1000)) dut(.ALUResultM(DataAdrM), .*);
+  wallypipelinedhart dut(.ALUResultM(DataAdrM), .*);
 
   // initialize test
   initial
@@ -32,7 +32,7 @@ module testbench_busybear();
   // read pc trace file
   integer data_file_PC, scan_file_PC;
   initial begin
-    data_file_PC = $fopen("busybear-testgen/parsedPC.txt", "r");
+    data_file_PC = $fopen("../busybear-testgen/parsedPC.txt", "r");
     if (data_file_PC == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -42,7 +42,7 @@ module testbench_busybear();
   // read register trace file
   integer data_file_rf, scan_file_rf;
   initial begin
-    data_file_rf = $fopen("busybear-testgen/parsedRegs.txt", "r");
+    data_file_rf = $fopen("../busybear-testgen/parsedRegs.txt", "r");
     if (data_file_rf == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -52,7 +52,7 @@ module testbench_busybear();
   // read memreads trace file
   integer data_file_memR, scan_file_memR;
   initial begin
-    data_file_memR = $fopen("busybear-testgen/parsedMemRead.txt", "r");
+    data_file_memR = $fopen("../busybear-testgen/parsedMemRead.txt", "r");
     if (data_file_memR == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -62,7 +62,7 @@ module testbench_busybear();
   // read memwrite trace file
   integer data_file_memW, scan_file_memW;
   initial begin
-    data_file_memW = $fopen("busybear-testgen/parsedMemWrite.txt", "r");
+    data_file_memW = $fopen("../busybear-testgen/parsedMemWrite.txt", "r");
     if (data_file_memW == 0) begin
       $display("file couldn't be opened");
       $stop;
