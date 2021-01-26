@@ -40,6 +40,7 @@ view wave
 add wave /testbench_busybear/clk
 add wave /testbench_busybear/reset
 add wave -divider
+add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
 add wave -hex /testbench_busybear/dut/dp/PCF
 add wave -hex /testbench_busybear/dut/dp/InstrF
@@ -129,6 +130,6 @@ add wave /testbench_busybear/InstrWName
 #set DefaultRadix hexadecimal
 #
 #-- Run the Simulation 
-run 800
+run 900
 #run -all
 ##quit

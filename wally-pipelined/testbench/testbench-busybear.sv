@@ -125,7 +125,8 @@ module testbench_busybear();
     speculative = 0;
   end
   logic [63:0] lastInstrF, lastPC, lastPC2;
-
+  
+  string PCtext, PCtext2;
   integer instrs;
   initial begin
     instrs = 0;
@@ -140,6 +141,8 @@ module testbench_busybear();
     else begin
     //if (~speculative) begin
       // first read instruction
+      scan_file_PC = $fscanf(data_file_PC, "%s %s\n", PCtext, PCtext2);
+      PCtext = {PCtext, " ", PCtext2};
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
