@@ -53,6 +53,7 @@ add wave -hex /testbench_busybear/MemRWM[0]
 add wave -hex /testbench_busybear/MemRWM[1]
 add wave -hex /testbench_busybear/ByteMaskM
 add wave -hex /testbench_busybear/WriteDataM
+add wave -hex /testbench_busybear/DataAdrM
 add wave -hex /testbench_busybear/dut/dp/regf/rf[1]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[2]
 add wave -hex /testbench_busybear/dut/dp/regf/rf[3]
@@ -128,6 +129,6 @@ add wave /testbench_busybear/InstrWName
 #set DefaultRadix hexadecimal
 #
 #-- Run the Simulation 
-run 700
+run 800
 #run -all
 ##quit

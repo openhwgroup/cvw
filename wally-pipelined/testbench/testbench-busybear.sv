@@ -103,14 +103,18 @@ module testbench_busybear();
     end
   end
 
-  logic [`XLEN-1:0] writeDataExpected;
+  logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
   // this might need to change
   always @(WriteDataM or DataAdrM or ByteMaskM) begin
+    #1;
     if (MemRWM[0]) begin
-      $display("!!!!");
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
+      scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
       if (writeDataExpected != WriteDataM) begin
-        $display("%t ps: WriteDataM does not equal WriteDataExpected: %x, %x", $time, WriteDataM, writeDataExpected);
+        $display("%t ps: WriteDataM does not equal writeDataExpected: %x, %x", $time, WriteDataM, writeDataExpected);
+      end
+      if (writeAdrExpected != DataAdrM) begin
+        $display("%t ps: DataAdrM does not equal writeAdrExpected: %x, %x", $time, DataAdrM, writeAdrExpected);
       end
     end
   end
