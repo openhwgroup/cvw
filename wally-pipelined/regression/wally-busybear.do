@@ -43,6 +43,9 @@ add wave -divider
 add wave -hex /testbench_busybear/pcExpected
 add wave -hex /testbench_busybear/dut/dp/PCF
 add wave -hex /testbench_busybear/dut/dp/InstrF
+add wave /testbench_busybear/lastInstrF
+add wave /testbench_busybear/speculative
+add wave /testbench_busybear/lastPC2
 add wave -divider
 # registers!
 add wave -hex /testbench_busybear/rfExpected

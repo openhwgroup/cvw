@@ -115,22 +115,26 @@ module testbench_busybear();
     end
   end
 
-  logic speculative, nextSpec;
+  logic speculative;
   initial begin
     speculative = 0;
-    nextSpec = 0;
+    speculative = 0;
   end
+  logic [63:0] lastInstrF, lastPC, lastPC2;
 
   integer instrs;
   initial begin
     instrs = 0;
   end 
   always @(PCF) begin
-    speculative <= nextSpec;
-    if (speculative) begin
-      nextSpec <= (PCF != pcExpected);
+    lastInstrF = InstrF;
+    lastPC <= PCF;
+    lastPC2 <= lastPC;
+    if (speculative && lastPC != pcExpected) begin
+      speculative = (PCF != pcExpected);
     end
-    if (~speculative) begin
+    else begin
+    //if (~speculative) begin
       // first read instruction
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
@@ -142,17 +146,17 @@ module testbench_busybear();
         $stop;
       end
       // are we at a branch/jump?
-      case (InstrF[6:0]) //todo: add C versions of these
+      case (lastInstrF[6:0]) //todo: add C versions of these
         7'b1101111, //JAL
         7'b1100111, //JALR
         7'b1100011: //B
-          nextSpec <= 1;
+          speculative = 1;
         default:
-          nextSpec <= 0;
+          speculative = 0;
       endcase
 
       //check things!
-      if ((~nextSpec) && (PCF !== pcExpected)) begin
+      if ((~speculative) && (PCF !== pcExpected)) begin
         $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
       //  $stop;
       end
