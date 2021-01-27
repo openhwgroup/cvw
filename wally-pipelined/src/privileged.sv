@@ -37,13 +37,14 @@ module privileged (
   output logic RetM, TrapM,
   input  logic InstrValidW, FloatRegWriteW, LoadStallD,
   input  logic PrivilegedM,
-  input  logic InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultInM,
+  input  logic InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
   input  logic LoadMisalignedFaultM, LoadAccessFaultM,
   input  logic StoreMisalignedFaultM, StoreAccessFaultM,
   input  logic TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM,
   input  logic [4:0]      SetFflagsM,
-  output logic [2:0]      FRM_REGW
+  output logic [2:0]      FRM_REGW,
+  input  logic FlushD, FlushE, FlushM, StallD
 );
 
   logic [1:0] NextPrivilegeModeM, PrivilegeModeW;
@@ -54,7 +55,10 @@ module privileged (
 //  logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW;
 
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
-  logic IllegalCSRAccessM, IllegalInstrFaultM;
+  logic IllegalCSRAccessM;
+  logic  IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
+  logic       InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
+  logic IllegalInstrFaultM;
 
   logic BreakpointFaultM, EcallFaultM;
   logic InstrPageFaultM, LoadPageFaultM, StorePageFaultM;
@@ -81,6 +85,17 @@ module privileged (
 
   // Control and Status Registers
   csr csr(.*);
+
+  // pipeline fault signals
+  flopenrc #(1) faultregD(clk, reset, FlushD, ~StallD, InstrAccessFaultF, InstrAccessFaultD);
+  floprc #(2) faultregE(clk, reset, FlushE,
+                           {IllegalIEUInstrFaultD, InstrAccessFaultD}, // ** vs IllegalInstrFaultInD
+                           {IllegalIEUInstrFaultE, InstrAccessFaultE});
+  floprc #(2) faultregM(clk, reset, FlushM,
+                         {IllegalIEUInstrFaultE, InstrAccessFaultE},
+                         {IllegalIEUInstrFaultM, InstrAccessFaultM});
+
+
 endmodule
 
 
