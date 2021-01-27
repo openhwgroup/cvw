@@ -42,8 +42,8 @@ add wave /testbench_busybear/reset
 add wave -divider
 add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
-add wave -hex /testbench_busybear/dut/dp/PCF
-add wave -hex /testbench_busybear/dut/dp/InstrF
+add wave -hex /testbench_busybear/dut/ieu/dp/PCF
+add wave -hex /testbench_busybear/dut/ieu/dp/InstrF
 add wave /testbench_busybear/lastInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
@@ -55,63 +55,63 @@ add wave -hex /testbench_busybear/MemRWM[1]
 add wave -hex /testbench_busybear/ByteMaskM
 add wave -hex /testbench_busybear/WriteDataM
 add wave -hex /testbench_busybear/DataAdrM
-add wave -hex /testbench_busybear/dut/dp/regf/rf[1]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[2]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[3]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[4]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[5]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[6]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[7]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[8]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[9]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[10]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[11]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[12]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[13]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[14]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[15]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[16]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[17]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[18]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[19]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[20]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[21]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[22]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[23]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[24]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[25]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[26]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[27]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[28]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[29]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[30]
-add wave -hex /testbench_busybear/dut/dp/regf/rf[31]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[1]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[2]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[3]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[4]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[5]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[6]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[7]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[8]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[9]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[10]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[11]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[12]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[13]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[14]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[15]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[16]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[17]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[18]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[19]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[20]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[21]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[22]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[23]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[24]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[25]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[26]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[27]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[28]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[29]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[30]
+add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[31]
 add wave /testbench_busybear/InstrFName
-add wave -hex /testbench_busybear/dut/dp/PCD
-#add wave -hex /testbench_busybear/dut/dp/InstrD
+add wave -hex /testbench_busybear/dut/ieu/dp/PCD
+#add wave -hex /testbench_busybear/dut/ieu/dp/InstrD
 add wave /testbench_busybear/InstrDName
 #add wave -divider
-add wave -hex /testbench_busybear/dut/dp/PCE
-##add wave -hex /testbench_busybear/dut/dp/InstrE
+add wave -hex /testbench_busybear/dut/ieu/dp/PCE
+##add wave -hex /testbench_busybear/dut/ieu/dp/InstrE
 add wave /testbench_busybear/InstrEName
-#add wave -hex /testbench_busybear/dut/dp/SrcAE
-#add wave -hex /testbench_busybear/dut/dp/SrcBE
-add wave -hex /testbench_busybear/dut/dp/ALUResultE
-#add wave /testbench_busybear/dut/dp/PCSrcE
+#add wave -hex /testbench_busybear/dut/ieu/dp/SrcAE
+#add wave -hex /testbench_busybear/dut/ieu/dp/SrcBE
+add wave -hex /testbench_busybear/dut/ieu/dp/ALUResultE
+#add wave /testbench_busybear/dut/ieu/dp/PCSrcE
 #add wave -divider
-add wave -hex /testbench_busybear/dut/dp/PCM
-##add wave -hex /testbench_busybear/dut/dp/InstrM
+add wave -hex /testbench_busybear/dut/ieu/dp/PCM
+##add wave -hex /testbench_busybear/dut/ieu/dp/InstrM
 add wave /testbench_busybear/InstrMName
 #add wave /testbench_busybear/dut/dmem/dtim/memwrite
 #add wave -hex /testbench_busybear/dut/dmem/AdrM
 #add wave -hex /testbench_busybear/dut/dmem/WriteDataM
 #add wave -divider
-add wave -hex /testbench_busybear/dut/dp/PCW
-##add wave -hex /testbench_busybear/dut/dp/InstrW
+add wave -hex /testbench_busybear/dut/ieu/dp/PCW
+##add wave -hex /testbench_busybear/dut/ieu/dp/InstrW
 add wave /testbench_busybear/InstrWName
-#add wave /testbench_busybear/dut/dp/RegWriteW
-#add wave -hex /testbench_busybear/dut/dp/ResultW
-#add wave -hex /testbench_busybear/dut/dp/RdW
+#add wave /testbench_busybear/dut/ieu/dp/RegWriteW
+#add wave -hex /testbench_busybear/dut/ieu/dp/ResultW
+#add wave -hex /testbench_busybear/dut/ieu/dp/RdW
 #add wave -divider
 ##add ww
 #add wave -hex -r /testbench_busybear/*
