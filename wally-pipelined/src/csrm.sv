@@ -64,14 +64,12 @@ module csrm #(parameter
     input  logic clk, reset, 
     input  logic CSRMWriteM, MTrapM,
     input  logic [11:0] CSRAdrM,
-    input  logic [`XLEN-1:0] resetExceptionVector,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
     output logic [31:0]     MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
     output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, 
     input  logic [11:0]     MIP_REGW, MIE_REGW,
-    output logic            WriteMIPM, WriteMIEM,
     output logic            WriteMSTATUSM,
     output logic            IllegalCSRMAccessM
   );
@@ -95,8 +93,6 @@ module csrm #(parameter
   assign WriteMTVECM = CSRMWriteM && (CSRAdrM == MTVEC);
   assign WriteMEDELEGM = CSRMWriteM && (CSRAdrM == MEDELEG);
   assign WriteMIDELEGM = CSRMWriteM && (CSRAdrM == MIDELEG);
-  assign WriteMIPM = CSRMWriteM && (CSRAdrM == MIP);
-  assign WriteMIEM = CSRMWriteM && (CSRAdrM == MIE);
   assign WriteMSCRATCHM = CSRMWriteM && (CSRAdrM == MSCRATCH);
   assign WriteMEPCM = MTrapM | (CSRMWriteM && (CSRAdrM == MEPC));
   assign WriteMCAUSEM = MTrapM | (CSRMWriteM && (CSRAdrM == MCAUSE));
@@ -105,7 +101,7 @@ module csrm #(parameter
   assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
 
   // CSRs
-  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, resetExceptionVector, MTVEC_REGW);
+  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, `RESET_VECTOR, MTVEC_REGW);
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
       flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, zero, MEDELEG_REGW);

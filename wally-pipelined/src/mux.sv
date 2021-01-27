@@ -24,6 +24,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+/* verilator lint_off DECLFILENAME */
 
 
 module mux2 #(parameter WIDTH = 8) (
@@ -50,3 +51,4 @@ module mux4 #(parameter WIDTH = 8) (
   assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
 endmodule
 
+/* verilator lint_on DECLFILENAME */

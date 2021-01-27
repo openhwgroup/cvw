@@ -24,6 +24,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+/* verilator lint_off DECLFILENAME */
 
 // ordinary flip-flop
 module flop #(parameter WIDTH = 8) ( 
@@ -96,3 +97,5 @@ module floprc #(parameter WIDTH = 8) (
       if (clear) q <= #1 0;
       else       q <= #1 d;
 endmodule
+
+/* verilator lint_on DECLFILENAME */

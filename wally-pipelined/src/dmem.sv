@@ -43,7 +43,7 @@ module dmem (
   logic [`XLEN-1:0] MaskedWriteDataM;
   logic [`XLEN-1:0] RdTimM, RdCLINTM, RdGPIOM, RdUARTM;
   logic            TimEnM, CLINTEnM, GPIOEnM, UARTEnM;
-  logic [1:0]      MemRWdtimM, MemRWclintM, MemRWgpioM;
+  logic [1:0]      MemRWdtimM, MemRWclintM, MemRWgpioM, MemRWuartM;
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
 
   // Address decoding
@@ -60,6 +60,7 @@ module dmem (
   assign MemRWdtimM  = MemRWM & {2{TimEnM}};
   assign MemRWclintM = MemRWM & {2{CLINTEnM}};
   assign MemRWgpioM  = MemRWM & {2{GPIOEnM}};
+  assign MemRWuartM  = MemRWM & {2{UARTEnM}};
 
   // tightly integrated memory
   dtim dtim(.AdrM(AdrM[18:0]), .*);
@@ -74,8 +75,9 @@ module dmem (
   // *** add cache and interface to external memory & other peripherals
   
   // merge reads
-  assign ReadDataM = ({`XLEN{TimEnM}} & RdTimM) | ({`XLEN{CLINTEnM}} & RdCLINTM) | ({`XLEN{GPIOEnM}} & RdGPIOM);
-  assign DataAccessFaultM = ~(|TimEnM | CLINTEnM | GPIOEnM);
+  assign ReadDataM = ({`XLEN{TimEnM}} & RdTimM) | ({`XLEN{CLINTEnM}} & RdCLINTM) | 
+                     ({`XLEN{GPIOEnM}} & RdGPIOM) | ({`XLEN{UARTEnM}} & RdUARTM);
+  assign DataAccessFaultM = ~(|TimEnM | CLINTEnM | GPIOEnM | UARTEnM);
 
   // byte masking
    // write each byte based on the byte mask

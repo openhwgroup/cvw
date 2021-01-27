@@ -38,17 +38,13 @@ module csrn #(parameter
     input  logic clk, reset, 
     input  logic CSRNWriteM, UTrapM,
     input  logic [11:0] CSRAdrM,
-    input  logic [`XLEN-1:0] resetExceptionVector,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRNReadValM, UEPC_REGW, UTVEC_REGW, 
     input  logic [11:0]     UIP_REGW, UIE_REGW, 
-    output logic            WriteUIPM, WriteUIEM,
     output logic            WriteUSTATUSM,
     output logic            IllegalCSRNAccessM
   );
-
-  logic [`XLEN-1:0] zero = 0;
 
   // User mode CSRs below only needed when user mode traps are supported
   generate  
@@ -56,22 +52,18 @@ module csrn #(parameter
       logic WriteUTVECM;
       logic WriteUSCRATCHM, WriteUEPCM;
       logic WriteUCAUSEM, WriteUTVALM;
-      logic [`XLEN-1:0] UEDELEG_REGW, UIDELEG_REGW, UIP_REGW, UIE_REGW;
+      logic [`XLEN-1:0] UEDELEG_REGW, UIDELEG_REGW;
       logic [`XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
       
       // Write enables
       assign WriteUSTATUSM = CSRNWriteM && (CSRAdrM == USTATUS);
       assign WriteUTVECM = CSRNWriteM && (CSRAdrM == UTVEC);
-      assign WriteUIPM = CSRNWriteM && (CSRAdrM == UIP);
-      assign WriteUIEM = CSRNWriteM && (CSRAdrM == UIE);
       assign WriteUEPCM = UTrapM | (CSRNWriteM && (CSRAdrM == UEPC));
       assign WriteUCAUSEM = UTrapM | (CSRNWriteM && (CSRAdrM == UCAUSE));
       assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL));
 
       // CSRs
-      flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, resetExceptionVector, UTVEC_REGW);
-      // flopenl #(`XLEN) UIPreg(clk, reset, WriteUIPM, CSRWriteValM, zero, UIP_REGW);
-      // flopenl #(`XLEN) UIEreg(clk, reset, WriteUIEM, CSRWriteValM, zero, UIE_REGW);
+      flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, `RESET_VECTOR, UTVEC_REGW);
       flopenr #(`XLEN) USCRATCHreg(clk, reset, WriteUSCRATCHM, CSRWriteValM, USCRATCH_REGW);
       flopenr #(`XLEN) UEPCreg(clk, reset, WriteUEPCM, NextEPCM, UEPC_REGW); 
       flopenr #(`XLEN) UCAUSEreg(clk, reset, WriteUCAUSEM, NextCauseM, UCAUSE_REGW); 
@@ -97,8 +89,6 @@ module csrn #(parameter
       end
     end else begin // if not supported
       assign WriteUSTATUSM = 0;
-      assign WriteUIPM = 0;
-      assign WriteUIEM = 0;
       assign CSRNReadValM = 0;
       assign UEPC_REGW = 0;
       assign UTVEC_REGW = 0;

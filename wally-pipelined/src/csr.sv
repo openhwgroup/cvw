@@ -55,12 +55,8 @@ module csr (
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
-  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM;
 
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
-
-  logic [`XLEN-1:0] zero = 0;
-  logic [`XLEN-1:0] resetExceptionVector = {{(`XLEN-32){1'b0}}, 32'h80000000}; // initial exception vector at reset
 
   logic [11:0] CSRAdrM;
   logic [11:0] SIP_REGW, SIE_REGW;

@@ -29,7 +29,7 @@
 
 module uart (
   input  logic            clk, reset, 
-  input  logic [1:0]      MemRWgpioM,
+  input  logic [1:0]      MemRWuartM,
   input  logic [7:0]      ByteMaskM,
   input  logic [`XLEN-1:0] AdrM, 
   input  logic [`XLEN-1:0] MaskedWriteDataM,
@@ -42,11 +42,10 @@ module uart (
   logic [2:0]      A;
   logic            MEMRb, MEMWb;
   logic [7:0]      Din, Dout;
-  logic            SINint; // for loopback testing
 
   // rename processor interface signals to match PC16550D and provide one-byte interface
-  assign MEMRb = ~MemRWgpioM[1];
-  assign MEMWb = ~MemRWgpioM[0];
+  assign MEMRb = ~MemRWuartM[1];
+  assign MEMWb = ~MemRWuartM[0];
   assign A = AdrM[2:0];
 
   generate

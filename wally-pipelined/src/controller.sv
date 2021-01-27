@@ -167,5 +167,6 @@ module controller(
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 
+  // *** improve this so CSR reads don't trigger this signal and cause pipeline flushes
   assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;   
 endmodule

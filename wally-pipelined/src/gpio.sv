@@ -30,7 +30,7 @@
 module gpio (
   input  logic            clk, reset, 
   input  logic [1:0]      MemRWgpioM,
-  input  logic [7:0]      ByteMaskM,
+//  input  logic [7:0]      ByteMaskM,
   input  logic [7:0]      AdrM, 
   input  logic [`XLEN-1:0] MaskedWriteDataM,
   output logic [`XLEN-1:0] RdGPIOM,
@@ -78,7 +78,7 @@ module gpio (
           INPUT_EN <= 0;
           OUTPUT_EN <= 0;
           // OUTPUT_VAL <= 0; // spec indicates synchronous rset (software control)
-        end else begin
+        end else if (memwrite) begin
           if (entry == 8'h00) INPUT_EN <= MaskedWriteDataM[63:32];
           if (entry == 8'h08) {OUTPUT_VAL, OUTPUT_EN} <= MaskedWriteDataM;
           if (entry == 8'h40) OUTPUT_VAL <= OUTPUT_VAL ^ MaskedWriteDataM[31:0]; // OUT_XOR
@@ -99,7 +99,7 @@ module gpio (
           INPUT_EN <= 0;
           OUTPUT_EN <= 0;
           //OUTPUT_VAL <= 0;// spec indicates synchronous rset (software control)
-        end else begin
+        end else if (memwrite) begin
           if (entry == 8'h04) INPUT_EN <= MaskedWriteDataM;
           if (entry == 8'h08) OUTPUT_EN <= MaskedWriteDataM;
           if (entry == 8'h0C) OUTPUT_VAL <= MaskedWriteDataM;

@@ -44,7 +44,6 @@ module csri #(parameter
   logic [11:0]     IntInM, IP_REGW, IE_REGW;
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
-  logic [`XLEN-1:0] zero = 0;
 
   // Determine which interrupts need to be set
   // assumes no N-mode user interrupts
@@ -78,16 +77,16 @@ module csri #(parameter
       assign SIP_WRITE_MASK = 12'h000;
     end
     always @(posedge clk, posedge reset) begin
-      if (reset)          IP_REGW = zero;
-      else if (WriteMIPM) IP_REGW = (CSRWriteValM & MIP_WRITE_MASK) | IntInM; // MTIP unclearable
-      else if (WriteSIPM) IP_REGW = (CSRWriteValM & SIP_WRITE_MASK) | IntInM; // MTIP unclearable
+      if (reset)          IP_REGW <= 12'b0;
+      else if (WriteMIPM) IP_REGW <= (CSRWriteValM & MIP_WRITE_MASK) | IntInM; // MTIP unclearable
+      else if (WriteSIPM) IP_REGW <= (CSRWriteValM & SIP_WRITE_MASK) | IntInM; // MTIP unclearable
 //      else if (WriteUIPM) IP_REGW = (CSRWriteValM & 12'hBBB) | (NextIPM & 12'h080); // MTIP unclearable
-      else                IP_REGW = IP_REGW | IntInM; // *** check this turns off interrupts properly even when MIDELEG changes
+      else                IP_REGW <= IP_REGW | IntInM; // *** check this turns off interrupts properly even when MIDELEG changes
     end
     always @(posedge clk, posedge reset) begin
-      if (reset)              IE_REGW = zero;
-      else if (WriteMIEM) IE_REGW = (CSRWriteValM & 12'hAAA); // MIE controls M and S fields
-      else if (WriteSIEM) IE_REGW = (CSRWriteValM & 12'h222) | (IE_REGW & 12'h888); // only S fields
+      if (reset)              IE_REGW <= 12'b0;
+      else if (WriteMIEM) IE_REGW <= (CSRWriteValM & 12'hAAA); // MIE controls M and S fields
+      else if (WriteSIEM) IE_REGW <= (CSRWriteValM & 12'h222) | (IE_REGW & 12'h888); // only S fields
 //      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field
     end
   endgenerate
@@ -104,8 +103,8 @@ module csri #(parameter
         SIP_REGW = IP_REGW & MIDELEG_REGW & 'h222; // only delegated interrupts visible
         SIE_REGW = IE_REGW & MIDELEG_REGW & 'h222;
       end else begin
-        SIP_REGW = zero;
-        SIE_REGW = zero;
+        SIP_REGW = 12'b0;
+        SIE_REGW = 12'b0;
       end
 
       // User Modes iterrupts depricated
@@ -113,8 +112,8 @@ module csri #(parameter
         UIP_REGW = IP_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
         UIE_REGW = IE_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
       end else begin
-        UIP_REGW = zero;
-        UIE_REGW = zero;
+        UIP_REGW = 12'b0;
+        UIE_REGW = 12'b0;
       end */
     end
   endgenerate

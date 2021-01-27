@@ -72,6 +72,6 @@ module wallypipelined (
   // instantiate processor and memories
   wallypipelinedhart hart(.ALUResultM(DataAdrM), .*);
 
-  imem imem(.AdrF(PCF), .*);
+  imem imem(.AdrF(PCF[`XLEN-1:1]), .*);
   dmem dmem(.AdrM(DataAdrM), .*);
 endmodule

@@ -26,13 +26,16 @@
 `include "wally-config.vh"
 
 module imem (
-  input  logic [`XLEN-1:0] AdrF,
+  input  logic [`XLEN-1:1] AdrF,
   output logic [31:0] InstrF,
   output logic        InstrAccessFaultF);
 
+ /* verilator lint_off UNDRIVEN */
   logic [`XLEN-1:0] RAM[0:65535];
+ /* verilator lint_on UNDRIVEN */
   logic [15:0] adrbits;
-  logic [`XLEN-1:0] rd, rd2;
+  logic [`XLEN-1:0] rd;
+  logic [15:0] rd2;
       
   generate
     if (`XLEN==32) assign adrbits = AdrF[17:2];
@@ -45,7 +48,7 @@ module imem (
   // eventually this will need to cause a stall like a cache miss
   // when the instruction wraps around a cache line
   // could be optimized to only stall when the instruction wrapping is 32 bits
-  assign #2 rd2 = RAM[adrbits+1];
+  assign #2 rd2 = RAM[adrbits+1][15:0];
   generate 
     if (`XLEN==32) begin
       assign InstrF = AdrF[1] ? {rd2[15:0], rd[31:16]} : rd;
