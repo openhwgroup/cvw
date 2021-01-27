@@ -27,7 +27,7 @@
 `include "wally-config.vh"
 
 module trap (
-  input  logic            clk, reset, 
+  input  logic            reset, 
   input  logic            InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
   input  logic            BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
   input  logic            LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,

@@ -78,12 +78,12 @@ module csrc #(parameter
       //  logic [63:0] TIME_REGW, TIMECMP_REGW;
       logic [63:0] CYCLE_REGW, INSTRET_REGW;
       logic [63:0] HPMCOUNTER3_REGW, HPMCOUNTER4_REGW; // add more performance counters here if desired
-      logic [63:0] CYCLEPlusM, TIMEPlusM, INSTRETPlusM;
+      logic [63:0] CYCLEPlusM, INSTRETPlusM;
       logic [63:0] HPMCOUNTER3PlusM, HPMCOUNTER4PlusM;
     //  logic [`XLEN-1:0] NextTIMEM;
       logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic [`XLEN-1:0] NextHPMCOUNTER3M, NextHPMCOUNTER4M;
-      logic        WriteTIMEM, WriteTIMECMPM, WriteCYCLEM, WriteINSTRETM;
+      logic        WriteCYCLEM, WriteINSTRETM;
       logic        WriteHPMCOUNTER3M, WriteHPMCOUNTER4M;
       logic [4:0]  CounterNumM;
 

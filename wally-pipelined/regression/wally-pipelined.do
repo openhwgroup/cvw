@@ -26,8 +26,13 @@ vlib work
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583
 
+# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
+# do wally-pipelined.do ../config/rv32ic
+switch $argc {
+    0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583}
+}
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench -o workopt 
@@ -40,34 +45,34 @@ view wave
 add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
-add wave -hex /testbench/dut/hart/dp/PCF
-add wave -hex /testbench/dut/hart/dp/InstrF
+add wave -hex /testbench/dut/hart/ieu/dp/PCF
+add wave -hex /testbench/dut/hart/ieu/dp/InstrF
 add wave /testbench/InstrFName
-#add wave -hex /testbench/dut/hart/dp/PCD
-add wave -hex /testbench/dut/hart/dp/InstrD
+#add wave -hex /testbench/dut/hart/ieu/dp/PCD
+add wave -hex /testbench/dut/hart/ieu/dp/InstrD
 add wave /testbench/InstrDName
 add wave -divider
-#add wave -hex /testbench/dut/hart/dp/PCE
-#add wave -hex /testbench/dut/hart/dp/InstrE
+#add wave -hex /testbench/dut/hart/ieu/dp/PCE
+#add wave -hex /testbench/dut/hart/ieu/dp/InstrE
 add wave /testbench/InstrEName
-add wave -hex /testbench/dut/hart/dp/SrcAE
-add wave -hex /testbench/dut/hart/dp/SrcBE
-add wave -hex /testbench/dut/hart/dp/ALUResultE
-add wave /testbench/dut/hart/dp/PCSrcE
+add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
+add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
+add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
+add wave /testbench/dut/hart/ieu/dp/PCSrcE
 add wave -divider
-#add wave -hex /testbench/dut/hart/dp/PCM
-#add wave -hex /testbench/dut/hart/dp/InstrM
+#add wave -hex /testbench/dut/hart/ieu/dp/PCM
+#add wave -hex /testbench/dut/hart/ieu/dp/InstrM
 add wave /testbench/InstrMName
 add wave /testbench/dut/dmem/dtim/memwrite
 add wave -hex /testbench/dut/dmem/AdrM
 add wave -hex /testbench/dut/dmem/WriteDataM
 add wave -divider
-add wave -hex /testbench/dut/hart/dp/PCW
-#add wave -hex /testbench/dut/hart/dp/InstrW
+add wave -hex /testbench/dut/hart/ieu/dp/PCW
+#add wave -hex /testbench/dut/hart/ieu/dp/InstrW
 add wave /testbench/InstrWName
-add wave /testbench/dut/hart/dp/RegWriteW
-add wave -hex /testbench/dut/hart/dp/ResultW
-add wave -hex /testbench/dut/hart/dp/RdW
+add wave /testbench/dut/hart/ieu/dp/RegWriteW
+add wave -hex /testbench/dut/hart/ieu/dp/ResultW
+add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 #add ww
 add wave -hex -r /testbench/*

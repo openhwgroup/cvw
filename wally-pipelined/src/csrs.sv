@@ -43,14 +43,12 @@ module csrs #(parameter
     input  logic clk, reset, 
     input  logic CSRSWriteM, STrapM,
     input  logic [11:0] CSRAdrM,
-    input  logic [`XLEN-1:0] resetExceptionVector,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRSReadValM, SEPC_REGW, STVEC_REGW, 
     output logic [31:0]     SCOUNTEREN_REGW,     
     output logic [`XLEN-1:0] SEDELEG_REGW, SIDELEG_REGW, 
     input  logic [11:0]     SIP_REGW, SIE_REGW,
-    output logic            WriteSIPM, WriteSIEM,
     output logic            WriteSSTATUSM,
     output logic            IllegalCSRSAccessM
   );
@@ -71,8 +69,6 @@ module csrs #(parameter
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC);
       assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
       assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
-      assign WriteSIEM = CSRSWriteM && (CSRAdrM == SIE);
-      assign WriteSIPM = CSRSWriteM && (CSRAdrM == SIP);
       assign WriteSSCRATCHM = CSRSWriteM && (CSRAdrM == SSCRATCH);
       assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC));
       assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE));
@@ -80,9 +76,7 @@ module csrs #(parameter
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN);
 
       // CSRs
-      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, CSRWriteValM, resetExceptionVector, STVEC_REGW);
-//      flopenl #(`XLEN) SIPreg(clk, reset, WriteSIPM, CSRWriteValM, zero, SIP_REGW);
-//      flopenl #(`XLEN) SIEreg(clk, reset, WriteSIEM, CSRWriteValM, zero, SIE_REGW);
+      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, CSRWriteValM, `RESET_VECTOR, STVEC_REGW);
       flopenr #(`XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
       flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
       flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, zero, SCAUSE_REGW); 
@@ -119,8 +113,6 @@ module csrs #(parameter
       end
     end else begin
       assign WriteSSTATUSM = 0;
-      assign WriteSIPM = 0;
-      assign WriteSIEM = 0;
       assign CSRSReadValM = 0;
       assign SEPC_REGW = 0;
       assign STVEC_REGW = 0;

@@ -68,7 +68,7 @@ module clint (
           MSIP <= 0;
           MTIME <= 0;
           // MTIMECMP is not reset
-        end else begin
+        end else if (memwrite) begin
           if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
           if (entry == 16'h4000) MTIMECMP <= MaskedWriteDataM;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
@@ -91,7 +91,7 @@ module clint (
           MSIP <= 0;
           MTIME <= 0;
           // MTIMECMP is not reset
-        end else begin
+        end else if (memwrite) begin
           if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
           if (entry == 16'h4000) MTIMECMP[31:0] <= MaskedWriteDataM;
           if (entry == 16'h4004) MTIMECMP[63:32] <= MaskedWriteDataM;

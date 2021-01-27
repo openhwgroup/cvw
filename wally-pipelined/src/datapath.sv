@@ -76,7 +76,8 @@ module datapath (
   logic [`XLEN-1:0] PCPlus2or4F;
   // Decode stage signals
   logic [31:0]     InstrD;
-  logic [`XLEN-1:0] PCD, PCPlus2or4D;
+  logic [`XLEN-1:0] PCD;
+//  logic [`XLEN-1:0] PCPlus2or4D;
   logic [`XLEN-1:0] RD1D, RD2D;
   logic [`XLEN-1:0] ExtImmD;
   logic [31:0]     InstrDecompD;
@@ -115,7 +116,7 @@ module datapath (
   // Decode stage pipeline register and logic
   flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrD);
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
-  flopenrc #(`XLEN) PCPlus2or4DReg(clk, reset, FlushD, ~StallD, PCPlus2or4F, PCPlus2or4D);
+//  flopenrc #(`XLEN) PCPlus2or4DReg(clk, reset, FlushD, ~StallD, PCPlus2or4F, PCPlus2or4D);
    
   instrDecompress decomp(.*);
   assign OpD       = InstrDecompD[6:0];

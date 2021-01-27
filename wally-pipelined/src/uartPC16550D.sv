@@ -30,6 +30,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+  /* verilator lint_off UNOPTFLAT */
 
 module uartPC16550D(
   // Processor Interface
@@ -52,7 +53,7 @@ module uartPC16550D(
 
   // Registers
   logic [10:0] RBR;
-  logic [7:0] IIR, FCR, LCR, LSR, SCR, DLL, DLM;
+  logic [7:0] FCR, LCR, LSR, SCR, DLL, DLM;
   logic [3:0] IER, MSR;
   logic [4:0] MCR;
 
@@ -124,7 +125,6 @@ module uartPC16550D(
   always_ff @(posedge clk, posedge reset) 
     if (reset) begin // Table 3 Reset Configuration
       IER <= 4'b0;
-      IIR <= 8'b1; 
       FCR <= 8'b0;
       LCR <= 8'b0;
       MCR <= 5'b0;
@@ -157,20 +157,20 @@ module uartPC16550D(
         /* verilator lint_on CASEINCOMPLETE */
       end
       // Line Status Register (8.6.3)
-      LSR[0] = rxdataready; // Data ready
-      if (RXBR[10]) LSR[1] = 1; // overrun error
-      if (RXBR[9])  LSR[2] = 1; // parity error
-      if (RXBR[8])  LSR[3] = 1; // framing error
-      if (rxbreak)  LSR[4] = 1; // break indicator
-      LSR[5] = txhremptyintr ; //  THRE
-      LSR[6] = ~txsrfull & txhremptyintr; //  TEMT
-      if (rxfifohaserr) LSR[7] = 1; // any bits in FIFO have error
+      LSR[0] <= rxdataready; // Data ready
+      if (RXBR[10]) LSR[1] <= 1; // overrun error
+      if (RXBR[9])  LSR[2] <= 1; // parity error
+      if (RXBR[8])  LSR[3] <= 1; // framing error
+      if (rxbreak)  LSR[4] <= 1; // break indicator
+      LSR[5] <= txhremptyintr ; //  THRE
+      LSR[6] <= ~txsrfull & txhremptyintr; //  TEMT
+      if (rxfifohaserr) LSR[7] <= 1; // any bits in FIFO have error
 
       // Modem Status Register (8.6.8)
-      MSR[0] |= CTSb2 ^ CTSbsync; // Delta Clear to Send
-      MSR[1] |= DSRb2 ^ DSRbsync; // Delta Data Set Ready
-      MSR[2] |= (~RIb2 & RIbsync); // Trailing Edge of Ring Indicator
-      MSR[3] |= DCDb2 ^ DCDbsync; // Delta Data Carrier Detect
+      MSR[0] <= MSR[0] | CTSb2 ^ CTSbsync; // Delta Clear to Send
+      MSR[1] <= MSR[1] | DSRb2 ^ DSRbsync; // Delta Data Set Ready
+      MSR[2] <= MSR[2] | (~RIb2 & RIbsync); // Trailing Edge of Ring Indicator
+      MSR[3] <= MSR[3] | DCDb2 ^ DCDbsync; // Delta Data Carrier Detect
     end
 
   always_comb
@@ -213,12 +213,12 @@ module uartPC16550D(
   always_ff @(posedge clk, posedge reset)
     if (reset) begin
       rxoversampledcnt <= 0;
-      rxstate = UART_IDLE;
+      rxstate <= UART_IDLE;
       rxbitsreceived <= 0;
       rxtimeoutcnt <= 0;
     end else begin
       if (rxstate == UART_IDLE & ~SINsync) begin // got start bit
-        rxstate = UART_ACTIVE;
+        rxstate <= UART_ACTIVE;
         rxoversampledcnt <= 0;
         rxbitsreceived <= 0;
         rxtimeoutcnt <= 0; // reset timeout when new character is arriving
@@ -268,16 +268,16 @@ module uartPC16550D(
       rxfifohead <= 0; rxfifotail <= 0; rxdataready <= 0; RXBR <= 0;
     end else begin
       if (rxstate == UART_DONE) begin
-        RXBR = {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
+        RXBR <= {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
         if (fifoenabled) begin
-          rxfifo[rxfifohead] <= RXBR; 
+          rxfifo[rxfifohead] <= {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; 
           rxfifohead <= rxfifohead + 1;
         end
         rxdataready <= 1;
       end else if (~MEMRb && A == 3'b000 && ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
-          rxfifotail = rxfifotail + 1;
-          if (rxfifohead == rxfifotail) rxdataready <= 0;
+          rxfifotail <= rxfifotail + 1;
+          if (rxfifohead == rxfifotail +1) rxdataready <= 0;
         end else rxdataready <= 0;
       end else if (~MEMWb && A == 3'b010)  // writes to FIFO Control Register
         if (Din[1] | ~Din[0]) begin // rx FIFO reset or FIFO disable clears FIFO contents
@@ -293,6 +293,7 @@ module uartPC16550D(
   assign rxfifotimeout = 0; // disabled pending fix
 
   // detect any errors in rx fifo
+  // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
   generate
     genvar i;
     for (i=0; i<16; i++) begin
@@ -400,7 +401,7 @@ module uartPC16550D(
           txsrfull <= 1;
         end
       else if (txstate == UART_DONE) txsrfull <= 0; // done transmitting shift register
-      else if (txstate == UART_ACTIVE && txnextbit) TXHR <= {TXHR[10:0], 1'b1}; // shift txhr
+      else if (txstate == UART_ACTIVE && txnextbit) txsr <= {txsr[10:0], 1'b1}; // shift txhr
       if (!MEMWb && A == 3'b010) // writes to FIFO control register
         if (Din[2] | ~Din[0]) begin // tx FIFO reste or FIFO disable clears FIFO contents
           txfifohead <= 0; txfifotail <= 0;
@@ -423,7 +424,7 @@ module uartPC16550D(
     else TXRDYb  = ~txhremptyintr;
 
   // Transmitter pin 
-  assign SOUTbit = TXHR[11]; // transmit most significant bit
+  assign SOUTbit = txsr[11]; // transmit most significant bit
   assign SOUT = loop ? 1 : (LCR[6] ? 0 : SOUTbit); // tied to 1 during loopback or 0 during break 
 
   ///////////////////////////////////////////
@@ -474,3 +475,5 @@ module uartPC16550D(
     endcase
 
 endmodule
+
+  /* verilator lint_on UNOPTFLAT */

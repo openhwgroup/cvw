@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// wallypipelinedhart.sv
+// ieu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Pipelined RISC-V Processor
+// Purpose: Integer Execution Unit: datapath and controller
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -24,9 +24,8 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-/* verilator lint_on UNUSED */
 
-module wallypipelinedhart (
+module ieu (
   input  logic            clk, reset,
   output logic [`XLEN-1:0] PCF,
   input  logic [31:0]     InstrF,
@@ -36,58 +35,50 @@ module wallypipelinedhart (
   input  logic [`XLEN-1:0] ReadDataM,
   input  logic            TimerIntM, ExtIntM, SwIntM,
   input  logic            InstrAccessFaultF,
-  input  logic            DataAccessFaultM);
+  input  logic            DataAccessFaultM,
+  input  logic [1:0]      ForwardAE, ForwardBE,
+  input  logic            StallF, StallD, FlushD, FlushE, FlushM, FlushW,
+  output logic        PCSrcE,
+  output logic        RegWriteM,
+  output logic 	     MemReadE,
+  output logic        RegWriteW,
+  output logic        CSRWritePendingDEM,
+  output logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
+  input  logic [4:0] SetFflagsM,
+  output logic [2:0] FRM_REGW,
+  output logic       FloatRegWriteW,
+  output logic        RetM, TrapM,
+  input logic        LoadStallD
 
-/*
-//  logic [2:0]  Funct3D;
-//  logic        Funct7b5D;
-//  logic [6:0]  OpD;
-//  logic [2:0]  ImmSrcD;
-//  logic        IllegalCompInstrD;
-//  logic [2:0]  FlagsE;
-//  logic [4:0]  ALUControlE;
-//  logic        ALUSrcAE, ALUSrcBE;
-//  logic        CSRWriteM;
-//  logic        PrivilegedM;
-//  logic        IllegalInstrFaultM;
+);
+
+  logic [2:0]  Funct3D;
+  logic        Funct7b5D;
+  logic [6:0]  OpD;
+  logic [2:0]  ImmSrcD;
+  logic        IllegalCompInstrD;
+  logic [2:0]  FlagsE;
+//  logic        PCSrcE;
+  logic [4:0]  ALUControlE;
+  logic        ALUSrcAE, ALUSrcBE;
+//  logic 	     MemReadE;
+//  logic        RegWriteM;
+  logic        CSRWriteM;
+  logic        PrivilegedM;
+  logic        IllegalInstrFaultM;
   logic        InstrAccessFaultM;
   logic [2:0]  Funct3M;
   logic [1:0]  ResultSrcW;
+//  logic        RegWriteW;
   logic        InstrValidW;
+  // logic LoadStallD;
+// logic        CSRWritePendingDEM;
   logic        InstrMisalignedFaultM;
-*/
-  logic [1:0]  ForwardAE, ForwardBE;
-  logic        StallF, StallD, FlushD, FlushE, FlushM, FlushW;
-  logic        RetM, TrapM;
 
-  logic        PCSrcE;
-  logic        RegWriteM;
-  logic 	     MemReadE;
-  logic        RegWriteW;
-  logic        CSRWritePendingDEM;
-  logic        LoadStallD;
-  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
-//  logic       TargetSrcE;
-  logic [4:0] SetFflagsM;
-  logic [2:0] FRM_REGW;
-  logic       FloatRegWriteW;
+
+//  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
+  logic       TargetSrcE;
            
-  ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
-/*  ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
-  mdu mdu(.*); // multiply and divide unit
-  fpu fpu(.*); // floating point unit
-  dcu dcu(.*); // data cache unit
-  ebu ebu(.*); // external bus to memory and peripherals */
-//  privileged pcu(.*); // privileged control unit CSRs, traps, privilege mode
-  hazard     hzu(.*);	// global stall and flush control
-
-  // Priveleged block operates in M and W stages, handling CSRs and exceptions
-//  privileged priv(.IllegalInstrFaultInM(IllegalInstrFaultM), .*);
-
-
-  // add FPU here, with SetFflagsM, FRM_REGW
-  // presently stub out SetFlagsM and FloatRegWriteW
-  assign SetFflagsM = 0;
-  //assign FloatRegWriteW = 0;
-             
+  controller c(.*);
+  datapath   dp(.*);             
 endmodule
