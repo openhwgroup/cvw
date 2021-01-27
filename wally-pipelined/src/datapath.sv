@@ -50,27 +50,32 @@ module datapath (
   // Memory stage signals
   input  logic        FlushM,
   input  logic [1:0]  MemRWM,
-  input  logic        CSRWriteM, PrivilegedM, 
-  input  logic        InstrAccessFaultM, IllegalInstrFaultM,
-  input  logic        TimerIntM, ExtIntM, SwIntM,
-  output logic        InstrMisalignedFaultM,
   input  logic [2:0]  Funct3M,
+  output logic [31:0]     InstrM,
+  output logic [`XLEN-1:0] SrcAM,
+  output logic [`XLEN-1:0] PCM,
+  input  logic [`XLEN-1:0] CSRReadValM,
+  input  logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic [`XLEN-1:0] WriteDataM, ALUResultM,
+  output logic [`XLEN-1:0] InstrMisalignedAdrM,
   input  logic [`XLEN-1:0] ReadDataM,
   output logic [7:0]  ByteMaskM,
-  output logic        RetM, TrapM,
-  input  logic [4:0]  SetFflagsM,
+  input  logic        RetM, TrapM,
   input  logic        DataAccessFaultM,
+  output logic InstrMisalignedFaultM,
+  output logic LoadMisalignedFaultM, LoadAccessFaultM, // *** eventually move these to the memory interface, along with memdp
+  output logic StoreMisalignedFaultM, StoreAccessFaultM,
   // Writeback stage signals
   input  logic        FlushW,
   input  logic        RegWriteW, 
   input  logic [1:0]  ResultSrcW,
   input  logic        InstrValidW,
   input  logic        FloatRegWriteW,
-  output logic [2:0]  FRM_REGW,
   // Hazard Unit signals 
   output logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]  RdE, RdM, RdW);
+
+
 
   // Fetch stage signals
   logic [`XLEN-1:0] PCPlus2or4F;
@@ -91,16 +96,8 @@ module datapath (
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] TargetBaseE;
   // Memory stage signals
-  logic [31:0]     InstrM;
-  logic [`XLEN-1:0] PCM;
-  logic [`XLEN-1:0] SrcAM;
   logic [`XLEN-1:0] ReadDataExtM;
   logic [`XLEN-1:0] WriteDataFullM;
-  logic [`XLEN-1:0] CSRReadValM;
-  logic [`XLEN-1:0] PrivilegedNextPCM;
-  logic            LoadMisalignedFaultM, LoadAccessFaultM;
-  logic            StoreMisalignedFaultM, StoreAccessFaultM;
-  logic [`XLEN-1:0] InstrMisalignedAdrM;
   // Writeback stage signals
   logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] ReadDataW;
@@ -156,9 +153,6 @@ module datapath (
   
   memdp memdp(.AdrM(ALUResultM), .*);
   
-  // Priveleged block operates in M and W stages, handling CSRs and exceptions
-  privileged priv(.IllegalInstrFaultInM(IllegalInstrFaultM), .*);
-
   // Writeback stage pipeline register and logic
   floprc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ALUResultM, ALUResultW);
   floprc #(`XLEN) ReadDataWReg(clk, reset, FlushW, ReadDataExtM, ReadDataW);

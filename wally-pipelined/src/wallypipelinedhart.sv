@@ -38,27 +38,22 @@ module wallypipelinedhart (
   input  logic            InstrAccessFaultF,
   input  logic            DataAccessFaultM);
 
-/*
-//  logic [2:0]  Funct3D;
-//  logic        Funct7b5D;
-//  logic [6:0]  OpD;
-//  logic [2:0]  ImmSrcD;
-//  logic        IllegalCompInstrD;
-//  logic [2:0]  FlagsE;
-//  logic [4:0]  ALUControlE;
-//  logic        ALUSrcAE, ALUSrcBE;
-//  logic        CSRWriteM;
-//  logic        PrivilegedM;
-//  logic        IllegalInstrFaultM;
-  logic        InstrAccessFaultM;
-  logic [2:0]  Funct3M;
-  logic [1:0]  ResultSrcW;
-  logic        InstrValidW;
-  logic        InstrMisalignedFaultM;
-*/
   logic [1:0]  ForwardAE, ForwardBE;
   logic        StallF, StallD, FlushD, FlushE, FlushM, FlushW;
   logic        RetM, TrapM;
+
+  // new signals that must connect through DP
+  logic        CSRWriteM, PrivilegedM;
+  logic [`XLEN-1:0] SrcAM;
+  logic [31:0] InstrM;
+  logic [`XLEN-1:0] PCM;
+  logic [`XLEN-1:0] CSRReadValM;
+  logic [`XLEN-1:0] PrivilegedNextPCM;
+  logic InstrValidW;
+  logic InstrMisalignedFaultM, IllegalIEUInstrFaultD;
+  logic LoadMisalignedFaultM, LoadAccessFaultM;
+  logic StoreMisalignedFaultM, StoreAccessFaultM;
+  logic [`XLEN-1:0] InstrMisalignedAdrM;
 
   logic        PCSrcE;
   logic        RegWriteM;
@@ -82,8 +77,27 @@ module wallypipelinedhart (
   hazard     hzu(.*);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
-//  privileged priv(.IllegalInstrFaultInM(IllegalInstrFaultM), .*);
+  privileged priv(.*);
 
+/*
+  input  logic clk, reset,
+  input  logic        CSRWriteM,
+  input  logic [`XLEN-1:0] SrcAM,
+  input  logic [31:0] InstrM,
+  input  logic [`XLEN-1:0] PCM,
+  output logic [`XLEN-1:0] CSRReadValM,
+  output logic [`XLEN-1:0] PrivilegedNextPCM,
+  output logic RetM, TrapM,
+  input  logic InstrValidW, FloatRegWriteW, LoadStallD,
+  input  logic PrivilegedM,
+  input  logic InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultInM,
+  input  logic LoadMisalignedFaultM, LoadAccessFaultM,
+  input  logic StoreMisalignedFaultM, StoreAccessFaultM,
+  input  logic TimerIntM, ExtIntM, SwIntM,
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM,
+  input  logic [4:0]      SetFflagsM,
+  output logic [2:0]      FRM_REGW
+*/
 
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW

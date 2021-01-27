@@ -33,8 +33,6 @@ module ieu (
   output logic [7:0]      ByteMaskM,
   output logic [`XLEN-1:0] ALUResultM, WriteDataM,
   input  logic [`XLEN-1:0] ReadDataM,
-  input  logic            TimerIntM, ExtIntM, SwIntM,
-  input  logic            InstrAccessFaultF,
   input  logic            DataAccessFaultM,
   input  logic [1:0]      ForwardAE, ForwardBE,
   input  logic            StallF, StallD, FlushD, FlushE, FlushM, FlushW,
@@ -42,12 +40,22 @@ module ieu (
   output logic        RegWriteM,
   output logic 	     MemReadE,
   output logic        RegWriteW,
+  output logic        CSRWriteM, PrivilegedM,
   output logic        CSRWritePendingDEM,
+  output logic [31:0]     InstrM,
+  output logic [`XLEN-1:0] SrcAM,
+  output logic [`XLEN-1:0] PCM,
+  input  logic [`XLEN-1:0] CSRReadValM,
+  input   logic [`XLEN-1:0] PrivilegedNextPCM, // *** eentually move to ifu
+  output logic [`XLEN-1:0] InstrMisalignedAdrM,
+  output logic InstrMisalignedFaultM,
+  output logic LoadMisalignedFaultM, LoadAccessFaultM, // *** eventually move these to the memory interface, along with memdp
+  output logic StoreMisalignedFaultM, StoreAccessFaultM,
+  output  logic        IllegalIEUInstrFaultD,
   output logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input  logic [4:0] SetFflagsM,
-  output logic [2:0] FRM_REGW,
   output logic       FloatRegWriteW,
-  output logic        RetM, TrapM,
+  output logic       InstrValidW,
+  input  logic        RetM, TrapM,
   input logic        LoadStallD
 
 );
@@ -58,25 +66,12 @@ module ieu (
   logic [2:0]  ImmSrcD;
   logic        IllegalCompInstrD;
   logic [2:0]  FlagsE;
-//  logic        PCSrcE;
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
-//  logic 	     MemReadE;
-//  logic        RegWriteM;
-  logic        CSRWriteM;
-  logic        PrivilegedM;
   logic        IllegalInstrFaultM;
-  logic        InstrAccessFaultM;
   logic [2:0]  Funct3M;
   logic [1:0]  ResultSrcW;
-//  logic        RegWriteW;
-  logic        InstrValidW;
-  // logic LoadStallD;
-// logic        CSRWritePendingDEM;
-  logic        InstrMisalignedFaultM;
 
-
-//  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
   logic       TargetSrcE;
            
   controller c(.*);

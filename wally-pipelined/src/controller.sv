@@ -34,7 +34,8 @@ module controller(
   input logic 	     Funct7b5D,
   output logic [2:0] ImmSrcD,
   input logic        StallD, FlushD, 
-  input logic        IllegalCompInstrD,
+  input logic        IllegalCompInstrD, 
+  output logic       IllegalIEUInstrFaultD,
   // Execute stage control signals
   input logic 	     FlushE, 
   input logic  [2:0] FlagsE, 
@@ -46,7 +47,7 @@ module controller(
   // Memory stage control signals
   input  logic       FlushM,
   output logic [1:0] MemRWM,
-  output logic       CSRWriteM, PrivilegedM, IllegalInstrFaultM,
+  output logic       CSRWriteM, PrivilegedM, 
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit	
   // Writeback stage control signals
@@ -55,10 +56,8 @@ module controller(
   output logic [1:0] ResultSrcW,
   output logic       InstrValidW,
   // Stall during CSRs
-  output logic       CSRWritePendingDEM,
-  // Exceptions
-  input  logic       InstrAccessFaultF,
-  output logic       InstrAccessFaultM);
+  output logic       CSRWritePendingDEM
+);
 
   // pipelined control signals
   logic 	    RegWriteD, RegWriteE;
@@ -74,8 +73,6 @@ module controller(
   logic [2:0] Funct3E;
   logic       InstrValidE, InstrValidM;
   logic       PrivilegedD, PrivilegedE;
-  logic       InstrAccessFaultD, InstrAccessFaultE;
-  logic       IllegalInstrFaultD, IllegalInstrFaultE;
   logic [18:0] ControlsD;
   logic        PreIllegalInstrFaultD;
   logic        aluc3D;
@@ -83,8 +80,6 @@ module controller(
   logic        BranchTakenE;
   logic        zeroE, ltE, ltuE;
 	
-  // Decode stage pipeline control register and logic
-  flopenrc #(1) controlregD(clk, reset, FlushD, ~StallD, InstrAccessFaultF, InstrAccessFaultD);
 
   // Main Instruction Decoder
   always_comb
@@ -115,7 +110,7 @@ module controller(
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD,
           PrivilegedD, PreIllegalInstrFaultD} = ControlsD & ~IllegalCompInstrD;
-  assign IllegalInstrFaultD = PreIllegalInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
+  assign IllegalIEUInstrFaultD = PreIllegalInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
 
   // ALU Decoding
   assign sltD = (Funct3D == 3'b010);
@@ -134,9 +129,9 @@ module controller(
     endcase
   
   // Execute stage pipeline control register and logic
-  floprc #(23) controlregE(clk, reset, FlushE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, IllegalInstrFaultD, InstrAccessFaultD, Funct3D, 1'b1},
-                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, IllegalInstrFaultE, InstrAccessFaultE, Funct3E, InstrValidE});
+  floprc #(21) controlregE(clk, reset, FlushE,
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, 1'b1},
+                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE});
 
 
   // Branch Logic
@@ -158,9 +153,9 @@ module controller(
   assign MemReadE = MemRWE[1]; 
   
   // Memory stage pipeline control register
-  floprc #(13) controlregM(clk, reset, FlushM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRWriteE, PrivilegedE, IllegalInstrFaultE, InstrAccessFaultE, Funct3E, InstrValidE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRWriteM, PrivilegedM, IllegalInstrFaultM, InstrAccessFaultM, Funct3M, InstrValidM});
+  floprc #(11) controlregM(clk, reset, FlushM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRWriteM, PrivilegedM, Funct3M, InstrValidM});
   
   // Writeback stage pipeline control register
   floprc #(4) controlregW(clk, reset, FlushW,
