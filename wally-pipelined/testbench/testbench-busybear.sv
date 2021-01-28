@@ -180,6 +180,8 @@ module testbench_busybear();
         16'bXXXXXXXXX1101111, // JAL
         16'bXXXXXXXXX1100111, // JALR
         16'bXXXXXXXXX1100011, // B
+        16'b110XXXXXXXXXXX01, // C.BEQZ
+        16'b111XXXXXXXXXXX01, // C.BNEZ
         16'b101XXXXXXXXXXX01: // C.J
           speculative = 1;
         16'b1001000000000010: // C.EBREAK:
