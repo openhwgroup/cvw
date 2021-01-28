@@ -21,7 +21,7 @@ module testbench_busybear();
   assign DataAccessFaultM = 0;
    
   // instantiate processor and memories
-  wallypipelinedhart dut(.ALUResultM(DataAdrM), .*);
+  wallypipelinedhart dut(.*);
 
   // initialize test
   initial
