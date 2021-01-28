@@ -37,7 +37,7 @@ module trap (
   input  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
   input  logic [11:0]     MIP_REGW, MIE_REGW,
   input  logic            STATUS_MIE, STATUS_SIE,
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM, 
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, DataAdrM, 
   input  logic [31:0]     InstrM,
   output logic            TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
@@ -107,11 +107,11 @@ module trap (
   
   always_comb 
     if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
-    else if (LoadMisalignedFaultM)  NextFaultMtvalM = ALUResultM;
-    else if (StoreMisalignedFaultM) NextFaultMtvalM = ALUResultM;
+    else if (LoadMisalignedFaultM)  NextFaultMtvalM = DataAdrM;
+    else if (StoreMisalignedFaultM) NextFaultMtvalM = DataAdrM;
     else if (InstrPageFaultM)       NextFaultMtvalM = 0; // *** implement
-    else if (LoadPageFaultM)        NextFaultMtvalM = ALUResultM;
-    else if (StorePageFaultM)       NextFaultMtvalM = ALUResultM;
+    else if (LoadPageFaultM)        NextFaultMtvalM = DataAdrM;
+    else if (StorePageFaultM)       NextFaultMtvalM = DataAdrM;
     else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
     else                            NextFaultMtvalM = 0;
 endmodule

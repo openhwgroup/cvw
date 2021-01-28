@@ -41,7 +41,7 @@ module privileged (
   input  logic LoadMisalignedFaultM, LoadAccessFaultM,
   input  logic StoreMisalignedFaultM, StoreAccessFaultM,
   input  logic TimerIntM, ExtIntM, SwIntM,
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM,
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, DataAdrM,
   input  logic [4:0]      SetFflagsM,
   output logic [2:0]      FRM_REGW,
   input  logic FlushD, FlushE, FlushM, StallD

@@ -70,7 +70,7 @@ module wallypipelined (
   logic        ExtIntM = 0; // not yet connected
    
   // instantiate processor and memories
-  wallypipelinedhart hart(.ALUResultM(DataAdrM), .*);
+  wallypipelinedhart hart(.*);
 
   imem imem(.AdrF(PCF[`XLEN-1:1]), .*);
   dmem dmem(.AdrM(DataAdrM), .*);

@@ -45,18 +45,12 @@ module datapath (
   output logic [`XLEN-1:0] PCTargetE,
   // Memory stage signals
   input  logic        FlushM,
-  input  logic [1:0]  MemRWM,
   input  logic [2:0]  Funct3M,
   output logic [`XLEN-1:0] SrcAM,
   input  logic [`XLEN-1:0] CSRReadValM,
-  input  logic [`XLEN-1:0] PrivilegedNextPCM,
-  output logic [`XLEN-1:0] WriteDataM, ALUResultM,
-  input  logic [`XLEN-1:0] ReadDataM,
-  output logic [7:0]  ByteMaskM,
+  output logic [`XLEN-1:0] WriteDataFullM, DataAdrM,
+  input  logic [`XLEN-1:0] ReadDataExtM,
   input  logic        RetM, TrapM,
-  input  logic        DataAccessFaultM,
-  output logic LoadMisalignedFaultM, LoadAccessFaultM, // *** eventually move these to the memory interface, along with memdp
-  output logic StoreMisalignedFaultM, StoreAccessFaultM,
   // Writeback stage signals
   input  logic        FlushW,
   input  logic        RegWriteW, 
@@ -80,8 +74,7 @@ module datapath (
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] TargetBaseE;
   // Memory stage signals
-  logic [`XLEN-1:0] ReadDataExtM;
-  logic [`XLEN-1:0] WriteDataFullM;
+  logic [`XLEN-1:0] ALUResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] ReadDataW;
@@ -114,10 +107,9 @@ module datapath (
   // Memory stage pipeline register
   floprc #(`XLEN) SrcAMReg(clk, reset, FlushM, SrcAE, SrcAM);
   floprc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ALUResultE, ALUResultM);
+  assign DataAdrM = ALUResultM;
   floprc #(`XLEN) WriteDataMReg(clk, reset, FlushM, WriteDataE, WriteDataFullM);
   floprc #(5)    RdMEg(clk, reset, FlushM, RdE, RdM);
-  
-  memdp memdp(.AdrM(ALUResultM), .*);
   
   // Writeback stage pipeline register and logic
   floprc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ALUResultM, ALUResultW);
