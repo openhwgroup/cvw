@@ -43,7 +43,7 @@ module ieu (
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] PCTargetE,
   input  logic [31:0] InstrD,
-  input  logic [`XLEN-1:0] PCE, PCW,
+  input  logic [`XLEN-1:0] PCE, PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValM,
   input   logic [`XLEN-1:0] PrivilegedNextPCM, // *** eventually move to ifu
   output logic LoadMisalignedFaultM, LoadAccessFaultM, // *** eventually move these to the memory interface, along with memdp

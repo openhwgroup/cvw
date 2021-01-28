@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// instrDecompress.sv
+// decompress.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module instrDecompress (
+module decompress (
   input  logic [31:0]     InstrRawD,
   output logic [31:0]     InstrD,
   output logic            IllegalCompInstrD);
