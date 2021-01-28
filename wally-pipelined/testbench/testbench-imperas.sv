@@ -241,6 +241,7 @@ string tests32i[] = {
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
+  assign UARTSin = 1;
   wallypipelined dut(
     clk, reset, WriteData, DataAdr, MemRW, 
     GPIOPinsIn, GPIOPinsOut, GPIOPinsEn, UARTSin, UARTSout
@@ -248,8 +249,8 @@ string tests32i[] = {
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ieu.dp.InstrDecompD, dut.hart.ieu.dp.InstrE,
-                dut.hart.ieu.dp.InstrM,  InstrW,
+                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize test

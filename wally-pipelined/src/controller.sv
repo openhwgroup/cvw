@@ -34,8 +34,8 @@ module controller(
   input logic 	     Funct7b5D,
   output logic [2:0] ImmSrcD,
   input logic        StallD, FlushD, 
-  input logic        IllegalCompInstrD, 
-  output logic       IllegalIEUInstrFaultD,
+  input logic        IllegalIEUInstrFaultD, 
+  output logic       IllegalBaseInstrFaultD,
   // Execute stage control signals
   input logic 	     FlushE, 
   input logic  [2:0] FlagsE, 
@@ -74,7 +74,6 @@ module controller(
   logic       InstrValidE, InstrValidM;
   logic       PrivilegedD, PrivilegedE;
   logic [18:0] ControlsD;
-  logic        PreIllegalInstrFaultD;
   logic        aluc3D;
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;
@@ -107,10 +106,11 @@ module controller(
 
   // unswizzle control bits
   // squash control signals if coming from an illegal compressed instruction
+  assign IllegalBaseInstrFaultD = ControlsD[0];
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD,
-          PrivilegedD, PreIllegalInstrFaultD} = ControlsD & ~IllegalCompInstrD;
-  assign IllegalIEUInstrFaultD = PreIllegalInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
+          PrivilegedD} = ControlsD[18:1] & ~IllegalIEUInstrFaultD;
+          // *** move Privileged, CSRwrite
 
   // ALU Decoding
   assign sltD = (Funct3D == 3'b010);
@@ -132,7 +132,6 @@ module controller(
   floprc #(21) controlregE(clk, reset, FlushE,
                            {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, 1'b1},
                            {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE});
-
 
   // Branch Logic
   assign {zeroE, ltE, ltuE} = FlagsE;

@@ -77,7 +77,7 @@ module gpio (
         if (reset) begin
           INPUT_EN <= 0;
           OUTPUT_EN <= 0;
-          // OUTPUT_VAL <= 0; // spec indicates synchronous rset (software control)
+          OUTPUT_VAL <= 0; // spec indicates synchronous reset (software control)
         end else if (memwrite) begin
           if (entry == 8'h00) INPUT_EN <= MaskedWriteDataM[63:32];
           if (entry == 8'h08) {OUTPUT_VAL, OUTPUT_EN} <= MaskedWriteDataM;

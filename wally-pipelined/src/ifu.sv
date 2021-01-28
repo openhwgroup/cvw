@@ -1,10 +1,11 @@
 ///////////////////////////////////////////
-// pclogic.sv
+// ifu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Determine Program Counter considering branches, exceptions, ret, reset
+// Purpose: Instrunction Fetch Unit
+//           PC, branch prediction, instruction cache
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,31 +26,41 @@
 
 `include "wally-config.vh"
 
-module pclogic (
+module ifu (
   input  logic            clk, reset,
-  input  logic            StallF, PCSrcE, 
+  input  logic            StallF, StallD, FlushD, FlushE, FlushM, FlushW,
+  input  logic            PCSrcE, 
   input  logic [31:0]     InstrF,
-  input  logic [`XLEN-1:0] ExtImmE, TargetBaseE,
+  input  logic [`XLEN-1:0] PCTargetE,
   input  logic            RetM, TrapM, 
   input  logic [`XLEN-1:0] PrivilegedNextPCM, 
-  output logic [`XLEN-1:0] PCF, PCPlus2or4F,
+  output logic [31:0]     InstrD, InstrM,
+  output logic [`XLEN-1:0] PCF, PCE, PCM, PCW, 
+  input  logic            IllegalBaseInstrFaultD,
+  output logic            IllegalIEUInstrFaultD,
   output logic            InstrMisalignedFaultM,
-  output logic [`XLEN-1:0] InstrMisalignedAdrM);
+  output logic [`XLEN-1:0] InstrMisalignedAdrM
+);
 
-  logic [`XLEN-1:0] UnalignedPCNextF, PCNextF, PCTargetE;
+  logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
-  logic [`XLEN-3:0] PCPlusUpperF;
+  logic IllegalCompInstrD;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD;
   logic        CompressedF;
+  logic [31:0]     InstrRawD, InstrE;
+  logic [31:0]     nop = 32'h00000013; // instruction for NOP
+
+  // *** put memory interface on here, InstrF becomes output
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
   assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
 
-  assign  PCTargetE = ExtImmE + TargetBaseE;
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
+
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -62,6 +73,15 @@ module pclogic (
       if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
+
+
+  // Decode stage pipeline register and logic
+  flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrRawD);
+  flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
+   
+  instrDecompress decomp(.*);
+  assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
+  // *** combine these with others in better way, including M, F
 
   // Misaligned PC logic
 
@@ -79,5 +99,11 @@ module pclogic (
   assign TrapMisalignedFaultM = misaligned & PrivilegedChangePCM;
   assign InstrMisalignedFaultM = BranchMisalignedFaultM; // | TrapMisalignedFaultM; *** put this back in without causing a cyclic path
   
+  flopr  #(32)   InstrEReg(clk, reset, FlushE ? nop : InstrD, InstrE);
+  flopr  #(32)   InstrMReg(clk, reset, FlushM ? nop : InstrE, InstrM);
+  floprc #(`XLEN) PCEReg(clk, reset, FlushE, PCD, PCE);
+  floprc #(`XLEN) PCMReg(clk, reset, FlushM, PCE, PCM);
+  floprc #(`XLEN) PCWReg(clk, reset, FlushW, PCM, PCW);
+
 endmodule
 

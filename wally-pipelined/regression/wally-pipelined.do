@@ -45,30 +45,29 @@ view wave
 add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
-add wave -hex /testbench/dut/hart/ieu/dp/PCF
-add wave -hex /testbench/dut/hart/ieu/dp/InstrF
+add wave -hex /testbench/dut/hart/ifu/PCF
+add wave -hex /testbench/dut/hart/ifu/InstrF
 add wave /testbench/InstrFName
-#add wave -hex /testbench/dut/hart/ieu/dp/PCD
-add wave -hex /testbench/dut/hart/ieu/dp/InstrD
+#add wave -hex /testbench/dut/hart/ifu/PCD
+add wave -hex /testbench/dut/hart/ifu/InstrD
 add wave /testbench/InstrDName
 add wave -divider
-#add wave -hex /testbench/dut/hart/ieu/dp/PCE
-#add wave -hex /testbench/dut/hart/ieu/dp/InstrE
+#add wave -hex /testbench/dut/hart/ifu/PCE
+#add wave -hex /testbench/dut/hart/ifu/InstrE
 add wave /testbench/InstrEName
 add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
 add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
 add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 add wave /testbench/dut/hart/ieu/dp/PCSrcE
 add wave -divider
-#add wave -hex /testbench/dut/hart/ieu/dp/PCM
-#add wave -hex /testbench/dut/hart/ieu/dp/InstrM
+#add wave -hex /testbench/dut/hart/ifu/PCM
+#add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
 add wave /testbench/dut/dmem/dtim/memwrite
 add wave -hex /testbench/dut/dmem/AdrM
 add wave -hex /testbench/dut/dmem/WriteDataM
 add wave -divider
-add wave -hex /testbench/dut/hart/ieu/dp/PCW
-#add wave -hex /testbench/dut/hart/ieu/dp/InstrW
+add wave -hex /testbench/dut/hart/ifu/PCW
 add wave /testbench/InstrWName
 add wave /testbench/dut/hart/ieu/dp/RegWriteW
 add wave -hex /testbench/dut/hart/ieu/dp/ResultW
