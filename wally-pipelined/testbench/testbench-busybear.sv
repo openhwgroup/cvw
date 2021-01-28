@@ -175,8 +175,8 @@ module testbench_busybear();
   logic [31:0] InstrW;
   instrNameDecTB dec(InstrF, InstrFName);
   instrTrackerTB it(clk, reset, dut.ieu.dp.FlushE,
-                dut.ieu.dp.InstrDecompD, dut.ieu.dp.InstrE,
-                dut.ieu.dp.InstrM,  InstrW,
+                dut.ifu.InstrD, dut.ifu.InstrE,
+                dut.ifu.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
   // generate clock to sequence tests
