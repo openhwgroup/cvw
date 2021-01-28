@@ -76,7 +76,7 @@ module testbench_busybear();
   genvar i;
   generate
   for(i=1; i<32; i++) begin
-    assign rf[i*64+63:i*64] = dut.dp.regf.rf[i];
+    assign rf[i*64+63:i*64] = dut.ieu.dp.regf.rf[i];
   end
   endgenerate
 
@@ -174,9 +174,9 @@ module testbench_busybear();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   instrNameDecTB dec(InstrF, InstrFName);
-  instrTrackerTB it(clk, reset, dut.dp.FlushE,
-                dut.dp.InstrDecompD, dut.dp.InstrE,
-                dut.dp.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.ieu.dp.FlushE,
+                dut.ieu.dp.InstrDecompD, dut.ieu.dp.InstrE,
+                dut.ieu.dp.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
   // generate clock to sequence tests
