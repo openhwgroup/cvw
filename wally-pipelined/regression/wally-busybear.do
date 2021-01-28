@@ -54,6 +54,7 @@ add wave -hex /testbench_busybear/MemRWM[0]
 add wave -hex /testbench_busybear/MemRWM[1]
 add wave -hex /testbench_busybear/ByteMaskM
 add wave -hex /testbench_busybear/WriteDataM
+add wave -hex /testbench_busybear/ReadDataM
 add wave -hex /testbench_busybear/DataAdrM
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[1]
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[2]
