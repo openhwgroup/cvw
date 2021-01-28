@@ -163,15 +163,22 @@ module testbench_busybear();
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
-      if (instrs > 175 || instrs % 10 == 0) begin
+      if (instrs < 10 || (instrs < 100 && instrs % 10 == 0) ||
+        (instrs < 1000 && instrs % 50 == 0) || instrs > 205) begin
         $display("loaded %0d instructions", instrs);
       end
       instrs += 1;
       // are we at a branch/jump?
-      case (lastInstrF[6:0]) //todo: add C versions of these
-        7'b1101111, //JAL
-        7'b1100111, //JALR
-        7'b1100011: //B
+      casex (lastInstrF[15:0]) 
+        16'bXXXXXXXXX1101111, // JAL
+        16'bXXXXXXXXX1100111, // JALR
+        16'bXXXXXXXXX1100011, // B
+        16'b101XXXXXXXXXXX01: // C.J
+          speculative = 1;
+        16'b1001000000000010: // C.EBREAK:
+          speculative = 0; // tbh don't really know what should happen here
+        16'b1000XXXXX0000010, // C.JR
+        16'b1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
           speculative = 1;
         default:
           speculative = 0;
