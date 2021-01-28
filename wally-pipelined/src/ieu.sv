@@ -56,7 +56,6 @@ module ieu (
   logic [2:0]  FlagsE;
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
-  logic        IllegalInstrFaultM;
   logic [2:0]  Funct3M;
   logic [1:0]  ResultSrcW;
 

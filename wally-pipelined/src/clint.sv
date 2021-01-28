@@ -67,6 +67,7 @@ module clint (
         if (reset) begin
           MSIP <= 0;
           MTIME <= 0;
+          MTIMECMP <= 0;
           // MTIMECMP is not reset
         end else if (memwrite) begin
           if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
@@ -90,6 +91,7 @@ module clint (
         if (reset) begin
           MSIP <= 0;
           MTIME <= 0;
+          MTIMECMP <= 0;
           // MTIMECMP is not reset
         end else if (memwrite) begin
           if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
