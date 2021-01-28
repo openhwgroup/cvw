@@ -27,44 +27,36 @@
 
 module ieu (
   input  logic            clk, reset,
-  output logic [`XLEN-1:0] PCF,
-  input  logic [31:0]     InstrF,
   output logic [1:0]      MemRWM,
   output logic [7:0]      ByteMaskM,
   output logic [`XLEN-1:0] ALUResultM, WriteDataM,
   input  logic [`XLEN-1:0] ReadDataM,
   input  logic            DataAccessFaultM,
   input  logic [1:0]      ForwardAE, ForwardBE,
-  input  logic            StallF, StallD, FlushD, FlushE, FlushM, FlushW,
+  input  logic            StallD, FlushD, FlushE, FlushM, FlushW,
   output logic        PCSrcE,
   output logic        RegWriteM,
   output logic 	     MemReadE,
   output logic        RegWriteW,
   output logic        CSRWriteM, PrivilegedM,
   output logic        CSRWritePendingDEM,
-  output logic [31:0]     InstrM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] PCM,
+  output logic [`XLEN-1:0] PCTargetE,
+  input  logic [31:0] InstrD,
+  input  logic [`XLEN-1:0] PCE, PCW,
   input  logic [`XLEN-1:0] CSRReadValM,
-  input   logic [`XLEN-1:0] PrivilegedNextPCM, // *** eentually move to ifu
-  output logic [`XLEN-1:0] InstrMisalignedAdrM,
-  output logic InstrMisalignedFaultM,
+  input   logic [`XLEN-1:0] PrivilegedNextPCM, // *** eventually move to ifu
   output logic LoadMisalignedFaultM, LoadAccessFaultM, // *** eventually move these to the memory interface, along with memdp
   output logic StoreMisalignedFaultM, StoreAccessFaultM,
-  output  logic        IllegalIEUInstrFaultD,
+  input logic        IllegalIEUInstrFaultD, 
+  output logic       IllegalBaseInstrFaultD,
   output logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  output logic       FloatRegWriteW,
   output logic       InstrValidW,
   input  logic        RetM, TrapM,
   input logic        LoadStallD
-
 );
 
-  logic [2:0]  Funct3D;
-  logic        Funct7b5D;
-  logic [6:0]  OpD;
   logic [2:0]  ImmSrcD;
-  logic        IllegalCompInstrD;
   logic [2:0]  FlagsE;
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
@@ -74,6 +66,7 @@ module ieu (
 
   logic       TargetSrcE;
            
-  controller c(.*);
+  controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7b5D(InstrD[30]), .*);
   datapath   dp(.*);             
 endmodule
+

@@ -45,12 +45,14 @@ module wallypipelinedhart (
   // new signals that must connect through DP
   logic        CSRWriteM, PrivilegedM;
   logic [`XLEN-1:0] SrcAM;
-  logic [31:0] InstrM;
-  logic [`XLEN-1:0] PCM;
+  logic [31:0] InstrD, InstrM;
+  logic [`XLEN-1:0] PCE, PCM, PCW;
+  logic [`XLEN-1:0] PCTargetE;
   logic [`XLEN-1:0] CSRReadValM;
   logic [`XLEN-1:0] PrivilegedNextPCM;
   logic InstrValidW;
-  logic InstrMisalignedFaultM, IllegalIEUInstrFaultD;
+  logic InstrMisalignedFaultM;
+  logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;
@@ -67,41 +69,22 @@ module wallypipelinedhart (
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
            
+  ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
+
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
-/*  ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
+//  dcu dcu(.*); // data cache unit
+/*  
   mdu mdu(.*); // multiply and divide unit
   fpu fpu(.*); // floating point unit
-  dcu dcu(.*); // data cache unit
   ebu ebu(.*); // external bus to memory and peripherals */
-//  privileged pcu(.*); // privileged control unit CSRs, traps, privilege mode
   hazard     hzu(.*);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);
 
-/*
-  input  logic clk, reset,
-  input  logic        CSRWriteM,
-  input  logic [`XLEN-1:0] SrcAM,
-  input  logic [31:0] InstrM,
-  input  logic [`XLEN-1:0] PCM,
-  output logic [`XLEN-1:0] CSRReadValM,
-  output logic [`XLEN-1:0] PrivilegedNextPCM,
-  output logic RetM, TrapM,
-  input  logic InstrValidW, FloatRegWriteW, LoadStallD,
-  input  logic PrivilegedM,
-  input  logic InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultInM,
-  input  logic LoadMisalignedFaultM, LoadAccessFaultM,
-  input  logic StoreMisalignedFaultM, StoreAccessFaultM,
-  input  logic TimerIntM, ExtIntM, SwIntM,
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, ALUResultM,
-  input  logic [4:0]      SetFflagsM,
-  output logic [2:0]      FRM_REGW
-*/
-
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW
   assign SetFflagsM = 0;
-  //assign FloatRegWriteW = 0;
+  assign FloatRegWriteW = 0;
              
 endmodule
