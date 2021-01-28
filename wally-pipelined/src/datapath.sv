@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Wally Datapath
+// Purpose: Wally Integer Datapath
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,39 +27,37 @@
 
 module datapath (
   input logic clk, reset,
-  // Fetch stage signals
   // Decode stage signals
-  input  logic        StallD, FlushD,
-  input  logic [2:0]  ImmSrcD,
-  input  logic        LoadStallD, // for performance counter
-  input  logic [31:0] InstrD,
+  input  logic             StallD, FlushD,
+  input  logic [2:0]       ImmSrcD,
+  input  logic [31:0]      InstrD,
   // Execute stage signals
-  input  logic        FlushE,
-  input  logic [1:0]  ForwardAE, ForwardBE,
-  input  logic        PCSrcE,
-  input  logic [4:0]  ALUControlE,
-  input  logic        ALUSrcAE, ALUSrcBE,
-  input  logic        TargetSrcE, 
+  input  logic             FlushE,
+  input  logic [1:0]       ForwardAE, ForwardBE,
+  input  logic             PCSrcE,
+  input  logic [4:0]       ALUControlE,
+  input  logic             ALUSrcAE, ALUSrcBE,
+  input  logic             TargetSrcE, 
   input  logic [`XLEN-1:0] PCE,
-  output logic [2:0]  FlagsE,
+  output logic [2:0]       FlagsE,
   output logic [`XLEN-1:0] PCTargetE,
   // Memory stage signals
-  input  logic        FlushM,
-  input  logic [2:0]  Funct3M,
-  output logic [`XLEN-1:0] SrcAM,
+  input  logic             FlushM,
+  input  logic [2:0]       Funct3M,
   input  logic [`XLEN-1:0] CSRReadValM,
-  output logic [`XLEN-1:0] WriteDataFullM, DataAdrM,
   input  logic [`XLEN-1:0] ReadDataExtM,
-  input  logic        RetM, TrapM,
+  input  logic             RetM, TrapM,
+  output logic [`XLEN-1:0] SrcAM,
+  output logic [`XLEN-1:0] WriteDataFullM, DataAdrM,
   // Writeback stage signals
-  input  logic        FlushW,
-  input  logic        RegWriteW, 
-  input  logic [1:0]  ResultSrcW,
+  input  logic             FlushW,
+  input  logic             RegWriteW, 
+  input  logic [1:0]       ResultSrcW,
   input  logic [`XLEN-1:0] PCLinkW,
-
   // Hazard Unit signals 
-  output logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E,
-  output logic [4:0]  RdE, RdM, RdW);
+  output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
+  output logic [4:0]       RdE, RdM, RdW
+);
 
   // Fetch stage signals
   // Decode stage signals

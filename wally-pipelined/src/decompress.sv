@@ -149,7 +149,7 @@ module decompress (
                         InstrD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000011}; // c.ldsp
             5'b10100: if (instr16[12] == 0)
                         if (instr16[6:2] == 5'b00000) 
-                          InstrD = {7'b0000000, 5'b00000, rds1, 3'b000, 5'b00001, 7'b1100111}; // c.jalr
+                          InstrD = {7'b0000000, 5'b00000, rds1, 3'b000, 5'b00000, 7'b1100111}; // c.jr
                         else
                           InstrD = {7'b0000000, rs2, 5'b00000, 3'b000, rds1, 7'b0110011}; // c.mv
                       else
