@@ -82,12 +82,12 @@ module testbench_busybear();
 
   always @(rf) begin
     for(int j=1; j<32; j++) begin
-      // read 31 integer registers
-      scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
       if($feof(data_file_rf)) begin
         $display("no more rf data to read");
         $stop;
       end
+      // read 31 integer registers
+      scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
       // check things!
       if (rf[j*64+63 -: 64] != rfExpected[j]) begin
         $display("%t ps: rf[%0d] does not equal rf expected: %x, %x", $time, j, rf[j*64+63 -: 64], rfExpected[j]);
@@ -96,10 +96,19 @@ module testbench_busybear();
     end
   end
 
+  logic [`XLEN-1:0] readAdrExpected;
   // this might need to change
   always @(MemRWM[1] or DataAdrM) begin
     if (MemRWM[1]) begin
+      if($feof(data_file_memR)) begin
+        $display("no more memR data to read");
+        $stop;
+      end
+      scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
       scan_file_memR = $fscanf(data_file_memR, "%x\n", ReadDataM);
+      if (DataAdrM != readAdrExpected) begin
+        $display("%t ps: DataAdrM does not equal readAdrExpected: %x, %x", $time, DataAdrM, readAdrExpected);
+      end
     end
   end
 
@@ -108,6 +117,10 @@ module testbench_busybear();
   always @(WriteDataM or DataAdrM or ByteMaskM) begin
     #1;
     if (MemRWM[0]) begin
+      if($feof(data_file_memW)) begin
+        $display("no more memW data to read");
+        $stop;
+      end
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
       if (writeDataExpected != WriteDataM) begin
@@ -140,6 +153,10 @@ module testbench_busybear();
     end
     else begin
     //if (~speculative) begin
+      if($feof(data_file_PC)) begin
+        $display("no more PC data to read");
+        $stop;
+      end
       // first read instruction
       scan_file_PC = $fscanf(data_file_PC, "%s %s\n", PCtext, PCtext2);
       PCtext = {PCtext, " ", PCtext2};
@@ -148,10 +165,6 @@ module testbench_busybear();
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
       $display("loaded %0d instructions", instrs);
       instrs += 1;
-      if($feof(data_file_PC)) begin
-        $display("no more PC data to read");
-        $stop;
-      end
       // are we at a branch/jump?
       case (lastInstrF[6:0]) //todo: add C versions of these
         7'b1101111, //JAL
