@@ -42,8 +42,8 @@ add wave /testbench_busybear/reset
 add wave -divider
 add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
-add wave -hex /testbench_busybear/dut/ieu/dp/PCF
-add wave -hex /testbench_busybear/dut/ieu/dp/InstrF
+add wave -hex /testbench_busybear/dut/ifu/PCF
+add wave -hex /testbench_busybear/dut/ifu/InstrF
 add wave /testbench_busybear/lastInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
@@ -87,27 +87,27 @@ add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[29]
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[30]
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[31]
 add wave /testbench_busybear/InstrFName
-add wave -hex /testbench_busybear/dut/ieu/dp/PCD
-#add wave -hex /testbench_busybear/dut/ieu/dp/InstrD
+add wave -hex /testbench_busybear/dut/ifu/PCD
+#add wave -hex /testbench_busybear/dut/ifu/InstrD
 add wave /testbench_busybear/InstrDName
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ieu/dp/PCE
-##add wave -hex /testbench_busybear/dut/ieu/dp/InstrE
+add wave -hex /testbench_busybear/dut/ifu/PCE
+##add wave -hex /testbench_busybear/dut/ifu/InstrE
 add wave /testbench_busybear/InstrEName
 #add wave -hex /testbench_busybear/dut/ieu/dp/SrcAE
 #add wave -hex /testbench_busybear/dut/ieu/dp/SrcBE
 add wave -hex /testbench_busybear/dut/ieu/dp/ALUResultE
 #add wave /testbench_busybear/dut/ieu/dp/PCSrcE
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ieu/dp/PCM
-##add wave -hex /testbench_busybear/dut/ieu/dp/InstrM
+add wave -hex /testbench_busybear/dut/ifu/PCM
+##add wave -hex /testbench_busybear/dut/ifu/InstrM
 add wave /testbench_busybear/InstrMName
 #add wave /testbench_busybear/dut/dmem/dtim/memwrite
 #add wave -hex /testbench_busybear/dut/dmem/AdrM
 #add wave -hex /testbench_busybear/dut/dmem/WriteDataM
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ieu/dp/PCW
-##add wave -hex /testbench_busybear/dut/ieu/dp/InstrW
+add wave -hex /testbench_busybear/dut/ifu/PCW
+##add wave -hex /testbench_busybear/dut/ifu/InstrW
 add wave /testbench_busybear/InstrWName
 #add wave /testbench_busybear/dut/ieu/dp/RegWriteW
 #add wave -hex /testbench_busybear/dut/ieu/dp/ResultW
