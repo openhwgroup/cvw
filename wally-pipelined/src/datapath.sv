@@ -61,7 +61,7 @@ module datapath (
   input  logic        FlushW,
   input  logic        RegWriteW, 
   input  logic [1:0]  ResultSrcW,
-  input  logic [`XLEN-1:0] PCW,
+  input  logic [`XLEN-1:0] PCLinkW,
 
   // Hazard Unit signals 
   output logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E,
@@ -125,5 +125,5 @@ module datapath (
   floprc #(`XLEN) CSRValWReg(clk, reset, FlushW, CSRReadValM, CSRValW);
   floprc #(5)    RdWEg(clk, reset, FlushW, RdM, RdW);
 
-  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCW, CSRValW, ResultSrcW, ResultW);	
+  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRValW, ResultSrcW, ResultW);	
 endmodule

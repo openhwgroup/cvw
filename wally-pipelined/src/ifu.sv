@@ -35,7 +35,8 @@ module ifu (
   input  logic            RetM, TrapM, 
   input  logic [`XLEN-1:0] PrivilegedNextPCM, 
   output logic [31:0]     InstrD, InstrM,
-  output logic [`XLEN-1:0] PCF, PCE, PCM, PCW, 
+  output logic [`XLEN-1:0] PCF, PCE, PCM, 
+  output logic [`XLEN-1:0] PCLinkW,
   input  logic            IllegalBaseInstrFaultD,
   output logic            IllegalIEUInstrFaultD,
   output logic            InstrMisalignedFaultM,
@@ -46,7 +47,7 @@ module ifu (
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
   logic IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM;
   logic        CompressedF;
   logic [31:0]     InstrRawD, InstrE;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
@@ -60,7 +61,6 @@ module ifu (
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
-
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -79,7 +79,8 @@ module ifu (
   flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrRawD);
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
-  instrDecompress decomp(.*);
+  // expand 16-bit compressed instructions to 32 bits
+  decompress decomp(.*);
   assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   // *** combine these with others in better way, including M, F
 
@@ -101,9 +102,16 @@ module ifu (
   
   flopr  #(32)   InstrEReg(clk, reset, FlushE ? nop : InstrD, InstrE);
   flopr  #(32)   InstrMReg(clk, reset, FlushM ? nop : InstrE, InstrM);
-  floprc #(`XLEN) PCEReg(clk, reset, FlushE, PCD, PCE);
-  floprc #(`XLEN) PCMReg(clk, reset, FlushM, PCE, PCM);
-  floprc #(`XLEN) PCWReg(clk, reset, FlushW, PCM, PCW);
+  flopr #(`XLEN) PCEReg(clk, reset, PCD, PCE);
+  flopr #(`XLEN) PCMReg(clk, reset, PCE, PCM);
+  flopr #(`XLEN) PCWReg(clk, reset, PCM, PCW); // *** probably not needed; delete later
+
+  // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  Maybe a way to draw on PC
+  // or just put an adder at the start of the writeback stage.
+  flopr #(`XLEN) PCPDReg(clk, reset, PCPlus2or4F, PCLinkD);
+  flopr #(`XLEN) PCPEReg(clk, reset, PCLinkD, PCLinkE);
+  flopr #(`XLEN) PCPMReg(clk, reset, PCLinkE, PCLinkM);
+  flopr #(`XLEN) PCPWReg(clk, reset, PCLinkM, PCLinkW);
 
 endmodule
 
