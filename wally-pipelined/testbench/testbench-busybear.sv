@@ -163,7 +163,9 @@ module testbench_busybear();
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
-      $display("loaded %0d instructions", instrs);
+      if (instrs > 175 || instrs % 10 == 0) begin
+        $display("loaded %0d instructions", instrs);
+      end
       instrs += 1;
       // are we at a branch/jump?
       case (lastInstrF[6:0]) //todo: add C versions of these
