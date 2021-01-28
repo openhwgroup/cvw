@@ -28,7 +28,7 @@
 module memdp (
   input  logic [1:0]      MemRWM,
   input  logic [`XLEN-1:0] ReadDataM,
-  input  logic [`XLEN-1:0] AdrM,
+  input  logic [`XLEN-1:0] DataAdrM,
   input  logic [2:0]      Funct3M,
   output logic [`XLEN-1:0] ReadDataExtM,
   input  logic [`XLEN-1:0] WriteDataFullM,
@@ -36,7 +36,8 @@ module memdp (
   output logic [7:0]      ByteMaskM,
   input  logic            DataAccessFaultM,
   output logic            LoadMisalignedFaultM, LoadAccessFaultM,
-  output logic            StoreMisalignedFaultM, StoreAccessFaultM);
+  output logic            StoreMisalignedFaultM, StoreAccessFaultM
+);
                   
   logic [7:0]  bytM;
   logic [15:0] HalfwordM;
@@ -46,7 +47,7 @@ module memdp (
     if (`XLEN == 64) begin
       // bytMe mux
       always_comb
-      case(AdrM[2:0])
+      case(DataAdrM[2:0])
         3'b000: bytM = ReadDataM[7:0];
         3'b001: bytM = ReadDataM[15:8];
         3'b010: bytM = ReadDataM[23:16];
@@ -59,7 +60,7 @@ module memdp (
     
       // halfword mux
       always_comb
-      case(AdrM[2:1])
+      case(DataAdrM[2:1])
         2'b00: HalfwordM = ReadDataM[15:0];
         2'b01: HalfwordM = ReadDataM[31:16];
         2'b10: HalfwordM = ReadDataM[47:32];
@@ -69,7 +70,7 @@ module memdp (
       logic [31:0] word;
       
       always_comb
-        case(AdrM[2])
+        case(DataAdrM[2])
           1'b0: word = ReadDataM[31:0];
           1'b1: word = ReadDataM[63:32];
         endcase
@@ -93,14 +94,14 @@ module memdp (
       always_comb 
         if (StoreMisalignedFaultM || StoreAccessFaultM) ByteMaskM = 8'b00000000; // discard Unaligned stores
         else case(Funct3M)
-          3'b000:  begin ByteMaskM = 8'b00000000; ByteMaskM[AdrM[2:0]] = 1; end // sb
-          3'b001:  case (AdrM[2:1])
+          3'b000:  begin ByteMaskM = 8'b00000000; ByteMaskM[DataAdrM[2:0]] = 1; end // sb
+          3'b001:  case (DataAdrM[2:1])
                     2'b00: ByteMaskM = 8'b00000011;
                     2'b01: ByteMaskM = 8'b00001100;
                     2'b10: ByteMaskM = 8'b00110000;
                     2'b11: ByteMaskM = 8'b11000000;
                   endcase
-          3'b010:  if (AdrM[2]) ByteMaskM = 8'b11110000;
+          3'b010:  if (DataAdrM[2]) ByteMaskM = 8'b11110000;
                    else        ByteMaskM = 8'b00001111;
           3'b011:  ByteMaskM = 8'b11111111;
           default: ByteMaskM = 8'b00000000;
@@ -119,7 +120,7 @@ module memdp (
     end else begin // 32-bit
       // byte mux
       always_comb
-      case(AdrM[1:0])
+      case(DataAdrM[1:0])
         2'b00: bytM = ReadDataM[7:0];
         2'b01: bytM = ReadDataM[15:8];
         2'b10: bytM = ReadDataM[23:16];
@@ -128,7 +129,7 @@ module memdp (
     
       // halfword mux
       always_comb
-      case(AdrM[1])
+      case(DataAdrM[1])
         1'b0: HalfwordM = ReadDataM[15:0];
         1'b1: HalfwordM = ReadDataM[31:16];
       endcase
@@ -150,8 +151,8 @@ module memdp (
       always_comb 
         if (StoreMisalignedFaultM || StoreAccessFaultM) ByteMaskM = 8'b0000; // discard Unaligned stores
         else case(Funct3M)
-          3'b000:  begin ByteMaskM = 8'b0000; ByteMaskM[{1'b0,AdrM[1:0]}] = 1; end // sb
-          3'b001:  if (AdrM[1]) ByteMaskM = 8'b1100;
+          3'b000:  begin ByteMaskM = 8'b0000; ByteMaskM[{1'b0,DataAdrM[1:0]}] = 1; end // sb
+          3'b001:  if (DataAdrM[1]) ByteMaskM = 8'b1100;
                    else         ByteMaskM = 8'b0011;
           3'b010:  ByteMaskM = 8'b1111;
           default: ByteMaskM = 8'b0000;
@@ -172,12 +173,12 @@ module memdp (
 	always_comb
 		case(Funct3M) 
 		  3'b000:  UnalignedM = 0;                 // lb, sb
-		  3'b001:  UnalignedM = AdrM[0];           // lh, sh
-		  3'b010:  UnalignedM = AdrM[1] | AdrM[0]; // lw, sw, flw, fsw
-		  3'b011:  UnalignedM = |AdrM[2:0];        // ld, sd, fld, fsd
+		  3'b001:  UnalignedM = DataAdrM[0];           // lh, sh
+		  3'b010:  UnalignedM = DataAdrM[1] | DataAdrM[0]; // lw, sw, flw, fsw
+		  3'b011:  UnalignedM = |DataAdrM[2:0];        // ld, sd, fld, fsd
 		  3'b100:  UnalignedM = 0;                 // lbu
-		  3'b101:  UnalignedM = AdrM[0];           // lhu
-		  3'b110:  UnalignedM = |AdrM[1:0];        // lwu
+		  3'b101:  UnalignedM = DataAdrM[0];           // lhu
+		  3'b110:  UnalignedM = |DataAdrM[1:0];        // lwu
 		  default: UnalignedM = 0;
 		endcase 
 

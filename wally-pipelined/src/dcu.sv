@@ -1,10 +1,12 @@
 ///////////////////////////////////////////
-// ieu.sv
+// dcu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Integer Execution Unit: datapath and controller
+// Purpose: Data cache unit
+//          Top level of the memory-stage hart logic
+//          Contains data cache, subword read/write datapath, interface to external bus
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,44 +27,21 @@
 
 `include "wally-config.vh"
 
-module ieu (
-  input  logic            clk, reset,
-  output logic [1:0]      MemRWM,
-  output logic [`XLEN-1:0] DataAdrM, WriteDataFullM,
-  input  logic [`XLEN-1:0] ReadDataExtM,
+module dcu (
+  input  logic [1:0]      MemRWM,
+  input  logic [`XLEN-1:0] ReadDataM,
+  input  logic [`XLEN-1:0] DataAdrM,
+  input  logic [2:0]      Funct3M,
+  output logic [`XLEN-1:0] ReadDataExtM,
+  input  logic [`XLEN-1:0] WriteDataFullM,
+  output logic [`XLEN-1:0] WriteDataM,
+  output logic [7:0]      ByteMaskM,
   input  logic            DataAccessFaultM,
-  input  logic [1:0]      ForwardAE, ForwardBE,
-  input  logic            StallD, FlushD, FlushE, FlushM, FlushW,
-  output logic        PCSrcE,
-  output logic        RegWriteM,
-  output logic 	     MemReadE,
-  output logic        RegWriteW,
-  output logic        CSRWriteM, PrivilegedM,
-  output logic        CSRWritePendingDEM,
-  output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] PCTargetE,
-  input  logic [31:0] InstrD,
-  input  logic [`XLEN-1:0] PCE, PCLinkW,
-  input  logic [`XLEN-1:0] CSRReadValM,
-  input logic        IllegalIEUInstrFaultD, 
-  output logic       IllegalBaseInstrFaultD,
-  output logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  output logic       InstrValidW,
-  input  logic        RetM, TrapM,
-  input logic        LoadStallD
+  output logic            LoadMisalignedFaultM, LoadAccessFaultM,
+  output logic            StoreMisalignedFaultM, StoreAccessFaultM
 );
+                  
+  memdp memdp(.*);
 
-  logic [2:0]  ImmSrcD;
-  logic [2:0]  FlagsE;
-  logic [4:0]  ALUControlE;
-  logic        ALUSrcAE, ALUSrcBE;
-  logic        IllegalInstrFaultM;
-  logic [2:0]  Funct3M;
-  logic [1:0]  ResultSrcW;
-
-  logic       TargetSrcE;
-           
-  controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7b5D(InstrD[30]), .*);
-  datapath   dp(.*);             
 endmodule
 

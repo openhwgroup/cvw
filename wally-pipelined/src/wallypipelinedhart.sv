@@ -32,7 +32,7 @@ module wallypipelinedhart (
   input  logic [31:0]     InstrF,
   output logic [1:0]      MemRWM,
   output logic [7:0]      ByteMaskM,
-  output logic [`XLEN-1:0] ALUResultM, WriteDataM,
+  output logic [`XLEN-1:0] DataAdrM, WriteDataM,
   input  logic [`XLEN-1:0] ReadDataM,
   input  logic            TimerIntM, ExtIntM, SwIntM,
   input  logic            InstrAccessFaultF,
@@ -50,6 +50,7 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] PCTargetE;
   logic [`XLEN-1:0] CSRReadValM;
   logic [`XLEN-1:0] PrivilegedNextPCM;
+  logic [`XLEN-1:0] ReadDataExtM, WriteDataFullM;
   logic InstrValidW;
   logic InstrMisalignedFaultM;
   logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
@@ -72,7 +73,8 @@ module wallypipelinedhart (
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
-//  dcu dcu(.*); // data cache unit
+  dcu dcu(.Funct3M(InstrM[14:12]), .*); // data cache unit
+
 /*  
   mdu mdu(.*); // multiply and divide unit
   fpu fpu(.*); // floating point unit
