@@ -158,8 +158,11 @@ module testbench_busybear();
         $stop;
       end
       // first read instruction
-      scan_file_PC = $fscanf(data_file_PC, "%s %s\n", PCtext, PCtext2);
-      PCtext = {PCtext, " ", PCtext2};
+      scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
+      if (PCtext != "ret") begin
+        scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
+        PCtext = {PCtext, " ", PCtext2};
+      end
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
