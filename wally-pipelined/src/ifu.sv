@@ -106,8 +106,10 @@ module ifu (
   flopr #(`XLEN) PCMReg(clk, reset, PCE, PCM);
   flopr #(`XLEN) PCWReg(clk, reset, PCM, PCW); // *** probably not needed; delete later
 
-  // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  Maybe a way to draw on PC
-  // or just put an adder at the start of the writeback stage.
+  // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
+  // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or
+  // have dedicated adder in Mem stage based on PCM + 2 or 4
+  // *** redo this 
   flopr #(`XLEN) PCPDReg(clk, reset, PCPlus2or4F, PCLinkD);
   flopr #(`XLEN) PCPEReg(clk, reset, PCLinkD, PCLinkE);
   flopr #(`XLEN) PCPMReg(clk, reset, PCLinkE, PCLinkM);
