@@ -76,6 +76,8 @@ module csrm #(parameter
 
   logic [`XLEN-1:0] MISA_REGW;
   logic [`XLEN-1:0] MSCRATCH_REGW,MCAUSE_REGW, MTVAL_REGW;
+  logic [63:0] PMPCFG01_REGW, PMPCFG23_REGW; // 64-bit registers in RV64, or two 32-bit registers in RV32
+  logic [`XLEN-1:0] PMPADDR0_REGW; // will need to add more
   logic [`XLEN-1:0] zero = 0;
   logic [31:0]     allones = {32{1'b1}};
   logic [`XLEN-1:0] MEDELEG_MASK = ~(zero | 1'b1 << 11); // medeleg[11] hardwired to zero per Privileged Spec 3.1.8
@@ -83,6 +85,8 @@ module csrm #(parameter
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+  logic            WritePMPCFG0M, WritePMPCFG2M;
+  logic            WritePMPADDR0M; 
   logic [25:0]     MISAbits = `MISA;
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
@@ -97,6 +101,9 @@ module csrm #(parameter
   assign WriteMEPCM = MTrapM | (CSRMWriteM && (CSRAdrM == MEPC));
   assign WriteMCAUSEM = MTrapM | (CSRMWriteM && (CSRAdrM == MCAUSE));
   assign WriteMTVALM = MTrapM | (CSRMWriteM && (CSRAdrM == MTVAL));
+  assign WritePMPCFG0M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPCFG0));
+  assign WritePMPCFG2M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPCFG2));
+  assign WritePMPADDR0M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPADDR0));
   assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
 
@@ -116,11 +123,26 @@ module csrm #(parameter
 //  flopenl #(`XLEN) MIEreg(clk, reset, WriteMIEM, CSRWriteValM, zero, MIE_REGW);
   flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
-  flopenl #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, zero, MCAUSE_REGW); 
+  flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW); 
   flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
   flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], allones, MCOUNTEREN_REGW);
   flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], allones, MCOUNTINHIBIT_REGW);
-  
+  flopenr #(`XLEN) PMPADDR0reg(clk, reset, WritePMPADDR0M, CSRWriteValM, PMPADDR0_REGW);  
+  // PMPCFG registers are a pair of 64-bit in RV64 and four 32-bit in RV32
+  generate
+    if (`XLEN==64) begin
+      flopenr #(`XLEN) PMPCFG01reg(clk, reset, WritePMPCFG0M, CSRWriteValM, PMPCFG01_REGW);
+      flopenr #(`XLEN) PMPCFG23reg(clk, reset, WritePMPCFG2M, CSRWriteValM, PMPCFG23_REGW);      
+    end else begin
+      logic WritePMPCFG1M, WritePMPCFG3M;
+      assign WritePMPCFG1M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPCFG1));
+      assign WritePMPCFG3M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPCFG3));
+      flopenr #(`XLEN) PMPCFG0reg(clk, reset, WritePMPCFG0M, CSRWriteValM, PMPCFG01_REGW[31:0]);
+      flopenr #(`XLEN) PMPCFG1reg(clk, reset, WritePMPCFG1M, CSRWriteValM, PMPCFG01_REGW[63:32]);            
+      flopenr #(`XLEN) PMPCFG2reg(clk, reset, WritePMPCFG2M, CSRWriteValM, PMPCFG23_REGW[31:0]);
+      flopenr #(`XLEN) PMPCFG3reg(clk, reset, WritePMPCFG3M, CSRWriteValM, PMPCFG23_REGW[63:32]);            
+    end
+  endgenerate
   // Read machine mode CSRs
   always_comb begin
     IllegalCSRMAccessM = !(`S_SUPPORTED | `U_SUPPORTED & `N_SUPPORTED) && 
@@ -144,6 +166,11 @@ module csrm #(parameter
       MTVAL:     CSRMReadValM = MTVAL_REGW;
       MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
       MCOUNTINHIBIT:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
+      PMPCFG0:   CSRMReadValM = PMPCFG01_REGW[`XLEN-1:0];
+      PMPCFG1:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG01_REGW[63:31]};
+      PMPCFG2:   CSRMReadValM = PMPCFG23_REGW[`XLEN-1:0];
+      PMPCFG3:   CSRMReadValM = PMPCFG23_REGW[63:31];
+      PMPADDR0:  CSRMReadValM = PMPADDR0_REGW;
       default: begin
                  CSRMReadValM = 0;
                  IllegalCSRMAccessM = 1;
