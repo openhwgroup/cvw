@@ -263,7 +263,7 @@ string tests32i[] = {
                 dut.hart.ifu.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
-  // initialize test
+  // initialize tests
   initial
     begin
       test = 0;
@@ -274,12 +274,12 @@ string tests32i[] = {
       else meminit = 64'hFEDCBA9876543210;
       for (i=0; i<=65535; i = i+1) begin
         //dut.imem.RAM[i] = meminit;
-       // dut.dmem.RAM[i] = meminit;
+       // dut.uncore.RAM[i] = meminit;
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
-      $readmemh(memfilename, dut.dmem.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.dtim.RAM);
       reset = 1; # 22; reset = 0;
     end
 
@@ -325,13 +325,13 @@ string tests32i[] = {
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.dmem.dtim.RAM[testadr+i]) begin
+          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i]) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*`XLEN/8, dut.dmem.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
             end
           end
           i = i + 1;
@@ -351,7 +351,7 @@ string tests32i[] = {
         else begin
           memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
           $readmemh(memfilename, dut.imem.RAM);
-          $readmemh(memfilename, dut.dmem.dtim.RAM);
+          $readmemh(memfilename, dut.uncore.dtim.RAM);
           $display("Read memfile %s", memfilename);
           reset = 1; # 17; reset = 0;
         end

@@ -57,6 +57,9 @@
 // Address space
 `define RESET_VECTOR 32'h80000000
 
+// Bus Interface
+`define AHBW 32
+
 // Test modes
 
 // Tie GPIO outputs back to inputs

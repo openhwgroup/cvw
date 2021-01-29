@@ -29,19 +29,40 @@
 
 module dcu (
   input  logic [1:0]      MemRWM,
-  input  logic [`XLEN-1:0] ReadDataM,
+  output logic [1:0]      MemRWdcuoutM,
+  output logic            DataMisalignedM,
+
   input  logic [`XLEN-1:0] DataAdrM,
   input  logic [2:0]      Funct3M,
-  output logic [`XLEN-1:0] ReadDataExtM,
-  input  logic [`XLEN-1:0] WriteDataFullM,
-  output logic [`XLEN-1:0] WriteDataM,
-  output logic [7:0]      ByteMaskM,
+/*  output  logic [`XLEN-1:0] ReadDataM,
+  input logic [`XLEN-1:0] WriteDataM, */
+  // faults
   input  logic            DataAccessFaultM,
   output logic            LoadMisalignedFaultM, LoadAccessFaultM,
   output logic            StoreMisalignedFaultM, StoreAccessFaultM
 );
                   
-  memdp memdp(.*);
+//  memdp memdp(.*);
+
+	// Determine if an Unaligned access is taking place
+	always_comb
+		case(Funct3M[1:0]) 
+		  2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
+		  2'b01:  DataMisalignedM = DataAdrM[0];           // lh, sh, lhu
+		  2'b10:  DataMisalignedM = DataAdrM[1] | DataAdrM[0]; // lw, sw, flw, fsw, lwu
+		  2'b11:  DataMisalignedM = |DataAdrM[2:0];        // ld, sd, fld, fsd
+		endcase 
+
+  // Squash unaligned data accesses
+  // *** this is also the place to squash if the cache is hit
+  assign MemRWdcuoutM = MemRWM & {2{~DataMisalignedM}};
+
+  // Determine if address is valid
+  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
+  assign LoadAccessFaultM = DataAccessFaultM & MemRWM[0];
+  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
+  assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
+
 
 endmodule
 

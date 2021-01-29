@@ -63,9 +63,9 @@ add wave -divider
 #add wave -hex /testbench/dut/hart/ifu/PCM
 #add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
-add wave /testbench/dut/dmem/dtim/memwrite
-add wave -hex /testbench/dut/dmem/AdrM
-add wave -hex /testbench/dut/dmem/WriteDataM
+add wave /testbench/dut/uncore/dtim/memwrite
+add wave -hex /testbench/dut/uncore/AdrM
+add wave -hex /testbench/dut/uncore/WriteDataM
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave /testbench/InstrWName
