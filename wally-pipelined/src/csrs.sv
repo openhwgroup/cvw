@@ -62,8 +62,8 @@ module csrs #(parameter
     if (`S_SUPPORTED) begin
       logic WriteSTVECM, WriteSEDELEGM, WriteSIDELEGM;
       logic WriteSSCRATCHM, WriteSEPCM;
-      logic WriteSCAUSEM, WriteSTVALM, WriteSCOUNTERENM;
-      logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW;
+      logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
+      logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW, SATP_REGW;
       
       assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS);
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC);
@@ -73,6 +73,7 @@ module csrs #(parameter
       assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC));
       assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE));
       assign WriteSTVALM = STrapM | (CSRSWriteM && (CSRAdrM == STVAL));
+      assign WriteSATPM = STrapM | (CSRSWriteM && (CSRAdrM == SATP));
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN);
 
       // CSRs
@@ -81,6 +82,7 @@ module csrs #(parameter
       flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
       flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, zero, SCAUSE_REGW); 
       flopenr #(`XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
+      flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
       flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], allones, SCOUNTEREN_REGW);
       if (`N_SUPPORTED) begin
         flopenl #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK, zero, SEDELEG_REGW);
@@ -104,6 +106,7 @@ module csrs #(parameter
           SEPC:      CSRSReadValM = SEPC_REGW;
           SCAUSE:    CSRSReadValM = SCAUSE_REGW;
           STVAL:     CSRSReadValM = STVAL_REGW;
+          SATP:      CSRSReadValM = SATP_REGW;
           SCOUNTEREN:CSRSReadValM = {{(`XLEN-32){1'b0}}, SCOUNTEREN_REGW};
           default: begin
                      CSRSReadValM = 0; 
