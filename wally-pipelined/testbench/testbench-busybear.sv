@@ -16,6 +16,23 @@ module testbench_busybear();
   logic        TimerIntM = 0, SwIntM = 0; // from CLINT
   logic        ExtIntM = 0; // not yet connected
 
+  logic [`AHBW-1:0] HRDATA;
+  logic             HREADY, HRESP;
+  logic [31:0]      HADDR;
+  logic [`AHBW-1:0] HWDATA;
+  logic             HWRITE;
+  logic [2:0]       HSIZE;
+  logic [2:0]       HBURST;
+  logic [3:0]       HPROT;
+  logic [1:0]       HTRANS;
+  logic             HMASTLOCK;
+
+  assign GPIOPinsIn = 0;
+  assign UARTSin = 1;
+  assign HREADY = 1;
+  assign HRESP = 0;
+  assign HRDATA = 0;
+
   // for now, seem to need these to be zero until we get a better idea
   assign InstrAccessFaultF = 0;
   assign DataAccessFaultM = 0;
