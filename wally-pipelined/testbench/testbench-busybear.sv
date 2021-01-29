@@ -170,8 +170,8 @@ module testbench_busybear();
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
-      if (instrs < 10 || (instrs < 100 && instrs % 10 == 0) ||
-        (instrs < 1000 && instrs % 50 == 0) || instrs > 205) begin
+      if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
+         (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0)) begin
         $display("loaded %0d instructions", instrs);
       end
       instrs += 1;
@@ -180,6 +180,8 @@ module testbench_busybear();
         16'bXXXXXXXXX1101111, // JAL
         16'bXXXXXXXXX1100111, // JALR
         16'bXXXXXXXXX1100011, // B
+        16'b110XXXXXXXXXXX01, // C.BEQZ
+        16'b111XXXXXXXXXXX01, // C.BNEZ
         16'b101XXXXXXXXXXX01: // C.J
           speculative = 1;
         16'b1001000000000010: // C.EBREAK:
