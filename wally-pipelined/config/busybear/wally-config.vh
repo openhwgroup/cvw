@@ -27,7 +27,7 @@
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
-`define MISA (32'h00000104)
+`define MISA (32'h0014112D)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
