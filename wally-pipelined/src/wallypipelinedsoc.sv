@@ -55,7 +55,8 @@ module wallypipelinedsoc (
   logic [`XLEN-1:0] DataAdrM, WriteDataM;
   logic [`XLEN-1:0] PCF, ReadDataM;
   logic [31:0] InstrF;
-  logic [7:0]  ByteMaskM;
+  logic [2:0]  Funct3M;
+  logic [1:0]  MemRWdcuoutM;
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM, SwIntM; // from CLINT
   logic        ExtIntM = 0; // not yet connected
@@ -64,5 +65,5 @@ module wallypipelinedsoc (
   wallypipelinedhart hart(.*);
 
   imem imem(.AdrF(PCF[`XLEN-1:1]), .*);
-  dmem dmem(.AdrM(DataAdrM), .*);
+  uncore uncore(.AdrM(DataAdrM), .MemRWM(MemRWdcuoutM), .*);
 endmodule

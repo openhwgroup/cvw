@@ -30,7 +30,7 @@
 module uart (
   input  logic            clk, reset, 
   input  logic [1:0]      MemRWuartM,
-  input  logic [7:0]      ByteMaskM,
+//  input  logic [7:0]      ByteMaskM,
   input  logic [`XLEN-1:0] AdrM, 
   input  logic [`XLEN-1:0] MaskedWriteDataM,
   output logic [`XLEN-1:0] RdUARTM,

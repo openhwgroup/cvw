@@ -28,8 +28,9 @@
 module ieu (
   input  logic            clk, reset,
   output logic [1:0]      MemRWM,
-  output logic [`XLEN-1:0] DataAdrM, WriteDataFullM,
-  input  logic [`XLEN-1:0] ReadDataExtM,
+  output logic [`XLEN-1:0] DataAdrM, WriteDataM,
+  input  logic [`XLEN-1:0] ReadDataM,
+  input  logic            DataMisalignedM,
   input  logic            DataAccessFaultM,
   input  logic [1:0]      ForwardAE, ForwardBE,
   input  logic            StallD, FlushD, FlushE, FlushM, FlushW,
@@ -39,6 +40,7 @@ module ieu (
   output logic        RegWriteW,
   output logic        CSRWriteM, PrivilegedM,
   output logic        CSRWritePendingDEM,
+  output logic [2:0]       Funct3M,
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] PCTargetE,
   input  logic [31:0] InstrD,
@@ -56,7 +58,6 @@ module ieu (
   logic [2:0]  FlagsE;
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
-  logic [2:0]  Funct3M;
   logic [1:0]  ResultSrcW;
 
   logic       TargetSrcE;

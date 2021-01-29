@@ -30,10 +30,10 @@ module wallypipelinedhart (
   input  logic            clk, reset,
   output logic [`XLEN-1:0] PCF,
   input  logic [31:0]     InstrF,
-  output logic [1:0]      MemRWM,
-  output logic [7:0]      ByteMaskM,
-  output logic [`XLEN-1:0] DataAdrM, WriteDataM,
-  input  logic [`XLEN-1:0] ReadDataM,
+  output logic [1:0]      MemRWdcuoutM, // *** should be removed when EBU enabled
+  output logic [2:0]      Funct3M, // *** remove when EBU enabled
+  output logic [`XLEN-1:0] DataAdrM, WriteDataM, // ***
+  input  logic [`XLEN-1:0] ReadDataM, // ***
   input  logic            TimerIntM, ExtIntM, SwIntM,
   input  logic            InstrAccessFaultF,
   input  logic            DataAccessFaultM,
@@ -62,9 +62,10 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] PCTargetE;
   logic [`XLEN-1:0] CSRReadValM;
   logic [`XLEN-1:0] PrivilegedNextPCM;
-  logic [`XLEN-1:0] ReadDataExtM, WriteDataFullM;
+  logic [1:0] MemRWM;
   logic InstrValidW;
   logic InstrMisalignedFaultM;
+  logic DataMisalignedM;
   logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
@@ -86,7 +87,7 @@ module wallypipelinedhart (
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
-  dcu dcu(.Funct3M(InstrM[14:12]), .*); // data cache unit
+  dcu dcu(/*.Funct3M(InstrM[14:12]),*/ .*); // data cache unit
 
   ahblite ebu(
     .IPAdrD(zero), .IReadD(1'b0), .IRData(), .IReady(), 

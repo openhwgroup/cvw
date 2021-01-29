@@ -28,9 +28,9 @@
 module dtim (
   input  logic            clk, 
   input  logic [1:0]      MemRWdtimM,
-  input  logic [7:0]      ByteMaskM,
+//  input  logic [7:0]      ByteMaskM,
   input  logic [18:0]     AdrM, 
-  input  logic [`XLEN-1:0] WriteDataM,
+  input  logic [`XLEN-1:0] MaskedWriteDataM,
   output logic [`XLEN-1:0] RdTimM);
 
   logic [`XLEN-1:0] RAM[0:65535];
@@ -54,7 +54,7 @@ module dtim (
   // UInstantiate a byte-writable memory here if possible
   // and drop tihs masking logic.  Otherwise, use the masking
   // from dmem
-  generate
+  /*generate
 
     if (`XLEN==64) begin
       always_comb begin
@@ -80,6 +80,15 @@ module dtim (
       end 
     always_ff @(posedge clk)
       if (memwrite) RAM[AdrM[17:2]] <= write;  
+    end
+  endgenerate */
+  generate
+    if (`XLEN == 64) begin
+      always_ff @(posedge clk)
+        if (memwrite) RAM[AdrM[17:3]] <= MaskedWriteDataM;  
+    end else begin
+      always_ff @(posedge clk)
+        if (memwrite) RAM[AdrM[17:2]] <= MaskedWriteDataM;  
     end
   endgenerate
 endmodule

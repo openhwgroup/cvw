@@ -1,10 +1,11 @@
 ///////////////////////////////////////////
-// dmem.sv
+// uncore.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Data memory
+// Purpose: System-on-Chip components outside the core (hart)
+//          Memories, peripherals, external bus control
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,26 +28,31 @@
 
 // *** need idiom to map onto cache RAM with byte writes
 // *** and use memread signal to reduce power when reads aren't needed
-module dmem (
+module uncore (
   input  logic            clk, reset,
+  // bus interface
   input  logic [1:0]      MemRWM,
-  input  logic [7:0]      ByteMaskM,
   input  logic [`XLEN-1:0] AdrM, WriteDataM,
+  input  logic [2:0]       Funct3M,
   output logic [`XLEN-1:0] ReadDataM,
   output logic            DataAccessFaultM,
+  // peripheral pins
   output logic            TimerIntM, SwIntM,
   input  logic [31:0]     GPIOPinsIn,
   output logic [31:0]     GPIOPinsOut, GPIOPinsEn, 
   input  logic            UARTSin,
-  output logic            UARTSout);
+  output logic            UARTSout
+  );
   
   logic [`XLEN-1:0] MaskedWriteDataM;
+  logic [`XLEN-1:0] ReadDataUnmaskedM;
   logic [`XLEN-1:0] RdTimM, RdCLINTM, RdGPIOM, RdUARTM;
   logic            TimEnM, CLINTEnM, GPIOEnM, UARTEnM;
   logic [1:0]      MemRWdtimM, MemRWclintM, MemRWgpioM, MemRWuartM;
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
 
   // Address decoding
+  // *** generalize, use configurable
   generate
     if (`XLEN == 64)
       assign TimEnM = ~(|AdrM[`XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x000...80000000 - 0x000...8007FFFF
@@ -57,6 +63,7 @@ module dmem (
   assign GPIOEnM = (AdrM[31:8] == 24'h10012); // 0x10012000-0x100120FF
   assign UARTEnM = ~(|AdrM[`XLEN-1:29]) & AdrM[28] & ~(|AdrM[27:3]); // 0x10000000-0x10000007
 
+  // Enable read or write based on decoded address.
   assign MemRWdtimM  = MemRWM & {2{TimEnM}};
   assign MemRWclintM = MemRWM & {2{CLINTEnM}};
   assign MemRWgpioM  = MemRWM & {2{GPIOEnM}};
@@ -72,37 +79,15 @@ module dmem (
             .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
             .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
 
-  // *** add cache and interface to external memory & other peripherals
+  // *** Interface to off-chip memory would appear as another peripheral
   
   // merge reads
-  assign ReadDataM = ({`XLEN{TimEnM}} & RdTimM) | ({`XLEN{CLINTEnM}} & RdCLINTM) | 
+  assign ReadDataUnmaskedM = ({`XLEN{TimEnM}} & RdTimM) | ({`XLEN{CLINTEnM}} & RdCLINTM) | 
                      ({`XLEN{GPIOEnM}} & RdGPIOM) | ({`XLEN{UARTEnM}} & RdUARTM);
-  assign DataAccessFaultM = ~(|TimEnM | CLINTEnM | GPIOEnM | UARTEnM);
+  assign DataAccessFaultM = ~(TimEnM | CLINTEnM | GPIOEnM | UARTEnM);
 
-  // byte masking
-   // write each byte based on the byte mask
-  generate
-    if (`XLEN==64) begin
-      always_comb begin
-        MaskedWriteDataM=ReadDataM;
-        if (ByteMaskM[0]) MaskedWriteDataM[7:0]   = WriteDataM[7:0];
-        if (ByteMaskM[1]) MaskedWriteDataM[15:8]  = WriteDataM[15:8];
-        if (ByteMaskM[2]) MaskedWriteDataM[23:16] = WriteDataM[23:16];
-        if (ByteMaskM[3]) MaskedWriteDataM[31:24] = WriteDataM[31:24];
-	      if (ByteMaskM[4]) MaskedWriteDataM[39:32] = WriteDataM[39:32];
-	      if (ByteMaskM[5]) MaskedWriteDataM[47:40] = WriteDataM[47:40];
-      	if (ByteMaskM[6]) MaskedWriteDataM[55:48] = WriteDataM[55:48];
-	      if (ByteMaskM[7]) MaskedWriteDataM[63:56] = WriteDataM[63:56];
-      end 
-    end else begin // 32-bit
-      always_comb begin
-        if (ByteMaskM[0]) MaskedWriteDataM[7:0]   = WriteDataM[7:0];
-        if (ByteMaskM[1]) MaskedWriteDataM[15:8]  = WriteDataM[15:8];
-        if (ByteMaskM[2]) MaskedWriteDataM[23:16] = WriteDataM[23:16];
-        if (ByteMaskM[3]) MaskedWriteDataM[31:24] = WriteDataM[31:24];
-      end 
-    end
-  endgenerate
-
+  // subword accesses: converts ReadDataUnmaskedM to ReadDataM and WriteDataM to MaskedWriteDataM
+  subword subword(.*);
+ 
 endmodule
 
