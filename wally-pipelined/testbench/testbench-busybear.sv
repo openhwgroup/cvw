@@ -90,7 +90,7 @@ module testbench_busybear();
       scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
       // check things!
       if (rf[j*64+63 -: 64] != rfExpected[j]) begin
-        $display("%t ps: rf[%0d] does not equal rf expected: %x, %x", $time, j, rf[j*64+63 -: 64], rfExpected[j]);
+        $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, j, rf[j*64+63 -: 64], rfExpected[j]);
     //    $stop;
       end
     end
@@ -107,7 +107,7 @@ module testbench_busybear();
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
       scan_file_memR = $fscanf(data_file_memR, "%x\n", ReadDataM);
       if (DataAdrM != readAdrExpected) begin
-        $display("%t ps: DataAdrM does not equal readAdrExpected: %x, %x", $time, DataAdrM, readAdrExpected);
+        $display("%t ps, instr %0d: DataAdrM does not equal readAdrExpected: %x, %x", $time, instrs, DataAdrM, readAdrExpected);
       end
     end
   end
@@ -126,12 +126,12 @@ module testbench_busybear();
       for(int i=0; i<8; i++) begin
         if (ByteMaskM[i]) begin
           if (writeDataExpected[i*8+7 -: 8] != WriteDataM[i*8+7 -: 8]) begin
-            $display("%t ps: WriteDataM does not equal writeDataExpected: %x, %x", $time, WriteDataM, writeDataExpected);
+            $display("%t ps, instr %0d: WriteDataM does not equal writeDataExpected: %x, %x", $time, instrs, WriteDataM, writeDataExpected);
           end
         end
       end
       if (writeAdrExpected != DataAdrM) begin
-        $display("%t ps: DataAdrM does not equal writeAdrExpected: %x, %x", $time, DataAdrM, writeAdrExpected);
+        $display("%t ps, instr %0d: DataAdrM does not equal writeAdrExpected: %x, %x", $time, instrs, DataAdrM, writeAdrExpected);
       end
     end
   end
@@ -171,7 +171,8 @@ module testbench_busybear();
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
       if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
-         (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0)) begin
+         (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
+         (instrs <= 100000 && instrs % 10000 == 0)) begin
         $display("loaded %0d instructions", instrs);
       end
       instrs += 1;
@@ -195,7 +196,7 @@ module testbench_busybear();
 
       //check things!
       if ((~speculative) && (PCF !== pcExpected)) begin
-        $display("%t ps: PC does not equal PC expected: %x, %x", $time, PCF, pcExpected);
+        $display("%t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
       //  $stop;
       end
     end
