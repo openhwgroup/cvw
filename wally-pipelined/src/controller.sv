@@ -46,6 +46,7 @@ module controller(
   output logic       MemReadE,  // for Hazard Unit
   // Memory stage control signals
   input  logic       FlushM,
+  input  logic       DataMisalignedM,
   output logic [1:0] MemRWM,
   output logic       CSRWriteM, PrivilegedM, 
   output logic [2:0] Funct3M,
@@ -110,7 +111,7 @@ module controller(
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD,
           PrivilegedD} = ControlsD[18:1] & ~IllegalIEUInstrFaultD;
-          // *** move Privileged, CSRwrite
+          // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
 
   // ALU Decoding
   assign sltD = (Funct3D == 3'b010);
