@@ -1,37 +1,16 @@
 ///////////////////////////////////////////
-// wally-pipelined.sv
+// wally-pipelinedsoc.sv
 //
 // Written: David_Harris@hmc.edu 6 November 2020
 // Modified: 
 //
-// Purpose: Top level module for pipelined processor and memories
+// Purpose: System on chip including pipelined processor and memories
 // Full RV32/64IC instruction set
-//
-// To Do:
-//  Sort out terminology of faults, traps, interrputs, exceptions
-//  Long names for instruction decoder
-//  *Consitency in capitalizaiton
-//  *Divide into many files
-//  *Keep lint clean
-//  *Put in git repo
-//  Sort out memory map
-//  *Automate testing based on MISA
-//  Drop Funct3 from Controller pipeline if not needed
-//  Finish exceptions & test
-//    *Flushes caused by exceptions
-//    Generate statements to reduce hardware for unneeded exception logic
-//    *RET
-//    *Status register
-//    Misaligned instruction faults on other aults
-//
 //
 // Note: the CSRs do not support the following features
 //- Disabling portions of the instruction set with bits of the MISA register
 //- Changing from RV64 to RV32 by writing the SXL/UXL bits of the STATUS register
 // As of January 2020, virtual memory is not yet supported
-//
-// Reference MISA Values: 
-//  104: C compressed
 //
 // A component of the Wally configurable RISC-V project.
 // 
@@ -52,16 +31,28 @@
 
 `include "wally-config.vh"
 
-module wallypipelined (
+module wallypipelinedsoc (
   input  logic            clk, reset, 
-  output logic [`XLEN-1:0] WriteDataM, DataAdrM, 
-  output logic [1:0]      MemRWM,
-  input  logic [31:0]     GPIOPinsIn,
-  output logic [31:0]     GPIOPinsOut, GPIOPinsEn,
-  input  logic            UARTSin,
-  output logic            UARTSout
+  // AHB Lite Interface
+  input  logic [`AHBW-1:0] HRDATA,
+  input  logic             HREADY, HRESP,
+  output logic [31:0]      HADDR,
+  output logic [`AHBW-1:0] HWDATA,
+  output logic             HWRITE,
+  output logic [2:0]       HSIZE,
+  output logic [2:0]       HBURST,
+  output logic [3:0]       HPROT,
+  output logic [1:0]       HTRANS,
+  output logic             HMASTLOCK,
+  // I/O Interface
+  input  logic [31:0]      GPIOPinsIn,
+  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,
+  input  logic             UARTSin,
+  output logic             UARTSout
 );
 
+  logic [1:0] MemRWM;
+  logic [`XLEN-1:0] DataAdrM, WriteDataM;
   logic [`XLEN-1:0] PCF, ReadDataM;
   logic [31:0] InstrF;
   logic [7:0]  ByteMaskM;

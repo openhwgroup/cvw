@@ -145,16 +145,6 @@ module uartPC16550D(
           3'b110: MSR <= Din[3:0];
           3'b111: SCR <= Din;
         endcase
-      end else if (~MEMRb) begin
-        /* verilator lint_off CASEINCOMPLETE */
-        case (A)
-          3'b101: begin // clear some LSR bits on read
-            LSR[4:1] <= 0;
-            LSR[7] <= 0;
-          end
-          3'b110: MSR[1:0] <= 4'b0; // clear status bits on read
-        endcase
-        /* verilator lint_on CASEINCOMPLETE */
       end
       // Line Status Register (8.6.3)
       LSR[0] <= rxdataready; // Data ready

@@ -36,7 +36,19 @@ module wallypipelinedhart (
   input  logic [`XLEN-1:0] ReadDataM,
   input  logic            TimerIntM, ExtIntM, SwIntM,
   input  logic            InstrAccessFaultF,
-  input  logic            DataAccessFaultM);
+  input  logic            DataAccessFaultM,
+  // Bus Interface
+  input  logic [`AHBW-1:0] HRDATA,
+  input  logic             HREADY, HRESP,
+  output logic [31:0]      HADDR,
+  output logic [`AHBW-1:0] HWDATA,
+  output logic             HWRITE,
+  output logic [2:0]       HSIZE,
+  output logic [2:0]       HBURST,
+  output logic [3:0]       HPROT,
+  output logic [1:0]       HTRANS,
+  output logic             HMASTLOCK
+);
 
   logic [1:0]  ForwardAE, ForwardBE;
   logic        StallF, StallD, FlushD, FlushE, FlushM, FlushW;
@@ -57,6 +69,7 @@ module wallypipelinedhart (
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;
+  logic [`XLEN-1:0] zero = 0;
 
   logic        PCSrcE;
   logic        RegWriteM;
@@ -75,10 +88,15 @@ module wallypipelinedhart (
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
   dcu dcu(.Funct3M(InstrM[14:12]), .*); // data cache unit
 
+  ahblite ebu(
+    .IPAdrD(zero), .IReadD(1'b0), .IRData(), .IReady(), 
+    .DPAdrM(DataAdrM), .DReadM(MemRWM[1]), .DWriteM(MemRWM[0]), .DWDataM(WriteDataM), .DSizeM(2'b11), .DRData(), .DReady(), 
+    .*);
+
 /*  
   mdu mdu(.*); // multiply and divide unit
   fpu fpu(.*); // floating point unit
-  ebu ebu(.*); // external bus to memory and peripherals */
+  */
   hazard     hzu(.*);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
