@@ -52,7 +52,12 @@ module uncore (
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
 
   // Address decoding
-  // *** generalize, use configurable
+  adrdec timdec(AdrM, `TIMBASE, `TIMRANGE, TimEnM);
+  adrdec clintdec(AdrM, `CLINTBASE, `CLINTRANGE, CLINTEnM);
+  adrdec gpiodec(AdrM, `GPIOBASE, `GPIORANGE, GPIOEnM);
+  adrdec uartdec(AdrM, `UARTBASE, `UARTRANGE, UARTEnM);
+  
+  /*// *** generalize, use configurable
   generate
     if (`XLEN == 64)
       assign TimEnM = ~(|AdrM[`XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x000...80000000 - 0x000...8007FFFF
@@ -62,6 +67,7 @@ module uncore (
   assign CLINTEnM = ~(|AdrM[`XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
   assign GPIOEnM = (AdrM[31:8] == 24'h10012); // 0x10012000-0x100120FF
   assign UARTEnM = ~(|AdrM[`XLEN-1:29]) & AdrM[28] & ~(|AdrM[27:3]); // 0x10000000-0x10000007
+  */
 
   // Enable read or write based on decoded address.
   assign MemRWdtimM  = MemRWM & {2{TimEnM}};
