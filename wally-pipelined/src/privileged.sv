@@ -68,23 +68,56 @@ module privileged (
   logic       STATUS_SPP, STATUS_TSR;
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW;
+  logic md, sd;
 
+  ///////////////////////////////////////////
   // track the current privilege level
-  privilegeModeReg pmr(.*);
+  ///////////////////////////////////////////
 
-  // decode privileged instructions
-  privilegeDecoder pmd(.InstrM(InstrM[31:20]), .*);
+  // get bits of DELEG registers based on CAUSE
+  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[4:0]] : MEDELEG_REGW[CauseM[4:0]];
+  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[4:0]] : SEDELEG_REGW[CauseM[4:0]]; // depricated
   
+  // PrivilegeMode FSM
+  always_comb
+    if      (reset) NextPrivilegeModeM = `M_MODE; // Privilege resets to 11 (Machine Mode)
+    else if (mretM) NextPrivilegeModeM = STATUS_MPP;
+    else if (sretM) NextPrivilegeModeM = {1'b0, STATUS_SPP};
+    else if (uretM) NextPrivilegeModeM = `U_MODE;
+    else if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
+      if (PrivilegeModeW == `U_MODE)
+        if (`N_SUPPORTED & `U_SUPPORTED & md & sd) NextPrivilegeModeM = `U_MODE;
+        else if (`S_SUPPORTED & md)                NextPrivilegeModeM = `S_MODE;
+        else                                       NextPrivilegeModeM = `M_MODE;
+      else if (PrivilegeModeW == `S_MODE) 
+        if (`S_SUPPORTED & md)                     NextPrivilegeModeM = `S_MODE;
+        else                                       NextPrivilegeModeM = `M_MODE;
+      else                                         NextPrivilegeModeM = `M_MODE;
+    end else                                       NextPrivilegeModeM = PrivilegeModeW;
+
+  flop #(2) privmodereg(clk, NextPrivilegeModeM, PrivilegeModeW);
+
+  ///////////////////////////////////////////
+  // decode privileged instructions
+  ///////////////////////////////////////////
+
+  privdec pmd(.InstrM(InstrM[31:20]), .*);
+
+  ///////////////////////////////////////////
+  // Control and Status Registers
+  ///////////////////////////////////////////
+
+  csr csr(.*);
+
+  ///////////////////////////////////////////
   // Extract exceptions by name and handle them 
+  ///////////////////////////////////////////
+
   assign BreakpointFaultM = ebreakM; // could have other causes too
   assign EcallFaultM = ecallM;
   assign InstrPageFaultM = 0;
   assign LoadPageFaultM = 0;
   assign StorePageFaultM = 0;
-  trap trap(.*);
-
-  // Control and Status Registers
-  csr csr(.*);
 
   // pipeline fault signals
   flopenrc #(1) faultregD(clk, reset, FlushD, ~StallD, InstrAccessFaultF, InstrAccessFaultD);
@@ -95,6 +128,7 @@ module privileged (
                          {IllegalIEUInstrFaultE, InstrAccessFaultE},
                          {IllegalIEUInstrFaultM, InstrAccessFaultM});
 
+  trap trap(.*);
 
 endmodule
 

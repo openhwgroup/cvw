@@ -1,7 +1,7 @@
 # check for warnings in Verilog code
 # The verilator lint tool is faster and better than Modelsim so it is best to run this first.
 
-verilator --lint-only -Iconfig/rv64ic src/*.sv
+verilator --lint-only --top-module wallypipelined -Iconfig/rv64ic src/*.sv
 
 # --lint-only just runs lint rather than trying to compile and simulate
 # -I points to the include directory where files such as `include wally-config.vh  are found

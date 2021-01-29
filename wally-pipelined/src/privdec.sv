@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// privilegeDecoder.sv
+// privdec.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
@@ -26,7 +26,7 @@
 
 `include "wally-config.vh"
 
-module privilegeDecoder (
+module privdec (
   input  logic [31:20] InstrM,
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM,
   input  logic [1:0]   PrivilegeModeW, 
