@@ -171,7 +171,7 @@ module testbench_busybear();
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
       if (instrs < 10 || (instrs < 100 && instrs % 10 == 0) ||
-        (instrs < 1000 && instrs % 50 == 0) || instrs > 700) begin
+        (instrs < 1000 && instrs % 50 == 0)) begin
         $display("loaded %0d instructions", instrs);
       end
       instrs += 1;
