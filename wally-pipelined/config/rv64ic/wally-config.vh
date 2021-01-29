@@ -58,6 +58,11 @@
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
 
+// Bus Interface
+`define AHBW 64
+
+// Peripheral Addresses
+
 // Test modes
 
 // Tie GPIO outputs back to inputs

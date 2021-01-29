@@ -30,9 +30,6 @@ module testbench();
   logic        clk;
   logic        reset;
 
-  logic [`XLEN-1:0] WriteData, DataAdr;
-  logic [1:0]      MemRW;
-
   int test, i, errors, totalerrors;
   logic [31:0] sig32[0:10000];
   logic [`XLEN-1:0] signature[0:10000];
@@ -222,6 +219,18 @@ string tests32i[] = {
                      "rv32i/WALLY-SUB", "3000"
 };
   string tests[];
+
+  logic [`AHBW-1:0] HRDATA;
+  logic             HREADY, HRESP;
+  logic [31:0]      HADDR;
+  logic [`AHBW-1:0] HWDATA;
+  logic             HWRITE;
+  logic [2:0]       HSIZE;
+  logic [2:0]       HBURST;
+  logic [3:0]       HPROT;
+  logic [1:0]       HTRANS;
+  logic             HMASTLOCK;
+
   
   // pick tests based on modes supported
   initial 
@@ -242,10 +251,11 @@ string tests32i[] = {
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  wallypipelined dut(
-    clk, reset, WriteData, DataAdr, MemRW, 
-    GPIOPinsIn, GPIOPinsOut, GPIOPinsEn, UARTSin, UARTSout
-  ); 
+  assign HREADY = 1;
+  assign HRESP = 0;
+  assign HRDATA = 0;
+
+  wallypipelinedsoc dut(.*); 
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
