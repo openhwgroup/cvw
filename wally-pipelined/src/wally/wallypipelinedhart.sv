@@ -96,13 +96,12 @@ module wallypipelinedhart (
   dcu dcu(/*.Funct3M(InstrM[14:12]),*/ .*); // data cache unit
 
   ahblite ebu( // *** make IRData InstrF
-    .IPAdrF(PCF), .IReadF(1'b0), .IRData(), //.IReady(), 
+    .IPAdrF(PCF), .IReadF(1'b1), .IRData(), //.IReady(), 
     .DPAdrM(DataAdrM), .DReadM(MemRWdcuoutM[1]), .DWriteM(MemRWdcuoutM[0]), .DWDataM(WriteDataM), 
     .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), //.DReady(), 
     .UnsignedLoadM(Funct3M[2]),
     .*);
   //assign InstrF = ReadDataM[31:0];
-//  assign UnsignedLoadM = Funct3M[2]; // *** maybe move read extension to dcu
 
 /*  
   mdu mdu(.*); // multiply and divide unit

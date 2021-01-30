@@ -77,6 +77,7 @@ module dtim (
       assign #2 entry = HADDR[17:2]; 
   endgenerate
   assign HREADTim = RAM[entry];
+//  assign HREADTim = HREADYTim ? RAM[entry] : ~RAM[entry]; // *** temproary mess up read value before ready
 
   // write each byte based on the byte mask
   // UInstantiate a byte-writable memory here if possible
