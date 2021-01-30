@@ -49,9 +49,10 @@ module ahblite (
   // AHB-Lite external signals
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
-  output logic [31:0]      HADDR,
+  output logic             HCLK, HRESETn,
+  output logic [31:0]      HADDR, 
   output logic [`AHBW-1:0] HWDATA,
-  output logic             HWRITE,
+  output logic             HWRITE, 
   output logic [2:0]       HSIZE,
   output logic [2:0]       HBURST,
   output logic [3:0]       HPROT,
@@ -59,7 +60,6 @@ module ahblite (
   output logic             HMASTLOCK
 );
 
-  logic HCLK, HRESETn;
   logic GrantData;
   logic [2:0] ISize;
   logic [`AHBW-1:0] HRDATAMasked;
@@ -82,7 +82,7 @@ module ahblite (
   assign HADDR = GrantData ? DPAdrM[31:0] : IPAdrD[31:0];
   assign HWDATA = DWDataM;
   //flop #(`XLEN) wdreg(HCLK, DWDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
-  assign HWRITE = DWriteM; // *** check no level to pulse conversion needed
+  assign HWRITE = DWriteM; 
   assign HSIZE = GrantData ? {1'b0, DSizeM} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfHPROT
   assign HPROT = 4'b0011; // not used; see Section 3.7

@@ -34,7 +34,7 @@
 
 module uartPC16550D(
   // Processor Interface
-  input  logic       clk, reset,
+  input  logic       HCLK, HRESETn,
   input  logic [2:0] A,
   input  logic [7:0] Din,
   output logic [7:0] Dout,
@@ -112,7 +112,7 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
   ///////////////////////////////////////////
-  always_ff @(posedge clk) begin
+  always_ff @(posedge HCLK) begin
     {SINd, DSRbd, DCDbd, CTSbd, RIbd} <= {SIN, DSRb, DCDb, CTSb, RIb};
     {SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync} <= loop ? {SOUTbit, ~MCR[0], ~MCR[3], ~MCR[1], ~MCR[2]} : 
         {SINd, DSRbd, DCDbd, CTSbd, RIbd}; // syncrhonized signals, handle loopback testing
@@ -122,8 +122,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Register interface (Table 1, note some are read only and some write only)
   ///////////////////////////////////////////
-  always_ff @(posedge clk, posedge reset) 
-    if (reset) begin // Table 3 Reset Configuration
+  always_ff @(posedge HCLK, negedge HRESETn) 
+    if (~HRESETn) begin // Table 3 Reset Configuration
       IER <= 4'b0;
       FCR <= 8'b0;
       LCR <= 8'b0;
@@ -184,8 +184,8 @@ module uartPC16550D(
   // Unlike PC16550D, this unit is hardwired with same rx and tx baud clock
   // *** add table of scale factors to get 16x uart clk
   ///////////////////////////////////////////
-  always_ff @(posedge clk, posedge reset) 
-    if (reset) begin
+  always_ff @(posedge HCLK, negedge HRESETn) 
+    if (~HRESETn) begin
       baudcount <= 0;
       baudpulse <= 0;
     end else begin
@@ -200,8 +200,8 @@ module uartPC16550D(
   // receive timing and control
   ///////////////////////////////////////////
 
-  always_ff @(posedge clk, posedge reset)
-    if (reset) begin
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) begin
       rxoversampledcnt <= 0;
       rxstate <= UART_IDLE;
       rxbitsreceived <= 0;
@@ -231,8 +231,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // receive shift register, buffer register, FIFO
   ///////////////////////////////////////////
-  always_ff @(posedge clk, posedge reset)
-    if (reset) rxshiftreg <= 0;
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) rxshiftreg <= 0;
     else if (rxcentered) rxshiftreg <= {rxshiftreg[8:0], SINsync}; // capture bit
   assign rxparitybit = rxshiftreg[1]; // parity, if it exists, in bit 1 when all done
   assign rxstopbit = rxshiftreg[0];
@@ -253,8 +253,8 @@ module uartPC16550D(
   assign rxbreak = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
 
   // receive FIFO and register
-  always_ff @(posedge clk, posedge reset)
-    if (reset) begin
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) begin
       rxfifohead <= 0; rxfifotail <= 0; rxdataready <= 0; RXBR <= 0;
     end else begin
       if (rxstate == UART_DONE) begin
@@ -297,8 +297,8 @@ module uartPC16550D(
   assign rxfifohaserr = |(rxerrbit & rxfullbit);
 
   // receive buffer register and ready bit
-  always_ff @(posedge clk, posedge reset) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
-    if (reset) rxfifodmaready <= 0;
+  always_ff @(posedge HCLK, negedge HRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
+    if (~HRESETn) rxfifodmaready <= 0;
     else if (rxfifotriggered | rxfifotimeout) rxfifodmaready <= 1;
     else if (rxfifoempty) rxfifodmaready <= 0;
 
@@ -316,8 +316,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // transmit timing and control
   ///////////////////////////////////////////
-  always_ff @(posedge clk, posedge reset)
-    if (reset) begin
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) begin
       txoversampledcnt <= 0;
       txstate <= UART_IDLE;
       txbitssent <= 0;
@@ -364,8 +364,8 @@ module uartPC16550D(
   end
        
   // registers & FIFO
-  always_ff @(posedge clk, posedge reset)
-    if (reset) begin
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) begin
       txfifohead <= 0; txfifotail <= 0; txhrfull <= 0; txsrfull <= 0; TXHR <= 0; txsr <= 0;
     end else begin
       if (~MEMWb && A == 3'b000 && ~DLAB) begin // writing transmit holding register or fifo
@@ -404,8 +404,8 @@ module uartPC16550D(
   assign txfifofull = (txfifoentries == 4'b1111);
 
   // transmit buffer ready bit
-  always_ff @(posedge clk, posedge reset) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
-    if (reset) txfifodmaready <= 0;
+  always_ff @(posedge HCLK, negedge HRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
+    if (~HRESETn) txfifodmaready <= 0;
     else if (txfifoempty) txfifodmaready <= 1;
     else if (txfifofull)  txfifodmaready <= 0;
 
@@ -440,7 +440,7 @@ module uartPC16550D(
       intrpending = 0;
     end
   end
-  always @(posedge clk) INTR <= intrpending; // prevent glitches on interrupt pin
+  always @(posedge HCLK) INTR <= intrpending; // prevent glitches on interrupt pin
 
   ///////////////////////////////////////////
   // modem control logic

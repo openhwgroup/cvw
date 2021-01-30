@@ -26,24 +26,24 @@
 `include "wally-config.vh"
 
 module dtim (
-  input  logic            clk, 
-  input  logic [1:0]      MemRWtim,
-//  input  logic [7:0]      ByteMaskM,
-  input  logic [18:0]     HADDR, 
+  input  logic             HCLK, HRESETn, 
+  input  logic [1:0]       MemRWtim,
+  input  logic [18:0]      HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
+  input  logic             HSELTim,
   output logic [`XLEN-1:0] HREADTim,
   output logic             HRESPTim, HREADYTim
 );
 
   logic [`XLEN-1:0] RAM[0:65535];
-  logic [`XLEN-1:0] write;
+//  logic [`XLEN-1:0] write;
   logic [15:0] entry;
   logic            memread, memwrite;
 
   assign memread = MemRWtim[1];
   assign memwrite = MemRWtim[0];
   assign HRESPTim = 0; // OK
-  assign HREADYTim= 1; // Respond immediately; *** extend this 
+  assign HREADYTim = 1; // Respond immediately; *** extend this 
   
   // word aligned reads
   generate
@@ -87,13 +87,16 @@ module dtim (
     end
   endgenerate */
   generate
-    if (`XLEN == 64) begin
-      always_ff @(posedge clk)
+    if (`XLEN == 64) 
+      always_ff @(posedge HCLK) begin
         if (memwrite) RAM[HADDR[17:3]] <= HWDATA;  
-    end else begin
-      always_ff @(posedge clk)
+//        HREADTim <= RAM[HADDR[17:3]];
+      end
+    else 
+      always_ff @(posedge HCLK) begin
         if (memwrite) RAM[HADDR[17:2]] <= HWDATA;  
-    end
+//        HREADTim <= RAM[HADDR[17:2]];
+      end
   endgenerate
 endmodule
 

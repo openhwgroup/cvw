@@ -38,6 +38,7 @@ module wallypipelinedsoc (
   input  logic [`AHBW-1:0] HRDATAEXT,
   input  logic             HREADYEXT, HRESPEXT,
   // outputs to external memory, shared with uncore memory
+  output logic             HCLK, HRESETn,
   output logic [31:0]      HADDR,
   output logic [`AHBW-1:0] HWDATA,
   output logic             HWRITE,
