@@ -27,12 +27,13 @@
 `include "wally-config.vh"
 
 module clint (
-  input  logic            clk, reset, 
-  input  logic [1:0]      MemRWclintM,
-  input  logic [15:0]     AdrM, 
-  input  logic [`XLEN-1:0] MaskedWriteDataM,
-  output logic [`XLEN-1:0] RdCLINTM,
-  output logic            TimerIntM, SwIntM);
+  input  logic             clk, reset, 
+  input  logic [1:0]       MemRWclint,
+  input  logic [15:0]      HADDR, 
+  input  logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN-1:0] HREADCLINT,
+  output logic             HRESPCLINT, HREADYCLINT,
+  output logic             TimerIntM, SwIntM);
 
   logic [63:0] MTIMECMP, MTIME;
   logic        MSIP;
@@ -40,15 +41,17 @@ module clint (
   logic [15:0] entry;
   logic            memread, memwrite;
 
-  assign memread  = MemRWclintM[1];
-  assign memwrite = MemRWclintM[0];
+  assign memread  = MemRWclint[1];
+  assign memwrite = MemRWclint[0];
+  assign HRESPCLINT = 0; // OK
+  assign HREADYCLINT = 1; // Respond immediately
   
   // word aligned reads
   generate
     if (`XLEN==64)
-      assign #2 entry = {AdrM[15:3], 3'b000};
+      assign #2 entry = {HADDR[15:3], 3'b000};
     else
-      assign #2 entry = {AdrM[15:2], 2'b00}; 
+      assign #2 entry = {HADDR[15:2], 2'b00}; 
   endgenerate
   
 
@@ -57,10 +60,10 @@ module clint (
     if (`XLEN==64) begin
       always_comb begin
         case(entry)
-          16'h0000: RdCLINTM = {63'b0, MSIP};
-          16'h4000: RdCLINTM = MTIMECMP;
-          16'hBFF8: RdCLINTM = MTIME;
-          default:  RdCLINTM = 0;
+          16'h0000: HREADCLINT = {63'b0, MSIP};
+          16'h4000: HREADCLINT = MTIMECMP;
+          16'hBFF8: HREADCLINT = MTIME;
+          default:  HREADCLINT = 0;
         endcase
       end 
       always_ff @(posedge clk or posedge reset) 
@@ -70,21 +73,21 @@ module clint (
           MTIMECMP <= 0;
           // MTIMECMP is not reset
         end else if (memwrite) begin
-          if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
-          if (entry == 16'h4000) MTIMECMP <= MaskedWriteDataM;
+          if (entry == 16'h0000) MSIP <= HWDATA[0];
+          if (entry == 16'h4000) MTIMECMP <= HWDATA;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-          if (entry == 16'hBFF8) MTIME <= MaskedWriteDataM;
+          if (entry == 16'hBFF8) MTIME <= HWDATA;
           else MTIME <= MTIME + 1;
         end
     end else begin // 32-bit
       always_comb begin
         case(entry)
-          16'h0000: RdCLINTM = {31'b0, MSIP};
-          16'h4000: RdCLINTM = MTIMECMP[31:0];
-          16'h4004: RdCLINTM = MTIMECMP[63:32];
-          16'hBFF8: RdCLINTM = MTIME[31:0];
-          16'hBFFC: RdCLINTM = MTIME[63:32];
-          default:  RdCLINTM = 0;
+          16'h0000: HREADCLINT = {31'b0, MSIP};
+          16'h4000: HREADCLINT = MTIMECMP[31:0];
+          16'h4004: HREADCLINT = MTIMECMP[63:32];
+          16'hBFF8: HREADCLINT = MTIME[31:0];
+          16'hBFFC: HREADCLINT = MTIME[63:32];
+          default:  HREADCLINT = 0;
         endcase
       end 
       always_ff @(posedge clk or posedge reset) 
@@ -94,12 +97,12 @@ module clint (
           MTIMECMP <= 0;
           // MTIMECMP is not reset
         end else if (memwrite) begin
-          if (entry == 16'h0000) MSIP <= MaskedWriteDataM[0];
-          if (entry == 16'h4000) MTIMECMP[31:0] <= MaskedWriteDataM;
-          if (entry == 16'h4004) MTIMECMP[63:32] <= MaskedWriteDataM;
+          if (entry == 16'h0000) MSIP <= HWDATA[0];
+          if (entry == 16'h4000) MTIMECMP[31:0] <= HWDATA;
+          if (entry == 16'h4004) MTIMECMP[63:32] <= HWDATA;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-          if (entry == 16'hBFF8) MTIME[31:0] <= MaskedWriteDataM;
-          else if (entry == 16'hBFFC) MTIME[63:32]<= MaskedWriteDataM;
+          if (entry == 16'hBFF8) MTIME[31:0] <= HWDATA;
+          else if (entry == 16'hBFFC) MTIME[63:32]<= HWDATA;
           else MTIME <= MTIME + 1;
         end
     end

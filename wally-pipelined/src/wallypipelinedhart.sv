@@ -30,12 +30,9 @@ module wallypipelinedhart (
   input  logic            clk, reset,
   output logic [`XLEN-1:0] PCF,
   input  logic [31:0]     InstrF,
-  output logic [1:0]      MemRWdcuoutM, // *** should be removed when EBU enabled
-  output logic [2:0]      Funct3M, // *** remove when EBU enabled
-  output logic [`XLEN-1:0] DataAdrM, WriteDataM, // ***
-  input  logic [`XLEN-1:0] ReadDataM, // ***
+  // Privileged
   input  logic            TimerIntM, ExtIntM, SwIntM,
-  input  logic            InstrAccessFaultF,
+  input  logic            InstrAccessFaultF, 
   input  logic            DataAccessFaultM,
   // Bus Interface
   input  logic [`AHBW-1:0] HRDATA,
@@ -83,6 +80,12 @@ module wallypipelinedhart (
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
+
+  // bus interface to dcu
+  logic [1:0]      MemRWdcuoutM;
+  logic [2:0]      Funct3M;
+  logic [`XLEN-1:0] DataAdrM, WriteDataM;
+  logic [`XLEN-1:0] ReadDataM;
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
@@ -91,8 +94,11 @@ module wallypipelinedhart (
 
   ahblite ebu(
     .IPAdrD(zero), .IReadD(1'b0), .IRData(), .IReady(), 
-    .DPAdrM(DataAdrM), .DReadM(MemRWM[1]), .DWriteM(MemRWM[0]), .DWDataM(WriteDataM), .DSizeM(2'b11), .DRData(), .DReady(), 
+    .DPAdrM(DataAdrM), .DReadM(MemRWdcuoutM[1]), .DWriteM(MemRWdcuoutM[0]), .DWDataM(WriteDataM), 
+    .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), .DReady(), 
+    .UnsignedLoadM(Funct3M[2]),
     .*);
+//  assign UnsignedLoadM = Funct3M[2]; // *** maybe move read extension to dcu
 
 /*  
   mdu mdu(.*); // multiply and divide unit

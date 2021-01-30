@@ -27,28 +27,32 @@
 
 module dtim (
   input  logic            clk, 
-  input  logic [1:0]      MemRWdtimM,
+  input  logic [1:0]      MemRWtim,
 //  input  logic [7:0]      ByteMaskM,
-  input  logic [18:0]     AdrM, 
-  input  logic [`XLEN-1:0] MaskedWriteDataM,
-  output logic [`XLEN-1:0] RdTimM);
+  input  logic [18:0]     HADDR, 
+  input  logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN-1:0] HREADTim,
+  output logic             HRESPTim, HREADYTim
+);
 
   logic [`XLEN-1:0] RAM[0:65535];
   logic [`XLEN-1:0] write;
   logic [15:0] entry;
   logic            memread, memwrite;
 
-  assign memread = MemRWdtimM[1];
-  assign memwrite = MemRWdtimM[0];
+  assign memread = MemRWtim[1];
+  assign memwrite = MemRWtim[0];
+  assign HRESPTim = 0; // OK
+  assign HREADYTim= 1; // Respond immediately; *** extend this 
   
   // word aligned reads
   generate
     if (`XLEN==64)
-      assign #2 entry = AdrM[18:3];
+      assign #2 entry = HADDR[18:3];
     else
-      assign #2 entry = AdrM[17:2]; 
+      assign #2 entry = HADDR[17:2]; 
   endgenerate
-  assign RdTimM = RAM[entry];
+  assign HREADTim = RAM[entry];
 
   // write each byte based on the byte mask
   // UInstantiate a byte-writable memory here if possible
@@ -58,37 +62,37 @@ module dtim (
 
     if (`XLEN==64) begin
       always_comb begin
-        write=RdTimM;
-        if (ByteMaskM[0]) write[7:0]   = WriteDataM[7:0];
-        if (ByteMaskM[1]) write[15:8]  = WriteDataM[15:8];
-        if (ByteMaskM[2]) write[23:16] = WriteDataM[23:16];
-        if (ByteMaskM[3]) write[31:24] = WriteDataM[31:24];
-	      if (ByteMaskM[4]) write[39:32] = WriteDataM[39:32];
-	      if (ByteMaskM[5]) write[47:40] = WriteDataM[47:40];
-      	if (ByteMaskM[6]) write[55:48] = WriteDataM[55:48];
-	      if (ByteMaskM[7]) write[63:56] = WriteDataM[63:56];
+        write=HREADTim;
+        if (ByteMaskM[0]) write[7:0]   = HWDATA[7:0];
+        if (ByteMaskM[1]) write[15:8]  = HWDATA[15:8];
+        if (ByteMaskM[2]) write[23:16] = HWDATA[23:16];
+        if (ByteMaskM[3]) write[31:24] = HWDATA[31:24];
+	      if (ByteMaskM[4]) write[39:32] = HWDATA[39:32];
+	      if (ByteMaskM[5]) write[47:40] = HWDATA[47:40];
+      	if (ByteMaskM[6]) write[55:48] = HWDATA[55:48];
+	      if (ByteMaskM[7]) write[63:56] = HWDATA[63:56];
       end 
       always_ff @(posedge clk)
-        if (memwrite) RAM[AdrM[18:3]] <= write;
+        if (memwrite) RAM[HADDR[18:3]] <= write;
     end else begin // 32-bit
       always_comb begin
-        write=RdTimM;
-        if (ByteMaskM[0]) write[7:0]   = WriteDataM[7:0];
-        if (ByteMaskM[1]) write[15:8]  = WriteDataM[15:8];
-        if (ByteMaskM[2]) write[23:16] = WriteDataM[23:16];
-        if (ByteMaskM[3]) write[31:24] = WriteDataM[31:24];
+        write=HREADTim;
+        if (ByteMaskM[0]) write[7:0]   = HWDATA[7:0];
+        if (ByteMaskM[1]) write[15:8]  = HWDATA[15:8];
+        if (ByteMaskM[2]) write[23:16] = HWDATA[23:16];
+        if (ByteMaskM[3]) write[31:24] = HWDATA[31:24];
       end 
     always_ff @(posedge clk)
-      if (memwrite) RAM[AdrM[17:2]] <= write;  
+      if (memwrite) RAM[HADDR[17:2]] <= write;  
     end
   endgenerate */
   generate
     if (`XLEN == 64) begin
       always_ff @(posedge clk)
-        if (memwrite) RAM[AdrM[17:3]] <= MaskedWriteDataM;  
+        if (memwrite) RAM[HADDR[17:3]] <= HWDATA;  
     end else begin
       always_ff @(posedge clk)
-        if (memwrite) RAM[AdrM[17:2]] <= MaskedWriteDataM;  
+        if (memwrite) RAM[HADDR[17:2]] <= HWDATA;  
     end
   endgenerate
 endmodule

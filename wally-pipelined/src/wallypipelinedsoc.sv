@@ -34,8 +34,10 @@
 module wallypipelinedsoc (
   input  logic            clk, reset, 
   // AHB Lite Interface
-  input  logic [`AHBW-1:0] HRDATA,
-  input  logic             HREADY, HRESP,
+  // inputs from external memory
+  input  logic [`AHBW-1:0] HRDATAEXT,
+  input  logic             HREADYEXT, HRESPEXT,
+  // outputs to external memory, shared with uncore memory
   output logic [31:0]      HADDR,
   output logic [`AHBW-1:0] HWDATA,
   output logic             HWRITE,
@@ -51,12 +53,14 @@ module wallypipelinedsoc (
   output logic             UARTSout
 );
 
-  logic [1:0] MemRWM;
-  logic [`XLEN-1:0] DataAdrM, WriteDataM;
-  logic [`XLEN-1:0] PCF, ReadDataM;
+  // to instruction memory *** remove later
+  logic [`XLEN-1:0] PCF;
   logic [31:0] InstrF;
-  logic [2:0]  Funct3M;
-  logic [1:0]  MemRWdcuoutM;
+
+  // Uncore signals
+  logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
+  logic             HREADY, HRESP;
+//  logic            UnsignedLoadM;
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM, SwIntM; // from CLINT
   logic        ExtIntM = 0; // not yet connected
@@ -65,5 +69,5 @@ module wallypipelinedsoc (
   wallypipelinedhart hart(.*);
 
   imem imem(.AdrF(PCF[`XLEN-1:1]), .*);
-  uncore uncore(.AdrM(DataAdrM), .MemRWM(MemRWdcuoutM), .*);
+  uncore uncore(.HWDATAIN(HWDATA), .*);
 endmodule

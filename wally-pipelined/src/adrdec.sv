@@ -26,19 +26,19 @@
 `include "wally-config.vh"
 
 module adrdec (
-  input  logic [`XLEN-1:0] AdrM,
-  input  logic [`XLEN-1:0] Base, Range,
-  output logic             En
+  input  logic [31:0] HADDR,
+  input  logic [31:0] Base, Range,
+  output logic        HSEL
 );
 
-  logic [`XLEN-1:0] match;
+  logic [31:0] match;
 
   // determine if an address is in a range starting at the base
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
-  // then anything address between 0x04002000 and 0x04002FFF should match (En=1)
+  // then anything address between 0x04002000 and 0x04002FFF should match (HSEL=1)
 
-  assign match = (AdrM ~^ Base) | Range;
-  assign En = &match;
+  assign match = (HADDR ~^ Base) | Range;
+  assign HSEL = &match;
 
 endmodule
 

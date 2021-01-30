@@ -32,6 +32,8 @@
 
 module ahblite (
   input  logic             clk, reset,
+  // Load control
+  input  logic             UnsignedLoadM,
   // Signals from Instruction Cache
   input  logic [`XLEN-1:0] IPAdrD,
   input  logic             IReadD,
@@ -60,6 +62,7 @@ module ahblite (
   logic HCLK, HRESETn;
   logic GrantData;
   logic [2:0] ISize;
+  logic [`AHBW-1:0] HRDATAMasked;
 
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -77,7 +80,8 @@ module ahblite (
 
   // drive bus outputs
   assign HADDR = GrantData ? DPAdrM[31:0] : IPAdrD[31:0];
-  flop #(`XLEN) wdreg(HCLK, DWDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  assign HWDATA = DWDataM;
+  //flop #(`XLEN) wdreg(HCLK, DWDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   assign HWRITE = DWriteM; // *** check no level to pulse conversion needed
   assign HSIZE = GrantData ? {1'b0, DSizeM} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfHPROT
@@ -87,13 +91,15 @@ module ahblite (
                   
   // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
-  assign IRData = HRDATA;
+  assign IRData = HRDATAMasked;
   assign IReady = HREADY & IReadD & ~GrantData;
-  assign DRData = HRDATA;
+  assign DRData = HRDATAMasked;
   assign DReady = HREADY & GrantData;
 
   // *** consider adding memory access faults based on HRESP being high
   //   InstrAccessFaultF, DataAccessFaultM,
+
+  subwordread swr(.*);
 
 endmodule
 
