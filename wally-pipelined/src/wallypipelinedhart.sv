@@ -37,6 +37,7 @@ module wallypipelinedhart (
   // Bus Interface
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
+  output logic             HCLK, HRESETn,
   output logic [31:0]      HADDR,
   output logic [`AHBW-1:0] HWDATA,
   output logic             HWRITE,

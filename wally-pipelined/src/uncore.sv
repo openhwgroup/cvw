@@ -29,8 +29,8 @@
 // *** need idiom to map onto cache RAM with byte writes
 // *** and use memread signal to reduce power when reads aren't needed
 module uncore (
-  input  logic            clk, reset,
   // AHB Bus Interface
+  input  logic             HCLK, HRESETn,
   input  logic [31:0]      HADDR,
   input  logic [`AHBW-1:0] HWDATAIN,
   input  logic             HWRITE,
@@ -72,10 +72,17 @@ module uncore (
   
   // Enable read or write based on decoded address
   assign MemRW = {~HWRITE, HWRITE};
-  assign MemRWtim  = MemRW & {2{HSELTim}};
+  assign MemRWtim = MemRW & {2{HSELTim}};
   assign MemRWclint = MemRW & {2{HSELCLINT}};
-  assign MemRWgpio  = MemRW & {2{HSELGPIO}};
-  assign MemRWuart  = MemRW & {2{HSELUART}};
+  assign MemRWgpio = MemRW & {2{HSELGPIO}};
+  assign MemRWuart = MemRW & {2{HSELUART}};
+/*  always_ff @(posedge HCLK) begin
+    HADDRD <= HADDR;
+    MemRWtim  <= MemRW & {2{HSELTim}};
+    MemRWclint <= MemRW & {2{HSELCLINT}};
+    MemRWgpio  <= MemRW & {2{HSELGPIO}};
+    MemRWuart  <= MemRW & {2{HSELUART}};
+  end */
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);

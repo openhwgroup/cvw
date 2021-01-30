@@ -230,6 +230,7 @@ string tests32i[] = {
   logic [3:0]       HPROT;
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
+  logic             HCLK, HRESETn;
 
   
   // pick tests based on modes supported

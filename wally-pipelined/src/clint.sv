@@ -27,7 +27,7 @@
 `include "wally-config.vh"
 
 module clint (
-  input  logic             clk, reset, 
+  input  logic             HCLK, HRESETn,
   input  logic [1:0]       MemRWclint,
   input  logic [15:0]      HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
@@ -66,8 +66,8 @@ module clint (
           default:  HREADCLINT = 0;
         endcase
       end 
-      always_ff @(posedge clk or posedge reset) 
-        if (reset) begin
+      always_ff @(posedge HCLK or negedge HRESETn) 
+        if (~HRESETn) begin
           MSIP <= 0;
           MTIME <= 0;
           MTIMECMP <= 0;
@@ -90,8 +90,8 @@ module clint (
           default:  HREADCLINT = 0;
         endcase
       end 
-      always_ff @(posedge clk or posedge reset) 
-        if (reset) begin
+      always_ff @(posedge HCLK or negedge HRESETn) 
+        if (~HRESETn) begin
           MSIP <= 0;
           MTIME <= 0;
           MTIMECMP <= 0;

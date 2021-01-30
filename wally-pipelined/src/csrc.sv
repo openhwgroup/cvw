@@ -182,10 +182,9 @@ module csrc #(parameter
                   IllegalCSRCAccessM = 1;
                 end
               endcase
-            end else 
-            begin 
-                 IllegalCSRCAccessM = 1; // no privileges for this coute
-                 CSRCReadValM = 0;
+            end else begin 
+              IllegalCSRCAccessM = 1; // no privileges for this csr
+              CSRCReadValM = 0;
             end
         else // 32-bit counter reads
           always_comb 
@@ -220,10 +219,9 @@ module csrc #(parameter
                   IllegalCSRCAccessM = 1;
                 end
               endcase
-            end else 
-            begin 
-                 IllegalCSRCAccessM = 1; // no privileges for this coute
-                 CSRCReadValM = 0;
+            end else begin 
+              IllegalCSRCAccessM = 1; // no privileges for this csr
+              CSRCReadValM = 0;
             end
     end else begin
       assign CSRCReadValM = 0;

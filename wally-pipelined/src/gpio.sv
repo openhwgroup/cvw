@@ -28,7 +28,7 @@
 `include "wally-config.vh"
 
 module gpio (
-  input  logic             clk, reset, 
+  input  logic             HCLK, HRESETn,
   input  logic [1:0]       MemRWgpio,
   input  logic [7:0]       HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
@@ -75,8 +75,8 @@ module gpio (
           default:  HREADGPIO = 0;
         endcase
       end 
-      always_ff @(posedge clk or posedge reset) 
-        if (reset) begin
+      always_ff @(posedge HCLK or negedge HRESETn) 
+        if (~HRESETn) begin
           INPUT_EN <= 0;
           OUTPUT_EN <= 0;
           OUTPUT_VAL <= 0; // spec indicates synchronous reset (software control)
@@ -96,8 +96,8 @@ module gpio (
           default:  HREADGPIO = 0;
         endcase
       end 
-      always_ff @(posedge clk or posedge reset) 
-        if (reset) begin
+      always_ff @(posedge HCLK or negedge HRESETn) 
+        if (~HRESETn) begin
           INPUT_EN <= 0;
           OUTPUT_EN <= 0;
           //OUTPUT_VAL <= 0;// spec indicates synchronous rset (software control)

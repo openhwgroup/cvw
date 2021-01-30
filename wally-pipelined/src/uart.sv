@@ -28,7 +28,7 @@
 `include "wally-config.vh"
 
 module uart (
-  input  logic            clk, reset, 
+  input  logic            HCLK, HRESETn, 
   input  logic [1:0]      MemRWuart,
   input  logic [2:0] HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
@@ -79,6 +79,7 @@ module uart (
   endgenerate
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
+  // *** make sure reads don't occur on UART unless fully selected because they could change state.  This applies to all peripherals
   uartPC16550D u(.RCLK(BAUDOUTb), .*);
 
 endmodule
