@@ -30,8 +30,8 @@ vlib work
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
-    0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../src/*.sv -suppress 2583}
+    0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -44,6 +44,17 @@ view wave
 # Diplays All Signals recursively
 add wave /testbench/clk
 add wave /testbench/reset
+add wave -divider
+add wave /testbench/dut/hart/ebu/IReadF
+add wave /testbench/dut/hart/DataStall
+add wave /testbench/dut/hart/InstrStall
+add wave /testbench/dut/hart/StallF
+add wave /testbench/dut/hart/StallD
+add wave /testbench/dut/hart/FlushD
+add wave /testbench/dut/hart/FlushE
+add wave /testbench/dut/hart/FlushM
+add wave /testbench/dut/hart/FlushW
+
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/InstrF
