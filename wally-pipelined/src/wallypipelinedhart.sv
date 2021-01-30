@@ -87,16 +87,17 @@ module wallypipelinedhart (
   logic [2:0]      Funct3M;
   logic [`XLEN-1:0] DataAdrM, WriteDataM;
   logic [`XLEN-1:0] ReadDataM;
+  logic             DataStall, InstrStall;
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
   dcu dcu(/*.Funct3M(InstrM[14:12]),*/ .*); // data cache unit
 
-  ahblite ebu(
-    .IPAdrD(zero), .IReadD(1'b0), .IRData(), .IReady(), 
+  ahblite ebu( // *** make IRData InstrF
+    .IPAdrF(PCF), .IReadF(1'b0), .IRData(), //.IReady(), 
     .DPAdrM(DataAdrM), .DReadM(MemRWdcuoutM[1]), .DWriteM(MemRWdcuoutM[0]), .DWDataM(WriteDataM), 
-    .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), .DReady(), 
+    .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), //.DReady(), 
     .UnsignedLoadM(Funct3M[2]),
     .*);
 //  assign UnsignedLoadM = Funct3M[2]; // *** maybe move read extension to dcu

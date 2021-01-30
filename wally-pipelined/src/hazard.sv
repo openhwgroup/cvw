@@ -29,6 +29,7 @@ module hazard(
   input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
   input  logic       PCSrcE, MemReadE, 
   input  logic       RegWriteM, RegWriteW, CSRWritePendingDEM, RetM, TrapM,
+  input  logic       InstrStall, DataStall,
   output logic [1:0] ForwardAE, ForwardBE,
   output logic       StallF, StallD, FlushD, FlushE, FlushM, FlushW,
   output logic       LoadStallD);
@@ -54,11 +55,24 @@ module hazard(
   // Exceptions: flush entire pipeline
   // Ret instructions: occur in M stage.  Might be possible to move earlier, but be careful about hazards
 
+  // General stall and flush rules:
+  // A stage must stall if the next stage is stalled
+  // If any stages are stalled, the first stage that isn't stalled must flush.
+
   assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
   assign StallD = LoadStallD;
-  assign StallF = LoadStallD | CSRWritePendingDEM;
-  assign FlushD = PCSrcE | CSRWritePendingDEM | RetM | TrapM;
+  assign StallF = StallD | InstrStall | CSRWritePendingDEM;
+  assign FlushD = PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
   assign FlushE = LoadStallD | PCSrcE | RetM | TrapM;
   assign FlushM = RetM | TrapM;
   assign FlushW = TrapM;
+
+/*
+  assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
+  assign StallD = LoadStallD;
+  assign StallF = StallD | CSRWritePendingDEM;
+  assign FlushD = PCSrcE | CSRWritePendingDEM | RetM | TrapM;
+  assign FlushE = LoadStallD | PCSrcE | RetM | TrapM;
+  assign FlushM = RetM | TrapM;
+  assign FlushW = TrapM; */
 endmodule

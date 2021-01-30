@@ -42,7 +42,6 @@ module dcu (
   output logic            StoreMisalignedFaultM, StoreAccessFaultM
 );
                   
-//  memdp memdp(.*);
 
 	// Determine if an Unaligned access is taking place
 	always_comb
