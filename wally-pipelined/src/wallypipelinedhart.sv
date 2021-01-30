@@ -55,6 +55,7 @@ module wallypipelinedhart (
   // new signals that must connect through DP
   logic        CSRWriteM, PrivilegedM;
   logic [`XLEN-1:0] SrcAM;
+//  logic [31:0] InstrF;
   logic [31:0] InstrD, InstrM;
   logic [`XLEN-1:0] PCE, PCM, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
@@ -100,6 +101,7 @@ module wallypipelinedhart (
     .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), //.DReady(), 
     .UnsignedLoadM(Funct3M[2]),
     .*);
+  //assign InstrF = ReadDataM[31:0];
 //  assign UnsignedLoadM = Funct3M[2]; // *** maybe move read extension to dcu
 
 /*  

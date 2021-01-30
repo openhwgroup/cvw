@@ -44,6 +44,7 @@ module ahblite (
   input  logic             DReadM, DWriteM,
   input  logic [`XLEN-1:0] DWDataM,
   input  logic [1:0]       DSizeM,
+  // Return from bus
   output logic [`XLEN-1:0] DRData,
 //  output logic             DReady,
   // AHB-Lite external signals
