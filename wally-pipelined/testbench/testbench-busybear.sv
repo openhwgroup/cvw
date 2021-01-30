@@ -180,6 +180,8 @@ module testbench_busybear();
         PCtext = {PCtext, " ", PCtext2};
       end
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
+      if(InstrF[6:0] == 7'b1010011) // for now, NOP out any float instrs
+        InstrF = 32'b0010011;
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
       if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
