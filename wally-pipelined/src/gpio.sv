@@ -28,29 +28,31 @@
 `include "wally-config.vh"
 
 module gpio (
-  input  logic            clk, reset, 
-  input  logic [1:0]      MemRWgpioM,
-//  input  logic [7:0]      ByteMaskM,
-  input  logic [7:0]      AdrM, 
-  input  logic [`XLEN-1:0] MaskedWriteDataM,
-  output logic [`XLEN-1:0] RdGPIOM,
-  input  logic [31:0]     GPIOPinsIn,
-  output logic [31:0]     GPIOPinsOut, GPIOPinsEn);
+  input  logic             clk, reset, 
+  input  logic [1:0]       MemRWgpio,
+  input  logic [7:0]       HADDR, 
+  input  logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN-1:0] HREADGPIO,
+  output logic             HRESPGPIO, HREADYGPIO,
+  input  logic [31:0]      GPIOPinsIn,
+  output logic [31:0]      GPIOPinsOut, GPIOPinsEn);
 
   logic [31:0] INPUT_VAL, INPUT_EN, OUTPUT_EN, OUTPUT_VAL;
  
   logic [7:0] entry;
   logic            memread, memwrite;
 
-  assign memread  = MemRWgpioM[1];
-  assign memwrite = MemRWgpioM[0];
+  assign memread  = MemRWgpio[1];
+  assign memwrite = MemRWgpio[0];
+  assign HRESPGPIO = 0; // OK
+  assign HREADYGPIO = 1; // Respond immediately
   
   // word aligned reads
   generate
     if (`XLEN==64)
-      assign #2 entry = {AdrM[7:3], 3'b000};
+      assign #2 entry = {HADDR[7:3], 3'b000};
     else
-      assign #2 entry = {AdrM[7:2], 2'b00}; 
+      assign #2 entry = {HADDR[7:2], 2'b00}; 
   endgenerate
   
   generate 
@@ -67,10 +69,10 @@ module gpio (
     if (`XLEN==64) begin
       always_comb begin
         case(entry)
-          8'h00: RdGPIOM = {INPUT_EN, INPUT_VAL};
-          8'h08: RdGPIOM = {OUTPUT_VAL, OUTPUT_EN};
-          8'h40: RdGPIOM = 0; // OUT_XOR reads as 0
-          default:  RdGPIOM = 0;
+          8'h00: HREADGPIO = {INPUT_EN, INPUT_VAL};
+          8'h08: HREADGPIO = {OUTPUT_VAL, OUTPUT_EN};
+          8'h40: HREADGPIO = 0; // OUT_XOR reads as 0
+          default:  HREADGPIO = 0;
         endcase
       end 
       always_ff @(posedge clk or posedge reset) 
@@ -79,19 +81,19 @@ module gpio (
           OUTPUT_EN <= 0;
           OUTPUT_VAL <= 0; // spec indicates synchronous reset (software control)
         end else if (memwrite) begin
-          if (entry == 8'h00) INPUT_EN <= MaskedWriteDataM[63:32];
-          if (entry == 8'h08) {OUTPUT_VAL, OUTPUT_EN} <= MaskedWriteDataM;
-          if (entry == 8'h40) OUTPUT_VAL <= OUTPUT_VAL ^ MaskedWriteDataM[31:0]; // OUT_XOR
+          if (entry == 8'h00) INPUT_EN <= HWDATA[63:32];
+          if (entry == 8'h08) {OUTPUT_VAL, OUTPUT_EN} <= HWDATA;
+          if (entry == 8'h40) OUTPUT_VAL <= OUTPUT_VAL ^ HWDATA[31:0]; // OUT_XOR
         end
     end else begin // 32-bit
       always_comb begin
         case(entry)
-          8'h00: RdGPIOM = INPUT_VAL;
-          8'h04: RdGPIOM = INPUT_EN;
-          8'h08: RdGPIOM = OUTPUT_EN;
-          8'h0C: RdGPIOM = OUTPUT_VAL;
-          8'h40: RdGPIOM = 0; // OUT_XOR reads as 0
-          default:  RdGPIOM = 0;
+          8'h00: HREADGPIO = INPUT_VAL;
+          8'h04: HREADGPIO = INPUT_EN;
+          8'h08: HREADGPIO = OUTPUT_EN;
+          8'h0C: HREADGPIO = OUTPUT_VAL;
+          8'h40: HREADGPIO = 0; // OUT_XOR reads as 0
+          default:  HREADGPIO = 0;
         endcase
       end 
       always_ff @(posedge clk or posedge reset) 
@@ -100,10 +102,10 @@ module gpio (
           OUTPUT_EN <= 0;
           //OUTPUT_VAL <= 0;// spec indicates synchronous rset (software control)
         end else if (memwrite) begin
-          if (entry == 8'h04) INPUT_EN <= MaskedWriteDataM;
-          if (entry == 8'h08) OUTPUT_EN <= MaskedWriteDataM;
-          if (entry == 8'h0C) OUTPUT_VAL <= MaskedWriteDataM;
-          if (entry == 8'h40) OUTPUT_VAL <= OUTPUT_VAL ^ MaskedWriteDataM; // OUT_XOR
+          if (entry == 8'h04) INPUT_EN <= HWDATA;
+          if (entry == 8'h08) OUTPUT_EN <= HWDATA;
+          if (entry == 8'h0C) OUTPUT_VAL <= HWDATA;
+          if (entry == 8'h40) OUTPUT_VAL <= OUTPUT_VAL ^ HWDATA; // OUT_XOR
         end
     end
   endgenerate

@@ -30,11 +30,20 @@
 // *** and use memread signal to reduce power when reads aren't needed
 module uncore (
   input  logic            clk, reset,
+  // AHB Bus Interface
+  input  logic [31:0]      HADDR,
+  input  logic [`AHBW-1:0] HWDATAIN,
+  input  logic             HWRITE,
+  input  logic [2:0]       HSIZE,
+  input  logic [2:0]       HBURST,
+  input  logic [3:0]       HPROT,
+  input  logic [1:0]       HTRANS,
+  input  logic             HMASTLOCK,
+  input  logic [`AHBW-1:0] HRDATAEXT,
+  input  logic             HREADYEXT, HRESPEXT,
+  output logic [`AHBW-1:0] HRDATA,
+  output logic             HREADY, HRESP,
   // bus interface
-  input  logic [1:0]      MemRWM,
-  input  logic [`XLEN-1:0] AdrM, WriteDataM,
-  input  logic [2:0]       Funct3M,
-  output logic [`XLEN-1:0] ReadDataM,
   output logic            DataAccessFaultM,
   // peripheral pins
   output logic            TimerIntM, SwIntM,
@@ -44,56 +53,53 @@ module uncore (
   output logic            UARTSout
   );
   
-  logic [`XLEN-1:0] MaskedWriteDataM;
-  logic [`XLEN-1:0] ReadDataUnmaskedM;
-  logic [`XLEN-1:0] RdTimM, RdCLINTM, RdGPIOM, RdUARTM;
-  logic            TimEnM, CLINTEnM, GPIOEnM, UARTEnM;
-  logic [1:0]      MemRWdtimM, MemRWclintM, MemRWgpioM, MemRWuartM;
+  logic [`XLEN-1:0] HWDATA;
+  logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADGPIO, HREADUART;
+  logic            HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
+  logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
+  logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
+  logic            MemRW;
+  logic [1:0]      MemRWtim, MemRWclint, MemRWgpio, MemRWuart;
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
-
-  // Address decoding
-  adrdec timdec(AdrM, `TIMBASE, `TIMRANGE, TimEnM);
-  adrdec clintdec(AdrM, `CLINTBASE, `CLINTRANGE, CLINTEnM);
-  adrdec gpiodec(AdrM, `GPIOBASE, `GPIORANGE, GPIOEnM);
-  adrdec uartdec(AdrM, `UARTBASE, `UARTRANGE, UARTEnM);
   
-  /*// *** generalize, use configurable
-  generate
-    if (`XLEN == 64)
-      assign TimEnM = ~(|AdrM[`XLEN-1:32]) & AdrM[31] & ~(|AdrM[30:19]); // 0x000...80000000 - 0x000...8007FFFF
-    else
-      assign TimEnM = AdrM[31] & ~(|AdrM[30:19]); // 0x80000000 - 0x8007FFFF
-  endgenerate
-  assign CLINTEnM = ~(|AdrM[`XLEN-1:26]) & AdrM[25] & ~(|AdrM[24:16]); // 0x02000000-0x0200FFFF
-  assign GPIOEnM = (AdrM[31:8] == 24'h10012); // 0x10012000-0x100120FF
-  assign UARTEnM = ~(|AdrM[`XLEN-1:29]) & AdrM[28] & ~(|AdrM[27:3]); // 0x10000000-0x10000007
-  */
 
-  // Enable read or write based on decoded address.
-  assign MemRWdtimM  = MemRWM & {2{TimEnM}};
-  assign MemRWclintM = MemRWM & {2{CLINTEnM}};
-  assign MemRWgpioM  = MemRWM & {2{GPIOEnM}};
-  assign MemRWuartM  = MemRWM & {2{UARTEnM}};
+  // AHB Address decoder
+  adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
+  adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
+  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO);
+  adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
+  assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
+  
+  // Enable read or write based on decoded address
+  assign MemRW = {~HWRITE, HWRITE};
+  assign MemRWtim  = MemRW & {2{HSELTim}};
+  assign MemRWclint = MemRW & {2{HSELCLINT}};
+  assign MemRWgpio  = MemRW & {2{HSELGPIO}};
+  assign MemRWuart  = MemRW & {2{HSELUART}};
+
+  // subword accesses: converts HWDATAIN to HWDATA
+  subwordwrite sww(.*);
 
   // tightly integrated memory
-  dtim dtim(.AdrM(AdrM[18:0]), .*);
+  dtim dtim(.HADDR(HADDR[18:0]), .*);
 
   // memory-mapped I/O peripherals
-  clint clint(.AdrM(AdrM[15:0]), .*);
-  gpio gpio(.AdrM(AdrM[7:0]), .*); // *** may want to add GPIO interrupts
-  uart uart(.TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
+  clint clint(.HADDR(HADDR[15:0]), .*);
+  gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
+  uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
             .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
             .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
 
-  // *** Interface to off-chip memory would appear as another peripheral
-  
-  // merge reads
-  assign ReadDataUnmaskedM = ({`XLEN{TimEnM}} & RdTimM) | ({`XLEN{CLINTEnM}} & RdCLINTM) | 
-                     ({`XLEN{GPIOEnM}} & RdGPIOM) | ({`XLEN{UARTEnM}} & RdUARTM);
-  assign DataAccessFaultM = ~(TimEnM | CLINTEnM | GPIOEnM | UARTEnM);
+  // mux could also include external memory  
+  // AHB Read Multiplexer
+  assign HRDATA = ({`XLEN{HSELTim}} & HREADTim) | ({`XLEN{HSELCLINT}} & HREADCLINT) | 
+                     ({`XLEN{HSELGPIO}} & HREADGPIO) | ({`XLEN{HSELUART}} & HREADUART);
+  assign HRESP = HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | HSELGPIO & HRESPGPIO | HSELUART & HRESPUART;
+  assign HREADY = HSELTim & HREADYTim | HSELCLINT & HREADYCLINT | HSELGPIO & HREADYGPIO | HSELUART & HREADYUART;
 
-  // subword accesses: converts ReadDataUnmaskedM to ReadDataM and WriteDataM to MaskedWriteDataM
-  subword subword(.*);
+  // Faults
+  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | HSELGPIO | HSELUART);
+
  
 endmodule
 

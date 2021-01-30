@@ -220,8 +220,8 @@ string tests32i[] = {
 };
   string tests[];
 
-  logic [`AHBW-1:0] HRDATA;
-  logic             HREADY, HRESP;
+  logic [`AHBW-1:0] HRDATAEXT;
+  logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -251,9 +251,9 @@ string tests32i[] = {
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  assign HREADY = 1;
-  assign HRESP = 0;
-  assign HRDATA = 0;
+  assign HREADYEXT = 1;
+  assign HRESPEXT = 0;
+  assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.*); 
 

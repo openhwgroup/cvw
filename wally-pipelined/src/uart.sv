@@ -29,11 +29,11 @@
 
 module uart (
   input  logic            clk, reset, 
-  input  logic [1:0]      MemRWuartM,
-//  input  logic [7:0]      ByteMaskM,
-  input  logic [`XLEN-1:0] AdrM, 
-  input  logic [`XLEN-1:0] MaskedWriteDataM,
-  output logic [`XLEN-1:0] RdUARTM,
+  input  logic [1:0]      MemRWuart,
+  input  logic [2:0] HADDR, 
+  input  logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN-1:0] HREADUART,
+  output logic             HRESPUART, HREADYUART,
   input  logic            SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
   output logic            SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
   output logic            OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);         // to CPU
@@ -44,33 +44,35 @@ module uart (
   logic [7:0]      Din, Dout;
 
   // rename processor interface signals to match PC16550D and provide one-byte interface
-  assign MEMRb = ~MemRWuartM[1];
-  assign MEMWb = ~MemRWuartM[0];
-  assign A = AdrM[2:0];
+  assign MEMRb = ~MemRWuart[1];
+  assign MEMWb = ~MemRWuart[0];
+  assign A = HADDR[2:0];
+  assign HRESPUART = 0; // OK
+  assign HREADYUART = 1; // Respond immediately
 
   generate
     if (`XLEN == 64) begin
       always_comb begin
-        RdUARTM = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
-        case (AdrM[2:0])
-          3'b000: Din = MaskedWriteDataM[7:0];
-          3'b001: Din = MaskedWriteDataM[15:8];
-          3'b010: Din = MaskedWriteDataM[23:16];
-          3'b011: Din = MaskedWriteDataM[31:24];
-          3'b100: Din = MaskedWriteDataM[39:32];
-          3'b101: Din = MaskedWriteDataM[47:40];
-          3'b110: Din = MaskedWriteDataM[55:48];
-          3'b111: Din = MaskedWriteDataM[63:56];
+        HREADUART = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
+        case (HADDR)
+          3'b000: Din = HWDATA[7:0];
+          3'b001: Din = HWDATA[15:8];
+          3'b010: Din = HWDATA[23:16];
+          3'b011: Din = HWDATA[31:24];
+          3'b100: Din = HWDATA[39:32];
+          3'b101: Din = HWDATA[47:40];
+          3'b110: Din = HWDATA[55:48];
+          3'b111: Din = HWDATA[63:56];
         endcase 
       end 
     end else begin // 32-bit
       always_comb begin
-        RdUARTM = {Dout, Dout, Dout, Dout};
-        case (AdrM[1:0])
-          2'b00: Din = MaskedWriteDataM[7:0];
-          2'b01: Din = MaskedWriteDataM[15:8];
-          2'b10: Din = MaskedWriteDataM[23:16];
-          2'b11: Din = MaskedWriteDataM[31:24];
+        HREADUART = {Dout, Dout, Dout, Dout};
+        case (HADDR[1:0])
+          2'b00: Din = HWDATA[7:0];
+          2'b01: Din = HWDATA[15:8];
+          2'b10: Din = HWDATA[23:16];
+          2'b11: Din = HWDATA[31:24];
         endcase
       end
     end

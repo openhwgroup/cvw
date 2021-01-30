@@ -169,7 +169,7 @@ module csrm #(parameter
       PMPCFG0:   CSRMReadValM = PMPCFG01_REGW[`XLEN-1:0];
       PMPCFG1:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG01_REGW[63:31]};
       PMPCFG2:   CSRMReadValM = PMPCFG23_REGW[`XLEN-1:0];
-      PMPCFG3:   CSRMReadValM = PMPCFG23_REGW[63:31];
+      PMPCFG3:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG23_REGW[63:31]};
       PMPADDR0:  CSRMReadValM = PMPADDR0_REGW;
       default: begin
                  CSRMReadValM = 0;
