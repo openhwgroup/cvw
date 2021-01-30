@@ -26,7 +26,7 @@ vlib work
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog +incdir+../config/busybear ../testbench/*.sv ../src/*.sv -suppress 2583
+vlog +incdir+../config/busybear ../testbench/*.sv ../src/*/*.sv -suppress 2583
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -50,12 +50,11 @@ add wave /testbench_busybear/lastPC2
 add wave -divider
 # registers!
 add wave -hex /testbench_busybear/rfExpected
-add wave -hex /testbench_busybear/MemRWM[0]
-add wave -hex /testbench_busybear/MemRWM[1]
-add wave -hex /testbench_busybear/ByteMaskM
-add wave -hex /testbench_busybear/WriteDataM
-add wave -hex /testbench_busybear/ReadDataM
-add wave -hex /testbench_busybear/DataAdrM
+add wave -hex /testbench_busybear/HWRITE
+add wave -hex /testbench_busybear/dut/MemRWM[1]
+add wave -hex /testbench_busybear/HWDATA
+add wave -hex /testbench_busybear/HRDATA
+add wave -hex /testbench_busybear/HADDR
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[1]
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[2]
 add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[3]

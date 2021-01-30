@@ -3,15 +3,12 @@
 module testbench_busybear();
 
   logic            clk, reset;
-  logic [`XLEN-1:0] WriteDataM, DataAdrM;
-  logic [1:0]      MemRWM;
   logic [31:0]     GPIOPinsIn;
   logic [31:0]     GPIOPinsOut, GPIOPinsEn;
 
   // instantiate device to be tested
-  logic [`XLEN-1:0] PCF, ReadDataM;
+  logic [`XLEN-1:0] PCF; 
   logic [31:0] InstrF;
-  logic [7:0]  ByteMaskM;
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM = 0, SwIntM = 0; // from CLINT
   logic        ExtIntM = 0; // not yet connected
@@ -26,6 +23,7 @@ module testbench_busybear();
   logic [3:0]       HPROT;
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
+  logic             HCLK, HRESETn;
 
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
@@ -115,40 +113,37 @@ module testbench_busybear();
 
   logic [`XLEN-1:0] readAdrExpected;
   // this might need to change
-  always @(MemRWM[1] or DataAdrM) begin
-    if (MemRWM[1]) begin
+  always @(dut.MemRWM[1] or HADDR) begin
+    if (dut.MemRWM[1]) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         $stop;
       end
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
-      scan_file_memR = $fscanf(data_file_memR, "%x\n", ReadDataM);
-      if (DataAdrM != readAdrExpected) begin
-        $display("%t ps, instr %0d: DataAdrM does not equal readAdrExpected: %x, %x", $time, instrs, DataAdrM, readAdrExpected);
+      scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
+      #1;
+      if (HADDR != readAdrExpected) begin
+        $display("%t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
       end
     end
   end
-
+      
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
   // this might need to change
-  always @(WriteDataM or DataAdrM or ByteMaskM) begin
+  always @(HWDATA or HADDR or HSIZE) begin
     #1;
-    if (MemRWM[0]) begin
+    if (HWRITE) begin
       if($feof(data_file_memW)) begin
         $display("no more memW data to read");
         $stop;
       end
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
-      for(int i=0; i<8; i++) begin
-        if (ByteMaskM[i]) begin
-          if (writeDataExpected[i*8+7 -: 8] != WriteDataM[i*8+7 -: 8]) begin
-            $display("%t ps, instr %0d: WriteDataM does not equal writeDataExpected: %x, %x", $time, instrs, WriteDataM, writeDataExpected);
-          end
-        end
+      if (writeDataExpected != HWDATA) begin
+        $display("%t ps, instr %0d: HWDATA does not equal writeDataExpected: %x, %x", $time, instrs, HWDATA, writeDataExpected);
       end
-      if (writeAdrExpected != DataAdrM) begin
-        $display("%t ps, instr %0d: DataAdrM does not equal writeAdrExpected: %x, %x", $time, instrs, DataAdrM, writeAdrExpected);
+      if (writeAdrExpected != HADDR) begin
+        $display("%t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrExpected);
       end
     end
   end
