@@ -35,17 +35,17 @@ module ahblite (
   // Load control
   input  logic             UnsignedLoadM,
   // Signals from Instruction Cache
-  input  logic [`XLEN-1:0] IPAdrD,
-  input  logic             IReadD,
+  input  logic [`XLEN-1:0] IPAdrF,
+  input  logic             IReadF,
   output logic [`XLEN-1:0] IRData,
-  output logic             IReady,
+//  output logic             IReady,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] DPAdrM,
   input  logic             DReadM, DWriteM,
   input  logic [`XLEN-1:0] DWDataM,
   input  logic [1:0]       DSizeM,
   output logic [`XLEN-1:0] DRData,
-  output logic             DReady,
+//  output logic             DReady,
   // AHB-Lite external signals
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
@@ -57,12 +57,15 @@ module ahblite (
   output logic [2:0]       HBURST,
   output logic [3:0]       HPROT,
   output logic [1:0]       HTRANS,
-  output logic             HMASTLOCK
+  output logic             HMASTLOCK,
+  // Stalls
+  output logic             InstrStall, DataStall
 );
 
   logic GrantData;
   logic [2:0] ISize;
   logic [`AHBW-1:0] HRDATAMasked;
+  logic IReady, DReady;
 
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -79,22 +82,28 @@ module ahblite (
   endgenerate
 
   // drive bus outputs
-  assign HADDR = GrantData ? DPAdrM[31:0] : IPAdrD[31:0];
+  assign HADDR = GrantData ? DPAdrM[31:0] : IPAdrF[31:0];
   assign HWDATA = DWDataM;
   //flop #(`XLEN) wdreg(HCLK, DWDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   assign HWRITE = DWriteM; 
   assign HSIZE = GrantData ? {1'b0, DSizeM} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfHPROT
   assign HPROT = 4'b0011; // not used; see Section 3.7
-  assign HTRANS = IReadD | DReadM | DWriteM ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
+  assign HTRANS = IReadF | DReadM | DWriteM ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
                   
   // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
   assign IRData = HRDATAMasked;
-  assign IReady = HREADY & IReadD & ~GrantData;
+  assign IReady = HREADY & IReadF & ~GrantData; // maybe unused?***
   assign DRData = HRDATAMasked;
-  assign DReady = HREADY & GrantData;
+  assign DReady = HREADY & GrantData; // ***unused?
+
+  // stalls
+  // Stall MEM stage if data is being accessed and bus isn't yet ready
+  assign DataStall = GrantData & ~HREADY; 
+  // Stall Fetch stage if instruction should be read but reading data or bus isn't ready
+  assign InstrStall = IReadF & (GrantData | ~HREADY); 
 
   // *** consider adding memory access faults based on HRESP being high
   //   InstrAccessFaultF, DataAccessFaultM,
