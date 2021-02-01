@@ -54,6 +54,15 @@ module testbench_busybear();
     end 
   end
 
+  integer data_file_PCW, scan_file_PCW;
+  initial begin
+    data_file_PCW = $fopen("../busybear-testgen/parsedPC.txt", "r");
+    if (data_file_PCW == 0) begin
+      $display("file couldn't be opened");
+      $stop;
+    end 
+  end
+
   // read register trace file
   integer data_file_rf, scan_file_rf;
   initial begin
@@ -154,7 +163,33 @@ module testbench_busybear();
     speculative = 0;
   end
   logic [63:0] lastInstrF, lastPC, lastPC2;
-  
+
+  string PCtextW, PCtext2W;
+  logic [31:0] InstrWExpected;
+  logic [63:0] PCWExpected;
+  always @(dut.ifu.PCW or dut.ieu.InstrValidW) begin
+   if(dut.ieu.InstrValidW && dut.ifu.PCW != 0) begin
+      if($feof(data_file_PCW)) begin
+        $display("no more PC data to read");
+        $stop;
+      end
+      scan_file_PCW = $fscanf(data_file_PCW, "%s\n", PCtextW);
+      if (PCtextW != "ret") begin
+        scan_file_PC = $fscanf(data_file_PCW, "%s\n", PCtext2W);
+        PCtextW = {PCtextW, " ", PCtext2W};
+      end
+      scan_file_PCW = $fscanf(data_file_PCW, "%x\n", InstrWExpected);
+      // then expected PC value
+      scan_file_PCW = $fscanf(data_file_PCW, "%x\n", PCWExpected);
+      if(dut.ifu.PCW != PCWExpected) begin
+        $display("%t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.ifu.PCW, PCWExpected);
+      end
+      //if(it.InstrW != InstrWExpected) begin
+      //  $display("%t ps, instr %0d: InstrW does not equal InstrW expected: %x, %x", $time, instrs, it.InstrW, InstrWExpected);
+      //end
+    end
+  end
+
   string PCtext, PCtext2;
   integer instrs;
   initial begin
@@ -182,7 +217,7 @@ module testbench_busybear();
       scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
       if(InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
         InstrF = 32'b0010011;
-        $display("warning: NOPing out %s at PC=%0d", PCtext, instrs);
+        $display("warning: NOPing out %s at PC=%0x", PCtext, PCF);
       end
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
