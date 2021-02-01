@@ -1,12 +1,12 @@
 ///////////////////////////////////////////
-// dcu.sv
+// dmem.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Data cache unit
+// Purpose: Data memory
 //          Top level of the memory-stage hart logic
-//          Contains data cache, subword read/write datapath, interface to external bus
+//          Contains data cache, DTLB, subword read/write datapath, interface to external bus
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-module dcu (
+module dmem (
   input  logic [1:0]      MemRWM,
   output logic [1:0]      MemRWdcuoutM,
   output logic            DataMisalignedM,
