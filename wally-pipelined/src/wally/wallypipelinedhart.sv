@@ -79,11 +79,13 @@ module wallypipelinedhart (
   logic       FloatRegWriteW;
 
   // bus interface to dmem
-  logic [1:0]      MemRWdcuoutM;
+  logic [1:0]      MemRWAlignedM;
   logic [2:0]      Funct3M;
-  logic [`XLEN-1:0] DataAdrM, WriteDataM;
+  logic [`XLEN-1:0] MemAdrM, MemPAdrM, WriteDataM;
   logic [`XLEN-1:0] ReadDataM, ReadDataW;
+  logic [`XLEN-1:0] InstrPAdrF;
   logic             DataStall, InstrStall;
+  logic             InstrAckD, MemAckW;
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
@@ -91,8 +93,8 @@ module wallypipelinedhart (
   dmem dmem(/*.Funct3M(InstrM[14:12]),*/ .*); // data cache unit
 
   ahblite ebu( // *** make IRData InstrF
-    .IPAdrF(PCF), .IReadF(1'b1), .IRData(), //.IReady(), 
-    .DPAdrM(DataAdrM), .DReadM(MemRWdcuoutM[1]), .DWriteM(MemRWdcuoutM[0]), .DWDataM(WriteDataM), 
+    .IReadF(1'b1), .IRData(), //.IReady(), 
+    .DReadM(MemRWAlignedM[1]), .DWriteM(MemRWAlignedM[0]), 
     .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), //.DReady(), 
     .UnsignedLoadM(Funct3M[2]),
     .*);

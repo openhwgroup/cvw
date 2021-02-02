@@ -35,14 +35,14 @@ module ahblite (
   // Load control
   input  logic             UnsignedLoadM,
   // Signals from Instruction Cache
-  input  logic [`XLEN-1:0] IPAdrF,
+  input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             IReadF,
   output logic [`XLEN-1:0] IRData,
 //  output logic             IReady,
   // Signals from Data Cache
-  input  logic [`XLEN-1:0] DPAdrM,
+  input  logic [`XLEN-1:0] MemPAdrM,
   input  logic             DReadM, DWriteM,
-  input  logic [`XLEN-1:0] DWDataM,
+  input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       DSizeM,
   // Return from bus
   output logic [`XLEN-1:0] DRData,
@@ -59,8 +59,10 @@ module ahblite (
   output logic [3:0]       HPROT,
   output logic [1:0]       HTRANS,
   output logic             HMASTLOCK,
+  // Acknowledge
+  output logic             InstrAckD, MemAckW
   // Stalls
-  output logic             InstrStall, DataStall
+//  output logic             InstrStall, DataStall
 );
 
   logic GrantData;
@@ -83,8 +85,8 @@ module ahblite (
   endgenerate
 
   // drive bus outputs
-  assign HADDR = GrantData ? DPAdrM[31:0] : IPAdrF[31:0];
-  assign HWDATA = DWDataM;
+  assign HADDR = GrantData ? MemPAdrM[31:0] : InstrPAdrF[31:0];
+  assign HWDATA = WriteDataM;
   //flop #(`XLEN) wdreg(HCLK, DWDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   assign HWRITE = DWriteM; 
   assign HSIZE = GrantData ? {1'b0, DSizeM} : ISize;
@@ -102,9 +104,9 @@ module ahblite (
 
   // stalls
   // Stall MEM stage if data is being accessed and bus isn't yet ready
-  assign DataStall = GrantData & ~HREADY; 
+  //assign DataStall = GrantData & ~HREADY; 
   // Stall Fetch stage if instruction should be read but reading data or bus isn't ready
-  assign InstrStall = IReadF & (GrantData | ~HREADY); 
+  //assign InstrStall = IReadF & (GrantData | ~HREADY); 
 
   // *** consider adding memory access faults based on HRESP being high
   //   InstrAccessFaultF, DataAccessFaultM,

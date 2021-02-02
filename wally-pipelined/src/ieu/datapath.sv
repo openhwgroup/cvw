@@ -48,7 +48,7 @@ module datapath (
   input  logic [`XLEN-1:0] ReadDataW,
   input  logic             RetM, TrapM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataM, DataAdrM,
+  output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
   input  logic             FlushW,
   input  logic             RegWriteW, 
@@ -103,7 +103,7 @@ module datapath (
   // Memory stage pipeline register
   floprc #(`XLEN) SrcAMReg(clk, reset, FlushM, SrcAE, SrcAM);
   floprc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ALUResultE, ALUResultM);
-  assign DataAdrM = ALUResultM;
+  assign MemAdrM = ALUResultM;
   floprc #(`XLEN) WriteDataMReg(clk, reset, FlushM, WriteDataE, WriteDataM);
   floprc #(5)    RdMEg(clk, reset, FlushM, RdE, RdM);
   

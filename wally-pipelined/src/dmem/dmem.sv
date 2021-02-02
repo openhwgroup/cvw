@@ -28,39 +28,45 @@
 `include "wally-config.vh"
 
 module dmem (
-  input  logic            clk, reset,
-  input  logic            FlushW,
-  //
-  input  logic [1:0]      MemRWM,
-  output logic [1:0]      MemRWdcuoutM,
-  output logic            DataMisalignedM,
-
-  input  logic [`XLEN-1:0] DataAdrM,
+  input  logic             clk, reset,
+  input  logic             FlushW,
+  output logic             DataStall,
+  // Memory Stage
+  input  logic [1:0]       MemRWM,
+  input  logic [`XLEN-1:0] MemAdrM,
   input  logic [2:0]       Funct3M,
   input  logic [`XLEN-1:0] ReadDataM,
+  input  logic [`XLEN-1:0] WriteDataM, 
+  output logic [`XLEN-1:0] MemPAdrM,
+  output logic [1:0]       MemRWAlignedM,
+  output logic             DataMisalignedM,
+  // Writeback Stage
+  input  logic             MemAckW,
   output logic [`XLEN-1:0] ReadDataW,
-/*  input logic [`XLEN-1:0] WriteDataM, */
   // faults
-  input  logic            DataAccessFaultM,
-  output logic            LoadMisalignedFaultM, LoadAccessFaultM,
-  output logic            StoreMisalignedFaultM, StoreAccessFaultM
+  input  logic             DataAccessFaultM,
+  output logic             LoadMisalignedFaultM, LoadAccessFaultM,
+  output logic             StoreMisalignedFaultM, StoreAccessFaultM
 );
 
-  // Pipeline register       
+  // Initially no MMU
+  assign MemPAdrM = MemAdrM;
+
+  // Pipeline register       *** AHB data will eventually come back in W anyway
   floprc #(`XLEN) ReadDataWReg(clk, reset, FlushW, ReadDataM, ReadDataW);
 
 	// Determine if an Unaligned access is taking place
 	always_comb
 		case(Funct3M[1:0]) 
 		  2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
-		  2'b01:  DataMisalignedM = DataAdrM[0];           // lh, sh, lhu
-		  2'b10:  DataMisalignedM = DataAdrM[1] | DataAdrM[0]; // lw, sw, flw, fsw, lwu
-		  2'b11:  DataMisalignedM = |DataAdrM[2:0];        // ld, sd, fld, fsd
+		  2'b01:  DataMisalignedM = MemAdrM[0];           // lh, sh, lhu
+		  2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
+		  2'b11:  DataMisalignedM = |MemAdrM[2:0];        // ld, sd, fld, fsd
 		endcase 
 
   // Squash unaligned data accesses
   // *** this is also the place to squash if the cache is hit
-  assign MemRWdcuoutM = MemRWM & {2{~DataMisalignedM}};
+  assign MemRWAlignedM = MemRWM & {2{~DataMisalignedM}};
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
@@ -68,6 +74,8 @@ module dmem (
   assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
   assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
 
+  // Data stall
+  assign DataStall = 0;
 
 endmodule
 
