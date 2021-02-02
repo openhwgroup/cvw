@@ -26,10 +26,11 @@
 `include "wally-config.vh"
 
 module hazard(
-  // Detect hazardsss
-  input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input  logic       PCSrcE, MemReadE, 
-  input  logic       RegWriteM, RegWriteW, CSRWritePendingDEM, RetM, TrapM,
+  // Detect hazards
+//  input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
+//  input  logic       MemReadE, 
+//  input  logic       RegWriteM, RegWriteW, 
+  input  logic       PCSrcE, CSRWritePendingDEM, RetM, TrapM,
   input  logic       LoadStallD,
   input  logic       InstrStall, DataStall,
   // Stall outputs

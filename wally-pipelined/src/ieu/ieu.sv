@@ -51,9 +51,7 @@ module ieu (
   input  logic             RetM, TrapM,
   output logic             LoadStallD,
   output logic             PCSrcE,
-//  output logic 	           MemReadE,
-  output logic             RegWriteM,
-  output logic             RegWriteW,
+
   output logic             CSRWriteM, PrivilegedM,
   output logic             CSRWritePendingDEM
 );
@@ -68,6 +66,7 @@ module ieu (
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
   logic [1:0]       ForwardAE, ForwardBE;
+  logic             RegWriteM, RegWriteW;
   logic             MemReadE;
            
   controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7b5D(InstrD[30]), .*);
