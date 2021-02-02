@@ -28,6 +28,7 @@
 
 module csr (
   input  logic             clk, reset,
+  input  logic             FlushW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
@@ -44,11 +45,11 @@ module csr (
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-  output logic [`XLEN-1:0] CSRReadValM,
+  output logic [`XLEN-1:0] CSRReadValW,
   output logic             IllegalCSRAccessM
 );
 
-  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM;
+  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM, CSRReadValM;
   logic [`XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
  
   logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW;
@@ -101,6 +102,7 @@ module csr (
 
       // merge CSR Reads
       assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 
+      floprc #(`XLEN) CSRValWReg(clk, reset, FlushW, CSRReadValM, CSRReadValW);
 
       // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
       assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 && PrivilegeModeW != `M_MODE) ||

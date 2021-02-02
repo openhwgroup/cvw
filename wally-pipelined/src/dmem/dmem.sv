@@ -29,21 +29,25 @@
 
 module dmem (
   input  logic            clk, reset,
+  input  logic            FlushW,
   //
   input  logic [1:0]      MemRWM,
   output logic [1:0]      MemRWdcuoutM,
   output logic            DataMisalignedM,
 
   input  logic [`XLEN-1:0] DataAdrM,
-  input  logic [2:0]      Funct3M,
-/*  output  logic [`XLEN-1:0] ReadDataM,
-  input logic [`XLEN-1:0] WriteDataM, */
+  input  logic [2:0]       Funct3M,
+  input  logic [`XLEN-1:0] ReadDataM,
+  output logic [`XLEN-1:0] ReadDataW,
+/*  input logic [`XLEN-1:0] WriteDataM, */
   // faults
   input  logic            DataAccessFaultM,
   output logic            LoadMisalignedFaultM, LoadAccessFaultM,
   output logic            StoreMisalignedFaultM, StoreAccessFaultM
 );
-                  
+
+  // Pipeline register       
+  floprc #(`XLEN) ReadDataWReg(clk, reset, FlushW, ReadDataM, ReadDataW);
 
 	// Determine if an Unaligned access is taking place
 	always_comb

@@ -82,6 +82,8 @@ module controller(
 	
 
   // Main Instruction Decoder
+  // *** decoding of non-IEU instructions should also go here, and should be gated by MISA bits in a generate so
+  // they don't get generated if that mode is disabled
   always_comb
     case(OpD)
     // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRWrite_Privileged_Illegal
