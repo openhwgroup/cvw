@@ -39,27 +39,21 @@ module dtim (
 //  logic [`XLEN-1:0] write;
   logic [15:0] entry;
   logic            memread, memwrite;
-//  logic busy;
   logic [3:0] busycount;
 
   // busy FSM to extend READY signal
   always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
-//      busy <= 0;
       HREADYTim <= 1;
     end else begin
-//      if (~busy & HSELTim) begin
       if (HREADYTim & HSELTim) begin
-//        busy <= 1;
         busycount <= 0;
         HREADYTim <= 0;
-//      end else if (busy) begin
       end else if (~HREADYTim) begin
-        busycount <= busycount + 1;
-        if (busycount == 4) begin // TIM latency, for testing purposes
-//          busy <= 0;
+        if (busycount == 0) begin // TIM latency, for testing purposes
           HREADYTim <= 1;
-        end
+        end else
+          busycount <= busycount + 1;
       end
     end
   
