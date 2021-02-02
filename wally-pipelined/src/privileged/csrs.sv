@@ -40,17 +40,17 @@ module csrs #(parameter
   STVAL = 12'h143,
   SIP= 12'h144,
   SATP = 12'h180) (
-    input  logic clk, reset, 
-    input  logic CSRSWriteM, STrapM,
-    input  logic [11:0] CSRAdrM,
+    input  logic             clk, reset, 
+    input  logic             CSRSWriteM, STrapM,
+    input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRSReadValM, SEPC_REGW, STVEC_REGW, 
-    output logic [31:0]     SCOUNTEREN_REGW,     
+    output logic [31:0]      SCOUNTEREN_REGW,     
     output logic [`XLEN-1:0] SEDELEG_REGW, SIDELEG_REGW, 
-    input  logic [11:0]     SIP_REGW, SIE_REGW,
-    output logic            WriteSSTATUSM,
-    output logic            IllegalCSRSAccessM
+    input  logic [11:0]      SIP_REGW, SIE_REGW,
+    output logic             WriteSSTATUSM,
+    output logic             IllegalCSRSAccessM
   );
 
   logic [`XLEN-1:0] zero = 0;

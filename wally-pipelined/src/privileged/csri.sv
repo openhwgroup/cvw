@@ -32,12 +32,12 @@ module csri #(parameter
   MIP = 12'h344,
   SIE = 12'h104,
   SIP = 12'h144) (
-    input  logic            clk, reset, 
-    input  logic            CSRMWriteM, CSRSWriteM,
-    input  logic [11:0]     CSRAdrM,
-    input  logic            ExtIntM, TimerIntM, SwIntM,
+    input  logic             clk, reset, 
+    input  logic             CSRMWriteM, CSRSWriteM,
+    input  logic [11:0]      CSRAdrM,
+    input  logic             ExtIntM, TimerIntM, SwIntM,
     input  logic [`XLEN-1:0] MIDELEG_REGW,
-    output logic [11:0]     MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
+    output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
     input  logic [`XLEN-1:0] CSRWriteValM
   );
 

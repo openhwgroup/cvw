@@ -53,7 +53,7 @@ module alu #(parameter WIDTH=32) (
   assign arith = alucontrol[3]; // sra
   assign w64 = alucontrol[4];
   assign right = (alucontrol[2:0] == 3'b101); // sra or srl
-  shifter #(WIDTH) sh(a, b[5:0], right, arith, w64, shift);
+  shifter sh(a, b[5:0], right, arith, w64, shift);
   
   // OR optionally passes zero when ALUControl[3] is set, supporting lui
   assign bor = alucontrol[3] ? b : a|b;

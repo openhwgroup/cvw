@@ -26,9 +26,9 @@
 `include "wally-config.vh"
 
 module extend (
-  input  logic [31:7]     InstrD,
-  input  logic [2:0]      ImmSrcD,
-  output logic [`XLEN-1:0] ExtImmD);
+  input  logic [31:7]       InstrD,
+  input  logic [2:0]        ImmSrcD,
+  output logic [`XLEN-1:0 ] ExtImmD);
  
   always_comb
     case(ImmSrcD) 

@@ -27,8 +27,8 @@
 
 module imem (
   input  logic [`XLEN-1:1] AdrF,
-  output logic [31:0] InstrF,
-  output logic        InstrAccessFaultF);
+  output logic [31:0]      InstrF,
+  output logic             InstrAccessFaultF);
 
  /* verilator lint_off UNDRIVEN */
   logic [`XLEN-1:0] RAM[0:65535];

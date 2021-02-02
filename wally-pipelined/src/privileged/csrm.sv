@@ -61,17 +61,17 @@ module csrm #(parameter
   DPC = 12'h7B1,
   DSCRATCH0 = 12'h7B2,
   DSCRATCH1 = 12'h7B3) (
-    input  logic clk, reset, 
-    input  logic CSRMWriteM, MTrapM,
-    input  logic [11:0] CSRAdrM,
+    input  logic             clk, reset, 
+    input  logic             CSRMWriteM, MTrapM,
+    input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
-    output logic [31:0]     MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
+    output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
     output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, 
-    input  logic [11:0]     MIP_REGW, MIE_REGW,
-    output logic            WriteMSTATUSM,
-    output logic            IllegalCSRMAccessM
+    input  logic [11:0]      MIP_REGW, MIE_REGW,
+    output logic             WriteMSTATUSM,
+    output logic             IllegalCSRMAccessM
   );
 
   logic [`XLEN-1:0] MISA_REGW;

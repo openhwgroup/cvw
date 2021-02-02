@@ -26,9 +26,9 @@
 `include "wally-config.vh"
 
 module regfile (
-  input  logic            clk, reset,
-  input  logic            we3, 
-  input  logic [ 4:0]     a1, a2, a3, 
+  input  logic             clk, reset,
+  input  logic             we3, 
+  input  logic [ 4:0]      a1, a2, a3, 
   input  logic [`XLEN-1:0] wd3, 
   output logic [`XLEN-1:0] rd1, rd2);
 

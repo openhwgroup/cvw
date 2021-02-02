@@ -26,32 +26,38 @@
 `include "wally-config.vh"
 
 module ieu (
-  input  logic            clk, reset,
-  output logic [1:0]      MemRWM,
-  output logic [`XLEN-1:0] DataAdrM, WriteDataM,
-  input  logic [`XLEN-1:0] ReadDataM,
-  input  logic            DataMisalignedM,
-  input  logic            DataAccessFaultM,
-  input  logic [1:0]      ForwardAE, ForwardBE,
-  input  logic            StallD, FlushD, FlushE, FlushM, FlushW,
-  output logic        PCSrcE,
-  output logic        RegWriteM,
-  output logic 	     MemReadE,
-  output logic        RegWriteW,
-  output logic        CSRWriteM, PrivilegedM,
-  output logic        CSRWritePendingDEM,
-  output logic [2:0]       Funct3M,
-  output logic [`XLEN-1:0] SrcAM,
+  input  logic             clk, reset,
+  // Decode Stage interface
+  input  logic [31:0]      InstrD,
+  input  logic             IllegalIEUInstrFaultD, 
+  output logic             IllegalBaseInstrFaultD,
+  // Execute Stage interface
+  input  logic [`XLEN-1:0] PCE, 
   output logic [`XLEN-1:0] PCTargetE,
-  input  logic [31:0] InstrD,
-  input  logic [`XLEN-1:0] PCE, PCLinkW,
+  // Memory stage interface
+  input  logic [`XLEN-1:0] ReadDataM,
+  input  logic             DataMisalignedM,
+  input  logic             DataAccessFaultM,
   input  logic [`XLEN-1:0] CSRReadValM,
-  input logic        IllegalIEUInstrFaultD, 
-  output logic       IllegalBaseInstrFaultD,
-  output logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  output logic       InstrValidW,
-  input  logic        RetM, TrapM,
-  input logic        LoadStallD
+  output logic [1:0]       MemRWM,
+  output logic [`XLEN-1:0] DataAdrM, WriteDataM,
+  output logic [`XLEN-1:0] SrcAM,
+  output logic [2:0]       Funct3M,
+  // Writeback stage
+  input  logic [`XLEN-1:0] PCLinkW,
+  output logic             InstrValidW,
+  // hazards
+  input  logic             StallD, FlushD, FlushE, FlushM, FlushW,
+  input  logic             LoadStallD,
+  input  logic [1:0]       ForwardAE, ForwardBE,
+  input  logic             RetM, TrapM,
+  output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
+  output logic             PCSrcE,
+  output logic 	           MemReadE,
+  output logic             RegWriteM,
+  output logic             RegWriteW,
+  output logic             CSRWriteM, PrivilegedM,
+  output logic             CSRWritePendingDEM
 );
 
   logic [2:0]  ImmSrcD;

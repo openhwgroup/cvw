@@ -31,14 +31,14 @@ module csru #(parameter
   FFLAGS = 12'h001,
   FRM = 12'h002,
   FCSR = 12'h003) (
-    input  logic clk, reset, 
-    input  logic CSRUWriteM,
-    input  logic [11:0] CSRAdrM,
+    input  logic             clk, reset, 
+    input  logic             CSRUWriteM,
+    input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRUReadValM,  
-    input  logic [4:0]      SetFflagsM,
-    output logic [2:0]      FRM_REGW,
-    output logic            IllegalCSRUAccessM
+    input  logic [4:0]       SetFflagsM,
+    output logic [2:0]       FRM_REGW,
+    output logic             IllegalCSRUAccessM
   );
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
