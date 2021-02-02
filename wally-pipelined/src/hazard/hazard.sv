@@ -30,25 +30,14 @@ module hazard(
   input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
   input  logic       PCSrcE, MemReadE, 
   input  logic       RegWriteM, RegWriteW, CSRWritePendingDEM, RetM, TrapM,
+  input  logic       LoadStallD,
   input  logic       InstrStall, DataStall,
-  // Forwaring controls
-  output logic [1:0] ForwardAE, ForwardBE,
   // Stall outputs
-  output logic       StallF, StallD, FlushD, FlushE, FlushM, FlushW,
-  output logic       LoadStallD);
-  
-  // forwarding logic
-  always_comb begin
-    ForwardAE = 2'b00;
-    ForwardBE = 2'b00;
-    if (Rs1E != 5'b0)
-      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
-      else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
- 
-    if (Rs2E != 5'b0)
-      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
-      else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
-  end
+  output logic       StallF, StallD, FlushD, FlushE, FlushM, FlushW
+);
+
+  logic BranchFlushDE;
+  logic StallDCause, StallFCause, StallWCause;
   
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -62,20 +51,16 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
-  assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
-  assign StallD = LoadStallD;
-  assign StallF = StallD | InstrStall | CSRWritePendingDEM;
-  assign FlushD = PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
-  assign FlushE = LoadStallD | PCSrcE | RetM | TrapM;
+  assign BranchFlushDE = PCSrcE | RetM | TrapM;
+
+  assign StallDCause = LoadStallD;
+  assign StallFCause = InstrStall | CSRWritePendingDEM;
+  assign StallWCause = DataStall; // *** not yet used
+
+  assign StallD = StallDCause;
+  assign StallF = StallD | StallFCause;
+  assign FlushD = BranchFlushDE | StallFCause; //  PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
+  assign FlushE = StallD | BranchFlushDE; //LoadStallD | PCSrcE | RetM | TrapM;
   assign FlushM = RetM | TrapM;
   assign FlushW = TrapM;
-
-/*
-  assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
-  assign StallD = LoadStallD;
-  assign StallF = StallD | CSRWritePendingDEM;
-  assign FlushD = PCSrcE | CSRWritePendingDEM | RetM | TrapM;
-  assign FlushE = LoadStallD | PCSrcE | RetM | TrapM;
-  assign FlushM = RetM | TrapM;
-  assign FlushW = TrapM; */
 endmodule

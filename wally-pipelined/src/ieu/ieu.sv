@@ -48,12 +48,10 @@ module ieu (
   output logic             InstrValidW,
   // hazards
   input  logic             StallD, FlushD, FlushE, FlushM, FlushW,
-  input  logic             LoadStallD,
-  input  logic [1:0]       ForwardAE, ForwardBE,
   input  logic             RetM, TrapM,
-  output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
+  output logic             LoadStallD,
   output logic             PCSrcE,
-  output logic 	           MemReadE,
+//  output logic 	           MemReadE,
   output logic             RegWriteM,
   output logic             RegWriteW,
   output logic             CSRWriteM, PrivilegedM,
@@ -65,10 +63,15 @@ module ieu (
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
   logic [1:0]  ResultSrcW;
-
   logic       TargetSrcE;
+
+  // forwarding signals
+  logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
+  logic [1:0]       ForwardAE, ForwardBE;
+  logic             MemReadE;
            
   controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7b5D(InstrD[30]), .*);
   datapath   dp(.*);             
+  forward    fw(.*);
 endmodule
 

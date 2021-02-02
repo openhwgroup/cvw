@@ -56,7 +56,7 @@ module datapath (
   input  logic [`XLEN-1:0] PCLinkW,
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
-  output logic [4:0]       RdE, RdM, RdW
+  output logic [4:0]       RdE, RdM, RdW 
 );
 
   // Fetch stage signals
