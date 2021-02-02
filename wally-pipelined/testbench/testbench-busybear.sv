@@ -73,6 +73,16 @@ module testbench_busybear();
     end 
   end
 
+  // read CSR trace file
+  integer data_file_csr, scan_file_csr;
+  initial begin
+    data_file_csr = $fopen("../busybear-testgen/parsedCSRs.txt", "r");
+    if (data_file_csr == 0) begin
+      $display("file couldn't be opened");
+      $stop;
+    end 
+  end
+
   // read memreads trace file
   integer data_file_memR, scan_file_memR;
   initial begin
@@ -150,6 +160,22 @@ module testbench_busybear();
         $display("%t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrExpected);
       end
     end
+  end
+
+  string CSRname;
+  logic [63:0] expectedCSR;
+  //CSR checking
+  always @(dut.priv.MTVEC_REGW) begin
+      if ($time != 1) begin
+        scan_file_csr = $fscanf(data_file_csr, "%s\n", CSRname);
+        scan_file_csr = $fscanf(data_file_csr, "%x\n", expectedCSR);
+        if(CSRname != "mtvec") begin
+          $display("%t ps, instr %0d: MTVEC changed, expected %s", $time, instrs, CSRname);
+        end
+        if(dut.priv.MTVEC_REGW != expectedCSR) begin
+          $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, CSRname, CSRname, dut.priv.MTVEC_REGW, expectedCSR);
+        end
+      end
   end
 
   logic speculative;
