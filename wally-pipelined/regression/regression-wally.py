@@ -15,37 +15,31 @@ import multiprocessing, os
 
 fail = 0
 
+def search_log_for_text(text, logfile):
+    """Search through the given log file for text, returning True if it is found or False if it is not"""
+    grepcmd = "grep -e '%s' '%s' > /dev/null" % (text, logfile)
+    return os.system(grepcmd) == 0
+
 def test_config(config, print_res=True):
   """Run the given config, and return 0 if it suceeds and 1 if it fails"""
   logname = "wally_"+config+".log"
   if config == "busybear":
     cmd = "echo 'quit' | vsim -do wally-busybear.do -c >" + logname
     os.system(cmd)
-
     # check for success.  grep returns 0 if found, 1 if not found
-    cmd = "grep -e 'no more .* to read' " + logname + "> /dev/null"
-    grepval = os.system(cmd)
-    if (grepval):
-      if print_res:print(logname+": failures detected")
-      return 1
-    else:
-      if print_res:print(logname+": Success")
-      return 0
-
-
+    passed = search_log_for_text("no more .* to read", logname)
   else:
     cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch-parallel.do ../config/" + config + " " + config + "\n!\n"
     os.system(cmd)
-
     # check for success.  grep returns 0 if found, 1 if not found
-    cmd = "grep 'All tests ran without failures' " + logname + "> /dev/null"
-    grepval = os.system(cmd)
-    if (grepval):
-      if print_res:print(logname+": failures detected")
-      return 1
-    else:
-      if print_res:print(logname+": Success")
-      return 0
+    passed = search_log_for_text("All tests ran without failures", logname)
+  if passed:
+    if print_res:print(logname+": Success")
+    return 0
+  else:
+    if print_res:print(logname+": failures detected")
+    return 1
+
 
 pool = multiprocessing.Pool(min(len(confignames), 12))
 fail = sum(pool.map(test_config, confignames))
