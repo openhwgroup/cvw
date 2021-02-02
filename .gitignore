@@ -1,4 +1,5 @@
-**/work
+**/work*
+**/wally_*.log
 
 #vsim work files to ignore
 transcript
