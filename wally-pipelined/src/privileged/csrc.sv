@@ -63,14 +63,14 @@ module csrc #(parameter
   //  ... more counters
   HPMCOUNTER31H = 12'hC9F
 ) (
-    input  logic clk, reset,
-    input  logic InstrValidW, LoadStallD, CSRMWriteM,
-    input  logic [11:0] CSRAdrM,
-    input  logic [1:0] PrivilegeModeW,
+    input  logic             clk, reset,
+    input  logic             InstrValidW, LoadStallD, CSRMWriteM,
+    input  logic [11:0]      CSRAdrM,
+    input  logic [1:0]       PrivilegeModeW,
     input  logic [`XLEN-1:0] CSRWriteValM,
-    input  logic [31:0] MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
     output logic [`XLEN-1:0] CSRCReadValM,
-    output logic            IllegalCSRCAccessM
+    output logic             IllegalCSRCAccessM
   );
 
   generate 

@@ -27,19 +27,19 @@
 `include "wally-config.vh"
 
 module trap (
-  input  logic            reset, 
-  input  logic            InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
-  input  logic            BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
-  input  logic            LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
-  input  logic            LoadPageFaultM, StorePageFaultM,
-  input  logic            mretM, sretM, uretM,
-  input  logic [1:0]      PrivilegeModeW, NextPrivilegeModeM,
+  input  logic             reset, 
+  input  logic             InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
+  input  logic             BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
+  input  logic             LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
+  input  logic             LoadPageFaultM, StorePageFaultM,
+  input  logic             mretM, sretM, uretM,
+  input  logic [1:0]       PrivilegeModeW, NextPrivilegeModeM,
   input  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  input  logic [11:0]     MIP_REGW, MIE_REGW,
-  input  logic            STATUS_MIE, STATUS_SIE,
+  input  logic [11:0]      MIP_REGW, MIE_REGW,
+  input  logic             STATUS_MIE, STATUS_SIE,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, DataAdrM, 
-  input  logic [31:0]     InstrM,
-  output logic            TrapM, MTrapM, STrapM, UTrapM, RetM,
+  input  logic [31:0]      InstrM,
+  output logic             TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM

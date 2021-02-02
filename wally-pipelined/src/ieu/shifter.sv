@@ -25,11 +25,11 @@
 
 `include "wally-config.vh"
 
-module shifter #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] a,
-  input  logic [5:0]  amt,
-  input  logic        right, arith, w64,
-  output logic [WIDTH-1:0] y);
+module shifter (
+  input  logic [`XLEN-1:0] a,
+  input  logic [5:0]       amt,
+  input  logic             right, arith, w64,
+  output logic [`XLEN-1:0] y);
 
   // The best shifter architecture differs based on `XLEN.
   // for RV32, only 32-bit shifts are needed.  These are 
@@ -38,7 +38,7 @@ module shifter #(parameter WIDTH=32) (
   // extension.
 
   generate
-    if (WIDTH==32) begin
+    if (`XLEN==32) begin
       // funnel shifter (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
       logic [62:0]        z, zshift;
       logic [4:0]         offset;
@@ -55,7 +55,7 @@ module shifter #(parameter WIDTH=32) (
     
       // funnel operation
       assign zshift = z >> offset;
-      assign y = zshift[WIDTH-1:0];      
+      assign y = zshift[31:0];      
     end else begin  // RV64
       // funnel shifter followed by masking
       // research idea: investigate shifter designs for mixed 32/64-bit shifts

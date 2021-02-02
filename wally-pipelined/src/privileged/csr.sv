@@ -27,25 +27,25 @@
 `include "wally-config.vh"
 
 module csr (
-  input  logic clk, reset,
-  input  logic [31:0] InstrM, 
+  input  logic             clk, reset,
+  input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic            CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
-  input  logic            TimerIntM, ExtIntM, SwIntM,
-  input  logic            InstrValidW, FloatRegWriteW, LoadStallD,
-  input  logic [1:0]      NextPrivilegeModeM, PrivilegeModeW,
+  input  logic             CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
+  input  logic             TimerIntM, ExtIntM, SwIntM,
+  input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
+  input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
-  output logic [1:0]      STATUS_MPP,
-  output logic            STATUS_SPP, STATUS_TSR,
+  output logic [1:0]       STATUS_MPP,
+  output logic             STATUS_SPP, STATUS_TSR,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
   output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
-  output logic [11:0]     MIP_REGW, MIE_REGW,
-  output logic            STATUS_MIE, STATUS_SIE,
-  input  logic [4:0]      SetFflagsM,
-  output logic [2:0]      FRM_REGW, 
+  output logic [11:0]      MIP_REGW, MIE_REGW,
+  output logic             STATUS_MIE, STATUS_SIE,
+  input  logic [4:0]       SetFflagsM,
+  output logic [2:0]       FRM_REGW, 
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
   output logic [`XLEN-1:0] CSRReadValM,
-  output logic            IllegalCSRAccessM
+  output logic             IllegalCSRAccessM
 );
 
   logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM;

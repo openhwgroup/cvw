@@ -32,7 +32,7 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input  logic            clk, reset, 
+  input  logic             clk, reset, 
   // AHB Lite Interface
   // inputs from external memory
   input  logic [`AHBW-1:0] HRDATAEXT,

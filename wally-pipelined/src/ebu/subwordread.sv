@@ -26,17 +26,16 @@
 `include "wally-config.vh"
 
 module subwordread (
-//  input  logic [1:0]       MemRWM,
+  // from AHB Interface
   input  logic [`XLEN-1:0] HRDATA,
   input  logic [31:0]      HADDR,
   input  logic             UnsignedLoadM, 
   input  logic [2:0]       HSIZE,
+  // to ifu/dmems
   output logic [`XLEN-1:0] HRDATAMasked
-//  input  logic [`XLEN-1:0] HWDATA,
-//  output logic [`XLEN-1:0] HWDATA
 );
                   
-  logic [7:0]  ByteM; // *** declare locally to generate as either 4 or 8 bits
+  logic [7:0]  ByteM; 
   logic [15:0] HalfwordM;
   
   generate
@@ -75,12 +74,12 @@ module subwordread (
       always_comb
       case({UnsignedLoadM, HSIZE[1:0]}) 
         3'b000:  HRDATAMasked = {{56{ByteM[7]}}, ByteM};                  // lb
-        3'b001:  HRDATAMasked = {{48{HalfwordM[15]}}, HalfwordM[15:0]}; // lh 
+        3'b001:  HRDATAMasked = {{48{HalfwordM[15]}}, HalfwordM[15:0]};   // lh 
         3'b010:  HRDATAMasked = {{32{WordM[31]}}, WordM[31:0]};           // lw
-        3'b011:  HRDATAMasked = HRDATA;                              // ld
-        3'b100:  HRDATAMasked = {56'b0, ByteM[7:0]};                     // lbu
-        3'b101:  HRDATAMasked = {48'b0, HalfwordM[15:0]};               // lhu
-        3'b110:  HRDATAMasked = {32'b0, WordM[31:0]};                    // lwu
+        3'b011:  HRDATAMasked = HRDATA;                                   // ld
+        3'b100:  HRDATAMasked = {56'b0, ByteM[7:0]};                      // lbu
+        3'b101:  HRDATAMasked = {48'b0, HalfwordM[15:0]};                 // lhu
+        3'b110:  HRDATAMasked = {32'b0, WordM[31:0]};                     // lwu
         default: HRDATAMasked = HRDATA; // Shouldn't happen
       endcase
     end else begin // 32-bit
@@ -104,10 +103,10 @@ module subwordread (
       always_comb
       case({UnsignedLoadM, HSIZE[1:0]}) 
         3'b000:  HRDATAMasked = {{24{ByteM[7]}}, ByteM};                  // lb
-        3'b001:  HRDATAMasked = {{16{HalfwordM[15]}}, HalfwordM[15:0]}; // lh 
-        3'b010:  HRDATAMasked = HRDATA;                              // lw
-        3'b100:  HRDATAMasked = {24'b0, ByteM[7:0]};                     // lbu
-        3'b101:  HRDATAMasked = {16'b0, HalfwordM[15:0]};               // lhu
+        3'b001:  HRDATAMasked = {{16{HalfwordM[15]}}, HalfwordM[15:0]};   // lh 
+        3'b010:  HRDATAMasked = HRDATA;                                   // lw
+        3'b100:  HRDATAMasked = {24'b0, ByteM[7:0]};                      // lbu
+        3'b101:  HRDATAMasked = {16'b0, HalfwordM[15:0]};                 // lhu
         default: HRDATAMasked = HRDATA;
       endcase
     end

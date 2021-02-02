@@ -27,13 +27,13 @@
 /* verilator lint_on UNUSED */
 
 module wallypipelinedhart (
-  input  logic            clk, reset,
+  input  logic             clk, reset,
   output logic [`XLEN-1:0] PCF,
-  input  logic [31:0]     InstrF,
+  input  logic [31:0]      InstrF,
   // Privileged
-  input  logic            TimerIntM, ExtIntM, SwIntM,
-  input  logic            InstrAccessFaultF, 
-  input  logic            DataAccessFaultM,
+  input  logic             TimerIntM, ExtIntM, SwIntM,
+  input  logic             InstrAccessFaultF, 
+  input  logic             DataAccessFaultM,
   // Bus Interface
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,

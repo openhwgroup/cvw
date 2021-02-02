@@ -27,15 +27,16 @@
 `include "wally-config.vh"
 
 module csrsr (
-  input  logic clk, reset,
-  input  logic WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, TrapM, FloatRegWriteW,
-  input  logic [1:0] NextPrivilegeModeM, PrivilegeModeW,
-  input  logic mretM, sretM, uretM,
+  input  logic             clk, reset,
+  input  logic             WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, 
+  input  logic             TrapM, FloatRegWriteW,
+  input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
+  input  logic             mretM, sretM, uretM,
   input  logic [`XLEN-1:0] CSRWriteValM,
   output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
-  output logic [1:0] STATUS_MPP,
-  output logic       STATUS_SPP, STATUS_TSR,
-  output logic       STATUS_MIE, STATUS_SIE
+  output logic [1:0]       STATUS_MPP,
+  output logic             STATUS_SPP, STATUS_TSR,
+  output logic             STATUS_MIE, STATUS_SIE
 );
 
   logic STATUS_SD, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_SUM_INT, STATUS_MPRV, STATUS_MPRV_INT;

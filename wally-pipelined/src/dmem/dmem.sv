@@ -28,6 +28,8 @@
 `include "wally-config.vh"
 
 module dmem (
+  input  logic            clk, reset,
+  //
   input  logic [1:0]      MemRWM,
   output logic [1:0]      MemRWdcuoutM,
   output logic            DataMisalignedM,

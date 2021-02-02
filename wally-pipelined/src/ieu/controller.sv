@@ -29,8 +29,8 @@
 module controller(
   input  logic		 clk, reset,
   // Decode stage control signals
-  input logic [6:0]  OpD,
-  input logic [2:0]  Funct3D,
+  input logic  [6:0] OpD,
+  input logic  [2:0] Funct3D,
   input logic 	     Funct7b5D,
   output logic [2:0] ImmSrcD,
   input logic        StallD, FlushD, 

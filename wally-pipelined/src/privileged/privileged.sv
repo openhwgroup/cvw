@@ -27,24 +27,24 @@
 `include "wally-config.vh"
 
 module privileged (
-  input  logic clk, reset,
-  input  logic        CSRWriteM,
+  input  logic             clk, reset,
+  input  logic             CSRWriteM,
   input  logic [`XLEN-1:0] SrcAM,
-  input  logic [31:0] InstrM,
+  input  logic [31:0]      InstrM,
   input  logic [`XLEN-1:0] PCM,
   output logic [`XLEN-1:0] CSRReadValM,
   output logic [`XLEN-1:0] PrivilegedNextPCM,
-  output logic RetM, TrapM,
-  input  logic InstrValidW, FloatRegWriteW, LoadStallD,
-  input  logic PrivilegedM,
-  input  logic InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
-  input  logic LoadMisalignedFaultM, LoadAccessFaultM,
-  input  logic StoreMisalignedFaultM, StoreAccessFaultM,
-  input  logic TimerIntM, ExtIntM, SwIntM,
+  output logic             RetM, TrapM,
+  input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
+  input  logic             PrivilegedM,
+  input  logic             InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
+  input  logic             LoadMisalignedFaultM, LoadAccessFaultM,
+  input  logic             StoreMisalignedFaultM, StoreAccessFaultM,
+  input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, DataAdrM,
-  input  logic [4:0]      SetFflagsM,
-  output logic [2:0]      FRM_REGW,
-  input  logic FlushD, FlushE, FlushM, StallD
+  input  logic [4:0]       SetFflagsM,
+  output logic [2:0]       FRM_REGW,
+  input  logic             FlushD, FlushE, FlushM, StallD
 );
 
   logic [1:0] NextPrivilegeModeM, PrivilegeModeW;

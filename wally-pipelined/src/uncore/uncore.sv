@@ -44,13 +44,13 @@ module uncore (
   output logic [`AHBW-1:0] HRDATA,
   output logic             HREADY, HRESP,
   // bus interface
-  output logic            DataAccessFaultM,
+  output logic             DataAccessFaultM,
   // peripheral pins
-  output logic            TimerIntM, SwIntM,
-  input  logic [31:0]     GPIOPinsIn,
-  output logic [31:0]     GPIOPinsOut, GPIOPinsEn, 
-  input  logic            UARTSin,
-  output logic            UARTSout
+  output logic             TimerIntM, SwIntM,
+  input  logic [31:0]      GPIOPinsIn,
+  output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
+  input  logic             UARTSin,
+  output logic             UARTSout
   );
   
   logic [`XLEN-1:0] HWDATA;

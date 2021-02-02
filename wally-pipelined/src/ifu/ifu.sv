@@ -27,19 +27,26 @@
 `include "wally-config.vh"
 
 module ifu (
-  input  logic            clk, reset,
-  input  logic            StallF, StallD, FlushD, FlushE, FlushM, FlushW,
-  input  logic            PCSrcE, 
-  input  logic [31:0]     InstrF,
+  input  logic             clk, reset,
+  input  logic             StallF, StallD, FlushD, FlushE, FlushM, FlushW,
+  // Fetch
+  input  logic [31:0]      InstrF,
+  output logic [`XLEN-1:0] PCF, 
+  // Execute
+  input  logic             PCSrcE, 
   input  logic [`XLEN-1:0] PCTargetE,
-  input  logic            RetM, TrapM, 
+  output logic [`XLEN-1:0] PCE, 
+  // Mem
+  input  logic             RetM, TrapM, 
   input  logic [`XLEN-1:0] PrivilegedNextPCM, 
-  output logic [31:0]     InstrD, InstrM,
-  output logic [`XLEN-1:0] PCF, PCE, PCM, 
+  output logic [31:0]      InstrD, InstrM,
+  output logic [`XLEN-1:0] PCM, 
+  // Writeback
   output logic [`XLEN-1:0] PCLinkW,
-  input  logic            IllegalBaseInstrFaultD,
-  output logic            IllegalIEUInstrFaultD,
-  output logic            InstrMisalignedFaultM,
+  // Faults
+  input  logic             IllegalBaseInstrFaultD,
+  output logic             IllegalIEUInstrFaultD,
+  output logic             InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM
 );
 

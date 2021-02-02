@@ -35,15 +35,15 @@ module csrn #(parameter
   UCAUSE = 12'h042,
   UTVAL = 12'h043,
   UIP = 12'h044) (
-    input  logic clk, reset, 
-    input  logic CSRNWriteM, UTrapM,
-    input  logic [11:0] CSRAdrM,
+    input  logic             clk, reset, 
+    input  logic             CSRNWriteM, UTrapM,
+    input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRNReadValM, UEPC_REGW, UTVEC_REGW, 
-    input  logic [11:0]     UIP_REGW, UIE_REGW, 
-    output logic            WriteUSTATUSM,
-    output logic            IllegalCSRNAccessM
+    input  logic [11:0]      UIP_REGW, UIE_REGW, 
+    output logic             WriteUSTATUSM,
+    output logic             IllegalCSRNAccessM
   );
 
   // User mode CSRs below only needed when user mode traps are supported
