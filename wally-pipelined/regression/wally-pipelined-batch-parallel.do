@@ -18,8 +18,8 @@
 onbreak {resume}
 
 # create library
-if [file exists work] {
-    vdel -all
+if [file exists work$2] {
+    vdel -lib work$2 -all
 }
 vlib work$2
 
