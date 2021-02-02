@@ -72,13 +72,8 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] zero = 0;
 
   logic        PCSrcE;
-  logic        RegWriteM;
-  logic 	     MemReadE;
-  logic        RegWriteW;
   logic        CSRWritePendingDEM;
   logic        LoadStallD;
-  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
-//  logic       TargetSrcE;
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;

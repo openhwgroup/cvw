@@ -61,7 +61,6 @@ module wallypipelinedsoc (
   // Uncore signals
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HREADY, HRESP;
-//  logic            UnsignedLoadM;
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM, SwIntM; // from CLINT
   logic        ExtIntM = 0; // not yet connected
@@ -69,6 +68,6 @@ module wallypipelinedsoc (
   // instantiate processor and memories
   wallypipelinedhart hart(.*);
 
-  imem imem(.AdrF(PCF[`XLEN-1:1]), .*);
+  imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
   uncore uncore(.HWDATAIN(HWDATA), .*);
 endmodule
