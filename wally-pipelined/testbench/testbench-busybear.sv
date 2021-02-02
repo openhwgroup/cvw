@@ -93,32 +93,27 @@ module testbench_busybear();
     end 
   end
 
-  logic [63:0] rfExpected[31:1];
   logic [63:0] pcExpected;
-  // I apologize for this hack, I don't have a clue how to properly work with packed arrays
-  logic [64*32:64] rf;
+  logic [63:0] regExpected;
+  integer regNumExpected;
+
   genvar i;
   generate
-  for(i=1; i<32; i++) begin
-    assign rf[i*64+63:i*64] = dut.ieu.dp.regf.rf[i];
-  end
-  endgenerate
-
-  always @(rf) begin
-    for(int j=1; j<32; j++) begin
-      if($feof(data_file_rf)) begin
-        $display("no more rf data to read");
-        $stop;
-      end
-      // read 31 integer registers
-      scan_file_rf = $fscanf(data_file_rf, "%x\n", rfExpected[j]);
-      // check things!
-      if (rf[j*64+63 -: 64] != rfExpected[j]) begin
-        $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, j, rf[j*64+63 -: 64], rfExpected[j]);
-    //    $stop;
+    for(i=1; i<32; i++) begin
+      always @(dut.ieu.dp.regf.rf[i]) begin
+        if ($time != 0) begin
+          scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
+          scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
+          if (i != regNumExpected) begin
+            $display("%t ps, instr %0d: wrong register changed: %0d, %0d expected", $time, instrs, i, regNumExpected);
+          end
+          if (dut.ieu.dp.regf.rf[i] != regExpected) begin
+            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.ieu.dp.regf.rf[i], regExpected);
+          end
+        end
       end
     end
-  end
+  endgenerate
 
   logic [`XLEN-1:0] readAdrExpected;
   // this might need to change
