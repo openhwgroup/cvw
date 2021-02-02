@@ -35,15 +35,15 @@ module ieu (
   input  logic [`XLEN-1:0] PCE, 
   output logic [`XLEN-1:0] PCTargetE,
   // Memory stage interface
-  input  logic [`XLEN-1:0] ReadDataM,
   input  logic             DataMisalignedM,
   input  logic             DataAccessFaultM,
-  input  logic [`XLEN-1:0] CSRReadValM,
   output logic [1:0]       MemRWM,
   output logic [`XLEN-1:0] DataAdrM, WriteDataM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [2:0]       Funct3M,
   // Writeback stage
+  input  logic [`XLEN-1:0] ReadDataW,
+  input  logic [`XLEN-1:0] CSRReadValW,
   input  logic [`XLEN-1:0] PCLinkW,
   output logic             InstrValidW,
   // hazards

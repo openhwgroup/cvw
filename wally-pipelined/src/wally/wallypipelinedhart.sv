@@ -59,7 +59,7 @@ module wallypipelinedhart (
   logic [31:0] InstrD, InstrM;
   logic [`XLEN-1:0] PCE, PCM, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
-  logic [`XLEN-1:0] CSRReadValM;
+  logic [`XLEN-1:0] CSRReadValW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
   logic [1:0] MemRWM;
   logic InstrValidW;
@@ -83,11 +83,11 @@ module wallypipelinedhart (
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
 
-  // bus interface to dcu
+  // bus interface to dmem
   logic [1:0]      MemRWdcuoutM;
   logic [2:0]      Funct3M;
   logic [`XLEN-1:0] DataAdrM, WriteDataM;
-  logic [`XLEN-1:0] ReadDataM;
+  logic [`XLEN-1:0] ReadDataM, ReadDataW;
   logic             DataStall, InstrStall;
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
