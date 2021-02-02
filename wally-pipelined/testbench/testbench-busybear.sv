@@ -162,21 +162,33 @@ module testbench_busybear();
     end
   end
 
-  string CSRname;
-  logic [63:0] expectedCSR;
-  //CSR checking
-  always @(dut.priv.MTVEC_REGW) begin
-      if ($time != 1) begin
-        scan_file_csr = $fscanf(data_file_csr, "%s\n", CSRname);
-        scan_file_csr = $fscanf(data_file_csr, "%x\n", expectedCSR);
-        if(CSRname != "mtvec") begin
-          $display("%t ps, instr %0d: MTVEC changed, expected %s", $time, instrs, CSRname);
-        end
-        if(dut.priv.MTVEC_REGW != expectedCSR) begin
-          $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, CSRname, CSRname, dut.priv.MTVEC_REGW, expectedCSR);
-        end
-      end
-  end
+  `define CHECK_CSR(CSR) \
+    string CSR; \
+    logic [63:0] expected``CSR``; \
+    //CSR checking \
+    always @(dut.priv.csr.``CSR``_REGW) begin \
+        if ($time > 1) begin \
+          scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
+          scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
+          if(CSR.icompare(`"CSR`")) begin \
+            $display("%t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
+          end \
+          if(dut.priv.csr.``CSR``_REGW != ``expected``CSR) begin \
+            $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, CSR, CSR, dut.priv.csr.``CSR``_REGW, ``expected``CSR); \
+          end \
+        end \
+    end
+
+  //`CHECK_CSR(FCSR)
+  `CHECK_CSR(MCOUNTEREN)
+  `CHECK_CSR(MEDELEG)
+  `CHECK_CSR(MIDELEG)
+  `CHECK_CSR(MIE)
+  //`CHECK_CSR(MSCRATCH)
+  `CHECK_CSR(MSTATUS)
+  `CHECK_CSR(MTVEC)
+  //`CHECK_CSR(SATP)
+  `CHECK_CSR(SCOUNTEREN)
 
   logic speculative;
   initial begin
