@@ -42,8 +42,6 @@ module extend (
       3'b011:   ExtImmD = {{(`XLEN-20){InstrD[31]}}, InstrD[19:12], InstrD[20], InstrD[30:21], 1'b0}; 
                // U-type (lui, auipc)
       3'b100:  ExtImmD = {{(`XLEN-31){InstrD[31]}}, InstrD[30:12], 12'b0}; 
-      /* verilator lint_off WIDTH */
-      default: ExtImmD = 'bx; // undefined
-      /* verilator lint_on WIDTH */
+      default: ExtImmD = {32{1'bx}}; // undefined
     endcase             
 endmodule
