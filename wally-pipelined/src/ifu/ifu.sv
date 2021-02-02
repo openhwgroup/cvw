@@ -32,6 +32,9 @@ module ifu (
   // Fetch
   input  logic [31:0]      InstrF,
   output logic [`XLEN-1:0] PCF, 
+  output logic [`XLEN-1:0] InstrPAdrF,
+  // Decode  
+  output logic             InstrStall,
   // Execute
   input  logic             PCSrcE, 
   input  logic [`XLEN-1:0] PCTargetE,
@@ -60,6 +63,8 @@ module ifu (
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
   // *** put memory interface on here, InstrF becomes output
+  assign InstrStall = 0; // ***
+  assign InstrPAdrF = PCF; // *** no MMU
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
