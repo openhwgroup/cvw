@@ -49,7 +49,8 @@ add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
 # registers!
-add wave -hex /testbench_busybear/rfExpected
+add wave -hex /testbench_busybear/regExpected
+add wave -hex /testbench_busybear/regNumExpected
 add wave -hex /testbench_busybear/HWRITE
 add wave -hex /testbench_busybear/dut/MemRWM[1]
 add wave -hex /testbench_busybear/HWDATA
