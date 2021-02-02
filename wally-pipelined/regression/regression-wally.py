@@ -18,7 +18,7 @@ fail = 0
 def test_config(config, print_res=True):
   """Run the given config, and return 0 if it suceeds and 1 if it fails"""
   logname = "wally_"+config+".log"
-  cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch.do ../config/" + config + "\n!\n"
+  cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch-parallel.do ../config/" + config + " " + config + "\n!\n"
   os.system(cmd)
 
   # check for success.  grep returns 0 if found, 1 if not found
