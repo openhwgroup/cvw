@@ -101,9 +101,9 @@ module csrm #(parameter
   assign WriteMEPCM = MTrapM | (CSRMWriteM && (CSRAdrM == MEPC));
   assign WriteMCAUSEM = MTrapM | (CSRMWriteM && (CSRAdrM == MCAUSE));
   assign WriteMTVALM = MTrapM | (CSRMWriteM && (CSRAdrM == MTVAL));
-  assign WritePMPCFG0M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPCFG0));
-  assign WritePMPCFG2M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPCFG2));
-  assign WritePMPADDR0M = MTrapM | (CSRMWriteM && (CSRAdrM == PMPADDR0));
+  assign WritePMPCFG0M = (CSRMWriteM && (CSRAdrM == PMPCFG0));
+  assign WritePMPCFG2M = (CSRMWriteM && (CSRAdrM == PMPCFG2));
+  assign WritePMPADDR0M = (CSRMWriteM && (CSRAdrM == PMPADDR0));
   assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
 
