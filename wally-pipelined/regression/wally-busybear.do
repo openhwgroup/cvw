@@ -17,10 +17,10 @@
 onbreak {resume}
 
 # create library
-if [file exists work] {
-    vdel -all
+if [file exists work-busybear] {
+    vdel -all -lib work-busybear
 }
-vlib work
+vlib work-busybear
 
 # compile source files
 # suppress spurious warnngs about 
