@@ -77,10 +77,10 @@ module datapath (
   logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] ResultW;
 
+  // Decode stage
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-	
   regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, RD1D, RD2D);
   extend ext(.InstrD(InstrD[31:7]), .*);
  
