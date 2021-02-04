@@ -83,7 +83,7 @@ module csrs #(parameter
       flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, zero, SCAUSE_REGW); 
       flopenr #(`XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
       flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
-      flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], allones, SCOUNTEREN_REGW);
+      flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, SCOUNTEREN_REGW);
       if (`N_SUPPORTED) begin
         flopenl #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK, zero, SEDELEG_REGW);
         flopenl #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, zero, SIDELEG_REGW);
