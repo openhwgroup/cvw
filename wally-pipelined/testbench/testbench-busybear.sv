@@ -181,40 +181,44 @@ module testbench_busybear();
     end
   end
     
-  `define CHECK_CSR(CSR) \
+  `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
     //CSR checking \
-    always @(dut.priv.csr.``CSR``_REGW) begin \
+    always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
           scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
           if(CSR.icompare(`"CSR`")) begin \
             $display("%t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
           end \
-          if(dut.priv.csr.``CSR``_REGW != ``expected``CSR) begin \
-            $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, dut.priv.csr.``CSR``_REGW, ``expected``CSR); \
+          if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
+            $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
           end \
         end else begin \
           for(integer j=0; j<totalCSR; j++) begin \
             if(!StartCSRname[j].icompare(`"CSR`")) begin \
-              if(dut.priv.csr.``CSR``_REGW != StartCSRexpected[j]) begin \
-                $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], dut.priv.csr.``CSR``_REGW, StartCSRexpected[j]); \
+              if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
+                $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
               end \
             end \
           end \
         end \
     end
+  `define CHECK_CSR(CSR) \
+     `CHECK_CSR2(CSR, dut.priv.csr) 
 
   //`CHECK_CSR(FCSR)
   `CHECK_CSR(MCOUNTEREN)
   `CHECK_CSR(MEDELEG)
   `CHECK_CSR(MIDELEG)
+  //`CHECK_CSR(MHARTID)
   `CHECK_CSR(MIE)
-  //`CHECK_CSR(MSCRATCH)
+  `CHECK_CSR2(MISA, dut.priv.csr.genblk1.csrm)
+  `CHECK_CSR2(MSCRATCH, dut.priv.csr.genblk1.csrm)
   `CHECK_CSR(MSTATUS)
   `CHECK_CSR(MTVEC)
-  //`CHECK_CSR(SATP)
+  `CHECK_CSR2(SATP, dut.priv.csr.genblk1.csrs.genblk1)
   `CHECK_CSR(SCOUNTEREN)
 
   logic speculative;
