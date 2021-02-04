@@ -31,7 +31,7 @@ vlog +incdir+../config/busybear ../testbench/*.sv ../src/*/*.sv -suppress 2583
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench_busybear -o workopt 
-vsim workopt
+vsim workopt -suppress 8852
 
 view wave
 
@@ -47,6 +47,13 @@ add wave -hex /testbench_busybear/dut/ifu/InstrF
 add wave /testbench_busybear/lastInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
+add wave -divider
+#add wave -hex /testbench_busybear/dut/priv/csr/MTVEC_REG
+#add wave -hex /testbench_busybear/dut/priv/csr/MSTATUS_REG
+#add wave -hex /testbench_busybear/dut/priv/csr/SCOUNTEREN_REG
+#add wave -hex /testbench_busybear/dut/priv/csr/MIE_REG
+#add wave -hex /testbench_busybear/dut/priv/csr/MIDELEG_REG
+#add wave -hex /testbench_busybear/dut/priv/csr/MEDELEG_REG
 add wave -divider
 # registers!
 add wave -hex /testbench_busybear/regExpected

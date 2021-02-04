@@ -109,15 +109,15 @@ module csrsr (
     if (reset) begin
       STATUS_SUM_INT <= 0;
       STATUS_MPRV_INT <= 0; // Per Priv 3.3
-      STATUS_FS_INT <= 2'b01; // initial 
-      STATUS_MPP <= `M_MODE;
-      STATUS_SPP <= 1'b1;
-      STATUS_MPIE <= 1;
-      STATUS_SPIE <= `S_SUPPORTED;
-      STATUS_UPIE <= `U_SUPPORTED;
+      STATUS_FS_INT <= 0; //2'b01; // initial 
+      STATUS_MPP <= 0; //`M_MODE;
+      STATUS_SPP <= 0; //1'b1;
+      STATUS_MPIE <= 0; //1;
+      STATUS_SPIE <= 0; //`S_SUPPORTED;
+      STATUS_UPIE <= 0; // `U_SUPPORTED;
       STATUS_MIE <= 0; // Per Priv 3.3
-      STATUS_SIE <= `S_SUPPORTED;
-      STATUS_UIE <= `U_SUPPORTED;
+      STATUS_SIE <= 0; // `S_SUPPORTED;
+      STATUS_UIE <= 0; // `U_SUPPORTED;
     end else begin
       if (WriteMSTATUSM) begin
         STATUS_SUM_INT <= CSRWriteValM[18];
