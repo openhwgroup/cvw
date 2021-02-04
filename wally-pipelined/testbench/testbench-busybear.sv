@@ -111,7 +111,12 @@ module testbench_busybear();
   generate
     for(i=1; i<32; i++) begin
       always @(dut.ieu.dp.regf.rf[i]) begin
-        if ($time != 0) begin
+        if ($time == 0) begin
+          scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
+          if (dut.ieu.dp.regf.rf[i] != regExpected) begin
+            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.ieu.dp.regf.rf[i], regExpected);
+          end
+        end else begin
           scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           if (i != regNumExpected) begin
@@ -162,6 +167,20 @@ module testbench_busybear();
     end
   end
 
+  integer totalCSR = 0;
+  logic [99:0] StartCSRexpected[63:0];
+  string StartCSRname[99:0];
+  initial begin
+    while(1) begin
+      scan_file_csr = $fscanf(data_file_csr, "%s\n", StartCSRname[totalCSR]); 
+      if(StartCSRname[totalCSR] == "---") begin
+        break;
+      end
+      scan_file_csr = $fscanf(data_file_csr, "%x\n", StartCSRexpected[totalCSR]);
+      totalCSR = totalCSR + 1;
+    end
+  end
+    
   `define CHECK_CSR(CSR) \
     string CSR; \
     logic [63:0] expected``CSR``; \
@@ -174,7 +193,15 @@ module testbench_busybear();
             $display("%t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
           end \
           if(dut.priv.csr.``CSR``_REGW != ``expected``CSR) begin \
-            $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, CSR, CSR, dut.priv.csr.``CSR``_REGW, ``expected``CSR); \
+            $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, dut.priv.csr.``CSR``_REGW, ``expected``CSR); \
+          end \
+        end else begin \
+          for(integer j=0; j<totalCSR; j++) begin \
+            if(!StartCSRname[j].icompare(`"CSR`")) begin \
+              if(dut.priv.csr.``CSR``_REGW != StartCSRexpected[j]) begin \
+                $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], dut.priv.csr.``CSR``_REGW, StartCSRexpected[j]); \
+              end \
+            end \
           end \
         end \
     end
