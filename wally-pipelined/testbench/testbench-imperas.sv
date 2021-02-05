@@ -137,6 +137,7 @@ string tests64iNOc[] = {
                      "rv64i/I-XORI-01", "3000",
                      "rv64i/WALLY-ADD", "4000",
                      "rv64i/WALLY-SUB", "4000",
+                     "rv64i/WALLY-JAL", "4000",
                      "rv64i/WALLY-STORE", "3000"
   };
 string tests32ic[] = '{
@@ -219,7 +220,8 @@ string tests32i[] = {
                      "rv32i/I-XORI-01","2000",
                      "rv32i/WALLY-ADD", "3000",
                      "rv32i/WALLY-SUB", "3000",
-                     "rv32i/WALLY-STORE", "2000"
+                     "rv32i/WALLY-STORE", "2000",
+                     "rv32i/WALLY-JAL", "3000"
 };
   string tests[];
 
