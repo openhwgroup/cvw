@@ -139,11 +139,11 @@ string tests64iNOc[] = {
                      "rv64i/WALLY-SUB", "4000",
                      "rv64i/WALLY-LOAD", "11bf0",
                      "rv64i/WALLY-JAL", "4000",
-                     "rv64i/WALLY-STORE", "3000"
-		     "rv64i/WALLY-ADDIW", "3000",
-		     "rv64i/WALLY-SLLIW", "3000",
-		     "rv64i/WALLY-SRLIW", "3000",
-		     "rv64i/WALLY-SRAIW", "3000"
+                     "rv64i/WALLY-STORE", "3000",
+                     "rv64i/WALLY-ADDIW", "3000",
+                     "rv64i/WALLY-SLLIW", "3000",
+                     "rv64i/WALLY-SRLIW", "3000",
+                     "rv64i/WALLY-SRAIW", "3000"
   };
 string tests32ic[] = '{
 //                     "rv32ic/WALLY-C-ADHOC-01", "2000",
