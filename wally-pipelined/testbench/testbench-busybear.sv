@@ -47,59 +47,59 @@ module testbench_busybear();
   // read pc trace file
   integer data_file_PC, scan_file_PC;
   initial begin
-    data_file_PC = $fopen("../busybear-testgen/parsedPC.txt", "r");
+    data_file_PC = $fopen("/courses/e190ax/busybear_boot/parsedPC.txt", "r");
     if (data_file_PC == 0) begin
       $display("file couldn't be opened");
-      $stop;
+      #10; $stop;
     end 
   end
 
   integer data_file_PCW, scan_file_PCW;
   initial begin
-    data_file_PCW = $fopen("../busybear-testgen/parsedPC.txt", "r");
+    data_file_PCW = $fopen("/courses/e190ax/busybear_boot/parsedPC.txt", "r");
     if (data_file_PCW == 0) begin
       $display("file couldn't be opened");
-      $stop;
+      #10; $stop;
     end 
   end
 
   // read register trace file
   integer data_file_rf, scan_file_rf;
   initial begin
-    data_file_rf = $fopen("../busybear-testgen/parsedRegs.txt", "r");
+    data_file_rf = $fopen("/courses/e190ax/busybear_boot/parsedRegs.txt", "r");
     if (data_file_rf == 0) begin
       $display("file couldn't be opened");
-      $stop;
+      #10; $stop;
     end 
   end
 
   // read CSR trace file
   integer data_file_csr, scan_file_csr;
   initial begin
-    data_file_csr = $fopen("../busybear-testgen/parsedCSRs.txt", "r");
+    data_file_csr = $fopen("/courses/e190ax/busybear_boot/parsedCSRs.txt", "r");
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
-      $stop;
+      #10; $stop;
     end 
   end
 
   // read memreads trace file
   integer data_file_memR, scan_file_memR;
   initial begin
-    data_file_memR = $fopen("../busybear-testgen/parsedMemRead.txt", "r");
+    data_file_memR = $fopen("/courses/e190ax/busybear_boot/parsedMemRead.txt", "r");
     if (data_file_memR == 0) begin
       $display("file couldn't be opened");
-      $stop;
+      #10; $stop;
     end 
   end
   
   // read memwrite trace file
   integer data_file_memW, scan_file_memW;
   initial begin
-    data_file_memW = $fopen("../busybear-testgen/parsedMemWrite.txt", "r");
+    data_file_memW = $fopen("/courses/e190ax/busybear_boot/parsedMemWrite.txt", "r");
     if (data_file_memW == 0) begin
       $display("file couldn't be opened");
-      $stop;
+      #10; $stop;
     end 
   end
 
@@ -115,6 +115,7 @@ module testbench_busybear();
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           if (dut.ieu.dp.regf.rf[i] != regExpected) begin
             $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.ieu.dp.regf.rf[i], regExpected);
+            #10; $stop;
           end
         end else begin
           scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
@@ -124,6 +125,7 @@ module testbench_busybear();
           end
           if (dut.ieu.dp.regf.rf[i] != regExpected) begin
             $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.ieu.dp.regf.rf[i], regExpected);
+            #10; $stop;
           end
         end
       end
@@ -136,13 +138,14 @@ module testbench_busybear();
     if (dut.MemRWM[1]) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
-        $stop;
+        #10; $stop;
       end
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
       scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
       #1;
       if (HADDR != readAdrExpected) begin
         $display("%t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
+        #10; $stop;
       end
     end
   end
@@ -154,15 +157,17 @@ module testbench_busybear();
     if (HWRITE) begin
       if($feof(data_file_memW)) begin
         $display("no more memW data to read");
-        $stop;
+        #10; $stop;
       end
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
       if (writeDataExpected != HWDATA) begin
         $display("%t ps, instr %0d: HWDATA does not equal writeDataExpected: %x, %x", $time, instrs, HWDATA, writeDataExpected);
+        #10; $stop;
       end
       if (writeAdrExpected != HADDR) begin
         $display("%t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrExpected);
+        #10; $stop;
       end
     end
   end
@@ -194,12 +199,14 @@ module testbench_busybear();
           end \
           if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
             $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+            #10; $stop; \
           end \
         end else begin \
           for(integer j=0; j<totalCSR; j++) begin \
             if(!StartCSRname[j].icompare(`"CSR`")) begin \
               if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
                 $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
+                #10; $stop; \
               end \
             end \
           end \
@@ -235,10 +242,10 @@ module testbench_busybear();
    if(dut.ieu.InstrValidW && dut.ifu.PCW != 0) begin
       if($feof(data_file_PCW)) begin
         $display("no more PC data to read");
-        $stop;
+        #10; $stop;
       end
       scan_file_PCW = $fscanf(data_file_PCW, "%s\n", PCtextW);
-      if (PCtextW != "ret") begin
+      if (PCtextW != "ret" && PCtextW != "fence" && PCtextW != "nop" && PCtextW != "mret") begin
         scan_file_PC = $fscanf(data_file_PCW, "%s\n", PCtext2W);
         PCtextW = {PCtextW, " ", PCtext2W};
       end
@@ -247,6 +254,7 @@ module testbench_busybear();
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", PCWExpected);
       if(dut.ifu.PCW != PCWExpected) begin
         $display("%t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.ifu.PCW, PCWExpected);
+        #10; $stop;
       end
       //if(it.InstrW != InstrWExpected) begin
       //  $display("%t ps, instr %0d: InstrW does not equal InstrW expected: %x, %x", $time, instrs, it.InstrW, InstrWExpected);
@@ -270,11 +278,11 @@ module testbench_busybear();
     //if (~speculative) begin
       if($feof(data_file_PC)) begin
         $display("no more PC data to read");
-        $stop;
+        #10; $stop;
       end
       // first read instruction
       scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
-      if (PCtext != "ret") begin
+      if (PCtext != "ret" && PCtext != "fence" && PCtext != "nop" && PCtext != "mret") begin
         scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
         PCtext = {PCtext, " ", PCtext2};
       end
@@ -287,23 +295,26 @@ module testbench_busybear();
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
       if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
          (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
-         (instrs <= 100000 && instrs % 10000 == 0)) begin
+         (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
         $display("loaded %0d instructions", instrs);
       end
       instrs += 1;
       // are we at a branch/jump?
-      casex (lastInstrF[15:0]) 
-        16'bXXXXXXXXX1101111, // JAL
-        16'bXXXXXXXXX1100111, // JALR
-        16'bXXXXXXXXX1100011, // B
-        16'b110XXXXXXXXXXX01, // C.BEQZ
-        16'b111XXXXXXXXXXX01, // C.BNEZ
-        16'b101XXXXXXXXXXX01: // C.J
+      casex (lastInstrF[31:0]) 
+        32'b00000000001000000000000001110011, // URET
+        32'b00010000001000000000000001110011, // SRET
+        32'b00110000001000000000000001110011, // MRET
+        32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
+        32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
+        32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
+        32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
+        32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
+        32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
           speculative = 1;
-        16'b1001000000000010: // C.EBREAK:
+        32'bXXXXXXXXXXXXXXXX1001000000000010: // C.EBREAK:
           speculative = 0; // tbh don't really know what should happen here
-        16'b1000XXXXX0000010, // C.JR
-        16'b1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
+        32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
+        32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
           speculative = 1;
         default:
           speculative = 0;
@@ -312,7 +323,7 @@ module testbench_busybear();
       //check things!
       if ((~speculative) && (PCF !== pcExpected)) begin
         $display("%t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
-      //  $stop;
+        #10; $stop;
       end
     end
   end
@@ -338,10 +349,10 @@ module testbench_busybear();
   //    if(MemWrite) begin
   //      if(DataAdr === 84 & WriteData === 71) begin
   //        $display("Simulation succeeded");
-  //        $stop;
+  //        #10; $stop;
   //      end else if (DataAdr !== 80) begin
   //        $display("Simulation failed");
-  //        $stop;
+  //        #10; $stop;
   //      end
   //    end
   //  end

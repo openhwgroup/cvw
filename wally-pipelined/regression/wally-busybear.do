@@ -138,6 +138,5 @@ add wave /testbench_busybear/InstrWName
 #set DefaultRadix hexadecimal
 #
 #-- Run the Simulation 
-run 1483850
-#run -all
+run -all
 ##quit
