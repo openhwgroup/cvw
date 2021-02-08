@@ -6,6 +6,7 @@
 //
 // Purpose: Universial Asynchronous Receiver/ Transmitter with FIFOs
 //          Emulates interface of Texas Instruments PC16550D
+//          https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf
 //          Compatible with UART in Imperas Virtio model ***
 //
 //  Compatible with most of PC16550D with the following known exceptions:

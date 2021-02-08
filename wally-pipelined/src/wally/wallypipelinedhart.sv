@@ -45,11 +45,16 @@ module wallypipelinedhart (
   output logic [2:0]       HBURST,
   output logic [3:0]       HPROT,
   output logic [1:0]       HTRANS,
-  output logic             HMASTLOCK
+  output logic             HMASTLOCK,
+  // Delayed signals for subword write
+  output logic [2:0]       HADDRD,
+  output logic [3:0]       HSIZED,
+  output logic             HWRITED
 );
 
-  logic [1:0]  ForwardAE, ForwardBE;
-  logic        StallF, StallD, FlushD, FlushE, FlushM, FlushW;
+//  logic [1:0]  ForwardAE, ForwardBE;
+  logic        StallF, StallD, StallE, StallM, StallW;
+  logic        FlushD, FlushE, FlushM, FlushW;
   logic        RetM, TrapM;
 
   // new signals that must connect through DP
@@ -79,26 +84,34 @@ module wallypipelinedhart (
   logic       FloatRegWriteW;
 
   // bus interface to dmem
-  logic [1:0]      MemRWAlignedM;
-  logic [2:0]      Funct3M;
+  logic             MemReadM, MemWriteM;
+  logic [2:0]       Funct3M;
   logic [`XLEN-1:0] MemAdrM, MemPAdrM, WriteDataM;
-  logic [`XLEN-1:0] ReadDataM, ReadDataW;
+  logic [`XLEN-1:0] ReadDataW;
   logic [`XLEN-1:0] InstrPAdrF;
+  logic             InstrReadF;
   logic             DataStall, InstrStall;
   logic             InstrAckD, MemAckW;
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
-  dmem dmem(/*.Funct3M(InstrM[14:12]),*/ .*); // data cache unit
+  dmem dmem(.*); // data cache unit
 
-  ahblite ebu( // *** make IRData InstrF
-    .IReadF(1'b1), .IRData(), //.IReady(), 
-    .DReadM(MemRWAlignedM[1]), .DWriteM(MemRWAlignedM[0]), 
-    .DSizeM(Funct3M[1:0]), .DRData(ReadDataM), //.DReady(), 
-    .UnsignedLoadM(Funct3M[2]),
+/*
+  ahblite ebu( 
+    //.InstrReadF(1'b0),
+    .InstrRData(InstrF), // hook up InstrF later
+    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .*);
-  //assign InstrF = ReadDataM[31:0];
+*/
+// changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
+// Would need to insertinstruction as InstrD, not InstrF
+  ahblite ebu( 
+    .InstrReadF(1'b0),
+    .InstrRData(), // hook up InstrF later
+    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
+    .*);
 
 /*  
   mdu mdu(.*); // multiply and divide unit

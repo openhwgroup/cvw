@@ -34,12 +34,14 @@ module hazard(
   input  logic       LoadStallD,
   input  logic       InstrStall, DataStall,
   // Stall outputs
-  output logic       StallF, StallD, FlushD, FlushE, FlushM, FlushW
+  output logic       StallF, StallD, StallE, StallM, StallW,
+  output logic       FlushD, FlushE, FlushM, FlushW
 );
 
   logic BranchFlushDE;
-  logic StallDCause, StallFCause, StallWCause;
-  
+  logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
+
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
   // branches and jumps: flush the next two instructions if the branch is taken in EXE
@@ -54,14 +56,28 @@ module hazard(
 
   assign BranchFlushDE = PCSrcE | RetM | TrapM;
 
-  assign StallDCause = LoadStallD;
-  assign StallFCause = InstrStall | CSRWritePendingDEM;
-  assign StallWCause = DataStall; // *** not yet used
+  assign StallFCause = InstrStall | CSRWritePendingDEM;  // stall at fetch if unable to get the instruction, 
+                                                         // or if a CSR will be written and may change system behavior
+  assign StallDCause = LoadStallD;                       // stall in decode if instruction is a load dependent on previous
+  assign StallECause = 0;
+  assign StallMCause = 0; // sDataStall; // not yet used***
+  assign StallWCause = DataStall;
 
-  assign StallD = StallDCause;
+  // Each stage stalls if the next stage is stalled or there is a cause to stall this stage.
   assign StallF = StallD | StallFCause;
-  assign FlushD = BranchFlushDE | StallFCause; //  PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
-  assign FlushE = StallD | BranchFlushDE; //LoadStallD | PCSrcE | RetM | TrapM;
-  assign FlushM = RetM | TrapM;
-  assign FlushW = TrapM;
+  assign StallD = StallE | StallDCause;
+  assign StallE = StallM | StallECause;
+  assign StallM = StallW | StallMCause;
+  assign StallW = StallWCause;
+
+  assign FirstUnstalledD = (~StallD & StallF);
+  assign FirstUnstalledE = (~StallE & StallD);
+  assign FirstUnstalledM = (~StallM & StallE);
+  assign FirstUnstalledW = (~StallW & StallM);;
+  
+  // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
+  assign FlushD = FirstUnstalledD || BranchFlushDE;  //  PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
+  assign FlushE = FirstUnstalledE || BranchFlushDE; //LoadStallD | PCSrcE | RetM | TrapM;
+  assign FlushM = FirstUnstalledM || RetM || TrapM;
+  assign FlushW = FirstUnstalledW | TrapM;
 endmodule

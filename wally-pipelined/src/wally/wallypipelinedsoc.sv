@@ -64,6 +64,9 @@ module wallypipelinedsoc (
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM, SwIntM; // from CLINT
   logic        ExtIntM = 0; // not yet connected
+  logic [2:0]       HADDRD;
+  logic [3:0]       HSIZED;
+  logic             HWRITED;
    
   // instantiate processor and memories
   wallypipelinedhart hart(.*);
