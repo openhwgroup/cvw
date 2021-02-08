@@ -32,6 +32,7 @@
 
 module ahblite (
   input  logic             clk, reset,
+  input  logic             StallW, FlushW,
   // Load control
   input  logic             UnsignedLoadM,
   // Signals from Instruction Cache
@@ -71,7 +72,7 @@ module ahblite (
 
   logic GrantData;
   logic [2:0] ISize;
-  logic [`AHBW-1:0] HRDATAMasked;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM;
   logic IReady, DReady;
 //  logic [3:0] HSIZED; // size delayed by one cycle for reads
 //  logic [2:0] HADDRD; // address delayed for subword reads
@@ -136,7 +137,9 @@ module ahblite (
   // *** assumes AHBW = XLEN
   assign InstrRData = HRDATAMasked[31:0];
   assign IReady = HREADY & InstrReadF & ~GrantData; // maybe unused?***
-  assign ReadDataW = HRDATAMasked;
+//  assign ReadDataW = HRDATAMasked;
+  assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
+  flopenrc #(`XLEN) ReadDataWReg(clk, reset, FlushW, ~StallW, ReadDataM, ReadDataW);
   assign DReady = HREADY & GrantData; // ***unused?
 
 
