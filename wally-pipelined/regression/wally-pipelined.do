@@ -45,11 +45,14 @@ view wave
 add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
-add wave /testbench/dut/hart/ebu/IReadF
+#add wave /testbench/dut/hart/ebu/IReadF
 add wave /testbench/dut/hart/DataStall
 add wave /testbench/dut/hart/InstrStall
 add wave /testbench/dut/hart/StallF
 add wave /testbench/dut/hart/StallD
+add wave /testbench/dut/hart/StallE
+add wave /testbench/dut/hart/StallM
+add wave /testbench/dut/hart/StallW
 add wave /testbench/dut/hart/FlushD
 add wave /testbench/dut/hart/FlushE
 add wave /testbench/dut/hart/FlushM
@@ -101,6 +104,6 @@ configure wave -childrowmargin 2
 set DefaultRadix hexadecimal
 
 -- Run the Simulation 
-#run 1000
-run -all
+run 2000
+#run -all
 #quit

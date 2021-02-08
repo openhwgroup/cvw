@@ -43,6 +43,10 @@ module uncore (
   input  logic             HREADYEXT, HRESPEXT,
   output logic [`AHBW-1:0] HRDATA,
   output logic             HREADY, HRESP,
+  // delayed signals
+  input  logic [2:0]       HADDRD,
+  input  logic [3:0]       HSIZED,
+  input  logic             HWRITED,
   // bus interface
   output logic             DataAccessFaultM,
   // peripheral pins
@@ -71,7 +75,7 @@ module uncore (
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
   
   // Enable read or write based on decoded address
-  assign MemRW = {~HWRITE, HWRITE};
+  assign MemRW = {~HWRITE, HWRITED};
   assign MemRWtim = MemRW & {2{HSELTim}};
   assign MemRWclint = MemRW & {2{HSELCLINT}};
   assign MemRWgpio = MemRW & {2{HSELGPIO}};

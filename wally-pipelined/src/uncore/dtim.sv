@@ -36,13 +36,15 @@ module dtim (
 );
 
   logic [`XLEN-1:0] RAM[0:65535];
+  logic [18:0] HWADDR;
+
 //  logic [`XLEN-1:0] write;
   logic [15:0] entry;
   logic            memread, memwrite;
   logic [3:0] busycount;
 
   // busy FSM to extend READY signal
-  always_ff @(posedge HCLK, negedge HRESETn) 
+/*  always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       HREADYTim <= 1;
     end else begin
@@ -52,25 +54,34 @@ module dtim (
       end else if (~HREADYTim) begin
         if (busycount == 0) begin // TIM latency, for testing purposes
           HREADYTim <= 1;
-        end else
+        end else begin
           busycount <= busycount + 1;
+        end
       end
+    end*/
+  always_ff @(posedge HCLK, negedge HRESETn) 
+    if (~HRESETn) begin
+      HREADYTim <= 0;
+    end else begin
+      HREADYTim <= HSELTim; // always respond one cycle later
     end
-  
+
 
   assign memread = MemRWtim[1];
   assign memwrite = MemRWtim[0];
+//  always_ff @(posedge HCLK)
+//    memwrite <= MemRWtim[0]; // delay memwrite to write phase
   assign HRESPTim = 0; // OK
 //  assign HREADYTim = 1; // Respond immediately; *** extend this 
   
   // word aligned reads
-  generate
+/*  generate
     if (`XLEN==64)
       assign #2 entry = HADDR[18:3];
     else
       assign #2 entry = HADDR[17:2]; 
-  endgenerate
-  assign HREADTim = RAM[entry];
+  endgenerate */
+//  assign HREADTim = RAM[entry];
 //  assign HREADTim = HREADYTim ? RAM[entry] : ~RAM[entry]; // *** temproary mess up read value before ready
 
   // write each byte based on the byte mask
@@ -105,17 +116,34 @@ module dtim (
       if (memwrite) RAM[HADDR[17:2]] <= write;  
     end
   endgenerate */
+
+  // Model memory read and write
+  // If write occurs at end of phase (rising edge of clock),
+  // then read of same address on next cycle won't work.  Would need to bypass.
+  // Faking for now with negedge clock write.  Will need to adjust this to
+  // match capabilities of FPGA or actual chip RAM.
+  // Also, writes occuring later than reads throws off single ported RAM that
+  // might be asked to write on one instruction and read on the next and would need
+  // to stall because both accesses happen on same cycle with AHB delay
+  
   generate
-    if (`XLEN == 64) 
+    if (`XLEN == 64)  begin
+      always_ff @(negedge HCLK) 
+        if (memwrite) RAM[HWADDR[17:3]] <= HWDATA;
       always_ff @(posedge HCLK) begin
-        if (memwrite) RAM[HADDR[17:3]] <= HWDATA;  
-//        HREADTim <= RAM[HADDR[17:3]];
+        //if (memwrite) RAM[HADDR[17:3]] <= HWDATA;  
+        HWADDR <= HADDR;
+        HREADTim <= RAM[HADDR[17:3]];
       end
-    else 
+    end else begin 
+      always_ff @(negedge HCLK) 
+        if (memwrite) RAM[HWADDR[17:2]] <= HWDATA;
       always_ff @(posedge HCLK) begin
-        if (memwrite) RAM[HADDR[17:2]] <= HWDATA;  
-//        HREADTim <= RAM[HADDR[17:2]];
+        //if (memwrite) RAM[HADDR[17:2]] <= HWDATA;
+        HWADDR <= HADDR;  
+        HREADTim <= RAM[HADDR[17:2]];
       end
+    end
   endgenerate
 endmodule
 

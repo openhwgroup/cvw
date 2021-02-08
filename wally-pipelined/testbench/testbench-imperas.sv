@@ -35,7 +35,7 @@ module testbench();
   logic [`XLEN-1:0] signature[0:10000];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
+  //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64ic[] = '{
 
@@ -75,7 +75,7 @@ string tests64iNOc[] = {
                      "rv64i/I-MISALIGN_JMP-01","2000"
   };
  string tests64i[] = '{                 
-                     "rv64i/I-LW-01", "4110",
+                     "rv64i/I-ENDIANESS-01", "2010",
                      "rv64i/I-ADD-01", "3000",
                      "rv64i/I-ADDI-01", "3000",
                      "rv64i/I-ADDIW-01", "3000",
@@ -262,7 +262,7 @@ string tests32i[] = {
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
+                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -368,11 +368,12 @@ module instrTrackerTB(
   input  logic            clk, reset, FlushE,
   input  logic [31:0]     InstrD,
   input  logic [31:0]     InstrE, InstrM,
-  output logic [31:0]     InstrW,
+  input  logic [31:0]     InstrW,
+//  output logic [31:0]     InstrW,
   output string           InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
-  flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+  // flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
 
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
