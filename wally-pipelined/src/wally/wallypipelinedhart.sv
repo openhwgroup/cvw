@@ -29,7 +29,7 @@
 module wallypipelinedhart (
   input  logic             clk, reset,
   output logic [`XLEN-1:0] PCF,
-  input  logic [31:0]      InstrF,
+//  input  logic [31:0]      InstrF,
   // Privileged
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic             InstrAccessFaultF, 
@@ -60,7 +60,7 @@ module wallypipelinedhart (
   // new signals that must connect through DP
   logic        CSRWriteM, PrivilegedM;
   logic [`XLEN-1:0] SrcAM;
-//  logic [31:0] InstrF;
+  logic [31:0] InstrF;
   logic [31:0] InstrD, InstrM;
   logic [`XLEN-1:0] PCE, PCM, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
@@ -75,6 +75,7 @@ module wallypipelinedhart (
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;
   logic [`XLEN-1:0] zero = 0;
+  logic ResolveBranchD;
 
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
@@ -98,20 +99,20 @@ module wallypipelinedhart (
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
   dmem dmem(.*); // data cache unit
 
-/*
+
   ahblite ebu( 
     //.InstrReadF(1'b0),
     .InstrRData(InstrF), // hook up InstrF later
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .*);
-*/
+
 // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
 // Would need to insertinstruction as InstrD, not InstrF
-  ahblite ebu( 
-    .InstrReadF(1'b0),
+    /*ahblite ebu( 
+  .InstrReadF(1'b0),
     .InstrRData(), // hook up InstrF later
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
-    .*);
+    .*); */
 
 /*  
   mdu mdu(.*); // multiply and divide unit
