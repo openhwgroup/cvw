@@ -38,6 +38,7 @@ module ahblite (
   // Signals from Instruction Cache
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
+  input  logic             ResolveBranchD,
   output logic [31:0] InstrRData,
 //  output logic             IReady,
   // Signals from Data Cache
@@ -158,7 +159,8 @@ module ahblite (
     else InstrState <= NextInstrState;*/
 
   assign NextInstrState = (InstrState == 0 && MemState == 0 && (~MemReadM  && ~MemWriteM && InstrReadF)) || 
-                          (InstrState == 1 && ~InstrAckD);
+                          (InstrState == 1 && ~InstrAckD) ||
+                          (InstrState == 1 && ResolveBranchD); // dh 2/8/2021 fixing 
   assign InstrStall = NextInstrState | MemState | NextMemState; // *** check this, explain better
   // temporarily turn off stalls and check it works
   //assign DataStall = 0;

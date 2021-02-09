@@ -37,6 +37,7 @@ module ifu (
   output logic             InstrReadF,
   // Decode  
   //output logic             InstrStall,
+  output logic             ResolveBranchD,
   // Execute
   input  logic             PCSrcE, 
   input  logic [`XLEN-1:0] PCTargetE,
@@ -66,11 +67,14 @@ module ifu (
 
   // *** put memory interface on here, InstrF becomes output
   assign InstrPAdrF = PCF; // *** no MMU
-  assign InstrReadF = ~StallD;
+  assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
   assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
+
+  // dh 2/8/2022 keep in instruction fetch stall mode when taking branch
+  flopr #(1) rbreg(clk, reset, (PCSrcE | PrivilegedChangePCM), ResolveBranchD);
 
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
