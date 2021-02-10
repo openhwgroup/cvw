@@ -233,7 +233,6 @@ string tests32i[] = {
                      "rv32i/I-XOR-01","2000",
                      "rv32i/I-XORI-01","2000",
                      "rv32i/WALLY-ADD", "3000",
-<<<<<<< HEAD
                      "rv32i/WALLY-SUB", "3000",
                      "rv32i/WALLY-ADDI", "2000",
                      "rv32i/WALLY-ANDI", "2000",
@@ -244,12 +243,10 @@ string tests32i[] = {
                      "rv32i/WALLY-SLLI", "2000",
                      "rv32i/WALLY-SRLI", "2000",
                      "rv32i/WALLY-SRAI", "2000"
-=======
                      "rv32i/WALLY-LOAD", "11c00",
                      "rv32i/WALLY-SUB", "3000",
                      "rv32i/WALLY-STORE", "2000",
                      "rv32i/WALLY-JAL", "3000"
->>>>>>> 88ccaff534d6bc14ccf767006b2d25505d0ce674
 };
   string tests[];
 
