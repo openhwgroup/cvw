@@ -145,7 +145,7 @@ string tests64iNOc[] = {
                      "rv64i/WALLY-SLTIU", "3000",
                      "rv64i/WALLY-SLLI", "3000",
                      "rv64i/WALLY-SRLI", "3000",
-                     "rv64i/WALLY-SRAI", "3000"
+                     "rv64i/WALLY-SRAI", "3000",
                      "rv64i/WALLY-LOAD", "11bf0",
                      "rv64i/WALLY-JAL", "4000",
                      "rv64i/WALLY-STORE", "3000",
@@ -242,14 +242,13 @@ string tests32i[] = {
                      "rv32i/WALLY-SLTIU", "2000",
                      "rv32i/WALLY-SLLI", "2000",
                      "rv32i/WALLY-SRLI", "2000",
-                     "rv32i/WALLY-SRAI", "2000"
+                     "rv32i/WALLY-SRAI", "2000",
                      "rv32i/WALLY-LOAD", "11c00",
                      "rv32i/WALLY-SUB", "3000",
                      "rv32i/WALLY-STORE", "2000",
                      "rv32i/WALLY-JAL", "3000"
 };
   string tests[];
-
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
