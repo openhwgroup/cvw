@@ -136,7 +136,16 @@ string tests64iNOc[] = {
                      "rv64i/I-XOR-01", "3000",
                      "rv64i/I-XORI-01", "3000",
                      "rv64i/WALLY-ADD", "4000",
-                     "rv64i/WALLY-SUB", "4000"
+                     "rv64i/WALLY-SUB", "4000",
+                     "rv64i/WALLY-ADDI", "3000",
+                     "rv64i/WALLY-ANDI", "3000",
+                     "rv64i/WALLY-ORI", "3000",
+                     "rv64i/WALLY-XORI", "3000",
+                     "rv64i/WALLY-SLTI", "3000",
+                     "rv64i/WALLY-SLTIU", "3000",
+                     "rv64i/WALLY-SLLI", "3000",
+                     "rv64i/WALLY-SRLI", "3000",
+                     "rv64i/WALLY-SRAI", "3000"
   };
 string tests32ic[] = '{
 //                     "rv32ic/WALLY-C-ADHOC-01", "2000",
@@ -217,7 +226,16 @@ string tests32i[] = {
                      "rv32i/I-XOR-01","2000",
                      "rv32i/I-XORI-01","2000",
                      "rv32i/WALLY-ADD", "3000",
-                     "rv32i/WALLY-SUB", "3000"
+                     "rv32i/WALLY-SUB", "3000",
+                     "rv32i/WALLY-ADDI", "2000",
+                     "rv32i/WALLY-ANDI", "2000",
+                     "rv32i/WALLY-ORI", "2000",
+                     "rv32i/WALLY-XORI", "2000",
+                     "rv32i/WALLY-SLTI", "2000",
+                     "rv32i/WALLY-SLTIU", "2000",
+                     "rv32i/WALLY-SLLI", "2000",
+                     "rv32i/WALLY-SRLI", "2000",
+                     "rv32i/WALLY-SRAI", "2000"
 };
   string tests[];
 
