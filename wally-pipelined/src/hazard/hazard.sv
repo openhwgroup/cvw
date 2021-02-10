@@ -61,7 +61,7 @@ module hazard(
   assign StallDCause = LoadStallD;                       // stall in decode if instruction is a load dependent on previous
   assign StallECause = 0;
   assign StallMCause = 0; // sDataStall; // not yet used***
-  assign StallWCause = DataStall;
+  assign StallWCause = DataStall; // | InstrStall;
 
   // Each stage stalls if the next stage is stalled or there is a cause to stall this stage.
   assign StallF = StallD | StallFCause;

@@ -110,6 +110,7 @@ module ahblite (
     if (MemReadM) NextAdrState = MEMREAD;
     else if (MemWriteM) NextAdrState = MEMWRITE;
     else if (InstrReadF) NextAdrState = INSTRREAD;
+//    else if (1) NextAdrState = INSTRREAD; // dm 2/9/2021 testing
     else NextAdrState = IDLE;
   
   // Generate acknowledges based on bus state and ready
@@ -159,8 +160,10 @@ module ahblite (
     else InstrState <= NextInstrState;*/
 
   assign NextInstrState = (InstrState == 0 && MemState == 0 && (~MemReadM  && ~MemWriteM && InstrReadF)) || 
-                          (InstrState == 1 && ~InstrAckD) ||
-                          (InstrState == 1 && ResolveBranchD); // dh 2/8/2021 fixing 
+                          (InstrState == 1 && ~InstrAckD)  ||
+                          (InstrState == 1 && ResolveBranchD); // dh 2/8/2021 fixing; delete this later 
+/*  assign NextInstrState = (InstrState == 0 && MemState == 0 && (~MemReadM  && ~MemWriteM)) || 
+                          (InstrState == 1 && ~InstrAckD);  // *** removed InstrReadF above dh 2/9/20 */
   assign InstrStall = NextInstrState | MemState | NextMemState; // *** check this, explain better
   // temporarily turn off stalls and check it works
   //assign DataStall = 0;
