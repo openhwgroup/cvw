@@ -227,6 +227,8 @@ module testbench_busybear();
   `CHECK_CSR(MTVEC)
   `CHECK_CSR2(SATP, dut.priv.csr.genblk1.csrs.genblk1)
   `CHECK_CSR(SCOUNTEREN)
+  `CHECK_CSR(SIE)
+  //`CHECK_CSR(SSTATUS)
 
   logic speculative;
   initial begin
@@ -290,6 +292,10 @@ module testbench_busybear();
       if(InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
         InstrF = 32'b0010011;
         $display("warning: NOPing out %s at PC=%0x", PCtext, PCF);
+      end
+      if(InstrF[28:27] != 2'b11 && InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+        InstrF = {12'b0, InstrF[19:7], 7'b0000011};
+        $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, PCF);
       end
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
