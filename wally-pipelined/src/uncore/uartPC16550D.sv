@@ -76,7 +76,6 @@ module uartPC16550D(
 
   // shift registrs and FIFOs
   logic [9:0] rxshiftreg;
-  logic [11:0] txshiftreg;
   logic [10:0] rxfifo[15:0];
   logic [7:0] txfifo[15:0];
   logic [3:0] rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
@@ -323,7 +322,7 @@ module uartPC16550D(
       txbitssent <= 0;
     end else if ((txstate == UART_IDLE) && txsrfull) begin // start transmitting
       txstate <= UART_ACTIVE;
-      txoversampledcnt <= 0;
+      txoversampledcnt <= 1;
       txbitssent <= 0;
     end else if (txbaudpulse & (txstate == UART_ACTIVE)) begin
       txoversampledcnt <= txoversampledcnt + 1; 
@@ -366,7 +365,7 @@ module uartPC16550D(
   // registers & FIFO
   always_ff @(posedge HCLK, negedge HRESETn)
     if (~HRESETn) begin
-      txfifohead <= 0; txfifotail <= 0; txhrfull <= 0; txsrfull <= 0; TXHR <= 0; txsr <= 0;
+      txfifohead <= 0; txfifotail <= 0; txhrfull <= 0; txsrfull <= 0; TXHR <= 0; txsr <= 12'hfff;
     end else begin
       if (~MEMWb && A == 3'b000 && ~DLAB) begin // writing transmit holding register or fifo
         if (fifoenabled) begin
@@ -378,19 +377,19 @@ module uartPC16550D(
         end
         $display("UART transmits: %c",Din); // for testbench
       end
-      if (txstate == UART_IDLE) // move data into tx shift register if available
-        if (fifoenabled) 
+      if (txstate == UART_IDLE) begin // move data into tx shift register if available
+        if (fifoenabled) begin 
           if (~txfifoempty) begin
             txsr <= txdata;
             txfifotail <= txfifotail+1;
             txsrfull <= 1;
           end
-        else if (txhrfull) begin
+        end else if (txhrfull) begin
           txsr <= txdata;
           txhrfull <= 0;
           txsrfull <= 1;
         end
-      else if (txstate == UART_DONE) txsrfull <= 0; // done transmitting shift register
+      end else if (txstate == UART_DONE) txsrfull <= 0; // done transmitting shift register
       else if (txstate == UART_ACTIVE && txnextbit) txsr <= {txsr[10:0], 1'b1}; // shift txhr
       if (!MEMWb && A == 3'b010) // writes to FIFO control register
         if (Din[2] | ~Din[0]) begin // tx FIFO reste or FIFO disable clears FIFO contents
