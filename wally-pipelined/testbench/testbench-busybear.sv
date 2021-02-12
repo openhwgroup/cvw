@@ -247,7 +247,7 @@ module testbench_busybear();
         #10; $stop;
       end
       scan_file_PCW = $fscanf(data_file_PCW, "%s\n", PCtextW);
-      if (PCtextW != "ret" && PCtextW != "fence" && PCtextW != "nop" && PCtextW != "mret") begin
+      if (PCtextW != "ret" && PCtextW != "fence" && PCtextW != "nop" && PCtextW != "mret" && PCtextW != "sfence.vma" && PCtextW != "unimp") begin
         scan_file_PC = $fscanf(data_file_PCW, "%s\n", PCtext2W);
         PCtextW = {PCtextW, " ", PCtext2W};
       end
@@ -284,7 +284,7 @@ module testbench_busybear();
       end
       // first read instruction
       scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
-      if (PCtext != "ret" && PCtext != "fence" && PCtext != "nop" && PCtext != "mret") begin
+      if (PCtext != "ret" && PCtext != "fence" && PCtext != "nop" && PCtext != "mret" && PCtext != "sfence.vma" && PCtext != "unimp") begin
         scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
         PCtext = {PCtext, " ", PCtext2};
       end
