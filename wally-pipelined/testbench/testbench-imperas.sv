@@ -157,7 +157,14 @@ string tests64iNOc[] = {
                      "rv64i/WALLY-SUBW", "4000",
                      "rv64i/WALLY-SLLW", "3000",
                      "rv64i/WALLY-SRLW", "3000",
-                     "rv64i/WALLY-SRAW", "3000"
+                     "rv64i/WALLY-SRAW", "3000",
+                     "rv64i/WALLY-BEQ" ,"5000",
+                     "rv64i/WALLY-BNE", "5000 ",
+                      "rv64i/WALLY-BLTU", "5000 ",
+                      "rv64i/WALLY-BLT", "5000",
+                       "rv64i/WALLY-BGE", "5000 ",
+                      "rv64i/WALLY-BGEU", "5000 "
+
   };
 string tests32ic[] = '{
 //                     "rv32ic/WALLY-C-ADHOC-01", "2000",
@@ -251,7 +258,14 @@ string tests32i[] = {
                      "rv32i/WALLY-LOAD", "11c00",
                      "rv32i/WALLY-SUB", "3000",
                      "rv32i/WALLY-STORE", "2000",
-                     "rv32i/WALLY-JAL", "3000"
+                     "rv32i/WALLY-JAL", "3000",
+                     "rv32i/WALLY-BEQ" ,"4000",
+                     "rv32i/WALLY-BNE", "4000 ",
+                      "rv32i/WALLY-BLTU", "4000 ",
+                      "rv32i/WALLY-BLT", "4000",
+                       "rv32i/WALLY-BGE", "4000 ",
+                      "rv32i/WALLY-BGEU", "4000 "
+
 };
   string tests[];
   logic [`AHBW-1:0] HRDATAEXT;
