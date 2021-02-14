@@ -163,7 +163,13 @@ string tests64iNOc[] = {
                       "rv64i/WALLY-BLTU", "5000 ",
                       "rv64i/WALLY-BLT", "5000",
                        "rv64i/WALLY-BGE", "5000 ",
-                      "rv64i/WALLY-BGEU", "5000 "
+                      "rv64i/WALLY-BGEU", "5000 ",
+                      "rv64i/WALLY-CSRRW", "4000",
+                      "rv64i/WALLY-CSRRS", "4000",
+                      "rv64i/WALLY-CSRRC", "5000",
+                      "rv64i/WALLY-CSRRWI", "4000",
+                      "rv64i/WALLY-CSRRSI", "4000",
+                      "rv64i/WALLY-CSRRCI", "4000"
 
   };
 string tests32ic[] = '{
@@ -264,7 +270,13 @@ string tests32i[] = {
                       "rv32i/WALLY-BLTU", "4000 ",
                       "rv32i/WALLY-BLT", "4000",
                        "rv32i/WALLY-BGE", "4000 ",
-                      "rv32i/WALLY-BGEU", "4000 "
+                      "rv32i/WALLY-BGEU", "4000 ",
+                      "rv64i/WALLY-CSRRW", "3000",
+                      "rv64i/WALLY-CSRRS", "3000",
+                      "rv64i/WALLY-CSRRC", "4000",
+                      "rv64i/WALLY-CSRRWI", "3000",
+                      "rv64i/WALLY-CSRRSI", "3000",
+                      "rv64i/WALLY-CSRRCI", "3000"
 
 };
   string tests[];
