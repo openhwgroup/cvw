@@ -91,8 +91,8 @@ module bpred
 
   assign SelBPPredF = ((InstrClassF[0] & BPPredF[1]) | 
 		       InstrClassF[3] |
-		       (InstrClassF[2]) | 
-		       InstrClassF[1]) & BTBValidF;
+		       (InstrClassF[2] & BTBValidF) | 
+		       InstrClassF[1]) ;
 
 
   // Part 3 Branch target address prediction
@@ -162,9 +162,5 @@ module bpred
   satCounter2 BPDirUpdate(.BrDir(~PredictionDirWrongE),
 			  .OldState(BPPredE),
 			  .NewState(UpdateBPPredE));
-  
-  
-  
-  
 
-  
+endmodule
