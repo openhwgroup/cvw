@@ -30,40 +30,40 @@
 
 module bpred 
   (input logic clk, reset,
-   input logic 	      StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
    // Fetch stage
    // the prediction
-   input [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
-   output [`XLEN-1:0] BPPredPCF,
-   output 	      SelBPPredF,
-   input [31:0]       InstrF, // we are going to use the opcode to indicate what type instruction this is.
+   input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
+   output logic [`XLEN-1:0] BPPredPCF,
+   output logic 	    SelBPPredF,
+   input logic [31:0] 	    InstrF, // we are going to use the opcode to indicate what type instruction this is.
    // if this is too slow we will have to predict the type of instruction.
    // Execute state
    // Update Predictor
-   input [`XLEN-1:0]  PCE, // The address of the currently executing instruction
+   input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
    // 1 hot encoding
    // return, jump register, jump, branch
    // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
    // *** the specifics of how this is encode is subject to change.
-   input 	      PCSrcE, // AKA Branch Taken
+   input logic 		    PCSrcE, // AKA Branch Taken
    // Signals required to check the branch prediction accuracy.
-   input [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
-   input [`XLEN-1:0]  PCD, // The address the branch predictor took.
-   input [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
+   input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
+   input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
+   input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
    // Report branch prediction status
-   output 	      BPPredWrongE
+   output logic 	    BPPredWrongE
    );
 
-  logic 	      BTBValidF;
-  logic [1:0] 	      BPPredF, BPPredD, BPPredE, UpdateBPPredE;
+  logic 		    BTBValidF;
+  logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
-  logic [3:0] 	      InstrClassD, InstrClassF, InstrClassE;
-  logic [`XLEN-1:0]   BTBPredPCF, RASPCF;
-  logic 	      TargetWrongE;
-  logic 	      FallThroughWrongE;
-  logic 	      PredictionDirWrongE;
-  logic 	      PredictionPCWrongE;
-  
+  logic [3:0] 		    InstrClassD, InstrClassF, InstrClassE;
+  logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
+  logic 		    TargetWrongE;
+  logic 		    FallThroughWrongE;
+  logic 		    PredictionDirWrongE;
+  logic 		    PredictionPCWrongE;
+  logic [`XLEN-1:0] 	    CorrectPCE;
 
   // Part 1 decode the instruction class.
   // *** for now I'm skiping the compressed instructions
@@ -77,7 +77,8 @@ module bpred
   
   // Part 2 branch direction prediction
 
-  twoBitPredictor predictor(.LookUpPC(PCNextF),
+  twoBitPredictor predictor(.clk(clk),
+			    .LookUpPC(PCNextF),
 			    .Prediction(BPPredF),
 			    // update
 			    .UpdatePC(PCE),
@@ -89,29 +90,37 @@ module bpred
   // 2) Any information which is necessary for the predictor to built it's next state.
   // For a 2 bit table this is the prediction count.
 
-  assign SelBPPredF = ((InstrClassF[0] & BPPredF[1]) | 
+  assign SelBPPredF = ((InstrClassF[0] & BPPredF[1] & BTBValidF) | 
 		       InstrClassF[3] |
 		       (InstrClassF[2] & BTBValidF) | 
-		       InstrClassF[1]) ;
+		       InstrClassF[1] & BTBValidF) ;
 
 
   // Part 3 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
-  BTBPredictor targetPredictor(.LookUpPC(PCNextF),
-			       .TargetPC(BTBPredPCF),
+  BTBPredictor targetPredictor(.clk(clk),
+			       .reset(reset),
+			       .LookUpPC(PCNextF),
+			       .TargetPC(BTBPredPCMemoryF),
 			       .Valid(BTBValidF),
 			       // update
 			       .UpdateEN(InstrClassE[2] | InstrClassE[1] | InstrClassE[0]),
 			       .UpdatePC(PCE),
 			       .UpdateTarget(PCTargetE));
 
+  // need to forward when updating to the same address as reading.
+  assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
+  assign TargetPC = (UpdatePC == LookUpPC) ? CorrectPCE : BTBPredPCMemoryF;
 
   // Part 4 RAS
-
-  RASPredictor RASPredictor(.pop(InstrClassF[3]),
+  // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
+  RASPredictor RASPredictor(.clk(clk),
+			    .reset(reset),
+			    .pop(InstrClassF[3]),
 			    .popPC(RASPCF),
 			    .push(InstrClassE[3]),
+			    .incr(1'b0),
 			    .pushPC(PCLinkE));
 
   assign BPPredPCF = InstrClassF[3] ? RASPCF : BTBPredPCF;
@@ -126,14 +135,14 @@ module bpred
 			   .en(~StallF),
 			   .clear(FlushF),
 			   .d(BPPredF),
-			   .Q(BPPredD));
+			   .q(BPPredD));
 
   flopenrc #(2) BPPredRegE(.clk(clk),
 			   .reset(reset),
 			   .en(~StallD),
 			   .clear(FlushD),
 			   .d(BPPredD),
-			   .Q(BPPredE));
+			   .q(BPPredE));
 
   // pipeline the class
   flopenrc #(4) InstrClassRegD(.clk(clk),

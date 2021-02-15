@@ -1,12 +1,12 @@
 ///////////////////////////////////////////
-// satCounter2.sv
+// RASPredictor.sv
 //
 // Written: Ross Thomposn
 // Email: ross1728@gmail.com
-// Created: February 13, 2021
+// Created: February 15, 2021
 // Modified: 
 //
-// Purpose: 2 bit starting counter
+// Purpose: 2 bit saturating counter predictor with parameterized table depth.
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,31 +27,49 @@
 
 `include "wally-config.vh"
 
-module satCounter2
-  (input logic BrDir,
-   input logic [1:0] OldState,
-   output logic [1:0] NewState
+module RASPredictor
+  #(parameter int StackSize = 16
+    )
+  (input logic clk,
+   input logic 		    reset,
+   input logic 		    pop,
+   output logic [`XLEN-1:0] popPC,
+   input logic 		    push,
+   input logic 		    incr,
+   input logic [`XLEN-1:0]  pushPC
    );
 
-  always_comb begin
-    case(OldState)
-      2'b00: begin
-	if(BrDir) NewState = 2'b01;
-	else NewState = 2'b00;
-      end
-      2'b01: begin
-	if(BrDir) NewState = 2'b10;
-	else NewState = 2'b00;
-      end
-      2'b10: begin
-	if(BrDir) NewState = 2'b11;
-	else NewState = 2'b01;
-      end
-      2'b11: begin
-	if(BrDir) NewState = 2'b11;
-	else NewState = 2'b10;
-      end
-    endcase
+  logic 		    CounterEn;
+  localparam Depth = $clog2(StackSize);
+
+  logic [StackSize-1:0]     PtrD, PtrQ, PtrP1, PtrM1;
+  logic [StackSize-1:0] [`XLEN-1:0] memory;
+  
+  assign CounterEn = pop | push | incr;
+
+  assign PtrD = pop ? PtrM1 : PtrP1;
+
+  assign PtrM1 = PtrQ - 1'b1;
+  assign PtrP1 = PtrQ + 1'b1;
+  // may have to handle a push and an incr at the same time.
+  // *** what happens if jal is executing and there is a return being flushed in Decode?
+
+  flopenr #(StackSize) PTR(.clk(clk),
+			   .reset(reset),
+			   .en(CounterEn),
+			   .d(PtrD),
+			   .q(PtrQ));
+
+  always_ff @ (posedge clk) begin
+    if(push) begin
+      memory[PtrP1] <= #1 pushPC;
+    end
   end
 
+  assign popPC = memory[PtrQ];
+  
+  
 endmodule
+
+
+

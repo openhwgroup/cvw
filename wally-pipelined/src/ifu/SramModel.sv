@@ -41,7 +41,8 @@ module SRAM2P1R1W
    // port 2 is write only
    input logic [Depth-1:0]  WA1,
    input logic [Width-1:0]  WD1,
-   input logic 		    WEN1
+   input logic 		    WEN1,
+   input logic [Width-1:0]  BitWEN1
    );
   
   
@@ -83,13 +84,19 @@ module SRAM2P1R1W
 			  .q(WD1Q));
   // read port
   assign RD1 = memory[RA1Q];
+
+  genvar 			   index;
   
   // write port
-  always_ff @ (posedge clk) begin
-    if (WEN1Q) begin
-      memory[WA1Q] = WD1Q;
+  generate
+    for (index = 0; index < Width; index = index + 1) begin    
+      always_ff @ (posedge clk) begin
+	if (WEN1Q & BitWEN1[index]) begin
+	  memory[WA1Q][index] = WD1Q[index];
+	end
+      end
     end
-  end
+  endgenerate
 
 endmodule  
 
