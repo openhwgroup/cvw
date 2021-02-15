@@ -67,18 +67,20 @@ module ifu (
 
   // *** put memory interface on here, InstrF becomes output
   assign InstrPAdrF = PCF; // *** no MMU
-  assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
+  //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
+  assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
+  //assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
 
   // dh 2/8/2022 keep in instruction fetch stall mode when taking branch
-  flopr #(1) rbreg(clk, reset, (PCSrcE | PrivilegedChangePCM), ResolveBranchD);
+  //flopr #(1) rbreg(clk, reset, (PCSrcE | PrivilegedChangePCM), ResolveBranchD);
 
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
+//  flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32

@@ -37,6 +37,7 @@ module dtim (
 
   logic [`XLEN-1:0] RAM[0:65535];
   logic [18:0] HWADDR;
+  logic [`XLEN-1:0] HREADTim0;
 
 //  logic [`XLEN-1:0] write;
   logic [15:0] entry;
@@ -44,27 +45,28 @@ module dtim (
   logic [3:0] busycount;
 
   // busy FSM to extend READY signal
-/*  always_ff @(posedge HCLK, negedge HRESETn) 
+  always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       HREADYTim <= 1;
     end else begin
       if (HREADYTim & HSELTim) begin
         busycount <= 0;
-        HREADYTim <= 0;
+        HREADYTim <= #1 0;
       end else if (~HREADYTim) begin
-        if (busycount == 0) begin // TIM latency, for testing purposes
-          HREADYTim <= 1;
+        if (busycount == 2) begin // TIM latency, for testing purposes
+          HREADYTim <= #1 1;
         end else begin
           busycount <= busycount + 1;
         end
       end
-    end*/
-  always_ff @(posedge HCLK, negedge HRESETn) 
+    end
+
+ /* always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       HREADYTim <= 0;
     end else begin
       HREADYTim <= HSELTim; // always respond one cycle later
-    end
+    end */
 
 
   assign memread = MemRWtim[1];
@@ -73,77 +75,32 @@ module dtim (
 //    memwrite <= MemRWtim[0]; // delay memwrite to write phase
   assign HRESPTim = 0; // OK
 //  assign HREADYTim = 1; // Respond immediately; *** extend this 
-  
-  // word aligned reads
-/*  generate
-    if (`XLEN==64)
-      assign #2 entry = HADDR[18:3];
-    else
-      assign #2 entry = HADDR[17:2]; 
-  endgenerate */
-//  assign HREADTim = RAM[entry];
-//  assign HREADTim = HREADYTim ? RAM[entry] : ~RAM[entry]; // *** temproary mess up read value before ready
 
-  // write each byte based on the byte mask
-  // UInstantiate a byte-writable memory here if possible
-  // and drop tihs masking logic.  Otherwise, use the masking
-  // from dmem
-  /*generate
-
-    if (`XLEN==64) begin
-      always_comb begin
-        write=HREADTim;
-        if (ByteMaskM[0]) write[7:0]   = HWDATA[7:0];
-        if (ByteMaskM[1]) write[15:8]  = HWDATA[15:8];
-        if (ByteMaskM[2]) write[23:16] = HWDATA[23:16];
-        if (ByteMaskM[3]) write[31:24] = HWDATA[31:24];
-	      if (ByteMaskM[4]) write[39:32] = HWDATA[39:32];
-	      if (ByteMaskM[5]) write[47:40] = HWDATA[47:40];
-      	if (ByteMaskM[6]) write[55:48] = HWDATA[55:48];
-	      if (ByteMaskM[7]) write[63:56] = HWDATA[63:56];
-      end 
-      always_ff @(posedge clk)
-        if (memwrite) RAM[HADDR[18:3]] <= write;
-    end else begin // 32-bit
-      always_comb begin
-        write=HREADTim;
-        if (ByteMaskM[0]) write[7:0]   = HWDATA[7:0];
-        if (ByteMaskM[1]) write[15:8]  = HWDATA[15:8];
-        if (ByteMaskM[2]) write[23:16] = HWDATA[23:16];
-        if (ByteMaskM[3]) write[31:24] = HWDATA[31:24];
-      end 
-    always_ff @(posedge clk)
-      if (memwrite) RAM[HADDR[17:2]] <= write;  
-    end
-  endgenerate */
 
   // Model memory read and write
-  // If write occurs at end of phase (rising edge of clock),
-  // then read of same address on next cycle won't work.  Would need to bypass.
-  // Faking for now with negedge clock write.  Will need to adjust this to
-  // match capabilities of FPGA or actual chip RAM.
-  // Also, writes occuring later than reads throws off single ported RAM that
-  // might be asked to write on one instruction and read on the next and would need
-  // to stall because both accesses happen on same cycle with AHB delay
   
   generate
     if (`XLEN == 64)  begin
-      always_ff @(negedge HCLK) 
-        if (memwrite) RAM[HWADDR[17:3]] <= HWDATA;
+//      always_ff @(negedge HCLK) 
+//        if (memwrite) RAM[HWADDR[17:3]] <= HWDATA;
       always_ff @(posedge HCLK) begin
         //if (memwrite) RAM[HADDR[17:3]] <= HWDATA;  
         HWADDR <= HADDR;
-        HREADTim <= RAM[HADDR[17:3]];
+        HREADTim0 <= RAM[HADDR[17:3]];
+        if (memwrite && HREADYTim) RAM[HWADDR[17:3]] <= HWDATA;
       end
     end else begin 
-      always_ff @(negedge HCLK) 
-        if (memwrite) RAM[HWADDR[17:2]] <= HWDATA;
+//      always_ff @(negedge HCLK) 
+//        if (memwrite) RAM[HWADDR[17:2]] <= HWDATA;
       always_ff @(posedge HCLK) begin
         //if (memwrite) RAM[HADDR[17:2]] <= HWDATA;
         HWADDR <= HADDR;  
-        HREADTim <= RAM[HADDR[17:2]];
+        HREADTim0 <= RAM[HADDR[17:2]];
+        if (memwrite && HREADYTim) RAM[HWADDR[17:2]] <= HWDATA;
       end
     end
   endgenerate
+
+  assign HREADTim = HREADYTim ? HREADTim0 : 'bz;
 endmodule
 
