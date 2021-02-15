@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# testgen-ADD-SUB.py
+# testgen-SLL-SRL-SRA.py
 #
 # David_Harris@hmc.edu 19 January 2021
 #
@@ -19,11 +19,25 @@ from random import getrandbits
 # functions
 ##################################
 
-def computeExpected(a, b, test):
-  if (test == "ADD"):
-    return a + b
-  elif (test == "SUB"):
-    return a - b
+def twoscomp(a):
+  amsb = a >> (xlen-1)
+  alsbs = ((1 << (xlen-1)) - 1) & a
+  if (amsb):
+      asigned = a - (1<<xlen)
+  else:
+      asigned = a
+  #print("a: " + str(a) + " amsb: "+str(amsb)+ " alsbs: " + str(alsbs) + " asigned: "+str(asigned))
+  return asigned
+
+def computeExpected(a, b, test, xlen):
+  asigned = twoscomp(a)
+  b = b % xlen
+  if (test == "SLL"):
+    return a << b
+  elif (test == "SRL"):
+    return a >> b
+  elif (test == "SRA"):
+    return asigned >> b
   else:
     die("bad test name ", test)
   #  exit(1)
@@ -37,9 +51,9 @@ def randRegs():
   else:
       return reg1, reg2, reg3
 
-def writeVector(a, b, storecmd):
+def writeVector(a, b, storecmd, xlen):
   global testnum
-  expected = computeExpected(a, b, test)
+  expected = computeExpected(a, b, test, xlen)
   expected = expected % 2**xlen # drop carry if necessary
   if (expected < 0): # take twos complement
     expected = 2**xlen + expected
@@ -65,10 +79,10 @@ def writeVector(a, b, storecmd):
 ##################################
 
 # change these to suite your tests
-tests = ["ADD", "SUB"]
-author = "David_Harris@hmc.edu & Katherine Parry"
+tests = ["SLL", "SRL", "SRA"]
+author = "David_Harris@hmc.edu"
 xlens = [32, 64]
-numrand = 100;
+numrand = 48
 
 # setup
 seed(0) # make tests reproducible
@@ -87,6 +101,11 @@ for xlen in xlens:
   for test in tests:
     corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
             2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1]
+    if (xlen == 32):
+        shamt = [0, 1, 2, 3, 4, 8, 15, 16, 29, 30, 31]
+    else:
+        shamt = [0, 1, 3, 8, 15, 16, 29, 31, 32, 47, 48, 62, 63]
+
     imperaspath = "../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "i/"
     basename = "WALLY-" + test 
     fname = imperaspath + "src/" + basename + ".S"
@@ -110,12 +129,12 @@ for xlen in xlens:
 
     # print directed and random test vectors
     for a in corners:
-      for b in corners:
-        writeVector(a, b, storecmd)
+      for b in shamt:
+        writeVector(a, b, storecmd, xlen)
     for i in range(0,numrand):
       a = getrandbits(xlen)
       b = getrandbits(xlen)
-      writeVector(a, b, storecmd)
+      writeVector(a, b, storecmd, xlen)
 
 
     # print footer
