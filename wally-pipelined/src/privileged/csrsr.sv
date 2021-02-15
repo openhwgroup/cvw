@@ -27,7 +27,7 @@
 `include "wally-config.vh"
 
 module csrsr (
-  input  logic             clk, reset,
+  input  logic             clk, reset, StallW,
   input  logic             WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, 
   input  logic             TrapM, FloatRegWriteW,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
@@ -118,7 +118,7 @@ module csrsr (
       STATUS_MIE <= 0; // Per Priv 3.3
       STATUS_SIE <= `S_SUPPORTED;
       STATUS_UIE <= `U_SUPPORTED;
-    end else begin
+    end else if (~StallW) begin
       if (WriteMSTATUSM) begin
         STATUS_SUM_INT <= CSRWriteValM[18];
         STATUS_MPRV_INT <= CSRWriteValM[17];

@@ -56,12 +56,12 @@ module hazard(
 
   assign BranchFlushDE = PCSrcE | RetM | TrapM;
 
-  assign StallFCause = InstrStall | CSRWritePendingDEM;  // stall at fetch if unable to get the instruction, 
+  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM;  // stall at fetch if unable to get the instruction, 
                                                          // or if a CSR will be written and may change system behavior
   assign StallDCause = LoadStallD;                       // stall in decode if instruction is a load dependent on previous
   assign StallECause = 0;
   assign StallMCause = 0; // sDataStall; // not yet used***
-  assign StallWCause = DataStall; // | InstrStall;
+  assign StallWCause = DataStall | InstrStall;
 
   // Each stage stalls if the next stage is stalled or there is a cause to stall this stage.
   assign StallF = StallD | StallFCause;
