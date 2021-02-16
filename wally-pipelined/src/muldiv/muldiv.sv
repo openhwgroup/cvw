@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// forward.sv
+// muldiv.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Determine datapath forwarding
+// Purpose: M extension multiply and divide
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,29 +25,27 @@
 
 `include "wally-config.vh"
 
-module forward(
-  // Detect hazards
-  input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input  logic       MemReadE, MulDivE,
-  input  logic       RegWriteM, RegWriteW, 
-  // Forwaring controls
-  output logic [1:0] ForwardAE, ForwardBE,
-  output logic       LoadStallD, MulDivStallD
+module muldiv (
+  input  logic             clk, reset,
+  // Decode Stage interface
+  input  logic [31:0]      InstrD, 
+  // Execute Stage interface
+  input  logic [`XLEN-1:0] SrcAE, SrcBE,
+  input  logic             MulDivE, W64E,
+  // Writeback stage
+  output logic [`XLEN-1:0] MulDivResultW,
+  // hazards
+  input  logic             FlushM, FlushW // ***fewer?
 );
-  
-  always_comb begin
-    ForwardAE = 2'b00;
-    ForwardBE = 2'b00;
-    if (Rs1E != 5'b0)
-      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
-      else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
- 
-    if (Rs2E != 5'b0)
-      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
-      else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
-  end
+           
+  logic [`XLEN*2-1:0] ProdE;
+  logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 
-  assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
-  assign MulDivStallD = MulDivE & & ((Rs1D == RdE) | (Rs2D == RdE)); // *** extend with stalls for divide
+  assign ProdE = SrcAE * SrcBE;
+  assign MulDivResultE = ProdE[`XLEN-1:0];
+
+  floprc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, MulDivResultE, MulDivResultM);
+  floprc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, MulDivResultM, MulDivResultW);
 
 endmodule
+

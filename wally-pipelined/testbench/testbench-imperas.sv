@@ -37,6 +37,9 @@ module testbench();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
+  string tests64m[] = '{
+                    "rv64m/I-MUL-01", "3000"
+  };
   string tests64ic[] = '{
 
                      "rv64ic/I-C-ADD-01", "3000",
@@ -172,6 +175,9 @@ string tests64iNOc[] = {
                       "rv64i/WALLY-CSRRCI", "4000"
 
   };
+  string tests32m[] = '{
+                    "rv32m/I-MUL-01", "3000"
+  };
 string tests32ic[] = '{
 //                     "rv32ic/WALLY-C-ADHOC-01", "2000",
                      "rv32ic/I-C-ADD-01", "2000",
@@ -299,10 +305,12 @@ string tests32i[] = {
       tests = {tests64i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests64ic};
       else                       tests = {tests, tests64iNOc};
+      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests64m};
     end else begin // RV32
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
+      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
     end
   string signame, memfilename;
 
@@ -491,10 +499,18 @@ module instrNameDecTB(
                        else                           name = "ILLEGAL";
       10'b0111011_000: if      (funct7 == 7'b0000000) name = "ADDW";
                        else if (funct7 == 7'b0100000) name = "SUBW";
+                       else if (funct7 == 7'b0000001) name = "MULW";
                        else                           name = "ILLEGAL";
-      10'b0111011_001: name = "SLLW";
+      10'b0111011_001: if      (funct7 == 7'b0000000) name = "SLLW";
+                       else if (funct7 == 7'b0000001) name = "DIVW";
+                       else                           name = "ILLEGAL";
       10'b0111011_101: if      (funct7 == 7'b0000000) name = "SRLW";
                        else if (funct7 == 7'b0100000) name = "SRAW";
+                       else if (funct7 == 7'b0000001) name = "DIVUW";
+                       else                           name = "ILLEGAL";
+      10'b0111011_110: if      (funct7 == 7'b0000001) name = "REMW";
+                       else                           name = "ILLEGAL";
+      10'b0111011_111: if      (funct7 == 7'b0000001) name = "REMUW";
                        else                           name = "ILLEGAL";
       10'b0110011_000: if      (funct7 == 7'b0000000) name = "ADD";
                        else if (funct7 == 7'b0000001) name = "MUL";
