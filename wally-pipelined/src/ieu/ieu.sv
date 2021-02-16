@@ -34,6 +34,9 @@ module ieu (
   // Execute Stage interface
   input  logic [`XLEN-1:0] PCE, 
   output logic [`XLEN-1:0] PCTargetE,
+  output logic             MulDivE, W64E,
+  output logic [2:0]       Funct3E,
+  output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage interface
   input  logic             DataMisalignedM,
   input  logic             DataAccessFaultM,
@@ -42,14 +45,13 @@ module ieu (
   output logic [`XLEN-1:0] SrcAM,
   output logic [2:0]       Funct3M,
   // Writeback stage
-  input  logic [`XLEN-1:0] ReadDataW,
-  input  logic [`XLEN-1:0] CSRReadValW,
+  input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW,
   input  logic [`XLEN-1:0] PCLinkW,
   output logic             InstrValidW,
   // hazards
   input  logic             StallD, FlushD, FlushE, FlushM, FlushW,
   input  logic             RetM, TrapM,
-  output logic             LoadStallD,
+  output logic             LoadStallD, MulDivStallD,
   output logic             PCSrcE,
 
   output logic             CSRWriteM, PrivilegedM,
@@ -60,7 +62,7 @@ module ieu (
   logic [2:0]  FlagsE;
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
-  logic [1:0]  ResultSrcW;
+  logic [2:0]  ResultSrcW;
   logic       TargetSrcE;
 
   // forwarding signals
@@ -69,7 +71,7 @@ module ieu (
   logic             RegWriteM, RegWriteW;
   logic             MemReadE;
            
-  controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7b5D(InstrD[30]), .*);
+  controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7D(InstrD[31:25]), .*);
   datapath   dp(.*);             
   forward    fw(.*);
 endmodule

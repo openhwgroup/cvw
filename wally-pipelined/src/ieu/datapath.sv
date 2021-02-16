@@ -41,19 +41,19 @@ module datapath (
   input  logic [`XLEN-1:0] PCE,
   output logic [2:0]       FlagsE,
   output logic [`XLEN-1:0] PCTargetE,
+  output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             FlushM,
   input  logic [2:0]       Funct3M,
-  input  logic [`XLEN-1:0] CSRReadValW,
-  input  logic [`XLEN-1:0] ReadDataW,
   input  logic             RetM, TrapM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
   input  logic             FlushW,
   input  logic             RegWriteW, 
-  input  logic [1:0]       ResultSrcW,
+  input  logic [2:0]       ResultSrcW,
   input  logic [`XLEN-1:0] PCLinkW,
+  input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW,
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -67,7 +67,7 @@ module datapath (
   // Execute stage signals
   logic [`XLEN-1:0] RD1E, RD2E;
   logic [`XLEN-1:0] ExtImmE;
-  logic [`XLEN-1:0] PreSrcAE, SrcAE, SrcBE;
+  logic [`XLEN-1:0] PreSrcAE;
   logic [`XLEN-1:0] ALUResultE;
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] TargetBaseE;
@@ -111,5 +111,5 @@ module datapath (
   floprc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ALUResultM, ALUResultW);
   floprc #(5)    RdWEg(clk, reset, FlushW, RdM, RdW);
 
-  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, ResultSrcW, ResultW);	
+  mux5  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, MulDivResultW, ResultSrcW, ResultW);	
 endmodule

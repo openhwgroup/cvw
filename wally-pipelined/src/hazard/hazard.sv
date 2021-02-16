@@ -31,7 +31,7 @@ module hazard(
 //  input  logic       MemReadE, 
 //  input  logic       RegWriteM, RegWriteW, 
   input  logic       PCSrcE, CSRWritePendingDEM, RetM, TrapM,
-  input  logic       LoadStallD,
+  input  logic       LoadStallD, MulDivStallD,
   input  logic       InstrStall, DataStall,
   // Stall outputs
   output logic       StallF, StallD, FlushD, FlushE, FlushM, FlushW
@@ -54,7 +54,7 @@ module hazard(
 
   assign BranchFlushDE = PCSrcE | RetM | TrapM;
 
-  assign StallDCause = LoadStallD;
+  assign StallDCause = LoadStallD | MulDivStallD;
   assign StallFCause = InstrStall | CSRWritePendingDEM;
   assign StallWCause = DataStall; // *** not yet used
 

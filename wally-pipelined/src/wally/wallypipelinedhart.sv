@@ -53,13 +53,16 @@ module wallypipelinedhart (
   logic        RetM, TrapM;
 
   // new signals that must connect through DP
+  logic        MulDivE, W64E;
   logic        CSRWriteM, PrivilegedM;
+  logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAM;
+  logic [2:0] Funct3E;
 //  logic [31:0] InstrF;
   logic [31:0] InstrD, InstrM;
   logic [`XLEN-1:0] PCE, PCM, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
-  logic [`XLEN-1:0] CSRReadValW;
+  logic [`XLEN-1:0] CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
   logic [1:0] MemRWM;
   logic InstrValidW;
@@ -73,7 +76,7 @@ module wallypipelinedhart (
 
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
-  logic        LoadStallD;
+  logic        LoadStallD, MulDivStallD;
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
@@ -100,9 +103,9 @@ module wallypipelinedhart (
     .*);
   //assign InstrF = ReadDataM[31:0];
 
-/*  
-  mdu mdu(.*); // multiply and divide unit
-  fpu fpu(.*); // floating point unit
+ 
+  muldiv mdu(.*); // multiply and divide unit
+ /*  fpu fpu(.*); // floating point unit
   */
   hazard     hzu(.*);	// global stall and flush control
 
