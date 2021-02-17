@@ -48,16 +48,18 @@ module muldiv (
 
       mul mul(.*);
 
-      if (WIDTH==32) begin
-        divide4x32 div(.clk(clk), .reset(reset), 
+/*
+      if (`XLEN==32) begin
+        int32div div(.clk(clk), .reset(reset), 
                        .N(SrcAE), .D(SrcBE), .Q(QuotE), .rem0(RemE),
-                       .start(), .div0(), .done(), .divone());
-      end else begin // WIDTH=64
-        divide4x64 div(.clk(clk), .reset(reset), 
+                       .start(), .div0(), .done(), .divdone());
+      end else begin // XLEN=64
+        int64div div(.clk(clk), .reset(reset), 
                        .N(SrcAE), .D(SrcBE), .Q(QuotE), .rem0(RemE),
-                       .start(), .div0(), .done(), .divone());
+                       .start(), .div0(), .done(), .divdone());
       end
-      
+      */
+
       // Select result
       always_comb
         case (Funct3E)
