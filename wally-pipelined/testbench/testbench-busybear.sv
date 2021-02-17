@@ -247,21 +247,34 @@ module testbench_busybear();
     end
   `define CHECK_CSR(CSR) \
      `CHECK_CSR2(CSR, dut.priv.csr) 
+  `define CSRM dut.priv.csr.genblk1.csrm 
+  `define CSRS dut.priv.csr.genblk1.csrs.genblk1
 
   //`CHECK_CSR(FCSR)
+  `CHECK_CSR2(MCAUSE, `CSRM)
   `CHECK_CSR(MCOUNTEREN)
   `CHECK_CSR(MEDELEG)
-  `CHECK_CSR(MIDELEG)
+  `CHECK_CSR(MEPC)
   //`CHECK_CSR(MHARTID)
+  `CHECK_CSR(MIDELEG)
   `CHECK_CSR(MIE)
-  `CHECK_CSR2(MISA, dut.priv.csr.genblk1.csrm)
-  `CHECK_CSR2(MSCRATCH, dut.priv.csr.genblk1.csrm)
-  //`CHECK_CSR(MSTATUS)
+  //`CHECK_CSR(MIP)
+  `CHECK_CSR2(MISA, `CSRM)
+  `CHECK_CSR2(MSCRATCH, `CSRM)
+  `CHECK_CSR(MSTATUS)
+  `CHECK_CSR2(MTVAL, `CSRM)
   `CHECK_CSR(MTVEC)
-  `CHECK_CSR2(SATP, dut.priv.csr.genblk1.csrs.genblk1)
+  //`CHECK_CSR2(PMPADDR0, `CSRM)
+  //`CHECK_CSR2(PMPCFG0, `CSRM)
+  `CHECK_CSR2(SATP, `CSRS)
+  `CHECK_CSR2(SCAUSE, `CSRS)
   `CHECK_CSR(SCOUNTEREN)
+  `CHECK_CSR(SEPC)
   `CHECK_CSR(SIE)
-  //`CHECK_CSR(SSTATUS)
+  `CHECK_CSR2(SSCRATCH, `CSRS)
+  `CHECK_CSR(SSTATUS)
+  `CHECK_CSR2(STVAL, `CSRS)
+  `CHECK_CSR(STVEC)
 
   logic speculative;
   initial begin
