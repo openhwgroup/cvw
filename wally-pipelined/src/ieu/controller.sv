@@ -94,14 +94,10 @@ module controller(
         7'b0100011:   ControlsD = 21'b0_001_01_01_000_0_00_0_0_0_0_0_0_0; // sw
         7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
                       ControlsD = 21'b1_000_00_00_000_0_10_0_0_0_0_0_0_0; // R-type 
-                    else if (Funct7D == 7'b0000001 && `M_SUPPORTED)
-                      ControlsD = 21'b1_000_00_00_100_0_00_0_0_0_0_0_1_0; // Multiply/Divide
                     else
                       ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
         7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
                       ControlsD = 21'b1_000_00_00_000_0_10_0_0_1_0_0_0_0; // R-type W instructions for RV64i
-                    else if (Funct7D == 7'b0000001 && `M_SUPPORTED && `XLEN == 64)
-                      ControlsD = 21'b1_000_00_00_100_0_00_0_0_1_0_0_1_0; // W-type Multiply/Divide
                     else
                       ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
         7'b1100011:   ControlsD = 21'b0_010_00_00_000_1_01_0_0_0_0_0_0_0; // beq
