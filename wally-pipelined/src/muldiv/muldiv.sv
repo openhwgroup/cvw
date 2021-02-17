@@ -46,39 +46,6 @@ module muldiv (
       logic [`XLEN-1:0] QuotE, RemE;
       logic [`XLEN*2-1:0] ProdE;
 
-      mul mul(.*);
-
-/*
-      if (`XLEN==32) begin
-        int32div div(.clk(clk), .reset(reset), 
-                       .N(SrcAE), .D(SrcBE), .Q(QuotE), .rem0(RemE),
-                       .start(), .div0(), .done(), .divdone());
-      end else begin // XLEN=64
-        int64div div(.clk(clk), .reset(reset), 
-                       .N(SrcAE), .D(SrcBE), .Q(QuotE), .rem0(RemE),
-                       .start(), .div0(), .done(), .divdone());
-      end
-      */
-
-      // Select result
-      always_comb
-        case (Funct3E)
-          3'b000: PrelimResultE = ProdE[`XLEN-1:0];
-          3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
-          3'b010: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
-          3'b011: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
-          3'b100: PrelimResultE = QuotE;
-          3'b101: PrelimResultE = QuotE;
-          3'b110: PrelimResultE = RemE;
-          3'b111: PrelimResultE = RemE;
-        endcase
-    
-      // Handle sign extension for W-type instructions
-      if (`XLEN == 64) begin // RV64 has W-type instructions
-        assign MulDivResultE = W64E ? {{32{PrelimResultE[31]}}, PrelimResultE[31:0]} : PrelimResultE;
-      end else begin // RV32 has no W-type instructions
-        assign MulDivResultE = PrelimResultE;
-      end
 
       floprc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, MulDivResultE, MulDivResultM);
       floprc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, MulDivResultM, MulDivResultW);
