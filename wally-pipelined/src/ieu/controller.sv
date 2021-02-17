@@ -80,6 +80,7 @@ module controller(
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;
   logic        zeroE, ltE, ltuE;
+  logic        unused;
 	
 
   // Main Instruction Decoder
@@ -100,7 +101,7 @@ module controller(
         7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
                       ControlsD = 21'b1_000_00_00_000_0_10_0_0_1_0_0_0_0; // R-type W instructions for RV64i
                     else if (Funct7D == 7'b0000001 && `M_SUPPORTED && `XLEN == 64)
-                      ControlsD = 21'b1_000_00_00_100_0_00_0_0_1_0_0_1_0; // Multiply/Divide
+                      ControlsD = 21'b1_000_00_00_100_0_00_0_0_1_0_0_1_0; // W-type Multiply/Divide
                     else
                       ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
         7'b1100011:   ControlsD = 21'b0_010_00_00_000_1_01_0_0_0_0_0_0_0; // beq
@@ -128,7 +129,7 @@ module controller(
   assign IllegalBaseInstrFaultD = ControlsD[0];
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD, 
-          PrivilegedD, MulDivD} = ControlsD[20:1] & ~IllegalIEUInstrFaultD;
+          PrivilegedD, MulDivD, unused} = ControlsD & ~IllegalIEUInstrFaultD;
           // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
 
   // ALU Decoding *** should move to ALU for better modularity

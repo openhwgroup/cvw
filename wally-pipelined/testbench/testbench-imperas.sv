@@ -38,7 +38,19 @@ module testbench();
   logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64m[] = '{
-                    "rv64m/I-MUL-01", "3000"
+                    "rv64m/I-MUL-01", "3000",
+                    "rv64m/I-MULH-01", "3000",
+                    "rv64m/I-MULHSU-01", "3000",
+                    "rv64m/I-MULHU-01", "3000",
+                    "rv64m/I-MULW-01", "3000"
+//                    "rv64m/I-DIV-01", "3000",
+//                    "rv64m/I-DIVU-01", "3000",
+ //                   "rv64m/I-DIVUW-01", "3000",
+ //                   "rv64m/I-DIVW-01", "3000",
+//                    "rv64m/I-REM-01", "3000",
+//                    "rv64m/I-REMU-01", "3000",
+//                    "rv64m/I-REMUW-01", "3000",
+//                    "rv64m/I-REMW-01", "3000"
   };
   string tests64ic[] = '{
 
@@ -176,7 +188,14 @@ string tests64iNOc[] = {
 
   };
   string tests32m[] = '{
-                    "rv32m/I-MUL-01", "3000"
+                    "rv32m/I-MUL-01", "2000",
+                    "rv32m/I-MULH-01", "2000",
+                    "rv32m/I-MULHSU-01", "2000",
+                    "rv32m/I-MULHU-01", "2000"
+//                    "rv32m/I-DIV-01", "2000",
+//                    "rv32m/I-DIVU-01", "2000",
+//                    "rv32m/I-REM-01", "2000",
+//                    "rv32m/I-REMU-01", "2000"
   };
 string tests32ic[] = '{
 //                     "rv32ic/WALLY-C-ADHOC-01", "2000",
@@ -277,12 +296,12 @@ string tests32i[] = {
                       "rv32i/WALLY-BLT", "4000",
                        "rv32i/WALLY-BGE", "4000 ",
                       "rv32i/WALLY-BGEU", "4000 ",
-                      "rv64i/WALLY-CSRRW", "3000",
-                      "rv64i/WALLY-CSRRS", "3000",
-                      "rv64i/WALLY-CSRRC", "4000",
-                      "rv64i/WALLY-CSRRWI", "3000",
-                      "rv64i/WALLY-CSRRSI", "3000",
-                      "rv64i/WALLY-CSRRCI", "3000"
+                      "rv32i/WALLY-CSRRW", "3000",
+                      "rv32i/WALLY-CSRRS", "3000",
+                      "rv32i/WALLY-CSRRC", "4000",
+                      "rv32i/WALLY-CSRRWI", "3000",
+                      "rv32i/WALLY-CSRRSI", "3000",
+                      "rv32i/WALLY-CSRRCI", "3000"
 
 };
   string tests[];
@@ -305,7 +324,7 @@ string tests32i[] = {
       tests = {tests64i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests64ic};
       else                       tests = {tests, tests64iNOc};
-      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests64m};
+      if (`M_SUPPORTED % 2 == 1) tests = {tests64m, tests};
     end else begin // RV32
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
@@ -523,10 +542,10 @@ module instrNameDecTB(
                        else if (funct7 == 7'b0000001) name = "MULHSU";
                        else                           name = "ILLEGAL";
       10'b0110011_011: if      (funct7 == 7'b0000000) name = "SLTU";
-                       else if (funct7 == 7'b0000001) name = "DIV";
+                       else if (funct7 == 7'b0000001) name = "MULHU";
                        else                           name = "ILLEGAL";
       10'b0110011_100: if      (funct7 == 7'b0000000) name = "XOR";
-                       else if (funct7 == 7'b0000001) name = "MUL";
+                       else if (funct7 == 7'b0000001) name = "DIV";
                        else                           name = "ILLEGAL";
       10'b0110011_101: if      (funct7 == 7'b0000000) name = "SRL";
                        else if (funct7 == 7'b0000001) name = "DIVU";
