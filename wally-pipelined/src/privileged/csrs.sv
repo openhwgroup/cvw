@@ -77,7 +77,7 @@ module csrs #(parameter
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN);
 
       // CSRs
-      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, CSRWriteValM, `RESET_VECTOR, STVEC_REGW);
+      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, CSRWriteValM, zero, STVEC_REGW);
       flopenr #(`XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
       flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
       flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, zero, SCAUSE_REGW); 
