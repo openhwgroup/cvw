@@ -27,29 +27,30 @@
 `include "wally-config.vh"
 
 module ifu (
-  input  logic             clk, reset,
-  input  logic             StallF, StallD, FlushD, FlushE, FlushM, FlushW,
+  input logic 		   clk, reset,
+  input logic 		   StallF, StallD, FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
-  input  logic [31:0]      InstrF,
+  input logic [31:0] 	   InstrF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   // Decode  
-  output logic             InstrStall,
+  output logic 		   InstrStall,
   // Execute
-  input  logic             PCSrcE, 
-  input  logic [`XLEN-1:0] PCTargetE,
-  output logic [`XLEN-1:0] PCE, 
+  input logic 		   PCSrcE, 
+  input logic [`XLEN-1:0]  PCTargetE,
+  output logic [`XLEN-1:0] PCE,
+  output logic BPPredWrongE,		   
   // Mem
-  input  logic             RetM, TrapM, 
-  input  logic [`XLEN-1:0] PrivilegedNextPCM, 
-  output logic [31:0]      InstrD, InstrM,
+  input logic 		   RetM, TrapM, 
+  input logic [`XLEN-1:0]  PrivilegedNextPCM, 
+  output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
   // Writeback
   output logic [`XLEN-1:0] PCLinkW,
   // Faults
-  input  logic             IllegalBaseInstrFaultD,
-  output logic             IllegalIEUInstrFaultD,
-  output logic             InstrMisalignedFaultM,
+  input logic 		   IllegalBaseInstrFaultD,
+  output logic 		   IllegalIEUInstrFaultD,
+  output logic 		   InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM
 );
 
@@ -62,6 +63,11 @@ module ifu (
   logic [31:0]     InstrRawD, InstrE;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
+  // branch predictor signals
+  logic 	   SelBPPredF;
+  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
+  
+
   // *** put memory interface on here, InstrF becomes output
   assign InstrStall = 0; // ***
   assign InstrPAdrF = PCF; // *** no MMU
@@ -70,9 +76,48 @@ module ifu (
 
   assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
 
-  mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
+  //mux3    #(`XLEN) pcmux(PCPlus2or4F, PCCorrectE, PrivilegedNextPCM, {PrivilegedChangePCM, BPPredWrongE}, UnalignedPCNextF);
+  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),
+		       .d1(BPPredPCF),
+		       .s(SelBPPredF),
+		       .y(PCNext0F));
+
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F),
+		       .d1(PCCorrectE),
+		       .s(BPPredWrongE),
+		       .y(PCNext1F));
+
+  mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
+		       .d1(PrivilegedNextPCM),
+		       .s(PrivilegedChangePCM),
+		       .y(UnalignedPCNextF));
+  
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
+
+  // branch and jump predictor
+  // I am making the port connection explicit for now as I want to see them and they will be changing.
+  bpred bpred(.clk(clk),
+	      .reset(reset),
+	      .StallF(StallF),
+	      .StallD(StallD),
+	      .StallE(1'b0),   // *** may need this eventually
+	      .FlushF(FlushF),
+	      .FlushD(FlushD),
+	      .FlushE(FlushE),
+	      .PCNextF(PCNextF),
+	      .BPPredPCF(BPPredPCF),
+	      .SelBPPredF(SelBPPredF),
+	      .InstrF(InstrF), // *** this is flushed internally. The logic is redundant with some out here.
+	      // Also I believe this port will be removed.
+	      .PCE(PCE),
+	      .PCSrcE(PCSrcE),
+	      .PCTargetE(PCTargetE),
+	      .PCD(PCD),
+	      .PCLinkE(PCLinkE),
+	      .BPPredWrongE(BPPredWrongE));
+  // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
+  assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32

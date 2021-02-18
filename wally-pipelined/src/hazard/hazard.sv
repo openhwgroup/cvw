@@ -30,7 +30,7 @@ module hazard(
 //  input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
 //  input  logic       MemReadE, 
 //  input  logic       RegWriteM, RegWriteW, 
-  input  logic       PCSrcE, CSRWritePendingDEM, RetM, TrapM,
+  input  logic       BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
   input  logic       LoadStallD,
   input  logic       InstrStall, DataStall,
   // Stall outputs
@@ -52,7 +52,7 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
-  assign BranchFlushDE = PCSrcE | RetM | TrapM;
+  assign BranchFlushDE = BPPredWrongE | RetM | TrapM;
 
   assign StallDCause = LoadStallD;
   assign StallFCause = InstrStall | CSRWritePendingDEM;
@@ -60,6 +60,7 @@ module hazard(
 
   assign StallD = StallDCause;
   assign StallF = StallD | StallFCause;
+  assign FlushF = BPPredWrongE;
   assign FlushD = BranchFlushDE | StallFCause; //  PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
   assign FlushE = StallD | BranchFlushDE; //LoadStallD | PCSrcE | RetM | TrapM;
   assign FlushM = RetM | TrapM;
