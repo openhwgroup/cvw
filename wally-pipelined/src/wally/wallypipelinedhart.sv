@@ -49,7 +49,7 @@ module wallypipelinedhart (
 );
 
   logic [1:0]  ForwardAE, ForwardBE;
-  logic        StallF, StallD, FlushD, FlushE, FlushM, FlushW;
+  logic        StallF, StallD, FlushF, FlushD, FlushE, FlushM, FlushW;
   logic        RetM, TrapM;
 
   // new signals that must connect through DP
@@ -86,6 +86,8 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] InstrPAdrF;
   logic             DataStall, InstrStall;
   logic             InstrAckD, MemAckW;
+  logic 	    BPPredWrongE;
+  
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 

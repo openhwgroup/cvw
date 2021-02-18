@@ -72,10 +72,10 @@ module BTBPredictor
 				.RA1(LookUpPCIndex),
 				.RD1(TargetPC),
 				.REN1(1'b1),
-				.WA1(UpdatePCindex),
+				.WA1(UpdatePCIndex),
 				.WD1(UpdateTarget),
 				.WEN1(UpdateEN),
-				.BitWEN1({XLEN{1'b1}}));
+				.BitWEN1({`XLEN{1'b1}}));
 
 
 endmodule

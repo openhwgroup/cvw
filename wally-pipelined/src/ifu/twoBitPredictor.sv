@@ -40,6 +40,8 @@ module twoBitPredictor
    );
 
   logic [Depth-1:0] 	   LookUpPCIndex, UpdatePCIndex;
+  logic [1:0] 		   PredictionMemory;
+  
 
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -50,10 +52,10 @@ module twoBitPredictor
 
 
   SRAM2P1R1W #(Depth, 2) memory(.clk(clk),
-				.RA1(LookUpPC),
+				.RA1(LookUpPCIndex),
 				.RD1(PredictionMemory),
 				.REN1(1'b1),
-				.WA1(UpdatePC),
+				.WA1(UpdatePCIndex),
 				.WD1(UpdatePrediction),
 				.WEN1(UpdateEN),
 				.BitWEN1(2'b11));

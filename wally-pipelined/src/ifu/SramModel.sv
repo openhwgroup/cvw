@@ -6,8 +6,16 @@
 // Created: February 14, 2021
 // Modified: 
 //
-// Purpose: Hacky two port SRAM model.
+// Purpose: Behavioral model of two port SRAM.  While this is synthesizable it will produce a flip flop based memory whi
+//          behaves with the timing of an SRAM typical of GF 14nm, 32nm, and 45nm.
+//          
 // 
+// to preload this memory we can use the following command
+// in modelsim's do file.
+// mem load -infile <relative path to the text file > -format <bin|hex> <hierarchy to the memory.>
+// example
+// mem laod -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
+//
 // A component of the Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
@@ -30,7 +38,8 @@
 module SRAM2P1R1W
   #(parameter int Depth = 10,
     parameter int Width = 2
-    ) 
+    )
+
   (input clk,
     
    // port 1 is read only
@@ -45,16 +54,13 @@ module SRAM2P1R1W
    input logic [Width-1:0]  BitWEN1
    );
   
-  
-
-
 
   logic [Depth-1:0] 	    RA1Q, WA1Q;
   logic 		    WEN1Q;
   logic [Width-1:0] 	    WD1Q;
 
-  logic [2**Depth-1:0] [Width-1:0] memory;
-  
+  logic [Width-1:0] memory [2**Depth-1:0];
+
   
   // SRAMs address busses are always registered first.
 
@@ -92,7 +98,7 @@ module SRAM2P1R1W
     for (index = 0; index < Width; index = index + 1) begin    
       always_ff @ (posedge clk) begin
 	if (WEN1Q & BitWEN1[index]) begin
-	  memory[WA1Q][index] = WD1Q[index];
+	  memory[WA1Q][index] <= WD1Q[index];
 	end
       end
     end
