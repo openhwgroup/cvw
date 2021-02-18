@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // mul.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu 16 February 2021
 // Modified: 
 //
 // Purpose: Multiply instructions
