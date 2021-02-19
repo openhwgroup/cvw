@@ -34,7 +34,7 @@ module hazard(
   input  logic       LoadStallD,
   input  logic       InstrStall, DataStall,
   // Stall outputs
-  output logic       StallF, StallD, FlushD, FlushE, FlushM, FlushW
+  output logic       StallF, StallD, FlushF, FlushD, FlushE, FlushM, FlushW
 );
 
   logic BranchFlushDE;

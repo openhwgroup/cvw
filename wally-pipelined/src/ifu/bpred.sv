@@ -58,7 +58,7 @@ module bpred
   logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
   logic [3:0] 		    InstrClassD, InstrClassF, InstrClassE;
-  logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF, BTBPredPCMemoryF;
+  logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
   logic 		    TargetWrongE;
   logic 		    FallThroughWrongE;
   logic 		    PredictionDirWrongE;
@@ -71,7 +71,7 @@ module bpred
   // This is probably too much logic. 
   // *** This also encourages me to switch to predicting the class.
 
-  assign InstrClassF[2] = InstrF[6:0] == 7'h67 && InstrF[19:15] == 5'h01; // jump register, but not return
+  assign InstrClassF[2] = InstrF[6:0] == 7'h67 && InstrF[19:15] != 5'h01; // jump register, but not return
   assign InstrClassF[1] = InstrF[6:0] == 7'h6F; // jump
   assign InstrClassF[0] = InstrF[6:0] == 7'h63; // branch
   
@@ -102,7 +102,7 @@ module bpred
   BTBPredictor TargetPredictor(.clk(clk),
 			       .reset(reset),
 			       .LookUpPC(PCNextF),
-			       .TargetPC(BTBPredPCMemoryF),
+			       .TargetPC(BTBPredPCF),
 			       .Valid(BTBValidF),
 			       // update
 			       .UpdateEN(InstrClassE[2] | InstrClassE[1] | InstrClassE[0]),
@@ -111,7 +111,7 @@ module bpred
 
   // need to forward when updating to the same address as reading.
   assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
-  assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCMemoryF;
+  assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCF;
 
   // Part 4 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
@@ -155,7 +155,7 @@ module bpred
   flopenrc #(4) InstrClassRegE(.clk(clk),
 			       .reset(reset),
 			       .en(~StallD),
-			       .clear(flushD),
+			       .clear(FlushD),
 			       .d(InstrClassD),
 			       .q(InstrClassE));
 
