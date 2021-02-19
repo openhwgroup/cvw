@@ -31,6 +31,7 @@ module twoBitPredictor
   #(parameter int Depth = 10
     )
   (input logic clk,
+   input logic reset,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0] 	   Prediction,
    // update
@@ -52,6 +53,7 @@ module twoBitPredictor
 
 
   SRAM2P1R1W #(Depth, 2) memory(.clk(clk),
+				.reset(reset),
 				.RA1(LookUpPCIndex),
 				.RD1(PredictionMemory),
 				.REN1(1'b1),

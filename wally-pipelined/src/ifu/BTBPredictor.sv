@@ -32,19 +32,19 @@ module BTBPredictor
   #(parameter int Depth = 10
     )
   (input  logic clk,
-   input  logic reset,
-   input  logic [`XLEN-1:0] LookUpPC,
+   input logic 		    reset,
+   input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
-   output logic Valid,
+   output logic 	    Valid,
    // update
-   input  logic UpdateEN,
-   input  logic [`XLEN-1:0] UpdatePC,
-   input  logic [`XLEN-1:0] UpdateTarget
+   input logic 		    UpdateEN,
+   input logic [`XLEN-1:0]  UpdatePC,
+   input logic [`XLEN-1:0]  UpdateTarget
    );
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
-  logic [Depth-1:0] 	    LookUpPCIndex, UpdatePCIndex;
+  logic [Depth-1:0] 	    LookUpPCIndex, UpdatePCIndex, LookUpPCIndexQ, UpdatePCIndexQ;
 
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -53,15 +53,29 @@ module BTBPredictor
   assign UpdatePCIndex = {UpdatePC[Depth+1] ^ UpdatePC[1], UpdatePC[Depth:2]};
   assign LookUpPCIndex = {LookUpPC[Depth+1] ^ LookUpPC[1], LookUpPC[Depth:2]};  
   
+
+  flopenr #(Depth) UpdatePCIndexReg(.clk(clk),
+				    .reset(reset),
+				    .en(1'b1),
+				    .d(UpdatePCIndex),
+				    .q(UpdatePCIndexQ));
   
   // The valid bit must be resetable.
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
     end else if (UpdateEN) begin
-      ValidBits[UpdatePCIndex] <= #1 1'b1;
+      ValidBits[UpdatePCIndexQ] <= #1 1'b1;
     end
   end
+
+  flopenr #(Depth) LookupPCIndexReg(.clk(clk),
+				    .reset(reset),
+				    .en(1'b1),
+				    .d(LookUpPCIndex),
+				    .q(LookUpPCIndexQ));
+
+  assign Valid = ValidBits[LookUpPCIndexQ];
 
   // the BTB contains the target address.
   // *** future version may contain the instruction class, a tag or partial tag,
@@ -69,13 +83,14 @@ module BTBPredictor
   // Another optimization may be using a PC relative address.
 
   SRAM2P1R1W #(Depth, `XLEN) memory(.clk(clk),
-				.RA1(LookUpPCIndex),
-				.RD1(TargetPC),
-				.REN1(1'b1),
-				.WA1(UpdatePCIndex),
-				.WD1(UpdateTarget),
-				.WEN1(UpdateEN),
-				.BitWEN1({`XLEN{1'b1}}));
+				    .reset(reset),
+				    .RA1(LookUpPCIndex),
+				    .RD1(TargetPC),
+				    .REN1(1'b1),
+				    .WA1(UpdatePCIndex),
+				    .WD1(UpdateTarget),
+				    .WEN1(UpdateEN),
+				    .BitWEN1({`XLEN{1'b1}}));
 
 
 endmodule

@@ -40,8 +40,10 @@ module SRAM2P1R1W
     parameter int Width = 2
     )
 
-  (input clk,
-    
+  (input logic clk,
+   // *** have to remove reset eventually
+   input logic 		    reset,
+  
    // port 1 is read only
    input logic [Depth-1:0]  RA1,
    output logic [Width-1:0] RD1,
@@ -59,39 +61,39 @@ module SRAM2P1R1W
   logic 		    WEN1Q;
   logic [Width-1:0] 	    WD1Q;
 
-  logic [Width-1:0] memory [2**Depth-1:0];
+  logic [Width-1:0] 	    memory [2**Depth-1:0];
 
   
   // SRAMs address busses are always registered first.
 
   flopenr #(Depth) RA1Reg(.clk(clk),
-			  .reset(1'b0),
+			  .reset(reset),
 			  .en(REN1),
 			  .d(RA1),
 			  .q(RA1Q));
   
 
   flopenr #(Depth) WA1Reg(.clk(clk),
-			  .reset(1'b0),
+			  .reset(reset),
 			  .en(REN1),
 			  .d(WA1),
 			  .q(WA1Q));
 
   flopenr #(1) WEN1Reg(.clk(clk),
-		       .reset(1'b0),
+		       .reset(reset),
 		       .en(1'b1),
 		       .d(WEN1),
 		       .q(WEN1Q));
   
   flopenr #(Width) WD1Reg(.clk(clk),
-			  .reset(1'b0),
+			  .reset(reset),
 			  .en(REN1),
 			  .d(WD1),
 			  .q(WD1Q));
   // read port
   assign RD1 = memory[RA1Q];
 
-  genvar 			   index;
+  genvar 		    index;
   
   // write port
   generate

@@ -329,7 +329,7 @@ string tests32i[] = {
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      reset = 1; # 22; reset = 0;
+      reset = 1; # 42; reset = 0;
     end
 
   // generate clock to sequence tests
