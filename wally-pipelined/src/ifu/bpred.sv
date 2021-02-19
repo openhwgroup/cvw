@@ -162,13 +162,13 @@ module bpred
   // Check the prediction makes execution.
   assign TargetWrongE = PCTargetE != PCD;
   assign FallThroughWrongE = PCLinkE != PCD;
-  assign PredictionDirWrongE = BPPredE ^ PCSrcE;
+  assign PredictionDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
   assign PredictionPCWrongE = PCSrcE ? TargetWrongE : FallThroughWrongE;
-  assign BPPredWrongE = PredictionPCWrongE | PredictionDirWrongE;
+  assign BPPredWrongE = (PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE);
 
   // Update predictors
 
-  satCounter2 BPDirUpdate(.BrDir(~PredictionDirWrongE),
+  satCounter2 BPDirUpdate(.BrDir(PCSrcE),
 			  .OldState(BPPredE),
 			  .NewState(UpdateBPPredE));
 
