@@ -74,7 +74,7 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
+  assign StallExceptResolveBranchesF = StallF & ~(SelBPPredF | BPPredWrongE | PrivilegedChangePCM);
 
   //mux3    #(`XLEN) pcmux(PCPlus2or4F, PCCorrectE, PrivilegedNextPCM, {PrivilegedChangePCM, BPPredWrongE}, UnalignedPCNextF);
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),

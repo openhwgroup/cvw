@@ -44,7 +44,7 @@ mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/Di
 mem load -infile BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory
 
 do wave.do
-add log /* -recursive
+add log -r /*
 
 -- Run the Simulation 
 #run 1000
