@@ -44,6 +44,7 @@ module RASPredictor
 
   logic [StackSize-1:0]     PtrD, PtrQ, PtrP1, PtrM1;
   logic [StackSize-1:0] [`XLEN-1:0] memory;
+  integer 			    index;
   
   assign CounterEn = pop | push | incr;
 
@@ -60,8 +61,12 @@ module RASPredictor
 			   .d(PtrD),
 			   .q(PtrQ));
 
-  always_ff @ (posedge clk) begin
-    if(push) begin
+  // RAS must be reset. 
+  always_ff @ (posedge clk, posedge reset) begin
+    if(reset) begin
+      for(index=0; index<StackSize; index++)
+	memory[index] <= {`XLEN{1'b0}};
+    end else if(push) begin
       memory[PtrP1] <= #1 pushPC;
     end
   end

@@ -85,8 +85,13 @@ add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/dp/RdD
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/dp/Rs1D
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/dp/Rs2D
 add wave -noupdate /testbench/InstrFName
+add wave -noupdate -expand -group dcache /testbench/dut/hart/MemAdrM
+add wave -noupdate -expand -group dcache /testbench/dut/hart/MemPAdrM
+add wave -noupdate -expand -group dcache /testbench/dut/hart/WriteDataM
+add wave -noupdate -expand -group dcache /testbench/dut/hart/ReadDataM
+add wave -noupdate -expand -group dcache /testbench/dut/hart/dmem/MemRWM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {332469 ns} 0} {{Cursor 3} {333566 ns} 0} {{Cursor 4} {675 ns} 0}
+WaveRestoreCursors {{Cursor 2} {363960 ns} 0} {{Cursor 3} {365915 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 185
@@ -102,4 +107,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {333505 ns} {333689 ns}
+WaveRestoreZoom {365848 ns} {366032 ns}

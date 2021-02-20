@@ -67,7 +67,7 @@ module bpred
 
   // Part 1 decode the instruction class.
   // *** for now I'm skiping the compressed instructions
-  assign InstrClassF[3] = InstrF[5:0] == 7'h67 && InstrF[19:15] == 5'h01; // return
+  assign InstrClassF[3] = InstrF[6:0] == 7'h67 && InstrF[19:15] == 5'h01; // return
   // This is probably too much logic. 
   // *** This also encourages me to switch to predicting the class.
 
