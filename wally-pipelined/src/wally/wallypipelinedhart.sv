@@ -91,7 +91,7 @@ module wallypipelinedhart (
            
   ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
 
-  ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
+  ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
   dmem dmem(/*.Funct3M(InstrM[14:12]),*/ .*); // data cache unit
 
   ahblite ebu( // *** make IRData InstrF
