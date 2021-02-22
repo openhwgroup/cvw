@@ -28,11 +28,11 @@
 module forward(
   // Detect hazards
   input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input  logic       MemReadE,
+  input  logic       MemReadE, MulDivE,
   input  logic       RegWriteM, RegWriteW, 
   // Forwaring controls
   output logic [1:0] ForwardAE, ForwardBE,
-  output logic       LoadStallD
+  output logic       LoadStallD, MulDivStallD
 );
   
   always_comb begin
@@ -48,5 +48,6 @@ module forward(
   end
 
   assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
+  assign MulDivStallD = MulDivE & & ((Rs1D == RdE) | (Rs2D == RdE)); // *** extend with stalls for divide
 
 endmodule

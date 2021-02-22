@@ -58,7 +58,7 @@ module uncore (
   logic            HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
   logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
   logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
-  logic            MemRW;
+  logic [1:0]      MemRW;
   logic [1:0]      MemRWtim, MemRWclint, MemRWgpio, MemRWuart;
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
   
