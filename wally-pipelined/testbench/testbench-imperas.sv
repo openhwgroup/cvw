@@ -75,6 +75,7 @@ string tests64iNOc[] = {
                      "rv64i/I-MISALIGN_JMP-01","2000"
   };
  string tests64i[] = '{                 
+                     "rv64i/I-ECALL-01", "2000",
                      "rv64i/I-ENDIANESS-01", "2010",
                      "rv64i/I-ADD-01", "3000",
                      "rv64i/I-ADDI-01", "3000",
@@ -90,8 +91,8 @@ string tests64iNOc[] = {
                      "rv64i/I-BLTU-01", "4000",
                      "rv64i/I-BNE-01", "4000",
                      "rv64i/I-DELAY_SLOTS-01", "2000",
-                     "rv64i/I-EBREAK-01", "2000",
-                     "rv64i/I-ECALL-01", "2000",
+//                     "rv64i/I-EBREAK-01", "2000",
+//                     "rv64i/I-ECALL-01", "2000",
                      "rv64i/I-ENDIANESS-01", "2010",
                      "rv64i/I-IO-01", "2050",
                      "rv64i/I-JAL-01", "3000",
@@ -104,7 +105,7 @@ string tests64iNOc[] = {
                      "rv64i/I-LUI-01", "2000",
                      "rv64i/I-LW-01", "4110",
                      "rv64i/I-LWU-01", "4110", 
-                     "rv64i/I-MISALIGN_LDST-01", "2010",
+                     //"rv64i/I-MISALIGN_LDST-01", "2010",
                      "rv64i/I-NOP-01", "2000",
                      "rv64i/I-OR-01", "3000",
                      "rv64i/I-ORI-01", "3000",

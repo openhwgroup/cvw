@@ -54,6 +54,11 @@ module clint (
       assign #2 entry = {HADDR[15:2], 2'b00}; 
   endgenerate
   
+  // DH 2/20/21: Eventually allow MTIME to run off a separate clock
+  // This will require synchronizing MTIME to the system clock
+  // before it is read or compared to MTIMECMP.
+  // It will also require synchronizing the write to MTIMECMP.
+  // Use req and ack signals synchronized across the clock domains.
 
   // register access
   generate
