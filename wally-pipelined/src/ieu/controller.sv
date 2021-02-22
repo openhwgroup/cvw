@@ -29,21 +29,23 @@
 module controller(
   input  logic		 clk, reset,
   // Decode stage control signals
-  input logic  [6:0] OpD,
-  input logic  [2:0] Funct3D,
-  input logic 	     Funct7b5D,
+  input  logic [6:0] OpD,
+  input  logic [2:0] Funct3D,
+  input  logic [6:0] Funct7D,
   output logic [2:0] ImmSrcD,
-  input logic        StallD, FlushD, 
-  input logic        IllegalIEUInstrFaultD, 
+  input  logic       StallD, FlushD, 
+  input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
   // Execute stage control signals
-  input logic 	     FlushE, 
-  input logic  [2:0] FlagsE, 
+  input  logic 	     FlushE, 
+  input  logic  [2:0] FlagsE, 
   output logic       PCSrcE,        // for datapath and Hazard Unit
   output logic [4:0] ALUControlE, 
   output logic 	     ALUSrcAE, ALUSrcBE,
   output logic       TargetSrcE,
   output logic       MemReadE,  // for Hazard Unit
+  output logic [2:0] Funct3E,
+  output logic       MulDivE, W64E,
   // Memory stage control signals
   input  logic       FlushM,
   input  logic       DataMisalignedM,
@@ -54,7 +56,7 @@ module controller(
   // Writeback stage control signals
   input  logic       FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
-  output logic [1:0] ResultSrcW,
+  output logic [2:0] ResultSrcW,
   output logic       InstrValidW,
   // Stall during CSRs
   output logic       CSRWritePendingDEM
@@ -62,64 +64,75 @@ module controller(
 
   // pipelined control signals
   logic 	    RegWriteD, RegWriteE;
-  logic [1:0] ResultSrcD, ResultSrcE, ResultSrcM;
+  logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
   logic [1:0] MemRWD, MemRWE;
   logic		    JumpD, JumpE;
   logic		    BranchD, BranchE;
   logic	[1:0] ALUOpD;
   logic [4:0] ALUControlD;
   logic 	    ALUSrcAD, ALUSrcBD;
-  logic       TargetSrcD, W64D;
+  logic       TargetSrcD, W64D, MulDivD;
   logic       CSRWriteD, CSRWriteE;
-  logic [2:0] Funct3E;
   logic       InstrValidE, InstrValidM;
   logic       PrivilegedD, PrivilegedE;
-  logic [18:0] ControlsD;
+  logic [20:0] ControlsD;
   logic        aluc3D;
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;
   logic        zeroE, ltE, ltuE;
+  logic        unused;
 	
 
   // Main Instruction Decoder
   // *** decoding of non-IEU instructions should also go here, and should be gated by MISA bits in a generate so
   // they don't get generated if that mode is disabled
-  always_comb
-    case(OpD)
-    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRWrite_Privileged_Illegal
-      7'b0000011: ControlsD = 19'b1_000_01_10_01_0_00_0_0_0_0_0_0; // lw
-      7'b0100011: ControlsD = 19'b0_001_01_01_00_0_00_0_0_0_0_0_0; // sw
-      7'b0110011: ControlsD = 19'b1_000_00_00_00_0_10_0_0_0_0_0_0; // R-type 
-      7'b0111011: ControlsD = 19'b1_000_00_00_00_0_10_0_0_1_0_0_0; // R-type W instructions for RV64i
-      7'b1100011: ControlsD = 19'b0_010_00_00_00_1_01_0_0_0_0_0_0; // beq
-      7'b0010011: ControlsD = 19'b1_000_01_00_00_0_10_0_0_0_0_0_0; // I-type ALU
-      7'b0011011: ControlsD = 19'b1_000_01_00_00_0_10_0_0_1_0_0_0; // IW-type ALU for RV64i
-      7'b1101111: ControlsD = 19'b1_011_00_00_10_0_00_1_0_0_0_0_0; // jal
-      7'b1100111: ControlsD = 19'b1_000_00_00_10_0_00_1_1_0_0_0_0; // jalr
-      7'b0010111: ControlsD = 19'b1_100_11_00_00_0_00_0_0_0_0_0_0; // auipc
-      7'b0110111: ControlsD = 19'b1_100_01_00_00_0_11_0_0_0_0_0_0; // lui
-      7'b0001111: ControlsD = 19'b0_000_00_00_00_0_00_0_0_0_0_0_0; // fence = nop
-      7'b1110011: if (Funct3D == 3'b000)
-                  ControlsD = 19'b0_000_00_00_00_0_00_0_0_0_0_1_0; // privileged; decoded further in priveleged modules
-                  else
-                  ControlsD = 19'b1_000_00_00_11_0_00_0_0_0_1_0_0; // csrs
-      7'b0000000: ControlsD = 19'b0_000_00_00_00_0_00_0_0_0_0_0_1; // illegal instruction
-      default:    ControlsD = 19'b0_000_00_00_00_0_00_0_0_0_0_0_1; // non-implemented instruction
-    endcase
+  generate
+    always_comb
+      case(OpD)
+      // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRWrite_Privileged_MulDiv_Illegal
+        7'b0000011:   ControlsD = 21'b1_000_01_10_001_0_00_0_0_0_0_0_0_0; // lw
+        7'b0100011:   ControlsD = 21'b0_001_01_01_000_0_00_0_0_0_0_0_0_0; // sw
+        7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
+                      ControlsD = 21'b1_000_00_00_000_0_10_0_0_0_0_0_0_0; // R-type 
+                    else
+                      ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
+        7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
+                      ControlsD = 21'b1_000_00_00_000_0_10_0_0_1_0_0_0_0; // R-type W instructions for RV64i
+                    else
+                      ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
+        7'b1100011:   ControlsD = 21'b0_010_00_00_000_1_01_0_0_0_0_0_0_0; // beq
+        7'b0010011:   ControlsD = 21'b1_000_01_00_000_0_10_0_0_0_0_0_0_0; // I-type ALU
+        7'b0011011: if (`XLEN == 64)
+                      ControlsD = 21'b1_000_01_00_000_0_10_0_0_1_0_0_0_0; // IW-type ALU for RV64i
+                    else
+                      ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
+        7'b1101111:   ControlsD = 21'b1_011_00_00_010_0_00_1_0_0_0_0_0_0; // jal
+        7'b1100111:   ControlsD = 21'b1_000_00_00_010_0_00_1_1_0_0_0_0_0; // jalr
+        7'b0010111:   ControlsD = 21'b1_100_11_00_000_0_00_0_0_0_0_0_0_0; // auipc
+        7'b0110111:   ControlsD = 21'b1_100_01_00_000_0_11_0_0_0_0_0_0_0; // lui
+        7'b0001111:   ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_0; // fence = nop
+        7'b1110011: if (Funct3D == 3'b000)
+                      ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_1_0_0; // privileged; decoded further in priveleged modules
+                    else
+                      ControlsD = 21'b1_000_00_00_011_0_00_0_0_0_1_0_0_0; // csrs
+        7'b0000000:   ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // illegal instruction
+        default:      ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
+      endcase
+  endgenerate
 
   // unswizzle control bits
   // squash control signals if coming from an illegal compressed instruction
   assign IllegalBaseInstrFaultD = ControlsD[0];
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
-          ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD,
-          PrivilegedD} = ControlsD[18:1] & ~IllegalIEUInstrFaultD;
+          ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD, 
+          PrivilegedD, MulDivD, unused} = ControlsD & ~IllegalIEUInstrFaultD;
           // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
 
-  // ALU Decoding
+  // ALU Decoding *** should move to ALU for better modularity
   assign sltD = (Funct3D == 3'b010);
   assign sltuD = (Funct3D == 3'b011);
-  assign subD = (Funct3D == 3'b000 & Funct7b5D & OpD[5]);
-  assign sraD = (Funct3D == 3'b101 & Funct7b5D);
+  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);
+  assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
 
   assign aluc3D = subD | sraD | sltD | sltuD; // TRUE for R-type subtracts and sra, slt, sltu
 
@@ -132,9 +145,9 @@ module controller(
     endcase
   
   // Execute stage pipeline control register and logic
-  floprc #(21) controlregE(clk, reset, FlushE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, 1'b1},
-                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE});
+  floprc #(24) controlregE(clk, reset, FlushE,
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, 1'b1},
+                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, InstrValidE});
 
   // Branch Logic
   assign {zeroE, ltE, ltuE} = FlagsE;
@@ -155,12 +168,12 @@ module controller(
   assign MemReadE = MemRWE[1]; 
   
   // Memory stage pipeline control register
-  floprc #(11) controlregM(clk, reset, FlushM,
+  floprc #(12) controlregM(clk, reset, FlushM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRWriteM, PrivilegedM, Funct3M, InstrValidM});
   
   // Writeback stage pipeline control register
-  floprc #(4) controlregW(clk, reset, FlushW,
+  floprc #(5) controlregW(clk, reset, FlushW,
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 

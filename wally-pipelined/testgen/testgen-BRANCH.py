@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 ##################################
-# testgen-ADD-SUB.py
+# testgen-branch.py
 #
-# David_Harris@hmc.edu 19 January 2021
+# ssanghai@hmc.edu 13th Feb 2021
 #
 # Generate directed and random test vectors for RISC-V Design Validation.
 ##################################
@@ -18,46 +18,66 @@ from random import getrandbits
 ##################################
 # functions
 ##################################
-
 def computeExpected(a, b, test):
-  if (test == "ADD"):
-    return a + b
-  elif (test == "SUB"):
-    return a - b
+  if (test == "BEQ"):
+    return 0xcccc if a==b else 0xeeee
+  elif (test == "BNE"):
+    return 0xeeee if a==b else 0xcccc
+  elif (test == "BGEU"):
+    return 0xcccc if a>=b else 0xeeee
+  elif (test == "BLT"):
+    if (1<<(xlen-1)) & a:
+      a = a -(2**xlen) 
+    if (1<<(xlen-1)) & b:
+      b = b - (2**xlen)
+    return 0xcccc if a<b else 0xeeee
+  elif (test == "BLTU"):
+    return 0xcccc if a<b else 0xeeee
+  elif (test == "BGE"):
+    if (1<<(xlen-1)) & a:
+      a = a - (2**xlen)
+    if (1<<(xlen-1)) & b:
+      b = b - (2**xlen)
+    return 0xcccc if a>=b else 0xeeee
   else:
     die("bad test name ", test)
   #  exit(1)
 
 def randRegs():
-  reg1 = randint(1,31)
-  reg2 = randint(1,31)
-  reg3 = randint(1,31) 
-  if (reg1 == 6 or reg2 == 6 or reg3 == 6 or reg1 == reg2):
+  reg1 = randint(2,31)
+  reg2 = randint(2,31)
+  if (reg1 == 6 or reg2 == 6 or reg1 == reg2):
     return randRegs()
   else:
-      return reg1, reg2, reg3
+      return reg1, reg2
+
+label = 0
 
 def writeVector(a, b, storecmd):
-  global testnum
+  global testnum 
+  global label
   expected = computeExpected(a, b, test)
   expected = expected % 2**xlen # drop carry if necessary
   if (expected < 0): # take twos complement
     expected = 2**xlen + expected
-  reg1, reg2, reg3 = randRegs()
+  reg1, reg2 = randRegs()
   lines = "\n# Testcase " + str(testnum) + ":  rs1:x" + str(reg1) + "(" + formatstr.format(a)
-  lines = lines + "), rs2:x" + str(reg2) + "(" +formatstr.format(b) 
-  lines = lines + "), result rd:x" + str(reg3) + "(" + formatstr.format(expected) +")\n"
+  lines = lines + "), rs2:x" + str(reg2) + "(" +formatstr.format(b) + "\n"
+  lines = lines + "li x1, MASK_XLEN(0xcccc)\n"
   lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
   lines = lines + "li x" + str(reg2) + ", MASK_XLEN(" + formatstr.format(b) + ")\n"
-  lines = lines + test + " x" + str(reg3) + ", x" + str(reg1) + ", x" + str(reg2) + "\n"
-  lines = lines + storecmd + " x" + str(reg3) + ", " + str(wordsize*testnum) + "(x6)\n"
-  lines = lines + "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg3) +", "+formatstr.format(expected)+")\n"
+  lines = lines + test + " x" + str(reg1) + ", x" + str(reg2) + ", " + str(label) + "f\n"
+  lines = lines + "li x1, MASK_XLEN(0xeeee)\n"
+  lines = lines + str(label) + ":\n"
+  lines = lines + storecmd + " x1, " + str(wordsize*testnum) + "(x6)\n"
+  lines = lines + "RVTEST_IO_ASSERT_GPR_EQ(x7, x1, "+formatstr.format(expected)+")\n"
   f.write(lines)
   if (xlen == 32):
     line = formatrefstr.format(expected)+"\n"
   else:
     line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
   r.write(line)
+  label += 1
   testnum = testnum+1
 
 ##################################
@@ -65,10 +85,10 @@ def writeVector(a, b, storecmd):
 ##################################
 
 # change these to suite your tests
-tests = ["ADD", "SUB"]
-author = "David_Harris@hmc.edu & Katherine Parry"
+tests = ["BEQ", "BNE", "BLT", "BGE", "BGEU", "BLTU"] 
+author = "Shreya Sanghai"
 xlens = [32, 64]
-numrand = 100;
+numrand = 100
 
 # setup
 seed(0) # make tests reproducible
