@@ -69,7 +69,7 @@ module ahblite (
 
   logic GrantData;
   logic [2:0] ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataPreW;
   logic IReady, DReady;
 //  logic [3:0] HSIZED; // size delayed by one cycle for reads
 //  logic [2:0] HADDRD; // address delayed for subword reads
@@ -114,6 +114,12 @@ module ahblite (
   assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || (NextBusState == INSTRREADMEMPENDING);
   assign #1 InstrStall = (NextBusState == INSTRREAD);
  // assign InstrUpdate = (BusState == INSTRREADMEMPENDING) && (NextBusState != INSTRREADMEMPENDING);
+
+  // DH 2/20/22: A cyclic path presently exists
+  // HREADY->NextBusState->GrantData->HSIZE->HSELUART->HREADY
+  // This is because the peripherals assert HREADY on the same cycle
+  // When memory is working, also fix the peripherals to respond on the subsequent cycle
+  // and this path should be fixed.
       
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE); 
@@ -130,6 +136,16 @@ module ahblite (
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
   flop #(1)   writereg(HCLK, HWRITE, HWRITED);
+
+    // Route signals to Instruction and Data Caches
+  // *** assumes AHBW = XLEN
+  assign InstrRData = HRDATAMasked[31:0];
+//  assign ReadDataW = HRDATAMasked;
+  assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
+  assign CaptureDataM = (BusState == MEMREAD) && (NextBusState != MEMREAD);
+  flopenr #(`XLEN) ReadDataPreWReg(clk, reset, CaptureDataM, ReadDataM, ReadDataPreW); // *** this may break when there is no instruction read after data read
+  flopenr #(`XLEN) ReadDataWReg(clk, reset, ~StallW, ReadDataPreW, ReadDataW);
+
 
   /*
   typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
@@ -209,13 +225,6 @@ module ahblite (
   assign HTRANS = InstrReadF | MemReadM | MemWriteM ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
            */       
-  // Route signals to Instruction and Data Caches
-  // *** assumes AHBW = XLEN
-  assign InstrRData = HRDATAMasked[31:0];
-//  assign ReadDataW = HRDATAMasked;
-  assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
-  assign CaptureDataM = (BusState == MEMREAD) && (NextBusState != MEMREAD);
-  flopenr #(`XLEN) ReadDataWReg(clk, reset, CaptureDataM, ReadDataM, ReadDataW);
 
 
   // stalls
