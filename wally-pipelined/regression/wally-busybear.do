@@ -42,84 +42,84 @@ add wave /testbench_busybear/reset
 add wave -divider
 add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
-add wave -hex /testbench_busybear/dut/ifu/PCF
-add wave -hex /testbench_busybear/dut/ifu/InstrF
+add wave -hex /testbench_busybear/dut/hart/ifu/PCF
+add wave -hex /testbench_busybear/dut/hart/ifu/InstrF
 add wave /testbench_busybear/lastInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
-#add wave -hex /testbench_busybear/dut/priv/csr/MTVEC_REG
-#add wave -hex /testbench_busybear/dut/priv/csr/MSTATUS_REG
-#add wave -hex /testbench_busybear/dut/priv/csr/SCOUNTEREN_REG
-#add wave -hex /testbench_busybear/dut/priv/csr/MIE_REG
-#add wave -hex /testbench_busybear/dut/priv/csr/MIDELEG_REG
-#add wave -hex /testbench_busybear/dut/priv/csr/MEDELEG_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/SCOUNTEREN_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MIE_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MIDELEG_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MEDELEG_REG
 add wave -divider
 # registers!
 add wave -hex /testbench_busybear/regExpected
 add wave -hex /testbench_busybear/regNumExpected
 add wave -hex /testbench_busybear/HWRITE
-add wave -hex /testbench_busybear/dut/MemRWM[1]
+add wave -hex /testbench_busybear/dut/hart/MemRWM[1]
 add wave -hex /testbench_busybear/HWDATA
 add wave -hex /testbench_busybear/HRDATA
 add wave -hex /testbench_busybear/HADDR
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[1]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[2]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[3]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[4]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[5]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[6]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[7]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[8]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[9]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[10]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[11]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[12]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[13]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[14]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[15]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[16]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[17]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[18]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[19]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[20]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[21]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[22]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[23]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[24]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[25]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[26]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[27]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[28]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[29]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[30]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[31]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[1]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[2]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[3]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[4]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[5]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[6]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[7]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[8]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[9]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[10]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[11]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[12]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[13]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[14]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[15]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[16]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[17]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[18]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[19]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[20]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[21]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[22]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[23]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[24]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[25]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[26]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[27]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[28]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[29]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[30]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[31]
 add wave /testbench_busybear/InstrFName
-add wave -hex /testbench_busybear/dut/ifu/PCD
-#add wave -hex /testbench_busybear/dut/ifu/InstrD
+add wave -hex /testbench_busybear/dut/hart/ifu/PCD
+#add wave -hex /testbench_busybear/dut/hart/ifu/InstrD
 add wave /testbench_busybear/InstrDName
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ifu/PCE
-##add wave -hex /testbench_busybear/dut/ifu/InstrE
+add wave -hex /testbench_busybear/dut/hart/ifu/PCE
+##add wave -hex /testbench_busybear/dut/hart/ifu/InstrE
 add wave /testbench_busybear/InstrEName
-#add wave -hex /testbench_busybear/dut/ieu/dp/SrcAE
-#add wave -hex /testbench_busybear/dut/ieu/dp/SrcBE
-add wave -hex /testbench_busybear/dut/ieu/dp/ALUResultE
-#add wave /testbench_busybear/dut/ieu/dp/PCSrcE
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/SrcAE
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/SrcBE
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/ALUResultE
+#add wave /testbench_busybear/dut/hart/ieu/dp/PCSrcE
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ifu/PCM
-##add wave -hex /testbench_busybear/dut/ifu/InstrM
+add wave -hex /testbench_busybear/dut/hart/ifu/PCM
+##add wave -hex /testbench_busybear/dut/hart/ifu/InstrM
 add wave /testbench_busybear/InstrMName
-#add wave /testbench_busybear/dut/dmem/dtim/memwrite
-#add wave -hex /testbench_busybear/dut/dmem/AdrM
-#add wave -hex /testbench_busybear/dut/dmem/WriteDataM
+#add wave /testbench_busybear/dut/hart/dmem/dtim/memwrite
+#add wave -hex /testbench_busybear/dut/hart/dmem/AdrM
+#add wave -hex /testbench_busybear/dut/hart/dmem/WriteDataM
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ifu/PCW
-##add wave -hex /testbench_busybear/dut/ifu/InstrW
+add wave -hex /testbench_busybear/dut/hart/ifu/PCW
+##add wave -hex /testbench_busybear/dut/hart/ifu/InstrW
 add wave /testbench_busybear/InstrWName
-#add wave /testbench_busybear/dut/ieu/dp/RegWriteW
-#add wave -hex /testbench_busybear/dut/ieu/dp/ResultW
-#add wave -hex /testbench_busybear/dut/ieu/dp/RdW
+#add wave /testbench_busybear/dut/hart/ieu/dp/RegWriteW
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/ResultW
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/RdW
 #add wave -divider
 ##add ww
 #add wave -hex -r /testbench_busybear/*
