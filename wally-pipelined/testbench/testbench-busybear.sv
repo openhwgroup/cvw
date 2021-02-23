@@ -140,18 +140,18 @@ module testbench_busybear();
         if ($time == 0) begin
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           if (dut.hart.ieu.dp.regf.rf[i] != regExpected) begin
-            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
+            $display("%0t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
         end else begin
           scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           if (i != regNumExpected) begin
-            $display("%t ps, instr %0d: wrong register changed: %0d, %0d expected", $time, instrs, i, regNumExpected);
+            $display("%0t ps, instr %0d: wrong register changed: %0d, %0d expected", $time, instrs, i, regNumExpected);
             `ERROR
           end
           if (~equal(dut.hart.ieu.dp.regf.rf[i],regExpected, 0)) begin
-            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
+            $display("%0t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
           if (dut.hart.ieu.dp.regf.rf[i] !== regExpected) begin
@@ -162,6 +162,27 @@ module testbench_busybear();
       end
     end
   endgenerate
+  
+  `define MAX_RAM 'h8000000
+  logic [`XLEN-1:0] RAM[`MAX_RAM:0];
+  logic [`XLEN-1:0] readRAM, readPC;
+  integer RAMAdr, RAMPC;
+  assign RAMAdr = HADDR - 'h80000000;
+  assign RAMPC = PCF - 'h80000000;
+  always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
+    if ((HWRITE || dut.hart.MemRWM[1]) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
+      if (HWRITE) begin
+        RAM[RAMAdr] = HWDATA;
+      end else begin
+        readRAM = RAM[RAMAdr];
+      end
+    end
+  end
+  always @(PCF) begin
+    if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
+      readPC = RAM[RAMPC];
+    end
+  end
 
   logic [`XLEN-1:0] readAdrExpected;
   // this might need to change
@@ -175,7 +196,12 @@ module testbench_busybear();
       scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
       #1;
       if (~equal(HADDR,readAdrExpected,4)) begin
-        $display("%t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
+        $display("%0t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
+        `ERROR
+      end
+      if (HRDATA != readRAM && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
+        $display("warning %0t ps, instr %0d: HRDATA does not equal readRAM: %x, %x from address %x", $time, instrs, HRDATA, readRAM, HADDR);
+        warningCount += 1;
         `ERROR
       end
     end
@@ -183,7 +209,7 @@ module testbench_busybear();
       
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
   // this might need to change
-  always @(HWDATA or HADDR or HSIZE) begin
+  always @(HWDATA or HADDR or HSIZE or HWRITE) begin
     #1;
     if (HWRITE) begin
       if($feof(data_file_memW)) begin
@@ -193,11 +219,11 @@ module testbench_busybear();
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
       if (writeDataExpected != HWDATA) begin
-        $display("%t ps, instr %0d: HWDATA does not equal writeDataExpected: %x, %x", $time, instrs, HWDATA, writeDataExpected);
+        $display("%0t ps, instr %0d: HWDATA does not equal writeDataExpected: %x, %x", $time, instrs, HWDATA, writeDataExpected);
         `ERROR
       end
       if (~equal(writeAdrExpected,HADDR,1)) begin
-        $display("%t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrExpected);
+        $display("%0t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrExpected);
         `ERROR
       end
     end
@@ -226,17 +252,17 @@ module testbench_busybear();
           scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
           if(CSR.icompare(`"CSR`")) begin \
-            $display("%t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
+            $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
           end \
           if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
-            $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+            $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
             `ERROR \
           end \
         end else begin \
           for(integer j=0; j<totalCSR; j++) begin \
             if(!StartCSRname[j].icompare(`"CSR`")) begin \
               if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
-                $display("%t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
+                $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
                 `ERROR \
               end \
             end \
@@ -299,11 +325,11 @@ module testbench_busybear();
       // then expected PC value
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", PCWExpected);
       if(~equal(dut.hart.ifu.PCW,PCWExpected,2)) begin
-        $display("%t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.hart.ifu.PCW, PCWExpected);
+        $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.hart.ifu.PCW, PCWExpected);
         `ERROR
       end
       //if(it.InstrW != InstrWExpected) begin
-      //  $display("%t ps, instr %0d: InstrW does not equal InstrW expected: %x, %x", $time, instrs, it.InstrW, InstrWExpected);
+      //  $display("%0t ps, instr %0d: InstrW does not equal InstrW expected: %x, %x", $time, instrs, it.InstrW, InstrWExpected);
       //end
     end
   end
@@ -372,8 +398,12 @@ module testbench_busybear();
 
       //check things!
       if ((~speculative) && (~equal(PCF,pcExpected,3))) begin
-        $display("%t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
+        $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
         `ERROR
+      end
+      if (readPC != InstrF) begin
+        $display("%0t ps, instr %0d: readPC does not equal InstrF: %x, %x", $time, instrs, readPC, InstrF);
+        warningCount += 1;
       end
     end
   end
