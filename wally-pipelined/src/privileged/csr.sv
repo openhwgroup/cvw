@@ -102,7 +102,9 @@ module csr (
 
       // merge CSR Reads
       assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 
-      floprc #(`XLEN) CSRValWReg(clk, reset, FlushW, CSRReadValM, CSRReadValW);
+      // *** add W stall 2/22/21 dh to try fixing memory stalls
+//      floprc #(`XLEN) CSRValWReg(clk, reset, FlushW, CSRReadValM, CSRReadValW);
+      flopenrc #(`XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
       // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
       assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 && PrivilegeModeW != `M_MODE) ||
