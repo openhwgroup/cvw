@@ -24,19 +24,15 @@ module testbench_busybear();
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
+  logic [`AHBW-1:0] HRDATAEXT;
+  logic             HREADYEXT, HRESPEXT;
+  logic             UARTSout;
 
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  assign HREADY = 1;
-  assign HRESP = 0;
-  assign HRDATA = 0;
-
-  // for now, seem to need these to be zero until we get a better idea
-  assign InstrAccessFaultF = 0;
-  assign DataAccessFaultM = 0;
    
   // instantiate processor and memories
-  wallypipelinedhart dut(.*);
+  wallypipelinedsocbusybear dut(.*);
 
   // initialize test
   initial
@@ -103,26 +99,32 @@ module testbench_busybear();
     end 
   end
 
-  logic[63:0] adrTranslation[4:0];
-  string translationType[4:0] = {"rf", "writeAdr", "PCW", "PC", "readAdr"};
   integer warningCount = 0;
-  initial begin
-    for(int i=0; i<5; i++) begin
-      adrTranslation[i] = 64'b0;
-    end
-  end
 
+  //logic[63:0] adrTranslation[4:0];
+  //string translationType[4:0] = {"rf", "writeAdr", "PCW", "PC", "readAdr"};
+  //initial begin
+  //  for(int i=0; i<5; i++) begin
+  //    adrTranslation[i] = 64'b0;
+  //  end
+  //end
+
+  //function logic equal(logic[63:0] adr, logic[63:0] adrExpected, integer func);
+  //  if (adr[11:0] !== adrExpected[11:0]) begin
+  //    equal = 1'b0;
+  //  end else begin
+  //    equal = 1'b1;
+  //    if ((adr+adrTranslation[func]) !== adrExpected) begin
+  //      adrTranslation[func] = adrExpected - adr;
+  //      $display("warning: probably new address translation %x for %s at instr %0d", adrTranslation[func], translationType[func], instrs);
+  //      warningCount += 1;
+  //    end
+  //  end
+  //endfunction
+
+  // pretty sure this isn't necessary anymore, but keeping this for now since its easier
   function logic equal(logic[63:0] adr, logic[63:0] adrExpected, integer func);
-    if (adr[11:0] !== adrExpected[11:0]) begin
-      equal = 1'b0;
-    end else begin
-      equal = 1'b1;
-      if ((adr+adrTranslation[func]) !== adrExpected) begin
-        adrTranslation[func] = adrExpected - adr;
-        $display("warning: probably new address translation %x for %s at instr %0d", adrTranslation[func], translationType[func], instrs);
-        warningCount += 1;
-      end
-    end
+    equal = adr === adrExpected;
   endfunction
 
 
@@ -138,11 +140,11 @@ module testbench_busybear();
   genvar i;
   generate
     for(i=1; i<32; i++) begin
-      always @(dut.ieu.dp.regf.rf[i]) begin
+      always @(dut.hart.ieu.dp.regf.rf[i]) begin
         if ($time == 0) begin
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
-          if (dut.ieu.dp.regf.rf[i] != regExpected) begin
-            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.ieu.dp.regf.rf[i], regExpected);
+          if (dut.hart.ieu.dp.regf.rf[i] != regExpected) begin
+            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
         end else begin
@@ -152,13 +154,13 @@ module testbench_busybear();
             $display("%t ps, instr %0d: wrong register changed: %0d, %0d expected", $time, instrs, i, regNumExpected);
             `ERROR
           end
-          if (~equal(dut.ieu.dp.regf.rf[i],regExpected, 0)) begin
-            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.ieu.dp.regf.rf[i], regExpected);
+          if (~equal(dut.hart.ieu.dp.regf.rf[i],regExpected, 0)) begin
+            $display("%t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
-          if (dut.ieu.dp.regf.rf[i] !== regExpected) begin
-            force dut.ieu.dp.regf.rf[i] = regExpected;
-            release dut.ieu.dp.regf.rf[i];
+          if (dut.hart.ieu.dp.regf.rf[i] !== regExpected) begin
+            force dut.hart.ieu.dp.regf.rf[i] = regExpected;
+            release dut.hart.ieu.dp.regf.rf[i];
           end
         end
       end
@@ -167,8 +169,8 @@ module testbench_busybear();
 
   logic [`XLEN-1:0] readAdrExpected;
   // this might need to change
-  always @(dut.MemRWM[1] or HADDR) begin
-    if (dut.MemRWM[1]) begin
+  always @(dut.hart.MemRWM[1] or HADDR) begin
+    if (dut.hart.MemRWM[1]) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         `ERROR
@@ -246,9 +248,9 @@ module testbench_busybear();
         end \
     end
   `define CHECK_CSR(CSR) \
-     `CHECK_CSR2(CSR, dut.priv.csr) 
-  `define CSRM dut.priv.csr.genblk1.csrm 
-  `define CSRS dut.priv.csr.genblk1.csrs.genblk1
+     `CHECK_CSR2(CSR, dut.hart.priv.csr) 
+  `define CSRM dut.hart.priv.csr.genblk1.csrm 
+  `define CSRS dut.hart.priv.csr.genblk1.csrs.genblk1
 
   //`CHECK_CSR(FCSR)
   `CHECK_CSR2(MCAUSE, `CSRM)
@@ -286,8 +288,8 @@ module testbench_busybear();
   string PCtextW, PCtext2W;
   logic [31:0] InstrWExpected;
   logic [63:0] PCWExpected;
-  always @(dut.ifu.PCW or dut.ieu.InstrValidW) begin
-   if(dut.ieu.InstrValidW && dut.ifu.PCW != 0) begin
+  always @(dut.hart.ifu.PCW or dut.hart.ieu.InstrValidW) begin
+   if(dut.hart.ieu.InstrValidW && dut.hart.ifu.PCW != 0) begin
       if($feof(data_file_PCW)) begin
         $display("no more PC data to read");
         `ERROR
@@ -300,8 +302,8 @@ module testbench_busybear();
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", InstrWExpected);
       // then expected PC value
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", PCWExpected);
-      if(~equal(dut.ifu.PCW,PCWExpected,2)) begin
-        $display("%t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.ifu.PCW, PCWExpected);
+      if(~equal(dut.hart.ifu.PCW,PCWExpected,2)) begin
+        $display("%t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.hart.ifu.PCW, PCWExpected);
         `ERROR
       end
       //if(it.InstrW != InstrWExpected) begin
@@ -384,9 +386,9 @@ module testbench_busybear();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   instrNameDecTB dec(InstrF, InstrFName);
-  instrTrackerTB it(clk, reset, dut.ieu.dp.FlushE,
-                dut.ifu.InstrD, dut.ifu.InstrE,
-                dut.ifu.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
+                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
   // generate clock to sequence tests
