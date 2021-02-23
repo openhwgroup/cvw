@@ -48,6 +48,8 @@ add wave /testbench_busybear/lastInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
+add wave -hex /testbench_busybear/readPC
+add wave -hex /testbench_busybear/readRAM
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/SCOUNTEREN_REG
