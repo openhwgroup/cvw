@@ -56,7 +56,11 @@ module hazard(
 
   assign BranchFlushDE = PCSrcE | RetM | TrapM;
 
-  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM;  // stall at fetch if unable to get the instruction, 
+  // changed 2/22/21 harris to turn off stallF when RetM or TrapM
+  // changed 2/23/21 harris to BranchFlushDEM to solve bug in ECALL about JAL being ignored
+//  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM;  // stall at fetch if unable to get the instruction, 
+//  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM & ~(RetM | TrapM);  // stall at fetch if unable to get the instruction, 
+  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM & ~(BranchFlushDE);  // stall at fetch if unable to get the instruction, 
                                                          // or if a CSR will be written and may change system behavior
   assign StallDCause = LoadStallD;                       // stall in decode if instruction is a load dependent on previous
   assign StallECause = 0;
