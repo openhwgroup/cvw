@@ -9,12 +9,8 @@ module testbench_busybear();
   // instantiate device to be tested
   logic [`XLEN-1:0] PCF; 
   logic [31:0] InstrF;
-  logic        InstrAccessFaultF, DataAccessFaultM;
-  logic        TimerIntM = 0, SwIntM = 0; // from CLINT
-  logic        ExtIntM = 0; // not yet connected
 
   logic [`AHBW-1:0] HRDATA;
-  logic             HREADY, HRESP;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
