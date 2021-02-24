@@ -177,7 +177,8 @@ module testbench_busybear();
 
   logic [`XLEN-1:0] RAM[('h8000000 >> 3):0];
   logic [`XLEN-1:0] bootram[('h2000 >> 3):0];
-  logic [`XLEN-1:0] readRAM, readPC;
+  logic [`XLEN-1:0] readRAM;
+  logic [31:0]      readPC;
   integer RAMAdr, RAMPC;
   assign RAMAdr = (HADDR - (HADDR > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
   assign RAMPC = (PCF - (PCF > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
@@ -194,7 +195,7 @@ module testbench_busybear();
   end
   always @(PCF) begin
     if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
-      readPC = RAM[RAMPC];
+      readPC = RAM[RAMPC] >> PCF[2] * 32;
     end
   end
   // there's almost certianly a better way than just copying this, but its simple enough for now:
@@ -208,8 +209,9 @@ module testbench_busybear();
     end
   end
   always @(PCF) begin
+    $write(""); // I know this does nothing, the first instruction doesn't load for me without it
     if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
-      readPC = bootram[RAMPC];
+      readPC = bootram[RAMPC] >> PCF[2] * 32;
     end
   end
 
@@ -431,7 +433,7 @@ module testbench_busybear();
         $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
         `ERROR
       end
-      if (readPC != InstrF) begin
+      if ((~speculative) && (readPC != InstrF)) begin
         $display("%0t ps, instr %0d: readPC does not equal InstrF: %x, %x", $time, instrs, readPC, InstrF);
         warningCount += 1;
       end
