@@ -236,7 +236,7 @@ string tests32i[] = {
   initial 
     if (`XLEN == 64) begin // RV64
       tests = {tests64i};
-      if (`C_SUPPORTED % 2 == 1) tests = {tests64ic, tests};
+      if (`C_SUPPORTED % 2 == 1) tests = {tests, tests64ic};
       else                       tests = {tests, tests64iNOc};
     end else begin // RV32
       tests = {tests32i};
