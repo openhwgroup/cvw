@@ -7,7 +7,7 @@ module testbench_busybear();
   logic [31:0]     GPIOPinsOut, GPIOPinsEn;
 
   // instantiate device to be tested
-  logic [`XLEN-1:0] PCF; 
+  logic [`XLEN-1:0] PCF;
   logic [31:0] InstrF;
 
   logic [`AHBW-1:0] HRDATA;
@@ -26,7 +26,7 @@ module testbench_busybear();
 
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-   
+
   // instantiate processor and memories
   wallypipelinedsocbusybear dut(.*);
 
@@ -36,7 +36,7 @@ module testbench_busybear();
     begin
       reset <= 1; # 22; reset <= 0;
     end
-  
+
   // read pc trace file
   integer data_file_PC, scan_file_PC;
   initial begin
@@ -44,7 +44,7 @@ module testbench_busybear();
     if (data_file_PC == 0) begin
       $display("file couldn't be opened");
       $stop;
-    end 
+    end
   end
 
   integer data_file_PCW, scan_file_PCW;
@@ -53,7 +53,7 @@ module testbench_busybear();
     if (data_file_PCW == 0) begin
       $display("file couldn't be opened");
       $stop;
-    end 
+    end
   end
 
   // read register trace file
@@ -63,7 +63,7 @@ module testbench_busybear();
     if (data_file_rf == 0) begin
       $display("file couldn't be opened");
       $stop;
-    end 
+    end
   end
 
   // read CSR trace file
@@ -73,7 +73,7 @@ module testbench_busybear();
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
       $stop;
-    end 
+    end
   end
 
   // read memreads trace file
@@ -83,9 +83,9 @@ module testbench_busybear();
     if (data_file_memR == 0) begin
       $display("file couldn't be opened");
       $stop;
-    end 
+    end
   end
-  
+
   // read memwrite trace file
   integer data_file_memW, scan_file_memW;
   initial begin
@@ -93,7 +93,7 @@ module testbench_busybear();
     if (data_file_memW == 0) begin
       $display("file couldn't be opened");
       $stop;
-    end 
+    end
   end
 
   integer warningCount = 0;
@@ -163,7 +163,18 @@ module testbench_busybear();
       end
     end
   endgenerate
-  
+
+  // RAM and bootram are addressed in 64-bit blocks - this logic handles R/W
+  // including subwords. Brief explanation on signals:
+  //
+  // readMask: bitmask of bits to read / write, left-shifted to align with
+  // nearest 64-bit boundary - examples
+  //    HSIZE = 0 -> readMask = 11111111
+  //    HSIZE = 1 -> readMask = 1111111111111111
+  //
+  // In the linux boot, the processor spends the first ~5 instructions in
+  // bootram, before jr jumps to main RAM
+
   logic [`XLEN-1:0] RAM[('h8000000 >> 3):0];
   logic [`XLEN-1:0] bootram[('h2000 >> 3):0];
   logic [`XLEN-1:0] readRAM, readPC;
@@ -175,7 +186,7 @@ module testbench_busybear();
   always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
     if ((HWRITE || dut.hart.MemRWM[1]) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
       if (HWRITE) begin
-        RAM[RAMAdr] = (RAM[RAMAdr] & (~readMask)) | ((HWDATA << 8 * HADDR[2:0]) & readMask);
+        RAM[RAMAdr] = (RAM[RAMAdr] & (~readMask)) | ((HWDATA << 8 * HADDR[2:0]) & readMask); // aligns write data for correct subword size
       end else begin
         readRAM = RAM[RAMAdr] & readMask;
       end
@@ -225,7 +236,7 @@ module testbench_busybear();
       end
     end
   end
-      
+
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
   // this might need to change
   always @(HWDATA or HADDR or HSIZE or HWRITE) begin
@@ -253,7 +264,7 @@ module testbench_busybear();
   string StartCSRname[99:0];
   initial begin
     while(1) begin
-      scan_file_csr = $fscanf(data_file_csr, "%s\n", StartCSRname[totalCSR]); 
+      scan_file_csr = $fscanf(data_file_csr, "%s\n", StartCSRname[totalCSR]);
       if(StartCSRname[totalCSR] == "---") begin
         break;
       end
@@ -261,7 +272,7 @@ module testbench_busybear();
       totalCSR = totalCSR + 1;
     end
   end
-    
+
   `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
@@ -289,8 +300,8 @@ module testbench_busybear();
         end \
     end
   `define CHECK_CSR(CSR) \
-     `CHECK_CSR2(CSR, dut.hart.priv.csr) 
-  `define CSRM dut.hart.priv.csr.genblk1.csrm 
+     `CHECK_CSR2(CSR, dut.hart.priv.csr)
+  `define CSRM dut.hart.priv.csr.genblk1.csrm
   `define CSRS dut.hart.priv.csr.genblk1.csrs.genblk1
 
   //`CHECK_CSR(FCSR)
@@ -357,7 +368,7 @@ module testbench_busybear();
   integer instrs;
   initial begin
     instrs = 0;
-  end 
+  end
   always @(PCF) begin
     lastInstrF = InstrF;
     lastPC <= PCF;
@@ -395,7 +406,7 @@ module testbench_busybear();
       end
       instrs += 1;
       // are we at a branch/jump?
-      casex (lastInstrF[31:0]) 
+      casex (lastInstrF[31:0])
         32'b00000000001000000000000001110011, // URET
         32'b00010000001000000000000001110011, // SRET
         32'b00110000001000000000000001110011, // MRET
