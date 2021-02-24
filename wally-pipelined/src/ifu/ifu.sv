@@ -31,7 +31,7 @@ module ifu (
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
   // Fetch
-  input  logic [31:0]      InstrF,
+  input  logic [`XLEN-1:0] InstrInF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
@@ -53,7 +53,9 @@ module ifu (
   input  logic             IllegalBaseInstrFaultD,
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
-  output logic [`XLEN-1:0] InstrMisalignedAdrM
+  output logic [`XLEN-1:0] InstrMisalignedAdrM,
+  // bogus
+  input  logic [15:0] rd2
 );
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
@@ -62,7 +64,7 @@ module ifu (
   logic IllegalCompInstrD;
   logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM;
   logic        CompressedF;
-  logic [31:0]     InstrRawD, InstrE, InstrW;
+  logic [31:0]     InstrF, InstrRawD, InstrE, InstrW;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
   // *** put memory interface on here, InstrF becomes output
@@ -94,6 +96,15 @@ module ifu (
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
+  // harris 2/23/21 Add code to fetch instruction split across two words
+  generate 
+    if (`XLEN==32) begin
+      assign InstrF = PCF[1] ? {rd2[15:0], InstrInF[31:16]} : InstrInF;
+    end else begin
+      assign InstrF = PCF[2] ? (PCF[1] ? {rd2[15:0], InstrInF[63:48]} : InstrInF[63:32])
+                          : (PCF[1] ? InstrInF[47:16] : InstrInF[31:0]);
+    end
+  endgenerate
 
   // Decode stage pipeline register and logic
   flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrRawD);

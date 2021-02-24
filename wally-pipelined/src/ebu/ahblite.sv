@@ -39,7 +39,7 @@ module ahblite (
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
 //  input  logic             ResolveBranchD,
-  output logic [31:0] InstrRData,
+  output logic [`XLEN-1:0] InstrRData,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] MemPAdrM,
   input  logic             MemReadM, MemWriteM,
@@ -71,6 +71,7 @@ module ahblite (
   logic [2:0] ISize;
   logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataPreW;
   logic IReady, DReady;
+  logic CaptureDataM;
 //  logic [3:0] HSIZED; // size delayed by one cycle for reads
 //  logic [2:0] HADDRD; // address delayed for subword reads
 
@@ -139,8 +140,10 @@ module ahblite (
 
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
-  assign InstrRData = HRDATAMasked[31:0];
-//  assign ReadDataW = HRDATAMasked;
+
+  // fix harris 2/24/21 to read all WLEN bits directly for instruction
+  assign InstrRData = HRDATA;
+
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = (BusState == MEMREAD) && (NextBusState != MEMREAD);
   flopenr #(`XLEN) ReadDataPreWReg(clk, reset, CaptureDataM, ReadDataM, ReadDataPreW); // *** this may break when there is no instruction read after data read

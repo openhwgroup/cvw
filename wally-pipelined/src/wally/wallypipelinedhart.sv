@@ -35,6 +35,7 @@ module wallypipelinedhart (
   input  logic             InstrAccessFaultF, 
   input  logic             DataAccessFaultM,
   // Bus Interface
+  input  logic [15:0]      rd2, // bogus, delete when real multicycle fetch works
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
   output logic             HCLK, HRESETn,
@@ -90,11 +91,12 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] MemAdrM, MemPAdrM, WriteDataM;
   logic [`XLEN-1:0] ReadDataW;
   logic [`XLEN-1:0] InstrPAdrF;
+  logic [`XLEN-1:0] InstrRData;
   logic             InstrReadF;
   logic             DataStall, InstrStall;
   logic             InstrAckD, MemAckW;
            
-  ifu ifu(.*); // instruction fetch unit: PC, branch prediction, instruction cache
+  ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
   dmem dmem(.*); // data cache unit
@@ -102,7 +104,7 @@ module wallypipelinedhart (
 
   ahblite ebu( 
     //.InstrReadF(1'b0),
-    .InstrRData(InstrF), // hook up InstrF later
+    //.InstrRData(InstrF), // hook up InstrF later
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .*);
 
