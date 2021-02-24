@@ -30,6 +30,7 @@ module testbench_busybear();
   // instantiate processor and memories
   wallypipelinedsocbusybear dut(.*);
 
+
   // initialize test
   initial
     begin
@@ -163,18 +164,19 @@ module testbench_busybear();
     end
   endgenerate
   
-  `define MAX_RAM 'h8000000
-  logic [`XLEN-1:0] RAM[`MAX_RAM:0];
+  logic [`XLEN-1:0] RAM[('h8000000 >> 3):0];
   logic [`XLEN-1:0] readRAM, readPC;
   integer RAMAdr, RAMPC;
-  assign RAMAdr = HADDR - 'h80000000;
-  assign RAMPC = PCF - 'h80000000;
+  assign RAMAdr = (HADDR - 'h80000000) >> 3;
+  assign RAMPC = (PCF - 'h80000000) >> 3;
+  logic [63:0] readMask;
+  assign readMask = ((1 << (8*(1 << HSIZE))) - 1) << 8 * HADDR[2:0];
   always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
     if ((HWRITE || dut.hart.MemRWM[1]) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
       if (HWRITE) begin
-        RAM[RAMAdr] = HWDATA;
+        RAM[RAMAdr] = (RAM[RAMAdr] & (~readMask)) | ((HWDATA << 8 * HADDR[2:0]) & readMask);
       end else begin
-        readRAM = RAM[RAMAdr];
+        readRAM = RAM[RAMAdr] & readMask;
       end
     end
   end
@@ -199,8 +201,9 @@ module testbench_busybear();
         $display("%0t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
         `ERROR
       end
-      if (HRDATA != readRAM && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
-        $display("warning %0t ps, instr %0d: HRDATA does not equal readRAM: %x, %x from address %x", $time, instrs, HRDATA, readRAM, HADDR);
+
+      if (((readMask & HRDATA) != (readMask & readRAM)) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
+        $display("warning %0t ps, instr %0d: HRDATA does not equal readRAM: %x, %x from address %x, %x", $time, instrs, HRDATA, readRAM, HADDR, HSIZE);
         warningCount += 1;
         `ERROR
       end
