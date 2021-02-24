@@ -184,7 +184,11 @@ module testbench_busybear();
   assign RAMPC = (PCF - (PCF > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
   logic [63:0] readMask;
   assign readMask = ((1 << (8*(1 << HSIZE))) - 1) << 8 * HADDR[2:0];
+
+  logic [`XLEN-1:0] readAdrExpected;
+
   always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
+
     if ((HWRITE || dut.hart.MemRWM[1]) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
       if (HWRITE) begin
         RAM[RAMAdr] = (RAM[RAMAdr] & (~readMask)) | ((HWDATA << 8 * HADDR[2:0]) & readMask); // aligns write data for correct subword size
@@ -192,14 +196,7 @@ module testbench_busybear();
         readRAM = RAM[RAMAdr] & readMask;
       end
     end
-  end
-  always @(PCF) begin
-    if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
-      readPC = RAM[RAMPC] >> PCF[2] * 32;
-    end
-  end
-  // there's almost certianly a better way than just copying this, but its simple enough for now:
-  always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
+
     if ((HWRITE || dut.hart.MemRWM[1]) && (HADDR >= 'h1000 && HADDR <= 'h2FFF)) begin
       if (HWRITE) begin
         bootram[RAMAdr] = (bootram[RAMAdr] & (~readMask)) | ((HWDATA << 8 * HADDR[2:0]) & readMask);
@@ -207,17 +204,7 @@ module testbench_busybear();
         readRAM = bootram[RAMAdr] & readMask;
       end
     end
-  end
-  always @(PCF) begin
-    $write(""); // I know this does nothing, the first instruction doesn't load for me without it
-    if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
-      readPC = bootram[RAMPC] >> PCF[2] * 32;
-    end
-  end
 
-  logic [`XLEN-1:0] readAdrExpected;
-  // this might need to change
-  always @(dut.hart.MemRWM[1] or HADDR) begin
     if (dut.hart.MemRWM[1]) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
@@ -240,6 +227,7 @@ module testbench_busybear();
   end
 
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
+
   // this might need to change
   always @(HWDATA or HADDR or HSIZE or HWRITE) begin
     #1;
@@ -372,6 +360,16 @@ module testbench_busybear();
     instrs = 0;
   end
   always @(PCF) begin
+
+    if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
+      readPC = RAM[RAMPC] >> PCF[2] * 32;
+    end
+
+    //$write(""); // I know this does nothing, the first instruction doesn't load for me without it
+    if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
+      readPC = bootram[RAMPC] >> PCF[2] * 32;
+    end
+
     lastInstrF = InstrF;
     lastPC <= PCF;
     lastPC2 <= lastPC;
