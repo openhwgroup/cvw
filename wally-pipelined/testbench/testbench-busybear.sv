@@ -165,10 +165,11 @@ module testbench_busybear();
   endgenerate
   
   logic [`XLEN-1:0] RAM[('h8000000 >> 3):0];
+  logic [`XLEN-1:0] bootram[('h2000 >> 3):0];
   logic [`XLEN-1:0] readRAM, readPC;
   integer RAMAdr, RAMPC;
-  assign RAMAdr = (HADDR - 'h80000000) >> 3;
-  assign RAMPC = (PCF - 'h80000000) >> 3;
+  assign RAMAdr = (HADDR - (HADDR > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
+  assign RAMPC = (PCF - (PCF > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
   logic [63:0] readMask;
   assign readMask = ((1 << (8*(1 << HSIZE))) - 1) << 8 * HADDR[2:0];
   always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
@@ -183,6 +184,21 @@ module testbench_busybear();
   always @(PCF) begin
     if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
       readPC = RAM[RAMPC];
+    end
+  end
+  // there's almost certianly a better way than just copying this, but its simple enough for now:
+  always @(HWDATA or HADDR or HSIZE or HWRITE or dut.hart.MemRWM[1]) begin
+    if ((HWRITE || dut.hart.MemRWM[1]) && (HADDR >= 'h1000 && HADDR <= 'h2FFF)) begin
+      if (HWRITE) begin
+        bootram[RAMAdr] = (bootram[RAMAdr] & (~readMask)) | ((HWDATA << 8 * HADDR[2:0]) & readMask);
+      end else begin
+        readRAM = bootram[RAMAdr] & readMask;
+      end
+    end
+  end
+  always @(PCF) begin
+    if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
+      readPC = bootram[RAMPC];
     end
   end
 
