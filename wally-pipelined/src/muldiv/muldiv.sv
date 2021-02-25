@@ -36,7 +36,7 @@ module muldiv (
   // Writeback stage
   output logic [`XLEN-1:0] MulDivResultW,
   // hazards
-  input  logic             FlushM, FlushW 
+  input  logic             StallM, StallW, FlushM, FlushW 
 );
 
   generate
@@ -45,6 +45,9 @@ module muldiv (
       logic [`XLEN-1:0] PrelimResultE;
       logic [`XLEN-1:0] QuotE, RemE;
       logic [`XLEN*2-1:0] ProdE;
+
+      // Multiplier
+      mul mul(.*);
 
       // Select result
       always_comb
@@ -66,8 +69,8 @@ module muldiv (
         assign MulDivResultE = PrelimResultE;
       end
 
-      floprc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, MulDivResultE, MulDivResultM);
-      floprc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, MulDivResultM, MulDivResultW);
+      flopenrc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, ~StallM, MulDivResultE, MulDivResultM);
+      flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);
     end else begin // no M instructions supported
       assign MulDivResultW = 0; 
     end
