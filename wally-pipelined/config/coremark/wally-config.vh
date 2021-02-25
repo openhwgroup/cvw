@@ -66,7 +66,7 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define TIMBASE    32'h80000000
+`define TIMBASE    32'h00000000
 `define TIMRANGE   32'h0007FFFF
 `define CLINTBASE  32'h02000000
 `define CLINTRANGE 32'h0000FFFF
