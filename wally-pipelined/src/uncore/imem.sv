@@ -57,7 +57,11 @@ module imem (
     end else begin
       assign InstrF = AdrF[2] ? (AdrF[1] ? {rd2[15:0], rd[63:48]} : rd[63:32])
                           : (AdrF[1] ? rd[47:16] : rd[31:0]);
-      assign InstrAccessFaultF = (|AdrF[`XLEN-1:32]) | ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF]
+      if(`TIMBASE==0) begin
+        assign InstrAccessFaultF = 0;
+      end else begin
+        assign InstrAccessFaultF = (|AdrF[`XLEN-1:32]) | ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF]
+      end
     end
   endgenerate
 endmodule
