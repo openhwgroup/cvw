@@ -32,7 +32,7 @@ module datapath (
   input  logic [2:0]       ImmSrcD,
   input  logic [31:0]      InstrD,
   // Execute stage signals
-  input  logic             FlushE,
+  input  logic             StallE, FlushE,
   input  logic [1:0]       ForwardAE, ForwardBE,
   input  logic             PCSrcE,
   input  logic [4:0]       ALUControlE,
@@ -43,13 +43,13 @@ module datapath (
   output logic [`XLEN-1:0] PCTargetE,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
-  input  logic             FlushM,
+  input  logic             StallM, FlushM,
   input  logic [2:0]       Funct3M,
   input  logic             RetM, TrapM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
-  input  logic             FlushW,
+  input  logic             StallW, FlushW,
   input  logic             RegWriteW, 
   input  logic [2:0]       ResultSrcW,
   input  logic [`XLEN-1:0] PCLinkW,
@@ -85,12 +85,12 @@ module datapath (
   extend ext(.InstrD(InstrD[31:7]), .*);
  
   // Execute stage pipeline register and logic
-  floprc #(`XLEN) RD1EReg(clk, reset, FlushE, RD1D, RD1E);
-  floprc #(`XLEN) RD2EReg(clk, reset, FlushE, RD2D, RD2E);
-  floprc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ExtImmD, ExtImmE);
-  floprc #(5)    Rs1EReg(clk, reset, FlushE, Rs1D, Rs1E);
-  floprc #(5)    Rs2EReg(clk, reset, FlushE, Rs2D, Rs2E);
-  floprc #(5)    RdEReg(clk, reset, FlushE, RdD, RdE);
+  flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, RD1D, RD1E);
+  flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, RD2D, RD2E);
+  flopenrc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ~StallE, ExtImmD, ExtImmE);
+  flopenrc #(5)    Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
+  flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
   mux3  #(`XLEN)  faemux(RD1E, ResultW, ALUResultM, ForwardAE, PreSrcAE);
   mux3  #(`XLEN)  fbemux(RD2E, ResultW, ALUResultM, ForwardBE, WriteDataE);
@@ -101,15 +101,15 @@ module datapath (
   assign  PCTargetE = ExtImmE + TargetBaseE;
 
   // Memory stage pipeline register
-  floprc #(`XLEN) SrcAMReg(clk, reset, FlushM, SrcAE, SrcAM);
-  floprc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ALUResultE, ALUResultM);
+  flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
+  flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
   assign MemAdrM = ALUResultM;
-  floprc #(`XLEN) WriteDataMReg(clk, reset, FlushM, WriteDataE, WriteDataM);
-  floprc #(5)    RdMEg(clk, reset, FlushM, RdE, RdM);
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
+  flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);
   
   // Writeback stage pipeline register and logic
-  floprc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ALUResultM, ALUResultW);
-  floprc #(5)    RdWEg(clk, reset, FlushW, RdM, RdW);
+  flopenrc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ~StallW, ALUResultM, ALUResultW);
+  flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   mux5  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, MulDivResultW, ResultSrcW, ResultW);	
 endmodule

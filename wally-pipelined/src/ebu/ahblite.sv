@@ -32,21 +32,21 @@
 
 module ahblite (
   input  logic             clk, reset,
+  input  logic             StallW, FlushW,
   // Load control
   input  logic             UnsignedLoadM,
   // Signals from Instruction Cache
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
-  input  logic             IReadF,
-  output logic [`XLEN-1:0] IRData,
-//  output logic             IReady,
+  input  logic             InstrReadF,
+//  input  logic             ResolveBranchD,
+  output logic [`XLEN-1:0] InstrRData,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] MemPAdrM,
-  input  logic             DReadM, DWriteM,
+  input  logic             MemReadM, MemWriteM,
   input  logic [`XLEN-1:0] WriteDataM,
-  input  logic [1:0]       DSizeM,
+  input  logic [1:0]       MemSizeM,
   // Return from bus
-  output logic [`XLEN-1:0] DRData,
-//  output logic             DReady,
+  output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
@@ -59,48 +59,176 @@ module ahblite (
   output logic [3:0]       HPROT,
   output logic [1:0]       HTRANS,
   output logic             HMASTLOCK,
-  // Acknowledge
-  output logic             InstrAckD, MemAckW
+  // Delayed signals for writes
+  output logic [2:0]       HADDRD,
+  output logic [3:0]       HSIZED,
+  output logic             HWRITED,
   // Stalls
-//  output logic             InstrStall, DataStall
+  output logic             InstrStall,/*InstrUpdate, */DataStall
 );
 
   logic GrantData;
   logic [2:0] ISize;
-  logic [`AHBW-1:0] HRDATAMasked;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataPreW;
   logic IReady, DReady;
+  logic CaptureDataM;
+//  logic [3:0] HSIZED; // size delayed by one cycle for reads
+//  logic [2:0] HADDRD; // address delayed for subword reads
 
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
-  // Arbitrate requests by giving data priority over instructions
-  assign GrantData = DReadM | DWriteM;
-
   // *** initially support HABW = XLEN
+
+  // track bus state
+  // Data accesses have priority over instructions.  However, if a data access comes
+  // while an instruction read is occuring, the instruction read finishes before
+  // the data access can take place.
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADMEMPENDING} statetype;
+  statetype BusState, NextBusState;
+
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) BusState <= #1 IDLE;
+    else          BusState <= #1 NextBusState;
+
+  always_comb 
+    case (BusState) 
+      IDLE: if      (MemReadM)   NextBusState = MEMREAD;  // Memory has pirority over instructions
+            else if (MemWriteM)  NextBusState = MEMWRITE;
+            else if (InstrReadF) NextBusState = INSTRREAD;
+            else                 NextBusState = IDLE;
+      MEMREAD: if (~HREADY)      NextBusState = MEMREAD;
+            else if (InstrReadF) NextBusState = INSTRREAD;
+            else                 NextBusState = IDLE;
+      MEMWRITE: if (~HREADY)     NextBusState = MEMWRITE;
+            else if (InstrReadF) NextBusState = INSTRREAD;
+            else                 NextBusState = IDLE;
+      INSTRREAD: //if (~HREADY & (MemReadM | MemWriteM))  NextBusState = INSTRREADMEMPENDING; // *** shouldn't happen, delete
+            if (~HREADY)    NextBusState = INSTRREAD;
+            else                 NextBusState = IDLE;
+      INSTRREADMEMPENDING: if (~HREADY) NextBusState = INSTRREADMEMPENDING; // *** shouldn't happen, delete
+            else if (MemReadM)   NextBusState = MEMREAD;
+            else                 NextBusState = MEMWRITE; // must be write if not a read.  Don't return to idle.
+    endcase
+
+  // stall signals
+  assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || (NextBusState == INSTRREADMEMPENDING);
+  assign #1 InstrStall = (NextBusState == INSTRREAD);
+ // assign InstrUpdate = (BusState == INSTRREADMEMPENDING) && (NextBusState != INSTRREADMEMPENDING);
+
+  // DH 2/20/22: A cyclic path presently exists
+  // HREADY->NextBusState->GrantData->HSIZE->HSELUART->HREADY
+  // This is because the peripherals assert HREADY on the same cycle
+  // When memory is working, also fix the peripherals to respond on the subsequent cycle
+  // and this path should be fixed.
+      
+  //  bus outputs
+  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE); 
+  assign #1 HADDR = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
+  assign #1 HSIZE = GrantData ? {1'b0, MemSizeM} : ISize;
+  assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
+  assign HPROT = 4'b0011; // not used; see Section 3.7
+  assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
+  assign HMASTLOCK = 0; // no locking supported
+  assign HWRITE = (NextBusState == MEMWRITE);
+  // delay write data by one cycle for 
+  flop #(`XLEN) wdreg(HCLK, WriteDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  // delay signals for subword writes
+  flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
+  flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
+  flop #(1)   writereg(HCLK, HWRITE, HWRITED);
+
+    // Route signals to Instruction and Data Caches
+  // *** assumes AHBW = XLEN
+
+  // fix harris 2/24/21 to read all WLEN bits directly for instruction
+  assign InstrRData = HRDATA;
+
+  assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
+  assign CaptureDataM = (BusState == MEMREAD) && (NextBusState != MEMREAD);
+  flopenr #(`XLEN) ReadDataPreWReg(clk, reset, CaptureDataM, ReadDataM, ReadDataPreW); // *** this may break when there is no instruction read after data read
+  flopenr #(`XLEN) ReadDataWReg(clk, reset, ~StallW, ReadDataPreW, ReadDataW);
+
+
+  /*
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
+  statetype AdrState, DataState, NextAdrState; // what is happening in the first and second phases of the bus
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) begin
+      AdrState <= IDLE; DataState <= IDLE;
+      HWDATA <= 0; // unnecessary but avoids x at startup
+      HSIZED <= 0;
+      HADDRD <= 0;
+      HWRITED <= 0;
+    end else begin
+      if (HREADY || (DataState == IDLE)) begin // only advance bus state if bus is idle or previous transaction returns ready
+        DataState <= AdrState;
+        AdrState <= NextAdrState;
+        if (HWRITE) HWDATA <= WriteDataM;
+        HSIZED <= {UnsignedLoadM, HSIZE};
+        HADDRD <= HADDR[2:0];
+        HWRITED <= HWRITE;
+      end
+    end
+  always_comb
+    if (MemReadM) NextAdrState = MEMREAD;
+    else if (MemWriteM) NextAdrState = MEMWRITE;
+    else if (InstrReadF) NextAdrState = INSTRREAD;
+//    else if (1) NextAdrState = INSTRREAD; // dm 2/9/2021 testing
+    else NextAdrState = IDLE;
+  
+  // Generate acknowledges based on bus state and ready
+  assign MemAckW = (AdrState == MEMREAD || AdrState == MEMWRITE) && HREADY;
+  assign InstrAckD = (AdrState == INSTRREAD) && HREADY;
+
+    // State machines for stalls (probably can merge with FSM above***)
+  // Idle, DataBusy, InstrBusy.  Stall while in busystate add suffixes
+  logic MemState, NextMemState, InstrState, NextInstrState;
+  flopr #(1) msreg(HCLK, ~HRESETn, NextMemState, MemState);
+  flopr #(1) isreg(HCLK, ~HRESETn, NextInstrState, InstrState);
+/*  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) MemState <=  0;
+    else MemState <= NextMemState; 
+  assign NextMemState = (MemState == 0 && InstrState == 0 && (MemReadM || MemWriteM)) || (MemState == 1 && ~MemAckW);
+  assign DataStall = NextMemState;
+/*  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn) InstrState <=  0;
+    else InstrState <= NextInstrState;
+
+  assign NextInstrState = (InstrState == 0 && MemState == 0 && (~MemReadM  && ~MemWriteM && InstrReadF)) || 
+                          (InstrState == 1 && ~InstrAckD)  ||
+                          (InstrState == 1 && ResolveBranchD); // dh 2/8/2021 fixing; delete this later 
+/*  assign NextInstrState = (InstrState == 0 && MemState == 0 && (~MemReadM  && ~MemWriteM)) || 
+                          (InstrState == 1 && ~InstrAckD);  // *** removed InstrReadF above dh 2/9/20 
+  assign InstrStall = NextInstrState | MemState | NextMemState; // *** check this, explain better
+  // temporarily turn off stalls and check it works
+  //assign DataStall = 0;
+  //assign InstrStall = 0;
+
+  assign DReady = HREADY & GrantData; // ***unused?
+  assign IReady = HREADY & InstrReadF & ~GrantData; // maybe unused?***
+
+*/
 
   // Choose ISize based on XLen
   generate
-    if (`AHBW == 32) assign ISize = 3'b010; // 32-bit transfers
-    else             assign ISize = 3'b011; // 64-bit transfers
+   //if (`AHBW == 32) assign ISize = 3'b010; // 32-bit transfers
+    //else             assign ISize = 3'b011; // 64-bit transfers
+    assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width
   endgenerate
-
+/*
   // drive bus outputs
   assign HADDR = GrantData ? MemPAdrM[31:0] : InstrPAdrF[31:0];
-  assign HWDATA = WriteDataM;
+  //assign HWDATA = WriteDataW;
   //flop #(`XLEN) wdreg(HCLK, DWDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
-  assign HWRITE = DWriteM; 
-  assign HSIZE = GrantData ? {1'b0, DSizeM} : ISize;
+  assign HWRITE = MemWriteM; 
+  assign HSIZE = GrantData ? {1'b0, MemSizeM} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfHPROT
   assign HPROT = 4'b0011; // not used; see Section 3.7
-  assign HTRANS = IReadF | DReadM | DWriteM ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
+  assign HTRANS = InstrReadF | MemReadM | MemWriteM ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
-                  
-  // Route signals to Instruction and Data Caches
-  // *** assumes AHBW = XLEN
-  assign IRData = HRDATAMasked;
-  assign IReady = HREADY & IReadF & ~GrantData; // maybe unused?***
-  assign DRData = HRDATAMasked;
-  assign DReady = HREADY & GrantData; // ***unused?
+           */       
+
 
   // stalls
   // Stall MEM stage if data is being accessed and bus isn't yet ready
