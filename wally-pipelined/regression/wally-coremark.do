@@ -42,7 +42,7 @@ view wave
 add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
-add wave /testbench/dut/hart/ebu/IReadF
+#add wave /testbench/dut/hart/ebu/IReadF
 add wave /testbench/dut/hart/DataStall
 add wave /testbench/dut/hart/InstrStall
 add wave /testbench/dut/hart/StallF
