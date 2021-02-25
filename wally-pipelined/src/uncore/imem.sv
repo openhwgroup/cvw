@@ -28,6 +28,7 @@
 module imem (
   input  logic [`XLEN-1:1] AdrF,
   output logic [31:0]      InstrF,
+  output logic [15:0]      rd2, // bogus, delete when real multicycle fetch works
   output logic             InstrAccessFaultF);
 
  /* verilator lint_off UNDRIVEN */
@@ -35,7 +36,7 @@ module imem (
  /* verilator lint_on UNDRIVEN */
   logic [15:0] adrbits;
   logic [`XLEN-1:0] rd;
-  logic [15:0] rd2;
+//  logic [15:0] rd2;
       
   generate
     if (`XLEN==32) assign adrbits = AdrF[17:2];

@@ -27,37 +27,35 @@
 
 module subwordwrite (
   input  logic [`XLEN-1:0] HRDATA,
-  input  logic [31:0]      HADDR,
-  input  logic [2:0]       HSIZE,
+  input  logic [2:0]       HADDRD,
+  input  logic [3:0]       HSIZED,
   input  logic [`XLEN-1:0] HWDATAIN,
   output logic [`XLEN-1:0] HWDATA
 );
                   
-  logic [7:0]  ByteM; // *** declare locally to generate as either 4 or 8 bits
-  logic [15:0] HalfwordM;
   logic [`XLEN-1:0] WriteDataSubwordDuplicated;
-  logic [7:0]      ByteMaskM;
   
   generate
     if (`XLEN == 64) begin
+      logic [7:0]      ByteMaskM;
       // Compute write mask
       always_comb 
-        case(HSIZE[1:0])
-          2'b00:  begin ByteMaskM = 8'b00000000; ByteMaskM[HADDR[2:0]] = 1; end // sb
-          2'b01:  case (HADDR[2:1])
+        case(HSIZED[1:0])
+          2'b00:  begin ByteMaskM = 8'b00000000; ByteMaskM[HADDRD[2:0]] = 1; end // sb
+          2'b01:  case (HADDRD[2:1])
                     2'b00: ByteMaskM = 8'b00000011;
                     2'b01: ByteMaskM = 8'b00001100;
                     2'b10: ByteMaskM = 8'b00110000;
                     2'b11: ByteMaskM = 8'b11000000;
                   endcase
-          2'b10:  if (HADDR[2]) ByteMaskM = 8'b11110000;
+          2'b10:  if (HADDRD[2]) ByteMaskM = 8'b11110000;
                    else        ByteMaskM = 8'b00001111;
           2'b11:  ByteMaskM = 8'b11111111;
         endcase
 
       // Handle subword writes
       always_comb 
-        case(HSIZE[1:0])
+        case(HSIZED[1:0])
           2'b00:  WriteDataSubwordDuplicated = {8{HWDATAIN[7:0]}};  // sb
           2'b01:  WriteDataSubwordDuplicated = {4{HWDATAIN[15:0]}}; // sh
           2'b10:  WriteDataSubwordDuplicated = {2{HWDATAIN[31:0]}}; // sw
@@ -77,19 +75,20 @@ module subwordwrite (
       end 
 
     end else begin // 32-bit
+      logic [3:0]      ByteMaskM;
       // Compute write mask
       always_comb 
-        case(HSIZE[1:0])
-          2'b00:  begin ByteMaskM = 8'b0000; ByteMaskM[{1'b0, HADDR[1:0]}] = 1; end // sb
-          2'b01:  if (HADDR[1]) ByteMaskM = 8'b1100;
-                   else         ByteMaskM = 8'b0011;
-          2'b10:  ByteMaskM = 8'b1111;
-          default: ByteMaskM = 8'b111; // shouldn't happen
+        case(HSIZED[1:0])
+          2'b00:  begin ByteMaskM = 4'b0000; ByteMaskM[HADDRD[1:0]] = 1; end // sb
+          2'b01:  if (HADDRD[1]) ByteMaskM = 4'b1100;
+                   else         ByteMaskM = 4'b0011;
+          2'b10:  ByteMaskM = 4'b1111;
+          default: ByteMaskM = 4'b111; // shouldn't happen
         endcase
 
       // Handle subword writes
       always_comb 
-        case(HSIZE[1:0])
+        case(HSIZED[1:0])
           2'b00:  WriteDataSubwordDuplicated = {4{HWDATAIN[7:0]}};  // sb
           2'b01:  WriteDataSubwordDuplicated = {2{HWDATAIN[15:0]}}; // sh
           2'b10:  WriteDataSubwordDuplicated = HWDATAIN;            // sw

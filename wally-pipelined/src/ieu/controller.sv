@@ -37,8 +37,8 @@ module controller(
   input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
   // Execute stage control signals
-  input  logic 	     FlushE, 
-  input  logic  [2:0] FlagsE, 
+  input logic 	     StallE, FlushE, 
+  input logic  [2:0] FlagsE, 
   output logic       PCSrcE,        // for datapath and Hazard Unit
   output logic [4:0] ALUControlE, 
   output logic 	     ALUSrcAE, ALUSrcBE,
@@ -47,14 +47,14 @@ module controller(
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
   // Memory stage control signals
-  input  logic       FlushM,
+  input  logic       StallM, FlushM,
   input  logic       DataMisalignedM,
   output logic [1:0] MemRWM,
   output logic       CSRWriteM, PrivilegedM, 
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit	
   // Writeback stage control signals
-  input  logic       FlushW,
+  input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   output logic       InstrValidW,
@@ -145,7 +145,7 @@ module controller(
     endcase
   
   // Execute stage pipeline control register and logic
-  floprc #(24) controlregE(clk, reset, FlushE,
+  flopenrc #(24) controlregE(clk, reset, FlushE, ~StallE,
                            {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, 1'b1},
                            {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, InstrValidE});
 
@@ -168,12 +168,12 @@ module controller(
   assign MemReadE = MemRWE[1]; 
   
   // Memory stage pipeline control register
-  floprc #(12) controlregM(clk, reset, FlushM,
+  flopenrc #(12) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRWriteM, PrivilegedM, Funct3M, InstrValidM});
   
   // Writeback stage pipeline control register
-  floprc #(5) controlregW(clk, reset, FlushW,
+  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 

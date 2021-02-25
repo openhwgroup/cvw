@@ -49,7 +49,8 @@ module ieu (
   input  logic [`XLEN-1:0] PCLinkW,
   output logic             InstrValidW,
   // hazards
-  input  logic             StallD, FlushD, FlushE, FlushM, FlushW,
+  input  logic             StallF, StallD, StallE, StallM, StallW,
+  input  logic             FlushD, FlushE, FlushM, FlushW,
   input  logic             RetM, TrapM,
   output logic             LoadStallD, MulDivStallD,
   output logic             PCSrcE,
