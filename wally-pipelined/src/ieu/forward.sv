@@ -30,7 +30,7 @@ module forward(
   input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
   input  logic       MemReadE, MulDivE,
   input  logic       RegWriteM, RegWriteW, 
-  // Forwaring controls
+  // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
   output logic       LoadStallD, MulDivStallD
 );

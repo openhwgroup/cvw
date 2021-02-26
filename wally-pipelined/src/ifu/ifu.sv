@@ -28,13 +28,14 @@
 
 module ifu (
   input  logic             clk, reset,
-  input  logic             StallF, StallD, FlushD, FlushE, FlushM, FlushW,
+  input  logic             StallF, StallD, StallE, StallM, StallW,
+  input  logic             FlushD, FlushE, FlushM, FlushW,
   // Fetch
-  input  logic [31:0]      InstrF,
+  input  logic [`XLEN-1:0] InstrInF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
+  output logic             InstrReadF,
   // Decode  
-  output logic             InstrStall,
   // Execute
   input  logic             PCSrcE, 
   input  logic [`XLEN-1:0] PCTargetE,
@@ -50,29 +51,31 @@ module ifu (
   input  logic             IllegalBaseInstrFaultD,
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
-  output logic [`XLEN-1:0] InstrMisalignedAdrM
+  output logic [`XLEN-1:0] InstrMisalignedAdrM,
+  // bogus
+  input  logic [15:0] rd2
 );
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
-  logic StallExceptResolveBranchesF, PrivilegedChangePCM;
+  logic PrivilegedChangePCM;
   logic IllegalCompInstrD;
   logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM;
   logic        CompressedF;
-  logic [31:0]     InstrRawD, InstrE;
+  logic [31:0]     InstrF, InstrRawD, InstrE, InstrW;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
   // *** put memory interface on here, InstrF becomes output
-  assign InstrStall = 0; // ***
   assign InstrPAdrF = PCF; // *** no MMU
+  //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
+  assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  assign StallExceptResolveBranchesF = StallF & ~(PCSrcE | PrivilegedChangePCM);
 
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallExceptResolveBranchesF, PCNextF, `RESET_VECTOR, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -86,6 +89,15 @@ module ifu (
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
+  // harris 2/23/21 Add code to fetch instruction split across two words
+  generate 
+    if (`XLEN==32) begin
+      assign InstrF = PCF[1] ? {rd2[15:0], InstrInF[31:16]} : InstrInF;
+    end else begin
+      assign InstrF = PCF[2] ? (PCF[1] ? {rd2[15:0], InstrInF[63:48]} : InstrInF[63:32])
+                          : (PCF[1] ? InstrInF[47:16] : InstrInF[31:0]);
+    end
+  endgenerate
 
   // Decode stage pipeline register and logic
   flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrRawD);
@@ -107,25 +119,26 @@ module ifu (
 
   // pipeline misaligned faults to M stage
   assign BranchMisalignedFaultE = misaligned & PCSrcE; // E-stage (Branch/Jump) misaligned
-  flopr #(1) InstrMisalginedReg(clk, reset, BranchMisalignedFaultE, BranchMisalignedFaultM);
-  flopr #(`XLEN) InstrMisalignedAdrReg(clk, reset, PCNextF, InstrMisalignedAdrM);
+  flopenr #(1) InstrMisalginedReg(clk, reset, ~StallM, BranchMisalignedFaultE, BranchMisalignedFaultM);
+  flopenr #(`XLEN) InstrMisalignedAdrReg(clk, reset, ~StallM, PCNextF, InstrMisalignedAdrM);
   assign TrapMisalignedFaultM = misaligned & PrivilegedChangePCM;
   assign InstrMisalignedFaultM = BranchMisalignedFaultM; // | TrapMisalignedFaultM; *** put this back in without causing a cyclic path
   
-  flopr  #(32)   InstrEReg(clk, reset, FlushE ? nop : InstrD, InstrE);
-  flopr  #(32)   InstrMReg(clk, reset, FlushM ? nop : InstrE, InstrM);
-  flopr #(`XLEN) PCEReg(clk, reset, PCD, PCE);
-  flopr #(`XLEN) PCMReg(clk, reset, PCE, PCM);
-  flopr #(`XLEN) PCWReg(clk, reset, PCM, PCW); // *** probably not needed; delete later
+  flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);
+  flopenr  #(32)   InstrMReg(clk, reset, ~StallM, FlushM ? nop : InstrE, InstrM);
+  flopenr  #(32)   InstrWReg(clk, reset, ~StallW, FlushW ? nop : InstrM, InstrW); // just for testbench, delete later
+  flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
+  flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or
   // have dedicated adder in Mem stage based on PCM + 2 or 4
   // *** redo this 
-  flopr #(`XLEN) PCPDReg(clk, reset, PCPlus2or4F, PCLinkD);
-  flopr #(`XLEN) PCPEReg(clk, reset, PCLinkD, PCLinkE);
-  flopr #(`XLEN) PCPMReg(clk, reset, PCLinkE, PCLinkM);
-  flopr #(`XLEN) PCPWReg(clk, reset, PCLinkM, PCLinkW);
+  flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
+  flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
+  flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
+  flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
 
 endmodule
 

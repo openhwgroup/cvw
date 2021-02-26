@@ -30,19 +30,19 @@
 module dmem (
   input  logic             clk, reset,
   input  logic             FlushW,
-  output logic             DataStall,
+  //output logic             DataStall,
   // Memory Stage
   input  logic [1:0]       MemRWM,
   input  logic [`XLEN-1:0] MemAdrM,
   input  logic [2:0]       Funct3M,
-  input  logic [`XLEN-1:0] ReadDataM,
+  //input  logic [`XLEN-1:0] ReadDataW,
   input  logic [`XLEN-1:0] WriteDataM, 
   output logic [`XLEN-1:0] MemPAdrM,
-  output logic [1:0]       MemRWAlignedM,
+  output logic             MemReadM, MemWriteM,
   output logic             DataMisalignedM,
   // Writeback Stage
   input  logic             MemAckW,
-  output logic [`XLEN-1:0] ReadDataW,
+  input  logic [`XLEN-1:0] ReadDataW,
   // faults
   input  logic             DataAccessFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
@@ -51,9 +51,6 @@ module dmem (
 
   // Initially no MMU
   assign MemPAdrM = MemAdrM;
-
-  // Pipeline register       *** AHB data will eventually come back in W anyway
-  floprc #(`XLEN) ReadDataWReg(clk, reset, FlushW, ReadDataM, ReadDataW);
 
 	// Determine if an Unaligned access is taking place
 	always_comb
@@ -66,7 +63,8 @@ module dmem (
 
   // Squash unaligned data accesses
   // *** this is also the place to squash if the cache is hit
-  assign MemRWAlignedM = MemRWM & {2{~DataMisalignedM}};
+  assign MemReadM = MemRWM[1] & ~DataMisalignedM;
+  assign MemWriteM = MemRWM[0] & ~DataMisalignedM;
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
@@ -75,7 +73,7 @@ module dmem (
   assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
 
   // Data stall
-  assign DataStall = 0;
+  //assign DataStall = 0;
 
 endmodule
 
