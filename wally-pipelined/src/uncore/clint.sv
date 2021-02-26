@@ -67,10 +67,10 @@ module clint (
     if (`XLEN==64) begin
       always @(posedge HCLK) begin
         case(entry)
-          16'h0000: HREADCLINT = {63'b0, MSIP};
-          16'h4000: HREADCLINT = MTIMECMP;
-          16'hBFF8: HREADCLINT = MTIME;
-          default:  HREADCLINT = 0;
+          16'h0000: HREADCLINT <= {63'b0, MSIP};
+          16'h4000: HREADCLINT <= MTIMECMP;
+          16'hBFF8: HREADCLINT <= MTIME;
+          default:  HREADCLINT <= 0;
         endcase
       end 
       always_ff @(posedge HCLK or negedge HRESETn) 
@@ -89,12 +89,12 @@ module clint (
     end else begin // 32-bit
       always @(posedge HCLK) begin
         case(entry)
-          16'h0000: HREADCLINT = {31'b0, MSIP};
-          16'h4000: HREADCLINT = MTIMECMP[31:0];
-          16'h4004: HREADCLINT = MTIMECMP[63:32];
-          16'hBFF8: HREADCLINT = MTIME[31:0];
-          16'hBFFC: HREADCLINT = MTIME[63:32];
-          default:  HREADCLINT = 0;
+          16'h0000: HREADCLINT <= {31'b0, MSIP};
+          16'h4000: HREADCLINT <= MTIMECMP[31:0];
+          16'h4004: HREADCLINT <= MTIMECMP[63:32];
+          16'hBFF8: HREADCLINT <= MTIME[31:0];
+          16'hBFFC: HREADCLINT <= MTIME[63:32];
+          default:  HREADCLINT <= 0;
         endcase
       end 
       always_ff @(posedge HCLK or negedge HRESETn) 

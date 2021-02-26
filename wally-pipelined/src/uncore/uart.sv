@@ -57,24 +57,24 @@ module uart (
       always @(posedge HCLK) begin
         HREADUART = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
         case (HADDR)
-          3'b000: Din = HWDATA[7:0];
-          3'b001: Din = HWDATA[15:8];
-          3'b010: Din = HWDATA[23:16];
-          3'b011: Din = HWDATA[31:24];
-          3'b100: Din = HWDATA[39:32];
-          3'b101: Din = HWDATA[47:40];
-          3'b110: Din = HWDATA[55:48];
-          3'b111: Din = HWDATA[63:56];
+          3'b000: Din <= HWDATA[7:0];
+          3'b001: Din <= HWDATA[15:8];
+          3'b010: Din <= HWDATA[23:16];
+          3'b011: Din <= HWDATA[31:24];
+          3'b100: Din <= HWDATA[39:32];
+          3'b101: Din <= HWDATA[47:40];
+          3'b110: Din <= HWDATA[55:48];
+          3'b111: Din <= HWDATA[63:56];
         endcase 
       end 
     end else begin // 32-bit
       always @(posedge HCLK) begin
         HREADUART = {Dout, Dout, Dout, Dout};
         case (HADDR[1:0])
-          2'b00: Din = HWDATA[7:0];
-          2'b01: Din = HWDATA[15:8];
-          2'b10: Din = HWDATA[23:16];
-          2'b11: Din = HWDATA[31:24];
+          2'b00: Din <= HWDATA[7:0];
+          2'b01: Din <= HWDATA[15:8];
+          2'b10: Din <= HWDATA[23:16];
+          2'b11: Din <= HWDATA[31:24];
         endcase
       end
     end

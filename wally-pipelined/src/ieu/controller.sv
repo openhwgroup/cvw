@@ -33,7 +33,6 @@ module controller(
   input  logic [2:0] Funct3D,
   input  logic [6:0] Funct7D,
   output logic [2:0] ImmSrcD,
-  input  logic       StallD, FlushD, 
   input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
   // Execute stage control signals
@@ -48,7 +47,6 @@ module controller(
   output logic       MulDivE, W64E,
   // Memory stage control signals
   input  logic       StallM, FlushM,
-  input  logic       DataMisalignedM,
   output logic [1:0] MemRWM,
   output logic       CSRWriteM, PrivilegedM, 
   output logic [2:0] Funct3M,
