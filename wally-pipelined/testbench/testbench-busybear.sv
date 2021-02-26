@@ -178,7 +178,7 @@ module testbench_busybear();
   logic [`XLEN-1:0] RAM[('h8000000 >> 3):0];
   logic [`XLEN-1:0] bootram[('h2000 >> 3):0];
   logic [`XLEN-1:0] readRAM;
-  logic [31:0]      readPC;
+  logic [31:0]      readInstrF;
   integer RAMAdr, RAMPC;
   assign RAMAdr = (HADDR - (HADDR > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
   assign RAMPC = (PCF - (PCF > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
@@ -361,14 +361,22 @@ module testbench_busybear();
   initial begin
     instrs = 0;
   end
+  logic [31:0] InstrMask;
+  logic forcedInstr;
   always @(PCF) begin
 
     if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
-      readPC = RAM[RAMPC] >> PCF[2] * 32;
+      readInstrF = RAM[RAMPC] >> PCF[2:1] * 16;
+      if (PCF[2:1] == 2'b11) begin
+        readInstrF |= RAM[RAMPC+1] << 16;
+      end
     end
 
     if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
-      readPC = bootram[RAMPC] >> PCF[2] * 32;
+      readInstrF = bootram[RAMPC] >> PCF[2:1] * 16;
+      if (PCF[2:1] == 2'b11) begin
+        readInstrF |= bootram[RAMPC+1] << 16;
+      end
     end
 
     lastInstrF = InstrF;
@@ -392,11 +400,18 @@ module testbench_busybear();
         InstrF = 32'b0010011;
         $display("warning: NOPing out %s at PC=%0x", PCtext, PCF);
         warningCount += 1;
+        forcedInstr = 1;
       end
-      if(InstrF[28:27] != 2'b11 && InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-        InstrF = {12'b0, InstrF[19:7], 7'b0000011};
-        $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, PCF);
-        warningCount += 1;
+      else begin
+        if(InstrF[28:27] != 2'b11 && InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+          InstrF = {12'b0, InstrF[19:7], 7'b0000011};
+          $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, PCF);
+          warningCount += 1;
+          forcedInstr = 1;
+        end
+        else begin
+          forcedInstr = 0;
+        end
       end
       // then expected PC value
       scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
@@ -432,8 +447,9 @@ module testbench_busybear();
         $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
         `ERROR
       end
-      if ((~speculative) && (readPC != InstrF)) begin
-        $display("%0t ps, instr %0d: readPC does not equal InstrF: %x, %x", $time, instrs, readPC, InstrF);
+      InstrMask = InstrF[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
+      if ((~forcedInstr) && (~speculative) && ((InstrMask & readInstrF) != (InstrMask & InstrF))) begin
+        $display("%0t ps, instr %0d: readInstrF does not equal InstrF: %x, %x, PC: %x", $time, instrs, readInstrF, InstrF, PCF);
         warningCount += 1;
       end
     end
