@@ -90,6 +90,7 @@ string tests64iNOc[] = {
                      "rv64i/I-MISALIGN_JMP-01","2000"
   };
  string tests64i[] = '{                 
+                     "rv64i/I-MISALIGN_LDST-01", "2010",
                      "rv64i/I-ADD-01", "3000",
                      "rv64i/I-ADDI-01", "3000",
                      "rv64i/I-ADDIW-01", "3000",
@@ -322,7 +323,7 @@ string tests32i[] = {
       tests = {tests64i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests64ic};
       else                       tests = {tests, tests64iNOc};
-      if (`M_SUPPORTED % 2 == 1) tests = {tests64m, tests};
+      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests64m};
     end else begin // RV32
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    

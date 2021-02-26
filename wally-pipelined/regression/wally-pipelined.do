@@ -72,7 +72,7 @@ add wave /testbench/InstrEName
 add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
 add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
 add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
-add wave /testbench/dut/hart/ieu/dp/PCSrcE
+#add wave /testbench/dut/hart/ieu/dp/PCSrcE
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
