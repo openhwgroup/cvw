@@ -204,7 +204,9 @@ module testbench_busybear();
         readRAM = bootram[RAMAdr] & readMask;
       end
     end
+  end
 
+  always @(dut.hart.MemRWM[1] or HADDR) begin
     if (dut.hart.MemRWM[1]) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
@@ -365,7 +367,6 @@ module testbench_busybear();
       readPC = RAM[RAMPC] >> PCF[2] * 32;
     end
 
-    $write(""); // I know this does nothing, the first instruction doesn't load for me without it
     if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
       readPC = bootram[RAMPC] >> PCF[2] * 32;
     end
