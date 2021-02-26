@@ -33,12 +33,11 @@ module controller(
   input  logic [2:0] Funct3D,
   input  logic [6:0] Funct7D,
   output logic [2:0] ImmSrcD,
-  input  logic       StallD, FlushD, 
   input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
   // Execute stage control signals
-  input  logic 	     FlushE, 
-  input  logic  [2:0] FlagsE, 
+  input logic 	     StallE, FlushE, 
+  input logic  [2:0] FlagsE, 
   output logic       PCSrcE,        // for datapath and Hazard Unit
   output logic [4:0] ALUControlE, 
   output logic 	     ALUSrcAE, ALUSrcBE,
@@ -47,14 +46,13 @@ module controller(
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
   // Memory stage control signals
-  input  logic       FlushM,
-  input  logic       DataMisalignedM,
+  input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
   output logic       CSRWriteM, PrivilegedM, 
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit	
   // Writeback stage control signals
-  input  logic       FlushW,
+  input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   output logic       InstrValidW,
@@ -94,10 +92,14 @@ module controller(
         7'b0100011:   ControlsD = 21'b0_001_01_01_000_0_00_0_0_0_0_0_0_0; // sw
         7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
                       ControlsD = 21'b1_000_00_00_000_0_10_0_0_0_0_0_0_0; // R-type 
+                    else if (Funct7D == 7'b0000001 && `M_SUPPORTED)
+                      ControlsD = 21'b1_000_00_00_100_0_00_0_0_0_0_0_1_0; // Multiply/Divide
                     else
                       ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
         7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
                       ControlsD = 21'b1_000_00_00_000_0_10_0_0_1_0_0_0_0; // R-type W instructions for RV64i
+                    else if (Funct7D == 7'b0000001 && `M_SUPPORTED && `XLEN == 64)
+                      ControlsD = 21'b1_000_00_00_100_0_00_0_0_1_0_0_1_0; // W-type Multiply/Divide
                     else
                       ControlsD = 21'b0_000_00_00_000_0_00_0_0_0_0_0_0_1; // non-implemented instruction
         7'b1100011:   ControlsD = 21'b0_010_00_00_000_1_01_0_0_0_0_0_0_0; // beq
@@ -145,7 +147,7 @@ module controller(
     endcase
   
   // Execute stage pipeline control register and logic
-  floprc #(24) controlregE(clk, reset, FlushE,
+  flopenrc #(24) controlregE(clk, reset, FlushE, ~StallE,
                            {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, 1'b1},
                            {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, InstrValidE});
 
@@ -168,12 +170,12 @@ module controller(
   assign MemReadE = MemRWE[1]; 
   
   // Memory stage pipeline control register
-  floprc #(12) controlregM(clk, reset, FlushM,
+  flopenrc #(12) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRWriteM, PrivilegedM, Funct3M, InstrValidM});
   
   // Writeback stage pipeline control register
-  floprc #(5) controlregW(clk, reset, FlushW,
+  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 

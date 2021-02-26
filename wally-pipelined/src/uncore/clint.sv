@@ -44,7 +44,9 @@ module clint (
   assign memread  = MemRWclint[1];
   assign memwrite = MemRWclint[0];
   assign HRESPCLINT = 0; // OK
-  assign HREADYCLINT = 1; // Respond immediately
+//  assign HREADYCLINT = 1; // Respond immediately
+  always_ff @(posedge HCLK) // delay response
+    HREADYCLINT <= memread | memwrite;
   
   // word aligned reads
   generate
@@ -54,16 +56,21 @@ module clint (
       assign #2 entry = {HADDR[15:2], 2'b00}; 
   endgenerate
   
+  // DH 2/20/21: Eventually allow MTIME to run off a separate clock
+  // This will require synchronizing MTIME to the system clock
+  // before it is read or compared to MTIMECMP.
+  // It will also require synchronizing the write to MTIMECMP.
+  // Use req and ack signals synchronized across the clock domains.
 
   // register access
   generate
     if (`XLEN==64) begin
-      always_comb begin
+      always @(posedge HCLK) begin
         case(entry)
-          16'h0000: HREADCLINT = {63'b0, MSIP};
-          16'h4000: HREADCLINT = MTIMECMP;
-          16'hBFF8: HREADCLINT = MTIME;
-          default:  HREADCLINT = 0;
+          16'h0000: HREADCLINT <= {63'b0, MSIP};
+          16'h4000: HREADCLINT <= MTIMECMP;
+          16'hBFF8: HREADCLINT <= MTIME;
+          default:  HREADCLINT <= 0;
         endcase
       end 
       always_ff @(posedge HCLK or negedge HRESETn) 
@@ -80,14 +87,14 @@ module clint (
           else MTIME <= MTIME + 1;
         end
     end else begin // 32-bit
-      always_comb begin
+      always @(posedge HCLK) begin
         case(entry)
-          16'h0000: HREADCLINT = {31'b0, MSIP};
-          16'h4000: HREADCLINT = MTIMECMP[31:0];
-          16'h4004: HREADCLINT = MTIMECMP[63:32];
-          16'hBFF8: HREADCLINT = MTIME[31:0];
-          16'hBFFC: HREADCLINT = MTIME[63:32];
-          default:  HREADCLINT = 0;
+          16'h0000: HREADCLINT <= {31'b0, MSIP};
+          16'h4000: HREADCLINT <= MTIMECMP[31:0];
+          16'h4004: HREADCLINT <= MTIMECMP[63:32];
+          16'hBFF8: HREADCLINT <= MTIME[31:0];
+          16'hBFFC: HREADCLINT <= MTIME[63:32];
+          default:  HREADCLINT <= 0;
         endcase
       end 
       always_ff @(posedge HCLK or negedge HRESETn) 

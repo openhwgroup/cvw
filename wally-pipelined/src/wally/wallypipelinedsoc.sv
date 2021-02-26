@@ -56,7 +56,6 @@ module wallypipelinedsoc (
 
   // to instruction memory *** remove later
   logic [`XLEN-1:0] PCF;
-  logic [31:0] InstrF;
 
   // Uncore signals
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
@@ -64,6 +63,11 @@ module wallypipelinedsoc (
   logic        InstrAccessFaultF, DataAccessFaultM;
   logic        TimerIntM, SwIntM; // from CLINT
   logic        ExtIntM = 0; // not yet connected
+  logic [2:0]       HADDRD;
+  logic [3:0]       HSIZED;
+  logic             HWRITED;
+  logic [15:0]      rd2; // bogus, delete when real multicycle fetch works
+  logic [31:0]      InstrF;
    
   // instantiate processor and memories
   wallypipelinedhart hart(.*);
