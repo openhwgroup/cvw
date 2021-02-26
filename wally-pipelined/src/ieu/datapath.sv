@@ -28,13 +28,11 @@
 module datapath (
   input logic clk, reset,
   // Decode stage signals
-  input  logic             StallD, FlushD,
   input  logic [2:0]       ImmSrcD,
   input  logic [31:0]      InstrD,
   // Execute stage signals
   input  logic             StallE, FlushE,
   input  logic [1:0]       ForwardAE, ForwardBE,
-  input  logic             PCSrcE,
   input  logic [4:0]       ALUControlE,
   input  logic             ALUSrcAE, ALUSrcBE,
   input  logic             TargetSrcE, 
@@ -44,8 +42,6 @@ module datapath (
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             StallM, FlushM,
-  input  logic [2:0]       Funct3M,
-  input  logic             RetM, TrapM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals

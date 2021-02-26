@@ -60,15 +60,13 @@ module csrs #(parameter
   // Supervisor mode CSRs sometimes supported
   generate  
     if (`S_SUPPORTED) begin
-      logic WriteSTVECM, WriteSEDELEGM, WriteSIDELEGM;
+      logic WriteSTVECM;
       logic WriteSSCRATCHM, WriteSEPCM;
       logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
       logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW, SATP_REGW;
       
       assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS);
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC);
-      assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
-      assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
       assign WriteSSCRATCHM = CSRSWriteM && (CSRAdrM == SSCRATCH);
       assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC));
       assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE));
@@ -85,6 +83,9 @@ module csrs #(parameter
       flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
       flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], allones, SCOUNTEREN_REGW);
       if (`N_SUPPORTED) begin
+        logic WriteSEDELEGM, WriteSIDELEGM;
+        assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
+        assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
         flopenl #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK, zero, SEDELEG_REGW);
         flopenl #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, zero, SIDELEG_REGW);
       end else begin

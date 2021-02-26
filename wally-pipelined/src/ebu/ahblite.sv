@@ -38,7 +38,6 @@ module ahblite (
   // Signals from Instruction Cache
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
-//  input  logic             ResolveBranchD,
   output logic [`XLEN-1:0] InstrRData,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] MemPAdrM,

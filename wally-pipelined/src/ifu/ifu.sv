@@ -36,8 +36,6 @@ module ifu (
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
   // Decode  
-  //output logic             InstrStall,
-  output logic             ResolveBranchD,
   // Execute
   input  logic             PCSrcE, 
   input  logic [`XLEN-1:0] PCTargetE,
@@ -60,7 +58,7 @@ module ifu (
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
-  logic StallExceptResolveBranchesF, PrivilegedChangePCM;
+  logic PrivilegedChangePCM;
   logic IllegalCompInstrD;
   logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM;
   logic        CompressedF;

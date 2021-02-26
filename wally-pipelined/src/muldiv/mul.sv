@@ -61,7 +61,7 @@ module mul (
     // flavor of multiplication
     assign MULH = (Funct3E == 2'b01);
     assign MULHSU = (Funct3E == 2'b10);
-    assign MULHU = (Funct3E == 2'b11);
+    // assign MULHU = (Funct3E == 2'b11); // signal unused
 
     // Handle signs
     assign PP1 = Pprime; // same for all flavors

@@ -78,8 +78,6 @@ module wallypipelinedhart (
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;
-  logic [`XLEN-1:0] zero = 0;
-  logic ResolveBranchD;
 
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
