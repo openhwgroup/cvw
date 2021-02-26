@@ -65,7 +65,6 @@ module dmem (
   // *** this is also the place to squash if the cache is hit
   assign MemReadM = MemRWM[1] & ~DataMisalignedM;
   assign MemWriteM = MemRWM[0] & ~DataMisalignedM;
-//  assign MemRWAlignedM = MemRWM & {2{~DataMisalignedM}};
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
