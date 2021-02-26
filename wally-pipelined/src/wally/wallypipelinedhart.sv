@@ -60,7 +60,7 @@ module wallypipelinedhart (
 
   // new signals that must connect through DP
   logic        MulDivE, W64E;
-  logic        CSRWriteM, PrivilegedM;
+  logic        CSRReadM, CSRWriteM, PrivilegedM;
   logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAM;
   logic [2:0] Funct3E;
@@ -81,7 +81,7 @@ module wallypipelinedhart (
 
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
-  logic        LoadStallD, MulDivStallD;
+  logic        LoadStallD, MulDivStallD, CSRRdStallD;
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
