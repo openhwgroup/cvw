@@ -27,13 +27,10 @@
 
 module hazard(
   // Detect hazards
-//  input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-//  input  logic       MemReadE, 
-//  input  logic       RegWriteM, RegWriteW, 
   input  logic       PCSrcE, CSRWritePendingDEM, RetM, TrapM,
   input  logic       LoadStallD, MulDivStallD,
   input  logic       InstrStall, DataStall,
-  // Stall outputs
+  // Stall & flush outputs
   output logic       StallF, StallD, StallE, StallM, StallW,
   output logic       FlushD, FlushE, FlushM, FlushW
 );
@@ -56,15 +53,10 @@ module hazard(
 
   assign BranchFlushDE = PCSrcE | RetM | TrapM;
 
-  // changed 2/22/21 harris to turn off stallF when RetM or TrapM
-  // changed 2/23/21 harris to BranchFlushDEM to solve bug in ECALL about JAL being ignored
-//  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM;  // stall at fetch if unable to get the instruction, 
-//  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM & ~(RetM | TrapM);  // stall at fetch if unable to get the instruction, 
-  assign StallFCause = /*InstrStall | */ CSRWritePendingDEM & ~(BranchFlushDE);  // stall at fetch if unable to get the instruction, 
-                                                         // or if a CSR will be written and may change system behavior
-  assign StallDCause = LoadStallD | MulDivStallD;                       // stall in decode if instruction is a load dependent on previous
+  assign StallFCause = CSRWritePendingDEM & ~(BranchFlushDE);  
+  assign StallDCause = LoadStallD | MulDivStallD;                // stall in decode if instruction is a load/mul dependent on previous
   assign StallECause = 0;
-  assign StallMCause = 0; // sDataStall; // not yet used***
+  assign StallMCause = 0; 
   assign StallWCause = DataStall | InstrStall;
 
   // Each stage stalls if the next stage is stalled or there is a cause to stall this stage.
