@@ -365,7 +365,7 @@ module testbench_busybear();
       readPC = RAM[RAMPC] >> PCF[2] * 32;
     end
 
-    //$write(""); // I know this does nothing, the first instruction doesn't load for me without it
+    $write(""); // I know this does nothing, the first instruction doesn't load for me without it
     if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
       readPC = bootram[RAMPC] >> PCF[2] * 32;
     end
