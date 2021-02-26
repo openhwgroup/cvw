@@ -21,7 +21,7 @@ module fcsr(
   //for clk-based write
   assign regInput = (write) ? {24'h0,frm,flags} : regInput;
 
-  floprc #(32) (.clk(clk), .reset(reset), .clear(clear), .d(regInput), .q(regOutput));
+  floprc #(32) fcsrreg(.clk(clk), .reset(reset), .clear(clear), .d(regInput), .q(regOutput));
 
   assign readData = regOutput;
 

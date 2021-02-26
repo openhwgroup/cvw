@@ -28,7 +28,7 @@ module freg1adr (
   generate
   	for (i = 0; i < numRegs; i = i + 1) begin:register
 
-  		floprc #(`XLEN) (.clk(clk), .reset(reset), .clear(clear), .d(regInput[i][`XLEN-1:0]), .q(regOutput[i][`XLEN-1:0])); 
+  		floprc #(`XLEN) freg[i](.clk(clk), .reset(reset), .clear(clear), .d(regInput[i][`XLEN-1:0]), .q(regOutput[i][`XLEN-1:0])); 
 	end
 
   endgenerate
@@ -167,7 +167,7 @@ module freg2adr (
   generate
   	for (i = 0; i < numRegs; i = i + 1) begin:register
 
-  		floprc #(`XLEN) (.clk(clk), .reset(reset), .clear(clear), .d(regInput[i][`XLEN-1:0]), .q(regOutput[i][`XLEN-1:0])); 
+  		floprc #(`XLEN) freg[i](.clk(clk), .reset(reset), .clear(clear), .d(regInput[i][`XLEN-1:0]), .q(regOutput[i][`XLEN-1:0])); 
 	end
 
   endgenerate
@@ -340,7 +340,7 @@ module freg3adr (
   generate
   	for (i = 0; i < numRegs; i = i + 1) begin:register
 
-  		floprc #(`XLEN) (.clk(clk), .reset(reset), .clear(clear), .d(regInput[i][`XLEN-1:0]), .q(regOutput[i][`XLEN-1:0])); 
+  		floprc #(`XLEN) freg[i](.clk(clk), .reset(reset), .clear(clear), .d(regInput[i][`XLEN-1:0]), .q(regOutput[i][`XLEN-1:0])); 
 	end
 
   endgenerate

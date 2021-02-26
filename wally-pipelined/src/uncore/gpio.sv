@@ -45,7 +45,9 @@ module gpio (
   assign memread  = MemRWgpio[1];
   assign memwrite = MemRWgpio[0];
   assign HRESPGPIO = 0; // OK
-  assign HREADYGPIO = 1; // Respond immediately
+  always_ff @(posedge HCLK) // delay response to data cycle
+    HREADYGPIO <= memread | memwrite;
+//  assign HREADYGPIO = 1; // Respond immediately
   
   // word aligned reads
   generate
@@ -67,12 +69,12 @@ module gpio (
   // register access
   generate
     if (`XLEN==64) begin
-      always_comb begin
+      always_ff @(posedge HCLK) begin
         case(entry)
-          8'h00: HREADGPIO = {INPUT_EN, INPUT_VAL};
-          8'h08: HREADGPIO = {OUTPUT_VAL, OUTPUT_EN};
-          8'h40: HREADGPIO = 0; // OUT_XOR reads as 0
-          default:  HREADGPIO = 0;
+          8'h00: HREADGPIO <= {INPUT_EN, INPUT_VAL};
+          8'h08: HREADGPIO <= {OUTPUT_VAL, OUTPUT_EN};
+          8'h40: HREADGPIO <= 0; // OUT_XOR reads as 0
+          default:  HREADGPIO <= 0;
         endcase
       end 
       always_ff @(posedge HCLK or negedge HRESETn) 
@@ -86,14 +88,14 @@ module gpio (
           if (entry == 8'h40) OUTPUT_VAL <= OUTPUT_VAL ^ HWDATA[31:0]; // OUT_XOR
         end
     end else begin // 32-bit
-      always_comb begin
+      always_ff @(posedge HCLK) begin
         case(entry)
-          8'h00: HREADGPIO = INPUT_VAL;
-          8'h04: HREADGPIO = INPUT_EN;
-          8'h08: HREADGPIO = OUTPUT_EN;
-          8'h0C: HREADGPIO = OUTPUT_VAL;
-          8'h40: HREADGPIO = 0; // OUT_XOR reads as 0
-          default:  HREADGPIO = 0;
+          8'h00: HREADGPIO <= INPUT_VAL;
+          8'h04: HREADGPIO <= INPUT_EN;
+          8'h08: HREADGPIO <= OUTPUT_EN;
+          8'h0C: HREADGPIO <= OUTPUT_VAL;
+          8'h40: HREADGPIO <= 0; // OUT_XOR reads as 0
+          default:  HREADGPIO <= 0;
         endcase
       end 
       always_ff @(posedge HCLK or negedge HRESETn) 
