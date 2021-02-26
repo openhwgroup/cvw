@@ -44,7 +44,9 @@ module clint (
   assign memread  = MemRWclint[1];
   assign memwrite = MemRWclint[0];
   assign HRESPCLINT = 0; // OK
-  assign HREADYCLINT = 1; // Respond immediately
+//  assign HREADYCLINT = 1; // Respond immediately
+  always_ff @(posedge HCLK) // delay response
+    HREADYCLINT <= memread | memwrite;
   
   // word aligned reads
   generate
@@ -63,7 +65,7 @@ module clint (
   // register access
   generate
     if (`XLEN==64) begin
-      always_comb begin
+      always @(posedge HCLK) begin
         case(entry)
           16'h0000: HREADCLINT = {63'b0, MSIP};
           16'h4000: HREADCLINT = MTIMECMP;
@@ -85,7 +87,7 @@ module clint (
           else MTIME <= MTIME + 1;
         end
     end else begin // 32-bit
-      always_comb begin
+      always @(posedge HCLK) begin
         case(entry)
           16'h0000: HREADCLINT = {31'b0, MSIP};
           16'h4000: HREADCLINT = MTIMECMP[31:0];

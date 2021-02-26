@@ -48,11 +48,13 @@ module uart (
   assign MEMWb = ~MemRWuart[0];
   assign A = HADDR[2:0];
   assign HRESPUART = 0; // OK
-  assign HREADYUART = 1; // Respond immediately
+  //assign HREADYUART = 1; // Respond immediately
+  always_ff @(posedge HCLK) // delay response to data cycle
+    HREADYUART <= ~MEMRb | ~MEMWb;
 
   generate
     if (`XLEN == 64) begin
-      always_comb begin
+      always @(posedge HCLK) begin
         HREADUART = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
         case (HADDR)
           3'b000: Din = HWDATA[7:0];
@@ -66,7 +68,7 @@ module uart (
         endcase 
       end 
     end else begin // 32-bit
-      always_comb begin
+      always @(posedge HCLK) begin
         HREADUART = {Dout, Dout, Dout, Dout};
         case (HADDR[1:0])
           2'b00: Din = HWDATA[7:0];
