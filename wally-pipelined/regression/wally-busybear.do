@@ -35,6 +35,8 @@ vopt +acc work.testbench_busybear -o workopt
 vsim workopt -suppress 8852,12070
 mem load -startaddress 0 -endaddress 1024 -filltype value -fillradix hex -filldata 0 /testbench_busybear/bootram
 mem load -startaddress 0 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/bootram
+mem load -startaddress 0 -endaddress 16777216 -filltype value -fillradix hex -filldata 0 /testbench_busybear/RAM
+mem load -startaddress 0 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/RAM
 
 view wave
 
@@ -51,7 +53,7 @@ add wave /testbench_busybear/lastInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
-add wave -hex /testbench_busybear/readPC
+add wave -hex /testbench_busybear/readInstrF
 add wave -hex /testbench_busybear/readRAM
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
