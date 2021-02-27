@@ -405,7 +405,11 @@ string tests32i[] = {
           reset = 1; # 17; reset = 0;
         end
       end
-    end
+    end // always @ (negedge clk)
+
+  // track the current function or label
+  function_rfunction_radix function_radix();
+  
 endmodule
 
 /* verilator lint_on STMTDLY */
