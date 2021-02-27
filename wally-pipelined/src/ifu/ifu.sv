@@ -36,10 +36,11 @@ module ifu (
   // Decode  
   output logic 		   InstrStall,
   // Execute
+  output logic [`XLEN-1:0] PCLinkE,
   input logic 		   PCSrcE, 
   input logic [`XLEN-1:0]  PCTargetE,
   output logic [`XLEN-1:0] PCE,
-  output logic BPPredWrongE,		   
+  output logic 		   BPPredWrongE, 
   // Mem
   input logic 		   RetM, TrapM, 
   input logic [`XLEN-1:0]  PrivilegedNextPCM, 
@@ -58,7 +59,7 @@ module ifu (
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic StallExceptResolveBranchesF, PrivilegedChangePCM;
   logic IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM;
   logic        CompressedF;
   logic [31:0]     InstrRawD, InstrE;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP

@@ -33,6 +33,7 @@ module ieu (
   output logic             IllegalBaseInstrFaultD,
   // Execute Stage interface
   input  logic [`XLEN-1:0] PCE, 
+  input  logic [`XLEN-1:0] PCLinkE,
   output logic [`XLEN-1:0] PCTargetE,
   // Memory stage interface
   input  logic             DataMisalignedM,
@@ -68,6 +69,7 @@ module ieu (
   logic [1:0]       ForwardAE, ForwardBE;
   logic             RegWriteM, RegWriteW;
   logic             MemReadE;
+  logic             JumpE;
            
   controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7b5D(InstrD[30]), .*);
   datapath   dp(.*);             

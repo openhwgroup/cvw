@@ -44,6 +44,7 @@ module controller(
   output logic 	     ALUSrcAE, ALUSrcBE,
   output logic       TargetSrcE,
   output logic       MemReadE,  // for Hazard Unit
+  output logic       JumpE,
   // Memory stage control signals
   input  logic       FlushM,
   input  logic       DataMisalignedM,
@@ -64,7 +65,7 @@ module controller(
   logic 	    RegWriteD, RegWriteE;
   logic [1:0] ResultSrcD, ResultSrcE, ResultSrcM;
   logic [1:0] MemRWD, MemRWE;
-  logic		    JumpD, JumpE;
+  logic		    JumpD;
   logic		    BranchD, BranchE;
   logic	[1:0] ALUOpD;
   logic [4:0] ALUControlD;

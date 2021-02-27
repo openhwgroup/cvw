@@ -408,7 +408,7 @@ string tests32i[] = {
     end // always @ (negedge clk)
 
   // track the current function or label
-  function_rfunction_radix function_radix();
+  //function_rfunction_radix function_radix();
   
 endmodule
 

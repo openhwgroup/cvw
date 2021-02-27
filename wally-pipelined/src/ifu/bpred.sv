@@ -78,6 +78,7 @@ module bpred
   // Part 2 branch direction prediction
 
   twoBitPredictor DirPredictor(.clk(clk),
+			       .reset(reset),
 			       .LookUpPC(PCNextF),
 			       .Prediction(BPPredF),
 			       // update
@@ -110,8 +111,8 @@ module bpred
 			       .UpdateTarget(PCTargetE));
 
   // need to forward when updating to the same address as reading.
-  assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
-  assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCF;
+  //assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
+  //assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCF;
 
   // Part 4 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
