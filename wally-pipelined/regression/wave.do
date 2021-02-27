@@ -115,7 +115,7 @@ add wave -noupdate -expand -group {alu execution stage} /testbench/dut/hart/ieu/
 add wave -noupdate -expand -group {alu execution stage} /testbench/dut/hart/ieu/dp/SrcBE
 add wave -noupdate /testbench/dut/hart/ieu/dp/ALUResultM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {231033 ns} 0} {{Cursor 3} {1276133 ns} 0}
+WaveRestoreCursors {{Cursor 2} {231033 ns} 0} {{Cursor 3} {1276117 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 518
