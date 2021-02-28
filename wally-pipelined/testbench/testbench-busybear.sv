@@ -28,7 +28,7 @@ module testbench_busybear();
   assign UARTSin = 1;
 
   // instantiate processor and memories
-  wallypipelinedsocbusybear dut(.*);
+  wallypipelinedsoc dut(.*);
 
 
   // initialize test
