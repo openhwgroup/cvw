@@ -29,7 +29,7 @@
 module privileged (
   input  logic             clk, reset,
   input  logic             FlushW,
-  input  logic             CSRWriteM,
+  input  logic             CSRReadM, CSRWriteM,
   input  logic [`XLEN-1:0] SrcAM,
   input  logic [31:0]      InstrM,
   input  logic [`XLEN-1:0] PCM,
