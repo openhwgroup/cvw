@@ -38,7 +38,8 @@ module adrdec (
   // then anything address between 0x04002000 and 0x04002FFF should match (HSEL=1)
 
   assign match = (HADDR ~^ Base) | Range;
-  assign HSEL = &match;
+  //assign HSEL = &match;
+  assign HSEL = (HADDR >= Base) && (HADDR <= Base + Range);
 
 endmodule
 

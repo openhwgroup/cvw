@@ -33,8 +33,10 @@ vlog +incdir+../config/busybear ../testbench/*.sv ../src/*/*.sv -suppress 2583
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench_busybear -o workopt 
 vsim workopt -suppress 8852,12070
-mem load -startaddress 0 -endaddress 1024 -filltype value -fillradix hex -filldata 0 /testbench_busybear/bootram
-mem load -startaddress 0 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/bootram
+mem load -startaddress 0 -endaddress 2048 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/bootdtim/RAM
+mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/uncore/bootdtim/RAM
+mem load -startaddress 0 -endaddress 2048 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/bootram
+mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/imem/bootram
 mem load -startaddress 0 -endaddress 16777216 -filltype value -fillradix hex -filldata 0 /testbench_busybear/RAM
 mem load -startaddress 0 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/RAM
 
@@ -49,6 +51,7 @@ add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
 add wave -hex /testbench_busybear/dut/hart/ifu/PCF
 add wave -hex /testbench_busybear/dut/hart/ifu/InstrF
+add wave -hex /testbench_busybear/dut/InstrF
 add wave /testbench_busybear/CheckInstrF
 add wave /testbench_busybear/lastCheckInstrF
 add wave /testbench_busybear/speculative
