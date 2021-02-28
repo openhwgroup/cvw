@@ -7,8 +7,7 @@ module testbench_busybear();
   logic [31:0]     GPIOPinsOut, GPIOPinsEn;
 
   // instantiate device to be tested
-  logic [`XLEN-1:0] PCF;
-  logic [31:0] InstrF;
+  logic [31:0] CheckInstrF;
 
   logic [`AHBW-1:0] HRDATA;
   logic [31:0]      HADDR;
@@ -178,10 +177,9 @@ module testbench_busybear();
   logic [`XLEN-1:0] RAM[('h8000000 >> 3):0];
   logic [`XLEN-1:0] bootram[('h2000 >> 3):0];
   logic [`XLEN-1:0] readRAM;
-  logic [31:0]      readInstrF;
   integer RAMAdr, RAMPC;
   assign RAMAdr = (HADDR - (HADDR > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
-  assign RAMPC = (PCF - (PCF > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
+  assign RAMPC = (dut.PCF - (dut.PCF > 'h2fff ? 'h80000000 : 'h1000)) >> 3;
   logic [63:0] readMask;
   assign readMask = ((1 << (8*(1 << HSIZE))) - 1) << 8 * HADDR[2:0];
 
@@ -220,7 +218,7 @@ module testbench_busybear();
         `ERROR
       end
 
-      if (((readMask & HRDATA) != (readMask & readRAM)) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
+      if (((readMask & HRDATA) !== (readMask & readRAM)) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
         $display("warning %0t ps, instr %0d: HRDATA does not equal readRAM: %x, %x from address %x, %x", $time, instrs, HRDATA, readRAM, HADDR, HSIZE);
         warningCount += 1;
         `ERROR
@@ -311,7 +309,7 @@ module testbench_busybear();
   `CHECK_CSR2(MTVAL, `CSRM)
   `CHECK_CSR(MTVEC)
   //`CHECK_CSR2(PMPADDR0, `CSRM)
-  //`CHECK_CSR2(PMPCFG0, `CSRM)
+  //`CHECK_CSR2(PMdut.PCFG0, `CSRM)
   `CHECK_CSR2(SATP, `CSRS)
   `CHECK_CSR2(SCAUSE, `CSRS)
   `CHECK_CSR(SCOUNTEREN)
@@ -325,9 +323,8 @@ module testbench_busybear();
   logic speculative;
   initial begin
     speculative = 0;
-    speculative = 0;
   end
-  logic [63:0] lastInstrF, lastPC, lastPC2;
+  logic [63:0] lastCheckInstrF, lastPC, lastPC2;
 
   string PCtextW, PCtext2W;
   logic [31:0] InstrWExpected;
@@ -363,27 +360,12 @@ module testbench_busybear();
   end
   logic [31:0] InstrMask;
   logic forcedInstr;
-  always @(PCF) begin
-
-    if (PCF >= 'h80000000 && PCF <= 'h87FFFFFF) begin
-      readInstrF = RAM[RAMPC] >> PCF[2:1] * 16;
-      if (PCF[2:1] == 2'b11) begin
-        readInstrF |= RAM[RAMPC+1] << 16;
-      end
-    end
-
-    if (PCF >= 'h1000 && PCF <= 'h2FFF) begin
-      readInstrF = bootram[RAMPC] >> PCF[2:1] * 16;
-      if (PCF[2:1] == 2'b11) begin
-        readInstrF |= bootram[RAMPC+1] << 16;
-      end
-    end
-
-    lastInstrF = InstrF;
-    lastPC <= PCF;
+  always @(dut.PCF) begin
+    lastCheckInstrF = CheckInstrF;
+    lastPC <= dut.PCF;
     lastPC2 <= lastPC;
-    if (speculative && ~equal(lastPC,pcExpected,3)) begin
-      speculative = ~equal(PCF,pcExpected,3);
+    if (speculative && (lastPC != pcExpected)) begin
+      speculative = ~equal(dut.PCF,pcExpected,3);
     end
     else begin
       if($feof(data_file_PC)) begin
@@ -395,17 +377,17 @@ module testbench_busybear();
         scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
         PCtext = {PCtext, " ", PCtext2};
       end
-      scan_file_PC = $fscanf(data_file_PC, "%x\n", InstrF);
-      if(InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-        InstrF = 32'b0010011;
-        $display("warning: NOPing out %s at PC=%0x", PCtext, PCF);
+      scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrF);
+      if(CheckInstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+        CheckInstrF = 32'b0010011;
+        $display("warning: NOPing out %s at PC=%0x", PCtext, dut.PCF);
         warningCount += 1;
         forcedInstr = 1;
       end
       else begin
-        if(InstrF[28:27] != 2'b11 && InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-          InstrF = {12'b0, InstrF[19:7], 7'b0000011};
-          $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, PCF);
+        if(CheckInstrF[28:27] != 2'b11 && CheckInstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+          CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
+          $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
           warningCount += 1;
           forcedInstr = 1;
         end
@@ -422,7 +404,7 @@ module testbench_busybear();
       end
       instrs += 1;
       // are we at a branch/jump?
-      casex (lastInstrF[31:0])
+      casex (lastCheckInstrF[31:0])
         32'b00000000001000000000000001110011, // URET
         32'b00010000001000000000000001110011, // SRET
         32'b00110000001000000000000001110011, // MRET
@@ -443,14 +425,14 @@ module testbench_busybear();
       endcase
 
       //check things!
-      if ((~speculative) && (~equal(PCF,pcExpected,3))) begin
-        $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, PCF, pcExpected);
+      if ((~speculative) && (~equal(dut.PCF,pcExpected,3))) begin
+        $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.PCF, pcExpected);
         `ERROR
       end
-      InstrMask = InstrF[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-      if ((~forcedInstr) && (~speculative) && ((InstrMask & readInstrF) != (InstrMask & InstrF))) begin
-        $display("%0t ps, instr %0d: readInstrF does not equal InstrF: %x, %x, PC: %x", $time, instrs, readInstrF, InstrF, PCF);
-        warningCount += 1;
+      InstrMask = CheckInstrF[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
+      if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.InstrF) !== (InstrMask & CheckInstrF))) begin
+        $display("%0t ps, instr %0d: InstrF does not equal CheckInstrF: %x, %x, PC: %x", $time, instrs, dut.InstrF, CheckInstrF, dut.PCF);
+        `ERROR
       end
     end
   end
@@ -458,7 +440,7 @@ module testbench_busybear();
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  instrNameDecTB dec(InstrF, InstrFName);
+  instrNameDecTB dec(dut.InstrF, InstrFName);
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
