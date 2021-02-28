@@ -29,9 +29,7 @@
 module controller(
   input  logic		 clk, reset,
   // Decode stage control signals
-  input  logic [6:0] OpD,
-  input  logic [2:0] Funct3D,
-  input  logic [6:0] Funct7D,
+  input  logic [31:0] InstrD,
   output logic [2:0] ImmSrcD,
   input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
@@ -42,13 +40,13 @@ module controller(
   output logic [4:0] ALUControlE, 
   output logic 	     ALUSrcAE, ALUSrcBE,
   output logic       TargetSrcE,
-  output logic       MemReadE,  // for Hazard Unit
+  output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
-  output logic       CSRWriteM, PrivilegedM, 
+  output logic       CSRReadM, CSRWriteM, PrivilegedM, 
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit	
   // Writeback stage control signals
@@ -60,6 +58,11 @@ module controller(
   output logic       CSRWritePendingDEM
 );
 
+  logic [6:0] OpD;
+  logic [2:0] Funct3D;
+  logic [6:0] Funct7D;
+  logic [4:0] Rs1D;
+
   // pipelined control signals
   logic 	    RegWriteD, RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
@@ -70,6 +73,8 @@ module controller(
   logic [4:0] ALUControlD;
   logic 	    ALUSrcAD, ALUSrcBD;
   logic       TargetSrcD, W64D, MulDivD;
+  logic       CSRZeroSrcD;
+  logic       CSRReadD;
   logic       CSRWriteD, CSRWriteE;
   logic       InstrValidE, InstrValidM;
   logic       PrivilegedD, PrivilegedE;
@@ -80,14 +85,19 @@ module controller(
   logic        zeroE, ltE, ltuE;
   logic        unused;
 	
+  // Extract fields
+  assign OpD = InstrD[6:0];
+  assign Funct3D = InstrD[14:12];
+  assign Funct7D = InstrD[31:25];
+  assign Rs1D = InstrD[19:15];
 
   // Main Instruction Decoder
-  // *** decoding of non-IEU instructions should also go here, and should be gated by MISA bits in a generate so
+  // *** perhaps decoding of non-IEU instructions should also go here, and should be gated by MISA bits in a generate so
   // they don't get generated if that mode is disabled
   generate
     always_comb
       case(OpD)
-      // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRWrite_Privileged_MulDiv_Illegal
+      // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRRead_Privileged_MulDiv_Illegal
         7'b0000011:   ControlsD = 21'b1_000_01_10_001_0_00_0_0_0_0_0_0_0; // lw
         7'b0100011:   ControlsD = 21'b0_001_01_01_000_0_00_0_0_0_0_0_0_0; // sw
         7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
@@ -126,9 +136,12 @@ module controller(
   // squash control signals if coming from an illegal compressed instruction
   assign IllegalBaseInstrFaultD = ControlsD[0];
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
-          ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRWriteD, 
+          ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRReadD, 
           PrivilegedD, MulDivD, unused} = ControlsD & ~IllegalIEUInstrFaultD;
           // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
+
+  assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
+  assign CSRWriteD = CSRReadD & !(CSRZeroSrcD && InstrD[13]); // Don't write if setting or clearing zeros
 
   // ALU Decoding *** should move to ALU for better modularity
   assign sltD = (Funct3D == 3'b010);
@@ -147,9 +160,9 @@ module controller(
     endcase
   
   // Execute stage pipeline control register and logic
-  flopenrc #(24) controlregE(clk, reset, FlushE, ~StallE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, 1'b1},
-                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, InstrValidE});
+  flopenrc #(25) controlregE(clk, reset, FlushE, ~StallE,
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, 1'b1},
+                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, InstrValidE});
 
   // Branch Logic
   assign {zeroE, ltE, ltuE} = FlagsE;
@@ -170,15 +183,14 @@ module controller(
   assign MemReadE = MemRWE[1]; 
   
   // Memory stage pipeline control register
-  flopenrc #(12) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRWriteM, PrivilegedM, Funct3M, InstrValidM});
+  flopenrc #(13) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, InstrValidE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, InstrValidM});
   
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 
-  // *** improve this so CSR reads don't trigger this signal and cause pipeline flushes
   assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;   
 endmodule

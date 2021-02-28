@@ -31,7 +31,7 @@ module csr (
   input  logic             FlushW, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic             CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
@@ -111,7 +111,7 @@ module csr (
                                         (CSRAdrM[9:8] == 2'b01 && PrivilegeModeW == `U_MODE);
       assign IllegalCSRAccessM = (IllegalCSRCAccessM && IllegalCSRMAccessM && 
         IllegalCSRSAccessM && IllegalCSRUAccessM  && IllegalCSRNAccessM ||
-        InsufficientCSRPrivilegeM) && CSRWriteM;
+        InsufficientCSRPrivilegeM) && CSRReadM;
     end else begin // CSRs not implemented
       assign STATUS_MPP = 2'b11;
       assign STATUS_SPP = 2'b0;
@@ -132,7 +132,7 @@ module csr (
       assign STATUS_SIE = 0;
       assign FRM_REGW = 0;
       assign CSRReadValM = 0;
-      assign IllegalCSRAccessM = CSRWriteM;
+      assign IllegalCSRAccessM = CSRReadM;
     end
   endgenerate
 endmodule

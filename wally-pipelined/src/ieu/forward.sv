@@ -28,11 +28,11 @@
 module forward(
   // Detect hazards
   input  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input  logic       MemReadE, MulDivE,
+  input  logic       MemReadE, MulDivE, CSRReadE,
   input  logic       RegWriteM, RegWriteW, 
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
-  output logic       LoadStallD, MulDivStallD
+  output logic       LoadStallD, MulDivStallD, CSRRdStallD
 );
   
   always_comb begin
@@ -47,7 +47,9 @@ module forward(
       else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
   end
 
+  // Stall on dependent operations that finish in Mem Stage and can't bypass in time
   assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
-  assign MulDivStallD = MulDivE & & ((Rs1D == RdE) | (Rs2D == RdE)); // *** extend with stalls for divide
+  assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)); // *** extend with stalls for divide
+  assign CSRRdStallD = CSRReadE & ((Rs1D == RdE) | (Rs2D == RdE));
 
 endmodule

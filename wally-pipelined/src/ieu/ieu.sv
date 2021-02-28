@@ -51,10 +51,10 @@ module ieu (
   // hazards
   input  logic             StallE, StallM, StallW,
   input  logic             FlushE, FlushM, FlushW,
-  output logic             LoadStallD, MulDivStallD,
+  output logic             LoadStallD, MulDivStallD, CSRRdStallD,
   output logic             PCSrcE,
 
-  output logic             CSRWriteM, PrivilegedM,
+  output logic             CSRReadM, CSRWriteM, PrivilegedM,
   output logic             CSRWritePendingDEM
 );
 
@@ -69,9 +69,9 @@ module ieu (
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
   logic [1:0]       ForwardAE, ForwardBE;
   logic             RegWriteM, RegWriteW;
-  logic             MemReadE;
+  logic             MemReadE, CSRReadE;
            
-  controller c(.OpD(InstrD[6:0]), .Funct3D(InstrD[14:12]), .Funct7D(InstrD[31:25]), .*);
+  controller c(.*);
   datapath   dp(.*);             
   forward    fw(.*);
 endmodule
