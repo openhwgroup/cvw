@@ -49,11 +49,11 @@ add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
 add wave -hex /testbench_busybear/dut/hart/ifu/PCF
 add wave -hex /testbench_busybear/dut/hart/ifu/InstrF
-add wave /testbench_busybear/lastInstrF
+add wave /testbench_busybear/CheckInstrF
+add wave /testbench_busybear/lastCheckInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
-add wave -hex /testbench_busybear/readInstrF
 add wave -hex /testbench_busybear/readRAM
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
