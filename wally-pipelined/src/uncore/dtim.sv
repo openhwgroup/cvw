@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module dtim (
+module dtim #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic [1:0]       MemRWtim,
   input  logic [18:0]      HADDR, 
@@ -35,7 +35,8 @@ module dtim (
   output logic             HRESPTim, HREADYTim
 );
 
-  logic [`XLEN-1:0] RAM[0:65535];
+  //logic [`XLEN-1:0] RAM[0:65535];
+  logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE-BASE)>>1+(`XLEN/32)];
   logic [18:0] HWADDR;
   logic [`XLEN-1:0] HREADTim0;
 
