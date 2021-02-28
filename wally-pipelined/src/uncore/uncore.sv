@@ -59,7 +59,7 @@ module uncore (
   
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADGPIO, HREADUART;
-  logic            HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
+  logic            HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
   logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
   logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
   logic [1:0]      MemRW;
@@ -69,8 +69,10 @@ module uncore (
 
   // AHB Address decoder
   adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
+  adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
   adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
-  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO);
+  //Busybear: for now, leaving out gpio since OVPsim doesn't seem to have it
+  //adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
   
