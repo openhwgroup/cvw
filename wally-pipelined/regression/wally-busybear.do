@@ -59,12 +59,20 @@ add wave /testbench_busybear/lastCheckInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
+add wave -divider
 add wave /testbench_busybear/dut/uncore/HSELBootTim
 add wave /testbench_busybear/dut/uncore/HSELTim
 add wave /testbench_busybear/dut/uncore/HREADTim
 add wave /testbench_busybear/dut/uncore/maindtim/HREADTim0
 add wave /testbench_busybear/dut/uncore/HREADYTim
+add wave -divider
+add wave /testbench_busybear/dut/uncore/HREADBootTim
+add wave /testbench_busybear/dut/uncore/bootdtim/HREADTim0
+add wave /testbench_busybear/dut/uncore/HREADYBootTim
 add wave /testbench_busybear/dut/uncore/HADDR
+add wave /testbench_busybear/dut/uncore/HRESP
+add wave /testbench_busybear/dut/uncore/HREADY
+add wave /testbench_busybear/dut/uncore/HRDATA
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/SCOUNTEREN_REG
@@ -140,7 +148,7 @@ add wave /testbench_busybear/InstrWName
 #add wave -hex /testbench_busybear/dut/hart/ieu/dp/RdW
 #add wave -divider
 ##add ww
-#add wave -hex -r /testbench_busybear/*
+add wave -hex -r /testbench_busybear/*
 #
 #-- Set Wave Output Items 
 #TreeUpdate [SetDefaultTree]

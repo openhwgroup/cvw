@@ -32,16 +32,16 @@ module imem (
   output logic             InstrAccessFaultF);
 
  /* verilator lint_off UNDRIVEN */
-  logic [`XLEN-1:0] RAM[`TIMBASE>>(1+`XLEN/32):(`TIMRANGE-`TIMBASE)>>(1+`XLEN/32)];
-  logic [`XLEN-1:0] bootram[`BOOTTIMBASE>>(1+`XLEN/32):(`BOOTTIMRANGE-`BOOTTIMBASE)>>(1+`XLEN/32)];
+  logic [`XLEN-1:0] RAM[`TIMBASE>>(1+`XLEN/32):(`TIMRANGE+`TIMBASE)>>(1+`XLEN/32)];
+  logic [`XLEN-1:0] bootram[`BOOTTIMBASE>>(1+`XLEN/32):(`BOOTTIMRANGE+`BOOTTIMBASE)>>(1+`XLEN/32)];
  /* verilator lint_on UNDRIVEN */
-  logic [15:0] adrbits;
+  logic [28:0] adrbits;
   logic [`XLEN-1:0] rd;
 //  logic [15:0] rd2;
       
   generate
-    if (`XLEN==32) assign adrbits = AdrF[17:2];
-    else          assign adrbits = AdrF[18:3];
+    if (`XLEN==32) assign adrbits = AdrF[30:2];
+    else          assign adrbits = AdrF[31:3];
   endgenerate
 
   //assign #2 rd = RAM[adrbits]; // word aligned

@@ -204,9 +204,10 @@ module testbench_busybear();
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
 
   // this might need to change
-  always @(HWDATA or HADDR or HSIZE or HWRITE) begin
-    #1;
-    if (HWRITE) begin
+  //always @(HWDATA or HADDR or HSIZE or HWRITE) begin
+  always @(negedge HWRITE) begin
+    //#1;
+    if ($time != 0) begin
       if($feof(data_file_memW)) begin
         $display("no more memW data to read");
         `ERROR
@@ -337,7 +338,9 @@ module testbench_busybear();
   logic forcedInstr;
   logic [63:0] lastPCF;
   always @(dut.PCF or dut.hart.ifu.InstrF) begin
-    if (~reset && dut.hart.ifu.InstrF !== {32{1'bx}}) begin
+    if(~HWRITE) begin
+    #3;
+    if (~reset && dut.hart.ifu.InstrF[15:0] !== {16{1'bx}}) begin
       if (dut.PCF !== lastPCF) begin
         lastCheckInstrF = CheckInstrF;
         lastPC <= dut.PCF;
@@ -415,6 +418,7 @@ module testbench_busybear();
         end
       end
       lastPCF = dut.PCF;
+    end
     end
   end
 
