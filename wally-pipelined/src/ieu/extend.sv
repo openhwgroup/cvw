@@ -29,19 +29,26 @@ module extend (
   input  logic [31:7]       InstrD,
   input  logic [2:0]        ImmSrcD,
   output logic [`XLEN-1:0 ] ExtImmD);
+
+  logic [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
  
-  always_comb
-    case(ImmSrcD) 
-               // I-type 
-      3'b000:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:20]};  
-               // S-type (stores)
-      3'b001:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:25], InstrD[11:7]}; 
-               // B-type (branches)
-      3'b010:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[7], InstrD[30:25], InstrD[11:8], 1'b0}; 
-               // J-type (jal)
-      3'b011:   ExtImmD = {{(`XLEN-20){InstrD[31]}}, InstrD[19:12], InstrD[20], InstrD[30:21], 1'b0}; 
-               // U-type (lui, auipc)
-      3'b100:  ExtImmD = {{(`XLEN-31){InstrD[31]}}, InstrD[30:12], 12'b0}; 
-      default: ExtImmD = {(`XLEN-1){1'bx}}; // undefined
-    endcase             
+  generate
+    always_comb
+      case(ImmSrcD) 
+                // I-type 
+        3'b000:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:20]};  
+                // S-type (stores)
+        3'b001:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:25], InstrD[11:7]}; 
+                // B-type (branches)
+        3'b010:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[7], InstrD[30:25], InstrD[11:8], 1'b0}; 
+                // J-type (jal)
+        3'b011:   ExtImmD = {{(`XLEN-20){InstrD[31]}}, InstrD[19:12], InstrD[20], InstrD[30:21], 1'b0}; 
+                // U-type (lui, auipc)
+        3'b100:  ExtImmD = {{(`XLEN-31){InstrD[31]}}, InstrD[30:12], 12'b0}; 
+                // Store Conditional: zero offset
+        3'b101:  if (`A_SUPPORTED) ExtImmD = 0;
+                 else              ExtImmD = undefined;
+        default: ExtImmD = undefined; // undefined
+      endcase  
+  endgenerate           
 endmodule
