@@ -1,6 +1,8 @@
 **/work*
 **/wally_*.log
 
+.nfs*
+
 #vsim work files to ignore
 transcript
 vsim.wlf
