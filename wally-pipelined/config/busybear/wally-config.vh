@@ -64,7 +64,7 @@
 `define TIMBASE       32'h80000000
 `define TIMRANGE      32'h07FFFFFF
 `define BOOTTIMBASE   32'h00000000 //only needs to go from 0x1000 to 0x2FFF, extending to a power of 2
-`define BOOTTIMRANGE  32'h00004000
+`define BOOTTIMRANGE  32'h00003FFF
 `define CLINTBASE     32'h02000000
 `define CLINTRANGE    32'h0000BFFF
 //`define GPIOBASE    32'h10012000 // no GPIO in linux for now
