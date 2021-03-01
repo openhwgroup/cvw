@@ -37,8 +37,10 @@ mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -fillda
 mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/uncore/bootdtim/RAM
 mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/bootram
 mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/imem/bootram
-mem load -startaddress 0 -endaddress 16777216 -filltype value -fillradix hex -filldata 0 /testbench_busybear/RAM
-mem load -startaddress 0 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/RAM
+mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/maindtim/RAM
+mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/uncore/maindtim/RAM
+mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/RAM
+mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/imem/RAM
 
 view wave
 
@@ -57,7 +59,12 @@ add wave /testbench_busybear/lastCheckInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
-add wave -hex /testbench_busybear/readRAM
+add wave /testbench_busybear/dut/uncore/HSELBootTim
+add wave /testbench_busybear/dut/uncore/HSELTim
+add wave /testbench_busybear/dut/uncore/HREADTim
+add wave /testbench_busybear/dut/uncore/maindtim/HREADTim0
+add wave /testbench_busybear/dut/uncore/HREADYTim
+add wave /testbench_busybear/dut/uncore/HADDR
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
 #add wave -hex /testbench_busybear/dut/hart/priv/csr/SCOUNTEREN_REG
@@ -73,6 +80,7 @@ add wave -hex /testbench_busybear/dut/hart/MemRWM[1]
 add wave -hex /testbench_busybear/HWDATA
 add wave -hex /testbench_busybear/HRDATA
 add wave -hex /testbench_busybear/HADDR
+add wave -hex /testbench_busybear/readAdrExpected
 add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[1]
 add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[2]
 add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[3]

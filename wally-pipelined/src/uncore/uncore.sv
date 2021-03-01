@@ -95,8 +95,8 @@ module uncore (
   subwordwrite sww(.*);
 
   // tightly integrated memory
-  dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) maindtim (.HADDR(HADDR[18:0]), .*);
-  dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim (.HADDR(HADDR[18:0]), .MemRWtim(MemRWboottim), 
+  dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) maindtim (.*);
+  dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim (.MemRWtim(MemRWboottim), 
               .HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
 
   // memory-mapped I/O peripherals
@@ -110,11 +110,11 @@ module uncore (
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELTim}} & HREADTim) | ({`XLEN{HSELCLINT}} & HREADCLINT) | 
                      ({`XLEN{HSELBootTim}} & HREADBootTim) | ({`XLEN{HSELUART}} & HREADUART);
-  assign HRESP = HSELBootTim & HRESPBootTim | HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | HSELGPIO & HRESPGPIO | HSELUART & HRESPUART;
-  assign HREADY = HSELBootTim & HREADYBootTim | HSELTim & HREADYTim | HSELCLINT & HREADYCLINT | HSELGPIO & HREADYGPIO | HSELUART & HREADYUART;
+  assign HRESP = HSELBootTim & HRESPBootTim | HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | HSELUART & HRESPUART;
+  assign HREADY = HSELBootTim & HREADYBootTim | HSELTim & HREADYTim | HSELCLINT & HREADYCLINT |  HSELUART & HREADYUART;
 
   // Faults
-  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | HSELGPIO | HSELUART);
+  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | HSELUART);
 
  
 endmodule

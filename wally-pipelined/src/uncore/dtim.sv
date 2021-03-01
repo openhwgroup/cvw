@@ -28,7 +28,7 @@
 module dtim #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic [1:0]       MemRWtim,
-  input  logic [18:0]      HADDR, 
+  input  logic [31:0]      HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
   input  logic             HSELTim,
   output logic [`XLEN-1:0] HREADTim,
@@ -36,8 +36,8 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
 );
 
   //logic [`XLEN-1:0] RAM[0:65535];
-  logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE-BASE)>>1+(`XLEN/32)];
-  logic [18:0] HWADDR;
+  logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
+  logic [31:0] HWADDR;
   logic [`XLEN-1:0] HREADTim0;
 
 //  logic [`XLEN-1:0] write;
@@ -83,21 +83,21 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   generate
     if (`XLEN == 64)  begin
 //      always_ff @(negedge HCLK) 
-//        if (memwrite) RAM[HWADDR[17:3]] <= HWDATA;
+//        if (memwrite) RAM[HWADDR[31:3]] <= HWDATA;
       always_ff @(posedge HCLK) begin
-        //if (memwrite) RAM[HADDR[17:3]] <= HWDATA;  
+        //if (memwrite) RAM[HADDR[31:3]] <= HWDATA;  
         HWADDR <= HADDR;
-        HREADTim0 <= RAM[HADDR[17:3]];
-        if (memwrite && HREADYTim) RAM[HWADDR[17:3]] <= HWDATA;
+        HREADTim0 <= RAM[HADDR[31:3]];
+        if (memwrite && HREADYTim) RAM[HWADDR[31:3]] <= HWDATA;
       end
     end else begin 
 //      always_ff @(negedge HCLK) 
-//        if (memwrite) RAM[HWADDR[17:2]] <= HWDATA;
+//        if (memwrite) RAM[HWADDR[31:2]] <= HWDATA;
       always_ff @(posedge HCLK) begin
-        //if (memwrite) RAM[HADDR[17:2]] <= HWDATA;
+        //if (memwrite) RAM[HADDR[31:2]] <= HWDATA;
         HWADDR <= HADDR;  
-        HREADTim0 <= RAM[HADDR[17:2]];
-        if (memwrite && HREADYTim) RAM[HWADDR[17:2]] <= HWDATA;
+        HREADTim0 <= RAM[HADDR[31:2]];
+        if (memwrite && HREADYTim) RAM[HWADDR[31:2]] <= HWDATA;
       end
     end
   endgenerate
