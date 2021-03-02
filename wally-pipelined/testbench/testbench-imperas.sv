@@ -90,7 +90,6 @@ string tests64iNOc[] = {
                      "rv64i/I-MISALIGN_JMP-01","2000"
   };
  string tests64i[] = '{                 
-                     "rv64i/I-MISALIGN_LDST-01", "2010",
                      "rv64i/I-ADD-01", "3000",
                      "rv64i/I-ADDI-01", "3000",
                      "rv64i/I-ADDIW-01", "3000",

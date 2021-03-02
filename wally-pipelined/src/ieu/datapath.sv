@@ -47,9 +47,10 @@ module datapath (
   // Writeback stage signals
   input  logic             StallW, FlushW,
   input  logic             RegWriteW, 
+  input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
   input  logic [`XLEN-1:0] PCLinkW,
-  input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW,
+  input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -70,6 +71,7 @@ module datapath (
   // Memory stage signals
   logic [`XLEN-1:0] ALUResultM;
   // Writeback stage signals
+  logic [`XLEN-1:0] SCResultW;
   logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] ResultW;
 
@@ -107,5 +109,13 @@ module datapath (
   flopenrc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ~StallW, ALUResultM, ALUResultW);
   flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
-  mux5  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, MulDivResultW, ResultSrcW, ResultW);	
+  // handle Store Conditional result if atomic extension supported
+  generate 
+    if (`A_SUPPORTED)
+      assign SCResultW = SquashSCW ? {{(`XLEN-1){1'b0}}, 1'b1} : {{(`XLEN-1){1'b0}}, 1'b0};
+    else 
+      assign SCResultW = 0;
+  endgenerate
+
+  mux6  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
 endmodule
