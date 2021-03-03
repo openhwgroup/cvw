@@ -89,8 +89,8 @@ module ahblite (
     else          BusState <= #1 NextBusState;
 
   always_comb 
-    case (BusState) 
-      IDLE: if      (MemReadM)   NextBusState = MEMREAD;  // Memory has pirority over instructions
+    case (BusState)
+      IDLE: if      (MemReadM)   NextBusState = MEMREAD;  // Memory has priority over instructions
             else if (MemWriteM)  NextBusState = MEMWRITE;
             else if (InstrReadF) NextBusState = INSTRREAD;
             else                 NextBusState = IDLE;
