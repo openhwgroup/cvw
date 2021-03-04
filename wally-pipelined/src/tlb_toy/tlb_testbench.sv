@@ -1,4 +1,6 @@
-module testbench();
+`include "wally-config.vh"
+
+module tlb_testbench();
   logic clk, reset;
 
   // DUT inputs
