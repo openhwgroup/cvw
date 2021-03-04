@@ -407,9 +407,9 @@ string tests32i[] = {
         i = 0;
         errors = 0;
         if (`XLEN == 32)
-          testadr = tests[test+1].atohex()/4;
+          testadr = (`TIMBASE+tests[test+1].atohex())/4;
         else
-          testadr = tests[test+1].atohex()/8;
+          testadr = (`TIMBASE+tests[test+1].atohex())/8;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);

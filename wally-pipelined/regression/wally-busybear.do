@@ -37,8 +37,8 @@ mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -fillda
 mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/uncore/bootdtim/RAM
 mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/bootram
 mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/imem/bootram
-mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/maindtim/RAM
-mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/uncore/maindtim/RAM
+mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/dtim/RAM
+mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/uncore/dtim/RAM
 mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/RAM
 mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/imem/RAM
 
@@ -63,7 +63,7 @@ add wave -divider
 add wave /testbench_busybear/dut/uncore/HSELBootTim
 add wave /testbench_busybear/dut/uncore/HSELTim
 add wave /testbench_busybear/dut/uncore/HREADTim
-add wave /testbench_busybear/dut/uncore/maindtim/HREADTim0
+add wave /testbench_busybear/dut/uncore/dtim/HREADTim0
 add wave /testbench_busybear/dut/uncore/HREADYTim
 add wave -divider
 add wave /testbench_busybear/dut/uncore/HREADBootTim
