@@ -10,8 +10,8 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm,
-			 sumzero, nan, invalid, xinf, yinf, inf, wsign, invz, negsum, selsum1, psign);
+module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm, overflow,
+			 sumzero, nan, invalid, xinf, yinf, zinf, inf, wsign, invz, negsum, selsum1, psign);
 ////////////////////////////////////////////////////////////////////////////I
  
 	input					xsign;			// Sign of X 
@@ -23,11 +23,13 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm,
 	input					ps;				// sticky bit from product
 	input					killprod;		// Product forced to zero
 	input					rm;				// Round toward minus infinity
+	input					overflow;				// Round toward minus infinity
 	input					sumzero;		// Sum = O
 	input					nan;			// Some input is NaN
 	input					invalid;		// Result invalid
 	input					xinf;			// X = Inf
 	input					yinf;			// Y = Inf
+	input					zinf;			// Y = Inf
 	input					inf;			// Some input = Inf
 	output					wsign;			// Sign of W 
 	output					invz;			// Invert addend into adder
@@ -47,13 +49,13 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm,
 	assign psign = xsign ^ ysign;
 
 	// Invert addend if sign of Z is different from sign of product assign invz = zsign ^ psign;
-	assign invz = zsign ^ psign;
+	assign invz = (zsign ^ psign);
 	// Select +l mode for adder and compute if result must be negated
 	// This is done according to cases based on the sticky bit.
 
 	always @(invz or negsum0 or negsum1 or bs or ps)
 		begin
-			if (~invz) begin               // both inputs have same sign
+			if (~invz) begin               // both inputs have same sign //KEP if overflow 
 				negsum = 0;
 				selsum1 = 0;
 			end else if (bs) begin        // sticky bit set on addend
@@ -85,9 +87,8 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm,
 	//			 sum/difference shall be -0.  However, x+x = x-(-X) retains the same sign as x even when x is zero."
  
 	assign zerosign = (~invz && killprod) ? zsign : rm;
-	assign infsign = psign; //KEP 210112 keep the correct sign when result is infinity
-	// assign infsign = xinf ? (yinf ? psign : xsign) : yinf ? ysign : zsign;//original
-	assign wsign =invalid? 0 : (inf ? infsign:
-								(sumzero ? zerosign : psign ^ negsum));
+	assign infsign = zinf ? zsign : psign; //KEP 210112 keep the correct sign when result is infinity
+	//assign infsign = xinf ? (yinf ? psign : xsign) : yinf ? ysign : zsign;//original
+	assign wsign = invalid ? 0 : (inf ? infsign :(sumzero ? zerosign : psign ^ negsum));
 
 endmodule
