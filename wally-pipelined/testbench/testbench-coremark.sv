@@ -48,7 +48,7 @@ module testbench();
   
   // pick tests based on modes supported
   initial 
-  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.memfile", "1000"};
+  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.elf.memfile", "1000"};
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -74,7 +74,7 @@ module testbench();
       memfilename = tests[0];
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      for(j=1911; j < 65535; j = j+1)
+      for(j=18710; j < 65535; j = j+1)
         dut.uncore.dtim.RAM[j] = 64'b0;
       reset = 1; # 22; reset = 0;
     end

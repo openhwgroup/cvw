@@ -93,7 +93,7 @@ add wave -divider RAM
 add wave -hex -r /testbench/dut/uncore/dtim/RAM
 add wave -divider Misc
 add wave -divider
-add wave -hex -r /testbench/*
+#add wave -hex -r /testbench/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
@@ -110,6 +110,6 @@ set DefaultRadix hexadecimal
 
 -- Run the Simulation 
 #run 7402000
-run 2780
-#run -all
+#run 10500
+run -all
 #quit
