@@ -35,14 +35,14 @@ module add(r[105:0], s[105:0], t[157:0], sum[157:0],
 	wire		[157:0] 	sum0;			// sum of compound adder +0 mode
 	wire		[157:0] 	sum1;			// sum of compound adder +1 mode
 
-	// Invert addend if necessary 
+	// Invert addend if z's sign is diffrent from the product's sign
 
 	assign t2 = invz ? -t : t;
 	
 	// Zero out product if Z >> product or product really should be zero
 
-	assign r2 = ~proddenorm & killprod ? 106'b0 : r;
-	assign s2 = ~proddenorm & killprod ? 106'b0 : s;
+	assign r2 = killprod ? 106'b0 : r;
+	assign s2 = killprod ? 106'b0 : s;
 
 	// Compound adder
 	// Consists of 3:2 CSA followed by long compound CPA

@@ -13,31 +13,31 @@ module flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
 			 inf, nan, invalid, overflow, underflow, inexact);
 /////////////////////////////////////////////////////////////////////////////
 
-	input                  	xnan;        	// X is NaN 
-	input                  	ynan;        	// Y is NaN 
-	input                 	znan;       	// Z is NaN 
-	input                  	xinf;        	// X is Inf
-	input                 	yinf;       	// Y is Inf 
-	input                  	zinf;        	// Z is Inf
-	input                  	prodof;         // X*Y overflows exponent
-	input                  	sumof;          // X*Y + z underflows exponent
-	input                  	sumuf;          // X*Y + z underflows exponent
-	input					psign; 			// Sign of product
-	input					zsign; 			// Sign of z
-	input					xzero;			// x = 0
-	input					yzero;			// y = 0
-	input     	[1:0]  		v;				// R and S bits of result
-	output					inf;			// Some	source is Inf
-	output					nan;			// Some	source is NaN
-	output					invalid;		// Result is invalid	
-	output					overflow;		// Result overflowed	
-	output					underflow;		// Result underflowed	
-	output					inexact;		// Result is not an exact	number
+	input                  		xnan;        	// X is NaN 
+	input                  		ynan;        	// Y is NaN 
+	input                 		znan;       	// Z is NaN 
+	input                  		xinf;        	// X is Inf
+	input                 		yinf;       	// Y is Inf 
+	input                  		zinf;        	// Z is Inf
+	input                  		prodof;         // X*Y overflows exponent
+	input                  		sumof;          // X*Y + z underflows exponent
+	input                  		sumuf;          // X*Y + z underflows exponent
+	input				psign; 		// Sign of product
+	input				zsign; 		// Sign of z
+	input				xzero;		// x = 0
+	input				yzero;		// y = 0
+	input     	[1:0]  		v;		// R and S bits of result
+	output				inf;		// Some	source is Inf
+	output				nan;		// Some	source is NaN
+	output				invalid;	// Result is invalid	
+	output				overflow;	// Result overflowed	
+	output				underflow;	// Result underflowed	
+	output				inexact;	// Result is not an exact number
  
 	//   Internal nodes
 
-	wire					prodinf;		// X*Y larger than max possible
-	wire					suminf;			// X*Y+Z larger than max possible
+	wire				prodinf;	// X*Y larger than max possible
+	wire				suminf;		// X*Y+Z larger than max possible
 
 	// If any input is NaN, propagate the NaN 
 
@@ -46,12 +46,14 @@ module flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
 	// Same with infinity (inf - inf and O * inf don't propagate inf
 	//  but it's ok becaue illegal op takes higher precidence)
 
-	assign inf= xinf || yinf || zinf;
+	assign inf= xinf || yinf || zinf || suminf;//KEP added suminf 
+	//assign inf= xinf || yinf || zinf;//original
 
 	// Generate infinity checks
 
 	assign prodinf = prodof && ~xnan && ~ynan;
-	assign suminf = sumof && ~xnan && ~ynan && ~znan;
+	//KEP added if the product is infinity then sum is infinity
+	assign suminf = prodinf | sumof && ~xnan && ~ynan && ~znan;
 
 	// Set invalid flag for following cases:
 	//   1) Inf - Inf
@@ -59,8 +61,7 @@ module flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
 	//   3) Output = NaN (this is not part of the IEEE spec,  only 486 proj)
 
 	assign invalid = (xinf || yinf || prodinf) && zinf && (psign ^ zsign) ||
-					   xzero && yinf || yzero && xinf ||
-					   nan;
+					   xzero && yinf || yzero && xinf;// KEP remove case 3) above
 
 	// Set the overflow flag for the following cases:
 	//   1) Rounded multiply result would be out of bounds

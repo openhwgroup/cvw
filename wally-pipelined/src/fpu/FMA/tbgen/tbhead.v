@@ -23,7 +23,14 @@ module tb;
  wire 					inexact;
 
 integer fp;
-reg nan;
+reg wnan;
+reg xnan;
+reg ynan;
+reg znan;
+reg ansnan;
+reg		[105:0]		s;				//	partial product 2	
+reg		[51:0] 		xnorm;
+reg 		[51:0] 		ynorm;
 
 localparam period = 20;  
 fmac UUT(.xrf(xrf), .y(y), .zrf(zrf), .rn(rn), .rz(rz), .rp(rp), .rm(rm),
@@ -33,4 +40,4 @@ fmac UUT(.xrf(xrf), .y(y), .zrf(zrf), .rn(rn), .rz(rz), .rp(rp), .rm(rm),
 
 initial 
     begin
-    fp = $fopen("/home/kparry/code/FMAC/tbgen/results.dat","w");
+    fp = $fopen("/home/kparry/riscv-wally/wally-pipelined/src/fpu/FMA/tbgen/results.dat","w");

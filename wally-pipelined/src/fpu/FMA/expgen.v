@@ -19,7 +19,7 @@ module expgen(x[62:52], y[62:52], z[62:52],
 			   earlyres[62:52], earlyressel, bypsel[1], byppostnorm, 
 			   killprod,  sumzero, postnormalize, normcnt, infinity, 
 			   invalid, overflow, underflow, inf, 
-			   nan, xnan, ynan, znan, zdenorm, specialsel, 
+			   nan, xnan, ynan, znan, zdenorm, proddenorm, specialsel, 
 			   aligncnt, w[62:52], wbypass[62:52],
 			   prodof, sumof, sumuf, denorm0, ae[12:0]);
 /////////////////////////////////////////////////////////////////////////////
@@ -28,36 +28,37 @@ module expgen(x[62:52], y[62:52], z[62:52],
 	input     	[62:52]  	y;         		// Exponent of multiplicand y
 	input     	[62:52]  	z;           	// Exponent of addend z
 	input     	[62:52]	 	earlyres;  		// Result from other FPU block
-	input     				earlyressel;    // Select result from other block
+	input     			earlyressel;    // Select result from other block
 	input     	[1:1] 		bypsel;         // Bypass X or Z
-	input     				byppostnorm;    // Postnormalize bypassed result
-	input     				killprod;    	// Z >> product
-	input     				sumzero;     	// sum exactly equals zero 
-	input     				postnormalize;  // postnormalize rounded result
+	input     			byppostnorm;    // Postnormalize bypassed result
+	input     			killprod;    	// Z >> product
+	input     			sumzero;     	// sum exactly equals zero 
+	input     			postnormalize;  // postnormalize rounded result
 	input     	[8:0]  		normcnt;     	// normalization shift count 
-	input     				infinity;    	// generate infinity on overflow 
-	input     				invalid;     	// Result invalid
-	input     				overflow;    	// Result overflowed
-	input     				underflow;   	// Result underflowed 
-	input     				inf;			// Some input is infinity
-	input     				nan;			// Some input is NaN
-	input     				xnan;			// X is NaN
-	input     				ynan;			// Y is NaN
-	input     				znan;			// Z is NaN 
-	input     				zdenorm;		// Z is denorm
-	input     				specialsel;  	// Select special result
+	input     			infinity;    	// generate infinity on overflow 
+	input     			invalid;     	// Result invalid
+	input     			overflow;    	// Result overflowed
+	input     			underflow;   	// Result underflowed 
+	input     			inf;			// Some input is infinity
+	input     			nan;			// Some input is NaN
+	input     			xnan;			// X is NaN
+	input     			ynan;			// Y is NaN
+	input     			znan;			// Z is NaN 
+	input     			zdenorm;		// Z is denorm
+	input     			proddenorm;		// product is denorm
+	input     			specialsel;  	// Select special result
 	output		[11:0]   	aligncnt;       // shift count for alignment shifter
-	output		[62:52]     w;           	// Exponent of result
-	output		[62:52]     wbypass;     	// Prerounded exponent for bypass 
-	output					prodof;         // X*Y exponent out of bounds 
-	output					sumof;          // X*Y+Z exponent out of bounds 
-	output					sumuf;         // X*Y+Z exponent underflows 
-	output					denorm0;     	// exponent = 0 for denorm 
+	output		[62:52]    	w;           	// Exponent of result
+	output		[62:52]     	wbypass;     	// Prerounded exponent for bypass 
+	output				prodof;         // X*Y exponent out of bounds 
+	output				sumof;          // X*Y+Z exponent out of bounds 
+	output				sumuf;         // X*Y+Z exponent underflows 
+	output				denorm0;     	// exponent = 0 for denorm 
 	output		[12:0]		ae;				//exponent of multiply
 
 	//   Internal nodes
 
-	wire 	[12:0]			aetmp;				// Exponent of Multiply
+
 	wire 	[12:0]			aligncnt0;		// Shift count for alignment
 	wire 	[12:0]			aligncnt1;		// Shift count for alignment
 	wire 	[12:0]			be;				// Exponent of multiply
@@ -72,9 +73,11 @@ module expgen(x[62:52], y[62:52], z[62:52],
 	// Note that the exponent does not have to be incremented on a postrounding
 	//   normalization of X because the mantissa was already increased.   Report
 	//   if exponent is out of bounds 
-	assign ae = x + y  - 1023; 
 
-	assign prodof = (ae > 2046 && ~ae[12] && ~killprod);
+
+	assign ae = x + y  - 1023;
+
+	assign prodof = (ae > 2046 && ~ae[12]);
 
 	// Compute alignment shift count
 	// Adjust for postrounding normalization of Z.
@@ -82,8 +85,10 @@ module expgen(x[62:52], y[62:52], z[62:52],
 	// check if a round overflows is shorter than the actual round and
 	// is masked by the bypass mux and two 10 bit adder delays.
 
-	assign aligncnt0 = z - ae[10:0] + 13'b0;
-	assign aligncnt1 = z - ae[10:0] + 13'b1;
+	assign aligncnt0 = z - ae + 13'b0;// KEP use all of ae
+	assign aligncnt1 = z - ae + 13'b1;	
+	//assign aligncnt0 = z - ae[10:0] + 13'b0;//original
+	//assign aligncnt1 = z - ae[10:0] + 13'b1;
 	assign aligncnt = bypsel[1] && byppostnorm ? aligncnt1 : aligncnt0;
 
 	// Select exponent (usually from product except in case of huge addend)
@@ -118,13 +123,17 @@ module expgen(x[62:52], y[62:52], z[62:52],
 	// rounding mode.  NaNs are propagated or generated.
 
 	assign specialres = earlyressel ? earlyres :
-					invalid ? nanres :
+					invalid | nan ? nanres : // KEP added nan
 					overflow ? infinityres : 
 					inf ? 11'b11111111111 :
 					underflow ? 11'b0 : 11'bx;
 
 	assign infinityres = infinity ? 11'b11111111111 : 11'b11111111110;
 
+	// IEEE 754-2008 section 6.2.3 states:
+	// "If two or more inputs are NaN, then the payload of the resulting NaN should be 
+	// identical to the payload of one of the input NaNs if representable in the destination
+	// format. This standard does not specify which of the input NaNs will provide the payload."
 	assign nanres = xnan ? x : (ynan ? y : (znan? z : 11'b11111111111));
 
 	// A mux selects the early result from other FPU blocks or the 
