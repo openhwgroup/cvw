@@ -31,7 +31,7 @@ module twoBitPredictor
   #(parameter int Depth = 10
     )
   (input logic clk,
-   input logic reset,
+   input logic 		   reset,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0] 	   Prediction,
    // update
@@ -42,6 +42,8 @@ module twoBitPredictor
 
   logic [Depth-1:0] 	   LookUpPCIndex, UpdatePCIndex;
   logic [1:0] 		   PredictionMemory;
+  logic 		   DoForwarding, DoForwardingF;
+  logic [1:0] 		   UpdatePredictionF;
   
 
   // hashing function for indexing the PC
@@ -63,6 +65,20 @@ module twoBitPredictor
 				.BitWEN1(2'b11));
 
   // need to forward when updating to the same address as reading.
-  assign Prediction = (UpdatePC == LookUpPC) ? UpdatePrediction : PredictionMemory;
+  // first we compare to see if the update and lookup addreses are the same
+  assign DoForwarding = UpdatePCIndex == LookUpPCIndex;
+
+  // register the update value and the forwarding signal into the Fetch stage
+  flopr #(1) DoForwardingReg(.clk(clk),
+			     .reset(reset),
+			     .d(DoForwarding),
+			     .q(DoForwardingF));
+  
+  flopr #(2) UpdatePredictionReg(.clk(clk),
+				 .reset(reset),
+				 .d(UpdatePrediction),
+				 .q(UpdatePredictionF));
+
+  assign Prediction = DoForwardingF ? UpdatePredictionF : PredictionMemory;
   
 endmodule

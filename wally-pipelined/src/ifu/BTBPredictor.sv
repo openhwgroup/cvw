@@ -80,9 +80,8 @@ module BTBPredictor
   assign Valid = ValidBits[LookUpPCIndexQ];
 
   // the BTB contains the target address.
-  // *** future version may contain the instruction class, a tag or partial tag,
-  // and other indirection branch data.
   // Another optimization may be using a PC relative address.
+  // *** need to add forwarding.
 
   SRAM2P1R1W #(Depth, `XLEN+4) memory(.clk(clk),
 				      .reset(reset),
