@@ -36,6 +36,7 @@
 `define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
 `define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 `define ZCSR_SUPPORTED 1
+`define COUNTERS 31
 `define ZCOUNTERS_SUPPORTED 1
 // N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
 //`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
