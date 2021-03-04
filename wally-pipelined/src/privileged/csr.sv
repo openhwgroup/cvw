@@ -28,10 +28,10 @@
 
 module csr (
   input  logic             clk, reset,
-  input  logic             FlushW,
+  input  logic             FlushW, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic             CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
@@ -102,14 +102,16 @@ module csr (
 
       // merge CSR Reads
       assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 
-      floprc #(`XLEN) CSRValWReg(clk, reset, FlushW, CSRReadValM, CSRReadValW);
+      // *** add W stall 2/22/21 dh to try fixing memory stalls
+//      floprc #(`XLEN) CSRValWReg(clk, reset, FlushW, CSRReadValM, CSRReadValW);
+      flopenrc #(`XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
       // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
       assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 && PrivilegeModeW != `M_MODE) ||
                                         (CSRAdrM[9:8] == 2'b01 && PrivilegeModeW == `U_MODE);
       assign IllegalCSRAccessM = (IllegalCSRCAccessM && IllegalCSRMAccessM && 
         IllegalCSRSAccessM && IllegalCSRUAccessM  && IllegalCSRNAccessM ||
-        InsufficientCSRPrivilegeM) && CSRWriteM;
+        InsufficientCSRPrivilegeM) && CSRReadM;
     end else begin // CSRs not implemented
       assign STATUS_MPP = 2'b11;
       assign STATUS_SPP = 2'b0;
@@ -130,7 +132,7 @@ module csr (
       assign STATUS_SIE = 0;
       assign FRM_REGW = 0;
       assign CSRReadValM = 0;
-      assign IllegalCSRAccessM = CSRWriteM;
+      assign IllegalCSRAccessM = CSRReadM;
     end
   endgenerate
 endmodule
