@@ -87,6 +87,9 @@ module wallypipelinedhart (
   logic       FloatRegWriteW;
   logic       SquashSCW;
 
+  // memory management unit signals
+  logic             ITLBMissF, ITLBHitF;
+
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
   logic [2:0]       Funct3M;

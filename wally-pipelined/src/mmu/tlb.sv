@@ -49,10 +49,11 @@
 /* *** TODO:
  * - add LRU algorithm (select the write index based on which entry was used
  *   least recently)
+ * - refactor modules into multiple files
  */
 
 // The TLB will have 2**ENTRY_BITS total entries
-module tlb_toy #(parameter ENTRY_BITS = 3) (
+module tlb #(parameter ENTRY_BITS = 3) (
   input              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
@@ -223,7 +224,7 @@ endmodule
 
 module tlb_rand #(parameter ENTRY_BITS = 3) (
   input        clk, reset,
-  output [ENTRY_BITS:0] WriteIndex
+  output [ENTRY_BITS-1:0] WriteIndex
 );
 
   logic [31:0] data;
