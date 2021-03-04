@@ -2,18 +2,21 @@ module testbench();
   logic clk, reset;
 
   // DUT inputs
-  logic [31:0] PCF;
-  logic [31:0] PageTableEntryF;
-  logic ITLBWriteF, ITLBFlushF;
+  logic [`XLEN-1:0] SATP;
+  logic [`XLEN-1:0] VirtualAddress;
+  logic [`XLEN-1:0] PageTableEntryWrite;
+  logic TLBWrite, TLBFlush;
 
   // DUT outputs
-  logic [31:0] PCPF;
-  logic ITLBMissF, ITLBHitF;
+  logic [`XLEN-1:0] PhysicalAddress;
+  logic TLBMiss, TLBHit;
 
   // Testbench signals
   logic [33:0] expected;
   logic [31:0] vectornum, errors;
   logic [99:0] testvectors[10000:0];
+
+  assign SATP = {1'b1, 31'b0};
 
   // instantiate device under test
   tlb_toy dut(.*);
@@ -31,17 +34,17 @@ module testbench();
 
   // apply test vectors on rising edge of clk
   always @(posedge clk) begin
-    #1; {PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF, expected} = testvectors[vectornum];
+    #1; {VirtualAddress, PageTableEntryWrite, TLBWrite, TLBFlush, expected} = testvectors[vectornum];
   end
 
   // check results on falling edge of clk
   always @(negedge clk)
     if (~reset) begin // skip during reset
-      if ({PCPF, ITLBMissF, ITLBHitF} !== expected) begin // check result
-      $display("Error: PCF = %b, write = %b, data = %b, flush = %b", PCF,
-        ITLBWriteF, PageTableEntryF, ITLBFlushF);
+      if ({PhysicalAddress, TLBMiss, TLBHit} !== expected) begin // check result
+      $display("Error: VirtualAddress = %b, write = %b, data = %b, flush = %b", VirtualAddress,
+        TLBWrite, PageTableEntryWrite, TLBFlush);
       $display(" outputs = %b %b %b (%b expected)",
-        PCPF, ITLBMissF, ITLBHitF, expected);
+        PhysicalAddress, TLBMiss, TLBHit, expected);
       errors = errors + 1;
     end
     vectornum = vectornum + 1;
