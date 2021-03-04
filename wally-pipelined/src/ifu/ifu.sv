@@ -52,7 +52,7 @@ module ifu (
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM,
-  // TLB Management
+  // TLB management
   //input logic  [`XLEN-1:0] PageTableEntryF,
   //input logic              ITLBWriteF, ITLBFlushF,
   // *** satp value will come from CSRs
