@@ -32,7 +32,6 @@ module testbench();
   logic [`XLEN-1:0] signature[0:10000];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests[];
   logic [`AHBW-1:0] HRDATAEXT;
@@ -62,9 +61,10 @@ module testbench();
   wallypipelinedsoc dut(.*); 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
+                dut.hart.ifu.InstrF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
-                InstrDName, InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.InstrM, dut.hart.ifu.InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
   // initialize tests
   initial
     begin
@@ -86,13 +86,13 @@ endmodule
 /* verilator lint_on WIDTH */
 module instrTrackerTB(
   input  logic            clk, reset, FlushE,
-  input  logic [31:0]     InstrD,
+  input  logic [31:0]     InstrF, InstrD,
   input  logic [31:0]     InstrE, InstrM,
-  output logic [31:0]     InstrW,
-  output string           InstrDName, InstrEName, InstrMName, InstrWName);
+  input  logic [31:0]     InstrW,
+  output string           InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
-  flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+  instrNameDecTB fdec(InstrF, InstrFName);
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
   instrNameDecTB mdec(InstrM, InstrMName);
