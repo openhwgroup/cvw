@@ -53,7 +53,7 @@ module imem (
   generate 
     if (`XLEN==32) begin
       assign InstrF = AdrF[1] ? {rd2[15:0], rd[31:16]} : rd;
-      assign InstrAccessFaultF = ~&(({AdrF,0} ~^ `TIMBASE) | `TIMRANGE);
+      assign InstrAccessFaultF = ~&(({AdrF,1'b0} ~^ `TIMBASE) | `TIMRANGE);
     end else begin
       assign InstrF = AdrF[2] ? (AdrF[1] ? {rd2[15:0], rd[63:48]} : rd[63:32])
                           : (AdrF[1] ? rd[47:16] : rd[31:0]);
