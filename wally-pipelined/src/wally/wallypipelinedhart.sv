@@ -89,6 +89,7 @@ module wallypipelinedhart (
 
   // memory management unit signals
   logic             ITLBMissF, ITLBHitF;
+  logic             DTLBMissM, DTLBHitM;
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;

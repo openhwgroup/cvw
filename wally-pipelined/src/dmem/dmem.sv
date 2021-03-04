@@ -48,13 +48,28 @@ module dmem (
   // faults
   input  logic             DataAccessFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
-  output logic             StoreMisalignedFaultM, StoreAccessFaultM
+  output logic             StoreMisalignedFaultM, StoreAccessFaultM,
+  // TLB management
+  //input logic  [`XLEN-1:0] PageTableEntryM,
+  //input logic              DTLBWriteM, DTLBFlushM,
+  // *** satp value will come from CSRs
+  // input logic [`XLEN-1:0] SATP,
+  output logic             DTLBMissM, DTLBHitM
 );
 
   logic             SquashSCM;
 
   // Initially no MMU
-  assign MemPAdrM = MemAdrM;
+  // *** temporary hack until we can figure out how to get actual satp value
+  // from priv unit -- Thomas F
+  logic [`XLEN-1:0] SATP = '0;
+  // *** temporary hack until walker is hooked up -- Thomas F
+  logic  [`XLEN-1:0] PageTableEntryM = '0;
+  logic DTLBFlushM = '0;
+  logic DTLBWriteM = '0;
+  tlb #(3) dtlb(clk, reset, SATP, MemAdrM, PageTableEntryM, DTLBWriteM,
+    DTLBFlushM, MemPAdrM, DTLBMissM, DTLBHitM);
+  //assign MemPAdrM = MemAdrM;
 
 	// Determine if an Unaligned access is taking place
 	always_comb
