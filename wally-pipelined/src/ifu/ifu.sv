@@ -35,6 +35,7 @@ module ifu (
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
+  output logic             ICacheStallF,
   // Decode  
   // Execute
   input  logic             PCSrcE, 
@@ -51,23 +52,23 @@ module ifu (
   input  logic             IllegalBaseInstrFaultD,
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
+  output logic [`XLEN-1:0] InstrMisalignedAdrM,
   // TLB management
   //input logic  [`XLEN-1:0] PageTableEntryF,
   //input logic              ITLBWriteF, ITLBFlushF,
   // *** satp value will come from CSRs
   // input logic [`XLEN-1:0] SATP,
-  output logic             ITLBMissF, ITLBHitF,
-  output logic [`XLEN-1:0] InstrMisalignedAdrM
+  output logic             ITLBMissF, ITLBHitF
 );
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
-  logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
-  logic PrivilegedChangePCM;
-  logic IllegalCompInstrD;
+  logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
+  logic             PrivilegedChangePCM;
+  logic             IllegalCompInstrD;
   logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM, PCPF;
-  logic        CompressedF;
-  logic [31:0]     InstrRawD, InstrE, InstrW;
-  logic [31:0]     nop = 32'h00000013; // instruction for NOP
+  logic             CompressedF;
+  logic [31:0]      InstrRawD, InstrE, InstrW;
+  logic [31:0]      nop = 32'h00000013; // instruction for NOP
   logic [`XLEN-1:0] ITLBInstrPAdrF, ICacheInstrPAdrF;
 
   // *** temporary hack until we can figure out how to get actual satp value
@@ -87,7 +88,7 @@ module ifu (
 
   // jarred 2021-03-04 Add instrution cache block to remove rd2
   assign PCPF = PCF; // Temporary workaround until iTLB is live
-  icache ic(clk, reset, StallF, StallD, FlushD, PCPF, InstrInF, ICacheInstrPAdrF, InstrReadF, InstrRawD);
+  icache ic(clk, reset, StallF, StallD, FlushD, PCPF, InstrInF, ICacheInstrPAdrF, InstrReadF, CompressedF, ICacheStallF, InstrRawD);
   // Prioritize the iTLB for reads if it wants one
   mux2 #(`XLEN) instrPAdrMux(ICacheInstrPAdrF, ITLBInstrPAdrF, ITLBMissF, InstrPAdrF);
 
@@ -95,13 +96,11 @@ module ifu (
 
   mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
-  assign CompressedF = 0; // is it a 16-bit compressed instruction? TODO Fix this
   assign PCPlusUpperF = PCF[`XLEN-1:2] + 1; // add 4 to PC
-  
   // choose PC+2 or PC+4
   always_comb
     if (CompressedF) // add 2

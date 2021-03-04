@@ -34,6 +34,8 @@ module icache(
   input  logic [`XLEN-1:0] InstrInF,
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
+  output logic             CompressedF,
+  output logic             ICacheStallF,
   // Decode
   output logic [31:0]     InstrRawD
 );
@@ -46,7 +48,7 @@ module icache(
 
     flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
     flopenr #(1)  delayStateFlop(clk, reset, ~StallF, (DelayF & ~DelaySideF) ? 1'b1 : 1'b0 , DelaySideF);
-    flopenr #(16) halfInstrFlop(clk, reset, DelayF, MisalignedHalfInstrF, MisalignedHalfInstrD);
+    flopenr #(16) halfInstrFlop(clk, reset, DelayF & ~StallF, MisalignedHalfInstrF, MisalignedHalfInstrD);
 
     flopenr #(32) instrFlop(clk, reset, ~StallF, InstrF, AlignedInstrD);
 
@@ -69,15 +71,20 @@ module icache(
     // machinery to swizzle bits.
     generate
         if (`XLEN == 32) begin
-            assign InstrF = PCPF[1] ? 32'b0 : InstrInF;
+            assign InstrF = PCPF[1] ? {16'b0, InstrInF[31:16]} : InstrInF;
             assign DelayF = PCPF[1];
             assign MisalignedHalfInstrF = InstrInF[31:16];
         end else begin
-            assign InstrF = PCPF[2] ? (PCPF[1] ? 64'b0  : InstrInF[63:32]) : (PCPF[1] ? InstrInF[47:16] : InstrInF[31:0]);
+            assign InstrF = PCPF[2] ? (PCPF[1] ? {16'b0, InstrInF[63:48]}  : InstrInF[63:32]) : (PCPF[1] ? InstrInF[47:16] : InstrInF[31:0]);
             assign DelayF = PCPF[1] && PCPF[2];
             assign MisalignedHalfInstrF = InstrInF[63:48];
         end
     endgenerate
+    assign ICacheStallF = DelayF & ~DelaySideF;
+
+    // Detect if the instruction is compressed
+    // TODO Low-hanging optimization, don't delay if compressed
+    assign CompressedF = DelaySideF ? (MisalignedHalfInstrD[1:0] != 2'b11) : (InstrF[1:0] != 2'b11);
 
     // Pick the correct output, depending on whether we have to assemble this
     // instruction from two reads or not.
