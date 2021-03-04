@@ -18,12 +18,12 @@ module normalize(sum[157:0], normcnt, sumzero, bs, ps, denorm0, zdenorm, v[53:0]
 /////////////////////////////////////////////////////////////////////////////
 	input     	[157:0]  	sum;            // sum
 	input		[8:0] 		normcnt;     	// normalization shift count
-	input					sumzero;		// sum is zero
-	input					bs;				// sticky bit for addend
-	input					ps;				// sticky bit for product
-	input					denorm0;		// exponent = -1023
-	input                  	zdenorm;        // Input Z is denormalized
-	output		[53:0]		v;				// normalized sum, R, S bits
+	input				sumzero;	// sum is zero
+	input				bs;		// sticky bit for addend
+	input				ps;		// sticky bit for product
+	input				denorm0;	// exponent = -1023
+	input                  		zdenorm;        // Input Z is denormalized
+	output		[53:0]		v;		// normalized sum, R, S bits
 
 	// Internal nodes
 
