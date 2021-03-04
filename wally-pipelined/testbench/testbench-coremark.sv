@@ -66,6 +66,7 @@ module testbench();
                 dut.hart.ifu.InstrM, dut.hart.ifu.InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
   // initialize tests
+  integer j;
   initial
     begin
       totalerrors = 0;
@@ -73,6 +74,8 @@ module testbench();
       memfilename = tests[0];
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
+      for(j=1911; j < 65535; j = j+1)
+        dut.uncore.dtim.RAM[j] = 64'b0;
       reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests
