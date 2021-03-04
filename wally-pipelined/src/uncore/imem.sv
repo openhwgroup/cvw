@@ -33,7 +33,9 @@ module imem (
 
  /* verilator lint_off UNDRIVEN */
   logic [`XLEN-1:0] RAM[`TIMBASE>>(1+`XLEN/32):(`TIMRANGE+`TIMBASE)>>(1+`XLEN/32)];
+  `ifdef BOOTTIMBASE
   logic [`XLEN-1:0] bootram[`BOOTTIMBASE>>(1+`XLEN/32):(`BOOTTIMRANGE+`BOOTTIMBASE)>>(1+`XLEN/32)];
+  `endif
  /* verilator lint_on UNDRIVEN */
   logic [28:0] adrbits;
   logic [`XLEN-1:0] rd;
@@ -44,15 +46,21 @@ module imem (
     else          assign adrbits = AdrF[31:3];
   endgenerate
 
-  //assign #2 rd = RAM[adrbits]; // word aligned
+  `ifndef BOOTTIMBASE
+  assign #2 rd = RAM[adrbits]; // word aligned
+  `else
   assign #2 rd = (AdrF < (`TIMBASE >> 1)) ? bootram[adrbits] : RAM[adrbits]; // busybear: 2 memory options
+  `endif
 
   // hack right now for unaligned 32-bit instructions
   // eventually this will need to cause a stall like a cache miss
   // when the instruction wraps around a cache line
   // could be optimized to only stall when the instruction wrapping is 32 bits
-  //assign #2 rd2 = RAM[adrbits+1][15:0];
+  `ifndef BOOTTIMBASE
+  assign #2 rd2 = RAM[adrbits+1][15:0];
+  `else
   assign #2 rd2 = (AdrF < (`TIMBASE >> 1)) ? bootram[adrbits+1][15:0] : RAM[adrbits+1][15:0]; //busybear: 2 memory options
+  `endif
   generate 
     if (`XLEN==32) begin
       assign InstrF = AdrF[1] ? {rd2[15:0], rd[31:16]} : rd;
@@ -60,8 +68,11 @@ module imem (
     end else begin
       assign InstrF = AdrF[2] ? (AdrF[1] ? {rd2[15:0], rd[63:48]} : rd[63:32])
                           : (AdrF[1] ? rd[47:16] : rd[31:0]);
+      `ifndef BOOTTIMBASE
+      assign InstrAccessFaultF = |AdrF[`XLEN-1:32] | ~&({AdrF[31:1],1'b0} ~^ `TIMBASE | `TIMRANGE);
+      `else
       assign InstrAccessFaultF = 0; //busybear: for now, i know we're not doing this
-      //assign InstrAccessFaultF = |AdrF[`XLEN-1:32] | ~&({AdrF[31:1],1'b0} ~^ `TIMBASE | `TIMRANGE);
+      `endif
     end
   endgenerate
 endmodule

@@ -58,30 +58,42 @@ module uncore (
   );
   
   logic [`XLEN-1:0] HWDATA;
-  logic [`XLEN-1:0] HREADBootTim, HREADTim, HREADCLINT, HREADGPIO, HREADUART;
-  logic            HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
-  logic            HRESPBootTim, HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
-  logic            HREADYBootTim, HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
+  logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADGPIO, HREADUART;
+  logic            HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
+  logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
+  logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
   logic [1:0]      MemRW;
-  logic [1:0]      MemRWboottim, MemRWtim, MemRWclint, MemRWgpio, MemRWuart;
+  logic [1:0]      MemRWtim, MemRWclint, MemRWgpio, MemRWuart;
+  `ifdef BOOTTIMBASE
+  logic [`XLEN-1:0] HREADBootTim; 
+  logic            HSELBootTim, HRESPBootTim, HREADYBootTim;
+  logic [1:0]      MemRWboottim;
+  `endif
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
   
 
   // AHB Address decoder
   adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
+  `ifdef BOOTTIMBASE
   adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
+  `endif
   adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
-  // Busybear: for now, leaving out gpio since OVPsim doesn't seem to have it
-  //adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
+  `ifdef GPIOBASE
+  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
+  `endif
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
   
   // Enable read or write based on decoded address
   assign MemRW = {~HWRITE, HWRITED};
+  `ifdef BOOTTIMBASE
   assign MemRWboottim = MemRW & {2{HSELBootTim}};
+  `endif
   assign MemRWtim = MemRW & {2{HSELTim}};
   assign MemRWclint = MemRW & {2{HSELCLINT}};
-  //assign MemRWgpio = MemRW & {2{HSELGPIO}};
+  `ifdef GPIOBASE
+  assign MemRWgpio = MemRW & {2{HSELGPIO}};
+  `endif
   assign MemRWuart = MemRW & {2{HSELUART}};
 /*  always_ff @(posedge HCLK) begin
     HADDRD <= HADDR;
@@ -95,13 +107,17 @@ module uncore (
   subwordwrite sww(.*);
 
   // tightly integrated memory
-  dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) maindtim (.*);
+  dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) dtim (.*);
+  `ifdef BOOTTIMBASE
   dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim (.MemRWtim(MemRWboottim), 
               .HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+  `endif
 
   // memory-mapped I/O peripherals
   clint clint(.HADDR(HADDR[15:0]), .*);
-  //gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
+  `ifdef GPIOBASE
+  gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
+  `endif
   uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
             .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
             .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
@@ -109,12 +125,39 @@ module uncore (
   // mux could also include external memory  
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELTim}} & HREADTim) | ({`XLEN{HSELCLINT}} & HREADCLINT) | 
-                     ({`XLEN{HSELBootTim}} & HREADBootTim) | ({`XLEN{HSELUART}} & HREADUART);
-  assign HRESP = HSELBootTim & HRESPBootTim | HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | HSELUART & HRESPUART;
-  assign HREADY = HSELBootTim & HREADYBootTim | HSELTim & HREADYTim | HSELCLINT & HREADYCLINT |  HSELUART & HREADYUART;
+                    `ifdef GPIOBASE
+                     ({`XLEN{HSELGPIO}} & HREADGPIO) |
+                    `endif
+                    `ifdef BOOTTIMBASE
+                     ({`XLEN{HSELBootTim}} & HREADBootTim) |
+                    `endif
+                     ({`XLEN{HSELUART}} & HREADUART);
+  assign HRESP = HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | 
+                 `ifdef GPIOBASE
+                 HSELGPIO & HRESPGPIO | 
+                 `endif
+                 `ifdef BOOTTIMBASE
+                 HSELBootTim & HRESPBootTim | 
+                 `endif
+                 HSELUART & HRESPUART;
+  assign HREADY = HSELTim & HREADYTim | HSELCLINT & HREADYCLINT | 
+                  `ifdef GPIOBASE
+                  HSELGPIO & HREADYGPIO | 
+                  `endif
+                  `ifdef BOOTTIMBASE
+                  HSELBootTim & HREADYBootTim | 
+                  `endif
+                  HSELUART & HREADYUART;
 
   // Faults
-  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | HSELUART);
+  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | 
+                            `ifdef GPIOBASE
+                            HSELGPIO |
+                            `endif
+                            `ifdef BOOTTIMBASE
+                            HSELBootTim |
+                            `endif
+                            HSELUART);
 
  
 endmodule

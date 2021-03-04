@@ -35,7 +35,6 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   output logic             HRESPTim, HREADYTim
 );
 
-  //logic [`XLEN-1:0] RAM[0:65535];
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   logic [31:0] HWADDR;
   logic [`XLEN-1:0] HREADTim0;
