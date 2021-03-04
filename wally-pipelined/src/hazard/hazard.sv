@@ -29,7 +29,7 @@ module hazard(
   // Detect hazards
   input  logic       PCSrcE, CSRWritePendingDEM, RetM, TrapM,
   input  logic       LoadStallD, MulDivStallD, CSRRdStallD,
-  input  logic       InstrStall, DataStall,
+  input  logic       InstrStall, DataStall, ICacheStallF,
   // Stall & flush outputs
   output logic       StallF, StallD, StallE, StallM, StallW,
   output logic       FlushD, FlushE, FlushM, FlushW

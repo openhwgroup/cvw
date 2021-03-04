@@ -91,6 +91,9 @@ module wallypipelinedhart (
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
 
+  // ICache stalls
+  logic             ICacheStallF;
+
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
   logic [2:0]       Funct3M;
