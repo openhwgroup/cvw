@@ -49,7 +49,7 @@ module csrc (
     for (i=0; i<= `COUNTERS; i = i+1) begin 
         if (i !==1) begin
             MHPMCOUNTER[i] = 12'hB00 + i;  // not sure this addition is legit 
-            MHPMCOUNTERH[i] = 12'hB83 + i; 
+            MHPMCOUNTERH[i] = 12'hB80 + i; 
             HPMCOUNTER[i] = 12'hC00 + i;
             HPMCOUNTERH[i] = 12'hC80 + i;
             MHPEVENT[i] = 12'h320 + i; // MHPEVENT[0] = MCOUNTERINHIBIT
@@ -72,6 +72,8 @@ module csrc (
             logic [`COUNTERS:0][`XLEN-1:0] NextHPMCOUNTERM;
             logic [`COUNTERS:0]  WriteHPMCOUNTERM;
             logic [4:0]  CounterNumM;
+
+            assign CounterNumM = CSRAdrM[4:0]; // which counter to read? *** 
 
             for (j=0; j<= `COUNTERS; j = j+1) begin 
                 // Write enables
@@ -100,62 +102,82 @@ module csrc (
                     flopr   #(32) HPMCOUNTERreg_j(clk, reset, NextHPMCOUNTERM[j], HPMCOUNTER_REGW[j][31:0]);
                     flopr   #(32) HPMCOUNTERHreg_j(clk, reset, NextHPMCOUNTERHM[j], HPMCOUNTER_REGW[j][63:32]);
                 end
+            end // end for 
 
-                // eventually move TIME and TIMECMP to the CLINT
-                //  run TIME off asynchronous reference clock
-                //  synchronize write enable to TIME
-                //  four phase handshake to synchronize reads from TIME
+            // eventually move TIME and TIMECMP to the CLINT
+            //  run TIME off asynchronous reference clock
+            //  synchronize write enable to TIME
+            //  four phase handshake to synchronize reads from TIME
 
-                // interrupt on timer compare
-                // ability to disable optional CSRs
-                
-                // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
-                assign CounterNumM = CSRAdrM[4:0]; // which counter to read? *** 
-                if (`XLEN==64) begin // 64-bit counter reads
-                always_comb 
-                    if (PrivilegeModeW == `M_MODE || 
-                        MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
-                    IllegalCSRCAccessM = 0;
-                    case (CSRAdrM) 
-                        MHPMCOUNTER[j]: CSRCReadValM = HPMCOUNTER_REGW[j];
-                        HPMCOUNTER[j]:  CSRCReadValM = HPMCOUNTER_REGW[j];
-                        default:   begin
-                            CSRCReadValM = 0;
-                            IllegalCSRCAccessM = 1;
-                        end
-                    endcase
+            // interrupt on timer compare
+            // ability to disable optional CSRs
+            
+            // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
+            if (`XLEN==64) begin // 64-bit counter reads
+            always_comb 
+                if (PrivilegeModeW == `M_MODE || 
+                    MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
+
+                    if (CSRAdrM[11:5] == MHPMCOUNTER[0][11:5] || CSRAdrM[11:5] == HPMCOUNTER[0][11:5]) begin
+                        CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM[4:0]];
+                        IllegalCSRCAccessM = 0;
                     end 
+                    // //case (CSRAdrM) 
+                    //     MHPMCOUNTER[j]: CSRCReadValM = HPMCOUNTER_REGW[j];
+                    //     HPMCOUNTER[j]:  CSRCReadValM = HPMCOUNTER_REGW[j];
+                    //     default:   begin
+                    //         CSRCReadValM = 0;
+                    //         IllegalCSRCAccessM = 1;
+                    //     end
+                    // endcase
+                    // end 
                     else begin 
                         IllegalCSRCAccessM = 1; // no privileges for this csr
                         CSRCReadValM = 0;
-                    end
+                    end 
+                end 
+                else begin 
+                    IllegalCSRCAccessM = 1; // no privileges for this csr
+                    CSRCReadValM = 0;
                 end
-                else begin  // 32-bit counter reads
-                always_comb 
-                    if (PrivilegeModeW == `M_MODE || 
-                        MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
-                    IllegalCSRCAccessM = 0;
-                    case (CSRAdrM) 
-                        MHPMCOUNTER[j]: CSRCReadValM = HPMCOUNTER_REGW[j][31:0];
-                        HPMCOUNTER[j]:  CSRCReadValM = HPMCOUNTER_REGW[j][31:0];
-                        MHPMCOUNTERH[j]: CSRCReadValM = HPMCOUNTER_REGW[j][63:32];
-                        HPMCOUNTERH[j]:  CSRCReadValM = HPMCOUNTER_REGW[j][63:32];
-                        default:   begin
-                            CSRCReadValM = 0;
-                            IllegalCSRCAccessM = 1;
-                        end
-                    endcase
+            end
+            else begin  // 32-bit counter reads
+            always_comb 
+                if (PrivilegeModeW == `M_MODE || 
+                    MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
+
+                    if (CSRAdrM[11:5] == MHPMCOUNTER[0][11:5] || CSRAdrM[11:5] == HPMCOUNTER[0][11:5] || 
+                        CSRAdrM[11:5] == MHPMCOUNTERH[0][11:5] || CSRAdrM[11:5] == HPMCOUNTERH[0][11:5]) begin
+                        CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM[4:0]];
+                        IllegalCSRCAccessM = 0;
                     end 
+                    
                     else begin 
                         IllegalCSRCAccessM = 1; // no privileges for this csr
                         CSRCReadValM = 0;
-                    end
-                end // 32-bit counter end 
-            end // end for loop
-        end // end for if 
+                    end 
+
+                    // IllegalCSRCAccessM = 0;
+                    // case (CSRAdrM) 
+                    //     MHPMCOUNTER[j]: CSRCReadValM = HPMCOUNTER_REGW[j][31:0];
+                    //     HPMCOUNTER[j]:  CSRCReadValM = HPMCOUNTER_REGW[j][31:0];
+                    //     MHPMCOUNTERH[j]: CSRCReadValM = HPMCOUNTER_REGW[j][63:32];
+                    //     HPMCOUNTERH[j]:  CSRCReadValM = HPMCOUNTER_REGW[j][63:32];
+                    //     default:   begin
+                    //         CSRCReadValM = 0;
+                    //         IllegalCSRCAccessM = 1;
+                    //     end
+                    // endcase
+                end 
+                else begin 
+                    IllegalCSRCAccessM = 1; // no privileges for this csr
+                    CSRCReadValM = 0;
+                end
+            end // 32-bit counter end 
+        end // end for big if 
         else begin
-        assign CSRCReadValM = 0;
-        assign IllegalCSRCAccessM = 1;
+            assign CSRCReadValM = 0;
+            assign IllegalCSRCAccessM = 1;
         end // end for else
     endgenerate
 endmodule
