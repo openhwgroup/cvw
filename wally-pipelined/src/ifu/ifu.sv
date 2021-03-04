@@ -67,6 +67,8 @@ module ifu (
   // branch predictor signals
   logic 	   SelBPPredF;
   logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
+  logic [3:0] 	    InstrClassD, InstrClassE;
+  
   
 
   // *** put memory interface on here, InstrF becomes output
@@ -109,13 +111,12 @@ module ifu (
 	      .PCNextF(PCNextF),
 	      .BPPredPCF(BPPredPCF),
 	      .SelBPPredF(SelBPPredF),
-	      .InstrF(InstrF), // *** this is flushed internally. The logic is redundant with some out here.
-	      // Also I believe this port will be removed.
 	      .PCE(PCE),
 	      .PCSrcE(PCSrcE),
 	      .PCTargetE(PCTargetE),
 	      .PCD(PCD),
 	      .PCLinkE(PCLinkE),
+	      .InstrClassE(InstrClassE),
 	      .BPPredWrongE(BPPredWrongE));
   // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
   assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
@@ -142,6 +143,14 @@ module ifu (
   assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   // *** combine these with others in better way, including M, F
 
+
+  // the branch predictor needs a compact decoding of the instruction class.
+  // *** consider adding in the alternate return address x5 for returns.
+  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && InstrD[19:15] == 5'h01; // return
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && InstrD[19:15] != 5'h01; // jump register, but not return
+  assign InstrClassD[1] = InstrD[6:0] == 7'h6F; // jump
+  assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
+
   // Misaligned PC logic
 
   generate
@@ -163,6 +172,13 @@ module ifu (
   flopr #(`XLEN) PCEReg(clk, reset, PCD, PCE);
   flopr #(`XLEN) PCMReg(clk, reset, PCE, PCM);
   flopr #(`XLEN) PCWReg(clk, reset, PCM, PCW); // *** probably not needed; delete later
+
+  flopenrc #(4) InstrClassRegE(.clk(clk),
+			       .reset(reset),
+			       .en(~StallD),
+			       .clear(FlushD),
+			       .d(InstrClassD),
+			       .q(InstrClassE));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or

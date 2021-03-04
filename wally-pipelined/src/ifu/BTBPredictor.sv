@@ -35,11 +35,13 @@ module BTBPredictor
    input logic 		    reset,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
+   output logic [3:0] 	    InstrClass,
    output logic 	    Valid,
    // update
    input logic 		    UpdateEN,
    input logic [`XLEN-1:0]  UpdatePC,
-   input logic [`XLEN-1:0]  UpdateTarget
+   input logic [`XLEN-1:0]  UpdateTarget,
+   input logic [3:0] 	    UpdateInstrClass
    );
 
   localparam TotalDepth = 2 ** Depth;
@@ -82,15 +84,15 @@ module BTBPredictor
   // and other indirection branch data.
   // Another optimization may be using a PC relative address.
 
-  SRAM2P1R1W #(Depth, `XLEN) memory(.clk(clk),
-				    .reset(reset),
-				    .RA1(LookUpPCIndex),
-				    .RD1(TargetPC),
-				    .REN1(1'b1),
-				    .WA1(UpdatePCIndex),
-				    .WD1(UpdateTarget),
-				    .WEN1(UpdateEN),
-				    .BitWEN1({`XLEN{1'b1}}));
+  SRAM2P1R1W #(Depth, `XLEN+4) memory(.clk(clk),
+				      .reset(reset),
+				      .RA1(LookUpPCIndex),
+				      .RD1({{InstrClass, TargetPC}}),
+				      .REN1(1'b1),
+				      .WA1(UpdatePCIndex),
+				      .WD1({UpdateInstrClass, UpdateTarget}),
+				      .WEN1(UpdateEN),
+				      .BitWEN1({`XLEN{1'b1}}));
 
 
 endmodule

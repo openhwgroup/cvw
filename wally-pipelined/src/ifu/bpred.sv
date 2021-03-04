@@ -36,9 +36,6 @@ module bpred
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
    output logic [`XLEN-1:0] BPPredPCF,
    output logic 	    SelBPPredF,
-   input logic [31:0] 	    InstrF, // we are going to use the opcode to indicate what type instruction this is.
-   // if this is too slow we will have to predict the type of instruction.
-   // Execute state
    // Update Predictor
    input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
    // 1 hot encoding
@@ -50,6 +47,7 @@ module bpred
    input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
+   input logic [3:0] 	    InstrClassE,
    // Report branch prediction status
    output logic 	    BPPredWrongE
    );
@@ -57,7 +55,7 @@ module bpred
   logic 		    BTBValidF;
   logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
-  logic [3:0] 		    InstrClassD, InstrClassF, InstrClassE;
+  logic [3:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
   logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
   logic 		    TargetWrongE;
   logic 		    FallThroughWrongE;
@@ -65,17 +63,8 @@ module bpred
   logic 		    PredictionPCWrongE;
   logic [`XLEN-1:0] 	    CorrectPCE;
 
-  // Part 1 decode the instruction class.
-  // *** for now I'm skiping the compressed instructions
-  assign InstrClassF[3] = InstrF[6:0] == 7'h67 && InstrF[19:15] == 5'h01; // return
-  // This is probably too much logic. 
-  // *** This also encourages me to switch to predicting the class.
 
-  assign InstrClassF[2] = InstrF[6:0] == 7'h67 && InstrF[19:15] != 5'h01; // jump register, but not return
-  assign InstrClassF[1] = InstrF[6:0] == 7'h6F; // jump
-  assign InstrClassF[0] = InstrF[6:0] == 7'h63; // branch
-  
-  // Part 2 branch direction prediction
+  // Part 1 branch direction prediction
 
   twoBitPredictor DirPredictor(.clk(clk),
 			       .reset(reset),
@@ -91,40 +80,42 @@ module bpred
   // 2) Any information which is necessary for the predictor to built it's next state.
   // For a 2 bit table this is the prediction count.
 
-  assign SelBPPredF = ((InstrClassF[0] & BPPredF[1] & BTBValidF) | 
-		       InstrClassF[3] |
-		       (InstrClassF[2] & BTBValidF) | 
-		       InstrClassF[1] & BTBValidF) ;
+  assign SelBPPredF = ((BPInstrClassF[0] & BPPredF[1] & BTBValidF) | 
+		       BPInstrClassF[3] |
+		       (BPInstrClassF[2] & BTBValidF) | 
+		       BPInstrClassF[1] & BTBValidF) ;
 
 
-  // Part 3 Branch target address prediction
+  // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
   BTBPredictor TargetPredictor(.clk(clk),
 			       .reset(reset),
 			       .LookUpPC(PCNextF),
 			       .TargetPC(BTBPredPCF),
+			       .InstrClass(BPInstrClassF),
 			       .Valid(BTBValidF),
 			       // update
 			       .UpdateEN(InstrClassE[2] | InstrClassE[1] | InstrClassE[0]),
 			       .UpdatePC(PCE),
-			       .UpdateTarget(PCTargetE));
+			       .UpdateTarget(PCTargetE),
+			       .UpdateInstrClass(InstrClassE));
 
   // need to forward when updating to the same address as reading.
   //assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
   //assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCF;
 
-  // Part 4 RAS
+  // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
 			    .reset(reset),
-			    .pop(InstrClassF[3]),
+			    .pop(BPInstrClassF[3]),
 			    .popPC(RASPCF),
 			    .push(InstrClassE[3]),
 			    .incr(1'b0),
 			    .pushPC(PCLinkE));
 
-  assign BPPredPCF = InstrClassF[3] ? RASPCF : BTBPredPCF;
+  assign BPPredPCF = BPInstrClassF[3] ? RASPCF : BTBPredPCF;
   
   
 
@@ -150,15 +141,17 @@ module bpred
 			       .reset(reset),
 			       .en(~StallF),
 			       .clear(FlushF),
-			       .d(InstrClassF),
-			       .q(InstrClassD));
+			       .d(BPInstrClassF),
+			       .q(BPInstrClassD));
 
   flopenrc #(4) InstrClassRegE(.clk(clk),
 			       .reset(reset),
 			       .en(~StallD),
 			       .clear(FlushD),
-			       .d(InstrClassD),
-			       .q(InstrClassE));
+			       .d(BPInstrClassD),
+			       .q(BPInstrClassE));
+
+  
 
   // Check the prediction makes execution.
   assign TargetWrongE = PCTargetE != PCD;
