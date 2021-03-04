@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// exceptions.sv
+// privileged.sv
 //
 // Written: David_Harris@hmc.edu 5 January 2021
 // Modified: 
@@ -29,7 +29,7 @@
 module privileged (
   input  logic             clk, reset,
   input  logic             FlushW,
-  input  logic             CSRWriteM,
+  input  logic             CSRReadM, CSRWriteM,
   input  logic [`XLEN-1:0] SrcAM,
   input  logic [31:0]      InstrM,
   input  logic [`XLEN-1:0] PCM,
@@ -45,7 +45,7 @@ module privileged (
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW,
-  input  logic             FlushD, FlushE, FlushM, StallD
+  input  logic             FlushD, FlushE, FlushM, StallD, StallW
 );
 
   logic [1:0] NextPrivilegeModeM, PrivilegeModeW;
@@ -81,8 +81,8 @@ module privileged (
   
   // PrivilegeMode FSM
   always_comb
-    if      (reset) NextPrivilegeModeM = `M_MODE; // Privilege resets to 11 (Machine Mode)
-    else if (mretM) NextPrivilegeModeM = STATUS_MPP;
+  /*  if      (reset) NextPrivilegeModeM = `M_MODE; // Privilege resets to 11 (Machine Mode) // moved reset to flop
+    else */ if (mretM) NextPrivilegeModeM = STATUS_MPP;
     else if (sretM) NextPrivilegeModeM = {1'b0, STATUS_SPP};
     else if (uretM) NextPrivilegeModeM = `U_MODE;
     else if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
@@ -96,7 +96,7 @@ module privileged (
       else                                         NextPrivilegeModeM = `M_MODE;
     end else                                       NextPrivilegeModeM = PrivilegeModeW;
 
-  flop #(2) privmodereg(clk, NextPrivilegeModeM, PrivilegeModeW);
+  flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
 
   ///////////////////////////////////////////
   // decode privileged instructions

@@ -28,6 +28,7 @@
 module imem (
   input  logic [`XLEN-1:1] AdrF,
   output logic [31:0]      InstrF,
+  output logic [15:0]      rd2, // bogus, delete when real multicycle fetch works
   output logic             InstrAccessFaultF);
 
  /* verilator lint_off UNDRIVEN */
@@ -35,7 +36,7 @@ module imem (
  /* verilator lint_on UNDRIVEN */
   logic [15:0] adrbits;
   logic [`XLEN-1:0] rd;
-  logic [15:0] rd2;
+//  logic [15:0] rd2;
       
   generate
     if (`XLEN==32) assign adrbits = AdrF[17:2];
@@ -52,11 +53,11 @@ module imem (
   generate 
     if (`XLEN==32) begin
       assign InstrF = AdrF[1] ? {rd2[15:0], rd[31:16]} : rd;
-      assign InstrAccessFaultF = ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF
+      assign InstrAccessFaultF = ~&(({AdrF,0} ~^ `TIMBASE) | `TIMRANGE);
     end else begin
       assign InstrF = AdrF[2] ? (AdrF[1] ? {rd2[15:0], rd[63:48]} : rd[63:32])
                           : (AdrF[1] ? rd[47:16] : rd[31:0]);
-      assign InstrAccessFaultF = (|AdrF[`XLEN-1:32]) | ~AdrF[31] | (|AdrF[30:16]); // memory mapped to 0x80000000-0x8000FFFF]
+      assign InstrAccessFaultF = |AdrF[`XLEN-1:32] | ~&({AdrF[31:1],1'b0} ~^ `TIMBASE | `TIMRANGE);
     end
   endgenerate
 endmodule

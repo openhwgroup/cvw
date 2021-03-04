@@ -29,44 +29,46 @@
 
 module dmem (
   input  logic             clk, reset,
-  input  logic             FlushW,
-  output logic             DataStall,
+  input  logic             StallW, FlushW,
+  //output logic             DataStall,
   // Memory Stage
   input  logic [1:0]       MemRWM,
   input  logic [`XLEN-1:0] MemAdrM,
   input  logic [2:0]       Funct3M,
-  input  logic [`XLEN-1:0] ReadDataM,
+  //input  logic [`XLEN-1:0] ReadDataW,
   input  logic [`XLEN-1:0] WriteDataM, 
+  input  logic             AtomicM,
   output logic [`XLEN-1:0] MemPAdrM,
-  output logic [1:0]       MemRWAlignedM,
+  output logic             MemReadM, MemWriteM,
   output logic             DataMisalignedM,
   // Writeback Stage
   input  logic             MemAckW,
-  output logic [`XLEN-1:0] ReadDataW,
+  input  logic [`XLEN-1:0] ReadDataW,
+  output logic             SquashSCW,
   // faults
   input  logic             DataAccessFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
   output logic             StoreMisalignedFaultM, StoreAccessFaultM
 );
 
+  logic             SquashSCM;
+
   // Initially no MMU
   assign MemPAdrM = MemAdrM;
-
-  // Pipeline register       *** AHB data will eventually come back in W anyway
-  floprc #(`XLEN) ReadDataWReg(clk, reset, FlushW, ReadDataM, ReadDataW);
 
 	// Determine if an Unaligned access is taking place
 	always_comb
 		case(Funct3M[1:0]) 
-		  2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
-		  2'b01:  DataMisalignedM = MemAdrM[0];           // lh, sh, lhu
+		  2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
+		  2'b01:  DataMisalignedM = MemAdrM[0];              // lh, sh, lhu
 		  2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
-		  2'b11:  DataMisalignedM = |MemAdrM[2:0];        // ld, sd, fld, fsd
+		  2'b11:  DataMisalignedM = |MemAdrM[2:0];           // ld, sd, fld, fsd
 		endcase 
 
-  // Squash unaligned data accesses
+  // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
-  assign MemRWAlignedM = MemRWM & {2{~DataMisalignedM}};
+  assign MemReadM = MemRWM[1] & ~DataMisalignedM;
+  assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM; 
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
@@ -74,8 +76,33 @@ module dmem (
   assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
   assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
 
+  // Handle atomic load reserved / store conditional
+  generate
+    if (`A_SUPPORTED) begin // atomic instructions supported
+      logic [`XLEN-1:2] ReservationPAdrW;
+      logic             ReservationValidM, ReservationValidW; 
+      logic             lrM, scM, WriteAdrMatchM;
+
+      assign lrM = MemReadM && AtomicM;
+      assign scM = MemRWM[0] && AtomicM; 
+      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM == ReservationPAdrW) && ReservationValidW;
+      assign SquashSCM = scM && ~WriteAdrMatchM;
+      always_comb begin // ReservationValidM (next valiue of valid reservation)
+        if (lrM) ReservationValidM = 1;  // set valid on load reserve
+        else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
+        else ReservationValidM = ReservationValidW; // otherwise don't change valid
+      end
+      flopenrc #(`XLEN-2) resadrreg(clk, reset, FlushW, ~StallW && lrM, MemPAdrM[`XLEN-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+      flopenrc #(1) resvldreg(clk, reset, FlushW, ~StallW, ReservationValidM, ReservationValidW);
+      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallW, SquashSCM, SquashSCW);
+    end else begin // Atomic operations not supported
+      assign SquashSCM = 0;
+      assign SquashSCW = 0; 
+    end
+  endgenerate
+
   // Data stall
-  assign DataStall = 0;
+  //assign DataStall = 0;
 
 endmodule
 

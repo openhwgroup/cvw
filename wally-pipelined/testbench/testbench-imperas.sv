@@ -35,7 +35,7 @@ module testbench();
   logic [`XLEN-1:0] signature[0:10000];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
+  //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64m[] = '{
                     "rv64m/I-MUL-01", "3000",
@@ -90,7 +90,6 @@ string tests64iNOc[] = {
                      "rv64i/I-MISALIGN_JMP-01","2000"
   };
  string tests64i[] = '{                 
-                     "rv64i/I-LW-01", "4110",
                      "rv64i/I-ADD-01", "3000",
                      "rv64i/I-ADDI-01", "3000",
                      "rv64i/I-ADDIW-01", "3000",
@@ -198,7 +197,6 @@ string tests64iNOc[] = {
 //                    "rv32m/I-REMU-01", "2000"
   };
 string tests32ic[] = '{
-//                     "rv32ic/WALLY-C-ADHOC-01", "2000",
                      "rv32ic/I-C-ADD-01", "2000",
                      "rv32ic/I-C-ADDI-01", "2000",
                      "rv32ic/I-C-AND-01", "2000",
@@ -324,7 +322,7 @@ string tests32i[] = {
       tests = {tests64i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests64ic};
       else                       tests = {tests, tests64iNOc};
-      if (`M_SUPPORTED % 2 == 1) tests = {tests64m, tests};
+      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests64m};
     end else begin // RV32
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
@@ -347,9 +345,9 @@ string tests32i[] = {
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
-                InstrDName, InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
   initial
@@ -452,14 +450,16 @@ endmodule
 
 module instrTrackerTB(
   input  logic            clk, reset, FlushE,
-  input  logic [31:0]     InstrD,
+  input  logic [31:0]     InstrF, InstrD,
   input  logic [31:0]     InstrE, InstrM,
-  output logic [31:0]     InstrW,
-  output string           InstrDName, InstrEName, InstrMName, InstrWName);
+  input  logic [31:0]     InstrW,
+//  output logic [31:0]     InstrW,
+  output string           InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
-  flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+  // flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
 
+  instrNameDecTB fdec(InstrF, InstrFName);
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
   instrNameDecTB mdec(InstrM, InstrMName);
