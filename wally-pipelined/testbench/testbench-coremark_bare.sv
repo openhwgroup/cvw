@@ -83,6 +83,14 @@ module testbench();
     begin
       clk = 1; # 5; clk = 0; # 5;
     end
+  always @(negedge clk)
+    begin
+      if (dut.hart.priv.ebreakM) begin
+        #20;
+        $display("Code ended with ebreakM");
+        $stop;
+      end
+    end
    
 endmodule
 /* verilator lint_on STMTDLY */
