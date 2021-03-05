@@ -368,7 +368,7 @@ string tests32i[] = {
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      reset = 1; # 22; reset = 0;
+      reset = 1; # 42; reset = 0;
     end
 
   // generate clock to sequence tests
@@ -444,7 +444,11 @@ string tests32i[] = {
           reset = 1; # 17; reset = 0;
         end
       end
-    end
+    end // always @ (negedge clk)
+
+  // track the current function or label
+  //function_rfunction_radix function_radix();
+  
 endmodule
 
 /* verilator lint_on STMTDLY */

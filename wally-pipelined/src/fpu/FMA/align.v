@@ -15,17 +15,17 @@ module align(z[51:0], ae[12:0], aligncnt, xzero, yzero, zzero, zdenorm, proddeno
              killprod,  bypsel[1], bypplus1, byppostnorm);
 /////////////////////////////////////////////////////////////////////////////
 
-	input 		[51:0]		z;				// Fraction of addend z;
+	input 		[51:0]		z;		// Fraction of addend z;
 	input 		[12:0]		ae;		// sign of exponent of addend z;
-	input 		[11:0]		aligncnt;		// amount to shift
-	input					xzero;			// Input X = 0
-	input                  	yzero;          // Input Y = 0 
-	input                  	zzero;          // Input Z = 0
-	input                  	zdenorm;        // Input Z = denorm
-	input			proddenorm;
+	input 		[11:0]		aligncnt;	// amount to shift
+	input				xzero;		// Input X = 0
+	input                  		yzero;          // Input Y = 0 
+	input                  		zzero;          // Input Z = 0
+	input                  		zdenorm;        // Input Z is denormalized
+	input				proddenorm;	// product is denormalized
 	input     	[1:1] 		bypsel;         // Select bypass to X or Z
-	input					bypplus1;		// Add one to bypassed result
-	input                  	byppostnorm;    // Postnormalize bypassed result 
+	input				bypplus1;	// Add one to bypassed result
+	input                  		byppostnorm;    // Postnormalize bypassed result 
 	output    	[157:0]    	t;              // aligned addend (54 bits left of bpt)
 	output          		bs;           	// sticky bit of addend
 	output          		ps;           	// sticky bit of product
@@ -34,13 +34,13 @@ module align(z[51:0], ae[12:0], aligncnt, xzero, yzero, zzero, zdenorm, proddeno
 	// Internal nodes
  
 	reg       	[157:0]   	t;				// aligned addend from shifter
-	reg             		killprod;		// Z >> product 
+	reg             		killprod;			// Z >> product 
 	reg             		bs;				// sticky bit of addend
 	reg             		ps;				// sticky bit of product
 	reg       	[7:0]		i;				// temp storage for finding sticky bit
 	wire		[52:0]		z1;				// Z plus 1
 	wire		[51:0]		z2;				// Z selected after handling rounds
-	wire		[11:0]		align104;		// alignment count + 104
+	wire		[11:0]		align104;			// alignment count + 104
 
 	// Increment fraction of Z by  one if necessary for prerounded bypass
 	// This incrementor delay is masked by the alignment count computation
@@ -56,7 +56,7 @@ module align(z[51:0], ae[12:0], aligncnt, xzero, yzero, zzero, zdenorm, proddeno
 	// addend on right shifts.  Handle special cases of shifting
 	// by too much.
 
-	always @(z2 or aligncnt or align104 or zzero or xzero or yzero or zdenorm)
+	always @(z2 or aligncnt or align104 or zzero or xzero or yzero or zdenorm or proddenorm)
 		begin
 
 		// Default to clearing sticky bits 
@@ -66,7 +66,7 @@ module align(z[51:0], ae[12:0], aligncnt, xzero, yzero, zzero, zdenorm, proddeno
 		// And to using product as primary operand in adder I exponent gen 
 		killprod = 0;
 
-		if(zzero) begin 
+		if(zzero) begin // if z = 0
 			t = 158'b0;
 			if (xzero || yzero) killprod = 1;
 		end else if ((aligncnt > 53 && ~aligncnt[11]) || xzero || yzero) begin
@@ -75,8 +75,8 @@ module align(z[51:0], ae[12:0], aligncnt, xzero, yzero, zzero, zdenorm, proddeno
 			t = {53'b0, ~zzero, z2, 52'b0}; 
 			killprod = 1;
 			ps = ~xzero && ~yzero; 
-		end else if ((ae[12] && align104[11])) begin //***fix the if statement
-			// KEP if the multiplier's exponent overflows
+		end else if ((ae[12] && align104[11]) && ~proddenorm) begin //***fix the if statement
+							// KEP if the multiplier's exponent overflows
 			t = {53'b0, ~zzero, z2, 52'b0}; 
 			killprod = 1;
 			ps = ~xzero && ~yzero; 
@@ -85,7 +85,7 @@ module align(z[51:0], ae[12:0], aligncnt, xzero, yzero, zzero, zdenorm, proddeno
 			t = 0;
 		end else if (~aligncnt[11])  begin 	// Left shift by reasonable amount
 			t = {53'b0, ~zzero, z2, 52'b0} << aligncnt;
-		end else begin                 // Otherwise right shift 
+		end else begin                 		// Otherwise right shift 
 			t = {53'b0, ~zzero, z2, 52'b0} >> -aligncnt;
 
 		// use some behavioral code to find sticky bit.  This is really
