@@ -91,7 +91,7 @@ module BTBPredictor
 				      .WA1(UpdatePCIndex),
 				      .WD1({UpdateInstrClass, UpdateTarget}),
 				      .WEN1(UpdateEN),
-				      .BitWEN1({`XLEN{1'b1}}));
+				      .BitWEN1({4'b0000, {`XLEN{1'b1}}})); // *** definitely not right.
 
 
 endmodule
