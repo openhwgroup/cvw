@@ -2,7 +2,7 @@
 // uncore.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified: Ben Bracker 6 Mar 2021 to better fit AMBA 3 AHB-Lite spec
 //
 // Purpose: System-on-Chip components outside the core (hart)
 //          Memories, peripherals, external bus control
@@ -59,58 +59,96 @@ module uncore (
   
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADGPIO, HREADUART;
+
   logic            HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
+  logic            HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD;
   logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
   logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
-  logic [1:0]      MemRW;
-  logic [1:0]      MemRWtim, MemRWclint, MemRWgpio, MemRWuart;
+  `ifdef BOOTTIMBASE
+  logic [`XLEN-1:0] HREADBootTim; 
+  logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
+  logic [1:0]      MemRWboottim;
+  `endif
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
   
 
   // AHB Address decoder
   adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
+  `ifdef BOOTTIMBASE
+  adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
+  `endif
   adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
-  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO);
+  `ifdef GPIOBASE
+  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
+  `endif
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
-  
-  // Enable read or write based on decoded address
-  assign MemRW = {~HWRITE, HWRITED};
-  assign MemRWtim = MemRW & {2{HSELTim}};
-  assign MemRWclint = MemRW & {2{HSELCLINT}};
-  assign MemRWgpio = MemRW & {2{HSELGPIO}};
-  assign MemRWuart = MemRW & {2{HSELUART}};
-/*  always_ff @(posedge HCLK) begin
-    HADDRD <= HADDR;
-    MemRWtim  <= MemRW & {2{HSELTim}};
-    MemRWclint <= MemRW & {2{HSELCLINT}};
-    MemRWgpio  <= MemRW & {2{HSELGPIO}};
-    MemRWuart  <= MemRW & {2{HSELUART}};
-  end */
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
 
   // tightly integrated memory
-  dtim dtim(.HADDR(HADDR[18:0]), .*);
+  dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) dtim (.*);
+  `ifdef BOOTTIMBASE
+  dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+  `endif
 
   // memory-mapped I/O peripherals
   clint clint(.HADDR(HADDR[15:0]), .*);
+  `ifdef GPIOBASE
   gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
+  `endif
   uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
             .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
-            .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
+            .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*);
 
   // mux could also include external memory  
   // AHB Read Multiplexer
-  assign HRDATA = ({`XLEN{HSELTim}} & HREADTim) | ({`XLEN{HSELCLINT}} & HREADCLINT) | 
-                     ({`XLEN{HSELGPIO}} & HREADGPIO) | ({`XLEN{HSELUART}} & HREADUART);
-  assign HRESP = HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | HSELGPIO & HRESPGPIO | HSELUART & HRESPUART;
-  assign HREADY = HSELTim & HREADYTim | HSELCLINT & HREADYCLINT | HSELGPIO & HREADYGPIO | HSELUART & HREADYUART;
+  assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) | ({`XLEN{HSELCLINTD}} & HREADCLINT) | 
+                    `ifdef GPIOBASE
+                     ({`XLEN{HSELGPIOD}} & HREADGPIO) |
+                    `endif
+                    `ifdef BOOTTIMBASE
+                     ({`XLEN{HSELBootTimD}} & HREADBootTim) |
+                    `endif
+                     ({`XLEN{HSELUARTD}} & HREADUART);
+  assign HRESP = HSELTimD & HRESPTim | HSELCLINTD & HRESPCLINT | 
+                 `ifdef GPIOBASE
+                 HSELGPIOD & HRESPGPIO | 
+                 `endif
+                 `ifdef BOOTTIMBASE
+                 HSELBootTimD & HRESPBootTim | 
+                 `endif
+                 HSELUARTD & HRESPUART;
+  assign HREADY = HSELTimD & HREADYTim | HSELCLINTD & HREADYCLINT | 
+                  `ifdef GPIOBASE
+                  HSELGPIOD & HREADYGPIO | 
+                  `endif
+                  `ifdef BOOTTIMBASE
+                  HSELBootTimD & HREADYBootTim | 
+                  `endif
+                  HSELUARTD & HREADYUART;
 
   // Faults
-  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | HSELGPIO | HSELUART);
+  assign DataAccessFaultM = ~(HSELTimD | HSELCLINTD | 
+                            `ifdef GPIOBASE
+                            HSELGPIOD |
+                            `endif
+                            `ifdef BOOTTIMBASE
+                            HSELBootTimD |
+                            `endif
+                            HSELUARTD);
 
- 
+
+  // Address Decoder Delay (figure 4-2 in spec)
+  flopr #(1) hseltimreg(HCLK, ~HRESETn, HSELTim, HSELTimD);
+  flopr #(1) hselclintreg(HCLK, ~HRESETn, HSELCLINT, HSELCLINTD);
+  `ifdef GPIOBASE
+  flopr #(1) hselgpioreg(HCLK, ~HRESETn, HSELGPIO, HSELGPIOD);
+  `endif
+  flopr #(1) hseluartreg(HCLK, ~HRESETn, HSELUART, HSELUARTD);
+  `ifdef BOOTTIMBASE
+  flopr #(1) hselboottimreg(HCLK, ~HRESETn, HSELBootTim, HSELBootTimD);
+  `endif
 endmodule
 
