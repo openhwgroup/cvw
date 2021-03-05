@@ -14,23 +14,23 @@ module special(x[63:0], y[63:0], z[63:0], ae, xzero, yzero, zzero,
 				xnan, ynan, znan, xdenorm, ydenorm, zdenorm, proddenorm, xinf, yinf, zinf);
 /////////////////////////////////////////////////////////////////////////////
 
-	input   		[63:0]     	x;             // Input x
+	input   	[63:0]     	x;              // Input x
 	input     	[63:0]     	y;           	// Input Y
 	input      	[63:0]    	z;            	// Input z 
-	input		[12:0]			ae;			// exponent of product
-	output						xzero;			// Input x = 0
-	output						yzero;			// Input y = 0
-	output						zzero;			// Input z = 0
-	output						xnan;			// x is NaN
-	output						ynan;			// y is NaN
-	output						znan;			// z is NaN
-	output						xdenorm;		// x is denormalized
-	output						ydenorm;		// y is denormalized
-	output						zdenorm;		// z is denormalized
-	output						proddenorm;		// product is denormalized
-	output						xinf;			// x is infinity
-	output						yinf;			// y is infinity
-	output						zinf;			// z is infinity
+	input		[12:0]		ae;		// exponent of product
+	output				xzero;		// Input x = 0
+	output				yzero;		// Input y = 0
+	output				zzero;		// Input z = 0
+	output				xnan;		// x is NaN
+	output				ynan;		// y is NaN
+	output				znan;		// z is NaN
+	output				xdenorm;	// x is denormalized
+	output				ydenorm;	// y is denormalized
+	output				zdenorm;	// z is denormalized
+	output				proddenorm;	// product is denormalized
+	output				xinf;		// x is infinity
+	output				yinf;		// y is infinity
+	output				zinf;		// z is infinity
 
 	// In the actual circuit design, the gates looking at bits
 	// 51:0 and at bits 62:52 should be shared among the various detectors.

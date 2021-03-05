@@ -103,7 +103,7 @@ module fmac(xrf, y, zrf, rn, rz, rp, rm,
 						   earlyres[62:52], earlyressel, bypsel[1], byppostnorm,
 						   killprod, sumzero, postnorrnalize, normcnt, 
 						   infinity, invalid, overflow, underflow, 
-						   inf, nan, xnan, ynan, znan, zdenorm, specialsel,
+						   inf, nan, xnan, ynan, znan, zdenorm, proddenorm, specialsel,
 						   aligncnt, w[62:52], wbypass[62:52],
 						   prodof, sumof, sumuf, denorm0, ae);
 // Instantiate special case detection across datapath & exponent path 
@@ -120,7 +120,7 @@ assign wbypass[63] = w[63];
 // Instantiate control logic
  
 sign				sign(x[63], y[63], z[63], negsum0, negsum1, bs, ps, 
-					     killprod, rm, sumzero, nan, invalid, xinf, yinf, inf, 
+					     killprod, rm, overflow, sumzero, nan, invalid, xinf, yinf, zinf, inf, 
 						 w[63], invz, negsum, selsum1, psign); 
 flag				flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
 						 psign, z[63], xzero, yzero, v[1:0],
