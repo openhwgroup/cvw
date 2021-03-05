@@ -33,6 +33,11 @@ vlog +incdir+../config/busybear ../testbench/*.sv ../src/*/*.sv -suppress 2583
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench_busybear -o workopt 
 vsim workopt -suppress 8852,12070
+# load the branch predictors with known data. The value of the data is not important for function, but
+# is important for perventing pessimistic x propagation.
+mem load -infile twoBitPredictor.txt -format bin /testbench_busybear/dut/hart/ifu/bpred/DirPredictor/memory/memory
+mem load -infile BTBPredictor.txt -format bin /testbench_busybear/dut/hart/ifu/bpred/TargetPredictor/memory/memory
+
 mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/bootdtim/RAM
 mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/uncore/bootdtim/RAM
 mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/bootram
