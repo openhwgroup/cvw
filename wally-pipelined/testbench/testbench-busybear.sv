@@ -337,7 +337,7 @@ module testbench_busybear();
   logic [31:0] InstrMask;
   logic forcedInstr;
   logic [63:0] lastPCF;
-  always @(dut.PCF or dut.hart.ifu.InstrF) begin
+  always @(dut.PCF or dut.hart.ifu.InstrF or reset) begin
     if(~HWRITE) begin
     #3;
     if (~reset && dut.hart.ifu.InstrF[15:0] !== {16{1'bx}}) begin
