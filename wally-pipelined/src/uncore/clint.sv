@@ -28,8 +28,9 @@
 
 module clint (
   input  logic             HCLK, HRESETn,
-  input  logic [1:0]       MemRWclint,
-  input  logic [15:0]      HADDR, 
+  input  logic             HSELCLINT,
+  input  logic [15:0]      HADDR,
+  input  logic             HWRITE,
   input  logic [`XLEN-1:0] HWDATA,
   output logic [`XLEN-1:0] HREADCLINT,
   output logic             HRESPCLINT, HREADYCLINT,
@@ -41,8 +42,8 @@ module clint (
   logic [15:0] entry;
   logic            memread, memwrite;
 
-  assign memread  = MemRWclint[1];
-  assign memwrite = MemRWclint[0];
+  assign memread  = HSELCLINT & ~HWRITE;
+  assign memwrite = HSELCLINT & HWRITE;
   assign HRESPCLINT = 0; // OK
 //  assign HREADYCLINT = 1; // Respond immediately
   always_ff @(posedge HCLK) // delay response
