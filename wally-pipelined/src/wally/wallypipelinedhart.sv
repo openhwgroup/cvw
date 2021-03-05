@@ -88,8 +88,12 @@ module wallypipelinedhart (
   logic       SquashSCW;
 
   // memory management unit signals
+  logic             ITLBWriteF, DTLBWriteM;
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
+  logic [`XLEN-1:0] SATP_REGW;
+
+  logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
@@ -114,6 +118,8 @@ module wallypipelinedhart (
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .*);
 
+  // walker walker(.*); *** // can send addresses to ahblite, send out pagetablestall
+  // *** can connect to hazard unit
 // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
 // Would need to insertinstruction as InstrD, not InstrF
     /*ahblite ebu( 

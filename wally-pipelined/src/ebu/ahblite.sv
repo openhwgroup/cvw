@@ -44,6 +44,8 @@ module ahblite (
   input  logic             MemReadM, MemWriteM,
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
+  // Signals from MMU ***
+  // MMUPAdr;
   // Return from bus
   output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals
@@ -64,6 +66,7 @@ module ahblite (
   output logic             HWRITED,
   // Stalls
   output logic             InstrStall,/*InstrUpdate, */DataStall
+  // *** add a chip-level ready signal as part of handshake
 );
 
   logic GrantData;
@@ -75,7 +78,7 @@ module ahblite (
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
-  // *** initially support HABW = XLEN
+  // *** initially support AHBW = XLEN
 
   // track bus state
   // Data accesses have priority over instructions.  However, if a data access comes
