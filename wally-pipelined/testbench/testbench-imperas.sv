@@ -162,6 +162,7 @@ string tests64iNOc[] = {
                      "rv64i/WALLY-SRAI", "3000",
                      "rv64i/WALLY-LOAD", "11bf0",
                      "rv64i/WALLY-JAL", "4000",
+                     "rv64i/WALLY-JALR", "3000",
                      "rv64i/WALLY-STORE", "3000",
                      "rv64i/WALLY-ADDIW", "3000",
                      "rv64i/WALLY-SLLIW", "3000",
@@ -288,6 +289,7 @@ string tests32i[] = {
                      "rv32i/WALLY-SUB", "3000",
                      "rv32i/WALLY-STORE", "2000",
                      "rv32i/WALLY-JAL", "3000",
+                     "rv32i/WALLY-JALR", "2000",
                      "rv32i/WALLY-BEQ" ,"4000",
                      "rv32i/WALLY-BNE", "4000 ",
                       "rv32i/WALLY-BLTU", "4000 ",
@@ -366,7 +368,7 @@ string tests32i[] = {
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      reset = 1; # 22; reset = 0;
+      reset = 1; # 42; reset = 0;
     end
 
   // generate clock to sequence tests
@@ -442,7 +444,11 @@ string tests32i[] = {
           reset = 1; # 17; reset = 0;
         end
       end
-    end
+    end // always @ (negedge clk)
+
+  // track the current function or label
+  //function_rfunction_radix function_radix();
+  
 endmodule
 
 /* verilator lint_on STMTDLY */
