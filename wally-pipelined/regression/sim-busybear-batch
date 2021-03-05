@@ -1,1 +1,3 @@
-vsim -do wally-busybear.do -c
+vsim -c <<!
+do wally-busybear.do 
+!
