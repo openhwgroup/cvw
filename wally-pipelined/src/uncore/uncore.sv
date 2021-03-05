@@ -90,8 +90,7 @@ module uncore (
   // tightly integrated memory
   dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) dtim (.*);
   `ifdef BOOTTIMBASE
-  dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim (.MemRWtim(MemRWboottim), 
-              .HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+  dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
   `endif
 
   // memory-mapped I/O peripherals
