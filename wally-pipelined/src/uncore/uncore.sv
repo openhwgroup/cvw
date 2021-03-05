@@ -2,7 +2,7 @@
 // uncore.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified: Ben Bracker 6 Mar 2021 to better fit AMBA 3 AHB-Lite spec
 //
 // Purpose: System-on-Chip components outside the core (hart)
 //          Memories, peripherals, external bus control
@@ -59,14 +59,14 @@ module uncore (
   
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADGPIO, HREADUART;
+
   logic            HSELTim, HSELCLINT, HSELGPIO, PreHSELUART, HSELUART;
+  logic            HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD;
   logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
   logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
-  logic [1:0]      MemRW;
-  logic [1:0]      MemRWtim, MemRWclint, MemRWgpio, MemRWuart;
   `ifdef BOOTTIMBASE
   logic [`XLEN-1:0] HREADBootTim; 
-  logic            HSELBootTim, HRESPBootTim, HREADYBootTim;
+  logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
   logic [1:0]      MemRWboottim;
   `endif
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
@@ -95,13 +95,6 @@ module uncore (
   assign MemRWgpio = MemRW & {2{HSELGPIO}};
   `endif
   assign MemRWuart = MemRW & {2{HSELUART}};
-/*  always_ff @(posedge HCLK) begin
-    HADDRD <= HADDR;
-    MemRWtim  <= MemRW & {2{HSELTim}};
-    MemRWclint <= MemRW & {2{HSELCLINT}};
-    MemRWgpio  <= MemRW & {2{HSELGPIO}};
-    MemRWuart  <= MemRW & {2{HSELUART}};
-  end */
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
@@ -120,45 +113,57 @@ module uncore (
   `endif
   uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
             .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
-            .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*); 
+            .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*);
 
   // mux could also include external memory  
   // AHB Read Multiplexer
-  assign HRDATA = ({`XLEN{HSELTim}} & HREADTim) | ({`XLEN{HSELCLINT}} & HREADCLINT) | 
+  assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) | ({`XLEN{HSELCLINTD}} & HREADCLINT) | 
                     `ifdef GPIOBASE
-                     ({`XLEN{HSELGPIO}} & HREADGPIO) |
+                     ({`XLEN{HSELGPIOD}} & HREADGPIO) |
                     `endif
                     `ifdef BOOTTIMBASE
-                     ({`XLEN{HSELBootTim}} & HREADBootTim) |
+                     ({`XLEN{HSELBootTimD}} & HREADBootTim) |
                     `endif
-                     ({`XLEN{HSELUART}} & HREADUART);
-  assign HRESP = HSELTim & HRESPTim | HSELCLINT & HRESPCLINT | 
+                     ({`XLEN{HSELUARTD}} & HREADUART);
+  assign HRESP = HSELTimD & HRESPTim | HSELCLINTD & HRESPCLINT | 
                  `ifdef GPIOBASE
-                 HSELGPIO & HRESPGPIO | 
+                 HSELGPIOD & HRESPGPIO | 
                  `endif
                  `ifdef BOOTTIMBASE
-                 HSELBootTim & HRESPBootTim | 
+                 HSELBootTimD & HRESPBootTim | 
                  `endif
-                 HSELUART & HRESPUART;
-  assign HREADY = HSELTim & HREADYTim | HSELCLINT & HREADYCLINT | 
+                 HSELUARTD & HRESPUART;
+  assign HREADY = HSELTimD & HREADYTim | HSELCLINTD & HREADYCLINT | 
                   `ifdef GPIOBASE
-                  HSELGPIO & HREADYGPIO | 
+                  HSELGPIOD & HREADYGPIO | 
                   `endif
                   `ifdef BOOTTIMBASE
-                  HSELBootTim & HREADYBootTim | 
+                  HSELBootTimD & HREADYBootTim | 
                   `endif
-                  HSELUART & HREADYUART;
+                  HSELUARTD & HREADYUART;
 
   // Faults
-  assign DataAccessFaultM = ~(HSELTim | HSELCLINT | 
+  assign DataAccessFaultM = ~(HSELTimD | HSELCLINTD | 
                             `ifdef GPIOBASE
-                            HSELGPIO |
+                            HSELGPIOD |
                             `endif
                             `ifdef BOOTTIMBASE
-                            HSELBootTim |
+                            HSELBootTimD |
                             `endif
-                            HSELUART);
+                            HSELUARTD);
 
- 
+
+  // Synchronized Address Decoder (figure 4-2 in spec)
+  always_ff @(posedge HCLK) begin
+    HSELTimD   <= HSELTim;
+    HSELCLINTD <= HSELCLINT;
+    `ifdef GPIOBASE
+    HSELGPIOD  <= HSELGPIO;
+    `endif
+    HSELUARTD  <= HSELUART;
+    `ifdef BOOTTIMBASE
+    HSELBootTimD <= HSELBootTim;
+    `endif
+  end
 endmodule
 
