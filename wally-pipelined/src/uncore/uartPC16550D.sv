@@ -376,7 +376,7 @@ module uartPC16550D(
           TXHR <= Din;
           txhrfull <= 1;
         end
-        $display("UART transmits: %c",Din); // for testbench
+        $write("%c",Din); // for testbench
       end
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin 
