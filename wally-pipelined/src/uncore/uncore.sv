@@ -83,18 +83,6 @@ module uncore (
   `endif
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
-  
-  // Enable read or write based on decoded address
-  assign MemRW = {~HWRITE, HWRITED};
-  `ifdef BOOTTIMBASE
-  assign MemRWboottim = MemRW & {2{HSELBootTim}};
-  `endif
-  assign MemRWtim = MemRW & {2{HSELTim}};
-  assign MemRWclint = MemRW & {2{HSELCLINT}};
-  `ifdef GPIOBASE
-  assign MemRWgpio = MemRW & {2{HSELGPIO}};
-  `endif
-  assign MemRWuart = MemRW & {2{HSELUART}};
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
