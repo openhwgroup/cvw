@@ -44,6 +44,7 @@ mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/Di
 switch $argc {
     0 {mem load -infile ../config/rv64ic/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
     1 {mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
+}
 
 run -all
 quit
