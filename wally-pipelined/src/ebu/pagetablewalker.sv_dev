@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// ahblite.sv
+// pagetablewalker.sv
 //
 // Written: tfleming@hmc.edu 2 March 2021
 // Modified: 
@@ -29,16 +29,17 @@
 module pagetablewalker (
   input  logic             clk, reset,
 
-  input  logic [`XLEN-1:0] satp,
+  input  logic [`XLEN-1:0] SATP_REGW,
 
-  input  logic             TLBMissF,
+  input  logic             ITLBMissF, DTLBMissM,
   input  logic [`XLEN-1:0] TranslationVAdr,
 
   input  logic             HCLK, HRESETn,
 
   input  logic             HREADY,
 
-  output logic [`XLEN-1:0] PageTableEntryF,
+  output logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM,
+  output logic             ITLBWriteF, DTLBWriteM,
   output logic             TranslationComplete
 );
 
@@ -52,15 +53,15 @@ module pagetablewalker (
   endgenerate
   */
 
-  logic Sv_Mode = satp[31];
-  logic BasePageTablePPN [21:0] = satp[21:0];
+  logic Sv_Mode = SATP_REGW[31];
+  logic BasePageTablePPN [21:0] = SATP_REGW[21:0];
 
   logic VPN1 [9:0] = TranslationVAdr[31:22];
   logic VPN0 [9:0] = TranslationVAdr[21:12]; // *** could optimize by not passing offset?
 
   logic TranslationPAdr [33:0];
 
-  typedef enum {IDLE, LEVEL1, LEVEL0, LEAF, FAULT} statetype;
+  typedef enum {IDLE, DATA_LEVEL1, DATA_LEVEL0, DATA_LEAF, DATA FAULT} statetype;
   statetype WalkerState, NextWalkerState;
 
   always_ff @(posedge HCLK, negedge HRESETn)
@@ -92,11 +93,14 @@ module pagetablewalker (
       case (NextWalkerState)
         LEVEL1: TranslationPAdr <= {BasePageTablePPN, VPN1, 2'b00};
         LEVEL2: TranslationPAdr <= {CurrentPPN, VPN0, 2'b00};
-        LEAF:   PageTableEntryF <= CurrentPageTableEntry;
-                TranslationComplete <= '1;
+        LEAF: begin
+          PageTableEntryF <= CurrentPageTableEntry;
+          TranslationComplete <= '1;
+          end
+      endcase
     end
 
-  assign #1 Translate = (NextWalkerState = LEVEL1);
+  assign #1 Translate = (NextWalkerState == LEVEL1);
 
 
 endmodule
