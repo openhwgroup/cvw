@@ -29,9 +29,10 @@
 
 module gpio (
   input  logic             HCLK, HRESETn,
-  input  logic [1:0]       MemRWgpio,
+  input  logic             HSELGPIO,
   input  logic [7:0]       HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
+  input  logic             HWRITE,
   output logic [`XLEN-1:0] HREADGPIO,
   output logic             HRESPGPIO, HREADYGPIO,
   input  logic [31:0]      GPIOPinsIn,
@@ -42,8 +43,8 @@ module gpio (
   logic [7:0] entry;
   logic            memread, memwrite;
 
-  assign memread  = MemRWgpio[1];
-  assign memwrite = MemRWgpio[0];
+  assign memread  = HSELGPIO & ~HWRITE;
+  assign memwrite = HSELGPIO & HWRITE;
   assign HRESPGPIO = 0; // OK
   always_ff @(posedge HCLK) // delay response to data cycle
     HREADYGPIO <= memread | memwrite;

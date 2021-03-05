@@ -1,5 +1,5 @@
 //////////////////////////////////////////
-// wally-config.vh
+// busybear-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
 // Modified: 
@@ -24,6 +24,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`define BUSYBEAR
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -61,14 +62,16 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define TIMBASE    64'h0000000080000000
-`define TIMRANGE   64'h000000000007FFFF
-`define CLINTBASE  64'h0000000002000000
-`define CLINTRANGE 64'h000000000000FFFF
-`define GPIOBASE   64'h0000000010012000
-`define GPIORANGE  64'h00000000000000FF
-`define UARTBASE   64'h0000000010000000
-`define UARTRANGE  64'h0000000000000007
+`define TIMBASE       32'h80000000
+`define TIMRANGE      32'h07FFFFFF
+`define BOOTTIMBASE   32'h00000000 //only needs to go from 0x1000 to 0x2FFF, extending to a power of 2
+`define BOOTTIMRANGE  32'h00003FFF
+`define CLINTBASE     32'h02000000
+`define CLINTRANGE    32'h0000BFFF
+//`define GPIOBASE    32'h10012000 // no GPIO in linux for now
+//`define GPIORANGE   32'h000000FF
+`define UARTBASE      32'h10000000
+`define UARTRANGE     32'h00000007
 // Bus Interface width
 `define AHBW 64
 

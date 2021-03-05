@@ -28,11 +28,12 @@ vlib work-busybear
 # because vsim will run vopt
 vlog +incdir+../config/busybear ../testbench/*.sv ../src/*/*.sv -suppress 2583
 
+
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench_busybear -o workopt 
-vsim workopt
 
+vsim workopt -suppress 8852,12070
 # load the branch predictors with known data. The value of the data is not important for function, but
 # is important for perventing pessimistic x propagation.
 mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
@@ -40,6 +41,15 @@ switch $argc {
     0 {mem load -infile ../config/rv64ic/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
     1 {mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
 }
+
+mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/bootdtim/RAM
+mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/uncore/bootdtim/RAM
+mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/bootram
+mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/imem/bootram
+mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/dtim/RAM
+mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/uncore/dtim/RAM
+mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/RAM
+mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/imem/RAM
 
 
 view wave
@@ -51,80 +61,104 @@ add wave /testbench_busybear/reset
 add wave -divider
 add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
-add wave -hex /testbench_busybear/dut/ifu/PCF
-add wave -hex /testbench_busybear/dut/ifu/InstrF
-add wave /testbench_busybear/lastInstrF
+add wave -hex /testbench_busybear/dut/hart/ifu/PCF
+add wave -hex /testbench_busybear/dut/hart/ifu/InstrF
+add wave -hex /testbench_busybear/dut/InstrF
+add wave /testbench_busybear/CheckInstrF
+add wave /testbench_busybear/lastCheckInstrF
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
+add wave -divider
+add wave -divider
+add wave /testbench_busybear/dut/uncore/HSELBootTim
+add wave /testbench_busybear/dut/uncore/HSELTim
+add wave /testbench_busybear/dut/uncore/HREADTim
+add wave /testbench_busybear/dut/uncore/dtim/HREADTim0
+add wave /testbench_busybear/dut/uncore/HREADYTim
+add wave -divider
+add wave /testbench_busybear/dut/uncore/HREADBootTim
+add wave /testbench_busybear/dut/uncore/bootdtim/HREADTim0
+add wave /testbench_busybear/dut/uncore/HREADYBootTim
+add wave /testbench_busybear/dut/uncore/HADDR
+add wave /testbench_busybear/dut/uncore/HRESP
+add wave /testbench_busybear/dut/uncore/HREADY
+add wave /testbench_busybear/dut/uncore/HRDATA
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MTVEC_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MSTATUS_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/SCOUNTEREN_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MIE_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MIDELEG_REG
+#add wave -hex /testbench_busybear/dut/hart/priv/csr/MEDELEG_REG
 add wave -divider
 # registers!
 add wave -hex /testbench_busybear/regExpected
 add wave -hex /testbench_busybear/regNumExpected
 add wave -hex /testbench_busybear/HWRITE
-add wave -hex /testbench_busybear/dut/MemRWM[1]
+add wave -hex /testbench_busybear/dut/hart/MemRWM[1]
 add wave -hex /testbench_busybear/HWDATA
 add wave -hex /testbench_busybear/HRDATA
 add wave -hex /testbench_busybear/HADDR
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[1]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[2]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[3]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[4]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[5]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[6]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[7]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[8]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[9]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[10]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[11]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[12]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[13]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[14]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[15]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[16]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[17]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[18]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[19]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[20]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[21]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[22]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[23]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[24]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[25]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[26]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[27]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[28]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[29]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[30]
-add wave -hex /testbench_busybear/dut/ieu/dp/regf/rf[31]
+add wave -hex /testbench_busybear/readAdrExpected
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[1]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[2]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[3]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[4]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[5]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[6]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[7]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[8]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[9]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[10]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[11]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[12]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[13]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[14]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[15]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[16]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[17]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[18]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[19]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[20]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[21]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[22]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[23]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[24]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[25]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[26]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[27]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[28]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[29]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[30]
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/regf/rf[31]
 add wave /testbench_busybear/InstrFName
-add wave -hex /testbench_busybear/dut/ifu/PCD
-#add wave -hex /testbench_busybear/dut/ifu/InstrD
+add wave -hex /testbench_busybear/dut/hart/ifu/PCD
+#add wave -hex /testbench_busybear/dut/hart/ifu/InstrD
 add wave /testbench_busybear/InstrDName
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ifu/PCE
-##add wave -hex /testbench_busybear/dut/ifu/InstrE
+add wave -hex /testbench_busybear/dut/hart/ifu/PCE
+##add wave -hex /testbench_busybear/dut/hart/ifu/InstrE
 add wave /testbench_busybear/InstrEName
-#add wave -hex /testbench_busybear/dut/ieu/dp/SrcAE
-#add wave -hex /testbench_busybear/dut/ieu/dp/SrcBE
-add wave -hex /testbench_busybear/dut/ieu/dp/ALUResultE
-#add wave /testbench_busybear/dut/ieu/dp/PCSrcE
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/SrcAE
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/SrcBE
+add wave -hex /testbench_busybear/dut/hart/ieu/dp/ALUResultE
+#add wave /testbench_busybear/dut/hart/ieu/dp/PCSrcE
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ifu/PCM
-##add wave -hex /testbench_busybear/dut/ifu/InstrM
+add wave -hex /testbench_busybear/dut/hart/ifu/PCM
+##add wave -hex /testbench_busybear/dut/hart/ifu/InstrM
 add wave /testbench_busybear/InstrMName
-#add wave /testbench_busybear/dut/dmem/dtim/memwrite
-#add wave -hex /testbench_busybear/dut/dmem/AdrM
-#add wave -hex /testbench_busybear/dut/dmem/WriteDataM
+#add wave /testbench_busybear/dut/hart/dmem/dtim/memwrite
+#add wave -hex /testbench_busybear/dut/hart/dmem/AdrM
+#add wave -hex /testbench_busybear/dut/hart/dmem/WriteDataM
 #add wave -divider
-add wave -hex /testbench_busybear/dut/ifu/PCW
-##add wave -hex /testbench_busybear/dut/ifu/InstrW
+add wave -hex /testbench_busybear/dut/hart/ifu/PCW
+##add wave -hex /testbench_busybear/dut/hart/ifu/InstrW
 add wave /testbench_busybear/InstrWName
-#add wave /testbench_busybear/dut/ieu/dp/RegWriteW
-#add wave -hex /testbench_busybear/dut/ieu/dp/ResultW
-#add wave -hex /testbench_busybear/dut/ieu/dp/RdW
+#add wave /testbench_busybear/dut/hart/ieu/dp/RegWriteW
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/ResultW
+#add wave -hex /testbench_busybear/dut/hart/ieu/dp/RdW
 #add wave -divider
 ##add ww
-#add wave -hex -r /testbench_busybear/*
+add wave -hex -r /testbench_busybear/*
 #
 #-- Set Wave Output Items 
 #TreeUpdate [SetDefaultTree]
@@ -140,6 +174,5 @@ add wave /testbench_busybear/InstrWName
 #set DefaultRadix hexadecimal
 #
 #-- Run the Simulation 
-run 1483850
-#run -all
+run -all
 ##quit
