@@ -1,5 +1,5 @@
 //////////////////////////////////////////
-// wally-config.vh
+// busybear-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
 // Modified: 
@@ -24,6 +24,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`define BUSYBEAR
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
