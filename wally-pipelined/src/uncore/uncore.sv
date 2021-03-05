@@ -140,17 +140,15 @@ module uncore (
                             HSELUARTD);
 
 
-  // Synchronized Address Decoder (figure 4-2 in spec)
-  always_ff @(posedge HCLK) begin
-    HSELTimD   <= HSELTim;
-    HSELCLINTD <= HSELCLINT;
-    `ifdef GPIOBASE
-    HSELGPIOD  <= HSELGPIO;
-    `endif
-    HSELUARTD  <= HSELUART;
-    `ifdef BOOTTIMBASE
-    HSELBootTimD <= HSELBootTim;
-    `endif
-  end
+  // Address Decoder Delay (figure 4-2 in spec)
+  flopr #(1) hseltimreg(HCLK, ~HRESETn, HSELTim, HSELTimD);
+  flopr #(1) hselclintreg(HCLK, ~HRESETn, HSELCLINT, HSELCLINTD);
+  `ifdef GPIOBASE
+  flopr #(1) hselgpioreg(HCLK, ~HRESETn, HSELGPIO, HSELGPIOD);
+  `endif
+  flopr #(1) hseluartreg(HCLK, ~HRESETn, HSELUART, HSELUARTD);
+  `ifdef BOOTTIMBASE
+  flopr #(1) hselboottimreg(HCLK, ~HRESETn, HSELBootTim, HSELBootTimD);
+  `endif
 endmodule
 
