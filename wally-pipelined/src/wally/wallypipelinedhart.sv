@@ -55,7 +55,7 @@ module wallypipelinedhart (
 
 //  logic [1:0]  ForwardAE, ForwardBE;
   logic        StallF, StallD, StallE, StallM, StallW;
-  logic        FlushD, FlushE, FlushM, FlushW;
+  logic        FlushF, FlushD, FlushE, FlushM, FlushW;
   logic        RetM, TrapM;
 
   // new signals that must connect through DP
@@ -66,7 +66,7 @@ module wallypipelinedhart (
   logic [2:0] Funct3E;
 //  logic [31:0] InstrF;
   logic [31:0] InstrD, InstrM;
-  logic [`XLEN-1:0] PCE, PCM, PCLinkW;
+  logic [`XLEN-1:0] PCE, PCM, PCLinkE, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
   logic [`XLEN-1:0] CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
@@ -105,12 +105,13 @@ module wallypipelinedhart (
   logic             InstrReadF;
   logic             DataStall, InstrStall;
   logic             InstrAckD, MemAckW;
+  logic 	    BPPredWrongE;
+  
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
-  ieu ieu(.*); // inteber execution unit: integer register file, datapath and controller
+  ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
   dmem dmem(.*); // data cache unit
-
 
   ahblite ebu( 
     //.InstrReadF(1'b0),

@@ -43,6 +43,7 @@ module controller(
   output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
+  output logic       JumpE,		  
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
@@ -68,7 +69,7 @@ module controller(
   logic 	    RegWriteD, RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
   logic [1:0] MemRWD, MemRWE;
-  logic		    JumpD, JumpE;
+  logic		    JumpD;
   logic		    BranchD, BranchE;
   logic	[1:0] ALUOpD;
   logic [4:0] ALUControlD;
