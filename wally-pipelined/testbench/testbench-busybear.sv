@@ -162,10 +162,10 @@ module testbench_busybear();
             $display("%0t ps, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
-          if (dut.hart.ieu.dp.regf.rf[i] !== regExpected) begin
-            force dut.hart.ieu.dp.regf.rf[i] = regExpected;
-            release dut.hart.ieu.dp.regf.rf[i];
-          end
+          //if (dut.hart.ieu.dp.regf.rf[i] !== regExpected) begin
+          //  force dut.hart.ieu.dp.regf.rf[i] = regExpected;
+          //  release dut.hart.ieu.dp.regf.rf[i];
+          //end
         end
       end
     end
@@ -348,7 +348,7 @@ module testbench_busybear();
   always @(dut.PCF or dut.hart.ifu.InstrF or reset) begin
     if(~HWRITE) begin
     #3;
-    if (~reset && dut.hart.ifu.InstrF[15:0] !== {16{1'bx}}) begin
+    if (~reset && dut.hart.ifu.InstrF[15:0] !== {16{1'bx}} && ~dut.hart.StallD) begin
       if (dut.PCF !== lastPCF) begin
         lastCheckInstrF = CheckInstrF;
         lastPC <= dut.PCF;
