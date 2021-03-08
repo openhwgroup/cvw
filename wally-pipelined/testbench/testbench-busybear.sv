@@ -95,6 +95,14 @@ module testbench_busybear();
     end
   end
 
+  // initial loading of memories
+  initial begin
+    $readmemh("/courses/e190ax/busybear_boot/bootmem.txt", dut.uncore.bootdtim.RAM, 'h1000 >> 3);
+    $readmemh("/courses/e190ax/busybear_boot/ram.txt", dut.uncore.dtim.RAM);
+    $readmemh("/courses/e190ax/busybear_boot/bootmem.txt", dut.imem.bootram, 'h1000 >> 3);
+    $readmemh("/courses/e190ax/busybear_boot/ram.txt", dut.imem.RAM);
+  end
+
   integer warningCount = 0;
 
   //logic[63:0] adrTranslation[4:0];
