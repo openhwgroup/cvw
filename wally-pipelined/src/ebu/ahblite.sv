@@ -102,7 +102,7 @@ module ahblite (
             else                 NextBusState = IDLE;
       INSTRREAD: //if (~HREADY & (MemReadM | MemWriteM))  NextBusState = INSTRREADMEMPENDING; // *** shouldn't happen, delete
             if (~HREADY)    NextBusState = INSTRREAD;
-            else                 NextBusState = IDLE;
+            else                 NextBusState = IDLE;  // if (InstrReadF still high)
       INSTRREADMEMPENDING: if (~HREADY) NextBusState = INSTRREADMEMPENDING; // *** shouldn't happen, delete
             else if (MemReadM)   NextBusState = MEMREAD;
             else                 NextBusState = MEMWRITE; // must be write if not a read.  Don't return to idle.
