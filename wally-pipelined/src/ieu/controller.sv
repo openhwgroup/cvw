@@ -116,7 +116,7 @@ module controller(
                       if (InstrD[31:27] == 5'b00010)
                         ControlsD = 22'b1_000_00_10_001_0_00_0_0_0_0_0_0_1_0; // lr
                       else if (InstrD[31:27] == 5'b00011)
-                        ControlsD = 22'b1_101_01_01_110_0_00_0_0_0_0_0_0_1_0; // sc
+                        ControlsD = 22'b1_101_01_01_101_0_00_0_0_0_0_0_0_1_0; // sc
                       else 
                         ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_1_0; // other atomic; decode later
                     end else
