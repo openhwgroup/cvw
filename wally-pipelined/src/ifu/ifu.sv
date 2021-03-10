@@ -29,7 +29,7 @@
 module ifu (
   input  logic             clk, reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
-  input  logic             FlushD, FlushE, FlushM, FlushW,
+  input  logic             FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
   input  logic [`XLEN-1:0] InstrInF,
   output logic [`XLEN-1:0] PCF, 
@@ -38,13 +38,15 @@ module ifu (
   output logic             ICacheStallF,
   // Decode  
   // Execute
-  input  logic             PCSrcE, 
-  input  logic [`XLEN-1:0] PCTargetE,
-  output logic [`XLEN-1:0] PCE, 
+  output logic [`XLEN-1:0] PCLinkE,
+  input logic 		   PCSrcE, 
+  input logic [`XLEN-1:0]  PCTargetE,
+  output logic [`XLEN-1:0] PCE,
+  output logic 		   BPPredWrongE, 
   // Mem
-  input  logic             RetM, TrapM, 
-  input  logic [`XLEN-1:0] PrivilegedNextPCM, 
-  output logic [31:0]      InstrD, InstrM,
+  input logic 		   RetM, TrapM, 
+  input logic [`XLEN-1:0]  PrivilegedNextPCM, 
+  output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
   // Writeback
   output logic [`XLEN-1:0] PCLinkW,
@@ -65,7 +67,7 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkE, PCLinkM, PCPF;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCPF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   logic [31:0]      nop = 32'h00000013; // instruction for NOP
@@ -81,6 +83,12 @@ module ifu (
   tlb #(3) itlb(clk, reset, SATP, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
     ITLBInstrPAdrF, ITLBMissF, ITLBHitF);
 
+  // branch predictor signals
+  logic 	   SelBPPredF;
+  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
+  logic [3:0] 	    InstrClassD, InstrClassE;
+  
+
   // *** put memory interface on here, InstrF becomes output
   //assign InstrPAdrF = PCF; // *** no MMU
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
@@ -94,9 +102,47 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  mux3    #(`XLEN) pcmux(PCPlus2or4F, PCTargetE, PrivilegedNextPCM, {PrivilegedChangePCM, PCSrcE}, UnalignedPCNextF);
+  //mux3    #(`XLEN) pcmux(PCPlus2or4F, PCCorrectE, PrivilegedNextPCM, {PrivilegedChangePCM, BPPredWrongE}, UnalignedPCNextF);
+  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),
+		       .d1(BPPredPCF),
+		       .s(SelBPPredF),
+		       .y(PCNext0F));
+
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F),
+		       .d1(PCCorrectE),
+		       .s(BPPredWrongE),
+		       .y(PCNext1F));
+
+  mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
+		       .d1(PrivilegedNextPCM),
+		       .s(PrivilegedChangePCM),
+		       .y(UnalignedPCNextF));
+  
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
+
+  // branch and jump predictor
+  // I am making the port connection explicit for now as I want to see them and they will be changing.
+  bpred bpred(.clk(clk),
+	      .reset(reset),
+	      .StallF(StallF),
+	      .StallD(StallD),
+	      .StallE(1'b0),   // *** may need this eventually
+	      .FlushF(FlushF),
+	      .FlushD(FlushD),
+	      .FlushE(FlushE),
+	      .PCNextF(PCNextF),
+	      .BPPredPCF(BPPredPCF),
+	      .SelBPPredF(SelBPPredF),
+	      .PCE(PCE),
+	      .PCSrcE(PCSrcE),
+	      .PCTargetE(PCTargetE),
+	      .PCD(PCD),
+	      .PCLinkE(PCLinkE),
+	      .InstrClassE(InstrClassE),
+	      .BPPredWrongE(BPPredWrongE));
+  // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
+  assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -115,6 +161,14 @@ module ifu (
   decompress decomp(.*);
   assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   // *** combine these with others in better way, including M, F
+
+
+  // the branch predictor needs a compact decoding of the instruction class.
+  // *** consider adding in the alternate return address x5 for returns.
+  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && InstrD[19:15] == 5'h01; // return
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && InstrD[19:15] != 5'h01; // jump register, but not return
+  assign InstrClassD[1] = InstrD[6:0] == 7'h6F; // jump
+  assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
 
   // Misaligned PC logic
 
@@ -138,6 +192,13 @@ module ifu (
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
+
+  flopenrc #(4) InstrClassRegE(.clk(clk),
+			       .reset(reset),
+			       .en(~StallD),
+			       .clear(FlushD),
+			       .d(InstrClassD),
+			       .q(InstrClassE));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or

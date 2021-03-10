@@ -36,7 +36,9 @@ module datapath (
   input  logic [4:0]       ALUControlE,
   input  logic             ALUSrcAE, ALUSrcBE,
   input  logic             TargetSrcE, 
+  input  logic             JumpE,
   input  logic [`XLEN-1:0] PCE,
+  input  logic [`XLEN-1:0] PCLinkE,
   output logic [2:0]       FlagsE,
   output logic [`XLEN-1:0] PCTargetE,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
@@ -64,7 +66,9 @@ module datapath (
   // Execute stage signals
   logic [`XLEN-1:0] RD1E, RD2E;
   logic [`XLEN-1:0] ExtImmE;
-  logic [`XLEN-1:0] PreSrcAE;
+
+  logic [`XLEN-1:0] PreSrcAE, SrcAE2, SrcBE2;
+
   logic [`XLEN-1:0] ALUResultE;
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] TargetBaseE;
@@ -93,8 +97,10 @@ module datapath (
   mux3  #(`XLEN)  faemux(RD1E, ResultW, ALUResultM, ForwardAE, PreSrcAE);
   mux3  #(`XLEN)  fbemux(RD2E, ResultW, ALUResultM, ForwardBE, WriteDataE);
   mux2  #(`XLEN)  srcamux(PreSrcAE, PCE, ALUSrcAE, SrcAE);
+  mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(WriteDataE, ExtImmE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, ALUResultE, FlagsE);
+  mux2  #(`XLEN)  srcbmux2(SrcBE, {`XLEN{1'b0}}, JumpE, SrcBE2); // *** May be able to remove this mux.
+  alu   #(`XLEN)  alu(SrcAE2, SrcBE2, ALUControlE, ALUResultE, FlagsE);
   mux2  #(`XLEN)  targetsrcmux(PCE, SrcAE, TargetSrcE, TargetBaseE);
   assign  PCTargetE = ExtImmE + TargetBaseE;
 
@@ -109,6 +115,9 @@ module datapath (
   flopenrc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ~StallW, ALUResultM, ALUResultW);
   flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
+  // *** something is not right here.  Before the merge I found an issue with the jal instruction not writing
+  // the link address through the alu.
+  // not sure what changed.
   // handle Store Conditional result if atomic extension supported
   generate 
     if (`A_SUPPORTED)
@@ -118,4 +127,11 @@ module datapath (
   endgenerate
 
   mux6  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
+/* -----\/----- EXCLUDED -----\/-----
+  // This mux4:1 no longer needs to include PCLinkW.  This is set correctly in the execution stage.
+  // *** need to look at how the decoder is coded to fix.
+  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, ResultSrcW, ResultW);	
+>>>>>>> bp
+ -----/\----- EXCLUDED -----/\----- */
+ 
 endmodule
