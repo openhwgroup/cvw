@@ -4,6 +4,7 @@
 // Written: Ross Thompson
 // email: ross1728@gmail.com
 // Created: November 9, 2019
+// Modified: March 04, 2021
 //
 // Purpose: Finds the current function or global assembly label based on PCE.
 // 
@@ -26,83 +27,150 @@
 
 `include "wally-config.vh"
 
-module function_radix();
+module function_radix(reset, ProgramName);
+  parameter  FunctionRadixFile, ProgramIndexFile;
+  
+  input logic reset;
+  /* -----\/----- EXCLUDED -----\/-----
+   input string FunctionRadixFile;
+   input string ProgramIndexFile;
+   -----/\----- EXCLUDED -----/\----- */
+  input string ProgramName;
 
-   parameter PRELOAD_FILE = "funct_addr.txt";
+  localparam TestSize = 16;
+  localparam TotalSize = `XLEN+TestSize;
 
-   integer memory_bank [];
-   integer index;
+  logic [TotalSize-1:0]      memory_bank [];
+  logic [TotalSize-1:0]      index;
 
-   logic [`XLEN-1:0] pc;
-   
-   initial begin
-     $init_signal_spy("/riscv_mram_tb/dut/pc", "/riscv_mram_tb/function_radix/pc");
-   end
+  integer       ProgramBank [string];
+  
+  logic [`XLEN-1:0] pc;
+  logic [TestSize-1:0] TestNumber;
+  logic [TotalSize-1:0] TestAddr;
 
-   task automatic bin_search_min;
-      input integer pc;
-      input integer length;
-      ref integer   array [];
-      output integer minval;
+  // *** I should look into the system verilog objects instead of signal spy.
+  initial begin
+    $init_signal_spy("/testbench/dut/hart/PCE", "/testbench/function_radix/pc");
+  end
 
-      integer 	     left, right;
-      integer 	     mid;
+  assign TestAddr = {TestNumber, pc};
 
-      begin
-	 left = 0;
-	 right = length;
-	 while (left <= right) begin
-	    mid = left + ((right - left) / 2);
-	    if (array[mid] == pc) begin
-	       minval = array[mid];
-	       return;
-            end
-	    if (array[mid] < pc) begin
-	      left = mid + 1;
-	    end else begin
-	      right = mid -1;
-	    end
-	 end // while (left <= right)
-	 // if the element pc is now found, right and left will be equal at this point.
-	 // we need to check if pc is less than the array at left or greather.
-	 // if it is less than pc, then we select left as the index.
-	 // if it is greather we want 1 less than left.
-	 if (array[left] < pc) begin
-	    minval = array[left];
-	    return;	    
-	 end else begin
-	    minval = array[left-1];
-	    return;
-	 end
-      end
-   endtask
+  task automatic bin_search_min;
+    input logic [TotalSize-1:0] pc;
+    input logic [TotalSize-1:0]   length;
+    ref logic [TotalSize-1:0]   array [];
+    output logic [TotalSize-1:0] minval;
 
-   
-   // preload
-   initial $readmemh(PRELOAD_FILE, memory_bank);
+    logic [TotalSize-1:0]  left, right;
+    logic [TotalSize-1:0]  mid;
 
-   // we need to count the number of lines in the file so we can set line_count.
-   integer fp;
-   integer line_count = 0;
-   logic [31:0] line;
-   initial begin
-      fp = $fopen(PRELOAD_FILE, "r");
-      // read line by line to count lines
-      if (fp) begin
-	 while (! $feof(fp)) begin
-	    $fscanf(fp, "%h\n", line);
-	    line_count = line_count + 1;
-	 end
+    begin
+      left = 0;
+      right = length;
+      while (left <= right) begin
+	mid = left + ((right - left) / 2);
+	if (array[mid] == pc) begin
+	  minval = array[mid];
+	  return;
+        end
+	if (array[mid] < pc) begin
+	  left = mid + 1;
+	end else if( array[mid] > pc) begin
+	  right = mid -1;
+	end else begin
+	  $display("Critical Error in function radix. PC, %x not found.", pc);
+	  return;
+	  //$stop();
+	end	  
+      end // while (left <= right)
+      // if the element pc is now found, right and left will be equal at this point.
+      // we need to check if pc is less than the array at left or greather.
+      // if it is less than pc, then we select left as the index.
+      // if it is greather we want 1 less than left.
+      if (array[left] < pc) begin
+	minval = array[left];
+	return;	    
       end else begin
-	 $display("Cannot open file %s for reading.", PRELOAD_FILE);
-	 $stop;
+	minval = array[left-1];
+	return;
       end
-   end
+    end
+  endtask // bin_search_min
 
-   always @(pc) begin
-      bin_search_min(pc, line_count, memory_bank, index);
-      
-   end
+/* -----\/----- EXCLUDED -----\/-----
+  task automatic FindProgramIndex;
+    input string ProgramName;
+    ref integer array [string];
+    output integer ProgramIndex;
+
+    string 	   line;
+    
+    begin
+      ProgramIndex = array[ProgramName];
+      return;
+    end
+  endtask
+  
+ -----/\----- EXCLUDED -----/\----- */
+
+
+  // *** this is all wrong
+  integer fp, ProgramFP;
+  integer line_count, ProgramLineCount;
+  logic [TotalSize-1:0] line;
+  string ProgramLine;
+
+  // preload
+  //always @ (posedge reset) begin
+  initial begin
+    $readmemh(FunctionRadixFile, memory_bank);
+    // we need to count the number of lines in the file so we can set line_count.
+
+    line_count = 0;
+    fp = $fopen(FunctionRadixFile, "r");
+
+    // read line by line to count lines
+    if (fp) begin
+      while (! $feof(fp)) begin
+	$fscanf(fp, "%h\n", line);
+	
+	line_count = line_count + 1;
+      end
+    end else begin
+      $display("Cannot open file %s for reading.", FunctionRadixFile);
+    end
+    $fclose(fp);
+    
+    ProgramLineCount = 0;
+    ProgramFP = $fopen(ProgramIndexFile, "r");
+    
+    // read line by line to count lines
+    if (ProgramFP) begin
+      while (! $feof(ProgramFP)) begin
+	$fscanf(ProgramFP, "%s\n", ProgramLine);
+	// *** missing the memory update
+	ProgramBank[ProgramLine] = ProgramLineCount;
+	//$display("Program name is %s", ProgramLine);
+	
+	ProgramLineCount = ProgramLineCount + 1;
+      end
+    end else begin
+      $display("Cannot open file %s for reading.", ProgramIndexFile);
+    end
+    $fclose(ProgramFP);
+    
+  end
+
+  always @(pc) begin
+    bin_search_min(TestAddr, line_count, memory_bank, index);
+  end
+
+  always @(ProgramName, reset) begin
+    //FindProgramIndex(ProgramName, ProgramBank, TestNumber);
+    TestNumber = ProgramBank[ProgramName];
+    //TestNumber = ProgramBank["rv64i/I-ADD-01"];
+  end
 
 endmodule // function_radix
 

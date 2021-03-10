@@ -27,6 +27,9 @@
 `include "wally-config.vh"
 
 module testbench();
+  parameter FunctionRadixFile = "../../imperas-riscv-tests/FunctionRadix.addr";  
+  parameter ProgramIndexFile  = "../../imperas-riscv-tests/ProgramMap.txt";
+
   logic        clk;
   logic        reset;
 
@@ -305,6 +308,7 @@ string tests32i[] = {
 
 };
   string tests[];
+  string testName;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
@@ -368,6 +372,7 @@ string tests32i[] = {
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
+      testName = tests[test];
       reset = 1; # 42; reset = 0;
     end
 
@@ -441,13 +446,17 @@ string tests32i[] = {
           $readmemh(memfilename, dut.imem.RAM);
           $readmemh(memfilename, dut.uncore.dtim.RAM);
           $display("Read memfile %s", memfilename);
+	  testName = tests[test];
           reset = 1; # 17; reset = 0;
         end
       end
     end // always @ (negedge clk)
 
-  // track the current function or label
-  //function_rfunction_radix function_radix();
+  // track the current function or global label
+  function_radix #(.FunctionRadixFile(FunctionRadixFile),
+		   .ProgramIndexFile(ProgramIndexFile))
+  function_radix(.reset(reset),
+		 .ProgramName(testName));
   
 endmodule
 
