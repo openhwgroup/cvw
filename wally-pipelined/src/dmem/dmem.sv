@@ -100,7 +100,7 @@ module dmem (
 
       assign lrM = MemReadM && AtomicM;
       assign scM = MemRWM[0] && AtomicM; 
-      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM == ReservationPAdrW) && ReservationValidW;
+      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`XLEN-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
       always_comb begin // ReservationValidM (next valiue of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve

@@ -113,6 +113,6 @@ configure wave -childrowmargin 2
 set DefaultRadix hexadecimal
 
 -- Run the Simulation 
-#run 2000
+#run 4100
 run -all
 #quit

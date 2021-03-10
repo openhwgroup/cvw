@@ -42,15 +42,6 @@ switch $argc {
     1 {mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench_busybear/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
 }
 
-mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/bootdtim/RAM
-mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/uncore/bootdtim/RAM
-mem load -startaddress 0 -endaddress 2047 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/bootram
-mem load -startaddress 512 -i "/courses/e190ax/busybear_boot/bootmem.txt" -format hex /testbench_busybear/dut/imem/bootram
-mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/uncore/dtim/RAM
-mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/uncore/dtim/RAM
-mem load -startaddress 268435456 -endaddress 285212671 -filltype value -fillradix hex -filldata 0 /testbench_busybear/dut/imem/RAM
-mem load -startaddress 268435456 -i "/courses/e190ax/busybear_boot/ram.txt" -format hex /testbench_busybear/dut/imem/RAM
-
 
 view wave
 
@@ -63,7 +54,9 @@ add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
 add wave -hex /testbench_busybear/dut/hart/ifu/PCF
 add wave -hex /testbench_busybear/dut/hart/ifu/InstrF
-add wave -hex /testbench_busybear/dut/InstrF
+add wave -hex /testbench_busybear/dut/hart/ifu/StallD
+add wave -hex /testbench_busybear/dut/hart/ifu/FlushD
+add wave -hex /testbench_busybear/dut/hart/ifu/InstrRawD
 add wave /testbench_busybear/CheckInstrF
 add wave /testbench_busybear/lastCheckInstrF
 add wave /testbench_busybear/speculative
