@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-module function_radix(reset, ProgramName);
+module function_radix(reset, ProgramIndexName);
   parameter  FunctionRadixFile, ProgramIndexFile;
   
   input logic reset;
@@ -35,18 +35,18 @@ module function_radix(reset, ProgramName);
    input string FunctionRadixFile;
    input string ProgramIndexFile;
    -----/\----- EXCLUDED -----/\----- */
-  input string ProgramName;
+  input string ProgramIndexName;
 
   localparam TestSize = 16;
   localparam TotalSize = `XLEN+TestSize;
 
-  logic [TotalSize-1:0]      memory_bank [];
-  logic [TotalSize-1:0]      index;
+  logic [TotalSize-1:0]      FunctionRadixMemory [];
+  logic [TotalSize-1:0]      FunctionRadixName;
 
-  integer       ProgramBank [string];
+  integer       ProgramIndexMemory [string];
   
   logic [`XLEN-1:0] pc;
-  logic [TestSize-1:0] TestNumber;
+  logic [TestSize-1:0] ProgramIndexTestNumber;
   logic [TotalSize-1:0] TestAddr;
 
   // *** I should look into the system verilog objects instead of signal spy.
@@ -54,7 +54,7 @@ module function_radix(reset, ProgramName);
     $init_signal_spy("/testbench/dut/hart/PCE", "/testbench/functionRadix/function_radix/pc");
   end
 
-  assign TestAddr = {TestNumber, pc};
+  assign TestAddr = {ProgramIndexTestNumber, pc};
 
   task automatic bin_search_min;
     input logic [TotalSize-1:0] pc;
@@ -98,31 +98,31 @@ module function_radix(reset, ProgramName);
     end
   endtask // bin_search_min
 
-  integer fp, ProgramFP;
-  integer line_count, ProgramLineCount;
-  logic [TotalSize-1:0] line;
-  string ProgramLine;
+  integer FunctionRadixFP, ProgramIndexFP;
+  integer FunctionRadixLineCount, ProgramLineCount;
+  logic [TotalSize-1:0] FunctionRadixLine;
+  string ProgramIndexLine;
 
   // preload
   //always @ (posedge reset) begin
   initial begin
-    $readmemh(FunctionRadixFile, memory_bank);
-    // we need to count the number of lines in the file so we can set line_count.
+    $readmemh(FunctionRadixFile, FunctionRadixMemory);
+    // we need to count the number of lines in the file so we can set FunctionRadixLineCount.
 
-    line_count = 0;
-    fp = $fopen(FunctionRadixFile, "r");
+    FunctionRadixLineCount = 0;
+    FunctionRadixFP = $fopen(FunctionRadixFile, "r");
 
     // read line by line to count lines
-    if (fp) begin
-      while (! $feof(fp)) begin
-	$fscanf(fp, "%h\n", line);
+    if (FunctionRadixFP) begin
+      while (! $feof(FunctionRadixFP)) begin
+	$fscanf(FunctionRadixFP, "%h\n", FunctionRadixLine);
 	
-	line_count = line_count + 1;
+	FunctionRadixLineCount = FunctionRadixLineCount + 1;
       end
     end else begin
       $display("Cannot open file %s for reading.", FunctionRadixFile);
     end
-    $fclose(fp);
+    $fclose(FunctionRadixFP);
 
 
     // ProgramIndexFile maps the program name to the compile index.
@@ -130,28 +130,28 @@ module function_radix(reset, ProgramName);
     // in the custom radix.
     // Build an associative array to convert the name to an index.
     ProgramLineCount = 0;
-    ProgramFP = $fopen(ProgramIndexFile, "r");
+    ProgramIndexFP = $fopen(ProgramIndexFile, "r");
     
-    if (ProgramFP) begin
-      while (! $feof(ProgramFP)) begin
-	$fscanf(ProgramFP, "%s\n", ProgramLine);
-	ProgramBank[ProgramLine] = ProgramLineCount;
+    if (ProgramIndexFP) begin
+      while (! $feof(ProgramIndexFP)) begin
+	$fscanf(ProgramIndexFP, "%s\n", ProgramIndexLine);
+	ProgramIndexMemory[ProgramIndexLine] = ProgramLineCount;
 	ProgramLineCount = ProgramLineCount + 1;
       end
     end else begin
       $display("Cannot open file %s for reading.", ProgramIndexFile);
     end
-    $fclose(ProgramFP);
+    $fclose(ProgramIndexFP);
     
   end
 
   always @(pc) begin
-    bin_search_min(TestAddr, line_count, memory_bank, index);
+    bin_search_min(TestAddr, FunctionRadixLineCount, FunctionRadixMemory, FunctionRadixName);
   end
 
   // Each time there is a new program update the test number
-  always @(ProgramName) begin
-    TestNumber = ProgramBank[ProgramName];
+  always @(ProgramIndexName) begin
+    ProgramIndexTestNumber = ProgramIndexMemory[ProgramIndexName];
   end
 
 endmodule // function_radix
