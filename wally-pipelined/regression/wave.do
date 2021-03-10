@@ -1,9 +1,9 @@
-onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/test
 add wave -noupdate -radix ascii /testbench/memfilename
+add wave -noupdate -label {Function Name} -radix Functions /testbench/functionRadix/function_radix/FunctionRadixName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
@@ -113,14 +113,12 @@ add wave -noupdate -expand -group {alu execution stage} /testbench/dut/hart/ieu/
 add wave -noupdate /testbench/dut/hart/ieu/dp/ALUResultM
 add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/FunctionRadixFile
 add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/ProgramIndexFile
-add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/ProgramName
+add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/ProgramIndexName
 add wave -noupdate -expand -group {Function Radix} /testbench/testName
 add wave -noupdate -expand -group {Function Radix} /testbench/functionRadix/function_radix/TestAddr
-add wave -noupdate -expand -group {Function Radix} -radix Functions /testbench/functionRadix/function_radix/index
-add wave -noupdate -expand -group {Function Radix} /testbench/functionRadix/function_radix/TestNumber
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {6683 ns} 0} {{Cursor 3} {6455941 ns} 0}
-quietly wave cursor active 1
+WaveRestoreCursors {{Cursor 2} {6683 ns} 0} {{Cursor 3} {5926044 ns} 0}
+quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 518
 configure wave -justifyvalue left
@@ -135,4 +133,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {131270 ns}
+WaveRestoreZoom {5925753 ns} {5927309 ns}

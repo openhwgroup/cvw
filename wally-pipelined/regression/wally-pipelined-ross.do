@@ -51,5 +51,5 @@ add log -r /*
 
 -- Run the Simulation 
 #run 1000
-#run -all
+run -all
 #quit

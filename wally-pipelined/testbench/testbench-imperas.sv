@@ -30,7 +30,8 @@ module testbench();
   parameter FunctionRadixFile32 = "../../imperas-riscv-tests/FunctionRadix_32.addr";
   parameter FunctionRadixFile64 = "../../imperas-riscv-tests/FunctionRadix_64.addr";
   parameter ProgramIndexFile  = "../../imperas-riscv-tests/ProgramMap.txt";
-
+  parameter DEBUG = 1;
+  
   logic        clk;
   logic        reset;
 
@@ -454,20 +455,18 @@ string tests32i[] = {
     end // always @ (negedge clk)
 
   // track the current function or global label
-  generate
-    if (`XLEN == 32) begin : functionRadix
-      function_radix #(.FunctionRadixFile(FunctionRadixFile32),
-		       .ProgramIndexFile(ProgramIndexFile))
-      function_radix(.reset(reset),
-		     .ProgramName(testName));
-    end else begin : functionRadix
-      function_radix #(.FunctionRadixFile(FunctionRadixFile64),
-		       .ProgramIndexFile(ProgramIndexFile))
-      function_radix(.reset(reset),
-		     .ProgramName(testName));
-    end
-  endgenerate
-    
+  if (`XLEN == 32 && DEBUG == 1) begin : functionRadix
+    function_radix #(.FunctionRadixFile(FunctionRadixFile32),
+		     .ProgramIndexFile(ProgramIndexFile))
+    function_radix(.reset(reset),
+		   .ProgramIndexName(testName));
+  end else if (`XLEN == 64 && DEBUG == 1) begin : functionRadix
+    function_radix #(.FunctionRadixFile(FunctionRadixFile64),
+		     .ProgramIndexFile(ProgramIndexFile))
+    function_radix(.reset(reset),
+		   .ProgramIndexName(testName));
+  end 
+  
 endmodule
 
 /* verilator lint_on STMTDLY */
