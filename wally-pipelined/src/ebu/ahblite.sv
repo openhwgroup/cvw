@@ -84,9 +84,7 @@ module ahblite (
   typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADMEMPENDING} statetype;
   statetype BusState, NextBusState;
 
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) BusState <= #1 IDLE;
-    else          BusState <= #1 NextBusState;
+  flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
   always_comb 
     case (BusState) 

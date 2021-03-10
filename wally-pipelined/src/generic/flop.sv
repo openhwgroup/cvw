@@ -82,11 +82,11 @@ module flopenr #(parameter WIDTH = 8) (
 endmodule
 
 // flop with enable, asynchronous load
-module flopenl #(parameter WIDTH = 8) (
-  input  logic             clk, load, en,
-  input  logic [WIDTH-1:0] d, 
-  input  logic [WIDTH-1:0] val,
-  output logic [WIDTH-1:0] q);
+module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
+  input  logic clk, load, en,
+  input  TYPE d,
+  input  TYPE val,
+  output TYPE q);
 
   always_ff @(posedge clk, posedge load)
     if (load)    q <= #1 val;
