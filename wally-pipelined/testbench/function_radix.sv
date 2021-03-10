@@ -51,7 +51,7 @@ module function_radix(reset, ProgramName);
 
   // *** I should look into the system verilog objects instead of signal spy.
   initial begin
-    $init_signal_spy("/testbench/dut/hart/PCE", "/testbench/function_radix/pc");
+    $init_signal_spy("/testbench/dut/hart/PCE", "/testbench/functionRadix/function_radix/pc");
   end
 
   assign TestAddr = {TestNumber, pc};
@@ -98,24 +98,6 @@ module function_radix(reset, ProgramName);
     end
   endtask // bin_search_min
 
-/* -----\/----- EXCLUDED -----\/-----
-  task automatic FindProgramIndex;
-    input string ProgramName;
-    ref integer array [string];
-    output integer ProgramIndex;
-
-    string 	   line;
-    
-    begin
-      ProgramIndex = array[ProgramName];
-      return;
-    end
-  endtask
-  
- -----/\----- EXCLUDED -----/\----- */
-
-
-  // *** this is all wrong
   integer fp, ProgramFP;
   integer line_count, ProgramLineCount;
   logic [TotalSize-1:0] line;
@@ -141,18 +123,19 @@ module function_radix(reset, ProgramName);
       $display("Cannot open file %s for reading.", FunctionRadixFile);
     end
     $fclose(fp);
-    
+
+
+    // ProgramIndexFile maps the program name to the compile index.
+    // The compile index is then used to inditify the application
+    // in the custom radix.
+    // Build an associative array to convert the name to an index.
     ProgramLineCount = 0;
     ProgramFP = $fopen(ProgramIndexFile, "r");
     
-    // read line by line to count lines
     if (ProgramFP) begin
       while (! $feof(ProgramFP)) begin
 	$fscanf(ProgramFP, "%s\n", ProgramLine);
-	// *** missing the memory update
 	ProgramBank[ProgramLine] = ProgramLineCount;
-	//$display("Program name is %s", ProgramLine);
-	
 	ProgramLineCount = ProgramLineCount + 1;
       end
     end else begin
@@ -166,10 +149,9 @@ module function_radix(reset, ProgramName);
     bin_search_min(TestAddr, line_count, memory_bank, index);
   end
 
-  always @(ProgramName, reset) begin
-    //FindProgramIndex(ProgramName, ProgramBank, TestNumber);
+  // Each time there is a new program update the test number
+  always @(ProgramName) begin
     TestNumber = ProgramBank[ProgramName];
-    //TestNumber = ProgramBank["rv64i/I-ADD-01"];
   end
 
 endmodule // function_radix
