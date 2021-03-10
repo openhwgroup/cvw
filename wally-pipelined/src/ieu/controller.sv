@@ -43,6 +43,7 @@ module controller(
   output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
+  output logic       JumpE,		  
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
@@ -68,7 +69,7 @@ module controller(
   logic 	    RegWriteD, RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
   logic [1:0] MemRWD, MemRWE;
-  logic		    JumpD, JumpE;
+  logic		    JumpD;
   logic		    BranchD, BranchE;
   logic	[1:0] ALUOpD;
   logic [4:0] ALUControlD;
@@ -115,7 +116,7 @@ module controller(
                       if (InstrD[31:27] == 5'b00010)
                         ControlsD = 22'b1_000_00_10_001_0_00_0_0_0_0_0_0_1_0; // lr
                       else if (InstrD[31:27] == 5'b00011)
-                        ControlsD = 22'b1_101_01_01_110_0_00_0_0_0_0_0_0_1_0; // sc
+                        ControlsD = 22'b1_101_01_01_101_0_00_0_0_0_0_0_0_1_0; // sc
                       else 
                         ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_1_0; // other atomic; decode later
                     end else

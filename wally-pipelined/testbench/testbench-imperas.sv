@@ -37,6 +37,9 @@ module testbench();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
+  string tests64a[] = '{
+                    "rv64a/WALLY-LRSC", "2110"
+  };
   string tests64m[] = '{
                     "rv64m/I-MUL-01", "3000",
                     "rv64m/I-MULH-01", "3000",
@@ -321,9 +324,11 @@ string tests32i[] = {
   initial 
     if (`XLEN == 64) begin // RV64
       tests = {tests64i};
-      if (`C_SUPPORTED % 2 == 1) tests = {tests64ic, tests};
-      else                       tests = {tests, tests64iNOc};
-      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests64m};
+      if (`C_SUPPORTED) tests = {tests64ic, tests};
+      else              tests = {tests, tests64iNOc};
+      if (`M_SUPPORTED) tests = {tests, tests64m};
+      if (`A_SUPPORTED) tests = {tests64a, tests};
+ //     tests = {tests64a, tests};
     end else begin // RV32
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
@@ -367,7 +372,8 @@ string tests32i[] = {
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      reset = 1; # 22; reset = 0;
+      $display("Read memfile %s", memfilename);
+      reset = 1; # 42; reset = 0;
     end
 
   // generate clock to sequence tests
@@ -406,9 +412,9 @@ string tests32i[] = {
         i = 0;
         errors = 0;
         if (`XLEN == 32)
-          testadr = tests[test+1].atohex()/4;
+          testadr = (`TIMBASE+tests[test+1].atohex())/4;
         else
-          testadr = tests[test+1].atohex()/8;
+          testadr = (`TIMBASE+tests[test+1].atohex())/8;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
@@ -443,7 +449,11 @@ string tests32i[] = {
           reset = 1; # 17; reset = 0;
         end
       end
-    end
+    end // always @ (negedge clk)
+
+  // track the current function or label
+  //function_rfunction_radix function_radix();
+  
 endmodule
 
 /* verilator lint_on STMTDLY */
@@ -579,6 +589,30 @@ module instrNameDecTB(
       10'b1110011_101: name = "CSRRWI";
       10'b1110011_110: name = "CSRRSI";
       10'b1110011_111: name = "CSRRCI";
+      10'b0101111_010: if      (funct7[6:2] == 5'b00010) name = "LR.W";
+                       else if (funct7[6:2] == 5'b00011) name = "SC.W";
+                       else if (funct7[6:2] == 5'b00001) name = "AMOSWAP.W";
+                       else if (funct7[6:2] == 5'b00000) name = "AMOADD.W";
+                       else if (funct7[6:2] == 5'b00100) name = "AMOAXOR.W";
+                       else if (funct7[6:2] == 5'b01100) name = "AMOAND.W";
+                       else if (funct7[6:2] == 5'b01000) name = "AMOOR.W";
+                       else if (funct7[6:2] == 5'b10000) name = "AMOMIN.W";
+                       else if (funct7[6:2] == 5'b10100) name = "AMOMAX.W";
+                       else if (funct7[6:2] == 5'b11000) name = "AMOMINU.W";
+                       else if (funct7[6:2] == 5'b11100) name = "AMOMAXU.W";
+                       else                              name = "ILLEGAL";
+      10'b0101111_011: if      (funct7[6:2] == 5'b00010) name = "LR.D";
+                       else if (funct7[6:2] == 5'b00011) name = "SC.D";
+                       else if (funct7[6:2] == 5'b00001) name = "AMOSWAP.D";
+                       else if (funct7[6:2] == 5'b00000) name = "AMOADD.D";
+                       else if (funct7[6:2] == 5'b00100) name = "AMOAXOR.D";
+                       else if (funct7[6:2] == 5'b01100) name = "AMOAND.D";
+                       else if (funct7[6:2] == 5'b01000) name = "AMOOR.D";
+                       else if (funct7[6:2] == 5'b10000) name = "AMOMIN.D";
+                       else if (funct7[6:2] == 5'b10100) name = "AMOMAX.D";
+                       else if (funct7[6:2] == 5'b11000) name = "AMOMINU.D";
+                       else if (funct7[6:2] == 5'b11100) name = "AMOMAXU.D";
+                       else                              name = "ILLEGAL";
       10'b0001111_???: name = "FENCE";
       default:         name = "ILLEGAL";
     endcase

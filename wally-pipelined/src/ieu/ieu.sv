@@ -33,6 +33,7 @@ module ieu (
   output logic             IllegalBaseInstrFaultD,
   // Execute Stage interface
   input  logic [`XLEN-1:0] PCE, 
+  input  logic [`XLEN-1:0] PCLinkE,
   output logic [`XLEN-1:0] PCTargetE,
   output logic             MulDivE, W64E,
   output logic [2:0]       Funct3E,
@@ -72,6 +73,7 @@ module ieu (
   logic [1:0]       ForwardAE, ForwardBE;
   logic             RegWriteM, RegWriteW;
   logic             MemReadE, CSRReadE;
+  logic             JumpE;
            
   controller c(.*);
   datapath   dp(.*);             
