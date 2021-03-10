@@ -53,14 +53,13 @@ module testbench();
 //                    "rv64m/I-REMW-01", "3000"
   };
   string tests64ic[] = '{
-
+                     "rv64ic/I-C-BEQZ-01", "3000",
                      "rv64ic/I-C-ADD-01", "3000",
                      "rv64ic/I-C-ADDI-01", "3000",
                      "rv64ic/I-C-ADDIW-01", "3000",
                      "rv64ic/I-C-ADDW-01", "3000",
                      "rv64ic/I-C-AND-01", "3000",
                      "rv64ic/I-C-ANDI-01", "3000",
-                     "rv64ic/I-C-BEQZ-01", "3000",
                      "rv64ic/I-C-BNEZ-01", "3000",
                      "rv64ic/I-C-EBREAK-01", "2000",
                      "rv64ic/I-C-J-01", "3000",
