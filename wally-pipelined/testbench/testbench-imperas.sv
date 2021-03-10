@@ -27,7 +27,8 @@
 `include "wally-config.vh"
 
 module testbench();
-  parameter FunctionRadixFile = "../../imperas-riscv-tests/FunctionRadix.addr";  
+  parameter FunctionRadixFile32 = "../../imperas-riscv-tests/FunctionRadix_32.addr";
+  parameter FunctionRadixFile64 = "../../imperas-riscv-tests/FunctionRadix_64.addr";
   parameter ProgramIndexFile  = "../../imperas-riscv-tests/ProgramMap.txt";
 
   logic        clk;
@@ -453,11 +454,20 @@ string tests32i[] = {
     end // always @ (negedge clk)
 
   // track the current function or global label
-  function_radix #(.FunctionRadixFile(FunctionRadixFile),
-		   .ProgramIndexFile(ProgramIndexFile))
-  function_radix(.reset(reset),
-		 .ProgramName(testName));
-  
+  generate
+    if (`XLEN == 32) begin : functionRadix
+      function_radix #(.FunctionRadixFile(FunctionRadixFile32),
+		       .ProgramIndexFile(ProgramIndexFile))
+      function_radix(.reset(reset),
+		     .ProgramName(testName));
+    end else begin : functionRadix
+      function_radix #(.FunctionRadixFile(FunctionRadixFile64),
+		       .ProgramIndexFile(ProgramIndexFile))
+      function_radix(.reset(reset),
+		     .ProgramName(testName));
+    end
+  endgenerate
+    
 endmodule
 
 /* verilator lint_on STMTDLY */
