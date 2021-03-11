@@ -5,8 +5,10 @@ check_test () {
   echo "$found"
 }
 echo "starting Imperas rv64ic"
+sleep 1
 coproc rv64 {(check_test "sim-wally-batch" "All tests ran without failures.")}
 echo "starting busybear"
+sleep 1
 coproc busybear {(check_test "sim-busybear-batch" "loaded 100000 instructions")}
 IFS= read -r -d '' -u "${rv64[0]}" rv64_out
 [[ $rv64_out -eq 1 ]] && echo "rv64ic passed" || echo "rv64ic failed"
