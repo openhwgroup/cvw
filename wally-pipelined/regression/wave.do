@@ -3,7 +3,6 @@ add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/test
 add wave -noupdate -radix ascii /testbench/memfilename
-add wave -noupdate -label {Function Name} -radix Functions /testbench/functionRadix/function_radix/FunctionRadixName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
@@ -111,16 +110,25 @@ add wave -noupdate -expand -group {alu execution stage} /testbench/dut/hart/ieu/
 add wave -noupdate -expand -group {alu execution stage} /testbench/dut/hart/ieu/dp/SrcAE
 add wave -noupdate -expand -group {alu execution stage} /testbench/dut/hart/ieu/dp/SrcBE
 add wave -noupdate /testbench/dut/hart/ieu/dp/ALUResultM
-add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/FunctionRadixFile
-add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/ProgramIndexFile
-add wave -noupdate -expand -group {Function Radix} -radix ascii /testbench/functionRadix/function_radix/ProgramIndexName
-add wave -noupdate -expand -group {Function Radix} /testbench/testName
-add wave -noupdate -expand -group {Function Radix} /testbench/functionRadix/function_radix/TestAddr
+add wave -noupdate /testbench/functionRadix/function_radix/FunctionAddr
+add wave -noupdate /testbench/functionRadix/function_radix/reset
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramLabelMapLineCount
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramLabelMapLine
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramLabelMapFP
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramLabelMapFile
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramAddrMapLineCount
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramAddrMapLine
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramAddrMapFP
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramAddrMapFile
+add wave -noupdate /testbench/functionRadix/function_radix/pc
+add wave -noupdate /testbench/functionRadix/function_radix/FunctionName
+add wave -noupdate /testbench/functionRadix/function_radix/FunctionAddr
+add wave -noupdate /testbench/functionRadix/function_radix/ProgramAddrIndex
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {6683 ns} 0} {{Cursor 3} {5926044 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 2} {1091 ns} 0} {{Cursor 3} {5926044 ns} 0}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
-configure wave -valuecolwidth 518
+configure wave -valuecolwidth 229
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
 configure wave -snapdistance 10
@@ -133,4 +141,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {5925753 ns} {5927309 ns}
+WaveRestoreZoom {0 ns} {105 us}

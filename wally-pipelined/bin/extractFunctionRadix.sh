@@ -57,9 +57,11 @@ function processProgram {
     # parse out the addresses and the labels
     local addresses=`echo "$listOfAddr" | awk '{print $1}'`
     local labels=`echo "$listOfAddr" | awk '{print  "\""$2"\"", "-color \"SpringGreen\","}' | tr -d '<>:'`
+    local labelsName=`echo "$listOfAddr" | awk '{print  ""$2""}' | tr -d '<>:'`
 
     # output per program function address list
     echo "$addresses" > $objDumpFile.addr
+    echo "$labelsName" > $objDumpFile.lab    
 
     # need to add some formatting to each line
     local numLines=`echo "$listOfAddr" | wc -l`
