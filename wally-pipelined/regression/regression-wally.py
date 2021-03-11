@@ -30,6 +30,7 @@ def test_config(config, print_res=True):
     passed = search_log_for_text("no more .* to read", logname)
   else:
     cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch-parallel.do ../config/" + config + " " + config + "\n!\n"
+    print(cmd)
     os.system(cmd)
     # check for success.  grep returns 0 if found, 1 if not found
     passed = search_log_for_text("All tests ran without failures", logname)
