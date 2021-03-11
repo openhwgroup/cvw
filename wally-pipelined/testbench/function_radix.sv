@@ -27,45 +27,40 @@
 
 `include "wally-config.vh"
 
-module function_radix(reset, ProgramIndexName);
-  parameter  FunctionRadixFile, ProgramIndexFile;
+module function_radix(reset, ProgramAddrMapFile, ProgramLabelMapFile);
   
   input logic reset;
-  /* -----\/----- EXCLUDED -----\/-----
-   input string FunctionRadixFile;
-   input string ProgramIndexFile;
-   -----/\----- EXCLUDED -----/\----- */
-  input string ProgramIndexName;
+  input string ProgramAddrMapFile;
+  input string ProgramLabelMapFile;
 
-  localparam TestSize = 16;
-  localparam TotalSize = `XLEN+TestSize;
-
-  logic [TotalSize-1:0]      FunctionRadixMemory [];
-  logic [TotalSize-1:0]      FunctionRadixName;
-
-  integer       ProgramIndexMemory [string];
+  logic [`XLEN-1:0] ProgramAddrMapMemory [];
+  string 	    ProgramLabelMapMemory [integer];
+  string 	    FunctionName;
   
-  logic [`XLEN-1:0] pc;
-  logic [TestSize-1:0] ProgramIndexTestNumber;
-  logic [TotalSize-1:0] TestAddr;
+
+  logic [`XLEN-1:0] pc, FunctionAddr;
+  integer 	    ProgramAddrIndex;
 
   // *** I should look into the system verilog objects instead of signal spy.
   initial begin
     $init_signal_spy("/testbench/dut/hart/PCE", "/testbench/functionRadix/function_radix/pc");
   end
 
-  assign TestAddr = {ProgramIndexTestNumber, pc};
-
   task automatic bin_search_min;
-    input logic [TotalSize-1:0] pc;
-    input logic [TotalSize-1:0]   length;
-    ref logic [TotalSize-1:0]   array [];
-    output logic [TotalSize-1:0] minval;
+    input logic [`XLEN-1:0] pc;
+    input logic [`XLEN-1:0] length;
+    ref logic [`XLEN-1:0]   array [];
+    output logic [`XLEN-1:0] minval;
+    output     logic [`XLEN-1:0] mid;
 
-    logic [TotalSize-1:0]  left, right;
-    logic [TotalSize-1:0]  mid;
+    logic [`XLEN-1:0] 	     left, right;
 
     begin
+      if ( pc == 0 ) begin
+	// *** want to  keep the old value for mid and minval
+	mid = 0;
+	return;
+      end
       left = 0;
       right = length;
       while (left <= right) begin
@@ -98,61 +93,59 @@ module function_radix(reset, ProgramIndexName);
     end
   endtask // bin_search_min
 
-  integer FunctionRadixFP, ProgramIndexFP;
-  integer FunctionRadixLineCount, ProgramLineCount;
-  logic [TotalSize-1:0] FunctionRadixLine;
-  string ProgramIndexLine;
+  integer ProgramAddrMapFP, ProgramLabelMapFP;
+  integer ProgramAddrMapLineCount, ProgramLabelMapLineCount;
+  longint ProgramAddrMapLine;
+  string  ProgramLabelMapLine;
 
   // preload
-  //always @ (posedge reset) begin
-  initial begin
-    $readmemh(FunctionRadixFile, FunctionRadixMemory);
+//  initial begin
+  always @ (posedge reset) begin
+    $readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
     // we need to count the number of lines in the file so we can set FunctionRadixLineCount.
 
-    FunctionRadixLineCount = 0;
-    FunctionRadixFP = $fopen(FunctionRadixFile, "r");
+    ProgramAddrMapLineCount = 0;
+    ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
 
     // read line by line to count lines
-    if (FunctionRadixFP) begin
-      while (! $feof(FunctionRadixFP)) begin
-	$fscanf(FunctionRadixFP, "%h\n", FunctionRadixLine);
+    if (ProgramAddrMapFP) begin
+      while (! $feof(ProgramAddrMapFP)) begin
+	$fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
 	
-	FunctionRadixLineCount = FunctionRadixLineCount + 1;
+	ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
       end
     end else begin
-      $display("Cannot open file %s for reading.", FunctionRadixFile);
+      $display("Cannot open file %s for reading.", ProgramAddrMapFile);
     end
-    $fclose(FunctionRadixFP);
-
+    $fclose(ProgramAddrMapFP);
 
     // ProgramIndexFile maps the program name to the compile index.
     // The compile index is then used to inditify the application
     // in the custom radix.
     // Build an associative array to convert the name to an index.
-    ProgramLineCount = 0;
-    ProgramIndexFP = $fopen(ProgramIndexFile, "r");
+    ProgramLabelMapLineCount = 0;
+    ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
     
-    if (ProgramIndexFP) begin
-      while (! $feof(ProgramIndexFP)) begin
-	$fscanf(ProgramIndexFP, "%s\n", ProgramIndexLine);
-	ProgramIndexMemory[ProgramIndexLine] = ProgramLineCount;
-	ProgramLineCount = ProgramLineCount + 1;
+    if (ProgramLabelMapFP) begin
+      while (! $feof(ProgramLabelMapFP)) begin
+	$fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
+	ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;
+	ProgramLabelMapLineCount = ProgramLabelMapLineCount + 1;
       end
     end else begin
-      $display("Cannot open file %s for reading.", ProgramIndexFile);
+      $display("Cannot open file %s for reading.", ProgramLabelMapFile);
     end
-    $fclose(ProgramIndexFP);
+    $fclose(ProgramLabelMapFP);
     
   end
 
   always @(pc) begin
-    bin_search_min(TestAddr, FunctionRadixLineCount, FunctionRadixMemory, FunctionRadixName);
+    bin_search_min(pc, ProgramAddrMapLineCount, ProgramAddrMapMemory, FunctionAddr, ProgramAddrIndex);
   end
 
-  // Each time there is a new program update the test number
-  always @(ProgramIndexName) begin
-    ProgramIndexTestNumber = ProgramIndexMemory[ProgramIndexName];
-  end
+
+  assign FunctionName = ProgramLabelMapMemory[ProgramAddrIndex];
+  
 
 endmodule // function_radix
 
