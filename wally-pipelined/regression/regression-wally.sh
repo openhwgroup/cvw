@@ -4,6 +4,9 @@ check_test () {
   found=$(echo $output | grep -c "$2")
   echo "$found"
 }
+echo "checking verilator"
+verilator_out=$(cd ..; ./lint-wally 2>&1)
+[[ -z $verilator_out ]] && echo "verilator passed" || echo "verilator failed"
 echo "starting Imperas rv64ic"
 sleep 1
 coproc rv64 {(check_test "sim-wally-batch" "All tests ran without failures.")}
@@ -16,4 +19,4 @@ IFS= read -r -d '' -u "${busybear[0]}" busybear_out
 [[ $busybear_out -eq 1 ]] && echo "busybear passed" || echo "busybear failed"
 
 #wait $(jobs -p)
-[[ $rv64_out -eq 1 && $busybear_out -eq 1 ]] && echo "all passed" || echo "not all passed"
+[[ -z $verilator_out && $rv64_out -eq 1 && $busybear_out -eq 1 ]] && echo "all passed" || echo "not all passed"
