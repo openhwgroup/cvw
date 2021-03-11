@@ -37,7 +37,7 @@ module dmem (
   input  logic [2:0]       Funct3M,
   //input  logic [`XLEN-1:0] ReadDataW,
   input  logic [`XLEN-1:0] WriteDataM, 
-  input  logic             AtomicM,
+  input  logic [1:0]       AtomicM,
   output logic [`XLEN-1:0] MemPAdrM,
   output logic             MemReadM, MemWriteM,
   output logic             DataMisalignedM,
@@ -98,8 +98,8 @@ module dmem (
       logic             ReservationValidM, ReservationValidW; 
       logic             lrM, scM, WriteAdrMatchM;
 
-      assign lrM = MemReadM && AtomicM;
-      assign scM = MemRWM[0] && AtomicM; 
+      assign lrM = MemReadM && AtomicM[0];
+      assign scM = MemRWM[0] && AtomicM[0]; 
       assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`XLEN-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
       always_comb begin // ReservationValidM (next valiue of valid reservation)

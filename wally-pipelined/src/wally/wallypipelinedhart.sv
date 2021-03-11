@@ -60,7 +60,8 @@ module wallypipelinedhart (
 
   // new signals that must connect through DP
   logic        MulDivE, W64E;
-  logic        CSRReadM, CSRWriteM, PrivilegedM, AtomicM;
+  logic        CSRReadM, CSRWriteM, PrivilegedM;
+  logic [1:0]  AtomicM;
   logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAM;
   logic [2:0] Funct3E;
@@ -113,6 +114,7 @@ module wallypipelinedhart (
     //.InstrReadF(1'b0),
     //.InstrRData(InstrF), // hook up InstrF later
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
+    .Funct7M(InstrM[31:25]),
     .*);
 
 // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
