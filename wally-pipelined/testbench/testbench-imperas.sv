@@ -43,6 +43,7 @@ module testbench();
   //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64a[] = '{
+                    "rv64a/WALLY-AMO", "2110",
                     "rv64a/WALLY-LRSC", "2110"
   };
   string tests64m[] = '{
@@ -195,6 +196,10 @@ string tests64iNOc[] = {
                       "rv64i/WALLY-CSRRCI", "4000"
 
   };
+  string tests32a[] = '{
+                    "rv64a/WALLY-AMO", "2110",
+                    "rv64a/WALLY-LRSC", "2110"
+  };
   string tests32m[] = '{
                     "rv32m/I-MUL-01", "2000",
                     "rv32m/I-MULH-01", "2000",
@@ -334,13 +339,14 @@ string tests32i[] = {
       if (`C_SUPPORTED) tests = {tests, tests64ic};
       else              tests = {tests, tests64iNOc};
       if (`M_SUPPORTED) tests = {tests, tests64m};
-      if (`A_SUPPORTED) tests = {tests64a, tests};
+      if (`A_SUPPORTED) tests = {tests, tests64a};
  //     tests = {tests64a, tests};
     end else begin // RV32
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
+      if (`A_SUPPORTED) tests = {tests, tests32a};
     end
   string signame, memfilename;
 

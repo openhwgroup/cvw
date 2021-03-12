@@ -37,7 +37,7 @@ module dmem (
   input  logic [2:0]       Funct3M,
   //input  logic [`XLEN-1:0] ReadDataW,
   input  logic [`XLEN-1:0] WriteDataM, 
-  input  logic             AtomicM,
+  input  logic [1:0]       AtomicM,
   output logic [`XLEN-1:0] MemPAdrM,
   output logic             MemReadM, MemWriteM,
   output logic             DataMisalignedM,
@@ -51,25 +51,19 @@ module dmem (
   output logic             StoreMisalignedFaultM, StoreAccessFaultM,
   // TLB management
   //input logic  [`XLEN-1:0] PageTableEntryM,
+  input logic  [`XLEN-1:0] SATP_REGW,
   //input logic              DTLBWriteM, DTLBFlushM,
-  // *** satp value will come from CSRs
-  // input logic [`XLEN-1:0] SATP,
   output logic             DTLBMissM, DTLBHitM
 );
 
   logic             SquashSCM;
 
-  // Initially no MMU
-  // *** temporary hack until we can figure out how to get actual satp value
-  // from priv unit -- Thomas F
-  logic [`XLEN-1:0] SATP = '0;
   // *** temporary hack until walker is hooked up -- Thomas F
   logic  [`XLEN-1:0] PageTableEntryM = '0;
   logic DTLBFlushM = '0;
   logic DTLBWriteM = '0;
-  tlb #(3) dtlb(clk, reset, SATP, MemAdrM, PageTableEntryM, DTLBWriteM,
+  tlb #(3) dtlb(clk, reset, SATP_REGW, MemAdrM, PageTableEntryM, DTLBWriteM,
     DTLBFlushM, MemPAdrM, DTLBMissM, DTLBHitM);
-  //assign MemPAdrM = MemAdrM;
 
 	// Determine if an Unaligned access is taking place
 	always_comb
@@ -98,8 +92,8 @@ module dmem (
       logic             ReservationValidM, ReservationValidW; 
       logic             lrM, scM, WriteAdrMatchM;
 
-      assign lrM = MemReadM && AtomicM;
-      assign scM = MemRWM[0] && AtomicM; 
+      assign lrM = MemReadM && AtomicM[0];
+      assign scM = MemRWM[0] && AtomicM[0]; 
       assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`XLEN-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
       always_comb begin // ReservationValidM (next valiue of valid reservation)
