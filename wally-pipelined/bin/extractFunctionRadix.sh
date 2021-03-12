@@ -65,20 +65,22 @@ function processProgram {
 
     # need to add some formatting to each line
     local numLines=`echo "$listOfAddr" | wc -l`
-    local prefix=`yes "    16#" | head -n  $numLines`
-    local midfix=`yes "# " | head -n $numLines`
+    #local prefix=`yes "    16#" | head -n  $numLines`
+    #local midfix=`yes "# " | head -n $numLines`
 
+    # old version which used a modelsim radix    
     # paste echos each of the 4 parts on a per line basis.
     #-d'\0' sets no delimiter
-    local temp=`paste -d'\0' <(echo "$prefix") <(echo "$addresses") <(echo "$midfix") <(echo "$labels")`
+    #local temp=`paste -d'\0' <(echo "$prefix") <(echo "$addresses") <(echo "$midfix") <(echo "$labels")`
+    
 
     # remove the last comma
-    local temp2=${temp::-1}
+    #local temp2=${temp::-1}
 
-    echo "radix define Functions {" > $objDumpFile.do
-    echo "$temp2" >> $objDumpFile.do
-    echo "    -default hex -color green" >> $objDumpFile.do
-    echo "}" >> $objDumpFile.do
+    #echo "radix define Functions {" > $objDumpFile.do
+    #echo "$temp2" >> $objDumpFile.do
+    #echo "    -default hex -color green" >> $objDumpFile.do
+    #echo "}" >> $objDumpFile.do
 
     # now create the all in one version
     # put the index at the begining of each line
@@ -91,8 +93,8 @@ function processProgram {
     local allAddresses=`paste -d'\0' <(printf "%s" "$copyIndex") <(echo "$addresses")`
     printf "%s\n" "$allAddresses" >> ${allProgramRadixFile}_$numBits.addr
 
-    local allAddressesTemp=`paste -d'\0' <(echo "$prefix") <(echo "$allAddresses") <(echo "$midfix") <(echo "$labels")`
-    printf "%s\n" "$allAddressesTemp" >> $allProgramRadixFile.do
+    #local allAddressesTemp=`paste -d'\0' <(echo "$prefix") <(echo "$allAddresses") <(echo "$midfix") <(echo "$labels")`
+    #printf "%s\n" "$allAddressesTemp" >> $allProgramRadixFile.do
 
     return 0
 }
@@ -103,9 +105,10 @@ programToIndexMap="ProgramMap.txt"
 index=0
 
 # clear the files
-rm -rf ${allProgramRadixFile}_32.addr ${allProgramRadixFile}_64.addr $allProgramRadixFile.do $programToIndexMap
+#rm -rf ${allProgramRadixFile}_32.addr ${allProgramRadixFile}_64.addr $allProgramRadixFile.do $programToIndexMap
+rm -rf $programToIndexMap
 
-echo "radix define Functions {" > $allProgramRadixFile.do
+#echo "radix define Functions {" > $allProgramRadixFile.do
 
 for objDumpFile in "$@";
 do
@@ -124,9 +127,9 @@ done
 
 # remove the last comma from the all radix
 # '$ selects the last line
-sed -i '$ s/,$//g' $allProgramRadixFile.do
+#sed -i '$ s/,$//g' $allProgramRadixFile.do
 
-echo "}" >> $allProgramRadixFile.do
+#echo "}" >> $allProgramRadixFile.do
 
 exit 0
 
