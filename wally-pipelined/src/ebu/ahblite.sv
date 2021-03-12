@@ -35,6 +35,8 @@ module ahblite (
   input  logic             StallW, FlushW,
   // Load control
   input  logic             UnsignedLoadM,
+  input  logic [1:0]       AtomicM,
+  input  logic [6:0]       Funct7M,
   // Signals from Instruction Cache
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
@@ -44,6 +46,8 @@ module ahblite (
   input  logic             MemReadM, MemWriteM,
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
+  // Signals from MMU ***
+  // MMUPAdr;
   // Return from bus
   output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals
@@ -64,32 +68,39 @@ module ahblite (
   output logic             HWRITED,
   // Stalls
   output logic             InstrStall,/*InstrUpdate, */DataStall
+  // *** add a chip-level ready signal as part of handshake
 );
 
   logic GrantData;
   logic [2:0] ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataPreW;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataPreW, WriteData;
   logic IReady, DReady;
   logic CaptureDataM;
 
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
-  // *** initially support HABW = XLEN
+  // *** initially support AHBW = XLEN
 
   // track bus state
   // Data accesses have priority over instructions.  However, if a data access comes
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADMEMPENDING} statetype;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADMEMPENDING, ATOMICREAD, ATOMICWRITE} statetype;
   statetype BusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
   always_comb 
     case (BusState) 
-      IDLE: if      (MemReadM)   NextBusState = MEMREAD;  // Memory has pirority over instructions
+      IDLE: if      (AtomicM[1]) NextBusState = ATOMICREAD;
+            else if (MemReadM)   NextBusState = MEMREAD;  // Memory has pirority over instructions
             else if (MemWriteM)  NextBusState = MEMWRITE;
+            else if (InstrReadF) NextBusState = INSTRREAD;
+            else                 NextBusState = IDLE;
+      ATOMICREAD: if (~HREADY)   NextBusState = ATOMICREAD;
+            else                 NextBusState = ATOMICWRITE;
+      ATOMICWRITE: if (~HREADY)  NextBusState = ATOMICWRITE;
             else if (InstrReadF) NextBusState = INSTRREAD;
             else                 NextBusState = IDLE;
       MEMREAD: if (~HREADY)      NextBusState = MEMREAD;
@@ -107,17 +118,14 @@ module ahblite (
     endcase
 
   // stall signals
-  assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || (NextBusState == INSTRREADMEMPENDING);
+  assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
+                        (NextBusState == INSTRREADMEMPENDING);
   assign #1 InstrStall = (NextBusState == INSTRREAD);
- 
-  // DH 2/20/22: A cyclic path presently exists
-  // HREADY->NextBusState->GrantData->HSIZE->HSELUART->HREADY
-  // This is because the peripherals assert HREADY on the same cycle
-  // When memory is working, also fix the peripherals to respond on the subsequent cycle
-  // and this path should be fixed.
-      
+       
   //  bus outputs
-  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE); 
+  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE); 
   assign #1 HADDR = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign #1 HSIZE = GrantData ? {1'b0, MemSizeM} : ISize;
@@ -125,9 +133,9 @@ module ahblite (
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
-  assign HWRITE = (NextBusState == MEMWRITE);
+  assign HWRITE = (NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE);
   // delay write data by one cycle for 
-  flop #(`XLEN) wdreg(HCLK, WriteDataM, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flop #(`XLEN) wdreg(HCLK, WriteData, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
@@ -138,11 +146,26 @@ module ahblite (
 
   assign InstrRData = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
-  assign CaptureDataM = (BusState == MEMREAD) && (NextBusState != MEMREAD);
+  assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
+                        ((BusState == ATOMICREAD) && (NextBusState == ATOMICWRITE));
+  // *** check if this introduces an unnecessary cycle of latency in memory accesses
   flopenr #(`XLEN) ReadDataPreWReg(clk, reset, CaptureDataM, ReadDataM, ReadDataPreW); // *** this may break when there is no instruction read after data read
   flopenr #(`XLEN) ReadDataWReg(clk, reset, ~StallW, ReadDataPreW, ReadDataW);
 
+  // Extract and sign-extend subwords if necessary
   subwordread swr(.*);
 
-endmodule
+  // Handle AMO instructions if applicable
+  generate 
+    if (`A_SUPPORTED) begin
+      logic [`XLEN-1:0] AMOResult;
+//      amoalu amoalu(.a(HRDATA), .b(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+//                    .result(AMOResult));
+      amoalu amoalu(.srca(ReadDataPreW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+                    .result(AMOResult));
+      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicM[1], WriteData);
+    end else
+      assign WriteData = WriteDataM;
+  endgenerate
 
+endmodule

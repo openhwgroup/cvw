@@ -56,9 +56,8 @@ module ifu (
   output logic [`XLEN-1:0] InstrMisalignedAdrM,
   // TLB management
   //input logic  [`XLEN-1:0] PageTableEntryF,
+  input logic  [`XLEN-1:0] SATP_REGW,
   //input logic              ITLBWriteF, ITLBFlushF,
-  // *** satp value will come from CSRs
-  // input logic [`XLEN-1:0] SATP,
   output logic             ITLBMissF, ITLBHitF,
   // bogus
   input  logic [15:0] rd2
@@ -74,14 +73,11 @@ module ifu (
   logic [31:0]     InstrF, InstrRawD, InstrE, InstrW;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
-  // *** temporary hack until we can figure out how to get actual satp value
-  // from priv unit -- Thomas F
-  logic [`XLEN-1:0] SATP = '0;
   // *** temporary hack until walker is hooked up -- Thomas F
   logic  [`XLEN-1:0] PageTableEntryF = '0;
   logic ITLBFlushF = '0;
   logic ITLBWriteF = '0;
-  tlb #(3) itlb(clk, reset, SATP, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
+  tlb #(3) itlb(clk, reset, SATP_REGW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
     InstrPAdrF, ITLBMissF, ITLBHitF);
 
   // branch predictor signals

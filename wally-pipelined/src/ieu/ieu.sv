@@ -43,7 +43,7 @@ module ieu (
   input  logic             DataAccessFaultM,
   input  logic             SquashSCW,
   output logic [1:0]       MemRWM,
-  output logic             AtomicM,
+  output logic [1:0]       AtomicM,
   output logic [`XLEN-1:0] MemAdrM, WriteDataM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [2:0]       Funct3M,

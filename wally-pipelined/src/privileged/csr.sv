@@ -40,6 +40,7 @@ module csr (
   output logic             STATUS_SPP, STATUS_TSR,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
   output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
+  output logic [`XLEN-1:0] SATP_REGW,
   output logic [11:0]      MIP_REGW, MIE_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   input  logic [4:0]       SetFflagsM,
@@ -126,6 +127,7 @@ module csr (
       assign MIDELEG_REGW = 0;
       assign SEDELEG_REGW = 0;
       assign SIDELEG_REGW = 0;
+      assign SATP_REGW = 0;
       assign MIP_REGW = 0;
       assign MIE_REGW = 0;
       assign STATUS_MIE = 0;
