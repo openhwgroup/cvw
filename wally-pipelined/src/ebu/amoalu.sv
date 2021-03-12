@@ -26,12 +26,15 @@
 `include "wally-config.vh"
 
 module amoalu (
-  input  logic [`XLEN-1:0] a, b,
+  input  logic [`XLEN-1:0] srca, srcb,
   input  logic [6:0]       funct,
   input  logic [1:0]       width,
   output logic [`XLEN-1:0] result);
 
-  logic [`XLEN-1:0] y;
+  logic [`XLEN-1:0] a, b, y;
+
+  // *** can this be muxed into the regular ALU to avoid needing a second one?  Only a good
+  // idea if the regular ALU is not the critical path
 
   // *** see how synthesis generates this and optimize more structurally if necessary to share hardware
   // a single carry chain should be shared for + and the four min/max
@@ -43,22 +46,31 @@ module amoalu (
       5'b00100: y = a ^ b;                            // amoxor
       5'b01100: y = a & b;                            // amoand
       5'b01000: y = a | b;                            // amoor
-      5'b10000: y = (a < b) ? a : b;                  // amomin
-      5'b10100: y = (a >= b) ? a : b;                 // amomax
-      5'b11000: y = ({1'b0, a} < {1'b0, b}) ? a : b;  // amominu
-      5'b11100: y = ({1'b0, a} >= {1'b0, b}) ? a : b; // amomaxu
+      5'b10000: y = ($signed(a) < $signed(b)) ? a : b;                  // amomin
+      5'b10100: y = ($signed(a) >= $signed(b)) ? a : b;                 // amomax
+      5'b11000: y = ($unsigned(a) < $unsigned(b)) ? a : b;  // amominu
+      5'b11100: y = ($unsigned(a) >= $unsigned(b)) ? a : b; // amomaxu
       default:  y = 'bx;                              // undefined; *** could change to b for efficiency
     endcase
 
   // sign extend if necessary
   generate
     if (`XLEN == 32) begin
+      assign a = srca;
+      assign b = srcb;
       assign result = y;
     end else begin // `XLEN = 64
       always_comb 
-        if (width == 2'b10) // sign-extend word-length operations
+        if (width == 2'b10) begin // sign-extend word-length operations
+          // *** it would be more efficient to look at carry out of bit 31 to determine comparisons than do this big mux on and b
+          a = {{32{srca[31]}}, srca[31:0]};
+          b = {{32{srcb[31]}}, srcb[31:0]};
           result = {{32{y[31]}}, y[31:0]};
-        else result = y;
+        end else begin
+          a = srca;
+          b = srcb;
+          result = y;
+        end
     end
   endgenerate
 

@@ -159,7 +159,9 @@ module ahblite (
   generate 
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
-      amoalu amoalu(.a(HRDATA), .b(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+//      amoalu amoalu(.a(HRDATA), .b(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+//                    .result(AMOResult));
+      amoalu amoalu(.srca(ReadDataPreW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
       mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicM[1], WriteData);
     end else
