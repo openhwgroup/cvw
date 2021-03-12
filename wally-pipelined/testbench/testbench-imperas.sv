@@ -38,6 +38,7 @@ module testbench();
   //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64a[] = '{
+                    "rv64a/WALLY-AMO", "2110",
                     "rv64a/WALLY-LRSC", "2110"
   };
   string tests64m[] = '{

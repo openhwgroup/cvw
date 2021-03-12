@@ -119,7 +119,7 @@ module controller(
                       else if (InstrD[31:27] == 5'b00011)
                         ControlsD = `CTRLW'b1_101_01_01_101_0_00_0_0_0_0_0_0_01_0; // sc
                       else 
-                        ControlsD = `CTRLW'b1_101_00_11_001_0_00_0_0_0_0_0_0_10_0;; // amo
+                        ControlsD = `CTRLW'b1_101_01_11_001_0_00_0_0_0_0_0_0_10_0;; // amo
                     end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
         7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
