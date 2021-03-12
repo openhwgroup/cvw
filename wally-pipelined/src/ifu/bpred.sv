@@ -124,30 +124,30 @@ module bpred
   
   flopenrc #(2) BPPredRegD(.clk(clk),
 			   .reset(reset),
-			   .en(~StallF),
-			   .clear(FlushF),
+			   .en(~StallD),
+			   .clear(FlushD),
 			   .d(BPPredF),
 			   .q(BPPredD));
 
   flopenrc #(2) BPPredRegE(.clk(clk),
 			   .reset(reset),
-			   .en(~StallD),
-			   .clear(FlushD),
+			   .en(~StallE),
+			   .clear(FlushE),
 			   .d(BPPredD),
 			   .q(BPPredE));
 
   // pipeline the class
   flopenrc #(4) InstrClassRegD(.clk(clk),
 			       .reset(reset),
-			       .en(~StallF),
-			       .clear(FlushF),
+			       .en(~StallD),
+			       .clear(FlushD),
 			       .d(BPInstrClassF),
 			       .q(BPInstrClassD));
 
   flopenrc #(4) InstrClassRegE(.clk(clk),
 			       .reset(reset),
-			       .en(~StallD),
-			       .clear(FlushD),
+			       .en(~StallE),
+			       .clear(FlushE),
 			       .d(BPInstrClassD),
 			       .q(BPInstrClassE));
 

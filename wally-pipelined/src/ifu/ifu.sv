@@ -204,8 +204,8 @@ module ifu (
 
   flopenrc #(4) InstrClassRegE(.clk(clk),
 			       .reset(reset),
-			       .en(~StallD),
-			       .clear(FlushD),
+			       .en(~StallE),
+			       .clear(FlushE),
 			       .d(InstrClassD),
 			       .q(InstrClassE));
 
