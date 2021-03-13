@@ -35,7 +35,7 @@ switch $argc {
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt +acc work.testbench -o workopt 
+vopt +acc -gDEBUG=1 work.testbench -o workopt 
 vsim workopt
 
 # load the branch predictors with known data. The value of the data is not important for function, but
