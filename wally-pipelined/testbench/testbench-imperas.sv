@@ -27,10 +27,7 @@
 `include "wally-config.vh"
 
 module testbench();
-  parameter FunctionRadixFile32 = "../../imperas-riscv-tests/FunctionRadix_32.addr";
-  parameter FunctionRadixFile64 = "../../imperas-riscv-tests/FunctionRadix_64.addr";
-  parameter ProgramIndexFile  = "../../imperas-riscv-tests/ProgramMap.txt";
-  parameter DEBUG = 1;
+  parameter DEBUG = 0;
   
   logic        clk;
   logic        reset;
