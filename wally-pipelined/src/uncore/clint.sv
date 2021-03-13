@@ -45,9 +45,7 @@ module clint (
   assign memread  = HSELCLINT & ~HWRITE;
   assign memwrite = HSELCLINT & HWRITE;
   assign HRESPCLINT = 0; // OK
-//  assign HREADYCLINT = 1; // Respond immediately
-  always_ff @(posedge HCLK) // delay response
-    HREADYCLINT <= memread | memwrite;
+  assign HREADYCLINT = 1'b1; // will need to be modified if CLINT ever needs more than 1 cycle to do something
   
   // word aligned reads
   generate
