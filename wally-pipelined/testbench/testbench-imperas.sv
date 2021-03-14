@@ -27,6 +27,8 @@
 `include "wally-config.vh"
 
 module testbench();
+  parameter DEBUG = 0;
+  
   logic        clk;
   logic        reset;
 
@@ -38,6 +40,7 @@ module testbench();
   //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64a[] = '{
+                    "rv64a/WALLY-AMO", "2110",
                     "rv64a/WALLY-LRSC", "2110"
   };
   string tests64m[] = '{
@@ -189,6 +192,10 @@ string tests64iNOc[] = {
                       "rv64i/WALLY-CSRRCI", "4000"
 
   };
+  string tests32a[] = '{
+                    "rv64a/WALLY-AMO", "2110",
+                    "rv64a/WALLY-LRSC", "2110"
+  };
   string tests32m[] = '{
                     "rv32m/I-MUL-01", "2000",
                     "rv32m/I-MULH-01", "2000",
@@ -307,6 +314,7 @@ string tests32i[] = {
 
 };
   string tests[];
+  string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
@@ -334,6 +342,7 @@ string tests32i[] = {
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
+      if (`A_SUPPORTED) tests = {tests, tests32a};
     end
   string signame, memfilename;
 
@@ -372,6 +381,8 @@ string tests32i[] = {
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
+      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
+      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
       reset = 1; # 42; reset = 0;
     end
@@ -446,13 +457,19 @@ string tests32i[] = {
           $readmemh(memfilename, dut.imem.RAM);
           $readmemh(memfilename, dut.uncore.dtim.RAM);
           $display("Read memfile %s", memfilename);
+	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
+	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
           reset = 1; # 17; reset = 0;
         end
       end
     end // always @ (negedge clk)
 
-  // track the current function or label
-  //function_rfunction_radix function_radix();
+  // track the current function or global label
+  if (DEBUG == 1) begin : functionRadix
+    function_radix function_radix(.reset(reset),
+				  .ProgramAddrMapFile(ProgramAddrMapFile),
+				  .ProgramLabelMapFile(ProgramLabelMapFile));
+  end
   
 endmodule
 

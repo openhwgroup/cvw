@@ -48,7 +48,7 @@ module controller(
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
   output logic       CSRReadM, CSRWriteM, PrivilegedM, 
-  output logic       AtomicM,
+  output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit	
   // Writeback stage control signals
@@ -65,6 +65,8 @@ module controller(
   logic [6:0] Funct7D;
   logic [4:0] Rs1D;
 
+  `define CTRLW 23
+
   // pipelined control signals
   logic 	    RegWriteD, RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
@@ -77,11 +79,11 @@ module controller(
   logic       TargetSrcD, W64D, MulDivD;
   logic       CSRZeroSrcD;
   logic       CSRReadD;
-  logic       AtomicD, AtomicE;
+  logic [1:0] AtomicD, AtomicE;
   logic       CSRWriteD, CSRWriteE;
   logic       InstrValidE, InstrValidM;
   logic       PrivilegedD, PrivilegedE;
-  logic [21:0] ControlsD;
+  logic [`CTRLW-1:0] ControlsD;
   logic        aluc3D;
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;
@@ -100,48 +102,47 @@ module controller(
   generate
     always_comb
       case(OpD)
-      // *** Atomic p. 132 assembly encodings, defs 48
       // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRRead_Privileged_MulDiv_Atomic_Illegal
-        7'b0000000:   ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_1; // illegal instruction
-        7'b0000011:   ControlsD = 22'b1_000_01_10_001_0_00_0_0_0_0_0_0_0_0; // lw
-        7'b0001111:   ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_0; // fence = nop
-        7'b0010011:   ControlsD = 22'b1_000_01_00_000_0_10_0_0_0_0_0_0_0_0; // I-type ALU
-        7'b0010111:   ControlsD = 22'b1_100_11_00_000_0_00_0_0_0_0_0_0_0_0; // auipc
+        7'b0000000:   ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // illegal instruction
+        7'b0000011:   ControlsD = `CTRLW'b1_000_01_10_001_0_00_0_0_0_0_0_0_00_0; // lw
+        7'b0001111:   ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_0; // fence = nop
+        7'b0010011:   ControlsD = `CTRLW'b1_000_01_00_000_0_10_0_0_0_0_0_0_00_0; // I-type ALU
+        7'b0010111:   ControlsD = `CTRLW'b1_100_11_00_000_0_00_0_0_0_0_0_0_00_0; // auipc
         7'b0011011: if (`XLEN == 64)
-                      ControlsD = 22'b1_000_01_00_000_0_10_0_0_1_0_0_0_0_0; // IW-type ALU for RV64i
+                      ControlsD = `CTRLW'b1_000_01_00_000_0_10_0_0_1_0_0_0_00_0; // IW-type ALU for RV64i
                     else
-                      ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_1; // non-implemented instruction
-        7'b0100011:   ControlsD = 22'b0_001_01_01_000_0_00_0_0_0_0_0_0_0_0; // sw
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
+        7'b0100011:   ControlsD = `CTRLW'b0_001_01_01_000_0_00_0_0_0_0_0_0_00_0; // sw
         7'b0101111: if (`A_SUPPORTED) begin
                       if (InstrD[31:27] == 5'b00010)
-                        ControlsD = 22'b1_000_00_10_001_0_00_0_0_0_0_0_0_1_0; // lr
+                        ControlsD = `CTRLW'b1_000_00_10_001_0_00_0_0_0_0_0_0_01_0; // lr
                       else if (InstrD[31:27] == 5'b00011)
-                        ControlsD = 22'b1_101_01_01_101_0_00_0_0_0_0_0_0_1_0; // sc
+                        ControlsD = `CTRLW'b1_101_01_01_101_0_00_0_0_0_0_0_0_01_0; // sc
                       else 
-                        ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_1_0; // other atomic; decode later
+                        ControlsD = `CTRLW'b1_101_01_11_001_0_00_0_0_0_0_0_0_10_0;; // amo
                     end else
-                      ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_1; // non-implemented instruction
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
         7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
-                      ControlsD = 22'b1_000_00_00_000_0_10_0_0_0_0_0_0_0_0; // R-type 
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_10_0_0_0_0_0_0_00_0; // R-type 
                     else if (Funct7D == 7'b0000001 && `M_SUPPORTED)
-                      ControlsD = 22'b1_000_00_00_100_0_00_0_0_0_0_0_1_0_0; // Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_100_0_00_0_0_0_0_0_1_00_0; // Multiply/Divide
                     else
-                      ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_1; // non-implemented instruction
-        7'b0110111:   ControlsD = 22'b1_100_01_00_000_0_11_0_0_0_0_0_0_0_0; // lui
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
+        7'b0110111:   ControlsD = `CTRLW'b1_100_01_00_000_0_11_0_0_0_0_0_0_00_0; // lui
         7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
-                      ControlsD = 22'b1_000_00_00_000_0_10_0_0_1_0_0_0_0_0; // R-type W instructions for RV64i
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_10_0_0_1_0_0_0_00_0; // R-type W instructions for RV64i
                     else if (Funct7D == 7'b0000001 && `M_SUPPORTED && `XLEN == 64)
-                      ControlsD = 22'b1_000_00_00_100_0_00_0_0_1_0_0_1_0_0; // W-type Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_100_0_00_0_0_1_0_0_1_00_0; // W-type Multiply/Divide
                     else
-                      ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_1; // non-implemented instruction
-        7'b1100011:   ControlsD = 22'b0_010_00_00_000_1_01_0_0_0_0_0_0_0_0; // beq
-        7'b1100111:   ControlsD = 22'b1_000_00_00_010_0_00_1_1_0_0_0_0_0_0; // jalr
-        7'b1101111:   ControlsD = 22'b1_011_00_00_010_0_00_1_0_0_0_0_0_0_0; // jal
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
+        7'b1100011:   ControlsD = `CTRLW'b0_010_00_00_000_1_01_0_0_0_0_0_0_00_0; // beq
+        7'b1100111:   ControlsD = `CTRLW'b1_000_00_00_010_0_00_1_1_0_0_0_0_00_0; // jalr
+        7'b1101111:   ControlsD = `CTRLW'b1_011_00_00_010_0_00_1_0_0_0_0_0_00_0; // jal
         7'b1110011: if (Funct3D == 3'b000)
-                      ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_1_0_0_0; // privileged; decoded further in priveleged modules
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_1_0_00_0; // privileged; decoded further in priveleged modules
                     else
-                      ControlsD = 22'b1_000_00_00_011_0_00_0_0_0_1_0_0_0_0; // csrs
-        default:      ControlsD = 22'b0_000_00_00_000_0_00_0_0_0_0_0_0_0_1; // non-implemented instruction
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_00_0_0_0_1_0_0_00_0; // csrs
+        default:      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
       endcase
   endgenerate
 
@@ -173,7 +174,7 @@ module controller(
     endcase
   
   // Execute stage pipeline control register and logic
-  flopenrc #(26) controlregE(clk, reset, FlushE, ~StallE,
+  flopenrc #(27) controlregE(clk, reset, FlushE, ~StallE,
                            {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, AtomicD, 1'b1},
                            {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, AtomicE, InstrValidE});
 
@@ -196,7 +197,7 @@ module controller(
   assign MemReadE = MemRWE[1]; 
   
   // Memory stage pipeline control register
-  flopenrc #(14) controlregM(clk, reset, FlushM, ~StallM,
+  flopenrc #(15) controlregM(clk, reset, FlushM, ~StallM,
                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, AtomicE, InstrValidE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, AtomicM, InstrValidM});
   

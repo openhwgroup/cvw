@@ -37,12 +37,12 @@ module imem (
   logic [`XLEN-1:0] bootram[`BOOTTIMBASE>>(1+`XLEN/32):(`BOOTTIMRANGE+`BOOTTIMBASE)>>(1+`XLEN/32)];
   `endif
  /* verilator lint_on UNDRIVEN */
-  logic [28:0] adrbits;
+  logic [31:0] adrbits; // needs to be 32 bits to index RAM
   logic [`XLEN-1:0] rd;
 //  logic [15:0] rd2;
       
   generate
-    if (`XLEN==32) assign adrbits = AdrF[30:2];
+    if (`XLEN==32) assign adrbits = AdrF[31:2];
     else          assign adrbits = AdrF[31:3];
   endgenerate
 

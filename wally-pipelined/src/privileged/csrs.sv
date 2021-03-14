@@ -48,6 +48,7 @@ module csrs #(parameter
     output logic [`XLEN-1:0] CSRSReadValM, SEPC_REGW, STVEC_REGW, 
     output logic [31:0]      SCOUNTEREN_REGW,     
     output logic [`XLEN-1:0] SEDELEG_REGW, SIDELEG_REGW, 
+    output logic [`XLEN-1:0] SATP_REGW,
     input  logic [11:0]      SIP_REGW, SIE_REGW,
     output logic             WriteSSTATUSM,
     output logic             IllegalCSRSAccessM
@@ -63,7 +64,7 @@ module csrs #(parameter
       logic WriteSTVECM;
       logic WriteSSCRATCHM, WriteSEPCM;
       logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
-      logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW, SATP_REGW;
+      logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW;
       
       assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS);
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC);
@@ -127,6 +128,7 @@ module csrs #(parameter
       assign SEDELEG_REGW = 0;
       assign SIDELEG_REGW = 0;
       assign SCOUNTEREN_REGW = 0;
+      assign SATP_REGW = 0;
       assign IllegalCSRSAccessM = 1;
     end
   endgenerate
