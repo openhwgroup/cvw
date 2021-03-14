@@ -64,7 +64,7 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
         busycount <= 0;
         HREADYTim <= #1 0;
       end else if (~HREADYTim) begin
-        if (busycount == 2) begin // TIM latency, for testing purposes
+        if (busycount == 2) begin // TIM latency, for testing purposes.  *** test with different values
           HREADYTim <= #1 1;
         end else begin
           busycount <= busycount + 1;

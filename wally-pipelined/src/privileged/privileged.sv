@@ -44,6 +44,7 @@ module privileged (
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
+  output logic [`XLEN-1:0] SATP_REGW,
   output logic [2:0]       FRM_REGW,
   input  logic             FlushD, FlushE, FlushM, StallD, StallW
 );

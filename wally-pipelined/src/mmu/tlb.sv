@@ -25,6 +25,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 
 /**
  * sv32 specs
@@ -57,7 +58,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
   input              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
-  input  [`XLEN-1:0] SATP,  // *** How do we get this?
+  input  [`XLEN-1:0] SATP_REGW,
 
   // Virtual address input
   input  [`XLEN-1:0] VirtualAddress,
@@ -75,32 +76,29 @@ module tlb #(parameter ENTRY_BITS = 3) (
   output             TLBHit
 );
 
+  logic SvMode;
+
   generate
-    if (`XLEN == 32) begin: ARCH
-      localparam VPN_BITS = 20;
-      localparam PPN_BITS = 22;
-      localparam PA_BITS = 34;
-
-      logic SvMode;
-      assign SvMode = SATP[31];  // *** change to an enum somehow?
-    end else begin: ARCH
-      localparam VPN_BITS = 27;
-      localparam PPN_BITS = 44;
-      localparam PA_BITS = 56;
-
-      logic SvMode;  // currently just a boolean whether translation enabled
-      assign SvMode = SATP[63];  // *** change to an enum somehow?
+    if (`XLEN == 32) begin
+      assign SvMode = SATP_REGW[31];  // *** change to an enum somehow?
+    end else begin
+      assign SvMode = SATP_REGW[63]; // currently just a boolean whether translation enabled
     end
   endgenerate
+
+  // *** If we want to support multiple virtual memory modes (ie sv39 AND sv48),
+  // we could have some muxes that control which parameters are current.
+  // Although then some of the signals are not big enough. But that's a problem
+  // for much later.
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
 
   // Sections of the virtual and physical addresses
-  logic [ARCH.VPN_BITS-1:0] VirtualPageNumber;
-  logic [ARCH.PPN_BITS-1:0] PhysicalPageNumber;
-  logic [11:0]              PageOffset;
-  logic [ARCH.PA_BITS-1:0]  PhysicalAddressFull;
+  logic [`VPN_BITS-1:0] VirtualPageNumber;
+  logic [`PPN_BITS-1:0] PhysicalPageNumber;
+  logic [11:0]          PageOffset;
+  logic [`PA_BITS-1:0]  PhysicalAddressFull;
 
   // Pattern and pattern location in the CAM
   logic [ENTRY_BITS-1:0] VPNIndex;
@@ -111,7 +109,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
   // Page table entry matching the virtual address
   logic [`XLEN-1:0] PageTableEntry;
 
-  assign VirtualPageNumber = VirtualAddress[ARCH.VPN_BITS+11:12];
+  assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
   assign PageOffset        = VirtualAddress[11:0];
 
   // Choose a read or write location to the entry list
@@ -121,28 +119,28 @@ module tlb #(parameter ENTRY_BITS = 3) (
   tlb_rand rdm(.*);
 
   tlb_ram #(ENTRY_BITS) ram(.*);
-  tlb_cam #(ENTRY_BITS, ARCH.VPN_BITS) cam(.*);
+  tlb_cam #(ENTRY_BITS, `VPN_BITS) cam(.*);
 
   always_comb begin
-    assign PhysicalPageNumber = PageTableEntry[ARCH.PPN_BITS+9:10];
+    assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
 
     if (TLBHit) begin
       assign PhysicalAddressFull = {PhysicalPageNumber, PageOffset};
     end else begin
-      assign PhysicalAddressFull = 8'b0; // *** Actual behavior; disabled until walker functioning
+      assign PhysicalAddressFull = '0; // *** Actual behavior; disabled until walker functioning
       //assign PhysicalAddressFull = {2'b0, VirtualPageNumber, PageOffset} // *** pass through should be removed as soon as walker ready
     end
   end
 
   generate
     if (`XLEN == 32) begin
-      mux2 #(`XLEN) addressmux(VirtualAddress, PhysicalAddressFull[31:0], ARCH.SvMode, PhysicalAddress);
+      mux2 #(`XLEN) addressmux(VirtualAddress, PhysicalAddressFull[31:0], SvMode, PhysicalAddress);
     end else begin
-      mux2 #(`XLEN) addressmux(VirtualAddress, {8'b0, PhysicalAddressFull}, ARCH.SvMode, PhysicalAddress);
+      mux2 #(`XLEN) addressmux(VirtualAddress, {8'b0, PhysicalAddressFull}, SvMode, PhysicalAddress);
     end
   endgenerate
 
-  assign TLBMiss = ~TLBHit & ~(TLBWrite | TLBFlush) & ARCH.SvMode;
+  assign TLBMiss = ~TLBHit & ~(TLBWrite | TLBFlush) & SvMode;
 endmodule
 
 module tlb_ram #(parameter ENTRY_BITS = 3) (
@@ -217,13 +215,13 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
 
   initial begin
     for (int i = 0; i < NENTRIES; i++)
-      ram[i] <= '0;
+      ram[i] = '0;
   end
 
 endmodule
 
 module tlb_rand #(parameter ENTRY_BITS = 3) (
-  input        clk, reset,
+  input                   clk, reset,
   output [ENTRY_BITS-1:0] WriteIndex
 );
 
