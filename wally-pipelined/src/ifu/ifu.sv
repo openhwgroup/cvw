@@ -91,7 +91,7 @@ module ifu (
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
-  // jarred 2021-03-04 Add instrution cache block to remove rd2
+  // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCPF = PCF; // Temporary workaround until iTLB is live
   icache ic(clk, reset, StallF, StallD, FlushD, PCPF, InstrInF, ICacheInstrPAdrF, InstrReadF, CompressedF, ICacheStallF, InstrRawD);
   // Prioritize the iTLB for reads if it wants one

@@ -68,9 +68,9 @@ module icache(
     // and then the upper word, in that order.
     generate
         if (`XLEN == 32) begin
-            assign InstrPAdrF = PCPF[1] ? (DelaySideF ? {PCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
+            assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
         end else begin
-            assign InstrPAdrF = PCPF[2] ? (PCPF[1] ? (DelaySideF ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000};
+            assign InstrPAdrF = PCPF[2] ? (PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000};
         end
     endgenerate
     // For now, we always read since the cache doesn't actually cache
@@ -108,10 +108,10 @@ module icache(
     // Output the requested instruction (we don't need to worry if the read is
     // incomplete, since the pipeline stalls for us when it isn't), or a NOP for
     // the cycle when the first of two reads comes in.
-    always_comb if (DelayD & (MisalignedHalfInstrD[1:0] != 2'b11)) begin
-        assign InstrDMuxChoice = 2'b11;
-    end else if (FlushDLastCycle) begin
+    always_comb if (FlushDLastCycle) begin
         assign InstrDMuxChoice = 2'b10;
+    end else if (DelayD & (MisalignedHalfInstrD[1:0] != 2'b11)) begin
+        assign InstrDMuxChoice = 2'b11;
     end else begin
         assign InstrDMuxChoice = {1'b0, DelaySideF};
     end
