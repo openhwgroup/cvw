@@ -40,7 +40,7 @@ module icache(
   output logic [31:0]     InstrRawD
 );
 
-    logic             DelayF, DelaySideF, FlushDLastCycle;
+    logic             DelayF, DelaySideF, FlushDLastCycle, DelayD, DelaySideD;
     logic  [1:0]      InstrDMuxChoice;
     logic [15:0]      MisalignedHalfInstrF, MisalignedHalfInstrD;
     logic [31:0]      InstrF, AlignedInstrD;
@@ -49,7 +49,9 @@ module icache(
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
 
     flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
-    flopenr #(1)  delayStateFlop(clk, reset, ~StallF, (DelayF & ~DelaySideF) ? 1'b1 : 1'b0 , DelaySideF);
+    flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF, DelayD);
+    flopenr #(1)  delaySideDFlop(clk, reset, ~StallF, DelaySideF, DelaySideD);
+    flopenr #(1)  delayStateFlop(clk, reset, ~StallF, DelayF & ~DelaySideF, DelaySideF);
     flopenr #(16) halfInstrFlop(clk, reset, DelayF & ~StallF, MisalignedHalfInstrF, MisalignedHalfInstrD);
 
     // This flop is here to simulate pulling data out of the cache, which is edge-triggered
@@ -99,7 +101,6 @@ module icache(
     assign ICacheStallF = 0; //DelayF & ~DelaySideF;
 
     // Detect if the instruction is compressed
-    // TODO Low-hanging optimization, don't delay if getting a compressed instruction
     assign CompressedF = (DelaySideF & DelayF) ? (MisalignedHalfInstrD[1:0] != 2'b11) : (InstrF[1:0] != 2'b11);
 
     // Pick the correct output, depending on whether we have to assemble this
@@ -107,7 +108,7 @@ module icache(
     // Output the requested instruction (we don't need to worry if the read is
     // incomplete, since the pipeline stalls for us when it isn't), or a NOP for
     // the cycle when the first of two reads comes in.
-    always_comb if (DelayF & (MisalignedHalfInstrF[1:0] != 2'b11)) begin
+    always_comb if (DelayD & (MisalignedHalfInstrD[1:0] != 2'b11)) begin
         assign InstrDMuxChoice = 2'b11;
     end else if (FlushDLastCycle) begin
         assign InstrDMuxChoice = 2'b10;
