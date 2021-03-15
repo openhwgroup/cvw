@@ -27,20 +27,12 @@ vlib work$2
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-#vlog +incdir+$1 ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583 -work work$2
+vlog +incdir+$1 ../testbench/testbench-imperas.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-#vopt +acc=+/testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory +acc=+/testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory work$2.testbench -o workopt$2
-#vsim workopt$2
+vopt work.testbench -o workopt
+vsim workopt
 
-# load the branch predictors with known data. The value of the data is not important for function, but
-# is important for perventing pessimistic x propagation.
-#mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
-#switch $argc {
-#    0 {mem load -infile ../config/rv64ic/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
-#    1 {mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
-#}
-
-#run -all
-#quit
+run -all
+quit

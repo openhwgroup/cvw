@@ -470,6 +470,12 @@ string tests32i[] = {
 				  .ProgramAddrMapFile(ProgramAddrMapFile),
 				  .ProgramLabelMapFile(ProgramLabelMapFile));
   end
+
+  // initialize the branch predictor
+  initial begin
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.DirPredictor.memory.memory);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);    
+  end
   
 endmodule
 

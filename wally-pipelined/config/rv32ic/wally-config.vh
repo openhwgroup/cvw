@@ -84,3 +84,6 @@
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
+
+`define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"

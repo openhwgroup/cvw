@@ -87,3 +87,6 @@
 /* verilator lint_off WIDTH */
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
+
+`define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
