@@ -86,3 +86,6 @@
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
+
+`define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"

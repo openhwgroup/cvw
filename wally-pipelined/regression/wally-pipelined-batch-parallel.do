@@ -31,11 +31,8 @@ vlog +incdir+$1 ../testbench/testbench-imperas.sv ../testbench/function_radix.sv
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt +acc=+/testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory +acc=+/testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory work.testbench -o workopt 
+vopt work.testbench -o workopt
 vsim workopt
-
-mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
-mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory
 
 run -all
 quit

@@ -38,13 +38,6 @@ switch $argc {
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
-# load the branch predictors with known data. The value of the data is not important for function, but
-# is important for perventing pessimistic x propagation.
-mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
-switch $argc {
-    0 {mem load -infile ../config/rv64ic/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
-    1 {mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
-}
 
 view wave
 
