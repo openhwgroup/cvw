@@ -35,16 +35,8 @@ switch $argc {
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt +acc=+/testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory +acc=+/testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory work.testbench -o workopt 
+vopt work.testbench -o workopt 
 vsim workopt
-
-# load the branch predictors with known data. The value of the data is not important for function, but
-# is important for perventing pessimistic x propagation.
-mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
-switch $argc {
-    0 {mem load -infile ../config/rv64ic/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
-    1 {mem load -infile ../config/$1/BTBPredictor.txt -format bin testbench/dut/hart/ifu/bpred/TargetPredictor/memory/memory}
-}
 
 run -all
 quit
