@@ -40,6 +40,8 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   logic [`XLEN-1:0] HREADTim0;
 
 //  logic [`XLEN-1:0] write;
+  logic [31:0] HADDRd;
+  logic        newAdr;
   logic [15:0] entry;
   logic        memread, memwrite;
   logic [3:0]  busycount;
@@ -48,14 +50,17 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
     memread <= HSELTim & ~ HWRITE;
     memwrite <= HSELTim & HWRITE;
     A <= HADDR;
+    HADDRd <= HADDR;
   end
+
+  assign newAdr = HADDR!=HADDRd;
 
   // busy FSM to extend READY signal
   always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       HREADYTim <= 1;
     end else begin
-      if (HREADYTim & HSELTim) begin
+      if ((HREADYTim | newAdr) & HSELTim) begin
         busycount <= 0;
         HREADYTim <= #1 0;
       end else if (~HREADYTim) begin
