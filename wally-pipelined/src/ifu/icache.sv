@@ -51,7 +51,7 @@ module icache(
     flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
     flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF, DelayD);
     flopenr #(1)  delaySideDFlop(clk, reset, ~StallF, DelaySideF, DelaySideD);
-    flopenr #(1)  delayStateFlop(clk, reset, ~StallF, DelayF & ~DelaySideF, DelaySideF);
+    flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF, DelaySideF);
     flopenr #(16) halfInstrFlop(clk, reset, DelayF & ~StallF, MisalignedHalfInstrF, MisalignedHalfInstrD);
 
     // This flop is here to simulate pulling data out of the cache, which is edge-triggered
