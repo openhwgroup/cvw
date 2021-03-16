@@ -91,4 +91,4 @@
 
 `define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
-`define BPTYPE "BPGLOBAL" // BPGLOBAL or BPTWOBIT
+`define BPTYPE "BPGLOBAL" // BPGLOBAL or BPTWOBIT or BPGSHARE
