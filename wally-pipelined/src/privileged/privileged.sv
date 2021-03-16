@@ -36,7 +36,7 @@ module privileged (
   output logic [`XLEN-1:0] CSRReadValW,
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM,
-  input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
+  input  logic             InstrValidW, FloatRegWriteW, LoadStallD, BPPredWrongE,
   input  logic             PrivilegedM,
   input  logic             InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
   input  logic             LoadMisalignedFaultM, LoadAccessFaultM,
