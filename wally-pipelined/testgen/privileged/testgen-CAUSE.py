@@ -30,33 +30,149 @@ from random import getrandbits
 #   #  exit(1)
 
 def randRegs():
-  reg1 = randint(1,31)
-  reg2 = randint(1,31)
-  reg3 = randint(1,31)
+  reg1 = randint(1,30)
+  reg2 = randint(1,30)
+  reg3 = randint(1,30)
   if (reg1 == 6 or reg2 == 6 or reg3 == 6 or reg1 == reg2):
     return randRegs()
   else:
       return reg1, reg2, reg3
 
 def writeVectors(storecmd):  
+  global testnum
   reg1, reg2, reg3 = randRegs()
 
+  # t5 gets written with mtvec?
+
+  # lines = f"""
+
+  # li x{reg1}, 0
+  # csrwi mtvec, 80002000
+  # .data 00000000
+  # j _done{testnum}
+
+  # _trap{testnum}:
+  # csrrs x{reg1}, mcause, x0
+  # ecall
+
+  # _done{testnum}:
+  # add x0, x0, x0
+  # """
+
+  #lines = 
+
   lines = f"""
-  li x{reg1}, 0
+  j _setup
+  csrrs x31, mcause, x0
+  ecall
+
+  _setup:
+  li x2, 0x80000004
+  csrrw x0, mtvec, x2
+
   """
+  f.write(lines)
 
-  write(lines, storecmd, reg1, 0)
+  # User Software Interrupt
+  write(f"""
+    li x3, 0x8000000
+    {storecmd} x2, 0(x3)
+  """, storecmd, True, 0, "u")
 
-def write(lines, storecmd, reg, expected):
+  # Supervisor Software Interrupt
+  write(f"""
+    li x3, 0x8000000
+    {storecmd} x2, 0(x3)
+  """, storecmd, True, 0, "s")
+
+  # Machine Software Interrupt
+  write(f"""
+    li x3, 0x8000000
+    {storecmd} x2, 0(x3)
+  """, storecmd, True, 3)
+
+  # User Timer Interrupt
+  #write(f"""
+  #  lw x2, mtimecmp
+  #  {storecmd} x2, mtimecmp
+  #""", storecmd, True, 4, "u")
+
+ # # Supervisor Timer Interrupt
+  #write(f"""
+  #  lw x2, mtimecmp
+  #  {storecmd} x2, mtimecmp
+  #""", storecmd, True, 5, "s")
+
+  # Machine Timer Interrupt
+  #write(f"""
+  #  lw x2, mtimecmp
+  #  {storecmd} x2, mtimecmp
+  #""", storecmd, True, 6)
+
+  # User external interrupt True, 8
+  # Supervisor external interrupt True, 9
+
+  # Instr Addr Misalign
+  write(f"""
+    li x2, 0x00000000
+    lw x3, 11(x2)
+  """, storecmd, False, 0)
+
+  # Instr Access Fault False, 1
+  # Not possible in machine mode, because we can access all memory
+
+  # Illegal Instruction
+  write(f"""
+    .data 00000000
+  """, storecmd, False, 2)
+
+  # Breakpoint
+  write(f"""
+    ebreak
+  """, storecmd, False, 3)
+
+  # Load Addr Misalign
+  write(f"""
+    li x2, 0x00000000
+    lw x3, 11(x2)
+  """, storecmd, False, 4)
+
+  # Load Access Fault False, 5
+    # Not possible in machine mode, because we can access all memory
+
+
+  # Store/AMO address misaligned
+  write(f"""
+    li x2, 0x00000000
+    {storecmd} x3, 11(x2)
+  """, storecmd, False, 6)
+
+  # Store/AMO access fault False, 7
+  # Not possible in machine mode, because we can access all memory
+
+  # Environment call from U-mode
+  # Environment call from S-mode
+
+def write(lines, storecmd, interrupt, code, mode = "m"):
   global testnum
+
+  # generate expected interrupt code
+  expected = (0 if not interrupt else (2**31 if xlen == 32 else 2**63)) + code
 
   lines = f"""
     # Testcase {testnum}
+    li x31, 0
     {lines}
 
-    {storecmd} x{reg}, {str(wordsize*testnum)}(x6)
-    #RVTEST_IO_ASSERT_GPR_EQ(x0, 0, {formatstr.format(expected)})
+    {storecmd} x31, {str(wordsize*testnum)}(x6)
+    # RVTEST_IO_ASSERT_GPR_EQ(x0, 0, {formatstr.format(expected)})
   """
+
+  #if mode == "s":
+    # go to supervisor mode
+  #elif mode == "u":
+    # go to user mode
+
   f.write(lines)
 
   if (xlen == 32):
@@ -71,31 +187,31 @@ def write(lines, storecmd, reg, expected):
 ##################################
 
 # name: (interrupt?, code)
-tests = {
- 'User software interrupt': (1, '0'),
- 'Supervisor software interrupt': (1, '1'),
- 'Machine software interrupt': (1, '3'),
- 'User timer interrupt': (1, '4'),
- 'Supervisor timer interrupt': (1, '5'),
- 'Machine timer interrupt': (1, '7'),
- 'User external interrupt': (1, '8'),
- 'Supervisor external interrupt': (1, '9'),
- 'Machine external interrupt': (1, '11'),
- 'Instruction address misaligned': (0, '0'),
- 'Instruction access fault': (0, '1'),
- 'Illegal instruction': (0, '2'),
- 'Breakpoint': (0, '3'),
- 'Load address misaligned': (0, '4'),
- 'Load access fault': (0, '5'),
- 'Store/AMO address misaligned': (0, '6'),
- 'Store/AMO access fault': (0, '7'),
- 'Environment call from U-mode': (0, '8'),
- 'Environment call from S-mode': (0, '9'),
- 'Environment call from M-mode': (0, '11'),
- 'Instruction page fault': (0, '12'),
- 'Load page fault': (0, '13'),
- 'Store/AMO page fault': (0, '15'),
-}
+# tests = {
+#  'User software interrupt': (1, '0'),
+#  'Supervisor software interrupt': (1, '1'),
+#  'Machine software interrupt': (1, '3'),
+#  'User timer interrupt': (1, '4'),
+#  'Supervisor timer interrupt': (1, '5'),
+#  'Machine timer interrupt': (1, '7'),
+#  'User external interrupt': (1, '8'),
+#  'Supervisor external interrupt': (1, '9'),
+#  'Machine external interrupt': (1, '11'),
+#  'Instruction address misaligned': (0, '0'),
+#  'Instruction access fault': (0, '1'),
+#  'Illegal instruction': (0, '2'),
+#  'Breakpoint': (0, '3'),
+#  'Load address misaligned': (0, '4'),
+#  'Load access fault': (0, '5'),
+#  'Store/AMO address misaligned': (0, '6'),
+#  'Store/AMO access fault': (0, '7'),
+#  'Environment call from U-mode': (0, '8'),
+#  'Environment call from S-mode': (0, '9'),
+#  'Environment call from M-mode': (0, '11'),
+#  'Instruction page fault': (0, '12'),
+#  'Load page fault': (0, '13'),
+#  'Store/AMO page fault': (0, '15'),
+# }
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
 numrand = 60;
@@ -132,23 +248,23 @@ for xlen in xlens:
   f.write(line)
 
   # insert generic header
-  h = open("../testgen_header.S", "r")
-  for line in h:  
-    f.write(line)
+  # h = open("../testgen_header.S", "r")
+  # for line in h:  
+  #   f.write(line)
 
   # print directed and random test vectors
   writeVectors(storecmd)
 
 
   # print footer
-  h = open("../testgen_footer.S", "r")
-  for line in h:  
-    f.write(line)
+  # h = open("../testgen_footer.S", "r")
+  # for line in h:  
+  #   f.write(line)
 
   # Finish
-  lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
-  lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-  f.write(lines)
+  # lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
+  # lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
+  # f.write(lines)
   f.close()
   r.close()
 
