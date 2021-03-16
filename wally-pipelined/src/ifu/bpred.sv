@@ -89,7 +89,19 @@ generate
               .UpdateEN(InstrClassE[0]),
               .PCSrcE(PCSrcE),
               .UpdatePrediction(UpdateBPPredE));
-    end 
+    end else if (`BPTYPE == "BPGSHARE") begin:Predictor
+
+      globalHistoryPredictor DirPredictor(.clk(clk),
+              .reset(reset),
+              .*, // Stalls and flushes
+              .LookUpPC(PCNextF),
+              .Prediction(BPPredF),
+              // update
+              .UpdatePC(PCE),
+              .UpdateEN(InstrClassE[0]),
+              .PCSrcE(PCSrcE),
+              .UpdatePrediction(UpdateBPPredE));
+   end 
 endgenerate
 
 

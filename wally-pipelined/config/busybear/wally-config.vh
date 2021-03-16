@@ -89,4 +89,4 @@
 
 `define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
-`define BPTYPE "BPGLOBAL" // BPGLOBAL or BPTWOBIT
+`define BPTYPE "BPGLOBAL" // BPGLOBAL or BPTWOBIT or BPGSHARE

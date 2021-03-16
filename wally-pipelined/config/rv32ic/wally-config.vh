@@ -88,4 +88,4 @@
 
 `define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"
-`define BPTYPE "BPGLOBAL" // BPGLOBAL or BPTWOBIT
+`define BPTYPE "BPGLOBAL" // BPGLOBAL or BPTWOBIT or BPGSHARE
