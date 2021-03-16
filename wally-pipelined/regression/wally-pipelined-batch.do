@@ -17,10 +17,10 @@
 onbreak {resume}
 
 # create library
-if [file exists work] {
-    vdel -all
+if [file exists work_$2] {
+    vdel -lib work_$2 -all
 }
-vlib work
+vlib work_$2
 
 # compile source files
 # suppress spurious warnngs about 
@@ -28,15 +28,16 @@ vlib work
 # because vsim will run vopt
 
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined-batch.do ../config/rv32ic
+# do wally-pipelined-batch.do ../config/rv32ic rv32ic
 switch $argc {
     0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
     1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv  ../src/*/*.sv -suppress 2583}
+    2 {vlog -work work_$2 +incdir+$1 ../testbench/testbench-imperas.sv  ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt work.testbench -o workopt 
-vsim workopt
+vopt work_$2.testbench -work work_$2 -o workopt_$2
+vsim -lib work_$2 workopt_$2
 
 run -all
 quit
