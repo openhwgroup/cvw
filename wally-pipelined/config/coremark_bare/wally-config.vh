@@ -89,5 +89,5 @@
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
 
-`define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPRedictor.txt"
+`define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/coremark_bare/BTBPredictor.txt"
