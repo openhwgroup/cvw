@@ -34,6 +34,7 @@ module testbench();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [`XLEN-1:0] meminit;
   string tests[];
+  string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
