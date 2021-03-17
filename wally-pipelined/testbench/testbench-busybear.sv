@@ -106,6 +106,7 @@ module testbench_busybear();
   end
 
   integer warningCount = 0;
+  integer instrs;
 
   //logic[63:0] adrTranslation[4:0];
   //string translationType[4:0] = {"rf", "writeAdr", "PCW", "PC", "readAdr"};
@@ -249,6 +250,15 @@ module testbench_busybear();
     end
   end
 
+  always @(dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW) begin
+    if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 5 && instrs != 0) begin
+      $display("!!!!!!illegal (physical) memory access !!!!!!!!!!");
+      $display("(as a reminder, MCAUSE and MEPC are set by this)");
+      $display("at %0t ps, instr %0d, HADDR %x", $time, instrs, HADDR);
+      `ERROR
+    end
+  end
+
   `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
@@ -340,7 +350,6 @@ module testbench_busybear();
   end
 
   string PCtext, PCtext2;
-  integer instrs;
   initial begin
     instrs = 0;
   end
