@@ -57,8 +57,7 @@
 `define MEM_VIRTMEM 0
 
 // Address space
-//`define RESET_VECTOR 64'h0000000080000000
-`define RESET_VECTOR 64'h0000000000000000
+`define RESET_VECTOR 64'h00000000000100b0
 
 // Bus Interface width
 `define AHBW 64
@@ -68,7 +67,7 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
 `define TIMBASE    32'h00000000
-`define TIMRANGE   32'h0007FFFF
+`define TIMRANGE   32'hFFFFFFFF
 `define CLINTBASE  32'h02000000
 `define CLINTRANGE 32'h0000FFFF
 `define GPIOBASE   32'h10012000

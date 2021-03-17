@@ -85,9 +85,11 @@ module function_radix(reset, ProgramAddrMapFile, ProgramLabelMapFile);
       // if it is greather we want 1 less than left.
       if (array[left] < pc) begin
 	minval = array[left];
+	mid = left;      
 	return;	    
       end else begin
 	minval = array[left-1];
+	mid = left - 1;	
 	return;
       end
     end

@@ -28,6 +28,7 @@
 
 module testbench();
   parameter DEBUG = 0;
+  parameter TESTSBP = 0;
   
   logic        clk;
   logic        reset;
@@ -313,6 +314,10 @@ string tests32i[] = {
                       "rv32i/WALLY-CSRRCI", "3000"
 
 };
+
+  string testsBP64[] = '{
+		       "rv64BP/reg-test", "10000"
+	 };
   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
@@ -331,13 +336,18 @@ string tests32i[] = {
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
-      tests = {tests64i};
-      if (`C_SUPPORTED) tests = {tests64ic, tests};
-      else              tests = {tests, tests64iNOc};
-      if (`M_SUPPORTED) tests = {tests, tests64m};
-      if (`A_SUPPORTED) tests = {tests, tests64a};
+      if(TESTSBP) begin
+	tests = testsBP64;	
+      end else begin 
+	tests = {tests64i};
+	if (`C_SUPPORTED) tests = {tests, tests64ic};
+	else              tests = {tests, tests64iNOc};
+	if (`M_SUPPORTED) tests = {tests, tests64m};
+	if (`A_SUPPORTED) tests = {tests, tests64a};
+      end
  //     tests = {tests64a, tests};
     end else begin // RV32
+      // *** add the 32 bit bp tests
       tests = {tests32i};
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
