@@ -34,7 +34,6 @@ module testbench();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [`XLEN-1:0] meminit;
   string tests[];
-  string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
@@ -77,8 +76,8 @@ module testbench();
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       for(j=2371; j < 65535; j = j+1)
         dut.uncore.dtim.RAM[j] = 64'b0;
-      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.objdump.addr";
-      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.objdump.lab";
+//      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.objdump.addr";
+//      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.objdump.lab";
       reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests
@@ -94,12 +93,6 @@ module testbench();
         $stop;
       end
     end
-
-  if (1 == 1) begin : functionRadix
-    function_radix function_radix(.reset(reset),
-                  .ProgramAddrMapFile(ProgramAddrMapFile),
-                  .ProgramLabelMapFile(ProgramLabelMapFile));
-  end
 
   initial begin
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.DirPredictor.memory.memory);
