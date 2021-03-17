@@ -37,7 +37,6 @@
 `define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
 `define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 `define ZCSR_SUPPORTED 1
-`define COUNTERS 31
 `define ZCOUNTERS_SUPPORTED 1
 // N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
 //`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
@@ -57,7 +56,7 @@
 `define MEM_VIRTMEM 0
 
 // Address space
-`define RESET_VECTOR 64'h00000000000100b0
+`define RESET_VECTOR 64'h0000000080000000
 
 // Bus Interface width
 `define AHBW 64
@@ -66,8 +65,8 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define TIMBASE    32'h00000000
-`define TIMRANGE   32'hFFFFFFFF
+`define TIMBASE    32'h80000000
+`define TIMRANGE   32'h000FFFFF
 `define CLINTBASE  32'h02000000
 `define CLINTRANGE 32'h0000FFFF
 `define GPIOBASE   32'h10012000
@@ -88,6 +87,3 @@
 /* verilator lint_off WIDTH */
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
-
-`define TWO_BIT_PRELOAD "../config/coremark/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/coremark/BTBPredictor.txt"

@@ -28,7 +28,7 @@ vlib work
 # because vsim will run vopt
 
 # default to config/coremark, but allow this to be overridden at the command line.  For example:
-vlog +incdir+../config/coremark ../testbench/testbench-coremark.sv ../src/*/*.sv -suppress 2583
+vlog +incdir+../config/coremark_bare ../testbench/testbench-coremark_bare.sv ../src/*/*.sv -suppress 2583
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
@@ -110,6 +110,6 @@ set DefaultRadix hexadecimal
 
 -- Run the Simulation 
 #run 7402000
-#run 10500
+#run 12750
 run -all
 #quit
