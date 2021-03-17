@@ -91,6 +91,12 @@ module testbench();
         $stop;
       end
     end
+
+  initial begin
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.DirPredictor.memory.memory);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);
+  end
+
    
 endmodule
 /* verilator lint_on STMTDLY */
