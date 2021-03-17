@@ -27,9 +27,9 @@ def test_config(config, print_res=True):
     cmd = "echo 'quit' | vsim -do wally-busybear.do -c >" + logname
     os.system(cmd)
     # check for success.  grep returns 0 if found, 1 if not found
-    passed = search_log_for_text("no more .* to read", logname)
+    passed = search_log_for_text("# loaded 100000 instructions", logname)
   else:
-    cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch-parallel.do ../config/" + config + " " + config + "\n!\n"
+    cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch.do ../config/" + config + " " + config + "\n!\n"
     print(cmd)
     os.system(cmd)
     # check for success.  grep returns 0 if found, 1 if not found

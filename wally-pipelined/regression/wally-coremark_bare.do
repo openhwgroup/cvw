@@ -1,4 +1,4 @@
-# wally-pipelined.do 
+# wally-coremark.do 
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench 
@@ -7,11 +7,11 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Use this wally-pipelined.do file to run this example.
+# Use this wally-coremark.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-pipelined.do
+#     do wally-coremark.do
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-pipelined.do -c
+#     vsim -do wally-coremark.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
 onbreak {resume}
@@ -27,17 +27,13 @@ vlib work
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined.do ../config/rv32ic
-switch $argc {
-    0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583}
-}
+# default to config/coremark, but allow this to be overridden at the command line.  For example:
+vlog +incdir+../config/coremark_bare ../testbench/testbench-coremark_bare.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583
+
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench -o workopt 
 vsim workopt
-
 
 view wave
 
@@ -47,55 +43,57 @@ add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
 #add wave /testbench/dut/hart/ebu/IReadF
-add wave /testbench/dut/hart/DataStall
-add wave /testbench/dut/hart/InstrStall
-add wave /testbench/dut/hart/StallF
-add wave /testbench/dut/hart/StallD
-add wave /testbench/dut/hart/StallE
-add wave /testbench/dut/hart/StallM
-add wave /testbench/dut/hart/StallW
-add wave /testbench/dut/hart/FlushD
-add wave /testbench/dut/hart/FlushE
-add wave /testbench/dut/hart/FlushM
-add wave /testbench/dut/hart/FlushW
+#add wave /testbench/dut/hart/DataStall
+#add wave /testbench/dut/hart/InstrStall
+#add wave /testbench/dut/hart/StallF
+#add wave /testbench/dut/hart/StallD
+#add wave /testbench/dut/hart/FlushD
+#add wave /testbench/dut/hart/FlushE
+#add wave /testbench/dut/hart/FlushM
+#add wave /testbench/dut/hart/FlushW
 
-add wave -divider
+add wave -divider Fetch
 add wave -hex /testbench/dut/hart/ifu/PCF
+add wave -hex /testbench/dut/hart/ifu/InstrF
+add wave /testbench/InstrFName
+add wave -divider Decode
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
 add wave /testbench/InstrDName
-add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
-add wave -hex /testbench/dut/hart/ifu/ic/AlignedInstrD
-add wave /testbench/dut/hart/ifu/ic/DelayF
-add wave /testbench/dut/hart/ifu/ic/DelaySideF
-add wave /testbench/dut/hart/ifu/ic/DelayD
-add wave /testbench/dut/hart/ifu/ic/DelaySideD
-add wave -hex /testbench/dut/hart/ifu/ic/MisalignedHalfInstrD
-add wave -divider
+add wave -divider Execute
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
 add wave /testbench/InstrEName
-add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
-add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
-add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
-#add wave /testbench/dut/hart/ieu/dp/PCSrcE
-add wave -divider
+add wave -divider Memory
 add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
-add wave /testbench/dut/uncore/dtim/memwrite
-add wave -hex /testbench/dut/uncore/HADDR
-add wave -hex /testbench/dut/uncore/HWDATA
-add wave -divider
+add wave -divider Write
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave -hex /testbench/dut/hart/ifu/InstrW
 add wave /testbench/InstrWName
-add wave /testbench/dut/hart/ieu/dp/RegWriteW
-add wave -hex /testbench/dut/hart/ieu/dp/ResultW
-add wave -hex /testbench/dut/hart/ieu/dp/RdW
+#add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
+#add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
+#add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
+#add wave /testbench/dut/hart/ieu/dp/PCSrcE
+add wave -divider Regfile_signals
+#add wave /testbench/dut/uncore/dtim/memwrite
+#add wave -hex /testbench/dut/uncore/HADDR
+#add wave -hex /testbench/dut/uncore/HWDATA
+#add wave -divider
+#add wave -hex /testbench/dut/hart/ifu/PCW
+#add wave /testbench/InstrWName
+#add wave /testbench/dut/hart/ieu/dp/RegWriteW
+#add wave -hex /testbench/dut/hart/ieu/dp/ResultW
+#add wave -hex /testbench/dut/hart/ieu/dp/RdW
+add wave -hex -r /testbench/dut/hart/ieu/dp/regf/*
+add wave -divider Regfile_itself
+add wave -hex -r /testbench/dut/hart/ieu/dp/regf/rf
+add wave -divider RAM
+add wave -hex -r /testbench/dut/uncore/dtim/RAM
+add wave -divider Misc
 add wave -divider
-#add ww
-add wave -hex -r /testbench/*
+#add wave -hex -r /testbench/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
@@ -111,6 +109,8 @@ configure wave -childrowmargin 2
 set DefaultRadix hexadecimal
 
 -- Run the Simulation 
-#run 4100
-run -all
+#run 7402000
+#run 12750
+#run -all
+run 5000
 #quit

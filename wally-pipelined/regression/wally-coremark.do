@@ -52,23 +52,23 @@ add wave -divider
 #add wave /testbench/dut/hart/FlushM
 #add wave /testbench/dut/hart/FlushW
 
-add wave -divider
+add wave -divider Fetch
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/InstrF
 add wave /testbench/InstrFName
-add wave -divider
+add wave -divider Decode
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
 add wave /testbench/InstrDName
-add wave -divider
+add wave -divider Execute
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
 add wave /testbench/InstrEName
-add wave -divider
+add wave -divider Memory
 add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
-add wave -divider
+add wave -divider Write
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave -hex /testbench/dut/hart/ifu/InstrW
 add wave /testbench/InstrWName
@@ -76,7 +76,7 @@ add wave /testbench/InstrWName
 #add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
 #add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 #add wave /testbench/dut/hart/ieu/dp/PCSrcE
-add wave -divider
+add wave -divider Regfile_signals
 #add wave /testbench/dut/uncore/dtim/memwrite
 #add wave -hex /testbench/dut/uncore/HADDR
 #add wave -hex /testbench/dut/uncore/HWDATA
@@ -86,11 +86,14 @@ add wave -divider
 #add wave /testbench/dut/hart/ieu/dp/RegWriteW
 #add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 #add wave -hex /testbench/dut/hart/ieu/dp/RdW
-#add wave -hex -r /testbench/*
 add wave -hex -r /testbench/dut/hart/ieu/dp/regf/*
+add wave -divider Regfile_itself
+add wave -hex -r /testbench/dut/hart/ieu/dp/regf/rf
+add wave -divider RAM
+add wave -hex -r /testbench/dut/uncore/dtim/RAM
+add wave -divider Misc
 add wave -divider
-add wave -divider
-add wave -hex -r /testbench/dut/hart/ebu/ReadDataW
+#add wave -hex -r /testbench/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
@@ -106,6 +109,7 @@ configure wave -childrowmargin 2
 set DefaultRadix hexadecimal
 
 -- Run the Simulation 
-run 3000
-#run -all
+#run 7402000
+#run 10500
+run -all
 #quit

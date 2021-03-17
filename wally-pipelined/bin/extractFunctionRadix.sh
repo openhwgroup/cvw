@@ -39,7 +39,7 @@ function processProgram {
 
     # when size = 16 => 64 bit
     # when size = 8 => 32 bit
-    local listOfAddr=`egrep -i "^[0-9]{$size} <[0-9a-zA-Z_]+>" $objDumpFile`
+    local listOfAddr=`egrep -i "^[0-9a-f]{$size} <[0-9a-zA-Z_]+>" $objDumpFile`
 
     # skip if the wrong bit width.
     if [ -z "$listOfAddr" ]; then

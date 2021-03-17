@@ -1,5 +1,5 @@
 //////////////////////////////////////////
-// busybear-config.vh
+// wally-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
 // Modified: 
@@ -24,11 +24,11 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`define BUSYBEAR
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
-`define MISA (32'h0014112D)
+//`define MISA (32'h00000104)
+`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -37,8 +37,8 @@
 `define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
 `define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 `define ZCSR_SUPPORTED 1
-`define ZCOUNTERS_SUPPORTED 1
 `define COUNTERS 31
+`define ZCOUNTERS_SUPPORTED 1
 // N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
 //`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
 `define N_SUPPORTED 0
@@ -57,24 +57,23 @@
 `define MEM_VIRTMEM 0
 
 // Address space
-`define RESET_VECTOR 64'h0000000000001000
+`define RESET_VECTOR 64'h0000000080000000
+
+// Bus Interface width
+`define AHBW 64
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define TIMBASE       32'h80000000
-`define TIMRANGE      32'h07FFFFFF
-`define BOOTTIMBASE   32'h00000000 //only needs to go from 0x1000 to 0x2FFF, extending to a power of 2
-`define BOOTTIMRANGE  32'h00003FFF
-`define CLINTBASE     32'h02000000
-`define CLINTRANGE    32'h0000BFFF
-//`define GPIOBASE    32'h10012000 // no GPIO in linux for now
-//`define GPIORANGE   32'h000000FF
-`define UARTBASE      32'h10000000
-`define UARTRANGE     32'h00000007
-// Bus Interface width
-`define AHBW 64
+`define TIMBASE    32'h80000000
+`define TIMRANGE   32'h000FFFFF
+`define CLINTBASE  32'h02000000
+`define CLINTRANGE 32'h0000FFFF
+`define GPIOBASE   32'h10012000
+`define GPIORANGE  32'h000000FF
+`define UARTBASE   32'h10000000
+`define UARTRANGE  32'h00000007
 
 // Test modes
 
@@ -87,6 +86,8 @@
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
+/* verilator lint_off ASSIGNDLY */
+/* verilator lint_off PINCONNECTEMPTY */
 
-`define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/coremark_bare/BTBPredictor.txt"
