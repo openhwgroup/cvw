@@ -76,7 +76,7 @@ module ahblite (
 
   logic GrantData;
   logic [2:0] ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataPreW, WriteData;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataNewW, ReadDataOldW, WriteData;
   logic IReady, DReady;
   logic CaptureDataM;
 
@@ -89,42 +89,40 @@ module ahblite (
   // Data accesses have priority over instructions.  However, if a data access comes
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADMEMPENDING, ATOMICREAD, ATOMICWRITE} statetype;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE} statetype;
   statetype BusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
   always_comb 
     case (BusState) 
-      IDLE: if      (AtomicM[1]) NextBusState = ATOMICREAD;
-            else if (MemReadM)   NextBusState = MEMREAD;  // Memory has pirority over instructions
-            else if (MemWriteM)  NextBusState = MEMWRITE;
-            else if (InstrReadF) NextBusState = INSTRREAD;
-            else                 NextBusState = IDLE;
-      ATOMICREAD: if (~HREADY)   NextBusState = ATOMICREAD;
-            else                 NextBusState = ATOMICWRITE;
-      ATOMICWRITE: if (~HREADY)  NextBusState = ATOMICWRITE;
-            else if (InstrReadF) NextBusState = INSTRREAD;
-            else                 NextBusState = IDLE;
-      MEMREAD: if (~HREADY)      NextBusState = MEMREAD;
-            else if (InstrReadF) NextBusState = INSTRREAD;
-            else                 NextBusState = IDLE;
-      MEMWRITE: if (~HREADY)     NextBusState = MEMWRITE;
-            else if (InstrReadF) NextBusState = INSTRREAD;
-            else                 NextBusState = IDLE;
-      INSTRREAD: //if (~HREADY & (MemReadM | MemWriteM))  NextBusState = INSTRREADMEMPENDING; // *** shouldn't happen, delete
-            if (~HREADY)    NextBusState = INSTRREAD;
-            else                 NextBusState = IDLE;  // if (InstrReadF still high)
-      INSTRREADMEMPENDING: if (~HREADY) NextBusState = INSTRREADMEMPENDING; // *** shouldn't happen, delete
-            else if (MemReadM)   NextBusState = MEMREAD;
-            else                 NextBusState = MEMWRITE; // must be write if not a read.  Don't return to idle.
+      IDLE: if      (AtomicM[1])  NextBusState = ATOMICREAD;
+            else if (MemReadM)    NextBusState = MEMREAD;  // Memory has pirority over instructions
+            else if (MemWriteM)   NextBusState = MEMWRITE;
+            else if (InstrReadF)  NextBusState = INSTRREAD;
+            else                  NextBusState = IDLE;
+      ATOMICREAD: if (~HREADY)    NextBusState = ATOMICREAD;
+            else                  NextBusState = ATOMICWRITE;
+      ATOMICWRITE: if (~HREADY)   NextBusState = ATOMICWRITE;
+            else if (InstrReadF)  NextBusState = INSTRREAD;
+            else                  NextBusState = IDLE;
+      MEMREAD: if (~HREADY)       NextBusState = MEMREAD;
+            else if (InstrReadF)  NextBusState = INSTRREADC;
+            else                  NextBusState = IDLE;
+      MEMWRITE: if (~HREADY)      NextBusState = MEMWRITE;
+            else if (InstrReadF)  NextBusState = INSTRREAD;
+            else                  NextBusState = IDLE;
+      INSTRREAD:
+            if (~HREADY)          NextBusState = INSTRREAD;
+            else                  NextBusState = IDLE;  // if (InstrReadF still high)
+      INSTRREADC: if (~HREADY)    NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
+            else                  NextBusState = IDLE;
     endcase
 
   // stall signals
   assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                        (NextBusState == INSTRREADMEMPENDING);
-  assign #1 InstrStall = (NextBusState == INSTRREAD);
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
+  assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC);
        
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
@@ -151,9 +149,10 @@ module ahblite (
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
                         ((BusState == ATOMICREAD) && (NextBusState == ATOMICWRITE));
-  // *** check if this introduces an unnecessary cycle of latency in memory accesses
-  flopenr #(`XLEN) ReadDataPreWReg(clk, reset, CaptureDataM, ReadDataM, ReadDataPreW); // *** this may break when there is no instruction read after data read
-  flopenr #(`XLEN) ReadDataWReg(clk, reset, ~StallW, ReadDataPreW, ReadDataW);
+  // We think this introduces an unnecessary cycle of latency in memory accesses
+  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM,    ReadDataM, ReadDataNewW); // *** check that this does not break when there is no instruction read after data read
+  flopenr #(`XLEN) ReadDataOldWReg(clk, reset, CaptureDataM, ReadDataNewW, ReadDataOldW); // *** check that this does not break when there is no instruction read after data read
+  assign ReadDataW = (BusState == INSTRREADC) ? ReadDataOldW : ReadDataNewW;
 
   // Extract and sign-extend subwords if necessary
   subwordread swr(.*);
@@ -164,7 +163,7 @@ module ahblite (
       logic [`XLEN-1:0] AMOResult;
 //      amoalu amoalu(.a(HRDATA), .b(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
 //                    .result(AMOResult));
-      amoalu amoalu(.srca(ReadDataPreW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+      amoalu amoalu(.srca(ReadDataW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
       mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicM[1], WriteData);
     end else
