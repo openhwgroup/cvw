@@ -117,7 +117,7 @@ module controller(
                       if (InstrD[31:27] == 5'b00010)
                         ControlsD = `CTRLW'b1_000_00_10_001_0_00_0_0_0_0_0_0_01_0; // lr
                       else if (InstrD[31:27] == 5'b00011)
-                        ControlsD = `CTRLW'b1_101_01_01_101_0_00_0_0_0_0_0_0_01_0; // sc
+                        ControlsD = `CTRLW'b1_101_01_01_100_0_00_0_0_0_0_0_0_01_0; // sc
                       else 
                         ControlsD = `CTRLW'b1_101_01_11_001_0_00_0_0_0_0_0_0_10_0;; // amo
                     end else
@@ -125,23 +125,23 @@ module controller(
         7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_10_0_0_0_0_0_0_00_0; // R-type 
                     else if (Funct7D == 7'b0000001 && `M_SUPPORTED)
-                      ControlsD = `CTRLW'b1_000_00_00_100_0_00_0_0_0_0_0_1_00_0; // Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_00_0_0_0_0_0_1_00_0; // Multiply/Divide
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
         7'b0110111:   ControlsD = `CTRLW'b1_100_01_00_000_0_11_0_0_0_0_0_0_00_0; // lui
         7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_10_0_0_1_0_0_0_00_0; // R-type W instructions for RV64i
                     else if (Funct7D == 7'b0000001 && `M_SUPPORTED && `XLEN == 64)
-                      ControlsD = `CTRLW'b1_000_00_00_100_0_00_0_0_1_0_0_1_00_0; // W-type Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_00_0_0_1_0_0_1_00_0; // W-type Multiply/Divide
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
         7'b1100011:   ControlsD = `CTRLW'b0_010_00_00_000_1_01_0_0_0_0_0_0_00_0; // beq
-        7'b1100111:   ControlsD = `CTRLW'b1_000_00_00_010_0_00_1_1_0_0_0_0_00_0; // jalr
-        7'b1101111:   ControlsD = `CTRLW'b1_011_00_00_010_0_00_1_0_0_0_0_0_00_0; // jal
+        7'b1100111:   ControlsD = `CTRLW'b1_000_00_00_000_0_00_1_1_0_0_0_0_00_0; // jalr
+        7'b1101111:   ControlsD = `CTRLW'b1_011_00_00_000_0_00_1_0_0_0_0_0_00_0; // jal
         7'b1110011: if (Funct3D == 3'b000)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_1_0_00_0; // privileged; decoded further in priveleged modules
                     else
-                      ControlsD = `CTRLW'b1_000_00_00_011_0_00_0_0_0_1_0_0_00_0; // csrs
+                      ControlsD = `CTRLW'b1_000_00_00_010_0_00_0_0_0_1_0_0_00_0; // csrs
         default:      ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
       endcase
   endgenerate

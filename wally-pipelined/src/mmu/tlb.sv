@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// tlb_toy.sv
+// tlb.sv
 //
 // Written: jtorrey@hmc.edu 16 February 2021
 // Modified:
@@ -60,6 +60,9 @@ module tlb #(parameter ENTRY_BITS = 3) (
   // Current value of satp CSR (from privileged unit)
   input  [`XLEN-1:0] SATP_REGW,
 
+  // Current privilege level of the processeor
+  input  [1:0]       PrivilegeModeW,
+
   // Virtual address input
   input  [`XLEN-1:0] VirtualAddress,
 
@@ -77,6 +80,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
 );
 
   logic SvMode;
+  logic Translate;
 
   generate
     if (`XLEN == 32) begin
@@ -85,6 +89,11 @@ module tlb #(parameter ENTRY_BITS = 3) (
       assign SvMode = SATP_REGW[63]; // currently just a boolean whether translation enabled
     end
   endgenerate
+  // *** Currently fake virtual memory being on for testing purposes
+  // *** DO NOT ENABLE UNLESS TESTING
+  // assign SvMode = 1;
+
+  assign Translate = SvMode & (PrivilegeModeW != `M_MODE);
 
   // *** If we want to support multiple virtual memory modes (ie sv39 AND sv48),
   // we could have some muxes that control which parameters are current.
@@ -134,13 +143,13 @@ module tlb #(parameter ENTRY_BITS = 3) (
 
   generate
     if (`XLEN == 32) begin
-      mux2 #(`XLEN) addressmux(VirtualAddress, PhysicalAddressFull[31:0], SvMode, PhysicalAddress);
+      mux2 #(`XLEN) addressmux(VirtualAddress, PhysicalAddressFull[31:0], Translate, PhysicalAddress);
     end else begin
-      mux2 #(`XLEN) addressmux(VirtualAddress, {8'b0, PhysicalAddressFull}, SvMode, PhysicalAddress);
+      mux2 #(`XLEN) addressmux(VirtualAddress, {8'b0, PhysicalAddressFull}, Translate, PhysicalAddress);
     end
   endgenerate
 
-  assign TLBMiss = ~TLBHit & ~(TLBWrite | TLBFlush) & SvMode;
+  assign TLBMiss = ~TLBHit & ~(TLBWrite | TLBFlush) & Translate;
 endmodule
 
 module tlb_ram #(parameter ENTRY_BITS = 3) (

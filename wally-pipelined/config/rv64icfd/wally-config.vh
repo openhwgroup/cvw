@@ -66,6 +66,8 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
+`define BOOTTIMBASE   32'h00000000
+`define BOOTTIMRANGE  32'h00003FFF
 `define TIMBASE    32'h80000000
 `define TIMRANGE   32'h0007FFFF
 `define CLINTBASE  32'h02000000
@@ -80,6 +82,8 @@
 // Tie GPIO outputs back to inputs
 `define GPIO_LOOPBACK_TEST 0
 
+// Busybear special CSR config to match OVPSim
+`define OVPSIM_CSR_CONFIG 0
 
 // Hardware configuration
 `define UART_PRESCALE 1
@@ -91,3 +95,4 @@
 
 `define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
+`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE

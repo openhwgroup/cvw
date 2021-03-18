@@ -49,17 +49,17 @@ module ifu (
   output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
   // Writeback
-  output logic [`XLEN-1:0] PCLinkW,
+  // output logic [`XLEN-1:0] PCLinkW,
   // Faults
   input  logic             IllegalBaseInstrFaultD,
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM,
   // TLB management
-  //input logic  [`XLEN-1:0] PageTableEntryF,
+  input logic  [1:0]       PrivilegeModeW,
+  input logic  [`XLEN-1:0] PageTableEntryF,
   input logic  [`XLEN-1:0] SATP_REGW,
-  //input logic              ITLBWriteF, ITLBFlushF,
-  // input logic [`XLEN-1:0] SATP,
+  input logic              ITLBWriteF, // ITLBFlushF,
   output logic             ITLBMissF, ITLBHitF
 );
 
@@ -74,10 +74,10 @@ module ifu (
   logic [`XLEN-1:0] ITLBInstrPAdrF, ICacheInstrPAdrF;
 
   // *** temporary hack until walker is hooked up -- Thomas F
-  logic  [`XLEN-1:0] PageTableEntryF = '0;
+  // logic  [`XLEN-1:0] PageTableEntryF = '0;
   logic ITLBFlushF = '0;
-  logic ITLBWriteF = '0;
-  tlb #(3) itlb(clk, reset, SATP_REGW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
+  // logic ITLBWriteF = '0;
+  tlb #(3) itlb(clk, reset, SATP_REGW, PrivilegeModeW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
     ITLBInstrPAdrF, ITLBMissF, ITLBHitF);
 
   // branch predictor signals
@@ -203,8 +203,8 @@ module ifu (
   // *** redo this 
   flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
   flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
-  flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
-  flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
+  // flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
+  // /flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
 
 endmodule
 
