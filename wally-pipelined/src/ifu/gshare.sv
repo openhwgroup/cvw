@@ -32,45 +32,45 @@ module gsharePredictor
     )
   (input logic clk,
    input logic 		   reset,
-   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		   StallF, StallD, StallE, FlushF, FlushD, FlushE,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0] 	   Prediction,
    // update
    input logic [`XLEN-1:0] UpdatePC,
    input logic 		   UpdateEN, PCSrcE,
    input logic [1:0] 	   UpdatePrediction
-   
+  
    );
-   localparam int Depth = 2^k;
-   logic [k-1:0] GHRF, GHRD, GHRE;
 
-    flopenr #(k) GlobalHistoryRegister(.clk(clk),
-            .reset(reset),
-            .en(UpdateEN),
-            .d({PCSrcE, GHRF[k-1:1] }),
-            .q(GHRF));
-
-
+  logic [k-1:0] 	   GHRF, GHRD, GHRE;
+  logic [k-1:0] 	   LookUpPCIndexD, LookUpPCIndexE;
   logic [k-1:0] 	   LookUpPCIndex, UpdatePCIndex;
   logic [1:0] 		   PredictionMemory;
   logic 		   DoForwarding, DoForwardingF;
   logic [1:0] 		   UpdatePredictionF;
   
+  flopenr #(k) GlobalHistoryRegister(.clk(clk),
+				     .reset(reset),
+				     .en(UpdateEN),
+				     .d({PCSrcE, GHRF[k-1:1] }),
+				     .q(GHRF));
+
+
   // for gshare xor the PC with the GHR 
-  assign UpdatePCIndex = GHRE ^ UpdatePC[k-1:0];
-  assign LookUpPCIndex = LookUpPC ^ GHRF[k-1:0];  
+  assign UpdatePCIndex = GHRE ^ UpdatePC[k:1];
+  assign LookUpPCIndex = GHRF ^ LookUpPC[k:1];  
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // GHR referes to the address that the past k branches points to in the prediction stage 
   // GHRE refers to the address that the past k branches points to in the exectution stage
-    SRAM2P1R1W #(Depth, 2) PHT(.clk(clk),
-				.reset(reset),
-				.RA1(LookUpPCIndex),
-				.RD1(PredictionMemory),
-				.REN1(1'b1),
-				.WA1(UpdatePCIndex),
-				.WD1(UpdatePrediction),
-				.WEN1(UpdateEN),
-				.BitWEN1(2'b11));
+  SRAM2P1R1W #(k, 2) PHT(.clk(clk),
+			 .reset(reset),
+			 .RA1(LookUpPCIndex),
+			 .RD1(PredictionMemory),
+			 .REN1(1'b1),
+			 .WA1(UpdatePCIndex),
+			 .WD1(UpdatePrediction),
+			 .WEN1(UpdateEN),
+			 .BitWEN1(2'b11));
 
 
   // need to forward when updating to the same address as reading.
@@ -93,17 +93,17 @@ module gsharePredictor
   
   //pipeline for GHR
   flopenrc #(k) LookUpDReg(.clk(clk),
-      .reset(reset),
-      .en(~StallD),
-      .clear(FlushD),
-      .d(LookUpPCIndex),
-      .q(LookUpPCIndexD));
+			   .reset(reset),
+			   .en(~StallD),
+			   .clear(FlushD),
+			   .d(LookUpPCIndex),
+			   .q(LookUpPCIndexD));
 
   flopenrc #(k) LookUpEReg(.clk(clk),
-        .reset(reset),
-        .en(~StallE),
-        .clear(FlushE),
-        .d(LookUpPCIndexD),
-        .q(LookUpPCIndexE));
+			   .reset(reset),
+			   .en(~StallE),
+			   .clear(FlushE),
+			   .d(LookUpPCIndexD),
+			   .q(LookUpPCIndexE));
 
 endmodule

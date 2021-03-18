@@ -66,43 +66,43 @@ module bpred
 
   // Part 1 branch direction prediction
 
-generate
-   if (`BPTYPE == "BPTWOBIT") begin:Predictor
-    twoBitPredictor DirPredictor(.clk(clk),
-              .reset(reset),
-              .LookUpPC(PCNextF),
-              .Prediction(BPPredF),
-              // update
-              .UpdatePC(PCE),
-              .UpdateEN(InstrClassE[0]),
-              .UpdatePrediction(UpdateBPPredE));
+  generate
+    if (`BPTYPE == "BPTWOBIT") begin:Predictor
+      twoBitPredictor DirPredictor(.clk(clk),
+				   .reset(reset),
+				   .LookUpPC(PCNextF),
+				   .Prediction(BPPredF),
+				   // update
+				   .UpdatePC(PCE),
+				   .UpdateEN(InstrClassE[0]),
+				   .UpdatePrediction(UpdateBPPredE));
 
     end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
 
       globalHistoryPredictor DirPredictor(.clk(clk),
-              .reset(reset),
-              .*, // Stalls and flushes
-              .LookUpPC(PCNextF),
-              .Prediction(BPPredF),
-              // update
-              .UpdatePC(PCE),
-              .UpdateEN(InstrClassE[0]),
-              .PCSrcE(PCSrcE),
-              .UpdatePrediction(UpdateBPPredE));
+					  .reset(reset),
+					  .*, // Stalls and flushes
+					  .LookUpPC(PCNextF),
+					  .Prediction(BPPredF),
+					  // update
+					  .UpdatePC(PCE),
+					  .UpdateEN(InstrClassE[0]),
+					  .PCSrcE(PCSrcE),
+					  .UpdatePrediction(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
 
-      globalHistoryPredictor DirPredictor(.clk(clk),
-              .reset(reset),
-              .*, // Stalls and flushes
-              .LookUpPC(PCNextF),
-              .Prediction(BPPredF),
-              // update
-              .UpdatePC(PCE),
-              .UpdateEN(InstrClassE[0]),
-              .PCSrcE(PCSrcE),
-              .UpdatePrediction(UpdateBPPredE));
-   end 
-endgenerate
+      gsharePredictor DirPredictor(.clk(clk),
+				   .reset(reset),
+				   .*, // Stalls and flushes
+				   .LookUpPC(PCNextF),
+				   .Prediction(BPPredF),
+				   // update
+				   .UpdatePC(PCE),
+				   .UpdateEN(InstrClassE[0]),
+				   .PCSrcE(PCSrcE),
+				   .UpdatePrediction(UpdateBPPredE));
+    end 
+  endgenerate
 
 
   // this predictor will have two pieces of data,
