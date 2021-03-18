@@ -33,7 +33,7 @@ module csr (
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
-  input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
+  input  logic             InstrValidW, FloatRegWriteW, LoadStallD, BPPredWrongE,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
   output logic [1:0]       STATUS_MPP,
