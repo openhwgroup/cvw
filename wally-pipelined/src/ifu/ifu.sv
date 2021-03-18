@@ -48,7 +48,7 @@ module ifu (
   output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
   // Writeback
-  output logic [`XLEN-1:0] PCLinkW,
+  // output logic [`XLEN-1:0] PCLinkW,
   // Faults
   input  logic             IllegalBaseInstrFaultD,
   output logic             IllegalIEUInstrFaultD,
@@ -212,8 +212,8 @@ module ifu (
   // *** redo this 
   flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
   flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
-  flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
-  flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
+  // flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
+  // /flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
 
 endmodule
 
