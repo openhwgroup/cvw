@@ -46,8 +46,11 @@ module ahblite (
   input  logic             MemReadM, MemWriteM,
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
-  // Signals from MMU ***
-  // MMUPAdr;
+  // Signals from MMU
+  input  logic [`XLEN-1:0] MMUPAdr,
+  input  logic             MMUTranslate,
+  output logic [`XLEN-1:0] MMUReadPTE,
+  output logic             MMUReady,
   // Return from bus
   output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals

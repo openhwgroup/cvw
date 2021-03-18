@@ -50,19 +50,20 @@ module dmem (
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
   output logic             StoreMisalignedFaultM, StoreAccessFaultM,
   // TLB management
-  //input logic  [`XLEN-1:0] PageTableEntryM,
+  input logic  [1:0]       PrivilegeModeW,
+  input logic  [`XLEN-1:0] PageTableEntryM,
   input logic  [`XLEN-1:0] SATP_REGW,
-  //input logic              DTLBWriteM, DTLBFlushM,
+  input logic              DTLBWriteM, // DTLBFlushM,
   output logic             DTLBMissM, DTLBHitM
 );
 
   logic             SquashSCM;
 
   // *** temporary hack until walker is hooked up -- Thomas F
-  logic  [`XLEN-1:0] PageTableEntryM = '0;
+  // logic  [`XLEN-1:0] PageTableEntryM = '0;
   logic DTLBFlushM = '0;
-  logic DTLBWriteM = '0;
-  tlb #(3) dtlb(clk, reset, SATP_REGW, MemAdrM, PageTableEntryM, DTLBWriteM,
+  // logic DTLBWriteM = '0;
+  tlb #(3) dtlb(clk, reset, SATP_REGW, PrivilegeModeW, MemAdrM, PageTableEntryM, DTLBWriteM,
     DTLBFlushM, MemPAdrM, DTLBMissM, DTLBHitM);
 
 	// Determine if an Unaligned access is taking place

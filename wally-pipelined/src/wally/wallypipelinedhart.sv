@@ -93,8 +93,12 @@ module wallypipelinedhart (
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] SATP_REGW;
+  logic [1:0]       PrivilegeModeW;
 
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
+
+  logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
+  logic             MMUTranslate, MMUReady;
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
@@ -106,7 +110,7 @@ module wallypipelinedhart (
   logic             InstrReadF;
   logic             DataStall, InstrStall;
   logic             InstrAckD, MemAckW;
-  logic 	    BPPredWrongE;
+  logic             BPPredWrongE;
   
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
@@ -121,7 +125,7 @@ module wallypipelinedhart (
     .Funct7M(InstrM[31:25]),
     .*);
 
-  // walker walker(.*); *** // can send addresses to ahblite, send out pagetablestall
+  pagetablewalker pagetablewalker(.*); // can send addresses to ahblite, send out pagetablestall
   // *** can connect to hazard unit
 // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
 // Would need to insertinstruction as InstrD, not InstrF

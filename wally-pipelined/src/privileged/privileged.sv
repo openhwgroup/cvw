@@ -44,12 +44,13 @@ module privileged (
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
+  output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [2:0]       FRM_REGW,
   input  logic             FlushD, FlushE, FlushM, StallD, StallW
 );
 
-  logic [1:0] NextPrivilegeModeM, PrivilegeModeW;
+  logic [1:0] NextPrivilegeModeM;
 
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
