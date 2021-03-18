@@ -30,6 +30,8 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   input  logic             HSELTim,
   input  logic [31:0]      HADDR,
   input  logic             HWRITE,
+  input  logic             HREADY,
+  input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
   output logic [`XLEN-1:0] HREADTim,
   output logic             HRESPTim, HREADYTim
@@ -40,27 +42,26 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   logic [`XLEN-1:0] HREADTim0;
 
 //  logic [`XLEN-1:0] write;
-  logic [31:0] HADDRd;
-  logic        newAdr;
+  logic        prevHREADYTim, risingHREADYTim;
+  logic        initTrans;
   logic [15:0] entry;
   logic        memread, memwrite;
   logic [3:0]  busycount;
 
-  always_ff @(posedge HCLK) begin
-    memread <= HSELTim & ~ HWRITE;
-    memwrite <= HSELTim & HWRITE;
-    A <= HADDR;
-    HADDRd <= HADDR;
-  end
+  assign initTrans = HREADY & HSELTim & (HTRANS != 2'b00);
 
-  assign newAdr = HADDR!=HADDRd;
+  // *** this seems like a weird way to use reset
+  flopenr #(1)  memreadreg(HCLK, 1'b0, initTrans | ~HRESETn, HSELTim & ~HWRITE, memread);
+  flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELTim &  HWRITE, memwrite);
+  flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
 
   // busy FSM to extend READY signal
   always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
-      HREADYTim <= 1;
+      busycount <= 0;
+      HREADYTim <= #1 0;
     end else begin
-      if ((HREADYTim | newAdr) & HSELTim) begin
+      if (initTrans) begin
         busycount <= 0;
         HREADYTim <= #1 0;
       end else if (~HREADYTim) begin
@@ -71,8 +72,14 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
         end
       end
     end
-
   assign HRESPTim = 0; // OK
+  
+  // Rising HREADY edge detector
+  //   Indicates when dtim is finishing up
+  //   Needed because HREADY may go high for other reasons,
+  //   and we only want to write data when finishing up.
+  flopr #(1) prevhreadytimreg(HCLK,~HRESETn,HREADYTim,prevHREADYTim);
+  assign risingHREADYTim = HREADYTim & ~prevHREADYTim;
 
   // Model memory read and write
   generate
@@ -80,13 +87,13 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
       always_ff @(posedge HCLK) begin
         HWADDR <= A;
         HREADTim0 <= RAM[A[31:3]];
-        if (memwrite && HREADYTim) RAM[HWADDR[31:3]] <= HWDATA;
+        if (memwrite && risingHREADYTim) RAM[HWADDR[31:3]] <= HWDATA;
       end
     end else begin 
       always_ff @(posedge HCLK) begin
         HWADDR <= A;  
         HREADTim0 <= RAM[A[31:2]];
-        if (memwrite && HREADYTim) RAM[HWADDR[31:2]] <= HWDATA;
+        if (memwrite && risingHREADYTim) RAM[HWADDR[31:2]] <= HWDATA;
       end
     end
   endgenerate
