@@ -111,6 +111,6 @@ set DefaultRadix hexadecimal
 -- Run the Simulation 
 #run 7402000
 #run 12750
-#run -all
-run 5000
+run -all
+#run 21400
 #quit
