@@ -63,16 +63,21 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define TIMBASE       32'h80000000
-`define TIMRANGE      32'h07FFFFFF
 `define BOOTTIMBASE   32'h00000000 //only needs to go from 0x1000 to 0x2FFF, extending to a power of 2
 `define BOOTTIMRANGE  32'h00003FFF
 `define CLINTBASE     32'h02000000
-`define CLINTRANGE    32'h0000BFFF
-//`define GPIOBASE    32'h10012000 // no GPIO in linux for now
-//`define GPIORANGE   32'h000000FF
+`define CLINTRANGE    32'h0000FFFF
+`define PLICBASE      32'h0C000000
+`define PLICRANGE     32'h0FFFFFFF
 `define UARTBASE      32'h10000000
 `define UARTRANGE     32'h00000007
+`define VBD0BASE      32'h10001000
+`define VBD0RANGE     32'h000001FF
+// differing from Imperas' OVPSim by not having a VND0
+`define GPIOBASE      32'h20000000 
+`define GPIORANGE     32'h000000FF
+`define TIMBASE       32'h80000000
+`define TIMRANGE      32'h07FFFFFF
 // Bus Interface width
 `define AHBW 64
 
@@ -81,6 +86,8 @@
 // Tie GPIO outputs back to inputs
 `define GPIO_LOOPBACK_TEST 0
 
+// Busybear special CSR config to match OVPSim
+`define OVPSIM_CSR_CONFIG 1
 
 // Hardware configuration
 `define UART_PRESCALE 1
@@ -90,3 +97,4 @@
 
 `define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
+`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE

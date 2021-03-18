@@ -1,7 +1,8 @@
 add wave /testbench/clk
 add wave /testbench/reset
-
 add wave -divider
+
+#add wave /testbench/dut/hart/ebu/IReadF
 add wave /testbench/dut/hart/DataStall
 add wave /testbench/dut/hart/InstrStall
 add wave /testbench/dut/hart/StallF
@@ -44,6 +45,8 @@ add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
 add wave /testbench/dut/uncore/dtim/memwrite
+add wave -hex /testbench/dut/uncore/HADDR
+add wave -hex /testbench/dut/uncore/HWDATA
 add wave -divider
 
 add wave -hex /testbench/dut/hart/ebu/MemReadM
@@ -60,9 +63,12 @@ add wave -hex /testbench/dut/hart/ebu/CaptureDataM
 add wave -hex /testbench/dut/hart/ebu/InstrStall
 add wave -divider
 
+<<<<<<< HEAD
 add wave -hex /testbench/dut/uncore/dtim/*
 add wave -divider
 
+=======
+>>>>>>> origin/main
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave -hex /testbench/dut/hart/ifu/InstrW
 add wave /testbench/InstrWName
@@ -72,4 +78,11 @@ add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 
+<<<<<<< HEAD
 add wave -hex -r /testbench/*
+=======
+add wave -hex /testbench/dut/uncore/dtim/*
+add wave -divider
+
+add wave -hex -r /testbench/*
+>>>>>>> origin/main

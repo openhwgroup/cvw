@@ -48,7 +48,7 @@ module testbench();
   
   // pick tests based on modes supported
   initial 
-  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.memfile", "1000"};
+  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.memfile", "1000"};
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -74,10 +74,10 @@ module testbench();
       memfilename = tests[0];
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      for(j=2371; j < 65535; j = j+1)
+      for(j=268437829; j < 268566528; j = j+1)
         dut.uncore.dtim.RAM[j] = 64'b0;
-//      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.objdump.addr";
-//      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64I.bare.elf.objdump.lab";
+//      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
+//      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
       reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests
@@ -95,7 +95,7 @@ module testbench();
     end
 
   initial begin
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.DirPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);
   end
    
