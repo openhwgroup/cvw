@@ -51,7 +51,7 @@ module datapath (
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
-  input  logic [`XLEN-1:0] PCLinkW,
+  // input  logic [`XLEN-1:0] PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
@@ -126,7 +126,7 @@ module datapath (
       assign SCResultW = 0;
   endgenerate
 
-  mux6  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
+  mux5  #(`XLEN) resultmux(ALUResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
 /* -----\/----- EXCLUDED -----\/-----
   // This mux4:1 no longer needs to include PCLinkW.  This is set correctly in the execution stage.
   // *** need to look at how the decoder is coded to fix.

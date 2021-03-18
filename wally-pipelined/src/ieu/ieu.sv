@@ -49,7 +49,7 @@ module ieu (
   output logic [2:0]       Funct3M,
   // Writeback stage
   input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW,
-  input  logic [`XLEN-1:0] PCLinkW,
+  // input  logic [`XLEN-1:0] PCLinkW,
   output logic             InstrValidW,
   // hazards
   input  logic             StallE, StallM, StallW,
