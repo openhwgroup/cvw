@@ -64,23 +64,17 @@ module uncore (
   logic            HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD;
   logic            HRESPTim, HRESPCLINT, HRESPGPIO, HRESPUART;
   logic            HREADYTim, HREADYCLINT, HREADYGPIO, HREADYUART;  
-  `ifdef BOOTTIMBASE
   logic [`XLEN-1:0] HREADBootTim; 
   logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
   logic [1:0]      MemRWboottim;
-  `endif
   logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
   
 
   // AHB Address decoder
   adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
-  `ifdef BOOTTIMBASE
   adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
-  `endif
   adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
-  `ifdef GPIOBASE
   adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
-  `endif
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
 
@@ -89,15 +83,11 @@ module uncore (
 
   // tightly integrated memory
   dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) dtim (.*);
-  `ifdef BOOTTIMBASE
   dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
-  `endif
 
   // memory-mapped I/O peripherals
   clint clint(.HADDR(HADDR[15:0]), .*);
-  `ifdef GPIOBASE
   gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
-  `endif
   uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
             .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
             .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*);
@@ -105,50 +95,22 @@ module uncore (
   // mux could also include external memory  
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) | ({`XLEN{HSELCLINTD}} & HREADCLINT) | 
-                    `ifdef GPIOBASE
-                     ({`XLEN{HSELGPIOD}} & HREADGPIO) |
-                    `endif
-                    `ifdef BOOTTIMBASE
-                     ({`XLEN{HSELBootTimD}} & HREADBootTim) |
-                    `endif
+                     ({`XLEN{HSELGPIOD}} & HREADGPIO) | ({`XLEN{HSELBootTimD}} & HREADBootTim) |
                      ({`XLEN{HSELUARTD}} & HREADUART);
-  assign HRESP = HSELTimD & HRESPTim | HSELCLINTD & HRESPCLINT | 
-                 `ifdef GPIOBASE
-                 HSELGPIOD & HRESPGPIO | 
-                 `endif
-                 `ifdef BOOTTIMBASE
-                 HSELBootTimD & HRESPBootTim | 
-                 `endif
-                 HSELUARTD & HRESPUART;
-  assign HREADY = HSELTimD & HREADYTim | HSELCLINTD & HREADYCLINT | 
-                  `ifdef GPIOBASE
-                  HSELGPIOD & HREADYGPIO | 
-                  `endif
-                  `ifdef BOOTTIMBASE
-                  HSELBootTimD & HREADYBootTim | 
-                  `endif
-                  HSELUARTD & HREADYUART;
+  assign HRESP = HSELTimD & HRESPTim | HSELCLINTD & HRESPCLINT | HSELGPIOD & HRESPGPIO | 
+                 HSELBootTimD & HRESPBootTim | HSELUARTD & HRESPUART;
+  assign HREADY = HSELTimD & HREADYTim | HSELCLINTD & HREADYCLINT | HSELGPIOD & HREADYGPIO | 
+                  HSELBootTimD & HREADYBootTim | HSELUARTD & HREADYUART;
 
   // Faults
-  assign DataAccessFaultM = ~(HSELTimD | HSELCLINTD | 
-                            `ifdef GPIOBASE
-                            HSELGPIOD |
-                            `endif
-                            `ifdef BOOTTIMBASE
-                            HSELBootTimD |
-                            `endif
-                            HSELUARTD);
+  assign DataAccessFaultM = ~(HSELTimD | HSELCLINTD | HSELGPIOD | HSELBootTimD | HSELUARTD);
 
 
   // Address Decoder Delay (figure 4-2 in spec)
   flopr #(1) hseltimreg(HCLK, ~HRESETn, HSELTim, HSELTimD);
   flopr #(1) hselclintreg(HCLK, ~HRESETn, HSELCLINT, HSELCLINTD);
-  `ifdef GPIOBASE
   flopr #(1) hselgpioreg(HCLK, ~HRESETn, HSELGPIO, HSELGPIOD);
-  `endif
   flopr #(1) hseluartreg(HCLK, ~HRESETn, HSELUART, HSELUARTD);
-  `ifdef BOOTTIMBASE
   flopr #(1) hselboottimreg(HCLK, ~HRESETn, HSELBootTim, HSELBootTimD);
-  `endif
 endmodule
 
