@@ -41,7 +41,6 @@ module globalHistoryPredictor
    input logic [1:0] 	   UpdatePrediction
    
    );
-   localparam int Depth = 2^k;
    logic [k-1:0] GHRF, GHRD, GHRE;
 
     flopenr #(k) GlobalHistoryRegister(.clk(clk),
@@ -63,7 +62,7 @@ module globalHistoryPredictor
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // GHR referes to the address that the past k branches points to in the prediction stage 
   // GHRE refers to the address that the past k branches points to in the exectution stage
-    SRAM2P1R1W #(Depth, 2) PHT(.clk(clk),
+    SRAM2P1R1W #(k, 2) PHT(.clk(clk),
 				.reset(reset),
 				.RA1(GHRF),
 				.RD1(PredictionMemory),

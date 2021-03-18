@@ -23,11 +23,9 @@ add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallF
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallD
 add wave -noupdate -group Bpred -expand -group direction -divider Update
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/DirPredictor/UpdatePC
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/DirPredictor/UpdateEN
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/DirPredictor/UpdatePCIndex
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/DirPredictor/UpdatePrediction
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
+add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePC
+add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdateEN
+add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePrediction
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/hart/ifu/bpred/TargetWrongE
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/hart/ifu/bpred/FallThroughWrongE
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/hart/ifu/bpred/PredictionDirWrongE
@@ -130,8 +128,8 @@ add wave -noupdate -expand -group PCS /testbench/dut/hart/PCE
 add wave -noupdate -expand -group PCS /testbench/dut/hart/PCM
 add wave -noupdate -expand -group PCS /testbench/dut/hart/ifu/PCW
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {3758805 ns} 0} {{Cursor 3} {4351471 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 2} {3758805 ns} 0}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 229
 configure wave -justifyvalue left
@@ -146,4 +144,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {4351320 ns} {4351862 ns}
+WaveRestoreZoom {1644110 ns} {15262484 ns}
