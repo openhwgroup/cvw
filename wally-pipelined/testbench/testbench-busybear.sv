@@ -356,10 +356,10 @@ module testbench_busybear();
   logic [31:0] InstrMask;
   logic forcedInstr;
   logic [63:0] lastPCF;
-  always @(dut.PCF or dut.hart.ifu.InstrF or reset) begin
+  always @(dut.PCF or dut.hart.ifu.ic.InstrF or reset) begin
     if(~HWRITE) begin
     #3;
-    if (~reset && dut.hart.ifu.InstrF[15:0] !== {16{1'bx}} && ~dut.hart.StallD) begin
+    if (~reset && dut.hart.ifu.ic.InstrF[15:0] !== {16{1'bx}} && ~dut.hart.StallD) begin
       if (dut.PCF !== lastPCF) begin
         lastCheckInstrF = CheckInstrF;
         lastPC <= dut.PCF;
@@ -367,23 +367,23 @@ module testbench_busybear();
         if (speculative && (lastPC != pcExpected)) begin
           speculative = ~equal(dut.PCF,pcExpected,3);
           if(dut.PCF===pcExpected) begin
-            if(dut.hart.ifu.InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+            if(dut.hart.ifu.ic.InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
               force CheckInstrF = 32'b0010011;
               release CheckInstrF;
-              force dut.hart.ifu.InstrF = 32'b0010011;
+              force dut.hart.ifu.ic.InstrF = 32'b0010011;
               #7;
-              release dut.hart.ifu.InstrF;
+              release dut.hart.ifu.ic.InstrF;
               $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.PCF, instrs, $time);
               warningCount += 1;
               forcedInstr = 1;
             end
             else begin
-              if(dut.hart.ifu.InstrF[28:27] != 2'b11 && dut.hart.ifu.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+              if(dut.hart.ifu.ic.InstrF[28:27] != 2'b11 && dut.hart.ifu.ic.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
                 force CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
                 release CheckInstrF;
-                force dut.hart.ifu.InstrF = {12'b0, dut.hart.ifu.InstrF[19:7], 7'b0000011};
+                force dut.hart.ifu.ic.InstrF = {12'b0, dut.hart.ifu.ic.InstrF[19:7], 7'b0000011};
                 #7;
-                release dut.hart.ifu.InstrF;
+                release dut.hart.ifu.ic.InstrF;
                 $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
                 warningCount += 1;
                 forcedInstr = 1;
@@ -406,23 +406,23 @@ module testbench_busybear();
           end
           scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrF);
           if(dut.PCF === pcExpected) begin
-            if(dut.hart.ifu.InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+            if(dut.hart.ifu.ic.InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
               force CheckInstrF = 32'b0010011;
               release CheckInstrF;
-              force dut.hart.ifu.InstrF = 32'b0010011;
+              force dut.hart.ifu.ic.InstrF = 32'b0010011;
               #7;
-              release dut.hart.ifu.InstrF;
+              release dut.hart.ifu.ic.InstrF;
               $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.PCF, instrs, $time);
               warningCount += 1;
               forcedInstr = 1;
             end
             else begin
-              if(dut.hart.ifu.InstrF[28:27] != 2'b11 && dut.hart.ifu.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+              if(dut.hart.ifu.ic.InstrF[28:27] != 2'b11 && dut.hart.ifu.ic.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
                 force CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
                 release CheckInstrF;
-                force dut.hart.ifu.InstrF = {12'b0, dut.hart.ifu.InstrF[19:7], 7'b0000011};
+                force dut.hart.ifu.ic.InstrF = {12'b0, dut.hart.ifu.ic.InstrF[19:7], 7'b0000011};
                 #7;
-                release dut.hart.ifu.InstrF;
+                release dut.hart.ifu.ic.InstrF;
                 $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
                 warningCount += 1;
                 forcedInstr = 1;
@@ -467,8 +467,8 @@ module testbench_busybear();
             `ERROR
           end
           InstrMask = CheckInstrF[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-          if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.InstrF) !== (InstrMask & CheckInstrF))) begin
-            $display("%0t ps, instr %0d: InstrF does not equal CheckInstrF: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.InstrF, CheckInstrF, dut.PCF);
+          if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.ic.InstrF) !== (InstrMask & CheckInstrF))) begin
+            $display("%0t ps, instr %0d: InstrF does not equal CheckInstrF: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.ic.InstrF, CheckInstrF, dut.PCF);
             `ERROR
           end
         end
@@ -481,7 +481,7 @@ module testbench_busybear();
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  instrNameDecTB dec(dut.hart.ifu.InstrF, InstrFName);
+  instrNameDecTB dec(dut.hart.ifu.ic.InstrF, InstrFName);
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
