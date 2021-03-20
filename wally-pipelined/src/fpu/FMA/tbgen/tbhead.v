@@ -2,9 +2,9 @@
 module tb;
 
 
- reg 		[63:0]		xrf;
+ reg 		[63:0]		x;
  reg 		[63:0]		y;
- reg 		[63:0]		zrf;
+ reg 		[63:0]		z;
  reg 		[63:0]		ans;
  reg 						rn;
  reg 						rz;
@@ -33,9 +33,7 @@ reg		[51:0] 		xnorm;
 reg 		[51:0] 		ynorm;
 
 localparam period = 20;  
-fmac UUT(.xrf(xrf), .y(y), .zrf(zrf), .rn(rn), .rz(rz), .rp(rp), .rm(rm),
-		.earlyres(earlyres), .earlyressel(earlyressel), .bypsel(bypsel), .bypplus1(bypplus1), .byppostnorm(byppostnorm), 
-		.w(w), .wbypass(wbypass), .invalid(invalid), .overflow(overflow), .underflow(underflow), .inexact(inexact));
+fmac UUT(.*);
 
 
 initial 
