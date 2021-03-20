@@ -105,7 +105,7 @@ module icache(
     assign ICacheStallF = 0; //DelayF & ~DelaySideF;
 
     // Detect if the instruction is compressed
-    assign CompressedF = (DelayD) ? (MisalignedHalfInstrD[1:0] != 2'b11) : (InstrF[1:0] != 2'b11);
+    assign CompressedF = InstrF[1:0] != 2'b11;
 
     // Pick the correct output, depending on whether we have to assemble this
     // instruction from two reads or not.
