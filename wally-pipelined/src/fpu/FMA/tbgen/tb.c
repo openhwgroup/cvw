@@ -20,18 +20,18 @@ void main() {
 		// b68ffff8000000ff_3f9080000007ffff_b6307ffbe0080080_00001
                 char ch;
 		int i,j,n;
-		char xrf[17];
+		char x[17];
 		char y[17];
-		char zrf[17];
+		char z[17];
 		char ans[81];
 		char flags[3];
 		int rn,rz,rm,rp;
-		long stop = 6039335;
-		int debug = 0;
+		long stop = 6128601;
+		int debug = 1;
 		//my_string = (char *) malloc (nbytes + 1);
 		//bytes_read = getline (&my_string, &nbytes, stdin);
 	
-		for(n=0; n < 613; n++) {//613 for 10000
+		for(n=0; n < 2013; n++) {//613 for 10000
 			if(getline(&ln,&nbytes,fp) < 0 || feof(fp)) break;
 			if(k == stop && debug == 1) break;
 			k++;
@@ -40,17 +40,17 @@ void main() {
 
 		if(!feof(fp)) {
 
-			strncpy(xrf,   ln,     16); xrf[16]=0;
+			strncpy(x,   ln,     16); x[16]=0;
 			strncpy(y,    &ln[17], 16); y[16]=0;
-			strncpy(zrf,  &ln[34], 16); zrf[16]=0;
-			// fprintf(stdout,"[%s]\n[%s]\n", ln,zrf);
+			strncpy(z,  &ln[34], 16); z[16]=0;
+			// fprintf(stdout,"[%s]\n[%s]\n", ln,z);
 			strncpy(ans,  &ln[51], 16); ans[16]=0;
 			strncpy(flags,&ln[68],2);   flags[2]=0;
 		
-			// fprintf(stdout,"[%s]\n[%s]\n", ln,zrf);
-			fprintf(fq,"    xrf = 64'h%s;\n",xrf); 
+			// fprintf(stdout,"[%s]\n[%s]\n", ln,z);
+			fprintf(fq,"    x = 64'h%s;\n",x); 
 			fprintf(fq,"    y = 64'h%s;\n",y); 
-			fprintf(fq,"    zrf = 64'h%s;\n",zrf);
+			fprintf(fq,"    z = 64'h%s;\n",z);
 			fprintf(fq,"    ans = 64'h%s;\n", ans);
 			// fprintf(fq,"    flags = 5'h%s;\n", flags);
 	
@@ -74,28 +74,28 @@ void main() {
 			}
 			fprintf(fq,"#10\n");
 			// IEEE 754-2008 section 6.3 states "When ether an input or result is NaN, this standard does not interpret the sign of a NaN."
-			//fprintf(fq,"	$fwrite(fp, \"%%h %%h %%h %%h \",xrf,y,w, ans);\n");	
+			//fprintf(fq,"	$fwrite(fp, \"%%h %%h %%h %%h \",x,y,w, ans);\n");	
 			fprintf(fq,"    // IEEE 754-2008 section 6.3 states: \"When ether an input or result is NaN, this\n");
 			fprintf(fq,"    //                                     standard does not interpret the sign of a NaN.\"\n");
 			fprintf(fq,"	wnan = &w[62:52] && |w[51:0]; \n");
-			fprintf(fq,"	xnan = &xrf[62:52] && |xrf[51:0]; \n");
+			fprintf(fq,"	xnan = &x[62:52] && |x[51:0]; \n");
 			fprintf(fq,"	ynan = &y[62:52] && |y[51:0]; \n");
-			fprintf(fq,"	znan = &zrf[62:52] && |zrf[51:0]; \n");
+			fprintf(fq,"	znan = &z[62:52] && |z[51:0]; \n");
 			fprintf(fq,"	ansnan = &ans[62:52] && |ans[51:0]; \n");
-			fprintf(fq,"	xnorm = ~(|xrf[62:52]) && |xrf[51:0] ? {xrf[50:0], 1'b0} : xrf; \n");
+			fprintf(fq,"	xnorm = ~(|x[62:52]) && |x[51:0] ? {x[50:0], 1'b0} : x; \n");
 			fprintf(fq,"	ynorm = ~(|y[62:52]) && |y[51:0] ? {y[50:0], 1'b0} : y;\n");
 			fprintf(fq,"	s = ({54'b1,xnorm} + (bypsel  && bypplus1))  *  {54'b1,ynorm}; \n");
-			// fprintf(fq,"    if(!(~(|xrf[62:52]) && |xrf[51:0] || ~(|y[62:52]) && |y[51:0])) begin\n"); 
+			// fprintf(fq,"    if(!(~(|x[62:52]) && |x[51:0] || ~(|y[62:52]) && |y[51:0])) begin\n"); 
 																							// not looknig at negative zero results right now
 			//fprintf(fq,"	  if( (nan && (w[62:0] != ans[62:0])) || (!nan && (w != ans)) && !(w == 64'h8000000000000000 && ans == 64'b0)) begin\n"); 
 			// fprintf(fq,"	if( (nan && (w[62:0] != ans[62:0])) || (!nan && (w != ans)) ) begin\n"); 
-			fprintf(fq,"	if((!wnan && (w != ans)) || (wnan && ansnan && ~(((xnan && (w[62:0] == {xrf[62:52],1'b1,xrf[50:0]})) || (ynan && (w[62:0] == {y[62:52],1'b1,y[50:0]}))  || (znan && (w[62:0] == {zrf[62:52],1'b1,zrf[50:0]})) || (w[62:0] == ans[62:0])) ))) begin\n"); 
-			fprintf(fq,"		$fwrite(fp, \"%%h %%h %%h %%h %%h  Wrong \",xrf,y, zrf, w, ans);\n");
+			fprintf(fq,"	if((!wnan && (w != ans)) || (wnan && ansnan && ~(((xnan && (w[62:0] == {x[62:52],1'b1,x[50:0]})) || (ynan && (w[62:0] == {y[62:52],1'b1,y[50:0]}))  || (znan && (w[62:0] == {z[62:52],1'b1,z[50:0]})) || (w[62:0] == ans[62:0])) ))) begin\n"); 
+			fprintf(fq,"		$fwrite(fp, \"%%h %%h %%h %%h %%h  Wrong \",x,y, z, w, ans);\n");
 			//fprintf(fq,"		$fwrite(fp, \"%%h \",s);\n");
 			fprintf(fq,"		if(w == 64'h8000000000000000) $fwrite(fp, \"w=-zero \");\n");
-			fprintf(fq,"		if(~(|xrf[62:52]) && |xrf[51:0]) $fwrite(fp, \"xdenorm \");\n");
+			fprintf(fq,"		if(~(|x[62:52]) && |x[51:0]) $fwrite(fp, \"xdenorm \");\n");
 			fprintf(fq,"		if(~(|y[62:52]) && |y[51:0]) $fwrite(fp, \"ydenorm \");\n");
-			fprintf(fq,"		if(~(|zrf[62:52]) && |zrf[51:0]) $fwrite(fp, \"zdenorm \");\n");
+			fprintf(fq,"		if(~(|z[62:52]) && |z[51:0]) $fwrite(fp, \"zdenorm \");\n");
 			fprintf(fq,"		if(invalid != 0) $fwrite(fp, \"invld \");\n");
 			fprintf(fq,"		if(overflow != 0) $fwrite(fp, \"ovrflw \");\n");
 			fprintf(fq,"		if(underflow != 0) $fwrite(fp, \"unflw \");\n");
