@@ -63,12 +63,9 @@ add wave -hex /testbench/dut/hart/ebu/CaptureDataM
 add wave -hex /testbench/dut/hart/ebu/InstrStall
 add wave -divider
 
-<<<<<<< HEAD
 add wave -hex /testbench/dut/uncore/dtim/*
 add wave -divider
 
-=======
->>>>>>> origin/main
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave -hex /testbench/dut/hart/ifu/InstrW
 add wave /testbench/InstrWName
@@ -78,11 +75,7 @@ add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 
-<<<<<<< HEAD
-add wave -hex -r /testbench/*
-=======
 add wave -hex /testbench/dut/uncore/dtim/*
 add wave -divider
 
 add wave -hex -r /testbench/*
->>>>>>> origin/main
