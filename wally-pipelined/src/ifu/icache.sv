@@ -48,7 +48,7 @@ module icache(
     logic             LastReadDataValidF;
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
 
-    flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
+    flopenr #(1)  flushDLastCycleFlop(clk, reset, ~StallF, FlushD, FlushDLastCycle);
     flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF, DelayD);
     flopenr #(1)  delaySideDFlop(clk, reset, ~StallF, DelaySideF, DelaySideD);
     flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF, DelaySideF);
