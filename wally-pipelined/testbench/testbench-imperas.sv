@@ -349,7 +349,7 @@ string tests32i[] = {
     end else begin // RV32
       // *** add the 32 bit bp tests
       tests = {tests32i};
-      if (`C_SUPPORTED % 2 == 1) tests = {tests32ic, tests};    
+      if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
       if (`A_SUPPORTED) tests = {tests, tests32a};
@@ -483,7 +483,7 @@ string tests32i[] = {
 
   // initialize the branch predictor
   initial begin
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.DirPredictor.memory.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);    
   end
   
