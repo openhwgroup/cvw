@@ -349,7 +349,7 @@ string tests32i[] = {
     end else begin // RV32
       // *** add the 32 bit bp tests
       tests = {tests32i};
-      if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
+      if (`C_SUPPORTED % 2 == 1) tests = {tests32ic, tests};    
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
       if (`A_SUPPORTED) tests = {tests, tests32a};

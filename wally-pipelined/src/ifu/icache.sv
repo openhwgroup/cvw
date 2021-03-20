@@ -48,10 +48,14 @@ module icache(
     logic             LastReadDataValidF;
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
 
+    // This flop doesn't stall if StallF is high because we should output a nop
+    // when FlushD happens, even if the pipeline is also stalled.
     flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
-    flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF, DelayD);
+
+    flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF & ~CompressedF, DelayD);
     flopenr #(1)  delaySideDFlop(clk, reset, ~StallF, DelaySideF, DelaySideD);
     flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF, DelaySideF);
+    // This flop stores the first half of a misaligned instruction while waiting for the other half
     flopenr #(16) halfInstrFlop(clk, reset, DelayF & ~StallF, MisalignedHalfInstrF, MisalignedHalfInstrD);
 
     // This flop is here to simulate pulling data out of the cache, which is edge-triggered
@@ -68,7 +72,7 @@ module icache(
     // and then the upper word, in that order.
     generate
         if (`XLEN == 32) begin
-            assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
+            assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[31:2], 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
         end else begin
             assign InstrPAdrF = PCPF[2] ? (PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000};
         end
@@ -101,7 +105,7 @@ module icache(
     assign ICacheStallF = 0; //DelayF & ~DelaySideF;
 
     // Detect if the instruction is compressed
-    assign CompressedF = (DelaySideF & DelayF) ? (MisalignedHalfInstrD[1:0] != 2'b11) : (InstrF[1:0] != 2'b11);
+    assign CompressedF = (DelayD) ? (MisalignedHalfInstrD[1:0] != 2'b11) : (InstrF[1:0] != 2'b11);
 
     // Pick the correct output, depending on whether we have to assemble this
     // instruction from two reads or not.
@@ -113,7 +117,7 @@ module icache(
     end else if (DelayD & (MisalignedHalfInstrD[1:0] != 2'b11)) begin
         assign InstrDMuxChoice = 2'b11;
     end else begin
-        assign InstrDMuxChoice = {1'b0, DelaySideF};
+        assign InstrDMuxChoice = {1'b0, DelayD};
     end
     mux4 #(32) instrDMux (AlignedInstrD, {InstrInF[15:0], MisalignedHalfInstrD}, nop, {16'b0, MisalignedHalfInstrD}, InstrDMuxChoice, InstrRawD);
 endmodule
