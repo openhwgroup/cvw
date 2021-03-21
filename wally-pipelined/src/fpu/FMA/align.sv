@@ -17,7 +17,7 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 
 	input 		[51:0]		zman;		// Fraction of addend z;
 	input 		[12:0]		ae;		// sign of exponent of addend z;
-	input 		[11:0]		aligncnt;	// amount to shift
+	input 		[12:0]		aligncnt;	// amount to shift
 	input				xzero;		// Input X = 0
 	input                  		yzero;          // Input Y = 0 
 	input                  		zzero;          // Input Z = 0
@@ -48,13 +48,13 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 
 	// Compute sign of aligncnt + 104 to check for shifting too far right 
 
-	assign align104 = aligncnt+104;
+	//assign align104 = aligncnt+104;
 	
 	// Shift addend by alignment count.  Generate sticky bits from
 	// addend on right shifts.  Handle special cases of shifting
 	// by too much.
 
-	always @(z2 or aligncnt or align104 or zzero or xzero or yzero or zdenorm or proddenorm)
+	always @(z2 or aligncnt  or zzero or xzero or yzero or zdenorm or proddenorm)
 		begin
 
 		// Default to clearing sticky bits 
@@ -63,36 +63,37 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 
 		// And to using product as primary operand in adder I exponent gen 
 		killprod = 0;
-
-		if ($signed(aligncnt) <= $signed(-105)) begin //ae<=-103
+		// d = aligncnt
+		// p = 53
+		if ($signed(aligncnt) <= $signed(-105)) begin //d<=-2p+1
 			//product ancored case with saturated shift
-			sumshift = 163;			
+			sumshift = 163;	// 3p+4	
 			shift = {~zdenorm,zman,163'b0} >> sumshift;
-			t = {shift[208:51]};
-			bs = |(shift[50:0]);
-			//bs = ~zzero; //set sticky bit
-			zexpsel = 0;
-		end else if($signed(aligncnt) <= $signed(2))  begin 	// -103<ae<=2
-			// product ancored or cancellation
-			sumshift = 56-aligncnt;
-			shift = {~zdenorm,zman,163'b0} >> sumshift;
-			t = {shift[208:51]};
+			t = {shift[215:52]};
 			bs = |(shift[51:0]);
-			zexpsel = 0;
-		end else if ($signed(aligncnt)<=$signed(55))  begin 	//2<ae<=54
+			//zexpsel = 0;
+		end else if($signed(aligncnt) <= $signed(2))  begin // -2p+1<d<=2
+			// product ancored or cancellation
+			sumshift = 56-aligncnt; // p + 3 - d
+			shift = {~zdenorm,zman,163'b0} >> sumshift;
+			t = {shift[215:52]};
+			bs = |(shift[51:0]);
+			//zexpsel = 0;
+		end else if ($signed(aligncnt)<=$signed(55))  begin // 2 < d <= p+2
 			// addend ancored case
 			sumshift = 56-aligncnt;
 			shift = {~zdenorm,zman, 163'b0} >> sumshift;
-			t = {shift[208:51]};
+			t = {shift[215:52]};
 			bs = |(shift[51:0]);
-			zexpsel = 1;
-		end else begin                 	// ae>= 55
+			//zexpsel = 1;
+		end else begin                 	// d >= p+3
 			// addend anchored case with saturated shift
 			sumshift = 0;			
 			shift = {~zdenorm,zman, 163'b0} >> sumshift;
 			t = {shift[215:52]};
 			bs = |(shift[51:0]);
-			zexpsel = 1;
+			//ps = 1;
+			//zexpsel = 1;
 
 		// use some behavioral code to find sticky bit.  This is really
 		// done by hardware in the shifter.

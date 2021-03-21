@@ -40,6 +40,7 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm, overflo
 	// Internal nodes
 
 	wire					zerosign;    	// sign if result= 0 
+	wire					sumneg;    	// sign if result= 0 
 	wire					infsign;     	// sign if result= Inf 
 	reg						negsum;         // negate result of adder 
 	reg						selsum1;     	// select +1 mode from compound adder 
@@ -50,27 +51,35 @@ logic tmp;
 	assign psign = xsign ^ ysign;
 
 	// Invert addend if sign of Z is different from sign of product assign invz = zsign ^ psign;
-	assign invz = (zsign ^ psign);
-	// Select +l mode for adder and compute if result must be negated
-	// This is done according to cases based on the sticky bit.
 
-	always @(invz or negsum0 or negsum1 or bs or ps)
-		begin
-			if (~invz) begin               // both inputs have same sign //KEP if overflow 
-				negsum = 0;
-				selsum1 = 0;
-			end else if (bs) begin        // sticky bit set on addend
-				selsum1 = 0;
-				negsum = negsum0; 
-			end else if (ps) begin 		// sticky bit set on product
-				selsum1 = 1;
-				negsum =  negsum1;
-			end else begin 				// both sticky bits clear
-				selsum1 = negsum1; 	// KEP 210113-10:44 Selsum1 was adding 1 to values that were multiplied by 0
-				// selsum1 = ~negsum1; //original
-				negsum = negsum1;
-		end 
-	end
+	//do you invert z
+	assign invz = (zsign ^ psign);
+
+	assign selsum1 = invz;
+	//negate sum if its negitive
+	assign negsum = (selsum1&negsum1) | (~selsum1&negsum0);
+	// is the sum negitive
+	// 	if p - z is the sum negitive
+	// 	if -p + z is the sum positive
+	// 	if -p - z then the sum is negitive
+	assign sumneg = invz&zsign&negsum1 | invz&psign&~negsum1 | (zsign&psign);
+	//always @(invz or negsum0 or negsum1 or bs or ps)
+	//	begin
+	//		if (~invz) begin               // both inputs have same sign  
+	//			negsum = 0;
+	//			selsum1 = 0;
+	//		end else if (bs) begin        // sticky bit set on addend
+	//			selsum1 = 0;
+	//			negsum = negsum0; 
+	//		end else if (ps) begin 		// sticky bit set on product
+	//			selsum1 = 1;
+	//			negsum =  negsum1;
+	//		end else begin 				// both sticky bits clear
+	//			//selsum1 = negsum1; 	// KEP 210113-10:44 Selsum1 was adding 1 to values that were multiplied by 0
+	//			 selsum1 = ~negsum1; //original
+	//			negsum = negsum1;
+	//	end 
+	//end
 
 	// Compute sign of result
 	// This involves a special case when the sum is zero:
@@ -91,6 +100,6 @@ logic tmp;
 	assign infsign = zinf ? zsign : psign; //KEP 210112 keep the correct sign when result is infinity
 	//assign infsign = xinf ? (yinf ? psign : xsign) : yinf ? ysign : zsign;//original
 	assign tmp = invalid ? 0 : (inf ? infsign :(sumzero ? zerosign : psign ^ negsum));
-	assign wsign = invalid ? 0 : (inf ? infsign :(sumzero ? zerosign : psign ^ negsum));
+	assign wsign = invalid ? 0 : (inf ? infsign :(sumzero ? zerosign : sumneg));
 
 endmodule
