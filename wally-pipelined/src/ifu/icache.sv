@@ -41,7 +41,7 @@ module icache(
   output logic [31:0]       InstrRawD
 );
 
-    logic             DelayF, DelaySideF, FlushDLastCycle, DelayD, DelaySideD;
+    logic             DelayF, DelaySideF, FlushDLastCycle, DelayD;
     logic  [1:0]      InstrDMuxChoice;
     logic [15:0]      MisalignedHalfInstrF, MisalignedHalfInstrD;
     logic [31:0]      InstrF, AlignedInstrD;
@@ -58,7 +58,6 @@ module icache(
     flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
 
     flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF & ~CompressedF, DelayD);
-    flopenr #(1)  delaySideDFlop(clk, reset, ~StallF, DelaySideF, DelaySideD);
     flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF, DelaySideF);
     // This flop stores the first half of a misaligned instruction while waiting for the other half
     flopenr #(16) halfInstrFlop(clk, reset, DelayF & ~StallF, MisalignedHalfInstrF, MisalignedHalfInstrD);
@@ -82,8 +81,8 @@ module icache(
             assign InstrPAdrF = PCPF[2] ? (PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000};
         end
     endgenerate
-    // For now, we always read since the cache doesn't actually cache
 
+    // Read from memory if we don't have the address we want
     always_comb if (LastReadDataValidF & (InstrPAdrF == LastReadAdrF)) begin
         assign InstrReadF = 0;
     end else begin
@@ -107,7 +106,8 @@ module icache(
             assign MisalignedHalfInstrF = InDataF[63:48];
         end
     endgenerate
-    assign ICacheStallF = 0; //DelayF & ~DelaySideF;
+    // We will likely need to stall later, but stalls are handled by the rest of the pipeline for now
+    assign ICacheStallF = 0;
 
     // Detect if the instruction is compressed
     assign CompressedF = InstrF[1:0] != 2'b11;
