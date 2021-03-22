@@ -150,8 +150,10 @@ module ahblite (
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
                         ((BusState == ATOMICREAD) && (NextBusState == ATOMICWRITE));
   // We think this introduces an unnecessary cycle of latency in memory accesses
-  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM,    ReadDataM, ReadDataNewW); // *** check that this does not break when there is no instruction read after data read
-  flopenr #(`XLEN) ReadDataOldWReg(clk, reset, CaptureDataM, ReadDataNewW, ReadDataOldW); // *** check that this does not break when there is no instruction read after data read
+  // *** can the following be simplified down to one register?
+  // *** examine more closely over summer?
+  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM,    ReadDataM, ReadDataNewW);
+  flopenr #(`XLEN) ReadDataOldWReg(clk, reset, CaptureDataM, ReadDataNewW, ReadDataOldW); 
   assign ReadDataW = (BusState == INSTRREADC) ? ReadDataOldW : ReadDataNewW;
 
   // Extract and sign-extend subwords if necessary
