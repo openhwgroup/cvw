@@ -190,15 +190,17 @@ module testbench_busybear();
 
   logic [`XLEN-1:0] readAdrExpected;
 
-  always @(dut.hart.MemRWM[1] or HADDR or dut.HRDATA) begin
-    if (dut.hart.MemRWM[1] && HADDR != dut.PCF && dut.HRDATA != {64{1'bx}}) begin
+  //always @(dut.hart.MemRWM[1] or HADDR or dut.HRDATA) begin
+  always @(posedge dut.HREADY) begin
+    #1;
+    if (dut.hart.MemRWM[1] && HADDR != dut.PCF && dut.HRDATA !== {64{1'bx}}) begin
+      $display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         `ERROR
       end
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
       scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
-      #2;
       if (~equal(HADDR,readAdrExpected,4)) begin
         $display("%0t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
         `ERROR
@@ -209,7 +211,11 @@ module testbench_busybear();
         warningCount += 1;
         `ERROR
       end
+    end else if(dut.hart.MemRWM[1]) begin
+      $display("%x, %x, %x, %t", HADDR, dut.PCF, dut.HRDATA, $time);
+
     end
+
   end
 
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
