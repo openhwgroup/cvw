@@ -45,11 +45,10 @@ module uart (
   logic [7:0]      Din, Dout;
 
   // rename processor interface signals to match PC16550D and provide one-byte interface
-  always_ff @(posedge HCLK) begin
-    MEMRb <= ~(HSELUART & ~HWRITE);
-    MEMWb <= ~(HSELUART & HWRITE);
-    A <= HADDR[2:0];
-  end
+  flopr #(1)  memreadreg(HCLK, ~HRESETn, ~(HSELUART & ~HWRITE), MEMRb);
+  flopr #(1) memwritereg(HCLK, ~HRESETn, ~(HSELUART &  HWRITE), MEMWb);
+  flopr #(3)   haddrreg(HCLK, ~HRESETn, HADDR[2:0], A);
+
   assign HRESPUART = 0; // OK
   assign HREADYUART = 1; // should idle high during address phase and respond high when done; will need to be modified if UART ever needs more than 1 cycle to do something
 
