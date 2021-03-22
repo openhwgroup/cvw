@@ -194,7 +194,7 @@ module testbench_busybear();
   always @(posedge dut.HREADY) begin
     #1;
     if (dut.hart.MemRWM[1] && HADDR != dut.PCF && dut.HRDATA !== {64{1'bx}}) begin
-      $display("%0t", $time);
+      //$display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         `ERROR
@@ -211,8 +211,8 @@ module testbench_busybear();
         warningCount += 1;
         `ERROR
       end
-    end else if(dut.hart.MemRWM[1]) begin
-      $display("%x, %x, %x, %t", HADDR, dut.PCF, dut.HRDATA, $time);
+    //end else if(dut.hart.MemRWM[1]) begin
+      //$display("%x, %x, %x, %t", HADDR, dut.PCF, dut.HRDATA, $time);
 
     end
 
