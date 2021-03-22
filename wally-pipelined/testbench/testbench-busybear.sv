@@ -262,8 +262,14 @@ module testbench_busybear();
   end
 
   always @(dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW) begin
+    if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 2 && instrs != 0) begin
+      $display("!!!!!! illegal instruction !!!!!!!!!!");
+      $display("(as a reminder, MCAUSE and MEPC are set by this)");
+      $display("at %0t ps, instr %0d, HADDR %x", $time, instrs, HADDR);
+      `ERROR
+    end
     if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 5 && instrs != 0) begin
-      $display("!!!!!!illegal (physical) memory access !!!!!!!!!!");
+      $display("!!!!!! illegal (physical) memory access !!!!!!!!!!");
       $display("(as a reminder, MCAUSE and MEPC are set by this)");
       $display("at %0t ps, instr %0d, HADDR %x", $time, instrs, HADDR);
       `ERROR
