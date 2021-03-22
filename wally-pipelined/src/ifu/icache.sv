@@ -26,18 +26,19 @@
 `include "wally-config.vh"
 
 module icache(
-  input  logic             clk, reset,
-  input  logic             StallF, StallD,
-  input  logic             FlushD,
+  input  logic              clk, reset,
+  input  logic              StallF, StallD,
+  input  logic              FlushD,
   // Fetch
-  input  logic [`XLEN-1:0] PCPF,
-  input  logic [`XLEN-1:0] InstrInF,
-  output logic [`XLEN-1:0] InstrPAdrF,
-  output logic             InstrReadF,
-  output logic             CompressedF,
-  output logic             ICacheStallF,
+  input  logic [`XLEN-1:12] UpperPCPF,
+  input  logic [11:0]       LowerPCF,
+  input  logic [`XLEN-1:0]  InstrInF,
+  output logic [`XLEN-1:0]  InstrPAdrF,
+  output logic              InstrReadF,
+  output logic              CompressedF,
+  output logic              ICacheStallF,
   // Decode
-  output logic [31:0]     InstrRawD
+  output logic [31:0]       InstrRawD
 );
 
     logic             DelayF, DelaySideF, FlushDLastCycle, DelayD, DelaySideD;
@@ -47,6 +48,10 @@ module icache(
     logic [31:0]      nop = 32'h00000013; // instruction for NOP
     logic             LastReadDataValidF;
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
+
+    // Temporary change to bridge the new interface to old behaviors
+    logic [`XLEN-1:0] PCPF;
+    assign PCPF = {UpperPCPF, LowerPCF};
 
     // This flop doesn't stall if StallF is high because we should output a nop
     // when FlushD happens, even if the pipeline is also stalled.

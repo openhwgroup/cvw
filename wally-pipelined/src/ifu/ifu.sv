@@ -93,7 +93,12 @@ module ifu (
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCPF = PCF; // Temporary workaround until iTLB is live
-  icache ic(clk, reset, StallF, StallD, FlushD, PCPF, InstrInF, ICacheInstrPAdrF, InstrReadF, CompressedF, ICacheStallF, InstrRawD);
+  icache ic(
+    .*,
+    .InstrPAdrF(ICacheInstrPAdrF),
+    .UpperPCPF(PCPF[`XLEN-1:12]),
+    .LowerPCF(PCF[11:0])
+  );
   // Prioritize the iTLB for reads if it wants one
   mux2 #(`XLEN) instrPAdrMux(ICacheInstrPAdrF, ITLBInstrPAdrF, ITLBMissF, InstrPAdrF);
 
