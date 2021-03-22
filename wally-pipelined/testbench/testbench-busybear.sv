@@ -158,7 +158,7 @@ module testbench_busybear();
           scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           if (i != regNumExpected) begin
-            $display("%0t ps, instr %0d: wrong register changed: %0d, %0d expected", $time, instrs, i, regNumExpected);
+            $display("%0t ps, instr %0d: wrong register changed: %0d, %0d expected to switch to %x from %x", $time, instrs, i, regNumExpected, regExpected, dut.hart.ieu.dp.regf.rf[regNumExpected]);
             `ERROR
           end
           if (~equal(dut.hart.ieu.dp.regf.rf[i],regExpected, 0)) begin
@@ -206,7 +206,7 @@ module testbench_busybear();
       end
       if ((readMask & HRDATA) !== (readMask & dut.HRDATA)) begin
         if (HADDR inside `BUSYBEAR_FIX_READ) begin
-          $display("warning %0t ps, instr %0d, adr %0d: forcing HRDATA to expected: %x, %x", $time, instrs, HADDR, HRDATA, dut.HRDATA);
+          //$display("warning %0t ps, instr %0d, adr %0d: forcing HRDATA to expected: %x, %x", $time, instrs, HADDR, HRDATA, dut.HRDATA);
           force dut.uncore.HRDATA = HRDATA;
           #9;
           release dut.uncore.HRDATA;
@@ -326,6 +326,13 @@ module testbench_busybear();
   `CHECK_CSR(SSTATUS)
   `CHECK_CSR2(STVAL, `CSRS)
   `CHECK_CSR(STVEC)
+
+  initial begin //this is temporary until the bug can be fixed!!!
+    #18909760;
+    force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
+    #100;
+    release dut.hart.ieu.dp.regf.rf[5];
+  end
 
   logic speculative;
   initial begin
