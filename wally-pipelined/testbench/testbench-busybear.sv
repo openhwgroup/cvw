@@ -190,8 +190,7 @@ module testbench_busybear();
 
   logic [`XLEN-1:0] readAdrExpected;
 
-  //always @(dut.hart.MemRWM[1] or HADDR or dut.HRDATA) begin
-  always @(posedge dut.HREADY) begin
+  always @(dut.HRDATA) begin
     #1;
     if (dut.hart.MemRWM[1] && HADDR != dut.PCF && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
@@ -205,14 +204,13 @@ module testbench_busybear();
         $display("%0t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
         `ERROR
       end
-
-      if (((readMask & HRDATA) !== (readMask & dut.HRDATA)) && (HADDR >= 'h80000000 && HADDR <= 'h87FFFFFF)) begin
+      if ((readMask & HRDATA) !== (readMask & dut.HRDATA)) begin
         $display("warning %0t ps, instr %0d: ExpectedHRDATA does not equal dut.HRDATA: %x, %x from address %x, %x", $time, instrs, HRDATA, dut.HRDATA, HADDR, HSIZE);
         warningCount += 1;
         `ERROR
       end
     //end else if(dut.hart.MemRWM[1]) begin
-      //$display("%x, %x, %x, %t", HADDR, dut.PCF, dut.HRDATA, $time);
+    //  $display("%x, %x, %x, %t", HADDR, dut.PCF, dut.HRDATA, $time);
 
     end
 
