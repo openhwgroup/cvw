@@ -46,7 +46,7 @@ module expgen(xexp, yexp, zexp,
 	input     			proddenorm;		// product is denorm
 	input     			specialsel;  	// Select special result
 	input     			zexpsel;  	// Select special result
-	output		[11:0]   	aligncnt;       // shift count for alignment shifter
+	output		[12:0]   	aligncnt;       // shift count for alignment shifter
 	output		[62:52]    	wexp;           	// Exponent of result
 	output				prodof;         // X*Y exponent out of bounds 
 	output				sumof;          // X*Y+Z exponent out of bounds 
@@ -72,9 +72,9 @@ module expgen(xexp, yexp, zexp,
 	//   if exponent is out of bounds 
 
 
-	assign ae = xexp + yexp;
+	assign ae = xexp + yexp -1023;
 
-	assign prodof = (ae - 1023 > 2046 && ~ae[12]);
+	assign prodof = (ae > 2046 && ~ae[12]);
 
 	// Compute alignment shift count
 	// Adjust for postrounding normalization of Z.
@@ -82,12 +82,12 @@ module expgen(xexp, yexp, zexp,
 	// check if a round overflows is shorter than the actual round and
 	// is masked by the bypass mux and two 10 bit adder delays.
 
-	assign aligncnt = zexp - ae;// KEP use all of ae
-
+	assign aligncnt = zexp -(xexp + yexp -1023) - 1 + ~xdenorm + ~ydenorm - ~zdenorm;// KEP use all of ae
+	//assign aligncnt = zexp - ae;// KEP use all of ae
 
 	// Select exponent (usually from product except in case of huge addend)
 
-	assign be = zexpsel ? zexp : ae;
+	//assign be = zexpsel ? zexp : ae;
 
 	// Adjust exponent based on normalization
 	// A compound adder takes care of the case of post-rounding normalization
@@ -109,7 +109,7 @@ module expgen(xexp, yexp, zexp,
 
 	// bypass occurs before rounding or taking early results 
 	
-	assign wbypass = de0[10:0];
+	//assign wbypass = de0[10:0];
 	
 	// In a non-critical special mux, we combine the early result from other
 	// FPU blocks with the results of exceptional conditions.  Overflow

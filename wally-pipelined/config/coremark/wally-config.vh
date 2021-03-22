@@ -76,6 +76,8 @@
 `define GPIORANGE  32'h000000FF
 `define UARTBASE   32'h10000000
 `define UARTRANGE  32'h00000007
+`define PLICBASE   32'h0C000000
+`define PLICRANGE  32'h03FFFFFF
 
 // Test modes
 
@@ -87,6 +89,9 @@
 
 // Hardware configuration
 `define UART_PRESCALE 1
+
+// Can add PLIC Config here
+// Num interrupt sources
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */

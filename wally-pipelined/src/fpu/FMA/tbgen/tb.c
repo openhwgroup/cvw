@@ -26,11 +26,12 @@ void main() {
 		char ans[81];
 		char flags[3];
 		int rn,rz,rm,rp;
-		long stop = 6128601;
+		long stop = 6015817;
 		int debug = 1;
 		//my_string = (char *) malloc (nbytes + 1);
 		//bytes_read = getline (&my_string, &nbytes, stdin);
 	
+
 		for(n=0; n < 2013; n++) {//613 for 10000
 			if(getline(&ln,&nbytes,fp) < 0 || feof(fp)) break;
 			if(k == stop && debug == 1) break;
@@ -53,7 +54,7 @@ void main() {
 			fprintf(fq,"    z = 64'h%s;\n",z);
 			fprintf(fq,"    ans = 64'h%s;\n", ans);
 			// fprintf(fq,"    flags = 5'h%s;\n", flags);
-	
+		
 
 			{
 				//rn=1; rz=0; rm=0; rp=0;

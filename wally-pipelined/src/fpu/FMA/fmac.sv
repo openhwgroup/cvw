@@ -60,7 +60,7 @@ module fmac(x, y, z, rn, rz, rp, rm,
 	logic 		[163:0]		t;				// output of alignment shifter
 	logic 		[163:0]		sum;			// output of carry prop adder
 	logic 		[53:0]		v; 				// normalized sum, R, S bits
-	logic 		[11:0]		aligncnt; 		// shift count for alignment
+	logic 		[12:0]		aligncnt; 		// shift count for alignment
 	logic 		[8:0]		normcnt; 		// shift count for normalizer
 	logic 		[12:0]		ae; 		// multiplier expoent
 	logic 					bs;				// sticky bit of addend

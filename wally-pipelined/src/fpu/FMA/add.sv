@@ -31,14 +31,14 @@ module add(r, s, t, sum,
 
 	wire		[105:0]		r2;				// partial product possibly zeroed out
 	wire		[105:0]		s2;				// partial product possibly zeroed out
-	wire		[163:0]		t2;				// addend after inversion if necessary
-	wire		[163:0] 	sum0;			// sum of compound adder +0 mode
-	wire		[163:0] 	sum1;			// sum of compound adder +1 mode
+	wire		[164:0]		t2;				// addend after inversion if necessary
+	wire		[164:0] 	sum0;			// sum of compound adder +0 mode
+	wire		[164:0] 	sum1;			// sum of compound adder +1 mode
 	wire		[163:0] 	prodshifted;			// sum of compound adder +1 mode
 
 	// Invert addend if z's sign is diffrent from the product's sign
 
-	assign t2 = invz ? ~t : t;
+	assign t2 = invz ? ~{1'b0,t} : {1'b0,t};
 	
 	// Zero out product if Z >> product or product really should be zero
 
@@ -48,15 +48,15 @@ module add(r, s, t, sum,
 	// Compound adder
 	// Consists of 3:2 CSA followed by long compound CPA
 	assign prodshifted = {56'b0, r2, 2'b0} + {56'b0, s2, 2'b0};
-	assign sum0 = prodshifted + t2 + 158'b0;
-	assign sum1 = prodshifted + t2 + 158'b1;
+	assign sum0 = {1'b0,prodshifted} + t2 + 158'b0;
+	assign sum1 = {1'b0,prodshifted} + t2 + 158'b1; // +1 from invert of z above
 	
 	// Check sign bits in +0/1 modes 
-	assign negsum0 = sum0[157];
-	assign negsum1 = sum1[157];
+	assign negsum0 = sum0[164];
+	assign negsum1 = sum1[164];
 
 	// Mux proper result (+Oil mode and inversion) using 4:1 mux
  
-	assign sum = selsum1 ? (negsum ? -sum1 : sum1) : (negsum ? -sum0 : sum0);
+	assign sum = selsum1 ? (negsum ? -sum1[163:0] : sum1[163:0]) : (negsum ? -sum0[163:0] : sum0[163:0]);
 	
 endmodule
