@@ -47,6 +47,8 @@ module ifu (
   input logic [`XLEN-1:0]  PrivilegedNextPCM, 
   output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
+  output logic [3:0] InstrClassM,
+  output logic BPPredWrongM,
   // Writeback
   // output logic [`XLEN-1:0] PCLinkW,
   // Faults
@@ -205,6 +207,20 @@ module ifu (
 			       .clear(FlushE),
 			       .d(InstrClassD),
 			       .q(InstrClassE));
+
+  flopenrc #(4) InstrClassRegM(.clk(clk),
+			       .reset(reset),
+			       .en(~StallM),
+			       .clear(FlushM),
+			       .d(InstrClassE),
+			       .q(InstrClassM));
+
+  flopenrc #(1) BPPredWrongRegM(.clk(clk),
+			       .reset(reset),
+			       .en(~StallM),
+			       .clear(FlushM),
+			       .d(BPPredWrongE),
+			       .q(BPPredWrongM));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or
