@@ -122,7 +122,7 @@ module ifu (
 	      .reset(reset),
 	      .StallF(StallF),
 	      .StallD(StallD),
-	      .StallE(1'b0),   // *** may need this eventually
+	      .StallE(StallE),
 	      .FlushF(FlushF),
 	      .FlushD(FlushD),
 	      .FlushE(FlushE),
