@@ -24,11 +24,13 @@ def test_config(config, print_res=True):
   """Run the given config, and return 0 if it suceeds and 1 if it fails"""
   logname = "wally_"+config+".log"
   if config == "busybear":
+    # Handle busybear separately
     cmd = "echo 'quit' | vsim -do wally-busybear.do -c >" + logname
     os.system(cmd)
     # check for success.  grep returns 0 if found, 1 if not found
     passed = search_log_for_text("# loaded 200000 instructions", logname)
   else:
+    # Any other configuration loads that name from the config folder and runs vsim
     cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch.do ../config/" + config + " " + config + "\n!\n"
     print(cmd)
     os.system(cmd)
