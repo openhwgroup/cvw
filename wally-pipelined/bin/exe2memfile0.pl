@@ -140,6 +140,5 @@ sub fixadr {
     # strip off leading 8 from address and convert to decimal
     # if the leading 8 is not present don't remove.
     my $adr = shift;
-    if ($adr =~ s/^8/0/) { return hex($adr); }
-    else { return hex($adr) }
+    return hex($adr);
 }
