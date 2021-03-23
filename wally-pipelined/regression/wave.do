@@ -82,7 +82,6 @@ add wave -noupdate -expand -group RegFile /testbench/dut/hart/ieu/dp/regf/we3
 add wave -noupdate -expand -group RegFile /testbench/dut/hart/ieu/dp/regf/wd3
 add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ALUResultW
 add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ReadDataW
-add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/PCLinkW
 add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/CSRReadValW
 add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultSrcW
 add wave -noupdate -expand -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultW
@@ -141,8 +140,12 @@ add wave -noupdate -group {function radix debug} /testbench/functionRadix/functi
 add wave -noupdate -group {function radix debug} /testbench/functionRadix/function_radix/FunctionAddr
 add wave -noupdate -group {function radix debug} /testbench/functionRadix/function_radix/ProgramAddrIndex
 add wave -noupdate -group {function radix debug} /testbench/functionRadix/function_radix/FunctionName
+add wave -noupdate -expand -group {performance counters} /testbench/dut/hart/priv/csr/genblk1/counters/HPMCOUNTER
+add wave -noupdate -expand -group {performance counters} /testbench/dut/hart/priv/csr/genblk1/counters/MHPMCOUNTERH
+add wave -noupdate -expand -group {performance counters} /testbench/dut/hart/priv/csr/genblk1/counters/MCOUNTEN
+add wave -noupdate -expand -group {performance counters} /testbench/dut/hart/priv/csr/genblk1/counters/MCOUNTINHIBIT_REGW
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {3758805 ns} 0}
+WaveRestoreCursors {{Cursor 2} {23169 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 229
@@ -158,4 +161,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1644110 ns} {15262484 ns}
+WaveRestoreZoom {0 ns} {491274 ns}
