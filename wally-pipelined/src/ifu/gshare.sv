@@ -43,7 +43,7 @@ module gsharePredictor
    );
 
   logic [k-1:0] 	   GHRF, GHRD, GHRE;
-  logic [k-1:0] 	   LookUpPCIndexD, LookUpPCIndexE;
+  //logic [k-1:0] 	   LookUpPCIndexD, LookUpPCIndexE;
   logic [k-1:0] 	   LookUpPCIndex, UpdatePCIndex;
   logic [1:0] 		   PredictionMemory;
   logic 		   DoForwarding, DoForwardingF;
@@ -66,7 +66,7 @@ module gsharePredictor
 			 .reset(reset),
 			 .RA1(LookUpPCIndex),
 			 .RD1(PredictionMemory),
-			 .REN1(1'b1),
+			 .REN1(~StallF),
 			 .WA1(UpdatePCIndex),
 			 .WD1(UpdatePrediction),
 			 .WEN1(UpdateEN),
@@ -92,6 +92,7 @@ module gsharePredictor
   assign Prediction = DoForwardingF ? UpdatePredictionF : PredictionMemory;
   
   //pipeline for GHR
+/* -----\/----- EXCLUDED -----\/-----
   flopenrc #(k) LookUpDReg(.clk(clk),
 			   .reset(reset),
 			   .en(~StallD),
@@ -105,5 +106,21 @@ module gsharePredictor
 			   .clear(FlushE),
 			   .d(LookUpPCIndexD),
 			   .q(LookUpPCIndexE));
+ -----/\----- EXCLUDED -----/\----- */
+
+  flopenrc #(k) GHRRegD(.clk(clk),
+			.reset(reset),
+			.en(~StallD),
+			.clear(FlushD),
+			.d(GHRF),
+			.q(GHRD));
+
+  flopenrc #(k) GHRRegE(.clk(clk),
+			.reset(reset),
+			.en(~StallE),
+			.clear(FlushE),
+			.d(GHRD),
+			.q(GHRE));
+  
 
 endmodule

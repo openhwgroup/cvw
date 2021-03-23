@@ -74,7 +74,7 @@ module bpred
 				   .Prediction(BPPredF),
 				   // update
 				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0]),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
 				   .UpdatePrediction(UpdateBPPredE));
 
     end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
@@ -86,7 +86,7 @@ module bpred
 					  .Prediction(BPPredF),
 					  // update
 					  .UpdatePC(PCE),
-					  .UpdateEN(InstrClassE[0]),
+					  .UpdateEN(InstrClassE[0] & ~StallE),
 					  .PCSrcE(PCSrcE),
 					  .UpdatePrediction(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -98,7 +98,7 @@ module bpred
 				   .Prediction(BPPredF),
 				   // update
 				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0]),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
 				   .PCSrcE(PCSrcE),
 				   .UpdatePrediction(UpdateBPPredE));
     end 
@@ -126,7 +126,7 @@ module bpred
 			       .InstrClass(BPInstrClassF),
 			       .Valid(BTBValidF),
 			       // update
-			       .UpdateEN(InstrClassE[2] | InstrClassE[1] | InstrClassE[0]),
+			       .UpdateEN((InstrClassE[2] | InstrClassE[1] | InstrClassE[0]) & ~StallE),
 			       .UpdatePC(PCE),
 			       .UpdateTarget(PCTargetE),
 			       .UpdateInstrClass(InstrClassE));
