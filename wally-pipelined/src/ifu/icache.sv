@@ -52,9 +52,12 @@ module icache(
     logic  [1:0]      InstrDMuxChoice;
     logic [15:0]      MisalignedHalfInstrF, MisalignedHalfInstrD;
     logic [31:0]      InstrF, AlignedInstrD;
-    logic [31:0]      nop = 32'h00000013; // instruction for NOP
+    // Buffer the last read, for ease of accessing it again
     logic             LastReadDataValidF;
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
+
+    // instruction for NOP
+    logic [31:0]      nop = 32'h00000013;
 
     // Temporary change to bridge the new interface to old behaviors
     logic [`XLEN-1:0] PCPF;
