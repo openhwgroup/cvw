@@ -49,6 +49,8 @@ add wave -hex /testbench_busybear/dut/hart/ifu/PCD
 add wave -hex /testbench_busybear/dut/hart/ifu/InstrD
 add wave -hex /testbench_busybear/dut/hart/ifu/StallD
 add wave -hex /testbench_busybear/dut/hart/ifu/FlushD
+add wave -hex /testbench_busybear/dut/hart/ifu/StallE
+add wave -hex /testbench_busybear/dut/hart/ifu/FlushE
 add wave -hex /testbench_busybear/dut/hart/ifu/InstrRawD
 add wave /testbench_busybear/CheckInstrD
 add wave /testbench_busybear/lastCheckInstrD

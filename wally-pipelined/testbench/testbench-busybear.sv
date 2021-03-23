@@ -192,7 +192,7 @@ module testbench_busybear();
 
   always @(dut.HRDATA) begin
     #1;
-    if (dut.hart.MemRWM[1] && HADDR != dut.PCF && dut.HRDATA !== {64{1'bx}}) begin
+    if (dut.hart.MemRWM[1] && HADDR[31:3] != dut.PCF[31:3] && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
@@ -335,6 +335,13 @@ module testbench_busybear();
   `CHECK_CSR2(STVAL, `CSRS)
   `CHECK_CSR(STVEC)
 
+  initial begin //this is just fun to make causes easier to understand
+    #38;
+    force dut.hart.priv.csr.genblk1.csrm.NextCauseM = 0;
+    #16;
+    release dut.hart.priv.csr.genblk1.csrm.NextCauseM;
+  end
+
   initial begin //this is temporary until the bug can be fixed!!!
     #18909760;
     force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
@@ -382,10 +389,10 @@ module testbench_busybear();
   logic [31:0] InstrMask;
   logic forcedInstr;
   logic [63:0] lastPCD;
-  always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset) begin
+  always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset or negedge dut.hart.ifu.StallE) begin
     if(~HWRITE) begin
-      #3;
-      if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0) begin
+      #2;
+      if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0 && ~dut.hart.ifu.StallE) begin
         if (dut.hart.ifu.PCD !== lastPCD) begin
           lastCheckInstrD = CheckInstrD;
           lastPC <= dut.hart.ifu.PCD;
