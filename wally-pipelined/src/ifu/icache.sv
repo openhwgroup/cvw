@@ -4,7 +4,7 @@
 // Written: jaallen@g.hmc.edu 2021-03-02
 // Modified: 
 //
-// Purpose: Cache instructions for the ifu so it can access memory less often
+// Purpose: Cache instructions for the ifu so it can access memory less often, saving cycles
 // 
 // A component of the Wally configurable RISC-V project.
 // 
