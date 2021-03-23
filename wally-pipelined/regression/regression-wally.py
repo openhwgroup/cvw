@@ -4,7 +4,7 @@
 # regression-wally.py
 # David_Harris@Hmc.edu 25 January 2021
 #
-# Run a regression with multiple configurations and report any errors.
+# Run a regression with multiple configurations in parallel and exit with non-zero status if an error happened
 #
 ##################################
 
@@ -41,7 +41,7 @@ def test_config(config, print_res=True):
     if print_res:print(logname+": failures detected")
     return 1
 
-
+# Run the tests and count the failures
 pool = multiprocessing.Pool(min(len(confignames), 12))
 fail = sum(pool.map(test_config, confignames))
 
