@@ -28,7 +28,6 @@
 
 module testbench();
   parameter DEBUG = 0;
-  parameter TESTSBP = 0;
   
   logic        clk;
   logic        reset;
@@ -337,7 +336,7 @@ string tests32i[] = {
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
-      if(TESTSBP) begin
+      if(`TESTSBP) begin
 	tests = testsBP64;	
       end else begin 
 	tests = {tests64i};

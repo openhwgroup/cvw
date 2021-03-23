@@ -43,43 +43,48 @@ for(my $i=0; $i<=$#ARGV; $i++) {
         my $address;
 
     # initialize to all zeros;
+	# *** need to fix the zeroing range.  Not always 64K
         for (my $i=0; $i < 65536*4; $i++) {
             $memfilebytes[$i] = "00";
         }
 
         while(<FILE>) {
             if ($mode == 0) { # Parse code
-    #	    print("Examining $_\n");
-            if (/^\s*(\S\S\S\S\S\S\S\S):\s+(\S+)\s+/) {
+#	    print("Examining $_\n");
+		if (/^\s*(\S{1,16}):\s+(\S+)\s+/) {
                     $address = &fixadr($1);
                     my $instr = $2;
                     my $len = length($instr);
                     for (my $i=0; $i<$len/2; $i++) {
                         $memfilebytes[$address+$i] = substr($instr, $len-2-2*$i, 2);
                     }
-    #                print ("address $address $instr\n");
-            }
-                if (/Disassembly of section .data:/) { $mode = 1;}
+                    print ("address $address $instr\n");
+		}
+		if (/Disassembly of section .data:/) { $mode = 1;}
             } elsif ($mode == 1) { # Parse data segment
-                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
+                if (/^\s*(\S{1,16}):\s+(.*)/) {
                     $address = &fixadr($1);
-    #		print "addresss $address maxaddress $maxaddress\n";
-            if ($address > $maxaddress) { $maxaddress = $address; }
+#		        print "addresss $address maxaddress $maxaddress\n";
+		    if ($address > $maxaddress) { $maxaddress = $address; }
                     my $line = $2;
                     # merge chunks with spaces
+		    # *** might need to change
                     $line =~ s/(\S)\s(\S)/$1$2/g;
                     # strip off comments
                     $line =~ /^(\S*)/;
                     $payload = $1;
                     &emitData($address, $payload);
                 }
-                if (/Disassembly of section .riscv.attributes:/) { $mode = 2; }
+                if (/Disassembly of section .comment:/) { $mode = 2; }
+	    } elsif ($mode == 2) { # parse the comment section
+                if (/Disassembly of section .riscv.attributes:/) { $mode = 3; }
             }
         }
         close(FILE);
         $maxaddress += 32; # pad some zeros at the end
 
         # print to memory file
+	# *** this is a problem
         if ($fname =~ /rv32/) {
         open(MEMFILE, ">$memfile") || die("Can't write $memfile");
         for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
@@ -133,7 +138,8 @@ sub emitData {
 
 sub fixadr {
     # strip off leading 8 from address and convert to decimal
+    # if the leading 8 is not present don't remove.
     my $adr = shift;
     if ($adr =~ s/^8/0/) { return hex($adr); }
-    else { die("address $adr lacks leading 8\n"); }
+    else { return hex($adr) }
 }
