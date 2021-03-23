@@ -7,7 +7,7 @@ module testbench_busybear();
   logic [31:0]     GPIOPinsOut, GPIOPinsEn;
 
   // instantiate device to be tested
-  logic [31:0] CheckInstrF;
+  logic [31:0] CheckInstrD;
 
   logic [`AHBW-1:0] HRDATA;
   logic [31:0]      HADDR;
@@ -344,7 +344,7 @@ module testbench_busybear();
   initial begin
     speculative = 0;
   end
-  logic [63:0] lastCheckInstrF, lastPC, lastPC2;
+  logic [63:0] lastCheckInstrD, lastPC, lastPC2;
 
   string PCtextW, PCtext2W;
   logic [31:0] InstrWExpected;
@@ -379,36 +379,36 @@ module testbench_busybear();
   end
   logic [31:0] InstrMask;
   logic forcedInstr;
-  logic [63:0] lastPCF;
-  always @(dut.PCF or dut.hart.ifu.ic.InstrF or reset) begin
+  logic [63:0] lastPCD;
+  always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset) begin
     if(~HWRITE) begin
     #3;
-    if (~reset && dut.hart.ifu.ic.InstrF[15:0] !== {16{1'bx}} && ~dut.hart.StallD) begin
-      if (dut.PCF !== lastPCF) begin
-        lastCheckInstrF = CheckInstrF;
-        lastPC <= dut.PCF;
+    if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && ~dut.hart.StallD) begin
+      if (dut.hart.ifu.PCD !== lastPCD) begin
+        lastCheckInstrD = CheckInstrD;
+        lastPC <= dut.hart.ifu.PCD;
         lastPC2 <= lastPC;
         if (speculative && (lastPC != pcExpected)) begin
-          speculative = ~equal(dut.PCF,pcExpected,3);
-          if(dut.PCF===pcExpected) begin
-            if(dut.hart.ifu.ic.InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-              force CheckInstrF = 32'b0010011;
-              release CheckInstrF;
-              force dut.hart.ifu.ic.InstrF = 32'b0010011;
+          speculative = ~equal(dut.hart.ifu.PCD,pcExpected,3);
+          if(dut.hart.ifu.PCD===pcExpected) begin
+            if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+              force CheckInstrD = 32'b0010011;
+              release CheckInstrD;
+              force dut.hart.ifu.InstrRawD = 32'b0010011;
               #7;
-              release dut.hart.ifu.ic.InstrF;
-              $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.PCF, instrs, $time);
+              release dut.hart.ifu.InstrRawD;
+              $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
               warningCount += 1;
               forcedInstr = 1;
             end
             else begin
-              if(dut.hart.ifu.ic.InstrF[28:27] != 2'b11 && dut.hart.ifu.ic.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                force CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
-                release CheckInstrF;
-                force dut.hart.ifu.ic.InstrF = {12'b0, dut.hart.ifu.ic.InstrF[19:7], 7'b0000011};
+              if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+                force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
+                release CheckInstrD;
+                force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
                 #7;
-                release dut.hart.ifu.ic.InstrF;
-                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
+                release dut.hart.ifu.InstrRawD;
+                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
                 warningCount += 1;
                 forcedInstr = 1;
               end
@@ -428,26 +428,26 @@ module testbench_busybear();
             scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
             PCtext = {PCtext, " ", PCtext2};
           end
-          scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrF);
-          if(dut.PCF === pcExpected) begin
-            if(dut.hart.ifu.ic.InstrF[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-              force CheckInstrF = 32'b0010011;
-              release CheckInstrF;
-              force dut.hart.ifu.ic.InstrF = 32'b0010011;
+          scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
+          if(dut.hart.ifu.PCD === pcExpected) begin
+            if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+              force CheckInstrD = 32'b0010011;
+              release CheckInstrD;
+              force dut.hart.ifu.InstrRawD = 32'b0010011;
               #7;
-              release dut.hart.ifu.ic.InstrF;
-              $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.PCF, instrs, $time);
+              release dut.hart.ifu.InstrRawD;
+              $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
               warningCount += 1;
               forcedInstr = 1;
             end
             else begin
-              if(dut.hart.ifu.ic.InstrF[28:27] != 2'b11 && dut.hart.ifu.ic.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                force CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
-                release CheckInstrF;
-                force dut.hart.ifu.ic.InstrF = {12'b0, dut.hart.ifu.ic.InstrF[19:7], 7'b0000011};
+              if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+                force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
+                release CheckInstrD;
+                force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
                 #7;
-                release dut.hart.ifu.ic.InstrF;
-                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
+                release dut.hart.ifu.InstrRawD;
+                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
                 warningCount += 1;
                 forcedInstr = 1;
               end
@@ -465,7 +465,7 @@ module testbench_busybear();
           end
           instrs += 1;
           // are we at a branch/jump?
-          casex (lastCheckInstrF[31:0])
+          casex (lastCheckInstrD[31:0])
             32'b00000000001000000000000001110011, // URET
             32'b00010000001000000000000001110011, // SRET
             32'b00110000001000000000000001110011, // MRET
@@ -486,18 +486,18 @@ module testbench_busybear();
           endcase
 
           //check things!
-          if ((~speculative) && (~equal(dut.PCF,pcExpected,3))) begin
-            $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.PCF, pcExpected);
+          if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
+            $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, pcExpected);
             `ERROR
           end
-          InstrMask = CheckInstrF[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-          if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.ic.InstrF) !== (InstrMask & CheckInstrF))) begin
-            $display("%0t ps, instr %0d: InstrF does not equal CheckInstrF: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.ic.InstrF, CheckInstrF, dut.PCF);
+          InstrMask = CheckInstrD[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
+          if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
+            $display("%0t ps, instr %0d: InstrD does not equal CheckInstrD: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.InstrRawD, CheckInstrD, dut.hart.ifu.PCD);
             `ERROR
           end
         end
       end
-      lastPCF = dut.PCF;
+      lastPCD = dut.hart.ifu.PCD;
     end
     end
   end

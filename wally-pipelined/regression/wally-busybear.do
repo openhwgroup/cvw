@@ -45,13 +45,13 @@ add wave /testbench_busybear/reset
 add wave -divider
 add wave -hex /testbench_busybear/PCtext
 add wave -hex /testbench_busybear/pcExpected
-add wave -hex /testbench_busybear/dut/hart/ifu/PCF
-add wave -hex /testbench_busybear/dut/hart/ifu/ic/InstrF
+add wave -hex /testbench_busybear/dut/hart/ifu/PCD
+add wave -hex /testbench_busybear/dut/hart/ifu/InstrD
 add wave -hex /testbench_busybear/dut/hart/ifu/StallD
 add wave -hex /testbench_busybear/dut/hart/ifu/FlushD
 add wave -hex /testbench_busybear/dut/hart/ifu/InstrRawD
-add wave /testbench_busybear/CheckInstrF
-add wave /testbench_busybear/lastCheckInstrF
+add wave /testbench_busybear/CheckInstrD
+add wave /testbench_busybear/lastCheckInstrD
 add wave /testbench_busybear/speculative
 add wave /testbench_busybear/lastPC2
 add wave -divider
