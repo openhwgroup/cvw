@@ -316,7 +316,8 @@ string tests32i[] = {
 };
 
   string testsBP64[] = '{
-		       "rv64BP/reg-test", "10000"
+			 "rv64BP/reg-test", "10000",
+			 "rv64BP/sieve", "1000000"
 	 };
   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
