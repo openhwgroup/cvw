@@ -262,7 +262,7 @@ module testbench_busybear();
   end
 
   always @(dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW) begin
-    if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 2 && instrs != 0) begin
+    if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 2 && instrs > 1) begin
       $display("!!!!!! illegal instruction !!!!!!!!!!");
       $display("(as a reminder, MCAUSE and MEPC are set by this)");
       $display("at %0t ps, instr %0d, HADDR %x", $time, instrs, HADDR);
@@ -282,7 +282,7 @@ module testbench_busybear();
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
-          if (instrs != 0) begin \
+          if (instrs > 1) begin \
             scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
             scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
             if(CSR.icompare(`"CSR`")) begin \
@@ -384,123 +384,123 @@ module testbench_busybear();
   logic [63:0] lastPCD;
   always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset) begin
     if(~HWRITE) begin
-    #3;
-    if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && ~dut.hart.StallD) begin
-      if (dut.hart.ifu.PCD !== lastPCD) begin
-        lastCheckInstrD = CheckInstrD;
-        lastPC <= dut.hart.ifu.PCD;
-        lastPC2 <= lastPC;
-        if (speculative && (lastPC != pcExpected)) begin
-          speculative = ~equal(dut.hart.ifu.PCD,pcExpected,3);
-          if(dut.hart.ifu.PCD===pcExpected) begin
-            if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-              force CheckInstrD = 32'b0010011;
-              release CheckInstrD;
-              force dut.hart.ifu.InstrRawD = 32'b0010011;
-              #7;
-              release dut.hart.ifu.InstrRawD;
-              $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
-              warningCount += 1;
-              forcedInstr = 1;
-            end
-            else begin
-              if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
+      #3;
+      if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0) begin
+        if (dut.hart.ifu.PCD !== lastPCD) begin
+          lastCheckInstrD = CheckInstrD;
+          lastPC <= dut.hart.ifu.PCD;
+          lastPC2 <= lastPC;
+          if (speculative && (lastPC != pcExpected)) begin
+            speculative = ~equal(dut.hart.ifu.PCD,pcExpected,3);
+            if(dut.hart.ifu.PCD===pcExpected) begin
+              if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+                force CheckInstrD = 32'b0010011;
                 release CheckInstrD;
-                force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
+                force dut.hart.ifu.InstrRawD = 32'b0010011;
                 #7;
                 release dut.hart.ifu.InstrRawD;
-                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
+                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
                 warningCount += 1;
                 forcedInstr = 1;
               end
               else begin
-                forcedInstr = 0;
+                if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+                  force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
+                  release CheckInstrD;
+                  force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
+                  #7;
+                  release dut.hart.ifu.InstrRawD;
+                  $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
+                  warningCount += 1;
+                  forcedInstr = 1;
+                end
+                else begin
+                  forcedInstr = 0;
+                end
               end
             end
           end
-        end
-        else begin
-          if($feof(data_file_PC)) begin
-            $display("no more PC data to read");
-            `ERROR
-          end
-          scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
-          if (PCtext != "ret" && PCtext != "fence" && PCtext != "nop" && PCtext != "mret" && PCtext != "sfence.vma" && PCtext != "unimp") begin
-            scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
-            PCtext = {PCtext, " ", PCtext2};
-          end
-          scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
-          if(dut.hart.ifu.PCD === pcExpected) begin
-            if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-              force CheckInstrD = 32'b0010011;
-              release CheckInstrD;
-              force dut.hart.ifu.InstrRawD = 32'b0010011;
-              #7;
-              release dut.hart.ifu.InstrRawD;
-              $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
-              warningCount += 1;
-              forcedInstr = 1;
+          else begin
+            if($feof(data_file_PC)) begin
+              $display("no more PC data to read");
+              `ERROR
             end
-            else begin
-              if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
+            scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
+            if (PCtext != "ret" && PCtext != "fence" && PCtext != "nop" && PCtext != "mret" && PCtext != "sfence.vma" && PCtext != "unimp") begin
+              scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
+              PCtext = {PCtext, " ", PCtext2};
+            end
+            scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
+            if(dut.hart.ifu.PCD === pcExpected) begin
+              if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
+                force CheckInstrD = 32'b0010011;
                 release CheckInstrD;
-                force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
+                force dut.hart.ifu.InstrRawD = 32'b0010011;
                 #7;
                 release dut.hart.ifu.InstrRawD;
-                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
+                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
                 warningCount += 1;
                 forcedInstr = 1;
               end
               else begin
-                forcedInstr = 0;
+                if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
+                  force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
+                  release CheckInstrD;
+                  force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
+                  #7;
+                  release dut.hart.ifu.InstrRawD;
+                  $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
+                  warningCount += 1;
+                  forcedInstr = 1;
+                end
+                else begin
+                  forcedInstr = 0;
+                end
               end
             end
-          end
-          // then expected PC value
-          scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
-          if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
-             (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
-             (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
-            $display("loaded %0d instructions", instrs);
-          end
-          instrs += 1;
-          // are we at a branch/jump?
-          casex (lastCheckInstrD[31:0])
-            32'b00000000001000000000000001110011, // URET
-            32'b00010000001000000000000001110011, // SRET
-            32'b00110000001000000000000001110011, // MRET
-            32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
-            32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
-            32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
-            32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
-            32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
-            32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
-              speculative = 1;
-            32'bXXXXXXXXXXXXXXXX1001000000000010: // C.EBREAK:
-              speculative = 0; // tbh don't really know what should happen here
-            32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
-            32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
-              speculative = 1;
-            default:
-              speculative = 0;
-          endcase
+            // then expected PC value
+            scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
+            if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
+               (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
+               (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
+              $display("loaded %0d instructions", instrs);
+            end
+            instrs += 1;
+            // are we at a branch/jump?
+            casex (lastCheckInstrD[31:0])
+              32'b00000000001000000000000001110011, // URET
+              32'b00010000001000000000000001110011, // SRET
+              32'b00110000001000000000000001110011, // MRET
+              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
+              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
+              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
+              32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
+              32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
+              32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
+                speculative = 1;
+              32'bXXXXXXXXXXXXXXXX1001000000000010: // C.EBREAK:
+                speculative = 0; // tbh don't really know what should happen here
+              32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
+              32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
+                speculative = 1;
+              default:
+                speculative = 0;
+            endcase
 
-          //check things!
-          if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
-            $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, pcExpected);
-            `ERROR
-          end
-          InstrMask = CheckInstrD[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-          if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
-            $display("%0t ps, instr %0d: InstrD does not equal CheckInstrD: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.InstrRawD, CheckInstrD, dut.hart.ifu.PCD);
-            `ERROR
+            //check things!
+            if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
+              $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, pcExpected);
+              `ERROR
+            end
+            InstrMask = CheckInstrD[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
+            if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
+              $display("%0t ps, instr %0d: InstrD does not equal CheckInstrD: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.InstrRawD, CheckInstrD, dut.hart.ifu.PCD);
+              `ERROR
+            end
           end
         end
+        lastPCD = dut.hart.ifu.PCD;
       end
-      lastPCD = dut.hart.ifu.PCD;
-    end
     end
   end
 
