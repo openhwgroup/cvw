@@ -282,14 +282,16 @@ module testbench_busybear();
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
-          scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
-          scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
-          if(CSR.icompare(`"CSR`")) begin \
-            $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
-          end \
-          if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
-            $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
-            `ERROR \
+          if (instrs != 0) begin \
+            scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
+            scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
+            if(CSR.icompare(`"CSR`")) begin \
+              $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
+            end \
+            if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
+              $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+              `ERROR \
+            end \
           end \
         end else begin \
           for(integer j=0; j<totalCSR; j++) begin \
