@@ -28,7 +28,6 @@ add wave -hex /testbench/dut/hart/ifu/ic/InstrPAdrF
 add wave /testbench/dut/hart/ifu/ic/DelayF
 add wave /testbench/dut/hart/ifu/ic/DelaySideF
 add wave /testbench/dut/hart/ifu/ic/DelayD
-add wave /testbench/dut/hart/ifu/ic/DelaySideD
 add wave -hex /testbench/dut/hart/ifu/ic/MisalignedHalfInstrD
 add wave -divider
 
