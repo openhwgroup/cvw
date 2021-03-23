@@ -49,6 +49,7 @@ for(my $i=0; $i<=$#ARGV; $i++) {
         }
 
         while(<FILE>) {
+	    # *** this mode stuff does not work if a section is missing or reordered.
             if ($mode == 0) { # Parse code
 #	    print("Examining $_\n");
 		if (/^\s*(\S{1,16}):\s+(\S+)\s+/) {
