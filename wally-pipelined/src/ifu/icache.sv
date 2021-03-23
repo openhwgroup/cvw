@@ -26,18 +26,25 @@
 `include "wally-config.vh"
 
 module icache(
+  // Basic pipeline stuff
   input  logic              clk, reset,
   input  logic              StallF, StallD,
   input  logic              FlushD,
-  // Fetch
+  // Upper bits of physical address for PC
   input  logic [`XLEN-1:12] UpperPCPF,
+  // Lower 12 bits of virtual PC address, since it's faster this way
   input  logic [11:0]       LowerPCF,
+  // Data read in from the ebu unit
   input  logic [`XLEN-1:0]  InstrInF,
+  // Read requested from the ebu unit
   output logic [`XLEN-1:0]  InstrPAdrF,
   output logic              InstrReadF,
+  // High if the instruction currently in the fetch stage is compressed
   output logic              CompressedF,
+  // High if the icache is requesting a stall
   output logic              ICacheStallF,
-  // Decode
+  // The raw (not decompressed) instruction that was requested
+  // If the next instruction is compressed, the upper 16 bits may be anything
   output logic [31:0]       InstrRawD
 );
 
