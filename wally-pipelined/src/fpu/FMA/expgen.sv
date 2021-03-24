@@ -17,7 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////
 module expgen(xexp, yexp, zexp,
 			   killprod,  sumzero, resultdenorm, normcnt, infinity, 
-			   invalid, overflow, underflow, inf, 
+			   invalid, overflow, underflow, inf, xzero, yzero,expplus1,
 			   nan, de0, xnan, ynan, znan, xdenorm, ydenorm, zdenorm, proddenorm, specialsel, zexpsel,
 			   aligncnt, wexp,
 			   prodof, sumof, sumuf, denorm0, ae);
@@ -43,6 +43,9 @@ module expgen(xexp, yexp, zexp,
 	input     			xdenorm;		// Z is denorm
 	input     			ydenorm;		// Z is denorm
 	input     			zdenorm;		// Z is denorm
+	input     			xzero;		// Z is denorm
+	input     			yzero;		// Z is denorm
+	input				expplus1;
 	input     			proddenorm;		// product is denorm
 	input     			specialsel;  	// Select special result
 	input     			zexpsel;  	// Select special result
@@ -72,7 +75,7 @@ module expgen(xexp, yexp, zexp,
 	//   if exponent is out of bounds 
 
 
-	assign ae = xexp + yexp -1023;
+	assign ae = xzero|yzero ? 0 : xexp + yexp -1023;
 
 	assign prodof = (ae > 2046 && ~ae[12]);
 
@@ -82,7 +85,7 @@ module expgen(xexp, yexp, zexp,
 	// check if a round overflows is shorter than the actual round and
 	// is masked by the bypass mux and two 10 bit adder delays.
 
-	assign aligncnt = zexp -(xexp + yexp -1023) - 1 + ~xdenorm + ~ydenorm - ~zdenorm;// KEP use all of ae
+	assign aligncnt = zexp -ae - 1 + ~xdenorm + ~ydenorm - ~zdenorm;
 	//assign aligncnt = zexp - ae;// KEP use all of ae
 
 	// Select exponent (usually from product except in case of huge addend)
@@ -103,7 +106,7 @@ module expgen(xexp, yexp, zexp,
 	
 	// check for exponent out of bounds after add 
 	
-	assign de = resultdenorm ? 0 : de0;
+	assign de = resultdenorm | sumzero ? 0 : de0;
 	assign sumof = de[12];
 	assign sumuf = de == 0  && ~sumzero && ~resultdenorm;
 
@@ -132,6 +135,6 @@ module expgen(xexp, yexp, zexp,
 	// A mux selects the early result from other FPU blocks or the 
 	// normalized FMAC result.   Special cases are also detected. 
 	
-	assign wexp = specialsel ? specialres[10:0] : de[10:0]; 
+	assign wexp = specialsel ? specialres[10:0] : de[10:0] + expplus1; 
 endmodule
 
