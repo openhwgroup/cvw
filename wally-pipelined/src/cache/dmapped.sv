@@ -5,6 +5,7 @@
 // Modified: 
 //
 // Purpose: An implementation of a direct-mapped cache memory
+// This cache is read-only, so "write"s to the memory are loading new data
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,15 +26,15 @@
 
 `include "wally-config.vh"
 
-module rodirectmapped #(parameter LINESIZE = 256, parameter NUMLINES = 512, parameter WORDSIZE = `XLEN) (
+module rodirectmappedmem #(parameter LINESIZE = 256, parameter NUMLINES = 512, parameter WORDSIZE = `XLEN) (
     // Pipeline stuff
     input  logic clk,
     input  logic reset,
     // If flush is high, invalidate the entire cache
     input  logic flush,
     // Select which address to read (broken for efficiency's sake)
-    input  logic [`XLEN-1:12]   UpperPAdr,
-    input  logic [11:0]         LowerAdr,
+    input  logic [`XLEN-1:12]   ReadUpperPAdr,
+    input  logic [11:0]         ReadLowerAdr,
     // Write new data to the cache
     input  logic                WriteEnable,
     input  logic [LINESIZE-1:0] WriteLine,
@@ -58,8 +59,8 @@ module rodirectmapped #(parameter LINESIZE = 256, parameter NUMLINES = 512, para
     // Swizzle bits to get the offset, set, and tag out of the read and write addresses
     always_comb begin
         // Read address
-        assign WordSelect = LowerAdr[OFFSETWIDTH-1:0];
-        assign ReadPAdr = {UpperPAdr, LowerAdr};
+        assign WordSelect = ReadLowerAdr[OFFSETWIDTH-1:0];
+        assign ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
         assign ReadSet = ReadPAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
         assign ReadTag = ReadPAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
         // Write address
@@ -89,3 +90,4 @@ module rodirectmapped #(parameter LINESIZE = 256, parameter NUMLINES = 512, para
     end
 
 endmodule
+
