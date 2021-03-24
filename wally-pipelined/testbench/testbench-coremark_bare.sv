@@ -74,7 +74,7 @@ module testbench();
       memfilename = tests[0];
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      for(j=26843770; j < 268566528; j = j+1)
+      for(j=268437702; j < 268566528; j = j+1)
         dut.uncore.dtim.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
