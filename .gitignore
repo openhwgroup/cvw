@@ -11,3 +11,9 @@ wlft*
 /imperas-riscv-tests/FunctionRadix_32.addr
 /imperas-riscv-tests/FunctionRadix_64.addr
 /imperas-riscv-tests/ProgramMap.txt
+*.o
+*.d
+testsBP/*/*/*.elf*
+testsBP/*/OBJ/*
+testsBP/*/*.a
+
