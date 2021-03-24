@@ -476,10 +476,11 @@ string tests32i[] = {
     end // always @ (negedge clk)
 
   // track the current function or global label
-  if (DEBUG == 1) begin : functionRadix
-    function_radix function_radix(.reset(reset),
-				  .ProgramAddrMapFile(ProgramAddrMapFile),
-				  .ProgramLabelMapFile(ProgramLabelMapFile));
+  if (DEBUG == 1) begin : FunctionName
+    FunctionName FunctionName(.reset(reset),
+			      .clk(clk),
+			      .ProgramAddrMapFile(ProgramAddrMapFile),
+			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
   // initialize the branch predictor
