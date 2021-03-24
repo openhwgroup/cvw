@@ -61,10 +61,16 @@ def writeVectors(storecmd):
 
   #lines = 
 
+
+  # https://ftp.gnu.org/old-gnu/Manuals/gas-2.9.1/html_chapter/as_7.html
+
   lines = f"""
   j _setup
   csrrs x31, mcause, x0
-  ecall
+  csrrs x30, mepc, x0
+  addi x30, x30, 0x100
+  csrrw x0, mepc, x30
+  mret
 
   _setup:
   li x2, 0x80000004
@@ -73,23 +79,25 @@ def writeVectors(storecmd):
   """
   f.write(lines)
 
-  # User Software Interrupt
-  write(f"""
-    li x3, 0x8000000
-    {storecmd} x2, 0(x3)
-  """, storecmd, True, 0, "u")
+  # # User Software Interrupt
+  # write(f"""
+  #   li x3, 0x8000000
+  #   {storecmd} x2, 0(x3)
+  # """, storecmd, True, 0, "u")
 
-  # Supervisor Software Interrupt
-  write(f"""
-    li x3, 0x8000000
-    {storecmd} x2, 0(x3)
-  """, storecmd, True, 0, "s")
+  # # A supervisor-level software interrupt is triggered on the current hart by writing 1 to its supervisor software interrupt-pending (SSIP) bit in the sip register.
+  # # page 58 of priv spec
+  # # Supervisor Software Interrupt
+  # write(f"""
+  #   li x3, 0x8000000
+  #   {storecmd} x2, 0(x3)
+  # """, storecmd, True, 0, "s")
 
-  # Machine Software Interrupt
-  write(f"""
-    li x3, 0x8000000
-    {storecmd} x2, 0(x3)
-  """, storecmd, True, 3)
+  # # Machine Software Interrupt
+  # write(f"""
+  #   li x3, 0x8000000
+  #   {storecmd} x2, 0(x3)
+  # """, storecmd, True, 3)
 
   # User Timer Interrupt
   #write(f"""
@@ -122,8 +130,9 @@ def writeVectors(storecmd):
   # Not possible in machine mode, because we can access all memory
 
   # Illegal Instruction
+  # . fill 1, 2, 0 outputs all 0s
   write(f"""
-    .data 00000000
+      .fill 1, 2, 0
   """, storecmd, False, 2)
 
   # Breakpoint
@@ -212,7 +221,7 @@ def write(lines, storecmd, interrupt, code, mode = "m"):
 #  'Load page fault': (0, '13'),
 #  'Store/AMO page fault': (0, '15'),
 # }
-author = "dottolia@hmc.edu"
+author = "Domenico Ottolia (dottolia@hmc.edu)"
 xlens = [32, 64]
 numrand = 60;
 
@@ -231,8 +240,8 @@ for xlen in xlens:
     storecmd = "sd"
     wordsize = 8
 
-  imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/privileged/"
-  basename = "WALLY-CAUSE-" + str(xlen)
+  imperaspath = f"""../../../imperas-riscv-tests/riscv-test-suite/rv{xlen}p/"""
+  basename = "WALLY-CAUSE"
   fname = imperaspath + "src/" + basename + ".S"
   refname = imperaspath + "references/" + basename + ".reference_output"
   testnum = 0
