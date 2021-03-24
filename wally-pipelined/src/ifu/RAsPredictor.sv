@@ -42,9 +42,9 @@ module RASPredictor
   logic 		    CounterEn;
   localparam Depth = $clog2(StackSize);
 
-  logic [StackSize-1:0]     PtrD, PtrQ, PtrP1, PtrM1;
-  logic [StackSize-1:0] [`XLEN-1:0] memory;
-  integer 			    index;
+  logic [Depth-1:0]     PtrD, PtrQ, PtrP1, PtrM1;
+  logic [Depth-1:0] [`XLEN-1:0] memory;
+  integer 			index;
   
   assign CounterEn = pop | push | incr;
 
