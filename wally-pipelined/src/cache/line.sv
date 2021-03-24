@@ -44,17 +44,25 @@ module rocacheline #(parameter LINESIZE = 256, parameter TAGSIZE = 32, parameter
     output logic                            DataValid
 );
 
-    logic [LINESIZE-1:0] DataLine;
-    logic [$clog2(LINESIZE/8)-1:0] AlignedWordSelect;
+    localparam integer OFFSETSIZE = $clog2(LINESIZE/8);
+    localparam integer NUMWORDS = LINESIZE/WORDSIZE;
+
+    logic [NUMWORDS-1:0][WORDSIZE-1:0]  DataLinesIn, DataLinesOut;
 
     flopenr #(1)        ValidBitFlop(clk, reset, WriteEnable | flush, ~flush, DataValid);
     flopenr #(TAGSIZE)  TagFlop(clk, reset, WriteEnable, WriteTag, DataTag);
-    flopenr #(LINESIZE) LineFlop(clk, reset, WriteEnable, WriteData, DataLine);
+
+    genvar i;
+    generate
+        for (i=0; i < NUMWORDS; i++) begin
+            assign DataLinesIn[i] = WriteData[NUMWORDS*i+WORDSIZE-1:NUMWORDS*i];
+            flopenr #(LINESIZE) LineFlop(clk, reset, WriteEnable, DataLinesIn[i], DataLinesOut[i]);
+        end
+    endgenerate
 
 
     always_comb begin
-        assign AlignedWordSelect = {WordSelect[$clog2(LINESIZE/8)-1:$clog2(WORDSIZE)], {$clog2(WORDSIZE){'b0}}};
-        assign DataWord = DataLine[WORDSIZE+AlignedWordSelect-1:AlignedWordSelect];
+        assign DataWord = DataLinesOut[WordSelect[OFFSETSIZE-1:$clog2(WORDSIZE)]];
     end
 
 endmodule
