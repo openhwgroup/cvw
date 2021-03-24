@@ -42,7 +42,8 @@ module BTBPredictor
    input logic 		    UpdateEN,
    input logic [`XLEN-1:0]  UpdatePC,
    input logic [`XLEN-1:0]  UpdateTarget,
-   input logic [3:0] 	    UpdateInstrClass
+   input logic [3:0] 	    UpdateInstrClass,
+   input logic 		    UpdateInvalid
    );
 
   localparam TotalDepth = 2 ** Depth;
@@ -71,7 +72,7 @@ module BTBPredictor
       ValidBits <= #1 {TotalDepth{1'b0}};
     end else 
     if (UpdateENQ) begin
-      ValidBits[UpdatePCIndexQ] <= #1 1'b1;
+      ValidBits[UpdatePCIndexQ] <= #1 ~ UpdateInvalid;
     end
   end
   assign Valid = ValidBits[LookUpPCIndexQ];

@@ -42,22 +42,24 @@ module gsharePredictor
   
    );
 
-  logic [k-1:0] 	   GHRF, GHRD, GHRE;
+  logic [k-1:0] 	   GHRF, GHRD, GHRE, GHRENext;
   //logic [k-1:0] 	   LookUpPCIndexD, LookUpPCIndexE;
   logic [k-1:0] 	   LookUpPCIndex, UpdatePCIndex;
   logic [1:0] 		   PredictionMemory;
   logic 		   DoForwarding, DoForwardingF;
   logic [1:0] 		   UpdatePredictionF;
+
+  assign GHRENext = {PCSrcE, GHRE[k-1:1]};
   
   flopenr #(k) GlobalHistoryRegister(.clk(clk),
 				     .reset(reset),
 				     .en(UpdateEN),
-				     .d({PCSrcE, GHRF[k-1:1] }),
+				     .d(GHRENext),
 				     .q(GHRF));
 
 
   // for gshare xor the PC with the GHR 
-  assign UpdatePCIndex = GHRE ^ UpdatePC[k:1];
+  assign UpdatePCIndex = GHRENext ^ UpdatePC[k:1];
   assign LookUpPCIndex = GHRF ^ LookUpPC[k:1];  
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // GHR referes to the address that the past k branches points to in the prediction stage 

@@ -61,6 +61,8 @@ module bpred
   logic 		    FallThroughWrongE;
   logic 		    PredictionDirWrongE;
   logic 		    PredictionPCWrongE;
+  logic 		    PredictionInstrClassWrongE;
+  
   logic [`XLEN-1:0] 	    CorrectPCE;
 
 
@@ -119,6 +121,7 @@ module bpred
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
+  // *** getting to many false positivies from the BTB, we need a partial TAG to reduce this.
   BTBPredictor TargetPredictor(.clk(clk),
 			       .reset(reset),
 			       .*, // Stalls and flushes
@@ -127,9 +130,10 @@ module bpred
 			       .InstrClass(BPInstrClassF),
 			       .Valid(BTBValidF),
 			       // update
-			       .UpdateEN((InstrClassE[2] | InstrClassE[1] | InstrClassE[0]) & ~StallE),
+			       .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
 			       .UpdatePC(PCE),
 			       .UpdateTarget(PCTargetE),
+			       .UpdateInvalid(PredictionInstrClassWrongE),
 			       .UpdateInstrClass(InstrClassE));
 
   // need to forward when updating to the same address as reading.
@@ -140,9 +144,9 @@ module bpred
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
 			    .reset(reset),
-			    .pop(BPInstrClassF[3]),
+			    .pop(BPInstrClassF[3] & ~StallF),
 			    .popPC(RASPCF),
-			    .push(InstrClassE[3]),
+			    .push(InstrClassE[3] & ~StallE),
 			    .incr(1'b0),
 			    .pushPC(PCLinkE));
 
@@ -189,7 +193,8 @@ module bpred
   assign FallThroughWrongE = PCLinkE != PCD;
   assign PredictionDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
   assign PredictionPCWrongE = PCSrcE ? TargetWrongE : FallThroughWrongE;
-  assign BPPredWrongE = (PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE);
+  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;  
+  assign BPPredWrongE = ((PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE)) | PredictionInstrClassWrongE;
 
   // Update predictors
 
