@@ -33,6 +33,7 @@ module BTBPredictor
     )
   (input  logic clk,
    input logic 		    reset,
+   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
    output logic [3:0] 	    InstrClass,
@@ -58,7 +59,7 @@ module BTBPredictor
 
   flopenr #(Depth) UpdatePCIndexReg(.clk(clk),
 				    .reset(reset),
-				    .en(1'b1),
+				    .en(~StallE),
 				    .d(UpdatePCIndex),
 				    .q(UpdatePCIndexQ));
   
@@ -66,18 +67,33 @@ module BTBPredictor
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
-    end else if (UpdateEN) begin
+    end else 
+    if (UpdateEN) begin
       ValidBits[UpdatePCIndexQ] <= #1 1'b1;
     end
   end
+  assign Valid = ValidBits[LookUpPCIndexQ];
+
+/* -----\/----- EXCLUDED -----\/-----
+
+  regfile2p1r1w #(10, 1) validMem(.clk(clk),
+				  .reset(reset),
+				  .RA1(LookUpPCIndexQ),
+				  .RD1(Valid),
+				  .REN1(1'b1),
+				  .WA1(UpdatePCIndexQ),
+				  .WD1(1'b1),
+				  .WEN1(UpdateEN));
+ -----/\----- EXCLUDED -----/\----- */
+  
 
   flopenr #(Depth) LookupPCIndexReg(.clk(clk),
 				    .reset(reset),
-				    .en(1'b1),
+				    .en(~StallF),
 				    .d(LookUpPCIndex),
 				    .q(LookUpPCIndexQ));
 
-  assign Valid = ValidBits[LookUpPCIndexQ];
+
 
   // the BTB contains the target address.
   // Another optimization may be using a PC relative address.
@@ -87,7 +103,7 @@ module BTBPredictor
 				      .reset(reset),
 				      .RA1(LookUpPCIndex),
 				      .RD1({{InstrClass, TargetPC}}),
-				      .REN1(1'b1),
+				      .REN1(~StallF),
 				      .WA1(UpdatePCIndex),
 				      .WD1({UpdateInstrClass, UpdateTarget}),
 				      .WEN1(UpdateEN),

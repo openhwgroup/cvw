@@ -121,6 +121,7 @@ module bpred
 
   BTBPredictor TargetPredictor(.clk(clk),
 			       .reset(reset),
+			       .*, // Stalls and flushes
 			       .LookUpPC(PCNextF),
 			       .TargetPC(BTBPredPCF),
 			       .InstrClass(BPInstrClassF),
