@@ -40,7 +40,7 @@ module testbench();
   logic [`XLEN-1:0] meminit;
 
   string tests[] = '{                 
-    "privileged/WALLY-CAUSE-64", "0"
+    "rv64p/WALLY-CAUSE", "0"
   };
 
   logic [`AHBW-1:0] HRDATAEXT;
