@@ -150,14 +150,15 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Handle cache faults
 
     localparam integer WORDSPERLINE = LINESIZE/`XLEN;
+    localparam integer LOGWPL = $clog2(WORDSPERLINE);
     localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
 
-    logic FetchState;
-    logic [$clog2(WORDSPERLINE)-1:0] FetchWordNum;
+    logic FetchState, EndFetchState, BeginFetchState;
+    logic [LOGWPL:0] FetchWordNum, NextFetchWordNum;
     logic [`XLEN-1:0] LineAlignedPCPF;
 
-    flopr #(1) FetchStateFlop(clk, reset, 1'b0, FetchState);
-    flopr #($clog2(WORDSPERLINE)) FetchWordNumFlop(clk, reset, {$clog2(WORDSPERLINE){1'b0}}, FetchWordNum);
+    flopr #(1) FetchStateFlop(clk, reset, BeginFetchState | (FetchState & ~EndFetchState), FetchState);
+    flopr #(LOGWPL+1) FetchWordNumFlop(clk, reset, NextFetchWordNum, FetchWordNum);
 
     genvar i;
     generate
@@ -166,10 +167,23 @@ module icachecontroller #(parameter LINESIZE = 256) (
         end
     endgenerate
 
+    // Machinery to request the correct addresses from main memory
     always_comb begin
         assign InstrReadF = FetchState;
         assign LineAlignedPCPF = {UpperPCPF, LowerPCF[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
-        assign InstrPAdrF = LineAlignedPCPF + i*`XLEN;
+        assign InstrPAdrF = LineAlignedPCPF + FetchWordNum*`XLEN;
+        assign NextFetchWordNum = FetchState ? FetchWordNum+1 : {LOGWPL+1{1'b0}}; 
+    end
+
+    // Write to cache memory when we have the line here
+    always_comb begin
+        assign BeginFetchState = 1'b0;
+        assign EndFetchState = FetchWordNum == {1'b1, {LOGWPL{1'b0}}};
+    end
+
+    // Stall the pipeline while loading a new line from memory
+    always_comb begin
+        assign ICacheStallF = FetchState | ~ICacheMemReadValid;
     end
 endmodule
 
