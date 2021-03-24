@@ -33,6 +33,7 @@ module csri #(parameter
   SIE = 12'h104,
   SIP = 12'h144) (
     input  logic             clk, reset, 
+    input  logic             StallW,
     input  logic             CSRMWriteM, CSRSWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic             ExtIntM, TimerIntM, SwIntM,
@@ -59,10 +60,10 @@ module csri #(parameter
    end
 
   // Interrupt Write Enables
-  assign WriteMIPM = CSRMWriteM && (CSRAdrM == MIP);
-  assign WriteMIEM = CSRMWriteM && (CSRAdrM == MIE);
-  assign WriteSIPM = CSRSWriteM && (CSRAdrM == SIP);
-  assign WriteSIEM = CSRSWriteM && (CSRAdrM == SIE);
+  assign WriteMIPM = CSRMWriteM && (CSRAdrM == MIP) && ~StallW;
+  assign WriteMIEM = CSRMWriteM && (CSRAdrM == MIE) && ~StallW;
+  assign WriteSIPM = CSRSWriteM && (CSRAdrM == SIP) && ~StallW;
+  assign WriteSIEM = CSRSWriteM && (CSRAdrM == SIE) && ~StallW;
 
   // Interrupt Pending and Enable Registers
   // MEIP, MTIP, MSIP are read-only

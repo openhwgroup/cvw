@@ -48,7 +48,7 @@ module privileged (
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [2:0]       FRM_REGW,
-  input  logic             FlushD, FlushE, FlushM, StallD, StallW
+  input  logic             FlushD, FlushE, FlushM, StallD, StallE, StallM, StallW
 );
 
   logic [1:0] NextPrivilegeModeM;
