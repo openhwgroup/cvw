@@ -48,6 +48,153 @@ module icache(
   output logic [31:0]       InstrRawD
 );
 
+    // Configuration parameters
+    // TODO Move these to a config file
+    localparam integer ICACHELINESIZE = 256;
+    localparam integer ICACHENUMLINES = 512;
+
+    // Input signals to cache memory
+    logic                       FlushMem;
+    logic [`XLEN-1:12]          ICacheMemReadUpperPAdr;
+    logic [11:0]                ICacheMemReadLowerAdr;
+    logic                       ICacheMemWriteEnable;
+    logic [ICACHELINESIZE-1:0]  ICacheMemWriteData;
+    logic [`XLEN-1:0]           ICacheMemWritePAdr;
+    // Output signals from cache memory
+    logic [`XLEN-1:0]   ICacheMemReadData;
+    logic               ICacheMemReadValid;
+
+    rodirectmappedmem #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES)) cachemem(
+        .*,
+        .flush(FlushMem),
+        .ReadUpperPAdr(ICacheMemReadUpperPAdr),
+        .ReadLowerAdr(ICacheMemReadLowerAdr),
+        .WriteEnable(ICacheMemWriteEnable),
+        .WriteLine(ICacheMemWriteData),
+        .WritePAdr(ICacheMemWritePAdr),
+        .DataWord(ICacheMemReadData),
+        .DataValid(ICacheMemReadValid)
+    );
+
+    icachecontroller #(.LINESIZE(ICACHELINESIZE)) controller(.*);
+endmodule
+
+module icachecontroller #(parameter LINESIZE = 256) (
+    // Inputs from pipeline
+    input  logic    clk, reset,
+    input  logic    StallF, StallD,
+    input  logic    FlushD,
+
+    // Input the address to read
+    // The upper bits of the physical pc
+    input  logic [`XLEN-1:12]   UpperPCPF,
+    // The lower bits of the virtual pc
+    input  logic [11:0]         LowerPCF,
+
+    // Signals to/from cache memory
+    // The read coming out of it
+    input  logic [`XLEN-1:0]    ICacheMemReadData,
+    input  logic                ICacheMemReadValid,
+    // The address at which we want to search the cache memory
+    output logic [`XLEN-1:12]   ICacheMemReadUpperPAdr,
+    output logic [11:0]         ICacheMemReadLowerAdr,
+    // Load data into the cache
+    output logic                ICacheMemWriteEnable,
+    output logic [LINESIZE-1:0] ICacheMemWriteData,
+    output logic [`XLEN-1:0]    ICacheMemWritePAdr,
+
+    // Outputs to rest of ifu
+    // High if the instruction in the fetch stage is compressed
+    output logic CompressedF,
+    // The instruction that was requested
+    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
+    output logic [31:0]     InstrRawD,
+
+    // Outputs to pipeline control stuff
+    output logic ICacheStallF,
+
+    // Signals to/from ahblite interface
+    // A read containing the requested data
+    input  logic [`XLEN-1:0] InstrInF,
+    // The read we request from main memory
+    output logic [`XLEN-1:0] InstrPAdrF,
+    output logic             InstrReadF
+);
+
+    logic [31:0]    AlignedInstrRawF, AlignedInstrRawD;
+    logic           FlushDLastCycle;
+    const logic [31:0] NOP = 32'h13;
+
+    // TODO allow compressed instructions
+    // (start with noncompressed only to get something working)
+    assign CompressedF = 1'b0;
+
+    // Handle happy path (data in cache, reads aligned)
+    always_comb begin
+        assign ICacheMemReadLowerAdr = LowerPCF;
+        assign ICacheMemReadUpperPAdr = UpperPCPF;
+    end
+
+    generate
+        if (`XLEN == 32) begin
+            assign AlignedInstrRawF = ICacheMemReadData;
+        end else begin
+            assign AlignedInstrRawF = LowerPCF[2] ? ICacheMemReadData[63:32] : ICacheMemReadData[31:0];
+        end
+    endgenerate
+
+    flopenr #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, AlignedInstrRawF, AlignedInstrRawD);
+    flopr   #(1)  FlushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
+    mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, FlushDLastCycle, InstrRawD);
+
+    // Handle cache faults
+
+    localparam integer WORDSPERLINE = LINESIZE/`XLEN;
+    localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
+
+    logic FetchState;
+    logic [$clog2(WORDSPERLINE)-1:0] FetchWordNum;
+    logic [`XLEN-1:0] LineAlignedPCPF;
+
+    flopr #(1) FetchStateFlop(clk, reset, 1'b0, FetchState);
+    flopr #($clog2(WORDSPERLINE)) FetchWordNumFlop(clk, reset, {$clog2(WORDSPERLINE){1'b0}}, FetchWordNum);
+
+    genvar i;
+    generate
+        for (i=0; i < WORDSPERLINE; i++) begin
+            flopenr #(32) flop(clk, reset, FetchState & (i == FetchWordNum), InstrInF, ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]);
+        end
+    endgenerate
+
+    always_comb begin
+        assign InstrReadF = FetchState;
+        assign LineAlignedPCPF = {UpperPCPF, LowerPCF[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
+        assign InstrPAdrF = LineAlignedPCPF + i*`XLEN;
+    end
+endmodule
+
+module oldicache(
+  // Basic pipeline stuff
+  input  logic              clk, reset,
+  input  logic              StallF, StallD,
+  input  logic              FlushD,
+  // Upper bits of physical address for PC
+  input  logic [`XLEN-1:12] UpperPCPF,
+  // Lower 12 bits of virtual PC address, since it's faster this way
+  input  logic [11:0]       LowerPCF,
+  // Data read in from the ebu unit
+  input  logic [`XLEN-1:0]  InstrInF,
+  // Read requested from the ebu unit
+  output logic [`XLEN-1:0]  InstrPAdrF,
+  output logic              InstrReadF,
+  // High if the instruction currently in the fetch stage is compressed
+  output logic              CompressedF,
+  // High if the icache is requesting a stall
+  output logic              ICacheStallF,
+  // The raw (not decompressed) instruction that was requested
+  // If the next instruction is compressed, the upper 16 bits may be anything
+  output logic [31:0]       InstrRawD
+);
     logic             DelayF, DelaySideF, FlushDLastCyclen, DelayD;
     logic  [1:0]      InstrDMuxChoice;
     logic [15:0]      MisalignedHalfInstrF, MisalignedHalfInstrD;
