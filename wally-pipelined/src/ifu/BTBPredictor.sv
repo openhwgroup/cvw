@@ -48,6 +48,8 @@ module BTBPredictor
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
   logic [Depth-1:0] 	    LookUpPCIndex, UpdatePCIndex, LookUpPCIndexQ, UpdatePCIndexQ;
+  logic 		    UpdateENQ;
+  
 
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -68,7 +70,7 @@ module BTBPredictor
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
     end else 
-    if (UpdateEN) begin
+    if (UpdateENQ) begin
       ValidBits[UpdatePCIndexQ] <= #1 1'b1;
     end
   end
@@ -86,6 +88,12 @@ module BTBPredictor
 				  .WEN1(UpdateEN));
  -----/\----- EXCLUDED -----/\----- */
   
+  flopenr #() UpdateENReg(.clk(clk),
+			  .reset(reset),
+			  .en(~StallF),
+			  .d(UpdateEN),
+			  .q(UpdateENQ));
+
 
   flopenr #(Depth) LookupPCIndexReg(.clk(clk),
 				    .reset(reset),
