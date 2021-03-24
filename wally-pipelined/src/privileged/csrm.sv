@@ -62,6 +62,7 @@ module csrm #(parameter
   DSCRATCH0 = 12'h7B2,
   DSCRATCH1 = 12'h7B3) (
     input  logic             clk, reset, 
+    input  logic             StallW,
     input  logic             CSRMWriteM, MTrapM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
@@ -93,19 +94,19 @@ module csrm #(parameter
   assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, MISAbits};
 
   // Write machine Mode CSRs 
-  assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS);
-  assign WriteMTVECM = CSRMWriteM && (CSRAdrM == MTVEC);
-  assign WriteMEDELEGM = CSRMWriteM && (CSRAdrM == MEDELEG);
-  assign WriteMIDELEGM = CSRMWriteM && (CSRAdrM == MIDELEG);
-  assign WriteMSCRATCHM = CSRMWriteM && (CSRAdrM == MSCRATCH);
-  assign WriteMEPCM = MTrapM | (CSRMWriteM && (CSRAdrM == MEPC));
-  assign WriteMCAUSEM = MTrapM | (CSRMWriteM && (CSRAdrM == MCAUSE));
-  assign WriteMTVALM = MTrapM | (CSRMWriteM && (CSRAdrM == MTVAL));
-  assign WritePMPCFG0M = (CSRMWriteM && (CSRAdrM == PMPCFG0));
-  assign WritePMPCFG2M = (CSRMWriteM && (CSRAdrM == PMPCFG2));
-  assign WritePMPADDR0M = (CSRMWriteM && (CSRAdrM == PMPADDR0));
-  assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN);
-  assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
+  assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS) && ~StallW;
+  assign WriteMTVECM = CSRMWriteM && (CSRAdrM == MTVEC) && ~StallW;
+  assign WriteMEDELEGM = CSRMWriteM && (CSRAdrM == MEDELEG) && ~StallW;
+  assign WriteMIDELEGM = CSRMWriteM && (CSRAdrM == MIDELEG) && ~StallW;
+  assign WriteMSCRATCHM = CSRMWriteM && (CSRAdrM == MSCRATCH) && ~StallW;
+  assign WriteMEPCM = MTrapM | (CSRMWriteM && (CSRAdrM == MEPC)) && ~StallW;
+  assign WriteMCAUSEM = MTrapM | (CSRMWriteM && (CSRAdrM == MCAUSE)) && ~StallW;
+  assign WriteMTVALM = MTrapM | (CSRMWriteM && (CSRAdrM == MTVAL)) && ~StallW;
+  assign WritePMPCFG0M = (CSRMWriteM && (CSRAdrM == PMPCFG0)) && ~StallW;
+  assign WritePMPCFG2M = (CSRMWriteM && (CSRAdrM == PMPCFG2)) && ~StallW;
+  assign WritePMPADDR0M = (CSRMWriteM && (CSRAdrM == PMPADDR0)) && ~StallW;
+  assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN) && ~StallW;
+  assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT) && ~StallW;
 
   // CSRs
   flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0

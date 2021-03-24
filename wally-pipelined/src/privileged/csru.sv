@@ -32,6 +32,7 @@ module csru #(parameter
   FRM = 12'h002,
   FCSR = 12'h003) (
     input  logic             clk, reset, 
+    input  logic             StallW,
     input  logic             CSRUWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] CSRWriteValM,
@@ -50,9 +51,9 @@ module csru #(parameter
       logic [4:0] NextFFLAGSM;
         
       // Write enables
-      assign WriteFCSRM = CSRUWriteM && (CSRAdrM == FCSR);
-      assign WriteFFLAGSM = CSRUWriteM && (CSRAdrM == FFLAGS) | WriteFCSRM ;
-      assign WriteFRMM = CSRUWriteM && (CSRAdrM == FRM) | WriteFCSRM;
+      assign WriteFCSRM = CSRUWriteM && (CSRAdrM == FCSR)  && ~StallW;
+      assign WriteFFLAGSM = (CSRUWriteM && (CSRAdrM == FFLAGS) | WriteFCSRM)  && ~StallW;
+      assign WriteFRMM = (CSRUWriteM && (CSRAdrM == FRM) | WriteFCSRM)  && ~StallW;
     
       // Write Values
       assign NextFRMM = WriteFCSRM ? CSRWriteValM[7:5] : CSRWriteValM[2:0];

@@ -7,7 +7,13 @@ simple_csrbr_test:
 	# step 1 enable the performance counters
 	# by default the hardware enables all performance counters
 	# however we will eventually want to manually enable incase
-	# some other code disables thems
+	# some other code disables them
+
+	# br count is counter 5
+	# br mp count is counter 4
+	li t0, 0x30
+	
+	csrrc x0, 0x320, t0  # clear bits 4 and 5 of inhibit register.
 
 	# step 2 read performance counters into general purpose registers
 
@@ -35,17 +41,20 @@ loop_done:
 	sub t3, t5, t3 # this is the number of branch mispredictions committed.
 
 	# now check if the branch count equals 100 and if the branch
-	bne t4, t2, fail  
-	# *** come back to t3
-
+	bne t4, t2, fail
+	li  t5, 3
+	bne t3, t5, fail
 	
 pass:
 	li a0, 0
+done:
+	li t0, 0x30
+	csrrs x0, 0x320, t0  # set bits 4 and 5
 	ret
 
 fail:
 	li a0, -1
-	ret
+	j done
 
 .data 
 sample_data:
