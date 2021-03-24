@@ -62,7 +62,7 @@ module rocacheline #(parameter LINESIZE = 256, parameter TAGSIZE = 32, parameter
 
 
     always_comb begin
-        assign DataWord = DataLinesOut[WordSelect[OFFSETSIZE-1:$clog2(WORDSIZE)]];
+        assign DataWord = DataLinesOut[WordSelect[OFFSETSIZE-1:$clog2(WORDSIZE/8)]];
     end
 
 endmodule
