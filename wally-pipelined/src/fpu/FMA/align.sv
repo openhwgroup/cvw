@@ -56,7 +56,7 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 	// addend on right shifts.  Handle special cases of shifting
 	// by too much.
 
-	always @(z2 or aligncnt  or zzero or xzero or yzero or zdenorm or proddenorm)
+	always @(aligncnt or zman or zdenorm)
 		begin
 
 		// Default to clearing sticky bits 
@@ -108,9 +108,9 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 
 		// use some behavioral code to find sticky bit.  This is really
 		// done by hardware in the shifter.
-		if (aligncnt < 0)
-			for (i=0; i<-aligncnt-52;  i = i+1)
-				bs = bs || z2[i];
+		//if (aligncnt < 0)
+		//	for (i=0; i<-aligncnt-52;  i = i+1)
+		//		bs = bs || z2[i];
 		end 
 	end
 
