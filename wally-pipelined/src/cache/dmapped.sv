@@ -43,13 +43,13 @@ module rodirectmapped #(parameter LINESIZE = 256, parameter NUMLINES = 512, para
     output logic                DataValid
 );
 
-    integer TAGWIDTH    = `XLEN-$clog2(NUMLINES)-$clog2(LINESIZE);
-    integer SETWIDTH    = $clog2(NUMLINES);
-    integer OFFSETWIDTH = $clog2(LINESIZE/8);
+    localparam integer SETWIDTH    = $clog2(NUMLINES);
+    localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
+    localparam integer TAGWIDTH    = `XLEN-SETWIDTH-OFFSETWIDTH;
 
     logic [NUMLINES-1:0][WORDSIZE-1:0]  LineOutputs;
     logic [NUMLINES-1:0]                ValidOutputs;
-    logic [NUMLINES-1:0][TAGSIZE-1:0]   TagOutputs;
+    logic [NUMLINES-1:0][TAGWIDTH-1:0]  TagOutputs;
     logic [OFFSETWIDTH-1:0]             WordSelect;
     logic [`XLEN-1:0]                   ReadPAdr;
     logic [SETWIDTH-1:0]                ReadSet, WriteSet;
@@ -70,14 +70,14 @@ module rodirectmapped #(parameter LINESIZE = 256, parameter NUMLINES = 512, para
     genvar i;
     generate
         for (i=0; i < NUMLINES; i++) begin
-            rocacheline #(LINESIZE, TAGSIZE, WORDSIZE) lines[NUMLINES](
+            rocacheline #(LINESIZE, TAGWIDTH, WORDSIZE) lines (
                 .*,
                 .WriteEnable(WriteEnable & (WriteSet == i)),
                 .WriteData(WriteLine),
                 .WriteTag(WriteTag),
                 .DataWord(LineOutputs[i]),
                 .DataTag(TagOutputs[i]),
-                .DataValid(ValidOutputs[i]),
+                .DataValid(ValidOutputs[i])
             );
         end
     endgenerate
