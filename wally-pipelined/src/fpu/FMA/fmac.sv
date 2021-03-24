@@ -93,10 +93,13 @@ module fmac(x, y, z, rn, rz, rp, rm,
 	logic					ynan;
 	logic					znan;
 	logic					specialsel;
+	logic					expplus1;
 	logic					nan;
 	logic					sumuf;
 	logic					psign;
+	logic					sticky;
 	logic			[8:0]		sumshift;
+	logic					sumshiftzero;
 	logic			[12:0]		de0;
 
 

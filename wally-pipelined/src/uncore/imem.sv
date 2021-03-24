@@ -54,17 +54,17 @@ module imem (
   generate 
     if (`XLEN==32) begin
       assign InstrF = AdrF[1] ? {rd2[15:0], rd[31:16]} : rd;
-      assign InstrAccessFaultF = ~&(({AdrF,1'b0} ~^ `TIMBASE) | `TIMRANGE);
+      // First, AdrF needs to get its last bit appended back onto it
+      // Then not-XORing it with TIMBASE checks if it matches TIMBASE exactly
+      // Then ORing it with TIMRANGE introduces some leeway into the previous check, by allowing the lower bits to be either high or low
+
+      assign InstrAccessFaultF = (~&(({AdrF,1'b0} ~^ `TIMBASE) | `TIMRANGE)) & (~&(({AdrF,1'b0} ~^ `BOOTTIMBASE) | `BOOTTIMRANGE));
+
     end else begin
       assign InstrF = AdrF[2] ? (AdrF[1] ? {rd2[15:0], rd[63:48]} : rd[63:32])
                           : (AdrF[1] ? rd[47:16] : rd[31:0]);
-      `ifndef BUSYBEAR
-      assign InstrAccessFaultF = |AdrF[`XLEN-1:32] | ~&({AdrF[31:1],1'b0} ~^ `TIMBASE | `TIMRANGE);
-      `else
-      // *** this is just a hack since the logic above seems scary ***
-      // TODO: this should be removed when InstrAccessFaultF works with bootram also
-      assign InstrAccessFaultF = 0; //busybear: for now, i know we're not doing this
-      `endif
+      // 
+      assign InstrAccessFaultF = (|AdrF[`XLEN-1:32] | ~&({AdrF[31:1],1'b0} ~^ `TIMBASE | `TIMRANGE)) & (|AdrF[`XLEN-1:32] | ~&({AdrF[31:1],1'b0} ~^ `BOOTTIMBASE | `BOOTTIMRANGE));
     end
   endgenerate
 endmodule
