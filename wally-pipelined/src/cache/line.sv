@@ -55,8 +55,8 @@ module rocacheline #(parameter LINESIZE = 256, parameter TAGSIZE = 32, parameter
     genvar i;
     generate
         for (i=0; i < NUMWORDS; i++) begin
-            assign DataLinesIn[i] = WriteData[NUMWORDS*i+WORDSIZE-1:NUMWORDS*i];
-            flopenr #(LINESIZE) LineFlop(clk, reset, WriteEnable, DataLinesIn[i], DataLinesOut[i]);
+            assign DataLinesIn[i] = WriteData[WORDSIZE*(i+1)-1:WORDSIZE*i];
+            flopenr #(WORDSIZE) LineFlop(clk, reset, WriteEnable, DataLinesIn[i], DataLinesOut[i]);
         end
     endgenerate
 

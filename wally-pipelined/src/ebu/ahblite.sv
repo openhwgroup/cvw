@@ -41,6 +41,7 @@ module ahblite (
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
   output logic [`XLEN-1:0] InstrRData,
+  output logic             InstrAckF,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] MemPAdrM,
   input  logic             MemReadM, MemWriteM,
@@ -171,6 +172,7 @@ module ahblite (
   assign #1 MMUReady = (NextBusState == MMUIDLE);
 
   assign InstrRData = HRDATA;
+  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
   assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||

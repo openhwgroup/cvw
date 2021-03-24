@@ -112,7 +112,7 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] InstrRData;
   logic             InstrReadF;
   logic             DataStall, InstrStall;
-  logic             InstrAckD, MemAckW;
+  logic             InstrAckF, MemAckW;
 
   logic             BPPredWrongE, BPPredWrongM;
   logic [3:0]       InstrClassM;
