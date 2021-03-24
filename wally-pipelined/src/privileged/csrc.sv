@@ -29,7 +29,8 @@
 
 module csrc ( 
     input  logic             clk, reset,
-    input  logic             InstrValidW, LoadStallD, CSRMWriteM, BPPredWrongE,
+    input  logic             InstrValidW, LoadStallD, CSRMWriteM, BPPredWrongM,
+    input  logic [3:0]      InstrClassM,
     input  logic [11:0]      CSRAdrM,
     input  logic [1:0]       PrivilegeModeW,
     input  logic [`XLEN-1:0] CSRWriteValM,
@@ -62,8 +63,9 @@ module csrc (
     assign MCOUNTEN[1] = 1'b0;
     assign MCOUNTEN[2] = InstrValidW;
     assign MCOUNTEN[3] = LoadStallD;
-    assign MCOUNTEN[4] = BPPredWrongE;
-    assign MCOUNTEN[`COUNTERS:5] = 0; 
+    assign MCOUNTEN[4] = BPPredWrongM;
+    assign MCOUNTEN[5] = InstrClassM[0];
+    assign MCOUNTEN[`COUNTERS:6] = 0; 
 
     genvar j;       
     generate

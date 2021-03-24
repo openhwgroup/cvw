@@ -13,13 +13,14 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module round(v, rz, rn, rp, rm, wsign,
+module round(v, sticky, rz, rn, rp, rm, wsign,
 			  invalid, overflow, underflow, inf, nan, xnan, ynan, znan, 
 			  xman, yman, zman,
-			  wman, infinity, specialsel);
+			  wman, infinity, specialsel,expplus1);
 /////////////////////////////////////////////////////////////////////////////
 
 	input		[53:0]		v;		// normalized sum, R, S bits
+	input				sticky;		//sticky bit
 	input				rz;		// Round toward zero
 	input				rn;		// Round toward	nearest
 	input				rp;		// Round toward	plus infinity
@@ -40,6 +41,7 @@ module round(v, rz, rn, rp, rm, wsign,
 	//output				postnormalize; 	// Right shift 1 for post-rounding norm
 	output				infinity;    	// Generate infinity on overflow
 	output				specialsel;  	// Select special result
+	output				expplus1;
 
 	// Internal nodes
 
@@ -52,10 +54,20 @@ module round(v, rz, rn, rp, rm, wsign,
 	// Compute if round should occur.  This equation is derived from
 	// the rounding tables.
 
-
-	assign plus1 = rn && ((v[1] && v[0]) || (v[2] && (v[1]))) ||
-					 rp && ~wsign && (v[1] || v[0]) ||
-					 rm && wsign && (v[1] || v[0]);
+	// round to infinity - plus1 if positive
+	// round to -infinity - plus1 if negitive
+	// round to zero - do nothing
+	// round to nearest even
+	//	{v[1], v[0], sticky}
+	//	0xx - do nothing
+	//	100 - tie - plus1 if v[2] = 1
+	//	101/110/111 - plus1
+	assign plus1 = (rn & v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2]))) |
+		       (rp & ~wsign) |
+		       (rm & wsign);
+	//assign plus1 = rn && ((v[1] && v[0]) || (v[2] && (v[1]))) ||
+	//				 rp && ~wsign && (v[1] || v[0]) ||
+	//				 rm && wsign && (v[1] || v[0]);
 
 	// Compute rounded result 
     assign v1 = v[53:2] + 1;
@@ -101,7 +113,7 @@ module round(v, rz, rn, rp, rm, wsign,
 	// If the sum is zero and we round up,  there is a special case in
 	// which we produce a massive loss of significance and trap to software.
 	// It is handled in the exception unit. 
-
+	assign expplus1 = v1[52] & ~specialsel & plus1;
 	assign wman = specialsel ? specialres : (plus1 ? v1[51:0] : v[53:2]);
 	
 endmodule

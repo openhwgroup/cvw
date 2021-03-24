@@ -4,7 +4,7 @@
 # regression-wally.py
 # David_Harris@Hmc.edu 25 January 2021
 #
-# Run a regression with multiple configurations and report any errors.
+# Run a regression with multiple configurations in parallel and exit with non-zero status if an error happened
 #
 ##################################
 
@@ -24,11 +24,13 @@ def test_config(config, print_res=True):
   """Run the given config, and return 0 if it suceeds and 1 if it fails"""
   logname = "wally_"+config+".log"
   if config == "busybear":
+    # Handle busybear separately
     cmd = "echo 'quit' | vsim -do wally-busybear.do -c >" + logname
     os.system(cmd)
     # check for success.  grep returns 0 if found, 1 if not found
     passed = search_log_for_text("# loaded 200000 instructions", logname)
   else:
+    # Any other configuration loads that name from the config folder and runs vsim
     cmd = "vsim -c >" + logname +" <<!\ndo wally-pipelined-batch.do ../config/" + config + " " + config + "\n!\n"
     print(cmd)
     os.system(cmd)
@@ -41,7 +43,7 @@ def test_config(config, print_res=True):
     if print_res:print(logname+": failures detected")
     return 1
 
-
+# Run the tests and count the failures
 pool = multiprocessing.Pool(min(len(confignames), 12))
 fail = sum(pool.map(test_config, confignames))
 
