@@ -36,6 +36,7 @@ module icache(
   input  logic [11:0]       LowerPCF,
   // Data read in from the ebu unit
   input  logic [`XLEN-1:0]  InstrInF,
+  input  logic              InstrAckF,
   // Read requested from the ebu unit
   output logic [`XLEN-1:0]  InstrPAdrF,
   output logic              InstrReadF,
@@ -77,6 +78,8 @@ module icache(
     );
 
     icachecontroller #(.LINESIZE(ICACHELINESIZE)) controller(.*);
+
+    assign FlushMem = 1'b0;
 endmodule
 
 module icachecontroller #(parameter LINESIZE = 256) (
@@ -116,6 +119,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Signals to/from ahblite interface
     // A read containing the requested data
     input  logic [`XLEN-1:0] InstrInF,
+    input  logic             InstrAckF,
     // The read we request from main memory
     output logic [`XLEN-1:0] InstrPAdrF,
     output logic             InstrReadF
@@ -163,22 +167,28 @@ module icachecontroller #(parameter LINESIZE = 256) (
     genvar i;
     generate
         for (i=0; i < WORDSPERLINE; i++) begin
-            flopenr #(32) flop(clk, reset, FetchState & (i == FetchWordNum), InstrInF, ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]);
+            flopenr #(`XLEN) flop(clk, reset, FetchState & (i == FetchWordNum), InstrInF, ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]);
         end
     endgenerate
 
+    // Enter the fetch state when we hit a cache fault
+    always_comb begin
+        assign BeginFetchState = ~ICacheMemReadValid & ~FetchState;
+    end
+
     // Machinery to request the correct addresses from main memory
     always_comb begin
-        assign InstrReadF = FetchState;
+        assign InstrReadF = FetchState & ~EndFetchState;
         assign LineAlignedPCPF = {UpperPCPF, LowerPCF[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
-        assign InstrPAdrF = LineAlignedPCPF + FetchWordNum*`XLEN;
-        assign NextFetchWordNum = FetchState ? FetchWordNum+1 : {LOGWPL+1{1'b0}}; 
+        assign InstrPAdrF = LineAlignedPCPF + FetchWordNum*(`XLEN/8);
+        assign NextFetchWordNum = FetchState ? FetchWordNum+InstrAckF : {LOGWPL+1{1'b0}}; 
     end
 
     // Write to cache memory when we have the line here
     always_comb begin
-        assign BeginFetchState = 1'b0;
-        assign EndFetchState = FetchWordNum == {1'b1, {LOGWPL{1'b0}}};
+        assign EndFetchState = FetchWordNum == {1'b1, {LOGWPL{1'b0}}} & FetchState;
+        assign ICacheMemWritePAdr = LineAlignedPCPF;
+        assign ICacheMemWriteEnable = EndFetchState;
     end
 
     // Stall the pipeline while loading a new line from memory

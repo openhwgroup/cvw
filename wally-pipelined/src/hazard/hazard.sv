@@ -53,12 +53,12 @@ module hazard(
 
   assign BranchFlushDE = BPPredWrongE | RetM | TrapM;
 
-  assign StallFCause = CSRWritePendingDEM & ~(BranchFlushDE);  
+  assign StallFCause = CSRWritePendingDEM & ~(BranchFlushDE) | ICacheStallF;
   assign StallDCause = (LoadStallD | MulDivStallD | CSRRdStallD) & ~(BranchFlushDE);    // stall in decode if instruction is a load/mul/csr dependent on previous
 //  assign StallDCause = LoadStallD | MulDivStallD | CSRRdStallD;    // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallECause = 0;
   assign StallMCause = 0; 
-  assign StallWCause = DataStall | InstrStall;
+  assign StallWCause = DataStall;
 
   // Each stage stalls if the next stage is stalled or there is a cause to stall this stage.
   assign StallF = StallD | StallFCause;
