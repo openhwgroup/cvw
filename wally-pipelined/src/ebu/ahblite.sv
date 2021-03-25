@@ -71,7 +71,7 @@ module ahblite (
   output logic [3:0]       HSIZED,
   output logic             HWRITED,
   // Stalls
-  output logic             InstrStall,/*InstrUpdate, */DataStall
+  output logic             /*InstrUpdate, */DataStall
   // *** add a chip-level ready signal as part of handshake
 );
 
@@ -135,8 +135,7 @@ module ahblite (
 
   // stall signals
   assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                        (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
   // *** Could get finer grained stalling if we distinguish between MMU
   //     instruction address translation and data address translation
   assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
