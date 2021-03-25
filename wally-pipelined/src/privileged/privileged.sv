@@ -125,10 +125,10 @@ module privileged (
 
   // pipeline fault signals
   flopenrc #(1) faultregD(clk, reset, FlushD, ~StallD, InstrAccessFaultF, InstrAccessFaultD);
-  floprc #(2) faultregE(clk, reset, FlushE,
+  flopenrc #(2) faultregE(clk, reset, FlushE, ~StallE,
                            {IllegalIEUInstrFaultD, InstrAccessFaultD}, // ** vs IllegalInstrFaultInD
                            {IllegalIEUInstrFaultE, InstrAccessFaultE});
-  floprc #(2) faultregM(clk, reset, FlushM,
+  flopenrc #(2) faultregM(clk, reset, FlushM, ~StallM,
                          {IllegalIEUInstrFaultE, InstrAccessFaultE},
                          {IllegalIEUInstrFaultM, InstrAccessFaultM});
 
