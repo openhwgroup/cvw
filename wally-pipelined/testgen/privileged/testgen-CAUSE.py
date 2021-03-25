@@ -147,7 +147,7 @@ for xlen in xlens:
       2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
     ]
     imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
-    basename = "WALLY-CAUSE" 
+    basename = "WALLY-CAUSE"
     fname = imperaspath + "src/" + basename + ".S"
     refname = imperaspath + "references/" + basename + ".reference_output"
     testnum = 0
@@ -188,3 +188,7 @@ for xlen in xlens:
     f.write(lines)
     f.close()
     r.close()
+
+
+
+
