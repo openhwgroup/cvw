@@ -48,7 +48,7 @@ module ahblite (
   input  logic [1:0]       MemSizeM,
   // Signals from MMU
   input  logic [`XLEN-1:0] MMUPAdr,
-  input  logic             MMUTranslate,
+  input  logic             MMUTranslate, MMUTranslationComplete,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Return from bus
@@ -75,7 +75,8 @@ module ahblite (
 );
 
   logic GrantData;
-  logic [2:0] ISize;
+  logic [31:0] AccessAddress;
+  logic [2:0] AccessSize, PTESize, ISize;
   logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataNewW, ReadDataOldW, WriteData;
   logic IReady, DReady;
   logic CaptureDataM;
@@ -89,47 +90,69 @@ module ahblite (
   // Data accesses have priority over instructions.  However, if a data access comes
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE} statetype;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE, MMUIDLE} statetype;
   statetype BusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
   always_comb 
     case (BusState) 
-      IDLE: if      (AtomicM[1])  NextBusState = ATOMICREAD;
-            else if (MemReadM)    NextBusState = MEMREAD;  // Memory has pirority over instructions
-            else if (MemWriteM)   NextBusState = MEMWRITE;
-            else if (InstrReadF)  NextBusState = INSTRREAD;
-            else                  NextBusState = IDLE;
-      ATOMICREAD: if (~HREADY)    NextBusState = ATOMICREAD;
-            else                  NextBusState = ATOMICWRITE;
-      ATOMICWRITE: if (~HREADY)   NextBusState = ATOMICWRITE;
-            else if (InstrReadF)  NextBusState = INSTRREAD;
-            else                  NextBusState = IDLE;
-      MEMREAD: if (~HREADY)       NextBusState = MEMREAD;
-            else if (InstrReadF)  NextBusState = INSTRREADC;
-            else                  NextBusState = IDLE;
-      MEMWRITE: if (~HREADY)      NextBusState = MEMWRITE;
-            else if (InstrReadF)  NextBusState = INSTRREAD;
-            else                  NextBusState = IDLE;
+      IDLE: if      (MMUTranslate) NextBusState = MMUTRANSLATE;
+            else if (AtomicM[1])   NextBusState = ATOMICREAD;
+            else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (MemWriteM)    NextBusState = MEMWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      MMUTRANSLATE: if (~HREADY)   NextBusState = MMUTRANSLATE;
+            else                   NextBusState = MMUIDLE;
+      // *** Could the MMUIDLE state just be the normal idle state?
+      // Do we trust MMUTranslate to be high exactly when we need translation?
+      MMUIDLE: if (~MMUTranslationComplete)
+                                   NextBusState = MMUTRANSLATE;
+            else if (AtomicM[1])   NextBusState = ATOMICREAD;
+            else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (MemWriteM)    NextBusState = MEMWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      ATOMICREAD: if (~HREADY)     NextBusState = ATOMICREAD;
+            else                   NextBusState = ATOMICWRITE;
+      ATOMICWRITE: if (~HREADY)    NextBusState = ATOMICWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
+            else if (InstrReadF)   NextBusState = INSTRREADC;
+            else                   NextBusState = IDLE;
+      MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
       INSTRREAD:
-            if (~HREADY)          NextBusState = INSTRREAD;
-            else                  NextBusState = IDLE;  // if (InstrReadF still high)
-      INSTRREADC: if (~HREADY)    NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
-            else                  NextBusState = IDLE;
+            if (~HREADY)           NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;  // if (InstrReadF still high)
+      INSTRREADC: if (~HREADY)     NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
+            else                   NextBusState = IDLE;
     endcase
 
   // stall signals
   assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
-  assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC);
-       
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
+                        (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
+  // *** Could get finer grained stalling if we distinguish between MMU
+  //     instruction address translation and data address translation
+  assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
+                         (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
+
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE); 
-  assign #1 HADDR = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
+  assign #1 AccessAddress = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
+  assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
+  generate
+    if (`XLEN == 32) assign PTESize = 3'b010;  // in rv32, PTEs are 4 bytes
+    else             assign PTESize = 3'b011;  // in rv64, PTEs are 8 bytes
+  endgenerate
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
-  assign #1 HSIZE = GrantData ? {1'b0, MemSizeM} : ISize;
+  assign #1 AccessSize = (GrantData) ? {1'b0, MemSizeM} : ISize;
+  assign #1 HSIZE = (MMUTranslate) ? PTESize : AccessSize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
@@ -145,7 +168,10 @@ module ahblite (
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
 
+  assign #1 MMUReady = (NextBusState == MMUIDLE);
+
   assign InstrRData = HRDATA;
+  assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
                         ((BusState == ATOMICREAD) && (NextBusState == ATOMICWRITE));
