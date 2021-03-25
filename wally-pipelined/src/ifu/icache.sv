@@ -233,7 +233,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Machinery to request the correct addresses from main memory
     always_comb begin
         assign InstrReadF = FetchState & ~EndFetchState;
-        assign LineAlignedPCPF = {UpperPCPF, LowerPCF[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
+        assign LineAlignedPCPF = {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
         assign InstrPAdrF = LineAlignedPCPF + FetchWordNum*(`XLEN/8);
         assign NextFetchWordNum = FetchState ? FetchWordNum+InstrAckF : {LOGWPL+1{1'b0}}; 
     end
