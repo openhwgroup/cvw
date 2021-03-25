@@ -38,7 +38,7 @@ module testbench();
   logic [`XLEN-1:0] signature[0:10000];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  //logic [31:0] InstrW;
+  logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
   string tests64a[] = '{
                     "rv64a/WALLY-AMO", "2110",
@@ -332,8 +332,10 @@ string tests32i[] = {
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
-
+  logic [`XLEN-1:0] PCW;
   
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.hazard.FlushW ? nop : dut.hart.ifu.InstrM, InstrW);
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
@@ -372,7 +374,7 @@ string tests32i[] = {
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests

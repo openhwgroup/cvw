@@ -71,9 +71,9 @@ module ifu (
   logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic PrivilegedChangePCM;
   logic IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCLinkD, PCLinkM;
   logic        CompressedF;
-  logic [31:0]     InstrF, InstrRawD, InstrE, InstrW;
+  logic [31:0]     InstrF, InstrRawD, InstrE;
   logic [31:0]     nop = 32'h00000013; // instruction for NOP
 
   // *** temporary hack until walker is hooked up -- Thomas F
@@ -196,10 +196,10 @@ module ifu (
   
   flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);
   flopenr  #(32)   InstrMReg(clk, reset, ~StallM, FlushM ? nop : InstrE, InstrM);
-  flopenr  #(32)   InstrWReg(clk, reset, ~StallW, FlushW ? nop : InstrM, InstrW); // just for testbench, delete later
+  // flopenr  #(32)   InstrWReg(clk, reset, ~StallW, FlushW ? nop : InstrM, InstrW); // just for testbench, delete later
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
+  // flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
 
   flopenrc #(4) InstrClassRegE(.clk(clk),
 			       .reset(reset),

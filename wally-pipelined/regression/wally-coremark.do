@@ -69,8 +69,8 @@ add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
 add wave -divider Write
-add wave -hex /testbench/dut/hart/ifu/PCW
-add wave -hex /testbench/dut/hart/ifu/InstrW
+add wave -hex /testbench/PCW
+add wave -hex /testbench/InstrW
 add wave /testbench/InstrWName
 #add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
 #add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
@@ -81,7 +81,7 @@ add wave -divider Regfile_signals
 #add wave -hex /testbench/dut/uncore/HADDR
 #add wave -hex /testbench/dut/uncore/HWDATA
 #add wave -divider
-#add wave -hex /testbench/dut/hart/ifu/PCW
+#add wave -hex /testbench/PCW
 #add wave /testbench/InstrWName
 #add wave /testbench/dut/hart/ieu/dp/RegWriteW
 #add wave -hex /testbench/dut/hart/ieu/dp/ResultW
