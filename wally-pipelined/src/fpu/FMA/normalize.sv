@@ -61,7 +61,7 @@ logic tmp,tmp1,tmp2,tmp3;
 	// does not require a true subtraction shown in the model.
  
 	assign tmp = ($signed(ae-normcnt+2) >= $signed(-1022));
-	always @(sum or normcnt or sumshift or ae or aligncnt)
+	always @(sum or sumshift or ae or aligncnt or normcnt or bs or zexp or zdenorm)
 		begin
 		// d = aligncnt
 		// l = normcnt
@@ -106,11 +106,16 @@ logic tmp,tmp1,tmp2,tmp3;
 					v = sumshifted[161:108];
 					sticky = (|sumshifted[107:0]) | bs;
 					de0 = zexp+1;
-				end else begin
+				end else if (sumshifted[161]) begin
 					v = sumshifted[160:107];
 					sticky = (|sumshifted[106:0]) | bs;
 					//de0 = zexp-1;
 					de0 = zexp;
+				end else begin
+					v = sumshifted[159:106];
+					sticky = (|sumshifted[105:0]) | bs;
+					//de0 = zexp-1;
+					de0 = zexp-1;
 				end
 
 				resultdenorm = 0;

@@ -97,3 +97,4 @@
 
 `define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/coremark_bare/BTBPredictor.txt"
+`define BPTYPE "BPGSHARE"

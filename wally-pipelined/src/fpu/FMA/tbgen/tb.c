@@ -26,7 +26,7 @@ void main() {
 		char ans[81];
 		char flags[3];
 		int rn,rz,rm,rp;
-		long stop = 6015817;
+		long stop = 5723787;
 		int debug = 1;
 		//my_string = (char *) malloc (nbytes + 1);
 		//bytes_read = getline (&my_string, &nbytes, stdin);
