@@ -162,7 +162,7 @@ module ifu (
   endgenerate
 
   // Decode stage pipeline register and logic
-  flopenl #(32)    InstrDReg(clk, reset, ~StallD, (FlushD ? nop : InstrF), nop, InstrRawD);
+  flopenl #(32)    InstrDReg(clk, reset, ~StallD | FlushD, (FlushD ? nop : InstrF), nop, InstrRawD);
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits

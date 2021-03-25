@@ -49,7 +49,7 @@ module csri #(parameter
   // assumes no N-mode user interrupts
 
   always_comb begin
-    IntInM     = 0;
+    IntInM     = 0; // *** does this really work
     IntInM[11] = ExtIntM & ~MIDELEG_REGW[9];   // MEIP
     IntInM[9]  = ExtIntM &  MIDELEG_REGW[9];   // SEIP
     IntInM[7]  = TimerIntM & ~MIDELEG_REGW[5]; // MTIP
