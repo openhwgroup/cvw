@@ -191,7 +191,7 @@ module testbench_busybear();
   logic [`XLEN-1:0] readAdrExpected;
 
   always @(dut.HRDATA) begin
-    #1;
+    #2;
     if (dut.hart.MemRWM[1] && HADDR[31:3] != dut.PCF[31:3] && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
@@ -282,16 +282,14 @@ module testbench_busybear();
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
-          if (instrs > 1) begin \
-            scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
-            scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
-            if(CSR.icompare(`"CSR`")) begin \
-              $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
-            end \
-            if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
-              $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
-              `ERROR \
-            end \
+          scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
+          scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
+          if(CSR.icompare(`"CSR`")) begin \
+            $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
+          end \
+          if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
+            $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+            `ERROR \
           end \
         end else begin \
           for(integer j=0; j<totalCSR; j++) begin \
