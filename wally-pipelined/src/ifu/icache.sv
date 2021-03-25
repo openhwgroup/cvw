@@ -48,7 +48,7 @@ module icache(
   output logic [31:0]       InstrRawD
 );
 
-    logic             DelayF, DelaySideF, FlushDLastCycle, DelayD;
+    logic             DelayF, DelaySideF, FlushDLastCyclen, DelayD;
     logic  [1:0]      InstrDMuxChoice;
     logic [15:0]      MisalignedHalfInstrF, MisalignedHalfInstrD;
     logic [31:0]      InstrF, AlignedInstrD;
@@ -65,7 +65,7 @@ module icache(
 
     // This flop doesn't stall if StallF is high because we should output a nop
     // when FlushD happens, even if the pipeline is also stalled.
-    flopr   #(1)  flushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
+    flopr   #(1)  flushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCyclen | ~StallF), FlushDLastCyclen);
 
     flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF & ~CompressedF, DelayD);
     flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF, DelaySideF);
@@ -127,7 +127,7 @@ module icache(
     // Output the requested instruction (we don't need to worry if the read is
     // incomplete, since the pipeline stalls for us when it isn't), or a NOP for
     // the cycle when the first of two reads comes in.
-    always_comb if (FlushDLastCycle) begin
+    always_comb if (~FlushDLastCyclen) begin
         assign InstrDMuxChoice = 2'b10;
     end else if (DelayD & (MisalignedHalfInstrD[1:0] != 2'b11)) begin
         assign InstrDMuxChoice = 2'b11;
