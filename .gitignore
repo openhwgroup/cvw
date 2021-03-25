@@ -10,4 +10,5 @@ wally-pipelined/wlft*
 wlft*
 /imperas-riscv-tests/FunctionRadix_32.addr
 /imperas-riscv-tests/FunctionRadix_64.addr
+/imperas-riscv-tests/FunctionRadix.addr
 /imperas-riscv-tests/ProgramMap.txt
