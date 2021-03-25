@@ -51,7 +51,20 @@ module csrm #(parameter
   PMPCFG2 = 12'h3A2,
   PMPCFG3 = 12'h3A3,
   PMPADDR0 = 12'h3B0,
-  //... more physical memory protection
+  PMPADDR1 = 12'h3B1,
+  PMPADDR2 = 12'h3B2,
+  PMPADDR3 = 12'h3B3,
+  PMPADDR4 = 12'h3B4,
+  PMPADDR5 = 12'h3B5,
+  PMPADDR6 = 12'h3B6,
+  PMPADDR7 = 12'h3B7,
+  PMPADDR8 = 12'h3B8,
+  PMPADDR9 = 12'h3B9,
+  PMPADDR10 = 12'h3BA,
+  PMPADDR11 = 12'h3BB,
+  PMPADDR12 = 12'h3BC,
+  PMPADDR13 = 12'h3BD,
+  PMPADDR14 = 12'h3BE,
   PMPADDR15 = 12'h3BF,
   TSELECT = 12'h7A0,
   TDATA1 = 12'h7A1,
@@ -77,7 +90,8 @@ module csrm #(parameter
   logic [`XLEN-1:0] MISA_REGW;
   logic [`XLEN-1:0] MSCRATCH_REGW,MCAUSE_REGW, MTVAL_REGW;
   logic [63:0] PMPCFG01_REGW, PMPCFG23_REGW; // 64-bit registers in RV64, or two 32-bit registers in RV32
-  logic [`XLEN-1:0] PMPADDR0_REGW; // will need to add more
+  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];  // *** Might have to make 16 individual registers
+  //logic [`XLEN-1:0] PMPADDR0_REGW;
   logic [`XLEN-1:0] zero = 0;
   logic [31:0]     allones = {32{1'b1}};
   logic [`XLEN-1:0] MEDELEG_MASK = ~(zero | 1'b1 << 11); // medeleg[11] hardwired to zero per Privileged Spec 3.1.8
@@ -86,7 +100,7 @@ module csrm #(parameter
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
   logic            WritePMPCFG0M, WritePMPCFG2M;
-  logic            WritePMPADDR0M; 
+  logic            WritePMPADDRM [0:15]; 
   logic [25:0]     MISAbits = `MISA;
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
@@ -103,7 +117,22 @@ module csrm #(parameter
   assign WriteMTVALM = MTrapM | (CSRMWriteM && (CSRAdrM == MTVAL));
   assign WritePMPCFG0M = (CSRMWriteM && (CSRAdrM == PMPCFG0));
   assign WritePMPCFG2M = (CSRMWriteM && (CSRAdrM == PMPCFG2));
-  assign WritePMPADDR0M = (CSRMWriteM && (CSRAdrM == PMPADDR0));
+  assign WritePMPADDRM[0] = (CSRMWriteM && (CSRAdrM == PMPADDR0));
+  assign WritePMPADDRM[1] = (CSRMWriteM && (CSRAdrM == PMPADDR1));
+  assign WritePMPADDRM[2] = (CSRMWriteM && (CSRAdrM == PMPADDR2));
+  assign WritePMPADDRM[3] = (CSRMWriteM && (CSRAdrM == PMPADDR3));
+  assign WritePMPADDRM[4] = (CSRMWriteM && (CSRAdrM == PMPADDR4));
+  assign WritePMPADDRM[5] = (CSRMWriteM && (CSRAdrM == PMPADDR5));
+  assign WritePMPADDRM[6] = (CSRMWriteM && (CSRAdrM == PMPADDR6));
+  assign WritePMPADDRM[7] = (CSRMWriteM && (CSRAdrM == PMPADDR7));
+  assign WritePMPADDRM[8] = (CSRMWriteM && (CSRAdrM == PMPADDR8));
+  assign WritePMPADDRM[9] = (CSRMWriteM && (CSRAdrM == PMPADDR9));
+  assign WritePMPADDRM[10] = (CSRMWriteM && (CSRAdrM == PMPADDR10));
+  assign WritePMPADDRM[11] = (CSRMWriteM && (CSRAdrM == PMPADDR11));
+  assign WritePMPADDRM[12] = (CSRMWriteM && (CSRAdrM == PMPADDR12));
+  assign WritePMPADDRM[13] = (CSRMWriteM && (CSRAdrM == PMPADDR13));
+  assign WritePMPADDRM[14] = (CSRMWriteM && (CSRAdrM == PMPADDR14));
+  assign WritePMPADDRM[15] = (CSRMWriteM && (CSRAdrM == PMPADDR15));
   assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
 
@@ -132,7 +161,15 @@ module csrm #(parameter
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], allones, MCOUNTEREN_REGW);
   endgenerate
   flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], allones, MCOUNTINHIBIT_REGW);
-  flopenr #(`XLEN) PMPADDR0reg(clk, reset, WritePMPADDR0M, CSRWriteValM, PMPADDR0_REGW);  
+
+  // There are 16 PMPADDR registers, each of which has its own flop
+  generate
+    genvar i;
+    for (i = 0; i < 16; i++) begin: pmp_flop
+      flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
+    end
+  endgenerate
+
   // PMPCFG registers are a pair of 64-bit in RV64 and four 32-bit in RV32
   generate
     if (`XLEN==64) begin
@@ -175,7 +212,22 @@ module csrm #(parameter
       PMPCFG1:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG01_REGW[63:31]};
       PMPCFG2:   CSRMReadValM = PMPCFG23_REGW[`XLEN-1:0];
       PMPCFG3:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG23_REGW[63:31]};
-      PMPADDR0:  CSRMReadValM = PMPADDR0_REGW;
+      PMPADDR0:  CSRMReadValM = PMPADDR_ARRAY_REGW[0];
+      PMPADDR1:  CSRMReadValM = PMPADDR_ARRAY_REGW[1];
+      PMPADDR2:  CSRMReadValM = PMPADDR_ARRAY_REGW[2];
+      PMPADDR3:  CSRMReadValM = PMPADDR_ARRAY_REGW[3];
+      PMPADDR4:  CSRMReadValM = PMPADDR_ARRAY_REGW[4];
+      PMPADDR5:  CSRMReadValM = PMPADDR_ARRAY_REGW[5];
+      PMPADDR6:  CSRMReadValM = PMPADDR_ARRAY_REGW[6];
+      PMPADDR7:  CSRMReadValM = PMPADDR_ARRAY_REGW[7];
+      PMPADDR8:  CSRMReadValM = PMPADDR_ARRAY_REGW[8];
+      PMPADDR9:  CSRMReadValM = PMPADDR_ARRAY_REGW[9];
+      PMPADDR10: CSRMReadValM = PMPADDR_ARRAY_REGW[10];
+      PMPADDR11: CSRMReadValM = PMPADDR_ARRAY_REGW[11];
+      PMPADDR12: CSRMReadValM = PMPADDR_ARRAY_REGW[12];
+      PMPADDR13: CSRMReadValM = PMPADDR_ARRAY_REGW[13];
+      PMPADDR14: CSRMReadValM = PMPADDR_ARRAY_REGW[14];
+      PMPADDR15: CSRMReadValM = PMPADDR_ARRAY_REGW[15];
       default: begin
                  CSRMReadValM = 0;
                  IllegalCSRMAccessM = 1;
