@@ -76,6 +76,7 @@ module wallypipelinedhart (
   logic InstrMisalignedFaultM;
   logic DataMisalignedM;
   logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
+  logic InstrPageFaultM, LoadPageFaultM, StorePageFaultM;
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;
@@ -100,7 +101,7 @@ module wallypipelinedhart (
   // IMem stalls
   logic             ICacheStallF;
   logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
-  logic             MMUTranslate, MMUReady;
+  logic             MMUTranslate, MMUTranslationComplete, MMUReady;
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
