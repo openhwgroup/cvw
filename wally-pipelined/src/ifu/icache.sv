@@ -127,11 +127,11 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     logic [31:0]    AlignedInstrRawF, AlignedInstrRawD;
     logic           FlushDLastCycleN;
+    logic           PCPMisalignedF;
     const logic [31:0] NOP = 32'h13;
 
-    // TODO allow compressed instructions
-    // (start with noncompressed only to get something working)
-    assign CompressedF = 1'b0;
+    // Detect if the instruction is compressed
+    assign CompressedF = AlignedInstrRawF[1:0] != 2'b11;
 
     // Handle happy path (data in cache, reads aligned)
     always_comb begin
@@ -141,9 +141,13 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     generate
         if (`XLEN == 32) begin
-            assign AlignedInstrRawF = ICacheMemReadData;
+            assign AlignedInstrRawF = LowerPCF[1] ? {16'b0, ICacheMemReadData[31:16]} : ICacheMemReadData;
+            assign PCPMisalignedF = LowerPCF[1] && ~CompressedF;
         end else begin
-            assign AlignedInstrRawF = LowerPCF[2] ? ICacheMemReadData[63:32] : ICacheMemReadData[31:0];
+            assign AlignedInstrRawF = LowerPCF[2]
+                ? (LowerPCF[1] ? MisalignedInstrRawF : ICacheMemReadData[63:32])
+                : (LowerPCF[1] ? ICacheMemReadData[47:16] : ICacheMemReadData[31:0]);
+            assign PCPMisalignedF = LowerPCF[2] && LowerPCF[1] && ~CompressedF;
         end
     endgenerate
 
@@ -151,15 +155,70 @@ module icachecontroller #(parameter LINESIZE = 256) (
     flopr   #(1)  FlushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCycleN | ~StallF), FlushDLastCycleN);
     mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCycleN, InstrRawD);
 
+    // Stall for faults or misaligned reads
+    always_comb begin
+        assign ICacheStallF = FaultStall | MisalignedStall;
+    end
+
+    // Handle misaligned, noncompressed reads
+    logic           MisalignedState, NextMisalignedState;
+    logic           MisalignedStall;
+    logic [15:0]    MisalignedHalfInstrF;
+    logic [`XLEN:0] MisalignedInstrRawF;
+
+    always_comb begin
+        assign MisalignedInstrRawF = {16'b0, ICacheMemReadData[63:48]};
+    end
+
+    flopenr #(16) MisalignedHalfInstrFlop(clk, reset, ~FaultStall & (PCPMisalignedF & MisalignedState), AlignedInstrRawF[15:0], MisalignedHalfInstrF);
+    flopenr #(1)  MisalignedStateFlop(clk, reset, ~FaultStall, NextMisalignedState, MisalignedState);
+
+    always_comb begin
+        assign MisalignedStall = PCPMisalignedF & MisalignedState;
+        assign NextMisalignedState = ~PCPMisalignedF | ~MisalignedState;
+    end
+
+    // Pick the correct address to read
+    always_comb begin
+        if (~PCPMisalignedF) begin
+            assign ICacheMemReadUpperPAdr = UpperPCPF;
+            generate
+                if (`XLEN == 32)
+                    assign ICacheMemReadLowerAdr = {LowerPCF[31:2], 2'b00};
+                else
+                    assign ICacheMemReadLowerAdr = {LowerPCF[31:3], 2'b000};
+            endgenerate
+        end else begin
+            if (MisalignedState) begin
+                assign ICacheMemReadUpperPAdr = UpperPCPF;
+                generate
+                    if (`XLEN == 32)
+                        assign ICacheMemReadLowerAdr = {LowerPCF[31:2]+1, 2'b00};
+                    else
+                        assign ICacheMemReadLowerAdr = {LowerPCF[31:3]+1, 2'b000};
+                endgenerate
+            end else begin
+                assign ICacheMemReadUpperPAdr = UpperPCPF;
+                generate
+                    if (`XLEN == 32)
+                        assign ICacheMemReadLowerAdr = {LowerPCF[31:2], 2'b00};
+                    else
+                        assign ICacheMemReadLowerAdr = {LowerPCF[31:3], 2'b000};
+                endgenerate
+            end
+        end
+    end
+
     // Handle cache faults
 
     localparam integer WORDSPERLINE = LINESIZE/`XLEN;
     localparam integer LOGWPL = $clog2(WORDSPERLINE);
     localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
 
-    logic FetchState, EndFetchState, BeginFetchState;
-    logic [LOGWPL:0] FetchWordNum, NextFetchWordNum;
-    logic [`XLEN-1:0] LineAlignedPCPF;
+    logic               FetchState, EndFetchState, BeginFetchState;
+    logic               FaultStall;
+    logic [LOGWPL:0]    FetchWordNum, NextFetchWordNum;
+    logic [`XLEN-1:0]   LineAlignedPCPF;
 
     flopr #(1) FetchStateFlop(clk, reset, BeginFetchState | (FetchState & ~EndFetchState), FetchState);
     flopr #(LOGWPL+1) FetchWordNumFlop(clk, reset, NextFetchWordNum, FetchWordNum);
@@ -193,7 +252,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     // Stall the pipeline while loading a new line from memory
     always_comb begin
-        assign ICacheStallF = FetchState | ~ICacheMemReadValid;
+        assign FaultStall = FetchState | ~ICacheMemReadValid;
     end
 endmodule
 

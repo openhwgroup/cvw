@@ -136,10 +136,6 @@ module ahblite (
   // stall signals
   assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                         (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
-  // *** Could get finer grained stalling if we distinguish between MMU
-  //     instruction address translation and data address translation
-  assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                         (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
