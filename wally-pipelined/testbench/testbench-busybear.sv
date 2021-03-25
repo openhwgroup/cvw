@@ -192,7 +192,7 @@ module testbench_busybear();
 
   always @(dut.HRDATA) begin
     #1;
-    if (dut.hart.MemRWM[1] && HADDR != dut.PCF && dut.HRDATA !== {64{1'bx}}) begin
+    if (dut.hart.MemRWM[1] && ~HWRITE && HADDR != dut.PCF && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
@@ -402,19 +402,7 @@ module testbench_busybear();
               forcedInstr = 1;
             end
             else begin
-              if(dut.hart.ifu.InstrF[28:27] != 2'b11 && dut.hart.ifu.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                force CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
-                release CheckInstrF;
-                force dut.hart.ifu.InstrF = {12'b0, dut.hart.ifu.InstrF[19:7], 7'b0000011};
-                #7;
-                release dut.hart.ifu.InstrF;
-                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
-                warningCount += 1;
-                forcedInstr = 1;
-              end
-              else begin
-                forcedInstr = 0;
-              end
+              forcedInstr = 0;
             end
           end
         end
@@ -441,19 +429,7 @@ module testbench_busybear();
               forcedInstr = 1;
             end
             else begin
-              if(dut.hart.ifu.InstrF[28:27] != 2'b11 && dut.hart.ifu.InstrF[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                force CheckInstrF = {12'b0, CheckInstrF[19:7], 7'b0000011};
-                release CheckInstrF;
-                force dut.hart.ifu.InstrF = {12'b0, dut.hart.ifu.InstrF[19:7], 7'b0000011};
-                #7;
-                release dut.hart.ifu.InstrF;
-                $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.PCF);
-                warningCount += 1;
-                forcedInstr = 1;
-              end
-              else begin
-                forcedInstr = 0;
-              end
+              forcedInstr = 0;
             end
           end
           // then expected PC value
