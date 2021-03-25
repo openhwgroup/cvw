@@ -87,13 +87,13 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
       always_ff @(posedge HCLK) begin
         HWADDR <= #1 A;
         HREADTim0 <= #1 RAM[A[31:3]];
-        if (memwrite && risingHREADYTim) RAM[HWADDR[31:3]] <= HWDATA;
+        if (memwrite && risingHREADYTim) RAM[HWADDR[31:3]] <= #1 HWDATA;
       end
     end else begin 
       always_ff @(posedge HCLK) begin
         HWADDR <= #1 A;  
         HREADTim0 <= #1 RAM[A[31:2]];
-        if (memwrite && risingHREADYTim) RAM[HWADDR[31:2]] <= HWDATA;
+        if (memwrite && risingHREADYTim) RAM[HWADDR[31:2]] <= #1 HWDATA;
       end
     end
   endgenerate
