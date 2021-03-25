@@ -51,7 +51,6 @@ add wave -hex /testbench/dut/hart/ebu/HRDATA
 add wave -hex /testbench/dut/hart/ebu/HWRITE
 add wave -hex /testbench/dut/hart/ebu/HWDATA
 add wave -hex /testbench/dut/hart/ebu/CaptureDataM
-add wave -hex /testbench/dut/hart/ebu/InstrStall
 add wave -divider
 
 add wave -hex /testbench/dut/uncore/dtim/*

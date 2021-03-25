@@ -340,7 +340,7 @@ string tests32i[] = {
 	tests = testsBP64;	
       end else begin 
 	tests = {tests64i};
-	if (`C_SUPPORTED) tests = {tests, tests64ic};
+	if (`C_SUPPORTED) tests = {tests64ic, tests};
 	else              tests = {tests, tests64iNOc};
 	if (`M_SUPPORTED) tests = {tests, tests64m};
 	if (`A_SUPPORTED) tests = {tests, tests64a};
