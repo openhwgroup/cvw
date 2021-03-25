@@ -73,13 +73,15 @@ module testbench();
   assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.*); 
-
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.hazard.FlushW ? nop : dut.hart.ifu.InstrM, InstrW);
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
                 InstrDName, InstrEName, InstrMName, InstrWName);
 
+  logic [`XLEN-1:0] PCW;
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
   // initialize tests
   initial
     begin

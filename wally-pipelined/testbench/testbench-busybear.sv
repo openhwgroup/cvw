@@ -143,6 +143,9 @@ module testbench_busybear();
   logic [63:0] pcExpected;
   logic [63:0] regExpected;
   integer regNumExpected;
+  logic [`XLEN-1:0] PCW;
+  
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
 
   genvar i;
   generate
@@ -349,8 +352,8 @@ module testbench_busybear();
   string PCtextW, PCtext2W;
   logic [31:0] InstrWExpected;
   logic [63:0] PCWExpected;
-  always @(dut.hart.ifu.PCW or dut.hart.ieu.InstrValidW) begin
-   if(dut.hart.ieu.InstrValidW && dut.hart.ifu.PCW != 0) begin
+  always @(PCW or dut.hart.ieu.InstrValidW) begin
+   if(dut.hart.ieu.InstrValidW && PCW != 0) begin
       if($feof(data_file_PCW)) begin
         $display("no more PC data to read");
         `ERROR
@@ -363,8 +366,8 @@ module testbench_busybear();
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", InstrWExpected);
       // then expected PC value
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", PCWExpected);
-      if(~equal(dut.hart.ifu.PCW,PCWExpected,2)) begin
-        $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, dut.hart.ifu.PCW, PCWExpected);
+      if(~equal(PCW,PCWExpected,2)) begin
+        $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, PCW, PCWExpected);
         `ERROR
       end
       //if(it.InstrW != InstrWExpected) begin
@@ -505,6 +508,7 @@ module testbench_busybear();
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.hazard.FlushW ? nop : dut.hart.ifu.InstrM, InstrW);
   instrNameDecTB dec(dut.hart.ifu.InstrF, InstrFName);
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
