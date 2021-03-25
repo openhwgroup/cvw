@@ -126,7 +126,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 );
 
     logic [31:0]    AlignedInstrRawF, AlignedInstrRawD;
-    logic           FlushDLastCycle;
+    logic           FlushDLastCycleN;
     const logic [31:0] NOP = 32'h13;
 
     // TODO allow compressed instructions
@@ -148,8 +148,8 @@ module icachecontroller #(parameter LINESIZE = 256) (
     endgenerate
 
     flopenr #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, AlignedInstrRawF, AlignedInstrRawD);
-    flopr   #(1)  FlushDLastCycleFlop(clk, reset, FlushD | (FlushDLastCycle & StallF), FlushDLastCycle);
-    mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, FlushDLastCycle, InstrRawD);
+    flopr   #(1)  FlushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCycleN | ~StallF), FlushDLastCycleN);
+    mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCycleN, InstrRawD);
 
     // Handle cache faults
 
