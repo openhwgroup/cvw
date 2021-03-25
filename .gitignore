@@ -3,6 +3,9 @@
 
 .nfs*
 
+__pycache__/
+.vscode/
+
 #vsim work files to ignore
 transcript
 vsim.wlf
