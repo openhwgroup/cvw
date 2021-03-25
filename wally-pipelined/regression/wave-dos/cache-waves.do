@@ -31,7 +31,10 @@ add wave -hex /testbench/dut/hart/ifu/ic/InstrPAdrF
 add wave -hex /testbench/dut/hart/ifu/ic/InstrAckF
 add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWriteData
 add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWritePAdr
+add wave -hex /testbench/dut/hart/ifu/ic/controller/MisalignedState
+add wave -hex /testbench/dut/hart/ifu/ic/controller/MisalignedHalfInstrF
 add wave -divider
+
 
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
