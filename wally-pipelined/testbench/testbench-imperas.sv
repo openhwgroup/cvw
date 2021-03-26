@@ -40,6 +40,11 @@ module testbench();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   //logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
+  string tests64f[] = '{
+                    "rv64f/I-FADD-S-01", "2000",
+                    "rv64f/I-FCLASS-S-01", "2000"
+  };
+  
   string tests64a[] = '{
                     "rv64a/WALLY-AMO", "2110",
                     "rv64a/WALLY-LRSC", "2110"
@@ -337,14 +342,16 @@ string tests32i[] = {
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
-      if(TESTSBP) begin
-	tests = testsBP64;	
+      if (TESTSBP) begin
+	      tests = testsBP64;	
       end else begin 
-	tests = {tests64i};
-	if (`C_SUPPORTED) tests = {tests, tests64ic};
-	else              tests = {tests, tests64iNOc};
-	if (`M_SUPPORTED) tests = {tests, tests64m};
-	if (`A_SUPPORTED) tests = {tests, tests64a};
+	      tests = {tests64i};
+        if (`C_SUPPORTED) tests = {tests, tests64ic};
+        else              tests = {tests, tests64iNOc};
+        if (`M_SUPPORTED) tests = {tests, tests64m};
+        if (`F_SUPPORTED) tests = {tests64f, tests};
+        if (`D_SUPPORTED) tests = {tests64d, tests};
+        if (`A_SUPPORTED) tests = {tests, tests64a};
       end
  //     tests = {tests64a, tests};
     end else begin // RV32
@@ -353,6 +360,7 @@ string tests32i[] = {
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
+      if (`F_SUPPORTED) tests = {tests32f, tests};
       if (`A_SUPPORTED) tests = {tests, tests32a};
     end
   string signame, memfilename;
