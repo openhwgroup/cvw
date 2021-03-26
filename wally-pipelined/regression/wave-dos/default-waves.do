@@ -40,8 +40,8 @@ add wave /testbench/dut/uncore/dtim/memwrite
 add wave -hex /testbench/dut/uncore/HADDR
 add wave -hex /testbench/dut/uncore/HWDATA
 add wave -divider
-add wave -hex /testbench/dut/hart/ifu/PCW
-add wave -hex /testbench/dut/hart/ifu/InstrW
+add wave -hex /testbench/PCW
+add wave -hex /testbench/InstrW
 add wave /testbench/InstrWName
 add wave /testbench/dut/hart/ieu/dp/RegWriteW
 add wave -hex /testbench/dut/hart/ieu/dp/ResultW
