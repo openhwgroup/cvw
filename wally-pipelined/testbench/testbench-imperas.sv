@@ -334,8 +334,8 @@ string tests32i[] = {
   logic             HCLK, HRESETn;
   logic [`XLEN-1:0] PCW;
   
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.hazard.FlushW ? nop : dut.hart.ifu.InstrM, InstrW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
