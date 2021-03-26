@@ -61,7 +61,7 @@ module testbench();
   wallypipelinedsoc dut(.*); 
   // Track names of instructions
   logic [31:0] InstrW;
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.hazard.FlushW ? nop : dut.hart.ifu.InstrM, InstrW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.InstrM, InstrW);
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,

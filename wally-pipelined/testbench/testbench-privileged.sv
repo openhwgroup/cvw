@@ -73,7 +73,7 @@ module testbench();
   assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.*); 
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.hazard.StallW, dut.hart.hazard.FlushW ? nop : dut.hart.ifu.InstrM, InstrW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
@@ -189,7 +189,7 @@ module instrTrackerTB(
   output string           InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
-  flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+  //flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
 
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
