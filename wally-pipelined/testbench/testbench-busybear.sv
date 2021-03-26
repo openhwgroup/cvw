@@ -192,7 +192,7 @@ module testbench_busybear();
 
   always @(dut.HRDATA) begin
     #2;
-    if (dut.hart.MemRWM[1] && HADDR[31:3] != dut.PCF[31:3] && dut.HRDATA !== {64{1'bx}}) begin
+    if (dut.hart.MemRWM[1] && ~HWRITE && HADDR[31:3] != dut.PCF[31:3] && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
@@ -333,15 +333,8 @@ module testbench_busybear();
   `CHECK_CSR2(STVAL, `CSRS)
   `CHECK_CSR(STVEC)
 
-  initial begin //this is just fun to make causes easier to understand
-    #38;
-    force dut.hart.priv.csr.genblk1.csrm.NextCauseM = 0;
-    #16;
-    release dut.hart.priv.csr.genblk1.csrm.NextCauseM;
-  end
-
   initial begin //this is temporary until the bug can be fixed!!!
-    #18909760;
+    #11130100;
     force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
     #100;
     release dut.hart.ieu.dp.regf.rf[5];
@@ -409,19 +402,7 @@ module testbench_busybear();
                 forcedInstr = 1;
               end
               else begin
-                if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                  force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
-                  release CheckInstrD;
-                  force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
-                  #7;
-                  release dut.hart.ifu.InstrRawD;
-                  $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
-                  warningCount += 1;
-                  forcedInstr = 1;
-                end
-                else begin
-                  forcedInstr = 0;
-                end
+                forcedInstr = 0;
               end
             end
           end
@@ -448,19 +429,7 @@ module testbench_busybear();
                 forcedInstr = 1;
               end
               else begin
-                if(dut.hart.ifu.InstrRawD[28:27] != 2'b11 && dut.hart.ifu.InstrRawD[6:0] == 7'b0101111) begin //for now, replace non-SC A instrs with LD
-                  force CheckInstrD = {12'b0, CheckInstrD[19:7], 7'b0000011};
-                  release CheckInstrD;
-                  force dut.hart.ifu.InstrRawD = {12'b0, dut.hart.ifu.InstrRawD[19:7], 7'b0000011};
-                  #7;
-                  release dut.hart.ifu.InstrRawD;
-                  $display("warning: replacing AMO instr %s at PC=%0x with ld", PCtext, dut.hart.ifu.PCD);
-                  warningCount += 1;
-                  forcedInstr = 1;
-                end
-                else begin
-                  forcedInstr = 0;
-                end
+                forcedInstr = 0;
               end
             end
             // then expected PC value
