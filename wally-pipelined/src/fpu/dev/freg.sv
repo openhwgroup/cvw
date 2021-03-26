@@ -1,4 +1,4 @@
-`include "../../config/rv64icfd/wally-config.vh"
+`include "../../../config/rv64icfd/wally-config.vh"
 
 module freg1adr (
   input  logic [2:0]       frm,
@@ -482,10 +482,10 @@ module freg3adr (
 			5'b00110 : regInput[6] = writeData;
 			5'b00111 : regInput[7] = writeData;
 			5'b01000 : regInput[8] = writeData;
-			5'b01000 : regInput[9] = writeData;
-			5'b01001 : regInput[10] = writeData;
-			5'b01010 : regInput[11] = writeData;
-			5'b01111 : regInput[12] = writeData;
+			5'b01001 : regInput[9] = writeData;
+			5'b01010 : regInput[10] = writeData;
+			5'b01011 : regInput[11] = writeData;
+			5'b01100 : regInput[12] = writeData;
 			5'b01101 : regInput[13] = writeData;
 			5'b01110 : regInput[14] = writeData;
 			5'b01111 : regInput[15] = writeData;
@@ -498,10 +498,10 @@ module freg3adr (
 			5'b10110 : regInput[22] = writeData;
 			5'b10111 : regInput[23] = writeData;
 			5'b11000 : regInput[24] = writeData;
-			5'b11000 : regInput[25] = writeData;
-			5'b11001 : regInput[26] = writeData;
-			5'b11010 : regInput[27] = writeData;
-			5'b11111 : regInput[28] = writeData;
+			5'b11001 : regInput[25] = writeData;
+			5'b11010 : regInput[26] = writeData;
+			5'b11011 : regInput[27] = writeData;
+			5'b11100 : regInput[28] = writeData;
 			5'b11101 : regInput[29] = writeData;
 			5'b11110 : regInput[30] = writeData;
 			5'b11111 : regInput[31] = writeData;
