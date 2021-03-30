@@ -47,7 +47,7 @@ module bpred
    input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
-   input logic [3:0] 	    InstrClassE,
+   input logic [4:0] 	    InstrClassE,
    // Report branch prediction status
    output logic 	    BPPredWrongE
    );
@@ -55,7 +55,7 @@ module bpred
   logic 		    BTBValidF;
   logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
-  logic [3:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
+  logic [4:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
   logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
   logic 		    TargetWrongE;
   logic 		    FallThroughWrongE;
@@ -146,7 +146,7 @@ module bpred
 			    .reset(reset),
 			    .pop(BPInstrClassF[3] & ~StallF),
 			    .popPC(RASPCF),
-			    .push(InstrClassE[3] & ~StallE),
+			    .push(InstrClassE[4] & ~StallE),
 			    .incr(1'b0),
 			    .pushPC(PCLinkE));
 

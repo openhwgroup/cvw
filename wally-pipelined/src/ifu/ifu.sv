@@ -86,7 +86,7 @@ module ifu (
   // branch predictor signals
   logic 	   SelBPPredF;
   logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
-  logic [3:0] 	    InstrClassD, InstrClassE;
+  logic [4:0] 	    InstrClassD, InstrClassE;
   
 
   // *** put memory interface on here, InstrF becomes output
@@ -173,8 +173,9 @@ module ifu (
 
   // the branch predictor needs a compact decoding of the instruction class.
   // *** consider adding in the alternate return address x5 for returns.
-  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && InstrD[19:15] == 5'h01; // return
-  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && InstrD[19:15] != 5'h01; // jump register, but not return
+  assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 && (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
+  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) == 5'h01; // return must link to ra or r5
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) != 5'h01; // jump register, but not return
   assign InstrClassD[1] = InstrD[6:0] == 7'h6F; // jump
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
 
@@ -201,14 +202,14 @@ module ifu (
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
 
-  flopenrc #(4) InstrClassRegE(.clk(clk),
+  flopenrc #(5) InstrClassRegE(.clk(clk),
 			       .reset(reset),
 			       .en(~StallE),
 			       .clear(FlushE),
 			       .d(InstrClassD),
 			       .q(InstrClassE));
 
-  flopenrc #(4) InstrClassRegM(.clk(clk),
+  flopenrc #(5) InstrClassRegM(.clk(clk),
 			       .reset(reset),
 			       .en(~StallM),
 			       .clear(FlushM),

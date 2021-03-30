@@ -39,7 +39,7 @@ module testbench_busybear();
   // read pc trace file
   integer data_file_PC, scan_file_PC;
   initial begin
-    data_file_PC = $fopen("/courses/e190ax/busybear_boot/parsedPC.txt", "r");
+    data_file_PC = $fopen("../../../busybear_boot/parsedPC.txt", "r");
     if (data_file_PC == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -48,7 +48,7 @@ module testbench_busybear();
 
   integer data_file_PCW, scan_file_PCW;
   initial begin
-    data_file_PCW = $fopen("/courses/e190ax/busybear_boot/parsedPC.txt", "r");
+    data_file_PCW = $fopen("../../../busybear_boot/parsedPC.txt", "r");
     if (data_file_PCW == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -58,7 +58,7 @@ module testbench_busybear();
   // read register trace file
   integer data_file_rf, scan_file_rf;
   initial begin
-    data_file_rf = $fopen("/courses/e190ax/busybear_boot/parsedRegs.txt", "r");
+    data_file_rf = $fopen("../../../busybear_boot/parsedRegs.txt", "r");
     if (data_file_rf == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -68,7 +68,7 @@ module testbench_busybear();
   // read CSR trace file
   integer data_file_csr, scan_file_csr;
   initial begin
-    data_file_csr = $fopen("/courses/e190ax/busybear_boot/parsedCSRs.txt", "r");
+    data_file_csr = $fopen("../../../busybear_boot/parsedCSRs.txt", "r");
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -78,7 +78,7 @@ module testbench_busybear();
   // read memreads trace file
   integer data_file_memR, scan_file_memR;
   initial begin
-    data_file_memR = $fopen("/courses/e190ax/busybear_boot/parsedMemRead.txt", "r");
+    data_file_memR = $fopen("../../../busybear_boot/parsedMemRead.txt", "r");
     if (data_file_memR == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -88,7 +88,7 @@ module testbench_busybear();
   // read memwrite trace file
   integer data_file_memW, scan_file_memW;
   initial begin
-    data_file_memW = $fopen("/courses/e190ax/busybear_boot/parsedMemWrite.txt", "r");
+    data_file_memW = $fopen("../../../busybear_boot/parsedMemWrite.txt", "r");
     if (data_file_memW == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -97,10 +97,10 @@ module testbench_busybear();
 
   // initial loading of memories
   initial begin
-    $readmemh("/courses/e190ax/busybear_boot/bootmem.txt", dut.uncore.bootdtim.RAM, 'h1000 >> 3);
-    $readmemh("/courses/e190ax/busybear_boot/ram.txt", dut.uncore.dtim.RAM);
-    $readmemh("/courses/e190ax/busybear_boot/bootmem.txt", dut.imem.bootram, 'h1000 >> 3);
-    $readmemh("/courses/e190ax/busybear_boot/ram.txt", dut.imem.RAM);
+    $readmemh("../../../busybear_boot/bootmem.txt", dut.uncore.bootdtim.RAM, 'h1000 >> 3);
+    $readmemh("../../../busybear_boot/ram.txt", dut.uncore.dtim.RAM);
+    $readmemh("../../../busybear_boot/bootmem.txt", dut.imem.bootram, 'h1000 >> 3);
+    $readmemh("../../../busybear_boot/ram.txt", dut.imem.RAM);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);
   end
