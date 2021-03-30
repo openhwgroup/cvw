@@ -80,7 +80,7 @@ module ifu (
   logic ITLBFlushF = '0;
   // logic ITLBWriteF = '0;
   tlb #(3) itlb(clk, reset, SATP_REGW, PrivilegeModeW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
-    ITLBInstrPAdrF, ITLBMissF, ITLBHitF);
+		ITLBInstrPAdrF, ITLBMissF, ITLBHitF);
 
   // branch predictor signals
   logic 	   SelBPPredF;

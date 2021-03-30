@@ -50,8 +50,9 @@ module int32div (Q, done, divdone, rem0, div0, N, D, clk, reset, start);
    
    // #iter: N = m+v+s = m+(s+2) = m+2+s (mod k = 0)
    // v = 2 since \rho < 1 (add 4 to make sure its a ceil)
-   bk6 cpa1 (co1, Num, {1'b0, P}, 
-	     {3'h0, shiftResult, ~shiftResult,1'b0}, 1'b0);
+   adder #(6) cpa1 ({1'b0, P}, 
+		    {3'h0, shiftResult, ~shiftResult,1'b0}, 
+		    Num);   
    
    // Determine whether need to add just Q/Rem
    assign shiftResult = P[0];   
@@ -160,10 +161,10 @@ module divide4x32 (Q, rem0, quotient, op1, op2, clk, reset, state0,
 		   otfzero, enable, Qstar, QMstar);
 
    // Correction and generation of Remainder
-   add36 cpa2 (cout1, rem1, SumN2[35:0], CarryN2[35:0], 1'b0);
+   adder #(36) cpa2 (SumN2[35:0], CarryN2[35:0], rem1);
    // Add back +D as correction
    csa #(36) csa2 (CarryN2[35:0], SumN2[35:0], divi1, SumR, CarryR);
-   add36 cpa3 (cout2, rem2, SumR, CarryR, 1'b0);
+   adder #(36) cpa3 (SumR, CarryR, rem2);
    // Choose remainder (Rem or Rem+D)
    mux2 #(36) mx6 (rem1, rem2, rem1[35], rem3);
    // Choose correct Q or QM
@@ -349,306 +350,7 @@ module floprc #(parameter WIDTH = 8)
 
  endmodule // qst4
 
-// Ladner-Fischer Prefix Adder
-
-module add36 (cout, sum, a, b, cin);
-	 
-   input logic [35:0]  a, b;
-   input logic 	       cin;
-   output logic [35:0] sum;
-   output logic        cout;
-   
-   logic [36:0]        p,g;
-   logic [35:0]        c;
-   
-   // pre-computation
-   assign p={a^b,1'b0};
-   assign g={a&b, cin};
-   
-   // prefix tree
-   ladner_fischer36 prefix_tree(c, p[35:0], g[35:0]);
-   
-   // post-computation
-   assign sum=p[36:1]^c;
-   assign cout=g[36]|(p[36]&c[35]);
-   
-endmodule // add36
-
-module ladner_fischer36 (c, p, g);
-	
-   input logic [35:0]  p;
-   input logic [35:0]  g;
-   
-   output logic [36:1] c;
-   
-   // parallel-prefix, Ladner-Fischer
-   
-   // Stage 1: Generates G/P pairs that span 1 bits
-   grey b_1_0 (G_1_0, {g[1],g[0]}, p[1]);
-   black b_3_2 (G_3_2, P_3_2, {g[3],g[2]}, {p[3],p[2]});
-   black b_5_4 (G_5_4, P_5_4, {g[5],g[4]}, {p[5],p[4]});
-   black b_7_6 (G_7_6, P_7_6, {g[7],g[6]}, {p[7],p[6]});
-   black b_9_8 (G_9_8, P_9_8, {g[9],g[8]}, {p[9],p[8]});
-   black b_11_10 (G_11_10, P_11_10, {g[11],g[10]}, {p[11],p[10]});
-   black b_13_12 (G_13_12, P_13_12, {g[13],g[12]}, {p[13],p[12]});
-   black b_15_14 (G_15_14, P_15_14, {g[15],g[14]}, {p[15],p[14]});
-   
-   black b_17_16 (G_17_16, P_17_16, {g[17],g[16]}, {p[17],p[16]});
-   black b_19_18 (G_19_18, P_19_18, {g[19],g[18]}, {p[19],p[18]});
-   black b_21_20 (G_21_20, P_21_20, {g[21],g[20]}, {p[21],p[20]});
-   black b_23_22 (G_23_22, P_23_22, {g[23],g[22]}, {p[23],p[22]});
-   black b_25_24 (G_25_24, P_25_24, {g[25],g[24]}, {p[25],p[24]});
-   black b_27_26 (G_27_26, P_27_26, {g[27],g[26]}, {p[27],p[26]});
-   black b_29_28 (G_29_28, P_29_28, {g[29],g[28]}, {p[29],p[28]});
-   black b_31_30 (G_31_30, P_31_30, {g[31],g[30]}, {p[31],p[30]});
-   
-   black b_33_32 (G_33_32, P_33_32, {g[33],g[32]}, {p[33],p[32]});
-   black b_35_34 (G_35_34, P_35_34, {g[35],g[34]}, {p[35],p[34]});
-   
-   // Stage 2: Generates G/P pairs that span 2 bits
-   grey g_3_0 (G_3_0, {G_3_2,G_1_0}, P_3_2);
-   black b_7_4 (G_7_4, P_7_4, {G_7_6,G_5_4}, {P_7_6,P_5_4});
-   black b_11_8 (G_11_8, P_11_8, {G_11_10,G_9_8}, {P_11_10,P_9_8});
-   black b_15_12 (G_15_12, P_15_12, {G_15_14,G_13_12}, {P_15_14,P_13_12});
-   black b_19_16 (G_19_16, P_19_16, {G_19_18,G_17_16}, {P_19_18,P_17_16});
-   black b_23_20 (G_23_20, P_23_20, {G_23_22,G_21_20}, {P_23_22,P_21_20});
-   black b_27_24 (G_27_24, P_27_24, {G_27_26,G_25_24}, {P_27_26,P_25_24});
-   black b_31_28 (G_31_28, P_31_28, {G_31_30,G_29_28}, {P_31_30,P_29_28});
-   
-   black b_35_32 (G_35_32, P_35_32, {G_35_34,G_33_32}, {P_35_34,P_33_32});
-   
-   // Stage 3: Generates G/P pairs that span 4 bits
-   grey g_5_0 (G_5_0, {G_5_4,G_3_0}, P_5_4);
-   grey g_7_0 (G_7_0, {G_7_4,G_3_0}, P_7_4);
-   black b_13_8 (G_13_8, P_13_8, {G_13_12,G_11_8}, {P_13_12,P_11_8});
-   black b_15_8 (G_15_8, P_15_8, {G_15_12,G_11_8}, {P_15_12,P_11_8});
-   black b_21_16 (G_21_16, P_21_16, {G_21_20,G_19_16}, {P_21_20,P_19_16});
-   black b_23_16 (G_23_16, P_23_16, {G_23_20,G_19_16}, {P_23_20,P_19_16});
-   black b_29_24 (G_29_24, P_29_24, {G_29_28,G_27_24}, {P_29_28,P_27_24});
-   black b_31_24 (G_31_24, P_31_24, {G_31_28,G_27_24}, {P_31_28,P_27_24});
-   
-   black b_37_32 (G_37_32, P_37_32, {G_37_36,G_35_32}, {P_37_36,P_35_32});
-   black b_39_32 (G_39_32, P_39_32, {G_39_36,G_35_32}, {P_39_36,P_35_32});
-   
-   // Stage 4: Generates G/P pairs that span 8 bits
-   grey g_9_0 (G_9_0, {G_9_8,G_7_0}, P_9_8);
-   grey g_11_0 (G_11_0, {G_11_8,G_7_0}, P_11_8);
-   grey g_13_0 (G_13_0, {G_13_8,G_7_0}, P_13_8);
-   grey g_15_0 (G_15_0, {G_15_8,G_7_0}, P_15_8);
-   black b_25_16 (G_25_16, P_25_16, {G_25_24,G_23_16}, {P_25_24,P_23_16});
-   black b_27_16 (G_27_16, P_27_16, {G_27_24,G_23_16}, {P_27_24,P_23_16});
-   black b_29_16 (G_29_16, P_29_16, {G_29_24,G_23_16}, {P_29_24,P_23_16});
-   black b_31_16 (G_31_16, P_31_16, {G_31_24,G_23_16}, {P_31_24,P_23_16});
-   
-   black b_41_32 (G_41_32, P_41_32, {G_41_40,G_39_32}, {P_41_40,P_39_32});
-   black b_43_32 (G_43_32, P_43_32, {G_43_40,G_39_32}, {P_43_40,P_39_32});
-   black b_45_32 (G_45_32, P_45_32, {G_45_40,G_39_32}, {P_45_40,P_39_32});
-   black b_47_32 (G_47_32, P_47_32, {G_47_40,G_39_32}, {P_47_40,P_39_32});
-   
-   // Stage 5: Generates G/P pairs that span 16 bits
-   grey g_17_0 (G_17_0, {G_17_16,G_15_0}, P_17_16);
-   grey g_19_0 (G_19_0, {G_19_16,G_15_0}, P_19_16);
-   grey g_21_0 (G_21_0, {G_21_16,G_15_0}, P_21_16);
-   grey g_23_0 (G_23_0, {G_23_16,G_15_0}, P_23_16);
-   grey g_25_0 (G_25_0, {G_25_16,G_15_0}, P_25_16);
-   grey g_27_0 (G_27_0, {G_27_16,G_15_0}, P_27_16);
-   grey g_29_0 (G_29_0, {G_29_16,G_15_0}, P_29_16);
-   grey g_31_0 (G_31_0, {G_31_16,G_15_0}, P_31_16);
-   
-   black b_49_32 (G_49_32, P_49_32, {G_49_48,G_47_32}, {P_49_48,P_47_32});
-   black b_51_32 (G_51_32, P_51_32, {G_51_48,G_47_32}, {P_51_48,P_47_32});
-   black b_53_32 (G_53_32, P_53_32, {G_53_48,G_47_32}, {P_53_48,P_47_32});
-   black b_55_32 (G_55_32, P_55_32, {G_55_48,G_47_32}, {P_55_48,P_47_32});
-   black b_57_32 (G_57_32, P_57_32, {G_57_48,G_47_32}, {P_57_48,P_47_32});
-   black b_59_32 (G_59_32, P_59_32, {G_59_48,G_47_32}, {P_59_48,P_47_32});
-   black b_61_32 (G_61_32, P_61_32, {G_61_48,G_47_32}, {P_61_48,P_47_32});
-   black b_63_32 (G_63_32, P_63_32, {G_63_48,G_47_32}, {P_63_48,P_47_32});   
-   
-   // Stage 6: Generates G/P pairs that span 32 bits
-   grey g_33_0 (G_33_0, {G_33_32,G_31_0}, P_33_32);
-   grey g_35_0 (G_35_0, {G_35_32,G_31_0}, P_35_32);
-   grey g_37_0 (G_37_0, {G_37_32,G_31_0}, P_37_32);
-   grey g_39_0 (G_39_0, {G_39_32,G_31_0}, P_39_32);
-   grey g_41_0 (G_41_0, {G_41_32,G_31_0}, P_41_32);
-   grey g_43_0 (G_43_0, {G_43_32,G_31_0}, P_43_32);
-   grey g_45_0 (G_45_0, {G_45_32,G_31_0}, P_45_32);
-   grey g_47_0 (G_47_0, {G_47_32,G_31_0}, P_47_32);
-   
-   grey g_49_0 (G_49_0, {G_49_32,G_31_0}, P_49_32);
-   grey g_51_0 (G_51_0, {G_51_32,G_31_0}, P_51_32);
-   grey g_53_0 (G_53_0, {G_53_32,G_31_0}, P_53_32);
-   grey g_55_0 (G_55_0, {G_55_32,G_31_0}, P_55_32);
-   grey g_57_0 (G_57_0, {G_57_32,G_31_0}, P_57_32);
-   grey g_59_0 (G_59_0, {G_59_32,G_31_0}, P_59_32);
-   grey g_61_0 (G_61_0, {G_61_32,G_31_0}, P_61_32);
-   grey g_63_0 (G_63_0, {G_63_32,G_31_0}, P_63_32);
-   
-   // Extra grey cell stage 
-   grey g_2_0 (G_2_0, {g[2],G_1_0}, p[2]);
-   grey g_4_0 (G_4_0, {g[4],G_3_0}, p[4]);
-   grey g_6_0 (G_6_0, {g[6],G_5_0}, p[6]);
-   grey g_8_0 (G_8_0, {g[8],G_7_0}, p[8]);
-   grey g_10_0 (G_10_0, {g[10],G_9_0}, p[10]);
-   grey g_12_0 (G_12_0, {g[12],G_11_0}, p[12]);
-   grey g_14_0 (G_14_0, {g[14],G_13_0}, p[14]);
-   grey g_16_0 (G_16_0, {g[16],G_15_0}, p[16]);
-   grey g_18_0 (G_18_0, {g[18],G_17_0}, p[18]);
-   grey g_20_0 (G_20_0, {g[20],G_19_0}, p[20]);
-   grey g_22_0 (G_22_0, {g[22],G_21_0}, p[22]);
-   grey g_24_0 (G_24_0, {g[24],G_23_0}, p[24]);
-   grey g_26_0 (G_26_0, {g[26],G_25_0}, p[26]);
-   grey g_28_0 (G_28_0, {g[28],G_27_0}, p[28]);
-   grey g_30_0 (G_30_0, {g[30],G_29_0}, p[30]);
-   grey g_32_0 (G_32_0, {g[32],G_31_0}, p[32]);
-   grey g_34_0 (G_34_0, {g[34],G_33_0}, p[34]);
-   
-   // Final Stage: Apply c_k+1=G_k_0
-   assign c[1]=g[0];
-   assign c[2]=G_1_0;
-   assign c[3]=G_2_0;
-   assign c[4]=G_3_0;
-   assign c[5]=G_4_0;
-   assign c[6]=G_5_0;
-   assign c[7]=G_6_0;
-   assign c[8]=G_7_0;
-   assign c[9]=G_8_0;
-   
-   assign c[10]=G_9_0;
-   assign c[11]=G_10_0;
-   assign c[12]=G_11_0;
-   assign c[13]=G_12_0;
-   assign c[14]=G_13_0;
-   assign c[15]=G_14_0;
-   assign c[16]=G_15_0;
-   assign c[17]=G_16_0;
-   
-   assign c[18]=G_17_0;
-   assign c[19]=G_18_0;
-   assign c[20]=G_19_0;
-   assign c[21]=G_20_0;
-   assign c[22]=G_21_0;
-   assign c[23]=G_22_0;
-   assign c[24]=G_23_0;
-   assign c[25]=G_24_0;
-   
-   assign c[26]=G_25_0;
-   assign c[27]=G_26_0;
-   assign c[28]=G_27_0;
-   assign c[29]=G_28_0;
-   assign c[30]=G_29_0;
-   assign c[31]=G_30_0;
-   assign c[32]=G_31_0;
-   assign c[33]=G_32_0;
-   
-   assign c[34]=G_33_0;
-   assign c[35]=G_34_0;
-   assign c[36]=G_35_0;
-
-endmodule // ladner_fischer36
-
-// Brent-Kung Prefix Adder
-module bk6 (cout, sum, a, b, cin);
-   
-   input logic [5:0]  a, b;
-   input logic 	      cin;
-   
-   output logic [5:0] sum;
-   output logic       cout;
-
-   logic [6:0] 	      p,g;
-   logic [5:0] 	      c;
-
-   // pre-computation
-   assign p={a^b,1'b0};
-   assign g={a&b, cin};
-
-   // prefix tree
-   brent_kung prefix_tree(c, p[5:0], g[5:0]);
-
-   // post-computation
-   assign sum=p[6:1]^c;
-   assign cout=g[6]|(p[6]&c[5]);
-
-endmodule // bk6
-
-module brent_kung (c, p, g);
-   
-   input logic [5:0]  p;
-   input logic [5:0]  g;
-   
-   output logic [6:1] c;
-
-   // parallel-prefix, Brent-Kung
-   // Stage 1: Generates G/P pairs that span 1 bits
-   grey b_1_0 (G_1_0, {g[1],g[0]}, p[1]);
-   black b_3_2 (G_3_2, P_3_2, {g[3],g[2]}, {p[3],p[2]});
-   black b_5_4 (G_5_4, P_5_4, {g[5],g[4]}, {p[5],p[4]});
-
-   // Stage 2: Generates G/P pairs that span 2 bits
-   grey g_3_0 (G_3_0, {G_3_2,G_1_0}, P_3_2);
-
-   // Stage 3: Generates G/P pairs that span 4 bits
-
-   // Stage 4: Generates G/P pairs that span 2 bits
-   grey g_5_0 (G_5_0, {G_5_4,G_3_0}, P_5_4);
-
-   // Last grey cell stage 
-   grey g_2_0 (G_2_0, {g[2],G_1_0}, p[2]);
-   grey g_4_0 (G_4_0, {g[4],G_3_0}, p[4]);
-
-   // Final Stage: Apply c_k+1=G_k_0
-   assign c[1]=g[0];
-   assign c[2]=G_1_0;
-   assign c[3]=G_2_0;
-   assign c[4]=G_3_0;
-   assign c[5]=G_4_0;
-   assign c[6]=G_5_0;
-
-endmodule // brent_kung
-
-// Black cell
-module black (gout, pout, gin, pin);
-
-   input logic [1:0] gin, pin;
-   output logic      gout, pout;
-
-   assign pout=pin[1]&pin[0];
-   assign gout=gin[1]|(pin[1]&gin[0]);
-
-endmodule // black
-
-// Grey cell
-module grey (gout, gin, pin);
-
-   input logic [1:0] gin;
-   input logic 	     pin;
-   output logic      gout;
-
-   assign gout=gin[1]|(pin&gin[0]);
-
-endmodule // grey
-
-// reduced Black cell
-module rblk (hout, iout, gin, pin);
-
-   input logic [1:0] gin, pin;
-   output logic      hout, iout;
-
-   assign iout=pin[1]&pin[0];
-   assign hout=gin[1]|gin[0];
-
-endmodule
-
-// reduced Grey cell
-module rgry (hout, gin);
-
-   input logic [1:0] gin;
-   output logic	     hout;
-
-   assign hout=gin[1]|gin[0];
-
-endmodule // rgry
-
+// LZD
 module lz2 (P, V, B0, B1);
 
    input logic  B0;
@@ -753,6 +455,8 @@ module lz32 (ZP, ZV, B);
    assign ZV = ZVa | ZVb;
 
 endmodule // lz32
+
+// FSM Control for Integer Divider
 
 module fsm32 (en, state0, done, divdone, otfzero,
 	      start, error, NumIter, clk, reset);
