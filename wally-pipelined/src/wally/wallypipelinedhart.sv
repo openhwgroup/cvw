@@ -98,6 +98,8 @@ module wallypipelinedhart (
 
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
 
+  // IMem stalls
+  logic             ICacheStallF;
   logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
   logic             MMUTranslate, MMUTranslationComplete, MMUReady;
 

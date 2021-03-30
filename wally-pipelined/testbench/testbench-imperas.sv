@@ -65,7 +65,6 @@ module testbench();
 //                    "rv64m/I-REMW-01", "3000"
   };
   string tests64ic[] = '{
-
                      "rv64ic/I-C-ADD-01", "3000",
                      "rv64ic/I-C-ADDI-01", "3000",
                      "rv64ic/I-C-ADDIW-01", "3000",
@@ -381,9 +380,9 @@ string tests32i[] = {
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
-                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.ic.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM, InstrW, InstrFName, InstrDName,
+                InstrEName, InstrMName, InstrWName);
 
   // initialize tests
   initial
