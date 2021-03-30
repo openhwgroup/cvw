@@ -371,6 +371,7 @@ string tests32i[] = {
       if (`A_SUPPORTED) tests = {tests, tests32a};
     end
 
+    // tests = tests64p;
   end
 
 
