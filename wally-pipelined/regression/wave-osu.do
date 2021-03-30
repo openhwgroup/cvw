@@ -31,24 +31,36 @@ vlib work
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
     0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
-
 view wave
 
 -- display input and output signals as hexidecimal values
-do ./wave-dos/ahb-waves.do
+# Diplays All Signals recursively
+-- display input and output signals as hexidecimal values
+# Diplays All Signals recursively
+add wave /testbench/clk
+add wave /testbench/reset
+add wave -noupdate -divider -height 32 "Datapath"
+add wave -hex /testbench/dut/hart/ieu/dp/*
+add wave -noupdate -divider -height 32 "RF"
+add wave -hex /testbench/dut/hart/ieu/dp/regf/*
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf
+add wave -noupdate -divider -height 32 "Control"
+add wave -hex /testbench/dut/hart/ieu/c/*
+add wave -noupdate -divider -height 32 "Multiply/Divide"
+add wave -hex /testbench/dut/hart/mdu/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {100 ps}
 configure wave -namecolwidth 250
-configure wave -valuecolwidth 140
+configure wave -valuecolwidth 120
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -58,6 +70,6 @@ configure wave -childrowmargin 2
 set DefaultRadix hexadecimal
 
 -- Run the Simulation 
-#run 4100
+#run 1000
 run -all
 #quit

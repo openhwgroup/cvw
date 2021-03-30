@@ -26,54 +26,61 @@
 `include "wally-config.vh"
 
 module muldiv (
-  input  logic             clk, reset,
-  // Decode Stage interface
-  input  logic [31:0]      InstrD, 
-  // Execute Stage interface
-  input  logic [`XLEN-1:0] SrcAE, SrcBE,
-  input  logic [2:0]       Funct3E,
-  input  logic             MulDivE, W64E,
-  // Writeback stage
-  output logic [`XLEN-1:0] MulDivResultW,
-  // hazards
-  input  logic             StallM, StallW, FlushM, FlushW 
-);
+	       input logic 		clk, reset,
+	       // Decode Stage interface
+	       input logic [31:0] 	InstrD, 
+	       // Execute Stage interface
+	       input logic [`XLEN-1:0] 	SrcAE, SrcBE,
+	       input logic [2:0] 	Funct3E,
+	       input logic 		MulDivE, W64E,
+	       // Writeback stage
+	       output logic [`XLEN-1:0] MulDivResultW,
+	       // Divide Done
+	       output logic 		DivDoneW, 
+	       // hazards
+	       input logic 		StallM, StallW, FlushM, FlushW 
+	       );
 
-  generate
-    if (`M_SUPPORTED) begin
-      logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
-      logic [`XLEN-1:0] PrelimResultE;
-      logic [`XLEN-1:0] QuotE, RemE;
-      logic [`XLEN*2-1:0] ProdE;
+   generate
+      if (`M_SUPPORTED) begin
+	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
+	 logic [`XLEN-1:0] PrelimResultE;
+	 logic [`XLEN-1:0] QuotE, RemE;
+	 logic [`XLEN*2-1:0] ProdE;
 
-      // Multiplier
-      mul mul(.*);
+	 // Multiplier
+	 mul mul(.*);
+	 // Divide
+	 div div (QuotE, RemE, DivDoneE, div0error, SrcAE, SrcBE, clk, reset, MulDivE);	 
 
-      // Select result
-      always_comb
-        case (Funct3E)
-          3'b000: PrelimResultE = ProdE[`XLEN-1:0];
-          3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
-          3'b010: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
-          3'b011: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
-          3'b100: PrelimResultE = QuotE;
-          3'b101: PrelimResultE = QuotE;
-          3'b110: PrelimResultE = RemE;
-          3'b111: PrelimResultE = RemE;
-        endcase
-    
-      // Handle sign extension for W-type instructions
-      if (`XLEN == 64) begin // RV64 has W-type instructions
-        assign MulDivResultE = W64E ? {{32{PrelimResultE[31]}}, PrelimResultE[31:0]} : PrelimResultE;
-      end else begin // RV32 has no W-type instructions
-        assign MulDivResultE = PrelimResultE;
+	 // Select result
+	 always_comb
+           case (Funct3E)
+             3'b000: PrelimResultE = ProdE[`XLEN-1:0];
+             3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
+             3'b010: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
+             3'b011: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
+             3'b100: PrelimResultE = QuotE;
+             3'b101: PrelimResultE = QuotE;
+             3'b110: PrelimResultE = RemE;
+             3'b111: PrelimResultE = RemE;
+           endcase
+	 
+	 // Handle sign extension for W-type instructions
+	 if (`XLEN == 64) begin // RV64 has W-type instructions
+            assign MulDivResultE = W64E ? {{32{PrelimResultE[31]}}, PrelimResultE[31:0]} : PrelimResultE;
+	 end else begin // RV32 has no W-type instructions
+            assign MulDivResultE = PrelimResultE;
+	 end
+
+	 flopenrc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, ~StallM, MulDivResultE, MulDivResultM);
+	 flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);	 
+
+      end else begin // no M instructions supported
+	 assign MulDivResultW = 0; 
       end
+   endgenerate
 
-      flopenrc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, ~StallM, MulDivResultE, MulDivResultM);
-      flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);
-    end else begin // no M instructions supported
-      assign MulDivResultW = 0; 
-    end
-  endgenerate
-endmodule
+endmodule // muldiv
+
 

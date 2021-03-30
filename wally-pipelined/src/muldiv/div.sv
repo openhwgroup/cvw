@@ -1,4 +1,29 @@
-module int64div (Q, done, divdone, rem0, div0, N, D, clk, reset, start);
+///////////////////////////////////////////
+// mul.sv
+//
+// Written: James.Stine@okstate.edu 1 February 2021
+// Modified: 
+//
+// Purpose: Integer Divide instructions
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+///////////////////////////////////////////
+
+module div (Q, rem0, divdone, div0, N, D, clk, reset, start);
 
    input logic [63:0]  N, D;
    input logic 	       clk;
@@ -8,9 +33,9 @@ module int64div (Q, done, divdone, rem0, div0, N, D, clk, reset, start);
    output logic [63:0] Q;
    output logic [63:0] rem0;
    output logic        div0;
-   output logic        done;
    output logic        divdone;   
 
+   logic 	       done;   
    logic 	       enable;
    logic 	       state0;
    logic 	       V;   
@@ -46,9 +71,6 @@ module int64div (Q, done, divdone, rem0, div0, N, D, clk, reset, start);
    assign op1 = N;
    assign div0 = ~V;
 
-   // Brent-Kung adder chosen for the heck of it and
-   // since so small (maybe could have used a RCA)
-   
    // #iter: N = m+v+s = m+(s+2) = m+2+s (mod k = 0)
    // v = 2 since \rho < 1 (add 4 to make sure its a ceil)
    adder #(8) cpa1 ({2'b0, P}, 
@@ -253,51 +275,6 @@ module csa #(parameter WIDTH=8) (input logic [WIDTH-1:0] a, b, c,
    assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     
 
 endmodule // adder
-
-module flopenr #(parameter WIDTH = 8) 
-   (input logic clk, reset, en,
-    input logic [WIDTH-1:0] d, output logic [WIDTH-1:0] q);
-
-   always_ff @(posedge clk, posedge reset) 
-     if (reset) q <= 0; 
-     else if (en) q <= d;
-
-endmodule // flopenr
-
-module flopr #(parameter WIDTH = 8) 
-   (input logic clk, reset, input
-    logic [WIDTH-1:0] d, output logic [WIDTH-1:0] q);
-
-   always_ff @(posedge clk, posedge reset) 
-     if (reset) q <= 0; 
-     else q <= d;
-
-endmodule // flopr
-
-module flopenrc #(parameter WIDTH = 8) 
-   (input logic clk, reset, en, clear, 
-    input logic [WIDTH-1:0] d, output logic [WIDTH-1:0] q);
-
-   always_ff @(posedge clk, posedge reset) 
-     if (reset) q <= 0; 
-     else 
-       if (en) 
-	 if (clear) q <= 0; 
-	 else q <= d;
-
-endmodule // flopenrc
-
-module floprc #(parameter WIDTH = 8) 
-   (input logic clk, reset, clear,
-    input logic [WIDTH-1:0] d, output logic [WIDTH-1:0] q);
-
-   always_ff @(posedge clk, posedge reset) 
-     if (reset) q <= 0; 
-     else 
-       if (clear) q <= 0; 
-       else q <= d;
-
-endmodule // floprc
 
 module eqcmp #(parameter WIDTH = 8)
    (input  logic [WIDTH-1:0] a, b,
@@ -1449,3 +1426,110 @@ module magcompare8 (LT, EQ, A, B);
    assign EQ = ~(GT | LT);   
 
 endmodule // magcompare8
+
+module shifter_l64 (Z, A, Shift);
+
+   input logic [63:0]  A;
+   input logic [5:0]   Shift;
+   
+   logic [63:0]        stage1;
+   logic [63:0]        stage2;
+   logic [63:0]        stage3;
+   logic [63:0]        stage4;
+   logic [63:0]        stage5;   
+   logic [31:0]        thirtytwozeros = 32'h0;
+   logic [15:0]        sixteenzeros = 16'h0;
+   logic [ 7:0]        eightzeros = 8'h0;
+   logic [ 3:0]        fourzeros = 4'h0;
+   logic [ 1:0]        twozeros = 2'b00;
+   logic 	       onezero = 1'b0;   
+   
+   output logic [63:0] Z;      
+   
+   mux2 #(64) mx01(A,      {A[31:0], thirtytwozeros}, Shift[5], stage1);   
+   mux2 #(64) mx02(stage1, {stage1[47:0], sixteenzeros}, Shift[4], stage2);
+   mux2 #(64) mx03(stage2, {stage2[55:0], eightzeros}, Shift[3], stage3);
+   mux2 #(64) mx04(stage3, {stage3[59:0], fourzeros}, Shift[2], stage4);
+   mux2 #(64) mx05(stage4, {stage4[61:0], twozeros}, Shift[1], stage5);
+   mux2 #(64) mx06(stage5, {stage5[62:0], onezero}, Shift[0], Z);
+
+endmodule // shifter_l64
+
+module shifter_r64 (Z, A, Shift);
+
+   input logic [63:0]  A;
+   input logic [5:0]   Shift;
+   
+   logic [63:0]        stage1;
+   logic [63:0]        stage2;
+   logic [63:0]        stage3;
+   logic [63:0]        stage4;
+   logic [63:0]        stage5;   		  
+   logic [31:0]        thirtytwozeros = 32'h0;		  
+   logic [15:0]        sixteenzeros = 16'h0;
+   logic [ 7:0]        eightzeros = 8'h0;
+   logic [ 3:0]        fourzeros = 4'h0;
+   logic [ 1:0]        twozeros = 2'b00;
+   logic 	       onezero = 1'b0;   
+   
+   output logic [63:0] Z;
+   
+   mux2 #(64) mx01(A, {thirtytwozeros, A[63:32]}, Shift[5], stage1);		  
+   mux2 #(64) mx02(stage1, {sixteenzeros, stage1[63:16]}, Shift[4], stage2);
+   mux2 #(64) mx03(stage2, {eightzeros, stage2[63:8]}, Shift[3], stage3);
+   mux2 #(64) mx04(stage3, {fourzeros, stage3[63:4]}, Shift[2], stage4);
+   mux2 #(64) mx05(stage4, {twozeros, stage4[63:2]}, Shift[1], stage5);
+   mux2 #(64) mx06(stage5, {onezero, stage5[63:1]},  Shift[0], Z);
+   
+endmodule // shifter_r64
+
+module shifter_l32 (Z, A, Shift);
+
+   input logic [31:0]  A;
+   input logic [4:0]   Shift;
+   
+   logic [31:0]        stage1;
+   logic [31:0]        stage2;
+   logic [31:0]        stage3;
+   logic [31:0]        stage4;
+   logic [15:0]        sixteenzeros = 16'h0;
+   logic [ 7:0]        eightzeros = 8'h0;
+   logic [ 3:0]        fourzeros = 4'h0;
+   logic [ 1:0]        twozeros = 2'b00;
+   logic 	       onezero = 1'b0;   
+   
+   output logic [31:0] Z;      
+
+   mux2 #(32) mx01(A,      {A[15:0], sixteenzeros},    Shift[4], stage1);
+   mux2 #(32) mx02(stage1, {stage1[23:0], eightzeros}, Shift[3], stage2);
+   mux2 #(32) mx03(stage2, {stage2[27:0], fourzeros},  Shift[2], stage3);
+   mux2 #(32) mx04(stage3, {stage3[29:0], twozeros},   Shift[1], stage4);
+   mux2 #(32) mx05(stage4, {stage4[30:0], onezero},    Shift[0], Z);
+
+endmodule // shifter_l32
+
+module shifter_r32 (Z, A, Shift);
+
+   input logic [31:0]  A;
+   input logic [4:0]   Shift;
+   
+   logic [31:0]        stage1;
+   logic [31:0]        stage2;
+   logic [31:0]        stage3;
+   logic [31:0]        stage4;
+   logic [15:0]        sixteenzeros = 16'h0;
+   logic [ 7:0]        eightzeros = 8'h0;
+   logic [ 3:0]        fourzeros = 4'h0;
+   logic [ 1:0]        twozeros = 2'b00;
+   logic 	       onezero = 1'b0;   
+   
+   output logic [31:0] Z;
+   
+   mux2 #(32) mx01(A,      {sixteenzeros, A[31:16]},   Shift[4], stage1);
+   mux2 #(32) mx02(stage1, {eightzeros, stage1[31:8]}, Shift[3], stage2);
+   mux2 #(32) mx03(stage2, {fourzeros, stage2[31:4]},  Shift[2], stage3);
+   mux2 #(32) mx04(stage3, {twozeros, stage3[31:2]},   Shift[1], stage4);
+   mux2 #(32) mx05(stage4, {onezero, stage4[31:1]},    Shift[0], Z);
+   
+endmodule // shifter_r32
+
