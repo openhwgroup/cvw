@@ -2,7 +2,7 @@
 ##################################
 # testgen-ADD-SUB.py
 #
-# ushakya@hmc.edu & dottolia@hmc.edu 14 Feb 2021
+# dottolia@hmc.edu 1 Mar 2021
 #
 # Generate directed and random test vectors for RISC-V Design Validation.
 ##################################
@@ -29,84 +29,164 @@ from random import getrandbits
 #   #  exit(1)
 
 def randRegs():
-  reg1 = randint(1,31)
-  reg2 = randint(1,31)
-  reg3 = randint(1,31)
+  reg1 = randint(1,20)
+  reg2 = randint(1,20)
+  reg3 = randint(1,20)
   if (reg1 == 6 or reg2 == 6 or reg3 == 6 or reg1 == reg2):
     return randRegs()
   else:
-      return reg1, reg2, reg3
+      return str(reg1), str(reg2), str(reg3)
 
-def writeVector(a, b, storecmd):
+def writeVectors(storecmd):
   global testnum
   #expected = computeExpected(a, b, test)
   #expected = expected % 2**xlen # drop carry if necessary
   #if (expected < 0): # take twos complement
   #  expected = 2**xlen + expected
-  csr = "mscratch"
 
-  reg1, reg2, reg3 = randRegs()
-  lines = "\n# Testcase " + str(testnum) + ":  " + csr + "\n"
-  lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
-  lines = lines + "li x" + str(reg2) + ", MASK_XLEN(0)\n"
+  #lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
+  #lines = lines + "li x" + str(reg2) + ", MASK_XLEN(0)\n"
 
   # Page 6 of unpriviledged spec
   # For both CSRRS and CSRRC, if rs1=x0, then the instruction will not write to the CSR at all, and so shall not cause any of the side effects
 
-  expected = a
+  #lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
+  #lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
 
-  if test == "csrrw":
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
+  # User Software Interrupt: True, 0
+  # Supervisor Software Interrupt: True, 1
+  # Machine Software Interrupt: True, 2
+  # User Timer Interrupt: True, 4
+  # writeTest(storecmd, f, r, f"""
+  #   la x21, 0x2004000
+  # """, False, 4)
+  # Supervior timer interrupt: True, 5
+  # Machine timer interrupt: True, 7
+  # User external input: True, 8
+  # Supervisor external input: True, 9
+  # Machine externa input: True, 11
 
-  elif test == "csrrs": # at some point, try writing a non-zero value first
-    lines += "csrrw x0, " + csr + ", x0\n" # set csr to 0
+  # Instruction address misaligned: False, 0
+  # Instruction access fault: False, 1
 
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
-  elif test == "csrrc": # at some point, try writing a non-one value first
-    allOnes = "0xFFFFFFFF" if xlen == 32 else "0xFFFFFFFFFFFFFFFF"
+  # Illegal Instruction 
+  writeTest(storecmd, f, r, f"""
+    .fill 1, 4, 0
+  """, False, 2)
 
-    lines += "li x" + str(reg1) + ", MASK_XLEN(" + allOnes + ")\n"
-    lines += "csrrw x0, " + csr + ", x" + str(reg1) + "\n" # set csr to all ones
+  # Breakpoint
+  writeTest(storecmd, f, r, f"""
+    ebreak
+  """, False, 3)
 
-    lines += "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
+  # Load Address Misaligned 
+  writeTest(storecmd, f, r, f"""
+    lw x0, 11(x0)
+  """, False, 4)
 
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
+  # Load Access fault: False, 5
 
-    expected = a ^ 0xFFFFFFFF if xlen == 32 else a ^ 0xFFFFFFFFFFFFFFFF
-  elif test == "csrrwi":
-    a = a & 0x1F # imm is only 5 bits
+  # Store/AMO address misaligned
+  writeTest(storecmd, f, r, f"""
+    sw x0, 11(x0)
+  """, False, 6)
 
-    lines += test + " x" + str(reg2) + ", " + csr + ", " + str(a) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", " + str(a) + "\n"
+  # Environment call from u-mode: only for when only M and U mode enabled?
+  # writeTest(storecmd, f, r, f"""
+  #   ecall
+  # """, False, 8, "u")
 
-    expected = a
-  elif test == "csrrsi": # at some point, try writing a non-zero value first
-    a = a & 0x1F
+  # # Environment call from s-mode
 
-    lines += "csrrw x0, " + csr + ", x0\n" # set csr to 0
+  # ??? BUG ??? Code should be 9, but ends up being 8
+  # writeTest(storecmd, f, r, f"""
+  #   ecall
+  # """, False, 8, "s")
 
-    lines += test + " x" + str(reg2) + ", " + csr + ", " + str(a) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", " + str(a) + "\n"
+  # Environment call from m-mode
+  writeTest(storecmd, f, r, f"""
+    ecall
+  """, False, 11, "m")
 
-    expected = a
-  elif test == "csrrci": # at some point, try writing a non-one value first
-    a = a & 0x1F
-    allOnes = "0xFFFFFFFF" if xlen == 32 else "0xFFFFFFFFFFFFFFFF"
+  # Instruction page fault: 12
+  # Load page fault: 13
+  # Store/AMO page fault: 15
+  
 
-    lines += "li x" + str(reg1) + ", MASK_XLEN(" + allOnes + ")\n"
-    lines += "csrrw x0, " + csr + ", x" + str(reg1) + "\n" # set csr to all ones
+  
 
-    lines += test + " x" + str(reg2) + ", " + csr + ", " + str(a) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", " + str(a) + "\n"
+def writeTest(storecmd, f, r, test, interrupt, code, mode = "m"):
+  global testnum
 
-    expected = a ^ 0xFFFFFFFF if xlen == 32 else a ^ 0xFFFFFFFFFFFFFFFF
+  expected = code
+  if(interrupt):
+    expected+=(1 << (wordsize - 1))
 
 
-  lines += storecmd + " x" + str(reg2) + ", " + str(wordsize*testnum) + "(x6)\n"
-  lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
+  trapEnd = ""
+  before = ""
+  if mode != "m":
+    before = f"""
+      li x1, 0b110000000000
+      csrrc x28, mstatus, x1
+      li x1, 0b{"01" if mode == "s" else "00"}0000000000
+      csrrs x28, mstatus, x1
+
+      auipc x1, 0
+      addi x1, x1, 16 # x1 is now right after the mret instruction
+      csrrw x27, mepc, x1
+      mret
+
+      # We're now in {mode} mode...
+    """
+
+    trapEnd = f"""j _jend{testnum}"""
+
+
+  # Setup
+  # TODO: Adding 8 to x30 won't work for 32 bit?
+  # x31: Old mtvec value
+  # x30: trap handler address
+  # x29: Old mtvec value for user/supervisor mode
+  # x28: Old mstatus value
+  # x27: Old mepc value
+  # x26: 0 if we should execute mret normally. 1 otherwise. This allows us to stay in machine
+  # x25: mcause
+  # mode for the next tests
+  lines = f"""
+    # Testcase {testnum}
+    csrrs x31, mtvec, x0
+
+    auipc x30, 0
+    addi x30, x30, 12
+    j _jtest{testnum}
+
+    # Machine trap vector
+    csrrs x25, mcause, x0
+    csrrs x1, mepc, x0
+    addi x1, x1, 4
+    csrrw x0, mepc, x1
+    {trapEnd}
+    mret
+
+    # Actual test
+    _jtest{testnum}:
+    csrrw x0, mtvec, x30
+
+    # Start test code
+    {before}
+    {test}
+
+    # Finished test. Reset to old mtvec
+    _jend{testnum}:
+
+    csrrw x0, mtvec, x31
+  """
+
+  #expected = 42
+  
+  lines += storecmd + " x25, " + str(wordsize*testnum) + "(x6)\n"
+  #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
   f.write(lines)
   if (xlen == 32):
     line = formatrefstr.format(expected)+"\n"
@@ -115,16 +195,25 @@ def writeVector(a, b, storecmd):
   r.write(line)
   testnum = testnum+1
 
+  # lines += storecmd + " x0" + ", " + str(wordsize*testnum) + "(x6)\n"
+  # #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
+  # f.write(lines)
+  # if (xlen == 32):
+  #   line = formatrefstr.format(expected)+"\n"
+  # else:
+  #   line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
+  # r.write(line)
+  # testnum = testnum+1
+
 ##################################
 # main body
 ##################################
 
 # change these to suite your tests
 # csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
-tests = ["csrrw"]
-author = "ushakya@hmc.edu & dottolia@hmc.edu"
+author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 60;
+numrand = 30;
 
 # setup
 seed(0xC365DDEB9173AB42) # make tests reproducible
@@ -140,54 +229,48 @@ for xlen in xlens:
   else:
     storecmd = "sd"
     wordsize = 8
-  for test in tests:
-    corners = [
-      0, 1, 2, 0x1E, 0x1F, 0xFF,
-      0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
-      2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
-    ]
-    imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
-    basename = "WALLY-CAUSE"
-    fname = imperaspath + "src/" + basename + ".S"
-    refname = imperaspath + "references/" + basename + ".reference_output"
-    testnum = 0
 
-    # print custom header part
-    f = open(fname, "w")
-    r = open(refname, "w")
-    line = "///////////////////////////////////////////\n"
+  corners = [
+    0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
+    2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
+  ]
+  imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
+  basename = "WALLY-CAUSE"
+  fname = imperaspath + "src/" + basename + ".S"
+  refname = imperaspath + "references/" + basename + ".reference_output"
+  testnum = 0
+
+  # print custom header part
+  f = open(fname, "w")
+  r = open(refname, "w")
+  line = "///////////////////////////////////////////\n"
+  f.write(line)
+  lines="// "+fname+ "\n// " + author + "\n"
+  f.write(lines)
+  line ="// Created " + str(datetime.now()) 
+  f.write(line)
+
+  # insert generic header
+  h = open("../testgen_header.S", "r")
+  for line in h:  
     f.write(line)
-    lines="// "+fname+ "\n// " + author + "\n"
-    f.write(lines)
-    line ="// Created " + str(datetime.now()) 
+
+  # print directed and random test vectors
+  for i in range(0,numrand):
+    writeVectors(storecmd)
+
+
+  # print footer
+  h = open("../testgen_footer.S", "r")
+  for line in h:  
     f.write(line)
 
-    # insert generic header
-    h = open("../testgen_header.S", "r")
-    for line in h:  
-      f.write(line)
-
-    # print directed and random test vectors
-    for a in corners:
-      for b in corners:
-        writeVector(a, b, storecmd)
-    for i in range(0,numrand):
-      a = getrandbits(xlen)
-      b = getrandbits(xlen)
-      writeVector(a, b, storecmd)
-
-
-    # print footer
-    h = open("../testgen_footer.S", "r")
-    for line in h:  
-      f.write(line)
-
-    # Finish
-    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
-    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-    f.write(lines)
-    f.close()
-    r.close()
+  # Finish
+  lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
+  lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
+  f.write(lines)
+  f.close()
+  r.close()
 
 
 
