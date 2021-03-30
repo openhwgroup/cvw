@@ -323,6 +323,11 @@ string tests32i[] = {
   string testsBP64[] = '{
 		       "rv64BP/reg-test", "10000"
 	 };
+
+   string tests64p[] = '{
+             "rv64p/WALLY-CAUSE", "3000"
+   };
+
   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
@@ -341,7 +346,7 @@ string tests32i[] = {
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
   // pick tests based on modes supported
-  initial 
+  initial begin
     if (`XLEN == 64) begin // RV64
       if (TESTSBP) begin
 	      tests = testsBP64;	
@@ -355,6 +360,7 @@ string tests32i[] = {
         if (`A_SUPPORTED) tests = {tests, tests64a};
       end
  //     tests = {tests64a, tests};
+      tests = {tests, tests64p};
     end else begin // RV32
       // *** add the 32 bit bp tests
       tests = {tests32i};
@@ -364,6 +370,10 @@ string tests32i[] = {
       // if (`F_SUPPORTED) tests = {tests32f, tests};
       if (`A_SUPPORTED) tests = {tests, tests32a};
     end
+
+  end
+
+
   string signame, memfilename;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
