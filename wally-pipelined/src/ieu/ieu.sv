@@ -26,39 +26,40 @@
 `include "wally-config.vh"
 
 module ieu (
-  input  logic             clk, reset,
+  input logic 		   clk, reset,
   // Decode Stage interface
-  input  logic [31:0]      InstrD,
-  input  logic             IllegalIEUInstrFaultD, 
-  output logic             IllegalBaseInstrFaultD,
+  input logic [31:0] 	   InstrD,
+  input logic 		   IllegalIEUInstrFaultD, 
+  output logic 		   IllegalBaseInstrFaultD,
   // Execute Stage interface
-  input  logic [`XLEN-1:0] PCE, 
-  input  logic [`XLEN-1:0] PCLinkE,
+  input logic [`XLEN-1:0]  PCE, 
+  input logic [`XLEN-1:0]  PCLinkE,
   output logic [`XLEN-1:0] PCTargetE,
-  output logic             MulDivE, W64E,
-  output logic [2:0]       Funct3E,
+  output logic 		   MulDivE, W64E,
+  output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage interface
-  input  logic             DataMisalignedM,
-  input  logic             DataAccessFaultM,
-  input  logic             SquashSCW,
-  output logic [1:0]       MemRWM,
-  output logic [1:0]       AtomicM,
+  input logic 		   DataMisalignedM,
+  input logic 		   DataAccessFaultM,
+  input logic 		   SquashSCW,
+  output logic [1:0] 	   MemRWM,
+  output logic [1:0] 	   AtomicM,
   output logic [`XLEN-1:0] MemAdrM, WriteDataM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [2:0]       Funct3M,
+  output logic [2:0] 	   Funct3M,
   // Writeback stage
-  input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW,
+  input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  output logic             InstrValidW,
+  output logic 		   InstrValidW,
   // hazards
-  input  logic             StallE, StallM, StallW,
-  input  logic             FlushE, FlushM, FlushW,
-  output logic             LoadStallD, MulDivStallD, CSRRdStallD,
-  output logic             PCSrcE,
+  input logic 		   StallE, StallM, StallW,
+  input logic 		   FlushE, FlushM, FlushW,
+  output logic 		   LoadStallD, MulDivStallD, CSRRdStallD,
+  output logic 		   PCSrcE,
+  input logic 		   DivDoneW,
 
-  output logic             CSRReadM, CSRWriteM, PrivilegedM,
-  output logic             CSRWritePendingDEM
+  output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
+  output logic 		   CSRWritePendingDEM
 );
 
   logic [2:0]  ImmSrcD;
@@ -78,5 +79,6 @@ module ieu (
   controller c(.*);
   datapath   dp(.*);             
   forward    fw(.*);
+
 endmodule
 
