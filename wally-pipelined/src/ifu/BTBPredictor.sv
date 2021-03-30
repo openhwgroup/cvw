@@ -36,7 +36,7 @@ module BTBPredictor
    input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
-   output logic [3:0] 	    InstrClass,
+   output logic [4:0] 	    InstrClass,
    output logic 	    Valid,
    // update
    input logic 		    UpdateEN,
@@ -108,7 +108,7 @@ module BTBPredictor
   // Another optimization may be using a PC relative address.
   // *** need to add forwarding.
 
-  SRAM2P1R1W #(Depth, `XLEN+4) memory(.clk(clk),
+  SRAM2P1R1W #(Depth, `XLEN+5) memory(.clk(clk),
 				      .reset(reset),
 				      .RA1(LookUpPCIndex),
 				      .RD1({{InstrClass, TargetPC}}),
@@ -116,7 +116,7 @@ module BTBPredictor
 				      .WA1(UpdatePCIndex),
 				      .WD1({UpdateInstrClass, UpdateTarget}),
 				      .WEN1(UpdateEN),
-				      .BitWEN1({4'b1111, {`XLEN{1'b1}}})); // *** definitely not right.
+				      .BitWEN1({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
 
 
 endmodule
