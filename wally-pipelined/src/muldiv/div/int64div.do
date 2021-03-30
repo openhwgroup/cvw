@@ -27,7 +27,7 @@ if [file exists work] {
 vlib work
 
 # compile source files
-vlog muxs.sv shifters.sv divide4x64.sv test_int64div.sv
+vlog mux_div.sv shifters_div.sv divide4x64.sv test_int64div.sv
 
 # start and run simulation
 vsim -voptargs=+acc work.tb
@@ -109,6 +109,6 @@ configure wave -rowmargin 4
 configure wave -childrowmargin 2
 
 -- Run the Simulation
-run 138ns
+run 338ns
 
 
