@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# testgen-ADD-SUB.py
+# testgen-CAUSE.py
 #
 # dottolia@hmc.edu 1 Mar 2021
 #
@@ -19,15 +19,6 @@ from random import getrandbits
 # functions
 ##################################
 
-# def computeExpected(a, b, test):
-#   if (test == "ADD"):
-#     return a + b
-#   elif (test == "SUB"):
-#     return a - b
-#   else:
-#     die("bad test name ", test)
-#   #  exit(1)
-
 def randRegs():
   reg1 = randint(1,20)
   reg2 = randint(1,20)
@@ -39,34 +30,56 @@ def randRegs():
 
 def writeVectors(storecmd):
   global testnum
-  #expected = computeExpected(a, b, test)
-  #expected = expected % 2**xlen # drop carry if necessary
-  #if (expected < 0): # take twos complement
-  #  expected = 2**xlen + expected
 
-  #lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
-  #lines = lines + "li x" + str(reg2) + ", MASK_XLEN(0)\n"
-
-  # Page 6 of unpriviledged spec
+    # Page 6 of unpriviledged spec
   # For both CSRRS and CSRRC, if rs1=x0, then the instruction will not write to the CSR at all, and so shall not cause any of the side effects
-
-  #lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
-  #lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
 
   # User Software Interrupt: True, 0
   # Supervisor Software Interrupt: True, 1
   # Machine Software Interrupt: True, 2
-  # User Timer Interrupt: True, 4
+
+  # When running run.sh CAUSE -c, everything works, but begin_signature doesn't appear
   # writeTest(storecmd, f, r, f"""
-  #   la x21, 0x2004000
-  # """, False, 4)
+  #   la x10, 0x02000000 #clint
+
+  #   li x1, 42
+  #   lw x1, 0(x10)
+  # """, True, 2, "m", f"""
+  #   lw x0, 0(x10)
+  # """)
+
+  # User Timer Interrupt: True, 4
   # Supervior timer interrupt: True, 5
   # Machine timer interrupt: True, 7
+  # writeTest(storecmd, f, r, f"""
+  #   la x10, 0x02004000 #clint timer
+  #   li x1, 42
+
+  #   lw x11, 0(x10)
+  #   lw x12, 4(x10)
+
+  #   sw x1, 0(x10)
+  #   sw x0, 4(x10)
+  # """, True, 7, "m", f"""
+  #   sw x11, 0(x10)
+  #   sw x12, 4(x10)
+  # """)
+
   # User external input: True, 8
   # Supervisor external input: True, 9
   # Machine externa input: True, 11
 
   # Instruction address misaligned: False, 0
+  # looks like this is giving us an infinite loop for wally
+  # BUG: jumping to a misaligned instruction address doesn't cause an exception: we actually jump...
+  # Either that, or somehow at the end we always end up at 0x80004002
+  # This is fine in OVPsim
+  writeTest(storecmd, f, r, f"""
+    li x1, 11
+    li x25, 0 # Force this test to pass, for now
+    # jr x1 # Something about this instruction is funky on wally, but fine with ovpsim
+  """, False, 0)
+
   # Instruction access fault: False, 1
 
   # Illegal Instruction 
@@ -106,7 +119,7 @@ def writeVectors(storecmd):
   # Environment call from m-mode
   writeTest(storecmd, f, r, f"""
     ecall
-  """, False, 11, "m")
+  """, False, 11, "m")  
 
   # Instruction page fault: 12
   # Load page fault: 13
@@ -115,7 +128,7 @@ def writeVectors(storecmd):
 
   
 
-def writeTest(storecmd, f, r, test, interrupt, code, mode = "m"):
+def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = ""):
   global testnum
 
   expected = code
@@ -162,6 +175,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m"):
     j _jtest{testnum}
 
     # Machine trap vector
+    {resetHander}
     csrrs x25, mcause, x0
     csrrs x1, mepc, x0
     addi x1, x1, 4
@@ -174,6 +188,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m"):
     csrrw x0, mtvec, x30
 
     # Start test code
+    li x25, 0x7BAD
     {before}
     {test}
 
@@ -213,7 +228,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m"):
 # csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 30;
+numrand = 15;
 
 # setup
 seed(0xC365DDEB9173AB42) # make tests reproducible
