@@ -92,13 +92,15 @@ module testbench();
   assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.*); 
-
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
   // Track names of instructions
   instrTrackerTBPriv it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
+  logic [`XLEN-1:0] PCW;
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
   // initialize tests
   initial
     begin
@@ -226,7 +228,8 @@ module instrTrackerTBPriv(
   output string           InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
-  // flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+  //flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+
 
   instrNameDecTB fdec(InstrF, InstrFName);
   instrNameDecTB ddec(InstrD, InstrDName);

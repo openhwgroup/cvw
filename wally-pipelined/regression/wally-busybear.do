@@ -138,7 +138,7 @@ add wave /testbench_busybear/InstrMName
 #add wave -hex /testbench_busybear/dut/hart/dmem/AdrM
 #add wave -hex /testbench_busybear/dut/hart/dmem/WriteDataM
 #add wave -divider
-add wave -hex /testbench_busybear/dut/hart/ifu/PCW
+add wave -hex /testbench_busybear/PCW
 ##add wave -hex /testbench_busybear/dut/hart/ifu/InstrW
 add wave /testbench_busybear/InstrWName
 #add wave /testbench_busybear/dut/hart/ieu/dp/RegWriteW

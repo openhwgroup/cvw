@@ -125,7 +125,7 @@ add wave -noupdate -expand -group PCS /testbench/dut/hart/PCF
 add wave -noupdate -expand -group PCS /testbench/dut/hart/ifu/PCD
 add wave -noupdate -expand -group PCS /testbench/dut/hart/PCE
 add wave -noupdate -expand -group PCS /testbench/dut/hart/PCM
-add wave -noupdate -expand -group PCS /testbench/dut/hart/ifu/PCW
+add wave -noupdate -expand -group PCS /testbench/PCW
 add wave -noupdate -group {function radix debug} /testbench/functionRadix/function_radix/FunctionAddr
 add wave -noupdate -group {function radix debug} -radix unsigned /testbench/functionRadix/function_radix/ProgramAddrIndex
 add wave -noupdate -group {function radix debug} /testbench/functionRadix/function_radix/reset
