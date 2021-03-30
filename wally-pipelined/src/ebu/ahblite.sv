@@ -41,6 +41,7 @@ module ahblite (
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
   output logic [`XLEN-1:0] InstrRData,
+  output logic             InstrAckF,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] MemPAdrM,
   input  logic             MemReadM, MemWriteM,
@@ -70,7 +71,7 @@ module ahblite (
   output logic [3:0]       HSIZED,
   output logic             HWRITED,
   // Stalls
-  output logic             InstrStall,/*InstrUpdate, */DataStall
+  output logic             /*InstrUpdate, */DataStall
   // *** add a chip-level ready signal as part of handshake
 );
 
@@ -134,12 +135,7 @@ module ahblite (
 
   // stall signals
   assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                        (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
-  // *** Could get finer grained stalling if we distinguish between MMU
-  //     instruction address translation and data address translation
-  assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                         (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
@@ -171,6 +167,7 @@ module ahblite (
   assign #1 MMUReady = (NextBusState == MMUIDLE);
 
   assign InstrRData = HRDATA;
+  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
   assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||

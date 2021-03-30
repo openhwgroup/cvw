@@ -32,6 +32,7 @@ module ifu (
   input  logic             FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
   input  logic [`XLEN-1:0] InstrInF,
+  input  logic             InstrAckF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
