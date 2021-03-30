@@ -1,3 +1,9 @@
+#
+# Written 1 Mar 2021 by Domenico Ottolia (dottolia@hmc.edu)
+#
+# See README.md in this directory for more info
+#
+
 clear
 printf "\n\n#####\nStarting tests for $1\n#####\n\n"
 
