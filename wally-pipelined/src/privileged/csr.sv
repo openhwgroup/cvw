@@ -28,7 +28,7 @@
 
 module csr (
   input  logic             clk, reset,
-  input  logic             FlushW, StallW,
+  input  logic             FlushW, StallD, StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,

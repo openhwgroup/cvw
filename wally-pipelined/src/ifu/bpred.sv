@@ -47,7 +47,7 @@ module bpred
    input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
-   input logic [3:0] 	    InstrClassE,
+   input logic [4:0] 	    InstrClassE,
    // Report branch prediction status
    output logic 	    BPPredWrongE
    );
@@ -55,12 +55,14 @@ module bpred
   logic 		    BTBValidF;
   logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
-  logic [3:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
+  logic [4:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
   logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
   logic 		    TargetWrongE;
   logic 		    FallThroughWrongE;
   logic 		    PredictionDirWrongE;
   logic 		    PredictionPCWrongE;
+  logic 		    PredictionInstrClassWrongE;
+  
   logic [`XLEN-1:0] 	    CorrectPCE;
 
 
@@ -74,7 +76,7 @@ module bpred
 				   .Prediction(BPPredF),
 				   // update
 				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0]),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
 				   .UpdatePrediction(UpdateBPPredE));
 
     end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
@@ -86,7 +88,7 @@ module bpred
 					  .Prediction(BPPredF),
 					  // update
 					  .UpdatePC(PCE),
-					  .UpdateEN(InstrClassE[0]),
+					  .UpdateEN(InstrClassE[0] & ~StallE),
 					  .PCSrcE(PCSrcE),
 					  .UpdatePrediction(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -98,7 +100,7 @@ module bpred
 				   .Prediction(BPPredF),
 				   // update
 				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0]),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
 				   .PCSrcE(PCSrcE),
 				   .UpdatePrediction(UpdateBPPredE));
     end 
@@ -119,16 +121,19 @@ module bpred
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
+  // *** getting to many false positivies from the BTB, we need a partial TAG to reduce this.
   BTBPredictor TargetPredictor(.clk(clk),
 			       .reset(reset),
+			       .*, // Stalls and flushes
 			       .LookUpPC(PCNextF),
 			       .TargetPC(BTBPredPCF),
 			       .InstrClass(BPInstrClassF),
 			       .Valid(BTBValidF),
 			       // update
-			       .UpdateEN(InstrClassE[2] | InstrClassE[1] | InstrClassE[0]),
+			       .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
 			       .UpdatePC(PCE),
 			       .UpdateTarget(PCTargetE),
+			       .UpdateInvalid(PredictionInstrClassWrongE),
 			       .UpdateInstrClass(InstrClassE));
 
   // need to forward when updating to the same address as reading.
@@ -139,9 +144,9 @@ module bpred
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
 			    .reset(reset),
-			    .pop(BPInstrClassF[3]),
+			    .pop(BPInstrClassF[3] & ~StallF),
 			    .popPC(RASPCF),
-			    .push(InstrClassE[3]),
+			    .push(InstrClassE[4] & ~StallE),
 			    .incr(1'b0),
 			    .pushPC(PCLinkE));
 
@@ -188,7 +193,8 @@ module bpred
   assign FallThroughWrongE = PCLinkE != PCD;
   assign PredictionDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
   assign PredictionPCWrongE = PCSrcE ? TargetWrongE : FallThroughWrongE;
-  assign BPPredWrongE = (PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE);
+  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;  
+  assign BPPredWrongE = ((PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE)) | PredictionInstrClassWrongE;
 
   // Update predictors
 

@@ -2,7 +2,7 @@
 // wally-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
-// Modified: 
+// Modified: Brett Mathis
 //
 // Purpose: Specify which features are configured
 //          Macros to determine which modes are supported based on MISA
@@ -28,7 +28,7 @@
 `define XLEN 64
 
 //`define MISA (32'h00000104)
-`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12)
+`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -57,7 +57,7 @@
 `define MEM_VIRTMEM 0
 
 // Address space
-`define RESET_VECTOR 64'h0000000080000000
+`define RESET_VECTOR 64'h0000000000000000
 
 // Bus Interface width
 `define AHBW 64
@@ -66,10 +66,10 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIMBASE   32'h00000000
+`define BOOTTIMBASE   32'h00080000
 `define BOOTTIMRANGE  32'h00003FFF
-`define TIMBASE    32'h80000000
-`define TIMRANGE   32'h000FFFFF
+`define TIMBASE       32'h00000000
+`define TIMRANGE      32'h0007FFFF
 `define CLINTBASE  32'h02000000
 `define CLINTRANGE 32'h0000FFFF
 `define GPIOBASE   32'h10012000
@@ -95,7 +95,7 @@
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
 
-`define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/coremark_bare/BTBPredictor.txt"
-`define BPTYPE "BPGSHARE"
-`define TESTSBP 0
+`define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
+`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
+`define TESTSBP 1
