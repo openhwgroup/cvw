@@ -1,4 +1,3 @@
-`include "../../config/rv64icfd/wally-config.vh"
 
 module fctrl (
   input  logic [6:0] Funct7D,
@@ -8,9 +7,9 @@ module fctrl (
   input  logic [2:0] FrmW,
   output logic       WriteEnD,
   output logic       DivSqrtStartD,
-  output logic [2:0] regSelD,
-  output logic [2:0] writeSelD,
-  output logic [3:0] OpCtrlD,
+  //output logic [2:0] regSelD,
+  output logic [2:0] WriteSelD,
+  output logic [2:0] OpCtrlD,
   output logic       FmtD,
   output logic       WriteIntD);
 
@@ -103,17 +102,11 @@ module fctrl (
   logic isSign;
   assign isSign = ~Funct7D[6] & ~Funct7D[5] & Funct7D[4] & ~Funct7D[3] & ~Funct7D[2];
 
-
-  assign regSelD[2] = isDivSqrt & ~isFMA;
-  assign regSelD[1] = isFMA | isCmp;
-  //AND of Funct7 for sign
-  assign regSelD[0] = isCmp | isSign;
-
   //write select
-  assign writeSelD[2] = isDivSqrt & ~isFMA;
-  assign writeSelD[1] = isFMA | isCmp;
+  assign WriteSelD[2] = isDivSqrt & ~isFMA;
+  assign WriteSelD[1] = isFMA | isCmp;
   //AND of Funct7 for sign
-  assign writeSelD[0] = isCmp | isSign;
+  assign WriteSelD[0] = isCmp | isSign;
 
   //if op is div/sqrt - start div/sqrt
   assign DivSqrtStartD = isDivSqrt & ~isFMA;
@@ -128,13 +121,25 @@ module fctrl (
   //also need to be added later as I find the opcode
   //version I used for this repo
 
-  assign OpCtrlD[3] = 1'b0;
-  //if is positive sign injection OR is precision convert
-  assign OpCtrlD[2] = (isSign & ~FrmW[0]) | (~Funct7D[6] & Funct7D[5] & ~Funct7D[4] & ~Funct7D[3] & ~Funct7D[2] & ~Funct7D[1]);
-  //if is precision convert OR is sign xor 
-  assign OpCtrlD[1] = (isSign & FrmW[1]) | (~Funct7D[6] & Funct7D[5] & ~Funct7D[4] & ~Funct7D[3] & ~Funct7D[2] & ~Funct7D[1]);
-  //if is sqrt OR is sub OR is single-precision cmp OR negation
-  assign OpCtrlD[0] = (isDivSqrt & ~isFMA & Funct7D[6]) | (isAddSub & ~isFMA & Funct7D[2]) | (isCmp & ~isFMA & Funct7D[0]) | (isSign & FrmW[0]);
+  //let's do separate SOP for each type of operation
+//  assign OpCtrlD[3] = 1'b0;
+//
+//
+
+  //add/cvt chooses unsigned conversion here
+  assign OpCtrlD[3] = (isAddSub & Rs2D[0]) | (isFMA & 1'b0) | (isDivSqrt & 1'b0) | (isCmp & 1'b0) | (isSign & 1'b0);
+  //add/cvt chooses FP/int or int/FP conversion 
+  assign OpCtrlD[2] = (isAddSub & (Funct7D[6] & Funct7D[5] & ~Funct7D[4])) | (isFMA & 1'b0) | (isDivSqrt & 1'b0) | (isCmp & 1'b0) | (isSign & 1'b0);
+  //compare chooses equals
+  //sign chooses sgnjx
+  //add/cvt can chooses between abs/neg functions, but they aren't used in the
+  //wally-spec
+  assign OpCtrlD[1] = (isAddSub & 1'b0) | (isFMA & 1'b0) | (isDivSqrt & 1'b0) | (isCmp & FrmW[2]) | (isSign & FrmW[1]);
+  //divide chooses between div/sqrt
+  //compare chooses between LT and LE
+  //sign chooses between sgnj and sgnjn
+  //add/cvt chooses between add/sub or single-precision conversion
+  assign OpCtrlD[0] = (isAddSub & (Funct7D[2] | Funct7D[0])) | (isFMA & 1'b0) | (isDivSqrt & Funct7D[5]) | (isCmp & FrmW[1]) | (isSign & FrmW[0]);
   
   //write to integer source if conv to int occurs
   //AND of Funct7 for int results 

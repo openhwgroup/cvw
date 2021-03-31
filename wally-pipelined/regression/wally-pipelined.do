@@ -42,7 +42,7 @@ vsim workopt
 view wave
 
 -- display input and output signals as hexidecimal values
-do ./wave-dos/default-waves.do
+do ./wave-dos/ahb-waves.do
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
