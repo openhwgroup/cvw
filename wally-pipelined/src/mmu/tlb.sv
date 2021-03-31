@@ -63,6 +63,9 @@ module tlb #(parameter ENTRY_BITS = 3) (
   // Current privilege level of the processeor
   input  [1:0]       PrivilegeModeW,
 
+  // High if the TLB is currently being accessed
+  input              TLBAccess,
+
   // Virtual address input
   input  [`XLEN-1:0] VirtualAddress,
 
@@ -82,6 +85,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
   logic SvMode;
   logic Translate;
 
+  /*
   generate
     if (`XLEN == 32) begin
       assign SvMode = SATP_REGW[31];  // *** change to an enum somehow?
@@ -89,9 +93,10 @@ module tlb #(parameter ENTRY_BITS = 3) (
       assign SvMode = SATP_REGW[63]; // currently just a boolean whether translation enabled
     end
   endgenerate
+  */
   // *** Currently fake virtual memory being on for testing purposes
   // *** DO NOT ENABLE UNLESS TESTING
-  // assign SvMode = 1;
+  assign SvMode = 1;
 
   assign Translate = SvMode & (PrivilegeModeW != `M_MODE);
 
@@ -117,6 +122,8 @@ module tlb #(parameter ENTRY_BITS = 3) (
 
   // Page table entry matching the virtual address
   logic [`XLEN-1:0] PageTableEntry;
+
+  logic             CAMHit;
 
   assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
   assign PageOffset        = VirtualAddress[11:0];
@@ -149,7 +156,8 @@ module tlb #(parameter ENTRY_BITS = 3) (
     end
   endgenerate
 
-  assign TLBMiss = ~TLBHit & ~(TLBWrite | TLBFlush) & Translate;
+  assign TLBHit = CAMHit & TLBAccess;
+  assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
 endmodule
 
 module tlb_ram #(parameter ENTRY_BITS = 3) (
@@ -185,7 +193,7 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   input                    TLBWrite,
   input                    TLBFlush,
   output [ENTRY_BITS-1:0]  VPNIndex,
-  output                   TLBHit
+  output                   CAMHit
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
@@ -220,7 +228,7 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   end
 
   assign VPNIndex = matched_address_comb;
-  assign TLBHit = match_found_comb & ~(TLBWrite | TLBFlush);
+  assign CAMHit = match_found_comb & ~TLBFlush;
 
   initial begin
     for (int i = 0; i < NENTRIES; i++)
@@ -236,6 +244,6 @@ module tlb_rand #(parameter ENTRY_BITS = 3) (
 
   logic [31:0] data;
   assign data = $urandom;
-  assign WriteIndex = data[ENTRY_BITS:0];
+  assign WriteIndex = data[ENTRY_BITS-1:0];
   
 endmodule

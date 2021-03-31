@@ -80,7 +80,7 @@ module ifu (
   // logic  [`XLEN-1:0] PageTableEntryF = '0;
   logic ITLBFlushF = '0;
   // logic ITLBWriteF = '0;
-  tlb #(3) itlb(clk, reset, SATP_REGW, PrivilegeModeW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
+  tlb #(3) itlb(clk, reset, SATP_REGW, PrivilegeModeW, 1'b1, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
     InstrPAdrF, ITLBMissF, ITLBHitF);
 
   // branch predictor signals
@@ -95,7 +95,6 @@ module ifu (
   assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   assign PrivilegedChangePCM = RetM | TrapM;
-
 
   //mux3    #(`XLEN) pcmux(PCPlus2or4F, PCCorrectE, PrivilegedNextPCM, {PrivilegedChangePCM, BPPredWrongE}, UnalignedPCNextF);
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),

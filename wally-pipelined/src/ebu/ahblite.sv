@@ -49,6 +49,7 @@ module ahblite (
   // Signals from MMU
   input  logic [`XLEN-1:0] MMUPAdr,
   input  logic             MMUTranslate, MMUTranslationComplete,
+  input  logic             TrapM,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Return from bus
@@ -104,16 +105,16 @@ module ahblite (
             else if (InstrReadF)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MMUTRANSLATE: if (~HREADY)   NextBusState = MMUTRANSLATE;
-            else                   NextBusState = MMUIDLE;
+            else                   NextBusState = IDLE;
       // *** Could the MMUIDLE state just be the normal idle state?
       // Do we trust MMUTranslate to be high exactly when we need translation?
-      MMUIDLE: if (~MMUTranslationComplete)
-                                   NextBusState = MMUTRANSLATE;
-            else if (AtomicM[1])   NextBusState = ATOMICREAD;
-            else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
-            else if (MemWriteM)    NextBusState = MEMWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
+      // MMUIDLE: if (MMUTranslate)
+      //                              NextBusState = MMUTRANSLATE;
+      //       else if (AtomicM[1])   NextBusState = ATOMICREAD;
+      //       else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
+      //       else if (MemWriteM)    NextBusState = MEMWRITE;
+      //       else if (InstrReadF)   NextBusState = INSTRREAD;
+      //       else                   NextBusState = IDLE;
       ATOMICREAD: if (~HREADY)     NextBusState = ATOMICREAD;
             else                   NextBusState = ATOMICWRITE;
       ATOMICWRITE: if (~HREADY)    NextBusState = ATOMICWRITE;
@@ -133,13 +134,15 @@ module ahblite (
     endcase
 
   // stall signals
-  assign #2 DataStall = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
+  // Note that we need to extend both stalls when MMUTRANSLATE goes to idle,
+  // since translation might not be complete.
+  assign #2 DataStall = ~TrapM && ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                         (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                        (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
+                        (NextBusState == MMUTRANSLATE) || (BusState == MMUTRANSLATE));
   // *** Could get finer grained stalling if we distinguish between MMU
   //     instruction address translation and data address translation
-  assign #1 InstrStall = (NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                         (NextBusState == MMUTRANSLATE) || (NextBusState == MMUIDLE);
+  assign #1 InstrStall = ~TrapM && ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
+                         (NextBusState == MMUTRANSLATE) || (BusState == MMUTRANSLATE));
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
@@ -158,7 +161,7 @@ module ahblite (
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE);
-  // delay write data by one cycle for 
+  // delay write data by one cycle for
   flop #(`XLEN) wdreg(HCLK, WriteData, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
@@ -168,7 +171,7 @@ module ahblite (
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
 
-  assign #1 MMUReady = (NextBusState == MMUIDLE);
+  assign MMUReady = (BusState == MMUTRANSLATE && NextBusState == IDLE);
 
   assign InstrRData = HRDATA;
   assign MMUReadPTE = HRDATA;
