@@ -28,7 +28,6 @@
 
 module testbench();
   parameter DEBUG = 0;
-  parameter TESTSBP = 0;
   
   logic        clk;
   logic        reset;
@@ -321,7 +320,8 @@ string tests32i[] = {
 };
 
   string testsBP64[] = '{
-		       "rv64BP/reg-test", "10000"
+			 "rv64BP/simple", "10000",
+			 "rv64BP/sieve", "1000000"
 	 };
   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
@@ -343,8 +343,8 @@ string tests32i[] = {
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
-      if (TESTSBP) begin
-	      tests = testsBP64;	
+      if(`TESTSBP) begin
+	tests = testsBP64;	
       end else begin 
 	      tests = {tests64i};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
@@ -485,10 +485,11 @@ string tests32i[] = {
     end // always @ (negedge clk)
 
   // track the current function or global label
-  if (DEBUG == 1) begin : functionRadix
-    function_radix function_radix(.reset(reset),
-				  .ProgramAddrMapFile(ProgramAddrMapFile),
-				  .ProgramLabelMapFile(ProgramLabelMapFile));
+  if (DEBUG == 1) begin : FunctionName
+    FunctionName FunctionName(.reset(reset),
+			      .clk(clk),
+			      .ProgramAddrMapFile(ProgramAddrMapFile),
+			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
   // initialize the branch predictor

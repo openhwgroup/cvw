@@ -33,20 +33,24 @@ module BTBPredictor
     )
   (input  logic clk,
    input logic 		    reset,
+   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
-   output logic [3:0] 	    InstrClass,
+   output logic [4:0] 	    InstrClass,
    output logic 	    Valid,
    // update
    input logic 		    UpdateEN,
    input logic [`XLEN-1:0]  UpdatePC,
    input logic [`XLEN-1:0]  UpdateTarget,
-   input logic [3:0] 	    UpdateInstrClass
+   input logic [3:0] 	    UpdateInstrClass,
+   input logic 		    UpdateInvalid
    );
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
   logic [Depth-1:0] 	    LookUpPCIndex, UpdatePCIndex, LookUpPCIndexQ, UpdatePCIndexQ;
+  logic 		    UpdateENQ;
+  
 
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -58,7 +62,7 @@ module BTBPredictor
 
   flopenr #(Depth) UpdatePCIndexReg(.clk(clk),
 				    .reset(reset),
-				    .en(1'b1),
+				    .en(~StallE),
 				    .d(UpdatePCIndex),
 				    .q(UpdatePCIndexQ));
   
@@ -66,32 +70,53 @@ module BTBPredictor
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
-    end else if (UpdateEN) begin
-      ValidBits[UpdatePCIndexQ] <= #1 1'b1;
+    end else 
+    if (UpdateENQ) begin
+      ValidBits[UpdatePCIndexQ] <= #1 ~ UpdateInvalid;
     end
   end
+  assign Valid = ValidBits[LookUpPCIndexQ];
+
+/* -----\/----- EXCLUDED -----\/-----
+
+  regfile2p1r1w #(10, 1) validMem(.clk(clk),
+				  .reset(reset),
+				  .RA1(LookUpPCIndexQ),
+				  .RD1(Valid),
+				  .REN1(1'b1),
+				  .WA1(UpdatePCIndexQ),
+				  .WD1(1'b1),
+				  .WEN1(UpdateEN));
+ -----/\----- EXCLUDED -----/\----- */
+  
+  flopenr #() UpdateENReg(.clk(clk),
+			  .reset(reset),
+			  .en(~StallF),
+			  .d(UpdateEN),
+			  .q(UpdateENQ));
+
 
   flopenr #(Depth) LookupPCIndexReg(.clk(clk),
 				    .reset(reset),
-				    .en(1'b1),
+				    .en(~StallF),
 				    .d(LookUpPCIndex),
 				    .q(LookUpPCIndexQ));
 
-  assign Valid = ValidBits[LookUpPCIndexQ];
+
 
   // the BTB contains the target address.
   // Another optimization may be using a PC relative address.
   // *** need to add forwarding.
 
-  SRAM2P1R1W #(Depth, `XLEN+4) memory(.clk(clk),
+  SRAM2P1R1W #(Depth, `XLEN+5) memory(.clk(clk),
 				      .reset(reset),
 				      .RA1(LookUpPCIndex),
 				      .RD1({{InstrClass, TargetPC}}),
-				      .REN1(1'b1),
+				      .REN1(~StallF),
 				      .WA1(UpdatePCIndex),
 				      .WD1({UpdateInstrClass, UpdateTarget}),
 				      .WEN1(UpdateEN),
-				      .BitWEN1({4'b0000, {`XLEN{1'b1}}})); // *** definitely not right.
+				      .BitWEN1({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
 
 
 endmodule
