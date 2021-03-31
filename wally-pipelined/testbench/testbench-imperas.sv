@@ -354,7 +354,7 @@ string tests32i[] = {
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        //if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
+        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
       end
  //     tests = {tests64a, tests};
     end else begin // RV32
@@ -364,7 +364,7 @@ string tests32i[] = {
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
       if (`A_SUPPORTED) tests = {tests, tests32a};
-      //if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
+      if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
     end
   string signame, memfilename;
 

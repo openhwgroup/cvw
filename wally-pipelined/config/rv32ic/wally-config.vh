@@ -27,7 +27,7 @@
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 32
 
-`define MISA (32'h00000104 | 1 << 12)
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -53,7 +53,7 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
+`define MEM_VIRTMEM 1
 
 // Address space
 `define RESET_VECTOR 32'h80000000

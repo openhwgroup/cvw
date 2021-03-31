@@ -27,46 +27,71 @@
 `include "wally-config.vh"
 `include "wally-constants.vh"
 
-module pagetablewalker (
-  input  logic             clk, reset,
+/* ***
+   TO-DO:
+    - Faults have a timing issue and currently do not work.
+    - Leaf state brings HADDR down to zeros (maybe fixed?)
+    - Complete rv64ic case
+    - Implement better accessed/dirty behavior
+    - Implement read/write/execute checking (either here or in TLB)
+*/
 
+module pagetablewalker (
+  // Control signals
+  input  logic             HCLK, HRESETn,
   input  logic [`XLEN-1:0] SATP_REGW,
 
-  input  logic             MemWriteM,
-  input  logic             ITLBMissF, DTLBMissM,
+  // Signals from TLBs (addresses to translate)
   input  logic [`XLEN-1:0] PCF, MemAdrM,
+  input  logic             ITLBMissF, DTLBMissM,
+  input  logic [1:0]       MemRWM,
 
+  // Outputs to the TLBs (PTEs to write)
   output logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM,
   output logic             ITLBWriteF, DTLBWriteM,
-  // *** handshake to tlbs probably not needed, since stalls take effect
-  output logic             MMUTranslationComplete,
 
-  // Signals from and to ahblite
+  // Signals from ahblite (PTEs from memory)
   input  logic [`XLEN-1:0] MMUReadPTE,
   input  logic             MMUReady,
 
+  // Signals to ahblite (memory addresses to access)
   output logic [`XLEN-1:0] MMUPAdr,
   output logic             MMUTranslate,
+  output logic             MMUTranslationComplete,
 
   // Faults
   output logic             InstrPageFaultM, LoadPageFaultM, StorePageFaultM
 );
 
-  logic                 SvMode;
+  // Internal signals
+  logic                 SvMode, TLBMiss;
   logic [`PPN_BITS-1:0] BasePageTablePPN;
-  logic [`XLEN-1:0]     DirectInstrPTE, DirectMemPTE, TranslationVAdr;
+  logic [`XLEN-1:0]     TranslationVAdr;
+  logic [`XLEN-1:0]     SavedPTE, CurrentPTE;
+  logic [`PA_BITS-1:0]  TranslationPAdr;
+  logic [`PPN_BITS-1:0] CurrentPPN;
+  logic                 MemStore;
 
-  logic [9:0] DirectPTEFlags = {2'b0, 8'b00001111};
+  // PTE Control Bits
+  logic Dirty, Accessed, Global, User,
+        Executable, Writable, Readable, Valid;
+  // PTE descriptions
+  logic ValidPTE, AccessAlert, MegapageMisaligned, BadMegapage, LeafPTE;
 
-  // rv32 temp case
-  logic [`VPN_BITS-1:0] PCPageNumber;
-  logic [`VPN_BITS-1:0] MemAdrPageNumber;
+  // Signals for direct, fake translations. Not part of the final Wally version.
+  logic [`XLEN-1:0]     DirectInstrPTE, DirectMemPTE;
+  logic [9:0]           DirectPTEFlags = {2'b0, 8'b00001111};
+
+  logic [`VPN_BITS-1:0] PCPageNumber, MemAdrPageNumber;
 
   assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
+
+  assign MemStore = MemRWM[0];
 
   assign PCPageNumber = PCF[`VPN_BITS+11:12];
   assign MemAdrPageNumber = MemAdrM[`VPN_BITS+11:12];
 
+  // Create fake page table entries for direct virtual to physical translation
   generate
     if (`XLEN == 32) begin
       assign DirectInstrPTE = {PCPageNumber, DirectPTEFlags};
@@ -77,36 +102,39 @@ module pagetablewalker (
     end
   endgenerate
 
-  //flopenr #(`XLEN) instrpte(clk, reset, ITLBMissF, DirectInstrPTE, PageTableEntryF);
-  //flopenr #(`XLEN)  datapte(clk, reset, DTLBMissM, DirectMemPTE, PageTableEntryM);
+  // Direct translation flops
+  //flopenr #(`XLEN) instrpte(HCLK, ~HRESETn, ITLBMissF, DirectInstrPTE, PageTableEntryF);
+  //flopenr #(`XLEN)  datapte(HCLK, ~HRESETn, DTLBMissM, DirectMemPTE, PageTableEntryM);
 
-  //flopr #(1) iwritesignal(clk, reset, ITLBMissF, ITLBWriteF);
-  //flopr #(1) dwritesignal(clk, reset, DTLBMissM, DTLBWriteM);
+  //flopr #(1) iwritesignal(HCLK, ~HRESETn, ITLBMissF, ITLBWriteF);
+  //flopr #(1) dwritesignal(HCLK, ~HRESETn, DTLBMissM, DTLBWriteM);
 
   // Prefer data address translations over instruction address translations
   assign TranslationVAdr = (DTLBMissM) ? MemAdrM : PCF;
   assign MMUTranslate = DTLBMissM || ITLBMissF;
 
+  // unswizzle PTE bits
+  assign {Dirty, Accessed, Global, User,
+          Executable, Writable, Readable, Valid} = CurrentPTE[7:0];
+  
+  // Assign PTE descriptors common across all XLEN values
+  assign LeafPTE = Executable | Writable | Readable;
+  assign ValidPTE = Valid && ~(Writable && ~Readable);
+  assign AccessAlert = ~Accessed || (MemStore && ~Dirty);
+
   generate
     if (`XLEN == 32) begin
+      logic [9:0] VPN1, VPN0;
+
       assign SvMode = SATP_REGW[31];
 
-      logic [9:0] VPN1 = TranslationVAdr[31:22];
-      logic [9:0] VPN0 = TranslationVAdr[21:12]; // *** could optimize by not passing offset?
-
-      logic [33:0] TranslationPAdr;
-      logic [21:0] CurrentPPN;
-
-      logic Dirty, Accessed, Global, User,
-            Executable, Writable, Readable, Valid;
-      logic ValidPTE, AccessAlert, MegapageMisaligned, BadMegapage, LeafPTE;
-
-      typedef enum {IDLE, LEVEL1, LEVEL0, LEAF, FAULT} statetype;
-      statetype WalkerState, NextWalkerState;
+      typedef enum {IDLE, LEVEL1, LEVEL0, LEAF, FAULT} walker_statetype;
+      walker_statetype WalkerState, NextWalkerState;
 
       // *** Do we need a synchronizer here for walker to talk to ahblite?
-      flopenl #(.TYPE(statetype)) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(.TYPE(walker_statetype)) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
 
+      // State transition logic
       always_comb begin
         case (WalkerState)
           IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL1;
@@ -129,62 +157,59 @@ module pagetablewalker (
         endcase
       end
 
-      // unswizzle PTE bits
-      assign {Dirty, Accessed, Global, User,
-              Executable, Writable, Readable, Valid} = MMUReadPTE[7:0];
 
       // A megapage is a Level 1 leaf page. This page must have zero PPN[0].
       assign MegapageMisaligned = |(CurrentPPN[9:0]);
-      assign LeafPTE = Executable | Writable | Readable;
-      assign ValidPTE = Valid && ~(Writable && ~Readable);
-      assign AccessAlert = ~Accessed || (MemWriteM && ~Dirty);
       assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-      // *** Should translate this flop block into our flop module notation
-      always_ff @(posedge clk, negedge reset)
-        if (reset) begin
-          TranslationPAdr <= '0;
-          PageTableEntryF <= '0;
-          MMUTranslationComplete <= '0;
-          DTLBWriteM <= '0;
-          ITLBWriteF <= '0;
-          InstrPageFaultM <= '0;
-          LoadPageFaultM <= '0;
-          StorePageFaultM <= '0;
-        end else begin
-          // default values
-          TranslationPAdr <= '0;
-          PageTableEntryF <= '0;
-          MMUTranslationComplete <= '0;
-          DTLBWriteM <= '0;
-          ITLBWriteF <= '0;
-          InstrPageFaultM <= '0;
-          LoadPageFaultM <= '0;
-          StorePageFaultM <= '0;
-          case (NextWalkerState)
-            LEVEL1: begin
-              TranslationPAdr <= {BasePageTablePPN, VPN1, 2'b00};
-            end
-            LEVEL0: begin
-              TranslationPAdr <= {CurrentPPN, VPN0, 2'b00};
-            end
-            LEAF: begin
-              PageTableEntryF <= MMUReadPTE;
-              PageTableEntryM <= MMUReadPTE;
-              MMUTranslationComplete <= '1;
-              DTLBWriteM <= DTLBMissM;
-              ITLBWriteF <= ~DTLBMissM;  // Prefer data over instructions
-            end
-            FAULT: begin
-              InstrPageFaultM <= ~DTLBMissM;
-              LoadPageFaultM <= DTLBMissM && ~MemWriteM;
-              StorePageFaultM <= DTLBMissM && MemWriteM;
-            end
-          endcase
-        end
+      assign VPN1 = TranslationVAdr[31:22];
+      assign VPN0 = TranslationVAdr[21:12]; // *** could optimize by not passing offset?
 
-      // Interpret inputs from ahblite
-      assign CurrentPPN = MMUReadPTE[31:10];
+      // Assign combinational outputs
+      always_comb begin
+        // default values
+        assign TranslationPAdr = '0;
+        assign PageTableEntryF = '0;
+        assign PageTableEntryM = '0;
+        assign MMUTranslationComplete = '0;
+        assign DTLBWriteM = '0;
+        assign ITLBWriteF = '0;
+        assign InstrPageFaultM = '0;
+        assign LoadPageFaultM = '0;
+        assign StorePageFaultM = '0;
+
+        case (NextWalkerState)
+          LEVEL1: begin
+            assign TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+          end
+          LEVEL0: begin
+            assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+          end
+          LEAF: begin
+            // Keep physical address alive to prevent HADDR dropping to 0
+            assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            assign PageTableEntryF = CurrentPTE;
+            assign PageTableEntryM = CurrentPTE;
+            assign MMUTranslationComplete = '1;
+            assign DTLBWriteM = DTLBMissM;
+            assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
+          end
+          FAULT: begin
+            assign InstrPageFaultM = ~DTLBMissM;
+            assign LoadPageFaultM = DTLBMissM && ~MemStore;
+            assign StorePageFaultM = DTLBMissM && MemStore;
+          end
+        endcase
+      end
+
+      
+
+      // Capture page table entry from ahblite
+      flopenr #(32) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
+      // *** Evil hack to get CurrentPTE a cycle early before it is saved.
+      //     Todo: Is it evil?
+      mux2 #(32) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
+      assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
       // Assign outputs to ahblite
       // *** Currently truncate address to 32 bits. This must be changed if
@@ -194,27 +219,19 @@ module pagetablewalker (
     end else begin
       assign SvMode = SATP_REGW[63];
 
-      logic [8:0] VPN2 = TranslationVAdr[38:30];
-      logic [8:0] VPN1 = TranslationVAdr[29:21];
-      logic [8:0] VPN0 = TranslationVAdr[20:12]; // *** could optimize by not passing offset?
+      logic [8:0] VPN2, VPN1, VPN0;
 
-      logic [55:0] TranslationPAdr;
-      logic [43:0] CurrentPPN;
+      logic GigapageMisaligned, BadGigapage;
 
-      logic Dirty, Accessed, Global, User,
-            Executable, Writable, Readable, Valid;
-      logic ValidPTE, AccessAlert, GigapageMisaligned, MegapageMisaligned,
-            BadGigapage, BadMegapage, LeafPTE;
-
-      typedef enum {IDLE, LEVEL2, LEVEL1, LEVEL0, LEAF, FAULT} statetype;
-      statetype WalkerState, NextWalkerState;
+      typedef enum {IDLE, LEVEL2, LEVEL1, LEVEL0, LEAF, FAULT} walker_statetype;
+      walker_statetype WalkerState, NextWalkerState;
 
       // *** Do we need a synchronizer here for walker to talk to ahblite?
-      flopenl #(.TYPE(statetype)) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(.TYPE(walker_statetype)) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       always_comb begin
         case (WalkerState)
-          IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL1;
+          IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL2;
                   else                             NextWalkerState = IDLE;
           LEVEL2: if      (~MMUReady)              NextWalkerState = LEVEL2;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL1;
@@ -237,67 +254,65 @@ module pagetablewalker (
         endcase
       end
 
-      // unswizzle PTE bits
-      assign {Dirty, Accessed, Global, User,
-              Executable, Writable, Readable, Valid} = MMUReadPTE[7:0];
-
-      // A megapage is a Level 1 leaf page. This page must have zero PPN[0].
+      // A gigapage is a Level 2 leaf page. This page must have zero PPN[1] and
+      // zero PPN[0]
       assign GigapageMisaligned = |(CurrentPPN[17:0]);
+      // A megapage is a Level 1 leaf page. This page must have zero PPN[0].
       assign MegapageMisaligned = |(CurrentPPN[8:0]);
-      assign LeafPTE = Executable | Writable | Readable;
-      assign ValidPTE = Valid && ~(Writable && ~Readable);
-      assign AccessAlert = ~Accessed || (MemWriteM && ~Dirty);
+
       assign BadGigapage = GigapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
       assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-      // *** Should translate this flop block into our flop module notation
-      always_ff @(posedge clk, negedge reset)
-        if (reset) begin
-          TranslationPAdr <= '0;
-          PageTableEntryF <= '0;
-          MMUTranslationComplete <= '0;
-          DTLBWriteM <= '0;
-          ITLBWriteF <= '0;
-          InstrPageFaultM <= '0;
-          LoadPageFaultM <= '0;
-          StorePageFaultM <= '0;
-        end else begin
-          // default values
-          TranslationPAdr <= '0;
-          PageTableEntryF <= '0;
-          MMUTranslationComplete <= '0;
-          DTLBWriteM <= '0;
-          ITLBWriteF <= '0;
-          InstrPageFaultM <= '0;
-          LoadPageFaultM <= '0;
-          StorePageFaultM <= '0;
-          case (NextWalkerState)
-            LEVEL2: begin
-              TranslationPAdr <= {BasePageTablePPN, VPN2, 3'b00};
-            end
-            LEVEL1: begin
-              TranslationPAdr <= {CurrentPPN, VPN1, 3'b00};
-            end
-            LEVEL0: begin
-              TranslationPAdr <= {CurrentPPN, VPN0, 3'b00};
-            end
-            LEAF: begin
-              PageTableEntryF <= MMUReadPTE;
-              PageTableEntryM <= MMUReadPTE;
-              MMUTranslationComplete <= '1;
-              DTLBWriteM <= DTLBMissM;
-              ITLBWriteF <= ~DTLBMissM;  // Prefer data over instructions
-            end
-            FAULT: begin
-              InstrPageFaultM <= ~DTLBMissM;
-              LoadPageFaultM <= DTLBMissM && ~MemWriteM;
-              StorePageFaultM <= DTLBMissM && MemWriteM;
-            end
-          endcase
-        end
+      assign VPN2 = TranslationVAdr[38:30];
+      assign VPN1 = TranslationVAdr[29:21];
+      assign VPN0 = TranslationVAdr[20:12]; // *** could optimize by not passing offset?
 
-      // Interpret inputs from ahblite
-      assign CurrentPPN = MMUReadPTE[53:10];
+      // *** Should translate this flop block into our flop module notation
+      always_comb begin
+        // default values
+        assign TranslationPAdr = '0;
+        assign PageTableEntryF = '0;
+        assign PageTableEntryM = '0;
+        assign MMUTranslationComplete = '0;
+        assign DTLBWriteM = '0;
+        assign ITLBWriteF = '0;
+        assign InstrPageFaultM = '0;
+        assign LoadPageFaultM = '0;
+        assign StorePageFaultM = '0;
+
+        case (NextWalkerState)
+          LEVEL2: begin
+            assign TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
+          end
+          LEVEL1: begin
+            assign TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+          end
+          LEVEL0: begin
+            assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+          end
+          LEAF: begin
+            // Keep physical address alive to prevent HADDR dropping to 0
+            assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            assign PageTableEntryF = CurrentPTE;
+            assign PageTableEntryM = CurrentPTE;
+            assign MMUTranslationComplete = '1;
+            assign DTLBWriteM = DTLBMissM;
+            assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
+          end
+          FAULT: begin
+            assign InstrPageFaultM = ~DTLBMissM;
+            assign LoadPageFaultM = DTLBMissM && ~MemStore;
+            assign StorePageFaultM = DTLBMissM && MemStore;
+          end
+        endcase
+      end
+
+      // Capture page table entry from ahblite
+      flopenr #(`XLEN) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
+      // *** Evil hack to get CurrentPTE a cycle early before it is saved.
+      //     Todo: Is it evil?
+      mux2 #(`XLEN) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
+      assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
       // Assign outputs to ahblite
       // *** Currently truncate address to 32 bits. This must be changed if
