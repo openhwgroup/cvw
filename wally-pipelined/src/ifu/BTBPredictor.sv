@@ -42,7 +42,7 @@ module BTBPredictor
    input logic 		    UpdateEN,
    input logic [`XLEN-1:0]  UpdatePC,
    input logic [`XLEN-1:0]  UpdateTarget,
-   input logic [3:0] 	    UpdateInstrClass,
+   input logic [4:0] 	    UpdateInstrClass,
    input logic 		    UpdateInvalid
    );
 
@@ -89,7 +89,7 @@ module BTBPredictor
 				  .WEN1(UpdateEN));
  -----/\----- EXCLUDED -----/\----- */
   
-  flopenr #() UpdateENReg(.clk(clk),
+  flopenr #(1) UpdateENReg(.clk(clk),
 			  .reset(reset),
 			  .en(~StallF),
 			  .d(UpdateEN),

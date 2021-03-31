@@ -49,7 +49,11 @@ module bpred
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
    input logic [4:0] 	    InstrClassE,
    // Report branch prediction status
-   output logic 	    BPPredWrongE
+   output logic 	    BPPredWrongE,
+   output logic 	    BPPredDirWrongE,
+   output logic 	    BTBPredPCWrongE,
+   output logic 	    RASPredPCWrongE,
+   output logic 	    BPPredClassNonCFIWrongE
    );
 
   logic 		    BTBValidF;
@@ -59,7 +63,6 @@ module bpred
   logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
   logic 		    TargetWrongE;
   logic 		    FallThroughWrongE;
-  logic 		    PredictionDirWrongE;
   logic 		    PredictionPCWrongE;
   logic 		    PredictionInstrClassWrongE;
   
@@ -172,14 +175,14 @@ module bpred
 			   .q(BPPredE));
 
   // pipeline the class
-  flopenrc #(4) InstrClassRegD(.clk(clk),
+  flopenrc #(5) InstrClassRegD(.clk(clk),
 			       .reset(reset),
 			       .en(~StallD),
 			       .clear(FlushD),
 			       .d(BPInstrClassF),
 			       .q(BPInstrClassD));
 
-  flopenrc #(4) InstrClassRegE(.clk(clk),
+  flopenrc #(5) InstrClassRegE(.clk(clk),
 			       .reset(reset),
 			       .en(~StallE),
 			       .clear(FlushE),
@@ -189,13 +192,40 @@ module bpred
   
 
   // Check the prediction makes execution.
+
+  // first check if the target or fallthrough address matches what was predicted.
   assign TargetWrongE = PCTargetE != PCD;
   assign FallThroughWrongE = PCLinkE != PCD;
-  assign PredictionDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
-  assign PredictionPCWrongE = PCSrcE ? TargetWrongE : FallThroughWrongE;
-  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;  
-  assign BPPredWrongE = ((PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE)) | PredictionInstrClassWrongE;
+  // If the target is taken check the target rather than fallthrough.  The instruction needs to be a branch if PCSrcE is selected
+  // Remember the bpred can incorrectly predict a non cfi instruction as a branch taken.  If the real instruction is non cfi
+  // it must have selected teh fall through.
+  assign PredictionPCWrongE = (PCSrcE  & (|InstrClassE) ? TargetWrongE : FallThroughWrongE);
 
+  // The branch direction also need to checked.
+  // However if the direction is wrong then the pc will be wrong.  This is only relavent to checking the
+  // accuracy of the direciton prediction.
+  assign BPPredDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
+  
+  // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
+  // Also we want to track this in a performance counter.
+  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;
+
+  // We want to output to the instruction fetch if the PC fetched was wrong.  If by chance the predictor was wrong about
+  // the direction or class, but correct about the target we don't have the flush the pipeline.  However we still
+  // need this information to verify the accuracy of the predictors.
+  
+  
+  //assign BPPredWrongE = ((PredictionPCWrongE | BPPredDirWrongE) & (|InstrClassE)) | PredictionInstrClassWrongE;
+
+  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
+
+  // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
+  assign BTBPredPCWrongE = (InstrClassE[4] | InstrClassE[2] | InstrClassE[1]) & PredictionPCWrongE;
+  // similar with RAS
+  assign RASPredPCWrongE = InstrClassE[3] & PredictionPCWrongE;
+  // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
+  assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
+  
   // Update predictors
 
   satCounter2 BPDirUpdate(.BrDir(PCSrcE),

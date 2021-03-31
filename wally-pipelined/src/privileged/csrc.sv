@@ -28,16 +28,20 @@
 `include "wally-config.vh"
 
 module csrc ( 
-    input  logic             clk, reset,
-    input  logic             StallD, StallE, StallM, StallW,
-    input  logic             InstrValidW, LoadStallD, CSRMWriteM, BPPredWrongM,
-    input  logic [3:0]       InstrClassM,
-    input  logic [11:0]      CSRAdrM,
-    input  logic [1:0]       PrivilegeModeW,
-    input  logic [`XLEN-1:0] CSRWriteValM,
-    input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input logic 	     clk, reset,
+    input logic 	     StallD, StallE, StallM, StallW,
+    input logic 	     InstrValidW, LoadStallD, CSRMWriteM,
+    input logic 	     BPPredDirWrongM,
+    input logic 	     BTBPredPCWrongM,
+    input logic 	     RASPredPCWrongM,
+    input logic 	     BPPredClassNonCFIWrongM,
+    input logic [4:0] 	     InstrClassM,
+    input logic [11:0] 	     CSRAdrM,
+    input logic [1:0] 	     PrivilegeModeW,
+    input logic [`XLEN-1:0]  CSRWriteValM,
+    input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
     output logic [`XLEN-1:0] CSRCReadValM,
-    output logic             IllegalCSRCAccessM);
+    output logic 	     IllegalCSRCAccessM);
 
     // create Counter arrays to store address of each counter 
     integer MHPMCOUNTER [`COUNTERS:0];
@@ -64,9 +68,14 @@ module csrc (
     assign MCOUNTEN[1] = 1'b0;
     assign MCOUNTEN[2] = InstrValidW & ~StallW;
     assign MCOUNTEN[3] = LoadStallD & ~StallD;
-    assign MCOUNTEN[4] = BPPredWrongM & ~StallM;
+    assign MCOUNTEN[4] = BPPredDirWrongM & ~StallM;
     assign MCOUNTEN[5] = InstrClassM[0] & ~StallM;
-    assign MCOUNTEN[`COUNTERS:6] = 0; 
+    assign MCOUNTEN[6] = BTBPredPCWrongM & ~StallM;
+    assign MCOUNTEN[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & ~StallM;
+    assign MCOUNTEN[8] = RASPredPCWrongM & ~StallM;
+    assign MCOUNTEN[9] = InstrClassM[3] & ~StallM;
+    assign MCOUNTEN[10] = BPPredClassNonCFIWrongM & ~StallM;
+    assign MCOUNTEN[`COUNTERS:11] = 0; 
 
     genvar j;       
     generate

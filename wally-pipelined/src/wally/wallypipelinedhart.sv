@@ -111,8 +111,13 @@ module wallypipelinedhart (
   logic             DataStall, InstrStall;
   logic             InstrAckD, MemAckW;
 
-  logic             BPPredWrongE, BPPredWrongM;
-  logic [3:0]       InstrClassM;
+  logic             BPPredWrongE;
+  logic 	    BPPredDirWrongM;
+  logic 	    BTBPredPCWrongM;
+  logic 	    RASPredPCWrongM;
+  logic 	    BPPredClassNonCFIWrongM;
+
+  logic [4:0]       InstrClassM;
   
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
