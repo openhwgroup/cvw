@@ -85,7 +85,6 @@ module tlb #(parameter ENTRY_BITS = 3) (
   logic SvMode;
   logic Translate;
 
-  /*
   generate
     if (`XLEN == 32) begin
       assign SvMode = SATP_REGW[31];  // *** change to an enum somehow?
@@ -93,10 +92,9 @@ module tlb #(parameter ENTRY_BITS = 3) (
       assign SvMode = SATP_REGW[63]; // currently just a boolean whether translation enabled
     end
   endgenerate
-  */
   // *** Currently fake virtual memory being on for testing purposes
   // *** DO NOT ENABLE UNLESS TESTING
-  assign SvMode = 1;
+  // assign SvMode = 1;
 
   assign Translate = SvMode & (PrivilegeModeW != `M_MODE);
 
