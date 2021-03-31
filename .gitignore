@@ -15,3 +15,4 @@ wlft*
 /imperas-riscv-tests/FunctionRadix_64.addr
 /imperas-riscv-tests/FunctionRadix.addr
 /imperas-riscv-tests/ProgramMap.txt
+/wally-pipelined/busybear-testgen/gdbcombined.txt
