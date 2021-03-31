@@ -55,7 +55,7 @@ module RASPredictor
   // may have to handle a push and an incr at the same time.
   // *** what happens if jal is executing and there is a return being flushed in Decode?
 
-  flopenr #(StackSize) PTR(.clk(clk),
+  flopenr #(Depth) PTR(.clk(clk),
 			   .reset(reset),
 			   .en(CounterEn),
 			   .d(PtrD),

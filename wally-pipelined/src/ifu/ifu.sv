@@ -27,14 +27,14 @@
 `include "wally-config.vh"
 
 module ifu (
-  input  logic             clk, reset,
-  input  logic             StallF, StallD, StallE, StallM, StallW,
-  input  logic             FlushF, FlushD, FlushE, FlushM, FlushW,
+  input logic 		   clk, reset,
+  input logic 		   StallF, StallD, StallE, StallM, StallW,
+  input logic 		   FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
-  input  logic [`XLEN-1:0] InstrInF,
+  input logic [`XLEN-1:0]  InstrInF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
-  output logic             InstrReadF,
+  output logic 		   InstrReadF,
   // Decode  
   // Execute
   output logic [`XLEN-1:0] PCLinkE,
@@ -47,23 +47,26 @@ module ifu (
   input logic [`XLEN-1:0]  PrivilegedNextPCM, 
   output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
-  output logic [3:0] InstrClassM,
-  output logic BPPredWrongM,
+  output logic [4:0] 	   InstrClassM,
+  output logic 		   BPPredDirWrongM,
+  output logic 		   BTBPredPCWrongM,
+  output logic 		   RASPredPCWrongM,
+  output logic 		   BPPredClassNonCFIWrongM,
   // Writeback
   // output logic [`XLEN-1:0] PCLinkW,
   // Faults
-  input  logic             IllegalBaseInstrFaultD,
-  output logic             IllegalIEUInstrFaultD,
-  output logic             InstrMisalignedFaultM,
+  input logic 		   IllegalBaseInstrFaultD,
+  output logic 		   IllegalIEUInstrFaultD,
+  output logic 		   InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM,
   // TLB management
-  input logic  [1:0]       PrivilegeModeW,
-  input logic  [`XLEN-1:0] PageTableEntryF,
-  input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              ITLBWriteF, // ITLBFlushF,
-  output logic             ITLBMissF, ITLBHitF,
+  input logic [1:0] 	   PrivilegeModeW,
+  input logic [`XLEN-1:0]  PageTableEntryF,
+  input logic [`XLEN-1:0]  SATP_REGW,
+  input logic 		   ITLBWriteF, // ITLBFlushF,
+  output logic 		   ITLBMissF, ITLBHitF,
   // bogus
-  input  logic [15:0] rd2
+  input logic [15:0] 	   rd2
 
 );
 
@@ -135,7 +138,11 @@ module ifu (
 	      .PCD(PCD),
 	      .PCLinkE(PCLinkE),
 	      .InstrClassE(InstrClassE),
-	      .BPPredWrongE(BPPredWrongE));
+	      .BPPredWrongE(BPPredWrongE),
+ 	      .BPPredDirWrongE(BPPredDirWrongE),
+ 	      .BTBPredPCWrongE(BTBPredPCWrongE),
+ 	      .RASPredPCWrongE(RASPredPCWrongE),
+ 	      .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
   // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
   assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
 
@@ -216,12 +223,12 @@ module ifu (
 			       .d(InstrClassE),
 			       .q(InstrClassM));
 
-  flopenrc #(1) BPPredWrongRegM(.clk(clk),
+  flopenrc #(4) BPPredWrongRegM(.clk(clk),
 			       .reset(reset),
 			       .en(~StallM),
 			       .clear(FlushM),
-			       .d(BPPredWrongE),
-			       .q(BPPredWrongM));
+			       .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
+			       .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or
