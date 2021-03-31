@@ -310,6 +310,7 @@ module testbench_busybear();
   `define CSRM dut.hart.priv.csr.genblk1.csrm
   `define CSRS dut.hart.priv.csr.genblk1.csrs.genblk1
 
+  /*
   //`CHECK_CSR(FCSR)
   `CHECK_CSR2(MCAUSE, `CSRM)
   `CHECK_CSR(MCOUNTEREN)
@@ -335,6 +336,7 @@ module testbench_busybear();
   `CHECK_CSR(SSTATUS)
   `CHECK_CSR2(STVAL, `CSRS)
   `CHECK_CSR(STVEC)
+  */
 
   initial begin //this is temporary until the bug can be fixed!!!
     #11130100;
