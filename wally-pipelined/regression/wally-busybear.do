@@ -26,7 +26,7 @@ vlib work-busybear
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog +incdir+../config/busybear ../testbench/*.sv ../src/*/*.sv -suppress 2583
+vlog +incdir+../config/busybear ../testbench/testbench-busybear.sv ../src/*/*.sv -suppress 2583
 
 
 # start and run simulation
