@@ -92,6 +92,7 @@ module wallypipelinedhart (
 
   // memory management unit signals
   logic             ITLBWriteF, DTLBWriteM;
+  logic             ITLBFlushF, DTLBFlushM;
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] SATP_REGW;
