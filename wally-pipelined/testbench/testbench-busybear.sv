@@ -145,7 +145,7 @@ module testbench_busybear();
   integer regNumExpected;
   logic [`XLEN-1:0] PCW;
   
-  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
 
   genvar i;
   generate
@@ -484,7 +484,6 @@ module testbench_busybear();
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.InstrM, InstrW);
   instrNameDecTB dec(dut.hart.ifu.ic.InstrF, InstrFName);
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
