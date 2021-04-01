@@ -41,12 +41,13 @@ module globalHistoryPredictor
    input logic [1:0] 	   UpdatePrediction
    
    );
-   logic [k-1:0] GHRF, GHRD, GHRE;
+   logic [k-1:0] GHRF, GHRD, GHRE, GHRENext;
+   assign GHRENext = {PCSrcE, GHRE[k-1:1]}; 
 
     flopenr #(k) GlobalHistoryRegister(.clk(clk),
             .reset(reset),
             .en(UpdateEN),
-            .d({PCSrcE, GHRF[k-1:1] }),
+            .d(GHRENext),
             .q(GHRF));
 
 
@@ -66,8 +67,8 @@ module globalHistoryPredictor
 				.reset(reset),
 				.RA1(GHRF),
 				.RD1(PredictionMemory),
-				.REN1(1'b1),
-				.WA1(GHRE),
+				.REN1(~StallF),
+				.WA1(GHRENext),
 				.WD1(UpdatePrediction),
 				.WEN1(UpdateEN),
 				.BitWEN1(2'b11));
