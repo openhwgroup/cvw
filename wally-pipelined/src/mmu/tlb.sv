@@ -126,9 +126,6 @@ module tlb #(parameter ENTRY_BITS = 3) (
   assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
   assign PageOffset        = VirtualAddress[11:0];
 
-  // Choose a read or write location to the entry list
-  mux2 #(3) indexmux(VPNIndex, WriteIndex, TLBWrite, EntryIndex);
-
   // Currently use random replacement algorithm
   tlb_rand rdm(.*);
 
@@ -160,7 +157,8 @@ endmodule
 
 module tlb_ram #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,
-  input  [ENTRY_BITS-1:0] EntryIndex,
+  input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from
+  input  [ENTRY_BITS-1:0] WriteIndex,
   input  [`XLEN-1:0]      PageTableEntryWrite,
   input                   TLBWrite,
 
@@ -171,10 +169,10 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
 
   logic [`XLEN-1:0] ram [0:NENTRIES-1];
   always @(posedge clk) begin
-    if (TLBWrite) ram[EntryIndex] <= PageTableEntryWrite;
+    if (TLBWrite) ram[WriteIndex] <= PageTableEntryWrite;
   end
 
-  assign PageTableEntry = ram[EntryIndex];
+  assign PageTableEntry = ram[VPNIndex];
     
   initial begin
     for (int i = 0; i < NENTRIES; i++)
