@@ -28,7 +28,7 @@
 `define XLEN 64
 
 //`define MISA (32'h00000104)
-`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12)
+`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
