@@ -26,7 +26,7 @@
 
 `include "wally-config.vh"
 
-module rodirectmappedmem #(parameter LINESIZE = 256, parameter NUMLINES = 512, parameter WORDSIZE = `XLEN) (
+module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, parameter WORDSIZE = `XLEN) (
     // Pipeline stuff
     input  logic clk,
     input  logic reset,
@@ -44,50 +44,76 @@ module rodirectmappedmem #(parameter LINESIZE = 256, parameter NUMLINES = 512, p
     output logic                DataValid
 );
 
-    localparam integer SETWIDTH    = $clog2(NUMLINES);
-    localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
-    localparam integer TAGWIDTH    = `XLEN-SETWIDTH-OFFSETWIDTH;
+    // Various compile-time constants
+    localparam integer WORDWIDTH = $clog2(WORDSIZE);
+    localparam integer LINEWIDTH = $clog2(LINESIZE/8);
+    localparam integer OFFSETWIDTH = $clog2(LINESIZE) - WORDWIDTH;
+    localparam integer SETWIDTH = $clog2(NUMLINES);
+    localparam integer TAGWIDTH = $clog2(`XLEN) - $clog2(LINESIZE) - SETWIDTH;
 
-    logic [NUMLINES-1:0][WORDSIZE-1:0]  LineOutputs;
-    logic [NUMLINES-1:0]                ValidOutputs;
-    logic [NUMLINES-1:0][TAGWIDTH-1:0]  TagOutputs;
-    logic [OFFSETWIDTH-1:0]             WordSelect;
-    logic [`XLEN-1:0]                   ReadPAdr;
-    logic [SETWIDTH-1:0]                ReadSet, WriteSet;
-    logic [TAGWIDTH-1:0]                ReadTag, WriteTag;
+    // Machinery to read from and write to the correct addresses in memory
+    logic [`XLEN-1:0]       ReadPAdr;
+    logic [OFFSETWIDTH-1:0] ReadOffset, WriteOffset;
+    logic [SETWIDTH-1:0]    ReadSet, WriteSet;
+    logic [TAGWIDTH-1:0]    ReadTag, WriteTag;
 
-    // Swizzle bits to get the offset, set, and tag out of the read and write addresses
+    // Machinery to check if a given read is valid and is the desired value
+    logic [TAGWIDTH-1:0]    DataTag;
+    logic [NUMLINES-1:0]    ValidOut, NextValidOut;
+
+    // Assign the read and write addresses in cache memory
     always_comb begin
-        // Read address
-        assign WordSelect = ReadLowerAdr[OFFSETWIDTH-1:0];
+        assign ReadOffset = ReadLowerAdr[WORDWIDTH+OFFSETWIDTH-1:WORDWIDTH];
         assign ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
-        assign ReadSet = ReadPAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
-        assign ReadTag = ReadPAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
-        // Write address
-        assign WriteSet = WritePAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
-        assign WriteTag = WritePAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
+        assign ReadSet = ReadPAdr[LINEWIDTH+SETWIDTH-1:LINEWIDTH];
+        assign ReadTag = ReadPAdr[`XLEN-1:LINEWIDTH+SETWIDTH];
+
+        assign WriteOffset = WritePAdr[WORDWIDTH+OFFSETWIDTH-1:WORDWIDTH];
+        assign WriteSet = WritePAdr[LINEWIDTH+SETWIDTH-1:LINEWIDTH];
+        assign WriteTag = WritePAdr[`XLEN-1:LINEWIDTH+SETWIDTH];
     end
 
-    genvar i;
-    generate
-        for (i=0; i < NUMLINES; i++) begin
-            rocacheline #(LINESIZE, TAGWIDTH, WORDSIZE) lines (
-                .*,
-                .WriteEnable(WriteEnable & (WriteSet == i)),
-                .WriteData(WriteLine),
-                .WriteTag(WriteTag),
-                .DataWord(LineOutputs[i]),
-                .DataTag(TagOutputs[i]),
-                .DataValid(ValidOutputs[i])
-            );
-        end
-    endgenerate
+    SRAM2P1R1W #(.Depth(OFFSETWIDTH), .Width(WORDSIZE)) cachemem (
+        .*,
+        .RA1(ReadOffset),
+        .RD1(DataWord),
+        .REN1(1'b1),
+        .WA1(WriteOffset),
+        .WD1(WriteSet),
+        .WEN1(WriteEnable),
+        .BitWEN1(0)
+    );
 
-    // Get the data and valid out of the lines
+    SRAM2P1R1W #(.Depth(OFFSETWIDTH), .Width(TAGWIDTH)) cachetags (
+        .*,
+        .RA1(ReadOffset),
+        .RD1(DataTag),
+        .REN1(1'b1),
+        .WA1(WriteOffset),
+        .WD1(WriteTag),
+        .WEN1(WriteEnable),
+        .BitWEN1(0)
+    );
+
+    // Correctly handle the valid bits
     always_comb begin
-        assign DataWord = LineOutputs[ReadSet];
-        assign DataValid = ValidOutputs[ReadSet] & (TagOutputs[ReadSet] == ReadTag);
+        if (WriteEnable) begin
+            assign NextValidOut = {NextValidOut[NUMLINES-1:WriteSet+1], 1'b1, NextValidOut[WriteSet-1:0]};
+        end else begin
+            assign NextValidOut = ValidOut;
+        end
+    end
+    always_ff @(posedge clk, reset, flush) begin
+        if (reset || flush) begin
+            ValidOut <= {NUMLINES{1'b0}};
+        end else begin
+            ValidOut <= NextValidOut;
+        end
+    end
+
+    // Determine if the line coming out is valid and matches the desired data
+    always_comb begin
+        assign DataValid = ValidOut[ReadSet] && (DataTag == ReadTag);
     end
 
 endmodule
-
