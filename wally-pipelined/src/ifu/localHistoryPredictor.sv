@@ -44,7 +44,7 @@ module localHistoryPredictor
    );
 
    logic [2**m-1:0][k-1:0] LHRNextF;
-   logic [k-1:0]       LHRD, LHRE, LHRENext, ForwardLHRNext;
+   logic [k-1:0]       LHRF, LHRD, LHRE, LHRENext, ForwardLHRNext;
    logic [m-1:0] 	   LookUpPCIndex, UpdatePCIndex;
    logic [1:0] 		   PredictionMemory;
    logic 		   DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
@@ -67,7 +67,7 @@ module localHistoryPredictor
 
 genvar index;
 generate
-    for (index = 0; index < 2**m; index = index +1) begin:index
+    for (index = 0; index < 2**m; index = index +1) begin
       
         flopenr #(k) LocalHistoryRegister(.clk(clk),
                 .reset(reset),
