@@ -37,7 +37,7 @@ module globalHistoryPredictor
    output logic [1:0] 	   Prediction,
    // update
    input logic [`XLEN-1:0] UpdatePC,
-   input logic 		   UpdateEN, PCSrcE, /// *** need to add as input from bpred.sv 
+   input logic 		   UpdateEN, PCSrcE, 
    input logic [1:0] 	   UpdatePrediction
    
    );
@@ -55,11 +55,8 @@ module globalHistoryPredictor
   logic [1:0] 		   PredictionMemory;
   logic 		   DoForwarding, DoForwardingF;
   logic [1:0] 		   UpdatePredictionF;
-  
-  // for gshare xor the PC with the GHR 
-  // TODO: change in sram memory2 module
-  // assign UpdatePCIndex = GHRE ^ UpdatePC;
-  //  assign LookUpPCIndex = LookUpPC ^ GHR;  
+ 
+
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // GHR referes to the address that the past k branches points to in the prediction stage 
   // GHRE refers to the address that the past k branches points to in the exectution stage
