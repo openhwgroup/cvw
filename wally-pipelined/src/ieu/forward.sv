@@ -30,7 +30,7 @@ module forward(
   input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
   input logic 	     MemReadE, MulDivE, CSRReadE,
   input logic 	     RegWriteM, RegWriteW,
-  input logic 	     DivDoneW,
+  input logic 	     DivDoneE, DivBusyE,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
   output logic 	     LoadStallD, MulDivStallD, CSRRdStallD
@@ -50,7 +50,7 @@ module forward(
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
    assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
-   assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)) | MulDivE&~DivDoneW; // *** extend with stalls for divide
+   assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)) | MulDivE | DivBusyE; // *** extend with stalls for divide
    assign CSRRdStallD = CSRReadE & ((Rs1D == RdE) | (Rs2D == RdE));
 
 endmodule

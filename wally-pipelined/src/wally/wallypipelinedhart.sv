@@ -84,7 +84,8 @@ module wallypipelinedhart (
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
   logic        LoadStallD, MulDivStallD, CSRRdStallD;
-   logic       DivDoneW;   
+   logic       DivDoneE;
+   logic       DivBusyE;   
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;

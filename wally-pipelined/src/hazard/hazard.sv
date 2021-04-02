@@ -27,12 +27,12 @@
 
 module hazard(
   // Detect hazards
-  input  logic       BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
-  input  logic       LoadStallD, MulDivStallD, CSRRdStallD,
-  input  logic       InstrStall, DataStall, ICacheStallF,
+  input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
+  input logic  LoadStallD, MulDivStallD, CSRRdStallD,
+  input logic  InstrStall, DataStall, ICacheStallF,
   // Stall & flush outputs
-  output logic       StallF, StallD, StallE, StallM, StallW,
-  output logic       FlushF, FlushD, FlushE, FlushM, FlushW
+  output logic StallF, StallD, StallE, StallM, StallW,
+  output logic FlushF, FlushD, FlushE, FlushM, FlushW
 );
 
   logic BranchFlushDE;
@@ -75,8 +75,8 @@ module hazard(
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
   assign FlushF = BPPredWrongE;
-  assign FlushD = FirstUnstalledD || BranchFlushDE;  //  PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
-  assign FlushE = FirstUnstalledE || BranchFlushDE; //LoadStallD | PCSrcE | RetM | TrapM;
+  assign FlushD = FirstUnstalledD || BranchFlushDE;  // PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
+  assign FlushE = FirstUnstalledE || BranchFlushDE;  // LoadStallD | PCSrcE | RetM | TrapM;
   assign FlushM = FirstUnstalledM || RetM || TrapM;
   assign FlushW = FirstUnstalledW | TrapM;
 endmodule
