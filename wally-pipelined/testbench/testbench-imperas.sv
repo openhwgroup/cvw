@@ -54,9 +54,9 @@ module testbench();
                     "rv64m/I-MULH-01", "3000",
                     "rv64m/I-MULHSU-01", "3000",
                     "rv64m/I-MULHU-01", "3000",
-                    "rv64m/I-MULW-01", "3000"
+                    "rv64m/I-MULW-01", "3000",
 //                    "rv64m/I-DIV-01", "3000",
-//                    "rv64m/I-DIVU-01", "3000"
+                    "rv64m/I-DIVU-01", "3000"
  //                   "rv64m/I-DIVUW-01", "3000",
  //                   "rv64m/I-DIVW-01", "3000",
 //                    "rv64m/I-REM-01", "3000",

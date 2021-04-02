@@ -36,7 +36,8 @@ module muldiv (
 	       // Writeback stage
 	       output logic [`XLEN-1:0] MulDivResultW,
 	       // Divide Done
-	       output logic 		DivDoneW, 
+	       output logic 		DivDoneE,
+	       output logic 		DivBusyE, 
 	       // hazards
 	       input logic 		StallM, StallW, FlushM, FlushW 
 	       );
@@ -47,11 +48,17 @@ module muldiv (
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
 	 logic [`XLEN*2-1:0] ProdE;
+	 
+	 logic 		     DivStartE;
+	 logic 		     startDivideE;
 
 	 // Multiplier
 	 mul mul(.*);
 	 // Divide
-	 div div (QuotE, RemE, DivDoneE, div0error, SrcAE, SrcBE, clk, reset, MulDivE);	 
+	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, SrcAE, SrcBE, clk, reset, startDivideE);
+
+	 // Added for debugging of start signal for divide
+	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
 
 	 // Select result
 	 always_comb
@@ -64,6 +71,19 @@ module muldiv (
              3'b101: PrelimResultE = QuotE;
              3'b110: PrelimResultE = RemE;
              3'b111: PrelimResultE = RemE;
+           endcase // case (Funct3E)
+
+	 // Start Divide process
+	 always_comb
+           case (Funct3E)
+             3'b000: DivStartE = 1'b0;
+             3'b001: DivStartE = 1'b0;
+             3'b010: DivStartE = 1'b0;
+             3'b011: DivStartE = 1'b0;
+             3'b100: DivStartE = 1'b1;
+             3'b101: DivStartE = 1'b1;
+             3'b110: DivStartE = 1'b1;
+             3'b111: DivStartE = 1'b1;
            endcase
 	 
 	 // Handle sign extension for W-type instructions
