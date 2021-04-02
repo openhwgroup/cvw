@@ -39,7 +39,7 @@ module muldiv (
 	       output logic 		DivDoneE,
 	       output logic 		DivBusyE, 
 	       // hazards
-	       input logic 		StallM, StallW, FlushM, FlushW 
+	       input logic 		StallE, StallM, StallW, FlushM, FlushW 
 	       );
 
    generate
@@ -52,17 +52,39 @@ module muldiv (
 	 logic 		     DivStartE;
 	 logic 		     startDivideE;
 
+	logic 		     enable_q, gclk;
+
+	logic [2:0] 	     Funct3E_Q;
+
+
 	 // Multiplier
 	 mul mul(.*);
 	 // Divide
-	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, SrcAE, SrcBE, clk, reset, startDivideE);
+
+	// *** replace this clock gater
+	always @(~clk) begin
+	  enable_q <= ~StallM;
+	end
+	assign gclk = enable_q & clk;
+	
+	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, SrcAE, SrcBE, gclk, reset, startDivideE);
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
 
+	// capture the start control signals since they are not held constant.
+	flopenrc #(3) funct3ereg (.d(Funct3E),
+			       .q(Funct3E_Q),
+			       .en(DivStartE),
+			       .clear(DivDoneE),
+			       .reset(reset),
+			       .clk(clk));
+	
+
 	 // Select result
 	 always_comb
-           case (Funct3E)
+//           case (DivDoneE ? Funct3E_Q : Funct3E)
+           case (Funct3E)	   
              3'b000: PrelimResultE = ProdE[`XLEN-1:0];
              3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
              3'b010: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
