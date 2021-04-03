@@ -55,6 +55,7 @@ module icache(
     // Buffer the last read, for ease of accessing it again
     logic             LastReadDataValidF;
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
+    logic [`XLEN-1:0] LastCyclePCPF;
 
     // instruction for NOP
     logic [31:0]      nop = 32'h00000013;
@@ -80,15 +81,17 @@ module icache(
     flopenr #(1)     lastReadDataVFlop(clk, reset, InstrReadF & ~StallF, 1'b1, LastReadDataValidF);
     flopenr #(`XLEN) lastReadAdrFlop(clk, reset, InstrReadF & ~StallF, InstrPAdrF, LastReadAdrF);
 
+    flopenr #(`XLEN) rememberPCPFFlop(clk, reset, ~StallF, PCPF, LastCyclePCPF);
+
     // Decide which address needs to be fetched and sent out over InstrPAdrF
     // If the requested address fits inside one read from memory, we fetch that
     // address, adjusted to the bit width. Otherwise, we request the lower word
     // and then the upper word, in that order.
     generate
         if (`XLEN == 32) begin
-            assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[31:2], 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
+            assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {LastCyclePCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
         end else begin
-            assign InstrPAdrF = PCPF[2] ? (PCPF[1] ? ((DelaySideF & ~CompressedF) ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000}) : {PCPF[63:3], 3'b000};
+            assign InstrPAdrF = (PCPF[2] && PCPF[1] && (DelaySideF & ~CompressedF)) ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000};
         end
     endgenerate
 
