@@ -9,7 +9,7 @@
 
 /////////////////////////////////////////////////////////////////////////////
 module flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
-			 psign,  zsign, xzero, yzero, vbits,
+			 psign,  zsign, xzero, yzero, zzero, vbits, killprod,
 			 inf, nan, invalid, overflow, underflow, inexact);
 /////////////////////////////////////////////////////////////////////////////
 
@@ -26,6 +26,8 @@ module flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
 	input				zsign; 		// Sign of z
 	input				xzero;		// x = 0
 	input				yzero;		// y = 0
+	input				zzero;		// y = 0
+	input				killprod;
 	input     	[1:0]  		vbits;		// R and S bits of result
 	output				inf;		// Some	source is Inf
 	output				nan;		// Some	source is NaN
@@ -73,8 +75,7 @@ module flag(xnan, ynan, znan, xinf, yinf, zinf, prodof, sumof, sumuf,
 	//   1) Any input is denormalized
 	//   2)  Output would be denormalized or smaller
 
-	assign underflow = (sumuf && ~inf && ~prodinf && ~nan);
-
+	assign underflow = (sumuf && ~inf && ~prodinf && ~nan) || (killprod & zzero & ~(yzero | xzero));
 
 	// Set the inexact flag for the following cases:
 	//   1) Multiplication inexact

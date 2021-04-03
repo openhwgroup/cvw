@@ -360,7 +360,7 @@ string tests32i[] = {
         if (`A_SUPPORTED) tests = {tests, tests64a};
       end
  //     tests = {tests64a, tests};
-      tests = {tests, tests64p};
+      // tests = {tests, tests64p};
     end else begin // RV32
       // *** add the 32 bit bp tests
       tests = {tests32i};
