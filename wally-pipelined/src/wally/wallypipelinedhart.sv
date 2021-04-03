@@ -88,8 +88,13 @@ module wallypipelinedhart (
    logic       DivBusyE;   
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
+  logic       DivDoneW;  
   logic       FloatRegWriteW;
   logic       SquashSCW;
+  logic [31:0]      FSROutW;
+  logic             DivSqrtDoneE;
+  logic             FInvalInstrD;
+  logic [`XLEN-1:0] FPUResultW;
 
   // memory management unit signals
   logic             ITLBWriteF, DTLBWriteM;
@@ -144,16 +149,17 @@ module wallypipelinedhart (
 
  
   muldiv mdu(.*); // multiply and divide unit
- /*  fpu fpu(.*); // floating point unit
-  */
+  
   hazard     hzu(.*);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);
+  
 
+  fpu fpu(.*); // floating point unit
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW
-  assign SetFflagsM = 0;
-  assign FloatRegWriteW = 0;
+  //assign SetFflagsM = 0;
+  //assign FloatRegWriteW = 0;
              
 endmodule
