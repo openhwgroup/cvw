@@ -15,9 +15,18 @@ module tb;
    integer 	 desc3;
    integer 	 i;   
 
-   logic [7:0] 	 count [0:15];   
+   logic [7:0] 	 count [0:15];
+
+   bit [63:0] 	 Ncomp;
+   bit [63:0] 	 Dcomp;
+   bit [63:0] 	 Qcomp;
+   bit [63:0] 	 Rcomp;      
 
    int64div dut (Q, done, divdone, rem, div0, N, D, clk, reset, start);
+   assign Ncomp = N;
+   assign Dcomp = D;
+   assign Qcomp = Ncomp/Dcomp;
+   assign Rcomp = Ncomp%Dcomp;	        
 
    initial 
      begin	
@@ -29,7 +38,20 @@ module tb;
      begin
 	#800 $finish;		
      end
-	     
+
+      initial
+     begin
+	handle3 = $fopen("div64.out");
+	desc3 = handle3;
+     end
+
+   always 
+     begin
+	desc3 = handle3;
+	#5 $fdisplay(desc3, "%h %h | %h %h | %h %h %b %b",
+		     N, D, Q, rem, Qcomp, Rcomp, 
+		       (Q==Qcomp), (rem==Rcomp));	
+     end
 
    initial
      begin
@@ -38,10 +60,8 @@ module tb;
 	#0  start = 1'b0;	
 	#0  reset = 1'b1;
 	#22 reset = 1'b0;	
-	//#25 N = 64'h0000_0000_9830_07C0;
-	//#0  D = 64'h0000_0000_0000_000C;
-	#25 N = 64'h0000_0000_06b9_7b0d;	
-	#0  D = 64'h0000_0000_46df_998d;
+	#25 N = 64'h10fd_3ded_adea_5195;
+	#0  D = 64'hdf7f_3844_121b_cc23;	
 	#0  start = 1'b1;
 	#50 start = 1'b0;	
 

@@ -370,7 +370,7 @@ string tests32i[] = {
         if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
       end
  //     tests = {tests64a, tests};
-      tests = {tests, tests64p};
+      // tests = {tests, tests64p};
     end else begin // RV32
       // *** add the 32 bit bp tests
       tests = {tests32i};
