@@ -136,13 +136,13 @@ module ahblite (
   // stall signals
   // Note that we need to extend both stalls when MMUTRANSLATE goes to idle,
   // since translation might not be complete.
-  assign #2 DataStall = ~TrapM && ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                        (NextBusState == MMUTRANSLATE) || (BusState == MMUTRANSLATE));
+  assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
+                    (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
+                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete)); // && ~TrapM
   // *** Could get finer grained stalling if we distinguish between MMU
   //     instruction address translation and data address translation
-  assign #1 InstrStall = ~TrapM && ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                         (NextBusState == MMUTRANSLATE) || (BusState == MMUTRANSLATE));
+  assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
+                          (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete)); // && ~TrapM
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
