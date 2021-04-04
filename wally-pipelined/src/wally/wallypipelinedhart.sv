@@ -157,7 +157,7 @@ module wallypipelinedhart (
   privileged priv(.*);
   
 
-  fpu fpu(.*); // floating point unit
+  // fpu fpu(.*); // floating point unit
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW
   //assign SetFflagsM = 0;
