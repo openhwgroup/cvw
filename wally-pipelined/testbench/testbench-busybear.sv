@@ -444,6 +444,10 @@ module testbench_busybear();
                (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
               $display("loaded %0d instructions", instrs);
             end
+            // TEMP
+            if (instrs >= 800010) begin
+              $stop;
+            end
             instrs += 1;
             // are we at a branch/jump?
             casex (lastCheckInstrD[31:0])
