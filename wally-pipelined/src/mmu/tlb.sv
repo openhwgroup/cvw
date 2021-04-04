@@ -126,25 +126,13 @@ module tlb #(parameter ENTRY_BITS = 3) (
   assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
   assign PageOffset        = VirtualAddress[11:0];
 
-  // Choose a read or write location to the entry list
-  mux2 #(3) indexmux(VPNIndex, WriteIndex, TLBWrite, EntryIndex);
-
   // Currently use random replacement algorithm
   tlb_rand rdm(.*);
 
   tlb_ram #(ENTRY_BITS) ram(.*);
   tlb_cam #(ENTRY_BITS, `VPN_BITS) cam(.*);
 
-  always_comb begin
-    assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
-
-    if (TLBHit) begin
-      assign PhysicalAddressFull = {PhysicalPageNumber, PageOffset};
-    end else begin
-      assign PhysicalAddressFull = '0; // *** Actual behavior; disabled until walker functioning
-      //assign PhysicalAddressFull = {2'b0, VirtualPageNumber, PageOffset} // *** pass through should be removed as soon as walker ready
-    end
-  end
+  assign PhysicalAddressFull = (TLBHit) ? {PhysicalPageNumber, PageOffset} : '0;
 
   generate
     if (`XLEN == 32) begin
@@ -158,9 +146,11 @@ module tlb #(parameter ENTRY_BITS = 3) (
   assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
 endmodule
 
+// *** use actual flop notation instead of initialbegin and alwaysff
 module tlb_ram #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,
-  input  [ENTRY_BITS-1:0] EntryIndex,
+  input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from
+  input  [ENTRY_BITS-1:0] WriteIndex,
   input  [`XLEN-1:0]      PageTableEntryWrite,
   input                   TLBWrite,
 
@@ -171,10 +161,10 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
 
   logic [`XLEN-1:0] ram [0:NENTRIES-1];
   always @(posedge clk) begin
-    if (TLBWrite) ram[EntryIndex] <= PageTableEntryWrite;
+    if (TLBWrite) ram[WriteIndex] <= PageTableEntryWrite;
   end
 
-  assign PageTableEntry = ram[EntryIndex];
+  assign PageTableEntry = ram[VPNIndex];
     
   initial begin
     for (int i = 0; i < NENTRIES; i++)
