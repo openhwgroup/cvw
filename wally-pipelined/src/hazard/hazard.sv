@@ -26,18 +26,22 @@
 `include "wally-config.vh"
 
 module hazard(
+	      input logic  clk,
+	      input logic  reset,
   // Detect hazards
-  input  logic       BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
-  input  logic       LoadStallD, MulDivStallD, CSRRdStallD,
-  input  logic       InstrStall, DataStall, ICacheStallF,
+	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
+	      input logic  LoadStallD, MulDivStallD, CSRRdStallD,
+	      input logic  InstrStall, DataStall, ICacheStallF,
+	      input logic  DivBusyE,
   // Stall & flush outputs
-  output logic       StallF, StallD, StallE, StallM, StallW,
-  output logic       FlushF, FlushD, FlushE, FlushM, FlushW
+	      output logic StallF, StallD, StallE, StallM, StallW,
+	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
 );
 
   logic BranchFlushDE;
   logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
   logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
+
 
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -56,9 +60,10 @@ module hazard(
   assign StallFCause = CSRWritePendingDEM & ~(BranchFlushDE);  
   assign StallDCause = (LoadStallD | MulDivStallD | CSRRdStallD) & ~(BranchFlushDE);    // stall in decode if instruction is a load/mul/csr dependent on previous
 //  assign StallDCause = LoadStallD | MulDivStallD | CSRRdStallD;    // stall in decode if instruction is a load/mul/csr dependent on previous
-  assign StallECause = 0;
+  assign StallECause = DivBusyE;
   assign StallMCause = 0; 
   assign StallWCause = DataStall | InstrStall;
+  
 
   // Each stage stalls if the next stage is stalled or there is a cause to stall this stage.
   assign StallF = StallD | StallFCause;
@@ -68,15 +73,17 @@ module hazard(
   assign StallM = StallW | StallMCause;
   assign StallW = StallWCause;
 
+  //assign FirstUnstalledD = (~StallD & StallF & ~MulDivStallD);
   assign FirstUnstalledD = (~StallD & StallF);
+  //assign FirstUnstalledE = (~StallE & StallD & ~MulDivStallD);
   assign FirstUnstalledE = (~StallE & StallD);
   assign FirstUnstalledM = (~StallM & StallE);
   assign FirstUnstalledW = (~StallW & StallM);;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
   assign FlushF = BPPredWrongE;
-  assign FlushD = FirstUnstalledD || BranchFlushDE;  //  PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
-  assign FlushE = FirstUnstalledE || BranchFlushDE; //LoadStallD | PCSrcE | RetM | TrapM;
+  assign FlushD = FirstUnstalledD || BranchFlushDE;  // PCSrcE |InstrStall | CSRWritePendingDEM | RetM | TrapM;
+  assign FlushE = FirstUnstalledE || BranchFlushDE;  // LoadStallD | PCSrcE | RetM | TrapM;
   assign FlushM = FirstUnstalledM || RetM || TrapM;
   assign FlushW = FirstUnstalledW | TrapM;
 endmodule
