@@ -132,16 +132,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
   tlb_ram #(ENTRY_BITS) ram(.*);
   tlb_cam #(ENTRY_BITS, `VPN_BITS) cam(.*);
 
-  always_comb begin
-    assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
-
-    if (TLBHit) begin
-      assign PhysicalAddressFull = {PhysicalPageNumber, PageOffset};
-    end else begin
-      assign PhysicalAddressFull = '0; // *** Actual behavior; disabled until walker functioning
-      //assign PhysicalAddressFull = {2'b0, VirtualPageNumber, PageOffset} // *** pass through should be removed as soon as walker ready
-    end
-  end
+  assign PhysicalAddressFull = (TLBHit) ? {PhysicalPageNumber, PageOffset} : '0;
 
   generate
     if (`XLEN == 32) begin
@@ -155,6 +146,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
   assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
 endmodule
 
+// *** use actual flop notation instead of initialbegin and alwaysff
 module tlb_ram #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,
   input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from

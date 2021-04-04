@@ -65,7 +65,7 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAM;
   logic [2:0] Funct3E;
-   //  logic [31:0] InstrF;
+  //  logic [31:0] InstrF;
   logic [31:0] InstrD, InstrM;
   logic [`XLEN-1:0] PCE, PCM, PCLinkE, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
@@ -84,7 +84,7 @@ module wallypipelinedhart (
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
   logic        LoadStallD, MulDivStallD, CSRRdStallD;
-   logic       DivDoneW;   
+  logic       DivDoneW;
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
@@ -132,15 +132,15 @@ module wallypipelinedhart (
     .Funct7M(InstrM[31:25]),
     .*);
 
-   pagetablewalker pagetablewalker(.*); // can send addresses to ahblite, send out pagetablestall
-   // *** can connect to hazard unit
-   // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
-   // Would need to insertinstruction as InstrD, not InstrF
-   /*ahblite ebu( 
-    .InstrReadF(1'b0),
-    .InstrRData(), // hook up InstrF later
-    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
-    .*); */
+  pagetablewalker pagetablewalker(.*); // can send addresses to ahblite, send out pagetablestall
+  // *** can connect to hazard unit
+  // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
+  // Would need to insertinstruction as InstrD, not InstrF
+  /*ahblite ebu( 
+   .InstrReadF(1'b0),
+   .InstrRData(), // hook up InstrF later
+   .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
+   .*); */
 
  
   muldiv mdu(.*); // multiply and divide unit
