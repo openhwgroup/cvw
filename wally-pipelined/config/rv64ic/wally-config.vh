@@ -90,6 +90,10 @@
 // Hardware configuration
 `define UART_PRESCALE 1
 
+// Interrupt configuration
+`define PLIC_NUM_SRC 4
+`define PLIC_UART_ID 4
+
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
 /* verilator lint_off ASSIGNDLY */
