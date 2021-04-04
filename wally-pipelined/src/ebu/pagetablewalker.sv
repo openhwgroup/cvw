@@ -116,7 +116,7 @@ module pagetablewalker (
   // unswizzle PTE bits
   assign {Dirty, Accessed, Global, User,
           Executable, Writable, Readable, Valid} = CurrentPTE[7:0];
-  
+
   // Assign PTE descriptors common across all XLEN values
   assign LeafPTE = Executable | Writable | Readable;
   assign ValidPTE = Valid && ~(Writable && ~Readable);
@@ -195,6 +195,8 @@ module pagetablewalker (
             assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
           end
           FAULT: begin
+            assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            assign MMUTranslationComplete = '1;
             assign InstrPageFaultM = ~DTLBMissM;
             assign LoadPageFaultM = DTLBMissM && ~MemStore;
             assign StorePageFaultM = DTLBMissM && MemStore;
@@ -206,8 +208,6 @@ module pagetablewalker (
 
       // Capture page table entry from ahblite
       flopenr #(32) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
-      // *** Evil hack to get CurrentPTE a cycle early before it is saved.
-      //     Todo: Is it evil?
       mux2 #(32) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
       assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
@@ -300,6 +300,8 @@ module pagetablewalker (
             assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
           end
           FAULT: begin
+            assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            assign MMUTranslationComplete = '1;
             assign InstrPageFaultM = ~DTLBMissM;
             assign LoadPageFaultM = DTLBMissM && ~MemStore;
             assign StorePageFaultM = DTLBMissM && MemStore;
@@ -309,8 +311,6 @@ module pagetablewalker (
 
       // Capture page table entry from ahblite
       flopenr #(`XLEN) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
-      // *** Evil hack to get CurrentPTE a cycle early before it is saved.
-      //     Todo: Is it evil?
       mux2 #(`XLEN) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
       assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
