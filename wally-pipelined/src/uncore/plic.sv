@@ -49,7 +49,7 @@ module plic (
 
   localparam N=`PLIC_NUM_SRC; // should not exceed 63; does not inlcude source 0, which does not connect to anything according to spec
 
-  logic memwrite, initTrans;
+  logic memwrite, memread, initTrans;
   logic [27:0] entry, entryd;
   logic [31:0] Din, Dout;
   logic [N:1] requests;
@@ -167,7 +167,7 @@ module plic (
   `endif
   //  or temporarily connect them to nothing
   assign requests[3:1] = 3'b0;
-  
+
   // pending updates
   // *** verify that this matches the expectations of the things that make requests (in terms of timing, edge-triggered vs level-triggered)
   assign nextIntPending = (intPending | (requests & ~intInProgress)) // requests should raise intPending except when their service routine is already in progress
