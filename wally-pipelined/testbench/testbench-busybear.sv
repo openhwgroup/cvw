@@ -279,12 +279,14 @@ module testbench_busybear();
     end
   end
 
+  string sepc_lit = "SEPC";
   `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
+          if (sepc_lit.icompare(`"CSR`")) begin #1; end \
           scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
           if(CSR.icompare(`"CSR`")) begin \
@@ -310,7 +312,7 @@ module testbench_busybear();
   `define CSRM dut.hart.priv.csr.genblk1.csrm
   `define CSRS dut.hart.priv.csr.genblk1.csrs.genblk1
 
-  /*
+  
   //`CHECK_CSR(FCSR)
   `CHECK_CSR2(MCAUSE, `CSRM)
   `CHECK_CSR(MCOUNTEREN)
@@ -336,8 +338,12 @@ module testbench_busybear();
   `CHECK_CSR(SSTATUS)
   `CHECK_CSR2(STVAL, `CSRS)
   `CHECK_CSR(STVEC)
-  */
 
+              //$stop;
+  initial begin
+    #34140421;
+    $stop;
+  end
   initial begin //this is temporary until the bug can be fixed!!!
     #11130100;
     force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
@@ -443,10 +449,6 @@ module testbench_busybear();
                (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
                (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
               $display("loaded %0d instructions", instrs);
-            end
-            // TEMP
-            if (instrs >= 800010) begin
-              $stop;
             end
             instrs += 1;
             // are we at a branch/jump?
