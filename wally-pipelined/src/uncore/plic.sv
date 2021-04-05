@@ -47,8 +47,7 @@ module plic (
   output logic             HRESPPLIC, HREADYPLIC,
   output logic             ExtIntM);
 
-  // N in config should not exceed 63; does not inlcude source 0, which does not connect to anything according to spec
-  localparam N=`PLIC_NUM_SRC;
+  localparam N=`PLIC_NUM_SRC; // should not exceed 63; does not inlcude source 0, which does not connect to anything according to spec
 
   logic memwrite, initTrans;
   logic [27:0] entry, entryd;
@@ -69,13 +68,15 @@ module plic (
   // AHB I/O
   assign entry = {HADDR[27:2],2'b0};
   assign initTrans = HREADY & HSELPLIC & (HTRANS != 2'b00);
+  assign memread = initTrans & ~HWRITE;
+  // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
   flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
   flopr #(28) entrydflop(HCLK, ~HRESETn, entry, entryd);
   assign HRESPPLIC = 0; // OK
   assign HREADYPLIC = 1'b1; // PLIC never takes >1 cycle to respond
 
   // account for subword read/write circuitry
-  //   Note PLIC registers are 32 bits no matter what; access them with LW SW.
+  // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
   generate
     if (`XLEN == 64) begin
       always_comb
@@ -103,7 +104,7 @@ module plic (
         if (~HRESETn)
           intPriority[i] <= 3'b0;
         else begin
-          if (entry == 28'hc000000+4*i) // *** make sure this does not synthesize into N 28-bit equality comparators 
+          if (entry == 28'hc000000+4*i) // *** make sure this does not synthesize into N 28-bit equality comparators; we want something more decoder-ish 
             Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[i]};
           if ((entryd == 28'hc000000+4*i) && memwrite)
             intPriority[i] <= #1 Din[2:0];
@@ -151,7 +152,7 @@ module plic (
           Dout <= #1 {29'b0,intThreshold[2:0]};
         if ((entryd == 28'hc200000) && memwrite)
           intThreshold[2:0] <= #1 Din[2:0];
-        if (entry == 28'hc200004) begin
+        if ((entry == 28'hc200004) && memread) begin // check for memread because reading claim reg. has side effects
           Dout <= #1 {26'b0,intClaim};
           intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
         end
@@ -166,12 +167,13 @@ module plic (
   `endif
   //  or temporarily connect them to nothing
   assign requests[3:1] = 3'b0;
+  
   // pending updates
   // *** verify that this matches the expectations of the things that make requests (in terms of timing, edge-triggered vs level-triggered)
   assign nextIntPending = (intPending | (requests & ~intInProgress)) // requests should raise intPending except when their service routine is already in progress
-                        & ~((entry == 28'hc200004) << (intClaim-1)); // clear pending bit when claim register is read
-
+                        & ~(((entry == 28'hc200004) && memread) << (intClaim-1)); // clear pending bit when claim register is read
   flopr #(N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
+
   // pending array - indexed by priority_lvl x source_ID
   generate
     for (i=1; i<=N; i=i+1) begin
@@ -203,14 +205,13 @@ module plic (
                              pendingPGrouped[1] & ~|pendingPGrouped[7:2]};
   // select the pending requests at that priority
   assign pendingRequestsAtMaxP[N:1] = ({N{pendingMaxP[7]}} & pendingArray[7])
-                                         | ({N{pendingMaxP[6]}} & pendingArray[6])
-                                         | ({N{pendingMaxP[5]}} & pendingArray[5])
-                                         | ({N{pendingMaxP[4]}} & pendingArray[4])
-                                         | ({N{pendingMaxP[3]}} & pendingArray[3])
-                                         | ({N{pendingMaxP[2]}} & pendingArray[2])
-                                         | ({N{pendingMaxP[1]}} & pendingArray[1]);
+                                    | ({N{pendingMaxP[6]}} & pendingArray[6])
+                                    | ({N{pendingMaxP[5]}} & pendingArray[5])
+                                    | ({N{pendingMaxP[4]}} & pendingArray[4])
+                                    | ({N{pendingMaxP[3]}} & pendingArray[3])
+                                    | ({N{pendingMaxP[2]}} & pendingArray[2])
+                                    | ({N{pendingMaxP[1]}} & pendingArray[1]);
   // find the lowest ID amongst active interrupts at the highest priority
-  
   integer j;
   // *** verify that this synthesizes to a reasonable priority encoder and that j doesn't actually exist in hardware
   always_comb begin
@@ -238,7 +239,7 @@ module plic (
                             (2>intThreshold),
                             (1>intThreshold)};
   // is the max priority > threshold?
-  // *** currently we decode threshold into threshMask and bitwise &, then reductive | ; would it be any better to binary encode maxPriority and ">" with threshold?
+  // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
   assign ExtIntM = |(threshMask & pendingPGrouped);
 endmodule
 
