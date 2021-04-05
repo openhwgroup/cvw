@@ -50,8 +50,9 @@ module plic (
   // N in config should not exceed 63; does not inlcude source 0, which does not connect to anything according to spec
   localparam N=`PLIC_NUM_SRC;
 
-  logic memread, memwrite, initTrans;
-  logic [27:0] entry, A;
+  logic memwrite, initTrans;
+  logic [27:0] entry, entryd;
+  logic [31:0] Din, Dout;
   logic [N:1] requests;
 
   logic [2:0] intPriority[N:1];
@@ -66,17 +67,34 @@ module plic (
   logic [7:1] threshMask;
 
   // AHB I/O
+  assign entry = {HADDR[27:2],2'b0};
   assign initTrans = HREADY & HSELPLIC & (HTRANS != 2'b00);
-  flopenrc #(1) memreadreg(HCLK, ~HRESETn, memread&HREADY, (memread&HREADY)|initTrans, HSELPLIC & ~HWRITE, memread);
-  flopenrc #(1) memwritereg(HCLK, ~HRESETn, memwrite&HREADY, (memwrite&HREADY)|initTrans, HSELPLIC &  HWRITE, memwrite);
-  flopenr #(28) haddrreg(HCLK, ~HRESETn,initTrans, HADDR, A);
+  flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
+  flopr #(28) entrydflop(HCLK, ~HRESETn, entry, entryd);
   assign HRESPPLIC = 0; // OK
-  assign HREADYPLIC = 1'b1; // will need to be modified if PLIC ever needs more than 1 cycle to do something
+  assign HREADYPLIC = 1'b1; // PLIC never takes >1 cycle to respond
 
-  // word aligned reads
-  assign #2 entry = {A[27:2], 2'b00}; 
+  // account for subword read/write circuitry
+  //   Note PLIC registers are 32 bits no matter what; access them with LW SW.
+  generate
+    if (`XLEN == 64) begin
+      always_comb
+        if (entryd[2]) begin
+          Din = HWDATA[63:32];
+          HREADPLIC = {Dout,32'b0};
+        end else begin
+          Din = HWDATA[31:0];
+          HREADPLIC = {32'b0,Dout};
+        end
+    end else begin // 32-bit
+      always_comb begin
+        Din = HWDATA[31:0];
+        HREADPLIC = Dout;
+      end
+    end
+  endgenerate
 
-  // register access
+  // register interface
   genvar i;
   generate
     // priority registers
@@ -84,89 +102,62 @@ module plic (
       always @(posedge HCLK,negedge HRESETn)
         if (~HRESETn)
           intPriority[i] <= 3'b0;
-        else if (entry == 28'hc000000+4*i) // *** make sure this does not synthesize into N 28-bit equality comparators
-          if (memwrite) intPriority[i] <= #1 HWDATA[2:0];
-          else HREADPLIC <= #1 {{(`XLEN-3){1'b0}},intPriority[i]};
+        else begin
+          if (entry == 28'hc000000+4*i) // *** make sure this does not synthesize into N 28-bit equality comparators 
+            Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[i]};
+          if ((entryd == 28'hc000000+4*i) && memwrite)
+            intPriority[i] <= #1 Din[2:0];
+        end
 
     // pending and enable registers
-    if (N<32 && `XLEN==32)
+    if (N<32)
       always @(posedge HCLK,negedge HRESETn)
         if (~HRESETn)
           intEn <= {N{1'b0}};
-        else
-          case(entry)
-            28'hc001000: HREADPLIC <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
-            28'hc002000: if (memwrite) intEn[N:1] <= #1 HWDATA[N:1];
-                         else HREADPLIC <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
-          endcase
-    else if (N>=32 && `XLEN==32)
+        else begin
+          if (entry == 28'hc001000)
+            Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
+          if (entry == 28'hc002000)
+            Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
+          if ((entryd == 28'hc002000) && memwrite)
+            intEn[N:1] <= #1 Din[N:1];
+        end
+    else // N>=32
       always @(posedge HCLK,negedge HRESETn)
         if (~HRESETn)
           intEn <= {N{1'b0}};
-        else
-          case(entry)
-            28'hc001000: HREADPLIC <= #1 {intPending[31:1],1'b0};
-            28'hc001004: HREADPLIC <= #1 {{(63-N){1'b0}},intPending[N:32]};
-            28'hc002000: if (memwrite) intEn[31:1] <= #1 HWDATA[31:1];
-                         else HREADPLIC <= #1 {intEn[31:1],1'b0};
-            28'hc002004: if (memwrite) intEn[N:32] <= #1 HWDATA[31:0];
-                         else HREADPLIC <= #1 {{(63-N){1'b0}},intEn[N:32]};
-          endcase
-    else if (N<32 && `XLEN==64)
-      always @(posedge HCLK,negedge HRESETn)
-        if (~HRESETn)
-            intEn <= {N{1'b0}};
-        else
-          case(entry)
-            28'hc001000: HREADPLIC <= #1 {{(63-N){1'b0}},intPending[N:1],1'b0};
-            28'hc002000: if (memwrite) intEn[N:1] <= #1 HWDATA[N:1];
-                         else HREADPLIC <= #1 {{(63-N){1'b0}},intEn[N:1],1'b0};
-          endcase
-    else if (N>=32 && `XLEN==64)
-      always @(posedge HCLK,negedge HRESETn)
-        if (~HRESETn)
-          intEn <= {N{1'b0}};
-        else
-          case(entry)
-            28'hc001000: HREADPLIC <= #1 {32'b0,intPending[31:1],1'b0};
-            28'hc001004: HREADPLIC <= #1 {{(63-N){1'b0}},intPending[N:32],32'b0}; // rearranged so that you can access it with lw (when addr%8 = 4, subwordwrite thinks we are looking at the upper half of a 64bit word); *** is this reasonable? Why does SWW work like that anyways?; if we don't mind 32 and 64 bit versions having different memory maps, that might clean things up, but it might also be a departure of spec
-            28'hc002000: if (memwrite) intEn[31:1] <= #1 HWDATA[31:1];
-                         else HREADPLIC <= #1 {intEn[31:1],1'b0};
-            28'hc002004: if (memwrite) intEn[N:32] <= #1 HWDATA[63:32];
-                         else HREADPLIC <= #1 {{(63-N){1'b0}},intEn[N:32],32'b0};
-          endcase
+        else begin
+          if (entry == 28'hc001000)
+            Dout <= #1 {intPending[31:1],1'b0};
+          if (entry == 28'hc001004)
+            Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
+          if (entry == 28'hc002000)
+            Dout <= #1 {intEn[31:1],1'b0};
+          if (entry == 28'hc002004)
+            Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
+          if ((entryd == 28'hc002000) && memwrite)
+            intEn[31:1] <= #1 Din[31:1];
+          if ((entryd == 28'hc002004) && memwrite)
+            intEn[N:32] <= #1 Din[31:0];
+        end
 
     // threshold and claim/complete registers
-    if (`XLEN==32)
-      always @(posedge HCLK, negedge HRESETn)
-        if (~HRESETn) begin
-          intThreshold<=3'b0;
-          intInProgress <= {N{1'b0}};
-        end else
-          case (HADDR)
-            28'hc200000: if (memwrite) intThreshold[2:0] <= #1 HWDATA[2:0];
-                         else HREADPLIC <= #1 {{29{1'b0}},intThreshold[2:0]};
-            28'hc200004: if (memwrite) intInProgress <= #1 intInProgress & ~(1'b1 << (HWDATA[5:0]-1)); // lower "InProgress" to signify completion
-                         else begin
-                          HREADPLIC <= #1 {{26{1'b0}},intClaim};
-                          intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
-                         end
-          endcase
-    else if (`XLEN==64)
-      always @(posedge HCLK, negedge HRESETn)
-          if (~HRESETn) begin
-            intThreshold<=3'b0;
-            intInProgress <= {N{1'b0}};
-          end else
-            case (HADDR)
-              28'hc200000: if (memwrite) intThreshold[2:0] <= #1 HWDATA[2:0];
-                           else HREADPLIC <= #1 {{61{1'b0}},intThreshold[2:0]};
-              28'hc200004: if (memwrite) intInProgress <= #1 intInProgress & ~(1'b1 << (HWDATA[5:0]-1)); // lower "InProgress" to signify completion
-                           else begin
-                            HREADPLIC <= #1 {{26{1'b0}},intClaim,32'b0};
-                            intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
-                          end
-            endcase
+    always @(posedge HCLK, negedge HRESETn)
+      if (~HRESETn) begin
+        intThreshold<=3'b0;
+        intInProgress <= {N{1'b0}};
+      end else begin
+        if (entry == 28'hc200000)
+          Dout <= #1 {29'b0,intThreshold[2:0]};
+        if ((entryd == 28'hc200000) && memwrite)
+          intThreshold[2:0] <= #1 Din[2:0];
+        if (entry == 28'hc200004) begin
+          Dout <= #1 {26'b0,intClaim};
+          intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
+        end
+        if ((entryd == 28'hc200004) && memwrite)
+          intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion
+      end
   endgenerate
 
   // connect sources to requests
