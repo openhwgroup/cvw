@@ -23,7 +23,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-module div (Q, rem0, divdone, div0, N, D, clk, reset, start);
+module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
 
    input logic [63:0]  N, D;
    input logic 	       clk;
@@ -33,9 +33,10 @@ module div (Q, rem0, divdone, div0, N, D, clk, reset, start);
    output logic [63:0] Q;
    output logic [63:0] rem0;
    output logic        div0;
-   output logic        divdone;   
+   output logic        done;
+   output logic        divBusy;   
 
-   logic 	       done;   
+   logic 	       divdone;   
    logic 	       enable;
    logic 	       state0;
    logic 	       V;   
@@ -86,14 +87,15 @@ module div (Q, rem0, divdone, div0, N, D, clk, reset, start);
    // FSM to control integer divider
    //   assume inputs are postive edge and
    //   datapath (divider) is negative edge
-   fsm64 fsm1 (enablev, state0v, donev, divdonev, otfzerov,
+   fsm64 fsm1 (enablev, state0v, donev, divdonev, otfzerov, divBusyv,
 	       start, div0, NumIter, ~clk, reset);
 
    flopr #(1) rega (~clk, reset, donev, done);
    flopr #(1) regb (~clk, reset, divdonev, divdone);
    flopr #(1) regc (~clk, reset, otfzerov, otfzero);
    flopr #(1) regd (~clk, reset, enablev, enable);
-   flopr #(1) rege (~clk, reset, state0v, state0);   
+   flopr #(1) rege (~clk, reset, state0v, state0);
+   flopr #(1) regf (~clk, reset, divBusyv, divBusy);      
    
    // To obtain a correct remainder the last bit of the
    // quotient has to be aligned with a radix-r boundary.
@@ -460,7 +462,7 @@ endmodule // lz64
 
 // FSM Control for Integer Divider
 
-module fsm64 (en, state0, done, divdone, otfzero,
+module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 	      start, error, NumIter, clk, reset);
 
    input logic [5:0]  NumIter;   
@@ -473,7 +475,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
    output logic       en;
    output logic       state0;
    output logic       divdone;
-   output logic       otfzero;   
+   output logic       otfzero;
+   output logic       divBusy;   
    
    logic 	      LT, EQ;
    logic 	      Divide0;   
@@ -519,6 +522,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 		 begin
 		    otfzero = 1'b1;   
 		    en = 1'b0;
+		    divBusy = 1'b0;		    
 		    state0 = 1'b0;
 		    divdone = 1'b0;		    
 		    done = 1'b0;
@@ -528,6 +532,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 		 begin
 		    otfzero = 1'b0;	       		    
 		    en = 1'b1;
+		    divBusy = 1'b1;		    		    
 		    state0 = 1'b1;
 		    if (EQ)
 		      divdone = 1'b1;		    
@@ -540,7 +545,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end	    
 	  S1:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -564,6 +570,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S2:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -587,6 +594,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S3:
 	    begin	       
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -610,6 +618,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S4:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -633,6 +642,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S5:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -656,6 +666,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S6:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -678,7 +689,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S6
 	  S7:
 	    begin
-	       otfzero = 1'b0;	     
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -701,7 +713,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S7
 	  S8:
 	    begin
-	       otfzero = 1'b0;	     
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -725,6 +738,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S9:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -747,7 +761,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S9
 	  S10:
 	    begin
-	       otfzero = 1'b0;	      
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -771,6 +786,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S11:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -794,6 +810,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S12:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -817,6 +834,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S13:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -840,6 +858,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S14:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -863,6 +882,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S15:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -885,7 +905,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S15
 	  S16:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -908,7 +929,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S16
 	  S17:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -931,7 +953,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S17
 	  S18:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -954,7 +977,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S18
 	  S19:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -977,7 +1001,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S19
 	  S20:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1000,7 +1025,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S20
 	  S21:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1023,7 +1049,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S21
 	  S22:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1047,6 +1074,7 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	  S23:
 	    begin
 	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1069,7 +1097,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S23 
 	  S24:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1092,7 +1121,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S24
 	  S25:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1115,7 +1145,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S25
 	  S26:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1138,7 +1169,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S26
 	  S27:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1161,7 +1193,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S27
 	  S28:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1184,7 +1217,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S28
 	  S29:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1207,7 +1241,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S29
 	  S30:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+     	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1230,7 +1265,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S30
 	  S31:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1253,7 +1289,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S31  
 	  S32:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1276,7 +1313,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S32
 	  S33:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1299,7 +1337,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S33
 	  S34:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1322,7 +1361,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S34  	  
 	  S35:
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
@@ -1345,7 +1385,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S35	  
 	  S36:
 	    begin
-	       otfzero = 1'b1;	       	       	       
+	       otfzero = 1'b1;
+	       divBusy = 1'b1;	       
 	       state0 = 1'b0;
 	       done = 1'b1;
 	       if (EQ)
@@ -1362,7 +1403,8 @@ module fsm64 (en, state0, done, divdone, otfzero,
 	    end // case: S36
 	  default: 
 	    begin
-	       otfzero = 1'b0;	       
+	       otfzero = 1'b0;
+	       divBusy = 1'b1;	       
 	       en = 1'b0;
 	       state0 = 1'b0;
 	       done = 1'b0;

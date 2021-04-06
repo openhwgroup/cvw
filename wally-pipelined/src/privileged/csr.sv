@@ -89,7 +89,7 @@ module csr (
       assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
       assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
       assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
-      assign NextMtvalM = TrapM? NextFaultMtvalM : CSRWriteValM;
+      assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
       assign CSRMWriteM = CSRWriteM && (PrivilegeModeW == `M_MODE);
       assign CSRSWriteM = CSRWriteM && (PrivilegeModeW[0]);
       assign CSRUWriteM = CSRWriteM;  

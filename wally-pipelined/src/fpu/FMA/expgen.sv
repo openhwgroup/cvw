@@ -84,8 +84,10 @@ module expgen(xexp, yexp, zexp,
 	// This should not increas the critical path because the time to
 	// check if a round overflows is shorter than the actual round and
 	// is masked by the bypass mux and two 10 bit adder delays.
-
-	assign aligncnt = zexp -ae - 1 + ~xdenorm + ~ydenorm - ~zdenorm;
+	assign aligncnt0 = - 1 + ~xdenorm + ~ydenorm - ~zdenorm;
+	assign aligncnt1 = - 1 + {12'b0,~xdenorm} + {12'b0,~ydenorm} - {12'b0,~zdenorm};
+	assign aligncnt = zexp -ae - 1 + {12'b0,~xdenorm} + {12'b0,~ydenorm} - {12'b0,~zdenorm};
+	//assign aligncnt = zexp -ae - 1 + ~xdenorm + ~ydenorm - ~zdenorm;
 	//assign aligncnt = zexp - ae;// KEP use all of ae
 
 	// Select exponent (usually from product except in case of huge addend)
@@ -107,7 +109,7 @@ module expgen(xexp, yexp, zexp,
 	// check for exponent out of bounds after add 
 	
 	assign de = resultdenorm | sumzero ? 0 : de0;
-	assign sumof = de[12];
+	assign sumof = ~de[12] && de > 2046;
 	assign sumuf = de == 0  && ~sumzero && ~resultdenorm;
 
 	// bypass occurs before rounding or taking early results 
