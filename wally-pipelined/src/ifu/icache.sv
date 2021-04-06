@@ -89,9 +89,9 @@ module icache(
     // and then the upper word, in that order.
     generate
         if (`XLEN == 32) begin
-            assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {LastCyclePCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
+            assign InstrPAdrF = DelaySideF ? {LastCyclePCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00};
         end else begin
-            assign InstrPAdrF = (PCPF[2] && PCPF[1] && DelaySideF & ~CompressedF) ? {LastCyclePCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000};
+            assign InstrPAdrF = DelaySideF ? {LastCyclePCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000};
         end
     endgenerate
 
