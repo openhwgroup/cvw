@@ -69,7 +69,7 @@ module icache(
     flopr   #(1)  flushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCyclen | ~StallF), FlushDLastCyclen);
 
     flopenr #(1)  delayDFlop(clk, reset, ~StallF, DelayF & ~CompressedF, DelayD);
-    flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF, DelaySideF);
+    flopenrc#(1)  delayStateFlop(clk, reset, FlushD, ~StallF, DelayF & ~DelaySideF & ~CompressedF, DelaySideF);
     // This flop stores the first half of a misaligned instruction while waiting for the other half
     flopenr #(16) halfInstrFlop(clk, reset, DelayF & ~StallF, MisalignedHalfInstrF, MisalignedHalfInstrD);
 
@@ -91,7 +91,7 @@ module icache(
         if (`XLEN == 32) begin
             assign InstrPAdrF = PCPF[1] ? ((DelaySideF & ~CompressedF) ? {LastCyclePCPF[31:2]+1, 2'b00} : {PCPF[31:2], 2'b00}) : PCPF;
         end else begin
-            assign InstrPAdrF = (PCPF[2] && PCPF[1] && (DelaySideF & ~CompressedF)) ? {PCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000};
+            assign InstrPAdrF = (PCPF[2] && PCPF[1] && DelaySideF & ~CompressedF) ? {LastCyclePCPF[63:3]+1, 3'b000} : {PCPF[63:3], 3'b000};
         end
     endgenerate
 
