@@ -1,12 +1,11 @@
 ///////////////////////////////////////////
-// testbench-peripherals.sv
+// testbench-imperas.sv
 //
-// Written: Ben Bracker (bbracker@hmc.edu) 11 Feb. 2021
-// Based on: testbench-imperas.sv by David Harris
+// Written: David_Harris@hmc.edu 9 January 2021
+// Modified: 
 //
 // Purpose: Wally Testbench and helper modules
-//          Applies test programs meant to test peripherals
-//          These tests assume the processor itself is already working!
+//          Applies test programs from the Imperas suite
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -28,6 +27,9 @@
 `include "wally-config.vh"
 
 module testbench();
+  parameter DEBUG = 0;
+  parameter TESTSBP = 0;
+  
   logic        clk;
   logic        reset;
 
@@ -38,11 +40,36 @@ module testbench();
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
-
-  string tests[] = '{                 
-    "peripherals/WALLY-UART", "2000"
+  
+  string tests64i[] = {       
+    "peripherals/WALLY-PLIC", "2000"          
+    //"peripherals/WALLY-UART", "2000"
+  };
+  string tests64ic[] = {
+  };
+  string tests64iNOc[] = {
+  };
+  string tests64m[] = {
+  };
+  string tests64a[] = {
+  };
+  string tests32a[] = {
+  };
+  string tests32m[] = {
+  };
+  string tests32ic[] = {
+  };
+  string tests32iNOc[] = {
+  };
+  string tests32i[] = {
+  };
+  string testsBP64[] = {
+	};
+  string tests64p[] = {
   };
 
+  string tests[];
+  string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
@@ -54,11 +81,39 @@ module testbench();
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
-
+  logic [`XLEN-1:0] PCW;
   
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
   // pick tests based on modes supported
-  // *** actually I no longer support this
-  // would need to put this back in if you wanted to test anything other than rv64i
+  initial begin
+    if (`XLEN == 64) begin // RV64
+      if (TESTSBP) begin
+	      tests = testsBP64;	
+      end else begin 
+	      tests = {tests64i};
+        if (`C_SUPPORTED) tests = {tests, tests64ic};
+        else              tests = {tests, tests64iNOc};
+        if (`M_SUPPORTED) tests = {tests, tests64m};
+        // if (`F_SUPPORTED) tests = {tests64f, tests};
+        // if (`D_SUPPORTED) tests = {tests64d, tests};
+        if (`A_SUPPORTED) tests = {tests, tests64a};
+      end
+ //     tests = {tests64a, tests};
+      tests = {tests, tests64p};
+    end else begin // RV32
+      // *** add the 32 bit bp tests
+      tests = {tests32i};
+      if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
+      else                       tests = {tests, tests32iNOc};
+      if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
+      // if (`F_SUPPORTED) tests = {tests32f, tests};
+      if (`A_SUPPORTED) tests = {tests, tests32a};
+    end
+
+    // tests = tests64p;
+  end
+
 
   string signame, memfilename;
 
@@ -73,15 +128,13 @@ module testbench();
   assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.*); 
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.InstrM, InstrW);
+
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
-                InstrDName, InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.ic.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM, InstrW, InstrFName, InstrDName,
+                InstrEName, InstrMName, InstrWName);
 
-  logic [`XLEN-1:0] PCW;
-  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
   // initialize tests
   initial
     begin
@@ -99,7 +152,10 @@ module testbench();
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      reset = 1; # 22; reset = 0;
+      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
+      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
+      $display("Read memfile %s", memfilename);
+      reset = 1; # 42; reset = 0;
     end
 
   // generate clock to sequence tests
@@ -172,10 +228,26 @@ module testbench();
           $readmemh(memfilename, dut.imem.RAM);
           $readmemh(memfilename, dut.uncore.dtim.RAM);
           $display("Read memfile %s", memfilename);
+	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
+	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
           reset = 1; # 17; reset = 0;
         end
       end
-    end
+    end // always @ (negedge clk)
+
+  // track the current function or global label
+  if (DEBUG == 1) begin : functionRadix
+    function_radix function_radix(.reset(reset),
+				  .ProgramAddrMapFile(ProgramAddrMapFile),
+				  .ProgramLabelMapFile(ProgramLabelMapFile));
+  end
+
+  // initialize the branch predictor
+  initial begin
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);    
+  end
+  
 endmodule
 
 /* verilator lint_on STMTDLY */
@@ -183,14 +255,16 @@ endmodule
 
 module instrTrackerTB(
   input  logic            clk, reset, FlushE,
-  input  logic [31:0]     InstrD,
+  input  logic [31:0]     InstrF, InstrD,
   input  logic [31:0]     InstrE, InstrM,
-  output logic [31:0]     InstrW,
-  output string           InstrDName, InstrEName, InstrMName, InstrWName);
+  input  logic [31:0]     InstrW,
+//  output logic [31:0]     InstrW,
+  output string           InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
-  //flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
+  // flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
 
+  instrNameDecTB fdec(InstrF, InstrFName);
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
   instrNameDecTB mdec(InstrM, InstrMName);
@@ -249,10 +323,18 @@ module instrNameDecTB(
                        else                           name = "ILLEGAL";
       10'b0111011_000: if      (funct7 == 7'b0000000) name = "ADDW";
                        else if (funct7 == 7'b0100000) name = "SUBW";
+                       else if (funct7 == 7'b0000001) name = "MULW";
                        else                           name = "ILLEGAL";
-      10'b0111011_001: name = "SLLW";
+      10'b0111011_001: if      (funct7 == 7'b0000000) name = "SLLW";
+                       else if (funct7 == 7'b0000001) name = "DIVW";
+                       else                           name = "ILLEGAL";
       10'b0111011_101: if      (funct7 == 7'b0000000) name = "SRLW";
                        else if (funct7 == 7'b0100000) name = "SRAW";
+                       else if (funct7 == 7'b0000001) name = "DIVUW";
+                       else                           name = "ILLEGAL";
+      10'b0111011_110: if      (funct7 == 7'b0000001) name = "REMW";
+                       else                           name = "ILLEGAL";
+      10'b0111011_111: if      (funct7 == 7'b0000001) name = "REMUW";
                        else                           name = "ILLEGAL";
       10'b0110011_000: if      (funct7 == 7'b0000000) name = "ADD";
                        else if (funct7 == 7'b0000001) name = "MUL";
@@ -265,10 +347,10 @@ module instrNameDecTB(
                        else if (funct7 == 7'b0000001) name = "MULHSU";
                        else                           name = "ILLEGAL";
       10'b0110011_011: if      (funct7 == 7'b0000000) name = "SLTU";
-                       else if (funct7 == 7'b0000001) name = "DIV";
+                       else if (funct7 == 7'b0000001) name = "MULHU";
                        else                           name = "ILLEGAL";
       10'b0110011_100: if      (funct7 == 7'b0000000) name = "XOR";
-                       else if (funct7 == 7'b0000001) name = "MUL";
+                       else if (funct7 == 7'b0000001) name = "DIV";
                        else                           name = "ILLEGAL";
       10'b0110011_101: if      (funct7 == 7'b0000000) name = "SRL";
                        else if (funct7 == 7'b0000001) name = "DIVU";
@@ -301,6 +383,30 @@ module instrNameDecTB(
       10'b1110011_101: name = "CSRRWI";
       10'b1110011_110: name = "CSRRSI";
       10'b1110011_111: name = "CSRRCI";
+      10'b0101111_010: if      (funct7[6:2] == 5'b00010) name = "LR.W";
+                       else if (funct7[6:2] == 5'b00011) name = "SC.W";
+                       else if (funct7[6:2] == 5'b00001) name = "AMOSWAP.W";
+                       else if (funct7[6:2] == 5'b00000) name = "AMOADD.W";
+                       else if (funct7[6:2] == 5'b00100) name = "AMOAXOR.W";
+                       else if (funct7[6:2] == 5'b01100) name = "AMOAND.W";
+                       else if (funct7[6:2] == 5'b01000) name = "AMOOR.W";
+                       else if (funct7[6:2] == 5'b10000) name = "AMOMIN.W";
+                       else if (funct7[6:2] == 5'b10100) name = "AMOMAX.W";
+                       else if (funct7[6:2] == 5'b11000) name = "AMOMINU.W";
+                       else if (funct7[6:2] == 5'b11100) name = "AMOMAXU.W";
+                       else                              name = "ILLEGAL";
+      10'b0101111_011: if      (funct7[6:2] == 5'b00010) name = "LR.D";
+                       else if (funct7[6:2] == 5'b00011) name = "SC.D";
+                       else if (funct7[6:2] == 5'b00001) name = "AMOSWAP.D";
+                       else if (funct7[6:2] == 5'b00000) name = "AMOADD.D";
+                       else if (funct7[6:2] == 5'b00100) name = "AMOAXOR.D";
+                       else if (funct7[6:2] == 5'b01100) name = "AMOAND.D";
+                       else if (funct7[6:2] == 5'b01000) name = "AMOOR.D";
+                       else if (funct7[6:2] == 5'b10000) name = "AMOMIN.D";
+                       else if (funct7[6:2] == 5'b10100) name = "AMOMAX.D";
+                       else if (funct7[6:2] == 5'b11000) name = "AMOMINU.D";
+                       else if (funct7[6:2] == 5'b11100) name = "AMOMAXU.D";
+                       else                              name = "ILLEGAL";
       10'b0001111_???: name = "FENCE";
       default:         name = "ILLEGAL";
     endcase

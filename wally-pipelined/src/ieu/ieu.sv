@@ -56,8 +56,8 @@ module ieu (
   input logic 		   FlushE, FlushM, FlushW,
   output logic 		   LoadStallD, MulDivStallD, CSRRdStallD,
   output logic 		   PCSrcE,
-  input logic 		   DivDoneW,
-
+  input logic 		   DivDoneE,
+  input logic 		   DivBusyE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
   output logic 		   CSRWritePendingDEM
 );

@@ -36,9 +36,10 @@ module muldiv (
 	       // Writeback stage
 	       output logic [`XLEN-1:0] MulDivResultW,
 	       // Divide Done
-	       output logic 		DivDoneW, 
+	       output logic 		DivDoneE,
+	       output logic 		DivBusyE, 
 	       // hazards
-	       input logic 		StallM, StallW, FlushM, FlushW 
+	       input logic 		StallE, StallM, StallW, FlushM, FlushW 
 	       );
 
    generate
@@ -47,15 +48,43 @@ module muldiv (
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
 	 logic [`XLEN*2-1:0] ProdE;
+	 
+	 logic 		     DivStartE;
+	 logic 		     startDivideE;
+
+	logic 		     enable_q, gclk;
+
+	logic [2:0] 	     Funct3E_Q;
+
 
 	 // Multiplier
 	 mul mul(.*);
 	 // Divide
-	 div div (QuotE, RemE, DivDoneE, div0error, SrcAE, SrcBE, clk, reset, MulDivE);	 
+
+	// *** replace this clock gater
+	always @(~clk) begin
+	  enable_q <= ~StallM;
+	end
+	assign gclk = enable_q & clk;
+	
+	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, SrcAE, SrcBE, gclk, reset, startDivideE);
+
+	 // Added for debugging of start signal for divide
+	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
+
+	// capture the start control signals since they are not held constant.
+	flopenrc #(3) funct3ereg (.d(Funct3E),
+			       .q(Funct3E_Q),
+			       .en(DivStartE),
+			       .clear(DivDoneE),
+			       .reset(reset),
+			       .clk(clk));
+	
 
 	 // Select result
 	 always_comb
-           case (Funct3E)
+//           case (DivDoneE ? Funct3E_Q : Funct3E)
+           case (Funct3E)	   
              3'b000: PrelimResultE = ProdE[`XLEN-1:0];
              3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
              3'b010: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
@@ -64,6 +93,19 @@ module muldiv (
              3'b101: PrelimResultE = QuotE;
              3'b110: PrelimResultE = RemE;
              3'b111: PrelimResultE = RemE;
+           endcase // case (Funct3E)
+
+	 // Start Divide process
+	 always_comb
+           case (Funct3E)
+             3'b000: DivStartE = 1'b0;
+             3'b001: DivStartE = 1'b0;
+             3'b010: DivStartE = 1'b0;
+             3'b011: DivStartE = 1'b0;
+             3'b100: DivStartE = 1'b1;
+             3'b101: DivStartE = 1'b1;
+             3'b110: DivStartE = 1'b1;
+             3'b111: DivStartE = 1'b1;
            endcase
 	 
 	 // Handle sign extension for W-type instructions
