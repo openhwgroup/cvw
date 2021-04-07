@@ -19,8 +19,6 @@ from random import getrandbits
 # functions
 ##################################
 
-#For instruction-fetch access or page-fault exceptions on systems with variable-length instructions, mtval will contain the virtual address of the portion of the instruction that caused the fault while mepc will point to the beginning of the instruction.
-
 def randRegs():
   reg1 = randint(1,20)
   reg2 = randint(1,20)
@@ -33,109 +31,38 @@ def randRegs():
 def writeVectors(storecmd):
   global testnum
 
-    # Page 6 of unpriviledged spec
-  # For both CSRRS and CSRRC, if rs1=x0, then the instruction will not write to the CSR at all, and so shall not cause any of the side effects
-
-  # User Software Interrupt: True, 0
-  # Supervisor Software Interrupt: True, 1
-  # Machine Software Interrupt: True, 2
-
-  # When running run.sh CAUSE -c, everything works, but begin_signature doesn't appear
-  # writeTest(storecmd, f, r, f"""
-  #   la x10, 0x02000000 #clint
-
-  #   li x1, 42
-  #   lw x1, 0(x10)
-  # """, True, 2, "m", f"""
-  #   lw x0, 0(x10)
-  # """)
-
-  # User Timer Interrupt: True, 4
-  # Supervior timer interrupt: True, 5
-  # Machine timer interrupt: True, 7
-  # writeTest(storecmd, f, r, f"""
-  #   la x10, 0x02004000 #clint timer
-  #   li x1, 42
-
-  #   lw x11, 0(x10)
-  #   lw x12, 4(x10)
-
-  #   sw x1, 0(x10)
-  #   sw x0, 4(x10)
-  # """, True, 7, "m", f"""
-  #   sw x11, 0(x10)
-  #   sw x12, 4(x10)
-  # """)
-
-  # User external input: True, 8
-  # Supervisor external input: True, 9
-  # Machine externa input: True, 11
-
-  # Instruction address misaligned: False, 0
-  # looks like this is giving us an infinite loop for wally
-  # BUG: jumping to a misaligned instruction address doesn't cause an exception: we actually jump...
-  # Either that, or somehow at the end we always end up at 0x80004002
-  # This is fine in OVPsim
-  # writeTest(storecmd, f, r, f"""
-  #   li x1, 11
-  #   jr x1 # Something about this instruction is funky on wally, but fine with ovpsim
-  # """, False, 0)
-
-  # Instruction access fault: False, 1
+  # x23 holds the expected value
 
   # Illegal Instruction 
   writeTest(storecmd, f, r, f"""
     .fill 1, 4, 0
-  """, False, 2)
+  """, f"""
+    li x23, 0
+  """)
 
-  # Breakpoint
-  writeTest(storecmd, f, r, f"""
-    ebreak
-  """, False, 3)
+  val = (randint(0, 200) * 4) + 1
 
   # Load Address Misaligned 
   writeTest(storecmd, f, r, f"""
-    lw x0, 11(x0)
-  """, False, 4)
+    lw x0, {val}(x0)
+  """, f"""
+    li x23, {val}
+  """)
 
-  # Load Access fault: False, 5
+  val = (randint(0, 200) * 4) + 1
 
-  # Store/AMO address misaligned
+  # Load Address Misaligned 
   writeTest(storecmd, f, r, f"""
-    sw x0, 11(x0)
-  """, False, 6)
-
-  # Environment call from u-mode: only for when only M and U mode enabled?
-  # writeTest(storecmd, f, r, f"""
-  #   ecall
-  # """, False, 8, "u")
-
-  # # Environment call from s-mode
-
-  # ??? BUG ??? Code should be 9, but ends up being 8
-  # It's 8 for both OVPSim and Wally
-  writeTest(storecmd, f, r, f"""
-    ecall
-  """, False, 8, "s")
-
-  # Environment call from m-mode
-  writeTest(storecmd, f, r, f"""
-    ecall
-  """, False, 11, "m")  
-
-  # Instruction page fault: 12
-  # Load page fault: 13
-  # Store/AMO page fault: 15
+    sw x0, {val}(x0)
+  """, f"""
+    li x23, {val}
+  """)
   
 
   
 
-def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = ""):
+def writeTest(storecmd, f, r, test, expected, mode = "m", resetHander = ""):
   global testnum
-
-  expected = code
-  if(interrupt):
-    expected+=(1 << (wordsize - 1))
 
 
   trapEnd = ""
@@ -167,6 +94,8 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
   # x27: Old mepc value
   # x26: 0 if we should execute mret normally. 1 otherwise. This allows us to stay in machine
   # x25: mcause
+  # x24: mtval
+  # x23: mtval expected
   # mode for the next tests
   lines = f"""
     # Testcase {testnum}
@@ -179,6 +108,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
     # Machine trap vector
     {resetHander}
     csrrs x25, mcause, x0
+    csrrs x24, mtval, x0
     csrrs x1, mepc, x0
     addi x1, x1, 4
     csrrw x0, mepc, x1
@@ -191,16 +121,19 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 
     # Start test code
     li x25, 0x7BAD
+    li x24, 0x7BAD
     {before}
     {test}
 
     # Finished test. Reset to old mtvec
     _jend{testnum}:
 
+    {expected}
+    sub x25, x24, x23
     csrrw x0, mtvec, x31
   """
 
-  #expected = 42
+  expected = 0
   
   lines += storecmd + " x25, " + str(wordsize*testnum) + "(x6)\n"
   #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
@@ -230,10 +163,10 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 # csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 15;
+numrand = 30;
 
 # setup
-seed(0xC365DDEB9173AB42) # make tests reproducible
+seed(0xC363DDEB9173AB42) # make tests reproducible
 
 # generate files for each test
 for xlen in xlens:
@@ -252,7 +185,7 @@ for xlen in xlens:
     2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
   ]
   imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
-  basename = "WALLY-CAUSE"
+  basename = "WALLY-TVAL"
   fname = imperaspath + "src/" + basename + ".S"
   refname = imperaspath + "references/" + basename + ".reference_output"
   testnum = 0
