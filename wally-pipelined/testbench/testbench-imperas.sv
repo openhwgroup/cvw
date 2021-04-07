@@ -334,7 +334,9 @@ string tests32i[] = {
 	 };
 
    string tests64p[] = '{
-             "rv64p/WALLY-CAUSE", "3000"
+             "rv64p/WALLY-CAUSE", "3000",
+             "rv64p/WALLY-EPC", "3000",
+             "rv64p/WALLY-TVAL", "3000"
    };
 
   string tests[];
@@ -370,7 +372,7 @@ string tests32i[] = {
         //if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
       end
  //     tests = {tests64a, tests};
-      // tests = {tests, tests64p};
+      tests = {tests, tests64p};
     end else begin // RV32
       // *** add the 32 bit bp tests
       tests = {tests32i};
@@ -382,7 +384,7 @@ string tests32i[] = {
       if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
     end
 
-    // tests = tests64p;
+    //tests = tests64p;
   end
 
 
