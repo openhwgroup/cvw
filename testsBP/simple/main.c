@@ -6,5 +6,6 @@ int main(){
     fail();
     return 0;
   }else
+    res = lbu_test();
     return 0;
 }
