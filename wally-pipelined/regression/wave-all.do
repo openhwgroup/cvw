@@ -45,7 +45,7 @@ add wave -noupdate /testbench/dut/uncore/dtim/memwrite
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/HADDR
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/HWDATA
 add wave -noupdate -divider <NULL>
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCW
+add wave -noupdate -radix hexadecimal /testbench/PCW
 add wave -noupdate /testbench/InstrWName
 add wave -noupdate /testbench/dut/hart/ieu/dp/RegWriteW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ResultW
@@ -219,7 +219,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/IllegalCompInstrD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCPlusUpperF
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCPlus2or4F
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCD
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCW
+add wave -noupdate -radix hexadecimal /testbench/PCW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCLinkD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCLinkE
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCLinkM

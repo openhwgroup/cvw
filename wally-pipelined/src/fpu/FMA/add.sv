@@ -26,6 +26,7 @@ module add(r, s, t, sum,
 	output		[163:0]		sum;         	// sum
 	output					negsum0;     	// sum was negative in +0 mode
 	output					negsum1;     	// sum was negative in +1 mode 
+	//output				sumzero;
 
 	// Internal nodes
 
@@ -47,7 +48,7 @@ module add(r, s, t, sum,
 
 	// Compound adder
 	// Consists of 3:2 CSA followed by long compound CPA
-	assign prodshifted = {56'b0, r2, 2'b0} + {56'b0, s2, 2'b0};
+	assign prodshifted = killprod ? 0 : {56'b0, r2, 2'b0} + {56'b0, s2, 2'b0};
 	assign sum0 = {1'b0,prodshifted} + t2 + 158'b0;
 	assign sum1 = {1'b0,prodshifted} + t2 + 158'b1; // +1 from invert of z above
 	
@@ -56,7 +57,7 @@ module add(r, s, t, sum,
 	assign negsum1 = sum1[164];
 
 	// Mux proper result (+Oil mode and inversion) using 4:1 mux
- 
+ 	//assign sumzero = |sum;
 	assign sum = selsum1 ? (negsum ? -sum1[163:0] : sum1[163:0]) : (negsum ? -sum0[163:0] : sum0[163:0]);
 	
 endmodule

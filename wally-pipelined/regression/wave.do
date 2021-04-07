@@ -63,7 +63,6 @@ add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/if
 add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/InstrClassE
 add wave -noupdate -group Bpred -expand -group {bp wrong} -divider pcs
 add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PCD
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PCTargetE
 add wave -noupdate -group Bpred -expand -group BTB -divider Update
 add wave -noupdate -group Bpred -expand -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdateEN
 add wave -noupdate -group Bpred -expand -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdatePC

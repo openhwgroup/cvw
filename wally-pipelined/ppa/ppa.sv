@@ -2,9 +2,6 @@
 // Teo Ene & David_Harris@hmc.edu 25 Feb 2021
 // Measure PPA of various building blocks
 
-// replace this with the tools setting a library path to a config/skl130 directory containing config.vh
-`define LIB SKL130
-
 module top(
     input  logic       a1,
     input  logic [7:0] a8, b8,
@@ -49,7 +46,7 @@ endmodule
 
 module INVX2(input logic a, output logic y);
     generate
-        if (LIB == SKL130)
+        if (LIB == SKY130)
             sky130_osu_sc_12T_ms__inv_2 inv(a, y);
         else if (LIB == SKL90)
             scc9gena_inv_2 inv(a, y)

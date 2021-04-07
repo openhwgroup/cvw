@@ -37,8 +37,13 @@ module testbench();
   logic [`XLEN-1:0] signature[0:10000];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  //logic [31:0] InstrW;
+  logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
+  string tests64f[] = '{
+                    "rv64f/I-FADD-S-01", "2000",
+                    "rv64f/I-FCLASS-S-01", "2000"
+  };
+  
   string tests64a[] = '{
                     "rv64a/WALLY-AMO", "2110",
                     "rv64a/WALLY-LRSC", "2110"
@@ -59,7 +64,6 @@ module testbench();
 //                    "rv64m/I-REMW-01", "3000"
   };
   string tests64ic[] = '{
-
                      "rv64ic/I-C-ADD-01", "3000",
                      "rv64ic/I-C-ADDI-01", "3000",
                      "rv64ic/I-C-ADDIW-01", "3000",
@@ -333,19 +337,23 @@ string tests32i[] = {
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
-
+  logic [`XLEN-1:0] PCW;
   
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
   // pick tests based on modes supported
   initial 
     if (`XLEN == 64) begin // RV64
       if(`TESTSBP) begin
 	tests = testsBP64;	
       end else begin 
-	tests = {tests64i};
-	if (`C_SUPPORTED) tests = {tests, tests64ic};
-	else              tests = {tests, tests64iNOc};
-	if (`M_SUPPORTED) tests = {tests, tests64m};
-	if (`A_SUPPORTED) tests = {tests, tests64a};
+	      tests = {tests64i};
+        if (`C_SUPPORTED) tests = {tests, tests64ic};
+        else              tests = {tests, tests64iNOc};
+        if (`M_SUPPORTED) tests = {tests, tests64m};
+        // if (`F_SUPPORTED) tests = {tests64f, tests};
+        // if (`D_SUPPORTED) tests = {tests64d, tests};
+        if (`A_SUPPORTED) tests = {tests, tests64a};
       end
  //     tests = {tests64a, tests};
     end else begin // RV32
@@ -354,6 +362,7 @@ string tests32i[] = {
       if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
       else                       tests = {tests, tests32iNOc};
       if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
+      // if (`F_SUPPORTED) tests = {tests32f, tests};
       if (`A_SUPPORTED) tests = {tests, tests32a};
     end
   string signame, memfilename;
@@ -372,9 +381,9 @@ string tests32i[] = {
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
-                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.ic.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM, InstrW, InstrFName, InstrDName,
+                InstrEName, InstrMName, InstrWName);
 
   // initialize tests
   initial
