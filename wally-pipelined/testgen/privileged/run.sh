@@ -7,8 +7,11 @@ then
 	python3 "testgen-$1.py"
 	printf "\n\n#####\nRan testgen-$1.py Making...\n#####\n\n\n"
 
-	cd ~/riscv-wally/imperas-riscv-tests
-	make privileged
+	if [[ "$2" != "-nosim" ]]
+	then
+		cd ~/riscv-wally/imperas-riscv-tests
+		make privileged
+	fi
 fi
 
 if [[ "$2" == "-sim" || "$2" == "-simonly" ]]
@@ -18,5 +21,5 @@ then
 	vsim -do wally-privileged.do -c
 fi
 
-cd ~/riscv-wally
+cd ~/riscv-wally/wally-pipelined
 printf "\n\n\n#####\nDone!\n#####\n\n"

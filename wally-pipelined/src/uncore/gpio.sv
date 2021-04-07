@@ -33,6 +33,8 @@ module gpio (
   input  logic [7:0]       HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
   input  logic             HWRITE,
+  input  logic             HREADY,
+  input  logic [1:0]       HTRANS,
   output logic [`XLEN-1:0] HREADGPIO,
   output logic             HRESPGPIO, HREADYGPIO,
   input  logic [31:0]      GPIOPinsIn,
@@ -40,15 +42,19 @@ module gpio (
 
   logic [31:0] INPUT_VAL, INPUT_EN, OUTPUT_EN, OUTPUT_VAL;
  
-  logic [7:0] entry;
-  logic            memread, memwrite;
+  logic [7:0] entry, HADDRd;
+  logic            initTrans, memread, memwrite;
 
-  assign memread  = HSELGPIO & ~HWRITE;
-  assign memwrite = HSELGPIO & HWRITE;
+  assign initTrans = HREADY & HSELGPIO & (HTRANS != 2'b00);
+
+  // Control Signals
+  flopenr #(1)  memreadreg(HCLK, ~HRESETn, initTrans, ~HWRITE, memread);
+  flopenr #(1) memwritereg(HCLK, ~HRESETn, initTrans, HWRITE, memwrite);
+  flopenr #(8)    haddrreg(HCLK, ~HRESETn, initTrans, HADDR, HADDRd);
+
+  // Response Signals
   assign HRESPGPIO = 0; // OK
-  always_ff @(posedge HCLK) // delay response to data cycle
-    HREADYGPIO <= memread | memwrite;
-//  assign HREADYGPIO = 1; // Respond immediately
+  assign HREADYGPIO = 1; // never ask for wait states
   
   // word aligned reads
   generate
@@ -103,7 +109,6 @@ module gpio (
         if (~HRESETn) begin
           INPUT_EN <= 0;
           OUTPUT_EN <= 0;
-          //OUTPUT_VAL <= 0;// spec indicates synchronous rset (software control)
         end else if (memwrite) begin
           if (entry == 8'h04) INPUT_EN <= HWDATA;
           if (entry == 8'h08) OUTPUT_EN <= HWDATA;

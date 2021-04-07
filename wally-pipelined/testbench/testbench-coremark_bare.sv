@@ -59,12 +59,20 @@ module testbench();
   assign HRESPEXT = 0;
   assign HRDATAEXT = 0;
   wallypipelinedsoc dut(.*); 
+
+  logic [31:0] InstrW;
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
+
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.InstrF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM, dut.hart.ifu.InstrW,
+                dut.hart.ifu.InstrM, InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+
+  logic [`XLEN-1:0] PCW;
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
+  
   // initialize tests
   integer j;
   initial
@@ -74,7 +82,7 @@ module testbench();
       memfilename = tests[0];
       $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      for(j=268437829; j < 268566528; j = j+1)
+      for(j=268437702; j < 268566528; j = j+1)
         dut.uncore.dtim.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";

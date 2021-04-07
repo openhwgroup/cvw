@@ -43,6 +43,7 @@ module privileged (
   input  logic 		   BPPredClassNonCFIWrongM,
   input  logic [4:0]       InstrClassM,
   input  logic             PrivilegedM,
+  input  logic             InstrPageFaultM, LoadPageFaultM, StorePageFaultM,
   input  logic             InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
   input  logic             LoadMisalignedFaultM, LoadAccessFaultM,
   input  logic             StoreMisalignedFaultM, StoreAccessFaultM,
@@ -69,7 +70,6 @@ module privileged (
   logic IllegalInstrFaultM;
 
   logic BreakpointFaultM, EcallFaultM;
-  logic InstrPageFaultM, LoadPageFaultM, StorePageFaultM;
   logic MTrapM, STrapM, UTrapM; 
 
   logic [1:0] STATUS_MPP;
@@ -123,16 +123,18 @@ module privileged (
 
   assign BreakpointFaultM = ebreakM; // could have other causes too
   assign EcallFaultM = ecallM;
-  assign InstrPageFaultM = 0;
-  assign LoadPageFaultM = 0;
-  assign StorePageFaultM = 0;
+  // *** Page faults now driven by page table walker. Might need to make the
+  // below signals ORs of a walker fault and a tlb fault if both of those come in
+  // assign InstrPageFaultM = 0;
+  // assign LoadPageFaultM = 0;
+  // assign StorePageFaultM = 0;
 
   // pipeline fault signals
   flopenrc #(1) faultregD(clk, reset, FlushD, ~StallD, InstrAccessFaultF, InstrAccessFaultD);
-  floprc #(2) faultregE(clk, reset, FlushE,
+  flopenrc #(2) faultregE(clk, reset, FlushE, ~StallE,
                            {IllegalIEUInstrFaultD, InstrAccessFaultD}, // ** vs IllegalInstrFaultInD
                            {IllegalIEUInstrFaultE, InstrAccessFaultE});
-  floprc #(2) faultregM(clk, reset, FlushM,
+  flopenrc #(2) faultregM(clk, reset, FlushM, ~StallM,
                          {IllegalIEUInstrFaultE, InstrAccessFaultE},
                          {IllegalIEUInstrFaultM, InstrAccessFaultM});
 

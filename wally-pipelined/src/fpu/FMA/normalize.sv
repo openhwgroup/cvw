@@ -14,7 +14,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module normalize(sum, zexp, normcnt, ae, aligncnt, sumshift, sumzero, bs, ps, denorm0, zdenorm, de0, resultdenorm, v); 
+module normalize(sum, zexp, invz, normcnt, ae, aligncnt, sumshift, sumshiftzero, sumzero, xzero, yzero, bs, ps, denorm0, xdenorm, ydenorm, zdenorm, sticky, de0, resultdenorm, v); 
 /////////////////////////////////////////////////////////////////////////////
 	input     	[163:0]  	sum;            // sum
 	input     	[62:52]  	zexp;            // sum
@@ -22,11 +22,18 @@ module normalize(sum, zexp, normcnt, ae, aligncnt, sumshift, sumzero, bs, ps, de
 	input		[12:0] 		ae;     	// normalization shift count
 	input		[12:0] 		aligncnt;     	// normalization shift count
 	input		[8:0] 		sumshift;     	// normalization shift count
+	input				sumshiftzero;
+	input				invz;
 	input				sumzero;	// sum is zero
 	input				bs;		// sticky bit for addend
 	input				ps;		// sticky bit for product
 	input				denorm0;	// exponent = -1023
+	input                  		xdenorm;        // Input Z is denormalized
+	input                  		ydenorm;        // Input Z is denormalized
 	input                  		zdenorm;        // Input Z is denormalized
+	input				xzero;
+	input				yzero;
+	output				sticky;		//sticky bit
 	output		[12:0]		de0;
 	output                  	resultdenorm;        // Input Z is denormalized
 	output		[53:0]		v;		// normalized sum, R, S bits
@@ -37,8 +44,10 @@ module normalize(sum, zexp, normcnt, ae, aligncnt, sumshift, sumzero, bs, ps, de
 	logic                  	resultdenorm;        // Input Z is denormalized
 	logic 		[12:0]	de0;
 	logic       	[163:0]  	sumshifted;     // shifted sum
+	logic		[9:0]		sumshifttmp;
 	logic       	[163:0]  	sumshiftedtmp;     // shifted sum
-logic tmp;
+	logic 				sticky;
+logic tmp,tmp1,tmp2,tmp3;
 
 	// When the sum is zero,  normalization does not apply and only the
 	// sticky bit must be computed.  Otherwise,  the sum is right-shifted
@@ -52,43 +61,63 @@ logic tmp;
 	// does not require a true subtraction shown in the model.
  
 	assign tmp = ($signed(ae-normcnt+2) >= $signed(-1022));
-	always @(sum or normcnt or sumshift or ae or aligncnt)
+	always @(sum or sumshift or ae or aligncnt or normcnt or bs or zexp or zdenorm)
 		begin
 		// d = aligncnt
 		// l = normcnt
 		// p = 53
 		// ea + eb = ae
-			if ($signed(aligncnt)<=$signed(2))  begin //d<=2 
+			// set d<=2 to d<=0
+			if ($signed(aligncnt)<=$signed(0))  begin //d<=2 
 				// product anchored or cancellation
 				if ($signed(ae-normcnt+2) >= $signed(-1022)) begin //ea+eb-l+2 >= emin
 					//normal result
 					sumshifted = sum << (55+normcnt); // p+2+l
 					v = sumshifted[162:109];
+					sticky = (|sumshifted[108:0]) | bs;
 					resultdenorm = 0;
 					//de0 = ae-normcnt+2-1023;
-					de0 = ae-normcnt+2;
+					de0 = xzero|yzero ? zexp : ae-normcnt+2+xdenorm+ydenorm;
 				end else begin
-					sumshifted = sum << (1079+ae);
+					sumshifted = sum << (1080+ae);
 					v = sumshifted[162:109];
+					sticky = (|sumshifted[108:0]) | bs;
 					resultdenorm = 1;
 					de0 = 0;
 				end
 
 			end else begin                 // extract normalized bits
-				sumshifted = sum << sumshift;//-1;
-				//if(sumshifted[163])begin
-				//	v = sumshifted[162:109];
-				//	de0 = zexp -1;
-				//end else if (zdenorm || sumshifted[162]) begin
-				//	v = sumshifted[161:108];
-				//	de0 = zexp;
-				//end else begin
-				//	v = sumshifted[160:107];
-				//	de0 = zexp+1;
-				//end
-
-					v = sumshifted[162:109];
+				sumshifttmp = sumshift - 2;
+				sumshifted = sumshifttmp[9] ? sum : sum << sumshifttmp;
+				tmp1 = (sumshifted[163] & ~zdenorm & ~sumshifttmp[9]);
+				tmp2 = (zdenorm | sumshifttmp[9] || sumshifted[162]);
+				tmp3 = sumshifted[161];
+				// for some reason use exp = zexp + {0,1,2}
+				// the book says exp = zexp + {-1,0,1}
+				if(sumshiftzero) begin
+					v = sum[162:109];
+					sticky = sum[108:0] | bs;
 					de0 = zexp;
+				end else if(sumshifted[163] & ~zdenorm & ~sumshifttmp[9])begin
+					v = sumshifted[162:109];
+					sticky = (|sumshifted[108:0]) | bs;
+					de0 = zexp +2;
+				end else if (zdenorm | sumshifttmp[9] || sumshifted[162]) begin
+					v = sumshifted[161:108];
+					sticky = (|sumshifted[107:0]) | bs;
+					de0 = zexp+1;
+				end else if (sumshifted[161]) begin
+					v = sumshifted[160:107];
+					sticky = (|sumshifted[106:0]) | bs;
+					//de0 = zexp-1;
+					de0 = zexp;
+				end else begin
+					v = sumshifted[159:106];
+					sticky = (|sumshifted[105:0]) | bs;
+					//de0 = zexp-1;
+					de0 = zexp-1;
+				end
+
 				resultdenorm = 0;
 		end 
 	end

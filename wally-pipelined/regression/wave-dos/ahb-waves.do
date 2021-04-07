@@ -14,14 +14,21 @@ add wave /testbench/dut/hart/FlushD
 add wave /testbench/dut/hart/FlushE
 add wave /testbench/dut/hart/FlushM
 add wave /testbench/dut/hart/FlushW
-add wave -divider
 
+add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCF
-add wave -hex /testbench/dut/hart/ifu/InstrF
-add wave /testbench/InstrFName
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
+
 add wave /testbench/InstrDName
+add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
+add wave -hex /testbench/dut/hart/ifu/ic/AlignedInstrD
+add wave -divider
+add wave -hex /testbench/dut/hart/ifu/ic/InstrPAdrF
+add wave /testbench/dut/hart/ifu/ic/DelayF
+add wave /testbench/dut/hart/ifu/ic/DelaySideF
+add wave /testbench/dut/hart/ifu/ic/DelayD
+add wave -hex /testbench/dut/hart/ifu/ic/MisalignedHalfInstrD
 add wave -divider
 
 add wave -hex /testbench/dut/hart/ifu/PCE
@@ -53,6 +60,9 @@ add wave -hex /testbench/dut/hart/ebu/HWRITE
 add wave -hex /testbench/dut/hart/ebu/HWDATA
 add wave -hex /testbench/dut/hart/ebu/CaptureDataM
 add wave -hex /testbench/dut/hart/ebu/InstrStall
+add wave -divider
+
+add wave -hex /testbench/dut/uncore/dtim/*
 add wave -divider
 
 add wave -hex /testbench/dut/hart/ifu/PCW

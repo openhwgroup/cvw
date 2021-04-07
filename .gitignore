@@ -3,6 +3,9 @@
 
 .nfs*
 
+__pycache__/
+.vscode/
+
 #vsim work files to ignore
 transcript
 vsim.wlf
@@ -10,10 +13,11 @@ wally-pipelined/wlft*
 wlft*
 /imperas-riscv-tests/FunctionRadix_32.addr
 /imperas-riscv-tests/FunctionRadix_64.addr
+/imperas-riscv-tests/FunctionRadix.addr
 /imperas-riscv-tests/ProgramMap.txt
+/wally-pipelined/busybear-testgen/gdbcombined.txt
 *.o
 *.d
 testsBP/*/*/*.elf*
 testsBP/*/OBJ/*
 testsBP/*/*.a
-
