@@ -66,18 +66,18 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIMBASE   32'h00080000
+`define BOOTTIMBASE   32'h00800000
 `define BOOTTIMRANGE  32'h00003FFF
 `define TIMBASE       32'h00000000
-`define TIMRANGE      32'h0007FFFF
-`define CLINTBASE  32'h02000000
-`define CLINTRANGE 32'h0000FFFF
-`define GPIOBASE   32'h10012000
-`define GPIORANGE  32'h000000FF
-`define UARTBASE   32'h10000000
-`define UARTRANGE  32'h00000007
-`define PLICBASE   32'h0C000000
-`define PLICRANGE  32'h03FFFFFF
+`define TIMRANGE      32'h007FFFFF
+`define CLINTBASE     32'h02000000
+`define CLINTRANGE    32'h0000FFFF
+`define GPIOBASE      32'h10012000
+`define GPIORANGE     32'h000000FF
+`define UARTBASE      32'h10000000
+`define UARTRANGE     32'h00000007
+`define PLICBASE      32'h0C000000
+`define PLICRANGE     32'h03FFFFFF
 
 // Test modes
 

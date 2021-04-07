@@ -317,6 +317,7 @@ string tests32i[] = {
 
   string testsBP64[] = '{
 			 "rv64BP/simple", "10000",
+			 "rv64BP/qsort", "1000000",
 			 "rv64BP/sieve", "1000000"
 	 };
   string tests[];
