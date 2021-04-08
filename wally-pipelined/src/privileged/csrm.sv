@@ -3,6 +3,7 @@
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
+//          dottolia@hmc.edu 7 April 2021
 //
 // Purpose: Machine-Mode Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
@@ -84,7 +85,7 @@ module csrm #(parameter
     output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, 
     input  logic [11:0]      MIP_REGW, MIE_REGW,
     output logic             WriteMSTATUSM,
-    output logic             IllegalCSRMAccessM
+    output logic             IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
   );
 
   logic [`XLEN-1:0] MISA_REGW;
@@ -135,6 +136,8 @@ module csrm #(parameter
   assign WritePMPADDRM[15] = (CSRMWriteM && (CSRAdrM == PMPADDR15));
   assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT);
+
+  assign IllegalCSRMWriteReadonlyM = CSRMWriteM && (CSRAdrM == MVENDORID || CSRAdrM == MARCHID || CSRAdrM == MIMPID || CSRAdrM == MHARTID);
 
   // CSRs
   flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0

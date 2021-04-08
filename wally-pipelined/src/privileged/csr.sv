@@ -3,6 +3,7 @@
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
+//          dottolia@hmc.edu 7 April 2021
 //
 // Purpose: Counter Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
@@ -66,6 +67,8 @@ module csr (
   logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRNAccessM, InsufficientCSRPrivilegeM;
 
+  logic IllegalCSRMWriteReadonlyM;
+
   generate
     if (`ZCSR_SUPPORTED) begin
       // modify CSRs
@@ -111,9 +114,9 @@ module csr (
       // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
       assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 && PrivilegeModeW != `M_MODE) ||
                                         (CSRAdrM[9:8] == 2'b01 && PrivilegeModeW == `U_MODE);
-      assign IllegalCSRAccessM = (IllegalCSRCAccessM && IllegalCSRMAccessM && 
+      assign IllegalCSRAccessM = ((IllegalCSRCAccessM && IllegalCSRMAccessM && 
         IllegalCSRSAccessM && IllegalCSRUAccessM  && IllegalCSRNAccessM ||
-        InsufficientCSRPrivilegeM) && CSRReadM;
+        InsufficientCSRPrivilegeM) && CSRReadM) || IllegalCSRMWriteReadonlyM;
     end else begin // CSRs not implemented
       assign STATUS_MPP = 2'b11;
       assign STATUS_SPP = 2'b0;
