@@ -52,19 +52,23 @@ module dmem (
   // TLB management
   input logic  [1:0]       PrivilegeModeW,
   input logic  [`XLEN-1:0] PageTableEntryM,
+  input logic  [1:0]       PageTypeM,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              DTLBWriteM, // DTLBFlushM,
+  input logic              DTLBWriteM, DTLBFlushM,
   output logic             DTLBMissM, DTLBHitM
 );
 
+  logic             MemAccessM;  // Whether memory needs to be accessed
   logic             SquashSCM;
+  // *** needs to be sent to trap unit
+  logic             DTLBPageFaultM;
 
-  // *** temporary hack until walker is hooked up -- Thomas F
-  // logic  [`XLEN-1:0] PageTableEntryM = '0;
-  logic DTLBFlushM = '0;
-  // logic DTLBWriteM = '0;
-  tlb #(3) dtlb(clk, reset, SATP_REGW, PrivilegeModeW, MemAdrM, PageTableEntryM, DTLBWriteM,
-    DTLBFlushM, MemPAdrM, DTLBMissM, DTLBHitM);
+  tlb #(3) dtlb(.TLBAccess(MemAccessM), .VirtualAddress(MemAdrM),
+                .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
+                .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
+                .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
+                .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
+                .*);
 
 	// Determine if an Unaligned access is taking place
 	always_comb
@@ -78,11 +82,12 @@ module dmem (
   // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
   assign MemReadM = MemRWM[1] & ~DataMisalignedM;
-  assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM; 
+  assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM;
+  assign MemAccessM = |MemRWM;
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-  assign LoadAccessFaultM = DataAccessFaultM & MemRWM[0];
+  assign LoadAccessFaultM = DataAccessFaultM & MemRWM[1];
   assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
   assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
 
@@ -97,7 +102,7 @@ module dmem (
       assign scM = MemRWM[0] && AtomicM[0]; 
       assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`XLEN-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
-      always_comb begin // ReservationValidM (next valiue of valid reservation)
+      always_comb begin // ReservationValidM (next value of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve
         else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
         else ReservationValidM = ReservationValidW; // otherwise don't change valid

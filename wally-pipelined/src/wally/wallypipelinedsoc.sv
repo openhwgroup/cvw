@@ -60,9 +60,9 @@ module wallypipelinedsoc (
   // Uncore signals
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HREADY, HRESP;
-  logic        InstrAccessFaultF, DataAccessFaultM;
-  logic        TimerIntM, SwIntM; // from CLINT
-  logic        ExtIntM = 0; // not yet connected
+  logic             InstrAccessFaultF, DataAccessFaultM;
+  logic             TimerIntM, SwIntM; // from CLINT
+  logic             ExtIntM; // from PLIC
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
   logic             HWRITED;

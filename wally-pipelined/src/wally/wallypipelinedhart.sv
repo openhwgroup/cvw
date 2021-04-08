@@ -53,7 +53,7 @@ module wallypipelinedhart (
   output logic             HWRITED
 );
 
-//  logic [1:0]  ForwardAE, ForwardBE;
+   //  logic [1:0]  ForwardAE, ForwardBE;
   logic        StallF, StallD, StallE, StallM, StallW;
   logic        FlushF, FlushD, FlushE, FlushM, FlushW;
   logic        RetM, TrapM;
@@ -65,7 +65,7 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAM;
   logic [2:0] Funct3E;
-//  logic [31:0] InstrF;
+  //  logic [31:0] InstrF;
   logic [31:0] InstrD, InstrM;
   logic [`XLEN-1:0] PCE, PCM, PCLinkE, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
@@ -84,20 +84,31 @@ module wallypipelinedhart (
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
   logic        LoadStallD, MulDivStallD, CSRRdStallD;
+  logic       DivDoneE;
+  logic       DivBusyE;
+  logic       DivDoneW;
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
   logic       SquashSCW;
+  logic [31:0]      FSROutW;
+  logic             DivSqrtDoneE;
+  logic             FInvalInstrD;
+  logic [`XLEN-1:0] FPUResultW;
 
   // memory management unit signals
   logic             ITLBWriteF, DTLBWriteM;
+  logic             ITLBFlushF, DTLBFlushM;
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] SATP_REGW;
   logic [1:0]       PrivilegeModeW;
 
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
+  logic [1:0]       PageTypeF, PageTypeM;
 
+  // IMem stalls
+  logic             ICacheStallF;
   logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
   logic             MMUTranslate, MMUTranslationComplete, MMUReady;
 
@@ -130,26 +141,27 @@ module wallypipelinedhart (
 
   pagetablewalker pagetablewalker(.*); // can send addresses to ahblite, send out pagetablestall
   // *** can connect to hazard unit
-// changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
-// Would need to insertinstruction as InstrD, not InstrF
-    /*ahblite ebu( 
-  .InstrReadF(1'b0),
-    .InstrRData(), // hook up InstrF later
-    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
-    .*); */
+  // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
+  // Would need to insertinstruction as InstrD, not InstrF
+  /*ahblite ebu( 
+   .InstrReadF(1'b0),
+   .InstrRData(), // hook up InstrF later
+   .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
+   .*); */
 
  
   muldiv mdu(.*); // multiply and divide unit
- /*  fpu fpu(.*); // floating point unit
-  */
+  
   hazard     hzu(.*);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);
+  
 
+  // fpu fpu(.*); // floating point unit
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW
-  assign SetFflagsM = 0;
-  assign FloatRegWriteW = 0;
+  //assign SetFflagsM = 0;
+  //assign FloatRegWriteW = 0;
              
 endmodule

@@ -40,4 +40,4 @@ vsim workopt
 
 
 view wave
-do wally-peripherals-signals.do
+do wave-dos/peripheral-waves.do

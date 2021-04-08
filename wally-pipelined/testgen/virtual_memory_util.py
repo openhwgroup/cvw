@@ -198,14 +198,14 @@ rv32 = Architecture(32)
 rv64 = Architecture(64)
 
 if __name__ == "__main__":
-  arch = rv64
+  arch = rv64 
   pgdir = PageTable("page_directory", next_ppn(), arch)
 
   # Directly map the first 20 pages of RAM
   for page in range(20):
     vaddr = 0x80000000 + (arch.PGSIZE * page)
     paddr = 0x80000000 + (arch.PGSIZE * page)
-    pgdir.add_mapping(vaddr, paddr, PTE_R | PTE_W | PTE_U | PTE_X | PTE_V)
+    pgdir.add_mapping(vaddr, paddr, PTE_D | PTE_A | PTE_R | PTE_W | PTE_U | PTE_X | PTE_V)
   """
   supervisor_pgdir = PageTable("sdir", next_ppn(), rv64)
   supervisor_pgdir.add_mapping(0x80000000, 0x80000000, PTE_R | PTE_W | PTE_X)

@@ -1,0 +1,3 @@
+vsim -c <<!
+do wally-pipelined-batch.do ../config/rv64imc rv64imc
+!

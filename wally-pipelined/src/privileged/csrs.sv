@@ -72,7 +72,7 @@ module csrs #(parameter
       assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC));
       assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE));
       assign WriteSTVALM = STrapM | (CSRSWriteM && (CSRAdrM == STVAL));
-      assign WriteSATPM = STrapM | (CSRSWriteM && (CSRAdrM == SATP));
+      assign WriteSATPM = CSRSWriteM && (CSRAdrM == SATP);
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN);
 
       // CSRs

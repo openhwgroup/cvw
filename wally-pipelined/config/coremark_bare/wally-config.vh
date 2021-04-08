@@ -28,7 +28,7 @@
 `define XLEN 64
 
 //`define MISA (32'h00000104)
-`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12)
+`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -89,6 +89,10 @@
 
 // Hardware configuration
 `define UART_PRESCALE 1
+
+// Interrupt configuration
+`define PLIC_NUM_SRC 53
+`define PLIC_UART_ID 4
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */

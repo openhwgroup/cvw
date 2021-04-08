@@ -50,12 +50,12 @@ module uncore (
   // bus interface
   output logic             DataAccessFaultM,
   // peripheral pins
-  output logic             TimerIntM, SwIntM,
+  output logic             TimerIntM, SwIntM, ExtIntM,
   input  logic [31:0]      GPIOPinsIn,
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
   input  logic             UARTSin,
   output logic             UARTSout
-  );
+);
   
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART;

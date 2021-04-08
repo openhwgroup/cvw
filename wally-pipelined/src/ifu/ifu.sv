@@ -2,7 +2,7 @@
 // ifu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified:
 //
 // Purpose: Instrunction Fetch Unit
 //           PC, branch prediction, instruction cache
@@ -35,6 +35,7 @@ module ifu (
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
+  output logic             ICacheStallF,
   // Decode  
   // Execute
   output logic [`XLEN-1:0] PCLinkE,
@@ -59,29 +60,30 @@ module ifu (
   // TLB management
   input logic  [1:0]       PrivilegeModeW,
   input logic  [`XLEN-1:0] PageTableEntryF,
+  input logic  [1:0]       PageTypeF,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              ITLBWriteF, // ITLBFlushF,
-  output logic             ITLBMissF, ITLBHitF,
-  // bogus
-  input  logic [15:0] rd2
-
+  input logic              ITLBWriteF, ITLBFlushF,
+  output logic             ITLBMissF, ITLBHitF
 );
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
-  logic misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
-  logic PrivilegedChangePCM;
-  logic IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCLinkD, PCLinkM;
-  logic        CompressedF;
-  logic [31:0]     InstrF, InstrRawD, InstrE;
-  logic [31:0]     nop = 32'h00000013; // instruction for NOP
+  logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
+  logic             PrivilegedChangePCM;
+  logic             IllegalCompInstrD;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCPF;
+  logic             CompressedF;
+  logic [31:0]      InstrRawD, InstrE, InstrW;
+  logic [31:0]      nop = 32'h00000013; // instruction for NOP
+  logic [`XLEN-1:0] ITLBInstrPAdrF, ICacheInstrPAdrF;
+  // *** send this to the trap unit
+  logic             ITLBPageFaultF;
 
-  // *** temporary hack until walker is hooked up -- Thomas F
-  // logic  [`XLEN-1:0] PageTableEntryF = '0;
-  logic ITLBFlushF = '0;
-  // logic ITLBWriteF = '0;
-  tlb #(3) itlb(clk, reset, SATP_REGW, PrivilegeModeW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
-    InstrPAdrF, ITLBMissF, ITLBHitF);
+  tlb #(3) itlb(.TLBAccess(1'b1), .VirtualAddress(PCF),
+                .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
+                .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
+                .PhysicalAddress(ITLBInstrPAdrF), .TLBMiss(ITLBMissF),
+                .TLBHit(ITLBHitF), .TLBPageFault(ITLBPageFaultF),
+                .*);
 
   // branch predictor signals
   logic 	   SelBPPredF;
@@ -92,10 +94,20 @@ module ifu (
   // *** put memory interface on here, InstrF becomes output
   //assign InstrPAdrF = PCF; // *** no MMU
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
-  assign InstrReadF = 1; // *** & ICacheMissF; add later
+  // assign InstrReadF = 1; // *** & ICacheMissF; add later
+
+  // jarred 2021-03-14 Add instrution cache block to remove rd2
+  assign PCPF = PCF; // Temporary workaround until iTLB is live
+  icache ic(
+    .*,
+    .InstrPAdrF(ICacheInstrPAdrF),
+    .UpperPCPF(PCPF[`XLEN-1:12]),
+    .LowerPCF(PCF[11:0])
+  );
+  // Prioritize the iTLB for reads if it wants one
+  mux2 #(`XLEN) instrPAdrMux(ICacheInstrPAdrF, ITLBInstrPAdrF, ITLBMissF, InstrPAdrF);
 
   assign PrivilegedChangePCM = RetM | TrapM;
-
 
   //mux3    #(`XLEN) pcmux(PCPlus2or4F, PCCorrectE, PrivilegedNextPCM, {PrivilegedChangePCM, BPPredWrongE}, UnalignedPCNextF);
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),
@@ -114,7 +126,7 @@ module ifu (
 		       .y(UnalignedPCNextF));
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
   // I am making the port connection explicit for now as I want to see them and they will be changing.
@@ -141,9 +153,7 @@ module ifu (
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
-  assign CompressedF = (InstrF[1:0] != 2'b11); // is it a 16-bit compressed instruction?
   assign PCPlusUpperF = PCF[`XLEN-1:2] + 1; // add 4 to PC
-  
   // choose PC+2 or PC+4
   always_comb
     if (CompressedF) // add 2
@@ -151,18 +161,7 @@ module ifu (
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
-  // harris 2/23/21 Add code to fetch instruction split across two words
-  generate 
-    if (`XLEN==32) begin
-      assign InstrF = PCF[1] ? {rd2[15:0], InstrInF[31:16]} : InstrInF;
-    end else begin
-      assign InstrF = PCF[2] ? (PCF[1] ? {rd2[15:0], InstrInF[63:48]} : InstrInF[63:32])
-                          : (PCF[1] ? InstrInF[47:16] : InstrInF[31:0]);
-    end
-  endgenerate
-
   // Decode stage pipeline register and logic
-  flopenl #(32)    InstrDReg(clk, reset, ~StallD | FlushD, (FlushD ? nop : InstrF), nop, InstrRawD);
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits

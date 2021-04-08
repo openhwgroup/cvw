@@ -27,7 +27,7 @@ if [file exists work] {
 vlib work
 
 # compile source files
-vlog muxs.sv shifters.sv divide4x64.sv test_iter64.sv
+vlog mux_div.sv shifters_div.sv divide4x64.sv test_iter64.sv
 
 # start and run simulation
 vsim -voptargs=+acc work.tb
