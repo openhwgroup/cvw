@@ -51,7 +51,7 @@ def writeVectors(storecmd):
 
   val = (randint(0, 200) * 4) + 1
 
-  # Load Address Misaligned 
+  # Store Address Misaligned 
   writeTest(storecmd, f, r, f"""
     sw x0, {val}(x0)
   """, f"""

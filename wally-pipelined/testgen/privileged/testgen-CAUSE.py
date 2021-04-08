@@ -41,11 +41,12 @@ def writeVectors(storecmd):
   # Machine Software Interrupt: True, 2
 
   # When running run.sh CAUSE -c, everything works, but begin_signature doesn't appear
+  # 0x2000000 in wally
   # writeTest(storecmd, f, r, f"""
-  #   la x10, 0x02000000 #clint
+  #   la x10, 0x2000000 #clint
 
   #   li x1, 42
-  #   lw x1, 0(x10)
+  #   sw x1, 0(x10)
   # """, True, 2, "m", f"""
   #   lw x0, 0(x10)
   # """)
@@ -53,18 +54,64 @@ def writeVectors(storecmd):
   # User Timer Interrupt: True, 4
   # Supervior timer interrupt: True, 5
   # Machine timer interrupt: True, 7
+
   # writeTest(storecmd, f, r, f"""
-  #   la x10, 0x02004000 #clint timer
-  #   li x1, 42
+  #   li x10, MASK_XLEN(0x8)
+  #   csrrs x0, mstatus, x10
+
+  #   li x11, MASK_XLEN(0x80)
+  #   csrrs x0, mie, x11
+
+  #   la x18, 0x2004000
+  #   lw x11, 0(x18)
+  #   lw x12, 4(x18)
+  #   {storecmd} x0, 0(x18)
+  #   {storecmd} x0, 4(x18)
+  #   nop
+  #   nop
+  # """, True, 7, "m", f"""
+  #   la x18, 0x2004000
+  #   {storecmd} x11, 0(x18)
+  #   {storecmd} x12, 4(x18)
+  # """)
+
+  #writeTest(storecmd, f, r, f"""
+  #  li x2, 0x0
+#
+  #   li x4, 0x80
+  #   csrrs x0, mie, x4
+
+  #   la x2, 0x2004000
+    
+  #   li x3, 0x0
+  #   lw x5, 0(x2)
+  #   sd x3, 0(x2)
+  #   wfi
+  # """, True, 7, "m", f"""
+  #   t
+  # """)
+
+  # writeTest(storecmd, f, r, f"""
+  #   csrr x18, mstatus
+  #   # csrsi mstatus, 0b11111
+  #   csrr x19, mie
+  #   li x17, 0b1111111111111
+  #   # csrs mie, x17
+
+  #   la x10, 0x2004000 #clint timer
+  #   li x1, 0
 
   #   lw x11, 0(x10)
   #   lw x12, 4(x10)
 
-  #   sw x1, 0(x10)
-  #   sw x0, 4(x10)
+  #   {storecmd} x0, 0(x10)
+  #   {storecmd} x0, 4(x10)
   # """, True, 7, "m", f"""
-  #   sw x11, 0(x10)
-  #   sw x12, 4(x10)
+  #   {storecmd} x11, 0(x10)
+  #   {storecmd} x12, 4(x10)
+
+  #   csrw mstatus, x18
+  #   csrw mie, x19
   # """)
 
   # User external input: True, 8
@@ -106,17 +153,14 @@ def writeVectors(storecmd):
   """, False, 6)
 
   # Environment call from u-mode: only for when only M and U mode enabled?
-  # writeTest(storecmd, f, r, f"""
-  #   ecall
-  # """, False, 8, "u")
-
-  # # Environment call from s-mode
-
-  # ??? BUG ??? Code should be 9, but ends up being 8
-  # It's 8 for both OVPSim and Wally
   writeTest(storecmd, f, r, f"""
     ecall
-  """, False, 8, "s")
+  """, False, 8, "u")
+
+  # # Environment call from s-mode
+  writeTest(storecmd, f, r, f"""
+    ecall
+  """, False, 9, "s")
 
   # Environment call from m-mode
   writeTest(storecmd, f, r, f"""
@@ -144,7 +188,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
     before = f"""
       li x1, 0b110000000000
       csrrc x28, mstatus, x1
-      li x1, 0b{"01" if mode == "s" else "00"}0000000000
+      li x1, 0b{"01" if mode == "s" else "00"}00000000000
       csrrs x28, mstatus, x1
 
       auipc x1, 0
@@ -230,7 +274,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 # csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 15;
+numrand = 10;
 
 # setup
 seed(0xC365DDEB9173AB42) # make tests reproducible
