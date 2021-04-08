@@ -2,6 +2,8 @@
 // priority_encoder.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
+// Based on implementation from https://www.allaboutcircuits.com/ip-cores/communication-controller/priority-encoder/
+// *** Give proper LGPL attribution for above source
 // Modified:
 //
 // Purpose: One-hot encoding to binary encoder
