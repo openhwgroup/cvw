@@ -1,4 +1,4 @@
-`include "../../config/rv64icfd/wally-config.vh"
+// `include "../../config/rv64icfd/wally-config.vh"
 
 module freg1adr (
   input  logic [2:0]       frm,
