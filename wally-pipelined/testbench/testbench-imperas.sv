@@ -333,11 +333,25 @@ string tests32i[] = {
 		       "rv64BP/reg-test", "10000"
 	 };
 
+   // string tests64p[] = '{
+   //           "rv64p/WALLY-CAUSE", "3000",
+   //           "rv64p/WALLY-EPC", "3000",
+   //           "rv64p/WALLY-TVAL", "3000"
+   // };
+
+   
+
    string tests64p[] = '{
              "rv64p/WALLY-CAUSE", "3000",
              "rv64p/WALLY-EPC", "3000",
-             "rv64p/WALLY-TVAL", "3000"
+             "rv64p/WALLY-TVAL", "3000",
+             "rv64p/WALLY-MARCHID", "4000",
+             "rv64p/WALLY-MIMPID", "4000",
+             "rv64p/WALLY-MHARTID", "4000",
+             "rv64p/WALLY-MVENDORID", "4000"
    };
+
+   
 
   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
