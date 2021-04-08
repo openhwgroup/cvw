@@ -71,22 +71,3 @@ add wave -divider
 # everything else
 add wave -hex -r /testbench/*
 
--- Set Wave Output Items 
-TreeUpdate [SetDefaultTree]
-WaveRestoreZoom {0 ps} {100 ps}
-configure wave -namecolwidth 250
-configure wave -valuecolwidth 120
-configure wave -justifyvalue left
-configure wave -signalnamewidth 0
-configure wave -snapdistance 10
-configure wave -datasetprefix 0
-configure wave -rowmargin 4
-configure wave -childrowmargin 2
-set DefaultRadix hexadecimal
-
--- Run the Simulation 
-#run 5000 
-run -all
-#quit
-noview ../testbench/testbench-peripherals.sv
-view wave
