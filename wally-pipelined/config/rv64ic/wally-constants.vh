@@ -25,11 +25,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-// Interrupt configuration
-`define PLIC_NUM_SRC 53
-`define PLIC_UART_ID 4
-
 // Virtual Memory Constants (sv39)
+`define VPN_SEGMENT_BITS 9
 `define VPN_BITS 27
 `define PPN_BITS 44
+`define PPN_HIGH_SEGMENT_BITS 26
 `define PA_BITS  56

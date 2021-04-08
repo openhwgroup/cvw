@@ -198,7 +198,7 @@ rv32 = Architecture(32)
 rv64 = Architecture(64)
 
 if __name__ == "__main__":
-  arch = rv32
+  arch = rv64 
   pgdir = PageTable("page_directory", next_ppn(), arch)
 
   # Directly map the first 20 pages of RAM

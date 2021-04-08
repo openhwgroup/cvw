@@ -1,12 +1,10 @@
-//////////////////////////////////////////
-// wally-constants.vh
+///////////////////////////////////////////
+// decoder.sv
 //
-// Written: tfleming@hmc.edu 4 March 2021
+// Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Modified:
 //
-// Purpose: Specify certain constants defined in the RISC-V 64-bit architecture.
-//          These macros should not be changed, except in the event of an
-//          update to the architecture or particularly special circumstances.
+// Purpose: Binary encoding to one-hot decoder
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -25,9 +23,14 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-// Virtual Memory Constants (sv39)
-`define VPN_SEGMENT_BITS 9
-`define VPN_BITS 27
-`define PPN_BITS 44
-`define PPN_HIGH_SEGMENT_BITS 26
-`define PA_BITS  56
+`include "wally-config.vh"
+
+module decoder #(parameter BINARY_BITS = 3) (
+  input  [BINARY_BITS-1:0] binary,
+  output [(2**BINARY_BITS)-1:0] one_hot
+);
+
+  // *** Double check whether this synthesizes as expected
+  assign one_hot = 1 << binary;
+
+endmodule

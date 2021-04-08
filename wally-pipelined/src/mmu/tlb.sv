@@ -71,6 +71,7 @@ module tlb #(parameter ENTRY_BITS = 3) (
 
   // Controls for writing a new entry to the TLB
   input  [`XLEN-1:0] PageTableEntryWrite,
+  input  [1:0]       PageTypeWrite,
   input              TLBWrite,
 
   // Invalidate all TLB entries
@@ -79,7 +80,10 @@ module tlb #(parameter ENTRY_BITS = 3) (
   // Physical address outputs
   output [`XLEN-1:0] PhysicalAddress,
   output             TLBMiss,
-  output             TLBHit
+  output             TLBHit,
+
+  // Faults
+  output             TLBPageFault
 );
 
   logic SvMode;
@@ -108,18 +112,17 @@ module tlb #(parameter ENTRY_BITS = 3) (
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
-  logic [`PPN_BITS-1:0] PhysicalPageNumber;
+  logic [`PPN_BITS-1:0] PhysicalPageNumber, PhysicalPageNumberMixed;
+  logic [7:0]           PTEAccessBits;
   logic [11:0]          PageOffset;
   logic [`PA_BITS-1:0]  PhysicalAddressFull;
 
-  // Pattern and pattern location in the CAM
+  // Pattern location in the CAM and type of page hit
   logic [ENTRY_BITS-1:0] VPNIndex;
+  logic [1:0]            HitPageType;
 
   // RAM access location
   logic [ENTRY_BITS-1:0] EntryIndex;
-
-  // Page table entry matching the virtual address
-  logic [`XLEN-1:0] PageTableEntry;
 
   logic             CAMHit;
 
@@ -130,9 +133,21 @@ module tlb #(parameter ENTRY_BITS = 3) (
   tlb_rand rdm(.*);
 
   tlb_ram #(ENTRY_BITS) ram(.*);
-  tlb_cam #(ENTRY_BITS, `VPN_BITS) cam(.*);
+  tlb_cam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) cam(.*);
 
-  assign PhysicalAddressFull = (TLBHit) ? {PhysicalPageNumber, PageOffset} : '0;
+  // *** check whether access is allowed, otherwise fault
+  assign TLBPageFault = 0; // *** temporary
+
+  localparam EXTRA_PHYSICAL_BITS = `PPN_HIGH_SEGMENT_BITS - `VPN_SEGMENT_BITS;
+
+  page_number_mixer #(`PPN_BITS, `PPN_HIGH_SEGMENT_BITS)
+    physical_mixer(PhysicalPageNumber,
+      {{EXTRA_PHYSICAL_BITS{1'b0}}, VirtualPageNumber},
+      HitPageType,
+      PhysicalPageNumberMixed);
+
+  assign PhysicalAddressFull = (TLBHit) ?
+    {PhysicalPageNumberMixed, PageOffset} : '0;
 
   generate
     if (`XLEN == 32) begin
@@ -154,18 +169,22 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
   input  [`XLEN-1:0]      PageTableEntryWrite,
   input                   TLBWrite,
 
-  output [`XLEN-1:0]      PageTableEntry
+  output [`PPN_BITS-1:0]  PhysicalPageNumber,
+  output [7:0]            PTEAccessBits
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
 
   logic [`XLEN-1:0] ram [0:NENTRIES-1];
+  logic [`XLEN-1:0] PageTableEntry;
   always @(posedge clk) begin
     if (TLBWrite) ram[WriteIndex] <= PageTableEntryWrite;
   end
 
   assign PageTableEntry = ram[VPNIndex];
-    
+  assign PTEAccessBits = PageTableEntry[7:0];
+  assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
+
   initial begin
     for (int i = 0; i < NENTRIES; i++)
       ram[i] = `XLEN'b0;
@@ -174,54 +193,49 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
 endmodule
 
 module tlb_cam #(parameter ENTRY_BITS = 3,
-                 parameter KEY_BITS   = 20) (
+                 parameter KEY_BITS   = 20,
+                 parameter HIGH_SEGMENT_BITS = 10) (
   input                    clk, reset,
   input  [KEY_BITS-1:0]    VirtualPageNumber,
+  input  [1:0]             PageTypeWrite,
   input  [ENTRY_BITS-1:0]  WriteIndex,
   input                    TLBWrite,
   input                    TLBFlush,
   output [ENTRY_BITS-1:0]  VPNIndex,
+  output [1:0]             HitPageType,
   output                   CAMHit
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
 
-  // Each entry of this memory has KEY_BITS for the key plus one valid bit.
-  logic [KEY_BITS:0] ram [0:NENTRIES-1];
+  logic [NENTRIES-1:0] CAMLineWrite;
+  logic [1:0] PageTypeList [0:NENTRIES-1];
+  logic [NENTRIES-1:0] Matches;
 
-  logic [ENTRY_BITS-1:0] matched_address_comb;
-  logic                  match_found_comb;
+  // Determine which CAM line should be written, based on a binary index
+  decoder #(ENTRY_BITS) decoder(WriteIndex, CAMLineWrite);
 
-  always @(posedge clk) begin
-    if (TLBWrite) ram[WriteIndex] <= {1'b1,VirtualPageNumber};
-    if (TLBFlush) begin
-      for (int i = 0; i < NENTRIES; i++)
-        ram[i][KEY_BITS] = 1'b0;  // Zero out msb (valid bit) of all entries
+  // Create NENTRIES CAM lines, each of which will independently consider
+  // whether the requested virtual address is a match. Each line stores the
+  // original virtual page number from when the address was written, regardless
+  // of page type. However, matches are determined based on a subset of the
+  // page number segments.
+  generate
+    genvar i;
+    for (i = 0; i < NENTRIES; i++) begin
+      cam_line #(KEY_BITS, HIGH_SEGMENT_BITS) cam_line(
+        .CAMLineWrite(CAMLineWrite[i] && TLBWrite),
+        .PageType(PageTypeList[i]),
+        .Match(Matches[i]),
+        .*);
     end
-  end
+  endgenerate
 
-  // *** Check whether this for loop synthesizes correctly
-  always_comb begin
-    match_found_comb = 1'b0;
-    matched_address_comb = '0;
-    for (int i = 0; i < NENTRIES; i++) begin
-      if (ram[i] == {1'b1,VirtualPageNumber} && !match_found_comb) begin
-        matched_address_comb = i;
-        match_found_comb = 1;
-      end else begin
-        matched_address_comb = matched_address_comb;
-        match_found_comb = match_found_comb;
-      end
-    end
-  end
+  // In case there are multiple matches in the CAM, select only one
+  priority_encoder #(ENTRY_BITS) match_priority(Matches, VPNIndex);
 
-  assign VPNIndex = matched_address_comb;
-  assign CAMHit = match_found_comb & ~TLBFlush;
-
-  initial begin
-    for (int i = 0; i < NENTRIES; i++)
-      ram[i] = '0;
-  end
+  assign CAMHit = |Matches & ~TLBFlush;
+  assign HitPageType = PageTypeList[VPNIndex];
 
 endmodule
 

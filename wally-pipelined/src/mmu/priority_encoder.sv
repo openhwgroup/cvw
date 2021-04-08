@@ -1,12 +1,10 @@
-//////////////////////////////////////////
-// wally-constants.vh
+///////////////////////////////////////////
+// priority_encoder.sv
 //
-// Written: tfleming@hmc.edu 4 March 2021
+// Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Modified:
 //
-// Purpose: Specify certain constants defined in the RISC-V 64-bit architecture.
-//          These macros should not be changed, except in the event of an
-//          update to the architecture or particularly special circumstances.
+// Purpose: One-hot encoding to binary encoder
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -25,9 +23,26 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-// Virtual Memory Constants (sv39)
-`define VPN_SEGMENT_BITS 9
-`define VPN_BITS 27
-`define PPN_BITS 44
-`define PPN_HIGH_SEGMENT_BITS 26
-`define PA_BITS  56
+`include "wally-config.vh"
+
+// *** We should look for a better parameterized priority encoder. This has a
+// bad code smell and might not synthesize
+module priority_encoder #(parameter BINARY_BITS = 3) (
+  input  [(2**BINARY_BITS)-1:0] one_hot,
+  output [BINARY_BITS-1:0] binary
+);
+
+  localparam ONE_HOT_BITS = 2**BINARY_BITS;
+
+  genvar i, j;
+  generate
+    for (i = 0; i < ONE_HOT_BITS; i++) begin
+      for (j = 0; j < BINARY_BITS; j++) begin
+        if (i[j]) begin
+          assign binary[j] = one_hot[i];
+        end
+      end
+    end
+  endgenerate
+
+endmodule
