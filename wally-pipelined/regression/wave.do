@@ -38,51 +38,51 @@ add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbe
 add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/ifu/StallE
 add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/ifu/StallM
 add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/ifu/StallW
-add wave -noupdate -group Bpred -expand -group direction -color Yellow /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/GHRF
-add wave -noupdate -group Bpred -expand -group direction -divider Lookup
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/LookUpPC
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/LookUpPCIndex
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/PredictionMemory
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/Prediction
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/BPPredF
-add wave -noupdate -group Bpred -expand -group direction -expand -group output /testbench/dut/hart/ifu/bpred/BPPredPCF
-add wave -noupdate -group Bpred -expand -group direction -expand -group output /testbench/dut/hart/ifu/bpred/SelBPPredF
-add wave -noupdate -group Bpred -expand -group direction -divider Update
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePC
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePCIndex
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdateEN
-add wave -noupdate -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePrediction
-add wave -noupdate -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/DoForwarding
-add wave -noupdate -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/DoForwardingF
-add wave -noupdate -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/GHRD
-add wave -noupdate -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/GHRE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/TargetWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/FallThroughWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PredictionPCWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/BPPredClassNonCFIWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PCSrcE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/BPPredWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/InstrClassE
-add wave -noupdate -group Bpred -expand -group {bp wrong} -divider pcs
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PCD
-add wave -noupdate -group Bpred -group BTB -divider Update
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdateEN
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdatePC
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/InstrClassE
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdateTarget
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdatePCIndexQ
-add wave -noupdate -group Bpred -group BTB -divider Lookup
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/TargetPC
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/InstrClass
-add wave -noupdate -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/Valid
-add wave -noupdate -group Bpred /testbench/dut/hart/ifu/bpred/BPPredWrongE
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/pop
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/push
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/pushPC
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/PtrD
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/PtrQ
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/memory
-add wave -noupdate -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/popPC
+add wave -noupdate -expand -group Bpred -expand -group direction -color Yellow /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/GHRF
+add wave -noupdate -expand -group Bpred -expand -group direction -divider Lookup
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/LookUpPC
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/LookUpPCIndex
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/PredictionMemory
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/Prediction
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/BPPredF
+add wave -noupdate -expand -group Bpred -expand -group direction -expand -group output /testbench/dut/hart/ifu/bpred/BPPredPCF
+add wave -noupdate -expand -group Bpred -expand -group direction -expand -group output /testbench/dut/hart/ifu/bpred/SelBPPredF
+add wave -noupdate -expand -group Bpred -expand -group direction -divider Update
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePC
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePCIndex
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdateEN
+add wave -noupdate -expand -group Bpred -expand -group direction /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/UpdatePrediction
+add wave -noupdate -expand -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/DoForwarding
+add wave -noupdate -expand -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/DoForwardingF
+add wave -noupdate -expand -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/GHRD
+add wave -noupdate -expand -group Bpred -expand -group direction -group other /testbench/dut/hart/ifu/bpred/Predictor/DirPredictor/GHRE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/TargetWrongE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/FallThroughWrongE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PredictionPCWrongE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/BPPredClassNonCFIWrongE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PCSrcE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/BPPredWrongE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/InstrClassE
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} -divider pcs
+add wave -noupdate -expand -group Bpred -expand -group {bp wrong} /testbench/dut/hart/ifu/bpred/PCD
+add wave -noupdate -expand -group Bpred -group BTB -divider Update
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdateEN
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdatePC
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/InstrClassE
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdateTarget
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/UpdatePCIndexQ
+add wave -noupdate -expand -group Bpred -group BTB -divider Lookup
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/TargetPC
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/InstrClass
+add wave -noupdate -expand -group Bpred -group BTB /testbench/dut/hart/ifu/bpred/TargetPredictor/Valid
+add wave -noupdate -expand -group Bpred /testbench/dut/hart/ifu/bpred/BPPredWrongE
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/pop
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/push
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/pushPC
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/PtrD
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/PtrQ
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/memory
+add wave -noupdate -expand -group Bpred -group RAS /testbench/dut/hart/ifu/bpred/RASPredictor/popPC
 add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/hart/ifu/InstrD
 add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/hart/ifu/InstrE
 add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/hart/ifu/InstrM
@@ -152,7 +152,7 @@ add wave -noupdate -group {alu execution stage} /testbench/dut/hart/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/hart/ieu/dp/SrcBE
 add wave -noupdate /testbench/dut/hart/ieu/dp/ALUResultM
 add wave -noupdate -expand -group PCS /testbench/dut/hart/ifu/PCNextF
-add wave -noupdate -expand -group PCS /testbench/dut/hart/PCF
+add wave -noupdate -expand -group PCS -color Yellow /testbench/dut/hart/PCF
 add wave -noupdate -expand -group PCS /testbench/dut/hart/ifu/PCD
 add wave -noupdate -expand -group PCS /testbench/dut/hart/PCE
 add wave -noupdate -expand -group PCS /testbench/dut/hart/PCM
@@ -188,40 +188,53 @@ add wave -noupdate /testbench/dut/imem/InstrF
 add wave -noupdate /testbench/dut/InstrF
 add wave -noupdate /testbench/dut/InstrF
 add wave -noupdate -divider {New Divider}
-add wave -noupdate /testbench/dut/hart/ifu/ic/InDataF
-add wave -noupdate /testbench/dut/hart/ifu/InstrInF
-add wave -noupdate /testbench/dut/hart/InstrRData
-add wave -noupdate /testbench/dut/hart/rd2
-add wave -noupdate /testbench/dut/hart/ebu/InstrRData
-add wave -noupdate /testbench/dut/hart/ebu/InstrPAdrF
-add wave -noupdate /testbench/dut/hart/ebu/HRDATA
-add wave -noupdate /testbench/dut/uncore/HSELUARTD
-add wave -noupdate /testbench/dut/uncore/HSELUART
-add wave -noupdate /testbench/dut/uncore/HSELTimD
-add wave -noupdate /testbench/dut/uncore/HSELTim
-add wave -noupdate /testbench/dut/uncore/HSELPLICD
-add wave -noupdate /testbench/dut/uncore/HSELPLIC
-add wave -noupdate /testbench/dut/uncore/HSELGPIOD
-add wave -noupdate /testbench/dut/uncore/HSELGPIO
-add wave -noupdate /testbench/dut/uncore/HSELCLINTD
-add wave -noupdate /testbench/dut/uncore/HSELCLINT
-add wave -noupdate /testbench/dut/uncore/HSELBootTimD
-add wave -noupdate /testbench/dut/uncore/HSELBootTim
-add wave -noupdate /testbench/dut/uncore/HREADTim
-add wave -noupdate /testbench/dut/uncore/dtim/HREADTim
-add wave -noupdate /testbench/dut/uncore/dtim/HREADTim0
-add wave -noupdate /testbench/dut/uncore/dtim/BASE
-add wave -noupdate /testbench/dut/uncore/dtim/RANGE
-add wave -noupdate /testbench/memfilename
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[770056]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[771306]}
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HADDR
-add wave -noupdate /testbench/dut/uncore/dtim/RAM
-add wave -noupdate /testbench/dut/uncore/dtim/HREADTim
-add wave -noupdate /testbench/dut/uncore/dtim/HREADTim0
-add wave -noupdate /testbench/dut/uncore/dtim/HRESETn
+add wave -noupdate {/testbench/dut/uncore/dtim/RAM[93182]}
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/ifu/ic/InDataF
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/ifu/InstrInF
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/InstrRData
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/rd2
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/ebu/InstrRData
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/ebu/InstrPAdrF
+add wave -noupdate -group {ahbi debug} /testbench/dut/hart/ebu/HRDATA
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELUARTD
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELUART
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELTimD
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELTim
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELPLICD
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELPLIC
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELGPIOD
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELGPIO
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELCLINTD
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELCLINT
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELBootTimD
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HSELBootTim
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/HREADTim
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/HREADTim
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/HREADTim0
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/BASE
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/RANGE
+add wave -noupdate -group {ahbi debug} /testbench/memfilename
+add wave -noupdate -group {ahbi debug} {/testbench/dut/uncore/dtim/RAM[770056]}
+add wave -noupdate -group {ahbi debug} {/testbench/dut/uncore/dtim/RAM[771306]}
+add wave -noupdate -group {ahbi debug} -radix hexadecimal /testbench/dut/uncore/dtim/HADDR
+add wave -noupdate -group {ahbi debug} {/testbench/dut/uncore/dtim/RAM[93182]}
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/RAM
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/HREADTim
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/HREADTim0
+add wave -noupdate -group {ahbi debug} /testbench/dut/uncore/dtim/HRESETn
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/PCPF
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/DelaySideF
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/InstrPAdrF
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/InstrInF
+add wave -noupdate -expand -group {icache debug} -color Yellow /testbench/dut/hart/PCF
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/InstrF
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/DelayF
+add wave -noupdate -expand -group {icache debug} /testbench/dut/hart/ifu/ic/CompressedF
+add wave -noupdate -color Yellow /testbench/dut/hart/ifu/PCD
+add wave -noupdate /testbench/dut/hart/ifu/ic/InstrRawD
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {10896277 ns} 1} {{Cursor 9} {10896453 ns} 0} {{wrong instruction} {10895117 ns} 0}
+WaveRestoreCursors {{Cursor 7} {10896277 ns} 1} {{Cursor 9} {10896453 ns} 0} {{wrong instruction} {3708 ns} 0}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 229
@@ -237,4 +250,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {10895029 ns} {10895205 ns}
+WaveRestoreZoom {3592 ns} {3824 ns}
