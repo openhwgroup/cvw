@@ -386,17 +386,24 @@ string tests32i[] = {
                 InstrEName, InstrMName, InstrWName);
 
   // initialize tests
+  localparam integer 	   MemStartAddr = `TIMBASE>>(1+`XLEN/32);
+  localparam integer 	   MemEndAddr = (`TIMRANGE+`TIMBASE)>>1+(`XLEN/32);
+
   initial
     begin
       test = 0;
       totalerrors = 0;
       testadr = 0;
       // fill memory with defined values to reduce Xs in simulation
+      // Quick note the memory will need to be initialized.  The C library does not
+      //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
+      //  strings, but uses a load double to read them in.  If the last 2 bytes are
+      //  not initialized the compare results in an 'x' which propagates through 
+      // the design.
       if (`XLEN == 32) meminit = 32'hFEDC0123;
       else meminit = 64'hFEDCBA9876543210;
-      for (i=0; i<=65535; i = i+1) begin
-        //dut.imem.RAM[i] = meminit;
-       // dut.uncore.RAM[i] = meminit;
+      for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
+	dut.uncore.dtim.RAM[i] = meminit;
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};

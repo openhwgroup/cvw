@@ -18,11 +18,7 @@ my $maxaddress = 0;
 
 STDOUT->autoflush(1);
 # *** Ross Thompson I think there is a bug here needs to be +1
-<<<<<<< HEAD
 print ("Processing $#ARGV memfiles: \n");
-=======
-print ("Processing $#ARGV memfiles: ");
->>>>>>> icache_bp_bug
 my $frac = $#ARGV/10;
 for(my $i=0; $i<=$#ARGV; $i++) {
     if ($i < 10 || $i % $frac == 0) { print ("$i ") };

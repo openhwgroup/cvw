@@ -1,4 +1,4 @@
-TARGETDIR	:= sieve
+TARGETDIR	:= qsort
 TARGET		:= $(TARGETDIR)/$(TARGETDIR).elf
 ROOT		:= ..
 LIBRARY_DIRS	:= ${ROOT}/crt0
