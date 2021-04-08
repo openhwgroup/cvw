@@ -29,7 +29,7 @@
 module testbench();
   parameter DEBUG = 0;
   parameter TESTSBP = 0;
-  parameter TESTSPERIPH = 1;
+  parameter TESTSPERIPH = 0; // set to 0 for regression
   
   logic        clk;
   logic        reset;
@@ -382,11 +382,11 @@ module testbench();
   initial begin
     if (`XLEN == 64) begin // RV64
       if (TESTSBP) begin
-        tests = testsBP64;
+        tests = {testsBP64,tests64p};
       end if (TESTSPERIPH) begin 
         tests = tests64periph;
       end else begin 
-        tests = {tests64i,tests64periph};
+        tests = {tests64i,tests64p,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
@@ -396,7 +396,7 @@ module testbench();
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
-      tests = {tests, tests64p};
+      // tests = {tests, tests64p};
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
