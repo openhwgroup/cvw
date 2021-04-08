@@ -36,6 +36,7 @@ module privileged (
   output logic [`XLEN-1:0] CSRReadValW,
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM,
+  output logic             ITLBFlushF, DTLBFlushM,
   input  logic             InstrValidW, FloatRegWriteW, LoadStallD, BPPredWrongM,
   input  logic [3:0]       InstrClassM,
   input  logic             PrivilegedM,
@@ -119,6 +120,8 @@ module privileged (
 
   assign BreakpointFaultM = ebreakM; // could have other causes too
   assign EcallFaultM = ecallM;
+  assign ITLBFlushF = sfencevmaM;
+  assign DTLBFlushM = sfencevmaM;
   // *** Page faults now driven by page table walker. Might need to make the
   // below signals ORs of a walker fault and a tlb fault if both of those come in
   // assign InstrPageFaultM = 0;

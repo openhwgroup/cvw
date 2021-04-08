@@ -90,6 +90,10 @@
 // Hardware configuration
 `define UART_PRESCALE 1
 
+// Interrupt configuration
+`define PLIC_NUM_SRC 53
+`define PLIC_UART_ID 4
+
 // Can add PLIC Config here
 // Num interrupt sources
 

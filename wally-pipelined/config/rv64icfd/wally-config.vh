@@ -54,7 +54,7 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
+`define MEM_VIRTMEM 1
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000

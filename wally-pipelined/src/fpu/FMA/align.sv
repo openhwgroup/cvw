@@ -64,35 +64,35 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 		ps = 0;
 
 		// And to using product as primary operand in adder I exponent gen 
-		killprod = 0;
+		killprod = xzero | yzero;
 		// d = aligncnt
 		// p = 53
-		if ($signed(aligncnt) <= $signed(-105)) begin //d<=-2p+1
+		if ($signed(aligncnt) <= $signed(-103)) begin //d<=-2p+1
 			//product ancored case with saturated shift
 			sumshift = 163;	// 3p+4	
 			sumshiftzero = 0;
 			shift = {~zdenorm,zman,163'b0} >> sumshift;
-			t = {shift[215:52]};
+			t = zzero ? 0 : {shift[215:52]};
 			bs = |(shift[51:0]);
 			//zexpsel = 0;
-		end else if($signed(aligncnt) <= $signed(0))  begin // -2p+1<d<=2
+		end else if($signed(aligncnt) <= $signed(1))  begin // -2p+1<d<=2
 			// set d<=2 to d<=0
 			// product ancored or cancellation
 			// warning: set to 55 rather then 56. was there a typo in the book?
-			sumshift = 55-aligncnt; // p + 3 - d  
+			sumshift = 57-aligncnt; // p + 3 - d  
 			sumshiftzero = 0;
 			shift = {~zdenorm,zman,163'b0} >> sumshift;
-			t = {shift[215:52]};
+			t = zzero ? 0 : {shift[215:52]};
 			bs = |(shift[51:0]);
 			//zexpsel = 0;
-		end else if ($signed(aligncnt)<=$signed(52))  begin // 2 < d <= p+2
+		end else if ($signed(aligncnt)<=$signed(55))  begin // 2 < d <= p+2
 			// another typo in book? above was 55 changed to 52
 			// addend ancored case
 			// used to be 56 \/ somthing doesn't seem right too many typos
-			sumshift = 55-aligncnt;
+			sumshift = 57-aligncnt;
 			sumshiftzero = 0;
 			shift = {~zdenorm,zman, 163'b0} >> sumshift;
-			t = {shift[215:52]};
+			t = zzero ? 0 : {shift[215:52]};
 			bs = |(shift[51:0]);
 			//zexpsel = 1;
 		end else begin                 	// d >= p+3
@@ -100,7 +100,7 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 			sumshift = 0;	
 			sumshiftzero = 1;		
 			shift = {~zdenorm,zman, 163'b0} >> sumshift;
-			t = {shift[215:52]};
+			t = zzero ? 0 : {shift[215:52]};
 			bs = |(shift[51:0]);
 			killprod = 1;
 			//ps = 1;

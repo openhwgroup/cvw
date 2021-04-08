@@ -42,7 +42,7 @@ module testbench();
   logic [`XLEN-1:0] meminit;
  //string tests64i[] = 
   string tests[] = '{                 
-                     "rv64p/WALLY-CAUSE", "4000"
+                     "rv64p/WALLY-CAUSE", "3000"
                      };
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;

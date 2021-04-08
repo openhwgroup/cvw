@@ -27,7 +27,7 @@
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 32
 
-`define MISA (32'h00000104 | 1 << 12)
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -53,7 +53,7 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
+`define MEM_VIRTMEM 1
 
 // Address space
 `define RESET_VECTOR 32'h80000000
@@ -88,6 +88,10 @@
 
 // Hardware configuration
 `define UART_PRESCALE 1
+
+// Interrupt configuration
+`define PLIC_NUM_SRC 53
+`define PLIC_UART_ID 4
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
