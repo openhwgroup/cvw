@@ -54,7 +54,7 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
+`define MEM_VIRTMEM 1
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
@@ -89,6 +89,10 @@
 
 // Hardware configuration
 `define UART_PRESCALE 1
+
+// Interrupt configuration
+`define PLIC_NUM_SRC 4
+`define PLIC_UART_ID 4
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
