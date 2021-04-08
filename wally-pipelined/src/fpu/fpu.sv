@@ -1,4 +1,5 @@
-// `include "../../config/rv64icfd/wally-config.vh"
+
+`include "wally-config.vh"
 
 module fpu (
   //input  logic [2:0]       FrmD,
