@@ -26,6 +26,8 @@
 ///////////////////////////////////////////
 
 // Virtual Memory Constants (sv32)
+`define VPN_SEGMENT_BITS 10
 `define VPN_BITS 20
 `define PPN_BITS 22
+`define PPN_HIGH_SEGMENT_BITS 12
 `define PA_BITS  34

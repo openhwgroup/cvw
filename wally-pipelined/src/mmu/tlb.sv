@@ -50,7 +50,6 @@
 /* *** TODO:
  * - add LRU algorithm (select the write index based on which entry was used
  *   least recently)
- * - refactor modules into multiple files
  */
 
 // The TLB will have 2**ENTRY_BITS total entries
@@ -63,11 +62,15 @@ module tlb #(parameter ENTRY_BITS = 3) (
   // Current privilege level of the processeor
   input  [1:0]       PrivilegeModeW,
 
+  // High if the TLB is currently being accessed
+  input              TLBAccess,
+
   // Virtual address input
   input  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
   input  [`XLEN-1:0] PageTableEntryWrite,
+  input  [1:0]       PageTypeWrite,
   input              TLBWrite,
 
   // Invalidate all TLB entries
@@ -76,7 +79,10 @@ module tlb #(parameter ENTRY_BITS = 3) (
   // Physical address outputs
   output [`XLEN-1:0] PhysicalAddress,
   output             TLBMiss,
-  output             TLBHit
+  output             TLBHit,
+
+  // Faults
+  output             TLBPageFault
 );
 
   logic SvMode;
@@ -89,10 +95,8 @@ module tlb #(parameter ENTRY_BITS = 3) (
       assign SvMode = SATP_REGW[63]; // currently just a boolean whether translation enabled
     end
   endgenerate
-  // *** Currently fake virtual memory being on for testing purposes
-  // *** DO NOT ENABLE UNLESS TESTING
-  // assign SvMode = 1;
 
+  // Whether translation should occur
   assign Translate = SvMode & (PrivilegeModeW != `M_MODE);
 
   // *** If we want to support multiple virtual memory modes (ie sv39 AND sv48),
@@ -105,42 +109,52 @@ module tlb #(parameter ENTRY_BITS = 3) (
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
-  logic [`PPN_BITS-1:0] PhysicalPageNumber;
-  logic [11:0]          PageOffset;
+  logic [`PPN_BITS-1:0] PhysicalPageNumber, PhysicalPageNumberMixed;
   logic [`PA_BITS-1:0]  PhysicalAddressFull;
 
-  // Pattern and pattern location in the CAM
+  // Sections of the page table entry
+  logic [7:0]           PTEAccessBits;
+  logic [11:0]          PageOffset;
+
+  // Pattern location in the CAM and type of page hit
   logic [ENTRY_BITS-1:0] VPNIndex;
+  logic [1:0]            HitPageType;
 
-  // RAM access location
-  logic [ENTRY_BITS-1:0] EntryIndex;
-
-  // Page table entry matching the virtual address
-  logic [`XLEN-1:0] PageTableEntry;
+  // Whether the virtual address has a match in the CAM
+  logic                  CAMHit;
 
   assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
   assign PageOffset        = VirtualAddress[11:0];
-
-  // Choose a read or write location to the entry list
-  mux2 #(3) indexmux(VPNIndex, WriteIndex, TLBWrite, EntryIndex);
 
   // Currently use random replacement algorithm
   tlb_rand rdm(.*);
 
   tlb_ram #(ENTRY_BITS) ram(.*);
-  tlb_cam #(ENTRY_BITS, `VPN_BITS) cam(.*);
+  tlb_cam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) cam(.*);
 
-  always_comb begin
-    assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
+  // *** check whether access is allowed, otherwise fault
+  assign TLBPageFault = 0; // *** temporary
 
-    if (TLBHit) begin
-      assign PhysicalAddressFull = {PhysicalPageNumber, PageOffset};
-    end else begin
-      assign PhysicalAddressFull = '0; // *** Actual behavior; disabled until walker functioning
-      //assign PhysicalAddressFull = {2'b0, VirtualPageNumber, PageOffset} // *** pass through should be removed as soon as walker ready
-    end
-  end
+  // *** Not the cleanest solution.
+  // The highest segment of the physical page number has some extra bits
+  // than the highest segment of the virtual page number.
+  localparam EXTRA_PHYSICAL_BITS = `PPN_HIGH_SEGMENT_BITS - `VPN_SEGMENT_BITS;
 
+  // Replace segments of the virtual page number with segments of the physical
+  // page number. For 4 KB pages, the entire virtual page number is replaced.
+  // For superpages, some segments are considered offsets into a larger page.
+  page_number_mixer #(`PPN_BITS, `PPN_HIGH_SEGMENT_BITS)
+    physical_mixer(PhysicalPageNumber,
+      {{EXTRA_PHYSICAL_BITS{1'b0}}, VirtualPageNumber},
+      HitPageType,
+      PhysicalPageNumberMixed);
+
+  // Provide physical address only on TLBHits to cause catastrophic errors if
+  // garbage address is used.
+  assign PhysicalAddressFull = (TLBHit) ?
+    {PhysicalPageNumberMixed, PageOffset} : '0;
+
+  // Output the hit physical address if translation is currently on.
   generate
     if (`XLEN == 32) begin
       mux2 #(`XLEN) addressmux(VirtualAddress, PhysicalAddressFull[31:0], Translate, PhysicalAddress);
@@ -149,93 +163,6 @@ module tlb #(parameter ENTRY_BITS = 3) (
     end
   endgenerate
 
-  assign TLBMiss = ~TLBHit & ~(TLBWrite | TLBFlush) & Translate;
-endmodule
-
-module tlb_ram #(parameter ENTRY_BITS = 3) (
-  input                   clk, reset,
-  input  [ENTRY_BITS-1:0] EntryIndex,
-  input  [`XLEN-1:0]      PageTableEntryWrite,
-  input                   TLBWrite,
-
-  output [`XLEN-1:0]      PageTableEntry
-);
-
-  localparam NENTRIES = 2**ENTRY_BITS;
-
-  logic [`XLEN-1:0] ram [0:NENTRIES-1];
-  always @(posedge clk) begin
-    if (TLBWrite) ram[EntryIndex] <= PageTableEntryWrite;
-  end
-
-  assign PageTableEntry = ram[EntryIndex];
-    
-  initial begin
-    for (int i = 0; i < NENTRIES; i++)
-      ram[i] = `XLEN'b0;
-  end
-
-endmodule
-
-module tlb_cam #(parameter ENTRY_BITS = 3,
-                 parameter KEY_BITS   = 20) (
-  input                    clk, reset,
-  input  [KEY_BITS-1:0]    VirtualPageNumber,
-  input  [ENTRY_BITS-1:0]  WriteIndex,
-  input                    TLBWrite,
-  input                    TLBFlush,
-  output [ENTRY_BITS-1:0]  VPNIndex,
-  output                   TLBHit
-);
-
-  localparam NENTRIES = 2**ENTRY_BITS;
-
-  // Each entry of this memory has KEY_BITS for the key plus one valid bit.
-  logic [KEY_BITS:0] ram [0:NENTRIES-1];
-
-  logic [ENTRY_BITS-1:0] matched_address_comb;
-  logic                  match_found_comb;
-
-  always @(posedge clk) begin
-    if (TLBWrite) ram[WriteIndex] <= {1'b1,VirtualPageNumber};
-    if (TLBFlush) begin
-      for (int i = 0; i < NENTRIES; i++)
-        ram[i][KEY_BITS] = 1'b0;  // Zero out msb (valid bit) of all entries
-    end
-  end
-
-  // *** Check whether this for loop synthesizes correctly
-  always_comb begin
-    match_found_comb = 1'b0;
-    matched_address_comb = '0;
-    for (int i = 0; i < NENTRIES; i++) begin
-      if (ram[i] == {1'b1,VirtualPageNumber} && !match_found_comb) begin
-        matched_address_comb = i;
-        match_found_comb = 1;
-      end else begin
-        matched_address_comb = matched_address_comb;
-        match_found_comb = match_found_comb;
-      end
-    end
-  end
-
-  assign VPNIndex = matched_address_comb;
-  assign TLBHit = match_found_comb & ~(TLBWrite | TLBFlush);
-
-  initial begin
-    for (int i = 0; i < NENTRIES; i++)
-      ram[i] = '0;
-  end
-
-endmodule
-
-module tlb_rand #(parameter ENTRY_BITS = 3) (
-  input                   clk, reset,
-  output [ENTRY_BITS-1:0] WriteIndex
-);
-
-  logic [31:0] data;
-  assign data = $urandom;
-  assign WriteIndex = data[ENTRY_BITS:0];
-  
+  assign TLBHit = CAMHit & TLBAccess;
+  assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
 endmodule

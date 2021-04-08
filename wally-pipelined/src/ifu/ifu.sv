@@ -61,8 +61,9 @@ module ifu (
   // TLB management
   input logic  [1:0]       PrivilegeModeW,
   input logic  [`XLEN-1:0] PageTableEntryF,
+  input logic  [1:0]       PageTypeF,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              ITLBWriteF, // ITLBFlushF,
+  input logic              ITLBWriteF, ITLBFlushF,
   output logic             ITLBMissF, ITLBHitF
 );
 
@@ -75,13 +76,15 @@ module ifu (
   logic [31:0]      InstrRawD, InstrE, InstrW;
   logic [31:0]      nop = 32'h00000013; // instruction for NOP
   logic [`XLEN-1:0] ITLBInstrPAdrF, ICacheInstrPAdrF;
+  // *** send this to the trap unit
+  logic             ITLBPageFaultF;
 
-  // *** temporary hack until walker is hooked up -- Thomas F
-  // logic  [`XLEN-1:0] PageTableEntryF = '0;
-  logic ITLBFlushF = '0;
-  // logic ITLBWriteF = '0;
-  tlb #(3) itlb(clk, reset, SATP_REGW, PrivilegeModeW, PCF, PageTableEntryF, ITLBWriteF, ITLBFlushF,
-    ITLBInstrPAdrF, ITLBMissF, ITLBHitF);
+  tlb #(3) itlb(.TLBAccess(1'b1), .VirtualAddress(PCF),
+                .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
+                .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
+                .PhysicalAddress(ITLBInstrPAdrF), .TLBMiss(ITLBMissF),
+                .TLBHit(ITLBHitF), .TLBPageFault(ITLBPageFaultF),
+                .*);
 
   // branch predictor signals
   logic 	   SelBPPredF;
