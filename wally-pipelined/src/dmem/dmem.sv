@@ -52,20 +52,23 @@ module dmem (
   // TLB management
   input logic  [1:0]       PrivilegeModeW,
   input logic  [`XLEN-1:0] PageTableEntryM,
+  input logic  [1:0]       PageTypeM,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              DTLBWriteM, // DTLBFlushM,
+  input logic              DTLBWriteM, DTLBFlushM,
   output logic             DTLBMissM, DTLBHitM
 );
 
   logic             MemAccessM;  // Whether memory needs to be accessed
   logic             SquashSCM;
+  // *** needs to be sent to trap unit
+  logic             DTLBPageFaultM;
 
-  // *** temporary hack until walker is hooked up -- Thomas F
-  // logic  [`XLEN-1:0] PageTableEntryM = '0;
-  logic DTLBFlushM = '0;
-  // logic DTLBWriteM = '0;
-  tlb #(3) dtlb(clk, reset, SATP_REGW, PrivilegeModeW, MemAccessM, MemAdrM, PageTableEntryM, DTLBWriteM,
-    DTLBFlushM, MemPAdrM, DTLBMissM, DTLBHitM);
+  tlb #(3) dtlb(.TLBAccess(MemAccessM), .VirtualAddress(MemAdrM),
+                .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
+                .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
+                .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
+                .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
+                .*);
 
 	// Determine if an Unaligned access is taking place
 	always_comb

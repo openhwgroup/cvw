@@ -105,6 +105,7 @@ module wallypipelinedhart (
   logic [1:0]       PrivilegeModeW;
 
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
+  logic [1:0]       PageTypeF, PageTypeM;
 
   // IMem stalls
   logic             ICacheStallF;

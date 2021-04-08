@@ -48,6 +48,7 @@ module pagetablewalker (
 
   // Outputs to the TLBs (PTEs to write)
   output logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM,
+  output logic [1:0]       PageTypeF, PageTypeM,
   output logic             ITLBWriteF, DTLBWriteM,
 
   // Signals from ahblite (PTEs from memory)
@@ -77,6 +78,10 @@ module pagetablewalker (
         Executable, Writable, Readable, Valid;
   // PTE descriptions
   logic ValidPTE, AccessAlert, MegapageMisaligned, BadMegapage, LeafPTE;
+
+  // Outputs of walker
+  logic [`XLEN-1:0] PageTableEntry;
+  logic [1:0] PageType;
 
   // Signals for direct, fake translations. Not part of the final Wally version.
   logic [`XLEN-1:0]     DirectInstrPTE, DirectMemPTE;
@@ -121,6 +126,12 @@ module pagetablewalker (
   assign LeafPTE = Executable | Writable | Readable;
   assign ValidPTE = Valid && ~(Writable && ~Readable);
   assign AccessAlert = ~Accessed || (MemStore && ~Dirty);
+
+  // Assign specific outputs to general outputs
+  assign PageTableEntryF = PageTableEntry;
+  assign PageTableEntryM = PageTableEntry;
+  assign PageTypeF = PageType;
+  assign PageTypeM = PageType;
 
   generate
     if (`XLEN == 32) begin
@@ -169,8 +180,8 @@ module pagetablewalker (
       always_comb begin
         // default values
         assign TranslationPAdr = '0;
-        assign PageTableEntryF = '0;
-        assign PageTableEntryM = '0;
+        assign PageTableEntry = '0;
+        assign PageType ='0;
         assign MMUTranslationComplete = '0;
         assign DTLBWriteM = '0;
         assign ITLBWriteF = '0;
@@ -188,8 +199,8 @@ module pagetablewalker (
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
             assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-            assign PageTableEntryF = CurrentPTE;
-            assign PageTableEntryM = CurrentPTE;
+            assign PageTableEntry = CurrentPTE;
+            assign PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
             assign MMUTranslationComplete = '1;
             assign DTLBWriteM = DTLBMissM;
             assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
@@ -203,8 +214,6 @@ module pagetablewalker (
           end
         endcase
       end
-
-      
 
       // Capture page table entry from ahblite
       flopenr #(32) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
@@ -271,8 +280,8 @@ module pagetablewalker (
       always_comb begin
         // default values
         assign TranslationPAdr = '0;
-        assign PageTableEntryF = '0;
-        assign PageTableEntryM = '0;
+        assign PageTableEntry = '0;
+        assign PageType = '0;
         assign MMUTranslationComplete = '0;
         assign DTLBWriteM = '0;
         assign ITLBWriteF = '0;
@@ -293,8 +302,9 @@ module pagetablewalker (
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
             assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-            assign PageTableEntryF = CurrentPTE;
-            assign PageTableEntryM = CurrentPTE;
+            assign PageTableEntry = CurrentPTE;
+            assign PageType = (WalkerState == LEVEL2) ? 2'b11 : 
+                                ((WalkerState == LEVEL1) ? 2'b01 : 2'b00);
             assign MMUTranslationComplete = '1;
             assign DTLBWriteM = DTLBMissM;
             assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
