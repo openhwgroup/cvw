@@ -56,7 +56,7 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 	// addend on right shifts.  Handle special cases of shifting
 	// by too much.
 
-	always @(aligncnt or zman or zdenorm)
+	always @(aligncnt or xzero or yzero or zman or zdenorm or zzero)
 		begin
 
 		// Default to clearing sticky bits 
@@ -67,26 +67,23 @@ module align(zman, ae, aligncnt, xzero, yzero, zzero, zdenorm, proddenorm, t, bs
 		killprod = xzero | yzero;
 		// d = aligncnt
 		// p = 53
-		if ($signed(aligncnt) <= $signed(-103)) begin //d<=-2p+1
+		if ($signed(aligncnt) <= $signed(-105)) begin //d<=-2p+1
 			//product ancored case with saturated shift
 			sumshift = 163;	// 3p+4	
 			sumshiftzero = 0;
-			shift = {~zdenorm,zman,163'b0} >> sumshift;
+			shift = {1'b1,zman,163'b0} >> sumshift;
 			t = zzero ? 0 : {shift[215:52]};
 			bs = |(shift[51:0]);
 			//zexpsel = 0;
-		end else if($signed(aligncnt) <= $signed(1))  begin // -2p+1<d<=2
-			// set d<=2 to d<=0
+		end else if($signed(aligncnt) <= $signed(2))  begin // -2p+1<d<=2
 			// product ancored or cancellation
-			// warning: set to 55 rather then 56. was there a typo in the book?
-			sumshift = 57-aligncnt; // p + 3 - d  
+			sumshift = 57-aligncnt; // p + 2 - d  
 			sumshiftzero = 0;
 			shift = {~zdenorm,zman,163'b0} >> sumshift;
 			t = zzero ? 0 : {shift[215:52]};
 			bs = |(shift[51:0]);
 			//zexpsel = 0;
 		end else if ($signed(aligncnt)<=$signed(55))  begin // 2 < d <= p+2
-			// another typo in book? above was 55 changed to 52
 			// addend ancored case
 			// used to be 56 \/ somthing doesn't seem right too many typos
 			sumshift = 57-aligncnt;

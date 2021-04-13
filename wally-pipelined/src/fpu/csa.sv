@@ -50,7 +50,7 @@ module FA_array (S, C, A, B, Ci) ;
    genvar 	  i;
    generate
       for (i = 0; i < n; i = i + 1) begin : index
-	 fa FA1(.S(S[i]), .C(C[i]), .A(A[i]), .B(B[i]), .Ci(Ci[i]));
+	 fa FA1(.sum(S[i]), .carry(C[i]), .a(A[i]), .b(B[i]), .c(Ci[i]));
       end
    endgenerate
    
