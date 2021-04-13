@@ -4,8 +4,8 @@
 // Written: jtorrey@hmc.edu 16 February 2021
 // Modified:
 //
-// Purpose: Example translation lookaside buffer
-//           Cache of virtural-to-physical address translations
+// Purpose: Translation lookaside buffer
+//          Cache of virtural-to-physical address translations
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -127,7 +127,8 @@ module tlb #(parameter ENTRY_BITS = 3) (
   assign PageOffset        = VirtualAddress[11:0];
 
   // Currently use random replacement algorithm
-  tlb_rand rdm(.*);
+  // tlb_rand rdm(.*);
+  tlb_lru lru(.*);
 
   tlb_ram #(ENTRY_BITS) ram(.*);
   tlb_cam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) cam(.*);
