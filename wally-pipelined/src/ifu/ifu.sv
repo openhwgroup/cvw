@@ -71,7 +71,7 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCPF;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCNextPF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   logic [31:0]      nop = 32'h00000013; // instruction for NOP
@@ -98,12 +98,12 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
-  assign PCPF = PCF; // Temporary workaround until iTLB is live
+  assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
   icache ic(
     .*,
     .InstrPAdrF(ICacheInstrPAdrF),
-    .UpperPCPF(PCPF[`XLEN-1:12]),
-    .LowerPCF(PCF[11:0])
+    .UpperPCNextPF(PCNextPF[`XLEN-1:12]),
+    .LowerPCNextF(PCNextF[11:0])
   );
   // Prioritize the iTLB for reads if it wants one
   mux2 #(`XLEN) instrPAdrMux(ICacheInstrPAdrF, ITLBInstrPAdrF, ITLBMissF, InstrPAdrF);
