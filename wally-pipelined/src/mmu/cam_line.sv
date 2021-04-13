@@ -71,6 +71,6 @@ module cam_line #(parameter KEY_BITS = 20,
   // should automatically match.
   page_number_mixer #(KEY_BITS, HIGH_SEGMENT_BITS) mixer(VirtualPageNumber, Key, PageType, VirtualPageNumberQuery);
 
-  assign Match = ({1'b1, VirtualPageNumberQuery} == Key);
+  assign Match = ({1'b1, VirtualPageNumberQuery} == {Valid, Key});
 
 endmodule
