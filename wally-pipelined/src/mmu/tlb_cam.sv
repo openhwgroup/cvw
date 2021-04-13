@@ -64,6 +64,8 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   endgenerate
 
   // In case there are multiple matches in the CAM, select only one
+  // *** it might be guaranteed that the CAM will never have multiple matches.
+  // If so, this is just an encoder
   priority_encoder #(ENTRY_BITS) match_priority(Matches, VPNIndex);
 
   assign CAMHit = |Matches & ~TLBFlush;
