@@ -85,7 +85,7 @@ module pagetablewalker (
 
   // Signals for direct, fake translations. Not part of the final Wally version.
   logic [`XLEN-1:0]     DirectInstrPTE, DirectMemPTE;
-  logic [9:0]           DirectPTEFlags = {2'b0, 8'b00001111};
+  localparam            DirectPTEFlags = {2'b0, 8'b00001111};
 
   logic [`VPN_BITS-1:0] PCPageNumber, MemAdrPageNumber;
 
@@ -133,17 +133,23 @@ module pagetablewalker (
   assign PageTypeF = PageType;
   assign PageTypeM = PageType;
 
+  localparam IDLE = 3'h0;
+  localparam LEVEL1 = 3'h1;
+  localparam LEVEL0 = 3'h2;
+  localparam LEAF = 3'h3;
+  localparam FAULT = 3'h4;
+  localparam LEVEL2 = 3'h5;
+
+  logic [2:0] WalkerState, NextWalkerState;
+
   generate
     if (`XLEN == 32) begin
       logic [9:0] VPN1, VPN0;
 
       assign SvMode = SATP_REGW[31];
 
-      typedef enum {IDLE, LEVEL1, LEVEL0, LEAF, FAULT} walker_statetype;
-      walker_statetype WalkerState, NextWalkerState;
-
       // *** Do we need a synchronizer here for walker to talk to ahblite?
-      flopenl #(.TYPE(walker_statetype)) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(3) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       // State transition logic
       always_comb begin
@@ -179,38 +185,38 @@ module pagetablewalker (
       // Assign combinational outputs
       always_comb begin
         // default values
-        assign TranslationPAdr = '0;
-        assign PageTableEntry = '0;
-        assign PageType ='0;
-        assign MMUTranslationComplete = '0;
-        assign DTLBWriteM = '0;
-        assign ITLBWriteF = '0;
-        assign InstrPageFaultM = '0;
-        assign LoadPageFaultM = '0;
-        assign StorePageFaultM = '0;
+        TranslationPAdr = '0;
+        PageTableEntry = '0;
+        PageType ='0;
+        MMUTranslationComplete = '0;
+        DTLBWriteM = '0;
+        ITLBWriteF = '0;
+        InstrPageFaultM = '0;
+        LoadPageFaultM = '0;
+        StorePageFaultM = '0;
 
         case (NextWalkerState)
           LEVEL1: begin
-            assign TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+            TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
           end
           LEVEL0: begin
-            assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
           end
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
-            assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-            assign PageTableEntry = CurrentPTE;
-            assign PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
-            assign MMUTranslationComplete = '1;
-            assign DTLBWriteM = DTLBMissM;
-            assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
+            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            PageTableEntry = CurrentPTE;
+            PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
+            MMUTranslationComplete = '1;
+            DTLBWriteM = DTLBMissM;
+            ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
           end
           FAULT: begin
-            assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-            assign MMUTranslationComplete = '1;
-            assign InstrPageFaultM = ~DTLBMissM;
-            assign LoadPageFaultM = DTLBMissM && ~MemStore;
-            assign StorePageFaultM = DTLBMissM && MemStore;
+            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            MMUTranslationComplete = '1;
+            InstrPageFaultM = ~DTLBMissM;
+            LoadPageFaultM = DTLBMissM && ~MemStore;
+            StorePageFaultM = DTLBMissM && MemStore;
           end
         endcase
       end
@@ -232,11 +238,8 @@ module pagetablewalker (
 
       logic GigapageMisaligned, BadGigapage;
 
-      typedef enum {IDLE, LEVEL2, LEVEL1, LEVEL0, LEAF, FAULT} walker_statetype;
-      walker_statetype WalkerState, NextWalkerState;
-
       // *** Do we need a synchronizer here for walker to talk to ahblite?
-      flopenl #(.TYPE(walker_statetype)) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(3) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       always_comb begin
         case (WalkerState)
@@ -279,42 +282,42 @@ module pagetablewalker (
       // *** Should translate this flop block into our flop module notation
       always_comb begin
         // default values
-        assign TranslationPAdr = '0;
-        assign PageTableEntry = '0;
-        assign PageType = '0;
-        assign MMUTranslationComplete = '0;
-        assign DTLBWriteM = '0;
-        assign ITLBWriteF = '0;
-        assign InstrPageFaultM = '0;
-        assign LoadPageFaultM = '0;
-        assign StorePageFaultM = '0;
+        TranslationPAdr = '0;
+        PageTableEntry = '0;
+        PageType = '0;
+        MMUTranslationComplete = '0;
+        DTLBWriteM = '0;
+        ITLBWriteF = '0;
+        InstrPageFaultM = '0;
+        LoadPageFaultM = '0;
+        StorePageFaultM = '0;
 
         case (NextWalkerState)
           LEVEL2: begin
-            assign TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
+            TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
           end
           LEVEL1: begin
-            assign TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+            TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
           end
           LEVEL0: begin
-            assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
           end
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
-            assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-            assign PageTableEntry = CurrentPTE;
-            assign PageType = (WalkerState == LEVEL2) ? 2'b11 : 
+            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            PageTableEntry = CurrentPTE;
+            PageType = (WalkerState == LEVEL2) ? 2'b11 : 
                                 ((WalkerState == LEVEL1) ? 2'b01 : 2'b00);
-            assign MMUTranslationComplete = '1;
-            assign DTLBWriteM = DTLBMissM;
-            assign ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
+            MMUTranslationComplete = '1;
+            DTLBWriteM = DTLBMissM;
+            ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
           end
           FAULT: begin
-            assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-            assign MMUTranslationComplete = '1;
-            assign InstrPageFaultM = ~DTLBMissM;
-            assign LoadPageFaultM = DTLBMissM && ~MemStore;
-            assign StorePageFaultM = DTLBMissM && MemStore;
+            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            MMUTranslationComplete = '1;
+            InstrPageFaultM = ~DTLBMissM;
+            LoadPageFaultM = DTLBMissM && ~MemStore;
+            StorePageFaultM = DTLBMissM && MemStore;
           end
         endcase
       end

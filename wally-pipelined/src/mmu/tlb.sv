@@ -24,9 +24,6 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
-`include "wally-constants.vh"
-
 /**
  * sv32 specs
  * ----------
@@ -51,6 +48,9 @@
  * - add LRU algorithm (select the write index based on which entry was used
  *   least recently)
  */
+
+`include "wally-config.vh"
+`include "wally-constants.vh"
 
 // The TLB will have 2**ENTRY_BITS total entries
 module tlb #(parameter ENTRY_BITS = 3) (
