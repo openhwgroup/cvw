@@ -24,9 +24,6 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
-`include "wally-constants.vh"
-
 module cam_line #(parameter KEY_BITS = 20,
                   parameter HIGH_SEGMENT_BITS = 10) (
   input                 clk, reset,

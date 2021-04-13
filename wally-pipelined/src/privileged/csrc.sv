@@ -80,7 +80,7 @@ module csrc (
 
             for (j=0; j<= `COUNTERS; j = j+1) begin 
                 // Write enables
-                if (j !==1) begin
+                if (j != 1) begin
                     assign WriteHPMCOUNTERM[j] = CSRMWriteM && (CSRAdrM == MHPMCOUNTER[j]);
                     // Count Signals 
                     assign HPMCOUNTERPlusM[j] = HPMCOUNTER_REGW[j] + {63'b0, MCOUNTEN[j] & ~MCOUNTINHIBIT_REGW[j]}; 

@@ -59,13 +59,13 @@ module rodirectmappedmem #(parameter LINESIZE = 256, parameter NUMLINES = 512, p
     // Swizzle bits to get the offset, set, and tag out of the read and write addresses
     always_comb begin
         // Read address
-        assign WordSelect = ReadLowerAdr[OFFSETWIDTH-1:0];
-        assign ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
-        assign ReadSet = ReadPAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
-        assign ReadTag = ReadPAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
+        WordSelect = ReadLowerAdr[OFFSETWIDTH-1:0];
+        ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
+        ReadSet = ReadPAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
+        ReadTag = ReadPAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
         // Write address
-        assign WriteSet = WritePAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
-        assign WriteTag = WritePAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
+        WriteSet = WritePAdr[SETWIDTH+OFFSETWIDTH-1:OFFSETWIDTH];
+        WriteTag = WritePAdr[`XLEN-1:SETWIDTH+OFFSETWIDTH];
     end
 
     genvar i;
@@ -85,8 +85,8 @@ module rodirectmappedmem #(parameter LINESIZE = 256, parameter NUMLINES = 512, p
 
     // Get the data and valid out of the lines
     always_comb begin
-        assign DataWord = LineOutputs[ReadSet];
-        assign DataValid = ValidOutputs[ReadSet] & (TagOutputs[ReadSet] == ReadTag);
+        DataWord = LineOutputs[ReadSet];
+        DataValid = ValidOutputs[ReadSet] & (TagOutputs[ReadSet] == ReadTag);
     end
 
 endmodule
