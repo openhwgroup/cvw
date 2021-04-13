@@ -30,6 +30,7 @@ module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
     // Pipeline stuff
     input  logic clk,
     input  logic reset,
+    input  logic stall,
     // If flush is high, invalidate the entire cache
     input  logic flush,
     // Select which address to read (broken for efficiency's sake)
@@ -45,75 +46,80 @@ module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
 );
 
     // Various compile-time constants
-    localparam integer WORDWIDTH = $clog2(WORDSIZE);
-    localparam integer LINEWIDTH = $clog2(LINESIZE/8);
-    localparam integer OFFSETWIDTH = $clog2(LINESIZE) - WORDWIDTH;
+    localparam integer WORDWIDTH = $clog2(WORDSIZE/8);
+    localparam integer OFFSETWIDTH = $clog2(LINESIZE/WORDSIZE);
     localparam integer SETWIDTH = $clog2(NUMLINES);
-    localparam integer TAGWIDTH = $clog2(`XLEN) - $clog2(LINESIZE) - SETWIDTH;
+    localparam integer TAGWIDTH = `XLEN - OFFSETWIDTH - SETWIDTH - WORDWIDTH;
+
+    localparam integer OFFSETBEGIN = WORDWIDTH;
+    localparam integer OFFSETEND = OFFSETBEGIN+OFFSETWIDTH-1;
+    localparam integer SETBEGIN = OFFSETEND+1;
+    localparam integer SETEND = SETBEGIN + SETWIDTH - 1;
+    localparam integer TAGBEGIN = SETEND + 1;
+    localparam integer TAGEND = TAGBEGIN + TAGWIDTH - 1;
 
     // Machinery to read from and write to the correct addresses in memory
     logic [`XLEN-1:0]       ReadPAdr;
+    logic [`XLEN-1:0]       OldReadPAdr;
     logic [OFFSETWIDTH-1:0] ReadOffset, WriteOffset;
     logic [SETWIDTH-1:0]    ReadSet, WriteSet;
     logic [TAGWIDTH-1:0]    ReadTag, WriteTag;
+    logic [LINESIZE-1:0]    ReadLine;
+    logic [LINESIZE/WORDSIZE-1:0][WORDSIZE-1:0] ReadLineTransformed;
 
     // Machinery to check if a given read is valid and is the desired value
     logic [TAGWIDTH-1:0]    DataTag;
-    logic [NUMLINES-1:0]    ValidOut, NextValidOut;
+    logic [NUMLINES-1:0]    ValidOut;
+
+    flopenr #(`XLEN) ReadPAdrFlop(clk, reset, ~stall, ReadPAdr, OldReadPAdr);
 
     // Assign the read and write addresses in cache memory
     always_comb begin
-        assign ReadOffset = ReadLowerAdr[WORDWIDTH+OFFSETWIDTH-1:WORDWIDTH];
+        assign ReadOffset = OldReadPAdr[OFFSETEND:OFFSETBEGIN];
         assign ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
-        assign ReadSet = ReadPAdr[LINEWIDTH+SETWIDTH-1:LINEWIDTH];
-        assign ReadTag = ReadPAdr[`XLEN-1:LINEWIDTH+SETWIDTH];
+        assign ReadSet = ReadPAdr[SETEND:SETBEGIN];
+        assign ReadTag = OldReadPAdr[TAGEND:TAGBEGIN];
 
-        assign WriteOffset = WritePAdr[WORDWIDTH+OFFSETWIDTH-1:WORDWIDTH];
-        assign WriteSet = WritePAdr[LINEWIDTH+SETWIDTH-1:LINEWIDTH];
-        assign WriteTag = WritePAdr[`XLEN-1:LINEWIDTH+SETWIDTH];
+        assign WriteOffset = WritePAdr[OFFSETEND:OFFSETBEGIN];
+        assign WriteSet = WritePAdr[SETEND:SETBEGIN];
+        assign WriteTag = WritePAdr[TAGEND:TAGBEGIN];
     end
 
-    SRAM2P1R1W #(.Depth(OFFSETWIDTH), .Width(WORDSIZE)) cachemem (
+    // Depth is number of bits in one "word" of the memory, width is number of such words
+    Sram1Read1Write #(.DEPTH(LINESIZE), .WIDTH(NUMLINES)) cachemem (
         .*,
-        .RA1(ReadOffset),
-        .RD1(DataWord),
-        .REN1(1'b1),
-        .WA1(WriteOffset),
-        .WD1(WriteSet),
-        .WEN1(WriteEnable),
-        .BitWEN1(0)
+        .ReadAddr(ReadSet),
+        .ReadData(ReadLine),
+        .WriteAddr(WriteSet),
+        .WriteData(WriteLine)
+    );
+    Sram1Read1Write #(.DEPTH(TAGWIDTH), .WIDTH(NUMLINES)) cachetags (
+        .*,
+        .ReadAddr(ReadSet),
+        .ReadData(DataTag),
+        .WriteAddr(WriteSet),
+        .WriteData(WriteTag)
     );
 
-    SRAM2P1R1W #(.Depth(OFFSETWIDTH), .Width(TAGWIDTH)) cachetags (
-        .*,
-        .RA1(ReadOffset),
-        .RD1(DataTag),
-        .REN1(1'b1),
-        .WA1(WriteOffset),
-        .WD1(WriteTag),
-        .WEN1(WriteEnable),
-        .BitWEN1(0)
-    );
+    // Pick the right bits coming out the read line
+    assign DataWord = ReadLineTransformed[ReadOffset];
+    genvar i;
+    generate
+        for (i=0; i < LINESIZE/WORDSIZE; i++) begin
+            assign ReadLineTransformed[i] = ReadLine[(i+1)*WORDSIZE-1:i*WORDSIZE];
+        end
+    endgenerate
 
     // Correctly handle the valid bits
-    always_comb begin
-        if (WriteEnable) begin
-            assign NextValidOut = {NextValidOut[NUMLINES-1:WriteSet+1], 1'b1, NextValidOut[WriteSet-1:0]};
-        end else begin
-            assign NextValidOut = ValidOut;
-        end
-    end
-    always_ff @(posedge clk, reset, flush) begin
+    always_ff @(posedge clk, posedge reset) begin
         if (reset || flush) begin
             ValidOut <= {NUMLINES{1'b0}};
         end else begin
-            ValidOut <= NextValidOut;
+            if (WriteEnable) begin
+                ValidOut[WriteSet] <= 1;
+            end
         end
-    end
-
-    // Determine if the line coming out is valid and matches the desired data
-    always_comb begin
-        assign DataValid = ValidOut[ReadSet] && (DataTag == ReadTag);
+        DataValid <= ValidOut[ReadSet] && (DataTag == ReadTag);
     end
 
 endmodule

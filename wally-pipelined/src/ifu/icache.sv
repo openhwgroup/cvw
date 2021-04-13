@@ -31,9 +31,9 @@ module icache(
   input  logic              StallF, StallD,
   input  logic              FlushD,
   // Upper bits of physical address for PC
-  input  logic [`XLEN-1:12] UpperPCPF,
+  input  logic [`XLEN-1:12] UpperPCNextPF,
   // Lower 12 bits of virtual PC address, since it's faster this way
-  input  logic [11:0]       LowerPCF,
+  input  logic [11:0]       LowerPCNextF,
   // Data read in from the ebu unit
   input  logic [`XLEN-1:0]  InstrInF,
   input  logic              InstrAckF,
@@ -65,8 +65,9 @@ module icache(
     logic [`XLEN-1:0]   ICacheMemReadData;
     logic               ICacheMemReadValid;
 
-    rodirectmappedmem #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES)) cachemem(
+    rodirectmappedmem #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES), .WORDSIZE(`XLEN)) cachemem(
         .*,
+        .stall(StallF && (~ICacheStallF || ~InstrAckF)),
         .flush(FlushMem),
         .ReadUpperPAdr(ICacheMemReadUpperPAdr),
         .ReadLowerAdr(ICacheMemReadLowerAdr),
@@ -79,6 +80,7 @@ module icache(
 
     icachecontroller #(.LINESIZE(ICACHELINESIZE)) controller(.*);
 
+    // For now, assume no writes to executable memory
     assign FlushMem = 1'b0;
 endmodule
 
@@ -90,9 +92,9 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     // Input the address to read
     // The upper bits of the physical pc
-    input  logic [`XLEN-1:12]   UpperPCPF,
+    input  logic [`XLEN-1:12]   UpperPCNextPF,
     // The lower bits of the virtual pc
-    input  logic [11:0]         LowerPCF,
+    input  logic [11:0]         LowerPCNextF,
 
     // Signals to/from cache memory
     // The read coming out of it
@@ -130,6 +132,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     logic           FlushDLastCycleN;
     logic           PCPMisalignedF;
     const logic [31:0] NOP = 32'h13;
+    logic [`XLEN-1:0] PCPF;
     // Misaligned signals
     logic [`XLEN:0] MisalignedInstrRawF;
     logic           MisalignedStall;
@@ -143,18 +146,19 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     generate
         if (`XLEN == 32) begin
-            assign AlignedInstrRawF = LowerPCF[1] ? MisalignedInstrRawF : ICacheMemReadData;
-            assign PCPMisalignedF = LowerPCF[1] && ~CompressedF;
+            assign AlignedInstrRawF = PCPF[1] ? MisalignedInstrRawF : ICacheMemReadData;
+            assign PCPMisalignedF = PCPF[1] && ~CompressedF;
         end else begin
-            assign AlignedInstrRawF = LowerPCF[2]
-                ? (LowerPCF[1] ? MisalignedInstrRawF : ICacheMemReadData[63:32])
-                : (LowerPCF[1] ? ICacheMemReadData[47:16] : ICacheMemReadData[31:0]);
-            assign PCPMisalignedF = LowerPCF[2] && LowerPCF[1] && ~CompressedF;
+            assign AlignedInstrRawF = PCPF[2]
+                ? (PCPF[1] ? MisalignedInstrRawF : ICacheMemReadData[63:32])
+                : (PCPF[1] ? ICacheMemReadData[47:16] : ICacheMemReadData[31:0]);
+            assign PCPMisalignedF = PCPF[2] && PCPF[1] && ~CompressedF;
         end
     endgenerate
 
     flopenr #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, AlignedInstrRawF, AlignedInstrRawD);
     flopr   #(1)  FlushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCycleN | ~StallF), FlushDLastCycleN);
+    flopenr #(`XLEN) PCPFFlop(clk, reset, ~StallF, {UpperPCNextPF, LowerPCNextF}, PCPF);
     mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCycleN, InstrRawD);
 
     // Stall for faults or misaligned reads
@@ -197,12 +201,13 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Pick the correct address to read
     generate
         if (`XLEN == 32) begin
-            assign ICacheMemReadLowerAdr = {LowerPCF[11:2] + (PCPMisalignedF & ~MisalignedState), 2'b00};
+            assign ICacheMemReadLowerAdr = {LowerPCNextF[11:2] + (PCPMisalignedF & ~MisalignedState), 2'b00};
         end else begin
-            assign ICacheMemReadLowerAdr = {LowerPCF[11:3] + (PCPMisalignedF & ~MisalignedState), 3'b00};
+            assign ICacheMemReadLowerAdr = {LowerPCNextF[11:3] + (PCPMisalignedF & ~MisalignedState), 3'b00};
         end
     endgenerate
-    assign ICacheMemReadUpperPAdr = UpperPCPF;
+    // TODO Handle reading instructions that cross page boundaries
+    assign ICacheMemReadUpperPAdr = UpperPCNextPF;
 
 
     // Handle cache faults
