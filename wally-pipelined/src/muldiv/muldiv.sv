@@ -62,7 +62,7 @@ module muldiv (
 	 // Divide
 
 	// *** replace this clock gater
-	always @(posedge clk) begin
+	always @(negedge clk) begin
 	  enable_q <= ~StallM;
 	end
 	assign gclk = enable_q & clk;
