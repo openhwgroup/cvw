@@ -251,7 +251,7 @@ def writeVectors(a, xlen, storecmd):
 ##################################
 
 # change these to suite your tests
-tests = ["timerM", "timerS", "timerU", "softwareM", "softwareS", "softwareU"]
+tests = ["timerM"] #, "timerS", "timerU", "softwareM", "softwareS", "softwareU"]
 author = "ushakya@hmc.edu"
 xlens = [64, 32]
 numrand = 100;
