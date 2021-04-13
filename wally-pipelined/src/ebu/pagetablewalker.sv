@@ -61,7 +61,7 @@ module pagetablewalker (
   output logic             MMUTranslationComplete,
 
   // Faults
-  output logic             InstrPageFaultM, LoadPageFaultM, StorePageFaultM
+  output logic             InstrPageFaultF, LoadPageFaultM, StorePageFaultM
 );
 
   // Internal signals
@@ -154,7 +154,8 @@ module pagetablewalker (
                 //  else if (~ValidPTE || (LeafPTE && BadMegapage))
                 //                                   NextWalkerState = FAULT;
                 // *** Leave megapage implementation for later
-                //  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
+                // *** need to check if megapage valid/aligned
+                  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
                   else                             NextWalkerState = FAULT;
           LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
@@ -185,7 +186,7 @@ module pagetablewalker (
         assign MMUTranslationComplete = '0;
         assign DTLBWriteM = '0;
         assign ITLBWriteF = '0;
-        assign InstrPageFaultM = '0;
+        assign InstrPageFaultF = '0;
         assign LoadPageFaultM = '0;
         assign StorePageFaultM = '0;
 
@@ -208,7 +209,7 @@ module pagetablewalker (
           FAULT: begin
             assign TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
             assign MMUTranslationComplete = '1;
-            assign InstrPageFaultM = ~DTLBMissM;
+            assign InstrPageFaultF = ~DTLBMissM;
             assign LoadPageFaultM = DTLBMissM && ~MemStore;
             assign StorePageFaultM = DTLBMissM && MemStore;
           end
@@ -243,13 +244,14 @@ module pagetablewalker (
           IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL2;
                   else                             NextWalkerState = IDLE;
           LEVEL2: if      (~MMUReady)              NextWalkerState = LEVEL2;
+                  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL1;
                   else                             NextWalkerState = FAULT;
           LEVEL1: if      (~MMUReady)              NextWalkerState = LEVEL1;
                 //  else if (~ValidPTE || (LeafPTE && BadMegapage))
                 //                                   NextWalkerState = FAULT;
                 // *** Leave megapage implementation for later
-                //  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
+                  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
                   else                             NextWalkerState = FAULT;
           LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
@@ -285,7 +287,7 @@ module pagetablewalker (
         assign MMUTranslationComplete = '0;
         assign DTLBWriteM = '0;
         assign ITLBWriteF = '0;
-        assign InstrPageFaultM = '0;
+        assign InstrPageFaultF = '0;
         assign LoadPageFaultM = '0;
         assign StorePageFaultM = '0;
 
@@ -312,7 +314,7 @@ module pagetablewalker (
           FAULT: begin
             assign TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
             assign MMUTranslationComplete = '1;
-            assign InstrPageFaultM = ~DTLBMissM;
+            assign InstrPageFaultF = ~DTLBMissM;
             assign LoadPageFaultM = DTLBMissM && ~MemStore;
             assign StorePageFaultM = DTLBMissM && MemStore;
           end
