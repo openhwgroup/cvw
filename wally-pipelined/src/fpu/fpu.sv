@@ -22,6 +22,7 @@ module fpu (
   //signals, modules, and combinational logic closely defined.
 
   //used for OSU DP-size hardware to wally XLEN interfacing
+
   integer XLENDIFF;
   assign XLENDIFF = `XLEN - 64;
   integer XLENDIFFN;
@@ -465,13 +466,18 @@ module fpu (
   always_comb begin
            
   //zero extension  
-  if(`XLEN > 64) begin
-      FPUResultW <= {FPUResultDirW,{XLENDIFF{1'b0}}};
-  end
+
+// Teo 04/13/2021
+// Commented out XLENDIFF{1'b0} due to error:
+// Repetition multiplier must be constant.
+
+  //if(`XLEN > 64) begin
+  //    FPUResultW <= {FPUResultDirW,{XLENDIFF{1'b0}}};
+  //end
   //truncate
-  else begin
+  //else begin
       FPUResultW <= FPUResultDirW[63:64-`XLEN];
-  end
+  //end
 
   end  
 

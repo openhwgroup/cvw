@@ -38,17 +38,15 @@ switch $argc {
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
-
 view wave
-
 -- display input and output signals as hexidecimal values
-do ./wave-dos/ahb-waves.do
+do ./wave-dos/peripheral-waves.do
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {100 ps}
 configure wave -namecolwidth 250
-configure wave -valuecolwidth 140
+configure wave -valuecolwidth 120
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -58,6 +56,8 @@ configure wave -childrowmargin 2
 set DefaultRadix hexadecimal
 
 -- Run the Simulation 
-#run 4100
+#run 5000 
 run -all
 #quit
+noview ../testbench/testbench-imperas.sv
+view wave

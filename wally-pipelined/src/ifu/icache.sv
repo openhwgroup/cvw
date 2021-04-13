@@ -94,9 +94,9 @@ module icache(
 
     // Read from memory if we don't have the address we want
     always_comb if (LastReadDataValidF & (InstrPAdrF == LastReadAdrF)) begin
-        assign InstrReadF = 0;
+        InstrReadF = 0;
     end else begin
-        assign InstrReadF = 1;
+        InstrReadF = 1;
     end
 
     // Pick from the memory input or from the previous read, as appropriate
@@ -128,11 +128,11 @@ module icache(
     // incomplete, since the pipeline stalls for us when it isn't), or a NOP for
     // the cycle when the first of two reads comes in.
     always_comb if (~FlushDLastCyclen) begin
-        assign InstrDMuxChoice = 2'b10;
+        InstrDMuxChoice = 2'b10;
     end else if (DelayD & (MisalignedHalfInstrD[1:0] != 2'b11)) begin
-        assign InstrDMuxChoice = 2'b11;
+        InstrDMuxChoice = 2'b11;
     end else begin
-        assign InstrDMuxChoice = {1'b0, DelayD};
+        InstrDMuxChoice = {1'b0, DelayD};
     end
     mux4 #(32) instrDMux (AlignedInstrD, {InstrInF[15:0], MisalignedHalfInstrD}, nop, {16'b0, MisalignedHalfInstrD}, InstrDMuxChoice, InstrRawD);
 endmodule
