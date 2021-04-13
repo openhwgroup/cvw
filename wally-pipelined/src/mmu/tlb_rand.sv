@@ -29,7 +29,7 @@ module tlb_rand #(parameter ENTRY_BITS = 3) (
 );
 
   logic [31:0] data;
-  assign data = $urandom;
+  assign data = 32'b0;
   assign WriteIndex = data[ENTRY_BITS-1:0];
   
 endmodule
