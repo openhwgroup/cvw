@@ -61,13 +61,14 @@ module icache(
     logic                       ICacheMemWriteEnable;
     logic [ICACHELINESIZE-1:0]  ICacheMemWriteData;
     logic [`XLEN-1:0]           ICacheMemWritePAdr;
+    logic                       EndFetchState;
     // Output signals from cache memory
     logic [`XLEN-1:0]   ICacheMemReadData;
     logic               ICacheMemReadValid;
 
     rodirectmappedmem #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES), .WORDSIZE(`XLEN)) cachemem(
         .*,
-        .stall(StallF && (~ICacheStallF || ~InstrAckF)),
+        .stall(StallF && (~ICacheStallF || ~EndFetchState)),
         .flush(FlushMem),
         .ReadUpperPAdr(ICacheMemReadUpperPAdr),
         .ReadLowerAdr(ICacheMemReadLowerAdr),
@@ -116,7 +117,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     output logic [31:0]     InstrRawD,
 
     // Outputs to pipeline control stuff
-    output logic ICacheStallF,
+    output logic ICacheStallF, EndFetchState,
 
     // Signals to/from ahblite interface
     // A read containing the requested data
@@ -141,6 +142,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     // Detect if the instruction is compressed
     assign CompressedF = AlignedInstrRawF[1:0] != 2'b11;
+
 
     // Handle happy path (data in cache, reads aligned)
 
@@ -216,7 +218,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     localparam integer LOGWPL = $clog2(WORDSPERLINE);
     localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
 
-    logic               FetchState, EndFetchState, BeginFetchState;
+    logic               FetchState, BeginFetchState;
     logic [LOGWPL:0]    FetchWordNum, NextFetchWordNum;
     logic [`XLEN-1:0]   LineAlignedPCPF;
 
@@ -232,26 +234,27 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     // Enter the fetch state when we hit a cache fault
     always_comb begin
-        assign BeginFetchState = ~ICacheMemReadValid & ~FetchState;
+        BeginFetchState = ~ICacheMemReadValid & ~FetchState & (FetchWordNum == 0);
     end
+    // Exit the fetch state once the cache line has been loaded
+    flopr #(1) EndFetchStateFlop(clk, reset, ICacheMemWriteEnable, EndFetchState);
 
     // Machinery to request the correct addresses from main memory
     always_comb begin
-        assign InstrReadF = FetchState & ~EndFetchState;
-        assign LineAlignedPCPF = {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
-        assign InstrPAdrF = LineAlignedPCPF + FetchWordNum*(`XLEN/8);
-        assign NextFetchWordNum = FetchState ? FetchWordNum+InstrAckF : {LOGWPL+1{1'b0}}; 
+        InstrReadF = FetchState & ~EndFetchState & ~ICacheMemWriteEnable;
+        LineAlignedPCPF = {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
+        InstrPAdrF = LineAlignedPCPF + FetchWordNum*(`XLEN/8);
+        NextFetchWordNum = FetchState ? FetchWordNum+InstrAckF : {LOGWPL+1{1'b0}}; 
     end
 
     // Write to cache memory when we have the line here
     always_comb begin
-        assign EndFetchState = FetchWordNum == {1'b1, {LOGWPL{1'b0}}} & FetchState;
-        assign ICacheMemWritePAdr = LineAlignedPCPF;
-        assign ICacheMemWriteEnable = EndFetchState;
+        ICacheMemWritePAdr = LineAlignedPCPF;
+        ICacheMemWriteEnable = FetchWordNum == {1'b1, {LOGWPL{1'b0}}} & FetchState & ~EndFetchState;
     end
 
     // Stall the pipeline while loading a new line from memory
     always_comb begin
-        assign FaultStall = FetchState | ~ICacheMemReadValid;
+        FaultStall = FetchState | ~ICacheMemReadValid;
     end
 endmodule
