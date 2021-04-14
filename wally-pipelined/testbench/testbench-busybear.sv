@@ -279,18 +279,15 @@ module testbench_busybear();
     end
   end
 
-  function logic icmp(string x, y);
-    return x.icompare(y);
-  endfunction
   `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
-          if (icmp("SEPC", `"CSR`")) begin #1; end \
-          if (icmp("SCAUSE", `"CSR`")) begin #2; end \
-          if (icmp("SSTATUS", `"CSR`")) begin #3; end \
+          if ("SEPC" == `"CSR`") begin #1; end \
+          if ("SCAUSE" == `"CSR`") begin #2; end \
+          if ("SSTATUS" == `"CSR`") begin #3; end \
           scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
           if(CSR.icompare(`"CSR`")) begin \
