@@ -70,6 +70,7 @@ module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
     // Machinery to check if a given read is valid and is the desired value
     logic [TAGWIDTH-1:0]    DataTag;
     logic [NUMLINES-1:0]    ValidOut;
+    logic                   DataValidBit;
 
     flopenr #(`XLEN) ReadPAdrFlop(clk, reset, ~stall, ReadPAdr, OldReadPAdr);
 
@@ -119,7 +120,7 @@ module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
                 ValidOut[WriteSet] <= 1;
             end
         end
-        DataValid <= ValidOut[ReadSet] && (DataTag == ReadTag);
+        DataValidBit <= ValidOut[ReadSet];
     end
-
+    assign DataValid = DataValidBit && (DataTag == ReadTag);
 endmodule
