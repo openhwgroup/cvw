@@ -279,14 +279,18 @@ module testbench_busybear();
     end
   end
 
-  string sepc_lit = "SEPC";
+  function logic icmp(string x, y);
+    return x.icompare(y);
+  endfunction
   `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
-          if (sepc_lit.icompare(`"CSR`")) begin #1; end \
+          if (icmp("SEPC", `"CSR`")) begin #1; end \
+          if (icmp("SCAUSE", `"CSR`")) begin #2; end \
+          if (icmp("SSTATUS", `"CSR`")) begin #3; end \
           scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
           if(CSR.icompare(`"CSR`")) begin \
@@ -463,8 +467,10 @@ module testbench_busybear();
               32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
               32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
                 speculative = 1;
-              32'bXXXXXXXXXXXXXXXX1001000000000010: // C.EBREAK:
+              32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
+              32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
                 speculative = 0; // tbh don't really know what should happen here
+              32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
               32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
               32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
                 speculative = 1;
