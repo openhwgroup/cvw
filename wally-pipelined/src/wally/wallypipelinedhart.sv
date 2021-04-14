@@ -24,6 +24,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 /* verilator lint_on UNUSED */
 
 module wallypipelinedhart (
@@ -76,7 +77,7 @@ module wallypipelinedhart (
   logic InstrMisalignedFaultM;
   logic DataMisalignedM;
   logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
-  logic InstrPageFaultM, LoadPageFaultM, StorePageFaultM;
+  logic InstrPageFaultF, LoadPageFaultM, StorePageFaultM;
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;

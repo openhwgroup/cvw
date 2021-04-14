@@ -40,7 +40,7 @@ module privileged (
   input  logic             InstrValidW, FloatRegWriteW, LoadStallD, BPPredWrongM,
   input  logic [3:0]       InstrClassM,
   input  logic             PrivilegedM,
-  input  logic             InstrPageFaultM, LoadPageFaultM, StorePageFaultM,
+  input  logic             InstrPageFaultF, LoadPageFaultM, StorePageFaultM,
   input  logic             InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
   input  logic             LoadMisalignedFaultM, LoadAccessFaultM,
   input  logic             StoreMisalignedFaultM, StoreAccessFaultM,
@@ -62,8 +62,9 @@ module privileged (
 
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
-  logic  IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
-  logic       InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
+  logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
+  logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
+  logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic IllegalInstrFaultM;
 
   logic BreakpointFaultM, EcallFaultM;
@@ -129,13 +130,15 @@ module privileged (
   // assign StorePageFaultM = 0;
 
   // pipeline fault signals
-  flopenrc #(1) faultregD(clk, reset, FlushD, ~StallD, InstrAccessFaultF, InstrAccessFaultD);
-  flopenrc #(2) faultregE(clk, reset, FlushE, ~StallE,
-                           {IllegalIEUInstrFaultD, InstrAccessFaultD}, // ** vs IllegalInstrFaultInD
-                           {IllegalIEUInstrFaultE, InstrAccessFaultE});
-  flopenrc #(2) faultregM(clk, reset, FlushM, ~StallM,
-                         {IllegalIEUInstrFaultE, InstrAccessFaultE},
-                         {IllegalIEUInstrFaultM, InstrAccessFaultM});
+  flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
+                  {InstrPageFaultF, InstrAccessFaultF},
+                  {InstrPageFaultD, InstrAccessFaultD});
+  flopenrc #(3) faultregE(clk, reset, FlushE, ~StallE,
+                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD}, // ** vs IllegalInstrFaultInD
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE});
+  flopenrc #(3) faultregM(clk, reset, FlushM, ~StallM,
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE},
+                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM});
 
   trap trap(.*);
 

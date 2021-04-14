@@ -30,7 +30,7 @@ module lza(sum, normcnt, sumzero);
 	always @ ( sum)
 		begin
 			i =   0;
-			while (~sum[108-i] && i < 108) i = i+1;  // search for leading one 
+			while (~sum[163-i] && i <= 163) i = i+1;  // search for leading one 
 			normcnt = i;    // compute shift count
 	end
 

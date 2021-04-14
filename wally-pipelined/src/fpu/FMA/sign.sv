@@ -10,23 +10,24 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, rm, overflow,
-			 sumzero, nan, invalid, xinf, yinf, zinf, inf, wsign, invz, negsum, selsum1, psign);
+module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, FrmE, FmaFlagsM, zzero,
+			 sumzero, nan, xinf, yinf, zinf, inf, wsign, invz, negsum, selsum1, psign, isAdd);
 ////////////////////////////////////////////////////////////////////////////I
  
 	input					xsign;			// Sign of X 
 	input					ysign;			// Sign of Y 
 	input					zsign;			// Sign of Z
+	input					zzero;
+	input					isAdd;
 	input					negsum0;		// Sum in +O mode is negative 
 	input					negsum1;		// Sum in +1 mode is negative 
 	input					bs;				// sticky bit from addend
 	input					ps;				// sticky bit from product
 	input					killprod;		// Product forced to zero
-	input					rm;				// Round toward minus infinity
-	input					overflow;				// Round toward minus infinity
+	input		[2:0]		FrmE;				// Round toward minus infinity
+	input		[4:0]		FmaFlagsM;				// Round toward minus infinity
 	input					sumzero;		// Sum = O
 	input					nan;			// Some input is NaN
-	input					invalid;		// Result invalid
 	input					xinf;			// X = Inf
 	input					yinf;			// Y = Inf
 	input					zinf;			// Y = Inf
@@ -96,10 +97,24 @@ logic tmp;
 	//			 shall be +0 in all rounding attributes EXCEPT roundTowardNegative. Under that attribute, the sign of an exact zero 
 	//			 sum/difference shall be -0.  However, x+x = x-(-X) retains the same sign as x even when x is zero."
  
-	assign zerosign = (~invz && killprod) ? zsign : rm;
+	//assign zerosign = (~invz && killprod) ? zsign : rm;//***look into
+//	assign zerosign = (~invz && killprod) ? zsign : 0;
+	// zero sign
+	//	if product underflows then use psign
+	//	otherwise
+	//		addition
+	//			if cancelation then 0 unless round to -inf
+	//			otherwise psign
+	//		subtraction
+	//			if cancelation then 0 unless round to -inf
+	//			otherwise psign
+
+	assign zerosign = FmaFlagsM[1] ? psign :
+			  (isAdd ? (psign^zsign ? FrmE == 3'b010 : psign) :
+				  (psign^zsign ? psign : FrmE == 3'b010));
 	assign infsign = zinf ? zsign : psign; //KEP 210112 keep the correct sign when result is infinity
 	//assign infsign = xinf ? (yinf ? psign : xsign) : yinf ? ysign : zsign;//original
-	assign tmp = invalid ? 0 : (inf ? infsign :(sumzero ? zerosign : psign ^ negsum));
-	assign wsign = invalid ? 0 : (inf ? infsign :(sumzero ? zerosign : sumneg));
+	assign tmp = FmaFlagsM[4] ? 0 : (inf ? infsign :(sumzero ? zerosign : psign ^ negsum));
+	assign wsign = FmaFlagsM[4] ? 0 : (inf ? infsign :(sumzero ? zerosign : sumneg));
 
 endmodule
