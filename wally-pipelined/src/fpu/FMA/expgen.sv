@@ -17,7 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////
 module expgen(xexp, yexp, zexp,
 			   killprod,  sumzero, resultdenorm, normcnt, infinity, 
-			   invalid, overflow, underflow, inf, xzero, yzero,expplus1,
+			   FmaFlagsM, inf, xzero, yzero,expplus1,
 			   nan, de0, xnan, ynan, znan, xdenorm, ydenorm, zdenorm, proddenorm, specialsel, zexpsel,
 			   aligncnt, wexp,
 			   prodof, sumof, sumuf, denorm0, ae);
@@ -31,9 +31,7 @@ module expgen(xexp, yexp, zexp,
 	input     			resultdenorm;  // postnormalize rounded result
 	input     	[8:0]  		normcnt;     	// normalization shift count 
 	input     			infinity;    	// generate infinity on overflow 
-	input     			invalid;     	// Result invalid
-	input     			overflow;    	// Result overflowed
-	input     			underflow;   	// Result underflowed 
+	input     	[4:0]	FmaFlagsM;     	// Result invalid
 	input     			inf;			// Some input is infinity
 	input     			nan;			// Some input is NaN
 	input     	[12:0]		de0;			// X is NaN NaN
@@ -121,10 +119,10 @@ module expgen(xexp, yexp, zexp,
 	// produces either infinity or the largest finite number, depending on the
 	// rounding mode.  NaNs are propagated or generated.
 
-	assign specialres = invalid | nan ? nanres : // KEP added nan
-					overflow ? infinityres : 
+	assign specialres = FmaFlagsM[4] | nan ? nanres : // invalid
+					FmaFlagsM[2] ? infinityres : 	//overflow
 					inf ? 11'b11111111111 :
-					underflow ? 11'b0 : 11'bx;
+					FmaFlagsM[1] ? 11'b0 : 11'bx; //underflow
 
 	assign infinityres = infinity ? 11'b11111111111 : 11'b11111111110;
 

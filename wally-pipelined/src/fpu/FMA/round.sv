@@ -13,22 +13,17 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module round(v, sticky, rz, rn, rp, rm, wsign,
-			  invalid, overflow, underflow, inf, nan, xnan, ynan, znan, 
+module round(v, sticky, FrmE, wsign,
+			  FmaFlagsM, inf, nan, xnan, ynan, znan, 
 			  xman, yman, zman,
 			  wman, infinity, specialsel,expplus1);
 /////////////////////////////////////////////////////////////////////////////
 
 	input		[53:0]		v;		// normalized sum, R, S bits
 	input				sticky;		//sticky bit
-	input				rz;		// Round toward zero
-	input				rn;		// Round toward	nearest
-	input				rp;		// Round toward	plus infinity
-	input				rm;		// Round toward	minus infinity
+	input		[2:0]	FrmE;
 	input				wsign;		// Sign of result
-	input 				invalid;	// Trap on infinity, NaN, denorm
-	input				overflow;	// Result overflowed
-	input				underflow;	// Result underflowed
+	input 		[4:0]	FmaFlagsM;
 	input				inf;		// Some input is infinity
 	input				nan;		// Some input is NaN
 	input				xnan;		// X is NaN
@@ -45,7 +40,7 @@ module round(v, sticky, rz, rn, rp, rm, wsign,
 
 	// Internal nodes
 
-	wire				plus1;		// Round by adding one 
+	logic				plus1;		// Round by adding one 
 	wire		[52:0]		v1;		// Result + 1 (for rounding)
 	wire		[51:0]		specialres;	// Result of exceptional case 
 	wire		[51:0]		infinityres;	// Infinity or largest real number
@@ -62,9 +57,19 @@ module round(v, sticky, rz, rn, rp, rm, wsign,
 	//	0xx - do nothing
 	//	100 - tie - plus1 if v[2] = 1
 	//	101/110/111 - plus1
-	assign plus1 = (rn & v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2]))) |
-		       (rp & ~wsign) |
-		       (rm & wsign);
+	always @ (FrmE, v, wsign, sticky) begin
+		case (FrmE)
+			3'b000: plus1 = (v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2])));//round to nearest even
+			3'b001: plus1 = 0;//round to zero
+			3'b010: plus1 = wsign;//round down
+			3'b011: plus1 = ~wsign;//round up
+			3'b100: plus1 = (v[1] & (v[0] | sticky | (~v[0]&~sticky&~wsign)));//round to nearest max magnitude
+			default: plus1 = 1'bx;
+		endcase
+	end
+	// assign plus1 = (rn & v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2]))) |
+	// 	       (rp & ~wsign) |
+	// 	       (rm & wsign);
 	//assign plus1 = rn && ((v[1] && v[0]) || (v[2] && (v[1]))) ||
 	//				 rp && ~wsign && (v[1] || v[0]) ||
 	//				 rm && wsign && (v[1] || v[0]);
@@ -84,17 +89,17 @@ module round(v, sticky, rz, rn, rp, rm, wsign,
 	// inputs to the wide muxes can be combined at the expense of more
 	// complicated non-critical control in the circuit implementation.
 
-	assign specialsel =  overflow || underflow || invalid ||
+	assign specialsel =  FmaFlagsM[2] ||  FmaFlagsM[1] ||  FmaFlagsM[4] || //overflow underflow invalid
 							nan || inf;
-	assign specialres = invalid | nan ? nanres : //KEP added nan
-						 overflow ? infinityres : 
+	assign specialres = FmaFlagsM[4] | nan ? nanres : //invalid
+						 FmaFlagsM[2] ? infinityres : //overflow
 						 inf ? 52'b0 :
-						underflow ? 52'b0 : 52'bx;  // default to undefined 
+						 FmaFlagsM[1] ? 52'b0 : 52'bx;  // underflow
 
 	// Overflow is handled differently for different rounding modes
 	// Round is to either infinity or to maximum finite number
 
-	assign infinity = rn || (rp && ~wsign) || (rm && wsign);
+	assign infinity =  |FrmE;//rn || (rp && ~wsign) || (rm && wsign);//***look into this
 	assign infinityres = infinity ? 52'b0 : {52{1'b1}};
 
 	// Invalid operations produce a quiet NaN. The result should

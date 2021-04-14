@@ -24,9 +24,6 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
-`include "wally-constants.vh"
-
 module cam_line #(parameter KEY_BITS = 20,
                   parameter HIGH_SEGMENT_BITS = 10) (
   input                 clk, reset,
@@ -74,6 +71,6 @@ module cam_line #(parameter KEY_BITS = 20,
   // should automatically match.
   page_number_mixer #(KEY_BITS, HIGH_SEGMENT_BITS) mixer(VirtualPageNumber, Key, PageType, VirtualPageNumberQuery);
 
-  assign Match = ({1'b1, VirtualPageNumberQuery} == Key);
+  assign Match = ({1'b1, VirtualPageNumberQuery} == {Valid, Key});
 
 endmodule

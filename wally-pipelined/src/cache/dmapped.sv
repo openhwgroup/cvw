@@ -75,14 +75,14 @@ module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
 
     // Assign the read and write addresses in cache memory
     always_comb begin
-        assign ReadOffset = OldReadPAdr[OFFSETEND:OFFSETBEGIN];
-        assign ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
-        assign ReadSet = ReadPAdr[SETEND:SETBEGIN];
-        assign ReadTag = OldReadPAdr[TAGEND:TAGBEGIN];
+        ReadOffset = OldReadPAdr[OFFSETEND:OFFSETBEGIN];
+        ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
+        ReadSet = ReadPAdr[SETEND:SETBEGIN];
+        ReadTag = OldReadPAdr[TAGEND:TAGBEGIN];
 
-        assign WriteOffset = WritePAdr[OFFSETEND:OFFSETBEGIN];
-        assign WriteSet = WritePAdr[SETEND:SETBEGIN];
-        assign WriteTag = WritePAdr[TAGEND:TAGBEGIN];
+        WriteOffset = WritePAdr[OFFSETEND:OFFSETBEGIN];
+        WriteSet = WritePAdr[SETEND:SETBEGIN];
+        WriteTag = WritePAdr[TAGEND:TAGBEGIN];
     end
 
     // Depth is number of bits in one "word" of the memory, width is number of such words
