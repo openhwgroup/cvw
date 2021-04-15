@@ -1,15 +1,15 @@
 
-module multiply(xman, yman, xdenorm, ydenorm, xzero, yzero, r, s); 
+module multiply(xman, yman, xdenormE, ydenormE, xzeroE, yzeroE, rE, sE); 
 /////////////////////////////////////////////////////////////////////////////
 
 	input 		[51:0]		xman;				// Fraction of multiplicand	x
 	input		[51:0]		yman;				// Fraction of multiplicand y	
-	input					xdenorm;		// is x denormalized	
-	input					ydenorm;		// is y denormalized	
-	input     			xzero;		// Z is denorm
-	input     			yzero;		// Z is denorm
-	output		[105:0]		r;				//	partial product 1	
-	output		[105:0]		s;				//	partial product 2	
+	input					xdenormE;		// is x denormalized	
+	input					ydenormE;		// is y denormalized	
+	input     			xzeroE;		// Z is denorm
+	input     			yzeroE;		// Z is denorm
+	output		[105:0]		rE;				//	partial product 1	
+	output		[105:0]		sE;				//	partial product 2	
     
      wire        [54:0]      yExt; //y with appended 0 and assumed 1
      wire        [53:0]      xExt; //y with assumed 1
@@ -25,8 +25,8 @@ module multiply(xman, yman, xdenorm, ydenorm, xzero, yzero, r, s);
      // wire [105:0] acc
     genvar i;	
 
-	assign xExt = {2'b0,~(xdenorm|xzero),xman};
-	assign yExt = {2'b0,~(ydenorm|yzero),yman, 1'b0};
+	assign xExt = {2'b0,~(xdenormE|xzeroE),xman};
+	assign yExt = {2'b0,~(ydenormE|yzeroE),yman, 1'b0};
     
      generate
         for(i=0; i<27; i=i+1) begin
@@ -97,10 +97,10 @@ module multiply(xman, yman, xdenorm, ydenorm, xzero, yzero, r, s);
     endgenerate
 
     add4comp2 #(.BITS(106)) add5(.a(lv4add[0]), .b(lv4add[1]), .c(lv4add[2]), .d(lv4add[3]) ,
-                                    .carry(carryTmp[21]), .sum(s));
-    assign r = {carryTmp[21][104:0], 1'b0};
-		// assign r = 0;
-		// assign s = acc[0] +
+                                    .carry(carryTmp[21]), .sum(sE));
+    assign rE = {carryTmp[21][104:0], 1'b0};
+		// assign rE = 0;
+		// assign sE = acc[0] +
 		// 		   acc[1] +
 		// 		   acc[2] +
 		// 		   acc[3] +
@@ -128,6 +128,6 @@ module multiply(xman, yman, xdenorm, ydenorm, xzero, yzero, r, s);
 		// 		   acc[25] +
 		// 		   acc[26];
 
-			// assign s = {53'b0,~(xdenorm|xzero),xman}  *  {53'b0,~(ydenorm|yzero),yman};
-			// assign r = 0;
+			// assign sE = {53'b0,~(xdenormE|xzeroE),xman}  *  {53'b0,~(ydenormE|yzeroE),yman};
+			// assign rE = 0;
 endmodule
