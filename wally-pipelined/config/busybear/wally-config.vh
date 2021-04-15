@@ -56,6 +56,7 @@
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
+`define VECTORED_INTERRUPTS_SUPPORTED 1 // Domenico Ottolia 4/15: Support for vectored interrupts in _tvec csrs. Just implemented in src/privileged/trap.sv around line 75. Pretty sure this should be 1.
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000
