@@ -30,34 +30,37 @@
 // Teo Ene 04/15:
 // Temporarily removed paramterized priority encoder for non-parameterized one
 // To get synthesis working quickly
-
-// *** We should look for a better parameterized priority encoder. This has a
-// bad code smell and might not synthesize
-//module priority_encoder #(parameter BINARY_BITS = 3) (
-//  input  [(2**BINARY_BITS)-1:0] one_hot,
-//  output [BINARY_BITS-1:0] binary
-//);
-//
-//  localparam ONE_HOT_BITS = 2**BINARY_BITS;
-//
-//  genvar i, j;
-//  generate
-//    for (i = 0; i < ONE_HOT_BITS; i++) begin
-//      for (j = 0; j < BINARY_BITS; j++) begin
-//        if (i[j]) begin
-//          assign binary[j] = one_hot[i];
-//        end
-//      end
-//    end
-//  endgenerate
-//
-//endmodule
-
 module priority_encoder #(parameter BINARY_BITS = 3) (
   input  logic  [7:0] one_hot,
   output logic  [2:0] binary
 );
 
+  // localparam ONE_HOT_BITS = 2**BINARY_BITS;
+
+  /*
+  genvar i, j;
+  generate
+    for (i = 0; i < ONE_HOT_BITS; i++) begin
+      for (j = 0; j < BINARY_BITS; j++) begin
+        if (i[j]) begin
+          assign binary[j] = one_hot[i];
+        end
+      end
+    end
+  endgenerate
+  */
+
+  /*
+  logic [BINARY_BITS-1:0] binary_comb;
+
+  always_comb begin
+    binary_comb = 0;
+    for (int i = 0; i < ONE_HOT_BITS; i++)
+      if (one_hot[i]) binary_comb = i;
+  end
+
+  assign binary = binary_comb;
+  */
   always_comb
     case (one_hot)
       8'h1:     binary=3'h0;
