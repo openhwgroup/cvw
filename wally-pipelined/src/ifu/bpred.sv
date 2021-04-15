@@ -102,6 +102,19 @@ module bpred
 				   .PCSrcE(PCSrcE),
 				   .UpdatePrediction(UpdateBPPredE));
     end 
+    else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
+
+      localHistoryPredictor DirPredictor(.clk(clk),
+				   .reset(reset),
+				   .*, // Stalls and flushes
+				   .LookUpPC(PCNextF),
+				   .Prediction(BPPredF),
+				   // update
+				   .UpdatePC(PCE),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
+				   .PCSrcE(PCSrcE),
+				   .UpdatePrediction(UpdateBPPredE));
+    end 
   endgenerate
 
 
