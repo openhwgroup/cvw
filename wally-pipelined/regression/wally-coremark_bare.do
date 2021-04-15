@@ -54,7 +54,7 @@ add wave -divider
 
 add wave -divider Fetch
 add wave -hex /testbench/dut/hart/ifu/PCF
-add wave -hex /testbench/dut/hart/ifu/InstrF
+add wave -hex /testbench/dut/hart/ifu/ic/InstrF
 add wave /testbench/InstrFName
 add wave -divider Decode
 add wave -hex /testbench/dut/hart/ifu/PCD
@@ -93,7 +93,7 @@ add wave -divider RAM
 add wave -hex -r /testbench/dut/uncore/dtim/RAM
 add wave -divider Misc
 add wave -divider
-#add wave -hex -r /testbench/*
+add wave -hex -r /testbench/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]

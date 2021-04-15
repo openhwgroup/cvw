@@ -48,7 +48,7 @@ module testbench();
   
   // pick tests based on modes supported
   initial 
-  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.memfile", "1000"};
+  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremarkcodemod.bare.riscv.memfile", "1000"};
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -65,7 +65,7 @@ module testbench();
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.InstrF,
+                dut.hart.ifu.ic.InstrF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM, InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
