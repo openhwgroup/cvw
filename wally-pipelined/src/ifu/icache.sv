@@ -68,6 +68,7 @@ module icache(
 
     rodirectmappedmem #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES), .WORDSIZE(`XLEN)) cachemem(
         .*,
+        // Stall it if the pipeline is stalled, unless we're stalling it and we're ending our stall
         .stall(StallF && (~ICacheStallF || ~EndFetchState)),
         .flush(FlushMem),
         .ReadUpperPAdr(ICacheMemReadUpperPAdr),
