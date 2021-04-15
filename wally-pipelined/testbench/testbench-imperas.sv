@@ -450,7 +450,6 @@ module testbench();
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
@@ -525,7 +524,6 @@ module testbench();
         end
         else begin
           memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-          $readmemh(memfilename, dut.imem.RAM);
           $readmemh(memfilename, dut.uncore.dtim.RAM);
           $display("Read memfile %s", memfilename);
 	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};

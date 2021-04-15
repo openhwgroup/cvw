@@ -80,7 +80,6 @@ module testbench();
       totalerrors = 0;
       // read test vectors into memory
       memfilename = tests[0];
-      $readmemh(memfilename, dut.imem.RAM);
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       for(j=268437702; j < 268566528; j = j+1)
         dut.uncore.dtim.RAM[j] = 64'b0;
