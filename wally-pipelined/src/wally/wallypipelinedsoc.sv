@@ -72,6 +72,9 @@ module wallypipelinedsoc (
   // instantiate processor and memories
   wallypipelinedhart hart(.*);
 
-  imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
+  // *** Temporary driving of access fault to low until PMA checker is complete
+  assign InstrAccessFaultF = '0;
+  // instructions now come from uncore memory. This line can be removed at any time.
+  // imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
   uncore uncore(.HWDATAIN(HWDATA), .*);
 endmodule
