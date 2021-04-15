@@ -131,6 +131,7 @@ module ahblite (
             else                   NextBusState = IDLE;  // if (InstrReadF still high)
       INSTRREADC: if (~HREADY)     NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
             else                   NextBusState = IDLE;
+      default:                     NextBusState = IDLE;
     endcase
 
   // stall signals
