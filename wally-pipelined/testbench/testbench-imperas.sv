@@ -342,7 +342,9 @@ module testbench();
   };
 
   string tests64p[] = '{
-    "rv64p/WALLY-MCAUSE", "3000",
+    "rv64p/WALLY-MCAUSE", "2000",
+    "rv64p/WALLY-SCAUSE", "2000",
+    "rv64p/WALLY-UCAUSE", "2000",
     "rv64p/WALLY-EPC", "3000",
     "rv64p/WALLY-TVAL", "3000",
     "rv64p/WALLY-MARCHID", "4000",
@@ -352,7 +354,9 @@ module testbench();
   };
 
   string tests32p[] = '{
-    "rv32p/WALLY-MCAUSE", "3000",
+    "rv32p/WALLY-MCAUSE", "2000",
+    "rv32p/WALLY-SCAUSE", "2000",
+    "rv32p/WALLY-UCAUSE", "2000",
     "rv32p/WALLY-EPC", "3000",
     "rv32p/WALLY-TVAL", "3000",
     "rv32p/WALLY-MARCHID", "4000",
@@ -406,8 +410,8 @@ module testbench();
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
-      // tests = {tests, tests64p};
-      tests = tests64p;
+      
+      //tests = tests64p;
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
@@ -422,7 +426,7 @@ module testbench();
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
       end
 
-      tests = tests32p;
+      //tests = tests32p;
     end
   end
 

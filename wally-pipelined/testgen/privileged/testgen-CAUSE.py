@@ -153,19 +153,25 @@ def writeVectors(storecmd):
   """, False, 6)
 
   # Environment call from u-mode: only for when only M and U mode enabled?
-  writeTest(storecmd, f, r, f"""
-    ecall
-  """, False, 8, "u")
+  # writeTest(storecmd, f, r, f"""
+  #   ecall
+  # """, False, 8, "u")
+  if testMode == "u":
+    writeTest(storecmd, f, r, f"""
+      ecall
+    """, False, 8, "u")
 
-  # # Environment call from s-mode
-  writeTest(storecmd, f, r, f"""
-    ecall
-  """, False, 9, "s")
+  # Environment call from s-mode
+  if testMode == "s":
+    writeTest(storecmd, f, r, f"""
+      ecall
+    """, False, 9, "s")
 
   # Environment call from m-mode
-  writeTest(storecmd, f, r, f"""
-    ecall
-  """, False, 11, "m")  
+  if testMode == "m":
+    writeTest(storecmd, f, r, f"""
+      ecall
+    """, False, 11, "m")  
 
   # Instruction page fault: 12
   # Load page fault: 13
@@ -176,6 +182,7 @@ def writeVectors(storecmd):
 
 def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = ""):
   global testnum
+  global testMode
 
   expected = code
   if(interrupt):
@@ -187,67 +194,29 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
   if mode != "m":
     before = f"""
       li x1, 0b110000000000
-      csrrc x28, mstatus, x1
+      csrrc x28, {testMode}status, x1
       li x1, 0b{"01" if mode == "s" else "00"}00000000000
-      csrrs x28, mstatus, x1
+      csrrs x28, {testMode}status, x1
 
       auipc x1, 0
       addi x1, x1, 16 # x1 is now right after the mret instruction
-      csrrw x27, mepc, x1
-      mret
+      csrrw x27, {testMode}epc, x1
+      {testMode}ret
 
-      # We're now in {mode} mode...
+      # From {testMode}, we're now in {mode} mode...
     """
 
     trapEnd = f"""j _jend{testnum}"""
 
-
-  # Setup
-  # TODO: Adding 8 to x30 won't work for 32 bit?
-  # x31: Old mtvec value
-  # x30: trap handler address
-  # x29: Old mtvec value for user/supervisor mode
-  # x28: Old mstatus value
-  # x27: Old mepc value
-  # x26: 0 if we should execute mret normally. 1 otherwise. This allows us to stay in machine
-  # x25: mcause
-  # mode for the next tests
   lines = f"""
-    # Testcase {testnum}
-    csrrs x31, mtvec, x0
-
-    auipc x30, 0
-    addi x30, x30, 12
-    j _jtest{testnum}
-
-    # Machine trap vector
-    {resetHander}
-    csrrs x25, mcause, x0
-    csrrs x1, mepc, x0
-    addi x1, x1, 4
-    csrrw x0, mepc, x1
-    {trapEnd}
-    mret
-
-    # Actual test
-    _jtest{testnum}:
-    csrrw x0, mtvec, x30
-
-    # Start test code
     li x25, 0x7BAD
-    {before}
     {test}
 
-    # Finished test. Reset to old mtvec
     _jend{testnum}:
 
-    csrrw x0, mtvec, x31
   """
 
-  #expected = 42
-  
   lines += storecmd + " x25, " + str(wordsize*testnum) + "(x6)\n"
-  #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
   f.write(lines)
   if (xlen == 32):
     line = formatrefstr.format(expected)+"\n"
@@ -256,22 +225,11 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
   r.write(line)
   testnum = testnum+1
 
-  # lines += storecmd + " x0" + ", " + str(wordsize*testnum) + "(x6)\n"
-  # #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
-  # f.write(lines)
-  # if (xlen == 32):
-  #   line = formatrefstr.format(expected)+"\n"
-  # else:
-  #   line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
-  # r.write(line)
-  # testnum = testnum+1
-
 ##################################
 # main body
 ##################################
 
 # change these to suite your tests
-# csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
 numrand = 8;
@@ -296,9 +254,9 @@ for xlen in xlens:
     2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
   ]
 
-  for mode in ["m", "s", "u"]:
+  for testMode in ["m", "s", "u"]:
     imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
-    basename = "WALLY-" + mode.upper() + "CAUSE"
+    basename = "WALLY-" + testMode.upper() + "CAUSE"
     fname = imperaspath + "src/" + basename + ".S"
     refname = imperaspath + "references/" + basename + ".reference_output"
     testnum = 0
@@ -318,10 +276,64 @@ for xlen in xlens:
     for line in h:  
       f.write(line)
 
+    lines = f"""
+      csrr x31, mtvec
+      li x30, 0
+
+      la x1, _j_m_trap
+      csrw mtvec, x1
+      la x1, _j_s_trap
+      csrw stvec, x1
+      j _j_t_begin
+
+      _j_m_trap:
+      csrrs x25, mcause, x0
+      csrrs x1, mepc, x0
+      addi x1, x1, 4
+      csrrw x0, mepc, x1
+      bnez x30, _j_all_end
+      mret
+
+      _j_s_trap:
+      csrrs x25, scause, x0
+      csrrs x1, sepc, x0
+      addi x1, x1, 4
+      csrrw x0, sepc, x1
+      sret
+
+      _j_t_begin:
+    """
+
+    if testMode == "s" or testMode == "u":
+      lines += f"""
+      li x1, 0b110000000000
+      csrrc x28, mstatus, x1
+      li x1, 0b{"01" if testMode == "s" else "00"}00000000000
+      csrrs x28, mstatus, x1
+
+      auipc x1, 0
+      addi x1, x1, 16 # x1 is now right after the mret instruction
+      csrw mepc, x1
+      mret
+
+      # We're now in {testMode} mode...
+      """
+
+    f.write(lines)
+
+
     # print directed and random test vectors
     for i in range(0,numrand):
       writeVectors(storecmd)
 
+
+    f.write(f"""
+      li x30, 1
+      ecall
+      _j_all_end:
+
+      csrw mtvec, x31
+    """)
 
     # print footer
     h = open("../testgen_footer.S", "r")
