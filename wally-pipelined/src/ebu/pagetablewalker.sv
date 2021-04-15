@@ -61,7 +61,7 @@ module pagetablewalker (
   output logic             MMUTranslationComplete,
 
   // Faults
-  output logic             InstrPageFaultM, LoadPageFaultM, StorePageFaultM
+  output logic             InstrPageFaultF, LoadPageFaultM, StorePageFaultM
 );
 
   // Internal signals
@@ -138,7 +138,6 @@ module pagetablewalker (
   localparam LEVEL0 = 3'h2;
   localparam LEAF = 3'h3;
   localparam FAULT = 3'h4;
-  localparam LEVEL2 = 3'h5;
 
   logic [2:0] WalkerState, NextWalkerState;
 
@@ -160,7 +159,8 @@ module pagetablewalker (
                 //  else if (~ValidPTE || (LeafPTE && BadMegapage))
                 //                                   NextWalkerState = FAULT;
                 // *** Leave megapage implementation for later
-                //  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
+                // *** need to check if megapage valid/aligned
+                  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
                   else                             NextWalkerState = FAULT;
           LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
@@ -171,6 +171,8 @@ module pagetablewalker (
                   else                             NextWalkerState = IDLE;
           FAULT:  if      (MMUTranslate)           NextWalkerState = LEVEL1;
                   else                             NextWalkerState = IDLE;
+          // Default case should never happen, but is included for linter.
+          default:                                 NextWalkerState = IDLE;
         endcase
       end
 
@@ -191,7 +193,7 @@ module pagetablewalker (
         MMUTranslationComplete = '0;
         DTLBWriteM = '0;
         ITLBWriteF = '0;
-        InstrPageFaultM = '0;
+        InstrPageFaultF = '0;
         LoadPageFaultM = '0;
         StorePageFaultM = '0;
 
@@ -214,9 +216,12 @@ module pagetablewalker (
           FAULT: begin
             TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
             MMUTranslationComplete = '1;
-            InstrPageFaultM = ~DTLBMissM;
+            InstrPageFaultF = ~DTLBMissM;
             LoadPageFaultM = DTLBMissM && ~MemStore;
             StorePageFaultM = DTLBMissM && MemStore;
+          end
+          default: begin
+            // nothing
           end
         endcase
       end
@@ -232,6 +237,8 @@ module pagetablewalker (
       assign MMUPAdr = TranslationPAdr[31:0];
 
     end else begin
+      localparam LEVEL2 = 3'h5;
+
       assign SvMode = SATP_REGW[63];
 
       logic [8:0] VPN2, VPN1, VPN0;
@@ -246,13 +253,14 @@ module pagetablewalker (
           IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL2;
                   else                             NextWalkerState = IDLE;
           LEVEL2: if      (~MMUReady)              NextWalkerState = LEVEL2;
+                  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL1;
                   else                             NextWalkerState = FAULT;
           LEVEL1: if      (~MMUReady)              NextWalkerState = LEVEL1;
                 //  else if (~ValidPTE || (LeafPTE && BadMegapage))
                 //                                   NextWalkerState = FAULT;
                 // *** Leave megapage implementation for later
-                //  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
+                  else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
                   else                             NextWalkerState = FAULT;
           LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
@@ -263,6 +271,8 @@ module pagetablewalker (
                   else                             NextWalkerState = IDLE;
           FAULT:  if      (MMUTranslate)           NextWalkerState = LEVEL2;
                   else                             NextWalkerState = IDLE;
+          // Default case should never happen, but is included for linter.
+          default:                                 NextWalkerState = IDLE;
         endcase
       end
 
@@ -288,7 +298,7 @@ module pagetablewalker (
         MMUTranslationComplete = '0;
         DTLBWriteM = '0;
         ITLBWriteF = '0;
-        InstrPageFaultM = '0;
+        InstrPageFaultF = '0;
         LoadPageFaultM = '0;
         StorePageFaultM = '0;
 
@@ -315,9 +325,12 @@ module pagetablewalker (
           FAULT: begin
             TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
             MMUTranslationComplete = '1;
-            InstrPageFaultM = ~DTLBMissM;
+            InstrPageFaultF = ~DTLBMissM;
             LoadPageFaultM = DTLBMissM && ~MemStore;
             StorePageFaultM = DTLBMissM && MemStore;
+          end
+          default: begin
+            // nothing
           end
         endcase
       end
