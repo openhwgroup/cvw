@@ -27,24 +27,48 @@
 
 `include "wally-config.vh"
 
+// Teo Ene 04/15:
+// Temporarily removed paramterized priority encoder for non-parameterized one
+// To get synthesis working quickly
+
 // *** We should look for a better parameterized priority encoder. This has a
 // bad code smell and might not synthesize
+//module priority_encoder #(parameter BINARY_BITS = 3) (
+//  input  [(2**BINARY_BITS)-1:0] one_hot,
+//  output [BINARY_BITS-1:0] binary
+//);
+//
+//  localparam ONE_HOT_BITS = 2**BINARY_BITS;
+//
+//  genvar i, j;
+//  generate
+//    for (i = 0; i < ONE_HOT_BITS; i++) begin
+//      for (j = 0; j < BINARY_BITS; j++) begin
+//        if (i[j]) begin
+//          assign binary[j] = one_hot[i];
+//        end
+//      end
+//    end
+//  endgenerate
+//
+//endmodule
+
 module priority_encoder #(parameter BINARY_BITS = 3) (
-  input  [(2**BINARY_BITS)-1:0] one_hot,
-  output [BINARY_BITS-1:0] binary
+  input  logic  [7:0] one_hot,
+  output logic  [2:0] binary
 );
 
-  localparam ONE_HOT_BITS = 2**BINARY_BITS;
-
-  genvar i, j;
-  generate
-    for (i = 0; i < ONE_HOT_BITS; i++) begin
-      for (j = 0; j < BINARY_BITS; j++) begin
-        if (i[j]) begin
-          assign binary[j] = one_hot[i];
-        end
-      end
-    end
-  endgenerate
+  always_comb
+    case (one_hot)
+      8'h1:     binary=3'h0;
+      8'h2:     binary=3'h1;
+      8'h4:     binary=3'h2;
+      8'h8:     binary=3'h3;
+      8'h10:    binary=3'h4;
+      8'h20:    binary=3'h5;
+      8'h40:    binary=3'h6;
+      8'h80:    binary=3'h7;
+      default:  binary=3'h0; //should never happen
+    endcase
 
 endmodule
