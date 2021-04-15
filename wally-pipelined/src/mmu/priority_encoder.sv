@@ -36,6 +36,7 @@ module priority_encoder #(parameter BINARY_BITS = 3) (
 
   localparam ONE_HOT_BITS = 2**BINARY_BITS;
 
+  /*
   genvar i, j;
   generate
     for (i = 0; i < ONE_HOT_BITS; i++) begin
@@ -46,5 +47,16 @@ module priority_encoder #(parameter BINARY_BITS = 3) (
       end
     end
   endgenerate
+  */
+
+  logic [BINARY_BITS-1:0] binary_comb;
+
+  always_comb begin
+    binary_comb = 0;
+    for (int i = 0; i < ONE_HOT_BITS; i++)
+      if (one_hot[i]) binary_comb = i;
+  end
+
+  assign binary = binary_comb;
 
 endmodule
