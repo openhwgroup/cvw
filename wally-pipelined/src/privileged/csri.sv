@@ -49,13 +49,13 @@ module csri #(parameter
   // assumes no N-mode user interrupts
 
   always_comb begin
-    IntInM     = 0; // *** does this really work
-    IntInM[11] = ExtIntM & ~MIDELEG_REGW[9];   // MEIP
-    IntInM[9]  = ExtIntM &  MIDELEG_REGW[9];   // SEIP
-    IntInM[7]  = TimerIntM & ~MIDELEG_REGW[5]; // MTIP
-    IntInM[5]  = TimerIntM &  MIDELEG_REGW[5]; // STIP
-    IntInM[3]  = SwIntM & ~MIDELEG_REGW[1];    // MSIP
-    IntInM[1]  = SwIntM &  MIDELEG_REGW[1];    // SSIP
+    IntInM      = 0; // *** does this overwriting technique really synthesize
+    IP_REGW[11] = ExtIntM & ~MIDELEG_REGW[9];   // MEIP
+    IntInM[9]   = ExtIntM &  MIDELEG_REGW[9];   // SEIP
+    IntInM[7]   = TimerIntM & ~MIDELEG_REGW[5]; // MTIP
+    IntInM[5]   = TimerIntM &  MIDELEG_REGW[5]; // STIP
+    IntInM[3]   = SwIntM & ~MIDELEG_REGW[1];    // MSIP
+    IntInM[1]   = SwIntM &  MIDELEG_REGW[1];    // SSIP
    end
 
   // Interrupt Write Enables
@@ -77,14 +77,14 @@ module csri #(parameter
       assign SIP_WRITE_MASK = 12'h000;
     end
     always @(posedge clk, posedge reset) begin
-      if (reset)          IP_REGW <= 12'b0;
-      else if (WriteMIPM) IP_REGW <= (CSRWriteValM & MIP_WRITE_MASK) | IntInM; // MTIP unclearable
-      else if (WriteSIPM) IP_REGW <= (CSRWriteValM & SIP_WRITE_MASK) | IntInM; // MTIP unclearable
+      if (reset)          IP_REGW[9:0] <= 10'b0;
+      else if (WriteMIPM) IP_REGW[9:0] <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
+      else if (WriteSIPM) IP_REGW[9:0] <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
 //      else if (WriteUIPM) IP_REGW = (CSRWriteValM & 12'hBBB) | (NextIPM & 12'h080); // MTIP unclearable
-      else                IP_REGW <= IP_REGW | IntInM; // *** check this turns off interrupts properly even when MIDELEG changes
+      else                IP_REGW[9:0] <= IP_REGW[9:0] | IntInM[9:0]; // *** check this turns off interrupts properly even when MIDELEG changes
     end
     always @(posedge clk, posedge reset) begin
-      if (reset)              IE_REGW <= 12'b0;
+      if (reset)          IE_REGW <= 12'b0;
       else if (WriteMIEM) IE_REGW <= (CSRWriteValM & 12'hAAA); // MIE controls M and S fields
       else if (WriteSIEM) IE_REGW <= (CSRWriteValM & 12'h222) | (IE_REGW & 12'h888); // only S fields
 //      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field

@@ -99,8 +99,6 @@ module testbench_busybear();
   initial begin
     $readmemh("/courses/e190ax/busybear_boot_new/bootmem.txt", dut.uncore.bootdtim.RAM, 'h1000 >> 3);
     $readmemh("/courses/e190ax/busybear_boot_new/ram.txt", dut.uncore.dtim.RAM);
-    $readmemh("/courses/e190ax/busybear_boot_new/bootmem.txt", dut.imem.bootram, 'h1000 >> 3);
-    $readmemh("/courses/e190ax/busybear_boot_new/ram.txt", dut.imem.RAM);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);
   end
@@ -279,14 +277,15 @@ module testbench_busybear();
     end
   end
 
-  string sepc_lit = "SEPC";
   `define CHECK_CSR2(CSR, PATH) \
     string CSR; \
     logic [63:0] expected``CSR``; \
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
         if ($time > 1) begin \
-          if (sepc_lit.icompare(`"CSR`")) begin #1; end \
+          if ("SEPC" == `"CSR`") begin #1; end \
+          if ("SCAUSE" == `"CSR`") begin #2; end \
+          if ("SSTATUS" == `"CSR`") begin #3; end \
           scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
           if(CSR.icompare(`"CSR`")) begin \
@@ -463,8 +462,10 @@ module testbench_busybear();
               32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
               32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
                 speculative = 1;
-              32'bXXXXXXXXXXXXXXXX1001000000000010: // C.EBREAK:
+              32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
+              32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
                 speculative = 0; // tbh don't really know what should happen here
+              32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
               32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
               32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
                 speculative = 1;
