@@ -274,7 +274,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 # csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 10;
+numrand = 8;
 
 # setup
 seed(0xC365DDEB9173AB42) # make tests reproducible
@@ -295,43 +295,45 @@ for xlen in xlens:
     0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
     2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
   ]
-  imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
-  basename = "WALLY-CAUSE"
-  fname = imperaspath + "src/" + basename + ".S"
-  refname = imperaspath + "references/" + basename + ".reference_output"
-  testnum = 0
 
-  # print custom header part
-  f = open(fname, "w")
-  r = open(refname, "w")
-  line = "///////////////////////////////////////////\n"
-  f.write(line)
-  lines="// "+fname+ "\n// " + author + "\n"
-  f.write(lines)
-  line ="// Created " + str(datetime.now()) 
-  f.write(line)
+  for mode in ["m", "s", "u"]:
+    imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
+    basename = "WALLY-" + mode.upper() + "CAUSE"
+    fname = imperaspath + "src/" + basename + ".S"
+    refname = imperaspath + "references/" + basename + ".reference_output"
+    testnum = 0
 
-  # insert generic header
-  h = open("../testgen_header.S", "r")
-  for line in h:  
+    # print custom header part
+    f = open(fname, "w")
+    r = open(refname, "w")
+    line = "///////////////////////////////////////////\n"
+    f.write(line)
+    lines="// "+fname+ "\n// " + author + "\n"
+    f.write(lines)
+    line ="// Created " + str(datetime.now()) 
     f.write(line)
 
-  # print directed and random test vectors
-  for i in range(0,numrand):
-    writeVectors(storecmd)
+    # insert generic header
+    h = open("../testgen_header.S", "r")
+    for line in h:  
+      f.write(line)
+
+    # print directed and random test vectors
+    for i in range(0,numrand):
+      writeVectors(storecmd)
 
 
-  # print footer
-  h = open("../testgen_footer.S", "r")
-  for line in h:  
-    f.write(line)
+    # print footer
+    h = open("../testgen_footer.S", "r")
+    for line in h:  
+      f.write(line)
 
-  # Finish
-  lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
-  lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-  f.write(lines)
-  f.close()
-  r.close()
+    # Finish
+    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
+    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
+    f.write(lines)
+    f.close()
+    r.close()
 
 
 

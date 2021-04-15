@@ -163,7 +163,7 @@ def writeTest(storecmd, f, r, test, expected, mode = "m", resetHander = ""):
 # csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 30;
+numrand = 20;
 
 # setup
 seed(0xC363DDEB9173AB42) # make tests reproducible
