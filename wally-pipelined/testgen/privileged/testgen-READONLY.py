@@ -30,8 +30,6 @@ def randRegs():
   else:
       return str(reg1), str(reg2), str(reg3)
 
-# WALLY BUG: doesn't cause an illegal instruction on csr writes to readonly places. Last paragraph of page 5 of privileged spec
-
 def writeVectors(a, storecmd):
   writeSingleVector(a, storecmd, f"""csrrw x0, {test}, x13""")
   writeSingleVector(a, storecmd, f"""csrrwi x0, {test}, {a % 32}""")

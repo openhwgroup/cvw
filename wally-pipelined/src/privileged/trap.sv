@@ -72,14 +72,23 @@ module trap (
 
   // Handle vectored traps (when mtvec/stvec/utvec csr value has bits [1:0] == 01)
   // For vectored traps, set program counter to _tvec value + 4 times the cause code
-  assign PrivilegedVectoredTrapVector = PrivilegedTrapVector + {CauseM[`XLEN-3:0], 2'b00};
+  generate
+    if(`VECTORED_INTERRUPTS_SUPPORTED) begin
+        always_comb
+          if (PrivilegedTrapVector[1:0] == 2'b01 && CauseM[`XLEN-1] == 1)
+            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
+          else
+            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+    end
+    else begin
+      assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+    end
+  endgenerate
 
   always_comb 
     if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else if (sretM)                         PrivilegedNextPCM = SEPC_REGW;
     else if (uretM)                         PrivilegedNextPCM = UEPC_REGW;
-    else if (PrivilegedTrapVector[1:0] == 2'b01 && CauseM[`XLEN-1] == 1)
-                                            PrivilegedNextPCM = PrivilegedVectoredTrapVector;
     else                                    PrivilegedNextPCM = PrivilegedTrapVector;
 
   // Cause priority defined in table 3.7 of 20190608 privileged spec
