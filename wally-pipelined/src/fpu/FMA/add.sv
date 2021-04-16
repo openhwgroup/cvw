@@ -11,22 +11,20 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-module add(r, s, t, sum,
-		   negsum, invz, selsum1, killprod, negsum0, negsum1, proddenorm);
+module add(rM, sM, tM, sum,
+		   negsum, invz, selsum1, negsum0, negsum1, killprodM);
 ////////////////////////////////////////////////////////////////////////////////
 
-	input 		[105:0]		r;     			// partial product 1
-	input 		[105:0]		s;              // partial product 2
-	input 		[163:0]		t;             	// aligned addend 
+	input 		[105:0]		rM;     			// partial product 1
+	input 		[105:0]		sM;              // partial product 2
+	input 		[163:0]		tM;             	// aligned addend 
 	input					invz;       	// invert addend
 	input 					selsum1;    	// select +1 mode of compound adder 
-	input					killprod;    	// z >> product
+	input					killprodM;    	// z >> product
 	input					negsum;      	// Negate sum 
-	input 					proddenorm;
 	output		[163:0]		sum;         	// sum
 	output					negsum0;     	// sum was negative in +0 mode
 	output					negsum1;     	// sum was negative in +1 mode 
-	//output				sumzero;
 
 	// Internal nodes
 
@@ -37,18 +35,18 @@ module add(r, s, t, sum,
 	wire		[164:0] 	sum1;			// sum of compound adder +1 mode
 	wire		[163:0] 	prodshifted;			// sum of compound adder +1 mode
 
-	// Invert addend if z's sign is diffrent from the product's sign
+	// Invert addend if z'sM sign is diffrent from the product'sM sign
 
-	assign t2 = invz ? ~{1'b0,t} : {1'b0,t};
+	assign t2 = invz ? ~{1'b0,tM} : {1'b0,tM};
 	
-	// Zero out product if Z >> product or product really should be zero
+	// Zero out product if Z >> product or product really should be 	
 
-	assign r2 = killprod ? 106'b0 : r;
-	assign s2 = killprod ? 106'b0 : s;
+	assign r2 = killprodM ? 106'b0 : rM;
+	assign s2 = killprodM ? 106'b0 : sM;
 
 	// Compound adder
 	// Consists of 3:2 CSA followed by long compound CPA
-	assign prodshifted = killprod ? 0 : {56'b0, r2+s2, 2'b0};
+	assign prodshifted = killprodM ? 0 : {56'b0, r2+s2, 2'b0};
 	assign sum0 = {1'b0,prodshifted} + t2 + 158'b0;
 	assign sum1 = {1'b0,prodshifted} + t2 + 158'b1; // +1 from invert of z above
 	
