@@ -49,7 +49,7 @@ module uartPC16550D(
   output logic       SOUT, RTSb, DTRb, OUT1b, OUT2b
 );
 
-  // transmit and receive states
+  // transmit and receive states // *** neeed to work on synth warning -- it wants to make enums 32 bits by default
   typedef enum {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
 
   // Registers

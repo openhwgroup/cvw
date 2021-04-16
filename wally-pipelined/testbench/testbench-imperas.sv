@@ -356,7 +356,7 @@ module testbench();
   };
 
   string tests32periph[] = '{
-    "rv32i-periph/WALLY-PLIC", "2000"
+    "rv32i-periph/WALLY-PLIC", "2080"
   };
 
    

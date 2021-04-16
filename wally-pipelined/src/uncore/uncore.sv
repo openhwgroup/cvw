@@ -67,7 +67,7 @@ module uncore (
   logic [`XLEN-1:0] HREADBootTim; 
   logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
   logic [1:0]      MemRWboottim;
-  logic            UARTIntr;// *** will need to tie INTR to an interrupt handler
+  logic            UARTIntr,GPIOIntr;
   
 
   // AHB Address decoder
