@@ -1,11 +1,25 @@
 # check for warnings in Verilog code
 # The verilator lint tool is faster and better than Modelsim so it is best to run this first.
 
-echo "rv64ic linting..."
-verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv64ic src/*/*.sv 
-echo "rv32ic linting..."
-verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv32ic src/*/*.sv 
-#verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv64ic src/*/*.sv src/*/div/*.sv
+if [ -n "$1" ]; then
+    echo "rv64ic linting..."
+    if verilator --lint-only --top-module "$1" -Iconfig/rv64ic src/*/*.sv; then
+        echo "rv32ic linting..."
+        verilator --lint-only --top-module "$1" -Iconfig/rv32ic src/*/*.sv 
+    else
+        echo "Skipping rv32ic because rv64ic had errors or warnings"
+        exit 1
+    fi
+else
+    echo "rv64ic linting..."
+    if verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv64ic src/*/*.sv; then
+        echo "rv32ic linting..."
+        verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv32ic src/*/*.sv 
+    else
+        echo "Skipping rv32ic because rv64ic had errors or warnings"
+        exit 1
+    fi
+fi
 
 # --lint-only just runs lint rather than trying to compile and simulate
 # -I points to the include directory where files such as `include wally-config.vh  are found
