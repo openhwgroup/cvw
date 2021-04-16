@@ -54,6 +54,7 @@
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 1
+`define VECTORED_INTERRUPTS_SUPPORTED 1
 
 // Address space
 `define RESET_VECTOR 32'h80000000
@@ -99,4 +100,5 @@
 
 `define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"
-`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
+`define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
+`define TESTSBP 0

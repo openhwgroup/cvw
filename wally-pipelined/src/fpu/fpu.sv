@@ -122,7 +122,32 @@ module fpu (
   logic                    DivStart;
 
   //instantiate E stage FMA signals here
-
+  logic [12:0]		aligncntE; 
+  logic [105:0]		rE; 
+  logic [105:0]		sE; 
+  logic [163:0]		tE;	
+  logic [8:0]		normcntE; 
+  logic [12:0]		aeE; 
+  logic 		bsE;
+  logic 		killprodE; 
+  logic 		prodofE; 
+  logic			xzeroE;
+  logic			yzeroE;
+  logic			zzeroE;
+  logic			xdenormE;
+  logic			ydenormE;
+  logic			zdenormE;
+  logic			xinfE;
+  logic			yinfE;
+  logic			zinfE;
+  logic			xnanE;
+  logic			ynanE;
+  logic			znanE;
+  logic			nanE;
+  logic	[8:0]		sumshiftE;
+  logic			sumshiftzeroE;
+  logic                 prodinfE;
+  
   //instantiation of E stage add/cvt signals
   logic [63:0]             AddSumE, AddSumTcE;
   logic [3:0]              AddSelInvE;
@@ -173,7 +198,7 @@ module fpu (
   //BEGIN EXECUTION STAGE
   //
 
-  //fma1 ();
+  fma1 fma1 (.*);
 
   //first and only instance of floating-point divider
   fpdiv fpdivsqrt (.*);
@@ -243,7 +268,34 @@ module fpu (
   logic                    PM;
   logic [3:0]              OpCtrlM;
 
-  //instantiate M stage FMA signals here
+  //instantiate M stage FMA signals here ***rename fma signals and resize for XLEN
+  logic [63:0]		FmaResultM;
+  logic [4:0]	 	FmaFlagsM;
+  logic [12:0]		aligncntM; 
+  logic [105:0]		rM; 
+  logic [105:0]		sM; 
+  logic [163:0]		tM;	
+  logic [8:0]		normcntM; 
+  logic [12:0]		aeM; 
+  logic 		bsM;
+  logic 		killprodM; 
+  logic 		prodofM; 
+  logic			xzeroM;
+  logic			yzeroM;
+  logic			zzeroM;
+  logic			xdenormM;
+  logic			ydenormM;
+  logic			zdenormM;
+  logic			xinfM;
+  logic			yinfM;
+  logic			zinfM;
+  logic			xnanM;
+  logic			ynanM;
+  logic			znanM;
+  logic			nanM;
+  logic	[8:0]		sumshiftM;
+  logic			sumshiftzeroM;
+  logic                 prodinfM;
 
   //instantiation of M stage regfile signals
   logic [4:0]              RdM;
@@ -276,6 +328,31 @@ module fpu (
   //*****************
   //fma E/M pipe registers
   //*****************  
+  flopenrc #(13) EMRegFma1(clk, reset, PipeClearEM, PipeEnableEM, aligncntE, aligncntM); 
+  flopenrc #(106) EMRegFma2(clk, reset, PipeClearEM, PipeEnableEM, rE, rM); 
+  flopenrc #(106) EMRegFma3(clk, reset, PipeClearEM, PipeEnableEM, sE, sM); 
+  flopenrc #(164) EMRegFma4(clk, reset, PipeClearEM, PipeEnableEM, tE, tM); 
+  flopenrc #(9) EMRegFma5(clk, reset, PipeClearEM, PipeEnableEM, normcntE, normcntM); 
+  flopenrc #(13) EMRegFma6(clk, reset, PipeClearEM, PipeEnableEM, aeE, aeM);  
+  flopenrc #(1) EMRegFma7(clk, reset, PipeClearEM, PipeEnableEM, bsE, bsM); 
+  flopenrc #(1) EMRegFma8(clk, reset, PipeClearEM, PipeEnableEM, killprodE, killprodM); 
+  flopenrc #(1) EMRegFma9(clk, reset, PipeClearEM, PipeEnableEM, prodofE, prodofM); 
+  flopenrc #(1) EMRegFma10(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
+  flopenrc #(1) EMRegFma11(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
+  flopenrc #(1) EMRegFma12(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
+  flopenrc #(1) EMRegFma13(clk, reset, PipeClearEM, PipeEnableEM, xdenormE, xdenormM); 
+  flopenrc #(1) EMRegFma14(clk, reset, PipeClearEM, PipeEnableEM, ydenormE, ydenormM); 
+  flopenrc #(1) EMRegFma15(clk, reset, PipeClearEM, PipeEnableEM, zdenormE, zdenormM); 
+  flopenrc #(1) EMRegFma16(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
+  flopenrc #(1) EMRegFma17(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
+  flopenrc #(1) EMRegFma18(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
+  flopenrc #(1) EMRegFma19(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
+  flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
+  flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
+  flopenrc #(1) EMRegFma22(clk, reset, PipeClearEM, PipeEnableEM, nanE, nanM); 
+  flopenrc #(9) EMRegFma23(clk, reset, PipeClearEM, PipeEnableEM, sumshiftE, sumshiftM); 
+  flopenrc #(1) EMRegFma24(clk, reset, PipeClearEM, PipeEnableEM, sumshiftzeroE, sumshiftzeroM); 
+  flopenrc #(1) EMRegFma25(clk, reset, PipeClearEM, PipeEnableEM, prodinfE, prodinfM); 
 
   //*****************
   //fpadd E/M pipe registers
@@ -346,7 +423,7 @@ module fpu (
   //BEGIN MEMORY STAGE
   //
 
-  //fma2 ();
+  fma2 fma2(.*);
 
   //second instance of two-stage floating-point add/cvt unit
   fpuaddcvt2 fpadd2 (.*);
@@ -369,6 +446,8 @@ module fpu (
   logic                    PW;
 
   //instantiate W stage fma signals here
+  logic [63:0]             FmaResultW;
+  logic [4:0]              FmaFlagsW;
 
   //instantiation of W stage div/sqrt signals
   logic                    DivDenormW;
@@ -395,7 +474,9 @@ module fpu (
   //*****************
   //fma M/W pipe registers
   //*****************
-  
+  flopenrc #(64) MWRegFma1(clk, reset, PipeClearMW, PipeEnableMW, FmaResultM, FmaResultW); 
+  flopenrc #(5) MWRegFma2(clk, reset, PipeClearMW, PipeEnableMW, FmaFlagsM, FmaFlagsW); 
+
   //*****************
   //fpdiv M/W pipe registers
   //*****************
@@ -446,7 +527,7 @@ module fpu (
   //set to div/sqrt flags
   assign FPUFlagsW = (FResultSelW[2]) ? (SgnFlagsW) : (
 	             (FResultSelW[1]) ? 
-		     ( (FResultSelW[0]) ? (5'b00000) : ({CmpInvalidW,4'b0000}) ) 
+		     ( (FResultSelW[0]) ? (FmaFlagsW) : ({CmpInvalidW,4'b0000}) ) 
 		     : ( (FResultSelW[0]) ? (AddFlagsW) : (DivFlagsW) ) 
                      );
 
@@ -455,7 +536,7 @@ module fpu (
   //the uses the same logic as for flag signals
   assign FPUResultDirW = (FResultSelW[2]) ? (SgnResultW) : (
 	             (FResultSelW[1]) ? 
-		     ( (FResultSelW[0]) ? (64'b0) : ({62'b0,CmpFCCW}) ) 
+		     ( (FResultSelW[0]) ? (FmaResultW) : ({62'b0,CmpFCCW}) ) 
 		     : ( (FResultSelW[0]) ? (AddResultW) : (DivResultW) ) 
                      );
 

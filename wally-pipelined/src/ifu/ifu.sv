@@ -74,14 +74,13 @@ module ifu (
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   logic [31:0]      nop = 32'h00000013; // instruction for NOP
-  logic [`XLEN-1:0] ITLBInstrPAdrF, ICacheInstrPAdrF;
   // *** send this to the trap unit
   logic             ITLBPageFaultF;
 
   tlb #(3) itlb(.TLBAccess(1'b1), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
-                .PhysicalAddress(ITLBInstrPAdrF), .TLBMiss(ITLBMissF),
+                .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
                 .TLBHit(ITLBHitF), .TLBPageFault(ITLBPageFaultF),
                 .*);
 
@@ -97,15 +96,11 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
-  assign PCPF = PCF; // Temporary workaround until iTLB is live
   icache ic(
     .*,
-    .InstrPAdrF(ICacheInstrPAdrF),
     .UpperPCPF(PCPF[`XLEN-1:12]),
     .LowerPCF(PCF[11:0])
   );
-  // Prioritize the iTLB for reads if it wants one
-  mux2 #(`XLEN) instrPAdrMux(ICacheInstrPAdrF, ITLBInstrPAdrF, ITLBMissF, InstrPAdrF);
 
   assign PrivilegedChangePCM = RetM | TrapM;
 

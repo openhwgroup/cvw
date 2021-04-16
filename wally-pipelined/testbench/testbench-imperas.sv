@@ -342,13 +342,27 @@ module testbench();
   };
 
   string tests64p[] = '{
-    "rv64p/WALLY-CAUSE", "3000",
+    "rv64p/WALLY-MCAUSE", "2000",
+    "rv64p/WALLY-SCAUSE", "2000",
+    "rv64p/WALLY-UCAUSE", "2000",
     "rv64p/WALLY-EPC", "3000",
     "rv64p/WALLY-TVAL", "3000",
     "rv64p/WALLY-MARCHID", "4000",
     "rv64p/WALLY-MIMPID", "4000",
     "rv64p/WALLY-MHARTID", "4000",
     "rv64p/WALLY-MVENDORID", "4000"
+  };
+
+  string tests32p[] = '{
+    "rv32p/WALLY-MCAUSE", "2000",
+    "rv32p/WALLY-SCAUSE", "2000",
+    "rv32p/WALLY-UCAUSE", "2000",
+    "rv32p/WALLY-EPC", "3000",
+    "rv32p/WALLY-TVAL", "3000",
+    "rv32p/WALLY-MARCHID", "4000",
+    "rv32p/WALLY-MIMPID", "4000",
+    "rv32p/WALLY-MHARTID", "4000",
+    "rv32p/WALLY-MVENDORID", "4000"
   };
 
   string tests64periph[] = '{
@@ -396,13 +410,14 @@ module testbench();
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
-      // tests = {tests, tests64p};
+      
+      //tests = tests64p;
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
         tests = tests32periph;
       end else begin
-          tests = {tests32i};//,tests32periph}; *** broken at the moment
+          tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
@@ -410,8 +425,9 @@ module testbench();
           if (`A_SUPPORTED) tests = {tests, tests32a};
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
       end
+
+      //tests = tests32p;
     end
-    //tests = tests64p;
   end
 
 

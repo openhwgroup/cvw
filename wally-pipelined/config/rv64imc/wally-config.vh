@@ -99,6 +99,7 @@
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
 
-`define TWO_BIT_PRELOAD "../config/rv64ic/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv64ic/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv64imc/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64imc/BTBPredictor.txt"
 `define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
+`define TESTSBP 0

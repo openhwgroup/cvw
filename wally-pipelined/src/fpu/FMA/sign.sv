@@ -10,33 +10,26 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module sign(xsign, ysign, zsign, negsum0, negsum1, bs, ps, killprod, FrmE, FmaFlagsM, zzero,
-			 sumzero, nan, xinf, yinf, zinf, inf, wsign, invz, negsum, selsum1, psign, isAdd);
+module sign(xsign, ysign, zsign, negsum0, negsum1, bsM, FrmM, FmaFlagsM, 
+			 sumzero, zinfM, inf, wsign, invz, negsum, selsum1, isAdd);
 ////////////////////////////////////////////////////////////////////////////I
  
 	input					xsign;			// Sign of X 
 	input					ysign;			// Sign of Y 
 	input					zsign;			// Sign of Z
-	input					zzero;
 	input					isAdd;
 	input					negsum0;		// Sum in +O mode is negative 
 	input					negsum1;		// Sum in +1 mode is negative 
-	input					bs;				// sticky bit from addend
-	input					ps;				// sticky bit from product
-	input					killprod;		// Product forced to zero
-	input		[2:0]		FrmE;				// Round toward minus infinity
+	input					bsM;				// sticky bit from addend
+	input		[2:0]		FrmM;				// Round toward minus infinity
 	input		[4:0]		FmaFlagsM;				// Round toward minus infinity
 	input					sumzero;		// Sum = O
-	input					nan;			// Some input is NaN
-	input					xinf;			// X = Inf
-	input					yinf;			// Y = Inf
-	input					zinf;			// Y = Inf
+	input					zinfM;			// Y = Inf
 	input					inf;			// Some input = Inf
 	output					wsign;			// Sign of W 
 	output					invz;			// Invert addend into adder
 	output					negsum;			// Negate result of adder
 	output					selsum1;		// Select +1 mode from compound adder
-	output					psign;			// sign of product X * Y 
  
 	// Internal nodes
 
@@ -64,12 +57,12 @@ logic tmp;
 	// 	if -p + z is the sum positive
 	// 	if -p - z then the sum is negitive
 	assign sumneg = invz&zsign&negsum1 | invz&psign&~negsum1 | (zsign&psign);
-	//always @(invz or negsum0 or negsum1 or bs or ps)
+	//always @(invz or negsum0 or negsum1 or bsM or ps)
 	//	begin
 	//		if (~invz) begin               // both inputs have same sign  
 	//			negsum = 0;
 	//			selsum1 = 0;
-	//		end else if (bs) begin        // sticky bit set on addend
+	//		end else if (bsM) begin        // sticky bit set on addend
 	//			selsum1 = 0;
 	//			negsum = negsum0; 
 	//		end else if (ps) begin 		// sticky bit set on product
@@ -97,8 +90,8 @@ logic tmp;
 	//			 shall be +0 in all rounding attributes EXCEPT roundTowardNegative. Under that attribute, the sign of an exact zero 
 	//			 sum/difference shall be -0.  However, x+x = x-(-X) retains the same sign as x even when x is zero."
  
-	//assign zerosign = (~invz && killprod) ? zsign : rm;//***look into
-//	assign zerosign = (~invz && killprod) ? zsign : 0;
+	//assign zerosign = (~invz && killprodM) ? zsign : rm;//***look into
+//	assign zerosign = (~invz && killprodM) ? zsign : 0;
 	// zero sign
 	//	if product underflows then use psign
 	//	otherwise
@@ -110,10 +103,10 @@ logic tmp;
 	//			otherwise psign
 
 	assign zerosign = FmaFlagsM[1] ? psign :
-			  (isAdd ? (psign^zsign ? FrmE == 3'b010 : psign) :
-				  (psign^zsign ? psign : FrmE == 3'b010));
-	assign infsign = zinf ? zsign : psign; //KEP 210112 keep the correct sign when result is infinity
-	//assign infsign = xinf ? (yinf ? psign : xsign) : yinf ? ysign : zsign;//original
+			  (isAdd ? (psign^zsign ? FrmM == 3'b010 : psign) :
+				  (psign^zsign ? psign : FrmM == 3'b010));
+	assign infsign = zinfM ? zsign : psign; //KEP 210112 keep the correct sign when result is infinity
+	//assign infsign = xinfM ? (yinfM ? psign : xsign) : yinfM ? ysign : zsign;//original
 	assign tmp = FmaFlagsM[4] ? 0 : (inf ? infsign :(sumzero ? zerosign : psign ^ negsum));
 	assign wsign = FmaFlagsM[4] ? 0 : (inf ? infsign :(sumzero ? zerosign : sumneg));
 
