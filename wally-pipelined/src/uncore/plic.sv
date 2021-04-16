@@ -37,12 +37,12 @@
 module plic (
   input  logic             HCLK, HRESETn,
   input  logic             HSELPLIC,
-  input  logic [27:0]      HADDR,
+  input  logic [27:0]      HADDR, // *** could factor out entryd into HADDRd at the level of uncore
   input  logic             HWRITE,
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
-  input  logic             UARTIntr,
+  input  logic             UARTIntr,GPIOIntr,
   output logic [`XLEN-1:0] HREADPLIC,
   output logic             HRESPPLIC, HREADYPLIC,
   output logic             ExtIntM);
@@ -77,7 +77,7 @@ module plic (
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-  generate
+  generate // *** add ld, sd functionality
     if (`XLEN == 64) begin
       always_comb
         if (entryd[2]) begin
@@ -162,11 +162,15 @@ module plic (
   endgenerate
 
   // connect sources to requests
-  `ifdef PLIC_UART_ID
-    assign requests[`PLIC_UART_ID] = UARTIntr;
-  `endif
-  //  or temporarily connect them to nothing
-  assign requests[3:1] = 3'b0;
+  always_comb begin
+    requests = {N{1'b0}};
+    `ifdef PLIC_GPIO_ID
+      requests[`PLIC_GPIO_ID] = GPIOIntr;
+    `endif
+    `ifdef PLIC_UART_ID
+      requests[`PLIC_UART_ID] = UARTIntr;
+    `endif
+  end
 
   // pending updates
   // *** verify that this matches the expectations of the things that make requests (in terms of timing, edge-triggered vs level-triggered)

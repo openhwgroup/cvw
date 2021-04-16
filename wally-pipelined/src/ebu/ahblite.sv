@@ -49,7 +49,6 @@ module ahblite (
   // Signals from MMU
   input  logic [`XLEN-1:0] MMUPAdr,
   input  logic             MMUTranslate, MMUTranslationComplete,
-  input  logic             TrapM,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Return from bus
@@ -131,6 +130,7 @@ module ahblite (
             else                   NextBusState = IDLE;  // if (InstrReadF still high)
       INSTRREADC: if (~HREADY)     NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
             else                   NextBusState = IDLE;
+      default:                     NextBusState = IDLE;
     endcase
 
   // stall signals
@@ -138,11 +138,11 @@ module ahblite (
   // since translation might not be complete.
   assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete)); // && ~TrapM
+                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
   // *** Could get finer grained stalling if we distinguish between MMU
   //     instruction address translation and data address translation
   assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                          (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete)); // && ~TrapM
+                          (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
