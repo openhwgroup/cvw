@@ -24,6 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`define BUILDROOT 0
+`define BUSYBEAR 0
+
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 

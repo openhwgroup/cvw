@@ -339,16 +339,20 @@ module testbench_busybear();
   `CHECK_CSR(STVEC)
 
               //$stop;
-  initial begin
-    #34140421;
-    $stop;
-  end
-  initial begin //this is temporary until the bug can be fixed!!!
-    #11130100;
-    force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
-    #100;
-    release dut.hart.ieu.dp.regf.rf[5];
-  end
+  generate 
+    if (`BUSYBEAR == 1) begin
+      initial begin
+        #34140421;
+        $stop;
+      end
+      initial begin //this is temporary until the bug can be fixed!!!
+        #11130100;
+      force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
+      #100;
+      release dut.hart.ieu.dp.regf.rf[5];
+      end
+    end 
+  endgenerate
 
   logic speculative;
   initial begin
