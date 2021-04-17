@@ -20,7 +20,7 @@ onbreak {resume}
 if [file exists work-buildroot] {
     vdel -all -lib work-buildroot
 }
-vlib work-buildroot
+vlib work-busybear
 
 # compile source files
 # suppress spurious warnngs about 

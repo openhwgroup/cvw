@@ -24,7 +24,8 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`define BUSYBEAR
+`define BUILDROOT 1
+`define BUSYBEAR 0
 `define BUSYBEAR_FIX_READ {'h10000005}
 `define BUSYBEAR_TEST_VECTORS "/courses/e190ax/buildroot_boot/"
 // RV32 or RV64: XLEN = 32 or 64
