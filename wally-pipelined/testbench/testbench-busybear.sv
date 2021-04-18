@@ -194,7 +194,9 @@ module testbench_busybear();
   import ahbliteState::*;
   always @(dut.HRDATA) begin
     #2;
-    if (dut.hart.MemRWM[1] && ~HWRITE && dut.hart.ebu.BusState == MEMREAD && dut.HRDATA !== {64{1'bx}}) begin
+    if (dut.hart.MemRWM[1]
+      && (dut.hart.ebu.BusState == MEMREAD || dut.hart.ebu.BusState == ATOMICREAD)
+      && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
