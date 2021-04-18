@@ -191,9 +191,10 @@ module testbench_busybear();
 
   logic [`XLEN-1:0] readAdrExpected;
 
+  import ahbliteState::*;
   always @(dut.HRDATA) begin
     #2;
-    if (dut.hart.MemRWM[1] && ~HWRITE && HADDR[31:3] != dut.PCF[31:3] && dut.HRDATA !== {64{1'bx}}) begin
+    if (dut.hart.MemRWM[1] && ~HWRITE && dut.hart.ebu.BusState == MEMREAD && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
