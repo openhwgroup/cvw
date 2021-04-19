@@ -17,35 +17,31 @@
 module normalize(sum, zexp, normcnt, aeM, aligncntM, sumshiftM, sumshiftzeroM, sumzero, 
 				xzeroM, zzeroM, yzeroM, bsM, xdenormM, ydenormM, zdenormM, sticky, de0, resultdenorm, v); 
 /////////////////////////////////////////////////////////////////////////////
-	input     	[163:0]  	sum;            // sum
-	input     	[62:52]  	zexp;            // sum
-	input		[8:0] 		normcnt;     	// normalization shift count
-	input		[12:0] 		aeM;     	// normalization shift count
-	input		[12:0] 		aligncntM;     	// normalization shift count
-	input		[8:0] 		sumshiftM;     	// normalization shift count
-	input				sumshiftzeroM;
-	input				sumzero;	// sum is zero
-	input				bsM;		// sticky bit for addend
-	input                  		xdenormM;        // Input Z is denormalized
-	input                  		ydenormM;        // Input Z is denormalized
-	input                  		zdenormM;        // Input Z is denormalized
-	input				xzeroM;
-	input				yzeroM;
-	input				zzeroM;
-	output				sticky;		//sticky bit
-	output		[12:0]		de0;
-	output                  	resultdenorm;        // Input Z is denormalized
-	output		[53:0]		v;		// normalized sum, R, S bits
+	input logic     	[163:0]  	sum;            // sum
+	input logic     	[62:52]  	zexp;            // sum
+	input logic		[8:0] 		normcnt;     	// normalization shift count
+	input logic		[12:0] 		aeM;     	// normalization shift count
+	input logic		[12:0] 		aligncntM;     	// normalization shift count
+	input logic		[8:0] 		sumshiftM;     	// normalization shift count
+	input logic				sumshiftzeroM;
+	input logic				sumzero;	// sum is zero
+	input logic				bsM;		// sticky bit for addend
+	input logic                  		xdenormM;        // Input Z is denormalized
+	input logic                  		ydenormM;        // Input Z is denormalized
+	input logic                  		zdenormM;        // Input Z is denormalized
+	input logic				xzeroM;
+	input logic				yzeroM;
+	input logic				zzeroM;
+	output logic				sticky;		//sticky bit
+	output logic		[12:0]		de0;
+	output logic                  	resultdenorm;        // Input Z is denormalized
+	output logic		[53:0]		v;		// normalized sum, R, S bits
 
 	// Internal nodes
 
-	reg       	[53:0]     	v;           	// normalized sum, R, S bits 
-	logic                  	resultdenorm;        // Input Z is denormalized
-	logic 		[12:0]	de0;
-	logic       	[163:0]  	sumshifted;     // shifted sum
+logic       	[163:0]  	sumshifted;     // shifted sum
 	logic		[9:0]		sumshifttmp;
 	logic       	[163:0]  	sumshiftedtmp;     // shifted sum
-	logic 				sticky;
 	logic				isShiftLeft1;
 logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
 
@@ -62,7 +58,7 @@ logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
  
 	assign isShiftLeft1 = (aligncntM == 1 ||aligncntM == 0 || $signed(aligncntM) == $signed(-1))&& zexp == 11'h2;//((xexp == 11'h3ff && yexp == 11'h1) || (yexp == 11'h3ff && xexp == 11'h1)) && zexp == 11'h2;
 	assign tmp = ($signed(aeM-normcnt+2) >= $signed(-1022));
-	always @(sum or sumshiftM or aeM or aligncntM or normcnt or bsM or isShiftLeft1 or zexp or zdenormM)
+	always_comb
 		begin
 		// d = aligncntM
 		// l = normcnt

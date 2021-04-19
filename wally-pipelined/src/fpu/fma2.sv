@@ -38,40 +38,37 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 
 );
 /////////////////////////////////////////////////////////////////////////////
- 
-	input 		[63:0]		ReadData1M;		// input 1
-	input		[63:0]		ReadData2M;     // input 2 
-	input 		[63:0]		ReadData3M;     // input 3
-	input 		[2:0]	 	FrmM;          	// Rounding mode
-	input 		[12:0]		aligncntM;    	// status flags
-	input 		[105:0]		rM; 				// one result of partial product sum
-	input 		[105:0]		sM; 				// other result of partial products
-	input 		[163:0]		tM;				// output of alignment shifter	
-	input 		[8:0]		normcntM; 		// shift count for normalizer
-	input 		[12:0]		aeM; 		// multiplier expoent
-	input 					bsM;				// sticky bit of addend
-	input 					killprodM; 		// ReadData3M >> product
-	input					prodinfM;
-	input					xzeroM;
-	input					yzeroM;
-	input					zzeroM;
-	input					xdenormM;
-	input					ydenormM;
-	input					zdenormM;
-	input					xinfM;
-	input					yinfM;
-	input					zinfM;
-	input					xnanM;
-	input					ynanM;
-	input					znanM;
-	input					nanM;
-	input			[8:0]		sumshiftM;
-	input					sumshiftzeroM;
-
-
-	input 		[63:0]		FmaResultM;     // output FmaResultM=ReadData1M*ReadData2M+ReadData3M
-	output 		[4:0]		FmaFlagsM;    	// status flags
-	
+  
+	input logic	 	[63:0]		ReadData1M;		// input 1
+	input logic	 	[63:0]		ReadData2M;     // input 2 
+	input logic		[63:0]		ReadData3M;     // input 3
+	input logic		[2:0]	 	FrmM;          	// Rounding mode
+	input logic		[12:0]		aligncntM;    	// status flags
+	input logic 	[105:0]		rM; 				// one result of partial product sum
+	input logic		[105:0]		sM; 				// other result of partial products
+	input logic		[163:0]		tM;				// output of alignment shifter	
+	input logic		[8:0]		normcntM; 		// shift count for normalizer
+	input logic		[12:0]		aeM; 		// multiplier expoent
+	input logic					bsM;				// sticky bit of addend
+	input logic 				killprodM; 		// ReadData3M >> product
+	input logic					prodinfM;
+	input logic					xzeroM;
+	input logic					yzeroM;
+	input logic					zzeroM;
+	input logic					xdenormM;
+	input logic					ydenormM;
+	input logic					zdenormM;
+	input logic					xinfM;
+	input logic					yinfM;
+	input logic					zinfM;
+	input logic					xnanM;
+	input logic					ynanM;
+	input logic					znanM;
+	input logic					nanM;
+	input logic		[8:0]		sumshiftM;
+	input logic					sumshiftzeroM;
+	output logic		[63:0]		FmaResultM;     // output FmaResultM=ReadData1M*ReadData2M+ReadData3M
+	output logic		[4:0]		FmaFlagsM;    	// status flags
 
 // Internal nodes
  	logic 		[163:0]		sum;			// output of carry prop adder
