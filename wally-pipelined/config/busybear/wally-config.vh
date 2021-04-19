@@ -27,7 +27,7 @@
 `define BUILDROOT 0
 `define BUSYBEAR 1
 `define BUSYBEAR_FIX_READ {'h10000005}
-`define BUSYBEAR_TEST_VECTORS "/courses/e190ax/busybear_boot_new/"
+`define BUSYBEAR_TEST_VECTORS "/courses/e190ax/busybear_boot/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
