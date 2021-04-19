@@ -24,6 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`define BUILDROOT 0
+`define BUSYBEAR 0
+
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -55,6 +58,7 @@
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 1
+`define VECTORED_INTERRUPTS_SUPPORTED 1
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000

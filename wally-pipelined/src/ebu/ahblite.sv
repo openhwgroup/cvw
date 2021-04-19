@@ -30,6 +30,10 @@
 
 `include "wally-config.vh"
 
+package ahbliteState;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE, MMUIDLE} statetype;
+endpackage
+
 module ahblite (
   input  logic             clk, reset,
   input  logic             StallW, FlushW,
@@ -50,7 +54,6 @@ module ahblite (
   // Signals from MMU
   input  logic [`XLEN-1:0] MMUPAdr,
   input  logic             MMUTranslate, MMUTranslationComplete,
-  input  logic             TrapM,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Return from bus
@@ -92,7 +95,7 @@ module ahblite (
   // Data accesses have priority over instructions.  However, if a data access comes
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE, MMUIDLE} statetype;
+  import ahbliteState::*;
   statetype BusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
@@ -132,6 +135,7 @@ module ahblite (
             else                   NextBusState = IDLE;  // if (InstrReadF still high)
       INSTRREADC: if (~HREADY)     NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
             else                   NextBusState = IDLE;
+      default:                     NextBusState = IDLE;
     endcase
 
   // stall signals
@@ -139,8 +143,7 @@ module ahblite (
   // since translation might not be complete.
   assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete)); // && ~TrapM
-
+                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                         (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);

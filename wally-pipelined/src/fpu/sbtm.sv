@@ -11,7 +11,8 @@ module sbtm (input logic [11:0] a, output logic [10:0] ia_out);
    // input to CPA
    logic [14:0] op1;
    logic [14:0] op2;
-   logic [14:0] p;   
+   logic [14:0] p; 
+   logic cout;  
 
    assign x0 = a[10:7];
    assign x1 = a[6:4];

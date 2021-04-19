@@ -24,8 +24,10 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`define BUSYBEAR
+`define BUILDROOT 0
+`define BUSYBEAR 1
 `define BUSYBEAR_FIX_READ {'h10000005}
+`define BUSYBEAR_TEST_VECTORS "/courses/e190ax/busybear_boot_new/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -56,6 +58,7 @@
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
+`define VECTORED_INTERRUPTS_SUPPORTED 1 // Domenico Ottolia 4/15: Support for vectored interrupts in _tvec csrs. Just implemented in src/privileged/trap.sv around line 75. Pretty sure this should be 1.
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000

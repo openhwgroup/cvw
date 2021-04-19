@@ -80,7 +80,7 @@ void main() {
 			fprintf(fq,"	if((!wnan && (FmaResultM != ans)) || (wnan && ansnan && ~(((xnan && (FmaResultM[62:0] == {ReadData1E[62:52],1'b1,ReadData1E[50:0]})) || (ynan && (FmaResultM[62:0] == {ReadData2E[62:52],1'b1,ReadData2E[50:0]}))  || (znan && (FmaResultM[62:0] == {ReadData3E[62:52],1'b1,ReadData3E[50:0]})) || (FmaResultM[62:0] == ans[62:0])) ))) begin\n"); 
 			fprintf(fq,"		$fwrite(fp, \"%%h %%h %%h %%h %%h  Wrong \",ReadData1E,ReadData2E, ReadData3E, FmaResultM, ans);\n");
 			//fprintf(fq,"		$fwrite(fp, \"%%h \",s);\n");
-			fprintf(fq,"		$fwrite(fp, \"FmaResultM=%%d \",$signed(aligncnt));\n");
+			fprintf(fq,"		$fwrite(fp, \"FmaResultM=%%d \",$signed(aligncntE));\n");
 			fprintf(fq,"		if(FmaResultM == 64'h8000000000000000) $fwrite(fp, \"FmaResultM=-zero \");\n");
 			fprintf(fq,"		if(~(|ReadData1E[62:52]) && |ReadData1E[51:0]) $fwrite(fp, \"xdenorm \");\n");
 			fprintf(fq,"		if(~(|ReadData2E[62:52]) && |ReadData2E[51:0]) $fwrite(fp, \"ydenorm \");\n");

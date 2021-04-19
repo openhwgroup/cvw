@@ -112,7 +112,7 @@ module fma(ReadData1E, ReadData2E, ReadData3E, FrmE,
 	align			align(.zman(ReadData3E[51:0]),.*);
 	add				add(.*);
 	lza				lza(.*);
-	normalize		normalize(.xexp(ReadData1E[62:52]),.yexp(ReadData2E[62:52]),.zexp(ReadData3E[62:52]),.*); 
+	normalize		normalize(.zexp(ReadData3E[62:52]),.*); 
 	round			round(.xman(ReadData1E[51:0]), .yman(ReadData2E[51:0]),.zman(ReadData3E[51:0]), .wman(FmaResultM[51:0]),.wsign(FmaResultM[63]),.*);
 
 // Instantiate exponent datapath
