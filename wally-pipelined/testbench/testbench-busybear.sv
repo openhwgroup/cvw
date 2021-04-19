@@ -373,9 +373,10 @@ module testbench_busybear();
         `ERROR
       end
       scan_file_PCW = $fscanf(data_file_PCW, "%s\n", PCtextW);
-      if (PCtextW != "ret" && PCtextW != "fence" && PCtextW != "nop" && PCtextW != "mret" && PCtextW != "sfence.vma" && PCtextW != "unimp") begin
-        scan_file_PC = $fscanf(data_file_PCW, "%s\n", PCtext2W);
+      PCtext2W = "";
+      while (PCtext2W != "***") begin
         PCtextW = {PCtextW, " ", PCtext2W};
+        scan_file_PC = $fscanf(data_file_PCW, "%s\n", PCtext2W);
       end
       scan_file_PCW = $fscanf(data_file_PCW, "%x\n", InstrWExpected);
       // then expected PC value
@@ -429,9 +430,10 @@ module testbench_busybear();
               `ERROR
             end
             scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
-            if (PCtext != "ret" && PCtext != "fence" && PCtext != "nop" && PCtext != "mret" && PCtext != "sfence.vma" && PCtext != "unimp") begin
-              scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
+            PCtext2 = "";
+            while (PCtext2 != "***") begin
               PCtext = {PCtext, " ", PCtext2};
+              scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
             end
             scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
             if(dut.hart.ifu.PCD === pcExpected) begin
