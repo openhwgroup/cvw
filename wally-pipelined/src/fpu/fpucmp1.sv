@@ -208,7 +208,6 @@ module exception_cmp_1 (ANaN, BNaN, Azero, Bzero, A, B, Sel);
    output logic 	      BNaN;
    output logic               Azero;
    output logic               Bzero;
-   logic [62:0]       sixtythreezeros = 63'h0;
 
    assign dp = !Sel[1]&!Sel[0];
    assign sp = !Sel[1]&Sel[0];
@@ -229,7 +228,7 @@ module exception_cmp_1 (ANaN, BNaN, Azero, Bzero, A, B, Sel);
    // the 63 least siginficant bits of A are zero). 
    // Depending on how this synthesizes, it may work better to replace
    // this with assign Azero = ~(A[62] | A[61] | ... | A[0])
-   assign Azero = (A[62:0] == sixtythreezeros);
-   assign Bzero = (B[62:0] == sixtythreezeros);
+   assign Azero = (A[62:0] == 63'h0);
+   assign Bzero = (B[62:0] == 63'h0);
 
 endmodule // exception_cmp

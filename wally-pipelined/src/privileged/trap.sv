@@ -2,7 +2,7 @@
 // trap.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified: dottolia@hmc.edu 14 April 2021: Add support for vectored interrupts
 //
 // Purpose: Handle Traps: Exceptions and Interrupt
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
@@ -47,6 +47,7 @@ module trap (
 
   logic [11:0] MIntGlobalEnM, SIntGlobalEnM, PendingIntsM; 
   logic InterruptM;
+  logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
 
   // Determine pending enabled interrupts
   assign MIntGlobalEnM = {12{(PrivilegeModeW != `M_MODE) || STATUS_MIE}}; // if M ints enabled or lower priv 3.1.9
@@ -64,13 +65,31 @@ module trap (
   assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
   assign RetM = mretM | sretM | uretM;
 
+  always_comb
+      if      (NextPrivilegeModeM == `U_MODE) PrivilegedTrapVector = UTVEC_REGW; 
+      else if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
+      else                                    PrivilegedTrapVector = MTVEC_REGW; 
+
+  // Handle vectored traps (when mtvec/stvec/utvec csr value has bits [1:0] == 01)
+  // For vectored traps, set program counter to _tvec value + 4 times the cause code
+  generate
+    if(`VECTORED_INTERRUPTS_SUPPORTED) begin
+        always_comb
+          if (PrivilegedTrapVector[1:0] == 2'b01 && CauseM[`XLEN-1] == 1)
+            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
+          else
+            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+    end
+    else begin
+      assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+    end
+  endgenerate
+
   always_comb 
     if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else if (sretM)                         PrivilegedNextPCM = SEPC_REGW;
     else if (uretM)                         PrivilegedNextPCM = UEPC_REGW;
-    else if (NextPrivilegeModeM == `U_MODE) PrivilegedNextPCM = UTVEC_REGW; 
-    else if (NextPrivilegeModeM == `S_MODE) PrivilegedNextPCM = STVEC_REGW;
-    else                                    PrivilegedNextPCM = MTVEC_REGW; 
+    else                                    PrivilegedNextPCM = PrivilegedTrapVector;
 
   // Cause priority defined in table 3.7 of 20190608 privileged spec
   // Exceptions are of lower priority than all interrupts (3.1.9)

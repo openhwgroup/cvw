@@ -13,27 +13,26 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module round(v, sticky, FrmE, wsign,
-			  FmaFlagsM, inf, nan, xnan, ynan, znan, 
+module round(v, sticky, FrmM, wsign,
+			  FmaFlagsM, inf, nanM, xnanM, ynanM, znanM, 
 			  xman, yman, zman,
 			  wman, infinity, specialsel,expplus1);
 /////////////////////////////////////////////////////////////////////////////
 
 	input		[53:0]		v;		// normalized sum, R, S bits
 	input				sticky;		//sticky bit
-	input		[2:0]	FrmE;
+	input		[2:0]	FrmM;
 	input				wsign;		// Sign of result
 	input 		[4:0]	FmaFlagsM;
 	input				inf;		// Some input is infinity
-	input				nan;		// Some input is NaN
-	input				xnan;		// X is NaN
-	input				ynan;		// Y is NaN
-	input				znan;		// Z is NaN
+	input				nanM;		// Some input is NaN
+	input				xnanM;		// X is NaN
+	input				ynanM;		// Y is NaN
+	input				znanM;		// Z is NaN
 	input		[51:0]		xman;		// Input X
 	input		[51:0]		yman;		// Input Y
 	input		[51:0]		zman;		// Input Z
 	output		[51:0]		wman; 		// rounded result of FMAC
-	//output				postnormalize; 	// Right shift 1 for post-rounding norm
 	output				infinity;    	// Generate infinity on overflow
 	output				specialsel;  	// Select special result
 	output				expplus1;
@@ -57,8 +56,8 @@ module round(v, sticky, FrmE, wsign,
 	//	0xx - do nothing
 	//	100 - tie - plus1 if v[2] = 1
 	//	101/110/111 - plus1
-	always @ (FrmE, v, wsign, sticky) begin
-		case (FrmE)
+	always @ (FrmM, v, wsign, sticky) begin
+		case (FrmM)
 			3'b000: plus1 = (v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2])));//round to nearest even
 			3'b001: plus1 = 0;//round to zero
 			3'b010: plus1 = wsign;//round down
@@ -90,8 +89,8 @@ module round(v, sticky, FrmE, wsign,
 	// complicated non-critical control in the circuit implementation.
 
 	assign specialsel =  FmaFlagsM[2] ||  FmaFlagsM[1] ||  FmaFlagsM[4] || //overflow underflow invalid
-							nan || inf;
-	assign specialres = FmaFlagsM[4] | nan ? nanres : //invalid
+							nanM || inf;
+	assign specialres = FmaFlagsM[4] | nanM ? nanres : //invalid
 						 FmaFlagsM[2] ? infinityres : //overflow
 						 inf ? 52'b0 :
 						 FmaFlagsM[1] ? 52'b0 : 52'bx;  // underflow
@@ -99,20 +98,20 @@ module round(v, sticky, FrmE, wsign,
 	// Overflow is handled differently for different rounding modes
 	// Round is to either infinity or to maximum finite number
 
-	assign infinity =  |FrmE;//rn || (rp && ~wsign) || (rm && wsign);//***look into this
+	assign infinity =  |FrmM;//rn || (rp && ~wsign) || (rm && wsign);//***look into this
 	assign infinityres = infinity ? 52'b0 : {52{1'b1}};
 
 	// Invalid operations produce a quiet NaN. The result should
 	// propagate an input if the input is NaN. Since we assume all
 	// NaN inputs are already quiet, we don't have to force them quiet.
 
-	// assign nanres = xnan ? x: (ynan ? y : (znan ? z : {1'b1, 51'b0})); // original
+	// assign nanres = xnanM ? x: (ynanM ? y : (znanM ? z : {1'b1, 51'b0})); // original
 
 	// IEEE 754-2008 section 6.2.3 states:
 	// "If two or more inputs are NaN, then the payload of the resulting NaN should be 
 	// identical to the payload of one of the input NaNs if representable in the destination
 	// format. This standard does not specify which of the input NaNs will provide the payload."
-	assign nanres = xnan ? {1'b1, xman[50:0]}: (ynan ? {1'b1, yman[50:0]} : (znan ? {1'b1, zman[50:0]} : {1'b1, 51'b0}));// KEP 210112 add the 1 to make NaNs quiet
+	assign nanres = xnanM ? {1'b1, xman[50:0]}: (ynanM ? {1'b1, yman[50:0]} : (znanM ? {1'b1, zman[50:0]} : {1'b1, 51'b0}));// KEP 210112 add the 1 to make NaNs quiet
 
 	// Select result with 4:1 mux
 	// If the sum is zero and we round up,  there is a special case in
