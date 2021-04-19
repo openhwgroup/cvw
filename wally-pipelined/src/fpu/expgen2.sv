@@ -23,24 +23,24 @@ module expgen2(xexp, yexp, zexp,
 			   sumof, sumuf);
 /////////////////////////////////////////////////////////////////////////////
   
-	input     	[62:52]    	xexp;           	// Exponent of multiplicand x
-	input     	[62:52]  	yexp;         		// Exponent of multiplicand y
-	input     	[62:52]  	zexp;           	// Exponent of addend z
-	input     			sumzero;     	// sum exactly equals zero 
-	input     			resultdenorm;  // postnormalize rounded result
-	input     			infinity;    	// generate infinity on overflow 
-	input     	[4:0]	FmaFlagsM;     	// Result invalid
-	input     			inf;			// Some input is infinity
-	input     			nanM;			// Some input is NaN
-	input     	[12:0]		de0;			// X is NaN NaN
-	input     			xnanM;			// X is NaN
-	input     			ynanM;			// Y is NaN
-	input     			znanM;			// Z is NaN 
-	input				expplus1;
-	input     			specialsel;  	// Select special result
-	output		[62:52]    	wexp;           	// Exponent of result
-	output				sumof;          // X*Y+Z exponent out of bounds 
-	output				sumuf;         // X*Y+Z exponent underflows 
+	input logic     	[62:52]    	xexp;           	// Exponent of multiplicand x
+	input logic     	[62:52]  	yexp;         		// Exponent of multiplicand y
+	input logic     	[62:52]  	zexp;           	// Exponent of addend z
+	input logic     			sumzero;     	// sum exactly equals zero 
+	input logic     			resultdenorm;  // postnormalize rounded result
+	input logic     			infinity;    	// generate infinity on overflow 
+	input logic     	[4:0]	FmaFlagsM;     	// Result invalid
+	input logic     			inf;			// Some input is infinity
+	input logic     			nanM;			// Some input is NaN
+	input logic     	[12:0]		de0;			// X is NaN NaN
+	input logic     			xnanM;			// X is NaN
+	input logic    			ynanM;			// Y is NaN
+	input logic     			znanM;			// Z is NaN 
+	input logic				expplus1;
+	input logic     			specialsel;  	// Select special result
+	output logic		[62:52]    	wexp;           	// Exponent of result
+	output logic				sumof;          // X*Y+Z exponent out of bounds 
+	output logic				sumuf;         // X*Y+Z exponent underflows 
 
 	//   Internal nodes
 

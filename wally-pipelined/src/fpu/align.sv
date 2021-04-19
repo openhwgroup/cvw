@@ -15,33 +15,26 @@ module align(zman, aligncntE, xzeroE, yzeroE, zzeroE, zdenormE, tE, bsE,
              killprodE,  sumshiftE, sumshiftzeroE);
 /////////////////////////////////////////////////////////////////////////////
 
-	input 		[51:0]		zman;		// Fraction of addend z;
-	input 		[12:0]		aligncntE;	// amount to shift
-	input				xzeroE;		// Input X = 0
-	input                  		yzeroE;          // Input Y = 0 
-	input                  		zzeroE;          // Input Z = 0
-	input                  		zdenormE;        // Input Z is denormalized
-	output    	[163:0]    	tE;              // aligned addend (54 bits left of bpt)
-	output          		bsE;           	// sticky bit of addend
-	output          		killprodE;    	// Z >> product
-	output		[7:0]		sumshiftE;	
-	output				sumshiftzeroE;
+	input logic 		[51:0]		zman;		// Fraction of addend z;
+	input logic 		[12:0]		aligncntE;	// amount to shift
+	input logic				xzeroE;		// Input X = 0
+	input logic                  		yzeroE;          // Input Y = 0 
+	input logic                  		zzeroE;          // Input Z = 0
+	input logic                  		zdenormE;        // Input Z is denormalized
+	output logic    	[163:0]    	tE;              // aligned addend (54 bits left of bpt)
+	output logic          		bsE;           	// sticky bit of addend
+	output logic          		killprodE;    	// Z >> product
+	output logic		[8:0]		sumshiftE;	
+	output logic				sumshiftzeroE;
 
 	// Internal nodes
  
-	reg       	[163:0]   	tE;				// aligned addend from shifter
 	reg       	[215:0]   	shift;				// aligned addend from shifter
-	reg             		killprodE;			// Z >> product 
-	reg             		bsE;				// sticky bit of addend
-	reg             		ps;				// sticky bit of product
-	reg             		zexpsel;				// sticky bit of product
+	logic         		zexpsel;				// sticky bit of product
 	reg       	[7:0]		i;				// temp storage for finding sticky bit
 	wire		[52:0]		z1;				// Z plus 1
 	wire		[51:0]		z2;				// Z selected after handling rounds
-	wire		[11:0]		align104;			// alignment count + 104
-	logic		[8:0]		sumshiftE;
-	logic sumshiftzeroE;
-
+	
 
 
 	// Compute sign of aligncntE + 104 to check for shifting too far right 
@@ -51,18 +44,18 @@ module align(zman, aligncntE, xzeroE, yzeroE, zzeroE, zdenormE, tE, bsE,
 	// Shift addend by alignment count.  Generate sticky bits from
 	// addend on right shifts.  Handle special cases of shifting
 	// by too much.
-
-	always @(aligncntE or xzeroE or yzeroE or zman or zdenormE or zzeroE)
+//***change always @ to always_combs
+	always_comb 
 		begin
 
 		// Default to clearing sticky bits 
 		bsE = 0;
-		ps = 0;
 
 		// And to using product as primary operand in adder I exponent gen 
 		killprodE = xzeroE | yzeroE;
 		// d = aligncntE
 		// p = 53
+		//***try reducing this hardware try getting onw shifter
 		if ($signed(aligncntE) <= $signed(-105)) begin //d<=-2p+1
 			//product ancored case with saturated shift
 			sumshiftE = 163;	// 3p+4	

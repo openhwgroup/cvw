@@ -14,21 +14,21 @@ module special(ReadData1E, ReadData2E, ReadData3E, xzeroE, yzeroE, zzeroE,
 				xnanE, ynanE, znanE, xdenormE, ydenormE, zdenormE, xinfE, yinfE, zinfE);
 /////////////////////////////////////////////////////////////////////////////
 
-	input   	[63:0]     	ReadData1E;              // Input ReadData1E
-	input     	[63:0]     	ReadData2E;           	// Input ReadData2E
-	input      	[63:0]    	ReadData3E;            	// Input ReadData3E 
-	output				xzeroE;		// Input ReadData1E = 0
-	output				yzeroE;		// Input ReadData2E = 0
-	output				zzeroE;		// Input ReadData3E = 0
-	output				xnanE;		// ReadData1E is NaN
-	output				ynanE;		// ReadData2E is NaN
-	output				znanE;		// ReadData3E is NaN
-	output				xdenormE;	// ReadData1E is denormalized
-	output				ydenormE;	// ReadData2E is denormalized
-	output				zdenormE;	// ReadData3E is denormalized
-	output				xinfE;		// ReadData1E is infinity
-	output				yinfE;		// ReadData2E is infinity
-	output				zinfE;		// ReadData3E is infinity
+	input logic   	[63:0]     	ReadData1E;              // Input ReadData1E
+	input logic     	[63:0]     	ReadData2E;           	// Input ReadData2E
+	input logic      	[63:0]    	ReadData3E;            	// Input ReadData3E 
+	output logic				xzeroE;		// Input ReadData1E = 0
+	output logic				yzeroE;		// Input ReadData2E = 0
+	output logic				zzeroE;		// Input ReadData3E = 0
+	output logic				xnanE;		// ReadData1E is NaN
+	output logic				ynanE;		// ReadData2E is NaN
+	output logic				znanE;		// ReadData3E is NaN
+	output logic				xdenormE;	// ReadData1E is denormalized
+	output logic				ydenormE;	// ReadData2E is denormalized
+	output logic			zdenormE;	// ReadData3E is denormalized
+	output logic				xinfE;		// ReadData1E is infinity
+	output logic				yinfE;		// ReadData2E is infinity
+	output logic				zinfE;		// ReadData3E is infinity
 
 	// In the actual circuit design, the gates looking at bits
 	// 51:0 and at bits 62:52 should be shared among the various detectors.

@@ -2,14 +2,14 @@
 module multiply(xman, yman, xdenormE, ydenormE, xzeroE, yzeroE, rE, sE); 
 /////////////////////////////////////////////////////////////////////////////
 
-	input 		[51:0]		xman;				// Fraction of multiplicand	x
-	input		[51:0]		yman;				// Fraction of multiplicand y	
-	input					xdenormE;		// is x denormalized	
-	input					ydenormE;		// is y denormalized	
-	input     			xzeroE;		// Z is denorm
-	input     			yzeroE;		// Z is denorm
-	output		[105:0]		rE;				//	partial product 1	
-	output		[105:0]		sE;				//	partial product 2	
+	input logic 		[51:0]		xman;				// Fraction of multiplicand	x
+	input logic		[51:0]		yman;				// Fraction of multiplicand y	
+	input logic					xdenormE;		// is x denormalized	
+	input logic					ydenormE;		// is y denormalized	
+	input logic     			xzeroE;		// Z is denorm
+	input logic     			yzeroE;		// Z is denorm
+	output logic		[105:0]		rE;				//	partial product 1	
+	output logic		[105:0]		sE;				//	partial product 2	
     
      wire        [54:0]      yExt; //y with appended 0 and assumed 1
      wire        [53:0]      xExt; //y with assumed 1

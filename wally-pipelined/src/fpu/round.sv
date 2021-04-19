@@ -19,23 +19,23 @@ module round(v, sticky, FrmM, wsign,
 			  wman, infinity, specialsel,expplus1);
 /////////////////////////////////////////////////////////////////////////////
 
-	input		[53:0]		v;		// normalized sum, R, S bits
-	input				sticky;		//sticky bit
-	input		[2:0]	FrmM;
-	input				wsign;		// Sign of result
-	input 		[4:0]	FmaFlagsM;
-	input				inf;		// Some input is infinity
-	input				nanM;		// Some input is NaN
-	input				xnanM;		// X is NaN
-	input				ynanM;		// Y is NaN
-	input				znanM;		// Z is NaN
-	input		[51:0]		xman;		// Input X
-	input		[51:0]		yman;		// Input Y
-	input		[51:0]		zman;		// Input Z
-	output		[51:0]		wman; 		// rounded result of FMAC
-	output				infinity;    	// Generate infinity on overflow
-	output				specialsel;  	// Select special result
-	output				expplus1;
+	input logic		[53:0]		v;		// normalized sum, R, S bits
+	input logic				sticky;		//sticky bit
+	input logic		[2:0]	FrmM;
+	input logic				wsign;		// Sign of result
+	input logic 		[4:0]	FmaFlagsM;
+	input logic				inf;		// Some input is infinity
+	input logic				nanM;		// Some input is NaN
+	input logic				xnanM;		// X is NaN
+	input logic				ynanM;		// Y is NaN
+	input logic				znanM;		// Z is NaN
+	input logic		[51:0]		xman;		// Input X
+	input logic		[51:0]		yman;		// Input Y
+	input logic		[51:0]		zman;		// Input Z
+	output logic		[51:0]		wman; 		// rounded result of FMAC
+	output logic				infinity;    	// Generate infinity on overflow
+	output logic				specialsel;  	// Select special result
+	output logic				expplus1;
 
 	// Internal nodes
 
@@ -56,7 +56,7 @@ module round(v, sticky, FrmM, wsign,
 	//	0xx - do nothing
 	//	100 - tie - plus1 if v[2] = 1
 	//	101/110/111 - plus1
-	always @ (FrmM, v, wsign, sticky) begin
+	always_comb begin
 		case (FrmM)
 			3'b000: plus1 = (v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2])));//round to nearest even
 			3'b001: plus1 = 0;//round to zero
