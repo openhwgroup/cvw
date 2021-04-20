@@ -4,6 +4,8 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified:ssanghai@hmc.edu 2nd March 
 // Added a configurable number of counters
+//          dottolia@hmc.edu 20 April 2021
+// Make counters synthesizable
 //
 // Purpose: Counter CSRs
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
@@ -45,18 +47,20 @@ module csrc (
     integer HPMCOUNTERH [`COUNTERS:0];
     integer MHPEVENT [`COUNTERS:0];
 
-    initial begin
-    integer i;
-    for (i=0; i<= `COUNTERS; i = i+1) begin 
-        if (i !==1) begin
-            MHPMCOUNTER[i] = 12'hB00 + i;  // not sure this addition is legit 
-            MHPMCOUNTERH[i] = 12'hB80 + i; 
-            HPMCOUNTER[i] = 12'hC00 + i;
-            HPMCOUNTERH[i] = 12'hC80 + i;
-            MHPEVENT[i] = 12'h320 + i; // MHPEVENT[0] = MCOUNTERINHIBIT
+    genvar i;
+    generate
+    for (i = 0; i <= `COUNTERS; i = i + 1) begin 
+        if (i != 1) begin
+            always @(posedge reset) begin
+                MHPMCOUNTER[i] = 12'hB00 + i;  // not sure this addition is legit 
+                MHPMCOUNTERH[i] = 12'hB80 + i; 
+                HPMCOUNTER[i] = 12'hC00 + i;
+                HPMCOUNTERH[i] = 12'hC80 + i;
+                MHPEVENT[i] = 12'h320 + i; // MHPEVENT[0] = MCOUNTERINHIBIT
+            end
         end 
     end //end for loop
-    end // end for initial
+    endgenerate
 
     logic [`COUNTERS:0] MCOUNTEN;
     assign MCOUNTEN[0] = 1'b1;

@@ -74,7 +74,12 @@ module csrm #(parameter
   DCSR = 12'h7B0,
   DPC = 12'h7B1,
   DSCRATCH0 = 12'h7B2,
-  DSCRATCH1 = 12'h7B3) (
+  DSCRATCH1 = 12'h7B3,
+  ZERO = {(`XLEN){1'b0}},
+  ALL_ONES = 32'hfffffff,
+  MEDELEG_MASK = ~(ZERO | 1'b1 << 11),
+  MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}
+  ) (
     input  logic             clk, reset, 
     input  logic             CSRMWriteM, MTrapM,
     input  logic [11:0]      CSRAdrM,
@@ -93,19 +98,15 @@ module csrm #(parameter
   logic [63:0] PMPCFG01_REGW, PMPCFG23_REGW; // 64-bit registers in RV64, or two 32-bit registers in RV32
   logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];  // *** Might have to make 16 individual registers
   //logic [`XLEN-1:0] PMPADDR0_REGW;
-  logic [`XLEN-1:0] zero = 0;
-  logic [31:0]     allones = {32{1'b1}};
-  logic [`XLEN-1:0] MEDELEG_MASK = ~(zero | 1'b1 << 11); // medeleg[11] hardwired to zero per Privileged Spec 3.1.8
-  logic [`XLEN-1:0] MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}; // only allow delegating interrupts to supervisor mode
+
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
   logic            WritePMPCFG0M, WritePMPCFG2M;
   logic            WritePMPADDRM [0:15]; 
-  logic [25:0]     MISAbits = `MISA;
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
-  assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, MISAbits};
+  assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, `MISA};
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS);
@@ -143,8 +144,8 @@ module csrm #(parameter
   flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
-      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, zero, MEDELEG_REGW);
-      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK, zero, MIDELEG_REGW);
+      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, ZERO, MEDELEG_REGW);
+      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK, ZERO, MIDELEG_REGW);
     end else begin
       assign MEDELEG_REGW = 0;
       assign MIDELEG_REGW = 0;
@@ -161,9 +162,9 @@ module csrm #(parameter
     if (`OVPSIM_CSR_CONFIG)
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, MCOUNTEREN_REGW);
     else
-      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], allones, MCOUNTEREN_REGW);
+      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], ALL_ONES, MCOUNTEREN_REGW);
   endgenerate
-  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], allones, MCOUNTINHIBIT_REGW);
+  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], ALL_ONES, MCOUNTINHIBIT_REGW);
 
   // There are 16 PMPADDR registers, each of which has its own flop
   generate
