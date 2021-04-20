@@ -27,7 +27,11 @@
 
 `include "wally-config.vh"
 
-module csr (
+module csr #(parameter
+  // Constants
+  UIP_REGW = 12'b0, // N user-mode exceptions not supported
+  UIE_REGW = 12'b0
+  ) (
   input  logic             clk, reset,
   input  logic             FlushW, StallW,
   input  logic [31:0]      InstrM, 
@@ -64,7 +68,7 @@ module csr (
 
   logic [11:0] CSRAdrM;
   logic [11:0] SIP_REGW, SIE_REGW;
-  logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
+  //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRNAccessM, InsufficientCSRPrivilegeM;
 
   logic IllegalCSRMWriteReadonlyM;
