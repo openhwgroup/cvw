@@ -65,11 +65,14 @@ module icache(
     // Output signals from cache memory
     logic [`XLEN-1:0]   ICacheMemReadData;
     logic               ICacheMemReadValid;
+  logic 		ICacheReadEn;
+  
 
-    rodirectmappedmem #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES), .WORDSIZE(`XLEN)) cachemem(
+  rodirectmappedmemre #(.LINESIZE(ICACHELINESIZE), .NUMLINES(ICACHENUMLINES), .WORDSIZE(`XLEN)) 
+  cachemem(
         .*,
         // Stall it if the pipeline is stalled, unless we're stalling it and we're ending our stall
-        .stall(StallF && (~ICacheStallF || ~EndFetchState)),
+        .re(ICacheReadEn),
         .flush(FlushMem),
         .ReadUpperPAdr(ICacheMemReadUpperPAdr),
         .ReadLowerAdr(ICacheMemReadLowerAdr),
@@ -88,45 +91,46 @@ endmodule
 
 module icachecontroller #(parameter LINESIZE = 256) (
     // Inputs from pipeline
-    input  logic    clk, reset,
-    input  logic    StallF, StallD,
-    input  logic    FlushD,
+    input logic 		clk, reset,
+    input logic 		StallF, StallD,
+    input logic 		FlushD,
 
     // Input the address to read
     // The upper bits of the physical pc
-    input  logic [`XLEN-1:12]   UpperPCNextPF,
+    input logic [`XLEN-1:12] 	UpperPCNextPF,
     // The lower bits of the virtual pc
-    input  logic [11:0]         LowerPCNextF,
+    input logic [11:0] 		LowerPCNextF,
 
     // Signals to/from cache memory
     // The read coming out of it
-    input  logic [`XLEN-1:0]    ICacheMemReadData,
-    input  logic                ICacheMemReadValid,
+    input logic [`XLEN-1:0] 	ICacheMemReadData,
+    input logic 		ICacheMemReadValid,
     // The address at which we want to search the cache memory
-    output logic [`XLEN-1:12]   ICacheMemReadUpperPAdr,
-    output logic [11:0]         ICacheMemReadLowerAdr,
+    output logic [`XLEN-1:12] 	ICacheMemReadUpperPAdr,
+    output logic [11:0] 	ICacheMemReadLowerAdr,
+    output logic                ICacheReadEn,
     // Load data into the cache
-    output logic                ICacheMemWriteEnable,
+    output logic 		ICacheMemWriteEnable,
     output logic [LINESIZE-1:0] ICacheMemWriteData,
-    output logic [`XLEN-1:0]    ICacheMemWritePAdr,
+    output logic [`XLEN-1:0] 	ICacheMemWritePAdr,
 
     // Outputs to rest of ifu
     // High if the instruction in the fetch stage is compressed
-    output logic CompressedF,
+    output logic 		CompressedF,
     // The instruction that was requested
     // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-    output logic [31:0]     InstrRawD,
+    output logic [31:0] 	InstrRawD,
 
     // Outputs to pipeline control stuff
-    output logic ICacheStallF, EndFetchState,
+    output logic 		ICacheStallF, EndFetchState,
 
     // Signals to/from ahblite interface
     // A read containing the requested data
-    input  logic [`XLEN-1:0] InstrInF,
-    input  logic             InstrAckF,
+    input logic [`XLEN-1:0] 	InstrInF,
+    input logic 		InstrAckF,
     // The read we request from main memory
-    output logic [`XLEN-1:0] InstrPAdrF,
-    output logic             InstrReadF
+    output logic [`XLEN-1:0] 	InstrPAdrF,
+    output logic 		InstrReadF
 );
 
   // FSM states
@@ -173,7 +177,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
   
   logic [LOGWPL:0] 	     FetchCount, NextFetchCount;
 
-  logic [`XLEN-1:0] 	     PCPreFinalF, PCPFinalF, PCSpillF;
+  logic [`XLEN-1:0] 	     PCPreFinalF, PCPFinalF, PCSpillF, PCNextPF;
   logic [`XLEN-1:OFFSETWIDTH] PCPTrunkF;
 
   
@@ -200,15 +204,16 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Cache fault signals
     //logic           FaultStall;
 
-
-  flopenr #(`XLEN) PCPFFlop(clk, reset, SavePC, {UpperPCNextPF, LowerPCNextF}, PCPF);
+  assign PCNextPF = {UpperPCNextPF, LowerPCNextF};
+  
+  flopenl #(`XLEN) PCPFFlop(clk, reset, SavePC, PCPFinalF, `RESET_VECTOR, PCPF);
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
   assign PCSpillF = PCPF + 2'b10;
 
   // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] ? PCPF : {UpperPCNextPF, LowerPCNextF};
+  assign PCPreFinalF = PCMux[0] ? PCPF : PCNextPF;
   assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
   
   
@@ -353,18 +358,20 @@ module icachecontroller #(parameter LINESIZE = 256) (
   
   // Next state logic
   always_comb begin
-      UnalignedSelect = 1'b0;
-      CntReset = 1'b0;
-      PreCntEn = 1'b0;
-      InstrReadF = 1'b0;
-      ICacheMemWriteEnable = 1'b0;
-      spillSave = 1'b0;
-      PCMux = 2'b00;
+    UnalignedSelect = 1'b0;
+    CntReset = 1'b0;
+    PreCntEn = 1'b0;
+    InstrReadF = 1'b0;
+    ICacheMemWriteEnable = 1'b0;
+    spillSave = 1'b0;
+    PCMux = 2'b00;
+    ICacheReadEn = 1'b0;
     
     case (CurrState)
       
       STATE_READY: begin
 	PCMux = 2'b00;
+	ICacheReadEn = 1'b1;
 	if (hit & ~spill) begin
 	  NextState = STATE_READY;
 	end else if (hit & spill) begin
@@ -384,7 +391,8 @@ module icachecontroller #(parameter LINESIZE = 256) (
       // branch 1,  hit spill and 2, miss spill hit
       STATE_HIT_SPILL: begin
 	PCMux = 2'b10;
-	UnalignedSelect = 1'b1;	
+	UnalignedSelect = 1'b1;
+	ICacheReadEn = 1'b1;
 	if (hit) begin
           NextState = STATE_READY;
 	end else
@@ -409,6 +417,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       STATE_HIT_SPILL_MERGE: begin
 	PCMux = 2'b10;
 	UnalignedSelect = 1'b1;
+	ICacheReadEn = 1'b1;
         NextState = STATE_READY;
       end
 
@@ -430,6 +439,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       end
       STATE_MISS_READ: begin
 	PCMux = 2'b01;
+	ICacheReadEn = 1'b1;
 	NextState = STATE_READY;
       end
 
@@ -452,6 +462,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
 	PCMux = 2'b10;	 // there is a 1 cycle delay after setting the address before the date arrives.
 	spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
+	ICacheReadEn = 1'b1;	
 	NextState = STATE_MISS_SPILL_2;
       end
       STATE_MISS_SPILL_2: begin
@@ -482,6 +493,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       STATE_MISS_SPILL_MERGE: begin
 	PCMux = 2'b10;
 	UnalignedSelect = 1'b1;
+	ICacheReadEn = 1'b1;	
         NextState = STATE_READY;
       end
       default: begin
@@ -496,9 +508,9 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // stall CPU any time we are not in the ready state.  any other state means the
   // cache is either requesting data from the memory interface or handling a
   // spill over two cycles.
-  assign ICacheStallF = (CurrState != STATE_READY) | reset_q ? 1'b1 : 1'b0;
+  assign ICacheStallF = ((CurrState != STATE_READY) & hit) | reset_q ? 1'b1 : 1'b0;
   // save the PC anytime we are in the ready state. The saved value will be used as the PC may not be stable.
-  assign SavePC = CurrState == STATE_READY ? 1'b1 : 1'b0;
+  assign SavePC = (CurrState == STATE_READY) & hit ? 1'b1 : 1'b0;
   assign CntEn = PreCntEn & InstrAckF;
 
   // to compute the fetch address we need to add the bit shifted
@@ -518,6 +530,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
   // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
   // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
+  // *** now a bug need to mux between PCPF and PCPF+2
   assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
 
 
@@ -553,7 +566,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       flop #(1) PCFReg(.clk(clk),
 		       .d(PCPreFinalF[1]),
 		       .q(PCPreFinalF_q[1]));
-      assign FinalInstrRawF = PCPreFinalF[1] ? {SpillDataBlock0, ICacheMemReadData[31:16]} : ICacheMemReadData;
+      assign FinalInstrRawF = PCPreFinalF_q[1] ? {SpillDataBlock0, ICacheMemReadData[31:16]} : ICacheMemReadData;
     end else begin
       logic [2:1] PCPreFinalF_q;
       flop #(2) PCFReg(.clk(clk),
@@ -563,7 +576,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 			      .d1(ICacheMemReadData[47:16]),
 			      .d2(ICacheMemReadData[63:32]),
 			      .d3({SpillDataBlock0, ICacheMemReadData[63:48]}),
-			      .s(PCPreFinalF[2:1]),
+			      .s(PCPreFinalF_q[2:1]),
 			      .y(FinalInstrRawF));
     end
   endgenerate
