@@ -5,7 +5,13 @@
 # dottolia@hmc.edu 1 Mar 2021
 #
 # Generate directed and random test vectors for RISC-V Design Validation.
+#
+#
 ##################################
+# DOCUMENTATION:
+# Most of the comments explaining what everything
+# does can be found in testgen-TVAL.py
+###################################
 
 ##################################
 # libraries
@@ -274,6 +280,16 @@ for xlen in xlens:
     for line in h:  
       f.write(line)
 
+    # We need to leave at least one bit in medeleg unset so that we have a way to get
+    # back to machine mode when the tests are complete (otherwise we'll only ever be able
+    # to get up to supervisor mode). 
+    #
+    # So, we define a returning instruction which will be used to cause the exception that
+    # brings us into machine mode. The bit for this returning instruction is NOT set in
+    # medeleg. However, this also means that we can't test that instruction. So, we have
+    # two different returning instructions.
+    #
+    # Current code is written to only support ebreak and ecall.
     for returningInstruction in ["ebreak", "ecall"]:
 
       # All registers used:
@@ -290,9 +306,9 @@ for xlen in xlens:
       lines = f"""
         add x7, x6, x0
         csrr x19, mtvec
-
       """
 
+      # Not used — user mode traps are deprecated
       if testMode == "u":
         lines += f"""
           csrr x17, sedeleg
