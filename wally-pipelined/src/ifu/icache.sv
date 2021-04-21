@@ -206,14 +206,14 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
   assign PCNextPF = {UpperPCNextPF, LowerPCNextF};
   
-  flopenl #(`XLEN) PCPFFlop(clk, reset, SavePC, PCPFinalF, `RESET_VECTOR, PCPF);
+  flopenl #(`XLEN) PCPFFlop(clk, reset, SavePC & ~StallF, PCPFinalF, `RESET_VECTOR, PCPF);
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
   assign PCSpillF = PCPF + 2'b10;
 
   // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] ? PCPF : PCNextPF;
+  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextPF; // *** don't like the stallf 
   assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
   
   
@@ -568,15 +568,19 @@ module icachecontroller #(parameter LINESIZE = 256) (
   generate
     if( `XLEN == 32) begin
       logic [1:1] PCPreFinalF_q;
-      flop #(1) PCFReg(.clk(clk),
-		       .d(PCPreFinalF[1]),
-		       .q(PCPreFinalF_q[1]));
+      flopenr #(1) PCFReg(.clk(clk),
+			  .reset(reset),
+			  .en(~StallF),
+			  .d(PCPreFinalF[1]),
+			  .q(PCPreFinalF_q[1]));
       assign FinalInstrRawF = PCPreFinalF_q[1] ? {SpillDataBlock0, ICacheMemReadData[31:16]} : ICacheMemReadData;
     end else begin
       logic [2:1] PCPreFinalF_q;
-      flop #(2) PCFReg(.clk(clk),
-		       .d(PCPreFinalF[2:1]),
-		       .q(PCPreFinalF_q[2:1]));
+      flopenr #(2) PCFReg(.clk(clk),
+			  .reset(reset),
+			  .en(~StallF),
+			  .d(PCPreFinalF[2:1]),
+			  .q(PCPreFinalF_q[2:1]));
       mux4 #(32) AlignmentMux(.d0(ICacheMemReadData[31:0]),
 			      .d1(ICacheMemReadData[47:16]),
 			      .d2(ICacheMemReadData[63:32]),
