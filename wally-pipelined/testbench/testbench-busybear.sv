@@ -299,11 +299,13 @@ module testbench_busybear();
             `ERROR \
           end \
         end else begin \
-          for(integer j=0; j<totalCSR; j++) begin \
-            if(!StartCSRname[j].icompare(`"CSR`")) begin \
-              if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
-                $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
-                `ERROR \
+          if (!(`BUILDROOT == 1 && "MSTATUS" == `"CSR`")) begin \
+            for(integer j=0; j<totalCSR; j++) begin \
+              if(!StartCSRname[j].icompare(`"CSR`")) begin \
+                if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
+                  $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
+                  `ERROR \
+                end \
               end \
             end \
           end \
