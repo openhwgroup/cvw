@@ -19,6 +19,8 @@ from random import getrandbits
 # functions
 ##################################
 
+#For instruction-fetch access or page-fault exceptions on systems with variable-length instructions, mtval will contain the virtual address of the portion of the instruction that caused the fault while mepc will point to the beginning of the instruction.
+
 def randRegs():
   reg1 = randint(1,20)
   reg2 = randint(1,20)
@@ -31,99 +33,54 @@ def randRegs():
 def writeVectors(storecmd):
   global testnum
 
-  # Breakpoint
+  # Load address misaligned
   writeTest(storecmd, f, r, f"""
-    ebreak
-  """)
-
+    ecall
+  """, False, 9)
   
 
-def writeTest(storecmd, f, r, test, mode = "m", resetHander = ""):
+def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
   global testnum
+  global testMode
 
-  noprand = ""
-  for i in range(0, randint(0, 32)):
-    noprand+="nop\n"
+  nops = ""
+  for i in range(0, randint(1, 16)):
+    nops+="nop\n"
 
-  # Setup
-  # TODO: Adding 8 to x30 won't work for 32 bit?
-  # x31: Old mtvec value
-  # x30: trap handler address
-  # x29: Old mtvec value for user/supervisor mode
-  # x28: Old mstatus value
-  # x27: Old mepc value
-  # x26: 0 if we should execute mret normally. 1 otherwise. This allows us to stay in machine
-  # x25: x24 - x23 should = 0
-  # x24: expected mepc value
-  # x23: actual mepc value
   lines = f"""
-    # Testcase {testnum}
-    csrrs x31, mtvec, x0
-
-    auipc x30, 0
-    addi x30, x30, 12
-    j _jtest{testnum}
-
-    # Machine trap vector
-    csrrs x23, mepc, x0
-    addi x1, x23, 4
-    csrrw x0, mepc, x1
-    mret
-
-    # Actual test
-    _jtest{testnum}:
-    csrrw x0, mtvec, x30
-
-    # Start test code
-    li x25, 0x7BAD
-    li x23, 0x7BAD
-    auipc x24, 0
+    {nops}
+    li x25, 0xDEADBEA7
+    auipc x26, 0
+    addi x26, x26, 8
     {test}
-    {noprand}
 
-    # Finished test. Reset to old mtvec
     _jend{testnum}:
-    addi x24, x24, 4 # x24 should be the address of the test
-    sub x25, x24, x23
-    csrrw x0, mtvec, x31
+
+    {storecmd} x25, 0(x7)
+    addi x7, x7, {wordsize}
   """
+
+  f.write(lines)
 
   expected = 0
 
-  #expected = 42
-  
-  lines += storecmd + " x25, " + str(wordsize*testnum) + "(x6)\n"
-  #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
-  f.write(lines)
   if (xlen == 32):
     line = formatrefstr.format(expected)+"\n"
   else:
     line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
   r.write(line)
   testnum = testnum+1
-
-  # lines += storecmd + " x0" + ", " + str(wordsize*testnum) + "(x6)\n"
-  # #lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
-  # f.write(lines)
-  # if (xlen == 32):
-  #   line = formatrefstr.format(expected)+"\n"
-  # else:
-  #   line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
-  # r.write(line)
-  # testnum = testnum+1
-
 ##################################
 # main body
 ##################################
 
 # change these to suite your tests
-# csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 40; # Doesn't work when numrand = 10
+numrand = 64;
 
 # setup
-seed(0xC365DDEB9173AB42) # make tests reproducible
+seed(0x9365DDEB9173AB42) # make tests reproducible
 
 # generate files for each test
 for xlen in xlens:
@@ -141,44 +98,164 @@ for xlen in xlens:
     0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
     2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
   ]
-  imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
-  basename = "WALLY-EPC"
-  fname = imperaspath + "src/" + basename + ".S"
-  refname = imperaspath + "references/" + basename + ".reference_output"
-  testnum = 0
 
-  # print custom header part
-  f = open(fname, "w")
-  r = open(refname, "w")
-  line = "///////////////////////////////////////////\n"
-  f.write(line)
-  lines="// "+fname+ "\n// " + author + "\n"
-  f.write(lines)
-  line ="// Created " + str(datetime.now()) 
-  f.write(line)
+  for testMode in ["m", "s"]:
+    imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
+    basename = "WALLY-" + testMode.upper() + "EPC"
+    fname = imperaspath + "src/" + basename + ".S"
+    refname = imperaspath + "references/" + basename + ".reference_output"
+    testnum = 0
 
-  # insert generic header
-  h = open("../testgen_header.S", "r")
-  for line in h:  
+    # print custom header part
+    f = open(fname, "w")
+    r = open(refname, "w")
+    line = "///////////////////////////////////////////\n"
+    f.write(line)
+    lines="// "+fname+ "\n// " + author + "\n"
+    f.write(lines)
+    line ="// Created " + str(datetime.now()) 
     f.write(line)
 
-  # print directed and random test vectors
-  for i in range(0,numrand):
-    writeVectors(storecmd)
+    # insert generic header
+    h = open("../testgen_header.S", "r")
+    for line in h:  
+      f.write(line)
+
+    # All registers used:
+    # x30: set to 1 if we should return to & stay in machine mode after trap, 0 otherwise
+    # ...
+    # x26: expected epc value
+    # x25: value to write to memory
+    # ...
+    # x19: mtvec old value
+    # x18: medeleg old value
+    # x17: sedeleg old value
 
 
-  # print footer
-  h = open("../testgen_footer.S", "r")
-  for line in h:  
-    f.write(line)
+    lines = f"""
+      add x7, x6, x0
+      csrr x19, mtvec
 
-  # Finish
-  lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
-  lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-  f.write(lines)
-  f.close()
-  r.close()
+      csrr x18, medeleg
+      li x9, {"0b1100000000" if testMode == "s" or testMode == "u" else "0b0000000000"}
+      csrs medeleg, x9
+
+    """
+
+    if testMode == "u":
+      lines += f"""
+        csrr x17, sedeleg
+        li x9, {"0b1100000000" if testMode == "u" else "0b0000000000"}
+        csrs sedeleg, x9
+        """
+
+    lines += f"""
+
+      li x30, 0
+
+      la x1, _j_m_trap
+      csrw mtvec, x1
+      la x1, _j_s_trap
+      csrw stvec, x1
+      la x1, _j_u_trap
+      csrw utvec, x1
+      j _j_t_begin
+
+      _j_m_trap:
+      csrrs x1, mepc, x0
+      {"sub x25, x26, x1" if testMode == "m" else "li x25, 0xBAD00003"}
+
+      addi x1, x1, 4
+      csrrw x0, mepc, x1
+      bnez x30, _j_all_end
+      mret
+
+      _j_s_trap:
+      csrrs x1, sepc, x0
+      {"sub x25, x26, x1" if testMode == "s" else "li x25, 0xBAD00001"}
+
+      addi x1, x1, 4
+      csrrw x0, sepc, x1
+      bnez x30, _j_goto_machine_mode
+      sret
+
+      _j_u_trap:
+      csrrs x1, uepc, x0
+      {"sub x25, x26, x1" if testMode == "u" else "li x25, 0xBAD00000"}
+
+      addi x1, x1, 4
+      csrrw x0, uepc, x1
+      bnez x30, _j_goto_supervisor_mode
+      uret
+
+      _j_goto_supervisor_mode:
+      csrw sedeleg, x17
+      j _j_goto_machine_mode
+
+      _j_goto_machine_mode:
+      csrw medeleg, x18
+      li x30, 1
+      ecall
+
+      _j_t_begin:
+    """
+
+    fromModeOptions = ["s", "u"] if testMode == "m" else ["u"]
+
+    f.write(lines)
+
+    for fromMode in fromModeOptions:
+      lines = ""
+      lines += f"""
+        li x1, 0b110000000000
+        csrrc x28, mstatus, x1
+        li x1, 0b0100000000000
+        csrrs x28, mstatus, x1
+
+        auipc x1, 0
+        addi x1, x1, 16 # x1 is now right after the mret instruction
+        csrw mepc, x1
+        mret
+
+        # We're now in supervisor mode...
+      """
+
+      if fromMode == "u":
+        lines += f"""
+
+        li x1, 0b110000000000
+        csrrc x28, sstatus, x1
+
+        auipc x1, 0
+        addi x1, x1, 16 # x1 is now right after the sret instruction
+        csrw sepc, x1
+        sret
+
+        # We're now in user mode...
+        """
+
+      # print directed and random test vectors
+      f.write(lines)
+      for i in range(0,numrand):
+        writeVectors(storecmd)
 
 
+    f.write(f"""
+      li x30, 1
+      ecall
+      _j_all_end:
 
+      csrw mtvec, x19
+    """)
 
+    # print footer
+    h = open("../testgen_footer.S", "r")
+    for line in h:  
+      f.write(line)
+
+    # Finish
+    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
+    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
+    f.write(lines)
+    f.close()
+    r.close()

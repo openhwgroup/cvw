@@ -345,7 +345,8 @@ module testbench();
     "rv64p/WALLY-MCAUSE", "2000",
     "rv64p/WALLY-SCAUSE", "2000",
     "rv64p/WALLY-UCAUSE", "2000",
-    "rv64p/WALLY-EPC", "3000",
+    "rv64p/WALLY-MEPC", "4000",
+    "rv64p/WALLY-SEPC", "4000",
     "rv64p/WALLY-TVAL", "3000",
     "rv64p/WALLY-MARCHID", "4000",
     "rv64p/WALLY-MIMPID", "4000",
@@ -357,7 +358,8 @@ module testbench();
     "rv32p/WALLY-MCAUSE", "2000",
     "rv32p/WALLY-SCAUSE", "2000",
     "rv32p/WALLY-UCAUSE", "2000",
-    "rv32p/WALLY-EPC", "3000",
+    "rv32p/WALLY-MEPC", "4000",
+    "rv32p/WALLY-SEPC", "4000",
     "rv32p/WALLY-TVAL", "3000",
     "rv32p/WALLY-MARCHID", "4000",
     "rv32p/WALLY-MIMPID", "4000",
@@ -425,8 +427,6 @@ module testbench();
           if (`A_SUPPORTED) tests = {tests, tests32a};
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
       end
-
-      //tests = tests32p;
     end
   end
 

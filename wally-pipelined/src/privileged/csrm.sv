@@ -75,6 +75,8 @@ module csrm #(parameter
   DPC = 12'h7B1,
   DSCRATCH0 = 12'h7B2,
   DSCRATCH1 = 12'h7B3,
+
+  // Constants
   ZERO = {(`XLEN){1'b0}},
   ALL_ONES = 32'hfffffff,
   MEDELEG_MASK = ~(ZERO | 1'b1 << 11),
