@@ -49,6 +49,7 @@ module csr #(parameter
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [11:0]      MIP_REGW, MIE_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
+  output logic             STATUS_MXR, STATUS_SUM,
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,

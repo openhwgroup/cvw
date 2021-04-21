@@ -40,7 +40,8 @@ module privileged (
   input  logic             InstrValidW, FloatRegWriteW, LoadStallD, BPPredWrongM,
   input  logic [3:0]       InstrClassM,
   input  logic             PrivilegedM,
-  input  logic             InstrPageFaultF, LoadPageFaultM, StorePageFaultM,
+  input  logic             ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM,
+  input  logic             WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM,
   input  logic             InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
   input  logic             LoadMisalignedFaultM, LoadAccessFaultM,
   input  logic             StoreMisalignedFaultM, StoreAccessFaultM,
@@ -49,6 +50,7 @@ module privileged (
   input  logic [4:0]       SetFflagsM,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
+  output logic             STATUS_MXR, STATUS_SUM,
   output logic [2:0]       FRM_REGW,
   input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM
 );
@@ -63,7 +65,8 @@ module privileged (
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
-  logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
+  logic LoadPageFaultM, StorePageFaultM; 
+  logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic IllegalInstrFaultM;
 
@@ -123,11 +126,12 @@ module privileged (
   assign EcallFaultM = ecallM;
   assign ITLBFlushF = sfencevmaM;
   assign DTLBFlushM = sfencevmaM;
-  // *** Page faults now driven by page table walker. Might need to make the
-  // below signals ORs of a walker fault and a tlb fault if both of those come in
-  // assign InstrPageFaultM = 0;
-  // assign LoadPageFaultM = 0;
-  // assign StorePageFaultM = 0;
+
+  // A page fault might occur because of insufficient privilege during a TLB
+  // lookup or a improperly formatted page table during walking
+  assign InstrPageFaultF = ITLBInstrPageFaultF || WalkerInstrPageFaultF;
+  assign LoadPageFaultM = DTLBLoadPageFaultM || WalkerLoadPageFaultM;
+  assign StorePageFaultM = DTLBStorePageFaultM || WalkerStorePageFaultM;
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,

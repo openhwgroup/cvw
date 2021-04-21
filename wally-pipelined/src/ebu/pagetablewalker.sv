@@ -61,7 +61,9 @@ module pagetablewalker (
   output logic             MMUTranslationComplete,
 
   // Faults
-  output logic             InstrPageFaultF, LoadPageFaultM, StorePageFaultM
+  output logic             WalkerInstrPageFaultF,
+  output logic             WalkerLoadPageFaultM, 
+  output logic             WalkerStorePageFaultM
 );
 
   // Internal signals
@@ -147,7 +149,6 @@ module pagetablewalker (
 
       assign SvMode = SATP_REGW[31];
 
-      // *** Do we need a synchronizer here for walker to talk to ahblite?
       flopenl #(3) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       // State transition logic
@@ -193,9 +194,9 @@ module pagetablewalker (
         MMUTranslationComplete = '0;
         DTLBWriteM = '0;
         ITLBWriteF = '0;
-        InstrPageFaultF = '0;
-        LoadPageFaultM = '0;
-        StorePageFaultM = '0;
+        WalkerInstrPageFaultF = '0;
+        WalkerLoadPageFaultM = '0;
+        WalkerStorePageFaultM = '0;
 
         case (NextWalkerState)
           LEVEL1: begin
@@ -216,9 +217,9 @@ module pagetablewalker (
           FAULT: begin
             TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
             MMUTranslationComplete = '1;
-            InstrPageFaultF = ~DTLBMissM;
-            LoadPageFaultM = DTLBMissM && ~MemStore;
-            StorePageFaultM = DTLBMissM && MemStore;
+            WalkerInstrPageFaultF = ~DTLBMissM;
+            WalkerLoadPageFaultM = DTLBMissM && ~MemStore;
+            WalkerStorePageFaultM = DTLBMissM && MemStore;
           end
           default: begin
             // nothing
@@ -298,9 +299,9 @@ module pagetablewalker (
         MMUTranslationComplete = '0;
         DTLBWriteM = '0;
         ITLBWriteF = '0;
-        InstrPageFaultF = '0;
-        LoadPageFaultM = '0;
-        StorePageFaultM = '0;
+        WalkerInstrPageFaultF = '0;
+        WalkerLoadPageFaultM = '0;
+        WalkerStorePageFaultM = '0;
 
         case (NextWalkerState)
           LEVEL2: begin
@@ -325,9 +326,9 @@ module pagetablewalker (
           FAULT: begin
             TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
             MMUTranslationComplete = '1;
-            InstrPageFaultF = ~DTLBMissM;
-            LoadPageFaultM = DTLBMissM && ~MemStore;
-            StorePageFaultM = DTLBMissM && MemStore;
+            WalkerInstrPageFaultF = ~DTLBMissM;
+            WalkerLoadPageFaultM = DTLBMissM && ~MemStore;
+            WalkerStorePageFaultM = DTLBMissM && MemStore;
           end
           default: begin
             // nothing

@@ -85,6 +85,9 @@ module ahblite (
   logic IReady, DReady;
   logic CaptureDataM;
 
+  // Describes type of access
+  logic Atomic, Execute, Write, Read;
+
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
@@ -109,15 +112,6 @@ module ahblite (
             else                   NextBusState = IDLE;
       MMUTRANSLATE: if (~HREADY)   NextBusState = MMUTRANSLATE;
             else                   NextBusState = IDLE;
-      // *** Could the MMUIDLE state just be the normal idle state?
-      // Do we trust MMUTranslate to be high exactly when we need translation?
-      // MMUIDLE: if (MMUTranslate)
-      //                              NextBusState = MMUTRANSLATE;
-      //       else if (AtomicM[1])   NextBusState = ATOMICREAD;
-      //       else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
-      //       else if (MemWriteM)    NextBusState = MEMWRITE;
-      //       else if (InstrReadF)   NextBusState = INSTRREAD;
-      //       else                   NextBusState = IDLE;
       ATOMICREAD: if (~HREADY)     NextBusState = ATOMICREAD;
             else                   NextBusState = ATOMICWRITE;
       ATOMICWRITE: if (~HREADY)    NextBusState = ATOMICWRITE;
@@ -147,6 +141,13 @@ module ahblite (
   //     instruction address translation and data address translation
   assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
                           (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
+
+  // Determine access type (important for determining whether to fault)
+  assign Atomic = ((NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));
+  assign Execute = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC));
+  assign Write = ((NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE));
+  assign Read = ((NextBusState == MEMREAD) || (NextBusState == ATOMICREAD) ||
+              (NextBusState == MMUTRANSLATE));
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
