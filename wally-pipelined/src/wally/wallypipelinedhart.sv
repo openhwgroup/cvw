@@ -77,7 +77,8 @@ module wallypipelinedhart (
   logic InstrMisalignedFaultM;
   logic DataMisalignedM;
   logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
-  logic InstrPageFaultF, LoadPageFaultM, StorePageFaultM;
+  logic ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
+  logic WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM;
   logic LoadMisalignedFaultM, LoadAccessFaultM;
   logic StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] InstrMisalignedAdrM;
@@ -103,6 +104,7 @@ module wallypipelinedhart (
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] SATP_REGW;
+  logic             STATUS_MXR, STATUS_SUM;
   logic [1:0]       PrivilegeModeW;
 
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;

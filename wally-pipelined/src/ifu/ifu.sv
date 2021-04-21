@@ -54,6 +54,7 @@ module ifu (
   // output logic [`XLEN-1:0] PCLinkW,
   // Faults
   input  logic             IllegalBaseInstrFaultD,
+  output logic             ITLBInstrPageFaultF,
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM,
@@ -62,6 +63,7 @@ module ifu (
   input logic  [`XLEN-1:0] PageTableEntryF,
   input logic  [1:0]       PageTypeF,
   input logic  [`XLEN-1:0] SATP_REGW,
+  input logic              STATUS_MXR, STATUS_SUM,
   input logic              ITLBWriteF, ITLBFlushF,
   output logic             ITLBMissF, ITLBHitF
 );
@@ -74,14 +76,12 @@ module ifu (
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   logic [31:0]      nop = 32'h00000013; // instruction for NOP
-  // *** send this to the trap unit
-  logic             ITLBPageFaultF;
 
-  tlb #(3) itlb(.TLBAccess(1'b1), .VirtualAddress(PCF),
+  tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
                 .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
-                .TLBHit(ITLBHitF), .TLBPageFault(ITLBPageFaultF),
+                .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
                 .*);
 
   // branch predictor signals

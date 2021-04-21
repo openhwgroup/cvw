@@ -47,6 +47,7 @@ module dmem (
   output logic             SquashSCW,
   // faults
   input  logic             DataAccessFaultM,
+  output logic             DTLBLoadPageFaultM, DTLBStorePageFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
   output logic             StoreMisalignedFaultM, StoreAccessFaultM,
   // TLB management
@@ -54,21 +55,24 @@ module dmem (
   input logic  [`XLEN-1:0] PageTableEntryM,
   input logic  [1:0]       PageTypeM,
   input logic  [`XLEN-1:0] SATP_REGW,
+  input logic              STATUS_MXR, STATUS_SUM,
   input logic              DTLBWriteM, DTLBFlushM,
   output logic             DTLBMissM, DTLBHitM
 );
 
-  logic             MemAccessM;  // Whether memory needs to be accessed
   logic             SquashSCM;
-  // *** needs to be sent to trap unit
   logic             DTLBPageFaultM;
 
-  tlb #(3) dtlb(.TLBAccess(MemAccessM), .VirtualAddress(MemAdrM),
+  tlb #(.ENTRY_BITS(3), .ITLB(0)) dtlb(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
                 .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
                 .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
                 .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
                 .*);
+
+  // Specify which type of page fault is occurring
+  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWM[1];
+  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWM[0];
 
 	// Determine if an Unaligned access is taking place
 	always_comb
@@ -83,7 +87,6 @@ module dmem (
   // *** this is also the place to squash if the cache is hit
   assign MemReadM = MemRWM[1] & ~DataMisalignedM;
   assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM;
-  assign MemAccessM = |MemRWM;
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
