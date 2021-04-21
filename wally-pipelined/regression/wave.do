@@ -210,7 +210,7 @@ add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPreFinalF
 add wave -noupdate /testbench/dut/hart/ifu/icache/controller/ICacheStallF
 add wave -noupdate /testbench/dut/hart/ifu/icache/controller/SavePC
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {44 ns} 0} {{Cursor 2} {284 ns} 0}
+WaveRestoreCursors {{Cursor 2} {44 ns} 0} {{Cursor 2} {566 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 229
@@ -226,4 +226,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {139 ns} {443 ns}
+WaveRestoreZoom {458 ns} {674 ns}

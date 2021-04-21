@@ -361,7 +361,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     UnalignedSelect = 1'b0;
     CntReset = 1'b0;
     PreCntEn = 1'b0;
-    InstrReadF = 1'b0;
+    //InstrReadF = 1'b0;
     ICacheMemWriteEnable = 1'b0;
     spillSave = 1'b0;
     PCMux = 2'b00;
@@ -401,7 +401,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       end
       STATE_HIT_SPILL_MISS_FETCH_WDV: begin
 	PCMux = 2'b10;
-	InstrReadF = 1'b1;
+	//InstrReadF = 1'b1;
 	PreCntEn = 1'b1;
 	if (FetchCountFlag & InstrAckF) begin
 	  NextState = STATE_HIT_SPILL_MISS_FETCH_DONE;
@@ -424,7 +424,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       // branch 3 miss no spill
       STATE_MISS_FETCH_WDV: begin
 	PCMux = 2'b01;
-	InstrReadF = 1'b1;
+	//InstrReadF = 1'b1;
 	PreCntEn = 1'b1;
 	if (FetchCountFlag & InstrAckF) begin
 	  NextState = STATE_MISS_FETCH_DONE;	  
@@ -447,7 +447,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       STATE_MISS_SPILL_FETCH_WDV: begin
 	PCMux = 2'b01;
 	PreCntEn = 1'b1;
-	InstrReadF = 1'b1;	
+	//InstrReadF = 1'b1;	
 	if (FetchCountFlag & InstrAckF) begin 
 	  NextState = STATE_MISS_SPILL_FETCH_DONE;
 	end else begin
@@ -478,7 +478,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
 	PCMux = 2'b10;
 	PreCntEn = 1'b1;
-	InstrReadF = 1'b1;	
+	//InstrReadF = 1'b1;	
 	if (FetchCountFlag & InstrAckF) begin
 	  NextState = STATE_MISS_SPILL_MISS_FETCH_DONE;	  
 	end else begin
@@ -508,10 +508,15 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // stall CPU any time we are not in the ready state.  any other state means the
   // cache is either requesting data from the memory interface or handling a
   // spill over two cycles.
-  assign ICacheStallF = ((CurrState != STATE_READY) & hit) | reset_q ? 1'b1 : 1'b0;
+  assign ICacheStallF = ((CurrState != STATE_READY) | ~hit) | reset_q ? 1'b1 : 1'b0;
   // save the PC anytime we are in the ready state. The saved value will be used as the PC may not be stable.
   assign SavePC = (CurrState == STATE_READY) & hit ? 1'b1 : 1'b0;
   assign CntEn = PreCntEn & InstrAckF;
+
+  assign InstrReadF = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
+		      (CurrState == STATE_MISS_FETCH_WDV) ||
+		      (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
+		      (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
 
   // to compute the fetch address we need to add the bit shifted
   // counter output to the address.
@@ -595,7 +600,13 @@ module icachecontroller #(parameter LINESIZE = 256) (
 		      .q(reset_q));
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FinalInstrRawF, NOP, AlignedInstrRawD);
-  mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, FlushD, InstrRawD);
+  // cannot have this mux as it creates a combo loop. 
+    // This flop doesn't stall if StallF is high because we should output a nop
+    // when FlushD happens, even if the pipeline is also stalled.
+    flopr   #(1)  flushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCyclen | ~StallF), FlushDLastCyclen);
+  mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCyclen, InstrRawD);
+  //assign InstrRawD = AlignedInstrRawD;
+  
   
   assign {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr} = PCPFinalF;
 
