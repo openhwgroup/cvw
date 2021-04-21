@@ -129,57 +129,141 @@ module icachecontroller #(parameter LINESIZE = 256) (
     output logic             InstrReadF
 );
 
-    // Happy path signals
-    logic [31:0]    AlignedInstrRawF, AlignedInstrRawD;
-    logic           FlushDLastCycleN;
-    logic           PCPMisalignedF;
-    const logic [31:0] NOP = 32'h13;
-    logic [`XLEN-1:0] PCPF;
-    // Misaligned signals
-    logic [`XLEN:0] MisalignedInstrRawF;
-    logic           MisalignedStall;
-    // Cache fault signals
-    logic           FaultStall;
+  // FSM states
+  localparam STATE_READY = 0;
+  localparam STATE_HIT_SPILL = 1; // spill, block 0 hit
+  localparam STATE_HIT_SPILL_MISS_FETCH_WDV = 2; // block 1 miss, issue read to AHB and wait data.
+  localparam STATE_HIT_SPILL_MISS_FETCH_DONE = 3; // write data into SRAM/LUT
+  localparam STATE_HIT_SPILL_MERGE = 4;   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
 
+  localparam STATE_MISS_FETCH_WDV = 5; // aligned miss, issue read to AHB and wait for data.
+  localparam STATE_MISS_FETCH_DONE = 6; // write data into SRAM/LUT
+  localparam STATE_MISS_READ = 7; // read block 1 from SRAM/LUT  
+
+  localparam STATE_MISS_SPILL_FETCH_WDV = 8; // spill, miss on block 0, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_FETCH_DONE = 9; // write data into SRAM/LUT
+  localparam STATE_MISS_SPILL_READ1 = 10; // read block 0 from SRAM/LUT
+  localparam STATE_MISS_SPILL_2 = 11; // return to ready if hit or do second block update.
+  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 12; // miss on block 1, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 13; // write data to SRAM/LUT
+  localparam STATE_MISS_SPILL_MERGE = 14; // read block 0 of CPU access,
+
+  localparam STATE_INVALIDATE = 15; // *** not sure if invalidate or evict? invalidate by cache block or address?
+  
+  localparam AHBByteLength = `XLEN / 8;
+  localparam AHBOFFETWIDTH = $clog2(AHBByteLength);
+  
+  
+  localparam BlockByteLength = LINESIZE / 8;
+  localparam OFFSETWIDTH = $clog2(BlockByteLength);
+  
+  localparam WORDSPERLINE = LINESIZE/`XLEN;
+  localparam LOGWPL = $clog2(WORDSPERLINE);
+
+  logic [3:0] 		     CurrState, NextState;
+  logic 		     hit, spill;
+  logic 		     SavePC;
+  logic [1:0] 		     PCMux;
+  logic 		     CntReset;
+  logic 		     PreCntEn, CntEn;
+  logic 		     spillSave;
+  logic 		     UnalignedSelect;
+  logic 		     FetchCountFlag;
+  localparam FetchCountThreshold = WORDSPERLINE - 1;
+  
+  logic [LOGWPL:0] 	     FetchCount, NextFetchCount;
+
+  logic [`XLEN-1:0] 	     PCPreFinalF, PCPFinalF, PCSpillF;
+  logic [`XLEN-1:OFFSETWIDTH] PCPTrunkF;
+
+  
+  logic [31:0] 		     FinalInstrRawF;
+
+  logic [15:0] 		     SpillDataBlock0;
+
+
+
+    // Happy path signals
+  logic [31:0] 		     AlignedInstrRawD;
+  
+    //logic [31:0]    AlignedInstrRawF, AlignedInstrRawD;
+    //logic           FlushDLastCycleN;
+    //logic           PCPMisalignedF;
+  const logic [31:0] 	     NOP = 32'h13;
+  logic [`XLEN-1:0] 	     PCPF;
+
+  logic 		     reset_q;
+  
+    // Misaligned signals
+    //logic [`XLEN:0] MisalignedInstrRawF;
+    //logic           MisalignedStall;
+    // Cache fault signals
+    //logic           FaultStall;
+
+
+  flopenr #(`XLEN) PCPFFlop(clk, reset, SavePC, {UpperPCNextPF, LowerPCNextF}, PCPF);
+  // on spill we want to get the first 2 bytes of the next cache block.
+  // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
+  // simply add 2 to land on the next cache block.
+  assign PCSpillF = PCPF + 2'b10;
+
+  // now we have to select between these three PCs
+  assign PCPreFinalF = PCMux[0] ? PCPF : {UpperPCNextPF, LowerPCNextF};
+  assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
+  
+  
+  
+  // truncate the offset from PCPF for memory address generation
+  assign PCPTrunkF = PCPFinalF[`XLEN-1:OFFSETWIDTH];
+  
     // Detect if the instruction is compressed
-    assign CompressedF = AlignedInstrRawF[1:0] != 2'b11;
+  assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
 
 
     // Handle happy path (data in cache, reads aligned)
+/* -----\/----- EXCLUDED -----\/-----
 
     generate
         if (`XLEN == 32) begin
             assign AlignedInstrRawF = PCPF[1] ? MisalignedInstrRawF : ICacheMemReadData;
-            assign PCPMisalignedF = PCPF[1] && ~CompressedF;
+            //assign PCPMisalignedF = PCPF[1] && ~CompressedF;
         end else begin
             assign AlignedInstrRawF = PCPF[2]
                 ? (PCPF[1] ? MisalignedInstrRawF : ICacheMemReadData[63:32])
                 : (PCPF[1] ? ICacheMemReadData[47:16] : ICacheMemReadData[31:0]);
-            assign PCPMisalignedF = PCPF[2] && PCPF[1] && ~CompressedF;
+            //assign PCPMisalignedF = PCPF[2] && PCPF[1] && ~CompressedF;
         end
     endgenerate
+ -----/\----- EXCLUDED -----/\----- */
 
-    flopenr #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, AlignedInstrRawF, AlignedInstrRawD);
-    flopr   #(1)  FlushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCycleN | ~StallF), FlushDLastCycleN);
-    flopenr #(`XLEN) PCPFFlop(clk, reset, ~StallF, {UpperPCNextPF, LowerPCNextF}, PCPF);
-    mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCycleN, InstrRawD);
+    //flopenr #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, AlignedInstrRawF, AlignedInstrRawD);
+    //flopr   #(1)  FlushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCycleN | ~StallF), FlushDLastCycleN);
+
+    //mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCycleN, InstrRawD);
 
     // Stall for faults or misaligned reads
+/* -----\/----- EXCLUDED -----\/-----
     always_comb begin
         assign ICacheStallF = FaultStall | MisalignedStall;
     end
+ -----/\----- EXCLUDED -----/\----- */
 
 
     // Handle misaligned, noncompressed reads
 
+/* -----\/----- EXCLUDED -----\/-----
     logic           MisalignedState, NextMisalignedState;
     logic [15:0]    MisalignedHalfInstrF;
     logic [15:0]    UpperHalfWord;
+ -----/\----- EXCLUDED -----/\----- */
 
+/* -----\/----- EXCLUDED -----\/-----
     flopenr #(16) MisalignedHalfInstrFlop(clk, reset, ~FaultStall & (PCPMisalignedF & MisalignedState), AlignedInstrRawF[15:0], MisalignedHalfInstrF);
     flopenr #(1)  MisalignedStateFlop(clk, reset, ~FaultStall, NextMisalignedState, MisalignedState);
+ -----/\----- EXCLUDED -----/\----- */
 
     // When doing a misaligned read, swizzle the bits correctly
+/* -----\/----- EXCLUDED -----\/-----
     generate
         if (`XLEN == 32) begin
             assign UpperHalfWord = ICacheMemReadData[31:16];
@@ -194,14 +278,18 @@ module icachecontroller #(parameter LINESIZE = 256) (
             assign MisalignedInstrRawF = {ICacheMemReadData[15:0], MisalignedHalfInstrF};
         end
     end
+ -----/\----- EXCLUDED -----/\----- */
 
     // Manage internal state and stall when necessary
+/* -----\/----- EXCLUDED -----\/-----
     always_comb begin
         assign MisalignedStall = PCPMisalignedF & MisalignedState;
         assign NextMisalignedState = ~PCPMisalignedF | ~MisalignedState;
     end
+ -----/\----- EXCLUDED -----/\----- */
 
     // Pick the correct address to read
+/* -----\/----- EXCLUDED -----\/-----
     generate
         if (`XLEN == 32) begin
             assign ICacheMemReadLowerAdr = {LowerPCNextF[11:2] + (PCPMisalignedF & ~MisalignedState), 2'b00};
@@ -209,16 +297,15 @@ module icachecontroller #(parameter LINESIZE = 256) (
             assign ICacheMemReadLowerAdr = {LowerPCNextF[11:3] + (PCPMisalignedF & ~MisalignedState), 3'b00};
         end
     endgenerate
+ -----/\----- EXCLUDED -----/\----- */
     // TODO Handle reading instructions that cross page boundaries
-    assign ICacheMemReadUpperPAdr = UpperPCNextPF;
+    //assign ICacheMemReadUpperPAdr = UpperPCNextPF;
 
 
     // Handle cache faults
 
-    localparam integer WORDSPERLINE = LINESIZE/`XLEN;
-    localparam integer LOGWPL = $clog2(WORDSPERLINE);
-    localparam integer OFFSETWIDTH = $clog2(LINESIZE/8);
 
+/* -----\/----- EXCLUDED -----\/-----
     logic               FetchState, BeginFetchState;
     logic [LOGWPL:0]    FetchWordNum, NextFetchWordNum;
     logic [`XLEN-1:0]   LineAlignedPCPF;
@@ -226,12 +313,6 @@ module icachecontroller #(parameter LINESIZE = 256) (
     flopr #(1) FetchStateFlop(clk, reset, BeginFetchState | (FetchState & ~EndFetchState), FetchState);
     flopr #(LOGWPL+1) FetchWordNumFlop(clk, reset, NextFetchWordNum, FetchWordNum);
 
-    genvar i;
-    generate
-        for (i=0; i < WORDSPERLINE; i++) begin
-            flopenr #(`XLEN) flop(clk, reset, FetchState & (i == FetchWordNum), InstrInF, ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]);
-        end
-    endgenerate
 
     // Enter the fetch state when we hit a cache fault
     always_comb begin
@@ -242,10 +323,10 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     // Machinery to request the correct addresses from main memory
     always_comb begin
-        InstrReadF = FetchState & ~EndFetchState & ~ICacheMemWriteEnable;
-        LineAlignedPCPF = {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}};
-        InstrPAdrF = LineAlignedPCPF + FetchWordNum*(`XLEN/8);
-        NextFetchWordNum = FetchState ? FetchWordNum+InstrAckF : {LOGWPL+1{1'b0}}; 
+        InstrReadF = FetchState & ~EndFetchState & ~ICacheMemWriteEnable; // next stage logic
+        LineAlignedPCPF = {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr[11:OFFSETWIDTH], {OFFSETWIDTH{1'b0}}}; // the fetch address for abh?
+        InstrPAdrF = LineAlignedPCPF + FetchWordNum*(`XLEN/8); // ?
+        NextFetchWordNum = FetchState ? FetchWordNum+InstrAckF : {LOGWPL+1{1'b0}}; // convert to enable
     end
 
     // Write to cache memory when we have the line here
@@ -258,4 +339,255 @@ module icachecontroller #(parameter LINESIZE = 256) (
     always_comb begin
         FaultStall = FetchState | ~ICacheMemReadValid;
     end
+ -----/\----- EXCLUDED -----/\----- */
+
+  // the FSM is always runing, do not stall.
+  flopr #(4) stateReg(.clk(clk),
+		      .reset(reset),
+		      .d(NextState),
+		      .q(CurrState));
+
+  assign spill = PCPF[5:1] == 5'b1_1111 ? 1'b1 : 1'b0;
+  assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
+  assign FetchCountFlag = FetchCount == FetchCountThreshold;
+  
+  // Next state logic
+  always_comb begin
+      UnalignedSelect = 1'b0;
+      CntReset = 1'b0;
+      PreCntEn = 1'b0;
+      InstrReadF = 1'b0;
+      ICacheMemWriteEnable = 1'b0;
+      spillSave = 1'b0;
+      PCMux = 2'b00;
+    
+    case (CurrState)
+      
+      STATE_READY: begin
+	PCMux = 2'b00;
+	if (hit & ~spill) begin
+	  NextState = STATE_READY;
+	end else if (hit & spill) begin
+	  spillSave = 1'b1;
+	  NextState = STATE_HIT_SPILL;
+	end else if (~hit & ~spill) begin
+	  CntReset = 1'b1;
+	  NextState = STATE_MISS_FETCH_WDV;
+	end else if (~hit & spill)	begin
+	  CntReset = 1'b1;
+	  NextState = STATE_MISS_SPILL_FETCH_WDV;
+	end else begin
+          NextState = STATE_READY;
+	end
+      end
+
+      // branch 1,  hit spill and 2, miss spill hit
+      STATE_HIT_SPILL: begin
+	PCMux = 2'b10;
+	UnalignedSelect = 1'b1;	
+	if (hit) begin
+          NextState = STATE_READY;
+	end else
+	  CntReset = 1'b1;
+          NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
+      end
+      STATE_HIT_SPILL_MISS_FETCH_WDV: begin
+	PCMux = 2'b10;
+	InstrReadF = 1'b1;
+	PreCntEn = 1'b1;
+	if (FetchCountFlag & InstrAckF) begin
+	  NextState = STATE_HIT_SPILL_MISS_FETCH_DONE;
+	end else begin
+	  NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
+	end
+      end
+      STATE_HIT_SPILL_MISS_FETCH_DONE: begin
+	PCMux = 2'b10;
+	ICacheMemWriteEnable = 1'b1;
+        NextState = STATE_HIT_SPILL_MERGE;
+      end
+      STATE_HIT_SPILL_MERGE: begin
+	PCMux = 2'b10;
+	UnalignedSelect = 1'b1;
+        NextState = STATE_READY;
+      end
+
+      // branch 3 miss no spill
+      STATE_MISS_FETCH_WDV: begin
+	PCMux = 2'b01;
+	InstrReadF = 1'b1;
+	PreCntEn = 1'b1;
+	if (FetchCountFlag & InstrAckF) begin
+	  NextState = STATE_MISS_FETCH_DONE;	  
+	end else begin
+	  NextState = STATE_MISS_FETCH_WDV;
+	end
+      end
+      STATE_MISS_FETCH_DONE: begin
+	PCMux = 2'b01;
+	ICacheMemWriteEnable = 1'b1;
+        NextState = STATE_MISS_READ;
+      end
+      STATE_MISS_READ: begin
+	PCMux = 2'b01;
+	NextState = STATE_READY;
+      end
+
+      // branch 4 miss spill hit, and 5 miss spill miss
+      STATE_MISS_SPILL_FETCH_WDV: begin
+	PCMux = 2'b01;
+	PreCntEn = 1'b1;
+	InstrReadF = 1'b1;	
+	if (FetchCountFlag & InstrAckF) begin 
+	  NextState = STATE_MISS_SPILL_FETCH_DONE;
+	end else begin
+	  NextState = STATE_MISS_SPILL_FETCH_WDV;
+	end
+      end
+      STATE_MISS_SPILL_FETCH_DONE: begin
+	PCMux = 2'b01;	
+	ICacheMemWriteEnable = 1'b1;
+	NextState = STATE_MISS_SPILL_READ1;
+      end
+      STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
+	PCMux = 2'b10;	 // there is a 1 cycle delay after setting the address before the date arrives.
+	spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
+	NextState = STATE_MISS_SPILL_2;
+      end
+      STATE_MISS_SPILL_2: begin
+	PCMux = 2'b10;
+	UnalignedSelect = 1'b1;	
+	if (~hit) begin
+	  CntReset = 1'b1;
+	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
+	end else begin
+	  NextState = STATE_READY;
+	end
+      end
+      STATE_MISS_SPILL_MISS_FETCH_WDV: begin
+	PCMux = 2'b10;
+	PreCntEn = 1'b1;
+	InstrReadF = 1'b1;	
+	if (FetchCountFlag & InstrAckF) begin
+	  NextState = STATE_MISS_SPILL_MISS_FETCH_DONE;	  
+	end else begin
+	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
+	end
+      end
+      STATE_MISS_SPILL_MISS_FETCH_DONE: begin
+	PCMux = 2'b10;
+	ICacheMemWriteEnable = 1'b1;
+	NextState = STATE_MISS_SPILL_MERGE;
+      end
+      STATE_MISS_SPILL_MERGE: begin
+	PCMux = 2'b10;
+	UnalignedSelect = 1'b1;
+        NextState = STATE_READY;
+      end
+      default: begin
+	PCMux = 2'b01;
+	NextState = STATE_READY;
+      end
+      // *** add in error handling and invalidate/evict
+    endcase
+  end
+
+  // fsm outputs
+  // stall CPU any time we are not in the ready state.  any other state means the
+  // cache is either requesting data from the memory interface or handling a
+  // spill over two cycles.
+  assign ICacheStallF = (CurrState != STATE_READY) | reset_q ? 1'b1 : 1'b0;
+  // save the PC anytime we are in the ready state. The saved value will be used as the PC may not be stable.
+  assign SavePC = CurrState == STATE_READY ? 1'b1 : 1'b0;
+  assign CntEn = PreCntEn & InstrAckF;
+
+  // to compute the fetch address we need to add the bit shifted
+  // counter output to the address.
+
+  flopenr #(LOGWPL+1) 
+  FetchCountReg(.clk(clk),
+		.reset(reset | CntReset),
+		.en(CntEn),
+		.d(NextFetchCount),
+		.q(FetchCount));
+
+  assign NextFetchCount = FetchCount + 1'b1;
+  
+  // This part is confusing.
+  // we need to remove the offset bits (PCPTrunkF).  Because the AHB interface is XLEN wide
+  // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
+  // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
+  // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
+  assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
+
+
+  // store read data from memory interface before writing into SRAM.
+  genvar i;
+  generate
+    for (i = 0; i < AHBByteLength; i++) begin
+      flopenr #(`XLEN) flop(.clk(clk),
+			    .reset(reset), 
+			    .en(InstrAckF & (i == FetchCount)),
+			    .d(InstrInF),
+			    .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
+    end
+  endgenerate
+
+  // what address is used to write the SRAM?
+  
+
+  // spills require storing the first cache block so it can merged
+  // with the second
+  // can optimize size, for now just make it the size of the data
+  // leaving the cache memory. 
+  flopenr #(16) SpillInstrReg(.clk(clk),
+			      .en(spillSave),
+			      .reset(reset),
+			      .d(ICacheMemReadData[15:0]),
+			      .q(SpillDataBlock0));
+
+  // use the not quite final PC to do the final selection.
+  generate
+    if( `XLEN == 32) begin
+      logic [1:1] PCPreFinalF_q;
+      flop #(1) PCFReg(.clk(clk),
+		       .d(PCPreFinalF[1]),
+		       .q(PCPreFinalF_q[1]));
+      assign FinalInstrRawF = PCPreFinalF[1] ? {SpillDataBlock0, ICacheMemReadData[31:16]} : ICacheMemReadData;
+    end else begin
+      logic [2:1] PCPreFinalF_q;
+      flop #(2) PCFReg(.clk(clk),
+		       .d(PCPreFinalF[2:1]),
+		       .q(PCPreFinalF_q[2:1]));
+      mux4 #(32) AlignmentMux(.d0(ICacheMemReadData[31:0]),
+			      .d1(ICacheMemReadData[47:16]),
+			      .d2(ICacheMemReadData[63:32]),
+			      .d3({SpillDataBlock0, ICacheMemReadData[63:48]}),
+			      .s(PCPreFinalF[2:1]),
+			      .y(FinalInstrRawF));
+    end
+  endgenerate
+
+  // There is a frustrating issue on the first access.
+  // The cache will not contain any valid data but will contain x's on
+  // reset. This makes FinalInstrRawF invalid.  On the first cycle out of
+  // reset this register will pickup this x and it will propagate throughout
+  // the cpu causing simulation failure, most likely a trap for invalid instruction.
+  // Reset must be held 1 cycle longer to prevent this issue. additionally the
+  // reset should be to a NOP rather than 0.
+
+  // register reset
+  flop #(1) resetReg (.clk(clk),
+		      .d(reset),
+		      .q(reset_q));
+  
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FinalInstrRawF, NOP, AlignedInstrRawD);
+  mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, FlushD, InstrRawD);
+  
+  assign {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr} = PCPFinalF;
+
+  assign ICacheMemWritePAdr = PCPFinalF;
+
+  
+  
 endmodule
