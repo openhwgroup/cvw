@@ -30,7 +30,7 @@ def randRegs():
   else:
       return str(reg1), str(reg2), str(reg3)
 
-def writeVectors(storecmd):
+def writeVectors(storecmd, returningInstruction):
   global testnum
 
     # Page 6 of unpriviledged spec
@@ -136,9 +136,10 @@ def writeVectors(storecmd):
   """, False, 2)
 
   # Breakpoint
-  writeTest(storecmd, f, r, f"""
-    ebreak
-  """, False, 3)
+  if returningInstruction != "ebreak":
+    writeTest(storecmd, f, r, f"""
+      ebreak
+    """, False, 3)
 
   # Load Address Misaligned 
   writeTest(storecmd, f, r, f"""
@@ -156,22 +157,23 @@ def writeVectors(storecmd):
   # writeTest(storecmd, f, r, f"""
   #   ecall
   # """, False, 8, "u")
-  if testMode == "u":
-    writeTest(storecmd, f, r, f"""
-      ecall
-    """, False, 8, "u")
+  if returningInstruction != "ecall":
+    if fromMode == "u":
+      writeTest(storecmd, f, r, f"""
+        ecall
+      """, False, 8, "u")
 
-  # Environment call from s-mode
-  if testMode == "s":
-    writeTest(storecmd, f, r, f"""
-      ecall
-    """, False, 9, "s")
+    # Environment call from s-mode
+    if fromMode == "s":
+      writeTest(storecmd, f, r, f"""
+        ecall
+      """, False, 9, "s")
 
-  # Environment call from m-mode
-  if testMode == "m":
-    writeTest(storecmd, f, r, f"""
-      ecall
-    """, False, 11, "m")  
+    # Environment call from m-mode
+    if fromMode == "m":
+      writeTest(storecmd, f, r, f"""
+        ecall
+      """, False, 11, "m")  
 
   # Instruction page fault: 12
   # Load page fault: 13
@@ -209,7 +211,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
     trapEnd = f"""j _jend{testnum}"""
 
   lines = f"""
-    li x25, 0x7BAD
+    li x25, 0xDEADBEA7
     {test}
 
     _jend{testnum}:
@@ -232,7 +234,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 # change these to suite your tests
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 8;
+numrand = 4;
 
 # setup
 seed(0xC365DDEB9173AB42) # make tests reproducible
@@ -249,12 +251,8 @@ for xlen in xlens:
     storecmd = "sd"
     wordsize = 8
 
-  corners = [
-    0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
-    2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1
-  ]
+  for testMode in ["m", "s"]:
 
-  for testMode in ["m", "s", "u"]:
     imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
     basename = "WALLY-" + testMode.upper() + "CAUSE"
     fname = imperaspath + "src/" + basename + ".S"
@@ -276,64 +274,142 @@ for xlen in xlens:
     for line in h:  
       f.write(line)
 
-    lines = f"""
-      csrr x31, mtvec
-      li x30, 0
+    for returningInstruction in ["ebreak", "ecall"]:
 
-      la x1, _j_m_trap
-      csrw mtvec, x1
-      la x1, _j_s_trap
-      csrw stvec, x1
-      j _j_t_begin
+      # All registers used:
+      # x30: set to 1 if we should return to & stay in machine mode after trap, 0 otherwise
+      # ...
+      # x26: expected epc value
+      # x25: value to write to memory
+      # ...
+      # x19: mtvec old value
+      # x18: medeleg old value
+      # x17: sedeleg old value
 
-      _j_m_trap:
-      csrrs x25, mcause, x0
-      csrrs x1, mepc, x0
-      addi x1, x1, 4
-      csrrw x0, mepc, x1
-      bnez x30, _j_all_end
-      mret
 
-      _j_s_trap:
-      csrrs x25, scause, x0
-      csrrs x1, sepc, x0
-      addi x1, x1, 4
-      csrrw x0, sepc, x1
-      sret
+      lines = f"""
+        add x7, x6, x0
+        csrr x19, mtvec
 
-      _j_t_begin:
-    """
-
-    if testMode == "s" or testMode == "u":
-      lines += f"""
-      li x1, 0b110000000000
-      csrrc x28, mstatus, x1
-      li x1, 0b{"01" if testMode == "s" else "00"}00000000000
-      csrrs x28, mstatus, x1
-
-      auipc x1, 0
-      addi x1, x1, 16 # x1 is now right after the mret instruction
-      csrw mepc, x1
-      mret
-
-      # We're now in {testMode} mode...
       """
 
-    f.write(lines)
+      if testMode == "u":
+        lines += f"""
+          csrr x17, sedeleg
+          li x9, {"0b1100000000" if testMode == "u" else "0b0000000000"}
+          csrs sedeleg, x9
+          """
+
+      lines += f"""
+        li x30, 0
+
+        la x1, _j_m_trap_{returningInstruction}
+        csrw mtvec, x1
+        la x1, _j_s_trap_{returningInstruction}
+        csrw stvec, x1
+        la x1, _j_u_trap_{returningInstruction}
+        csrw utvec, x1
+        j _j_t_begin_{returningInstruction}
+
+        _j_m_trap_{returningInstruction}:
+        csrrs x1, mepc, x0
+        {"csrr x25, mcause" if testMode == "m" else "li x25, 0xBAD00003"}
+
+        addi x1, x1, 4
+        csrrw x0, mepc, x1
+        bnez x30, _j_all_end_{returningInstruction}
+        mret
+
+        _j_s_trap_{returningInstruction}:
+        csrrs x1, sepc, x0
+        {"csrr x25, scause" if testMode == "s" else "li x25, 0xBAD00001"}
+
+        addi x1, x1, 4
+        csrrw x0, sepc, x1
+        bnez x30, _j_goto_machine_mode_{returningInstruction}
+        sret
+
+        _j_u_trap_{returningInstruction}:
+        csrrs x1, uepc, x0
+        {"csrr x25, ucause" if testMode == "u" else "li x25, 0xBAD00000"}
+
+        addi x1, x1, 4
+        csrrw x0, uepc, x1
+        bnez x30, _j_goto_supervisor_mode_{returningInstruction}
+        uret
+
+        _j_goto_supervisor_mode_{returningInstruction}:
+        j _j_goto_machine_mode_{returningInstruction}
+
+        _j_goto_machine_mode_{returningInstruction}:
+        li x30, 1
+        {returningInstruction}
+
+        _j_t_begin_{returningInstruction}:
+      """
+
+      fromModeOptions = ["m", "s", "u"] if testMode == "m" else (["s", "u"] if testMode == "s" else ["u"])
+
+      medelegMask = "0b1111111111110111" if returningInstruction == "ebreak" else "0b1111000011111111"
+
+      lines += f"""
+        csrr x18, medeleg
+        li x9, {medelegMask if testMode == "s" or testMode == "u" else "0"}
+        csrw medeleg, x9
+      """
+
+      f.write(lines)
+
+      for fromMode in fromModeOptions:
+        lines = ""
+        
+        if fromMode == "s" or fromMode == "u":
+          lines += f"""
+            li x1, 0b110000000000
+            csrrc x28, mstatus, x1
+            li x1, 0b0100000000000
+            csrrs x28, mstatus, x1
+
+            auipc x1, 0
+            addi x1, x1, 16 # x1 is now right after the mret instruction
+            csrw mepc, x1
+            mret
+
+            # We're now in supervisor mode...
+          """
+
+        if fromMode == "u":
+          lines += f"""
+
+          li x1, 0b110000000000
+          csrrc x28, sstatus, x1
+
+          auipc x1, 0
+          addi x1, x1, 16 # x1 is now right after the sret instruction
+          csrw sepc, x1
+          sret
+
+          # We're now in user mode...
+          """
+
+        # print directed and random test vectors
+
+        f.write(lines)
+        for i in range(0,numrand):
+          writeVectors(storecmd, returningInstruction)
 
 
-    # print directed and random test vectors
-    for i in range(0,numrand):
-      writeVectors(storecmd)
+      f.write(f"""
+        li x30, 1
+        {returningInstruction}
+        _j_all_end_{returningInstruction}:
 
+        csrw mtvec, x19
+        csrw medeleg, x18
+      """)
 
-    f.write(f"""
-      li x30, 1
-      ecall
-      _j_all_end:
-
-      csrw mtvec, x31
-    """)
+    # if we're in supervisor mode, this leaves the ebreak instruction untested (we need a way to)
+    # get back to machine mode. 
 
     # print footer
     h = open("../testgen_footer.S", "r")
@@ -346,7 +422,6 @@ for xlen in xlens:
     f.write(lines)
     f.close()
     r.close()
-
 
 
 

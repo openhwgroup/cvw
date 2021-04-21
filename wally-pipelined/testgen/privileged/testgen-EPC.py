@@ -200,25 +200,27 @@ for xlen in xlens:
       _j_t_begin:
     """
 
-    fromModeOptions = ["s", "u"] if testMode == "m" else ["u"]
+    fromModeOptions = ["m", "s", "u"] if testMode == "m" else (["s", "u"] if testMode == "s" else ["u"])
 
     f.write(lines)
 
     for fromMode in fromModeOptions:
       lines = ""
-      lines += f"""
-        li x1, 0b110000000000
-        csrrc x28, mstatus, x1
-        li x1, 0b0100000000000
-        csrrs x28, mstatus, x1
+      
+      if fromMode == "s" or fromMode == "u":
+        lines += f"""
+          li x1, 0b110000000000
+          csrrc x28, mstatus, x1
+          li x1, 0b0100000000000
+          csrrs x28, mstatus, x1
 
-        auipc x1, 0
-        addi x1, x1, 16 # x1 is now right after the mret instruction
-        csrw mepc, x1
-        mret
+          auipc x1, 0
+          addi x1, x1, 16 # x1 is now right after the mret instruction
+          csrw mepc, x1
+          mret
 
-        # We're now in supervisor mode...
-      """
+          # We're now in supervisor mode...
+        """
 
       if fromMode == "u":
         lines += f"""
