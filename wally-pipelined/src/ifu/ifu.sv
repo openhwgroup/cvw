@@ -77,6 +77,8 @@ module ifu (
   logic [31:0]      nop = 32'h00000013; // instruction for NOP
   // *** send this to the trap unit
   logic             ITLBPageFaultF;
+  logic 	    reset_q; // *** look at this later.
+  
 
   tlb #(3) itlb(.TLBAccess(1'b1), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
@@ -87,7 +89,7 @@ module ifu (
 
   // branch predictor signals
   logic 	   SelBPPredF;
-  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
+  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F;
   logic [3:0] 	    InstrClassD, InstrClassE;
   
 
@@ -98,10 +100,10 @@ module ifu (
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
-  icache ic(
+  icache icache(
     .*,
-    .UpperPCPF(PCPF[`XLEN-1:12]),
-    .LowerPCF(PCF[11:0])
+    .UpperPCNextPF(PCNextPF[`XLEN-1:12]),
+    .LowerPCNextF(PCNextPF[11:0])
   );
 
   assign PrivilegedChangePCM = RetM | TrapM;
@@ -120,7 +122,17 @@ module ifu (
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
 		       .d1(PrivilegedNextPCM),
 		       .s(PrivilegedChangePCM),
+		       .y(PCNext2F));
+
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
+		       .d1(`RESET_VECTOR),
+		       .s(reset_q),
 		       .y(UnalignedPCNextF));
+
+  flop #(1) resetReg (.clk(clk),
+		      .d(reset),
+		      .q(reset_q));
+  
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
