@@ -344,8 +344,7 @@ module testbench();
   string tests64p[] = '{
     "rv64p/WALLY-MCAUSE", "2000",
     "rv64p/WALLY-SCAUSE", "2000",
-    "rv64p/WALLY-UCAUSE", "2000",
-    "rv64p/WALLY-MEPC", "4000",
+    "rv64p/WALLY-MEPC", "5000",
     "rv64p/WALLY-SEPC", "4000",
     "rv64p/WALLY-TVAL", "3000",
     "rv64p/WALLY-MARCHID", "4000",
@@ -357,8 +356,7 @@ module testbench();
   string tests32p[] = '{
     "rv32p/WALLY-MCAUSE", "2000",
     "rv32p/WALLY-SCAUSE", "2000",
-    "rv32p/WALLY-UCAUSE", "2000",
-    "rv32p/WALLY-MEPC", "4000",
+    "rv32p/WALLY-MEPC", "5000",
     "rv32p/WALLY-SEPC", "4000",
     "rv32p/WALLY-TVAL", "3000",
     "rv32p/WALLY-MARCHID", "4000",

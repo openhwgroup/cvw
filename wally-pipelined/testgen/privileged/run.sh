@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #
 # Written 1 Mar 2021 by Domenico Ottolia (dottolia@hmc.edu)
 #
@@ -25,6 +27,9 @@ then
 	then
 		cd ~/riscv-wally/imperas-riscv-tests
 		make privileged
+
+		exe2memfile.pl work/*/*.elf
+		extractFunctionRadix.sh work/rv64p/*.elf.objdump
 	fi
 fi
 
@@ -49,3 +54,21 @@ fi
 
 cd ~/riscv-wally/wally-pipelined
 printf "\n\n\n#####\nDone!\n#####\n\n"
+
+cd ~/riscv-wally/imperas-riscv-tests/work
+for isa in "rv64p" "rv32p"; do
+	printf "$isa = '{"
+	COMMA=""
+	for file in "$isa"/*.elf.objdump; do
+		if [[ "$file" == *"$1"* ]]; then
+		    RES=$(grep "^\s*0*8000.000 <begin_signature>" $file)
+		    RES=$(echo "$RES" | sed -r 's/^0*80+([0-9]+).+?$/\1/g')
+		    file=$(echo "$file" | sed -r 's/^(.+?)\.elf\.objdump/\1/g')
+		    printf "$COMMA\n    '$file', '${RES}'"
+		    COMMA=","
+		fi
+	done
+	printf "\n};\n\n"
+done
+
+cd ~/riscv-wally/wally-pipelined
