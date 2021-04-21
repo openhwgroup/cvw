@@ -55,6 +55,7 @@ module muldiv (
 	logic 		     enable_q, gclk;
 
 	logic [2:0] 	     Funct3E_Q;
+    logic            div0error;
 
 
 	 // Multiplier

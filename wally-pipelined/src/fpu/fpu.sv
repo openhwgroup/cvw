@@ -41,8 +41,8 @@ module fpu (
 
   //temporarily assign pipe clear and enable signals
   //to never flush & always be running
-  assign PipeClear = 1'b0;
-  assign PipeEnable = 1'b1;
+  localparam PipeClear = 1'b0;
+  localparam PipeEnable = 1'b1;
   always_comb begin
 
 	  PipeEnableDE = PipeEnable;
@@ -154,6 +154,7 @@ module fpu (
   logic [10:0]             AddExpPostSumE;
   logic                    AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE;
   logic                    AddDenormInE, AddSwapE, AddNormOvflowE, AddSignAE;
+  logic                    AddConvertE;
   logic [63:0]             AddFloat1E, AddFloat2E;
   logic [10:0]             AddExp1DenormE, AddExp2DenormE, AddExponentE;
   logic [63:0]             AddOp1E, AddOp2E;
@@ -310,6 +311,7 @@ module fpu (
   logic [10:0]             AddExpPostSumM;
   logic                    AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM;
   logic                    AddDenormInM, AddSwapM, AddNormOvflowM, AddSignAM;
+  logic                    AddConvertM, AddSignM;
   logic [63:0]             AddFloat1M, AddFloat2M;
   logic [10:0]             AddExp1DenormM, AddExp2DenormM, AddExponentM;
   logic [63:0]             AddOp1M, AddOp2M;
