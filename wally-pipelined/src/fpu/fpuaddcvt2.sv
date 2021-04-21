@@ -64,6 +64,7 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
    wire [63:0] 	 Result;   
    wire [63:0] 	 sum_norm, sum_norm_w_bypass;
    wire [5:0] 	 norm_shift, norm_shift_denorm;
+   wire          exp_valid;
    wire		 DenormIO;
    wire [4:0] 	 FlagsIn;	
    wire 	 Sticky_out;

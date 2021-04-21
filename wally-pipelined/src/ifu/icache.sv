@@ -57,7 +57,7 @@ module icache(
     logic [`XLEN-1:0] LastReadDataF, LastReadAdrF, InDataF;
 
     // instruction for NOP
-    logic [31:0]      nop = 32'h00000013;
+    localparam [31:0]      nop = 32'h00000013;
 
     // Temporary change to bridge the new interface to old behaviors
     logic [`XLEN-1:0] PCPF;

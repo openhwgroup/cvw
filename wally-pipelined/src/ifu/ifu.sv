@@ -73,7 +73,7 @@ module ifu (
   logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCPF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
-  logic [31:0]      nop = 32'h00000013; // instruction for NOP
+  localparam [31:0]      nop = 32'h00000013; // instruction for NOP
   // *** send this to the trap unit
   logic             ITLBPageFaultF;
 
