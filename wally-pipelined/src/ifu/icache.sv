@@ -103,12 +103,12 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
     // Signals to/from cache memory
     // The read coming out of it
-    input logic [`XLEN-1:0] 	ICacheMemReadData,
+    input logic [31:0] 		ICacheMemReadData,
     input logic 		ICacheMemReadValid,
     // The address at which we want to search the cache memory
     output logic [`XLEN-1:12] 	ICacheMemReadUpperPAdr,
     output logic [11:0] 	ICacheMemReadLowerAdr,
-    output logic                ICacheReadEn,
+    output logic 		ICacheReadEn,
     // Load data into the cache
     output logic 		ICacheMemWriteEnable,
     output logic [LINESIZE-1:0] ICacheMemWriteData,
@@ -565,30 +565,13 @@ module icachecontroller #(parameter LINESIZE = 256) (
 			      .q(SpillDataBlock0));
 
   // use the not quite final PC to do the final selection.
-  generate
-    if( `XLEN == 32) begin
-      logic [1:1] PCPreFinalF_q;
-      flopenr #(1) PCFReg(.clk(clk),
-			  .reset(reset),
-			  .en(~StallF),
-			  .d(PCPreFinalF[1]),
-			  .q(PCPreFinalF_q[1]));
-      assign FinalInstrRawF = PCPreFinalF_q[1] ? {SpillDataBlock0, ICacheMemReadData[31:16]} : ICacheMemReadData;
-    end else begin
-      logic [2:1] PCPreFinalF_q;
-      flopenr #(2) PCFReg(.clk(clk),
-			  .reset(reset),
-			  .en(~StallF),
-			  .d(PCPreFinalF[2:1]),
-			  .q(PCPreFinalF_q[2:1]));
-      mux4 #(32) AlignmentMux(.d0(ICacheMemReadData[31:0]),
-			      .d1(ICacheMemReadData[47:16]),
-			      .d2(ICacheMemReadData[63:32]),
-			      .d3({SpillDataBlock0, ICacheMemReadData[63:48]}),
-			      .s(PCPreFinalF_q[2:1]),
-			      .y(FinalInstrRawF));
-    end
-  endgenerate
+  logic [1:1] PCPreFinalF_q;
+  flopenr #(1) PCFReg(.clk(clk),
+		      .reset(reset),
+		      .en(~StallF),
+		      .d(PCPreFinalF[1]),
+		      .q(PCPreFinalF_q[1]));
+  assign FinalInstrRawF = PCPreFinalF_q[1] ? {ICacheMemReadData[31:16], SpillDataBlock0} : ICacheMemReadData;
 
   // There is a frustrating issue on the first access.
   // The cache will not contain any valid data but will contain x's on

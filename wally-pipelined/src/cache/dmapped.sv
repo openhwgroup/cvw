@@ -140,7 +140,7 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     input  logic [LINESIZE-1:0] WriteLine,
     input  logic [`XLEN-1:0]    WritePAdr,
     // Output the word, as well as if it is valid
-    output logic [WORDSIZE-1:0] DataWord,
+    output logic [31:0] DataWord, // *** was WORDSIZE-1
     output logic                DataValid
 );
 
@@ -202,7 +202,31 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     );
 
     // Pick the right bits coming out the read line
-    assign DataWord = ReadLineTransformed[ReadOffset];
+    //assign DataWord = ReadLineTransformed[ReadOffset];
+  //logic [31:0] tempRD;
+  always_comb begin
+    case (OldReadPAdr[4:1])
+      0: DataWord = ReadLine[31:0];
+      1: DataWord = ReadLine[47:16];
+      2: DataWord = ReadLine[63:32];
+      3: DataWord = ReadLine[79:48];
+
+      4: DataWord = ReadLine[95:64];
+      5: DataWord = ReadLine[111:80];
+      6: DataWord = ReadLine[127:96];
+      7: DataWord = ReadLine[143:112];      
+
+      8: DataWord = ReadLine[159:128];      
+      9: DataWord = ReadLine[175:144];      
+      10: DataWord = ReadLine[191:160];      
+      11: DataWord = ReadLine[207:176];
+
+      12: DataWord = ReadLine[223:192];
+      13: DataWord = ReadLine[239:208];
+      14: DataWord = ReadLine[255:224];
+      15: DataWord = {16'b0, ReadLine[255:240]};
+    endcase
+  end
     genvar i;
     generate
         for (i=0; i < LINESIZE/WORDSIZE; i++) begin
