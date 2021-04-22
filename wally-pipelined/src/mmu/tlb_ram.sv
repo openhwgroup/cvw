@@ -28,7 +28,6 @@
 `include "wally-config.vh"
 `include "wally-constants.vh"
 
-// *** use actual flop notation instead of initialbegin and alwaysff
 module tlb_ram #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,
   input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from
@@ -44,17 +43,22 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
 
   logic [`XLEN-1:0] ram [0:NENTRIES-1];
   logic [`XLEN-1:0] PageTableEntry;
-  always @(posedge clk) begin
-    if (TLBWrite) ram[WriteIndex] <= PageTableEntryWrite;
-  end
+
+  logic [NENTRIES-1:0] RAMEntryWrite;
+
+  decoder #(ENTRY_BITS) tlb_ram_decoder(WriteIndex, RAMEntryWrite);
+
+  // Generate a flop for every entry in the RAM
+  generate
+    genvar i;
+    for (i = 0; i < NENTRIES; i++) begin: tlb_ram_flops
+      flopenr #(`XLEN) pte_flop(clk, reset, RAMEntryWrite[i] & TLBWrite,
+        PageTableEntryWrite, ram[i]);
+    end
+  endgenerate
 
   assign PageTableEntry = ram[VPNIndex];
   assign PTEAccessBits = PageTableEntry[7:0];
   assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
-
-  initial begin
-    for (int i = 0; i < NENTRIES; i++)
-      ram[i] = `XLEN'b0;
-  end
 
 endmodule
