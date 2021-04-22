@@ -409,7 +409,7 @@ module testbench();
         // if (`F_SUPPORTED) tests = {tests64f, tests};
         // if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        // if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
       
