@@ -113,6 +113,7 @@ module wallypipelinedhart (
   // IMem stalls
   logic             ICacheStallF;
   logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
+  logic             MMUStall;
   logic             MMUTranslate, MMUTranslationComplete, MMUReady;
 
   // bus interface to dmem
