@@ -63,6 +63,14 @@ module dmem (
   // *** needs to be sent to trap unit
   logic             DTLBPageFaultM;
 
+  logic [1:0] CurrState, NextState;
+
+  localparam STATE_READY = 0;
+  localparam STATE_FETCH = 1;
+  localparam STATE_STALLED = 2;
+
+  
+
   tlb #(3) dtlb(.TLBAccess(MemAccessM), .VirtualAddress(MemAdrM),
                 .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
@@ -81,8 +89,8 @@ module dmem (
 
   // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
-  assign MemReadM = MemRWM[1] & ~DataMisalignedM;
-  assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM;
+  assign MemReadM = MemRWM[1] & ~DataMisalignedM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM & CurrState != STATE_STALLED;
   assign MemAccessM = |MemRWM;
 
   // Determine if address is valid
@@ -118,6 +126,31 @@ module dmem (
 
   // Data stall
   //assign DataStall = 0;
+
+  // Ross Thompson April 22, 2021
+  // for now we need to handle the issue where the data memory interface repeately
+  // requests data from memory rather than issuing a single request.
+
+
+  flopr #(2) stateReg(.clk(clk),
+		      .reset(reset),
+		      .d(NextState),
+		      .q(CurrState));
+
+  always_comb begin
+    case (CurrState)
+      STATE_READY: if (MemAccessM & ~DataMisalignedM) NextState = STATE_FETCH;
+                   else            NextState = STATE_READY;
+      STATE_FETCH: if (MemAckW & ~StallW)     NextState = STATE_READY;
+                   else if (MemAckW & StallW) NextState = STATE_STALLED;
+		   else                       NextState = STATE_FETCH;
+      STATE_STALLED: if (~StallW)             NextState = STATE_READY;
+                     else                     NextState = STATE_STALLED;
+      default: NextState = STATE_READY;
+    endcase // case (CurrState)
+  end
+  
+  
 
 endmodule
 

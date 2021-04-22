@@ -75,7 +75,8 @@ module ahblite (
   output logic [3:0]       HSIZED,
   output logic             HWRITED,
   // Stalls
-  output logic             /*InstrUpdate, */DataStall
+  output logic             /*InstrUpdate, */DataStall,
+		output logic MemAckW
   // *** add a chip-level ready signal as part of handshake
 );
 
@@ -175,6 +176,7 @@ module ahblite (
 
   assign InstrRData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
+  assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
   assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
