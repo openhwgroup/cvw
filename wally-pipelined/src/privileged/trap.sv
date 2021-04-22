@@ -37,6 +37,7 @@ module trap (
   input  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
   input  logic [11:0]      MIP_REGW, MIE_REGW,
   input  logic             STATUS_MIE, STATUS_SIE,
+  input  logic [`XLEN-1:0] PCM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
   input  logic [31:0]      InstrM,
   output logic             TrapM, MTrapM, STrapM, UTrapM, RetM,
@@ -128,7 +129,7 @@ module trap (
     if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = MemAdrM;
     else if (StoreMisalignedFaultM) NextFaultMtvalM = MemAdrM;
-    else if (InstrPageFaultM)       NextFaultMtvalM = 0; // *** implement
+    else if (InstrPageFaultM)       NextFaultMtvalM = PCM;
     else if (LoadPageFaultM)        NextFaultMtvalM = MemAdrM;
     else if (StorePageFaultM)       NextFaultMtvalM = MemAdrM;
     else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
