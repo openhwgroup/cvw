@@ -68,6 +68,7 @@ fail = sum(pool.map(test_config, configs))
 
 if (fail):
     print("Regression failed with " +str(fail)+ " failed configurations")
+    print("Reminder: have you run `make allclean`?")
     exit(1)
 else:
     print("SUCCESS! All tests ran without failures")
