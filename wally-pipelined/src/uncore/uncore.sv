@@ -47,8 +47,11 @@ module uncore (
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
+  // PMA checker signals
+  input  logic [5:0]       HSELRegions,
   // bus interface
-  output logic             DataAccessFaultM,
+  // PMA checker now handles access faults. *** This can be deleted
+  // output logic             DataAccessFaultM,
   // peripheral pins
   output logic             TimerIntM, SwIntM, ExtIntM,
   input  logic [31:0]      GPIOPinsIn,
@@ -68,8 +71,11 @@ module uncore (
   logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
   logic [1:0]      MemRWboottim;
   logic            UARTIntr,GPIOIntr;
-  
 
+  // unswizzle HSEL signals
+  assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions;
+
+  /* PMA checker now handles decoding addresses. *** This can be deleted.
   // AHB Address decoder
   adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
   adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
@@ -78,6 +84,7 @@ module uncore (
   adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
+  */
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
@@ -115,9 +122,10 @@ module uncore (
                   HSELBootTimD & HREADYBootTim |
                   HSELUARTD & HREADYUART;
 
+  /* PMA checker now handles access faults. *** This can be deleted
   // Faults
   assign DataAccessFaultM = ~(HSELTimD | HSELCLINTD | HSELPLICD | HSELGPIOD | HSELBootTimD | HSELUARTD);
-
+  */
 
   // Address Decoder Delay (figure 4-2 in spec)
   flopr #(1) hseltimreg(HCLK, ~HRESETn, HSELTim, HSELTimD);

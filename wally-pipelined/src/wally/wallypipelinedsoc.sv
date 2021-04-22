@@ -60,6 +60,7 @@ module wallypipelinedsoc (
   // Uncore signals
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HREADY, HRESP;
+  logic [5:0]       HSELRegions;
   logic             InstrAccessFaultF, DataAccessFaultM;
   logic             TimerIntM, SwIntM; // from CLINT
   logic             ExtIntM; // from PLIC
@@ -72,8 +73,6 @@ module wallypipelinedsoc (
   // instantiate processor and memories
   wallypipelinedhart hart(.*);
 
-  // *** Temporary driving of access fault to low until PMA checker is complete
-  assign InstrAccessFaultF = '0;
   // instructions now come from uncore memory. This line can be removed at any time.
   // imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
   uncore uncore(.HWDATAIN(HWDATA), .*);
