@@ -95,6 +95,8 @@
 
 // Interrupt configuration
 `define PLIC_NUM_SRC 4
+// comment out the following if >=32 sources
+`define PLIC_NUM_SRC_LT_32
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
 
