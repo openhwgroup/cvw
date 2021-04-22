@@ -89,7 +89,7 @@ module ifu (
 
   // branch predictor signals
   logic 	   SelBPPredF;
-  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F;
+  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [3:0] 	    InstrClassD, InstrClassE;
   
 
@@ -124,11 +124,20 @@ module ifu (
 		       .s(PrivilegedChangePCM),
 		       .y(PCNext2F));
 
+  // *** try to remove this in the future as it can add a long path.
+  // StallF may arrive late.
+/* -----\/----- EXCLUDED -----\/-----
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
+		       .d1(PCF),
+		       .s(StallF),
+		       .y(PCNext3F));
+ -----/\----- EXCLUDED -----/\----- */
+
+  mux2 #(`XLEN) pcmux4(.d0(PCNext2F),
 		       .d1(`RESET_VECTOR),
 		       .s(reset_q),
-		       .y(UnalignedPCNextF));
-
+		       .y(UnalignedPCNextF)); 
+ 
   flop #(1) resetReg (.clk(clk),
 		      .d(reset),
 		      .q(reset_q));
