@@ -51,6 +51,7 @@ module ahblite (
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
   // Signals from MMU
+  input  logic             MMUStall,
   input  logic [`XLEN-1:0] MMUPAdr,
   input  logic             MMUTranslate, MMUTranslationComplete,
   output logic [`XLEN-1:0] MMUReadPTE,
@@ -136,11 +137,10 @@ module ahblite (
   // since translation might not be complete.
   assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
-  // *** Could get finer grained stalling if we distinguish between MMU
-  //     instruction address translation and data address translation
+                    MMUStall);
+
   assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                          (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
+                          MMUStall);
 
   // Determine access type (important for determining whether to fault)
   assign Atomic = ((NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));

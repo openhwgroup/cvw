@@ -60,6 +60,9 @@ module pagetablewalker (
   output logic             MMUTranslate,
   output logic             MMUTranslationComplete,
 
+  // Stall signal
+  output logic             MMUStall,
+
   // Faults
   output logic             WalkerInstrPageFaultF,
   output logic             WalkerLoadPageFaultM, 
@@ -197,8 +200,12 @@ module pagetablewalker (
         WalkerInstrPageFaultF = '0;
         WalkerLoadPageFaultM = '0;
         WalkerStorePageFaultM = '0;
+        MMUStall = '1;
 
         case (NextWalkerState)
+          IDLE: begin
+            MMUStall = '0;
+          end
           LEVEL1: begin
             TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
           end
@@ -220,6 +227,7 @@ module pagetablewalker (
             WalkerInstrPageFaultF = ~DTLBMissM;
             WalkerLoadPageFaultM = DTLBMissM && ~MemStore;
             WalkerStorePageFaultM = DTLBMissM && MemStore;
+            MMUStall = '0;  // Drop the stall early to enter trap handling code
           end
           default: begin
             // nothing
@@ -302,8 +310,12 @@ module pagetablewalker (
         WalkerInstrPageFaultF = '0;
         WalkerLoadPageFaultM = '0;
         WalkerStorePageFaultM = '0;
+        MMUStall = '1;
 
         case (NextWalkerState)
+          IDLE: begin
+            MMUStall = '0;
+          end
           LEVEL2: begin
             TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
           end
@@ -329,6 +341,7 @@ module pagetablewalker (
             WalkerInstrPageFaultF = ~DTLBMissM;
             WalkerLoadPageFaultM = DTLBMissM && ~MemStore;
             WalkerStorePageFaultM = DTLBMissM && MemStore;
+            MMUStall = '0;  // Drop the stall early to enter trap handling code
           end
           default: begin
             // nothing
