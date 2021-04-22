@@ -108,7 +108,7 @@ module csrm #(parameter
   logic            WritePMPADDRM [0:15]; 
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
-  assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, `MISA};
+  assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, {`MISA}[25:0]};
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS);
