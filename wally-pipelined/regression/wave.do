@@ -101,6 +101,9 @@ add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/neg
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/lt
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/ltu
 add wave -noupdate /testbench/InstrFName
+add wave -noupdate -expand -group {dcache memory} /testbench/dut/hart/dmem/MemReadM
+add wave -noupdate -expand -group {dcache memory} /testbench/dut/hart/dmem/MemWriteM
+add wave -noupdate -expand -group {dcache memory} /testbench/dut/hart/dmem/MemAckW
 add wave -noupdate -group dcache /testbench/dut/hart/MemAdrM
 add wave -noupdate -group dcache /testbench/dut/hart/MemPAdrM
 add wave -noupdate -group dcache /testbench/dut/hart/WriteDataM
@@ -174,6 +177,8 @@ add wave -noupdate -expand -group icache -expand -group {fsm out and control} /t
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PCMux
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntReset
+add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
+add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntEn
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/AHBByteLength
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/AHBOFFETWIDTH
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/BlockByteLength
@@ -219,8 +224,24 @@ add wave -noupdate /testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr
 add wave -noupdate /testbench/dut/hart/ifu/CompressedF
 add wave -noupdate /testbench/dut/hart/ifu/icache/controller/SpillDataBlock0
 add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPreFinalF_q
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/BusState
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HCLK
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HRDATA
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HREADY
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HRESP
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HADDR
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HWDATA
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HWRITE
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HSIZE
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HBURST
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HPROT
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HTRANS
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HMASTLOCK
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HADDRD
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HSIZED
+add wave -noupdate -expand -group AHB /testbench/dut/hart/ebu/HWRITED
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {9808584 ns} 0} {{Cursor 3} {9808065 ns} 0} {{Cursor 4} {535 ns} 0}
+WaveRestoreCursors {{Cursor 2} {9808206 ns} 0} {{Cursor 3} {9807791 ns} 0} {{Cursor 4} {85 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 513
@@ -236,4 +257,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {9808255 ns} {9808913 ns}
+WaveRestoreZoom {9807926 ns} {9808486 ns}
