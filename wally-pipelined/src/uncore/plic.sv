@@ -12,8 +12,6 @@
 // *** Big questions:
 //  Do we detect requests as level-triggered or edge-trigged?
 //  If edge-triggered, do we want to allow 1 source to be able to make a number of repeated requests?
-//  Should PLIC also output SEIP or just MEIP?
-//  MEIP is the same as ExtIntM, right?
 //
 // A component of the Wally configurable RISC-V project.
 // 
@@ -65,7 +63,9 @@ module plic (
   logic [N:1] pendingRequestsAtMaxP;
   logic [7:1] threshMask;
 
+  // =======
   // AHB I/O
+  // =======
   assign entry = {HADDR[27:2],2'b0};
   assign initTrans = HREADY & HSELPLIC & (HTRANS != 2'b00);
   assign memread = initTrans & ~HWRITE;
@@ -77,7 +77,8 @@ module plic (
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-  generate // *** add ld, sd functionality
+  // *** add ld, sd functionality
+  generate
     if (`XLEN == 64) begin
       always_comb
         if (entryd[2]) begin
@@ -95,71 +96,54 @@ module plic (
     end
   endgenerate
 
-  // register interface
-  genvar i;
-  generate
-    // priority registers
-    for (i=1; i<=N; i=i+1)
-      always @(posedge HCLK,negedge HRESETn)
-        if (~HRESETn)
-          intPriority[i] <= 3'b0;
-        else begin
-          if (entry == 28'hc000000+4*i) // *** make sure this does not synthesize into N 28-bit equality comparators; we want something more decoder-ish 
-            Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[i]};
-          if ((entryd == 28'hc000000+4*i) && memwrite)
-            intPriority[i] <= #1 Din[2:0];
-        end
-
-    // pending and enable registers
-    if (N<32)
-      always @(posedge HCLK,negedge HRESETn)
-        if (~HRESETn)
-          intEn <= {N{1'b0}};
-        else begin
-          if (entry == 28'hc001000)
-            Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
-          if (entry == 28'hc002000)
-            Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
-          if ((entryd == 28'hc002000) && memwrite)
-            intEn[N:1] <= #1 Din[N:1];
-        end
-    else // N>=32
-      always @(posedge HCLK,negedge HRESETn)
-        if (~HRESETn)
-          intEn <= {N{1'b0}};
-        else begin
-          if (entry == 28'hc001000)
-            Dout <= #1 {intPending[31:1],1'b0};
-          if (entry == 28'hc001004)
-            Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
-          if (entry == 28'hc002000)
-            Dout <= #1 {intEn[31:1],1'b0};
-          if (entry == 28'hc002004)
-            Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
-          if ((entryd == 28'hc002000) && memwrite)
-            intEn[31:1] <= #1 Din[31:1];
-          if ((entryd == 28'hc002004) && memwrite)
-            intEn[N:32] <= #1 Din[31:0];
-        end
-
-    // threshold and claim/complete registers
-    always @(posedge HCLK, negedge HRESETn)
-      if (~HRESETn) begin
-        intThreshold<=3'b0;
-        intInProgress <= {N{1'b0}};
-      end else begin
-        if (entry == 28'hc200000)
-          Dout <= #1 {29'b0,intThreshold[2:0]};
-        if ((entryd == 28'hc200000) && memwrite)
-          intThreshold[2:0] <= #1 Din[2:0];
-        if ((entry == 28'hc200004) && memread) begin // check for memread because reading claim reg. has side effects
+  // ==================
+  // Register Interface
+  // ==================
+  always @(posedge HCLK,negedge HRESETn) begin
+    // resetting
+    if (~HRESETn) begin
+      intPriority <= #1 '{default:3'b0}; // *** does this initialization synthesize cleanly?
+      intEn <= #1 {N{1'b0}};
+      intThreshold <= #1 3'b0;
+      intInProgress <= #1 {N{1'b0}};
+    // writing
+    end else if (memwrite)
+      casez(entryd)
+        28'hc0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
+        `ifdef PLIC_NUM_SRC_LT_32
+        28'hc002000: intEn[N:1] <= #1 Din[N:1];
+        `endif
+        `ifndef PLIC_NUM_SRC_LT_32
+        28'hc002000: intEn[31:1] <= #1 Din[31:1];
+        28'hc002004: intEn[N:32] <= #1 Din[31:0];
+        `endif
+        28'hc200000: intThreshold[2:0] <= #1 Din[2:0];       
+        28'hc200004: intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+      endcase
+    // reading
+    if (memread)
+      casez(entry)
+        28'hc0000??: Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[entry[7:2]]};
+        `ifdef PLIC_NUM_SRC_LT_32
+        28'hc001000: Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
+        28'hc002000: Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
+        `endif
+        `ifndef PLIC_NUM_SRC_LT_32
+        28'hc001000: Dout <= #1 {intPending[31:1],1'b0};
+        28'hc001004: Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
+        28'hc002000: Dout <= #1 {intEn[31:1],1'b0};
+        28'hc002004: Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
+        `endif
+        28'hc200000: Dout <= #1 {29'b0,intThreshold[2:0]};
+        28'hc200004: begin
           Dout <= #1 {26'b0,intClaim};
           intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
         end
-        if ((entryd == 28'hc200004) && memwrite)
-          intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion
-      end
-  endgenerate
+        default: Dout <= #1 32'hdeadbeef; // invalid access
+      endcase
+    else
+      Dout <= #1 32'h0;
+  end
 
   // connect sources to requests
   always_comb begin
@@ -179,6 +163,7 @@ module plic (
   flopr #(N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // pending array - indexed by priority_lvl x source_ID
+  genvar i;
   generate
     for (i=1; i<=N; i=i+1) begin
       // *** make sure that this synthesizes into N decoders, not 7*N 3-bit equality comparators (right?)
