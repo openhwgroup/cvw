@@ -140,19 +140,41 @@ module icachecontroller #(parameter LINESIZE = 256) (
   localparam STATE_HIT_SPILL_MISS_FETCH_DONE = 3; // write data into SRAM/LUT
   localparam STATE_HIT_SPILL_MERGE = 4;   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
 
-  localparam STATE_MISS_FETCH_WDV = 5; // aligned miss, issue read to AHB and wait for data.
-  localparam STATE_MISS_FETCH_DONE = 6; // write data into SRAM/LUT
-  localparam STATE_MISS_READ = 7; // read block 1 from SRAM/LUT  
+  // a challenge is the spill signal gets us out of the ready state and moves us to
+  // 1 of the 2 spill branches.  However the original fsm design had us return to
+  // the ready state when the spill + hits/misses were fully resolved.  The problem
+  // is the spill signal is based on PCPF so when we return to READY to check if the
+  // cache has a hit it still expresses spill.  We can fix in 1 of two ways.
+  // 1. we can add 1 extra state at the end of each spill branch to returns the instruction
+  // to the CPU advancing the CPU and icache to the next instruction.
+  // 2. We can assert a signal which is delayed 1 cycle to suppress the spill when we get
+  // to the READY state.
+  // The first first option is more robust and increases the number of states by 2.  The
+  // second option is seams like it should work, but I worry there is a hidden interaction 
+  // between CPU stalling and that register.
+  // Picking option 1.
 
-  localparam STATE_MISS_SPILL_FETCH_WDV = 8; // spill, miss on block 0, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_FETCH_DONE = 9; // write data into SRAM/LUT
-  localparam STATE_MISS_SPILL_READ1 = 10; // read block 0 from SRAM/LUT
-  localparam STATE_MISS_SPILL_2 = 11; // return to ready if hit or do second block update.
-  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 12; // miss on block 1, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 13; // write data to SRAM/LUT
-  localparam STATE_MISS_SPILL_MERGE = 14; // read block 0 of CPU access,
+  localparam STATE_HIT_SPILL_FINAL = 5; // this state replicates STATE_READY's replay of the
+  // spill access but does nto consider spill.  It also does not do another operation.
+  
 
-  localparam STATE_INVALIDATE = 15; // *** not sure if invalidate or evict? invalidate by cache block or address?
+  localparam STATE_MISS_FETCH_WDV = 6; // aligned miss, issue read to AHB and wait for data.
+  localparam STATE_MISS_FETCH_DONE = 7; // write data into SRAM/LUT
+  localparam STATE_MISS_READ = 8; // read block 1 from SRAM/LUT  
+
+  localparam STATE_MISS_SPILL_FETCH_WDV = 9; // spill, miss on block 0, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_FETCH_DONE = 10; // write data into SRAM/LUT
+  localparam STATE_MISS_SPILL_READ1 = 11; // read block 0 from SRAM/LUT
+  localparam STATE_MISS_SPILL_2 = 12; // return to ready if hit or do second block update.
+  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 13; // miss on block 1, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 14; // write data to SRAM/LUT
+  localparam STATE_MISS_SPILL_MERGE = 15; // read block 0 of CPU access,
+
+  localparam STATE_MISS_SPILL_FINAL = 16; // this state replicates STATE_READY's replay of the
+  // spill access but does nto consider spill.  It also does not do another operation.
+  
+
+  localparam STATE_INVALIDATE = 17; // *** not sure if invalidate or evict? invalidate by cache block or address?
   
   localparam AHBByteLength = `XLEN / 8;
   localparam AHBOFFETWIDTH = $clog2(AHBByteLength);
@@ -164,7 +186,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
   localparam WORDSPERLINE = LINESIZE/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
-  logic [3:0] 		     CurrState, NextState;
+  logic [4:0] 		     CurrState, NextState;
   logic 		     hit, spill;
   logic 		     SavePC;
   logic [1:0] 		     PCMux;
@@ -213,7 +235,8 @@ module icachecontroller #(parameter LINESIZE = 256) (
   assign PCSpillF = PCPF + 2'b10;
 
   // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextPF; // *** don't like the stallf 
+  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextPF; // *** don't like the stallf
+  //assign PCPreFinalF = PCMux[0] ? PCPF : PCNextPF; // *** don't like the stallf 
   assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
   
   
@@ -347,12 +370,12 @@ module icachecontroller #(parameter LINESIZE = 256) (
  -----/\----- EXCLUDED -----/\----- */
 
   // the FSM is always runing, do not stall.
-  flopr #(4) stateReg(.clk(clk),
+  flopr #(5) stateReg(.clk(clk),
 		      .reset(reset),
 		      .d(NextState),
 		      .q(CurrState));
 
-  assign spill = PCPF[5:1] == 5'b1_1111 ? 1'b1 : 1'b0;
+  assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
   assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
   assign FetchCountFlag = FetchCount == FetchCountThreshold;
   
@@ -366,6 +389,8 @@ module icachecontroller #(parameter LINESIZE = 256) (
     spillSave = 1'b0;
     PCMux = 2'b00;
     ICacheReadEn = 1'b0;
+    SavePC = 1'b0;
+    ICacheStallF = 1'b1;
     
     case (CurrState)
       
@@ -373,15 +398,19 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	PCMux = 2'b00;
 	ICacheReadEn = 1'b1;
 	if (hit & ~spill) begin
+	  SavePC = 1'b1;
+	  ICacheStallF = 1'b0;
 	  NextState = STATE_READY;
 	end else if (hit & spill) begin
 	  spillSave = 1'b1;
+	  PCMux = 2'b10;
 	  NextState = STATE_HIT_SPILL;
 	end else if (~hit & ~spill) begin
 	  CntReset = 1'b1;
 	  NextState = STATE_MISS_FETCH_WDV;
 	end else if (~hit & spill)	begin
 	  CntReset = 1'b1;
+	  PCMux = 2'b10;
 	  NextState = STATE_MISS_SPILL_FETCH_WDV;
 	end else begin
           NextState = STATE_READY;
@@ -394,7 +423,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	UnalignedSelect = 1'b1;
 	ICacheReadEn = 1'b1;
 	if (hit) begin
-          NextState = STATE_READY;
+          NextState = STATE_HIT_SPILL_FINAL;
 	end else
 	  CntReset = 1'b1;
           NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
@@ -418,7 +447,15 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	PCMux = 2'b10;
 	UnalignedSelect = 1'b1;
 	ICacheReadEn = 1'b1;
-        NextState = STATE_READY;
+        NextState = STATE_HIT_SPILL_FINAL;
+      end
+      STATE_HIT_SPILL_FINAL: begin
+	ICacheReadEn = 1'b1;
+	PCMux = 2'b00;
+	UnalignedSelect = 1'b1;
+	SavePC = 1'b1;
+	NextState = STATE_READY;
+	ICacheStallF = 1'b0;	
       end
 
       // branch 3 miss no spill
@@ -472,7 +509,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	  CntReset = 1'b1;
 	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
 	end else begin
-	  NextState = STATE_READY;
+	  NextState = STATE_MISS_SPILL_FINAL;
 	end
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
@@ -494,7 +531,15 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	PCMux = 2'b10;
 	UnalignedSelect = 1'b1;
 	ICacheReadEn = 1'b1;	
-        NextState = STATE_READY;
+        NextState = STATE_MISS_SPILL_FINAL;
+      end
+      STATE_MISS_SPILL_FINAL: begin
+	ICacheReadEn = 1'b1;
+	PCMux = 2'b00;
+	UnalignedSelect = 1'b1;
+	SavePC = 1'b1;
+	ICacheStallF = 1'b0;	
+	NextState = STATE_READY;
       end
       default: begin
 	PCMux = 2'b01;
@@ -508,9 +553,10 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // stall CPU any time we are not in the ready state.  any other state means the
   // cache is either requesting data from the memory interface or handling a
   // spill over two cycles.
-  assign ICacheStallF = ((CurrState != STATE_READY) | ~hit) | reset_q ? 1'b1 : 1'b0;
+  // *** BUG this logic will need to change
+  //assign ICacheStallF = ((CurrState != STATE_READY) | ~hit | spill) | reset_q ? 1'b1 : 1'b0;
   // save the PC anytime we are in the ready state. The saved value will be used as the PC may not be stable.
-  assign SavePC = (CurrState == STATE_READY) & hit ? 1'b1 : 1'b0;
+  //assign SavePC = ((CurrState == STATE_READY) & hit) & ~spill ? 1'b1 : 1'b0;
   assign CntEn = PreCntEn & InstrAckF;
 
   assign InstrReadF = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
@@ -571,7 +617,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 		      .en(~StallF),
 		      .d(PCPreFinalF[1]),
 		      .q(PCPreFinalF_q[1]));
-  assign FinalInstrRawF = PCPreFinalF_q[1] ? {ICacheMemReadData[31:16], SpillDataBlock0} : ICacheMemReadData;
+  assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
 
   // There is a frustrating issue on the first access.
   // The cache will not contain any valid data but will contain x's on

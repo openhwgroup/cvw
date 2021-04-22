@@ -9,26 +9,26 @@ add wave -noupdate -expand -group {Execution Stage} /testbench/functionRadix/fun
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/IllegalInstrFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/BreakpointFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StoreMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StoreAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/EcallFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StorePageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InterruptM
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/BPPredWrongE
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/CSRWritePendingDEM
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/RetM
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/TrapM
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/LoadStallD
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/DataStall
-add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/MulDivStallD
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/InstrMisalignedFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/InstrAccessFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/IllegalInstrFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/BreakpointFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/LoadMisalignedFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/StoreMisalignedFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/LoadAccessFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/StoreAccessFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/EcallFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/InstrPageFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/LoadPageFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/StorePageFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/hart/priv/trap/InterruptM
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/BPPredWrongE
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/CSRWritePendingDEM
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/RetM
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/TrapM
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/LoadStallD
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/DataStall
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/MulDivStallD
 add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/hzu/FlushF
 add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushD
 add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushE
@@ -172,6 +172,8 @@ add wave -noupdate -expand -group icache -expand -group {fsm out and control} /t
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/UnalignedSelect
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PCMux
+add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
+add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntReset
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/AHBByteLength
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/AHBOFFETWIDTH
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/BlockByteLength
@@ -179,34 +181,35 @@ add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/i
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/WORDSPERLINE
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/LOGWPL
 add wave -noupdate -expand -group icache -group parameters /testbench/dut/hart/ifu/icache/controller/LINESIZE
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/FetchCountFlag
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/FetchCount
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/InstrPAdrF
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/InstrReadF
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/InstrAckF
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/InstrInF
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteData
-add wave -noupdate -expand -group icache -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWritePAdr
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/DataValidBit
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/DataValid
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/ReadTag
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/DataTag
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/cachetags/ReadAddr
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/cachetags/ReadData
-add wave -noupdate -expand -group icache -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/ReadPAdr
-add wave -noupdate -expand -group icache -group memory -expand -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteEnable
-add wave -noupdate -expand -group icache -group memory -expand -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteLine
-add wave -noupdate -expand -group icache -group memory -expand -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WritePAdr
-add wave -noupdate -expand -group icache -group memory -expand -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteSet
-add wave -noupdate -expand -group icache -group memory -expand -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteTag
-add wave -noupdate -expand -group icache -group memory -expand -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/cachetags/StoredData
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/FetchCountFlag
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/FetchCount
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrPAdrF
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrReadF
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrAckF
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrInF
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteData
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWritePAdr
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/DataValidBit
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/DataValid
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/ReadTag
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/DataTag
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/cachetags/ReadAddr
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/cachetags/ReadData
+add wave -noupdate -expand -group icache -expand -group memory -group {tag read} /testbench/dut/hart/ifu/icache/cachemem/ReadPAdr
+add wave -noupdate -expand -group icache -expand -group memory -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteEnable
+add wave -noupdate -expand -group icache -expand -group memory -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteLine
+add wave -noupdate -expand -group icache -expand -group memory -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WritePAdr
+add wave -noupdate -expand -group icache -expand -group memory -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteSet
+add wave -noupdate -expand -group icache -expand -group memory -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/WriteTag
+add wave -noupdate -expand -group icache -expand -group memory -group {tag write} /testbench/dut/hart/ifu/icache/cachemem/cachetags/StoredData
 add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbench/dut/hart/ifu/icache/controller/FinalInstrRawF
 add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbench/dut/hart/ifu/icache/controller/AlignedInstrRawD
 add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbench/dut/hart/ifu/icache/controller/InstrRawD
-add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPF
-add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPreFinalF
-add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPFinalF
+add wave -noupdate -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCNextPF
+add wave -noupdate -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCPF
+add wave -noupdate -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCPreFinalF
+add wave -noupdate -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCPFinalF
 add wave -noupdate /testbench/dut/hart/ifu/icache/controller/ICacheMemReadData
 add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPreFinalF
 add wave -noupdate /testbench/dut/hart/ifu/icache/cachemem/ReadLine
@@ -214,9 +217,11 @@ add wave -noupdate -radix hexadecimal -childformat {{{/testbench/dut/hart/ifu/ic
 add wave -noupdate -label {read offset} -radix unsigned -childformat {{(4) -radix unsigned} {(3) -radix unsigned} {(2) -radix unsigned} {(1) -radix unsigned} {(0) -radix unsigned}} -subitemconfig {{/testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr[4]} {-radix unsigned} {/testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr[3]} {-radix unsigned} {/testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr[2]} {-radix unsigned} {/testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr[1]} {-radix unsigned} {/testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr[0]} {-radix unsigned}} /testbench/dut/hart/ifu/icache/cachemem/offset
 add wave -noupdate /testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr
 add wave -noupdate /testbench/dut/hart/ifu/CompressedF
+add wave -noupdate /testbench/dut/hart/ifu/icache/controller/SpillDataBlock0
+add wave -noupdate /testbench/dut/hart/ifu/icache/controller/PCPreFinalF_q
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {44 ns} 0} {{Cursor 2} {9098514 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 2} {9808584 ns} 0} {{Cursor 3} {9808065 ns} 0} {{Cursor 4} {535 ns} 0}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 513
 configure wave -justifyvalue left
@@ -231,4 +236,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {9098483 ns} {9098569 ns}
+WaveRestoreZoom {9808255 ns} {9808913 ns}
