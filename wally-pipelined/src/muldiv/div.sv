@@ -46,7 +46,8 @@ module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
    logic [64:0]        Qd, Rd, Qd2, Rd2;
    logic [3:0] 	       quotient;
    logic 	       otfzero; 
-   logic 	       shiftResult;  
+   logic 	       shiftResult;
+   logic           enablev, state0v, donev, divdonev, oftzerov, divBusyv, ulp;
 
    // Divider goes the distance to 37 cycles
    // (thanks the evil divisor for D = 0x1) 
