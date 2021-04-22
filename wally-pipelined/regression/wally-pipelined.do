@@ -40,7 +40,7 @@ vsim workopt
 
 view wave
 -- display input and output signals as hexidecimal values
-do ./wave-dos/peripheral-waves.do
+do ./wave-dos/cache-waves.do
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]

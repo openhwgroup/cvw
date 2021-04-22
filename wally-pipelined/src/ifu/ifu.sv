@@ -32,6 +32,7 @@ module ifu (
   input  logic             FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
   input  logic [`XLEN-1:0] InstrInF,
+  input  logic             InstrAckF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
@@ -72,10 +73,11 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCPF;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCNextPF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
+  logic 	    reset_q; // *** look at this later.  
 
   tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
@@ -86,7 +88,7 @@ module ifu (
 
   // branch predictor signals
   logic 	   SelBPPredF;
-  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
+  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [3:0] 	    InstrClassD, InstrClassE;
   
 
@@ -96,10 +98,11 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
-  icache ic(
+  assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
+  icache icache(
     .*,
-    .UpperPCPF(PCPF[`XLEN-1:12]),
-    .LowerPCF(PCF[11:0])
+    .UpperPCNextPF(PCNextPF[`XLEN-1:12]),
+    .LowerPCNextF(PCNextPF[11:0])
   );
 
   assign PrivilegedChangePCM = RetM | TrapM;
@@ -118,7 +121,26 @@ module ifu (
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
 		       .d1(PrivilegedNextPCM),
 		       .s(PrivilegedChangePCM),
-		       .y(UnalignedPCNextF));
+		       .y(PCNext2F));
+
+  // *** try to remove this in the future as it can add a long path.
+  // StallF may arrive late.
+/* -----\/----- EXCLUDED -----\/-----
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
+		       .d1(PCF),
+		       .s(StallF),
+		       .y(PCNext3F));
+ -----/\----- EXCLUDED -----/\----- */
+
+  mux2 #(`XLEN) pcmux4(.d0(PCNext2F),
+		       .d1(`RESET_VECTOR),
+		       .s(reset_q),
+		       .y(UnalignedPCNextF)); 
+ 
+  flop #(1) resetReg (.clk(clk),
+		      .d(reset),
+		      .q(reset_q));
+  
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);

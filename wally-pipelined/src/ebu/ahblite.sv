@@ -45,6 +45,7 @@ module ahblite (
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
   output logic [`XLEN-1:0] InstrRData,
+  output logic             InstrAckF,
   // Signals from Data Cache
   input  logic [`XLEN-1:0] MemPAdrM,
   input  logic             MemReadM, MemWriteM,
@@ -77,7 +78,8 @@ module ahblite (
   output logic [3:0]       HSIZED,
   output logic             HWRITED,
   // Stalls
-  output logic             InstrStall,/*InstrUpdate, */DataStall
+  output logic             /*InstrUpdate, */DataStall,
+		output logic MemAckW
   // *** add a chip-level ready signal as part of handshake
 );
 
@@ -185,6 +187,8 @@ module ahblite (
   assign MMUReady = (BusState == MMUTRANSLATE && NextBusState == IDLE);
 
   assign InstrRData = HRDATA;
+  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
+  assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
   assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
