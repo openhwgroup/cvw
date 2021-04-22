@@ -447,9 +447,10 @@ module testbench();
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.ic.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM, InstrW, InstrFName, InstrDName,
-                InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.icache.controller.FinalInstrRawF,
+                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
   initial

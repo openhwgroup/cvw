@@ -19,9 +19,22 @@ add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
+
 add wave /testbench/InstrDName
 add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
+add wave -hex /testbench/dut/hart/ifu/ic/controller/AlignedInstrRawD
 add wave -divider
+add wave -hex /testbench/dut/hart/ifu/ic/controller/FetchState
+add wave -hex /testbench/dut/hart/ifu/ic/controller/FetchWordNum
+add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWriteEnable
+add wave -hex /testbench/dut/hart/ifu/ic/InstrPAdrF
+add wave -hex /testbench/dut/hart/ifu/ic/InstrAckF
+add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWriteData
+add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWritePAdr
+add wave -hex /testbench/dut/hart/ifu/ic/controller/MisalignedState
+add wave -hex /testbench/dut/hart/ifu/ic/controller/MisalignedHalfInstrF
+add wave -divider
+
 
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE

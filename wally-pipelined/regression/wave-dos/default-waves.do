@@ -6,7 +6,7 @@ add wave /testbench/reset
 add wave -divider
 #add wave /testbench/dut/hart/ebu/IReadF
 add wave /testbench/dut/hart/DataStall
-add wave /testbench/dut/hart/InstrStall
+add wave /testbench/dut/hart/ICacheStallF
 add wave /testbench/dut/hart/StallF
 add wave /testbench/dut/hart/StallD
 add wave /testbench/dut/hart/StallE
@@ -23,11 +23,6 @@ add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
 add wave /testbench/InstrDName
 add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
-add wave -hex /testbench/dut/hart/ifu/ic/AlignedInstrD
-add wave /testbench/dut/hart/ifu/ic/DelayF
-add wave /testbench/dut/hart/ifu/ic/DelaySideF
-add wave /testbench/dut/hart/ifu/ic/DelayD
-add wave -hex /testbench/dut/hart/ifu/ic/MisalignedHalfInstrD
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
