@@ -39,7 +39,7 @@ module ahblite (
   input  logic             StallW, FlushW,
   // Load control
   input  logic             UnsignedLoadM,
-  input  logic [1:0]       AtomicM,
+  input  logic [1:0]       AtomicMaskedM,
   input  logic [6:0]       Funct7M,
   // Signals from Instruction Cache
   input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
@@ -114,7 +114,7 @@ module ahblite (
   always_comb 
     case (BusState) 
       IDLE: if      (MMUTranslate) NextBusState = MMUTRANSLATE;
-            else if (AtomicM[1])   NextBusState = ATOMICREAD;
+            else if (AtomicMaskedM[1])   NextBusState = ATOMICREAD;
             else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
             else if (MemWriteM)    NextBusState = MEMWRITE;
             else if (InstrReadF)   NextBusState = INSTRREAD;
@@ -188,7 +188,8 @@ module ahblite (
 
   assign InstrRData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
-  assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
+  assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
+		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
   assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
@@ -199,6 +200,7 @@ module ahblite (
   flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM,    ReadDataM, ReadDataNewW);
   flopenr #(`XLEN) ReadDataOldWReg(clk, reset, CaptureDataM, ReadDataNewW, ReadDataOldW); 
   assign ReadDataW = (BusState == INSTRREADC) ? ReadDataOldW : ReadDataNewW;
+  //assign ReadDataW = (BusState == INSTRREADC) ? ReadDataOldW : ReadDataNewW;
 
   // Extract and sign-extend subwords if necessary
   subwordread swr(.*);
@@ -211,7 +213,7 @@ module ahblite (
 //                    .result(AMOResult));
       amoalu amoalu(.srca(ReadDataW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
-      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicM[1], WriteData);
+      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicMaskedM[1], WriteData);
     end else
       assign WriteData = WriteDataM;
   endgenerate

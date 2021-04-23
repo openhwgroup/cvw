@@ -27,6 +27,7 @@
 
 `include "wally-config.vh"
 
+// *** Ross Thompson amo misalignment check?
 module dmem (
   input  logic             clk, reset,
   input  logic             StallW, FlushW,
@@ -40,6 +41,7 @@ module dmem (
   input  logic [1:0]       AtomicM,
   output logic [`XLEN-1:0] MemPAdrM,
   output logic             MemReadM, MemWriteM,
+  output logic [1:0]       AtomicMaskedM,
   output logic             DataMisalignedM,
   // Writeback Stage
   input  logic             MemAckW,
@@ -68,8 +70,8 @@ module dmem (
 
   localparam STATE_READY = 0;
   localparam STATE_FETCH = 1;
-  localparam STATE_STALLED = 2;
-  
+  localparam STATE_FETCH_AMO = 2;
+  localparam STATE_STALLED = 3;
 
   tlb #(.ENTRY_BITS(3), .ITLB(0)) dtlb(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
                 .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
@@ -95,6 +97,7 @@ module dmem (
   // *** this is also the place to squash if the cache is hit
   assign MemReadM = MemRWM[1] & ~DataMisalignedM & CurrState != STATE_STALLED;
   assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM & CurrState != STATE_STALLED;
+  assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
   assign MemAccessM = |MemRWM;
 
   // Determine if address is valid
@@ -143,8 +146,11 @@ module dmem (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (MemAccessM & ~DataMisalignedM) NextState = STATE_FETCH;
-                   else            NextState = STATE_READY;
+      STATE_READY: if (MemRWM[1] & MemRWM[0]) NextState = STATE_FETCH_AMO; // *** should be some misalign check
+                   else if (MemAccessM & ~DataMisalignedM) NextState = STATE_FETCH;
+                   else                                    NextState = STATE_READY;
+      STATE_FETCH_AMO: if (MemAckW)                        NextState = STATE_FETCH;
+                       else                                NextState = STATE_FETCH_AMO;
       STATE_FETCH: if (MemAckW & ~StallW)     NextState = STATE_READY;
                    else if (MemAckW & StallW) NextState = STATE_STALLED;
 		   else                       NextState = STATE_FETCH;
