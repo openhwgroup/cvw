@@ -124,6 +124,7 @@ module wallypipelinedhart (
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
+  logic [1:0] 	    AtomicMaskedM;
   logic [2:0]       Funct3M;
   logic [`XLEN-1:0] MemAdrM, MemPAdrM, WriteDataM;
   logic [`XLEN-1:0] ReadDataW;
