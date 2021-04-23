@@ -334,7 +334,8 @@ module testbench();
     "rv32i/WALLY-CSRRC", "4000",
     "rv32i/WALLY-CSRRWI", "3000",
     "rv32i/WALLY-CSRRSI", "3000",
-    "rv32i/WALLY-CSRRCI", "3000"
+    "rv32i/WALLY-CSRRCI", "3000",
+    "rv32i/WALLY-PIPELINE", "1a800"
   };
 
   string testsBP64[] = '{
