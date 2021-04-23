@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 ###################################################################################################
 # testgen-PIPELINE.py
 #
@@ -1716,7 +1716,7 @@ InstrTypes = {  'R' : ['add', 'sub', 'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 
 
 XLEN = ['32']
 INSTRUCTION_TYPE = ['I']
-NUMINSTR = 10000
+NUMINSTR = 70000
 IMPERASPATH = "../../imperas-riscv-tests/riscv-test-suite/"
 
 seed(42)
