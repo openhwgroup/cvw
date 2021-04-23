@@ -1,5 +1,13 @@
 `include "wally-config.vh"
 
+function logic [`XLEN-1:0] adrTranslator( 
+  input logic [`XLEN-1:0] adrIn);
+  begin
+    // MMU team put translation here!!
+    assign adrTranslator = adrIn;
+  end
+endfunction
+
 module testbench_busybear();
 
   logic            clk, reset;
@@ -68,7 +76,7 @@ module testbench_busybear();
   // read CSR trace file
   integer data_file_csr, scan_file_csr;
   initial begin
-    data_file_csr = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedCSRs.txt"}, "r");
+    data_file_csr = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedCSRs2.txt"}, "r");
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -189,7 +197,7 @@ module testbench_busybear();
   logic [63:0] readMask;
   assign readMask = ((1 << (8*(1 << HSIZE))) - 1) << 8 * HADDR[2:0];
 
-  logic [`XLEN-1:0] readAdrExpected;
+  logic [`XLEN-1:0] readAdrExpected, readAdrTranslated;
 
   import ahbliteState::*;
   always @(dut.HRDATA) begin
@@ -204,8 +212,9 @@ module testbench_busybear();
       end
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
       scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
-      if (~equal(HADDR,readAdrExpected,4)) begin
-        $display("%0t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrExpected);
+      assign readAdrTranslated = adrTranslator(readAdrExpected);
+      if (~equal(HADDR,readAdrTranslated,4)) begin
+        $display("%0t ps, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, instrs, HADDR, readAdrTranslated);
         `ERROR
       end
       if ((readMask & HRDATA) !== (readMask & dut.HRDATA)) begin
@@ -227,7 +236,7 @@ module testbench_busybear();
 
   end
 
-  logic [`XLEN-1:0] writeDataExpected, writeAdrExpected;
+  logic [`XLEN-1:0] writeDataExpected, writeAdrExpected, writeAdrTranslated;
 
   // this might need to change
   //always @(HWDATA or HADDR or HSIZE or HWRITE) begin
@@ -240,12 +249,14 @@ module testbench_busybear();
       end
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
+      assign writeAdrTranslated = adrTranslator(writeAdrExpected);
+
       if (writeDataExpected != HWDATA) begin
         $display("%0t ps, instr %0d: HWDATA does not equal writeDataExpected: %x, %x", $time, instrs, HWDATA, writeDataExpected);
         `ERROR
       end
-      if (~equal(writeAdrExpected,HADDR,1)) begin
-        $display("%0t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrExpected);
+      if (~equal(writeAdrTranslated,HADDR,1)) begin
+        $display("%0t ps, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, instrs, HADDR, writeAdrTranslated);
         `ERROR
       end
     end
@@ -346,10 +357,6 @@ module testbench_busybear();
               //$stop;
   generate 
     if (`BUSYBEAR == 1) begin
-      initial begin
-        #34140421;
-        $stop;
-      end
       initial begin //this is temporary until the bug can be fixed!!!
         #11130100;
       force dut.hart.ieu.dp.regf.rf[5] = 64'h0000000080000004;
