@@ -42,9 +42,9 @@ module privileged (
   input  logic             PrivilegedM,
   input  logic             ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM,
   input  logic             WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM,
-  input  logic             InstrMisalignedFaultM, InstrAccessFaultF, IllegalIEUInstrFaultD,
-  input  logic             LoadMisalignedFaultM, LoadAccessFaultM,
-  input  logic             StoreMisalignedFaultM, StoreAccessFaultM,
+  input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD,
+  input  logic             LoadMisalignedFaultM,
+  input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
@@ -52,7 +52,16 @@ module privileged (
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic [2:0]       FRM_REGW,
-  input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM
+  input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM,
+
+  // PMA checker signals
+  input  logic [31:0]      HADDR,
+  input  logic [2:0]       HSIZE, HBURST,
+  input  logic             HWRITE,
+  input  logic             Atomic, Execute, Write, Read,
+  output logic             Cacheable, Idempotent, AtomicAllowed,
+  output logic             SquashAHBAccess,
+  output logic [5:0]       HSELRegions
 );
 
   logic [1:0] NextPrivilegeModeM;
@@ -67,7 +76,8 @@ module privileged (
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic LoadPageFaultM, StorePageFaultM; 
   logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
-  logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
+  logic InstrAccessFaultF, InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
+  logic LoadAccessFaultM, StoreAccessFaultM;
   logic IllegalInstrFaultM;
 
   logic BreakpointFaultM, EcallFaultM;
@@ -117,6 +127,12 @@ module privileged (
   ///////////////////////////////////////////
 
   csr csr(.*);
+
+  ///////////////////////////////////////////
+  // Check physical memory accesses
+  ///////////////////////////////////////////
+
+  pmachecker pmachecker(.*);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 

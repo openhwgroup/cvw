@@ -1,305 +1,1031 @@
 #!/usr/bin/python
+###################################################################################################
+# testgen-PIPELINE.py
+#
+# Shriya Nadgauda: snadgauda@hmc.edu & Ethan Falicov: efalicov@hmc.edu
+# Created: Feb 2, 2021
+#
+# Generate random assembly code for RISC-V Processor Design Validation.
+###################################################################################################
 
+# Many Functions Based On: https://github.com/wallento/riscv-python-model (MIT License)
+
+
+###################################################################################################
+# Libraries
+###################################################################################################
+from random import seed
+from random import randint
+from enum import Enum
 import numpy as np
-import string
+
+import re
+
 from datetime import datetime
 
-INSTRUCTION_SIZE = 32
-VALID_REGISTERS = [str(x) for x in range(1, 32) if x != 6] # generates list of ints from (1, 31) without 6
+MEMSTART = 'testdata'
+###################################################################################################
+# Main Body
+###################################################################################################
 
-# Enumeration for decoding instruction formats
-NAME            = 0
-REG             = 1
-ADDR            = 5
-IMM             = 6
-ZIMM            = 7
-LABEL           = 8
+class InvalidImmediateValueException(Exception):
+    pass
 
-# Enumeration for decoding alignments
-BYTE            = 1
-HALF            = INSTRUCTION_SIZE // 16
-WORD            = INSTRUCTION_SIZE // 8
-NONE            = 1 
+class InvalidRegisterNumberException(Exception):
+    pass
 
-wordsize = 8
+class InvalidRegisterValueException(Exception):
+    pass
 
-class InstrGenerator():
+class WriteToImmutableRegisterException(Exception):
+    pass
+
+class ReadFromUninitializedMemoryException(Exception):
+    pass
+
+class InvalidMemoryWriteLocation(Exception):
+    pass
+
+def zeroExtend(inputBits, resultNumBits):
+    numDigitsToAppend = resultNumBits - len(inputBits)
+    newBits = inputBits
+    if numDigitsToAppend > 0:
+        newBits = ('0' * numDigitsToAppend) + inputBits
+    return newBits
+
+def oneExtend(inputBits, resultNumBits):
+    numDigitsToAppend = resultNumBits - len(inputBits)
+    newBits = inputBits
+    if numDigitsToAppend > 0:
+        newBits = ('1' * numDigitsToAppend) + inputBits
+    return newBits
+
+def signExtend(inputBits, resultNumBits):
+    if inputBits[0] == '1':
+        return oneExtend(inputBits = inputBits, resultNumBits = resultNumBits)
+    return zeroExtend(inputBits = inputBits, resultNumBits = resultNumBits)
+
+def binToDec(inputBits):
+    if inputBits[0] == '0':
+        return int(inputBits, 2)
     
-    class InstrDict():
-        INSTR_RV32I = \
-        ["lb", "lh", "lw", "lbu", "lhu", "addi", "slli", "slti", "sltiu", "xori", \
-        "srli", "srai", "ori", "andi", "auipc", "sb", "sh", "sw", "add", "sub", \
-        "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and", "lui", "beq", \
-        "bne", "blt", "bge", "bltu", "bgeu", "jal"] #37 #"jalr"
-        INSTR_RV64M = ["mul", "mulh", "muhsu", "mulhu"] #"div", "divu", "rem", "remu"
-        #TODO: Add jalr functionality 
-        
-        # Lists of instructions that follow a specific format
-        INSTR_MEM = ["lb", "lh", "lw", "lbu", "lhu", "sb", "sh", "sw"] #8
-        INSTR_DEST_SRC1_IMM = ["addi", "slti", "sltiu", "xori", "ori", "andi", "jarl"] #7
-        INSTR_DEST_SRC1_ZIMM = ["slli", "srli", "srai"] #3
-        INSTR_DEST_IMM = ["auipc", "lui"] #2
-        INSTR_DEST_SRC1_SRC2 = ["add", "sub", "sll", "slt", "sltu", "xor", "srl", "sra", "or", "and"]
-        
-        INSTR_SRC1_SRC2_LABEL = ["beq", "bne", "blt", "bge", "bltu", "bgeu"] #6
-        INSTR_DEST_LABEL = ["jal"] #1
-
-        INSTR_DEST_SRC1_SRC2_64M = ["mul", "mulh", "muhsu", "mulhu", "div", "divu", "rem", "remu"]
-
-        def __init__(self):
-            self.instr = {}
-            
-        
-        def fillInstructionDictRV32i(self):
-            self.instr["lb"] = [(NAME, REG, ADDR), BYTE]
-            self.instr["lh"] = [(NAME, REG, ADDR), HALF]
-            self.instr["lw"] = [(NAME, REG, ADDR), WORD]
-            self.instr["lbu"] = [(NAME, REG, ADDR), BYTE]
-            self.instr["lhu"] = [(NAME, REG, ADDR), HALF]
-
-            self.instr["addi"] = [(NAME, REG, REG, IMM), NONE]
-            self.instr["slli"] = [(NAME, REG, REG, ZIMM), NONE]
-            self.instr["slti"] = [(NAME, REG, REG, IMM), NONE]
-            self.instr["sltiu"] = [(NAME, REG, REG, IMM), NONE]
-            self.instr["xori"] = [(NAME, REG, REG, IMM), NONE]
-
-            self.instr["srli"] = [(NAME, REG, REG, ZIMM), NONE]
-            self.instr["srai"] = [(NAME, REG, REG, ZIMM), NONE]
-            self.instr["ori"] = [(NAME, REG, REG, IMM), NONE]
-            self.instr["andi"] = [(NAME, REG, REG, IMM), NONE]
-            self.instr["auipc"] = [(NAME, REG, IMM), NONE]
-
-            self.instr["sb"] = [(NAME, REG, ADDR), BYTE]
-            self.instr["sh"] = [(NAME, REG, ADDR), HALF]
-            self.instr["sw"] = [(NAME, REG, ADDR), WORD]
-            self.instr["add"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["sub"] = [(NAME, REG, REG, REG), NONE]
-
-            self.instr["sll"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["slt"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["sltu"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["xor"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["srl"] = [(NAME, REG, REG, REG), NONE]
-
-            self.instr["sra"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["or"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["and"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["lui"] = [(NAME, REG, IMM), NONE]
-            self.instr["beq"] = [(NAME, REG, REG, LABEL), NONE]
-            
-            self.instr["bne"] = [(NAME, REG, REG, LABEL), NONE]
-            self.instr["blt"] = [(NAME, REG, REG, LABEL), NONE] 
-            self.instr["bge"] = [(NAME, REG, REG, LABEL), NONE]
-            self.instr["bltu"] = [(NAME, REG, REG, LABEL), NONE]
-            self.instr["bgeu"] = [(NAME, REG, REG, LABEL), NONE]
-            
-            #self.instr["jalr"] = [(NAME, REG, REG, IMM), NONE]
-            self.instr["jal"] = [(NAME, REG, LABEL), WORD]
-            
-        def fillInstructionDictRV64M(self):
-            self.instr["mul"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["mulh"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["mulhsu"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["mulhu"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["div"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["divu"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["rem"] = [(NAME, REG, REG, REG), NONE]
-            self.instr["remu"] = [(NAME, REG, REG, REG), NONE]
+    numBits = len(inputBits)
+    twoCompMask = (1 << (numBits - 1)) - 1
+    msbMask = (1 << (numBits -1))
     
-    class RandomSelect():
-        LETTER_CHOICES = string.ascii_letters
-        
-        def randReg(self, regs):
-            return regs[np.random.randint(0, len(regs))]
-        
-        def randBinary(self, signed, numBits, valueAlignment):
-            # use this for corners: xlen = 32 here 
-            corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**numBits, 2**(numBits-1)-2, 2**(numBits-1)-1, \
-            2**(numBits-1), 2**(numBits-1)+1, 0xC365DDEB9173AB42 % 2**numBits, 2**(numBits)-2, 2**(numBits)-1]
-            # when not biased don't gen numbers from (|2^(n-2) to 2^(n-2)|)
-            biased = np.random.randint(0, 3) # on 2 generate random edge case
-            returnVal = 0
-            sign = 0
-            if biased < 2:
-                # print("unbiased")
-                if not(signed):
-                    returnVal = np.random.randint(0, 2**(numBits) - 1)
+    return int((-1 * (msbMask * int(inputBits[0], 2))) + (twoCompMask & int(inputBits, 2)))
 
-                else:    
-                    returnVal = np.random.randint(-2**(numBits - 1), 2**(numBits - 1) - 1)
-            
+def randBinary(signed, numBits, valueAlignment):
+    # use this for corners: xlen = 32 here
+    # corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
+    # 2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1]
+    # when not biased don't gen numbers from (|2^(n-2) to 2^(n-2)|)
+    biased = np.random.randint(0, 3) # on 2 generate random edge case
+    returnVal = 0
+    sign = 0
+    if biased < 2:
+        # print("unbiased")
+        if not(signed):
+            returnVal = np.random.randint(0, 2**(numBits - 2))
+
+        else:    
+            returnVal = np.random.randint(-2**(numBits - 2), 2**(numBits - 2))
+    
+    else:
+        # print("corner")
+        if not(signed):
+            returnVal = np.random.randint(2**(numBits - 2)+1, 2**(numBits - 1)-2)
+
+        else:    
+            sign = np.random.randint(0, 2) # 0 is pos, 1 is neg
+            if sign:
+                returnVal = np.random.randint(2**(numBits - 2)+1, 2**(numBits - 1)-2)
             else:
-                # print("corner")
-                returnVal = corners[np.random.randint(0, len(corners))]
+                returnVal = np.random.randint(-2**(numBits - 1), -2**(numBits - 2)-1)
 
-            binReturnVal = bin(returnVal)
-            
-            if returnVal >= 0:
-                binReturnVal = binReturnVal[2:] # get rid of 0b
+    binReturnVal = bin(returnVal) #remove "0b"
+    if returnVal >= 0:
+        binReturnVal = binReturnVal[2:]
 
-                #make binary correct length
-                while(len(binReturnVal) < numBits):
-                    binReturnVal = "0" + binReturnVal
+        #make binary correct length
+        while(len(binReturnVal) < numBits):
+            binReturnVal = "0" + binReturnVal
+    else:
+        binReturnVal = binReturnVal[3:]
+        #two's compliment
+        flipped = ''.join('1' if x == '0' else '0' for x in binReturnVal)
+        added = bin(int(flipped, 2) + 1)[2:]
 
-            else:
-                binReturnVal = binReturnVal[3:] # get rid of -0b
-                #two's compliment
-                flipped = ''.join('1' if x == '0' else '0' for x in binReturnVal)
-                added = bin(int(flipped, 2) + 1)[2:]
-
-                while(len(added) < len(flipped)):
-                    added = "0" + added
-                while(len(added) < numBits):
-                    added = "1" + added
-                
-                binReturnVal = added
-
-            # ensure correct value assignment
-            if valueAlignment == 1:
-                return binReturnVal
-            
-            indexVal = valueAlignment // 2
-            returnValue = binReturnVal[:-indexVal] + "0"*indexVal 
-            return returnValue
-
-        def randHex(self, sign, numBits, divisibleByValue):
-            return hex(int(self.randBinary(sign, numBits*4, divisibleByValue), 2))
+        while(len(added) < len(flipped)):
+            added = "0" + added
+        while(len(added) < numBits):
+            added = "1" + added
         
-        def randDec(self, valueRangeMin, valueRangeMax, divisibleByValue):
-            valRange = (valueRangeMax - valueRangeMin)//divisibleByValue   
-            return (np.random.randint(0, valRange + 1) * divisibleByValue + valueRangeMin)
+        binReturnVal = added
 
-    def __init__(self, numMemoryRegisters, xlen):
-        self.instrDict = self.InstrDict()
-        self.instrDict.fillInstructionDictRV32i()
-        if (xlen == 64):
-            self.instrDict.fillInstructionDictRV64M()
+    # ensure correct value assignment
+    if valueAlignment == 1:
+        return binReturnVal
+    
+    indexVal = valueAlignment // 2
+    returnValue = binReturnVal[:-indexVal] + "0"*indexVal 
+    return returnValue
 
-        self.randSelect = self.RandomSelect()
+def randHex(sign, numBits, divisibleByValue):
+    val = hex(int(randBinary(sign, numBits*4, divisibleByValue), 2))
+    return val
 
-        self.memoryAdrList = []
-        self.populateMemory()
-        self.prevLabel = 0
+def randDec(valueRangeMin, valueRangeMax, divisibleByValue):
+    valRange = (valueRangeMax - valueRangeMin)//divisibleByValue   
+    return (np.random.randint(0, valRange + 1) * divisibleByValue + valueRangeMin)
 
-        self.memReg = []
-        self.anyReg = VALID_REGISTERS[:]
+class Label:
+    def __init__(self, name, pcValue):
+        self.name = name
+        self.pcValue = pcValue
 
+class Immediate:
+    def __init__(self, xlen, numBits = None, signed = 1):
+        self.xlen = int(xlen)
+        if numBits == None:
+            numBits = self.xlen
+        self.numBits = int(numBits)
+        self.signed = signed
+        self.bits = '0'*self.numBits
+        self.twoCompMask = (1 << (self.numBits - 1)) - 1
+        self.msbMask = (1 << (self.numBits -1))
+
+        self.value = self.getDecValue()
+    
+        self.maxValue = self.getMaxValue()
+        self.minValue = self.getMinValue()
+
+    def getDecValue(self):
+        if self.signed == 1:
+            return self.getValueSigned()
+        return self.getValueUnsigned()
+
+    def getMaxValue(self):
+        if self.signed == 1:
+            return ((2**(self.numBits - 1)) - 1)
+        return ((2**self.numBits) - 1) 
+
+    def getMinValue(self):
+        if self.signed == 1:
+            return (-1 * 2**(self.numBits - 1))
+        return 0
+
+    def signExtend(self, inputBits = None):
+        if inputBits == None:
+            inputBits = self.bits
+
+        return signExtend(inputBits, self.numBits)
+
+    def oneExtend(self, inputBits = None):
+        if inputBits == None:
+            inputBits = self.bits
+
+        return oneExtend(inputBits, self.numBits)
+
+    def zeroExtend(self, inputBits = None):
+        if inputBits == None:
+            inputBits = self.bits
+
+        return zeroExtend(inputBits, self.numBits)
+
+    def setValue(self, newValue, signed = None):
+        if signed != None:
+            self.signed = signed
+        self.maxValue = self.getMaxValue()
+        self.minValue = self.getMinValue()
+
+        if newValue > self.maxValue:
+            errStr = 'Attempted: {}, Max: {}'.format(newValue, self.maxValue)
+            raise InvalidImmediateValueException(errStr)
+            newValue = self.maxValue
+
+        elif newValue < self.minValue:
+            errStr = 'Attempted: {}, Min: {}'.format(newValue, self.minValue)
+            raise InvalidImmediateValueException(errStr)
+            newValue = self.minValue
+        
+        self.value = newValue
+
+        bitValue = ''
+        if (self.signed == 1) and (newValue < 0):
+            bitValue = bin(self.value)[3:] # Remove the -0b
+            flipped = ''.join('1' if x == '0' else '0' for x in bitValue)
+            bitValue = bin(int(flipped, 2) + 1)[2:]
+
+            if len(bitValue) < len(flipped): # Correction for removing sig figs
+                bitValue = '0'*(len(flipped)-len(bitValue)) + bitValue
+
+            bitValue = self.oneExtend(bitValue)
+        elif self.signed == 1 and newValue >= 0:
+            bitValue = bin(self.value)[2:] # Remove the 0b
+            bitValue = self.zeroExtend(bitValue)
+        else:
+            bitValue = bitValue = bin(self.value)[2:] # Remove the 0b
+            bitValue = self.zeroExtend(bitValue)
+        
+        self.bits = bitValue
+
+    def setBits(self, newBits, signed = None):
+        if signed != None:
+            self.signed = signed
+
+        if len(newBits) != self.numBits:
+            errStr = 'Attempted to write {} bits into {} bit immediate'.format(len(newBits), self.numBits)
+            raise InvalidImmediateValueException(errStr)
+        
+        self.bits = newBits
+        self.value = self.getDecValue()
+        
+    def randomize(self, signed = None, minVal = None, maxVal = None, granularity = None):
+        if signed != None: 
+            self.signed = signed
+        self.maxValue = self.getMaxValue()
+        self.minValue = self.getMinValue()
+
+        if minVal == None:
+            minVal = self.minValue
+        if maxVal == None:
+            maxVal = self.maxValue
+        if granularity == None:
+            granularity = GRANULARITY.BYTE
+        
+        granularityNum = 1
+        if granularity == GRANULARITY.HALFWORD:
+            granularityNum = self.xlen // 16
+        elif granularity == GRANULARITY.WORD:
+            granularityNum = self.xlen // 8 
+
+        minVal = int(np.ceil(minVal / granularityNum) * granularityNum)
+        maxVal = int(np.floor(maxVal / granularityNum) * granularityNum)
+
+        
+        valRange = (maxVal - minVal)//granularityNum
+        randValue = randint(0, valRange) * granularityNum + minVal
+
+        self.setValue(randValue, signed=self.signed)
+
+    def getValueSigned(self):
+        if self.bits[0] == '0':
+            return int(self.bits, 2)
+        else:
+            return int((-1 * (self.msbMask * int(self.bits[0], 2))) + (self.twoCompMask & int(self.bits, 2)))
+
+    def getValueUnsigned(self):
+        return int(self.bits, 2)
+
+    def __str__(self):
+        infoStr = ''
+        if self.signed == 1:
+            infoStr = 'Signed {} bit value: {}'.format(self.numBits, self.value)
+        infoStr = 'Unsigned {} bit value: {}'.format(self.numBits, self.value)
+        return 'Immediate bits {} ({})'.format(self.bits, infoStr)
+
+    @classmethod
+    def randImm12(cls, xlen, signed = 1):
+        imm = cls(xlen = xlen, numBits = 12, signed = signed)
+        imm.randomize()
+        return imm
+
+    @classmethod
+    def setImm12(cls, xlen, value, signed = 1):
+        imm = cls(xlen = xlen, numBits = 12, signed = signed)
+        imm.setValue(newValue = value)
+        return imm
+
+    @classmethod
+    def setImm20(cls, xlen, value, signed = 1):
+        imm = cls(xlen = xlen, numBits = 20, signed = signed)
+        imm.setValue(newValue = value, signed=1)
+        return imm
+
+    @classmethod
+    def randZImm5(cls, xlen, signed = 0):
+        imm = cls(xlen = xlen, numBits = 5, signed = signed)
+        imm.randomize()
+        return imm
+
+    @classmethod
+    def randImm13(cls, xlen, signed = 1):
+        imm = cls(xlen = xlen, numBits = 13, signed = signed)
+        imm.randomize()
+        return imm
+
+    @classmethod
+    def randImm20(cls, xlen, signed = 1):
+        imm = cls(xlen = xlen, numBits = 20, signed = signed)
+        imm.randomize()
+        return imm
+       
+class Register:
+    def __init__(self, xlen, signed = 1):
+        self.xlen = int(xlen)
+        self.numBits = self.xlen
+        self.signed = signed
+        self.bits = '0'*self.numBits
+        self.twoCompMask = (1 << (self.numBits - 1)) - 1
+        self.msbMask = (1 << (self.numBits -1))
+
+        self.value = self.getDecValue()
+        self.immutable = False
+        self.regName = None
+    
+        self.maxValue = self.getMaxValue()
+        self.minValue = self.getMinValue()
+    
+    def getRegName(self):
+        return self.regName
+        
+    def setRegName(self, newName):
+        self.regName = newName
+
+    def setImmutable(self, immutable):
+        self.immutable = immutable    
+
+    def getDecValue(self):
+        if self.signed == 1:
+            return self.getValueSigned()
+        return self.getValueUnsigned()
+
+    def getMaxValue(self):
+        if self.signed == 1:
+            return (2**(self.numBits - 1) - 1)
+        return (2**(self.numBits) - 1) 
+
+    def getMinValue(self):
+        if self.signed == 1:
+            return (-1 * 2**(self.numBits - 1))
+        return 0
+
+    def signExtend(self, inputBits = None):
+        if inputBits == None:
+            inputBits = self.bits
+
+        return signExtend(inputBits, self.numBits)
+
+    def oneExtend(self, inputBits = None):
+        if inputBits == None:
+            inputBits = self.bits
+
+        return oneExtend(inputBits, self.numBits)
+
+    def zeroExtend(self, inputBits = None):
+        if inputBits == None:
+            inputBits = self.bits
+
+        return zeroExtend(inputBits, self.numBits)  
+
+    def setValue(self, newValue, signed = None):
+        if self.immutable:
+            raise(WriteToImmutableRegisterException)
+        else:
+            if signed != None:
+                self.signed = signed
+            self.maxValue = self.getMaxValue()
+            self.minValue = self.getMinValue()
+
+            if newValue > self.maxValue:
+                errStr = 'Attempted: {}, Max: {}'.format(newValue, self.maxValue)
+                raise InvalidRegisterValueException(errStr)
+                newValue = self.maxValue
+
+            elif newValue < self.minValue:
+                errStr = 'Attempted: {}, Min: {}'.format(newValue, self.minValue)
+                raise InvalidRegisterValueException(errStr)
+                newValue = self.minValue
+            
+            self.value = newValue
+
+            bitValue = ''
+            if signed == 1 and newValue < 0:
+                bitValue = bin(self.value)[3:] # Remove the -0b
+                flipped = ''.join('1' if x == '0' else '0' for x in bitValue)
+                bitValue = bin(int(flipped, 2) + 1)[2:]
+
+                if len(bitValue) < len(flipped): # Correction for removing sig figs
+                    bitValue = '0'*(len(flipped)-len(bitValue)) + bitValue
+
+                bitValue = self.oneExtend(bitValue)
+            elif signed == 1 and newValue >= 0:
+                bitValue = bin(self.value)[2:] # Remove the 0b
+                bitValue = self.zeroExtend(bitValue)
+            else:
+                bitValue = bitValue = bin(self.value)[2:] # Remove the 0b
+                bitValue = self.zeroExtend(bitValue)
+            
+            self.bits = bitValue
+
+    def setBits(self, newBits, signed = None):
+        if self.immutable:
+            raise(WriteToImmutableRegisterException)
+        else:
+            if signed != None:
+                self.signed = signed
+
+            if len(newBits) != self.numBits:
+                errStr = 'Attempted to write {} bits into {} bit register'.format(len(newBits), self.numBits)
+                raise InvalidRegisterValueException(errStr)
+            
+            self.bits = newBits
+            self.value = self.getDecValue()
+        
+    def randomize(self, signed = None, minVal = None, maxVal = None, granularity = None):
+        if self.immutable:
+            raise(WriteToImmutableRegisterException)
+        else:
+            if signed != None: 
+                self.signed = signed
+            self.maxValue = self.getMaxValue()
+            self.minValue = self.getMinValue()
+            
+            if minVal == None:
+                minVal = self.minValue
+            if maxVal == None:
+                maxVal = self.maxValue
+            if granularity == None:
+                granularity = GRANULARITY.BYTE
+            
+            granularityNum = 1
+            if granularity == GRANULARITY.HALFWORD:
+                granularityNum = self.xlen // 16
+            elif granularity == GRANULARITY.WORD:
+                granularityNum = self.xlen // 8 
+
+            minVal = int(np.ceil(minVal / granularityNum) * granularityNum)
+            maxVal = int(np.floor(maxVal / granularityNum) * granularityNum)
+
+            
+            valRange = (maxVal - minVal)//granularityNum
+            randValue = randint(0, valRange) * granularityNum + minVal
+        
+            self.setValue(randValue, signed=self.signed)
+    
+    def getValueSigned(self):
+        if self.bits[0] == 0:
+            return int(self.bits, 2)
+        else:
+            return int((-1 * (self.msbMask * int(self.bits[0], 2))) + (self.twoCompMask & int(self.bits, 2)))
+
+    def getValueUnsigned(self):
+        return int(self.bits, 2)
+
+    def __str__(self):
+        infoStr = ''
+        if self.signed == 1:
+            infoStr += 'Signed'
+        else:
+            infoStr += 'Unsigned'
+
+        if self.immutable == True:
+            infoStr += ' Immutable'
+        
+            
+        return('Register {} bits: {} ({} value: {})'.format(self.regName, self.bits, infoStr, self.value))
+
+    def __add__(self, other):
+        self.setValue(self.value + int(other))
+        return self
+
+    @classmethod 
+    def immutableRegister(cls, xlen, value, signed = 1):
+        reg = cls(xlen = xlen)
+        reg.setValue(newValue = value, signed = signed)
+        reg.setImmutable(immutable = True)
+        return reg
+
+class RegFile():
+    def __init__(self, xlen, numRegs = 32, immutableRegsDict = {0 : 0}, prefix = 'x'):
         self.xlen = xlen
+        self.numRegs = numRegs
+        self.regs = []
+        self.immutableRegsList = []
+        self.prefix = prefix
+
+        for i in range(0, numRegs):
+            self.regs.append(Register(xlen))
+            self.regs[-1].setRegName('{}{}'.format(prefix, i))
+            
+
+        for immutableRegKey, immutableRegVal in immutableRegsDict.items():
+            self.regs[immutableRegKey].setValue(newValue = immutableRegVal, signed = 1)
+            self.immutableRegsList.append(immutableRegKey)
+        
+    def getRandReg(self):
+        reg = randint(1, len(self.regs)-1)
+        while(reg in self.immutableRegsList):
+            reg = randint(1, len(self.regs)-1)
+        return self.regs[reg]
+    
+    # def getRandMemReg(self):
+    #     reg = randint(1, len(self.memoryreg)-1)
+    #     while(reg in self.immutableRegsList):
+    #         reg = randint(1, len(self.memoryreg)-1)
+    #     return str(reg)
+
+    def randomize(self):
+        for regNum in range(0, self.numRegs):
+            if regNum not in self.immutableRegsList:
+                self.regs[regNum].randomize()
+    
+    def setRegValue(self, regNum, newValue, signed = None):
+        if regNum in self.immutableRegsList:
+            errStr = 'Write to x{} not allowed'.format(regNum)
+            raise WriteToImmutableRegisterException(errStr)
+        if regNum > self.numRegs - 1:
+            errStr = 'Write to x{} exceeds number of registers: {}'.format(regNum, self.numRegs)
+            raise InvalidRegisterNumberException(errStr)
+
+
+        self.regs[regNum].setValue(newValue = newValue, signed = signed)
+
+    def setRegBits(self, regNum, newBits, signed = None):
+        if regNum in self.immutableRegsList:
+            errStr = 'Write to x{} not allowed'.format(regNum)
+            raise WriteToImmutableRegisterException(errStr)
+
+        if regNum > self.numRegs - 1:
+            errStr = 'Write to x{} exceeds number of registers: {}'.format(regNum, self.numRegs)
+            raise InvalidRegisterNumberException(errStr)
+
+        self.regs[regNum].setBits(newBits = newBits, signed = signed)
+        
+    def __str__(self):
+        formattedString = ''
+        for x in range(0, len(self.regs)):
+            formattedString += 'x{}:\t{}\n'.format(str(x), str(self.regs[x]))
+        return formattedString
+
+class Memory():
+    def __init__(self, xlen):
+        self.memDict = {} #keys: strings, values: binary strings
+        self.xlen = int(xlen)
+        self.minVal = 0
+        self.maxVal = 2047
+    def populateMemory(self, memDict):
+        # add all values of memDict to self.memDict
+        # overwrites any values that already exist 
+        for key in memDict.keys():
+            self.memDict[key] = memDict[key]
+
+    def updateMemory(self, addr, granularity, value):
+        # sign extend value to 32 bits
+        if addr > self.maxVal:
+            errStr = 'Tried to write to invalid memory location {} max {}'.format(value, self.maxVal)
+            raise InvalidMemoryWriteLocation(errStr)
+        exValue = signExtend(value, self.xlen)
+        self.memDict[addr] = exValue
+
+    def readMemory(self, addr, granularity):
+        # check if memory is unitilaized 
+        if addr not in self.memDict.keys():
+            errStr = 'Tried to read from uninitialized address: {}'.format(addr)
+            raise ReadFromUninitializedMemoryException(errStr)
+        #     # get a random number of grandularity
+        #     self.memDict[addr] = self.genRandMemoryValue()
+        # get value from memory
+        # print(self.memDict.items())
+        val = self.memDict[addr]
+        if granularity == GRANULARITY.WORD:
+            val = val
+        elif granularity == GRANULARITY.HALFWORD:
+            val = val[-(self.xlen//2):]
+        else:
+            val = val[-(self.xlen//4):]
+        if val == "":
+            return '0'
+        return val
+    
+    def genRandMemoryValue(self):
+
+        #generate a random value
+        minVal = self.minVal
+        maxVal = self.maxVal
+        randValue = randint(0, self.maxVal + 1)
+
+        # #convert to binary string
+        # bitValue = ''
+        # bitValue = bitValue = bin(randValue)[2:] # Remove the 0b
+        # bitValue = signExtend(bitValue, self.xlen)
+        
+        return randValue
+
+class Model():
+    def __init__(self, xlen, numRegs, immutableRegsDict, initPc = 0):
+        self.xlen = int(xlen)
+        self.memory = Memory(xlen=self.xlen)
+        self.regFile = RegFile(xlen=self.xlen, immutableRegsDict = immutableRegsDict)
+        self.pc = Register(xlen=self.xlen, signed=0)
+        self.pc.setValue(newValue=initPc)
+        self.pc.setRegName(newName = 'PC')
+        self.memStart = 0x8000400
+        self.memoryImmediateCounter = 0
+        self.resultImmediateCounter = 0
+        self.totalStoreCount = 0
+    
+class TestGen():
+    def __init__(self, numInstr, immutableRegsDict, instrSet, imperasPath):
+        self.numInstr = numInstr
+        self.instrSet = instrSet
+        self.xlen = int((re.search(r'\d+', instrSet)).group())
+        self.model = Model(xlen=self.xlen, numRegs=16, immutableRegsDict = immutableRegsDict)
+
+        self.prevLabel = 0
         self.test_count = 0
 
-        for i in range(0, numMemoryRegisters):
-            reg = self.randSelect.randReg(self.anyReg)
-            self.anyReg.remove(reg)
-            self.memReg.append(reg)
+        self.imperasPath = imperasPath + instrSet.lower() + '/'
+        self.exportTestName = 'PIPELINE'
+        self.basename = 'WALLY-'+ self.exportTestName
+        self.fname = self.imperasPath + "src/" + self.basename + ".S"
+        self.refname = self.imperasPath + "references/" + self.basename + ".reference_output"
         
-        self.PC = int("80000108",16)
-    
-    def addPC(self, instr): #adapted from BB code
-        if instr == "li":
-            self.PC += 8 if (self.xlen == 32) else 20
-        elif instr == "la":
-            self.PC += 8
-        else:
-            self.PC += 4
+    def genTestInstr(self, reg):
+        imm = Immediate.setImm12(xlen = self.xlen, value = self.model.resultImmediateCounter)
+        reg6 = self.model.regFile.regs[6]
+        out = [Instr.issue(model = self.model, instrName = "sw", rs2 = reg, imm = imm, rs1 = reg6)]
+        self.model.resultImmediateCounter += 4
+        if (self.model.resultImmediateCounter == 2044):
+            # Reset
+            imm2 = Immediate.setImm12(xlen = self.xlen, value = 2044)
+            reg6.setImmutable(False)
+            wreset = Instr.issue(model = self.model, instrName = "addi", rd = reg6, imm = imm2, rs1 = reg6) 
+            reg6.setImmutable(True)
+            self.model.resultImmediateCounter = 0
+            out.append(wreset)     
+        out.append('\n')
+        self.model.totalStoreCount += 1       
+        return out
 
-    def getRandInstruction(self, instr):
-        return instr[np.random.randint(0, len(instr))]
-
-    def getForwardingInstructions(self, instr): #TODO make so that memory register can be manipulated
-        fields, alignment = self.instrDict.instr[instr]
-        ld_instr = "lw"
-        num = np.random.randint(0, 2) # 0 signed, on 1 unsigned
-        if alignment == BYTE:
-            if num == 0:
-                ld_instr = "lbu"
-            else:
-                ld_instr = "lb"
-        if alignment == HALF:
-            if num == 0:
-                ld_instr = "lhu"
-            else:
-                ld_instr = "lw"
-
-        reg1 = self.randSelect.randReg(self.anyReg)
-        mask = self.randSelect.randHex(True, 3, alignment)
-        reg_set_instr = "andi x" + reg1 + ", x" + reg1 + ", SEXT_IMM(" + mask + ")"  # set register to  multiple of 4
-
-        rd = self.randSelect.randReg(self.anyReg)
-        imm1 = self.memoryAdrList[np.random.randint(0, len(self.memoryAdrList))] #load imm 
-        mem_instr_ld = ld_instr + " x" + rd + ", " + imm1 + "(x" + reg1 + ")" #load value to rd
-
-        reg2 = self.randSelect.randReg(self.memReg)
-        imm2 = self.memoryAdrList[np.random.randint(0, len(self.memoryAdrList))] #str imm
-        mem_instr_str = "sw" + " x" + rd + ", " + imm2 + "(x" + reg2 + ")" #store value of rd
-        
-        instructions = [reg_set_instr, mem_instr_ld, mem_instr_str]
-        check_instr = self.genTestInstr(rd)
-        for check in check_instr:
-            instructions.append(check)
-        
-        return instructions
-        
-    def jumpInstruction(self, instr):
-        fields, alignment = self.instrDict.instr[instr]
+    def branchInstruction(self, instr):
+        # get field and granularity of instruction
 
         # randomly determine forward or back branch direction
         fwd = np.random.randint(0, 2) #fwd on 1, bwd on 0
         taken = np.random.randint(0,2) #not taken on 0, taken on 1
 
-        reg_pc = self.randSelect.randReg(self.anyReg)
+        # pick 2 registers for branch comparison
+        reg1 = self.model.regFile.getRandReg()
+        reg2 = reg1
+        reg0 = self.model.regFile.regs[0]
+        while(reg2 == reg1):
+            reg2 = self.model.regFile.getRandReg()
+
+        instructions = []
+       
+        
+        if (fwd == 1):
+            # set r1 and r2 to what they should be to do the branching we want
+            if  (instr == "beq" and taken==1)   or (instr == "bne" and taken==0) or \
+                (instr == "blt" and taken==0)   or (instr == "bge" and taken==1) or \
+                (instr == "bltu" and taken==0)  or (instr == "bgeu" and taken==1): #r1 = r2
+                newInstr = Instr.issue(model = self.model, instrName="add", rd = reg1, rs1  = reg2, rs2 = reg0)
+                instructions.append(newInstr)
+
+            elif (instr == "beq" and taken==0)   or (instr == "bne" and taken==1) or \
+                (instr == "blt" and taken==1)   or (instr == "bltu" and taken==1): #r2 = r1 + 1
+                imm = Immediate.setImm12(xlen = self.xlen, value = 1)
+                newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                instructions.append(newInstr)
+
+            else: #r2 = r1 - 1
+                imm = Immediate.setImm12(xlen = self.xlen, value = -1)
+                newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                instructions.append(newInstr)
+
+            # add branching instruction
+            label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+            branch = Instr.issue(model = self.model, instrName = instr, rs1 = reg2, rs2 = reg1, label = label, dir = 'f')
+            instructions.append(branch)
+            numInstr = np.random.randint(0, 6)
+            # add random alu instructions after branching before branch point
+            for i in range(0, numInstr):
+                curr = "RAND ALU INSTRUCTION"
+                rd = self.model.regFile.getRandReg()
+                r1 = self.model.regFile.getRandReg()
+                r2 = self.model.regFile.getRandReg()
+                instr = "add"
+                if (taken == 0):
+                    instructions.append('add {}, {}, {}'.format(rd.getRegName(), r1.getRegName(), r2.getRegName()))
+                else:
+                    instructions.append(Instr.issue(model = self.model, instrName = instr, rd = rd, rs1 = r1, rs2 = r2))
+
+            instructions.append(str(self.prevLabel) + ":")
+            self.prevLabel += 1
+            return instructions
+        else:
+            if (not taken):
+                if instr == "beq":
+                    randImm = np.random.randint(1, 10)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = randImm)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+
+                elif instr == "bne":
+                    imm = Immediate.setImm12(xlen = self.xlen, value = 0)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+                
+                elif instr == "bltu":
+                    # deals with overflow
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 2)
+                    newInstr = Instr.issue(model = self.model, instrName="srli", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+
+                    randImm = np.random.randint(1, 11)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = randImm)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+
+                elif instr == "blt":
+                    # deals with overflow
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 2)
+                    newInstr = Instr.issue(model = self.model, instrName="srli", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+
+                    randImm = np.random.randint(1, 11)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = randImm)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+
+                elif instr == "bgeu":
+                    # deals with overflow
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 2)
+                    newInstr = Instr.issue(model = self.model, instrName="srli", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 15)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+
+                    randImm = np.random.randint(-10, 0)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = randImm)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+
+                elif instr == "bge":
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 15)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+
+                    randImm = np.random.randint(-10, 0)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = randImm)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+
+                label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                instructions.append(str(self.prevLabel) + ":")
+                numInstr = np.random.randint(0, 6)
+                # add random alu instructions after branching before branch point
+                for i in range(0, numInstr):
+                    curr = "RAND ALU INSTRUCTION"
+                    rd = self.model.regFile.getRandReg()
+                    while(rd == reg2 or rd == reg1):
+                        rd = self.model.regFile.getRandReg()
+                    r1 = self.model.regFile.getRandReg()
+                    r2 = self.model.regFile.getRandReg()
+                    instrJunk = "add"
+                    instructions.append('add {}, {}, {}'.format(rd.getRegName(), r1.getRegName(), r2.getRegName()))
+                branch = Instr.issue(model = self.model, instrName = instr, rs1 = reg2, rs2 = reg1, label = label, dir = 'b')
+                instructions.append(branch)  
+            else:
+                #setup reg instructions before any branching stuff
+                if instr == "beq": 
+                    numTimesRepeat = 1 #can only be repeated once with the way we are doing this
+                    imm = Immediate.setImm12(xlen = self.xlen, value = numTimesRepeat)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+                    
+                    label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                    instructions.append(str(self.prevLabel) + ":")
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = -1)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg2, imm = imm)
+                    instructions.append(newInstr)
+
+                elif instr == "bne":
+                    numTimesRepeat = np.random.randint(2, 6) 
+                    imm = Immediate.setImm12(xlen = self.xlen, value = numTimesRepeat)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+                    
+                    label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                    instructions.append(str(self.prevLabel) + ":")
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = -1)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg2, imm = imm)
+                    instructions.append(newInstr)
+                
+                elif instr == "bltu": 
+                    numTimesRepeat = np.random.randint(2, 6)*(-1)
+                    # deals with overflow
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 2)
+                    newInstr = Instr.issue(model = self.model, instrName="srli", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = numTimesRepeat)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+                    
+                    label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                    instructions.append(str(self.prevLabel) + ":")
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = 1)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg2, imm = imm)
+                    instructions.append(newInstr)
+                
+                elif instr == "blt":
+                    # deals with overflow
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 2)
+                    newInstr = Instr.issue(model = self.model, instrName="srli", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+                    
+                    numTimesRepeat = np.random.randint(2, 6)*(-1)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = numTimesRepeat)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+                    
+                    label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                    instructions.append(str(self.prevLabel) + ":")
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = 1)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg2, imm = imm)
+                    instructions.append(newInstr)
+
+                elif instr == "bgeu":
+                    numTimesRepeat = np.random.randint(2, 6)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = numTimesRepeat)
+                    
+                    # deals with overflow
+                    imm1 = Immediate.setImm12(xlen = self.xlen, value = 2)
+                    newInstr1 = Instr.issue(model = self.model, instrName="srli", rd = reg1, rs1  = reg1, imm = imm1)
+                    instructions.append(newInstr1)
+
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 15)
+                    newInstr2 = Instr.issue(model = self.model, instrName="addi", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr2)
+
+                    newInstr3 = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr3)
+                    
+                    label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                    instructions.append(str(self.prevLabel) + ":")
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = -1)
+                    newInstr4 = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg2, imm = imm)
+                    instructions.append(newInstr4)
+
+                elif instr == "bge":
+                    imm2 = Immediate.setImm12(xlen = self.xlen, value = 15)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg1, rs1  = reg1, imm = imm2)
+                    instructions.append(newInstr)
+                    
+                    numTimesRepeat = np.random.randint(2, 6)
+                    imm = Immediate.setImm12(xlen = self.xlen, value = numTimesRepeat)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg1, imm = imm)
+                    instructions.append(newInstr)
+                    
+                    label = Label(name = self.prevLabel, pcValue = self.model.pc.getValueUnsigned())
+                    instructions.append(str(self.prevLabel) + ":")
+
+                    imm = Immediate.setImm12(xlen = self.xlen, value = -1)
+                    newInstr = Instr.issue(model = self.model, instrName="addi", rd = reg2, rs1  = reg2, imm = imm)
+                    instructions.append(newInstr)
+
+                numInstr = np.random.randint(0, 5)
+                for i in range(0, numInstr):
+                    curr = "RAND ALU INSTRUCTION"
+                    rd = self.model.regFile.getRandReg()
+                    while(rd == reg2) or (rd == reg1):
+                        rd = self.model.regFile.getRandReg()
+                    r1 = self.model.regFile.getRandReg()
+                    r2 = self.model.regFile.getRandReg()
+                    instrJunk = "add"
+                    instructions.append(Instr.issue(model = self.model, instrName = instrJunk, rd = rd, rs1 = r1, rs2 = r2))
+
+                branch = Instr.issue(model = self.model, instrName = instr, rs1 = reg2, rs2 = reg1, label = label, dir = 'b')
+                instructions.append(branch) 
+            self.prevLabel += 1
+        return instructions
+
+
+    def getForwardingInstructions(self, instr):
+        ld_instr = instr
+        divBy = 1 
+        
+        granularity = None
+        if (instr == "lw"):
+            granularity = GRANULARITY.WORD
+        elif (instr == "lh") | (instr == 'lhu'):
+            divBy = self.xlen//2
+            granularity = GRANULARITY.HALFWORD
+        else:
+            divBy = self.xlen//4
+            granularity =  GRANULARITY.BYTE
+
+        instructions = []
+        
+        rd = self.model.regFile.getRandReg()
+        
+        memVal = self.model.memoryImmediateCounter
+        reg1 = self.model.regFile.regs[7]
+        
+        self.model.memoryImmediateCounter += 4
+        if (self.model.memoryImmediateCounter == 2044):
+            self.model.memoryImmediateCounter = 0
+            immMem = Immediate.setImm12(xlen = self.model.xlen, value = 2044)
+            instructions.append(Instr.issue(model = self.model, instrName = "addi" , rd = reg1, rs1 = reg1, imm = immMem))
+
+
+        imm1 = Immediate.setImm12(xlen = self.model.xlen, value = memVal)
+
+        reg2 = self.model.regFile.getRandReg()
+        instructions.append(Instr.issue(model = self.model, instrName = "sw" , rs2 = reg2, rs1 = reg1, imm = imm1))
+    
+        
+        while (rd == reg1):
+            rd = self.model.regFile.getRandReg()
+        instructions.append(Instr.issue(model = self.model, instrName = ld_instr, rd = rd, rs1 = reg1, imm = imm1))
+        
+        return instructions
+
+    def jumpInstruction(self, instr):
+        # fields, alignment = self.instrDict.instr[instr]
+        granularity = GRANULARITY.BYTE
+        divBy = 1
+
+        # randomly determine forward or back branch direction
+        fwd = np.random.randint(0, 2) #fwd on 1, bwd on 0
+        taken = np.random.randint(0,2) #not taken on 0, taken on 1
+
+        reg_pc = self.model.regFile.getRandReg()
         instructions = []
 
+        label1 = Label(name = 1, pcValue = self.model.pc.getValueUnsigned())
+        label2 = Label(name = 2, pcValue = self.model.pc.getValueUnsigned())
+        label3 = Label(name = 3, pcValue = self.model.pc.getValueUnsigned())
+
         if fwd == 1:
-            instructions.append(instr + " x" + reg_pc + ", " + str(self.prevLabel) + "f")
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg_pc, label = label1, dir = "f")  
+            instructions.append(newInstr)
             
             numInstr = np.random.randint(0, 6)
             # add random alu instructions after jumping before jump point
-            reg_check = 1
+            reg_check = self.model.regFile.getRandReg()
             for i in range(0, numInstr):
-                curr = self.getRandInstruction(self.instrDict.INSTR_DEST_SRC1_SRC2)
-                rd = self.randSelect.randReg(self.anyReg)
+                rd = self.model.regFile.getRandReg()
                 while (rd == reg_pc):
-                    rd = self.randSelect.randReg(self.anyReg)
+                    rd = self.model.regFile.getRandReg()
                 reg_check = rd
-                r1 = self.randSelect.randReg(self.anyReg)
-                r2 = self.randSelect.randReg(self.anyReg)
-                instructions.append(curr + " x" + rd + ", x" + r1 + ", x" + r2)
-            instructions.append(str(self.prevLabel) + ":")
-            self.prevLabel += 1
+                r1 = self.model.regFile.getRandReg()
+                r2 = self.model.regFile.getRandReg()
+                instructions.append(Instr.issue(model = self.model, instrName = "and", rd = rd, rs1 = r1, rs2 = r2))
+            instructions.append("1:")
+            self.model.pc += 4
 
-            #make sure jump was taken
+            # #make sure jump was taken
             check_instr = self.genTestInstr(reg_check)
             for check in check_instr:
                 instructions.append(check)
 
-            #check value in pc + 4 reg
+            # #check value in pc + 4 reg
             check_instr = self.genTestInstr(reg_pc)
             for check in check_instr:
                 instructions.append(check)
         else:
-            reg1 = self.randSelect.randReg(self.anyReg)
-            reg2 = self.randSelect.randReg(self.anyReg)
+            reg1 = self.model.regFile.getRandReg()
+            reg2 = self.model.regFile.getRandReg()
             while reg2 == reg1:
-                reg2 = self.randSelect.randReg(self.anyReg)
+                reg2 = self.model.regFile.getRandReg()
             
-            instructions.append("jal x" + reg1 + ", 1f")
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg1, label = label1, dir = "f")  
+            instructions.append(newInstr)
+            # instructions.append("jal x" + reg1 + ", 1f")
             
             instructions.append("2:")
-            instructions.append("jal x" + reg2 + ", 3f")
+            self.model.pc += 4
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg2, label = label3, dir = "f")  
+            instructions.append(newInstr)
+            # instructions.append("jal x" + reg2 + ", 3f")
             
             instructions.append("1:")
-    
+            self.model.pc += 4
+
             numInstr = np.random.randint(0,6)
             for i in range(0, numInstr):
-                curr = self.getRandInstruction(self.instrDict.INSTR_DEST_SRC1_SRC2)
-                rd = self.randSelect.randReg(self.anyReg)
-                r1 = self.randSelect.randReg(self.anyReg)
-                r2 = self.randSelect.randReg(self.anyReg)
-                instructions.append(curr + " x" + rd + ", x" + r1 + ", x" + r2)
+                rd = self.model.regFile.getRandReg()
+                r1 = self.model.regFile.getRandReg()
+                r2 = self.model.regFile.getRandReg()
+                instructions.append(Instr.issue(model = self.model, instrName = 'and', rd = rd, rs1 = r1, rs2 = r2))
             
             #test case here
-            instructions.append("jal x" + reg2 + ", 2b")
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg2, label = label2, dir = "b")  
+            instructions.append(newInstr)
+            # instructions.append("jal x" + reg2 + ", 2b")
             instructions.append("3:")
+            self.model.pc += 4
             
             check_instr = self.genTestInstr(reg1)
             for check in check_instr:
@@ -314,323 +1040,701 @@ class InstrGenerator():
                 # #3  
                 #     check answer from 1
         return instructions
-            
-    def branchInstruction(self, instr):
-        fields, alignment = self.instrDict.instr[instr]
+
+
+    def jumpRInstruction(self, instr):
+        # fields, alignment = self.instrDict.instr[instr]
+        granularity = GRANULARITY.BYTE
+        divBy = 1
 
         # randomly determine forward or back branch direction
         fwd = np.random.randint(0, 2) #fwd on 1, bwd on 0
-        taken = np.random.randint(0,2) #not taken on 0, taken on 1
 
+        reg_pc = self.model.regFile.getRandReg()
         instructions = []
 
-        # pick 2 registers for branch comparison
-        reg1 = self.randSelect.randReg(self.anyReg)
-        reg2 = reg1
-        while (reg2 == reg1):
-            reg2 = self.randSelect.randReg(self.anyReg)
-            
-        if (fwd == 1):
-            # set r1 and r2 to what they should be to do the branching we want
-            #TODO this assumed that greater than equal to or lteq are instead jsut equal, will be changed later
-            if  (instr == "beq" and taken==1)   or (instr == "bne" and taken==0) or \
-                (instr == "blt" and taken==0)   or (instr == "bge" and taken==1) or \
-                (instr == "bltu" and taken==0)  or (instr == "bgeu" and taken==1): #r1 = r2
-                instructions.append("mv x" + reg1 + ", x" + reg2)
+        label1 = Label(name = 1, pcValue = self.model.pc.getValueUnsigned())
+        label2 = Label(name = 2, pcValue = self.model.pc.getValueUnsigned())
+        label3 = Label(name = 3, pcValue = self.model.pc.getValueUnsigned())
 
-            elif (instr == "beq" and taken==0)   or (instr == "bne" and taken==1) or \
-                (instr == "blt" and taken==1)   or (instr == "bltu" and taken==1): #r2 = r1 + 1
-                instructions.append("addi x" + reg2 + ", x" + reg1 + ", 1")
-
-            else:
-                instructions.append("addi x" + reg2 + ", x" + reg1 + ", -1") #r2 = r1 - 1
-
-            # add branching instruction
-            instructions.append(instr + " x" + reg1 + ", x" + reg2 +  ", " + str(self.prevLabel) + "f")
+        if fwd == 1:
             numInstr = np.random.randint(0, 6)
-            # add random alu instructions after branching before branch point
-            reg_check = 1
+            
+            rs1 = self.model.regFile.getRandReg()
+            while (rs1 == reg_pc):
+                rs1 = self.model.regFile.getRandReg()
+
+            imm = Immediate.setImm12(xlen = self.model.xlen, value = 0)
+            
+            jumpDestVal = self.model.pc.value + numInstr * 4 + 8
+            generatedInstructions.append('li {}, MASK_XLEN({})'.format(rs1.regName ,jumpDestVal))
+            self.model.pc += 8
+            
+
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg_pc, rs1 = rs1, imm = imm, dir = "f")  
+            instructions.append(newInstr)
+            
+            
+            # add random alu instructions after jumping before jump point
+            reg_check = self.model.regFile.getRandReg()
             for i in range(0, numInstr):
-                curr = self.getRandInstruction(self.instrDict.INSTR_DEST_SRC1_SRC2)
-                rd = self.randSelect.randReg(self.anyReg)
+                rd = self.model.regFile.getRandReg()
+                while (rd == reg_pc):
+                    rd = self.model.regFile.getRandReg()
                 reg_check = rd
-                r1 = self.randSelect.randReg(self.anyReg)
-                r2 = self.randSelect.randReg(self.anyReg)
-                instructions.append(curr + " x" + rd + ", x" + r1 + ", x" + r2)
-            instructions.append(str(self.prevLabel) + ":")
-            self.prevLabel += 1
+                r1 = self.model.regFile.getRandReg()
+                r2 = self.model.regFile.getRandReg()
+                instructions.append(Instr.issue(model = self.model, instrName = "and", rd = rd, rs1 = r1, rs2 = r2))
+
+            #make sure jump was taken
             check_instr = self.genTestInstr(reg_check)
             for check in check_instr:
                 instructions.append(check)
-            return instructions
 
-        # Backwards branch case
+            #check value in pc + 4 reg
+            check_instr = self.genTestInstr(reg_pc)
+            for check in check_instr:
+                instructions.append(check)
         else:
-            if (not taken):
-                if instr == "beq":
-                    randImm = self.randSelect.randHex(True, 1, 1)
-                    while randImm == "0x0":
-                        randImm = self.randSelect.randHex(True, 1, 1)
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(randImm) + ")") #r2 = r1 + randImm (-10, 10) and not 0
-
-                elif instr == "bne":
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", 0") #r2 = r1 + 0
-                
-                elif instr == "bltu" or instr == "blt":
-                    randImm = np.random.randint(-10, 0)
-                    randMaskLen = np.random.randint(10, 100)
-                    instructions.append("addi x" + reg1 + ", x0, " + "MASK_XLEN(" + str(randMaskLen) + ")") # set reg1 to be rand positive number, helps stop infinite looping
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(randImm) + ")") #r2 = r1 + randImm (-10, -1)
-
-                elif instr == "bgeu" or instr == "bge":
-                    randImm = np.random.randint(1, 11)
-                    randMaskLen = np.random.randint(10, 100)
-                    instructions.append("addi x" + reg1 + ", x0, "+ "MASK_XLEN(" + str(randMaskLen) + ")") # set reg1 to be rand positive number, helps stop infinite looping
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(randImm) + ")") #r2 = r1 + randImm (1, 11)
-
-                instructions.append(str(self.prevLabel) + ":")
-                numInstr = np.random.randint(0, 6)
-                # add random alu instructions after branching before branch point
-                reg_check = 1
-                for i in range(0, numInstr):
-                    curr = self.getRandInstruction(self.instrDict.INSTR_DEST_SRC1_SRC2)
-                    rd = self.randSelect.randReg(self.anyReg)
-                    reg_check = rd
-                    while rd == reg1 or rd==reg2:
-                        rd = self.randSelect.randReg(self.anyReg)
-                    r1 = self.randSelect.randReg(self.anyReg)
-                    r2 = self.randSelect.randReg(self.anyReg)
-                    instructions.append(curr + " x" + rd + ", x" + r1 + ", x" + r2)
-                
-                check_instr = self.genTestInstr(reg_check)
-                for check in check_instr:
-                    instructions.append(check)
+            reg1 = self.model.regFile.getRandReg()
+            reg2 = self.model.regFile.getRandReg()
+            while reg2 == reg1:
+                reg2 = self.model.regFile.getRandReg()
             
+            jumpDestVal = self.model.pc.value + 4
+            newInstr = Instr.issue(model = self.model, instrName='jal', rd = reg1, label = label1, dir = "f")  
+            instructions.append(newInstr)
+            # instructions.append("jal x" + reg1 + ", 1f")
+            
+
+            newInstr = Instr.issue(model = self.model, instrName='jal', rd = reg2, label = label3, dir = "f")  
+            instructions.append(newInstr)
+            # instructions.append("jal x" + reg2 + ", 3f")
+            
+            instructions.append("1:")
+            self.model.pc += 4
+
+
+            rs1 = self.model.regFile.getRandReg()
+            while (rs1 == reg_pc):
+                rs1 = self.model.regFile.getRandReg()
+                
+            imm = Immediate.setImm12(xlen = self.model.xlen, value = 0)
+            
+
+            
+            generatedInstructions.append('li {}, MASK_XLEN({})'.format(rs1.regName ,jumpDestVal))
+            self.model.pc += 8
+
+            
+            rs1 = self.model.regFile.regs[0]
+            imm = Immediate.setImm12(xlen = self.model.xlen, value = jumpDestVal)
+
+            numInstr = np.random.randint(0,6)
+            for i in range(0, numInstr):
+                rd = self.model.regFile.getRandReg()
+                r1 = self.model.regFile.getRandReg()
+                r2 = self.model.regFile.getRandReg()
+                instructions.append(Instr.issue(model = self.model, instrName = 'and', rd = rd, rs1 = r1, rs2 = r2))
+            
+            #test case here
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg2, rs1 = rs1, imm = imm, dir = "b")  
+            instructions.append(newInstr)
+            # instructions.append("jal x" + reg2 + ", 2b")
+            instructions.append("3:")
+            self.model.pc += 4
+            
+            check_instr = self.genTestInstr(reg1)
+            for check in check_instr:
+                instructions.append(check)
+            
+                # jump to 1
+                # jump to 3
+                # #1
+                # junk instructions
+                # ...
+                # ...
+                # test instruction
+                # #3  
+                # check answer from 1
+        return instructions
+
+    def generateASM(self, instrSet, instrTypes):
+        generatedInstructions = []
+
+        # for memLocation in self.model.memory.memDict.keys():
+        #     memData = self.model.memory.readMemory(addr = memLocation, granularity = GRANULARITY.WORD)
+        #     memDataVal = hex(int(memData, 2))
+        #     generatedInstructions.append('li x2, MASK_XLEN({})'.format(memDataVal))
+        #     self.model.pc += 8
+        #     generatedInstructions.append('li x3, MASK_XLEN({})'.format(memLocation))
+        #     self.model.pc += 8
+        #     generatedInstructions.append('sw x2, 0(x3)')
+        #     self.model.pc += 4
+
+        generatedInstructions.append('la x7, test_data')
+        self.model.pc += 8
+
+        for reg in self.model.regFile.regs:
+            if (int(reg.regName[-1:]) not in self.model.regFile.immutableRegsList) :
+                immHex = randHex(False, 5, 1)
+                imm = int(immHex, 16)
+                reg.setValue(imm)
+                generatedInstructions.append('li {}, MASK_XLEN({})'.format(reg.getRegName(), immHex))
+                self.model.pc += 8
+            elif (reg == self.model.regFile.regs[0]):
+                immHex = 0
+                imm = 0
+                reg.setValue(imm)
+                generatedInstructions.append('li {}, MASK_XLEN({})'.format(reg.getRegName(), immHex))
+                self.model.pc += 8
+            elif (reg == self.model.regFile.regs[6]):
+                # immHex = 0
+                # imm = 0
+                # reg.setValue(imm)
+                # generatedInstructions.append('la {}, {}'.format(reg.getRegName(), "test_1_res"))
+                # self.model.pc += 8
+                pass
+        for i in range(0, self.numInstr):
+            # decide which instruction to issue
+            randInstr = instrSet[randint(0, len(instrSet)-1)]
+
+            randNum = randint(0, 2)
+            if randInstr in InstrTypes['B']:
+                newInstr = self.branchInstruction(instr = randInstr)
+                for i in newInstr:
+                    generatedInstructions.append(i)
+            elif randInstr in InstrTypes['J']:
+                newInstr = self.jumpInstruction(instr = randInstr)
+                for i in newInstr:
+                    generatedInstructions.append(i)
+            elif randInstr[0] == 'l' and randNum == 0 and randInstr != "lui":
+                newInstr = self.getForwardingInstructions(instr = randInstr)
+                for i in newInstr:
+                    generatedInstructions.append(i)
             else:
-                #setup reg instructions before any branching stuff
-                if instr == "beq": 
-                    numTimesRepeat = 1 #can only be repeated once with the way we are doing this
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(numTimesRepeat) + ")") #r2 = r1 + numTimesRepeat ( - 6)
-                    instructions.append(str(self.prevLabel) + ":")
-                    instructions.append("addi x" + reg2 + ", x" + reg2 + ", -1")
+                if randInstr in InstrTypes['R']:
+                    rd = self.model.regFile.getRandReg()
+                    rs1 = self.model.regFile.getRandReg()
+                    rs2 = self.model.regFile.getRandReg()
+                    instr = Instr.issue(model = self.model, instrName = randInstr, rd = rd, rs1 = rs1, rs2 = rs2)
+                    generatedInstructions.append(instr)
 
-                elif instr == "bne":
-                    numTimesRepeat = np.random.randint(2, 6) 
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(numTimesRepeat) + ")") #r2 = r1 + numTimesRepeat (2 - 6)
-                    instructions.append(str(self.prevLabel) + ":")
-                    instructions.append("addi x" + reg2 + ", x" + reg2 + ", -1")
+                    testInstrs = self.genTestInstr(rd)
+                    for testInstr in testInstrs:
+                        generatedInstructions.append(testInstr)
+
+                elif randInstr in InstrTypes['I']:
+                    if randInstr == "jalr":
+                        # newInstr = self.jumpRInstruction(instr = randInstr)
+                        # for i in newInstr:
+                        #     generatedInstructions.append(i)
+                        continue
+                    # memory instruction
+                    elif randInstr[0] == 'l': 
+                        rd = self.model.regFile.getRandReg()
+                        rs1 = self.model.regFile.regs[7]
+                        
+                        memLocation = list(self.model.memory.memDict.keys())[randint(0, len(self.model.memory.memDict.keys()) -1)]
+
+                        imm12 = Immediate.setImm12(xlen = self.model.xlen, value = memLocation)
+                        instr = Instr.issue(model = self.model, instrName = randInstr, rd = rd, rs1 = rs1, imm = imm12)
+                        generatedInstructions.append(instr)
+
+                        testInstrs = self.genTestInstr(rd)
+                        for testInstr in testInstrs:
+                            generatedInstructions.append(testInstr)
+                    else:
+                        rd = self.model.regFile.getRandReg()
+                        rs1 = self.model.regFile.getRandReg()
+                        imm12 = Immediate.randImm12(xlen = self.model.xlen)
+
+                        instr = Instr.issue(model = self.model, instrName = randInstr, rd = rd, rs1 = rs1, imm = imm12)
+                        generatedInstructions.append(instr)
+
+                        testInstrs = self.genTestInstr(rd)
+                        for testInstr in testInstrs:
+                            generatedInstructions.append(testInstr)
+
+                elif randInstr in InstrTypes['S']:
+                    rs2 = self.model.regFile.getRandReg()
+                    rs1 = self.model.regFile.regs[7]
                 
-                elif instr == "bltu": 
-                    numTimesRepeat = np.random.randint(2, 6)
-                    instructions.append("ori x" + reg1 + ", x" + reg1 + ", " + "1") # ensure reg1 is not 0
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(numTimesRepeat) + ")") #r2 = r1 - numTimesRepeat (2 - 6)
-                    instructions.append(str(self.prevLabel) + ":")
-                    instructions.append("addi x" + reg2 + ", x" + reg2 + ", -1")
-                
-                elif instr == "blt":
-                    numTimesRepeat = np.random.randint(2, 6)
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(numTimesRepeat) + ")") #r2 = r1 - numTimesRepeat (2 - 6)
-                    instructions.append(str(self.prevLabel) + ":")
-                    instructions.append("addi x" + reg2 + ", x" + reg2 + ", -1")
+                    immValue = self.model.memoryImmediateCounter
+                    self.model.memoryImmediateCounter += 4
+                    immMem = Immediate.setImm12(xlen = self.model.xlen, value = 2044)
+                    if (self.model.memoryImmediateCounter == 2044):
+                        self.model.memoryImmediateCounter = 0
+                        generatedInstructions.append(Instr.issue(model = self.model, instrName = "addi" , rd = rs1, rs1 = rs1, imm = immMem))
 
-                elif instr == "bgeu" or instr == "bge":
-                    numTimesRepeat = np.random.randint(2, 6)*(-1)
-                    instructions.append("addi x" + reg2 + ", x" + reg1 + ", MASK_XLEN(" + str(numTimesRepeat) + ")") #r2 = r1 + numTimesRepeat (2 - 6)
-                    instructions.append(str(self.prevLabel) + ":")
-                    instructions.append("addi x" + reg2 + ", x" + reg2 + ", 1")
+                    imm12 = Immediate.setImm12(xlen = self.model.xlen, value = immValue)
+                    instr = Instr.issue(model = self.model, instrName = randInstr, rs1 = rs1, rs2 = rs2, imm = imm12)
+                    generatedInstructions.append(instr)
 
-                # Junk instructions
-                numInstr = np.random.randint(0, 5)
-                reg_check = 1
-                for i in range(0, numInstr):
-                    curr = self.getRandInstruction(self.instrDict.INSTR_DEST_SRC1_SRC2)
-                    rd = self.randSelect.randReg(self.anyReg)
-                    reg_check = rd
-                    while rd == reg1 or rd==reg2:
-                        rd = self.randSelect.randReg(self.anyReg)
-                    r1 = self.randSelect.randReg(self.anyReg)
-                    r2 = self.randSelect.randReg(self.anyReg)
-                    instructions.append(curr + " x" + rd + ", x" + r1 + ", x" + r2)
-                    
-                check_instr = self.genTestInstr(reg_check)
-                for check in check_instr:
-                    instructions.append(check)
-            instructions.append(instr + " x" + reg1 + ", x" + reg2 +  ", " + str(self.prevLabel) + "b")  
-            self.prevLabel += 1
+                elif randInstr in InstrTypes['U']:
+                    rd = self.model.regFile.getRandReg()
+                    imm20 = Immediate.randImm20(xlen = self.model.xlen, signed = 0)
+                    instr = Instr.issue(model = self.model, instrName = randInstr, rd = rd, imm = imm20)
+                    generatedInstructions.append(instr)
 
-        return instructions
-            
-        # have (1-5) sudo random alu instructions for backwards branch, (0-5) for forward
+                    testInstrs = self.genTestInstr(rd)
+                    for testInstr in testInstrs:
+                        generatedInstructions.append(testInstr)
 
-        # randomly determine if branch is taken or not
-            # if branch not taken, 
-                # we go by specific instruction and do some bit swizzling to make it false
-        
-            # if branch taken
-                # add specific instruction to make branch true
-                # for backwards, have alu instructions change comparison flags to be true
-    
-    def genTestInstr(self, reg):
-        out = ["sw x" + str(reg) + ", "+ str(self.test_count) + "(x6)"]
-        out.append("RVTEST_IO_ASSERT_GPR_EQ(x7, x{}, 0xdeadbeef) ".format(reg))
-        self.test_count += 4
-
-        if (self.test_count == 2044):
-            # Reset
-            wreset = "addi x6, x6, MASK_XLEN(2044)"
-            self.test_count = 0
-            out.append(wreset)
-            
-        return out
-
-    def genInstruction(self):
-        num = np.random.randint(0, 20)
-        instr = ""
-        if (self.xlen == 64) and (num == 20):
-            instr = self.getRandInstruction(self.InstrDict.INSTR_RV64M)
-        else:
-            instr = self.getRandInstruction(self.InstrDict.INSTR_RV32I)
-
-        num = np.random.randint(0, 2) # 0 mem reg, on 1 do forwarding stuff
-        if instr in self.InstrDict.INSTR_MEM and num == 1:
-            return self.getForwardingInstructions(instr)
-        
-        if instr in self.InstrDict.INSTR_SRC1_SRC2_LABEL:
-            return self.branchInstruction(instr)
-        
-        if instr in self.InstrDict.INSTR_DEST_LABEL:
-            return self.jumpInstruction(instr)
-
-        fields, alignment = self.instrDict.instr[instr]
-        output = ""
-        rd = 1
-        for field in fields:
-            if field == NAME:
-                output += instr + " "
-                
-            elif field == REG:
-                rd = self.randSelect.randReg(self.anyReg)
-                output += "x" + str(rd) + ", "
-                
-            elif field == IMM and instr != "lui" and instr != "auipc":
-                output += "SEXT_IMM(" + self.randSelect.randHex(False, 3, alignment) + ")"
-
-            elif field == IMM and (instr == "lui" or instr == "auipc"):
-                output += self.randSelect.randHex(False, 3, alignment)
-            
-            elif field == ADDR:
-                output += self.memoryAdrList[np.random.randint(0, len(self.memoryAdrList))]
-                output += "("
-                output += "x" + self.randSelect.randReg(self.memReg)
-                output += ")"
-            
-            elif field == ZIMM:
-                if (instr in self.instrDict.INSTR_DEST_SRC1_ZIMM):
-                    output += "SEXT_IMM(" + str(hex(np.random.randint(0, 32))) + ")" # has to be between 0 and 31
+                elif randInstr in InstrTypes['R4']:
+                    continue
                 else:
-                    output += "SEXT_IMM(" + self.randSelect.randHex(True, 3, alignment) + ")"
-                
-            elif field == LABEL:
-                output += str(self.prevLabel)
+                    # INVALID INSTR
+                    print(randInstr)
+                    print("You made a typo")
+        return generatedInstructions    
+
+    def exportASM(self, instrSet, instrTypes):
+        asmFile = open(self.fname, 'w')
+        refFile = open(self.refname, 'w')
         
-        if output[-2:] == ", ":
-            output = output[0:-2]
+        # Custom Header
+        line = "///////////////////////////////////////////\n"
+        asmFile.write(line)
+        line ="// "+self.fname+ "\n// " + "Ethan Falicov & Shriya Nadgauda" + "\n"
+        asmFile.write(line)
+        line ="// Created " + str(datetime.now())  + "\n" + "\n"
+        asmFile.write(line)
+        line = "// Begin Tests" + "\n"
+        asmFile.write(line)
+
+        # Generic Header
+        headerFile = open("testgen_header.S", "r")
+        for line in headerFile:  
+            asmFile.write(line)
+        asmFile.write("\n")
+
+
+        # Write Instructions
+        generatedInstructions = self.generateASM(instrSet = INSTRSETS[instrSet], instrTypes = instrType)
+        for generatedInstr in generatedInstructions:
+            asmFile.write("\t" + generatedInstr + "\n")
+            if ("RVTEST_IO_ASSERT_GPR_EQ" in generatedInstr):
+                asmFile.write("\n")
+
+        # Footer
+        footerFile = open("testgen_footer.S", "r")
+        lineNum = 0
+        for line in footerFile:  
+            asmFile.write(line)
+            if lineNum  == 14:
+                asmFile.write('test_data:\n')
+                memList = list(self.model.memory.memDict.keys())
+                memList.sort()
+                paddingSize = 0
+                for memLoc in memList:
+                    hexVal = int(self.model.memory.memDict[memLoc],2)
+                    hexDigitSize = self.model.xlen / 4
+                    formattedStr = '0x{0:0{1}x}'.format(hexVal, hexDigitSize)
+                    asmFile.write('\t.word {}\n'.format(formattedStr))
+            lineNum += 1
         
-        out_instr = [output]
-        check_instr = self.genTestInstr(rd)
-        for check in check_instr:
-            out_instr.append(check)
-        return out_instr
+        asmFile.write("\n")
+        line = "\t.fill " + str(self.model.totalStoreCount) + ", " + str(self.xlen//8) + ", -1\n"
+        asmFile.write(line)
+        asmFile.write("\n")
+        
+        line = "\nRV_COMPLIANCE_DATA_END\n" 
+        asmFile.write(line)
+        
+        asmFile.close()
+        refFile.close()
+
+class Instr():
+    @classmethod
+    def issue(self, model, instrName, **kwargs):
+        funcName = 'Instr_' + str(instrName)
+        return getattr(Instr, funcName)(model = model, **kwargs)
+ 
+    @classmethod
+    def Instr_label(self, model, label = None):
+        label.pcValue = model.pc.value
+        model.pc += 4
+        return '{}:'.format(label.name)
+
+    ###############################################################################################
+    # RV32I Instructions
+    ###############################################################################################
+    @classmethod
+    def Instr_lb(self, model, rd = None, rs1 = None, imm = None):  
+        addr = imm.getDecValue()
+        rd.setBits(newBits = signExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.BYTE), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'lb {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
+        
+    @classmethod
+    def Instr_lh(self, model, rd = None, rs1 = None, imm = None):
+        addr = imm.getDecValue()
+        rd.setBits(newBits = signExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.HALFWORD), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'lh {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
     
-    def setRegisters(self):
-        out = []
-        for reg in self.anyReg:
-            out.append('li x{}, MASK_XLEN({})'.format(reg, self.randSelect.randHex(False, 5, 1)))
-        return out
+    @classmethod
+    def Instr_lw(self, model, rd = None, rs1 = None, imm = None):
+        addr = imm.getDecValue()
+        rd.setBits(newBits = signExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.WORD), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'lw {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
+
+    @classmethod
+    def Instr_lbu(self, model, rd = None, rs1 = None, imm = None):
+        addr = imm.getDecValue()
+        rd.setBits(newBits = zeroExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.BYTE), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'lbu {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
         
-    def populateMemory(self):
-        for i in range(0, 5):
-            val = self.randSelect.randDec(-1000, 1000, WORD)
-            while val in self.memoryAdrList:
-                val = self.randSelect.randDec(-1000, 1000, WORD)
-            self.memoryAdrList.append(str(val))
+    @classmethod
+    def Instr_lhu(self, model, rd = None, rs1 = None, imm = None):
+        addr = imm.getDecValue()
+        rd.setBits(newBits = zeroExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.HALFWORD), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'lhu {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
 
-    def generateInstructions(self, numInstructions):
-        instructions = []
-        for i in range(0, numInstructions):
-            instr = self.genInstruction()
-            for j in instr:
-                instructions.append(j) 
-        return instructions
+    @classmethod
+    def Instr_addi(self, model, rd = None, rs1 = None, imm = None):
+        newValue = rs1.getDecValue() + imm.getDecValue()
+        newValueBin = 0
+        if newValue > 0:
+            newValueBin = bin(newValue)[2:]
+        elif newValue == 0:
+            newValueBin = "0" * model.xlen
+        else:
+            newValueBin = bin(newValue)[3:]
+        newValueBinTrunk = newValueBin[-model.xlen:]
+        rd.setBits(newBits = signExtend(inputBits = newValueBinTrunk, resultNumBits = model.xlen), signed = 1)
+        model.pc += 4
+        return 'addi {}, {}, MASK_XLEN({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
+        
+    @classmethod
+    def Instr_slli(self, model, rd = None, rs1 = None, imm = None):
+        bits = rs1.bits
+        immBits = imm.bits[-5:]
+        immShift = int(immBits, 2)
+        shifted = bits[-(len(bits) - immShift):]
+        shiftedExt = binToDec(inputBits = shifted + '0'*(model.xlen - len(shifted)))
+        rd.setValue(newValue = shiftedExt, signed = 1)
+        model.pc += 4
+        return 'slli {}, {}, 0b{}'.format(rd.getRegName(), rs1.getRegName(), immBits)
 
-class RandInstrGenerator(InstrGenerator):
-    pass
+    @classmethod
+    def Instr_slti(self, model, rd = None, rs1 = None, imm = None):
+        if (rs1.getValueSigned() < imm.getValueSigned()):
+            rd.setValue(newValue = 1, signed = 1)
+        else:
+            rd.setValue(newValue = 0, signed = 1)
+        model.pc += 4
+        return 'slti {}, {}, SEXT_IMM({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
 
-class HazardInstrGenerator(InstrGenerator):
-    pass
+    @classmethod
+    def Instr_sltiu(self, model, rd = None, rs1 = None, imm = None):
+        if (rs1.getValueUnsigned() < imm.getValueUnsigned()):
+            rd.setValue(newValue = 1, signed = 1)
+        else:
+            rd.setValue(newValue = 0, signed = 1)
+        model.pc += 4
+        return 'slti {}, {}, SEXT_IMM({})'.format(rd.getRegName(),rs1.getRegName(), imm.getDecValue())
 
-# xlens = [32, 64]
-xlens = [64]
-for xlen in xlens:
+    @classmethod
+    def Instr_xori(self, model, rd = None, rs1 = None, imm = None):
+        newValue = rs1.getDecValue() ^ imm.getDecValue()
+        rd.setValue(newValue = newValue, signed = rs1.signed)
+        model.pc += 4
+        return 'xori {}, {}, SEXT_IMM({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
 
-    test = "PIPELINE"
-    np.random.seed(42)
-    instrGen = InstrGenerator(10, xlen)
+    @classmethod
+    def Instr_srli(self, model, rd = None, rs1 = None, imm = None):
+        bits = rs1.bits
+        immBits = imm.bits[-5:]
+        immShift = int(immBits, 2)
+        shifted = bits[0:len(bits) - immShift]
+        extShifted = zeroExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'srli {}, {}, 0b{}'.format(rd.getRegName(), rs1.getRegName(), immBits)
 
-    # write instructions to file
-    imperaspath = "../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "wally/"
-    basename = "WALLY-" + test 
-    fname = imperaspath + "src/" + basename + ".S"
-    refname = imperaspath + "references/" + basename + ".reference_output"
+    @classmethod
+    def Instr_srai(self, model, rd = None, rs1 = None, imm = None):
+        bits = rs1.bits
+        immBits = imm.bits[-5:]
+        immShift = int(immBits, 2)
+        shifted = bits[0:len(bits) - immShift]
+        extShifted = signExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'srai {}, {}, 0b{}'.format(rd.getRegName(), rs1.getRegName(), immBits)
+
+    @classmethod
+    def Instr_ori(self, model, rd = None, rs1 = None, imm = None):
+        rd.setValue(newValue = (rs1.getDecValue() | imm.getDecValue()), signed = rs1.signed)
+        return 'ori {}, {}, SEXT_IMM({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
+
+    @classmethod
+    def Instr_andi(self, model, rd = None, rs1 = None, imm = None):
+        rd.setValue(newValue = (rs1.getDecValue() & imm.getDecValue()), signed = rs1.signed)
+        return 'andi {}, {}, SEXT_IMM({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
+
+    @classmethod
+    def Instr_auipc(self, model, rd = None, imm = None):
+        rd.setValue(newValue = binToDec(inputBits = imm.bits[:-12] + '0'*12) + model.pc.getDecValue(), signed = 1)
+        return 'auipc {}, MASK_XLEN({})'.format(rd.getRegName(), imm.getDecValue())
+
+    @classmethod
+    def Instr_sb(self, model, rs1 = None, rs2 = None, imm = None):
+        addr = imm.getDecValue()
+        if addr in model.memory.memDict.keys():
+            originalMem = model.memory.readMemory(addr = addr, granularity = GRANULARITY.WORD)
+            model.memory.updateMemory(addr = addr, value = originalMem[:-8] + rs2.bits[-8:], granularity = GRANULARITY.WORD)
+        else:
+            model.memory.updateMemory(addr = addr, value = '0'*(model.xlen - 8) + rs2.bits[-8:], granularity = GRANULARITY.WORD)
+        model.pc += 4
+        return 'sb {}, {}({})'.format(rs2.getRegName(), imm.getDecValue(), rs1.getRegName())
+
+    @classmethod
+    def Instr_sh(self, model, rs1 = None, rs2 = None, imm = None):
+        addr = imm.getDecValue()
+        if addr in model.memory.memDict.keys():
+            originalMem = model.memory.readMemory(addr = addr, granularity = GRANULARITY.WORD)
+            model.memory.updateMemory(addr = addr, value = originalMem[:-16] + rs2.bits[-16:], granularity = GRANULARITY.WORD)
+        else:
+            model.memory.updateMemory(addr = addr, value = '0'*(model.xlen - 16) + rs2.bits[-16:], granularity = GRANULARITY.WORD)
+        model.pc += 4
+        return 'sh {}, {}({})'.format(rs2.getRegName(), imm.getDecValue(), rs1.getRegName())
+
+    @classmethod
+    def Instr_sw(self, model, rs1 = None, rs2 = None, imm = None):
+        addr = imm.getDecValue()
+        model.memory.updateMemory(addr = addr, value = rs2.bits, granularity = GRANULARITY.WORD)
+        model.pc += 4
+        return 'sw {}, {}({})'.format(rs2.getRegName(), imm.getDecValue(), rs1.getRegName())
+
+    @classmethod
+    def Instr_add(self, model, rd = None, rs1 = None, rs2 = None):
+        newValue = rs1.getDecValue() + rs2.getDecValue()
+        newValueBin = 0
+        if newValue > 0:
+            newValueBin = bin(newValue)[2:]
+        elif newValue == 0:
+            newValueBin = "0" * model.xlen
+        else:
+            newValueBin = bin(newValue)[3:]
+        newValueBinTrunk = newValueBin[-model.xlen:]
+        rd.setBits(newBits = signExtend(inputBits = newValueBinTrunk, resultNumBits = model.xlen), signed = 1)
+        model.pc += 4
+        return 'add {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_sub(self, model, rd = None, rs1 = None, rs2 = None):
+        newValue = rs1.getDecValue() - rs2.getDecValue()
+        newValueBin = 0
+        if newValue > 0:
+            newValueBin = bin(newValue)[2:]
+        elif newValue == 0:
+            newValueBin = "0" * model.xlen
+        else:
+            newValueBin = bin(newValue)[3:]
+        newValueBinTrunk = newValueBin[-model.xlen:]
+        rd.setBits(newBits = signExtend(inputBits = newValueBinTrunk, resultNumBits = model.xlen), signed = 1)
+        model.pc += 4
+        return 'sub {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_sll(self, model, rd = None, rs1 = None, rs2 = None):
+        bits = rs1.bits
+        rs2Bin = rs2.bits[-5:]
+        rs2Shift = int(rs2Bin,2)
+        shifted = bits[-(len(bits) - rs2Shift):]
+        shiftedExt = binToDec(inputBits = shifted + '0'*(model.xlen - len(shifted)))
+        rd.setValue(newValue = shiftedExt, signed = 1)
+        model.pc += 4
+        return 'sll {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_slt(self, model, rd = None, rs1 = None, rs2 = None):
+        if (rs1.getDecValue() < rs2.getDecValue()):
+            rd.setValue(newValue = 1, signed = 1)
+        else:
+            rd.setValue(newValue = 0, signed = 1)
+        model.pc += 4
+        return 'slt {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
 
 
-    # FOR LOCAL TESTING
-    # fname = "PIPELINE_TEST.S"
+    @classmethod
+    def Instr_sltu(self, model, rd = None, rs1 = None, rs2 = None):
+        if (rs1.getValueUnsigned() < rs2.getValueUnsigned()):
+            rd.setValue(newValue = 1, signed = 1)
+        else:
+            rd.setValue(newValue = 0, signed = 1)
+        model.pc += 4
+        return 'sltu {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
 
-    # print custom header part
-    f = open(fname, "w")
-    r = open(refname, "w")
-    line = "///////////////////////////////////////////\n"
-    f.write(line)
-    lines="// "+fname+ "\n// " + "Ethan Falicov & Shriya Nadgauda" + "\n"
-    f.write(lines)
-    line ="// Created " + str(datetime.now())  + "\n" + "\n"
-    f.write(line)
-    line = "// Begin Tests" + "\n"
-    f.write(line)
+    @classmethod
+    def Instr_xor(self, model, rd = None, rs1 = None, rs2 = None):
+        rd.setValue(newValue = (rs1.getDecValue() ^ rs2.getDecValue()), signed = rs1.signed)
+        model.pc += 4
+        return 'xor {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_srl(self, model, rd = None, rs1 = None, rs2 = None):
+        bits = rs1.bits
+        rs2Bin = rs2.bits[-5:]
+        rs2Shift = int(rs2Bin,2)
+        shifted = bits[0:len(bits) - rs2Shift]
+        extShifted = zeroExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'srl {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_sra(self, model, rd = None, rs1 = None, rs2 = None):
+        bits = rs1.bits
+        rs2Bin = rs2.bits[-5:]
+        rs2Shift = int(rs2Bin,2)
+        shifted = bits[0:len(bits) - rs2Shift]
+        extShifted = signExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'sra {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_or(self, model, rd = None, rs1 = None, rs2 = None):
+        rd.setValue(newValue = (rs1.getDecValue() | rs2.getDecValue()), signed = rs1.signed)
+        model.pc += 4
+        return 'or {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_and(self, model, rd = None, rs1 = None, rs2 = None):
+        rd.setValue(newValue = (rs1.getDecValue() & rs2.getDecValue()), signed = rs1.signed)
+        model.pc += 4
+        return 'and {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_lui(self, model, rd = None, imm = None):
+        rd.setValue(newValue = binToDec(inputBits = imm.bits[:20] + '0'*(model.xlen-20)) , signed = 1)
+        model.pc += 4
+        return 'lui {}, {}'.format(rd.getRegName(), imm.getDecValue())
 
 
-    # insert generic header
-    h = open("testgen_header.S", "r")
-    for line in h:  
-        f.write(line)
-    f.write("\n")
+    @classmethod
+    def Instr_beq(self, model, rs1 = None, rs2 = None, label = None, dir = None):
+        if (rs1.getValueSigned() == rs2.getValueSigned()):
+            model.pc.setValue(label.pcValue)
+        else:
+            model.pc += 4
+        return 'beq {}, {}, {}{}'.format(rs1.getRegName(), rs2.getRegName(), label.name, dir)
+
+    @classmethod
+    def Instr_bne(self, model, rs1 = None, rs2 = None, label = None, dir = None):
+        if (rs1.getValueSigned() != rs2.getValueSigned()):
+            model.pc.setValue(label.pcValue)
+        else:
+            model.pc += 4
+        return 'bne {}, {}, {}{}'.format(rs1.getRegName(), rs2.getRegName(), label.name, dir)
+
+    @classmethod
+    def Instr_blt(self, model, rs1 = None, rs2 = None, label = None, dir = None):
+        if (rs1.getValueSigned() < rs2.getValueSigned()):
+            model.pc.setValue(label.pcValue)
+        else:
+            model.pc += 4
+        return 'blt {}, {}, {}{}'.format(rs1.getRegName(), rs2.getRegName(), label.name, dir)
+
+    @classmethod
+    def Instr_bge(self, model, rs1 = None, rs2 = None, label = None, dir = None):
+        if (rs1.getValueSigned() >= rs2.getValueSigned()):
+            model.pc.setValue(label.pcValue)
+        else:
+            model.pc += 4
+        return 'bge {}, {}, {}{}'.format(rs1.getRegName(), rs2.getRegName(), label.name, dir)
+
+    @classmethod
+    def Instr_bltu(self, model, rs1 = None, rs2 = None, label = None, dir = None):
+        if (rs1.getValueUnsigned() < rs2.getValueUnsigned()):
+            model.pc.setValue(label.pcValue)
+        else:
+            model.pc += 4
+        return 'bltu {}, {}, {}{}'.format(rs1.getRegName(), rs2.getRegName(), label.name, dir)
+
+    @classmethod
+    def Instr_bgeu(self, model, rs1 = None, rs2 = None, label = None, dir = None):
+        if (rs1.getValueUnsigned() >= rs2.getValueUnsigned()):
+            model.pc.setValue(label.pcValue)
+        else:
+            model.pc += 4
+        return 'bgeu {}, {}, {}{}'.format(rs1.getRegName(), rs2.getRegName(), label.name, dir)
+
+    @classmethod
+    def Instr_jalr(self, model, rd = None, rs1 = None, imm = None):
+        rd.setValue(newValue = model.pc.getDecValue() + 4, signed = 1)
+        model.pc.setValue(rs1.getDecValue() + imm.getDecValue())
+        return 'jalr {}, {}, MASK_XLEN({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
+
+    @classmethod
+    def Instr_jal(self, model, rd = None, label = None, dir = None):
+        rd.setValue(newValue = model.pc.getDecValue() + 4, signed = 1)
+        model.pc.setValue(label.pcValue)
+        return 'jal {}, {}{}'.format(rd.getRegName(), label.name, dir)
 
 
-    #set registerss
-    reg_instr = instrGen.setRegisters()
-    for instr in reg_instr:
-        f.write("\t" + instr + "\n")
-    
-    # write instructions
-    testnum = 500
-    instructions = instrGen.generateInstructions(testnum)
-    for instr in instructions:
-        f.write("\t" + instr + "\n")
-        if ("RVTEST_IO_ASSERT_GPR_EQ" in instr):
-            f.write("\n")
+###################################################################################################
+# Global Constants
+###################################################################################################
+GRANULARITY = Enum('granularity', ['WORD', 'HALFWORD', 'BYTE'])
+# 'jalr',
+INSTRSETS = {'RV32I':   ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', \
+                        'srli', 'srai', 'ori', 'andi', 'auipc', 'sb', 'sh', 'sw', 'add', 'sub', \
+                        'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and', 'lui', 'beq', \
+                        'bne', 'blt', 'bge', 'bltu', 'bgeu', 'jal'], \
+            'RV64I':   ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', \
+                        'srli', 'srai', 'ori', 'andi', 'auipc', 'sb', 'sh', 'sw', 'add', 'sub', \
+                        'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and', 'lui', 'beq', \
+                        'bne', 'blt', 'bge', 'bltu', 'bgeu', 'jalr', 'jal', \
+                        'ld', 'lwu', 'addiw', 'slliw', 'srliw', 'sraiw', 'Sd', 'addw', 'subw', \
+                        'sllw', 'srlw', 'sraw'] \
+            }
 
 
-    # print footer
-    h = open("testgen_footer.S", "r")
-    for line in h:  
-        f.write(line)
+InstrTypes = {  'R' : ['add', 'sub', 'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and'], \
+                'I' : ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', 'srli', 'srai', 'ori', 'andi', 'jalr'], \
+                'S' : ['sw', 'sh', 'sb'], \
+                'B' : ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu'], \
+                'U' : ['lui', 'auipc'], \
+                'J' : ['jal'],  \
+                'R4': []}
+###################################################################################################
+# Main Body
+###################################################################################################
 
-    # Finish
-    lines = ".fill " + str(testnum) + ", " + str(xlen//8) + ", -1\n"
-    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
-    f.write(lines)
-    f.close()
-    r.close()
+XLEN = ['32']
+INSTRUCTION_TYPE = ['I']
+NUMINSTR = 70000
+IMPERASPATH = "../../imperas-riscv-tests/riscv-test-suite/"
 
-    print("Done with ", xlen)
+seed(42)
+np.random.seed(42)
+for xlen in XLEN:
+    memInit = {}
+    for i in range(0, 400, 4):
+        val = randBinary(signed = 0, numBits = int(xlen), valueAlignment = 1)
+        memInit[i] = val
+    for instrType in INSTRUCTION_TYPE:
+        instrSet = 'RV' + xlen + instrType
+
+        print('Generating Assembly for {}'.format(instrSet))
+        
+        dut = TestGen(numInstr=NUMINSTR, immutableRegsDict = {0 : 0, 6 : 0, 7 : 0}, instrSet=instrSet, imperasPath=IMPERASPATH)
+        # regFile = 
+        dut.model.memory.populateMemory(memDict = memInit)
+        dut.exportASM(instrSet = instrSet, instrTypes = instrType)
+
+        
+

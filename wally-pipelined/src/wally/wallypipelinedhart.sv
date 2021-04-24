@@ -48,6 +48,7 @@ module wallypipelinedhart (
   output logic [3:0]       HPROT,
   output logic [1:0]       HTRANS,
   output logic             HMASTLOCK,
+  output logic [5:0]       HSELRegions,
   // Delayed signals for subword write
   output logic [2:0]       HADDRD,
   output logic [3:0]       HSIZED,
@@ -110,9 +111,15 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
   logic [1:0]       PageTypeF, PageTypeM;
 
+  // PMA checker signals
+  logic             Atomic, Execute, Write, Read;
+  logic             Cacheable, Idempotent, AtomicAllowed;
+  logic             SquashAHBAccess;
+
   // IMem stalls
   logic             ICacheStallF;
   logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
+  logic             MMUStall;
   logic             MMUTranslate, MMUTranslationComplete, MMUReady;
 
   // bus interface to dmem
