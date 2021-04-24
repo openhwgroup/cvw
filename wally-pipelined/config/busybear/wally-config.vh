@@ -94,7 +94,8 @@
 `define OVPSIM_CSR_CONFIG 1
 
 // Hardware configuration
-`define UART_PRESCALE 1
+//`define UART_PRESCALE 1
+`define UART_PRESCALE 0
 
 // Interrupt configuration
 `define PLIC_NUM_SRC 53

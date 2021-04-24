@@ -1,6 +1,6 @@
 `include "wally-config.vh"
 
-module testbench_busybear();
+module testbench();
 
   logic            clk, reset;
   logic [31:0]     GPIOPinsIn;

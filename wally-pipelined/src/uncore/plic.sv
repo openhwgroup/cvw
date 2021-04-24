@@ -77,7 +77,6 @@ module plic (
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-  // *** add ld, sd functionality
   generate
     if (`XLEN == 64) begin
       always_comb
@@ -102,7 +101,7 @@ module plic (
   always @(posedge HCLK,negedge HRESETn) begin
     // resetting
     if (~HRESETn) begin
-      intPriority <= #1 '{default:3'b0}; // *** does this initialization synthesize cleanly?
+      intPriority <= #1 '{default:3'b0};
       intEn <= #1 {N{1'b0}};
       intThreshold <= #1 3'b0;
       intInProgress <= #1 {N{1'b0}};

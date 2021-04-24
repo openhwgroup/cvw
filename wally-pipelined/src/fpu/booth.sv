@@ -22,7 +22,7 @@ module booth(xExt, choose, add1, e, pp);
         3'b100 : pp = {negx, 1'b0};  // -2
         3'b101 : pp = {1'b1, negx};  // -1
         3'b110 : pp = {1'b1, negx};  // -1
-        3'b111 : pp = 55'hfffffffffffffff;  //  -0
+        3'b111 : pp = 55'h7fffffffffffff;  //  -0
     endcase
 
     always_comb

@@ -40,20 +40,7 @@ vsim workopt
 
 view wave
 -- display input and output signals as hexidecimal values
-do ./wave-dos/peripheral-waves.do
-
--- Set Wave Output Items 
-TreeUpdate [SetDefaultTree]
-WaveRestoreZoom {0 ps} {100 ps}
-configure wave -namecolwidth 250
-configure wave -valuecolwidth 120
-configure wave -justifyvalue left
-configure wave -signalnamewidth 0
-configure wave -snapdistance 10
-configure wave -datasetprefix 0
-configure wave -rowmargin 4
-configure wave -childrowmargin 2
-set DefaultRadix hexadecimal
+do ./wave-dos/default-waves.do
 
 -- Run the Simulation 
 #run 5000 
