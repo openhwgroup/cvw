@@ -1,13 +1,5 @@
 `include "wally-config.vh"
 
-function logic [`XLEN-1:0] adrTranslator( 
-  input logic [`XLEN-1:0] adrIn);
-  begin
-    // MMU team put translation here!!
-    assign adrTranslator = adrIn;
-  end
-endfunction
-
 module testbench_busybear();
 
   logic            clk, reset;
@@ -37,6 +29,76 @@ module testbench_busybear();
   // instantiate processor and memories
   wallypipelinedsoc dut(.*);
 
+  /**
+   * Walk the page table stored in dtim according to sv39 logic and translate a
+   * virtual address to a physical address.
+   *
+   * See section 4.3.2 of the RISC-V Privileged specification for a full
+   * explanation of the below algorithm.
+   */
+  function logic [`XLEN-1:0] adrTranslator( 
+    input logic [`XLEN-1:0] adrIn);
+    begin
+      logic             SvMode, PTE_R, PTE_X;
+      logic [`XLEN-1:0] SATP, PTE;
+      logic [55:0]      BaseAdr, PAdr;
+      logic [8:0]       VPN [0:2];
+      logic [11:0]      Offset;
+
+      int i;
+
+      // Grab the SATP register from privileged unit
+      SATP = dut.hart.priv.csr.SATP_REGW;
+
+      // Split the virtual address into page number segments and offset
+      VPN[2] = adrIn[38:30];
+      VPN[1] = adrIn[29:21];
+      VPN[0] = adrIn[20:12];
+      Offset = adrIn[11:0];
+
+      // We do not support sv48; only sv39
+      SvMode = SATP[63];
+
+      // Only perform translation if translation is on and the processor is not
+      // in machine mode
+      if (SvMode && (dut.hart.priv.PrivilegeModeW != `M_MODE)) begin
+        BaseAdr = SATP[43:0] << 12;
+
+        for (i = 2; i >= 0; i--) begin
+          PAdr = BaseAdr + (VPN[i] << 3);
+          
+          // dtim.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
+          // by 3 (the PTE size) to get the requested 64-bit PTE.
+          PTE = dut.uncore.dtim.RAM[PAdr >> 3];
+          PTE_R = PTE[1];
+          PTE_X = PTE[3];
+          if (PTE_R || PTE_X) begin
+            // Leaf page found
+            break;
+          end else begin
+            // Go to next level of table
+            BaseAdr = PTE[53:10] << 12;
+          end
+        end
+
+        // Determine which parts of the PTE page number to use based on the
+        // level of the page table we reached.
+        if (i == 2) begin
+          // Gigapage
+          assign adrTranslator = {8'b0, PTE[53:28], VPN[1], VPN[0], Offset};
+        end else if (i == 1) begin
+          // Megapage
+          assign adrTranslator = {8'b0, PTE[53:19], VPN[0], Offset};
+        end else begin
+          // Kilopage
+          assign adrTranslator = {8'b0, PTE[53:10], Offset};
+        end
+      end else begin
+        // Direct translation if address translation is not on
+        assign adrTranslator = adrIn;
+      end
+    end
+  endfunction
 
   // initialize test
   initial
