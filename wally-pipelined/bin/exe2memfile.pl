@@ -13,12 +13,13 @@ if ($#ARGV == -1) {
 }
 
 # array to hold contents of memory file
-my @memfilebytes = (0)*16384*4;
+my $maxmemfilesize = 1000000;
+my @memfilebytes = (0)*$maxmemfilesize*4;
 my $maxaddress = 0;
 
 STDOUT->autoflush(1);
-# *** Ross Thompson I think there is a bug here needs to be +1
-print ("Processing $#ARGV memfiles: ");
+my $numfiles = $#ARGV+1;
+print ("Processing $numfiles memfiles: ");
 my $frac = $#ARGV/10;
 for(my $i=0; $i<=$#ARGV; $i++) {
     if ($i < 10 || $i % $frac == 0) { print ("$i ") };
@@ -43,7 +44,7 @@ for(my $i=0; $i<=$#ARGV; $i++) {
         my $address;
 
     # initialize to all zeros;
-        for (my $i=0; $i < 65536*4; $i++) {
+        for (my $i=0; $i < $maxmemfilesize*4; $i++) {
             $memfilebytes[$i] = "00";
         }
 
@@ -84,7 +85,11 @@ for(my $i=0; $i<=$#ARGV; $i++) {
         open(MEMFILE, ">$memfile") || die("Can't write $memfile");
         for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
             for ($j=3; $j>=0; $j--) {
-            print MEMFILE "$memfilebytes[$i+$j]";
+		if (defined($memfilebytes[$i+$j])) {
+		    print MEMFILE "$memfilebytes[$i+$j]";
+		} else {
+		    print MEMFILE "00";
+		}
             }
             print MEMFILE "\n";
         }
@@ -93,7 +98,11 @@ for(my $i=0; $i<=$#ARGV; $i++) {
         open(MEMFILE, ">$memfile") || die("Can't write $memfile");
         for (my $i=0; $i<= $maxaddress; $i = $i + 8) {
             for ($j=7; $j>=0; $j--) {
-            print MEMFILE "$memfilebytes[$i+$j]";
+		if (defined($memfilebytes[$i+$j])) {
+		    print MEMFILE "$memfilebytes[$i+$j]";
+		} else {
+		    print MEMFILE "00";
+		}
             }
             print MEMFILE "\n";
         }
