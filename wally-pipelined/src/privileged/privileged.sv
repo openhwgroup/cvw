@@ -56,7 +56,8 @@ module privileged (
 
   // PMA checker signals
   input  logic [31:0]      HADDR,
-  input  logic             HSIZE, HWRITE, HBURST,
+  input  logic [2:0]       HSIZE, HBURST,
+  input  logic             HWRITE,
   input  logic             Atomic, Execute, Write, Read,
   output logic             Cacheable, Idempotent, AtomicAllowed,
   output logic             SquashAHBAccess,
