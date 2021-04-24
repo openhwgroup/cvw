@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 package ahbliteState;
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE, MMUIDLE} statetype;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
 endpackage
 
 module ahblite (
@@ -51,10 +51,13 @@ module ahblite (
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
   // Signals from MMU
+  input  logic             MMUStall,
   input  logic [`XLEN-1:0] MMUPAdr,
   input  logic             MMUTranslate, MMUTranslationComplete,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
+  // Signals from PMA checker
+  input  logic             SquashAHBAccess,
   // Return from bus
   output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals
@@ -102,6 +105,10 @@ module ahblite (
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
+  // *** If the SquashAHBAccess signal is high, we need to set NextBusState to IDLE.
+  // We could either have this case statement set a signal ProposedNextBusState, which gets
+  // used for NextBusState when we are not squashing. Alternatively, we could add a bunch of
+  // conditional statments below 
   always_comb 
     case (BusState) 
       IDLE: if      (MMUTranslate) NextBusState = MMUTRANSLATE;
@@ -136,11 +143,10 @@ module ahblite (
   // since translation might not be complete.
   assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                    (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
-  // *** Could get finer grained stalling if we distinguish between MMU
-  //     instruction address translation and data address translation
+                    MMUStall);
+
   assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                          (NextBusState == MMUTRANSLATE) || (MMUTranslate && ~MMUTranslationComplete));
+                          MMUStall);
 
   // Determine access type (important for determining whether to fault)
   assign Atomic = ((NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));

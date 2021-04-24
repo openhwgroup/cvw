@@ -23,6 +23,13 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+// *** <Thomas Fleming> I added these verilator controls to clean up the
+// lint output. The linter warnings should be fixed, but now the output is at
+// least readable.
+/* verilator lint_off COMBDLY */
+/* verilator lint_off IMPLICIT */
+
+
 module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
 
    input logic [63:0]  N, D;
@@ -1554,3 +1561,5 @@ module shifter_r32 (Z, A, Shift);
    
 endmodule // shifter_r32
 
+/* verilator lint_on COMBDLY */
+/* verilator lint_on IMPLICIT */

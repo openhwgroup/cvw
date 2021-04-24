@@ -334,7 +334,8 @@ module testbench();
     "rv32i/WALLY-CSRRC", "4000",
     "rv32i/WALLY-CSRRWI", "3000",
     "rv32i/WALLY-CSRRSI", "3000",
-    "rv32i/WALLY-CSRRCI", "3000"
+    "rv32i/WALLY-CSRRCI", "3000",
+    "rv32i/WALLY-PIPELINE", "1a800"
   };
 
   string testsBP64[] = '{
@@ -409,7 +410,7 @@ module testbench();
         // if (`F_SUPPORTED) tests = {tests64f, tests};
         // if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        // if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
       

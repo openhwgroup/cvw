@@ -2,9 +2,9 @@
 # The verilator lint tool is faster and better than Modelsim so it is best to run this first.
 
 echo "rv64ic linting..."
-verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv64ic src/*/*.sv 
+verilator --lint-only "$@" --top-module wallypipelinedsoc -Iconfig/rv64ic src/*/*.sv 
 echo "rv32ic linting..."
-verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv32ic src/*/*.sv 
+verilator --lint-only "$@" --top-module wallypipelinedsoc -Iconfig/rv32ic src/*/*.sv 
 #verilator --lint-only --top-module wallypipelinedsoc -Iconfig/rv64ic src/*/*.sv src/*/div/*.sv
 
 # --lint-only just runs lint rather than trying to compile and simulate
