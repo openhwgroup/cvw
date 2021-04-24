@@ -1,10 +1,4 @@
-# wally-peripherals-signals.do 
-#
-# Created by Ben Bracker (bbracker@hmc.edu) on 4 Mar. 2021
-#
-# I really didn't like having to relaunch and recompile an entire sim
-# just because some signal names have changed, so I thought this
-# would be good to factor out.
+# peripheral-waves.do 
 
 restart -f
 delete wave /*
@@ -58,13 +52,13 @@ add wave -divider
 add wave -divider
 
 # peripherals
+add wave -hex /testbench/dut/uncore/uart/u/*
+add wave -divider
 add wave -hex /testbench/dut/uncore/gpio/*
 add wave -divider
 add wave -hex /testbench/dut/uncore/plic/*
 add wave -hex /testbench/dut/uncore/plic/intPriority
 add wave -hex /testbench/dut/uncore/plic/pendingArray
-add wave -divider
-add wave -hex /testbench/dut/uncore/uart/u/*
 add wave -divider
 add wave -hex /testbench/dut/hart/ebu/*
 add wave -divider
@@ -73,3 +67,15 @@ add wave -divider
 # everything else
 add wave -hex -r /testbench/*
 
+# appearance
+TreeUpdate [SetDefaultTree]
+WaveRestoreZoom {0 ps} {100 ps}
+configure wave -namecolwidth 250
+configure wave -valuecolwidth 150
+configure wave -justifyvalue left
+configure wave -signalnamewidth 0
+configure wave -snapdistance 10
+configure wave -datasetprefix 0
+configure wave -rowmargin 4
+configure wave -childrowmargin 2
+set DefaultRadix hexadecimal
