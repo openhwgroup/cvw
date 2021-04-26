@@ -496,14 +496,14 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	NextState = STATE_MISS_SPILL_READ1;
       end
       STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
-	PCMux = 2'b10;	 // there is a 1 cycle delay after setting the address before the date arrives.
-	spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
+	PCMux = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
 	ICacheReadEn = 1'b1;	
 	NextState = STATE_MISS_SPILL_2;
       end
       STATE_MISS_SPILL_2: begin
 	PCMux = 2'b10;
-	UnalignedSelect = 1'b1;	
+	UnalignedSelect = 1'b1;
+	spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
 	if (~hit) begin
 	  CntReset = 1'b1;
 	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
