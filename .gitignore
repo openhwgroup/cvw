@@ -17,3 +17,9 @@ wlft*
 /imperas-riscv-tests/ProgramMap.txt
 /wally-pipelined/busybear-testgen/gdbcombined.txt
 /wally-pipelined/busybear-testgen/first10.txt
+*.o
+*.d
+testsBP/*/*/*.elf*
+testsBP/*/OBJ/*
+testsBP/*/*.a
+
