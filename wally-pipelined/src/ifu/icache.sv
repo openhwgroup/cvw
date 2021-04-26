@@ -206,8 +206,8 @@ module icachecontroller #(parameter LINESIZE = 256) (
 
   logic [15:0] 		     SpillDataBlock0;
 
-
-
+  logic 		     FlushDLastCyclen;
+  
     // Happy path signals
   logic [31:0] 		     AlignedInstrRawD;
   

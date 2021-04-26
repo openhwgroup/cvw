@@ -27,9 +27,10 @@
 
 `include "wally-config.vh"
 
-module function_radix(reset, ProgramAddrMapFile, ProgramLabelMapFile);
+module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   
   input logic reset;
+  input logic clk;
   input string ProgramAddrMapFile;
   input string ProgramLabelMapFile;
 
@@ -38,13 +39,23 @@ module function_radix(reset, ProgramAddrMapFile, ProgramLabelMapFile);
   string 	    FunctionName;
   
 
-  logic [`XLEN-1:0] pc, FunctionAddr;
+  logic [`XLEN-1:0] PCF, PCD, PCE, FunctionAddr;
+  logic 	    StallD, StallE, FlushD, FlushE;
   integer 	    ProgramAddrIndex;
 
-  // *** I should look into the system verilog objects instead of signal spy.
-  initial begin
-    $init_signal_spy("/testbench/dut/hart/PCE", "/testbench/functionRadix/function_radix/pc");
-  end
+  assign PCF = testbench.dut.hart.PCF;
+  assign StallD = testbench.dut.hart.StallD;
+  assign StallE = testbench.dut.hart.StallE;  
+  assign FlushD = testbench.dut.hart.FlushD;
+  assign FlushE = testbench.dut.hart.FlushE;
+
+  // copy from ifu
+  // when the F and D stages are flushed we need to ensure the PCE is held so that the function name does not
+  // erroneously change.
+  flopenrc #(`XLEN) PCDReg(clk, reset, 1'b0, ~StallD, FlushE & FlushD ? PCE : PCF, PCD);
+  flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, FlushE ? PCE : PCD, PCE);
+  
+  
 
   task automatic bin_search_min;
     input logic [`XLEN-1:0] pc;
@@ -74,7 +85,7 @@ module function_radix(reset, ProgramAddrMapFile, ProgramLabelMapFile);
 	end else if( array[mid] > pc) begin
 	  right = mid -1;
 	end else begin
-	  $display("Critical Error in function radix. PC, %x not found.", pc);
+	  $display("Critical Error in FunctionName. PC, %x not found.", pc);
 	  return;
 	  //$stop();
 	end	  
@@ -141,8 +152,8 @@ module function_radix(reset, ProgramAddrMapFile, ProgramLabelMapFile);
     
   end
 
-  always @(pc) begin
-    bin_search_min(pc, ProgramAddrMapLineCount, ProgramAddrMapMemory, FunctionAddr, ProgramAddrIndex);
+  always @(PCE) begin
+    bin_search_min(PCE, ProgramAddrMapLineCount, ProgramAddrMapMemory, FunctionAddr, ProgramAddrIndex);
   end
 
 

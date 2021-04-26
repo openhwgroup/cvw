@@ -191,10 +191,10 @@ sub fixadr {
     #print "addr $adr\n";
 
     # start at 0
-    #return hex($adr);
+    return hex($adr);
 
     # start at 8
-    if ($adr =~ s/^8/0/) { return hex($adr); }
-    else { return hex($adr) }
+    #if ($adr =~ s/^8/0/) { return hex($adr); }
+    #else { return hex($adr) }
     
 }

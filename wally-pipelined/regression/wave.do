@@ -5,7 +5,7 @@ add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/test
 add wave -noupdate -radix ascii /testbench/memfilename
-add wave -noupdate -expand -group {Execution Stage} /testbench/functionRadix/function_radix/FunctionName
+add wave -noupdate -expand -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
