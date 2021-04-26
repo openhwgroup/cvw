@@ -554,12 +554,13 @@ module testbench();
             endcase
 
             //check things!
-            if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
+            if ((~dut.hart.ifu.bpred.BPPredWrongE) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
+            //if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
               $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, pcExpected);
               `ERROR
             end
             InstrMask = CheckInstrD[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-            if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
+            if ((~forcedInstr) && (~dut.hart.ifu.bpred.BPPredWrongE) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
               $display("%0t ps, instr %0d: InstrD does not equal CheckInstrD: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.InstrRawD, CheckInstrD, dut.hart.ifu.PCD);
               `ERROR
             end
