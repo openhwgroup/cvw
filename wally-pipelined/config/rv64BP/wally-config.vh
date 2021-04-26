@@ -2,7 +2,7 @@
 // wally-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
-// Modified: 
+// Modified: Brett Mathis
 //
 // Purpose: Specify which features are configured
 //          Macros to determine which modes are supported based on MISA
@@ -24,14 +24,11 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`define BUILDROOT 0
-`define BUSYBEAR 0
-
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
 //`define MISA (32'h00000104)
-`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12)
+`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -60,7 +57,7 @@
 `define MEM_VIRTMEM 0
 
 // Address space
-`define RESET_VECTOR 64'h00000000000100b0
+`define RESET_VECTOR 64'h0000000000000000
 
 // Bus Interface width
 `define AHBW 64
@@ -69,18 +66,18 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIMBASE   32'h00000000
+`define BOOTTIMBASE   32'h00800000
 `define BOOTTIMRANGE  32'h00003FFF
-`define TIMBASE    32'h00000000
-`define TIMRANGE   32'hFFFFFFFF
-`define CLINTBASE  32'h02000000
-`define CLINTRANGE 32'h0000FFFF
-`define GPIOBASE   32'h10012000
-`define GPIORANGE  32'h000000FF
-`define UARTBASE   32'h10000000
-`define UARTRANGE  32'h00000007
-`define PLICBASE   32'h0C000000
-`define PLICRANGE  32'h03FFFFFF
+`define TIMBASE       32'h00000000
+`define TIMRANGE      32'h007FFFFF
+`define CLINTBASE     32'h02000000
+`define CLINTRANGE    32'h0000FFFF
+`define GPIOBASE      32'h10012000
+`define GPIORANGE     32'h000000FF
+`define UARTBASE      32'h10000000
+`define UARTRANGE     32'h00000007
+`define PLICBASE      32'h0C000000
+`define PLICRANGE     32'h03FFFFFF
 
 // Test modes
 
@@ -93,19 +90,12 @@
 // Hardware configuration
 `define UART_PRESCALE 1
 
-// Interrupt configuration
-`define PLIC_NUM_SRC 53
-`define PLIC_UART_ID 4
-
-// Can add PLIC Config here
-// Num interrupt sources
-
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
 
-`define TWO_BIT_PRELOAD "../config/coremark/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/coremark/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
 `define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
-`define TESTSBP 0
+`define TESTSBP 1

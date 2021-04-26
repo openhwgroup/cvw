@@ -30,15 +30,20 @@
 `include "wally-config.vh"
 
 module csrc ( 
-    input  logic             clk, reset,
-    input  logic             InstrValidW, LoadStallD, CSRMWriteM, BPPredWrongM,
-    input  logic [3:0]      InstrClassM,
-    input  logic [11:0]      CSRAdrM,
-    input  logic [1:0]       PrivilegeModeW,
-    input  logic [`XLEN-1:0] CSRWriteValM,
-    input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input logic 	     clk, reset,
+    input logic 	     StallD, StallE, StallM, StallW,
+    input logic 	     InstrValidW, LoadStallD, CSRMWriteM,
+    input logic 	     BPPredDirWrongM,
+    input logic 	     BTBPredPCWrongM,
+    input logic 	     RASPredPCWrongM,
+    input logic 	     BPPredClassNonCFIWrongM,
+    input logic [4:0] 	     InstrClassM,
+    input logic [11:0] 	     CSRAdrM,
+    input logic [1:0] 	     PrivilegeModeW,
+    input logic [`XLEN-1:0]  CSRWriteValM,
+    input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
     output logic [`XLEN-1:0] CSRCReadValM,
-    output logic             IllegalCSRCAccessM);
+    output logic 	     IllegalCSRCAccessM);
 
     // create Counter arrays to store address of each counter 
     integer MHPMCOUNTER [`COUNTERS:0];
@@ -65,11 +70,16 @@ module csrc (
     logic [`COUNTERS:0] MCOUNTEN;
     assign MCOUNTEN[0] = 1'b1;
     assign MCOUNTEN[1] = 1'b0;
-    assign MCOUNTEN[2] = InstrValidW;
-    assign MCOUNTEN[3] = LoadStallD;
-    assign MCOUNTEN[4] = BPPredWrongM;
-    assign MCOUNTEN[5] = InstrClassM[0];
-    assign MCOUNTEN[`COUNTERS:6] = 0; 
+    assign MCOUNTEN[2] = InstrValidW & ~StallW;
+    assign MCOUNTEN[3] = LoadStallD & ~StallD;
+    assign MCOUNTEN[4] = BPPredDirWrongM & ~StallM;
+    assign MCOUNTEN[5] = InstrClassM[0] & ~StallM;
+    assign MCOUNTEN[6] = BTBPredPCWrongM & ~StallM;
+    assign MCOUNTEN[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & ~StallM;
+    assign MCOUNTEN[8] = RASPredPCWrongM & ~StallM;
+    assign MCOUNTEN[9] = InstrClassM[3] & ~StallM;
+    assign MCOUNTEN[10] = BPPredClassNonCFIWrongM & ~StallM;
+    assign MCOUNTEN[`COUNTERS:11] = 0; 
 
     genvar j;       
     generate
@@ -95,7 +105,7 @@ module csrc (
                 // Write / update counters
                 // Only the Machine mode versions of the counter CSRs are writable
                 if (`XLEN==64) begin // 64-bit counters
-                    flopr   #(64) HPMCOUNTERreg_j(clk, reset, NextHPMCOUNTERM[j], HPMCOUNTER_REGW[j]);
+                    flopenr   #(64) HPMCOUNTERreg_j(clk, reset, ~StallW, NextHPMCOUNTERM[j], HPMCOUNTER_REGW[j]);
                 end
                 else begin // 32-bit low and high counters
                     logic [`COUNTERS:0] WriteHPMCOUNTERHM;
@@ -106,8 +116,8 @@ module csrc (
                     assign NextHPMCOUNTERHM[j] = WriteHPMCOUNTERHM[j] ? CSRWriteValM : HPMCOUNTERPlusM[j][63:32]; 
 
                     // Counter CSRs
-                    flopr   #(32) HPMCOUNTERreg_j(clk, reset, NextHPMCOUNTERM[j], HPMCOUNTER_REGW[j][31:0]);
-                    flopr   #(32) HPMCOUNTERHreg_j(clk, reset, NextHPMCOUNTERHM[j], HPMCOUNTER_REGW[j][63:32]);
+                    flopenr   #(32) HPMCOUNTERreg_j(clk, reset, ~StallW, NextHPMCOUNTERM[j], HPMCOUNTER_REGW[j][31:0]);
+                    flopenr   #(32) HPMCOUNTERHreg_j(clk, reset, ~StallW, NextHPMCOUNTERHM[j], HPMCOUNTER_REGW[j][63:32]);
                 end
             end // end for 
 

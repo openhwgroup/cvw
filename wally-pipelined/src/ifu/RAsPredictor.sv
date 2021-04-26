@@ -42,7 +42,7 @@ module RASPredictor
   logic 		    CounterEn;
   localparam Depth = $clog2(StackSize);
 
-  logic [StackSize-1:0]     PtrD, PtrQ, PtrP1, PtrM1;
+  logic [Depth-1:0] 	    PtrD, PtrQ, PtrP1, PtrM1;
   logic [StackSize-1:0] [`XLEN-1:0] memory;
   integer 			    index;
   
@@ -55,7 +55,7 @@ module RASPredictor
   // may have to handle a push and an incr at the same time.
   // *** what happens if jal is executing and there is a return being flushed in Decode?
 
-  flopenr #(StackSize) PTR(.clk(clk),
+  flopenr #(Depth) PTR(.clk(clk),
 			   .reset(reset),
 			   .en(CounterEn),
 			   .d(PtrD),

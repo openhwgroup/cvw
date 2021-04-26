@@ -115,9 +115,6 @@ module datapath (
   flopenrc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ~StallW, ALUResultM, ALUResultW);
   flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
-  // *** something is not right here.  Before the merge I found an issue with the jal instruction not writing
-  // the link address through the alu.
-  // not sure what changed.
   // handle Store Conditional result if atomic extension supported
   generate 
     if (`A_SUPPORTED)
