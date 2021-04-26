@@ -81,7 +81,6 @@ module ifu (
   logic [31:0]      InstrRawD, InstrE, InstrW;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
   logic 	    reset_q; // *** look at this later.
-  logic [`XLEN-1:0] PCPF;
 
   logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   

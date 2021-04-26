@@ -471,9 +471,10 @@ module testbench();
       // the design.
       if (`XLEN == 32) meminit = 32'hFEDC0123;
       else meminit = 64'hFEDCBA9876543210;
-      for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	dut.uncore.dtim.RAM[i] = meminit;
-      end
+      // *** broken because DTIM also drives RAM
+      /*for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
+	      dut.uncore.dtim.RAM[i] = meminit;
+      end*/
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
