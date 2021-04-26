@@ -1,21 +1,7 @@
 `include "wally-config.vh"
 
 
-// *** Noah please check which way you need to fix the merge conflict.
-// Ross was not sure.
-// merge conflict main
 module testbench();
-
-/* -----\/----- EXCLUDED -----\/-----
- // merge conflict icache-almost-ready
-package ahbliteState;
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
-endpackage
-
-module testbench_busybear();
- -----/\----- EXCLUDED -----/\----- */
-
-
   logic            clk, reset;
   logic [31:0]     GPIOPinsIn;
   logic [31:0]     GPIOPinsOut, GPIOPinsEn;
