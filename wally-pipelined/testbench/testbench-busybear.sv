@@ -531,36 +531,36 @@ module testbench();
             end
             instrs += 1;
             // are we at a branch/jump?
-            casex (lastCheckInstrD[31:0])
-              32'b00000000001000000000000001110011, // URET
-              32'b00010000001000000000000001110011, // SRET
-              32'b00110000001000000000000001110011, // MRET
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
-              32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
-              32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
-              32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
-                speculative = 1;
-              32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
-              32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
-                speculative = 0; // tbh don't really know what should happen here
-              32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
-              32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
-              32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
-                speculative = 1;
-              default:
-                speculative = 0;
-            endcase
+            //casex (lastCheckInstrD[31:0])
+            //  32'b00000000001000000000000001110011, // URET
+            //  32'b00010000001000000000000001110011, // SRET
+            //  32'b00110000001000000000000001110011, // MRET
+            //  32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
+            //  32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
+            //  32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
+            //  32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
+            //  32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
+            //  32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
+            //    speculative = 1;
+            //  32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
+            //  32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
+            //    speculative = 0; // tbh don't really know what should happen here
+            //  32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
+            //  32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
+            //  32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
+            //    speculative = 1;
+            //  default:
+            //    speculative = 0;
+            //endcase
+            speculative = dut.hart.ifu.bpred.BPPredWrongE;
 
             //check things!
-            if ((~dut.hart.ifu.bpred.BPPredWrongE) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
-            //if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
+            if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
               $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, pcExpected);
               `ERROR
             end
             InstrMask = CheckInstrD[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-            if ((~forcedInstr) && (~dut.hart.ifu.bpred.BPPredWrongE) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
+            if ((~forcedInstr) && (~speculative) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & CheckInstrD))) begin
               $display("%0t ps, instr %0d: InstrD does not equal CheckInstrD: %x, %x, PC: %x", $time, instrs, dut.hart.ifu.InstrRawD, CheckInstrD, dut.hart.ifu.PCD);
               `ERROR
             end
