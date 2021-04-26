@@ -105,4 +105,6 @@
 
 `define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
-`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
+`define BPRED_ENABLED 1
+`define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
+`define TESTSBP 0

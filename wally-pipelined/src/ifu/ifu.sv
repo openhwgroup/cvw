@@ -152,29 +152,41 @@ module ifu (
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
-  // I am making the port connection explicit for now as I want to see them and they will be changing.
-  bpred bpred(.clk(clk),
-	      .reset(reset),
-	      .StallF(StallF),
-	      .StallD(StallD),
-	      .StallE(StallE),
-	      .FlushF(FlushF),
-	      .FlushD(FlushD),
-	      .FlushE(FlushE),
-	      .PCNextF(PCNextF),
-	      .BPPredPCF(BPPredPCF),
-	      .SelBPPredF(SelBPPredF),
-	      .PCE(PCE),
-	      .PCSrcE(PCSrcE),
-	      .PCTargetE(PCTargetE),
-	      .PCD(PCD),
-	      .PCLinkE(PCLinkE),
-	      .InstrClassE(InstrClassE),
-	      .BPPredWrongE(BPPredWrongE),
- 	      .BPPredDirWrongE(BPPredDirWrongE),
- 	      .BTBPredPCWrongE(BTBPredPCWrongE),
- 	      .RASPredPCWrongE(RASPredPCWrongE),
- 	      .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
+  generate 
+    if (`BPRED_ENABLED == 1) begin : bpred
+      // I am making the port connection explicit for now as I want to see them and they will be changing.
+      bpred bpred(.clk(clk),
+		  .reset(reset),
+		  .StallF(StallF),
+		  .StallD(StallD),
+		  .StallE(StallE),
+		  .FlushF(FlushF),
+		  .FlushD(FlushD),
+		  .FlushE(FlushE),
+		  .PCNextF(PCNextF),
+		  .BPPredPCF(BPPredPCF),
+		  .SelBPPredF(SelBPPredF),
+		  .PCE(PCE),
+		  .PCSrcE(PCSrcE),
+		  .PCTargetE(PCTargetE),
+		  .PCD(PCD),
+		  .PCLinkE(PCLinkE),
+		  .InstrClassE(InstrClassE),
+		  .BPPredWrongE(BPPredWrongE),
+ 		  .BPPredDirWrongE(BPPredDirWrongE),
+ 		  .BTBPredPCWrongE(BTBPredPCWrongE),
+ 		  .RASPredPCWrongE(RASPredPCWrongE),
+ 		  .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
+    end else begin : bpred
+      assign BPPredPCF = {`XLEN{1'b0}};
+      assign SelBPPredF = 1'b0;
+      assign BPPredWrongE = PCSrcE;
+      assign BPPredDirWrongE = 1'b0;
+      assign BTBPredPCWrongE = 1'b0;
+      assign RASPredPCWrongE = 1'b0;
+      assign BPPredClassNonCFIWrong = 1'b0;
+    end      
+  endgenerate
   // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
   assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
 
