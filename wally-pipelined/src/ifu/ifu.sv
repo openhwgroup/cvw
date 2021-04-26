@@ -77,7 +77,8 @@ module ifu (
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
-  logic 	    reset_q; // *** look at this later.  
+  logic 	    reset_q; // *** look at this later.
+  logic [`XLEN-1:0] PCPF;
 
   tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),

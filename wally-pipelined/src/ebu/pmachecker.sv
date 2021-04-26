@@ -29,9 +29,8 @@
 
 module pmachecker (
   input  logic [31:0] HADDR,
-  input  logic        HSIZE,
+  input  logic [2:0]  HSIZE, HBURST,
   input  logic        HWRITE,
-  input  logic        HBURST,
 
   input  logic        Atomic, Execute, Write, Read,
 
