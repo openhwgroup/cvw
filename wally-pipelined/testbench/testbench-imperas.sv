@@ -569,11 +569,16 @@ module testbench();
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-  // initialize the branch predictor
-  initial begin
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);    
-  end
+  generate
+    // initialize the branch predictor
+    if (`BPRED_ENABLED == 1) begin : bpred
+      
+      initial begin
+	$readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
+	$readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);    
+      end
+    end
+  endgenerate
   
 endmodule
 
