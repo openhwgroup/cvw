@@ -18,7 +18,7 @@ my $maxaddress = 0;
 
 STDOUT->autoflush(1);
 # *** Ross Thompson I think there is a bug here needs to be +1
-print ("Processing $#ARGV memfiles: \n");
+print ("Processing $#ARGV memfiles: ");
 my $frac = $#ARGV/10;
 for(my $i=0; $i<=$#ARGV; $i++) {
     if ($i < 10 || $i % $frac == 0) { print ("$i ") };
@@ -40,113 +40,60 @@ for(my $i=0; $i<=$#ARGV; $i++) {
     if ($needsprocessing == 1) {
         open(FILE, $ofile) || die("Can't read $ofile");
         my $mode = 0; # parse for code
-	my $section = "";
-	my $data = "";
         my $address;
-	my $first = 0;
-	my $firstAddress;
 
     # initialize to all zeros;
-	# *** need to fix the zeroing range.  Not always 64K
         for (my $i=0; $i < 65536*4; $i++) {
             $memfilebytes[$i] = "00";
         }
 
         while(<FILE>) {
-	    # objdump fill is divided into several .sections of which only some we want to actually process.
-	    # In general we want everything except the .comment and .*attributes
-	    if (/Disassembly of section (.*):/) {
-		$section = $1;
-		print ("setting section to $section\n");
-	    } else {
-		# now check if the section is one we are interested in processing.
-		#if ($section ne ".comment" && $section ne ".riscv.attributes" && $section =~ /\.debug.*/) {
-		if ($section =~ "\.init|\.text|\..*data|\..*bss") {
-		    # the structure is: possible space(s) hex number: possible space(s) hex number space(s) junk
-		    # there are also lines we need to skip: possible  space(s) hex number <string>:
-		    if (/^\s*([0-9A-Fa-f]{1,16}):\s+([0-9A-Fa-f]+).*$/) {
-			$address = &fixadr($1);			
-			if ($first == 0) {
-			    $first = 1;
-			    $firstAddress = $address;
-			}
-			$data = $2;
-			&emitData($address, $data);
-			# my $len = length($data);
-			# for (my $i=0; $i<$len/2; $i++) {
-			#     $memfilebytes[$address+$i] = substr($data, $len-2-2*$i, 2);
-			# }
-#			print ("Addr $address $data\n");
-#		    } elsif (/^\s*\.\.\./) {
-#			print ("Got ...\n");
-#		    } else {
-#			print ("No match\n");
-		    }
-		}
-	    }
-# 	    # *** this mode stuff does not work if a section is missing or reordered.
-#             if ($mode == 0) { # Parse code
-# #	    print("Examining $_\n");
-# 		if (/^\s*(\S{1,16}):\s+(\S+)\s+/) {
-#                     $address = &fixadr($1);
-#                     my $instr = $2;
-#                     my $len = length($instr);
-#                     for (my $i=0; $i<$len/2; $i++) {
-#                         $memfilebytes[$address+$i] = substr($instr, $len-2-2*$i, 2);
-#                     }
-#                     print ("address $address $instr\n");
-# 		}
-# 		if (/Disassembly of section .data:/) { $mode = 1;}
-#             } elsif ($mode == 1) { # Parse data segment
-#                 if (/^\s*(\S{1,16}):\s+(.*)/) {
-#                     $address = &fixadr($1);
-# #		        print "addresss $address maxaddress $maxaddress\n";
-# 		    if ($address > $maxaddress) { $maxaddress = $address; }
-#                     my $line = $2;
-#                     # merge chunks with spaces
-# 		    # *** might need to change
-#                     $line =~ s/(\S)\s(\S)/$1$2/g;
-#                     # strip off comments
-#                     $line =~ /^(\S*)/;
-#                     $payload = $1;
-#                     &emitData($address, $payload);
-#                 }
-#                 if (/Disassembly of section .comment:/) { $mode = 2; }
-# 	    } elsif ($mode == 2) { # parse the comment section
-#                 if (/Disassembly of section .riscv.attributes:/) { $mode = 3; }
-#             }
+            if ($mode == 0) { # Parse code
+    #	    print("Examining $_\n");
+            if (/^\s*(\S\S\S\S\S\S\S\S):\s+(\S+)\s+/) {
+                    $address = &fixadr($1);
+                    my $instr = $2;
+                    my $len = length($instr);
+                    for (my $i=0; $i<$len/2; $i++) {
+                        $memfilebytes[$address+$i] = substr($instr, $len-2-2*$i, 2);
+                    }
+    #                print ("address $address $instr\n");
+            }
+                if (/Disassembly of section .data:/) { $mode = 1;}
+            } elsif ($mode == 1) { # Parse data segment
+                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
+                    $address = &fixadr($1);
+    #		print "addresss $address maxaddress $maxaddress\n";
+            if ($address > $maxaddress) { $maxaddress = $address; }
+                    my $line = $2;
+                    # merge chunks with spaces
+                    $line =~ s/(\S)\s(\S)/$1$2/g;
+                    # strip off comments
+                    $line =~ /^(\S*)/;
+                    $payload = $1;
+                    &emitData($address, $payload);
+                }
+                if (/Disassembly of section .riscv.attributes:/) { $mode = 2; }
+            }
         }
         close(FILE);
-        $maxaddress = $address + 32; # pad some zeros at the end
+        $maxaddress += 32; # pad some zeros at the end
 
         # print to memory file
-	# *** this is a problem
         if ($fname =~ /rv32/) {
         open(MEMFILE, ">$memfile") || die("Can't write $memfile");
-        for (my $i=$firstAddress; $i<= $maxaddress; $i = $i + 4) {
+        for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
             for ($j=3; $j>=0; $j--) {
-		no warnings 'uninitialized';
-		my $value = $memfilebytes[$i+$j];
-		if ($value eq ""){
-		    print MEMFILE "00";
-		} else {
-		    print MEMFILE "$memfilebytes[$i+$j]";
-		}
+            print MEMFILE "$memfilebytes[$i+$j]";
             }
             print MEMFILE "\n";
         }
         close(MEMFILE);
         } else {
         open(MEMFILE, ">$memfile") || die("Can't write $memfile");
-        for (my $i=$firstAddress; $i<= $maxaddress; $i = $i + 8) {
+        for (my $i=0; $i<= $maxaddress; $i = $i + 8) {
             for ($j=7; $j>=0; $j--) {
-		no warnings 'uninitialized';
-		my $value = $memfilebytes[$i+$j];
-		if ($value eq ""){
-		    print MEMFILE "00";
-		} else {
-		    print MEMFILE "$memfilebytes[$i+$j]";
-		}
+            print MEMFILE "$memfilebytes[$i+$j]";
             }
             print MEMFILE "\n";
         }
@@ -186,15 +133,7 @@ sub emitData {
 
 sub fixadr {
     # strip off leading 8 from address and convert to decimal
-    # if the leading 8 is not present don't remove.
     my $adr = shift;
-    #print "addr $adr\n";
-
-    # start at 0
-    #return hex($adr);
-
-    # start at 8
     if ($adr =~ s/^8/0/) { return hex($adr); }
-    else { return hex($adr) }
-    
+    else { die("address $adr lacks leading 8\n"); }
 }
