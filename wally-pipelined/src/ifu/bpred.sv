@@ -47,20 +47,25 @@ module bpred
    input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
-   input logic [3:0] 	    InstrClassE,
+   input logic [4:0] 	    InstrClassE,
    // Report branch prediction status
-   output logic 	    BPPredWrongE
+   output logic 	    BPPredWrongE,
+   output logic 	    BPPredDirWrongE,
+   output logic 	    BTBPredPCWrongE,
+   output logic 	    RASPredPCWrongE,
+   output logic 	    BPPredClassNonCFIWrongE
    );
 
   logic 		    BTBValidF;
   logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
-  logic [3:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
+  logic [4:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
   logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
   logic 		    TargetWrongE;
   logic 		    FallThroughWrongE;
-  logic 		    PredictionDirWrongE;
   logic 		    PredictionPCWrongE;
+  logic 		    PredictionInstrClassWrongE;
+  
   logic [`XLEN-1:0] 	    CorrectPCE;
 
 
@@ -74,7 +79,7 @@ module bpred
 				   .Prediction(BPPredF),
 				   // update
 				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0]),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
 				   .UpdatePrediction(UpdateBPPredE));
 
     end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
@@ -86,7 +91,7 @@ module bpred
 					  .Prediction(BPPredF),
 					  // update
 					  .UpdatePC(PCE),
-					  .UpdateEN(InstrClassE[0]),
+					  .UpdateEN(InstrClassE[0] & ~StallE),
 					  .PCSrcE(PCSrcE),
 					  .UpdatePrediction(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -98,7 +103,20 @@ module bpred
 				   .Prediction(BPPredF),
 				   // update
 				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0]),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
+				   .PCSrcE(PCSrcE),
+				   .UpdatePrediction(UpdateBPPredE));
+    end 
+    else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
+
+      localHistoryPredictor DirPredictor(.clk(clk),
+				   .reset(reset),
+				   .*, // Stalls and flushes
+				   .LookUpPC(PCNextF),
+				   .Prediction(BPPredF),
+				   // update
+				   .UpdatePC(PCE),
+				   .UpdateEN(InstrClassE[0] & ~StallE),
 				   .PCSrcE(PCSrcE),
 				   .UpdatePrediction(UpdateBPPredE));
     end 
@@ -132,16 +150,19 @@ module bpred
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
+  // *** getting to many false positivies from the BTB, we need a partial TAG to reduce this.
   BTBPredictor TargetPredictor(.clk(clk),
 			       .reset(reset),
+			       .*, // Stalls and flushes
 			       .LookUpPC(PCNextF),
 			       .TargetPC(BTBPredPCF),
 			       .InstrClass(BPInstrClassF),
 			       .Valid(BTBValidF),
 			       // update
-			       .UpdateEN(InstrClassE[2] | InstrClassE[1] | InstrClassE[0]),
+			       .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
 			       .UpdatePC(PCE),
 			       .UpdateTarget(PCTargetE),
+			       .UpdateInvalid(PredictionInstrClassWrongE),
 			       .UpdateInstrClass(InstrClassE));
 
   // need to forward when updating to the same address as reading.
@@ -152,9 +173,9 @@ module bpred
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
 			    .reset(reset),
-			    .pop(BPInstrClassF[3]),
+			    .pop(BPInstrClassF[3] & ~StallF),
 			    .popPC(RASPCF),
-			    .push(InstrClassE[3]),
+			    .push(InstrClassE[4] & ~StallE),
 			    .incr(1'b0),
 			    .pushPC(PCLinkE));
 
@@ -180,14 +201,14 @@ module bpred
 			   .q(BPPredE));
 
   // pipeline the class
-  flopenrc #(4) InstrClassRegD(.clk(clk),
+  flopenrc #(5) InstrClassRegD(.clk(clk),
 			       .reset(reset),
 			       .en(~StallD),
 			       .clear(FlushD),
 			       .d(BPInstrClassF),
 			       .q(BPInstrClassD));
 
-  flopenrc #(4) InstrClassRegE(.clk(clk),
+  flopenrc #(5) InstrClassRegE(.clk(clk),
 			       .reset(reset),
 			       .en(~StallE),
 			       .clear(FlushE),
@@ -197,12 +218,40 @@ module bpred
   
 
   // Check the prediction makes execution.
+
+  // first check if the target or fallthrough address matches what was predicted.
   assign TargetWrongE = PCTargetE != PCD;
   assign FallThroughWrongE = PCLinkE != PCD;
-  assign PredictionDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
-  assign PredictionPCWrongE = PCSrcE ? TargetWrongE : FallThroughWrongE;
-  assign BPPredWrongE = (PredictionPCWrongE | PredictionDirWrongE) & (|InstrClassE);
+  // If the target is taken check the target rather than fallthrough.  The instruction needs to be a branch if PCSrcE is selected
+  // Remember the bpred can incorrectly predict a non cfi instruction as a branch taken.  If the real instruction is non cfi
+  // it must have selected teh fall through.
+  assign PredictionPCWrongE = (PCSrcE  & (|InstrClassE) ? TargetWrongE : FallThroughWrongE);
 
+  // The branch direction also need to checked.
+  // However if the direction is wrong then the pc will be wrong.  This is only relavent to checking the
+  // accuracy of the direciton prediction.
+  assign BPPredDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
+  
+  // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
+  // Also we want to track this in a performance counter.
+  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;
+
+  // We want to output to the instruction fetch if the PC fetched was wrong.  If by chance the predictor was wrong about
+  // the direction or class, but correct about the target we don't have the flush the pipeline.  However we still
+  // need this information to verify the accuracy of the predictors.
+  
+  
+  //assign BPPredWrongE = ((PredictionPCWrongE | BPPredDirWrongE) & (|InstrClassE)) | PredictionInstrClassWrongE;
+
+  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
+
+  // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
+  assign BTBPredPCWrongE = (InstrClassE[4] | InstrClassE[2] | InstrClassE[1]) & PredictionPCWrongE;
+  // similar with RAS
+  assign RASPredPCWrongE = InstrClassE[3] & PredictionPCWrongE;
+  // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
+  assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
+  
   // Update predictors
 
   satCounter2 BPDirUpdate(.BrDir(PCSrcE),

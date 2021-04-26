@@ -27,11 +27,12 @@
 `include "wally-config.vh"
 
 module ifu (
-  input  logic             clk, reset,
-  input  logic             StallF, StallD, StallE, StallM, StallW,
-  input  logic             FlushF, FlushD, FlushE, FlushM, FlushW,
+  input logic 		   clk, reset,
+  input logic 		   StallF, StallD, StallE, StallM, StallW,
+  input logic 		   FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
   input  logic [`XLEN-1:0] InstrInF,
+  input  logic             InstrAckF,
   output logic [`XLEN-1:0] PCF, 
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
@@ -48,8 +49,11 @@ module ifu (
   input logic [`XLEN-1:0]  PrivilegedNextPCM, 
   output logic [31:0] 	   InstrD, InstrM,
   output logic [`XLEN-1:0] PCM, 
-  output logic [3:0] InstrClassM,
-  output logic BPPredWrongM,
+  output logic [4:0] 	   InstrClassM,
+  output logic 		   BPPredDirWrongM,
+  output logic 		   BTBPredPCWrongM,
+  output logic 		   RASPredPCWrongM,
+  output logic 		   BPPredClassNonCFIWrongM,
   // Writeback
   // output logic [`XLEN-1:0] PCLinkW,
   // Faults
@@ -72,10 +76,14 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCPF;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCNextPF, PCPF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, InstrE, InstrW;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
+  logic 	    reset_q; // *** look at this later.
+
+  logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+  
 
   tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
@@ -86,8 +94,8 @@ module ifu (
 
   // branch predictor signals
   logic 	   SelBPPredF;
-  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F;
-  logic [3:0] 	    InstrClassD, InstrClassE;
+  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
+  logic [4:0] 	    InstrClassD, InstrClassE;
   
 
   // *** put memory interface on here, InstrF becomes output
@@ -96,10 +104,11 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
-  icache ic(
+  assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
+  icache icache(
     .*,
-    .UpperPCPF(PCPF[`XLEN-1:12]),
-    .LowerPCF(PCF[11:0])
+    .UpperPCNextPF(PCNextPF[`XLEN-1:12]),
+    .LowerPCNextF(PCNextPF[11:0])
   );
 
   assign PrivilegedChangePCM = RetM | TrapM;
@@ -118,7 +127,26 @@ module ifu (
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
 		       .d1(PrivilegedNextPCM),
 		       .s(PrivilegedChangePCM),
-		       .y(UnalignedPCNextF));
+		       .y(PCNext2F));
+
+  // *** try to remove this in the future as it can add a long path.
+  // StallF may arrive late.
+/* -----\/----- EXCLUDED -----\/-----
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
+		       .d1(PCF),
+		       .s(StallF),
+		       .y(PCNext3F));
+ -----/\----- EXCLUDED -----/\----- */
+
+  mux2 #(`XLEN) pcmux4(.d0(PCNext2F),
+		       .d1(`RESET_VECTOR),
+		       .s(reset_q),
+		       .y(UnalignedPCNextF)); 
+ 
+  flop #(1) resetReg (.clk(clk),
+		      .d(reset),
+		      .q(reset_q));
+  
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
@@ -129,7 +157,7 @@ module ifu (
 	      .reset(reset),
 	      .StallF(StallF),
 	      .StallD(StallD),
-	      .StallE(1'b0),   // *** may need this eventually
+	      .StallE(StallE),
 	      .FlushF(FlushF),
 	      .FlushD(FlushD),
 	      .FlushE(FlushE),
@@ -142,7 +170,11 @@ module ifu (
 	      .PCD(PCD),
 	      .PCLinkE(PCLinkE),
 	      .InstrClassE(InstrClassE),
-	      .BPPredWrongE(BPPredWrongE));
+	      .BPPredWrongE(BPPredWrongE),
+ 	      .BPPredDirWrongE(BPPredDirWrongE),
+ 	      .BTBPredPCWrongE(BTBPredPCWrongE),
+ 	      .RASPredPCWrongE(RASPredPCWrongE),
+ 	      .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
   // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
   assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
 
@@ -167,8 +199,9 @@ module ifu (
 
   // the branch predictor needs a compact decoding of the instruction class.
   // *** consider adding in the alternate return address x5 for returns.
-  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && InstrD[19:15] == 5'h01; // return
-  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && InstrD[19:15] != 5'h01; // jump register, but not return
+  assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 && (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
+  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) == 5'h01; // return must link to ra or r5
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) != 5'h01; // jump register, but not return
   assign InstrClassD[1] = InstrD[6:0] == 7'h6F; // jump
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
 
@@ -195,26 +228,26 @@ module ifu (
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   // flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
 
-  flopenrc #(4) InstrClassRegE(.clk(clk),
+  flopenrc #(5) InstrClassRegE(.clk(clk),
 			       .reset(reset),
 			       .en(~StallE),
 			       .clear(FlushE),
 			       .d(InstrClassD),
 			       .q(InstrClassE));
 
-  flopenrc #(4) InstrClassRegM(.clk(clk),
+  flopenrc #(5) InstrClassRegM(.clk(clk),
 			       .reset(reset),
 			       .en(~StallM),
 			       .clear(FlushM),
 			       .d(InstrClassE),
 			       .q(InstrClassM));
 
-  flopenrc #(1) BPPredWrongRegM(.clk(clk),
+  flopenrc #(4) BPPredWrongRegM(.clk(clk),
 			       .reset(reset),
 			       .en(~StallM),
 			       .clear(FlushM),
-			       .d(BPPredWrongE),
-			       .q(BPPredWrongM));
+			       .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
+			       .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or

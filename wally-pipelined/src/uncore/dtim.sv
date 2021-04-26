@@ -37,6 +37,9 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   output logic             HRESPTim, HREADYTim
 );
 
+  localparam integer 	   MemStartAddr = BASE>>(1+`XLEN/32);
+  localparam integer 	   MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
+  
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   logic [31:0] HWADDR, A;
   logic [`XLEN-1:0] HREADTim0;
@@ -47,6 +50,7 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   logic [15:0] entry;
   logic        memread, memwrite;
   logic [3:0]  busycount;
+
 
   assign initTrans = HREADY & HSELTim & (HTRANS != 2'b00);
 
@@ -82,12 +86,22 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   assign risingHREADYTim = HREADYTim & ~prevHREADYTim;
 
   // Model memory read and write
+/* -----\/----- EXCLUDED -----\/-----
+  integer       index;
+
+  initial begin
+    for(index = MemStartAddr; index < MemEndAddr; index = index + 1) begin
+      RAM[index] <= {`XLEN{1'b0}};
+    end
+  end
+ -----/\----- EXCLUDED -----/\----- */
+  
   generate
     if (`XLEN == 64)  begin
       always_ff @(posedge HCLK) begin
         HWADDR <= #1 A;
         HREADTim0 <= #1 RAM[A[31:3]];
-        if (memwrite && risingHREADYTim) RAM[HWADDR[31:3]] <= #1 HWDATA;
+	if (memwrite && risingHREADYTim) RAM[HWADDR[31:3]] <= #1 HWDATA;
       end
     end else begin 
       always_ff @(posedge HCLK) begin

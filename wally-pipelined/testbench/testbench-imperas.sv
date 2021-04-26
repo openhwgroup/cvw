@@ -339,7 +339,9 @@ module testbench();
   };
 
   string testsBP64[] = '{
-    "rv64BP/reg-test", "10000"
+			 "rv64BP/simple", "10000",
+			 "rv64BP/qsort", "1000000",
+			 "rv64BP/sieve", "1000000"
   };
 
   string tests64p[] = '{
@@ -398,7 +400,7 @@ module testbench();
   // pick tests based on modes supported
   initial begin
     if (`XLEN == 64) begin // RV64
-      if (TESTSBP) begin
+      if (`TESTSBP) begin
         tests = {testsBP64,tests64p};
       end if (TESTSPERIPH) begin 
         tests = tests64periph;
@@ -448,23 +450,32 @@ module testbench();
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.ic.InstrF, dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM, InstrW, InstrFName, InstrDName,
-                InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.icache.controller.FinalInstrRawF,
+                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
+  localparam integer 	   MemStartAddr = `TIMBASE>>(1+`XLEN/32);
+  localparam integer 	   MemEndAddr = (`TIMRANGE+`TIMBASE)>>1+(`XLEN/32);
+
   initial
     begin
       test = 0;
       totalerrors = 0;
       testadr = 0;
       // fill memory with defined values to reduce Xs in simulation
+      // Quick note the memory will need to be initialized.  The C library does not
+      //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
+      //  strings, but uses a load double to read them in.  If the last 2 bytes are
+      //  not initialized the compare results in an 'x' which propagates through 
+      // the design.
       if (`XLEN == 32) meminit = 32'hFEDC0123;
       else meminit = 64'hFEDCBA9876543210;
-      for (i=0; i<=65535; i = i+1) begin
-        //dut.imem.RAM[i] = meminit;
-       // dut.uncore.RAM[i] = meminit;
-      end
+      // *** broken because DTIM also drives RAM
+      /*for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
+	      dut.uncore.dtim.RAM[i] = meminit;
+      end*/
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
@@ -551,10 +562,11 @@ module testbench();
     end // always @ (negedge clk)
 
   // track the current function or global label
-  if (DEBUG == 1) begin : functionRadix
-    function_radix function_radix(.reset(reset),
-				  .ProgramAddrMapFile(ProgramAddrMapFile),
-				  .ProgramLabelMapFile(ProgramLabelMapFile));
+  if (DEBUG == 1) begin : FunctionName
+    FunctionName FunctionName(.reset(reset),
+			      .clk(clk),
+			      .ProgramAddrMapFile(ProgramAddrMapFile),
+			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
   // initialize the branch predictor

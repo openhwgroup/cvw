@@ -124,17 +124,23 @@ module wallypipelinedhart (
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
+  logic [1:0] 	    AtomicMaskedM;
   logic [2:0]       Funct3M;
   logic [`XLEN-1:0] MemAdrM, MemPAdrM, WriteDataM;
   logic [`XLEN-1:0] ReadDataW;
   logic [`XLEN-1:0] InstrPAdrF;
   logic [`XLEN-1:0] InstrRData;
   logic             InstrReadF;
-  logic             DataStall, InstrStall;
-  logic             InstrAckD, MemAckW;
+  logic             DataStall;
+  logic             InstrAckF, MemAckW;
 
-  logic             BPPredWrongE, BPPredWrongM;
-  logic [3:0]       InstrClassM;
+  logic             BPPredWrongE;
+  logic 	    BPPredDirWrongM;
+  logic 	    BTBPredPCWrongM;
+  logic 	    RASPredPCWrongM;
+  logic 	    BPPredClassNonCFIWrongM;
+
+  logic [4:0]       InstrClassM;
   
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
