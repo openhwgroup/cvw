@@ -1,6 +1,20 @@
 `include "wally-config.vh"
 
+
+// *** Noah please check which way you need to fix the merge conflict.
+// Ross was not sure.
+// merge conflict main
 module testbench();
+
+/* -----\/----- EXCLUDED -----\/-----
+ // merge conflict icache-almost-ready
+package ahbliteState;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
+endpackage
+
+module testbench_busybear();
+ -----/\----- EXCLUDED -----/\----- */
+
 
   logic            clk, reset;
   logic [31:0]     GPIOPinsIn;
@@ -573,11 +587,11 @@ module testbench();
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  instrNameDecTB dec(dut.hart.ifu.ic.InstrF, InstrFName);
-  instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
+  instrTrackerTB it(clk, reset,
+                dut.hart.ifu.icache.controller.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
-                InstrDName, InstrEName, InstrMName, InstrWName);
+                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // generate clock to sequence tests
   always
@@ -587,15 +601,14 @@ module testbench();
 
 endmodule
 module instrTrackerTB(
-  input  logic            clk, reset, FlushE,
-  input  logic [31:0]     InstrD,
-  input  logic [31:0]     InstrE, InstrM,
-  output logic [31:0]     InstrW,
-  output string           InstrDName, InstrEName, InstrMName, InstrWName);
+  input  logic            clk, reset,
+  input  logic [31:0]     InstrF,InstrD,InstrE,InstrM,InstrW,
+  output string           InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
         
   // stage Instr to Writeback for visualization
   //flopr  #(32) InstrWReg(clk, reset, InstrM, InstrW);
 
+  instrNameDecTB fdec(InstrF, InstrFName);
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
   instrNameDecTB mdec(InstrM, InstrMName);

@@ -36,6 +36,7 @@ module csrn #(parameter
   UTVAL = 12'h043,
   UIP = 12'h044) (
     input  logic             clk, reset, 
+    input  logic             StallW,
     input  logic             CSRNWriteM, UTrapM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
@@ -56,11 +57,11 @@ module csrn #(parameter
       logic [`XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
       
       // Write enables
-      assign WriteUSTATUSM = CSRNWriteM && (CSRAdrM == USTATUS);
-      assign WriteUTVECM = CSRNWriteM && (CSRAdrM == UTVEC);
-      assign WriteUEPCM = UTrapM | (CSRNWriteM && (CSRAdrM == UEPC));
-      assign WriteUCAUSEM = UTrapM | (CSRNWriteM && (CSRAdrM == UCAUSE));
-      assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL));
+      assign WriteUSTATUSM = CSRNWriteM && (CSRAdrM == USTATUS) && ~StallW;
+      assign WriteUTVECM = CSRNWriteM && (CSRAdrM == UTVEC) && ~StallW;
+      assign WriteUEPCM = UTrapM | (CSRNWriteM && (CSRAdrM == UEPC)) && ~StallW;
+      assign WriteUCAUSEM = UTrapM | (CSRNWriteM && (CSRAdrM == UCAUSE)) && ~StallW;
+      assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL)) && ~StallW;
 
       // CSRs
       flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, `RESET_VECTOR, UTVEC_REGW);

@@ -47,6 +47,7 @@ module csrs #(parameter
   SEDELEG_MASK = ~(ZERO | 3'b111 << 9)
   ) (
     input  logic             clk, reset, 
+    input  logic             StallW,
     input  logic             CSRSWriteM, STrapM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
@@ -72,14 +73,14 @@ module csrs #(parameter
       logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
       logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW;
       
-      assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS);
-      assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC);
-      assign WriteSSCRATCHM = CSRSWriteM && (CSRAdrM == SSCRATCH);
-      assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC));
-      assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE));
-      assign WriteSTVALM = STrapM | (CSRSWriteM && (CSRAdrM == STVAL));
-      assign WriteSATPM = CSRSWriteM && (CSRAdrM == SATP);
-      assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN);
+      assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS)  && ~StallW;
+      assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC) && ~StallW;
+      assign WriteSSCRATCHM = CSRSWriteM && (CSRAdrM == SSCRATCH) && ~StallW;
+      assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC)) && ~StallW;
+      assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE)) && ~StallW;
+      assign WriteSTVALM = STrapM | (CSRSWriteM && (CSRAdrM == STVAL)) && ~StallW;
+      assign WriteSATPM = CSRSWriteM && (CSRAdrM == SATP) && ~StallW;
+      assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN) && ~StallW;
 
       // CSRs
       flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, CSRWriteValM, ZERO, STVEC_REGW); //busybear: change reset to 0

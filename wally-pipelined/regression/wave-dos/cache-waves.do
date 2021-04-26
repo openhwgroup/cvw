@@ -1,8 +1,3 @@
-# ahb-waves.do
-restart -f
-delete wave /*
-view wave
-
 add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
@@ -24,9 +19,10 @@ add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
+
 add wave /testbench/InstrDName
-add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
 add wave -divider
+
 
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
@@ -55,12 +51,15 @@ add wave -hex /testbench/dut/hart/ebu/HTRANS
 add wave -hex /testbench/dut/hart/ebu/HRDATA
 add wave -hex /testbench/dut/hart/ebu/HWRITE
 add wave -hex /testbench/dut/hart/ebu/HWDATA
-add wave -hex /testbench/dut/hart/ebu/CaptureDataM
+add wave -hex /testbench/dut/hart/ebu/ReadDataM
 add wave -divider
 
-add wave -hex /testbench/dut/uncore/dtim/*
-add wave -divider
-
+add wave /testbench/dut/hart/ebu/CaptureDataM
+add wave /testbench/dut/hart/ebu/CapturedDataAvailable
+add wave /testbench/dut/hart/StallW
+add wave -hex /testbench/dut/hart/ebu/CapturedData
+add wave -hex /testbench/dut/hart/ebu/ReadDataWnext
+add wave -hex /testbench/dut/hart/ebu/ReadDataW
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave -hex /testbench/dut/hart/ifu/InstrW
 add wave /testbench/InstrWName
@@ -70,20 +69,8 @@ add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 
-add wave -hex /testbench/dut/uncore/dtim/*
+add wave -hex /testbench/dut/hart/dmem/*
+add wave -hex /testbench/dut/hart/dmem/genblk1/*
 add wave -divider
 
 add wave -hex -r /testbench/*
-
-# appearance
-TreeUpdate [SetDefaultTree]
-WaveRestoreZoom {0 ps} {100 ps}
-configure wave -namecolwidth 250
-configure wave -valuecolwidth 150
-configure wave -justifyvalue left
-configure wave -signalnamewidth 0
-configure wave -snapdistance 10
-configure wave -datasetprefix 0
-configure wave -rowmargin 4
-configure wave -childrowmargin 2
-set DefaultRadix hexadecimal
