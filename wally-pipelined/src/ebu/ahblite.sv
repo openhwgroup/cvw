@@ -86,9 +86,9 @@ module ahblite (
   logic GrantData;
   logic [31:0] AccessAddress;
   logic [2:0] AccessSize, PTESize, ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, ReadDataNewW, ReadDataOldW, WriteData;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, CapturedData, ReadDataWnext, WriteData;
   logic IReady, DReady;
-  logic CaptureDataM;
+  logic CaptureDataM,CapturedDataAvailable;
 
   // Describes type of access
   logic Atomic, Execute, Write, Read;
@@ -192,15 +192,26 @@ module ahblite (
 		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
   assign MMUReadPTE = HRDATA;
   assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
+  // Carefully decide when to update ReadDataW
+  //   ReadDataMstored holds the most recent memory read.
+  //   We need to wait until the pipeline actually advances before we can update the contents of ReadDataW
+  //   (or else the W stage will accidentally get the M stage's data when the pipeline does advance).
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
-                        ((BusState == ATOMICREAD) && (NextBusState == ATOMICWRITE));
-  // We think this introduces an unnecessary cycle of latency in memory accesses
-  // *** can the following be simplified down to one register?
-  // *** examine more closely over summer?
-  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM,    ReadDataM, ReadDataNewW);
-  flopenr #(`XLEN) ReadDataOldWReg(clk, reset, CaptureDataM, ReadDataNewW, ReadDataOldW); 
-  assign ReadDataW = (BusState == INSTRREADC) ? ReadDataOldW : ReadDataNewW;
-  //assign ReadDataW = (BusState == INSTRREADC) ? ReadDataOldW : ReadDataNewW;
+                        ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD));
+  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM, ReadDataM, CapturedData);
+
+  always @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn)
+      CapturedDataAvailable <= #1 1'b0;
+    else
+      CapturedDataAvailable <= #1 (StallW) ? (CaptureDataM | CapturedDataAvailable) : 1'b0;
+  always_comb
+    casez({StallW && (BusState != ATOMICREAD),CapturedDataAvailable})
+      2'b00: ReadDataWnext = ReadDataM;
+      2'b01: ReadDataWnext = CapturedData;
+      2'b1?: ReadDataWnext = ReadDataW;
+    endcase
+  flopr #(`XLEN) ReadDataOldWReg(clk, reset, ReadDataWnext, ReadDataW); 
 
   // Extract and sign-extend subwords if necessary
   subwordread swr(.*);

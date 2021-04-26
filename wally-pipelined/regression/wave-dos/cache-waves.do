@@ -21,18 +21,6 @@ add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
 
 add wave /testbench/InstrDName
-add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
-add wave -hex /testbench/dut/hart/ifu/ic/controller/AlignedInstrRawD
-add wave -divider
-add wave -hex /testbench/dut/hart/ifu/ic/controller/FetchState
-add wave -hex /testbench/dut/hart/ifu/ic/controller/FetchWordNum
-add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWriteEnable
-add wave -hex /testbench/dut/hart/ifu/ic/InstrPAdrF
-add wave -hex /testbench/dut/hart/ifu/ic/InstrAckF
-add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWriteData
-add wave -hex /testbench/dut/hart/ifu/ic/controller/ICacheMemWritePAdr
-add wave -hex /testbench/dut/hart/ifu/ic/controller/MisalignedState
-add wave -hex /testbench/dut/hart/ifu/ic/controller/MisalignedHalfInstrF
 add wave -divider
 
 
@@ -63,12 +51,15 @@ add wave -hex /testbench/dut/hart/ebu/HTRANS
 add wave -hex /testbench/dut/hart/ebu/HRDATA
 add wave -hex /testbench/dut/hart/ebu/HWRITE
 add wave -hex /testbench/dut/hart/ebu/HWDATA
-add wave -hex /testbench/dut/hart/ebu/CaptureDataM
+add wave -hex /testbench/dut/hart/ebu/ReadDataM
 add wave -divider
 
-add wave -hex /testbench/dut/uncore/dtim/*
-add wave -divider
-
+add wave /testbench/dut/hart/ebu/CaptureDataM
+add wave /testbench/dut/hart/ebu/CapturedDataAvailable
+add wave /testbench/dut/hart/StallW
+add wave -hex /testbench/dut/hart/ebu/CapturedData
+add wave -hex /testbench/dut/hart/ebu/ReadDataWnext
+add wave -hex /testbench/dut/hart/ebu/ReadDataW
 add wave -hex /testbench/dut/hart/ifu/PCW
 add wave -hex /testbench/dut/hart/ifu/InstrW
 add wave /testbench/InstrWName
@@ -78,7 +69,8 @@ add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 
-add wave -hex /testbench/dut/uncore/dtim/*
+add wave -hex /testbench/dut/hart/dmem/*
+add wave -hex /testbench/dut/hart/dmem/genblk1/*
 add wave -divider
 
 add wave -hex -r /testbench/*

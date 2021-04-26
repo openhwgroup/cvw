@@ -63,7 +63,7 @@ module icache(
     logic [`XLEN-1:0]           ICacheMemWritePAdr;
     logic                       EndFetchState;
     // Output signals from cache memory
-    logic [`XLEN-1:0]   ICacheMemReadData;
+    logic [31:0]   ICacheMemReadData;
     logic               ICacheMemReadValid;
   logic 		ICacheReadEn;
   

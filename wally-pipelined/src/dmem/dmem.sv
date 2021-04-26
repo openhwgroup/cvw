@@ -122,8 +122,8 @@ module dmem (
         else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
         else ReservationValidM = ReservationValidW; // otherwise don't change valid
       end
-      flopenrc #(`XLEN-2) resadrreg(clk, reset, FlushW, ~StallW && lrM, MemPAdrM[`XLEN-1:2], ReservationPAdrW); // could drop clear on this one but not valid
-      flopenrc #(1) resvldreg(clk, reset, FlushW, ~StallW, ReservationValidM, ReservationValidW);
+      flopenrc #(`XLEN-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`XLEN-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+      flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
       flopenrc #(1) squashreg(clk, reset, FlushW, ~StallW, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported
       assign SquashSCM = 0;
