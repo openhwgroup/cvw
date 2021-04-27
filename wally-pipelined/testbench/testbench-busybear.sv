@@ -531,28 +531,31 @@ module testbench();
             end
             instrs += 1;
             // are we at a branch/jump?
-            //casex (lastCheckInstrD[31:0])
-            //  32'b00000000001000000000000001110011, // URET
-            //  32'b00010000001000000000000001110011, // SRET
-            //  32'b00110000001000000000000001110011, // MRET
-            //  32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
-            //  32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
-            //  32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
-            //  32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
-            //  32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
-            //  32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
-            //    speculative = 1;
-            //  32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
-            //  32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
-            //    speculative = 0; // tbh don't really know what should happen here
-            //  32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
-            //  32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
-            //  32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
-            //    speculative = 1;
-            //  default:
-            //    speculative = 0;
-            //endcase
-            speculative = dut.hart.ifu.bpred.BPPredWrongE;
+            if (`BPRED_ENABLED) begin
+              speculative = dut.hart.ifu.bpred.BPPredWrongE;
+            end else begin
+              casex (lastCheckInstrD[31:0])
+                32'b00000000001000000000000001110011, // URET
+                32'b00010000001000000000000001110011, // SRET
+                32'b00110000001000000000000001110011, // MRET
+                32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
+                32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
+                32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
+                32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
+                32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
+                32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
+                  speculative = 1;
+                32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
+                32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
+                  speculative = 0; // tbh don't really know what should happen here
+                32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
+                32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
+                32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
+                  speculative = 1;
+                default:
+                  speculative = 0;
+              endcase
+            end
 
             //check things!
             if ((~speculative) && (~equal(dut.hart.ifu.PCD,pcExpected,3))) begin
