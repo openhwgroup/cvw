@@ -81,11 +81,12 @@ module testbench();
       // read test vectors into memory
       memfilename = tests[0];
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      for(j=268437702; j < 268566528; j = j+1)
-        dut.uncore.dtim.RAM[j] = 64'b0;
+      //for(j=268437955; j < 268566528; j = j+1)
+        //dut.uncore.dtim.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
-      reset = 1; # 22; reset = 0;
+        //dut.uncore.dtim.RAM[268437713]=64'b1;
+    reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests
   always
@@ -94,7 +95,7 @@ module testbench();
     end
   always @(negedge clk)
     begin
-      if (dut.hart.priv.ebreakM) begin
+      if (dut.hart.priv.ecallM) begin
         #20;
         $display("Code ended with ebreakM");
         $stop;
