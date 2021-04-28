@@ -169,8 +169,8 @@ module testbench();
   initial begin
     $readmemh({`BUSYBEAR_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.RAM, 'h1000 >> 3);
     $readmemh({`BUSYBEAR_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
   end
 
   integer warningCount = 0;
@@ -532,7 +532,7 @@ module testbench();
             instrs += 1;
             // are we at a branch/jump?
             if (`BPRED_ENABLED) begin
-              speculative = dut.hart.ifu.bpred.BPPredWrongE;
+              speculative = dut.hart.ifu.bpred.bpred.BPPredWrongE;
             end else begin
               casex (lastCheckInstrD[31:0])
                 32'b00000000001000000000000001110011, // URET
