@@ -52,26 +52,44 @@ def writeVectors(storecmd):
   # Instruction access fault: False, 1
 
   # Illegal Instruction 
-  #writeTest(storecmd, f, r, "ecall", False, 11, "m")
+  #writeTest(storecmd, f, r, "ecall", False, 11)
+
+  writeTest(storecmd, f, r, f"""
+    .fill 1, 4, 0
+  """, False, 2)
 
   # Breakpoint
   writeTest(storecmd, f, r, "ebreak", False, 3)
 
   # Load Address Misaligned 
-  # writeTest(storecmd, f, r, f"""
-  #   lw x0, 11(x0)
-  # """, False, 4)
+  writeTest(storecmd, f, r, f"""
+    lw x0, 11(x0)
+  """, False, 4)
 
   # # Load Access fault: False, 5
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # # Store/AMO address misaligned
-  # writeTest(storecmd, f, r, f"""
-  #   sw x0, 11(x0)
-  # """, False, 6)
+  writeTest(storecmd, f, r, f"""
+    sw x0, 11(x0)
+  """, False, 6)
+
+  # Breakpoint: codes 8, 9, 11
+  writeTest(storecmd, f, r, "ecall", False, -1) # code determined inside of writeTest
+
+  # Instruction page fault: 12
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
+  # Load page fault: 13
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
+  # Store/AMO page fault: 15
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+  
 
   #writeTest(storecmd, f, r, "ecall", False, 11, "m")
   
-def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = ""):
+def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
   global testnum
   global testMode
   global isInterrupts
@@ -79,9 +97,18 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
   if interrupt != isInterrupts:
     return
   
-  mask = 1 << code
   delegateType = "i" if interrupt else "e"
   for mode in (["m", "s", "u"] if testMode == "m" else ["s", "u"]):
+
+    if test == "ecall":
+      if mode == "m":
+        code = 11
+      elif mode == "s":
+        code = 9
+      else:
+        code = 8
+
+    mask = 1 << code
     for delegated in [True, False]:
       labelSuffix = testnum
 
@@ -235,11 +262,9 @@ for xlen in xlens:
         csrr x17, medeleg
       """)
 
-      print("\n\n" + basename)
       testnum = 0
       for i in range(0, 2):
         writeVectors(storecmd)
-      print(testnum)
 
       f.write(f"""
         csrw mtvec, x19

@@ -58,8 +58,13 @@ def writeVectors(storecmd, returningInstruction):
   # """)
 
   # User Timer Interrupt: True, 4
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+  
   # Supervior timer interrupt: True, 5
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Machine timer interrupt: True, 7
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # if fromMode == "m":
   #   clintAddr = "0x2004000"
@@ -152,10 +157,17 @@ def writeVectors(storecmd, returningInstruction):
   # """)
 
   # User external input: True, 8
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Supervisor external input: True, 9
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Machine externa input: True, 11
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Instruction address misaligned: False, 0
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # looks like this is giving us an infinite loop for wally
   # BUG: jumping to a misaligned instruction address doesn't cause an exception: we actually jump...
   # Either that, or somehow at the end we always end up at 0x80004002
@@ -166,6 +178,7 @@ def writeVectors(storecmd, returningInstruction):
   # """, False, 0)
 
   # Instruction access fault: False, 1
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Illegal Instruction 
   writeTest(storecmd, f, r, f"""
@@ -184,16 +197,14 @@ def writeVectors(storecmd, returningInstruction):
   """, False, 4)
 
   # Load Access fault: False, 5
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Store/AMO address misaligned
   writeTest(storecmd, f, r, f"""
     sw x0, 11(x0)
   """, False, 6)
 
-  # Environment call from u-mode: only for when only M and U mode enabled?
-  # writeTest(storecmd, f, r, f"""
-  #   ecall
-  # """, False, 8, "u")
+  # Environment call
   if returningInstruction != "ecall":
     if fromMode == "u":
       writeTest(storecmd, f, r, f"""
@@ -213,8 +224,13 @@ def writeVectors(storecmd, returningInstruction):
       """, False, 11, "m")  
 
   # Instruction page fault: 12
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Load page fault: 13
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Store/AMO page fault: 15
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
   
 
   
