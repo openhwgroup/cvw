@@ -21,7 +21,6 @@ add wave -hex /testbench/dut/hart/ifu/InstrRawD
 add wave /testbench/CheckInstrD
 add wave /testbench/lastCheckInstrD
 add wave /testbench/speculative
-add wave /testbench/dut/hart/ifu/bpred/BPPredWrongE
 add wave /testbench/lastPC2
 add wave -divider
 add wave -divider

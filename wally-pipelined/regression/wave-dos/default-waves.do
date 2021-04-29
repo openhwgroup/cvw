@@ -26,7 +26,6 @@ add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
 add wave /testbench/InstrDName
-add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
