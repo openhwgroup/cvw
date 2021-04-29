@@ -44,13 +44,13 @@ module localHistoryPredictor
    );
 
    logic [2**m-1:0][k-1:0] LHRNextF;
-   logic [k-1:0]       LHRF, LHRD, LHRE, LHRENext, ForwardLHRNext;
+   logic [k-1:0]       LHRF, ForwardLHRNext;
    logic [m-1:0] 	   LookUpPCIndex, UpdatePCIndex;
    logic [1:0] 		   PredictionMemory;
    logic 		   DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
    logic [1:0] 		   UpdatePredictionF;
 
-   assign LHRENext = {PCSrcE, LHRE[k-1:1]}; 
+   assign LHRFNext = {PCSrcE, LHRF[k-1:1]}; 
    assign UpdatePCIndex = {UpdatePC[m+1] ^ UpdatePC[1], UpdatePC[m:2]};
    assign LookUpPCIndex = {LookUpPC[m+1] ^ LookUpPC[1], LookUpPC[m:2]};  
 
@@ -72,7 +72,7 @@ generate
         flopenr #(k) LocalHistoryRegister(.clk(clk),
                 .reset(reset),
                 .en(UpdateEN && (index == UpdatePCIndex)),
-                .d(LHRENext),
+                .d(LHRFNext),
                 .q(LHRNextF[index]));
     end 
 endgenerate
@@ -80,7 +80,7 @@ endgenerate
 // need to forward when updating to the same address as reading.
 // first we compare to see if the update and lookup addreses are the same
 assign DoForwarding = LookUpPCIndex == UpdatePCIndex;
-assign ForwardLHRNext = DoForwarding ? LHRENext :LHRNextF[LookUpPCIndex]; 
+assign ForwardLHRNext = DoForwarding ? LHRFNext :LHRNextF[LookUpPCIndex]; 
 
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // LHR referes to the address that the past k branches points to in the prediction stage 
@@ -90,14 +90,14 @@ assign ForwardLHRNext = DoForwarding ? LHRENext :LHRNextF[LookUpPCIndex];
 				.RA1(ForwardLHRNext),
 				.RD1(PredictionMemory),
 				.REN1(~StallF),
-				.WA1(LHRENext),
+				.WA1(LHRFNext),
 				.WD1(UpdatePrediction),
 				.WEN1(UpdateEN),
 				.BitWEN1(2'b11));
 
 
   
-assign DoForwardingPHT = LHRENext == ForwardLHRNext; 
+assign DoForwardingPHT = LHRFNext == ForwardLHRNext; 
 
   // register the update value and the forwarding signal into the Fetch stage
   // TODO: add stall logic ***
@@ -120,7 +120,7 @@ assign DoForwardingPHT = LHRENext == ForwardLHRNext;
       .clear(FlushF),
       .d(ForwardLHRNext),
       .q(LHRF));
-
+/*
   flopenrc #(k) LHRDReg(.clk(clk),
         .reset(reset),
         .en(~StallD),
@@ -134,5 +134,5 @@ assign DoForwardingPHT = LHRENext == ForwardLHRNext;
         .clear(FlushE),
         .d(LHRD),
         .q(LHRE));
-
+*/
 endmodule
