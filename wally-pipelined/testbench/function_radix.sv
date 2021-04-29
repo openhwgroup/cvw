@@ -110,6 +110,8 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   integer ProgramAddrMapLineCount, ProgramLabelMapLineCount;
   longint ProgramAddrMapLine;
   string  ProgramLabelMapLine;
+  integer status;
+  
 
   // preload
 //  initial begin
@@ -123,7 +125,7 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
     // read line by line to count lines
     if (ProgramAddrMapFP) begin
       while (! $feof(ProgramAddrMapFP)) begin
-	$fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
+	status = $fscanf(ProgramAddrMapFP, "%h\n", ProgramAddrMapLine);
 	
 	ProgramAddrMapLineCount = ProgramAddrMapLineCount + 1;
       end
@@ -141,7 +143,7 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
     
     if (ProgramLabelMapFP) begin
       while (! $feof(ProgramLabelMapFP)) begin
-	$fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
+	status = $fscanf(ProgramLabelMapFP, "%s\n", ProgramLabelMapLine);
 	ProgramLabelMapMemory[ProgramLabelMapLineCount] = ProgramLabelMapLine;
 	ProgramLabelMapLineCount = ProgramLabelMapLineCount + 1;
       end
