@@ -41,13 +41,14 @@ module trap (
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
   input  logic [31:0]      InstrM,
   output logic             TrapM, MTrapM, STrapM, UTrapM, RetM,
+  output logic             InterruptM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
 );
 
   logic [11:0] MIntGlobalEnM, SIntGlobalEnM, PendingIntsM; 
-  logic InterruptM;
+  //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
 
   // Determine pending enabled interrupts
