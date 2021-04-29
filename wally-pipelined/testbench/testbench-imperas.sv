@@ -355,7 +355,7 @@ module testbench();
     "rv64p/WALLY-MIMPID", "4000",
     "rv64p/WALLY-MHARTID", "4000",
     "rv64p/WALLY-MVENDORID", "4000",
-    "rv64p/WALLY-MIE", "3000"
+    "rv64p/WALLY-MIE", "3000",
     "rv64p/WALLY-MEDELEG", "4000"
   };
 
