@@ -85,7 +85,8 @@ module privileged (
   logic IllegalInstrFaultM;
 
   logic BreakpointFaultM, EcallFaultM;
-  logic MTrapM, STrapM, UTrapM; 
+  logic MTrapM, STrapM, UTrapM;
+  logic InterruptM; 
 
   logic [1:0] STATUS_MPP;
   logic       STATUS_SPP, STATUS_TSR;
