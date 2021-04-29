@@ -28,22 +28,22 @@
 `include "wally-config.vh"
 
 module pmachecker (
+  input  logic        clk, reset,
+
   input  logic [31:0] HADDR,
   input  logic [2:0]  HSIZE,
-  input  logic        HWRITE,
   input  logic [2:0]  HBURST,
 
-  input  logic        Atomic, Execute, Write, Read,
+  input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
 
-  // *** Add pipeline suffixes
   output logic        Cacheable, Idempotent, AtomicAllowed,
-  output logic        SquashAHBAccess,
+  output logic        PMASquashBusAccess,
 
   output logic [5:0]  HSELRegions,
 
-  output logic        InstrAccessFaultF,
-  output logic        LoadAccessFaultM,
-  output logic        StoreAccessFaultM
+  output logic        PMAInstrAccessFaultF,
+  output logic        PMALoadAccessFaultM,
+  output logic        PMAStoreAccessFaultM
 );
 
   // Signals are high if the memory access is within the given region
@@ -51,6 +51,7 @@ module pmachecker (
 
   logic PreHSELUART;
 
+  logic ExecutableRegion, ReadableRegion, WritableRegion;
   logic Empty;
 
   // Determine which region of physical memory (if any) is being accessed
@@ -61,6 +62,7 @@ module pmachecker (
   adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
   adrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, HSELPLIC);
 
+  // *** Should this fault?
   assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
 
   // Swizzle region bits
@@ -75,12 +77,17 @@ module pmachecker (
   // *** Temporarily assume only RAM regions allow full atomic operations -- likely wrong
   assign AtomicAllowed = HSELBootTim | HSELTim;
 
+  assign ExecutableRegion = HSELBootTim | HSELTim;
+  assign ReadableRegion = HSELBootTim | HSELTim | HSELCLINT | HSELGPIO | HSELUART | HSELPLIC;
+  assign WritableRegion = HSELBootTim | HSELTim | HSELCLINT | HSELGPIO | HSELUART | HSELPLIC;
+
   assign Empty = ~|HSELRegions;
 
-  assign InstrAccessFaultF = Empty && Execute;
-  assign LoadAccessFaultM = Empty && Read;
-  assign StoreAccessFaultM = Empty && Write;
+  assign PMAInstrAccessFaultF = ExecuteAccessF && (Empty || ~ExecutableRegion);
+  assign PMALoadAccessFaultM = ReadAccessM && (Empty || ~ReadableRegion);
+  assign PMAStoreAccessFaultM = WriteAccessM && (Empty || ~WritableRegion);
 
-  assign SquashAHBAccess = InstrAccessFaultF || LoadAccessFaultM || StoreAccessFaultM;
+  //assign PMASquashBusAccess = PMAInstrAccessFaultF || PMALoadAccessFaultM || PMAStoreAccessFaultM;
+  assign PMASquashBusAccess = 0;
 
 endmodule
