@@ -41,13 +41,13 @@ module globalHistoryPredictor
    input logic [1:0] 	   UpdatePrediction
    
    );
-   logic [k-1:0] GHRF, GHRD, GHRE, GHRENext;
-   assign GHRENext = {PCSrcE, GHRE[k-1:1]}; 
+   logic [k-1:0] GHRF, GHRFNext;
+   assign GHRFNext = {PCSrcE, GHRF[k-1:1]}; 
 
     flopenr #(k) GlobalHistoryRegister(.clk(clk),
             .reset(reset),
             .en(UpdateEN),
-            .d(GHRENext),
+            .d(GHRFNext),
             .q(GHRF));
 
 
@@ -65,7 +65,7 @@ module globalHistoryPredictor
 				.RA1(GHRF),
 				.RD1(PredictionMemory),
 				.REN1(~StallF),
-				.WA1(GHRENext),
+				.WA1(GHRFNext),
 				.WD1(UpdatePrediction),
 				.WEN1(UpdateEN),
 				.BitWEN1(2'b11));
@@ -73,7 +73,7 @@ module globalHistoryPredictor
 
   // need to forward when updating to the same address as reading.
   // first we compare to see if the update and lookup addreses are the same
-  assign DoForwarding = GHRF == GHRE;
+  assign DoForwarding = GHRF == GHRFNext;
 
   // register the update value and the forwarding signal into the Fetch stage
   // TODO: add stall logic ***
@@ -90,7 +90,7 @@ module globalHistoryPredictor
   assign Prediction = DoForwardingF ? UpdatePredictionF : PredictionMemory;
   
   //pipeline for GHR
-  flopenrc #(k) GHRDReg(.clk(clk),
+  /*flopenrc #(k) GHRDReg(.clk(clk),
       .reset(reset),
       .en(~StallD),
       .clear(FlushD),
@@ -103,5 +103,5 @@ module globalHistoryPredictor
         .clear(FlushE),
         .d(GHRD),
         .q(GHRE));
-
+*/
 endmodule

@@ -58,8 +58,44 @@ def writeVectors(storecmd, returningInstruction):
   # """)
 
   # User Timer Interrupt: True, 4
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+  
   # Supervior timer interrupt: True, 5
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Machine timer interrupt: True, 7
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
+  # if fromMode == "m":
+  #   clintAddr = "0x2004000"
+  #   writeTest(storecmd, f, r, f"""
+  #     li x1, 0x8
+  #     csrrs x0, {fromMode}status, x1
+
+  #     la x18, {clintAddr}
+  #     lw x11, 0(x18)
+  #     li x1, 1
+  #     # {storecmd} x1, 0(x18)
+
+  #     li x1, 0x80
+  #     csrrs x0, {fromMode}ie, x1
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #   """, True, 4, f"""
+  #     li x1, 0x80
+  #     # csrrc x0, {fromMode}ie, x1
+
+  #     li x1, 0x8
+  #     # csrrc x0, {fromMode}status, x1
+
+  #     la x18, {clintAddr}
+  #     {storecmd} x11, 0(x18)
+  #   """)
 
   # writeTest(storecmd, f, r, f"""
   #   li x10, MASK_XLEN(0x8)
@@ -121,10 +157,17 @@ def writeVectors(storecmd, returningInstruction):
   # """)
 
   # User external input: True, 8
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Supervisor external input: True, 9
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Machine externa input: True, 11
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Instruction address misaligned: False, 0
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # looks like this is giving us an infinite loop for wally
   # BUG: jumping to a misaligned instruction address doesn't cause an exception: we actually jump...
   # Either that, or somehow at the end we always end up at 0x80004002
@@ -135,6 +178,7 @@ def writeVectors(storecmd, returningInstruction):
   # """, False, 0)
 
   # Instruction access fault: False, 1
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Illegal Instruction 
   writeTest(storecmd, f, r, f"""
@@ -153,16 +197,14 @@ def writeVectors(storecmd, returningInstruction):
   """, False, 4)
 
   # Load Access fault: False, 5
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Store/AMO address misaligned
   writeTest(storecmd, f, r, f"""
     sw x0, 11(x0)
   """, False, 6)
 
-  # Environment call from u-mode: only for when only M and U mode enabled?
-  # writeTest(storecmd, f, r, f"""
-  #   ecall
-  # """, False, 8, "u")
+  # Environment call
   if returningInstruction != "ecall":
     if fromMode == "u":
       writeTest(storecmd, f, r, f"""
@@ -182,8 +224,13 @@ def writeVectors(storecmd, returningInstruction):
       """, False, 11, "m")  
 
   # Instruction page fault: 12
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Load page fault: 13
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
+
   # Store/AMO page fault: 15
+  # TODO: THIS NEEDS TO BE IMPLEMENTED
   
 
   
@@ -194,7 +241,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 
   expected = code
   if(interrupt):
-    expected+=(1 << (wordsize - 1))
+    expected+=(1 << (xlen - 1))
 
 
   trapEnd = ""
@@ -316,6 +363,8 @@ for xlen in xlens:
           csrs sedeleg, x9
           """
 
+      clintAddr = "0x2004000"
+
       lines += f"""
         li x30, 0
 
@@ -328,6 +377,32 @@ for xlen in xlens:
         j _j_t_begin_{returningInstruction}
 
         _j_m_trap_{returningInstruction}:
+
+        #li x1, 0x20
+        #csrrw x0, mie, x1
+
+        li x11, 0x3fffffffffffffff
+        la x18, {clintAddr}
+        {storecmd} x11, 0(x18)
+
+        li x1, 0x8
+        csrrc x0, mstatus, x1
+
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+
         csrrs x1, mepc, x0
         {"csrr x25, mcause" if testMode == "m" else "li x25, 0xBAD00003"}
 

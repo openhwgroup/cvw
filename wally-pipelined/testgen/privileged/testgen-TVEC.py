@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# testgen-CAUSE.py (new)
+# testgen-TVEC.py (new)
 #
 # dottolia@hmc.edu 1 Mar 2021
 #
@@ -26,6 +26,12 @@ from random import seed
 from random import getrandbits
 
 ##################################
+# setup
+##################################
+
+areVectoredTrapsSupported = True
+
+##################################
 # functions
 ##################################
 
@@ -42,29 +48,6 @@ def randRegs():
 
 def writeVectors(storecmd, returningInstruction):
   global testnum
-
-  if fromMode == "m":
-    expectedCode = 7 if fromMode == "m" else 5
-    clintAddr = "0x2004000"
-
-    writeTest(storecmd, f, r, f"""
-      li x1, 0x8
-      csrrs x0, {fromMode}status, x1
-
-      la x18, {clintAddr}
-      lw x11, 0(x18)
-      li x1, 1
-      {storecmd} x1, 0(x18)
-
-      li x1, 0x80
-      csrrs x0, {fromMode}ie, x1
-    """, True, expectedCode, f"""
-      la x18, {clintAddr}
-      {storecmd} x11, 0(x18)
-
-      li x1, 0x80
-      csrrc x0, {fromMode}ie, x1
-    """)
 
 
   # Illegal Instruction 
@@ -112,6 +95,35 @@ def writeVectors(storecmd, returningInstruction):
         ecall
       """, False, 0)  
 
+
+  if fromMode == "m":
+    expectedCode = 7 if fromMode == "m" else 5
+    clintAddr = "0x2004000"
+
+    writeTest(storecmd, f, r, f"""
+      li x1, 0x8
+      csrrs x0, {fromMode}status, x1
+
+      la x18, {clintAddr}
+      lw x11, 0(x18)
+      li x1, 0x3fffffffffffffff
+      {storecmd} x1, 0(x18)
+
+      li x1, 0x80
+      csrrs x0, {fromMode}ie, x1
+
+      {storecmd} x0, 0(x18)
+    """, True, expectedCode, f"""
+      li x1, 0x80
+      csrrc x0, {fromMode}ie, x1
+
+      li x1, 0x8
+      csrrc x0, {fromMode}status, x1
+
+      la x18, {clintAddr}
+      {storecmd} x0, 0(x18)
+    """)
+
   # Instruction page fault: 12
   # Load page fault: 13
   # Store/AMO page fault: 15
@@ -144,13 +156,12 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
     {test}
   """
 
-  # We expect x25 to be 0 always. This is because of the code we wrote at the begining
-  # of this function
-  
-  # Store the expected value of x25 to memory and in the .reference_output file
   lines += f"""
     {storecmd} x25, {testnum * wordsize}(x6)
   """
+
+  if not areVectoredTrapsSupported:
+    expected = 0
 
   f.write(lines)
   if (xlen == 32):
@@ -291,7 +302,7 @@ for xlen in xlens:
 
         # Set up 
         la x1, _j_m_trap_{returningInstruction}
-        addi x1, 1
+        #addi x1, 1
         csrw mtvec, x1
         la x1, _j_s_trap_{returningInstruction}
         csrw stvec, x1
