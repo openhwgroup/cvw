@@ -37,10 +37,11 @@ module csrsr (
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR,
   output logic             STATUS_MIE, STATUS_SIE,
-  output logic             STATUS_MXR, STATUS_SUM
+  output logic             STATUS_MXR, STATUS_SUM,
+  output logic             STATUS_MPRV
 );
 
-  logic STATUS_SD, STATUS_TW, STATUS_TVM, STATUS_SUM_INT, STATUS_MPRV, STATUS_MPRV_INT;
+  logic STATUS_SD, STATUS_TW, STATUS_TVM, STATUS_SUM_INT, STATUS_MPRV_INT;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UPIE, STATUS_UIE;
 
