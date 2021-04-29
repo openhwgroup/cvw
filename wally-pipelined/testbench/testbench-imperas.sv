@@ -354,7 +354,8 @@ module testbench();
     "rv64p/WALLY-MARCHID", "4000",
     "rv64p/WALLY-MIMPID", "4000",
     "rv64p/WALLY-MHARTID", "4000",
-    "rv64p/WALLY-MVENDORID", "4000"
+    "rv64p/WALLY-MVENDORID", "4000",
+    "rv64p/WALLY-MEDELEG", "2000"
   };
 
   string tests32p[] = '{
@@ -368,6 +369,7 @@ module testbench();
     "rv32p/WALLY-MIMPID", "4000",
     "rv32p/WALLY-MHARTID", "4000",
     "rv32p/WALLY-MVENDORID", "4000"
+    //"rv32p/WALLY-MEDELEG", "2000" // all 32 bit tests are currently failing, so haven't been able to confirm this test works yet. It should, though.
   };
 
   string tests64periph[] = '{

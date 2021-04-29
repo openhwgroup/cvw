@@ -61,6 +61,37 @@ def writeVectors(storecmd, returningInstruction):
   # Supervior timer interrupt: True, 5
   # Machine timer interrupt: True, 7
 
+  # if fromMode == "m":
+  #   clintAddr = "0x2004000"
+  #   writeTest(storecmd, f, r, f"""
+  #     li x1, 0x8
+  #     csrrs x0, {fromMode}status, x1
+
+  #     la x18, {clintAddr}
+  #     lw x11, 0(x18)
+  #     li x1, 1
+  #     # {storecmd} x1, 0(x18)
+
+  #     li x1, 0x80
+  #     csrrs x0, {fromMode}ie, x1
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #   """, True, 4, f"""
+  #     li x1, 0x80
+  #     # csrrc x0, {fromMode}ie, x1
+
+  #     li x1, 0x8
+  #     # csrrc x0, {fromMode}status, x1
+
+  #     la x18, {clintAddr}
+  #     {storecmd} x11, 0(x18)
+  #   """)
+
   # writeTest(storecmd, f, r, f"""
   #   li x10, MASK_XLEN(0x8)
   #   csrrs x0, mstatus, x10
@@ -194,7 +225,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 
   expected = code
   if(interrupt):
-    expected+=(1 << (wordsize - 1))
+    expected+=(1 << (xlen - 1))
 
 
   trapEnd = ""
@@ -316,6 +347,8 @@ for xlen in xlens:
           csrs sedeleg, x9
           """
 
+      clintAddr = "0x2004000"
+
       lines += f"""
         li x30, 0
 
@@ -328,6 +361,32 @@ for xlen in xlens:
         j _j_t_begin_{returningInstruction}
 
         _j_m_trap_{returningInstruction}:
+
+        #li x1, 0x20
+        #csrrw x0, mie, x1
+
+        li x11, 0x3fffffffffffffff
+        la x18, {clintAddr}
+        {storecmd} x11, 0(x18)
+
+        li x1, 0x8
+        csrrc x0, mstatus, x1
+
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+        sub x1, x2, x3
+
         csrrs x1, mepc, x0
         {"csrr x25, mcause" if testMode == "m" else "li x25, 0xBAD00003"}
 
