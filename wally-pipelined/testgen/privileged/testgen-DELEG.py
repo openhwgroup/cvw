@@ -52,8 +52,6 @@ def writeVectors(storecmd):
   # Instruction access fault: False, 1
 
   # Illegal Instruction 
-  #writeTest(storecmd, f, r, "ecall", False, 11)
-
   writeTest(storecmd, f, r, f"""
     .fill 1, 4, 0
   """, False, 2)
