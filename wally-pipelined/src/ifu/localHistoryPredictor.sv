@@ -97,7 +97,7 @@ assign ForwardLHRNext = DoForwarding ? LHRFNext :LHRNextF[LookUpPCIndex];
 
 
   
-assign DoForwardingPHT = LHRENext == ForwardLHRNext; 
+assign DoForwardingPHT = LHRFNext == ForwardLHRNext; 
 
   // register the update value and the forwarding signal into the Fetch stage
   // TODO: add stall logic ***
