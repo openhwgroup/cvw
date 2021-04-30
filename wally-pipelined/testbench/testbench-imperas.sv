@@ -29,7 +29,7 @@
 module testbench();
   parameter DEBUG = 0;
   parameter TESTSBP = 0;
-  parameter TESTSPERIPH = 0; // set to 0 for regression
+  parameter TESTSPERIPH = 0 ; // set to 0 for regression
   
   logic        clk;
   logic        reset;
@@ -425,7 +425,7 @@ module testbench();
       if (TESTSPERIPH) begin 
         tests = tests32periph;
       end else begin
-          tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
+          tests = {tests32i, tests32p, tests32periph};
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
