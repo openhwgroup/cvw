@@ -106,42 +106,44 @@ module plic (
       intThreshold <= #1 3'b0;
       intInProgress <= #1 {N{1'b0}};
     // writing
-    end else if (memwrite)
-      casez(entryd)
-        28'hc0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
-        `ifdef PLIC_NUM_SRC_LT_32
-        28'hc002000: intEn[N:1] <= #1 Din[N:1];
-        `endif
-        `ifndef PLIC_NUM_SRC_LT_32
-        28'hc002000: intEn[31:1] <= #1 Din[31:1];
-        28'hc002004: intEn[N:32] <= #1 Din[31:0];
-        `endif
-        28'hc200000: intThreshold[2:0] <= #1 Din[2:0];       
-        28'hc200004: intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
-      endcase
-    // reading
-    if (memread)
-      casez(entry)
-        28'hc0000??: Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[entry[7:2]]};
-        `ifdef PLIC_NUM_SRC_LT_32
-        28'hc001000: Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
-        28'hc002000: Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
-        `endif
-        `ifndef PLIC_NUM_SRC_LT_32
-        28'hc001000: Dout <= #1 {intPending[31:1],1'b0};
-        28'hc001004: Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
-        28'hc002000: Dout <= #1 {intEn[31:1],1'b0};
-        28'hc002004: Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
-        `endif
-        28'hc200000: Dout <= #1 {29'b0,intThreshold[2:0]};
-        28'hc200004: begin
-          Dout <= #1 {26'b0,intClaim};
-          intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
-        end
-        default: Dout <= #1 32'hdeadbeef; // invalid access
-      endcase
-    else
-      Dout <= #1 32'h0;
+    end else begin
+      if (memwrite)
+        casez(entryd)
+          28'hc0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
+          `ifdef PLIC_NUM_SRC_LT_32
+          28'hc002000: intEn[N:1] <= #1 Din[N:1];
+          `endif
+          `ifndef PLIC_NUM_SRC_LT_32
+          28'hc002000: intEn[31:1] <= #1 Din[31:1];
+          28'hc002004: intEn[N:32] <= #1 Din[31:0];
+          `endif
+          28'hc200000: intThreshold[2:0] <= #1 Din[2:0];       
+          28'hc200004: intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+        endcase
+      // reading
+      if (memread)
+        casez(entry)
+          28'hc0000??: Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[entry[7:2]]};
+          `ifdef PLIC_NUM_SRC_LT_32
+          28'hc001000: Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
+          28'hc002000: Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
+          `endif
+          `ifndef PLIC_NUM_SRC_LT_32
+          28'hc001000: Dout <= #1 {intPending[31:1],1'b0};
+          28'hc001004: Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
+          28'hc002000: Dout <= #1 {intEn[31:1],1'b0};
+          28'hc002004: Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
+          `endif
+          28'hc200000: Dout <= #1 {29'b0,intThreshold[2:0]};
+          28'hc200004: begin
+            Dout <= #1 {26'b0,intClaim};
+            intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
+          end
+          default: Dout <= #1 32'hdeadbeef; // invalid access
+        endcase
+      else
+        Dout <= #1 32'h0;
+    end
   end
 
   // connect sources to requests

@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 package ahbliteState;
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
 endpackage
 
 module ahblite (
@@ -127,7 +127,7 @@ module ahblite (
             else if (InstrReadF)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
-            else if (InstrReadF)   NextBusState = INSTRREADC;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
             else if (InstrReadF)   NextBusState = INSTRREAD;
@@ -135,8 +135,6 @@ module ahblite (
       INSTRREAD:
             if (~HREADY)           NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;  // if (InstrReadF still high)
-      INSTRREADC: if (~HREADY)     NextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
-            else                   NextBusState = IDLE;
       default:                     NextBusState = IDLE;
     endcase
 
@@ -147,12 +145,12 @@ module ahblite (
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
                     MMUStall);
 
-  assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                          MMUStall);
+  //assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
+  //                        MMUStall);
 
   // Determine access type (important for determining whether to fault)
   assign Atomic = ((NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));
-  assign Execute = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC));
+  assign Execute = ((NextBusState == INSTRREAD));
   assign Write = ((NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE));
   assign Read = ((NextBusState == MEMREAD) || (NextBusState == ATOMICREAD) ||
               (NextBusState == MMUTRANSLATE));
@@ -187,7 +185,7 @@ module ahblite (
   assign MMUReady = (BusState == MMUTRANSLATE && NextBusState == IDLE);
 
   assign InstrRData = HRDATA;
-  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
+  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
   assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
 		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
   assign MMUReadPTE = HRDATA;
