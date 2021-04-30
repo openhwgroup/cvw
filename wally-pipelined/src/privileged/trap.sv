@@ -27,7 +27,7 @@
 `include "wally-config.vh"
 
 module trap (
-  input  logic             reset, 
+  input  logic             clk, reset, 
   input  logic             InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
   input  logic             BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
   input  logic             LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
@@ -40,6 +40,7 @@ module trap (
   input  logic [`XLEN-1:0] PCM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
   input  logic [31:0]      InstrM,
+  input  logic             StallW,
   output logic             TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic             InterruptM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
@@ -74,11 +75,18 @@ module trap (
 
   // Handle vectored traps (when mtvec/stvec/utvec csr value has bits [1:0] == 01)
   // For vectored traps, set program counter to _tvec value + 4 times the cause code
+  //
+  // POSSIBLE OPTIMIZATION: 
+  // From 20190608 privielegd spec page 27 (3.1.7)
+  // > Allowing coarser alignments in Vectored mode enables vectoring to be
+  // > implemented without a hardware adder circuit.
+  // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
+  // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
   generate
     if(`VECTORED_INTERRUPTS_SUPPORTED) begin
         always_comb
           if (PrivilegedTrapVector[1:0] == 2'b01 && CauseM[`XLEN-1] == 1)
-            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
+            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {CauseM[`XLEN-5:0], 2'b00}, 2'b00};
           else
             PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
     end
@@ -91,7 +99,7 @@ module trap (
     if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else if (sretM)                         PrivilegedNextPCM = SEPC_REGW;
     else if (uretM)                         PrivilegedNextPCM = UEPC_REGW;
-    else                                    PrivilegedNextPCM = PrivilegedTrapVector;
+    else                                    PrivilegedNextPCM = PrivilegedVectoredTrapVector;
 
   // Cause priority defined in table 3.7 of 20190608 privileged spec
   // Exceptions are of lower priority than all interrupts (3.1.9)
