@@ -97,7 +97,7 @@ module csrm #(parameter
   );
 
   logic [`XLEN-1:0] MISA_REGW;
-  logic [`XLEN-1:0] MSCRATCH_REGW,MCAUSE_REGW, MTVAL_REGW;
+  logic [`XLEN-1:0] MSCRATCH_REGW, MCAUSE_REGW, MTVAL_REGW;
   logic [63:0] PMPCFG01_REGW, PMPCFG23_REGW; // 64-bit registers in RV64, or two 32-bit registers in RV32
   logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];  // *** Might have to make 16 individual registers
   //logic [`XLEN-1:0] PMPADDR0_REGW;
