@@ -9,7 +9,7 @@ module cla64 (S, X, Y, Sub);
    input 	 Sub;
    output [63:0] S;
    wire 	 CO;
-   wire [0:63] 	 A,B,Q, Bbar;
+   wire [63:0] 	 A,B,Q, Bbar; //***KEP was 0:63 - changed due to lint warning
    
    DBLCADDER_64_64 U1 (A , Bbar , Sub , Q , CO );
    assign A[0] = X[0];
@@ -220,7 +220,7 @@ module cla_sub64 (S, X, Y);
    
    wire 	 CO;
    wire 	 VDD = 1'b1;
-   wire [0:63] 	 A,B,Q, Bbar;
+   wire [63:0] 	 A,B,Q, Bbar; //***KEP was 0:63 - changed due to lint warning
    
    DBLCADDER_64_64 U1 (A , Bbar , VDD, Q , CO );
    assign A[0] = X[0];

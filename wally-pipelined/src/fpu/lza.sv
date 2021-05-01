@@ -19,7 +19,7 @@ module lza(sum, normcnt, sumzero);
 	// Internal nodes
 
 	reg			[8:0] 		i;				// loop index
-	
+ 
 	// A real LOP uses a fast carry chain to find only the first 0.
 	// It is an example of a parallel prefix algorithm.  For the sake
 	// of simplicity,  this model is behavioral instead.

@@ -4,7 +4,7 @@
 // Date:		11/2/1995
 //
 // Block Description: 
-//   This block is responsible for rounding the normalized result of //   the FMAC.   Because prenormalized results may be bypassed back to //   the FMAC X and z inputs, rounding does not appear in the critical //   path of most floating point code.   This is good because rounding //   requires an entire 52 bit carry-propagate half-adder delay.
+//   This block is responsible for rounding the normalized result of //   the FMAC.   Because prenormalized results may be bypassed back to //   the FMAC X and z input logics, rounding does not appear in the critical //   path of most floating point code.   This is good because rounding //   requires an entire 52 bit carry-propagate half-adder delay.
 //
 //   The results from other FPU blocks (e.g. FCVT,  FDIV,  etc)  are also 
 //   muxed in to form the actual result for register file writeback.  This
@@ -24,14 +24,14 @@ module round(v, sticky, FrmM, wsign,
 	input logic		[2:0]	FrmM;
 	input logic				wsign;		// Sign of result
 	input logic 		[4:0]	FmaFlagsM;
-	input logic				inf;		// Some input is infinity
-	input logic				nanM;		// Some input is NaN
+	input logic				inf;		// Some input logic is infinity
+	input logic				nanM;		// Some input logic is NaN
 	input logic				xnanM;		// X is NaN
 	input logic				ynanM;		// Y is NaN
 	input logic				znanM;		// Z is NaN
-	input logic		[51:0]		xman;		// Input X
-	input logic		[51:0]		yman;		// Input Y
-	input logic		[51:0]		zman;		// Input Z
+	input logic		[51:0]		xman;		// input logic X
+	input logic		[51:0]		yman;		// input logic Y
+	input logic		[51:0]		zman;		// input logic Z
 	output logic		[51:0]		wman; 		// rounded result of FMAC
 	output logic				infinity;    	// Generate infinity on overflow
 	output logic				specialsel;  	// Select special result
@@ -85,7 +85,7 @@ module round(v, sticky, FrmM, wsign,
 	// The special result mux is a 4:1 mux that should not appear in the
 	// critical path of the machine.   It is not priority encoded,  despite
 	// the code below suggesting otherwise.  Also,  several of the identical data
-	// inputs to the wide muxes can be combined at the expense of more
+	// input logics to the wide muxes can be combined at the expense of more
 	// complicated non-critical control in the circuit implementation.
 
 	assign specialsel =  FmaFlagsM[2] ||  FmaFlagsM[1] ||  FmaFlagsM[4] || //overflow underflow invalid
@@ -102,15 +102,15 @@ module round(v, sticky, FrmM, wsign,
 	assign infinityres = infinity ? 52'b0 : {52{1'b1}};
 
 	// Invalid operations produce a quiet NaN. The result should
-	// propagate an input if the input is NaN. Since we assume all
-	// NaN inputs are already quiet, we don't have to force them quiet.
+	// propagate an input logic if the input logic is NaN. Since we assume all
+	// NaN input logics are already quiet, we don't have to force them quiet.
 
 	// assign nanres = xnanM ? x: (ynanM ? y : (znanM ? z : {1'b1, 51'b0})); // original
 
 	// IEEE 754-2008 section 6.2.3 states:
-	// "If two or more inputs are NaN, then the payload of the resulting NaN should be 
-	// identical to the payload of one of the input NaNs if representable in the destination
-	// format. This standard does not specify which of the input NaNs will provide the payload."
+	// "If two or more input logics are NaN, then the payload of the resulting NaN should be 
+	// identical to the payload of one of the input logic NaNs if representable in the destination
+	// format. This standard does not specify which of the input logic NaNs will provide the payload."
 	assign nanres = xnanM ? {1'b1, xman[50:0]}: (ynanM ? {1'b1, yman[50:0]} : (znanM ? {1'b1, zman[50:0]} : {1'b1, 51'b0}));// KEP 210112 add the 1 to make NaNs quiet
 
 	// Select result with 4:1 mux

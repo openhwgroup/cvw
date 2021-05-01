@@ -75,7 +75,7 @@ module sng4comp2(a, b, c, d, cin, cout, carry, sum);
     
 	input logic 				a;
 	input logic				b;
-	input logic	       	c;
+	input logic		       	c;
     input logic               d;
     input logic               cin;
     output logic              cout;
