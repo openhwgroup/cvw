@@ -240,6 +240,7 @@ module multiplier( y, x, Sum, Carry );
    
    // Below are the nets for the partial products (booth)
    wire 	  pp_0_0;
+   wire    pp_0_1;
    wire 	  pp_0_2;
    wire 	  pp_1_2;
    wire 	  pp_0_3;

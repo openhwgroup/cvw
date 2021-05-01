@@ -46,7 +46,7 @@ module privileged (
   input  logic             PrivilegedM,
   input  logic             ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM,
   input  logic             WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM,
-  input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD,
+  input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrD,
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
@@ -78,6 +78,7 @@ module privileged (
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
+  logic IllegalFPUInstrE, IllegalFPUInstrM;
   logic LoadPageFaultM, StorePageFaultM; 
   logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultF, InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
@@ -158,12 +159,12 @@ module privileged (
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
                   {InstrPageFaultF, InstrAccessFaultF},
                   {InstrPageFaultD, InstrAccessFaultD});
-  flopenrc #(3) faultregE(clk, reset, FlushE, ~StallE,
-                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD}, // ** vs IllegalInstrFaultInD
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE});
-  flopenrc #(3) faultregM(clk, reset, FlushM, ~StallM,
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE},
-                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM});
+  flopenrc #(4) faultregE(clk, reset, FlushE, ~StallE,
+                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD, IllegalFPUInstrD}, // ** vs IllegalInstrFaultInD
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE});
+  flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
+                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
 
   trap trap(.*);
 

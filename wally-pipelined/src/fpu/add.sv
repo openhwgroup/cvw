@@ -34,6 +34,7 @@ module add(rM, sM, tM, sum,
 	wire		[164:0] 	sum0;			// sum of compound adder +0 mode
 	wire		[164:0] 	sum1;			// sum of compound adder +1 mode
 	wire		[163:0] 	prodshifted;			// sum of compound adder +1 mode
+	wire		[164:0] 	tmp;			// sum of compound adder +1 mode
 
 	// Invert addend if z'sM sign is diffrent from the product'sM sign
 
@@ -44,12 +45,13 @@ module add(rM, sM, tM, sum,
 	assign r2 = killprodM ? 106'b0 : rM;
 	assign s2 = killprodM ? 106'b0 : sM;
 
-	//replace this with a more structural cpa that synthisises better
+	//***replace this with a more structural cpa that synthisises better
 	// Compound adder
 	// Consists of 3:2 CSA followed by long compound CPA
-	// assign prodshifted = killprodM ? 0 : {56'b0, r2+s2, 2'b0};
-	assign sum0 = {1'b0,prodshifted} + t2 + 158'b0 + {{56{r2[105]}},r2, 2'b0} + {{56{s2[105]}},s2, 2'b0};
-	assign sum1 = {1'b0,prodshifted} + t2 + 158'b1 + {{56{r2[105]}},r2, 2'b0} + {{56{s2[105]}},s2, 2'b0}; // +1 from invert of z above
+	//assign prodshifted = killprodM ? 0 : {56'b0, r2+s2, 2'b0};
+	//assign tmp = ({{57{r2[105]}},r2, 2'b0} + {{57{s2[105]}},s2, 2'b0});
+	assign sum0 = t2 + 164'b0 + {57'b0, r2+s2, 2'b0};
+	assign sum1 = t2 + 164'b1 + {57'b0, r2+s2, 2'b0}; // +1 from invert of z above
 	
 	// Check sign bits in +0/1 modes 
 	assign negsum0 = sum0[164];
@@ -60,3 +62,4 @@ module add(rM, sM, tM, sum,
 	assign sum = selsum1 ? (negsum ? -sum1[163:0] : sum1[163:0]) : (negsum ? -sum0[163:0] : sum0[163:0]);
 	
 endmodule
+
