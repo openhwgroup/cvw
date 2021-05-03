@@ -56,6 +56,10 @@ module round(v, sticky, FrmM, wsign,
 	//	0xx - do nothing
 	//	100 - tie - plus1 if v[2] = 1
 	//	101/110/111 - plus1
+
+	//***causes lint warning: %Warning-UNOPTFLAT:      Example path: src/fpu/round.sv:59:  ALWAYS
+// %Warning-UNOPTFLAT:      Example path: src/fpu/round.sv:42:  wallypipelinedsoc.hart.fpu.fma2.round.plus1
+
 	always_comb begin
 		case (FrmM)
 			3'b000: plus1 = (v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2])));//round to nearest even
@@ -66,12 +70,6 @@ module round(v, sticky, FrmM, wsign,
 			default: plus1 = 1'bx;
 		endcase
 	end
-	// assign plus1 = (rn & v[1] & (v[0] | sticky | (~v[0]&~sticky&v[2]))) |
-	// 	       (rp & ~wsign) |
-	// 	       (rm & wsign);
-	//assign plus1 = rn && ((v[1] && v[0]) || (v[2] && (v[1]))) ||
-	//				 rp && ~wsign && (v[1] || v[0]) ||
-	//				 rm && wsign && (v[1] || v[0]);
 
 	// Compute rounded result 
     assign v1 = v[53:2] + 1;
