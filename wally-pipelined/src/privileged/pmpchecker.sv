@@ -29,76 +29,104 @@
 `include "wally-config.vh"
 
 module pmpchecker (
-  input  logic        clk, reset,
+  input  logic             clk, reset,
 
-  input  logic [31:0] HADDR,
+  input  logic [31:0]      HADDR,
 
-  input  logic [1:0]  PrivilegeModeW,
+  input  logic [1:0]       PrivilegeModeW,
 
-  input  logic [1:0]  STATUS_MPP,
-  input  logic        STATUS_MPRV,
+  input  logic [1:0]       STATUS_MPP,
+  input  logic             STATUS_MPRV,
+
+  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
 
   input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
 
-  input  logic        ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
 
-  output logic        PMPSquashBusAccess,
+  output logic             PMPSquashBusAccess,
 
-  output logic        PMPInstrAccessFaultF,
-  output logic        PMPLoadAccessFaultM,
-  output logic        PMPStoreAccessFaultM
+  output logic             PMPInstrAccessFaultF,
+  output logic             PMPLoadAccessFaultM,
+  output logic             PMPStoreAccessFaultM
 );
 
-  assign PMPSquashBusAccess = '0;
-  assign PMPInstrAccessFaultF = '0;
-  assign PMPLoadAccessFaultM = '0;
-  assign PMPStoreAccessFaultM = '0;
+  // Bit i is high when the address falls in PMP region i
+  logic [15:0] Regions;
+  logic [3:0]  MatchedRegion;
+  logic        Match;
 
-  
+  logic [7:0] PMPCFG [0:15];
+
+  logic L_Bit, X_Bit, W_Bit, R_Bit;
+  logic InvalidExecute, InvalidWrite, InvalidRead;
+
+  assign {PMPCFG[15], PMPCFG[14], PMPCFG[13], PMPCFG[12],
+          PMPCFG[11], PMPCFG[10], PMPCFG[9], PMPCFG[8]} = PMPCFG23_REGW;
+
+  assign {PMPCFG[7], PMPCFG[6], PMPCFG[5], PMPCFG[4],
+          PMPCFG[3], PMPCFG[2], PMPCFG[1], PMPCFG[0]} = PMPCFG01_REGW;
+
+  pmpadrdec pmpadrdec0(HADDR, PMPCFG[0][4:3],
+                       '0, PMPADDR_ARRAY_REGW[0],
+                       Regions[0]);
+
+  generate
+    genvar i;
+    for (i = 1; i < 16; i++) begin
+      pmpadrdec pmpadrdec(HADDR, PMPCFG[i][4:3],
+                          PMPADDR_ARRAY_REGW[i-1], PMPADDR_ARRAY_REGW[i],
+                          Regions[i]);
+    end
+  endgenerate
+
+  assign Match = |Regions;
+
+  always_comb
+    casez (Regions)
+      16'b???????????????1: MatchedRegion = 0;
+      16'b??????????????10: MatchedRegion = 1;
+      16'b?????????????100: MatchedRegion = 2;
+      16'b????????????1000: MatchedRegion = 3;
+      16'b???????????10000: MatchedRegion = 4;
+      16'b??????????100000: MatchedRegion = 5;
+      16'b?????????1000000: MatchedRegion = 6;
+      16'b????????10000000: MatchedRegion = 7;
+      16'b???????100000000: MatchedRegion = 8;
+      16'b??????1000000000: MatchedRegion = 9;
+      16'b?????10000000000: MatchedRegion = 10;
+      16'b????100000000000: MatchedRegion = 11;
+      16'b???1000000000000: MatchedRegion = 12;
+      16'b??10000000000000: MatchedRegion = 13;
+      16'b?100000000000000: MatchedRegion = 14;
+      16'b1000000000000000: MatchedRegion = 15;
+      default:              MatchedRegion = 0; // Should only occur if there is no match
+    endcase
+
+  assign L_Bit = PMPCFG[MatchedRegion][7];
+  assign X_Bit = PMPCFG[MatchedRegion][2];
+  assign W_Bit = PMPCFG[MatchedRegion][1];
+  assign R_Bit = PMPCFG[MatchedRegion][0];
+
+  assign InvalidExecute = ExecuteAccessF && ~X_Bit;
+  assign InvalidWrite   = WriteAccessM   && ~W_Bit;
+  assign InvalidRead    = ReadAccessM    && ~R_Bit;
+
+  assign PMPInstrAccessFaultF = (PrivilegeModeW == `M_MODE) ?
+                                  Match && L_Bit && InvalidExecute :
+                                  ~Match || InvalidExecute;
+  assign PMPStoreAccessFaultM = (PrivilegeModeW == `M_MODE) ?
+                                  Match && L_Bit && InvalidWrite :
+                                  ~Match || InvalidWrite;
+  assign PMPLoadAccessFaultM  = (PrivilegeModeW == `M_MODE) ?
+                                  Match && L_Bit && InvalidRead :
+                                  ~Match || InvalidRead;
 
   /*
-  // Signals are high if the memory access is within the given region
-  logic HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC;
+  If no PMP entry matches an M-mode access, the access succeeds. If no PMP entry matches an
+S-mode or U-mode access, but at least one PMP entry is implemented, the access fails.
+*/
 
-  logic PreHSELUART;
-
-  logic ExecutableRegion, ReadableRegion, WritableRegion;
-  logic Empty;
-
-  // Determine which region of physical memory (if any) is being accessed
-  adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
-  adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
-  adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
-  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO);
-  adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
-  adrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, HSELPLIC);
-
-  // *** Should this fault?
-  assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
-
-  // Swizzle region bits
-  assign HSELRegions = {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC};
-
-  // Only RAM memory regions are cacheable
-  assign Cacheable = HSELBootTim | HSELTim;
-
-  // *** Temporarily assume only RAM regions are idempotent -- likely wrong
-  assign Idempotent = HSELBootTim | HSELTim;
-
-  // *** Temporarily assume only RAM regions allow full atomic operations -- likely wrong
-  assign AtomicAllowed = HSELBootTim | HSELTim;
-
-  assign ExecutableRegion = HSELBootTim | HSELTim;
-  assign ReadableRegion = HSELBootTim | HSELTim | HSELCLINT | HSELGPIO | HSELUART | HSELPLIC;
-  assign WritableRegion = HSELBootTim | HSELTim | HSELCLINT | HSELGPIO | HSELUART | HSELPLIC;
-
-  assign Empty = ~|HSELRegions;
-
-  assign InstrAccessFaultF = ExecuteAccessF && (Empty || ~ExecutableRegion);
-  assign LoadAccessFaultM = ReadAccessM && (Empty || ~ReadableRegion);
-  assign StoreAccessFaultM = WriteAccessM && (Empty || ~WritableRegion);
-
-  assign SquashBusAccess = InstrAccessFaultF || LoadAccessFaultM || StoreAccessFaultM;
-  */
+  assign PMPSquashBusAccess = PMPInstrAccessFaultF || PMPLoadAccessFaultM || PMPStoreAccessFaultM;
 
 endmodule
