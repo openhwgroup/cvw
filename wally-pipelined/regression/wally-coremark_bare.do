@@ -35,6 +35,8 @@ vlog +incdir+../config/coremark_bare ../testbench/testbench-coremark_bare.sv ../
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
+mem load -startaddress 268435456 -endaddress 268566527 -filltype value -fillradix hex -filldata 0 /testbench/dut/uncore/dtim/RAM
+
 view wave
 
 -- display input and output signals as hexidecimal values
@@ -54,7 +56,7 @@ add wave -divider
 
 add wave -divider Fetch
 add wave -hex /testbench/dut/hart/ifu/PCF
-add wave -hex /testbench/dut/hart/ifu/ic/InstrF
+add wave -hex /testbench/dut/hart/ifu/icache/controller/FinalInstrRawF
 add wave /testbench/InstrFName
 add wave -divider Decode
 add wave -hex /testbench/dut/hart/ifu/PCD
@@ -90,10 +92,10 @@ add wave -hex -r /testbench/dut/hart/ieu/dp/regf/*
 add wave -divider Regfile_itself
 add wave -hex -r /testbench/dut/hart/ieu/dp/regf/rf
 add wave -divider RAM
-add wave -hex -r /testbench/dut/uncore/dtim/RAM
+#add wave -hex -r /testbench/dut/uncore/dtim/RAM
 add wave -divider Misc
 add wave -divider
-add wave -hex -r /testbench/*
+#add wave -hex -r /testbench/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
