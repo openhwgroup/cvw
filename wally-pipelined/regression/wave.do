@@ -3,6 +3,7 @@ quietly virtual function -install /testbench/dut/hart/ifu/icache/cachemem -env /
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
+add wave -noupdate -expand -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
@@ -112,8 +113,6 @@ add wave -noupdate -group dcache /testbench/dut/hart/MemPAdrM
 add wave -noupdate -group dcache /testbench/dut/hart/dmem/MemAccessM
 add wave -noupdate -group dcache /testbench/dut/hart/dmem/AtomicMaskedM
 add wave -noupdate -group dcache /testbench/dut/hart/dmem/MemAckW
-add wave -noupdate -group dcache /testbench/dut/hart/dmem/genblk1/lrM
-add wave -noupdate -group dcache /testbench/dut/hart/dmem/genblk1/scM
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs1D
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs2D
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs1E
@@ -223,9 +222,8 @@ add wave -noupdate -group AHB /testbench/dut/hart/ebu/HMASTLOCK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HADDRD
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HSIZED
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HWRITED
-add wave -noupdate /testbench/dut/hart/dmem/genblk1/scM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {12215488 ns} 0} {{Cursor 4} {22127 ns} 0}
+WaveRestoreCursors {{Cursor 2} {5792261 ns} 0} {{Cursor 4} {1318991 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 513
@@ -241,4 +239,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {21993 ns} {22181 ns}
+WaveRestoreZoom {1311008 ns} {1321254 ns}
