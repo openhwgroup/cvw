@@ -27,18 +27,16 @@
 //
 
 
-module fpuaddcvt1 (sum, sum_tc, sel_inv, exponent_postsum, corr_sign, op1_Norm, op2_Norm, opA_Norm, opB_Norm, Invalid, DenormIn, convert, swap, normal_overflow, signA, Float1, Float2, exp1_denorm, exp2_denorm, exponent, op1, op2, rm, op_type, Pin, OvEn, UnEn);
+module fpuaddcvt1 (sum, sum_tc, sel_inv, exponent_postsum, corr_sign, op1_Norm, op2_Norm, opA_Norm, opB_Norm, Invalid, DenormIn, convert, swap, normal_overflow, signA, Float1, Float2, exp1_denorm, exp2_denorm, exponent, op1, op2, rm, op_type, Pin);
 
-   input [63:0] op1;		// 1st input operand (A)
-   input [63:0] op2;		// 2nd input operand (B)
-   input [2:0] 	rm;		// Rounding mode - specify values 
-   input [3:0]	op_type;	// Function opcode
-   input 	Pin;   		// Result Precision (0 for double, 1 for single)
-   input 	OvEn;		// Overflow trap enabled
-   input 	UnEn;   	// Underflow trap enabled
+   input logic [63:0] op1;		// 1st input operand (A)
+   input logic [63:0] op2;		// 2nd input operand (B)
+   input logic [2:0] 	rm;		// Rounding mode - specify values 
+   input logic [3:0]	op_type;	// Function opcode
+   input logic 	Pin;   		// Result Precision (1 for double, 0 for single)
 
    wire          P;
-   assign P = Pin | op_type[2];
+   assign P = ~Pin | op_type[2];
 
    wire [63:0] 	 IntValue;
    wire [11:0] 	 exp1, exp2;
@@ -56,23 +54,23 @@ module fpuaddcvt1 (sum, sum_tc, sel_inv, exponent_postsum, corr_sign, op1_Norm, 
    wire 	 zeroB;
    wire [5:0]	 align_shift; 
 
-   output [63:0] 	 Float1; 
-   output [63:0] 	 Float2;
-   output [10:0] 	 exponent;
-   output [10:0]	 exponent_postsum;
-   output [10:0]	 exp1_denorm, exp2_denorm;
-   output [63:0] sum, sum_tc;
-   output [3:0]  sel_inv;
-   output        corr_sign;
-   output 	 signA;
-   output	 op1_Norm, op2_Norm;
-   output	 opA_Norm, opB_Norm;
-   output	 Invalid;
-   output 	 DenormIn;
-//   output 	 exp_valid;
-   output 	 convert;
-   output        swap;
-   output 	 normal_overflow;
+   output logic [63:0] 	 Float1; 
+   output logic [63:0] 	 Float2;
+   output logic [10:0] 	 exponent;
+   output logic [10:0]	 exponent_postsum;
+   output logic [11:0]	 exp1_denorm, exp2_denorm;//KEP used to be [10:0]
+   output logic [63:0] sum, sum_tc;
+   output logic [3:0]  sel_inv;
+   output logic        corr_sign;
+   output logic 	 signA;
+   output logic	 op1_Norm, op2_Norm;
+   output logic	 opA_Norm, opB_Norm;
+   output logic	 Invalid;
+   output logic 	 DenormIn;
+//   output logic 	 exp_valid;
+   output logic 	 convert;
+   output logic        swap;
+   output logic 	 normal_overflow;
    wire [5:0]	 ZP_mantissaA;
    wire [5:0]	 ZP_mantissaB;
    wire		 ZV_mantissaA;
@@ -129,15 +127,15 @@ module fpuaddcvt1 (sum, sum_tc, sel_inv, exponent_postsum, corr_sign, op1_Norm, 
    lz52 lz_norm_2 (ZP_mantissaB, ZV_mantissaB, mantissaB);
 
    // Denormalized exponents created by subtracting the leading zeroes from the original exponents
-   assign exp1_denorm = swap ? (exp1 - ZP_mantissaB) : (exp1 - ZP_mantissaA);
-   assign exp2_denorm = swap ? (exp2 - ZP_mantissaA) : (exp2 - ZP_mantissaB);
+   assign exp1_denorm = swap ? (exp1 - {6'b0, ZP_mantissaB}) : (exp1 - {6'b0, ZP_mantissaA}); //KEP extended ZP_mantissa 
+   assign exp2_denorm = swap ? (exp2 - {6'b0, ZP_mantissaA}) : (exp2 - {6'b0, ZP_mantissaB});
 
    // Determine the alignment shift and limit it to 63. If any bit from 
    // exp_shift[6] to exp_shift[11] is one, then shift is set to all ones. 
    assign exp_shift = swap ? exp_diff2 : exp_diff1;
    assign exp_gt63 = exp_shift[11] | exp_shift[10] | exp_shift[9] 
      | exp_shift[8] | exp_shift[7] | exp_shift[6];
-   assign align_shift = exp_shift | {6{exp_gt63}};
+   assign align_shift = exp_shift[5:0] | {6{exp_gt63}}; //KEP used to be all of exp_shift
 
    // Unpack the 52-bit mantissas to 57-bit numbers of the form.
    //    001.M[51]M[50] ... M[1]M[0]00
@@ -193,7 +191,8 @@ module fpuaddcvt1 (sum, sum_tc, sel_inv, exponent_postsum, corr_sign, op1_Norm, 
    cla_sub64 sub1 (sum_tc, mantissaB3, mantissaA3);
  
    // Finds normal underflow result to determine whether to round final exponent down
-   assign normal_overflow = (DenormIn & (sum == 16'h0) & (opA_Norm | opB_Norm) & ~op_type[0]) ? 1'b1 : (sum[63] ? sum_tc[52] : sum[52]);
+   //***KEP used to be (sum == 16'h0) I am unsure what it's supposed to be
+   assign normal_overflow = (DenormIn & (sum == 64'h0) & (opA_Norm | opB_Norm) & ~op_type[0]) ? 1'b1 : (sum[63] ? sum_tc[52] : sum[52]);
 
 endmodule // fpadd
 

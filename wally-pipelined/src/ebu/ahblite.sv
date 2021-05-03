@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 package ahbliteState;
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, INSTRREADC, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
+  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
 endpackage
 
 module ahblite (
@@ -136,8 +136,6 @@ module ahblite (
             else                   ProposedNextBusState = IDLE;
       INSTRREAD: if (~HREADY)      ProposedNextBusState = INSTRREAD;
             else                   ProposedNextBusState = IDLE;  // if (InstrReadF still high)
-      INSTRREADC: if (~HREADY)     ProposedNextBusState = INSTRREADC; // "C" for "competing", meaning please don't mess up the memread in the W stage.
-            else                   ProposedNextBusState = IDLE;
       default:                     ProposedNextBusState = IDLE;
     endcase
 
@@ -158,8 +156,8 @@ module ahblite (
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
                     MMUStall);
 
-  assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-                          MMUStall);
+  //assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
+  //                        MMUStall);
 
   //  bus outputs
   assign #1 GrantData = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == MEMWRITE) || 
@@ -191,7 +189,7 @@ module ahblite (
   assign MMUReady = (BusState == MMUTRANSLATE && HREADY);
 
   assign InstrRData = HRDATA;
-  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD) || (BusState == INSTRREADC) && (NextBusState != INSTRREADC);
+  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
   assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
 		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
   assign MMUReadPTE = HRDATA;

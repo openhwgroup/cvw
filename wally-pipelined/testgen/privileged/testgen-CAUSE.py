@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# testgen-CAUSE.py
+# testgen-CAUSE.py (new)
 #
 # dottolia@hmc.edu 1 Mar 2021
 #
@@ -9,8 +9,12 @@
 #
 ##################################
 # DOCUMENTATION:
-# Most of the comments explaining what everything
-# does can be found in testgen-TVAL.py
+#
+# The most up-to-date comments explaining what everything
+# does and the layout of the privileged tests
+# can be found in testgen-TVAL.py. This and
+# other files do not have as many comments
+#
 ###################################
 
 ##################################
@@ -39,6 +43,35 @@ def randRegs():
 def writeVectors(storecmd, returningInstruction):
   global testnum
 
+  if testMode == "m":
+    if fromMode == "m":
+      expectedCode = 7 if fromMode == "m" else 5
+      clintAddr = "0x2004000"
+
+      writeTest(storecmd, f, r, f"""
+        li x1, 0x8
+        csrrs x0, {fromMode}status, x1
+
+        la x18, {clintAddr}
+        lw x11, 0(x18)
+        li x1, 0x3fffffffffffffff
+        {storecmd} x1, 0(x18)
+
+        li x1, 0x80
+        csrrs x0, {fromMode}ie, x1
+
+        {storecmd} x0, 0(x18)
+      """, True, expectedCode, f"""
+        li x1, 0x80
+        csrrc x0, {fromMode}ie, x1
+
+        li x1, 0x8
+        csrrc x0, {fromMode}status, x1
+
+        la x18, {clintAddr}
+        {storecmd} x0, 0(x18)
+      """)
+
     # Page 6 of unpriviledged spec
   # For both CSRRS and CSRRC, if rs1=x0, then the instruction will not write to the CSR at all, and so shall not cause any of the side effects
 
@@ -58,27 +91,28 @@ def writeVectors(storecmd, returningInstruction):
   # """)
 
   # User Timer Interrupt: True, 4
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-  
   # Supervior timer interrupt: True, 5
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-
   # Machine timer interrupt: True, 7
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # if fromMode == "m":
   #   clintAddr = "0x2004000"
+
   #   writeTest(storecmd, f, r, f"""
-  #     li x1, 0x8
-  #     csrrs x0, {fromMode}status, x1
+  #     # li x1, 0x8
+  #     # csrrs x0, mstatus, x1
 
-  #     la x18, {clintAddr}
-  #     lw x11, 0(x18)
-  #     li x1, 1
+  #     # li x1, 0x80
+  #     # csrrs x0, mie, x1
+
+  #     # la x18, {clintAddr}
+  #     # lw x11, 0(x18)
+  #     # lw x12, 4(x18)
+  #     # li x1, 1
   #     # {storecmd} x1, 0(x18)
-
-  #     li x1, 0x80
-  #     csrrs x0, {fromMode}ie, x1
+  #     nop
+  #     sub x1, x2, x3
+  #     sub x2, x3, x4
+  #     sub x3, x4, x5
   #     nop
   #     nop
   #     nop
@@ -86,36 +120,19 @@ def writeVectors(storecmd, returningInstruction):
   #     nop
   #     nop
   #     nop
-  #   """, True, 4, f"""
-  #     li x1, 0x80
-  #     # csrrc x0, {fromMode}ie, x1
-
-  #     li x1, 0x8
-  #     # csrrc x0, {fromMode}status, x1
-
-  #     la x18, {clintAddr}
-  #     {storecmd} x11, 0(x18)
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #     nop
+  #   """, True, 7, f"""
+  #     # la x18, {clintAddr}
+  #     # {storecmd} x11, 0(x18)
   #   """)
-
-  # writeTest(storecmd, f, r, f"""
-  #   li x10, MASK_XLEN(0x8)
-  #   csrrs x0, mstatus, x10
-
-  #   li x11, MASK_XLEN(0x80)
-  #   csrrs x0, mie, x11
-
-  #   la x18, 0x2004000
-  #   lw x11, 0(x18)
-  #   lw x12, 4(x18)
-  #   {storecmd} x0, 0(x18)
-  #   {storecmd} x0, 4(x18)
-  #   nop
-  #   nop
-  # """, True, 7, "m", f"""
-  #   la x18, 0x2004000
-  #   {storecmd} x11, 0(x18)
-  #   {storecmd} x12, 4(x18)
-  # """)
 
   #writeTest(storecmd, f, r, f"""
   #  li x2, 0x0
@@ -157,17 +174,10 @@ def writeVectors(storecmd, returningInstruction):
   # """)
 
   # User external input: True, 8
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-
   # Supervisor external input: True, 9
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-
   # Machine externa input: True, 11
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Instruction address misaligned: False, 0
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-
   # looks like this is giving us an infinite loop for wally
   # BUG: jumping to a misaligned instruction address doesn't cause an exception: we actually jump...
   # Either that, or somehow at the end we always end up at 0x80004002
@@ -178,7 +188,6 @@ def writeVectors(storecmd, returningInstruction):
   # """, False, 0)
 
   # Instruction access fault: False, 1
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Illegal Instruction 
   writeTest(storecmd, f, r, f"""
@@ -197,81 +206,82 @@ def writeVectors(storecmd, returningInstruction):
   """, False, 4)
 
   # Load Access fault: False, 5
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
 
   # Store/AMO address misaligned
   writeTest(storecmd, f, r, f"""
     sw x0, 11(x0)
   """, False, 6)
 
-  # Environment call
+  # Environment call from u-mode: only for when only M and U mode enabled?
+  # writeTest(storecmd, f, r, f"""
+  #   ecall
+  # """, False, 8, "u")
   if returningInstruction != "ecall":
     if fromMode == "u":
       writeTest(storecmd, f, r, f"""
         ecall
-      """, False, 8, "u")
+      """, False, 8)
 
     # Environment call from s-mode
     if fromMode == "s":
       writeTest(storecmd, f, r, f"""
         ecall
-      """, False, 9, "s")
+      """, False, 9)
 
     # Environment call from m-mode
     if fromMode == "m":
       writeTest(storecmd, f, r, f"""
         ecall
-      """, False, 11, "m")  
+      """, False, 11)  
 
   # Instruction page fault: 12
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-
   # Load page fault: 13
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
-
   # Store/AMO page fault: 15
-  # TODO: THIS NEEDS TO BE IMPLEMENTED
   
 
   
 
-def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = ""):
-  global testnum
-  global testMode
+def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
+  global testnum, storeAddressOffset
 
   expected = code
   if(interrupt):
     expected+=(1 << (xlen - 1))
 
-
-  trapEnd = ""
-  before = ""
-  if mode != "m":
-    before = f"""
-      li x1, 0b110000000000
-      csrrc x28, {testMode}status, x1
-      li x1, 0b{"01" if mode == "s" else "00"}00000000000
-      csrrs x28, {testMode}status, x1
-
-      auipc x1, 0
-      addi x1, x1, 16 # x1 is now right after the mret instruction
-      csrrw x27, {testMode}epc, x1
-      {testMode}ret
-
-      # From {testMode}, we're now in {mode} mode...
-    """
-
-    trapEnd = f"""j _jend{testnum}"""
-
+  # The code we actually change for our test
   lines = f"""
-    li x25, 0xDEADBEA7
-    {test}
-
-    _jend{testnum}:
-
+    csrr x25, {testMode}cause
   """
 
-  lines += storecmd + " x25, " + str(wordsize*testnum) + "(x6)\n"
+  # Boilerplate
+  #
+  # x28 is the address that our trap handler will jump to before returning.
+  # This is where we can do our actual tests. After we're done computing and storing
+  # what we want, we jump to x27, which continues with the trap handling code (look at the _j_x_trap_... labels)
+  # 
+  lines = f"""
+    la x28, _jtest{testnum}
+    j _jdo{testnum}
+
+    _jtest{testnum}:
+    {lines}
+    {resetHander}
+    jr x27
+
+    _jdo{testnum}:
+    li x25, 0xDEADBEA7
+    li gp, 0
+    {test}
+  """
+
+  # We expect x25 to be 0 always. This is because of the code we wrote at the begining
+  # of this function
+  
+  # Store the expected value of x25 to memory and in the .reference_output file
+  lines += f"""
+    {storecmd} x25, {testnum * wordsize}(x6)
+  """
+
   f.write(lines)
   if (xlen == 32):
     line = formatrefstr.format(expected)+"\n"
@@ -284,13 +294,13 @@ def writeTest(storecmd, f, r, test, interrupt, code, mode = "m", resetHander = "
 # main body
 ##################################
 
-# change these to suite your tests
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-numrand = 4;
+testCount = 16;
 
 # setup
-seed(0xC365DDEB9173AB42) # make tests reproducible
+# Change this seed to a different constant value for every test
+seed(0xC363DAEB9193AB45) # make tests reproducible
 
 # generate files for each test
 for xlen in xlens:
@@ -304,13 +314,14 @@ for xlen in xlens:
     storecmd = "sd"
     wordsize = 8
 
+  # testMode can be m, s, and u. User mode traps are deprecated, so this should likely just be ["m", "s"]
   for testMode in ["m", "s"]:
-
     imperaspath = "../../../imperas-riscv-tests/riscv-test-suite/rv" + str(xlen) + "p/"
     basename = "WALLY-" + testMode.upper() + "CAUSE"
     fname = imperaspath + "src/" + basename + ".S"
     refname = imperaspath + "references/" + basename + ".reference_output"
     testnum = 0
+    storeAddressOffset = 0
 
     # print custom header part
     f = open(fname, "w")
@@ -337,19 +348,38 @@ for xlen in xlens:
     # two different returning instructions.
     #
     # Current code is written to only support ebreak and ecall.
-    for returningInstruction in ["ebreak", "ecall"]:
+    #
+    # For testgen-TVAL, we don't need to test ebreak, so we can use that as the sole
+    # returning instruction. For others, like testgen-CAUSE, we'll need to put
+    # both ebreak and ecall here.
+    for returningInstruction in ["ebreak"]:
 
       # All registers used:
       # x30: set to 1 if we should return to & stay in machine mode after trap, 0 otherwise
       # ...
-      # x26: expected epc value
+      # x28: address trap handler should jump to for the test
+      # x27: address the test should return to after the test
+      # ...
       # x25: value to write to memory
       # ...
+      # x20: intermediate value in trap handler. Don't overwrite this!
       # x19: mtvec old value
       # x18: medeleg old value
-      # x17: sedeleg old value
+      # x17: sedeleg old value (currently unused — user mode traps deprecated)
+      # x16: mideleg old value
+      # ...
+      # x10 - x14 can be freely written
+      # ...
+      # x7: copy of x6. Increment this instead of using an offset on x6.
+      #     this allows us to create more than 2048/wordlen tests.
+      #     This is the address we write results to
+      # x6: Starting address we should write expected results to
+      # ...
+      # x1 - x5 can be freely written  
 
 
+
+      # Set up x7 and store old value of mtvec
       lines = f"""
         add x7, x6, x0
         csrr x19, mtvec
@@ -363,90 +393,89 @@ for xlen in xlens:
           csrs sedeleg, x9
           """
 
-      clintAddr = "0x2004000"
+      # Code that will jump to the test (x28 is set in writeTest above)
+      testJumpCode = f"""
+        auipc x27, 0
+        addi x27, x27, 12
+        jr x28
+      """
 
+      # Code for handling traps in different modes
+      # Some comments are inside of the below strings (prefixed with a #, as you might expected)
       lines += f"""
+        # Reset x30 to 0 so we can run the tests. We'll set this to 1 when tests are completed so we stay in machine mode
         li x30, 0
 
+        # Set up 
         la x1, _j_m_trap_{returningInstruction}
         csrw mtvec, x1
         la x1, _j_s_trap_{returningInstruction}
         csrw stvec, x1
         la x1, _j_u_trap_{returningInstruction}
-        csrw utvec, x1
+        # csrw utvec, x1 # user mode traps are not supported
+
+        # Start the tests!
         j _j_t_begin_{returningInstruction}
 
+        # Machine mode traps
         _j_m_trap_{returningInstruction}:
+        {testJumpCode if testMode == "m" else "li x25, 0xBAD00003"}
 
-        #li x1, 0x20
-        #csrrw x0, mie, x1
-
-        li x11, 0x3fffffffffffffff
-        la x18, {clintAddr}
-        {storecmd} x11, 0(x18)
-
-        li x1, 0x8
-        csrrc x0, mstatus, x1
-
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-        sub x1, x2, x3
-
-        csrrs x1, mepc, x0
-        {"csrr x25, mcause" if testMode == "m" else "li x25, 0xBAD00003"}
-
-        addi x1, x1, 4
-        csrrw x0, mepc, x1
+        csrrs x20, mepc, x0
+        addi x20, x20, 4
+        csrrw x0, mepc, x20
         bnez x30, _j_all_end_{returningInstruction}
         mret
 
+        # Supervisor mode traps
         _j_s_trap_{returningInstruction}:
-        csrrs x1, sepc, x0
-        {"csrr x25, scause" if testMode == "s" else "li x25, 0xBAD00001"}
+        {testJumpCode if testMode == "s" else "li x25, 0xBAD00001"}
 
-        addi x1, x1, 4
-        csrrw x0, sepc, x1
+        csrrs x20, sepc, x0
+        addi x20, x20, 4
+        csrrw x0, sepc, x20
         bnez x30, _j_goto_machine_mode_{returningInstruction}
         sret
 
+        # Unused: user mode traps are no longer supported
         _j_u_trap_{returningInstruction}:
-        csrrs x1, uepc, x0
-        {"csrr x25, ucause" if testMode == "u" else "li x25, 0xBAD00000"}
+        {testJumpCode if testMode == "u" else "li x25, 0xBAD00000"}
 
-        addi x1, x1, 4
-        csrrw x0, uepc, x1
+        csrrs x20, uepc, x0
+        addi x20, x20, 4
+        csrrw x0, uepc, x20
         bnez x30, _j_goto_supervisor_mode_{returningInstruction}
         uret
 
+        # Currently unused. Just jumps to _j_goto_machine_mode. If you actually
+        # want to implement this, you'll likely need to reset sedeleg here
+        # and then cause an exception with {returningInstruction} (based on my intuition. Try that first, but I could be missing something / just wrong)
         _j_goto_supervisor_mode_{returningInstruction}:
         j _j_goto_machine_mode_{returningInstruction}
 
         _j_goto_machine_mode_{returningInstruction}:
-        li x30, 1
-        {returningInstruction}
+        li x30, 1 # This will cause us to branch to _j_all_end_{returningInstruction} in the machine trap handler, which we'll get into by invoking...
+        {returningInstruction} # ... this instruction!
 
+        # Run the actual tests!
         _j_t_begin_{returningInstruction}:
       """
 
       fromModeOptions = ["m", "s", "u"] if testMode == "m" else (["s", "u"] if testMode == "s" else ["u"])
 
+      # We don't want to delegate our returning instruction. Otherwise, we'll have no way of getting
+      # back to machine mode at the end! (and we need to be in machine mode to complete the tests)
       medelegMask = "0b1111111111110111" if returningInstruction == "ebreak" else "0b1111000011111111"
 
+      # Set medeleg and mideleg
       lines += f"""
         csrr x18, medeleg
         li x9, {medelegMask if testMode == "s" or testMode == "u" else "0"}
         csrw medeleg, x9
+
+        csrr x16, mideleg
+        li x9, {"0xffffffff" if testMode == "s" or testMode == "u" else "0"}
+        csrw mideleg, x9
       """
 
       f.write(lines)
@@ -454,6 +483,7 @@ for xlen in xlens:
       for fromMode in fromModeOptions:
         lines = ""
         
+        # Code to bring us down to supervisor mode
         if fromMode == "s" or fromMode == "u":
           lines += f"""
             li x1, 0b110000000000
@@ -469,6 +499,7 @@ for xlen in xlens:
             # We're now in supervisor mode...
           """
 
+        # Code to bring us down to user mode
         if fromMode == "u":
           lines += f"""
 
@@ -483,24 +514,32 @@ for xlen in xlens:
           # We're now in user mode...
           """
 
-        # print directed and random test vectors
-
         f.write(lines)
-        for i in range(0,numrand):
+        for i in range(0,testCount):
           writeVectors(storecmd, returningInstruction)
 
 
+      # Very end of test. Bring us back up to machine mode
+      # We set x30 to 1, which will cause us to branch to _j_all_end in the
+      # machine mode trap handler, before executing the mret instruction. This will
+      # make us stay in machine mode.
+      #
+      # If we're currently in user mode, this will first bump us up to the supervisor mode
+      # trap handler, which will call returningInstruction again before it's sret instruction,
+      # bumping us up to machine mode
+      #
+      # Get into the trap handler by running returningInstruction (either an ecall or ebreak) 
       f.write(f"""
         li x30, 1
+        li gp, 0
         {returningInstruction}
         _j_all_end_{returningInstruction}:
 
+        # Reset trap handling csrs to old values
         csrw mtvec, x19
         csrw medeleg, x18
+        csrw mideleg, x16
       """)
-
-    # if we're in supervisor mode, this leaves the ebreak instruction untested (we need a way to)
-    # get back to machine mode. 
 
     # print footer
     h = open("../testgen_footer.S", "r")
@@ -513,6 +552,3 @@ for xlen in xlens:
     f.write(lines)
     f.close()
     r.close()
-
-
-
