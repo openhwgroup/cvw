@@ -96,6 +96,7 @@ module privileged (
   logic [11:0] MIP_REGW, MIE_REGW;
   logic md, sd;
 
+  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW;
   logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];
 
   logic PMASquashBusAccess, PMPSquashBusAccess;

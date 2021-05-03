@@ -56,6 +56,7 @@ module csr #(parameter
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic             STATUS_MPRV,
+  output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
   output logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
