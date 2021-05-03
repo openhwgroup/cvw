@@ -36,6 +36,11 @@ configs = [
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv64ic rv64ic\n!",
         grepstr="All tests ran without failures"
     ),
+    Config(
+        name="lints",
+        cmd="../lint-wally > {}",
+        grepstr="All lints run with no errors or warnings"
+    ),
 ]
 
 import multiprocessing, os
