@@ -159,7 +159,8 @@ module fpu (
   logic                    AddDenormInE, AddSwapE, AddNormOvflowE, AddSignAE;
   logic                    AddConvertE;
   logic [63:0]             AddFloat1E, AddFloat2E;
-  logic [10:0]             AddExp1DenormE, AddExp2DenormE, AddExponentE;
+  logic [11:0]             AddExp1DenormE, AddExp2DenormE;
+  logic [10:0]             AddExponentE;
   logic [63:0]             AddOp1E, AddOp2E;
   logic [2:0]              AddRmE;
   logic [3:0]              AddOpTypeE;
@@ -317,7 +318,8 @@ module fpu (
   logic                    AddDenormInM, AddSwapM, AddNormOvflowM, AddSignAM;
   logic                    AddConvertM, AddSignM;
   logic [63:0]             AddFloat1M, AddFloat2M;
-  logic [10:0]             AddExp1DenormM, AddExp2DenormM, AddExponentM;
+  logic [11:0]             AddExp1DenormM, AddExp2DenormM;
+  logic [10:0]             AddExponentM;
   logic [63:0]             AddOp1M, AddOp2M;
   logic [2:0]              AddRmM;
   logic [3:0]              AddOpTypeM;
@@ -380,8 +382,8 @@ module fpu (
   flopenrc #(1) EMRegAdd15(clk, reset, PipeClearEM, PipeEnableEM, AddSignAE, AddSignM); 
   flopenrc #(64) EMRegAdd16(clk, reset, PipeClearEM, PipeEnableEM, AddFloat1E, AddFloat1M); 
   flopenrc #(64) EMRegAdd17(clk, reset, PipeClearEM, PipeEnableEM, AddFloat2E, AddFloat2M); 
-  flopenrc #(11) EMRegAdd18(clk, reset, PipeClearEM, PipeEnableEM, AddExp1DenormE, AddExp1DenormM); 
-  flopenrc #(11) EMRegAdd19(clk, reset, PipeClearEM, PipeEnableEM, AddExp2DenormE, AddExp2DenormM); 
+  flopenrc #(12) EMRegAdd18(clk, reset, PipeClearEM, PipeEnableEM, AddExp1DenormE, AddExp1DenormM); 
+  flopenrc #(12) EMRegAdd19(clk, reset, PipeClearEM, PipeEnableEM, AddExp2DenormE, AddExp2DenormM); 
   flopenrc #(11) EMRegAdd20(clk, reset, PipeClearEM, PipeEnableEM, AddExponentE, AddExponentM); 
   flopenrc #(64) EMRegAdd21(clk, reset, PipeClearEM, PipeEnableEM, AddOp1E, AddOp1M); 
   flopenrc #(64) EMRegAdd22(clk, reset, PipeClearEM, PipeEnableEM, AddOp2E, AddOp2M); 
