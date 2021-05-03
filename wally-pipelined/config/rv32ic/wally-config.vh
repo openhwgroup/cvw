@@ -68,8 +68,8 @@
 
 `define BOOTTIMBASE   32'h00000000
 `define BOOTTIMRANGE  32'h00003FFF
-`define TIMBASE    32'h80000000
-`define TIMRANGE   32'h0007FFFF
+`define TIMBASE       32'h80000000
+`define TIMRANGE      32'h07FFFFFF
 `define CLINTBASE  32'h02000000
 `define CLINTRANGE 32'h0000FFFF
 `define GPIOBASE   32'h10012000
@@ -85,7 +85,7 @@
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 0
+`define GPIO_LOOPBACK_TEST 1
 
 // Busybear special CSR config to match OVPSim
 `define OVPSIM_CSR_CONFIG 0

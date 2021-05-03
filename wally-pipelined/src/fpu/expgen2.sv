@@ -102,6 +102,7 @@ module expgen2(xexp, yexp, zexp,
 	// A mux selects the early result from other FPU blocks or the 
 	// normalized FMAC result.   Special cases are also detected. 
 	
-	assign wexp = specialsel ? specialres[10:0] : de[10:0] + expplus1; 
+	assign wexp = specialsel ? specialres[10:0] : de[10:0] + {10'b0,expplus1}; 
 endmodule
+
 

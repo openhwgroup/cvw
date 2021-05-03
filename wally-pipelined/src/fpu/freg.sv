@@ -1,8 +1,9 @@
 
 `include "wally-config.vh"
+//  `include "../../config/rv64icfd/wally-config.vh" //debug
 
 module freg1adr (
-  input  logic [2:0]       frm,
+  input  logic 	       	   FmtW,
   input  logic             reset,
   input  logic             clear,
   input  logic             clk,
@@ -13,7 +14,7 @@ module freg1adr (
   output logic [`XLEN-1:0] readData);
 
   //note - not word aligning based on precision of 
-  //operation (frm)
+  //operation (FmtW)
 
   //reg number should remain static, but it doesn't hurt
   //to parameterize
@@ -139,7 +140,7 @@ endmodule
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module freg2adr (
-  input  logic [2:0]       frm,
+  input  logic 	           FmtW,
   input  logic             reset,
   input  logic             clear,
   input  logic             clk,
@@ -152,7 +153,7 @@ module freg2adr (
   output logic [`XLEN-1:0] readData2);
 
   //note - not word aligning based on precision of 
-  //operation (frm)
+  //operation (FmtW)
 
   //reg number should remain static, but it doesn't hurt
   //to parameterize
@@ -310,7 +311,7 @@ endmodule
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 module freg3adr (
-  input  logic [2:0]       frm,
+  input  logic    	   FmtW,
   input  logic             reset,
   input  logic             clear,
   input  logic             clk,
@@ -325,7 +326,7 @@ module freg3adr (
   output logic [`XLEN-1:0] readData3);
 
   //note - not word aligning based on precision of 
-  //operation (frm)
+  //operation (FmtW)
 
   //reg number should remain static, but it doesn't hurt
   //to parameterize

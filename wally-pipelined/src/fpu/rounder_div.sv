@@ -66,7 +66,8 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    wire [1:0] 	  mux_mant;
    wire 	  sign_rem;
    wire [63:0] 	  q, qm, qp;
-   wire 	  exp_ovf, exp_ovfSP, exp_ovfDP;   
+   wire 	  exp_ovf, exp_ovfSP, exp_ovfDP;
+   logic zero_rem;   
 
    // Remainder = 0?
    assign zero_rem = ~(|regr_out);
@@ -97,7 +98,7 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    //   1.) we choose any qm0, qp0, q0 (since we shift mant)
    //   2.) we choose qp and we overflow (for RU)
    assign exp_ovf = |{qp[62:40], (qp[39:11] & {29{~P}})};
-   assign Texp = exp_diff - {{13{vss}}, ~q1[63]} + {{13{vss}}, mux_mant[1]&qp1[63]&~exp_ovf};
+   assign Texp = exp_diff - {{12{vss}}, ~q1[63]} + {{12{vss}}, mux_mant[1]&qp1[63]&~exp_ovf}; // KEP used to be 13{vss}
    
    // Overflow only occurs for double precision, if Texp[10] to Texp[0] are 
    // all ones. To encourage sharing with single precision overflow detection,

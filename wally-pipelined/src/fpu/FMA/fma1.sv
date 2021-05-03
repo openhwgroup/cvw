@@ -35,37 +35,37 @@ module fma1(ReadData1E, ReadData2E, ReadData3E, FrmE,
 			xinfE, yinfE, zinfE, nanE, prodinfE);
 /////////////////////////////////////////////////////////////////////////////
  
-	input 		[63:0]		ReadData1E;		// input 1
-	input		[63:0]		ReadData2E;     // input 2 
-	input 		[63:0]		ReadData3E;     // input 3
-	input 		[2:0]	 	FrmE;          	// Rounding mode
-	output 		[12:0]		aligncntE;    	// status flags
-	output 		[105:0]		rE; 				// one result of partial product sum
-	output 		[105:0]		sE; 				// other result of partial products
-	output 		[163:0]		tE;				// output of alignment shifter	
-	output 		[12:0]		aeE; 		// multiplier expoent
-	output 					bsE;				// sticky bit of addend
-	output 					killprodE; 		// ReadData3E >> product
-	output					xzeroE;
-	output					yzeroE;
-	output					zzeroE;
-	output					xdenormE;
-	output					ydenormE;
-	output					zdenormE;
-	output					xinfE;
-	output					yinfE;
-	output					zinfE;
-	output					xnanE;
-	output					ynanE;
-	output					znanE;
-	output					nanE;
-	output					prodinfE;
-	output			[8:0]		sumshiftE;
-	output					sumshiftzeroE;
+	input logic 		[63:0]		ReadData1E;		// input 1
+	input logic		[63:0]		ReadData2E;     // input 2 
+	input logic 		[63:0]		ReadData3E;     // input 3
+	input logic 		[2:0]	 	FrmE;          	// Rounding mode
+	output logic 		[12:0]		aligncntE;    	// status flags
+	output logic 		[105:0]		rE; 				// one result of partial product sum
+	output logic 		[105:0]		sE; 				// other result of partial products
+	output logic 		[163:0]		tE;				// output logic of alignment shifter	
+	output logic 		[12:0]		aeE; 		// multiplier expoent
+	output logic 					bsE;				// sticky bit of addend
+	output logic 					killprodE; 		// ReadData3E >> product
+	output logic					xzeroE;
+	output logic					yzeroE;
+	output logic					zzeroE;
+	output logic					xdenormE;
+	output logic					ydenormE;
+	output logic					zdenormE;
+	output logic					xinfE;
+	output logic					yinfE;
+	output logic					zinfE;
+	output logic					xnanE;
+	output logic					ynanE;
+	output logic					znanE;
+	output logic					nanE;
+	output logic					prodinfE;
+	output logic			[8:0]		sumshiftE;
+	output logic					sumshiftzeroE;
 
 // Internal nodes
  
-//	output 		[12:0]		aligncntE; 		// shift count for alignment
+//	output logic 		[12:0]		aligncntE; 		// shift count for alignment
 
 
 	logic 					prodof; 		// ReadData1E*ReadData2E out of range
@@ -95,7 +95,7 @@ module fma1(ReadData1E, ReadData2E, ReadData3E, FrmE,
 	special			special(.*);
 
 
-// Instantiate control output
+// Instantiate control output logic
  
 flag1				flag1(.*); 
 

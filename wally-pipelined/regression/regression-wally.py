@@ -19,7 +19,7 @@ configs = [
     Config(
         name="busybear",
         cmd="vsim -do wally-busybear-batch.do -c > {}",
-        grepstr="# loaded 800000 instructions"
+        grepstr="# loaded 40000 instructions"
     ),
     Config(
         name="buildroot",

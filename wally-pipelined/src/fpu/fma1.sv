@@ -34,7 +34,7 @@ module fma1(ReadData1E, ReadData2E, ReadData3E, FrmE,
 			, xzeroE, yzeroE, zzeroE, xnanE,ynanE, znanE, xdenormE, ydenormE, zdenormE,
 			xinfE, yinfE, zinfE, nanE, prodinfE);
 /////////////////////////////////////////////////////////////////////////////
- //***clean up code, comment, fix names, and c3f000200003fffe * 0000000000000001 + 001ffffffffffffe error
+ 
 	input logic 		[63:0]		ReadData1E;		// input 1
 	input logic		[63:0]		ReadData2E;     // input 2 
 	input logic 		[63:0]		ReadData3E;     // input 3
@@ -42,7 +42,7 @@ module fma1(ReadData1E, ReadData2E, ReadData3E, FrmE,
 	output logic 		[12:0]		aligncntE;    	// status flags
 	output logic 		[105:0]		rE; 				// one result of partial product sum
 	output logic 		[105:0]		sE; 				// other result of partial products
-	output logic 		[163:0]		tE;				// output of alignment shifter	
+	output logic 		[163:0]		tE;				// output logic of alignment shifter	
 	output logic 		[12:0]		aeE; 		// multiplier expoent
 	output logic 					bsE;				// sticky bit of addend
 	output logic 					killprodE; 		// ReadData3E >> product
@@ -65,7 +65,7 @@ module fma1(ReadData1E, ReadData2E, ReadData3E, FrmE,
 
 // Internal nodes
  
-//	output 		[12:0]		aligncntE; 		// shift count for alignment
+//	output logic 		[12:0]		aligncntE; 		// shift count for alignment
 
 
 	logic 					prodof; 		// ReadData1E*ReadData2E out of range
@@ -95,7 +95,7 @@ module fma1(ReadData1E, ReadData2E, ReadData3E, FrmE,
 	special			special(.*);
 
 
-// Instantiate control output
+// Instantiate control output logic
  
 flag1				flag1(.*); 
 

@@ -10,7 +10,6 @@ add wave /testbench/reset
 add wave -divider
 
 add wave /testbench/dut/hart/DataStall
-add wave /testbench/dut/hart/InstrStall
 add wave /testbench/dut/hart/StallF
 add wave /testbench/dut/hart/StallD
 add wave /testbench/dut/hart/StallE

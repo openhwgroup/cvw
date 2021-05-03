@@ -88,15 +88,15 @@ module BLOCK2A ( PIN2, GIN1, GIN2, GOUT );
    assign GOUT =  ~ (GIN2 | (PIN2 & GIN1));
    
 endmodule
-
+//***KEP all 0:63, 0:64 ect changed - changed due to lint warning
 module PRESTAGE_64 ( A, B, CIN, POUT, GOUT );
    
-   input  [0:63] A;
-   input [0:63]  B;
+   input  [63:0] A;
+   input [63:0]  B;
    input 	 CIN;
    
-   output [0:63] POUT;
-   output [0:64] GOUT;
+   output [63:0] POUT;
+   output [64:0] GOUT;
    
    BLOCK0 U10 (A[0] , B[0] , POUT[0] , GOUT[1] );
    BLOCK0 U11 (A[1] , B[1] , POUT[1] , GOUT[2] );
@@ -169,11 +169,11 @@ endmodule // PRESTAGE_64
 
 module DBLC_0_64 ( PIN, GIN, POUT, GOUT );
    
-   input  [0:63] PIN;
-   input [0:64]  GIN;
+   input  [63:0] PIN;
+   input [64:0]  GIN;
    
-   output [0:62] POUT;
-   output [0:64] GOUT;
+   output [62:0] POUT;
+   output [64:0] GOUT;
    
    INVBLOCK U10 (GIN[0] , GOUT[0] );
    BLOCK1A U21 (PIN[0] , GIN[0] , GIN[1] , GOUT[1] );
@@ -246,11 +246,11 @@ endmodule // DBLC_0_64
 
 module DBLC_1_64 ( PIN, GIN, POUT, GOUT );
    
-   input  [0:62] PIN;
-   input [0:64]  GIN;
+   input  [62:0] PIN;
+   input [64:0]  GIN;
    
-   output [0:60] POUT;
-   output [0:64] GOUT;
+   output [60:0] POUT;
+   output [64:0] GOUT;
    
    INVBLOCK U10 (GIN[0] , GOUT[0] );
    INVBLOCK U11 (GIN[1] , GOUT[1] );
@@ -323,11 +323,11 @@ endmodule // DBLC_1_64
 
 module DBLC_2_64 ( PIN, GIN, POUT, GOUT );
    
-   input  [0:60] PIN;
-   input [0:64]  GIN;
+   input  [60:0] PIN;
+   input [64:0]  GIN;
    
-   output [0:56] POUT;
-   output [0:64] GOUT;
+   output [56:0] POUT;
+   output [64:0] GOUT;
    
    INVBLOCK U10 (GIN[0] , GOUT[0] );
    INVBLOCK U11 (GIN[1] , GOUT[1] );
@@ -400,11 +400,11 @@ endmodule // DBLC_2_64
 
 module DBLC_3_64 ( PIN, GIN, POUT, GOUT );
    
-   input  [0:56] PIN;
-   input [0:64]  GIN;
+   input  [56:0] PIN;
+   input [64:0]  GIN;
    
-   output [0:48] POUT;
-   output [0:64] GOUT;
+   output [48:0] POUT;
+   output [64:0] GOUT;
    
    INVBLOCK U10 (GIN[0] , GOUT[0] );
    INVBLOCK U11 (GIN[1] , GOUT[1] );
@@ -477,11 +477,11 @@ endmodule // DBLC_3_64
 
 module DBLC_4_64 ( PIN, GIN, POUT, GOUT );
    
-   input  [0:48] PIN;
-   input [0:64]  GIN;
+   input  [48:0] PIN;
+   input [64:0]  GIN;
    
-   output [0:32] POUT;
-   output [0:64] GOUT;
+   output [32:0] POUT;
+   output [64:0] GOUT;
    
    INVBLOCK U10 (GIN[0] , GOUT[0] );
    INVBLOCK U11 (GIN[1] , GOUT[1] );
@@ -554,11 +554,11 @@ endmodule // DBLC_4_64
 
 module DBLC_5_64 ( PIN, GIN, POUT, GOUT );
    
-   input  [0:32] PIN;
-   input [0:64]  GIN;
+   input  [32:0] PIN;
+   input [64:0]  GIN;
    
    output [0:0]  POUT;
-   output [0:64] GOUT;
+   output [64:0] GOUT;
    
    INVBLOCK U10 (GIN[0] , GOUT[0] );
    INVBLOCK U11 (GIN[1] , GOUT[1] );
@@ -631,12 +631,12 @@ endmodule // DBLC_5_64
 
 module XORSTAGE_64 ( A, B, PBIT, CARRY, SUM, COUT );
    
-   input  [0:63] A;
-   input [0:63]  B;
+   input  [63:0] A;
+   input [63:0]  B;
    input 	 PBIT;
-   input [0:64]  CARRY;
+   input [64:0]  CARRY;
    
-   output [0:63] SUM;
+   output [63:0] SUM;
    output 	 COUT;
    
    XXOR1 U20 (A[0] , B[0] , CARRY[0] , SUM[0] );
@@ -710,22 +710,22 @@ endmodule // XORSTAGE_64
 
 module DBLCTREE_64 ( PIN, GIN, GOUT, POUT );
    
-   input  [0:63] PIN;
-   input [0:64]  GIN;
+   input  [63:0] PIN;
+   input [64:0]  GIN;
    
-   output [0:64] GOUT;
+   output [64:0] GOUT;
    output [0:0]  POUT;
    
-   wire [0:62] 	 INTPROP_0;
-   wire [0:64] 	 INTGEN_0;
-   wire [0:60] 	 INTPROP_1;
-   wire [0:64] 	 INTGEN_1;
-   wire [0:56] 	 INTPROP_2;
-   wire [0:64] 	 INTGEN_2;
-   wire [0:48] 	 INTPROP_3;
-   wire [0:64] 	 INTGEN_3;
-   wire [0:32] 	 INTPROP_4;
-   wire [0:64] 	 INTGEN_4;
+   wire [62:0] 	 INTPROP_0;
+   wire [64:0] 	 INTGEN_0;
+   wire [60:0] 	 INTPROP_1;
+   wire [64:0] 	 INTGEN_1;
+   wire [56:0] 	 INTPROP_2;
+   wire [64:0] 	 INTGEN_2;
+   wire [48:0] 	 INTPROP_3;
+   wire [64:0] 	 INTGEN_3;
+   wire [32:0] 	 INTPROP_4;
+   wire [64:0] 	 INTGEN_4;
    
    DBLC_0_64 U_0 (.PIN(PIN) , .GIN(GIN) , .POUT(INTPROP_0) , .GOUT(INTGEN_0) );
    DBLC_1_64 U_1 (.PIN(INTPROP_0) , .GIN(INTGEN_0) , .POUT(INTPROP_1) , .GOUT(INTGEN_1) );
@@ -739,20 +739,20 @@ endmodule // DBLCTREE_64
 
 module DBLCADDER_64_64 ( OPA, OPB, CIN, SUM, COUT );
    
-   input  [0:63] OPA;
-   input [0:63]  OPB;
+   input  [63:0] OPA;
+   input [63:0]  OPB;
    input 	 CIN;
    
-   output [0:63] SUM;
+   output [63:0] SUM;
    output 	 COUT;
    
-   wire [0:63] 	 INTPROP;
-   wire [0:64] 	 INTGEN;
+   wire [63:0] 	 INTPROP;
+   wire [64:0] 	 INTGEN;
    wire [0:0] 	 PBIT;
-   wire [0:64] 	 CARRY;
+   wire [64:0] 	 CARRY;
    
    PRESTAGE_64 U1 (OPA , OPB , CIN , INTPROP , INTGEN );
    DBLCTREE_64 U2 (INTPROP , INTGEN , CARRY , PBIT );
-   XORSTAGE_64 U3 (OPA[0:63] , OPB[0:63] , PBIT[0] , CARRY[0:64] , SUM , COUT );
+   XORSTAGE_64 U3 (OPA[63:0] , OPB[63:0] , PBIT[0] , CARRY[64:0] , SUM , COUT );
    
 endmodule 

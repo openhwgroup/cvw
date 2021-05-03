@@ -84,13 +84,14 @@ module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, Di
    wire [127:0]  regr_out;
    wire [2:0] 	 sel_muxa, sel_muxb;
    wire 	 sel_muxr;   
-   wire 	 load_rega, load_regb, load_regc, load_regd, load_regr;
+   wire 	 load_rega, load_regb, load_regc, load_regd, load_regr, load_regs;
 
    wire 	 donev, sel_muxrv, sel_muxsv;
    wire [1:0] 	 sel_muxav, sel_muxbv;   
    wire 	 load_regav, load_regbv, load_regcv;
    wire 	 load_regrv, load_regsv;
    
+   logic exp_cout1, exp_cout2, exp_odd, open;
    // Convert the input operands to their appropriate forms based on 
    // the orignal operands, the DivOpType , and their precision DivP. 
    // Single precision inputs are converted to double precision 
@@ -138,7 +139,7 @@ module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, Di
    // FSM : control divider
    fsm control (DivSqrtDone, load_rega, load_regb, load_regc, load_regd, 
 		load_regr, load_regs, sel_muxa, sel_muxb, sel_muxr, 
-		clk, reset, DivStart, error, DivOpType);
+		clk, reset, DivStart, DivOpType);
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 
@@ -191,6 +192,9 @@ module brent_kung (c, p, g);
    input [13:0] g;
    output [14:1] c;
 
+   logic G_1_0, G_3_2,G_5_4,G_7_6,G_9_8,G_11_10,G_13_12,G_3_0,G_7_4,G_11_8;
+   logic P_3_2,P_5_4,P_7_6,P_9_8,P_11_10,P_13_12,P_7_4,P_11_8;
+   logic G_7_0,G_11_0,G_5_0,G_9_0,G_13_0,G_2_0,G_4_0,G_6_0,G_8_0,G_10_0,G_12_0;
    // parallel-prefix, Brent-Kung
 
    // Stage 1: Generates G/DivP pairs that span 1 bits

@@ -82,23 +82,6 @@ module gpio (
 
   // register access
   always_ff @(posedge HCLK, negedge HRESETn) begin
-    // reads
-    case(entry)
-      8'h00: Dout <= #1 input_val;
-      8'h04: Dout <= #1 input_en;
-      8'h08: Dout <= #1 output_en;
-      8'h0C: Dout <= #1 output_val;
-      8'h18: Dout <= #1 rise_ie;
-      8'h1C: Dout <= #1 rise_ip;
-      8'h20: Dout <= #1 fall_ie;
-      8'h24: Dout <= #1 fall_ip;
-      8'h28: Dout <= #1 high_ie;
-      8'h2C: Dout <= #1 high_ip;
-      8'h30: Dout <= #1 low_ie;
-      8'h34: Dout <= #1 low_ip;
-      8'h40: Dout <= #1 0; // OUT_XOR reads as 0
-      default: Dout <= #1 0;
-    endcase
     // writes
     if (~HRESETn) begin
       // asynch reset
@@ -114,22 +97,57 @@ module gpio (
       high_ip <= #1 0;
       low_ie <= #1 0;
       low_ip <= #1 0;
-    end else if (memwrite)
-      // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
-      case(entryd)
-        8'h04: input_en <= #1 Din;
-        8'h08: output_en <= #1 Din;
-        8'h0C: output_val <= #1 Din;
-        8'h18: rise_ie <= #1 Din;
-        8'h1C: rise_ip <= #1 rise_ip & ~Din;
-        8'h20: fall_ie <= #1 Din;
-        8'h24: fall_ip <= #1 fall_ip & ~Din;
-        8'h28: high_ie <= #1 Din;
-        8'h2C: high_ip <= #1 high_ip & ~Din;
-        8'h30: low_ie  <= #1 Din;
-        8'h34: low_ip  <= #1 low_ip & ~Din;
-        8'h40: output_val <= #1 output_val ^ Din; // OUT_XOR
+    end else begin
+      // writes
+      if (memwrite)
+        // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
+        /* verilator lint_off CASEINCOMPLETE */
+        case(entryd)
+          8'h04: input_en <= #1 Din;
+          8'h08: output_en <= #1 Din;
+          8'h0C: output_val <= #1 Din;
+          8'h18: rise_ie <= #1 Din;
+          8'h20: fall_ie <= #1 Din;
+          8'h28: high_ie <= #1 Din;
+          8'h30: low_ie  <= #1 Din;
+          8'h40: output_val <= #1 output_val ^ Din; // OUT_XOR
+        endcase
+        /* verilator lint_on CASEINCOMPLETE */
+      // reads
+      case(entry)
+        8'h00: Dout <= #1 input_val;
+        8'h04: Dout <= #1 input_en;
+        8'h08: Dout <= #1 output_en;
+        8'h0C: Dout <= #1 output_val;
+        8'h18: Dout <= #1 rise_ie;
+        8'h1C: Dout <= #1 rise_ip;
+        8'h20: Dout <= #1 fall_ie;
+        8'h24: Dout <= #1 fall_ip;
+        8'h28: Dout <= #1 high_ie;
+        8'h2C: Dout <= #1 high_ip;
+        8'h30: Dout <= #1 low_ie;
+        8'h34: Dout <= #1 low_ip;
+        8'h40: Dout <= #1 0; // OUT_XOR reads as 0
+        default: Dout <= #1 0;
       endcase
+      // interrupts
+      if (memwrite && (entryd == 8'h1C))
+        rise_ip <= rise_ip & ~Din | (input2d & ~input3d);
+      else
+        rise_ip <= rise_ip | (input2d & ~input3d);
+      if (memwrite && (entryd == 8'h24))
+        fall_ip <= fall_ip & ~Din | (~input2d & input3d);
+      else
+        fall_ip <= fall_ip | (~input2d & input3d);
+      if (memwrite && (entryd == 8'h2C))
+        high_ip <= high_ip & ~Din | input3d;
+      else
+        high_ip <= high_ip | input3d;
+      if (memwrite && (entryd == 8'h34))
+        low_ip <= low_ip & ~Din | ~input3d;
+      else
+        low_ip <= low_ip | ~input3d;
+    end
   end
 
   // chip i/o
@@ -147,25 +165,6 @@ module gpio (
   assign GPIOPinsOut = output_val;
   assign GPIOPinsEn = output_en;
 
-  // interrupts
-  always_ff @(posedge HCLK) begin
-    if (memwrite && (entryd == 8'h1C))
-      rise_ip <= rise_ip & ~Din | (input2d & ~input3d);
-    else
-      rise_ip <= rise_ip | (input2d & ~input3d);
-    if (memwrite && (entryd == 8'h24))
-      fall_ip <= fall_ip & ~Din | (~input2d & input3d);
-    else
-      fall_ip <= fall_ip | (~input2d & input3d);
-    if (memwrite && (entryd == 8'h2C))
-      high_ip <= high_ip & ~Din | input3d;
-    else
-      high_ip <= high_ip | input3d;
-    if (memwrite && (entryd == 8'h34))
-      low_ip <= low_ip & ~Din | ~input3d;
-    else
-      low_ip <= low_ip | ~input3d;
-    end
   assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ip),(high_ip & high_ie),(low_ip & low_ie)};
 endmodule
 
