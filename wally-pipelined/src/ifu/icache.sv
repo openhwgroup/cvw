@@ -238,7 +238,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
   assign PCNextIndexF = PCPFinalF;
   
   // truncate the offset from PCPF for memory address generation
-  assign PCPTrunkF = PCPFinalF[`XLEN-1:OFFSETWIDTH];
+  assign PCPTrunkF = PCTagF[`XLEN-1:OFFSETWIDTH];
   
     // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
