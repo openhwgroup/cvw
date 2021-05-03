@@ -57,7 +57,8 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
+`define MEM_VIRTMEM 1
+`define VECTORED_INTERRUPTS_SUPPORTED 1
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
@@ -85,7 +86,7 @@
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 0
+`define GPIO_LOOPBACK_TEST 1
 
 // Busybear special CSR config to match OVPSim
 `define OVPSIM_CSR_CONFIG 0
@@ -94,7 +95,10 @@
 `define UART_PRESCALE 1
 
 // Interrupt configuration
-`define PLIC_NUM_SRC 53
+`define PLIC_NUM_SRC 4
+//comment out the following if >= 32 sources
+`define PLIC_NUM_SRC_LT_32
+`define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
 
 /* verilator lint_off STMTDLY */
@@ -105,5 +109,5 @@
 `define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/coremark_bare/BTBPredictor.txt"
 `define BPRED_ENABLED 1
-`define BPTYPE "BPGSHARE"
+`define BPTYPE "BPGSHARE"//comments
 `define TESTSBP 0
