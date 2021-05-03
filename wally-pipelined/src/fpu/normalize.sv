@@ -56,8 +56,8 @@ logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
 	// The sticky bit calculation is actually built into the shifter and
 	// does not require a true subtraction shown in the model.
  
-	assign isShiftLeft1 = (aligncntM == 1 ||aligncntM == 0 || $signed(aligncntM) == $signed(-1))&& zexp == 11'h2;//((xexp == 11'h3ff && yexp == 11'h1) || (yexp == 11'h3ff && xexp == 11'h1)) && zexp == 11'h2;
-	assign tmp = ($signed(aeM-normcnt+2) >= $signed(-1022));
+	assign isShiftLeft1 = (aligncntM == 13'b1 ||aligncntM == 13'b0 || $signed(aligncntM) == $signed(-(13'b1)))&& zexp == 11'h2;
+	// assign tmp = ($signed(aeM-normcnt+2) >= $signed(-1022));
 	always_comb
 		begin
 		// d = aligncntM
@@ -65,19 +65,19 @@ logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
 		// p = 53
 		// ea + eb = aeM
 			// set d<=2 to d<=0
-			if ($signed(aligncntM)<=$signed(2))  begin //d<=2 
+			if ($signed(aligncntM)<=$signed(13'd2))  begin //d<=2 
 				// product anchored or cancellation
-				if ($signed(aeM-normcnt+2) >= $signed(-1022)) begin //ea+eb-l+2 >= emin
+				if ($signed(aeM-{{4{normcnt[8]}},normcnt}+13'd2) >= $signed(-(13'd1022))) begin //ea+eb-l+2 >= emin
 					//normal result
-					de0 = xzeroM|yzeroM ? zexp : aeM-normcnt+xdenormM+ydenormM+57;
+					de0 = xzeroM|yzeroM ? {2'b0,zexp} : aeM-{{4{normcnt[8]}},normcnt}+{12'b0,xdenormM}+{12'b0,ydenormM}+13'd57;
 					resultdenorm = |sum & ~|de0 | de0[12];
 					// if z is zero then there was a 56 bit shift of the product
-					sumshifted = resultdenorm ? sum << sumshiftM-zzeroM+isShiftLeft1 : sum << normcnt; // p+2+l
+					sumshifted = resultdenorm ? sum << sumshiftM-{8'b0,zzeroM}+{8'b0,isShiftLeft1} : sum << normcnt; // p+2+l
 					v = sumshifted[162:109];
 					sticky = (|sumshifted[108:0]) | bsM;
 					//de0 = aeM-normcnt+2-1023;
 				end else begin
-					sumshifted = sum << (1080+aeM);
+					sumshifted = sum << (13'd1080+aeM);
 					v = sumshifted[162:109];
 					sticky = (|sumshifted[108:0]) | bsM;
 					resultdenorm = 1;
@@ -96,29 +96,29 @@ logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
 				// the book says exp = zexp + {-1,0,1}
 				if(sumshiftzeroM) begin
 					v = sum[162:109];
-					sticky = sum[108:0] | bsM;
-					de0 = zexp;
+					sticky = (|sum[108:0]) | bsM;
+					de0 = {2'b0,zexp};
 				end else if(sumshifted[163] & ~sumshifttmp[9])begin
 					v = sumshifted[162:109];
 					sticky = (|sumshifted[108:0]) | bsM;
-					de0 = zexp +2;
+					de0 = {2'b0,zexp} +13'd2;
 				end else if ((sumshifttmp[9] & sumshiftM[0]) || sumshifted[162]) begin
 					v = sumshifted[161:108];
 					sticky = (|sumshifted[107:0]) | bsM;
-					de0 = zexp+1;
+					de0 = {2'b0,zexp}+13'd1;
 				end else if (sumshifted[161] || (sumshifttmp[9] & sumshiftM[1])) begin
 					v = sumshifted[160:107];
 					sticky = (|sumshifted[106:0]) | bsM;
 					//de0 = zexp-1;
-					de0 = zexp+zdenormM;
+					de0 = {2'b0,zexp}+{12'b0,zdenormM};
 				end else if(sumshifted[160]& ~zdenormM) begin
-					de0 = zexp-1;
+					de0 = {2'b0,zexp}-13'b1;
 					v = ~|de0&~sumzero ? sumshifted[160:107] : sumshifted[159:106];
 					sticky = (|sumshifted[105:0]) | bsM;
 					//de0 = zexp-1;
 				end else if(sumshifted[159]& ~zdenormM) begin
 					//v = sumshifted[158:105];
-					de0 = zexp-2;
+					de0 = {2'b0,zexp}-13'd2;
 					v = (~|de0 | de0[12])&~sumzero ? sumshifted[161:108] : sumshifted[158:105];
 					sticky = (|sumshifted[104:0]) | bsM;
 					//de0 = zexp-1;
@@ -126,7 +126,7 @@ logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
 					v = sumshifted[160:107];
 					sticky = (|sumshifted[106:0]) | bsM;
 					//de0 = zexp-1;
-					de0 = zexp;
+					de0 = {{2{zexp[62]}},zexp};
 				end else begin
 					de0 = 0;
 					sumshifted = sum << sumshiftM-1; // p+2+l
@@ -143,4 +143,5 @@ logic tmp,tmp1,tmp2,tmp3,tmp4, tmp5;
 	//assign sumshifted = sum << normcnt;
 	
 endmodule
+
 
