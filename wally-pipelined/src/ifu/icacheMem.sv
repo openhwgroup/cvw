@@ -2,21 +2,20 @@
 
 module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, parameter WORDSIZE = `XLEN) (
     // Pipeline stuff
-    input  logic clk,
-    input  logic reset,
-    input  logic re,
+    input logic 	       clk,
+    input logic 	       reset,
     // If flush is high, invalidate the entire cache
-    input  logic flush,
+    input logic 	       flush,
+													    
     // Select which address to read (broken for efficiency's sake)
-    input  logic [`XLEN-1:12]   ReadUpperPAdr, // physical address Must come one cycle later
-    input  logic [11:0]         ReadLowerAdr, // virtual address
+    input logic [`XLEN-1:0]    PCTagF, // physical tag address
+    input logic [`XLEN-1:0]    PCNextIndexF,
     // Write new data to the cache
-    input  logic                WriteEnable,
-    input  logic [LINESIZE-1:0] WriteLine,
-    input  logic [`XLEN-1:0]    WritePAdr,
+    input logic 	       WriteEnable,
+    input logic [LINESIZE-1:0] WriteLine,
     // Output the word, as well as if it is valid
-    output logic [31:0] DataWord, // *** was WORDSIZE-1
-    output logic                DataValid
+    output logic [31:0]        DataWord, // *** was WORDSIZE-1
+    output logic 	       DataValid
 );
 
     // Various compile-time constants
@@ -33,11 +32,6 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     localparam integer TAGEND = TAGBEGIN + TAGWIDTH - 1;
 
     // Machinery to read from and write to the correct addresses in memory
-    logic [`XLEN-1:0]       ReadPAdr;
-    logic [`XLEN-1:0]       OldReadPAdr;
-    logic [OFFSETWIDTH-1:0] ReadOffset, WriteOffset;
-    logic [SETWIDTH-1:0]    ReadSet, WriteSet;
-    logic [TAGWIDTH-1:0]    ReadTag, WriteTag;
     logic [LINESIZE-1:0]    ReadLine;
     logic [LINESIZE/WORDSIZE-1:0][WORDSIZE-1:0] ReadLineTransformed;
 
@@ -46,41 +40,25 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     logic [NUMLINES-1:0]    ValidOut;
     logic                   DataValidBit;
 
-    flopenr #(`XLEN) ReadPAdrFlop(clk, reset, re, ReadPAdr, OldReadPAdr);
-
-    // Assign the read and write addresses in cache memory
-    always_comb begin
-        ReadOffset = OldReadPAdr[OFFSETEND:OFFSETBEGIN];
-        ReadPAdr = {ReadUpperPAdr, ReadLowerAdr};
-        ReadSet = ReadPAdr[SETEND:SETBEGIN];
-        ReadTag = OldReadPAdr[TAGEND:TAGBEGIN];
-
-        WriteOffset = WritePAdr[OFFSETEND:OFFSETBEGIN];
-        WriteSet = WritePAdr[SETEND:SETBEGIN];
-        WriteTag = WritePAdr[TAGEND:TAGBEGIN];
-    end
-
     // Depth is number of bits in one "word" of the memory, width is number of such words
-    Sram1Read1Write #(.DEPTH(LINESIZE), .WIDTH(NUMLINES)) cachemem (
+    sram1rw #(.DEPTH(LINESIZE), .WIDTH(NUMLINES)) cachemem (
         .*,
-        .ReadAddr(ReadSet),
+        .Addr(PCNextIndexF[SETEND:SETBEGIN]),
         .ReadData(ReadLine),
-        .WriteAddr(WriteSet),
         .WriteData(WriteLine)
     );
-    Sram1Read1Write #(.DEPTH(TAGWIDTH), .WIDTH(NUMLINES)) cachetags (
+    sram1rw #(.DEPTH(TAGWIDTH), .WIDTH(NUMLINES)) cachetags (
         .*,
-        .ReadAddr(ReadSet),
+        .Addr(PCNextIndexF[SETEND:SETBEGIN]),
         .ReadData(DataTag),
-        .WriteAddr(WriteSet),
-        .WriteData(WriteTag)
+        .WriteData(PCTagF[TAGEND:TAGBEGIN])
     );
 
     // Pick the right bits coming out the read line
     //assign DataWord = ReadLineTransformed[ReadOffset];
   //logic [31:0] tempRD;
   always_comb begin
-    case (OldReadPAdr[4:1])
+    case (PCTagF[4:1])
       0: DataWord = ReadLine[31:0];
       1: DataWord = ReadLine[47:16];
       2: DataWord = ReadLine[63:32];
@@ -115,10 +93,10 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
             ValidOut <= {NUMLINES{1'b0}};
         end else begin
             if (WriteEnable) begin
-                ValidOut[WriteSet] <= 1;
+                ValidOut[PCNextIndexF[SETEND:SETBEGIN]] <= 1;
             end
         end
-        DataValidBit <= ValidOut[ReadSet];
+        DataValidBit <= ValidOut[PCNextIndexF[SETEND:SETBEGIN]];
     end
-    assign DataValid = DataValidBit && (DataTag == ReadTag);
+    assign DataValid = DataValidBit && (DataTag == PCTagF[TAGEND:TAGBEGIN]);
 endmodule

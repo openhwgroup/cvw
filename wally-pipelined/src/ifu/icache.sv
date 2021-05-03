@@ -54,12 +54,10 @@ module icache(
 
     // Input signals to cache memory
     logic                       FlushMem;
-    logic [`XLEN-1:12]          ICacheMemReadUpperPAdr;
-    logic [11:0]                ICacheMemReadLowerAdr;
     logic                       ICacheMemWriteEnable;
     logic [ICACHELINESIZE-1:0]  ICacheMemWriteData;
-    logic [`XLEN-1:0]           ICacheMemWritePAdr;
     logic                       EndFetchState;
+    logic [`XLEN-1:0]           PCTagF, PCNextIndexF;  
     // Output signals from cache memory
     logic [31:0]   ICacheMemReadData;
     logic               ICacheMemReadValid;
@@ -69,13 +67,9 @@ module icache(
   cachemem(
         .*,
         // Stall it if the pipeline is stalled, unless we're stalling it and we're ending our stall
-        .re(ICacheReadEn),
         .flush(FlushMem),
-        .ReadUpperPAdr(ICacheMemReadUpperPAdr),
-        .ReadLowerAdr(ICacheMemReadLowerAdr),
         .WriteEnable(ICacheMemWriteEnable),
         .WriteLine(ICacheMemWriteData),
-        .WritePAdr(ICacheMemWritePAdr),
         .DataWord(ICacheMemReadData),
         .DataValid(ICacheMemReadValid)
     );
@@ -95,19 +89,18 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Input the address to read
     // The upper bits of the physical pc
     input logic [`XLEN-1:0] 	PCNextF,
-    input logic [`XLEN-1:0]     PCPF,
+    input logic [`XLEN-1:0] 	PCPF,
     // Signals to/from cache memory
     // The read coming out of it
     input logic [31:0] 		ICacheMemReadData,
     input logic 		ICacheMemReadValid,
     // The address at which we want to search the cache memory
-    output logic [`XLEN-1:12] 	ICacheMemReadUpperPAdr,
-    output logic [11:0] 	ICacheMemReadLowerAdr,
+    output logic [`XLEN-1:0] 	PCTagF,
+    output logic [`XLEN-1:0]    PCNextIndexF,						     
     output logic 		ICacheReadEn,
     // Load data into the cache
     output logic 		ICacheMemWriteEnable,
     output logic [LINESIZE-1:0] ICacheMemWriteData,
-    output logic [`XLEN-1:0] 	ICacheMemWritePAdr,
 
     // Outputs to rest of ifu
     // High if the instruction in the fetch stage is compressed
@@ -214,6 +207,8 @@ module icachecontroller #(parameter LINESIZE = 256) (
   //logic [`XLEN-1:0] 	     PCPF;
 
   logic 		     reset_q;
+  logic [1:0] 		     PCMux_q;
+  
   
     // Misaligned signals
     //logic [`XLEN:0] MisalignedInstrRawF;
@@ -230,8 +225,17 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // now we have to select between these three PCs
   assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf
   assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
+
+  // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
+  // *** read enable may not be necessary.
+  flopenr #(2) PCMuxReg(.clk(clk),
+			.reset(reset),
+			.en(ICacheReadEn),
+			.d(PCMux),
+			.q(PCMux_q));
   
-  
+  assign PCTagF = PCMux_q[1] ? PCSpillF : PCPF;
+  assign PCNextIndexF = PCPFinalF;
   
   // truncate the offset from PCPF for memory address generation
   assign PCPTrunkF = PCPFinalF[`XLEN-1:OFFSETWIDTH];
@@ -510,12 +514,6 @@ module icachecontroller #(parameter LINESIZE = 256) (
     flopr   #(1)  flushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCyclen | ~StallF), FlushDLastCyclen);
   mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCyclen, InstrRawD);
   //assign InstrRawD = AlignedInstrRawD;
-  
-  
-  assign {ICacheMemReadUpperPAdr, ICacheMemReadLowerAdr} = PCPFinalF;
 
-  assign ICacheMemWritePAdr = PCPFinalF;
-
-  
   
 endmodule
