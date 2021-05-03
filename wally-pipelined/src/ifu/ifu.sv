@@ -184,7 +184,7 @@ module ifu (
       assign BPPredDirWrongE = 1'b0;
       assign BTBPredPCWrongE = 1'b0;
       assign RASPredPCWrongE = 1'b0;
-      assign BPPredClassNonCFIWrong = 1'b0;
+      assign BPPredClassNonCFIWrongE = 1'b0;
     end      
   endgenerate
   // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.

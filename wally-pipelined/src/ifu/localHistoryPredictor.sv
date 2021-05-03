@@ -44,7 +44,7 @@ module localHistoryPredictor
    );
 
    logic [2**m-1:0][k-1:0] LHRNextF;
-   logic [k-1:0]       LHRF, ForwardLHRNext;
+   logic [k-1:0]       LHRF, LHRFNext, ForwardLHRNext;
    logic [m-1:0] 	   LookUpPCIndex, UpdatePCIndex;
    logic [1:0] 		   PredictionMemory;
    logic 		   DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
