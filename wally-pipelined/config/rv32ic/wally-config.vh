@@ -85,7 +85,7 @@
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 0
+`define GPIO_LOOPBACK_TEST 1
 
 // Busybear special CSR config to match OVPSim
 `define OVPSIM_CSR_CONFIG 0
