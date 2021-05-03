@@ -282,7 +282,8 @@ module csa #(parameter WIDTH=8) (input logic [WIDTH-1:0] a, b, c,
 	   fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
 	end
    endgenerate
-   assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     
+   //assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     // trmimmed excess bit dh 5/3/21
+   assign carry = {carry_temp[WIDTH-1:1], 1'b0};     
 
 endmodule // adder
 
