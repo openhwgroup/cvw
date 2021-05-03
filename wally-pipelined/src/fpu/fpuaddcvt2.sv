@@ -39,7 +39,7 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
    input [63:0] AddSumM, AddSumTcM;
    input [63:0] 	 AddFloat1M; 
    input [63:0] 	 AddFloat2M;
-   input [10:0]	 AddExp1DenormM, AddExp2DenormM;
+   input [11:0]	 AddExp1DenormM, AddExp2DenormM;
    input [10:0] 	 AddExponentM, AddExpPostSumM; //exp_pre;
    //input		 exp_valid;
    input [3:0] 	 AddSelInvM;
@@ -85,7 +85,7 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
    //AddExponentM value pre-rounding with considerations for denormalized
    //cases/conversion cases
    assign exp_pre       = AddDenormInM ?
-                          ((norm_shift == 6'b001011) ? 11'b00000000001 : (AddSwapM ? AddExp2DenormM : AddExp1DenormM))
+                          ((norm_shift == 6'b001011) ? 11'b00000000001 : (AddSwapM ? AddExp2DenormM[10:0] : AddExp1DenormM[10:0]))
                           : (AddConvertM ? 11'b10000111100 : AddExponentM);
 
 

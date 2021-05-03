@@ -97,6 +97,9 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 	logic					sticky;
 	logic			[12:0]		de0;
 	logic					isAdd;
+	logic					wsign;
+	logic 			[51:0]		wman;
+	logic 			[10:0]		wexp;
 
 	assign isAdd = 1;
 
@@ -118,17 +121,19 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 	add				add(.*);
 	lza				lza(.*);
 	normalize		normalize(.zexp(ReadData3M[62:52]),.*); 
-	round			round(.xman(ReadData1M[51:0]), .yman(ReadData2M[51:0]),.zman(ReadData3M[51:0]), .wman(FmaResultM[51:0]),.wsign(FmaResultM[63]),.*);
+	round			round(.xman(ReadData1M[51:0]), .yman(ReadData2M[51:0]),.zman(ReadData3M[51:0]),.*);
 
 // Instantiate exponent datapath
 
-	expgen2			expgen2(.xexp(ReadData1M[62:52]),.yexp(ReadData2M[62:52]),.zexp(ReadData3M[62:52]),.wexp(FmaResultM[62:52]),.*);
+	expgen2			expgen2(.xexp(ReadData1M[62:52]),.yexp(ReadData2M[62:52]),.zexp(ReadData3M[62:52]),.*);
 
 
 // Instantiate control logic
  
-sign				sign(.xsign(ReadData1M[63]),.ysign(ReadData2M[63]),.zsign(ReadData3M[63]),.wsign(FmaResultM[63]),.*); 
+sign				sign(.xsign(ReadData1M[63]),.ysign(ReadData2M[63]),.zsign(ReadData3M[63]),.*); 
 flag2				flag2(.xsign(ReadData1M[63]),.ysign(ReadData2M[63]),.zsign(ReadData3M[63]),.vbits(v[1:0]),.*); 
+
+assign FmaResultM = {wsign,wexp,wman};
 
 endmodule
 
