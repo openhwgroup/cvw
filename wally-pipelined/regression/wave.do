@@ -203,7 +203,6 @@ add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbenc
 add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbench/dut/hart/ifu/icache/controller/AlignedInstrRawD
 add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbench/dut/hart/ifu/icache/controller/FlushDLastCyclen
 add wave -noupdate -expand -group icache -expand -group {instr to cpu} /testbench/dut/hart/ifu/icache/controller/InstrRawD
-add wave -noupdate -expand -group icache -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCNextPF
 add wave -noupdate -expand -group icache -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCPF
 add wave -noupdate -expand -group icache -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCPreFinalF
 add wave -noupdate -expand -group icache -expand -group pc /testbench/dut/hart/ifu/icache/controller/PCPFinalF
@@ -223,8 +222,10 @@ add wave -noupdate -group AHB /testbench/dut/hart/ebu/HMASTLOCK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HADDRD
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HSIZED
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HWRITED
+add wave -noupdate /testbench/dut/hart/ifu/icache/PCTagF
+add wave -noupdate /testbench/dut/hart/ifu/icache/cachemem/OldReadPAdr
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {5796691 ns} 0} {{Cursor 4} {1318991 ns} 0}
+WaveRestoreCursors {{Cursor 2} {9951515 ns} 0} {{Cursor 4} {1318991 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 513
@@ -240,4 +241,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {5795108 ns} {5798036 ns}
+WaveRestoreZoom {9951431 ns} {9951599 ns}
