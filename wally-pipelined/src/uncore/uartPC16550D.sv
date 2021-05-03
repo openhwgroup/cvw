@@ -377,7 +377,7 @@ module uartPC16550D(
           txhrfull <= #1 1;
         end
         $write("%c",Din); // for testbench
-        if (Din == 13) $flush;
+        if (Din == 13) $fflush;
       end
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin 
