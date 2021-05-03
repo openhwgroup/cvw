@@ -20,17 +20,17 @@ module expgen1(xexp, yexp, zexp, xzeroE, yzeroE,
 			   aligncntE, prodof, aeE);
 /////////////////////////////////////////////////////////////////////////////
   
-	input     	[62:52]    	xexp;           	// Exponent of multiplicand x
-	input     	[62:52]  	yexp;         		// Exponent of multiplicand y
-	input     	[62:52]  	zexp;           	// Exponent of addend z
-	input     			xdenormE;		// Z is denorm
-	input     			ydenormE;		// Z is denorm
-	input     			zdenormE;		// Z is denorm
-	input     			xzeroE;		// Z is denorm
-	input     			yzeroE;		// Z is denorm
-	output		[12:0]   	aligncntE;       // shift count for alignment shifter
-	output				prodof;         // X*Y exponent out of bounds 
-	output		[12:0]		aeE;				//exponent of multiply
+	input logic     	[62:52]    	xexp;           	// Exponent of multiplicand x
+	input logic     	[62:52]  	yexp;         		// Exponent of multiplicand y
+	input logic     	[62:52]  	zexp;           	// Exponent of addend z
+	input logic     			xdenormE;		// Z is denorm
+	input logic     			ydenormE;		// Z is denorm
+	input logic     			zdenormE;		// Z is denorm
+	input logic     			xzeroE;		// Z is denorm
+	input logic     			yzeroE;		// Z is denorm
+	output logic		[12:0]   	aligncntE;       // shift count for alignment shifter
+	output logic			prodof;         // X*Y exponent out of bounds 
+	output logic		[12:0]		aeE;				//exponent of multiply
 
 	//   Internal nodes
 
@@ -50,7 +50,7 @@ module expgen1(xexp, yexp, zexp, xzeroE, yzeroE,
 	//   if exponent is out of bounds 
 
 
-	assign aeE = xzeroE|yzeroE ? 0 : xexp + yexp -1023;
+	assign aeE = xzeroE|yzeroE ? 0 : {2'b0,xexp} + {2'b0,yexp} - 13'd1023;
 
 	assign prodof = (aeE > 2046 && ~aeE[12]);
 
@@ -61,7 +61,7 @@ module expgen1(xexp, yexp, zexp, xzeroE, yzeroE,
 	// is masked by the bypass mux and two 10 bit adder delays.
 	// assign aligncnt0 = - 1 + ~xdenormE + ~ydenormE - ~zdenormE;
 	// assign aligncnt1 = - 1 + {12'b0,~xdenormE} + {12'b0,~ydenormE} - {12'b0,~zdenormE};
-	assign aligncntE = zexp -aeE - 1 + {12'b0,~xdenormE} + {12'b0,~ydenormE} - {12'b0,~zdenormE};
+	assign aligncntE = {2'b0,zexp} -aeE - 1 + {12'b0,~xdenormE} + {12'b0,~ydenormE} - {12'b0,~zdenormE};
 	//assign aligncntE = zexp -aeE - 1 + ~xdenormE + ~ydenormE - ~zdenormE;
 	//assign aligncntE = zexp - aeE;// KEP use all of aeE
 
@@ -86,4 +86,5 @@ module expgen1(xexp, yexp, zexp, xzeroE, yzeroE,
 	// produces either infinity or the largest finite number, depending on the
 	// rounding mode.  NaNs are propagated or generated.
 endmodule
+
 

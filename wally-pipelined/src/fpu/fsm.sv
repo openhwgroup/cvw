@@ -1,12 +1,12 @@
 module fsm (done, load_rega, load_regb, load_regc, 
 	    load_regd, load_regr, load_regs,
 	    sel_muxa, sel_muxb, sel_muxr, 
-	    clk, reset, start, error, op_type);
+	    clk, reset, start, op_type);
 
    input 	clk;
    input 	reset;
    input 	start;
-   input 	error;
+//    input 	error;
    input  	op_type;
    
    output       done;      
@@ -50,9 +50,9 @@ module fsm (done, load_rega, load_regb, load_regc,
    always @(posedge clk)
      begin
 	if(reset==1'b1)
-	  CURRENT_STATE<=S0;
+	  CURRENT_STATE=S0;
 	else
-	  CURRENT_STATE<=NEXT_STATE;
+	  CURRENT_STATE=NEXT_STATE;
      end
 
    always @(*)
@@ -72,7 +72,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		    sel_muxa = 3'b000;
 		    sel_muxb = 3'b000;
 		    sel_muxr = 1'b0;
-		    NEXT_STATE <= S0;
+		    NEXT_STATE = S0;
 		 end 
 	       else if (start==1'b1 && op_type==1'b0) 
 		 begin
@@ -86,7 +86,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		    sel_muxa = 3'b001;
 		    sel_muxb = 3'b001;		    
 		    sel_muxr = 1'b0;
-		    NEXT_STATE <= S1;
+		    NEXT_STATE = S1;
 		 end // if (start==1'b1 && op_type==1'b0)
 	       else if (start==1'b1 && op_type==1'b1) 
 		 begin
@@ -100,7 +100,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		    sel_muxa = 3'b010;
 		    sel_muxb = 3'b000;		    
 		    sel_muxr = 1'b0;
-		    NEXT_STATE <= S13;
+		    NEXT_STATE = S13;
 		 end 	       
 	    end // case: S0
 	  S1:
@@ -115,7 +115,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b010;
 	       sel_muxb = 3'b000;		    
 	       sel_muxr = 1'b0;	
-	       NEXT_STATE <= S2;
+	       NEXT_STATE = S2;
 	    end	  
 	  S2: // iteration 1
 	    begin
@@ -129,7 +129,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S3;
+	       NEXT_STATE = S3;
 	    end
 	  S3:
 	    begin
@@ -143,7 +143,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b010;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S4;
+	       NEXT_STATE = S4;
 	    end
 	  S4: // iteration 2
 	    begin
@@ -157,7 +157,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S5;
+	       NEXT_STATE = S5;
 	    end
 	  S5:
 	    begin
@@ -171,7 +171,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b010;
 	       sel_muxr = 1'b0;  // add
-	       NEXT_STATE <= S6;
+	       NEXT_STATE = S6;
 	    end
 	  S6: // iteration 3
 	    begin
@@ -185,7 +185,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S8;
+	       NEXT_STATE = S8;
 	    end
 	  S7:
 	    begin
@@ -199,7 +199,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b010;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S8;
+	       NEXT_STATE = S8;
 	    end // case: S7
 	  S8: // q,qm,qp
 	    begin
@@ -213,7 +213,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S9;
+	       NEXT_STATE = S9;
 	    end 
 	  S9:  // rem
 	    begin
@@ -227,7 +227,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b1;
-	       NEXT_STATE <= S10;
+	       NEXT_STATE = S10;
 	    end 	  
 	  S10:  // done
 	    begin
@@ -241,7 +241,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S0;
+	       NEXT_STATE = S0;
 	    end 
 	  S13:  // start of sqrt path
 	    begin
@@ -255,7 +255,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b010;
 	       sel_muxb = 3'b001;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S14;
+	       NEXT_STATE = S14;
 	    end
 	  S14:  
 	    begin
@@ -269,7 +269,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b001;
 	       sel_muxb = 3'b100;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S15;
+	       NEXT_STATE = S15;
 	    end 
 	  S15:  // iteration 1
 	    begin
@@ -283,7 +283,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S16;
+	       NEXT_STATE = S16;
 	    end
 	  S16:  
 	    begin
@@ -297,7 +297,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S17;
+	       NEXT_STATE = S17;
 	    end
 	  S17:  
 	    begin
@@ -311,7 +311,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b100;
 	       sel_muxb = 3'b010;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S18;
+	       NEXT_STATE = S18;
 	    end
 	  S18:  // iteration 2
 	    begin
@@ -325,7 +325,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S19;
+	       NEXT_STATE = S19;
 	    end
 	  S19:  
 	    begin
@@ -339,7 +339,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S20;
+	       NEXT_STATE = S20;
 	    end
 	  S20:  
 	    begin
@@ -353,7 +353,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b100;
 	       sel_muxb = 3'b010;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S21;
+	       NEXT_STATE = S21;
 	    end
 	  S21:  // iteration 3
 	    begin
@@ -367,7 +367,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S22;
+	       NEXT_STATE = S22;
 	    end
 	  S22:  
 	    begin
@@ -381,7 +381,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b011;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S23;
+	       NEXT_STATE = S23;
 	    end
 	  S23:  
 	    begin
@@ -395,7 +395,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b100;
 	       sel_muxb = 3'b010;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S24;
+	       NEXT_STATE = S24;
 	    end 
 	  S24: // q,qm,qp
 	    begin
@@ -409,7 +409,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S25;
+	       NEXT_STATE = S25;
 	    end 	  
 	  S25:  // rem
 	    begin
@@ -423,7 +423,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b110;
 	       sel_muxr = 1'b1;
-	       NEXT_STATE <= S26;
+	       NEXT_STATE = S26;
 	    end 	  
 	  S26:  // done
 	    begin
@@ -437,7 +437,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S0;
+	       NEXT_STATE = S0;
 	    end 
 	  default: 
 	    begin
@@ -451,7 +451,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
-	       NEXT_STATE <= S0;
+	       NEXT_STATE = S0;
 	    end
 	endcase // case(CURRENT_STATE)	
      end // always @ (CURRENT_STATE or X)   

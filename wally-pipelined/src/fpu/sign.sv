@@ -25,7 +25,7 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bsM, FrmM, FmaFlagsM,
 	input logic		[4:0]		FmaFlagsM;				// Round toward minus infinity
 	input logic					sumzero;		// Sum = O
 	input logic					zinfM;			// Y = Inf
-	input logic					inf;			// Some input = Inf
+	input logic					inf;			// Some input logic = Inf
 	output logic					wsign;			// Sign of W 
 	output logic					invz;			// Invert addend into adder
 	output logic					negsum;			// Negate result of adder
@@ -36,6 +36,9 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bsM, FrmM, FmaFlagsM,
 	wire					zerosign;    	// sign if result= 0 
 	wire					sumneg;    	// sign if result= 0 
 	wire					infsign;     	// sign if result= Inf 
+logic tmp;
+	logic psign;
+
 	// Compute sign of product 
 
 	assign psign = xsign ^ ysign;
@@ -55,7 +58,7 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bsM, FrmM, FmaFlagsM,
 	assign sumneg = invz&zsign&negsum1 | invz&psign&~negsum1 | (zsign&psign);
 	//always @(invz or negsum0 or negsum1 or bsM or ps)
 	//	begin
-	//		if (~invz) begin               // both inputs have same sign  
+	//		if (~invz) begin               // both input logics have same sign  
 	//			negsum = 0;
 	//			selsum1 = 0;
 	//		end else if (bsM) begin        // sticky bit set on addend
@@ -80,7 +83,7 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bsM, FrmM, FmaFlagsM,
 	// Sign calculation is not in the critical path so the cases
 	// can be tolerated. 
 	// IEEE 754-2008 section 6.3 states 
-	// 		"When ether an input or result is NaN, this standard does not interpret the sign of a NaN."
+	// 		"When ether an input logic or result is NaN, this standard does not interpret the sign of a NaN."
 	// 		also pertaining to negZero it states:
 	//			"When the sum/difference of two operands with opposite signs is exactly zero, the sign of that sum/difference
 	//			 shall be +0 in all rounding attributes EXCEPT roundTowardNegative. Under that attribute, the sign of an exact zero 

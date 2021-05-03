@@ -21,7 +21,7 @@ module flag1(xnanE, ynanE, znanE, prodof, prodinfE, nanE);
 
 	output logic				prodinfE;	// X*Y larger than max possible
 
-	// If any input is NaN, propagate the NaN 
+	// If any input logic is NaN, propagate the NaN 
 
 	assign nanE = xnanE || ynanE || znanE;
 

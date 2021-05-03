@@ -14,30 +14,28 @@ module sign(xsign, ysign, zsign, negsum0, negsum1, bsM, FrmM, FmaFlagsM,
 			 sumzero, zinfM, inf, wsign, invz, negsum, selsum1, isAdd);
 ////////////////////////////////////////////////////////////////////////////I
  
-	input					xsign;			// Sign of X 
-	input					ysign;			// Sign of Y 
-	input					zsign;			// Sign of Z
-	input					isAdd;
-	input					negsum0;		// Sum in +O mode is negative 
-	input					negsum1;		// Sum in +1 mode is negative 
-	input					bsM;				// sticky bit from addend
-	input		[2:0]		FrmM;				// Round toward minus infinity
-	input		[4:0]		FmaFlagsM;				// Round toward minus infinity
-	input					sumzero;		// Sum = O
-	input					zinfM;			// Y = Inf
-	input					inf;			// Some input = Inf
-	output					wsign;			// Sign of W 
-	output					invz;			// Invert addend into adder
-	output					negsum;			// Negate result of adder
-	output					selsum1;		// Select +1 mode from compound adder
+	input logic					xsign;			// Sign of X 
+	input logic					ysign;			// Sign of Y 
+	input logic					zsign;			// Sign of Z
+	input logic					isAdd;
+	input logic					negsum0;		// Sum in +O mode is negative 
+	input logic					negsum1;		// Sum in +1 mode is negative 
+	input logic					bsM;				// sticky bit from addend
+	input logic		[2:0]		FrmM;				// Round toward minus infinity
+	input logic		[4:0]		FmaFlagsM;				// Round toward minus infinity
+	input logic					sumzero;		// Sum = O
+	input logic					zinfM;			// Y = Inf
+	input logic					inf;			// Some input logic = Inf
+	output logic					wsign;			// Sign of W 
+	output logic					invz;			// Invert addend into adder
+	output logic					negsum;			// Negate result of adder
+	output logic					selsum1;		// Select +1 mode from compound adder
  
 	// Internal nodes
 
 	wire					zerosign;    	// sign if result= 0 
 	wire					sumneg;    	// sign if result= 0 
 	wire					infsign;     	// sign if result= Inf 
-	reg						negsum;         // negate result of adder 
-	reg						selsum1;     	// select +1 mode from compound adder 
 logic tmp;
 
 	// Compute sign of product 
@@ -59,7 +57,7 @@ logic tmp;
 	assign sumneg = invz&zsign&negsum1 | invz&psign&~negsum1 | (zsign&psign);
 	//always @(invz or negsum0 or negsum1 or bsM or ps)
 	//	begin
-	//		if (~invz) begin               // both inputs have same sign  
+	//		if (~invz) begin               // both input logics have same sign  
 	//			negsum = 0;
 	//			selsum1 = 0;
 	//		end else if (bsM) begin        // sticky bit set on addend
@@ -84,7 +82,7 @@ logic tmp;
 	// Sign calculation is not in the critical path so the cases
 	// can be tolerated. 
 	// IEEE 754-2008 section 6.3 states 
-	// 		"When ether an input or result is NaN, this standard does not interpret the sign of a NaN."
+	// 		"When ether an input logic or result is NaN, this standard does not interpret the sign of a NaN."
 	// 		also pertaining to negZero it states:
 	//			"When the sum/difference of two operands with opposite signs is exactly zero, the sign of that sum/difference
 	//			 shall be +0 in all rounding attributes EXCEPT roundTowardNegative. Under that attribute, the sign of an exact zero 

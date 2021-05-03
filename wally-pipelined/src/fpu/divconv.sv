@@ -40,7 +40,9 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    logic [127:0] 	constant, constant2;
    logic [63:0] 	q_const, qp_const, qm_const;
    logic [63:0] 	d2, n2;   
-   logic [11:0] 	d3;   
+   logic [11:0] 	d3;  
+
+   logic cout1, cout2, cout3, cout4, cout5, cout6, cout7, muxr_out; 
 
    // Check if exponent is odd for sqrt
    // If exp_odd=1 and sqrt, then M/2 and use ia_addr=0 as IA

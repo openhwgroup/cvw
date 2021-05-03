@@ -9,7 +9,7 @@ module cla52 (S, CO, X, Y);
    output [51:0] S;
    output 	 CO;
    
-   wire [0:63] 	 A,B,Q;
+   wire [63:0] 	 A,B,Q;//***KEP was 0:63 - changed due to lint warning
    wire 	 LOGIC0;
    wire 	 CIN;
    wire 	 CO_64;
@@ -211,7 +211,7 @@ module cla_sub52 (S, X, Y);
    
    output [51:0] S;
    
-   wire [0:63] 	 A,B,Q,Bbar;
+   wire [63:0] 	 A,B,Q,Bbar;//***KEP was 0:63 - changed due to lint warning
    wire 	 LOGIC0;
    wire 	 CIN;
    wire 	 CO_52;
