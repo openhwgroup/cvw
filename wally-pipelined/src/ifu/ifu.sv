@@ -105,11 +105,9 @@ module ifu (
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
-  icache icache(
-    .*,
-    .UpperPCNextPF(PCNextPF[`XLEN-1:12]),
-    .LowerPCNextF(PCNextPF[11:0])
-  );
+  icache icache(.*);
+  
+
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
