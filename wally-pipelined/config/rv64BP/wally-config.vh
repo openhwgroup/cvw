@@ -25,10 +25,14 @@
 ///////////////////////////////////////////
 
 // RV32 or RV64: XLEN = 32 or 64
+`define BUILDROOT 0
+`define BUSYBEAR 0
+
+// RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
-//`define MISA (32'h00000104)
-`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20)
+//`define MISA (32'h00000105)
+`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -54,7 +58,8 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
+`define MEM_VIRTMEM 1
+`define VECTORED_INTERRUPTS_SUPPORTED 1
 
 // Address space
 `define RESET_VECTOR 64'h0000000000000000
@@ -69,26 +74,33 @@
 `define BOOTTIMBASE   32'h00800000
 `define BOOTTIMRANGE  32'h00003FFF
 `define TIMBASE       32'h00000000
-`define TIMRANGE      32'h007FFFFF
-`define CLINTBASE     32'h02000000
-`define CLINTRANGE    32'h0000FFFF
-`define GPIOBASE      32'h10012000
-`define GPIORANGE     32'h000000FF
-`define UARTBASE      32'h10000000
-`define UARTRANGE     32'h00000007
-`define PLICBASE      32'h0C000000
-`define PLICRANGE     32'h03FFFFFF
+`define TIMRANGE      32'h07FFFFFF
+`define CLINTBASE  32'h02000000
+`define CLINTRANGE 32'h0000FFFF
+`define GPIOBASE   32'h10012000
+`define GPIORANGE  32'h000000FF
+`define UARTBASE   32'h10000000
+`define UARTRANGE  32'h00000007
+`define PLICBASE   32'h0C000000
+`define PLICRANGE  32'h03FFFFFF
 
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 0
+`define GPIO_LOOPBACK_TEST 1
 
 // Busybear special CSR config to match OVPSim
 `define OVPSIM_CSR_CONFIG 0
 
 // Hardware configuration
 `define UART_PRESCALE 1
+
+// Interrupt configuration
+`define PLIC_NUM_SRC 4
+// comment out the following if >=32 sources
+`define PLIC_NUM_SRC_LT_32
+`define PLIC_GPIO_ID 3
+`define PLIC_UART_ID 4
 
 /* verilator lint_off STMTDLY */
 /* verilator lint_off WIDTH */

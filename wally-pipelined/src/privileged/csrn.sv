@@ -3,6 +3,7 @@
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
+//          dottolia@hmc.edu 3 May 2021 - fix bug with utvec getting wrong value
 //
 // Purpose: User-Mode Control and Status Registers for User Mode Exceptions
 //          See RISC-V Privileged Mode Specification 20190608 Table 2.2
@@ -64,7 +65,7 @@ module csrn #(parameter
       assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL)) && ~StallW;
 
       // CSRs
-      flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, CSRWriteValM, `RESET_VECTOR, UTVEC_REGW);
+      flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `RESET_VECTOR, UTVEC_REGW);
       flopenr #(`XLEN) USCRATCHreg(clk, reset, WriteUSCRATCHM, CSRWriteValM, USCRATCH_REGW);
       flopenr #(`XLEN) UEPCreg(clk, reset, WriteUEPCM, NextEPCM, UEPC_REGW); 
       flopenr #(`XLEN) UCAUSEreg(clk, reset, WriteUCAUSEM, NextCauseM, UCAUSE_REGW); 
