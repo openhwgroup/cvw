@@ -30,13 +30,14 @@ module testbench();
   parameter DEBUG = 0;
   parameter TESTSBP = 0;
   parameter TESTSPERIPH = 0 ; // set to 0 for regression
+  localparam MAXSIGLEN = 1000000;
   
   logic        clk;
   logic        reset;
 
   int test, i, errors, totalerrors;
-  logic [31:0] sig32[0:10000];
-  logic [`XLEN-1:0] signature[0:10000];
+  logic [31:0] sig32[0:MAXSIGLEN];
+  logic [`XLEN-1:0] signature[0:MAXSIGLEN];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
@@ -602,7 +603,7 @@ string tests32f[] = '{
         $display("Code ended with ecall with gp = 1");
         #60; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
-        for(i=0; i<10000; i=i+1) begin
+        for(i=0; i<MAXSIGLEN; i=i+1) begin
           sig32[i] = 'bx;
         end
 
@@ -610,7 +611,7 @@ string tests32f[] = '{
         signame = {"../../imperas-riscv-tests/work/", tests[test], ".signature.output"};
         $readmemh(signame, sig32);
         i = 0;
-        while (i < 10000) begin
+        while (i < MAXSIGLEN) begin
           if (`XLEN == 32) begin
             signature[i] = sig32[i];
             i = i+1;
