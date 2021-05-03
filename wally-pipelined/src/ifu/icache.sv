@@ -216,14 +216,13 @@ module icachecontroller #(parameter LINESIZE = 256) (
     // Cache fault signals
     //logic           FaultStall;
   
-  //flopenl #(`XLEN) PCPFFlop(clk, reset, SavePC & ~StallF, PCPFinalF, `RESET_VECTOR, PCPF);
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
   assign PCSpillF = PCPF + 2'b10;
 
   // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf
+  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
   assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
@@ -283,7 +282,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	end else if (~hit & ~spill) begin
 	  CntReset = 1'b1;
 	  NextState = STATE_MISS_FETCH_WDV;
-	end else if (~hit & spill)	begin
+	end else if (~hit & spill) begin
 	  CntReset = 1'b1;
 	  PCMux = 2'b10;
 	  NextState = STATE_MISS_SPILL_FETCH_WDV;
@@ -299,9 +298,10 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	ICacheReadEn = 1'b1;
 	if (hit) begin
           NextState = STATE_HIT_SPILL_FINAL;
-	end else
+	end else begin
 	  CntReset = 1'b1;
           NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
+	end
       end
       STATE_HIT_SPILL_MISS_FETCH_WDV: begin
 	PCMux = 2'b10;
@@ -424,16 +424,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
     endcase
   end
 
-  // fsm outputs
-  // stall CPU any time we are not in the ready state.  any other state means the
-  // cache is either requesting data from the memory interface or handling a
-  // spill over two cycles.
-  // *** BUG this logic will need to change
-  //assign ICacheStallF = ((CurrState != STATE_READY) | ~hit | spill) | reset_q ? 1'b1 : 1'b0;
-  // save the PC anytime we are in the ready state. The saved value will be used as the PC may not be stable.
-  //assign SavePC = ((CurrState == STATE_READY) & hit) & ~spill ? 1'b1 : 1'b0;
   assign CntEn = PreCntEn & InstrAckF;
-
   assign InstrReadF = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
 		      (CurrState == STATE_MISS_FETCH_WDV) ||
 		      (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
@@ -456,7 +447,6 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
   // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
   // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
-  // *** now a bug need to mux between PCPF and PCPF+2
   assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
 
 
