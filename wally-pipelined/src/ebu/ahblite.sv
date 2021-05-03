@@ -129,7 +129,7 @@ module ahblite (
             else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
             else                   ProposedNextBusState = IDLE;
       MEMREAD: if (~HREADY)        ProposedNextBusState = MEMREAD;
-            else if (InstrReadF)   ProposedNextBusState = INSTRREADC;
+            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
             else                   ProposedNextBusState = IDLE;
       MEMWRITE: if (~HREADY)       ProposedNextBusState = MEMWRITE;
             else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
@@ -141,7 +141,7 @@ module ahblite (
 
   // Determine access type (important for determining whether to fault)
   assign AtomicAccessM = (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
-  assign ExecuteAccessF = (ProposedNextBusState == INSTRREAD) || (ProposedNextBusState == INSTRREADC);
+  assign ExecuteAccessF = (ProposedNextBusState == INSTRREAD);
   assign WriteAccessM = (ProposedNextBusState == MEMWRITE) || (ProposedNextBusState == ATOMICWRITE);
   assign ReadAccessM = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == ATOMICREAD) ||
               (ProposedNextBusState == MMUTRANSLATE);
