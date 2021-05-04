@@ -40,7 +40,7 @@ module pmpchecker (
 
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
 
-  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [15:0],
+  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
 
@@ -54,13 +54,16 @@ module pmpchecker (
   // Bit i is high when the address falls in PMP region i
   logic [15:0] Regions;
   logic [3:0]  MatchedRegion;
-  logic        Match;
+  logic        Match, EnforcePMP;
 
   logic [7:0] PMPCFG [0:15];
 
   // Bit i is high when the address is greater than or equal to PMPADR[i]
   // Used for determining whether TOR PMP regions match
   logic [15:0] AboveRegion;
+
+  // Bit i is high if PMP register i is non-null
+  logic [15:0] ActiveRegion;
 
   logic L_Bit, X_Bit, W_Bit, R_Bit;
   logic InvalidExecute, InvalidWrite, InvalidRead;
@@ -76,6 +79,7 @@ module pmpchecker (
                       .AdrAtLeastPreviousPMP(1'b1),
                       .AdrAtLeastCurrentPMP(AboveRegion[0]),
                       .Match(Regions[0]));
+  assign ActiveRegion[0] = |PMPCFG[0][4:3];
 
   generate
     genvar i;
@@ -85,10 +89,15 @@ module pmpchecker (
                           .AdrAtLeastPreviousPMP(AboveRegion[i-1]),
                           .AdrAtLeastCurrentPMP(AboveRegion[i]),
                           .Match(Regions[i]));
+      
+      assign ActiveRegion[i] = |PMPCFG[i][4:3];
     end
   endgenerate
 
   assign Match = |Regions;
+
+  // Only enforce PMP checking for S and U modes when at least one PMP is active
+  assign EnforcePMP = |ActiveRegion;
 
   always_comb
     casez (Regions)
@@ -111,30 +120,30 @@ module pmpchecker (
       default:              MatchedRegion = 0; // Should only occur if there is no match
     endcase
 
-  assign L_Bit = PMPCFG[MatchedRegion][7];
-  assign X_Bit = PMPCFG[MatchedRegion][2];
-  assign W_Bit = PMPCFG[MatchedRegion][1];
-  assign R_Bit = PMPCFG[MatchedRegion][0];
+  assign L_Bit = PMPCFG[MatchedRegion][7] && Match;
+  assign X_Bit = PMPCFG[MatchedRegion][2] && Match;
+  assign W_Bit = PMPCFG[MatchedRegion][1] && Match;
+  assign R_Bit = PMPCFG[MatchedRegion][0] && Match;
 
   assign InvalidExecute = ExecuteAccessF && ~X_Bit;
   assign InvalidWrite   = WriteAccessM   && ~W_Bit;
   assign InvalidRead    = ReadAccessM    && ~R_Bit;
 
-/*
   assign PMPInstrAccessFaultF = (PrivilegeModeW == `M_MODE) ?
                                   Match && L_Bit && InvalidExecute :
-                                  ~Match || InvalidExecute;
+                                  EnforcePMP && InvalidExecute;
   assign PMPStoreAccessFaultM = (PrivilegeModeW == `M_MODE) ?
                                   Match && L_Bit && InvalidWrite :
-                                  ~Match || InvalidWrite;
+                                  EnforcePMP && InvalidWrite;
   assign PMPLoadAccessFaultM  = (PrivilegeModeW == `M_MODE) ?
                                   Match && L_Bit && InvalidRead :
-                                  ~Match || InvalidRead;
-*/
+                                  EnforcePMP && InvalidRead;
 
+/*
   assign PMPInstrAccessFaultF = 1'b0;
   assign PMPStoreAccessFaultM = 1'b0;
   assign PMPLoadAccessFaultM  =  1'b0;
+*/
 
   /*
   If no PMP entry matches an M-mode access, the access succeeds. If no PMP entry matches an
