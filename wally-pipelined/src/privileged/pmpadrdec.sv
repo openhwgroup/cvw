@@ -34,7 +34,11 @@ module pmpadrdec (
   input  logic [31:0]      HADDR,
 
   input  logic [1:0]       AdrMode,
-  input  logic [`XLEN-1:0] PreviousPMPAdr, CurrentPMPAdr,
+
+  // input  logic [`XLEN-1:0] PreviousPMPAdr,
+  input  logic [`XLEN-1:0] CurrentPMPAdr,
+  input  logic             AdrAtLeastPreviousPMP,
+  output logic             AdrAtLeastCurrentPMP,
   output logic             Match
 );
 
@@ -44,18 +48,22 @@ module pmpadrdec (
 
   logic TORMatch, NA4Match, NAPOTMatch;
 
-  logic [31:0] PreviousAdrFull, CurrentAdrFull;
+  logic AdrBelowCurrentPMP;
+
+  logic [31:0] CurrentAdrFull;
+  // logic [31:0] PreviousAdrFull;
 
   logic [33:0] Range;
   
-  assign PreviousAdrFull = {PreviousPMPAdr[29:0], 2'b00};
+  //assign PreviousAdrFull = {PreviousPMPAdr[29:0], 2'b00};
   assign CurrentAdrFull  = {CurrentPMPAdr[29:0],  2'b00};
 
   // Top-of-range (TOR)
   // *** Check if this synthesizes
   // if not, literally do comparison (HADDR - PreviousAdrFull == 0)
-  assign TORMatch = HADDR inside {[PreviousAdrFull:CurrentAdrFull]};
-  // *** cut number of comparators in half (treat entire pmp space as TOR and have 16 comparators)
+  assign AdrBelowCurrentPMP = HADDR < CurrentAdrFull;
+  assign AdrAtLeastCurrentPMP = ~AdrBelowCurrentPMP;
+  assign TORMatch = AdrAtLeastPreviousPMP && AdrBelowCurrentPMP;
 
   // Naturally aligned four-byte region
   adrdec na4dec(HADDR, CurrentAdrFull, (2**2)-1, NA4Match);
