@@ -3,6 +3,7 @@
 # testgen-ADD-SUB.py
 #
 # ushakya@hmc.edu & dottolia@hmc.edu 14 Feb 2021
+# Modified: ushakya@hmc.edu 21 April 2021
 #
 # Generate directed and random test vectors for RISC-V Design Validation.
 ##################################
@@ -19,15 +20,6 @@ from random import getrandbits
 # functions
 ##################################
 
-# def computeExpected(a, b, test):
-#   if (test == "ADD"):
-#     return a + b
-#   elif (test == "SUB"):
-#     return a - b
-#   else:
-#     die("bad test name ", test)
-#   #  exit(1)
-
 def randRegs():
   reg1 = randint(1,31)
   reg2 = randint(1,31)
@@ -39,10 +31,6 @@ def randRegs():
 
 def writeVector(a, b, storecmd):
   global testnum
-  #expected = computeExpected(a, b, test)
-  #expected = expected % 2**xlen # drop carry if necessary
-  #if (expected < 0): # take twos complement
-  #  expected = 2**xlen + expected
   csr = "mscratch"
 
   reg1, reg2, reg3 = randRegs()
@@ -56,8 +44,17 @@ def writeVector(a, b, storecmd):
   expected = a
 
   if test == "csrrw":
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
-    lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
+    if testnum == 0:
+      # this is a corner case (reading and writing same register)
+      expected = 4
+      lines += "li x" + str(reg2) + ", MASK_XLEN(" + formatstr.format(0x8) + ")\n"
+      lines += "la x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(0x4) + ")\n"
+      lines += "csrrw x" + str(reg3) + ", mtvec, x" + str(reg1) + "\n"
+      lines += test +  " x" + str(reg2) + ", mtvec, x" + str(reg2) + "\n"
+      lines += "csrrw x0, mtvec, x" + str(reg3) + "\n"
+    else:
+      lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
+      lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
 
   elif test == "csrrs": # at some point, try writing a non-zero value first
     lines += "csrrw x0, " + csr + ", x0\n" # set csr to 0
@@ -104,6 +101,29 @@ def writeVector(a, b, storecmd):
 
     expected = a ^ 0xFFFFFFFF if xlen == 32 else a ^ 0xFFFFFFFFFFFFFFFF
 
+
+  lines += storecmd + " x" + str(reg2) + ", " + str(wordsize*testnum) + "(x6)\n"
+  lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
+  f.write(lines)
+  if (xlen == 32):
+    line = formatrefstr.format(expected)+"\n"
+  else:
+    line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
+  r.write(line)
+  testnum = testnum+1
+
+def writeSpec(a, storecmd):
+  global testnum
+  csr = "mscratch"
+  reg1 = 3
+  reg2 = 3
+
+  lines = "\n# Testcase " + str(testnum) + ":  " + csr + "\n"
+  lines = lines + "li x" + str(reg1) + ", MASK_XLEN(" + formatstr.format(a) + ")\n"
+  expected = a
+
+  lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
+  lines += test + " x" + str(reg2) + ", " + csr + ", x" + str(reg1) + "\n"
 
   lines += storecmd + " x" + str(reg2) + ", " + str(wordsize*testnum) + "(x6)\n"
   lines += "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg2) +", "+formatstr.format(expected)+")\n"
@@ -168,6 +188,10 @@ for xlen in xlens:
       f.write(line)
 
     # print directed and random test vectors
+    # test that reading and writing from same register work
+    if test == "csrrw":
+      a = getrandbits(xlen)
+      #writeSpec(a, storecmd)
     for a in corners:
       for b in corners:
         writeVector(a, b, storecmd)
@@ -183,7 +207,7 @@ for xlen in xlens:
       f.write(line)
 
     # Finish
-    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -1\n"
+    lines = ".fill " + str(testnum) + ", " + str(wordsize) + ", -4\n"
     lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
     f.write(lines)
     f.close()
