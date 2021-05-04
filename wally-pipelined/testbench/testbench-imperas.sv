@@ -48,7 +48,7 @@ module testbench();
   };
 
   string tests64mmu[] = '{
-    "rv64mmu/WALLY-VIRTUALMEMORY", "5000"
+    "rv64mmu/WALLY-VIRTUALMEMORY", "2000"
   };
 
   string tests64f[] = '{
@@ -509,14 +509,14 @@ string tests32f[] = '{
       end if (TESTSPERIPH) begin 
         tests = tests64periph;
       end else begin 
-        tests = {tests64i,tests64p,tests64periph};
+        tests = {tests64p,tests64i,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
         // if (`F_SUPPORTED) tests = {tests64f, tests};
         // if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        // if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
       end
       //tests = {tests64a, tests};
       
@@ -532,7 +532,7 @@ string tests32f[] = '{
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           // if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`A_SUPPORTED) tests = {tests, tests32a};
-          if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
+          if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
       end
     end
   end
