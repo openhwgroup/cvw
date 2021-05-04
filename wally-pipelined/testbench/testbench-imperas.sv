@@ -360,7 +360,8 @@ module testbench();
     "rv64p/WALLY-MIMPID", "4000",
     "rv64p/WALLY-MHARTID", "4000",
     "rv64p/WALLY-MVENDORID", "4000",
-    "rv64p/WALLY-MIE", "3000"
+    "rv64p/WALLY-MIE", "3000",
+    "rv64p/WALLY-MEDELEG", "4000"
   };
 
   string tests32p[] = '{
@@ -376,7 +377,8 @@ module testbench();
     "rv32p/WALLY-MVENDORID", "4000",
     "rv32p/WALLY-MTVEC", "2000",
     "rv32p/WALLY-STVEC", "2000",
-    "rv32p/WALLY-MIE", "3000"
+    "rv32p/WALLY-MIE", "3000",
+    "rv32p/WALLY-MEDELEG", "4000"
   };
 
   string tests64periph[] = '{
@@ -425,6 +427,7 @@ module testbench();
       end
       //tests = {tests64a, tests};
 
+      //tests = tests64p;
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
