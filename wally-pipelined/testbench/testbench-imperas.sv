@@ -49,7 +49,7 @@ module testbench();
   };
 
   string tests64mmu[] = '{
-    "rv64mmu/WALLY-VIRTUALMEMORY", "5000"
+    "rv64mmu/WALLY-VIRTUALMEMORY", "2000"
   };
 
   string tests64f[] = '{
@@ -348,8 +348,8 @@ module testbench();
   };
 
   string tests64p[] = '{
-    "rv64p/WALLY-MCAUSE", "4000",
-    "rv64p/WALLY-SCAUSE", "3000",
+    "rv64p/WALLY-MCAUSE", "3000",
+    "rv64p/WALLY-SCAUSE", "2000",
     "rv64p/WALLY-MEPC", "5000",
     "rv64p/WALLY-SEPC", "4000",
     "rv64p/WALLY-MTVAL", "6000",
@@ -419,11 +419,11 @@ module testbench();
         // if (`F_SUPPORTED) tests = {tests64f, tests};
         // if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        // if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
       end
       //tests = {tests64a, tests};
       
-      //tests = tests64p;
+      tests = tests64p;
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
@@ -435,7 +435,7 @@ module testbench();
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           // if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`A_SUPPORTED) tests = {tests, tests32a};
-          if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
+          if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
       end
 
       //tests = tests32p;

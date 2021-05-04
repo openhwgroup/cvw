@@ -112,9 +112,9 @@ module wallypipelinedhart (
   logic [1:0]       PageTypeF, PageTypeM;
 
   // PMA checker signals
-  logic             Atomic, Execute, Write, Read;
+  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM;
   logic             Cacheable, Idempotent, AtomicAllowed;
-  logic             SquashAHBAccess;
+  logic             SquashBusAccess;
 
   // IMem stalls
   logic             ICacheStallF;

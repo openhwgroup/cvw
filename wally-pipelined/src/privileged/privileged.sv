@@ -62,9 +62,9 @@ module privileged (
   input  logic [31:0]      HADDR,
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
-  input  logic             Atomic, Execute, Write, Read,
+  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   output logic             Cacheable, Idempotent, AtomicAllowed,
-  output logic             SquashAHBAccess,
+  output logic             SquashBusAccess,
   output logic [5:0]       HSELRegions
 );
 
@@ -92,8 +92,16 @@ module privileged (
   logic [1:0] STATUS_MPP;
   logic       STATUS_SPP, STATUS_TSR;
   logic       STATUS_MIE, STATUS_SIE;
+  logic       STATUS_MPRV;
   logic [11:0] MIP_REGW, MIE_REGW;
   logic md, sd;
+
+  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW;
+  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];
+
+  logic PMASquashBusAccess, PMPSquashBusAccess;
+  logic PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
+  logic PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
 
   ///////////////////////////////////////////
   // track the current privilege level
@@ -139,6 +147,7 @@ module privileged (
   ///////////////////////////////////////////
 
   pmachecker pmachecker(.*);
+  pmpchecker pmpchecker(.*);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 
@@ -154,6 +163,12 @@ module privileged (
   assign InstrPageFaultF = ITLBInstrPageFaultF || WalkerInstrPageFaultF;
   assign LoadPageFaultM = DTLBLoadPageFaultM || WalkerLoadPageFaultM;
   assign StorePageFaultM = DTLBStorePageFaultM || WalkerStorePageFaultM;
+
+  assign InstrAccessFaultF = PMAInstrAccessFaultF || PMPInstrAccessFaultF;
+  assign LoadAccessFaultM  = PMALoadAccessFaultM || PMPLoadAccessFaultM;
+  assign StoreAccessFaultM  = PMAStoreAccessFaultM || PMPStoreAccessFaultM;
+
+  assign SquashBusAccess = PMASquashBusAccess || PMPSquashBusAccess;
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
