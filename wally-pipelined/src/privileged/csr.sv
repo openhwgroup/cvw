@@ -36,6 +36,7 @@ module csr #(parameter
   input  logic             FlushW, StallD, StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
+  input  logic             InterruptM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic             InstrValidW, FloatRegWriteW, LoadStallD,
@@ -69,7 +70,14 @@ module csr #(parameter
   logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
 
-  logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
+  logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, preservedPCM, readPCM, NextCauseM, NextMtvalM;
+
+  always_ff @(posedge clk) begin
+      preservedPCM <= PCM;
+  end
+
+  mux2 #(`XLEN) pcmux(PCM, preservedPCM, InterruptM, readPCM);
+  //flop #(`XLEN) CSRReadPCMreg(clk, reset, PCM, readPCM);
 
   logic [11:0] CSRAdrM;
   logic [11:0] SIP_REGW, SIE_REGW;
@@ -98,7 +106,7 @@ module csr #(parameter
 
       // write CSRs
       assign CSRAdrM = InstrM[31:20];
-      assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
+      assign UnalignedNextEPCM = TrapM ? readPCM : CSRWriteValM;
       assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
       assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
       assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;

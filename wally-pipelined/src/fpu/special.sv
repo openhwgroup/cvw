@@ -25,7 +25,7 @@ module special(ReadData1E, ReadData2E, ReadData3E, xzeroE, yzeroE, zzeroE,
 	output logic				znanE;		// ReadData3E is NaN
 	output logic				xdenormE;	// ReadData1E is denormalized
 	output logic				ydenormE;	// ReadData2E is denormalized
-	output logic			zdenormE;	// ReadData3E is denormalized
+	output logic				zdenormE;	// ReadData3E is denormalized
 	output logic				xinfE;		// ReadData1E is infinity
 	output logic				yinfE;		// ReadData2E is infinity
 	output logic				zinfE;		// ReadData3E is infinity
@@ -60,7 +60,7 @@ module special(ReadData1E, ReadData2E, ReadData3E, xzeroE, yzeroE, zzeroE,
 	// assign xzeroE = ~(|ReadData1E[62:0]) || xdenormE;
 	// assign yzeroE = ~(|ReadData2E[62:0]) || ydenormE;
 	// assign zzeroE = ~(|ReadData3E[62:0]) || zdenormE;
-	// KATHERINE - removed denorm to prevent outputing zero when computing with a denormalized number
+	// KATHERINE - removed denorm to prevent output logicing zero when computing with a denormalized number
 	assign xzeroE = ~(|ReadData1E[62:0]);
 	assign yzeroE = ~(|ReadData2E[62:0]);
 	assign zzeroE = ~(|ReadData3E[62:0]);

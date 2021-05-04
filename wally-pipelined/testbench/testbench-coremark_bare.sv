@@ -48,7 +48,7 @@ module testbench();
   
   // pick tests based on modes supported
   initial 
-  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.memfile", "1000"};
+  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremarkcodemod.bare.riscv.memfile", "1000"};
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -65,7 +65,7 @@ module testbench();
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.InstrF,
+                dut.hart.ifu.icache.controller.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM, InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
@@ -81,11 +81,12 @@ module testbench();
       // read test vectors into memory
       memfilename = tests[0];
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      for(j=268437702; j < 268566528; j = j+1)
-        dut.uncore.dtim.RAM[j] = 64'b0;
+      //for(j=268437955; j < 268566528; j = j+1)
+        //dut.uncore.dtim.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
-      reset = 1; # 22; reset = 0;
+        //dut.uncore.dtim.RAM[268437713]=64'b1;
+    reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests
   always
@@ -94,7 +95,7 @@ module testbench();
     end
   always @(negedge clk)
     begin
-      if (dut.hart.priv.ebreakM) begin
+      if (dut.hart.priv.ecallM) begin
         #20;
         $display("Code ended with ebreakM");
         $stop;
@@ -102,8 +103,8 @@ module testbench();
     end
 
   initial begin
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.Predictor.DirPredictor.PHT.memory);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.TargetPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
   end
    
 endmodule

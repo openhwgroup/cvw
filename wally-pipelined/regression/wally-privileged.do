@@ -30,34 +30,43 @@ vlib work
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
-    0 {vlog +incdir+../config/rv64ic ../testbench/testbench-privileged.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 ../testbench/testbench-privileged.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583}
+    0 {vlog +incdir+../config/rv64ic ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
-
 view wave
-
 -- display input and output signals as hexidecimal values
-do ./wave-dos/default-waves.do
-
--- Set Wave Output Items 
+onerror {resume}
+add wave -noupdate /testbench/clk
+add wave -noupdate /testbench/reset
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
+quietly WaveActivateNextPane {} 0
 TreeUpdate [SetDefaultTree]
-WaveRestoreZoom {0 ps} {100 ps}
+WaveRestoreCursors {{Cursor 2} {12215488 ns} 0} {{Cursor 4} {22127 ns} 0}
+quietly wave cursor active 2
 configure wave -namecolwidth 250
-configure wave -valuecolwidth 140
+configure wave -valuecolwidth 513
 configure wave -justifyvalue left
-configure wave -signalnamewidth 0
+configure wave -signalnamewidth 1
 configure wave -snapdistance 10
 configure wave -datasetprefix 0
 configure wave -rowmargin 4
 configure wave -childrowmargin 2
-set DefaultRadix hexadecimal
+configure wave -gridoffset 0
+configure wave -gridperiod 1
+configure wave -griddelta 40
+configure wave -timeline 0
+configure wave -timelineunits ns
+update
+WaveRestoreZoom {21993 ns} {22181 ns}
 
 -- Run the Simulation 
-#run 4100
+#run 5000 
 run -all
 #quit
+noview ../testbench/testbench-imperas.sv
+view wave

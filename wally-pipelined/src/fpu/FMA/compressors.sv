@@ -3,11 +3,11 @@ module add3comp2(a, b, c, carry, sum);
 //look into diffrent implementations of the compressors?
     
     parameter BITS = 4;
-	input 		[BITS-1:0]		a;
-	input		[BITS-1:0]		b;
-	input		[BITS-1:0]    	c;
-    output      [BITS-1:0]      carry;
-	output		[BITS-1:0]		sum;
+	input logic 		[BITS-1:0]		a;
+	input logic		[BITS-1:0]		b;
+	input logic		[BITS-1:0]    	c;
+    output logic      [BITS-1:0]      carry;
+	output logic		[BITS-1:0]		sum;
     genvar i;
 
     generate
@@ -22,12 +22,12 @@ module add4comp2(a, b, c, d, carry, sum);
 /////////////////////////////////////////////////////////////////////////////
     
     parameter BITS = 4;
-	input 		[BITS-1:0]		a;
-	input		[BITS-1:0]		b;
-	input		[BITS-1:0]    	c;
-	input		[BITS-1:0]    	d;
-    output      [BITS:0]      carry;
-	output		[BITS-1:0]		sum;
+	input logic 		[BITS-1:0]		a;
+	input logic		[BITS-1:0]		b;
+	input logic		[BITS-1:0]    	c;
+	input logic		[BITS-1:0]    	d;
+    output logic      [BITS:0]      carry;
+	output logic		[BITS-1:0]		sum;
 
     logic       [BITS-1:0]      cout;
     logic                       carryTmp;
@@ -54,11 +54,11 @@ module sng3comp2(a, b, c, carry, sum);
 /////////////////////////////////////////////////////////////////////////////
 //look into diffrent implementations of the compressors?
     
-	input 				a;
-	input				b;
-	input		       	c;
-    output              carry;
-	output				sum;
+	input logic 				a;
+	input logic				b;
+	input logic		       	c;
+    output logic              carry;
+	output logic				sum;
     
     logic               axorb;
 
@@ -73,14 +73,14 @@ module sng4comp2(a, b, c, d, cin, cout, carry, sum);
 /////////////////////////////////////////////////////////////////////////////
 //look into pass gate 4:2 counters?
     
-	input 				a;
-	input				b;
-	input		       	c;
-    input               d;
-    input               cin;
-    output              cout;
-    output              carry;
-	output				sum;
+	input logic 				a;
+	input logic				b;
+	input logic		       	c;
+    input logic               d;
+    input logic               cin;
+    output logic              cout;
+    output logic              carry;
+	output logic				sum;
     
     logic               TmpSum;
 

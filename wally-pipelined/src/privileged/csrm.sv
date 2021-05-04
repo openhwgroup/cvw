@@ -97,7 +97,7 @@ module csrm #(parameter
   );
 
   logic [`XLEN-1:0] MISA_REGW;
-  logic [`XLEN-1:0] MSCRATCH_REGW,MCAUSE_REGW, MTVAL_REGW;
+  logic [`XLEN-1:0] MSCRATCH_REGW, MCAUSE_REGW, MTVAL_REGW;
   logic [63:0] PMPCFG01_REGW, PMPCFG23_REGW; // 64-bit registers in RV64, or two 32-bit registers in RV32
   logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];  // *** Might have to make 16 individual registers
   //logic [`XLEN-1:0] PMPADDR0_REGW;
@@ -146,7 +146,7 @@ module csrm #(parameter
   assign IllegalCSRMWriteReadonlyM = CSRMWriteM && (CSRAdrM == MVENDORID || CSRAdrM == MARCHID || CSRAdrM == MIMPID || CSRAdrM == MHARTID);
 
   // CSRs
-  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
+  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
       flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, ZERO, MEDELEG_REGW);

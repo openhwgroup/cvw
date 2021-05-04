@@ -27,7 +27,7 @@
 //
 
 
-module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSelInvM, AddExpPostSumM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddNormOvflowM, AddSignAM, AddFloat1M, AddFloat2M, AddExp1DenormM, AddExp2DenormM, AddExponentM, AddOp1M, AddOp2M, AddRmM, AddOpTypeM, AddPM, AddOvEnM, AddUnEnM);
+module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSelInvM, AddExpPostSumM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddSignAM, AddFloat1M, AddFloat2M, AddExp1DenormM, AddExp2DenormM, AddExponentM, AddOp1M, AddOp2M, AddRmM, AddOpTypeM, AddPM, AddOvEnM, AddUnEnM);
 
    input [63:0] AddOp1M;		// 1st input operand (A)
    input [63:0] AddOp2M;		// 2nd input operand (B)
@@ -39,7 +39,7 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
    input [63:0] AddSumM, AddSumTcM;
    input [63:0] 	 AddFloat1M; 
    input [63:0] 	 AddFloat2M;
-   input [10:0]	 AddExp1DenormM, AddExp2DenormM;
+   input [11:0]	 AddExp1DenormM, AddExp2DenormM;
    input [10:0] 	 AddExponentM, AddExpPostSumM; //exp_pre;
    //input		 exp_valid;
    input [3:0] 	 AddSelInvM;
@@ -51,7 +51,7 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
    input         AddCorrSignM;
    input 	 AddConvertM;
    input          AddSwapM;
-   input 	 AddNormOvflowM;
+   // input 	 AddNormOvflowM;
 
    output [63:0] AddResultM;	// Result of operation
    output [4:0]  AddFlagsM;   	// IEEE exception flags 
@@ -80,11 +80,12 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
    wire 	 Float2_sum_tc_comp;
    wire 	 normal_underflow;
    wire [63:0]   sum_corr;
+   logic AddNormOvflowM;
  
    //AddExponentM value pre-rounding with considerations for denormalized
    //cases/conversion cases
    assign exp_pre       = AddDenormInM ?
-                          ((norm_shift == 6'b001011) ? 11'b00000000001 : (AddSwapM ? AddExp2DenormM : AddExp1DenormM))
+                          ((norm_shift == 6'b001011) ? 11'b00000000001 : (AddSwapM ? AddExp2DenormM[10:0] : AddExp1DenormM[10:0]))
                           : (AddConvertM ? 11'b10000111100 : AddExponentM);
 
 
@@ -116,7 +117,8 @@ module fpuaddcvt2 (AddResultM, AddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSel
 			 ? (AddSumM[63] ? AddSumM : AddSumTcM) : ( (AddOpTypeM[3]) ? AddSumM : (AddSumM[63] ? AddSumTcM : AddSumM));
 
    // Finds normal underflow result to determine whether to round final AddExponentM down
-   assign AddNormOvflowM = (AddDenormInM & (AddSumM == 16'h0) & (AddOpANormM | AddOpBNormM) & ~AddOpTypeM[0]) ? 1'b1 : (AddSumM[63] ? AddSumTcM[52] : AddSumM[52]);
+   //KEP used to be (AddSumM == 16'h0) not sure what it is supposed to be
+   assign AddNormOvflowM = (AddDenormInM & (AddSumM == 64'h0) & (AddOpANormM | AddOpBNormM) & ~AddOpTypeM[0]) ? 1'b1 : (AddSumM[63] ? AddSumTcM[52] : AddSumM[52]);
 
    // Leading-Zero Detector. Determine the size of the shift needed for
    // normalization. If sum_corrected is all zeros, the exp_valid is 
