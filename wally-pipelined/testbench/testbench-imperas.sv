@@ -423,7 +423,7 @@ module testbench();
       end
       //tests = {tests64a, tests};
       
-      tests = tests64p;
+      //tests = tests64p;
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
