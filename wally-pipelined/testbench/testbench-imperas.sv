@@ -422,8 +422,7 @@ module testbench();
         if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
       end
       //tests = {tests64a, tests};
-      
-      tests = tests64p;
+
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH) begin 
