@@ -30,7 +30,7 @@ module extend (
   input  logic [2:0]        ImmSrcD,
   output logic [`XLEN-1:0 ] ExtImmD);
 
-  logic [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
+  localparam [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
  
   generate
     always_comb
