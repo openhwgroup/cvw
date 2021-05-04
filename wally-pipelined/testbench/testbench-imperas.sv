@@ -524,11 +524,17 @@ module testbench();
             signature[i/2] = {sig32[i+1], sig32[i]};
             i = i + 2;
           end
+          if (sig32[i-1] === 'bx) begin
+            if (i == 1) begin
+              i = SIGNATURESIZE+1; // flag empty file
+              $display("  Error: empty test file");
+            end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
+          end
         end
 
         // Check errors
+        errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
-        errors = 0;
         if (`XLEN == 32)
           testadr = (`TIMBASE+tests[test+1].atohex())/4;
         else
