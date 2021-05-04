@@ -40,7 +40,18 @@ module pmpchecker (
 
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
 
-  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
+  // *** ModelSim has a switch -svinputport which controls whether input ports
+  // are nets (wires) or vars by default. The default setting of this switch is
+  // `relaxed`, which means that signals are nets if and only if they are
+  // scalars or one-dimensional vectors. Since this is a two-dimensional vector,
+  // this will be understood as a var. However, if we don't supply the `var`
+  // keyword, the compiler warns us that it's interpreting the signal as a var,
+  // which we might not intend.
+  // However, it's still bad form to pass 512 or 1024 signals across a module
+  // boundary. It would be better to store the PMP address registers in a module
+  // somewhere in the CSR hierarchy and do PMP checking _within_ that module, so
+  // we don't have to pass around 16 whole registers.
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
 
