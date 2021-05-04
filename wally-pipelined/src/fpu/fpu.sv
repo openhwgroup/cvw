@@ -1,19 +1,22 @@
 
 `include "wally-config.vh"
+//  `include "../../config/rv64icfd/wally-config.vh" //debug
 
 module fpu (
   //input  logic [2:0]       FrmD,
   input  logic [2:0]       FRM_REGW,    // Rounding mode from CSR
   input  logic             reset,
-  //input  logic             clear,     // *** what is this used for?
+  //input  logic             clear,     // *** not being used anywhere
   input  logic             clk,
   input  logic [31:0]      InstrD,
   input  logic [`XLEN-1:0] SrcAE,       // Integer input being processed
   input  logic [`XLEN-1:0] SrcAM,       // Integer input being written into fpreg
+  input  logic 		   StallE, StallM, StallW,
+  input  logic             FlushE, FlushM, FlushW,
   output logic [4:0]       SetFflagsM,
   output logic [31:0]      FSROutW,
   output logic             DivSqrtDoneE,
-  output logic             FInvalInstrD,
+  output logic             IllegalFPUInstrD,
   output logic [`XLEN-1:0] FPUResultW);
 
   //NOTE:
@@ -45,12 +48,12 @@ module fpu (
   localparam PipeEnable = 1'b1;
   always_comb begin
 
-	  PipeEnableDE = PipeEnable;
-	  PipeEnableEM = PipeEnable;
-	  PipeEnableMW = PipeEnable;
-	  PipeClearDE = PipeClear;
-	  PipeClearEM = PipeClear;
-	  PipeClearMW = PipeClear;
+	  PipeEnableDE = StallE;
+	  PipeEnableEM = StallM;
+	  PipeEnableMW = StallW;
+	  PipeClearDE = FlushE;
+	  PipeClearEM = FlushM;
+	  PipeClearMW = FlushW;
 
   end
 
@@ -63,33 +66,33 @@ module fpu (
   //
  
   //wally-spec D stage control logic signal instantiation
-  logic                    IllegalFPUInstrFaultD;
   logic                    FRegWriteD;
   logic [2:0]              FResultSelD;
   logic [2:0]              FrmD;
-  logic                    PD;
+  logic                    FmtD;
   logic                    DivSqrtStartD;
   logic [3:0]              OpCtrlD;
   logic                    WriteIntD;
   
   //top-level controller for FPU
-  fctrl ctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Rs1D(InstrD[19:15]), .FrmW(InstrD[14:12]), .WriteEnD(FRegWriteD), .WriteSelD(FResultSelD), .FmtD(PD), .*);
+  fctrl ctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .*);
 
   //instantiation of D stage regfile signals (includes some W stage signals
   //for easy reference)
   logic [2:0]              FrmW;
-  logic                    WriteEnW;
+  logic                    FmtW;
+  logic                    FRegWriteW;
   logic [4:0]              RdW, Rs1D, Rs2D, Rs3D;
   logic [`XLEN-1:0]        WriteDataW;
+  logic [63:0] FPUResultDirW; 
   logic [`XLEN-1:0]        ReadData1D, ReadData2D, ReadData3D; 
 
   //regfile instantiation
-  freg3adr fpregfile (FrmW, reset, PipeClear, clk, RdW, WriteEnW, Rs1D, Rs2D, Rs3D, WriteDataW, ReadData1D, ReadData2D, ReadData3D);
+  freg3adr fpregfile (FmtW, reset, PipeClear, clk, RdW, FRegWriteW, InstrD[19:15], InstrD[24:20], InstrD[31:27], FPUResultDirW, ReadData1D, ReadData2D, ReadData3D);
 
-  always_comb begin
-     FrmW = InstrD[14:12];
-  end
-
+  //always_comb begin
+  //   FrmW = InstrD[14:12];
+  //end
   //
   //END DECODE STAGE
   //#########################################
@@ -102,7 +105,7 @@ module fpu (
   logic                    FRegWriteE;
   logic [2:0]              FResultSelE;
   logic [2:0]              FrmE;
-  logic                    PE;
+  logic                    FmtE;
   logic                    DivSqrtStartE;
   logic [3:0]              OpCtrlE;
 
@@ -156,7 +159,8 @@ module fpu (
   logic                    AddDenormInE, AddSwapE, AddNormOvflowE, AddSignAE;
   logic                    AddConvertE;
   logic [63:0]             AddFloat1E, AddFloat2E;
-  logic [10:0]             AddExp1DenormE, AddExp2DenormE, AddExponentE;
+  logic [11:0]             AddExp1DenormE, AddExp2DenormE;
+  logic [10:0]             AddExponentE;
   logic [63:0]             AddOp1E, AddOp2E;
   logic [2:0]              AddRmE;
   logic [3:0]              AddOpTypeE;
@@ -187,9 +191,10 @@ module fpu (
   flopenrc #(1) DEReg4(clk, reset, PipeClearDE, PipeEnableDE, FRegWriteD, FRegWriteE);
   flopenrc #(3) DEReg5(clk, reset, PipeClearDE, PipeEnableDE, FResultSelD, FResultSelE);
   flopenrc #(3) DEReg6(clk, reset, PipeClearDE, PipeEnableDE, FrmD, FrmE);
-  flopenrc #(1) DEReg7(clk, reset, PipeClearDE, PipeEnableDE, PD, PE);
-  flopenrc #(4) DEReg8(clk, reset, PipeClearDE, PipeEnableDE, OpCtrlD, OpCtrlE);
-  flopenrc #(1) DEReg9(clk, reset, PipeClearDE, PipeEnableDE, DivSqrtStartD, DivSqrtStartE);
+  flopenrc #(1) DEReg7(clk, reset, PipeClearDE, PipeEnableDE, FmtD, FmtE);
+  flopenrc #(5) DEReg8(clk, reset, PipeClearDE, PipeEnableDE, InstrD[11:7], RdE);
+  flopenrc #(4) DEReg9(clk, reset, PipeClearDE, PipeEnableDE, OpCtrlD, OpCtrlE);
+  flopenrc #(1) DEReg10(clk, reset, PipeClearDE, PipeEnableDE, DivSqrtStartD, DivSqrtStartE);
 
   //
   //END D/E PIPE
@@ -205,10 +210,10 @@ module fpu (
   fpdiv fpdivsqrt (.*);
 
   //first of two-stage instance of floating-point add/cvt unit
-  fpuaddcvt1 fpadd1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, AddOp1E, AddOp2E, AddRmE, AddOpTypeE, AddPE, AddOvEnE, AddUnEnE);
+  fpuaddcvt1 fpadd1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, ReadData1E, ReadData2E, FrmE, OpCtrlE, FmtE);
 
   //first of two-stage instance of floating-point comparator
-  fpucmp1 fpcmp1 (WE, XE, ANaNE, BNaNE, AzeroE, BzeroE, CmpOp1E, CmpOp2E, CmpSelE);
+  fpucmp1 fpcmp1 (WE, XE, ANaNE, BNaNE, AzeroE, BzeroE, ReadData1E, ReadData2E, OpCtrlE[1:0]);
 
   //first and only instance of floating-point sign converter
   fpusgn fpsgn (.*);
@@ -221,33 +226,33 @@ module fpu (
 
   //truncate to 64 bits
   //(causes warning during compilation - case never reached) 
-  if(`XLEN > 64) begin
-        DivOp1 <= ReadData1E[`XLEN-1:`XLEN-64];
-	DivOp2 <= ReadData2E[`XLEN-1:`XLEN-64];
-        AddOp1E <= ReadData1E[`XLEN-1:`XLEN-64];
-	AddOp2E <= ReadData2E[`XLEN-1:`XLEN-64];
-        CmpOp1E <= ReadData1E[`XLEN-1:`XLEN-64];
-	CmpOp2E <= ReadData2E[`XLEN-1:`XLEN-64];
-        SgnOp1E <= ReadData1E[`XLEN-1:`XLEN-64];
-	SgnOp2E <= ReadData2E[`XLEN-1:`XLEN-64];
-  end
-  //zero extend to 64 bits
-  else begin
-        DivOp1 <= {ReadData1E,{64-`XLEN{1'b0}}};
-	DivOp2 <= {ReadData2E,{64-`XLEN{1'b0}}};
-        AddOp1E <= {ReadData1E,{64-`XLEN{1'b0}}};
-	AddOp2E <= {ReadData2E,{64-`XLEN{1'b0}}};
-        CmpOp1E <= {ReadData1E,{64-`XLEN{1'b0}}};
-	CmpOp2E <= {ReadData2E,{64-`XLEN{1'b0}}};
-        SgnOp1E <= {ReadData1E,{64-`XLEN{1'b0}}};
-	SgnOp2E <= {ReadData2E,{64-`XLEN{1'b0}}};
-  end
+//   if(`XLEN > 64) begin // ***KEP this isn't usedand it causes a lint error
+//         DivOp1 = ReadData1E[`XLEN-1:`XLEN-64];
+// 	DivOp2 = ReadData2E[`XLEN-1:`XLEN-64];
+//         AddOp1E = ReadData1E[`XLEN-1:`XLEN-64];
+// 	AddOp2E = ReadData2E[`XLEN-1:`XLEN-64];
+//         CmpOp1E = ReadData1E[`XLEN-1:`XLEN-64];
+// 	CmpOp2E = ReadData2E[`XLEN-1:`XLEN-64];
+//         SgnOp1E = ReadData1E[`XLEN-1:`XLEN-64];
+// 	SgnOp2E = ReadData2E[`XLEN-1:`XLEN-64];
+//   end
+//   //zero extend to 64 bits
+//   else begin
+//         DivOp1 = {ReadData1E,{64-`XLEN{1'b0}}};
+// 	DivOp2 = {ReadData2E,{64-`XLEN{1'b0}}};
+//         AddOp1E = {ReadData1E,{64-`XLEN{1'b0}}};
+// 	AddOp2E = {ReadData2E,{64-`XLEN{1'b0}}};
+//         CmpOp1E = {ReadData1E,{64-`XLEN{1'b0}}};
+// 	CmpOp2E = {ReadData2E,{64-`XLEN{1'b0}}};
+//         SgnOp1E = {ReadData1E,{64-`XLEN{1'b0}}};
+// 	SgnOp2E = {ReadData2E,{64-`XLEN{1'b0}}};
+//   end
 
   //assign op codes
-  AddOpTypeE[3:0] <= OpCtrlE[3:0];
-  CmpSelE[1:0] <= OpCtrlE[1:0];
-  DivOpType <= OpCtrlE[0];
-  SgnOpCodeE[1:0] <= OpCtrlE[1:0];
+  AddOpTypeE[3:0] = OpCtrlE[3:0];
+  CmpSelE[1:0] = OpCtrlE[1:0];
+  DivOpType = OpCtrlE[0];
+  SgnOpCodeE[1:0] = OpCtrlE[1:0];
 
   end 
 
@@ -266,7 +271,7 @@ module fpu (
   logic                    FRegWriteM;
   logic [2:0]              FResultSelM;
   logic [2:0]              FrmM;
-  logic                    PM;
+  logic                    FmtM;
   logic [3:0]              OpCtrlM;
 
   //instantiate M stage FMA signals here ***rename fma signals and resize for XLEN
@@ -313,7 +318,8 @@ module fpu (
   logic                    AddDenormInM, AddSwapM, AddNormOvflowM, AddSignAM;
   logic                    AddConvertM, AddSignM;
   logic [63:0]             AddFloat1M, AddFloat2M;
-  logic [10:0]             AddExp1DenormM, AddExp2DenormM, AddExponentM;
+  logic [11:0]             AddExp1DenormM, AddExp2DenormM;
+  logic [10:0]             AddExponentM;
   logic [63:0]             AddOp1M, AddOp2M;
   logic [2:0]              AddRmM;
   logic [3:0]              AddOpTypeM;
@@ -340,17 +346,17 @@ module fpu (
   flopenrc #(1) EMRegFma8(clk, reset, PipeClearEM, PipeEnableEM, killprodE, killprodM); 
   flopenrc #(1) EMRegFma9(clk, reset, PipeClearEM, PipeEnableEM, prodofE, prodofM); 
   flopenrc #(1) EMRegFma10(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
-  flopenrc #(1) EMRegFma11(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
-  flopenrc #(1) EMRegFma12(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
+  flopenrc #(1) EMRegFma11(clk, reset, PipeClearEM, PipeEnableEM, yzeroE, yzeroM); 
+  flopenrc #(1) EMRegFma12(clk, reset, PipeClearEM, PipeEnableEM, zzeroE, zzeroM); 
   flopenrc #(1) EMRegFma13(clk, reset, PipeClearEM, PipeEnableEM, xdenormE, xdenormM); 
   flopenrc #(1) EMRegFma14(clk, reset, PipeClearEM, PipeEnableEM, ydenormE, ydenormM); 
   flopenrc #(1) EMRegFma15(clk, reset, PipeClearEM, PipeEnableEM, zdenormE, zdenormM); 
   flopenrc #(1) EMRegFma16(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
-  flopenrc #(1) EMRegFma17(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
-  flopenrc #(1) EMRegFma18(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
+  flopenrc #(1) EMRegFma17(clk, reset, PipeClearEM, PipeEnableEM, yinfE, yinfM); 
+  flopenrc #(1) EMRegFma18(clk, reset, PipeClearEM, PipeEnableEM, zinfE, zinfM); 
   flopenrc #(1) EMRegFma19(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
-  flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
-  flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
+  flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, ynanE, ynanM); 
+  flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, znanE, znanM); 
   flopenrc #(1) EMRegFma22(clk, reset, PipeClearEM, PipeEnableEM, nanE, nanM); 
   flopenrc #(9) EMRegFma23(clk, reset, PipeClearEM, PipeEnableEM, sumshiftE, sumshiftM); 
   flopenrc #(1) EMRegFma24(clk, reset, PipeClearEM, PipeEnableEM, sumshiftzeroE, sumshiftzeroM); 
@@ -376,8 +382,8 @@ module fpu (
   flopenrc #(1) EMRegAdd15(clk, reset, PipeClearEM, PipeEnableEM, AddSignAE, AddSignM); 
   flopenrc #(64) EMRegAdd16(clk, reset, PipeClearEM, PipeEnableEM, AddFloat1E, AddFloat1M); 
   flopenrc #(64) EMRegAdd17(clk, reset, PipeClearEM, PipeEnableEM, AddFloat2E, AddFloat2M); 
-  flopenrc #(11) EMRegAdd18(clk, reset, PipeClearEM, PipeEnableEM, AddExp1DenormE, AddExp1DenormM); 
-  flopenrc #(11) EMRegAdd19(clk, reset, PipeClearEM, PipeEnableEM, AddExp2DenormE, AddExp2DenormM); 
+  flopenrc #(12) EMRegAdd18(clk, reset, PipeClearEM, PipeEnableEM, AddExp1DenormE, AddExp1DenormM); 
+  flopenrc #(12) EMRegAdd19(clk, reset, PipeClearEM, PipeEnableEM, AddExp2DenormE, AddExp2DenormM); 
   flopenrc #(11) EMRegAdd20(clk, reset, PipeClearEM, PipeEnableEM, AddExponentE, AddExponentM); 
   flopenrc #(64) EMRegAdd21(clk, reset, PipeClearEM, PipeEnableEM, AddOp1E, AddOp1M); 
   flopenrc #(64) EMRegAdd22(clk, reset, PipeClearEM, PipeEnableEM, AddOp2E, AddOp2M); 
@@ -414,8 +420,9 @@ module fpu (
   flopenrc #(1) EMReg1(clk, reset, PipeClearEM, PipeEnableEM, FRegWriteE, FRegWriteM);
   flopenrc #(3) EMReg2(clk, reset, PipeClearEM, PipeEnableEM, FResultSelE, FResultSelM);
   flopenrc #(3) EMReg3(clk, reset, PipeClearEM, PipeEnableEM, FrmE, FrmM);
-  flopenrc #(1) EMReg4(clk, reset, PipeClearEM, PipeEnableEM, PE, PM);
-  flopenrc #(4) EMReg5(clk, reset, PipeClearEM, PipeEnableEM, OpCtrlE, OpCtrlM);
+  flopenrc #(1) EMReg4(clk, reset, PipeClearEM, PipeEnableEM, FmtE, FmtM);
+  flopenrc #(5) EMReg5(clk, reset, PipeClearEM, PipeEnableEM, RdE, RdM);
+  flopenrc #(4) EMReg6(clk, reset, PipeClearEM, PipeEnableEM, OpCtrlE, OpCtrlM);
 
   //
   //END E/M PIPE
@@ -443,9 +450,7 @@ module fpu (
   //
   
   //wally-spec W stage control logic signal instantiation
-  logic                    FRegWriteW;
   logic [2:0]              FResultSelW;
-  logic                    PW;
 
   //instantiate W stage fma signals here
   logic [63:0]             FmaResultW;
@@ -470,8 +475,13 @@ module fpu (
   logic                    AddDenormW;
 
   //instantiation of W stage cmp signals
+  logic [63:0]             CmpResultW;
   logic                    CmpInvalidW;
   logic [1:0]              CmpFCCW; 
+
+  //instantiation of W stage classify signals
+  logic [63:0]             ClassResultW;
+  logic [4:0]              ClassFlagsW;
 
   //*****************
   //fma M/W pipe registers
@@ -510,7 +520,9 @@ module fpu (
   //*****************
   flopenrc #(1) MWReg1(clk, reset, PipeClearMW, PipeEnableMW, FRegWriteM, FRegWriteW);
   flopenrc #(3) MWReg2(clk, reset, PipeClearMW, PipeEnableMW, FResultSelM, FResultSelW);
-  flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, PM, PW);
+  flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, FmtM, FmtW);
+  flopenrc #(5) MWReg4(clk, reset, PipeClearMW, PipeEnableMW, RdM, RdW);
+  flopenrc #(`XLEN) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, SrcAM, SrcAW);
 
   ////END M/W PIPE
   //*****************************************
@@ -527,21 +539,61 @@ module fpu (
   //set to cmp flags
   //iff bit one is low - if bit zero is active set to add/cvt flags - otherwise
   //set to div/sqrt flags
-  assign FPUFlagsW = (FResultSelW[2]) ? (SgnFlagsW) : (
-	             (FResultSelW[1]) ? 
-		     ( (FResultSelW[0]) ? (FmaFlagsW) : ({CmpInvalidW,4'b0000}) ) 
-		     : ( (FResultSelW[0]) ? (AddFlagsW) : (DivFlagsW) ) 
-                     );
+  //assign FPUFlagsW = (FResultSelW[2]) ? (SgnFlagsW) : (
+//	             (FResultSelW[1]) ? 
+//		     ( (FResultSelW[0]) ? (FmaFlagsW) : ({CmpInvalidW,4'b0000}) ) 
+//		     : ( (FResultSelW[0]) ? (AddFlagsW) : (DivFlagsW) ) 
+//                     );
+  always_comb begin
+	case (FResultSelW)
+		// div/sqrt
+		3'b000 : FPUFlagsW = DivFlagsW;
+		// cmp		
+		3'b001 : FPUFlagsW = {CmpInvalidW, 4'b0};
+		//fma/mult
+		3'b010 : FPUFlagsW = FmaFlagsW;
+		// sgn inj
+		3'b011 : FPUFlagsW = SgnFlagsW;
+		// add/sub/cnvt
+		3'b100 : FPUFlagsW = AddFlagsW;
+		// classify
+		3'b101 : FPUFlagsW = ClassFlagsW;
+		// output SrcAW
+		3'b110 : FPUFlagsW = 5'b0;
+		// output ReadData1
+		3'b111 : FPUFlagsW = 5'b0;
+		default : FPUFlagsW = 5'bxxxxx;
+	endcase
+  end
 
   //result mux via in-line ternaries
-  logic [63:0] FPUResultDirW; 
   //the uses the same logic as for flag signals
-  assign FPUResultDirW = (FResultSelW[2]) ? (SgnResultW) : (
-	             (FResultSelW[1]) ? 
-		     ( (FResultSelW[0]) ? (FmaResultW) : ({62'b0,CmpFCCW}) ) 
-		     : ( (FResultSelW[0]) ? (AddResultW) : (DivResultW) ) 
-                     );
-
+  //assign FPUResultDirW = (FResultSelW[2]) ? (SgnResultW) : (
+  //	             (FResultSelW[1]) ? 
+  //		     ( (FResultSelW[0]) ? (FmaResultW) : ({62'b0,CmpFCCW}) ) 
+  //		     : ( (FResultSelW[0]) ? (AddResultW) : (DivResultW) ) 
+  //                   );
+  always_comb begin
+	case (FResultSelW)
+		// div/sqrt
+		3'b000 : FPUResultDirW = DivResultW;
+		// cmp		
+		3'b001 : FPUResultDirW = CmpResultW;
+		//fma/mult
+		3'b010 : FPUResultDirW = FmaResultW;
+		// sgn inj
+		3'b011 : FPUResultDirW = SgnResultW;
+		// add/sub/cnvt
+		3'b100 : FPUResultDirW = AddResultW;
+		// classify
+		3'b101 : FPUResultDirW = ClassResultW;
+		// output SrcAW
+		3'b110 : FPUResultDirW = SrcAW;
+		// output ReadData1
+		3'b111 : FPUResultDirW = ReadData1W;
+		default : FPUResultDirW = {64{1'bx}};
+	endcase
+  end
   //interface between XLEN size datapath and double-precision sized
   //floating-point results
   //
@@ -555,11 +607,12 @@ module fpu (
 // Repetition multiplier must be constant.
 
   //if(`XLEN > 64) begin
-  //    FPUResultW <= {FPUResultDirW,{XLENDIFF{1'b0}}};
+  //    FPUResultW = {FPUResultDirW,{XLENDIFF{1'b0}}};
   //end
   //truncate
   //else begin
-      FPUResultW <= FPUResultDirW[63:64-`XLEN];
+      FPUResultW = FPUResultDirW[63:64-`XLEN];
+      SetFflagsM = FPUFlagsW;
   //end
 
   end  

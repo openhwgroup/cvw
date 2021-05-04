@@ -105,11 +105,9 @@ module ifu (
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
-  icache icache(
-    .*,
-    .UpperPCNextPF(PCNextPF[`XLEN-1:12]),
-    .LowerPCNextF(PCNextPF[11:0])
-  );
+  icache icache(.*);
+  
+
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
@@ -184,7 +182,7 @@ module ifu (
       assign BPPredDirWrongE = 1'b0;
       assign BTBPredPCWrongE = 1'b0;
       assign RASPredPCWrongE = 1'b0;
-      assign BPPredClassNonCFIWrong = 1'b0;
+      assign BPPredClassNonCFIWrongE = 1'b0;
     end      
   endgenerate
   // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.

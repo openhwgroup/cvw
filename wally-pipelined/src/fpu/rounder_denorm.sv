@@ -238,7 +238,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
 					( (normal_overflow == normal_underflow) ? Texp[10:0] : (normal_overflow ? Texp_addone[10:0] : Texp_subone[10:0]) ) 
 					: ( normal_overflow ? Texp_addone[10:0] : Texp[10:0] ) ) 
 				) : 
-			(op_type[3]) ? exp_A_unmodified : Rexp;
+			(op_type[3]) ? exp_A_unmodified[10:0] : Rexp; //KEP used to be all of exp_A_unmodified
 
    // If the result is zero or infinity, the mantissa is all zeros. 
    // If the result is NaN, the mantissa is 10...0

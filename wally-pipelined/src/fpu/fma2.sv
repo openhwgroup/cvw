@@ -15,13 +15,13 @@
 //    normalize Normalization shifter
 //    round     Rounding of result
 //    exception Handles exceptional cases
-//    bypass    Handles bypass of result to ReadData1M or ReadData3M inputs
+//    bypass    Handles bypass of result to ReadData1M or ReadData3M input logics
 //    sign      One bit sign handling block 
-//    special   Catch special cases (inputs = 0  / infinity /  etc.) 
+//    special   Catch special cases (input logics = 0  / infinity /  etc.) 
 //
 //   The FMAC computes FmaResultM=ReadData1M*ReadData2M+ReadData3M, rounded with the mode specified by
 //   RN, RZ, RM, or RP.  The result is optionally bypassed back to
-//   the ReadData1M or ReadData3M inputs for use on the next cycle.  In addition,  four signals
+//   the ReadData1M or ReadData3M input logics for use on the next cycle.  In addition,  four signals
 //   are produced: trap, overflow, underflow, and inexact.  Trap indicates
 //   an infinity, NaN, or denormalized number to be handled in software;
 //   the other three signals are IMMM flags.
@@ -38,19 +38,19 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 
 );
 /////////////////////////////////////////////////////////////////////////////
-  
-	input logic	 	[63:0]		ReadData1M;		// input 1
-	input logic	 	[63:0]		ReadData2M;     // input 2 
-	input logic		[63:0]		ReadData3M;     // input 3
-	input logic		[2:0]	 	FrmM;          	// Rounding mode
-	input logic		[12:0]		aligncntM;    	// status flags
-	input logic 	[105:0]		rM; 				// one result of partial product sum
-	input logic		[105:0]		sM; 				// other result of partial products
-	input logic		[163:0]		tM;				// output of alignment shifter	
-	input logic		[8:0]		normcntM; 		// shift count for normalizer
-	input logic		[12:0]		aeM; 		// multiplier expoent
-	input logic					bsM;				// sticky bit of addend
-	input logic 				killprodM; 		// ReadData3M >> product
+ 
+	input logic 		[63:0]		ReadData1M;		// input logic 1
+	input logic		[63:0]		ReadData2M;     // input logic 2 
+	input logic 		[63:0]		ReadData3M;     // input logic 3
+	input logic 		[2:0]	 	FrmM;          	// Rounding mode
+	input logic 		[12:0]		aligncntM;    	// status flags
+	input logic 		[105:0]		rM; 				// one result of partial product sum
+	input logic 		[105:0]		sM; 				// other result of partial products
+	input logic 		[163:0]		tM;				// output of alignment shifter	
+	input logic 		[8:0]		normcntM; 		// shift count for normalizer
+	input logic 		[12:0]		aeM; 		// multiplier expoent
+	input logic 					bsM;				// sticky bit of addend
+	input logic 					killprodM; 		// ReadData3M >> product
 	input logic					prodinfM;
 	input logic					xzeroM;
 	input logic					yzeroM;
@@ -65,10 +65,13 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 	input logic					ynanM;
 	input logic					znanM;
 	input logic					nanM;
-	input logic		[8:0]		sumshiftM;
+	input logic			[8:0]		sumshiftM;
 	input logic					sumshiftzeroM;
-	output logic		[63:0]		FmaResultM;     // output FmaResultM=ReadData1M*ReadData2M+ReadData3M
-	output logic		[4:0]		FmaFlagsM;    	// status flags
+
+
+	output logic 		[63:0]		FmaResultM;     // output FmaResultM=ReadData1M*ReadData2M+ReadData3M
+	output logic 		[4:0]		FmaFlagsM;    	// status flags
+	
 
 // Internal nodes
  	logic 		[163:0]		sum;			// output of carry prop adder
@@ -94,6 +97,9 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 	logic					sticky;
 	logic			[12:0]		de0;
 	logic					isAdd;
+	logic					wsign;
+	logic 			[51:0]		wman;
+	logic 			[10:0]		wexp;
 
 	assign isAdd = 1;
 
@@ -115,17 +121,19 @@ module fma2(ReadData1M, ReadData2M, ReadData3M, FrmM,
 	add				add(.*);
 	lza				lza(.*);
 	normalize		normalize(.zexp(ReadData3M[62:52]),.*); 
-	round			round(.xman(ReadData1M[51:0]), .yman(ReadData2M[51:0]),.zman(ReadData3M[51:0]), .wman(FmaResultM[51:0]),.wsign(FmaResultM[63]),.*);
+	round			round(.xman(ReadData1M[51:0]), .yman(ReadData2M[51:0]),.zman(ReadData3M[51:0]),.*);
 
 // Instantiate exponent datapath
 
-	expgen2			expgen2(.xexp(ReadData1M[62:52]),.yexp(ReadData2M[62:52]),.zexp(ReadData3M[62:52]),.wexp(FmaResultM[62:52]),.*);
+	expgen2			expgen2(.xexp(ReadData1M[62:52]),.yexp(ReadData2M[62:52]),.zexp(ReadData3M[62:52]),.*);
 
 
 // Instantiate control logic
  
-sign				sign(.xsign(ReadData1M[63]),.ysign(ReadData2M[63]),.zsign(ReadData3M[63]),.wsign(FmaResultM[63]),.*); 
+sign				sign(.xsign(ReadData1M[63]),.ysign(ReadData2M[63]),.zsign(ReadData3M[63]),.*); 
 flag2				flag2(.xsign(ReadData1M[63]),.ysign(ReadData2M[63]),.zsign(ReadData3M[63]),.vbits(v[1:0]),.*); 
+
+assign FmaResultM = {wsign,wexp,wman};
 
 endmodule
 

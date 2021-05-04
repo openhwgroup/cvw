@@ -19,7 +19,7 @@ configs = [
     Config(
         name="busybear",
         cmd="vsim -do wally-busybear-batch.do -c > {}",
-        grepstr="# loaded 800000 instructions"
+        grepstr="# loaded 40000 instructions"
     ),
     Config(
         name="buildroot",
@@ -35,6 +35,11 @@ configs = [
         name="rv64ic",
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv64ic rv64ic\n!",
         grepstr="All tests ran without failures"
+    ),
+    Config(
+        name="lints",
+        cmd="../lint-wally > {}",
+        grepstr="All lints run with no errors or warnings"
     ),
 ]
 
