@@ -40,7 +40,7 @@ module pmpchecker (
 
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
 
-  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
+  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [15:0],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
 
@@ -58,6 +58,10 @@ module pmpchecker (
 
   logic [7:0] PMPCFG [0:15];
 
+  // Bit i is high when the address is greater than or equal to PMPADR[i]
+  // Used for determining whether TOR PMP regions match
+  logic [15:0] AboveRegion;
+
   logic L_Bit, X_Bit, W_Bit, R_Bit;
   logic InvalidExecute, InvalidWrite, InvalidRead;
 
@@ -67,16 +71,20 @@ module pmpchecker (
   assign {PMPCFG[7], PMPCFG[6], PMPCFG[5], PMPCFG[4],
           PMPCFG[3], PMPCFG[2], PMPCFG[1], PMPCFG[0]} = PMPCFG01_REGW;
 
-  pmpadrdec pmpadrdec0(HADDR, PMPCFG[0][4:3],
-                       '0, PMPADDR_ARRAY_REGW[0],
-                       Regions[0]);
+  pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[0][4:3]),
+                      .CurrentPMPAdr(PMPADDR_ARRAY_REGW[0]),
+                      .AdrAtLeastPreviousPMP(1'b1),
+                      .AdrAtLeastCurrentPMP(AboveRegion[0]),
+                      .Match(Regions[0]));
 
   generate
     genvar i;
     for (i = 1; i < 16; i++) begin
-      pmpadrdec pmpadrdec(HADDR, PMPCFG[i][4:3],
-                          PMPADDR_ARRAY_REGW[i-1], PMPADDR_ARRAY_REGW[i],
-                          Regions[i]);
+      pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[i][4:3]),
+                          .CurrentPMPAdr(PMPADDR_ARRAY_REGW[i]),
+                          .AdrAtLeastPreviousPMP(AboveRegion[i-1]),
+                          .AdrAtLeastCurrentPMP(AboveRegion[i]),
+                          .Match(Regions[i]));
     end
   endgenerate
 
@@ -112,6 +120,7 @@ module pmpchecker (
   assign InvalidWrite   = WriteAccessM   && ~W_Bit;
   assign InvalidRead    = ReadAccessM    && ~R_Bit;
 
+/*
   assign PMPInstrAccessFaultF = (PrivilegeModeW == `M_MODE) ?
                                   Match && L_Bit && InvalidExecute :
                                   ~Match || InvalidExecute;
@@ -121,6 +130,11 @@ module pmpchecker (
   assign PMPLoadAccessFaultM  = (PrivilegeModeW == `M_MODE) ?
                                   Match && L_Bit && InvalidRead :
                                   ~Match || InvalidRead;
+*/
+
+  assign PMPInstrAccessFaultF = 1'b0;
+  assign PMPStoreAccessFaultM = 1'b0;
+  assign PMPLoadAccessFaultM  =  1'b0;
 
   /*
   If no PMP entry matches an M-mode access, the access succeeds. If no PMP entry matches an
