@@ -58,7 +58,9 @@ module ahblite (
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Signals from PMA checker
-  input  logic             SquashAHBAccess,
+  input  logic             SquashBusAccess,
+  // Signals to PMA checker (metadata of proposed access)
+  output logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   // Return from bus
   output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals
@@ -79,8 +81,7 @@ module ahblite (
   output logic             HWRITED,
   // Stalls
   output logic             /*InstrUpdate, */DataStall,
-		output logic MemAckW
-  // *** add a chip-level ready signal as part of handshake
+  output logic MemAckW
 );
 
   logic GrantData;
@@ -89,9 +90,6 @@ module ahblite (
   logic [`AHBW-1:0] HRDATAMasked, ReadDataM, CapturedData, ReadDataWnext, WriteData;
   logic IReady, DReady;
   logic CaptureDataM,CapturedDataAvailable;
-
-  // Describes type of access
-  logic Atomic, Execute, Write, Read;
 
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -103,40 +101,53 @@ module ahblite (
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
   import ahbliteState::*;
-  statetype BusState, NextBusState;
+  statetype BusState, ProposedNextBusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
-  // *** If the SquashAHBAccess signal is high, we need to set NextBusState to IDLE.
-  // We could either have this case statement set a signal ProposedNextBusState, which gets
-  // used for NextBusState when we are not squashing. Alternatively, we could add a bunch of
-  // conditional statments below 
+  // This case statement computes the desired next state for the AHBlite,
+  // prioritizing address translations, then atomics, then data accesses, and
+  // finally instructions. This proposition controls HADDR so the PMA and PMP
+  // checkers can determine whether the access is allowed. If not, the actual
+  // NextWalkerState is set to IDLE.
+
+  // *** This ability to squash accesses must be replicated by any bus
+  // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: if      (MMUTranslate) NextBusState = MMUTRANSLATE;
-            else if (AtomicMaskedM[1])   NextBusState = ATOMICREAD;
-            else if (MemReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
-            else if (MemWriteM)    NextBusState = MEMWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      MMUTRANSLATE: if (~HREADY)   NextBusState = MMUTRANSLATE;
-            else                   NextBusState = IDLE;
-      ATOMICREAD: if (~HREADY)     NextBusState = ATOMICREAD;
-            else                   NextBusState = ATOMICWRITE;
-      ATOMICWRITE: if (~HREADY)    NextBusState = ATOMICWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      INSTRREAD:
-            if (~HREADY)           NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;  // if (InstrReadF still high)
-      default:                     NextBusState = IDLE;
+      IDLE: if      (MMUTranslate) ProposedNextBusState = MMUTRANSLATE;
+            else if (AtomicMaskedM[1])   ProposedNextBusState = ATOMICREAD;
+            else if (MemReadM)     ProposedNextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (MemWriteM)    ProposedNextBusState = MEMWRITE;
+            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
+            else                   ProposedNextBusState = IDLE;
+      MMUTRANSLATE: if (~HREADY)   ProposedNextBusState = MMUTRANSLATE;
+            else                   ProposedNextBusState = IDLE;
+      ATOMICREAD: if (~HREADY)     ProposedNextBusState = ATOMICREAD;
+            else                   ProposedNextBusState = ATOMICWRITE;
+      ATOMICWRITE: if (~HREADY)    ProposedNextBusState = ATOMICWRITE;
+            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
+            else                   ProposedNextBusState = IDLE;
+      MEMREAD: if (~HREADY)        ProposedNextBusState = MEMREAD;
+            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
+            else                   ProposedNextBusState = IDLE;
+      MEMWRITE: if (~HREADY)       ProposedNextBusState = MEMWRITE;
+            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
+            else                   ProposedNextBusState = IDLE;
+      INSTRREAD: if (~HREADY)      ProposedNextBusState = INSTRREAD;
+            else                   ProposedNextBusState = IDLE;  // if (InstrReadF still high)
+      default:                     ProposedNextBusState = IDLE;
     endcase
+
+  // Determine access type (important for determining whether to fault)
+  assign AtomicAccessM = (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
+  assign ExecuteAccessF = (ProposedNextBusState == INSTRREAD);
+  assign WriteAccessM = (ProposedNextBusState == MEMWRITE) || (ProposedNextBusState == ATOMICWRITE);
+  assign ReadAccessM = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == ATOMICREAD) ||
+              (ProposedNextBusState == MMUTRANSLATE);
+
+  // The PMA and PMP checkers can decide to squash the access 
+  assign NextBusState = (SquashBusAccess) ? IDLE : ProposedNextBusState;
 
   // stall signals
   // Note that we need to extend both stalls when MMUTRANSLATE goes to idle,
@@ -148,16 +159,9 @@ module ahblite (
   //assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
   //                        MMUStall);
 
-  // Determine access type (important for determining whether to fault)
-  assign Atomic = ((NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));
-  assign Execute = ((NextBusState == INSTRREAD));
-  assign Write = ((NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE));
-  assign Read = ((NextBusState == MEMREAD) || (NextBusState == ATOMICREAD) ||
-              (NextBusState == MMUTRANSLATE));
-
   //  bus outputs
-  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
+  assign #1 GrantData = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == MEMWRITE) || 
+                        (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
   assign #1 AccessAddress = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
   assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
   generate
@@ -182,7 +186,7 @@ module ahblite (
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
 
-  assign MMUReady = (BusState == MMUTRANSLATE && NextBusState == IDLE);
+  assign MMUReady = (BusState == MMUTRANSLATE && HREADY);
 
   assign InstrRData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);

@@ -38,6 +38,8 @@ vsim workopt -suppress 8852,12070
 #do ./wave-dos/peripheral-waves.do
 do ./wave-dos/busybear-waves.do
 
+#do busy-mmu.do
+
 #-- Run the Simulation 
 run -all
 ##quit
