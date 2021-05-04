@@ -361,7 +361,8 @@ module testbench();
     "rv64p/WALLY-MHARTID", "4000",
     "rv64p/WALLY-MVENDORID", "4000",
     "rv64p/WALLY-MIE", "3000",
-    "rv64p/WALLY-MEDELEG", "4000"
+    "rv64p/WALLY-MEDELEG", "4000",
+    "rv64p/WALLY-IP", "2000"
   };
 
   string tests32p[] = '{
@@ -378,7 +379,8 @@ module testbench();
     "rv32p/WALLY-MTVEC", "2000",
     "rv32p/WALLY-STVEC", "2000",
     "rv32p/WALLY-MIE", "3000",
-    "rv32p/WALLY-MEDELEG", "4000"
+    "rv32p/WALLY-MEDELEG", "4000",
+    "rv32p/WALLY-IP", "3000"
   };
 
   string tests64periph[] = '{
