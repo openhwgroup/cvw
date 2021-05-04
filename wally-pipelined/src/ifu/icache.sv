@@ -284,7 +284,7 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	  NextState = STATE_MISS_FETCH_WDV;
 	end else if (~hit & spill) begin
 	  CntReset = 1'b1;
-	  PCMux = 2'b10;
+	  PCMux = 2'b01;
 	  NextState = STATE_MISS_SPILL_FETCH_WDV;
 	end else begin
           NextState = STATE_READY;
