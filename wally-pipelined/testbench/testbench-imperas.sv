@@ -34,9 +34,11 @@ module testbench();
   logic        clk;
   logic        reset;
 
+  parameter SIGNATURESIZE = 5000000;
+
   int test, i, errors, totalerrors;
-  logic [31:0] sig32[0:10000];
-  logic [`XLEN-1:0] signature[0:10000];
+  logic [31:0] sig32[0:SIGNATURESIZE];
+  logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
@@ -115,6 +117,7 @@ module testbench();
   };
 
   string tests64i[] = '{
+    "rv64i/WALLY-PIPELINE-100K", "f7ff0",
     "rv64i/I-ADD-01", "3000",
     "rv64i/I-ADDI-01", "3000",
     "rv64i/I-ADDIW-01", "3000",
@@ -260,6 +263,7 @@ module testbench();
   };
 
   string tests32i[] = {
+    "rv32i/WALLY-PIPELINE-100K", "10a800",
     "rv32i/I-ADD-01", "2000",
     "rv32i/I-ADDI-01","2000",
     "rv32i/I-AND-01","2000",
@@ -275,7 +279,7 @@ module testbench();
     "rv32i/I-EBREAK-01","2000",
     "rv32i/I-ECALL-01","2000",
     "rv32i/I-ENDIANESS-01","2010",
-    "rv32i/I-IO-01","2030",
+    "rv32i/I-IO-01","2030rv",
     "rv32i/I-JAL-01","3000",
     "rv32i/I-JALR-01","3000",
     "rv32i/I-LB-01","3020",
@@ -334,8 +338,7 @@ module testbench();
     "rv32i/WALLY-CSRRC", "4000",
     "rv32i/WALLY-CSRRWI", "3000",
     "rv32i/WALLY-CSRRSI", "3000",
-    "rv32i/WALLY-CSRRCI", "3000",
-    "rv32i/WALLY-PIPELINE", "1a800"
+    "rv32i/WALLY-CSRRCI", "3000"
   };
 
   string testsBP64[] = '{
@@ -358,16 +361,16 @@ module testbench();
   };
 
   string tests32p[] = '{
-    "rv32p/WALLY-MCAUSE", "2000",
-    "rv32p/WALLY-SCAUSE", "2000",
-    "rv32p/WALLY-MEPC", "5000",
-    "rv32p/WALLY-SEPC", "4000",
-    "rv32p/WALLY-MTVAL", "5000",
-    "rv32p/WALLY-STVAL", "4000",
-    "rv32p/WALLY-MARCHID", "4000",
-    "rv32p/WALLY-MIMPID", "4000",
-    "rv32p/WALLY-MHARTID", "4000",
-    "rv32p/WALLY-MVENDORID", "4000"
+    // "rv32p/WALLY-MCAUSE", "2000",
+    // "rv32p/WALLY-SCAUSE", "2000",
+    // "rv32p/WALLY-MEPC", "5000",
+    // "rv32p/WALLY-SEPC", "4000",
+    // "rv32p/WALLY-MTVAL", "5000",
+    // "rv32p/WALLY-STVAL", "4000",
+    // "rv32p/WALLY-MARCHID", "4000",
+    // "rv32p/WALLY-MIMPID", "4000",
+    // "rv32p/WALLY-MHARTID", "4000",
+    // "rv32p/WALLY-MVENDORID", "4000"
   };
 
   string tests64periph[] = '{
@@ -499,7 +502,7 @@ module testbench();
         $display("Code ended with ecall with gp = 1");
         #60; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
-        for(i=0; i<10000; i=i+1) begin
+        for(i=0; i<SIGNATURESIZE; i=i+1) begin
           sig32[i] = 'bx;
         end
 
@@ -507,7 +510,7 @@ module testbench();
         signame = {"../../imperas-riscv-tests/work/", tests[test], ".signature.output"};
         $readmemh(signame, sig32);
         i = 0;
-        while (i < 10000) begin
+        while (i < SIGNATURESIZE) begin
           if (`XLEN == 32) begin
             signature[i] = sig32[i];
             i = i+1;
