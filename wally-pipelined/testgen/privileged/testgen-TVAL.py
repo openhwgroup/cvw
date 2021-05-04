@@ -190,7 +190,9 @@ for xlen in xlens:
       #     This is the address we write results to
       # x6: Starting address we should write expected results to
       # ...
-      # x1 - x5 can be freely written  
+      # x4 & x5 can be freely written
+      # x3 — DO NOT WRITE ANY NON-ZERO VALUE TO THIS — test exits on ecall if x3 = 1 (x3 is gp)
+      # x1 & x2 can be freely written 
 
 
 
