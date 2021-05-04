@@ -31,6 +31,7 @@ module decoder #(parameter BINARY_BITS = 3) (
 );
 
   // *** Double check whether this synthesizes as expected
+  //     -- Ben @ May 4: only warning is that "signed to unsigned assignment occurs"; that said, I haven't checked the netlists
   assign one_hot = 1 << binary;
 
 endmodule
