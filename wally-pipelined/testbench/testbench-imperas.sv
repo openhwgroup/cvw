@@ -412,7 +412,7 @@ module testbench();
       end if (TESTSPERIPH) begin 
         tests = tests64periph;
       end else begin 
-        tests = {tests64p,tests64i,tests64periph};
+        tests = {tests64i,tests64p,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
