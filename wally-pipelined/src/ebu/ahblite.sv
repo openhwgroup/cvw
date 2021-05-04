@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 package ahbliteState;
-  typedef enum {IDLE, MEMREAD, MEMWRITE, INSTRREAD, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
+  typedef enum logic [3:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
 endpackage
 
 module ahblite (
