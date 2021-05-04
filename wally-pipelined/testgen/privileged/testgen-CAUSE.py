@@ -296,7 +296,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
 
 author = "dottolia@hmc.edu"
 xlens = [32, 64]
-testCount = 16;
+testCount = 8;
 
 # setup
 # Change this seed to a different constant value for every test
@@ -336,7 +336,15 @@ for xlen in xlens:
     # insert generic header
     h = open("../testgen_header.S", "r")
     for line in h:  
-      f.write(line)
+     f.write(line.replace("RV_COMPLIANCE_RV64M", "RV_COMPLIANCE_RV" + str(xlen) + "M"))
+    # f.write(f"""
+    #   #include "riscv_test_macros.h"
+    #   #include "compliance_test.h"
+    #   #include "compliance_io.h"
+
+    #   0000000080000000 <_start>:
+    #   80000000: 0480006f            j 80000048 <reset_vector>
+    # """)
 
     # We need to leave at least one bit in medeleg unset so that we have a way to get
     # back to machine mode when the tests are complete (otherwise we'll only ever be able
@@ -383,6 +391,14 @@ for xlen in xlens:
       lines = f"""
         add x7, x6, x0
         csrr x19, mtvec
+
+        slli  a0,a0,0x1f
+        slli  a0,a0,0x1e
+        slli  a0,a0,0x1d
+        slli  a0,a0,0x1c
+        slli  a0,a0,0x1b
+        slli  a0,a0,0x1a
+        slli  a0,a0,0x19
       """
 
       # Not used — user mode traps are deprecated
