@@ -89,7 +89,9 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
 
     // Correctly handle the valid bits
     always_ff @(posedge clk, posedge reset) begin
-        if (reset || flush) begin
+        if (reset) begin
+            ValidOut <= {NUMLINES{1'b0}};
+        end else if (flush) begin
             ValidOut <= {NUMLINES{1'b0}};
         end else begin
             if (WriteEnable) begin
