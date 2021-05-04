@@ -513,7 +513,7 @@ class RegFile():
         for immutableRegKey, immutableRegVal in immutableRegsDict.items():
             self.regs[immutableRegKey].setValue(newValue = immutableRegVal, signed = 1)
             self.immutableRegsList.append(immutableRegKey)
-        
+                
     def getRandReg(self):
         reg = randint(1, len(self.regs)-1)
         while(reg in self.immutableRegsList):
@@ -584,10 +584,7 @@ class Memory():
         if addr not in self.memDict.keys():
             errStr = 'Tried to read from uninitialized address: {}'.format(addr)
             raise ReadFromUninitializedMemoryException(errStr)
-        #     # get a random number of grandularity
-        #     self.memDict[addr] = self.genRandMemoryValue()
-        # get value from memory
-        # print(self.memDict.items())
+
         val = self.memDict[addr]
         if granularity == GRANULARITY.WORD:
             val = val
@@ -638,6 +635,10 @@ class TestGen():
 
         self.imperasPath = imperasPath + instrSet.lower() + '/'
         self.exportTestName = 'PIPELINE'
+        if (self.numInstr == 100000):
+            self.exportTestName += "-100K"
+        elif (self.numInstr == 1000000):
+            self.exportTestName += "-1M"
         self.basename = 'WALLY-'+ self.exportTestName
         self.fname = self.imperasPath + "src/" + self.basename + ".S"
         self.refname = self.imperasPath + "references/" + self.basename + ".reference_output"
@@ -647,9 +648,9 @@ class TestGen():
         reg6 = self.model.regFile.regs[6]
         out = [Instr.issue(model = self.model, instrName = "sw", rs2 = reg, imm = imm, rs1 = reg6)]
         self.model.resultImmediateCounter += 4
-        if (self.model.resultImmediateCounter == 2044):
+        if (self.model.resultImmediateCounter == 2040):
             # Reset
-            imm2 = Immediate.setImm12(xlen = self.xlen, value = 2044)
+            imm2 = Immediate.setImm12(xlen = self.xlen, value = 2040)
             reg6.setImmutable(False)
             wreset = Instr.issue(model = self.model, instrName = "addi", rd = reg6, imm = imm2, rs1 = reg6) 
             reg6.setImmutable(True)
@@ -928,14 +929,20 @@ class TestGen():
         instructions = []
         
         rd = self.model.regFile.getRandReg()
-        
-        memVal = self.model.memoryImmediateCounter
         reg1 = self.model.regFile.regs[7]
-        
+
+        memVal = self.model.memoryImmediateCounter
         self.model.memoryImmediateCounter += 4
-        if (self.model.memoryImmediateCounter == 2044):
+        if instr == "ld":
+            if ((memVal + reg1.getValueUnsigned()) % 8) != 0:
+                memVal -= 4
+                self.model.memoryImmediateCounter -= 4 # we haven't read from a new location
+
+        
+        
+        if (self.model.memoryImmediateCounter == 2040):
             self.model.memoryImmediateCounter = 0
-            immMem = Immediate.setImm12(xlen = self.model.xlen, value = 2044)
+            immMem = Immediate.setImm12(xlen = self.model.xlen, value = 2040)
             instructions.append(Instr.issue(model = self.model, instrName = "addi" , rd = reg1, rs1 = reg1, imm = immMem))
 
 
@@ -1062,18 +1069,18 @@ class TestGen():
             
             rs1 = self.model.regFile.getRandReg()
             while (rs1 == reg_pc):
-                rs1 = self.model.regFile.getRandReg()
-
+                rs1 = self.model.regFile.getRandReg() 
+                
+            # TODO fix the value of rs1 - should be pc location of "1f"
+            rs1.setValue(newValue = 0)
+            
             imm = Immediate.setImm12(xlen = self.model.xlen, value = 0)
             
-            jumpDestVal = self.model.pc.value + numInstr * 4 + 8
-            generatedInstructions.append('li {}, MASK_XLEN({})'.format(rs1.regName ,jumpDestVal))
-            self.model.pc += 8
-            
+            instructions.append('la {}, {}'.format(rs1.regName , "1f"))
+            self.model.pc += 8     
 
-            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg_pc, rs1 = rs1, imm = imm, dir = "f")  
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg_pc, rs1 = rs1, imm = imm)  
             instructions.append(newInstr)
-            
             
             # add random alu instructions after jumping before jump point
             reg_check = self.model.regFile.getRandReg()
@@ -1085,6 +1092,9 @@ class TestGen():
                 r1 = self.model.regFile.getRandReg()
                 r2 = self.model.regFile.getRandReg()
                 instructions.append(Instr.issue(model = self.model, instrName = "and", rd = rd, rs1 = r1, rs2 = r2))
+
+            instructions.append("1:")
+            self.model.pc += 4
 
             #make sure jump was taken
             check_instr = self.genTestInstr(reg_check)
@@ -1106,6 +1116,8 @@ class TestGen():
             instructions.append(newInstr)
             # instructions.append("jal x" + reg1 + ", 1f")
             
+            instructions.append("2:")
+            self.model.pc += 4
 
             newInstr = Instr.issue(model = self.model, instrName='jal', rd = reg2, label = label3, dir = "f")  
             instructions.append(newInstr)
@@ -1121,24 +1133,26 @@ class TestGen():
                 
             imm = Immediate.setImm12(xlen = self.model.xlen, value = 0)
             
-
             
-            generatedInstructions.append('li {}, MASK_XLEN({})'.format(rs1.regName ,jumpDestVal))
+            instructions.append('la {}, {}'.format(rs1.regName ,"2b"))
             self.model.pc += 8
 
             
-            rs1 = self.model.regFile.regs[0]
-            imm = Immediate.setImm12(xlen = self.model.xlen, value = jumpDestVal)
+            rs1.setValue(newValue = 0) #TODO: this value is wrong, should be address of label
+            imm = Immediate.setImm12(xlen = self.model.xlen, value = 0)
+
 
             numInstr = np.random.randint(0,6)
             for i in range(0, numInstr):
                 rd = self.model.regFile.getRandReg()
+                while(rd == rs1) or (rd == reg_pc):
+                    rd = self.model.regFile.getRandReg()
                 r1 = self.model.regFile.getRandReg()
                 r2 = self.model.regFile.getRandReg()
                 instructions.append(Instr.issue(model = self.model, instrName = 'and', rd = rd, rs1 = r1, rs2 = r2))
             
             #test case here
-            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg2, rs1 = rs1, imm = imm, dir = "b")  
+            newInstr = Instr.issue(model = self.model, instrName=instr, rd = reg_pc, rs1 = rs1, imm = imm)  
             instructions.append(newInstr)
             # instructions.append("jal x" + reg2 + ", 2b")
             instructions.append("3:")
@@ -1148,13 +1162,18 @@ class TestGen():
             for check in check_instr:
                 instructions.append(check)
             
+            check_instr = self.genTestInstr(reg_pc)
+            for check in check_instr:
+                instructions.append(check)
+            
                 # jump to 1
+                # #2
                 # jump to 3
                 # #1
                 # junk instructions
                 # ...
                 # ...
-                # test instruction
+                # test instruction to 2
                 # #3  
                 # check answer from 1
         return instructions
@@ -1226,17 +1245,23 @@ class TestGen():
 
                 elif randInstr in InstrTypes['I']:
                     if randInstr == "jalr":
-                        # newInstr = self.jumpRInstruction(instr = randInstr)
-                        # for i in newInstr:
-                        #     generatedInstructions.append(i)
-                        continue
+                        newInstr = self.jumpRInstruction(instr = randInstr)
+                        for i in newInstr:
+                            generatedInstructions.append(i)
                     # memory instruction
                     elif randInstr[0] == 'l': 
-                        rd = self.model.regFile.getRandReg()
                         rs1 = self.model.regFile.regs[7]
-                        
-                        memLocation = list(self.model.memory.memDict.keys())[randint(0, len(self.model.memory.memDict.keys()) -1)]
 
+                        memLocation = list(self.model.memory.memDict.keys())[randint(0, len(self.model.memory.memDict.keys()) -1)]
+                        if randInstr == "ld":
+                            if ((memLocation + rs1.getValueUnsigned()) % 8) != 0:
+                                if (memLocation != 0):
+                                    memLocation -=4
+                                else:
+                                    memLocation = 4
+
+                        rd = self.model.regFile.getRandReg()
+                        
                         imm12 = Immediate.setImm12(xlen = self.model.xlen, value = memLocation)
                         instr = Instr.issue(model = self.model, instrName = randInstr, rd = rd, rs1 = rs1, imm = imm12)
                         generatedInstructions.append(instr)
@@ -1257,13 +1282,20 @@ class TestGen():
                             generatedInstructions.append(testInstr)
 
                 elif randInstr in InstrTypes['S']:
-                    rs2 = self.model.regFile.getRandReg()
                     rs1 = self.model.regFile.regs[7]
-                
+
                     immValue = self.model.memoryImmediateCounter
                     self.model.memoryImmediateCounter += 4
-                    immMem = Immediate.setImm12(xlen = self.model.xlen, value = 2044)
-                    if (self.model.memoryImmediateCounter == 2044):
+                    if randInstr == 'Sd':
+                        if ((immValue + rs1.getValueUnsigned()) % 8) != 0:
+                            immValue -= 4
+                            self.model.memoryImmediateCounter -= 4 #haven't put a value in a new mem locatoin
+                    
+                    rs2 = self.model.regFile.getRandReg()
+                    
+
+                    immMem = Immediate.setImm12(xlen = self.model.xlen, value = 2040)
+                    if (self.model.memoryImmediateCounter == 2040):
                         self.model.memoryImmediateCounter = 0
                         generatedInstructions.append(Instr.issue(model = self.model, instrName = "addi" , rd = rs1, rs1 = rs1, imm = immMem))
 
@@ -1331,7 +1363,10 @@ class TestGen():
                     hexVal = int(self.model.memory.memDict[memLoc],2)
                     hexDigitSize = self.model.xlen / 4
                     formattedStr = '0x{0:0{1}x}'.format(hexVal, hexDigitSize)
-                    asmFile.write('\t.word {}\n'.format(formattedStr))
+                    if self.model.xlen == 64:
+                        asmFile.write('\t.dword {}\n'.format(formattedStr))
+                    else:
+                        asmFile.write('\t.word {}\n'.format(formattedStr))
             lineNum += 1
         
         asmFile.write("\n")
@@ -1685,6 +1720,148 @@ class Instr():
         return 'jal {}, {}{}'.format(rd.getRegName(), label.name, dir)
 
 
+    
+    
+    ###################################################################################################
+    # RV 64I
+    ###################################################################################################
+    #TODO These may not keep the internal model consistent. You have been warned...sorry lol
+    
+    @classmethod
+    def Instr_ld(self, model, rd = None, rs1 = None, imm = None):
+        addr = imm.getDecValue()
+        rd.setBits(newBits = signExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.WORD), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'ld {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
+
+    @classmethod
+    def Instr_lwu(self, model, rd = None, rs1 = None, imm = None):
+        addr = imm.getDecValue()
+        rd.setBits(newBits = zeroExtend(model.memory.readMemory(addr = addr, granularity = GRANULARITY.BYTE), \
+            resultNumBits = model.xlen))
+        model.pc += 4
+        return 'lwu {}, {}({})'.format(rd.getRegName(), imm.getDecValue(), rs1.getRegName())
+    
+    @classmethod
+    def Instr_addiw(self, model, rd = None, rs1 = None, imm = None):
+        newValue = rs1.getDecValue() + imm.getDecValue()
+        newValueBin = 0
+        if newValue > 0:
+            newValueBin = bin(newValue)[2:]
+        elif newValue == 0:
+            newValueBin = "0" * model.xlen
+        else:
+            newValueBin = bin(newValue)[3:]
+        newValueBinTrunk = newValueBin[-model.xlen:]
+        rd.setBits(newBits = signExtend(inputBits = newValueBinTrunk, resultNumBits = model.xlen), signed = 1)
+        model.pc += 4
+        return 'addiw {}, {}, MASK_XLEN({})'.format(rd.getRegName(), rs1.getRegName(), imm.getDecValue())
+    
+    @classmethod
+    def Instr_slliw(self, model, rd = None, rs1 = None, imm = None):
+        bits = rs1.bits
+        immBits = imm.bits[-5:]
+        immShift = int(immBits, 2)
+        shifted = bits[-(len(bits) - immShift):]
+        shiftedExt = binToDec(inputBits = shifted + '0'*(model.xlen - len(shifted)))
+        rd.setValue(newValue = shiftedExt, signed = 1)
+        model.pc += 4
+        return 'slliw {}, {}, 0b{}'.format(rd.getRegName(), rs1.getRegName(), immBits)
+
+    @classmethod
+    def Instr_srliw(self, model, rd = None, rs1 = None, imm = None):
+        bits = rs1.bits
+        immBits = imm.bits[-5:]
+        immShift = int(immBits, 2)
+        shifted = bits[0:len(bits) - immShift]
+        extShifted = zeroExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'srliw {}, {}, 0b{}'.format(rd.getRegName(), rs1.getRegName(), immBits)
+
+    @classmethod
+    def Instr_sraiw(self, model, rd = None, rs1 = None, imm = None):
+        bits = rs1.bits
+        immBits = imm.bits[-5:]
+        immShift = int(immBits, 2)
+        shifted = bits[0:len(bits) - immShift]
+        extShifted = signExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'sraiw {}, {}, 0b{}'.format(rd.getRegName(), rs1.getRegName(), immBits)
+
+    @classmethod
+    def Instr_Sd(self, model, rs1 = None, rs2 = None, imm = None):
+        addr = imm.getDecValue()
+        model.memory.updateMemory(addr = addr, value = rs2.bits, granularity = GRANULARITY.WORD)
+        model.pc += 4
+        return 'Sd {}, {}({})'.format(rs2.getRegName(), imm.getDecValue(), rs1.getRegName())
+
+    @classmethod
+    def Instr_addw(self, model, rd = None, rs1 = None, rs2 = None):
+        newValue = rs1.getDecValue() + rs2.getDecValue()
+        newValueBin = 0
+        if newValue > 0:
+            newValueBin = bin(newValue)[2:]
+        elif newValue == 0:
+            newValueBin = "0" * model.xlen
+        else:
+            newValueBin = bin(newValue)[3:]
+        newValueBinTrunk = newValueBin[-model.xlen:]
+        rd.setBits(newBits = signExtend(inputBits = newValueBinTrunk, resultNumBits = model.xlen), signed = 1)
+        model.pc += 4
+        return 'addw {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+    
+    @classmethod
+    def Instr_subw(self, model, rd = None, rs1 = None, rs2 = None):
+        newValue = rs1.getDecValue() - rs2.getDecValue()
+        newValueBin = 0
+        if newValue > 0:
+            newValueBin = bin(newValue)[2:]
+        elif newValue == 0:
+            newValueBin = "0" * model.xlen
+        else:
+            newValueBin = bin(newValue)[3:]
+        newValueBinTrunk = newValueBin[-model.xlen:]
+        rd.setBits(newBits = signExtend(inputBits = newValueBinTrunk, resultNumBits = model.xlen), signed = 1)
+        model.pc += 4
+        return 'subw {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+        
+    @classmethod
+    def Instr_sllw(self, model, rd = None, rs1 = None, rs2 = None):
+        bits = rs1.bits
+        rs2Bin = rs2.bits[-5:]
+        rs2Shift = int(rs2Bin,2)
+        shifted = bits[-(len(bits) - rs2Shift):]
+        shiftedExt = binToDec(inputBits = shifted + '0'*(model.xlen - len(shifted)))
+        rd.setValue(newValue = shiftedExt, signed = 1)
+        model.pc += 4
+        return 'sllw {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+    @classmethod
+    def Instr_srlw(self, model, rd = None, rs1 = None, rs2 = None):
+        bits = rs1.bits
+        rs2Bin = rs2.bits[-5:]
+        rs2Shift = int(rs2Bin,2)
+        shifted = bits[0:len(bits) - rs2Shift]
+        extShifted = zeroExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'srlw {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+    
+    @classmethod
+    def Instr_sraw(self, model, rd = None, rs1 = None, rs2 = None):
+        bits = rs1.bits
+        rs2Bin = rs2.bits[-5:]
+        rs2Shift = int(rs2Bin,2)
+        shifted = bits[0:len(bits) - rs2Shift]
+        extShifted = signExtend(inputBits = shifted, resultNumBits = model.xlen)
+        rd.setBits(newBits = extShifted, signed = 1)
+        model.pc += 4
+        return 'sraw {}, {}, {}'.format(rd.getRegName(), rs1.getRegName(), rs2.getRegName())
+
+
 ###################################################################################################
 # Global Constants
 ###################################################################################################
@@ -1693,7 +1870,7 @@ GRANULARITY = Enum('granularity', ['WORD', 'HALFWORD', 'BYTE'])
 INSTRSETS = {'RV32I':   ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', \
                         'srli', 'srai', 'ori', 'andi', 'auipc', 'sb', 'sh', 'sw', 'add', 'sub', \
                         'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and', 'lui', 'beq', \
-                        'bne', 'blt', 'bge', 'bltu', 'bgeu', 'jal'], \
+                        'bne', 'blt', 'bge', 'bltu', 'bgeu', 'jal', 'jalr'], \
             'RV64I':   ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', \
                         'srli', 'srai', 'ori', 'andi', 'auipc', 'sb', 'sh', 'sw', 'add', 'sub', \
                         'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and', 'lui', 'beq', \
@@ -1703,9 +1880,11 @@ INSTRSETS = {'RV32I':   ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti',
             }
 
 
-InstrTypes = {  'R' : ['add', 'sub', 'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and'], \
-                'I' : ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', 'srli', 'srai', 'ori', 'andi', 'jalr'], \
-                'S' : ['sw', 'sh', 'sb'], \
+InstrTypes = {  'R' : ['add', 'sub', 'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 'or', 'and', \
+                        'addw', 'subw', 'sllw', 'srlw', 'sraw'], \
+                'I' : ['lb', 'lh', 'lw', 'lbu', 'lhu', 'addi', 'slli', 'slti', 'sltiu', 'xori', 'srli', 'srai', 'ori', 'andi', 'jalr', \
+                        'ld', 'lwu', 'addiw', 'slliw', 'srliw', 'sraiw'], \
+                'S' : ['sw', 'sh', 'sb', 'Sd'], \
                 'B' : ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu'], \
                 'U' : ['lui', 'auipc'], \
                 'J' : ['jal'],  \
@@ -1714,27 +1893,25 @@ InstrTypes = {  'R' : ['add', 'sub', 'sll', 'slt', 'sltu', 'xor', 'srl', 'sra', 
 # Main Body
 ###################################################################################################
 
-XLEN = ['32']
+XLEN = ['32', '64']
 INSTRUCTION_TYPE = ['I']
-NUMINSTR = 70000
+NUMINSTR = [100000, 1000000]
 IMPERASPATH = "../../imperas-riscv-tests/riscv-test-suite/"
 
 seed(42)
 np.random.seed(42)
-for xlen in XLEN:
-    memInit = {}
-    for i in range(0, 400, 4):
-        val = randBinary(signed = 0, numBits = int(xlen), valueAlignment = 1)
-        memInit[i] = val
-    for instrType in INSTRUCTION_TYPE:
-        instrSet = 'RV' + xlen + instrType
+for num_instructions in NUMINSTR:
+    for xlen in XLEN:
+        memInit = {}
+        for i in range(0, 400, 4):
+            val = randBinary(signed = 0, numBits = int(xlen), valueAlignment = 1)
+            memInit[i] = val
+        for instrType in INSTRUCTION_TYPE:
+            instrSet = 'RV' + xlen + instrType
 
-        print('Generating Assembly for {}'.format(instrSet))
-        
-        dut = TestGen(numInstr=NUMINSTR, immutableRegsDict = {0 : 0, 6 : 0, 7 : 0}, instrSet=instrSet, imperasPath=IMPERASPATH)
-        # regFile = 
-        dut.model.memory.populateMemory(memDict = memInit)
-        dut.exportASM(instrSet = instrSet, instrTypes = instrType)
-
-        
-
+            print('Generating {} Assembly Instructions for {}'.format(num_instructions, instrSet))
+            
+            dut = TestGen(numInstr=num_instructions, immutableRegsDict = {0 : 0, 6 : 0, 7 : 0}, instrSet=instrSet, imperasPath=IMPERASPATH)
+            # regFile = 
+            dut.model.memory.populateMemory(memDict = memInit)
+            dut.exportASM(instrSet = instrSet, instrTypes = instrType)

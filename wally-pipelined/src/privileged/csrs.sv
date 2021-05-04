@@ -3,6 +3,7 @@
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
+//          dottolia@hmc.edu 3 May 2021 - fix bug with stvec getting wrong value
 //
 // Purpose: Supervisor-Mode Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
@@ -83,7 +84,7 @@ module csrs #(parameter
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN) && ~StallW;
 
       // CSRs
-      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, CSRWriteValM, ZERO, STVEC_REGW); //busybear: change reset to 0
+      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, ZERO, STVEC_REGW); //busybear: change reset to 0
       flopenr #(`XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
       flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
       flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, ZERO, SCAUSE_REGW); 

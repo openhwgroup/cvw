@@ -146,7 +146,7 @@ module csrm #(parameter
   assign IllegalCSRMWriteReadonlyM = CSRMWriteM && (CSRAdrM == MVENDORID || CSRAdrM == MARCHID || CSRAdrM == MIMPID || CSRAdrM == MHARTID);
 
   // CSRs
-  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, CSRWriteValM, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
+  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
       flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, ZERO, MEDELEG_REGW);
