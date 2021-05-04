@@ -3,40 +3,47 @@
 #
 # regression-wally.py
 # David_Harris@Hmc.edu 25 January 2021
+# Modified by Jarred Allen <jaallen@g.hmc.edu>
 #
-# Run a regression with multiple configurations in parallel and exit with non-zero status if an error happened
+# Run a regression with multiple configurations in parallel and exit with
+# non-zero status code if an error happened, as well as printing human-readable
+# output.
 #
 ##################################
 
 from collections import namedtuple
-# name:     the name of this test configuration/script
-# cmd:      the command to run to test (should include the logfile as {})
-# grepstr:  the string to grep through the log file for, success iff grep finds that string
-Config = namedtuple("Config", ['name', 'cmd', 'grepstr'])
+TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
+# name:     the name of this test configuration (used in printing human-readable
+#           output and picking logfile names)
+# cmd:      the command to run to test (should include the logfile as '{}', and
+#           the command needs to write to that file)
+# grepstr:  the string to grep through the log file for. The test succeeds iff
+#           grep finds that string in the logfile (is used by grep, so it may
+#           be any pattern grep accepts, see `man 1 grep` for more info).
 
-# edit this list to add more configurations
+# edit this list to add more test cases
 configs = [
-    Config(
+    TestCase(
         name="busybear",
         cmd="vsim -do wally-busybear-batch.do -c > {}",
         grepstr="# loaded 40000 instructions"
     ),
-    Config(
+    TestCase(
         name="buildroot",
         cmd="vsim -do wally-buildroot-batch.do -c > {}",
         grepstr="# loaded 100000 instructions"
     ),
-    Config(
+    TestCase(
         name="rv32ic",
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv32ic rv32ic\n!",
         grepstr="All tests ran without failures"
     ),
-    Config(
+    TestCase(
         name="rv64ic",
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv64ic rv64ic\n!",
         grepstr="All tests ran without failures"
     ),
-    Config(
+    TestCase(
         name="lints",
         cmd="../lint-wally > {}",
         grepstr="All lints run with no errors or warnings"
@@ -45,36 +52,39 @@ configs = [
 
 import multiprocessing, os
 
-fail = 0
-
 def search_log_for_text(text, logfile):
     """Search through the given log file for text, returning True if it is found or False if it is not"""
     grepcmd = "grep -e '%s' '%s' > /dev/null" % (text, logfile)
     return os.system(grepcmd) == 0
 
-def test_config(config, print_res=True):
-    """Run the given config, and return 0 if it suceeds and 1 if it fails"""
-    logname = "wally_"+config.name+".log"
-    cmd = config.cmd.format(logname)
+def run_test_case(case):
+    """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
+    logname = "regression_logs/wally_"+case.name+".log"
+    cmd = case.cmd.format(logname)
     print(cmd)
     os.system(cmd)
-    # check for success.  grep returns 0 if found, 1 if not found
-    passed = search_log_for_text(config.grepstr, logname)
-    if passed:
-        if print_res:print(logname+": Success")
+    if search_log_for_text(case.grepstr, logname):
+        print("%s: Success" % logname)
         return 0
     else:
-        if print_res:print(logname+": failures detected")
+        print("%s: failures detected" % logname)
         return 1
 
-# Run the tests and count the failures
-pool = multiprocessing.Pool(min(len(configs), 12))
-fail = sum(pool.map(test_config, configs))
+def main():
+    """Run the tests and count the failures"""
+    # Scale the number of concurrent processes to the number of test cases, but
+    # max out at 12 concurrent processes to not overwhelm the system
+    pool = multiprocessing.Pool(min(len(configs), 12))
+    # Count the number of failures
+    num_fail = sum(pool.map(run_test_case, configs))
+    if num_fail:
+        print("Regression failed with %s failed configurations" % num_fail)
+        # Remind the user to try `make allclean`, since it may be needed if test
+        # cases have changed
+        print("Reminder: have you run `make allclean`?")
+    else:
+        print("SUCCESS! All tests ran without failures")
+    return num_fail
 
-if (fail):
-    print("Regression failed with " +str(fail)+ " failed configurations")
-    print("Reminder: have you run `make allclean`?")
-    exit(1)
-else:
-    print("SUCCESS! All tests ran without failures")
-    exit(0)
+if __name__ == '__main__':
+    exit(main())
