@@ -29,15 +29,16 @@
 module testbench();
   parameter DEBUG = 0;
   parameter TESTSBP = 0;
-  parameter TESTSPERIPH = 0 ; // set to 0 for regression
-  localparam MAXSIGLEN = 1000000;
+  parameter TESTSPERIPH = 0; // set to 0 for regression
   
   logic        clk;
   logic        reset;
 
+  parameter SIGNATURESIZE = 5000000;
+
   int test, i, errors, totalerrors;
-  logic [31:0] sig32[0:MAXSIGLEN];
-  logic [`XLEN-1:0] signature[0:MAXSIGLEN];
+  logic [31:0] sig32[0:SIGNATURESIZE];
+  logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
@@ -53,71 +54,7 @@ module testbench();
 
   string tests64f[] = '{
     "rv64f/I-FADD-S-01", "2000",
-    "rv64f/I-FCLASS-S-01", "2000",
-    "rv64f/I-FCVT-S-L-01", "2000",
-    "rv64f/I-FCVT-S-LU-01", "2000",
-    "rv64f/I-FCVT-S-W-01", "2000",
-    "rv64f/I-FCVT-S-WU-01", "2000",
-    "rv64f/I-FCVT-L-S-01", "2000",
-    "rv64f/I-FCVT-LU-S-01", "2000",
-    "rv64f/I-FCVT-W-S-01", "2000",
-    "rv64f/I-FCVT-WU-S-01", "2000",
-    "rv64f/I-FDIV-S-01", "2000",
-    "rv64f/I-FEQ-S-01", "2000",
-    "rv64f/I-FLE-S-01", "2000",
-    "rv64f/I-FLT-S-01", "2000",
-    "rv64f/I-FMADD-S-01", "2000",
-    "rv64f/I-FMAX-S-01", "2000",
-    "rv64f/I-FMIN-S-01", "2000",
-    "rv64f/I-FMSUB-S-01", "2000",
-    "rv64f/I-FMUL-S-01", "2000",
-    "rv64f/I-FMV-W-X-01", "2000",
-    "rv64f/I-FMV-X-W-01", "2000",
-    "rv64f/I-FNMADD-S-01", "2000",
-    "rv64f/I-FNMSUB-S-01", "2000",
-    "rv64f/I-FSGNJ-S-01", "2000",
-    "rv64f/I-FSGNJN-S-01", "2000",
-    "rv64f/I-FSGNJX-S-01", "2000",
-    "rv64f/I-FSQRT-S-01", "2000",
-    "rv64f/I-FSW-01", "2000",
-    "rv64f/I-FLW-01", "2110",
-    "rv64f/I-FSUB-S-01", "2000"
-  };
-
-
-  string tests64d[] = '{
-    "rv64d/I-FADD-D-01", "2000",
-    "rv64d/I-FCLASS-D-01", "2000",
-    "rv64d/I-FCVT-D-L-01", "2000",
-    "rv64d/I-FCVT-D-LU-01", "2000",
-    "rv64d/I-FCVT-D-S-01", "2000",
-    "rv64d/I-FCVT-D-W-01", "2000",
-    "rv64d/I-FCVT-D-WU-01", "2000",
-    "rv64d/I-FCVT-L-D-01", "2000",
-    "rv64d/I-FCVT-LU-D-01", "2000",
-    "rv64d/I-FCVT-S-D-01", "2000",
-    "rv64d/I-FCVT-W-D-01", "2000",
-    "rv64d/I-FCVT-WU-D-01", "2000",
-    "rv64d/I-FDIV-D-01", "2000",
-    "rv64d/I-FEQ-D-01", "2000",
-    "rv64d/I-FLD-D-01", "2420",
-    "rv64d/I-FLE-D-01", "2000",
-    "rv64d/I-FLT-D-01", "2000",
-    "rv64d/I-FMADD-D-01", "2000",
-    "rv64d/I-FMAX-D-01", "2000",
-    "rv64d/I-FMIN-D-01", "2000",
-    "rv64d/I-FMSUB-D-01", "2000",
-    "rv64d/I-FMUL-D-01", "2000",
-    "rv64d/I-FMV-D-X-01", "2000",
-    "rv64d/I-FMV-X-D-01", "2000",
-    "rv64d/I-FNMADD-D-01", "2000",
-    "rv64d/I-FNMSUB-D-01", "2000",
-    "rv64d/I-FSD-01", "2000",
-    "rv64d/I-FSGNJ-D-01", "2000",
-    "rv64d/I-FSGNJN-D-01", "2000",
-    "rv64d/I-FSGNJX-D-01", "2000",
-    "rv64d/I-FSQRTD-01", "2000",
-    "rv64d/I-FSUB-D-01", "2000"
+    "rv64f/I-FCLASS-S-01", "2000"
   };
 
   string tests64a[] = '{
@@ -180,6 +117,7 @@ module testbench();
   };
 
   string tests64i[] = '{
+    "rv64i/WALLY-PIPELINE-100K", "f7ff0",
     "rv64i/I-ADD-01", "3000",
     "rv64i/I-ADDI-01", "3000",
     "rv64i/I-ADDIW-01", "3000",
@@ -324,41 +262,8 @@ module testbench();
     "rv32i/I-MISALIGN_JMP-01","2000"
   };
 
-string tests32f[] = '{
-    "rv32f/I-FADD-S-01", "2000",
-    "rv32f/I-FCLASS-S-01", "2000",
-    "rv32f/I-FCVT-S-L-01", "2000",
-    "rv32f/I-FCVT-S-LU-01", "2000",
-    "rv32f/I-FCVT-S-W-01", "2000",
-    "rv32f/I-FCVT-S-WU-01", "2000",
-    "rv32f/I-FCVT-L-S-01", "2000",
-    "rv32f/I-FCVT-LU-S-01", "2000",
-    "rv32f/I-FCVT-W-S-01", "2000",
-    "rv32f/I-FCVT-WU-S-01", "2000",
-    "rv32f/I-FDIV-S-01", "2000",
-    "rv32f/I-FEQ-S-01", "2000",
-    "rv32f/I-FLE-S-01", "2000",
-    "rv32f/I-FLT-S-01", "2000",
-    "rv32f/I-FMADD-S-01", "2000",
-    "rv32f/I-FMAX-S-01", "2000",
-    "rv32f/I-FMIN-S-01", "2000",
-    "rv32f/I-FMSUB-S-01", "2000",
-    "rv32f/I-FMUL-S-01", "2000",
-    "rv32f/I-FMV-W-X-01", "2000",
-    "rv32f/I-FMV-X-W-01", "2000",
-    "rv32f/I-FNMADD-S-01", "2000",
-    "rv32f/I-FNMSUB-S-01", "2000",
-    "rv32f/I-FSGNJ-S-01", "2000",
-    "rv32f/I-FSGNJN-S-01", "2000",
-    "rv32f/I-FSGNJX-S-01", "2000",
-    "rv32f/I-FSQRT-S-01", "2000",
-    "rv32f/I-FSW-01", "2000",
-    "rv32f/I-FLW-01", "2110",
-    "rv32f/I-FSUB-S-01", "2000"
-  };
-
-
   string tests32i[] = {
+    "rv32i/WALLY-PIPELINE-100K", "10a800",
     "rv32i/I-ADD-01", "2000",
     "rv32i/I-ADDI-01","2000",
     "rv32i/I-AND-01","2000",
@@ -374,7 +279,7 @@ string tests32f[] = '{
     "rv32i/I-EBREAK-01","2000",
     "rv32i/I-ECALL-01","2000",
     "rv32i/I-ENDIANESS-01","2010",
-    "rv32i/I-IO-01","2030",
+    "rv32i/I-IO-01","2030rv",
     "rv32i/I-JAL-01","3000",
     "rv32i/I-JALR-01","3000",
     "rv32i/I-LB-01","3020",
@@ -433,8 +338,7 @@ string tests32f[] = '{
     "rv32i/WALLY-CSRRC", "4000",
     "rv32i/WALLY-CSRRWI", "3000",
     "rv32i/WALLY-CSRRSI", "3000",
-    "rv32i/WALLY-CSRRCI", "3000",
-    "rv32i/WALLY-PIPELINE", "1a800"
+    "rv32i/WALLY-CSRRCI", "3000"
   };
 
   string testsBP64[] = '{
@@ -451,27 +355,26 @@ string tests32f[] = '{
     "rv64p/WALLY-MTVAL", "6000",
     "rv64p/WALLY-STVAL", "4000",
     "rv64p/WALLY-MTVEC", "2000",
+    "rv64p/WALLY-STVEC", "2000",
     "rv64p/WALLY-MARCHID", "4000",
     "rv64p/WALLY-MIMPID", "4000",
     "rv64p/WALLY-MHARTID", "4000",
-    "rv64p/WALLY-MVENDORID", "4000",
-    "rv64p/WALLY-MIE", "3000",
-    "rv64p/WALLY-MEDELEG", "4000"
+    "rv64p/WALLY-MVENDORID", "4000"
   };
 
   string tests32p[] = '{
-    "rv32p/WALLY-MCAUSE", "4000",
-    "rv32p/WALLY-SCAUSE", "3000",
-    "rv32p/WALLY-MEPC", "5000",
-    "rv32p/WALLY-SEPC", "4000",
-    "rv32p/WALLY-MTVAL", "5000",
-    "rv32p/WALLY-STVAL", "4000",
-    "rv32p/WALLY-MARCHID", "4000",
-    "rv32p/WALLY-MIMPID", "4000",
-    "rv32p/WALLY-MHARTID", "4000",
-    "rv32p/WALLY-MVENDORID", "4000"
-    //"rv32p/WALLY-MEDELEG", "4000" // all 32 bit tests are currently failing, so haven't been able to confirm this test works yet. It should, though.
-    //"rv32p/WALLY-MTVEC", "2000" // all 32 bit tests are currently failing, so haven't been able to confirm this test works yet. It should, though.
+    // "rv32p/WALLY-MCAUSE", "4000",
+    // "rv32p/WALLY-SCAUSE", "3000",
+    // "rv32p/WALLY-MEPC", "5000",
+    // "rv32p/WALLY-SEPC", "4000",
+    // "rv32p/WALLY-MTVAL", "5000",
+    // "rv32p/WALLY-STVAL", "4000",
+    // "rv32p/WALLY-MARCHID", "4000",
+    // "rv32p/WALLY-MIMPID", "4000",
+    // "rv32p/WALLY-MHARTID", "4000",
+    // "rv32p/WALLY-MVENDORID", "4000"
+    // "rv32p/WALLY-MTVEC", "2000",
+    // "rv32p/WALLY-STVEC", "2000"
   };
 
   string tests64periph[] = '{
@@ -526,7 +429,7 @@ string tests32f[] = '{
       if (TESTSPERIPH) begin 
         tests = tests32periph;
       end else begin
-          tests = {tests32i, tests32p, tests32periph};
+          tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
@@ -603,7 +506,7 @@ string tests32f[] = '{
         $display("Code ended with ecall with gp = 1");
         #60; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
-        for(i=0; i<MAXSIGLEN; i=i+1) begin
+        for(i=0; i<SIGNATURESIZE; i=i+1) begin
           sig32[i] = 'bx;
         end
 
@@ -611,7 +514,7 @@ string tests32f[] = '{
         signame = {"../../imperas-riscv-tests/work/", tests[test], ".signature.output"};
         $readmemh(signame, sig32);
         i = 0;
-        while (i < MAXSIGLEN) begin
+        while (i < SIGNATURESIZE) begin
           if (`XLEN == 32) begin
             signature[i] = sig32[i];
             i = i+1;
@@ -716,13 +619,11 @@ module instrNameDecTB(
   logic [2:0] funct3;
   logic [6:0] funct7;
   logic [11:0] imm;
-  logic [4:0] rs2;
 
   assign op = instr[6:0];
   assign funct3 = instr[14:12];
   assign funct7 = instr[31:25];
   assign imm = instr[31:20];
-  assign rs2 = instr[24:20];
 
   // it would be nice to add the operands to the name 
   // create another variable called decoded
@@ -846,67 +747,6 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b11100) name = "AMOMAXU.D";
                        else                              name = "ILLEGAL";
       10'b0001111_???: name = "FENCE";
-      10'b1000011_???: name = "FMADD";
-      10'b1000111_???: name = "FMSUB";
-      10'b1001011_???: name = "FNMSUB";
-      10'b1001111_???: name = "FNMADD";
-      10'b1010011_000: if      (funct7[6:2] == 5'b00000) name = "FADD";
-                       else if (funct7[6:2] == 5'b00001) name = "FSUB";
-                       else if (funct7[6:2] == 5'b00010) name = "FMUL";
-                       else if (funct7[6:2] == 5'b00011) name = "FDIV";
-                       else if (funct7[6:2] == 5'b01011) name = "FSQRT";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
-                       else if (funct7 == 7'b1110000 && rs2 == 5'b00000) name = "FMV.X.W";
-                       else if (funct7 == 7'b1111000 && rs2 == 5'b00000) name = "FMV.W.X";
-                       else if (funct7 == 7'b1110001 && rs2 == 5'b00000) name = "FMV.X.W"; // DOUBLE
-                       else if (funct7 == 7'b1111001 && rs2 == 5'b00000) name = "FMV.W.X"; // DOUBLE
-                       else if (funct7[6:2] == 5'b00100) name = "FSGNJ";
-                       else if (funct7[6:2] == 5'b00101) name = "FMIN";
-                       else if (funct7[6:2] == 5'b10100) name = "FLE";
-                       else                              name = "ILLEGAL";
-      10'b1010011_001: if      (funct7[6:2] == 5'b00000) name = "FADD";
-                       else if (funct7[6:2] == 5'b00001) name = "FSUB";
-                       else if (funct7[6:2] == 5'b00010) name = "FMUL";
-                       else if (funct7[6:2] == 5'b00011) name = "FDIV";
-                       else if (funct7[6:2] == 5'b01011) name = "FSQRT";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
-                       else if (funct7[6:2] == 5'b00100) name = "FSGNJN";
-                       else if (funct7[6:2] == 5'b00101) name = "FMAX";
-                       else if (funct7[6:2] == 5'b10100) name = "FLT";
-                       else if (funct7[6:2] == 5'b11100) name = "FCLASS";
-                       else                              name = "ILLEGAL";
-      10'b0101111_010: if      (funct7[6:2] == 5'b00000) name = "FADD";
-                       else if (funct7[6:2] == 5'b00001) name = "FSUB";
-                       else if (funct7[6:2] == 5'b00010) name = "FMUL";
-                       else if (funct7[6:2] == 5'b00011) name = "FDIV";
-                       else if (funct7[6:2] == 5'b01011) name = "FSQRT";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
-                       else if (funct7[6:2] == 5'b00100) name = "FSGNJX";
-                       else if (funct7[6:2] == 5'b10100) name = "FEQ";
-                       else                              name = "ILLEGAL";
-      10'b1010011_???: if      (funct7[6:2] == 5'b00000) name = "FADD";
-                       else if (funct7[6:2] == 5'b00001) name = "FSUB";
-                       else if (funct7[6:2] == 5'b00010) name = "FMUL";
-                       else if (funct7[6:2] == 5'b00011) name = "FDIV";
-                       else if (funct7[6:2] == 5'b01011) name = "FSQRT";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
-                       else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
-                       else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
-                       else                              name = "ILLEGAL";
-      10'b0000111_010: name = "FLW";
-      10'b0100111_010: name = "FSW";
-      10'b0000111_010: name = "FLD";
-      10'b0100111_010: name = "FSD";
       default:         name = "ILLEGAL";
     endcase
 endmodule
