@@ -38,13 +38,8 @@ module testbench();
   parameter SIGNATURESIZE = 5000000;
 
   int test, i, errors, totalerrors;
-<<<<<<< HEAD
-  logic [31:0] sig32[0:SIGNATURESIZE];
-  logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
-=======
   logic [31:0] sig32[0:MAXSIGLEN];
   logic [`XLEN-1:0] signature[0:MAXSIGLEN];
->>>>>>> 8ba2d3f3f5386454804de1a4036360b1c2c32bc0
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
