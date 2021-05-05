@@ -43,6 +43,8 @@ def writeVectors(storecmd):
   # Supervisor Software Interrupt: True, 1
   # Machine Software Interrupt: True, 2
 
+  writeTest(storecmd, f, r, "timer-interrupt", True, -1) # code determined inside of writeTest
+
   # User external input: True, 8
   # Supervisor external input: True, 9
   # Machine externa input: True, 11
@@ -92,13 +94,85 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
   global testMode
   global isInterrupts
 
+  beforeTest = ""
+
   if interrupt != isInterrupts:
     return
   
+  isTimerInterruptTest = test == "timer-interrupt"
   delegateType = "i" if interrupt else "e"
   for mode in (["m", "s", "u"] if testMode == "m" else ["s", "u"]):
+    if isTimerInterruptTest:
+      clintAddr = "0x2004000"
 
-    if test == "ecall":
+      if mode == "m":
+        code = 7
+        test = f"""
+          la x18, {clintAddr}
+          {storecmd} x0, 0(x18)
+        """
+
+      elif mode == "s":
+        code = 5
+        test = ""
+      else:
+        code = 4
+        test = ""
+
+      ieMask = 1 << code
+      statusMask = 0b1010
+
+      beforeTest = f"""
+        li x1, {statusMask}
+        csrrs x0, mstatus, x1
+
+        li x1, 0b0010
+        csrrs x0, sstatus, x1
+
+        la x18, {clintAddr}
+        lw x11, 0(x18)
+        li x1, 0x7fffffffffffffff
+        {storecmd} x1, 0(x18)
+
+        li x1, {ieMask}
+        csrrs x0, mie, x1
+
+        li x1, {ieMask}
+        csrrs x0, sie, x1
+      """
+
+      resetHander = f"""
+        #li x1, 0x80
+        #csrrc x0, sie, x1
+
+        li x1, {ieMask}
+        csrrc x0, mie, x1
+
+        li x1, {ieMask}
+        csrrc x0, sie, x1
+
+        li x1, {statusMask}
+        csrrc x0, mstatus, x1
+
+        li x1, 0b0010
+        csrrc x0, sstatus, x1
+
+        la x18, {clintAddr}
+        {storecmd} x11, 0(x18)
+      """
+
+      if mode == "s":
+        beforeTest += f"""
+          li x1, {ieMask}
+          csrrs x0, sip, x1
+        """
+
+        resetHander += f"""
+          li x1, {ieMask}
+          csrrc x0, sip, x1
+        """
+
+    elif test == "ecall":
       if mode == "m":
         code = 11
       elif mode == "s":
@@ -121,6 +195,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
         j _j_test_{labelSuffix}
 
         _j_m_trap_{labelSuffix}:
+        {resetHander}
         li x25, 3
 
         csrr x1, mepc
@@ -130,6 +205,7 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
         mret
 
         _j_s_trap_{labelSuffix}:
+        {resetHander}
         li x25, 1
 
         csrr x1, sepc
@@ -150,10 +226,11 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
         csrw m{delegateType}deleg, x1
       """
 
-      lines = original + "\n" + test
       if mode != "m":
         lines = f"""
           {original}
+
+          {beforeTest}
 
           li x1, 0b110000000000
           csrrc x28, {testMode}status, x1
@@ -176,6 +253,11 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
         """)
 
       else:
+        lines = f"""
+          {original}
+          {beforeTest}
+          {test}
+        """
         writeTestInner(storecmd, f, r, lines, 3)
 
       f.write(f"""
