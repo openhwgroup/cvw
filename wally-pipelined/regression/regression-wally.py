@@ -74,6 +74,10 @@ def main():
     """Run the tests and count the failures"""
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at 12 concurrent processes to not overwhelm the system
+    try:
+        os.mkdir("regression_logs")
+    except:
+        pass
     pool = multiprocessing.Pool(min(len(configs), 12))
     # Count the number of failures
     num_fail = sum(pool.map(run_test_case, configs))
