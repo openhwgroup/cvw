@@ -17,23 +17,23 @@
 onbreak {resume}
 
 # create library
-if [file exists work-busybear] {
-    vdel -all -lib work-busybear
+if [file exists work_busybear] {
+    vdel -all -lib work_busybear
 }
-vlib work-busybear
+vlib work_busybear
 
 # compile source files
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog +incdir+../config/busybear ../testbench/testbench-busybear.sv ../src/*/*.sv -suppress 2583
+vlog -work work_busybear +incdir+../config/busybear ../testbench/testbench-busybear.sv ../src/*/*.sv -suppress 2583
 
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt work.testbench -o workopt 
+vopt work_busybear.testbench -o workopt_busybear
 
-vsim workopt -suppress 8852,12070
+vsim workopt_busybear -suppress 8852,12070
 
 run -all
 quit
