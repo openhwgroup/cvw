@@ -120,7 +120,7 @@ module wallypipelinedhart (
   logic             ICacheStallF;
   logic [`XLEN-1:0] MMUPAdr, MMUReadPTE;
   logic             MMUStall;
-  logic             MMUTranslate, MMUTranslationComplete, MMUReady;
+  logic             MMUTranslate, MMUReady;
 
   // bus interface to dmem
   logic             MemReadM, MemWriteM;
