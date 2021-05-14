@@ -130,7 +130,7 @@ module pagetablewalker (
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
                   else if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
-                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** If you test the above line, delete this line
+                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
                   else                             NextWalkerState = FAULT;
           LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
@@ -226,7 +226,7 @@ module pagetablewalker (
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
                   else if (ValidPTE && LeafPTE && ~BadGigapage) NextWalkerState = LEAF;
-                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** If you test the above line, delete this line
+                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL1;
                   else                             NextWalkerState = FAULT;
           LEVEL1: if      (~MMUReady)              NextWalkerState = LEVEL1;
@@ -235,7 +235,7 @@ module pagetablewalker (
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
                   else if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
-                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** If you test the above line, delete this line
+                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
                   else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
                   else                             NextWalkerState = FAULT;
           LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
