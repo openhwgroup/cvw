@@ -71,7 +71,7 @@ module pmpadrdec (
   generate
     if (`XLEN == 32 || `XLEN == 64) begin
       // priority encoder to translate address to range
-      // *** We'd like to replace this with a 
+      // *** We'd like to replace this with a better priority encoder
       // *** We should not be truncating 64 bit physical addresses to 32 bits...
       always_comb
         casez (CurrentPMPAdr[31:0])

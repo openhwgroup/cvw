@@ -129,6 +129,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign Translate = SvMode & (PrivilegeModeW != `M_MODE);
 
   // Determine how the TLB is currently being used
+  // Note that we use ReadAccess for both loads and instruction fetches
   assign ReadAccess = TLBAccessType[1];
   assign WriteAccess = TLBAccessType[0];
   assign TLBAccess = ReadAccess || WriteAccess;
@@ -179,7 +180,6 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // *** Not the cleanest solution.
   // The highest segment of the physical page number has some extra bits
   // than the highest segment of the virtual page number.
   localparam EXTRA_PHYSICAL_BITS = `PPN_HIGH_SEGMENT_BITS - `VPN_SEGMENT_BITS;
