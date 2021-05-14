@@ -150,17 +150,6 @@ module pmpchecker (
                                   Match && L_Bit && InvalidRead :
                                   EnforcePMP && InvalidRead;
 
-/*
-  assign PMPInstrAccessFaultF = 1'b0;
-  assign PMPStoreAccessFaultM = 1'b0;
-  assign PMPLoadAccessFaultM  =  1'b0;
-*/
-
-  /*
-  If no PMP entry matches an M-mode access, the access succeeds. If no PMP entry matches an
-S-mode or U-mode access, but at least one PMP entry is implemented, the access fails.
-*/
-
   assign PMPSquashBusAccess = PMPInstrAccessFaultF || PMPLoadAccessFaultM || PMPStoreAccessFaultM;
 
 endmodule

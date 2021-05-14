@@ -54,7 +54,7 @@ module ahblite (
   // Signals from MMU
   input  logic             MMUStall,
   input  logic [`XLEN-1:0] MMUPAdr,
-  input  logic             MMUTranslate, MMUTranslationComplete,
+  input  logic             MMUTranslate,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Signals from PMA checker
