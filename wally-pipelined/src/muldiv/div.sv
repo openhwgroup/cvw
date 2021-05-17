@@ -29,6 +29,7 @@
 /* verilator lint_off COMBDLY */
 /* verilator lint_off IMPLICIT */
 
+`include "wally-config.vh"
 
 module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start);
 
