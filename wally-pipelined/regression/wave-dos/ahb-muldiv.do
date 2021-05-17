@@ -6,12 +6,13 @@ add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
 
+# new
 #add wave /testbench/dut/hart/ebu/IReadF
-add wave -noupdate -divider -height 32 "Stalls"
 add wave /testbench/dut/hart/DataStall
-add wave /testbench/dut/hart/InstrStall
+add wave /testbench/dut/hart/ICacheStallF
 add wave /testbench/dut/hart/StallF
 add wave /testbench/dut/hart/StallD
+
 add wave /testbench/dut/hart/StallE
 add wave /testbench/dut/hart/StallM
 add wave /testbench/dut/hart/StallW
@@ -28,27 +29,15 @@ add wave -hex /testbench/dut/hart/mdu/genblk1/div/fsm1/CURRENT_STATE
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/fsm1/NEXT_STATE
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/*
 
-
-
 add wave -noupdate -divider -height 32 "RF"
 add wave -hex /testbench/dut/hart/ieu/dp/regf/*
 add wave -hex /testbench/dut/hart/ieu/dp/regf/rf
-
 
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
-
 add wave /testbench/InstrDName
-add wave -hex /testbench/dut/hart/ifu/ic/InstrRawD
-add wave -hex /testbench/dut/hart/ifu/ic/AlignedInstrD
-add wave -divider
-add wave -hex /testbench/dut/hart/ifu/ic/InstrPAdrF
-add wave /testbench/dut/hart/ifu/ic/DelayF
-add wave /testbench/dut/hart/ifu/ic/DelaySideF
-add wave /testbench/dut/hart/ifu/ic/DelayD
-add wave -hex /testbench/dut/hart/ifu/ic/MisalignedHalfInstrD
 add wave -divider
 
 add wave -hex /testbench/dut/hart/ifu/PCE
@@ -79,7 +68,6 @@ add wave -hex /testbench/dut/hart/ebu/HRDATA
 add wave -hex /testbench/dut/hart/ebu/HWRITE
 add wave -hex /testbench/dut/hart/ebu/HWDATA
 add wave -hex /testbench/dut/hart/ebu/CaptureDataM
-add wave -hex /testbench/dut/hart/ebu/InstrStall
 add wave -divider
 
 add wave -hex /testbench/dut/uncore/dtim/*
@@ -97,13 +85,11 @@ add wave -divider
 add wave -hex /testbench/dut/uncore/dtim/*
 add wave -divider
 
-add wave -hex -r /testbench/*
-
 # appearance
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {100 ps}
-configure wave -namecolwidth 250
-configure wave -valuecolwidth 150
+configure wave -namecolwidth 350
+configure wave -valuecolwidth 250
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10

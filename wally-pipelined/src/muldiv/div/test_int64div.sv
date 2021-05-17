@@ -60,8 +60,8 @@ module tb;
 	#0  start = 1'b0;	
 	#0  reset = 1'b1;
 	#22 reset = 1'b0;	
-	#25 N = 64'h10fd_3ded_adea_5195;
-	#0  D = 64'hdf7f_3844_121b_cc23;	
+	#25 N = 64'hffff_ffff_ffff_ffff;
+	#0  D = 64'h0000_0000_0000_0000;
 	#0  start = 1'b1;
 	#50 start = 1'b0;	
 

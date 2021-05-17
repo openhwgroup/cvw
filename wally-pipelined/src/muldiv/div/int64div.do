@@ -70,6 +70,8 @@ add wave -hex /tb/dut/N
 add wave -hex /tb/dut/D
 add wave -hex /tb/dut/reset
 add wave -hex /tb/dut/start
+add wave -hex /tb/dut/Qf
+add wave -hex /tb/dut/remf
 add wave -hex /tb/dut/Q
 add wave -hex /tb/dut/rem0
 add wave -hex /tb/dut/div0
@@ -99,8 +101,8 @@ add wave -hex -r /tb/dut/p3/*
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {75 ns}
-configure wave -namecolwidth 150
-configure wave -valuecolwidth 100
+configure wave -namecolwidth 350
+configure wave -valuecolwidth 200
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -109,6 +111,6 @@ configure wave -rowmargin 4
 configure wave -childrowmargin 2
 
 -- Run the Simulation
-run 338ns
+run 538ns
 
 

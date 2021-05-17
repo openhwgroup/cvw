@@ -1,0 +1,948 @@
+do wally-pipelined-batch-muldiv.do ../config/rv64imc rv64imc
+# Model Technology ModelSim SE-64 vlog 10.7e Compiler 2019.06 May 30 2019
+# Start time: 08:48:17 on May 17,2021
+# vlog -work work_rv64imc "+incdir+../config/rv64imc" ../testbench/testbench-imperas-div.sv ../src/cache/cache-sram.sv ../src/cache/dmapped.sv ../src/cache/sram1rw.sv ../src/dmem/dcache.sv ../src/dmem/dmem.sv ../src/ebu/ahblite.sv ../src/ebu/amoalu.sv ../src/ebu/subwordread.sv ../src/fpu/add.sv ../src/fpu/adder.sv ../src/fpu/align.sv ../src/fpu/bk128.sv ../src/fpu/bk13.sv ../src/fpu/bk14.sv ../src/fpu/bk15.sv ../src/fpu/black_gray_cells.sv ../src/fpu/booth.sv ../src/fpu/cla12.sv ../src/fpu/cla52.sv ../src/fpu/cla64.sv ../src/fpu/compressors.sv ../src/fpu/convert_inputs.sv ../src/fpu/convert_inputs_div.sv ../src/fpu/csa.sv ../src/fpu/divconv.sv ../src/fpu/exception.sv ../src/fpu/exception_div.sv ../src/fpu/expgen1.sv ../src/fpu/expgen2.sv ../src/fpu/fctrl.sv ../src/fpu/flag1.sv ../src/fpu/flag2.sv ../src/fpu/fma1.sv ../src/fpu/fma2.sv ../src/fpu/fpadd_denorm.sv ../src/fpu/fpdiv.sv ../src/fpu/fpu.sv ../src/fpu/fpuaddcvt1.sv ../src/fpu/fpuaddcvt2.sv ../src/fpu/fpucmp1.sv ../src/fpu/fpucmp2.sv ../src/fpu/freg.sv ../src/fpu/fsgn.sv ../src/fpu/fsm.sv ../src/fpu/ldf128.sv ../src/fpu/ldf64.sv ../src/fpu/ling_bk13.sv ../src/fpu/lza.sv ../src/fpu/lzd_denorm.sv ../src/fpu/mult_R4_64_64_cs.sv ../src/fpu/multiply.sv ../src/fpu/normalize.sv ../src/fpu/round.sv ../src/fpu/rounder_denorm.sv ../src/fpu/rounder_div.sv ../src/fpu/sbtm.sv ../src/fpu/sbtm2.sv ../src/fpu/sbtm_a0.sv ../src/fpu/sbtm_a1.sv ../src/fpu/sbtm_a2.sv ../src/fpu/sbtm_a3.sv ../src/fpu/sbtm_a4.sv ../src/fpu/shifter_denorm.sv ../src/fpu/sign.sv ../src/fpu/sk14.sv ../src/fpu/special.sv ../src/generic/flop.sv ../src/generic/mux.sv ../src/hazard/hazard.sv ../src/ieu/alu.sv ../src/ieu/controller.sv ../src/ieu/datapath.sv ../src/ieu/extend.sv ../src/ieu/forward.sv ../src/ieu/ieu.sv ../src/ieu/regfile.sv ../src/ieu/shifter.sv ../src/ifu/BTBPredictor.sv ../src/ifu/RAsPredictor.sv ../src/ifu/SramModel.sv ../src/ifu/bpred.sv ../src/ifu/decompress.sv ../src/ifu/globalHistoryPredictor.sv ../src/ifu/gshare.sv ../src/ifu/icache.sv ../src/ifu/icacheMem.sv ../src/ifu/ifu.sv ../src/ifu/localHistoryPredictor.sv ../src/ifu/satCounter2.sv ../src/ifu/twoBitPredictor.sv ../src/mmu/cam_line.sv ../src/mmu/decoder.sv ../src/mmu/page_number_mixer.sv ../src/mmu/pagetablewalker.sv ../src/mmu/priority_encoder.sv ../src/mmu/tlb.sv ../src/mmu/tlb_cam.sv ../src/mmu/tlb_lru.sv ../src/mmu/tlb_ram.sv ../src/muldiv/div.sv ../src/muldiv/mul.sv ../src/muldiv/muldiv.sv ../src/privileged/csr.sv ../src/privileged/csrc.sv ../src/privileged/csri.sv ../src/privileged/csrm.sv ../src/privileged/csrn.sv ../src/privileged/csrs.sv ../src/privileged/csrsr.sv ../src/privileged/csru.sv ../src/privileged/pmachecker.sv ../src/privileged/pmpadrdec.sv ../src/privileged/pmpchecker.sv ../src/privileged/privdec.sv ../src/privileged/privileged.sv ../src/privileged/trap.sv ../src/uncore/adrdec.sv ../src/uncore/clint.sv ../src/uncore/dtim.sv ../src/uncore/gpio.sv ../src/uncore/imem.sv ../src/uncore/plic.sv ../src/uncore/subwordwrite.sv ../src/uncore/uart.sv ../src/uncore/uartPC16550D.sv ../src/uncore/uncore.sv ../src/wally/wallypipelinedhart.sv ../src/wally/wallypipelinedsoc.sv -suppress 2583 
+# -- Compiling module testbench
+# ** Warning: ../testbench/testbench-imperas-div.sv(63): (vlog-2737) '{ }' may only be used with a queue.
+# ** Warning: ../testbench/testbench-imperas-div.sv(221): (vlog-2737) '{ }' may only be used with a queue.
+# ** Warning: ../testbench/testbench-imperas-div.sv(368): (vlog-2737) '{ }' may only be used with a queue.
+# ** Warning: ../testbench/testbench-imperas-div.sv(392): (vlog-2737) '{ }' may only be used with a queue.
+# -- Compiling module instrTrackerTB
+# -- Compiling module instrNameDecTB
+# -- Compiling module Sram1Read1Write
+# -- Compiling module rodirectmappedmem
+# -- Compiling module wtdirectmappedmem
+# -- Compiling module sram1rw
+# -- Compiling module dcache
+# -- Compiling module dcachecontroller
+# -- Compiling module dmem
+# -- Compiling package ahbliteState
+# -- Compiling module ahblite
+# -- Importing package ahbliteState
+# -- Compiling module amoalu
+# -- Compiling module subwordread
+# -- Compiling module add
+# -- Compiling module INVBLOCK
+# -- Compiling module XXOR1
+# -- Compiling module BLOCK0
+# -- Compiling module BLOCK1
+# -- Compiling module BLOCK2
+# -- Compiling module BLOCK1A
+# -- Compiling module BLOCK2A
+# -- Compiling module PRESTAGE_64
+# -- Compiling module DBLC_0_64
+# -- Compiling module DBLC_1_64
+# -- Compiling module DBLC_2_64
+# -- Compiling module DBLC_3_64
+# -- Compiling module DBLC_4_64
+# -- Compiling module DBLC_5_64
+# -- Compiling module XORSTAGE_64
+# -- Compiling module DBLCTREE_64
+# -- Compiling module DBLCADDER_64_64
+# -- Compiling module align
+# -- Compiling module bk128
+# -- Compiling module brent_kung_cs128
+# -- Compiling module bk13
+# -- Compiling module brent_kung_cs13
+# -- Compiling module bk14
+# -- Compiling module brent_kung14
+# -- Compiling module bk15
+# -- Compiling module kogge_stone
+# -- Compiling module black
+# -- Compiling module grey
+# -- Compiling module rblk
+# -- Compiling module rgry
+# -- Compiling module booth
+# -- Compiling module cla12
+# -- Compiling module cla_sub12
+# -- Compiling module cla52
+# -- Compiling module cla_sub52
+# -- Compiling module cla64
+# -- Compiling module cla_sub64
+# -- Compiling module convert_inputs
+# -- Compiling module convert_inputs_div
+# -- Compiling module ha
+# -- Compiling module FA_array
+# -- Compiling module HA_array
+# -- Compiling module divconv
+# -- Compiling module exception
+# -- Compiling module exception_div
+# -- Compiling module expgen1
+# -- Compiling module expgen2
+# -- Compiling module fctrl
+# -- Compiling module flag1
+# -- Compiling module flag2
+# -- Compiling module fma1
+# -- Compiling module fma2
+# -- Compiling module fpadd
+# -- Compiling module fpdiv
+# -- Compiling module exp_add
+# -- Compiling module brent_kung
+# -- Compiling module fpu
+# -- Compiling module fpuaddcvt1
+# -- Compiling module fpuaddcvt2
+# -- Compiling module fpucmp1
+# -- Compiling module magcompare2c
+# -- Compiling module magcompare64b_1
+# -- Compiling module exception_cmp_1
+# -- Compiling module fpucmp2
+# -- Compiling module magcompare64b_2
+# -- Compiling module exception_cmp_2
+# -- Compiling module freg1adr
+# -- Compiling module freg2adr
+# -- Compiling module freg3adr
+# -- Compiling module fpusgn
+# -- Compiling module fsm
+# -- Compiling module ldf128
+# -- Compiling module ladner_fischer128
+# -- Compiling module ldf64
+# -- Compiling module ladner_fischer64
+# -- Compiling module ling_bk13
+# -- Compiling module ling_brent_kung
+# -- Compiling module lza
+# -- Compiling module lz52
+# -- Compiling module mult64
+# -- Compiling module multiplier
+# -- Compiling module aaoi
+# -- Compiling module halfAdd
+# -- Compiling module r4bs
+# -- Compiling module r4be
+# -- Compiling module fullAdd_xc
+# -- Compiling module maj
+# -- Compiling module fourtwo_x
+# -- Compiling module inverter
+# -- Compiling module buffer
+# -- Compiling module subxor
+# -- Compiling module xnor2
+# -- Compiling module xor2
+# -- Compiling module xor3
+# -- Compiling module xor3c
+# -- Compiling module fullAdd_x
+# -- Compiling module nand2
+# -- Compiling module nand3
+# -- Compiling module and3
+# -- Compiling module and2
+# -- Compiling module nor2
+# -- Compiling module or2
+# -- Compiling module nor3
+# -- Compiling module nand5
+# -- Compiling module and5
+# -- Compiling module nand4
+# -- Compiling module and4
+# -- Compiling module oai
+# -- Compiling module aoi
+# -- Compiling module min
+# -- Compiling module sum_b
+# -- Compiling module fullAdd_i
+# -- Compiling module fullAdd
+# -- Compiling module blackCell
+# -- Compiling module grayCell
+# -- Compiling module multiply
+# -- Compiling module normalize
+# -- Compiling module round
+# -- Compiling module rounder
+# -- Compiling module rounder_div
+# -- Compiling module sbtm
+# -- Compiling module sbtm2
+# -- Compiling module sbtm_a0
+# -- Compiling module sbtm_a1
+# -- Compiling module sbtm_a2
+# -- Compiling module sbtm_a3
+# -- Compiling module sbtm_a4
+# -- Compiling module mux21x57
+# -- Compiling module mux21x64
+# -- Compiling module barrel_shifter_l64
+# -- Compiling module barrel_shifter_r57
+# -- Compiling module barrel_shifter_r64
+# -- Compiling module sign
+# -- Compiling module sk14
+# -- Compiling module sklansky
+# -- Compiling module special
+# -- Compiling module flop
+# -- Compiling module flopr
+# -- Compiling module flopen
+# -- Compiling module flopenrc
+# -- Compiling module flopenr
+# -- Compiling module flopenl
+# -- Compiling module floprc
+# -- Compiling module mux2
+# -- Compiling module mux3
+# -- Compiling module mux4
+# -- Compiling module mux5
+# -- Compiling module mux6
+# -- Compiling module hazard
+# -- Compiling module alu
+# -- Compiling module controller
+# -- Compiling module datapath
+# -- Compiling module extend
+# -- Compiling module forward
+# -- Compiling module ieu
+# -- Compiling module regfile
+# -- Compiling module shifter
+# -- Compiling module BTBPredictor
+# -- Compiling module RASPredictor
+# -- Compiling module SRAM2P1R1W
+# -- Compiling module bpred
+# -- Compiling module decompress
+# -- Compiling module globalHistoryPredictor
+# -- Compiling module gsharePredictor
+# -- Compiling module icache
+# -- Compiling module icachecontroller
+# -- Compiling module rodirectmappedmemre
+# -- Compiling module ifu
+# -- Compiling module localHistoryPredictor
+# -- Compiling module satCounter2
+# -- Compiling module twoBitPredictor
+# -- Compiling module cam_line
+# -- Compiling module decoder
+# -- Compiling module page_number_mixer
+# -- Compiling module pagetablewalker
+# -- Compiling module priority_encoder
+# -- Compiling module tlb
+# -- Compiling module tlb_cam
+# -- Compiling module tlb_lru
+# -- Compiling module tlb_ram
+# -- Compiling module div
+# -- Compiling module divide4x64
+# -- Compiling module ls_control
+# -- Compiling module otf
+# -- Compiling module adder
+# -- Compiling module fa
+# -- Compiling module csa
+# -- Compiling module eqcmp
+# -- Compiling module qst4
+# -- Compiling module lz2
+# -- Compiling module lz4
+# -- Compiling module lz8
+# -- Compiling module lz16
+# -- Compiling module lz32
+# -- Compiling module lz64
+# -- Compiling module fsm64
+# -- Compiling module magcompare2b
+# -- Compiling module magcompare8
+# -- Compiling module shifter_l64
+# -- Compiling module shifter_r64
+# -- Compiling module shifter_l32
+# -- Compiling module shifter_r32
+# -- Compiling module mul
+# -- Compiling module muldiv
+# -- Compiling module csr
+# -- Compiling module csrc
+# -- Compiling module csri
+# -- Compiling module csrm
+# -- Compiling module csrn
+# -- Compiling module csrs
+# -- Compiling module csrsr
+# -- Compiling module csru
+# -- Compiling module pmachecker
+# -- Compiling module attributes
+# -- Compiling module pmpadrdec
+# -- Compiling module pmpchecker
+# -- Compiling module privdec
+# -- Compiling module privileged
+# -- Compiling module trap
+# -- Compiling module adrdec
+# -- Compiling module clint
+# -- Compiling module dtim
+# -- Compiling module gpio
+# -- Compiling module imem
+# -- Compiling module plic
+# -- Compiling module subwordwrite
+# -- Compiling module uart
+# -- Compiling module uartPC16550D
+# -- Compiling module uncore
+# -- Compiling module wallypipelinedhart
+# -- Compiling module wallypipelinedsoc
+# 
+# Top level modules:
+# 	testbench
+# 	rodirectmappedmem
+# 	dcache
+# 	bk128
+# 	bk13
+# 	bk14
+# 	booth
+# 	cla_sub52
+# 	FA_array
+# 	HA_array
+# 	fpadd
+# 	freg1adr
+# 	freg2adr
+# 	ling_bk13
+# 	mult64
+# 	fourtwo_x
+# 	nand2
+# 	nand3
+# 	and3
+# 	nor2
+# 	or2
+# 	nor3
+# 	nand5
+# 	and5
+# 	nand4
+# 	and4
+# 	oai
+# 	fullAdd
+# 	blackCell
+# 	sbtm_a4
+# 	barrel_shifter_r64
+# 	sk14
+# 	flopen
+# 	eqcmp
+# 	shifter_l32
+# 	shifter_r32
+# 	imem
+# End time: 08:48:17 on May 17,2021, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 4, Suppressed Warnings: 256
+# Model Technology ModelSim SE-64 vopt 10.7e Compiler 2019.06 May 30 2019
+# Start time: 08:48:17 on May 17,2021
+# vopt work_rv64imc.testbench -work work_rv64imc -o workopt_rv64imc 
+# 
+# Top level modules:
+# 	testbench
+# 
+# Analyzing design...
+# -- Loading module testbench
+# -- Loading module flopenr
+# -- Loading module wallypipelinedsoc
+# -- Loading module wallypipelinedhart
+# -- Loading module ifu
+# -- Loading module tlb
+# -- Loading module tlb_lru
+# -- Loading module decoder
+# -- Loading module priority_encoder
+# -- Loading module flopenrc
+# -- Loading module tlb_ram
+# -- Loading module tlb_cam
+# -- Loading module page_number_mixer
+# -- Loading module icache
+# -- Loading module rodirectmappedmemre
+# -- Loading module sram1rw
+# -- Loading module icachecontroller
+# -- Loading module flopr
+# -- Loading module flop
+# -- Loading module flopenl
+# -- Loading module mux2
+# -- Loading module decompress
+# -- Loading module ieu
+# -- Loading module controller
+# -- Loading module datapath
+# -- Loading module regfile
+# -- Loading module extend
+# -- Loading module mux3
+# -- Loading module alu
+# -- Loading module shifter
+# -- Loading module mux5
+# -- Loading module forward
+# -- Loading module dmem
+# -- Loading module ahblite
+# -- Importing package ahbliteState
+# -- Loading module subwordread
+# -- Loading module pagetablewalker
+# -- Loading module muldiv
+# -- Loading module hazard
+# -- Loading module privileged
+# -- Loading module privdec
+# -- Loading module csr
+# -- Loading module pmachecker
+# -- Loading module attributes
+# -- Loading module adrdec
+# -- Loading module pmpchecker
+# -- Loading module pmpadrdec
+# -- Loading module trap
+# -- Loading module fpu
+# -- Loading module fctrl
+# -- Loading module freg3adr
+# -- Loading module fma1
+# -- Loading module multiply
+# -- Loading module align
+# -- Loading module expgen1
+# -- Loading module special
+# -- Loading module flag1
+# -- Loading module fpdiv
+# -- Loading module convert_inputs_div
+# -- Loading module exception_div
+# -- Loading module csa
+# -- Loading module exp_add
+# -- Loading module brent_kung
+# -- Loading module grey
+# -- Loading module black
+# -- Loading module divconv
+# -- Loading module sbtm
+# -- Loading module sbtm_a0
+# -- Loading module sbtm_a1
+# -- Loading module bk15
+# -- Loading module kogge_stone
+# -- Loading module rgry
+# -- Loading module rblk
+# -- Loading module sbtm2
+# -- Loading module sbtm_a2
+# -- Loading module sbtm_a3
+# -- Loading module mux6
+# -- Loading module multiplier
+# -- Loading module buffer
+# -- Loading module r4be
+# -- Loading module inverter
+# -- Loading module r4bs
+# -- Loading module aaoi
+# -- Loading module xnor2
+# -- Loading module halfAdd
+# -- Loading module and2
+# -- Loading module xor2
+# -- Loading module subxor
+# -- Loading module fullAdd_x
+# -- Loading module xor3c
+# -- Loading module maj
+# -- Loading module min
+# -- Loading module xor3
+# -- Loading module ldf128
+# -- Loading module ladner_fischer128
+# -- Loading module ldf64
+# -- Loading module ladner_fischer64
+# -- Loading module fsm
+# -- Loading module rounder_div
+# -- Loading module fpuaddcvt1
+# -- Loading module convert_inputs
+# -- Loading module exception
+# -- Loading module lz52
+# -- Loading module lz32
+# -- Loading module lz16
+# -- Loading module lz8
+# -- Loading module lz2
+# -- Loading module lz4
+# -- Loading module barrel_shifter_r57
+# -- Loading module mux21x57
+# -- Loading module cla64
+# -- Loading module DBLCADDER_64_64
+# -- Loading module PRESTAGE_64
+# -- Loading module BLOCK0
+# -- Loading module INVBLOCK
+# -- Loading module DBLCTREE_64
+# -- Loading module DBLC_0_64
+# -- Loading module BLOCK1A
+# -- Loading module BLOCK1
+# -- Loading module DBLC_1_64
+# -- Loading module BLOCK2A
+# -- Loading module BLOCK2
+# -- Loading module DBLC_2_64
+# -- Loading module DBLC_3_64
+# -- Loading module DBLC_4_64
+# -- Loading module DBLC_5_64
+# -- Loading module XORSTAGE_64
+# -- Loading module XXOR1
+# -- Loading module cla_sub64
+# -- Loading module fpucmp1
+# -- Loading module magcompare64b_1
+# -- Loading module magcompare2b
+# -- Loading module magcompare2c
+# -- Loading module exception_cmp_1
+# -- Loading module fpusgn
+# -- Loading module fma2
+# -- Loading module add
+# -- Loading module lza
+# -- Loading module normalize
+# -- Loading module round
+# -- Loading module expgen2
+# -- Loading module sign
+# -- Loading module flag2
+# -- Loading module fpuaddcvt2
+# -- Loading module lz64
+# -- Loading module barrel_shifter_l64
+# -- Loading module mux21x64
+# -- Loading module rounder
+# -- Loading module cla52
+# -- Loading module cla12
+# -- Loading module cla_sub12
+# -- Loading module fpucmp2
+# -- Loading module magcompare64b_2
+# -- Loading module exception_cmp_2
+# -- Loading module uncore
+# -- Loading module subwordwrite
+# -- Loading module dtim
+# -- Loading module clint
+# -- Loading module plic
+# -- Loading module gpio
+# -- Loading module uart
+# -- Loading module uartPC16550D
+# -- Loading module instrTrackerTB
+# -- Loading module instrNameDecTB
+# -- Loading module cam_line
+# -- Loading module bpred
+# -- Loading module BTBPredictor
+# -- Loading module SRAM2P1R1W
+# -- Loading module RASPredictor
+# -- Loading module satCounter2
+# -- Loading module amoalu
+# -- Loading module mul
+# -- Loading module div
+# -- Loading module shifter_l64
+# -- Loading module adder
+# -- Loading module fsm64
+# -- Loading module magcompare8
+# -- Loading module divide4x64
+# -- Loading module qst4
+# -- Loading module mux4
+# -- Loading module ls_control
+# -- Loading module otf
+# -- Loading module shifter_r64
+# -- Loading module csri
+# -- Loading module csrsr
+# -- Loading module csrc
+# -- Loading module csrm
+# -- Loading module csrs
+# -- Loading module csrn
+# -- Loading module csru
+# -- Loading module floprc
+# -- Loading module fa
+# -- Loading module gsharePredictor
+# Optimizing 250 design-units (inlining 28324/28336 module instances):
+# -- Inlining module buffer(fast)
+# -- Inlining module r4be(fast)
+# -- Inlining module inverter(fast)
+# -- Inlining module aaoi(fast)
+# -- Inlining module xnor2(fast)
+# -- Inlining module r4bs(fast)
+# -- Inlining module and2(fast)
+# -- Inlining module subxor(fast)
+# -- Inlining module xor2(fast)
+# -- Inlining module halfAdd(fast)
+# -- Inlining module xor3c(fast)
+# -- Inlining module min(fast)
+# -- Inlining module maj(fast)
+# -- Inlining module fullAdd_x(fast)
+# -- Inlining module xor3(fast)
+# -- Optimizing module multiplier(fast)
+# -- Inlining module flopenr(fast)
+# -- Inlining module flopenr(fast__1)
+# -- Inlining module decoder(fast)
+# -- Inlining module priority_encoder(fast)
+# -- Inlining module flopenrc(fast)
+# -- Inlining module tlb_lru(fast)
+# -- Inlining module tlb_ram(fast)
+# -- Inlining module flopenr(fast__2)
+# -- Inlining module flopenrc(fast__1)
+# -- Inlining module flopenr(fast__3)
+# -- Inlining module mux2(fast)
+# -- Inlining module page_number_mixer(fast)
+# -- Inlining module cam_line(fast)
+# -- Inlining module tlb_cam(fast)
+# -- Inlining module page_number_mixer(fast__1)
+# -- Inlining module mux2(fast__1)
+# -- Inlining module tlb(fast)
+# -- Inlining module sram1rw(fast)
+# -- Inlining module sram1rw(fast__1)
+# -- Inlining module rodirectmappedmemre(fast)
+# -- Inlining module flopr(fast)
+# -- Inlining module flopenr(fast__4)
+# -- Inlining module flopenr(fast__5)
+# -- Inlining module flopenr(fast__6)
+# -- Inlining module flop(fast)
+# -- Inlining module flopenl(fast)
+# -- Inlining module flopr(fast__1)
+# -- Inlining module mux2(fast__2)
+# -- Inlining module icachecontroller(fast)
+# -- Inlining module icache(fast)
+# -- Inlining module flopenl(fast__1)
+# -- Inlining module flopenrc(fast__2)
+# -- Inlining module decompress(fast)
+# -- Inlining module flopenrc(fast__3)
+# -- Inlining module flopenrc(fast__4)
+# -- Inlining module flopenr(fast__7)
+# -- Inlining module flopenr(fast__8)
+# -- Inlining module SRAM2P1R1W(fast)
+# -- Inlining module BTBPredictor(fast)
+# -- Inlining module flopenr(fast__9)
+# -- Inlining module RASPredictor(fast)
+# -- Inlining module flopenrc(fast__5)
+# -- Inlining module satCounter2(fast)
+# -- Inlining module SRAM2P1R1W(fast__1)
+# -- Inlining module flopr(fast__2)
+# -- Inlining module gsharePredictor(fast)
+# -- Inlining module bpred(fast)
+# -- Inlining module ifu(fast)
+# -- Inlining module flopenrc(fast__6)
+# -- Inlining module flopenrc(fast__7)
+# -- Inlining module controller(fast)
+# -- Inlining module regfile(fast)
+# -- Inlining module extend(fast)
+# -- Inlining module mux3(fast)
+# -- Inlining module shifter(fast)
+# -- Inlining module alu(fast)
+# -- Inlining module mux5(fast)
+# -- Inlining module datapath(fast)
+# -- Inlining module forward(fast)
+# -- Inlining module ieu(fast)
+# -- Inlining module tlb(fast__1)
+# -- Inlining module flopenrc(fast__8)
+# -- Inlining module dmem(fast)
+# -- Inlining module flopenl(fast__2)
+# -- Inlining module flop(fast__1)
+# -- Inlining module flop(fast__2)
+# -- Inlining module flop(fast__3)
+# -- Inlining module flopr(fast__3)
+# -- Inlining module subwordread(fast)
+# -- Inlining module amoalu(fast)
+# -- Inlining module ahblite(fast)
+# -- Inlining module flopenl(fast__3)
+# -- Inlining module pagetablewalker(fast)
+# -- Inlining module mul(fast)
+# -- Inlining module lz2(fast)
+# -- Inlining module lz4(fast)
+# -- Inlining module lz8(fast)
+# -- Inlining module lz16(fast)
+# -- Inlining module lz32(fast)
+# -- Inlining module lz64(fast)
+# -- Inlining module shifter_l64(fast)
+# -- Inlining module adder(fast)
+# -- Inlining module magcompare2b(fast)
+# -- Inlining module magcompare8(fast)
+# -- Inlining module fsm64(fast)
+# -- Inlining module mux2(fast__3)
+# -- Inlining module qst4(fast)
+# -- Inlining module mux4(fast)
+# -- Inlining module fa(fast)
+# -- Inlining module csa(fast)
+# -- Inlining module flopenr(fast__10)
+# -- Inlining module ls_control(fast)
+# -- Inlining module mux2(fast__4)
+# -- Inlining module flopenr(fast__11)
+# -- Inlining module otf(fast)
+# -- Inlining module adder(fast__1)
+# -- Inlining module divide4x64(fast)
+# -- Inlining module shifter_r64(fast)
+# -- Inlining module div(fast)
+# -- Inlining module flopenrc(fast__9)
+# -- Inlining module muldiv(fast)
+# -- Inlining module hazard(fast)
+# -- Inlining module flopenl(fast__4)
+# -- Inlining module privdec(fast)
+# -- Inlining module adrdec(fast)
+# -- Inlining module attributes(fast)
+# -- Inlining module pmachecker(fast)
+# -- Inlining module trap(fast)
+# -- Inlining module privileged(fast)
+# -- Inlining module fctrl(fast)
+# -- Inlining module floprc(fast)
+# -- Inlining module freg3adr(fast)
+# -- Inlining module multiply(fast)
+# -- Inlining module align(fast)
+# -- Inlining module expgen1(fast)
+# -- Inlining module special(fast)
+# -- Inlining module flag1(fast)
+# -- Inlining module fma1(fast)
+# -- Inlining module convert_inputs_div(fast)
+# -- Inlining module exception_div(fast)
+# -- Inlining module csa(fast__1)
+# -- Inlining module grey(fast)
+# -- Inlining module black(fast)
+# -- Inlining module brent_kung(fast)
+# -- Inlining module exp_add(fast)
+# -- Inlining module sbtm_a0(fast)
+# -- Inlining module sbtm_a1(fast)
+# -- Inlining module rgry(fast)
+# -- Inlining module rblk(fast)
+# -- Inlining module kogge_stone(fast)
+# -- Inlining module bk15(fast)
+# -- Inlining module sbtm(fast)
+# -- Inlining module sbtm_a2(fast)
+# -- Inlining module sbtm_a3(fast)
+# -- Inlining module sbtm2(fast)
+# -- Inlining module mux6(fast)
+# -- Inlining module mux2(fast__5)
+# -- Inlining module csa(fast__2)
+# -- Inlining module mux2(fast__6)
+# -- Inlining module ladner_fischer128(fast)
+# -- Inlining module ldf128(fast)
+# -- Inlining module ladner_fischer64(fast)
+# -- Inlining module ldf64(fast)
+# -- Inlining module flopenr(fast__12)
+# -- Inlining module divconv(fast)
+# -- Inlining module fsm(fast)
+# -- Inlining module rounder_div(fast)
+# -- Inlining module flopenr(fast__13)
+# -- Inlining module fpdiv(fast)
+# -- Inlining module convert_inputs(fast)
+# -- Inlining module exception(fast)
+# -- Inlining module lz52(fast)
+# -- Inlining module mux21x57(fast)
+# -- Inlining module barrel_shifter_r57(fast)
+# -- Inlining module BLOCK0(fast)
+# -- Inlining module INVBLOCK(fast)
+# -- Inlining module PRESTAGE_64(fast)
+# -- Inlining module BLOCK1A(fast)
+# -- Inlining module BLOCK1(fast)
+# -- Inlining module DBLC_0_64(fast)
+# -- Inlining module BLOCK2A(fast)
+# -- Inlining module BLOCK2(fast)
+# -- Inlining module DBLC_1_64(fast)
+# -- Inlining module DBLC_2_64(fast)
+# -- Inlining module DBLC_3_64(fast)
+# -- Inlining module DBLC_4_64(fast)
+# -- Inlining module DBLC_5_64(fast)
+# -- Inlining module DBLCTREE_64(fast)
+# -- Inlining module XXOR1(fast)
+# -- Inlining module XORSTAGE_64(fast)
+# -- Inlining module DBLCADDER_64_64(fast)
+# -- Inlining module cla64(fast)
+# -- Inlining module cla_sub64(fast)
+# -- Inlining module fpuaddcvt1(fast)
+# -- Inlining module magcompare2c(fast)
+# -- Inlining module magcompare64b_1(fast)
+# -- Inlining module exception_cmp_1(fast)
+# -- Inlining module fpucmp1(fast)
+# -- Inlining module fpusgn(fast)
+# -- Inlining module flopenrc(fast__10)
+# -- Inlining module flopenrc(fast__11)
+# -- Inlining module flopenrc(fast__12)
+# -- Inlining module flopenrc(fast__13)
+# -- Inlining module flopenrc(fast__14)
+# -- Inlining module flopenrc(fast__15)
+# -- Inlining module add(fast)
+# -- Inlining module lza(fast)
+# -- Inlining module normalize(fast)
+# -- Inlining module round(fast)
+# -- Inlining module expgen2(fast)
+# -- Inlining module sign(fast)
+# -- Inlining module flag2(fast)
+# -- Inlining module fma2(fast)
+# -- Inlining module mux21x64(fast)
+# -- Inlining module barrel_shifter_l64(fast)
+# -- Inlining module cla52(fast)
+# -- Inlining module cla12(fast)
+# -- Inlining module cla_sub12(fast)
+# -- Inlining module rounder(fast)
+# -- Inlining module fpuaddcvt2(fast)
+# -- Inlining module magcompare64b_2(fast)
+# -- Inlining module exception_cmp_2(fast)
+# -- Inlining module fpucmp2(fast)
+# -- Inlining module fpu(fast)
+# -- Inlining module wallypipelinedhart(fast)
+# -- Inlining module subwordwrite(fast)
+# -- Inlining module dtim(fast)
+# -- Inlining module dtim(fast__1)
+# -- Inlining module clint(fast)
+# -- Inlining module flopr(fast__4)
+# -- Inlining module flopr(fast__5)
+# -- Inlining module plic(fast)
+# -- Inlining module flopr(fast__6)
+# -- Inlining module flop(fast__4)
+# -- Inlining module gpio(fast)
+# -- Inlining module flopr(fast__7)
+# -- Inlining module uartPC16550D(fast)
+# -- Inlining module uart(fast)
+# -- Inlining module uncore(fast)
+# -- Inlining module wallypipelinedsoc(fast)
+# -- Optimizing module testbench(fast)
+# ** Warning: ../testbench/testbench-imperas-div.sv(63): (vopt-2737) '{ }' may only be used with a queue.
+# ** Warning: ../testbench/testbench-imperas-div.sv(221): (vopt-2737) '{ }' may only be used with a queue.
+# ** Warning: ../testbench/testbench-imperas-div.sv(368): (vopt-2737) '{ }' may only be used with a queue.
+# ** Warning: ../testbench/testbench-imperas-div.sv(392): (vopt-2737) '{ }' may only be used with a queue.
+# -- Inlining module mux2(fast__1)
+# -- Inlining module csri(fast)
+# -- Inlining module csrsr(fast)
+# -- Inlining module flopenr(fast)
+# -- Inlining module csrc(fast)
+# -- Inlining module flopenl(fast__1)
+# -- Inlining module flopenl(fast)
+# -- Inlining module csrs(fast)
+# -- Inlining module flopenr(fast__4)
+# -- Inlining module flopr(fast)
+# -- Inlining module csru(fast)
+# -- Inlining module flopenrc(fast__2)
+# -- Optimizing module csr(fast)
+# -- Inlining module adrdec(fast)
+# -- Inlining module pmpadrdec(fast)
+# -- Optimizing module pmpchecker(fast)
+# -- Inlining module flopenl(fast__1)
+# -- Inlining module flopenr(fast)
+# -- Inlining module flopenl(fast)
+# -- Optimizing module csrm(fast)
+# -- Optimizing module instrNameDecTB(fast)
+# -- Optimizing module csrn(fast)
+# -- Optimizing module instrTrackerTB(fast)
+# -- Optimizing package ahbliteState(fast)
+# Optimized design name is workopt_rv64imc
+# End time: 08:48:19 on May 17,2021, Elapsed time: 0:00:02
+# Errors: 0, Warnings: 4
+# vsim -lib work_rv64imc workopt_rv64imc 
+# Start time: 08:48:19 on May 17,2021
+# //  ModelSim SE-64 10.7e May 30 2019 Linux 5.4.0-73-generic
+# //
+# //  Copyright 1991-2019 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  ModelSim SE-64 and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+# Loading sv_std.std
+# Loading work.ahbliteState(fast)
+# Loading work.testbench(fast)
+# Loading work.csr(fast)
+# Loading work.csrm(fast)
+# Loading work.csrn(fast)
+# Loading work.pmpchecker(fast)
+# Loading work.multiplier(fast)
+# Loading work.instrTrackerTB(fast)
+# Loading work.instrNameDecTB(fast)
+# Read memfile ../../imperas-riscv-tests/work/rv64i/WALLY-PIPELINE-100K.elf.memfile
+# Code ended with ecall with gp = 1
+# rv64i/WALLY-PIPELINE-100K succeeded.  Brilliant!!!
+# Read memfile ../../imperas-riscv-tests/work/rv64i/I-ADD-01.elf.memfile
+# Code ended with ecall with gp = 1
+# rv64i/I-ADD-01 succeeded.  Brilliant!!!
+# Read memfile ../../imperas-riscv-tests/work/rv64ic/I-C-ADD-01.elf.memfile
+# Code ended with ecall with gp = 1
+# rv64ic/I-C-ADD-01 succeeded.  Brilliant!!!
+# Read memfile ../../imperas-riscv-tests/work/rv64m/I-MUL-01.elf.memfile
+# Code ended with ecall with gp = 1
+# rv64m/I-MUL-01 succeeded.  Brilliant!!!
+# Read memfile ../../imperas-riscv-tests/work/rv64m/I-DIVU-01.elf.memfile
+# Code ended with ecall with gp = 1
+#   Error on test rv64m/I-DIVU-01 result          75: adr = 0000000080003258 sim = 9ffffffffffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         140: adr = 0000000080003460 sim = 0000000000000001, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         141: adr = 0000000080003468 sim = 0000000000000001, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         142: adr = 0000000080003470 sim = 0000000000000006, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         143: adr = 0000000080003478 sim = 0000000000000006, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         144: adr = 0000000080003480 sim = 0000000000000019, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         145: adr = 0000000080003488 sim = 0000000000000018, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         146: adr = 0000000080003490 sim = 0000000000000068, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         147: adr = 0000000080003498 sim = 0000000000000060, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         148: adr = 00000000800034a0 sim = 00000000000001a0, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         149: adr = 00000000800034a8 sim = 0000000000000180, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         150: adr = 00000000800034b0 sim = 0000000000000680, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         151: adr = 00000000800034b8 sim = 0000000000000600, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         152: adr = 00000000800034c0 sim = 0000000000001a00, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         153: adr = 00000000800034c8 sim = 0000000000001800, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         154: adr = 00000000800034d0 sim = 0000000000006800, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         155: adr = 00000000800034d8 sim = 0000000000006000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         156: adr = 00000000800034e0 sim = 000000000001a000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         157: adr = 00000000800034e8 sim = 0000000000018000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         158: adr = 00000000800034f0 sim = 0000000000068000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         159: adr = 00000000800034f8 sim = 0000000000060000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         160: adr = 0000000080003500 sim = 00000000001a0000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         161: adr = 0000000080003508 sim = 0000000000180000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         162: adr = 0000000080003510 sim = 0000000000680000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         163: adr = 0000000080003518 sim = 0000000000600000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         164: adr = 0000000080003520 sim = 0000000001a00000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         165: adr = 0000000080003528 sim = 0000000001800000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         166: adr = 0000000080003530 sim = 0000000006800000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         167: adr = 0000000080003538 sim = 0000000006000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         168: adr = 0000000080003540 sim = 000000001a000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         169: adr = 0000000080003548 sim = 0000000018000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         170: adr = 0000000080003550 sim = 0000000068000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         171: adr = 0000000080003558 sim = 0000000060000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         172: adr = 0000000080003560 sim = 00000001a0000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         173: adr = 0000000080003568 sim = 0000000180000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         174: adr = 0000000080003570 sim = 0000000680000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         175: adr = 0000000080003578 sim = 0000000600000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         176: adr = 0000000080003580 sim = 0000001a00000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         177: adr = 0000000080003588 sim = 0000001800000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         178: adr = 0000000080003590 sim = 0000006800000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         179: adr = 0000000080003598 sim = 0000006000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         180: adr = 00000000800035a0 sim = 000001a000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         181: adr = 00000000800035a8 sim = 0000018000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         182: adr = 00000000800035b0 sim = 0000068000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         183: adr = 00000000800035b8 sim = 0000060000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         184: adr = 00000000800035c0 sim = 00001a0000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         185: adr = 00000000800035c8 sim = 0000180000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         186: adr = 00000000800035d0 sim = 0000680000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         187: adr = 00000000800035d8 sim = 0000600000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         188: adr = 00000000800035e0 sim = 0001a00000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         189: adr = 00000000800035e8 sim = 0001800000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         190: adr = 00000000800035f0 sim = 0006800000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         191: adr = 00000000800035f8 sim = 0006000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         192: adr = 0000000080003600 sim = 001a000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         193: adr = 0000000080003608 sim = 0018000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         194: adr = 0000000080003610 sim = 0068000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         195: adr = 0000000080003618 sim = 0060000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         196: adr = 0000000080003620 sim = 01a0000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         197: adr = 0000000080003628 sim = 0180000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         198: adr = 0000000080003630 sim = 0680000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         199: adr = 0000000080003638 sim = 0600000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         200: adr = 0000000080003640 sim = 1a00000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         201: adr = 0000000080003648 sim = 1800000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         202: adr = 0000000080003650 sim = 6800000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         203: adr = 0000000080003658 sim = 6000000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         204: adr = 0000000080003660 sim = 0000000000000000, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         205: adr = 0000000080003668 sim = 9ffffffffffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         206: adr = 0000000080003670 sim = 9ffffffffffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         207: adr = 0000000080003678 sim = 9ffffffffffffff9, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         208: adr = 0000000080003680 sim = 9ffffffffffffff9, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         209: adr = 0000000080003688 sim = 9fffffffffffffea, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         210: adr = 0000000080003690 sim = 9fffffffffffffe7, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         211: adr = 0000000080003698 sim = 9fffffffffffffa6, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         212: adr = 00000000800036a0 sim = 9fffffffffffff9f, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         213: adr = 00000000800036a8 sim = 9ffffffffffffe9e, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         214: adr = 00000000800036b0 sim = 9ffffffffffffe7f, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         215: adr = 00000000800036b8 sim = 9ffffffffffffa7e, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         216: adr = 00000000800036c0 sim = 9ffffffffffff9ff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         217: adr = 00000000800036c8 sim = 9fffffffffffe9fe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         218: adr = 00000000800036d0 sim = 9fffffffffffe7ff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         219: adr = 00000000800036d8 sim = 9fffffffffffa7fe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         220: adr = 00000000800036e0 sim = 9fffffffffff9fff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         221: adr = 00000000800036e8 sim = 9ffffffffffe9ffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         222: adr = 00000000800036f0 sim = 9ffffffffffe7fff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         223: adr = 00000000800036f8 sim = 9ffffffffffa7ffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         224: adr = 0000000080003700 sim = 9ffffffffff9ffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         225: adr = 0000000080003708 sim = 9fffffffffe9fffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         226: adr = 0000000080003710 sim = 9fffffffffe7ffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         227: adr = 0000000080003718 sim = 9fffffffffa7fffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         228: adr = 0000000080003720 sim = 9fffffffff9fffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         229: adr = 0000000080003728 sim = 9ffffffffe9ffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         230: adr = 0000000080003730 sim = 9ffffffffe7fffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         231: adr = 0000000080003738 sim = 9ffffffffa7ffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         232: adr = 0000000080003740 sim = 9ffffffff9ffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         233: adr = 0000000080003748 sim = 9fffffffe9fffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         234: adr = 0000000080003750 sim = 9fffffffe7ffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         235: adr = 0000000080003758 sim = 9fffffffa7fffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         236: adr = 0000000080003760 sim = 9fffffff9fffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         237: adr = 0000000080003768 sim = 9ffffffe9ffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         238: adr = 0000000080003770 sim = 9ffffffe7fffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         239: adr = 0000000080003778 sim = 9ffffffa7ffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         240: adr = 0000000080003780 sim = 9ffffff9ffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         241: adr = 0000000080003788 sim = 9fffffe9fffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         242: adr = 0000000080003790 sim = 9fffffe7ffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         243: adr = 0000000080003798 sim = 9fffffa7fffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         244: adr = 00000000800037a0 sim = 9fffff9fffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         245: adr = 00000000800037a8 sim = 9ffffe9ffffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         246: adr = 00000000800037b0 sim = 9ffffe7fffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         247: adr = 00000000800037b8 sim = 9ffffa7ffffffffe, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         248: adr = 00000000800037c0 sim = 9ffff9ffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         249: adr = 00000000800037c8 sim = 9fffe9ffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         250: adr = 00000000800037d0 sim = 9fffe7ffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         251: adr = 00000000800037d8 sim = 9fffa7ffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         252: adr = 00000000800037e0 sim = 9fff9fffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         253: adr = 00000000800037e8 sim = 9ffe9fffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         254: adr = 00000000800037f0 sim = 9ffe7fffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         255: adr = 00000000800037f8 sim = 9ffa7fffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         256: adr = 0000000080003800 sim = 9ff9ffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         257: adr = 0000000080003808 sim = 9fe9ffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         258: adr = 0000000080003810 sim = 9fe7ffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         259: adr = 0000000080003818 sim = 9fa7ffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         260: adr = 0000000080003820 sim = 9f9fffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         261: adr = 0000000080003828 sim = 9e9fffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         262: adr = 0000000080003830 sim = 9e7fffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         263: adr = 0000000080003838 sim = 9a7fffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         264: adr = 0000000080003840 sim = 99ffffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         265: adr = 0000000080003848 sim = 99ffffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         266: adr = 0000000080003850 sim = 97ffffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         267: adr = 0000000080003858 sim = 67ffffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         268: adr = 0000000080003860 sim = 5fffffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         269: adr = 0000000080003868 sim = 9fffffffffffffff, signature = ffffffffffffffff
+#   Error on test rv64m/I-DIVU-01 result         272: adr = 0000000080003880 sim = 9a59a6656a996a65, signature = ffffffffffffffff
+# rv64m/I-DIVU-01 failed with         132 errors. :(
+# Read memfile ../../imperas-riscv-tests/work/rv64mmu/WALLY-VIRTUALMEMORY.elf.memfile
+# Code ended with ecall with gp = 1
+# rv64mmu/WALLY-VIRTUALMEMORY succeeded.  Brilliant!!!
+# FAIL:           1 test programs had errors
+# ** Note: $stop    : ../testbench/testbench-imperas-div.sv(572)
+#    Time: 15284605 ns  Iteration: 0  Instance: /testbench
+# Break at ../testbench/testbench-imperas-div.sv line 572
+# Stopped at ../testbench/testbench-imperas-div.sv line 572
+# End time: 08:48:38 on May 17,2021, Elapsed time: 0:00:19
+# Errors: 0, Warnings: 0
