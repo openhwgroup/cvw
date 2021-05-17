@@ -30,14 +30,13 @@ vlib work
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
-    0 {vlog +incdir+../config/rv64imc ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 ../testbench/testbench-imperas.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583}
+    0 {vlog +incdir+../config/rv64imc ../testbench/testbench-imperas-div.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 ../testbench/testbench-imperas-div.sv ../testbench/function_radix.sv ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt +acc work.testbench -o workopt 
 vsim workopt
-
 
 view wave
 
@@ -47,8 +46,8 @@ do ./wave-dos/ahb-muldiv.do
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {100 ps}
-configure wave -namecolwidth 250
-configure wave -valuecolwidth 140
+configure wave -namecolwidth 350
+configure wave -valuecolwidth 240
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10

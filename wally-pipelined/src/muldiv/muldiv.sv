@@ -47,44 +47,52 @@ module muldiv (
 	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
-	 logic [`XLEN*2-1:0] ProdE;
-	 
+	 //logic [`XLEN-1:0] Q, R;	 
+	 logic [`XLEN*2-1:0] ProdE; 
+
+	 logic 		     enable_q;	 
+	 logic [2:0] 	     Funct3E_Q;
+	 logic 		     div0error;
+	 logic [`XLEN-1:0]   N, D;
+
+	 logic 		     gclk;
 	 logic 		     DivStartE;
-	 logic 		     startDivideE;
-
-	logic 		     enable_q, gclk;
-
-	logic [2:0] 	     Funct3E_Q;
-    logic            div0error;
-
-
+	 logic 		     startDivideE;   	 
+	 
 	 // Multiplier
 	 mul mul(.*);
 	 // Divide
 
 	// *** replace this clock gater
-	always @(negedge clk) begin
-	  enable_q <= ~StallM;
-	end
-	assign gclk = enable_q & clk;
-	
-	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, SrcAE, SrcBE, gclk, reset, startDivideE);
+	 always @(negedge clk) begin
+	    enable_q <= ~StallM;
+	 end
+	 assign gclk = enable_q & clk;
+
+	 // capture the Numerator/Denominator	 
+	 flopenrc #(`XLEN) reg_num (.d(SrcAE), .q(N),
+				    .en(startDivideE), .clear(DivDoneE),
+				    .reset(reset),  .clk(~gclk));
+	 flopenrc #(`XLEN) reg_den (.d(SrcBE), .q(D),
+				    .en(startDivideE), .clear(DivDoneE),
+				    .reset(reset),  .clk(~gclk));	 
+	 
+	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE);
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
-
-	// capture the start control signals since they are not held constant.
-	flopenrc #(3) funct3ereg (.d(Funct3E),
-			       .q(Funct3E_Q),
-			       .en(DivStartE),
-			       .clear(DivDoneE),
-			       .reset(reset),
-			       .clk(clk));
-	
-
+	 
+	 // capture the start control signals since they are not held constant.
+	 flopenrc #(3) funct3ereg (.d(Funct3E),
+				   .q(Funct3E_Q),
+				   .en(DivStartE),
+				   .clear(DivDoneE),
+				   .reset(reset),
+				   .clk(clk));
+	 
 	 // Select result
 	 always_comb
-//           case (DivDoneE ? Funct3E_Q : Funct3E)
+	   //           case (DivDoneE ? Funct3E_Q : Funct3E)
            case (Funct3E)	   
              3'b000: PrelimResultE = ProdE[`XLEN-1:0];
              3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];

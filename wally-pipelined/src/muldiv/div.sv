@@ -30,15 +30,15 @@
 /* verilator lint_off IMPLICIT */
 
 
-module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
+module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start);
 
    input logic [63:0]  N, D;
    input logic 	       clk;
    input logic 	       reset;
    input logic 	       start;
    
-   output logic [63:0] Q;
-   output logic [63:0] rem0;
+   output logic [63:0] Qf;
+   output logic [63:0] remf;
    output logic        div0;
    output logic        done;
    output logic        divBusy;   
@@ -51,10 +51,11 @@ module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
    logic [5:0] 	       P, NumIter, RemShift;
    logic [63:0]        op1, op2, op1shift, Rem5;
    logic [64:0]        Qd, Rd, Qd2, Rd2;
+   logic [63:0]        Q, rem0;
    logic [3:0] 	       quotient;
    logic 	       otfzero; 
    logic 	       shiftResult;
-   logic           enablev, state0v, donev, divdonev, oftzerov, divBusyv, ulp;
+   logic 	       enablev, state0v, donev, divdonev, oftzerov, divBusyv, ulp;
 
    // Divider goes the distance to 37 cycles
    // (thanks the evil divisor for D = 0x1) 
@@ -112,9 +113,6 @@ module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
    // shifting N right by v+s so that (m+v+s) mod k = 0.  And,
    // the quotient has to be aligned to the integer position.
 
-   // Used a Brent-Kung for no reason (just wanted prefix -- might
-   // have gotten away with a RCA)
-   
    // Actual divider unit FIXME: r16 (jes)
    divide4x64 p3 (Qd, Rd, quotient, op1, op2, clk, reset, state0, 
 		  enable, otfzero, shiftResult);
@@ -130,6 +128,10 @@ module div (Q, rem0, done, divBusy, div0, N, D, clk, reset, start);
    // Adjust remainder by m (no need to adjust by
    // n ln(r)
    shifter_r64 p4 (rem0, Rem5, RemShift);
+
+   // RISC-V has exceptions for divide by 0 (Table 6.1 of SPEC)
+   mux2 #(64) exc1 (Q, {64{1'b1}}, div0, Qf);
+   mux2 #(64) exc2 (rem0, op1, div0, remf);   
 
 endmodule // int32div
 
