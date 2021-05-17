@@ -1564,5 +1564,50 @@ module shifter_r32 (Z, A, Shift);
    
 endmodule // shifter_r32
 
+module shift_right #(parameter WIDTH=8) 
+   (input logic [`XLEN-1:0]         A,
+    input logic [$clog2(`XLEN)-1:0] Shift,
+    output logic [`XLEN-1:0] 	    Z);
+   
+   logic [`XLEN-1:0] 							 stage [$clog2(`XLEN):0];
+   genvar 								 i;
+   
+   assign stage[0] = A;   
+   generate
+      for (i=0;i<$clog2(`XLEN);i=i+1)
+	begin : genbit
+	   mux2 #(`XLEN) mux_inst (stage[i], 
+				   {{(`XLEN/(2**(i+1))){1'b0}}, stage[i][`XLEN-1:`XLEN/(2**(i+1))]}, 
+				   Shift[$clog2(`XLEN)-i-1], 
+				   stage[i+1]);
+	end
+   endgenerate
+   assign Z = stage[$clog2(`XLEN)];   
+
+endmodule // shift_right
+
+module shift_left #(parameter WIDTH=8) 
+   (input logic [`XLEN-1:0]         A,
+    input logic [$clog2(`XLEN)-1:0] Shift,
+    output logic [`XLEN-1:0] 	    Z);
+   
+   logic [`XLEN-1:0] 							stage [$clog2(`XLEN):0];
+   genvar 								i;
+   
+   assign stage[0] = A;   
+   generate
+      for (i=0;i<$clog2(`XLEN);i=i+1)
+	begin : genbit
+	   mux2 #(`XLEN) mux_inst (stage[i], 
+				   {stage[i][`XLEN-1-`XLEN/(2**(i+1)):0], {(`XLEN/(2**(i+1))){1'b0}}}, 
+				   Shift[$clog2(`XLEN)-i-1], 
+				   stage[i+1]);
+	end
+   endgenerate
+   assign Z = stage[$clog2(`XLEN)];   
+
+endmodule // shift_right
+
 /* verilator lint_on COMBDLY */
 /* verilator lint_on IMPLICIT */
+
