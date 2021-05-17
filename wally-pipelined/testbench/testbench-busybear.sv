@@ -261,11 +261,10 @@ module testbench();
 
   logic [`XLEN-1:0] readAdrExpected, readAdrTranslated;
 
-  import ahbliteState::*;
   always @(dut.HRDATA) begin
     #2;
     if (dut.hart.MemRWM[1]
-      && (dut.hart.ebu.BusState == MEMREAD || dut.hart.ebu.BusState == ATOMICREAD)
+      && (dut.hart.ebu.CaptureDataM)
       && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
