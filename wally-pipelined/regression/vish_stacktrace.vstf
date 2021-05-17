@@ -1,3 +1,0 @@
-# transcript error: error writing "stdout": broken pipe
-    while executing
-"puts -nonewline stdout $s"
