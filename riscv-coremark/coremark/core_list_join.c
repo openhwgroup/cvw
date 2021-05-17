@@ -158,19 +158,22 @@ ee_u16 core_bench_list(core_results *res, ee_s16 finder_idx) {
 	list_head *finder, *remover;
 	list_data info;
 	ee_s16 i;
-
+	ee_printf("entered corebenchlist \n");
 	info.idx=finder_idx;
 	/* find <find_num> values in the list, and change the list each time (reverse and cache if value found) */
 	for (i=0; i<find_num; i++) {
+		ee_printf("for loop \n");
 		info.data16= (i & 0xff) ;
 		this_find=core_list_find(list,&info);
 		list=core_list_reverse(list);
 		if (this_find==NULL) {
 			missed++;
 			retval+=(list->next->info->data16 >> 8) & 1;
+			ee_printf("if statement \n");
 		}
 		else {
 			found++;
+			ee_printf("else statement \n");
 			if (this_find->info->data16 & 0x1) /* use found value */
 				retval+=(this_find->info->data16 >> 9) & 1;
 			/* and cache next item at the head of the list (if any) */
@@ -421,13 +424,20 @@ list_head *core_list_undo_remove(list_head *item_removed, list_head *item_modifi
 	Found item, or NULL if not found.
 */
 list_head *core_list_find(list_head *list,list_data *info) {
+	ee_printf("entered core_list_find \n");
 	if (info->idx>=0) {
-		while (list && (list->info->idx != info->idx))
+		ee_printf("find if \n");
+		while (list && (list->info->idx != info->idx)){
 			list=list->next;
+			ee_printf("find while if \n");}
+		ee_printf("core_list_find end \n");
 		return list;
 	} else {
-		while (list && ((list->info->data16 & 0xff) != info->data16))
+		ee_printf("find else");
+		while (list && ((list->info->data16 & 0xff) != info->data16)){
 			list=list->next;
+			ee_printf("find while else \n");}
+		ee_printf("core list find end \n");
 		return list;
 	}
 }
@@ -446,6 +456,7 @@ list_head *core_list_find(list_head *list,list_data *info) {
 */
 
 list_head *core_list_reverse(list_head *list) {
+	ee_printf("entered core_list_reverse");
 	list_head *next=NULL, *tmp;
 	while (list) {
 		tmp=list->next;
@@ -453,6 +464,7 @@ list_head *core_list_reverse(list_head *list) {
 		next=list;
 		list=tmp;
 	}
+	ee_printf("core_list_reverse done");
 	return next;
 }
 /* Function: core_list_mergesort
@@ -481,20 +493,27 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
     ee_s32 insize, nmerges, psize, qsize, i;
 
     insize = 1;
-
+	char bufftwo[200];
     while (1) {
         p = list;
         list = NULL;
         tail = NULL;
 
         nmerges = 0;  /* count number of merges we do in this pass */
-
+		ehitoa(nmerges, bufftwo, 10);
+		ee_printf(" nmerges default value = %s done \n", bufftwo);
         while (p) {
             nmerges++;  /* there exists a merge to be done */
+			ehitoa(nmerges, bufftwo, 10);
+			ee_printf(" current nmerges = %s done \n", bufftwo);
             /* step `insize' places along from p */
             q = p;
             psize = 0;
+			ehitoa(insize, bufftwo, 10);
+			ee_printf(" insize = %s done \n", bufftwo);
             for (i = 0; i < insize; i++) {
+				ehitoa(i, bufftwo, 10);
+				ee_printf(" i = %s done \n", bufftwo);
                 psize++;
 			    q = q->next;
                 if (!q) break;
@@ -502,29 +521,37 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
 
             /* if q hasn't fallen off end, we have two lists to merge */
             qsize = insize;
+			ehitoa(qsize, bufftwo, 10);
+			ee_printf(" qsize = %s done \n", bufftwo);
 
             /* now we have two lists; merge them */
             while (psize > 0 || (qsize > 0 && q)) {
 
 				/* decide whether next element of merge comes from p or q */
 				if (psize == 0) {
+					ee_printf("if \n");
 				    /* p is empty; e must come from q. */
 				    e = q; q = q->next; qsize--;
 				} else if (qsize == 0 || !q) {
+					ee_printf("else if \n");
 				    /* q is empty; e must come from p. */
 				    e = p; p = p->next; psize--;
 				} else if (cmp(p->info,q->info,res) <= 0) {
+					ee_printf("else if 2 \n");
 				    /* First element of p is lower (or same); e must come from p. */
 				    e = p; p = p->next; psize--;
 				} else {
+					ee_printf("else \n");
 				    /* First element of q is lower; e must come from q. */
 				    e = q; q = q->next; qsize--;
 				}
 
 		        /* add the next element to the merged list */
 				if (tail) {
+					ee_printf("tail if \n");
 				    tail->next = e;
 				} else {
+					ee_printf("tail else \n");
 				    list = e;
 				}
 				tail = e;
@@ -542,6 +569,8 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
 
         /* Otherwise repeat, merging lists twice the size */
         insize *= 2;
+		ehitoa(insize, bufftwo, 10);
+		ee_printf(" insize2 = %s done \n", bufftwo);
     }
 #if COMPILER_REQUIRES_SORT_RETURN
 	return list;
