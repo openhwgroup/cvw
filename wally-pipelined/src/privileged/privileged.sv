@@ -52,6 +52,7 @@ module privileged (
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
+  output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM,
@@ -78,7 +79,7 @@ module privileged (
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
-  logic IllegalFPUInstrE, IllegalFPUInstrM;
+  logic IllegalFPUInstrM;
   logic LoadPageFaultM, StorePageFaultM; 
   logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultF, InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
