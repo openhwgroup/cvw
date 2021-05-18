@@ -447,6 +447,7 @@ string tests32f[] = '{
   };
 
   string tests64p[] = '{
+    "rv64p/WALLY-MSTATUS", "2010",
     "rv64p/WALLY-MCAUSE", "3000",
     "rv64p/WALLY-SCAUSE", "2000",
     "rv64p/WALLY-MEPC", "5000",
@@ -521,7 +522,7 @@ string tests32f[] = '{
       end if (TESTSPERIPH) begin 
         tests = tests64periph;
       end else begin 
-        tests = {tests64i,tests64p,tests64periph};
+        tests = {tests64p,tests64i,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
