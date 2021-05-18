@@ -200,7 +200,7 @@ module fctrl (
       //  fmv.d.w  = ?101
       //		   {?, is mv, is store, is double or fcvt.d.w}
       3'b111 : OpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])};
-      default : begin OpCtrlD = 4'bxxxx; IllegalFPUInstrD = isFP; end
+      default : begin OpCtrlD = 4'bxxxx; IllegalFPUInstrD = 1'b1; end
     endcase
   end
 

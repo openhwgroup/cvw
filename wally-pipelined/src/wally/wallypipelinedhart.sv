@@ -96,7 +96,7 @@ module wallypipelinedhart (
   logic       SquashSCW;
   logic [31:0]      FSROutW;
   logic             DivSqrtDoneE;
-  logic             IllegalFPUInstrD;
+  logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic [`XLEN-1:0] FPUResultW;
 
   // memory management unit signals
