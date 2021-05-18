@@ -36,7 +36,7 @@ vopt +acc work.testbench -o workopt
 vsim workopt -suppress 8852,12070
 
 #do ./wave-dos/peripheral-waves.do
-do ./wave-dos/busybear-waves.do
+do ./wave-dos/default-waves.do
 
 #do busy-mmu.do
 

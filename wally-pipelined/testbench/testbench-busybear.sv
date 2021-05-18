@@ -261,11 +261,10 @@ module testbench();
 
   logic [`XLEN-1:0] readAdrExpected, readAdrTranslated;
 
-  import ahbliteState::*;
   always @(dut.HRDATA) begin
     #2;
     if (dut.hart.MemRWM[1]
-      && (dut.hart.ebu.BusState == MEMREAD || dut.hart.ebu.BusState == ATOMICREAD)
+      && (dut.hart.ebu.CaptureDataM)
       && dut.HRDATA !== {64{1'bx}}) begin
       //$display("%0t", $time);
       if($feof(data_file_memR)) begin
@@ -469,12 +468,13 @@ module testbench();
             speculative = ~equal(dut.hart.ifu.PCD,pcExpected,3);
             if(dut.hart.ifu.PCD===pcExpected) begin
               if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-                force CheckInstrD = 32'b0010011;
-                release CheckInstrD;
-                force dut.hart.ifu.InstrRawD = 32'b0010011;
-                #7;
-                release dut.hart.ifu.InstrRawD;
                 $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
+                force CheckInstrD = 32'b0010011;
+                force dut.hart.ifu.InstrRawD = 32'b0010011;
+                while (clk != 0) #1;
+                while (clk != 1) #1;
+                release dut.hart.ifu.InstrRawD;
+                release CheckInstrD;
                 warningCount += 1;
                 forcedInstr = 1;
               end
@@ -497,12 +497,13 @@ module testbench();
             scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
             if(dut.hart.ifu.PCD === pcExpected) begin
               if(dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) begin // for now, NOP out any float instrs
-                force CheckInstrD = 32'b0010011;
-                release CheckInstrD;
-                force dut.hart.ifu.InstrRawD = 32'b0010011;
-                #7;
-                release dut.hart.ifu.InstrRawD;
                 $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
+                force CheckInstrD = 32'b0010011;
+                force dut.hart.ifu.InstrRawD = 32'b0010011;
+                while (clk != 0) #1;
+                while (clk != 1) #1;
+                release dut.hart.ifu.InstrRawD;
+                release CheckInstrD;
                 warningCount += 1;
                 forcedInstr = 1;
               end

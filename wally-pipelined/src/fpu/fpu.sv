@@ -48,9 +48,9 @@ module fpu (
   localparam PipeEnable = 1'b1;
   always_comb begin
 
-	  PipeEnableDE = StallE;
-	  PipeEnableEM = StallM;
-	  PipeEnableMW = StallW;
+	  PipeEnableDE = ~StallE;
+	  PipeEnableEM = ~StallM;
+	  PipeEnableMW = ~StallW;
 	  PipeClearDE = FlushE;
 	  PipeClearEM = FlushM;
 	  PipeClearMW = FlushW;
