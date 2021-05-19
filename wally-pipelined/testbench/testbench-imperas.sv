@@ -447,7 +447,7 @@ string tests32f[] = '{
   };
 
   string tests64p[] = '{
-    "rv64p/WALLY-MSTATUS", "2010",
+    //"rv64p/WALLY-MSTATUS", "2010",
     "rv64p/WALLY-MCAUSE", "3000",
     "rv64p/WALLY-SCAUSE", "2000",
     "rv64p/WALLY-MEPC", "5000",
