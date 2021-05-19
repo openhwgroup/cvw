@@ -48,7 +48,7 @@ module plic (
   localparam N=`PLIC_NUM_SRC; // should not exceed 63; does not inlcude source 0, which does not connect to anything according to spec
 
   logic memwrite, memread, initTrans;
-  logic [27:0] entry, entryd;
+  logic [23:0] entry, entryd;
   logic [31:0] Din, Dout;
   logic [N:1] requests;
 
@@ -66,12 +66,12 @@ module plic (
   // =======
   // AHB I/O
   // =======
-  assign entry = {HADDR[27:2],2'b0};
+  assign entry = {HADDR[23:2],2'b0};
   assign initTrans = HREADY & HSELPLIC & (HTRANS != 2'b00);
   assign memread = initTrans & ~HWRITE;
   // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
   flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
-  flopr #(28) entrydflop(HCLK, ~HRESETn, entry, entryd);
+  flopr #(24) entrydflop(HCLK, ~HRESETn, entry, entryd);
   assign HRESPPLIC = 0; // OK
   assign HREADYPLIC = 1'b1; // PLIC never takes >1 cycle to respond
 
@@ -109,33 +109,33 @@ module plic (
     end else begin
       if (memwrite)
         casez(entryd)
-          28'hc0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
+          24'h0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
           `ifdef PLIC_NUM_SRC_LT_32
-          28'hc002000: intEn[N:1] <= #1 Din[N:1];
+          24'h002000: intEn[N:1] <= #1 Din[N:1];
           `endif
           `ifndef PLIC_NUM_SRC_LT_32
-          28'hc002000: intEn[31:1] <= #1 Din[31:1];
-          28'hc002004: intEn[N:32] <= #1 Din[31:0];
+          24'h002000: intEn[31:1] <= #1 Din[31:1];
+          24'h002004: intEn[N:32] <= #1 Din[31:0];
           `endif
-          28'hc200000: intThreshold[2:0] <= #1 Din[2:0];       
-          28'hc200004: intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h200000: intThreshold[2:0] <= #1 Din[2:0];       
+          24'h200004: intInProgress <= #1 intInProgress & ~(1'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // reading
       if (memread)
         casez(entry)
-          28'hc0000??: Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[entry[7:2]]};
+          24'h0000??: Dout <= #1 {{(`XLEN-3){1'b0}},intPriority[entry[7:2]]};
           `ifdef PLIC_NUM_SRC_LT_32
-          28'hc001000: Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
-          28'hc002000: Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
+          24'h001000: Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
+          24'h002000: Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
           `endif
           `ifndef PLIC_NUM_SRC_LT_32
-          28'hc001000: Dout <= #1 {intPending[31:1],1'b0};
-          28'hc001004: Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
-          28'hc002000: Dout <= #1 {intEn[31:1],1'b0};
-          28'hc002004: Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
+          24'h001000: Dout <= #1 {intPending[31:1],1'b0};
+          24'h001004: Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
+          24'h002000: Dout <= #1 {intEn[31:1],1'b0};
+          24'h002004: Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
           `endif
-          28'hc200000: Dout <= #1 {29'b0,intThreshold[2:0]};
-          28'hc200004: begin
+          24'h200000: Dout <= #1 {29'b0,intThreshold[2:0]};
+          24'h200004: begin
             Dout <= #1 {26'b0,intClaim};
             intInProgress <= #1 intInProgress | (1'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
@@ -160,7 +160,7 @@ module plic (
   // pending updates
   // *** verify that this matches the expectations of the things that make requests (in terms of timing, edge-triggered vs level-triggered)
   assign nextIntPending = (intPending | (requests & ~intInProgress)) // requests should raise intPending except when their service routine is already in progress
-                        & ~(((entry == 28'hc200004) && memread) << (intClaim-1)); // clear pending bit when claim register is read
+                        & ~(((entry == 24'h200004) && memread) << (intClaim-1)); // clear pending bit when claim register is read
   flopr #(N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // pending array - indexed by priority_lvl x source_ID
@@ -212,22 +212,15 @@ module plic (
   end
   
   // create threshold mask
-  //   *** I think this commented out version would be nice, but linter complains about circular logic
-  //assign threshMask[7:1] = {~(7==intThreshold),
-  //                          ~(6==intThreshold) & threshMask[7],
-  //                          ~(5==intThreshold) & threshMask[6],
-  //                          ~(4==intThreshold) & threshMask[5],
-  //                          ~(3==intThreshold) & threshMask[4],
-  //                          ~(2==intThreshold) & threshMask[3],
-  //                          ~(1==intThreshold) & threshMask[2]};
-  //   *** verify that this alternate version does not synthesize to 7 separate comparators
-  assign threshMask[7:1] = {(7>intThreshold),
-                            (6>intThreshold),
-                            (5>intThreshold),
-                            (4>intThreshold),
-                            (3>intThreshold),
-                            (2>intThreshold),
-                            (1>intThreshold)};
+  always_comb begin
+    threshMask[7] = ~(7==intThreshold);
+    threshMask[6] = ~(6==intThreshold) & threshMask[7];
+    threshMask[5] = ~(5==intThreshold) & threshMask[6];
+    threshMask[4] = ~(4==intThreshold) & threshMask[5];
+    threshMask[3] = ~(3==intThreshold) & threshMask[4];
+    threshMask[2] = ~(2==intThreshold) & threshMask[3];
+    threshMask[1] = ~(1==intThreshold) & threshMask[2];
+  end
   // is the max priority > threshold?
   // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
   assign ExtIntM = |(threshMask & pendingPGrouped);
