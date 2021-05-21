@@ -120,7 +120,7 @@ string tests32f[] = '{
 
 
   string tests64d[] = '{
-    "rv64d/I-FMV-D-X-01", "2000",
+    "rv64d/I-FMV-D-X-01", "2000"
     // "rv64d/I-FADD-D-01", "2000",
     // "rv64d/I-FCLASS-D-01", "2000",
     // "rv64d/I-FCVT-D-L-01", "2000",
