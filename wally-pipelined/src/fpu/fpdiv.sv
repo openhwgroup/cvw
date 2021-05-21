@@ -24,7 +24,7 @@
 
 // `timescale 1ps/1ps
 module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, DivFrm, DivOpType, DivP, DivOvEn, DivUnEn,
-	      DivStart, reset, clk);
+	      DivStart, reset, clk, DivBusyM);
 
    input [63:0] DivOp1;		// 1st input operand (A)
    input [63:0] DivOp2;		// 2nd input operand (B)
@@ -42,6 +42,7 @@ module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, Di
    output [4:0]  DivFlagsM;   	// IEEE exception flags 
    output 	 DivDenormM;   	// DivDenormM on input or output
    output 	 DivSqrtDone;
+   output    DivBusyM;
 
    supply1 	  vdd;
    supply0 	  vss;   
@@ -139,7 +140,7 @@ module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, Di
    // FSM : control divider
    fsm control (DivSqrtDone, load_rega, load_regb, load_regc, load_regd, 
 		load_regr, load_regs, sel_muxa, sel_muxb, sel_muxr, 
-		clk, reset, DivStart, DivOpType);
+		clk, reset, DivStart, DivOpType, DivBusyM);
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 

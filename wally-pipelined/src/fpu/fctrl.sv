@@ -13,9 +13,12 @@ module fctrl (
   output logic [3:0] OpCtrlD,
   output logic       FmtD,
   output logic [2:0] FrmD,
-  output logic       WriteIntD);
+  output logic [1:0] FMemRWD,
+  output logic       OutputInput2D,
+  output logic       FWriteIntD);
 
 
+  logic IllegalFPUInstr1D, IllegalFPUInstr2D;
   //precision is taken directly from instruction
   assign FmtD = Funct7D[0];
   // *** fix rounding for dynamic rounding
@@ -53,6 +56,7 @@ module fctrl (
 
   always_comb begin
 	//checks all but FMA/store/load
+  IllegalFPUInstr2D = 0;
 	if(OpD == 7'b1010011) begin
   		casez(Funct7D)
 			//compare	
@@ -77,7 +81,7 @@ module fctrl (
                    else if (Funct7D[1] == 0) FResultSelD = 3'b111;
 			//output SrcW
 			7'b111100? : FResultSelD = 3'b110;
-			default    : FResultSelD = 3'bxxx;
+			default    : begin FResultSelD = 3'b0; IllegalFPUInstr2D = 1'b1; end
 		endcase
 	end
 	//FMA/store/load
@@ -92,12 +96,15 @@ module fctrl (
 			7'b0100111 : FResultSelD = 3'b111;
 			//load
 			7'b0000111 : FResultSelD = 3'b111;
-			default    : FResultSelD = 3'bxxx;
+			default    : begin FResultSelD = 3'b0; IllegalFPUInstr2D = 1'b1; end
 		endcase
 	end
   end
 
+  assign OutputInput2D = OpD == 7'b0100111;
 
+  assign FMemRWD[0] = OutputInput2D;
+  assign FMemRWD[1] = OpD == 7'b0000111;
 
 
 
@@ -143,7 +150,7 @@ module fctrl (
 
  
   always_comb begin
-    IllegalFPUInstrD = 0;
+    IllegalFPUInstr1D = 0;
     case (FResultSelD)
       // div/sqrt
       //  fdiv  = ???0
@@ -191,23 +198,24 @@ module fctrl (
       //  fmv.w.x = ???0
       //  fmv.w.d = ???1
       3'b110 : OpCtrlD = {3'b0, Funct7D[0]};
-      // output ReadData1
+      // output Input1
       //  flw       = ?000
-      //  fld       = ?001
-      //  fsw       = ?010
-      //  fsd       = ?011
+      //  fld       = ?001 
+      //  fsw       = ?010 // output Input2
+      //  fsd       = ?011 // output Input2
       //  fmv.x.w  = ?100
       //  fmv.d.w  = ?101
       //		   {?, is mv, is store, is double or fcvt.d.w}
       3'b111 : OpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])};
-      default : begin OpCtrlD = 4'bxxxx; IllegalFPUInstrD = 1'b1; end
+      default : begin OpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; end
     endcase
   end
 
+  assign IllegalFPUInstrD = IllegalFPUInstr1D | IllegalFPUInstr2D;
   //write to integer source if conv to int occurs
   //AND of Funct7 for int results 
   //			is add/cvt       and  is to int  or is classify		 or     is cmp	       	and not max/min or is output ReadData1 and is mv
-  assign WriteIntD = ((FResultSelD == 3'b100)&Funct7D[3]) | (FResultSelD == 3'b101) | ((FResultSelD == 3'b001)&~Funct7D[2]) | ((FResultSelD == 3'b001)&OpD[6]);
+  assign FWriteIntD = ((FResultSelD == 3'b100)&Funct7D[3]) | (FResultSelD == 3'b101) | ((FResultSelD == 3'b001)&~Funct7D[2]) | ((FResultSelD == 3'b111)&OpD[6]);
   // 		      if not writting to int reg and not a store function and not move
-  assign FRegWriteD = ~WriteIntD & ~OpD[5] & ~((FResultSelD == 3'b111)&OpD[6]);
+  assign FRegWriteD = ~FWriteIntD & ~OpD[5] & ~((FResultSelD == 3'b111)&OpD[6]) & isFP;
 endmodule

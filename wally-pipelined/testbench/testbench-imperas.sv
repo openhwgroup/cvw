@@ -120,38 +120,38 @@ string tests32f[] = '{
 
 
   string tests64d[] = '{
-    "rv64d/I-FMV-X-D-01", "2000",
-    "rv64d/I-FADD-D-01", "2000",
-    "rv64d/I-FCLASS-D-01", "2000",
-    "rv64d/I-FCVT-D-L-01", "2000",
-    "rv64d/I-FCVT-D-LU-01", "2000",
-    "rv64d/I-FCVT-D-S-01", "2000",
-    "rv64d/I-FCVT-D-W-01", "2000",
-    "rv64d/I-FCVT-D-WU-01", "2000",
-    "rv64d/I-FCVT-L-D-01", "2000",
-    "rv64d/I-FCVT-LU-D-01", "2000",
-    "rv64d/I-FCVT-S-D-01", "2000",
-    "rv64d/I-FCVT-W-D-01", "2000",
-    "rv64d/I-FCVT-WU-D-01", "2000",
-    "rv64d/I-FDIV-D-01", "2000",
-    "rv64d/I-FEQ-D-01", "2000",
-    "rv64d/I-FLD-D-01", "2000",
-    "rv64d/I-FLE-D-01", "2000",
-    "rv64d/I-FLT-D-01", "2000",
-    "rv64d/I-FMADD-D-01", "2000",
-    "rv64d/I-FMAX-D-01", "2000",
-    "rv64d/I-FMIN-D-01", "2000",
-    "rv64d/I-FMSUB-D-01", "2000",
-    "rv64d/I-FMUL-D-01", "2000",
     "rv64d/I-FMV-D-X-01", "2000",
-    "rv64d/I-FNMADD-D-01", "2000",
-    "rv64d/I-FNMSUB-D-01", "2000",
-    "rv64d/I-FSD-01", "2000",
-    "rv64d/I-FSGNJ-D-01", "2000",
-    "rv64d/I-FSGNJN-D-01", "2000",
-    "rv64d/I-FSGNJX-D-01", "2000",
-    "rv64d/I-FSQRTD-01", "2000",
-    "rv64d/I-FSUB-D-01", "2000"
+    // "rv64d/I-FADD-D-01", "2000",
+    // "rv64d/I-FCLASS-D-01", "2000",
+    // "rv64d/I-FCVT-D-L-01", "2000",
+    // "rv64d/I-FCVT-D-LU-01", "2000",
+    // "rv64d/I-FCVT-D-S-01", "2000",
+    // "rv64d/I-FCVT-D-W-01", "2000",
+    // "rv64d/I-FCVT-D-WU-01", "2000",
+    // "rv64d/I-FCVT-L-D-01", "2000",
+    // "rv64d/I-FCVT-LU-D-01", "2000",
+    // "rv64d/I-FCVT-S-D-01", "2000",
+    // "rv64d/I-FCVT-W-D-01", "2000",
+    // "rv64d/I-FCVT-WU-D-01", "2000",
+    // "rv64d/I-FDIV-D-01", "2000",
+    // "rv64d/I-FEQ-D-01", "2000",
+    // "rv64d/I-FLD-D-01", "2000",
+    // "rv64d/I-FLE-D-01", "2000",
+    // "rv64d/I-FLT-D-01", "2000",
+    // "rv64d/I-FMADD-D-01", "2000",
+    // "rv64d/I-FMAX-D-01", "2000",
+    // "rv64d/I-FMIN-D-01", "2000",
+    // "rv64d/I-FMSUB-D-01", "2000",
+    // "rv64d/I-FMUL-D-01", "2000",
+    // "rv64d/I-FMV-X-D-01", "2000",
+    // "rv64d/I-FNMADD-D-01", "2000",
+    // "rv64d/I-FNMSUB-D-01", "2000",
+    // "rv64d/I-FSD-01", "2000",
+    // "rv64d/I-FSGNJ-D-01", "2000",
+    // "rv64d/I-FSGNJN-D-01", "2000",
+    // "rv64d/I-FSGNJX-D-01", "2000",
+    // "rv64d/I-FSQRTD-01", "2000",
+    // "rv64d/I-FSUB-D-01", "2000"
   };
 
 
@@ -528,7 +528,7 @@ string tests32f[] = '{
         if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`A_SUPPORTED) tests = {tests, tests64a};
         if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
-        if (`F_SUPPORTED) tests = {tests64f, tests};
+        // if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
       end
       //tests = {tests64a, tests};
@@ -655,7 +655,7 @@ string tests32f[] = '{
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
                     tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
-              // $stop;//***debug
+              $stop;//***debug
             end
           end
           i = i + 1;
@@ -923,8 +923,8 @@ module instrNameDecTB(
                        else                              name = "ILLEGAL";
       10'b0000111_010: name = "FLW";
       10'b0100111_010: name = "FSW";
-      10'b0000111_010: name = "FLD";
-      10'b0100111_010: name = "FSD";
+      10'b0000111_011: name = "FLD";
+      10'b0100111_011: name = "FSD";
       default:         name = "ILLEGAL";
     endcase
 endmodule

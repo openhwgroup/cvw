@@ -32,6 +32,7 @@ module hazard(
 	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
 	      input logic  LoadStallD, MulDivStallD, CSRRdStallD,
 	      input logic  DataStall, ICacheStallF,
+        input logic  FStallE,
 	      input logic  DivBusyE,
   // Stall & flush outputs
 	      output logic StallF, StallD, StallE, StallM, StallW,
@@ -60,7 +61,7 @@ module hazard(
   assign StallFCause = CSRWritePendingDEM & ~(BranchFlushDE);
   assign StallDCause = (LoadStallD | MulDivStallD | CSRRdStallD) & ~(BranchFlushDE);    // stall in decode if instruction is a load/mul/csr dependent on previous
 //  assign StallDCause = LoadStallD | MulDivStallD | CSRRdStallD;    // stall in decode if instruction is a load/mul/csr dependent on previous
-  assign StallECause = DivBusyE;
+  assign StallECause = DivBusyE | FStallE;
   assign StallMCause = 0; 
   assign StallWCause = DataStall | ICacheStallF;
 

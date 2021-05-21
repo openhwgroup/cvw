@@ -11,10 +11,15 @@ module fpu (
   input  logic [31:0]      InstrD,
   input  logic [`XLEN-1:0] SrcAE,       // Integer input being processed
   input  logic [`XLEN-1:0] SrcAM,       // Integer input being written into fpreg
-  input  logic 		   StallE, StallM, StallW,
+  input  logic 		         StallE, StallM, StallW,
   input  logic             FlushE, FlushM, FlushW,
+  input  logic             RegWriteD,
   output logic [4:0]       SetFflagsM,
   output logic [31:0]      FSROutW,
+  output logic [1:0]       FMemRWM,
+	output logic             FStallE,
+  output logic             FWriteIntW,
+  output logic [`XLEN-1:0] FWriteDataM,       // Integer input being written into fpreg
   output logic             DivSqrtDoneE,
   output logic             IllegalFPUInstrD,
   output logic [`XLEN-1:0] FPUResultW);
@@ -72,8 +77,17 @@ module fpu (
   logic                    FmtD;
   logic                    DivSqrtStartD;
   logic [3:0]              OpCtrlD;
-  logic                    WriteIntD;
+  logic                    FWriteIntD;
+  logic                    OutputInput2D;
+  logic [1:0]              FMemRWD;
+
+  logic                    DivBusyM;
+	logic [1:0]              Input1MuxD, Input2MuxD;
+  logic                    Input3MuxD;
   
+  //Hazard unit for FPU
+  fpuhazard hazard(.Adr1(InstrD[19:15]), .Adr2(InstrD[24:20]), .Adr3(InstrD[31:27]), .*);
+
   //top-level controller for FPU
   fctrl ctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .*);
 
@@ -108,10 +122,17 @@ module fpu (
   logic                    FmtE;
   logic                    DivSqrtStartE;
   logic [3:0]              OpCtrlE;
+	logic [1:0]              Input1MuxE, Input2MuxE;
+  logic                    Input3MuxE;
+  logic [63:0]             FPUResultDirE;
+  logic                    FWriteIntE;
+  logic                    OutputInput2E;
+  logic [1:0]              FMemRWE;
 
   //instantiation of E stage regfile signals
   logic [4:0]              RdE;
   logic [`XLEN-1:0]        ReadData1E, ReadData2E, ReadData3E;
+  logic [`XLEN-1:0]        Input1E, Input2E, Input3E, Input1tmpE;
 
   //instantiation of E/M stage div/sqrt signals
   logic                    DivSqrtDone, DivDenormM;
@@ -195,6 +216,13 @@ module fpu (
   flopenrc #(5) DEReg8(clk, reset, PipeClearDE, PipeEnableDE, InstrD[11:7], RdE);
   flopenrc #(4) DEReg9(clk, reset, PipeClearDE, PipeEnableDE, OpCtrlD, OpCtrlE);
   flopenrc #(1) DEReg10(clk, reset, PipeClearDE, PipeEnableDE, DivSqrtStartD, DivSqrtStartE);
+  flopenrc #(2) DEReg11(clk, reset, PipeClearDE, PipeEnableDE, Input1MuxD, Input1MuxE);
+  flopenrc #(2) DEReg12(clk, reset, PipeClearDE, PipeEnableDE, Input2MuxD, Input2MuxE);
+  flopenrc #(1) DEReg13(clk, reset, PipeClearDE, PipeEnableDE, Input3MuxD, Input3MuxE);
+  flopenrc #(64) DEReg14(clk, reset, PipeClearDE, PipeEnableDE, FPUResultDirW, FPUResultDirE);
+  flopenrc #(1) DEReg15(clk, reset, PipeClearDE, PipeEnableDE, FWriteIntD, FWriteIntE);
+  flopenrc #(1) DEReg16(clk, reset, PipeClearDE, PipeEnableDE, OutputInput2D, OutputInput2E);
+  flopenrc #(2) DEReg17(clk, reset, PipeClearDE, PipeEnableDE, FMemRWD, FMemRWE);
 
   //
   //END D/E PIPE
@@ -204,16 +232,27 @@ module fpu (
   //BEGIN EXECUTION STAGE
   //
 
+
+
+  // input muxs for forwarding
+  
+  mux4  #(64)  Input1Emux(ReadData1E, FPUResultDirW, FPUResultDirE, SrcAM, Input1MuxE, Input1tmpE);
+  mux3  #(64)  Input2Emux(ReadData2E, FPUResultDirW, FPUResultDirE, Input2MuxE, Input2E);
+  mux2  #(64)  Input3Emux(ReadData3E, FPUResultDirE, Input3MuxE, Input3E);
+  mux2  #(64)  OutputInput2mux(Input1tmpE, Input2E, OutputInput2E, Input1E);
+
+
+
   fma1 fma1 (.*);
 
   //first and only instance of floating-point divider
   fpdiv fpdivsqrt (.*);
 
   //first of two-stage instance of floating-point add/cvt unit
-  fpuaddcvt1 fpadd1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, ReadData1E, ReadData2E, FrmE, OpCtrlE, FmtE);
+  fpuaddcvt1 fpadd1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, Input1E, Input2E, FrmE, OpCtrlE, FmtE);
 
   //first of two-stage instance of floating-point comparator
-  fpucmp1 fpcmp1 (WE, XE, ANaNE, BNaNE, AzeroE, BzeroE, ReadData1E, ReadData2E, OpCtrlE[1:0]);
+  fpucmp1 fpcmp1 (WE, XE, ANaNE, BNaNE, AzeroE, BzeroE, Input1E, Input2E, OpCtrlE[1:0]);
 
   //first and only instance of floating-point sign converter
   fpusgn fpsgn (.*);
@@ -227,25 +266,25 @@ module fpu (
   //truncate to 64 bits
   //(causes warning during compilation - case never reached) 
 //   if(`XLEN > 64) begin // ***KEP this isn't usedand it causes a lint error
-//         DivOp1 = ReadData1E[`XLEN-1:`XLEN-64];
-// 	DivOp2 = ReadData2E[`XLEN-1:`XLEN-64];
-//         AddOp1E = ReadData1E[`XLEN-1:`XLEN-64];
-// 	AddOp2E = ReadData2E[`XLEN-1:`XLEN-64];
-//         CmpOp1E = ReadData1E[`XLEN-1:`XLEN-64];
-// 	CmpOp2E = ReadData2E[`XLEN-1:`XLEN-64];
-//         SgnOp1E = ReadData1E[`XLEN-1:`XLEN-64];
-// 	SgnOp2E = ReadData2E[`XLEN-1:`XLEN-64];
+//         DivOp1 = Input1E[`XLEN-1:`XLEN-64];
+// 	DivOp2 = Input2E[`XLEN-1:`XLEN-64];
+//         AddOp1E = Input1E[`XLEN-1:`XLEN-64];
+// 	AddOp2E = Input2E[`XLEN-1:`XLEN-64];
+//         CmpOp1E = Input1E[`XLEN-1:`XLEN-64];
+// 	CmpOp2E = Input2E[`XLEN-1:`XLEN-64];
+//         SgnOp1E = Input1E[`XLEN-1:`XLEN-64];
+// 	SgnOp2E = Input2E[`XLEN-1:`XLEN-64];
 //   end
 //   //zero extend to 64 bits
 //   else begin
-//         DivOp1 = {ReadData1E,{64-`XLEN{1'b0}}};
-// 	DivOp2 = {ReadData2E,{64-`XLEN{1'b0}}};
-//         AddOp1E = {ReadData1E,{64-`XLEN{1'b0}}};
-// 	AddOp2E = {ReadData2E,{64-`XLEN{1'b0}}};
-//         CmpOp1E = {ReadData1E,{64-`XLEN{1'b0}}};
-// 	CmpOp2E = {ReadData2E,{64-`XLEN{1'b0}}};
-//         SgnOp1E = {ReadData1E,{64-`XLEN{1'b0}}};
-// 	SgnOp2E = {ReadData2E,{64-`XLEN{1'b0}}};
+//         DivOp1 = {Input1E,{64-`XLEN{1'b0}}};
+// 	DivOp2 = {Input2E,{64-`XLEN{1'b0}}};
+//         AddOp1E = {Input1E,{64-`XLEN{1'b0}}};
+// 	AddOp2E = {Input2E,{64-`XLEN{1'b0}}};
+//         CmpOp1E = {Input1E,{64-`XLEN{1'b0}}};
+// 	CmpOp2E = {Input2E,{64-`XLEN{1'b0}}};
+//         SgnOp1E = {Input1E,{64-`XLEN{1'b0}}};
+// 	SgnOp2E = {Input2E,{64-`XLEN{1'b0}}};
 //   end
 
   //assign op codes
@@ -273,6 +312,7 @@ module fpu (
   logic [2:0]              FrmM;
   logic                    FmtM;
   logic [3:0]              OpCtrlM;
+  logic                    FWriteIntM;
 
   //instantiate M stage FMA signals here ***rename fma signals and resize for XLEN
   logic [63:0]		FmaResultM;
@@ -305,7 +345,7 @@ module fpu (
 
   //instantiation of M stage regfile signals
   logic [4:0]              RdM;
-  logic [`XLEN-1:0]        ReadData1M, ReadData2M, ReadData3M;
+  logic [`XLEN-1:0]        Input1M, Input2M, Input3M;
 
   //instantiation of M stage add/cvt signals
   logic [63:0]             AddResultM;
@@ -332,6 +372,14 @@ module fpu (
   logic                    ANaNM, BNaNM, AzeroM, BzeroM;
   logic [63:0]             CmpOp1M, CmpOp2M;
   logic [1:0]              CmpSelM;
+
+
+  //*****************
+  //fpregfile D/E pipe registers
+  //*****************
+  flopenrc #(64) EMFpReg1(clk, reset, PipeClearEM, PipeEnableEM, Input1E, Input1M);
+  flopenrc #(64) EMFpReg2(clk, reset, PipeClearEM, PipeEnableEM, Input2E, Input2M);
+  flopenrc #(64) EMFpReg3(clk, reset, PipeClearEM, PipeEnableEM, Input3E, Input3M);
 
   //*****************
   //fma E/M pipe registers
@@ -423,6 +471,8 @@ module fpu (
   flopenrc #(1) EMReg4(clk, reset, PipeClearEM, PipeEnableEM, FmtE, FmtM);
   flopenrc #(5) EMReg5(clk, reset, PipeClearEM, PipeEnableEM, RdE, RdM);
   flopenrc #(4) EMReg6(clk, reset, PipeClearEM, PipeEnableEM, OpCtrlE, OpCtrlM);
+  flopenrc #(1) EMReg7(clk, reset, PipeClearEM, PipeEnableEM, FWriteIntE, FWriteIntM);
+  flopenrc #(2) EMReg8(clk, reset, PipeClearEM, PipeEnableEM, FMemRWE, FMemRWM);
 
   //
   //END E/M PIPE
@@ -431,6 +481,9 @@ module fpu (
   //#########################################
   //BEGIN MEMORY STAGE
   //
+
+  
+  assign FWriteDataM = Input1M;
 
   fma2 fma2(.*);
 
@@ -466,7 +519,7 @@ module fpu (
   logic [4:0]             SgnFlagsW;
 
   //instantiation of W stage regfile signals
-  logic [`XLEN-1:0]        ReadData1W, ReadData2W, ReadData3W;
+  logic [`XLEN-1:0]        Input1W;
   logic [`XLEN-1:0]        SrcAW;
 
   //instantiation of W stage add/cvt signals
@@ -523,6 +576,8 @@ module fpu (
   flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, FmtM, FmtW);
   flopenrc #(5) MWReg4(clk, reset, PipeClearMW, PipeEnableMW, RdM, RdW);
   flopenrc #(`XLEN) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, SrcAM, SrcAW);
+  flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, Input1M, Input1W);
+  flopenrc #(1) MWReg7(clk, reset, PipeClearMW, PipeEnableMW, FWriteIntM, FWriteIntW);
 
   ////END M/W PIPE
   //*****************************************
@@ -590,7 +645,7 @@ module fpu (
 		// output SrcAW
 		3'b110 : FPUResultDirW = SrcAW;
 		// output ReadData1
-		3'b111 : FPUResultDirW = ReadData1W;
+		3'b111 : FPUResultDirW = Input1W;
 		default : FPUResultDirW = {64{1'bx}};
 	endcase
   end

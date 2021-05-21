@@ -31,6 +31,7 @@ module ieu (
   input logic [31:0] 	   InstrD,
   input logic 		   IllegalIEUInstrFaultD, 
   output logic 		   IllegalBaseInstrFaultD,
+  output logic       RegWriteD,
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
@@ -49,6 +50,8 @@ module ieu (
   output logic [2:0] 	   Funct3M,
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
+  input logic             FWriteIntW,
+  input logic [`XLEN-1:0] FPUResultW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidW,
   // hazards

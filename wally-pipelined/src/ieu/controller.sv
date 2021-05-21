@@ -33,6 +33,7 @@ module controller(
   output logic [2:0] ImmSrcD,
   input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
+  output logic       RegWriteD,
   // Execute stage control signals
   input logic 	     StallE, FlushE, 
   input logic  [2:0] FlagsE, 
@@ -68,7 +69,7 @@ module controller(
   `define CTRLW 23
 
   // pipelined control signals
-  logic 	    RegWriteD, RegWriteE;
+  logic 	    RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
   logic [1:0] MemRWD, MemRWE;
   logic		    JumpD;
@@ -105,6 +106,7 @@ module controller(
       // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_TargetSrc_W64_CSRRead_Privileged_MulDiv_Atomic_Illegal
         7'b0000000:   ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // illegal instruction
         7'b0000011:   ControlsD = `CTRLW'b1_000_01_10_001_0_00_0_0_0_0_0_0_00_0; // lw
+        7'b0000111:   ControlsD = `CTRLW'b0_000_01_10_001_0_00_0_0_0_0_0_0_00_0; // flw
         7'b0001111:   ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_0; // fence = nop
         7'b0010011:   ControlsD = `CTRLW'b1_000_01_00_000_0_10_0_0_0_0_0_0_00_0; // I-type ALU
         7'b0010111:   ControlsD = `CTRLW'b1_100_11_00_000_0_00_0_0_0_0_0_0_00_0; // auipc
@@ -113,6 +115,7 @@ module controller(
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
         7'b0100011:   ControlsD = `CTRLW'b0_001_01_01_000_0_00_0_0_0_0_0_0_00_0; // sw
+        7'b0100111:   ControlsD = `CTRLW'b0_001_01_01_000_0_00_0_0_0_0_0_0_00_0; // fsw
         7'b0101111: if (`A_SUPPORTED) begin
                       if (InstrD[31:27] == 5'b00010)
                         ControlsD = `CTRLW'b1_000_00_10_001_0_00_0_0_0_0_0_0_01_0; // lr
