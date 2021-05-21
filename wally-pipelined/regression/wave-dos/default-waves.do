@@ -49,6 +49,8 @@ add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 
+add wave -hex -r /testbench/*
+
 # appearance
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {100 ps}

@@ -48,6 +48,8 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
   input  logic             StallW, FlushW,
+  input  logic             FWriteIntW,
+  input  logic [`XLEN-1:0] FPUResultW,
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
@@ -77,13 +79,18 @@ module datapath (
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
   logic [`XLEN-1:0] ALUResultW;
+  logic [`XLEN-1:0] WriteDataW;
   logic [`XLEN-1:0] ResultW;
 
   // Decode stage
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, RD1D, RD2D);
+
+  //Mux for writting floating point
+  mux2  #(`XLEN)  writedatamux(ResultW, FPUResultW, FWriteIntW, WriteDataW);  
+  
+  regfile regf(clk, reset, {RegWriteW | FWriteIntW}, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
   extend ext(.InstrD(InstrD[31:7]), .*);
  
   // Execute stage pipeline register and logic

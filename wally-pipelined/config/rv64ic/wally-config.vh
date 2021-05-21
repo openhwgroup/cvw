@@ -31,7 +31,7 @@
 `define XLEN 64
 
 // MISA RISC-V configuration per specification
-`define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 0 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)

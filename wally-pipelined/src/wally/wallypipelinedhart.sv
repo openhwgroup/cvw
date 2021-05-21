@@ -93,7 +93,12 @@ module wallypipelinedhart (
   logic [4:0] SetFflagsM;
   logic [2:0] FRM_REGW;
   logic       FloatRegWriteW;
+  logic [1:0] FMemRWM;
+  logic       RegWriteD;
+  logic [`XLEN-1:0] FWriteDataM;
   logic       SquashSCW;
+  logic       FStallE;
+  logic       FWriteIntW;
   logic [31:0]      FSROutW;
   logic             DivSqrtDoneE;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
@@ -140,17 +145,23 @@ module wallypipelinedhart (
   logic 	    RASPredPCWrongM;
   logic 	    BPPredClassNonCFIWrongM;
 
+  logic[`XLEN-1:0] WriteDatatmpM;
+
   logic [4:0]       InstrClassM;
   
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
-  dmem dmem(.*); // data cache unit
+
+  
+  mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
+  dmem dmem(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*); // data cache unit
 
   ahblite ebu( 
     //.InstrReadF(1'b0),
     //.InstrRData(InstrF), // hook up InstrF later
+    .WriteDataM(WriteDatatmpM),
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .Funct7M(InstrM[31:25]),
     .*);
