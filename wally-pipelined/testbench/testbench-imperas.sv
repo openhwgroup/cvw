@@ -118,7 +118,6 @@ string tests32f[] = '{
     "rv64f/I-FSUB-S-01", "2000"
   };
 
-
   string tests64d[] = '{
     "rv64d/I-FMV-D-X-01", "2000",
     // "rv64d/I-FADD-D-01", "2000",
@@ -153,8 +152,6 @@ string tests32f[] = '{
     // "rv64d/I-FSQRTD-01", "2000",
     // "rv64d/I-FSUB-D-01", "2000"
   };
-
-
 
   string tests64a[] = '{
     "rv64a/WALLY-AMO", "2110",
@@ -441,9 +438,9 @@ string tests32f[] = '{
   };
 
   string testsBP64[] = '{
-			 "rv64BP/simple", "10000",
-			 "rv64BP/qsort", "1000000",
-			 "rv64BP/sieve", "1000000"
+    "rv64BP/simple", "10000",
+    "rv64BP/qsort", "1000000",
+    "rv64BP/sieve", "1000000"
   };
 
   string tests64p[] = '{
@@ -495,9 +492,7 @@ string tests32f[] = '{
     "rv32i-periph/WALLY-PLIC", "2080"
   };
 
-   
-
-  string tests[];
+   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
@@ -547,7 +542,6 @@ string tests32f[] = '{
       end
     end
   end
-
 
   string signame, memfilename;
 
