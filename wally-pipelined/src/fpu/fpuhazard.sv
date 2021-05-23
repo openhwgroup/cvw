@@ -32,8 +32,10 @@ module fpuhazard(
 	  input logic  DivBusyM,
 	  input logic	RegWriteD,
     input logic [2:0] FResultSelD, FResultSelE,
+    input logic IllegalFPUInstrD,
+    input logic In2UsedD, In3UsedD,
   // Stall outputs
-	  output logic FStallE,
+	  output logic FStallD,
     output logic [1:0] Input1MuxD, Input2MuxD, 
     output logic Input3MuxD
 );
@@ -44,27 +46,28 @@ module fpuhazard(
     Input1MuxD = 2'b00; 
     Input2MuxD = 2'b00;
     Input3MuxD = 1'b0;
-    FStallE = DivBusyM;
+    FStallD = DivBusyM;
+    if (~IllegalFPUInstrD) begin
 
-    if      ((Adr1 == RdE) & (FRegWriteE | ((FResultSelE == 3'b110) & RegWriteD))) 
-	if (FResultSelE == 3'b110) Input1MuxD = 2'b11; // choose SrcAM
-        else FStallE = 1'b1;                           // otherwise stall
+      if ((Adr1 == RdE) & (FRegWriteE | ((FResultSelE == 3'b110) & RegWriteD))) 
+        if (FResultSelE == 3'b110) Input1MuxD = 2'b11; // choose SrcAM
+        else FStallD = 1'b1;                           // otherwise stall
+      else if ((Adr1 == RdM) & FRegWriteM) Input1MuxD = 2'b01; // choose FPUResultDirW
+      else if ((Adr1 == RdW) & FRegWriteW) Input1MuxD = 2'b11; // choose FPUResultDirE
+    
 
-    else if ((Adr1 == RdM) & FRegWriteM) Input1MuxD = 2'b01; // choose FPUResultDirW
-    else if ((Adr1 == RdW) & FRegWriteW) Input1MuxD = 2'b11; // choose FPUResultDirE
- 
-
- 
-    else if      ((Adr2 == RdE) & FRegWriteE) FStallE = 1'b1;//***add a signals saying whether input 1, 2 or 3 are used
-    else if ((Adr2 == RdM) & FRegWriteM) Input2MuxD = 2'b01; // choose FPUResultDirW
-    else if ((Adr2 == RdW) & FRegWriteW) Input2MuxD = 2'b10; // choose FPUResultDirE
-
-
+      if(In2UsedD)
+        if      ((Adr2 == RdE) & FRegWriteE) FStallD = 1'b1;
+        else if ((Adr2 == RdM) & FRegWriteM) Input2MuxD = 2'b01; // choose FPUResultDirW
+        else if ((Adr2 == RdW) & FRegWriteW) Input2MuxD = 2'b10; // choose FPUResultDirE
 
 
-    else if      ((Adr3 == RdE) & FRegWriteE) FStallE = 1'b1;
-    else if ((Adr3 == RdM) & FRegWriteM) FStallE = 1'b1;
-    else if ((Adr3 == RdW) & FRegWriteW) Input3MuxD = 1'b1; // choose FPUResultDirE
+      if(In3UsedD)
+        if      ((Adr3 == RdE) & FRegWriteE) FStallD = 1'b1;
+        else if ((Adr3 == RdM) & FRegWriteM) FStallD = 1'b1;
+        else if ((Adr3 == RdW) & FRegWriteW) Input3MuxD = 1'b1; // choose FPUResultDirE
+    end
+
   end 
 
 endmodule
