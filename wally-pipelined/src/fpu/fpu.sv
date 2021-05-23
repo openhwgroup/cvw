@@ -13,11 +13,12 @@ module fpu (
   input  logic [`XLEN-1:0] SrcAM,       // Integer input being written into fpreg
   input  logic 		         StallE, StallM, StallW,
   input  logic             FlushE, FlushM, FlushW,
+  input  logic [`AHBW-1:0] HRDATA,
   input  logic             RegWriteD,
   output logic [4:0]       SetFflagsM,
   output logic [31:0]      FSROutW,
   output logic [1:0]       FMemRWM,
-	output logic             FStallE,
+	output logic             FStallD,
   output logic             FWriteIntW,
   output logic [`XLEN-1:0] FWriteDataM,       // Integer input being written into fpreg
   output logic             DivSqrtDoneE,
@@ -84,7 +85,7 @@ module fpu (
   logic                    DivBusyM;
 	logic [1:0]              Input1MuxD, Input2MuxD;
   logic                    Input3MuxD;
-  
+  logic                    In2UsedD, In3UsedD;
   //Hazard unit for FPU
   fpuhazard hazard(.Adr1(InstrD[19:15]), .Adr2(InstrD[24:20]), .Adr3(InstrD[31:27]), .*);
 
@@ -346,6 +347,7 @@ module fpu (
   //instantiation of M stage regfile signals
   logic [4:0]              RdM;
   logic [`XLEN-1:0]        Input1M, Input2M, Input3M;
+  logic [`XLEN-1:0]        LoadStoreResultM;
 
   //instantiation of M stage add/cvt signals
   logic [63:0]             AddResultM;
@@ -485,6 +487,8 @@ module fpu (
   
   assign FWriteDataM = Input1M;
 
+  mux2  #(64)  LoadStoreResultMux(HRDATA, Input1M, |OpCtrlM[2:1], LoadStoreResultM);
+
   fma2 fma2(.*);
 
   //second instance of two-stage floating-point add/cvt unit
@@ -519,7 +523,7 @@ module fpu (
   logic [4:0]             SgnFlagsW;
 
   //instantiation of W stage regfile signals
-  logic [`XLEN-1:0]        Input1W;
+  logic [`XLEN-1:0]        LoadStoreResultW;
   logic [`XLEN-1:0]        SrcAW;
 
   //instantiation of W stage add/cvt signals
@@ -576,7 +580,7 @@ module fpu (
   flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, FmtM, FmtW);
   flopenrc #(5) MWReg4(clk, reset, PipeClearMW, PipeEnableMW, RdM, RdW);
   flopenrc #(`XLEN) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, SrcAM, SrcAW);
-  flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, Input1M, Input1W);
+  flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, LoadStoreResultM, LoadStoreResultW);
   flopenrc #(1) MWReg7(clk, reset, PipeClearMW, PipeEnableMW, FWriteIntM, FWriteIntW);
 
   ////END M/W PIPE
@@ -628,6 +632,8 @@ module fpu (
   //		     ( (FResultSelW[0]) ? (FmaResultW) : ({62'b0,CmpFCCW}) ) 
   //		     : ( (FResultSelW[0]) ? (AddResultW) : (DivResultW) ) 
   //                   );
+
+
   always_comb begin
 	case (FResultSelW)
 		// div/sqrt
@@ -644,8 +650,8 @@ module fpu (
 		3'b101 : FPUResultDirW = ClassResultW;
 		// output SrcAW
 		3'b110 : FPUResultDirW = SrcAW;
-		// output ReadData1
-		3'b111 : FPUResultDirW = Input1W;
+		// Load/Store/Move to FP-register
+		3'b111 : FPUResultDirW = LoadStoreResultW;
 		default : FPUResultDirW = {64{1'bx}};
 	endcase
   end
