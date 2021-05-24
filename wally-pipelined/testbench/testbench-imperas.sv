@@ -119,7 +119,6 @@ string tests32f[] = '{
   };
 
   string tests64d[] = '{
-    "rv64d/I-FMV-D-X-01", "2000",
     // "rv64d/I-FADD-D-01", "2000",
     // "rv64d/I-FCLASS-D-01", "2000",
     // "rv64d/I-FCVT-D-L-01", "2000",
@@ -135,7 +134,7 @@ string tests32f[] = '{
     // "rv64d/I-FDIV-D-01", "2000",
     // "rv64d/I-FEQ-D-01", "2000",
     "rv64d/I-FSD-01", "2000",
-    "rv64d/I-FLD-01", "2420"
+    "rv64d/I-FLD-01", "2420",
     // "rv64d/I-FLE-D-01", "2000",
     // "rv64d/I-FLT-D-01", "2000",
     // "rv64d/I-FMADD-D-01", "2000",
@@ -143,7 +142,8 @@ string tests32f[] = '{
     // "rv64d/I-FMIN-D-01", "2000",
     // "rv64d/I-FMSUB-D-01", "2000",
     // "rv64d/I-FMUL-D-01", "2000",
-    // "rv64d/I-FMV-X-D-01", "2000",
+    "rv64d/I-FMV-D-X-01", "2000",
+    "rv64d/I-FMV-X-D-01", "2000"
     // "rv64d/I-FNMADD-D-01", "2000",
     // "rv64d/I-FNMSUB-D-01", "2000",
     // "rv64d/I-FSGNJ-D-01", "2000",
@@ -873,8 +873,8 @@ module instrNameDecTB(
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
                        else if (funct7 == 7'b1110000 && rs2 == 5'b00000) name = "FMV.X.W";
                        else if (funct7 == 7'b1111000 && rs2 == 5'b00000) name = "FMV.W.X";
-                       else if (funct7 == 7'b1110001 && rs2 == 5'b00000) name = "FMV.X.W"; // DOUBLE
-                       else if (funct7 == 7'b1111001 && rs2 == 5'b00000) name = "FMV.W.X"; // DOUBLE
+                       else if (funct7 == 7'b1110001 && rs2 == 5'b00000) name = "FMV.X.D"; // DOUBLE
+                       else if (funct7 == 7'b1111001 && rs2 == 5'b00000) name = "FMV.D.X"; // DOUBLE
                        else if (funct7[6:2] == 5'b00100) name = "FSGNJ";
                        else if (funct7[6:2] == 5'b00101) name = "FMIN";
                        else if (funct7[6:2] == 5'b10100) name = "FLE";
