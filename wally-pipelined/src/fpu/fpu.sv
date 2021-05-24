@@ -43,6 +43,7 @@ module fpu (
   output logic [1:0]       FMemRWM,
 	output logic             FStallD,
   output logic             FWriteIntW,
+  output logic             FWriteIntM,
   output logic [`XLEN-1:0] FWriteDataM,       // Integer input being written into fpreg
   output logic             DivSqrtDoneE,
   output logic             IllegalFPUInstrD,
@@ -336,7 +337,6 @@ module fpu (
   logic [2:0]              FrmM;
   logic                    FmtM;
   logic [3:0]              OpCtrlM;
-  logic                    FWriteIntM;
 
   //instantiate M stage FMA signals here ***rename fma signals and resize for XLEN
   logic [63:0]		FmaResultM;
