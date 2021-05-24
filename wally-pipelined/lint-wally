@@ -1,7 +1,8 @@
 #!/bin/bash
 # check for warnings in Verilog code
 # The verilator lint tool is faster and better than Modelsim so it is best to run this first.
-verilator="/usr/local/bin/verilator"
+export PATH=$PATH:/usr/local/bin/
+verilator=`which verilator`
 
 basepath=$(dirname $0)
 for config in rv64ic rv32ic; do
