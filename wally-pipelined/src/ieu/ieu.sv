@@ -43,6 +43,8 @@ module ieu (
   input logic 		   DataMisalignedM,
   input logic 		   DataAccessFaultM,
   input logic 		   SquashSCW,
+  input logic	     	   FWriteIntM,
+  input  logic [`XLEN-1:0] FWriteDataM,
   output logic [1:0] 	   MemRWM,
   output logic [1:0] 	   AtomicM,
   output logic [`XLEN-1:0] MemAdrM, WriteDataM,
