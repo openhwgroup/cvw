@@ -447,7 +447,14 @@ module icachecontroller #(parameter LINESIZE = 256) (
   // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
   // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
   // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
-  assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
+  logic [`XLEN-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
+
+  assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
+  assign InstrPAdrTrunkF = PCPTrunkExtF + FetchCount;
+  
+  //assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
+  assign InstrPAdrF = {InstrPAdrTrunkF, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
+  
 
 
   // store read data from memory interface before writing into SRAM.

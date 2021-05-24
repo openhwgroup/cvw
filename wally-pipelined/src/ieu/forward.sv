@@ -31,6 +31,7 @@ module forward(
   input logic 	     MemReadE, MulDivE, CSRReadE,
   input logic 	     RegWriteM, RegWriteW,
   input logic 	     DivDoneE, DivBusyE,
+  input logic	     FWriteIntM, FWriteIntW,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
   output logic 	     LoadStallD, MulDivStallD, CSRRdStallD
@@ -41,11 +42,13 @@ module forward(
     ForwardBE = 2'b00;
     if (Rs1E != 5'b0)
       if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
-      else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
+      else if ((Rs1E == RdW) & (RegWriteW|FWriteIntW)) ForwardAE = 2'b01;
+     else if ((Rs1E == RdM) & FWriteIntM) ForwardAE = 2'b11;
  
     if (Rs2E != 5'b0)
       if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
-      else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
+      else if ((Rs2E == RdW) & (RegWriteW|FWriteIntW)) ForwardBE = 2'b01;
+      else if ((Rs2E == RdM) & FWriteIntM) ForwardBE = 2'b11;
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
