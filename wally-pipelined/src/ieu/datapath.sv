@@ -44,6 +44,7 @@ module datapath (
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             StallM, FlushM,
+  input  logic [`XLEN-1:0] FWriteDataM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
@@ -101,8 +102,8 @@ module datapath (
   flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux3  #(`XLEN)  faemux(RD1E, ResultW, ALUResultM, ForwardAE, PreSrcAE);
-  mux3  #(`XLEN)  fbemux(RD2E, ResultW, ALUResultM, ForwardBE, WriteDataE);
+  mux4  #(`XLEN)  faemux(RD1E, WriteDataW, ALUResultM, FWriteDataM, ForwardAE, PreSrcAE);
+  mux4  #(`XLEN)  fbemux(RD2E, WriteDataW, ALUResultM, FWriteDataM, ForwardBE, WriteDataE);
   mux2  #(`XLEN)  srcamux(PreSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(WriteDataE, ExtImmE, ALUSrcBE, SrcBE);

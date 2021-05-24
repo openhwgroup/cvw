@@ -206,7 +206,7 @@ module fctrl (
       //  fsw       = ?010 // output Input2
       //  fsd       = ?011 // output Input2
       //  fmv.x.w  = ?100
-      //  fmv.d.w  = ?101
+      //  fmv.x.d  = ?101
       //		   {?, is mv, is store, is double or fcvt.d.w}
       3'b111 : begin OpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])}; In2UsedD = OpD[5]; end
       default : begin OpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; In2UsedD = 1'b0; end

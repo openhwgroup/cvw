@@ -48,7 +48,7 @@ module fpuhazard(
     Input3MuxD = 1'b0;
     FStallD = DivBusyM;
     if (~IllegalFPUInstrD) begin
-
+//					if taking a value from int register
       if ((Adr1 == RdE) & (FRegWriteE | ((FResultSelE == 3'b110) & RegWriteD))) 
         if (FResultSelE == 3'b110) Input1MuxD = 2'b11; // choose SrcAM
         else FStallD = 1'b1;                           // otherwise stall
