@@ -210,9 +210,9 @@ module ifu (
   // the branch predictor needs a compact decoding of the instruction class.
   // *** consider adding in the alternate return address x5 for returns.
   assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 && (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
-  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) == 5'h01; // return must link to ra or r5
-  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) != 5'h01; // jump register, but not return
-  assign InstrClassD[1] = InstrD[6:0] == 7'h6F; // jump
+  assign InstrClassD[3] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 && (InstrD[19:15] & 5'h1B) != 5'h01 && (InstrD[11:7] & 5'h1B) != 5'h01; // jump register, but not return
+  assign InstrClassD[1] = InstrD[6:0] == 7'h6F && (InstrD[11:7] & 5'h1B) != 5'h01; // jump, RD != x1 or x5
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
 
   // Misaligned PC logic

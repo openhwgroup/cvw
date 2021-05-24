@@ -15,6 +15,7 @@ module fctrl (
   output logic [2:0] FrmD,
   output logic [1:0] FMemRWD,
   output logic       OutputInput2D,
+  output logic       In2UsedD, In3UsedD,
   output logic       FWriteIntD);
 
 
@@ -55,50 +56,50 @@ module fctrl (
   //(or equivalent)
 
   always_comb begin
-	//checks all but FMA/store/load
-  IllegalFPUInstr2D = 0;
-	if(OpD == 7'b1010011) begin
-  		casez(Funct7D)
-			//compare	
-			7'b10100?? : FResultSelD = 3'b001;
-			//div/sqrt
-			7'b0?011?? : FResultSelD = 3'b000;
-			//add/sub
-			7'b0000??? : FResultSelD = 3'b100;
-			//mult
-			7'b00010?? : FResultSelD = 3'b010;
-			//convert (not precision)
-			7'b110?0?? : FResultSelD = 3'b100;
-			//convert (precision)
-			7'b010000? : FResultSelD = 3'b100;
-			//Min/Max
-			7'b00101?? : FResultSelD = 3'b001;
-			//sign injection
-			7'b00100?? : FResultSelD = 3'b011;
-			//classify //only if funct3 = 001 
-			7'b11100?? : if(Funct3D == 3'b001) FResultSelD = 3'b101;
-			//output ReadData1
-                   else if (Funct7D[1] == 0) FResultSelD = 3'b111;
-			//output SrcW
-			7'b111100? : FResultSelD = 3'b110;
-			default    : begin FResultSelD = 3'b0; IllegalFPUInstr2D = 1'b1; end
-		endcase
-	end
-	//FMA/store/load
-	else begin
-  		case(OpD)
-			//4 FMA instructions
-			7'b1000011 : FResultSelD = 3'b010;
-			7'b1000111 : FResultSelD = 3'b010;
-			7'b1001011 : FResultSelD = 3'b010;
-			7'b1001111 : FResultSelD = 3'b010;
-			//store
-			7'b0100111 : FResultSelD = 3'b111;
-			//load
-			7'b0000111 : FResultSelD = 3'b111;
-			default    : begin FResultSelD = 3'b0; IllegalFPUInstr2D = 1'b1; end
-		endcase
-	end
+    //checks all but FMA/store/load
+    IllegalFPUInstr2D = 0;
+    if(OpD == 7'b1010011) begin
+      casez(Funct7D)
+        //compare	
+        7'b10100?? : FResultSelD = 3'b001;
+        //div/sqrt
+        7'b0?011?? : FResultSelD = 3'b000;
+        //add/sub
+        7'b0000??? : FResultSelD = 3'b100;
+        //mult
+        7'b00010?? : FResultSelD = 3'b010;
+        //convert (not precision)
+        7'b110?0?? : FResultSelD = 3'b100;
+        //convert (precision)
+        7'b010000? : FResultSelD = 3'b100;
+        //Min/Max
+        7'b00101?? : FResultSelD = 3'b001;
+        //sign injection
+        7'b00100?? : FResultSelD = 3'b011;
+        //classify //only if funct3 = 001 
+        7'b11100?? : if(Funct3D == 3'b001) FResultSelD = 3'b101;
+        //output ReadData1
+                    else if (Funct7D[1] == 0) FResultSelD = 3'b111;
+        //output SrcW
+        7'b111100? : FResultSelD = 3'b110;
+        default    : begin FResultSelD = 3'b0; IllegalFPUInstr2D = 1'b1; end
+      endcase
+    end
+    //FMA/store/load
+    else begin
+      case(OpD)
+        //4 FMA instructions
+        7'b1000011 : FResultSelD = 3'b010;
+        7'b1000111 : FResultSelD = 3'b010;
+        7'b1001011 : FResultSelD = 3'b010;
+        7'b1001111 : FResultSelD = 3'b010;
+        //store
+        7'b0100111 : FResultSelD = 3'b111;
+        //load
+        7'b0000111 : FResultSelD = 3'b111;
+        default    : begin FResultSelD = 3'b0; IllegalFPUInstr2D = 1'b1; end
+      endcase
+    end
   end
 
   assign OutputInput2D = OpD == 7'b0100111;
@@ -151,11 +152,12 @@ module fctrl (
  
   always_comb begin
     IllegalFPUInstr1D = 0;
+    In3UsedD = 0;
     case (FResultSelD)
       // div/sqrt
       //  fdiv  = ???0
       //  fsqrt = ???1
-      3'b000 : OpCtrlD = {3'b0, Funct7D[5]};
+      3'b000 : begin OpCtrlD = {3'b0, Funct7D[5]}; In2UsedD = ~Funct7D[5]; end
       // cmp		
       //  fmin = ?100
       //  fmax = ?101
@@ -163,7 +165,7 @@ module fctrl (
       //  flt  = ?001
       //  fle  = ?011
       //		   {?,    is min or max, is eq or le, is lt or le}
-      3'b001 : OpCtrlD = {1'b0, Funct7D[2], ~Funct3D[0], ~(|Funct3D[2:1])};
+      3'b001 : begin OpCtrlD = {1'b0, Funct7D[2], ~Funct3D[0], ~(|Funct3D[2:1])}; In2UsedD = 1'b1; end
       //fma/mult	
       //  fmadd  = ?000
       //  fmsub  = ?001
@@ -171,12 +173,12 @@ module fctrl (
       //  fnmsub = ?011
       //  fmul   = ?100
       //		  {?, is mul, is negitive, is sub}
-      3'b010 : OpCtrlD = {1'b0, OpD[4:2]};
+      3'b010 : begin OpCtrlD = {1'b0, OpD[4:2]}; In2UsedD = 1'b1; In3UsedD = ~OpD[4]; end
       // sgn inj
       //  fsgnj  = ??00
       //  fsgnjn = ??01
       //  fsgnjx = ??10
-      3'b011 : OpCtrlD = {2'b0, Funct3D[1:0]};
+      3'b011 : begin OpCtrlD = {2'b0, Funct3D[1:0]}; In2UsedD = 1'b1; end
       // add/sub/cnvt
       //  fadd      = 0000
       //  fsub      = 0001
@@ -191,23 +193,23 @@ module fctrl (
       //  fcvt.d.wu = 1111
       //  fcvt.d.s  = 1000
       //		   { is double and not add/sub, is to/from int, is to int or float to double,      is unsigned or sub
-      3'b100 : OpCtrlD = {Funct7D[0]&Funct7D[5], Funct7D[6], Funct7D[3] | (~Funct7D[6]&Funct7D[5]&~Funct7D[0]), Rs2D[0]|(Funct7D[2]&~Funct7D[5])};
+      3'b100 : begin OpCtrlD = {Funct7D[0]&Funct7D[5], Funct7D[6], Funct7D[3] | (~Funct7D[6]&Funct7D[5]&~Funct7D[0]), Rs2D[0]|(Funct7D[2]&~Funct7D[5])}; In2UsedD = ~Funct7D[5]; end
       // classify	  {?, ?, ?, ?}
-      3'b101 : OpCtrlD = 4'b0;
+      3'b101 : begin OpCtrlD = 4'b0; In2UsedD = 1'b0; end
       // output SrcAW
       //  fmv.w.x = ???0
       //  fmv.w.d = ???1
-      3'b110 : OpCtrlD = {3'b0, Funct7D[0]};
+      3'b110 : begin OpCtrlD = {3'b0, Funct7D[0]}; In2UsedD = 1'b0; end
       // output Input1
       //  flw       = ?000
       //  fld       = ?001 
       //  fsw       = ?010 // output Input2
       //  fsd       = ?011 // output Input2
       //  fmv.x.w  = ?100
-      //  fmv.d.w  = ?101
+      //  fmv.x.d  = ?101
       //		   {?, is mv, is store, is double or fcvt.d.w}
-      3'b111 : OpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])};
-      default : begin OpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; end
+      3'b111 : begin OpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])}; In2UsedD = OpD[5]; end
+      default : begin OpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; In2UsedD = 1'b0; end
     endcase
   end
 
