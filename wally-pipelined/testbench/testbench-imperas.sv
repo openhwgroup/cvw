@@ -28,7 +28,6 @@
 
 module testbench();
   parameter DEBUG = 0;
-  parameter TESTSBP = 0;
   parameter TESTSPERIPH = 0; // set to 0 for regression
   
   logic        clk;
@@ -513,10 +512,12 @@ string tests32f[] = '{
   initial begin
     if (`XLEN == 64) begin // RV64
       if (`TESTSBP) begin
-        tests = {testsBP64,tests64p};
-      end if (TESTSPERIPH) begin 
+        tests = testsBP64;
+	// testsbp should not run the other tests. It starts at address 0 rather than
+	// 0x8000_0000, the next if must remain an else if.	
+      end else if (TESTSPERIPH) begin 
         tests = tests64periph;
-      end else begin 
+      end else begin
         tests = {tests64p,tests64i,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
@@ -582,9 +583,11 @@ string tests32f[] = '{
       if (`XLEN == 32) meminit = 32'hFEDC0123;
       else meminit = 64'hFEDCBA9876543210;
       // *** broken because DTIM also drives RAM
-      /*for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	      dut.uncore.dtim.RAM[i] = meminit;
-      end*/
+      if (`TESTSBP) begin
+	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
+	  dut.uncore.dtim.RAM[i] = meminit;
+	end
+      end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);

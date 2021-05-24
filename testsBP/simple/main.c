@@ -1,7 +1,8 @@
 #include "header.h"
 
 int main(){
-  int res = icache_spill_test();
+  //int res = icache_spill_test();
+  int res = 1;
   if (res < 0) {
     fail();
     return 0;

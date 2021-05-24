@@ -90,4 +90,5 @@ $(TARGET).memfile: $(TARGET)
 	@echo 'Making memory file'
 	exe2memfile0.pl $<
 	extractFunctionRadix.sh $<.objdump
-	cp $(TARGETDIR)/* ../../imperas-riscv-tests/work/rv64BP/
+	mkdir -p ../../imperas-riscv-tests/work/rv64BP/
+	cp -f $(TARGETDIR)/* ../../imperas-riscv-tests/work/rv64BP/
