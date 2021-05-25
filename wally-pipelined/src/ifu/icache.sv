@@ -154,15 +154,16 @@ module icachecontroller #(parameter LINESIZE = 256) (
   localparam STATE_MISS_SPILL_FETCH_DONE = 10; // write data into SRAM/LUT
   localparam STATE_MISS_SPILL_READ1 = 11; // read block 0 from SRAM/LUT
   localparam STATE_MISS_SPILL_2 = 12; // return to ready if hit or do second block update.
-  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 13; // miss on block 1, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 14; // write data to SRAM/LUT
-  localparam STATE_MISS_SPILL_MERGE = 15; // read block 0 of CPU access,
+  localparam STATE_MISS_SPILL_2_START = 13; // return to ready if hit or do second block update.  
+  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 14; // miss on block 1, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 15; // write data to SRAM/LUT
+  localparam STATE_MISS_SPILL_MERGE = 16; // read block 0 of CPU access,
 
-  localparam STATE_MISS_SPILL_FINAL = 16; // this state replicates STATE_READY's replay of the
+  localparam STATE_MISS_SPILL_FINAL = 17; // this state replicates STATE_READY's replay of the
   // spill access but does nto consider spill.  It also does not do another operation.
   
 
-  localparam STATE_INVALIDATE = 17; // *** not sure if invalidate or evict? invalidate by cache block or address?
+  localparam STATE_INVALIDATE = 18; // *** not sure if invalidate or evict? invalidate by cache block or address?
   
   localparam AHBByteLength = `XLEN / 8;
   localparam AHBOFFETWIDTH = $clog2(AHBByteLength);
@@ -380,11 +381,20 @@ module icachecontroller #(parameter LINESIZE = 256) (
 	PCMux = 2'b10;
 	UnalignedSelect = 1'b1;
 	spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
+	ICacheReadEn = 1'b1;
+	NextState = STATE_MISS_SPILL_2_START;
+      end
+      STATE_MISS_SPILL_2_START: begin
 	if (~hit) begin
 	  CntReset = 1'b1;
 	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
 	end else begin
-	  NextState = STATE_MISS_SPILL_FINAL;
+	  NextState = STATE_READY;
+	  ICacheReadEn = 1'b1;
+	  PCMux = 2'b00;
+	  UnalignedSelect = 1'b1;
+	  SavePC = 1'b1;
+	  ICacheStallF = 1'b0;	
 	end
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
