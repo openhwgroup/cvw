@@ -32,6 +32,7 @@ module twoBitPredictor
     )
   (input logic clk,
    input logic 		   reset,
+   input logic 		   StallF,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0] 	   Prediction,
    // update
@@ -54,11 +55,11 @@ module twoBitPredictor
   assign LookUpPCIndex = {LookUpPC[Depth+1] ^ LookUpPC[1], LookUpPC[Depth:2]};  
 
 
-  SRAM2P1R1W #(Depth, 2) memory(.clk(clk),
+  SRAM2P1R1W #(Depth, 2) PHT(.clk(clk),
 				.reset(reset),
 				.RA1(LookUpPCIndex),
 				.RD1(PredictionMemory),
-				.REN1(1'b1),
+				.REN1(~StallF),
 				.WA1(UpdatePCIndex),
 				.WD1(UpdatePrediction),
 				.WEN1(UpdateEN),
