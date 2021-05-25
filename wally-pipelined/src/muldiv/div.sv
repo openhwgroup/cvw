@@ -130,7 +130,6 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
    // shifting N right by v+s so that (m+v+s) mod k = 0.  And,
    // the quotient has to be aligned to the integer position.
 
-   // Actual divider unit FIXME: r16 (jes)
    divide4x64 p3 (Qd, Rd, quotient, op1, op2, clk, reset, state0, 
 		  enable, otfzero, shiftResult);
 
@@ -158,11 +157,6 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
 
    // RISC-V has exceptions for divide by 0 and overflow (see Table 6.1 of spec)
    exception_int exc (QT, remT, N, S, div0, Max_N, D_NegOne, Qf, remf);
-
-   // Delete me if works
-   // RISC-V has exceptions for divide by 0 (Table 6.1 of SPEC)
-   //mux2 #(64) exc1 (Q, {64{1'b1}}, div0, Qf);
-   //mux2 #(64) exc2 (rem0, op1, div0, remf);   
 
 endmodule // int32div
 
