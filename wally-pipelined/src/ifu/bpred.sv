@@ -75,6 +75,7 @@ module bpred
     if (`BPTYPE == "BPTWOBIT") begin:Predictor
       twoBitPredictor DirPredictor(.clk(clk),
 				   .reset(reset),
+				   .StallF(StallF),
 				   .LookUpPC(PCNextF),
 				   .Prediction(BPPredF),
 				   // update
