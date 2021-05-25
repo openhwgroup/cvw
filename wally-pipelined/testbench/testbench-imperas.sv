@@ -443,7 +443,7 @@ string tests32f[] = '{
   };
 
   string tests64p[] = '{
-    //"rv64p/WALLY-MSTATUS", "2010",
+    "rv64p/WALLY-MSTATUS", "2000",
     "rv64p/WALLY-MCAUSE", "3000",
     "rv64p/WALLY-SCAUSE", "2000",
     "rv64p/WALLY-MEPC", "5000",
@@ -464,6 +464,7 @@ string tests32f[] = '{
   };
 
   string tests32p[] = '{
+    "rv32p/WALLY-MSTATUS", "2000",
     "rv32p/WALLY-MCAUSE", "3000",
     "rv32p/WALLY-SCAUSE", "2000",
     "rv32p/WALLY-MEPC", "5000",
@@ -652,7 +653,7 @@ string tests32f[] = '{
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
                     tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
-              $stop;//***debug
+              // $stop;//***debug
             end
           end
           i = i + 1;
