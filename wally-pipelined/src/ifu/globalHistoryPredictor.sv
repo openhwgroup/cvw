@@ -32,76 +32,34 @@ module globalHistoryPredictor
     )
   (input logic clk,
    input logic 		   reset,
-   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		   StallF, StallD, StallE, FlushF, FlushD, FlushE,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0] 	   Prediction,
    // update
    input logic [`XLEN-1:0] UpdatePC,
    input logic 		   UpdateEN, PCSrcE, 
    input logic [1:0] 	   UpdatePrediction
-   
+  
    );
-   logic [k-1:0] GHRF, GHRFNext;
-   assign GHRFNext = {PCSrcE, GHRF[k-1:1]}; 
+  logic [k-1:0] 	   GHRF, GHRFNext;
+  assign GHRFNext = {PCSrcE, GHRF[k-1:1]}; 
 
-    flopenr #(k) GlobalHistoryRegister(.clk(clk),
-            .reset(reset),
-            .en(UpdateEN),
-            .d(GHRFNext),
-            .q(GHRF));
-
-
-
-  logic [1:0] 		   PredictionMemory;
-  logic 		   DoForwarding, DoForwardingF;
-  logic [1:0] 		   UpdatePredictionF;
- 
+  flopenr #(k) GlobalHistoryRegister(.clk(clk),
+				     .reset(reset),
+				     .en(UpdateEN),
+				     .d(GHRFNext),
+				     .q(GHRF));
 
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
-  // GHR referes to the address that the past k branches points to in the prediction stage 
-  // GHRE refers to the address that the past k branches points to in the exectution stage
-    SRAM2P1R1W #(k, 2) PHT(.clk(clk),
-				.reset(reset),
-				.RA1(GHRF),
-				.RD1(PredictionMemory),
-				.REN1(~StallF),
-				.WA1(GHRFNext),
-				.WD1(UpdatePrediction),
-				.WEN1(UpdateEN),
-				.BitWEN1(2'b11));
+  SRAM2P1R1W #(k, 2) PHT(.clk(clk),
+			 .reset(reset),
+			 .RA1(GHRF),
+			 .RD1(Prediction),
+			 .REN1(~StallF),
+			 .WA1(GHRF),
+			 .WD1(UpdatePrediction),
+			 .WEN1(UpdateEN),
+			 .BitWEN1(2'b11));
 
 
-  // need to forward when updating to the same address as reading.
-  // first we compare to see if the update and lookup addreses are the same
-  assign DoForwarding = GHRF == GHRFNext;
-
-  // register the update value and the forwarding signal into the Fetch stage
-  // TODO: add stall logic ***
-  flopr #(1) DoForwardingReg(.clk(clk),
-			     .reset(reset),
-			     .d(DoForwarding),
-			     .q(DoForwardingF));
-  
-  flopr #(2) UpdatePredictionReg(.clk(clk),
-				 .reset(reset),
-				 .d(UpdatePrediction),
-				 .q(UpdatePredictionF));
-
-  assign Prediction = DoForwardingF ? UpdatePredictionF : PredictionMemory;
-  
-  //pipeline for GHR
-  /*flopenrc #(k) GHRDReg(.clk(clk),
-      .reset(reset),
-      .en(~StallD),
-      .clear(FlushD),
-      .d(GHRF),
-      .q(GHRD));
-
-  flopenrc #(k) GHREReg(.clk(clk),
-        .reset(reset),
-        .en(~StallE),
-        .clear(FlushE),
-        .d(GHRD),
-        .q(GHRE));
-*/
 endmodule
