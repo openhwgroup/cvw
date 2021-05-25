@@ -31,12 +31,13 @@
 
 `include "wally-config.vh"
 
-module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start);
+module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
 
    input logic [63:0]  N, D;
    input logic 	       clk;
    input logic 	       reset;
    input logic 	       start;
+   input logic 	       S;   
    
    output logic [63:0] Qf;
    output logic [63:0] remf;
@@ -58,6 +59,24 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start);
    logic 	       shiftResult;
    logic 	       enablev, state0v, donev, divdonev, oftzerov, divBusyv, ulp;
 
+   logic [63:0]        twoD;
+   logic [63:0]        twoN;
+   logic 	       SignD;
+   logic 	       SignN;
+   logic [63:0]        QT, remT;
+   logic 	       D_NegOne;
+   logic 	       Max_N;
+
+   // Check if negative (two's complement)
+   //   If so, convert to positive
+   adder #(64) cpa1 ((D ^ {64{D[63]&S}}), {63'h0, D[63]&S}, twoD);
+   adder #(64) cpa2 ((N ^ {64{N[63]&S}}), {63'h0, N[63]&S}, twoN);   
+   assign SignD = D[63];
+   assign SignN = N[63];   
+   // Max N and D = -1 (Overflow)
+   assign Max_N = (~|N[62:0]) & N[63];
+   assign D_NegOne = &D;
+
    // Divider goes the distance to 37 cycles
    // (thanks the evil divisor for D = 0x1) 
    // but could theoretically be stopped when
@@ -74,17 +93,14 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start);
    // exception is given to FSM to tell the operation to 
    // quit gracefully.
 
-   // div0 produced output  errors have untested results
-   // (it is assumed the OS would handle some output)
-   
-   lz64 p1 (P, V, D);
-   shifter_l64 p2 (op2, D, P);
-   assign op1 = N;
+   lz64 p1 (P, V, twoD);
+   shifter_l64 p2 (op2, twoD, P);
+   assign op1 = twoN;
    assign div0 = ~V;
 
    // #iter: N = m+v+s = m+(s+2) = m+2+s (mod k = 0)
    // v = 2 since \rho < 1 (add 4 to make sure its a ceil)
-   adder #(8) cpa1 ({2'b0, P}, 
+   adder #(8) cpa3 ({2'b0, P}, 
 		    {5'h0, shiftResult, ~shiftResult, 1'b0}, 
 		    Num);      
    
@@ -130,9 +146,23 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start);
    // n ln(r)
    shifter_r64 p4 (rem0, Rem5, RemShift);
 
+   // Adjust Q/Rem for Signed
+   assign tcQ = (SignN ^ SignD) & S;
+   assign tcR = SignN & S;
+   // Signed Divide
+   // - When N and D are negative: Remainder is negative (undergoes a two's complement).
+   // - When N is negative: Quotient and Remainder are both negative (undergo a two's complement).
+   // - When D is negative: Quotient is negative (undergoes a two's complement).
+   adder #(64) cpa4 ((rem0 ^ {64{tcR}}), {63'h0, tcR}, remT);
+   adder #(64) cpa5 ((Q ^ {64{tcQ}}), {63'h0, tcQ}, QT);         
+
+   // RISC-V has exceptions for divide by 0 and overflow (see Table 6.1 of spec)
+   exception_int exc (QT, remT, N, S, div0, Max_N, D_NegOne, Qf, remf);
+
+   // Delete me if works
    // RISC-V has exceptions for divide by 0 (Table 6.1 of SPEC)
-   mux2 #(64) exc1 (Q, {64{1'b1}}, div0, Qf);
-   mux2 #(64) exc2 (rem0, op1, div0, remf);   
+   //mux2 #(64) exc1 (Q, {64{1'b1}}, div0, Qf);
+   //mux2 #(64) exc2 (rem0, op1, div0, remf);   
 
 endmodule // int32div
 
@@ -1608,6 +1638,64 @@ module shift_left #(parameter WIDTH=8)
    assign Z = stage[$clog2(`XLEN)];   
 
 endmodule // shift_right
+
+module exception_int (Q, rem, op1, S, div0, Max_N, D_NegOne, Qf, remf);
+
+   input logic [63:0] Q;
+   input logic [63:0] rem;
+   input logic [63:0] op1;      
+   input logic 	      S;
+   input logic 	      div0;
+   input logic 	      Max_N;
+   input logic 	      D_NegOne;
+   
+   output logic [63:0] Qf;
+   output logic [63:0] remf;
+
+   // Needs to be optimized
+   always_comb
+     case ({div0, S, Max_N, D_NegOne})
+       4'b0000 : Qf = Q;
+       4'b0001 : Qf = Q;
+       4'b0010 : Qf = Q;              
+       4'b0011 : Qf = Q;              
+       4'b0100 : Qf = Q;
+       4'b0101 : Qf = Q;
+       4'b0110 : Qf = Q;       
+       4'b0111 : Qf = {1'b1, 31'h0};
+       4'b1000 : Qf = {64{1'b1}};
+       4'b1001 : Qf = {64{1'b1}};
+       4'b1010 : Qf = {64{1'b1}};
+       4'b1011 : Qf = {64{1'b1}};              
+       4'b1100 : Qf = {64{1'b1}};
+       4'b1101 : Qf = {64{1'b1}};       
+       4'b1110 : Qf = {64{1'b1}};       
+       4'b1111 : Qf = {64{1'b1}};              
+       default: Qf = Q;       
+     endcase 
+
+   always_comb
+     case ({div0, S, Max_N, D_NegOne})
+       4'b0000 : remf = rem;
+       4'b0001 : remf = rem;
+       4'b0010 : remf = rem;
+       4'b0011 : remf = rem;
+       4'b0100 : remf = rem;
+       4'b0101 : remf = rem;
+       4'b0110 : remf = rem;
+       4'b0111 : remf = 64'h0;     
+       4'b1000 : remf = op1;
+       4'b1001 : remf = op1;
+       4'b1010 : remf = op1;
+       4'b1011 : remf = op1;       
+       4'b1100 : remf = op1;
+       4'b1101 : remf = op1;
+       4'b1110 : remf = op1;       
+       4'b1111 : remf = op1;              
+       default: remf = rem;
+     endcase 
+
+endmodule // exception_int
 
 /* verilator lint_on COMBDLY */
 /* verilator lint_on IMPLICIT */

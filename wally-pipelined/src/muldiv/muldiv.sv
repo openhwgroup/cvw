@@ -57,7 +57,8 @@ module muldiv (
 
 	 logic 		     gclk;
 	 logic 		     DivStartE;
-	 logic 		     startDivideE;   	 
+	 logic 		     startDivideE;
+	 logic 		     signedDivide;	 
 	 
 	 // Multiplier
 	 mul mul(.*);
@@ -76,8 +77,8 @@ module muldiv (
 	 flopenrc #(`XLEN) reg_den (.d(SrcBE), .q(D),
 				    .en(startDivideE), .clear(DivDoneE),
 				    .reset(reset),  .clk(~gclk));	 
-	 
-	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE);
+	 assign signedDivide = (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
+	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
