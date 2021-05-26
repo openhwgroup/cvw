@@ -100,7 +100,7 @@ module wallypipelinedhart (
   logic       FStallD;
   logic       FWriteIntW, FWriteIntM;
   logic [31:0]      FSROutW;
-  logic             DivSqrtDoneE;
+  logic             FDivSqrtDoneM;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic [`XLEN-1:0] FPUResultW;
 

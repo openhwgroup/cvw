@@ -6,16 +6,15 @@ module fctrl (
   input  logic [2:0] Funct3D,
   input  logic [2:0] FRM_REGW,
   output logic       IllegalFPUInstrD,
-  output logic       FRegWriteD,
-  output logic       DivSqrtStartD,
-  //output logic [2:0] regSelD,
+  output logic       FWriteEnD,
+  output logic       FDivStartD,
   output logic [2:0] FResultSelD,
-  output logic [3:0] OpCtrlD,
+  output logic [3:0] FOpCtrlD,
   output logic       FmtD,
   output logic [2:0] FrmD,
   output logic [1:0] FMemRWD,
-  output logic       OutputInput2D,
-  output logic       In2UsedD, In3UsedD,
+  output logic       FOutputInput2D,
+  output logic       FInput2UsedD, FInput3UsedD,
   output logic       FWriteIntD);
 
 
@@ -102,9 +101,9 @@ module fctrl (
     end
   end
 
-  assign OutputInput2D = OpD == 7'b0100111;
+  assign FOutputInput2D = OpD == 7'b0100111;
 
-  assign FMemRWD[0] = OutputInput2D;
+  assign FMemRWD[0] = FOutputInput2D;
   assign FMemRWD[1] = OpD == 7'b0000111;
 
 
@@ -131,7 +130,7 @@ module fctrl (
   //this value is used enough to be shorthand
 
   //if op is div/sqrt - start div/sqrt
-  assign DivSqrtStartD = ~|FResultSelD; // is FResultSelD == 000
+  assign FDivStartD = ~|FResultSelD; // is FResultSelD == 000
 
   //operation control for each fp operation
   //has to be expanded over standard to account for
@@ -144,7 +143,7 @@ module fctrl (
   //version I used for this repo
 
   //let's do separate SOP for each type of operation
-//  assign OpCtrlD[3] = 1'b0;
+//  assign FOpCtrlD[3] = 1'b0;
 //
 //
 
@@ -152,12 +151,12 @@ module fctrl (
  
   always_comb begin
     IllegalFPUInstr1D = 0;
-    In3UsedD = 0;
+    FInput3UsedD = 0;
     case (FResultSelD)
       // div/sqrt
       //  fdiv  = ???0
       //  fsqrt = ???1
-      3'b000 : begin OpCtrlD = {3'b0, Funct7D[5]}; In2UsedD = ~Funct7D[5]; end
+      3'b000 : begin FOpCtrlD = {3'b0, Funct7D[5]}; FInput2UsedD = ~Funct7D[5]; end
       // cmp		
       //  fmin = ?100
       //  fmax = ?101
@@ -165,7 +164,7 @@ module fctrl (
       //  flt  = ?001
       //  fle  = ?011
       //		   {?,    is min or max, is eq or le, is lt or le}
-      3'b001 : begin OpCtrlD = {1'b0, Funct7D[2], ~Funct3D[0], ~(|Funct3D[2:1])}; In2UsedD = 1'b1; end
+      3'b001 : begin FOpCtrlD = {1'b0, Funct7D[2], ~Funct3D[0], ~(|Funct3D[2:1])}; FInput2UsedD = 1'b1; end
       //fma/mult	
       //  fmadd  = ?000
       //  fmsub  = ?001
@@ -173,12 +172,12 @@ module fctrl (
       //  fnmsub = ?011
       //  fmul   = ?100
       //		  {?, is mul, is negitive, is sub}
-      3'b010 : begin OpCtrlD = {1'b0, OpD[4:2]}; In2UsedD = 1'b1; In3UsedD = ~OpD[4]; end
+      3'b010 : begin FOpCtrlD = {1'b0, OpD[4:2]}; FInput2UsedD = 1'b1; FInput3UsedD = ~OpD[4]; end
       // sgn inj
       //  fsgnj  = ??00
       //  fsgnjn = ??01
       //  fsgnjx = ??10
-      3'b011 : begin OpCtrlD = {2'b0, Funct3D[1:0]}; In2UsedD = 1'b1; end
+      3'b011 : begin FOpCtrlD = {2'b0, Funct3D[1:0]}; FInput2UsedD = 1'b1; end
       // add/sub/cnvt
       //  fadd      = 0000
       //  fsub      = 0001
@@ -193,13 +192,13 @@ module fctrl (
       //  fcvt.d.wu = 1111
       //  fcvt.d.s  = 1000
       //		   { is double and not add/sub, is to/from int, is to int or float to double,      is unsigned or sub
-      3'b100 : begin OpCtrlD = {Funct7D[0]&Funct7D[5], Funct7D[6], Funct7D[3] | (~Funct7D[6]&Funct7D[5]&~Funct7D[0]), Rs2D[0]|(Funct7D[2]&~Funct7D[5])}; In2UsedD = ~Funct7D[5]; end
+      3'b100 : begin FOpCtrlD = {Funct7D[0]&Funct7D[5], Funct7D[6], Funct7D[3] | (~Funct7D[6]&Funct7D[5]&~Funct7D[0]), Rs2D[0]|(Funct7D[2]&~Funct7D[5])}; FInput2UsedD = ~Funct7D[5]; end
       // classify	  {?, ?, ?, ?}
-      3'b101 : begin OpCtrlD = 4'b0; In2UsedD = 1'b0; end
+      3'b101 : begin FOpCtrlD = 4'b0; FInput2UsedD = 1'b0; end
       // output SrcAW
       //  fmv.w.x = ???0
       //  fmv.w.d = ???1
-      3'b110 : begin OpCtrlD = {3'b0, Funct7D[0]}; In2UsedD = 1'b0; end
+      3'b110 : begin FOpCtrlD = {3'b0, Funct7D[0]}; FInput2UsedD = 1'b0; end
       // output Input1
       //  flw       = ?000
       //  fld       = ?001 
@@ -207,9 +206,9 @@ module fctrl (
       //  fsd       = ?011 // output Input2
       //  fmv.x.w  = ?100
       //  fmv.x.d  = ?101
-      //		   {?, is mv, is store, is double or fcvt.d.w}
-      3'b111 : begin OpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])}; In2UsedD = OpD[5]; end
-      default : begin OpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; In2UsedD = 1'b0; end
+      //		   {?, is mv, is store, is double or fmv}
+      3'b111 : begin FOpCtrlD = {1'b0, OpD[6:5], Funct3D[0] | (OpD[6]&Funct7D[0])}; FInput2UsedD = OpD[5]; end
+      default : begin FOpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; FInput2UsedD = 1'b0; end
     endcase
   end
 
@@ -219,5 +218,5 @@ module fctrl (
   //			is add/cvt       and  is to int  or is classify		 or     is cmp	       	and not max/min or is output ReadData1 and is mv
   assign FWriteIntD = ((FResultSelD == 3'b100)&Funct7D[3]) | (FResultSelD == 3'b101) | ((FResultSelD == 3'b001)&~Funct7D[2]) | ((FResultSelD == 3'b111)&OpD[6]);
   // 		      if not writting to int reg and not a store function and not move
-  assign FRegWriteD = ~FWriteIntD & ~OpD[5] & ~((FResultSelD == 3'b111)&OpD[6]) & isFP;
+  assign FWriteEnD = ~FWriteIntD & ~OpD[5] & ~((FResultSelD == 3'b111)&OpD[6]) & isFP;
 endmodule
