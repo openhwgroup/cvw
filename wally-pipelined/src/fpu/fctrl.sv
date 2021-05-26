@@ -192,7 +192,7 @@ module fctrl (
       //  fcvt.d.wu = 1111
       //  fcvt.d.s  = 1000
       //		   { is double and not add/sub, is to/from int, is to int or float to double,      is unsigned or sub
-      3'b100 : begin FOpCtrlD = {Funct7D[0]&Funct7D[5], Funct7D[6], Funct7D[3] | (~Funct7D[6]&Funct7D[5]&~Funct7D[0]), Rs2D[0]|(Funct7D[2]&~Funct7D[5])}; FInput2UsedD = ~Funct7D[5]; end
+      3'b100 : begin FOpCtrlD = {Funct7D[0]&Funct7D[5], Funct7D[6], Funct7D[3] | (~Funct7D[6]&Funct7D[5]&~Funct7D[0]), (Rs2D[0]&Funct7D[5])|(Funct7D[2]&~Funct7D[5])}; FInput2UsedD = ~Funct7D[5]; end
       // classify	  {?, ?, ?, ?}
       3'b101 : begin FOpCtrlD = 4'b0; FInput2UsedD = 1'b0; end
       // output SrcAW

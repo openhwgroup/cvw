@@ -56,7 +56,7 @@ module fpuaddcvt2 (FAddResultM, FAddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddS
    output 	 AddDenormM;   	// AddDenormM on input or output   
 
    wire          P;
-   assign P = FmtM | FOpCtrlM[2];
+   assign P = ~FmtM | FOpCtrlM[2];
 
    wire [10:0]   exp_pre;
    wire [63:0] 	 Result;   
