@@ -108,7 +108,7 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
    assign zeroB = FOpCtrlE[2] | FOpCtrlE[1];
 
    // Swapped operands if zeroB is not one and exp1 < exp2. 
-   // SwapFmtEg causes exp2 to be used for the result exponent. 
+   // Swapping causes exp2 to be used for the result exponent. 
    // Only the exponent of the larger operand is used to determine
    // the final result. 
    assign AddSwapE = exp_diff1[11] & ~zeroB;
