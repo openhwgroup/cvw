@@ -5,4 +5,5 @@ int fail();
 int simple_csrbr_test();
 int lbu_test();
 int icache_spill_test();
+void global_hist_test();
 #endif
