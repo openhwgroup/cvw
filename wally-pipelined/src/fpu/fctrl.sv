@@ -158,7 +158,7 @@ module fctrl (
       //  fsqrt = ???1
       3'b000 : begin FOpCtrlD = {3'b0, Funct7D[5]}; FInput2UsedD = ~Funct7D[5]; end
       // cmp		
-      //  fmin = ?100
+      //  fmin = ?111
       //  fmax = ?101
       //  feq  = ?010
       //  flt  = ?001
