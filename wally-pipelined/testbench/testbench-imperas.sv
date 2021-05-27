@@ -124,7 +124,7 @@ string tests32f[] = '{
     "rv64d/I-FLT-D-01", "2000",
     "rv64d/I-FEQ-D-01", "2000",
     "rv64d/I-FADD-D-01", "2000",
-    // "rv64d/I-FCLASS-D-01", "2000",
+    "rv64d/I-FCLASS-D-01", "2000",
     // "rv64d/I-FCVT-D-L-01", "2000",
     // "rv64d/I-FCVT-D-LU-01", "2000",
     // "rv64d/I-FCVT-D-S-01", "2000",
@@ -653,7 +653,7 @@ string tests32f[] = '{
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
                     tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
-              // $stop;//***debug
+              $stop;//***debug
             end
           end
           i = i + 1;
