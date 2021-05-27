@@ -40,7 +40,7 @@ module fpu (
   output logic [31:0]      FSROutW,
   output logic [1:0]       FMemRWM,
 	output logic             FStallD,
-  output logic             FWriteIntM, FWriteIntW,
+  output logic             FWriteIntE, FWriteIntM, FWriteIntW,
   output logic [`XLEN-1:0] FWriteDataM,
   output logic             FDivSqrtDoneM,
   output logic             IllegalFPUInstrD,
@@ -55,7 +55,7 @@ module fpu (
   logic [2:0]       FrmD, FrmE, FrmM, FrmW;                                 // FP rounding mode
   logic             FmtD, FmtE, FmtM, FmtW;                                 // FP precision 0-single 1-double
   logic             FDivStartD, FDivStartE;                                 // Start division
-  logic             FWriteIntD, FWriteIntE;                                 // Write to integer register
+  logic             FWriteIntD;                                 // Write to integer register
   logic             FOutputInput2D, FOutputInput2E;                         // Put Input2 in Input1 if a store instruction
   logic [1:0]       FMemRWD, FMemRWE;                                       // Read and write enable for memory
   logic [1:0]       FForwardInput1D, FForwardInput1E;                       // Input1 forwarding mux control signal
@@ -151,7 +151,7 @@ module fpu (
   logic             BzeroE, BzeroM;
   logic             CmpInvalidM, CmpInvalidW;
   logic [1:0]       CmpFCCM, CmpFCCW; 
-  logic [63:0]      FCmpResultW;
+  logic [63:0]      FCmpResultM, FCmpResultW;
 
   // fsgn signals
   logic [63:0]      SgnResultE, SgnResultM, SgnResultW;
@@ -415,7 +415,7 @@ module fpu (
   fpuaddcvt2 fpadd2 (.*);
 
   //second instance of two-stage floating-point comparator
-  fpucmp2 fpcmp2 (CmpInvalidM, CmpFCCM, ANaNM, BNaNM, AzeroM, BzeroM, WM, XM, {1'b0, FmtM}, FInput1M, FInput2M);
+  fpucmp2 fpcmp2 (.Invalid(CmpInvalidM), .FCC(CmpFCCM), .ANaN(ANaNM), .BNaN(BNaNM), .Azero(AzeroM), .Bzero(BzeroM), .w(WM), .x(XM), .Sel({1'b0, FmtM}), .op1(FInput1M), .op2(FInput2M), .*);
 
 
 
@@ -451,6 +451,7 @@ module fpu (
   //*****************
   flopenrc #(1) MWRegCmp1(clk, reset, PipeClearMW, PipeEnableMW, CmpInvalidM, CmpInvalidW); 
   flopenrc #(2) MWRegCmp2(clk, reset, PipeClearMW, PipeEnableMW, CmpFCCM, CmpFCCW); 
+  flopenrc #(64) MWRegCmp3(clk, reset, PipeClearMW, PipeEnableMW, FCmpResultM, FCmpResultW); 
 
   //*****************
   //fpsgn M/W pipe registers

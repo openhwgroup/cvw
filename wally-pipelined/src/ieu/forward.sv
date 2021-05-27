@@ -31,10 +31,10 @@ module forward(
   input logic 	     MemReadE, MulDivE, CSRReadE,
   input logic 	     RegWriteM, RegWriteW,
   input logic 	     DivDoneE, DivBusyE,
-  input logic	     FWriteIntM, FWriteIntW,
+  input logic	     FWriteIntE, FWriteIntM, FWriteIntW,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
-  output logic 	     LoadStallD, MulDivStallD, CSRRdStallD
+  output logic 	     FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
 );
   
   always_comb begin
@@ -52,6 +52,7 @@ module forward(
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
+   assign FPUStallD = FWriteIntE & ((Rs1D == RdE) | (Rs2D == RdE)); 
    assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
    assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)) | MulDivE | DivBusyE; // *** extend with stalls for divide
    assign CSRRdStallD = CSRReadE & ((Rs1D == RdE) | (Rs2D == RdE));

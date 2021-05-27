@@ -35,6 +35,7 @@ module ieu (
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
+  input logic 		   FWriteIntE, 
   output logic [`XLEN-1:0] PCTargetE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
@@ -59,7 +60,7 @@ module ieu (
   // hazards
   input logic 		   StallE, StallM, StallW,
   input logic 		   FlushE, FlushM, FlushW,
-  output logic 		   LoadStallD, MulDivStallD, CSRRdStallD,
+  output logic 		   FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD,
   output logic 		   PCSrcE,
   input logic 		   DivDoneE,
   input logic 		   DivBusyE,
