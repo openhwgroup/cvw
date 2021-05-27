@@ -162,7 +162,6 @@ module fpu (
 
   // classify signals
   logic [63:0]      ClassResultE, ClassResultM, ClassResultW;
-  logic [4:0]       ClassFlagsE, ClassFlagsM, ClassFlagsW;
 
   // other
   logic [63:0]      FPUResult64W, FPUResult64E;                                           // 64-bit FPU result
@@ -287,6 +286,11 @@ module fpu (
   //first and only instance of floating-point sign converter
   fpusgn fpsgn (.SgnOpCodeE(FOpCtrlE[1:0]),.*);
 
+  //first and only instance of floating-point classify unit
+  fpuclassify fpuclass (.*);
+
+  
+
 
 
 
@@ -394,7 +398,10 @@ module fpu (
   flopenrc #(1) EMReg7(clk, reset, PipeClearEM, PipeEnableEM, FWriteIntE, FWriteIntM);
   flopenrc #(2) EMReg8(clk, reset, PipeClearEM, PipeEnableEM, FMemRWE, FMemRWM);
 
-
+  //*****************
+  //fpuclassify E/M pipe registers
+  //***************** 
+  flopenrc #(64) EMRegClass(clk, reset, PipeClearEM, PipeEnableEM, ClassResultE, ClassResultM);
 
 
 
@@ -471,6 +478,10 @@ module fpu (
   flopenrc #(1) MWReg7(clk, reset, PipeClearMW, PipeEnableMW, FWriteIntM, FWriteIntW);
 
 
+  //*****************
+  //fpuclassify M/W pipe registers
+  //***************** 
+  flopenrc #(64) MWRegClass(clk, reset, PipeClearMW, PipeEnableMW, ClassResultM, ClassResultW);
 
 
 
@@ -496,7 +507,7 @@ module fpu (
 		// add/sub/cnvt
 		3'b100 : FPUFlagsW = FAddFlagsW;
 		// classify
-		3'b101 : FPUFlagsW = ClassFlagsW;
+		3'b101 : FPUFlagsW = 5'b0;
 		// output SrcAW
 		3'b110 : FPUFlagsW = 5'b0;
 		// output FRD1
