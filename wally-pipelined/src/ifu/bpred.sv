@@ -30,7 +30,8 @@
 
 module bpred 
   (input logic clk, reset,
-   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		    StallF, StallD, StallE, StallM, StallW, 
+   input logic 		    FlushF, FlushD, FlushE, FlushM, FlushW,
    // Fetch stage
    // the prediction
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
@@ -93,6 +94,8 @@ module bpred
 					  // update
 					  .UpdatePC(PCE),
 					  .UpdateEN(InstrClassE[0] & ~StallE),
+					  .SpeculativeUpdateEn(BPInstrClassF[0] & ~StallF),
+					  .BPPredDirWrongE(BPPredDirWrongE),
 					  .PCSrcE(PCSrcE),
 					  .UpdatePrediction(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -190,14 +193,14 @@ module bpred
   flopenrc #(2) BPPredRegD(.clk(clk),
 			   .reset(reset),
 			   .en(~StallD),
-			   .clear(FlushD),
+			   .clear(1'b0),
 			   .d(BPPredF),
 			   .q(BPPredD));
 
   flopenrc #(2) BPPredRegE(.clk(clk),
 			   .reset(reset),
 			   .en(~StallE),
-			   .clear(FlushE),
+			   .clear(1'b0),
 			   .d(BPPredD),
 			   .q(BPPredE));
 

@@ -153,14 +153,7 @@ module ifu (
   generate 
     if (`BPRED_ENABLED == 1) begin : bpred
       // I am making the port connection explicit for now as I want to see them and they will be changing.
-      bpred bpred(.clk(clk),
-		  .reset(reset),
-		  .StallF(StallF),
-		  .StallD(StallD),
-		  .StallE(StallE),
-		  .FlushF(FlushF),
-		  .FlushD(FlushD),
-		  .FlushE(FlushE),
+      bpred bpred(.*,
 		  .PCNextF(PCNextF),
 		  .BPPredPCF(BPPredPCF),
 		  .SelBPPredF(SelBPPredF),

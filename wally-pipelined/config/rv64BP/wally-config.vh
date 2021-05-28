@@ -110,5 +110,6 @@
 `define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
 `define BPRED_ENABLED 1
-`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
+//`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
+`define BPTYPE "BPGLOBAL" // BPTWOBIT or "BPGSHARE"  or BPLOCALPAg or BPGSHARE
 `define TESTSBP 1
