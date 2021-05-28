@@ -37,18 +37,30 @@ module globalHistoryPredictor
    output logic [1:0] 	   Prediction,
    // update
    input logic [`XLEN-1:0] UpdatePC,
-   input logic 		   UpdateEN, PCSrcE, 
+   input logic 		   UpdateEN, PCSrcE,
+   input logic SpeculativeUpdateEn, BPPredDirWrongE,
    input logic [1:0] 	   UpdatePrediction
   
    );
-  logic [k-1:0] 	   GHRF, GHRFNext;
-  assign GHRFNext = {PCSrcE, GHRF[k-1:1]}; 
+  logic [k-1:0] 	   GHRF, GHRFNext, GHRD, GHRE, GHRLookup;
+
+  logic 		   FlushedD, FlushedE;
+  
+
+  // if the prediction is wrong we need to restore the ghr.
+  assign GHRFNext = BPPredDirWrongE ? {PCSrcE, GHRE[k-1:1]} : 
+		    {Prediction[1], GHRF[k-1:1]};
 
   flopenr #(k) GlobalHistoryRegister(.clk(clk),
 				     .reset(reset),
-				     .en(UpdateEN),
+				     .en((UpdateEN & BPPredDirWrongE) | (SpeculativeUpdateEn)),
 				     .d(GHRFNext),
 				     .q(GHRF));
+
+  // if actively updating the GHR at the time of prediction we want to us
+  // GHRFNext as the lookup rather than GHRF.
+
+  assign GHRLookup = UpdateEN ? GHRFNext : GHRF;
 
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   SRAM2P1R1W #(k, 2) PHT(.clk(clk),
@@ -56,10 +68,35 @@ module globalHistoryPredictor
 			 .RA1(GHRF),
 			 .RD1(Prediction),
 			 .REN1(~StallF),
-			 .WA1(GHRF),
+			 .WA1(GHRE),
 			 .WD1(UpdatePrediction),
 			 .WEN1(UpdateEN),
 			 .BitWEN1(2'b11));
 
+  flopenr #(k) GlobalHistoryRegisterD(.clk(clk),
+				     .reset(reset),
+				     .en(~StallD & ~FlushedE),
+				     .d(GHRF),
+				     .q(GHRD));
+
+  flopenr #(k) GlobalHistoryRegisterE(.clk(clk),
+				     .reset(reset),
+				     .en(~StallE & ~ FlushedE),
+				     .d(GHRD),
+				     .q(GHRE));
+
+
+  flopenr #(1) flushedDReg(.clk(clk),
+			   .reset(reset),
+			   .en(~StallD),
+			   .d(FlushD),
+			   .q(FlushedD));
+
+  flopenr #(1) flushedEReg(.clk(clk),
+			   .reset(reset),
+			   .en(~StallE),
+			   .d(FlushE | FlushedD),
+			   .q(FlushedE));
+    
 
 endmodule
