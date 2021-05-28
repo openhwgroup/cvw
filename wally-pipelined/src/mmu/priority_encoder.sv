@@ -4,7 +4,11 @@
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Based on implementation from https://www.allaboutcircuits.com/ip-cores/communication-controller/priority-encoder/
 // *** Give proper LGPL attribution for above source
-// Modified:
+// Modified: Teo Ene 15 Apr 2021:
+//              Temporarily removed paramterized priority encoder for non-parameterized one
+//              To get synthesis working quickly
+//           Kmacsaigoren@hmc.edu 28 May 2021:
+//              Added working version of parameterized priority encoder. 
 //
 // Purpose: One-hot encoding to binary encoder
 //
@@ -27,51 +31,33 @@
 
 `include "wally-config.vh"
 
-// Teo Ene 04/15:
-// Temporarily removed paramterized priority encoder for non-parameterized one
-// To get synthesis working quickly
 module priority_encoder #(parameter BINARY_BITS = 3) (
-  input  logic  [7:0] one_hot,
-  output logic  [2:0] binary
+  input  logic  [2**BINARY_BITS - 1:0] one_hot,
+  output logic  [BINARY_BITS - 1:0] binary
 );
 
-  // localparam ONE_HOT_BITS = 2**BINARY_BITS;
-
-  /*
-  genvar i, j;
-  generate
-    for (i = 0; i < ONE_HOT_BITS; i++) begin
-      for (j = 0; j < BINARY_BITS; j++) begin
-        if (i[j]) begin
-          assign binary[j] = one_hot[i];
-        end
-      end
-    end
-  endgenerate
-  */
-
-  /*
-  logic [BINARY_BITS-1:0] binary_comb;
-
+  integer i;
   always_comb begin
-    binary_comb = 0;
-    for (int i = 0; i < ONE_HOT_BITS; i++)
-      if (one_hot[i]) binary_comb = i;
+    binary = 0;
+    for (i = 0; i < 2**BINARY_BITS; i++) begin
+      if (one_hot[i]) binary = i; // prioritizes the most significant bit
+    end
   end
+  // *** triple check synthesizability here
 
-  assign binary = binary_comb;
+  // Ideally this mimics the following:
+  /*
+  always_comb begin
+    casex (one_hot)
+      1xx ... x: binary = BINARY_BITS - 1;
+      01x ... x: binary = BINARY_BITS - 2;
+      001 ... x: binary = BINARY_BITS - 3;
+      
+      {...}
+
+      00 ... 1xx: binary = 2;
+      00 ... 01x: binary = 1;
+      00 ... 001: binary = 0;
+  end
   */
-  always_comb
-    case (one_hot)
-      8'h1:     binary=3'h0;
-      8'h2:     binary=3'h1;
-      8'h4:     binary=3'h2;
-      8'h8:     binary=3'h3;
-      8'h10:    binary=3'h4;
-      8'h20:    binary=3'h5;
-      8'h40:    binary=3'h6;
-      8'h80:    binary=3'h7;
-      default:  binary=3'h0; //should never happen
-    endcase
-
 endmodule
