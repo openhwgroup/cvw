@@ -34,8 +34,8 @@ module csr #(parameter
   ) (
   input  logic             clk, reset,
   input  logic             FlushW, StallD, StallE, StallM, StallW,
-  input  logic [31:0]      InstrM, 
-  input  logic [`XLEN-1:0] PCM, SrcAM,
+  input  logic [31:0]      InstrD,InstrE,InstrM, 
+  input  logic [`XLEN-1:0] PCF, PCD, PCE, PCM, SrcAM,
   input  logic             InterruptM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
@@ -47,6 +47,9 @@ module csr #(parameter
   input  logic [4:0]       InstrClassM,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
+  input  logic             BreakpointFaultM, EcallFaultM,
+  input  logic             InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
+  input  logic             LoadMisalignedFaultM, StoreMisalignedFaultM, LoadAccessFaultM, StoreAccessFaultM,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
@@ -65,6 +68,7 @@ module csr #(parameter
   output logic             IllegalCSRAccessM
 );
 
+  localparam NOP = 32'h13;
   logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM, CSRReadValM;
   logic [`XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
  
@@ -73,22 +77,32 @@ module csr #(parameter
   logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
 
-  logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, preservedPCM, readPCM, NextCauseM, NextMtvalM;
-
-  always_ff @(posedge clk) begin
-      preservedPCM <= PCM;
-  end
-
-  mux2 #(`XLEN) pcmux(PCM, preservedPCM, InterruptM, readPCM);
-  //flop #(`XLEN) CSRReadPCMreg(clk, reset, PCM, readPCM);
+  logic MStageFailed;
+  logic [`XLEN-1:0] ProposedEPCM, UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
   logic [11:0] CSRAdrM;
   logic [11:0] SIP_REGW, SIE_REGW;
   //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRNAccessM, InsufficientCSRPrivilegeM;
-
   logic IllegalCSRMWriteReadonlyM;
 
+  assign MStageFailed = BreakpointFaultM || EcallFaultM || InstrMisalignedFaultM || InstrAccessFaultM || IllegalInstrFaultM || LoadMisalignedFaultM || StoreMisalignedFaultM || LoadAccessFaultM || StoreAccessFaultM;
+  always_comb begin
+    if (MStageFailed)
+      casez({InstrD==NOP,InstrE==NOP,InstrM==NOP})
+        3'b??0: ProposedEPCM = PCM;
+        3'b?01: ProposedEPCM = PCE;
+        3'b011: ProposedEPCM = PCD;
+        3'b111: ProposedEPCM = PCF;
+      endcase
+    else
+      casez({InstrD==NOP,InstrE==NOP})
+        2'b?0: ProposedEPCM = PCE;
+        2'b01: ProposedEPCM = PCD;
+        2'b11: ProposedEPCM = PCF;
+      endcase
+  end
+  
   generate
     if (`ZCSR_SUPPORTED) begin
       // modify CSRs
@@ -109,7 +123,7 @@ module csr #(parameter
 
       // write CSRs
       assign CSRAdrM = InstrM[31:20];
-      assign UnalignedNextEPCM = TrapM ? readPCM : CSRWriteValM;
+      assign UnalignedNextEPCM = TrapM ? ProposedEPCM : CSRWriteValM;
       assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
       assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
       assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
