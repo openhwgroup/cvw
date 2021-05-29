@@ -109,74 +109,74 @@ module csrsr (
   // complex register with reset, write enable, and the ability to update other bits in certain cases
   always_ff @(posedge clk, posedge reset)
     if (reset) begin
-      STATUS_SUM_INT <= 0;
-      STATUS_MPRV_INT <= 0; // Per Priv 3.3
-      STATUS_FS_INT <= 0; //2'b01; // busybear: change all these reset values to 0
-      STATUS_MPP <= 0; //`M_MODE;
-      STATUS_SPP <= 0; //1'b1;
-      STATUS_MPIE <= 0; //1;
-      STATUS_SPIE <= 0; //`S_SUPPORTED;
-      STATUS_UPIE <= 0; // `U_SUPPORTED;
-      STATUS_MIE <= 0; // Per Priv 3.3
-      STATUS_SIE <= 0; //`S_SUPPORTED;
-      STATUS_UIE <= 0; //`U_SUPPORTED;
+      STATUS_SUM_INT <= #1 0;
+      STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
+      STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
+      STATUS_MPP <= #1 0; //`M_MODE;
+      STATUS_SPP <= #1 0; //1'b1;
+      STATUS_MPIE <= #1 0; //1;
+      STATUS_SPIE <= #1 0; //`S_SUPPORTED;
+      STATUS_UPIE <= #1 0; // `U_SUPPORTED;
+      STATUS_MIE <= #1 0; // Per Priv 3.3
+      STATUS_SIE <= #1 0; //`S_SUPPORTED;
+      STATUS_UIE <= #1 0; //`U_SUPPORTED;
     end else if (~StallW) begin
       if (WriteMSTATUSM) begin
-        STATUS_SUM_INT <= CSRWriteValM[18];
-        STATUS_MPRV_INT <= CSRWriteValM[17];
-        STATUS_FS_INT <= CSRWriteValM[14:13];
-        STATUS_MPP <= STATUS_MPP_NEXT;
-        STATUS_SPP <= `S_SUPPORTED & CSRWriteValM[8];
-        STATUS_MPIE <= CSRWriteValM[7];
-        STATUS_SPIE <= `S_SUPPORTED & CSRWriteValM[5];
-        STATUS_UPIE <= `U_SUPPORTED & CSRWriteValM[4];
-        STATUS_MIE <= CSRWriteValM[3];
-        STATUS_SIE <= `S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UIE <= `U_SUPPORTED & CSRWriteValM[0];
+        STATUS_SUM_INT <= #1 CSRWriteValM[18];
+        STATUS_MPRV_INT <= #1 CSRWriteValM[17];
+        STATUS_FS_INT <= #1 CSRWriteValM[14:13];
+        STATUS_MPP <= #1 STATUS_MPP_NEXT;
+        STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
+        STATUS_MPIE <= #1 CSRWriteValM[7];
+        STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
+        STATUS_UPIE <= #1 `U_SUPPORTED & CSRWriteValM[4];
+        STATUS_MIE <= #1 CSRWriteValM[3];
+        STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
+        STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
-        STATUS_SUM_INT <= CSRWriteValM[18];
-        STATUS_FS_INT <= CSRWriteValM[14:13];
-        STATUS_SPP <= `S_SUPPORTED & CSRWriteValM[8];
-        STATUS_SPIE <= `S_SUPPORTED & CSRWriteValM[5];
-        STATUS_UPIE <= `U_SUPPORTED & CSRWriteValM[4];
-        STATUS_SIE <= `S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UIE <= `U_SUPPORTED & CSRWriteValM[0];      
+        STATUS_SUM_INT <= #1 CSRWriteValM[18];
+        STATUS_FS_INT <= #1 CSRWriteValM[14:13];
+        STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
+        STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
+        STATUS_UPIE <= #1 `U_SUPPORTED & CSRWriteValM[4];
+        STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
+        STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];      
       end else if (WriteUSTATUSM) begin // write a subset of the STATUS bits
-        STATUS_FS_INT <= CSRWriteValM[14:13];
-        STATUS_UPIE <= `U_SUPPORTED & CSRWriteValM[4];
-        STATUS_UIE <= `U_SUPPORTED & CSRWriteValM[0];      
+        STATUS_FS_INT <= #1 CSRWriteValM[14:13];
+        STATUS_UPIE <= #1 `U_SUPPORTED & CSRWriteValM[4];
+        STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];      
       end else begin
-        if (FloatRegWriteW) STATUS_FS_INT <=2'b11; // mark Float State dirty
+        if (FloatRegWriteW) STATUS_FS_INT <= #12'b11; // mark Float State dirty
         if (TrapM) begin
           // Update interrupt enables per Privileged Spec p. 21
           // y = PrivilegeModeW
           // x = NextPrivilegeModeM
           // Modes: 11 = Machine, 01 = Supervisor, 00 = User
           if (NextPrivilegeModeM == `M_MODE) begin
-            STATUS_MPIE <= STATUS_MIE;
-            STATUS_MIE <= 0;
-            STATUS_MPP <= PrivilegeModeW;
+            STATUS_MPIE <= #1 STATUS_MIE;
+            STATUS_MIE <= #1 0;
+            STATUS_MPP <= #1 PrivilegeModeW;
           end else if (NextPrivilegeModeM == `S_MODE) begin
-            STATUS_SPIE <= STATUS_SIE;
-            STATUS_SIE <= 0;
-            STATUS_SPP <= PrivilegeModeW[0]; // *** seems to disagree with P. 56
+            STATUS_SPIE <= #1 STATUS_SIE;
+            STATUS_SIE <= #1 0;
+            STATUS_SPP <= #1 PrivilegeModeW[0]; // *** seems to disagree with P. 56
           end else begin // user mode
-            STATUS_UPIE <= STATUS_UIE;
-            STATUS_UIE <= 0;
+            STATUS_UPIE <= #1 STATUS_UIE;
+            STATUS_UIE <= #1 0;
           end
         end else if (mretM) begin // Privileged 3.1.6.1
-          STATUS_MIE <= STATUS_MPIE;
-          STATUS_MPIE <= 1;
-          STATUS_MPP <= `U_SUPPORTED ? `U_MODE : `M_MODE; // per spec, not sure why
-          STATUS_MPRV_INT <= 0; // per 20210108 draft spec
+          STATUS_MIE <= #1 STATUS_MPIE;
+          STATUS_MPIE <= #1 1;
+          STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // per spec, not sure why
+          STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
         end else if (sretM) begin
-          STATUS_SIE <= STATUS_SPIE;
-          STATUS_SPIE <= `S_SUPPORTED;
-          STATUS_SPP <= 0; // Privileged 4.1.1
-          STATUS_MPRV_INT <= 0; // per 20210108 draft spec
+          STATUS_SIE <= #1 STATUS_SPIE;
+          STATUS_SPIE <= #1 `S_SUPPORTED;
+          STATUS_SPP <= #1 0; // Privileged 4.1.1
+          STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
         end else if (uretM) begin
-          STATUS_UIE <= STATUS_UPIE;
-          STATUS_UPIE <= `U_SUPPORTED;
+          STATUS_UIE <= #1 STATUS_UPIE;
+          STATUS_UPIE <= #1 `U_SUPPORTED;
         end
         // *** add code to track STATUS_FS_INT for dirty floating point registers
       end
