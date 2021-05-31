@@ -29,6 +29,7 @@
 module testbench();
   parameter DEBUG = 0;
   parameter TESTSPERIPH = 0; // set to 0 for regression
+  parameter TESTSPRIV = 0; // set to 0 for regression
   
   logic        clk;
   logic        reset;
@@ -516,9 +517,11 @@ string tests32f[] = '{
         tests = testsBP64;
 	// testsbp should not run the other tests. It starts at address 0 rather than
 	// 0x8000_0000, the next if must remain an else if.	
-      end else if (TESTSPERIPH) begin 
+      end else if (TESTSPERIPH)
         tests = tests64periph;
-      end else begin
+      else if (TESTSPRIV)
+        tests = tests64p;
+      else begin
         tests = {tests64p,tests64i,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
@@ -531,9 +534,11 @@ string tests32f[] = '{
       //tests = {tests64a, tests};
     end else begin // RV32
       // *** add the 32 bit bp tests
-      if (TESTSPERIPH) begin 
+      if (TESTSPERIPH)
         tests = tests32periph;
-      end else begin
+      else if (TESTSPRIV)
+        tests = tests32p;
+      else begin
           tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};

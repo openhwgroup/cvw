@@ -37,7 +37,8 @@ module ifu (
   output logic [`XLEN-1:0] InstrPAdrF,
   output logic             InstrReadF,
   output logic             ICacheStallF,
-  // Decode  
+  // Decode
+  output logic [`XLEN-1:0] PCD, 
   // Execute
   output logic [`XLEN-1:0] PCLinkE,
   input logic 		   PCSrcE, 
@@ -47,7 +48,7 @@ module ifu (
   // Mem
   input logic 		   RetM, TrapM, 
   input logic [`XLEN-1:0]  PrivilegedNextPCM, 
-  output logic [31:0] 	   InstrD, InstrM,
+  output logic [31:0] 	   InstrD, InstrE, InstrM, InstrW,
   output logic [`XLEN-1:0] PCM, 
   output logic [4:0] 	   InstrClassM,
   output logic 		   BPPredDirWrongM,
@@ -76,9 +77,9 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCD, PCW, PCLinkD, PCLinkM, PCNextPF, PCPF;
+  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCNextPF, PCPF;
   logic             CompressedF;
-  logic [31:0]      InstrRawD, InstrE, InstrW;
+  logic [31:0]      InstrRawD;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
   logic 	    reset_q; // *** look at this later.
 

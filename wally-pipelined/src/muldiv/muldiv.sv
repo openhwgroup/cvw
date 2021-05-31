@@ -47,7 +47,6 @@ module muldiv (
 	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
-	 //logic [`XLEN-1:0] Q, R;	 
 	 logic [`XLEN*2-1:0] ProdE; 
 
 	 logic 		     enable_q;	 
@@ -78,7 +77,7 @@ module muldiv (
 				    .en(startDivideE), .clear(DivDoneE),
 				    .reset(reset),  .clk(~gclk));	 
 	 assign signedDivide = (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
-	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
+	 intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
@@ -93,7 +92,6 @@ module muldiv (
 	 
 	 // Select result
 	 always_comb
-	   //           case (DivDoneE ? Funct3E_Q : Funct3E)
            case (Funct3E)	   
              3'b000: PrelimResultE = ProdE[`XLEN-1:0];
              3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];
