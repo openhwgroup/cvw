@@ -55,7 +55,7 @@ module intdiv #(parameter WIDTH=64)
    logic [3:0] 		     quotient;
    logic 		     otfzero; 
    logic 		     shiftResult;
-   logic 		     enablev, state0v, donev, divdonev, oftzerov, divBusyv, ulp;   
+   logic 		     enablev, state0v, donev, oftzerov, divBusyv, ulp;   
    
    logic [WIDTH-1:0] 	     twoD;
    logic [WIDTH-1:0] 	     twoN;
@@ -231,6 +231,7 @@ module divide4 #(parameter WIDTH=64)
    
 endmodule // divide4x64
 
+// Load/Control for OTFC
 module ls_control (quot, Qin, QMin, CshiftQ, CshiftQM);
 
    input logic [3:0] quot;
@@ -251,8 +252,7 @@ module ls_control (quot, Qin, QMin, CshiftQ, CshiftQM);
 
 endmodule 
 
-// On-the-fly Conversion per Ercegovac/Lang
-
+// On-the-fly Conversion (OTFC)
 module otf #(parameter WIDTH=8) 
    (Qin, QMin, CshiftQ, CshiftQM, clk, reset, enable, R2Q, R1Q);
    
@@ -317,6 +317,7 @@ module eqcmp #(parameter WIDTH = 8)
    
 endmodule // eqcmp
 
+// QST for r=4
 module qst4 (input logic [6:0] s, input logic [2:0] d,
 	     output logic [3:0] q);
    
