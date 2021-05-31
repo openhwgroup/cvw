@@ -68,8 +68,8 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] SrcAM;
   logic [2:0] Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] InstrD, InstrM;
-  logic [`XLEN-1:0] PCE, PCM, PCLinkE, PCLinkW;
+  logic [31:0] InstrD, InstrE, InstrM, InstrW;
+  logic [`XLEN-1:0] PCD, PCE, PCM, PCLinkE, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
   logic [`XLEN-1:0] CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
