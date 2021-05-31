@@ -47,7 +47,6 @@ module muldiv (
 	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
-	 //logic [`XLEN-1:0] Q, R;	 
 	 logic [`XLEN*2-1:0] ProdE; 
 
 	 logic 		     enable_q;	 
