@@ -78,11 +78,7 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
    assign D_NegOne = &D;
 
    // Divider goes the distance to 37 cycles
-   // (thanks the evil divisor for D = 0x1) 
-   // but could theoretically be stopped when
-   // divdone is asserted.  The enable signal
-   // turns off register storage thus invalidating
-   // any future cycles.
+   // (thanks to the evil divisor for D = 0x1) 
    
    // Shift D, if needed (for integer)
    // needed to allow qst to be in range for integer
@@ -93,8 +89,8 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
    // exception is given to FSM to tell the operation to 
    // quit gracefully.
 
-   lz64 p1 (P, V, twoD);
-   shifter_l64 p2 (op2, twoD, P);
+   lzd_hier #(64) p1 (.ZP(P), .ZV(V), .B(twoD));
+   shift_left #(64) p2 (twoD, P, op2);   
    assign op1 = twoN;
    assign div0 = ~V;
 
@@ -141,9 +137,8 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
    assign Q = Qd2[63:0];
    assign Rem5 = Rd2[64:1];  
    
-   // Adjust remainder by m (no need to adjust by
-   // n ln(r)
-   shifter_r64 p4 (rem0, Rem5, RemShift);
+   // Adjust remainder by m 
+   shift_right #(64) p4 (Rem5, RemShift, rem0);   
 
    // Adjust Q/Rem for Signed
    assign tcQ = (SignN ^ SignD) & S;
@@ -368,8 +363,6 @@ module qst4 (input logic [6:0] s, input logic [2:0] d,
    
 endmodule // qst4
 
-// LZD
-
 module lz2 (P, V, B0, B1);
 
    input logic  B0;
@@ -497,7 +490,6 @@ module lz64 (ZP, ZV, B);
 endmodule // lz64
 
 // FSM Control for Integer Divider
-
 module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 	      start, error, NumIter, clk, reset);
 
@@ -1504,134 +1496,6 @@ module magcompare8 (LT, EQ, A, B);
    assign EQ = ~(GT | LT);   
 
 endmodule // magcompare8
-
-module shifter_l64 (Z, A, Shift);
-
-   input logic [63:0]  A;
-   input logic [5:0]   Shift;
-   
-   logic [63:0]        stage1;
-   logic [63:0]        stage2;
-   logic [63:0]        stage3;
-   logic [63:0]        stage4;
-   logic [63:0]        stage5;   
-   
-   output logic [63:0] Z;      
-   
-   mux2 #(64) mx01(A,      {A[31:0], 32'h0}, Shift[5], stage1);   
-   mux2 #(64) mx02(stage1, {stage1[47:0], 16'h0}, Shift[4], stage2);
-   mux2 #(64) mx03(stage2, {stage2[55:0], 8'h0}, Shift[3], stage3);
-   mux2 #(64) mx04(stage3, {stage3[59:0], 4'h0}, Shift[2], stage4);
-   mux2 #(64) mx05(stage4, {stage4[61:0], 2'h0}, Shift[1], stage5);
-   mux2 #(64) mx06(stage5, {stage5[62:0], 1'h0}, Shift[0], Z);
-
-endmodule // shifter_l64
-
-module shifter_r64 (Z, A, Shift);
-
-   input logic [63:0]  A;
-   input logic [5:0]   Shift;
-   
-   logic [63:0]        stage1;
-   logic [63:0]        stage2;
-   logic [63:0]        stage3;
-   logic [63:0]        stage4;
-   logic [63:0]        stage5;   		  
-   
-   output logic [63:0] Z;
-   
-   mux2 #(64) mx01(A, {32'h0, A[63:32]}, Shift[5], stage1);		  
-   mux2 #(64) mx02(stage1, {16'h0, stage1[63:16]}, Shift[4], stage2);
-   mux2 #(64) mx03(stage2, {8'h0, stage2[63:8]}, Shift[3], stage3);
-   mux2 #(64) mx04(stage3, {4'h0, stage3[63:4]}, Shift[2], stage4);
-   mux2 #(64) mx05(stage4, {2'h0, stage4[63:2]}, Shift[1], stage5);
-   mux2 #(64) mx06(stage5, {1'h0, stage5[63:1]},  Shift[0], Z);
-   
-endmodule // shifter_r64
-
-module shifter_l32 (Z, A, Shift);
-
-   input logic [31:0]  A;
-   input logic [4:0]   Shift;
-   
-   logic [31:0]        stage1;
-   logic [31:0]        stage2;
-   logic [31:0]        stage3;
-   logic [31:0]        stage4;
-   
-   output logic [31:0] Z;      
-
-   mux2 #(32) mx01(A,      {A[15:0], 16'h0},    Shift[4], stage1);
-   mux2 #(32) mx02(stage1, {stage1[23:0], 8'h0}, Shift[3], stage2);
-   mux2 #(32) mx03(stage2, {stage2[27:0], 4'h0},  Shift[2], stage3);
-   mux2 #(32) mx04(stage3, {stage3[29:0], 2'h0},   Shift[1], stage4);
-   mux2 #(32) mx05(stage4, {stage4[30:0], 1'h0},    Shift[0], Z);
-
-endmodule // shifter_l32
-
-module shifter_r32 (Z, A, Shift);
-
-   input logic [31:0]  A;
-   input logic [4:0]   Shift;
-   
-   logic [31:0]        stage1;
-   logic [31:0]        stage2;
-   logic [31:0]        stage3;
-   logic [31:0]        stage4;
-   
-   output logic [31:0] Z;
-   
-   mux2 #(32) mx01(A,      {16'h0, A[31:16]},   Shift[4], stage1);
-   mux2 #(32) mx02(stage1, {8'h0, stage1[31:8]}, Shift[3], stage2);
-   mux2 #(32) mx03(stage2, {4'h0, stage2[31:4]},  Shift[2], stage3);
-   mux2 #(32) mx04(stage3, {2'h0, stage3[31:2]},   Shift[1], stage4);
-   mux2 #(32) mx05(stage4, {1'h0, stage4[31:1]},    Shift[0], Z);
-   
-endmodule // shifter_r32
-
-module shift_right #(parameter WIDTH=8) 
-   (input logic [`XLEN-1:0]         A,
-    input logic [$clog2(`XLEN)-1:0] Shift,
-    output logic [`XLEN-1:0] 	    Z);
-   
-   logic [`XLEN-1:0] 							 stage [$clog2(`XLEN):0];
-   genvar 								 i;
-   
-   assign stage[0] = A;   
-   generate
-      for (i=0;i<$clog2(`XLEN);i=i+1)
-	begin : genbit
-	   mux2 #(`XLEN) mux_inst (stage[i], 
-				   {{(`XLEN/(2**(i+1))){1'b0}}, stage[i][`XLEN-1:`XLEN/(2**(i+1))]}, 
-				   Shift[$clog2(`XLEN)-i-1], 
-				   stage[i+1]);
-	end
-   endgenerate
-   assign Z = stage[$clog2(`XLEN)];   
-
-endmodule // shift_right
-
-module shift_left #(parameter WIDTH=8) 
-   (input logic [`XLEN-1:0]         A,
-    input logic [$clog2(`XLEN)-1:0] Shift,
-    output logic [`XLEN-1:0] 	    Z);
-   
-   logic [`XLEN-1:0] 							stage [$clog2(`XLEN):0];
-   genvar 								i;
-   
-   assign stage[0] = A;   
-   generate
-      for (i=0;i<$clog2(`XLEN);i=i+1)
-	begin : genbit
-	   mux2 #(`XLEN) mux_inst (stage[i], 
-				   {stage[i][`XLEN-1-`XLEN/(2**(i+1)):0], {(`XLEN/(2**(i+1))){1'b0}}}, 
-				   Shift[$clog2(`XLEN)-i-1], 
-				   stage[i+1]);
-	end
-   endgenerate
-   assign Z = stage[$clog2(`XLEN)];   
-
-endmodule // shift_right
 
 module exception_int (Q, rem, op1, S, div0, Max_N, D_NegOne, Qf, remf);
 
