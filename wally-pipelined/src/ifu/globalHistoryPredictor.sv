@@ -34,49 +34,108 @@ module globalHistoryPredictor
    input logic 		   reset,
    input logic 		   StallF, StallD, StallE, FlushF, FlushD, FlushE,
    input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0] 	   Prediction,
+   output logic [1:0] 	   BPPredF,
    // update
+   input logic [1:0] 	   BPPredD,
+   input logic [4:0] 	   InstrClassE,
+   input logic [4:0] 	   BPInstrClassE,
+   input logic [4:0] 	   BPInstrClassD,
+   input logic [4:0] 	   BPInstrClassF, 
+   input logic 		   BPPredDirWrongE,
+
    input logic [`XLEN-1:0] UpdatePC,
-   input logic 		   UpdateEN, PCSrcE,
-   input logic SpeculativeUpdateEn, BPPredDirWrongE,
+   input logic 		   PCSrcE,
    input logic [1:0] 	   UpdatePrediction
   
    );
-  logic [k-1:0] 	   GHRF, GHRFNext, GHRD, GHRE, GHRLookup;
+  logic [k+1:0] 	   GHR, GHRNext;
+  logic [k-1:0] 	   PHTUpdateAdr, PHTUpdateAdr0, PHTUpdateAdr1;
+  logic 		   PHTUpdateEN;
+  logic 		   BPClassWrongNonCFI;
+  logic 		   BPClassWrongCFI;
+  logic 		   BPClassRightNonCFI;
+  
+		   
+/* -----\/----- EXCLUDED -----\/-----
+  logic [k-1:0] GHRD, GHRE, GHRLookup;
 
   logic 		   FlushedD, FlushedE;
+ -----/\----- EXCLUDED -----/\----- */
+
+
+  logic [6:0] 		   GHRMuxSel;
+  logic 		   GHRUpdateEN;
+
+  assign BPClassRightNonCFI = ~BPInstrClassE[0] & ~InstrClassE[0];
+  assign BPClassWrongCFI = ~BPInstrClassE[0] & InstrClassE[0];
+  assign BPClassWrongNonCFI = BPInstrClassE[0] & ~InstrClassE[0];
+  assign BPClassRightBPWrong = BPInstrClassE[0] & InstrClassE[0] & BPPredDirWrongE;
+  assign BPClassRightBPRight = BPInstrClassE[0] & InstrClassE[0] & ~BPPredDirWrongE;
   
+  
+  // GHR update selection, 1 hot encoded.
+  assign GHRMuxSel[0] = ~BPInstrClassF[0] & (BPClassRightNonCFI | BPClassRightBPRight);
 
-  // if the prediction is wrong we need to restore the ghr.
-  assign GHRFNext = BPPredDirWrongE ? {PCSrcE, GHRE[k-1:1]} : 
-		    {Prediction[1], GHRF[k-1:1]};
+  assign GHRMuxSel[1] = BPClassWrongCFI & ~BPInstrClassD[0];
+  assign GHRMuxSel[3] = (BPClassRightBPWrong & ~BPInstrClassD[0]) | (BPClassWrongCFI & BPInstrClassD[0]);
 
-  flopenr #(k) GlobalHistoryRegister(.clk(clk),
-				     .reset(reset),
-				     .en((UpdateEN & BPPredDirWrongE) | (SpeculativeUpdateEn)),
-				     .d(GHRFNext),
-				     .q(GHRF));
+
+  assign GHRMuxSel[2] = BPClassWrongNonCFI & ~BPInstrClassD[0];
+
+
+
+  assign GHRMuxSel[4] = BPClassWrongNonCFI & BPInstrClassD[0];
+  assign GHRMuxSel[5] = InstrClassE[0] & BPClassRightBPWrong & BPInstrClassD[0];
+  assign GHRMuxSel[6] = BPInstrClassF[0] & (BPClassRightNonCFI | (InstrClassE[0] & BPClassRightBPRight));
+  assign GHRUpdateEN = (| GHRMuxSel[5:1] & ~StallE) | GHRMuxSel[6] & ~StallF;
+
+  // hoping this created a AND-OR mux.
+  always_comb begin
+    case (GHRMuxSel) 
+      7'b000_0001: GHRNext = GHR[k-1+2:0];  // no change
+      7'b000_0010: GHRNext = {GHR[k-2+2:0], PCSrcE}; // branch update
+      7'b000_0100: GHRNext = {1'b0, GHR[k+1:1]}; // repair 1
+      7'b000_1000: GHRNext = {GHR[k-1+2:1], PCSrcE}; // branch update with mis prediction correction
+      7'b001_0000: GHRNext = {2'b00, GHR[k+1:2]}; // repair 2
+      7'b010_0000: GHRNext = {1'b0, GHR[k+1:2], PCSrcE}; // branch update + repair 1
+      7'b100_0000: GHRNext = {GHR[k-2+2:0], BPPredF[1]}; // speculative update
+      //7'b100_0000: GHRNext = {k+1{1'bx}}; // speculative update
+      default: GHRNext = GHR[k-1+2:0];
+    endcase
+  end
+
+  flopenr #(k+2) GlobalHistoryRegister(.clk(clk),
+				       .reset(reset),
+				       .en((GHRUpdateEN)),
+				       .d(GHRNext),
+				       .q(GHR));
 
   // if actively updating the GHR at the time of prediction we want to us
-  // GHRFNext as the lookup rather than GHRF.
+  // GHRNext as the lookup rather than GHR.
 
-  assign GHRLookup = UpdateEN ? GHRFNext : GHRF;
+  //assign GHRLookup = GHRUpdateEN ? GHRNext : GHR;
 
+  assign PHTUpdateAdr0 = InstrClassE[0] ? GHR[k:1] : GHR[k-1:0];
+  assign PHTUpdateAdr1 = InstrClassE[0] ? GHR[k+1:2] : GHR[k:1];  
+  assign PHTUpdateAdr = BPInstrClassD[0] ? PHTUpdateAdr1 : PHTUpdateAdr0;
+  assign PHTUpdateEN = InstrClassE[0] & ~StallE;
+  
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   SRAM2P1R1W #(k, 2) PHT(.clk(clk),
 			 .reset(reset),
-			 .RA1(GHRF),
-			 .RD1(Prediction),
+			 .RA1(GHR[k-1:0]),
+			 .RD1(BPPredF),
 			 .REN1(~StallF),
-			 .WA1(GHRE),
+			 .WA1(PHTUpdateAdr),
 			 .WD1(UpdatePrediction),
-			 .WEN1(UpdateEN),
+			 .WEN1(PHTUpdateEN),
 			 .BitWEN1(2'b11));
 
+/* -----\/----- EXCLUDED -----\/-----
   flopenr #(k) GlobalHistoryRegisterD(.clk(clk),
 				     .reset(reset),
 				     .en(~StallD & ~FlushedE),
-				     .d(GHRF),
+				     .d(GHR),
 				     .q(GHRD));
 
   flopenr #(k) GlobalHistoryRegisterE(.clk(clk),
@@ -97,6 +156,7 @@ module globalHistoryPredictor
 			   .en(~StallE),
 			   .d(FlushE | FlushedD),
 			   .q(FlushedE));
+ -----/\----- EXCLUDED -----/\----- */
     
 
 endmodule
