@@ -90,12 +90,13 @@ module bpred
 					  .reset(reset),
 					  .*, // Stalls and flushes
 					  .LookUpPC(PCNextF),
-					  .Prediction(BPPredF),
+					  .BPPredF(BPPredF),
 					  // update
-					  .UpdatePC(PCE),
-					  .UpdateEN(InstrClassE[0] & ~StallE),
-					  .SpeculativeUpdateEn(BPInstrClassF[0] & ~StallF),
+					  .BPPredD(BPPredD),
+					  .InstrClassE(InstrClassE),
+					  .BPInstrClassE(BPInstrClassE),
 					  .BPPredDirWrongE(BPPredDirWrongE),
+					  .UpdatePC(PCE),
 					  .PCSrcE(PCSrcE),
 					  .UpdatePrediction(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -108,6 +109,8 @@ module bpred
 				   // update
 				   .UpdatePC(PCE),
 				   .UpdateEN(InstrClassE[0] & ~StallE),
+				   .SpeculativeUpdateEn(BPInstrClassF[0] & ~StallF),
+				   .BPPredDirWrongE(BPPredDirWrongE),
 				   .PCSrcE(PCSrcE),
 				   .UpdatePrediction(UpdateBPPredE));
     end 
