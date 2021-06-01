@@ -32,7 +32,7 @@
 `define XLEN 64
 
 //`define MISA (32'h00000105)
-`define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -107,8 +107,8 @@
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */
 
-`define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv64BP/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64BP/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 //`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
 `define BPTYPE "BPGLOBAL" // BPTWOBIT or "BPGSHARE"  or BPLOCALPAg or BPGSHARE

@@ -33,19 +33,18 @@ module globalHistoryPredictor
   (input logic clk,
    input logic 		   reset,
    input logic 		   StallF, StallD, StallE, FlushF, FlushD, FlushE,
-   input logic [`XLEN-1:0] LookUpPC,
+   input logic [`XLEN-1:0] PCNextF,
    output logic [1:0] 	   BPPredF,
    // update
-   input logic [1:0] 	   BPPredD,
    input logic [4:0] 	   InstrClassE,
    input logic [4:0] 	   BPInstrClassE,
    input logic [4:0] 	   BPInstrClassD,
    input logic [4:0] 	   BPInstrClassF, 
    input logic 		   BPPredDirWrongE,
 
-   input logic [`XLEN-1:0] UpdatePC,
+   input logic [`XLEN-1:0] PCE,
    input logic 		   PCSrcE,
-   input logic [1:0] 	   UpdatePrediction
+   input logic [1:0] 	   UpdateBPPredE
   
    );
   logic [k+1:0] 	   GHR, GHRNext;
@@ -54,17 +53,10 @@ module globalHistoryPredictor
   logic 		   BPClassWrongNonCFI;
   logic 		   BPClassWrongCFI;
   logic 		   BPClassRightNonCFI;
-  
-		   
-/* -----\/----- EXCLUDED -----\/-----
-  logic [k-1:0] GHRD, GHRE, GHRLookup;
-
-  logic 		   FlushedD, FlushedE;
- -----/\----- EXCLUDED -----/\----- */
-
 
   logic [6:0] 		   GHRMuxSel;
   logic 		   GHRUpdateEN;
+  logic [k-1:0] 	   GHRLookup;
 
   assign BPClassRightNonCFI = ~BPInstrClassE[0] & ~InstrClassE[0];
   assign BPClassWrongCFI = ~BPInstrClassE[0] & InstrClassE[0];
@@ -75,15 +67,9 @@ module globalHistoryPredictor
   
   // GHR update selection, 1 hot encoded.
   assign GHRMuxSel[0] = ~BPInstrClassF[0] & (BPClassRightNonCFI | BPClassRightBPRight);
-
   assign GHRMuxSel[1] = BPClassWrongCFI & ~BPInstrClassD[0];
-  assign GHRMuxSel[3] = (BPClassRightBPWrong & ~BPInstrClassD[0]) | (BPClassWrongCFI & BPInstrClassD[0]);
-
-
   assign GHRMuxSel[2] = BPClassWrongNonCFI & ~BPInstrClassD[0];
-
-
-
+  assign GHRMuxSel[3] = (BPClassRightBPWrong & ~BPInstrClassD[0]) | (BPClassWrongCFI & BPInstrClassD[0]);
   assign GHRMuxSel[4] = BPClassWrongNonCFI & BPInstrClassD[0];
   assign GHRMuxSel[5] = InstrClassE[0] & BPClassRightBPWrong & BPInstrClassD[0];
   assign GHRMuxSel[6] = BPInstrClassF[0] & (BPClassRightNonCFI | (InstrClassE[0] & BPClassRightBPRight));
@@ -99,7 +85,6 @@ module globalHistoryPredictor
       7'b001_0000: GHRNext = {2'b00, GHR[k+1:2]}; // repair 2
       7'b010_0000: GHRNext = {1'b0, GHR[k+1:2], PCSrcE}; // branch update + repair 1
       7'b100_0000: GHRNext = {GHR[k-2+2:0], BPPredF[1]}; // speculative update
-      //7'b100_0000: GHRNext = {k+1{1'bx}}; // speculative update
       default: GHRNext = GHR[k-1+2:0];
     endcase
   end
@@ -113,50 +98,23 @@ module globalHistoryPredictor
   // if actively updating the GHR at the time of prediction we want to us
   // GHRNext as the lookup rather than GHR.
 
-  //assign GHRLookup = GHRUpdateEN ? GHRNext : GHR;
-
   assign PHTUpdateAdr0 = InstrClassE[0] ? GHR[k:1] : GHR[k-1:0];
   assign PHTUpdateAdr1 = InstrClassE[0] ? GHR[k+1:2] : GHR[k:1];  
   assign PHTUpdateAdr = BPInstrClassD[0] ? PHTUpdateAdr1 : PHTUpdateAdr0;
   assign PHTUpdateEN = InstrClassE[0] & ~StallE;
+
+  assign GHRLookup = |GHRMuxSel[6:1] ? GHRNext[k-1:0] : GHR[k-1:0];
   
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   SRAM2P1R1W #(k, 2) PHT(.clk(clk),
 			 .reset(reset),
-			 .RA1(GHR[k-1:0]),
+			 //.RA1(GHR[k-1:0]),
+			 .RA1(GHRLookup),
 			 .RD1(BPPredF),
 			 .REN1(~StallF),
 			 .WA1(PHTUpdateAdr),
-			 .WD1(UpdatePrediction),
+			 .WD1(UpdateBPPredE),
 			 .WEN1(PHTUpdateEN),
 			 .BitWEN1(2'b11));
-
-/* -----\/----- EXCLUDED -----\/-----
-  flopenr #(k) GlobalHistoryRegisterD(.clk(clk),
-				     .reset(reset),
-				     .en(~StallD & ~FlushedE),
-				     .d(GHR),
-				     .q(GHRD));
-
-  flopenr #(k) GlobalHistoryRegisterE(.clk(clk),
-				     .reset(reset),
-				     .en(~StallE & ~ FlushedE),
-				     .d(GHRD),
-				     .q(GHRE));
-
-
-  flopenr #(1) flushedDReg(.clk(clk),
-			   .reset(reset),
-			   .en(~StallD),
-			   .d(FlushD),
-			   .q(FlushedD));
-
-  flopenr #(1) flushedEReg(.clk(clk),
-			   .reset(reset),
-			   .en(~StallE),
-			   .d(FlushE | FlushedD),
-			   .q(FlushedE));
- -----/\----- EXCLUDED -----/\----- */
-    
 
 endmodule

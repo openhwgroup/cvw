@@ -89,30 +89,29 @@ module bpred
       globalHistoryPredictor DirPredictor(.clk(clk),
 					  .reset(reset),
 					  .*, // Stalls and flushes
-					  .LookUpPC(PCNextF),
+					  .PCNextF(PCNextF),
 					  .BPPredF(BPPredF),
 					  // update
-					  .BPPredD(BPPredD),
 					  .InstrClassE(InstrClassE),
 					  .BPInstrClassE(BPInstrClassE),
 					  .BPPredDirWrongE(BPPredDirWrongE),
-					  .UpdatePC(PCE),
+					  .PCE(PCE),
 					  .PCSrcE(PCSrcE),
-					  .UpdatePrediction(UpdateBPPredE));
+					  .UpdateBPPredE(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
 
       gsharePredictor DirPredictor(.clk(clk),
-				   .reset(reset),
-				   .*, // Stalls and flushes
-				   .LookUpPC(PCNextF),
-				   .Prediction(BPPredF),
-				   // update
-				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0] & ~StallE),
-				   .SpeculativeUpdateEn(BPInstrClassF[0] & ~StallF),
-				   .BPPredDirWrongE(BPPredDirWrongE),
-				   .PCSrcE(PCSrcE),
-				   .UpdatePrediction(UpdateBPPredE));
+					  .reset(reset),
+					  .*, // Stalls and flushes
+					  .PCNextF(PCNextF),
+					  .BPPredF(BPPredF),
+					  // update
+					  .InstrClassE(InstrClassE),
+					  .BPInstrClassE(BPInstrClassE),
+					  .BPPredDirWrongE(BPPredDirWrongE),
+					  .PCE(PCE),
+					  .PCSrcE(PCSrcE),
+					  .UpdateBPPredE(UpdateBPPredE));
     end 
     else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
