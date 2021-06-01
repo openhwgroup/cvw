@@ -2,7 +2,9 @@
 // cam_line.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 6 April 2021
-// Modified:
+// Modified: kmacsaigoren@hmc.edu 1 June 2021
+//            Implemented SV48 on top of SV39. This included adding SvMode input signal and the wally constants
+//            Mostly this was done to make the PageNumberMixer work.
 //
 // Purpose: CAM line for the translation lookaside buffer (TLB)
 //          Determines whether a virtual address matches the stored key.
@@ -24,12 +26,17 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`include "wally-constants.vh"
+
 module cam_line #(parameter KEY_BITS = 20,
                   parameter HIGH_SEGMENT_BITS = 10) (
   input                 clk, reset,
 
+  // input to scheck which SvMode is running
+  input [`SVMODE_BITS-1:0] SvMode,
+  
   // The requested page number to compare against the key
-  input  [KEY_BITS-1:0] VirtualPageNumber,
+  input [KEY_BITS-1:0]  VirtualPageNumber,
 
   // Signals to write a new entry to this line
   input                 CAMLineWrite,
@@ -38,10 +45,11 @@ module cam_line #(parameter KEY_BITS = 20,
   // Flush this line (set valid to 0)
   input                 TLBFlush,
 
-  // This entry is a key for a giga, mega, or kilopage.
+  // This entry is a key for a tera, giga, mega, or kilopage.
   // PageType == 2'b00 --> kilopage
   // PageType == 2'b01 --> megapage
-  // PageType == 2'b11 --> gigapage
+  // PageType == 2'b10 --> gigapage
+  // PageType == 2'b11 --> terapage
   output [1:0]          PageType,  // *** should this be the stored version or the always updated one?
   output                Match
 );
@@ -67,9 +75,9 @@ module cam_line #(parameter KEY_BITS = 20,
   flopenr #(KEY_BITS) keyflop(clk, reset, CAMLineWrite, VirtualPageNumber, Key);
 
   // Calculate the actual query key based on the input key and the page type.
-  // For example, a megapage in sv39 only cares about VPN2 and VPN1, so VPN0
+  // For example, a megapage in SV39 only cares about VPN2 and VPN1, so VPN0
   // should automatically match.
-  page_number_mixer #(KEY_BITS, HIGH_SEGMENT_BITS) mixer(VirtualPageNumber, Key, PageType, VirtualPageNumberQuery);
+  page_number_mixer #(KEY_BITS, HIGH_SEGMENT_BITS) mixer(VirtualPageNumber, Key, PageType, SvMode, VirtualPageNumberQuery);
 
   assign Match = ({1'b1, VirtualPageNumberQuery} == {Valid, Key});
 
