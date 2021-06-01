@@ -438,8 +438,11 @@ string tests32f[] = '{
 
   string testsBP64[] = '{
     "rv64BP/simple", "10000",
+    "rv64BP/mmm", "1000000",
+    "rv64BP/linpack_bench", "1000000",
+    "rv64BP/sieve", "1000000",
     "rv64BP/qsort", "1000000",
-    "rv64BP/sieve", "1000000"
+    "rv64BP/dhrystone", "1000000"
   };
 
   string tests64p[] = '{
