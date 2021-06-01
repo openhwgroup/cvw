@@ -166,12 +166,12 @@ string tests32f[] = '{
     "rv64m/I-MULW-01", "3000",
     "rv64m/I-DIV-01", "3000",
     "rv64m/I-DIVU-01", "3000",
-    //"rv64m/I-DIVUW-01", "3000",
-    //"rv64m/I-DIVW-01", "3000",
+    "rv64m/I-DIVUW-01", "3000",
+    "rv64m/I-DIVW-01", "3000",
     "rv64m/I-REM-01", "3000",
-    "rv64m/I-REMU-01", "3000"
-    //"rv64m/I-REMUW-01", "3000",
-    //"rv64m/I-REMW-01", "3000"
+    "rv64m/I-REMU-01", "3000",
+    "rv64m/I-REMUW-01", "3000",
+    "rv64m/I-REMW-01", "3000"
   };
 
   string tests64ic[] = '{
@@ -439,8 +439,11 @@ string tests32f[] = '{
 
   string testsBP64[] = '{
     "rv64BP/simple", "10000",
+    "rv64BP/mmm", "1000000",
+    "rv64BP/linpack_bench", "1000000",
+    "rv64BP/sieve", "1000000",
     "rv64BP/qsort", "1000000",
-    "rv64BP/sieve", "1000000"
+    "rv64BP/dhrystone", "1000000"
   };
 
   string tests64p[] = '{

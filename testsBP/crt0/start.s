@@ -43,11 +43,10 @@ _start:
 
 
 
-	# set the stack pointer to the top of memory
-	# 0x8000_0000 + 64K - 8 bytes
-	li sp, 0x007FFFF8
+	# set the stack pointer to the top of memory - 8 bytes (pointer size)
+	li sp, 0x07FFFFF8
 
-	jal ra, main
+	jal ra, pre_main
 	jal ra, _halt
 
 .section .text
