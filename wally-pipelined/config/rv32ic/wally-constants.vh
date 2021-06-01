@@ -2,7 +2,10 @@
 // wally-constants.vh
 //
 // Written: tfleming@hmc.edu 4 March 2021
-// Modified:
+// Modified: kmacsaigoren@hmc.edu 31 May 2021
+//              added svmode constants. These aren't strictly necessary since we're just checking one bit,
+//              but they're here to stay consistent and to make sure we dont wind up
+//              a "NO_TRANSLATE undefined" situation.
 //
 // Purpose: Specify certain constants defined in the RISC-V 64-bit architecture.
 //          These macros should not be changed, except in the event of an
@@ -31,3 +34,10 @@
 `define PPN_BITS 22
 `define PPN_HIGH_SEGMENT_BITS 12
 `define PA_BITS  34
+`define SVMODE_BITS 1
+// constants to check SATP_MODE against
+// defined in Table 4.3 of the privileged spec
+`define NO_TRANSLATE 0
+`define SV32 1
+`define SV39 8 // These two are only here to stop
+`define SV48 9 // the verilator from yelling at me
