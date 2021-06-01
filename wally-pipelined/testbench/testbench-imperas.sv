@@ -320,11 +320,11 @@ string tests32f[] = '{
     "rv32m/I-MUL-01", "2000",
     "rv32m/I-MULH-01", "2000",
     "rv32m/I-MULHSU-01", "2000",
-    "rv32m/I-MULHU-01", "2000"
-    //"rv32m/I-DIV-01", "2000",
-    //"rv32m/I-DIVU-01", "2000",
-    //"rv32m/I-REM-01", "2000",
-    //"rv32m/I-REMU-01", "2000"
+    "rv32m/I-MULHU-01", "2000",
+    "rv32m/I-DIV-01", "2000",
+    "rv32m/I-DIVU-01", "2000",
+    "rv32m/I-REM-01", "2000",
+    "rv32m/I-REMU-01", "2000"
   };
 
   string tests32ic[] = '{
