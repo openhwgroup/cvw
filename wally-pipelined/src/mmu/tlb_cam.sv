@@ -2,7 +2,9 @@
 // tlb_cam.sv
 //
 // Written: jtorrey@hmc.edu 16 February 2021
-// Modified:
+// Modified: kmacsaigoren@hmc.edu 1 June 2021
+//            Implemented SV48 on top of SV39. This included adding the SvMode signal input and wally constants
+//            Mostly this was to make the cam_lines work.
 //
 // Purpose: Stores virtual page numbers with cached translations.
 //          Determines whether a given virtual page number is in the TLB.
@@ -24,18 +26,21 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`include "wally-constants.vh"
+
 module tlb_cam #(parameter ENTRY_BITS = 3,
                  parameter KEY_BITS   = 20,
                  parameter HIGH_SEGMENT_BITS = 10) (
-  input                    clk, reset,
-  input  [KEY_BITS-1:0]    VirtualPageNumber,
-  input  [1:0]             PageTypeWrite,
-  input  [ENTRY_BITS-1:0]  WriteIndex,
-  input                    TLBWrite,
-  input                    TLBFlush,
-  output [ENTRY_BITS-1:0]  VPNIndex,
-  output [1:0]             HitPageType,
-  output                   CAMHit
+  input                     clk, reset,
+  input  [KEY_BITS-1:0]     VirtualPageNumber,
+  input  [1:0]              PageTypeWrite,
+  input  [ENTRY_BITS-1:0]   WriteIndex,
+  input  [`SVMODE_BITS-1:0] SvMode,
+  input                     TLBWrite,
+  input                     TLBFlush,
+  output [ENTRY_BITS-1:0]   VPNIndex,
+  output [1:0]              HitPageType,
+  output                    CAMHit
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
