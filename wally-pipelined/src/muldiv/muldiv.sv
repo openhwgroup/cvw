@@ -76,7 +76,7 @@ module muldiv (
             assign Den0 = W64E ? {{32{SrcBE[31]&signedDivide}}, SrcBE[31:0]} : SrcBE;
 	 end else begin // RV32 has no W-type instructions
             assign Num0 = SrcAE;
-            assign Den0 = SrcAE;	    
+            assign Den0 = SrcBE;	    
 	 end	    
 
 	 // capture the Numerator/Denominator	 
