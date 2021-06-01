@@ -23,25 +23,25 @@
 //
 
 // `timescale 1ps/1ps
-module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, DivFrm, DivOpType, DivP, DivOvEn, DivUnEn,
-	      DivStart, reset, clk, DivBusyM);
+module fpdiv (FDivSqrtDoneM, FDivResultM, FDivFlagsM, DivDenormM, FInput1E, FInput2E, FrmE, DivOpType, FmtE, DivOvEn, DivUnEn,
+	      FDivStartE, reset, clk, DivBusyM);
 
-   input [63:0] DivOp1;		// 1st input operand (A)
-   input [63:0] DivOp2;		// 2nd input operand (B)
-   input [2:0] 	DivFrm;		// Rounding mode - specify values 
+   input [63:0] FInput1E;		// 1st input operand (A)
+   input [63:0] FInput2E;		// 2nd input operand (B)
+   input [2:0] 	FrmE;		// Rounding mode - specify values 
    input 	DivOpType;	// Function opcode
-   input 	DivP;   		// Result Precision (0 for double, 1 for single)
+   input 	FmtE;   		// Result Precision (0 for double, 1 for single)
    input 	DivOvEn;		// Overflow trap enabled
    input 	DivUnEn;   	// Underflow trap enabled
 
-   input 	DivStart;
+   input 	FDivStartE;
    input 	reset;
    input 	clk;   
 
-   output [63:0] DivResultM;	// Result of operation
-   output [4:0]  DivFlagsM;   	// IEEE exception flags 
+   output [63:0] FDivResultM;	// Result of operation
+   output [4:0]  FDivFlagsM;   	// IEEE exception flags 
    output 	 DivDenormM;   	// DivDenormM on input or output
-   output 	 DivSqrtDone;
+   output 	 FDivSqrtDoneM;
    output    DivBusyM;
 
    supply1 	  vdd;
@@ -94,16 +94,16 @@ module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, Di
    
    logic exp_cout1, exp_cout2, exp_odd, open;
    // Convert the input operands to their appropriate forms based on 
-   // the orignal operands, the DivOpType , and their precision DivP. 
+   // the orignal operands, the DivOpType , and their precision FmtE. 
    // Single precision inputs are converted to double precision 
    // and the sign of the first operand is set appropratiately based on
    // if the operation is absolute value or negation. 
-   convert_inputs_div divconv1 (Float1, Float2, DivOp1, DivOp2, DivOpType, DivP);
+   convert_inputs_div divconv1 (Float1, Float2, FInput1E, FInput2E, DivOpType, FmtE);
 
    // Test for exceptions and return the "Invalid Operation" and
-   // "Denormalized" Input DivFlagsM. The "sel_inv" is used in
+   // "Denormalized" Input FDivFlagsM. The "sel_inv" is used in
    // the third pipeline stage to select the result. Also, op1_Norm
-   // and op2_Norm are one if DivOp1 and DivOp2 are not zero or denormalized.
+   // and op2_Norm are one if FInput1E and FInput2E are not zero or denormalized.
    // sub is one if the effective operation is subtaction. 
    exception_div divexc1 (sel_inv, Invalid, DenormIn, op1_Norm, op2_Norm, 
 		   Float1, Float2, DivOpType);
@@ -135,26 +135,26 @@ module fpdiv (DivSqrtDone, DivResultM, DivFlagsM, DivDenormM, DivOp1, DivOp2, Di
 		  sel_muxa, sel_muxb, sel_muxr, 
 		  reset, clk,
 		  load_rega, load_regb, load_regc, load_regd,
-		  load_regr, load_regs, DivP, DivOpType, exp_odd);
+		  load_regr, load_regs, FmtE, DivOpType, exp_odd);
 
    // FSM : control divider
-   fsm control (DivSqrtDone, load_rega, load_regb, load_regc, load_regd, 
+   fsm control (FDivSqrtDoneM, load_rega, load_regb, load_regc, load_regd, 
 		load_regr, load_regs, sel_muxa, sel_muxb, sel_muxr, 
-		clk, reset, DivStart, DivOpType, DivBusyM);
+		clk, reset, FDivStartE, DivOpType, DivBusyM);
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 
    // set the exception flags.
    //***add max magnitude and swap negitive and positive infinity
    rounder_div divround1 (Result, DenormIO, FlagsIn, 
-		   DivFrm, DivP, DivOvEn, DivUnEn, expF, 
+		   FrmE, FmtE, DivOvEn, DivUnEn, expF, 
    		   sel_inv, Invalid, DenormIn, signResult, 
 		   q1, qm1, qp1, q0, qm0, qp0, regr_out);
 
    // Store the final result and the exception flags in registers.
-   flopenr #(64) rega (clk, reset, DivSqrtDone, Result, DivResultM);
-   flopenr #(1) regb (clk, reset, DivSqrtDone, DenormIO, DivDenormM);   
-   flopenr #(5) regc (clk, reset, DivSqrtDone, FlagsIn, DivFlagsM);   
+   flopenr #(64) rega (clk, reset, FDivSqrtDoneM, Result, FDivResultM);
+   flopenr #(1) regb (clk, reset, FDivSqrtDoneM, DenormIO, DivDenormM);   
+   flopenr #(5) regc (clk, reset, FDivSqrtDoneM, FlagsIn, FDivFlagsM);   
    
 endmodule // fpadd
 
@@ -198,7 +198,7 @@ module brent_kung (c, p, g);
    logic G_7_0,G_11_0,G_5_0,G_9_0,G_13_0,G_2_0,G_4_0,G_6_0,G_8_0,G_10_0,G_12_0;
    // parallel-prefix, Brent-Kung
 
-   // Stage 1: Generates G/DivP pairs that span 1 bits
+   // Stage 1: Generates G/FmtE pairs that span 1 bits
    grey b_1_0 (G_1_0, {g[1],g[0]}, p[1]);
    black b_3_2 (G_3_2, P_3_2, {g[3],g[2]}, {p[3],p[2]});
    black b_5_4 (G_5_4, P_5_4, {g[5],g[4]}, {p[5],p[4]});
@@ -207,20 +207,20 @@ module brent_kung (c, p, g);
    black b_11_10 (G_11_10, P_11_10, {g[11],g[10]}, {p[11],p[10]});
    black b_13_12 (G_13_12, P_13_12, {g[13],g[12]}, {p[13],p[12]});
 
-   // Stage 2: Generates G/DivP pairs that span 2 bits
+   // Stage 2: Generates G/FmtE pairs that span 2 bits
    grey g_3_0 (G_3_0, {G_3_2,G_1_0}, P_3_2);
    black b_7_4 (G_7_4, P_7_4, {G_7_6,G_5_4}, {P_7_6,P_5_4});
    black b_11_8 (G_11_8, P_11_8, {G_11_10,G_9_8}, {P_11_10,P_9_8});
 
-   // Stage 3: Generates G/DivP pairs that span 4 bits
+   // Stage 3: Generates G/FmtE pairs that span 4 bits
    grey g_7_0 (G_7_0, {G_7_4,G_3_0}, P_7_4);
 
-   // Stage 4: Generates G/DivP pairs that span 8 bits
+   // Stage 4: Generates G/FmtE pairs that span 8 bits
 
-   // Stage 5: Generates G/DivP pairs that span 4 bits
+   // Stage 5: Generates G/FmtE pairs that span 4 bits
    grey g_11_0 (G_11_0, {G_11_8,G_7_0}, P_11_8);
 
-   // Stage 6: Generates G/DivP pairs that span 2 bits
+   // Stage 6: Generates G/FmtE pairs that span 2 bits
    grey g_5_0 (G_5_0, {G_5_4,G_3_0}, P_5_4);
    grey g_9_0 (G_9_0, {G_9_8,G_7_0}, P_9_8);
    grey g_13_0 (G_13_0, {G_13_12,G_11_0}, P_13_12);

@@ -27,45 +27,45 @@
 
 module fpuhazard(
     input logic [4:0] Adr1, Adr2, Adr3,
-    input logic  FRegWriteE, FRegWriteM, FRegWriteW, 
+    input logic FWriteEnE, FWriteEnM, FWriteEnW, 
 	  input logic [4:0] RdE, RdM, RdW,
-	  input logic  DivBusyM,
+	  input logic DivBusyM,
 	  input logic	RegWriteD,
     input logic [2:0] FResultSelD, FResultSelE,
     input logic IllegalFPUInstrD,
-    input logic In2UsedD, In3UsedD,
+    input logic FInput2UsedD, FInput3UsedD,
   // Stall outputs
 	  output logic FStallD,
-    output logic [1:0] Input1MuxD, Input2MuxD, 
-    output logic Input3MuxD
+    output logic [1:0] FForwardInput1D, FForwardInput2D, 
+    output logic FForwardInput3D
 );
 
 
   always_comb begin
     // set ReadData as default
-    Input1MuxD = 2'b00; 
-    Input2MuxD = 2'b00;
-    Input3MuxD = 1'b0;
+    FForwardInput1D = 2'b00; 
+    FForwardInput2D = 2'b00;
+    FForwardInput3D = 1'b0;
     FStallD = DivBusyM;
     if (~IllegalFPUInstrD) begin
 //					if taking a value from int register
-      if ((Adr1 == RdE) & (FRegWriteE | ((FResultSelE == 3'b110) & RegWriteD))) 
-        if (FResultSelE == 3'b110) Input1MuxD = 2'b11; // choose SrcAM
+      if ((Adr1 == RdE) & (FWriteEnE | ((FResultSelE == 3'b110) & RegWriteD))) 
+        if (FResultSelE == 3'b110) FForwardInput1D = 2'b11; // choose SrcAM
         else FStallD = 1'b1;                           // otherwise stall
-      else if ((Adr1 == RdM) & FRegWriteM) Input1MuxD = 2'b01; // choose FPUResultDirW
-      else if ((Adr1 == RdW) & FRegWriteW) Input1MuxD = 2'b11; // choose FPUResultDirE
+      else if ((Adr1 == RdM) & FWriteEnM) FForwardInput1D = 2'b01; // choose FPUResultDirW
+      else if ((Adr1 == RdW) & FWriteEnW) FForwardInput1D = 2'b11; // choose FPUResultDirE
     
 
-      if(In2UsedD)
-        if      ((Adr2 == RdE) & FRegWriteE) FStallD = 1'b1;
-        else if ((Adr2 == RdM) & FRegWriteM) Input2MuxD = 2'b01; // choose FPUResultDirW
-        else if ((Adr2 == RdW) & FRegWriteW) Input2MuxD = 2'b10; // choose FPUResultDirE
+      if(FInput2UsedD)
+        if      ((Adr2 == RdE) & FWriteEnE) FStallD = 1'b1;
+        else if ((Adr2 == RdM) & FWriteEnM) FForwardInput2D = 2'b01; // choose FPUResultDirW
+        else if ((Adr2 == RdW) & FWriteEnW) FForwardInput2D = 2'b10; // choose FPUResultDirE
 
 
-      if(In3UsedD)
-        if      ((Adr3 == RdE) & FRegWriteE) FStallD = 1'b1;
-        else if ((Adr3 == RdM) & FRegWriteM) FStallD = 1'b1;
-        else if ((Adr3 == RdW) & FRegWriteW) Input3MuxD = 1'b1; // choose FPUResultDirE
+      if(FInput3UsedD)
+        if      ((Adr3 == RdE) & FWriteEnE) FStallD = 1'b1;
+        else if ((Adr3 == RdM) & FWriteEnM) FStallD = 1'b1;
+        else if ((Adr3 == RdW) & FWriteEnW) FForwardInput3D = 1'b1; // choose FPUResultDirE
     end
 
   end 

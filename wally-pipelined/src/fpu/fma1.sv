@@ -15,13 +15,13 @@
 //    normalize Normalization shifter
 //    round     Rounding of result
 //    exception Handles exceptional cases
-//    bypass    Handles bypass of result to Input1E or Input3E inputs
+//    bypass    Handles bypass of result to FInput1E or FInput3E inputs
 //    sign      One bit sign handling block 
 //    special   Catch special cases (inputs = 0  / infinity /  etc.) 
 //
-//   The FMAC computes FmaResultM=Input1E*Input2E+Input3E, rounded with the mode specified by
+//   The FMAC computes FmaResultM=FInput1E*FInput2E+FInput3E, rounded with the mode specified by
 //   RN, RZ, RM, or RP.  The result is optionally bypassed back to
-//   the Input1E or Input3E inputs for use on the next cycle.  In addition,  four signals
+//   the FInput1E or FInput3E inputs for use on the next cycle.  In addition,  four signals
 //   are produced: trap, overflow, underflow, and inexact.  Trap indicates
 //   an infinity, NaN, or denormalized number to be handled in software;
 //   the other three signals are IEEE flags.
@@ -29,15 +29,15 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module fma1(Input1E, Input2E, Input3E, FrmE,  
+module fma1(FInput1E, FInput2E, FInput3E, FrmE,  
 			rE, sE, tE, bsE, killprodE, sumshiftE, sumshiftzeroE,  aligncntE, aeE
 			, xzeroE, yzeroE, zzeroE, xnanE,ynanE, znanE, xdenormE, ydenormE, zdenormE,
 			xinfE, yinfE, zinfE, nanE, prodinfE);
 /////////////////////////////////////////////////////////////////////////////
  
-	input logic 		[63:0]		Input1E;		// input 1
-	input logic		[63:0]		Input2E;     // input 2 
-	input logic 		[63:0]		Input3E;     // input 3
+	input logic 		[63:0]		FInput1E;		// input 1
+	input logic		[63:0]		FInput2E;     // input 2 
+	input logic 		[63:0]		FInput3E;     // input 3
 	input logic 		[2:0]	 	FrmE;          	// Rounding mode
 	output logic 		[12:0]		aligncntE;    	// status flags
 	output logic 		[105:0]		rE; 				// one result of partial product sum
@@ -45,7 +45,7 @@ module fma1(Input1E, Input2E, Input3E, FrmE,
 	output logic 		[163:0]		tE;				// output logic of alignment shifter	
 	output logic 		[12:0]		aeE; 		// multiplier expoent
 	output logic 					bsE;				// sticky bit of addend
-	output logic 					killprodE; 		// Input3E >> product
+	output logic 					killprodE; 		// FInput3E >> product
 	output logic					xzeroE;
 	output logic					yzeroE;
 	output logic					zzeroE;
@@ -68,7 +68,7 @@ module fma1(Input1E, Input2E, Input3E, FrmE,
 //	output logic 		[12:0]		aligncntE; 		// shift count for alignment
 
 
-	logic 					prodof; 		// Input1E*Input2E out of range
+	logic 					prodof; 		// FInput1E*FInput2E out of range
 
 
 
@@ -84,12 +84,12 @@ module fma1(Input1E, Input2E, Input3E, FrmE,
 
 //   Instantiate fraction datapath
 
-	multiply		multiply(.xman(Input1E[51:0]), .yman(Input2E[51:0]), .*);
-	align			align(.zman(Input3E[51:0]),.*);
+	multiply		multiply(.xman(FInput1E[51:0]), .yman(FInput2E[51:0]), .*);
+	align			align(.zman(FInput3E[51:0]),.*);
 
 // Instantiate exponent datapath
 
-	expgen1			expgen1(.xexp(Input1E[62:52]),.yexp(Input2E[62:52]),.zexp(Input3E[62:52]),.*);
+	expgen1			expgen1(.xexp(FInput1E[62:52]),.yexp(FInput2E[62:52]),.zexp(FInput3E[62:52]),.*);
 // Instantiate special case detection across datapath & exponent path 
 
 	special			special(.*);

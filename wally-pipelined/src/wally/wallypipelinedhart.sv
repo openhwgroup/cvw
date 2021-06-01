@@ -68,8 +68,8 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] SrcAM;
   logic [2:0] Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] InstrD, InstrM;
-  logic [`XLEN-1:0] PCE, PCM, PCLinkE, PCLinkW;
+  logic [31:0] InstrD, InstrE, InstrM, InstrW;
+  logic [`XLEN-1:0] PCD, PCE, PCM, PCLinkE, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
   logic [`XLEN-1:0] CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
@@ -86,7 +86,7 @@ module wallypipelinedhart (
 
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
-  logic        LoadStallD, MulDivStallD, CSRRdStallD;
+  logic        FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD;
   logic       DivDoneE;
   logic       DivBusyE;
   logic       DivDoneW;
@@ -98,9 +98,9 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] FWriteDataM;
   logic       SquashSCW;
   logic       FStallD;
-  logic       FWriteIntW, FWriteIntM;
+  logic       FWriteIntE, FWriteIntW, FWriteIntM;
   logic [31:0]      FSROutW;
-  logic             DivSqrtDoneE;
+  logic             FDivSqrtDoneM;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic [`XLEN-1:0] FPUResultW;
 

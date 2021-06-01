@@ -37,17 +37,18 @@
 // It also produces an invalid operation flag, which is one
 // if either of the input operands is a signaling NaN per 754
 
-module fpucmp2 (Invalid, FCC, ANaN, BNaN, Azero, Bzero, w, x, Sel, op1, op2);
+module fpucmp2 (   
+   input logic [63:0] op1, 
+   input logic [63:0] op2,
+   input logic [1:0]  Sel,
+   input logic [7:0]  w, x,
+   input logic        ANaN, BNaN,
+   input logic        Azero, Bzero,
+   input logic [3:0]  FOpCtrlM,
    
-   input logic [63:0] op1; 
-   input logic [63:0] op2;
-   input logic [1:0]  Sel;
-   input logic [7:0]  w, x;
-   input logic        ANaN, BNaN;
-   input logic        Azero, Bzero;
-   
-   output logic       Invalid; 		 // Invalid Operation
-   output logic [1:0] FCC;  		 // Condition Codes 
+   output logic       Invalid, 		 // Invalid Operation
+   output logic [1:0] FCC,  		 // Condition Codes 
+   output logic [63:0] FCmpResultM);
    
    logic 	      LT;                // magnitude op1 < magnitude op2
    logic 	      EQ;                // magnitude op1 = magnitude op2
@@ -59,7 +60,7 @@ module fpucmp2 (Invalid, FCC, ANaN, BNaN, Azero, Bzero, w, x, Sel, op1, op2);
 
    // Determine final values based on output of magnitude comparison, 
    // sign bits, and special case testing. 
-   exception_cmp_2 exc2 (.invalid(Invalid), .fcc(FCC), .LT_mag(LT), .EQ_mag(EQ), .ANaN(ANaN), .BNaN(BNaN), .Azero(Azero), .Bzero(Bzero), .Sel(Sel), .A(op1), .B(op2));
+   exception_cmp_2 exc2 (.invalid(Invalid), .fcc(FCC), .LT_mag(LT), .EQ_mag(EQ), .ANaN(ANaN), .BNaN(BNaN), .Azero(Azero), .Bzero(Bzero), .Sel(Sel), .A(op1), .B(op2), .*);
    
 
 endmodule // fpcomp
@@ -156,24 +157,26 @@ endmodule // magcompare64b
 // It also produces a invalid operation flag, which is one
 // if either of the input operands is a signaling NaN.
 
-module exception_cmp_2 (invalid, fcc, LT_mag, EQ_mag, ANaN, BNaN, Azero, Bzero, Sel, A, B);
-
-   input logic [63:0] A;
-   input logic [63:0] B;
-   input logic 	      LT_mag;
-   input logic 	      EQ_mag;
-   input logic [1:0]  Sel;
+module exception_cmp_2 (
+   input logic [63:0] A,
+   input logic [63:0] B,
+   input logic 	      LT_mag,
+   input logic 	      EQ_mag,
+   input logic [1:0]  Sel,
+   input logic [3:0]  FOpCtrlM,
    
-   output logic       invalid;
-   output logic [1:0] fcc;   
+   output logic       invalid,
+   output logic [1:0] fcc,
+   output logic [63:0] FCmpResultM,
 
+   input logic 	      Azero,
+   input logic 	      Bzero,   
+   input logic 	      ANaN,
+   input logic 	      BNaN);
+   
    logic 	      dp;   
    logic 	      sp;
    logic 	      hp;   
-   input logic 	      Azero;
-   input logic 	      Bzero;   
-   input logic 	      ANaN;
-   input logic 	      BNaN;
    logic 	      ASNaN;
    logic 	      BSNaN;
    logic 	      UO;
@@ -221,6 +224,17 @@ module exception_cmp_2 (invalid, fcc, LT_mag, EQ_mag, ANaN, BNaN, Azero, Bzero, 
 
    // Set the bits of fcc based on LT, GT, EQ, and UO
    assign fcc[0] = LT | UO;
-   assign fcc[1] = GT | UO;   
+   assign fcc[1] = GT | UO;  
+
+   always_comb begin
+      case (FOpCtrlM[2:0])
+         3'b111: FCmpResultM = LT ? A : B;//min 
+         3'b101: FCmpResultM = GT ? A : B;//max
+         3'b010: FCmpResultM = {63'b0, EQ};//equal
+         3'b001: FCmpResultM = {63'b0, LT};//less than
+         3'b011: FCmpResultM = {63'b0, LT | EQ};//less than or equal
+         default: FCmpResultM = 64'b0;
+      endcase
+   end 
 
 endmodule // exception_cmp

@@ -48,6 +48,11 @@ add wave /testbench/dut/hart/ieu/dp/RegWriteW
 add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
+add wave -hex /testbench/dut/hart/priv/csr/ProposedEPCM
+add wave -hex /testbench/dut/hart/priv/csr/TrapM
+add wave -hex /testbench/dut/hart/priv/csr/UnalignedNextEPCM
+add wave -hex /testbench/dut/hart/priv/csr/genblk1/csrm/WriteMEPCM
+add wave -hex /testbench/dut/hart/priv/csr/genblk1/csrm/MEPC_REGW
 add wave -divider
 
 # peripherals
