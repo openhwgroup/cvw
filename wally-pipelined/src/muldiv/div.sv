@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// mul.sv
+// divide4x64.sv
 //
 // Written: James.Stine@okstate.edu 1 February 2021
 // Modified: 
@@ -29,60 +29,55 @@
 /* verilator lint_off COMBDLY */
 /* verilator lint_off IMPLICIT */
 
-`include "wally-config.vh"
+module intdiv #(parameter WIDTH=64) 
+   (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
 
-module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
-
-   input logic [63:0]  N, D;
-   input logic 	       clk;
-   input logic 	       reset;
-   input logic 	       start;
-   input logic 	       S;   
+   input logic [WIDTH-1:0]   N, D;
+   input logic 		     clk;
+   input logic 		     reset;
+   input logic 		     start;
+   input logic 		     S;   
    
-   output logic [63:0] Qf;
-   output logic [63:0] remf;
-   output logic        div0;
-   output logic        done;
-   output logic        divBusy;   
-
-   logic 	       divdone;   
-   logic 	       enable;
-   logic 	       state0;
-   logic 	       V;   
-   logic [7:0] 	       Num;
-   logic [5:0] 	       P, NumIter, RemShift;
-   logic [63:0]        op1, op2, op1shift, Rem5;
-   logic [64:0]        Qd, Rd, Qd2, Rd2;
-   logic [63:0]        Q, rem0;
-   logic [3:0] 	       quotient;
-   logic 	       otfzero; 
-   logic 	       shiftResult;
-   logic 	       enablev, state0v, donev, divdonev, oftzerov, divBusyv, ulp;
-
-   logic [63:0]        twoD;
-   logic [63:0]        twoN;
-   logic 	       SignD;
-   logic 	       SignN;
-   logic [63:0]        QT, remT;
-   logic 	       D_NegOne;
-   logic 	       Max_N;
+   output logic [WIDTH-1:0]  Qf;
+   output logic [WIDTH-1:0]  remf;
+   output logic 	     div0;
+   output logic 	     done;
+   output logic 	     divBusy;   
+   
+   logic 		     enable;
+   logic 		     state0;
+   logic 		     V;   
+   logic [$clog2(WIDTH):0]   Num;
+   logic [$clog2(WIDTH)-1:0] P, NumIter, RemShift;
+   logic [WIDTH-1:0] 	     op1, op2, op1shift, Rem5;
+   logic [WIDTH:0] 	     Qd, Rd, Qd2, Rd2;
+   logic [WIDTH-1:0] 	     Q, rem0;
+   logic [3:0] 		     quotient;
+   logic 		     otfzero; 
+   logic 		     shiftResult;
+   logic 		     enablev, state0v, donev, oftzerov, divBusyv, ulp;   
+   
+   logic [WIDTH-1:0] 	     twoD;
+   logic [WIDTH-1:0] 	     twoN;
+   logic 		     SignD;
+   logic 		     SignN;
+   logic [WIDTH-1:0] 	     QT, remT;
+   logic 		     D_NegOne;
+   logic 		     Max_N;      
+   
 
    // Check if negative (two's complement)
    //   If so, convert to positive
-   adder #(64) cpa1 ((D ^ {64{D[63]&S}}), {63'h0, D[63]&S}, twoD);
-   adder #(64) cpa2 ((N ^ {64{N[63]&S}}), {63'h0, N[63]&S}, twoN);   
-   assign SignD = D[63];
-   assign SignN = N[63];   
+   adder #(WIDTH) cpa1 ((D ^ {WIDTH{D[WIDTH-1]&S}}), {{WIDTH-1{1'b0}}, D[WIDTH-1]&S}, twoD);
+   adder #(WIDTH) cpa2 ((N ^ {WIDTH{N[WIDTH-1]&S}}), {{WIDTH-1{1'b0}}, N[WIDTH-1]&S}, twoN);   
+   assign SignD = D[WIDTH-1];
+   assign SignN = N[WIDTH-1];   
    // Max N and D = -1 (Overflow)
-   assign Max_N = (~|N[62:0]) & N[63];
+   assign Max_N = (~|N[WIDTH-2:0]) & N[WIDTH-1];
    assign D_NegOne = &D;
-
+   
    // Divider goes the distance to 37 cycles
-   // (thanks the evil divisor for D = 0x1) 
-   // but could theoretically be stopped when
-   // divdone is asserted.  The enable signal
-   // turns off register storage thus invalidating
-   // any future cycles.
+   // (thanks to the evil divisor for D = 0x1) 
    
    // Shift D, if needed (for integer)
    // needed to allow qst to be in range for integer
@@ -92,32 +87,31 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
    // is 0 and thus a divide by 0 exception.  This div0
    // exception is given to FSM to tell the operation to 
    // quit gracefully.
-
-   lz64 p1 (P, V, twoD);
-   shifter_l64 p2 (op2, twoD, P);
-   assign op1 = twoN;
+   lzd_hier #(WIDTH) p1 (.ZP(P), .ZV(V), .B(twoD));
+   shift_left #(WIDTH) p2 (twoD, P, op2);
+   assign op1 = twoN;   
    assign div0 = ~V;
 
-   // #iter: N = m+v+s = m+(s+2) = m+2+s (mod k = 0)
+   // #iter: N = m+v+s = m+2+s (mod k = 0)
    // v = 2 since \rho < 1 (add 4 to make sure its a ceil)
-   adder #(8) cpa3 ({2'b0, P}, 
-		    {5'h0, shiftResult, ~shiftResult, 1'b0}, 
-		    Num);      
+   // k = 2 (r = 2^k)
+   adder #($clog2(WIDTH)+1) cpa3 ({1'b0, P}, 
+				  {{$clog2(WIDTH)+1-3{1'b0}}, shiftResult, ~shiftResult, 1'b0}, 
+				  Num);      
    
    // Determine whether need to add just Q/Rem
    assign shiftResult = P[0];   
    // div by 2 (ceil)
-   assign NumIter = Num[6:1];   
+   assign NumIter = Num[$clog2(WIDTH):1];   
    assign RemShift = P;
 
    // FSM to control integer divider
    //   assume inputs are postive edge and
    //   datapath (divider) is negative edge
-   fsm64 fsm1 (enablev, state0v, donev, divdonev, otfzerov, divBusyv,
-	       start, div0, NumIter, ~clk, reset);
+   fsm64 #($clog2(WIDTH)) fsm1 (enablev, state0v, donev, otfzerov, divBusyv,
+				start, div0, NumIter, ~clk, reset);
 
    flopr #(1) rega (~clk, reset, donev, done);
-   flopr #(1) regb (~clk, reset, divdonev, divdone);
    flopr #(1) regc (~clk, reset, otfzerov, otfzero);
    flopr #(1) regd (~clk, reset, enablev, enable);
    flopr #(1) rege (~clk, reset, state0v, state0);
@@ -129,65 +123,66 @@ module div (Qf, remf, done, divBusy, div0, N, D, clk, reset, start, S);
    // integer bit and m fractional bits), this is achieved by
    // shifting N right by v+s so that (m+v+s) mod k = 0.  And,
    // the quotient has to be aligned to the integer position.
-
-   divide4x64 p3 (Qd, Rd, quotient, op1, op2, clk, reset, state0, 
-		  enable, otfzero, shiftResult);
+   divide4 #(WIDTH) p3 (Qd, Rd, quotient, op1, op2, clk, reset, state0, 
+			enable, otfzero, shiftResult);
 
    // Storage registers to hold contents stable
-   flopenr #(65) reg3 (clk, reset, enable, Rd, Rd2);
-   flopenr #(65) reg4 (clk, reset, enable, Qd, Qd2);         
+   flopenr #(WIDTH+1) reg3 (clk, reset, enable, Rd, Rd2);
+   flopenr #(WIDTH+1) reg4 (clk, reset, enable, Qd, Qd2);         
 
    // Probably not needed - just assigns results
-   assign Q = Qd2[63:0];
-   assign Rem5 = Rd2[64:1];  
+   assign Q = Qd2[WIDTH-1:0];
+   assign Rem5 = Rd2[WIDTH:1];  
    
    // Adjust remainder by m (no need to adjust by
-   // n ln(r)
-   shifter_r64 p4 (rem0, Rem5, RemShift);
+   shift_right #(WIDTH) p4 (Rem5, RemShift, rem0);
 
    // Adjust Q/Rem for Signed
    assign tcQ = (SignN ^ SignD) & S;
    assign tcR = SignN & S;
-   // Signed Divide
+
+   // When Dividend (N) and/or Divisor (D) are negative (first bit is '1'):
    // - When N and D are negative: Remainder is negative (undergoes a two's complement).
    // - When N is negative: Quotient and Remainder are both negative (undergo a two's complement).
    // - When D is negative: Quotient is negative (undergoes a two's complement).
-   adder #(64) cpa4 ((rem0 ^ {64{tcR}}), {63'h0, tcR}, remT);
-   adder #(64) cpa5 ((Q ^ {64{tcQ}}), {63'h0, tcQ}, QT);         
+   adder #(WIDTH) cpa4 ((rem0 ^ {WIDTH{tcR}}), {{WIDTH-1{1'b0}}, tcR}, remT);
+   adder #(WIDTH) cpa5 ((Q ^ {WIDTH{tcQ}}), {{WIDTH-1{1'b0}}, tcQ}, QT);         
 
    // RISC-V has exceptions for divide by 0 and overflow (see Table 6.1 of spec)
-   exception_int exc (QT, remT, N, S, div0, Max_N, D_NegOne, Qf, remf);
-
+   exception_int #(WIDTH) exc (QT, remT, N, S, div0, Max_N, D_NegOne, Qf, remf);
+   
 endmodule // int32div
 
-module divide4x64 (Q, rem0, quotient, op1, op2, clk, reset, state0, 
-		   enable, otfzero, shiftResult); 
+// Division by Recurrence (r=4)
+module divide4 #(parameter WIDTH=64) 
+   (Q, rem0, quotient, op1, op2, clk, reset, state0, 
+    enable, otfzero, shiftResult); 
 
-   input logic [63:0]   op1, op2;
-   input logic 		clk, state0;
-   input logic 		reset;
-   input logic 		enable;
-   input logic 		otfzero;
-   input logic 		shiftResult;   
+   input logic [WIDTH-1:0]   op1, op2;
+   input logic 		     clk, state0;
+   input logic 		     reset;
+   input logic 		     enable;
+   input logic 		     otfzero;
+   input logic 		     shiftResult;   
    
-   output logic [64:0] 	rem0;
-   output logic [64:0] 	Q;
-   output logic [3:0] 	quotient;   
+   output logic [WIDTH:0]    rem0;
+   output logic [WIDTH:0]    Q;
+   output logic [3:0] 	     quotient;   
 
-   logic [67:0] 	Sum, Carry;   
-   logic [64:0] 	Qstar;   
-   logic [64:0] 	QMstar;   
-   logic [7:0] 		qtotal;   
-   logic [67:0] 	SumN, CarryN, SumN2, CarryN2;
-   logic [67:0] 	divi1, divi2, divi1c, divi2c, dive1;
-   logic [67:0] 	mdivi_temp, mdivi;   
-   logic 		zero;
-   logic [1:0] 		qsel;
-   logic [1:0] 		Qin, QMin;
-   logic 		CshiftQ, CshiftQM;
-   logic [67:0] 	rem1, rem2, rem3;
-   logic [67:0] 	SumR, CarryR;
-   logic [64:0] 	Qt;   
+   logic [WIDTH+3:0] 	     Sum, Carry;   
+   logic [WIDTH:0] 	     Qstar;   
+   logic [WIDTH:0] 	     QMstar;   
+   logic [7:0] 		     qtotal;   
+   logic [WIDTH+3:0] 	     SumN, CarryN, SumN2, CarryN2;
+   logic [WIDTH+3:0] 	     divi1, divi2, divi1c, divi2c, dive1;
+   logic [WIDTH+3:0] 	     mdivi_temp, mdivi;   
+   logic 		     zero;
+   logic [1:0] 		     qsel;
+   logic [1:0] 		     Qin, QMin;
+   logic 		     CshiftQ, CshiftQM;
+   logic [WIDTH+3:0] 	     rem1, rem2, rem3;
+   logic [WIDTH+3:0] 	     SumR, CarryR;
+   logic [WIDTH:0] 	     Qt;   
 
    // Create one's complement values of Divisor (for q*D)
    assign divi1 = {3'h0, op2, 1'b0};
@@ -195,46 +190,47 @@ module divide4x64 (Q, rem0, quotient, op1, op2, clk, reset, state0,
    assign divi1c = ~divi1;
    assign divi2c = ~divi2;
    // Shift x1 if not mod k
-   mux2 #(68) mx1 ({3'b000, op1, 1'b0},  {4'h0, op1}, shiftResult, dive1);   
+   mux2 #(WIDTH+4) mx1 ({3'b000, op1, 1'b0},  {4'h0, op1}, shiftResult, dive1);   
 
    // I I I . F F F F F ... (Robertson Criteria - \rho * qmax * D)
-   mux2 #(68) mx2 ({CarryN2[65:0], 2'h0}, 68'h0, state0, CarryN);
-   mux2 #(68) mx3 ({SumN2[65:0], 2'h0}, dive1, state0, SumN);
+   mux2 #(WIDTH+4) mx2 ({CarryN2[WIDTH+1:0], 2'h0}, {WIDTH+4{1'b0}}, state0, CarryN);
+   mux2 #(WIDTH+4) mx3 ({SumN2[WIDTH+1:0], 2'h0}, dive1, state0, SumN);
    // Simplify QST
-   adder #(8) cpa1 (SumN[67:60], CarryN[67:60], qtotal);   
+   adder #(8) cpa1 (SumN[WIDTH+3:WIDTH-4], CarryN[WIDTH+3:WIDTH-4], qtotal);   
    // q = {+2, +1, -1, -2} else q = 0
-   qst4 pd1 (qtotal[7:1], divi1[63:61], quotient);
+   qst4 pd1 (qtotal[7:1], divi1[WIDTH-1:WIDTH-3], quotient);
    assign ulp = quotient[2]|quotient[3];
    assign zero = ~(quotient[3]|quotient[2]|quotient[1]|quotient[0]);
    // Map to binary encoding
    assign qsel[1] = quotient[3]|quotient[2];
    assign qsel[0] = quotient[3]|quotient[1];   
-   mux4 #(68) mx4 (divi2, divi1, divi1c, divi2c, qsel, mdivi_temp);
-   mux2 #(68) mx5 (mdivi_temp, 68'h0, zero, mdivi);
-   csa #(68) csa1 (mdivi, SumN, {CarryN[67:1], ulp}, Sum, Carry);
+   mux4 #(WIDTH+4) mx4 (divi2, divi1, divi1c, divi2c, qsel, mdivi_temp);
+   mux2 #(WIDTH+4) mx5 (mdivi_temp, {WIDTH+4{1'b0}}, zero, mdivi);
+   csa #(WIDTH+4) csa1 (mdivi, SumN, {CarryN[WIDTH+3:1], ulp}, Sum, Carry);
    // regs : save CSA
-   flopenr #(68) reg1 (clk, reset, enable, Sum, SumN2);
-   flopenr #(68) reg2 (clk, reset, enable, Carry, CarryN2);
+   flopenr #(WIDTH+4) reg1 (clk, reset, enable, Sum, SumN2);
+   flopenr #(WIDTH+4) reg2 (clk, reset, enable, Carry, CarryN2);
    // OTF
    ls_control otf1 (quotient, Qin, QMin, CshiftQ, CshiftQM);   
-   otf #(65) otf2 (Qin, QMin, CshiftQ, CshiftQM, clk, 
-		   otfzero, enable, Qstar, QMstar);
+   otf #(WIDTH+1) otf2 (Qin, QMin, CshiftQ, CshiftQM, clk, 
+			otfzero, enable, Qstar, QMstar);
 
    // Correction and generation of Remainder
-   adder #(68) cpa2 (SumN2[67:0], CarryN2[67:0], rem1);
+   adder #(WIDTH+4) cpa2 (SumN2[WIDTH+3:0], CarryN2[WIDTH+3:0], rem1);
    // Add back +D as correction
-   csa #(68) csa2 (CarryN2[67:0], SumN2[67:0], divi1, SumR, CarryR);
-   adder #(68) cpa3 (SumR, CarryR, rem2);   
+   csa #(WIDTH+4) csa2 (CarryN2[WIDTH+3:0], SumN2[WIDTH+3:0], divi1, SumR, CarryR);
+   adder #(WIDTH+4) cpa3 (SumR, CarryR, rem2);   
    // Choose remainder (Rem or Rem+D)
-   mux2 #(68) mx6 (rem1, rem2, rem1[67], rem3);
+   mux2 #(WIDTH+4) mx6 (rem1, rem2, rem1[WIDTH+3], rem3);
    // Choose correct Q or QM
-   mux2 #(65) mx7 (Qstar, QMstar, rem1[67], Qt);
+   mux2 #(WIDTH+1) mx7 (Qstar, QMstar, rem1[WIDTH+3], Qt);
    // Final results
-   assign rem0 = rem3[64:0];
+   assign rem0 = rem3[WIDTH:0];
    assign Q = Qt;   
    
 endmodule // divide4x64
 
+// Load/Control for OTFC
 module ls_control (quot, Qin, QMin, CshiftQ, CshiftQM);
 
    input logic [3:0] quot;
@@ -255,8 +251,7 @@ module ls_control (quot, Qin, QMin, CshiftQ, CshiftQM);
 
 endmodule 
 
-// On-the-fly Conversion per Ercegovac/Lang
-
+// On-the-fly Conversion (OTFC)
 module otf #(parameter WIDTH=8) 
    (Qin, QMin, CshiftQ, CshiftQM, clk, reset, enable, R2Q, R1Q);
    
@@ -309,10 +304,9 @@ module csa #(parameter WIDTH=8) (input logic [WIDTH-1:0] a, b, c,
 	   fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
 	end
    endgenerate
-   //assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     // trmimmed excess bit dh 5/3/21
-   assign carry = {carry_temp[WIDTH-1:1], 1'b0};     
+   assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     
 
-endmodule // adder
+endmodule // csa
 
 module eqcmp #(parameter WIDTH = 8)
    (input  logic [WIDTH-1:0] a, b,
@@ -322,6 +316,7 @@ module eqcmp #(parameter WIDTH = 8)
    
 endmodule // eqcmp
 
+// QST for r=4
 module qst4 (input logic [6:0] s, input logic [2:0] d,
 	     output logic [3:0] q);
    
@@ -367,8 +362,6 @@ module qst4 (input logic [6:0] s, input logic [2:0] d,
 		 (!d[2]&!d[1]&s[6]&!s[3]&!s[2]&!s[1]&!s[0]);
    
 endmodule // qst4
-
-// LZD
 
 module lz2 (P, V, B0, B1);
 
@@ -497,27 +490,24 @@ module lz64 (ZP, ZV, B);
 endmodule // lz64
 
 // FSM Control for Integer Divider
+module fsm64 #(parameter WIDTH=6)
+  (en, state0, done, otfzero, divBusy, start, error, NumIter, clk, reset);
 
-module fsm64 (en, state0, done, divdone, otfzero, divBusy,
-	      start, error, NumIter, clk, reset);
-
-   input logic [5:0]  NumIter;   
-   input logic 	      clk;
-   input logic 	      reset;
-   input logic 	      start;
-   input logic 	      error;   
+   input logic [WIDTH-1:0]  NumIter;   
+   input logic 		    clk;
+   input logic 		    reset;
+   input logic 		    start;
+   input logic 		    error;   
    
-   output logic       done;      
-   output logic       en;
-   output logic       state0;
-   output logic       divdone;
-   output logic       otfzero;
-   output logic       divBusy;   
+   output logic 	    done;      
+   output logic 	    en;
+   output logic 	    state0;
+   output logic 	    otfzero;
+   output logic 	    divBusy;   
    
-   logic 	      LT, EQ;
-   logic 	      Divide0;   
-   logic [5:0] 	      CURRENT_STATE;
-   logic [5:0] 	      NEXT_STATE;   
+   logic 		    LT, EQ;
+   logic [5:0] 		    CURRENT_STATE;
+   logic [5:0] 		    NEXT_STATE;   
    
    parameter [5:0] 
      S0=6'd0, S1=6'd1, S2=6'd2,
@@ -542,12 +532,8 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 	  CURRENT_STATE<=NEXT_STATE;
      end
 
-   // Going to cheat and hard code number of states 
-   // needed into FSM instead of using a counter
-   // FIXME: could counter be better
-
    // Cheated and made 8 - let synthesis do its magic
-   magcompare8 comp1 (LT, EQ, {2'h0, CURRENT_STATE}, {2'h0, NumIter});
+   magcompare8 comp1 (LT, EQ, {2'h0, CURRENT_STATE}, {{8-WIDTH{1'b0}}, NumIter});
 
    always @(CURRENT_STATE or start)
      begin
@@ -560,7 +546,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    divBusy = 1'b0;		    
 		    state0 = 1'b0;
-		    divdone = 1'b0;		    
 		    done = 1'b0;
 		    NEXT_STATE <= S0;
 		 end 
@@ -568,30 +553,21 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		 begin
 		    otfzero = 1'b0;	       		    
 		    en = 1'b1;
-		    divBusy = 1'b1;		    		    
+		    divBusy = 1'b1;		    
 		    state0 = 1'b1;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		    
 		    done = 1'b0;
-		    divdone = 1'b0;		 		 
 		    NEXT_STATE <= S1;
 		 end 
 	    end	    
 	  S1:
 	    begin
-	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       
+	       otfzero = 1'b0;	   
+	       divBusy = 1'b1;
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S2;
 		 end
 	       else
@@ -599,8 +575,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S2;
+		    NEXT_STATE <= S36;
 		 end		    
 	    end // case: S1	  
 	  S2:
@@ -612,10 +587,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S3;
 		 end // if (LT|EQ)
 	       else
@@ -623,8 +594,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S3;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S2
 	  S3:
@@ -636,10 +606,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S4;
 		 end 
 	       else
@@ -647,8 +613,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S4;
+		    NEXT_STATE <= S36;
 		 end		    	       
 	    end // case: S3
 	  S4:
@@ -660,10 +625,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S5;
 		 end 	       	    
 	       else
@@ -671,8 +632,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S5;
+		    NEXT_STATE <= S36;
 		 end		       	       
 	    end // case: S4
 	  S5:
@@ -684,10 +644,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S6;
 		 end // if (LT|EQ)
 	       else
@@ -695,8 +651,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S6;
+		    NEXT_STATE <= S36;
 		 end		    	       	       	       
 	    end // case: S5
 	  S6:
@@ -708,10 +663,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S7;
 		 end // if (LT|EQ)
 	       else
@@ -719,8 +670,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S7;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S6
 	  S7:
@@ -732,10 +682,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S8;
 		 end // if (LT|EQ)
 	       else
@@ -743,8 +689,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S8;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S7
 	  S8:
@@ -756,10 +701,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S9;
 		 end // if (LT|EQ)
 	       else
@@ -767,8 +708,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S9;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S8
 	  S9:
@@ -780,10 +720,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S10;
 		 end // if (LT|EQ)
 	       else
@@ -791,8 +727,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S10;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S9
 	  S10:
@@ -804,10 +739,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S11;
 		 end // if (LT|EQ)
 	       else
@@ -815,8 +746,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S11;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S10
 	  S11:
@@ -828,10 +758,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S12;
 		 end // if (LT|EQ)
 	       else
@@ -839,8 +765,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S12;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S11
 	  S12:
@@ -852,10 +777,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S13;
 		 end // if (LT|EQ)
 	       else
@@ -863,8 +784,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S13;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S12
 	  S13:
@@ -876,10 +796,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S14;
 		 end // if (LT|EQ)
 	       else
@@ -887,23 +803,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S14;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S13
 	  S14:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S15;
 		 end // if (LT|EQ)
 	       else
@@ -911,23 +822,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S15;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S14
 	  S15:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S16;
 		 end // if (LT|EQ)
 	       else
@@ -935,23 +841,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S16;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S15
 	  S16:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S17;
 		 end // if (LT|EQ)
 	       else
@@ -959,23 +860,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S17;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S16
 	  S17:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S18;
 		 end // if (LT|EQ)
 	       else
@@ -983,23 +879,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S18;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S17
 	  S18:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S19;
 		 end // if (LT|EQ)
 	       else
@@ -1007,23 +898,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S19;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S18
 	  S19:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S20;
 		 end // if (LT|EQ)
 	       else
@@ -1031,23 +917,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S20;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S19
 	  S20:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S21;
 		 end // if (LT|EQ)
 	       else
@@ -1055,23 +936,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S21;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S20
 	  S21:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S22;
 		 end // if (LT|EQ)
 	       else
@@ -1079,23 +955,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S22;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S21
 	  S22:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;
 		    NEXT_STATE <= S23;
 		 end // if (LT|EQ)
 	       else
@@ -1103,23 +974,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S23;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S22
 	  S23:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S24;		    
 		 end // if (LT|EQ)
 	       else
@@ -1127,23 +993,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S24;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S23 
 	  S24:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S25;
 		 end // if (LT|EQ)
 	       else
@@ -1151,23 +1012,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S25;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S24
 	  S25:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S26;
 		 end // if (LT|EQ)
 	       else
@@ -1175,23 +1031,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S26;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S25
 	  S26:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S27;
 		 end // if (LT|EQ)
 	       else
@@ -1199,23 +1050,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S27;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S26
 	  S27:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S28;
 		 end // if (LT|EQ)
 	       else
@@ -1223,23 +1069,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S28;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S27
 	  S28:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S29;
 		 end // if (LT|EQ)
 	       else
@@ -1247,23 +1088,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S29;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S28
 	  S29:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S30;
 		 end // if (LT|EQ)
 	       else
@@ -1271,23 +1107,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S30;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S29
 	  S30:
 	    begin
 	       otfzero = 1'b0;
-     	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;	       
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S31;
 		 end // if (LT|EQ)
 	       else
@@ -1295,8 +1126,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S31;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S30
 	  S31:
@@ -1308,10 +1138,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S32;
 		 end // if (LT|EQ)
 	       else
@@ -1319,8 +1145,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S32;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S31  
 	  S32:
@@ -1332,10 +1157,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S33;
 		 end // if (LT|EQ)
 	       else
@@ -1343,8 +1164,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S33;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S32
 	  S33:
@@ -1356,10 +1176,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S34;
 		 end // if (LT|EQ)
 	       else
@@ -1367,23 +1183,18 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S34;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S33
 	  S34:
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
 	       if (LT|EQ)
 		 begin
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S35;
 		 end // if (LT|EQ)
 	       else
@@ -1391,8 +1202,7 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
-		    NEXT_STATE <= S35;
+		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S34  	  
 	  S35:
@@ -1404,10 +1214,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b1;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    if (EQ)
-		      divdone = 1'b1;		    
-		    else
-		      divdone = 1'b0;		 		 
 		    NEXT_STATE <= S36;
 		 end // if (LT|EQ)
 	       else
@@ -1415,7 +1221,6 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 		    en = 1'b0;
 		    state0 = 1'b0;
 		    done = 1'b0;
-		    divdone = 1'b0;
 		    NEXT_STATE <= S36;
 		 end		    	       	       
 	    end // case: S35	  
@@ -1427,12 +1232,10 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 	       done = 1'b1;
 	       if (EQ)
 		 begin
-		    divdone = 1'b1;
 		    en = 1'b1;
 		 end
 	       else
 		 begin
-		    divdone = 1'b0;
 		    en = 1'b0;
 		 end
 	       NEXT_STATE <= S0;
@@ -1440,11 +1243,10 @@ module fsm64 (en, state0, done, divdone, otfzero, divBusy,
 	  default: 
 	    begin
 	       otfzero = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b0;	       
 	       en = 1'b0;
 	       state0 = 1'b0;
 	       done = 1'b0;
-	       divdone = 1'b0;
 	       NEXT_STATE <= S0;
 	    end
 	endcase // case(CURRENT_STATE)	
@@ -1505,166 +1307,39 @@ module magcompare8 (LT, EQ, A, B);
 
 endmodule // magcompare8
 
-module shifter_l64 (Z, A, Shift);
+// RISC-V Exception Logic for Divide by 0 and Overflow (Signed Integer Divide)
+module exception_int #(parameter WIDTH=8) 
+   (Q, rem, op1, S, div0, Max_N, D_NegOne, Qf, remf);
 
-   input logic [63:0]  A;
-   input logic [5:0]   Shift;
+   input logic [WIDTH-1:0] Q;
+   input logic [WIDTH-1:0] rem;
+   input logic [WIDTH-1:0] op1;      
+   input logic 		   S;
+   input logic 		   div0;
+   input logic 		   Max_N;
+   input logic 		   D_NegOne;
    
-   logic [63:0]        stage1;
-   logic [63:0]        stage2;
-   logic [63:0]        stage3;
-   logic [63:0]        stage4;
-   logic [63:0]        stage5;   
-   
-   output logic [63:0] Z;      
-   
-   mux2 #(64) mx01(A,      {A[31:0], 32'h0}, Shift[5], stage1);   
-   mux2 #(64) mx02(stage1, {stage1[47:0], 16'h0}, Shift[4], stage2);
-   mux2 #(64) mx03(stage2, {stage2[55:0], 8'h0}, Shift[3], stage3);
-   mux2 #(64) mx04(stage3, {stage3[59:0], 4'h0}, Shift[2], stage4);
-   mux2 #(64) mx05(stage4, {stage4[61:0], 2'h0}, Shift[1], stage5);
-   mux2 #(64) mx06(stage5, {stage5[62:0], 1'h0}, Shift[0], Z);
+   output logic [WIDTH-1:0] Qf;
+   output logic [WIDTH-1:0] remf;
 
-endmodule // shifter_l64
-
-module shifter_r64 (Z, A, Shift);
-
-   input logic [63:0]  A;
-   input logic [5:0]   Shift;
-   
-   logic [63:0]        stage1;
-   logic [63:0]        stage2;
-   logic [63:0]        stage3;
-   logic [63:0]        stage4;
-   logic [63:0]        stage5;   		  
-   
-   output logic [63:0] Z;
-   
-   mux2 #(64) mx01(A, {32'h0, A[63:32]}, Shift[5], stage1);		  
-   mux2 #(64) mx02(stage1, {16'h0, stage1[63:16]}, Shift[4], stage2);
-   mux2 #(64) mx03(stage2, {8'h0, stage2[63:8]}, Shift[3], stage3);
-   mux2 #(64) mx04(stage3, {4'h0, stage3[63:4]}, Shift[2], stage4);
-   mux2 #(64) mx05(stage4, {2'h0, stage4[63:2]}, Shift[1], stage5);
-   mux2 #(64) mx06(stage5, {1'h0, stage5[63:1]},  Shift[0], Z);
-   
-endmodule // shifter_r64
-
-module shifter_l32 (Z, A, Shift);
-
-   input logic [31:0]  A;
-   input logic [4:0]   Shift;
-   
-   logic [31:0]        stage1;
-   logic [31:0]        stage2;
-   logic [31:0]        stage3;
-   logic [31:0]        stage4;
-   
-   output logic [31:0] Z;      
-
-   mux2 #(32) mx01(A,      {A[15:0], 16'h0},    Shift[4], stage1);
-   mux2 #(32) mx02(stage1, {stage1[23:0], 8'h0}, Shift[3], stage2);
-   mux2 #(32) mx03(stage2, {stage2[27:0], 4'h0},  Shift[2], stage3);
-   mux2 #(32) mx04(stage3, {stage3[29:0], 2'h0},   Shift[1], stage4);
-   mux2 #(32) mx05(stage4, {stage4[30:0], 1'h0},    Shift[0], Z);
-
-endmodule // shifter_l32
-
-module shifter_r32 (Z, A, Shift);
-
-   input logic [31:0]  A;
-   input logic [4:0]   Shift;
-   
-   logic [31:0]        stage1;
-   logic [31:0]        stage2;
-   logic [31:0]        stage3;
-   logic [31:0]        stage4;
-   
-   output logic [31:0] Z;
-   
-   mux2 #(32) mx01(A,      {16'h0, A[31:16]},   Shift[4], stage1);
-   mux2 #(32) mx02(stage1, {8'h0, stage1[31:8]}, Shift[3], stage2);
-   mux2 #(32) mx03(stage2, {4'h0, stage2[31:4]},  Shift[2], stage3);
-   mux2 #(32) mx04(stage3, {2'h0, stage3[31:2]},   Shift[1], stage4);
-   mux2 #(32) mx05(stage4, {1'h0, stage4[31:1]},    Shift[0], Z);
-   
-endmodule // shifter_r32
-
-module shift_right #(parameter WIDTH=8) 
-   (input logic [`XLEN-1:0]         A,
-    input logic [$clog2(`XLEN)-1:0] Shift,
-    output logic [`XLEN-1:0] 	    Z);
-   
-   logic [`XLEN-1:0] 							 stage [$clog2(`XLEN):0];
-   genvar 								 i;
-   
-   assign stage[0] = A;   
-   generate
-      for (i=0;i<$clog2(`XLEN);i=i+1)
-	begin : genbit
-	   mux2 #(`XLEN) mux_inst (stage[i], 
-				   {{(`XLEN/(2**(i+1))){1'b0}}, stage[i][`XLEN-1:`XLEN/(2**(i+1))]}, 
-				   Shift[$clog2(`XLEN)-i-1], 
-				   stage[i+1]);
-	end
-   endgenerate
-   assign Z = stage[$clog2(`XLEN)];   
-
-endmodule // shift_right
-
-module shift_left #(parameter WIDTH=8) 
-   (input logic [`XLEN-1:0]         A,
-    input logic [$clog2(`XLEN)-1:0] Shift,
-    output logic [`XLEN-1:0] 	    Z);
-   
-   logic [`XLEN-1:0] 							stage [$clog2(`XLEN):0];
-   genvar 								i;
-   
-   assign stage[0] = A;   
-   generate
-      for (i=0;i<$clog2(`XLEN);i=i+1)
-	begin : genbit
-	   mux2 #(`XLEN) mux_inst (stage[i], 
-				   {stage[i][`XLEN-1-`XLEN/(2**(i+1)):0], {(`XLEN/(2**(i+1))){1'b0}}}, 
-				   Shift[$clog2(`XLEN)-i-1], 
-				   stage[i+1]);
-	end
-   endgenerate
-   assign Z = stage[$clog2(`XLEN)];   
-
-endmodule // shift_right
-
-module exception_int (Q, rem, op1, S, div0, Max_N, D_NegOne, Qf, remf);
-
-   input logic [63:0] Q;
-   input logic [63:0] rem;
-   input logic [63:0] op1;      
-   input logic 	      S;
-   input logic 	      div0;
-   input logic 	      Max_N;
-   input logic 	      D_NegOne;
-   
-   output logic [63:0] Qf;
-   output logic [63:0] remf;
-
-   // Needs to be optimized
    always_comb
      case ({div0, S, Max_N, D_NegOne})
        4'b0000 : Qf = Q;
        4'b0001 : Qf = Q;
-       4'b0010 : Qf = Q;              
-       4'b0011 : Qf = Q;              
+       4'b0010 : Qf = Q;       
+       4'b0011 : Qf = Q;
        4'b0100 : Qf = Q;
-       4'b0101 : Qf = Q;
+       4'b0101 : Qf = Q;       
        4'b0110 : Qf = Q;       
-       4'b0111 : Qf = {1'b1, 31'h0};
-       4'b1000 : Qf = {64{1'b1}};
-       4'b1001 : Qf = {64{1'b1}};
-       4'b1010 : Qf = {64{1'b1}};
-       4'b1011 : Qf = {64{1'b1}};              
-       4'b1100 : Qf = {64{1'b1}};
-       4'b1101 : Qf = {64{1'b1}};       
-       4'b1110 : Qf = {64{1'b1}};       
-       4'b1111 : Qf = {64{1'b1}};              
+       4'b0111 : Qf = {1'b1, {WIDTH-1{1'h0}}};       
+       4'b1000 : Qf = {WIDTH{1'b1}};
+       4'b1001 : Qf = {WIDTH{1'b1}};
+       4'b1010 : Qf = {WIDTH{1'b1}};
+       4'b1011 : Qf = {WIDTH{1'b1}};       
+       4'b1100 : Qf = {WIDTH{1'b1}};
+       4'b1101 : Qf = {WIDTH{1'b1}};
+       4'b1110 : Qf = {WIDTH{1'b1}};
+       4'b1111 : Qf = {WIDTH{1'b1}};       
        default: Qf = Q;       
      endcase 
 
@@ -1672,18 +1347,18 @@ module exception_int (Q, rem, op1, S, div0, Max_N, D_NegOne, Qf, remf);
      case ({div0, S, Max_N, D_NegOne})
        4'b0000 : remf = rem;
        4'b0001 : remf = rem;
-       4'b0010 : remf = rem;
+       4'b0010 : remf = rem;       
        4'b0011 : remf = rem;
        4'b0100 : remf = rem;
        4'b0101 : remf = rem;
        4'b0110 : remf = rem;
-       4'b0111 : remf = 64'h0;     
+       4'b0111 : remf = {WIDTH{1'h0}};
        4'b1000 : remf = op1;
        4'b1001 : remf = op1;
        4'b1010 : remf = op1;
        4'b1011 : remf = op1;       
        4'b1100 : remf = op1;
-       4'b1101 : remf = op1;
+       4'b1101 : remf = op1;       
        4'b1110 : remf = op1;       
        4'b1111 : remf = op1;              
        default: remf = rem;
@@ -1693,4 +1368,3 @@ endmodule // exception_int
 
 /* verilator lint_on COMBDLY */
 /* verilator lint_on IMPLICIT */
-

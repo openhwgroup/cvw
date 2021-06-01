@@ -15,13 +15,13 @@
 //    normalize Normalization shifter
 //    round     Rounding of result
 //    exception Handles exceptional cases
-//    bypass    Handles bypass of result to Input1M or Input3M input logics
+//    bypass    Handles bypass of result to FInput1M or FInput3M input logics
 //    sign      One bit sign handling block 
 //    special   Catch special cases (input logics = 0  / infinity /  etc.) 
 //
-//   The FMAC computes FmaResultM=Input1M*Input2M+Input3M, rounded with the mode specified by
+//   The FMAC computes FmaResultM=FInput1M*FInput2M+FInput3M, rounded with the mode specified by
 //   RN, RZ, RM, or RP.  The result is optionally bypassed back to
-//   the Input1M or Input3M input logics for use on the next cycle.  In addition,  four signals
+//   the FInput1M or FInput3M input logics for use on the next cycle.  In addition,  four signals
 //   are produced: trap, overflow, underflow, and inexact.  Trap indicates
 //   an infinity, NaN, or denormalized number to be handled in software;
 //   the other three signals are IMMM flags.
@@ -29,7 +29,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 /////////////////////////////////////////////////////////////////////////////
-module fma2(Input1M, Input2M, Input3M, FrmM,
+module fma2(FInput1M, FInput2M, FInput3M, FrmM,
 			FmaResultM, FmaFlagsM, aligncntM, rM, sM,
 			tM,	normcntM, aeM, bsM,killprodM,
 			xzeroM,	yzeroM,zzeroM,xdenormM,ydenormM,
@@ -39,9 +39,9 @@ module fma2(Input1M, Input2M, Input3M, FrmM,
 );
 /////////////////////////////////////////////////////////////////////////////
  
-	input logic 		[63:0]		Input1M;		// input logic 1
-	input logic		[63:0]		Input2M;     // input logic 2 
-	input logic 		[63:0]		Input3M;     // input logic 3
+	input logic 		[63:0]		FInput1M;		// input logic 1
+	input logic		[63:0]		FInput2M;     // input logic 2 
+	input logic 		[63:0]		FInput3M;     // input logic 3
 	input logic 		[2:0]	 	FrmM;          	// Rounding mode
 	input logic 		[12:0]		aligncntM;    	// status flags
 	input logic 		[105:0]		rM; 				// one result of partial product sum
@@ -50,7 +50,7 @@ module fma2(Input1M, Input2M, Input3M, FrmM,
 	input logic 		[8:0]		normcntM; 		// shift count for normalizer
 	input logic 		[12:0]		aeM; 		// multiplier expoent
 	input logic 					bsM;				// sticky bit of addend
-	input logic 					killprodM; 		// Input3M >> product
+	input logic 					killprodM; 		// FInput3M >> product
 	input logic					prodinfM;
 	input logic					xzeroM;
 	input logic					yzeroM;
@@ -69,7 +69,7 @@ module fma2(Input1M, Input2M, Input3M, FrmM,
 	input logic					sumshiftzeroM;
 
 
-	output logic 		[63:0]		FmaResultM;     // output FmaResultM=Input1M*Input2M+Input3M
+	output logic 		[63:0]		FmaResultM;     // output FmaResultM=FInput1M*FInput2M+FInput3M
 	output logic 		[4:0]		FmaFlagsM;    	// status flags
 	
 
@@ -120,18 +120,18 @@ module fma2(Input1M, Input2M, Input3M, FrmM,
 
 	add				add(.*);
 	lza				lza(.*);
-	normalize		normalize(.zexp(Input3M[62:52]),.*); 
-	round			round(.xman(Input1M[51:0]), .yman(Input2M[51:0]),.zman(Input3M[51:0]),.*);
+	normalize		normalize(.zexp(FInput3M[62:52]),.*); 
+	round			round(.xman(FInput1M[51:0]), .yman(FInput2M[51:0]),.zman(FInput3M[51:0]),.*);
 
 // Instantiate exponent datapath
 
-	expgen2			expgen2(.xexp(Input1M[62:52]),.yexp(Input2M[62:52]),.zexp(Input3M[62:52]),.*);
+	expgen2			expgen2(.xexp(FInput1M[62:52]),.yexp(FInput2M[62:52]),.zexp(FInput3M[62:52]),.*);
 
 
 // Instantiate control logic
  
-sign				sign(.xsign(Input1M[63]),.ysign(Input2M[63]),.zsign(Input3M[63]),.*); 
-flag2				flag2(.xsign(Input1M[63]),.ysign(Input2M[63]),.zsign(Input3M[63]),.vbits(v[1:0]),.*); 
+sign				sign(.xsign(FInput1M[63]),.ysign(FInput2M[63]),.zsign(FInput3M[63]),.*); 
+flag2				flag2(.xsign(FInput1M[63]),.ysign(FInput2M[63]),.zsign(FInput3M[63]),.vbits(v[1:0]),.*); 
 
 assign FmaResultM = {wsign,wexp,wman};
 

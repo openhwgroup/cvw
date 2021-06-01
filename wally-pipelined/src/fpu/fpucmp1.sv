@@ -37,7 +37,7 @@
 // It also produces an invalid operation flag, which is one
 // if either of the input operands is a signaling NaN per 754
 
-module fpucmp1 (w, x, ANaN, BNaN, Azero, Bzero, op1, op2, Sel);
+module fpucmp1 (w, x, ANaN, BNaN, Azero, Bzero, op1, op2, Sel);///***fix Sel to match spec
    
    input logic [63:0] op1; 
    input logic [63:0] op2;

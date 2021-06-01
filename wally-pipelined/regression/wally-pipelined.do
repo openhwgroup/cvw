@@ -40,7 +40,7 @@ vsim workopt
 
 view wave
 -- display input and output signals as hexidecimal values
-do ./wave-dos/default-waves.do
+do ./wave-dos/peripheral-waves.do
 
 -- Run the Simulation 
 #run 5000 

@@ -29,6 +29,7 @@
 module testbench();
   parameter DEBUG = 0;
   parameter TESTSPERIPH = 0; // set to 0 for regression
+  parameter TESTSPRIV = 0; // set to 0 for regression
   
   logic        clk;
   logic        reset;
@@ -118,8 +119,13 @@ string tests32f[] = '{
   };
 
   string tests64d[] = '{
-    // "rv64d/I-FADD-D-01", "2000",
-    // "rv64d/I-FCLASS-D-01", "2000",
+    "rv64d/I-FMAX-D-01", "2000",
+    "rv64d/I-FMIN-D-01", "2000",
+    "rv64d/I-FLE-D-01", "2000",
+    "rv64d/I-FLT-D-01", "2000",
+    "rv64d/I-FEQ-D-01", "2000",
+    "rv64d/I-FADD-D-01", "2000",
+    "rv64d/I-FCLASS-D-01", "2000",
     // "rv64d/I-FCVT-D-L-01", "2000",
     // "rv64d/I-FCVT-D-LU-01", "2000",
     // "rv64d/I-FCVT-D-S-01", "2000",
@@ -131,25 +137,20 @@ string tests32f[] = '{
     // "rv64d/I-FCVT-W-D-01", "2000",
     // "rv64d/I-FCVT-WU-D-01", "2000",
     // "rv64d/I-FDIV-D-01", "2000",
-    // "rv64d/I-FEQ-D-01", "2000",
     "rv64d/I-FSD-01", "2000",
     "rv64d/I-FLD-01", "2420",
-    // "rv64d/I-FLE-D-01", "2000",
-    // "rv64d/I-FLT-D-01", "2000",
-    // "rv64d/I-FMADD-D-01", "2000",
-    // "rv64d/I-FMAX-D-01", "2000",
-    // "rv64d/I-FMIN-D-01", "2000",
+    "rv64d/I-FMADD-D-01", "2000",
     // "rv64d/I-FMSUB-D-01", "2000",
     // "rv64d/I-FMUL-D-01", "2000",
     "rv64d/I-FMV-D-X-01", "2000",
-    "rv64d/I-FMV-X-D-01", "2000"
+    "rv64d/I-FMV-X-D-01", "2000",
     // "rv64d/I-FNMADD-D-01", "2000",
     // "rv64d/I-FNMSUB-D-01", "2000",
-    // "rv64d/I-FSGNJ-D-01", "2000",
-    // "rv64d/I-FSGNJN-D-01", "2000",
-    // "rv64d/I-FSGNJX-D-01", "2000",
+    "rv64d/I-FSGNJ-D-01", "2000",
+    "rv64d/I-FSGNJN-D-01", "2000",
+    "rv64d/I-FSGNJX-D-01", "2000",
     // "rv64d/I-FSQRTD-01", "2000",
-    // "rv64d/I-FSUB-D-01", "2000"
+    "rv64d/I-FSUB-D-01", "2000"
   };
 
   string tests64a[] = '{
@@ -165,12 +166,12 @@ string tests32f[] = '{
     "rv64m/I-MULW-01", "3000",
     "rv64m/I-DIV-01", "3000",
     "rv64m/I-DIVU-01", "3000",
-    //"rv64m/I-DIVUW-01", "3000",
-    //"rv64m/I-DIVW-01", "3000",
+    "rv64m/I-DIVUW-01", "3000",
+    "rv64m/I-DIVW-01", "3000",
     "rv64m/I-REM-01", "3000",
-    "rv64m/I-REMU-01", "3000"
-    //"rv64m/I-REMUW-01", "3000",
-    //"rv64m/I-REMW-01", "3000"
+    "rv64m/I-REMU-01", "3000",
+    "rv64m/I-REMUW-01", "3000",
+    "rv64m/I-REMW-01", "3000"
   };
 
   string tests64ic[] = '{
@@ -446,7 +447,7 @@ string tests32f[] = '{
   };
 
   string tests64p[] = '{
-    //"rv64p/WALLY-MSTATUS", "2010",
+    "rv64p/WALLY-MSTATUS", "2000",
     "rv64p/WALLY-MCAUSE", "3000",
     "rv64p/WALLY-SCAUSE", "2000",
     "rv64p/WALLY-MEPC", "5000",
@@ -467,6 +468,7 @@ string tests32f[] = '{
   };
 
   string tests32p[] = '{
+    "rv32p/WALLY-MSTATUS", "2000",
     "rv32p/WALLY-MCAUSE", "3000",
     "rv32p/WALLY-SCAUSE", "2000",
     "rv32p/WALLY-MEPC", "5000",
@@ -518,9 +520,11 @@ string tests32f[] = '{
         tests = testsBP64;
 	// testsbp should not run the other tests. It starts at address 0 rather than
 	// 0x8000_0000, the next if must remain an else if.	
-      end else if (TESTSPERIPH) begin 
+      end else if (TESTSPERIPH)
         tests = tests64periph;
-      end else begin
+      else if (TESTSPRIV)
+        tests = tests64p;
+      else begin
         tests = {tests64p,tests64i,tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
@@ -533,9 +537,11 @@ string tests32f[] = '{
       //tests = {tests64a, tests};
     end else begin // RV32
       // *** add the 32 bit bp tests
-      if (TESTSPERIPH) begin 
+      if (TESTSPERIPH)
         tests = tests32periph;
-      end else begin
+      else if (TESTSPRIV)
+        tests = tests32p;
+      else begin
           tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
