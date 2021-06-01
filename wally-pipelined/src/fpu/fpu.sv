@@ -275,7 +275,14 @@ module fpu (
   fma1 fma1 (.*);
 
   //first and only instance of floating-point divider
-  fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .*);
+  logic fpdivClk;
+  
+  clockgater fpdivclkg(.E(FDivStartE),
+		       .SE(DivBusyM),
+		       .CLK(clk),
+		       .ECLK(fpdivClk));
+  
+  fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk));
 
   //first of two-stage instance of floating-point add/cvt unit
   fpuaddcvt1 fpadd1 (.*);
