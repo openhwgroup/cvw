@@ -87,7 +87,6 @@ module intdiv #(parameter WIDTH=64)
    // is 0 and thus a divide by 0 exception.  This div0
    // exception is given to FSM to tell the operation to 
    // quit gracefully.
-
    lzd_hier #(WIDTH) p1 (.ZP(P), .ZV(V), .B(twoD));
    shift_left #(WIDTH) p2 (twoD, P, op2);
    assign op1 = twoN;   
