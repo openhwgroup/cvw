@@ -8,7 +8,7 @@ MARCH           :=-march=rv64ic
 MABI            :=-mabi=lp64
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -Wl,-Map=$(TARGET).map
 
-CFLAGS =$(MARCH) $(MABI) -Wa,-alhs -Wa,-L -mcmodel=medany  -mstrict-align
+CFLAGS =$(MARCH) $(MABI) -Wa,-alhs -Wa,-L -mcmodel=medany  -mstrict-align -O2
 
 CC=riscv64-unknown-elf-gcc
 DA=riscv64-unknown-elf-objdump -d

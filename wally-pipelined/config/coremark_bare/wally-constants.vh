@@ -2,11 +2,14 @@
 // wally-constants.vh
 //
 // Written: tfleming@hmc.edu 4 March 2021
-// Modified:
+// Modified: Kmacsaigoren@hmc.edu 31 May 2021
+//              Added constants for checking sv mode and changed existing constants to accomodate
+//              both sv48 and sv39
 //
-// Purpose: Specify certain constants defined in the RISC-V 64-bit architecture.
-//          These macros should not be changed, except in the event of an
-//          update to the architecture or particularly special circumstances.
+// Purpose: Specify constants nexessary for different memory virtualization modes.
+//              These are specific to sv49, defined in section 4.5 of the privileged spec.
+//              However, despite different constants for different modes, the hardware helps distinguish between
+//              each mode.
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -25,9 +28,16 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-// Virtual Memory Constants (sv39)
+// Virtual Memory Constants (sv48)
 `define VPN_SEGMENT_BITS 9
-`define VPN_BITS 27
+`define VPN_BITS 36
+`define PPN_HIGH_SEGMENT_BITS 17
 `define PPN_BITS 44
-`define PPN_HIGH_SEGMENT_BITS 26
-`define PA_BITS  56
+`define PA_BITS 56
+`define SVMODE_BITS 4
+// constants to check SATP_MODE against
+// defined in Table 4.3 of the privileged spec
+`define NO_TRANSLATE 0
+`define SV32 1
+`define SV39 8
+`define SV48 9

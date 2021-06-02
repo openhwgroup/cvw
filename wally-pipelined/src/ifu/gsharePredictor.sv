@@ -6,7 +6,7 @@
 // Created: March 16, 2021
 // Modified: 
 //
-// Purpose: Global History Branch predictor with parameterized global history register
+// Purpose: Gshare predictor with parameterized global history register
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-module globalHistoryPredictor
+module gsharePredictor
   #(parameter int k = 10
     )
   (input logic clk,
@@ -109,12 +109,12 @@ module globalHistoryPredictor
   SRAM2P1R1W #(k, 2) PHT(.clk(clk),
 			 .reset(reset),
 			 //.RA1(GHR[k-1:0]),
-			 .RA1(GHRLookup),
+			 .RA1(GHRLookup ^ PCNextF[k:1]),
 			 .RD1(BPPredF),
 			 .REN1(~StallF),
-			 .WA1(PHTUpdateAdr),
+			 .WA1(PHTUpdateAdr ^ PCE[k:1]),
 			 .WD1(UpdateBPPredE),
 			 .WEN1(PHTUpdateEN),
 			 .BitWEN1(2'b11));
 
-endmodule
+endmodule // gsharePredictor

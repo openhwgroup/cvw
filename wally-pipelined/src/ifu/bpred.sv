@@ -30,7 +30,8 @@
 
 module bpred 
   (input logic clk, reset,
-   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		    StallF, StallD, StallE, StallM, StallW, 
+   input logic 		    FlushF, FlushD, FlushE, FlushM, FlushW,
    // Fetch stage
    // the prediction
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
@@ -88,25 +89,29 @@ module bpred
       globalHistoryPredictor DirPredictor(.clk(clk),
 					  .reset(reset),
 					  .*, // Stalls and flushes
-					  .LookUpPC(PCNextF),
-					  .Prediction(BPPredF),
+					  .PCNextF(PCNextF),
+					  .BPPredF(BPPredF),
 					  // update
-					  .UpdatePC(PCE),
-					  .UpdateEN(InstrClassE[0] & ~StallE),
+					  .InstrClassE(InstrClassE),
+					  .BPInstrClassE(BPInstrClassE),
+					  .BPPredDirWrongE(BPPredDirWrongE),
+					  .PCE(PCE),
 					  .PCSrcE(PCSrcE),
-					  .UpdatePrediction(UpdateBPPredE));
+					  .UpdateBPPredE(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
 
       gsharePredictor DirPredictor(.clk(clk),
-				   .reset(reset),
-				   .*, // Stalls and flushes
-				   .LookUpPC(PCNextF),
-				   .Prediction(BPPredF),
-				   // update
-				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0] & ~StallE),
-				   .PCSrcE(PCSrcE),
-				   .UpdatePrediction(UpdateBPPredE));
+					  .reset(reset),
+					  .*, // Stalls and flushes
+					  .PCNextF(PCNextF),
+					  .BPPredF(BPPredF),
+					  // update
+					  .InstrClassE(InstrClassE),
+					  .BPInstrClassE(BPInstrClassE),
+					  .BPPredDirWrongE(BPPredDirWrongE),
+					  .PCE(PCE),
+					  .PCSrcE(PCSrcE),
+					  .UpdateBPPredE(UpdateBPPredE));
     end 
     else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
@@ -190,14 +195,14 @@ module bpred
   flopenrc #(2) BPPredRegD(.clk(clk),
 			   .reset(reset),
 			   .en(~StallD),
-			   .clear(FlushD),
+			   .clear(1'b0),
 			   .d(BPPredF),
 			   .q(BPPredD));
 
   flopenrc #(2) BPPredRegE(.clk(clk),
 			   .reset(reset),
 			   .en(~StallE),
-			   .clear(FlushE),
+			   .clear(1'b0),
 			   .d(BPPredD),
 			   .q(BPPredE));
 
