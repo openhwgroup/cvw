@@ -237,7 +237,7 @@ module fpu (
    logic fpdivClk;
    
    clockgater fpdivclkg(.E(FDivStartE),
-			.SE(DivBusyM),
+			.SE(1'b0),
 			.CLK(clk),
 			.ECLK(fpdivClk));
    
