@@ -77,31 +77,13 @@ module csr #(parameter
   logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
 
-  logic MStageFailed;
-  logic [`XLEN-1:0] ProposedEPCM, UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
+  logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
   logic [11:0] CSRAdrM;
   logic [11:0] SIP_REGW, SIE_REGW;
   //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRNAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;
-
-  assign MStageFailed = BreakpointFaultM || EcallFaultM || InstrMisalignedFaultM || InstrAccessFaultM || IllegalInstrFaultM || LoadMisalignedFaultM || StoreMisalignedFaultM || LoadAccessFaultM || StoreAccessFaultM;
-  always_comb begin
-    if (MStageFailed)
-      casez({InstrD==NOP,InstrE==NOP,InstrM==NOP})
-        3'b??0: ProposedEPCM = PCM;
-        3'b?01: ProposedEPCM = PCE;
-        3'b011: ProposedEPCM = PCD;
-        3'b111: ProposedEPCM = PCF;
-      endcase
-    else
-      casez({InstrD==NOP,InstrE==NOP})
-        2'b?0: ProposedEPCM = PCE;
-        2'b01: ProposedEPCM = PCD;
-        2'b11: ProposedEPCM = PCF;
-      endcase
-  end
   
   generate
     if (`ZCSR_SUPPORTED) begin
@@ -123,7 +105,7 @@ module csr #(parameter
 
       // write CSRs
       assign CSRAdrM = InstrM[31:20];
-      assign UnalignedNextEPCM = TrapM ? ProposedEPCM : CSRWriteValM;
+      assign UnalignedNextEPCM = TrapM ? PCM : CSRWriteValM;
       assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
       assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
       assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;

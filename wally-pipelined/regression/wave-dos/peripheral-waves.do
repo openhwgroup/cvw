@@ -24,10 +24,12 @@ add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/dut/hart/ifu/InstrD
+add wave -hex /testbench/dut/hart/ieu/c/InstrValidD
 add wave /testbench/InstrDName
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/dut/hart/ifu/InstrE
+add wave -hex /testbench/dut/hart/ieu/c/InstrValidE
 add wave /testbench/InstrEName
 add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
 add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
@@ -36,6 +38,7 @@ add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
+add wave -hex /testbench/dut/hart/ieu/c/InstrValidM
 add wave /testbench/InstrMName
 add wave /testbench/dut/uncore/dtim/memwrite
 add wave -hex /testbench/dut/uncore/HADDR
@@ -43,12 +46,12 @@ add wave -hex /testbench/dut/uncore/HWDATA
 add wave -divider
 add wave -hex /testbench/PCW
 add wave -hex /testbench/InstrW
+add wave -hex /testbench/dut/hart/ieu/c/InstrValidW
 add wave /testbench/InstrWName
 add wave /testbench/dut/hart/ieu/dp/RegWriteW
 add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
-add wave -hex /testbench/dut/hart/priv/csr/ProposedEPCM
 add wave -hex /testbench/dut/hart/priv/csr/TrapM
 add wave -hex /testbench/dut/hart/priv/csr/UnalignedNextEPCM
 add wave -hex /testbench/dut/hart/priv/csr/genblk1/csrm/WriteMEPCM

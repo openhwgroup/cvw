@@ -48,6 +48,7 @@ module dmem (
   input  logic [`XLEN-1:0] ReadDataW,
   output logic             SquashSCW,
   // faults
+  input  logic             NonBusTrapM,
   input  logic             DataAccessFaultM,
   output logic             DTLBLoadPageFaultM, DTLBStorePageFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
@@ -95,8 +96,11 @@ module dmem (
 
   // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
-  assign MemReadM = MemRWM[1] & ~DataMisalignedM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWM[0] & ~DataMisalignedM && ~SquashSCM & CurrState != STATE_STALLED;
+  // Changed DataMisalignedM to a larger combination of trap sources
+  // NonBusTrapM is anything that the bus doesn't contribute to producing 
+  // By contrast, using TrapM results in circular logic errors
+  assign MemReadM = MemRWM[1] & ~NonBusTrapM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWM[0] & ~NonBusTrapM && ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
   assign MemAccessM = |MemRWM;
 

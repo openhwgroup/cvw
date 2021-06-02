@@ -56,10 +56,10 @@ module ieu (
   input logic             FWriteIntW,
   input logic [`XLEN-1:0] FPUResultW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  output logic 		   InstrValidW,
+  output logic 		   InstrValidM, InstrValidW,
   // hazards
-  input logic 		   StallE, StallM, StallW,
-  input logic 		   FlushE, FlushM, FlushW,
+  input logic 		   StallD, StallE, StallM, StallW,
+  input logic 		   FlushD, FlushE, FlushM, FlushW,
   output logic 		   FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD,
   output logic 		   PCSrcE,
   input logic 		   DivDoneE,

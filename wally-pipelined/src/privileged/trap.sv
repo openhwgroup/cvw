@@ -41,7 +41,8 @@ module trap (
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
   input  logic [31:0]      InstrM,
   input  logic             StallW,
-  output logic             TrapM, MTrapM, STrapM, UTrapM, RetM,
+  input  logic             InstrValidM,
+  output logic             NonBusTrapM, TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic             InterruptM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
@@ -51,18 +52,23 @@ module trap (
   logic [11:0] MIntGlobalEnM, SIntGlobalEnM, PendingIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
+  logic BusTrapM;
 
   // Determine pending enabled interrupts
   assign MIntGlobalEnM = {12{(PrivilegeModeW != `M_MODE) || STATUS_MIE}}; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
   assign PendingIntsM = (MIP_REGW & MIE_REGW) & ((MIntGlobalEnM & 12'h888) | (SIntGlobalEnM & 12'h222));
-  assign InterruptM = |PendingIntsM; // interrupt if any sources are pending
+  assign InterruptM = (|PendingIntsM) && InstrValidM; // interrupt if any sources are pending // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
  
   // Trigger Traps and RET
-  assign TrapM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
-                      BreakpointFaultM | LoadMisalignedFaultM | StoreMisalignedFaultM |
-                      LoadAccessFaultM | StoreAccessFaultM | EcallFaultM | InstrPageFaultM |
-                      LoadPageFaultM | StorePageFaultM | InterruptM;
+  //   Created groups of trap signals so that bus could take in all traps it doesn't already produce (i.e. using just TrapM to squash access created circular paths)
+  assign BusTrapM = LoadAccessFaultM | StoreAccessFaultM;
+  assign NonBusTrapM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
+                       LoadMisalignedFaultM | StoreMisalignedFaultM |
+                       InstrPageFaultM | LoadPageFaultM | StorePageFaultM |
+                       BreakpointFaultM | EcallFaultM |
+                       InterruptM;
+  assign TrapM = BusTrapM | NonBusTrapM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
   assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
