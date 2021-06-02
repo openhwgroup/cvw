@@ -58,7 +58,7 @@ module wallypipelinedhart (
    //  logic [1:0]  ForwardAE, ForwardBE;
   logic        StallF, StallD, StallE, StallM, StallW;
   logic        FlushF, FlushD, FlushE, FlushM, FlushW;
-  logic        RetM, TrapM;
+  logic        RetM, TrapM, NonBusTrapM;
 
   // new signals that must connect through DP
   logic        MulDivE, W64E;
@@ -74,7 +74,7 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
   logic [1:0] MemRWM;
-  logic InstrValidW;
+  logic InstrValidM, InstrValidW;
   logic InstrMisalignedFaultM;
   logic DataMisalignedM;
   logic IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;

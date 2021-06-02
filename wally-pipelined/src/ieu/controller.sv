@@ -29,6 +29,7 @@
 module controller(
   input  logic		 clk, reset,
   // Decode stage control signals
+  input  logic       StallD, FlushD,
   input  logic [31:0] InstrD,
   output logic [2:0] ImmSrcD,
   input  logic       IllegalIEUInstrFaultD, 
@@ -51,7 +52,8 @@ module controller(
   output logic       CSRReadM, CSRWriteM, PrivilegedM, 
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
-  output logic       RegWriteM,     // for Hazard Unit	
+  output logic       RegWriteM,     // for Hazard Unit
+  output logic       InstrValidM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
@@ -82,7 +84,7 @@ module controller(
   logic       CSRReadD;
   logic [1:0] AtomicD, AtomicE;
   logic       CSRWriteD, CSRWriteE;
-  logic       InstrValidE, InstrValidM;
+  logic       InstrValidD, InstrValidE;
   logic       PrivilegedD, PrivilegedE;
   logic [`CTRLW-1:0] ControlsD;
   logic        aluc3D;
@@ -176,9 +178,12 @@ module controller(
       default:              ALUControlD = {W64D, aluc3D, Funct3D}; // R-type instructions
     endcase
   
+  // Decocde stage pipeline control register
+  flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
+
   // Execute stage pipeline control register and logic
   flopenrc #(27) controlregE(clk, reset, FlushE, ~StallE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, AtomicD, 1'b1},
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, TargetSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, AtomicD, InstrValidD},
                            {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, TargetSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, AtomicE, InstrValidE});
 
   // Branch Logic
