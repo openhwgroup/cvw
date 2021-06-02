@@ -47,13 +47,13 @@ module muldiv (
 	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
-	 //logic [`XLEN-1:0] Q, R;	 
 	 logic [`XLEN*2-1:0] ProdE; 
 
 	 logic 		     enable_q;	 
 	 logic [2:0] 	     Funct3E_Q;
 	 logic 		     div0error;
 	 logic [`XLEN-1:0]   N, D;
+	 logic [`XLEN-1:0]   Num0, Den0;	 
 
 	 logic 		     gclk;
 	 logic 		     DivStartE;
@@ -70,15 +70,25 @@ module muldiv (
 	 end
 	 assign gclk = enable_q & clk;
 
+	 // Handle sign extension for W-type instructions
+	 if (`XLEN == 64) begin // RV64 has W-type instructions
+            assign Num0 = W64E ? {{32{SrcAE[31]&signedDivide}}, SrcAE[31:0]} : SrcAE;
+            assign Den0 = W64E ? {{32{SrcBE[31]&signedDivide}}, SrcBE[31:0]} : SrcBE;
+	 end else begin // RV32 has no W-type instructions
+            assign Num0 = SrcAE;
+            assign Den0 = SrcBE;	    
+	 end	    
+
 	 // capture the Numerator/Denominator	 
-	 flopenrc #(`XLEN) reg_num (.d(SrcAE), .q(N),
+	 flopenrc #(`XLEN) reg_num (.d(Num0), .q(N),
 				    .en(startDivideE), .clear(DivDoneE),
 				    .reset(reset),  .clk(~gclk));
-	 flopenrc #(`XLEN) reg_den (.d(SrcBE), .q(D),
+	 flopenrc #(`XLEN) reg_den (.d(Den0), .q(D),
 				    .en(startDivideE), .clear(DivDoneE),
-				    .reset(reset),  .clk(~gclk));	 
+				    .reset(reset),  .clk(~gclk));
+	 
 	 assign signedDivide = (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
-	 div div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
+	 intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
@@ -93,7 +103,6 @@ module muldiv (
 	 
 	 // Select result
 	 always_comb
-	   //           case (DivDoneE ? Funct3E_Q : Funct3E)
            case (Funct3E)	   
              3'b000: PrelimResultE = ProdE[`XLEN-1:0];
              3'b001: PrelimResultE = ProdE[`XLEN*2-1:`XLEN];

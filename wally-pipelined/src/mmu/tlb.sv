@@ -2,7 +2,9 @@
 // tlb.sv
 //
 // Written: jtorrey@hmc.edu 16 February 2021
-// Modified:
+// Modified: kmacsaigoren@hmc.edu 1 June 2021
+//            Implemented SV48 on top of SV39. This included adding the SvMode signal,
+//            and using it to decide the translate signal and get the virtual page number
 //
 // Purpose: Translation lookaside buffer
 //          Cache of virtural-to-physical address translations
@@ -25,7 +27,7 @@
 ///////////////////////////////////////////
 
 /**
- * sv32 specs
+ * SV32 specs
  * ----------
  * Virtual address [31:0] (32 bits)
  *    [________________________________]
@@ -85,14 +87,11 @@ module tlb #(parameter ENTRY_BITS = 3,
   output             TLBPageFault
 );
 
-  logic SvMode;
   logic Translate;
   logic TLBAccess, ReadAccess, WriteAccess;
 
-  // *** If we want to support multiple virtual memory modes (ie sv39 AND sv48),
-  // we could have some muxes that control which parameters are current.
-  // Although then some of the signals are not big enough. But that's a problem
-  // for much later.
+  // Store current virtual memory mode (SV32, SV39, SV48, ect...)
+  logic [`SVMODE_BITS-1:0] SvMode;
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
@@ -116,17 +115,24 @@ module tlb #(parameter ENTRY_BITS = 3,
   // Whether the virtual address has a match in the CAM
   logic                  CAMHit;
 
-  // Grab the sv bit from SATP
+  // Grab the sv mode from SATP
+  assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+
+  // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
+  // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,
+  // is shorter, the extra bits are used as padded zeros on the left of the full value.
   generate
     if (`XLEN == 32) begin
-      assign SvMode = SATP_REGW[31];  // *** change to an enum somehow?
+      assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
     end else begin
-      assign SvMode = SATP_REGW[63]; // currently just a boolean whether translation enabled
+      assign VirtualPageNumber = (SvMode == `SV48) ?
+                                 VirtualAddress[`VPN_BITS+11:12] :
+                                 {{`VPN_SEGMENT_BITS{1'b0}}, VirtualAddress[3*`VPN_SEGMENT_BITS+11:12]};
     end
   endgenerate
 
   // Whether translation should occur
-  assign Translate = SvMode & (PrivilegeModeW != `M_MODE);
+  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE);
 
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches
@@ -134,7 +140,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign WriteAccess = TLBAccessType[0];
   assign TLBAccess = ReadAccess || WriteAccess;
 
-  assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
+  
   assign PageOffset        = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
@@ -188,9 +194,10 @@ module tlb #(parameter ENTRY_BITS = 3,
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
   page_number_mixer #(`PPN_BITS, `PPN_HIGH_SEGMENT_BITS)
-    physical_mixer(PhysicalPageNumber,
+    physical_mixer(PhysicalPageNumber, 
       {{EXTRA_PHYSICAL_BITS{1'b0}}, VirtualPageNumber},
       HitPageType,
+      SvMode,
       PhysicalPageNumberMixed);
 
   // Provide physical address only on TLBHits to cause catastrophic errors if

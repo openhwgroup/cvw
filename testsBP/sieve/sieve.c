@@ -66,21 +66,21 @@ int main () {
     
   ans = sieve ();
   //gettimeofday(&after , NULL);
-  if (ans != 1899)
-    printf ("Sieve result wrong, ans = %d, expected 1899", ans);
+  /* /\* /\\* if (ans != 1899) *\\/ *\/ */
+  /* /\* /\\*   printf ("Sieve result wrong, ans = %d, expected 1899", ans); *\\/ *\/ */
 
-  //printf("Total time elapsed : %.0lf us\n" , time_diff(before , after) );
+  /* /\* //printf("Total time elapsed : %.0lf us\n" , time_diff(before , after) ); *\/ */
 
 
-  printf("Round 2\n");
-  //gettimeofday(&before , NULL);
+  /* /\* printf("Round 2\n"); *\/ */
+  /* //gettimeofday(&before , NULL); */
     
-  ans = sieve ();
-  //gettimeofday(&after , NULL);
-  if (ans != 1899)
-    printf ("Sieve result wrong, ans = %d, expected 1899", ans);
+  /* ans = sieve (); */
+  /* //gettimeofday(&after , NULL); */
+  /* if (ans != 1899) */
+  /*   printf ("Sieve result wrong, ans = %d, expected 1899", ans); */
 
-  //printf("Total time elapsed : %.0lf us\n" , time_diff(before , after) ); 
+  /* //printf("Total time elapsed : %.0lf us\n" , time_diff(before , after) );  */
   
   return 0;
 
