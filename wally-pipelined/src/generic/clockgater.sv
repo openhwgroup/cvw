@@ -38,8 +38,10 @@ module clockgater
   logic 	enable_q;
   
 
-  always @(~CLK) begin
-    enable_q <= E | SE;
+  always_latch begin
+    if(~CLK) begin
+      enable_q <= E | SE;
+    end
   end
   assign ECLK = enable_q & CLK;
 
