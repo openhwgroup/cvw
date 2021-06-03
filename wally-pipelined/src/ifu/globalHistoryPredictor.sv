@@ -53,6 +53,8 @@ module globalHistoryPredictor
   logic 		   BPClassWrongNonCFI;
   logic 		   BPClassWrongCFI;
   logic 		   BPClassRightNonCFI;
+  logic 		   BPClassRightBPWrong;
+  logic 		   BPClassRightBPRight;
 
   logic [6:0] 		   GHRMuxSel;
   logic 		   GHRUpdateEN;
