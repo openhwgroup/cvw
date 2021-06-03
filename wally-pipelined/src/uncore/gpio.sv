@@ -165,6 +165,6 @@ module gpio (
   assign GPIOPinsOut = output_val;
   assign GPIOPinsEn = output_en;
 
-  assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ip),(high_ip & high_ie),(low_ip & low_ie)};
+  assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ie),(high_ip & high_ie),(low_ip & low_ie)};
 endmodule
 
