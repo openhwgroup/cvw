@@ -1,103 +1,141 @@
- ////////////////////////////////////////////////////////////////////////////////
-// Block Name:	fmac.v
-// Author:		David Harris
-// Date:		11/2/1995
-//
-// Block Description:
-//   This is the top level block of a floating-point  multiply/accumulate
-//   unit(FMAC).   It instantiates the following sub-blocks:
-//
-//    array     Booth encoding, partial product generation, product summation
-//    expgen    Exponent summation, compare, and adjust
-//    align     Alignment shifter
-//    add       Carry-save adder for accumulate, carry propagate adder
-//    lza       Leading zero anticipator to control normalization shifter
-//    normalize Normalization shifter
-//    round     Rounding of result
-//    exception Handles exceptional cases
-//    bypass    Handles bypass of result to FInput1E or FInput3E inputs
-//    sign      One bit sign handling block 
-//    special   Catch special cases (inputs = 0  / infinity /  etc.) 
-//
-//   The FMAC computes FmaResultM=FInput1E*FInput2E+FInput3E, rounded with the mode specified by
-//   RN, RZ, RM, or RP.  The result is optionally bypassed back to
-//   the FInput1E or FInput3E inputs for use on the next cycle.  In addition,  four signals
-//   are produced: trap, overflow, underflow, and inexact.  Trap indicates
-//   an infinity, NaN, or denormalized number to be handled in software;
-//   the other three signals are IEEE flags.
-//
-/////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////////////
-module fma1(FInput1E, FInput2E, FInput3E, FrmE,  
-			rE, sE, tE, bsE, killprodE, sumshiftE, sumshiftzeroE,  aligncntE, aeE
-			, xzeroE, yzeroE, zzeroE, xnanE,ynanE, znanE, xdenormE, ydenormE, zdenormE,
-			xinfE, yinfE, zinfE, nanE, prodinfE);
-/////////////////////////////////////////////////////////////////////////////
+module fma1(
  
-	input logic 		[63:0]		FInput1E;		// input 1
-	input logic		[63:0]		FInput2E;     // input 2 
-	input logic 		[63:0]		FInput3E;     // input 3
-	input logic 		[2:0]	 	FrmE;          	// Rounding mode
-	output logic 		[12:0]		aligncntE;    	// status flags
-	output logic 		[105:0]		rE; 				// one result of partial product sum
-	output logic 		[105:0]		sE; 				// other result of partial products
-	output logic 		[163:0]		tE;				// output logic of alignment shifter	
-	output logic 		[12:0]		aeE; 		// multiplier expoent
-	output logic 					bsE;				// sticky bit of addend
-	output logic 					killprodE; 		// FInput3E >> product
-	output logic					xzeroE;
-	output logic					yzeroE;
-	output logic					zzeroE;
-	output logic					xdenormE;
-	output logic					ydenormE;
-	output logic					zdenormE;
-	output logic					xinfE;
-	output logic					yinfE;
-	output logic					zinfE;
-	output logic					xnanE;
-	output logic					ynanE;
-	output logic					znanE;
-	output logic					nanE;
-	output logic					prodinfE;
-	output logic			[8:0]		sumshiftE;
-	output logic					sumshiftzeroE;
+	input logic 	[63:0]		FInput1E,
+	input logic		[63:0]		FInput2E,
+	input logic 	[63:0]		FInput3E,
+	input logic 	[3:0]		FOpCtrlE,
+	output logic 	[105:0]		ProdManE,
+	output logic 	[161:0]		AlignedAddendE,	
+	output logic 	[12:0]		ProdExpE,
+	output logic 				AddendStickyE,
+	output logic 				KillProdE,
+	output logic				XZeroE, YZeroE, ZZeroE,
+	output logic				XInfE, YInfE, ZInfE,
+	output logic				XNaNE, YNaNE, ZNaNE);
 
-// Internal nodes
- 
-//	output logic 		[12:0]		aligncntE; 		// shift count for alignment
+	logic [51:0] 	XMan,YMan,ZMan;
+	logic [10:0] 	XExp,YExp,ZExp;
+	logic 		 	XSgn,YSgn,ZSgn;
+	logic [12:0]	AlignCnt;
+	logic [211:0] 	Shift;
+	logic			XDenormE, YDenormE, ZDenormE;
+	logic [63:0]	FInput3E2;
 
+	// Set addend to zero if FMUL instruction
+  	assign FInput3E2 = FOpCtrlE[2] ? 64'b0 : FInput3E;
 
-	logic 					prodof; 		// FInput1E*FInput2E out of range
+	// split inputs into the sign bit, mantissa, and exponent for readability
+	assign XSgn = FInput1E[63];
+	assign YSgn = FInput2E[63];
+	assign ZSgn = FInput3E2[63];
 
+	assign XExp = FInput1E[62:52];
+	assign YExp = FInput2E[62:52];
+	assign ZExp = FInput3E2[62:52];
 
-
-
+	assign XMan = FInput1E[51:0];
+	assign YMan = FInput2E[51:0];
+	assign ZMan = FInput3E2[51:0];
 
 
 
+	// determine if an input is a special value
+	assign XNaNE = &FInput1E[62:52] && |FInput1E[51:0]; 
+	assign YNaNE = &FInput2E[62:52] && |FInput2E[51:0]; 
+	assign ZNaNE = &FInput3E2[62:52] && |FInput3E2[51:0];
+
+	assign XDenormE = ~(|FInput1E[62:52]) && |FInput1E[51:0]; 
+	assign YDenormE = ~(|FInput2E[62:52]) && |FInput2E[51:0]; 
+	assign ZDenormE = ~(|FInput3E2[62:52]) && |FInput3E2[51:0];
+
+	assign XInfE = &FInput1E[62:52] && ~(|FInput1E[51:0]); 
+	assign YInfE = &FInput2E[62:52] && ~(|FInput2E[51:0]); 
+	assign ZInfE = &FInput3E2[62:52] && ~(|FInput3E2[51:0]);
+
+	assign XZeroE = ~(|FInput1E[62:0]);
+	assign YZeroE = ~(|FInput2E[62:0]);
+	assign ZZeroE = ~(|FInput3E2[62:0]);
 
 
 
 
+	// Calculate the product's exponent
+	//		- When multipliying two fp numbers, add the exponents
+	// 		- Subtract 3ff to remove one of the biases (XExp + YExp has two biases, one from each exponent)
+	//		- Denormal numbers have an an exponent value of 1, however they are 
+	//		  represented with an exponent of 0. add one if there is a denormal number
+	assign ProdExpE = (XZeroE|YZeroE) ? 13'b0 : 
+				 {2'b0, XExp} + {2'b0, YExp} - 13'h3ff + {12'b0, XDenormE} + {12'b0, YDenormE};
+
+	// Calculate the product's mantissa
+	//		- Add the assumed one. If the number is denormalized or zero, it does not have an assumed one.
+	assign ProdManE = {53'b0,~(XDenormE|XZeroE),XMan}  *  {53'b0,~(YDenormE|YZeroE),YMan};
 
 
-//   Instantiate fraction datapath
-
-	multiply		multiply(.xman(FInput1E[51:0]), .yman(FInput2E[51:0]), .*);
-	align			align(.zman(FInput3E[51:0]),.*);
-
-// Instantiate exponent datapath
-
-	expgen1			expgen1(.xexp(FInput1E[62:52]),.yexp(FInput2E[62:52]),.zexp(FInput3E[62:52]),.*);
-// Instantiate special case detection across datapath & exponent path 
-
-	special			special(.*);
 
 
-// Instantiate control output logic
- 
-flag1				flag1(.*); 
+	// determine the shift count for alignment
+	//		- negitive means Z is larger, so shift Z left
+	//		- positive means the product is larger, so shift Z right
+	//		- Denormal numbers have an an exponent value of 1, however they are 
+	//		  represented with an exponent of 0. add one to the exponent if it is a denormal number
+	assign AlignCnt = ProdExpE - {2'b0, ZExp} - {12'b0, ZDenormE};
+
+	// Alignment shifter
+
+	// Defualt Addition without shifting
+	// 			| 	55'b0	 |	106'b(product)	| 2'b0 |
+	//						 |1'b0| addnend |
+
+	// the 1'b0 before the added is because the product's mantissa has two bits before the decimal point (xx.xxxxxxxxxx...)
+	
+	always_comb 
+		begin
+			
+		// Set default values
+		AddendStickyE = 0;
+		KillProdE = 0;
+		
+		// If the product is too small to effect the sum, kill the product
+
+		// 			| 	55'b0	 |	106'b(product)	| 2'b0 |
+		//	| addnend |
+		if ($signed(AlignCnt) <= $signed(-13'd56)) begin
+			KillProdE = 1;
+			AlignedAddendE = {107'b0, ~(ZZeroE|ZDenormE),ZMan,2'b0};
+			AddendStickyE = ~(XZeroE|YZeroE);
+
+		// If the Addend is shifted left (negitive AlignCnt)
+
+		// 			| 	55'b0	 |	106'b(product)	| 2'b0 |
+		//					| addnend |
+		end else if($signed(AlignCnt) <= $signed(13'd0))  begin
+			Shift = {55'b0, ~(ZZeroE|ZDenormE),ZMan, 104'b0} << -AlignCnt;
+			AlignedAddendE = Shift[211:50];
+			AddendStickyE = |(Shift[49:0]);
+
+		// If the Addend is shifted right (positive AlignCnt)
+
+		// 			| 	55'b0	 |	106'b(product)	| 2'b0 |
+		//									| addnend |
+		end else if ($signed(AlignCnt)<=$signed(13'd105))  begin
+			Shift = {55'b0, ~(ZZeroE|ZDenormE),ZMan, 104'b0} >> AlignCnt;
+			AlignedAddendE = Shift[211:50];
+			AddendStickyE = |(Shift[49:0]);
+
+		// If the addend is too small to effect the addition		
+		//		- The addend has to shift two past the end of the addend to be considered too small
+		//		- The 2 extra bits are needed for rounding
+
+		// 			| 	55'b0	 |	106'b(product)	| 2'b0 |
+		//														| addnend |
+		end else begin
+			AlignedAddendE = 162'b0;
+			AddendStickyE = ~ZZeroE;
+
+
+		end 
+	end
 
 endmodule
 
