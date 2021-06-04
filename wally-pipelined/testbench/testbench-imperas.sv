@@ -122,6 +122,9 @@ string tests32f[] = '{
   };
 
   string tests64d[] = '{
+    "rv64d/I-FNMADD-D-01", "2000",
+    "rv64d/I-FNMSUB-D-01", "2000",
+    "rv64d/I-FMSUB-D-01", "2000",
     "rv64d/I-FMAX-D-01", "2000",
     "rv64d/I-FMIN-D-01", "2000",
     "rv64d/I-FLE-D-01", "2000",
@@ -143,12 +146,9 @@ string tests32f[] = '{
     "rv64d/I-FSD-01", "2000",
     "rv64d/I-FLD-01", "2420",
     "rv64d/I-FMADD-D-01", "2000",
-    // "rv64d/I-FMSUB-D-01", "2000",
-    // "rv64d/I-FMUL-D-01", "2000",
-    "rv64d/I-FMV-D-X-01", "2000",
-    "rv64d/I-FMV-X-D-01", "2000",
-    // "rv64d/I-FNMADD-D-01", "2000",
-    // "rv64d/I-FNMSUB-D-01", "2000",
+    "rv64d/I-FMUL-D-01", "2000",
+    // "rv64d/I-FMV-D-X-01", "2000",
+    // "rv64d/I-FMV-X-D-01", "2000",
     "rv64d/I-FSGNJ-D-01", "2000",
     "rv64d/I-FSGNJN-D-01", "2000",
     "rv64d/I-FSGNJX-D-01", "2000",
