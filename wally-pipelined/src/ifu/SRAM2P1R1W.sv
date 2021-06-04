@@ -14,7 +14,7 @@
 // in modelsim's do file.
 // mem load -infile <relative path to the text file > -format <bin|hex> <hierarchy to the memory.>
 // example
-// mem laod -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
+// mem load -infile twoBitPredictor.txt -format bin testbench/dut/hart/ifu/bpred/DirPredictor/memory/memory
 //
 // A component of the Wally configurable RISC-V project.
 // 

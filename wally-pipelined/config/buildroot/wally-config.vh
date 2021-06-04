@@ -67,7 +67,7 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIMBASE   32'h00000000 //only needs to go from 0x1000 to 0x2FFF, extending to a power of 2
+`define BOOTTIMBASE   32'h00000000 //only needs to go from 0x1000 to 0x2FFF, extending to a power of 2  // ***dh 3 June 2021 change this to ensure segfault on null pointer access.
 `define BOOTTIMRANGE  32'h00003FFF
 `define CLINTBASE     32'h02000000
 `define CLINTRANGE    32'h0000FFFF
