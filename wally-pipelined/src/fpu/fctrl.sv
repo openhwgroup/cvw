@@ -168,8 +168,8 @@ module fctrl (
       //fma/mult	
       //  fmadd  = ?000
       //  fmsub  = ?001
-      //  fnmadd = ?010
-      //  fnmsub = ?011
+      //  fnmsub = ?010	-(a*b)+c
+      //  fnmadd = ?011 -(a*b)-c
       //  fmul   = ?100
       //		  {?, is mul, is negitive, is sub}
       3'b010 : begin FOpCtrlD = {1'b0, OpD[4:2]}; FInput2UsedD = 1'b1; FInput3UsedD = ~OpD[4]; end
