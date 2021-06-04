@@ -30,23 +30,6 @@
 
 `include "wally-config.vh"
 
-/*
-// Virtual Memory Constants (sv48)
-`define VPN_SEGMENT_BITS_RV64 9
-`define VPN_BITS_RV64 36
-`define PPN_HIGH_SEGMENT_BITS_RV64 17
-`define PPN_BITS_RV64 44
-`define PA_BITS_RV64 56
-`define SVMODE_BITS_RV64 4
-// Virtual Memory Constants (sv32)
-`define VPN_SEGMENT_BITS_RV32 10
-`define VPN_BITS_RV32 20
-`define PPN_HIGH_SEGMENT_BITS_RV32 12
-`define PPN_BITS_RV32 22
-`define PA_BITS_RV32 34
-`define SVMODE_BITS_RV32 1
-*/
-
 // Virtual Memory Constants
 `define VPN_SEGMENT_BITS (`XLEN == 32 ? 10 : 9)
 `define VPN_BITS (`XLEN==32 ? (2*`VPN_SEGMENT_BITS) : (4*`VPN_SEGMENT_BITS))
@@ -61,3 +44,4 @@
 `define SV32 1
 `define SV39 8
 `define SV48 9
+
