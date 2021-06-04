@@ -80,34 +80,17 @@ module fpu (
    logic [4:0] 		   FDivFlagsM, FDivFlagsW;
    
    // FMA signals
-   logic [12:0] 	   aligncntE, aligncntM; 
-   logic [105:0] 	   rE, rM; 
-   logic [105:0] 	   sE, sM; 
-   logic [163:0] 	   tE, tM;	
-   logic [8:0] 		   normcntE, normcntM; 
-   logic [12:0] 	   aeE, aeM; 
-   logic 		   bsE, bsM;
-   logic 		   killprodE, killprodM; 
-   logic 		   prodofE, prodofM; 
-   logic 		   xzeroE, xzeroM;
-   logic 		   yzeroE, yzeroM;
-   logic 		   zzeroE, zzeroM;
-   logic 		   xdenormE, xdenormM;
-   logic 		   ydenormE, ydenormM;
-   logic 		   zdenormE, zdenormM;
-   logic 		   xinfE, xinfM;
-   logic 		   yinfE, yinfM;
-   logic 		   zinfE, zinfM;
-   logic 		   xnanE, xnanM;
-   logic 		   ynanE, ynanM;
-   logic 		   znanE, znanM;
-   logic 		   nanE, nanM;
-   logic [8:0] 		   sumshiftE, sumshiftM;
-   logic 		   sumshiftzeroE, sumshiftzeroM;
-   logic 		   prodinfE, prodinfM;
-   logic [63:0] 	   FmaResultM, FmaResultW;
-   logic [4:0] 		   FmaFlagsM, FmaFlagsW;
-   
+	logic 	[105:0]		ProdManE, ProdManM;
+	logic 	[161:0]		AlignedAddendE,	AlignedAddendM;
+	logic 	[12:0]		ProdExpE, ProdExpM;
+	logic 				    AddendStickyE, AddendStickyM;
+	logic 				    KillProdE, KillProdM;
+	logic				      XZeroE, YZeroE, ZZeroE, XZeroM, YZeroM, ZZeroM;
+	logic				      XInfE, YInfE, ZInfE, XInfM, YInfM, ZInfM;
+	logic				      XNaNE, YNaNE, ZNaNE, XNaNM, YNaNM, ZNaNM;
+  logic [63:0]      FmaResultM, FmaResultW;
+  logic [4:0]       FmaFlagsM, FmaFlagsW;
+
    // add/cvt signals
    logic [63:0] 	   AddSumE, AddSumTcE;
    logic [3:0] 		   AddSelInvE;
@@ -241,7 +224,7 @@ module fpu (
 			.CLK(clk),
 			.ECLK(fpdivClk));
    
-   fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk));
+   fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .*);
    
    // first of two-stage instance of floating-point add/cvt unit
    fpuaddcvt1 fpadd1 (.*);
@@ -265,31 +248,20 @@ module fpu (
    //*****************
    // fma E/M pipe registers
    //*****************  
-   flopenrc #(13) EMRegFma1(clk, reset, PipeClearEM, PipeEnableEM, aligncntE, aligncntM); 
-   flopenrc #(106) EMRegFma2(clk, reset, PipeClearEM, PipeEnableEM, rE, rM); 
-   flopenrc #(106) EMRegFma3(clk, reset, PipeClearEM, PipeEnableEM, sE, sM); 
-   flopenrc #(164) EMRegFma4(clk, reset, PipeClearEM, PipeEnableEM, tE, tM); 
-   flopenrc #(9) EMRegFma5(clk, reset, PipeClearEM, PipeEnableEM, normcntE, normcntM); 
-   flopenrc #(13) EMRegFma6(clk, reset, PipeClearEM, PipeEnableEM, aeE, aeM);  
-   flopenrc #(1) EMRegFma7(clk, reset, PipeClearEM, PipeEnableEM, bsE, bsM); 
-   flopenrc #(1) EMRegFma8(clk, reset, PipeClearEM, PipeEnableEM, killprodE, killprodM); 
-   flopenrc #(1) EMRegFma9(clk, reset, PipeClearEM, PipeEnableEM, prodofE, prodofM); 
-   flopenrc #(1) EMRegFma10(clk, reset, PipeClearEM, PipeEnableEM, xzeroE, xzeroM); 
-   flopenrc #(1) EMRegFma11(clk, reset, PipeClearEM, PipeEnableEM, yzeroE, yzeroM); 
-   flopenrc #(1) EMRegFma12(clk, reset, PipeClearEM, PipeEnableEM, zzeroE, zzeroM); 
-   flopenrc #(1) EMRegFma13(clk, reset, PipeClearEM, PipeEnableEM, xdenormE, xdenormM); 
-   flopenrc #(1) EMRegFma14(clk, reset, PipeClearEM, PipeEnableEM, ydenormE, ydenormM); 
-   flopenrc #(1) EMRegFma15(clk, reset, PipeClearEM, PipeEnableEM, zdenormE, zdenormM); 
-   flopenrc #(1) EMRegFma16(clk, reset, PipeClearEM, PipeEnableEM, xinfE, xinfM); 
-   flopenrc #(1) EMRegFma17(clk, reset, PipeClearEM, PipeEnableEM, yinfE, yinfM); 
-   flopenrc #(1) EMRegFma18(clk, reset, PipeClearEM, PipeEnableEM, zinfE, zinfM); 
-   flopenrc #(1) EMRegFma19(clk, reset, PipeClearEM, PipeEnableEM, xnanE, xnanM); 
-   flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, ynanE, ynanM); 
-   flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, znanE, znanM); 
-   flopenrc #(1) EMRegFma22(clk, reset, PipeClearEM, PipeEnableEM, nanE, nanM); 
-   flopenrc #(9) EMRegFma23(clk, reset, PipeClearEM, PipeEnableEM, sumshiftE, sumshiftM); 
-   flopenrc #(1) EMRegFma24(clk, reset, PipeClearEM, PipeEnableEM, sumshiftzeroE, sumshiftzeroM); 
-   flopenrc #(1) EMRegFma25(clk, reset, PipeClearEM, PipeEnableEM, prodinfE, prodinfM); 
+  flopenrc #(106) EMRegFma3(clk, reset, PipeClearEM, PipeEnableEM, ProdManE, ProdManM); 
+  flopenrc #(162) EMRegFma4(clk, reset, PipeClearEM, PipeEnableEM, AlignedAddendE, AlignedAddendM); 
+  flopenrc #(13) EMRegFma6(clk, reset, PipeClearEM, PipeEnableEM, ProdExpE, ProdExpM);  
+  flopenrc #(1) EMRegFma7(clk, reset, PipeClearEM, PipeEnableEM, AddendStickyE, AddendStickyM); 
+  flopenrc #(1) EMRegFma8(clk, reset, PipeClearEM, PipeEnableEM, KillProdE, KillProdM); 
+  flopenrc #(1) EMRegFma10(clk, reset, PipeClearEM, PipeEnableEM, XZeroE, XZeroM); 
+  flopenrc #(1) EMRegFma11(clk, reset, PipeClearEM, PipeEnableEM, YZeroE, YZeroM); 
+  flopenrc #(1) EMRegFma12(clk, reset, PipeClearEM, PipeEnableEM, ZZeroE, ZZeroM); 
+  flopenrc #(1) EMRegFma16(clk, reset, PipeClearEM, PipeEnableEM, XInfE, XInfM); 
+  flopenrc #(1) EMRegFma17(clk, reset, PipeClearEM, PipeEnableEM, YInfE, YInfM); 
+  flopenrc #(1) EMRegFma18(clk, reset, PipeClearEM, PipeEnableEM, ZInfE, ZInfM); 
+  flopenrc #(1) EMRegFma19(clk, reset, PipeClearEM, PipeEnableEM, XNaNE, XNaNM); 
+  flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, YNaNE, YNaNM); 
+  flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, ZNaNE, ZNaNM);  
    
    //*****************
    // fpadd E/M pipe registers
