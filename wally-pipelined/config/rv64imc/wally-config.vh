@@ -46,10 +46,6 @@
 //`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
 `define N_SUPPORTED 0
 
-`define M_MODE (2'b11)
-`define S_MODE (2'b01)
-`define U_MODE (2'b00)
-
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
@@ -58,6 +54,10 @@
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
+`define VECTORED_INTERRUPTS_SUPPORTED 1
+
+`define ITLB_ENTRY_BITS 5
+`define DTLB_ENTRY_BITS 5
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000

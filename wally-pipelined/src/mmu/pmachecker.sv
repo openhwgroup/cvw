@@ -66,7 +66,7 @@ module pmachecker (
 
   assign ValidBootTim = '1;
   assign ValidTim = '1;
-  assign ValidCLINT = ~ExecuteAccessF && ((HSIZE == 3'b011) || (HSIZE == 3'b010));
+  assign ValidCLINT = ~ExecuteAccessF && ((HSIZE == 3'b011 && `XLEN==64) || (HSIZE == 3'b010 && `XLEN==32));
   assign ValidGPIO  = ~ExecuteAccessF && (HSIZE == 3'b010);
   assign ValidUART  = ~ExecuteAccessF && (HSIZE == 3'b000);
   assign ValidPLIC  = ~ExecuteAccessF && (HSIZE == 3'b010);

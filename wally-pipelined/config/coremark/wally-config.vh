@@ -58,6 +58,10 @@
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
+`define VECTORED_INTERRUPTS_SUPPORTED 1
+
+`define ITLB_ENTRY_BITS 5
+`define DTLB_ENTRY_BITS 5
 
 // Address space
 `define RESET_VECTOR 64'h00000000000100b0

@@ -59,6 +59,9 @@
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
 
+`define ITLB_ENTRY_BITS 5
+`define DTLB_ENTRY_BITS 5
+
 // Address space
 `define RESET_VECTOR 32'h80000000
 
