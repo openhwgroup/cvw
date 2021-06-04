@@ -52,39 +52,39 @@
 // The TLB will have 2**ENTRY_BITS total entries
 module tlb #(parameter ENTRY_BITS = 3,
              parameter ITLB = 0) (
-  input              clk, reset,
+  input logic              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
-  input  [`XLEN-1:0] SATP_REGW,
-  input              STATUS_MXR, STATUS_SUM,
+  input logic  [`XLEN-1:0] SATP_REGW,
+  input logic              STATUS_MXR, STATUS_SUM,
 
   // Current privilege level of the processeor
-  input  [1:0]       PrivilegeModeW,
+  input logic  [1:0]       PrivilegeModeW,
 
   // 00 - TLB is not being accessed
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input [1:0]        TLBAccessType,
+  input logic [1:0]        TLBAccessType,
 
   // Virtual address input
-  input  [`XLEN-1:0] VirtualAddress,
+  input logic  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
-  input  [`XLEN-1:0] PageTableEntryWrite,
-  input  [1:0]       PageTypeWrite,
-  input              TLBWrite,
+  input logic  [`XLEN-1:0] PageTableEntryWrite,
+  input logic  [1:0]       PageTypeWrite,
+  input logic              TLBWrite,
 
   // Invalidate all TLB entries
-  input              TLBFlush,
+  input logic              TLBFlush,
 
   // Physical address outputs
-  output [`XLEN-1:0] PhysicalAddress,
-  output             TLBMiss,
-  output             TLBHit,
+  output logic [`XLEN-1:0] PhysicalAddress,
+  output logic             TLBMiss,
+  output logic             TLBHit,
 
   // Faults
-  output             TLBPageFault
+  output logic             TLBPageFault
 );
 
   logic Translate;
@@ -144,7 +144,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign PageOffset        = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
-  tlb_lru lru(.*);
+  tlb_lru #(ENTRY_BITS) lru(.*);
 
   tlb_ram #(ENTRY_BITS) tlb_ram(.*);
   tlb_cam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlb_cam(.*);
