@@ -110,16 +110,23 @@ module wallypipelinedhart (
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] SATP_REGW;
-  logic             STATUS_MXR, STATUS_SUM;
-  logic [1:0]       PrivilegeModeW;
+  logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV;
+  logic [1:0]       PrivilegeModeW, STATUS_MPP;
 
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
   logic [1:0]       PageTypeF, PageTypeM;
 
   // PMA checker signals
   logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM;
-  logic             Cacheable, Idempotent, AtomicAllowed;
-  logic             SquashBusAccess;
+  logic             DCacheableM, DIdempotentM, DAtomicAllowedM;
+  logic             ICacheableF, IIdempotentF, IAtomicAllowedF;
+  logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
+  logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
+  logic             DSquashBusAccessM, ISquashBusAccessF;
+  logic [5:0]            DHSELRegionsM, IHSELRegionsF;
+  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15]; // *** again, this is a huge bus to be sending all around.
+  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW; // signals being sent from privileged unit to pmp/pma in dmem and ifu.
+  assign            HSELRegions = ExecuteAccessF ? IHSELRegionsF : DHSELRegionsM; // *** this is a pure guess on how one of these should be selected. it passes tests, but is it the right way to do this?
 
   // IMem stalls
   logic             ICacheStallF;
@@ -185,7 +192,7 @@ module wallypipelinedhart (
   privileged priv(.*);
   
 
-   fpu fpu(.*); // floating point unit
+  fpu fpu(.*); // floating point unit
   // add FPU here, with SetFflagsM, FRM_REGW
   // presently stub out SetFlagsM and FloatRegWriteW
   //assign SetFflagsM = 0;

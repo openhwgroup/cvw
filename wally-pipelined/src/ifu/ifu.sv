@@ -63,20 +63,27 @@ module ifu (
   output logic             IllegalIEUInstrFaultD,
   output logic             InstrMisalignedFaultM,
   output logic [`XLEN-1:0] InstrMisalignedAdrM,
-  // TLB management
+
+  
+  // mmu management
   input logic  [1:0]       PrivilegeModeW,
   input logic  [`XLEN-1:0] PageTableEntryF,
   input logic  [1:0]       PageTypeF,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
+  input logic              STATUS_MXR, STATUS_SUM,  STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP, // *** the last two are for the pmp checker.
   input logic              ITLBWriteF, ITLBFlushF,
   output logic             ITLBMissF, ITLBHitF,
 
-  // MMU signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
+  // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
   input  logic [31:0]      HADDR,
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
-  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  logic             ExecuteAccessF, //read, write, and atomic access are all set to zero because this mmu is onlt working with instructinos in the F stage.
+  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
+  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
+
+  output logic             PMPInstrAccessFaultF, PMAInstrAccessFaultF,
   output logic             ICacheableF, IIdempotentF, IAtomicAllowedF,
   output logic             ISquashBusAccessF,
   output logic [5:0]       IHSELRegionsF
@@ -94,28 +101,25 @@ module ifu (
   logic 	    reset_q; // *** look at this later.
 
   logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
-  
 
-/*  tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
-                .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
-                .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
-                .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
-                .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
-                .*); */
+  logic PMALoadAccessFaultM, PMAStoreAccessFaultM;
+  logic PMPLoadAccessFaultM, PMPStoreAccessFaultM; // *** these are just so that the mmu has somewhere to put these outputs, they're unused in this stage
+  // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
+
   mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
                 .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
                 .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
 
-                .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
+                .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0), // *** is this the right way force these bits constant? should they be someething else?
                 .Cacheable(ICacheableF), .Idempotent(IIdempotentF), .AtomicAllowed(IAtomicAllowedF),
-                .SquashBusAccess(.ISquashBusAccssF), .HSELRegionsF(.IHSELRegionsF)),
+                .SquashBusAccess(ISquashBusAccessF), .HSELRegions(IHSELRegionsF),
                 .*);
 
 
   // branch predictor signals
-  logic 	   SelBPPredF;
+  logic 	          SelBPPredF;
   logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [4:0] 	    InstrClassD, InstrClassE;
   

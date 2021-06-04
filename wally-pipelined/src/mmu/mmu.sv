@@ -28,54 +28,65 @@
 
 // The TLB will have 2**ENTRY_BITS total entries
 
-module mmu #(parameter IMMU = 0) (
-  input              clk, reset,
+module mmu #(parameter ENTRY_BITS = 3,
+             parameter IMMU = 0) (
+
+  input logic              clk, reset,
   // Current value of satp CSR (from privileged unit)
-  input  [`XLEN-1:0] SATP_REGW,
-  input              STATUS_MXR, STATUS_SUM,
+  input logic  [`XLEN-1:0] SATP_REGW,
+  input logic              STATUS_MXR, STATUS_SUM,
 
   // Current privilege level of the processeor
-  input  [1:0]       PrivilegeModeW,
+  input logic  [1:0]       PrivilegeModeW,
 
   // 00 - TLB is not being accessed
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input [1:0]        TLBAccessType,
+  input logic [1:0]        TLBAccessType,
 
   // Virtual address input
-  input  [`XLEN-1:0] VirtualAddress,
+  input logic  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
-  input  [`XLEN-1:0] PageTableEntryWrite,
-  input  [1:0]       PageTypeWrite,
-  input              TLBWrite,
+  input logic  [`XLEN-1:0] PageTableEntryWrite,
+  input logic  [1:0]       PageTypeWrite,
+  input logic              TLBWrite,
 
   // Invalidate all TLB entries
-  input              TLBFlush,
+  input logic              TLBFlush,
 
   // Physical address outputs
-  output [`XLEN-1:0] PhysicalAddress,
-  output             TLBMiss,
-  output             TLBHit,
+  output logic [`XLEN-1:0] PhysicalAddress,
+  output logic             TLBMiss,
+  output logic             TLBHit,
 
   // Faults
-  output             TLBPageFault,
+  output logic             TLBPageFault,
 
-    // PMA checker signals
+  // PMA checker signals
   input  logic [31:0]      HADDR,
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  logic             STATUS_MPRV,
+  input  logic [1:0]       STATUS_MPP,
+  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
+  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
+
   output logic             Cacheable, Idempotent, AtomicAllowed,
-  output logic             SquashBusAccess,
+  output logic             SquashBusAccess, // *** send to privileged unit
+  output logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM,
+  output logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM,
   output logic [5:0]       HSELRegions
 
 );
 
+  logic PMPSquashBusAccess, PMASquashBusAccess;
+
   // Translation lookaside buffer
 
-  tlb tlb #(.ENTRY_BITS(.ENTRY_BITS), .ITLB(IMMU)) itlb(.*);
+  tlb #(.ENTRY_BITS(ENTRY_BITS), .ITLB(IMMU)) tlb(.*);
 
   ///////////////////////////////////////////
   // Check physical memory accesses
@@ -84,13 +95,7 @@ module mmu #(parameter IMMU = 0) (
   pmachecker pmachecker(.*);
   pmpchecker pmpchecker(.*);
 
-  *** to edit
-  edit PMP/PMA to use phyisical address information instead of HADDR / AHB signals [Later after it works]
-  *move PMA checker to MMU from privileged
-  *move PMP checker to MMU from privileged
-  *delete PMA/PMP signals from priviliged & above no longer needed
-  replace TLB with MMU in IFU and DMEM
-  adjust for two PMA/PMP outputs (IFU, DMEM) instead of just one for Bus
-  Move M_MODE, other constants from each config file to wally-constants, #include wally-constants as needed
+
+  assign SquashBusAccess = PMASquashBusAccess || PMPSquashBusAccess;
 
 endmodule
