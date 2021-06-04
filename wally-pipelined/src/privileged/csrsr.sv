@@ -25,6 +25,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 
 module csrsr (
   input  logic             clk, reset, StallW,

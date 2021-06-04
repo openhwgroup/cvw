@@ -46,10 +46,6 @@
 //`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
 `define N_SUPPORTED 0
 
-`define M_MODE (2'b11)
-`define S_MODE (2'b01)
-`define U_MODE (2'b00)
-
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0

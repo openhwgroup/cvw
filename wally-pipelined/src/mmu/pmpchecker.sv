@@ -27,6 +27,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 
 module pmpchecker (
   input  logic             clk, reset,
