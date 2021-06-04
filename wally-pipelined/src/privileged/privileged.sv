@@ -26,6 +26,7 @@
 
 `include "wally-config.vh"
 
+// *** remove signals not needed by PMA/PMP now that it is moved
 module privileged (
   input  logic             clk, reset,
   input  logic             FlushW,
@@ -58,15 +59,6 @@ module privileged (
   output logic             STATUS_MXR, STATUS_SUM,
   output logic [2:0]       FRM_REGW,
   input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM,
-
-  // PMA checker signals
-  input  logic [31:0]      HADDR,
-  input  logic [2:0]       HSIZE, HBURST,
-  input  logic             HWRITE,
-  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
-  output logic             Cacheable, Idempotent, AtomicAllowed,
-  output logic             SquashBusAccess,
-  output logic [5:0]       HSELRegions
 );
 
   logic [1:0] NextPrivilegeModeM;
@@ -142,13 +134,6 @@ module privileged (
   ///////////////////////////////////////////
 
   csr csr(.*);
-
-  ///////////////////////////////////////////
-  // Check physical memory accesses
-  ///////////////////////////////////////////
-
-  pmachecker pmachecker(.*);
-  pmpchecker pmpchecker(.*);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 

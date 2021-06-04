@@ -70,7 +70,17 @@ module ifu (
   input logic  [`XLEN-1:0] SATP_REGW,
   input logic              STATUS_MXR, STATUS_SUM,
   input logic              ITLBWriteF, ITLBFlushF,
-  output logic             ITLBMissF, ITLBHitF
+  output logic             ITLBMissF, ITLBHitF,
+
+  // MMU signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
+  input  logic [31:0]      HADDR,
+  input  logic [2:0]       HSIZE, HBURST,
+  input  logic             HWRITE,
+  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
+  output logic             ICacheableF, IIdempotentF, IAtomicAllowedF,
+  output logic             ISquashBusAccessF,
+  output logic [5:0]       IHSELRegionsF
+
 );
 
   logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
@@ -86,12 +96,23 @@ module ifu (
   logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
 
-  tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
+/*  tlb #(.ENTRY_BITS(3), .ITLB(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
                 .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
                 .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
+                .*); */
+  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
+                .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
+                .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
+                .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
+                .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
+
+                .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
+                .Cacheable(ICacheableF), .Idempotent(IIdempotentF), .AtomicAllowed(IAtomicAllowedF),
+                .SquashBusAccess(.ISquashBusAccssF), .HSELRegionsF(.IHSELRegionsF)),
                 .*);
+
 
   // branch predictor signals
   logic 	   SelBPPredF;
