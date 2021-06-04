@@ -26,6 +26,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 
 module csr #(parameter
   // Constants

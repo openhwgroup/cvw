@@ -45,3 +45,9 @@
 `define SV39 8
 `define SV48 9
 
+
+// constants defining different privilege modes
+// defined in Table 1.1 of the privileged spec
+`define M_MODE (2'b11)
+`define S_MODE (2'b01)
+`define U_MODE (2'b00)
