@@ -1,6 +1,6 @@
 `include "wally-config.vh"
 
-module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, parameter WORDSIZE = `XLEN) (
+module ICacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256) (
     // Pipeline stuff
     input logic 	       clk,
     input logic 	       reset,
@@ -12,15 +12,15 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     input logic [`XLEN-1:0]    PCNextIndexF,
     // Write new data to the cache
     input logic 	       WriteEnable,
-    input logic [LINESIZE-1:0] WriteLine,
+    input logic [BLOCKLEN-1:0] WriteLine,
     // Output the word, as well as if it is valid
-    output logic [31:0]        DataWord, // *** was WORDSIZE-1
+    output logic [31:0]        DataWord, // *** was `XLEN-1
     output logic 	       DataValid
 );
 
     // Various compile-time constants
-    localparam integer WORDWIDTH = $clog2(WORDSIZE/8);
-    localparam integer OFFSETWIDTH = $clog2(LINESIZE/WORDSIZE);
+    localparam integer WORDWIDTH = $clog2(`XLEN/8);
+    localparam integer OFFSETWIDTH = $clog2(BLOCKLEN/`XLEN);
     localparam integer SETWIDTH = $clog2(NUMLINES);
     localparam integer TAGWIDTH = `XLEN - OFFSETWIDTH - SETWIDTH - WORDWIDTH;
 
@@ -32,8 +32,8 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     localparam integer TAGEND = TAGBEGIN + TAGWIDTH - 1;
 
     // Machinery to read from and write to the correct addresses in memory
-    logic [LINESIZE-1:0]    ReadLine;
-    logic [LINESIZE/WORDSIZE-1:0][WORDSIZE-1:0] ReadLineTransformed;
+    logic [BLOCKLEN-1:0]    ReadLine;
+    logic [BLOCKLEN/`XLEN-1:0][`XLEN-1:0] ReadLineTransformed;
 
     // Machinery to check if a given read is valid and is the desired value
     logic [TAGWIDTH-1:0]    DataTag;
@@ -41,7 +41,7 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
     logic                   DataValidBit;
 
     // Depth is number of bits in one "word" of the memory, width is number of such words
-    sram1rw #(.DEPTH(LINESIZE), .WIDTH(NUMLINES)) cachemem (
+    sram1rw #(.DEPTH(BLOCKLEN), .WIDTH(NUMLINES)) cachemem (
         .*,
         .Addr(PCNextIndexF[SETEND:SETBEGIN]),
         .ReadData(ReadLine),
@@ -82,8 +82,8 @@ module rodirectmappedmemre #(parameter NUMLINES=512, parameter LINESIZE = 256, p
   end
     genvar i;
     generate
-        for (i=0; i < LINESIZE/WORDSIZE; i++) begin
-            assign ReadLineTransformed[i] = ReadLine[(i+1)*WORDSIZE-1:i*WORDSIZE];
+        for (i=0; i < BLOCKLEN/`XLEN; i++) begin
+            assign ReadLineTransformed[i] = ReadLine[(i+1)*`XLEN-1:i*`XLEN];
         end
     endgenerate
 
