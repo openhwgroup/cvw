@@ -140,17 +140,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   logic [31:0] 		     FinalInstrRawF;
 
   logic [15:0] 		     SpillDataBlock0;
-
-  logic 		     FlushDLastCyclen;
   
-    // Happy path signals
-  logic [31:0] 		     AlignedInstrRawD;
-  
-    //logic [31:0]    AlignedInstrRawF, AlignedInstrRawD;
-    //logic           FlushDLastCycleN;
-    //logic           PCPMisalignedF;
   localparam [31:0]  	     NOP = 32'h13;
-  //logic [`XLEN-1:0] 	     PCPF;
 
   logic 		     reset_q;
   logic [1:0] 		     PCMux_q;
@@ -459,13 +450,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 		      .d(reset),
 		      .q(reset_q));
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FinalInstrRawF, NOP, AlignedInstrRawD);
-  // cannot have this mux as it creates a combo loop. 
-    // This flop doesn't stall if StallF is high because we should output a nop
-    // when FlushD happens, even if the pipeline is also stalled.
-    flopr   #(1)  flushDLastCycleFlop(clk, reset, ~FlushD & (FlushDLastCyclen | ~StallF), FlushDLastCyclen);
-  mux2    #(32) InstrRawDMux(AlignedInstrRawD, NOP, ~FlushDLastCyclen, InstrRawD);
-  //assign InstrRawD = AlignedInstrRawD;
-
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? NOP : FinalInstrRawF, NOP, InstrRawD);
   
 endmodule
