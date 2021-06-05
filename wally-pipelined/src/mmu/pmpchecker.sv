@@ -36,9 +36,6 @@ module pmpchecker (
 
   input  logic [1:0]       PrivilegeModeW,
 
-  input  logic [1:0]       STATUS_MPP,
-  input  logic             STATUS_MPRV,
-
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
 
   // *** ModelSim has a switch -svinputport which controls whether input ports

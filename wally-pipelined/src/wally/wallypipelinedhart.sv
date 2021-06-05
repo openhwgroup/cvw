@@ -110,16 +110,13 @@ module wallypipelinedhart (
   logic             ITLBMissF, ITLBHitF;
   logic             DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] SATP_REGW;
-  logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV;
-  logic [1:0]       PrivilegeModeW, STATUS_MPP;
-
+  logic             STATUS_MXR, STATUS_SUM;
+  logic [1:0]       PrivilegeModeW;
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
   logic [1:0]       PageTypeF, PageTypeM;
 
   // PMA checker signals
   logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM;
-  logic             DCacheableM, DIdempotentM, DAtomicAllowedM;
-  logic             ICacheableF, IIdempotentF, IAtomicAllowedF;
   logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
   logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic             DSquashBusAccessM, ISquashBusAccessF;

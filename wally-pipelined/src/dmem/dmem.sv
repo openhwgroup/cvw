@@ -59,8 +59,7 @@ module dmem (
   input logic  [`XLEN-1:0] PageTableEntryM,
   input logic  [1:0]       PageTypeM,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic [1:0]        STATUS_MPP, 
+  input logic              STATUS_MXR, STATUS_SUM,
   input logic              DTLBWriteM, DTLBFlushM,
   output logic             DTLBMissM, DTLBHitM,
   
@@ -75,7 +74,6 @@ module dmem (
   output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
   output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
-  output logic             DCacheableM, DIdempotentM, DAtomicAllowedM,
   output logic             DSquashBusAccessM,
   output logic [5:0]       DHSELRegionsM
   
@@ -102,7 +100,6 @@ module dmem (
                 .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
 
                 .ExecuteAccessF(1'b0),
-                .Cacheable(DCacheableM), .Idempotent(DIdempotentM), .AtomicAllowed(DAtomicAllowedM),
                 .SquashBusAccess(DSquashBusAccessM), .HSELRegions(DHSELRegionsM),
                 .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
@@ -188,8 +185,6 @@ module dmem (
       default: NextState = STATE_READY;
     endcase // case (CurrState)
   end
-  
-  
 
 endmodule
 
