@@ -42,7 +42,7 @@ module fpu (
   output logic 		   FStallD,
   output logic 		   FWriteIntE, FWriteIntM, FWriteIntW,
   output logic [`XLEN-1:0] FWriteDataM,
-  output logic 		   FDivSqrtDoneM,
+  output logic 		   FDivBusyE,
   output logic 		   IllegalFPUInstrD,
   output logic [`XLEN-1:0] FPUResultW);
 
@@ -73,11 +73,11 @@ module fpu (
    logic [`XLEN-1:0] 	   FLoadStoreResultM, FLoadStoreResultW;                   // Result for load, store, and move to int-reg instructions
    
    // div/sqrt signals
-   logic 		   DivDenormM, DivDenormW;
+   logic 		   DivDenormE, DivDenormM, DivDenormW;
    logic 		   DivOvEn, DivUnEn;
-   logic 		   DivBusyM;
-   logic [63:0] 	   FDivResultM, FDivResultW;
-   logic [4:0] 		   FDivFlagsM, FDivFlagsW;
+   logic [63:0] 	   FDivResultE, FDivResultM, FDivResultW;
+   logic [4:0] 		   FDivFlagsE, FDivFlagsM, FDivFlagsW;
+   logic            FDivSqrtDoneE, FDivSqrtDoneM;
    
    // FMA signals
 	logic 	[105:0]		ProdManE, ProdManM;
@@ -263,6 +263,13 @@ module fpu (
   flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, YNaNE, YNaNM); 
   flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, ZNaNE, ZNaNM);  
    
+   //*****************
+   // fpdiv E/M pipe registers
+   //*****************
+   flopenrc #(64) EMRegDiv1(clk, reset, PipeClearEM, PipeEnableEM, FDivResultE, FDivResultM); 
+   flopenrc #(5) EMRegDiv2(clk, reset, PipeClearEM, PipeEnableEM, FDivFlagsE, FDivFlagsM);
+   flopenrc #(1) EMRegDiv3(clk, reset, PipeClearEM, PipeEnableEM, DivDenormE, DivDenormM); 
+
    //*****************
    // fpadd E/M pipe registers
    //*****************
