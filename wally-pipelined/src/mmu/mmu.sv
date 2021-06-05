@@ -69,12 +69,9 @@ module mmu #(parameter ENTRY_BITS = 3,
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
-  input  logic             STATUS_MPRV,
-  input  logic [1:0]       STATUS_MPP,
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
   input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
 
-  output logic             Cacheable, Idempotent, AtomicAllowed,
   output logic             SquashBusAccess, // *** send to privileged unit
   output logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM,
   output logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM,
@@ -83,7 +80,7 @@ module mmu #(parameter ENTRY_BITS = 3,
 );
 
   logic PMPSquashBusAccess, PMASquashBusAccess;
-
+  logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
 
   tlb #(.ENTRY_BITS(ENTRY_BITS), .ITLB(IMMU)) tlb(.*);
