@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// priority_encoder.sv
+// priorityencoder.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Based on implementation from https://www.allaboutcircuits.com/ip-cores/communication-controller/priority-encoder/
@@ -31,8 +31,8 @@
 
 `include "wally-config.vh"
 
-module priority_encoder #(parameter BINARY_BITS = 3) (
-  input  logic  [2**BINARY_BITS - 1:0] one_hot,
+module priorityencoder #(parameter BINARY_BITS = 3) (
+  input  logic  [2**BINARY_BITS - 1:0] onehot,
   output logic  [BINARY_BITS - 1:0] binary
 );
 
@@ -40,7 +40,7 @@ module priority_encoder #(parameter BINARY_BITS = 3) (
   always_comb begin
     binary = 0;
     for (i = 0; i < 2**BINARY_BITS; i++) begin
-      if (one_hot[i]) binary = i; // prioritizes the most significant bit
+      if (onehot[i]) binary = i; // prioritizes the most significant bit
     end
   end
   // *** triple check synthesizability here
