@@ -78,6 +78,8 @@ module fpu (
    logic [63:0] 	   FDivResultE, FDivResultM, FDivResultW;
    logic [4:0] 		   FDivFlagsE, FDivFlagsM, FDivFlagsW;
    logic            FDivSqrtDoneE, FDivSqrtDoneM;
+   logic [63:0] 	 DivInput1E, DivInput2E;
+   logic HoldInputs;
    
    // FMA signals
 	logic 	[105:0]		ProdManE, ProdManM;
@@ -224,7 +226,15 @@ module fpu (
 			.CLK(clk),
 			.ECLK(fpdivClk));
    
-   fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .*);
+   // capture the inputs for div/sqrt	 
+   flopenrc #(64) reg_input1 (.d(FInput1E), .q(DivInput1E),
+               .en(~HoldInputs), .clear(FDivSqrtDoneE),
+               .reset(reset),  .clk(clk));
+   flopenrc #(64) reg_input2 (.d(FInput2E), .q(DivInput2E),
+               .en(~HoldInputs), .clear(FDivSqrtDoneE),
+               .reset(reset),  .clk(clk));
+
+   fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .*);
    
    // first of two-stage instance of floating-point add/cvt unit
    fpuaddcvt1 fpadd1 (.*);
@@ -266,9 +276,9 @@ module fpu (
    //*****************
    // fpdiv E/M pipe registers
    //*****************
-   flopenrc #(64) EMRegDiv1(clk, reset, PipeClearEM, PipeEnableEM, FDivResultE, FDivResultM); 
-   flopenrc #(5) EMRegDiv2(clk, reset, PipeClearEM, PipeEnableEM, FDivFlagsE, FDivFlagsM);
-   flopenrc #(1) EMRegDiv3(clk, reset, PipeClearEM, PipeEnableEM, DivDenormE, DivDenormM); 
+   // flopenrc #(64) EMRegDiv1(clk, reset, PipeClearEM, PipeEnableEM, FDivResultE, FDivResultM); 
+   // flopenrc #(5) EMRegDiv2(clk, reset, PipeClearEM, PipeEnableEM, FDivFlagsE, FDivFlagsM);
+   // flopenrc #(1) EMRegDiv3(clk, reset, PipeClearEM, PipeEnableEM, DivDenormE, DivDenormM); 
 
    //*****************
    // fpadd E/M pipe registers
