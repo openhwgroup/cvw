@@ -26,7 +26,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-constants.vh"
+`include "wally-config.vh"
 
 module tlb_cam #(parameter ENTRY_BITS = 3,
                  parameter KEY_BITS   = 20,

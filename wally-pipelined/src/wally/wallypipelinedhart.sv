@@ -24,7 +24,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 /* verilator lint_on UNUSED */
 
 module wallypipelinedhart (

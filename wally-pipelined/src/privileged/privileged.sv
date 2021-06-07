@@ -25,7 +25,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 // *** remove signals not needed by PMA/PMP now that it is moved
 module privileged (
