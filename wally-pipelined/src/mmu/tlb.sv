@@ -185,19 +185,10 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // The highest segment of the physical page number has some extra bits
-  // than the highest segment of the virtual page number.
-  localparam EXTRA_PHYSICAL_BITS = `PPN_HIGH_SEGMENT_BITS - `VPN_SEGMENT_BITS;
-
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  page_number_mixer #(`PPN_BITS, `PPN_HIGH_SEGMENT_BITS)
-    physical_mixer(PhysicalPageNumber, 
-      {{EXTRA_PHYSICAL_BITS{1'b0}}, VirtualPageNumber},
-      HitPageType,
-      SvMode,
-      PhysicalPageNumberMixed);
+  physicalpagemask PageNumberMixer(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
   // Provide physical address only on TLBHits to cause catastrophic errors if
   // garbage address is used.

@@ -7,7 +7,7 @@
 //            Mostly this was done to make the PageNumberMixer work.
 //
 // Purpose: CAM line for the translation lookaside buffer (TLB)
-//          Determines whether a virtual address matches the stored key.
+//          Determines whether a virtual page number matches the stored key.
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -59,32 +59,40 @@ module cam_line #(parameter KEY_BITS = 20,
   logic [KEY_BITS-1:0] Key;
   
 
-  // Split up key and VPN into sections for each page table level.
-  logic [SEGMENT_BITS-1:0] Key0, Key1, VPN0, VPN1;
-  logic MatchVPN0, MatchVPN1;
+  // Split up key and query into sections for each page table level.
+  logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
+  logic Match0, Match1;
 
   generate
     if (`XLEN == 32) begin
+
       assign {Key1, Key0} = Key;
-      assign {VPN1, VPN0} = VirtualPageNumber;
+      assign {Query1, Query0} = VirtualPageNumber;
 
-      assign MatchVPN0 = (VPN0 == Key0) || (PageType[0]); // least signifcant section
-      assign MatchVPN1 = (VPN1 == Key1);
+      // Calculate the actual match value based on the input vpn and the page type.
+      // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
+      // should automatically match.
+      assign Match0 = (Query0 == Key0) || (PageType[0]); // least signifcant section
+      assign Match1 = (Query1 == Key1);
 
-      assign Match = MatchVPN0 & MatchVPN1 & Valid;
+      assign Match = Match0 & Match1 & Valid;
     end else begin
-      logic [SEGMENT_BITS-1:0] Key2, Key3, VPN2, VPN3;
-      logic MatchVPN2, MatchVPN3;
 
-      assign {VPN3, VPN2, VPN1, VPN0} = VirtualPageNumber;
+      logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
+      logic Match2, Match3;
+
+      assign {Query3, Query2, Query1, Query0} = VirtualPageNumber;
       assign {Key3, Key2, Key1, Key0} = Key;
 
-      assign MatchVPN0 = (VPN0 == Key0) || (PageType > 2'd0); // least signifcant section
-      assign MatchVPN1 = (VPN1 == Key1) || (PageType > 2'd1);
-      assign MatchVPN2 = (VPN2 == Key2) || (PageType > 2'd2);
-      assign MatchVPN3 = (VPN3 == Key3); // *** this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
+      // Calculate the actual match value based on the input vpn and the page type.
+      // For example, a gigapage in SV only cares about VPN[2], so VPN[0] and VPN[1]
+      // should automatically match.
+      assign Match0 = (Query0 == Key0) || (PageType > 2'd0); // least signifcant section
+      assign Match1 = (Query1 == Key1) || (PageType > 2'd1);
+      assign Match2 = (Query2 == Key2) || (PageType > 2'd2);
+      assign Match3 = (Query3 == Key3); // *** this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
       
-      assign Match = MatchVPN0 & MatchVPN1 & MatchVPN2 & MatchVPN3 & Valid;
+      assign Match = Match0 & Match1 & Match2 & Match3 & Valid;
     end
   endgenerate
 
@@ -103,21 +111,5 @@ module cam_line #(parameter KEY_BITS = 20,
   // write cycle? (using a mux)
   flopenrc #(1) validbitflop(clk, reset, TLBFlush, CAMLineWrite, 1'b1, Valid);
   flopenr #(KEY_BITS) keyflop(clk, reset, CAMLineWrite, VirtualPageNumber, Key);
-
-  // Calculate the actual query key based on the input key and the page type.
-  // For example, a megapage in SV39 only cares about VPN2 and VPN1, so VPN0
-  // should automatically match.
-//  logic [KEY_BITS-1:0] PageNumberMask, MaskedKey, MaskedQuery;
-  // this is the max possible length of the vpn, as listed in wally-constants.
-  // for modes with a mode with fewer bits in the vpn, the extra levels in MaskedQuery 
-  // and MaskedKey should have been zeroed out by the tlb before coming through the cam as VirtualPageNumber.
-  generate
-      if (`XLEN == 32) begin
-
-      end else begin
-
-      end
-  endgenerate
-
 
 endmodule
