@@ -29,7 +29,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 module page_number_mixer #(parameter BITS = 20,
                            parameter HIGH_SEGMENT_BITS = 10) (

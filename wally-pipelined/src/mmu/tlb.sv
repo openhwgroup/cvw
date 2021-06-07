@@ -47,7 +47,6 @@
  */
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 // The TLB will have 2**ENTRY_BITS total entries
 module tlb #(parameter ENTRY_BITS = 3,

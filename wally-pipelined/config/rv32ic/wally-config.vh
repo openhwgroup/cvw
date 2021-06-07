@@ -24,6 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+`include "wally-constants.vh"
+`include "wally-shared.vh"
+
 `define BUILDROOT 0
 `define BUSYBEAR 0
 
@@ -31,23 +34,9 @@
 `define XLEN 32
 
 `define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12)
-`define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
-`define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
-`define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
-`define F_SUPPORTED ((`MISA >> 5) % 2 == 1)
-`define M_SUPPORTED ((`MISA >> 12) % 2 == 1)
-`define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
-`define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 31
 `define ZCOUNTERS_SUPPORTED 1
-// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
-//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
-`define N_SUPPORTED 0
-
-`define M_MODE (2'b11)
-`define S_MODE (2'b01)
-`define U_MODE (2'b00)
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -99,9 +88,6 @@
 `define PLIC_NUM_SRC_LT_32
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
-
-/* verilator lint_off STMTDLY */
-/* verilator lint_off WIDTH */
 
 `define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"

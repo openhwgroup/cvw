@@ -1,15 +1,9 @@
 //////////////////////////////////////////
-// wally-constants.vh
+// wally-shared.vh
 //
-// Written: tfleming@hmc.edu 4 March 2021
-// Modified: Kmacsaigoren@hmc.edu 31 May 2021
-//              Added constants for checking sv mode and changed existing constants to accomodate
-//              both sv48 and sv39
+// Written: david_harris@hmc.edu 7 June 2021
 //
-// Purpose: Specify constants nexessary for different memory virtualization modes.
-//              These are specific to sv49, defined in section 4.5 of the privileged spec.
-//              However, despite different constants for different modes, the hardware helps distinguish between
-//              each mode.
+// Purpose: Shared and default configuration values common to all designs
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -28,22 +22,23 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-// Privileged modes
-`define M_MODE (2'b11)
-`define S_MODE (2'b01)
-`define U_MODE (2'b00)
+// macros to define supported modes
 
-// Virtual Memory Constants
-`define VPN_SEGMENT_BITS (`XLEN == 32 ? 10 : 9)
-`define VPN_BITS (`XLEN==32 ? (2*`VPN_SEGMENT_BITS) : (4*`VPN_SEGMENT_BITS))
-`define PPN_HIGH_SEGMENT_BITS (`XLEN==32 ? 12 : 17)
-`define PPN_BITS (`XLEN==32 ? 22 : 44)
-`define PA_BITS (`XLEN==32 ? 34 : 56)
-`define SVMODE_BITS (`XLEN == 32 ? 1 : 4)
+`define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
+`define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
+`define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
+`define F_SUPPORTED ((`MISA >> 5) % 2 == 1)
+`define M_SUPPORTED ((`MISA >> 12) % 2 == 1)
+`define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
+`define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 
-// constants to check SATP_MODE against
-// defined in Table 4.3 of the privileged spec
-`define NO_TRANSLATE 0
-`define SV32 1
-`define SV39 8
-`define SV48 9
+// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
+//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
+`define N_SUPPORTED 0
+
+// Disable spurious Verilator warnings
+
+/* verilator lint_off STMTDLY */
+/* verilator lint_off WIDTH */
+/* verilator lint_off ASSIGNDLY */
+/* verilator lint_off PINCONNECTEMPTY */

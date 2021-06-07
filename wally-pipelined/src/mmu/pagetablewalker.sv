@@ -28,11 +28,10 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 /* ***
    TO-DO:
-    - Implement better accessed/dirty behavior
+    - Implement faults on accessed/dirty behavior
 */
 
 module pagetablewalker (
