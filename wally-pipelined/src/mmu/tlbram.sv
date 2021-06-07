@@ -28,14 +28,15 @@
 `include "wally-config.vh"
 
 module tlbram #(parameter ENTRY_BITS = 3) (
-  input                   clk, reset,
-  input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from
-  input  [ENTRY_BITS-1:0] WriteIndex,
-  input  [`XLEN-1:0]      PageTableEntryWrite,
-  input                   TLBWrite,
+  input logic                       clk, reset,
+  input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
+  input logic [ENTRY_BITS-1:0]      WriteIndex,
+  input logic [`XLEN-1:0]           PageTableEntryWrite,
+  input logic                       TLBWrite,
+  input logic [2**ENTRY_BITS-1:0]   WriteLines,
 
-  output [`PPN_BITS-1:0]  PhysicalPageNumber,
-  output [7:0]            PTEAccessBits
+  output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
+  output logic [7:0]                PTEAccessBits
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
@@ -43,15 +44,11 @@ module tlbram #(parameter ENTRY_BITS = 3) (
   logic [`XLEN-1:0] ram [0:NENTRIES-1];
   logic [`XLEN-1:0] PageTableEntry;
 
-  logic [NENTRIES-1:0] RAMEntryWrite;
-
-  decoder #(ENTRY_BITS) tlbramdecoder(WriteIndex, RAMEntryWrite);
-
   // Generate a flop for every entry in the RAM
   generate
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
-      flopenr #(`XLEN) pteflop(clk, reset, RAMEntryWrite[i] & TLBWrite,
+      flopenr #(`XLEN) pteflop(clk, reset, WriteLines[i] & TLBWrite,
         PageTableEntryWrite, ram[i]);
     end
   endgenerate

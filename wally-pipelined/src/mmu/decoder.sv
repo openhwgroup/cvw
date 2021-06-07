@@ -26,8 +26,8 @@
 `include "wally-config.vh"
 
 module decoder #(parameter BINARY_BITS = 3) (
-  input  [BINARY_BITS-1:0] binary,
-  output [(2**BINARY_BITS)-1:0] onehot
+  input  logic [BINARY_BITS-1:0] binary,
+  output logic [(2**BINARY_BITS)-1:0] onehot
 );
 
   // *** Double check whether this synthesizes as expected

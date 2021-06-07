@@ -94,6 +94,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
+  logic [2**ENTRY_BITS-1:0] WriteLines; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -116,6 +117,9 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Grab the sv mode from SATP
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+
+  // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
+  decoder writedecoder(WriteIndex, WriteLines);
 
   // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
   // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,
@@ -140,7 +144,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign TLBAccess = ReadAccess || WriteAccess;
 
   
-  assign PageOffset        = VirtualAddress[11:0];
+  assign PageOffset = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
   tlblru #(ENTRY_BITS) lru(.*);
