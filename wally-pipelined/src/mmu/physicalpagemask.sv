@@ -32,15 +32,15 @@
 
 module physicalpagemask #(parameter BITS = 20,
                            parameter HIGH_SEGMENT_BITS = 10) (
-    input  [BITS-1:0]  ****       VirtualAddress,
-    input  [BITS-1:0] ***        PPN,
+    input  [BITS-1:0]       VirtualAddress, //***
+    input  [BITS-1:0]        PPN, //***
     input  [1:0]              PageType,
     input  [`SVMODE_BITS-1:0] SvMode,
 
-    output [BITS-1:0]***         PhysicalAddress
+    output [BITS-1:0]         PhysicalAddress //***
 );
 
-  logic [***] OffsetMask;
+  logic [34:0] OffsetMask;
 
   generate
     if (`XLEN == 32) begin
@@ -57,6 +57,7 @@ module physicalpagemask #(parameter BITS = 20,
           2: OffsetMask = 56'hFFFFFFC0000000; // gigapage: 26 bits of PPN, 30 bits of offset
           3: OffsetMask = 56'hFFFF8000000000; // terapage: 17 bits of PPN, 39 bits of offset
         endcase
+    end
   endgenerate
 
   // merge low bits of the virtual address containing the offset with high bits of the PPN
