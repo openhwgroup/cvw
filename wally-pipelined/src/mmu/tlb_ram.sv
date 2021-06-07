@@ -26,7 +26,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 module tlb_ram #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,

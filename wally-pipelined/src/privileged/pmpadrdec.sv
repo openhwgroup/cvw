@@ -28,7 +28,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 module pmpadrdec (
   input  logic [31:0]      HADDR,
