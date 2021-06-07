@@ -30,28 +30,28 @@
 
 module camline #(parameter KEY_BITS = 20,
                   parameter SEGMENT_BITS = 10) (
-  input                 clk, reset,
+  input logic                 clk, reset,
 
   // input to check which SvMode is running
-  input [`SVMODE_BITS-1:0] SvMode,
+  input logic [`SVMODE_BITS-1:0] SvMode,
   
   // The requested page number to compare against the key
-  input [KEY_BITS-1:0]  VirtualPageNumber,
+  input logic [KEY_BITS-1:0]  VirtualPageNumber,
 
   // Signals to write a new entry to this line
-  input                 CAMLineWrite,
-  input  [1:0]          PageTypeWrite,
+  input logic                 CAMLineWrite,
+  input logic [1:0]           PageTypeWrite,
 
   // Flush this line (set valid to 0)
-  input                 TLBFlush,
+  input logic                 TLBFlush,
 
   // This entry is a key for a tera, giga, mega, or kilopage.
   // PageType == 2'b00 --> kilopage
   // PageType == 2'b01 --> megapage
   // PageType == 2'b10 --> gigapage
   // PageType == 2'b11 --> terapage
-  output [1:0]          PageType,  // *** should this be the stored version or the always updated one?
-  output                Match
+  output logic [1:0]          PageType,  // *** should this be the stored version or the always updated one?
+  output logic                Match
 );
 
   // This entry has KEY_BITS for the key plus one valid bit.

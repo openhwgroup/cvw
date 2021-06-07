@@ -28,11 +28,11 @@
 `include "wally-config.vh"
 
 module physicalpagemask (
-    input  [`VPN_BITS-1:0]    VPN,
-    input  [`PPN_BITS-1:0]    PPN,
-    input  [1:0]              PageType,
+    input logic [`VPN_BITS-1:0]    VPN,
+    input logic [`PPN_BITS-1:0]    PPN,
+    input logic [1:0]              PageType,
 
-    output [`PPN_BITS-1:0]    MixedPageNumber 
+    output logic [`PPN_BITS-1:0]   MixedPageNumber 
 );
 
   localparam EXTRA_BITS = `PPN_BITS - `VPN_BITS;

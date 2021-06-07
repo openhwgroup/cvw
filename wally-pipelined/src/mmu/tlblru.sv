@@ -25,12 +25,14 @@
 ///////////////////////////////////////////
 
 module tlblru #(parameter ENTRY_BITS = 3) (
-  input                   clk, reset,
-  input                   TLBWrite,
-  input                   TLBFlush,
-  input  [ENTRY_BITS-1:0] VPNIndex,
-  input                   CAMHit,
-  output [ENTRY_BITS-1:0] WriteIndex
+  input logic                     clk, reset,
+  input logic                     TLBWrite,
+  input logic                     TLBFlush,
+  input logic [ENTRY_BITS-1:0]    VPNIndex,
+  input logic                     CAMHit,
+  input logic [2**ENTRY_BITS-1:0] WriteLines, 
+
+  output logic [ENTRY_BITS-1:0]   WriteIndex
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
@@ -39,21 +41,19 @@ module tlblru #(parameter ENTRY_BITS = 3) (
   logic [NENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
 
   // One-hot encodings of which line is being accessed
-  logic [NENTRIES-1:0] ReadLineOneHot, WriteLineOneHot, AccessLineOneHot;
+  logic [NENTRIES-1:0] ReadLineOneHot, AccessLineOneHot;
   
   // High if the next access causes all RU bits to be 1
   logic                AllUsed;
 
   // Convert indices to one-hot encodings
   decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
-  // *** should output writelineonehot so we don't have to decode WriteIndex outside
-  decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLineOneHot);
 
   // Find the first line not recently used
   priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
 
   // Access either the hit line or written line
-  assign AccessLineOneHot = (TLBWrite) ? WriteLineOneHot : ReadLineOneHot;
+  assign AccessLineOneHot = (TLBWrite) ? WriteLines : ReadLineOneHot;
 
   // Raise the bit of the recently accessed line
   assign RUBitsAccessed = AccessLineOneHot | RUBits;

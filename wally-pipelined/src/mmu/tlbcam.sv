@@ -31,26 +31,24 @@
 module tlbcam #(parameter ENTRY_BITS = 3,
                  parameter KEY_BITS   = 20,
                  parameter SEGMENT_BITS = 10) (
-  input                     clk, reset,
-  input  [KEY_BITS-1:0]     VirtualPageNumber,
-  input  [1:0]              PageTypeWrite,
-  input  [ENTRY_BITS-1:0]   WriteIndex,
-  input  [`SVMODE_BITS-1:0] SvMode,
-  input                     TLBWrite,
-  input                     TLBFlush,
-  output [ENTRY_BITS-1:0]   VPNIndex,
-  output [1:0]              HitPageType,
-  output                    CAMHit
+  input logic                     clk, reset,
+  input logic [KEY_BITS-1:0]      VirtualPageNumber,
+  input logic [1:0]               PageTypeWrite,
+  input logic [`SVMODE_BITS-1:0]  SvMode,
+  input logic                     TLBWrite,
+  input logic                     TLBFlush,
+  input logic [2**ENTRY_BITS-1:0] WriteLines,
+
+  output logic [ENTRY_BITS-1:0]   VPNIndex,
+  output logic [1:0]              HitPageType,
+  output logic                    CAMHit
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
 
-  logic [NENTRIES-1:0] CAMLineWrite;
+
   logic [1:0] PageTypeList [0:NENTRIES-1];
   logic [NENTRIES-1:0] Matches;
-
-  // Determine which CAM line should be written, based on a binary index
-  decoder #(ENTRY_BITS) decoder(WriteIndex, CAMLineWrite);
 
   // Create NENTRIES CAM lines, each of which will independently consider
   // whether the requested virtual address is a match. Each line stores the
@@ -61,7 +59,7 @@ module tlbcam #(parameter ENTRY_BITS = 3,
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin
       camline #(KEY_BITS, SEGMENT_BITS) camline(
-        .CAMLineWrite(CAMLineWrite[i] && TLBWrite),
+        .CAMLineWrite(WriteLines[i] && TLBWrite),
         .PageType(PageTypeList[i]),
         .Match(Matches[i]),
         .*);
