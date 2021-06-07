@@ -29,8 +29,8 @@
 
 `define BUILDROOT 0
 `define BUSYBEAR 1
-`define BUSYBEAR_FIX_READ {'h10000005}
-`define BUSYBEAR_TEST_VECTORS "/courses/e190ax/busybear_boot/"
+`define LINUX_FIX_READ {'h10000005}
+`define LINUX_TEST_VECTORS "/courses/e190ax/busybear_boot/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -92,9 +92,6 @@
 // Interrupt configuration
 `define PLIC_NUM_SRC 53
 `define PLIC_UART_ID 4
-
-/* verilator lint_off STMTDLY */
-/* verilator lint_off WIDTH */
 
 `define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
