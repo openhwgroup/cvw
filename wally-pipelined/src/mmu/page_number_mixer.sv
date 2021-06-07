@@ -51,7 +51,6 @@ module page_number_mixer #(parameter BITS = 20,
 
   generate
     if (`XLEN == 32) begin
-      always_comb 
 
       logic [HIGH_SEGMENT_BITS-1:0] Segment1, MixSegment1, Segment1Combined;
       logic [LOW_SEGMENT_BITS-1:0]  Segment0, MixSegment0, Segment0Combined;
