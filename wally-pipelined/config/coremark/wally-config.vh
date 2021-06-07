@@ -93,11 +93,6 @@
 // Can add PLIC Config here
 // Num interrupt sources
 
-/* verilator lint_off STMTDLY */
-/* verilator lint_off WIDTH */
-/* verilator lint_off ASSIGNDLY */
-/* verilator lint_off PINCONNECTEMPTY */
-
 `define TWO_BIT_PRELOAD "../config/coremark/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/coremark/BTBPredictor.txt"
 `define BPRED_ENABLED 1

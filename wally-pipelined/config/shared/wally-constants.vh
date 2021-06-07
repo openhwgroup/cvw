@@ -28,6 +28,12 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+// constants defining different privilege modes
+// defined in Table 1.1 of the privileged spec
+`define M_MODE (2'b11)
+`define S_MODE (2'b01)
+`define U_MODE (2'b00)
+
 // Virtual Memory Constants
 `define VPN_SEGMENT_BITS (`XLEN == 32 ? 10 : 9)
 `define VPN_BITS (`XLEN==32 ? (2*`VPN_SEGMENT_BITS) : (4*`VPN_SEGMENT_BITS))
@@ -43,8 +49,3 @@
 `define SV39 8
 `define SV48 9
 
-// constants defining different privilege modes
-// defined in Table 1.1 of the privileged spec
-`define M_MODE (2'b11)
-`define S_MODE (2'b01)
-`define U_MODE (2'b00)

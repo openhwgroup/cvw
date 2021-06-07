@@ -94,11 +94,6 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
 
-/* verilator lint_off STMTDLY */
-/* verilator lint_off WIDTH */
-/* verilator lint_off ASSIGNDLY */
-/* verilator lint_off PINCONNECTEMPTY */
-
 `define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
 `define BPRED_ENABLED 1
