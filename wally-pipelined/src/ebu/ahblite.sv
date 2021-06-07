@@ -58,7 +58,7 @@ module ahblite (
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
   // Signals from PMA checker
-  input  logic             SquashBusAccess,
+  input  logic             DSquashBusAccessM, ISquashBusAccessF,
   // Signals to PMA checker (metadata of proposed access)
   output logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   // Return from bus
@@ -147,7 +147,7 @@ module ahblite (
               (ProposedNextBusState == MMUTRANSLATE);
 
   // The PMA and PMP checkers can decide to squash the access 
-  assign NextBusState = (SquashBusAccess) ? IDLE : ProposedNextBusState;
+  assign NextBusState = (DSquashBusAccessM || ISquashBusAccessF) ? IDLE : ProposedNextBusState;
 
   // stall signals
   // Note that we need to extend both stalls when MMUTRANSLATE goes to idle,

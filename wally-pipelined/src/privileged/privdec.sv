@@ -25,6 +25,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 
 module privdec (
   input  logic [31:20] InstrM,

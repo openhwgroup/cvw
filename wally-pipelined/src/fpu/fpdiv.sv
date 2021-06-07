@@ -23,8 +23,8 @@
 //
 
 // `timescale 1ps/1ps
-module fpdiv (FDivSqrtDoneM, FDivResultM, FDivFlagsM, DivDenormM, FInput1E, FInput2E, FrmE, DivOpType, FmtE, DivOvEn, DivUnEn,
-	      FDivStartE, reset, clk, DivBusyM);
+module fpdiv (FDivSqrtDoneE, FDivResultE, FDivFlagsE, DivDenormE, FInput1E, FInput2E, FrmE, DivOpType, FmtE, DivOvEn, DivUnEn,
+	      FDivStartE, reset, clk, FDivBusyE);
 
    input [63:0] FInput1E;		// 1st input operand (A)
    input [63:0] FInput2E;		// 2nd input operand (B)
@@ -38,11 +38,11 @@ module fpdiv (FDivSqrtDoneM, FDivResultM, FDivFlagsM, DivDenormM, FInput1E, FInp
    input 	reset;
    input 	clk;   
 
-   output [63:0] FDivResultM;	// Result of operation
-   output [4:0]  FDivFlagsM;   	// IEEE exception flags 
-   output 	 DivDenormM;   	// DivDenormM on input or output
-   output 	 FDivSqrtDoneM;
-   output    DivBusyM;
+   output [63:0] FDivResultE;	// Result of operation
+   output [4:0]  FDivFlagsE;   	// IEEE exception flags 
+   output 	 DivDenormE;   	// DivDenormE on input or output
+   output 	 FDivSqrtDoneE;
+   output    FDivBusyE;
 
    supply1 	  vdd;
    supply0 	  vss;   
@@ -101,7 +101,7 @@ module fpdiv (FDivSqrtDoneM, FDivResultM, FDivFlagsM, DivDenormM, FInput1E, FInp
    convert_inputs_div divconv1 (Float1, Float2, FInput1E, FInput2E, DivOpType, FmtE);
 
    // Test for exceptions and return the "Invalid Operation" and
-   // "Denormalized" Input FDivFlagsM. The "sel_inv" is used in
+   // "Denormalized" Input FDivFlagsE. The "sel_inv" is used in
    // the third pipeline stage to select the result. Also, op1_Norm
    // and op2_Norm are one if FInput1E and FInput2E are not zero or denormalized.
    // sub is one if the effective operation is subtaction. 
@@ -138,9 +138,9 @@ module fpdiv (FDivSqrtDoneM, FDivResultM, FDivFlagsM, DivDenormM, FInput1E, FInp
 		  load_regr, load_regs, FmtE, DivOpType, exp_odd);
 
    // FSM : control divider
-   fsm control (FDivSqrtDoneM, load_rega, load_regb, load_regc, load_regd, 
+   fsm control (FDivSqrtDoneE, load_rega, load_regb, load_regc, load_regd, 
 		load_regr, load_regs, sel_muxa, sel_muxb, sel_muxr, 
-		clk, reset, FDivStartE, DivOpType, DivBusyM);
+		clk, reset, FDivStartE, DivOpType, FDivBusyE);
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 
@@ -152,9 +152,9 @@ module fpdiv (FDivSqrtDoneM, FDivResultM, FDivFlagsM, DivDenormM, FInput1E, FInp
 		   q1, qm1, qp1, q0, qm0, qp0, regr_out);
 
    // Store the final result and the exception flags in registers.
-   flopenr #(64) rega (clk, reset, FDivSqrtDoneM, Result, FDivResultM);
-   flopenr #(1) regb (clk, reset, FDivSqrtDoneM, DenormIO, DivDenormM);   
-   flopenr #(5) regc (clk, reset, FDivSqrtDoneM, FlagsIn, FDivFlagsM);   
+   flopenr #(64) rega (clk, reset, FDivSqrtDoneE, Result, FDivResultE);
+   flopenr #(1) regb (clk, reset, FDivSqrtDoneE, DenormIO, DivDenormE);   
+   flopenr #(5) regc (clk, reset, FDivSqrtDoneE, FlagsIn, FDivFlagsE);   
    
 endmodule // fpadd
 

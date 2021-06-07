@@ -57,12 +57,13 @@ module fctrl (
   always_comb begin
     //checks all but FMA/store/load
     IllegalFPUInstr2D = 0;
+    FDivStartD = 1'b0;
     if(OpD == 7'b1010011) begin
       casez(Funct7D)
         //compare	
         7'b10100?? : FResultSelD = 3'b001;
         //div/sqrt
-        7'b0?011?? : FResultSelD = 3'b000;
+        7'b0?011?? : begin FResultSelD = 3'b000; FDivStartD = 1'b1; end
         //add/sub
         7'b0000??? : FResultSelD = 3'b100;
         //mult
@@ -129,8 +130,6 @@ module fctrl (
   
   //this value is used enough to be shorthand
 
-  //if op is div/sqrt - start div/sqrt
-  assign FDivStartD = ~|FResultSelD; // is FResultSelD == 000
 
   //operation control for each fp operation
   //has to be expanded over standard to account for
@@ -168,8 +167,8 @@ module fctrl (
       //fma/mult	
       //  fmadd  = ?000
       //  fmsub  = ?001
-      //  fnmadd = ?010
-      //  fnmsub = ?011
+      //  fnmsub = ?010	-(a*b)+c
+      //  fnmadd = ?011 -(a*b)-c
       //  fmul   = ?100
       //		  {?, is mul, is negitive, is sub}
       3'b010 : begin FOpCtrlD = {1'b0, OpD[4:2]}; FInput2UsedD = 1'b1; FInput3UsedD = ~OpD[4]; end
