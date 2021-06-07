@@ -1,12 +1,9 @@
 ///////////////////////////////////////////
-// page_number_mixer.sv
+// physicalpagemask.sv
 //
-// Written: tfleming@hmc.edu & jtorrey@hmc.edu 6 April 2021
-// Modified: kmacsaigoren@hmc.edu 1 June 2021
-//              Implemented SV48 on top of SV39. This included adding a 3rd Segment to each of the pagenumbers,
-//              Ensuring that the BITS and HIGH_SEGMENT_BITS inputs were correct everywhere this module gets instatniated,
-//              Adding seveeral muxes to decide the bit selection to turn pagenumbers into segments based on SV mode,
-//              Adding support for terapage/newgigapage encoding.
+// Written: David Harris and kmacsaigoren@hmc.edu 7 June 2021
+// Modified:
+// 
 //
 // Purpose: Takes two page numbers and replaces segments of the first page
 //          number with segments from the second, based on the page type.
@@ -30,37 +27,43 @@
 
 `include "wally-config.vh"
 
-module physicalpagemask #(parameter BITS = 20,
-                           parameter HIGH_SEGMENT_BITS = 10) (
-    input  [BITS-1:0]       VirtualAddress, //***
-    input  [BITS-1:0]        PPN, //***
+module physicalpagemask (
+    input  [`VPN_BITS-1:0]    VPN,
+    input  [`PPN_BITS-1:0]    PPN,
     input  [1:0]              PageType,
-    input  [`SVMODE_BITS-1:0] SvMode,
 
-    output [BITS-1:0]         PhysicalAddress //***
+    output [`PPN_BITS-1:0]    MixedPageNumber 
 );
 
-  logic [34:0] OffsetMask;
+  localparam EXTRA_BITS = `PPN_BITS - `VPN_BITS;
+  logic ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
+
+  logic [`PPN_BITS-1:0] OffsetMask;
+
 
   generate
     if (`XLEN == 32) begin
       always_comb 
         case (PageType[0])
-          0: OffsetMask = 34'h3FFFFF000; // kilopage: 22 bits of PPN, 12 bits of offset
-          1: OffsetMask = 34'h3FFC00000; // megapage: 12 bits of PPN, 22 bits of offset
+          // *** the widths of these constansts are hardocded here to match `PPN_BITS in the wally-constants file.
+          0: OffsetMask = 22'h3FFFFF; // kilopage: 22 bits of PPN, 0 bits of VPN
+          1: OffsetMask = 22'h3FFC00; // megapage: 12 bits of PPN, 10 bits of VPN
         endcase
     end else begin
       always_comb 
         case (PageType[1:0])
-          0: OffsetMask = 56'hFFFFFFFFFFF000; // kilopage: 44 bits of PPN, 12 bits of offset
-          1: OffsetMask = 56'hFFFFFFFFE00000; // megapage: 35 bits of PPN, 21 bits of offset
-          2: OffsetMask = 56'hFFFFFFC0000000; // gigapage: 26 bits of PPN, 30 bits of offset
-          3: OffsetMask = 56'hFFFF8000000000; // terapage: 17 bits of PPN, 39 bits of offset
+          0: OffsetMask = 44'hFFFFFFFFFFF; // kilopage: 44 bits of PPN, 0 bits of VPN
+          1: OffsetMask = 44'hFFFFFFFFE00; // megapage: 35 bits of PPN, 9 bits of VPN
+          2: OffsetMask = 44'hFFFFFFC0000; // gigapage: 26 bits of PPN, 18 bits of VPN
+          3: OffsetMask = 44'hFFFF8000000; // terapage: 17 bits of PPN, 27 bits of VPN
+          // *** make sure that this doesnt break when using sv39. In that case, all of these
+          //     busses are the widths for sv48, but extra bits should be zeroed out by the mux
+          //     in the tlb when it generates VPN from the full virtualadress.
         endcase
     end
   endgenerate
 
   // merge low bits of the virtual address containing the offset with high bits of the PPN
-  assign PhysicalAddress = VirtualAddress & ~OffsetMask | ((PPN<<12) & OffsetMask);
+  assign MixedPageNumber = (ZeroExtendedVPN & ~OffsetMask) | (PPN & OffsetMask);
 
 endmodule

@@ -45,8 +45,8 @@ module testbench();
   logic [`XLEN-1:0] meminit;
 
   string tests32mmu[] = '{
-    "rv32mmu/WALLY-VIRTUALMEMORY-NOTRANSLATE", "2000",
-    "rv32mmu/WALLY-VIRTUALMEMORY", "5000"
+    "rv32mmu/WALLY-VIRTUALMEMORY-NOTRANSLATE", "2000"
+    // "rv32mmu/WALLY-VIRTUALMEMORY", "5000"  // *** commented out until we have better virtual memory tests.
   };
 
   string tests64mmu[] = '{
