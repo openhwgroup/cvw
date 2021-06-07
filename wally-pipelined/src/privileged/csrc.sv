@@ -28,7 +28,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 module csrc ( 
     input logic 	     clk, reset,

@@ -24,6 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+// include shared configuration
+`include "wally-shared.vh"
+
 `define BUILDROOT 0
 `define BUSYBEAR 1
 `define BUSYBEAR_FIX_READ {'h10000005}
@@ -32,19 +35,9 @@
 `define XLEN 64
 
 `define MISA (32'h0014112D)
-`define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
-`define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
-`define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
-`define F_SUPPORTED ((`MISA >> 5) % 2 == 1)
-`define M_SUPPORTED ((`MISA >> 12) % 2 == 1)
-`define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
-`define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 `define ZCSR_SUPPORTED 1
 `define ZCOUNTERS_SUPPORTED 1
 `define COUNTERS 31
-// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
-//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
-`define N_SUPPORTED 0
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1

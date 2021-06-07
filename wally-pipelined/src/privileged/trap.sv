@@ -25,7 +25,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 module trap (
   input  logic             clk, reset, 
