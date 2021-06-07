@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// cam_line.sv
+// camline.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 6 April 2021
 // Modified: kmacsaigoren@hmc.edu 1 June 2021
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module cam_line #(parameter KEY_BITS = 20,
+module camline #(parameter KEY_BITS = 20,
                   parameter SEGMENT_BITS = 10) (
   input                 clk, reset,
 

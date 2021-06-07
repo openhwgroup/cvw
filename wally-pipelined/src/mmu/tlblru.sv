@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// tlb_lru.sv
+// tlblru.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 16 February 2021
 // Modified:
@@ -24,7 +24,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-module tlb_lru #(parameter ENTRY_BITS = 3) (
+module tlblru #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,
   input                   TLBWrite,
   input                   TLBFlush,
@@ -45,12 +45,12 @@ module tlb_lru #(parameter ENTRY_BITS = 3) (
   logic                AllUsed;
 
   // Convert indices to one-hot encodings
-  decoder #(ENTRY_BITS) read_decoder(VPNIndex, ReadLineOneHot);
+  decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
   // *** should output writelineonehot so we don't have to decode WriteIndex outside
-  decoder #(ENTRY_BITS) write_decoder(WriteIndex, WriteLineOneHot);
+  decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLineOneHot);
 
   // Find the first line not recently used
-  priority_encoder #(ENTRY_BITS) first_nru(~RUBits, WriteIndex);
+  priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
 
   // Access either the hit line or written line
   assign AccessLineOneHot = (TLBWrite) ? WriteLineOneHot : ReadLineOneHot;
@@ -63,7 +63,7 @@ module tlb_lru #(parameter ENTRY_BITS = 3) (
   assign RUBitsNext = (AllUsed) ? AccessLineOneHot : RUBitsAccessed;
 
   // Update LRU state on any TLB hit or write
-  flopenrc #(NENTRIES) lru_state(clk, reset, TLBFlush, (CAMHit || TLBWrite),
+  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite),
     RUBitsNext, RUBits);
 
 endmodule

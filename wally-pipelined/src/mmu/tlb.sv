@@ -143,10 +143,10 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign PageOffset        = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
-  tlb_lru #(ENTRY_BITS) lru(.*);
+  tlblru #(ENTRY_BITS) lru(.*);
 
-  tlb_ram #(ENTRY_BITS) tlb_ram(.*);
-  tlb_cam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlb_cam(.*);
+  tlbram #(ENTRY_BITS) tlbram(.*);
+  tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
   // unswizzle useful PTE bits
   assign PTE_U = PTEAccessBits[4];

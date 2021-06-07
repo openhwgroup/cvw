@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// tlb_ram.sv
+// tlbram.sv
 //
 // Written: jtorrey@hmc.edu & tfleming@hmc.edu 16 February 2021
 // Modified:
@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-module tlb_ram #(parameter ENTRY_BITS = 3) (
+module tlbram #(parameter ENTRY_BITS = 3) (
   input                   clk, reset,
   input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from
   input  [ENTRY_BITS-1:0] WriteIndex,
@@ -45,13 +45,13 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
 
   logic [NENTRIES-1:0] RAMEntryWrite;
 
-  decoder #(ENTRY_BITS) tlb_ram_decoder(WriteIndex, RAMEntryWrite);
+  decoder #(ENTRY_BITS) tlbramdecoder(WriteIndex, RAMEntryWrite);
 
   // Generate a flop for every entry in the RAM
   generate
     genvar i;
-    for (i = 0; i < NENTRIES; i++) begin: tlb_ram_flops
-      flopenr #(`XLEN) pte_flop(clk, reset, RAMEntryWrite[i] & TLBWrite,
+    for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
+      flopenr #(`XLEN) pteflop(clk, reset, RAMEntryWrite[i] & TLBWrite,
         PageTableEntryWrite, ram[i]);
     end
   endgenerate

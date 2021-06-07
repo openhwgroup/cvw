@@ -27,11 +27,11 @@
 
 module decoder #(parameter BINARY_BITS = 3) (
   input  [BINARY_BITS-1:0] binary,
-  output [(2**BINARY_BITS)-1:0] one_hot
+  output [(2**BINARY_BITS)-1:0] onehot
 );
 
   // *** Double check whether this synthesizes as expected
   //     -- Ben @ May 4: only warning is that "signed to unsigned assignment occurs"; that said, I haven't checked the netlists
-  assign one_hot = 1 << binary;
+  assign onehot = 1 << binary;
 
 endmodule

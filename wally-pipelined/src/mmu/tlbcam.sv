@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// tlb_cam.sv
+// tlbcam.sv
 //
 // Written: jtorrey@hmc.edu 16 February 2021
 // Modified: kmacsaigoren@hmc.edu 1 June 2021
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module tlb_cam #(parameter ENTRY_BITS = 3,
+module tlbcam #(parameter ENTRY_BITS = 3,
                  parameter KEY_BITS   = 20,
                  parameter SEGMENT_BITS = 10) (
   input                     clk, reset,
@@ -60,7 +60,7 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   generate
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin
-      cam_line #(KEY_BITS, SEGMENT_BITS) cam_line(
+      camline #(KEY_BITS, SEGMENT_BITS) camline(
         .CAMLineWrite(CAMLineWrite[i] && TLBWrite),
         .PageType(PageTypeList[i]),
         .Match(Matches[i]),
@@ -71,7 +71,7 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   // In case there are multiple matches in the CAM, select only one
   // *** it might be guaranteed that the CAM will never have multiple matches.
   // If so, this is just an encoder
-  priority_encoder #(ENTRY_BITS) match_priority(Matches, VPNIndex);
+  priorityencoder #(ENTRY_BITS) matchpriority(Matches, VPNIndex);
 
   assign CAMHit = |Matches & ~TLBFlush;
   assign HitPageType = PageTypeList[VPNIndex];
