@@ -30,7 +30,7 @@
 
 module tlb_cam #(parameter ENTRY_BITS = 3,
                  parameter KEY_BITS   = 20,
-                 parameter HIGH_SEGMENT_BITS = 10) (
+                 parameter SEGMENT_BITS = 10) (
   input                     clk, reset,
   input  [KEY_BITS-1:0]     VirtualPageNumber,
   input  [1:0]              PageTypeWrite,
@@ -60,7 +60,7 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   generate
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin
-      cam_line #(KEY_BITS, HIGH_SEGMENT_BITS) cam_line(
+      cam_line #(KEY_BITS, SEGMENT_BITS) cam_line(
         .CAMLineWrite(CAMLineWrite[i] && TLBWrite),
         .PageType(PageTypeList[i]),
         .Match(Matches[i]),
