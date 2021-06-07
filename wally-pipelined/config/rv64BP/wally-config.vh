@@ -39,6 +39,12 @@
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 31
 `define ZCOUNTERS_SUPPORTED 1
+<<<<<<< HEAD
+=======
+// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
+//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
+`define N_SUPPORTED 0
+>>>>>>> 64a687b80fbd04a02ac986dde4802d9324aa6ac1
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -49,6 +55,9 @@
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
+
+`define ITLB_ENTRY_BITS 5
+`define DTLB_ENTRY_BITS 5
 
 // Address space
 `define RESET_VECTOR 64'h0000000000000000

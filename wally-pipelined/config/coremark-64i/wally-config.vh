@@ -34,6 +34,12 @@
 `define MISA (32'h00000104 | 1<<5 | 1<<18 | 1 << 20)
 `define ZCSR_SUPPORTED 1
 `define ZCOUNTERS_SUPPORTED 1
+<<<<<<< HEAD
+=======
+// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
+//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
+`define N_SUPPORTED 0
+>>>>>>> 64a687b80fbd04a02ac986dde4802d9324aa6ac1
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1

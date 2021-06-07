@@ -28,10 +28,14 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+<<<<<<< HEAD
 // Privileged modes
 `define M_MODE (2'b11)
 `define S_MODE (2'b01)
 `define U_MODE (2'b00)
+=======
+`include "wally-config.vh"
+>>>>>>> 64a687b80fbd04a02ac986dde4802d9324aa6ac1
 
 // Virtual Memory Constants
 `define VPN_SEGMENT_BITS (`XLEN == 32 ? 10 : 9)
@@ -47,3 +51,10 @@
 `define SV32 1
 `define SV39 8
 `define SV48 9
+
+
+// constants defining different privilege modes
+// defined in Table 1.1 of the privileged spec
+`define M_MODE (2'b11)
+`define S_MODE (2'b01)
+`define U_MODE (2'b00)

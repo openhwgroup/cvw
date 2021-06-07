@@ -25,7 +25,9 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "wally-constants.vh"
 
+// *** remove signals not needed by PMA/PMP now that it is moved
 module privileged (
   input  logic             clk, reset,
   input  logic             FlushW,
@@ -52,21 +54,24 @@ module privileged (
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
+
+  // Trap signals from pmp/pma in mmu
+  // *** do these need to be split up into one for dmem and one for ifu?
+  // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
+  
+  input logic PMAInstrAccessFaultF, PMPInstrAccessFaultF,
+  input logic PMALoadAccessFaultM, PMPLoadAccessFaultM,
+  input logic PMAStoreAccessFaultM, PMPStoreAccessFaultM,
+
   output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM,
+  output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
+  output logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], //*** to be sent up through wallypipelinedhart into the pma/pmp in ifu and dmem. *** is it a bad idea to have this huge bus running all over?
   output logic [2:0]       FRM_REGW,
-  input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM,
+  input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM
 
-  // PMA checker signals
-  input  logic [31:0]      HADDR,
-  input  logic [2:0]       HSIZE, HBURST,
-  input  logic             HWRITE,
-  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
-  output logic             Cacheable, Idempotent, AtomicAllowed,
-  output logic             SquashBusAccess,
-  output logic [5:0]       HSELRegions
 );
 
   logic [1:0] NextPrivilegeModeM;
@@ -91,18 +96,11 @@ module privileged (
   logic InterruptM; 
 
   logic [1:0] STATUS_MPP;
-  logic       STATUS_SPP, STATUS_TSR;
+  logic       STATUS_SPP, STATUS_TSR, STATUS_MPRV; // **** status mprv is unused outside of the csr module as of 4 June 2021. should it be deleted alltogether from the module, or should I leav the pin here in case someone needs it? 
   logic       STATUS_MIE, STATUS_SIE;
-  logic       STATUS_MPRV;
   logic [11:0] MIP_REGW, MIE_REGW;
   logic md, sd;
 
-  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW;
-  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15];
-
-  logic PMASquashBusAccess, PMPSquashBusAccess;
-  logic PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
-  logic PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
 
   ///////////////////////////////////////////
   // track the current privilege level
@@ -144,13 +142,6 @@ module privileged (
   csr csr(.*);
 
   ///////////////////////////////////////////
-  // Check physical memory accesses
-  ///////////////////////////////////////////
-
-  pmachecker pmachecker(.*);
-  pmpchecker pmpchecker(.*);
-
-  ///////////////////////////////////////////
   // Extract exceptions by name and handle them 
   ///////////////////////////////////////////
 
@@ -168,8 +159,6 @@ module privileged (
   assign InstrAccessFaultF = PMAInstrAccessFaultF || PMPInstrAccessFaultF;
   assign LoadAccessFaultM  = PMALoadAccessFaultM || PMPLoadAccessFaultM;
   assign StoreAccessFaultM  = PMAStoreAccessFaultM || PMPStoreAccessFaultM;
-
-  assign SquashBusAccess = PMASquashBusAccess || PMPSquashBusAccess;
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,

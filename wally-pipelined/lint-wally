@@ -7,7 +7,11 @@ verilator=`which verilator`
 basepath=$(dirname $0)
 for config in rv64ic rv32ic; do
     echo "$config linting..."
+<<<<<<< HEAD
     if !($verilator --lint-only "$@" --top-module wallypipelinedsoc "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/*/*.sv); then
+=======
+    if !($verilator --lint-only "$@" --top-module wallypipelinedsoc "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/*/*.sv --relative-includes); then
+>>>>>>> 64a687b80fbd04a02ac986dde4802d9324aa6ac1
         echo "Exiting after $config lint due to errors or warnings"
         exit 1
     fi

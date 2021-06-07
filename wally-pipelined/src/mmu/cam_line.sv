@@ -32,7 +32,7 @@ module cam_line #(parameter KEY_BITS = 20,
                   parameter HIGH_SEGMENT_BITS = 10) (
   input                 clk, reset,
 
-  // input to scheck which SvMode is running
+  // input to check which SvMode is running
   input [`SVMODE_BITS-1:0] SvMode,
   
   // The requested page number to compare against the key

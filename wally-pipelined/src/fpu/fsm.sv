@@ -48,7 +48,7 @@ module fsm (done, load_rega, load_regb, load_regc,
      S25=5'd25, S26=5'd26, S27=5'd27,
      S28=5'd28, S29=5'd29, S30=5'd30;
    
-   always @(posedge clk)
+   always @(negedge clk)
      begin
 	if(reset==1'b1)
 	  CURRENT_STATE=S0;
@@ -245,7 +245,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	  S10:  // done
 	    begin
 	       done = 1'b1;
-		   divBusy = 1'b1;
+		   divBusy = 1'b0;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
