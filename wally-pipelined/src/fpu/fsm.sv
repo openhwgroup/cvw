@@ -1,7 +1,7 @@
 module fsm (done, load_rega, load_regb, load_regc, 
 	    load_regd, load_regr, load_regs,
 	    sel_muxa, sel_muxb, sel_muxr, 
-	    clk, reset, start, op_type, divBusy);
+	    clk, reset, start, op_type, divBusy, holdInputs);
 
    input 	clk;
    input 	reset;
@@ -20,7 +20,7 @@ module fsm (done, load_rega, load_regb, load_regc,
    output [2:0] sel_muxa;
    output [2:0] sel_muxb;
    output 	sel_muxr;
-   output logic	divBusy;
+   output logic	divBusy,holdInputs;
 
    reg 		done;      // End of cycles
    reg 		load_rega; // enable for regA
@@ -65,6 +65,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b0;	
+		    holdInputs = 1'b0;	
 		    load_rega = 1'b0;
 		    load_regb = 1'b0;
 		    load_regc = 1'b0;
@@ -80,6 +81,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;	
+		    holdInputs = 1'b0;	
 		    load_rega = 1'b0;
 		    load_regb = 1'b1;
 		    load_regc = 1'b0;
@@ -95,6 +97,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
+		    holdInputs = 1'b0;	
 		    load_rega = 1'b0;
 		    load_regb = 1'b1;
 		    load_regc = 1'b0;
@@ -111,6 +114,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -126,6 +130,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -141,6 +146,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -156,6 +162,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -171,6 +178,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -186,6 +194,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -201,6 +210,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -216,6 +226,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -231,6 +242,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -246,6 +258,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b1;
 		   divBusy = 1'b0;
+		   holdInputs = 1'b0;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -261,6 +274,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -276,6 +290,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -291,6 +306,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -306,6 +322,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -321,6 +338,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -336,6 +354,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -351,6 +370,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -366,6 +386,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -381,6 +402,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -396,6 +418,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -411,6 +434,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -426,6 +450,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -441,6 +466,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b1;
+		   holdInputs = 1'b1;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -456,6 +482,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b1;
 		   divBusy = 1'b0;
+		   holdInputs = 1'b0;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -471,6 +498,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	    begin
 	       done = 1'b0;
 		   divBusy = 1'b0;
+		   holdInputs = 1'b0;
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;

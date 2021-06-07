@@ -40,21 +40,21 @@ module fma1(
 
 
 	// determine if an input is a special value
-	assign XNaNE = &FInput1E[62:52] && |FInput1E[51:0]; 
-	assign YNaNE = &FInput2E[62:52] && |FInput2E[51:0]; 
-	assign ZNaNE = &FInput3E2[62:52] && |FInput3E2[51:0];
+	assign XNaNE = &XExp && |XMan; 
+	assign YNaNE = &YExp && |XMan; 
+	assign ZNaNE = &ZExp && |ZMan;
 
-	assign XDenormE = ~(|FInput1E[62:52]) && |FInput1E[51:0]; 
-	assign YDenormE = ~(|FInput2E[62:52]) && |FInput2E[51:0]; 
-	assign ZDenormE = ~(|FInput3E2[62:52]) && |FInput3E2[51:0];
+	assign XDenormE = ~(|XExp) && |XMan; 
+	assign YDenormE = ~(|YExp) && |YMan; 
+	assign ZDenormE = ~(|ZExp) && |ZMan;
 
-	assign XInfE = &FInput1E[62:52] && ~(|FInput1E[51:0]); 
-	assign YInfE = &FInput2E[62:52] && ~(|FInput2E[51:0]); 
-	assign ZInfE = &FInput3E2[62:52] && ~(|FInput3E2[51:0]);
+	assign XInfE = &XExp && ~(|XMan); 
+	assign YInfE = &YExp && ~(|YMan); 
+	assign ZInfE = &ZExp && ~(|ZMan);
 
-	assign XZeroE = ~(|FInput1E[62:0]);
-	assign YZeroE = ~(|FInput2E[62:0]);
-	assign ZZeroE = ~(|FInput3E2[62:0]);
+	assign XZeroE = ~(|{XExp, XMan});
+	assign YZeroE = ~(|{YExp, YMan});
+	assign ZZeroE = ~(|{ZExp, ZMan});
 
 
 
