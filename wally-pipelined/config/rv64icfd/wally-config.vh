@@ -24,6 +24,9 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+// include shared configuration
+`include "wally-shared.vh"
+
 `define BUILDROOT 0
 `define BUSYBEAR 0
 
@@ -32,23 +35,9 @@
 
 // MISA RISC-V configuration per specification
 `define MISA (32'h00000104 | 0 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
-`define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
-`define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
-`define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
-`define F_SUPPORTED ((`MISA >> 5) % 2 == 1)
-`define M_SUPPORTED ((`MISA >> 12) % 2 == 1)
-`define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
-`define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 31
 `define ZCOUNTERS_SUPPORTED 1
-// N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
-//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
-`define N_SUPPORTED 0
-
-`define M_MODE (2'b11)
-`define S_MODE (2'b01)
-`define U_MODE (2'b00)
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -59,6 +48,9 @@
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
+
+`define ITLB_ENTRY_BITS 5
+`define DTLB_ENTRY_BITS 5
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
@@ -101,11 +93,6 @@
 `define PLIC_NUM_SRC_LT_32
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
-
-/* verilator lint_off STMTDLY */
-/* verilator lint_off WIDTH */
-/* verilator lint_off ASSIGNDLY */
-/* verilator lint_off PINCONNECTEMPTY */
 
 `define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"

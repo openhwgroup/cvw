@@ -55,14 +55,30 @@ module dmem (
   output logic             DTLBLoadPageFaultM, DTLBStorePageFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
   output logic             StoreMisalignedFaultM, StoreAccessFaultM,
-  // TLB management
+  
+  // mmu management
   input logic  [1:0]       PrivilegeModeW,
   input logic  [`XLEN-1:0] PageTableEntryM,
   input logic  [1:0]       PageTypeM,
   input logic  [`XLEN-1:0] SATP_REGW,
   input logic              STATUS_MXR, STATUS_SUM,
   input logic              DTLBWriteM, DTLBFlushM,
-  output logic             DTLBMissM, DTLBHitM
+  output logic             DTLBMissM, DTLBHitM,
+  
+  // PMA/PMP (inside mmu) signals
+  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
+  input  logic [2:0]       HSIZE, HBURST,
+  input  logic             HWRITE,
+  input  logic             AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
+  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
+  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
+
+  output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
+  output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
+  
+  output logic             DSquashBusAccessM,
+  output logic [5:0]       DHSELRegionsM
+  
 );
 
   logic SquashSCM;
@@ -76,12 +92,18 @@ module dmem (
   localparam STATE_FETCH_AMO = 2;
   localparam STATE_STALLED = 3;
 
-  tlb #(.ENTRY_BITS(3), .ITLB(0)) dtlb(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
+  logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
+  // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
+  
+  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
                 .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
                 .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
                 .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
-                .*);
+
+                .ExecuteAccessF(1'b0),
+                .SquashBusAccess(DSquashBusAccessM), .HSELRegions(DHSELRegionsM),
+                .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // Specify which type of page fault is occurring
   assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWM[1];
@@ -170,8 +192,6 @@ module dmem (
       default: NextState = STATE_READY;
     endcase // case (CurrState)
   end
-  
-  
 
 endmodule
 
