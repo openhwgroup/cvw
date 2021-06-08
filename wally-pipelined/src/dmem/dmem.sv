@@ -30,7 +30,7 @@
 // *** Ross Thompson amo misalignment check?
 module dmem (
   input  logic             clk, reset,
-  input  logic             StallW, FlushW,
+  input  logic             StallM, FlushM, StallW, FlushW,
   //output logic             DataStall,
   // Memory Stage
   input  logic [1:0]       MemRWM,
@@ -39,10 +39,12 @@ module dmem (
   //input  logic [`XLEN-1:0] ReadDataW,
   input  logic [`XLEN-1:0] WriteDataM, 
   input  logic [1:0]       AtomicM,
+  input  logic             CommitM,
   output logic [`XLEN-1:0] MemPAdrM,
   output logic             MemReadM, MemWriteM,
   output logic [1:0]       AtomicMaskedM,
   output logic             DataMisalignedM,
+  output logic             CommittedM,
   // Writeback Stage
   input  logic             MemAckW,
   input  logic [`XLEN-1:0] ReadDataW,
@@ -63,11 +65,11 @@ module dmem (
   output logic             DTLBMissM, DTLBHitM
 );
 
-  logic             SquashSCM;
-  logic             DTLBPageFaultM;
-  logic 	    MemAccessM;
-
+  logic SquashSCM;
+  logic DTLBPageFaultM;
+  logic MemAccessM;
   logic [1:0] CurrState, NextState;
+  logic preCommittedM;
 
   localparam STATE_READY = 0;
   localparam STATE_FETCH = 1;
@@ -103,6 +105,11 @@ module dmem (
   assign MemWriteM = MemRWM[0] & ~NonBusTrapM && ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
   assign MemAccessM = |MemRWM;
+
+  // Determine if M stage committed
+  // Reset whenever unstalled. Set when access successfully occurs
+  flopr #(1) committedMreg(clk,reset,(CommittedM | CommitM) & StallM,preCommittedM);
+  assign CommittedM = preCommittedM | CommitM;
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];

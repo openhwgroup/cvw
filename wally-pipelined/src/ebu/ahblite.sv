@@ -81,7 +81,7 @@ module ahblite (
   output logic             HWRITED,
   // Stalls
   output logic             /*InstrUpdate, */DataStall,
-  output logic MemAckW
+  output logic CommitM, MemAckW
 );
 
   logic GrantData;
@@ -190,6 +190,8 @@ module ahblite (
 
   assign InstrRData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
+  assign CommitM = (BusState == MEMREAD) || (BusState == MEMWRITE) || (BusState == ATOMICREAD) || (BusState == ATOMICWRITE);
+  // *** Bracker 6/5/21: why is this W stage?
   assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
 		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
   assign MMUReadPTE = HRDATA;

@@ -489,7 +489,7 @@ string tests32f[] = '{
   };
 
   string tests64periph[] = '{
-    "rv64i-periph/WALLY-PLIC", "2000"
+    "rv64i-periph/WALLY-PERIPH", "2000"
   };
 
   string tests32periph[] = '{

@@ -28,7 +28,7 @@
 
 module privileged (
   input  logic             clk, reset,
-  input  logic             FlushW,
+  input  logic             FlushD, FlushE, FlushM, FlushW, StallD, StallW, StallE, StallM,
   input  logic             CSRReadM, CSRWriteM,
   input  logic [`XLEN-1:0] SrcAM,
   input  logic [`XLEN-1:0] PCF,PCD,PCE,PCM,
@@ -37,7 +37,8 @@ module privileged (
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, NonBusTrapM,
   output logic             ITLBFlushF, DTLBFlushM,
-  input  logic             InstrValidM,InstrValidW, FloatRegWriteW, LoadStallD,
+  input  logic             InstrValidM,InstrValidW, CommittedM,
+  input  logic             FloatRegWriteW, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
   input  logic 		   RASPredPCWrongM,
@@ -57,8 +58,6 @@ module privileged (
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic [2:0]       FRM_REGW,
-  input  logic             FlushD, FlushE, FlushM, StallD, StallW, StallE, StallM,
-
   // PMA checker signals
   input  logic [31:0]      HADDR,
   input  logic [2:0]       HSIZE, HBURST,
