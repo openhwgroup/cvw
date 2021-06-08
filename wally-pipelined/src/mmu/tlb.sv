@@ -94,7 +94,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
-  logic [2**ENTRY_BITS-1:0] WriteLines; // used as the one-hot encoding of WriteIndex
+  logic [(2**ENTRY_BITS)-1:0] WriteLines; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
