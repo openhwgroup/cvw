@@ -79,8 +79,8 @@ module ifu (
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
   input  logic             ExecuteAccessF, //read, write, and atomic access are all set to zero because this mmu is onlt working with instructinos in the F stage.
-  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
-  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
+  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so they're gonna have to come over into ifu and dmem
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1], 
 
   output logic             PMPInstrAccessFaultF, PMAInstrAccessFaultF,
   output logic             ISquashBusAccessF,

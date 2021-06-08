@@ -48,7 +48,7 @@ module pmpchecker (
   // boundary. It would be better to store the PMP address registers in a module
   // somewhere in the CSR hierarchy and do PMP checking _within_ that module, so
   // we don't have to pass around 16 whole registers.
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
 
@@ -89,9 +89,9 @@ module pmpchecker (
                       .Match(Regions[0]));
   assign ActiveRegion[0] = |PMPCFG[0][4:3];
 
-  generate
+  generate // *** only for PMP_ENTRIES > 0
     genvar i;
-    for (i = 1; i < 16; i++) begin
+    for (i = 1; i < `PMP_ENTRIES; i++) begin
       pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[i][4:3]),
                           .CurrentPMPAdr(PMPADDR_ARRAY_REGW[i]),
                           .AdrAtLeastPreviousPMP(AboveRegion[i-1]),

@@ -71,7 +71,7 @@ module dmem (
   input  logic             HWRITE,
   input  logic             AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
-  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1], // *** this one especially has a large note attached to it in pmpchecker.
 
   output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
   output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
