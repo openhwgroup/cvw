@@ -29,7 +29,7 @@
 `include "wally-config.vh"
 
 module pmpchecker (
-  input  logic             clk, reset,
+//  input  logic             clk, reset, //*** it seems like clk, reset is also not needed here?
 
   input  logic [31:0]      HADDR,
 
