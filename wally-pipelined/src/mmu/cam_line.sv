@@ -32,15 +32,15 @@ module cam_line #(parameter KEY_BITS = 20,
                   parameter HIGH_SEGMENT_BITS = 10) (
   input                 clk, reset,
 
-  // input to scheck which SvMode is running
-  input [`SVMODE_BITS-1:0] SvMode,
+  // input to check which SvMode is running
+//  input logic [`SVMODE_BITS-1:0] SvMode, // *** may no longer be needed.
   
   // The requested page number to compare against the key
   input [KEY_BITS-1:0]  VirtualPageNumber,
 
   // Signals to write a new entry to this line
-  input                 CAMLineWrite,
-  input  [1:0]          PageTypeWrite,
+  input logic                 CAMLineWrite,
+  input logic [1:0]           PageTypeWriteVal,
 
   // Flush this line (set valid to 0)
   input                 TLBFlush,
@@ -58,13 +58,8 @@ module cam_line #(parameter KEY_BITS = 20,
   logic                Valid;
   logic [KEY_BITS-1:0] Key;
 
-  // When determining a match for a superpage, we might use only a portion of
-  // the input VirtualPageNumber. Unused parts of the VirtualPageNumber are
-  // zeroed in VirtualPageNumberQuery to better match with Key.
-  logic [KEY_BITS-1:0] VirtualPageNumberQuery;
-
   // On a write, update the type of the page referred to by this line.
-  flopenr #(2) pagetypeflop(clk, reset, CAMLineWrite, PageTypeWrite, PageType);
+  flopenr #(2) pagetypeflop(clk, reset, CAMLineWrite, PageTypeWriteVal, PageType);
   //mux2 #(2) pagetypemux(StoredPageType, PageTypeWrite, CAMLineWrite, PageType);
 
   // On a write, set the valid bit high and update the stored key.

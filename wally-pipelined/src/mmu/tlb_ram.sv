@@ -28,12 +28,13 @@
 `include "wally-config.vh"
 `include "wally-constants.vh"
 
-module tlb_ram #(parameter ENTRY_BITS = 3) (
-  input                   clk, reset,
-  input  [ENTRY_BITS-1:0] VPNIndex,  // Index to read from
-  input  [ENTRY_BITS-1:0] WriteIndex,
-  input  [`XLEN-1:0]      PageTableEntryWrite,
-  input                   TLBWrite,
+module tlbram #(parameter ENTRY_BITS = 3) (
+  input logic                       clk, reset,
+  input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
+//  input logic [ENTRY_BITS-1:0]      WriteIndex, // *** unused?
+  input logic [`XLEN-1:0]           PTEWriteVal,
+  input logic                       TLBWrite,
+  input logic [2**ENTRY_BITS-1:0]   WriteLines,
 
   output [`PPN_BITS-1:0]  PhysicalPageNumber,
   output [7:0]            PTEAccessBits
@@ -51,9 +52,9 @@ module tlb_ram #(parameter ENTRY_BITS = 3) (
   // Generate a flop for every entry in the RAM
   generate
     genvar i;
-    for (i = 0; i < NENTRIES; i++) begin: tlb_ram_flops
-      flopenr #(`XLEN) pte_flop(clk, reset, RAMEntryWrite[i] & TLBWrite,
-        PageTableEntryWrite, ram[i]);
+    for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
+      flopenr #(`XLEN) pteflop(clk, reset, WriteLines[i] & TLBWrite,
+        PTEWriteVal, ram[i]);
     end
   endgenerate
 
