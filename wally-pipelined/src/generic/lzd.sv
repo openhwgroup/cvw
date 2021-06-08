@@ -44,7 +44,7 @@ module lzd2 (P, V, B);
    assign V = B[0] | B[1];
    assign P = B[0] & ~B[1];
    
-endmodule // lz2
+endmodule // lzd2
 
 module lzd_hier #(parameter WIDTH=8) 
    (input logic [WIDTH-1:0]          B,
@@ -78,8 +78,8 @@ module lzd4 (ZP, ZV, B);
    output logic [1:0]  ZP;
    output logic        ZV;
 
-   lz2 l1(ZPa, ZVa, B[1:0]);
-   lz2 l2(ZPb, ZVb, B[3:2]);
+   lzd2 l1(ZPa, ZVa, B[1:0]);
+   lzd2 l2(ZPb, ZVb, B[3:2]);
 
    assign ZP[0:0] = ZVb ? ZPb : ZPa;
    assign ZP[1]   = ~ZVb;
@@ -99,8 +99,8 @@ module lzd8 (ZP, ZV, B);
    output logic [2:0]  ZP;
    output logic        ZV;
 
-   lz4 l1(ZPa, ZVa, B[3:0]);
-   lz4 l2(ZPb, ZVb, B[7:4]);
+   lzd4 l1(ZPa, ZVa, B[3:0]);
+   lzd4 l2(ZPb, ZVb, B[7:4]);
 
    assign ZP[1:0] = ZVb ? ZPb : ZPa;
    assign ZP[2]   = ~ZVb;
@@ -120,8 +120,8 @@ module lzd16 (ZP, ZV, B);
    output logic [3:0]  ZP;
    output logic        ZV;
 
-   lz8 l1(ZPa, ZVa, B[7:0]);
-   lz8 l2(ZPb, ZVb, B[15:8]);
+   lzd8 l1(ZPa, ZVa, B[7:0]);
+   lzd8 l2(ZPb, ZVb, B[15:8]);
 
    assign ZP[2:0] = ZVb ? ZPb : ZPa;
    assign ZP[3]   = ~ZVb;
@@ -141,8 +141,8 @@ module lzd32 (ZP, ZV, B);
    output logic [4:0] ZP;
    output logic       ZV;
    
-   lz16 l1(ZPa, ZVa, B[15:0]);
-   lz16 l2(ZPb, ZVb, B[31:16]);
+   lzd16 l1(ZPa, ZVa, B[15:0]);
+   lzd16 l2(ZPb, ZVb, B[31:16]);
    
    assign ZP[3:0] = ZVb ? ZPb : ZPa;
    assign ZP[4]   = ~ZVb;
@@ -162,8 +162,8 @@ module lzd64 (ZP, ZV, B);
    output logic [5:0]  ZP;
    output logic        ZV;
    
-   lz32 l1(ZPa, ZVa, B[31:0]);
-   lz32 l2(ZPb, ZVb, B[63:32]);
+   lzd32 l1(ZPa, ZVa, B[31:0]);
+   lzd32 l2(ZPb, ZVb, B[63:32]);
    
    assign ZP[4:0] = ZVb ? ZPb : ZPa;
    assign ZP[5]   = ~ZVb;
@@ -183,8 +183,8 @@ module lzd128 (ZP, ZV, B);
    output logic [6:0]  ZP;
    output logic        ZV;
    
-   lz64 l1(ZPa, ZVa, B[64:0]);
-   lz64 l2(ZPb, ZVb, B[127:63]);
+   lzd64 l1(ZPa, ZVa, B[64:0]);
+   lzd64 l2(ZPb, ZVb, B[127:63]);
    
    assign ZP[5:0] = ZVb ? ZPb : ZPa;
    assign ZP[6]   = ~ZVb;

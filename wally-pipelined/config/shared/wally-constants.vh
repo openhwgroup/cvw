@@ -28,7 +28,11 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
+// constants defining different privilege modes
+// defined in Table 1.1 of the privileged spec
+`define M_MODE (2'b11)
+`define S_MODE (2'b01)
+`define U_MODE (2'b00)
 
 // Virtual Memory Constants
 `define VPN_SEGMENT_BITS (`XLEN == 32 ? 10 : 9)
