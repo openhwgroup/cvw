@@ -30,8 +30,8 @@
 module tlbram #(parameter ENTRY_BITS = 3) (
   input logic                       clk, reset,
   input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
-  input logic [ENTRY_BITS-1:0]      WriteIndex,
-  input logic [`XLEN-1:0]           PageTableEntryWrite,
+//  input logic [ENTRY_BITS-1:0]      WriteIndex, // *** unused?
+  input logic [`XLEN-1:0]           PTEWriteVal,
   input logic                       TLBWrite,
   input logic [2**ENTRY_BITS-1:0]   WriteLines,
 
@@ -49,7 +49,7 @@ module tlbram #(parameter ENTRY_BITS = 3) (
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
       flopenr #(`XLEN) pteflop(clk, reset, WriteLines[i] & TLBWrite,
-        PageTableEntryWrite, ram[i]);
+        PTEWriteVal, ram[i]);
     end
   endgenerate
 

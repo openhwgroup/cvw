@@ -105,7 +105,7 @@ module ifu (
   // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
 
   mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
-                .PageTableEntryWrite(PageTableEntryF), .PageTypeWrite(PageTypeF),
+                .PTEWriteVal(PageTableEntryF), .PageTypeWriteVal(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
                 .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
                 .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
