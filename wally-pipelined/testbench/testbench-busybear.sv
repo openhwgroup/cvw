@@ -109,7 +109,7 @@ module testbench();
   // read pc trace file
   integer data_file_PC, scan_file_PC;
   initial begin
-    data_file_PC = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedPC.txt"}, "r");
+    data_file_PC = $fopen({`LINUX_TEST_VECTORS,"parsedPC.txt"}, "r");
     if (data_file_PC == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -118,7 +118,7 @@ module testbench();
 
   integer data_file_PCW, scan_file_PCW;
   initial begin
-    data_file_PCW = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedPC.txt"}, "r");
+    data_file_PCW = $fopen({`LINUX_TEST_VECTORS,"parsedPC.txt"}, "r");
     if (data_file_PCW == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -128,7 +128,7 @@ module testbench();
   // read register trace file
   integer data_file_rf, scan_file_rf;
   initial begin
-    data_file_rf = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedRegs.txt"}, "r");
+    data_file_rf = $fopen({`LINUX_TEST_VECTORS,"parsedRegs.txt"}, "r");
     if (data_file_rf == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -138,7 +138,7 @@ module testbench();
   // read CSR trace file
   integer data_file_csr, scan_file_csr;
   initial begin
-    data_file_csr = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedCSRs2.txt"}, "r");
+    data_file_csr = $fopen({`LINUX_TEST_VECTORS,"parsedCSRs2.txt"}, "r");
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -148,7 +148,7 @@ module testbench();
   // read memreads trace file
   integer data_file_memR, scan_file_memR;
   initial begin
-    data_file_memR = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedMemRead.txt"}, "r");
+    data_file_memR = $fopen({`LINUX_TEST_VECTORS,"parsedMemRead.txt"}, "r");
     if (data_file_memR == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -158,7 +158,7 @@ module testbench();
   // read memwrite trace file
   integer data_file_memW, scan_file_memW;
   initial begin
-    data_file_memW = $fopen({`BUSYBEAR_TEST_VECTORS,"parsedMemWrite.txt"}, "r");
+    data_file_memW = $fopen({`LINUX_TEST_VECTORS,"parsedMemWrite.txt"}, "r");
     if (data_file_memW == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -167,8 +167,8 @@ module testbench();
 
   // initial loading of memories
   initial begin
-    $readmemh({`BUSYBEAR_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.RAM, 'h1000 >> 3);
-    $readmemh({`BUSYBEAR_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
+    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.RAM, 'h1000 >> 3);
+    $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
   end
@@ -279,7 +279,7 @@ module testbench();
         `ERROR
       end
       if ((readMask & HRDATA) !== (readMask & dut.HRDATA)) begin
-        if (HADDR inside `BUSYBEAR_FIX_READ) begin
+        if (HADDR inside `LINUX_FIX_READ) begin
           //$display("warning %0t ps, instr %0d, adr %0d: forcing HRDATA to expected: %x, %x", $time, instrs, HADDR, HRDATA, dut.HRDATA);
           force dut.uncore.HRDATA = HRDATA;
           #9;

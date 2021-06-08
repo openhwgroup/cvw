@@ -26,13 +26,13 @@ void main() {
 		char ans[81];
 		char flags[3];
 		int FrmE;
-		long stop = 1119653;
-		int debug = 1;
+		long stop = 5587581;
+		int debug = 0;
 		//my_string = (char *) malloc (nbytes + 1);
 		//bytes_read = getline (&my_string, &nbytes, stdin);
 	
 
-		for(n=0; n < 305; n++) {//613 for 10000
+		for(n=0; n < 1000; n++) {//613 for 10000
 			if(getline(&ln,&nbytes,fp) < 0 || feof(fp)) break;
 			if(k == stop && debug == 1) break;
 			k++;

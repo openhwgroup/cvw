@@ -65,8 +65,7 @@ module privileged (
   output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
-  output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  output logic [1:0]       STATUS_MPP, 
+  output logic             STATUS_MXR, STATUS_SUM,
   output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
   output logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], //*** to be sent up through wallypipelinedhart into the pma/pmp in ifu and dmem. *** is it a bad idea to have this huge bus running all over?
   output logic [2:0]       FRM_REGW,
@@ -95,7 +94,8 @@ module privileged (
   logic MTrapM, STrapM, UTrapM;
   logic InterruptM; 
 
-  logic       STATUS_SPP, STATUS_TSR;
+  logic [1:0] STATUS_MPP;
+  logic       STATUS_SPP, STATUS_TSR, STATUS_MPRV; // **** status mprv is unused outside of the csr module as of 4 June 2021. should it be deleted alltogether from the module, or should I leav the pin here in case someone needs it? 
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW;
   logic md, sd;

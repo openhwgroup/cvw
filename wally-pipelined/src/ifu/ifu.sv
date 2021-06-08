@@ -70,8 +70,7 @@ module ifu (
   input logic  [`XLEN-1:0] PageTableEntryF,
   input logic  [1:0]       PageTypeF,
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,  STATUS_MPRV,
-  input logic  [1:0]       STATUS_MPP, // *** the last two are for the pmp checker.
+  input logic              STATUS_MXR, STATUS_SUM, 
   input logic              ITLBWriteF, ITLBFlushF,
   output logic             ITLBMissF, ITLBHitF,
 
@@ -84,7 +83,6 @@ module ifu (
   input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
 
   output logic             PMPInstrAccessFaultF, PMAInstrAccessFaultF,
-  output logic             ICacheableF, IIdempotentF, IAtomicAllowedF,
   output logic             ISquashBusAccessF,
   output logic [5:0]       IHSELRegionsF
 
@@ -113,7 +111,6 @@ module ifu (
                 .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
 
                 .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0), // *** is this the right way force these bits constant? should they be someething else?
-                .Cacheable(ICacheableF), .Idempotent(IIdempotentF), .AtomicAllowed(IAtomicAllowedF),
                 .SquashBusAccess(ISquashBusAccessF), .HSELRegions(IHSELRegionsF),
                 .*);
 
