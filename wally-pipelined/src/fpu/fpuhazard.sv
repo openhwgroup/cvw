@@ -29,7 +29,7 @@ module fpuhazard(
     input logic [4:0] Adr1, Adr2, Adr3,
     input logic FWriteEnE, FWriteEnM, FWriteEnW, 
 	  input logic [4:0] RdE, RdM, RdW,
-	  input logic DivBusyM,
+	  input logic FDivBusyE,
 	  input logic	RegWriteD,
     input logic [2:0] FResultSelD, FResultSelE,
     input logic IllegalFPUInstrD,
@@ -46,7 +46,7 @@ module fpuhazard(
     FForwardInput1D = 2'b00; 
     FForwardInput2D = 2'b00;
     FForwardInput3D = 1'b0;
-    FStallD = DivBusyM;
+    FStallD = FDivBusyE;
     if (~IllegalFPUInstrD) begin
 //					if taking a value from int register
       if ((Adr1 == RdE) & (FWriteEnE | ((FResultSelE == 3'b110) & RegWriteD))) 

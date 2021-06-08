@@ -30,9 +30,9 @@ vlib work_$2
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined-batch.do ../config/rv32ic rv32ic
 switch $argc {
-    0 {vlog +incdir+../config/rv64imc ../testbench/testbench-imperas-div.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 ../testbench/testbench-imperas-div.sv  ../src/*/*.sv -suppress 2583}
-    2 {vlog -work work_$2 +incdir+$1 ../testbench/testbench-imperas-div.sv  ../src/*/*.sv -suppress 2583}
+    0 {vlog +incdir+../config/rv64imc +incdir+../config/shared ../testbench/testbench-imperas-div.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas-div.sv  ../src/*/*.sv -suppress 2583}
+    2 {vlog -work work_$2 +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas-div.sv  ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals

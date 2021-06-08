@@ -47,44 +47,43 @@
  */
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 
 // The TLB will have 2**ENTRY_BITS total entries
 module tlb #(parameter ENTRY_BITS = 3,
              parameter ITLB = 0) (
-  input              clk, reset,
+  input logic              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
-  input  [`XLEN-1:0] SATP_REGW,
-  input              STATUS_MXR, STATUS_SUM,
+  input logic  [`XLEN-1:0] SATP_REGW,
+  input logic              STATUS_MXR, STATUS_SUM,
 
   // Current privilege level of the processeor
-  input  [1:0]       PrivilegeModeW,
+  input logic  [1:0]       PrivilegeModeW,
 
   // 00 - TLB is not being accessed
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input [1:0]        TLBAccessType,
+  input logic [1:0]        TLBAccessType,
 
   // Virtual address input
-  input  [`XLEN-1:0] VirtualAddress,
+  input logic  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
-  input  [`XLEN-1:0] PageTableEntryWrite,
-  input  [1:0]       PageTypeWrite,
-  input              TLBWrite,
+  input logic  [`XLEN-1:0] PageTableEntryWrite,
+  input logic  [1:0]       PageTypeWrite,
+  input logic              TLBWrite,
 
   // Invalidate all TLB entries
-  input              TLBFlush,
+  input logic              TLBFlush,
 
   // Physical address outputs
-  output [`XLEN-1:0] PhysicalAddress,
-  output             TLBMiss,
-  output             TLBHit,
+  output logic [`XLEN-1:0] PhysicalAddress,
+  output logic             TLBMiss,
+  output logic             TLBHit,
 
   // Faults
-  output             TLBPageFault
+  output logic             TLBPageFault
 );
 
   logic Translate;
@@ -95,6 +94,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
+  logic [2**ENTRY_BITS-1:0] WriteLines; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -117,6 +117,9 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Grab the sv mode from SATP
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+
+  // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
+  decoder writedecoder(WriteIndex, WriteLines);
 
   // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
   // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,
@@ -141,13 +144,13 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign TLBAccess = ReadAccess || WriteAccess;
 
   
-  assign PageOffset        = VirtualAddress[11:0];
+  assign PageOffset = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
-  tlb_lru lru(.*);
+  tlblru #(ENTRY_BITS) lru(.*);
 
-  tlb_ram #(ENTRY_BITS) tlb_ram(.*);
-  tlb_cam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlb_cam(.*);
+  tlbram #(ENTRY_BITS) tlbram(.*);
+  tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
   // unswizzle useful PTE bits
   assign PTE_U = PTEAccessBits[4];
@@ -186,19 +189,10 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // The highest segment of the physical page number has some extra bits
-  // than the highest segment of the virtual page number.
-  localparam EXTRA_PHYSICAL_BITS = `PPN_HIGH_SEGMENT_BITS - `VPN_SEGMENT_BITS;
-
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  page_number_mixer #(`PPN_BITS, `PPN_HIGH_SEGMENT_BITS)
-    physical_mixer(PhysicalPageNumber, 
-      {{EXTRA_PHYSICAL_BITS{1'b0}}, VirtualPageNumber},
-      HitPageType,
-      SvMode,
-      PhysicalPageNumberMixed);
+  physicalpagemask PageNumberMixer(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
   // Provide physical address only on TLBHits to cause catastrophic errors if
   // garbage address is used.

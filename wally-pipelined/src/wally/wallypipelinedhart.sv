@@ -24,7 +24,6 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`include "wally-constants.vh"
 /* verilator lint_on UNUSED */
 
 module wallypipelinedhart (
@@ -100,7 +99,7 @@ module wallypipelinedhart (
   logic       FStallD;
   logic       FWriteIntE, FWriteIntW, FWriteIntM;
   logic [31:0]      FSROutW;
-  logic             FDivSqrtDoneM;
+  logic             FDivBusyE;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic [`XLEN-1:0] FPUResultW;
 
@@ -112,14 +111,18 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] SATP_REGW;
   logic             STATUS_MXR, STATUS_SUM;
   logic [1:0]       PrivilegeModeW;
-
   logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM;
   logic [1:0]       PageTypeF, PageTypeM;
 
   // PMA checker signals
   logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM;
-  logic             Cacheable, Idempotent, AtomicAllowed;
-  logic             SquashBusAccess;
+  logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
+  logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
+  logic             DSquashBusAccessM, ISquashBusAccessF;
+  logic [5:0]            DHSELRegionsM, IHSELRegionsF;
+  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15]; // *** again, this is a huge bus to be sending all around.
+  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW; // signals being sent from privileged unit to pmp/pma in dmem and ifu.
+  assign            HSELRegions = ExecuteAccessF ? IHSELRegionsF : DHSELRegionsM; // *** this is a pure guess on how one of these should be selected. it passes tests, but is it the right way to do this?
 
   // IMem stalls
   logic             ICacheStallF;
