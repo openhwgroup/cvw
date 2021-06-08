@@ -62,8 +62,8 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIMBASE   32'h00000000
-`define BOOTTIMRANGE  32'h00003FFF
+`define BOOTTIMBASE   32'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+`define BOOTTIMRANGE  32'h00000FFF
 `define TIMBASE    32'h80000000
 // `define TIMRANGE   32'h0007FFFF
 `define TIMRANGE   32'h07FFFFFF
