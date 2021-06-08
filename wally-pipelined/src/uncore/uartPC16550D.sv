@@ -106,8 +106,8 @@ module uartPC16550D(
   logic fifoenabled, fifodmamodesel, evenparitysel;
 
   // interrupts
-  logic rxlinestatusintr, rxdataavailintr, txhremptyintr, modemstatusintr, intrpending;
-  logic [2:0] intrid;
+  logic rxlinestatusintr, rxdataavailintr, modemstatusintr, intrpending, THRE, suppressTHREbecauseIIR, suppressTHREbecauseIIRtrig;
+  logic [2:0] intrID;
 
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
@@ -152,8 +152,8 @@ module uartPC16550D(
       if (RXBR[9])  LSR[2] <= #1 1; // parity error
       if (RXBR[8])  LSR[3] <= #1 1; // framing error
       if (rxbreak)  LSR[4] <= #1 1; // break indicator
-      LSR[5] <= #1 txhremptyintr ; //  THRE
-      LSR[6] <= #1 ~txsrfull & txhremptyintr; //  TEMT
+      LSR[5] <= #1 THRE & ~(suppressTHREbecauseIIR | suppressTHREbecauseIIRtrig); //  THRE (suppress trigger included to avoid 2-cycle delay)
+      LSR[6] <= #1 ~txsrfull & THRE; //  TEMT
       if (rxfifohaserr) LSR[7] <= #1 1; // any bits in FIFO have error
 
       // Modem Status Register (8.6.8)
@@ -168,7 +168,7 @@ module uartPC16550D(
       case (A)
         3'b000: if (DLAB) Dout = DLL; else Dout = RBR;
         3'b001: if (DLAB) Dout = DLM; else Dout = {4'b0, IER[3:0]};
-        3'b010: Dout = {{2{fifoenabled}}, 2'b00, intrid[2:0], ~intrpending}; // Read only Interupt Ident Register
+        3'b010: Dout = {{2{fifoenabled}}, 2'b00, intrID[2:0], ~intrpending}; // Read only Interupt Ident Register
         3'b011: Dout = LCR;
         3'b100: Dout = {3'b000, MCR};
         3'b101: Dout = LSR;
@@ -411,7 +411,7 @@ module uartPC16550D(
 
   always_comb
     if (fifoenabled & fifodmamodesel) TXRDYb = ~txfifodmaready;
-    else TXRDYb  = ~txhremptyintr;
+    else TXRDYb  = ~THRE;
 
   // Transmitter pin 
   assign SOUTbit = txsr[11]; // transmit most significant bit
@@ -420,27 +420,30 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // interrupts
   ///////////////////////////////////////////
-
   assign rxlinestatusintr = |LSR[4:1]; // LS interrupt if any of the flags are true
   assign rxdataavailintr = fifoenabled ? rxfifotriggered : rxdataready; 
-  assign txhremptyintr = fifoenabled ? txfifoempty : ~txhrfull; 
+  assign THRE = fifoenabled ? txfifoempty : ~txhrfull; 
   assign modemstatusintr = |MSR[3:0]; // set interrupt when modem pins change
  
-  // interrupt priority (Table 5)
-  // set intrid based on highest priority pending interrupt source; otherwise, no interrupt is pending
+  // IIR: interrupt priority (Table 5)
+  // set intrID based on highest priority pending interrupt source; otherwise, no interrupt is pending
   always_comb begin
     intrpending = 1;
-    if      (rxlinestatusintr & IER[2])            intrid = 3'b011;
-    else if (rxdataavailintr & IER[0])             intrid = 3'b010;
-    else if (rxfifotimeout & fifoenabled & IER[0]) intrid = 3'b110;
-    else if (txhremptyintr & IER[1])               intrid = 3'b001;
-    else if (modemstatusintr & IER[3])             intrid = 3'b000;
+    if      (rxlinestatusintr & IER[2])               intrID = 3'b011;
+    else if (rxdataavailintr & IER[0])                intrID = 3'b010;
+    else if (rxfifotimeout & fifoenabled & IER[0])    intrID = 3'b110;
+    else if (THRE & IER[1] & ~suppressTHREbecauseIIR) intrID = 3'b001;
+    else if (modemstatusintr & IER[3])                intrID = 3'b000;
     else begin
-      intrid = 3'b000;
+      intrID = 3'b000;
       intrpending = 0;
     end
   end
   always @(posedge HCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
+
+    // Side effect of reading IIR is lowering THRE if most significant intr
+  assign suppressTHREbecauseIIRtrig = ~MEMRb & (A==3'b010) & (intrID==2'h1);
+  flopr #(1) suppressTHREreg(HCLK, (~HRESETn | (fifoenabled ? ~txfifoempty : txhrfull)), (suppressTHREbecauseIIRtrig | suppressTHREbecauseIIR), suppressTHREbecauseIIR);
 
   ///////////////////////////////////////////
   // modem control logic

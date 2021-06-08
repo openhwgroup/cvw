@@ -41,7 +41,7 @@ module trap (
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
   input  logic [31:0]      InstrM,
   input  logic             StallW,
-  input  logic             InstrValidM,
+  input  logic             InstrValidM, CommittedM,
   output logic             NonBusTrapM, TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic             InterruptM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
@@ -58,7 +58,10 @@ module trap (
   assign MIntGlobalEnM = {12{(PrivilegeModeW != `M_MODE) || STATUS_MIE}}; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
   assign PendingIntsM = (MIP_REGW & MIE_REGW) & ((MIntGlobalEnM & 12'h888) | (SIntGlobalEnM & 12'h222));
-  assign InterruptM = (|PendingIntsM) && InstrValidM; // interrupt if any sources are pending // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
+  assign InterruptM = (|PendingIntsM) & InstrValidM & ~CommittedM;
+  // interrupt if any sources are pending
+  // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
+  // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
  
   // Trigger Traps and RET
   //   Created groups of trap signals so that bus could take in all traps it doesn't already produce (i.e. using just TrapM to squash access created circular paths)
