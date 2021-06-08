@@ -30,17 +30,18 @@
 
 module tlb_cam #(parameter ENTRY_BITS = 3,
                  parameter KEY_BITS   = 20,
-                 parameter HIGH_SEGMENT_BITS = 10) (
-  input                     clk, reset,
-  input  [KEY_BITS-1:0]     VirtualPageNumber,
-  input  [1:0]              PageTypeWrite,
-  input  [ENTRY_BITS-1:0]   WriteIndex,
-  input  [`SVMODE_BITS-1:0] SvMode,
-  input                     TLBWrite,
-  input                     TLBFlush,
-  output [ENTRY_BITS-1:0]   VPNIndex,
-  output [1:0]              HitPageType,
-  output                    CAMHit
+                 parameter SEGMENT_BITS = 10) (
+  input logic                     clk, reset,
+  input logic [KEY_BITS-1:0]      VirtualPageNumber,
+  input logic [1:0]               PageTypeWriteVal,
+//  input logic [`SVMODE_BITS-1:0]  SvMode, // *** may not need to be used.
+  input logic                     TLBWrite,
+  input logic                     TLBFlush,
+  input logic [2**ENTRY_BITS-1:0] WriteLines,
+
+  output logic [ENTRY_BITS-1:0]   VPNIndex,
+  output logic [1:0]              HitPageType,
+  output logic                    CAMHit
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
@@ -71,7 +72,7 @@ module tlb_cam #(parameter ENTRY_BITS = 3,
   // In case there are multiple matches in the CAM, select only one
   // *** it might be guaranteed that the CAM will never have multiple matches.
   // If so, this is just an encoder
-  priority_encoder #(ENTRY_BITS) match_priority(Matches, VPNIndex);
+  priorityencoder #(ENTRY_BITS) matchencoder(Matches, VPNIndex);
 
   assign CAMHit = |Matches & ~TLBFlush;
   assign HitPageType = PageTypeList[VPNIndex];
