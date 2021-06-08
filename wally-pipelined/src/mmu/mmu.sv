@@ -49,8 +49,8 @@ module mmu #(parameter ENTRY_BITS = 3,
   input logic  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
-  input logic  [`XLEN-1:0] PageTableEntryWrite,
-  input logic  [1:0]       PageTypeWrite,
+  input logic  [`XLEN-1:0] PTEWriteVal,
+  input logic  [1:0]       PageTypeWriteVal,
   input logic              TLBWrite,
 
   // Invalidate all TLB entries

@@ -96,7 +96,7 @@ module dmem (
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
   
   mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
-                .PageTableEntryWrite(PageTableEntryM), .PageTypeWrite(PageTypeM),
+                .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
                 .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
                 .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
