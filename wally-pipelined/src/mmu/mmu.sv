@@ -49,8 +49,8 @@ module mmu #(parameter ENTRY_BITS = 3,
   input logic  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
-  input logic  [`XLEN-1:0] PageTableEntryWrite,
-  input logic  [1:0]       PageTypeWrite,
+  input logic  [`XLEN-1:0] PTEWriteVal,
+  input logic  [1:0]       PageTypeWriteVal,
   input logic              TLBWrite,
 
   // Invalidate all TLB entries
@@ -70,7 +70,7 @@ module mmu #(parameter ENTRY_BITS = 3,
   input  logic             HWRITE,
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
-  input  logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], // *** this one especially has a large note attached to it in pmpchecker.
+  input  var logic  [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1], 
 
   output logic             SquashBusAccess, // *** send to privileged unit
   output logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM,

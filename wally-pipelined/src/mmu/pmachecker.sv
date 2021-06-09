@@ -28,13 +28,13 @@
 `include "wally-config.vh"
 
 module pmachecker (
-  input  logic        clk, reset,
+//  input  logic        clk, reset, // *** unused in this module and all sub modules.
 
   input  logic [31:0] HADDR,
   input  logic [2:0]  HSIZE,
-  input  logic [2:0]  HBURST,
+//  input  logic [2:0]  HBURST, //  *** in AHBlite, HBURST is hardwired to zero for single bursts only allowed. consider removing from this module if unused.
 
-  input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
 
   output logic        Cacheable, Idempotent, AtomicAllowed,
   output logic        PMASquashBusAccess,
@@ -92,7 +92,7 @@ module pmachecker (
 endmodule
 
 module attributes (
-  input  logic        clk, reset,
+//  input  logic        clk, reset, // *** unused in this module and all sub modules.
 
   input  logic [31:0] Address,
 
