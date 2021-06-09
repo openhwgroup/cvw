@@ -93,7 +93,7 @@ module csrm #(parameter
     output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW,
     // 64-bit registers in RV64, or two 32-bit registers in RV32
     output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
-    output logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15],
+    output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1],
     input  logic [11:0]      MIP_REGW, MIE_REGW,
     output logic             WriteMSTATUSM,
     output logic             IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
@@ -171,10 +171,10 @@ module csrm #(parameter
   endgenerate
   flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], ALL_ONES, MCOUNTINHIBIT_REGW);
 
-  // There are 16 PMPADDR registers, each of which has its own flop
+  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   generate
     genvar i;
-    for (i = 0; i < 16; i++) begin: pmp_flop
+    for (i = 0; i < `PMP_ENTRIES-1; i++) begin: pmp_flop
       flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
     end
   endgenerate
@@ -221,7 +221,7 @@ module csrm #(parameter
       PMPCFG1:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG01_REGW[63:31]};
       PMPCFG2:   CSRMReadValM = PMPCFG23_REGW[`XLEN-1:0];
       PMPCFG3:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG23_REGW[63:31]};
-      PMPADDR0:  CSRMReadValM = PMPADDR_ARRAY_REGW[0];
+      PMPADDR0:  CSRMReadValM = PMPADDR_ARRAY_REGW[0]; // *** make configurable
       PMPADDR1:  CSRMReadValM = PMPADDR_ARRAY_REGW[1];
       PMPADDR2:  CSRMReadValM = PMPADDR_ARRAY_REGW[2];
       PMPADDR3:  CSRMReadValM = PMPADDR_ARRAY_REGW[3];

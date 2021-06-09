@@ -68,7 +68,7 @@ module privileged (
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
-  output logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:15], //*** to be sent up through wallypipelinedhart into the pma/pmp in ifu and dmem. *** is it a bad idea to have this huge bus running all over?
+  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1], 
   output logic [2:0]       FRM_REGW
 );
 

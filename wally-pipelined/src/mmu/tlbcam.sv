@@ -33,8 +33,8 @@ module tlbcam #(parameter ENTRY_BITS = 3,
                  parameter SEGMENT_BITS = 10) (
   input logic                     clk, reset,
   input logic [KEY_BITS-1:0]      VirtualPageNumber,
-  input logic [1:0]               PageTypeWrite,
-  input logic [`SVMODE_BITS-1:0]  SvMode,
+  input logic [1:0]               PageTypeWriteVal,
+//  input logic [`SVMODE_BITS-1:0]  SvMode, // *** may not need to be used.
   input logic                     TLBWrite,
   input logic                     TLBFlush,
   input logic [2**ENTRY_BITS-1:0] WriteLines,
@@ -69,7 +69,7 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   // In case there are multiple matches in the CAM, select only one
   // *** it might be guaranteed that the CAM will never have multiple matches.
   // If so, this is just an encoder
-  priorityencoder #(ENTRY_BITS) matchpriority(Matches, VPNIndex);
+  priorityencoder #(ENTRY_BITS) matchencoder(Matches, VPNIndex);
 
   assign CAMHit = |Matches & ~TLBFlush;
   assign HitPageType = PageTypeList[VPNIndex];
