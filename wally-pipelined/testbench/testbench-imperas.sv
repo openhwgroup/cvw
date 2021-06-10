@@ -516,6 +516,10 @@ string tests32f[] = '{
   
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
+
+  // check assertions for a legal configuration
+  riscvassertions riscvassertions();
+
   // pick tests based on modes supported
   initial begin
     if (`XLEN == 64) begin // RV64
@@ -711,6 +715,13 @@ string tests32f[] = '{
     end
   endgenerate
   
+endmodule
+
+module riscvassertions();
+  // Legal number of PMP entries are 0, 16, or 64
+  initial begin
+    assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries");
+  end
 endmodule
 
 /* verilator lint_on STMTDLY */

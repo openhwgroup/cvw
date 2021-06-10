@@ -96,6 +96,7 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   end
  -----/\----- EXCLUDED -----/\----- */
   
+  /* verilator lint_off WIDTH */
   generate
     if (`XLEN == 64)  begin
       always_ff @(posedge HCLK) begin
@@ -111,7 +112,8 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
       end
     end
   endgenerate
+  /* verilator lint_on WIDTH */
 
-  assign HREADTim = HREADYTim ? HREADTim0 : 'bz;
+  assign HREADTim = HREADYTim ? HREADTim0 : `XLEN'bz;
 endmodule
 

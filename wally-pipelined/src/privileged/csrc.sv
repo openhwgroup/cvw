@@ -53,6 +53,7 @@ module csrc (
     integer MHPEVENT [`COUNTERS:0];
 
     genvar i;
+    // *** this is totally incorrect.  Fix parameterized counters dh 6/9/21
     generate
     for (i = 0; i <= `COUNTERS; i = i + 1) begin 
         if (i != 1) begin

@@ -59,8 +59,8 @@ module mul (
     assign PP = SrcAE[`XLEN-1] & SrcBE[`XLEN-1];
 
     // flavor of multiplication
-    assign MULH = (Funct3E == 2'b01);
-    assign MULHSU = (Funct3E == 2'b10);
+    assign MULH   = (Funct3E == 3'b001);
+    assign MULHSU = (Funct3E == 3'b010);
     // assign MULHU = (Funct3E == 2'b11); // signal unused
 
     // Handle signs
