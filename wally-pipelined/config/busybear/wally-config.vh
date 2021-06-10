@@ -52,6 +52,9 @@
 `define ITLB_ENTRY_BITS 5
 `define DTLB_ENTRY_BITS 5
 
+// Legal number of PMP entries are 0, 16, or 64
+`define PMP_ENTRIES 16
+
 // Address space
 `define RESET_VECTOR 64'h0000000000001000
 
