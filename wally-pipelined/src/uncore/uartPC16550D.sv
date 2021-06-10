@@ -94,7 +94,7 @@ module uartPC16550D(
   logic rxfifodmaready;
   logic [8:0] rxdata9;
   logic [7:0] rxdata;
-  logic [15:0] rxerrbit, rxfullbit;
+  logic [15:0] RXerrbit, rxfullbit;
 
   // transmit data
   logic [11:0] TXHR, txdata, nexttxdata, txsr;
@@ -106,7 +106,9 @@ module uartPC16550D(
   logic fifoenabled, fifodmamodesel, evenparitysel;
 
   // interrupts
-  logic rxlinestatusintr, rxdataavailintr, modemstatusintr, intrpending, THRE, suppressTHREbecauseIIR, suppressTHREbecauseIIRtrig;
+  logic RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
+  logic THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
+  logic rxdataavailintr, modemstatusintr, intrpending;
   logic [2:0] intrID;
 
   ///////////////////////////////////////////
@@ -146,13 +148,15 @@ module uartPC16550D(
           3'b111: SCR <= #1 Din;
         endcase
       end
+      
       // Line Status Register (8.6.3)
+      //   Ben 6/9/21 I don't like how this is a register. A lot of the individual bits have clocked components, so this just adds unecessary delay.
       LSR[0] <= #1 rxdataready; // Data ready
-      if (RXBR[10]) LSR[1] <= #1 1; // overrun error
-      if (RXBR[9])  LSR[2] <= #1 1; // parity error
-      if (RXBR[8])  LSR[3] <= #1 1; // framing error
-      if (rxbreak)  LSR[4] <= #1 1; // break indicator
-      LSR[5] <= #1 THRE & ~(suppressTHREbecauseIIR | suppressTHREbecauseIIRtrig); //  THRE (suppress trigger included to avoid 2-cycle delay)
+      LSR[1] <= #1 (LSR[1] | RXBR[10]) & ~squashRXerrIP;; // overrun error
+      LSR[2] <= #1 (LSR[2] | RXBR[9]) & ~squashRXerrIP; // parity error
+      LSR[3] <= #1 (LSR[3] | RXBR[8]) & ~squashRXerrIP; // framing error
+      LSR[4] <= #1 (LSR[4] | rxbreak) & ~squashRXerrIP; // break indicator
+      LSR[5] <= #1 THRE; // THRE
       LSR[6] <= #1 ~txsrfull & THRE; //  TEMT
       if (rxfifohaserr) LSR[7] <= #1 1; // any bits in FIFO have error
 
@@ -162,7 +166,6 @@ module uartPC16550D(
       MSR[2] <= #1 MSR[2] | (~RIb2 & RIbsync); // Trailing Edge of Ring Indicator
       MSR[3] <= #1 MSR[3] | DCDb2 ^ DCDbsync; // Delta Data Carrier Detect
     end
-
   always_comb
     if (~MEMRb)
       case (A)
@@ -199,7 +202,6 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // receive timing and control
   ///////////////////////////////////////////
-
   always_ff @(posedge HCLK, negedge HRESETn)
     if (~HRESETn) begin
       rxoversampledcnt <= #1 0;
@@ -260,7 +262,7 @@ module uartPC16550D(
       if (rxstate == UART_DONE) begin
         RXBR <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
         if (fifoenabled) begin
-          rxfifo[rxfifohead] <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; 
+          rxfifo[rxfifohead] <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata};
           rxfifohead <= #1 rxfifohead + 1;
         end
         rxdataready <= #1 1;
@@ -287,14 +289,14 @@ module uartPC16550D(
   generate
     genvar i;
     for (i=0; i<16; i++) begin
-      assign rxerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
+      assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
       if (i > 0)
         assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
       else
         assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);
     end
   endgenerate
-  assign rxfifohaserr = |(rxerrbit & rxfullbit);
+  assign rxfifohaserr = |(RXerrbit & rxfullbit);
 
   // receive buffer register and ready bit
   always_ff @(posedge HCLK, negedge HRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
@@ -341,7 +343,6 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // transmit holding register, shift register, FIFO
   ///////////////////////////////////////////
-
   always_comb begin // compute value for parity and tx holding register
     nexttxdata = fifoenabled ? txfifo[txfifotail] : TXHR; // pick from FIFO or holding register
     case (LCR[1:0]) // compute parity from appropriate number of bits
@@ -420,20 +421,22 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // interrupts
   ///////////////////////////////////////////
-  assign rxlinestatusintr = |LSR[4:1]; // LS interrupt if any of the flags are true
+  assign RXerr = |LSR[4:1]; // LS interrupt if any of the flags are true
+  assign RXerrIP = RXerr & ~squashRXerrIP; // intr squashed upon reading LSR
   assign rxdataavailintr = fifoenabled ? rxfifotriggered : rxdataready; 
-  assign THRE = fifoenabled ? txfifoempty : ~txhrfull; 
+  assign THRE = fifoenabled ? txfifoempty : ~txhrfull;
+  assign THRE_IP = THRE & ~squashTHRE_IP; // THRE_IP squashed upon reading IIR
   assign modemstatusintr = |MSR[3:0]; // set interrupt when modem pins change
  
   // IIR: interrupt priority (Table 5)
   // set intrID based on highest priority pending interrupt source; otherwise, no interrupt is pending
   always_comb begin
     intrpending = 1;
-    if      (rxlinestatusintr & IER[2])               intrID = 3'b011;
-    else if (rxdataavailintr & IER[0])                intrID = 3'b010;
-    else if (rxfifotimeout & fifoenabled & IER[0])    intrID = 3'b110;
-    else if (THRE & IER[1] & ~suppressTHREbecauseIIR) intrID = 3'b001;
-    else if (modemstatusintr & IER[3])                intrID = 3'b000;
+    if      (RXerrIP & IER[2])                     intrID = 3'b011;
+    else if (rxdataavailintr & IER[0])             intrID = 3'b010;
+    else if (rxfifotimeout & fifoenabled & IER[0]) intrID = 3'b110;
+    else if (THRE_IP & IER[1])                     intrID = 3'b001;
+    else if (modemstatusintr & IER[3])             intrID = 3'b000;
     else begin
       intrID = 3'b000;
       intrpending = 0;
@@ -441,9 +444,16 @@ module uartPC16550D(
   end
   always @(posedge HCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
 
-    // Side effect of reading IIR is lowering THRE if most significant intr
-  assign suppressTHREbecauseIIRtrig = ~MEMRb & (A==3'b010) & (intrID==2'h1);
-  flopr #(1) suppressTHREreg(HCLK, (~HRESETn | (fifoenabled ? ~txfifoempty : txhrfull)), (suppressTHREbecauseIIRtrig | suppressTHREbecauseIIR), suppressTHREbecauseIIR);
+  // Side effect of reading LSR is lowering overrun, parity, framing, break intr's
+  assign setSquashRXerrIP = ~MEMRb & (A==3'b101);
+  assign resetSquashRXerrIP = (rxstate == UART_DONE);
+  assign squashRXerrIP = (prevSquashRXerrIP | setSquashRXerrIP) & ~resetSquashRXerrIP;
+  flopr #(1) squashRXerrIPreg(HCLK, ~HRESETn, squashRXerrIP, prevSquashRXerrIP);
+  // Side effect of reading IIR is lowering THRE_IP if most significant intr
+  assign setSquashTHRE_IP = ~MEMRb & (A==3'b010) & (intrID==2'h1); // there's a 1-cycle delay on set squash so that THRE_IP doesn't change during the process of reading IIR (otherwise combinational loop)
+  assign resetSquashTHRE_IP = ~THRE;
+  assign squashTHRE_IP = prevSquashTHRE_IP & ~resetSquashTHRE_IP;
+  flopr #(1) squashTHRE_IPreg(HCLK, ~HRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
 
   ///////////////////////////////////////////
   // modem control logic
