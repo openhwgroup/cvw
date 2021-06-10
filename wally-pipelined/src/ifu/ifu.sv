@@ -88,7 +88,7 @@ module ifu (
 
 );
 
-  logic [`XLEN-1:0] UnalignedPCNextF, PCNextF;
+  logic [`XLEN-1:0] PCCorrectE, UnalignedPCNextF, PCNextF;
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
