@@ -36,7 +36,7 @@
 // MISA RISC-V configuration per specification
 `define MISA (32'h00000104 | 0 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZCSR_SUPPORTED 1
-`define COUNTERS 31
+`define COUNTERS 32
 `define ZCOUNTERS_SUPPORTED 1
 
 // Microarchitectural Features
@@ -62,7 +62,7 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIMBASE   32'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+`define BOOTTIMBASE   32'h00000000
 `define BOOTTIMRANGE  32'h00003FFF
 `define TIMBASE    32'h80000000
 // `define TIMRANGE   32'h0007FFFF

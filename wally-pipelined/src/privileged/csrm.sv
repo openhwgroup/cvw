@@ -74,14 +74,8 @@ module csrm #(parameter
   DCSR = 12'h7B0,
   DPC = 12'h7B1,
   DSCRATCH0 = 12'h7B2,
-  DSCRATCH1 = 12'h7B3,
-
-  // Constants
-  ZERO = {(`XLEN){1'b0}},
-  ALL_ONES = 32'hfffffff,
-  MEDELEG_MASK = ~(ZERO | 1'b1 << 11),
-  MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}
-  ) (
+  DSCRATCH1 = 12'h7B3  
+) (
     input  logic             clk, reset, 
     input  logic             StallW,
     input  logic             CSRMWriteM, MTrapM,
@@ -90,7 +84,7 @@ module csrm #(parameter
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
     output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-    output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW,
+    output logic [11:0]      MEDELEG_REGW, MIDELEG_REGW,
     // 64-bit registers in RV64, or two 32-bit registers in RV32
     output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
     output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1],
@@ -149,8 +143,8 @@ module csrm #(parameter
   flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
-      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, ZERO, MEDELEG_REGW);
-      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK, ZERO, MIDELEG_REGW);
+      flopenl #(12) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[11:0] & 12'h7FF, 12'b0, MEDELEG_REGW);
+      flopenl #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & 12'h222, 12'b0, MIDELEG_REGW);
     end else begin
       assign MEDELEG_REGW = 0;
       assign MIDELEG_REGW = 0;
@@ -167,9 +161,9 @@ module csrm #(parameter
     if (`OVPSIM_CSR_CONFIG)
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, MCOUNTEREN_REGW);
     else
-      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], ALL_ONES, MCOUNTEREN_REGW);
+      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, MCOUNTEREN_REGW);
   endgenerate
-  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], ALL_ONES, MCOUNTINHIBIT_REGW);
+  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], 32'hFFFFFFFF, MCOUNTINHIBIT_REGW);
 
   // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   generate
@@ -202,13 +196,13 @@ module csrm #(parameter
       MISA_ADR:  CSRMReadValM = MISA_REGW;
       MVENDORID: CSRMReadValM = 0;
       MARCHID:   CSRMReadValM = 0;
-      MIMPID:    CSRMReadValM = 'h100; // pipelined implementation
+      MIMPID:    CSRMReadValM = `XLEN'h100; // pipelined implementation
       MHARTID:   CSRMReadValM = 0; 
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = 0; // flush this out later if MBE and SBE fields are supported
       MTVEC:     CSRMReadValM = MTVEC_REGW;
-      MEDELEG:   CSRMReadValM = MEDELEG_REGW;
-      MIDELEG:   CSRMReadValM = MIDELEG_REGW;
+      MEDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MEDELEG_REGW};
+      MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
       MIP:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW};
       MIE:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW};
       MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;
@@ -218,9 +212,9 @@ module csrm #(parameter
       MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
       MCOUNTINHIBIT:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
       PMPCFG0:   CSRMReadValM = PMPCFG01_REGW[`XLEN-1:0];
-      PMPCFG1:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG01_REGW[63:31]};
+      PMPCFG1:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG01_REGW[63:32]};
       PMPCFG2:   CSRMReadValM = PMPCFG23_REGW[`XLEN-1:0];
-      PMPCFG3:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG23_REGW[63:31]};
+      PMPCFG3:   CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG23_REGW[63:32]};
       PMPADDR0:  CSRMReadValM = PMPADDR_ARRAY_REGW[0]; // *** make configurable
       PMPADDR1:  CSRMReadValM = PMPADDR_ARRAY_REGW[1];
       PMPADDR2:  CSRMReadValM = PMPADDR_ARRAY_REGW[2];

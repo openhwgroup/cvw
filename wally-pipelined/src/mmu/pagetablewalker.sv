@@ -353,7 +353,7 @@ module pagetablewalker (
       // Assign outputs to ahblite
       // *** Currently truncate address to 32 bits. This must be changed if
       // we support larger physical address spaces
-      assign MMUPAdr = TranslationPAdr[31:0];
+      assign MMUPAdr = {{(`XLEN-32){1'b0}}, TranslationPAdr[31:0]};
     end
   endgenerate
 
