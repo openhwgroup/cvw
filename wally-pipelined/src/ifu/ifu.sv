@@ -92,7 +92,8 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlusUpperF, PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCNextPF, PCPF;
+  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCNextPF, PCPF;
+  logic [`XLEN-3:0] PCPlusUpperF;
   logic             CompressedF;
   logic [31:0]      InstrRawD;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
@@ -117,7 +118,7 @@ module ifu (
 
   // branch predictor signals
   logic 	          SelBPPredF;
-  logic [`XLEN-1:0] BPPredPCF, PCCorrectE, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
+  logic [`XLEN-1:0] BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [4:0] 	    InstrClassD, InstrClassE;
   
 

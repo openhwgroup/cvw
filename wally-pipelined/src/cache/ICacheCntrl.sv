@@ -156,7 +156,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
-  assign PCSpillF = PCPF + 2'b10;
+  assign PCSpillF = PCPF + `XLEN'b10;
 
   // now we have to select between these three PCs
   assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
@@ -188,7 +188,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
   assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
   assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
-  assign FetchCountFlag = FetchCount == FetchCountThreshold;
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold);
   
   // Next state logic
   always_comb begin

@@ -37,7 +37,7 @@
 `define MISA (32'h0014112D)
 `define ZCSR_SUPPORTED 1
 `define ZCOUNTERS_SUPPORTED 1
-`define COUNTERS 31
+`define COUNTERS 32
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
