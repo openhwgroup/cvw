@@ -39,9 +39,16 @@
 //`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
 `define N_SUPPORTED 0
 
+
+// logarithm of XLEN, used for number of index bits to select
+//`define LOG_XLEN (`XLEN == 32 ? 5 : 6)
+
+// Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
+`define PMPCFG_ENTRIES (`PMP_ENTRIES\8)
+
+
 // Disable spurious Verilator warnings
 
 /* verilator lint_off STMTDLY */
-/* verilator lint_off WIDTH */
 /* verilator lint_off ASSIGNDLY */
 /* verilator lint_off PINCONNECTEMPTY */

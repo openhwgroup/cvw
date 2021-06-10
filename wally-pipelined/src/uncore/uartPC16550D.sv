@@ -70,7 +70,7 @@ module uartPC16550D(
 
   // Baud and rx/tx timing
   logic baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
-  logic [23:0] baudcount;
+  logic [16+`UART_PRESCALE-1:0] baudcount;
   logic [3:0] rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
   logic [3:0] rxbitsreceived, txbitssent;
   statetype rxstate, txstate;
@@ -97,7 +97,8 @@ module uartPC16550D(
   logic [15:0] RXerrbit, rxfullbit;
 
   // transmit data
-  logic [11:0] TXHR, txdata, nexttxdata, txsr;
+  logic [7:0] TXHR, nexttxdata;
+  logic [11:0] txdata, txsr;
   logic txnextbit, txhrfull, txsrfull;
   logic txparity;
   logic txfifoempty, txfifofull, txfifodmaready;
@@ -169,7 +170,7 @@ module uartPC16550D(
   always_comb
     if (~MEMRb)
       case (A)
-        3'b000: if (DLAB) Dout = DLL; else Dout = RBR;
+        3'b000: if (DLAB) Dout = DLL; else Dout = RBR[7:0];
         3'b001: if (DLAB) Dout = DLM; else Dout = {4'b0, IER[3:0]};
         3'b010: Dout = {{2{fifoenabled}}, 2'b00, intrID[2:0], ~intrpending}; // Read only Interupt Ident Register
         3'b011: Dout = LCR;
@@ -228,13 +229,13 @@ module uartPC16550D(
     end
 
   assign rxcentered = rxbaudpulse && (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE
-  assign rxbitsexpected = 1 + (5 + LCR[1:0]) + LCR[3] + 1; // start bit + data bits + (parity bit) + stop bit 
+  assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
   ///////////////////////////////////////////
   // receive shift register, buffer register, FIFO
   ///////////////////////////////////////////
   always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) rxshiftreg <= #1 9'b000000001; // initialize so that there is a valid stop bit
+    if (~HRESETn) rxshiftreg <= #1 10'b0000000001; // initialize so that there is a valid stop bit
     else if (rxcentered) rxshiftreg <= #1 {rxshiftreg[8:0], SINsync}; // capture bit
   assign rxparitybit = rxshiftreg[1]; // parity, if it exists, in bit 1 when all done
   assign rxstopbit = rxshiftreg[0];
@@ -278,8 +279,10 @@ module uartPC16550D(
     end
 
   assign rxfifoempty = (rxfifohead == rxfifotail);
+  // verilator lint_off WIDTH
   assign rxfifoentries = (rxfifohead >= rxfifotail) ? (rxfifohead-rxfifotail) : 
                                                       (rxfifohead + 16 - rxfifotail);
+  // verilator lint_on WIDTH
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
   //assign rxfifotimeout = rxtimeoutcnt[6]; // time out after 4 character periods; *** probably not right yet
   assign rxfifotimeout = 0; // disabled pending fix
@@ -337,7 +340,7 @@ module uartPC16550D(
       txstate <= #1 UART_IDLE;
     end
 
-  assign txbitsexpected = 1 + (5 + LCR[1:0]) + LCR[3] + 1 + LCR[2] - 1; // start bit + data bits + (parity bit) + stop bit(s)
+  assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s)
   assign txnextbit = txbaudpulse && (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
 
   ///////////////////////////////////////////
@@ -400,8 +403,10 @@ module uartPC16550D(
     end
 
   assign txfifoempty = (txfifohead == txfifotail);
+  // verilator lint_off WIDTH
   assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
                                                       (txfifohead + 16 - txfifotail);
+  // verilator lint_on WIDTH
   assign txfifofull = (txfifoentries == 4'b1111);
 
   // transmit buffer ready bit
