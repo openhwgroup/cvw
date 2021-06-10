@@ -35,7 +35,7 @@
 // MISA RISC-V configuration per specification
 `define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZCSR_SUPPORTED 1
- 31
+`define COUNTERS 32
 `define ZCOUNTERS_SUPPORTED 1
 
 // Microarchitectural Features
