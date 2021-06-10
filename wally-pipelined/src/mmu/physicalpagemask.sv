@@ -36,7 +36,7 @@ module physicalpagemask (
 );
 
   localparam EXTRA_BITS = `PPN_BITS - `VPN_BITS;
-  logic ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
+  logic [`PPN_BITS-1:0] ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
 
   logic [`PPN_BITS-1:0] OffsetMask;
 

@@ -49,15 +49,16 @@ module trap (
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
 );
 
-  logic [11:0] MIntGlobalEnM, SIntGlobalEnM, PendingIntsM; 
+  logic MIntGlobalEnM, SIntGlobalEnM;
+  logic [11:0] PendingIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
   logic BusTrapM;
 
   // Determine pending enabled interrupts
-  assign MIntGlobalEnM = {12{(PrivilegeModeW != `M_MODE) || STATUS_MIE}}; // if M ints enabled or lower priv 3.1.9
+  assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
-  assign PendingIntsM = (MIP_REGW & MIE_REGW) & ((MIntGlobalEnM & 12'h888) | (SIntGlobalEnM & 12'h222));
+  assign PendingIntsM = (MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888) | ({12{SIntGlobalEnM}} & 12'h222);
   assign InterruptM = (|PendingIntsM) & InstrValidM & ~CommittedM;
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)

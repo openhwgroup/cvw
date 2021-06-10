@@ -37,7 +37,7 @@ module csri #(parameter
     input  logic             CSRMWriteM, CSRSWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic             ExtIntM, TimerIntM, SwIntM,
-    input  logic [`XLEN-1:0] MIDELEG_REGW,
+    input  logic [11:0]      MIDELEG_REGW,
     output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
     input  logic [`XLEN-1:0] CSRWriteValM
   );
@@ -87,8 +87,8 @@ module csri #(parameter
     end
     always @(posedge clk, posedge reset) begin
       if (reset)          IE_REGW <= 12'b0;
-      else if (WriteMIEM) IE_REGW <= (CSRWriteValM & 12'hAAA); // MIE controls M and S fields
-      else if (WriteSIEM) IE_REGW <= (CSRWriteValM & 12'h222) | (IE_REGW & 12'h888); // only S fields
+      else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'hAAA); // MIE controls M and S fields
+      else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
 //      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field
     end
   endgenerate

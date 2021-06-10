@@ -50,7 +50,7 @@ module amoalu (
       5'b10100: y = ($signed(a) >= $signed(b)) ? a : b;                 // amomax
       5'b11000: y = ($unsigned(a) < $unsigned(b)) ? a : b;  // amominu
       5'b11100: y = ($unsigned(a) >= $unsigned(b)) ? a : b; // amomaxu
-      default:  y = 'bx;                              // undefined; *** could change to b for efficiency
+      default:  y = `XLEN'bx;                              // undefined; *** could change to b for efficiency
     endcase
 
   // sign extend if necessary

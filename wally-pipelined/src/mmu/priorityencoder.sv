@@ -40,7 +40,9 @@ module priorityencoder #(parameter BINARY_BITS = 3) (
   always_comb begin
     binary = 0;
     for (i = 0; i < 2**BINARY_BITS; i++) begin
+      // verilator lint_off WIDTH
       if (onehot[i]) binary = i; // prioritizes the most significant bit
+      // verilator lint_on WIDTH
     end
   end
   // *** triple check synthesizability here

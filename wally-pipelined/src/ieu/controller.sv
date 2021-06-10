@@ -156,7 +156,7 @@ module controller(
   assign IllegalBaseInstrFaultD = ControlsD[0];
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, TargetSrcD, W64D, CSRReadD, 
-          PrivilegedD, MulDivD, AtomicD, unused} = ControlsD & ~IllegalIEUInstrFaultD;
+          PrivilegedD, MulDivD, AtomicD, unused} = IllegalIEUInstrFaultD ? `CTRLW'b0 : ControlsD;
           // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
 
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
