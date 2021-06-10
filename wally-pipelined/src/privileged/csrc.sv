@@ -71,7 +71,13 @@ module csrc #(parameter
   //HPMCOUNTER31H = 12'hC9F
 ) (
     input  logic             clk, reset,
+    input logic 	         StallD, StallE, StallM, StallW,
     input  logic             InstrValidW, LoadStallD, CSRMWriteM,
+    input logic 	         BPPredDirWrongM,
+    input logic 	         BTBPredPCWrongM,
+    input logic 	         RASPredPCWrongM,
+    input logic 	         BPPredClassNonCFIWrongM,
+    input logic [4:0] 	     InstrClassM,
     input  logic [11:0]      CSRAdrM,
     input  logic [1:0]       PrivilegeModeW,
     input  logic [`XLEN-1:0] CSRWriteValM,
@@ -118,20 +124,32 @@ module csrc #(parameter
 
     // parameterized number of additional counters
     if (`COUNTERS > 3) begin
-        logic [`COUNTERS-1:3] WriteHPMCOUNTERM, CounterEvent;
+        logic [`COUNTERS-1:3] WriteHPMCOUNTERM;
+        logic [`COUNTERS-1:0] CounterEvent;
         logic [63:0] /*HPMCOUNTER_REGW[`COUNTERS-1:3], */ HPMCOUNTERPlusM[`COUNTERS-1:3];
         logic [`XLEN-1:0] NextHPMCOUNTERM[`COUNTERS-1:3];
-        
         genvar i;
-        assign CounterEvent[3] = LoadStallD;
-        assign CounterEvent[`COUNTERS-1:4] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+
+        // could replace special counters 0-2 with this loop for all counters
+        assign CounterEvent[0] = 1'b1;
+        assign CounterEvent[1] = 1'b0;
+        assign CounterEvent[2] = InstrValidW & ~StallW;
+        assign CounterEvent[3] = LoadStallD & ~StallD;
+        assign CounterEvent[4] = BPPredDirWrongM & ~StallM;
+        assign CounterEvent[5] = InstrClassM[0] & ~StallM;
+        assign CounterEvent[6] = BTBPredPCWrongM & ~StallM;
+        assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & ~StallM;
+        assign CounterEvent[8] = RASPredPCWrongM & ~StallM;
+        assign CounterEvent[9] = InstrClassM[3] & ~StallM;
+        assign CounterEvent[10] = BPPredClassNonCFIWrongM & ~StallM;
+        assign CounterEvent[`COUNTERS-1:11] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
 
         for (i = 3; i < `COUNTERS; i = i+1) begin
             assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
             assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
             always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
               if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
-              else       HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
+              else if (~StallW) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
             //flopr #(`XLEN) HPMCOUNTERreg[i](clk, reset, NextHPMCOUNTERM[i], HPMCOUNTER_REGW[i]);
 
             if (`XLEN==32) begin
@@ -142,7 +160,7 @@ module csrc #(parameter
                 assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
                 always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
                     if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
-                    else       HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
+                    else if (~StallW) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
                 //flopr #(`XLEN) HPMCOUNTERHreg[i](clk, reset, NextHPMCOUNTERHM[i], HPMCOUNTER_REGW[i][63:32]);
             end else begin
                 assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
