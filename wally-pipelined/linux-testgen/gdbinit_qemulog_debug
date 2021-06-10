@@ -1,0 +1,9 @@
+set pagination off
+target extended-remote :1234
+b *0x000000008020103c
+c
+del 1
+stepi 100
+set confirm off
+kill
+q
