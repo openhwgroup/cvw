@@ -37,7 +37,7 @@ module csri #(parameter
     input  logic             CSRMWriteM, CSRSWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic             ExtIntM, TimerIntM, SwIntM,
-    input  logic [11:0]      MIDELEG_REGW,
+    input  logic [`XLEN-1:0]      MIDELEG_REGW,
     output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
     input  logic [`XLEN-1:0] CSRWriteValM
   );
@@ -105,8 +105,8 @@ module csri #(parameter
 
       // Supervisor mode
       if (`S_SUPPORTED) begin
-        SIP_REGW = IP_REGW & MIDELEG_REGW & 'h222; // only delegated interrupts visible
-        SIE_REGW = IE_REGW & MIDELEG_REGW & 'h222;
+        SIP_REGW = IP_REGW & MIDELEG_REGW[11:0] & 'h222; // only delegated interrupts visible
+        SIE_REGW = IE_REGW & MIDELEG_REGW[11:0] & 'h222;
       end else begin
         SIP_REGW = 12'b0;
         SIE_REGW = 12'b0;
