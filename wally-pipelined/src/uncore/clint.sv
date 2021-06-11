@@ -27,23 +27,30 @@
 `include "wally-config.vh"
 
 module clint (
-  input  logic             HCLK, HRESETn,
-  input  logic             HSELCLINT,
-  input  logic [15:0]      HADDR,
-  input  logic             HWRITE,
-  input  logic [`XLEN-1:0] HWDATA,
+  input logic 		   HCLK, HRESETn,
+  input logic 		   HSELCLINT,
+  input logic [15:0] 	   HADDR,
+  input logic 		   HWRITE,
+  input logic [`XLEN-1:0]  HWDATA,
   output logic [`XLEN-1:0] HREADCLINT,
-  output logic             HRESPCLINT, HREADYCLINT,
-  output logic             TimerIntM, SwIntM);
+  output logic 		   HRESPCLINT, HREADYCLINT,
+  input  logic             HREADY,
+  input logic [1:0] 	   HTRANS,
+  output logic 		   TimerIntM, SwIntM);
 
   logic [63:0] MTIMECMP, MTIME;
   logic        MSIP;
 
-  logic [15:0] entry;
+  logic [15:0] entry, entryd;
   logic            memread, memwrite;
+  logic initTrans;
 
-  assign memread  = HSELCLINT & ~HWRITE;
-  assign memwrite = HSELCLINT & HWRITE;
+  assign initTrans = HREADY & HSELCLINT & (HTRANS != 2'b00);
+  assign memread = initTrans & ~HWRITE;
+  // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
+  flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
+  flopr #(16) entrydflop(HCLK, ~HRESETn, entry, entryd);
+
   assign HRESPCLINT = 0; // OK
   assign HREADYCLINT = 1'b1; // will need to be modified if CLINT ever needs more than 1 cycle to do something
   
@@ -75,16 +82,22 @@ module clint (
       always_ff @(posedge HCLK or negedge HRESETn) 
         if (~HRESETn) begin
           MSIP <= 0;
-          MTIME <= 0;
           MTIMECMP <= 0;
           // MTIMECMP is not reset
         end else if (memwrite) begin
-          if (entry == 16'h0000) MSIP <= HWDATA[0];
-          if (entry == 16'h4000) MTIMECMP <= HWDATA;
+          if (entryd == 16'h0000) MSIP <= HWDATA[0];
+          if (entryd == 16'h4000) MTIMECMP <= HWDATA;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-          if (entry == 16'hBFF8) MTIME <= HWDATA;
-          else MTIME <= MTIME + 1;
         end
+
+      always_ff @(posedge HCLK or negedge HRESETn) 
+        if (~HRESETn) begin
+          MTIME <= 0;
+          // MTIMECMP is not reset
+        end else if (memwrite && entryd == 16'hBFF8) begin
+          // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
+	  MTIME <= HWDATA;
+        end else MTIME <= MTIME + 1;
     end else begin // 32-bit
       always @(posedge HCLK) begin
         case(entry)
@@ -99,18 +112,25 @@ module clint (
       always_ff @(posedge HCLK or negedge HRESETn) 
         if (~HRESETn) begin
           MSIP <= 0;
-          MTIME <= 0;
           MTIMECMP <= 0;
           // MTIMECMP is not reset
         end else if (memwrite) begin
-          if (entry == 16'h0000) MSIP <= HWDATA[0];
-          if (entry == 16'h4000) MTIMECMP[31:0] <= HWDATA;
-          if (entry == 16'h4004) MTIMECMP[63:32] <= HWDATA;
+          if (entryd == 16'h0000) MSIP <= HWDATA[0];
+          if (entryd == 16'h4000) MTIMECMP[31:0] <= HWDATA;
+          if (entryd == 16'h4004) MTIMECMP[63:32] <= HWDATA;
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-          if (entry == 16'hBFF8) MTIME[31:0] <= HWDATA;
-          else if (entry == 16'hBFFC) MTIME[63:32]<= HWDATA;
-          else MTIME <= MTIME + 1;
-        end
+	end
+
+      always_ff @(posedge HCLK or negedge HRESETn) 
+        if (~HRESETn) begin
+          MTIME <= 0;
+          // MTIMECMP is not reset
+	end else if (memwrite && (entryd == 16'hBFF8)) begin
+	  MTIME[31:0] <= HWDATA;
+	end else if (memwrite && (entryd == 16'hBFFC)) begin
+          // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
+	  MTIME[63:32]<= HWDATA;
+	end else MTIME <= MTIME + 1;
     end
   endgenerate
 
