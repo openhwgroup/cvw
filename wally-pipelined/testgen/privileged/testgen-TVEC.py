@@ -406,9 +406,9 @@ for xlen in xlens:
           if fromMode == "s" or fromMode == "u":
             lines += f"""
               li x1, 0b110000000000
-              csrrc x28, mstatus, x1
+              csrrc x31, mstatus, x1
               li x1, 0b0100000000000
-              csrrs x28, mstatus, x1
+              csrrs x31, mstatus, x1
 
               auipc x1, 0
               addi x1, x1, 16 # x1 is now right after the mret instruction
@@ -423,7 +423,7 @@ for xlen in xlens:
             lines += f"""
 
             li x1, 0b110000000000
-            csrrc x28, sstatus, x1
+            csrrc x31, sstatus, x1
 
             auipc x1, 0
             addi x1, x1, 16 # x1 is now right after the sret instruction
