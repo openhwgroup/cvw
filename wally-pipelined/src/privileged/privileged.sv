@@ -76,7 +76,8 @@ module privileged (
 
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
-  logic [11:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
+//  logic [11:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
+  logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
 
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
@@ -104,8 +105,10 @@ module privileged (
   ///////////////////////////////////////////
 
   // get bits of DELEG registers based on CAUSE
-  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]];
-  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[3:0]] : SEDELEG_REGW[CauseM[3:0]]; // depricated
+//  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]];
+//  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[3:0]] : SEDELEG_REGW[CauseM[3:0]]; // depricated
+  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
+  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : SEDELEG_REGW[CauseM[`LOG_XLEN-1:0]]; // depricated
   
   // PrivilegeMode FSM
   always_comb

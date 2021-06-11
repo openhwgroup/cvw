@@ -40,7 +40,11 @@ module csrs #(parameter
   SCAUSE = 12'h142,
   STVAL = 12'h143,
   SIP= 12'h144,
-  SATP = 12'h180
+  SATP = 12'h180,
+    // Constants
+   ZERO = {(`XLEN){1'b0}},
+   SEDELEG_MASK = ~(ZERO | `XLEN'b111 << 9)
+
   ) (
     input  logic             clk, reset, 
     input  logic             StallW,
@@ -50,7 +54,7 @@ module csrs #(parameter
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRSReadValM, SEPC_REGW, STVEC_REGW, 
     output logic [31:0]      SCOUNTEREN_REGW,     
-    output logic [11:0]      SEDELEG_REGW, SIDELEG_REGW, 
+    output logic [`XLEN-1:0]      SEDELEG_REGW, SIDELEG_REGW, 
     output logic [`XLEN-1:0] SATP_REGW,
     input  logic [11:0]      SIP_REGW, SIE_REGW,
     output logic             WriteSSTATUSM,
@@ -93,8 +97,8 @@ module csrs #(parameter
         logic WriteSEDELEGM, WriteSIDELEGM;
         assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
         assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
-        flopenl #(12) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM[11:0] & 12'h1FF, 12'b0, SEDELEG_REGW);
-        flopenl #(12) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM[11:0], 12'b0, SIDELEG_REGW);
+        flopenl #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK /* 12'h1FF */, `XLEN'b0, SEDELEG_REGW);
+        flopenl #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, `XLEN'b0, SIDELEG_REGW);
       end else begin
         assign SEDELEG_REGW = 0;
         assign SIDELEG_REGW = 0;
@@ -106,8 +110,10 @@ module csrs #(parameter
         case (CSRAdrM) 
           SSTATUS:   CSRSReadValM = SSTATUS_REGW;
           STVEC:     CSRSReadValM = STVEC_REGW;
-          SEDELEG:   CSRSReadValM = {{(`XLEN-12){1'b0}}, SEDELEG_REGW};
-          SIDELEG:   CSRSReadValM = {{(`XLEN-12){1'b0}}, SIDELEG_REGW};
+//          SIDELEG:   CSRSReadValM = {{(`XLEN-12){1'b0}}, SIDELEG_REGW};
+//          SEDELEG:   CSRSReadValM = {{(`XLEN-12){1'b0}}, SEDELEG_REGW};
+          SIDELEG:   CSRSReadValM = SIDELEG_REGW;
+          SEDELEG:   CSRSReadValM = SEDELEG_REGW;
           SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, SIP_REGW};
           SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, SIE_REGW};
           SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
