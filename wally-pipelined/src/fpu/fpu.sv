@@ -62,15 +62,15 @@ module fpu (
    logic [2:0] 		   FResultSelD, FResultSelE, FResultSelM, FResultSelW;     // Select FP result
    logic [3:0] 		   FOpCtrlD, FOpCtrlE, FOpCtrlM;                           // Select which opperation to do in each component
    
-   // regfile signals
+   // regfile signals //*** KEP lint warning -  changed `XLEN-1 to 63 
    logic [4:0] 		   RdE, RdM, RdW; // ***Can take from ieu
-   logic [`XLEN-1:0] 	   FWDM;                                                   // Write data for FP register
-   logic [`XLEN-1:0] 	   FRD1D, FRD2D, FRD3D;                                    // Read Data from FP register
-   logic [`XLEN-1:0] 	   FRD1E, FRD2E, FRD3E;
-   logic [`XLEN-1:0] 	   FInput1E, FInput1M, FInput1tmpE;
-   logic [`XLEN-1:0] 	   FInput2E, FInput2M;
-   logic [`XLEN-1:0] 	   FInput3E, FInput3M;
-   logic [`XLEN-1:0] 	   FLoadStoreResultM, FLoadStoreResultW;                   // Result for load, store, and move to int-reg instructions
+   logic [63:0] 	   FWDM;                                                   // Write data for FP register
+   logic [63:0] 	   FRD1D, FRD2D, FRD3D;                                    // Read Data from FP register
+   logic [63:0] 	   FRD1E, FRD2E, FRD3E;
+   logic [63:0] 	   FInput1E, FInput1M, FInput1tmpE;
+   logic [63:0] 	   FInput2E, FInput2M;
+   logic [63:0] 	   FInput3E, FInput3M;
+   logic [63:0] 	   FLoadStoreResultM, FLoadStoreResultW;                   // Result for load, store, and move to int-reg instructions
    
    // div/sqrt signals
    logic 		   DivDenormE, DivDenormM, DivDenormW;
@@ -211,12 +211,12 @@ module fpu (
    //EXECUTION STAGE
    
    // input muxs for forwarding
-   mux4  #(64)  FInput1Emux(FRD1E, FPUResult64W, FPUResult64E, SrcAM, FForwardInput1E, FInput1tmpE);
+   mux4  #(64)  FInput1Emux(FRD1E, FPUResult64W, FPUResult64E, {SrcAM, {64-`XLEN{1'b0}}}, FForwardInput1E, FInput1tmpE);
    mux3  #(64)  FInput2Emux(FRD2E, FPUResult64W, FPUResult64E, FForwardInput2E, FInput2E);
    mux2  #(64)  FInput3Emux(FRD3E, FPUResult64E, FForwardInput3E, FInput3E);
    mux2  #(64)  FOutputInput2mux(FInput1tmpE, FInput2E, FOutputInput2E, FInput1E);
    
-   fma1 fma1 (.*);
+   fma1 fma1 (.FOpCtrlE(FOpCtrlE[2:0]),.*);
    
    // first and only instance of floating-point divider
    logic fpdivClk;
@@ -345,11 +345,11 @@ module fpu (
    
    //BEGIN MEMORY STAGE
    
-   assign FWriteDataM = FInput1M;
+   assign FWriteDataM = FInput1M[63:64-`XLEN];
    
-   mux2  #(64)  FLoadStoreResultMux(HRDATA, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
+   mux2  #(64)  FLoadStoreResultMux({HRDATA, {64-`AHBW{1'b0}}}, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
    
-   fma2 fma2(.*);
+   fma2 fma2(.FOpCtrlM(FOpCtrlM[2:0]), .*);
    
    // second instance of two-stage floating-point add/cvt unit
    fpuaddcvt2 fpadd2 (.*);
@@ -447,7 +447,7 @@ module fpu (
 	// classify
 	3'b101 : FPUResult64W = ClassResultW;
 	// output SrcAW
-	3'b110 : FPUResult64W = SrcAW;
+	3'b110 : FPUResult64W = {SrcAW, {64-`XLEN{1'b0}}};
 	// Load/Store/Move to FP-register
 	3'b111 : FPUResult64W = FLoadStoreResultW;
 	default : FPUResult64W = {64{1'bx}};
