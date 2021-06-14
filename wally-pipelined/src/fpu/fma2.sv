@@ -1,66 +1,77 @@
 module fma2(
  
-	input logic 	[63:0]		FInput1M,
-	input logic		[63:0]		FInput2M,
-	input logic 	[63:0]		FInput3M,
-	input logic 	[2:0] 		FrmM,
-	input logic 	[105:0]		ProdManM,
-	input logic 	[161:0]		AlignedAddendM,	
-	input logic 	[12:0]		ProdExpM,
-	input logic 				AddendStickyM,
-	input logic 				KillProdM,
-	input logic 	[3:0]		FOpCtrlM,
-	input logic					XZeroM, YZeroM, ZZeroM,
-	input logic					XInfM, YInfM, ZInfM,
-	input logic					XNaNM, YNaNM, ZNaNM,
-	output logic	[63:0]		FmaResultM,
-	output logic 	[4:0]		FmaFlagsM);
+	input logic 	[63:0]		FInput1M,	// X
+	input logic		[63:0]		FInput2M,	// Y
+	input logic 	[63:0]		FInput3M,	// Z
+	input logic 	[2:0] 		FrmM,		// rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+	input logic 	[2:0]		FOpCtrlM,	// 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
+	input logic 				FmtM,		// precision 1 = double 0 = single
+	input logic 	[105:0]		ProdManM,	// 1.X frac * 1.Y frac
+	input logic 	[161:0]		AlignedAddendM,	// Z aligned for addition
+	input logic 	[12:0]		ProdExpM,		// X exponent + Y exponent - bias
+	input logic 				AddendStickyM,	// sticky bit that is calculated during alignment
+	input logic 				KillProdM,		// set the product to zero before addition if the product is too small to matter
+	input logic					XZeroM, YZeroM, ZZeroM, // inputs are zero
+	input logic					XInfM, YInfM, ZInfM,	// inputs are infinity
+	input logic					XNaNM, YNaNM, ZNaNM,	// inputs are NaN
+	output logic	[63:0]		FmaResultM,		// FMA final result
+	output logic 	[4:0]		FmaFlagsM);		// FMA flags {invalid, divide by zero, overflow, underflow, inexact}
 	
 
 
-	logic [51:0] 	XMan, YMan, ZMan, WMan;
-	logic [10:0] 	XExp, YExp, ZExp, WExp;
-	logic 		 	XSgn, YSgn, ZSgn, WSgn, PSgn;
-	logic [105:0]	ProdMan2;
-	logic [162:0]	AlignedAddend2;
- 	logic [161:0]	Sum;
-	logic [162:0]	SumTmp;
-	logic [12:0]	SumExp;
-	logic [12:0]	SumExpMinus1;
-	logic [12:0]	SumExpTmp, SumExpTmpMinus1, WExpTmp;
-	logic [53:0]	NormSum;
-	logic [161:0]	NormSumTmp;
-	logic [8:0]		NormCnt;
-	logic 			NormSumSticky;
-	logic 			SumZero;
-	logic 			NegSum;
-	logic 			InvZ;
-	logic			ResultDenorm;
-	logic			Sticky;
-	logic 			Plus1, Minus1, Plus1Tmp, Minus1Tmp;
-	logic 			Invalid,Underflow,Overflow,Inexact;
-	logic [8:0]		DenormShift;
-	logic 			ProdInf, ProdOf, ProdUf;
-	logic [63:0]	FmaResultTmp;
-	logic 			SubBySmallNum;
-	logic [63:0]	FInput3M2;
-	logic			ZeroSgn, ResultSgn;
+	logic [51:0] 	ResultFrac;	// Result fraction
+	logic [10:0] 	ResultExp;	// Result exponent
+	logic 		 	ResultSgn;	// Result sign
+	logic [10:0] 	ZExp;	// input exponent
+	logic 		 	XSgn, YSgn, ZSgn;	// input sign
+	logic 		 	PSgn;		// product sign
+	logic [105:0]	ProdMan2;	// product being added
+	logic [162:0]	AlignedAddend2;	// possibly inverted aligned Z
+ 	logic [161:0]	Sum;		// positive sum
+	logic [162:0]	PreSum;		// possibly negitive sum 
+	logic [12:0]	SumExp;		// exponent of the normalized sum
+	logic [12:0]	SumExpTmp;	// exponent of the normalized sum not taking into account denormal or zero results
+	logic [12:0]	SumExpTmpMinus1;	// SumExpTmp-1
+	logic [12:0]	ResultExpTmp;		// ResultExp with bits to determine sign and overflow
+	logic [53:0]	NormSum;	// normalized sum
+	logic [161:0]	SumShifted; // sum shifted for normalization
+	logic [8:0]		NormCnt;	// output of the leading zero detector
+	logic 			NormSumSticky; // sticky bit calulated from the normalized sum
+	logic 			SumZero;	// is the sum zero
+	logic 			NegSum;		// is the sum negitive
+	logic 			InvZ;		// invert Z if there is a subtraction (-product + Z or product - Z)
+	logic			ResultDenorm;	// is the result denormalized
+	logic			Sticky;		// Sticky bit
+	logic 			Plus1, Minus1, Plus1Tmp, Minus1Tmp;	// do you add or subtract one for rounding
+	logic 			Invalid,Underflow,Overflow,Inexact;	// flags
+	logic [8:0]		DenormShift;	// right shift if the result is denormalized
+	logic 			SubBySmallNum;	// was there supposed to be a subtraction by a small number
+	logic [63:0]	FInput3M2;		// value to add (Z or zero)
+	logic			ZeroSgn;		// the result's sign if the sum is zero
+	logic			ResultSgnTmp;	// the result's sign assuming the result is not zero
+	logic 			Guard, Round, LSBNormSum;	// bits needed to determine rounding
+	logic [12:0] 	MaxExp;		// maximum value of the exponent
+	logic [12:0] 	FracLen;	// length of the fraction
+	logic 			SigNaN;		// is an input a signaling NaN
+	logic [63:0] XNaNResult, YNaNResult, ZNaNResult, InvalidResult, OverflowResult, KillProdResult, UnderflowResult; // possible results
+
+	
+	///////////////////////////////////////////////////////////////////////////////
+	// Select input fields
+	// The following logic duplicates fma1 because it's cheaper to recompute than provide registers
+	///////////////////////////////////////////////////////////////////////////////
 
 	// Set addend to zero if FMUL instruction
   	assign FInput3M2 = FOpCtrlM[2] ? 64'b0 : FInput3M;
 
-	// split inputs into the sign bit, mantissa, and exponent for readability
+	// split inputs into the sign bit, and exponent to handle single or double precision
+	// 		- single precision is in the top half of the inputs
 	assign XSgn = FInput1M[63];
 	assign YSgn = FInput2M[63];
 	assign ZSgn = FInput3M2[63]^FOpCtrlM[0]; //Negate Z if subtraction
 
-	assign XExp = FInput1M[62:52];
-	assign YExp = FInput2M[62:52];
-	assign ZExp = FInput3M2[62:52];
+	assign ZExp = FmtM ? FInput3M2[62:52] : {3'b0, FInput3M2[62:55]};
 
-	assign XMan = FInput1M[51:0];
-	assign YMan = FInput2M[51:0];
-	assign ZMan = FInput3M2[51:0];
 
 
 
@@ -70,8 +81,9 @@ module fma2(
 
 
 
-
+	///////////////////////////////////////////////////////////////////////////////
 	// Addition
+	///////////////////////////////////////////////////////////////////////////////
 	
 	// Negate Z  when doing one of the following opperations:
 	//		-prod +  Z
@@ -79,26 +91,30 @@ module fma2(
 	assign InvZ = ZSgn ^ PSgn;
 
 	// Choose an inverted or non-inverted addend - the one is added later
-	assign AlignedAddend2 = InvZ ? ~{1'b0,AlignedAddendM} : {1'b0,AlignedAddendM};
+	assign AlignedAddend2 = InvZ ? ~{1'b0, AlignedAddendM} : {1'b0, AlignedAddendM};
 	// Kill the product if the product is too small to effect the addition (determined in fma1.sv)
 	assign ProdMan2 = KillProdM ? 106'b0 : ProdManM;
 
 	// Do the addition
 	// 		- add one to negate if the added was inverted
 	//		- the 2 extra bits at the begining and end are needed for rounding
-	assign SumTmp = AlignedAddend2 + {55'b0, ProdMan2,2'b0} + {162'b0, InvZ};
+	assign PreSum = AlignedAddend2 + {55'b0, ProdMan2, 2'b0} + {162'b0, InvZ};
 	 
 	// Is the sum negitive
-	assign NegSum = SumTmp[162];
+	assign NegSum = PreSum[162];
 	// If the sum is negitive, negate the sum.
-	assign Sum = NegSum ? -SumTmp[161:0] : SumTmp[161:0];
+	assign Sum = NegSum ? -PreSum[161:0] : PreSum[161:0];
 
 
 
 
 
 
+	///////////////////////////////////////////////////////////////////////////////
 	// Leading one detector
+	///////////////////////////////////////////////////////////////////////////////
+
+	//*** replace with non-behavoral code
 	logic [8:0]	i;
 	always_comb begin
 			i = 0;
@@ -116,28 +132,32 @@ module fma2(
 
 
 
+	///////////////////////////////////////////////////////////////////////////////
 	// Normalization
-
+	///////////////////////////////////////////////////////////////////////////////
 
 	// Determine if the sum is zero
 	assign SumZero = ~(|Sum);
 
+	// determine the length of the fraction based on precision
+	assign FracLen = FmtM ? 13'd52 : 13'd23;
+
 	// Determine if the result is denormal
-	assign ResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp+13'd52)>=0);
+	assign SumExpTmp = KillProdM ? {2'b0, ZExp} : ProdExpM + -({4'b0, NormCnt} - 13'd56);
+	assign ResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp)>=$signed(-FracLen)) & ~SumZero;
 
 	// Determine the shift needed for denormal results
 	assign SumExpTmpMinus1 = SumExpTmp-1;
 	assign DenormShift = ResultDenorm ? SumExpTmpMinus1[8:0] : 9'b0;
 
 	// Normalize the sum
-	assign NormSumTmp = SumZero ? 162'b0 : Sum << NormCnt+DenormShift; 
-	assign NormSum = NormSumTmp[161:108];
+	assign SumShifted = SumZero ? 162'b0 : Sum << NormCnt+DenormShift; 
+	assign NormSum = SumShifted[161:108];
 	// Calculate the sticky bit
-	assign NormSumSticky = (|NormSumTmp[107:0]);
+	assign NormSumSticky = FmtM ? (|SumShifted[107:0]) : (|SumShifted[136:0]);
 	assign Sticky = AddendStickyM | NormSumSticky;
 
 	// Determine sum's exponent
-	assign SumExpTmp = KillProdM ? {2'b0, ZExp} : ProdExpM + -({4'b0, NormCnt} - 13'd56);
 	assign SumExp = SumZero ? 13'b0 : 
 				 ResultDenorm ? 13'b0 :
 				 SumExpTmp; 
@@ -146,57 +166,60 @@ module fma2(
 
 
 
-
-
-
-
+	///////////////////////////////////////////////////////////////////////////////
 	// Rounding
+	///////////////////////////////////////////////////////////////////////////////
 
 	// round to nearest even
-	//		{NormSum[1], NormSum[0], Sticky}
+	//		{Guard, Round, Sticky}
 	//		0xx - do nothing
-	//		100 - tie - Plus1 if NormSum[2] = 1
-	//			- don't add 1 if there was supposed to be a subtraction by a small number that didn't happen
-	//		101/110/111 - Plus1
+	//		100 - tie - Plus1 if result is odd  (LSBNormSum = 1)
+	//			- don't add 1 if a small number was supposed to be subtracted
+	//		101 - do nothing if a small number was supposed to subtracted (the sticky bit was set by the small number)
+	//		110/111 - Plus1
 
-	// 	round to zero - do nothing
-	//			- subtract 1 if a small number was supposed to be subtracted from the positive result
+	// 	round to zero - subtract 1 if a small number was supposed to be subtracted from a positive result with guard and round bits of 0
 
-	// 	round to -infinity - Plus1 if negitive
-	//			- don't add 1 if there was supposed to be a subtraction by a small number that didn't happen
-	//			- subtract 1 if a small number was supposed to be subtracted from the positive result
+	// 	round to -infinity 
+	//			- Plus1 if negative unless a small number was supposed to be subtracted from a result with guard and round bits of 0
+	//			- subtract 1 if a small number was supposed to be subtracted from a positive result with guard and round bits of 0
 
-	// 	round to infinity - Plus1 if positive
-
-	//			- don't add 1 if there was supposed to be a subtraction by a small number that didn't happen
-	//			- subtract 1 if a small number was supposed to be subtracted from the negitive result
+	// 	round to infinity 
+	//			- Plus1 if positive unless a small number was supposed to be subtracted from a result with guard and round bits of 0
+	//			- subtract 1 if a small number was supposed to be subtracted from a negative result with guard and round bits of 0
 
 	//  round to nearest max magnitude
-	//		{NormSum[1], NormSum[0], Sticky}
+	//		{Guard, Round, Sticky}
 	//		0xx - do nothing
 	//		100 - tie - Plus1
-	//			- don't add 1 if there was supposed to be a subtraction by a small number that didn't happen
-	//		101/110/111 - Plus1
+	//			- don't add 1 if a small number was supposed to be subtracted
+	//		101 - do nothing if a small number was supposed to subtracted (the sticky bit was set by the small number)
+	//		110/111 - Plus1
 
-	// Deterimine if the result was supposed to be subtrated by a small number
-	assign SubBySmallNum = AddendStickyM&InvZ&~NormSumSticky;
+	// determine guard, round, and least significant bit of the result
+	assign Guard = FmtM ? NormSum[1] : NormSum[30];
+	assign Round = FmtM ? NormSum[0] : NormSum[29];
+	assign LSBNormSum = FmtM ? NormSum[2] : NormSum[31];
+
+	// Deterimine if a small number was supposed to be subtrated
+	assign SubBySmallNum = AddendStickyM&InvZ&~(NormSumSticky)&~ZZeroM;
 
 	always_comb begin
 		// Determine if you add 1
 		case (FrmM)
-			3'b000: Plus1Tmp = NormSum[1] & (NormSum[0] | (Sticky&~(~NormSum[0]&SubBySmallNum)) | (~NormSum[0]&~Sticky&NormSum[2]));//round to nearest even
+			3'b000: Plus1Tmp = Guard & (Round | (Sticky&~(~Round&SubBySmallNum)) | (~Round&~Sticky&LSBNormSum&~SubBySmallNum));//round to nearest even
 			3'b001: Plus1Tmp = 0;//round to zero
-			3'b010: Plus1Tmp = WSgn & ~(SubBySmallNum);//round down
-			3'b011: Plus1Tmp = ~WSgn & ~(SubBySmallNum);//round up
-			3'b100: Plus1Tmp = (NormSum[1] & (NormSum[0] | (Sticky&~(~NormSum[0]&SubBySmallNum)) | (~NormSum[0]&~Sticky)));//round to nearest max magnitude
+			3'b010: Plus1Tmp = ResultSgn & ~(SubBySmallNum & ~Guard & ~Round);//round down
+			3'b011: Plus1Tmp = ~ResultSgn & ~(SubBySmallNum & ~Guard & ~Round);//round up
+			3'b100: Plus1Tmp = (Guard & (Round | (Sticky&~(~Round&SubBySmallNum)) | (~Round&~Sticky&~SubBySmallNum)));//round to nearest max magnitude
 			default: Plus1Tmp = 1'bx;
 		endcase
 		// Determine if you subtract 1
 		case (FrmM)
 			3'b000: Minus1Tmp = 0;//round to nearest even
-			3'b001: Minus1Tmp = SubBySmallNum;//round to zero
-			3'b010: Minus1Tmp = ~WSgn & SubBySmallNum;//round down
-			3'b011: Minus1Tmp = WSgn & SubBySmallNum;//round up
+			3'b001: Minus1Tmp = SubBySmallNum & ~Guard & ~Round;//round to zero
+			3'b010: Minus1Tmp = ~ResultSgn & ~Guard & ~Round & SubBySmallNum;//round down
+			3'b011: Minus1Tmp = ResultSgn & ~Guard & ~Round & SubBySmallNum;//round up
 			3'b100: Minus1Tmp = 0;//round to nearest max magnitude
 			default: Minus1Tmp = 1'bx;
 		endcase
@@ -204,11 +227,18 @@ module fma2(
 	end
 
 	// If an answer is exact don't round
-    assign Plus1 = Sticky | (|NormSum[1:0]) ? Plus1Tmp : 1'b0;
-    assign Minus1 = Sticky | (|NormSum[1:0]) ? Minus1Tmp : 1'b0;
+    assign Plus1 = Plus1Tmp & (Sticky | Guard | Round);
+    assign Minus1 = Minus1Tmp & (Sticky | Guard | Round);
+
 	// Compute rounded result 
-    assign {WExpTmp, WMan} = {SumExp, NormSum[53:2]} - {64'b0, Minus1} + {64'b0, Plus1};
-    assign WExp = WExpTmp[10:0];
+	logic [64:0] RoundAdd;
+	logic [51:0] NormSumTruncated;
+	assign RoundAdd = FmtM ? Minus1 ? {65{1'b1}} : {64'b0, Plus1} : 
+							 Minus1 ? {{36{1'b1}}, 29'b0} :	{35'b0, Plus1, 29'b0};
+	assign NormSumTruncated = FmtM ? NormSum[53:2] : {NormSum[53:31], 29'b0};
+
+	assign {ResultExpTmp, ResultFrac} = {SumExp, NormSumTruncated} + RoundAdd;
+    assign ResultExp = ResultExpTmp[10:0];
 
 
 
@@ -216,60 +246,91 @@ module fma2(
 
 
 
+	///////////////////////////////////////////////////////////////////////////////
 	// Sign calculation
-
+	///////////////////////////////////////////////////////////////////////////////
 
 	// Determine the sign if the sum is zero
-	//	if product underflows then use psign
-	//	otherwise
-	//		if cancelation then 0 unless round to -inf
+	//		if cancelation then 0 unless round to -infinity
 	//		otherwise psign
-	assign ZeroSgn = Underflow & ~ResultDenorm ? PSgn :
-				  (PSgn^ZSgn ? FrmM == 3'b010 : PSgn);
+	assign ZeroSgn = (PSgn^ZSgn)&~Underflow ? FrmM == 3'b010 : PSgn;
 
 	// is the result negitive
 	// 	if p - z is the Sum negitive
 	// 	if -p + z is the Sum positive
 	// 	if -p - z then the Sum is negitive
-	assign ResultSgn = InvZ&(ZSgn)&NegSum | InvZ&PSgn&~NegSum | ((ZSgn)&PSgn);
-	assign WSgn = SumZero ? ZeroSgn : ResultSgn;
+	assign ResultSgnTmp = InvZ&(ZSgn)&NegSum | InvZ&PSgn&~NegSum | ((ZSgn)&PSgn);
+	assign ResultSgn = SumZero ? ZeroSgn : ResultSgnTmp;
  
-	// Select the result
-	assign FmaResultM = XNaNM ? {XSgn, XExp, 1'b1,XMan[50:0]} : 
-						YNaNM ? {YSgn, YExp, 1'b1,YMan[50:0]} :
-						ZNaNM ? {ZSgn, ZExp, 1'b1,ZMan[50:0]} :
-						Invalid ? {WSgn, 11'h7ff, 1'b1, 51'b0} : // has to be before inf
-						XInfM ? {PSgn, XExp, XMan} :
-						YInfM ? {PSgn, YExp, YMan} :
-						ZInfM ? {ZSgn, ZExp, ZMan} :
-						Overflow ? {WSgn, 11'h7ff, 52'b0} :
-						Underflow & ~ResultDenorm ? {WSgn, 63'b0} - {63'b0, (Minus1&AddendStickyM)} + {63'b0, (Plus1&AddendStickyM)} :
-						KillProdM ? {ZSgn, ZExp, ZMan} - {63'b0, (Minus1&AddendStickyM)} + {63'b0, (Plus1&AddendStickyM)}: // has to be after Underflow
-						{WSgn,WExp,WMan};
-	
+
+
+
+
+	///////////////////////////////////////////////////////////////////////////////
+	// Flags
+	///////////////////////////////////////////////////////////////////////////////
+
+
 
 	// Set Invalid flag for following cases:
-	//   1) Inf - Inf
+	//   1) Inf - Inf (unless x or y is NaN)
 	//   2) 0 * Inf
 	//   3) any input is a signaling NaN
-	assign ProdOf = (ProdExpM >= 2047 && ~ProdExpM[12]);
-	assign ProdInf = ProdOf && ~XNaNM && ~YNaNM;
-	assign Invalid = (XNaNM&~XMan[51]) | (YNaNM&~YMan[51]) | (ZNaNM&~ZMan[51]) | ((XInfM || YInfM || ProdInf) & ZInfM & (XSgn ^ YSgn ^ ZSgn)) | (XZeroM & YInfM) | (YZeroM & XInfM);  
+	assign MaxExp = FmtM ? 13'd2047 : 13'd255;
+	assign SigNaN = FmtM ? (XNaNM&~FInput1M[51]) | (YNaNM&~FInput2M[51]) | (ZNaNM&~FInput3M2[51]) : 
+						   (XNaNM&~FInput1M[54]) | (YNaNM&~FInput2M[54]) | (ZNaNM&~FInput3M2[54]);
+	assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (XSgn ^ YSgn ^ ZSgn) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
 	
 	// Set Overflow flag if the number is too big to be represented
-	assign Overflow = WExpTmp >= 2047 & ~WExpTmp[12];
+	//		- Don't set the overflow flag if an overflowed result isn't outputed
+	assign Overflow = ResultExpTmp >= MaxExp & ~ResultExpTmp[12]&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
 	// Set Underflow flag if the number is too small to be represented in normal numbers
-	assign ProdUf = KillProdM & ZZeroM;
-	assign Underflow = SumExp[12] | ProdUf;
-
+	logic ProdUf;
+	assign ProdUf = ProdExpM <= 1;
+	// assign Underflow = ResultExpTmp[12] | (KillProdM&AddendStickyM&ZZeroM) | (~(|ResultExpTmp)&ResultDenorm&(Round|Guard|Sticky)) | Plus1&ResultDenorm&(ResultExp == 1);
+	assign Underflow = (SumExp[12] | ((SumExp == 0) & (Round|Guard|Sticky))    )&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 	// Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
-	assign Inexact = Sticky|Overflow| (|NormSum[1:0]);
+	//		- Don't set the underflow flag if an underflowed result isn't outputed
+	assign Inexact = (Sticky|Overflow|Guard|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
 	// Combine flags 
 	//		- FMA can't set the Divide by zero flag
 	//		- Don't set the underflow flag if the result is exact 
-	assign FmaFlagsM = {Invalid, 1'b0, Overflow, Underflow & Inexact, Inexact};
+	assign FmaFlagsM = {Invalid, 1'b0, Overflow, Underflow & ~(ResultExpTmp == 1), Inexact};
+
+
+
+
+
+
+
+	///////////////////////////////////////////////////////////////////////////////
+	// Select the result
+	///////////////////////////////////////////////////////////////////////////////
+	assign XNaNResult = FmtM ? {XSgn, FInput1M[62:52], 1'b1,FInput1M[50:0]} : {XSgn, FInput1M[62:55], 1'b1,FInput1M[53:0]};
+	assign YNaNResult = FmtM ? {YSgn, FInput2M[62:52], 1'b1,FInput2M[50:0]} : {YSgn, FInput2M[62:55], 1'b1,FInput2M[53:0]};
+	assign ZNaNResult = FmtM ? {ZSgn, FInput3M2[62:52], 1'b1,FInput3M2[50:0]} : {ZSgn, FInput3M2[62:55], 1'b1,FInput3M2[53:0]};
+	assign OverflowResult =  FmtM ? ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, 11'h7fe, {52{1'b1}}} : 
+																														  {ResultSgn, 11'h7ff, 52'b0} : 
+									((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, 8'hfe, {23{1'b1}}, 32'b0} :
+																														  {ResultSgn, 8'hff, 55'b0};
+	assign InvalidResult = FmtM ? {ResultSgn, 11'h7ff, 1'b1, 51'b0} : {ResultSgn, 8'hff, 1'b1, 54'b0};
+	assign KillProdResult = FmtM ?{ResultSgn, FInput3M2[62:0] - {62'b0, (Minus1&AddendStickyM)}} + {62'b0, (Plus1&AddendStickyM)} : {ResultSgn, FInput3M2[62:32] - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}, 32'b0};
+	assign UnderflowResult = FmtM ? {ResultSgn, 63'b0} + {63'b0, (Plus1Tmp&(AddendStickyM|FrmM[1]))} : {{ResultSgn, 31'b0} + {31'b0, (Plus1Tmp&(AddendStickyM|FrmM[1]))}, 32'b0};
+	assign FmaResultM = XNaNM ? XNaNResult : 
+						YNaNM ? YNaNResult : 
+						ZNaNM ? ZNaNResult :
+						Invalid ? InvalidResult : // has to be before inf
+						XInfM ? {PSgn, FInput1M[62:0]} :
+						YInfM ? {PSgn, FInput2M[62:0]} :
+						ZInfM ? {ZSgn, FInput3M2[62:0]} :
+						Overflow ? OverflowResult :	
+						KillProdM ? KillProdResult : // has to be after Underflow		
+						Underflow & ~ResultDenorm ? UnderflowResult :	
+						FmtM ? {ResultSgn, ResultExp, ResultFrac} : 
+							   {ResultSgn, ResultExp[7:0], ResultFrac, 3'b0};
+
+
 
 endmodule
-
