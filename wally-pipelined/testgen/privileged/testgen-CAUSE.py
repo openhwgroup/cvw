@@ -69,7 +69,8 @@ def writeVectors(storecmd, returningInstruction):
         csrrc x0, {fromMode}status, x1
 
         la x18, {clintAddr}
-        {storecmd} x0, 0(x18)
+        li x1, -1
+        {storecmd} x1, 0(x18)
       """)
 
     # Page 6 of unpriviledged spec
