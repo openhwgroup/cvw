@@ -27,22 +27,22 @@
 `include "wally-config.vh"
 
 module clint (
-  input logic 		   HCLK, HRESETn,
-  input logic 		   HSELCLINT,
-  input logic [15:0] 	   HADDR,
-  input logic 		   HWRITE,
-  input logic [`XLEN-1:0]  HWDATA,
-  output logic [`XLEN-1:0] HREADCLINT,
-  output logic 		   HRESPCLINT, HREADYCLINT,
+  input  logic             HCLK, HRESETn,
+  input  logic             HSELCLINT,
+  input  logic [15:0]      HADDR,
+  input  logic             HWRITE,
+  input  logic [`XLEN-1:0] HWDATA,
   input  logic             HREADY,
-  input logic [1:0] 	   HTRANS,
-  output logic 		   TimerIntM, SwIntM);
+  input  logic [1:0]       HTRANS,
+  output logic [`XLEN-1:0] HREADCLINT,
+  output logic             HRESPCLINT, HREADYCLINT,
+  output logic             TimerIntM, SwIntM);
 
   logic [63:0] MTIMECMP, MTIME;
   logic        MSIP;
 
   logic [15:0] entry, entryd;
-  logic            memread, memwrite;
+  logic memread, memwrite;
   logic initTrans;
 
   assign initTrans = HREADY & HSELCLINT & (HTRANS != 2'b00);
