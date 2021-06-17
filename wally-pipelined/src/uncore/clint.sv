@@ -36,9 +36,9 @@ module clint (
   input  logic [1:0]       HTRANS,
   output logic [`XLEN-1:0] HREADCLINT,
   output logic             HRESPCLINT, HREADYCLINT,
+  output logic [63:0]      MTIME, MTIMECMP,
   output logic             TimerIntM, SwIntM);
 
-  logic [63:0] MTIMECMP, MTIME;
   logic        MSIP;
 
   logic [15:0] entry, entryd;
