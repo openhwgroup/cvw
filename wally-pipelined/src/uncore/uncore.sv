@@ -57,7 +57,8 @@ module uncore (
   input  logic [31:0]      GPIOPinsIn,
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
   input  logic             UARTSin,
-  output logic             UARTSout
+  output logic             UARTSout,
+  output logic [63:0]      MTIME, MTIMECMP
 );
   
   logic [`XLEN-1:0] HWDATA;

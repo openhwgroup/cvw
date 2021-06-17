@@ -27,11 +27,11 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-
+// Ben 06/17/21: I brought in MTIME, MTIMECMP from CLINT. *** this probably isn't perfect though because it doesn't yet provide the ability to change these through CSR writes
 module csrc #(parameter 
   MCYCLE = 12'hB00,
-//  MTIME = 12'hB01, // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
- // MTIMECMP = 12'hB21, // not specified in privileged spec.  Move to CLINT
+  // MTIME = 12'hB01, // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
+  // MTIMECMP = 12'hB21, // not specified in privileged spec.  Move to CLINT
   MINSTRET = 12'hB02,
   MHPMCOUNTERBASE = 12'hB00,
   //MHPMCOUNTER3 = 12'hB03,
@@ -39,8 +39,8 @@ module csrc #(parameter
   // ... more counters
   //MHPMCOUNTER31 = 12'hB1F,
   MCYCLEH = 12'hB80,
-//  MTIMEH = 12'hB81,  // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
-//  MTIMECMPH = 12'hBA1, // not specified in privileged spec.  Move to CLINT
+  // MTIMEH = 12'hB81,  // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
+  // MTIMECMPH = 12'hBA1, // not specified in privileged spec.  Move to CLINT
   MINSTRETH = 12'hB82,
   MHPMCOUNTERHBASE = 12'hB80,
   //MHPMCOUNTER3H = 12'hB83,
@@ -54,7 +54,7 @@ module csrc #(parameter
   // ... more counters
   //MHPMEVENT31 = 12'h33F,
   CYCLE = 12'hC00, 
-//  TIME = 12'hC01, // not specified
+  TIME = 12'hC01, 
   INSTRET = 12'hC02,
   HPMCOUNTERBASE = 12'hC00,
   //HPMCOUNTER3 = 12'hC03,
@@ -62,7 +62,7 @@ module csrc #(parameter
   //  ...more counters
   //HPMCOUNTER31 = 12'hC1F,
   CYCLEH = 12'hC80,
-//  TIMEH = 12'hC81, // not specified
+  TIMEH = 12'hC81, // not specified
   INSTRETH = 12'hC82,
   HPMCOUNTERHBASE = 12'hC80
   //HPMCOUNTER3H = 12'hC83,
@@ -71,17 +71,18 @@ module csrc #(parameter
   //HPMCOUNTER31H = 12'hC9F
 ) (
     input  logic             clk, reset,
-    input logic 	         StallD, StallE, StallM, StallW,
+    input  logic             StallD, StallE, StallM, StallW,
     input  logic             InstrValidW, LoadStallD, CSRMWriteM,
-    input logic 	         BPPredDirWrongM,
-    input logic 	         BTBPredPCWrongM,
-    input logic 	         RASPredPCWrongM,
-    input logic 	         BPPredClassNonCFIWrongM,
-    input logic [4:0] 	     InstrClassM,
+    input  logic             BPPredDirWrongM,
+    input  logic             BTBPredPCWrongM,
+    input  logic             RASPredPCWrongM,
+    input  logic             BPPredClassNonCFIWrongM,
+    input  logic [4:0]       InstrClassM,
     input  logic [11:0]      CSRAdrM,
     input  logic [1:0]       PrivilegeModeW,
     input  logic [`XLEN-1:0] CSRWriteValM,
     input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input  logic [63:0]      MTIME, MTIMECMP,
     output logic [`XLEN-1:0] CSRCReadValM,
     output logic             IllegalCSRCAccessM
   );
@@ -112,12 +113,12 @@ module csrc #(parameter
 
       // Counter adders with inhibits for power savings
       assign CYCLEPlusM = CYCLE_REGW + {63'b0, ~MCOUNTINHIBIT_REGW[0]};
-    //  assign TIMEPlusM = TIME_REGW + 1; // can't be inhibited
+      //assign TIMEPlusM = TIME_REGW + 1; // can't be inhibited
       assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidW & ~MCOUNTINHIBIT_REGW[2]};
       //assign HPMCOUNTER3PlusM = HPMCOUNTER3_REGW + {63'b0, LoadStallD & ~MCOUNTINHIBIT_REGW[3]}; // count load stalls
-      ///assign HPMCOUNTER4PlusM = HPMCOUNTER4_REGW + {63'b0, 1'b0 & ~MCOUNTINHIBIT_REGW[4]}; // change to count signals
+      //assign HPMCOUNTER4PlusM = HPMCOUNTER4_REGW + {63'b0, 1'b0 & ~MCOUNTINHIBIT_REGW[4]}; // change to count signals
       assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[`XLEN-1:0];
-    //  assign NextTIMEM = WriteTIMEM ? CSRWriteValM : TIMEPlusM[`XLEN-1:0];
+      //assign NextTIMEM = WriteTIMEM ? CSRWriteValM : TIMEPlusM[`XLEN-1:0];
       assign NextINSTRETM = WriteINSTRETM ? CSRWriteValM : INSTRETPlusM[`XLEN-1:0];
       //assign NextHPMCOUNTER3M = WriteHPMCOUNTER3M ? CSRWriteValM : HPMCOUNTER3PlusM[`XLEN-1:0]; 
       //assign NextHPMCOUNTER4M = WriteHPMCOUNTER4M ? CSRWriteValM : HPMCOUNTER4PlusM[`XLEN-1:0];
@@ -211,7 +212,7 @@ module csrc #(parameter
           //flopr   #(32) HPMCOUNTER4Hreg(clk, reset, NextHPMCOUNTER4HM, HPMCOUNTER4_REGW[63:32]);
         end
 
-    // eventually move TIME and TIMECMP to the CLINT
+    // eventually move TIME and TIMECMP to the CLINT -- Ben 06/17/21: sure let's give that a shot!
     //  run TIME off asynchronous reference clock
     //  synchronize write enable to TIME
     //  four phase handshake to synchronize reads from TIME
@@ -235,7 +236,7 @@ module csrc #(parameter
                 MINSTRET:     CSRCReadValM = INSTRET_REGW;
                 //MHPMCOUNTER3: CSRCReadValM = HPMCOUNTER3_REGW;
                 //MHPMCOUNTER4: CSRCReadValM = HPMCOUNTER4_REGW;
-      //          TIME:         CSRCReadValM = TIME_REGW;
+                TIME:         CSRCReadValM = MTIME;
                 CYCLE:        CSRCReadValM = CYCLE_REGW;
                 INSTRET:      CSRCReadValM = INSTRET_REGW;
                 //HPMCOUNTER3:  CSRCReadValM = HPMCOUNTER3_REGW;
@@ -275,7 +276,7 @@ module csrc #(parameter
                 MINSTRETH:     CSRCReadValM = INSTRET_REGW[63:32];
                 //MHPMCOUNTER3H: CSRCReadValM = HPMCOUNTER3_REGW[63:32];
                 //MHPMCOUNTER4H: CSRCReadValM = HPMCOUNTER4_REGW[63:32];
-      //          TIMEH:         CSRCReadValM = TIME_REGW[63:32];
+                TIMEH:         CSRCReadValM = MTIME[63:32];
                 CYCLEH:        CSRCReadValM = CYCLE_REGW[63:32];
                 INSTRETH:      CSRCReadValM = INSTRET_REGW[63:32];
                 //HPMCOUNTER3H:  CSRCReadValM = HPMCOUNTER3_REGW[63:32];
