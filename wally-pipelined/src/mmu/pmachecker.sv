@@ -64,20 +64,20 @@ module pmachecker (
 
 
   // Determine which region of physical memory (if any) is being accessed
-  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, BootTim);
-  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, Tim);
-  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, CLINT);
-  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, GPIO);
-  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, UART);
-  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, PLIC);
+  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, AccessRX, Size, 4'b1111, BootTim);
+  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, AccessRWX, Size, 4'b1111, Tim);
+  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, AccessRW, Size, (`XLEN==64 ? 4'b1000 : 4'b0100), CLINT);
+  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, AccessRW, Size, 4'b0100, GPIO);
+  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, AccessRW, Size, 4'b0001, UART);
+  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, AccessRW, Size, 4'b0100, PLIC);
 
   // Swizzle region bits
   assign Regions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
 
   // Only RAM memory regions are cacheable
   assign Cacheable = BootTim | Tim;
-  assign Idempotent = BootTim | Tim;
-  assign AtomicAllowed = BootTim | Tim;
+  assign Idempotent = Tim;
+  assign AtomicAllowed = Tim;
 
   assign ValidBootTim = '1;
   assign ValidTim = '1;
@@ -98,9 +98,9 @@ module pmachecker (
 
   assign PMAAccessFault = ~|HSELRegions;
 
+  // Detect access faults
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
-
   assign PMASquashBusAccess = PMAAccessFault && AccessRWX;
 endmodule

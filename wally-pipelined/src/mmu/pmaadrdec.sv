@@ -29,6 +29,9 @@ module pmaadrdec (
   input  logic [31:0] HADDR,
   input  logic [31:0] Base, Range,
   input  logic        Supported,
+  input  logic        AccessValid,
+  input  logic [2:0]  Size,
+  input  logic [3:0]  SizeMask,
   output logic        HSEL
 );
 
@@ -38,8 +41,8 @@ module pmaadrdec (
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
   // then anything address between 0x04002000 and 0x04002FFF should match (HSEL=1)
 
-  assign match = (HADDR ~^ Base) | Range;
-  assign HSEL = &match & Supported;
+  assign match = &((HADDR ~^ Base) | Range);
+  assign HSEL = match & Supported;
 
 endmodule
 
