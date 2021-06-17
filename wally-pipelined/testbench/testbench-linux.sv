@@ -473,7 +473,21 @@ module testbench();
     end
   end
 
-  string PCtext, PCtext2;
+  string PCtextD,PCtextE,PCtextM,PCtext2;
+  always_ff @(posedge clk, posedge reset)
+    if (reset) begin
+      PCtextE <= #1 "(reset)";
+      PCtextM <= #1 "(reset)";
+    end else begin
+      if (~dut.hart.StallE) 
+        if (dut.hart.FlushE) PCtextE <= #1 "(flushed)";
+        else                 PCtextE <= #1 PCtextD;
+      if (~dut.hart.StallM) 
+        if (dut.hart.FlushM) PCtextM <= #1 "(flushed)";
+        else                 PCtextM <= #1 PCtextE;
+    end
+
+
   initial begin
     instrs = 0;
   end
@@ -495,7 +509,7 @@ module testbench();
                  (dut.hart.ifu.PCD == 32'h80001dc6) ||          // as well as stores to PLIC
                  (dut.hart.ifu.PCD == 32'h80001de0) ||
                  (dut.hart.ifu.PCD == 32'h80001de2)) begin 
-                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
+                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
                 force CheckInstrD = 32'b0010011;
                 force dut.hart.ifu.InstrRawD = 32'b0010011;
                 while (clk != 0) #1;
@@ -515,10 +529,10 @@ module testbench();
               $display("no more PC data to read");
               `ERROR
             end
-            scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
+            scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtextD);
             PCtext2 = "";
             while (PCtext2 != "***") begin
-              PCtext = {PCtext, " ", PCtext2};
+              PCtextD = {PCtextD, " ", PCtext2};
               scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
             end
             scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
@@ -527,7 +541,7 @@ module testbench();
                  (dut.hart.ifu.PCD == 32'h80001dc6) ||          // as well as stores to PLIC
                  (dut.hart.ifu.PCD == 32'h80001de0) ||
                  (dut.hart.ifu.PCD == 32'h80001de2)) begin 
-                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
+                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
                 force CheckInstrD = 32'b0010011;
                 force dut.hart.ifu.InstrRawD = 32'b0010011;
                 while (clk != 0) #1;
