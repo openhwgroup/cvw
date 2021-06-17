@@ -16,8 +16,8 @@ wlft*
 /imperas-riscv-tests/FunctionRadix.addr
 /imperas-riscv-tests/ProgramMap.txt
 /imperas-riscv-tests/logs
-/wally-pipelined/busybear-testgen/gdbcombined.txt
-/wally-pipelined/busybear-testgen/first10.txt
+/wally-pipelined/linux-testgen/qemu_output.txt
+/wally-pipelined/linux-testgen/qemu_in_gdb_format.txt
 *.o
 *.d
 testsBP/*/*/*.elf*
