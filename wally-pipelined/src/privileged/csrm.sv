@@ -74,7 +74,11 @@ module csrm #(parameter
   DCSR = 12'h7B0,
   DPC = 12'h7B1,
   DSCRATCH0 = 12'h7B2,
-  DSCRATCH1 = 12'h7B3  
+  DSCRATCH1 = 12'h7B3,
+  // Constants
+   ZERO = {(`XLEN){1'b0}},
+   MEDELEG_MASK = ~(ZERO | `XLEN'b1 << 11),
+   MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}
 ) (
     input  logic             clk, reset, 
     input  logic             StallW,
@@ -84,7 +88,7 @@ module csrm #(parameter
     input  logic [`XLEN-1:0] CSRWriteValM,
     output logic [`XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
     output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-    output logic [11:0]      MEDELEG_REGW, MIDELEG_REGW,
+    output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW,
     // 64-bit registers in RV64, or two 32-bit registers in RV32
     output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
     output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1],
@@ -143,8 +147,8 @@ module csrm #(parameter
   flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
-      flopenl #(12) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[11:0] & 12'h7FF, 12'b0, MEDELEG_REGW);
-      flopenl #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & 12'h222, 12'b0, MIDELEG_REGW);
+      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, `XLEN'b0, MEDELEG_REGW);
+      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, `XLEN'b0, MIDELEG_REGW);
     end else begin
       assign MEDELEG_REGW = 0;
       assign MIDELEG_REGW = 0;
@@ -201,8 +205,10 @@ module csrm #(parameter
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = 0; // flush this out later if MBE and SBE fields are supported
       MTVEC:     CSRMReadValM = MTVEC_REGW;
-      MEDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MEDELEG_REGW};
-      MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
+      //MEDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MEDELEG_REGW};
+      //MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
+      MEDELEG:   CSRMReadValM = MEDELEG_REGW;
+      MIDELEG:   CSRMReadValM = MIDELEG_REGW;
       MIP:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW};
       MIE:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW};
       MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;

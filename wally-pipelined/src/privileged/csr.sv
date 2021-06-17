@@ -53,9 +53,9 @@ module csr #(parameter
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  output logic [11:0]      MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
+  output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
-  output logic [11:0]      MIP_REGW, MIE_REGW,
+  output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic             STATUS_MPRV,
@@ -80,7 +80,6 @@ module csr #(parameter
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
   logic [11:0] CSRAdrM;
-  logic [11:0] SIP_REGW, SIE_REGW;
   //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRNAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;

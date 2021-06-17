@@ -233,9 +233,9 @@ def writeTest(storecmd, f, r, test, interrupt, code, resetHander = ""):
           {beforeTest}
 
           li x1, 0b110000000000
-          csrrc x28, {testMode}status, x1
+          csrrc x31, {testMode}status, x1
           li x1, 0b{"01" if mode == "s" else "00"}00000000000
-          csrrs x28, {testMode}status, x1
+          csrrs x31, {testMode}status, x1
 
           auipc x1, 0
           addi x1, x1, 16 # x1 is now right after the ret instruction

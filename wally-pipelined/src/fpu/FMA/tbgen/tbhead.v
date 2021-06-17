@@ -2,13 +2,15 @@
 module tb;
 
 
- reg 	[63:0]		ReadData1E;
- reg 	[63:0]		ReadData2E;
- reg 	[63:0]		ReadData3E;
+ reg 	[63:0]		FInput1E;
+ reg 	[63:0]		FInput2E;
+ reg 	[63:0]		FInput3E;
  reg 	[63:0]		ans;
- reg 	[2:0]		FrmE;
+ wire 	[2:0]		FrmE;
  wire 	[63:0]		FmaResultM;
  wire 	[4:0]	 	FmaFlagsM;
+ reg 	[4:0]	 	flags;
+ wire				FmtE;
 
 	wire 		[12:0]		aligncntE;    	// status flags
 	wire 		[105:0]		ProdManE; 				// other result of partial products
@@ -16,11 +18,11 @@ module tb;
 	wire 		[8:0]		normcntE; 		// shift count for normalizer
 	wire 		[12:0]		ProdExpE; 		// multiplier expoent
 	wire 					AddendStickyE;				// sticky bit of addend
-	wire 					KillProdE; 		// ReadData3E >> product
-	wire 					prodofE; 		// ReadData1E*ReadData2E out of range
+	wire 					KillProdE; 		// FInput3E >> product
+	wire 					prodofE; 		// FInput1E*FInput2E out of range
 	wire					XZeroE;
-	wire					yzeroE;
-	wire					zzeroE;
+	wire					YZeroE;
+	wire					ZZeroE;
 	wire					XDenormE;
 	wire					YDenormE;
 	wire					ZDenormE;
@@ -44,16 +46,22 @@ reg ansnan;
 reg		[105:0]		s;				//	partial product 2	
 reg		[51:0] 		xnorm;
 reg 		[51:0] 		ynorm;
-wire 	[3:0]		FOpCtrlM;
-
-assign FOpCtrlM = 4'b0;
+wire 	[2:0]		FOpCtrlE;
+assign FOpCtrlE = 3'b0;  
+// nearest even - 000
+// twords zero - 001
+// down - 010
+// up - 011
+// nearest max mag - 100  
+assign FrmE = 3'b000;
+assign FmtE = 1'b1;
 
 
 localparam period = 20;  
 fma1 UUT1(.*);
-fma2 UUT2(.ReadData1M(ReadData1E), .ReadData2M(ReadData2E), .ReadData3M(ReadData3E), .FrmM(FrmE), .ProdManM(ProdManE),
-			.AlignedAddendM(AlignedAddendE), .ProdExpM(ProdExpE), .AddendStickyM(AddendStickyE),.KillProdM(KillProdE),
-			.XZeroM(XZeroE),.YZeroM(YZeroE),.ZZeroM(ZZeroE),.XInfM(XInfE),.YInfM(YInfE),.ZInfM(ZInfE),.XNaNM(XNaNE),.YNaNM(YNaNE),.ZNaNM(ZNaNE), .*);
+fma2 UUT2(.FInput1M(FInput1E), .FInput2M(FInput2E), .FInput3M(FInput3E), .FrmM(FrmE), .ProdManM(ProdManE),
+			.AlignedAddendM(AlignedAddendE), .ProdExpM(ProdExpE), .AddendStickyM(AddendStickyE),.KillProdM(KillProdE), .FOpCtrlM(FOpCtrlE),
+			.XZeroM(XZeroE),.YZeroM(YZeroE),.ZZeroM(ZZeroE),.XInfM(XInfE),.YInfM(YInfE),.ZInfM(ZInfE),.XNaNM(XNaNE),.YNaNM(YNaNE),.ZNaNM(ZNaNE), .FmtM(FmtE), .*);
 
 
 initial 
