@@ -286,17 +286,17 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 			results[i].err=0;
 			if ((results[i].execs & ID_LIST) && 
 				(results[i].crclist!=list_known_crc[known_id])) {
-				ee_printf("[%u]ERROR! list crc 0x%04x - should be 0x%04x\n,i,results[i].crclist,list_known_crc[known_id]");
+				ee_printf("[%u]ERROR! list crc 0x%04x - should be 0x%04x\n",i,results[i].crclist,list_known_crc[known_id]);
 				results[i].err++;
 			}
 			if ((results[i].execs & ID_MATRIX) &&
 				(results[i].crcmatrix!=matrix_known_crc[known_id])) {
-				ee_printf("[%u]ERROR! matrix crc 0x%04x - should be 0x%04x\n,i,results[i].crcmatrix,matrix_known_crc[known_id]");
+				ee_printf("[%u]ERROR! matrix crc 0x%04x - should be 0x%04x\n",i,results[i].crcmatrix,matrix_known_crc[known_id]);
 				results[i].err++;
 			}
 			if ((results[i].execs & ID_STATE) &&
 				(results[i].crcstate!=state_known_crc[known_id])) {
-				ee_printf("[%u]ERROR! state crc 0x%04x - should be 0x%04x\n,i,results[i].crcstate,state_known_crc[known_id]");
+				ee_printf("[%u]ERROR! state crc 0x%04x - should be 0x%04x\n",i,results[i].crcstate,state_known_crc[known_id]);
 				results[i].err++;
 			}
 			total_errors+=results[i].err;
@@ -305,55 +305,55 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 	total_errors+=check_data_types();
 	/* and report results */
 	//ee_printf("CoreMark Size    : %lu\n", (long unsigned) results[0].size);
-	ee_printf("CoreMark Size    : %lu\n, (long unsigned) results[0].size");
-	ee_printf("Total ticks      : %lu\n, (long unsigned) total_time");
+	ee_printf("CoreMark Size    : %lu\n", (long unsigned) results[0].size);
+	ee_printf("Total ticks      : %lu\n", (long unsigned) total_time);
 #if HAS_FLOAT
-	ee_printf("Total time (secs): %f\n,time_in_secs(total_time)");
+	ee_printf("Total time (secs): %f\n",time_in_secs(total_time));
 	if (time_in_secs(total_time) > 0)
-		ee_printf("Iterations/Sec   : %f\n,default_num_contexts*results[0].iterations/time_in_secs(total_time)");
+		ee_printf("Iterations/Sec   : %f\n",default_num_contexts*results[0].iterations/time_in_secs(total_time));
 #else 
 	ee_printf("Total time (secs): %d\n,time_in_secs(total_time)");
 	if (time_in_secs(total_time) > 0)
-		ee_printf("Iterations/Sec   : %d\n,default_num_contexts*results[0].iterations/time_in_secs(total_time)");
+		ee_printf("Iterations/Sec   : %d\n",default_num_contexts*results[0].iterations/time_in_secs(total_time));
 #endif
 	if (time_in_secs(total_time) < 10) {
 		ee_printf("ERROR! Must execute for at least 10 secs for a valid result!\n");
 		total_errors++;
 	}
 
-	ee_printf("Iterations       : %lu\n, (long unsigned) default_num_contexts*results[0].iterations");
-	ee_printf("Compiler version : %s\n,COMPILER_VERSION");
-	ee_printf("Compiler flags   : %s\n,COMPILER_FLAGS");
+	ee_printf("Iterations       : %lu\n", (long unsigned) default_num_contexts*results[0].iterations);
+	ee_printf("Compiler version : %s\n",COMPILER_VERSION);
+	ee_printf("Compiler flags   : %s\n",COMPILER_FLAGS);
 #if (MULTITHREAD>1)
-	ee_printf("Parallel %s : %d\n,PARALLEL_METHOD,default_num_contexts");
+	ee_printf("Parallel %s : %d\n",PARALLEL_METHOD,default_num_contexts);
 #endif
-	ee_printf("Memory location  : %s\n,MEM_LOCATION");
+	ee_printf("Memory location  : %s\n",MEM_LOCATION);
 	/* output for verification */
-	ee_printf("seedcrc          : 0x%04x\n,seedcrc");
+	ee_printf("seedcrc          : 0x%04x\n",seedcrc);
 	if (results[0].execs & ID_LIST)
 		for (i=0 ; i<default_num_contexts; i++) 
-			ee_printf("[%d]crclist       : 0x%04x\n,i,results[i].crclist");
+			ee_printf("[%d]crclist       : 0x%04x\n",i,results[i].crclist);
 	if (results[0].execs & ID_MATRIX) 
 		for (i=0 ; i<default_num_contexts; i++) 
-			ee_printf("[%d]crcmatrix     : 0x%04x\n,i,results[i].crcmatrix");
+			ee_printf("[%d]crcmatrix     : 0x%04x\n",i,results[i].crcmatrix);
 	if (results[0].execs & ID_STATE)
 		for (i=0 ; i<default_num_contexts; i++) 
-			ee_printf("[%d]crcstate      : 0x%04x\n,i,results[i].crcstate");
+			ee_printf("[%d]crcstate      : 0x%04x\n",i,results[i].crcstate);
 	for (i=0 ; i<default_num_contexts; i++) 
-		ee_printf("[%d]crcfinal      : 0x%04x\n,i,results[i].crc");
+		ee_printf("[%d]crcfinal      : 0x%04x\"n",i,results[i].crc);
 	if (total_errors==0) {
 		ee_printf("Correct operation validated. See README.md for run and reporting rules.\n");
 #if HAS_FLOAT
 		if (known_id==3) {
-			ee_printf("CoreMark 1.0 : %f / %s %s,default_num_contexts*results[0].iterations/time_in_secs(total_time),COMPILER_VERSION,COMPILER_FLAGS");
+			ee_printf("CoreMark 1.0 : %f / %s %s",default_num_contexts*results[0].iterations/time_in_secs(total_time),COMPILER_VERSION,COMPILER_FLAGS);
 #if defined(MEM_LOCATION) && !defined(MEM_LOCATION_UNSPEC)
-			ee_printf(" / %s,MEM_LOCATION");
+			ee_printf(" / %s",MEM_LOCATION);
 #else
-			ee_printf(" / %s,mem_name[MEM_METHOD]");
+			ee_printf(" / %s",mem_name[MEM_METHOD]);
 #endif
 
 #if (MULTITHREAD>1)
-			ee_printf(" / %d:%s,default_num_contexts,PARALLEL_METHOD");
+			ee_printf(" / %d:%s",default_num_contexts,PARALLEL_METHOD);
 #endif
 			ee_printf("\n");
 		}
