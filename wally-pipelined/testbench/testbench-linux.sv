@@ -162,7 +162,7 @@ module testbench();
   // read CSR trace file
   integer data_file_csr, scan_file_csr;
   initial begin
-    data_file_csr = $fopen({`LINUX_TEST_VECTORS,"parsedCSRs2.txt"}, "r");
+    data_file_csr = $fopen({`LINUX_TEST_VECTORS,"parsedCSRs.txt"}, "r");
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
       $stop;
