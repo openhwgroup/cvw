@@ -172,7 +172,7 @@ module csrm #(parameter
   // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   generate
     genvar i;
-    for (i = 0; i < `PMP_ENTRIES-1; i++) begin: pmp_flop
+    for (i = 0; i < `PMP_ENTRIES; i++) begin: pmp_flop
       flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
     end
   endgenerate

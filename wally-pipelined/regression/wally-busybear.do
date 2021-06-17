@@ -35,7 +35,7 @@ vopt +acc work.testbench -o workopt
 
 vsim workopt -suppress 8852,12070
 
-do ./wave-dos/bens-busybear-waves.do
+do ./wave-dos/linux-waves.do
 
 
 #-- Run the Simulation 
