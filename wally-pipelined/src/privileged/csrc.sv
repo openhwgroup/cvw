@@ -265,7 +265,7 @@ module csrc #(parameter
                 MINSTRET:     CSRCReadValM = INSTRET_REGW[31:0];
                 //MHPMCOUNTER3: CSRCReadValM = HPMCOUNTER3_REGW[31:0];
                 //MHPMCOUNTER4: CSRCReadValM = HPMCOUNTER4_REGW[31:0];
-      //          TIME:         CSRCReadValM = TIME_REGW[31:0];
+                TIME:         CSRCReadValM = MTIME[31:0];
                 CYCLE:        CSRCReadValM = CYCLE_REGW[31:0];
                 INSTRET:      CSRCReadValM = INSTRET_REGW[31:0];
                 //HPMCOUNTER3:  CSRCReadValM = HPMCOUNTER3_REGW[31:0];
