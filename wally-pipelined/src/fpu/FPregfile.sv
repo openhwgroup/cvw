@@ -29,10 +29,10 @@ module FPregfile (
   input  logic             clk, reset,
   input  logic             we4, 
   input  logic [ 4:0]      a1, a2, a3, a4, 
-  input  logic [`XLEN-1:0] wd4, 
-  output logic [`XLEN-1:0] rd1, rd2, rd3);
+  input  logic [63:0] wd4,    //KEP `XLEN-1 changed to 63 (lint warning) *** figure out if double can be suported when XLEN = 32
+  output logic [63:0] rd1, rd2, rd3);
 
-  logic [`XLEN-1:0] rf[31:0];
+  logic [63:0] rf[31:0];
   integer i;
 
   // three ported register file

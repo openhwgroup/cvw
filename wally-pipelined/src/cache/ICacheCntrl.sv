@@ -188,7 +188,9 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
   assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
   assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
+  // verilator lint_off WIDTH
   assign FetchCountFlag = (FetchCount == FetchCountThreshold);
+  // verilator lint_on WIDTH
   
   // Next state logic
   always_comb begin
@@ -396,7 +398,9 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   logic [`XLEN-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
 
   assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
+  // verilator lint_off WIDTH
   assign InstrPAdrTrunkF = PCPTrunkExtF + FetchCount;
+  // verilator lint_on WIDTH
   
   //assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
   assign InstrPAdrF = {InstrPAdrTrunkF, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
