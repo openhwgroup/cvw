@@ -8,8 +8,8 @@ module ICacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256)
    // If flush is high, invalidate the entire cache
    input logic 		       flush,
 
-   input logic [`XLEN-1:0]     PCTagF,        // physical address
-   input logic [`XLEN-1:0]     PCNextIndexF,  // virtual address
+   input logic [`PA_BITS-1:0]     PCTagF,        // physical address
+   input logic [`PA_BITS-1:0]     PCNextIndexF,  // virtual address
    input logic 		       WriteEnable,
    input logic [BLOCKLEN-1:0]  WriteLine,
    output logic [BLOCKLEN-1:0] ReadLineF,
@@ -21,7 +21,7 @@ module ICacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256)
   localparam OFFSETLEN = $clog2(BLOCKBYTELEN);
   localparam INDEXLEN = $clog2(NUMLINES);
   // *** BUG. `XLEN needs to be replaced with the virtual address width, S32, S39, or S48
-  localparam TAGLEN = `XLEN - OFFSETLEN - INDEXLEN;
+  localparam TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
 
   logic [TAGLEN-1:0] 	       LookupTag;
   logic [NUMLINES-1:0] 	       ValidOut;
@@ -39,7 +39,7 @@ module ICacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256)
   cachetags (.*,
 	     .Addr(PCNextIndexF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	     .ReadData(LookupTag),
-	     .WriteData(PCTagF[`XLEN-1:INDEXLEN+OFFSETLEN])
+	     .WriteData(PCTagF[`PA_BITS-1:INDEXLEN+OFFSETLEN])
 	     );
 
   // Correctly handle the valid bits
@@ -55,5 +55,5 @@ module ICacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256)
          end
     DataValidBit <= ValidOut[PCNextIndexF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]];
   end
-  assign HitF = DataValidBit && (LookupTag == PCTagF[`XLEN-1:INDEXLEN+OFFSETLEN]);
+  assign HitF = DataValidBit && (LookupTag == PCTagF[`PA_BITS-1:INDEXLEN+OFFSETLEN]);
 endmodule
