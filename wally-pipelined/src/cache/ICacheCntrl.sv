@@ -133,8 +133,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   
   logic [LOGWPL:0] 	     FetchCount, NextFetchCount;
 
-  logic [`XLEN-1:0] 	     PCPreFinalF, PCPFinalF, PCSpillF;
-  logic [`XLEN-1:OFFSETWIDTH] PCPTrunkF;
+  logic [`PA_BITS-1:0] 	     PCPreFinalF, PCPSpillF;
+  logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
 
   
   logic [31:0] 		     FinalInstrRawF;
@@ -156,11 +156,11 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
-  assign PCSpillF = PCPF + `XLEN'b10;
+  assign PCPSpillF = PCPF + 2'b10; // *** modelsim does not allow the use of PA_BITS for literal width.
 
   // now we have to select between these three PCs
   assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
-  assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
+  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
@@ -170,8 +170,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 			.d(PCMux),
 			.q(PCMux_q));
   
-  assign PCTagF = PCMux_q[1] ? PCSpillF : PCPF;
-  assign PCNextIndexF = PCPFinalF;
+  assign PCTagF = PCMux_q[1] ? PCPSpillF : PCPF;
   
   // truncate the offset from PCPF for memory address generation
   assign PCPTrunkF = PCTagF[`XLEN-1:OFFSETWIDTH];
@@ -395,7 +394,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
   // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
   // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
-  logic [`XLEN-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
+  logic [`PA_BITS-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
 
   assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
   // verilator lint_off WIDTH
