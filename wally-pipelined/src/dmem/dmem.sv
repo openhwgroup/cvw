@@ -87,6 +87,8 @@ module dmem (
   logic [1:0] CurrState, NextState;
   logic preCommittedM;
 
+  logic [`PA_BITS-1:0] MemPAdrMmmu;
+
   localparam STATE_READY = 0;
   localparam STATE_FETCH = 1;
   localparam STATE_FETCH_AMO = 2;
@@ -95,10 +97,16 @@ module dmem (
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
   
+  generate
+    if (`XLEN==32)
+      assign MemPAdrM = MemPAdrMmmu[31:0];
+    else
+      assign MemPAdrM = {8'b0, MemPAdrMmmu};
+  endgenerate
   mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
                 .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
-                .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
+                .PhysicalAddress(MemPAdrMmmu), .TLBMiss(DTLBMissM),
                 .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
 
                 .ExecuteAccessF(1'b0),
@@ -142,20 +150,20 @@ module dmem (
   // Handle atomic load reserved / store conditional
   generate
     if (`A_SUPPORTED) begin // atomic instructions supported
-      logic [`XLEN-1:2] ReservationPAdrW;
+      logic [`PA_BITS-1:2] ReservationPAdrW;
       logic             ReservationValidM, ReservationValidW; 
       logic             lrM, scM, WriteAdrMatchM;
 
       assign lrM = MemReadM && AtomicM[0];
       assign scM = MemRWM[0] && AtomicM[0]; 
-      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`XLEN-1:2] == ReservationPAdrW) && ReservationValidW;
+      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
       always_comb begin // ReservationValidM (next value of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve
         else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
         else ReservationValidM = ReservationValidW; // otherwise don't change valid
       end
-      flopenrc #(`XLEN-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`XLEN-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+      flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
       flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
       flopenrc #(1) squashreg(clk, reset, FlushW, ~StallW, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported
