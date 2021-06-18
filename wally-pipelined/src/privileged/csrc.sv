@@ -30,8 +30,8 @@
 // Ben 06/17/21: I brought in MTIME, MTIMECMP from CLINT. *** this probably isn't perfect though because it doesn't yet provide the ability to change these through CSR writes; overall this whole thing might need some rethinking
 module csrc #(parameter 
   MCYCLE = 12'hB00,
-  MTIMEadr = 12'hB01, // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
-  MTIMECMPadr = 12'hB21, // not specified in privileged spec.  Move to CLINT
+  MTIME = 12'hB01, // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
+  MTIMECMP = 12'hB21, // not specified in privileged spec.  Move to CLINT
   MINSTRET = 12'hB02,
   MHPMCOUNTERBASE = 12'hB00,
   //MHPMCOUNTER3 = 12'hB03,
@@ -39,8 +39,8 @@ module csrc #(parameter
   // ... more counters
   //MHPMCOUNTER31 = 12'hB1F,
   MCYCLEH = 12'hB80,
-  MTIMEHadr = 12'hB81,  // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
-  MTIMECMPHadr = 12'hBA1, // not specified in privileged spec.  Move to CLINT
+  MTIMEH = 12'hB81,  // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
+  MTIMECMPH = 12'hBA1, // not specified in privileged spec.  Move to CLINT
   MINSTRETH = 12'hB82,
   MHPMCOUNTERHBASE = 12'hB80,
   //MHPMCOUNTER3H = 12'hB83,
@@ -82,7 +82,7 @@ module csrc #(parameter
     input  logic [1:0]       PrivilegeModeW,
     input  logic [`XLEN-1:0] CSRWriteValM,
     input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-    input  logic [63:0]      MTIME, MTIMECMP,
+    input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
     output logic [`XLEN-1:0] CSRCReadValM,
     output logic             IllegalCSRCAccessM
   );
@@ -230,13 +230,13 @@ module csrc #(parameter
               if      (CSRAdrM >= MHPMCOUNTERBASE+3 && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-MHPMCOUNTERBASE];
               else if (CSRAdrM >= HPMCOUNTERBASE+3 && CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-HPMCOUNTERBASE];
               else case (CSRAdrM) 
-                MTIMEadr:     CSRCReadValM = MTIME;
-                MTIMECMPadr:  CSRCReadValM = MTIMECMP;
+                MTIME:     CSRCReadValM = MTIME_CLINT;
+                MTIMECMP:  CSRCReadValM = MTIMECMP_CLINT;
                 MCYCLE:       CSRCReadValM = CYCLE_REGW;
                 MINSTRET:     CSRCReadValM = INSTRET_REGW;
                 //MHPMCOUNTER3: CSRCReadValM = HPMCOUNTER3_REGW;
                 //MHPMCOUNTER4: CSRCReadValM = HPMCOUNTER4_REGW;
-                TIME:         CSRCReadValM = MTIME;
+                TIME:         CSRCReadValM = MTIME_CLINT;
                 CYCLE:        CSRCReadValM = CYCLE_REGW;
                 INSTRET:      CSRCReadValM = INSTRET_REGW;
                 //HPMCOUNTER3:  CSRCReadValM = HPMCOUNTER3_REGW;
@@ -259,24 +259,24 @@ module csrc #(parameter
               else if (CSRAdrM >= MHPMCOUNTERHBASE+3 && CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS) CSRCReadValM = HPMCOUNTERH_REGW[CSRAdrM-MHPMCOUNTERHBASE];
               else if (CSRAdrM >= HPMCOUNTERHBASE+3 && CSRAdrM  < HPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CSRAdrM-HPMCOUNTERHBASE];
               else case (CSRAdrM) 
-                MTIMEadr:     CSRCReadValM = MTIME[31:0];
-                MTIMECMPadr:  CSRCReadValM = MTIMECMP[31:0];
+                MTIME:     CSRCReadValM = MTIME_CLINT[31:0];
+                MTIMECMP:  CSRCReadValM = MTIMECMP_CLINT[31:0];
                 MCYCLE:       CSRCReadValM = CYCLE_REGW[31:0];
                 MINSTRET:     CSRCReadValM = INSTRET_REGW[31:0];
                 //MHPMCOUNTER3: CSRCReadValM = HPMCOUNTER3_REGW[31:0];
                 //MHPMCOUNTER4: CSRCReadValM = HPMCOUNTER4_REGW[31:0];
-                TIME:         CSRCReadValM = MTIME[31:0];
+                TIME:         CSRCReadValM = MTIME_CLINT[31:0];
                 CYCLE:        CSRCReadValM = CYCLE_REGW[31:0];
                 INSTRET:      CSRCReadValM = INSTRET_REGW[31:0];
                 //HPMCOUNTER3:  CSRCReadValM = HPMCOUNTER3_REGW[31:0];
                 //HPMCOUNTER4:  CSRCReadValM = HPMCOUNTER4_REGW[31:0];
-                MTIMEHadr:     CSRCReadValM = MTIME[63:32];
-                MTIMECMPHadr:  CSRCReadValM = MTIMECMP[63:32];
+                MTIMEH:     CSRCReadValM = MTIME_CLINT[63:32];
+                MTIMECMPH:  CSRCReadValM = MTIMECMP_CLINT[63:32];
                 MCYCLEH:       CSRCReadValM = CYCLE_REGW[63:32];
                 MINSTRETH:     CSRCReadValM = INSTRET_REGW[63:32];
                 //MHPMCOUNTER3H: CSRCReadValM = HPMCOUNTER3_REGW[63:32];
                 //MHPMCOUNTER4H: CSRCReadValM = HPMCOUNTER4_REGW[63:32];
-                TIMEH:         CSRCReadValM = MTIME[63:32];
+                TIMEH:         CSRCReadValM = MTIME_CLINT[63:32];
                 CYCLEH:        CSRCReadValM = CYCLE_REGW[63:32];
                 INSTRETH:      CSRCReadValM = INSTRET_REGW[63:32];
                 //HPMCOUNTER3H:  CSRCReadValM = HPMCOUNTER3_REGW[63:32];

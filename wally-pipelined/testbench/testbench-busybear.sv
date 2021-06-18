@@ -493,7 +493,12 @@ module testbench();
             end
             scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
             PCtext2 = "";
+            $display("loading tests");
+            $display("PCtext = %s\n", PCtext);
             while (PCtext2 != "***") begin
+              $display("debugging\n");
+              $display("PCtext is %s\n", PCtext);
+              $display("PCtext %s PCtext2 %s\n", PCtext, PCtext2);
               PCtext = {PCtext, " ", PCtext2};
               scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
             end
