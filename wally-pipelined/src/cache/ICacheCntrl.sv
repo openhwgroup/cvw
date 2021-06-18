@@ -33,15 +33,15 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
     // Input the address to read
     // The upper bits of the physical pc
-    input logic [`XLEN-1:0] 	PCNextF,
-    input logic [`XLEN-1:0] 	PCPF,
+    input logic [`PA_BITS-1:0] 	PCNextF,
+    input logic [`PA_BITS-1:0] 	PCPF,
     // Signals to/from cache memory
     // The read coming out of it
     input logic [31:0] 		ICacheMemReadData,
     input logic 		ICacheMemReadValid,
     // The address at which we want to search the cache memory
-    output logic [`XLEN-1:0] 	PCTagF,
-    output logic [`XLEN-1:0]    PCNextIndexF,						     
+    output logic [`PA_BITS-1:0] 	PCTagF,
+    output logic [`PA_BITS-1:0]    PCNextIndexF,						     
     output logic 		ICacheReadEn,
     // Load data into the cache
     output logic 		ICacheMemWriteEnable,
@@ -173,7 +173,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   assign PCTagF = PCMux_q[1] ? PCPSpillF : PCPF;
   
   // truncate the offset from PCPF for memory address generation
-  assign PCPTrunkF = PCTagF[`XLEN-1:OFFSETWIDTH];
+  assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
   
     // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
