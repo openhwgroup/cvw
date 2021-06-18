@@ -54,15 +54,30 @@ module pmachecker (
   logic HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC;
   logic ValidBootTim, ValidTim, ValidCLINT, ValidGPIO, ValidUART, ValidPLIC;
 
-  // Attributes of memory region accessed
-  logic Executable, Readable, Writable;
+  logic PMAAccessFault;
+  logic AccessRW, AccessRWX, AccessRX;
 
-  logic Fault;
+  // Determine what type of access is being made
+  assign AccessRW = ReadAccessM | WriteAccessM;
+  assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
+  assign AccessRX = ReadAccessM | ExecuteAccessF;
 
-  attributes attributes(.Address(HADDR), .*);
 
-  // Unswizzle region bits
-  assign {BootTim, Tim, CLINT, GPIO, UART, PLIC} = Regions;
+  // Determine which region of physical memory (if any) is being accessed
+  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, AccessRX, HSIZE, 4'b1111, BootTim);
+  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, AccessRWX, HSIZE, 4'b1111, Tim);
+  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, AccessRW, HSIZE, (`XLEN==64 ? 4'b1000 : 4'b0100), CLINT);
+  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, AccessRW, HSIZE, 4'b0100, GPIO);
+  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, AccessRW, HSIZE, 4'b0001, UART);
+  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, AccessRW, HSIZE, 4'b0100, PLIC);
+
+  // Swizzle region bits
+  assign Regions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
+
+  // Only RAM memory regions are cacheable
+  assign Cacheable = BootTim | Tim;
+  assign Idempotent = Tim;
+  assign AtomicAllowed = Tim;
 
   assign ValidBootTim = '1;
   assign ValidTim = '1;
@@ -81,50 +96,11 @@ module pmachecker (
   // Swizzle region bits
   assign HSELRegions = {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC};
 
-  assign Fault = ~|HSELRegions;
+  assign PMAAccessFault = ~|HSELRegions;
 
-  assign PMAInstrAccessFaultF = ExecuteAccessF && Fault;
-  assign PMALoadAccessFaultM  = ReadAccessM    && Fault;
-  assign PMAStoreAccessFaultM = WriteAccessM   && Fault;
-
-  assign PMASquashBusAccess = PMAInstrAccessFaultF || PMALoadAccessFaultM || PMAStoreAccessFaultM;
-
-endmodule
-
-module attributes (
-//  input  logic        clk, reset, // *** unused in this module and all sub modules.
-
-  input  logic [31:0] Address,
-
-  output logic [5:0]  Regions,
-
-  output logic        Cacheable, Idempotent, AtomicAllowed,
-  output logic        Executable, Readable, Writable
-);
-
-  // Signals are high if the memory access is within the given region
-  logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
-
-  // Determine which region of physical memory (if any) is being accessed
-  adrdec boottimdec(Address, `BOOTTIMBASE, `BOOTTIMRANGE, BootTim);
-  adrdec timdec(Address, `TIMBASE, `TIMRANGE, Tim);
-  adrdec clintdec(Address, `CLINTBASE, `CLINTRANGE, CLINT);
-  adrdec gpiodec(Address, `GPIOBASE, `GPIORANGE, GPIO);
-  adrdec uartdec(Address, `UARTBASE, `UARTRANGE, UART);
-  adrdec plicdec(Address, `PLICBASE, `PLICRANGE, PLIC);
-
-  // Swizzle region bits
-  assign Regions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
-
-  // Only RAM memory regions are cacheable
-  assign Cacheable = BootTim | Tim;
-
-  assign Idempotent = BootTim | Tim;
-
-  assign AtomicAllowed = BootTim | Tim;
-
-  assign Executable = BootTim | Tim;
-  assign Readable = BootTim | Tim | CLINT | GPIO | UART | PLIC;
-  assign Writable = BootTim | Tim | CLINT | GPIO | UART | PLIC;
-
+  // Detect access faults
+  assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
+  assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
+  assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
+  assign PMASquashBusAccess = PMAAccessFault && AccessRWX;
 endmodule
