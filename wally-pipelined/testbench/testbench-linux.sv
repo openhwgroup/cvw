@@ -474,18 +474,18 @@ module testbench();
   end
 
   string PCtextD,PCtextE,PCtextM,PCtext2;
-  always_ff @(posedge clk, posedge reset)
-    if (reset) begin
-      PCtextE <= #1 "(reset)";
-      PCtextM <= #1 "(reset)";
-    end else begin
-      if (~dut.hart.StallE) 
-        if (dut.hart.FlushE) PCtextE <= #1 "(flushed)";
-        else                 PCtextE <= #1 PCtextD;
-      if (~dut.hart.StallM) 
-        if (dut.hart.FlushM) PCtextM <= #1 "(flushed)";
-        else                 PCtextM <= #1 PCtextE;
-    end
+  //always_ff @(posedge clk, posedge reset)
+  //  if (reset) begin
+  //    PCtextE <= #1 "(reset)";
+  //    PCtextM <= #1 "(reset)";
+  //  end else begin
+  //    if (~dut.hart.StallE) 
+  //      if (dut.hart.FlushE) PCtextE <= #1 "(flushed)";
+  //      else                 PCtextE <= #1 PCtextD;
+  //    if (~dut.hart.StallM) 
+  //      if (dut.hart.FlushM) PCtextM <= #1 "(flushed)";
+  //      else                 PCtextM <= #1 PCtextE;
+  //  end
 
 
   initial begin
@@ -498,10 +498,8 @@ module testbench();
   always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset or negedge dut.hart.ifu.StallE) begin
     if(~HWRITE) begin
       #2;
-      $display("test point");
       if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0 && ~dut.hart.ifu.StallE) begin
         if (dut.hart.ifu.PCD !== lastPCD) begin
-          $display("tp2");
           lastCheckInstrD = CheckInstrD;
           lastPC <= dut.hart.ifu.PCD;
           lastPC2 <= lastPC;
@@ -528,22 +526,16 @@ module testbench();
             end
           end
           else begin
-            $display("tp4");
             if($feof(data_file_PC)) begin
               $display("no more PC data to read");
               `ERROR
             end
             scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtextD);
             PCtext2 = "";
-            $display("tp5 PCtextD = %s PCtext2 = %s\n", PCtextD, PCtext2);
             while (PCtext2 != "***") begin
-              $display("tp6 PCtextD = %s PCtext2 = %s\n", PCtextD, PCtext2);
               PCtextD = {PCtextD, " ", PCtext2};
-              $display("tp8");
               scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
-              $display("tp9");
             end
-            $display("tp7 PCtextD = %s PCtext2 = %s\n", PCtextD, PCtext2);
             scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
             if(dut.hart.ifu.PCD === pcExpected) begin
               if((dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) || // for now, NOP out any float instrs
