@@ -80,8 +80,8 @@ module uncore (
   subwordwrite sww(.*);
 
   // tightly integrated memory
-  dtim #(.BASE(`TIMBASE), .RANGE(`TIMRANGE)) dtim (.*);
-  dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+  dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
+  dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
 
   // memory-mapped I/O peripherals
   clint clint(.HADDR(HADDR[15:0]), .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT), .*);

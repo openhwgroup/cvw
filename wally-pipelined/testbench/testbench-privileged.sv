@@ -159,9 +159,9 @@ module testbench();
         i = 0;
         errors = 0;
         if (`XLEN == 32)
-          testadr = (`TIMBASE+tests[test+1].atohex())/4;
+          testadr = (`TIM_BASE+tests[test+1].atohex())/4;
         else
-          testadr = (`TIMBASE+tests[test+1].atohex())/8;
+          testadr = (`TIM_BASE+tests[test+1].atohex())/8;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
