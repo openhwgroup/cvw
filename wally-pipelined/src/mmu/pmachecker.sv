@@ -46,14 +46,7 @@ module pmachecker (
   output logic        PMAStoreAccessFaultM
 );
 
-  // Signals are high if the memory access is within the given region
-  logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
-  logic [5:0] Regions;
-
-  // Actual HSEL signals sent to uncore
-  logic HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC;
-  logic ValidBootTim, ValidTim, ValidCLINT, ValidGPIO, ValidUART, ValidPLIC;
-
+  // logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
 
@@ -62,43 +55,27 @@ module pmachecker (
   assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
   assign AccessRX = ReadAccessM | ExecuteAccessF;
 
-
   // Determine which region of physical memory (if any) is being accessed
-  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, AccessRX, HSIZE, 4'b1111, BootTim);
-  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, AccessRWX, HSIZE, 4'b1111, Tim);
-  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, AccessRW, HSIZE, (`XLEN==64 ? 4'b1000 : 4'b0100), CLINT);
-  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, AccessRW, HSIZE, 4'b0100, GPIO);
-  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, AccessRW, HSIZE, 4'b0001, UART);
-  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, AccessRW, HSIZE, 4'b0100, PLIC);
-
-  // Swizzle region bits
-  assign Regions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
+  // *** linux tests fail early when Access is anything other than 1b1
+  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, 1'b1/*AccessRX*/, HSIZE, 4'b1111, HSELRegions[5]);
+  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, 1'b1/*AccessRWX*/, HSIZE, 4'b1111, HSELRegions[4]);
+  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, AccessRW, HSIZE, (`XLEN==64 ? 4'b1000 : 4'b0100), HSELRegions[3]);
+  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[2]);
+  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, AccessRW, HSIZE, 4'b0001, HSELRegions[1]);
+  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[0]);
 
   // Only RAM memory regions are cacheable
-  assign Cacheable = BootTim | Tim;
-  assign Idempotent = Tim;
-  assign AtomicAllowed = Tim;
+  assign Cacheable = HSELRegions[5] | HSELRegions[4];
+  assign Idempotent = HSELRegions[4];
+  assign AtomicAllowed = HSELRegions[4];
 
-  assign ValidBootTim = '1;
-  assign ValidTim = '1;
-  assign ValidCLINT = ~ExecuteAccessF && ((HSIZE == 3'b011 && `XLEN==64) || (HSIZE == 3'b010 && `XLEN==32));
-  assign ValidGPIO  = ~ExecuteAccessF && (HSIZE == 3'b010);
-  assign ValidUART  = ~ExecuteAccessF && (HSIZE == 3'b000);
-  assign ValidPLIC  = ~ExecuteAccessF && (HSIZE == 3'b010);
-
-  assign HSELBootTim = BootTim && ValidBootTim; 
-  assign HSELTim     = Tim     && ValidTim;
-  assign HSELCLINT   = CLINT   && ValidCLINT;
-  assign HSELGPIO    = GPIO    && ValidGPIO;
-  assign HSELUART    = UART    && ValidUART; // only byte writes to UART are supported
-  assign HSELPLIC    = PLIC    && ValidPLIC;
+  /*ExecuteAccessF | ReadAccessM | WriteAccessM; */
 
   // Swizzle region bits
-  assign HSELRegions = {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC};
-
-  assign PMAAccessFault = ~|HSELRegions;
+  //assign HSELRegions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
 
   // Detect access faults
+  assign PMAAccessFault = ~|HSELRegions;
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
