@@ -494,11 +494,14 @@ module testbench();
   logic [31:0] InstrMask;
   logic forcedInstr;
   logic [63:0] lastPCD;
+  
   always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset or negedge dut.hart.ifu.StallE) begin
     if(~HWRITE) begin
       #2;
+      $display("test point");
       if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0 && ~dut.hart.ifu.StallE) begin
         if (dut.hart.ifu.PCD !== lastPCD) begin
+          $display("tp2");
           lastCheckInstrD = CheckInstrD;
           lastPC <= dut.hart.ifu.PCD;
           lastPC2 <= lastPC;
@@ -525,16 +528,22 @@ module testbench();
             end
           end
           else begin
+            $display("tp4");
             if($feof(data_file_PC)) begin
               $display("no more PC data to read");
               `ERROR
             end
             scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtextD);
             PCtext2 = "";
+            $display("tp5 PCtextD = %s PCtext2 = %s\n", PCtextD, PCtext2);
             while (PCtext2 != "***") begin
+              $display("tp6 PCtextD = %s PCtext2 = %s\n", PCtextD, PCtext2);
               PCtextD = {PCtextD, " ", PCtext2};
+              $display("tp8");
               scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
+              $display("tp9");
             end
+            $display("tp7 PCtextD = %s PCtext2 = %s\n", PCtextD, PCtext2);
             scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
             if(dut.hart.ifu.PCD === pcExpected) begin
               if((dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) || // for now, NOP out any float instrs
@@ -606,6 +615,7 @@ module testbench();
       end
     end
   end
+
 
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;

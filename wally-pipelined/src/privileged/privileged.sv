@@ -52,7 +52,7 @@ module privileged (
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
-  input  logic [63:0]      MTIME, MTIMECMP,
+  input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
 

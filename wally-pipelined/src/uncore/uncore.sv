@@ -58,7 +58,7 @@ module uncore (
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
   input  logic             UARTSin,
   output logic             UARTSout,
-  output logic [63:0]      MTIME, MTIMECMP
+  output logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT
 );
   
   logic [`XLEN-1:0] HWDATA;
@@ -76,17 +76,6 @@ module uncore (
   // unswizzle HSEL signals
   assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions;
 
-  /* PMA checker now handles decoding addresses. *** This can be deleted.
-  // AHB Address decoder
-  adrdec timdec(HADDR, `TIMBASE, `TIMRANGE, HSELTim);
-  adrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, HSELBootTim);
-  adrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, HSELCLINT);
-  adrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, HSELPLIC);
-  adrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, HSELGPIO); 
-  adrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, PreHSELUART);
-  assign HSELUART = PreHSELUART && (HSIZE == 3'b000); // only byte writes to UART are supported
-  */
-
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
 
@@ -95,7 +84,7 @@ module uncore (
   dtim #(.BASE(`BOOTTIMBASE), .RANGE(`BOOTTIMRANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
 
   // memory-mapped I/O peripherals
-  clint clint(.HADDR(HADDR[15:0]), .*);
+  clint clint(.HADDR(HADDR[15:0]), .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT), .*);
   plic plic(.HADDR(HADDR[27:0]), .*);
   gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
   uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
