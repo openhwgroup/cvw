@@ -78,7 +78,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   input logic              TLBFlush,
 
   // Physical address outputs
-  output logic [`XLEN-1:0] PhysicalAddress,
+  output logic [`PA_BITS-1:0] PhysicalAddress,
   output logic             TLBMiss,
   output logic             TLBHit,
 
@@ -202,11 +202,9 @@ module tlb #(parameter ENTRY_BITS = 3,
   // Output the hit physical address if translation is currently on.
   generate
     if (`XLEN == 32) begin
-      // *** If we want rv32 to use the full 34 bit physical address space, this
-      // must be changed
-      mux2 #(`XLEN) addressmux(VirtualAddress, PhysicalAddressFull[31:0], Translate, PhysicalAddress);
+       mux2 #(`PA_BITS) addressmux({2'b0, VirtualAddress}, PhysicalAddressFull, Translate, PhysicalAddress);
     end else begin
-      mux2 #(`XLEN) addressmux(VirtualAddress, {8'b0, PhysicalAddressFull}, Translate, PhysicalAddress);
+      mux2 #(`PA_BITS) addressmux(VirtualAddress[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
     end
   endgenerate
 
