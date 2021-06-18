@@ -35,7 +35,7 @@ module pmaadrdec (
   output logic        HSEL
 );
 
-  logic [31:0] match;
+  logic match;
 
   // determine if an address is in a range starting at the base
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
