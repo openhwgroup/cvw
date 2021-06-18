@@ -31,7 +31,7 @@ module dcache(
   input  logic              StallW,
   input  logic              FlushW,
   // Upper bits of physical address
-  input  logic [`XLEN-1:12] UpperPAdrM,
+  input  logic [`PA_BITS-1:12] UpperPAdrM,
   // Lower 12 bits of virtual address, since it's faster this way
   input  logic [11:0]       LowerVAdrM,
   // Write to the dcache
@@ -41,7 +41,7 @@ module dcache(
   input  logic [`XLEN-1:0]  ReadDataW,
   input  logic              MemAckW,
   // Access requested from the ebu unit
-  output logic [`XLEN-1:0]  MemPAdrM,
+  output logic [`PA_BITS-1:0]  MemPAdrM,
   output logic              MemReadM, MemWriteM,
   // High if the dcache is requesting a stall
   output logic              DCacheStallW,
@@ -56,7 +56,7 @@ module dcache(
 
     // Input signals to cache memory
     logic                       FlushMem;
-    logic [`XLEN-1:12]          DCacheMemUpperPAdr;
+    logic [`PA_BITS-1:12]       DCacheMemUpperPAdr;
     logic [11:0]                DCacheMemLowerAdr;
     logic                       DCacheMemWriteEnable;
     logic [DCACHELINESIZE-1:0]  DCacheMemWriteData;
@@ -98,7 +98,7 @@ module dcachecontroller #(parameter LINESIZE = 256) (
 
     // Input the address to read
     // The upper bits of the physical pc
-    input  logic [`XLEN-1:12]   DCacheMemUpperPAdr,
+    input  logic [`PA_BITS-1:12]   DCacheMemUpperPAdr,
     // The lower bits of the virtual pc
     input  logic [11:0]         DCacheMemLowerAdr,
 
@@ -122,7 +122,7 @@ module dcachecontroller #(parameter LINESIZE = 256) (
     input  logic [`XLEN-1:0] ReadDataW,
     input  logic             MemAckW,
     // The read we request from main memory
-    output logic [`XLEN-1:0] MemPAdrM,
+    output logic [`PA_BITS-1:0] MemPAdrM,
     output logic             MemReadM, MemWriteM
 );
 
@@ -144,7 +144,7 @@ module dcachecontroller #(parameter LINESIZE = 256) (
 
     logic               FetchState, BeginFetchState;
     logic [LOGWPL:0]    FetchWordNum, NextFetchWordNum;
-    logic [`XLEN-1:0]   LineAlignedPCPF;
+    logic [`PA_BITS-1:0]   LineAlignedPCPF;
 
     flopr #(1) FetchStateFlop(clk, reset, BeginFetchState | (FetchState & ~EndFetchState), FetchState);
     flopr #(LOGWPL+1) FetchWordNumFlop(clk, reset, NextFetchWordNum, FetchWordNum);

@@ -40,7 +40,7 @@ module dmem (
   input  logic [`XLEN-1:0] WriteDataM, 
   input  logic [1:0]       AtomicM,
   input  logic             CommitM,
-  output logic [`XLEN-1:0] MemPAdrM,
+  output logic [`PA_BITS-1:0] MemPAdrM,
   output logic             MemReadM, MemWriteM,
   output logic [1:0]       AtomicMaskedM,
   output logic             DataMisalignedM,
@@ -87,8 +87,6 @@ module dmem (
   logic [1:0] CurrState, NextState;
   logic preCommittedM;
 
-  logic [`PA_BITS-1:0] MemPAdrMmmu;
-
   localparam STATE_READY = 0;
   localparam STATE_FETCH = 1;
   localparam STATE_FETCH_AMO = 2;
@@ -97,16 +95,10 @@ module dmem (
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
   
-  generate
-    if (`XLEN==32)
-      assign MemPAdrM = MemPAdrMmmu[31:0];
-    else
-      assign MemPAdrM = {8'b0, MemPAdrMmmu};
-  endgenerate
   mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
                 .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
-                .PhysicalAddress(MemPAdrMmmu), .TLBMiss(DTLBMissM),
+                .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
                 .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
 
                 .ExecuteAccessF(1'b0),
