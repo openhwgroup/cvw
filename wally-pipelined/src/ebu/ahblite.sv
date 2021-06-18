@@ -47,7 +47,7 @@ module ahblite (
   output logic [`XLEN-1:0] InstrRData,
   output logic             InstrAckF,
   // Signals from Data Cache
-  input  logic [`XLEN-1:0] MemPAdrM,
+  input  logic [`PA_BITS-1:0] MemPAdrM,
   input  logic             MemReadM, MemWriteM,
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
