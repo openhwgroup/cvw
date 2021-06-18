@@ -57,7 +57,7 @@ module mmu #(parameter ENTRY_BITS = 3,
   input logic              TLBFlush,
 
   // Physical address outputs
-  output logic [`XLEN-1:0] PhysicalAddress,
+  output logic [`PA_BITS-1:0] PhysicalAddress,
   output logic             TLBMiss,
   output logic             TLBHit,
 
