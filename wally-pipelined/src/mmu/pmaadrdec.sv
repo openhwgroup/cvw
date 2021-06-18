@@ -35,14 +35,18 @@ module pmaadrdec (
   output logic        HSEL
 );
 
-  logic match;
+  logic Match;
+  logic SizeValid;
 
   // determine if an address is in a range starting at the base
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
   // then anything address between 0x04002000 and 0x04002FFF should match (HSEL=1)
+  assign Match = &((HADDR ~^ Base) | Range);
 
-  assign match = &((HADDR ~^ Base) | Range);
-  assign HSEL = match & Supported;
+  // determine if legal size of access is being made (byte, halfword, word, doubleword)
+  assign SizeValid = SizeMask[Size[1:0]]; 
+  
+  assign HSEL = Match && Supported && AccessValid && SizeValid;
 
 endmodule
 

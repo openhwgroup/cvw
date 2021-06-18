@@ -34,7 +34,7 @@ module wallypipelinedhart (
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic             InstrAccessFaultF, 
   input  logic             DataAccessFaultM,
-  input  logic [63:0]      MTIME, MTIMECMP,
+  input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
   // Bus Interface
   input  logic [15:0]      rd2, // bogus, delete when real multicycle fetch works
   input  logic [`AHBW-1:0] HRDATA,
@@ -135,7 +135,8 @@ module wallypipelinedhart (
   logic             MemReadM, MemWriteM;
   logic [1:0] 	    AtomicMaskedM;
   logic [2:0]       Funct3M;
-  logic [`XLEN-1:0] MemAdrM, MemPAdrM, WriteDataM;
+  logic [`XLEN-1:0] MemAdrM, WriteDataM;
+  logic [`PA_BITS-1:0] MemPAdrM;
   logic [`XLEN-1:0] ReadDataW;
   logic [`XLEN-1:0] InstrPAdrF;
   logic [`XLEN-1:0] InstrRData;
