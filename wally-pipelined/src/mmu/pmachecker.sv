@@ -64,12 +64,12 @@ module pmachecker (
 
 
   // Determine which region of physical memory (if any) is being accessed
-  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, AccessRX, Size, 4'b1111, BootTim);
-  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, AccessRWX, Size, 4'b1111, Tim);
-  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, AccessRW, Size, (`XLEN==64 ? 4'b1000 : 4'b0100), CLINT);
-  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, AccessRW, Size, 4'b0100, GPIO);
-  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, AccessRW, Size, 4'b0001, UART);
-  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, AccessRW, Size, 4'b0100, PLIC);
+  pmaadrdec boottimdec(HADDR, `BOOTTIMBASE, `BOOTTIMRANGE, `BOOTTIMSUPPORTED, AccessRX, HSIZE, 4'b1111, BootTim);
+  pmaadrdec timdec(HADDR, `TIMBASE, `TIMRANGE, `TIMSUPPORTED, AccessRWX, HSIZE, 4'b1111, Tim);
+  pmaadrdec clintdec(HADDR, `CLINTBASE, `CLINTRANGE, `CLINTSUPPORTED, AccessRW, HSIZE, (`XLEN==64 ? 4'b1000 : 4'b0100), CLINT);
+  pmaadrdec gpiodec(HADDR, `GPIOBASE, `GPIORANGE, `GPIOSUPPORTED, AccessRW, HSIZE, 4'b0100, GPIO);
+  pmaadrdec uartdec(HADDR, `UARTBASE, `UARTRANGE, `UARTSUPPORTED, AccessRW, HSIZE, 4'b0001, UART);
+  pmaadrdec plicdec(HADDR, `PLICBASE, `PLICRANGE, `PLICSUPPORTED, AccessRW, HSIZE, 4'b0100, PLIC);
 
   // Swizzle region bits
   assign Regions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
