@@ -70,9 +70,9 @@ module pmachecker (
   assign AtomicAllowed = HSELRegions[4];
 
   // Detect access faults
-  assign PMAAccessFault = ~|HSELRegions;
+  assign PMAAccessFault = (~|HSELRegions)  && AccessRWX;  
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
-  assign PMASquashBusAccess = PMAAccessFault && AccessRWX;
+  assign PMASquashBusAccess = PMAAccessFault;
 endmodule
