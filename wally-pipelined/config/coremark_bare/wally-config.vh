@@ -52,6 +52,9 @@
 `define ITLB_ENTRY_BITS 5
 `define DTLB_ENTRY_BITS 5
 
+// Legal number of PMP entries are 0, 16, or 64
+`define PMP_ENTRIES 16
+
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
 
@@ -101,7 +104,7 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
 
-/`define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/coremark_bare/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/coremark_bare/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE"//comments
