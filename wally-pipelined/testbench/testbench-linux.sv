@@ -474,18 +474,18 @@ module testbench();
   end
 
   string PCtextD,PCtextE,PCtextM,PCtext2;
-  always_ff @(posedge clk, posedge reset)
-    if (reset) begin
-      PCtextE <= #1 "(reset)";
-      PCtextM <= #1 "(reset)";
-    end else begin
-      if (~dut.hart.StallE) 
-        if (dut.hart.FlushE) PCtextE <= #1 "(flushed)";
-        else                 PCtextE <= #1 PCtextD;
-      if (~dut.hart.StallM) 
-        if (dut.hart.FlushM) PCtextM <= #1 "(flushed)";
-        else                 PCtextM <= #1 PCtextE;
-    end
+  //always_ff @(posedge clk, posedge reset)
+  //  if (reset) begin
+  //    PCtextE <= #1 "(reset)";
+  //    PCtextM <= #1 "(reset)";
+  //  end else begin
+  //    if (~dut.hart.StallE) 
+  //      if (dut.hart.FlushE) PCtextE <= #1 "(flushed)";
+  //      else                 PCtextE <= #1 PCtextD;
+  //    if (~dut.hart.StallM) 
+  //      if (dut.hart.FlushM) PCtextM <= #1 "(flushed)";
+  //      else                 PCtextM <= #1 PCtextE;
+  //  end
 
 
   initial begin
