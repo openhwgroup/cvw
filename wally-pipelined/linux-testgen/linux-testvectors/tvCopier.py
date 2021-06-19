@@ -3,11 +3,14 @@
 import os
 from datetime import datetime
 
-tera = '<your username>@tera.eng.hmc.edu'
-print("SORRY")
-print("This script will fail because you have not set the \'tera\' var to your username")
-print("Please make a copy called tvCopier.py")
-exit()
+
+if not os.path.isfile('sshUname.txt'):
+    print("GREETINGS FRIEND")
+    print("Please supply your tera username in ./sshUname.txt")
+    exit(1)
+sshUnameFile = open('sshUname.txt','r')
+uname = sshUnameFile.readline().strip('\n')
+tera = uname+'@tera.eng.hmc.edu'
 
 logFile = open('tvCopier.log', 'w')
 def pyTee(line):
