@@ -46,85 +46,33 @@ module pmachecker (
   output logic        PMAStoreAccessFaultM
 );
 
-  // Signals are high if the memory access is within the given region
-  logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
-  logic [5:0] Regions;
+  // logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
+  logic PMAAccessFault;
+  logic AccessRW, AccessRWX, AccessRX;
 
-  // Actual HSEL signals sent to uncore
-  logic HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC;
-  logic ValidBootTim, ValidTim, ValidCLINT, ValidGPIO, ValidUART, ValidPLIC;
-
-  // Attributes of memory region accessed
-  logic Executable, Readable, Writable;
-
-  logic Fault;
-
-  attributes attributes(.Address(HADDR), .*);
-
-  // Unswizzle region bits
-  assign {BootTim, Tim, CLINT, GPIO, UART, PLIC} = Regions;
-
-  assign ValidBootTim = '1;
-  assign ValidTim = '1;
-  assign ValidCLINT = ~ExecuteAccessF && ((HSIZE == 3'b011 && `XLEN==64) || (HSIZE == 3'b010 && `XLEN==32));
-  assign ValidGPIO  = ~ExecuteAccessF && (HSIZE == 3'b010);
-  assign ValidUART  = ~ExecuteAccessF && (HSIZE == 3'b000);
-  assign ValidPLIC  = ~ExecuteAccessF && (HSIZE == 3'b010);
-
-  assign HSELBootTim = BootTim && ValidBootTim; 
-  assign HSELTim     = Tim     && ValidTim;
-  assign HSELCLINT   = CLINT   && ValidCLINT;
-  assign HSELGPIO    = GPIO    && ValidGPIO;
-  assign HSELUART    = UART    && ValidUART; // only byte writes to UART are supported
-  assign HSELPLIC    = PLIC    && ValidPLIC;
-
-  // Swizzle region bits
-  assign HSELRegions = {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC};
-
-  assign Fault = ~|HSELRegions;
-
-  assign PMAInstrAccessFaultF = ExecuteAccessF && Fault;
-  assign PMALoadAccessFaultM  = ReadAccessM    && Fault;
-  assign PMAStoreAccessFaultM = WriteAccessM   && Fault;
-
-  assign PMASquashBusAccess = PMAInstrAccessFaultF || PMALoadAccessFaultM || PMAStoreAccessFaultM;
-
-endmodule
-
-module attributes (
-//  input  logic        clk, reset, // *** unused in this module and all sub modules.
-
-  input  logic [31:0] Address,
-
-  output logic [5:0]  Regions,
-
-  output logic        Cacheable, Idempotent, AtomicAllowed,
-  output logic        Executable, Readable, Writable
-);
-
-  // Signals are high if the memory access is within the given region
-  logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
+  // Determine what type of access is being made
+  assign AccessRW = ReadAccessM | WriteAccessM;
+  assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
+  assign AccessRX = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdec boottimdec(Address, `BOOTTIMBASE, `BOOTTIMRANGE, BootTim);
-  adrdec timdec(Address, `TIMBASE, `TIMRANGE, Tim);
-  adrdec clintdec(Address, `CLINTBASE, `CLINTRANGE, CLINT);
-  adrdec gpiodec(Address, `GPIOBASE, `GPIORANGE, GPIO);
-  adrdec uartdec(Address, `UARTBASE, `UARTRANGE, UART);
-  adrdec plicdec(Address, `PLICBASE, `PLICRANGE, PLIC);
-
-  // Swizzle region bits
-  assign Regions = {BootTim, Tim, CLINT, GPIO, UART, PLIC};
+  // *** linux tests fail early when Access is anything other than 1b1
+  pmaadrdec boottimdec(HADDR, `BOOTTIM_BASE, `BOOTTIM_RANGE, `BOOTTIM_SUPPORTED, 1'b1/*AccessRX*/, HSIZE, 4'b1111, HSELRegions[5]);
+  pmaadrdec timdec(HADDR, `TIM_BASE, `TIM_RANGE, `TIM_SUPPORTED, 1'b1/*AccessRWX*/, HSIZE, 4'b1111, HSELRegions[4]);
+  pmaadrdec clintdec(HADDR, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, HSIZE, 4'b1111, HSELRegions[3]);
+  pmaadrdec gpiodec(HADDR, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[2]);
+  pmaadrdec uartdec(HADDR, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, HSIZE, 4'b0001, HSELRegions[1]);
+  pmaadrdec plicdec(HADDR, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[0]);
 
   // Only RAM memory regions are cacheable
-  assign Cacheable = BootTim | Tim;
+  assign Cacheable = HSELRegions[5] | HSELRegions[4];
+  assign Idempotent = HSELRegions[4];
+  assign AtomicAllowed = HSELRegions[4];
 
-  assign Idempotent = BootTim | Tim;
-
-  assign AtomicAllowed = BootTim | Tim;
-
-  assign Executable = BootTim | Tim;
-  assign Readable = BootTim | Tim | CLINT | GPIO | UART | PLIC;
-  assign Writable = BootTim | Tim | CLINT | GPIO | UART | PLIC;
-
+  // Detect access faults
+  assign PMAAccessFault = (~|HSELRegions)  && AccessRWX;  
+  assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
+  assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
+  assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
+  assign PMASquashBusAccess = PMAAccessFault;
 endmodule

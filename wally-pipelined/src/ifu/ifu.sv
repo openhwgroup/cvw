@@ -105,10 +105,19 @@ module ifu (
   logic PMPLoadAccessFaultM, PMPStoreAccessFaultM; // *** these are just so that the mmu has somewhere to put these outputs, they're unused in this stage
   // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
 
+  logic [`PA_BITS-1:0] PCPFmmu;
+
+  generate
+    if (`XLEN==32)
+      assign PCPF = PCPFmmu[31:0];
+    else
+      assign PCPF = {8'b0, PCPFmmu};
+  endgenerate
+
   mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
                 .PTEWriteVal(PageTableEntryF), .PageTypeWriteVal(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
-                .PhysicalAddress(PCPF), .TLBMiss(ITLBMissF),
+                .PhysicalAddress(PCPFmmu), .TLBMiss(ITLBMissF),
                 .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
 
                 .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0), // *** is this the right way force these bits constant? should they be someething else?
@@ -129,7 +138,9 @@ module ifu (
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
-  icache icache(.*);
+  icache icache(.*,
+		.PCNextF(PCNextF[`PA_BITS-1:0]),
+		.PCPF(PCPFmmu));
   
 
 

@@ -52,6 +52,7 @@ module privileged (
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
+  input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
   input  logic [4:0]       SetFflagsM,
 
@@ -96,7 +97,7 @@ module privileged (
   logic [1:0] STATUS_MPP;
   logic       STATUS_SPP, STATUS_TSR, STATUS_MPRV; // **** status mprv is unused outside of the csr module as of 4 June 2021. should it be deleted alltogether from the module, or should I leav the pin here in case someone needs it? 
   logic       STATUS_MIE, STATUS_SIE;
-  logic [11:0] MIP_REGW, MIE_REGW;
+  logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
   logic md, sd;
 
 

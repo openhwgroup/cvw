@@ -63,6 +63,7 @@ module wallypipelinedsoc (
   logic [5:0]       HSELRegions;
   logic             InstrAccessFaultF, DataAccessFaultM;
   logic             TimerIntM, SwIntM; // from CLINT
+  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
   logic             ExtIntM; // from PLIC
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
