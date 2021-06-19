@@ -25,3 +25,4 @@ testsBP/*/OBJ/*
 testsBP/*/*.a
 wally-pipelined/linux-testgen/linux-testvectors/*
 !wally-pipelined/linux-testgen/linux-testvectors/tvCopierTemplate.py
+!wally-pipelined/linux-testgen/linux-testvectors/tvLinker.sh
