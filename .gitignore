@@ -23,4 +23,5 @@ wlft*
 testsBP/*/*/*.elf*
 testsBP/*/OBJ/*
 testsBP/*/*.a
-
+wally-pipelined/linux-testgen/linux-testvectors/*
+!wally-pipelined/linux-testgen/linux-testvectors/tvCopierTemplate.py
