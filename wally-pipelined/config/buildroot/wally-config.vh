@@ -30,7 +30,7 @@
 `define BUILDROOT 1
 `define BUSYBEAR 0
 `define LINUX_FIX_READ {'h10000005}
-`define LINUX_TEST_VECTORS "/courses/e190ax/buildroot_boot/"
+`define LINUX_TEST_VECTORS "../linux-testgen/linux-testvectors/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
