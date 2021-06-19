@@ -138,9 +138,7 @@ module ifu (
 
   // jarred 2021-03-14 Add instrution cache block to remove rd2
   assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
-  icache icache(.*,
-		.PCNextF(PCNextF[`PA_BITS-1:0]),
-		.PCPF(PCPFmmu));
+  icache icache(.*);
   
 
 
