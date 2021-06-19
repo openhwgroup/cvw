@@ -28,11 +28,11 @@ configs = [
         cmd="vsim -do wally-busybear-batch.do -c > {}",
         grepstr="# loaded 100000 instructions"
     ),
-#    TestCase(
-#        name="buildroot",
-#        cmd="vsim -do wally-buildroot-batch.do -c > {}",
-#        grepstr="# loaded 100000 instructions"
-#    ),
+    TestCase(
+        name="buildroot",
+        cmd="vsim -do wally-buildroot-batch.do -c > {}",
+        grepstr="# loaded 600000 instructions"
+    ),
     TestCase(
         name="rv32ic",
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv32ic rv32ic\n!",

@@ -40,7 +40,7 @@ module dmem (
   input  logic [`XLEN-1:0] WriteDataM, 
   input  logic [1:0]       AtomicM,
   input  logic             CommitM,
-  output logic [`XLEN-1:0] MemPAdrM,
+  output logic [`PA_BITS-1:0] MemPAdrM,
   output logic             MemReadM, MemWriteM,
   output logic [1:0]       AtomicMaskedM,
   output logic             DataMisalignedM,
@@ -142,20 +142,20 @@ module dmem (
   // Handle atomic load reserved / store conditional
   generate
     if (`A_SUPPORTED) begin // atomic instructions supported
-      logic [`XLEN-1:2] ReservationPAdrW;
+      logic [`PA_BITS-1:2] ReservationPAdrW;
       logic             ReservationValidM, ReservationValidW; 
       logic             lrM, scM, WriteAdrMatchM;
 
       assign lrM = MemReadM && AtomicM[0];
       assign scM = MemRWM[0] && AtomicM[0]; 
-      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`XLEN-1:2] == ReservationPAdrW) && ReservationValidW;
+      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
       always_comb begin // ReservationValidM (next value of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve
         else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
         else ReservationValidM = ReservationValidW; // otherwise don't change valid
       end
-      flopenrc #(`XLEN-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`XLEN-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+      flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
       flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
       flopenrc #(1) squashreg(clk, reset, FlushW, ~StallW, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported

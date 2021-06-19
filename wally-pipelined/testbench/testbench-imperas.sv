@@ -582,8 +582,8 @@ string tests32f[] = '{
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = `TIMBASE>>(1+`XLEN/32);
-  localparam integer 	   MemEndAddr = (`TIMRANGE+`TIMBASE)>>1+(`XLEN/32);
+  localparam integer 	   MemStartAddr = `TIM_BASE>>(1+`XLEN/32);
+  localparam integer 	   MemEndAddr = (`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32);
 
   initial
     begin
@@ -655,9 +655,9 @@ string tests32f[] = '{
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
         if (`XLEN == 32)
-          testadr = (`TIMBASE+tests[test+1].atohex())/4;
+          testadr = (`TIM_BASE+tests[test+1].atohex())/4;
         else
-          testadr = (`TIMBASE+tests[test+1].atohex())/8;
+          testadr = (`TIM_BASE+tests[test+1].atohex())/8;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);

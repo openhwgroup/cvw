@@ -1,5 +1,5 @@
 //////////////////////////////////////////
-// busybear-config.vh
+// wally-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
 // Modified: 
@@ -61,22 +61,27 @@
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
+`define BOOTTIM_SUPPORTED 1'b1
+`define BOOTTIM_BASE   32'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+`define BOOTTIM_RANGE  32'h00003FFF
+//`define BOOTTIM_BASE   32'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+//`define BOOTTIM_RANGE  32'h00000FFF
+`define TIM_SUPPORTED 1'b1
+`define TIM_BASE       32'h80000000
+`define TIM_RANGE      32'h07FFFFFF
+`define CLINT_SUPPORTED 1'b1
+`define CLINT_BASE  32'h02000000
+`define CLINT_RANGE 32'h0000FFFF
+`define GPIO_SUPPORTED 1'b1
+`define GPIO_BASE   32'h10012000
+`define GPIO_RANGE  32'h000000FF
+`define UART_SUPPORTED 1'b1
+`define UART_BASE   32'h10000000
+`define UART_RANGE  32'h00000007
+`define PLIC_SUPPORTED 1'b1
+`define PLIC_BASE   32'h0C000000
+`define PLIC_RANGE  32'h03FFFFFF
 
-`define BOOTTIMBASE   32'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-`define BOOTTIMRANGE  32'h00003FFF
-`define CLINTBASE     32'h02000000
-`define CLINTRANGE    32'h0000FFFF
-`define PLICBASE      32'h0C000000
-`define PLICRANGE     32'h03FFFFFF
-`define UARTBASE      32'h10000000
-`define UARTRANGE     32'h00000007
-`define VBD0BASE      32'h10001000
-`define VBD0RANGE     32'h000001FF
-// differing from Imperas' OVPSim by not having a VND0
-`define GPIOBASE      32'h20000000 
-`define GPIORANGE     32'h000000FF
-`define TIMBASE       32'h80000000
-`define TIMRANGE      32'h07FFFFFF
 // Bus Interface width
 `define AHBW 64
 

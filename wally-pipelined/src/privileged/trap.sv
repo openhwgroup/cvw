@@ -35,7 +35,7 @@ module trap (
   input  logic             mretM, sretM, uretM,
   input  logic [1:0]       PrivilegeModeW, NextPrivilegeModeM,
   input  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  input  logic [11:0]      MIP_REGW, MIE_REGW,
+  input  logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
   input  logic             STATUS_MIE, STATUS_SIE,
   input  logic [`XLEN-1:0] PCM,
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
@@ -58,7 +58,7 @@ module trap (
   // Determine pending enabled interrupts
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
-  assign PendingIntsM = (MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888) | ({12{SIntGlobalEnM}} & 12'h222);
+  assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign InterruptM = (|PendingIntsM) & InstrValidM & ~CommittedM;
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)

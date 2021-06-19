@@ -162,7 +162,7 @@ module testbench();
   // read CSR trace file
   integer data_file_csr, scan_file_csr;
   initial begin
-    data_file_csr = $fopen({`LINUX_TEST_VECTORS,"parsedCSRs2.txt"}, "r");
+    data_file_csr = $fopen({`LINUX_TEST_VECTORS,"parsedCSRs.txt"}, "r");
     if (data_file_csr == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -473,13 +473,28 @@ module testbench();
     end
   end
 
-  string PCtext, PCtext2;
+  string PCtextD,PCtextE,PCtextM,PCtext2;
+  always_ff @(posedge clk, posedge reset)
+    if (reset) begin
+      PCtextE = "(reset)";
+      PCtextM = "(reset)";
+    end else begin
+      if (~dut.hart.StallM) 
+        if (dut.hart.FlushM) PCtextM = "(flushed)";
+        else                 PCtextM = PCtextE;
+      if (~dut.hart.StallE) 
+        if (dut.hart.FlushE) PCtextE = "(flushed)";
+        else                 PCtextE = PCtextD;
+    end
+
+
   initial begin
     instrs = 0;
   end
   logic [31:0] InstrMask;
   logic forcedInstr;
   logic [63:0] lastPCD;
+  
   always @(dut.hart.ifu.PCD or dut.hart.ifu.InstrRawD or reset or negedge dut.hart.ifu.StallE) begin
     if(~HWRITE) begin
       #2;
@@ -495,7 +510,7 @@ module testbench();
                  (dut.hart.ifu.PCD == 32'h80001dc6) ||          // as well as stores to PLIC
                  (dut.hart.ifu.PCD == 32'h80001de0) ||
                  (dut.hart.ifu.PCD == 32'h80001de2)) begin 
-                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
+                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
                 force CheckInstrD = 32'b0010011;
                 force dut.hart.ifu.InstrRawD = 32'b0010011;
                 while (clk != 0) #1;
@@ -515,10 +530,10 @@ module testbench();
               $display("no more PC data to read");
               `ERROR
             end
-            scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext);
+            scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtextD);
             PCtext2 = "";
             while (PCtext2 != "***") begin
-              PCtext = {PCtext, " ", PCtext2};
+              PCtextD = {PCtextD, " ", PCtext2};
               scan_file_PC = $fscanf(data_file_PC, "%s\n", PCtext2);
             end
             scan_file_PC = $fscanf(data_file_PC, "%x\n", CheckInstrD);
@@ -527,7 +542,7 @@ module testbench();
                  (dut.hart.ifu.PCD == 32'h80001dc6) ||          // as well as stores to PLIC
                  (dut.hart.ifu.PCD == 32'h80001de0) ||
                  (dut.hart.ifu.PCD == 32'h80001de2)) begin 
-                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtext, dut.hart.ifu.PCD, instrs, $time);
+                $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
                 force CheckInstrD = 32'b0010011;
                 force dut.hart.ifu.InstrRawD = 32'b0010011;
                 while (clk != 0) #1;
@@ -592,6 +607,7 @@ module testbench();
       end
     end
   end
+
 
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;

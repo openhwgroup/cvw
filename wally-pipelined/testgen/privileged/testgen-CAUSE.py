@@ -53,7 +53,7 @@ def writeVectors(storecmd, returningInstruction):
         csrrs x0, {fromMode}status, x1
 
         la x18, {clintAddr}
-        lw x11, 0(x18)
+        {loadcmd} x11, 0(x18)
         li x1, 0x3fffffffffffffff
         {storecmd} x1, 0(x18)
 
@@ -69,7 +69,8 @@ def writeVectors(storecmd, returningInstruction):
         csrrc x0, {fromMode}status, x1
 
         la x18, {clintAddr}
-        {storecmd} x0, 0(x18)
+        li x1, -1
+        {storecmd} x1, 0(x18)
       """)
 
     # Page 6 of unpriviledged spec
@@ -309,9 +310,11 @@ for xlen in xlens:
   formatrefstr = "{:08x}" # format as xlen-bit hexadecimal number with no leading 0x
   if (xlen == 32):
     storecmd = "sw"
+    loadcmd = "lw"
     wordsize = 4
   else:
     storecmd = "sd"
+    loadcmd = "ld"
     wordsize = 8
 
   # testMode can be m, s, and u. User mode traps are deprecated, so this should likely just be ["m", "s"]
