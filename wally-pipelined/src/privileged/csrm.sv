@@ -164,6 +164,8 @@ module csrm #(parameter
   generate
     if (`OVPSIM_CSR_CONFIG)
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, MCOUNTEREN_REGW);
+    else if (`BUILDROOT == 1)
+      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], 32'h0, MCOUNTEREN_REGW);
     else
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, MCOUNTEREN_REGW);
   endgenerate
