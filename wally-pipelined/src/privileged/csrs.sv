@@ -91,6 +91,8 @@ module csrs #(parameter
       flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
       if (`OVPSIM_CSR_CONFIG)
         flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, SCOUNTEREN_REGW);
+      else if (`BUILDROOT == 1)
+        flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], 32'h0, SCOUNTEREN_REGW);
       else
         flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, SCOUNTEREN_REGW);
       if (`N_SUPPORTED) begin
