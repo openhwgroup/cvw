@@ -1,7 +1,6 @@
 # wally-pipelined.do 
 #
 # Modification by Oklahoma State University & Harvey Mudd College
-# Use with testbench_busybear 
 # James Stine, 2008; David Harris 2021
 # Go Cowboys!!!!!!
 #

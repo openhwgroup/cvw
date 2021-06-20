@@ -1,7 +1,6 @@
 # wally-pipelined.do 
 #
 # Modification by Oklahoma State University & Harvey Mudd College
-# Use with testbench_busybear 
 # James Stine, 2008; David Harris 2021
 # Go Cowboys!!!!!!
 #
@@ -20,7 +19,7 @@ onbreak {resume}
 if [file exists work-buildroot] {
     vdel -all -lib work-buildroot
 }
-vlib work-busybear
+vlib work-buildroot
 
 # compile source files
 # suppress spurious warnngs about 
