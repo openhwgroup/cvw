@@ -1,6 +1,4 @@
 # linux-waves.do 
-restart -f
-delete wave /*
 view wave
 
 add wave -divider
@@ -13,8 +11,6 @@ add wave /testbench/dut/hart/StallD
 add wave /testbench/dut/hart/StallE
 add wave /testbench/dut/hart/StallM
 add wave /testbench/dut/hart/StallW
-add wave -group stall_srcs /testbench/dut/hart/DataStall
-add wave -group stall_srcs /testbench/dut/hart/ICacheStallF
 add wave /testbench/dut/hart/FlushD
 add wave /testbench/dut/hart/FlushE
 add wave /testbench/dut/hart/FlushM
