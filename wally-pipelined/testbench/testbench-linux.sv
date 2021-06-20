@@ -385,36 +385,48 @@ module testbench();
     end
   end
 
+  string MSTATUSstring = "MSTATUS";
+  string SEPCstring = "SEPC";
+  string SCAUSEstring = "SCAUSE";
+  string SSTATUSstring = "SSTATUS";
   `define CHECK_CSR2(CSR, PATH) \
-    string CSR; \
     logic [63:0] expected``CSR``; \
+    string CSR; \
+    string ``CSR``name = `"CSR`"; \
+    string expected``CSR``name; \
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
-        if ($time > 1) begin \
-          if ("SEPC" == `"CSR`") begin #1; end \
-          if ("SCAUSE" == `"CSR`") begin #2; end \
-          if ("SSTATUS" == `"CSR`") begin #3; end \
-          scan_file_csr = $fscanf(data_file_csr, "%s\n", CSR); \
-          scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
-          if(CSR.icompare(`"CSR`")) begin \
-            $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", CSR); \
-          end \
-          if(``PATH``.``CSR``_REGW != ``expected``CSR) begin \
-            $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", CSR, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+      if ($time > 1) begin \
+        if (``CSR``name == SEPCstring) begin #1; end \
+        if (``CSR``name == SCAUSEstring) begin #2; end \
+        if (``CSR``name == SSTATUSstring) begin #4; end \
+        scan_file_csr = $fscanf(data_file_csr, "%s\n", expected``CSR``name); \
+        scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
+        if(expected``CSR``name.icompare(``CSR``name)) begin \
+          $display("%0t ps, instr %0d: %s changed, expected %s", $time, instrs, `"CSR`", expected``CSR``name); \
+        end \
+        if (``CSR``name == MSTATUSstring) begin \
+          if (``PATH``.``CSR``_REGW != ((``expected``CSR) | 64'ha00000000)) begin \
+            $display("%0t ps, instr %0d: %s does not equal %s Expected: %x, %x", $time, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, (``expected``CSR) | 64'ha00000000); \
             `ERROR \
           end \
-        end else begin \
-          if (!(`BUILDROOT == 1 && "MSTATUS" == `"CSR`")) begin \
-            for(integer j=0; j<totalCSR; j++) begin \
-              if(!StartCSRname[j].icompare(`"CSR`")) begin \
-                if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
-                  $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, `"CSR`", StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
-                  `ERROR \
-                end \
+        end else \
+          if (``PATH``.``CSR``_REGW != ``expected``CSR) begin \
+            $display("%0t ps, instr %0d: %s does not Equal %s expected: %x, %x", $time, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+            `ERROR \
+          end \
+      end else begin \
+        if (!(`BUILDROOT == 1 && ``CSR``name == MSTATUSstring)) begin \
+          for(integer j=0; j<totalCSR; j++) begin \
+            if(!StartCSRname[j].icompare(``CSR``name)) begin \
+              if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
+                $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, ``CSR``name, StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
+                `ERROR \
               end \
             end \
           end \
         end \
+      end \
     end
   `define CHECK_CSR(CSR) \
      `CHECK_CSR2(CSR, dut.hart.priv.csr)
