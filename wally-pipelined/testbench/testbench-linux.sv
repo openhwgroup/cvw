@@ -407,12 +407,12 @@ module testbench();
         end \
         if (``CSR``name == MSTATUSstring) begin \
           if (``PATH``.``CSR``_REGW != ((``expected``CSR) | 64'ha00000000)) begin \
-            $display("%0t ps, instr %0d: %s does not equal %s Expected: %x, %x", $time, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, (``expected``CSR) | 64'ha00000000); \
+            $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, (``expected``CSR) | 64'ha00000000); \
             `ERROR \
           end \
         end else \
-          if (``PATH``.``CSR``_REGW != ``expected``CSR) begin \
-            $display("%0t ps, instr %0d: %s does not Equal %s expected: %x, %x", $time, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, ``expected``CSR); \
+          if (``PATH``.``CSR``_REGW != ``expected``CSR[$bits(``PATH``.``CSR``_REGW)-1:0]) begin \
+            $display("%0t ps, instr %0d: %s does not equal %s expected: %x, %x", $time, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, ``expected``CSR); \
             `ERROR \
           end \
       end else begin \
