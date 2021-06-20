@@ -49,7 +49,7 @@ module testbench();
 
   logic ignoreRFwrite;
   
-  parameter waveOnICount = 690000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = 2060000; // # of instructions at which to turn on waves in graphical sim
 
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
@@ -498,6 +498,9 @@ module testbench();
         scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
         scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
         force dut.hart.ieu.dp.regf.wd3 = regExpected;
+      // Hack to compensate for QEMU's incorrect MSTATUS
+      end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,16) == "mstatus") begin
+        force dut.hart.ieu.dp.regf.wd3 = dut.hart.ieu.dp.WriteDataW & ~64'ha00000000;
       end else
         release dut.hart.ieu.dp.regf.wd3;
     end
@@ -590,7 +593,7 @@ module testbench();
             scan_file_PC = $fscanf(data_file_PC, "%x\n", pcExpected);
             if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
                (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
-               (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
+               (instrs <= 100000 && instrs % 10000 == 0) || (instrs % 100000 == 0)) begin
               $display("loaded %0d instructions", instrs);
             end
             if (instrs == waveOnICount) begin
