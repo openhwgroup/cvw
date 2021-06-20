@@ -89,7 +89,44 @@ add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[29]
 add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[30]
 add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[31]
 
-add wave -divider
+add wave -divider CSRs
+add wave -hex sim:/testbench/dut/hart/priv/csr/MSTATUS_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/MCOUNTINHIBIT_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/MCOUNTEREN_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csri/MIDELEG_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csri/MIP_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csri/MIE_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MEPC_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MTVEC_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MCOUNTEREN_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MCOUNTINHIBIT_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MEDELEG_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MIDELEG_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MSCRATCH_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MCAUSE_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MTVAL_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/SSTATUS_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/SCOUNTEREN_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csri/SIP_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csri/SIE_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrs/SEPC_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrs/STVEC_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrs/SCOUNTEREN_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrs/SEDELEG_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrs/SIDELEG_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrs/SATP_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/USTATUS_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UEPC_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UTVEC_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UIP_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UIE_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG01_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG23_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPADDR_ARRAY_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MISA_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csru/FRM_REGW
+
+add wave divider
 add wave -hex -r /testbench/*
 
 # appearance

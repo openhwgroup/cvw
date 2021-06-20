@@ -396,10 +396,10 @@ module testbench();
     string expected``CSR``name; \
     //CSR checking \
     always @(``PATH``.``CSR``_REGW) begin \
-      if ($time > 1) begin \
+      if ($time > 1 && (`BUILDROOT != 1 || ``CSR``name != SSTATUSstring)) begin \
         if (``CSR``name == SEPCstring) begin #1; end \
         if (``CSR``name == SCAUSEstring) begin #2; end \
-        if (``CSR``name == SSTATUSstring) begin #4; end \
+        if (``CSR``name == SSTATUSstring) begin #3; end \
         scan_file_csr = $fscanf(data_file_csr, "%s\n", expected``CSR``name); \
         scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
         if(expected``CSR``name.icompare(``CSR``name)) begin \
