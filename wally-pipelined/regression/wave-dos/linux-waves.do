@@ -126,7 +126,7 @@ add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPADDR_ARRAY_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MISA_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csru/FRM_REGW
 
-add wave divider
+add wave -divider
 add wave -hex -r /testbench/*
 
 # appearance
