@@ -36,4 +36,5 @@ vopt work.testbench -o workopt
 vsim workopt -suppress 8852,12070
 
 run -all
-quit
+run -all
+quit 

@@ -46,6 +46,8 @@ module testbench();
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic             UARTSout;
+  
+  parameter waveOnICount = 650000; // # of instructions at which to turn on waves in graphical sim
 
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
@@ -562,6 +564,10 @@ module testbench();
                (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
                (instrs <= 100000 && instrs % 10000 == 0) || (instrs <= 1000000 && instrs % 100000 == 0)) begin
               $display("loaded %0d instructions", instrs);
+            end
+            if (instrs == waveOnICount) begin
+              $display("turning on waves at %0d instructions", instrs);
+              $stop; // do file will resume after this first stop
             end
             instrs += 1;
             // are we at a branch/jump?
