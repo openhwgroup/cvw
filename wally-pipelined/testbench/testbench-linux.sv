@@ -46,8 +46,10 @@ module testbench();
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic             UARTSout;
+
+  logic ignoreRFwrite;
   
-  parameter waveOnICount = 650000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = 690000; // # of instructions at which to turn on waves in graphical sim
 
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
@@ -129,6 +131,7 @@ module testbench();
   // initialize test
   initial
     begin
+      ignoreRFwrite <= 0;
       reset <= 1; # 22; reset <= 0;
     end
 
@@ -252,8 +255,12 @@ module testbench();
             `ERROR
           end
         end else begin
-          scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
-          scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
+          if (ignoreRFwrite)
+            ignoreRFwrite <= 0;
+          else begin
+            scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
+            scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
+          end
           if (i != regNumExpected) begin
             $display("%0t ps, instr %0d: wrong register changed: %0d, %0d expected to switch to %x from %x", $time, instrs, i, regNumExpected, regExpected, dut.hart.ieu.dp.regf.rf[regNumExpected]);
             `ERROR
@@ -472,6 +479,15 @@ module testbench();
       //if(it.InstrW != InstrWExpected) begin
       //  $display("%0t ps, instr %0d: InstrW does not equal InstrW expected: %x, %x", $time, instrs, it.InstrW, InstrWExpected);
       //end
+      //
+      // Hack to compensate for how Wally's MTIME may diverge from QEMU's MTIME (and that is okay)
+      if (PCtextW.substr(0,5) == "rdtime") begin
+        ignoreRFwrite <= 1;
+        scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
+        scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
+        force dut.hart.ieu.dp.regf.wd3 = regExpected;
+      end else
+        release dut.hart.ieu.dp.regf.wd3;
     end
   end
 
