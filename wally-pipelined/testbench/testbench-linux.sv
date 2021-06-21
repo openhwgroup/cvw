@@ -539,8 +539,8 @@ module testbench();
           if (speculative && (lastPC != pcExpected)) begin
             speculative = ~equal(dut.hart.ifu.PCD,pcExpected,3);
             if(dut.hart.ifu.PCD===pcExpected) begin
-              if((dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) || // for now, NOP out any float instrs
-                 (dut.hart.ifu.PCD == 32'h80001dc6) ||          // as well as stores to PLIC
+              //if((dut.hart.ifu.InstrRawD[6:0] == 7'b1010011) || // We no longer have to NOP out any float instrs!
+              if((dut.hart.ifu.PCD == 32'h80001dc6) ||          // for now, NOP out any stores to PLIC
                  (dut.hart.ifu.PCD == 32'h80001de0) ||
                  (dut.hart.ifu.PCD == 32'h80001de2)) begin 
                 $display("warning: NOPing out %s at PC=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
