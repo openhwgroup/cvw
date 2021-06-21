@@ -34,7 +34,7 @@
 `define XLEN 64
 
 // MISA RISC-V configuration per specification
-`define MISA (32'h00000104 | 0 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 32
 `define ZCOUNTERS_SUPPORTED 1
