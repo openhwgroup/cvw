@@ -91,9 +91,6 @@
 // Tie GPIO outputs back to inputs
 `define GPIO_LOOPBACK_TEST 0
 
-// Busybear special CSR config to match OVPSim
-`define OVPSIM_CSR_CONFIG 1
-
 // Hardware configuration
 //`define UART_PRESCALE 1
 `define UART_PRESCALE 0
