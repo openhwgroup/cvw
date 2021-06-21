@@ -30,6 +30,8 @@
 module pmachecker (
 //  input  logic        clk, reset, // *** unused in this module and all sub modules.
 
+  input  logic [`PA_BITS-1:0] PhysicalAddress,
+  input  logic [1:0]          Size,
   input  logic [31:0] HADDR,
   input  logic [2:0]  HSIZE,
 //  input  logic [2:0]  HBURST, //  *** in AHBlite, HBURST is hardwired to zero for single bursts only allowed. consider removing from this module if unused.

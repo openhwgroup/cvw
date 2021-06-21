@@ -114,7 +114,7 @@ module ifu (
       assign PCPF = {8'b0, PCPFmmu};
   endgenerate
 
-  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF),
+  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF), .Size(2'b10),
                 .PTEWriteVal(PageTableEntryF), .PageTypeWriteVal(PageTypeF),
                 .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
                 .PhysicalAddress(PCPFmmu), .TLBMiss(ITLBMissF),
