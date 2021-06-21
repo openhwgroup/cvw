@@ -95,7 +95,7 @@ module dmem (
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
   
-  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM),
+  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM), .Size(Funct3M[1:0]),
                 .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
                 .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),

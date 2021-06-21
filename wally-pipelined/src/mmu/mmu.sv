@@ -47,6 +47,7 @@ module mmu #(parameter ENTRY_BITS = 3,
 
   // Virtual address input
   input logic  [`XLEN-1:0] VirtualAddress,
+  input logic  [1:0]       Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
 
   // Controls for writing a new entry to the TLB
   input logic  [`XLEN-1:0] PTEWriteVal,
