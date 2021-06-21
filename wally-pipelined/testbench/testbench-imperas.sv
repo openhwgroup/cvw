@@ -217,7 +217,7 @@ string tests32f[] = '{
   };
 
   string tests64i[] = '{
-    "rv64i/WALLY-PIPELINE-100K", "f7ff0",
+    //"rv64i/WALLY-PIPELINE-100K", "f7ff0",
     "rv64i/I-ADD-01", "3000",
     "rv64i/I-ADDI-01", "3000",
     "rv64i/I-ADDIW-01", "3000",
@@ -363,7 +363,7 @@ string tests32f[] = '{
   };
 
   string tests32i[] = {
-    "rv32i/WALLY-PIPELINE-100K", "10a800",
+    //"rv32i/WALLY-PIPELINE-100K", "10a800",
     "rv32i/I-ADD-01", "2000",
     "rv32i/I-ADDI-01","2000",
     "rv32i/I-AND-01","2000",
