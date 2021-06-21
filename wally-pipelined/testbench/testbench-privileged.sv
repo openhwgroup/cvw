@@ -34,8 +34,8 @@ module testbench();
   logic        reset;
 
   int test, i, errors, totalerrors;
-  logic [31:0] sig32[0:10000];
-  logic [`XLEN-1:0] signature[0:10000];
+  logic [31:0] sig32[10000:0];
+  logic [`XLEN-1:0] signature[10000:0];
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   //logic [31:0] InstrW;

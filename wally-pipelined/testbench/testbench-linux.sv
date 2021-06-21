@@ -70,7 +70,7 @@ module testbench();
       logic             SvMode, PTE_R, PTE_X;
       logic [`XLEN-1:0] SATP, PTE;
       logic [55:0]      BaseAdr, PAdr;
-      logic [8:0]       VPN [0:2];
+      logic [8:0]       VPN [2:0];
       logic [11:0]      Offset;
 
       int i;

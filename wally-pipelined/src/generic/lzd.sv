@@ -81,7 +81,7 @@ module lzd4 (ZP, ZV, B);
    lzd2 l1(ZPa, ZVa, B[1:0]);
    lzd2 l2(ZPb, ZVb, B[3:2]);
 
-   assign ZP[0:0] = ZVb ? ZPb : ZPa;
+   assign ZP[0] = ZVb ? ZPb : ZPa;
    assign ZP[1]   = ~ZVb;
    assign ZV = ZVa | ZVb;
 

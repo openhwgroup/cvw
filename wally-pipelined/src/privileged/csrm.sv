@@ -91,7 +91,7 @@ module csrm #(parameter
     output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW,
     // 64-bit registers in RV64, or two 32-bit registers in RV32
     output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
-    output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1],
+    output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
     input  logic [11:0]      MIP_REGW, MIE_REGW,
     output logic             WriteMSTATUSM,
     output logic             IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
@@ -104,7 +104,7 @@ module csrm #(parameter
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
   logic            WritePMPCFG0M, WritePMPCFG2M;
-  logic            WritePMPADDRM [0:15]; 
+  logic            WritePMPADDRM [15:0]; 
 
   localparam MISA_26 = (`MISA) & 32'h03ffffff;
 

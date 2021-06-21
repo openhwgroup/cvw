@@ -41,7 +41,7 @@ module tlbram #(parameter ENTRY_BITS = 3) (
 
   localparam NENTRIES = 2**ENTRY_BITS;
 
-  logic [`XLEN-1:0] ram [0:NENTRIES-1];
+  logic [`XLEN-1:0] ram [NENTRIES-1:0];
   logic [`XLEN-1:0] PageTableEntry;
 
   // Generate a flop for every entry in the RAM
