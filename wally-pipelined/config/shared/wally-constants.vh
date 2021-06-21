@@ -37,7 +37,6 @@
 // Virtual Memory Constants
 `define VPN_SEGMENT_BITS (`XLEN == 32 ? 10 : 9)
 `define VPN_BITS (`XLEN==32 ? (2*`VPN_SEGMENT_BITS) : (4*`VPN_SEGMENT_BITS))
-`define PPN_HIGH_SEGMENT_BITS (`XLEN==32 ? 12 : 17)
 `define PPN_BITS (`XLEN==32 ? 22 : 44)
 `define PA_BITS (`XLEN==32 ? 34 : 56)
 `define SVMODE_BITS (`XLEN == 32 ? 1 : 4)

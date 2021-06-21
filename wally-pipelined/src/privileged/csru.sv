@@ -46,17 +46,17 @@ module csru #(parameter
   generate  
     if (`F_SUPPORTED | `D_SUPPORTED) begin
       logic [4:0] FFLAGS_REGW;
-      logic WriteFFLAGSM, WriteFRMM, WriteFCSRM;
+      logic WriteFFLAGSM, WriteFRMM; //, WriteFCSRM;
       logic [2:0] NextFRMM;
       logic [4:0] NextFFLAGSM;
         
       // Write enables
-      assign WriteFCSRM = CSRUWriteM && (CSRAdrM == FCSR)  && ~StallW;
-      assign WriteFFLAGSM = (CSRUWriteM && (CSRAdrM == FFLAGS) | WriteFCSRM)  && ~StallW;
-      assign WriteFRMM = (CSRUWriteM && (CSRAdrM == FRM) | WriteFCSRM)  && ~StallW;
+      //assign WriteFCSRM = CSRUWriteM && (CSRAdrM == FCSR)  && ~StallW;
+      assign WriteFRMM = (CSRUWriteM && (CSRAdrM == FRM | CSRAdrM == FCSR))  && ~StallW;
+      assign WriteFFLAGSM = (CSRUWriteM && (CSRAdrM == FFLAGS | CSRAdrM == FCSR))  && ~StallW;
     
       // Write Values
-      assign NextFRMM = WriteFCSRM ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
+      assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
       assign NextFFLAGSM = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
 
       // CSRs

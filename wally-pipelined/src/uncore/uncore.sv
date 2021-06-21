@@ -79,17 +79,37 @@ module uncore (
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
 
-  // tightly integrated memory
-  dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
-  dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+  generate
+    // tightly integrated memory
+    dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
+    //if (`BOOTTIM_SUPPORTED) *** restore when naming is figured out
+      dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
 
-  // memory-mapped I/O peripherals
-  clint clint(.HADDR(HADDR[15:0]), .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT), .*);
-  plic plic(.HADDR(HADDR[27:0]), .*);
-  gpio gpio(.HADDR(HADDR[7:0]), .*); // *** may want to add GPIO interrupts
-  uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
-            .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
-            .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*);
+    // memory-mapped I/O peripherals
+    if (`CLINT_SUPPORTED == 1)
+      clint clint(.HADDR(HADDR[15:0]), .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT), .*);
+    else begin
+      assign MTIME_CLINT = 0; assign MTIMECMP_CLINT = 0;
+      assign TimerIntM = 0; assign SwIntM = 0;
+    end
+    if (`PLIC_SUPPORTED == 1)
+      plic plic(.HADDR(HADDR[27:0]), .*);
+    else begin
+      assign ExtIntM = 0;
+    end
+    if (`GPIO_SUPPORTED == 1)
+      gpio gpio(.HADDR(HADDR[7:0]), .*); 
+    else begin
+      assign GPIOPinsOut = 0; assign GPIOPinsEn = 0; assign GPIOIntr = 0;
+    end
+    if (`UART_SUPPORTED == 1)
+      uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
+                .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
+                .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*);
+    else begin
+      assign UARTSout = 0; assign UARTIntr = 0; 
+    end
+  endgenerate
 
   // mux could also include external memory  
   // AHB Read Multiplexer
