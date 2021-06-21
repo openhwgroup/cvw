@@ -45,6 +45,7 @@ module fpucmp2 (
    input logic        ANaN, BNaN,
    input logic        Azero, Bzero,
    input logic [3:0]  FOpCtrlM,
+   input logic 	      FmtM,
    
    output logic       Invalid, 		 // Invalid Operation
    output logic [1:0] FCC,  		 // Condition Codes 
@@ -160,6 +161,7 @@ endmodule // magcompare64b
 module exception_cmp_2 (
    input logic [63:0] A,
    input logic [63:0] B,
+   input logic 	      FmtM,
    input logic 	      LT_mag,
    input logic 	      EQ_mag,
    input logic [1:0]  Sel,
@@ -230,11 +232,12 @@ module exception_cmp_2 (
       case (FOpCtrlM[2:0])
          3'b111: FCmpResultM = LT ? A : B;//min 
          3'b101: FCmpResultM = GT ? A : B;//max
-         3'b010: FCmpResultM = {63'b0, EQ};//equal
-         3'b001: FCmpResultM = {63'b0, LT};//less than
-         3'b011: FCmpResultM = {63'b0, LT | EQ};//less than or equal
+         3'b010: FCmpResultM = FmtM ? {63'b0, EQ} : {31'b0, EQ, 32'b0};//equal
+         3'b001: FCmpResultM = FmtM ? {63'b0, LT} : {31'b0, LT, 32'b0};//less than
+         3'b011: FCmpResultM = FmtM ? {63'b0, LT|EQ} : {31'b0, LT|EQ, 32'b0};//less than or equal
          default: FCmpResultM = 64'b0;
       endcase
    end 
+
 
 endmodule // exception_cmp

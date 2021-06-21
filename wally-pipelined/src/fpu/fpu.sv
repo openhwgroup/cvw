@@ -61,6 +61,7 @@ module fpu (
    logic 		   FInput3UsedD;                                           // Is input 3 used
    logic [2:0] 		   FResultSelD, FResultSelE, FResultSelM, FResultSelW;     // Select FP result
    logic [3:0] 		   FOpCtrlD, FOpCtrlE, FOpCtrlM;                           // Select which opperation to do in each component
+   logic          SelLoadInputE, SelLoadInputM;
    
    // regfile signals //*** KEP lint warning -  changed `XLEN-1 to 63 
    logic [4:0] 		   RdE, RdM, RdW; // ***Can take from ieu
@@ -70,7 +71,7 @@ module fpu (
    logic [63:0] 	   FInput1E, FInput1M, FInput1tmpE;
    logic [63:0] 	   FInput2E, FInput2M;
    logic [63:0] 	   FInput3E, FInput3M;
-   logic [63:0] 	   FLoadStoreResultM, FLoadStoreResultW;                   // Result for load, store, and move to int-reg instructions
+   logic [63:0] 	   FLoadResultM, FLoadStoreResultM, FLoadStoreResultW;                   // Result for load, store, and move to int-reg instructions
    
    // div/sqrt signals
    logic 		   DivDenormE, DivDenormM, DivDenormW;
@@ -139,7 +140,7 @@ module fpu (
    logic [4:0] 		   SgnFlagsE, SgnFlagsM, SgnFlagsW;
    
    // instantiation of W stage regfile signals
-   logic [`XLEN-1:0] 	   SrcAW;
+   logic [63:0] 	   AlignedSrcAM, ForwardSrcAM, SrcAW;
    
    // classify signals
    logic [63:0] 	   ClassResultE, ClassResultM, ClassResultW;
@@ -207,16 +208,18 @@ module fpu (
    flopenrc #(1) DEReg15(clk, reset, PipeClearDE, PipeEnableDE, FWriteIntD, FWriteIntE);
    flopenrc #(1) DEReg16(clk, reset, PipeClearDE, PipeEnableDE, FOutputInput2D, FOutputInput2E);
    flopenrc #(2) DEReg17(clk, reset, PipeClearDE, PipeEnableDE, FMemRWD, FMemRWE);
+   flopenrc #(1) DEReg18(clk, reset, PipeClearDE, PipeEnableDE, InstrD[15], SelLoadInputE);
    
    //EXECUTION STAGE
    
-   // input muxs for forwarding
-   mux4  #(64)  FInput1Emux(FRD1E, FPUResult64W, FPUResult64E, {SrcAM, {64-`XLEN{1'b0}}}, FForwardInput1E, FInput1tmpE);
+   // input muxs for forwarding   
+   mux2  #(64)  SrcAMuxForward({SrcAM[31:0], 32'b0}, {SrcAM, {64-`XLEN{1'b0}}}, FmtM, ForwardSrcAM);
+   mux4  #(64)  FInput1Emux(FRD1E, FPUResult64W, FPUResult64E, ForwardSrcAM, FForwardInput1E, FInput1tmpE);
    mux3  #(64)  FInput2Emux(FRD2E, FPUResult64W, FPUResult64E, FForwardInput2E, FInput2E);
    mux2  #(64)  FInput3Emux(FRD3E, FPUResult64E, FForwardInput3E, FInput3E);
    mux2  #(64)  FOutputInput2mux(FInput1tmpE, FInput2E, FOutputInput2E, FInput1E);
    
-   fma1 fma1 (.FOpCtrlE(FOpCtrlE[2:0]),.*);
+   fma1 fma1 (.X(FInput1E), .Y(FInput2E), .Z(FInput3E), .FOpCtrlE(FOpCtrlE[2:0]),.*);
    
    // first and only instance of floating-point divider
    logic fpdivClk;
@@ -337,6 +340,7 @@ module fpu (
    flopenrc #(4) EMReg6(clk, reset, PipeClearEM, PipeEnableEM, FOpCtrlE, FOpCtrlM);
    flopenrc #(1) EMReg7(clk, reset, PipeClearEM, PipeEnableEM, FWriteIntE, FWriteIntM);
    flopenrc #(2) EMReg8(clk, reset, PipeClearEM, PipeEnableEM, FMemRWE, FMemRWM);
+   flopenrc #(1) EMReg9(clk, reset, PipeClearEM, PipeEnableEM, SelLoadInputE, SelLoadInputM);
    
    //*****************
    // fpuclassify E/M pipe registers
@@ -345,11 +349,13 @@ module fpu (
    
    //BEGIN MEMORY STAGE
    
-   assign FWriteDataM = FInput1M[63:64-`XLEN];
+   assign FWriteDataM = FmtM ? FInput1M[63:64-`XLEN] : {{`XLEN-32{1'b0}}, FInput1M[63:32]};
+   //adjecent adress values are sent to the FPU, select the correct one
+   //    -imm is 80000 most of the time vs the error one which is 00000
+   mux3  #(64)  FLoadResultMux({HRDATA[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
+   mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
    
-   mux2  #(64)  FLoadStoreResultMux({HRDATA, {64-`AHBW{1'b0}}}, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
-   
-   fma2 fma2(.FOpCtrlM(FOpCtrlM[2:0]), .*);
+   fma2 fma2(.X(FInput1M), .Y(FInput2M), .Z(FInput3M), .FOpCtrlM(FOpCtrlM[2:0]), .*);
    
    // second instance of two-stage floating-point add/cvt unit
    fpuaddcvt2 fpadd2 (.*);
@@ -357,7 +363,9 @@ module fpu (
    // second instance of two-stage floating-point comparator
    fpucmp2 fpcmp2 (.Invalid(CmpInvalidM), .FCC(CmpFCCM), .ANaN(ANaNM), .BNaN(BNaNM), .Azero(AzeroM), 
 		   .Bzero(BzeroM), .w(WM), .x(XM), .Sel({1'b0, FmtM}), .op1(FInput1M), .op2(FInput2M), .*);
-   
+
+   mux2  #(64)  SrcAMux({SrcAM[31:0], 32'b0}, {{64-`XLEN{1'b0}}, SrcAM}, FmtM, AlignedSrcAM);
+      
    //*****************
    // fma M/W pipe registers
    //*****************
@@ -397,7 +405,7 @@ module fpu (
    flopenrc #(3) MWReg2(clk, reset, PipeClearMW, PipeEnableMW, FResultSelM, FResultSelW);
    flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, FmtM, FmtW);
    flopenrc #(5) MWReg4(clk, reset, PipeClearMW, PipeEnableMW, RdM, RdW);
-   flopenrc #(`XLEN) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, SrcAM, SrcAW);
+   flopenrc #(64) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, AlignedSrcAM, SrcAW);
    flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, FLoadStoreResultM, FLoadStoreResultW);
    flopenrc #(1) MWReg7(clk, reset, PipeClearMW, PipeEnableMW, FWriteIntM, FWriteIntW);
    
@@ -447,7 +455,7 @@ module fpu (
 	// classify
 	3'b101 : FPUResult64W = ClassResultW;
 	// output SrcAW
-	3'b110 : FPUResult64W = {SrcAW, {64-`XLEN{1'b0}}};
+	3'b110 : FPUResult64W = SrcAW;
 	// Load/Store/Move to FP-register
 	3'b111 : FPUResult64W = FLoadStoreResultW;
 	default : FPUResult64W = {64{1'bx}};
@@ -460,7 +468,7 @@ module fpu (
    // define offsets for LSB zero extension or truncation
    always_comb begin      
       // zero extension 
-      FPUResultW = FPUResult64W[63:64-`XLEN];
+      FPUResultW = FmtW ? FPUResult64W[63:64-`XLEN] : {{`XLEN-32{1'b0}}, FPUResult64W[63:32]};
       SetFflagsM = FPUFlagsW;      
    end
   

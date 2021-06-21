@@ -19,8 +19,6 @@ module fctrl (
 
 
   logic IllegalFPUInstr1D, IllegalFPUInstr2D;
-  //precision is taken directly from instruction
-  assign FmtD = Funct7D[0];
   // *** fix rounding for dynamic rounding
   assign FrmD = &Funct3D ? FRM_REGW : Funct3D;
 
@@ -210,6 +208,9 @@ module fctrl (
       default : begin FOpCtrlD = 4'b0; IllegalFPUInstr1D = 1'b1; FInput2UsedD = 1'b0; end
     endcase
   end
+
+  //precision
+  assign FmtD = (~&FResultSelD & Funct7D[0]) | (&FResultSelD & FOpCtrlD[0]);
 
   assign IllegalFPUInstrD = IllegalFPUInstr1D | IllegalFPUInstr2D;
   //write to integer source if conv to int occurs

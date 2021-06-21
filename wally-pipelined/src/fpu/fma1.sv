@@ -1,8 +1,8 @@
 module fma1(
  
-	input logic 	[63:0]		FInput1E,	// X
-	input logic		[63:0]		FInput2E,	// Y
-	input logic 	[63:0]		FInput3E,	// Z
+	input logic 	[63:0]		X,	// X
+	input logic		[63:0]		Y,	// Y
+	input logic 	[63:0]		Z,	// Z
 	input logic 	[2:0]		FOpCtrlE,	// 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
 	input logic 				FmtE,		// precision 1 = double 0 = single
 	output logic 	[105:0]		ProdManE,	// 1.X frac * 1.Y frac
@@ -21,8 +21,8 @@ module fma1(
 	logic [12:0]	AlignCnt;			// how far to shift the addend to align with the product
 	logic [211:0] 	ZManShifted;				// output of the alignment shifter including sticky bit
 	logic [211:0] 	ZManPreShifted;		// input to the alignment shifter
-	logic			XDenormE, YDenormE, ZDenormE;	// inputs are denormal
-	logic [63:0]	FInput3E2;	// value to add (Z or zero)
+	logic			XDenorm, YDenorm, ZDenorm;	// inputs are denormal
+	logic [63:0]	Addend;	// value to add (Z or zero)
 	logic [12:0]	Bias;	// 1023 for double, 127 for single
 	logic 			XExpZero, YExpZero, ZExpZero; 	// input exponent zero
 	logic 			XFracZero, YFracZero, ZFracZero; // input fraction zero
@@ -34,19 +34,19 @@ module fma1(
 	///////////////////////////////////////////////////////////////////////////////
 
 	// Set addend to zero if FMUL instruction
-  	assign FInput3E2 = FOpCtrlE[2] ? 64'b0 : FInput3E;
+  	assign Addend = FOpCtrlE[2] ? 64'b0 : Z;
 
-	assign XSgn = FInput1E[63];
-	assign YSgn = FInput2E[63];
-	assign ZSgn = FInput3E2[63];
+	assign XSgn = X[63];
+	assign YSgn = Y[63];
+	assign ZSgn = Addend[63];
 
-	assign XExp = FmtE ? {2'b0, FInput1E[62:52]} : {5'b0, FInput1E[62:55]};
-	assign YExp = FmtE ? {2'b0, FInput2E[62:52]} : {5'b0, FInput2E[62:55]};
-	assign ZExp = FmtE ? {2'b0, FInput3E2[62:52]} : {5'b0, FInput3E2[62:55]};
+	assign XExp = FmtE ? {2'b0, X[62:52]} : {5'b0, X[62:55]};
+	assign YExp = FmtE ? {2'b0, Y[62:52]} : {5'b0, Y[62:55]};
+	assign ZExp = FmtE ? {2'b0, Addend[62:52]} : {5'b0, Addend[62:55]};
 
-	assign XFrac = FmtE ? FInput1E[51:0] : {FInput1E[54:32], 29'b0};
-	assign YFrac = FmtE ? FInput2E[51:0] : {FInput2E[54:32], 29'b0};
-	assign ZFrac = FmtE ? FInput3E2[51:0] : {FInput3E2[54:32], 29'b0};
+	assign XFrac = FmtE ? X[51:0] : {X[54:32], 29'b0};
+	assign YFrac = FmtE ? Y[51:0] : {Y[54:32], 29'b0};
+	assign ZFrac = FmtE ? Addend[51:0] : {Addend[54:32], 29'b0};
 	
 	assign XMan = {~XExpZero, XFrac};
 	assign YMan = {~YExpZero, YFrac};
@@ -76,9 +76,9 @@ module fma1(
 	assign YNaNE = YExpMax & ~YFracZero;
 	assign ZNaNE = ZExpMax & ~ZFracZero;
 
-	assign XDenormE = XExpZero & ~XFracZero; 
-	assign YDenormE = YExpZero & ~YFracZero; 
-	assign ZDenormE = ZExpZero & ~ZFracZero; 
+	assign XDenorm = XExpZero & ~XFracZero; 
+	assign YDenorm = YExpZero & ~YFracZero; 
+	assign ZDenorm = ZExpZero & ~ZFracZero; 
 
 	assign XInfE = XExpMax & XFracZero; 
 	assign YInfE = YExpMax & YFracZero; 
@@ -101,7 +101,7 @@ module fma1(
 	
 	// verilator lint_off WIDTH
 	assign ProdExpE = (XZeroE|YZeroE) ? 13'b0 : 
-				 XExp + YExp - Bias + XDenormE + YDenormE;
+				 XExp + YExp - Bias + XDenorm + YDenorm;
 
 	// Calculate the product's mantissa
 	//		- Add the assumed one. If the number is denormalized or zero, it does not have an assumed one.
@@ -124,7 +124,7 @@ module fma1(
 	//		- positive means the product is larger, so shift Z right
 	//		- Denormal numbers have an an exponent value of 1, however they are 
 	//		  represented with an exponent of 0. add one to the exponent if it is a denormal number
-	assign AlignCnt = ProdExpE - ZExp - ZDenormE;
+	assign AlignCnt = ProdExpE - ZExp - ZDenorm;
 	// verilator lint_on WIDTH
 
 
