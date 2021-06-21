@@ -47,7 +47,7 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   localparam NENTRIES = 2**ENTRY_BITS;
 
 
-  logic [1:0] PageTypeList [0:NENTRIES-1];
+  logic [1:0] PageTypeList [NENTRIES-1:0];
   logic [NENTRIES-1:0] Matches;
 
   // Create NENTRIES CAM lines, each of which will independently consider

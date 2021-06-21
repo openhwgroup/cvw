@@ -48,7 +48,7 @@ module pmpchecker (
   // boundary. It would be better to store the PMP address registers in a module
   // somewhere in the CSR hierarchy and do PMP checking _within_ that module, so
   // we don't have to pass around 16 whole registers.
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [0:`PMP_ENTRIES-1],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
 
@@ -64,7 +64,7 @@ module pmpchecker (
   logic [3:0]  MatchedRegion;
   logic        Match, EnforcePMP;
 
-  logic [7:0] PMPCFG [0:15];
+  logic [7:0] PMPCFG [15:0];
 
   // Bit i is high when the address is greater than or equal to PMPADR[i]
   // Used for determining whether TOR PMP regions match
