@@ -45,7 +45,7 @@ assign FOpCtrlE = 3'b0;
 // down - 010
 // up - 011
 // nearest max mag - 100  
-assign FrmE = 3'b000;
+assign FrmE = 3'b010;
 assign FmtE = 1'b1;
 
 
@@ -55,8 +55,8 @@ assign	ynan = FmtE ? &FInput2E[62:52] && |FInput2E[51:0] : &FInput2E[62:55] && |
 assign	znan = FmtE ? &FInput3E[62:52] && |FInput3E[51:0] : &FInput3E[62:55] && |FInput3E[54:32]; 
 assign	ansnan = FmtE ? &ans[62:52] && |ans[51:0] : &ans[62:55] && |ans[54:32]; 
  // instantiate device under test
-fma1 UUT1(.*);
-fma2 UUT2(.FInput1M(FInput1E), .FInput2M(FInput2E), .FInput3M(FInput3E), .FrmM(FrmE), .ProdManM(ProdManE),
+fma1 UUT1(.X(FInput1E), .Y(FInput2E), .Z(FInput3E), .*);
+fma2 UUT2(.X(FInput1E), .Y(FInput2E), .Z(FInput3E), .FrmM(FrmE), .ProdManM(ProdManE),
 			.AlignedAddendM(AlignedAddendE), .ProdExpM(ProdExpE), .AddendStickyM(AddendStickyE),.KillProdM(KillProdE), .FOpCtrlM(FOpCtrlE),
 			.XZeroM(XZeroE),.YZeroM(YZeroE),.ZZeroM(ZZeroE),.XInfM(XInfE),.YInfM(YInfE),.ZInfM(ZInfE),.XNaNM(XNaNE),.YNaNM(YNaNE),.ZNaNM(ZNaNE), .FmtM(FmtE), .*);
 
@@ -110,7 +110,7 @@ always @(posedge clk)
 		if(ans >= 64'h7FF8000000000000 && ans <= 64'h7FFfffffffffffff ) $display( "ans=qutNaN ");
 		if(ans >= 64'hFFF8000000000000 && ans <= 64'hFFFfffffffffffff ) $display( "ans=qutNaN ");
         errors = errors + 1;
-	  if (errors == 40)
+	 // if (errors == 40)
 		$stop;
     end
     if((FmtE==1'b0)&(FmaFlagsM != flags[4:0] || (!wnan && (FmaResultM != ans)) || (wnan && ansnan && ~(((xnan && (FmaResultM[62:0] == {FInput1E[62:55],1'b1,FInput1E[53:0]})) || (ynan && (FmaResultM[62:0] == {FInput2E[62:55],1'b1,FInput2E[53:0]}))  || (znan && (FmaResultM[62:0] == {FInput3E[62:55],1'b1,FInput3E[53:0]})) || (FmaResultM[62:0] == ans[62:0]))) ))) begin
@@ -131,7 +131,7 @@ always @(posedge clk)
 		if(&ans[62:55] && |ans[54:32] && ~ans[54] ) $display( "ans=sigNaN ");
 		if(&ans[62:55] && |ans[54:32] && ans[54]) $display( "ans=qutNaN ");
         errors = errors + 1;
-	  if (errors == 10)
+	  //if (errors == 10)
 		$stop;
     end
  vectornum = vectornum + 1;

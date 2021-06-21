@@ -43,8 +43,10 @@ module fpuclassify (
     //  bit 7 - +infinity
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassResultE = {{`XLEN-10{1'b0}}, FirstBitMan&NaN, ~FirstBitMan&NaN, ~sign&infinity, ~sign&normal, 
-                                    ~sign&subnormal, ~sign&zero, sign&zero, sign&subnormal, sign&normal, sign&infinity, {64-`XLEN{1'b0}}};
+    assign ClassResultE = FmtE ? {{54{1'b0}}, FirstBitMan&NaN, ~FirstBitMan&NaN, ~sign&infinity, ~sign&normal, 
+                                    ~sign&subnormal, ~sign&zero, sign&zero, sign&subnormal, sign&normal, sign&infinity} : 
+				 {{22{1'b0}}, FirstBitMan&NaN, ~FirstBitMan&NaN, ~sign&infinity, ~sign&normal, 
+                                    ~sign&subnormal, ~sign&zero, sign&zero, sign&subnormal, sign&normal, sign&infinity, {32{1'b0}}};
 
 
 endmodule

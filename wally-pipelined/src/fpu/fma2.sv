@@ -1,8 +1,8 @@
 module fma2(
  
-	input logic 	[63:0]		FInput1M,	// X
-	input logic		[63:0]		FInput2M,	// Y
-	input logic 	[63:0]		FInput3M,	// Z
+	input logic 	[63:0]		X,	// X
+	input logic		[63:0]		Y,	// Y
+	input logic 	[63:0]		Z,	// Z
 	input logic 	[2:0] 		FrmM,		// rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
 	input logic 	[2:0]		FOpCtrlM,	// 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
 	input logic 				FmtM,		// precision 1 = double 0 = single
@@ -32,7 +32,7 @@ module fma2(
 	logic [12:0]	SumExp;		// exponent of the normalized sum
 	logic [12:0]	SumExpTmp;	// exponent of the normalized sum not taking into account denormal or zero results
 	logic [12:0]	SumExpTmpMinus1;	// SumExpTmp-1
-	logic [12:0]	ResultExpTmp;		// ResultExp with bits to determine sign and overflow
+	logic [12:0]	FullResultExp;		// ResultExp with bits to determine sign and overflow
 	logic [53:0]	NormSum;	// normalized sum
 	logic [161:0]	SumShifted; // sum shifted for normalization
 	logic [8:0]		NormCnt;	// output of the leading zero detector
@@ -42,17 +42,18 @@ module fma2(
 	logic 			InvZ;		// invert Z if there is a subtraction (-product + Z or product - Z)
 	logic			ResultDenorm;	// is the result denormalized
 	logic			Sticky;		// Sticky bit
-	logic 			Plus1, Minus1, Plus1Tmp, Minus1Tmp;	// do you add or subtract one for rounding
+	logic 			Plus1, Minus1, CalcPlus1, CalcMinus1;	// do you add or subtract one for rounding
 	logic 			Invalid,Underflow,Overflow,Inexact;	// flags
 	logic [8:0]		DenormShift;	// right shift if the result is denormalized
 	logic 			SubBySmallNum;	// was there supposed to be a subtraction by a small number
-	logic [63:0]	FInput3M2;		// value to add (Z or zero)
+	logic [63:0]	Addend;		// value to add (Z or zero)
 	logic			ZeroSgn;		// the result's sign if the sum is zero
 	logic			ResultSgnTmp;	// the result's sign assuming the result is not zero
 	logic 			Guard, Round, LSBNormSum;	// bits needed to determine rounding
 	logic [12:0] 	MaxExp;		// maximum value of the exponent
 	logic [12:0] 	FracLen;	// length of the fraction
 	logic 			SigNaN;		// is an input a signaling NaN
+	logic 			UnderflowFlag; 	// Underflow singal used in FmaFlagsM (used to avoid a circular depencency)
 	logic [63:0] XNaNResult, YNaNResult, ZNaNResult, InvalidResult, OverflowResult, KillProdResult, UnderflowResult; // possible results
 
 	
@@ -62,15 +63,15 @@ module fma2(
 	///////////////////////////////////////////////////////////////////////////////
 
 	// Set addend to zero if FMUL instruction
-  	assign FInput3M2 = FOpCtrlM[2] ? 64'b0 : FInput3M;
+  	assign Addend = FOpCtrlM[2] ? 64'b0 : Z;
 
 	// split inputs into the sign bit, and exponent to handle single or double precision
 	// 		- single precision is in the top half of the inputs
-	assign XSgn = FInput1M[63];
-	assign YSgn = FInput2M[63];
-	assign ZSgn = FInput3M2[63]^FOpCtrlM[0]; //Negate Z if subtraction
+	assign XSgn = X[63];
+	assign YSgn = Y[63];
+	assign ZSgn = Addend[63]^FOpCtrlM[0]; //Negate Z if subtraction
 
-	assign ZExp = FmtM ? FInput3M2[62:52] : {3'b0, FInput3M2[62:55]};
+	assign ZExp = FmtM ? Addend[62:52] : {3'b0, Addend[62:55]};
 
 
 
@@ -207,28 +208,28 @@ module fma2(
 	always_comb begin
 		// Determine if you add 1
 		case (FrmM)
-			3'b000: Plus1Tmp = Guard & (Round | (Sticky&~(~Round&SubBySmallNum)) | (~Round&~Sticky&LSBNormSum&~SubBySmallNum));//round to nearest even
-			3'b001: Plus1Tmp = 0;//round to zero
-			3'b010: Plus1Tmp = ResultSgn & ~(SubBySmallNum & ~Guard & ~Round);//round down
-			3'b011: Plus1Tmp = ~ResultSgn & ~(SubBySmallNum & ~Guard & ~Round);//round up
-			3'b100: Plus1Tmp = (Guard & (Round | (Sticky&~(~Round&SubBySmallNum)) | (~Round&~Sticky&~SubBySmallNum)));//round to nearest max magnitude
-			default: Plus1Tmp = 1'bx;
+			3'b000: CalcPlus1 = Guard & (Round | (Sticky&~(~Round&SubBySmallNum)) | (~Round&~Sticky&LSBNormSum&~SubBySmallNum));//round to nearest even
+			3'b001: CalcPlus1 = 0;//round to zero
+			3'b010: CalcPlus1 = ResultSgn & ~(SubBySmallNum & ~Guard & ~Round);//round down
+			3'b011: CalcPlus1 = ~ResultSgn & ~(SubBySmallNum & ~Guard & ~Round);//round up
+			3'b100: CalcPlus1 = (Guard & (Round | (Sticky&~(~Round&SubBySmallNum)) | (~Round&~Sticky&~SubBySmallNum)));//round to nearest max magnitude
+			default: CalcPlus1 = 1'bx;
 		endcase
 		// Determine if you subtract 1
 		case (FrmM)
-			3'b000: Minus1Tmp = 0;//round to nearest even
-			3'b001: Minus1Tmp = SubBySmallNum & ~Guard & ~Round;//round to zero
-			3'b010: Minus1Tmp = ~ResultSgn & ~Guard & ~Round & SubBySmallNum;//round down
-			3'b011: Minus1Tmp = ResultSgn & ~Guard & ~Round & SubBySmallNum;//round up
-			3'b100: Minus1Tmp = 0;//round to nearest max magnitude
-			default: Minus1Tmp = 1'bx;
+			3'b000: CalcMinus1 = 0;//round to nearest even
+			3'b001: CalcMinus1 = SubBySmallNum & ~Guard & ~Round;//round to zero
+			3'b010: CalcMinus1 = ~ResultSgn & ~Guard & ~Round & SubBySmallNum;//round down
+			3'b011: CalcMinus1 = ResultSgn & ~Guard & ~Round & SubBySmallNum;//round up
+			3'b100: CalcMinus1 = 0;//round to nearest max magnitude
+			default: CalcMinus1 = 1'bx;
 		endcase
 	
 	end
 
 	// If an answer is exact don't round
-    assign Plus1 = Plus1Tmp & (Sticky | Guard | Round);
-    assign Minus1 = Minus1Tmp & (Sticky | Guard | Round);
+    assign Plus1 = CalcPlus1 & (Sticky | Guard | Round);
+    assign Minus1 = CalcMinus1 & (Sticky | Guard | Round);
 
 	// Compute rounded result 
 	logic [64:0] RoundAdd;
@@ -237,8 +238,8 @@ module fma2(
 							 Minus1 ? {{36{1'b1}}, 29'b0} :	{35'b0, Plus1, 29'b0};
 	assign NormSumTruncated = FmtM ? NormSum[53:2] : {NormSum[53:31], 29'b0};
 
-	assign {ResultExpTmp, ResultFrac} = {SumExp, NormSumTruncated} + RoundAdd;
-    assign ResultExp = ResultExpTmp[10:0];
+	assign {FullResultExp, ResultFrac} = {SumExp, NormSumTruncated} + RoundAdd;
+    assign ResultExp = FullResultExp[10:0];
 
 
 
@@ -277,27 +278,27 @@ module fma2(
 	//   2) 0 * Inf
 	//   3) any input is a signaling NaN
 	assign MaxExp = FmtM ? 13'd2047 : 13'd255;
-	assign SigNaN = FmtM ? (XNaNM&~FInput1M[51]) | (YNaNM&~FInput2M[51]) | (ZNaNM&~FInput3M2[51]) : 
-						   (XNaNM&~FInput1M[54]) | (YNaNM&~FInput2M[54]) | (ZNaNM&~FInput3M2[54]);
-	assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (XSgn ^ YSgn ^ ZSgn) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
+	assign SigNaN = FmtM ? (XNaNM&~X[51]) | (YNaNM&~Y[51]) | (ZNaNM&~Addend[51]) : 
+						   (XNaNM&~X[54]) | (YNaNM&~Y[54]) | (ZNaNM&~Addend[54]);
+	assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgn ^ ZSgn) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
 	
 	// Set Overflow flag if the number is too big to be represented
 	//		- Don't set the overflow flag if an overflowed result isn't outputed
-	assign Overflow = ResultExpTmp >= MaxExp & ~ResultExpTmp[12]&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+	assign Overflow = FullResultExp >= MaxExp & ~FullResultExp[12]&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
 	// Set Underflow flag if the number is too small to be represented in normal numbers
-	logic ProdUf;
-	assign ProdUf = ProdExpM <= 1;
-	// assign Underflow = ResultExpTmp[12] | (KillProdM&AddendStickyM&ZZeroM) | (~(|ResultExpTmp)&ResultDenorm&(Round|Guard|Sticky)) | Plus1&ResultDenorm&(ResultExp == 1);
+	//		- Don't set the underflow flag if the result is exact 
 	assign Underflow = (SumExp[12] | ((SumExp == 0) & (Round|Guard|Sticky))    )&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+	assign UnderflowFlag = Underflow | (FullResultExp == 0)&Minus1; // before rounding option
+	// assign UnderflowFlag = (Underflow | (FullResultExp == 0)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM)&(Round|Guard|Sticky))  & ~(FullResultExp == 1); //after rounding option
 	// Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
 	//		- Don't set the underflow flag if an underflowed result isn't outputed
 	assign Inexact = (Sticky|Overflow|Guard|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
 	// Combine flags 
 	//		- FMA can't set the Divide by zero flag
-	//		- Don't set the underflow flag if the result is exact 
-	assign FmaFlagsM = {Invalid, 1'b0, Overflow, Underflow & ~(ResultExpTmp == 1), Inexact};
+	//		- Don't set the underflow flag if the result was rounded up to a normal number
+	assign FmaFlagsM = {Invalid, 1'b0, Overflow, UnderflowFlag, Inexact};
 
 
 
@@ -308,23 +309,23 @@ module fma2(
 	///////////////////////////////////////////////////////////////////////////////
 	// Select the result
 	///////////////////////////////////////////////////////////////////////////////
-	assign XNaNResult = FmtM ? {XSgn, FInput1M[62:52], 1'b1,FInput1M[50:0]} : {XSgn, FInput1M[62:55], 1'b1,FInput1M[53:0]};
-	assign YNaNResult = FmtM ? {YSgn, FInput2M[62:52], 1'b1,FInput2M[50:0]} : {YSgn, FInput2M[62:55], 1'b1,FInput2M[53:0]};
-	assign ZNaNResult = FmtM ? {ZSgn, FInput3M2[62:52], 1'b1,FInput3M2[50:0]} : {ZSgn, FInput3M2[62:55], 1'b1,FInput3M2[53:0]};
+	assign XNaNResult = FmtM ? {XSgn, X[62:52], 1'b1,X[50:0]} : {XSgn, X[62:55], 1'b1,X[53:0]};
+	assign YNaNResult = FmtM ? {YSgn, Y[62:52], 1'b1,Y[50:0]} : {YSgn, Y[62:55], 1'b1,Y[53:0]};
+	assign ZNaNResult = FmtM ? {ZSgn, Addend[62:52], 1'b1,Addend[50:0]} : {ZSgn, Addend[62:55], 1'b1,Addend[53:0]};
 	assign OverflowResult =  FmtM ? ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, 11'h7fe, {52{1'b1}}} : 
 																														  {ResultSgn, 11'h7ff, 52'b0} : 
 									((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, 8'hfe, {23{1'b1}}, 32'b0} :
 																														  {ResultSgn, 8'hff, 55'b0};
 	assign InvalidResult = FmtM ? {ResultSgn, 11'h7ff, 1'b1, 51'b0} : {ResultSgn, 8'hff, 1'b1, 54'b0};
-	assign KillProdResult = FmtM ?{ResultSgn, FInput3M2[62:0] - {62'b0, (Minus1&AddendStickyM)}} + {62'b0, (Plus1&AddendStickyM)} : {ResultSgn, FInput3M2[62:32] - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}, 32'b0};
-	assign UnderflowResult = FmtM ? {ResultSgn, 63'b0} + {63'b0, (Plus1Tmp&(AddendStickyM|FrmM[1]))} : {{ResultSgn, 31'b0} + {31'b0, (Plus1Tmp&(AddendStickyM|FrmM[1]))}, 32'b0};
+	assign KillProdResult = FmtM ?{ResultSgn, Addend[62:0] - {62'b0, (Minus1&AddendStickyM)}} + {62'b0, (Plus1&AddendStickyM)} : {ResultSgn, Addend[62:32] - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}, 32'b0};
+	assign UnderflowResult = FmtM ? {ResultSgn, 63'b0} + {63'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))} : {{ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}, 32'b0};
 	assign FmaResultM = XNaNM ? XNaNResult : 
 						YNaNM ? YNaNResult : 
 						ZNaNM ? ZNaNResult :
 						Invalid ? InvalidResult : // has to be before inf
-						XInfM ? {PSgn, FInput1M[62:0]} :
-						YInfM ? {PSgn, FInput2M[62:0]} :
-						ZInfM ? {ZSgn, FInput3M2[62:0]} :
+						XInfM ? {PSgn, X[62:0]} :
+						YInfM ? {PSgn, Y[62:0]} :
+						ZInfM ? {ZSgn, Addend[62:0]} :
 						Overflow ? OverflowResult :	
 						KillProdM ? KillProdResult : // has to be after Underflow		
 						Underflow & ~ResultDenorm ? UnderflowResult :	
