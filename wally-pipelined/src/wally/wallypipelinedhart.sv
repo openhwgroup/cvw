@@ -52,7 +52,9 @@ module wallypipelinedhart (
   // Delayed signals for subword write
   output logic [2:0]       HADDRD,
   output logic [3:0]       HSIZED,
-  output logic             HWRITED
+  output logic             HWRITED,
+  // Access signals for PMA decoder
+  output logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM
 );
 
    //  logic [1:0]  ForwardAE, ForwardBE;
@@ -116,7 +118,7 @@ module wallypipelinedhart (
   logic [1:0]       PageTypeF, PageTypeM;
 
   // PMA checker signals
-  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM;
+  //logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM;
   logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
   logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic             DSquashBusAccessM, ISquashBusAccessF;
