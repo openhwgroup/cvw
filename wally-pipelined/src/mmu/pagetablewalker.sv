@@ -225,49 +225,51 @@ module pagetablewalker (
 
       always_comb begin
         case (WalkerState)
-          IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL3;
-                  else                             NextWalkerState = IDLE;
-          LEVEL3: if      (SvMode != `SV48)         NextWalkerState = LEVEL2;
-                  // 3rd level used if SV48 is enabled.
-                  else begin
-                    if      (~MMUReady)              NextWalkerState = LEVEL3;
-                    // *** <FUTURE WORK> According to the architecture, we should
-                    // fault upon finding a superpage that is misaligned or has 0
-                    // access bit. The following commented line of code is
-                    // supposed to perform that check. However, it is untested.
-                    else if (ValidPTE && LeafPTE && ~BadTerapage) NextWalkerState = LEAF;
-                    // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                    else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL2;
-                    else                             NextWalkerState = FAULT;
-                  end
-          LEVEL2: if      (~MMUReady)              NextWalkerState = LEVEL2;
+          IDLE:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3;
+                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2;
+                  else                                          NextWalkerState = IDLE;
+
+          LEVEL3: if      (~MMUReady)                           NextWalkerState = LEVEL3;
+                  // *** <FUTURE WORK> According to the architecture, we should
+                  // fault upon finding a superpage that is misaligned or has 0
+                  // access bit. The following commented line of code is
+                  // supposed to perform that check. However, it is untested.
+                  else if (ValidPTE && LeafPTE && ~BadTerapage) NextWalkerState = LEAF;
+                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
+                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL2;
+                  else                                          NextWalkerState = FAULT;
+
+          LEVEL2: if      (~MMUReady)                           NextWalkerState = LEVEL2;
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
                   else if (ValidPTE && LeafPTE && ~BadGigapage) NextWalkerState = LEAF;
                   // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL1;
-                  else                             NextWalkerState = FAULT;
-          LEVEL1: if      (~MMUReady)              NextWalkerState = LEVEL1;
+                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL1;
+                  else                                          NextWalkerState = FAULT;
+
+          LEVEL1: if      (~MMUReady)                           NextWalkerState = LEVEL1;
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
                   else if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
                   // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
-                  else                             NextWalkerState = FAULT;
-          LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
-                  else if (ValidPTE && LeafPTE && ~AccessAlert)
-                                                   NextWalkerState = LEAF;
-                  else                             NextWalkerState = FAULT;
-          LEAF:   if      (MMUTranslate)           NextWalkerState = LEVEL3;
-                  else                             NextWalkerState = IDLE;
-          FAULT:  if      (MMUTranslate)           NextWalkerState = LEVEL3;
-                  else                             NextWalkerState = IDLE;
+                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL0;
+                  else                                          NextWalkerState = FAULT;
+
+          LEVEL0: if      (~MMUReady)                           NextWalkerState = LEVEL0;
+                  else if (ValidPTE && LeafPTE && ~AccessAlert) NextWalkerState = LEAF;
+                  else                                          NextWalkerState = FAULT;
+                  
+          LEAF:   if      (MMUTranslate)                        NextWalkerState = LEVEL3;
+                  else                                          NextWalkerState = IDLE;
+
+          FAULT:  if      (MMUTranslate)                        NextWalkerState = LEVEL3;
+                  else                                          NextWalkerState = IDLE;
           // Default case should never happen, but is included for linter.
-          default:                                 NextWalkerState = IDLE;
+          default:                                              NextWalkerState = IDLE;
         endcase
       end
 
