@@ -62,6 +62,7 @@ module wallypipelinedsoc (
   logic             HREADY, HRESP;
   logic [5:0]       HSELRegions;
   logic             InstrAccessFaultF, DataAccessFaultM;
+  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM; // to uncore PMA decoder
   logic             TimerIntM, SwIntM; // from CLINT
   logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
   logic             ExtIntM; // from PLIC
