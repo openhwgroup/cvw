@@ -110,7 +110,7 @@ always @(posedge clk)
 		if(ans >= 64'h7FF8000000000000 && ans <= 64'h7FFfffffffffffff ) $display( "ans=qutNaN ");
 		if(ans >= 64'hFFF8000000000000 && ans <= 64'hFFFfffffffffffff ) $display( "ans=qutNaN ");
         errors = errors + 1;
-	 // if (errors == 40)
+	  if (errors == 20)
 		$stop;
     end
     if((FmtE==1'b0)&(FmaFlagsM != flags[4:0] || (!wnan && (FmaResultM != ans)) || (wnan && ansnan && ~(((xnan && (FmaResultM[62:0] == {FInput1E[62:55],1'b1,FInput1E[53:0]})) || (ynan && (FmaResultM[62:0] == {FInput2E[62:55],1'b1,FInput2E[53:0]}))  || (znan && (FmaResultM[62:0] == {FInput3E[62:55],1'b1,FInput3E[53:0]})) || (FmaResultM[62:0] == ans[62:0]))) ))) begin

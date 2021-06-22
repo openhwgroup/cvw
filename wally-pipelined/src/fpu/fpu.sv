@@ -25,129 +25,127 @@
 `include "wally-config.vh"
 
 module fpu (
-  input logic [2:0] 	   FRM_REGW, // Rounding mode from CSR
-  input logic 		   reset,
-  //input  logic             clear,     // *** not being used anywhere
-  input logic 		   clk,
-  input logic [31:0] 	   InstrD,
-  input logic [`XLEN-1:0]  SrcAE, // Integer input being processed
-  input logic [`XLEN-1:0]  SrcAM, // Integer input being written into fpreg
-  input logic 		   StallE, StallM, StallW,
-  input logic 		   FlushE, FlushM, FlushW,
-  input logic [`AHBW-1:0]  HRDATA,
-  input logic 		   RegWriteD,
-  output logic [4:0] 	   SetFflagsM,
-  output logic [31:0] 	   FSROutW,
-  output logic [1:0] 	   FMemRWM,
-  output logic 		   FStallD,
-  output logic 		   FWriteIntE, FWriteIntM, FWriteIntW,
-  output logic [`XLEN-1:0] FWriteDataM,
-  output logic 		   FDivBusyE,
-  output logic 		   IllegalFPUInstrD,
-  output logic [`XLEN-1:0] FPUResultW);
+  input logic [2:0]        FRM_REGW,   // Rounding mode from CSR
+  input logic 		         reset,
+  input logic 		         clk,
+  input logic [31:0]       InstrD,
+  input logic [`XLEN-1:0]  SrcAE,      // Integer input being processed
+  input logic [`XLEN-1:0]  SrcAM,      // Integer input being written into fpreg
+  input logic 		         StallE, StallM, StallW,
+  input logic 		         FlushE, FlushM, FlushW,
+  input logic [`XLEN-1:0]  ReadDataW,     // Read data from memory
+  input logic 		         RegWriteD,  // register write enable from ieu
+  output logic [4:0] 	   SetFflagsM, // FPU flags
+  output logic [1:0] 	   FMemRWM,    // Read/write enable for memory {read, write}
+  output logic 		      FStallD,    // Stall the decode stage if Div/Sqrt instruction
+  output logic 		      FWriteIntE, FWriteIntM, FWriteIntW, // Write integer register enable
+  output logic [`XLEN-1:0] FWriteDataM,      // Data to be written to memory
+  output logic 		      FDivBusyE,        // Is the divison/sqrt unit busy
+  output logic 		      IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+  output logic [`XLEN-1:0] FPUResultW);      // FPU result
 
    // control logic signal instantiation
-   logic 		   FWriteEnD, FWriteEnE, FWriteEnM, FWriteEnW;             // FP register write enable
-   logic [2:0] 		   FrmD, FrmE, FrmM, FrmW;                                 // FP rounding mode
-   logic 		   FmtD, FmtE, FmtM, FmtW;                                 // FP precision 0-single 1-double
-   logic 		   FDivStartD, FDivStartE;                                 // Start division
-   logic 		   FWriteIntD;                                 // Write to integer register
-   logic 		   FOutputInput2D, FOutputInput2E;                         // Put Input2 in Input1 if a store instruction
-   logic [1:0] 		   FMemRWD, FMemRWE;                                       // Read and write enable for memory
-   logic [1:0] 		   FForwardInput1D, FForwardInput1E;                       // Input1 forwarding mux control signal
-   logic [1:0] 		   FForwardInput2D, FForwardInput2E;                       // Input2 forwarding mux control signal
-   logic 		   FForwardInput3D, FForwardInput3E;                       // Input3 forwarding mux control signal
-   logic 		   FInput2UsedD;                                           // Is input 2 used
-   logic 		   FInput3UsedD;                                           // Is input 3 used
-   logic [2:0] 		   FResultSelD, FResultSelE, FResultSelM, FResultSelW;     // Select FP result
-   logic [3:0] 		   FOpCtrlD, FOpCtrlE, FOpCtrlM;                           // Select which opperation to do in each component
-   logic          SelLoadInputE, SelLoadInputM;
+   logic 		   FWriteEnD, FWriteEnE, FWriteEnM, FWriteEnW;              // FP register write enable
+   logic [2:0] 	FrmD, FrmE, FrmM, FrmW;                                  // FP rounding mode
+   logic 		   FmtD, FmtE, FmtM, FmtW;                                  // FP precision 0-single 1-double
+   logic 		   FDivStartD, FDivStartE;                                  // Start division
+   logic 		   FWriteIntD;                                              // Write to integer register
+   logic 		   FOutputInput2D, FOutputInput2E;                          // Put Input2 in Input1 if a store instruction
+   logic [1:0] 	FMemRWD, FMemRWE;                                        // Read and write enable for memory
+   logic [1:0]    FForwardInput1D, FForwardInput1E;                        // Input1 forwarding mux control signal
+   logic [1:0] 	FForwardInput2D, FForwardInput2E;                        // Input2 forwarding mux control signal
+   logic 		   FForwardInput3D, FForwardInput3E;                        // Input3 forwarding mux control signal
+   logic 		   FInput2UsedD;                                            // Is input 2 used
+   logic 		   FInput3UsedD;                                            // Is input 3 used
+   logic [2:0] 	FResultSelD, FResultSelE, FResultSelM, FResultSelW;      // Select FP result
+   logic [3:0] 	FOpCtrlD, FOpCtrlE, FOpCtrlM, FOpCtrlW;                            // Select which opperation to do in each component
+   logic          SelLoadInputE, SelLoadInputM;                            // Select which adress to load when single precision
    
    // regfile signals //*** KEP lint warning -  changed `XLEN-1 to 63 
-   logic [4:0] 		   RdE, RdM, RdW; // ***Can take from ieu
-   logic [63:0] 	   FWDM;                                                   // Write data for FP register
-   logic [63:0] 	   FRD1D, FRD2D, FRD3D;                                    // Read Data from FP register
-   logic [63:0] 	   FRD1E, FRD2E, FRD3E;
-   logic [63:0] 	   FInput1E, FInput1M, FInput1tmpE;
-   logic [63:0] 	   FInput2E, FInput2M;
-   logic [63:0] 	   FInput3E, FInput3M;
-   logic [63:0] 	   FLoadResultM, FLoadStoreResultM, FLoadStoreResultW;                   // Result for load, store, and move to int-reg instructions
+   logic [4:0]    RdE, RdM, RdW;                                           // what adress to write to    // ***Can take from ieu insted of pipelining
+   logic [63:0] 	FWDM;                                                    // Write data for FP register
+   logic [63:0] 	FRD1D, FRD2D, FRD3D;                                     // Read Data from FP register - decode stage
+   logic [63:0] 	FRD1E, FRD2E, FRD3E;                                     // Read Data from FP register - execute stage
+   logic [63:0] 	FInput1E, FInput1M, FInput1W, FInput1tmpE;                         // Input 1 to the various units (after forwarding)
+   logic [63:0] 	FInput2E, FInput2M;                                      // Input 2 to the various units (after forwarding)
+   logic [63:0] 	FInput3E, FInput3M;                                      // Input 3 to the various units (after forwarding)
+   logic [63:0] 	FLoadResultW, FLoadStoreResultM, FLoadStoreResultW;      // Result for load, store, and move to int-reg instructions
    
    // div/sqrt signals
    logic 		   DivDenormE, DivDenormM, DivDenormW;
    logic 		   DivOvEn, DivUnEn;
-   logic [63:0] 	   FDivResultE, FDivResultM, FDivResultW;
-   logic [4:0] 		   FDivFlagsE, FDivFlagsM, FDivFlagsW;
-   logic            FDivSqrtDoneE, FDivSqrtDoneM;
-   logic [63:0] 	 DivInput1E, DivInput2E;
-   logic HoldInputs;
+   logic [63:0] 	FDivResultE, FDivResultM, FDivResultW;
+   logic [4:0] 	FDivFlagsE, FDivFlagsM, FDivFlagsW;
+   logic          FDivSqrtDoneE, FDivSqrtDoneM;
+   logic [63:0] 	DivInput1E, DivInput2E;
+   logic          HoldInputs;                                              // keep forwarded inputs arround durring division
    
    // FMA signals
-	logic 	[105:0]		ProdManE, ProdManM;
-	logic 	[161:0]		AlignedAddendE,	AlignedAddendM;
-	logic 	[12:0]		ProdExpE, ProdExpM;
-	logic 				    AddendStickyE, AddendStickyM;
-	logic 				    KillProdE, KillProdM;
-	logic				      XZeroE, YZeroE, ZZeroE, XZeroM, YZeroM, ZZeroM;
-	logic				      XInfE, YInfE, ZInfE, XInfM, YInfM, ZInfM;
-	logic				      XNaNE, YNaNE, ZNaNE, XNaNM, YNaNM, ZNaNM;
-  logic [63:0]      FmaResultM, FmaResultW;
-  logic [4:0]       FmaFlagsM, FmaFlagsW;
+	logic [105:0]	ProdManE, ProdManM;
+	logic [161:0]	AlignedAddendE, AlignedAddendM;                       
+	logic [12:0]	ProdExpE, ProdExpM;
+	logic 			AddendStickyE, AddendStickyM;
+	logic 			KillProdE, KillProdM;
+	logic				XZeroE, YZeroE, ZZeroE, XZeroM, YZeroM, ZZeroM;
+	logic				XInfE, YInfE, ZInfE, XInfM, YInfM, ZInfM;
+	logic				XNaNE, YNaNE, ZNaNE, XNaNM, YNaNM, ZNaNM;
+   logic [63:0]   FmaResultM, FmaResultW;
+   logic [4:0]    FmaFlagsM, FmaFlagsW;
 
    // add/cvt signals
-   logic [63:0] 	   AddSumE, AddSumTcE;
-   logic [3:0] 		   AddSelInvE;
-   logic [10:0] 	   AddExpPostSumE;
+   logic [63:0] 	AddSumE, AddSumTcE;
+   logic [3:0] 	AddSelInvE;
+   logic [10:0] 	AddExpPostSumE;
    logic 		   AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE;
    logic 		   AddDenormInE, AddSwapE, AddNormOvflowE, AddSignAE;
    logic 		   AddConvertE;
-   logic [63:0] 	   AddFloat1E, AddFloat2E;
-   logic [11:0] 	   AddExp1DenormE, AddExp2DenormE;
-   logic [10:0] 	   AddExponentE;
-   logic [2:0] 		   AddRmE;
-   logic [3:0] 		   AddOpTypeE;
+   logic [63:0] 	AddFloat1E, AddFloat2E;
+   logic [11:0] 	AddExp1DenormE, AddExp2DenormE;
+   logic [10:0] 	AddExponentE;
+   logic [2:0] 	AddRmE;
+   logic [3:0] 	AddOpTypeE;
    logic 		   AddPE, AddOvEnE, AddUnEnE;    
    logic 		   AddDenormM;
-   logic [63:0] 	   AddSumM, AddSumTcM;
-   logic [3:0] 		   AddSelInvM;
-   logic [10:0] 	   AddExpPostSumM;
+   logic [63:0] 	AddSumM, AddSumTcM;
+   logic [3:0] 	AddSelInvM;
+   logic [10:0] 	AddExpPostSumM;
    logic 		   AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM;
    logic 		   AddDenormInM, AddSwapM, AddNormOvflowM, AddSignAM;
    logic 		   AddConvertM, AddSignM;
-   logic [63:0] 	   AddFloat1M, AddFloat2M;
-   logic [11:0] 	   AddExp1DenormM, AddExp2DenormM;
-   logic [10:0] 	   AddExponentM;
-   logic [63:0] 	   AddOp1M, AddOp2M;
-   logic [2:0] 		   AddRmM;
-   logic [3:0] 		   AddOpTypeM;
+   logic [63:0] 	AddFloat1M, AddFloat2M;
+   logic [11:0] 	AddExp1DenormM, AddExp2DenormM;
+   logic [10:0] 	AddExponentM;
+   logic [63:0] 	AddOp1M, AddOp2M;
+   logic [2:0] 	AddRmM;
+   logic [3:0] 	AddOpTypeM;
    logic 		   AddPM, AddOvEnM, AddUnEnM;  
-   logic [63:0] 	   FAddResultM, FAddResultW;
-   logic [4:0] 		   FAddFlagsM, FAddFlagsW;
+   logic [63:0] 	FAddResultM, FAddResultW;
+   logic [4:0] 	FAddFlagsM, FAddFlagsW;
    
    // cmp signals 
-   logic [7:0] 		   WE, WM;
-   logic [7:0] 		   XE, XM;
+   logic [7:0] 	WE, WM;
+   logic [7:0] 	XE, XM;
    logic 		   ANaNE, ANaNM;
    logic 		   BNaNE, BNaNM;
    logic 		   AzeroE, AzeroM;
    logic 		   BzeroE, BzeroM;
    logic 		   CmpInvalidM, CmpInvalidW;
-   logic [1:0] 		   CmpFCCM, CmpFCCW; 
-   logic [63:0] 	   FCmpResultM, FCmpResultW;
+   logic [1:0] 	CmpFCCM, CmpFCCW; 
+   logic [63:0] 	FCmpResultM, FCmpResultW;
    
    // fsgn signals
-   logic [63:0] 	   SgnResultE, SgnResultM, SgnResultW;
-   logic [4:0] 		   SgnFlagsE, SgnFlagsM, SgnFlagsW;
+   logic [63:0] 	SgnResultE, SgnResultM, SgnResultW;
+   logic [4:0] 	SgnFlagsE, SgnFlagsM, SgnFlagsW;
    
    // instantiation of W stage regfile signals
-   logic [63:0] 	   AlignedSrcAM, ForwardSrcAM, SrcAW;
+   logic [63:0] 	AlignedSrcAM, ForwardSrcAM, SrcAW;
    
    // classify signals
-   logic [63:0] 	   ClassResultE, ClassResultM, ClassResultW;
+   logic [63:0] 	ClassResultE, ClassResultM, ClassResultW;
    
    // 64-bit FPU result   
-   logic [63:0] 	   FPUResult64W, FPUResult64E;                                           
-   logic [4:0] 		   FPUFlagsW;
+   logic [63:0] 	FPUResult64W, FPUResult64E;                                           
+   logic [4:0] 	FPUFlagsW;
    
    // pipeline control logic
    logic 		   PipeEnableDE;
@@ -159,8 +157,8 @@ module fpu (
    
    // temporarily assign pipe clear and enable signals
    // to never flush & always be running
-   localparam PipeClear = 1'b0;
-   localparam PipeEnable = 1'b1;
+   localparam     PipeClear = 1'b0;
+   localparam     PipeEnable = 1'b1;
    always_comb begin      
       PipeEnableDE = ~StallE;
       PipeEnableEM = ~StallM;
@@ -219,6 +217,7 @@ module fpu (
    mux2  #(64)  FInput3Emux(FRD3E, FPUResult64E, FForwardInput3E, FInput3E);
    mux2  #(64)  FOutputInput2mux(FInput1tmpE, FInput2E, FOutputInput2E, FInput1E);
    
+   // first of two-stage instance of floating-point fused multiply-add unit
    fma1 fma1 (.X(FInput1E), .Y(FInput2E), .Z(FInput3E), .FOpCtrlE(FOpCtrlE[2:0]),.*);
    
    // first and only instance of floating-point divider
@@ -275,13 +274,6 @@ module fpu (
   flopenrc #(1) EMRegFma19(clk, reset, PipeClearEM, PipeEnableEM, XNaNE, XNaNM); 
   flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, YNaNE, YNaNM); 
   flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, ZNaNE, ZNaNM);  
-   
-   //*****************
-   // fpdiv E/M pipe registers
-   //*****************
-   // flopenrc #(64) EMRegDiv1(clk, reset, PipeClearEM, PipeEnableEM, FDivResultE, FDivResultM); 
-   // flopenrc #(5) EMRegDiv2(clk, reset, PipeClearEM, PipeEnableEM, FDivFlagsE, FDivFlagsM);
-   // flopenrc #(1) EMRegDiv3(clk, reset, PipeClearEM, PipeEnableEM, DivDenormE, DivDenormM); 
 
    //*****************
    // fpadd E/M pipe registers
@@ -352,8 +344,8 @@ module fpu (
    assign FWriteDataM = FmtM ? FInput1M[63:64-`XLEN] : {{`XLEN-32{1'b0}}, FInput1M[63:32]};
    //adjecent adress values are sent to the FPU, select the correct one
    //    -imm is 80000 most of the time vs the error one which is 00000
-   mux3  #(64)  FLoadResultMux({HRDATA[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
-   mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
+   // mux3  #(64)  FLoadResultMux({HRDATA[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
+   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
    
    fma2 fma2(.X(FInput1M), .Y(FInput2M), .Z(FInput3M), .FOpCtrlM(FOpCtrlM[2:0]), .*);
    
@@ -364,8 +356,18 @@ module fpu (
    fpucmp2 fpcmp2 (.Invalid(CmpInvalidM), .FCC(CmpFCCM), .ANaN(ANaNM), .BNaN(BNaNM), .Azero(AzeroM), 
 		   .Bzero(BzeroM), .w(WM), .x(XM), .Sel({1'b0, FmtM}), .op1(FInput1M), .op2(FInput2M), .*);
 
+   // Align SrcA to MSB when single precicion
    mux2  #(64)  SrcAMux({SrcAM[31:0], 32'b0}, {{64-`XLEN{1'b0}}, SrcAM}, FmtM, AlignedSrcAM);
       
+
+
+
+      
+   //*****************
+   //fpregfile M/W pipe registers
+   //*****************
+   flopenrc #(64) MWFpReg1(clk, reset, PipeClearMW, PipeEnableMW, FInput1M, FInput1W);
+   
    //*****************
    // fma M/W pipe registers
    //*****************
@@ -406,18 +408,36 @@ module fpu (
    flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, FmtM, FmtW);
    flopenrc #(5) MWReg4(clk, reset, PipeClearMW, PipeEnableMW, RdM, RdW);
    flopenrc #(64) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, AlignedSrcAM, SrcAW);
-   flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, FLoadStoreResultM, FLoadStoreResultW);
+   // flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, FLoadStoreResultM, FLoadStoreResultW);
    flopenrc #(1) MWReg7(clk, reset, PipeClearMW, PipeEnableMW, FWriteIntM, FWriteIntW);
+   flopenrc #(4) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, FOpCtrlM, FOpCtrlW);
    
    //*****************
    // fpuclassify M/W pipe registers
    //***************** 
    flopenrc #(64) MWRegClass(clk, reset, PipeClearMW, PipeEnableMW, ClassResultM, ClassResultW);
+   
+
+
+
 
   //#########################################
   // BEGIN WRITEBACK STAGE
   //#########################################
    
+
+   // mux3  #(64)  FLoadResultMux({ReadD[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
+   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
+   //***RV32D needs to give two bus transactions
+    mux2  #(64)  FLoadResultMux({ReadDataW[31:0], {32{1'b0}}}, {ReadDataW, {64-`XLEN{1'b0}}}, FmtW, FLoadResultW);
+    mux2  #(64)  FLoadStoreResultMux(FLoadResultW, FInput1W, |FOpCtrlW[2:1], FLoadStoreResultW);
+
+
+
+
+
+
+
    always_comb begin
       case (FResultSelW)
 	// div/sqrt
