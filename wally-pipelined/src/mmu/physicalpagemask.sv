@@ -7,6 +7,7 @@
 //
 // Purpose: Takes two page numbers and replaces segments of the first page
 //          number with segments from the second, based on the page type.
+//          NOTE: this DOES NOT include the 12 bit offset, which is the same no matter the translation mode or page type.
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -36,26 +37,26 @@ module physicalpagemask (
 );
 
   localparam EXTRA_BITS = `PPN_BITS - `VPN_BITS;
-  logic [`PPN_BITS-1:0] ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
+  logic [`PPN_BITS-1:0] ZeroExtendedVPN;
+  logic [`PPN_BITS-1:0] PageNumberMask;
 
-  logic [`PPN_BITS-1:0] OffsetMask;
-
+  assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
 
   generate
     if (`XLEN == 32) begin
       always_comb 
         case (PageType[0])
           // *** the widths of these constansts are hardocded here to match `PPN_BITS in the wally-constants file.
-          0: OffsetMask = 22'h3FFFFF; // kilopage: 22 bits of PPN, 0 bits of VPN
-          1: OffsetMask = 22'h3FFC00; // megapage: 12 bits of PPN, 10 bits of VPN
+          0: PageNumberMask = 22'h3FFFFF; // kilopage: 22 bits of PPN, 0 bits of VPN
+          1: PageNumberMask = 22'h3FFC00; // megapage: 12 bits of PPN, 10 bits of VPN
         endcase
     end else begin
       always_comb 
         case (PageType[1:0])
-          0: OffsetMask = 44'hFFFFFFFFFFF; // kilopage: 44 bits of PPN, 0 bits of VPN
-          1: OffsetMask = 44'hFFFFFFFFE00; // megapage: 35 bits of PPN, 9 bits of VPN
-          2: OffsetMask = 44'hFFFFFFC0000; // gigapage: 26 bits of PPN, 18 bits of VPN
-          3: OffsetMask = 44'hFFFF8000000; // terapage: 17 bits of PPN, 27 bits of VPN
+          0: PageNumberMask = 44'hFFFFFFFFFFF; // kilopage: 44 bits of PPN, 0 bits of VPN
+          1: PageNumberMask = 44'hFFFFFFFFE00; // megapage: 35 bits of PPN, 9 bits of VPN
+          2: PageNumberMask = 44'hFFFFFFC0000; // gigapage: 26 bits of PPN, 18 bits of VPN
+          3: PageNumberMask = 44'hFFFF8000000; // terapage: 17 bits of PPN, 27 bits of VPN
           // *** make sure that this doesnt break when using sv39. In that case, all of these
           //     busses are the widths for sv48, but extra bits should be zeroed out by the mux
           //     in the tlb when it generates VPN from the full virtualadress.
@@ -63,7 +64,7 @@ module physicalpagemask (
     end
   endgenerate
 
-  // merge low bits of the virtual address containing the offset with high bits of the PPN
-  assign MixedPageNumber = (ZeroExtendedVPN & ~OffsetMask) | (PPN & OffsetMask);
+  // merge low segments of VPN with high segments of PPN decided by the pagetype.
+  assign MixedPageNumber = (ZeroExtendedVPN & ~PageNumberMask) | (PPN & PageNumberMask);
 
 endmodule
