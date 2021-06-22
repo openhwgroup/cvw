@@ -40,4 +40,5 @@ do ./wave-dos/linux-waves.do
 
 #-- Run the Simulation 
 run -all
+exec ./slack-notifier/slack-notifier.py
 ##quit
