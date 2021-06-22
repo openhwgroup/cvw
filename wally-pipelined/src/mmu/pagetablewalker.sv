@@ -110,7 +110,7 @@ module pagetablewalker (
   assign PageTypeF = PageType;
   assign PageTypeM = PageType;
 
-  localparam LEVEL0 = 3'h0;
+localparam LEVEL0 = 3'h0;
   localparam LEVEL1 = 3'h1;
   // space left for more levels
   localparam LEAF = 3'h5;
@@ -216,7 +216,7 @@ module pagetablewalker (
     end else begin
       localparam LEVEL2 = 3'h2;
       localparam LEVEL3 = 3'h3;
-
+      
       logic [8:0] VPN3, VPN2, VPN1, VPN0;
 
       logic TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
@@ -263,10 +263,12 @@ module pagetablewalker (
                   else if (ValidPTE && LeafPTE && ~AccessAlert) NextWalkerState = LEAF;
                   else                                          NextWalkerState = FAULT;
                   
-          LEAF:   if      (MMUTranslate)                        NextWalkerState = LEVEL3;
+          LEAF:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3;
+                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2;
                   else                                          NextWalkerState = IDLE;
 
-          FAULT:  if      (MMUTranslate)                        NextWalkerState = LEVEL3;
+          FAULT:  if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3;
+                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2;
                   else                                          NextWalkerState = IDLE;
           // Default case should never happen, but is included for linter.
           default:                                              NextWalkerState = IDLE;
