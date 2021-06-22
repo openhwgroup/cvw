@@ -288,9 +288,9 @@ module fma2(
 
 	// Set Underflow flag if the number is too small to be represented in normal numbers
 	//		- Don't set the underflow flag if the result is exact 
-	assign Underflow = (SumExp[12] | ((SumExp == 0) & (Round|Guard|Sticky))    )&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
-	assign UnderflowFlag = Underflow | (FullResultExp == 0)&Minus1; // before rounding option
-	// assign UnderflowFlag = (Underflow | (FullResultExp == 0)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM)&(Round|Guard|Sticky))  & ~(FullResultExp == 1); //after rounding option
+	assign Underflow = (SumExp[12] | ((SumExp == 0) & (Round|Guard|Sticky)))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+	//assign UnderflowFlag = (Underflow | (FullResultExp == 0)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM)&(Round|Guard|Sticky))  & ~(FullResultExp == 1);
+	assign UnderflowFlag = (Underflow | (FullResultExp == 0)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM)&(Round|Guard|Sticky))  & ~(FullResultExp == 1);
 	// Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
 	//		- Don't set the underflow flag if an underflowed result isn't outputed
 	assign Inexact = (Sticky|Overflow|Guard|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
