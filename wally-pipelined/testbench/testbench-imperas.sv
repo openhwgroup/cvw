@@ -554,7 +554,7 @@ string tests32f[] = '{
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
-          // if (`F_SUPPORTED) tests = {tests32f, tests};
+          if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`A_SUPPORTED) tests = {tests, tests32a};
           if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
       end
