@@ -49,13 +49,19 @@ module pagetablewalker (
   output logic [1:0]       PageTypeF, PageTypeM,
   output logic             ITLBWriteF, DTLBWriteM,
 
-  // Signals from ahblite (PTEs from memory)
+
+
+
+  // *** modify to send to LSU
   input  logic [`XLEN-1:0] MMUReadPTE,
   input  logic             MMUReady,
 
-  // Signals to ahblite (memory addresses to access)
+  // *** modify to send to LSU
   output logic [`XLEN-1:0] MMUPAdr,
-  output logic             MMUTranslate,
+  output logic             MMUTranslate,   // *** rename to HPTWReq
+
+
+
 
   // Stall signal
   output logic             MMUStall,

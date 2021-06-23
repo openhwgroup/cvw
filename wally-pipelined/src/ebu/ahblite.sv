@@ -62,7 +62,7 @@ module ahblite (
   // Signals to PMA checker (metadata of proposed access)
   output logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   // Return from bus
-  output logic [`XLEN-1:0] ReadDataW,
+  output logic [`XLEN-1:0] HRDATAW,
   // AHB-Lite external signals
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
@@ -87,7 +87,7 @@ module ahblite (
   logic GrantData;
   logic [31:0] AccessAddress;
   logic [2:0] AccessSize, PTESize, ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, CapturedData, ReadDataWnext, WriteData;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, CapturedHRDATAMasked, HRDATANext, WriteData;
   logic IReady, DReady;
   logic CaptureDataM,CapturedDataAvailable;
 
@@ -195,14 +195,13 @@ module ahblite (
   assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
 		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
   assign MMUReadPTE = HRDATA;
-  assign ReadDataM = HRDATAMasked; // changed from W to M dh 2/7/2021
   // Carefully decide when to update ReadDataW
   //   ReadDataMstored holds the most recent memory read.
   //   We need to wait until the pipeline actually advances before we can update the contents of ReadDataW
   //   (or else the W stage will accidentally get the M stage's data when the pipeline does advance).
   assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
                         ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD));
-  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM, ReadDataM, CapturedData);
+  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM, HRDATAMasked, CapturedHRDATAMasked);
 
   always @(posedge HCLK, negedge HRESETn)
     if (~HRESETn)
@@ -211,11 +210,11 @@ module ahblite (
       CapturedDataAvailable <= #1 (StallW) ? (CaptureDataM | CapturedDataAvailable) : 1'b0;
   always_comb
     casez({StallW && (BusState != ATOMICREAD),CapturedDataAvailable})
-      2'b00: ReadDataWnext = ReadDataM;
-      2'b01: ReadDataWnext = CapturedData;
-      2'b1?: ReadDataWnext = ReadDataW;
+      2'b00: HRDATANext = HRDATAMasked;
+      2'b01: HRDATANext = CapturedHRDATAMasked;
+      2'b1?: HRDATANext = HRDATAW;
     endcase
-  flopr #(`XLEN) ReadDataOldWReg(clk, reset, ReadDataWnext, ReadDataW); 
+  flopr #(`XLEN) ReadDataOldWReg(clk, reset, HRDATANext, HRDATAW); 
 
   // Extract and sign-extend subwords if necessary
   subwordread swr(.*);
@@ -226,7 +225,7 @@ module ahblite (
       logic [`XLEN-1:0] AMOResult;
 //      amoalu amoalu(.a(HRDATA), .b(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
 //                    .result(AMOResult));
-      amoalu amoalu(.srca(ReadDataW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+      amoalu amoalu(.srca(HRDATAW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
       mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicMaskedM[1], WriteData);
     end else

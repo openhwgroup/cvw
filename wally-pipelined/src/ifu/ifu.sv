@@ -122,6 +122,7 @@ module ifu (
 
                 .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0), // *** is this the right way force these bits constant? should they be someething else?
                 .SquashBusAccess(ISquashBusAccessF), .HSELRegions(IHSELRegionsF),
+						      .DisableTranslation(1'b0),
                 .*);
 
 
