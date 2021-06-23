@@ -47,8 +47,6 @@ module uncore (
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
-  // PMA checker signals
-  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   // bus interface
   // PMA checker now handles access faults. *** This can be deleted
   // output logic             DataAccessFaultM,
@@ -74,7 +72,9 @@ module uncore (
   logic [1:0]      MemRWboottim;
   logic            UARTIntr,GPIOIntr;
 
-  pmachecker ebuAdrDec(.PhysicalAddress('0),.Size('0),.Cacheable(),.Idempotent(),.AtomicAllowed(),.PMASquashBusAccess(),.PMAInstrAccessFaultF(),.PMALoadAccessFaultM(),.PMAStoreAccessFaultM(),.*);
+  // Determine which region of physical memory (if any) is being accessed
+  // Use a trimmed down portion of the PMA checker - only the address decoders
+  adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE, HSELRegions);
 
   // unswizzle HSEL signals
   assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions;
