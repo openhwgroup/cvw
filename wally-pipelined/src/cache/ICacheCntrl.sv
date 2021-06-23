@@ -52,7 +52,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
     output logic 		CompressedF,
     // The instruction that was requested
     // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-    output logic [31:0] 	InstrRawD,
+    output logic [31:0] 	FinalInstrRawF,
 
     // Outputs to pipeline control stuff
     output logic 		ICacheStallF, EndFetchState,
@@ -62,7 +62,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
     input logic [`XLEN-1:0] 	InstrInF,
     input logic 		InstrAckF,
     // The read we request from main memory
-    output logic [`XLEN-1:0] 	InstrPAdrF,
+    output logic [`PA_BITS-1:0]	InstrPAdrF,
     output logic 		InstrReadF
 );
 
@@ -119,6 +119,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer PA_WIDTH = `PA_BITS - 2;
+  
 
   logic [4:0] 		     CurrState, NextState;
   logic 		     hit, spill;
@@ -137,8 +139,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
 
   
-  logic [31:0] 		     FinalInstrRawF;
-
   logic [15:0] 		     SpillDataBlock0;
   
   localparam [31:0]  	     NOP = 32'h13;
@@ -156,7 +156,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
-  assign PCPSpillF = PCPF + 2'b10; // *** modelsim does not allow the use of PA_BITS for literal width.
+  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
 
   // now we have to select between these three PCs
   assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
@@ -453,6 +453,5 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 		      .d(reset),
 		      .q(reset_q));
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? NOP : FinalInstrRawF, NOP, InstrRawD);
   
 endmodule

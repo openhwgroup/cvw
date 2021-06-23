@@ -37,7 +37,7 @@ module icache
    input logic [`XLEN-1:0]  InstrInF,
    input logic 		    InstrAckF,
    // Read requested from the ebu unit
-   output logic [`XLEN-1:0] InstrPAdrF,
+   output logic [`PA_BITS-1:0] InstrPAdrF,
    output logic 	    InstrReadF,
    // High if the instruction currently in the fetch stage is compressed
    output logic 	    CompressedF,
@@ -45,7 +45,7 @@ module icache
    output logic 	    ICacheStallF,
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-   output logic [31:0] 	    InstrRawD
+   output logic [31:0] 	    FinalInstrRawF
    );
 
   // Configuration parameters
