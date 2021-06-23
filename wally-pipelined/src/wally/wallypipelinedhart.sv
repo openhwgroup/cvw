@@ -137,7 +137,7 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] MemAdrM, WriteDataM;
   logic [`PA_BITS-1:0] MemPAdrM;
   logic [`XLEN-1:0] ReadDataW;
-  logic [`XLEN-1:0] InstrPAdrF;
+  logic [`PA_BITS-1:0] InstrPAdrF;
   logic [`XLEN-1:0] InstrRData;
   logic             InstrReadF;
   logic             DataStall;

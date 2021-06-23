@@ -34,7 +34,7 @@ module ifu (
   input  logic [`XLEN-1:0] InstrInF,
   input  logic             InstrAckF,
   output logic [`XLEN-1:0] PCF, 
-  output logic [`XLEN-1:0] InstrPAdrF,
+  output logic [`PA_BITS-1:0] InstrPAdrF,
   output logic             InstrReadF,
   output logic             ICacheStallF,
   // Decode
@@ -92,10 +92,10 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCNextPF, PCPF;
+  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCPF;
   logic [`XLEN-3:0] PCPlusUpperF;
   logic             CompressedF;
-  logic [31:0]      InstrRawD;
+  logic [31:0]      InstrRawD, FinalInstrRawF;
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
   logic 	    reset_q; // *** look at this later.
 
@@ -136,17 +136,15 @@ module ifu (
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
-  // jarred 2021-03-14 Add instrution cache block to remove rd2
-  assign PCNextPF = PCNextF; // Temporary workaround until iTLB is live
   icache icache(.*,
 		.PCNextF(PCNextF[`PA_BITS-1:0]),
 		.PCPF(PCPFmmu));
   
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
 
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  //mux3    #(`XLEN) pcmux(PCPlus2or4F, PCCorrectE, PrivilegedNextPCM, {PrivilegedChangePCM, BPPredWrongE}, UnalignedPCNextF);
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),
 		       .d1(BPPredPCF),
 		       .s(SelBPPredF),
@@ -161,15 +159,6 @@ module ifu (
 		       .d1(PrivilegedNextPCM),
 		       .s(PrivilegedChangePCM),
 		       .y(PCNext2F));
-
-  // *** try to remove this in the future as it can add a long path.
-  // StallF may arrive late.
-/* -----\/----- EXCLUDED -----\/-----
-  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
-		       .d1(PCF),
-		       .s(StallF),
-		       .y(PCNext3F));
- -----/\----- EXCLUDED -----/\----- */
 
   mux2 #(`XLEN) pcmux4(.d0(PCNext2F),
 		       .d1(`RESET_VECTOR),
@@ -255,6 +244,7 @@ module ifu (
   // pipeline misaligned faults to M stage
   assign BranchMisalignedFaultE = misaligned & PCSrcE; // E-stage (Branch/Jump) misaligned
   flopenr #(1) InstrMisalginedReg(clk, reset, ~StallM, BranchMisalignedFaultE, BranchMisalignedFaultM);
+  // *** Ross Thompson. Check InstrMisalignedAdrM as I believe it is the same as PCF.  Should be able to remove.
   flopenr #(`XLEN) InstrMisalignedAdrReg(clk, reset, ~StallM, PCNextF, InstrMisalignedAdrM);
   assign TrapMisalignedFaultM = misaligned & PrivilegedChangePCM;
   assign InstrMisalignedFaultM = BranchMisalignedFaultM; // | TrapMisalignedFaultM; *** put this back in without causing a cyclic path
