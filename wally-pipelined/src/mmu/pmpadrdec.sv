@@ -67,7 +67,7 @@ module pmpadrdec (
   // create a mask of which bits to ignore
   generate
     assign Mask[1:0] = 2'b11;
-    assign Mask[2] = ~CurrentPMPAdr[0] & (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
+    assign Mask[2] = (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
     for (i=3; i < `PA_BITS; i=i+1) 
       assign Mask[i] = Mask[i-1] & CurrentPMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
    endgenerate
