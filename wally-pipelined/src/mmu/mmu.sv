@@ -68,7 +68,7 @@ module mmu #(parameter ENTRY_BITS = 3,
 
   // PMA checker signals
   input  logic [31:0]      HADDR,
-  input  logic [2:0]       HSIZE, HBURST,
+  input  logic [2:0]       HSIZE,
   input  logic             HWRITE,
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem

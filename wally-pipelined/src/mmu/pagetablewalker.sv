@@ -52,7 +52,7 @@ module pagetablewalker (
 
 
 
-  // *** modify to send to LSU
+  // *** modify to send to LSU // *** KMG: These are inputs/results from the ahblite whose addresses should have already been checked, so I don't think they need to be sent through the LSU
   input  logic [`XLEN-1:0] MMUReadPTE,
   input  logic             MMUReady,
 
