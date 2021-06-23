@@ -65,7 +65,9 @@ module pmpadrdec (
   assign TORMatch = AdrAtLeastPreviousPMP && AdrBelowCurrentPMP;
 
   // Naturally aligned four-byte region
-  adrdec na4dec(HADDR, CurrentAdrFull, (2**2)-1, NA4Match);
+  // *** need to switch to Physical Address and extend to proper number of bits
+  assign NA4Match = &(HADDR[31:2] ~^ CurrentAdrFull[31:2]); // check if address matches all but bottom 2 bits;
+  //adrdec na4dec(HADDR, CurrentAdrFull, (2**2)-1, NA4Match);
 
   generate
     if (`XLEN == 32 || `XLEN == 64) begin
@@ -116,7 +118,8 @@ module pmpadrdec (
 
   // *** Range should not be truncated... but our physical address space is
   // currently only 32 bits wide.
-  adrdec napotdec(HADDR, CurrentAdrFull, Range[31:0], NAPOTMatch);
+  // with a bit of combining of range selection,  this could be shared with NA4Match ***
+   assign NAPOTMatch = &((HADDR ~^ CurrentAdrFull) | Range[31:0]);
 
   assign Match = (AdrMode == TOR) ? TORMatch : 
                  (AdrMode == NA4) ? NA4Match :
