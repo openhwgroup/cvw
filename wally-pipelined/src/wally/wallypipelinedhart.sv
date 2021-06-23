@@ -163,7 +163,7 @@ module wallypipelinedhart (
 
   
   mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
-  dmem dmem(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*); // data cache unit
+  lsu lsu(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*); // data cache unit
 
   ahblite ebu( 
     //.InstrReadF(1'b0),
