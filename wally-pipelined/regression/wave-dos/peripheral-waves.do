@@ -65,17 +65,17 @@ add wave -hex /testbench/dut/hart/priv/csr/genblk1/csrm/MEPC_REGW
 add wave -divider
 
 # peripherals
-add wave -hex /testbench/dut/uncore/plic/*
-add wave -hex /testbench/dut/uncore/plic/intPriority
-add wave -hex /testbench/dut/uncore/plic/pendingArray
-add wave -divider
-add wave -hex /testbench/dut/uncore/uart/u/*
-add wave -divider
-add wave -hex /testbench/dut/uncore/gpio/*
-add wave -divider
-add wave -hex /testbench/dut/hart/ebu/*
-add wave -divider
-add wave -divider
+#add wave -hex /testbench/dut/uncore/plic/*
+#add wave -hex /testbench/dut/uncore/plic/intPriority
+#add wave -hex /testbench/dut/uncore/plic/pendingArray
+#add wave -divider
+#add wave -hex /testbench/dut/uncore/uart/u/*
+#add wave -divider
+#add wave -hex /testbench/dut/uncore/gpio/*
+#add wave -divider
+#add wave -hex /testbench/dut/hart/ebu/*
+#add wave -divider
+#add wave -divider
 
 # everything else
 add wave -hex -r /testbench/*
