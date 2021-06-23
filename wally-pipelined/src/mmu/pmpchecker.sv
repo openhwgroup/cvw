@@ -76,6 +76,8 @@ module pmpchecker (
   logic L_Bit, X_Bit, W_Bit, R_Bit;
   logic InvalidExecute, InvalidWrite, InvalidRead;
 
+  // *** extend to optionally 64 configurations
+
   assign {PMPCFG[15], PMPCFG[14], PMPCFG[13], PMPCFG[12],
           PMPCFG[11], PMPCFG[10], PMPCFG[9], PMPCFG[8]} = PMPCFG23_REGW;
 
@@ -107,6 +109,7 @@ module pmpchecker (
   // Only enforce PMP checking for S and U modes when at least one PMP is active
   assign EnforcePMP = |ActiveRegion;
 
+  // *** extend to up to 64, fold bit extraction to avoid need for binary encoding of region
   always_comb
     casez (Regions)
       16'b???????????????1: MatchedRegion = 0;
@@ -137,6 +140,7 @@ module pmpchecker (
   assign InvalidWrite   = WriteAccessM   && ~W_Bit;
   assign InvalidRead    = ReadAccessM    && ~R_Bit;
 
+  // *** don't cause faults when there are no PMPs
   assign PMPInstrAccessFaultF = (PrivilegeModeW == `M_MODE) ?
                                   Match && L_Bit && InvalidExecute :
                                   EnforcePMP && InvalidExecute;

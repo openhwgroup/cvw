@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// dmem.sv
+// lsu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Data memory
+// Purpose: Load/Store Unit 
 //          Top level of the memory-stage hart logic
 //          Contains data cache, DTLB, subword read/write datapath, interface to external bus
 // 
@@ -28,7 +28,7 @@
 `include "wally-config.vh"
 
 // *** Ross Thompson amo misalignment check?
-module dmem (
+module lsu (
   input  logic             clk, reset,
   input  logic             StallM, FlushM, StallW, FlushW,
   //output logic             DataStall,

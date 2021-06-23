@@ -58,13 +58,7 @@ module pmachecker (
   assign AccessRX = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
-  // *** linux tests fail early when Access is anything other than 1b1
-  pmaadrdec boottimdec(HADDR, `BOOTTIM_BASE, `BOOTTIM_RANGE, `BOOTTIM_SUPPORTED, 1'b1/*AccessRX*/, HSIZE, 4'b1111, HSELRegions[5]);
-  pmaadrdec timdec(HADDR, `TIM_BASE, `TIM_RANGE, `TIM_SUPPORTED, 1'b1/*AccessRWX*/, HSIZE, 4'b1111, HSELRegions[4]);
-  pmaadrdec clintdec(HADDR, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, HSIZE, 4'b1111, HSELRegions[3]);
-  pmaadrdec gpiodec(HADDR, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[2]);
-  pmaadrdec uartdec(HADDR, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, HSIZE, 4'b0001, HSELRegions[1]);
-  pmaadrdec plicdec(HADDR, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[0]);
+  adrdecs adrdecs(HADDR, AccessRW, AccessRX, AccessRWX, HSIZE, HSELRegions);
 
   // Only RAM memory regions are cacheable
   assign Cacheable = HSELRegions[5] | HSELRegions[4];

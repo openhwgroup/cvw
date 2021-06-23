@@ -47,8 +47,6 @@ module uncore (
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
-  // PMA checker signals
-  input  logic [5:0]       HSELRegions,
   // bus interface
   // PMA checker now handles access faults. *** This can be deleted
   // output logic             DataAccessFaultM,
@@ -64,6 +62,7 @@ module uncore (
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART;
 
+  logic [5:0]      HSELRegions;
   logic            HSELTim, HSELCLINT, HSELPLIC, HSELGPIO, PreHSELUART, HSELUART;
   logic            HSELTimD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD;
   logic            HRESPTim, HRESPCLINT, HRESPPLIC, HRESPGPIO, HRESPUART;
@@ -72,6 +71,10 @@ module uncore (
   logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
   logic [1:0]      MemRWboottim;
   logic            UARTIntr,GPIOIntr;
+
+  // Determine which region of physical memory (if any) is being accessed
+  // Use a trimmed down portion of the PMA checker - only the address decoders
+  adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE, HSELRegions);
 
   // unswizzle HSEL signals
   assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions;
