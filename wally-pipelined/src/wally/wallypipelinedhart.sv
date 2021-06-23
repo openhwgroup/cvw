@@ -155,7 +155,12 @@ module wallypipelinedhart (
   logic [4:0]       InstrClassM;
 
   logic [`XLEN-1:0] HRDATAW;
-  
+
+  // IEU vs HPTW arbitration signals to send to LSU
+  logic             DisableTranslation;   
+  logic [1:0]       MemRWMtoLSU;
+  logic [2:0]       Funct3MtoLSU;
+  logic [1:0]       AtomicMtoLSU;
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
@@ -174,13 +179,19 @@ module wallypipelinedhart (
    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
    .*); */
 
+
   // arbiter between IEU and pagetablewalker
+  lsuArb arbiter(.MMUTranslate(MMUTranslate), .MMUPAdr(MMUPAdr), .MemRWM(MemRWM|FMemRWM),
+    .Funct3M(Funct3M), .AtomicM(AtomicM), .MemAdrM(MemAdrM),
+    // outputs to LSU
+    .DisableTranslation(DisableTranslation), .MemRWMtoLSU(MemRWMtoLSU), .Funct3MtoLSU(Funct3MtoLSU),
+    .AtomicMtoLSU(AtomicMtoLSU), .*);
 
 
-  lsu lsu(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*,
-	  .ReadDataW(ReadDataW),
-	  .DisableTranslation(1'b0) // *** will connect to page table walker arbiter
-); // data cache unit
+  lsu lsu(.MemRWM(MemRWMtoLSU), .AtomicM(AtomicMtoLSU), .Funct3M(Funct3MtoLSU), 
+    .DisableTranslation(DisableTranslation),
+    .WriteDataM(WriteDatatmpM),
+	  .ReadDataW(ReadDataW), .* ); // data cache unit
 
   ahblite ebu( 
     //.InstrReadF(1'b0),

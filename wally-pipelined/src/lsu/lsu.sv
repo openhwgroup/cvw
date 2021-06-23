@@ -42,9 +42,6 @@ module lsu (
   output logic             SquashSCW,
   output logic             DataMisalignedM,
 
-  // part of the page table walker
-  input logic              DisableTranslation,
-
   // address and write data
   input  logic [`XLEN-1:0] MemAdrM,
   input  logic [`XLEN-1:0] WriteDataM, 
@@ -78,6 +75,7 @@ module lsu (
   input logic              STATUS_MXR, STATUS_SUM, // from csr
   input logic              DTLBWriteM,
   output logic             DTLBMissM,
+  input logic              DisableTranslation, // used to stop intermediate PTE physical addresses being saved to TLB.
 
 
 
@@ -85,7 +83,7 @@ module lsu (
   
   // PMA/PMP (inside mmu) signals
   input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input  logic [2:0]       HSIZE, HBURST,
+  input  logic [2:0]       HSIZE,
   input  logic             HWRITE,
   input  logic             AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
