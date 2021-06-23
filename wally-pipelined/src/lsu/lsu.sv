@@ -33,37 +33,53 @@ module lsu (
   input  logic             StallM, FlushM, StallW, FlushW,
   //output logic             DataStall,
   // Memory Stage
+
+  // connected to cpu (controls)
   input  logic [1:0]       MemRWM,
-  input  logic [`XLEN-1:0] MemAdrM,
   input  logic [2:0]       Funct3M,
-  //input  logic [`XLEN-1:0] ReadDataW,
-  input  logic [`XLEN-1:0] WriteDataM, 
   input  logic [1:0]       AtomicM,
-  input  logic             CommitM,
-  output logic [`PA_BITS-1:0] MemPAdrM,
-  output logic             MemReadM, MemWriteM,
-  output logic [1:0]       AtomicMaskedM,
-  output logic             DataMisalignedM,
-  output logic             CommittedM,
-  // Writeback Stage
-  input  logic             MemAckW,
-  input  logic [`XLEN-1:0] ReadDataW,
+  output logic             CommittedM,    
   output logic             SquashSCW,
+  output logic             DataMisalignedM,
+  input logic              DisableTranslation,
+
+  // address and write data
+  input  logic [`XLEN-1:0] MemAdrM,
+  input  logic [`XLEN-1:0] WriteDataM, 
+  output  logic [`XLEN-1:0] ReadDataW,    // from ahb
+
+  // cpu privilege
+  input logic  [1:0]       PrivilegeModeW,
+  input logic              DTLBFlushM,
   // faults
-  input  logic             NonBusTrapM,
-  input  logic             DataAccessFaultM,
+  input  logic             NonBusTrapM, 
   output logic             DTLBLoadPageFaultM, DTLBStorePageFaultM,
   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
+  // cpu hazard unit (trap)
   output logic             StoreMisalignedFaultM, StoreAccessFaultM,
-  
+
+  // connect to ahb
+  input  logic             CommitM,        // should this be generated in the abh interface?
+  output logic [`PA_BITS-1:0] MemPAdrM,    // to ahb
+  output logic             MemReadM, MemWriteM,
+  output logic [1:0]       AtomicMaskedM,
+  input  logic             MemAckW,      // from ahb
+  input  logic [`XLEN-1:0] HRDATAW,    // from ahb
+
+
   // mmu management
-  input logic  [1:0]       PrivilegeModeW,
+
+  // page table walker
   input logic  [`XLEN-1:0] PageTableEntryM,
   input logic  [1:0]       PageTypeM,
-  input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
-  input logic              DTLBWriteM, DTLBFlushM,
-  output logic             DTLBMissM, DTLBHitM,
+  input logic  [`XLEN-1:0] SATP_REGW,   // from csr
+  input logic              STATUS_MXR, STATUS_SUM, // from csr
+  input logic              DTLBWriteM,
+  output logic             DTLBMissM,
+
+
+
+  output logic             DTLBHitM,  // not connected 
   
   // PMA/PMP (inside mmu) signals
   input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
@@ -94,7 +110,11 @@ module lsu (
 
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
-  
+
+  // for time being until we have a dcache the AHB Lite read bus HRDATAW will be connected to the
+  // CPU's read data input ReadDataW.
+  assign ReadDataW = HRDATAW;
+    
   mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM), .Size(Funct3M[1:0]),
                 .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
                 .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
@@ -135,9 +155,9 @@ module lsu (
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-  assign LoadAccessFaultM = DataAccessFaultM & MemRWM[1];
+  assign LoadAccessFaultM = MemRWM[1];
   assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
-  assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
+  assign StoreAccessFaultM = MemRWM[0];
 
   // Handle atomic load reserved / store conditional
   generate

@@ -153,6 +153,8 @@ module wallypipelinedhart (
   logic[`XLEN-1:0] WriteDatatmpM;
 
   logic [4:0]       InstrClassM;
+
+  logic [`XLEN-1:0] HRDATAW;
   
            
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
@@ -161,15 +163,6 @@ module wallypipelinedhart (
 
   
   mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
-  lsu lsu(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*); // data cache unit
-
-  ahblite ebu( 
-    //.InstrReadF(1'b0),
-    //.InstrRData(InstrF), // hook up InstrF later
-    .WriteDataM(WriteDatatmpM),
-    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
-    .Funct7M(InstrM[31:25]),
-    .*);
 
   pagetablewalker pagetablewalker(.*); // can send addresses to ahblite, send out pagetablestall
   // *** can connect to hazard unit
@@ -180,6 +173,23 @@ module wallypipelinedhart (
    .InstrRData(), // hook up InstrF later
    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
    .*); */
+
+  // arbiter between IEU and pagetablewalker
+
+
+  lsu lsu(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*,
+	  .ReadDataW(ReadDataW),
+	  .DisableTranslation(1'b0) // *** will connect to page table walker arbiter
+); // data cache unit
+
+  ahblite ebu( 
+    //.InstrReadF(1'b0),
+    //.InstrRData(InstrF), // hook up InstrF later
+    .WriteDataM(WriteDatatmpM),
+    .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
+    .Funct7M(InstrM[31:25]),
+	       .HRDATAW(HRDATAW),
+    .*);
 
  
   muldiv mdu(.*); // multiply and divide unit

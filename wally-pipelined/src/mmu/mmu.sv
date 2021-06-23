@@ -44,6 +44,7 @@ module mmu #(parameter ENTRY_BITS = 3,
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
   input logic [1:0]        TLBAccessType,
+  input logic              DisableTranslation,
 
   // Virtual address input
   input logic  [`XLEN-1:0] VirtualAddress,

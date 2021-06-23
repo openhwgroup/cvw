@@ -41,16 +41,19 @@ module ieu (
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage interface
-  input logic 		   DataMisalignedM,
-  input logic 		   DataAccessFaultM,
-  input logic 		   SquashSCW,
-  input logic	     	   FWriteIntM,
-  input  logic [`XLEN-1:0] FWriteDataM,
-  output logic [1:0] 	   MemRWM,
-  output logic [1:0] 	   AtomicM,
-  output logic [`XLEN-1:0] MemAdrM, WriteDataM,
-  output logic [`XLEN-1:0] SrcAM,
-  output logic [2:0] 	   Funct3M,
+  input logic 		   DataMisalignedM,                        // from LSU
+  input logic 		   SquashSCW,                              // from LSU
+  output logic [1:0] 	   MemRWM,                                 // read/write control goes to LSU
+  output logic [1:0] 	   AtomicM,                                // atomic control goes to LSU
+  output logic [`XLEN-1:0] MemAdrM, WriteDataM,                    // Address and write data to LSU
+
+  output logic [2:0] 	   Funct3M,                                // size and signedness to LSU
+
+
+  input logic	     	   FWriteIntM,                             // from FPU
+  input  logic [`XLEN-1:0] FWriteDataM,                            // from FPU
+  output logic [`XLEN-1:0] SrcAM,                                  // to privilege and fpu
+
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
   input logic             FWriteIntW,
