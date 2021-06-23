@@ -41,6 +41,8 @@ module lsu (
   output logic             CommittedM,    
   output logic             SquashSCW,
   output logic             DataMisalignedM,
+
+  // part of the page table walker
   input logic              DisableTranslation,
 
   // address and write data
