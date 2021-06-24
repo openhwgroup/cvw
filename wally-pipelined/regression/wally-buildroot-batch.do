@@ -36,5 +36,4 @@ vsim workopt -suppress 8852,12070
 
 run -all
 run -all
-exec ./slack-notifier/slack-notifier.py
 quit 

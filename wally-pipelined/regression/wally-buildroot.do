@@ -39,5 +39,4 @@ vsim workopt -suppress 8852,12070
 run -all
 do ./wave-dos/linux-waves.do
 run -all
-exec ./slack-notifier/slack-notifier.py
 ##quit
