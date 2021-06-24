@@ -33,15 +33,15 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
     // Input the address to read
     // The upper bits of the physical pc
-    input logic [`XLEN-1:0] 	PCNextF,
-    input logic [`XLEN-1:0] 	PCPF,
+    input logic [`PA_BITS-1:0] 	PCNextF,
+    input logic [`PA_BITS-1:0] 	PCPF,
     // Signals to/from cache memory
     // The read coming out of it
     input logic [31:0] 		ICacheMemReadData,
     input logic 		ICacheMemReadValid,
     // The address at which we want to search the cache memory
-    output logic [`XLEN-1:0] 	PCTagF,
-    output logic [`XLEN-1:0]    PCNextIndexF,						     
+    output logic [`PA_BITS-1:0] 	PCTagF,
+    output logic [`PA_BITS-1:0]    PCNextIndexF,						     
     output logic 		ICacheReadEn,
     // Load data into the cache
     output logic 		ICacheMemWriteEnable,
@@ -52,7 +52,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
     output logic 		CompressedF,
     // The instruction that was requested
     // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-    output logic [31:0] 	InstrRawD,
+    output logic [31:0] 	FinalInstrRawF,
 
     // Outputs to pipeline control stuff
     output logic 		ICacheStallF, EndFetchState,
@@ -62,7 +62,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
     input logic [`XLEN-1:0] 	InstrInF,
     input logic 		InstrAckF,
     // The read we request from main memory
-    output logic [`XLEN-1:0] 	InstrPAdrF,
+    output logic [`PA_BITS-1:0]	InstrPAdrF,
     output logic 		InstrReadF
 );
 
@@ -119,6 +119,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer PA_WIDTH = `PA_BITS - 2;
+  
 
   logic [4:0] 		     CurrState, NextState;
   logic 		     hit, spill;
@@ -133,12 +135,10 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   
   logic [LOGWPL:0] 	     FetchCount, NextFetchCount;
 
-  logic [`XLEN-1:0] 	     PCPreFinalF, PCPFinalF, PCSpillF;
-  logic [`XLEN-1:OFFSETWIDTH] PCPTrunkF;
+  logic [`PA_BITS-1:0] 	     PCPreFinalF, PCPSpillF;
+  logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
 
   
-  logic [31:0] 		     FinalInstrRawF;
-
   logic [15:0] 		     SpillDataBlock0;
   
   localparam [31:0]  	     NOP = 32'h13;
@@ -156,11 +156,11 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
-  assign PCSpillF = PCPF + `XLEN'b10;
+  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
 
   // now we have to select between these three PCs
   assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
-  assign PCPFinalF = PCMux[1] ? PCSpillF : PCPreFinalF;
+  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
@@ -170,11 +170,10 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 			.d(PCMux),
 			.q(PCMux_q));
   
-  assign PCTagF = PCMux_q[1] ? PCSpillF : PCPF;
-  assign PCNextIndexF = PCPFinalF;
+  assign PCTagF = PCMux_q[1] ? PCPSpillF : PCPF;
   
   // truncate the offset from PCPF for memory address generation
-  assign PCPTrunkF = PCTagF[`XLEN-1:OFFSETWIDTH];
+  assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
   
     // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
@@ -395,7 +394,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
   // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
   // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
-  logic [`XLEN-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
+  logic [`PA_BITS-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
 
   assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
   // verilator lint_off WIDTH
@@ -454,6 +453,5 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 		      .d(reset),
 		      .q(reset_q));
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? NOP : FinalInstrRawF, NOP, InstrRawD);
   
 endmodule

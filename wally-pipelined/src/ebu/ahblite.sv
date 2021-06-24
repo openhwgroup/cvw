@@ -42,7 +42,7 @@ module ahblite (
   input  logic [1:0]       AtomicMaskedM,
   input  logic [6:0]       Funct7M,
   // Signals from Instruction Cache
-  input  logic [`XLEN-1:0] InstrPAdrF, // *** rename these to match block diagram
+  input  logic [`PA_BITS-1:0] InstrPAdrF, // *** rename these to match block diagram
   input  logic             InstrReadF,
   output logic [`XLEN-1:0] InstrRData,
   output logic             InstrAckF,
