@@ -45,7 +45,6 @@ module lsu (
   output logic [1:0]       AtomicMaskedM,
   output logic             DataMisalignedM,
   output logic             CommittedM,
-  output logic             SquashSCM,
   // Writeback Stage
   input  logic             MemAckW,
   input  logic [`XLEN-1:0] ReadDataW,
@@ -82,6 +81,7 @@ module lsu (
   
 );
 
+  logic SquashSCM;
   logic DTLBPageFaultM;
   logic MemAccessM;
   logic [1:0] CurrState, NextState;

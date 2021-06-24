@@ -62,7 +62,7 @@ module ahblite (
   // Signals to PMA checker (metadata of proposed access)
   output logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   // Return from bus
-  output logic [`XLEN-1:0] ReadDataM, ReadDataW,
+  output logic [`XLEN-1:0] ReadDataW,
   // AHB-Lite external signals
   input  logic [`AHBW-1:0] HRDATA,
   input  logic             HREADY, HRESP,
@@ -87,7 +87,7 @@ module ahblite (
   logic GrantData;
   logic [31:0] AccessAddress;
   logic [2:0] AccessSize, PTESize, ISize;
-  logic [`AHBW-1:0] HRDATAMasked, CapturedData, ReadDataWnext, WriteData;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, CapturedData, ReadDataWnext, WriteData;
   logic IReady, DReady;
   logic CaptureDataM,CapturedDataAvailable;
 
