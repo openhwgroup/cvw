@@ -34,7 +34,7 @@ module privileged (
   input  logic [`XLEN-1:0] SrcAM,
   input  logic [`XLEN-1:0] PCF,PCD,PCE,PCM,
   input  logic [31:0]      InstrD, InstrE, InstrM, InstrW,
-  output logic [`XLEN-1:0] CSRReadValW,
+  output logic [`XLEN-1:0] CSRReadValM, CSRReadValW,
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, NonBusTrapM,
   output logic             ITLBFlushF, DTLBFlushM,

@@ -53,6 +53,7 @@ module controller(
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
+  output logic [2:0] ResultSrcM,
   output logic       InstrValidM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
@@ -72,7 +73,7 @@ module controller(
 
   // pipelined control signals
   logic 	    RegWriteE;
-  logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
+  logic [2:0] ResultSrcD, ResultSrcE;
   logic [1:0] MemRWD, MemRWE;
   logic		    JumpD;
   logic		    BranchD, BranchE;

@@ -71,7 +71,7 @@ module wallypipelinedhart (
   logic [31:0] InstrD, InstrE, InstrM, InstrW;
   logic [`XLEN-1:0] PCD, PCE, PCM, PCLinkE, PCLinkW;
   logic [`XLEN-1:0] PCTargetE;
-  logic [`XLEN-1:0] CSRReadValW, MulDivResultW;
+  logic [`XLEN-1:0] CSRReadValM, MulDivResultM, CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] PrivilegedNextPCM;
   logic [1:0] MemRWM;
   logic InstrValidM, InstrValidW;
@@ -96,7 +96,7 @@ module wallypipelinedhart (
   logic [1:0] FMemRWM;
   logic       RegWriteD;
   logic [`XLEN-1:0] FWriteDataM;
-  logic       SquashSCW;
+  logic       SquashSCM, SquashSCW;
   logic       FStallD;
   logic       FWriteIntE, FWriteIntW, FWriteIntM;
   logic             FDivBusyE;
@@ -136,7 +136,7 @@ module wallypipelinedhart (
   logic [2:0]       Funct3M;
   logic [`XLEN-1:0] MemAdrM, WriteDataM;
   logic [`PA_BITS-1:0] MemPAdrM;
-  logic [`XLEN-1:0] ReadDataW;
+  logic [`XLEN-1:0] ReadDataM, ReadDataW;
   logic [`PA_BITS-1:0] InstrPAdrF;
   logic [`XLEN-1:0] InstrRData;
   logic             InstrReadF;
@@ -153,8 +153,7 @@ module wallypipelinedhart (
   logic[`XLEN-1:0] WriteDatatmpM;
 
   logic [4:0]       InstrClassM;
-  
-           
+     
   ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
