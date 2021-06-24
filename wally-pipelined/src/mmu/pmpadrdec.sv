@@ -30,7 +30,8 @@
 `include "wally-config.vh"
 
 module pmpadrdec (
-  input  logic [31:0]      HADDR, // *** replace with PAdr
+  input  logic [`PA_BITS-1:0]      PhysicalAddress,
+//  input  logic [31:0]      HADDR, // *** replace with PAdr
   input  logic [1:0]       AdrMode,
   input  logic [`XLEN-1:0] CurrentPMPAdr,
   input  logic             AdrAtLeastPreviousPMP,
@@ -45,15 +46,15 @@ module pmpadrdec (
   logic TORMatch, NAMatch;
   logic AdrBelowCurrentPMP;
   logic [`PA_BITS-1:0] CurrentAdrFull;
-  logic [`PA_BITS-1:0] FakePhysAdr; 
+//  logic [`PA_BITS-1:0] FakePhysAdr; 
 
   // ***replace this when the true physical address from MMU is available
-  assign FakePhysAdr = {{(`PA_BITS-32){1'b0}}, HADDR};
+//  assign FakePhysAdr = {{(`PA_BITS-32){1'b0}}, HADDR};
  
   // Top-of-range (TOR)
   // Append two implicit trailing 0's to PMPAdr value
   assign CurrentAdrFull  = {CurrentPMPAdr[`PA_BITS-3:0],  2'b00};
-  assign AdrBelowCurrentPMP = /*HADDR */FakePhysAdr < CurrentAdrFull; // *** make sure unsigned comparison works correctly
+  assign AdrBelowCurrentPMP = PhysicalAddress < CurrentAdrFull; // *** make sure unsigned comparison works correctly
   assign AdrAtLeastCurrentPMP = ~AdrBelowCurrentPMP;
   assign TORMatch = AdrAtLeastPreviousPMP && AdrBelowCurrentPMP;
 
@@ -73,7 +74,7 @@ module pmpadrdec (
    endgenerate
   // verilator lint_on UNOPTFLAT
 
-  assign NAMatch = &((FakePhysAdr ~^ CurrentAdrFull) | Mask);
+  assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | Mask);
 
  /* generate
     if (`XLEN == 32 || `XLEN == 64) begin // ***redo for various sizes

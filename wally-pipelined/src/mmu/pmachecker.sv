@@ -32,16 +32,14 @@ module pmachecker (
 
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
-  input  logic [31:0] HADDR,
-  input  logic [2:0]  HSIZE,
+//  input  logic [31:0] HADDR,
+//  input  logic [2:0]  HSIZE,
 //  input  logic [2:0]  HBURST, //  *** in AHBlite, HBURST is hardwired to zero for single bursts only allowed. consider removing from this module if unused.
 
-  input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
+  input  logic        AtomicAccessM, InstrReadF, MemWriteM, MemReadM, // *** atomicaccessM is unused but might want to stay in for future use.
 
   output logic        Cacheable, Idempotent, AtomicAllowed,
   output logic        PMASquashBusAccess,
-
-  output logic [5:0]  HSELRegions,
 
   output logic        PMAInstrAccessFaultF,
   output logic        PMALoadAccessFaultM,
@@ -51,24 +49,25 @@ module pmachecker (
   // logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
+  logic [5:0]  SelRegions;
 
   // Determine what type of access is being made
-  assign AccessRW = ReadAccessM | WriteAccessM;
-  assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
-  assign AccessRX = ReadAccessM | ExecuteAccessF;
+  assign AccessRW = MemReadM | MemWriteM;
+  assign AccessRWX = MemReadM | MemWriteM | InstrReadF;
+  assign AccessRX = MemReadM | InstrReadF;
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdecs adrdecs(HADDR, AccessRW, AccessRX, AccessRWX, HSIZE, HSELRegions);
+  adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only RAM memory regions are cacheable
-  assign Cacheable = HSELRegions[5] | HSELRegions[4];
-  assign Idempotent = HSELRegions[4];
-  assign AtomicAllowed = HSELRegions[4];
+  assign Cacheable = SelRegions[5] | SelRegions[4];
+  assign Idempotent = SelRegions[4];
+  assign AtomicAllowed = SelRegions[4];
 
   // Detect access faults
-  assign PMAAccessFault = (~|HSELRegions)  && AccessRWX;  
-  assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
-  assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
-  assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
+  assign PMAAccessFault = (~|SelRegions) & AccessRWX;  
+  assign PMAInstrAccessFaultF = InstrReadF & PMAAccessFault;
+  assign PMALoadAccessFaultM  = MemReadM   & PMAAccessFault;
+  assign PMAStoreAccessFaultM = MemWriteM  & PMAAccessFault;
   assign PMASquashBusAccess = PMAAccessFault;
 endmodule

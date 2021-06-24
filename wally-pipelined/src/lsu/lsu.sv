@@ -92,8 +92,8 @@ module lsu (
   output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
   output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
-  output logic             DSquashBusAccessM,
-  output logic [5:0]       DHSELRegionsM
+  output logic             DSquashBusAccessM
+//  output logic [5:0]       DHSELRegionsM
   
 );
 
@@ -127,12 +127,12 @@ module lsu (
        .TLBMiss(DTLBMissM),
        .TLBHit(DTLBHitM),
        .TLBPageFault(DTLBPageFaultM),
-       .ExecuteAccessF(1'b0),
-       .AtomicAccessM(|AtomicM),
-       .WriteAccessM(MemRWM[0]),
-       .ReadAccessM(MemRWM[1]),
+       .InstrReadF(1'b0),
+       .AtomicAccessM(AtomicMaskedM[1]), 
+       .MemWriteM(MemRWM[0]),
+       .MemReadM(MemRWM[1]),
        .SquashBusAccess(DSquashBusAccessM),
-       .HSELRegions(DHSELRegionsM),
+//       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // Specify which type of page fault is occurring
@@ -214,13 +214,13 @@ module lsu (
                    else                                    NextState = STATE_READY;
       STATE_FETCH_AMO: if (MemAckW)                        NextState = STATE_FETCH;
                        else                                NextState = STATE_FETCH_AMO;
-      STATE_FETCH: if (MemAckW & ~StallW)     NextState = STATE_READY;
+      STATE_FETCH: if (MemAckW & ~StallW)     NextState = STATE_READY; // StallW will stay high if datastall stays high, so right now, once we get into STATE_FETCH, datastall goes high, and we never leave
                    else if (MemAckW & StallW) NextState = STATE_STALLED;
 		   else                       NextState = STATE_FETCH;
       STATE_STALLED: if (~StallW)             NextState = STATE_READY;
                      else                     NextState = STATE_STALLED;
       default: NextState = STATE_READY;
-    endcase // case (CurrState)
+    endcase
   end
 
 endmodule

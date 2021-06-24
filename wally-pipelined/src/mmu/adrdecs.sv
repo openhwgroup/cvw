@@ -26,19 +26,20 @@
 `include "wally-config.vh"
 
 module adrdecs (
-  input  logic [31:0] HADDR, // *** will need to use PAdr in mmu, stick with HADDR in uncore
-  input  logic        AccessRW, AccessRX, AccessRWX,
-  input  logic [2:0]  HSIZE,
-  output logic [5:0]  HSELRegions
+  input  logic [`PA_BITS-1:0] PhysicalAddress,
+  input  logic                AccessRW, AccessRX, AccessRWX,
+  input  logic [1:0]          Size,
+  output logic [5:0]          SelRegions
 );
 
  // Determine which region of physical memory (if any) is being accessed
  // *** eventually uncomment Access signals
-  adrdec boottimdec(HADDR, `BOOTTIM_BASE, `BOOTTIM_RANGE, `BOOTTIM_SUPPORTED, 1'b1/*AccessRX*/, HSIZE, 4'b1111, HSELRegions[5]);
-  adrdec timdec(HADDR, `TIM_BASE, `TIM_RANGE, `TIM_SUPPORTED, 1'b1/*AccessRWX*/, HSIZE, 4'b1111, HSELRegions[4]);
-  adrdec clintdec(HADDR, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, HSIZE, 4'b1111, HSELRegions[3]);
-  adrdec gpiodec(HADDR, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[2]);
-  adrdec uartdec(HADDR, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, HSIZE, 4'b0001, HSELRegions[1]);
-  adrdec plicdec(HADDR, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, HSIZE, 4'b0100, HSELRegions[0]);
+  adrdec boottimdec(PhysicalAddress, `BOOTTIM_BASE, `BOOTTIM_RANGE, `BOOTTIM_SUPPORTED, 1'b1/*AccessRX*/, Size, 4'b1111, SelRegions[5]);
+  adrdec timdec(PhysicalAddress, `TIM_BASE, `TIM_RANGE, `TIM_SUPPORTED, 1'b1/*AccessRWX*/, Size, 4'b1111, SelRegions[4]);
+  adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, 4'b1111, SelRegions[3]);
+  adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[2]);
+  adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[1]);
+  adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[0]);
+
 endmodule
 
