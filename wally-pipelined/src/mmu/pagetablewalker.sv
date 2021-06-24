@@ -36,7 +36,7 @@
 
 module pagetablewalker (
   // Control signals
-  input  logic             HCLK, HRESETn,
+  input  logic             clk, reset,
   input  logic [`XLEN-1:0] SATP_REGW,
 
   // Signals from TLBs (addresses to translate)
@@ -73,6 +73,10 @@ module pagetablewalker (
 );
 
   // Internal signals
+  // register TLBs translation miss requests
+  logic [`XLEN-1:0] 	   TranslationVAdrQ;
+  logic 		   ITLBMissFQ, DTLBMissMQ;
+  
   logic [`PPN_BITS-1:0] BasePageTablePPN;
   logic [`XLEN-1:0]     TranslationVAdr;
   logic [`XLEN-1:0]     SavedPTE, CurrentPTE;
@@ -98,8 +102,28 @@ module pagetablewalker (
   assign MemStore = MemRWM[0];
 
   // Prefer data address translations over instruction address translations
-  assign TranslationVAdr = (DTLBMissM) ? MemAdrM : PCF;
-  assign MMUTranslate = DTLBMissM || ITLBMissF;
+  assign TranslationVAdr = (DTLBMissM) ? MemAdrM : PCF; // *** need to register TranslationVAdr
+  flopenr #(`XLEN) 
+  TranslationVAdrReg(.clk(clk),
+		     .reset(reset),
+		     .en(1'b1), // *** use enable later to save power
+		     .d(TranslationVAdr),
+		     .q(TranslationVAdrQ));
+
+  flopr #(1)
+  DTLBMissMReg(.clk(clk),
+	       .reset(reset),
+	       .d(DTLBMissM),
+	       .q(DTLBMissMQ));
+  
+  flopr #(1)
+  ITLBMissMReg(.clk(clk),
+	       .reset(reset),
+	       .d(ITLBMissF),
+	       .q(ITLBMissFQ));
+  		     
+    
+  assign MMUTranslate = DTLBMissMQ | ITLBMissFQ;
 
   // unswizzle PTE bits
   assign {Dirty, Accessed, Global, User,
@@ -108,7 +132,7 @@ module pagetablewalker (
   // Assign PTE descriptors common across all XLEN values
   assign LeafPTE = Executable | Writable | Readable;
   assign ValidPTE = Valid && ~(Writable && ~Readable);
-  assign AccessAlert = ~Accessed || (MemStore && ~Dirty);
+  assign AccessAlert = ~Accessed | (MemStore & ~Dirty);
 
   // Assign specific outputs to general outputs
   assign PageTableEntryF = PageTableEntry;
@@ -129,7 +153,7 @@ localparam LEVEL0 = 3'h0;
     if (`XLEN == 32) begin
       logic [9:0] VPN1, VPN0;
 
-      flopenl #(3) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(3) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       // State transition logic
       always_comb begin
@@ -162,8 +186,8 @@ localparam LEVEL0 = 3'h0;
       assign MegapageMisaligned = |(CurrentPPN[9:0]);
       assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-      assign VPN1 = TranslationVAdr[31:22];
-      assign VPN0 = TranslationVAdr[21:12];
+      assign VPN1 = TranslationVAdrQ[31:22];
+      assign VPN0 = TranslationVAdrQ[21:12];
 
       // Assign combinational outputs
       always_comb begin
@@ -193,14 +217,14 @@ localparam LEVEL0 = 3'h0;
             TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
             PageTableEntry = CurrentPTE;
             PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
-            DTLBWriteM = DTLBMissM;
-            ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
+            DTLBWriteM = DTLBMissMQ;
+            ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
           end
           FAULT: begin
             TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-            WalkerInstrPageFaultF = ~DTLBMissM;
-            WalkerLoadPageFaultM = DTLBMissM && ~MemStore;
-            WalkerStorePageFaultM = DTLBMissM && MemStore;
+            WalkerInstrPageFaultF = ~DTLBMissMQ;
+            WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+            WalkerStorePageFaultM = DTLBMissMQ && MemStore;
             MMUStall = '0;  // Drop the stall early to enter trap handling code
           end
           default: begin
@@ -210,7 +234,7 @@ localparam LEVEL0 = 3'h0;
       end
 
       // Capture page table entry from ahblite
-      flopenr #(32) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
+      flopenr #(32) ptereg(clk, reset, MMUReady, MMUReadPTE, SavedPTE);
       mux2 #(32) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
       assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
@@ -227,7 +251,7 @@ localparam LEVEL0 = 3'h0;
 
       logic TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
 
-      flopenl #(3) mmureg(HCLK, ~HRESETn, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(3) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       always_comb begin
         case (WalkerState)
@@ -294,10 +318,10 @@ localparam LEVEL0 = 3'h0;
       assign BadGigapage = GigapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
       assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-      assign VPN3 = TranslationVAdr[47:39];
-      assign VPN2 = TranslationVAdr[38:30];
-      assign VPN1 = TranslationVAdr[29:21];
-      assign VPN0 = TranslationVAdr[20:12];
+      assign VPN3 = TranslationVAdrQ[47:39];
+      assign VPN2 = TranslationVAdrQ[38:30];
+      assign VPN1 = TranslationVAdrQ[29:21];
+      assign VPN0 = TranslationVAdrQ[20:12];
 
       always_comb begin
         // default values
@@ -338,15 +362,15 @@ localparam LEVEL0 = 3'h0;
             PageType = (WalkerState == LEVEL3) ? 2'b11 :
                                 ((WalkerState == LEVEL2) ? 2'b10 : 
                                 ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
-            DTLBWriteM = DTLBMissM;
-            ITLBWriteF = ~DTLBMissM;  // Prefer data over instructions
+            DTLBWriteM = DTLBMissMQ;
+            ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
           end
           FAULT: begin
             // Keep physical address alive to prevent HADDR dropping to 0
             TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-            WalkerInstrPageFaultF = ~DTLBMissM;
-            WalkerLoadPageFaultM = DTLBMissM && ~MemStore;
-            WalkerStorePageFaultM = DTLBMissM && MemStore;
+            WalkerInstrPageFaultF = ~DTLBMissMQ;
+            WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+            WalkerStorePageFaultM = DTLBMissMQ && MemStore;
             MMUStall = '0;  // Drop the stall early to enter trap handling code
           end
           default: begin
@@ -356,7 +380,7 @@ localparam LEVEL0 = 3'h0;
       end
 
       // Capture page table entry from ahblite
-      flopenr #(`XLEN) ptereg(HCLK, ~HRESETn, MMUReady, MMUReadPTE, SavedPTE);
+      flopenr #(`XLEN) ptereg(clk, reset, MMUReady, MMUReadPTE, SavedPTE);
       mux2 #(`XLEN) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
       assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
