@@ -26,12 +26,12 @@ configs = [
     TestCase(
         name="busybear",
         cmd="vsim -do wally-busybear-batch.do -c > {}",
-        grepstr="# loaded 100000 instructions"
+        grepstr="loaded 100000 instructions"
     ),
     TestCase(
         name="buildroot",
         cmd="vsim -do wally-buildroot-batch.do -c > {}",
-        grepstr="# loaded 2500000 instructions"
+        grepstr="loaded 2500000 instructions"
     ),
     TestCase(
         name="rv32ic",
