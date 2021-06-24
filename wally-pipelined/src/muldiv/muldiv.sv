@@ -34,7 +34,7 @@ module muldiv (
 	       input logic [2:0] 	Funct3E,
 	       input logic 		MulDivE, W64E,
 	       // Writeback stage
-	       output logic [`XLEN-1:0] MulDivResultM, MulDivResultW,
+	       output logic [`XLEN-1:0] MulDivResultW,
 	       // Divide Done
 	       output logic 		DivDoneE,
 	       output logic 		DivBusyE, 
@@ -44,7 +44,7 @@ module muldiv (
 
    generate
       if (`M_SUPPORTED) begin
-	 logic [`XLEN-1:0] MulDivResultE;
+	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
 	 logic [`XLEN*2-1:0] ProdE; 

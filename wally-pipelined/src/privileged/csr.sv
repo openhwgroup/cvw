@@ -65,12 +65,12 @@ module csr #(parameter
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-  output logic [`XLEN-1:0] CSRReadValM, CSRReadValW,
+  output logic [`XLEN-1:0] CSRReadValW,
   output logic             IllegalCSRAccessM
 );
 
   localparam NOP = 32'h13;
-  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM;
+  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM, CSRReadValM;
   logic [`XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
  
   logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW;
