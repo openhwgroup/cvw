@@ -30,8 +30,8 @@
 
 module pmpchecker (
 //  input  logic             clk, reset, //*** it seems like clk, reset is also not needed here?
-
-  input  logic [31:0]      HADDR,
+  input  logic [`PA_BITS-1:0]      PhysicalAddress,  
+//  input  logic [31:0]      HADDR,
 
   input  logic [1:0]       PrivilegeModeW,
 
@@ -50,7 +50,7 @@ module pmpchecker (
   // we don't have to pass around 16 whole registers.
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
 
-  input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  logic             InstrReadF, MemWriteM, MemReadM,
 
   output logic             PMPSquashBusAccess,
 
@@ -84,17 +84,20 @@ module pmpchecker (
   assign {PMPCFG[7], PMPCFG[6], PMPCFG[5], PMPCFG[4],
           PMPCFG[3], PMPCFG[2], PMPCFG[1], PMPCFG[0]} = PMPCFG01_REGW;
 
-  pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[0][4:3]),
+  pmpadrdec pmpadrdec(.PhysicalAddress(PhysicalAddress), 
+                      .AdrMode(PMPCFG[0][4:3]),
                       .CurrentPMPAdr(PMPADDR_ARRAY_REGW[0]),
                       .AdrAtLeastPreviousPMP(1'b1),
                       .AdrAtLeastCurrentPMP(AboveRegion[0]),
                       .Match(Regions[0]));
+
   assign ActiveRegion[0] = |PMPCFG[0][4:3];
 
   generate // *** only for PMP_ENTRIES > 0
     genvar i;
     for (i = 1; i < `PMP_ENTRIES; i++) begin
-      pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[i][4:3]),
+      pmpadrdec pmpadrdec(.PhysicalAddress(PhysicalAddress), 
+                          .AdrMode(PMPCFG[i][4:3]),
                           .CurrentPMPAdr(PMPADDR_ARRAY_REGW[i]),
                           .AdrAtLeastPreviousPMP(AboveRegion[i-1]),
                           .AdrAtLeastCurrentPMP(AboveRegion[i]),
@@ -131,26 +134,26 @@ module pmpchecker (
       default:              MatchedRegion = 0; // Should only occur if there is no match
     endcase
 
-  assign L_Bit = PMPCFG[MatchedRegion][7] && Match;
-  assign X_Bit = PMPCFG[MatchedRegion][2] && Match;
-  assign W_Bit = PMPCFG[MatchedRegion][1] && Match;
-  assign R_Bit = PMPCFG[MatchedRegion][0] && Match;
+  assign L_Bit = PMPCFG[MatchedRegion][7] & Match;
+  assign X_Bit = PMPCFG[MatchedRegion][2] & Match;
+  assign W_Bit = PMPCFG[MatchedRegion][1] & Match;
+  assign R_Bit = PMPCFG[MatchedRegion][0] & Match;
 
-  assign InvalidExecute = ExecuteAccessF && ~X_Bit;
-  assign InvalidWrite   = WriteAccessM   && ~W_Bit;
-  assign InvalidRead    = ReadAccessM    && ~R_Bit;
+  assign InvalidExecute = InstrReadF & ~X_Bit;
+  assign InvalidWrite   = MemWriteM  & ~W_Bit;
+  assign InvalidRead    = MemReadM   & ~R_Bit;
 
   // *** don't cause faults when there are no PMPs
   assign PMPInstrAccessFaultF = (PrivilegeModeW == `M_MODE) ?
-                                  Match && L_Bit && InvalidExecute :
-                                  EnforcePMP && InvalidExecute;
+                                  Match & L_Bit & InvalidExecute :
+                                  EnforcePMP & InvalidExecute;
   assign PMPStoreAccessFaultM = (PrivilegeModeW == `M_MODE) ?
-                                  Match && L_Bit && InvalidWrite :
-                                  EnforcePMP && InvalidWrite;
+                                  Match & L_Bit & InvalidWrite :
+                                  EnforcePMP & InvalidWrite;
   assign PMPLoadAccessFaultM  = (PrivilegeModeW == `M_MODE) ?
-                                  Match && L_Bit && InvalidRead :
-                                  EnforcePMP && InvalidRead;
+                                  Match & L_Bit & InvalidRead :
+                                  EnforcePMP & InvalidRead;
 
-  assign PMPSquashBusAccess = PMPInstrAccessFaultF || PMPLoadAccessFaultM || PMPStoreAccessFaultM;
+  assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
 
 endmodule

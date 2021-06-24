@@ -75,15 +75,15 @@ module ifu (
   output logic             ITLBMissF, ITLBHitF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input  logic [31:0]      HADDR,
-  input  logic [2:0]       HSIZE,
-  input  logic             HWRITE,
+//  input  logic [31:0]      HADDR,
+//  input  logic [2:0]       HSIZE,
+//  input  logic             HWRITE,
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so they're gonna have to come over into ifu and dmem
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
 
   output logic             PMPInstrAccessFaultF, PMAInstrAccessFaultF,
-  output logic             ISquashBusAccessF,
-  output logic [5:0]       IHSELRegionsF
+  output logic             ISquashBusAccessF
+//  output logic [5:0]       IHSELRegionsF
 
 );
 
@@ -104,13 +104,17 @@ module ifu (
   logic PMPLoadAccessFaultM, PMPStoreAccessFaultM; // *** these are just so that the mmu has somewhere to put these outputs, they're unused in this stage
   // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
 
-  logic [`PA_BITS-1:0] PCPFmmu;
+  logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width. 
+;
 
   generate
-    if (`XLEN==32)
+    if (`XLEN==32) begin
       assign PCPF = PCPFmmu[31:0];
-    else
+      assign PCNextFPhys = {{(`PA_BITS-`XLEN){1'b0}}, PCNextF};
+    end else begin
       assign PCPF = {8'b0, PCPFmmu};
+      assign PCNextFPhys = PCNextF[`PA_BITS-1:0];
+    end
   endgenerate
 
   mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1))
@@ -125,12 +129,12 @@ module ifu (
        .TLBMiss(ITLBMissF),
        .TLBHit(ITLBHitF),
        .TLBPageFault(ITLBInstrPageFaultF),
-       .ExecuteAccessF(1'b1),
+       .InstrReadF(InstrReadF),
        .AtomicAccessM(1'b0),
-       .WriteAccessM(1'b0),
-       .ReadAccessM(1'b0),
+       .MemReadM(1'b0),
+       .MemWriteM(1'b0),
        .SquashBusAccess(ISquashBusAccessF),
-       .HSELRegions(IHSELRegionsF),
+//       .HSELRegions(IHSELRegionsF),
        .DisableTranslation(1'b0),
        .*);
 
@@ -147,7 +151,7 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   icache icache(.*,
-		.PCNextF(PCNextF[`PA_BITS-1:0]),
+		.PCNextF(PCNextFPhys),
 		.PCPF(PCPFmmu));
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
