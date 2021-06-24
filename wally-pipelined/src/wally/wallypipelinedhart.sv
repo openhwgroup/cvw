@@ -86,21 +86,26 @@ module wallypipelinedhart (
 
   logic        PCSrcE;
   logic        CSRWritePendingDEM;
-  logic        FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD;
+  logic       LoadStallD, MulDivStallD, CSRRdStallD;
   logic       DivDoneE;
   logic       DivBusyE;
   logic       DivDoneW;
-  logic [4:0] SetFflagsM;
-  logic [2:0] FRM_REGW;
-  logic       FloatRegWriteW;
-  logic [1:0] FMemRWM;
   logic       RegWriteD;
-  logic [`XLEN-1:0] FWriteDataM;
   logic       SquashSCM, SquashSCW;
-  logic       FStallD;
-  logic       FWriteIntE, FWriteIntW, FWriteIntM;
-  logic             FDivBusyE;
-  logic             IllegalFPUInstrD, IllegalFPUInstrE;
+
+  // floating point unit signals
+  logic [2:0]        FRM_REGW;
+  logic [1:0] 	   FMemRWM, FMemRWE;
+  logic 		      FStallD;
+  logic 		      FWriteIntE, FWriteIntM, FWriteIntW;
+  logic [`XLEN-1:0] FWriteDataE;
+  logic [`XLEN-1:0] FIntResM;  
+  logic 		      FDivBusyE;
+  logic 		      IsFPD, IsFPE;
+  logic 		      IllegalFPUInstrD, IllegalFPUInstrE;
+  logic           FloatRegWriteW;
+  logic           FPUStallD;
+  logic [4:0] 	   SetFflagsM;
   logic [`XLEN-1:0] FPUResultW;
 
   // memory management unit signals
@@ -159,13 +164,13 @@ module wallypipelinedhart (
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
 
   
-  mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
-  lsu lsu(.MemRWM(MemRWM|FMemRWM), .WriteDataM(WriteDatatmpM),.*); // data cache unit
+  // mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
+  lsu lsu(.*); // data cache unit
 
   ahblite ebu( 
     //.InstrReadF(1'b0),
     //.InstrRData(InstrF), // hook up InstrF later
-    .WriteDataM(WriteDatatmpM),
+    .WriteDataM(WriteDataM),
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .Funct7M(InstrM[31:25]),
     .*);

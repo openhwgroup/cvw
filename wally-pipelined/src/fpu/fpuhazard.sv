@@ -26,47 +26,41 @@
 `include "wally-config.vh"
 
 module fpuhazard(
-    input logic [4:0] Adr1, Adr2, Adr3,
-    input logic FWriteEnE, FWriteEnM, FWriteEnW, 
-	  input logic [4:0] RdE, RdM, RdW,
-	  input logic FDivBusyE,
-	  input logic	RegWriteD,
-    input logic [2:0] FResultSelD, FResultSelE,
-    input logic IllegalFPUInstrD,
-    input logic FInput2UsedD, FInput3UsedD,
-  // Stall outputs
-	  output logic FStallD,
-    output logic [1:0] FForwardInput1D, FForwardInput2D, 
-    output logic FForwardInput3D
+    input logic [4:0] Adr1E, Adr2E, Adr3E,
+    input logic FWriteEnM, FWriteEnW, 
+	  input logic [4:0] RdM, RdW,
+    input logic [2:0] FResultSelM,
+    output logic FStallD,
+    output logic [1:0] ForwardXE, ForwardYE, ForwardZE
 );
 
 
   always_comb begin
     // set ReadData as default
-    FForwardInput1D = 2'b00; 
-    FForwardInput2D = 2'b00;
-    FForwardInput3D = 1'b0;
-    FStallD = FDivBusyE;
-    if (~IllegalFPUInstrD) begin
-//					if taking a value from int register
-      if ((Adr1 == RdE) & (FWriteEnE | ((FResultSelE == 3'b110) & RegWriteD))) 
-        if (FResultSelE == 3'b110) FForwardInput1D = 2'b11; // choose SrcAM
-        else FStallD = 1'b1;                           // otherwise stall
-      else if ((Adr1 == RdM) & FWriteEnM) FForwardInput1D = 2'b01; // choose FPUResultDirW
-      else if ((Adr1 == RdW) & FWriteEnW) FForwardInput1D = 2'b11; // choose FPUResultDirE
+    ForwardXE = 2'b00; // choose FRD1E
+    ForwardYE = 2'b00; // choose FRD2E
+    ForwardZE = 2'b00; // choose FRD3E
+    FStallD = 0;
+
+      if ((Adr1E == RdM) & FWriteEnM)
+      // if the result will be FResM
+        if(FResultSelM == 3'b110 | FResultSelM == 3'b011) ForwardXE = 2'b10; // choose FResM
+        else FStallD = 1;   // if the result won't be ready stall
+      else if ((Adr1E == RdW) & FWriteEnW) ForwardXE = 2'b01; // choose FPUResult64W
     
 
-      if(FInput2UsedD)
-        if      ((Adr2 == RdE) & FWriteEnE) FStallD = 1'b1;
-        else if ((Adr2 == RdM) & FWriteEnM) FForwardInput2D = 2'b01; // choose FPUResultDirW
-        else if ((Adr2 == RdW) & FWriteEnW) FForwardInput2D = 2'b10; // choose FPUResultDirE
+      if ((Adr2E == RdM) & FWriteEnM)
+      // if the result will be FResM
+        if(FResultSelM == 3'b110 | FResultSelM == 3'b011) ForwardYE = 2'b10; // choose FResM
+        else FStallD = 1;   // if the result won't be ready stall
+      else if ((Adr2E == RdW) & FWriteEnW) ForwardYE = 2'b01; // choose FPUResult64W
 
-
-      if(FInput3UsedD)
-        if      ((Adr3 == RdE) & FWriteEnE) FStallD = 1'b1;
-        else if ((Adr3 == RdM) & FWriteEnM) FStallD = 1'b1;
-        else if ((Adr3 == RdW) & FWriteEnW) FForwardInput3D = 1'b1; // choose FPUResultDirE
-    end
+ 
+      if ((Adr3E == RdM) & FWriteEnM)
+      // if the result will be FResM
+        if(FResultSelM == 3'b110 | FResultSelM == 3'b011) ForwardZE = 2'b10; // choose FResM
+        else FStallD = 1;   // if the result won't be ready stall
+      else if ((Adr3E == RdW) & FWriteEnW) ForwardZE = 2'b01; // choose FPUResult64W
 
   end 
 
