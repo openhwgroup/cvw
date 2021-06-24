@@ -26,77 +26,112 @@
 
 `include "wally-config.vh"
 
-module lsuArb (
-  input  logic clk, reset,
+module lsuArb 
+  (input  logic clk, reset,
 
-   // signals from page table walker
-//  output logic [`XLEN-1:0] MMUReadPTE, // *** it seems like this is the value out of the ahblite that gets sent back to the ptw. I don;t think it needs to get checked until the next paddr has been extracted from it.
-  input  logic             MMUTranslate,   // *** rename to HPTWReq
-//  output logic             MMUReady, // *** Similar reason to mmuReadPTE
-  input  logic [`XLEN-1:0] MMUPAdr,
+   // from page table walker
+   input logic 		    HPTWTranslate,
+   input logic [`XLEN-1:0]  HPTWPAdr,
+   // to page table walker.
+   output logic [`XLEN-1:0] HPTWReadPTE,
+   output logic 	    HPTWReady,
 
-  // signal from CPU
-  input  logic [1:0]       MemRWM,
-  input  logic [2:0]       Funct3M,
-  input  logic [1:0]       AtomicM,
-  input  logic [`XLEN-1:0] MemAdrM, // memory addrress to be checked coming from the CPU. *** this will be used to arbitrate to decide HADDR going into the PM checks, but it also gets sent in its normal form to the lsu because we need the virtual address for the tlb.
-  // back to CPU
+   // from CPU
+   input logic [1:0] 	    MemRWM,
+   input logic [2:0] 	    Funct3M,
+   input logic [1:0] 	    AtomicM,
+   input logic [`XLEN-1:0]  MemAdrM,
+   input logic [`XLEN-1:0]  WriteDataM,
+   // to CPU
+   output logic [`XLEN-1:0] ReadDataW,
+   output logic 	    CommittedM, 
+   output logic 	    SquashSCW,
+   output logic 	    DataMisalignedM,
+   output logic 	    DCacheStall, 
+  
+   // to LSU   
+   output logic 	    DisableTranslation, 
+   output logic [1:0] 	    MemRWMtoLSU,
+   output logic [2:0] 	    Funct3MtoLSU,
+   output logic [1:0] 	    AtomicMtoLSU,
+   output logic [`XLEN-1:0] MemAdrMtoLSU,
+   output logic [`XLEN-1:0] WriteDataMtoLSU,
+   // from LSU
+   input logic 		    CommittedMfromLSU,
+   input logic 		    SquashSCWfromLSU,
+   input logic 		    DataMisalignedMfromLSU,
+   input logic [`XLEN-1:0]  ReadDataWFromLSU,
+   input logic 		    DataStall
+  
+   );
+  
+  // HPTWTranslate is the request for memory by the page table walker.  When 
+  // this is high the page table walker gains priority over the CPU's data
+  // input.  Note the ptw only makes a request after an instruction or data
+  // tlb miss.  It is entirely possible the dcache is currently processing
+  // a data cache miss when an instruction tlb miss occurs.  If an instruction
+  // in the E stage causes a d cache miss, the d cache will immediately start
+  // processing the request.  Simultaneously the ITLB misses.  By the time
+  // the TLB miss causes the page table walker to issue the first request
+  // to data memory the d cache is already busy.  We can interlock by 
+  // leveraging Stall as a d cache busy.  We will need an FSM to handle this.
 
-  /* *** unused for not (23 June 2021)    
-  output logic             CommittedM,    
-  output logic             SquashSCW,
-  output logic             DataMisalignedM,
-*/
-  // to LSU   
-  output logic             DisableTranslation,   
-  output logic [1:0]       MemRWMtoLSU,
-  output logic [2:0]       Funct3MtoLSU,
-  output logic [1:0]       AtomicMtoLSU
+  localparam StateReady = 0;
+  localparam StatePTWPending = 1;
+  localparam StatePTWActive = 1;
 
-  /* *********** KMG: A lot of the rest of the signals that need to be arbitrated are going to be very annoying
-                      these are the ones that used to get sent from the ahb to the pma checkers. but our eventual
-                      goal is to have many of them sent thru the pmp/pma FIRST before the bus can get to them.
+  logic [1:0] 		    CurrState, NextState;
+  logic 		    SelPTW;
+  
 
-                      deciding how to choose the right Haddr for the PM checkers will be difficult since they currently get
-                      HADDR from the ahblite which seems like it could come from any number of sources, while we will eventually be narrowing it down to two possible sources.
+  flopr #(2) StateReg(
+		      .clk(clk),
+		      .reset(reset),
+		      .d(NextState),
+		      .q(CurrState));
 
-                      other problems arise when some signals like HSIZE are used in the PM checks but there's also a differnent size input to the tlb and both of these get to go through the mmu.
-                      which one should be chosen for which device? can the be merged somehow?
+  always_comb begin
+    case(CurrState)
+      StateReady: 
+	if (HPTWTranslate & DataStall) NextState = StatePTWPending;
+        else if (HPTWTranslate & ~DataStall) NextState = StatePTWActive;
+	else NextState = StateReady;
+      StatePTWPending:
+	if (~DataStall) NextState = StatePTWActive;
+	else NextState = StatePTWPending;
+      StatePTWActive:
+	if (~DataStall) NextState = StateReady;
+	else NextState = StatePTWActive;
+      default: NextState = StateReady;
+    endcase // case (CurrState)
+  end
 
-*/
 
-  /*// pmp/pma specifics sent through lsu
-  output logic [`XLEN-1:0] HADDRtoLSU,
-  output logic [2:0]       HSIZEtoLSU  // *** May not actually need to be arbitrated, since I'm 
-*/
-);
-
-/* *** these are all the signals that get sent to the pmp/pma chackers straight from the ahblite. We want to switch it around so the
-        checkers get these signals first and then the newly checked values can get sent to the ahblite.
-  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input  logic [2:0]       HSIZE,
-  input  logic             HWRITE,
-  input  logic             AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
-*/
+  // multiplex the outputs to LSU
+  assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
+  assign SelPTW = CurrState == StatePTWActive;
+  assign MemRWMtoLSU = SelPTW ? 2'b10 : MemRWM;
   
   generate
     if (`XLEN == 32) begin
-
-      assign Funct3MtoLSU = MMUTranslate ? 3'b010 : Funct3M; // *** is this the right thing for the msB?
-
+      assign Funct3MtoLSU = SelPTW ? 3'b010 : Funct3M;
     end else begin
-
-      assign Funct3MtoLSU = MMUTranslate ? 3'b011 : Funct3M; // *** is this the right thing for the msB?
-
+      assign Funct3MtoLSU = SelPTW ? 3'b011 : Funct3M;
     end
   endgenerate
 
-  assign AtomicMtoLSU = MMUTranslate ? 2'b00 : AtomicM;
-  assign MemRWMtoLSU = MemRWM; // *** along with the rest of the lsu, the mmu uses memrwm in it's pure form so I think we can just forward it through
-  assign DisableTranslation = MMUTranslate;
-//  assign HADDRtoLSU = MMUTranslate ? MMUPAdr : MemAdrM; // *** Potentially a huge breaking point since the PM checks always get HADDR from ahblite and not necessarily just these two sources. this will need to be looked over when we fix PM to only take physical addresses.
-//  assign HSIZEtoLSU = {1'b0, Funct3MtoLSU[1:0]}; // the Hsize is always just the funct3M indicating the size of the data transfer.
+  assign AtomicMtoLSU = SelPTW ? 2'b00 : AtomicM;
+  assign MemAdrMtoLSU = SelPTW ? HPTWPAdr : MemAdrM;
+  assign WriteDataMtoLSU = SelPTW ? `XLEN'b0 : WriteDataM;
 
+  // demux the inputs from LSU to walker or cpu's data port.
 
-	      
+  assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWFromLSU;  // probably can avoid this demux
+  assign HPTWReadPTE = SelPTW ? ReadDataWFromLSU : `XLEN'b0 ;  // probably can avoid this demux
+  assign CommittedM = SelPTW ? 1'b0 : CommittedMfromLSU;
+  assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromLSU;
+  assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromLSU;
+  assign HPTWReady = ~ DataStall;
+  assign DCacheStall = DataStall; // *** this is probably going to change.
+  
 endmodule

@@ -31,7 +31,7 @@ module hazard(
   // Detect hazards
 	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
 	      input logic  LoadStallD, MulDivStallD, CSRRdStallD,
-	      input logic  DataStall, ICacheStallF,
+	      input logic  DCacheStall, ICacheStallF,
         input logic  FPUStallD,
 	      input logic  DivBusyE,FDivBusyE,
   // Stall & flush outputs
@@ -55,16 +55,16 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
-  assign StallFCause = CSRWritePendingDEM && ~(TrapM || RetM || BPPredWrongE);
-  assign StallDCause = (LoadStallD || MulDivStallD || CSRRdStallD || FPUStallD) && ~(TrapM || RetM || BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
-  assign StallECause = DivBusyE || FDivBusyE;
+  assign StallFCause = CSRWritePendingDEM && ~(TrapM | RetM | BPPredWrongE);
+  assign StallDCause = (LoadStallD | MulDivStallD | CSRRdStallD | FPUStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
+  assign StallECause = DivBusyE | FDivBusyE;
   assign StallMCause = 0; 
-  assign StallWCause = DataStall || ICacheStallF;
+  assign StallWCause = DCacheStall | ICacheStallF;
 
-  assign StallF = StallFCause || StallD;
-  assign StallD = StallDCause || StallE;
-  assign StallE = StallECause || StallM;
-  assign StallM = StallMCause || StallW;
+  assign StallF = StallFCause | StallD;
+  assign StallD = StallDCause | StallE;
+  assign StallE = StallECause | StallM;
+  assign StallM = StallMCause | StallW;
   assign StallW = StallWCause;
 
   //assign FirstUnstalledD = (~StallD & StallF & ~MulDivStallD);
@@ -76,8 +76,8 @@ module hazard(
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
   assign FlushF = BPPredWrongE;
-  assign FlushD = FirstUnstalledD || TrapM || RetM || BPPredWrongE;
-  assign FlushE = FirstUnstalledE || TrapM || RetM || BPPredWrongE;
-  assign FlushM = FirstUnstalledM || TrapM || RetM;
-  assign FlushW = FirstUnstalledW || TrapM;
+  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE;
+  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE;
+  assign FlushM = FirstUnstalledM | TrapM | RetM;
+  assign FlushW = FirstUnstalledW | TrapM;
 endmodule
