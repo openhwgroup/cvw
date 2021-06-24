@@ -45,6 +45,9 @@ module datapath (
   // Memory stage signals
   input  logic             StallM, FlushM,
   input  logic [`XLEN-1:0] FWriteDataM,
+  input  logic             SquashSCM,
+  input  logic [2:0]       ResultSrcM,
+  input  logic [`XLEN-1:0] CSRReadValM, ReadDataM, MulDivResultM, 
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
@@ -54,7 +57,6 @@ module datapath (
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
-  // input  logic [`XLEN-1:0] PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
@@ -76,7 +78,9 @@ module datapath (
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] TargetBaseE;
   // Memory stage signals
+  logic [`XLEN-1:0] SCResultM;
   logic [`XLEN-1:0] ALUResultM;
+  logic [`XLEN-1:0] ResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
   logic [`XLEN-1:0] ALUResultW;
@@ -102,8 +106,8 @@ module datapath (
   flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux4  #(`XLEN)  faemux(RD1E, WriteDataW, ALUResultM, FWriteDataM, ForwardAE, PreSrcAE);
-  mux4  #(`XLEN)  fbemux(RD2E, WriteDataW, ALUResultM, FWriteDataM, ForwardBE, WriteDataE);
+  mux4  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, FWriteDataM, ForwardAE, PreSrcAE);
+  mux4  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, FWriteDataM, ForwardBE, WriteDataE);
   mux2  #(`XLEN)  srcamux(PreSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(WriteDataE, ExtImmE, ALUSrcBE, SrcBE);
@@ -118,6 +122,7 @@ module datapath (
   assign MemAdrM = ALUResultM;
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);
+  mux5  #(`XLEN) resultmuxM(ALUResultM, ReadDataM, CSRReadValM, MulDivResultM, SCResultM, ResultSrcM, ResultM);	
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ~StallW, ALUResultM, ALUResultW);
@@ -125,13 +130,16 @@ module datapath (
 
   // handle Store Conditional result if atomic extension supported
   generate 
-    if (`A_SUPPORTED)
+    if (`A_SUPPORTED) begin
+      assign SCResultM = SquashSCM ? {{(`XLEN-1){1'b0}}, 1'b1} : {{(`XLEN-1){1'b0}}, 1'b0};
       assign SCResultW = SquashSCW ? {{(`XLEN-1){1'b0}}, 1'b1} : {{(`XLEN-1){1'b0}}, 1'b0};
-    else 
+    end else begin
+      assign SCResultM = 0;
       assign SCResultW = 0;
+    end
   endgenerate
 
-  mux5  #(`XLEN) resultmux(ALUResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
+  mux5  #(`XLEN) resultmuxW(ALUResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
 /* -----\/----- EXCLUDED -----\/-----
   // This mux4:1 no longer needs to include PCLinkW.  This is set correctly in the execution stage.
   // *** need to look at how the decoder is coded to fix.

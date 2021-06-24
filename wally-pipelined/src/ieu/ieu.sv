@@ -43,9 +43,10 @@ module ieu (
   // Memory stage interface
   input logic 		   DataMisalignedM,
   input logic 		   DataAccessFaultM,
-  input logic 		   SquashSCW,
   input logic	     	   FWriteIntM,
   input  logic [`XLEN-1:0] FWriteDataM,
+  input logic 		       SquashSCM,
+  input  logic [`XLEN-1:0] CSRReadValM, ReadDataM, MulDivResultM, 
   output logic [1:0] 	   MemRWM,
   output logic [1:0] 	   AtomicM,
   output logic [`XLEN-1:0] MemAdrM, WriteDataM,
@@ -55,6 +56,7 @@ module ieu (
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
   input logic             FWriteIntW,
   input logic [`XLEN-1:0] FPUResultW,
+  input logic 		   SquashSCW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, InstrValidW,
   // hazards
@@ -72,7 +74,7 @@ module ieu (
   logic [2:0]  FlagsE;
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
-  logic [2:0]  ResultSrcW;
+  logic [2:0]  ResultSrcM, ResultSrcW;
   logic       TargetSrcE;
 
   // forwarding signals

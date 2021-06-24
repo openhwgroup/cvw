@@ -43,7 +43,7 @@ module forward(
     if (Rs1E != 5'b0)
       if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
       else if ((Rs1E == RdW) & (RegWriteW|FWriteIntW)) ForwardAE = 2'b01;
-     else if ((Rs1E == RdM) & FWriteIntM) ForwardAE = 2'b11;
+      else if ((Rs1E == RdM) & FWriteIntM) ForwardAE = 2'b11;
  
     if (Rs2E != 5'b0)
       if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
