@@ -27,10 +27,10 @@
 //
 
 
-module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, FInput1E, FInput2E, FOpCtrlE, FmtE);
+module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, SrcXE, SrcYE, FOpCtrlE, FmtE);
 
-   input logic [63:0] FInput1E;		// 1st input operand (A)
-   input logic [63:0] FInput2E;		// 2nd input operand (B)
+   input logic [63:0] SrcXE;		// 1st input operand (A)
+   input logic [63:0] SrcYE;		// 2nd input operand (B)
    input logic [3:0]	FOpCtrlE;	// Function opcode
    input logic 	FmtE;   		// Result Precision (1 for double, 0 for single)
 
@@ -81,12 +81,12 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
    // and the sign of the first operand is set appropratiately based on
    // if the operation is absolute value or negation. 
 
-   convert_inputs conv1 (AddFloat1E, AddFloat2E, FInput1E, FInput2E, FOpCtrlE, P);
+   convert_inputs conv1 (AddFloat1E, AddFloat2E, SrcXE, SrcYE, FOpCtrlE, P);
 
    // Test for exceptions and return the "Invalid Operation" and
    // "Denormalized" Input Flags. The "AddSelInvE" is used in
    // the third pipeline stage to select the result. Also, AddOp1NormE
-   // and AddOp2NormE are one if FInput1E and FInput2E are not zero or denormalized.
+   // and AddOp2NormE are one if SrcXE and SrcYE are not zero or denormalized.
    // sub is one if the effective operation is subtaction. 
 
    exception exc1 (AddSelInvE, AddInvalidE, AddDenormInE, AddOp1NormE, AddOp2NormE, sub, 
@@ -159,8 +159,8 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
 
    // Place either the sign-extened 32-bit value or the original 64-bit value 
    // into IntValue (to be used for integer to floating point conversion)
-   assign IntValue [31:0] = FInput1E[31:0];
-   assign IntValue [63:32] = FOpCtrlE[0] ? {32{FInput1E[31]}} : FInput1E[63:32];
+   assign IntValue [31:0] = SrcXE[31:0];
+   assign IntValue [63:32] = FOpCtrlE[0] ? {32{SrcXE[31]}} : SrcXE[63:32];
 
    // If doing an integer to floating point conversion, mantissaA3 is set to 
    // IntVal and the prenomalized exponent is set to 1084. Otherwise, 

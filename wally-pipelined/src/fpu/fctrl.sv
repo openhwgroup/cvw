@@ -6,6 +6,7 @@ module fctrl (
   input  logic [2:0] Funct3D,
   input  logic [2:0] FRM_REGW,
   output logic       IllegalFPUInstrD,
+  output logic       IsFPD,
   output logic       FWriteEnD,
   output logic       FDivStartD,
   output logic [2:0] FResultSelD,
@@ -27,20 +28,19 @@ module fctrl (
   
   //write is enabled for all fp instruciton op codes
   //sans fp load
-  logic isFP, isFPLD;
   always_comb begin
 	//case statement is easier to modify
 	//in case of errors
 	case(OpD)
 		//fp instructions sans load
-		7'b1010011 : isFP = 1'b1;
-		7'b1000011 : isFP = 1'b1;
-		7'b1000111 : isFP = 1'b1;
-		7'b1001011 : isFP = 1'b1;
-		7'b1001111 : isFP = 1'b1;
-		7'b0100111 : isFP = 1'b1;
-		7'b0000111 : isFP = 1'b1;// KEP change 7'b1010011 to 7'b0000111
-		default    : isFP = 1'b0;
+		7'b1010011 : IsFPD = 1'b1;
+		7'b1000011 : IsFPD = 1'b1;
+		7'b1000111 : IsFPD = 1'b1;
+		7'b1001011 : IsFPD = 1'b1;
+		7'b1001111 : IsFPD = 1'b1;
+		7'b0100111 : IsFPD = 1'b1;
+		7'b0000111 : IsFPD = 1'b1;// KEP change 7'b1010011 to 7'b0000111
+		default    : IsFPD = 1'b0;
 	endcase
   end
   
@@ -218,5 +218,5 @@ module fctrl (
   //			is add/cvt       and  is to int  or is classify		 or     is cmp	       	and not max/min or is output ReadData1 and is mv
   assign FWriteIntD = ((FResultSelD == 3'b100)&Funct7D[3]) | (FResultSelD == 3'b101) | ((FResultSelD == 3'b001)&~Funct7D[2]) | ((FResultSelD == 3'b111)&OpD[6]);
   // 		      if not writting to int reg and not a store function and not move
-  assign FWriteEnD = ~FWriteIntD & ~OpD[5] & ~((FResultSelD == 3'b111)&OpD[6]) & isFP;
+  assign FWriteEnD = ~FWriteIntD & ~OpD[5] & ~((FResultSelD == 3'b111)&OpD[6]) & IsFPD;
 endmodule
