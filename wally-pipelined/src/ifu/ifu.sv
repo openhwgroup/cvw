@@ -78,7 +78,6 @@ module ifu (
   input  logic [31:0]      HADDR,
   input  logic [2:0]       HSIZE,
   input  logic             HWRITE,
-  input  logic             ExecuteAccessF, //read, write, and atomic access are all set to zero because this mmu is onlt working with instructinos in the F stage.
   input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so they're gonna have to come over into ifu and dmem
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
 
@@ -114,16 +113,26 @@ module ifu (
       assign PCPF = {8'b0, PCPFmmu};
   endgenerate
 
-  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1)) itlb(.TLBAccessType(2'b10), .VirtualAddress(PCF), .Size(2'b10),
-                .PTEWriteVal(PageTableEntryF), .PageTypeWriteVal(PageTypeF),
-                .TLBWrite(ITLBWriteF), .TLBFlush(ITLBFlushF),
-                .PhysicalAddress(PCPFmmu), .TLBMiss(ITLBMissF),
-                .TLBHit(ITLBHitF), .TLBPageFault(ITLBInstrPageFaultF),
-
-                .AtomicAccessM(1'b0), .WriteAccessM(1'b0), .ReadAccessM(1'b0), // *** is this the right way force these bits constant? should they be someething else?
-                .SquashBusAccess(ISquashBusAccessF), .HSELRegions(IHSELRegionsF),
-						      .DisableTranslation(1'b0),
-                .*);
+  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1))
+  itlb(.TLBAccessType(2'b10),
+       .VirtualAddress(PCF),
+       .Size(2'b10),
+       .PTEWriteVal(PageTableEntryF),
+       .PageTypeWriteVal(PageTypeF),
+       .TLBWrite(ITLBWriteF),
+       .TLBFlush(ITLBFlushF),
+       .PhysicalAddress(PCPFmmu),
+       .TLBMiss(ITLBMissF),
+       .TLBHit(ITLBHitF),
+       .TLBPageFault(ITLBInstrPageFaultF),
+       .ExecuteAccessF(1'b1),
+       .AtomicAccessM(1'b0),
+       .WriteAccessM(1'b0),
+       .ReadAccessM(1'b0),
+       .SquashBusAccess(ISquashBusAccessF),
+       .HSELRegions(IHSELRegionsF),
+       .DisableTranslation(1'b0),
+       .*);
 
 
   // branch predictor signals

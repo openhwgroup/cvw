@@ -31,7 +31,7 @@
 module lsu (
   input  logic             clk, reset,
   input  logic             StallM, FlushM, StallW, FlushW,
-  //output logic             DataStall,
+  output logic             DataStall,
   // Memory Stage
 
   // connected to cpu (controls)
@@ -115,28 +115,38 @@ module lsu (
   // CPU's read data input ReadDataW.
   assign ReadDataW = HRDATAW;
     
-  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM), .Size(Funct3M[1:0]),
-                .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
-                .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
-                .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
-                .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
-
-                .ExecuteAccessF(1'b0),
-                .SquashBusAccess(DSquashBusAccessM), .HSELRegions(DHSELRegionsM),
-                .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
+  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0))
+  dmmu(.TLBAccessType(MemRWM),
+       .VirtualAddress(MemAdrM),
+       .Size(Funct3M[1:0]),
+       .PTEWriteVal(PageTableEntryM),
+       .PageTypeWriteVal(PageTypeM),
+       .TLBWrite(DTLBWriteM),
+       .TLBFlush(DTLBFlushM),
+       .PhysicalAddress(MemPAdrM),
+       .TLBMiss(DTLBMissM),
+       .TLBHit(DTLBHitM),
+       .TLBPageFault(DTLBPageFaultM),
+       .ExecuteAccessF(1'b0),
+       .AtomicAccessM(|AtomicM),
+       .WriteAccessM(MemRWM[0]),
+       .ReadAccessM(MemRWM[1]),
+       .SquashBusAccess(DSquashBusAccessM),
+       .HSELRegions(DHSELRegionsM),
+       .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // Specify which type of page fault is occurring
   assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWM[1];
   assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWM[0];
 
-	// Determine if an Unaligned access is taking place
-	always_comb
-		case(Funct3M[1:0]) 
-		  2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-		  2'b01:  DataMisalignedM = MemAdrM[0];              // lh, sh, lhu
-		  2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
-		  2'b11:  DataMisalignedM = |MemAdrM[2:0];           // ld, sd, fld, fsd
-		endcase 
+  // Determine if an Unaligned access is taking place
+  always_comb
+    case(Funct3M[1:0]) 
+      2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
+      2'b01:  DataMisalignedM = MemAdrM[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedM = |MemAdrM[2:0];           // ld, sd, fld, fsd
+    endcase 
 
   // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
@@ -185,7 +195,7 @@ module lsu (
   endgenerate
 
   // Data stall
-  //assign DataStall = 0;
+  assign DataStall = CurrState != STATE_READY;
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately

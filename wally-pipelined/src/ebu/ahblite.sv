@@ -80,7 +80,6 @@ module ahblite (
   output logic [3:0]       HSIZED,
   output logic             HWRITED,
   // Stalls
-  output logic             /*InstrUpdate, */DataStall,
   output logic CommitM, MemAckW
 );
 
@@ -152,9 +151,12 @@ module ahblite (
   // stall signals
   // Note that we need to extend both stalls when MMUTRANSLATE goes to idle,
   // since translation might not be complete.
+  // *** Ross Thompson remove this datastall
+/* -----\/----- EXCLUDED -----\/-----
   assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
                     (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
                     MMUStall);
+ -----/\----- EXCLUDED -----/\----- */
 
   //assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
   //                        MMUStall);
