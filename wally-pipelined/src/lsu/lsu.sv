@@ -195,7 +195,7 @@ module lsu (
   endgenerate
 
   // Data stall
-  assign DataStall = CurrState != STATE_READY;
+  assign DataStall = (CurrState == STATE_FETCH) || (CurrState == STATE_FETCH_AMO);
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately

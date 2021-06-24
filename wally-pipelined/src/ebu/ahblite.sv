@@ -52,11 +52,13 @@ module ahblite (
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
   // Signals from MMU
+/* -----\/----- EXCLUDED -----\/-----
   input  logic             MMUStall,
   input  logic [`XLEN-1:0] MMUPAdr,
   input  logic             MMUTranslate,
   output logic [`XLEN-1:0] MMUReadPTE,
   output logic             MMUReady,
+ -----/\----- EXCLUDED -----/\----- */
   // Signals from PMA checker
   input  logic             DSquashBusAccessM, ISquashBusAccessF,
   // Signals to PMA checker (metadata of proposed access)
@@ -114,14 +116,16 @@ module ahblite (
   // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: if      (MMUTranslate) ProposedNextBusState = MMUTRANSLATE;
-            else if (AtomicMaskedM[1])   ProposedNextBusState = ATOMICREAD;
+      IDLE: /*if      (MMUTranslate) ProposedNextBusState = MMUTRANSLATE;
+            else*/ if (AtomicMaskedM[1])   ProposedNextBusState = ATOMICREAD;
             else if (MemReadM)     ProposedNextBusState = MEMREAD;  // Memory has priority over instructions
             else if (MemWriteM)    ProposedNextBusState = MEMWRITE;
             else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
             else                   ProposedNextBusState = IDLE;
+/* -----\/----- EXCLUDED -----\/-----
       MMUTRANSLATE: if (~HREADY)   ProposedNextBusState = MMUTRANSLATE;
             else                   ProposedNextBusState = IDLE;
+ -----/\----- EXCLUDED -----/\----- */
       ATOMICREAD: if (~HREADY)     ProposedNextBusState = ATOMICREAD;
             else                   ProposedNextBusState = ATOMICWRITE;
       ATOMICWRITE: if (~HREADY)    ProposedNextBusState = ATOMICWRITE;
@@ -142,8 +146,8 @@ module ahblite (
   assign AtomicAccessM = (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
   assign ExecuteAccessF = (ProposedNextBusState == INSTRREAD);
   assign WriteAccessM = (ProposedNextBusState == MEMWRITE) || (ProposedNextBusState == ATOMICWRITE);
-  assign ReadAccessM = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == ATOMICREAD) ||
-              (ProposedNextBusState == MMUTRANSLATE);
+  assign ReadAccessM = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == ATOMICREAD);// ||
+//              (ProposedNextBusState == MMUTRANSLATE);
 
   // The PMA and PMP checkers can decide to squash the access 
   assign NextBusState = (DSquashBusAccessM || ISquashBusAccessF) ? IDLE : ProposedNextBusState;
@@ -165,14 +169,16 @@ module ahblite (
   assign #1 GrantData = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == MEMWRITE) || 
                         (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
   assign #1 AccessAddress = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
-  assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
+  //assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
+  assign #1 HADDR = AccessAddress;
   generate
     if (`XLEN == 32) assign PTESize = 3'b010;  // in rv32, PTEs are 4 bytes
     else             assign PTESize = 3'b011;  // in rv64, PTEs are 8 bytes
   endgenerate
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign #1 AccessSize = (GrantData) ? {1'b0, MemSizeM} : ISize;
-  assign #1 HSIZE = (MMUTranslate) ? PTESize : AccessSize;
+  //assign #1 HSIZE = (MMUTranslate) ? PTESize : AccessSize;
+  assign #1 HSIZE = AccessSize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
@@ -188,7 +194,7 @@ module ahblite (
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
 
-  assign MMUReady = (BusState == MMUTRANSLATE && HREADY);
+  //assign MMUReady = (BusState == MMUTRANSLATE && HREADY);
 
   assign InstrRData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
@@ -196,7 +202,7 @@ module ahblite (
   // *** Bracker 6/5/21: why is this W stage?
   assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
 		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
-  assign MMUReadPTE = HRDATA;
+  //assign MMUReadPTE = HRDATA;
   // Carefully decide when to update ReadDataW
   //   ReadDataMstored holds the most recent memory read.
   //   We need to wait until the pipeline actually advances before we can update the contents of ReadDataW
