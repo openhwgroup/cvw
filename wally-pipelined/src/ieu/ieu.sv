@@ -73,7 +73,8 @@ module ieu (
   logic [4:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
   logic [2:0]  ResultSrcW;
-  logic       TargetSrcE;
+  logic        TargetSrcE;
+  logic        SCE;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
