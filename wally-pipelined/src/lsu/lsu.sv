@@ -156,7 +156,7 @@ module lsu (
   assign MemReadM = MemRWM[1] & ~NonBusTrapM & CurrState != STATE_STALLED;
   assign MemWriteM = MemRWM[0] & ~NonBusTrapM && ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
-  assign MemAccessM = |MemRWM;
+  assign MemAccessM = MemReadM | MemWriteM;
 
   // Determine if M stage committed
   // Reset whenever unstalled. Set when access successfully occurs
@@ -195,7 +195,7 @@ module lsu (
   endgenerate
 
   // Data stall
-  assign DataStall = (CurrState == STATE_FETCH) || (CurrState == STATE_FETCH_AMO);
+  assign DataStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO);
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately
@@ -209,7 +209,7 @@ module lsu (
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (MemRWM[1] & MemRWM[0]) NextState = STATE_FETCH_AMO; // *** should be some misalign check
+      STATE_READY: if (|AtomicMaskedM) NextState = STATE_FETCH_AMO; // *** should be some misalign check
                    else if (MemAccessM & ~DataMisalignedM) NextState = STATE_FETCH;
                    else                                    NextState = STATE_READY;
       STATE_FETCH_AMO: if (MemAckW)                        NextState = STATE_FETCH;
