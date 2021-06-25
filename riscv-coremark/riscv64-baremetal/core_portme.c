@@ -114,9 +114,10 @@ void portable_free(void *p) {
     #define read_csr(reg) ({ unsigned long __tmp; \
        asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
        __tmp; })
-    #define GETMYTIME(_t) (*_t=read_csr(cycle))
+    #define GETMYTIME(_t) (_t = *(volatile unsigned long long*)0x0200BFF8)
 	#define MYTIMEDIFF(fin,ini) ((fin)-(ini))
-	#define TIMER_RES_DIVIDER 1
+	// Changing TIMER_RES_DIVIDER to 1000000 sets EE_TICKS_PER_SEC to 1000 (now counting ticks per ms)
+	#define TIMER_RES_DIVIDER 10000
 	#define SAMPLE_TIME_IMPLEMENTATION 1
 #endif
 #define EE_TICKS_PER_SEC (NSECS_PER_SEC / TIMER_RES_DIVIDER)
@@ -132,7 +133,9 @@ static CORETIMETYPE start_time_val, stop_time_val;
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
-	GETMYTIME(&start_time_val );
+	GETMYTIME(start_time_val);
+	ee_printf("Timer started\n");
+	ee_printf("  MTIME: %u\n", start_time_val);
 #if CALLGRIND_RUN
 	CALLGRIND_START_INSTRUMENTATION
 #endif
@@ -153,7 +156,9 @@ void stop_time(void) {
 #if MICA
     asm volatile("int3");/*1 */
 #endif
-	GETMYTIME(&stop_time_val );
+	GETMYTIME(stop_time_val);
+	ee_printf("Timer stopped\n");
+	ee_printf("  MTIME: %u\n", stop_time_val);
 }
 /* Function: get_time
 	Return an abstract "ticks" number that signifies time on the system.
@@ -166,6 +171,7 @@ void stop_time(void) {
 */
 CORE_TICKS get_time(void) {
 	CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
+	ee_printf("    Elapsed MTIME: %u\n", elapsed);
 	return elapsed;
 }
 /* Function: time_in_secs
@@ -176,13 +182,15 @@ CORE_TICKS get_time(void) {
 */
 secs_ret time_in_secs(CORE_TICKS ticks) {
 	secs_ret retval=((secs_ret)ticks) / (secs_ret)EE_TICKS_PER_SEC;
+	int retvalint = (int)retval;
+	ee_printf("  RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
 	return retval;
 }
 #else
 #error "Please implement timing functionality in core_portme.c"
 #endif /* SAMPLE_TIME_IMPLEMENTATION */
 
-ee_u32 default_num_contexts=MULTITHREAD;
+ee_u32 default_num_contexts = MULTITHREAD;
 
 /* Function: portable_init
 	Target specific initialization code
