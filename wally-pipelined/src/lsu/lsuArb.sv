@@ -61,6 +61,7 @@ module lsuArb
    input logic 		    SquashSCWfromLSU,
    input logic 		    DataMisalignedMfromLSU,
    input logic [`XLEN-1:0]  ReadDataWFromLSU,
+   input logic              HPTWReadyfromLSU,		    
    input logic 		    DataStall
   
    );
@@ -131,7 +132,7 @@ module lsuArb
   assign CommittedM = SelPTW ? 1'b0 : CommittedMfromLSU;
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromLSU;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromLSU;
-  assign HPTWReady = ~ DataStall;
+  assign HPTWReady = HPTWReadyfromLSU;
   assign DCacheStall = DataStall; // *** this is probably going to change.
   
 endmodule

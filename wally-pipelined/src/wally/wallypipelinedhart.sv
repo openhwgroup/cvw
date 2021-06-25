@@ -131,6 +131,8 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    MMUPAdr, MMUReadPTE;
   logic 		    MMUStall;
   logic 		    MMUTranslate, MMUReady;
+  logic 		    HPTWReadyfromLSU;
+  
 
   // bus interface to dmem
   logic 		    MemReadM, MemWriteM;
@@ -219,6 +221,7 @@ module wallypipelinedhart
 		 .SquashSCWfromLSU(SquashSCWfromLSU),      
 		 .DataMisalignedMfromLSU(DataMisalignedMfromLSU),
 		 .ReadDataWFromLSU(ReadDataWFromLSU),
+		 .HPTWReadyfromLSU(HPTWReadyfromLSU),
 		 .DataStall(DataStall),
 		 .*);
 
@@ -235,7 +238,9 @@ module wallypipelinedhart
 	  .DataMisalignedM(DataMisalignedMfromLSU),
 	  .DisableTranslation(DisableTranslation),
 
-	  .DataStall(DataStall), .* ); // data cache unit
+	  .DataStall(DataStall),
+	  .HPTWReady(HPTWReadyfromLSU), 
+	  .* ); // data cache unit
 
   ahblite ebu( 
 	       //.InstrReadF(1'b0),

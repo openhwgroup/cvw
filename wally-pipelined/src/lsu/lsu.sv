@@ -32,6 +32,7 @@ module lsu (
   input  logic             clk, reset,
   input  logic             StallM, FlushM, StallW, FlushW,
   output logic             DataStall,
+  output logic             HPTWReady,
   // Memory Stage
 
   // connected to cpu (controls)
@@ -197,6 +198,8 @@ module lsu (
 
   // Data stall
   //assign DataStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
+  assign HPTWReady = (CurrState == STATE_READY);
+  
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately
@@ -221,13 +224,14 @@ module lsu (
           NextState = STATE_READY;
 	  DataStall = 1'b0;
 	end
-      STATE_FETCH_AMO_1:
+      STATE_FETCH_AMO_1: begin
 	DataStall = 1'b1;
 	if (MemAckW) begin
 	  NextState = STATE_FETCH_AMO_2;
 	end else begin 
 	  NextState = STATE_FETCH_AMO_1;
 	end
+      end
       STATE_FETCH_AMO_2: begin
 	DataStall = 1'b1;	
 	if (MemAckW & ~StallW) begin
