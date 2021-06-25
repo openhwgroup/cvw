@@ -1,7 +1,8 @@
+
 `include "wally-config.vh"
 
 module fpuclassify (
-    input  logic [63:0] FInput1E,
+    input  logic [63:0] SrcXE,
     input  logic        FmtE,           // 0-single 1-double
     output logic [63:0] ClassResultE
     );
@@ -13,9 +14,9 @@ module fpuclassify (
     logic ExpNotZero, ExpOnes, ManNotZero, ExpZero, ManZero, FirstBitMan;
    
     // single and double precision layouts
-    assign single = FInput1E[63:32];
-    assign double = FInput1E;
-    assign sign = FInput1E[63];
+    assign single = SrcXE[63:32];
+    assign double = SrcXE;
+    assign sign = SrcXE[63];
 
     // basic calculations for readabillity
     assign ExpNotZero = FmtE ? |double[62:52] : |single[30:23];
@@ -43,10 +44,7 @@ module fpuclassify (
     //  bit 7 - +infinity
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassResultE = FmtE ? {{54{1'b0}}, FirstBitMan&NaN, ~FirstBitMan&NaN, ~sign&infinity, ~sign&normal, 
-                                    ~sign&subnormal, ~sign&zero, sign&zero, sign&subnormal, sign&normal, sign&infinity} : 
-				 {{22{1'b0}}, FirstBitMan&NaN, ~FirstBitMan&NaN, ~sign&infinity, ~sign&normal, 
-                                    ~sign&subnormal, ~sign&zero, sign&zero, sign&subnormal, sign&normal, sign&infinity, {32{1'b0}}};
-
+    assign ClassResultE = {{54{1'b0}}, FirstBitMan&NaN, ~FirstBitMan&NaN, ~sign&infinity, ~sign&normal, 
+                                    ~sign&subnormal, ~sign&zero, sign&zero, sign&subnormal, sign&normal, sign&infinity};
 
 endmodule

@@ -30,15 +30,15 @@ module fpu (
   input logic [2:0]        FRM_REGW,   // Rounding mode from CSR
   input logic [31:0]       InstrD,
   input logic [`XLEN-1:0]  ReadDataW,     // Read data from memory
-  input logic 		         RegWriteD,  // register write enable from ieu
   input logic [`XLEN-1:0]  SrcAE,      // Integer input being processed
   input logic [`XLEN-1:0]  SrcAM,      // Integer input being written into fpreg
   input logic 		         StallE, StallM, StallW,
   input logic 		         FlushE, FlushM, FlushW,
-  output logic [1:0] 	   FMemRWM,    // Read/write enable for memory {read, write}
+  output logic  	         IsFPD, IsFPE,    // Read/write enable for memory {read, write}
   output logic 		      FStallD,    // Stall the decode stage if Div/Sqrt instruction
   output logic 		      FWriteIntE, FWriteIntM, FWriteIntW, // Write integer register enable
-  output logic [`XLEN-1:0] FWriteDataM,      // Data to be written to memory
+  output logic [`XLEN-1:0] FWriteDataE,      // Data to be written to memory
+  output logic [`XLEN-1:0] FIntResM,     
   output logic 		      FDivBusyE,        // Is the divison/sqrt unit busy
   output logic 		      IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
   output logic [4:0] 	   SetFflagsM,       // FPU flags
@@ -51,24 +51,27 @@ module fpu (
    logic 		   FDivStartD, FDivStartE;                                  // Start division
    logic 		   FWriteIntD;                                              // Write to integer register
    logic 		   FOutputInput2D, FOutputInput2E;                          // Put Input2 in Input1 if a store instruction
-   logic [1:0] 	FMemRWD, FMemRWE;                                        // Read and write enable for memory
-   logic [1:0]    FForwardInput1D, FForwardInput1E;                        // Input1 forwarding mux control signal
-   logic [1:0] 	FForwardInput2D, FForwardInput2E;                        // Input2 forwarding mux control signal
-   logic 		   FForwardInput3D, FForwardInput3E;                        // Input3 forwarding mux control signal
-   logic 		   FInput2UsedD;                                            // Is input 2 used
-   logic 		   FInput3UsedD;                                            // Is input 3 used
+   logic [1:0] 	FMemRWD;                                        // Read and write enable for memory
+   logic [1:0]    ForwardXD, ForwardXE;                        // Input1 forwarding mux control signal
+   logic [1:0] 	ForwardYD, ForwardYE;                        // Input2 forwarding mux control signal
+   logic [1:0]		   ForwardZD, ForwardZE;                        // Input3 forwarding mux control signal
+   logic 		   SrcYUsedD;                                            // Is input 2 used
+   logic 		   SrcZUsedD;                                            // Is input 3 used
    logic [2:0] 	FResultSelD, FResultSelE, FResultSelM, FResultSelW;      // Select FP result
    logic [3:0] 	FOpCtrlD, FOpCtrlE, FOpCtrlM, FOpCtrlW;                  // Select which opperation to do in each component
    logic          SelLoadInputE, SelLoadInputM;                            // Select which adress to load when single precision
+   logic       FInput2UsedD, FInput3UsedD;                                   
+   logic [4:0] 	Adr1E, Adr2E, Adr3E;
    
    // regfile signals
    logic [4:0]    RdE, RdM, RdW;                                           // what adress to write to    // ***Can take from ieu insted of pipelining
    logic [63:0] 	FWDM;                                                    // Write data for FP register
    logic [63:0] 	FRD1D, FRD2D, FRD3D;                                     // Read Data from FP register - decode stage
    logic [63:0] 	FRD1E, FRD2E, FRD3E;                                     // Read Data from FP register - execute stage
-   logic [63:0] 	FInput1E, FInput1M, FInput1W, FInput1tmpE;                         // Input 1 to the various units (after forwarding)
-   logic [63:0] 	FInput2E, FInput2M;                                      // Input 2 to the various units (after forwarding)
-   logic [63:0] 	FInput3E, FInput3M;                                      // Input 3 to the various units (after forwarding)
+   logic [63:0] 	SrcXE, SrcXM, SrcXW;                         // Input 1 to the various units (after forwarding)
+   logic [`XLEN-1:0]   SrcXMAligned;
+   logic [63:0] 	SrcYE, SrcYM, SrcYW;                                      // Input 2 to the various units (after forwarding)
+   logic [63:0] 	SrcZE, SrcZM;                                      // Input 3 to the various units (after forwarding)
    logic [63:0] 	FLoadResultW, FLoadStoreResultM, FLoadStoreResultW;      // Result for load, store, and move to int-reg instructions
    
    // div/sqrt signals
@@ -123,19 +126,13 @@ module fpu (
    logic [4:0] 	FAddFlagsM, FAddFlagsW;
    
    // cmp signals 
-   logic [7:0] 	WE, WM;
-   logic [7:0] 	XE, XM;
-   logic 		   ANaNE, ANaNM;
-   logic 		   BNaNE, BNaNM;
-   logic 		   AzeroE, AzeroM;
-   logic 		   BzeroE, BzeroM;
-   logic 		   CmpInvalidM, CmpInvalidW;
-   logic [1:0] 	CmpFCCM, CmpFCCW; 
-   logic [63:0] 	FCmpResultM, FCmpResultW;
+   logic 		   CmpInvalidE, CmpInvalidM, CmpInvalidW;
+   logic [63:0] 	FCmpResultE, FCmpResultM, FCmpResultW;
    
    // fsgn signals
    logic [63:0] 	SgnResultE, SgnResultM, SgnResultW;
    logic [4:0] 	SgnFlagsE, SgnFlagsM, SgnFlagsW;
+   logic [63:0]   FResM;
    
    // instantiation of W stage regfile signals
    logic [63:0] 	AlignedSrcAM, ForwardSrcAM, SrcAW;
@@ -150,8 +147,6 @@ module fpu (
    
    //DECODE STAGE
    
-   // Hazard unit for FPU
-   fpuhazard hazard(.Adr1(InstrD[19:15]), .Adr2(InstrD[24:20]), .Adr3(InstrD[31:27]), .*);
    
    // top-level controller for FPU
    fctrl ctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .*);
@@ -172,22 +167,45 @@ module fpu (
    //*****************
    // other  D/E pipe registers
    //*****************
-   flopenrc #(64) DEReg14(clk, reset, FlushE, ~StallE, FPUResult64W, FPUResult64E);
-   flopenrc #(28) CtrlRegE(clk, reset, FlushE, ~StallE, 
-                        {FWriteEnD, FResultSelD, FrmD, FmtD, InstrD[11:7], FOpCtrlD, FDivStartD, FForwardInput1D, FForwardInput2D, FForwardInput3D, FWriteIntD, FOutputInput2D, FMemRWD, InstrD[15]},
-                        {FWriteEnE, FResultSelE, FrmE, FmtE, RdE,          FOpCtrlE, FDivStartE, FForwardInput1E, FForwardInput2E, FForwardInput3E, FWriteIntE, FOutputInput2E, FMemRWE, SelLoadInputE});
-  
+   // flopenrc #(64) DEReg14(clk, reset, FlushE, ~StallE, FPUResult64W, FPUResult64E);
+   // flopenrc #(1) CtrlRegE1(clk, reset, FlushE, ~StallE, FWriteEnD, FWriteEnE);
+   // flopenrc #(3) CtrlRegE2(clk, reset, FlushE, ~StallE, FResultSelD, FResultSelE);
+   // flopenrc #(3) CtrlRegE3(clk, reset, FlushE, ~StallE, FrmD, FrmE);
+   // flopenrc #(1) CtrlRegE4(clk, reset, FlushE, ~StallE, FmtD, FmtE);
+   // flopenrc #(5) CtrlRegE5(clk, reset, FlushE, ~StallE, InstrD[11:7], RdE);
+   // flopenrc #(4) CtrlRegE6(clk, reset, FlushE, ~StallE, FOpCtrlD, FOpCtrlE);
+   flopenrc #(1) CtrlRegE1(clk, reset, FlushE, ~StallE, FDivStartD, FDivStartE);
+   flopenrc #(15) CtrlRegE2(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
+                                                      {Adr1E,         Adr2E,         Adr3E});
+   // flopenrc #(1) CtrlRegE8(clk, reset, FlushE, ~StallE, FWriteIntD, FWriteIntE);
+   // flopenrc #(1) CtrlRegE9(clk, reset, FlushE, ~StallE, FOutputInput2D, FOutputInput2E);
+   // flopenrc #(2) CtrlRegE10(clk, reset, FlushE, ~StallE, FMemRWD, FMemRWE);
+   // flopenrc #(1) CtrlRegE11(clk, reset, FlushE, ~StallE, InstrD[15], SelLoadInputE);
+   flopenrc #(20) CtrlRegE(clk, reset, FlushE, ~StallE, 
+                        {FWriteEnD, FResultSelD, FrmD, FmtD, InstrD[11:7], FOpCtrlD, FWriteIntD, InstrD[15],    IsFPD},
+                        {FWriteEnE, FResultSelE, FrmE, FmtE, RdE,          FOpCtrlE, FWriteIntE, SelLoadInputE, IsFPE});
+
    //EXECUTION STAGE
    
    // input muxs for forwarding   
-   mux2  #(64)  SrcAMuxForward({SrcAM[31:0], 32'b0}, {SrcAM, {64-`XLEN{1'b0}}}, FmtM, ForwardSrcAM);
-   mux4  #(64)  FInput1Emux(FRD1E, FPUResult64W, FPUResult64E, ForwardSrcAM, FForwardInput1E, FInput1tmpE);
-   mux3  #(64)  FInput2Emux(FRD2E, FPUResult64W, FPUResult64E, FForwardInput2E, FInput2E);
-   mux2  #(64)  FInput3Emux(FRD3E, FPUResult64E, FForwardInput3E, FInput3E);
-   mux2  #(64)  FOutputInput2mux(FInput1tmpE, FInput2E, FOutputInput2E, FInput1E);
+   // single vs double for SRCAM
+   // mux2  #(64)  SrcAMuxForward({SrcAM[31:0], 32'b0}, {SrcAM, {64-`XLEN{1'b0}}}, FmtM, ForwardSrcAM);
+   // //input 1 forwarding mux
+   // mux4  #(64)  SrcXEmux(FRD1E, FPUResult64W, FPUResult64E, ForwardSrcAM, ForwardXE, SrcXtmpE);
+   // mux3  #(64)  SrcYEmux(FRD2E, FPUResult64W, FPUResult64E, ForwardYE, SrcYE);
+   // mux2  #(64)  SrcZEmux(FRD3E, FPUResult64E, ForwardZE, SrcZE);
+   // mux2  #(64)  FOutputInput2mux(SrcXtmpE, SrcYE, FOutputInput2E, SrcXE);
+   
+   // Hazard unit for FPU
+   fpuhazard hazard(.*);
+
+   mux3  #(64)  fxemux(FRD1E, FPUResult64W, FResM, ForwardXE, SrcXE);
+   mux3  #(64)  fyemux(FRD2E, FPUResult64W, FResM, ForwardYE, SrcYE);
+   mux3  #(64)  fzemux(FRD3E, FPUResult64W, FResM, ForwardZE, SrcZE);
+
    
    // first of two-stage instance of floating-point fused multiply-add unit
-   fma1 fma1 (.X(FInput1E), .Y(FInput2E), .Z(FInput3E), .FOpCtrlE(FOpCtrlE[2:0]),.*);
+   fma1 fma1 (.X(SrcXE), .Y(SrcYE), .Z(SrcZE), .FOpCtrlE(FOpCtrlE[2:0]),.*);
    
    // first and only instance of floating-point divider
    logic fpdivClk;
@@ -198,10 +216,10 @@ module fpu (
 			.ECLK(fpdivClk));
    
    // capture the inputs for div/sqrt	 
-   flopenrc #(64) reg_input1 (.d(FInput1E), .q(DivInput1E),
+   flopenrc #(64) reg_input1 (.d(SrcXE), .q(DivInput1E),
                .en(~HoldInputs), .clear(FDivSqrtDoneE),
                .reset(reset),  .clk(clk));
-   flopenrc #(64) reg_input2 (.d(FInput2E), .q(DivInput2E),
+   flopenrc #(64) reg_input2 (.d(SrcYE), .q(DivInput2E),
                .en(~HoldInputs), .clear(FDivSqrtDoneE),
                .reset(reset),  .clk(clk));
 
@@ -211,20 +229,21 @@ module fpu (
    fpuaddcvt1 fpadd1 (.*);
    
    // first of two-stage instance of floating-point comparator
-   fpucmp1 fpcmp1 (WE, XE, ANaNE, BNaNE, AzeroE, BzeroE, FInput1E, FInput2E, FOpCtrlE[1:0]);
+   fpucmp1 fpcmp1 (SrcXE, SrcYE, FOpCtrlE[2:0], FmtE, CmpInvalidE, FCmpResultE);
    
    // first and only instance of floating-point sign converter
    fpusgn fpsgn (.SgnOpCodeE(FOpCtrlE[1:0]),.*);
    
    // first and only instance of floating-point classify unit
    fpuclassify fpuclass (.*);
+   assign FWriteDataE = FmtE ? SrcYE[63:64-`XLEN] : {{`XLEN-32{1'b0}}, SrcYE[63:32]};
    
    //*****************
    //fpregfile D/E pipe registers
    //*****************
-   flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FInput1E, FInput1M);
-   flopenrc #(64) EMFpReg2(clk, reset, FlushM, ~StallM, FInput2E, FInput2M);
-   flopenrc #(64) EMFpReg3(clk, reset, FlushM, ~StallM, FInput3E, FInput3M);
+   flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, SrcXE, SrcXM);
+   flopenrc #(64) EMFpReg2(clk, reset, FlushM, ~StallM, SrcYE, SrcYM);
+   flopenrc #(64) EMFpReg3(clk, reset, FlushM, ~StallM, SrcZE, SrcZM);
    
    //*****************
    // fma E/M pipe registers
@@ -276,12 +295,15 @@ module fpu (
    //*****************
    // fpcmp E/M pipe registers
    //*****************
-   flopenrc #(8) EMRegCmp1(clk, reset, FlushM, ~StallM, WE, WM); 
-   flopenrc #(8) EMRegCmp2(clk, reset, FlushM, ~StallM, XE, XM); 
-   flopenrc #(1) EMRegcmp3(clk, reset, FlushM, ~StallM, ANaNE, ANaNM); 
-   flopenrc #(1) EMRegCmp4(clk, reset, FlushM, ~StallM, BNaNE, BNaNM); 
-   flopenrc #(1) EMRegCmp5(clk, reset, FlushM, ~StallM, AzeroE, AzeroM); 
-   flopenrc #(1) EMRegCmp6(clk, reset, FlushM, ~StallM, BzeroE, BzeroM); 
+   // flopenrc #(8) EMRegCmp1(clk, reset, FlushM, ~StallM, WE, WM); 
+   // flopenrc #(8) EMRegCmp2(clk, reset, FlushM, ~StallM, XE, XM); 
+   // flopenrc #(1) EMRegcmp3(clk, reset, FlushM, ~StallM, ANaNE, ANaNM); 
+   // flopenrc #(1) EMRegCmp4(clk, reset, FlushM, ~StallM, BNaNE, BNaNM); 
+   // flopenrc #(1) EMRegCmp5(clk, reset, FlushM, ~StallM, AzeroE, AzeroM); 
+   // flopenrc #(1) EMRegCmp6(clk, reset, FlushM, ~StallM, BzeroE, BzeroM); 
+   flopenrc #(1)  EMRegCmp1(clk, reset, FlushM, ~StallM, CmpInvalidE, CmpInvalidM); 
+   // flopenrc #(2)  EMRegCmp2(clk, reset, FlushM, ~StallM, CmpFCCE, CmpFCCM); 
+   flopenrc #(64) EMRegCmp3(clk, reset, FlushM, ~StallM, FCmpResultE, FCmpResultM); 
    
    // put this in for the event we want to delay fsgn - will otherwise bypass
    //*****************
@@ -300,7 +322,7 @@ module fpu (
    flopenrc #(5) EMReg5(clk, reset, FlushM, ~StallM, RdE, RdM);
    flopenrc #(4) EMReg6(clk, reset, FlushM, ~StallM, FOpCtrlE, FOpCtrlM);
    flopenrc #(1) EMReg7(clk, reset, FlushM, ~StallM, FWriteIntE, FWriteIntM);
-   flopenrc #(2) EMReg8(clk, reset, FlushM, ~StallM, FMemRWE, FMemRWM);
+   // flopenrc #(2) EMReg8(clk, reset, FlushM, ~StallM, FMemRWE, FMemRWM);
    flopenrc #(1) EMReg9(clk, reset, FlushM, ~StallM, SelLoadInputE, SelLoadInputM);
    
    //*****************
@@ -310,32 +332,35 @@ module fpu (
    
    //BEGIN MEMORY STAGE
    
-   assign FWriteDataM = FmtM ? FInput1M[63:64-`XLEN] : {{`XLEN-32{1'b0}}, FInput1M[63:32]};
+   mux2  #(64)  FResMux(AlignedSrcAM, SgnResultM, FResultSelM == 3'b011, FResM);
+   assign SrcXMAligned = FmtM ? SrcXM[63:64-`XLEN] : {{`XLEN-32{1'b0}}, SrcXM[63:32]};
+   mux3  #(`XLEN)  IntResMux(SrcXMAligned, FCmpResultM[`XLEN-1:0], ClassResultM[`XLEN-1:0], {FResultSelM == 3'b101, FResultSelM == 3'b001}, FIntResM);
+
    //adjecent adress values are sent to the FPU, select the correct one
    //    -imm is 80000 most of the time vs the error one which is 00000
    // mux3  #(64)  FLoadResultMux({HRDATA[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
-   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
+   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, SrcXM, |FOpCtrlM[2:1], FLoadStoreResultM);
    
-   fma2 fma2(.X(FInput1M), .Y(FInput2M), .Z(FInput3M), .FOpCtrlM(FOpCtrlM[2:0]), .*);
+   fma2 fma2(.X(SrcXM), .Y(SrcYM), .Z(SrcZM), .FOpCtrlM(FOpCtrlM[2:0]), .*);
    
    // second instance of two-stage floating-point add/cvt unit
    fpuaddcvt2 fpadd2 (.*);
    
    // second instance of two-stage floating-point comparator
-   fpucmp2 fpcmp2 (.Invalid(CmpInvalidM), .FCC(CmpFCCM), .ANaN(ANaNM), .BNaN(BNaNM), .Azero(AzeroM), 
-		   .Bzero(BzeroM), .w(WM), .x(XM), .Sel({1'b0, FmtM}), .op1(FInput1M), .op2(FInput2M), .*);
+   // fpucmp2 fpcmp2 (.Invalid(CmpInvalidM), .FCC(CmpFCCM), .ANaN(ANaNM), .BNaN(BNaNM), .Azero(AzeroM), 
+	// 	   .Bzero(BzeroM), .w(WM), .x(XM), .Sel({1'b0, FmtM}), .op1(SrcXM), .op2(SrcYM), .*);
 
    // Align SrcA to MSB when single precicion
    mux2  #(64)  SrcAMux({SrcAM[31:0], 32'b0}, {{64-`XLEN{1'b0}}, SrcAM}, FmtM, AlignedSrcAM);
       
 
 
-
       
    //*****************
    //fpregfile M/W pipe registers
    //*****************
-   flopenrc #(64) MWFpReg1(clk, reset, FlushW, ~StallW, FInput1M, FInput1W);
+   flopenrc #(64) MWFpReg1(clk, reset, FlushW, ~StallW, SrcXM, SrcXW);
+   flopenrc #(64) MWFpReg2(clk, reset, FlushW, ~StallW, SrcYM, SrcYW);
    
    //*****************
    // fma M/W pipe registers
@@ -360,7 +385,7 @@ module fpu (
    // fpcmp M/W pipe registers
    //*****************
    flopenrc #(1) MWRegCmp1(clk, reset, FlushW, ~StallW, CmpInvalidM, CmpInvalidW); 
-   flopenrc #(2) MWRegCmp2(clk, reset, FlushW, ~StallW, CmpFCCM, CmpFCCW); 
+   // flopenrc #(2) MWRegCmp2(clk, reset, FlushW, ~StallW, CmpFCCM, CmpFCCW); 
    flopenrc #(64) MWRegCmp3(clk, reset, FlushW, ~StallW, FCmpResultM, FCmpResultW); 
    
    //*****************
@@ -396,10 +421,10 @@ module fpu (
    
 
    // mux3  #(64)  FLoadResultMux({ReadD[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
-   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
+   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, SrcXM, |FOpCtrlM[2:1], FLoadStoreResultM);
    //***RV32D needs to give two bus transactions
     mux2  #(64)  FLoadResultMux({ReadDataW[31:0], {32{1'b0}}}, {ReadDataW, {64-`XLEN{1'b0}}}, FmtW, FLoadResultW);
-    mux2  #(64)  FLoadStoreResultMux(FLoadResultW, FInput1W, |FOpCtrlW[2:1], FLoadStoreResultW);
+    mux2  #(64)  FLoadStoreResultMux(FLoadResultW, SrcYW, |FOpCtrlW[2:1], FLoadStoreResultW);
 
 
 
