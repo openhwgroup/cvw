@@ -42,14 +42,12 @@ module forward(
     ForwardAE = 2'b00;
     ForwardBE = 2'b00;
     if (Rs1E != 5'b0)
-      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
+      if      ((Rs1E == RdM) & (RegWriteM|FWriteIntM)) ForwardAE = 2'b10;
       else if ((Rs1E == RdW) & (RegWriteW|FWriteIntW)) ForwardAE = 2'b01;
-      else if ((Rs1E == RdM) & FWriteIntM) ForwardAE = 2'b11;
  
     if (Rs2E != 5'b0)
-      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
+      if      ((Rs2E == RdM) & (RegWriteM|FWriteIntM)) ForwardBE = 2'b10;
       else if ((Rs2E == RdW) & (RegWriteW|FWriteIntW)) ForwardBE = 2'b01;
-      else if ((Rs2E == RdM) & FWriteIntM) ForwardBE = 2'b11;
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
