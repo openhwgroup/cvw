@@ -4,6 +4,7 @@ view wave
 add wave -divider
 add wave /testbench/clk
 add wave /testbench/reset
+add wave -dec /testbench/instrs
 
 add wave -divider Stalls_and_Flushes
 add wave /testbench/dut/hart/StallF

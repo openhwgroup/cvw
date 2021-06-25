@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = 2514000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = 2657000; // # of instructions at which to turn on waves in graphical sim
   
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -491,7 +491,7 @@ module testbench();
   //always @(HWDATA or HADDR or HSIZE or HWRITE) begin
   always @(negedge HWRITE) begin
     //#1;
-    if ($time != 0) begin
+    if (($time != 0) && ~dut.hart.hzu.FlushM) begin
       if($feof(data_file_memW)) begin
         $display("no more memW data to read");
         `ERROR
