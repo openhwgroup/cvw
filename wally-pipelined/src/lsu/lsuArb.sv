@@ -93,17 +93,17 @@ module lsuArb
   always_comb begin
     case(CurrState)
       StateReady: 
-	if (HPTWTranslate & DataStall) NextState = StatePTWPending;
+	      if      (HPTWTranslate & DataStall)  NextState = StatePTWPending;
         else if (HPTWTranslate & ~DataStall) NextState = StatePTWActive;
-	else NextState = StateReady;
+	      else                                 NextState = StateReady;
       StatePTWPending:
-	if (~DataStall) NextState = StatePTWActive;
-	else NextState = StatePTWPending;
+	      if (~DataStall)                      NextState = StatePTWActive;
+	      else                                 NextState = StatePTWPending;
       StatePTWActive:
-	if (~DataStall) NextState = StateReady;
-	else NextState = StatePTWActive;
-      default: NextState = StateReady;
-    endcase // case (CurrState)
+	      if (~DataStall)                      NextState = StateReady;
+	      else                                 NextState = StatePTWActive;
+      default:                               NextState = StateReady;
+    endcase
   end
 
 
