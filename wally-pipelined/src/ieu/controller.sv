@@ -49,7 +49,8 @@ module controller(
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
-  output logic       CSRReadM, CSRWriteM, PrivilegedM, 
+  output logic       CSRReadM, CSRWriteM, PrivilegedM,
+  output logic       SCE,
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
@@ -202,7 +203,8 @@ module controller(
     
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
 
-  assign MemReadE = MemRWE[1]; 
+  assign MemReadE = MemRWE[1];
+  assign SCE = (ResultSrcE == 3'b100);
   
   // Memory stage pipeline control register
   flopenrc #(15) controlregM(clk, reset, FlushM, ~StallM,
