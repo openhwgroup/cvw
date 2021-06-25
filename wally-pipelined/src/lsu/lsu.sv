@@ -100,13 +100,14 @@ module lsu (
   logic SquashSCM;
   logic DTLBPageFaultM;
   logic MemAccessM;
-  logic [1:0] CurrState, NextState;
+  logic [2:0] CurrState, NextState;
   logic preCommittedM;
 
   localparam STATE_READY = 0;
   localparam STATE_FETCH = 1;
-  localparam STATE_FETCH_AMO = 2;
-  localparam STATE_STALLED = 3;
+  localparam STATE_FETCH_AMO_1 = 2;
+  localparam STATE_FETCH_AMO_2 = 3;
+  localparam STATE_STALLED = 4;
 
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
@@ -195,31 +196,70 @@ module lsu (
   endgenerate
 
   // Data stall
-  assign DataStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO);
+  //assign DataStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately
   // requests data from memory rather than issuing a single request.
 
 
-  flopr #(2) stateReg(.clk(clk),
+  flopr #(3) stateReg(.clk(clk),
 		      .reset(reset),
 		      .d(NextState),
 		      .q(CurrState));
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (|AtomicMaskedM) NextState = STATE_FETCH_AMO; // *** should be some misalign check
-                   else if (MemAccessM & ~DataMisalignedM) NextState = STATE_FETCH;
-                   else                                    NextState = STATE_READY;
-      STATE_FETCH_AMO: if (MemAckW)                        NextState = STATE_FETCH;
-                       else                                NextState = STATE_FETCH_AMO;
-      STATE_FETCH: if (MemAckW & ~StallW)     NextState = STATE_READY; // StallW will stay high if datastall stays high, so right now, once we get into STATE_FETCH, datastall goes high, and we never leave
-                   else if (MemAckW & StallW) NextState = STATE_STALLED;
-		   else                       NextState = STATE_FETCH;
-      STATE_STALLED: if (~StallW)             NextState = STATE_READY;
-                     else                     NextState = STATE_STALLED;
-      default: NextState = STATE_READY;
+      STATE_READY:
+	if (|AtomicMaskedM) begin 
+	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
+	  DataStall = 1'b1;
+	end else if (MemAccessM & ~DataMisalignedM) begin
+	  NextState = STATE_FETCH;
+	  DataStall = 1'b1;
+	end else begin
+          NextState = STATE_READY;
+	  DataStall = 1'b0;
+	end
+      STATE_FETCH_AMO_1:
+	DataStall = 1'b1;
+	if (MemAckW) begin
+	  NextState = STATE_FETCH_AMO_2;
+	end else begin 
+	  NextState = STATE_FETCH_AMO_1;
+	end
+      STATE_FETCH_AMO_2: begin
+	DataStall = 1'b1;	
+	if (MemAckW & ~StallW) begin
+	  NextState = STATE_FETCH_AMO_2;
+	end else if (MemAckW & StallW) begin
+          NextState = STATE_STALLED;
+	end else begin
+	  NextState = STATE_FETCH_AMO_2;
+	end
+      end
+      STATE_FETCH: begin
+	DataStall = 1'b1;	
+	if (MemAckW & ~StallW) begin
+	  NextState = STATE_READY;
+	end else if (MemAckW & StallW) begin
+	  NextState = STATE_STALLED;
+	end else begin
+	  NextState = STATE_FETCH;
+	end
+      end
+      STATE_STALLED: begin
+	DataStall = 1'b0;
+	if (~StallW) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_STALLED;
+	end
+      end
+      default: begin
+	DataStall = 1'b0;
+	NextState = STATE_READY;
+      end
     endcase
   end
 
