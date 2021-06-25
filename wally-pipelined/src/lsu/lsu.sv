@@ -214,8 +214,11 @@ module lsu (
   always_comb begin
     case (CurrState)
       STATE_READY:
-	if (|AtomicMaskedM) begin 
+	if (AtomicMaskedM[1]) begin 
 	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
+	  DataStall = 1'b1;
+	end else if((MemReadM & AtomicM[0]) | (MemWriteM & AtomicM[0])) begin
+	  NextState = STATE_FETCH_AMO_2; 
 	  DataStall = 1'b1;
 	end else if (MemAccessM & ~DataMisalignedM) begin
 	  NextState = STATE_FETCH;

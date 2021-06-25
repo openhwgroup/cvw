@@ -283,7 +283,7 @@ add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/MTIMECMP
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/TimerIntM
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/SwIntM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {32648010 ns} 0} {{Cursor 5} {10763646 ns} 0}
+WaveRestoreCursors {{Cursor 4} {32648010 ns} 0} {{Cursor 5} {11165332 ns} 0} {{Cursor 3} {7672141 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 189
@@ -299,4 +299,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {10763302 ns} {10763880 ns}
+WaveRestoreZoom {11156770 ns} {11173894 ns}
