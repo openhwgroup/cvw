@@ -57,7 +57,7 @@ module testbench();
   wallypipelinedsoc dut(.*);
 
   ///////////////////////////////////////////////////////////////////////////////
-  ////////////////////////   Signals & Shared Macros  //////////////////////////
+  ////////////////////////   Signals & Shared Macros  ///////////////////////////
   //////////////////////// AKA stuff that comes first ///////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   // Sorry if these have gotten decontextualized.
@@ -252,7 +252,7 @@ module testbench();
 
             // Check if PCD is going to be flushed due to a branch or jump
             if (`BPRED_ENABLED) begin
-              PCDwrong = dut.hart.ifu.bpred.bpred.BPPredWrongE;
+              PCDwrong = dut.hart.hzu.FlushD; //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
             end else begin
               casex (lastInstrDExpected[31:0])
                 32'b00000000001000000000000001110011, // URET
