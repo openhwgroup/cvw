@@ -171,6 +171,7 @@ module wallypipelinedhart (
   ahblite ebu( 
     //.InstrReadF(1'b0),
     //.InstrRData(InstrF), // hook up InstrF later
+    .ISquashBusAccessF(1'b0), // *** temporary hack to disable PMP instruction fetch checking
     .WriteDataM(WriteDataM),
     .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
     .Funct7M(InstrM[31:25]),
