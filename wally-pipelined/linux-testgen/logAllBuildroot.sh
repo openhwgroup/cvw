@@ -23,7 +23,7 @@
 #cat qemu_output.txt | ./parse_qemu.py | ./parse_gdb_output.py "/courses/e190ax/buildroot_boot/"
 # Uncomment this version in case you just want to have qemu_in_gdb_format.txt around
 # It is often helpful for general debugging
-(qemu-system-riscv64 -M virt -nographic -bios /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/fw_jump.elf -kernel /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/Image -append "root=/dev/vda ro" -initrd /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2>&1 >/dev/null | ./parse_qemu.py >qemu_in_gdb_format.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+#(qemu-system-riscv64 -M virt -nographic -bios /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/fw_jump.elf -kernel /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/Image -append "root=/dev/vda ro" -initrd /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2>&1 >/dev/null | ./parse_qemu.py >qemu_in_gdb_format.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog
 
 # Split qemu_in_gdb_format.txt into chunks of 100,000 instructions for easier inspection
 #split -d -l 5600000 qemu_in_gdb_format.txt --verbose
@@ -36,4 +36,4 @@
 # =========== Just Do the Thing ========== 
 # Uncomment this version for the whole thing 
 # - Logs info needed by buildroot testbench
-#(qemu-system-riscv64 -M virt -nographic -bios /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/fw_jump.elf -kernel /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/Image -append "root=/dev/vda ro" -initrd /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2>&1 >/dev/null | ./parse_qemu.py | ./parse_gdb_output.py "/courses/e190ax/buildroot_boot_new/") & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+(qemu-system-riscv64 -M virt -nographic -bios /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/fw_jump.elf -kernel /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/Image -append "root=/dev/vda ro" -initrd /courses/e190ax/qemu_sim/rv64_initrd/buildroot_experimental/output/images/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2>&1 >/dev/null | ./parse_qemu.py | ./parse_gdb_output.py "/courses/e190ax/buildroot_boot_new/") & riscv64-unknown-elf-gdb -x gdbinit_qemulog
