@@ -211,26 +211,53 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 			core_init_state(results[0].size,results[i].seed1,results[i].memblock[3]);
 		}
 	}
-	
+
+ /*int foreverLoop = 1;
+ secs_ret timing = 0;
+ int timingInt;
+ ee_printf("\nENTERING FOREVER WHILE LOOP\n");
+ while(foreverLoop == 1)
+ {
+	 start_time();
+	 //filler
+	 stop_time();
+	 timing += time_in_secs(get_time());
+	 timingInt = (int)timing;
+	 ee_printf("Timing is %d\n", timingInt);
+ }/*
+
 	/* automatically determine number of iterations if not set */
 	if (results[0].iterations==0) { 
 		secs_ret secs_passed=0;
 		ee_u32 divisor;
 		results[0].iterations=1;
+		int iterationInc = 0;
+		ee_printf("\n\nENTERING ITERATION WHILE LOOP\n");
 		while (secs_passed < (secs_ret)1) {
-			results[0].iterations*=10;
+			if(iterationInc != 0)
+			{
+			  results[0].iterations++;
+			}
+			ee_printf("iterations is %d\n", results[0].iterations);
 			start_time();
 			iterate(&results[0]);
 			stop_time();
-			secs_passed=time_in_secs(get_time());
+			secs_passed = time_in_secs(get_time());
+			int secs_passed_int = (int)secs_passed;
+			ee_printf("secs passed is %d\n", secs_passed_int);
+			iterationInc++;
 		}
+		ee_printf("LEAVING ITERATION WHILE LOOP!\n\n");
 		/* now we know it executes for at least 1 sec, set actual run time at about 10 secs */
 		divisor=(ee_u32)secs_passed;
+		ee_printf("divisor is %lu\n", divisor);
 		if (divisor==0) /* some machines cast float to int as 0 since this conversion is not defined by ANSI, but we know at least one second passed */
 			divisor=1;
 		results[0].iterations*=1+10/divisor;
+		ee_printf("iterations is %d\n", results[0].iterations);
 	}
 	/* perform actual benchmark */
+	ee_printf("Starting benchmark\n");
 	start_time();
 #if (MULTITHREAD>1)
 	if (default_num_contexts>MULTITHREAD) {
@@ -249,7 +276,8 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 #endif
 	stop_time();
 	total_time=get_time();
-	ee_printf("ending benchmark");
+	ee_printf("total time is %u\n", total_time);
+	ee_printf("ending benchmark\n");
 	/* get a function of the input to report */
 	seedcrc=crc16(results[0].seed1,seedcrc);
 	seedcrc=crc16(results[0].seed2,seedcrc);
@@ -340,12 +368,17 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 		for (i=0 ; i<default_num_contexts; i++) 
 			ee_printf("[%d]crcstate      : 0x%04x\n",i,results[i].crcstate);
 	for (i=0 ; i<default_num_contexts; i++) 
-		ee_printf("[%d]crcfinal      : 0x%04x\"n",i,results[i].crc);
+		ee_printf("[%d]crcfinal      : 0x%04x\n",i,results[i].crc);
 	if (total_errors==0) {
 		ee_printf("Correct operation validated. See README.md for run and reporting rules.\n");
 #if HAS_FLOAT
 		if (known_id==3) {
-			ee_printf("CoreMark 1.0 : %f / %s %s",default_num_contexts*results[0].iterations/time_in_secs(total_time),COMPILER_VERSION,COMPILER_FLAGS);
+			unsigned long long tmp = (unsigned long long) 1000.0*default_num_contexts*results[0].iterations/time_in_secs(total_time);
+			secs_ret totalmsecs = time_in_secs(total_time);
+			int totalmint = (int) totalmsecs;
+			ee_printf("ELAPSED S: %d\n", totalmint);
+
+			ee_printf("CoreMark 1.0 : %d / %s %s\n",tmp,COMPILER_VERSION,COMPILER_FLAGS);
 #if defined(MEM_LOCATION) && !defined(MEM_LOCATION_UNSPEC)
 			ee_printf(" / %s",MEM_LOCATION);
 #else
