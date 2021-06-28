@@ -44,21 +44,21 @@ module fpuhazard(
 
       if ((Adr1E == RdM) & FWriteEnM)
       // if the result will be FResM
-        if(FResultSelM == 3'b110 | FResultSelM == 3'b011) ForwardXE = 2'b10; // choose FResM
+        if(FResultSelM == 3'b100) ForwardXE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
       else if ((Adr1E == RdW) & FWriteEnW) ForwardXE = 2'b01; // choose FPUResult64W
     
 
       if ((Adr2E == RdM) & FWriteEnM)
       // if the result will be FResM
-        if(FResultSelM == 3'b110 | FResultSelM == 3'b011) ForwardYE = 2'b10; // choose FResM
+        if(FResultSelM == 3'b100) ForwardYE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
       else if ((Adr2E == RdW) & FWriteEnW) ForwardYE = 2'b01; // choose FPUResult64W
 
  
       if ((Adr3E == RdM) & FWriteEnM)
       // if the result will be FResM
-        if(FResultSelM == 3'b110 | FResultSelM == 3'b011) ForwardZE = 2'b10; // choose FResM
+        if(FResultSelM == 3'b100) ForwardZE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
       else if ((Adr3E == RdW) & FWriteEnW) ForwardZE = 2'b01; // choose FPUResult64W
 
