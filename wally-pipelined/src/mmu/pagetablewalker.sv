@@ -55,6 +55,7 @@ module pagetablewalker (
   // *** modify to send to LSU // *** KMG: These are inputs/results from the ahblite whose addresses should have already been checked, so I don't think they need to be sent through the LSU
   input  logic [`XLEN-1:0] MMUReadPTE,
   input  logic             MMUReady,
+  input  logic             HPTWStall,
 
   // *** modify to send to LSU
   output logic [`XLEN-1:0] MMUPAdr,
@@ -140,14 +141,22 @@ module pagetablewalker (
   assign PageTypeF = PageType;
   assign PageTypeM = PageType;
 
-localparam LEVEL0 = 3'h0;
-  localparam LEVEL1 = 3'h1;
+  localparam LEVEL0_WDV = 4'h0;
+  localparam LEVEL0 = 4'h8;  
+  localparam LEVEL1_WDV = 4'h1;
+  localparam LEVEL1 = 4'h9;
+  localparam LEVEL2_WDV = 4'h2;
+  localparam LEVEL2 = 4'hA;  
+  localparam LEVEL3_WDV = 4'h3;
+  localparam LEVEL3 = 4'hB;
   // space left for more levels
-  localparam LEAF = 3'h5;
-  localparam IDLE = 3'h6;
-  localparam FAULT = 3'h7;
+  localparam LEAF = 4'h5;  
+  localparam IDLE = 4'h6;
+  localparam FAULT = 4'h7;
 
-  logic [2:0] WalkerState, NextWalkerState;
+  logic [3:0] WalkerState, NextWalkerState;
+
+  logic       PRegEn;
 
   generate
     if (`XLEN == 32) begin
@@ -155,27 +164,32 @@ localparam LEVEL0 = 3'h0;
 
       flopenl #(3) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
+      assign PRegEn = (WalkerState == LEVEL1 || WalkerState == LEVEL0) && ~HPTWStall;
+
       // State transition logic
       always_comb begin
         case (WalkerState)
-          IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL1;
+          IDLE:   if      (MMUTranslate)           NextWalkerState = LEVEL1_WDV;
                   else                             NextWalkerState = IDLE;
-          LEVEL1: if      (~MMUReady)              NextWalkerState = LEVEL1;
+          LEVEL1_WDV: if      (HPTWStall)          NextWalkerState = LEVEL1_WDV;
+	              else                         NextWalkerState = LEVEL1;
+	  LEVEL1: 
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
-                  else if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
+                  if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
                   // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0;
+                  else if (ValidPTE && ~LeafPTE)   NextWalkerState = LEVEL0_WDV;
                   else                             NextWalkerState = FAULT;
-          LEVEL0: if      (~MMUReady)              NextWalkerState = LEVEL0;
-                  else if (ValidPTE && LeafPTE && ~AccessAlert)
+          LEVEL0_WDV: if      (HPTWStall)          NextWalkerState = LEVEL0_WDV;
+	              else                         NextWalkerState = LEVEL0;
+	  LEVEL0: if (ValidPTE && LeafPTE && ~AccessAlert)
                                                    NextWalkerState = LEAF;
                   else                             NextWalkerState = FAULT;
-          LEAF:   if      (MMUTranslate)           NextWalkerState = LEVEL1;
+          LEAF:   if      (MMUTranslate)           NextWalkerState = LEVEL1_WDV;
                   else                             NextWalkerState = IDLE;
-          FAULT:  if      (MMUTranslate)           NextWalkerState = LEVEL1;
+          FAULT:  if      (MMUTranslate)           NextWalkerState = LEVEL1_WDV;
                   else                             NextWalkerState = IDLE;
           // Default case should never happen, but is included for linter.
           default:                                 NextWalkerState = IDLE;
@@ -201,7 +215,7 @@ localparam LEVEL0 = 3'h0;
         WalkerLoadPageFaultM = '0;
         WalkerStorePageFaultM = '0;
         MMUStall = '1;
-
+	
         case (NextWalkerState)
           IDLE: begin
             MMUStall = '0;
@@ -209,7 +223,13 @@ localparam LEVEL0 = 3'h0;
           LEVEL1: begin
             TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
           end
+          LEVEL1_WDV: begin
+            TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+          end
           LEVEL0: begin
+            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+          end
+          LEVEL0_WDV: begin
             TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
           end
           LEAF: begin
@@ -233,9 +253,16 @@ localparam LEVEL0 = 3'h0;
         endcase
       end
 
-      // Capture page table entry from ahblite
-      flopenr #(32) ptereg(clk, reset, MMUReady, MMUReadPTE, SavedPTE);
-      mux2 #(32) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
+      // Capture page table entry from data cache
+      // *** may need to delay reading this value until the next clock cycle.
+      // The clk to q latency of the SRAM in the data cache will be long.
+      // I cannot see directly using this value.  This is no different than
+      // a load delay hazard.  This will require rewriting the walker fsm.
+      // also need a new signal to save.  Should be a mealy output of the fsm
+      // request followed by ~stall.
+      flopenr #(32) ptereg(clk, reset, PRegEn, MMUReadPTE, SavedPTE);
+      //mux2 #(32) ptemux(SavedPTE, MMUReadPTE, PRegEn, CurrentPTE);
+      assign CurrentPTE = SavedPTE;
       assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
       // Assign outputs to ahblite
@@ -244,61 +271,70 @@ localparam LEVEL0 = 3'h0;
       assign MMUPAdr = TranslationPAdr[31:0];
 
     end else begin
-      localparam LEVEL2 = 3'h2;
-      localparam LEVEL3 = 3'h3;
       
       logic [8:0] VPN3, VPN2, VPN1, VPN0;
 
       logic TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
 
-      flopenl #(3) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(4) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+
+      assign PRegEn = (WalkerState == LEVEL1 || WalkerState == LEVEL0 ||
+		       WalkerState == LEVEL2 || WalkerState == LEVEL3) && ~HPTWStall;
 
       always_comb begin
         case (WalkerState)
-          IDLE:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3;
-                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2;
+          IDLE:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3_WDV;
+                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2_WDV;
                   else                                          NextWalkerState = IDLE;
 
-          LEVEL3: if      (~MMUReady)                           NextWalkerState = LEVEL3;
+          LEVEL3_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL3_WDV;
+	              else                                      NextWalkerState = LEVEL3;
+	  LEVEL3: 
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
-                  else if (ValidPTE && LeafPTE && ~BadTerapage) NextWalkerState = LEAF;
+                  if (ValidPTE && LeafPTE && ~BadTerapage) NextWalkerState = LEAF;
                   // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL2;
+                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL2_WDV;
                   else                                          NextWalkerState = FAULT;
 
-          LEVEL2: if      (~MMUReady)                           NextWalkerState = LEVEL2;
+          LEVEL2_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL2_WDV;
+	              else                                      NextWalkerState = LEVEL2;
+	  LEVEL2:
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
-                  else if (ValidPTE && LeafPTE && ~BadGigapage) NextWalkerState = LEAF;
+                  if (ValidPTE && LeafPTE && ~BadGigapage) NextWalkerState = LEAF;
                   // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL1;
+                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL1_WDV;
                   else                                          NextWalkerState = FAULT;
 
-          LEVEL1: if      (~MMUReady)                           NextWalkerState = LEVEL1;
+          LEVEL1_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL1_WDV;
+	              else                                      NextWalkerState = LEVEL1;
+	  LEVEL1:
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
-                  else if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
+                  if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
                   // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL0;
+                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL0_WDV;
                   else                                          NextWalkerState = FAULT;
 
-          LEVEL0: if      (~MMUReady)                           NextWalkerState = LEVEL0;
-                  else if (ValidPTE && LeafPTE && ~AccessAlert) NextWalkerState = LEAF;
+          LEVEL0_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL0_WDV;
+	              else                                      NextWalkerState = LEVEL0;
+	  LEVEL0:
+                  if (ValidPTE && LeafPTE && ~AccessAlert) NextWalkerState = LEAF;
                   else                                          NextWalkerState = FAULT;
                   
-          LEAF:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3;
-                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2;
+          LEAF:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3_WDV;
+                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2_WDV;
                   else                                          NextWalkerState = IDLE;
 
-          FAULT:  if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3;
-                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2;
+          FAULT:  if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3_WDV;
+                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2_WDV;
                   else                                          NextWalkerState = IDLE;
           // Default case should never happen, but is included for linter.
           default:                                              NextWalkerState = IDLE;
@@ -346,13 +382,27 @@ localparam LEVEL0 = 3'h0;
             // *** this is a huge breaking point. if we're going through level3 every time, even when sv48 is off,
             // what should translationPAdr be when level3 is just off?
           end
+          LEVEL3_WDV: begin
+            TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+            // *** this is a huge breaking point. if we're going through level3 every time, even when sv48 is off,
+            // what should translationPAdr be when level3 is just off?
+          end
           LEVEL2: begin
+            TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+          end
+          LEVEL2_WDV: begin
             TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
           end
           LEVEL1: begin
             TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
           end
+          LEVEL1_WDV: begin
+            TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+          end
           LEVEL0: begin
+            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+          end
+          LEVEL0_WDV: begin
             TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
           end
           LEAF: begin
@@ -380,8 +430,9 @@ localparam LEVEL0 = 3'h0;
       end
 
       // Capture page table entry from ahblite
-      flopenr #(`XLEN) ptereg(clk, reset, MMUReady, MMUReadPTE, SavedPTE);
-      mux2 #(`XLEN) ptemux(SavedPTE, MMUReadPTE, MMUReady, CurrentPTE);
+      flopenr #(`XLEN) ptereg(clk, reset, PRegEn, MMUReadPTE, SavedPTE);
+      //mux2 #(`XLEN) ptemux(SavedPTE, MMUReadPTE, PRegEn, CurrentPTE);
+      assign CurrentPTE = SavedPTE;
       assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
       // Assign outputs to ahblite

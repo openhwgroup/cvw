@@ -132,6 +132,7 @@ module wallypipelinedhart
   logic 		    MMUStall;
   logic 		    MMUTranslate, MMUReady;
   logic 		    HPTWReadyfromLSU;
+  logic 		    HPTWStall;
   
 
   // bus interface to dmem
@@ -171,6 +172,9 @@ module wallypipelinedhart
   logic 		    CommittedMfromLSU;
   logic 		    SquashSCWfromLSU;
   logic 		    DataMisalignedMfromLSU;
+  logic 		    StallWtoLSU;
+  logic 		    StallWfromLSU;  
+  logic [2:0] 		    Funct3MfromLSU;
   
   
   
@@ -199,11 +203,13 @@ module wallypipelinedhart
 		 .HPTWPAdr(MMUPAdr),
 		 .HPTWReadPTE(MMUReadPTE),
 		 .HPTWReady(MMUReady),
+		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM|FMemRWM),
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
+		 .StallW(StallW),
 		 .WriteDataM(WriteDatatmpM),
 		 .ReadDataW(ReadDataW),
 		 .CommittedM(CommittedM),
@@ -216,7 +222,8 @@ module wallypipelinedhart
 		 .Funct3MtoLSU(Funct3MtoLSU),
 		 .AtomicMtoLSU(AtomicMtoLSU),
 		 .MemAdrMtoLSU(MemAdrMtoLSU),          
-		 .WriteDataMtoLSU(WriteDataMtoLSU),       
+		 .WriteDataMtoLSU(WriteDataMtoLSU),  
+		 .StallWtoLSU(StallWtoLSU),
 		 .CommittedMfromLSU(CommittedMfromLSU),     
 		 .SquashSCWfromLSU(SquashSCWfromLSU),      
 		 .DataMisalignedMfromLSU(DataMisalignedMfromLSU),
@@ -232,6 +239,7 @@ module wallypipelinedhart
 	  .MemAdrM(MemAdrMtoLSU),
 	  .WriteDataM(WriteDataMtoLSU),
 	  .ReadDataW(ReadDataWFromLSU),
+	  .StallW(StallWtoLSU),
 
 	  .CommittedM(CommittedMfromLSU),
 	  .SquashSCW(SquashSCWfromLSU),
@@ -239,16 +247,19 @@ module wallypipelinedhart
 	  .DisableTranslation(DisableTranslation),
 
 	  .DataStall(DataStall),
-	  .HPTWReady(HPTWReadyfromLSU), 
+	  .HPTWReady(HPTWReadyfromLSU),
+	  .Funct3MfromLSU(Funct3MfromLSU),
+	  .StallWfromLSU(StallWfromLSU),
 	  .* ); // data cache unit
 
   ahblite ebu( 
 	       //.InstrReadF(1'b0),
 	       //.InstrRData(InstrF), // hook up InstrF later
 	       .WriteDataM(WriteDatatmpM),
-	       .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
+	       .MemSizeM(Funct3MfromLSU[1:0]), .UnsignedLoadM(Funct3MfromLSU[2]),
 	       .Funct7M(InstrM[31:25]),
 	       .HRDATAW(HRDATAW),
+	       .StallW(StallWfromLSU),
 	       .*);
 
   

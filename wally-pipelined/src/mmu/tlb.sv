@@ -136,7 +136,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   endgenerate
 
   // Whether translation should occur
-  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE);
+  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE) & ~ DisableTranslation;
 
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches

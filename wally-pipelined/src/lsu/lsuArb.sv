@@ -35,6 +35,7 @@ module lsuArb
    // to page table walker.
    output logic [`XLEN-1:0] HPTWReadPTE,
    output logic 	    HPTWReady,
+   output logic 	    HPTWStall, 
 
    // from CPU
    input logic [1:0] 	    MemRWM,
@@ -42,6 +43,7 @@ module lsuArb
    input logic [1:0] 	    AtomicM,
    input logic [`XLEN-1:0]  MemAdrM,
    input logic [`XLEN-1:0]  WriteDataM,
+   input logic 		    StallW,
    // to CPU
    output logic [`XLEN-1:0] ReadDataW,
    output logic 	    CommittedM, 
@@ -56,12 +58,13 @@ module lsuArb
    output logic [1:0] 	    AtomicMtoLSU,
    output logic [`XLEN-1:0] MemAdrMtoLSU,
    output logic [`XLEN-1:0] WriteDataMtoLSU,
+   output logic 	    StallWtoLSU,
    // from LSU
    input logic 		    CommittedMfromLSU,
    input logic 		    SquashSCWfromLSU,
    input logic 		    DataMisalignedMfromLSU,
    input logic [`XLEN-1:0]  ReadDataWFromLSU,
-   input logic              HPTWReadyfromLSU,		    
+   input logic 		    HPTWReadyfromLSU, 
    input logic 		    DataStall
   
    );
@@ -124,6 +127,7 @@ module lsuArb
   assign AtomicMtoLSU = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMtoLSU = SelPTW ? HPTWPAdr : MemAdrM;
   assign WriteDataMtoLSU = SelPTW ? `XLEN'b0 : WriteDataM;
+  assign StallWtoLSU = SelPTW ? 1'b0 : StallW;
 
   // demux the inputs from LSU to walker or cpu's data port.
 
@@ -133,6 +137,10 @@ module lsuArb
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromLSU;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromLSU;
   assign HPTWReady = HPTWReadyfromLSU;
-  assign DCacheStall = DataStall; // *** this is probably going to change.
+  // *** need to rename DcacheStall and Datastall.
+  // not clear at all.  I think it should be LSUStall from the LSU,
+  // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
+  assign HPTWStall = SelPTW ? DataStall : 1'b1;
+  assign DCacheStall = SelPTW ? 1'b0 : DataStall; // *** this is probably going to change.
   
 endmodule

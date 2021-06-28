@@ -218,9 +218,11 @@ add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/har
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/MemReadM
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/MemWriteM
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/InstrReadF
+add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/MemSizeM
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HCLK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRESETn
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRDATA
+add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRDATANext
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HREADY
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRESP
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HADDR
@@ -234,9 +236,12 @@ add wave -noupdate -group AHB /testbench/dut/hart/ebu/HMASTLOCK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HADDRD
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HSIZED
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HWRITED
+add wave -noupdate -group AHB /testbench/dut/hart/ebu/StallW
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/CurrState
-add wave -noupdate -expand -group lsu /testbench/dut/hart/arbiter/MemAdrM
+add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/DataStall
+add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/MemAdrM
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/MemPAdrM
+add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/ReadDataW
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/WriteDataM
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/AtomicMaskedM
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/DSquashBusAccessM
@@ -282,8 +287,25 @@ add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/MTIME
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/MTIMECMP
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/TimerIntM
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/SwIntM
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/PRegEn
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/WalkerState
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/MMUReady
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/HPTWStall
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/TranslationPAdr
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/MMUReadPTE
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/MMUPAdr
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/CurrentPTE
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/ValidPTE
+add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/LeafPTE
+add wave -noupdate -expand -group {LSU ARB} /testbench/dut/hart/arbiter/HPTWTranslate
+add wave -noupdate -expand -group {LSU ARB} /testbench/dut/hart/arbiter/HPTWPAdr
+add wave -noupdate -expand -group {LSU ARB} /testbench/dut/hart/arbiter/HPTWReadPTE
+add wave -noupdate -expand -group {LSU ARB} /testbench/dut/hart/arbiter/HPTWReady
+add wave -noupdate -expand -group {LSU ARB} -expand -group toLSU /testbench/dut/hart/arbiter/MemAdrMtoLSU
+add wave -noupdate -expand -group {LSU ARB} /testbench/dut/hart/arbiter/SelPTW
+add wave -noupdate /testbench/dut/hart/lsu/DataStall
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {32648010 ns} 0} {{Cursor 5} {11165332 ns} 0} {{Cursor 3} {7672141 ns} 0}
+WaveRestoreCursors {{Cursor 4} {32648010 ns} 0} {{Cursor 5} {11172098 ns} 0} {{Cursor 3} {7672141 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 189
@@ -299,4 +321,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {11156770 ns} {11173894 ns}
+WaveRestoreZoom {11171939 ns} {11172253 ns}
