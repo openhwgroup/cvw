@@ -29,71 +29,73 @@
 
 // *** Ross Thompson amo misalignment check?
 module lsu (
-  input  logic             clk, reset,
-  input  logic             StallM, FlushM, StallW, FlushW,
-  output logic             DataStall,
-  output logic             HPTWReady,
+  input logic 		      clk, reset,
+  input logic 		      StallM, FlushM, StallW, FlushW,
+  output logic 		      DataStall,
+  output logic 		      HPTWReady,
   // Memory Stage
 
   // connected to cpu (controls)
-  input  logic [1:0]       MemRWM,
-  input  logic [2:0]       Funct3M,
-  input  logic [1:0]       AtomicM,
-  output logic             CommittedM,    
-  output logic             SquashSCW,
-  output logic             DataMisalignedM,
+  input logic [1:0] 	      MemRWM,
+  input logic [2:0] 	      Funct3M,
+  input logic [1:0] 	      AtomicM,
+  output logic 		      CommittedM, 
+  output logic 		      SquashSCW,
+  output logic 		      DataMisalignedM,
 
   // address and write data
-  input  logic [`XLEN-1:0] MemAdrM,
-  input  logic [`XLEN-1:0] WriteDataM, 
-  output  logic [`XLEN-1:0] ReadDataW,    // from ahb
+  input logic [`XLEN-1:0]     MemAdrM,
+  input logic [`XLEN-1:0]     WriteDataM, 
+  output logic [`XLEN-1:0]    ReadDataW,
 
   // cpu privilege
-  input logic  [1:0]       PrivilegeModeW,
-  input logic              DTLBFlushM,
+  input logic [1:0] 	      PrivilegeModeW,
+  input logic 		      DTLBFlushM,
   // faults
-  input  logic             NonBusTrapM, 
-  output logic             DTLBLoadPageFaultM, DTLBStorePageFaultM,
-  output logic             LoadMisalignedFaultM, LoadAccessFaultM,
+  input logic 		      NonBusTrapM, 
+  output logic 		      DTLBLoadPageFaultM, DTLBStorePageFaultM,
+  output logic 		      LoadMisalignedFaultM, LoadAccessFaultM,
   // cpu hazard unit (trap)
-  output logic             StoreMisalignedFaultM, StoreAccessFaultM,
+  output logic 		      StoreMisalignedFaultM, StoreAccessFaultM,
 
   // connect to ahb
-  input  logic             CommitM,        // should this be generated in the abh interface?
-  output logic [`PA_BITS-1:0] MemPAdrM,    // to ahb
-  output logic             MemReadM, MemWriteM,
-  output logic [1:0]       AtomicMaskedM,
-  input  logic             MemAckW,      // from ahb
-  input  logic [`XLEN-1:0] HRDATAW,    // from ahb
+  input logic 		      CommitM, // should this be generated in the abh interface?
+  output logic [`PA_BITS-1:0] MemPAdrM, // to ahb
+  output logic 		      MemReadM, MemWriteM,
+  output logic [1:0] 	      AtomicMaskedM,
+  input logic 		      MemAckW, // from ahb
+  input logic [`XLEN-1:0]     HRDATAW, // from ahb
+  output logic [2:0] 	      Funct3MfromLSU,
+	    output logic StallWfromLSU,
 
 
   // mmu management
 
   // page table walker
-  input logic  [`XLEN-1:0] PageTableEntryM,
-  input logic  [1:0]       PageTypeM,
-  input logic  [`XLEN-1:0] SATP_REGW,   // from csr
-  input logic              STATUS_MXR, STATUS_SUM, // from csr
-  input logic              DTLBWriteM,
-  output logic             DTLBMissM,
-  input logic              DisableTranslation, // used to stop intermediate PTE physical addresses being saved to TLB.
+  input logic [`XLEN-1:0]     PageTableEntryM,
+  input logic [1:0] 	      PageTypeM,
+  input logic [`XLEN-1:0]     SATP_REGW, // from csr
+  input logic 		      STATUS_MXR, STATUS_SUM, // from csr
+  input logic 		      DTLBWriteM,
+  output logic 		      DTLBMissM,
+  input logic 		      DisableTranslation, // used to stop intermediate PTE physical addresses being saved to TLB.
 
 
 
-  output logic             DTLBHitM,  // not connected 
+  output logic 		      DTLBHitM, // not connected 
   
   // PMA/PMP (inside mmu) signals
-  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input  logic [2:0]       HSIZE,
-  input  logic             HWRITE,
-  input  logic             AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
-  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+  input logic [31:0] 	      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
+  input logic [2:0] 	      HSIZE,
+  input logic 		      HWRITE,
+  input logic 		      AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
+  input logic [63:0] 	      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
+  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
-  output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
-  output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
+  output logic 		      PMALoadAccessFaultM, PMAStoreAccessFaultM,
+  output logic 		      PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
-  output logic             DSquashBusAccessM
+  output logic 		      DSquashBusAccessM
 //  output logic [5:0]       DHSELRegionsM
   
 );
@@ -246,13 +248,15 @@ module lsu (
 	end
       end
       STATE_FETCH: begin
-	DataStall = 1'b1;	
 	if (MemAckW & ~StallW) begin
 	  NextState = STATE_READY;
+	  DataStall = 1'b0;	
 	end else if (MemAckW & StallW) begin
 	  NextState = STATE_STALLED;
+	  DataStall = 1'b1;	
 	end else begin
 	  NextState = STATE_FETCH;
+	  DataStall = 1'b1;
 	end
       end
       STATE_STALLED: begin
@@ -268,7 +272,12 @@ module lsu (
 	NextState = STATE_READY;
       end
     endcase
-  end
+  end // always_comb
+
+  // *** for now just pass through size
+  assign Funct3MfromLSU = Funct3M;
+  assign StallWfromLSU = StallW;
+  
 
 endmodule
 
