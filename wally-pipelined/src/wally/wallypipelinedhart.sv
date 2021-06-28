@@ -95,18 +95,17 @@ module wallypipelinedhart (
 
   // floating point unit signals
   logic [2:0]        FRM_REGW;
-  logic [1:0]        FMemRWM, FMemRWE;
-  logic              FStallD;
-  logic              FWriteIntE, FWriteIntM, FWriteIntW;
-  logic [`XLEN-1:0]  FWriteDataE;
-  logic [`XLEN-1:0]  FIntResM;  
-  logic              FDivBusyE;
-  logic              IsFPD, IsFPE;
-  logic              IllegalFPUInstrD, IllegalFPUInstrE;
-  logic              FloatRegWriteW;
-  logic              FPUStallD;
-  logic [4:0]        SetFflagsM;
-  logic [`XLEN-1:0]  FPUResultW;
+  logic [1:0] 	   FMemRWM, FMemRWE;
+  logic 		      FStallD;
+  logic 		      FWriteIntE, FWriteIntM, FWriteIntW;
+  logic [`XLEN-1:0] FWriteDataE;
+  logic [`XLEN-1:0] FIntResM;  
+  logic 		      FDivBusyE;
+  logic 		      IllegalFPUInstrD, IllegalFPUInstrE;
+  logic           FloatRegWriteW;
+  logic           FPUStallD;
+  logic [4:0] 	   SetFflagsM;
+  logic [`XLEN-1:0] FPUResultW;
 
   // memory management unit signals
   logic             ITLBWriteF, DTLBWriteM;

@@ -37,7 +37,7 @@ module datapath (
   input  logic             ALUSrcAE, ALUSrcBE,
   input  logic             TargetSrcE, 
   input  logic             JumpE,
-  input  logic             IsFPE,
+  input  logic             IllegalFPUInstrE,
   input  logic [1:0]       MemRWE,
   input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
@@ -105,9 +105,9 @@ module datapath (
   flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ALUResultM, ForwardAE, PreSrcAE);
-  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ALUResultM, ForwardBE, PreSrcBE);
-  mux2  #(`XLEN)  writedatamux(PreSrcBE, FWriteDataE, IsFPE, WriteDataE);
+  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, PreSrcAE);
+  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, PreSrcBE);
+  mux2  #(`XLEN)  writedatamux(PreSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   mux2  #(`XLEN)  srcamux(PreSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(PreSrcBE, ExtImmE, ALUSrcBE, SrcBE);
