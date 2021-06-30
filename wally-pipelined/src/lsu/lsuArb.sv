@@ -31,6 +31,7 @@ module lsuArb
 
    // from page table walker
    input logic 		    HPTWTranslate,
+   input logic 		    HPTWRead,
    input logic [`XLEN-1:0]  HPTWPAdr,
    // to page table walker.
    output logic [`XLEN-1:0] HPTWReadPTE,
@@ -82,7 +83,7 @@ module lsuArb
 
   localparam StateReady = 0;
   localparam StatePTWPending = 1;
-  localparam StatePTWActive = 1;
+  localparam StatePTWActive = 2;
 
   logic [1:0] 		    CurrState, NextState;
   logic 		    SelPTW;
@@ -102,11 +103,12 @@ module lsuArb
         else if (HPTWTranslate & ~DataStall) NextState = StatePTWActive;
 	      else                                 NextState = StateReady;
       StatePTWPending:
-	      if (~DataStall)                      NextState = StatePTWActive;
-	      else                                 NextState = StatePTWPending;
+	      if (HPTWTranslate & ~DataStall)     NextState = StatePTWActive;
+	      else if (HPTWTranslate & DataStall) NextState = StatePTWPending;
+	      else                                NextState = StateReady;
       StatePTWActive:
-	      if (~DataStall)                      NextState = StateReady;
-	      else                                 NextState = StatePTWActive;
+	      if (HPTWTranslate)     NextState = StatePTWActive;
+	      else                                NextState = StateReady;
       default:                               NextState = StateReady;
     endcase
   end
@@ -114,8 +116,8 @@ module lsuArb
 
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
-  assign SelPTW = CurrState == StatePTWActive;
-  assign MemRWMtoLSU = SelPTW ? 2'b10 : MemRWM;
+  assign SelPTW = (CurrState == StatePTWActive) || (CurrState == StateReady && HPTWTranslate);
+  assign MemRWMtoLSU = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
     if (`XLEN == 32) begin
