@@ -351,7 +351,7 @@ add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/genb
 add wave -noupdate -expand -group dtlb /testbench/dut/hart/lsu/dmmu/TLBMiss
 add wave -noupdate -expand -group itlb /testbench/dut/hart/ifu/ITLBMissF
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {11172515 ns} 0} {{Cursor 8} {2967 ns} 0}
+WaveRestoreCursors {{Cursor 5} {11172515 ns} 0} {{Cursor 8} {3207 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 189
@@ -367,4 +367,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2729 ns} {3045 ns}
+WaveRestoreZoom {2930 ns} {3454 ns}

@@ -112,6 +112,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
   localparam STATE_INVALIDATE = 18; // *** not sure if invalidate or evict? invalidate by cache block or address?
   localparam STATE_TLB_MISS = 19;
+  localparam STATE_TLB_MISS_DONE = 20;
+  
   
   
   localparam AHBByteLength = `XLEN / 8;
@@ -371,10 +373,13 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
       end
       STATE_TLB_MISS: begin
 	if (ITLBWriteF) begin
-	  NextState = STATE_READY;
+	  NextState = STATE_TLB_MISS_DONE;
 	end else begin
 	  NextState = STATE_TLB_MISS;
 	end
+      end
+      STATE_TLB_MISS_DONE : begin
+	NextState = STATE_READY;
       end
       default: begin
 	PCMux = 2'b01;

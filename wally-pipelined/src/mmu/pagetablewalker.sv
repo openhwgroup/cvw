@@ -96,7 +96,25 @@ module pagetablewalker (
   // Outputs of walker
   logic [`XLEN-1:0] PageTableEntry;
   logic [1:0] PageType;
+  logic       StartWalk;
+  logic       EndWalk;
+  
+  typedef enum {LEVEL0_WDV,
+		LEVEL0,
+		LEVEL1_WDV,
+		LEVEL1,
+		LEVEL2_WDV,
+		LEVEL2,
+		LEVEL3_WDV,
+		LEVEL3,
+		LEAF,
+		IDLE,
+		FAULT} statetype;
 
+  statetype WalkerState, NextWalkerState;
+
+  logic       PRegEn;
+  
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 
   assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
@@ -108,23 +126,30 @@ module pagetablewalker (
   flopenr #(`XLEN) 
   TranslationVAdrReg(.clk(clk),
 		     .reset(reset),
-		     .en(1'b1), // *** use enable later to save power
+		     .en(StartWalk), // *** use enable later to save power
 		     .d(TranslationVAdr),
 		     .q(TranslationVAdrQ));
 
-  flopr #(1)
+  flopenrc #(1)
   DTLBMissMReg(.clk(clk),
 	       .reset(reset),
+	       .en(StartWalk | EndWalk),
+	       .clear(EndWalk),
 	       .d(DTLBMissM),
 	       .q(DTLBMissMQ));
   
-  flopr #(1)
+  flopenrc #(1)
   ITLBMissMReg(.clk(clk),
 	       .reset(reset),
+	       .en(StartWalk | EndWalk),
+	       .clear(EndWalk),
 	       .d(ITLBMissF),
 	       .q(ITLBMissFQ));
   		     
-    
+
+  assign StartWalk = WalkerState == IDLE && (DTLBMissM | ITLBMissF);
+  assign EndWalk = WalkerState == LEAF;
+  
   assign MMUTranslate = DTLBMissMQ | ITLBMissFQ;
   //assign MMUTranslate = DTLBMissM | ITLBMissF;
 
@@ -143,21 +168,6 @@ module pagetablewalker (
   assign PageTypeF = PageType;
   assign PageTypeM = PageType;
 
-  typedef enum {LEVEL0_WDV,
-		LEVEL0,
-		LEVEL1_WDV,
-		LEVEL1,
-		LEVEL2_WDV,
-		LEVEL2,
-		LEVEL3_WDV,
-		LEVEL3,
-		LEAF,
-		IDLE,
-		FAULT} statetype;
-
-  statetype WalkerState, NextWalkerState;
-
-  logic       PRegEn;
 
   generate
     if (`XLEN == 32) begin
