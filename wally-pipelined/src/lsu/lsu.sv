@@ -103,14 +103,17 @@ module lsu (
   logic SquashSCM;
   logic DTLBPageFaultM;
   logic MemAccessM;
-  logic [2:0] CurrState, NextState;
+
   logic preCommittedM;
 
-  localparam STATE_READY = 0;
-  localparam STATE_FETCH = 1;
-  localparam STATE_FETCH_AMO_1 = 2;
-  localparam STATE_FETCH_AMO_2 = 3;
-  localparam STATE_STALLED = 4;
+  typedef enum {STATE_READY,
+		STATE_FETCH,
+		STATE_FETCH_AMO_1,
+		STATE_FETCH_AMO_2,
+		STATE_STALLED,
+		STATE_TLB_MISS} statetype;
+  statetype CurrState, NextState;
+		
 
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
@@ -208,15 +211,20 @@ module lsu (
   // requests data from memory rather than issuing a single request.
 
 
-  flopr #(3) stateReg(.clk(clk),
-		      .reset(reset),
-		      .d(NextState),
-		      .q(CurrState));
+  flopenl #(.TYPE(statetype)) stateReg(.clk(clk),
+				       .load(reset),
+				       .en(1'b1),
+				       .d(NextState),
+				       .val(STATE_READY),
+				       .q(CurrState));
 
   always_comb begin
     case (CurrState)
       STATE_READY:
-	if (AtomicMaskedM[1]) begin 
+	if (DTLBMissM) begin
+	  NextState = STATE_READY;
+	  DataStall = 1'b0;
+	end else if (AtomicMaskedM[1]) begin 
 	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
 	  DataStall = 1'b1;
 	end else if((MemReadM & AtomicM[0]) | (MemWriteM & AtomicM[0])) begin
@@ -248,15 +256,13 @@ module lsu (
 	end
       end
       STATE_FETCH: begin
+	  DataStall = 1'b1;
 	if (MemAckW & ~StallW) begin
 	  NextState = STATE_READY;
-	  DataStall = 1'b0;	
 	end else if (MemAckW & StallW) begin
 	  NextState = STATE_STALLED;
-	  DataStall = 1'b1;	
 	end else begin
 	  NextState = STATE_FETCH;
-	  DataStall = 1'b1;
 	end
       end
       STATE_STALLED: begin
@@ -265,6 +271,13 @@ module lsu (
 	  NextState = STATE_READY;
 	end else begin
 	  NextState = STATE_STALLED;
+	end
+      end
+      STATE_TLB_MISS: begin
+	if (DTLBWriteM) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_TLB_MISS;
 	end
       end
       default: begin

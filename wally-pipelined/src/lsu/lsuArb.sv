@@ -81,26 +81,31 @@ module lsuArb
   // to data memory the d cache is already busy.  We can interlock by 
   // leveraging Stall as a d cache busy.  We will need an FSM to handle this.
 
-  localparam StateReady = 0;
-  localparam StatePTWPending = 1;
-  localparam StatePTWActive = 2;
+  typedef enum{StateReady,
+	       StatePTWPending,
+	       StatePTWActive} statetype;
+  
 
-  logic [1:0] 		    CurrState, NextState;
+  statetype CurrState, NextState;
   logic 		    SelPTW;
   logic 		    HPTWStallD;
   
 
-  flopr #(2) StateReg(
-		      .clk(clk),
-		      .reset(reset),
-		      .d(NextState),
-		      .q(CurrState));
+  flopenl #(.TYPE(statetype)) StateReg(.clk(clk),
+				       .load(reset),
+				       .en(1'b1),
+				       .d(NextState),
+				       .val(StateReady),
+				       .q(CurrState));
 
   always_comb begin
     case(CurrState)
       StateReady: 
+/* -----\/----- EXCLUDED -----\/-----
 	      if      (HPTWTranslate & DataStall)  NextState = StatePTWPending;
-        else if (HPTWTranslate & ~DataStall) NextState = StatePTWActive;
+ else
+ -----/\----- EXCLUDED -----/\----- */
+         if (HPTWTranslate) NextState = StatePTWActive;
 	      else                                 NextState = StateReady;
       StatePTWPending:
 	      if (HPTWTranslate & ~DataStall)     NextState = StatePTWActive;
@@ -143,11 +148,15 @@ module lsuArb
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
+  assign HPTWStall = SelPTW ? DataStall : 1'b1;  
+  //assign HPTWStallD = SelPTW ? DataStall : 1'b1;
+/* -----\/----- EXCLUDED -----\/-----
   assign HPTWStallD = SelPTW ? DataStall : 1'b1;
   flopr #(1) HPTWStallReg (.clk(clk),
 			   .reset(reset),
 			   .d(HPTWStallD),
 			   .q(HPTWStall));
+ -----/\----- EXCLUDED -----/\----- */
   
   assign DCacheStall = SelPTW ? 1'b0 : DataStall; // *** this is probably going to change.
   

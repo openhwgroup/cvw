@@ -126,6 +126,7 @@ module pagetablewalker (
   		     
     
   assign MMUTranslate = DTLBMissMQ | ITLBMissFQ;
+  //assign MMUTranslate = DTLBMissM | ITLBMissF;
 
   // unswizzle PTE bits
   assign {Dirty, Accessed, Global, User,
@@ -142,20 +143,19 @@ module pagetablewalker (
   assign PageTypeF = PageType;
   assign PageTypeM = PageType;
 
-  localparam LEVEL0_WDV = 4'h0;
-  localparam LEVEL0 = 4'h8;  
-  localparam LEVEL1_WDV = 4'h1;
-  localparam LEVEL1 = 4'h9;
-  localparam LEVEL2_WDV = 4'h2;
-  localparam LEVEL2 = 4'hA;  
-  localparam LEVEL3_WDV = 4'h3;
-  localparam LEVEL3 = 4'hB;
-  // space left for more levels
-  localparam LEAF = 4'h5;  
-  localparam IDLE = 4'h6;
-  localparam FAULT = 4'h7;
+  typedef enum {LEVEL0_WDV,
+		LEVEL0,
+		LEVEL1_WDV,
+		LEVEL1,
+		LEVEL2_WDV,
+		LEVEL2,
+		LEVEL3_WDV,
+		LEVEL3,
+		LEAF,
+		IDLE,
+		FAULT} statetype;
 
-  logic [3:0] WalkerState, NextWalkerState;
+  statetype WalkerState, NextWalkerState;
 
   logic       PRegEn;
 
@@ -163,7 +163,7 @@ module pagetablewalker (
     if (`XLEN == 32) begin
       logic [9:0] VPN1, VPN0;
 
-      flopenl #(3) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(.TYPE(statetype)) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
       assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV) && ~HPTWStall;
 
@@ -202,13 +202,13 @@ module pagetablewalker (
       assign VPN1 = TranslationVAdrQ[31:22];
       assign VPN0 = TranslationVAdrQ[21:12];
 
-      assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || 
-			WalkerState == LEVEL2 || WalkerState == LEVEL1;
+      //assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || 
+//			WalkerState == LEVEL2 || WalkerState == LEVEL1;
       
       // Assign combinational outputs
       always_comb begin
         // default values
-        TranslationPAdr = '0;
+        //TranslationPAdr = '0;
         PageTableEntry = '0;
         PageType ='0;
         DTLBWriteM = '0;
@@ -216,38 +216,38 @@ module pagetablewalker (
         WalkerInstrPageFaultF = '0;
         WalkerLoadPageFaultM = '0;
         WalkerStorePageFaultM = '0;
-        MMUStall = '1;
+        //MMUStall = '1;
 	
         case (NextWalkerState)
           IDLE: begin
-            MMUStall = '0;
+            //MMUStall = '0;
           end
           LEVEL1: begin
-            TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+            //TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
           end
           LEVEL1_WDV: begin
-            TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+            //TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
           end
           LEVEL0: begin
-            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
           end
           LEVEL0_WDV: begin
-            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
           end
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
-            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
             PageTableEntry = CurrentPTE;
             PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
             DTLBWriteM = DTLBMissMQ;
             ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
           end
           FAULT: begin
-            TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+            //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
             WalkerInstrPageFaultF = ~DTLBMissMQ;
             WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
             WalkerStorePageFaultM = DTLBMissMQ && MemStore;
-            MMUStall = '0;  // Drop the stall early to enter trap handling code
+          //  MMUStall = '0;  // Drop the stall early to enter trap handling code
           end
           default: begin
             // nothing
@@ -278,68 +278,179 @@ module pagetablewalker (
 
       logic TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
 
-      flopenl #(4) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+      flopenl #(.TYPE(statetype)) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
+/* -----\/----- EXCLUDED -----\/-----
       assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV ||
 		       WalkerState == LEVEL2_WDV || WalkerState == LEVEL3_WDV) && ~HPTWStall;
+ -----/\----- EXCLUDED -----/\----- */
 
-      assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || WalkerState == LEVEL3 ||
-			WalkerState == LEVEL2 || WalkerState == LEVEL1;
+      //assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || WalkerState == LEVEL3 ||
+//			WalkerState == LEVEL2 || WalkerState == LEVEL1;
       
 
       always_comb begin
+	PRegEn = 1'b0;
+	TranslationPAdr = '0;
+	HPTWRead = 1'b0;
+	MMUStall = 1'b1;
+	
+        WalkerInstrPageFaultF = 1'b0;
+        WalkerLoadPageFaultM = 1'b0;
+        WalkerStorePageFaultM = 1'b0;
+
         case (WalkerState)
-          IDLE:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3_WDV;
-                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2_WDV;
-                  else                                          NextWalkerState = IDLE;
+          IDLE: begin
+	    if (MMUTranslate && SvMode == `SV48) begin
+	      NextWalkerState = LEVEL3_WDV;
+              TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+	      HPTWRead = 1'b1;
+	    end else if (MMUTranslate && SvMode == `SV39) begin
+	      NextWalkerState = LEVEL2_WDV;
+              TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
+	      HPTWRead = 1'b1;
+	    end else begin
+              NextWalkerState = IDLE;
+	      TranslationPAdr = '0;
+	      MMUStall = 1'b0;
+	    end
+	  end
 
-          LEVEL3_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL3_WDV;
-	              else                                      NextWalkerState = LEVEL3;
-	  LEVEL3: 
+          LEVEL3_WDV: begin
+            TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+	    //HPTWRead = 1'b1;
+	    if (HPTWStall) begin
+	      NextWalkerState = LEVEL3_WDV;
+	    end else begin
+	      NextWalkerState = LEVEL3;
+	      PRegEn = 1'b1;
+	    end
+	  end
+	  
+	  LEVEL3: begin
+            // *** <FUTURE WORK> According to the architecture, we should
+            // fault upon finding a superpage that is misaligned or has 0
+            // access bit. The following commented line of code is
+            // supposed to perform that check. However, it is untested.
+            if (ValidPTE && LeafPTE && ~BadTerapage) begin 
+	      NextWalkerState = LEAF;
+	    end 
+            // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
+            else if (ValidPTE && ~LeafPTE) begin
+              NextWalkerState = LEVEL2_WDV;
+              TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+	      HPTWRead = 1'b1;
+	    end else begin
+	      NextWalkerState = FAULT;
+              WalkerInstrPageFaultF = ~DTLBMissMQ;
+              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
+	    end
+
+	  end
+
+          LEVEL2_WDV:  begin
+	    TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+	    //HPTWRead = 1'b1;
+	    if (HPTWStall) begin
+	      NextWalkerState = LEVEL2_WDV;
+	    end else begin
+	      NextWalkerState = LEVEL2;
+	      PRegEn = 1'b1;
+	    end
+	  end
+	  
+	  LEVEL2: begin
                   // *** <FUTURE WORK> According to the architecture, we should
                   // fault upon finding a superpage that is misaligned or has 0
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
-                  if (ValidPTE && LeafPTE && ~BadTerapage) NextWalkerState = LEAF;
-                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL2_WDV;
-                  else                                          NextWalkerState = FAULT;
+            if (ValidPTE && LeafPTE && ~BadGigapage) begin 
+	      NextWalkerState = LEAF;
+	    end
+            // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
+            else if (ValidPTE && ~LeafPTE) begin
+              NextWalkerState = LEVEL1_WDV;
+	      TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	      HPTWRead = 1'b1;
+	    end else begin
+              NextWalkerState = FAULT;
+              WalkerInstrPageFaultF = ~DTLBMissMQ;
+              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
+	    end
 
-          LEVEL2_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL2_WDV;
-	              else                                      NextWalkerState = LEVEL2;
-	  LEVEL2:
-                  // *** <FUTURE WORK> According to the architecture, we should
-                  // fault upon finding a superpage that is misaligned or has 0
-                  // access bit. The following commented line of code is
-                  // supposed to perform that check. However, it is untested.
-                  if (ValidPTE && LeafPTE && ~BadGigapage) NextWalkerState = LEAF;
-                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL1_WDV;
-                  else                                          NextWalkerState = FAULT;
+	  end
 
-          LEVEL1_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL1_WDV;
-	              else                                      NextWalkerState = LEVEL1;
-	  LEVEL1:
-                  // *** <FUTURE WORK> According to the architecture, we should
-                  // fault upon finding a superpage that is misaligned or has 0
-                  // access bit. The following commented line of code is
-                  // supposed to perform that check. However, it is untested.
-                  if (ValidPTE && LeafPTE && ~BadMegapage) NextWalkerState = LEAF;
-                  // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
-                  else if (ValidPTE && ~LeafPTE)                NextWalkerState = LEVEL0_WDV;
-                  else                                          NextWalkerState = FAULT;
+          LEVEL1_WDV: begin
+            TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	    //HPTWRead = 1'b1;
+	    if (HPTWStall) begin 
+	      NextWalkerState = LEVEL1_WDV;
+	    end else begin
+              NextWalkerState = LEVEL1;
+	      PRegEn = 1'b1;
+	    end
+	  end
 
-          LEVEL0_WDV: if      (HPTWStall)                       NextWalkerState = LEVEL0_WDV;
-	              else                                      NextWalkerState = LEVEL0;
-	  LEVEL0:
-                  if (ValidPTE && LeafPTE && ~AccessAlert) NextWalkerState = LEAF;
-                  else                                          NextWalkerState = FAULT;
+	  LEVEL1: begin
+            // *** <FUTURE WORK> According to the architecture, we should
+            // fault upon finding a superpage that is misaligned or has 0
+            // access bit. The following commented line of code is
+            // supposed to perform that check. However, it is untested.
+            if (ValidPTE && LeafPTE && ~BadMegapage) begin 
+	      NextWalkerState = LEAF;
+	    end
+            // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
+            else if (ValidPTE && ~LeafPTE) begin
+              NextWalkerState = LEVEL0_WDV;
+              TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	      HPTWRead = 1'b1;
+	    end else begin 
+	      NextWalkerState = FAULT;
+              WalkerInstrPageFaultF = ~DTLBMissMQ;
+              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
+	    end
+	  end
+
+          LEVEL0_WDV: begin
+            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	    //HPTWRead = 1'b1;
+	    if (HPTWStall) begin 
+	      NextWalkerState = LEVEL0_WDV;
+	    end else begin
+              NextWalkerState = LEVEL0;
+	      PRegEn = 1'b1;
+	    end
+	  end
+
+	  LEVEL0: begin
+            if (ValidPTE && LeafPTE && ~AccessAlert) begin 
+	      NextWalkerState = LEAF;
+	    end else begin 
+	      NextWalkerState = FAULT;
+              WalkerInstrPageFaultF = ~DTLBMissMQ;
+              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
+	    end
+	  end
                   
-          LEAF:                                                 NextWalkerState = IDLE;
+          LEAF: begin 
+	    NextWalkerState = IDLE;
+	    MMUStall = 1'b0;
+	  end
 
-          FAULT:                                                NextWalkerState = IDLE;
-          // Default case should never happen, but is included for linter.
-          default:                                              NextWalkerState = IDLE;
+          FAULT: begin
+	    NextWalkerState = IDLE;
+	    MMUStall = 1'b0;
+	  end
+
+          // Default case should never happen
+          default: begin
+	    NextWalkerState = IDLE;
+	  end
+
         endcase
       end
 
@@ -363,53 +474,55 @@ module pagetablewalker (
 
       always_comb begin
         // default values
-        TranslationPAdr = '0;
+        //TranslationPAdr = '0;
         PageTableEntry = '0;
         PageType = '0;
         DTLBWriteM = '0;
         ITLBWriteF = '0;
+/* -----\/----- EXCLUDED -----\/-----
         WalkerInstrPageFaultF = '0;
         WalkerLoadPageFaultM = '0;
         WalkerStorePageFaultM = '0;
+ -----/\----- EXCLUDED -----/\----- */
 
         // The MMU defaults to stalling the processor 
-        MMUStall = '1;
+        //MMUStall = '1;
 
         case (NextWalkerState)
           IDLE: begin
-            MMUStall = '0;
+            //MMUStall = '0;
           end
           LEVEL3: begin
-            TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+            //TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
             // *** this is a huge breaking point. if we're going through level3 every time, even when sv48 is off,
             // what should translationPAdr be when level3 is just off?
           end
           LEVEL3_WDV: begin
-            TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+            //TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
             // *** this is a huge breaking point. if we're going through level3 every time, even when sv48 is off,
             // what should translationPAdr be when level3 is just off?
           end
           LEVEL2: begin
-            TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+            //TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
           end
           LEVEL2_WDV: begin
-            TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+            //TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
           end
           LEVEL1: begin
-            TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+            //TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
           end
           LEVEL1_WDV: begin
-            TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+            //TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
           end
           LEVEL0: begin
-            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
           end
           LEVEL0_WDV: begin
-            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
           end
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
-            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
             PageTableEntry = CurrentPTE;
             PageType = (WalkerState == LEVEL3) ? 2'b11 :
                                 ((WalkerState == LEVEL2) ? 2'b10 : 
@@ -419,11 +532,13 @@ module pagetablewalker (
           end
           FAULT: begin
             // Keep physical address alive to prevent HADDR dropping to 0
-            TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+/* -----\/----- EXCLUDED -----\/-----
             WalkerInstrPageFaultF = ~DTLBMissMQ;
             WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
             WalkerStorePageFaultM = DTLBMissMQ && MemStore;
-            MMUStall = '0;  // Drop the stall early to enter trap handling code
+ -----/\----- EXCLUDED -----/\----- */
+            //MMUStall = '0;  // Drop the stall early to enter trap handling code
           end
           default: begin
             // nothing
