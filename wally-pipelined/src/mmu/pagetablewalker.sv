@@ -36,41 +36,42 @@
 
 module pagetablewalker (
   // Control signals
-  input  logic             clk, reset,
-  input  logic [`XLEN-1:0] SATP_REGW,
+  input logic 		   clk, reset,
+  input logic [`XLEN-1:0]  SATP_REGW,
 
   // Signals from TLBs (addresses to translate)
-  input  logic [`XLEN-1:0] PCF, MemAdrM,
-  input  logic             ITLBMissF, DTLBMissM,
-  input  logic [1:0]       MemRWM,
+  input logic [`XLEN-1:0]  PCF, MemAdrM,
+  input logic 		   ITLBMissF, DTLBMissM,
+  input logic [1:0] 	   MemRWM,
 
   // Outputs to the TLBs (PTEs to write)
   output logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM,
-  output logic [1:0]       PageTypeF, PageTypeM,
-  output logic             ITLBWriteF, DTLBWriteM,
+  output logic [1:0] 	   PageTypeF, PageTypeM,
+  output logic 		   ITLBWriteF, DTLBWriteM,
 
 
 
 
   // *** modify to send to LSU // *** KMG: These are inputs/results from the ahblite whose addresses should have already been checked, so I don't think they need to be sent through the LSU
-  input  logic [`XLEN-1:0] MMUReadPTE,
-  input  logic             MMUReady,
-  input  logic             HPTWStall,
+  input logic [`XLEN-1:0]  MMUReadPTE,
+  input logic 		   MMUReady,
+  input logic 		   HPTWStall,
 
   // *** modify to send to LSU
   output logic [`XLEN-1:0] MMUPAdr,
-  output logic             MMUTranslate,   // *** rename to HPTWReq
+  output logic 		   MMUTranslate, // *** rename to HPTWReq
+  output logic 		   HPTWRead,
 
 
 
 
   // Stall signal
-  output logic             MMUStall,
+  output logic 		   MMUStall,
 
   // Faults
-  output logic             WalkerInstrPageFaultF,
-  output logic             WalkerLoadPageFaultM, 
-  output logic             WalkerStorePageFaultM
+  output logic 		   WalkerInstrPageFaultF,
+  output logic 		   WalkerLoadPageFaultM, 
+  output logic 		   WalkerStorePageFaultM
 );
 
   // Internal signals
@@ -201,6 +202,9 @@ module pagetablewalker (
       assign VPN1 = TranslationVAdrQ[31:22];
       assign VPN0 = TranslationVAdrQ[21:12];
 
+      assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || 
+			WalkerState == LEVEL2 || WalkerState == LEVEL1;
+      
       // Assign combinational outputs
       always_comb begin
         // default values
@@ -278,6 +282,10 @@ module pagetablewalker (
 
       assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV ||
 		       WalkerState == LEVEL2_WDV || WalkerState == LEVEL3_WDV) && ~HPTWStall;
+
+      assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || WalkerState == LEVEL3 ||
+			WalkerState == LEVEL2 || WalkerState == LEVEL1;
+      
 
       always_comb begin
         case (WalkerState)

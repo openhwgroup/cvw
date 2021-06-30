@@ -131,6 +131,7 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    MMUPAdr, MMUReadPTE;
   logic 		    MMUStall;
   logic 		    MMUTranslate, MMUReady;
+  logic 		    HPTWRead;
   logic 		    HPTWReadyfromLSU;
   logic 		    HPTWStall;
   
@@ -186,7 +187,8 @@ module wallypipelinedhart
   
   mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
 
-  pagetablewalker pagetablewalker(.*); // can send addresses to ahblite, send out pagetablestall
+  pagetablewalker pagetablewalker(.HPTWRead(HPTWRead),
+				  .*); // can send addresses to ahblite, send out pagetablestall
   // *** can connect to hazard unit
   // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
   // Would need to insertinstruction as InstrD, not InstrF
@@ -200,6 +202,7 @@ module wallypipelinedhart
   // arbiter between IEU and pagetablewalker
   lsuArb arbiter(// HPTW connection
 		 .HPTWTranslate(MMUTranslate),
+		 .HPTWRead(HPTWRead),
 		 .HPTWPAdr(MMUPAdr),
 		 .HPTWReadPTE(MMUReadPTE),
 		 .HPTWReady(MMUReady),
