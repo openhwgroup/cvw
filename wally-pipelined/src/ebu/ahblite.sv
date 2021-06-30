@@ -51,6 +51,7 @@ module ahblite (
   input  logic             MemReadM, MemWriteM,
   input  logic [`XLEN-1:0] WriteDataM,
   input  logic [1:0]       MemSizeM,
+  //output logic             DataStall,
   // Signals from MMU
 /* -----\/----- EXCLUDED -----\/-----
   input  logic             MMUStall,
@@ -158,9 +159,9 @@ module ahblite (
   // *** Ross Thompson remove this datastall
 /* -----\/----- EXCLUDED -----\/-----
   assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                    (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE) ||
-                    MMUStall);
+			 (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));
  -----/\----- EXCLUDED -----/\----- */
+  
 
   //assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
   //                        MMUStall);
