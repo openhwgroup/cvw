@@ -164,7 +164,7 @@ module pagetablewalker (
 
       flopenl #(3) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
-      assign PRegEn = (WalkerState == LEVEL1 || WalkerState == LEVEL0) && ~HPTWStall;
+      assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV) && ~HPTWStall;
 
       // State transition logic
       always_comb begin
@@ -184,13 +184,11 @@ module pagetablewalker (
                   else                             NextWalkerState = FAULT;
           LEVEL0_WDV: if      (HPTWStall)          NextWalkerState = LEVEL0_WDV;
 	              else                         NextWalkerState = LEVEL0;
-	  LEVEL0: if (ValidPTE && LeafPTE && ~AccessAlert)
+	  LEVEL0: if (ValidPTE & LeafPTE & ~AccessAlert)
                                                    NextWalkerState = LEAF;
                   else                             NextWalkerState = FAULT;
-          LEAF:   if      (MMUTranslate)           NextWalkerState = LEVEL1_WDV;
-                  else                             NextWalkerState = IDLE;
-          FAULT:  if      (MMUTranslate)           NextWalkerState = LEVEL1_WDV;
-                  else                             NextWalkerState = IDLE;
+          LEAF:                                    NextWalkerState = IDLE;
+          FAULT:                                   NextWalkerState = IDLE;
           // Default case should never happen, but is included for linter.
           default:                                 NextWalkerState = IDLE;
         endcase
@@ -278,8 +276,8 @@ module pagetablewalker (
 
       flopenl #(4) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
-      assign PRegEn = (WalkerState == LEVEL1 || WalkerState == LEVEL0 ||
-		       WalkerState == LEVEL2 || WalkerState == LEVEL3) && ~HPTWStall;
+      assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV ||
+		       WalkerState == LEVEL2_WDV || WalkerState == LEVEL3_WDV) && ~HPTWStall;
 
       always_comb begin
         case (WalkerState)
@@ -329,13 +327,9 @@ module pagetablewalker (
                   if (ValidPTE && LeafPTE && ~AccessAlert) NextWalkerState = LEAF;
                   else                                          NextWalkerState = FAULT;
                   
-          LEAF:   if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3_WDV;
-                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2_WDV;
-                  else                                          NextWalkerState = IDLE;
+          LEAF:                                                 NextWalkerState = IDLE;
 
-          FAULT:  if      (MMUTranslate && SvMode == `SV48)     NextWalkerState = LEVEL3_WDV;
-                  else if (MMUTranslate && SvMode == `SV39)     NextWalkerState = LEVEL2_WDV;
-                  else                                          NextWalkerState = IDLE;
+          FAULT:                                                NextWalkerState = IDLE;
           // Default case should never happen, but is included for linter.
           default:                                              NextWalkerState = IDLE;
         endcase

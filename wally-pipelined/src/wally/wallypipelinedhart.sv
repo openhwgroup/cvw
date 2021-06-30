@@ -250,6 +250,7 @@ module wallypipelinedhart
 	  .HPTWReady(HPTWReadyfromLSU),
 	  .Funct3MfromLSU(Funct3MfromLSU),
 	  .StallWfromLSU(StallWfromLSU),
+//	  .DataStall(LSUStall),
 	  .* ); // data cache unit
 
   ahblite ebu( 

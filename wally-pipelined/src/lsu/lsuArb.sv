@@ -86,6 +86,7 @@ module lsuArb
 
   logic [1:0] 		    CurrState, NextState;
   logic 		    SelPTW;
+  logic 		    HPTWStallD;
   
 
   flopr #(2) StateReg(
@@ -140,7 +141,12 @@ module lsuArb
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
-  assign HPTWStall = SelPTW ? DataStall : 1'b1;
+  assign HPTWStallD = SelPTW ? DataStall : 1'b1;
+  flopr #(1) HPTWStallReg (.clk(clk),
+			   .reset(reset),
+			   .d(HPTWStallD),
+			   .q(HPTWStall));
+  
   assign DCacheStall = SelPTW ? 1'b0 : DataStall; // *** this is probably going to change.
   
 endmodule

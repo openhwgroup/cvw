@@ -28,24 +28,27 @@
 module icache
   (
    // Basic pipeline stuff
-   input logic 		    clk, reset,
-   input logic 		    StallF, StallD,
-   input logic 		    FlushD,
+   input logic 		       clk, reset,
+   input logic 		       StallF, StallD,
+   input logic 		       FlushD,
    input logic [`PA_BITS-1:0]  PCNextF,
    input logic [`PA_BITS-1:0]  PCPF, 
    // Data read in from the ebu unit
-   input logic [`XLEN-1:0]  InstrInF,
-   input logic 		    InstrAckF,
+   input logic [`XLEN-1:0]     InstrInF,
+   input logic 		       InstrAckF,
    // Read requested from the ebu unit
    output logic [`PA_BITS-1:0] InstrPAdrF,
-   output logic 	    InstrReadF,
+   output logic 	       InstrReadF,
    // High if the instruction currently in the fetch stage is compressed
-   output logic 	    CompressedF,
+   output logic 	       CompressedF,
    // High if the icache is requesting a stall
-   output logic 	    ICacheStallF,
+   output logic 	       ICacheStallF,
+   input logic 		       ITLBMissF,
+   input logic 		       ITLBWriteF,
+   
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-   output logic [31:0] 	    FinalInstrRawF
+   output logic [31:0] 	       FinalInstrRawF
    );
 
   // Configuration parameters
