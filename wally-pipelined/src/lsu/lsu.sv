@@ -225,7 +225,7 @@ module lsu (
       STATE_READY:
 	if (DTLBMissM) begin
 	  NextState = STATE_PTW_READY;
-	  DataStall = 1'b0;
+	  DataStall = 1'b1;
 	end else if (AtomicMaskedM[1]) begin 
 	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
 	  DataStall = 1'b1;
@@ -278,7 +278,7 @@ module lsu (
       STATE_PTW_READY: begin
 	DataStall = 1'b0;
 	if (DTLBWriteM) begin
-	  NextState = STATE_PTW_DONE;
+	  NextState = STATE_READY;
 	end else if (MemReadM & ~DataMisalignedM) begin
 	  NextState = STATE_PTW_FETCH;
 	end else begin
@@ -290,7 +290,7 @@ module lsu (
 	if (MemAckW & ~DTLBWriteM) begin
 	  NextState = STATE_PTW_READY;
 	end else if (MemAckW & DTLBWriteM) begin
-	  NextState = STATE_PTW_DONE;
+	  NextState = STATE_READY;
 	end else begin
 	  NextState = STATE_PTW_FETCH;
 	end
