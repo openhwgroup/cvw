@@ -121,7 +121,7 @@ module lsuArb
 
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
-  assign SelPTW = (CurrState == StatePTWActive) || (CurrState == StateReady && HPTWTranslate);
+  assign SelPTW = (CurrState == StatePTWActive && HPTWTranslate) || (CurrState == StateReady && HPTWTranslate);
   assign MemRWMtoLSU = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
@@ -158,6 +158,6 @@ module lsuArb
 			   .q(HPTWStall));
  -----/\----- EXCLUDED -----/\----- */
   
-  assign DCacheStall = SelPTW ? 1'b0 : DataStall; // *** this is probably going to change.
+  assign DCacheStall = SelPTW ? 1'b1 : DataStall; // *** this is probably going to change.
   
 endmodule

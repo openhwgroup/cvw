@@ -148,9 +148,13 @@ module pagetablewalker (
   		     
 
   assign StartWalk = WalkerState == IDLE && (DTLBMissM | ITLBMissF);
-  assign EndWalk = WalkerState == LEAF;
+  assign EndWalk = (WalkerState == LEVEL0 && ValidPTE && LeafPTE && ~AccessAlert) ||
+		   (WalkerState == LEVEL1 && ValidPTE && LeafPTE && ~AccessAlert) ||
+		   (WalkerState == LEVEL2 && ValidPTE && LeafPTE && ~AccessAlert) ||
+		   (WalkerState == LEVEL3 && ValidPTE && LeafPTE && ~AccessAlert) ||		   
+		   (WalkerState == FAULT);
   
-  assign MMUTranslate = DTLBMissMQ | ITLBMissFQ;
+  assign MMUTranslate = (DTLBMissMQ | ITLBMissFQ) & ~EndWalk;
   //assign MMUTranslate = DTLBMissM | ITLBMissF;
 
   // unswizzle PTE bits
@@ -304,6 +308,10 @@ module pagetablewalker (
 	TranslationPAdr = '0;
 	HPTWRead = 1'b0;
 	MMUStall = 1'b1;
+        PageTableEntry = '0;
+        PageType = '0;
+        DTLBWriteM = '0;
+        ITLBWriteF = '0;
 	
         WalkerInstrPageFaultF = 1'b0;
         WalkerLoadPageFaultM = 1'b0;
@@ -343,7 +351,13 @@ module pagetablewalker (
             // access bit. The following commented line of code is
             // supposed to perform that check. However, it is untested.
             if (ValidPTE && LeafPTE && ~BadTerapage) begin 
-	      NextWalkerState = LEAF;
+	      NextWalkerState = IDLE;
+              PageTableEntry = CurrentPTE;
+              PageType = (WalkerState == LEVEL3) ? 2'b11 :
+                         ((WalkerState == LEVEL2) ? 2'b10 : 
+                          ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
+              DTLBWriteM = DTLBMissMQ;
+              ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
 	    end 
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -376,7 +390,13 @@ module pagetablewalker (
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
             if (ValidPTE && LeafPTE && ~BadGigapage) begin 
-	      NextWalkerState = LEAF;
+	      NextWalkerState = IDLE;
+              PageTableEntry = CurrentPTE;
+              PageType = (WalkerState == LEVEL3) ? 2'b11 :
+                         ((WalkerState == LEVEL2) ? 2'b10 : 
+                          ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
+              DTLBWriteM = DTLBMissMQ;
+              ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
 	    end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -409,7 +429,14 @@ module pagetablewalker (
             // access bit. The following commented line of code is
             // supposed to perform that check. However, it is untested.
             if (ValidPTE && LeafPTE && ~BadMegapage) begin 
-	      NextWalkerState = LEAF;
+	      NextWalkerState = IDLE;
+              PageTableEntry = CurrentPTE;
+              PageType = (WalkerState == LEVEL3) ? 2'b11 :
+                         ((WalkerState == LEVEL2) ? 2'b10 : 
+                          ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
+              DTLBWriteM = DTLBMissMQ;
+              ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
+	      
 	    end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -437,7 +464,14 @@ module pagetablewalker (
 
 	  LEVEL0: begin
             if (ValidPTE && LeafPTE && ~AccessAlert) begin 
-	      NextWalkerState = LEAF;
+	      NextWalkerState = IDLE;
+              PageTableEntry = CurrentPTE;
+              PageType = (WalkerState == LEVEL3) ? 2'b11 :
+                         ((WalkerState == LEVEL2) ? 2'b10 : 
+                          ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
+              DTLBWriteM = DTLBMissMQ;
+              ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
+	      
 	    end else begin 
 	      NextWalkerState = FAULT;
               WalkerInstrPageFaultF = ~DTLBMissMQ;
@@ -485,11 +519,12 @@ module pagetablewalker (
       always_comb begin
         // default values
         //TranslationPAdr = '0;
+/* -----\/----- EXCLUDED -----\/-----
         PageTableEntry = '0;
         PageType = '0;
         DTLBWriteM = '0;
         ITLBWriteF = '0;
-/* -----\/----- EXCLUDED -----\/-----
+
         WalkerInstrPageFaultF = '0;
         WalkerLoadPageFaultM = '0;
         WalkerStorePageFaultM = '0;
@@ -533,12 +568,6 @@ module pagetablewalker (
           LEAF: begin
             // Keep physical address alive to prevent HADDR dropping to 0
             //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-            PageTableEntry = CurrentPTE;
-            PageType = (WalkerState == LEVEL3) ? 2'b11 :
-                                ((WalkerState == LEVEL2) ? 2'b10 : 
-                                ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
-            DTLBWriteM = DTLBMissMQ;
-            ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
           end
           FAULT: begin
             // Keep physical address alive to prevent HADDR dropping to 0

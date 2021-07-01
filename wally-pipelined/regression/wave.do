@@ -26,7 +26,7 @@ add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/Ret
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/LoadStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/ICacheStallF
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/DataStall
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/DCacheStall
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/MulDivStallD
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/hart/hzu/FlushF
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/hart/FlushD
@@ -212,7 +212,7 @@ add wave -noupdate -group icache -expand -group pc /testbench/dut/hart/ifu/icach
 add wave -noupdate -group AHB -expand -group read /testbench/dut/hart/ebu/HRDATA
 add wave -noupdate -group AHB -expand -group read /testbench/dut/hart/ebu/HRDATAMasked
 add wave -noupdate -group AHB -expand -group read /testbench/dut/hart/ebu/HRDATANext
-add wave -noupdate -group AHB /testbench/dut/hart/ebu/BusState
+add wave -noupdate -group AHB -color Gold /testbench/dut/hart/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/ProposedNextBusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/NextBusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/DSquashBusAccessM
@@ -306,15 +306,16 @@ add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/T
 add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/ValidPTE
 add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/LeafPTE
 add wave -noupdate -expand -group ptwalker /testbench/dut/hart/pagetablewalker/MMUStall
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/TranslationPAdr
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/PageTableEntry
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/PageType
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/ITLBWriteF
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/DTLBWriteM
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/WalkerInstrPageFaultF
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/WalkerLoadPageFaultM
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/WalkerStorePageFaultM
-add wave -noupdate -expand -group ptwalker -expand -group {fsm outputs} /testbench/dut/hart/pagetablewalker/MMUStall
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/TranslationPAdr
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/PageTableEntry
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/PageType
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/ITLBWriteF
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/DTLBWriteM
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/WalkerInstrPageFaultF
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/WalkerLoadPageFaultM
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/WalkerStorePageFaultM
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/MMUStall
+add wave -noupdate -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/pagetablewalker/EndWalk
 add wave -noupdate -expand -group {LSU ARB} -color Gold /testbench/dut/hart/arbiter/CurrState
 add wave -noupdate -expand -group {LSU ARB} /testbench/dut/hart/arbiter/SelPTW
 add wave -noupdate -expand -group {LSU ARB} -expand -group hptw /testbench/dut/hart/arbiter/HPTWTranslate
@@ -349,9 +350,10 @@ add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/genb
 add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/genblk4/uart/TXRDYb
 add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/genblk4/uart/RXRDYb
 add wave -noupdate -expand -group dtlb /testbench/dut/hart/lsu/dmmu/TLBMiss
+add wave -noupdate -expand -group dtlb /testbench/dut/hart/lsu/dmmu/tlb/TLBWrite
 add wave -noupdate -expand -group itlb /testbench/dut/hart/ifu/ITLBMissF
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {11172515 ns} 0} {{Cursor 8} {3207 ns} 0}
+WaveRestoreCursors {{Cursor 5} {11172515 ns} 0} {{Cursor 8} {3377 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 189
@@ -367,4 +369,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2930 ns} {3454 ns}
+WaveRestoreZoom {3091 ns} {3683 ns}
