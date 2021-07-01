@@ -369,9 +369,6 @@ module pagetablewalker
               HPTWRead = 1'b1;
             end else begin
               NextWalkerState = FAULT;
-              WalkerInstrPageFaultF = ~DTLBMissMQ;
-              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
             end
 
           end
@@ -409,9 +406,6 @@ module pagetablewalker
               HPTWRead = 1'b1;
             end else begin
               NextWalkerState = FAULT;
-              WalkerInstrPageFaultF = ~DTLBMissMQ;
-              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
             end
 
           end
@@ -450,9 +444,6 @@ module pagetablewalker
               HPTWRead = 1'b1;
             end else begin 
               NextWalkerState = FAULT;
-              WalkerInstrPageFaultF = ~DTLBMissMQ;
-              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
             end
           end
 
@@ -479,9 +470,6 @@ module pagetablewalker
               TranslationPAdr = TranslationVAdrQ;
             end else begin 
               NextWalkerState = FAULT;
-              WalkerInstrPageFaultF = ~DTLBMissMQ;
-              WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-              WalkerStorePageFaultM = DTLBMissMQ && MemStore;
             end
           end
           
@@ -492,7 +480,10 @@ module pagetablewalker
 
           FAULT: begin
             NextWalkerState = IDLE;
-            MMUStall = 1'b0;
+            WalkerInstrPageFaultF = ~DTLBMissMQ;
+            WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
+            WalkerStorePageFaultM = DTLBMissMQ && MemStore;
+	    MMUStall = 1'b0;
           end
 
           // Default case should never happen

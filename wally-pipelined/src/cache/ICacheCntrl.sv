@@ -25,48 +25,50 @@
 
 `include "wally-config.vh"
 
-module ICacheCntrl #(parameter BLOCKLEN = 256) (
-    // Inputs from pipeline
-    input logic 		clk, reset,
-    input logic 		StallF, StallD,
-    input logic 		FlushD,
+module ICacheCntrl #(parameter BLOCKLEN = 256) 
+  (
+   // Inputs from pipeline
+   input logic 		       clk, reset,
+   input logic 		       StallF, StallD,
+   input logic 		       FlushD,
 
-    // Input the address to read
-    // The upper bits of the physical pc
-    input logic [`PA_BITS-1:0] 	PCNextF,
-    input logic [`PA_BITS-1:0] 	PCPF,
-    // Signals to/from cache memory
-    // The read coming out of it
-    input logic [31:0] 		ICacheMemReadData,
-    input logic 		ICacheMemReadValid,
-    // The address at which we want to search the cache memory
-    output logic [`PA_BITS-1:0] PCTagF,
-    output logic [`PA_BITS-1:0] PCNextIndexF, 
-    output logic 		ICacheReadEn,
-    // Load data into the cache
-    output logic 		ICacheMemWriteEnable,
-    output logic [BLOCKLEN-1:0] ICacheMemWriteData,
+   // Input the address to read
+   // The upper bits of the physical pc
+   input logic [`PA_BITS-1:0]  PCNextF,
+   input logic [`PA_BITS-1:0]  PCPF,
+   // Signals to/from cache memory
+   // The read coming out of it
+   input logic [31:0] 	       ICacheMemReadData,
+   input logic 		       ICacheMemReadValid,
+   // The address at which we want to search the cache memory
+   output logic [`PA_BITS-1:0] PCTagF,
+   output logic [`PA_BITS-1:0] PCNextIndexF, 
+   output logic 	       ICacheReadEn,
+   // Load data into the cache
+   output logic 	       ICacheMemWriteEnable,
+   output logic [BLOCKLEN-1:0] ICacheMemWriteData,
 
-    // Outputs to rest of ifu
-    // High if the instruction in the fetch stage is compressed
-    output logic 		CompressedF,
-    // The instruction that was requested
-    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-    output logic [31:0] 	FinalInstrRawF,
+   // Outputs to rest of ifu
+   // High if the instruction in the fetch stage is compressed
+   output logic 	       CompressedF,
+   // The instruction that was requested
+   // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
+   output logic [31:0] 	       FinalInstrRawF,
 
-    // Outputs to pipeline control stuff
-    output logic 		ICacheStallF, EndFetchState,
-    input logic  ITLBMissF,
-    input logic  ITLBWriteF,
+   // Outputs to pipeline control stuff
+   output logic 	       ICacheStallF, EndFetchState,
+   input logic 		       ITLBMissF,
+   input logic 		       ITLBWriteF,
+   input logic 		       WalkerInstrPageFaultF,
 
-    // Signals to/from ahblite interface
-    // A read containing the requested data
-    input logic [`XLEN-1:0] 	InstrInF,
-    input logic 		InstrAckF,
-    // The read we request from main memory
-    output logic [`PA_BITS-1:0] InstrPAdrF,
-    output logic 		InstrReadF
-);
+   // Signals to/from ahblite interface
+   // A read containing the requested data
+   input logic [`XLEN-1:0]     InstrInF,
+   input logic 		       InstrAckF,
+   // The read we request from main memory
+   output logic [`PA_BITS-1:0] InstrPAdrF,
+   output logic 	       InstrReadF
+   );
 
   // FSM states
   localparam STATE_READY = 0;
@@ -125,39 +127,39 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
-  localparam integer PA_WIDTH = `PA_BITS - 2;
+  localparam integer 	       PA_WIDTH = `PA_BITS - 2;
   
 
-  logic [4:0] 		     CurrState, NextState;
-  logic 		     hit, spill;
-  logic 		     SavePC;
-  logic [1:0] 		     PCMux;
-  logic 		     CntReset;
-  logic 		     PreCntEn, CntEn;
-  logic 		     spillSave;
-  logic 		     UnalignedSelect;
-  logic 		     FetchCountFlag;
+  logic [4:0] 		       CurrState, NextState;
+  logic 		       hit, spill;
+  logic 		       SavePC;
+  logic [1:0] 		       PCMux;
+  logic 		       CntReset;
+  logic 		       PreCntEn, CntEn;
+  logic 		       spillSave;
+  logic 		       UnalignedSelect;
+  logic 		       FetchCountFlag;
   localparam FetchCountThreshold = WORDSPERLINE - 1;
   
-  logic [LOGWPL:0] 	     FetchCount, NextFetchCount;
+  logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
 
-  logic [`PA_BITS-1:0] 	     PCPreFinalF, PCPSpillF;
+  logic [`PA_BITS-1:0] 	       PCPreFinalF, PCPSpillF;
   logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
 
   
-  logic [15:0] 		     SpillDataBlock0;
+  logic [15:0] 			 SpillDataBlock0;
   
   localparam [31:0]  	     NOP = 32'h13;
 
-  logic 		     reset_q;
-  logic [1:0] 		     PCMux_q;
+  logic 			 reset_q;
+  logic [1:0] 			 PCMux_q;
   
   
-    // Misaligned signals
-    //logic [`XLEN:0] MisalignedInstrRawF;
-    //logic           MisalignedStall;
-    // Cache fault signals
-    //logic           FaultStall;
+  // Misaligned signals
+  //logic [`XLEN:0] MisalignedInstrRawF;
+  //logic           MisalignedStall;
+  // Cache fault signals
+  //logic           FaultStall;
   
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
@@ -181,7 +183,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   // truncate the offset from PCPF for memory address generation
   assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
   
-    // Detect if the instruction is compressed
+  // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
 
 
@@ -372,7 +374,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 	NextState = STATE_READY;
       end
       STATE_TLB_MISS: begin
-	if (ITLBWriteF) begin
+	if (ITLBWriteF | WalkerInstrPageFaultF) begin
 	  NextState = STATE_TLB_MISS_DONE;
 	end else begin
 	  NextState = STATE_TLB_MISS;
@@ -425,7 +427,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
 
   // store read data from memory interface before writing into SRAM.
-  genvar i;
+  genvar 				i;
   generate
     for (i = 0; i < WORDSPERLINE; i++) begin
       flopenr #(`XLEN) flop(.clk(clk),
