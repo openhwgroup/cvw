@@ -101,23 +101,38 @@ module lsuArb
   always_comb begin
     case(CurrState)
       StateReady: 
-/* -----\/----- EXCLUDED -----\/-----
-	      if      (HPTWTranslate & DataStall)  NextState = StatePTWPending;
- else
- -----/\----- EXCLUDED -----/\----- */
-         if (HPTWTranslate) NextState = StatePTWActive;
-	      else                                 NextState = StateReady;
-      StatePTWPending:
-	      if (HPTWTranslate & ~DataStall)     NextState = StatePTWActive;
-	      else if (HPTWTranslate & DataStall) NextState = StatePTWPending;
-	      else                                NextState = StateReady;
+        if (HPTWTranslate) NextState = StatePTWActive;
+	else NextState = StateReady;
       StatePTWActive:
-	      if (HPTWTranslate)     NextState = StatePTWActive;
-	      else                                NextState = StateReady;
+	if (HPTWTranslate) NextState = StatePTWActive;
+	else NextState = StateReady;
+      default: NextState = StateReady;
+    endcase
+  end
+
+/* -----\/----- EXCLUDED -----\/-----
+
+  always_comb begin
+    case(CurrState)
+      StateReady: 
+	/-* -----\/----- EXCLUDED -----\/-----
+	 if      (HPTWTranslate & DataStall)  NextState = StatePTWPending;
+	 else
+	 -----/\----- EXCLUDED -----/\----- *-/
+        if (HPTWTranslate) NextState = StatePTWActive;
+	else                                 NextState = StateReady;
+      StatePTWPending:
+	if (HPTWTranslate & ~DataStall)     NextState = StatePTWActive;
+	else if (HPTWTranslate & DataStall) NextState = StatePTWPending;
+	else                                NextState = StateReady;
+      StatePTWActive:
+	if (HPTWTranslate)     NextState = StatePTWActive;
+	else                                NextState = StateReady;
       default:                               NextState = StateReady;
     endcase
   end
 
+ -----/\----- EXCLUDED -----/\----- */
 
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
