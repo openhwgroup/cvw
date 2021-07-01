@@ -111,7 +111,9 @@ module lsu (
 		STATE_FETCH_AMO_1,
 		STATE_FETCH_AMO_2,
 		STATE_STALLED,
-		STATE_TLB_MISS} statetype;
+		STATE_PTW_READY,
+		STATE_PTW_FETCH,
+		STATE_PTW_DONE} statetype;
   statetype CurrState, NextState;
 		
 
@@ -160,8 +162,8 @@ module lsu (
   // Changed DataMisalignedM to a larger combination of trap sources
   // NonBusTrapM is anything that the bus doesn't contribute to producing 
   // By contrast, using TrapM results in circular logic errors
-  assign MemReadM = MemRWM[1] & ~NonBusTrapM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWM[0] & ~NonBusTrapM && ~SquashSCM & CurrState != STATE_STALLED;
+  assign MemReadM = MemRWM[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWM[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
   assign MemAccessM = MemReadM | MemWriteM;
 
@@ -222,7 +224,7 @@ module lsu (
     case (CurrState)
       STATE_READY:
 	if (DTLBMissM) begin
-	  NextState = STATE_READY;
+	  NextState = STATE_PTW_READY;
 	  DataStall = 1'b0;
 	end else if (AtomicMaskedM[1]) begin 
 	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
@@ -273,12 +275,28 @@ module lsu (
 	  NextState = STATE_STALLED;
 	end
       end
-      STATE_TLB_MISS: begin
+      STATE_PTW_READY: begin
+	DataStall = 1'b0;
 	if (DTLBWriteM) begin
-	  NextState = STATE_READY;
+	  NextState = STATE_PTW_DONE;
+	end else if (MemReadM & ~DataMisalignedM) begin
+	  NextState = STATE_PTW_FETCH;
 	end else begin
-	  NextState = STATE_TLB_MISS;
+	  NextState = STATE_PTW_READY;
 	end
+      end
+      STATE_PTW_FETCH : begin
+	DataStall = 1'b1;
+	if (MemAckW & ~DTLBWriteM) begin
+	  NextState = STATE_PTW_READY;
+	end else if (MemAckW & DTLBWriteM) begin
+	  NextState = STATE_PTW_DONE;
+	end else begin
+	  NextState = STATE_PTW_FETCH;
+	end
+      end
+      STATE_PTW_DONE: begin
+	NextState = STATE_READY;
       end
       default: begin
 	DataStall = 1'b0;
