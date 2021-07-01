@@ -40,8 +40,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
     input logic [31:0] 		ICacheMemReadData,
     input logic 		ICacheMemReadValid,
     // The address at which we want to search the cache memory
-    output logic [`PA_BITS-1:0] 	PCTagF,
-    output logic [`PA_BITS-1:0]    PCNextIndexF,						     
+    output logic [`PA_BITS-1:0] PCTagF,
+    output logic [`PA_BITS-1:0] PCNextIndexF, 
     output logic 		ICacheReadEn,
     // Load data into the cache
     output logic 		ICacheMemWriteEnable,
@@ -56,13 +56,15 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 
     // Outputs to pipeline control stuff
     output logic 		ICacheStallF, EndFetchState,
+    input logic  ITLBMissF,
+    input logic  ITLBWriteF,
 
     // Signals to/from ahblite interface
     // A read containing the requested data
     input logic [`XLEN-1:0] 	InstrInF,
     input logic 		InstrAckF,
     // The read we request from main memory
-    output logic [`PA_BITS-1:0]	InstrPAdrF,
+    output logic [`PA_BITS-1:0] InstrPAdrF,
     output logic 		InstrReadF
 );
 
@@ -109,6 +111,10 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
   
 
   localparam STATE_INVALIDATE = 18; // *** not sure if invalidate or evict? invalidate by cache block or address?
+  localparam STATE_TLB_MISS = 19;
+  localparam STATE_TLB_MISS_DONE = 20;
+  
+  
   
   localparam AHBByteLength = `XLEN / 8;
   localparam AHBOFFETWIDTH = $clog2(AHBByteLength);
@@ -209,7 +215,9 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
       STATE_READY: begin
 	PCMux = 2'b00;
 	ICacheReadEn = 1'b1;
-	if (hit & ~spill) begin
+	if (ITLBMissF) begin
+	  NextState = STATE_TLB_MISS;
+	end else if (hit & ~spill) begin
 	  SavePC = 1'b1;
 	  ICacheStallF = 1'b0;
 	  NextState = STATE_READY;
@@ -361,6 +369,16 @@ module ICacheCntrl #(parameter BLOCKLEN = 256) (
 	UnalignedSelect = 1'b1;
 	SavePC = 1'b1;
 	ICacheStallF = 1'b0;	
+	NextState = STATE_READY;
+      end
+      STATE_TLB_MISS: begin
+	if (ITLBWriteF) begin
+	  NextState = STATE_TLB_MISS_DONE;
+	end else begin
+	  NextState = STATE_TLB_MISS;
+	end
+      end
+      STATE_TLB_MISS_DONE : begin
 	NextState = STATE_READY;
       end
       default: begin
