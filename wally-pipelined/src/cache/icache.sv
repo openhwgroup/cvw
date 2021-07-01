@@ -45,6 +45,7 @@ module icache
    output logic 	       ICacheStallF,
    input logic 		       ITLBMissF,
    input logic 		       ITLBWriteF,
+   input logic 		       WalkerInstrPageFaultF,
    
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros

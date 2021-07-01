@@ -176,11 +176,11 @@ module wallypipelinedhart
   logic 		    StallWtoLSU;
   logic 		    StallWfromLSU;  
   logic [2:0] 		    Funct3MfromLSU;
+
   
-  
-  
-  
-  ifu ifu(.InstrInF(InstrRData), .*); // instruction fetch unit: PC, branch prediction, instruction cache
+  ifu ifu(.InstrInF(InstrRData),
+	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	  .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
 
