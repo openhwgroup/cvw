@@ -148,7 +148,8 @@ module pagetablewalker (
   		     
 
   assign StartWalk = WalkerState == IDLE && (DTLBMissM | ITLBMissF);
-  assign EndWalk = (WalkerState == LEVEL0 && ValidPTE && LeafPTE && ~AccessAlert) ||
+  assign EndWalk = WalkerState == LEAF || 
+		   //(WalkerState == LEVEL0 && ValidPTE && LeafPTE && ~AccessAlert) ||
 		   (WalkerState == LEVEL1 && ValidPTE && LeafPTE && ~AccessAlert) ||
 		   (WalkerState == LEVEL2 && ValidPTE && LeafPTE && ~AccessAlert) ||
 		   (WalkerState == LEVEL3 && ValidPTE && LeafPTE && ~AccessAlert) ||		   
@@ -351,13 +352,14 @@ module pagetablewalker (
             // access bit. The following commented line of code is
             // supposed to perform that check. However, it is untested.
             if (ValidPTE && LeafPTE && ~BadTerapage) begin 
-	      NextWalkerState = IDLE;
+	      NextWalkerState = LEAF;
               PageTableEntry = CurrentPTE;
               PageType = (WalkerState == LEVEL3) ? 2'b11 :
                          ((WalkerState == LEVEL2) ? 2'b10 : 
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
+	      TranslationPAdr = TranslationVAdrQ;
 	    end 
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -390,13 +392,14 @@ module pagetablewalker (
                   // access bit. The following commented line of code is
                   // supposed to perform that check. However, it is untested.
             if (ValidPTE && LeafPTE && ~BadGigapage) begin 
-	      NextWalkerState = IDLE;
+	      NextWalkerState = LEAF;
               PageTableEntry = CurrentPTE;
               PageType = (WalkerState == LEVEL3) ? 2'b11 :
                          ((WalkerState == LEVEL2) ? 2'b10 : 
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
+	      TranslationPAdr = TranslationVAdrQ;
 	    end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -429,13 +432,14 @@ module pagetablewalker (
             // access bit. The following commented line of code is
             // supposed to perform that check. However, it is untested.
             if (ValidPTE && LeafPTE && ~BadMegapage) begin 
-	      NextWalkerState = IDLE;
+	      NextWalkerState = LEAF;
               PageTableEntry = CurrentPTE;
               PageType = (WalkerState == LEVEL3) ? 2'b11 :
                          ((WalkerState == LEVEL2) ? 2'b10 : 
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
+	      TranslationPAdr = TranslationVAdrQ;
 	      
 	    end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
@@ -464,14 +468,14 @@ module pagetablewalker (
 
 	  LEVEL0: begin
             if (ValidPTE && LeafPTE && ~AccessAlert) begin 
-	      NextWalkerState = IDLE;
+	      NextWalkerState = LEAF;
               PageTableEntry = CurrentPTE;
               PageType = (WalkerState == LEVEL3) ? 2'b11 :
                          ((WalkerState == LEVEL2) ? 2'b10 : 
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-	      
+	      TranslationPAdr = TranslationVAdrQ;
 	    end else begin 
 	      NextWalkerState = FAULT;
               WalkerInstrPageFaultF = ~DTLBMissMQ;
@@ -516,74 +520,6 @@ module pagetablewalker (
       assign VPN1 = TranslationVAdrQ[29:21];
       assign VPN0 = TranslationVAdrQ[20:12];
 
-      always_comb begin
-        // default values
-        //TranslationPAdr = '0;
-/* -----\/----- EXCLUDED -----\/-----
-        PageTableEntry = '0;
-        PageType = '0;
-        DTLBWriteM = '0;
-        ITLBWriteF = '0;
-
-        WalkerInstrPageFaultF = '0;
-        WalkerLoadPageFaultM = '0;
-        WalkerStorePageFaultM = '0;
- -----/\----- EXCLUDED -----/\----- */
-
-        // The MMU defaults to stalling the processor 
-        //MMUStall = '1;
-
-        case (NextWalkerState)
-          IDLE: begin
-            //MMUStall = '0;
-          end
-          LEVEL3: begin
-            //TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
-            // *** this is a huge breaking point. if we're going through level3 every time, even when sv48 is off,
-            // what should translationPAdr be when level3 is just off?
-          end
-          LEVEL3_WDV: begin
-            //TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
-            // *** this is a huge breaking point. if we're going through level3 every time, even when sv48 is off,
-            // what should translationPAdr be when level3 is just off?
-          end
-          LEVEL2: begin
-            //TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
-          end
-          LEVEL2_WDV: begin
-            //TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
-          end
-          LEVEL1: begin
-            //TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
-          end
-          LEVEL1_WDV: begin
-            //TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
-          end
-          LEVEL0: begin
-            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-          end
-          LEVEL0_WDV: begin
-            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-          end
-          LEAF: begin
-            // Keep physical address alive to prevent HADDR dropping to 0
-            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-          end
-          FAULT: begin
-            // Keep physical address alive to prevent HADDR dropping to 0
-            //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-/* -----\/----- EXCLUDED -----\/-----
-            WalkerInstrPageFaultF = ~DTLBMissMQ;
-            WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-            WalkerStorePageFaultM = DTLBMissMQ && MemStore;
- -----/\----- EXCLUDED -----/\----- */
-            //MMUStall = '0;  // Drop the stall early to enter trap handling code
-          end
-          default: begin
-            // nothing
-          end
-        endcase
-      end
 
       // Capture page table entry from ahblite
       flopenr #(`XLEN) ptereg(clk, reset, PRegEn, MMUReadPTE, SavedPTE);
