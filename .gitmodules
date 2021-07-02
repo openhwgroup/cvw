@@ -1,3 +1,0 @@
-[submodule "sky130/sky130_osu_sc_t12"]
-	path = sky130/sky130_osu_sc_t12
-	url = https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12/

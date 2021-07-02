@@ -68,9 +68,9 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    mux2 #(64) mx5 (muxb_out, mcand_q, sel_muxr&op_type, mplier);   
    mux2 #(64) mx6 (muxa_out, mcand_q, sel_muxr, mcand);
    // TDM multiplier (carry/save)
-   multiplier mult1 (mcand, mplier, Sum, Carry);
+   multiplier mult1 (mcand, mplier, Sum, Carry);   // ***multiply
    // Q*D - N (reversed but changed in rounder.v to account for sign reversal)
-   csa #(128) csa1 (Sum, Carry, constant, Sum2, Carry2);
+   csa #(128) csa1 (Sum, Carry, constant, Sum2, Carry2); //***adder
    // Add ulp for subtraction in remainder
    mux2 #(1) mx7 (1'b0, 1'b1, sel_muxr, muxr_out);
 
@@ -80,15 +80,15 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    mux2 #(64) mxA ({64'hFFFF_FFFF_FFFF_F9FF}, {64'hFFFF_FF3F_FFFF_FFFF}, P, qm_const);
    
    // CPA (from CSA)/Remainder addition/subtraction
-   ldf128 cpa1 (cout1, mul_out, Sum2, Carry2, muxr_out);
+   ldf128 cpa1 (cout1, mul_out, Sum2, Carry2, muxr_out); //***adder
    // Assuming [1,2) - q1
-   ldf64 cpa2 (cout2, q_out1, regb_out, q_const, 1'b0);
-   ldf64 cpa3 (cout3, qp_out1, regb_out, qp_const, 1'b0);
-   ldf64 cpa4 (cout4, qm_out1, regb_out, qm_const, 1'b1);   
+   ldf64 cpa2 (cout2, q_out1, regb_out, q_const, 1'b0); //***adder
+   ldf64 cpa3 (cout3, qp_out1, regb_out, qp_const, 1'b0); //***adder
+   ldf64 cpa4 (cout4, qm_out1, regb_out, qm_const, 1'b1);    //***adder
    // Assuming [0.5,1) - q0
-   ldf64 cpa5 (cout5, q_out0, {regb_out[62:0], vss}, q_const, 1'b0);
-   ldf64 cpa6 (cout6, qp_out0, {regb_out[62:0], vss}, qp_const, 1'b0);
-   ldf64 cpa7 (cout7, qm_out0, {regb_out[62:0], vss}, qm_const, 1'b1);
+   ldf64 cpa5 (cout5, q_out0, {regb_out[62:0], vss}, q_const, 1'b0); //***adder
+   ldf64 cpa6 (cout6, qp_out0, {regb_out[62:0], vss}, qp_const, 1'b0); //***adder
+   ldf64 cpa7 (cout7, qm_out0, {regb_out[62:0], vss}, qm_const, 1'b1); //***adder
    // One's complement instead of two's complement (for hw efficiency)
    assign three = {~mul_out[126], mul_out[126], ~mul_out[125:63]};   
    mux2 #(64) mxTC (~mul_out[126:63], three[64:1],  op_type, twocmp_out);

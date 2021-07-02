@@ -183,11 +183,11 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
    assign AddCorrSignE = ~FOpCtrlE[2]&~FOpCtrlE[1]&FOpCtrlE[0]&AddSwapE;
 
    // 64-bit Mantissa Adder/Subtractor
-   cla64 add1 (AddSumE, mantissaA3, mantissaB3, sub);
+   cla64 add1 (AddSumE, mantissaA3, mantissaB3, sub); //***adder
 
    // 64-bit Mantissa Subtractor - to get the two's complement of the 
    // result when the sign from the adder/subtractor is negative. 
-   cla_sub64 sub1 (AddSumTcE, mantissaB3, mantissaA3);
+   cla_sub64 sub1 (AddSumTcE, mantissaB3, mantissaA3); //***adder
  
    // Finds normal underflow result to determine whether to round final exponent down
    //***KEP used to be (AddSumE == 16'h0) I am unsure what it's supposed to be
