@@ -187,9 +187,9 @@ module csrm #(parameter
                           (CSRAdrM == MEDELEG || CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
     if (CSRAdrM >= PMPADDR0 && CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry
       CSRMReadValM = PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0];
-    else if (CSRAdrM >= PMPCFG0 && CSRAdrM < PMPCFG0 + `PMP_ENTRIES/8) begin
-      if (~CSRAdrM[0]) CSRMReadValM = PMPCFG_ARRAY_REGW[CSRAdrM - PMPCFG0][`XLEN-1:0];
-      else             CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG_ARRAY_REGW[CSRAdrM - PMPCFG0][63:32]};
+    else if (CSRAdrM >= PMPCFG0 && CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4) begin
+      if (~CSRAdrM[0]) CSRMReadValM = PMPCFG_ARRAY_REGW[(CSRAdrM - PMPCFG0)/2][`XLEN-1:0];
+      else             CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG_ARRAY_REGW[(CSRAdrM - PMPCFG0-1)/2][63:32]};
     end
     else case (CSRAdrM) 
       MISA_ADR:  CSRMReadValM = MISA_REGW;
