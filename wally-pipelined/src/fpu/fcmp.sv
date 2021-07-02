@@ -39,7 +39,7 @@
 // if either of the input operands is a signaling NaN per 754
 
 `include "wally-config.vh"
-module fpucmp1 (   
+module fcmp (   
    input logic [63:0] op1, 
    input logic [63:0] op2,
    input logic [2:0]  FOpCtrlE,
@@ -48,7 +48,7 @@ module fpucmp1 (
    
    output logic       Invalid, 		 // Invalid Operation
    // output logic [1:0] FCC,  		 // Condition Codes 
-   output logic [63:0] FCmpResultE);
+   output logic [63:0] CmpResE);
    // Perform magnitude comparison between the 63 least signficant bits
    // of the input operands. Only LT and EQ are returned, since GT can
    // be determined from these values. 
@@ -392,7 +392,7 @@ module exception_cmp_2 (
    
    output logic       invalid,
    output logic [1:0] fcc,
-   output logic [63:0] FCmpResultE,
+   output logic [63:0] CmpResE,
 
    input logic 	      Azero,
    input logic 	      Bzero,   
@@ -453,12 +453,12 @@ module exception_cmp_2 (
 
    always_comb begin
       case (FOpCtrlE[2:0])
-         3'b111: FCmpResultE = LT ? A : B;//min 
-         3'b101: FCmpResultE = GT ? A : B;//max
-         3'b010: FCmpResultE = {63'b0, EQ};//equal
-         3'b001: FCmpResultE = {63'b0, LT};//less than
-         3'b011: FCmpResultE = {63'b0, LT|EQ};//less than or equal
-         default: FCmpResultE = 64'b0;
+         3'b111: CmpResE = LT ? A : B;//min 
+         3'b101: CmpResE = GT ? A : B;//max
+         3'b010: CmpResE = {63'b0, EQ};//equal
+         3'b001: CmpResE = {63'b0, LT};//less than
+         3'b011: CmpResE = {63'b0, LT|EQ};//less than or equal
+         default: CmpResE = 64'b0;
       endcase
    end 
 

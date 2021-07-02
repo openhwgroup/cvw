@@ -115,11 +115,11 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    assign B_12_overflow = {8'h0, 3'b0, normal_overflow};
    assign B_12_underflow = {8'h0, 3'b0, normal_underflow};
 
-   cla52 add1(Tmant, Cout, A[62:11], B);
+   cla52 add1(Tmant, Cout, A[62:11], B); //***adder
 
-   cla12 add1_exp(Texp_addone, Cout_overflow, Texp, B_12_overflow);
+   cla12 add1_exp(Texp_addone, Cout_overflow, Texp, B_12_overflow); //***adder
 
-   cla_sub12 sub1_exp(Texp_subone, Texp, B_12_underflow);
+   cla_sub12 sub1_exp(Texp_subone, Texp, B_12_underflow); //***adder
 
    // Now that rounding is done, we compute the final exponent
    // and test for special cases. 

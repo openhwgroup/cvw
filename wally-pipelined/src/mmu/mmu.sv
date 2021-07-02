@@ -67,12 +67,9 @@ module mmu #(parameter ENTRY_BITS = 3,
   output logic             TLBPageFault,
 
   // PMA checker signals
-//  input  logic [31:0]      HADDR,
-//  input  logic [2:0]       HSIZE,
-//  input  logic             HWRITE,
-  input  logic             AtomicAccessM, InstrReadF, MemWriteM, MemReadM,
-  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
-  input  var logic  [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
+  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
 
   output logic             SquashBusAccess, // *** send to privileged unit
   output logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM,

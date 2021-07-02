@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module fpuhazard(
+module fhazard(
     input logic [4:0] Adr1E, Adr2E, Adr3E,
     input logic FWriteEnM, FWriteEnW, 
 	  input logic [4:0] RdM, RdW,
