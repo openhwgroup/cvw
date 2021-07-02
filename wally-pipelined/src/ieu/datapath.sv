@@ -37,6 +37,9 @@ module datapath (
   input  logic             ALUSrcAE, ALUSrcBE,
   input  logic             TargetSrcE, 
   input  logic             JumpE,
+  input  logic             IllegalFPUInstrE,
+  input  logic [1:0]       MemRWE,
+  input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
   output logic [2:0]       FlagsE,
@@ -44,13 +47,13 @@ module datapath (
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             StallM, FlushM,
-  input  logic [`XLEN-1:0] FWriteDataM,
+  input  logic             FWriteIntM,
+  input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
   output logic [`XLEN-1:0] WriteDataM, MemAdrM,
   // Writeback stage signals
   input  logic             StallW, FlushW,
   input  logic             FWriteIntW,
-  input  logic [`XLEN-1:0] FPUResultW,
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
@@ -70,13 +73,14 @@ module datapath (
   logic [`XLEN-1:0] RD1E, RD2E;
   logic [`XLEN-1:0] ExtImmE;
 
-  logic [`XLEN-1:0] PreSrcAE, SrcAE2, SrcBE2;
+  logic [`XLEN-1:0] PreSrcAE, PreSrcBE, SrcAE2, SrcBE2;
 
   logic [`XLEN-1:0] ALUResultE;
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] TargetBaseE;
   // Memory stage signals
   logic [`XLEN-1:0] ALUResultM;
+  logic [`XLEN-1:0] ResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
   logic [`XLEN-1:0] ALUResultW;
@@ -88,8 +92,7 @@ module datapath (
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
 
-  //Mux for writting floating point
-  mux2  #(`XLEN)  writedatamux(ResultW, FPUResultW, FWriteIntW, WriteDataW);  
+  //Mux for writting floating point 
   
   regfile regf(clk, reset, {RegWriteW | FWriteIntW}, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
   extend ext(.InstrD(InstrD[31:7]), .*);
@@ -102,11 +105,12 @@ module datapath (
   flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux4  #(`XLEN)  faemux(RD1E, WriteDataW, ALUResultM, FWriteDataM, ForwardAE, PreSrcAE);
-  mux4  #(`XLEN)  fbemux(RD2E, WriteDataW, ALUResultM, FWriteDataM, ForwardBE, WriteDataE);
+  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, PreSrcAE);
+  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, PreSrcBE);
+  mux2  #(`XLEN)  writedatamux(PreSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   mux2  #(`XLEN)  srcamux(PreSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
-  mux2  #(`XLEN)  srcbmux(WriteDataE, ExtImmE, ALUSrcBE, SrcBE);
+  mux2  #(`XLEN)  srcbmux(PreSrcBE, ExtImmE, ALUSrcBE, SrcBE);
   mux2  #(`XLEN)  srcbmux2(SrcBE, {`XLEN{1'b0}}, JumpE, SrcBE2); // *** May be able to remove this mux.
   alu   #(`XLEN)  alu(SrcAE2, SrcBE2, ALUControlE, ALUResultE, FlagsE);
   mux2  #(`XLEN)  targetsrcmux(PCE, SrcAE, TargetSrcE, TargetBaseE);
@@ -117,10 +121,11 @@ module datapath (
   flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
   assign MemAdrM = ALUResultM;
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
-  flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);
+  flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);	
+  mux2  #(`XLEN)   resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);
   
   // Writeback stage pipeline register and logic
-  flopenrc #(`XLEN) ALUResultWReg(clk, reset, FlushW, ~StallW, ALUResultM, ALUResultW);
+  flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
   flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // handle Store Conditional result if atomic extension supported
@@ -131,11 +136,11 @@ module datapath (
       assign SCResultW = 0;
   endgenerate
 
-  mux5  #(`XLEN) resultmux(ALUResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW);	
+  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	
 /* -----\/----- EXCLUDED -----\/-----
   // This mux4:1 no longer needs to include PCLinkW.  This is set correctly in the execution stage.
   // *** need to look at how the decoder is coded to fix.
-  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, ResultSrcW, ResultW);	
+  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, ResultSrcW, WriteDataW);	
 >>>>>>> bp
  -----/\----- EXCLUDED -----/\----- */
  

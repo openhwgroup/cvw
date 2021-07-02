@@ -28,32 +28,31 @@
 module forward(
   // Detect hazards
   input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input logic 	     MemReadE, MulDivE, CSRReadE,
-  input logic 	     RegWriteM, RegWriteW,
-  input logic 	     DivDoneE, DivBusyE,
-  input logic	     FWriteIntE, FWriteIntM, FWriteIntW,
+  input logic        MemReadE, MulDivE, CSRReadE,
+  input logic        RegWriteM, RegWriteW,
+  input logic        DivDoneE, DivBusyE,
+  input logic	       FWriteIntE, FWriteIntM, FWriteIntW,
+  input logic        SCE,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
-  output logic 	     FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
+  output logic       FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
 );
   
   always_comb begin
     ForwardAE = 2'b00;
     ForwardBE = 2'b00;
     if (Rs1E != 5'b0)
-      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
+      if      ((Rs1E == RdM) & (RegWriteM|FWriteIntM)) ForwardAE = 2'b10;
       else if ((Rs1E == RdW) & (RegWriteW|FWriteIntW)) ForwardAE = 2'b01;
-     else if ((Rs1E == RdM) & FWriteIntM) ForwardAE = 2'b11;
  
     if (Rs2E != 5'b0)
-      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
+      if      ((Rs2E == RdM) & (RegWriteM|FWriteIntM)) ForwardBE = 2'b10;
       else if ((Rs2E == RdW) & (RegWriteW|FWriteIntW)) ForwardBE = 2'b01;
-      else if ((Rs2E == RdM) & FWriteIntM) ForwardBE = 2'b11;
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
    assign FPUStallD = FWriteIntE & ((Rs1D == RdE) | (Rs2D == RdE)); 
-   assign LoadStallD = MemReadE & ((Rs1D == RdE) | (Rs2D == RdE));  
+   assign LoadStallD = (MemReadE|SCE) & ((Rs1D == RdE) | (Rs2D == RdE));  
    assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)) | MulDivE | DivBusyE; // *** extend with stalls for divide
    assign CSRRdStallD = CSRReadE & ((Rs1D == RdE) | (Rs2D == RdE));
 

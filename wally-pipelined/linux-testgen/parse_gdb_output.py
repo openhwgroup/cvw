@@ -44,7 +44,7 @@ try:
                   instrs += 1
                   storeAMO = ''
                   if instrs % 10000 == 0:
-                    print(instrs)
+                    print(instrs,flush=True)
                   # Instr in human assembly
                   wPC.write('{} ***\n'.format(' '.join(l.split(':')[1].split()[0:2])))
                   if '\tld' in l or '\tlw' in l or '\tlh' in l or '\tlb' in l:
@@ -63,6 +63,15 @@ try:
                     storeLoc = readLoc
                     storeReg = l.split()[-1].split(',')[1]
                     storeAMO = l.split()[-2]
+                  if '\tlr' in l:
+                    currentRead = l.split()[-1].split(',')[0]
+                    readOffset = "0"
+                    readLoc = l.split()[-1].split('(')[1][:-1]
+                    readType = "0" # *** I don't see that readType or lastReadType are ever used; we can probably get rid of them
+                  if '\tsc' in l:
+                    storeOffset = "0"
+                    storeLoc = l.split()[-1].split('(')[1][:-1]
+                    storeReg = l.split()[-1].split(',')[1]
                   if '\tsd' in l or '\tsw' in l or '\tsh' in l or '\tsb' in l:
                     s = l.split('#')[0].split()[-1]
                     storeReg = s.split(',')[0]

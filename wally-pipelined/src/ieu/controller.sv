@@ -45,11 +45,13 @@ module controller(
   output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
-  output logic       JumpE,		  
+  output logic       JumpE,	
+  output logic [1:0] MemRWE,	  
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
-  output logic       CSRReadM, CSRWriteM, PrivilegedM, 
+  output logic       CSRReadM, CSRWriteM, PrivilegedM,
+  output logic       SCE,
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
@@ -73,7 +75,7 @@ module controller(
   // pipelined control signals
   logic 	    RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
-  logic [1:0] MemRWD, MemRWE;
+  logic [1:0] MemRWD;
   logic		    JumpD;
   logic		    BranchD, BranchE;
   logic	[1:0] ALUOpD;
@@ -140,6 +142,7 @@ module controller(
                       ControlsD = `CTRLW'b1_000_00_00_011_0_00_0_0_1_0_0_1_00_0; // W-type Multiply/Divide
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_00_0_0_0_0_0_0_00_1; // non-implemented instruction
+        //7'b1010011:   ControlsD = `CTRLW'b0_000_00_00_101_0_00_0_0_0_0_0_0_00_1; // FP
         7'b1100011:   ControlsD = `CTRLW'b0_010_00_00_000_1_01_0_0_0_0_0_0_00_0; // beq
         7'b1100111:   ControlsD = `CTRLW'b1_000_00_00_000_0_00_1_1_0_0_0_0_00_0; // jalr
         7'b1101111:   ControlsD = `CTRLW'b1_011_00_00_000_0_00_1_0_0_0_0_0_00_0; // jal
@@ -202,7 +205,8 @@ module controller(
     
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
 
-  assign MemReadE = MemRWE[1]; 
+  assign MemReadE = MemRWE[1];
+  assign SCE = (ResultSrcE == 3'b100);
   
   // Memory stage pipeline control register
   flopenrc #(15) controlregM(clk, reset, FlushM, ~StallM,

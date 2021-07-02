@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 //
-// Written: 
-// Modified: 
+// Written: Katherine Parry, Bret Mathis
+// Modified: 6/23/2021
 //
 // Purpose: FPU
 // 
@@ -25,23 +25,22 @@
 `include "wally-config.vh"
 
 module fpu (
-  input logic [2:0]        FRM_REGW,   // Rounding mode from CSR
-  input logic 		         reset,
   input logic 		         clk,
+  input logic 		         reset,
+  input logic [2:0]        FRM_REGW,   // Rounding mode from CSR
   input logic [31:0]       InstrD,
+  input logic [`XLEN-1:0]  ReadDataW,     // Read data from memory
   input logic [`XLEN-1:0]  SrcAE,      // Integer input being processed
   input logic [`XLEN-1:0]  SrcAM,      // Integer input being written into fpreg
   input logic 		         StallE, StallM, StallW,
   input logic 		         FlushE, FlushM, FlushW,
-  input logic [`XLEN-1:0]  ReadDataW,     // Read data from memory
-  input logic 		         RegWriteD,  // register write enable from ieu
-  output logic [4:0] 	   SetFflagsM, // FPU flags
-  output logic [1:0] 	   FMemRWM,    // Read/write enable for memory {read, write}
   output logic 		      FStallD,    // Stall the decode stage if Div/Sqrt instruction
   output logic 		      FWriteIntE, FWriteIntM, FWriteIntW, // Write integer register enable
-  output logic [`XLEN-1:0] FWriteDataM,      // Data to be written to memory
+  output logic [`XLEN-1:0] FWriteDataE,      // Data to be written to memory
+  output logic [`XLEN-1:0] FIntResM,     
   output logic 		      FDivBusyE,        // Is the divison/sqrt unit busy
   output logic 		      IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+  output logic [4:0] 	   SetFflagsM,       // FPU flags
   output logic [`XLEN-1:0] FPUResultW);      // FPU result
 
    // control logic signal instantiation
@@ -51,24 +50,27 @@ module fpu (
    logic 		   FDivStartD, FDivStartE;                                  // Start division
    logic 		   FWriteIntD;                                              // Write to integer register
    logic 		   FOutputInput2D, FOutputInput2E;                          // Put Input2 in Input1 if a store instruction
-   logic [1:0] 	FMemRWD, FMemRWE;                                        // Read and write enable for memory
-   logic [1:0]    FForwardInput1D, FForwardInput1E;                        // Input1 forwarding mux control signal
-   logic [1:0] 	FForwardInput2D, FForwardInput2E;                        // Input2 forwarding mux control signal
-   logic 		   FForwardInput3D, FForwardInput3E;                        // Input3 forwarding mux control signal
-   logic 		   FInput2UsedD;                                            // Is input 2 used
-   logic 		   FInput3UsedD;                                            // Is input 3 used
+   logic [1:0] 	FMemRWD;                                        // Read and write enable for memory
+   logic [1:0]    ForwardXD, ForwardXE;                        // Input1 forwarding mux control signal
+   logic [1:0] 	ForwardYD, ForwardYE;                        // Input2 forwarding mux control signal
+   logic [1:0]		   ForwardZD, ForwardZE;                        // Input3 forwarding mux control signal
+   logic 		   SrcYUsedD;                                            // Is input 2 used
+   logic 		   SrcZUsedD;                                            // Is input 3 used
    logic [2:0] 	FResultSelD, FResultSelE, FResultSelM, FResultSelW;      // Select FP result
-   logic [3:0] 	FOpCtrlD, FOpCtrlE, FOpCtrlM, FOpCtrlW;                            // Select which opperation to do in each component
-   logic          SelLoadInputE, SelLoadInputM;                            // Select which adress to load when single precision
+   logic [3:0] 	FOpCtrlD, FOpCtrlE, FOpCtrlM, FOpCtrlW;                  // Select which opperation to do in each component
+   logic [1:0]         FResSelD, FResSelE, FResSelM;  
+   logic [1:0]         FIntResSelD, FIntResSelE, FIntResSelM;                                   
+   logic [4:0] 	Adr1E, Adr2E, Adr3E;
    
-   // regfile signals //*** KEP lint warning -  changed `XLEN-1 to 63 
+   // regfile signals
    logic [4:0]    RdE, RdM, RdW;                                           // what adress to write to    // ***Can take from ieu insted of pipelining
    logic [63:0] 	FWDM;                                                    // Write data for FP register
    logic [63:0] 	FRD1D, FRD2D, FRD3D;                                     // Read Data from FP register - decode stage
    logic [63:0] 	FRD1E, FRD2E, FRD3E;                                     // Read Data from FP register - execute stage
-   logic [63:0] 	FInput1E, FInput1M, FInput1W, FInput1tmpE;                         // Input 1 to the various units (after forwarding)
-   logic [63:0] 	FInput2E, FInput2M;                                      // Input 2 to the various units (after forwarding)
-   logic [63:0] 	FInput3E, FInput3M;                                      // Input 3 to the various units (after forwarding)
+   logic [63:0] 	SrcXE, SrcXM, SrcXW;                         // Input 1 to the various units (after forwarding)
+   logic [`XLEN-1:0]   SrcXMAligned;
+   logic [63:0] 	SrcYE, SrcYM, SrcYW;                                      // Input 2 to the various units (after forwarding)
+   logic [63:0] 	SrcZE, SrcZM;                                      // Input 3 to the various units (after forwarding)
    logic [63:0] 	FLoadResultW, FLoadStoreResultM, FLoadStoreResultW;      // Result for load, store, and move to int-reg instructions
    
    // div/sqrt signals
@@ -123,19 +125,14 @@ module fpu (
    logic [4:0] 	FAddFlagsM, FAddFlagsW;
    
    // cmp signals 
-   logic [7:0] 	WE, WM;
-   logic [7:0] 	XE, XM;
-   logic 		   ANaNE, ANaNM;
-   logic 		   BNaNE, BNaNM;
-   logic 		   AzeroE, AzeroM;
-   logic 		   BzeroE, BzeroM;
-   logic 		   CmpInvalidM, CmpInvalidW;
-   logic [1:0] 	CmpFCCM, CmpFCCW; 
-   logic [63:0] 	FCmpResultM, FCmpResultW;
+   logic 		   CmpInvalidE, CmpInvalidM, CmpInvalidW;
+   logic [63:0] 	FCmpResultE, FCmpResultM, FCmpResultW;
    
    // fsgn signals
    logic [63:0] 	SgnResultE, SgnResultM, SgnResultW;
    logic [4:0] 	SgnFlagsE, SgnFlagsM, SgnFlagsW;
+   logic [63:0]   FResM, FResW;
+   logic    FFlgM, FFlgW;
    
    // instantiation of W stage regfile signals
    logic [63:0] 	AlignedSrcAM, ForwardSrcAM, SrcAW;
@@ -147,31 +144,9 @@ module fpu (
    logic [63:0] 	FPUResult64W, FPUResult64E;                                           
    logic [4:0] 	FPUFlagsW;
    
-   // pipeline control logic
-   logic 		   PipeEnableDE;
-   logic 		   PipeEnableEM;
-   logic 		   PipeEnableMW;
-   logic 		   PipeClearDE;
-   logic 		   PipeClearEM;
-   logic 		   PipeClearMW;
-   
-   // temporarily assign pipe clear and enable signals
-   // to never flush & always be running
-   localparam     PipeClear = 1'b0;
-   localparam     PipeEnable = 1'b1;
-   always_comb begin      
-      PipeEnableDE = ~StallE;
-      PipeEnableEM = ~StallM;
-      PipeEnableMW = ~StallW;
-      PipeClearDE = FlushE;
-      PipeClearEM = FlushM;
-      PipeClearMW = FlushW;      
-   end
    
    //DECODE STAGE
    
-   // Hazard unit for FPU
-   fpuhazard hazard(.Adr1(InstrD[19:15]), .Adr2(InstrD[24:20]), .Adr3(InstrD[31:27]), .*);
    
    // top-level controller for FPU
    fctrl ctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .*);
@@ -185,40 +160,33 @@ module fpu (
    //*****************
    // fpregfile D/E pipe registers
    //*****************
-   flopenrc #(64) DEReg1(clk, reset, PipeClearDE, PipeEnableDE, FRD1D, FRD1E);
-   flopenrc #(64) DEReg2(clk, reset, PipeClearDE, PipeEnableDE, FRD2D, FRD2E);
-   flopenrc #(64) DEReg3(clk, reset, PipeClearDE, PipeEnableDE, FRD3D, FRD3E);
+   flopenrc #(64) DEReg1(clk, reset, FlushE, ~StallE, FRD1D, FRD1E);
+   flopenrc #(64) DEReg2(clk, reset, FlushE, ~StallE, FRD2D, FRD2E);
+   flopenrc #(64) DEReg3(clk, reset, FlushE, ~StallE, FRD3D, FRD3E);
    
    //*****************
    // other  D/E pipe registers
    //*****************
-   flopenrc #(1) DEReg4(clk, reset, PipeClearDE, PipeEnableDE, FWriteEnD, FWriteEnE);
-   flopenrc #(3) DEReg5(clk, reset, PipeClearDE, PipeEnableDE, FResultSelD, FResultSelE);
-   flopenrc #(3) DEReg6(clk, reset, PipeClearDE, PipeEnableDE, FrmD, FrmE);
-   flopenrc #(1) DEReg7(clk, reset, PipeClearDE, PipeEnableDE, FmtD, FmtE);
-   flopenrc #(5) DEReg8(clk, reset, PipeClearDE, PipeEnableDE, InstrD[11:7], RdE);
-   flopenrc #(4) DEReg9(clk, reset, PipeClearDE, PipeEnableDE, FOpCtrlD, FOpCtrlE);
-   flopenrc #(1) DEReg10(clk, reset, PipeClearDE, PipeEnableDE, FDivStartD, FDivStartE);
-   flopenrc #(2) DEReg11(clk, reset, PipeClearDE, PipeEnableDE, FForwardInput1D, FForwardInput1E);
-   flopenrc #(2) DEReg12(clk, reset, PipeClearDE, PipeEnableDE, FForwardInput2D, FForwardInput2E);
-   flopenrc #(1) DEReg13(clk, reset, PipeClearDE, PipeEnableDE, FForwardInput3D, FForwardInput3E);
-   flopenrc #(64) DEReg14(clk, reset, PipeClearDE, PipeEnableDE, FPUResult64W, FPUResult64E);
-   flopenrc #(1) DEReg15(clk, reset, PipeClearDE, PipeEnableDE, FWriteIntD, FWriteIntE);
-   flopenrc #(1) DEReg16(clk, reset, PipeClearDE, PipeEnableDE, FOutputInput2D, FOutputInput2E);
-   flopenrc #(2) DEReg17(clk, reset, PipeClearDE, PipeEnableDE, FMemRWD, FMemRWE);
-   flopenrc #(1) DEReg18(clk, reset, PipeClearDE, PipeEnableDE, InstrD[15], SelLoadInputE);
-   
+   flopenrc #(1) CtrlRegE1(clk, reset, FlushE, ~StallE, FDivStartD, FDivStartE);
+   flopenrc #(15) CtrlRegE2(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
+                                                         {Adr1E,         Adr2E,         Adr3E});
+   flopenrc #(22) DECtrlReg(clk, reset, FlushE, ~StallE, 
+                        {FWriteEnD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, InstrD[11:7], FOpCtrlD, FWriteIntD},
+                        {FWriteEnE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE,          FOpCtrlE, FWriteIntE});
+
    //EXECUTION STAGE
    
-   // input muxs for forwarding   
-   mux2  #(64)  SrcAMuxForward({SrcAM[31:0], 32'b0}, {SrcAM, {64-`XLEN{1'b0}}}, FmtM, ForwardSrcAM);
-   mux4  #(64)  FInput1Emux(FRD1E, FPUResult64W, FPUResult64E, ForwardSrcAM, FForwardInput1E, FInput1tmpE);
-   mux3  #(64)  FInput2Emux(FRD2E, FPUResult64W, FPUResult64E, FForwardInput2E, FInput2E);
-   mux2  #(64)  FInput3Emux(FRD3E, FPUResult64E, FForwardInput3E, FInput3E);
-   mux2  #(64)  FOutputInput2mux(FInput1tmpE, FInput2E, FOutputInput2E, FInput1E);
+   // Hazard unit for FPU
+   fpuhazard hazard(.*);
+
+   // forwarding muxs
+   mux3  #(64)  fxemux(FRD1E, FPUResult64W, FResM, ForwardXE, SrcXE);
+   mux3  #(64)  fyemux(FRD2E, FPUResult64W, FResM, ForwardYE, SrcYE);
+   mux3  #(64)  fzemux(FRD3E, FPUResult64W, FResM, ForwardZE, SrcZE);
+
    
    // first of two-stage instance of floating-point fused multiply-add unit
-   fma1 fma1 (.X(FInput1E), .Y(FInput2E), .Z(FInput3E), .FOpCtrlE(FOpCtrlE[2:0]),.*);
+   fma1 fma1 (.X(SrcXE), .Y(SrcYE), .Z(SrcZE), .FOpCtrlE(FOpCtrlE[2:0]),.*);
    
    // first and only instance of floating-point divider
    logic fpdivClk;
@@ -229,193 +197,181 @@ module fpu (
 			.ECLK(fpdivClk));
    
    // capture the inputs for div/sqrt	 
-   flopenrc #(64) reg_input1 (.d(FInput1E), .q(DivInput1E),
+   flopenrc #(64) reg_input1 (.d(SrcXE), .q(DivInput1E),
                .en(~HoldInputs), .clear(FDivSqrtDoneE),
                .reset(reset),  .clk(clk));
-   flopenrc #(64) reg_input2 (.d(FInput2E), .q(DivInput2E),
+   flopenrc #(64) reg_input2 (.d(SrcYE), .q(DivInput2E),
                .en(~HoldInputs), .clear(FDivSqrtDoneE),
                .reset(reset),  .clk(clk));
 
    fpdiv fpdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .*);
    
+
+
    // first of two-stage instance of floating-point add/cvt unit
    fpuaddcvt1 fpadd1 (.*);
    
    // first of two-stage instance of floating-point comparator
-   fpucmp1 fpcmp1 (WE, XE, ANaNE, BNaNE, AzeroE, BzeroE, FInput1E, FInput2E, FOpCtrlE[1:0]);
+   fpucmp1 fpcmp1 (SrcXE, SrcYE, FOpCtrlE[2:0], FmtE, CmpInvalidE, FCmpResultE);
    
    // first and only instance of floating-point sign converter
    fpusgn fpsgn (.SgnOpCodeE(FOpCtrlE[1:0]),.*);
    
    // first and only instance of floating-point classify unit
    fpuclassify fpuclass (.*);
+
+   // output for store instructions
+   assign FWriteDataE = FmtE ? SrcYE[63:64-`XLEN] : {{`XLEN-32{1'b0}}, SrcYE[63:32]};
    
    //*****************
    //fpregfile D/E pipe registers
    //*****************
-   flopenrc #(64) EMFpReg1(clk, reset, PipeClearEM, PipeEnableEM, FInput1E, FInput1M);
-   flopenrc #(64) EMFpReg2(clk, reset, PipeClearEM, PipeEnableEM, FInput2E, FInput2M);
-   flopenrc #(64) EMFpReg3(clk, reset, PipeClearEM, PipeEnableEM, FInput3E, FInput3M);
+   flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, SrcXE, SrcXM);
+   flopenrc #(64) EMFpReg2(clk, reset, FlushM, ~StallM, SrcYE, SrcYM);
+   flopenrc #(64) EMFpReg3(clk, reset, FlushM, ~StallM, SrcZE, SrcZM);
    
    //*****************
    // fma E/M pipe registers
    //*****************  
-  flopenrc #(106) EMRegFma3(clk, reset, PipeClearEM, PipeEnableEM, ProdManE, ProdManM); 
-  flopenrc #(162) EMRegFma4(clk, reset, PipeClearEM, PipeEnableEM, AlignedAddendE, AlignedAddendM); 
-  flopenrc #(13) EMRegFma6(clk, reset, PipeClearEM, PipeEnableEM, ProdExpE, ProdExpM);  
-  flopenrc #(1) EMRegFma7(clk, reset, PipeClearEM, PipeEnableEM, AddendStickyE, AddendStickyM); 
-  flopenrc #(1) EMRegFma8(clk, reset, PipeClearEM, PipeEnableEM, KillProdE, KillProdM); 
-  flopenrc #(1) EMRegFma10(clk, reset, PipeClearEM, PipeEnableEM, XZeroE, XZeroM); 
-  flopenrc #(1) EMRegFma11(clk, reset, PipeClearEM, PipeEnableEM, YZeroE, YZeroM); 
-  flopenrc #(1) EMRegFma12(clk, reset, PipeClearEM, PipeEnableEM, ZZeroE, ZZeroM); 
-  flopenrc #(1) EMRegFma16(clk, reset, PipeClearEM, PipeEnableEM, XInfE, XInfM); 
-  flopenrc #(1) EMRegFma17(clk, reset, PipeClearEM, PipeEnableEM, YInfE, YInfM); 
-  flopenrc #(1) EMRegFma18(clk, reset, PipeClearEM, PipeEnableEM, ZInfE, ZInfM); 
-  flopenrc #(1) EMRegFma19(clk, reset, PipeClearEM, PipeEnableEM, XNaNE, XNaNM); 
-  flopenrc #(1) EMRegFma20(clk, reset, PipeClearEM, PipeEnableEM, YNaNE, YNaNM); 
-  flopenrc #(1) EMRegFma21(clk, reset, PipeClearEM, PipeEnableEM, ZNaNE, ZNaNM);  
+  flopenrc #(106) EMRegFma3(clk, reset, FlushM, ~StallM, ProdManE, ProdManM); 
+  flopenrc #(162) EMRegFma4(clk, reset, FlushM, ~StallM, AlignedAddendE, AlignedAddendM); 
+  flopenrc #(13) EMRegFma6(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
+  flopenrc #(1) EMRegFma7(clk, reset, FlushM, ~StallM, AddendStickyE, AddendStickyM); 
+  flopenrc #(1) EMRegFma8(clk, reset, FlushM, ~StallM, KillProdE, KillProdM); 
+  flopenrc #(1) EMRegFma10(clk, reset, FlushM, ~StallM, XZeroE, XZeroM); 
+  flopenrc #(1) EMRegFma11(clk, reset, FlushM, ~StallM, YZeroE, YZeroM); 
+  flopenrc #(1) EMRegFma12(clk, reset, FlushM, ~StallM, ZZeroE, ZZeroM); 
+  flopenrc #(1) EMRegFma16(clk, reset, FlushM, ~StallM, XInfE, XInfM); 
+  flopenrc #(1) EMRegFma17(clk, reset, FlushM, ~StallM, YInfE, YInfM); 
+  flopenrc #(1) EMRegFma18(clk, reset, FlushM, ~StallM, ZInfE, ZInfM); 
+  flopenrc #(1) EMRegFma19(clk, reset, FlushM, ~StallM, XNaNE, XNaNM); 
+  flopenrc #(1) EMRegFma20(clk, reset, FlushM, ~StallM, YNaNE, YNaNM); 
+  flopenrc #(1) EMRegFma21(clk, reset, FlushM, ~StallM, ZNaNE, ZNaNM);  
 
    //*****************
    // fpadd E/M pipe registers
    //*****************
-   flopenrc #(64) EMRegAdd1(clk, reset, PipeClearEM, PipeEnableEM, AddSumE, AddSumM); 
-   flopenrc #(64) EMRegAdd2(clk, reset, PipeClearEM, PipeEnableEM, AddSumTcE, AddSumTcM); 
-   flopenrc #(4)  EMRegAdd3(clk, reset, PipeClearEM, PipeEnableEM, AddSelInvE, AddSelInvM); 
-   flopenrc #(11) EMRegAdd4(clk, reset, PipeClearEM, PipeEnableEM, AddExpPostSumE, AddExpPostSumM); 
-   flopenrc #(1) EMRegAdd5(clk, reset, PipeClearEM, PipeEnableEM, AddCorrSignE, AddCorrSignM); 
-   flopenrc #(1) EMRegAdd6(clk, reset, PipeClearEM, PipeEnableEM, AddOp1NormE, AddOp1NormM); 
-   flopenrc #(1) EMRegAdd7(clk, reset, PipeClearEM, PipeEnableEM, AddOp2NormE, AddOp2NormM); 
-   flopenrc #(1) EMRegAdd8(clk, reset, PipeClearEM, PipeEnableEM, AddOpANormE, AddOpANormM); 
-   flopenrc #(1) EMRegAdd9(clk, reset, PipeClearEM, PipeEnableEM, AddOpBNormE, AddOpBNormM); 
-   flopenrc #(1) EMRegAdd10(clk, reset, PipeClearEM, PipeEnableEM, AddInvalidE, AddInvalidM); 
-   flopenrc #(1) EMRegAdd11(clk, reset, PipeClearEM, PipeEnableEM, AddDenormInE, AddDenormInM); 
-   flopenrc #(1) EMRegAdd12(clk, reset, PipeClearEM, PipeEnableEM, AddConvertE, AddConvertM); 
-   flopenrc #(1) EMRegAdd13(clk, reset, PipeClearEM, PipeEnableEM, AddSwapE, AddSwapM); 
-   flopenrc #(1) EMRegAdd14(clk, reset, PipeClearEM, PipeEnableEM, AddNormOvflowE, AddNormOvflowM); 
-   flopenrc #(1) EMRegAdd15(clk, reset, PipeClearEM, PipeEnableEM, AddSignAE, AddSignAM); 
-   flopenrc #(64) EMRegAdd16(clk, reset, PipeClearEM, PipeEnableEM, AddFloat1E, AddFloat1M); 
-   flopenrc #(64) EMRegAdd17(clk, reset, PipeClearEM, PipeEnableEM, AddFloat2E, AddFloat2M); 
-   flopenrc #(12) EMRegAdd18(clk, reset, PipeClearEM, PipeEnableEM, AddExp1DenormE, AddExp1DenormM); 
-   flopenrc #(12) EMRegAdd19(clk, reset, PipeClearEM, PipeEnableEM, AddExp2DenormE, AddExp2DenormM); 
-   flopenrc #(11) EMRegAdd20(clk, reset, PipeClearEM, PipeEnableEM, AddExponentE, AddExponentM); 
-   flopenrc #(3) EMRegAdd23(clk, reset, PipeClearEM, PipeEnableEM, AddRmE, AddRmM); 
-   flopenrc #(4) EMRegAdd24(clk, reset, PipeClearEM, PipeEnableEM, AddOpTypeE, AddOpTypeM); 
-   flopenrc #(1) EMRegAdd25(clk, reset, PipeClearEM, PipeEnableEM, AddPE, AddPM); 
-   flopenrc #(1) EMRegAdd26(clk, reset, PipeClearEM, PipeEnableEM, AddOvEnE, AddOvEnM); 
-   flopenrc #(1) EMRegAdd27(clk, reset, PipeClearEM, PipeEnableEM, AddUnEnE, AddUnEnM); 
+   flopenrc #(64) EMRegAdd1(clk, reset, FlushM, ~StallM, AddSumE, AddSumM); 
+   flopenrc #(64) EMRegAdd2(clk, reset, FlushM, ~StallM, AddSumTcE, AddSumTcM); 
+   flopenrc #(4)  EMRegAdd3(clk, reset, FlushM, ~StallM, AddSelInvE, AddSelInvM); 
+   flopenrc #(11) EMRegAdd4(clk, reset, FlushM, ~StallM, AddExpPostSumE, AddExpPostSumM); 
+   flopenrc #(1) EMRegAdd5(clk, reset, FlushM, ~StallM, AddCorrSignE, AddCorrSignM); 
+   flopenrc #(1) EMRegAdd6(clk, reset, FlushM, ~StallM, AddOp1NormE, AddOp1NormM); 
+   flopenrc #(1) EMRegAdd7(clk, reset, FlushM, ~StallM, AddOp2NormE, AddOp2NormM); 
+   flopenrc #(1) EMRegAdd8(clk, reset, FlushM, ~StallM, AddOpANormE, AddOpANormM); 
+   flopenrc #(1) EMRegAdd9(clk, reset, FlushM, ~StallM, AddOpBNormE, AddOpBNormM); 
+   flopenrc #(1) EMRegAdd10(clk, reset, FlushM, ~StallM, AddInvalidE, AddInvalidM); 
+   flopenrc #(1) EMRegAdd11(clk, reset, FlushM, ~StallM, AddDenormInE, AddDenormInM); 
+   flopenrc #(1) EMRegAdd12(clk, reset, FlushM, ~StallM, AddConvertE, AddConvertM); 
+   flopenrc #(1) EMRegAdd13(clk, reset, FlushM, ~StallM, AddSwapE, AddSwapM); 
+   flopenrc #(1) EMRegAdd14(clk, reset, FlushM, ~StallM, AddNormOvflowE, AddNormOvflowM); 
+   flopenrc #(1) EMRegAdd15(clk, reset, FlushM, ~StallM, AddSignAE, AddSignAM); 
+   flopenrc #(64) EMRegAdd16(clk, reset, FlushM, ~StallM, AddFloat1E, AddFloat1M); 
+   flopenrc #(64) EMRegAdd17(clk, reset, FlushM, ~StallM, AddFloat2E, AddFloat2M); 
+   flopenrc #(12) EMRegAdd18(clk, reset, FlushM, ~StallM, AddExp1DenormE, AddExp1DenormM); 
+   flopenrc #(12) EMRegAdd19(clk, reset, FlushM, ~StallM, AddExp2DenormE, AddExp2DenormM); 
+   flopenrc #(11) EMRegAdd20(clk, reset, FlushM, ~StallM, AddExponentE, AddExponentM); 
+   flopenrc #(3) EMRegAdd23(clk, reset, FlushM, ~StallM, AddRmE, AddRmM); 
+   flopenrc #(4) EMRegAdd24(clk, reset, FlushM, ~StallM, AddOpTypeE, AddOpTypeM); 
+   flopenrc #(1) EMRegAdd25(clk, reset, FlushM, ~StallM, AddPE, AddPM); 
+   flopenrc #(1) EMRegAdd26(clk, reset, FlushM, ~StallM, AddOvEnE, AddOvEnM); 
+   flopenrc #(1) EMRegAdd27(clk, reset, FlushM, ~StallM, AddUnEnE, AddUnEnM); 
    
    //*****************
    // fpcmp E/M pipe registers
    //*****************
-   flopenrc #(8) EMRegCmp1(clk, reset, PipeClearEM, PipeEnableEM, WE, WM); 
-   flopenrc #(8) EMRegCmp2(clk, reset, PipeClearEM, PipeEnableEM, XE, XM); 
-   flopenrc #(1) EMRegcmp3(clk, reset, PipeClearEM, PipeEnableEM, ANaNE, ANaNM); 
-   flopenrc #(1) EMRegCmp4(clk, reset, PipeClearEM, PipeEnableEM, BNaNE, BNaNM); 
-   flopenrc #(1) EMRegCmp5(clk, reset, PipeClearEM, PipeEnableEM, AzeroE, AzeroM); 
-   flopenrc #(1) EMRegCmp6(clk, reset, PipeClearEM, PipeEnableEM, BzeroE, BzeroM); 
+   flopenrc #(1)  EMRegCmp1(clk, reset, FlushM, ~StallM, CmpInvalidE, CmpInvalidM); 
+   flopenrc #(64) EMRegCmp3(clk, reset, FlushM, ~StallM, FCmpResultE, FCmpResultM); 
    
-   // put this in for the event we want to delay fsgn - will otherwise bypass
    //*****************
    // fpsgn E/M pipe registers
    //***************** 
-   flopenrc #(64) EMRegSgn2(clk, reset, PipeClearEM, PipeEnableEM, SgnResultE, SgnResultM);
-   flopenrc #(5) EMRegSgn3(clk, reset, PipeClearEM, PipeEnableEM, SgnFlagsE, SgnFlagsM);
+   flopenrc #(64) EMRegSgn2(clk, reset, FlushM, ~StallM, SgnResultE, SgnResultM);
+   flopenrc #(5) EMRegSgn3(clk, reset, FlushM, ~StallM, SgnFlagsE, SgnFlagsM);
    
    //*****************
    // other E/M pipe registers
    //*****************
-   flopenrc #(1) EMReg1(clk, reset, PipeClearEM, PipeEnableEM, FWriteEnE, FWriteEnM);
-   flopenrc #(3) EMReg2(clk, reset, PipeClearEM, PipeEnableEM, FResultSelE, FResultSelM);
-   flopenrc #(3) EMReg3(clk, reset, PipeClearEM, PipeEnableEM, FrmE, FrmM);
-   flopenrc #(1) EMReg4(clk, reset, PipeClearEM, PipeEnableEM, FmtE, FmtM);
-   flopenrc #(5) EMReg5(clk, reset, PipeClearEM, PipeEnableEM, RdE, RdM);
-   flopenrc #(4) EMReg6(clk, reset, PipeClearEM, PipeEnableEM, FOpCtrlE, FOpCtrlM);
-   flopenrc #(1) EMReg7(clk, reset, PipeClearEM, PipeEnableEM, FWriteIntE, FWriteIntM);
-   flopenrc #(2) EMReg8(clk, reset, PipeClearEM, PipeEnableEM, FMemRWE, FMemRWM);
-   flopenrc #(1) EMReg9(clk, reset, PipeClearEM, PipeEnableEM, SelLoadInputE, SelLoadInputM);
+   flopenrc #(22) EMCtrlReg(clk, reset, FlushM, ~StallM,
+                        {FWriteEnE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE, FOpCtrlE, FWriteIntE},
+                        {FWriteEnM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, RdM, FOpCtrlM, FWriteIntM});
    
    //*****************
    // fpuclassify E/M pipe registers
    //***************** 
-   flopenrc #(64) EMRegClass(clk, reset, PipeClearEM, PipeEnableEM, ClassResultE, ClassResultM);
+   flopenrc #(64) EMRegClass(clk, reset, FlushM, ~StallM, ClassResultE, ClassResultM);
    
    //BEGIN MEMORY STAGE
    
-   assign FWriteDataM = FmtM ? FInput1M[63:64-`XLEN] : {{`XLEN-32{1'b0}}, FInput1M[63:32]};
-   //adjecent adress values are sent to the FPU, select the correct one
-   //    -imm is 80000 most of the time vs the error one which is 00000
-   // mux3  #(64)  FLoadResultMux({HRDATA[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
-   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
-   
-   fma2 fma2(.X(FInput1M), .Y(FInput2M), .Z(FInput3M), .FOpCtrlM(FOpCtrlM[2:0]), .*);
+   mux3  #(64)  FResMux(AlignedSrcAM, SgnResultM, FCmpResultM, FResSelM, FResM);
+   assign FFlgM = CmpInvalidM & FResSelM[1];
+
+   assign SrcXMAligned = FmtM ? SrcXM[63:64-`XLEN] : {{`XLEN-32{1'b0}}, SrcXM[63:32]};
+   mux3  #(`XLEN)  IntResMux(FCmpResultM[`XLEN-1:0], SrcXMAligned, ClassResultM[`XLEN-1:0], FIntResSelM, FIntResM);
+
+   // second instance of two-stage FMA unit
+   fma2 fma2(.X(SrcXM), .Y(SrcYM), .Z(SrcZM), .FOpCtrlM(FOpCtrlM[2:0]), .*);
    
    // second instance of two-stage floating-point add/cvt unit
    fpuaddcvt2 fpadd2 (.*);
    
-   // second instance of two-stage floating-point comparator
-   fpucmp2 fpcmp2 (.Invalid(CmpInvalidM), .FCC(CmpFCCM), .ANaN(ANaNM), .BNaN(BNaNM), .Azero(AzeroM), 
-		   .Bzero(BzeroM), .w(WM), .x(XM), .Sel({1'b0, FmtM}), .op1(FInput1M), .op2(FInput2M), .*);
-
    // Align SrcA to MSB when single precicion
    mux2  #(64)  SrcAMux({SrcAM[31:0], 32'b0}, {{64-`XLEN{1'b0}}, SrcAM}, FmtM, AlignedSrcAM);
       
-
 
 
       
    //*****************
    //fpregfile M/W pipe registers
    //*****************
-   flopenrc #(64) MWFpReg1(clk, reset, PipeClearMW, PipeEnableMW, FInput1M, FInput1W);
+   flopenrc #(64) MWFpReg1(clk, reset, FlushW, ~StallW, SrcXM, SrcXW);
+   flopenrc #(64) MWFpReg2(clk, reset, FlushW, ~StallW, SrcYM, SrcYW);
    
    //*****************
    // fma M/W pipe registers
    //*****************
-   flopenrc #(64) MWRegFma1(clk, reset, PipeClearMW, PipeEnableMW, FmaResultM, FmaResultW); 
-   flopenrc #(5) MWRegFma2(clk, reset, PipeClearMW, PipeEnableMW, FmaFlagsM, FmaFlagsW); 
+   flopenrc #(64) MWRegFma1(clk, reset, FlushW, ~StallW, FmaResultM, FmaResultW); 
+   flopenrc #(5) MWRegFma2(clk, reset, FlushW, ~StallW, FmaFlagsM, FmaFlagsW); 
    
    //*****************
    // fpdiv M/W pipe registers
    //*****************
-   flopenrc #(64) MWRegDiv1(clk, reset, PipeClearMW, PipeEnableMW, FDivResultM, FDivResultW); 
-   flopenrc #(5) MWRegDiv2(clk, reset, PipeClearMW, PipeEnableMW, FDivFlagsM, FDivFlagsW);
-   flopenrc #(1) MWRegDiv3(clk, reset, PipeClearMW, PipeEnableMW, DivDenormM, DivDenormW); 
+   flopenrc #(64) MWRegDiv1(clk, reset, FlushW, ~StallW, FDivResultM, FDivResultW); 
+   flopenrc #(5) MWRegDiv2(clk, reset, FlushW, ~StallW, FDivFlagsM, FDivFlagsW);
+   flopenrc #(1) MWRegDiv3(clk, reset, FlushW, ~StallW, DivDenormM, DivDenormW); 
    
    //*****************
    // fpadd M/W pipe registers
    //*****************
-   flopenrc #(64) MWRegAdd1(clk, reset, PipeClearMW, PipeEnableMW, FAddResultM, FAddResultW); 
-   flopenrc #(5) MWRegAdd2(clk, reset, PipeClearMW, PipeEnableMW, FAddFlagsM, FAddFlagsW); 
+   flopenrc #(64) MWRegAdd1(clk, reset, FlushW, ~StallW, FAddResultM, FAddResultW); 
+   flopenrc #(5) MWRegAdd2(clk, reset, FlushW, ~StallW, FAddFlagsM, FAddFlagsW); 
    
    //*****************
    // fpcmp M/W pipe registers
    //*****************
-   flopenrc #(1) MWRegCmp1(clk, reset, PipeClearMW, PipeEnableMW, CmpInvalidM, CmpInvalidW); 
-   flopenrc #(2) MWRegCmp2(clk, reset, PipeClearMW, PipeEnableMW, CmpFCCM, CmpFCCW); 
-   flopenrc #(64) MWRegCmp3(clk, reset, PipeClearMW, PipeEnableMW, FCmpResultM, FCmpResultW); 
+   flopenrc #(1) MWRegCmp1(clk, reset, FlushW, ~StallW, CmpInvalidM, CmpInvalidW); 
+   // flopenrc #(2) MWRegCmp2(clk, reset, FlushW, ~StallW, CmpFCCM, CmpFCCW); 
+   flopenrc #(64) MWRegCmp3(clk, reset, FlushW, ~StallW, FCmpResultM, FCmpResultW); 
    
    //*****************
    // fpsgn M/W pipe registers
    //***************** 
-   flopenrc #(64) MWRegSgn1(clk, reset, PipeClearMW, PipeEnableMW, SgnResultM, SgnResultW);
-   flopenrc #(5) MWRegSgn2(clk, reset, PipeClearMW, PipeEnableMW, SgnFlagsM, SgnFlagsW);
+   flopenrc #(64) MWRegSgn1(clk, reset, FlushW, ~StallW, SgnResultM, SgnResultW);
+   flopenrc #(5) MWRegSgn2(clk, reset, FlushW, ~StallW, SgnFlagsM, SgnFlagsW);
    
    //*****************
    // other M/W pipe registers
    //*****************
-   flopenrc #(1) MWReg1(clk, reset, PipeClearMW, PipeEnableMW, FWriteEnM, FWriteEnW);
-   flopenrc #(3) MWReg2(clk, reset, PipeClearMW, PipeEnableMW, FResultSelM, FResultSelW);
-   flopenrc #(1) MWReg3(clk, reset, PipeClearMW, PipeEnableMW, FmtM, FmtW);
-   flopenrc #(5) MWReg4(clk, reset, PipeClearMW, PipeEnableMW, RdM, RdW);
-   flopenrc #(64) MWReg5(clk, reset, PipeClearMW, PipeEnableMW, AlignedSrcAM, SrcAW);
-   // flopenrc #(64) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, FLoadStoreResultM, FLoadStoreResultW);
-   flopenrc #(1) MWReg7(clk, reset, PipeClearMW, PipeEnableMW, FWriteIntM, FWriteIntW);
-   flopenrc #(4) MWReg6(clk, reset, PipeClearMW, PipeEnableMW, FOpCtrlM, FOpCtrlW);
+   flopenrc #(11) MWCtrlReg(clk, reset, FlushW, ~StallW,
+                        {FWriteEnM, FResultSelM, RdM, FmtM, FWriteIntM},
+                        {FWriteEnW, FResultSelW, RdW, FmtW, FWriteIntW});
    
    //*****************
    // fpuclassify M/W pipe registers
    //***************** 
-   flopenrc #(64) MWRegClass(clk, reset, PipeClearMW, PipeEnableMW, ClassResultM, ClassResultW);
+   flopenrc #(64) MWRegClass(clk, reset, FlushW, ~StallW, ClassResultM, ClassResultW);
+   flopenrc #(64) MWRegClass2(clk, reset, FlushW, ~StallW, FResM, FResW);
+   flopenrc #(1) MWRegClass1(clk, reset, FlushW, ~StallW, FFlgM, FFlgW);
    
 
 
@@ -424,14 +380,6 @@ module fpu (
   //#########################################
   // BEGIN WRITEBACK STAGE
   //#########################################
-   
-
-   // mux3  #(64)  FLoadResultMux({ReadD[31:0], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA[`AHBW-1:`AHBW-32], {64-`AHBW+(`XLEN-32){1'b0}}}, {HRDATA, {64-`AHBW{1'b0}}}, {FmtM, SelLoadInputM}, FLoadResultM);
-   // mux2  #(64)  FLoadStoreResultMux(FLoadResultM, FInput1M, |FOpCtrlM[2:1], FLoadStoreResultM);
-   //***RV32D needs to give two bus transactions
-    mux2  #(64)  FLoadResultMux({ReadDataW[31:0], {32{1'b0}}}, {ReadDataW, {64-`XLEN{1'b0}}}, FmtW, FLoadResultW);
-    mux2  #(64)  FLoadStoreResultMux(FLoadResultW, FInput1W, |FOpCtrlW[2:1], FLoadStoreResultW);
-
 
 
 
@@ -440,47 +388,26 @@ module fpu (
 
    always_comb begin
       case (FResultSelW)
-	// div/sqrt
-	3'b000 : FPUFlagsW = FDivFlagsW;
-	// cmp		
-	3'b001 : FPUFlagsW = {CmpInvalidW, 4'b0};
-	//fma/mult
-	3'b010 : FPUFlagsW = FmaFlagsW;
-	// sgn inj
-	3'b011 : FPUFlagsW = SgnFlagsW;
-	// add/sub/cnvt
-	3'b100 : FPUFlagsW = FAddFlagsW;
-	// classify
-	3'b101 : FPUFlagsW = 5'b0;
-	// output SrcAW
-	3'b110 : FPUFlagsW = 5'b0;
-	// output FRD1
-	3'b111 : FPUFlagsW = 5'b0;
+	3'b000 : FPUFlagsW = 5'b0;
+	3'b001 : FPUFlagsW = FmaFlagsW;
+	3'b010 : FPUFlagsW = FAddFlagsW;
+	3'b011 : FPUFlagsW = FDivFlagsW;
+	3'b100 : FPUFlagsW = {4'b0,FFlgW};
 	default : FPUFlagsW = 5'bxxxxx;
       endcase
    end
-   
+
    always_comb begin
       case (FResultSelW)
-	// div/sqrt
-	3'b000 : FPUResult64W = FDivResultW;
-	// cmp		
-	3'b001 : FPUResult64W = FCmpResultW;
-	//fma/mult
-	3'b010 : FPUResult64W = FmaResultW;
-	// sgn inj
-	3'b011 : FPUResult64W = SgnResultW;
-	// add/sub/cnvt
-	3'b100 : FPUResult64W = FAddResultW;
-	// classify
-	3'b101 : FPUResult64W = ClassResultW;
-	// output SrcAW
-	3'b110 : FPUResult64W = SrcAW;
-	// Load/Store/Move to FP-register
-	3'b111 : FPUResult64W = FLoadStoreResultW;
-	default : FPUResult64W = {64{1'bx}};
+	3'b000 : FPUResult64W = FmtW ? {ReadDataW, {64-`XLEN{1'b0}}} : {ReadDataW[31:0], 32'b0};
+	3'b001 : FPUResult64W = FmaResultW;
+	3'b010 : FPUResult64W = FAddResultW;
+	3'b011 : FPUResult64W = FDivResultW;
+	3'b100 : FPUResult64W = FResW;
+	default : FPUResult64W = 64'bxxxxx;
       endcase
-   end // always_comb
+   end
+   
    
    // interface between XLEN size datapath and double-precision sized
    // floating-point results
