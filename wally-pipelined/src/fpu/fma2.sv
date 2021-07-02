@@ -16,8 +16,8 @@ module fma2(
     input logic                 XZeroM, YZeroM, ZZeroM, // inputs are zero
     input logic                 XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                 XNaNM, YNaNM, ZNaNM,    // inputs are NaN
-    output logic    [63:0]      FmaResultM,     // FMA final result
-    output logic    [4:0]       FmaFlagsM);     // FMA flags {invalid, divide by zero, overflow, underflow, inexact}
+    output logic    [63:0]      FMAResM,     // FMA final result
+    output logic    [4:0]       FMAFlgM);     // FMA flags {invalid, divide by zero, overflow, underflow, inexact}
    
 
 
@@ -57,7 +57,7 @@ module fma2(
     logic [12:0]    MaxExp;     // maximum value of the exponent
     logic [12:0]    FracLen;    // length of the fraction
     logic           SigNaN;     // is an input a signaling NaN
-    logic           UnderflowFlag;  // Underflow singal used in FmaFlagsM (used to avoid a circular depencency)
+    logic           UnderflowFlag;  // Underflow singal used in FMAFlgM (used to avoid a circular depencency)
     logic [63:0] XNaNResult, YNaNResult, ZNaNResult, InvalidResult, OverflowResult, KillProdResult, UnderflowResult; // possible results
 
    
@@ -316,7 +316,7 @@ module fma2(
     // Combine flags
     //      - FMA can't set the Divide by zero flag
     //      - Don't set the underflow flag if the result was rounded up to a normal number
-    assign FmaFlagsM = {Invalid, 1'b0, Overflow, UnderflowFlag, Inexact};
+    assign FMAFlgM = {Invalid, 1'b0, Overflow, UnderflowFlag, Inexact};
 
 
 
@@ -337,7 +337,7 @@ module fma2(
     assign InvalidResult = FmtM ? {ResultSgn, 11'h7ff, 1'b1, 51'b0} : {ResultSgn, 8'hff, 1'b1, 54'b0};
     assign KillProdResult = FmtM ?{ResultSgn, Addend[62:0] - {62'b0, (Minus1&AddendStickyM)}} + {62'b0, (Plus1&AddendStickyM)} : {ResultSgn, Addend[62:32] - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}, 32'b0};
     assign UnderflowResult = FmtM ? {ResultSgn, 63'b0} + {63'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))} : {{ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}, 32'b0};
-    assign FmaResultM = XNaNM ? XNaNResult :
+    assign FMAResM = XNaNM ? XNaNResult :
                         YNaNM ? YNaNResult :
                         ZNaNM ? ZNaNResult :
                         Invalid ? InvalidResult : // has to be before inf
