@@ -59,7 +59,7 @@ module pagetablewalker
    input logic 		    HPTWStall,
 
    // *** modify to send to LSU
-   output logic [`XLEN-1:0] MMUPAdr,
+   output logic [`XLEN-1:0] MMUPAdr, // this probalby should be `PA_BITS wide
    output logic 	    MMUTranslate, // *** rename to HPTWReq
    output logic 	    HPTWRead,
 
@@ -234,7 +234,7 @@ module pagetablewalker
               PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = TranslationVAdrQ[`PA_BITS-1:0];
+              TranslationPAdr = {2'b00, TranslationVAdrQ[31:0]};
 	    end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -263,7 +263,7 @@ module pagetablewalker
               PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = TranslationVAdrQ[`PA_BITS-1:0];
+              TranslationPAdr = {2'b00, TranslationVAdrQ[31:0]};
 	    end else begin
               NextWalkerState = FAULT;
 	    end
