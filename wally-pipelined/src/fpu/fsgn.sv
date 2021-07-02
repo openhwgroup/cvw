@@ -1,13 +1,12 @@
 //performs the fsgnj/fsgnjn/fsgnjx RISCV instructions
 
-module fpusgn (SgnOpCodeE, SgnResultE, SgnFlagsE, SrcXE, SrcYE);
+module fsgn (
+	input  logic [63:0]  SrcXE, SrcYE,
+	input  logic [1:0]   SgnOpCodeE,
+	output logic [63:0]  SgnResE,
+	output logic   SgnNVE);
 
-	input  [63:0]  SrcXE, SrcYE;
-	input  [1:0]   SgnOpCodeE;
-	output [63:0]  SgnResultE;
-	output [4:0]   SgnFlagsE;
-
-	wire AonesExp;
+	logic AonesExp;
 
 	//op code designation:
 	//
@@ -16,8 +15,8 @@ module fpusgn (SgnOpCodeE, SgnResultE, SgnFlagsE, SrcXE, SrcYE);
 	//10 - fsgnjx - XOR sign values of SrcXE & SrcYE
 	//
 	
-	assign SgnResultE[63] = SgnOpCodeE[1] ? (SrcXE[63] ^ SrcYE[63]) : (SrcYE[63] ^ SgnOpCodeE[0]);
-	assign SgnResultE[62:0] = SrcXE[62:0];
+	assign SgnResE[63] = SgnOpCodeE[1] ? (SrcXE[63] ^ SrcYE[63]) : (SrcYE[63] ^ SgnOpCodeE[0]);
+	assign SgnResE[62:0] = SrcXE[62:0];
 
 	//If the exponent is all ones, then the value is either Inf or NaN,
 	//both of which will produce a QNaN/SNaN value of some sort. This will 
@@ -26,6 +25,6 @@ module fpusgn (SgnOpCodeE, SgnResultE, SgnFlagsE, SrcXE, SrcYE);
 
 	//the only flag that can occur during this operation is invalid
 	//due to changing sign on already existing NaN
-	assign SgnFlagsE = {AonesExp & SgnResultE[63], 1'b0, 1'b0, 1'b0, 1'b0};
+	assign SgnNVE = AonesExp & SgnResE[63];
 
 endmodule
