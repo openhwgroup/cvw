@@ -35,7 +35,6 @@ module pmpchecker (
 
   input  logic [1:0]       PrivilegeModeW,
 
-  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
 
   // *** ModelSim has a switch -svinputport which controls whether input ports
   // are nets (wires) or vars by default. The default setting of this switch is
@@ -48,6 +47,7 @@ module pmpchecker (
   // boundary. It would be better to store the PMP address registers in a module
   // somewhere in the CSR hierarchy and do PMP checking _within_ that module, so
   // we don't have to pass around 16 whole registers.
+  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
@@ -60,29 +60,23 @@ module pmpchecker (
 );
 
   // Bit i is high when the address falls in PMP region i
-  logic [15:0] Regions;
-  logic [3:0]  MatchedRegion;
-  logic        Match, EnforcePMP;
+  logic [`PMP_ENTRIES-1:0] Regions, FirstMatch;
+  //logic [3:0]  MatchedRegion;
+  logic        EnforcePMP;
 
-  logic [7:0] PMPCFG [15:0];
+  logic [7:0] PMPCFG [`PMP_ENTRIES-1:0];
 
   // Bit i is high when the address is greater than or equal to PMPADR[i]
   // Used for determining whether TOR PMP regions match
-  logic [15:0] AboveRegion;
+  logic [`PMP_ENTRIES-1:0] AboveRegion;
 
   // Bit i is high if PMP register i is non-null
-  logic [15:0] ActiveRegion;
+  logic [`PMP_ENTRIES-1:0] ActiveRegion;
 
-  logic L_Bit, X_Bit, W_Bit, R_Bit;
-  logic InvalidExecute, InvalidWrite, InvalidRead;
+  logic [`PMP_ENTRIES-1:0] L_Bits, X_Bits, W_Bits, R_Bits;
+  //logic InvalidExecute, InvalidWrite, InvalidRead;
 
-  // *** extend to optionally 64 configurations
-
-  assign {PMPCFG[15], PMPCFG[14], PMPCFG[13], PMPCFG[12],
-          PMPCFG[11], PMPCFG[10], PMPCFG[9], PMPCFG[8]} = PMPCFG23_REGW;
-
-  assign {PMPCFG[7], PMPCFG[6], PMPCFG[5], PMPCFG[4],
-          PMPCFG[3], PMPCFG[2], PMPCFG[1], PMPCFG[0]} = PMPCFG01_REGW;
+  genvar i,j;
 
   pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[0][4:3]),
                       .CurrentPMPAdr(PMPADDR_ARRAY_REGW[0]),
@@ -92,7 +86,6 @@ module pmpchecker (
   assign ActiveRegion[0] = |PMPCFG[0][4:3];
 
   generate // *** only for PMP_ENTRIES > 0
-    genvar i;
     for (i = 1; i < `PMP_ENTRIES; i++) begin
       pmpadrdec pmpadrdec(.HADDR(HADDR), .AdrMode(PMPCFG[i][4:3]),
                           .CurrentPMPAdr(PMPADDR_ARRAY_REGW[i]),
@@ -104,12 +97,34 @@ module pmpchecker (
     end
   endgenerate
 
-  assign Match = |Regions;
+  //assign Match = |Regions; 
 
-  // Only enforce PMP checking for S and U modes when at least one PMP is active
-  assign EnforcePMP = |ActiveRegion;
-
-  // *** extend to up to 64, fold bit extraction to avoid need for binary encoding of region
+  // verilator lint_off UNOPTFLAT
+  logic [`PMP_ENTRIES-1:0] NoLowerMatch;
+//  assign NoLowerMatch[0] = 1;
+  generate
+    // verilator lint_off WIDTH
+    for (j=0; j<`PMP_ENTRIES; j = j+8) begin
+      assign {PMPCFG[j+7], PMPCFG[j+6], PMPCFG[j+5], PMPCFG[j+4],
+              PMPCFG[j+3], PMPCFG[j+2], PMPCFG[j+1], PMPCFG[j]} = PMPCFG_ARRAY_REGW[j/8];
+    end
+    // verilator lint_on WIDTH
+    for (i=0; i<`PMP_ENTRIES; i++) begin
+      if (i==0) begin
+	 assign FirstMatch[i] = Regions[i];
+	assign NoLowerMatch[i] = ~Regions[i];
+      end else begin
+	 assign FirstMatch[i] = Regions[i] & NoLowerMatch[i];
+	assign NoLowerMatch[i] = NoLowerMatch[i-1] & ~Regions[i];
+      end
+      assign L_Bits[i] = PMPCFG[i][7] & FirstMatch[i];
+      assign X_Bits[i] = PMPCFG[i][2] & FirstMatch[i];
+      assign W_Bits[i] = PMPCFG[i][1] & FirstMatch[i];
+      assign R_Bits[i] = PMPCFG[i][0] & FirstMatch[i];
+    end
+    // verilator lint_on UNOPTFLAT
+  endgenerate
+/*  // *** extend to up to 64, fold bit extraction to avoid need for binary encoding of region
   always_comb
     casez (Regions)
       16'b???????????????1: MatchedRegion = 0;
@@ -134,22 +149,18 @@ module pmpchecker (
   assign L_Bit = PMPCFG[MatchedRegion][7] && Match;
   assign X_Bit = PMPCFG[MatchedRegion][2] && Match;
   assign W_Bit = PMPCFG[MatchedRegion][1] && Match;
-  assign R_Bit = PMPCFG[MatchedRegion][0] && Match;
+  assign R_Bit = PMPCFG[MatchedRegion][0] && Match; 
 
   assign InvalidExecute = ExecuteAccessF && ~X_Bit;
   assign InvalidWrite   = WriteAccessM   && ~W_Bit;
-  assign InvalidRead    = ReadAccessM    && ~R_Bit;
+  assign InvalidRead    = ReadAccessM    && ~R_Bit;*/
 
-  // *** don't cause faults when there are no PMPs
-  assign PMPInstrAccessFaultF = (PrivilegeModeW == `M_MODE) ?
-                                  Match && L_Bit && InvalidExecute :
-                                  EnforcePMP && InvalidExecute;
-  assign PMPStoreAccessFaultM = (PrivilegeModeW == `M_MODE) ?
-                                  Match && L_Bit && InvalidWrite :
-                                  EnforcePMP && InvalidWrite;
-  assign PMPLoadAccessFaultM  = (PrivilegeModeW == `M_MODE) ?
-                                  Match && L_Bit && InvalidRead :
-                                  EnforcePMP && InvalidRead;
+  // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
+  assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L_Bits : |ActiveRegion;
+
+  assign PMPInstrAccessFaultF = EnforcePMP && ExecuteAccessF && ~|X_Bits;
+  assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W_Bits;
+  assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R_Bits;
 
   assign PMPSquashBusAccess = PMPInstrAccessFaultF || PMPLoadAccessFaultM || PMPStoreAccessFaultM;
 
