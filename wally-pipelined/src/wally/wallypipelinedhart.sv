@@ -125,7 +125,7 @@ module wallypipelinedhart (
   logic             DSquashBusAccessM, ISquashBusAccessF;
   logic [5:0]            DHSELRegionsM, IHSELRegionsF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
-  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW; // signals being sent from privileged unit to pmp/pma in dmem and ifu.
+  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0];
   assign            HSELRegions = ExecuteAccessF ? IHSELRegionsF : DHSELRegionsM; // *** this is a pure guess on how one of these should be selected. it passes tests, but is it the right way to do this?
 
   // IMem stalls
