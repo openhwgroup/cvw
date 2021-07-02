@@ -4,6 +4,7 @@ view wave
 add wave -divider
 add wave /testbench/clk
 add wave /testbench/reset
+add wave -dec /testbench/instrs
 
 add wave -divider Stalls_and_Flushes
 add wave /testbench/dut/hart/StallF
@@ -19,12 +20,13 @@ add wave /testbench/dut/hart/FlushW
 add wave -divider F
 add wave -hex /testbench/dut/hart/ifu/PCF
 add wave -divider D
-add wave -hex /testbench/pcExpected
+add wave -hex /testbench/PCDexpected
 add wave -hex /testbench/dut/hart/ifu/PCD
 add wave -hex /testbench/PCtextD
 add wave /testbench/InstrDName
 add wave -hex /testbench/dut/hart/ifu/InstrD
 add wave -hex /testbench/dut/hart/ieu/c/InstrValidD
+add wave -hex /testbench/PCDwrong
 add wave -divider E
 add wave -hex /testbench/dut/hart/ifu/PCE
 add wave -hex /testbench/PCtextE

@@ -40,13 +40,12 @@ def parseCSRs(l):
             val = int(l.split()[1],16)
             if inPageFault:
                 # Not sure if these CSRs should be updated or not during page fault.
-                #if l.startswith("mstatus") or l.startswith("mepc") or l.startswith("mcause") or l.startswith("mtval") or l.startswith("sepc") or l.startswith("scause") or l.startswith("stval"):
-                #    # We do update some CSRs
-                #    CSRs[csr] = val
-                #else:
-                #    # Others we preserve until changed later
-                #    pageFaultCSRs[csr] = val
-                pageFaultCSRs[csr] = val
+                if l.startswith("mstatus") or l.startswith("mepc") or l.startswith("mcause") or l.startswith("mtval") or l.startswith("sepc") or l.startswith("scause") or l.startswith("stval"):
+                    # We do update some CSRs
+                    CSRs[csr] = val
+                else:
+                    # Others we preserve until changed later
+                    pageFaultCSRs[csr] = val
             elif pageFaultCSRs and (csr in pageFaultCSRs):
                 if (val != pageFaultCSRs[csr]):
                     del pageFaultCSRs[csr]

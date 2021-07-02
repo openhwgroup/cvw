@@ -87,21 +87,23 @@ module wallypipelinedhart
 
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
-  logic 		    FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD;
   logic 		    DivDoneE;
   logic 		    DivBusyE;
-  logic 		    DivDoneW;
-  logic [4:0] 		    SetFflagsM;
-  logic [2:0] 		    FRM_REGW;
-  logic 		    FloatRegWriteW;
-  logic [1:0] 		    FMemRWM;
   logic 		    RegWriteD;
-  logic [`XLEN-1:0] 	    FWriteDataM;
-  logic 		    SquashSCW;
+  logic 		    LoadStallD, MulDivStallD, CSRRdStallD;
+  logic 		    SquashSCM, SquashSCW;
+  // floating point unit signals
+  logic [2:0] 		    FRM_REGW;
+  logic [1:0] 		    FMemRWM, FMemRWE;
   logic 		    FStallD;
-  logic 		    FWriteIntE, FWriteIntW, FWriteIntM;
+  logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
+  logic [`XLEN-1:0] 	    FWriteDataE;
+  logic [`XLEN-1:0] 	    FIntResM;  
   logic 		    FDivBusyE;
   logic 		    IllegalFPUInstrD, IllegalFPUInstrE;
+  logic 		    FloatRegWriteW;
+  logic 		    FPUStallD;
+  logic [4:0] 		    SetFflagsM;
   logic [`XLEN-1:0] 	    FPUResultW;
 
   // memory management unit signals
@@ -185,20 +187,10 @@ module wallypipelinedhart
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
 
   
-  mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
+  // mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
 
   pagetablewalker pagetablewalker(.HPTWRead(HPTWRead),
 				  .*); // can send addresses to ahblite, send out pagetablestall
-  // *** can connect to hazard unit
-  // changing from this to the line above breaks the program.  auipc at 104 fails; seems to be flushed.
-  // Would need to insertinstruction as InstrD, not InstrF
-  /*ahblite ebu( 
-   .InstrReadF(1'b0),
-   .InstrRData(), // hook up InstrF later
-   .MemSizeM(Funct3M[1:0]), .UnsignedLoadM(Funct3M[2]),
-   .*); */
-
-
   // arbiter between IEU and pagetablewalker
   lsuArb arbiter(// HPTW connection
 		 .HPTWTranslate(MMUTranslate),
@@ -208,12 +200,12 @@ module wallypipelinedhart
 		 .HPTWReady(MMUReady),
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
-		 .MemRWM(MemRWM|FMemRWM),
+		 .MemRWM(MemRWM),
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
 		 .StallW(StallW),
-		 .WriteDataM(WriteDatatmpM),
+		 .WriteDataM(WriteDataM),
 		 .ReadDataW(ReadDataW),
 		 .CommittedM(CommittedM),
 		 .SquashSCW(SquashSCW),
@@ -259,7 +251,8 @@ module wallypipelinedhart
   ahblite ebu( 
 	       //.InstrReadF(1'b0),
 	       //.InstrRData(InstrF), // hook up InstrF later
-	       .WriteDataM(WriteDatatmpM),
+	       .ISquashBusAccessF(1'b0), // *** temporary hack to disable PMP instruction fetch checking
+	       .WriteDataM(WriteDataM),
 	       .MemSizeM(Funct3MfromLSU[1:0]), .UnsignedLoadM(Funct3MfromLSU[2]),
 	       .Funct7M(InstrM[31:25]),
 	       .HRDATAW(HRDATAW),
