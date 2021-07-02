@@ -85,15 +85,14 @@ module lsu (
   output logic 		      DTLBHitM, // not connected 
   
   // PMA/PMP (inside mmu) signals
-  input logic [31:0] 	      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input logic [2:0] 	      HSIZE,
-  input logic 		      HWRITE,
-  input logic 		      AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
-  input logic [63:0] 	      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
-  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
+  input  logic [2:0]       HSIZE, HBURST,
+  input  logic             HWRITE,
+  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
-  output logic 		      PMALoadAccessFaultM, PMAStoreAccessFaultM,
-  output logic 		      PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
+  output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
+  output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
   output logic 		      DSquashBusAccessM
 //  output logic [5:0]       DHSELRegionsM
@@ -136,10 +135,10 @@ module lsu (
        .TLBMiss(DTLBMissM),
        .TLBHit(DTLBHitM),
        .TLBPageFault(DTLBPageFaultM),
-       .InstrReadF(1'b0),
+       .ExecuteAccessF(1'b0),
        .AtomicAccessM(AtomicMaskedM[1]), 
-       .MemWriteM(MemRWM[0]),
-       .MemReadM(MemRWM[1]),
+       .WriteAccessM(MemRWM[0]),
+       .ReadAccessM(MemRWM[1]),
        .SquashBusAccess(DSquashBusAccessM),
 //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?

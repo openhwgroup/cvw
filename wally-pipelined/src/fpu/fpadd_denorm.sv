@@ -229,11 +229,11 @@ module fpadd (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn);
    assign corr_sign = ~op_type[2]&~op_type[1]&op_type[0]&swap;
    
    // 64-bit Mantissa Adder/Subtractor
-   cla64 add1 (sum, mantissaA3, mantissaB3, sub);
+   cla64 add1 (sum, mantissaA3, mantissaB3, sub); //***adder
 
    // 64-bit Mantissa Subtractor - to get the two's complement of the 
    // result when the sign from the adder/subtractor is negative. 
-   cla_sub64 sub1 (sum_tc, mantissaB3, mantissaA3);
+   cla_sub64 sub1 (sum_tc, mantissaB3, mantissaA3); //***adder
 
    // Determine the correct sign of the result
    assign sign_corr = ((corr_sign ^ signA) & ~convert) ^ sum[63];   

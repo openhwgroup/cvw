@@ -36,7 +36,7 @@ module pmachecker (
 //  input  logic [2:0]  HSIZE,
 //  input  logic [2:0]  HBURST, //  *** in AHBlite, HBURST is hardwired to zero for single bursts only allowed. consider removing from this module if unused.
 
-  input  logic        AtomicAccessM, InstrReadF, MemWriteM, MemReadM, // *** atomicaccessM is unused but might want to stay in for future use.
+  input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
 
   output logic        Cacheable, Idempotent, AtomicAllowed,
   output logic        PMASquashBusAccess,
@@ -52,9 +52,9 @@ module pmachecker (
   logic [5:0]  SelRegions;
 
   // Determine what type of access is being made
-  assign AccessRW = MemReadM | MemWriteM;
-  assign AccessRWX = MemReadM | MemWriteM | InstrReadF;
-  assign AccessRX = MemReadM | InstrReadF;
+  assign AccessRW = ReadAccessM | WriteAccessM;
+  assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
+  assign AccessRX = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
   adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
@@ -66,8 +66,9 @@ module pmachecker (
 
   // Detect access faults
   assign PMAAccessFault = (~|SelRegions) & AccessRWX;  
-  assign PMAInstrAccessFaultF = InstrReadF & PMAAccessFault;
-  assign PMALoadAccessFaultM  = MemReadM   & PMAAccessFault;
-  assign PMAStoreAccessFaultM = MemWriteM  & PMAAccessFault;
+  assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
+  assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
+  assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
   assign PMASquashBusAccess = PMAAccessFault;
 endmodule
+

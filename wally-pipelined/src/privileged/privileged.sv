@@ -68,7 +68,7 @@ module privileged (
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM,
-  output logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW,
+  output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
   output logic [2:0]       FRM_REGW
 );

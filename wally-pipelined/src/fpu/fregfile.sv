@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module FPregfile (
+module fregfile (
   input  logic             clk, reset,
   input  logic             we4, 
   input  logic [ 4:0]      a1, a2, a3, a4, 

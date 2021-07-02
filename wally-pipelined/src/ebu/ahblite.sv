@@ -63,7 +63,6 @@ module ahblite (
   // Signals from PMA checker
   input  logic             DSquashBusAccessM, ISquashBusAccessF,
   // Signals to PMA checker (metadata of proposed access)
-  output logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   // Return from bus
   output logic [`XLEN-1:0] HRDATAW,
   // AHB-Lite external signals
@@ -144,10 +143,6 @@ module ahblite (
     endcase
 
   // Determine access type (important for determining whether to fault)
-  assign AtomicAccessM = (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
-  assign ExecuteAccessF = (ProposedNextBusState == INSTRREAD);
-  assign WriteAccessM = (ProposedNextBusState == MEMWRITE) || (ProposedNextBusState == ATOMICWRITE);
-  assign ReadAccessM = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == ATOMICREAD);// ||
 //              (ProposedNextBusState == MMUTRANSLATE);
 
   // The PMA and PMP checkers can decide to squash the access 

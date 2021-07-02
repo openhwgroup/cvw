@@ -77,11 +77,8 @@ module ifu (
   output logic 		      ITLBMissF, ITLBHitF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-//  input  logic [31:0]      HADDR,
-//  input  logic [2:0]       HSIZE,
-//  input  logic             HWRITE,
-  input logic [63:0] 	      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so they're gonna have to come over into ifu and dmem
-  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
+  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
 
   output logic 		      PMPInstrAccessFaultF, PMAInstrAccessFaultF,
   output logic 		      ISquashBusAccessF
@@ -130,10 +127,10 @@ module ifu (
        .TLBMiss(ITLBMissF),
        .TLBHit(ITLBHitF),
        .TLBPageFault(ITLBInstrPageFaultF),
-       .InstrReadF(InstrReadF),
+       .ExecuteAccessF(InstrReadF), /// *** Ross Thompson this is definitely wrong. InstrReadF changed to icache read to memory.
        .AtomicAccessM(1'b0),
-       .MemReadM(1'b0),
-       .MemWriteM(1'b0),
+       .ReadAccessM(1'b0),
+       .WriteAccessM(1'b0),
        .SquashBusAccess(ISquashBusAccessF),
 //       .HSELRegions(IHSELRegionsF),
        .DisableTranslation(1'b0),

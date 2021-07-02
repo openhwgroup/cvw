@@ -23,7 +23,7 @@
 //
 
 // `timescale 1ps/1ps
-module fpdiv (FDivSqrtDoneE, FDivResultM, FDivFlagsM, DivDenormM, DivInput1E, DivInput2E, FrmE, DivOpType, FmtE, DivOvEn, DivUnEn,
+module fdivsqrt (FDivSqrtDoneE, FDivResultM, FDivSqrtFlgM, DivInput1E, DivInput2E, FrmE, DivOpType, FmtE, DivOvEn, DivUnEn,
 	      FDivStartE, reset, clk, FDivBusyE, HoldInputs);
 
    input [63:0] DivInput1E;		// 1st input operand (A)
@@ -39,8 +39,7 @@ module fpdiv (FDivSqrtDoneE, FDivResultM, FDivFlagsM, DivDenormM, DivInput1E, Di
    input 	clk;   
 
    output [63:0] FDivResultM;	// Result of operation
-   output [4:0]  FDivFlagsM;   	// IEEE exception flags 
-   output 	 DivDenormM;   	// DivDenormM on input or output
+   output [4:0]  FDivSqrtFlgM;   	// IEEE exception flags 
    output 	 FDivSqrtDoneE;
    output    FDivBusyE, HoldInputs;
 
@@ -51,6 +50,7 @@ module fpdiv (FDivSqrtDoneE, FDivResultM, FDivFlagsM, DivDenormM, DivInput1E, Di
    wire [63:0] 	 Float2;
    wire [63:0] 	 IntValue;
    
+   wire 	 DivDenormM;   	// DivDenormM on input or output
    wire [12:0] 	 exp1, exp2, expF;
    wire [12:0] 	 exp_diff, bias;
    wire [13:0] 	 exp_sqrt;
@@ -103,7 +103,7 @@ module fpdiv (FDivSqrtDoneE, FDivResultM, FDivFlagsM, DivDenormM, DivInput1E, Di
    convert_inputs_div divconv1 (Float1, Float2, DivInput1E, DivInput2E, DivOpType, FmtE);
 
    // Test for exceptions and return the "Invalid Operation" and
-   // "Denormalized" Input FDivFlagsM. The "sel_inv" is used in
+   // "Denormalized" Input FDivSqrtFlgM. The "sel_inv" is used in
    // the third pipeline stage to select the result. Also, op1_Norm
    // and op2_Norm are one if DivInput1E and DivInput2E are not zero or denormalized.
    // sub is one if the effective operation is subtaction. 
@@ -120,12 +120,12 @@ module fpdiv (FDivSqrtDoneE, FDivResultM, FDivFlagsM, DivDenormM, DivInput1E, Di
    // bias : DP = 2^{11-1}-1 = 1023
    assign bias = {3'h0, 10'h3FF};
    // Divide exponent
-   csa #(13) csa1 (exp1, ~exp2, bias, exp_s, exp_c);
-   exp_add explogic1 (exp_cout1, {open, exp_diff}, 
+   csa #(13) csa1 (exp1, ~exp2, bias, exp_s, exp_c); //***adder
+   exp_add explogic1 (exp_cout1, {open, exp_diff}, //***adder?
 		      {vss, exp_s}, {vss, exp_c}, 1'b1);
    // Sqrt exponent (check if exponent is odd)
    assign exp_odd = Float1[52] ? vss : vdd;
-   exp_add explogic2 (exp_cout2, exp_sqrt, 
+   exp_add explogic2 (exp_cout2, exp_sqrt, //***adder?
 		      {vss, exp1}, {4'h0, 10'h3ff}, exp_odd);
    // Choose correct exponent
    assign expF = DivOpType ? exp_sqrt[13:1] : exp_diff;   
@@ -156,7 +156,7 @@ module fpdiv (FDivSqrtDoneE, FDivResultM, FDivFlagsM, DivDenormM, DivInput1E, Di
    // Store the final result and the exception flags in registers.
    flopenr #(64) rega (clk, reset, FDivSqrtDoneE, Result, FDivResultM);
    flopenr #(1) regb (clk, reset, FDivSqrtDoneE, DenormIO, DivDenormM);   
-   flopenr #(5) regc (clk, reset, FDivSqrtDoneE, FlagsIn, FDivFlagsM);   
+   flopenr #(5) regc (clk, reset, FDivSqrtDoneE, FlagsIn, FDivSqrtFlgM);   
    
 endmodule // fpadd
 
