@@ -26,13 +26,13 @@
 `include "wally-config.vh"
 
 module adrdec (
-  input  logic [31:0] HADDR,
-  input  logic [31:0] Base, Range,
-  input  logic        Supported,
-  input  logic        AccessValid,
-  input  logic [2:0]  Size,
-  input  logic [3:0]  SizeMask,
-  output logic        HSEL
+  input  logic [`PA_BITS-1:0] PhysicalAddress,
+  input  logic [`PA_BITS-1:0] Base, Range,
+  input  logic                Supported,
+  input  logic                AccessValid,
+  input  logic [1:0]          Size,
+  input  logic [3:0]          SizeMask,
+  output logic                Sel
 );
 
   logic Match;
@@ -41,12 +41,12 @@ module adrdec (
   // determine if an address is in a range starting at the base
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
   // then anything address between 0x04002000 and 0x04002FFF should match (HSEL=1)
-  assign Match = &((HADDR ~^ Base) | Range);
+  assign Match = &((PhysicalAddress ~^ Base) | Range);
 
   // determine if legal size of access is being made (byte, halfword, word, doubleword)
-  assign SizeValid = SizeMask[Size[1:0]]; 
+  assign SizeValid = SizeMask[Size]; 
   
-  assign HSEL = Match && Supported && AccessValid && SizeValid;
+  assign Sel = Match && Supported && AccessValid && SizeValid;
 
 endmodule
 

@@ -27,8 +27,8 @@
 
 module testbench();
   
-  parameter waveOnICount = 2657000; // # of instructions at which to turn on waves in graphical sim
-  
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*2400000; // # of instructions at which to turn on waves in graphical sim
+  parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////// DUT /////////////////////////////////////
@@ -247,6 +247,9 @@ module testbench();
             // Stop before bugs so "do" file can turn on waves
             if (instrs == waveOnICount) begin
               $display("turning on waves at %0d instructions", instrs);
+              $stop;
+            end else if (instrs == stopICount && stopICount != 0) begin
+              $display("Ending sim at %0d instructions (set stopICount to 0 to let the sim go on)", instrs);
               $stop;
             end
 
