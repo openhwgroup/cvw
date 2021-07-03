@@ -31,20 +31,29 @@
 
 module pmpadrdec (
   input  logic [`PA_BITS-1:0]      PhysicalAddress,
-  input  logic [1:0]       AdrMode,
-  input  logic [`XLEN-1:0] CurrentPMPAdr,
-  input  logic             AdrAtLeastPreviousPMP,
-  output logic             AdrAtLeastCurrentPMP,
-  output logic             Match
+  input  logic [7:0]       PMPCfg,
+  input  logic [`XLEN-1:0] PMPAdr,
+  input  logic             PAgePMPAdrIn,
+  input  logic             NoLowerMatchIn,
+  output logic             PAgePMPAdrOut,
+  output logic             NoLowerMatchOut,
+  output logic             Match, Active, 
+  output logic             L, X, W, R
 );
+      
 
   localparam TOR   = 2'b01;
   localparam NA4   = 2'b10;
   localparam NAPOT = 2'b11;
 
   logic TORMatch, NAMatch;
-  logic AdrBelowCurrentPMP;
+  logic PAltPMPAdr;
+  logic FirstMatch;
   logic [`PA_BITS-1:0] CurrentAdrFull;
+  logic [1:0] AdrMode;
+
+
+  assign AdrMode = PMPCfg[4:3];
 
   // The two lsb of the physical address don't matter for this checking.
   // The following code includes them, but hardwires the PMP checker lsbs to 00
@@ -52,10 +61,10 @@ module pmpadrdec (
  
   // Top-of-range (TOR)
   // Append two implicit trailing 0's to PMPAdr value
-  assign CurrentAdrFull  = {CurrentPMPAdr[`PA_BITS-3:0],  2'b00};
-  assign AdrBelowCurrentPMP = {1'b0, PhysicalAddress} < {1'b0, CurrentAdrFull}; // unsigned comparison
-  assign AdrAtLeastCurrentPMP = ~AdrBelowCurrentPMP;
-  assign TORMatch = AdrAtLeastPreviousPMP && AdrBelowCurrentPMP;
+  assign CurrentAdrFull  = {PMPAdr[`PA_BITS-3:0],  2'b00};
+  assign PAltPMPAdr = {1'b0, PhysicalAddress} < {1'b0, CurrentAdrFull}; // unsigned comparison
+  assign PAgePMPAdrOut = ~PAltPMPAdr;
+  assign TORMatch = PAgePMPAdrIn && PAltPMPAdr;
 
   // Naturally aligned regions
 
@@ -68,7 +77,7 @@ module pmpadrdec (
     assign Mask[1:0] = 2'b11;
     assign Mask[2] = (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
     for (i=3; i < `PA_BITS; i=i+1) 
-      assign Mask[i] = Mask[i-1] & CurrentPMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
+      assign Mask[i] = Mask[i-1] & PMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
    endgenerate
   // verilator lint_on UNOPTFLAT
 
@@ -78,5 +87,12 @@ module pmpadrdec (
                  (AdrMode == NA4 || AdrMode == NAPOT) ? NAMatch :
                  0;
 
-endmodule
+  assign FirstMatch =      NoLowerMatchIn & Match;
+  assign NoLowerMatchOut = NoLowerMatchIn & ~Match;
+  assign L = PMPCfg[7] & FirstMatch;
+  assign X = PMPCfg[2] & FirstMatch;
+  assign W = PMPCfg[1] & FirstMatch;
+  assign R = PMPCfg[0] & FirstMatch;
+  assign Active = |PMPCfg[4:3];
+ endmodule
 

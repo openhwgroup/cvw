@@ -51,76 +51,49 @@ module pmpchecker (
   output logic             PMPStoreAccessFaultM
 );
 
+  // verilator lint_off UNOPTFLAT
+
   // Bit i is high when the address falls in PMP region i
-  logic [`PMP_ENTRIES-1:0] Regions, FirstMatch;
-  logic        EnforcePMP;
-
-  logic [7:0] PMPCFG [`PMP_ENTRIES-1:0];
-
-  // Bit i is high when the address is greater than or equal to PMPADR[i]
-  // Used for determining whether TOR PMP regions match
-  logic [`PMP_ENTRIES-1:0] AboveRegion;
-
-  // Bit i is high if PMP register i is non-null
-  logic [`PMP_ENTRIES-1:0] ActiveRegion;
-
-  logic [`PMP_ENTRIES-1:0] L_Bits, X_Bits, W_Bits, R_Bits;
-
+  logic                    EnforcePMP;
+  logic [7:0]              PMPCFG [`PMP_ENTRIES-1:0];
+  logic [`PMP_ENTRIES-1:0] Match;      // PMP Entry matches
+  logic [`PMP_ENTRIES-1:0] Active;     // PMP register i is non-null
+  logic [`PMP_ENTRIES-1:0] L, X, W, R; // PMP matches and has flag set
+  logic [`PMP_ENTRIES:0]   NoLowerMatch; // None of the lower PMP entries match
+  logic [`PMP_ENTRIES:0]   PAgePMPAdr;  // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
   genvar i,j;
 
-  pmpadrdec pmpadrdec(.PhysicalAddress(PhysicalAddress), 
-                      .AdrMode(PMPCFG[0][4:3]),
-                      .CurrentPMPAdr(PMPADDR_ARRAY_REGW[0]),
-                      .AdrAtLeastPreviousPMP(1'b1),
-                      .AdrAtLeastCurrentPMP(AboveRegion[0]),
-                      .Match(Regions[0]));
-
-  assign ActiveRegion[0] = |PMPCFG[0][4:3];
-
-  generate // *** only for PMP_ENTRIES > 0
-    for (i = 1; i < `PMP_ENTRIES; i++) begin
-      pmpadrdec pmpadrdec(.PhysicalAddress(PhysicalAddress), 
-                          .AdrMode(PMPCFG[i][4:3]),
-                          .CurrentPMPAdr(PMPADDR_ARRAY_REGW[i]),
-                          .AdrAtLeastPreviousPMP(AboveRegion[i-1]),
-                          .AdrAtLeastCurrentPMP(AboveRegion[i]),
-                          .Match(Regions[i]));
-      
-      assign ActiveRegion[i] = |PMPCFG[i][4:3];
-    end
-  endgenerate
-
-  // verilator lint_off UNOPTFLAT
-  logic [`PMP_ENTRIES-1:0] NoLowerMatch;
+  assign PAgePMPAdr[0] = 1'b1;
+  assign NoLowerMatch[0] = 1'b1;
+  
   generate
     // verilator lint_off WIDTH
-    for (j=0; j<`PMP_ENTRIES; j = j+8) begin
+    for (j=0; j<`PMP_ENTRIES; j = j+8)
       assign {PMPCFG[j+7], PMPCFG[j+6], PMPCFG[j+5], PMPCFG[j+4],
               PMPCFG[j+3], PMPCFG[j+2], PMPCFG[j+1], PMPCFG[j]} = PMPCFG_ARRAY_REGW[j/8];
-    end
     // verilator lint_on WIDTH
-    for (i=0; i<`PMP_ENTRIES; i++) begin
-      if (i==0) begin
-	 assign FirstMatch[i] = Regions[i];
-	assign NoLowerMatch[i] = ~Regions[i];
-      end else begin
-	 assign FirstMatch[i] = Regions[i] & NoLowerMatch[i];
-	assign NoLowerMatch[i] = NoLowerMatch[i-1] & ~Regions[i];
-      end
-      assign L_Bits[i] = PMPCFG[i][7] & FirstMatch[i];
-      assign X_Bits[i] = PMPCFG[i][2] & FirstMatch[i];
-      assign W_Bits[i] = PMPCFG[i][1] & FirstMatch[i];
-      assign R_Bits[i] = PMPCFG[i][0] & FirstMatch[i];
-    end
+    for (i=0; i<`PMP_ENTRIES; i++) 
+      pmpadrdec pmpadrdec(.PhysicalAddress, 
+                          .PMPCfg(PMPCFG[i]),
+                          .PMPAdr(PMPADDR_ARRAY_REGW[i]),
+                          .PAgePMPAdrIn(PAgePMPAdr[i]),
+                          .PAgePMPAdrOut(PAgePMPAdr[i+1]),
+                          .NoLowerMatchIn(NoLowerMatch[i]),
+                          .NoLowerMatchOut(NoLowerMatch[i+1]),
+                          .Match(Match[i]),
+                          .Active(Active[i]),
+                          .L(L[i]), .X(X[i]), .W(W[i]), .R(R[i])
+                          );
+
     // verilator lint_on UNOPTFLAT
   endgenerate
 
   // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
-  assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L_Bits : |ActiveRegion;
+  assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 
 
-  assign PMPInstrAccessFaultF = EnforcePMP && ExecuteAccessF && ~|X_Bits;
-  assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W_Bits;
-  assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R_Bits;
+  assign PMPInstrAccessFaultF = EnforcePMP && ExecuteAccessF && ~|X;
+  assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W;
+  assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R;
 
   assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
 
