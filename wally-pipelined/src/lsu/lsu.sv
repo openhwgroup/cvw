@@ -66,7 +66,7 @@ module lsu (
   input logic 		      MemAckW, // from ahb
   input logic [`XLEN-1:0]     HRDATAW, // from ahb
   output logic [2:0] 	      Funct3MfromLSU,
-	    output logic StallWfromLSU,
+  output logic 		      StallWfromLSU,
 
 
   // mmu management
@@ -85,14 +85,14 @@ module lsu (
   output logic 		      DTLBHitM, // not connected 
   
   // PMA/PMP (inside mmu) signals
-  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input  logic [2:0]       HSIZE, HBURST,
-  input  logic             HWRITE,
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+  input logic [31:0] 	      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
+  input logic [2:0] 	      HSIZE, HBURST,
+  input logic 		      HWRITE,
+  input 		      var logic [63:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
-  output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
-  output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
+  output logic 		      PMALoadAccessFaultM, PMAStoreAccessFaultM,
+  output logic 		      PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
   output logic 		      DSquashBusAccessM
 //  output logic [5:0]       DHSELRegionsM
