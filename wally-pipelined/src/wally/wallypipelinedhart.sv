@@ -129,7 +129,6 @@ module wallypipelinedhart
   logic 		    ICacheStallF;
   logic 		    DCacheStall;
   logic [`XLEN-1:0] 	    MMUPAdr, MMUReadPTE;
-  logic 		    MMUStall;
   logic 		    MMUTranslate, MMUReady;
   logic 		    HPTWRead;
   logic 		    HPTWReadyfromLSU;
@@ -199,19 +198,18 @@ module wallypipelinedhart
 				  .PageTableEntryF(PageTableEntryF),   // add to lsu port
 				  .PageTableEntryM(PageTableEntryM),   // already on lsu port convert to internal
 				  .PageTypeF(PageTypeF),               // add to lsu port connects to ifu
-				  .PageTypeM(PageTypeM),
-				  .ITLBWriteF(ITLBWriteF),
-				  .DTLBWriteM(DTLBWriteM),
-				  .MMUReadPTE(MMUReadPTE),
-				  .MMUReady(MMUReady),
-				  .HPTWStall(HPTWStall),
-				  .MMUPAdr(MMUPAdr),
-				  .MMUTranslate(MMUTranslate),
-				  .HPTWRead(HPTWRead),
-				  .MMUStall(MMUStall),
-				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
-				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM), 
-				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
+				  .PageTypeM(PageTypeM),               // already on lsu port convert to internal
+				  .ITLBWriteF(ITLBWriteF),             // add to lsu port connects to ifu
+				  .DTLBWriteM(DTLBWriteM),             // already on lsu port convert to internal
+				  .MMUReadPTE(MMUReadPTE),             // from lsu arb convert to internal
+				  .MMUReady(MMUReady),                 // to lsu arb, convert to internal
+				  .HPTWStall(HPTWStall),               // from lsu arb convert to internal
+				  .MMUPAdr(MMUPAdr),                   // to lsu arb, convert to internal
+				  .MMUTranslate(MMUTranslate),         // to lsu arb, convert to internal
+				  .HPTWRead(HPTWRead),                 // to lsu arb, convert to internal
+				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF), // add to lsu port
+				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),   // add to lsu port (to privilege)
+				  .WalkerStorePageFaultM(WalkerStorePageFaultM)); // add to lsu port (to privilege)
   
   
 
