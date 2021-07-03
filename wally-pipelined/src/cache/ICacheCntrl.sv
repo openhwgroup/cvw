@@ -71,11 +71,11 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
    );
 
   // FSM states
-  localparam STATE_READY = 0;
-  localparam STATE_HIT_SPILL = 1; // spill, block 0 hit
-  localparam STATE_HIT_SPILL_MISS_FETCH_WDV = 2; // block 1 miss, issue read to AHB and wait data.
-  localparam STATE_HIT_SPILL_MISS_FETCH_DONE = 3; // write data into SRAM/LUT
-  localparam STATE_HIT_SPILL_MERGE = 4;   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
+  localparam STATE_READY = 'h0;
+  localparam STATE_HIT_SPILL = 'h1; // spill, block 0 hit
+  localparam STATE_HIT_SPILL_MISS_FETCH_WDV = 'h2; // block 1 miss, issue read to AHB and wait data.
+  localparam STATE_HIT_SPILL_MISS_FETCH_DONE = 'h3; // write data into SRAM/LUT
+  localparam STATE_HIT_SPILL_MERGE = 'h4;   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
 
   // a challenge is the spill signal gets us out of the ready state and moves us to
   // 1 of the 2 spill branches.  However the original fsm design had us return to
@@ -91,30 +91,30 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   // between CPU stalling and that register.
   // Picking option 1.
 
-  localparam STATE_HIT_SPILL_FINAL = 5; // this state replicates STATE_READY's replay of the
+  localparam STATE_HIT_SPILL_FINAL = 'h5; // this state replicates STATE_READY's replay of the
   // spill access but does nto consider spill.  It also does not do another operation.
   
 
-  localparam STATE_MISS_FETCH_WDV = 6; // aligned miss, issue read to AHB and wait for data.
-  localparam STATE_MISS_FETCH_DONE = 7; // write data into SRAM/LUT
-  localparam STATE_MISS_READ = 8; // read block 1 from SRAM/LUT  
+  localparam STATE_MISS_FETCH_WDV = 'h6; // aligned miss, issue read to AHB and wait for data.
+  localparam STATE_MISS_FETCH_DONE = 'h7; // write data into SRAM/LUT
+  localparam STATE_MISS_READ = 'h8; // read block 1 from SRAM/LUT  
 
-  localparam STATE_MISS_SPILL_FETCH_WDV = 9; // spill, miss on block 0, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_FETCH_DONE = 10; // write data into SRAM/LUT
-  localparam STATE_MISS_SPILL_READ1 = 11; // read block 0 from SRAM/LUT
-  localparam STATE_MISS_SPILL_2 = 12; // return to ready if hit or do second block update.
-  localparam STATE_MISS_SPILL_2_START = 13; // return to ready if hit or do second block update.  
-  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 14; // miss on block 1, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 15; // write data to SRAM/LUT
-  localparam STATE_MISS_SPILL_MERGE = 16; // read block 0 of CPU access,
+  localparam STATE_MISS_SPILL_FETCH_WDV = 'h9; // spill, miss on block 0, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_FETCH_DONE = 'ha; // write data into SRAM/LUT
+  localparam STATE_MISS_SPILL_READ1 = 'hb; // read block 0 from SRAM/LUT
+  localparam STATE_MISS_SPILL_2 = 'hc; // return to ready if hit or do second block update.
+  localparam STATE_MISS_SPILL_2_START = 'hd; // return to ready if hit or do second block update.  
+  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 'he; // miss on block 1, issue read to AHB and wait
+  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 'hf; // write data to SRAM/LUT
+  localparam STATE_MISS_SPILL_MERGE = 'h10; // read block 0 of CPU access,
 
-  localparam STATE_MISS_SPILL_FINAL = 17; // this state replicates STATE_READY's replay of the
+  localparam STATE_MISS_SPILL_FINAL = 'h11; // this state replicates STATE_READY's replay of the
   // spill access but does nto consider spill.  It also does not do another operation.
   
 
-  localparam STATE_INVALIDATE = 18; // *** not sure if invalidate or evict? invalidate by cache block or address?
-  localparam STATE_TLB_MISS = 19;
-  localparam STATE_TLB_MISS_DONE = 20;
+  localparam STATE_INVALIDATE = 'h12; // *** not sure if invalidate or evict? invalidate by cache block or address?
+  localparam STATE_TLB_MISS = 'h13;
+  localparam STATE_TLB_MISS_DONE = 'h14;
   
   
   
