@@ -29,104 +29,142 @@
 
 // *** Ross Thompson amo misalignment check?
 module lsu (
-  input  logic             clk, reset,
-  input  logic             StallM, FlushM, StallW, FlushW,
-  //output logic             DataStall,
+  input logic 		      clk, reset,
+  input logic 		      StallM, FlushM, StallW, FlushW,
+  output logic 		      DataStall,
+  output logic 		      HPTWReady,
   // Memory Stage
-  input  logic [1:0]       MemRWM,
-  input  logic [`XLEN-1:0] MemAdrM,
-  input  logic [2:0]       Funct3M,
-  //input  logic [`XLEN-1:0] ReadDataW,
-  input  logic [`XLEN-1:0] WriteDataM, 
-  input  logic [1:0]       AtomicM,
-  input  logic             CommitM,
-  output logic [`PA_BITS-1:0] MemPAdrM,
-  output logic             MemReadM, MemWriteM,
-  output logic [1:0]       AtomicMaskedM,
-  output logic             DataMisalignedM,
-  output logic             CommittedM,
-  // Writeback Stage
-  input  logic             MemAckW,
-  input  logic [`XLEN-1:0] ReadDataW,
-  output logic             SquashSCW,
+
+  // connected to cpu (controls)
+  input logic [1:0] 	      MemRWM,
+  input logic [2:0] 	      Funct3M,
+  input logic [1:0] 	      AtomicM,
+  output logic 		      CommittedM, 
+  output logic 		      SquashSCW,
+  output logic 		      DataMisalignedM,
+
+  // address and write data
+  input logic [`XLEN-1:0]     MemAdrM,
+  input logic [`XLEN-1:0]     WriteDataM, 
+  output logic [`XLEN-1:0]    ReadDataW,
+
+  // cpu privilege
+  input logic [1:0] 	      PrivilegeModeW,
+  input logic 		      DTLBFlushM,
   // faults
-  input  logic             NonBusTrapM,
-  input  logic             DataAccessFaultM,
-  output logic             DTLBLoadPageFaultM, DTLBStorePageFaultM,
-  output logic             LoadMisalignedFaultM, LoadAccessFaultM,
-  output logic             StoreMisalignedFaultM, StoreAccessFaultM,
-  
+  input logic 		      NonBusTrapM, 
+  output logic 		      DTLBLoadPageFaultM, DTLBStorePageFaultM,
+  output logic 		      LoadMisalignedFaultM, LoadAccessFaultM,
+  // cpu hazard unit (trap)
+  output logic 		      StoreMisalignedFaultM, StoreAccessFaultM,
+
+  // connect to ahb
+  input logic 		      CommitM, // should this be generated in the abh interface?
+  output logic [`PA_BITS-1:0] MemPAdrM, // to ahb
+  output logic 		      MemReadM, MemWriteM,
+  output logic [1:0] 	      AtomicMaskedM,
+  input logic 		      MemAckW, // from ahb
+  input logic [`XLEN-1:0]     HRDATAW, // from ahb
+  output logic [2:0] 	      Funct3MfromLSU,
+	    output logic StallWfromLSU,
+
+
   // mmu management
-  input logic  [1:0]       PrivilegeModeW,
-  input logic  [`XLEN-1:0] PageTableEntryM,
-  input logic  [1:0]       PageTypeM,
-  input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
-  input logic              DTLBWriteM, DTLBFlushM,
-  output logic             DTLBMissM, DTLBHitM,
+
+  // page table walker
+  input logic [`XLEN-1:0]     PageTableEntryM,
+  input logic [1:0] 	      PageTypeM,
+  input logic [`XLEN-1:0]     SATP_REGW, // from csr
+  input logic 		      STATUS_MXR, STATUS_SUM, // from csr
+  input logic 		      DTLBWriteM,
+  output logic 		      DTLBMissM,
+  input logic 		      DisableTranslation, // used to stop intermediate PTE physical addresses being saved to TLB.
+
+
+
+  output logic 		      DTLBHitM, // not connected 
   
   // PMA/PMP (inside mmu) signals
   input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
-  input  logic             AtomicAccessM, WriteAccessM, ReadAccessM, // execute access is hardwired to zero in this mmu because we're only working with data in the M stage.
-  input  logic [63:0]      PMPCFG01_REGW, PMPCFG23_REGW, // *** all of these come from the privileged unit, so thwyre gonna have to come over into ifu and dmem
+  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
   output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
   output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
-  output logic             DSquashBusAccessM,
-  output logic [5:0]       DHSELRegionsM
+  output logic 		      DSquashBusAccessM
+//  output logic [5:0]       DHSELRegionsM
   
 );
 
   logic SquashSCM;
   logic DTLBPageFaultM;
   logic MemAccessM;
-  logic [1:0] CurrState, NextState;
+
   logic preCommittedM;
 
-  localparam STATE_READY = 0;
-  localparam STATE_FETCH = 1;
-  localparam STATE_FETCH_AMO = 2;
-  localparam STATE_STALLED = 3;
+  typedef enum {STATE_READY,
+		STATE_FETCH,
+		STATE_FETCH_AMO_1,
+		STATE_FETCH_AMO_2,
+		STATE_STALLED,
+		STATE_PTW_READY,
+		STATE_PTW_FETCH,
+		STATE_PTW_DONE} statetype;
+  statetype CurrState, NextState;
+		
 
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
-  
-  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0)) dmmu(.TLBAccessType(MemRWM), .VirtualAddress(MemAdrM), .Size(Funct3M[1:0]),
-                .PTEWriteVal(PageTableEntryM), .PageTypeWriteVal(PageTypeM),
-                .TLBWrite(DTLBWriteM), .TLBFlush(DTLBFlushM),
-                .PhysicalAddress(MemPAdrM), .TLBMiss(DTLBMissM),
-                .TLBHit(DTLBHitM), .TLBPageFault(DTLBPageFaultM),
 
-                .ExecuteAccessF(1'b0),
-                .SquashBusAccess(DSquashBusAccessM), .HSELRegions(DHSELRegionsM),
-                .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
+  // for time being until we have a dcache the AHB Lite read bus HRDATAW will be connected to the
+  // CPU's read data input ReadDataW.
+  assign ReadDataW = HRDATAW;
+    
+  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0))
+  dmmu(.TLBAccessType(MemRWM),
+       .VirtualAddress(MemAdrM),
+       .Size(Funct3M[1:0]),
+       .PTEWriteVal(PageTableEntryM),
+       .PageTypeWriteVal(PageTypeM),
+       .TLBWrite(DTLBWriteM),
+       .TLBFlush(DTLBFlushM),
+       .PhysicalAddress(MemPAdrM),
+       .TLBMiss(DTLBMissM),
+       .TLBHit(DTLBHitM),
+       .TLBPageFault(DTLBPageFaultM),
+       .ExecuteAccessF(1'b0),
+       .AtomicAccessM(AtomicMaskedM[1]), 
+       .WriteAccessM(MemRWM[0]),
+       .ReadAccessM(MemRWM[1]),
+       .SquashBusAccess(DSquashBusAccessM),
+//       .SelRegions(DHSELRegionsM),
+       .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // Specify which type of page fault is occurring
   assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWM[1];
   assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWM[0];
 
-	// Determine if an Unaligned access is taking place
-	always_comb
-		case(Funct3M[1:0]) 
-		  2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-		  2'b01:  DataMisalignedM = MemAdrM[0];              // lh, sh, lhu
-		  2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
-		  2'b11:  DataMisalignedM = |MemAdrM[2:0];           // ld, sd, fld, fsd
-		endcase 
+  // Determine if an Unaligned access is taking place
+  always_comb
+    case(Funct3M[1:0]) 
+      2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
+      2'b01:  DataMisalignedM = MemAdrM[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedM = |MemAdrM[2:0];           // ld, sd, fld, fsd
+    endcase 
 
   // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
   // Changed DataMisalignedM to a larger combination of trap sources
   // NonBusTrapM is anything that the bus doesn't contribute to producing 
   // By contrast, using TrapM results in circular logic errors
-  assign MemReadM = MemRWM[1] & ~NonBusTrapM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWM[0] & ~NonBusTrapM && ~SquashSCM & CurrState != STATE_STALLED;
+  assign MemReadM = MemRWM[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWM[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
-  assign MemAccessM = |MemRWM;
+  assign MemAccessM = MemReadM | MemWriteM;
 
   // Determine if M stage committed
   // Reset whenever unstalled. Set when access successfully occurs
@@ -135,9 +173,9 @@ module lsu (
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-  assign LoadAccessFaultM = DataAccessFaultM & MemRWM[1];
+  assign LoadAccessFaultM = MemRWM[1];
   assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
-  assign StoreAccessFaultM = DataAccessFaultM & MemRWM[0];
+  assign StoreAccessFaultM = MemRWM[0];
 
   // Handle atomic load reserved / store conditional
   generate
@@ -165,33 +203,111 @@ module lsu (
   endgenerate
 
   // Data stall
-  //assign DataStall = 0;
+  //assign DataStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
+  assign HPTWReady = (CurrState == STATE_READY);
+  
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately
   // requests data from memory rather than issuing a single request.
 
 
-  flopr #(2) stateReg(.clk(clk),
-		      .reset(reset),
-		      .d(NextState),
-		      .q(CurrState));
+  flopenl #(.TYPE(statetype)) stateReg(.clk(clk),
+				       .load(reset),
+				       .en(1'b1),
+				       .d(NextState),
+				       .val(STATE_READY),
+				       .q(CurrState));
 
   always_comb begin
     case (CurrState)
-      STATE_READY: if (MemRWM[1] & MemRWM[0]) NextState = STATE_FETCH_AMO; // *** should be some misalign check
-                   else if (MemAccessM & ~DataMisalignedM) NextState = STATE_FETCH;
-                   else                                    NextState = STATE_READY;
-      STATE_FETCH_AMO: if (MemAckW)                        NextState = STATE_FETCH;
-                       else                                NextState = STATE_FETCH_AMO;
-      STATE_FETCH: if (MemAckW & ~StallW)     NextState = STATE_READY;
-                   else if (MemAckW & StallW) NextState = STATE_STALLED;
-		   else                       NextState = STATE_FETCH;
-      STATE_STALLED: if (~StallW)             NextState = STATE_READY;
-                     else                     NextState = STATE_STALLED;
-      default: NextState = STATE_READY;
-    endcase // case (CurrState)
-  end
+      STATE_READY:
+	if (DTLBMissM) begin
+	  NextState = STATE_PTW_READY;
+	  DataStall = 1'b1;
+	end else if (AtomicMaskedM[1]) begin 
+	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
+	  DataStall = 1'b1;
+	end else if((MemReadM & AtomicM[0]) | (MemWriteM & AtomicM[0])) begin
+	  NextState = STATE_FETCH_AMO_2; 
+	  DataStall = 1'b1;
+	end else if (MemAccessM & ~DataMisalignedM) begin
+	  NextState = STATE_FETCH;
+	  DataStall = 1'b1;
+	end else begin
+          NextState = STATE_READY;
+	  DataStall = 1'b0;
+	end
+      STATE_FETCH_AMO_1: begin
+	DataStall = 1'b1;
+	if (MemAckW) begin
+	  NextState = STATE_FETCH_AMO_2;
+	end else begin 
+	  NextState = STATE_FETCH_AMO_1;
+	end
+      end
+      STATE_FETCH_AMO_2: begin
+	DataStall = 1'b1;	
+	if (MemAckW & ~StallW) begin
+	  NextState = STATE_FETCH_AMO_2;
+	end else if (MemAckW & StallW) begin
+          NextState = STATE_STALLED;
+	end else begin
+	  NextState = STATE_FETCH_AMO_2;
+	end
+      end
+      STATE_FETCH: begin
+	  DataStall = 1'b1;
+	if (MemAckW & ~StallW) begin
+	  NextState = STATE_READY;
+	end else if (MemAckW & StallW) begin
+	  NextState = STATE_STALLED;
+	end else begin
+	  NextState = STATE_FETCH;
+	end
+      end
+      STATE_STALLED: begin
+	DataStall = 1'b0;
+	if (~StallW) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_STALLED;
+	end
+      end
+      STATE_PTW_READY: begin
+	DataStall = 1'b0;
+	if (DTLBWriteM) begin
+	  NextState = STATE_READY;
+	end else if (MemReadM & ~DataMisalignedM) begin
+	  NextState = STATE_PTW_FETCH;
+	end else begin
+	  NextState = STATE_PTW_READY;
+	end
+      end
+      STATE_PTW_FETCH : begin
+	DataStall = 1'b1;
+	if (MemAckW & ~DTLBWriteM) begin
+	  NextState = STATE_PTW_READY;
+	end else if (MemAckW & DTLBWriteM) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_PTW_FETCH;
+	end
+      end
+      STATE_PTW_DONE: begin
+	NextState = STATE_READY;
+      end
+      default: begin
+	DataStall = 1'b0;
+	NextState = STATE_READY;
+      end
+    endcase
+  end // always_comb
+
+  // *** for now just pass through size
+  assign Funct3MfromLSU = Funct3M;
+  assign StallWfromLSU = StallW;
+  
 
 endmodule
 

@@ -31,31 +31,34 @@ module ieu (
   input logic [31:0] 	   InstrD,
   input logic 		   IllegalIEUInstrFaultD, 
   output logic 		   IllegalBaseInstrFaultD,
-  output logic       RegWriteD,
+  output logic 		   RegWriteD,
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
-  input logic 		         FWriteIntE, 
-  input logic              IllegalFPUInstrE,
-  input  logic [`XLEN-1:0] FWriteDataE,
+  input logic 		   FWriteIntE, 
+  input logic 		   IllegalFPUInstrE,
+  input logic [`XLEN-1:0]  FWriteDataE,
   output logic [`XLEN-1:0] PCTargetE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
+  input logic 		   FWriteIntM,
+
   // Memory stage interface
-  input logic 		   DataMisalignedM,
+  input logic 		   DataMisalignedM, // from LSU
+  input logic 		   SquashSCW, // from LSU
+  output logic [1:0] 	   MemRWM, // read/write control goes to LSU
+  output logic [1:0] 	   AtomicM, // atomic control goes to LSU
+  output logic [`XLEN-1:0] MemAdrM, WriteDataM, // Address and write data to LSU
+
+  output logic [2:0] 	   Funct3M, // size and signedness to LSU
+  output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
   input logic 		   DataAccessFaultM,
-  input logic	     	   FWriteIntM,
-  input  logic [`XLEN-1:0] FIntResM,
-  output logic [1:0] 	   MemRWM,
-  output logic [1:0] 	   AtomicM,
-  output logic [`XLEN-1:0] MemAdrM, WriteDataM,
-  output logic [`XLEN-1:0] SrcAM,
-  output logic [2:0] 	   Funct3M,
+  input logic [`XLEN-1:0]  FIntResM, 
+
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
-  input logic             FWriteIntW,
-  input logic             SquashSCW,
+  input logic 		   FWriteIntW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, InstrValidW,
   // hazards

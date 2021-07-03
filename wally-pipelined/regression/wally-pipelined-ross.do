@@ -35,8 +35,8 @@ switch $argc {
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt +acc -gDEBUG=1 work.testbench -o workopt 
-vsim workopt
+vopt -fsmdebug  +acc -gDEBUG=1 work.testbench -o workopt 
+vsim workopt -fsmdebug
 
 
 do wave.do

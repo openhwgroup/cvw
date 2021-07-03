@@ -27,7 +27,7 @@
 //
 
 
-module fpuaddcvt2 (FAddResultM, FAddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddSelInvM, AddExpPostSumM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddSignAM, AddFloat1M, AddFloat2M, AddExp1DenormM, AddExp2DenormM, AddExponentM, FrmM, FOpCtrlM, FmtM);
+module fpuaddcvt2 (FAddResM, FAddFlgM, AddSumM, AddSumTcM, AddSelInvM, AddExpPostSumM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddSignAM, AddFloat1M, AddFloat2M, AddExp1DenormM, AddExp2DenormM, AddExponentM, FrmM, FOpCtrlM, FmtM);
 
    input [2:0] 	FrmM;		// Rounding mode - specify values 
    input [3:0]	FOpCtrlM;	// Function opcode
@@ -51,9 +51,9 @@ module fpuaddcvt2 (FAddResultM, FAddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddS
    input          AddSwapM;
    // input 	 AddNormOvflowM;
 
-   output [63:0] FAddResultM;	// Result of operation
-   output [4:0]  FAddFlagsM;   	// IEEE exception flags 
-   output 	 AddDenormM;   	// AddDenormM on input or output   
+   output [63:0] FAddResM;	// Result of operation
+   output [4:0]  FAddFlgM;   	// IEEE exception flags 
+   wire 	 AddDenormM;   	// AddDenormM on input or output   
 
    wire          P;
    assign P = ~FmtM | FOpCtrlM[2];
@@ -145,7 +145,7 @@ module fpuaddcvt2 (FAddResultM, FAddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddS
    // exactly where the rounding point is. The rounding units also
    // handles special cases and set the exception flags.
 
-   // Changed DenormIO -> AddDenormM and FlagsIn -> FAddFlagsM in order to
+   // Changed DenormIO -> AddDenormM and FlagsIn -> FAddFlgM in order to
    // help in processor reservation station detection of load/stores. In
    // other words, the processor would like to know ahead of time that
    // if the result is an exception then don't load or store.
@@ -155,8 +155,8 @@ module fpuaddcvt2 (FAddResultM, FAddFlagsM, AddDenormM, AddSumM, AddSumTcM, AddS
 		   AddNormOvflowM, normal_underflow, AddSwapM, FOpCtrlM, AddSumM);
 
    // Store the final result and the exception flags in registers.
-   assign FAddResultM = Result;
-   assign {AddDenormM, FAddFlagsM} = {DenormIO, FlagsIn};
+   assign FAddResM = Result;
+   assign {AddDenormM, FAddFlgM} = {DenormIO, FlagsIn};
    
 endmodule // fpadd
 
