@@ -32,9 +32,6 @@ module pmachecker (
 
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
-//  input  logic [31:0] HADDR,
-//  input  logic [2:0]  HSIZE,
-//  input  logic [2:0]  HBURST, //  *** in AHBlite, HBURST is hardwired to zero for single bursts only allowed. consider removing from this module if unused.
 
   input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
 
@@ -46,7 +43,6 @@ module pmachecker (
   output logic        PMAStoreAccessFaultM
 );
 
-  // logic BootTim, Tim, CLINT, GPIO, UART, PLIC;
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
   logic [5:0]  SelRegions;

@@ -29,12 +29,8 @@
 `include "wally-config.vh"
 
 module pmpchecker (
-//  input  logic             clk, reset, //*** it seems like clk, reset is also not needed here?
   input  logic [`PA_BITS-1:0]      PhysicalAddress,  
-//  input  logic [31:0]      HADDR,
-
-  input  logic [1:0]       PrivilegeModeW,
-
+  input  logic [1:0]               PrivilegeModeW,
 
   // *** ModelSim has a switch -svinputport which controls whether input ports
   // are nets (wires) or vars by default. The default setting of this switch is
@@ -43,10 +39,6 @@ module pmpchecker (
   // this will be understood as a var. However, if we don't supply the `var`
   // keyword, the compiler warns us that it's interpreting the signal as a var,
   // which we might not intend.
-  // However, it's still bad form to pass 512 or 1024 signals across a module
-  // boundary. It would be better to store the PMP address registers in a module
-  // somewhere in the CSR hierarchy and do PMP checking _within_ that module, so
-  // we don't have to pass around 16 whole registers.
   input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
 
@@ -61,7 +53,6 @@ module pmpchecker (
 
   // Bit i is high when the address falls in PMP region i
   logic [`PMP_ENTRIES-1:0] Regions, FirstMatch;
-  //logic [3:0]  MatchedRegion;
   logic        EnforcePMP;
 
   logic [7:0] PMPCFG [`PMP_ENTRIES-1:0];
@@ -74,7 +65,6 @@ module pmpchecker (
   logic [`PMP_ENTRIES-1:0] ActiveRegion;
 
   logic [`PMP_ENTRIES-1:0] L_Bits, X_Bits, W_Bits, R_Bits;
-  //logic InvalidExecute, InvalidWrite, InvalidRead;
 
   genvar i,j;
 
@@ -100,11 +90,8 @@ module pmpchecker (
     end
   endgenerate
 
-  //assign Match = |Regions; 
-
   // verilator lint_off UNOPTFLAT
   logic [`PMP_ENTRIES-1:0] NoLowerMatch;
-//  assign NoLowerMatch[0] = 1;
   generate
     // verilator lint_off WIDTH
     for (j=0; j<`PMP_ENTRIES; j = j+8) begin
@@ -127,36 +114,6 @@ module pmpchecker (
     end
     // verilator lint_on UNOPTFLAT
   endgenerate
-/*  // *** extend to up to 64, fold bit extraction to avoid need for binary encoding of region
-  always_comb
-    casez (Regions)
-      16'b???????????????1: MatchedRegion = 0;
-      16'b??????????????10: MatchedRegion = 1;
-      16'b?????????????100: MatchedRegion = 2;
-      16'b????????????1000: MatchedRegion = 3;
-      16'b???????????10000: MatchedRegion = 4;
-      16'b??????????100000: MatchedRegion = 5;
-      16'b?????????1000000: MatchedRegion = 6;
-      16'b????????10000000: MatchedRegion = 7;
-      16'b???????100000000: MatchedRegion = 8;
-      16'b??????1000000000: MatchedRegion = 9;
-      16'b?????10000000000: MatchedRegion = 10;
-      16'b????100000000000: MatchedRegion = 11;
-      16'b???1000000000000: MatchedRegion = 12;
-      16'b??10000000000000: MatchedRegion = 13;
-      16'b?100000000000000: MatchedRegion = 14;
-      16'b1000000000000000: MatchedRegion = 15;
-      default:              MatchedRegion = 0; // Should only occur if there is no match
-    endcase
-
-  assign L_Bit = PMPCFG[MatchedRegion][7] && Match;
-  assign X_Bit = PMPCFG[MatchedRegion][2] && Match;
-  assign W_Bit = PMPCFG[MatchedRegion][1] && Match;
-  assign R_Bit = PMPCFG[MatchedRegion][0] && Match; 
-
-  assign InvalidExecute = ExecuteAccessF && ~X_Bit;
-  assign InvalidWrite   = WriteAccessM   && ~W_Bit;
-  assign InvalidRead    = ReadAccessM    && ~R_Bit;*/
 
   // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L_Bits : |ActiveRegion;
