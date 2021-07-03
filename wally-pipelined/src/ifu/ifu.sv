@@ -127,7 +127,7 @@ module ifu (
        .TLBMiss(ITLBMissF),
        .TLBHit(ITLBHitF),
        .TLBPageFault(ITLBInstrPageFaultF),
-       .ExecuteAccessF(InstrReadF), /// *** Ross Thompson this is definitely wrong. InstrReadF changed to icache read to memory.
+       .ExecuteAccessF(1'b1), // ***dh -- this should eventually change to only true if an instruction fetch is occurring
        .AtomicAccessM(1'b0),
        .ReadAccessM(1'b0),
        .WriteAccessM(1'b0),
