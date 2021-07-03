@@ -213,179 +213,175 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
     ICacheStallF = 1'b1;
     
     case (CurrState)
-      
       STATE_READY: begin
-	PCMux = 2'b00;
-	ICacheReadEn = 1'b1;
-	if (ITLBMissF) begin
-	  NextState = STATE_TLB_MISS;
-	end else if (hit & ~spill) begin
-	  SavePC = 1'b1;
-	  ICacheStallF = 1'b0;
-	  NextState = STATE_READY;
-	end else if (hit & spill) begin
-	  spillSave = 1'b1;
-	  PCMux = 2'b10;
-	  NextState = STATE_HIT_SPILL;
-	end else if (~hit & ~spill) begin
-	  CntReset = 1'b1;
-	  NextState = STATE_MISS_FETCH_WDV;
-	end else if (~hit & spill) begin
-	  CntReset = 1'b1;
-	  PCMux = 2'b01;
-	  NextState = STATE_MISS_SPILL_FETCH_WDV;
-	end else begin
+        PCMux = 2'b00;
+        ICacheReadEn = 1'b1;
+        if (ITLBMissF) begin
+          NextState = STATE_TLB_MISS;
+        end else if (hit & ~spill) begin
+          SavePC = 1'b1;
+          ICacheStallF = 1'b0;
           NextState = STATE_READY;
-	end
+        end else if (hit & spill) begin
+          spillSave = 1'b1;
+          PCMux = 2'b10;
+          NextState = STATE_HIT_SPILL;
+        end else if (~hit & ~spill) begin
+          CntReset = 1'b1;
+          NextState = STATE_MISS_FETCH_WDV;
+        end else if (~hit & spill) begin
+          CntReset = 1'b1;
+          PCMux = 2'b01;
+          NextState = STATE_MISS_SPILL_FETCH_WDV;
+        end else begin
+          NextState = STATE_READY;
+        end
       end
-
       // branch 1,  hit spill and 2, miss spill hit
       STATE_HIT_SPILL: begin
-	PCMux = 2'b10;
-	UnalignedSelect = 1'b1;
-	ICacheReadEn = 1'b1;
-	if (hit) begin
+        PCMux = 2'b10;
+        UnalignedSelect = 1'b1;
+        ICacheReadEn = 1'b1;
+        if (hit) begin
           NextState = STATE_HIT_SPILL_FINAL;
-	end else begin
-	  CntReset = 1'b1;
+        end else begin
+          CntReset = 1'b1;
           NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
-	end
+        end
       end
       STATE_HIT_SPILL_MISS_FETCH_WDV: begin
-	PCMux = 2'b10;
-	//InstrReadF = 1'b1;
-	PreCntEn = 1'b1;
-	if (FetchCountFlag & InstrAckF) begin
-	  NextState = STATE_HIT_SPILL_MISS_FETCH_DONE;
-	end else begin
-	  NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
-	end
+        PCMux = 2'b10;
+        //InstrReadF = 1'b1;
+        PreCntEn = 1'b1;
+        if (FetchCountFlag & InstrAckF) begin
+          NextState = STATE_HIT_SPILL_MISS_FETCH_DONE;
+        end else begin
+          NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
+        end
       end
       STATE_HIT_SPILL_MISS_FETCH_DONE: begin
-	PCMux = 2'b10;
-	ICacheMemWriteEnable = 1'b1;
+        PCMux = 2'b10;
+        ICacheMemWriteEnable = 1'b1;
         NextState = STATE_HIT_SPILL_MERGE;
       end
       STATE_HIT_SPILL_MERGE: begin
-	PCMux = 2'b10;
-	UnalignedSelect = 1'b1;
-	ICacheReadEn = 1'b1;
+        PCMux = 2'b10;
+        UnalignedSelect = 1'b1;
+        ICacheReadEn = 1'b1;
         NextState = STATE_HIT_SPILL_FINAL;
       end
       STATE_HIT_SPILL_FINAL: begin
-	ICacheReadEn = 1'b1;
-	PCMux = 2'b00;
-	UnalignedSelect = 1'b1;
-	SavePC = 1'b1;
-	NextState = STATE_READY;
-	ICacheStallF = 1'b0;	
+        ICacheReadEn = 1'b1;
+        PCMux = 2'b00;
+        UnalignedSelect = 1'b1;
+        SavePC = 1'b1;
+        NextState = STATE_READY;
+        ICacheStallF = 1'b0;	
       end
-
       // branch 3 miss no spill
       STATE_MISS_FETCH_WDV: begin
-	PCMux = 2'b01;
-	//InstrReadF = 1'b1;
-	PreCntEn = 1'b1;
-	if (FetchCountFlag & InstrAckF) begin
-	  NextState = STATE_MISS_FETCH_DONE;	  
-	end else begin
-	  NextState = STATE_MISS_FETCH_WDV;
-	end
+        PCMux = 2'b01;
+        //InstrReadF = 1'b1;
+        PreCntEn = 1'b1;
+        if (FetchCountFlag & InstrAckF) begin
+          NextState = STATE_MISS_FETCH_DONE;	  
+        end else begin
+          NextState = STATE_MISS_FETCH_WDV;
+        end
       end
       STATE_MISS_FETCH_DONE: begin
-	PCMux = 2'b01;
-	ICacheMemWriteEnable = 1'b1;
+        PCMux = 2'b01;
+        ICacheMemWriteEnable = 1'b1;
         NextState = STATE_MISS_READ;
       end
       STATE_MISS_READ: begin
-	PCMux = 2'b01;
-	ICacheReadEn = 1'b1;
-	NextState = STATE_READY;
+        PCMux = 2'b01;
+        ICacheReadEn = 1'b1;
+        NextState = STATE_READY;
       end
-
       // branch 4 miss spill hit, and 5 miss spill miss
       STATE_MISS_SPILL_FETCH_WDV: begin
-	PCMux = 2'b01;
-	PreCntEn = 1'b1;
-	//InstrReadF = 1'b1;	
-	if (FetchCountFlag & InstrAckF) begin 
-	  NextState = STATE_MISS_SPILL_FETCH_DONE;
-	end else begin
-	  NextState = STATE_MISS_SPILL_FETCH_WDV;
-	end
+        PCMux = 2'b01;
+        PreCntEn = 1'b1;
+        //InstrReadF = 1'b1;	
+        if (FetchCountFlag & InstrAckF) begin 
+          NextState = STATE_MISS_SPILL_FETCH_DONE;
+        end else begin
+          NextState = STATE_MISS_SPILL_FETCH_WDV;
+        end
       end
       STATE_MISS_SPILL_FETCH_DONE: begin
-	PCMux = 2'b01;	
-	ICacheMemWriteEnable = 1'b1;
-	NextState = STATE_MISS_SPILL_READ1;
+        PCMux = 2'b01;	
+        ICacheMemWriteEnable = 1'b1;
+        NextState = STATE_MISS_SPILL_READ1;
       end
       STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
-	PCMux = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
-	ICacheReadEn = 1'b1;	
-	NextState = STATE_MISS_SPILL_2;
+        PCMux = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
+        ICacheReadEn = 1'b1;	
+        NextState = STATE_MISS_SPILL_2;
       end
       STATE_MISS_SPILL_2: begin
-	PCMux = 2'b10;
-	UnalignedSelect = 1'b1;
-	spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
-	ICacheReadEn = 1'b1;
-	NextState = STATE_MISS_SPILL_2_START;
+        PCMux = 2'b10;
+        UnalignedSelect = 1'b1;
+        spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
+        ICacheReadEn = 1'b1;
+        NextState = STATE_MISS_SPILL_2_START;
       end
       STATE_MISS_SPILL_2_START: begin
-	if (~hit) begin
-	  CntReset = 1'b1;
-	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
-	end else begin
-	  NextState = STATE_READY;
-	  ICacheReadEn = 1'b1;
-	  PCMux = 2'b00;
-	  UnalignedSelect = 1'b1;
-	  SavePC = 1'b1;
-	  ICacheStallF = 1'b0;	
-	end
+        if (~hit) begin
+          CntReset = 1'b1;
+          NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
+        end else begin
+          NextState = STATE_READY;
+          ICacheReadEn = 1'b1;
+          PCMux = 2'b00;
+          UnalignedSelect = 1'b1;
+          SavePC = 1'b1;
+          ICacheStallF = 1'b0;	
+        end
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
-	PCMux = 2'b10;
-	PreCntEn = 1'b1;
-	//InstrReadF = 1'b1;	
-	if (FetchCountFlag & InstrAckF) begin
-	  NextState = STATE_MISS_SPILL_MISS_FETCH_DONE;	  
-	end else begin
-	  NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
-	end
+        PCMux = 2'b10;
+        PreCntEn = 1'b1;
+        //InstrReadF = 1'b1;	
+        if (FetchCountFlag & InstrAckF) begin
+          NextState = STATE_MISS_SPILL_MISS_FETCH_DONE;	  
+        end else begin
+          NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
+        end
       end
       STATE_MISS_SPILL_MISS_FETCH_DONE: begin
-	PCMux = 2'b10;
-	ICacheMemWriteEnable = 1'b1;
-	NextState = STATE_MISS_SPILL_MERGE;
+        PCMux = 2'b10;
+        ICacheMemWriteEnable = 1'b1;
+        NextState = STATE_MISS_SPILL_MERGE;
       end
       STATE_MISS_SPILL_MERGE: begin
-	PCMux = 2'b10;
-	UnalignedSelect = 1'b1;
-	ICacheReadEn = 1'b1;	
+        PCMux = 2'b10;
+        UnalignedSelect = 1'b1;
+        ICacheReadEn = 1'b1;	
         NextState = STATE_MISS_SPILL_FINAL;
       end
       STATE_MISS_SPILL_FINAL: begin
-	ICacheReadEn = 1'b1;
-	PCMux = 2'b00;
-	UnalignedSelect = 1'b1;
-	SavePC = 1'b1;
-	ICacheStallF = 1'b0;	
-	NextState = STATE_READY;
+        ICacheReadEn = 1'b1;
+        PCMux = 2'b00;
+        UnalignedSelect = 1'b1;
+        SavePC = 1'b1;
+        ICacheStallF = 1'b0;	
+        NextState = STATE_READY;
       end
       STATE_TLB_MISS: begin
-	if (ITLBWriteF | WalkerInstrPageFaultF) begin
-	  NextState = STATE_TLB_MISS_DONE;
-	end else begin
-	  NextState = STATE_TLB_MISS;
-	end
+        if (ITLBWriteF | WalkerInstrPageFaultF) begin
+          NextState = STATE_TLB_MISS_DONE;
+        end else begin
+          NextState = STATE_TLB_MISS;
+        end
       end
       STATE_TLB_MISS_DONE : begin
-	NextState = STATE_READY;
+        NextState = STATE_READY;
       end
       default: begin
-	PCMux = 2'b01;
-	NextState = STATE_READY;
+        PCMux = 2'b01;
+        NextState = STATE_READY;
       end
       // *** add in error handling and invalidate/evict
     endcase
