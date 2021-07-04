@@ -49,8 +49,8 @@
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
 
-`define ITLB_ENTRY_BITS 5
-`define DTLB_ENTRY_BITS 5
+`define ITLB_ENTRIES 32
+`define DTLB_ENTRIES 32
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 16

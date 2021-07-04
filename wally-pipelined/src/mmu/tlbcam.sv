@@ -28,44 +28,36 @@
 
 `include "wally-config.vh"
 
-module tlbcam #(parameter ENTRY_BITS = 3,
-                 parameter KEY_BITS   = 20,
-                 parameter SEGMENT_BITS = 10) (
+module tlbcam #(parameter TLB_ENTRIES = 8,
+                parameter KEY_BITS   = 20,
+                parameter SEGMENT_BITS = 10) (
   input logic                     clk, reset,
-  input logic [KEY_BITS-1:0]      VirtualPageNumber,
+  input logic [`VPN_BITS-1:0]     VirtualPageNumber,
   input logic [1:0]               PageTypeWriteVal,
   input logic                     TLBFlush,
-  input logic [2**ENTRY_BITS-1:0] WriteEnables,
-
-  //output logic [ENTRY_BITS-1:0]   VPNIndex,
-  output logic [2**ENTRY_BITS-1:0] ReadLines,
+  input logic [TLB_ENTRIES-1:0]   WriteEnables,
+  input logic [TLB_ENTRIES-1:0]   PTE_G,
+  input logic [`ASID_BITS-1:0]    ASID,
+  output logic [TLB_ENTRIES-1:0]  ReadLines,
   output logic [1:0]              HitPageType,
   output logic                    CAMHit
 );
 
-  localparam NENTRIES = 2**ENTRY_BITS;
+  logic [1:0] PageTypeRead [TLB_ENTRIES-1:0];
+  logic [TLB_ENTRIES-1:0] Matches;
 
-  logic [1:0] PageTypeRead [NENTRIES-1:0];
-  logic [NENTRIES-1:0] Matches;
-
-  // Create NENTRIES CAM lines, each of which will independently consider
+  // Create TLB_ENTRIES CAM lines, each of which will independently consider
   // whether the requested virtual address is a match. Each line stores the
   // original virtual page number from when the address was written, regardless
   // of page type. However, matches are determined based on a subset of the
   // page number segments.
 
-  tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[NENTRIES-1:0](
+  tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
     .WriteEnable(WriteEnables),
     .PageTypeRead, // *** change name to agree
     .Match(ReadLines), // *** change name to agree
     .*);
-
-  // In case there are multiple matches in the CAM, select only one
-  // *** it might be guaranteed that the CAM will never have multiple matches.
-  // If so, this is just an encoder
-  //priorityencoder #(ENTRY_BITS) matchencoder(Matches, VPNIndex);
-
   assign CAMHit = |ReadLines & ~TLBFlush;
-  assign HitPageType = PageTypeRead.or; // applies OR to elements of the (NENTRIES x 2) array to get 2-bit result
+  assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result
 
 endmodule
