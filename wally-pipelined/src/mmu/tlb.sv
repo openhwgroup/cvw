@@ -111,6 +111,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [1:0]            HitPageType;
   logic                  CAMHit;
   logic [`ASID_BITS-1:0] ASID;
+  logic                  DAFault;
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
@@ -165,7 +166,9 @@ module tlb #(parameter TLB_ENTRIES = 8,
       // only execute non-user mode pages.
       assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
         ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X);
+      // fault for software handling if access bit is off
+      assign DAFault = ~PTE_A;
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAFault);
     end else begin
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
@@ -180,7 +183,9 @@ module tlb #(parameter TLB_ENTRIES = 8,
       // Check for write error. Writes are invalid when the page's write bit is
       // low.
       assign InvalidWrite = WriteAccess && ~PTE_W;
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite);
+      // Fault for software handling if access bit is off or writing a page with dirty bit off
+      assign DAFault = ~PTE_A | WriteAccess & ~PTE_D; 
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAFault);
     end
   endgenerate
 
