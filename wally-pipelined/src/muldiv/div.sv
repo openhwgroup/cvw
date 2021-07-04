@@ -307,7 +307,7 @@ module csa #(parameter WIDTH=8) (input logic [WIDTH-1:0] a, b, c,
    assign carry = {carry_temp[WIDTH-1:1], 1'b0};     
 
 endmodule // csa
-
+/*
 module eqcmp #(parameter WIDTH = 8)
    (input  logic [WIDTH-1:0] a, b,
     output logic y);
@@ -315,6 +315,7 @@ module eqcmp #(parameter WIDTH = 8)
    assign y = (a == b);
    
 endmodule // eqcmp
+*/
 
 // QST for r=4
 module qst4 (input logic [6:0] s, input logic [2:0] d,

@@ -77,8 +77,8 @@ module ifu (
   output logic 		      ITLBMissF, ITLBHitF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
+  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
   output logic 		      PMPInstrAccessFaultF, PMAInstrAccessFaultF,
   output logic 		      ISquashBusAccessF
