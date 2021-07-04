@@ -49,7 +49,7 @@
 `include "wally-config.vh"
 
 // The TLB will have 2**ENTRY_BITS total entries
-module tlb #(parameter ENTRY_BITS = 3,
+module tlb #(parameter TLB_ENTRIES = 8,
              parameter ITLB = 0) (
   input logic              clk, reset,
 
@@ -88,8 +88,6 @@ module tlb #(parameter ENTRY_BITS = 3,
   output logic             TLBPageFault
 );
 
-  localparam NENTRIES = 2**ENTRY_BITS;
-
   logic Translate;
   logic TLBAccess, ReadAccess, WriteAccess;
 
@@ -97,8 +95,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   logic [`SVMODE_BITS-1:0] SvMode;
   logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
 
-  //logic [ENTRY_BITS-1:0] WriteIndex;
-  logic [NENTRIES-1:0] ReadLines, WriteLines, WriteEnables; // used as the one-hot encoding of WriteIndex
+  logic [TLB_ENTRIES-1:0] ReadLines, WriteLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -110,24 +107,20 @@ module tlb #(parameter ENTRY_BITS = 3,
   logic [7:0]           PTEAccessBits;
   logic [11:0]          PageOffset;
 
-  // Useful PTE Control Bits
-  logic PTE_U, PTE_X, PTE_W, PTE_R;
-
-  // Pattern location in the CAM and type of page hit
-  //ogic [ENTRY_BITS-1:0] VPNIndex;
+  logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
   logic [1:0]            HitPageType;
-
-  // Whether the virtual address has a match in the CAM
   logic                  CAMHit;
+  logic [`ASID_BITS-1:0] ASID;
+  logic                  DAFault;
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+  assign ASID = SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE];
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
   assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
 
-  // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
-  //decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
-  assign WriteEnables = WriteLines & {(2**ENTRY_BITS){TLBWrite}};
+  // Determine whether to write TLB
+  assign WriteEnables = WriteLines & {(TLB_ENTRIES){TLBWrite}};
 
   // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
   // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,
@@ -142,20 +135,18 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
- 
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches
   assign ReadAccess = TLBAccessType[1];
   assign WriteAccess = TLBAccessType[0];
   assign TLBAccess = ReadAccess || WriteAccess;
 
-
   // TLB entries are evicted according to the LRU algorithm
-  tlblru #(ENTRY_BITS) lru(.*);
+  tlblru #(TLB_ENTRIES) lru(.*);
 
   // TLB memory
-  tlbram #(ENTRY_BITS) tlbram(.*);
-  tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
+  tlbram #(TLB_ENTRIES) tlbram(.*);
+  tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
@@ -163,6 +154,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
   // unswizzle useful PTE bits
+  assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
   assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
  
   // Check whether the access is allowed, page faulting if not.
@@ -174,7 +166,9 @@ module tlb #(parameter ENTRY_BITS = 3,
       // only execute non-user mode pages.
       assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
         ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X);
+      // fault for software handling if access bit is off
+      assign DAFault = ~PTE_A;
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAFault);
     end else begin
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
@@ -189,7 +183,9 @@ module tlb #(parameter ENTRY_BITS = 3,
       // Check for write error. Writes are invalid when the page's write bit is
       // low.
       assign InvalidWrite = WriteAccess && ~PTE_W;
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite);
+      // Fault for software handling if access bit is off or writing a page with dirty bit off
+      assign DAFault = ~PTE_A | WriteAccess & ~PTE_D; 
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAFault);
     end
   endgenerate
 

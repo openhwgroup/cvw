@@ -26,9 +26,7 @@
 
 `include "wally-config.vh"
 
-// The TLB will have 2**ENTRY_BITS total entries
-
-module mmu #(parameter ENTRY_BITS = 3,
+module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
              parameter IMMU = 0) (
 
   input logic              clk, reset,
@@ -83,7 +81,7 @@ module mmu #(parameter ENTRY_BITS = 3,
   logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
 
-  tlb #(.ENTRY_BITS(ENTRY_BITS), .ITLB(IMMU)) tlb(.*);
+  tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
 
   ///////////////////////////////////////////
   // Check physical memory accesses
