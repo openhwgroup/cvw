@@ -46,16 +46,7 @@ module tlbram #(parameter ENTRY_BITS = 3) (
 
   // Generate a flop for every entry in the RAM
   flopenr #(`XLEN) pteflops[NENTRIES-1:0](clk, reset, WriteEnables, PTEWriteVal, ram);
-/*
-  generate
-    genvar i;
-    for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
-      flopenr #(`XLEN) pteflop(clk, reset, WriteEnables[i],
-        PTEWriteVal, ram[i]);
-    end
-  endgenerate
-*/
-
+  
   assign PageTableEntry = ram[VPNIndex];
   assign PTEAccessBits = PageTableEntry[7:0];
   assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];

@@ -148,7 +148,6 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign WriteAccess = TLBAccessType[0];
   assign TLBAccess = ReadAccess || WriteAccess;
 
-  assign PageOffset = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
   tlblru #(ENTRY_BITS) lru(.*);
@@ -157,11 +156,15 @@ module tlb #(parameter ENTRY_BITS = 3,
   tlbram #(ENTRY_BITS) tlbram(.*);
   tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
+  // Replace segments of the virtual page number with segments of the physical
+  // page number. For 4 KB pages, the entire virtual page number is replaced.
+  // For superpages, some segments are considered offsets into a larger page.
+  tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
+
   // unswizzle useful PTE bits
   assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
  
   // Check whether the access is allowed, page faulting if not.
-  // *** We might not have S mode.
   generate
     if (ITLB == 1) begin
       logic ImproperPrivilege;
@@ -189,28 +192,12 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // Replace segments of the virtual page number with segments of the physical
-  // page number. For 4 KB pages, the entire virtual page number is replaced.
-  // For superpages, some segments are considered offsets into a larger page.
-  tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
-
-  // Provide physical address only on TLBHits to cause catastrophic errors if
-  // garbage address is used.
-  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0;
 
   // Output the hit physical address if translation is currently on.
-/*  generate
-    if (`XLEN == 32) begin
-      VirtualAddressPALen = {2'b0, VirtualAddress};
-
-       mux2 #(`PA_BITS) addressmux({2'b0, VirtualAddress}, PhysicalAddressFull, Translate, PhysicalAddress);
-    end else begin
-      VirtualAddressPALen = VirtualAddress[`PA_BITS-1:0];
-      mux2 #(`PA_BITS) addressmux(VirtualAddress[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
-    end
-  endgenerate*/
-
+  // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
   assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
+  assign PageOffset = VirtualAddress[11:0];
+  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0;
   mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
 
   assign TLBHit = CAMHit & TLBAccess;
