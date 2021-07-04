@@ -119,8 +119,9 @@ module tlb #(parameter ENTRY_BITS = 3,
   // Whether the virtual address has a match in the CAM
   logic                  CAMHit;
 
-  // Grab the sv mode from SATP
+  // Grab the sv mode from SATP and determine whether translation should occur
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+  assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
 
   // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
   decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
@@ -139,8 +140,6 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // Whether translation should occur; ITLB ignores MPRVW
-  assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
  
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches
