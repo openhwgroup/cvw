@@ -64,11 +64,6 @@ module pagetablewalker
    output logic 	    HPTWRead,
 
 
-
-
-   // Stall signal
-   output logic 	    MMUStall,
-
    // Faults
    output logic 	    WalkerInstrPageFaultF,
    output logic 	    WalkerLoadPageFaultM, 
@@ -190,7 +185,6 @@ module pagetablewalker
 	PRegEn = 1'b0;
 	TranslationPAdr = '0;
 	HPTWRead = 1'b0;
-	MMUStall = 1'b1;
         PageTableEntry = '0;
         PageType = '0;
         DTLBWriteM = '0;
@@ -209,7 +203,6 @@ module pagetablewalker
 	    end else begin
               NextWalkerState = IDLE;
 	      TranslationPAdr = '0;
-	      MMUStall = 1'b0;
 	    end
 	  end
 	  
@@ -271,14 +264,12 @@ module pagetablewalker
 	  
           LEAF: begin
             NextWalkerState = IDLE;
-            MMUStall = 1'b0;
 	  end
           FAULT: begin
             NextWalkerState = IDLE;
             WalkerInstrPageFaultF = ~DTLBMissMQ;
             WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
             WalkerStorePageFaultM = DTLBMissMQ && MemStore;
-	    MMUStall = 1'b0;
 	  end
 	  
           // Default case should never happen, but is included for linter.
@@ -293,8 +284,6 @@ module pagetablewalker
       assign VPN1 = TranslationVAdrQ[31:22];
       assign VPN0 = TranslationVAdrQ[21:12];
 
-      //assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || 
-      //			WalkerState == LEVEL2 || WalkerState == LEVEL1;
       
 
       // Capture page table entry from data cache
@@ -335,7 +324,6 @@ module pagetablewalker
 	PRegEn = 1'b0;
 	TranslationPAdr = '0;
 	HPTWRead = 1'b0;
-	MMUStall = 1'b1;
         PageTableEntry = '0;
         PageType = '0;
         DTLBWriteM = '0;
@@ -358,7 +346,6 @@ module pagetablewalker
 	    end else begin
               NextWalkerState = IDLE;
 	      TranslationPAdr = '0;
-	      MMUStall = 1'b0;
 	    end
 	  end
 
@@ -499,7 +486,6 @@ module pagetablewalker
           
           LEAF: begin 
             NextWalkerState = IDLE;
-            MMUStall = 1'b0;
           end
 
           FAULT: begin
@@ -507,7 +493,6 @@ module pagetablewalker
             WalkerInstrPageFaultF = ~DTLBMissMQ;
             WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
             WalkerStorePageFaultM = DTLBMissMQ && MemStore;
-	    MMUStall = 1'b0;
           end
 
           // Default case should never happen

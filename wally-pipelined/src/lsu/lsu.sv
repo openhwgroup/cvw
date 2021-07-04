@@ -31,8 +31,7 @@
 module lsu (
   input logic 		      clk, reset,
   input logic 		      StallM, FlushM, StallW, FlushW,
-  output logic 		      DataStall,
-  output logic 		      HPTWReady,
+  output logic 		      DCacheStall,
   // Memory Stage
 
   // connected to cpu (controls)
@@ -66,22 +65,24 @@ module lsu (
   input logic 		      MemAckW, // from ahb
   input logic [`XLEN-1:0]     HRDATAW, // from ahb
   output logic [2:0] 	      Funct3MfromLSU,
-	    output logic StallWfromLSU,
+  output logic 		      StallWfromLSU,
 
 
   // mmu management
 
   // page table walker
-  input logic [`XLEN-1:0]     PageTableEntryM,
-  input logic [1:0] 	      PageTypeM,
   input logic [`XLEN-1:0]     SATP_REGW, // from csr
   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input logic  [1:0]       STATUS_MPP,
-  input logic 		      DTLBWriteM,
-  output logic 		      DTLBMissM,
-  input logic 		      DisableTranslation, // used to stop intermediate PTE physical addresses being saved to TLB.
 
-
+  input logic [`XLEN-1:0]     PCF,
+  input logic 		      ITLBMissF,
+  output logic [`XLEN-1:0]    PageTableEntryF,
+  output logic [1:0] 	      PageTypeF,
+  output logic 		      ITLBWriteF,
+	    output logic WalkerInstrPageFaultF,
+	    output logic WalkerLoadPageFaultM,
+	    output logic WalkerStorePageFaultM,
 
   output logic 		      DTLBHitM, // not connected 
   
@@ -120,14 +121,106 @@ module lsu (
   logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
 
+  logic DTLBMissM;
+  logic [`XLEN-1:0] PageTableEntryM;
+  logic [1:0] 	    PageTypeM;
+  logic 	    DTLBWriteM;
+  logic [`XLEN-1:0] MMUReadPTE;
+  logic 	    MMUReady;
+  logic 	    HPTWStall;  
+  logic [`XLEN-1:0] MMUPAdr;
+  logic 	    MMUTranslate;
+  logic 	    HPTWRead;
+  logic [1:0] 	    MemRWMtoLSU;
+  logic [2:0] 	    Funct3MtoLSU;
+  logic [1:0] 	    AtomicMtoLSU;
+  logic [`XLEN-1:0] MemAdrMtoLSU;
+  logic [`XLEN-1:0] WriteDataMtoLSU;
+  logic [`XLEN-1:0] ReadDataWFromLSU;
+  logic 	    StallWtoLSU;
+  logic 	    CommittedMfromLSU;
+  logic 	    SquashSCWfromLSU;
+  logic 	    DataMisalignedMfromLSU;
+  logic 	    HPTWReady;
+  logic 	    LSUStall;
+  logic 	    DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
+  
+  
+  
+  
   // for time being until we have a dcache the AHB Lite read bus HRDATAW will be connected to the
   // CPU's read data input ReadDataW.
-  assign ReadDataW = HRDATAW;
+  assign ReadDataWFromLSU = HRDATAW;
+
+
+  pagetablewalker pagetablewalker(
+				  .clk(clk),
+				  .reset(reset),
+				  .SATP_REGW(SATP_REGW),
+				  .PCF(PCF),
+				  .MemAdrM(MemAdrM),
+				  .ITLBMissF(ITLBMissF),
+				  .DTLBMissM(DTLBMissM),
+				  .MemRWM(MemRWM),
+				  .PageTableEntryF(PageTableEntryF),
+				  .PageTableEntryM(PageTableEntryM),
+				  .PageTypeF(PageTypeF),
+				  .PageTypeM(PageTypeM),
+				  .ITLBWriteF(ITLBWriteF),
+				  .DTLBWriteM(DTLBWriteM),
+				  .MMUReadPTE(MMUReadPTE),
+				  .MMUReady(HPTWReady),
+				  .HPTWStall(HPTWStall),
+				  .MMUPAdr(MMUPAdr),
+				  .MMUTranslate(MMUTranslate),
+				  .HPTWRead(HPTWRead),
+				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
+				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
+  
+  
+
+  // arbiter between IEU and pagetablewalker
+  lsuArb arbiter(.clk(clk),
+		 .reset(reset),
+		 // HPTW connection
+		 .HPTWTranslate(MMUTranslate),
+		 .HPTWRead(HPTWRead),
+		 .HPTWPAdr(MMUPAdr),
+		 .HPTWReadPTE(MMUReadPTE),
+		 .HPTWStall(HPTWStall),		 
+		 // CPU connection
+		 .MemRWM(MemRWM),
+		 .Funct3M(Funct3M),
+		 .AtomicM(AtomicM),
+		 .MemAdrM(MemAdrM),
+		 .WriteDataM(WriteDataM), // *** Need to remove this.
+		 .StallW(StallW),
+		 .ReadDataW(ReadDataW),
+		 .CommittedM(CommittedM),
+		 .SquashSCW(SquashSCW),
+		 .DataMisalignedM(DataMisalignedM),
+		 .DCacheStall(DCacheStall),
+		 // LSU
+		 .DisableTranslation(DisableTranslation),
+		 .MemRWMtoLSU(MemRWMtoLSU),
+		 .Funct3MtoLSU(Funct3MtoLSU),
+		 .AtomicMtoLSU(AtomicMtoLSU),
+		 .MemAdrMtoLSU(MemAdrMtoLSU),          
+		 .WriteDataMtoLSU(WriteDataMtoLSU),   // *** ??????????????
+		 .StallWtoLSU(StallWtoLSU),
+		 .CommittedMfromLSU(CommittedMfromLSU),     
+		 .SquashSCWfromLSU(SquashSCWfromLSU),      
+		 .DataMisalignedMfromLSU(DataMisalignedMfromLSU),
+		 .ReadDataWFromLSU(ReadDataWFromLSU),
+		 .DataStall(LSUStall));
+
+  
     
-  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.TLBAccessType(MemRWM),
-       .VirtualAddress(MemAdrM),
-       .Size(Funct3M[1:0]),
+  mmu #(.TLB_ENTRIES(`DTLB_ENTRY_BITS), .IMMU(0))
+  dmmu(.TLBAccessType(MemRWMtoLSU),
+       .VirtualAddress(MemAdrMtoLSU),
+       .Size(Funct3MtoLSU[1:0]),
        .PTEWriteVal(PageTableEntryM),
        .PageTypeWriteVal(PageTypeM),
        .TLBWrite(DTLBWriteM),
@@ -138,45 +231,46 @@ module lsu (
        .TLBPageFault(DTLBPageFaultM),
        .ExecuteAccessF(1'b0),
        .AtomicAccessM(AtomicMaskedM[1]), 
-       .WriteAccessM(MemRWM[0]),
-       .ReadAccessM(MemRWM[1]),
+       .WriteAccessM(MemRWMtoLSU[0]),
+       .ReadAccessM(MemRWMtoLSU[1]),
        .SquashBusAccess(DSquashBusAccessM),
+       .DisableTranslation(DisableTranslation),
 //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // Specify which type of page fault is occurring
-  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWM[1];
-  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWM[0];
+  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoLSU[1];
+  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoLSU[0];
 
   // Determine if an Unaligned access is taking place
   always_comb
-    case(Funct3M[1:0]) 
-      2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedM = MemAdrM[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedM = MemAdrM[1] | MemAdrM[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedM = |MemAdrM[2:0];           // ld, sd, fld, fsd
+    case(Funct3MtoLSU[1:0]) 
+      2'b00:  DataMisalignedMfromLSU = 0;                       // lb, sb, lbu
+      2'b01:  DataMisalignedMfromLSU = MemAdrMtoLSU[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedMfromLSU = MemAdrMtoLSU[1] | MemAdrMtoLSU[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedMfromLSU = |MemAdrMtoLSU[2:0];           // ld, sd, fld, fsd
     endcase 
 
   // Squash unaligned data accesses and failed store conditionals
   // *** this is also the place to squash if the cache is hit
-  // Changed DataMisalignedM to a larger combination of trap sources
+  // Changed DataMisalignedMfromLSU to a larger combination of trap sources
   // NonBusTrapM is anything that the bus doesn't contribute to producing 
   // By contrast, using TrapM results in circular logic errors
-  assign MemReadM = MemRWM[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWM[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
-  assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicM : 2'b00 ;
+  assign MemReadM = MemRWMtoLSU[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWMtoLSU[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
+  assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicMtoLSU : 2'b00 ;
   assign MemAccessM = MemReadM | MemWriteM;
 
   // Determine if M stage committed
   // Reset whenever unstalled. Set when access successfully occurs
-  flopr #(1) committedMreg(clk,reset,(CommittedM | CommitM) & StallM,preCommittedM);
-  assign CommittedM = preCommittedM | CommitM;
+  flopr #(1) committedMreg(clk,reset,(CommittedMfromLSU | CommitM) & StallM,preCommittedM);
+  assign CommittedMfromLSU = preCommittedM | CommitM;
 
   // Determine if address is valid
-  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-  assign LoadAccessFaultM = MemRWM[1];
-  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
-  assign StoreAccessFaultM = MemRWM[0];
+  assign LoadMisalignedFaultM = DataMisalignedMfromLSU & MemRWMtoLSU[1];
+  assign LoadAccessFaultM = MemRWMtoLSU[1];
+  assign StoreMisalignedFaultM = DataMisalignedMfromLSU & MemRWMtoLSU[0];
+  assign StoreAccessFaultM = MemRWMtoLSU[0];
 
   // Handle atomic load reserved / store conditional
   generate
@@ -185,9 +279,9 @@ module lsu (
       logic             ReservationValidM, ReservationValidW; 
       logic             lrM, scM, WriteAdrMatchM;
 
-      assign lrM = MemReadM && AtomicM[0];
-      assign scM = MemRWM[0] && AtomicM[0]; 
-      assign WriteAdrMatchM = MemRWM[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
+      assign lrM = MemReadM && AtomicMtoLSU[0];
+      assign scM = MemRWMtoLSU[0] && AtomicMtoLSU[0]; 
+      assign WriteAdrMatchM = MemRWMtoLSU[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
       always_comb begin // ReservationValidM (next value of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve
@@ -196,15 +290,15 @@ module lsu (
       end
       flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
       flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
-      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallW, SquashSCM, SquashSCW);
+      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoLSU, SquashSCM, SquashSCWfromLSU);
     end else begin // Atomic operations not supported
       assign SquashSCM = 0;
-      assign SquashSCW = 0; 
+      assign SquashSCWfromLSU = 0; 
     end
   endgenerate
 
   // Data stall
-  //assign DataStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
+  //assign LSUStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
   assign HPTWReady = (CurrState == STATE_READY);
   
 
@@ -225,22 +319,22 @@ module lsu (
       STATE_READY:
 	if (DTLBMissM) begin
 	  NextState = STATE_PTW_READY;
-	  DataStall = 1'b1;
+	  LSUStall = 1'b1;
 	end else if (AtomicMaskedM[1]) begin 
 	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
-	  DataStall = 1'b1;
-	end else if((MemReadM & AtomicM[0]) | (MemWriteM & AtomicM[0])) begin
+	  LSUStall = 1'b1;
+	end else if((MemReadM & AtomicMtoLSU[0]) | (MemWriteM & AtomicMtoLSU[0])) begin
 	  NextState = STATE_FETCH_AMO_2; 
-	  DataStall = 1'b1;
-	end else if (MemAccessM & ~DataMisalignedM) begin
+	  LSUStall = 1'b1;
+	end else if (MemAccessM & ~DataMisalignedMfromLSU) begin
 	  NextState = STATE_FETCH;
-	  DataStall = 1'b1;
+	  LSUStall = 1'b1;
 	end else begin
           NextState = STATE_READY;
-	  DataStall = 1'b0;
+	  LSUStall = 1'b0;
 	end
       STATE_FETCH_AMO_1: begin
-	DataStall = 1'b1;
+	LSUStall = 1'b1;
 	if (MemAckW) begin
 	  NextState = STATE_FETCH_AMO_2;
 	end else begin 
@@ -248,45 +342,45 @@ module lsu (
 	end
       end
       STATE_FETCH_AMO_2: begin
-	DataStall = 1'b1;	
-	if (MemAckW & ~StallW) begin
+	LSUStall = 1'b1;	
+	if (MemAckW & ~StallWtoLSU) begin
 	  NextState = STATE_FETCH_AMO_2;
-	end else if (MemAckW & StallW) begin
+	end else if (MemAckW & StallWtoLSU) begin
           NextState = STATE_STALLED;
 	end else begin
 	  NextState = STATE_FETCH_AMO_2;
 	end
       end
       STATE_FETCH: begin
-	  DataStall = 1'b1;
-	if (MemAckW & ~StallW) begin
+	  LSUStall = 1'b1;
+	if (MemAckW & ~StallWtoLSU) begin
 	  NextState = STATE_READY;
-	end else if (MemAckW & StallW) begin
+	end else if (MemAckW & StallWtoLSU) begin
 	  NextState = STATE_STALLED;
 	end else begin
 	  NextState = STATE_FETCH;
 	end
       end
       STATE_STALLED: begin
-	DataStall = 1'b0;
-	if (~StallW) begin
+	LSUStall = 1'b0;
+	if (~StallWtoLSU) begin
 	  NextState = STATE_READY;
 	end else begin
 	  NextState = STATE_STALLED;
 	end
       end
       STATE_PTW_READY: begin
-	DataStall = 1'b0;
+	LSUStall = 1'b0;
 	if (DTLBWriteM) begin
 	  NextState = STATE_READY;
-	end else if (MemReadM & ~DataMisalignedM) begin
+	end else if (MemReadM & ~DataMisalignedMfromLSU) begin
 	  NextState = STATE_PTW_FETCH;
 	end else begin
 	  NextState = STATE_PTW_READY;
 	end
       end
       STATE_PTW_FETCH : begin
-	DataStall = 1'b1;
+	LSUStall = 1'b1;
 	if (MemAckW & ~DTLBWriteM) begin
 	  NextState = STATE_PTW_READY;
 	end else if (MemAckW & DTLBWriteM) begin
@@ -299,15 +393,15 @@ module lsu (
 	NextState = STATE_READY;
       end
       default: begin
-	DataStall = 1'b0;
+	LSUStall = 1'b0;
 	NextState = STATE_READY;
       end
     endcase
   end // always_comb
 
   // *** for now just pass through size
-  assign Funct3MfromLSU = Funct3M;
-  assign StallWfromLSU = StallW;
+  assign Funct3MfromLSU = Funct3MtoLSU;
+  assign StallWfromLSU = StallWtoLSU;
   
 
 endmodule
