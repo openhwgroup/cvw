@@ -101,6 +101,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   logic [`VPN_BITS-1:0] VirtualPageNumber;
   logic [`PPN_BITS-1:0] PhysicalPageNumber, PhysicalPageNumberMixed;
   logic [`PA_BITS-1:0]  PhysicalAddressFull;
+  logic [`XLEN+1:0]     VAExt;
 
   // Sections of the page table entry
   logic [7:0]           PTEAccessBits;
@@ -137,7 +138,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   endgenerate
 
   // Whether translation should occur
-  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE) & ~ DisableTranslation;
+  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE) & ~ DisableTranslation; // *** needs to account for mprv
 
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches
@@ -155,11 +156,8 @@ module tlb #(parameter ENTRY_BITS = 3,
   tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
   // unswizzle useful PTE bits
-  assign PTE_U = PTEAccessBits[4];
-  assign PTE_X = PTEAccessBits[3];
-  assign PTE_W = PTEAccessBits[2];
-  assign PTE_R = PTEAccessBits[1];
-
+  assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
+ 
   // Check whether the access is allowed, page faulting if not.
   // *** We might not have S mode.
   generate
@@ -198,17 +196,22 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Provide physical address only on TLBHits to cause catastrophic errors if
   // garbage address is used.
-  assign PhysicalAddressFull = (TLBHit) ?
-    {PhysicalPageNumberMixed, PageOffset} : '0;
+  assign PhysicalAddressFull = (TLBHit) ? {PhysicalPageNumberMixed, PageOffset} : '0;
 
   // Output the hit physical address if translation is currently on.
-  generate
+/*  generate
     if (`XLEN == 32) begin
+      VirtualAddressPALen = {2'b0, VirtualAddress};
+
        mux2 #(`PA_BITS) addressmux({2'b0, VirtualAddress}, PhysicalAddressFull, Translate, PhysicalAddress);
     end else begin
+      VirtualAddressPALen = VirtualAddress[`PA_BITS-1:0];
       mux2 #(`PA_BITS) addressmux(VirtualAddress[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
     end
-  endgenerate
+  endgenerate*/
+
+  assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
+  mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
 
   assign TLBHit = CAMHit & TLBAccess;
   assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
