@@ -95,7 +95,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [`SVMODE_BITS-1:0] SvMode;
   logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
 
-  logic [TLB_ENTRIES-1:0] ReadLines, WriteLines, WriteEnables, Global; // used as the one-hot encoding of WriteIndex
+  logic [TLB_ENTRIES-1:0] ReadLines, WriteLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -107,7 +107,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [7:0]           PTEAccessBits;
   logic [11:0]          PageOffset;
 
-  logic PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
+  logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
   logic [1:0]            HitPageType;
   logic                  CAMHit;
   logic [`ASID_BITS-1:0] ASID;
@@ -153,6 +153,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
   // unswizzle useful PTE bits
+  assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
   assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
  
   // Check whether the access is allowed, page faulting if not.
