@@ -70,7 +70,7 @@ module pmpchecker (
               PMPCfg[j+3], PMPCfg[j+2], PMPCfg[j+1], PMPCfg[j]} = PMPCFG_ARRAY_REGW[j/8];
   endgenerate */
 
-  pmpadrdec pmpadrdec[`PMP_ENTRIES-1:0](
+  pmpadrdec pmpadrdecs[`PMP_ENTRIES-1:0](
     .PhysicalAddress, 
     .PMPCfg(PMPCFG_ARRAY_REGW),
     .PMPAdr(PMPADDR_ARRAY_REGW),
