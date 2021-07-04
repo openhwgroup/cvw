@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// camline.sv
+// tlbcamline.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 6 April 2021
 // Modified: kmacsaigoren@hmc.edu 1 June 2021
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module camline #(parameter KEY_BITS = 20,
+module tlbcamline #(parameter KEY_BITS = 20,
                   parameter SEGMENT_BITS = 10) (
   input logic                 clk, reset,
 
@@ -85,12 +85,12 @@ module camline #(parameter KEY_BITS = 20,
       assign {Key3, Key2, Key1, Key0} = Key;
 
       // Calculate the actual match value based on the input vpn and the page type.
-      // For example, a gigapage in SV only cares about VPN[2], so VPN[0] and VPN[1]
+      // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
       // should automatically match.
       assign Match0 = (Query0 == Key0) || (PageType > 2'd0); // least signifcant section
       assign Match1 = (Query1 == Key1) || (PageType > 2'd1);
       assign Match2 = (Query2 == Key2) || (PageType > 2'd2);
-      assign Match3 = (Query3 == Key3); // *** this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
+      assign Match3 = (Query3 == Key3); // this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
       
       assign Match = Match0 & Match1 & Match2 & Match3 & Valid;
     end

@@ -31,7 +31,7 @@
 
 `include "wally-config.vh"
 
-module priorityencoder #(parameter BINARY_BITS = 3) (
+module tlbpriority #(parameter BINARY_BITS = 3) (
   input  logic  [2**BINARY_BITS - 1:0] onehot,
   output logic  [BINARY_BITS - 1:0] binary
 );
