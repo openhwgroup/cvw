@@ -49,7 +49,7 @@ module csrn #(parameter
   );
 
   // User mode CSRs below only needed when user mode traps are supported
-  generate  
+  generate
     if (`N_SUPPORTED) begin
       logic WriteUTVECM;
       logic WriteUSCRATCHM, WriteUEPCM;

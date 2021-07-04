@@ -291,7 +291,7 @@ module uartPC16550D(
   // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
   generate
     genvar i;
-    for (i=0; i<16; i++) begin
+    for (i=0; i<16; i++) begin:rx
       assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
       if (i > 0)
         assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);

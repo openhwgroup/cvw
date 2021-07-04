@@ -151,7 +151,7 @@ module gpio (
   end
 
   // chip i/o
-  generate 
+  generate
     if (`GPIO_LOOPBACK_TEST) // connect OUT to IN for loopback testing
       assign input0d = GPIOPinsOut & input_en & output_en;
     else

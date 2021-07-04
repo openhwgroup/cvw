@@ -70,7 +70,7 @@ module csri #(parameter
   // MEIP, MTIP, MSIP are read-only
   // SEIP, STIP, SSIP is writable in MIP if S mode exists
   // SSIP is writable in SIP if S mode exists
-  generate 
+  generate
     if (`S_SUPPORTED) begin
       assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writable in MIP (20210108-draft 3.1.9)
       assign SIP_WRITE_MASK = 12'h002; // SSIP is writable in SIP (privileged 20210108-draft 4.1.3)

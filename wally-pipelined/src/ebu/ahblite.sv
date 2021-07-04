@@ -216,7 +216,7 @@ module ahblite (
   subwordread swr(.*);
 
   // Handle AMO instructions if applicable
-  generate 
+  generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
       amoalu amoalu(.srca(HRDATAW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 

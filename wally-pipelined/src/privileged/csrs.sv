@@ -66,7 +66,7 @@ module csrs #(parameter
   //logic [`XLEN-1:0] SEDELEG_MASK = ~(zero | 3'b111 << 9); // sedeleg[11:9] hardwired to zero per Privileged Spec 3.1.8
 
   // Supervisor mode CSRs sometimes supported
-  generate  
+  generate
     if (`S_SUPPORTED) begin
       logic WriteSTVECM;
       logic WriteSSCRATCHM, WriteSEPCM;

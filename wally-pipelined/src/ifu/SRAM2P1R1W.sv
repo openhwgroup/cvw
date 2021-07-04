@@ -97,11 +97,11 @@ module SRAM2P1R1W
   
   // write port
   generate
-    for (index = 0; index < Width; index = index + 1) begin    
+    for (index = 0; index < Width; index = index + 1) begin:mem
       always_ff @ (posedge clk) begin
-	if (WEN1Q & BitWEN1[index]) begin
-	  memory[WA1Q][index] <= WD1Q[index];
-	end
+	      if (WEN1Q & BitWEN1[index]) begin
+	        memory[WA1Q][index] <= WD1Q[index];
+	      end
       end
     end
   endgenerate
