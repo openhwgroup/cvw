@@ -425,8 +425,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   // store read data from memory interface before writing into SRAM.
   genvar 				i;
   generate
-    for (i = 0; i < WORDSPERLINE; i++) begin
-      flopenr #(`XLEN) flop(.clk(clk),
+    for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
+      flopenr #(`XLEN) sb(.clk(clk),
 			    .reset(reset), 
 			    .en(InstrAckF & (i == FetchCount)),
 			    .d(InstrInF),

@@ -63,12 +63,6 @@ module pmpchecker (
   // verilator lint_on UNOPTFLAT
   logic [`PMP_ENTRIES-1:0]   PAgePMPAdr;  // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
   genvar i,j;
- /*
-  generate // extract 8-bit chunks from PMPCFG array
-    for (j=0; j<`PMP_ENTRIES; j = j+8)
-      assign {PMPCfg[j+7], PMPCfg[j+6], PMPCfg[j+5], PMPCfg[j+4],
-              PMPCfg[j+3], PMPCfg[j+2], PMPCfg[j+1], PMPCfg[j]} = PMPCFG_ARRAY_REGW[j/8];
-  endgenerate */
 
   pmpadrdec pmpadrdecs[`PMP_ENTRIES-1:0](
     .PhysicalAddress, 
@@ -79,7 +73,6 @@ module pmpchecker (
     .NoLowerMatchIn({NoLowerMatch[`PMP_ENTRIES-2:0], 1'b1}),
     .NoLowerMatchOut(NoLowerMatch),
     .Match, .Active, .L, .X, .W, .R);
-
 
   // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 

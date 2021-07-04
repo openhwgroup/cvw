@@ -138,12 +138,14 @@ module lsuArb
   assign MemRWMtoLSU = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
-    if (`XLEN == 32) begin
+    assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
+  /*  if (`XLEN == 32) begin
       assign Funct3MtoLSU = SelPTW ? 3'b010 : Funct3M;
     end else begin
       assign Funct3MtoLSU = SelPTW ? 3'b011 : Funct3M;
-    end
+    end*/
   endgenerate
+  mux2 sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoLSU);
 
   assign AtomicMtoLSU = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMtoLSU = SelPTW ? HPTWPAdr : MemAdrM;
