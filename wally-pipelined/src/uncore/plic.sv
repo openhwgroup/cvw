@@ -170,24 +170,18 @@ module plic (
       for (i=1; i<=N; i=i+1) begin: pendingbit
         // *** make sure that this synthesizes into N decoders, not 7*N 3-bit equality comparators (right?)
         assign pendingArray[j][i] = (intPriority[i]==j) & intEn[i] & intPending[i];
-/*        assign pendingArray[6][i] = (intPriority[i]==6) & intEn[i] & intPending[i];
-        assign pendingArray[5][i] = (intPriority[i]==5) & intEn[i] & intPending[i];
-        assign pendingArray[4][i] = (intPriority[i]==4) & intEn[i] & intPending[i];
-        assign pendingArray[3][i] = (intPriority[i]==3) & intEn[i] & intPending[i];
-        assign pendingArray[2][i] = (intPriority[i]==2) & intEn[i] & intPending[i];
-        assign pendingArray[1][i] = (intPriority[i]==1) & intEn[i] & intPending[i]; */
       end
     end
   endgenerate
   // pending array, except grouped by priority
-/*  assign pendingPGrouped[7:1] = {|pendingArray[7],
+  assign pendingPGrouped[7:1] = {|pendingArray[7],
                                  |pendingArray[6],
                                  |pendingArray[5],
                                  |pendingArray[4],
                                  |pendingArray[3],
                                  |pendingArray[2],
-                                 |pendingArray[1]}; */
-  assign pendingPGrouped = pendingArray.or;
+                                 |pendingArray[1]}; 
+  //assign pendingPGrouped = pendingArray.or;
 
   // pendingPGrouped, except only topmost priority is active
   assign pendingMaxP[7:1] = {pendingPGrouped[7],
@@ -206,26 +200,24 @@ module plic (
                                     | ({N{pendingMaxP[2]}} & pendingArray[2])
                                     | ({N{pendingMaxP[1]}} & pendingArray[1]);
   // find the lowest ID amongst active interrupts at the highest priority
-  genvar k;
-  // *** verify that this synthesizes to a reasonable priority encoder and that j doesn't actually exist in hardware
-  generate
-    always_comb begin
-      intClaim = 6'b0;
-      for(k=N; k>0; k=k-1) begin:priorityenc
-        if(pendingRequestsAtMaxP[k]) intClaim = k;
-      end
+  int k;
+  // *** verify that this synthesizes to a reasonable priority encoder and that k doesn't actually exist in hardware
+  always_comb begin
+    intClaim = 6'b0;
+    for(k=N; k>0; k=k-1) begin
+      if(pendingRequestsAtMaxP[k]) intClaim = k[5:0];
     end
-  endgenerate
+  end
   
   // create threshold mask
-  always_comb begin
-    threshMask[7] = ~(7==intThreshold);
-    threshMask[6] = ~(6==intThreshold) & threshMask[7];
-    threshMask[5] = ~(5==intThreshold) & threshMask[6];
-    threshMask[4] = ~(4==intThreshold) & threshMask[5];
-    threshMask[3] = ~(3==intThreshold) & threshMask[4];
-    threshMask[2] = ~(2==intThreshold) & threshMask[3];
-    threshMask[1] = ~(1==intThreshold) & threshMask[2];
+   always_comb begin
+    threshMask[7] = (intThreshold != 7);
+    threshMask[6] = (intThreshold != 6) & threshMask[7];
+    threshMask[5] = (intThreshold != 5) & threshMask[6];
+    threshMask[4] = (intThreshold != 4) & threshMask[5];
+    threshMask[3] = (intThreshold != 3) & threshMask[4];
+    threshMask[2] = (intThreshold != 2) & threshMask[3];
+    threshMask[1] = (intThreshold != 1) & threshMask[2];
   end
   // is the max priority > threshold?
   // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
