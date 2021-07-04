@@ -132,19 +132,19 @@ module gpio (
       endcase
       // interrupts
       if (memwrite & (entryd == 8'h1C))
-        rise_ip <= rise_ip & ~Din | (input2d & ~input3d);
+        rise_ip <= rise_ip & ~Din;
       else
         rise_ip <= rise_ip | (input2d & ~input3d);
       if (memwrite & (entryd == 8'h24))
-        fall_ip <= fall_ip & ~Din | (~input2d & input3d);
+        fall_ip <= fall_ip & ~Din;
       else
         fall_ip <= fall_ip | (~input2d & input3d);
       if (memwrite & (entryd == 8'h2C))
-        high_ip <= high_ip & ~Din | input3d;
+        high_ip <= high_ip & ~Din;
       else
         high_ip <= high_ip | input3d;
       if (memwrite & (entryd == 8'h34))
-        low_ip <= low_ip & ~Din | ~input3d;
+        low_ip <= low_ip & ~Din;
       else
         low_ip <= low_ip | ~input3d;
     end
