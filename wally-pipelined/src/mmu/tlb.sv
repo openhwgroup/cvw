@@ -88,6 +88,8 @@ module tlb #(parameter ENTRY_BITS = 3,
   output logic             TLBPageFault
 );
 
+  localparam NENTRIES = 2**ENTRY_BITS;
+
   logic Translate;
   logic TLBAccess, ReadAccess, WriteAccess;
 
@@ -95,9 +97,8 @@ module tlb #(parameter ENTRY_BITS = 3,
   logic [`SVMODE_BITS-1:0] SvMode;
   logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
 
-  // Index (currently random) to write the next TLB entry
-  logic [ENTRY_BITS-1:0] WriteIndex;
-  logic [(2**ENTRY_BITS)-1:0] WriteLines, WriteEnables; // used as the one-hot encoding of WriteIndex
+  //logic [ENTRY_BITS-1:0] WriteIndex;
+  logic [NENTRIES-1:0] ReadLines, WriteLines, WriteEnables; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -113,7 +114,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   logic PTE_U, PTE_X, PTE_W, PTE_R;
 
   // Pattern location in the CAM and type of page hit
-  logic [ENTRY_BITS-1:0] VPNIndex;
+  //ogic [ENTRY_BITS-1:0] VPNIndex;
   logic [1:0]            HitPageType;
 
   // Whether the virtual address has a match in the CAM
@@ -125,7 +126,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
 
   // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
-  decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
+  //decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
   assign WriteEnables = WriteLines & {(2**ENTRY_BITS){TLBWrite}};
 
   // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64

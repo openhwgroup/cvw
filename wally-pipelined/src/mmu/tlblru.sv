@@ -28,11 +28,9 @@ module tlblru #(parameter ENTRY_BITS = 3) (
   input logic                     clk, reset,
   input logic                     TLBWrite,
   input logic                     TLBFlush,
-  input logic [ENTRY_BITS-1:0]    VPNIndex,
+  input logic [2**ENTRY_BITS-1:0]    ReadLines,
   input logic                     CAMHit,
-  input logic [2**ENTRY_BITS-1:0] WriteLines, 
-
-  output logic [ENTRY_BITS-1:0]   WriteIndex
+  output logic [2**ENTRY_BITS-1:0]   WriteLines
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
@@ -41,26 +39,27 @@ module tlblru #(parameter ENTRY_BITS = 3) (
   logic [NENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
 
   // One-hot encodings of which line is being accessed
-  logic [NENTRIES-1:0] ReadLineOneHot, AccessLineOneHot;
+  logic [NENTRIES-1:0] AccessLines;
   
   // High if the next access causes all RU bits to be 1
   logic                AllUsed;
 
   // Convert indices to one-hot encodings
-  decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
+  //decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
 
   // Find the first line not recently used
-  priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
+  tlbpriority #(NENTRIES) nru(~RUBits, WriteLines);
+  //priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
 
   // Access either the hit line or written line
-  assign AccessLineOneHot = (TLBWrite) ? WriteLines : ReadLineOneHot;
+  assign AccessLines = TLBWrite ? WriteLines : ReadLines;
 
   // Raise the bit of the recently accessed line
-  assign RUBitsAccessed = AccessLineOneHot | RUBits;
+  assign RUBitsAccessed = AccessLines | RUBits;
 
   // Determine whether we need to reset the RU bits to all zeroes
-  assign AllUsed = &(RUBitsAccessed);
-  assign RUBitsNext = (AllUsed) ? AccessLineOneHot : RUBitsAccessed;
+  assign AllUsed = &RUBitsAccessed;
+  assign RUBitsNext = AllUsed ? AccessLines : RUBitsAccessed; // *** seems it should set to 0, not to AccessLines
 
   // Update LRU state on any TLB hit or write
   flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite),
