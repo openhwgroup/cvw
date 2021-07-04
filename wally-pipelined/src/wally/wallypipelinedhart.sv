@@ -128,11 +128,7 @@ module wallypipelinedhart
   // IMem stalls
   logic 		    ICacheStallF;
   logic 		    DCacheStall;
-  logic [`XLEN-1:0] 	    MMUPAdr, MMUReadPTE;
-  logic 		    MMUTranslate, MMUReady;
-  logic 		    HPTWRead;
-  logic 		    HPTWReadyfromLSU;
-  logic 		    HPTWStall;
+
   
 
   // bus interface to dmem
@@ -145,7 +141,6 @@ module wallypipelinedhart
   logic [`PA_BITS-1:0] 	    InstrPAdrF;
   logic [`XLEN-1:0] 	    InstrRData;
   logic 		    InstrReadF;
-  logic 		    DataStall;
   logic 		    InstrAckF, MemAckW;
   logic 		    CommitM, CommittedM;
 
@@ -162,7 +157,6 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    HRDATAW;
 
   // IEU vs HPTW arbitration signals to send to LSU
-  logic 		    DisableTranslation;   
   logic [1:0] 		    MemRWMtoLSU;
   logic [2:0] 		    Funct3MtoLSU;
   logic [1:0] 		    AtomicMtoLSU;
@@ -186,87 +180,23 @@ module wallypipelinedhart
   
   // mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
 
-  pagetablewalker pagetablewalker(
-				  .clk(clk),
-				  .reset(reset),
-				  .SATP_REGW(SATP_REGW),               // already on lsu port
-				  .PCF(PCF),                           // add to lsu port
-				  .MemAdrM(MemAdrM),                   // alreayd on lsu port
-				  .ITLBMissF(ITLBMissF),               // add to lsu port
-				  .DTLBMissM(DTLBMissM),               // already on lsu port convert to internal
-				  .MemRWM(MemRWM),                     // already on lsu port
-				  .PageTableEntryF(PageTableEntryF),   // add to lsu port
-				  .PageTableEntryM(PageTableEntryM),   // already on lsu port convert to internal
-				  .PageTypeF(PageTypeF),               // add to lsu port connects to ifu
-				  .PageTypeM(PageTypeM),               // already on lsu port convert to internal
-				  .ITLBWriteF(ITLBWriteF),             // add to lsu port connects to ifu
-				  .DTLBWriteM(DTLBWriteM),             // already on lsu port convert to internal
-				  .MMUReadPTE(MMUReadPTE),             // from lsu arb convert to internal
-				  .MMUReady(MMUReady),                 // to lsu arb, convert to internal
-				  .HPTWStall(HPTWStall),               // from lsu arb convert to internal
-				  .MMUPAdr(MMUPAdr),                   // to lsu arb, convert to internal
-				  .MMUTranslate(MMUTranslate),         // to lsu arb, convert to internal
-				  .HPTWRead(HPTWRead),                 // to lsu arb, convert to internal
-				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF), // add to lsu port
-				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),   // add to lsu port (to privilege)
-				  .WalkerStorePageFaultM(WalkerStorePageFaultM)); // add to lsu port (to privilege)
-  
-  
-
-  // arbiter between IEU and pagetablewalker
-  lsuArb arbiter(.clk(clk),
-		 .reset(reset),
-		 // HPTW connection
-		 .HPTWTranslate(MMUTranslate),
-		 .HPTWRead(HPTWRead),
-		 .HPTWPAdr(MMUPAdr),
-		 .HPTWReadPTE(MMUReadPTE),
-		 .HPTWReady(MMUReady),
-		 .HPTWStall(HPTWStall),		 
-		 // CPU connection
-		 .MemRWM(MemRWM),
-		 .Funct3M(Funct3M),
-		 .AtomicM(AtomicM),
-		 .MemAdrM(MemAdrM),
-		 .WriteDataM(WriteDataM),
-		 .StallW(StallW),
-		 .ReadDataW(ReadDataW),
-		 .CommittedM(CommittedM),
-		 .SquashSCW(SquashSCW),
-		 .DataMisalignedM(DataMisalignedM),
-		 .DCacheStall(DCacheStall),
-		 // LSU
-		 .DisableTranslation(DisableTranslation),
-		 .MemRWMtoLSU(MemRWMtoLSU),
-		 .Funct3MtoLSU(Funct3MtoLSU),
-		 .AtomicMtoLSU(AtomicMtoLSU),
-		 .MemAdrMtoLSU(MemAdrMtoLSU),          
-		 .WriteDataMtoLSU(WriteDataMtoLSU),  
-		 .StallWtoLSU(StallWtoLSU),
-		 .CommittedMfromLSU(CommittedMfromLSU),     
-		 .SquashSCWfromLSU(SquashSCWfromLSU),      
-		 .DataMisalignedMfromLSU(DataMisalignedMfromLSU),
-		 .ReadDataWFromLSU(ReadDataWFromLSU),
-		 .HPTWReadyfromLSU(HPTWReadyfromLSU),
-		 .DataStall(DataStall));
-
 
   lsu lsu(.clk(clk),
 	  .reset(reset),
 	  .StallM(StallM),
 	  .FlushM(FlushM),
-	  .StallW(StallWtoLSU),
+	  .StallW(StallW),
 	  .FlushW(FlushW),
 	  // connected to arbiter (reconnect to CPU)
-	  .MemRWM(MemRWMtoLSU),                      // change to MemRWM
-	  .Funct3M(Funct3MtoLSU),                    // change to Funct3M
-	  .AtomicM(AtomicMtoLSU),                    // change to AtomicMtoLSU
-	  .CommittedM(CommittedMfromLSU),            // change to CommitttedM
-	  .SquashSCW(SquashSCWfromLSU),              // change to SquashSCW
-	  .DataMisalignedM(DataMisalignedMfromLSU),  // change to DataMisalignedM
-	  .MemAdrM(MemAdrMtoLSU),                    // change to MemAdrM
-	  .WriteDataM(WriteDataMtoLSU),              // change to WriteDataM
-	  .ReadDataW(ReadDataWFromLSU),              // change to ReadDataW
+	  .MemRWM(MemRWM),                  
+	  .Funct3M(Funct3M),                
+	  .AtomicM(AtomicM),               
+	  .CommittedM(CommittedM),          
+	  .SquashSCW(SquashSCW),            
+	  .DataMisalignedM(DataMisalignedM),
+	  .MemAdrM(MemAdrM),      
+	  .WriteDataM(WriteDataM),
+	  .ReadDataW(ReadDataW),
 
 	  // connected to ahb (all stay the same)
 	  .CommitM(CommitM),
@@ -308,16 +238,18 @@ module wallypipelinedhart
 	  .PMPStoreAccessFaultM(PMPStoreAccessFaultM),
     
 	  // connected to hptw. Move to internal.
-	  .PageTableEntryM(PageTableEntryM),
-	  .PageTypeM(PageTypeM),
-	  .DTLBWriteM(DTLBWriteM),  // from hptw.
-	  .DTLBMissM(DTLBMissM),    // to hptw from dmmu
-	  .DisableTranslation(DisableTranslation),   // from hptw to dmmu
-	  .HPTWReady(HPTWReadyfromLSU),              // from hptw, remove
+	  .PCF(PCF),
+	  .ITLBMissF(ITLBMissF),
+	  .PageTableEntryF(PageTableEntryF),
+	  .PageTypeF(PageTypeF),
+	  .ITLBWriteF(ITLBWriteF),
+	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
+	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
 
 	  .DTLBHitM(DTLBHitM), // not connected remove
 
-	  .DataStall(DataStall))                     // change to DCacheStall
+	  .DCacheStall(DCacheStall))                     // change to DCacheStall
     ;
 
 
