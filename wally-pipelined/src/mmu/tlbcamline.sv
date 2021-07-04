@@ -29,30 +29,23 @@
 `include "wally-config.vh"
 
 module tlbcamline #(parameter KEY_BITS = 20,
-                  parameter SEGMENT_BITS = 10) (
-  input logic                 clk, reset,
+                    parameter SEGMENT_BITS = 10) (
+  input  logic                  clk, reset,
+  input  logic [`VPN_BITS-1:0]  VirtualPageNumber, // The requested page number to compare against the key
+  input  logic [`ASID_BITS-1:0] ASID,
+  input  logic                  WriteEnable,  // Write a new entry to this line
+  input  logic                  Global,
+  input  logic [1:0]            PageTypeWriteVal,
+  input  logic                  TLBFlush,   // Flush this line (set valid to 0)
+  output logic [1:0]            PageTypeRead,  // *** should this be the stored version or the always updated one?
+  output logic                  Match
+);
 
-  // input to check which SvMode is running
-//  input logic [`SVMODE_BITS-1:0] SvMode, // *** may no longer be needed.
-  
-  // The requested page number to compare against the key
-  input logic [KEY_BITS-1:0]  VirtualPageNumber,
-
-  // Signals to write a new entry to this line
-  input logic                 WriteEnable,
-  input logic [1:0]           PageTypeWriteVal,
-
-  // Flush this line (set valid to 0)
-  input logic                 TLBFlush,
-
-  // This entry is a key for a tera, giga, mega, or kilopage.
+  // PageTypeRead is a key for a tera, giga, mega, or kilopage.
   // PageType == 2'b00 --> kilopage
   // PageType == 2'b01 --> megapage
   // PageType == 2'b10 --> gigapage
   // PageType == 2'b11 --> terapage
-  output logic [1:0]          PageTypeRead,  // *** should this be the stored version or the always updated one?
-  output logic                Match
-);
 
   // This entry has KEY_BITS for the key plus one valid bit.
   logic                Valid;
@@ -60,15 +53,16 @@ module tlbcamline #(parameter KEY_BITS = 20,
   logic [1:0]          PageType;
   
   // Split up key and query into sections for each page table level.
+  logic [`ASID_BITS-1:0] Key_ASID;
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
-  logic Match0, Match1;
+  logic MatchASID, Match0, Match1;
 
-  // *** need to add ASID and G bit support
+  assign MatchASID = (ASID == Key_ASID) | Global; 
 
   generate
     if (`XLEN == 32) begin
 
-      assign {Key1, Key0} = Key;
+      assign {Key_ASID, Key1, Key0} = Key;
       assign {Query1, Query0} = VirtualPageNumber;
 
       // Calculate the actual match value based on the input vpn and the page type.
@@ -84,7 +78,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       logic Match2, Match3;
 
       assign {Query3, Query2, Query1, Query0} = VirtualPageNumber;
-      assign {Key3, Key2, Key1, Key0} = Key;
+      assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
 
       // Calculate the actual match value based on the input vpn and the page type.
       // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
@@ -107,6 +101,5 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
   flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
-  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, VirtualPageNumber, Key);
-
+  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {ASID, VirtualPageNumber}, Key);
 endmodule

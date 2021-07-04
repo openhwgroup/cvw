@@ -116,7 +116,7 @@ module ifu (
     end
   endgenerate
 
-  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1))
+  mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   itlb(.TLBAccessType(2'b10),
        .VirtualAddress(PCF),
        .Size(2'b10),
