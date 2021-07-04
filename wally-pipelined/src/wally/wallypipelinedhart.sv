@@ -159,7 +159,7 @@ module wallypipelinedhart
 
   // IEU vs HPTW arbitration signals to send to LSU
   logic [1:0] 		    MemRWMtoLSU;
-  logic [2:0] 		    Funct3MtoLSU;
+  logic [2:0] 		    SizeToLSU;
   logic [1:0] 		    AtomicMtoLSU;
   logic [`XLEN-1:0] 	    MemAdrMtoLSU;
   logic [`XLEN-1:0] 	    WriteDataMtoLSU;
@@ -169,7 +169,7 @@ module wallypipelinedhart
   logic 		    DataMisalignedMfromLSU;
   logic 		    StallWtoLSU;
   logic 		    StallWfromLSU;  
-  logic [2:0] 		    Funct3MfromLSU;
+  logic [2:0] 		    SizeFromLSU;
 
   
   ifu ifu(.InstrInF(InstrRData),
@@ -207,7 +207,7 @@ module wallypipelinedhart
 	  .AtomicMaskedM(AtomicMaskedM),
 	  .MemAckW(MemAckW),
 	  .HRDATAW(HRDATAW),
-	  .Funct3MfromLSU(Funct3MfromLSU),           // stays the same
+	  .SizeFromLSU(SizeFromLSU),           // stays the same
 	  .StallWfromLSU(StallWfromLSU),             // stays the same
 	  .DSquashBusAccessM(DSquashBusAccessM),     // probalby removed after dcache implemenation?
 	  // currently not connected (but will need to be used for lsu talking to ahb.
@@ -261,7 +261,7 @@ module wallypipelinedhart
 	       //.InstrRData(InstrF), // hook up InstrF later
 	       .ISquashBusAccessF(1'b0), // *** temporary hack to disable PMP instruction fetch checking
 	       .WriteDataM(WriteDataM),
-	       .MemSizeM(Funct3MfromLSU[1:0]), .UnsignedLoadM(Funct3MfromLSU[2]),
+	       .MemSizeM(SizeFromLSU[1:0]), .UnsignedLoadM(SizeFromLSU[2]),
 	       .Funct7M(InstrM[31:25]),
 	       .HRDATAW(HRDATAW),
 	       .StallW(StallWfromLSU),
