@@ -118,6 +118,7 @@ module barrel_shifter_r57 (Z, Sticky, A, Shift);
 
 endmodule // barrel_shifter_r57
 
+/*
 module barrel_shifter_r64 (Z, Sticky, A, Shift);
    
    input [63:0] A;
@@ -160,3 +161,4 @@ module barrel_shifter_r64 (Z, Sticky, A, Shift);
    assign Sticky = (S != sixtythreezeros);
 
 endmodule // barrel_shifter_r64
+*/
