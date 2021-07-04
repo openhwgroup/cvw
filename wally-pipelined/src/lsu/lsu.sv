@@ -75,7 +75,8 @@ module lsu (
   input logic [`XLEN-1:0]     PageTableEntryM,
   input logic [1:0] 	      PageTypeM,
   input logic [`XLEN-1:0]     SATP_REGW, // from csr
-  input logic 		      STATUS_MXR, STATUS_SUM, // from csr
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
   input logic 		      DTLBWriteM,
   output logic 		      DTLBMissM,
   input logic 		      DisableTranslation, // used to stop intermediate PTE physical addresses being saved to TLB.

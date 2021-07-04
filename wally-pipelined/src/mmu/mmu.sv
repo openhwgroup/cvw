@@ -34,7 +34,8 @@ module mmu #(parameter ENTRY_BITS = 3,
   input logic              clk, reset,
   // Current value of satp CSR (from privileged unit)
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
 
   // Current privilege level of the processeor
   input logic  [1:0]       PrivilegeModeW,
