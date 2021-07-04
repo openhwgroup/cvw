@@ -151,7 +151,7 @@ module ifu (
   icache icache(.*,
 		.PCNextF(PCNextFPhys),
 		.PCPF(PCPFmmu),
-		.WalkerInstrPageFaultF(WalkerInstrPageFaultF));
+		.WalkerInstrPageFaultF);
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
 
@@ -184,7 +184,7 @@ module ifu (
   
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, (~StallF & ~ICacheStallF) | WalkerInstrPageFaultF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
   generate 
