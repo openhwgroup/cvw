@@ -39,7 +39,7 @@ module pmpchecker (
   // this will be understood as a var. However, if we don't supply the `var`
   // keyword, the compiler warns us that it's interpreting the signal as a var,
   // which we might not intend.
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
 
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
@@ -60,19 +60,19 @@ module pmpchecker (
   logic [`PMP_ENTRIES-1:0] L, X, W, R; // PMP matches and has flag set
   // verilator lint_off UNOPTFLAT
   logic [`PMP_ENTRIES-1:0]   NoLowerMatch; // None of the lower PMP entries match
-    // verilator lint_on UNOPTFLAT
+  // verilator lint_on UNOPTFLAT
   logic [`PMP_ENTRIES-1:0]   PAgePMPAdr;  // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
   genvar i,j;
- 
+ /*
   generate // extract 8-bit chunks from PMPCFG array
     for (j=0; j<`PMP_ENTRIES; j = j+8)
       assign {PMPCfg[j+7], PMPCfg[j+6], PMPCfg[j+5], PMPCfg[j+4],
               PMPCfg[j+3], PMPCfg[j+2], PMPCfg[j+1], PMPCfg[j]} = PMPCFG_ARRAY_REGW[j/8];
-  endgenerate
+  endgenerate */
 
   pmpadrdec pmpadrdec[`PMP_ENTRIES-1:0](
     .PhysicalAddress, 
-    .PMPCfg,
+    .PMPCfg(PMPCFG_ARRAY_REGW),
     .PMPAdr(PMPADDR_ARRAY_REGW),
     .PAgePMPAdrIn({PAgePMPAdr[`PMP_ENTRIES-2:0], 1'b1}),
     .PAgePMPAdrOut(PAgePMPAdr),
