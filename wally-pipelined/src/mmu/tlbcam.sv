@@ -36,7 +36,7 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
   input logic [1:0]               PageTypeWriteVal,
   input logic                     TLBFlush,
   input logic [TLB_ENTRIES-1:0]   WriteEnables,
-  input logic [TLB_ENTRIES-1:0]   Global
+  input logic [TLB_ENTRIES-1:0]   PTE_G,
   input logic [`ASID_BITS-1:0]    ASID,
   output logic [TLB_ENTRIES-1:0]  ReadLines,
   output logic [1:0]              HitPageType,
