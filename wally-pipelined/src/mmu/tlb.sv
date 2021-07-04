@@ -55,7 +55,8 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Current value of satp CSR (from privileged unit)
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
 
   // Current privilege level of the processeor
   input logic  [1:0]       PrivilegeModeW,
@@ -92,6 +93,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Store current virtual memory mode (SV32, SV39, SV48, ect...)
   logic [`SVMODE_BITS-1:0] SvMode;
+  logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
@@ -137,16 +139,15 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // Whether translation should occur
-  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE) & ~ DisableTranslation; // *** needs to account for mprv
-
+  // Whether translation should occur; ITLB ignores MPRVW
+  assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
+ 
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches
   assign ReadAccess = TLBAccessType[1];
   assign WriteAccess = TLBAccessType[0];
   assign TLBAccess = ReadAccess || WriteAccess;
 
-  
   assign PageOffset = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
@@ -164,28 +165,30 @@ module tlb #(parameter ENTRY_BITS = 3,
     if (ITLB == 1) begin
       logic ImproperPrivilege;
 
+      assign EffectivePrivilegeMode = PrivilegeModeW; // ITLB ignores MPRV
+
       // User mode may only execute user mode pages, and supervisor mode may
       // only execute non-user mode pages.
-      assign ImproperPrivilege = ((PrivilegeModeW == `U_MODE) && ~PTE_U) ||
-        ((PrivilegeModeW == `S_MODE) && PTE_U);
+      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
+        ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
       assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X);
     end else begin
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
+      assign EffectivePrivilegeMode = STATUS_MPRV ? STATUS_MPP : PrivilegeModeW; // DTLB uses MPP mode when MPRV is 1
+
       // User mode may only load/store from user mode pages, and supervisor mode
       // may only access user mode pages when STATUS_SUM is low.
-      assign ImproperPrivilege = ((PrivilegeModeW == `U_MODE) && ~PTE_U) ||
-        ((PrivilegeModeW == `S_MODE) && PTE_U && ~STATUS_SUM);
+      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
+        ((EffectivePrivilegeMode == `S_MODE) && PTE_U && ~STATUS_SUM);
       // Check for read error. Reads are invalid when the page is not readable
       // (and executable pages are not readable) or when the page is neither
       // readable nor executable (and executable pages are readable).
-      assign InvalidRead = ReadAccess &&
-        ((~STATUS_MXR && ~PTE_R) || (STATUS_MXR && ~PTE_R && PTE_X));
+      assign InvalidRead = ReadAccess && ~PTE_R && (~STATUS_MXR | ~PTE_X);
       // Check for write error. Writes are invalid when the page's write bit is
       // low.
       assign InvalidWrite = WriteAccess && ~PTE_W;
-      assign TLBPageFault = Translate && TLBHit &&
-        (ImproperPrivilege || InvalidRead || InvalidWrite);
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite);
     end
   endgenerate
 
