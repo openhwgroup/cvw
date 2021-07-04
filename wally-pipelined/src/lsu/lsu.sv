@@ -124,7 +124,7 @@ module lsu (
   // CPU's read data input ReadDataW.
   assign ReadDataW = HRDATAW;
     
-  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0))
+  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.TLBAccessType(MemRWM),
        .VirtualAddress(MemAdrM),
        .Size(Funct3M[1:0]),
