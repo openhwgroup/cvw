@@ -50,13 +50,14 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // PageType == 2'b01 --> megapage
   // PageType == 2'b10 --> gigapage
   // PageType == 2'b11 --> terapage
-  output logic [1:0]          PageType,  // *** should this be the stored version or the always updated one?
+  output logic [1:0]          MatchedPageType,  // *** should this be the stored version or the always updated one?
   output logic                Match
 );
 
   // This entry has KEY_BITS for the key plus one valid bit.
   logic                Valid;
   logic [KEY_BITS-1:0] Key;
+  logic [1:0]          PageType;
   
 
   // Split up key and query into sections for each page table level.
@@ -98,6 +99,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
 
   // On a write, update the type of the page referred to by this line.
   flopenr #(2) pagetypeflop(clk, reset, CAMLineWrite, PageTypeWriteVal, PageType);
+  assign MatchedPageType = PageType & {2{Match}};
   //mux2 #(2) pagetypemux(StoredPageType, PageTypeWrite, CAMLineWrite, PageType);
 
   // On a write, set the valid bit high and update the stored key.

@@ -37,7 +37,8 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   input logic                     TLBFlush,
   input logic [2**ENTRY_BITS-1:0] WriteEnables,
 
-  output logic [ENTRY_BITS-1:0]   VPNIndex,
+  //output logic [ENTRY_BITS-1:0]   VPNIndex,
+  output logic [2**ENTRY_BITS-1:0] ReadLines,
   output logic [1:0]              HitPageType,
   output logic                    CAMHit
 );
@@ -56,16 +57,16 @@ module tlbcam #(parameter ENTRY_BITS = 3,
 
   tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[NENTRIES-1:0](
     .CAMLineWrite(WriteEnables),
-    .PageType(PageTypeList),
-    .Match(Matches),
+    .MatchedPageType(PageTypeList), // *** change name to agree
+    .Match(ReadLines), // *** change name to agree
     .*);
 
   // In case there are multiple matches in the CAM, select only one
   // *** it might be guaranteed that the CAM will never have multiple matches.
   // If so, this is just an encoder
-  priorityencoder #(ENTRY_BITS) matchencoder(Matches, VPNIndex);
+  //priorityencoder #(ENTRY_BITS) matchencoder(Matches, VPNIndex);
 
-  assign CAMHit = |Matches & ~TLBFlush;
-  assign HitPageType = PageTypeList[VPNIndex];
+  assign CAMHit = |ReadLines & ~TLBFlush;
+  assign HitPageType = PageTypeList.or; // applies OR to elements of the (NENTRIES x 2) array to get 2-bit result
 
 endmodule

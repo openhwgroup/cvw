@@ -29,11 +29,11 @@
 
 module tlbram #(parameter ENTRY_BITS = 3) (
   input logic                       clk, reset,
-  input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
+  //input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
 //  input logic [ENTRY_BITS-1:0]      WriteIndex, // *** unused?
   input logic [`XLEN-1:0]           PTEWriteVal,
 //  input logic                       TLBWrite,
-  input logic [2**ENTRY_BITS-1:0]   WriteEnables,
+  input logic [2**ENTRY_BITS-1:0]   ReadLines, WriteEnables,
 
   output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
   output logic [7:0]                PTEAccessBits
@@ -41,14 +41,42 @@ module tlbram #(parameter ENTRY_BITS = 3) (
 
   localparam NENTRIES = 2**ENTRY_BITS;
 
-  logic [`XLEN-1:0] ram [NENTRIES-1:0];
+  //logic [`XLEN-1:0] ram[NENTRIES-1:0];
+  logic [`XLEN-1:0] RamRead[NENTRIES-1:0];
   logic [`XLEN-1:0] PageTableEntry;
 
+//  logic [ENTRY_BITS-1:0] VPNIndex;
+
   // Generate a flop for every entry in the RAM
-  flopenr #(`XLEN) pteflops[NENTRIES-1:0](clk, reset, WriteEnables, PTEWriteVal, ram);
-  
-  assign PageTableEntry = ram[VPNIndex];
+  //flopenr #(`XLEN) pteflops[NENTRIES-1:0](clk, reset, WriteEnables, PTEWriteVal, ram);
+  tlbramline #(`XLEN) tlblineram[NENTRIES-1:0](clk, reset, ReadLines, WriteEnables, PTEWriteVal, RamRead);
+/*
+  // temporary code for read
+  // verilator lint_off WIDTH
+  integer i;
+  generate
+    always_comb begin
+      VPNIndex = 0;
+      for (i=0; i<NENTRIES; i++)
+        if (ReadLines[i]) VPNIndex = i;
+    end
+  endgenerate
+  // verilator lint_on WIDTH
+*/
+  //assign PageTableEntry = ram[VPNIndex]; // *** need to fix
+  assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
   assign PTEAccessBits = PageTableEntry[7:0];
   assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
 
+endmodule
+
+module tlbramline #(parameter WIDTH)
+  (input  logic             clk, reset,
+   input  logic             re, we,
+   input  logic [WIDTH-1:0] d,
+   output logic [WIDTH-1:0] q);
+
+   logic [WIDTH-1:0] line;
+   flopenr #(`XLEN) pteflop(clk, reset, we, d, line);
+   assign q = re ? line : 0;
 endmodule
