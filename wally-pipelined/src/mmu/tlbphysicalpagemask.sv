@@ -29,10 +29,9 @@
 `include "wally-config.vh"
 
 module tlbphysicalpagemask (
-    input logic [`VPN_BITS-1:0]    VPN,
-    input logic [`PPN_BITS-1:0]    PPN,
-    input logic [1:0]              PageType,
-
+    input  logic [`VPN_BITS-1:0]   VPN,
+    input  logic [`PPN_BITS-1:0]   PPN,
+    input  logic [1:0]             PageType,
     output logic [`PPN_BITS-1:0]   MixedPageNumber 
 );
 

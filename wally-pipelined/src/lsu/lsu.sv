@@ -217,7 +217,7 @@ module lsu (
 
   
     
-  mmu #(.ENTRY_BITS(`DTLB_ENTRY_BITS), .IMMU(0))
+  mmu #(.TLB_ENTRIES(`DTLB_ENTRY_BITS), .IMMU(0))
   dmmu(.TLBAccessType(MemRWMtoLSU),
        .VirtualAddress(MemAdrMtoLSU),
        .Size(Funct3MtoLSU[1:0]),

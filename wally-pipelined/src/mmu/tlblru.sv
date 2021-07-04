@@ -24,34 +24,27 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-module tlblru #(parameter ENTRY_BITS = 3) (
-  input logic                     clk, reset,
-  input logic                     TLBWrite,
-  input logic                     TLBFlush,
-  input logic [2**ENTRY_BITS-1:0]    ReadLines,
-  input logic                     CAMHit,
-  output logic [2**ENTRY_BITS-1:0]   WriteLines
+module tlblru #(parameter TLB_ENTRIES = 8) (
+  input  logic                clk, reset,
+  input  logic                TLBWrite,
+  input  logic                TLBFlush,
+  input  logic [TLB_ENTRIES-1:0] ReadLines,
+  input  logic                CAMHit,
+  output logic [TLB_ENTRIES-1:0] WriteLines
 );
 
-  localparam NENTRIES = 2**ENTRY_BITS;
-
-  // Keep a "recently-used" record for each TLB entry. On access, set to 1
-  logic [NENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
-
-  // One-hot encodings of which line is being accessed
-  logic [NENTRIES-1:0] AccessLines;
-  
-  // High if the next access causes all RU bits to be 1
-  logic                AllUsed;
+  logic [TLB_ENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
+  logic [TLB_ENTRIES-1:0] AccessLines; // One-hot encodings of which line is being accessed
+  logic                AllUsed;  // High if the next access causes all RU bits to be 1
 
   // Find the first line not recently used
-  tlbpriority #(NENTRIES) nru(~RUBits, WriteLines);
+  tlbpriority #(TLB_ENTRIES) nru(~RUBits, WriteLines);
 
   // Track recently used lines, updating on a CAM Hit or TLB write
   assign AccessLines = TLBWrite ? WriteLines : ReadLines;
   assign RUBitsAccessed = AccessLines | RUBits;
   assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
   assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 
-  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite), RUBitsNext, RUBits);
+  flopenrc #(TLB_ENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite), RUBitsNext, RUBits);
 
 endmodule
