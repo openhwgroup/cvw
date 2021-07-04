@@ -112,7 +112,8 @@ module wallypipelinedhart
   logic 		    ITLBMissF, ITLBHitF;
   logic 		    DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] 	    SATP_REGW;
-  logic 		    STATUS_MXR, STATUS_SUM;
+  logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
+  logic  [1:0]       STATUS_MPP;
   logic [1:0] 		    PrivilegeModeW;
   logic [`XLEN-1:0] 	    PageTableEntryF, PageTableEntryM;
   logic [1:0] 		    PageTypeF, PageTypeM;
@@ -122,8 +123,8 @@ module wallypipelinedhart
   logic 		    PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
   logic 		    PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic 		    DSquashBusAccessM, ISquashBusAccessF;
-  var logic [`XLEN-1:0]     PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
-  var logic [63:0] 	    PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0];
+  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
+  var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
   logic 		    ICacheStallF;
@@ -223,6 +224,8 @@ module wallypipelinedhart
 	  .SATP_REGW(SATP_REGW), // from csr
 	  .STATUS_MXR(STATUS_MXR), // from csr
 	  .STATUS_SUM(STATUS_SUM),  // from csr
+	  .STATUS_MPRV(STATUS_MPRV),  // from csr	  	  
+	  .STATUS_MPP(STATUS_MPP),  // from csr	  
 
 	  .DTLBFlushM(DTLBFlushM),                   // connects to privilege
 	  .NonBusTrapM(NonBusTrapM),                 // connects to privilege

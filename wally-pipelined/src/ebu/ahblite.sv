@@ -139,6 +139,7 @@ module ahblite (
 //              (ProposedNextBusState == MMUTRANSLATE);
 
   // The PMA and PMP checkers can decide to squash the access 
+  // *** this probably needs to be controlled by the caches rather than EBU dh 7/2/11
   assign NextBusState = (DSquashBusAccessM || ISquashBusAccessF) ? IDLE : ProposedNextBusState;
 
   // stall signals

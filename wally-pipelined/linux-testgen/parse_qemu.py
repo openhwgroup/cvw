@@ -9,9 +9,10 @@ pageFaultCSRs = {}
 regs = {}
 pageFaultRegs = {}
 instrs = {}
+instrCount = 0
 
 def printPC(l):
-    global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
+    global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs, instrCount
     if not inPageFault:
         inst = l.split()
         if len(inst) > 3:
@@ -19,6 +20,9 @@ def printPC(l):
         else:
             print(f'=> {inst[1]}:\t{inst[2]}')
         print(f'{inst[0]} 0x{inst[1]}')
+        instrCount += 1
+        if ((instrCount % 100000) == 0):
+            sys.stderr.write("QEMU parser reached "+str(instrCount)+" instrs\n")
 
 def printCSRs():
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs

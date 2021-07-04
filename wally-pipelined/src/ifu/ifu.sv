@@ -70,15 +70,16 @@ module ifu (
   input logic [`XLEN-1:0]     PageTableEntryF,
   input logic [1:0] 	      PageTypeF,
   input logic [`XLEN-1:0]     SATP_REGW,
-  input logic 		      STATUS_MXR, STATUS_SUM, 
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
   input logic 		      ITLBWriteF, ITLBFlushF,
   input logic 		      WalkerInstrPageFaultF,
 
   output logic 		      ITLBMissF, ITLBHitF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
+  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
   output logic 		      PMPInstrAccessFaultF, PMAInstrAccessFaultF,
   output logic 		      ISquashBusAccessF
@@ -127,7 +128,7 @@ module ifu (
        .TLBMiss(ITLBMissF),
        .TLBHit(ITLBHitF),
        .TLBPageFault(ITLBInstrPageFaultF),
-       .ExecuteAccessF(InstrReadF), /// *** Ross Thompson this is definitely wrong. InstrReadF changed to icache read to memory.
+       .ExecuteAccessF(1'b1), // ***dh -- this should eventually change to only true if an instruction fetch is occurring
        .AtomicAccessM(1'b0),
        .ReadAccessM(1'b0),
        .WriteAccessM(1'b0),

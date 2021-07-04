@@ -38,9 +38,9 @@ module privdec (
 
   // xRET defined in Privileged Spect 3.2.2
   assign uretM =      PrivilegedM & (InstrM[31:20] == 12'b000000000010) & `N_SUPPORTED; 
-  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED && 
+  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
                       PrivilegeModeW[0] & ~STATUS_TSR; 
-  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) && (PrivilegeModeW == `M_MODE);
+  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
 
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);

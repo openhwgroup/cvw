@@ -55,7 +55,8 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Current value of satp CSR (from privileged unit)
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
 
   // Current privilege level of the processeor
   input logic  [1:0]       PrivilegeModeW,
@@ -87,20 +88,23 @@ module tlb #(parameter ENTRY_BITS = 3,
   output logic             TLBPageFault
 );
 
+  localparam NENTRIES = 2**ENTRY_BITS;
+
   logic Translate;
   logic TLBAccess, ReadAccess, WriteAccess;
 
   // Store current virtual memory mode (SV32, SV39, SV48, ect...)
   logic [`SVMODE_BITS-1:0] SvMode;
+  logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
 
-  // Index (currently random) to write the next TLB entry
-  logic [ENTRY_BITS-1:0] WriteIndex;
-  logic [(2**ENTRY_BITS)-1:0] WriteLines; // used as the one-hot encoding of WriteIndex
+  //logic [ENTRY_BITS-1:0] WriteIndex;
+  logic [NENTRIES-1:0] ReadLines, WriteLines, WriteEnables; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
   logic [`PPN_BITS-1:0] PhysicalPageNumber, PhysicalPageNumberMixed;
   logic [`PA_BITS-1:0]  PhysicalAddressFull;
+  logic [`XLEN+1:0]     VAExt;
 
   // Sections of the page table entry
   logic [7:0]           PTEAccessBits;
@@ -110,17 +114,20 @@ module tlb #(parameter ENTRY_BITS = 3,
   logic PTE_U, PTE_X, PTE_W, PTE_R;
 
   // Pattern location in the CAM and type of page hit
-  logic [ENTRY_BITS-1:0] VPNIndex;
+  //ogic [ENTRY_BITS-1:0] VPNIndex;
   logic [1:0]            HitPageType;
 
   // Whether the virtual address has a match in the CAM
   logic                  CAMHit;
 
-  // Grab the sv mode from SATP
+  // Grab the sv mode from SATP and determine whether translation should occur
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+  assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
+  assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
 
   // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
-  decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
+  //decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
+  assign WriteEnables = WriteLines & {(2**ENTRY_BITS){TLBWrite}};
 
   // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
   // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,
@@ -135,79 +142,64 @@ module tlb #(parameter ENTRY_BITS = 3,
     end
   endgenerate
 
-  // Whether translation should occur
-  assign Translate = (SvMode != `NO_TRANSLATE) & (PrivilegeModeW != `M_MODE) & ~ DisableTranslation;
-
+ 
   // Determine how the TLB is currently being used
   // Note that we use ReadAccess for both loads and instruction fetches
   assign ReadAccess = TLBAccessType[1];
   assign WriteAccess = TLBAccessType[0];
   assign TLBAccess = ReadAccess || WriteAccess;
 
-  
-  assign PageOffset = VirtualAddress[11:0];
 
   // TLB entries are evicted according to the LRU algorithm
   tlblru #(ENTRY_BITS) lru(.*);
 
+  // TLB memory
   tlbram #(ENTRY_BITS) tlbram(.*);
   tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
-  // unswizzle useful PTE bits
-  assign PTE_U = PTEAccessBits[4];
-  assign PTE_X = PTEAccessBits[3];
-  assign PTE_W = PTEAccessBits[2];
-  assign PTE_R = PTEAccessBits[1];
+  // Replace segments of the virtual page number with segments of the physical
+  // page number. For 4 KB pages, the entire virtual page number is replaced.
+  // For superpages, some segments are considered offsets into a larger page.
+  tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
+  // unswizzle useful PTE bits
+  assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
+ 
   // Check whether the access is allowed, page faulting if not.
-  // *** We might not have S mode.
   generate
     if (ITLB == 1) begin
       logic ImproperPrivilege;
 
       // User mode may only execute user mode pages, and supervisor mode may
       // only execute non-user mode pages.
-      assign ImproperPrivilege = ((PrivilegeModeW == `U_MODE) && ~PTE_U) ||
-        ((PrivilegeModeW == `S_MODE) && PTE_U);
+      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
+        ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
       assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X);
     end else begin
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
       // User mode may only load/store from user mode pages, and supervisor mode
       // may only access user mode pages when STATUS_SUM is low.
-      assign ImproperPrivilege = ((PrivilegeModeW == `U_MODE) && ~PTE_U) ||
-        ((PrivilegeModeW == `S_MODE) && PTE_U && ~STATUS_SUM);
+      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
+        ((EffectivePrivilegeMode == `S_MODE) && PTE_U && ~STATUS_SUM);
       // Check for read error. Reads are invalid when the page is not readable
       // (and executable pages are not readable) or when the page is neither
       // readable nor executable (and executable pages are readable).
-      assign InvalidRead = ReadAccess &&
-        ((~STATUS_MXR && ~PTE_R) || (STATUS_MXR && ~PTE_R && PTE_X));
+      assign InvalidRead = ReadAccess && ~PTE_R && (~STATUS_MXR | ~PTE_X);
       // Check for write error. Writes are invalid when the page's write bit is
       // low.
       assign InvalidWrite = WriteAccess && ~PTE_W;
-      assign TLBPageFault = Translate && TLBHit &&
-        (ImproperPrivilege || InvalidRead || InvalidWrite);
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite);
     end
   endgenerate
 
-  // Replace segments of the virtual page number with segments of the physical
-  // page number. For 4 KB pages, the entire virtual page number is replaced.
-  // For superpages, some segments are considered offsets into a larger page.
-  physicalpagemask PageNumberMixer(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
-
-  // Provide physical address only on TLBHits to cause catastrophic errors if
-  // garbage address is used.
-  assign PhysicalAddressFull = (TLBHit) ?
-    {PhysicalPageNumberMixed, PageOffset} : '0;
 
   // Output the hit physical address if translation is currently on.
-  generate
-    if (`XLEN == 32) begin
-       mux2 #(`PA_BITS) addressmux({2'b0, VirtualAddress}, PhysicalAddressFull, Translate, PhysicalAddress);
-    end else begin
-      mux2 #(`PA_BITS) addressmux(VirtualAddress[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
-    end
-  endgenerate
+  // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
+  assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
+  assign PageOffset = VirtualAddress[11:0];
+  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0;
+  mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
 
   assign TLBHit = CAMHit & TLBAccess;
   assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;

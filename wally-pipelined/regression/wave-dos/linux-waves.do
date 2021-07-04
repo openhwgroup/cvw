@@ -122,8 +122,7 @@ add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UEPC_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UTVEC_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UIP_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrn/UIE_REGW
-add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG01_REGW
-add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG23_REGW
+add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG_ARRAY_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/PMPADDR_ARRAY_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csrm/MISA_REGW
 add wave -hex sim:/testbench/dut/hart/priv/csr/genblk1/csru/FRM_REGW

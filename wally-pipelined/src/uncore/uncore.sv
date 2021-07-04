@@ -62,22 +62,24 @@ module uncore (
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART;
 
-  logic [5:0]      HSELRegions;
+  logic [6:0]      HSELRegions;
   logic            HSELTim, HSELCLINT, HSELPLIC, HSELGPIO, PreHSELUART, HSELUART;
   logic            HSELTimD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD;
   logic            HRESPTim, HRESPCLINT, HRESPPLIC, HRESPGPIO, HRESPUART;
   logic            HREADYTim, HREADYCLINT, HREADYPLIC, HREADYGPIO, HREADYUART;  
   logic [`XLEN-1:0] HREADBootTim; 
   logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim;
+  logic            HSELNoneD;
   logic [1:0]      MemRWboottim;
   logic            UARTIntr,GPIOIntr;
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
+  // Set access types to all 1 as don't cares because the MMU has already done access checking
   adrdecs adrdecs({{(`PA_BITS-32){1'b0}}, HADDR}, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions;
+  assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions[5:0];
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
@@ -133,19 +135,10 @@ module uncore (
                   HSELPLICD & HREADYPLIC |
                   HSELGPIOD & HREADYGPIO | 
                   HSELBootTimD & HREADYBootTim |
-                  HSELUARTD & HREADYUART;
-
-  /* PMA checker now handles access faults. *** This can be deleted
-  // Faults
-  assign DataAccessFaultM = ~(HSELTimD | HSELCLINTD | HSELPLICD | HSELGPIOD | HSELBootTimD | HSELUARTD);
-  */
+                  HSELUARTD & HREADYUART |
+                  HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
-  flopr #(1) hseltimreg(HCLK, ~HRESETn, HSELTim, HSELTimD);
-  flopr #(1) hselclintreg(HCLK, ~HRESETn, HSELCLINT, HSELCLINTD);
-  flopr #(1) hselplicreg(HCLK, ~HRESETn, HSELPLIC, HSELPLICD);
-  flopr #(1) hselgpioreg(HCLK, ~HRESETn, HSELGPIO, HSELGPIOD);
-  flopr #(1) hseluartreg(HCLK, ~HRESETn, HSELUART, HSELUARTD);
-  flopr #(1) hselboottimreg(HCLK, ~HRESETn, HSELBootTim, HSELBootTimD);
+  flopr #(7) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELBootTimD, HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD});
 endmodule
 
