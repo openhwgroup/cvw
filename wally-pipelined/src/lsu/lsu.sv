@@ -64,7 +64,7 @@ module lsu (
   output logic [1:0] 	      AtomicMaskedM,
   input logic 		      MemAckW, // from ahb
   input logic [`XLEN-1:0]     HRDATAW, // from ahb
-  output logic [2:0] 	      Funct3MfromLSU,
+  output logic [2:0] 	      SizeFromLSU,
   output logic 		      StallWfromLSU,
 
 
@@ -132,7 +132,7 @@ module lsu (
   logic 	    MMUTranslate;
   logic 	    HPTWRead;
   logic [1:0] 	    MemRWMtoLSU;
-  logic [2:0] 	    Funct3MtoLSU;
+  logic [2:0] 	    SizeToLSU;
   logic [1:0] 	    AtomicMtoLSU;
   logic [`XLEN-1:0] MemAdrMtoLSU;
   logic [`XLEN-1:0] WriteDataMtoLSU;
@@ -204,7 +204,7 @@ module lsu (
 		 // LSU
 		 .DisableTranslation(DisableTranslation),
 		 .MemRWMtoLSU(MemRWMtoLSU),
-		 .Funct3MtoLSU(Funct3MtoLSU),
+		 .SizeToLSU(SizeToLSU),
 		 .AtomicMtoLSU(AtomicMtoLSU),
 		 .MemAdrMtoLSU(MemAdrMtoLSU),          
 		 .WriteDataMtoLSU(WriteDataMtoLSU),   // *** ??????????????
@@ -220,7 +220,7 @@ module lsu (
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.TLBAccessType(MemRWMtoLSU),
        .VirtualAddress(MemAdrMtoLSU),
-       .Size(Funct3MtoLSU[1:0]),
+       .Size(SizeToLSU[1:0]),
        .PTEWriteVal(PageTableEntryM),
        .PageTypeWriteVal(PageTypeM),
        .TLBWrite(DTLBWriteM),
@@ -244,7 +244,7 @@ module lsu (
 
   // Determine if an Unaligned access is taking place
   always_comb
-    case(Funct3MtoLSU[1:0]) 
+    case(SizeToLSU[1:0]) 
       2'b00:  DataMisalignedMfromLSU = 0;                       // lb, sb, lbu
       2'b01:  DataMisalignedMfromLSU = MemAdrMtoLSU[0];              // lh, sh, lhu
       2'b10:  DataMisalignedMfromLSU = MemAdrMtoLSU[1] | MemAdrMtoLSU[0]; // lw, sw, flw, fsw, lwu
@@ -400,7 +400,7 @@ module lsu (
   end // always_comb
 
   // *** for now just pass through size
-  assign Funct3MfromLSU = Funct3MtoLSU;
+  assign SizeFromLSU = SizeToLSU;
   assign StallWfromLSU = StallWtoLSU;
   
 
