@@ -39,7 +39,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   input logic [KEY_BITS-1:0]  VirtualPageNumber,
 
   // Signals to write a new entry to this line
-  input logic                 CAMLineWrite,
+  input logic                 WriteEnable,
   input logic [1:0]           PageTypeWriteVal,
 
   // Flush this line (set valid to 0)
@@ -50,7 +50,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // PageType == 2'b01 --> megapage
   // PageType == 2'b10 --> gigapage
   // PageType == 2'b11 --> terapage
-  output logic [1:0]          MatchedPageType,  // *** should this be the stored version or the always updated one?
+  output logic [1:0]          PageTypeRead,  // *** should this be the stored version or the always updated one?
   output logic                Match
 );
 
@@ -59,10 +59,11 @@ module tlbcamline #(parameter KEY_BITS = 20,
   logic [KEY_BITS-1:0] Key;
   logic [1:0]          PageType;
   
-
   // Split up key and query into sections for each page table level.
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic Match0, Match1;
+
+  // *** need to add ASID and G bit support
 
   generate
     if (`XLEN == 32) begin
@@ -98,15 +99,14 @@ module tlbcamline #(parameter KEY_BITS = 20,
   endgenerate
 
   // On a write, update the type of the page referred to by this line.
-  flopenr #(2) pagetypeflop(clk, reset, CAMLineWrite, PageTypeWriteVal, PageType);
-  assign MatchedPageType = PageType & {2{Match}};
-  //mux2 #(2) pagetypemux(StoredPageType, PageTypeWrite, CAMLineWrite, PageType);
+  flopenr #(2) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
+  assign PageTypeRead = PageType & {2{Match}};
 
   // On a write, set the valid bit high and update the stored key.
   // On a flush, zero the valid bit and leave the key unchanged.
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
-  flopenrc #(1) validbitflop(clk, reset, TLBFlush, CAMLineWrite, 1'b1, Valid);
-  flopenr #(KEY_BITS) keyflop(clk, reset, CAMLineWrite, VirtualPageNumber, Key);
+  flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
+  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, VirtualPageNumber, Key);
 
 endmodule

@@ -44,25 +44,14 @@ module tlblru #(parameter ENTRY_BITS = 3) (
   // High if the next access causes all RU bits to be 1
   logic                AllUsed;
 
-  // Convert indices to one-hot encodings
-  //decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
-
   // Find the first line not recently used
   tlbpriority #(NENTRIES) nru(~RUBits, WriteLines);
-  //priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
 
-  // Access either the hit line or written line
+  // Track recently used lines, updating on a CAM Hit or TLB write
   assign AccessLines = TLBWrite ? WriteLines : ReadLines;
-
-  // Raise the bit of the recently accessed line
   assign RUBitsAccessed = AccessLines | RUBits;
-
-  // Determine whether we need to reset the RU bits to all zeroes
-  assign AllUsed = &RUBitsAccessed;
-  assign RUBitsNext = AllUsed ? AccessLines : RUBitsAccessed; // *** seems it should set to 0, not to AccessLines
-
-  // Update LRU state on any TLB hit or write
-  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite),
-    RUBitsNext, RUBits);
+  assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
+  assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 
+  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite), RUBitsNext, RUBits);
 
 endmodule

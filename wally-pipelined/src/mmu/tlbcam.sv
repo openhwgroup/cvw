@@ -45,8 +45,7 @@ module tlbcam #(parameter ENTRY_BITS = 3,
 
   localparam NENTRIES = 2**ENTRY_BITS;
 
-
-  logic [1:0] PageTypeList [NENTRIES-1:0];
+  logic [1:0] PageTypeRead [NENTRIES-1:0];
   logic [NENTRIES-1:0] Matches;
 
   // Create NENTRIES CAM lines, each of which will independently consider
@@ -56,8 +55,8 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   // page number segments.
 
   tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[NENTRIES-1:0](
-    .CAMLineWrite(WriteEnables),
-    .MatchedPageType(PageTypeList), // *** change name to agree
+    .WriteEnable(WriteEnables),
+    .PageTypeRead, // *** change name to agree
     .Match(ReadLines), // *** change name to agree
     .*);
 
@@ -67,6 +66,6 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   //priorityencoder #(ENTRY_BITS) matchencoder(Matches, VPNIndex);
 
   assign CAMHit = |ReadLines & ~TLBFlush;
-  assign HitPageType = PageTypeList.or; // applies OR to elements of the (NENTRIES x 2) array to get 2-bit result
+  assign HitPageType = PageTypeRead.or; // applies OR to elements of the (NENTRIES x 2) array to get 2-bit result
 
 endmodule
