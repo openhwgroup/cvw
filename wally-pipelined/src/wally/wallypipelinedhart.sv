@@ -179,7 +179,7 @@ module wallypipelinedhart
 
   
   ifu ifu(.InstrInF(InstrRData),
-	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	  .WalkerInstrPageFaultF,
 	  .*); // instruction fetch unit: PC, branch prediction, instruction cache
 
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller

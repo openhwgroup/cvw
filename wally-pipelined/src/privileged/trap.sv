@@ -30,7 +30,7 @@ module trap (
   input  logic             clk, reset, 
   input  logic             InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
   input  logic             BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
-  input  logic             LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
+  input  logic             LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultF,
   input  logic             LoadPageFaultM, StorePageFaultM,
   input  logic             mretM, sretM, uretM,
   input  logic [1:0]       PrivilegeModeW, NextPrivilegeModeM,
@@ -69,7 +69,7 @@ module trap (
   assign BusTrapM = LoadAccessFaultM | StoreAccessFaultM;
   assign NonBusTrapM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
                        LoadMisalignedFaultM | StoreMisalignedFaultM |
-                       InstrPageFaultM | LoadPageFaultM | StorePageFaultM |
+                       InstrPageFaultF | LoadPageFaultM | StorePageFaultM |
                        BreakpointFaultM | EcallFaultM |
                        InterruptM;
   assign TrapM = BusTrapM | NonBusTrapM;
@@ -121,7 +121,7 @@ module trap (
     else if (PendingIntsM[9])       CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int
     else if (PendingIntsM[1])       CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int
     else if (PendingIntsM[5])       CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int
-    else if (InstrPageFaultM)       CauseM = 12;
+    else if (InstrPageFaultF)       CauseM = 12;
     else if (InstrAccessFaultM)     CauseM = 1;
     else if (InstrMisalignedFaultM) CauseM = 0;
     else if (IllegalInstrFaultM)    CauseM = 2;
@@ -148,7 +148,7 @@ module trap (
     if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = MemAdrM;
     else if (StoreMisalignedFaultM) NextFaultMtvalM = MemAdrM;
-    else if (InstrPageFaultM)       NextFaultMtvalM = PCM;
+    else if (InstrPageFaultF)       NextFaultMtvalM = PCM;
     else if (LoadPageFaultM)        NextFaultMtvalM = MemAdrM;
     else if (StorePageFaultM)       NextFaultMtvalM = MemAdrM;
     else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
