@@ -94,7 +94,7 @@ module clint (
         if (~HRESETn) begin
           MTIME <= 0;
           // MTIMECMP is not reset
-        end else if (memwrite && entryd == 16'hBFF8) begin
+        end else if (memwrite & entryd == 16'hBFF8) begin
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
 	  MTIME <= HWDATA;
         end else MTIME <= MTIME + 1;
@@ -125,9 +125,9 @@ module clint (
         if (~HRESETn) begin
           MTIME <= 0;
           // MTIMECMP is not reset
-	end else if (memwrite && (entryd == 16'hBFF8)) begin
+	end else if (memwrite & (entryd == 16'hBFF8)) begin
 	  MTIME[31:0] <= HWDATA;
-	end else if (memwrite && (entryd == 16'hBFFC)) begin
+	end else if (memwrite & (entryd == 16'hBFFC)) begin
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
 	  MTIME[63:32]<= HWDATA;
 	end else MTIME <= MTIME + 1;

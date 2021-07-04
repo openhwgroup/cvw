@@ -131,19 +131,19 @@ module gpio (
         default: Dout <= #1 0;
       endcase
       // interrupts
-      if (memwrite && (entryd == 8'h1C))
+      if (memwrite & (entryd == 8'h1C))
         rise_ip <= rise_ip & ~Din | (input2d & ~input3d);
       else
         rise_ip <= rise_ip | (input2d & ~input3d);
-      if (memwrite && (entryd == 8'h24))
+      if (memwrite & (entryd == 8'h24))
         fall_ip <= fall_ip & ~Din | (~input2d & input3d);
       else
         fall_ip <= fall_ip | (~input2d & input3d);
-      if (memwrite && (entryd == 8'h2C))
+      if (memwrite & (entryd == 8'h2C))
         high_ip <= high_ip & ~Din | input3d;
       else
         high_ip <= high_ip | input3d;
-      if (memwrite && (entryd == 8'h34))
+      if (memwrite & (entryd == 8'h34))
         low_ip <= low_ip & ~Din | ~input3d;
       else
         low_ip <= low_ip | ~input3d;
@@ -157,7 +157,6 @@ module gpio (
     else
       assign input0d = GPIOPinsIn & input_en;
   endgenerate
-  // *** this costs lots of flops; I suspect they don't need to be resettable, do they?
   flop #(32) sync1(HCLK,input0d,input1d);
   flop #(32) sync2(HCLK,input1d,input2d);
   flop #(32) sync3(HCLK,input2d,input3d);

@@ -27,8 +27,8 @@
 
 module testbench();
   
-  parameter waveOnICount = 2657000; // # of instructions at which to turn on waves in graphical sim
-  
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*2400000; // # of instructions at which to turn on waves in graphical sim
+  parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////// DUT /////////////////////////////////////
@@ -248,6 +248,9 @@ module testbench();
             if (instrs == waveOnICount) begin
               $display("turning on waves at %0d instructions", instrs);
               $stop;
+            end else if (instrs == stopICount && stopICount != 0) begin
+              $display("Ending sim at %0d instructions (set stopICount to 0 to let the sim go on)", instrs);
+              $stop;
             end
 
             // Check if PCD is going to be flushed due to a branch or jump
@@ -330,6 +333,8 @@ module testbench();
     // This makes sure PCM is one instr ahead of PCW
     `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
   end
+
+  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
 
   // -------------------
   // Additional Hardware
@@ -713,6 +718,16 @@ module testbench();
       end
     end
   endfunction
+endmodule
+
+module logging(
+  input logic clk, reset,
+  input logic [31:0] HADDR,
+  input logic [1:0]  HTRANS);
+
+  always @(posedge clk)
+    if (HTRANS != 2'b00 && HADDR == 0)
+      $display("Warning: access to memory address 0\n");
 endmodule
 
 

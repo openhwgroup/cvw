@@ -72,7 +72,8 @@ module lsu (
 
   // page table walker
   input logic [`XLEN-1:0]     SATP_REGW, // from csr
-  input logic 		      STATUS_MXR, STATUS_SUM, // from csr
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
 
   input logic [`XLEN-1:0]     PCF,
   input logic 		      ITLBMissF,
@@ -86,14 +87,14 @@ module lsu (
   output logic 		      DTLBHitM, // not connected 
   
   // PMA/PMP (inside mmu) signals
-  input logic [31:0] 	      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input logic [2:0] 	      HSIZE, HBURST,
-  input logic 		      HWRITE,
-  input 		      var logic [63:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
+  input  logic [2:0]       HSIZE, HBURST,
+  input  logic             HWRITE,
+  input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
-  output logic 		      PMALoadAccessFaultM, PMAStoreAccessFaultM,
-  output logic 		      PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
+  output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
+  output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
   
   output logic 		      DSquashBusAccessM
 //  output logic [5:0]       DHSELRegionsM

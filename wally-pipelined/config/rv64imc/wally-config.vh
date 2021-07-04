@@ -62,25 +62,23 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
 `define BOOTTIM_SUPPORTED 1'b1
-`define BOOTTIM_BASE   32'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-`define BOOTTIM_RANGE  32'h00003FFF
-//`define BOOTTIM_BASE   32'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-//`define BOOTTIM_RANGE  32'h00000FFF
+`define BOOTTIM_BASE   56'h00001000 
+`define BOOTTIM_RANGE  56'h00000FFF
 `define TIM_SUPPORTED 1'b1
-`define TIM_BASE       32'h80000000
-`define TIM_RANGE      32'h07FFFFFF
+`define TIM_BASE       56'h80000000
+`define TIM_RANGE      56'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
-`define CLINT_BASE  32'h02000000
-`define CLINT_RANGE 32'h0000FFFF
+`define CLINT_BASE  56'h02000000
+`define CLINT_RANGE 56'h0000FFFF
 `define GPIO_SUPPORTED 1'b1
-`define GPIO_BASE   32'h10012000
-`define GPIO_RANGE  32'h000000FF
+`define GPIO_BASE   56'h10012000
+`define GPIO_RANGE  56'h000000FF
 `define UART_SUPPORTED 1'b1
-`define UART_BASE   32'h10000000
-`define UART_RANGE  32'h00000007
+`define UART_BASE   56'h10000000
+`define UART_RANGE  56'h00000007
 `define PLIC_SUPPORTED 1'b1
-`define PLIC_BASE   32'h0C000000
-`define PLIC_RANGE  32'h03FFFFFF
+`define PLIC_BASE   56'h0C000000
+`define PLIC_RANGE  56'h03FFFFFF
 
 // Test modes
 

@@ -520,6 +520,7 @@ string tests32f[] = '{
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
+  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
 
   // pick tests based on modes supported
   initial begin
@@ -722,6 +723,7 @@ module riscvassertions();
   // Legal number of PMP entries are 0, 16, or 64
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries");
+    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
   end
 endmodule
 
@@ -948,4 +950,14 @@ module instrNameDecTB(
       10'b0100111_011: name = "FSD";
       default:         name = "ILLEGAL";
     endcase
+endmodule
+
+module logging(
+  input logic clk, reset,
+  input logic [31:0] HADDR,
+  input logic [1:0]  HTRANS);
+
+  always @(posedge clk)
+    if (HTRANS != 2'b00 && HADDR == 0)
+      $display("Warning: access to memory address 0\n");
 endmodule

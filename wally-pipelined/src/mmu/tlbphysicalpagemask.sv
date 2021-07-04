@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// physicalpagemask.sv
+// tlbphysicalpagemask.sv
 //
 // Written: David Harris and kmacsaigoren@hmc.edu 7 June 2021
 // Modified:
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module physicalpagemask (
+module tlbphysicalpagemask (
     input logic [`VPN_BITS-1:0]    VPN,
     input logic [`PPN_BITS-1:0]    PPN,
     input logic [1:0]              PageType,
@@ -40,13 +40,11 @@ module physicalpagemask (
   logic [`PPN_BITS-1:0] ZeroExtendedVPN;
   logic [`PPN_BITS-1:0] PageNumberMask;
 
-  assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
-
   generate
     if (`XLEN == 32) begin
       always_comb 
         case (PageType[0])
-          // *** the widths of these constansts are hardocded here to match `PPN_BITS in the wally-constants file.
+          // the widths of these constansts are hardocded here to match `PPN_BITS in the wally-constants file.
           0: PageNumberMask = 22'h3FFFFF; // kilopage: 22 bits of PPN, 0 bits of VPN
           1: PageNumberMask = 22'h3FFC00; // megapage: 12 bits of PPN, 10 bits of VPN
         endcase
@@ -57,7 +55,7 @@ module physicalpagemask (
           1: PageNumberMask = 44'hFFFFFFFFE00; // megapage: 35 bits of PPN, 9 bits of VPN
           2: PageNumberMask = 44'hFFFFFFC0000; // gigapage: 26 bits of PPN, 18 bits of VPN
           3: PageNumberMask = 44'hFFFF8000000; // terapage: 17 bits of PPN, 27 bits of VPN
-          // *** make sure that this doesnt break when using sv39. In that case, all of these
+          //     Bus widths accomodate SV48. In SV39, all of these
           //     busses are the widths for sv48, but extra bits should be zeroed out by the mux
           //     in the tlb when it generates VPN from the full virtualadress.
         endcase
@@ -65,6 +63,7 @@ module physicalpagemask (
   endgenerate
 
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
+  assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
   assign MixedPageNumber = (ZeroExtendedVPN & ~PageNumberMask) | (PPN & PageNumberMask);
 
 endmodule
