@@ -35,9 +35,9 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   input logic [KEY_BITS-1:0]      VirtualPageNumber,
   input logic [1:0]               PageTypeWriteVal,
 //  input logic [`SVMODE_BITS-1:0]  SvMode, // *** may not need to be used.
-  input logic                     TLBWrite,
+//  input logic                     TLBWrite,
   input logic                     TLBFlush,
-  input logic [2**ENTRY_BITS-1:0] WriteLines,
+  input logic [2**ENTRY_BITS-1:0] WriteEnables,
 
   output logic [ENTRY_BITS-1:0]   VPNIndex,
   output logic [1:0]              HitPageType,
@@ -55,16 +55,24 @@ module tlbcam #(parameter ENTRY_BITS = 3,
   // original virtual page number from when the address was written, regardless
   // of page type. However, matches are determined based on a subset of the
   // page number segments.
+
+  camline #(KEY_BITS, SEGMENT_BITS) camlines[NENTRIES-1:0](
+    .CAMLineWrite(WriteEnables),
+        .PageType(PageTypeList),
+        .Match(Matches),
+        .*);
+/*
   generate
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin
       camline #(KEY_BITS, SEGMENT_BITS) camline(
-        .CAMLineWrite(WriteLines[i] && TLBWrite),
+        .CAMLineWrite(WriteEnables[i]),
         .PageType(PageTypeList[i]),
         .Match(Matches[i]),
         .*);
     end
   endgenerate
+  */
 
   // In case there are multiple matches in the CAM, select only one
   // *** it might be guaranteed that the CAM will never have multiple matches.

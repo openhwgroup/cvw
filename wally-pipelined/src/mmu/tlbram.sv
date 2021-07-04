@@ -32,8 +32,8 @@ module tlbram #(parameter ENTRY_BITS = 3) (
   input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
 //  input logic [ENTRY_BITS-1:0]      WriteIndex, // *** unused?
   input logic [`XLEN-1:0]           PTEWriteVal,
-  input logic                       TLBWrite,
-  input logic [2**ENTRY_BITS-1:0]   WriteLines,
+//  input logic                       TLBWrite,
+  input logic [2**ENTRY_BITS-1:0]   WriteEnables,
 
   output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
   output logic [7:0]                PTEAccessBits
@@ -45,13 +45,16 @@ module tlbram #(parameter ENTRY_BITS = 3) (
   logic [`XLEN-1:0] PageTableEntry;
 
   // Generate a flop for every entry in the RAM
+  flopenr #(`XLEN) pteflops[NENTRIES-1:0](clk, reset, WriteEnables, PTEWriteVal, ram);
+/*
   generate
     genvar i;
     for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
-      flopenr #(`XLEN) pteflop(clk, reset, WriteLines[i] & TLBWrite,
+      flopenr #(`XLEN) pteflop(clk, reset, WriteEnables[i],
         PTEWriteVal, ram[i]);
     end
   endgenerate
+*/
 
   assign PageTableEntry = ram[VPNIndex];
   assign PTEAccessBits = PageTableEntry[7:0];
