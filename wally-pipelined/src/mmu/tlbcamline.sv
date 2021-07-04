@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// camline.sv
+// tlbcamline.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 6 April 2021
 // Modified: kmacsaigoren@hmc.edu 1 June 2021
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module camline #(parameter KEY_BITS = 20,
+module tlbcamline #(parameter KEY_BITS = 20,
                   parameter SEGMENT_BITS = 10) (
   input logic                 clk, reset,
 
@@ -39,7 +39,7 @@ module camline #(parameter KEY_BITS = 20,
   input logic [KEY_BITS-1:0]  VirtualPageNumber,
 
   // Signals to write a new entry to this line
-  input logic                 CAMLineWrite,
+  input logic                 WriteEnable,
   input logic [1:0]           PageTypeWriteVal,
 
   // Flush this line (set valid to 0)
@@ -50,18 +50,20 @@ module camline #(parameter KEY_BITS = 20,
   // PageType == 2'b01 --> megapage
   // PageType == 2'b10 --> gigapage
   // PageType == 2'b11 --> terapage
-  output logic [1:0]          PageType,  // *** should this be the stored version or the always updated one?
+  output logic [1:0]          PageTypeRead,  // *** should this be the stored version or the always updated one?
   output logic                Match
 );
 
   // This entry has KEY_BITS for the key plus one valid bit.
   logic                Valid;
   logic [KEY_BITS-1:0] Key;
+  logic [1:0]          PageType;
   
-
   // Split up key and query into sections for each page table level.
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic Match0, Match1;
+
+  // *** need to add ASID and G bit support
 
   generate
     if (`XLEN == 32) begin
@@ -85,26 +87,26 @@ module camline #(parameter KEY_BITS = 20,
       assign {Key3, Key2, Key1, Key0} = Key;
 
       // Calculate the actual match value based on the input vpn and the page type.
-      // For example, a gigapage in SV only cares about VPN[2], so VPN[0] and VPN[1]
+      // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
       // should automatically match.
       assign Match0 = (Query0 == Key0) || (PageType > 2'd0); // least signifcant section
       assign Match1 = (Query1 == Key1) || (PageType > 2'd1);
       assign Match2 = (Query2 == Key2) || (PageType > 2'd2);
-      assign Match3 = (Query3 == Key3); // *** this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
+      assign Match3 = (Query3 == Key3); // this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
       
       assign Match = Match0 & Match1 & Match2 & Match3 & Valid;
     end
   endgenerate
 
   // On a write, update the type of the page referred to by this line.
-  flopenr #(2) pagetypeflop(clk, reset, CAMLineWrite, PageTypeWriteVal, PageType);
-  //mux2 #(2) pagetypemux(StoredPageType, PageTypeWrite, CAMLineWrite, PageType);
+  flopenr #(2) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);
+  assign PageTypeRead = PageType & {2{Match}};
 
   // On a write, set the valid bit high and update the stored key.
   // On a flush, zero the valid bit and leave the key unchanged.
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
-  flopenrc #(1) validbitflop(clk, reset, TLBFlush, CAMLineWrite, 1'b1, Valid);
-  flopenr #(KEY_BITS) keyflop(clk, reset, CAMLineWrite, VirtualPageNumber, Key);
+  flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
+  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, VirtualPageNumber, Key);
 
 endmodule

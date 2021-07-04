@@ -1,16 +1,15 @@
 ///////////////////////////////////////////
-// priorityencoder.sv
+// tlbpriority.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
-// Based on implementation from https://www.allaboutcircuits.com/ip-cores/communication-controller/priority-encoder/
-// *** Give proper LGPL attribution for above source
 // Modified: Teo Ene 15 Apr 2021:
 //              Temporarily removed paramterized priority encoder for non-parameterized one
 //              To get synthesis working quickly
 //           Kmacsaigoren@hmc.edu 28 May 2021:
 //              Added working version of parameterized priority encoder. 
+//           David_Harris@Hmc.edu switched to one-hot output
 //
-// Purpose: One-hot encoding to binary encoder
+// Purpose: Priority circuit to choose most significant one-hot output
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -31,35 +30,20 @@
 
 `include "wally-config.vh"
 
-module priorityencoder #(parameter BINARY_BITS = 3) (
-  input  logic  [2**BINARY_BITS - 1:0] onehot,
-  output logic  [BINARY_BITS - 1:0] binary
+module tlbpriority #(parameter ENTRIES = 8) (
+  input  logic  [ENTRIES-1:0] a,
+  output logic  [ENTRIES-1:0] y
 );
+  // verilator lint_off UNOPTFLAT
+  logic [ENTRIES-1:0] nolower;
 
-  integer i;
-  always_comb begin
-    binary = 0;
-    for (i = 0; i < 2**BINARY_BITS; i++) begin
-      // verilator lint_off WIDTH
-      if (onehot[i]) binary = i; // prioritizes the most significant bit
-      // verilator lint_on WIDTH
-    end
-  end
-  // *** triple check synthesizability here
-
-  // Ideally this mimics the following:
-  /*
-  always_comb begin
-    casex (one_hot)
-      1xx ... x: binary = BINARY_BITS - 1;
-      01x ... x: binary = BINARY_BITS - 2;
-      001 ... x: binary = BINARY_BITS - 3;
-      
-      {...}
-
-      00 ... 1xx: binary = 2;
-      00 ... 01x: binary = 1;
-      00 ... 001: binary = 0;
-  end
-  */
+  // generate thermometer code mask
+  genvar i;
+  generate
+    assign nolower[0] = 1;
+    for (i=1; i<ENTRIES; i++) 
+      assign nolower[i] = nolower[i-1] & ~a[i-1];
+  endgenerate
+  // verilator lint_on UNOPTFLAT
+  assign y = a & nolower;
 endmodule

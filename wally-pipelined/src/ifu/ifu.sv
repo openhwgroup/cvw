@@ -70,7 +70,8 @@ module ifu (
   input logic [`XLEN-1:0]     PageTableEntryF,
   input logic [1:0] 	      PageTypeF,
   input logic [`XLEN-1:0]     SATP_REGW,
-  input logic 		      STATUS_MXR, STATUS_SUM, 
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
   input logic 		      ITLBWriteF, ITLBFlushF,
   input logic 		      WalkerInstrPageFaultF,
 

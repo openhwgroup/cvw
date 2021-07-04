@@ -28,11 +28,9 @@ module tlblru #(parameter ENTRY_BITS = 3) (
   input logic                     clk, reset,
   input logic                     TLBWrite,
   input logic                     TLBFlush,
-  input logic [ENTRY_BITS-1:0]    VPNIndex,
+  input logic [2**ENTRY_BITS-1:0]    ReadLines,
   input logic                     CAMHit,
-  input logic [2**ENTRY_BITS-1:0] WriteLines, 
-
-  output logic [ENTRY_BITS-1:0]   WriteIndex
+  output logic [2**ENTRY_BITS-1:0]   WriteLines
 );
 
   localparam NENTRIES = 2**ENTRY_BITS;
@@ -41,29 +39,19 @@ module tlblru #(parameter ENTRY_BITS = 3) (
   logic [NENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
 
   // One-hot encodings of which line is being accessed
-  logic [NENTRIES-1:0] ReadLineOneHot, AccessLineOneHot;
+  logic [NENTRIES-1:0] AccessLines;
   
   // High if the next access causes all RU bits to be 1
   logic                AllUsed;
 
-  // Convert indices to one-hot encodings
-  decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
-
   // Find the first line not recently used
-  priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
+  tlbpriority #(NENTRIES) nru(~RUBits, WriteLines);
 
-  // Access either the hit line or written line
-  assign AccessLineOneHot = (TLBWrite) ? WriteLines : ReadLineOneHot;
-
-  // Raise the bit of the recently accessed line
-  assign RUBitsAccessed = AccessLineOneHot | RUBits;
-
-  // Determine whether we need to reset the RU bits to all zeroes
-  assign AllUsed = &(RUBitsAccessed);
-  assign RUBitsNext = (AllUsed) ? AccessLineOneHot : RUBitsAccessed;
-
-  // Update LRU state on any TLB hit or write
-  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite),
-    RUBitsNext, RUBits);
+  // Track recently used lines, updating on a CAM Hit or TLB write
+  assign AccessLines = TLBWrite ? WriteLines : ReadLines;
+  assign RUBitsAccessed = AccessLines | RUBits;
+  assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
+  assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 
+  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite), RUBitsNext, RUBits);
 
 endmodule
