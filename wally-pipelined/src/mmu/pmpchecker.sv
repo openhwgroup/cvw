@@ -72,7 +72,7 @@ module pmpchecker (
       assign {PMPCFG[j+7], PMPCFG[j+6], PMPCFG[j+5], PMPCFG[j+4],
               PMPCFG[j+3], PMPCFG[j+2], PMPCFG[j+1], PMPCFG[j]} = PMPCFG_ARRAY_REGW[j/8];
     // verilator lint_on WIDTH
-    for (i=0; i<`PMP_ENTRIES; i++) 
+    for (i=0; i<`PMP_ENTRIES; i++)  // *** can this be done with array notation?
       pmpadrdec pmpadrdec(.PhysicalAddress, 
                           .PMPCfg(PMPCFG[i]),
                           .PMPAdr(PMPADDR_ARRAY_REGW[i]),

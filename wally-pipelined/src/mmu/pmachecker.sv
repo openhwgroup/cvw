@@ -45,7 +45,7 @@ module pmachecker (
 
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
-  logic [5:0]  SelRegions;
+  logic [6:0]  SelRegions;
 
   // Determine what type of access is being made
   assign AccessRW = ReadAccessM | WriteAccessM;
