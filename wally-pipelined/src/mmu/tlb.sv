@@ -121,6 +121,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+  assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
   assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
 
   // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
@@ -152,6 +153,7 @@ module tlb #(parameter ENTRY_BITS = 3,
   // TLB entries are evicted according to the LRU algorithm
   tlblru #(ENTRY_BITS) lru(.*);
 
+  // TLB memory
   tlbram #(ENTRY_BITS) tlbram(.*);
   tlbcam #(ENTRY_BITS, `VPN_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
 
@@ -164,8 +166,6 @@ module tlb #(parameter ENTRY_BITS = 3,
     if (ITLB == 1) begin
       logic ImproperPrivilege;
 
-      assign EffectivePrivilegeMode = PrivilegeModeW; // ITLB ignores MPRV
-
       // User mode may only execute user mode pages, and supervisor mode may
       // only execute non-user mode pages.
       assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
@@ -173,8 +173,6 @@ module tlb #(parameter ENTRY_BITS = 3,
       assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X);
     end else begin
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
-
-      assign EffectivePrivilegeMode = STATUS_MPRV ? STATUS_MPP : PrivilegeModeW; // DTLB uses MPP mode when MPRV is 1
 
       // User mode may only load/store from user mode pages, and supervisor mode
       // may only access user mode pages when STATUS_SUM is low.
@@ -194,11 +192,11 @@ module tlb #(parameter ENTRY_BITS = 3,
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  physicalpagemask PageNumberMixer(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
+  tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
   // Provide physical address only on TLBHits to cause catastrophic errors if
   // garbage address is used.
-  assign PhysicalAddressFull = (TLBHit) ? {PhysicalPageNumberMixed, PageOffset} : '0;
+  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0;
 
   // Output the hit physical address if translation is currently on.
 /*  generate
