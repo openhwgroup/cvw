@@ -164,27 +164,31 @@ module plic (
   flopr #(N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // pending array - indexed by priority_lvl x source_ID
-  genvar i;
+  genvar i, j;
   generate
-    for (i=1; i<=N; i=i+1) begin
-      // *** make sure that this synthesizes into N decoders, not 7*N 3-bit equality comparators (right?)
-      assign pendingArray[7][i] = (intPriority[i]==7) & intEn[i] & intPending[i];
-      assign pendingArray[6][i] = (intPriority[i]==6) & intEn[i] & intPending[i];
-      assign pendingArray[5][i] = (intPriority[i]==5) & intEn[i] & intPending[i];
-      assign pendingArray[4][i] = (intPriority[i]==4) & intEn[i] & intPending[i];
-      assign pendingArray[3][i] = (intPriority[i]==3) & intEn[i] & intPending[i];
-      assign pendingArray[2][i] = (intPriority[i]==2) & intEn[i] & intPending[i];
-      assign pendingArray[1][i] = (intPriority[i]==1) & intEn[i] & intPending[i];
+    for (j=1; j<=7; j++) begin: pending
+      for (i=1; i<=N; i=i+1) begin: pendingbit
+        // *** make sure that this synthesizes into N decoders, not 7*N 3-bit equality comparators (right?)
+        assign pendingArray[j][i] = (intPriority[i]==j) & intEn[i] & intPending[i];
+/*        assign pendingArray[6][i] = (intPriority[i]==6) & intEn[i] & intPending[i];
+        assign pendingArray[5][i] = (intPriority[i]==5) & intEn[i] & intPending[i];
+        assign pendingArray[4][i] = (intPriority[i]==4) & intEn[i] & intPending[i];
+        assign pendingArray[3][i] = (intPriority[i]==3) & intEn[i] & intPending[i];
+        assign pendingArray[2][i] = (intPriority[i]==2) & intEn[i] & intPending[i];
+        assign pendingArray[1][i] = (intPriority[i]==1) & intEn[i] & intPending[i]; */
+      end
     end
   endgenerate
   // pending array, except grouped by priority
-  assign pendingPGrouped[7:1] = {|pendingArray[7],
+/*  assign pendingPGrouped[7:1] = {|pendingArray[7],
                                  |pendingArray[6],
                                  |pendingArray[5],
                                  |pendingArray[4],
                                  |pendingArray[3],
                                  |pendingArray[2],
-                                 |pendingArray[1]};
+                                 |pendingArray[1]}; */
+  assign pendingPGrouped = pendingArray.or;
+
   // pendingPGrouped, except only topmost priority is active
   assign pendingMaxP[7:1] = {pendingPGrouped[7],
                              pendingPGrouped[6] & ~|pendingPGrouped[7],
@@ -202,14 +206,16 @@ module plic (
                                     | ({N{pendingMaxP[2]}} & pendingArray[2])
                                     | ({N{pendingMaxP[1]}} & pendingArray[1]);
   // find the lowest ID amongst active interrupts at the highest priority
-  integer j;
+  genvar k;
   // *** verify that this synthesizes to a reasonable priority encoder and that j doesn't actually exist in hardware
-  always_comb begin
-    intClaim = 6'b0;
-    for(j=N; j>0; j=j-1) begin
-      if(pendingRequestsAtMaxP[j]) intClaim = j[5:0];
+  generate
+    always_comb begin
+      intClaim = 6'b0;
+      for(k=N; k>0; k=k-1) begin:priorityenc
+        if(pendingRequestsAtMaxP[k]) intClaim = k;
+      end
     end
-  end
+  endgenerate
   
   // create threshold mask
   always_comb begin
