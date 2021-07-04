@@ -24,12 +24,13 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+  // verilator lint_off UNOPTFLAT 
 
 module adrdecs (
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic                AccessRW, AccessRX, AccessRWX,
   input  logic [1:0]          Size,
-  output logic [5:0]          SelRegions
+  output logic [6:0]          SelRegions
 );
 
  // Determine which region of physical memory (if any) is being accessed
@@ -41,5 +42,8 @@ module adrdecs (
   adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[1]);
   adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[0]);
 
+  assign SelRegions[6] = ~|(SelRegions[5:0]);
+
 endmodule
 
+  // verilator lint_on UNOPTFLAT 

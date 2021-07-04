@@ -88,8 +88,8 @@ module lsu (
   input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
   input  logic [2:0]       HSIZE, HBURST,
   input  logic             HWRITE,
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+  input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
   output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
   output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.

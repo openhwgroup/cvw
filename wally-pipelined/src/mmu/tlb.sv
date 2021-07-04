@@ -95,7 +95,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Index (currently random) to write the next TLB entry
   logic [ENTRY_BITS-1:0] WriteIndex;
-  logic [(2**ENTRY_BITS)-1:0] WriteLines; // used as the one-hot encoding of WriteIndex
+  logic [(2**ENTRY_BITS)-1:0] WriteLines, WriteEnables; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -121,6 +121,7 @@ module tlb #(parameter ENTRY_BITS = 3,
 
   // Decode the integer encoded WriteIndex into the one-hot encoded WriteLines
   decoder #(ENTRY_BITS) writedecoder(WriteIndex, WriteLines);
+  assign WriteEnables = WriteLines & {(2**ENTRY_BITS){TLBWrite}};
 
   // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
   // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,

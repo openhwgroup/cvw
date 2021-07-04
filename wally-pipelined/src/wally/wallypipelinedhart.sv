@@ -123,7 +123,7 @@ module wallypipelinedhart
   logic 		    PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic 		    DSquashBusAccessM, ISquashBusAccessF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
-  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0];
+  var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
   logic 		    ICacheStallF;

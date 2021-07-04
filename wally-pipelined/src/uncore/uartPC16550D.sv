@@ -224,11 +224,11 @@ module uartPC16550D(
         else rxstate <= #1 UART_IDLE;
       end
       // timeout counting
-      if (~MEMRb && A == 3'b000 && ~DLAB) rxtimeoutcnt <= #1 0; // reset timeout on read
+      if (~MEMRb & A == 3'b000 & ~DLAB) rxtimeoutcnt <= #1 0; // reset timeout on read
       else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // *** not right
     end
 
-  assign rxcentered = rxbaudpulse && (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE
+  assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE
   assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
   ///////////////////////////////////////////
@@ -267,12 +267,12 @@ module uartPC16550D(
           rxfifohead <= #1 rxfifohead + 1;
         end
         rxdataready <= #1 1;
-      end else if (~MEMRb && A == 3'b000 && ~DLAB) begin // reading RBR updates ready / pops fifo 
+      end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
           rxfifotail <= #1 rxfifotail + 1;
           if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
         end else rxdataready <= #1 0;
-      end else if (~MEMWb && A == 3'b010)  // writes to FIFO Control Register
+      end else if (~MEMWb & A == 3'b010)  // writes to FIFO Control Register
         if (Din[1] | ~Din[0]) begin // rx FIFO reset or FIFO disable clears FIFO contents
           rxfifohead <= #1 0; rxfifotail <= #1 0;
         end
@@ -326,7 +326,7 @@ module uartPC16550D(
       txoversampledcnt <= #1 0;
       txstate <= #1 UART_IDLE;
       txbitssent <= #1 0;
-    end else if ((txstate == UART_IDLE) && txsrfull) begin // start transmitting
+    end else if ((txstate == UART_IDLE) & txsrfull) begin // start transmitting
       txstate <= #1 UART_ACTIVE;
       txoversampledcnt <= #1 1;
       txbitssent <= #1 0;
@@ -341,7 +341,7 @@ module uartPC16550D(
     end
 
   assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s)
-  assign txnextbit = txbaudpulse && (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
+  assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
 
   ///////////////////////////////////////////
   // transmit holding register, shift register, FIFO
@@ -372,7 +372,7 @@ module uartPC16550D(
     if (~HRESETn) begin
       txfifohead <= #1 0; txfifotail <= #1 0; txhrfull <= #1 0; txsrfull <= #1 0; TXHR <= #1 0; txsr <= #1 12'hfff;
     end else begin
-      if (~MEMWb && A == 3'b000 && ~DLAB) begin // writing transmit holding register or fifo
+      if (~MEMWb & A == 3'b000 & ~DLAB) begin // writing transmit holding register or fifo
         if (fifoenabled) begin
           txfifo[txfifohead] <= #1 Din;
           txfifohead <= #1 txfifohead + 1;          
@@ -395,8 +395,8 @@ module uartPC16550D(
           txsrfull <= #1 1;
         end
       end else if (txstate == UART_DONE) txsrfull <= #1 0; // done transmitting shift register
-      else if (txstate == UART_ACTIVE && txnextbit) txsr <= #1 {txsr[10:0], 1'b1}; // shift txhr
-      if (!MEMWb && A == 3'b010) // writes to FIFO control register
+      else if (txstate == UART_ACTIVE & txnextbit) txsr <= #1 {txsr[10:0], 1'b1}; // shift txhr
+      if (!MEMWb & A == 3'b010) // writes to FIFO control register
         if (Din[2] | ~Din[0]) begin // tx FIFO reste or FIFO disable clears FIFO contents
           txfifohead <= #1 0; txfifotail <= #1 0;
         end
