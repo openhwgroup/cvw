@@ -34,7 +34,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   input  logic [`VPN_BITS-1:0]  VirtualPageNumber, // The requested page number to compare against the key
   input  logic [`ASID_BITS-1:0] ASID,
   input  logic                  WriteEnable,  // Write a new entry to this line
-  input  logic                  Global,
+  input  logic                  PTE_G,
   input  logic [1:0]            PageTypeWriteVal,
   input  logic                  TLBFlush,   // Flush this line (set valid to 0)
   output logic [1:0]            PageTypeRead,  // *** should this be the stored version or the always updated one?
@@ -57,7 +57,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic MatchASID, Match0, Match1;
 
-  assign MatchASID = (ASID == Key_ASID) | Global; 
+  assign MatchASID = (ASID == Key_ASID) | PTE_G; 
 
   generate
     if (`XLEN == 32) begin
