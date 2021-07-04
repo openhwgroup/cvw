@@ -35,7 +35,6 @@ module lsuArb
    input logic [`XLEN-1:0]  HPTWPAdr,
    // to page table walker.
    output logic [`XLEN-1:0] HPTWReadPTE,
-   output logic 	    HPTWReady,
    output logic 	    HPTWStall, 
 
    // from CPU
@@ -65,7 +64,6 @@ module lsuArb
    input logic 		    SquashSCWfromLSU,
    input logic 		    DataMisalignedMfromLSU,
    input logic [`XLEN-1:0]  ReadDataWFromLSU,
-   input logic 		    HPTWReadyfromLSU, 
    input logic 		    DataStall
   
    );
@@ -159,7 +157,6 @@ module lsuArb
   assign CommittedM = SelPTW ? 1'b0 : CommittedMfromLSU;
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromLSU;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromLSU;
-  assign HPTWReady = HPTWReadyfromLSU;
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
