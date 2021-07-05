@@ -514,6 +514,9 @@ string tests32f[] = '{
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
   logic [`XLEN-1:0] PCW;
+
+  logic [`XLEN-1:0] debug;
+  assign debug = dut.uncore.dtim.RAM[536872960];
   
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
@@ -656,10 +659,7 @@ string tests32f[] = '{
         // Check errors
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
-        if (`XLEN == 32)
-          testadr = (`TIM_BASE+tests[test+1].atohex())/4;
-        else
-          testadr = (`TIM_BASE+tests[test+1].atohex())/8;
+        testadr = (`TIM_BASE+tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
@@ -669,14 +669,16 @@ string tests32f[] = '{
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), dut.uncore.dtim.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
           i = i + 1;
         end
         /* verilator lint_on INFINITELOOP */
-        if (errors == 0) $display("%s succeeded.  Brilliant!!!", tests[test]);
+        if (errors == 0) begin
+          $display("%s succeeded.  Brilliant!!!", tests[test]);
+        end
         else begin
           $display("%s failed with %d errors. :(", tests[test], errors);
           totalerrors = totalerrors+1;
