@@ -76,8 +76,9 @@ module pmpadrdec (
   generate
     assign Mask[1:0] = 2'b11;
     assign Mask[2] = (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
-    for (i=3; i < `PA_BITS; i=i+1) 
+    for (i=3; i < `PA_BITS; i=i+1) begin:mask
       assign Mask[i] = Mask[i-1] & PMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
+    end
    endgenerate
   // verilator lint_on UNOPTFLAT
 

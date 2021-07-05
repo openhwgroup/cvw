@@ -138,7 +138,9 @@ module muldiv (
 	 flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);	 
 
       end else begin // no M instructions supported
-	 assign MulDivResultW = 0; 
+	 	assign MulDivResultW = 0; 
+		assign DivBusyE = 0;
+		assign DivDoneE = 0;
       end
    endgenerate
 

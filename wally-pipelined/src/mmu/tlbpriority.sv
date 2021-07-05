@@ -41,8 +41,9 @@ module tlbpriority #(parameter ENTRIES = 8) (
   genvar i;
   generate
     assign nolower[0] = 1;
-    for (i=1; i<ENTRIES; i++) 
+    for (i=1; i<ENTRIES; i++) begin:therm
       assign nolower[i] = nolower[i-1] & ~a[i-1];
+    end
   endgenerate
   // verilator lint_on UNOPTFLAT
   assign y = a & nolower;

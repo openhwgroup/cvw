@@ -42,7 +42,7 @@ module alu #(parameter WIDTH=32) (
   assign {carry, presum} = a + condinvb + {{(WIDTH-1){1'b0}},alucontrol[3]};
   
   // support W-type RV64I ADDW/SUBW/ADDIW that sign-extend 32-bit result to 64 bits
-  generate 
+  generate
     if (WIDTH==64)
       assign sum = w64 ? {{32{presum[31]}}, presum[31:0]} : presum;
     else
