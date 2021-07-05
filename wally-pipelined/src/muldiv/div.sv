@@ -299,15 +299,14 @@ module csa #(parameter WIDTH=8) (input logic [WIDTH-1:0] a, b, c,
    logic [WIDTH:0] 					  carry_temp;   
    genvar 						  i;
    generate
-      for (i=0;i<WIDTH;i=i+1)
-	begin : genbit
-	   fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
-	end
+      for (i=0;i<WIDTH;i=i+1) begin : genbit
+	    fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
+	  end
    endgenerate
    assign carry = {carry_temp[WIDTH-1:1], 1'b0};     
 
 endmodule // csa
-
+/*
 module eqcmp #(parameter WIDTH = 8)
    (input  logic [WIDTH-1:0] a, b,
     output logic y);
@@ -315,6 +314,7 @@ module eqcmp #(parameter WIDTH = 8)
    assign y = (a == b);
    
 endmodule // eqcmp
+*/
 
 // QST for r=4
 module qst4 (input logic [6:0] s, input logic [2:0] d,

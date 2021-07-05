@@ -64,11 +64,12 @@ module privileged (
   input logic PMALoadAccessFaultM, PMPLoadAccessFaultM,
   input logic PMAStoreAccessFaultM, PMPStoreAccessFaultM,
 
-  output logic		   IllegalFPUInstrE,
+  output logic		         IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
-  output logic             STATUS_MXR, STATUS_SUM,
-  output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  output logic  [1:0]      STATUS_MPP,
+  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
   output logic [2:0]       FRM_REGW
 );
@@ -94,8 +95,7 @@ module privileged (
   logic MTrapM, STrapM, UTrapM;
   logic InterruptM; 
 
-  logic [1:0] STATUS_MPP;
-  logic       STATUS_SPP, STATUS_TSR, STATUS_MPRV; // **** status mprv is unused outside of the csr module as of 4 June 2021. should it be deleted alltogether from the module, or should I leav the pin here in case someone needs it? 
+  logic       STATUS_SPP, STATUS_TSR; 
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
   logic md, sd;

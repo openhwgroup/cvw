@@ -129,7 +129,7 @@ module datapath (
   flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
   // handle Store Conditional result if atomic extension supported
-  generate 
+  generate
     if (`A_SUPPORTED)
       assign SCResultW = SquashSCW ? {{(`XLEN-1){1'b0}}, 1'b1} : {{(`XLEN-1){1'b0}}, 1'b0};
     else 

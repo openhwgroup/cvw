@@ -334,6 +334,8 @@ module testbench();
     `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
   end
 
+  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
+
   // -------------------
   // Additional Hardware
   // -------------------
@@ -716,6 +718,16 @@ module testbench();
       end
     end
   endfunction
+endmodule
+
+module logging(
+  input logic clk, reset,
+  input logic [31:0] HADDR,
+  input logic [1:0]  HTRANS);
+
+  always @(posedge clk)
+    if (HTRANS != 2'b00 && HADDR == 0)
+      $display("Warning: access to memory address 0\n");
 endmodule
 
 

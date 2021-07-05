@@ -112,7 +112,8 @@ module wallypipelinedhart
   logic 		    ITLBMissF, ITLBHitF;
   logic 		    DTLBMissM, DTLBHitM;
   logic [`XLEN-1:0] 	    SATP_REGW;
-  logic 		    STATUS_MXR, STATUS_SUM;
+  logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
+  logic  [1:0]       STATUS_MPP;
   logic [1:0] 		    PrivilegeModeW;
   logic [`XLEN-1:0] 	    PageTableEntryF, PageTableEntryM;
   logic [1:0] 		    PageTypeF, PageTypeM;
@@ -123,17 +124,12 @@ module wallypipelinedhart
   logic 		    PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic 		    DSquashBusAccessM, ISquashBusAccessF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
-  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0];
+  var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
   logic 		    ICacheStallF;
   logic 		    DCacheStall;
-  logic [`XLEN-1:0] 	    MMUPAdr, MMUReadPTE;
-  logic 		    MMUStall;
-  logic 		    MMUTranslate, MMUReady;
-  logic 		    HPTWRead;
-  logic 		    HPTWReadyfromLSU;
-  logic 		    HPTWStall;
+
   
 
   // bus interface to dmem
@@ -146,7 +142,6 @@ module wallypipelinedhart
   logic [`PA_BITS-1:0] 	    InstrPAdrF;
   logic [`XLEN-1:0] 	    InstrRData;
   logic 		    InstrReadF;
-  logic 		    DataStall;
   logic 		    InstrAckF, MemAckW;
   logic 		    CommitM, CommittedM;
 
@@ -163,9 +158,8 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    HRDATAW;
 
   // IEU vs HPTW arbitration signals to send to LSU
-  logic 		    DisableTranslation;   
   logic [1:0] 		    MemRWMtoLSU;
-  logic [2:0] 		    Funct3MtoLSU;
+  logic [2:0] 		    SizeToLSU;
   logic [1:0] 		    AtomicMtoLSU;
   logic [`XLEN-1:0] 	    MemAdrMtoLSU;
   logic [`XLEN-1:0] 	    WriteDataMtoLSU;
@@ -175,7 +169,7 @@ module wallypipelinedhart
   logic 		    DataMisalignedMfromLSU;
   logic 		    StallWtoLSU;
   logic 		    StallWfromLSU;  
-  logic [2:0] 		    Funct3MfromLSU;
+  logic [2:0] 		    SizeFromLSU;
 
   
   ifu ifu(.InstrInF(InstrRData),
@@ -187,71 +181,87 @@ module wallypipelinedhart
   
   // mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
 
-  pagetablewalker pagetablewalker(.HPTWRead(HPTWRead),
-				  .*); // can send addresses to ahblite, send out pagetablestall
-  // arbiter between IEU and pagetablewalker
-  lsuArb arbiter(// HPTW connection
-		 .HPTWTranslate(MMUTranslate),
-		 .HPTWRead(HPTWRead),
-		 .HPTWPAdr(MMUPAdr),
-		 .HPTWReadPTE(MMUReadPTE),
-		 .HPTWReady(MMUReady),
-		 .HPTWStall(HPTWStall),		 
-		 // CPU connection
-		 .MemRWM(MemRWM),
-		 .Funct3M(Funct3M),
-		 .AtomicM(AtomicM),
-		 .MemAdrM(MemAdrM),
-		 .StallW(StallW),
-		 .WriteDataM(WriteDataM),
-		 .ReadDataW(ReadDataW),
-		 .CommittedM(CommittedM),
-		 .SquashSCW(SquashSCW),
-		 .DataMisalignedM(DataMisalignedM),
-		 .DCacheStall(DCacheStall),
-		 // LSU
-		 .DisableTranslation(DisableTranslation),
-		 .MemRWMtoLSU(MemRWMtoLSU),
-		 .Funct3MtoLSU(Funct3MtoLSU),
-		 .AtomicMtoLSU(AtomicMtoLSU),
-		 .MemAdrMtoLSU(MemAdrMtoLSU),          
-		 .WriteDataMtoLSU(WriteDataMtoLSU),  
-		 .StallWtoLSU(StallWtoLSU),
-		 .CommittedMfromLSU(CommittedMfromLSU),     
-		 .SquashSCWfromLSU(SquashSCWfromLSU),      
-		 .DataMisalignedMfromLSU(DataMisalignedMfromLSU),
-		 .ReadDataWFromLSU(ReadDataWFromLSU),
-		 .HPTWReadyfromLSU(HPTWReadyfromLSU),
-		 .DataStall(DataStall),
-		 .*);
 
+  lsu lsu(.clk(clk),
+	  .reset(reset),
+	  .StallM(StallM),
+	  .FlushM(FlushM),
+	  .StallW(StallW),
+	  .FlushW(FlushW),
+	  // connected to arbiter (reconnect to CPU)
+	  .MemRWM(MemRWM),                  
+	  .Funct3M(Funct3M),                
+	  .AtomicM(AtomicM),               
+	  .CommittedM(CommittedM),          
+	  .SquashSCW(SquashSCW),            
+	  .DataMisalignedM(DataMisalignedM),
+	  .MemAdrM(MemAdrM),      
+	  .WriteDataM(WriteDataM),
+	  .ReadDataW(ReadDataW),
 
-  lsu lsu(.MemRWM(MemRWMtoLSU),
-	  .Funct3M(Funct3MtoLSU),
-	  .AtomicM(AtomicMtoLSU),
-	  .MemAdrM(MemAdrMtoLSU),
-	  .WriteDataM(WriteDataMtoLSU),
-	  .ReadDataW(ReadDataWFromLSU),
-	  .StallW(StallWtoLSU),
+	  // connected to ahb (all stay the same)
+	  .CommitM(CommitM),
+	  .MemPAdrM(MemPAdrM),
+	  .MemReadM(MemReadM),
+	  .MemWriteM(MemWriteM),
+	  .AtomicMaskedM(AtomicMaskedM),
+	  .MemAckW(MemAckW),
+	  .HRDATAW(HRDATAW),
+	  .SizeFromLSU(SizeFromLSU),           // stays the same
+	  .StallWfromLSU(StallWfromLSU),             // stays the same
+	  .DSquashBusAccessM(DSquashBusAccessM),     // probalby removed after dcache implemenation?
+	  // currently not connected (but will need to be used for lsu talking to ahb.
+	  .HADDR(HADDR),                             
+	  .HSIZE(HSIZE),
+	  .HBURST(HBURST),
+	  .HWRITE(HWRITE),
 
-	  .CommittedM(CommittedMfromLSU),
-	  .SquashSCW(SquashSCWfromLSU),
-	  .DataMisalignedM(DataMisalignedMfromLSU),
-	  .DisableTranslation(DisableTranslation),
+	  // connect to csr or privilege and stay the same.
+	  .PrivilegeModeW(PrivilegeModeW),           // connects to csr
+	  .PMPCFG_ARRAY_REGW(PMPCFG_ARRAY_REGW),     // connects to csr
+	  .PMPADDR_ARRAY_REGW(PMPADDR_ARRAY_REGW),    // connects to csr
+	  // hptw keep i/o
+	  .SATP_REGW(SATP_REGW), // from csr
+	  .STATUS_MXR(STATUS_MXR), // from csr
+	  .STATUS_SUM(STATUS_SUM),  // from csr
+	  .STATUS_MPRV(STATUS_MPRV),  // from csr	  	  
+	  .STATUS_MPP(STATUS_MPP),  // from csr	  
 
-	  .DataStall(DataStall),
-	  .HPTWReady(HPTWReadyfromLSU),
-	  .Funct3MfromLSU(Funct3MfromLSU),
-	  .StallWfromLSU(StallWfromLSU),
-//	  .DataStall(LSUStall),
-	  .* ); // data cache unit
+	  .DTLBFlushM(DTLBFlushM),                   // connects to privilege
+	  .NonBusTrapM(NonBusTrapM),                 // connects to privilege
+	  .DTLBLoadPageFaultM(DTLBLoadPageFaultM),   // connects to privilege
+	  .DTLBStorePageFaultM(DTLBStorePageFaultM), // connects to privilege
+	  .LoadMisalignedFaultM(LoadMisalignedFaultM), // connects to privilege
+	  .LoadAccessFaultM(LoadAccessFaultM),         // connects to privilege
+	  .StoreMisalignedFaultM(StoreMisalignedFaultM), // connects to privilege
+	  .StoreAccessFaultM(StoreAccessFaultM),     // connects to privilege
+	  .PMALoadAccessFaultM(PMALoadAccessFaultM),
+	  .PMAStoreAccessFaultM(PMAStoreAccessFaultM),
+	  .PMPLoadAccessFaultM(PMPLoadAccessFaultM),
+	  .PMPStoreAccessFaultM(PMPStoreAccessFaultM),
+    
+	  // connected to hptw. Move to internal.
+	  .PCF(PCF),
+	  .ITLBMissF(ITLBMissF),
+	  .PageTableEntryF(PageTableEntryF),
+	  .PageTypeF(PageTypeF),
+	  .ITLBWriteF(ITLBWriteF),
+	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
+	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
+
+	  .DTLBHitM(DTLBHitM), // not connected remove
+
+	  .DCacheStall(DCacheStall))                     // change to DCacheStall
+    ;
+
 
   ahblite ebu( 
 	       //.InstrReadF(1'b0),
 	       //.InstrRData(InstrF), // hook up InstrF later
 	       .ISquashBusAccessF(1'b0), // *** temporary hack to disable PMP instruction fetch checking
 	       .WriteDataM(WriteDataM),
-	       .MemSizeM(Funct3MfromLSU[1:0]), .UnsignedLoadM(Funct3MfromLSU[2]),
+	       .MemSizeM(SizeFromLSU[1:0]), .UnsignedLoadM(SizeFromLSU[2]),
 	       .Funct7M(InstrM[31:25]),
 	       .HRDATAW(HRDATAW),
 	       .StallW(StallWfromLSU),

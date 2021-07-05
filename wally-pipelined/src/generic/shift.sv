@@ -38,13 +38,12 @@ module shift_right #(parameter WIDTH=8)
 
    assign stage[0] = A;   
    generate
-      for (i=0;i<$clog2(WIDTH);i=i+1)
-	begin : genbit
-	   mux2 #(WIDTH) mux_inst (stage[i], 
+      for (i=0;i<$clog2(WIDTH);i=i+1) begin : genbit
+	      mux2 #(WIDTH) mux_inst (stage[i], 
 				   {{(WIDTH/(2**(i+1))){1'b0}}, stage[i][WIDTH-1:WIDTH/(2**(i+1))]}, 
 				   Shift[$clog2(WIDTH)-i-1], 
 				   stage[i+1]);
-	end
+	   end
    endgenerate
    assign Z = stage[$clog2(WIDTH)];   
 
@@ -60,13 +59,12 @@ module shift_left #(parameter WIDTH=8)
    
    assign stage[0] = A;   
    generate
-      for (i=0;i<$clog2(WIDTH);i=i+1)
-	begin : genbit
-	   mux2 #(WIDTH) mux_inst (stage[i], 
+      for (i=0;i<$clog2(WIDTH);i=i+1) begin : genbit
+	     mux2 #(WIDTH) mux_inst (stage[i], 
 				   {stage[i][WIDTH-1-WIDTH/(2**(i+1)):0], {(WIDTH/(2**(i+1))){1'b0}}}, 
 				   Shift[$clog2(WIDTH)-i-1], 
 				   stage[i+1]);
-	end
+	   end
    endgenerate
    assign Z = stage[$clog2(WIDTH)];   
 

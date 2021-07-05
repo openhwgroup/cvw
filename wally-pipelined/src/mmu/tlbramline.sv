@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// adrdecs.sv
+// tlbramline.sv
 //
-// Written: David_Harris@hmc.edu 22 June 2021
-// Modified: 
+// Written: David_Harris@hmc.edu 4 July 2021
+// Modified:
 //
-// Purpose: All the address decoders for peripherals
+// Purpose: One line of the RAM, with enabled flip-flop and logic for reading into distributed OR
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -24,26 +24,17 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-  // verilator lint_off UNOPTFLAT 
 
-module adrdecs (
-  input  logic [`PA_BITS-1:0] PhysicalAddress,
-  input  logic                AccessRW, AccessRX, AccessRWX,
-  input  logic [1:0]          Size,
-  output logic [6:0]          SelRegions
-);
+module tlbramline #(parameter WIDTH)
+  (input  logic             clk, reset,
+   input  logic             re, we,
+   input  logic [WIDTH-1:0] d,
+   output logic [WIDTH-1:0] q,
+   output logic             PTE_G);
 
- // Determine which region of physical memory (if any) is being accessed
- // *** eventually uncomment Access signals
-  adrdec boottimdec(PhysicalAddress, `BOOTTIM_BASE, `BOOTTIM_RANGE, `BOOTTIM_SUPPORTED, 1'b1/*AccessRX*/, Size, 4'b1111, SelRegions[5]);
-  adrdec timdec(PhysicalAddress, `TIM_BASE, `TIM_RANGE, `TIM_SUPPORTED, 1'b1/*AccessRWX*/, Size, 4'b1111, SelRegions[4]);
-  adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, 4'b1111, SelRegions[3]);
-  adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[2]);
-  adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[1]);
-  adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[0]);
+   logic [WIDTH-1:0] line;
 
-  assign SelRegions[6] = ~|(SelRegions[5:0]);
-
+   flopenr #(`XLEN) pteflop(clk, reset, we, d, line);
+   assign q = re ? line : 0;
+   assign PTE_G = line[5]; // send global bit to CAM as part of ASID matching
 endmodule
-
-  // verilator lint_on UNOPTFLAT 

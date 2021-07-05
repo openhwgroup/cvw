@@ -151,7 +151,7 @@ module dcachecontroller #(parameter LINESIZE = 256) (
 
     genvar i;
     generate
-        for (i=0; i < WORDSPERLINE; i++) begin
+        for (i=0; i < WORDSPERLINE; i++) begin:sb
             flopenr #(`XLEN) flop(clk, reset, FetchState & (i == FetchWordNum), ReadDataW, DCacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]);
         end
     endgenerate

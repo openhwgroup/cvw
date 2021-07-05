@@ -48,8 +48,8 @@
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
 
-`define ITLB_ENTRY_BITS 5
-`define DTLB_ENTRY_BITS 5
+`define ITLB_ENTRIES 32
+`define DTLB_ENTRIES 32
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 16
@@ -63,10 +63,8 @@
 
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTTIM_SUPPORTED 1'b1
-`define BOOTTIM_BASE   34'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-`define BOOTTIM_RANGE  34'h00003FFF
-//`define BOOTTIM_BASE   34'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-//`define BOOTTIM_RANGE  34'h00000FFF
+`define BOOTTIM_BASE   34'h00001000 
+`define BOOTTIM_RANGE  34'h00000FFF
 `define TIM_SUPPORTED 1'b1
 `define TIM_BASE       34'h80000000
 `define TIM_RANGE      34'h07FFFFFF

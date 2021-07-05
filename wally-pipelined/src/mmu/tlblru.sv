@@ -24,46 +24,27 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-module tlblru #(parameter ENTRY_BITS = 3) (
-  input logic                     clk, reset,
-  input logic                     TLBWrite,
-  input logic                     TLBFlush,
-  input logic [ENTRY_BITS-1:0]    VPNIndex,
-  input logic                     CAMHit,
-  input logic [2**ENTRY_BITS-1:0] WriteLines, 
-
-  output logic [ENTRY_BITS-1:0]   WriteIndex
+module tlblru #(parameter TLB_ENTRIES = 8) (
+  input  logic                clk, reset,
+  input  logic                TLBWrite,
+  input  logic                TLBFlush,
+  input  logic [TLB_ENTRIES-1:0] ReadLines,
+  input  logic                CAMHit,
+  output logic [TLB_ENTRIES-1:0] WriteLines
 );
 
-  localparam NENTRIES = 2**ENTRY_BITS;
-
-  // Keep a "recently-used" record for each TLB entry. On access, set to 1
-  logic [NENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
-
-  // One-hot encodings of which line is being accessed
-  logic [NENTRIES-1:0] ReadLineOneHot, AccessLineOneHot;
-  
-  // High if the next access causes all RU bits to be 1
-  logic                AllUsed;
-
-  // Convert indices to one-hot encodings
-  decoder #(ENTRY_BITS) readdecoder(VPNIndex, ReadLineOneHot);
+  logic [TLB_ENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
+  logic [TLB_ENTRIES-1:0] AccessLines; // One-hot encodings of which line is being accessed
+  logic                AllUsed;  // High if the next access causes all RU bits to be 1
 
   // Find the first line not recently used
-  priorityencoder #(ENTRY_BITS) firstnru(~RUBits, WriteIndex);
+  tlbpriority #(TLB_ENTRIES) nru(~RUBits, WriteLines);
 
-  // Access either the hit line or written line
-  assign AccessLineOneHot = (TLBWrite) ? WriteLines : ReadLineOneHot;
-
-  // Raise the bit of the recently accessed line
-  assign RUBitsAccessed = AccessLineOneHot | RUBits;
-
-  // Determine whether we need to reset the RU bits to all zeroes
-  assign AllUsed = &(RUBitsAccessed);
-  assign RUBitsNext = (AllUsed) ? AccessLineOneHot : RUBitsAccessed;
-
-  // Update LRU state on any TLB hit or write
-  flopenrc #(NENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite),
-    RUBitsNext, RUBits);
+  // Track recently used lines, updating on a CAM Hit or TLB write
+  assign AccessLines = TLBWrite ? WriteLines : ReadLines;
+  assign RUBitsAccessed = AccessLines | RUBits;
+  assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
+  assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 
+  flopenrc #(TLB_ENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit || TLBWrite), RUBitsNext, RUBits);
 
 endmodule
