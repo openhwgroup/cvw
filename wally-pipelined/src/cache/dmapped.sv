@@ -106,7 +106,7 @@ module rodirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
     assign DataWord = ReadLineTransformed[ReadOffset];
     genvar i;
     generate
-        for (i=0; i < LINESIZE/WORDSIZE; i++) begin
+        for (i=0; i < LINESIZE/WORDSIZE; i++) begin:readline
             assign ReadLineTransformed[i] = ReadLine[(i+1)*WORDSIZE-1:i*WORDSIZE];
         end
     endgenerate
@@ -214,7 +214,7 @@ module wtdirectmappedmem #(parameter NUMLINES=512, parameter LINESIZE = 256, par
     assign DataWord = ReadLineTransformed[ReadOffset];
     genvar i;
     generate
-        for (i=0; i < LINESIZE/WORDSIZE; i++) begin
+        for (i=0; i < LINESIZE/WORDSIZE; i++) begin:readline
             assign ReadLineTransformed[i] = ReadLine[(i+1)*WORDSIZE-1:i*WORDSIZE];
         end
     endgenerate

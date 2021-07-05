@@ -87,7 +87,7 @@ module csrc #(parameter
     output logic             IllegalCSRCAccessM
   );
 
-  generate 
+  generate
     if (`ZCOUNTERS_SUPPORTED) begin
       //  logic [63:0] TIME_REGW, TIMECMP_REGW;
       logic [63:0] CYCLE_REGW, INSTRET_REGW;

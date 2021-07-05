@@ -67,7 +67,7 @@ module localHistoryPredictor
 
   genvar 		   index;
   generate
-    for (index = 0; index < 2**m; index = index +1) begin
+    for (index = 0; index < 2**m; index = index +1) begin:localhist
       
       flopenr #(k) LocalHistoryRegister(.clk(clk),
 					.reset(reset),
