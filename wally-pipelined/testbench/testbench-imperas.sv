@@ -514,12 +514,16 @@ string tests32f[] = '{
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
   logic [`XLEN-1:0] PCW;
+
+  logic [`XLEN-1:0] debug;
+  assign debug = dut.uncore.dtim.RAM[536872960];
   
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
+  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
 
   // pick tests based on modes supported
   initial begin
@@ -655,10 +659,7 @@ string tests32f[] = '{
         // Check errors
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
-        if (`XLEN == 32)
-          testadr = (`TIM_BASE+tests[test+1].atohex())/4;
-        else
-          testadr = (`TIM_BASE+tests[test+1].atohex())/8;
+        testadr = (`TIM_BASE+tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
@@ -668,14 +669,16 @@ string tests32f[] = '{
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), dut.uncore.dtim.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
           i = i + 1;
         end
         /* verilator lint_on INFINITELOOP */
-        if (errors == 0) $display("%s succeeded.  Brilliant!!!", tests[test]);
+        if (errors == 0) begin
+          $display("%s succeeded.  Brilliant!!!", tests[test]);
+        end
         else begin
           $display("%s failed with %d errors. :(", tests[test], errors);
           totalerrors = totalerrors+1;
@@ -722,6 +725,7 @@ module riscvassertions();
   // Legal number of PMP entries are 0, 16, or 64
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries");
+    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
   end
 endmodule
 
@@ -948,4 +952,14 @@ module instrNameDecTB(
       10'b0100111_011: name = "FSD";
       default:         name = "ILLEGAL";
     endcase
+endmodule
+
+module logging(
+  input logic clk, reset,
+  input logic [31:0] HADDR,
+  input logic [1:0]  HTRANS);
+
+  always @(posedge clk)
+    if (HTRANS != 2'b00 && HADDR == 0)
+      $display("Warning: access to memory address 0\n");
 endmodule

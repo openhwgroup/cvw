@@ -70,15 +70,16 @@ module ifu (
   input logic [`XLEN-1:0]     PageTableEntryF,
   input logic [1:0] 	      PageTypeF,
   input logic [`XLEN-1:0]     SATP_REGW,
-  input logic 		      STATUS_MXR, STATUS_SUM, 
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
   input logic 		      ITLBWriteF, ITLBFlushF,
   input logic 		      WalkerInstrPageFaultF,
 
   output logic 		      ITLBMissF, ITLBHitF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
+  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
   output logic 		      PMPInstrAccessFaultF, PMAInstrAccessFaultF,
   output logic 		      ISquashBusAccessF
@@ -115,7 +116,7 @@ module ifu (
     end
   endgenerate
 
-  mmu #(.ENTRY_BITS(`ITLB_ENTRY_BITS), .IMMU(1))
+  mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   itlb(.TLBAccessType(2'b10),
        .VirtualAddress(PCF),
        .Size(2'b10),
@@ -187,7 +188,7 @@ module ifu (
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
-  generate 
+  generate
     if (`BPRED_ENABLED == 1) begin : bpred
       // I am making the port connection explicit for now as I want to see them and they will be changing.
       bpred bpred(.*,

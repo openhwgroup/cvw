@@ -26,15 +26,14 @@
 
 `include "wally-config.vh"
 
-// The TLB will have 2**ENTRY_BITS total entries
-
-module mmu #(parameter ENTRY_BITS = 3,
+module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
              parameter IMMU = 0) (
 
   input logic              clk, reset,
   // Current value of satp CSR (from privileged unit)
   input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM,
+  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic  [1:0]       STATUS_MPP,
 
   // Current privilege level of the processeor
   input logic  [1:0]       PrivilegeModeW,
@@ -68,7 +67,7 @@ module mmu #(parameter ENTRY_BITS = 3,
 
   // PMA checker signals
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
-  input  var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
 
   output logic             SquashBusAccess, // *** send to privileged unit
@@ -82,7 +81,7 @@ module mmu #(parameter ENTRY_BITS = 3,
   logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
 
-  tlb #(.ENTRY_BITS(ENTRY_BITS), .ITLB(IMMU)) tlb(.*);
+  tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
 
   ///////////////////////////////////////////
   // Check physical memory accesses

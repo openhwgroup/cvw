@@ -35,7 +35,6 @@ module lsuArb
    input logic [`XLEN-1:0]  HPTWPAdr,
    // to page table walker.
    output logic [`XLEN-1:0] HPTWReadPTE,
-   output logic 	    HPTWReady,
    output logic 	    HPTWStall, 
 
    // from CPU
@@ -55,7 +54,7 @@ module lsuArb
    // to LSU   
    output logic 	    DisableTranslation, 
    output logic [1:0] 	    MemRWMtoLSU,
-   output logic [2:0] 	    Funct3MtoLSU,
+   output logic [2:0] 	    SizeToLSU,
    output logic [1:0] 	    AtomicMtoLSU,
    output logic [`XLEN-1:0] MemAdrMtoLSU,
    output logic [`XLEN-1:0] WriteDataMtoLSU,
@@ -65,7 +64,6 @@ module lsuArb
    input logic 		    SquashSCWfromLSU,
    input logic 		    DataMisalignedMfromLSU,
    input logic [`XLEN-1:0]  ReadDataWFromLSU,
-   input logic 		    HPTWReadyfromLSU, 
    input logic 		    DataStall
   
    );
@@ -89,6 +87,7 @@ module lsuArb
   statetype CurrState, NextState;
   logic 		    SelPTW;
   logic 		    HPTWStallD;
+  logic [2:0] PTWSize;
   
 
   flopenl #(.TYPE(statetype)) StateReg(.clk(clk),
@@ -140,12 +139,9 @@ module lsuArb
   assign MemRWMtoLSU = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
-    if (`XLEN == 32) begin
-      assign Funct3MtoLSU = SelPTW ? 3'b010 : Funct3M;
-    end else begin
-      assign Funct3MtoLSU = SelPTW ? 3'b011 : Funct3M;
-    end
+    assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
   endgenerate
+  mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, SizeToLSU);
 
   assign AtomicMtoLSU = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMtoLSU = SelPTW ? HPTWPAdr : MemAdrM;
@@ -159,7 +155,6 @@ module lsuArb
   assign CommittedM = SelPTW ? 1'b0 : CommittedMfromLSU;
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromLSU;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromLSU;
-  assign HPTWReady = HPTWReadyfromLSU;
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).

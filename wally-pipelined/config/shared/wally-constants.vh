@@ -39,7 +39,9 @@
 `define VPN_BITS (`XLEN==32 ? (2*`VPN_SEGMENT_BITS) : (4*`VPN_SEGMENT_BITS))
 `define PPN_BITS (`XLEN==32 ? 22 : 44)
 `define PA_BITS (`XLEN==32 ? 34 : 56)
-`define SVMODE_BITS (`XLEN == 32 ? 1 : 4)
+`define SVMODE_BITS (`XLEN==32 ? 1 : 4)
+`define ASID_BASE (`XLEN==32 ? 22 : 44)
+`define ASID_BITS (`XLEN==32 ? 9 : 16)
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec

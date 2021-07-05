@@ -27,34 +27,22 @@
 
 `include "wally-config.vh"
 
-module tlbram #(parameter ENTRY_BITS = 3) (
+module tlbram #(parameter TLB_ENTRIES = 8) (
   input logic                       clk, reset,
-  input logic [ENTRY_BITS-1:0]      VPNIndex,  // Index to read from
-//  input logic [ENTRY_BITS-1:0]      WriteIndex, // *** unused?
   input logic [`XLEN-1:0]           PTEWriteVal,
-  input logic                       TLBWrite,
-  input logic [2**ENTRY_BITS-1:0]   WriteLines,
-
+  input logic [TLB_ENTRIES-1:0]     ReadLines, WriteEnables,
   output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
-  output logic [7:0]                PTEAccessBits
+  output logic [7:0]                PTEAccessBits,
+  output logic [TLB_ENTRIES-1:0]    PTE_G
 );
 
-  localparam NENTRIES = 2**ENTRY_BITS;
-
-  logic [`XLEN-1:0] ram [NENTRIES-1:0];
+  logic [`XLEN-1:0] RamRead[TLB_ENTRIES-1:0];
   logic [`XLEN-1:0] PageTableEntry;
 
   // Generate a flop for every entry in the RAM
-  generate
-    genvar i;
-    for (i = 0; i < NENTRIES; i++) begin:  tlb_ram_flops
-      flopenr #(`XLEN) pteflop(clk, reset, WriteLines[i] & TLBWrite,
-        PTEWriteVal, ram[i]);
-    end
-  endgenerate
-
-  assign PageTableEntry = ram[VPNIndex];
+  tlbramline #(`XLEN) tlblineram[TLB_ENTRIES-1:0](clk, reset, ReadLines, WriteEnables, PTEWriteVal, RamRead, PTE_G);
+  
+  assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
   assign PTEAccessBits = PageTableEntry[7:0];
   assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
-
 endmodule

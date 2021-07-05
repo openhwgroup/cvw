@@ -43,7 +43,7 @@ module csru #(parameter
   );
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
-  generate  
+  generate
     if (`F_SUPPORTED | `D_SUPPORTED) begin
       logic [4:0] FFLAGS_REGW;
       logic WriteFFLAGSM, WriteFRMM; //, WriteFCSRM;

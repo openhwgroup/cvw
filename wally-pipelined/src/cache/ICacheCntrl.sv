@@ -115,8 +115,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   localparam STATE_INVALIDATE = 'h12; // *** not sure if invalidate or evict? invalidate by cache block or address?
   localparam STATE_TLB_MISS = 'h13;
   localparam STATE_TLB_MISS_DONE = 'h14;
-  
-  
+  localparam STATE_INSTR_PAGE_FAULT = 'h15;
+
   
   localparam AHBByteLength = `XLEN / 8;
   localparam AHBOFFETWIDTH = $clog2(AHBByteLength);
@@ -370,13 +370,20 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
         NextState = STATE_READY;
       end
       STATE_TLB_MISS: begin
-        if (ITLBWriteF | WalkerInstrPageFaultF) begin
+        if (WalkerInstrPageFaultF) begin
+          NextState = STATE_INSTR_PAGE_FAULT;
+          ICacheStallF = 1'b0;
+        end else if (ITLBWriteF) begin
           NextState = STATE_TLB_MISS_DONE;
         end else begin
           NextState = STATE_TLB_MISS;
         end
       end
-      STATE_TLB_MISS_DONE : begin
+      STATE_TLB_MISS_DONE: begin
+        NextState = STATE_READY;
+      end
+      STATE_INSTR_PAGE_FAULT: begin
+        ICacheStallF = 1'b0;
         NextState = STATE_READY;
       end
       default: begin
@@ -425,8 +432,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   // store read data from memory interface before writing into SRAM.
   genvar 				i;
   generate
-    for (i = 0; i < WORDSPERLINE; i++) begin
-      flopenr #(`XLEN) flop(.clk(clk),
+    for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
+      flopenr #(`XLEN) sb(.clk(clk),
 			    .reset(reset), 
 			    .en(InstrAckF & (i == FetchCount)),
 			    .d(InstrInF),

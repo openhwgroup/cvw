@@ -53,13 +53,6 @@ module ahblite (
   input  logic [1:0]       MemSizeM,
   //output logic             DataStall,
   // Signals from MMU
-/* -----\/----- EXCLUDED -----\/-----
-  input  logic             MMUStall,
-  input  logic [`XLEN-1:0] MMUPAdr,
-  input  logic             MMUTranslate,
-  output logic [`XLEN-1:0] MMUReadPTE,
-  output logic             MMUReady,
- -----/\----- EXCLUDED -----/\----- */
   // Signals from PMA checker
   input  logic             DSquashBusAccessM, ISquashBusAccessF,
   // Signals to PMA checker (metadata of proposed access)
@@ -159,8 +152,6 @@ module ahblite (
  -----/\----- EXCLUDED -----/\----- */
   
 
-  //assign #1 InstrStall = ((NextBusState == INSTRREAD) || (NextBusState == INSTRREADC) ||
-  //                        MMUStall);
 
   //  bus outputs
   assign #1 GrantData = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == MEMWRITE) || 
@@ -225,11 +216,9 @@ module ahblite (
   subwordread swr(.*);
 
   // Handle AMO instructions if applicable
-  generate 
+  generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
-//      amoalu amoalu(.a(HRDATA), .b(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
-//                    .result(AMOResult));
       amoalu amoalu(.srca(HRDATAW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
       mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicMaskedM[1], WriteData);

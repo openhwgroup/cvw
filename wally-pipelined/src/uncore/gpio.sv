@@ -131,33 +131,32 @@ module gpio (
         default: Dout <= #1 0;
       endcase
       // interrupts
-      if (memwrite && (entryd == 8'h1C))
-        rise_ip <= rise_ip & ~Din | (input2d & ~input3d);
+      if (memwrite & (entryd == 8'h1C))
+        rise_ip <= rise_ip & ~Din;
       else
         rise_ip <= rise_ip | (input2d & ~input3d);
-      if (memwrite && (entryd == 8'h24))
-        fall_ip <= fall_ip & ~Din | (~input2d & input3d);
+      if (memwrite & (entryd == 8'h24))
+        fall_ip <= fall_ip & ~Din;
       else
         fall_ip <= fall_ip | (~input2d & input3d);
-      if (memwrite && (entryd == 8'h2C))
-        high_ip <= high_ip & ~Din | input3d;
+      if (memwrite & (entryd == 8'h2C))
+        high_ip <= high_ip & ~Din;
       else
         high_ip <= high_ip | input3d;
-      if (memwrite && (entryd == 8'h34))
-        low_ip <= low_ip & ~Din | ~input3d;
+      if (memwrite & (entryd == 8'h34))
+        low_ip <= low_ip & ~Din;
       else
         low_ip <= low_ip | ~input3d;
     end
   end
 
   // chip i/o
-  generate 
+  generate
     if (`GPIO_LOOPBACK_TEST) // connect OUT to IN for loopback testing
       assign input0d = GPIOPinsOut & input_en & output_en;
     else
       assign input0d = GPIOPinsIn & input_en;
   endgenerate
-  // *** this costs lots of flops; I suspect they don't need to be resettable, do they?
   flop #(32) sync1(HCLK,input0d,input1d);
   flop #(32) sync2(HCLK,input1d,input2d);
   flop #(32) sync3(HCLK,input2d,input3d);
