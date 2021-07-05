@@ -72,6 +72,7 @@ module pagetablewalker
 
   // Internal signals
   // register TLBs translation miss requests
+  logic [`XLEN-1:0] 	    TranslationVAdrQ;
   logic 		    ITLBMissFQ, DTLBMissMQ;
   
   logic [`PPN_BITS-1:0]     BasePageTablePPN;
@@ -104,6 +105,7 @@ module pagetablewalker
 			     LEVEL3,
 			     LEAF,
 			     IDLE,
+			     START,
 			     FAULT} statetype;
 
   statetype WalkerState, NextWalkerState;
@@ -121,6 +123,13 @@ module pagetablewalker
   // Prefer data address translations over instruction address translations
   assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF; // *** need to register TranslationVAdr
   assign SelDataTranslation = DTLBMissMQ | DTLBMissM;
+
+  flopenr #(`XLEN) 
+  TranslationVAdrReg(.clk(clk),
+		     .reset(reset),
+		     .en(StartWalk),
+		     .d(TranslationVAdr),
+		     .q(TranslationVAdrQ));
 
   flopenrc #(1)
   DTLBMissMReg(.clk(clk),
@@ -193,13 +202,16 @@ module pagetablewalker
         case (WalkerState)
           IDLE: begin
 	    if (MMUTranslate && SvMode == `SV32) begin // *** Added SvMode
-	      NextWalkerState = LEVEL1_WDV;
-              TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
-	      HPTWRead = 1'b1;
+	      NextWalkerState = START;
 	    end else begin
               NextWalkerState = IDLE;
-	      TranslationPAdr = '0;
 	    end
+	  end
+
+          START: begin
+	    NextWalkerState = LEVEL1_WDV;
+            TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+	    HPTWRead = 1'b1;
 	  end
 	  
           LEVEL1_WDV: begin
@@ -223,7 +235,7 @@ module pagetablewalker
               PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+              TranslationPAdr = {2'b00, TranslationVAdrQ[31:0]};
 	    end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -252,7 +264,7 @@ module pagetablewalker
               PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+              TranslationPAdr = {2'b00, TranslationVAdrQ[31:0]};
 	    end else begin
               NextWalkerState = FAULT;
 	    end
@@ -277,8 +289,8 @@ module pagetablewalker
       assign MegapageMisaligned = |(CurrentPPN[9:0]);
       assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-      assign VPN1 = TranslationVAdr[31:22];
-      assign VPN0 = TranslationVAdr[21:12];
+      assign VPN1 = TranslationVAdrQ[31:22];
+      assign VPN0 = TranslationVAdrQ[21:12];
 
       
 
@@ -331,6 +343,14 @@ module pagetablewalker
 
         case (WalkerState)
           IDLE: begin
+	    if (MMUTranslate && (SvMode == `SV48 || SvMode == `SV39)) begin
+	      NextWalkerState = START;
+	    end else begin
+              NextWalkerState = IDLE;
+	    end
+	  end
+
+          START: begin
 	    if (MMUTranslate && SvMode == `SV48) begin
 	      NextWalkerState = LEVEL3_WDV;
               TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
@@ -339,7 +359,7 @@ module pagetablewalker
 	      NextWalkerState = LEVEL2_WDV;
               TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
 	      HPTWRead = 1'b1;
-	    end else begin
+	    end else begin // *** should not get here
               NextWalkerState = IDLE;
 	      TranslationPAdr = '0;
 	    end
@@ -368,7 +388,7 @@ module pagetablewalker
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+              TranslationPAdr = TranslationVAdrQ[`PA_BITS-1:0];
             end 
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -405,7 +425,7 @@ module pagetablewalker
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+              TranslationPAdr = TranslationVAdrQ[`PA_BITS-1:0];
             end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
             else if (ValidPTE && ~LeafPTE) begin
@@ -442,7 +462,7 @@ module pagetablewalker
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+              TranslationPAdr = TranslationVAdrQ[`PA_BITS-1:0];
               
             end
             // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
@@ -474,7 +494,7 @@ module pagetablewalker
                           ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
               DTLBWriteM = DTLBMissMQ;
               ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-              TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+              TranslationPAdr = TranslationVAdrQ[`PA_BITS-1:0];
             end else begin 
               NextWalkerState = FAULT;
             end
@@ -512,10 +532,10 @@ module pagetablewalker
       assign BadGigapage = GigapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
       assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-      assign VPN3 = TranslationVAdr[47:39];
-      assign VPN2 = TranslationVAdr[38:30];
-      assign VPN1 = TranslationVAdr[29:21];
-      assign VPN0 = TranslationVAdr[20:12];
+      assign VPN3 = TranslationVAdrQ[47:39];
+      assign VPN2 = TranslationVAdrQ[38:30];
+      assign VPN1 = TranslationVAdrQ[29:21];
+      assign VPN0 = TranslationVAdrQ[20:12];
 
 
       // Capture page table entry from ahblite
