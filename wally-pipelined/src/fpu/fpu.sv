@@ -44,9 +44,8 @@ module fpu (
   output logic [`XLEN-1:0] FPUResultW);      // FPU result
 // *** change FMA to do 16 - 32 - 64 - 128 FEXPBITS 
 
-  /*generate
-     if (`F_SUPPORTED) begin */
-        
+  generate
+     if (`F_SUPPORTED) begin 
       // control logic signal instantiation
       logic 		   FWriteEnD, FWriteEnE, FWriteEnM, FWriteEnW;              // FP register write enable
       logic [2:0] 	FrmD, FrmE, FrmM;                                  // FP rounding mode
@@ -401,8 +400,7 @@ module fpu (
          //*** put into mem stage
          SetFflagsM = FPUFlagsW;      
       end
-
-   /* end else begin
+   end else begin // no F_SUPPORTED; tie outputs low
      assign FStallD = 0;
      assign FWriteIntE = 0; 
      assign FWriteIntM = 0;
@@ -410,11 +408,11 @@ module fpu (
      assign FWriteDataE = 0;
      assign FIntResM = 0;
      assign FDivBusyE = 0;
-     assign IllegalFPUInstrD = 0;
+     assign IllegalFPUInstrD = 1;
      assign SetFflagsM = 0;
      assign FPUResultW = 0;
    end
-  endgenerate*/
+  endgenerate 
   
 endmodule // fpu
 
