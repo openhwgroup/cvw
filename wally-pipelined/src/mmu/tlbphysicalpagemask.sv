@@ -40,8 +40,19 @@ module tlbphysicalpagemask (
   logic [`PPN_BITS-1:0] PageNumberMask;
 
   generate
-    if (`XLEN == 32) begin
-      always_comb 
+    if (`XLEN == 32)
+      // kilopage: 22 bits of PPN, 0 bits of VPN
+      // megapage: 12 bits of PPN, 10 bits of VPN
+      mux2 #(22) pnm(22'h3FFFFF, 22'h3FFC00, PageType[0], PageNumberMask);
+    else
+      // kilopage: 44 bits of PPN, 0 bits of VPN
+      // megapage: 35 bits of PPN, 9 bits of VPN
+      // gigapage: 26 bits of PPN, 18 bits of VPN
+      // terapage: 17 bits of PPN, 27 bits of VPN
+      mux4 #(44) pnm(44'hFFFFFFFFFFF, 44'hFFFFFFFFE00, 44'hFFFFFFC0000, 44'hFFFF8000000, PageType, PageNumberMask);
+  endgenerate
+ /*     always_comb 
+
         case (PageType[0])
           // the widths of these constansts are hardocded here to match `PPN_BITS in the wally-constants file.
           0: PageNumberMask = 22'h3FFFFF; // kilopage: 22 bits of PPN, 0 bits of VPN
@@ -59,7 +70,7 @@ module tlbphysicalpagemask (
           //     in the tlb when it generates VPN from the full virtualadress.
         endcase
     end
-  endgenerate
+  endgenerate */
 
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
   assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
