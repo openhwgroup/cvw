@@ -117,10 +117,9 @@ module ifu (
   endgenerate
 
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
-  itlb(.TLBAccessType(2'b10),
-       .VirtualAddress(PCF),
+  itlb(.VirtualAddress(PCF),
        .Size(2'b10),
-       .PTEWriteVal(PageTableEntryF),
+       .PTE(PageTableEntryF),
        .PageTypeWriteVal(PageTypeF),
        .TLBWrite(ITLBWriteF),
        .TLBFlush(ITLBFlushF),

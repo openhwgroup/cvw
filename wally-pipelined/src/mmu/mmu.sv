@@ -42,7 +42,6 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input logic [1:0]        TLBAccessType,
   input logic              DisableTranslation,
 
   // Virtual address input
@@ -50,7 +49,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   input logic  [1:0]       Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
 
   // Controls for writing a new entry to the TLB
-  input logic  [`XLEN-1:0] PTEWriteVal,
+  input logic  [`XLEN-1:0] PTE,
   input logic  [1:0]       PageTypeWriteVal,
   input logic              TLBWrite,
 
@@ -81,8 +80,23 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
 
-  tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
-
+  // only instantiate TLB if Virtual Memory is supported
+  generate
+    if (`MEM_VIRTMEM) begin
+      logic ReadAccess, WriteAccess;
+      assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
+      assign WriteAccess = WriteAccessM;
+      tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
+    end else begin // just pass address through as physical
+      logic [`XLEN+1:0]     VAExt;
+      assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
+      assign PhysicalAddress = VAExt[`PA_BITS-1:0];
+      assign TLBMiss = 0;
+      assign TLBHit = 1;
+      assign TLBPageFault = 0;
+     end
+  endgenerate
+  
   ///////////////////////////////////////////
   // Check physical memory accesses
   ///////////////////////////////////////////

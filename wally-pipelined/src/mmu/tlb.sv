@@ -65,14 +65,14 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input logic [1:0]        TLBAccessType,
+  input logic              ReadAccess, WriteAccess,
   input logic              DisableTranslation,
 
   // Virtual address input
   input logic  [`XLEN-1:0] VirtualAddress,
 
   // Controls for writing a new entry to the TLB
-  input logic  [`XLEN-1:0] PTEWriteVal,
+  input logic  [`XLEN-1:0] PTE,
   input logic  [1:0]       PageTypeWriteVal,
   input logic              TLBWrite,
 
@@ -89,7 +89,6 @@ module tlb #(parameter TLB_ENTRIES = 8,
 );
 
   logic Translate;
-  logic TLBAccess, ReadAccess, WriteAccess;
 
   // Store current virtual memory mode (SV32, SV39, SV48, ect...)
   logic [`SVMODE_BITS-1:0] SvMode;
@@ -111,13 +110,9 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [1:0]            HitPageType;
   logic                  CAMHit;
   logic [`ASID_BITS-1:0] ASID;
-  logic                  DAFault;
 
   // Grab the sv mode from SATP and determine whether translation should occur
-  assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
   assign ASID = SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE];
-  assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
 
   // Determine whether to write TLB
   assign WriteEnables = WriteLines & {(TLB_ENTRIES){TLBWrite}};
@@ -135,11 +130,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
     end
   endgenerate
 
-  // Determine how the TLB is currently being used
-  // Note that we use ReadAccess for both loads and instruction fetches
-  assign ReadAccess = TLBAccessType[1];
-  assign WriteAccess = TLBAccessType[0];
-  assign TLBAccess = ReadAccess || WriteAccess;
+  tlbcontrol tlbcontrol(.*);
 
   // TLB entries are evicted according to the LRU algorithm
   tlblru #(TLB_ENTRIES) lru(.*);
@@ -153,50 +144,10 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // For superpages, some segments are considered offsets into a larger page.
   tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
 
-  // unswizzle useful PTE bits
-  assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
-  assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
- 
-  // Check whether the access is allowed, page faulting if not.
-  generate
-    if (ITLB == 1) begin
-      logic ImproperPrivilege;
-
-      // User mode may only execute user mode pages, and supervisor mode may
-      // only execute non-user mode pages.
-      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
-        ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
-      // fault for software handling if access bit is off
-      assign DAFault = ~PTE_A;
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAFault);
-    end else begin
-      logic ImproperPrivilege, InvalidRead, InvalidWrite;
-
-      // User mode may only load/store from user mode pages, and supervisor mode
-      // may only access user mode pages when STATUS_SUM is low.
-      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
-        ((EffectivePrivilegeMode == `S_MODE) && PTE_U && ~STATUS_SUM);
-      // Check for read error. Reads are invalid when the page is not readable
-      // (and executable pages are not readable) or when the page is neither
-      // readable nor executable (and executable pages are readable).
-      assign InvalidRead = ReadAccess && ~PTE_R && (~STATUS_MXR | ~PTE_X);
-      // Check for write error. Writes are invalid when the page's write bit is
-      // low.
-      assign InvalidWrite = WriteAccess && ~PTE_W;
-      // Fault for software handling if access bit is off or writing a page with dirty bit off
-      assign DAFault = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAFault);
-    end
-  endgenerate
-
-
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
   assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
   assign PageOffset = VirtualAddress[11:0];
-  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0;
+  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0; // *** in block diagram TLB just works on page numbers
   mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
-
-  assign TLBHit = CAMHit & TLBAccess;
-  assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
 endmodule
