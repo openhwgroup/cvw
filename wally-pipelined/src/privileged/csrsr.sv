@@ -112,6 +112,7 @@ module csrsr (
       STATUS_SUM_INT <= #1 0;
       STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
       STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
+      //STATUS_TVM_INT <= #1 0; // when S_SUPPORTED
       STATUS_MPP <= #1 0; //`M_MODE;
       STATUS_SPP <= #1 0; //1'b1;
       STATUS_MPIE <= #1 0; //1;
@@ -125,6 +126,7 @@ module csrsr (
         STATUS_SUM_INT <= #1 CSRWriteValM[18];
         STATUS_MPRV_INT <= #1 CSRWriteValM[17];
         STATUS_FS_INT <= #1 CSRWriteValM[14:13];
+        //STATUS_TVM_INT <= #1 CSRWriteValM[]
         STATUS_MPP <= #1 STATUS_MPP_NEXT;
         STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
         STATUS_MPIE <= #1 CSRWriteValM[7];
