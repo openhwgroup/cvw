@@ -38,10 +38,10 @@ module csrsr (
   output logic             STATUS_SPP, STATUS_TSR,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM,
-  output logic             STATUS_MPRV
+  output logic             STATUS_MPRV, STATUS_TVM
 );
 
-  logic STATUS_SD, STATUS_TW, STATUS_TVM, STATUS_SUM_INT, STATUS_MPRV_INT;
+  logic STATUS_SD, STATUS_TW, STATUS_SUM_INT, STATUS_MPRV_INT;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UPIE, STATUS_UIE;
 
@@ -96,7 +96,7 @@ module csrsr (
   assign STATUS_SD = (STATUS_FS == 2'b11) || (STATUS_XS == 2'b11); // dirty state logic
   assign STATUS_TSR = 0; // Trap SRET not supported; revisit whether this is necessary for an OS
   assign STATUS_TW = 0; // Timeout Wait not supported
-  assign STATUS_TVM = 0; // Trap Virtual Memory not supported (revisit if supporting virtualizations)
+  assign STATUS_TVM = 0; // Trap Virtual Memory not supported (revisit if supporting virtualizations, but hooks in place for it in satp)
   assign STATUS_MXR = 0; // Make Executable Readable (may need to add support for VM later)
   assign STATUS_XS = 2'b00; // No additional user-mode state to be dirty
 

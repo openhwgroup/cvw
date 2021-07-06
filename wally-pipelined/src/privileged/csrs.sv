@@ -51,7 +51,9 @@ module csrs #(parameter
     input  logic             CSRSWriteM, STrapM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
+    input  logic             STATUS_TVM,
     input  logic [`XLEN-1:0] CSRWriteValM,
+    input  logic [1:0]       PrivilegeModeW,
     output logic [`XLEN-1:0] CSRSReadValM, SEPC_REGW, STVEC_REGW, 
     output logic [31:0]      SCOUNTEREN_REGW,     
     output logic [`XLEN-1:0]      SEDELEG_REGW, SIDELEG_REGW, 
@@ -79,7 +81,7 @@ module csrs #(parameter
       assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC)) && ~StallW;
       assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE)) && ~StallW;
       assign WriteSTVALM = STrapM | (CSRSWriteM && (CSRAdrM == STVAL)) && ~StallW;
-      assign WriteSATPM = CSRSWriteM && (CSRAdrM == SATP) && ~StallW;
+      assign WriteSATPM = CSRSWriteM && (CSRAdrM == SATP) && (PrivilegeModeW == `M_MODE || ~STATUS_TVM) && ~StallW;
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN) && ~StallW;
 
       // CSRs
@@ -88,7 +90,10 @@ module csrs #(parameter
       flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
       flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, `XLEN'b0, SCAUSE_REGW); 
       flopenr #(`XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
-      flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
+      if (`MEM_VIRTMEM)
+        flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
+      else
+        assign SATP_REGW = 0;
       if (`BUSYBEAR == 1)
         flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, SCOUNTEREN_REGW);
       else if (`BUILDROOT == 1)
@@ -122,7 +127,11 @@ module csrs #(parameter
           SEPC:      CSRSReadValM = SEPC_REGW;
           SCAUSE:    CSRSReadValM = SCAUSE_REGW;
           STVAL:     CSRSReadValM = STVAL_REGW;
-          SATP:      CSRSReadValM = SATP_REGW;
+          SATP:      if (`MEM_VIRTMEM && (PrivilegeModeW == `M_MODE || ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
+                     else begin
+                       CSRSReadValM = 0;
+                       IllegalCSRSAccessM = 1;
+                     end
           SCOUNTEREN:CSRSReadValM = {{(`XLEN-32){1'b0}}, SCOUNTEREN_REGW};
           default: begin
                      CSRSReadValM = 0; 
