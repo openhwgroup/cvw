@@ -48,14 +48,14 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
   output logic             TLBMiss,
   output logic             TLBHit,
   output logic             TLBPageFault,
-  output logic [1:0]       EffectivePrivilegeMode,
   output logic             SV39Mode,
   output logic             Translate
 );
 
   // Sections of the page table entry
-  logic [11:0]          PageOffset;
+  logic [11:0]             PageOffset;
   logic [`SVMODE_BITS-1:0] SVMode;
+  logic [1:0]              EffectivePrivilegeMode;
 
   logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
   logic                  UpperBitsUnequalPageFault;
