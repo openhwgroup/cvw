@@ -91,10 +91,10 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic Translate;
 
   // Store current virtual memory mode (SV32, SV39, SV48, ect...)
-  logic [`SVMODE_BITS-1:0] SvMode;
+  //logic [`SVMODE_BITS-1:0] SvMode;
   logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
 
-  logic [TLB_ENTRIES-1:0] ReadLines, WriteLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
+  logic [TLB_ENTRIES-1:0] ReadLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -106,29 +106,17 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [7:0]           PTEAccessBits;
   logic [11:0]          PageOffset;
 
-  logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
+  logic                  PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
   logic [1:0]            HitPageType;
   logic                  CAMHit;
+  logic                  SV39Mode;
   logic [`ASID_BITS-1:0] ASID;
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign ASID = SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE];
 
   // Determine whether to write TLB
-  assign WriteEnables = WriteLines & {(TLB_ENTRIES){TLBWrite}};
-
-  // The bus width is always the largest it could be for that XLEN. For example, vpn will be 36 bits wide in rv64
-  // this, even though it could be 27 bits (SV39) or 36 bits (SV48) wide. When the value of VPN is narrower,
-  // is shorter, the extra bits are used as padded zeros on the left of the full value.
-  generate
-    if (`XLEN == 32) begin
-      assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
-    end else begin
-      assign VirtualPageNumber = (SvMode == `SV48) ?
-                                 VirtualAddress[`VPN_BITS+11:12] :
-                                 {{`VPN_SEGMENT_BITS{1'b0}}, VirtualAddress[3*`VPN_SEGMENT_BITS+11:12]};
-    end
-  endgenerate
+  assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
 
   tlbcontrol tlbcontrol(.*);
 

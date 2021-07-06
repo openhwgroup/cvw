@@ -49,21 +49,26 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
   output logic             TLBHit,
   output logic             TLBPageFault,
   output logic [1:0]       EffectivePrivilegeMode,
-  output logic [`SVMODE_BITS-1:0] SvMode,
+  output logic             SV39Mode,
   output logic             Translate
 );
 
   // Sections of the page table entry
   logic [11:0]          PageOffset;
+  logic [`SVMODE_BITS-1:0] SVMode;
 
   logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
   logic                  DAFault;
   logic                  TLBAccess;
 
   // Grab the sv mode from SATP and determine whether translation should occur
-  assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+  assign SVMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SvMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
+  assign Translate = (SVMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
+  generate
+      if (`XLEN==64) assign SV39Mode = (SVMode == `SV39);
+      else           assign SV39Mode = 0;
+  endgenerate
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess || WriteAccess;
