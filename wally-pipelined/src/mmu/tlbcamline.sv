@@ -33,6 +33,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   input  logic                  clk, reset,
   input  logic [`VPN_BITS-1:0]  VirtualPageNumber, // The requested page number to compare against the key
   input  logic [`ASID_BITS-1:0] ASID,
+  input  logic                  SV39Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
   input  logic                  PTE_G,
   input  logic [1:0]            PageTypeWriteVal,
@@ -86,7 +87,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       assign Match0 = (Query0 == Key0) || (PageType > 2'd0); // least signifcant section
       assign Match1 = (Query1 == Key1) || (PageType > 2'd1);
       assign Match2 = (Query2 == Key2) || (PageType > 2'd2);
-      assign Match3 = (Query3 == Key3); // this should always match in sv39 since both vPN3 and key3 are zeroed by the pagetable walker before getting to the cam
+      assign Match3 = (Query3 == Key3) || SV39Mode; // this should always match in sv39 because they aren't used
       
       assign Match = Match0 & Match1 & Match2 & Match3 & Valid;
     end
