@@ -28,7 +28,7 @@
 
 module privdec (
   input  logic [31:20] InstrM,
-  input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM,
+  input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, TrappedSRETM,
   input  logic [1:0]   PrivilegeModeW, 
   input  logic         STATUS_TSR,
   output logic         IllegalInstrFaultM,
@@ -47,7 +47,7 @@ module privdec (
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001);
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(uretM|sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM; // *** generalize this for other instructions
+  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | TrappedSRETM; // *** generalize this for other instructions
 
   // *** initially, wfi and sfencevma are nop
   // *** zfenci extension?
