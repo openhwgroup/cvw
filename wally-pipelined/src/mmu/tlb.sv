@@ -108,15 +108,9 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [1:0]            HitPageType;
   logic                  CAMHit;
   logic                  SV39Mode;
-  logic [`ASID_BITS-1:0] ASID;
 
-  // Grab the sv mode from SATP and determine whether translation should occur
-  assign ASID = SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE];
-
-  // Determine whether to write TLB
   assign VirtualPageNumber = Address[`VPN_BITS+11:12];
 
-//  tlbcontrol tlbcontrol(.*);
   tlbcontrol tlbcontrol(.SATP_REGW, .Address, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
                         .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
                         .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, .EffectivePrivilegeMode,
@@ -130,13 +124,13 @@ module tlb #(parameter TLB_ENTRIES = 8,
 
   // tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
-    tlbcam(.clk, .reset, .VirtualPageNumber, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_G, .ASID,
-           .ReadLines, .HitPageType, .CAMHit);
+    tlbcam(.clk, .reset, .VirtualPageNumber, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_G, 
+           .ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]), .ReadLines, .HitPageType, .CAMHit);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
+  tlbphysicalpagemask PageMask(.VirtualPageNumber, .PhysicalPageNumber, .HitPageType, .PhysicalPageNumberMixed);
 
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal

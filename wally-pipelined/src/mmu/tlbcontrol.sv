@@ -28,7 +28,6 @@
 // The TLB will have 2**ENTRY_BITS total entries
 module tlbcontrol #(parameter TLB_ENTRIES = 8,
                     parameter ITLB = 0) (
-//  input logic              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
   input logic  [`XLEN-1:0] SATP_REGW,
