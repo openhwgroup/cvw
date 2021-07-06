@@ -89,10 +89,6 @@ module tlb #(parameter TLB_ENTRIES = 8,
   output logic             TLBPageFault
 );
 
-  // Store current virtual memory mode (SV32, SV39, SV48, ect...)
-  //logic [`SVMODE_BITS-1:0] SvMode;
-  logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
-
   logic [TLB_ENTRIES-1:0] ReadLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
@@ -113,19 +109,14 @@ module tlb #(parameter TLB_ENTRIES = 8,
 
   tlbcontrol tlbcontrol(.SATP_REGW, .Address, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
                         .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
-                        .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, .EffectivePrivilegeMode,
+                        .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, 
                         .SV39Mode, .Translate);
 
-  // TLB entries are evicted according to the LRU algorithm
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .ReadLines, .CAMHit, .WriteEnables);
-
-  //  tlbram #(TLB_ENTRIES) tlbram(.*);
-  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .ReadLines, .WriteEnables, .PhysicalPageNumber, .PTEAccessBits, .PTE_G);
-
-  // tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
     tlbcam(.clk, .reset, .VirtualPageNumber, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_G, 
            .ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]), .ReadLines, .HitPageType, .CAMHit);
+  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .ReadLines, .WriteEnables, .PhysicalPageNumber, .PTEAccessBits, .PTE_G);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
