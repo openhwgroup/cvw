@@ -115,10 +115,6 @@ module lsu
 				STATE_PTW_DONE} statetype;
   statetype CurrState, NextState;
   
-
-  logic 		       PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
-  // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
-
   logic 		       DTLBMissM;
   logic [`XLEN-1:0] 	       PageTableEntryM;
   logic [1:0] 		       PageTypeM;
@@ -216,7 +212,7 @@ module lsu
   
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.VirtualAddress(MemAdrMtoLSU),
+  dmmu(.Address(MemAdrMtoLSU),
        .Size(SizeToLSU[1:0]),
        .PTE(PageTableEntryM),
        .PageTypeWriteVal(PageTypeM),

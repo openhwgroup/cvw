@@ -68,8 +68,8 @@ module tlb #(parameter TLB_ENTRIES = 8,
   input logic              ReadAccess, WriteAccess,
   input logic              DisableTranslation,
 
-  // Virtual address input
-  input logic  [`XLEN-1:0] VirtualAddress,
+  // address input before translation (could be physical or virtual)
+  input logic  [`XLEN-1:0] Address,
 
   // Controls for writing a new entry to the TLB
   input logic  [`XLEN-1:0] PTE,
@@ -80,15 +80,14 @@ module tlb #(parameter TLB_ENTRIES = 8,
   input logic              TLBFlush,
 
   // Physical address outputs
-  output logic [`PA_BITS-1:0] PhysicalAddress,
+  output logic [`PA_BITS-1:0] TLBPhysicalAddress,
   output logic             TLBMiss,
   output logic             TLBHit,
+  output logic             Translate,
 
   // Faults
   output logic             TLBPageFault
 );
-
-  logic Translate;
 
   // Store current virtual memory mode (SV32, SV39, SV48, ect...)
   //logic [`SVMODE_BITS-1:0] SvMode;
@@ -99,8 +98,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
   logic [`PPN_BITS-1:0] PhysicalPageNumber, PhysicalPageNumberMixed;
-  logic [`PA_BITS-1:0]  PhysicalAddressFull;
-  logic [`XLEN+1:0]     VAExt;
+  logic [`XLEN+1:0]     AddressExt;
 
   // Sections of the page table entry
   logic [7:0]           PTEAccessBits;
@@ -116,7 +114,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   assign ASID = SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE];
 
   // Determine whether to write TLB
-  assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
+  assign VirtualPageNumber = Address[`VPN_BITS+11:12];
 
   tlbcontrol tlbcontrol(.*);
 
@@ -134,7 +132,5 @@ module tlb #(parameter TLB_ENTRIES = 8,
 
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
-  assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
-  mux2 #(`PA_BITS) hitmux('0, {PhysicalPageNumberMixed, VirtualAddress[11:0]}, TLBHit, PhysicalAddressFull); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
-  mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
+  mux2 #(`PA_BITS) hitmux('0, {PhysicalPageNumberMixed, Address[11:0]}, TLBHit, TLBPhysicalAddress); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
 endmodule
