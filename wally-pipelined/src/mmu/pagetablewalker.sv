@@ -105,11 +105,14 @@ module pagetablewalker
 			     LEVEL3,
 			     LEAF,
 			     IDLE,
+			     START,
 			     FAULT} statetype;
 
   statetype WalkerState, NextWalkerState;
 
   logic 		    PRegEn;
+  logic 		    SelDataTranslation;
+  
   
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 
@@ -118,11 +121,13 @@ module pagetablewalker
   assign MemStore = MemRWM[0];
 
   // Prefer data address translations over instruction address translations
-  assign TranslationVAdr = (DTLBMissM) ? MemAdrM : PCF; // *** need to register TranslationVAdr
+  assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF; // *** need to register TranslationVAdr
+  assign SelDataTranslation = DTLBMissMQ | DTLBMissM;
+
   flopenr #(`XLEN) 
   TranslationVAdrReg(.clk(clk),
 		     .reset(reset),
-		     .en(StartWalk), // *** use enable later to save power
+		     .en(StartWalk),
 		     .d(TranslationVAdr),
 		     .q(TranslationVAdrQ));
 
@@ -197,13 +202,16 @@ module pagetablewalker
         case (WalkerState)
           IDLE: begin
 	    if (MMUTranslate && SvMode == `SV32) begin // *** Added SvMode
-	      NextWalkerState = LEVEL1_WDV;
-              TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
-	      HPTWRead = 1'b1;
+	      NextWalkerState = START;
 	    end else begin
               NextWalkerState = IDLE;
-	      TranslationPAdr = '0;
 	    end
+	  end
+
+          START: begin
+	    NextWalkerState = LEVEL1_WDV;
+            TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+	    HPTWRead = 1'b1;
 	  end
 	  
           LEVEL1_WDV: begin
@@ -335,6 +343,14 @@ module pagetablewalker
 
         case (WalkerState)
           IDLE: begin
+	    if (MMUTranslate && (SvMode == `SV48 || SvMode == `SV39)) begin
+	      NextWalkerState = START;
+	    end else begin
+              NextWalkerState = IDLE;
+	    end
+	  end
+
+          START: begin
 	    if (MMUTranslate && SvMode == `SV48) begin
 	      NextWalkerState = LEVEL3_WDV;
               TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
@@ -343,7 +359,7 @@ module pagetablewalker
 	      NextWalkerState = LEVEL2_WDV;
               TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
 	      HPTWRead = 1'b1;
-	    end else begin
+	    end else begin // *** should not get here
               NextWalkerState = IDLE;
 	      TranslationPAdr = '0;
 	    end
