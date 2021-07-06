@@ -66,6 +66,7 @@ module trap (
  
   // Trigger Traps and RET
   //   Created groups of trap signals so that bus could take in all traps it doesn't already produce (i.e. using just TrapM to squash access created circular paths)
+  // *** Ben July 06, 2021 probably remove bus and nonbus trapm after dcache implemenation.
   assign BusTrapM = LoadAccessFaultM | StoreAccessFaultM;
   assign NonBusTrapM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
                        LoadMisalignedFaultM | StoreMisalignedFaultM |
