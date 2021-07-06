@@ -81,8 +81,20 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
 
-  tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
-
+  // only instantiate TLB if Virtual Memory is supported
+  generate
+    if (`MEM_VIRTMEM)
+      tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
+    else begin // just pass address through as physical
+      logic [`XLEN+1:0]     VAExt;
+      assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
+      assign PhysicalAddress = VAExt[`PA_BITS-1:0];
+      assign TLBMiss = 0;
+      assign TLBHit = 1;
+      assign TLBPageFault = 0;
+     end
+  endgenerate
+  
   ///////////////////////////////////////////
   // Check physical memory accesses
   ///////////////////////////////////////////

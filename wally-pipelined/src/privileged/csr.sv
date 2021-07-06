@@ -76,6 +76,7 @@ module csr #(parameter
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
+  logic            STATUS_TVM;
 
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
@@ -109,7 +110,7 @@ module csr #(parameter
       assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
       assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
       assign CSRMWriteM = CSRWriteM && (PrivilegeModeW == `M_MODE);
-      assign CSRSWriteM = CSRWriteM && (PrivilegeModeW[0]);
+      assign CSRSWriteM = CSRWriteM && (|PrivilegeModeW);
       assign CSRUWriteM = CSRWriteM;  
 
       csri  csri(.*);
