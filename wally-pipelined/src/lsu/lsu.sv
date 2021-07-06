@@ -28,122 +28,123 @@
 `include "wally-config.vh"
 
 // *** Ross Thompson amo misalignment check?
-module lsu (
-  input logic 		      clk, reset,
-  input logic 		      StallM, FlushM, StallW, FlushW,
-  output logic 		      DCacheStall,
-  // Memory Stage
+module lsu 
+  (
+   input logic 		       clk, reset,
+   input logic 		       StallM, FlushM, StallW, FlushW,
+   output logic 	       DCacheStall,
+   // Memory Stage
 
-  // connected to cpu (controls)
-  input logic [1:0] 	      MemRWM,
-  input logic [2:0] 	      Funct3M,
-  input logic [1:0] 	      AtomicM,
-  output logic 		      CommittedM, 
-  output logic 		      SquashSCW,
-  output logic 		      DataMisalignedM,
+   // connected to cpu (controls)
+   input logic [1:0] 	       MemRWM,
+   input logic [2:0] 	       Funct3M,
+   input logic [1:0] 	       AtomicM,
+   output logic 	       CommittedM, 
+   output logic 	       SquashSCW,
+   output logic 	       DataMisalignedM,
 
-  // address and write data
-  input logic [`XLEN-1:0]     MemAdrM,
-  input logic [`XLEN-1:0]     WriteDataM, 
-  output logic [`XLEN-1:0]    ReadDataW,
+   // address and write data
+   input logic [`XLEN-1:0]     MemAdrM,
+   input logic [`XLEN-1:0]     WriteDataM, 
+   output logic [`XLEN-1:0]    ReadDataW,
 
-  // cpu privilege
-  input logic [1:0] 	      PrivilegeModeW,
-  input logic 		      DTLBFlushM,
-  // faults
-  input logic 		      NonBusTrapM, 
-  output logic 		      DTLBLoadPageFaultM, DTLBStorePageFaultM,
-  output logic 		      LoadMisalignedFaultM, LoadAccessFaultM,
-  // cpu hazard unit (trap)
-  output logic 		      StoreMisalignedFaultM, StoreAccessFaultM,
+   // cpu privilege
+   input logic [1:0] 	       PrivilegeModeW,
+   input logic 		       DTLBFlushM,
+   // faults
+   input logic 		       NonBusTrapM, 
+   output logic 	       DTLBLoadPageFaultM, DTLBStorePageFaultM,
+   output logic 	       LoadMisalignedFaultM, LoadAccessFaultM,
+   // cpu hazard unit (trap)
+   output logic 	       StoreMisalignedFaultM, StoreAccessFaultM,
 
-  // connect to ahb
-  input logic 		      CommitM, // should this be generated in the abh interface?
-  output logic [`PA_BITS-1:0] MemPAdrM, // to ahb
-  output logic 		      MemReadM, MemWriteM,
-  output logic [1:0] 	      AtomicMaskedM,
-  input logic 		      MemAckW, // from ahb
-  input logic [`XLEN-1:0]     HRDATAW, // from ahb
-  output logic [2:0] 	      SizeFromLSU,
-  output logic 		      StallWfromLSU,
+   // connect to ahb
+   input logic 		       CommitM, // should this be generated in the abh interface?
+   output logic [`PA_BITS-1:0] MemPAdrM, // to ahb
+   output logic 	       MemReadM, MemWriteM,
+   output logic [1:0] 	       AtomicMaskedM,
+   input logic 		       MemAckW, // from ahb
+   input logic [`XLEN-1:0]     HRDATAW, // from ahb
+   output logic [2:0] 	       SizeFromLSU,
+   output logic 	       StallWfromLSU,
 
 
-  // mmu management
+   // mmu management
 
-  // page table walker
-  input logic [`XLEN-1:0]     SATP_REGW, // from csr
-  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic  [1:0]       STATUS_MPP,
+   // page table walker
+   input logic [`XLEN-1:0]     SATP_REGW, // from csr
+   input logic 		       STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+   input logic [1:0] 	       STATUS_MPP,
 
-  input logic [`XLEN-1:0]     PCF,
-  input logic 		      ITLBMissF,
-  output logic [`XLEN-1:0]    PageTableEntryF,
-  output logic [1:0] 	      PageTypeF,
-  output logic 		      ITLBWriteF,
-	    output logic WalkerInstrPageFaultF,
-	    output logic WalkerLoadPageFaultM,
-	    output logic WalkerStorePageFaultM,
+   input logic [`XLEN-1:0]     PCF,
+   input logic 		       ITLBMissF,
+   output logic [`XLEN-1:0]    PageTableEntryF,
+   output logic [1:0] 	       PageTypeF,
+   output logic 	       ITLBWriteF,
+   output logic 	       WalkerInstrPageFaultF,
+   output logic 	       WalkerLoadPageFaultM,
+   output logic 	       WalkerStorePageFaultM,
 
-  output logic 		      DTLBHitM, // not connected 
-  
-  // PMA/PMP (inside mmu) signals
-  input  logic [31:0]      HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-  input  logic [2:0]       HSIZE, HBURST,
-  input  logic             HWRITE,
-  input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+   output logic 	       DTLBHitM, // not connected 
 
-  output  logic            PMALoadAccessFaultM, PMAStoreAccessFaultM,
-  output  logic            PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
-  
-  output logic 		      DSquashBusAccessM
-//  output logic [5:0]       DHSELRegionsM
-  
-);
+   // PMA/PMP (inside mmu) signals
+   input logic [31:0] 	       HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
+   input logic [2:0] 	       HSIZE, HBURST,
+   input logic 		       HWRITE,
+   input 		       var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+   input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
-  logic SquashSCM;
-  logic DTLBPageFaultM;
-  logic MemAccessM;
+   output logic 	       PMALoadAccessFaultM, PMAStoreAccessFaultM,
+   output logic 	       PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
 
-  logic preCommittedM;
+   output logic 	       DSquashBusAccessM
+   //  output logic [5:0]       DHSELRegionsM
 
-  typedef enum {STATE_READY,
-		STATE_FETCH,
-		STATE_FETCH_AMO_1,
-		STATE_FETCH_AMO_2,
-		STATE_STALLED,
-		STATE_PTW_READY,
-		STATE_PTW_FETCH,
-		STATE_PTW_DONE} statetype;
+   );
+
+  logic 		       SquashSCM;
+  logic 		       DTLBPageFaultM;
+  logic 		       MemAccessM;
+
+  logic 		       preCommittedM;
+
+  typedef enum 		       {STATE_READY,
+				STATE_FETCH,
+				STATE_FETCH_AMO_1,
+				STATE_FETCH_AMO_2,
+				STATE_STALLED,
+				STATE_PTW_READY,
+				STATE_PTW_FETCH,
+				STATE_PTW_DONE} statetype;
   statetype CurrState, NextState;
-		
+  
 
-  logic PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
+  logic 		       PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
 
-  logic DTLBMissM;
-  logic [`XLEN-1:0] PageTableEntryM;
-  logic [1:0] 	    PageTypeM;
-  logic 	    DTLBWriteM;
-  logic [`XLEN-1:0] MMUReadPTE;
-  logic 	    MMUReady;
-  logic 	    HPTWStall;  
-  logic [`XLEN-1:0] MMUPAdr;
-  logic 	    MMUTranslate;
-  logic 	    HPTWRead;
-  logic [1:0] 	    MemRWMtoLSU;
-  logic [2:0] 	    SizeToLSU;
-  logic [1:0] 	    AtomicMtoLSU;
-  logic [`XLEN-1:0] MemAdrMtoLSU;
-  logic [`XLEN-1:0] WriteDataMtoLSU;
-  logic [`XLEN-1:0] ReadDataWFromLSU;
-  logic 	    StallWtoLSU;
-  logic 	    CommittedMfromLSU;
-  logic 	    SquashSCWfromLSU;
-  logic 	    DataMisalignedMfromLSU;
-  logic 	    HPTWReady;
-  logic 	    LSUStall;
-  logic 	    DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
+  logic 		       DTLBMissM;
+  logic [`XLEN-1:0] 	       PageTableEntryM;
+  logic [1:0] 		       PageTypeM;
+  logic 		       DTLBWriteM;
+  logic [`XLEN-1:0] 	       MMUReadPTE;
+  logic 		       MMUReady;
+  logic 		       HPTWStall;  
+  logic [`XLEN-1:0] 	       MMUPAdr;
+  logic 		       MMUTranslate;
+  logic 		       HPTWRead;
+  logic [1:0] 		       MemRWMtoLSU;
+  logic [2:0] 		       SizeToLSU;
+  logic [1:0] 		       AtomicMtoLSU;
+  logic [`XLEN-1:0] 	       MemAdrMtoLSU;
+  logic [`XLEN-1:0] 	       WriteDataMtoLSU;
+  logic [`XLEN-1:0] 	       ReadDataWFromLSU;
+  logic 		       StallWtoLSU;
+  logic 		       CommittedMfromLSU;
+  logic 		       SquashSCWfromLSU;
+  logic 		       DataMisalignedMfromLSU;
+  logic 		       HPTWReady;
+  logic 		       LSUStall;
+  logic 		       DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
   
   
   
@@ -216,7 +217,7 @@ module lsu (
 		 .DataStall(LSUStall));
 
   
-    
+  
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.VirtualAddress(MemAdrMtoLSU),
        .Size(SizeToLSU[1:0]),
@@ -234,7 +235,7 @@ module lsu (
        .ReadAccessM(MemRWMtoLSU[1]),
        .SquashBusAccess(DSquashBusAccessM),
        .DisableTranslation(DisableTranslation),
-//       .SelRegions(DHSELRegionsM),
+       //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // Specify which type of page fault is occurring
@@ -275,8 +276,8 @@ module lsu (
   generate
     if (`A_SUPPORTED) begin // atomic instructions supported
       logic [`PA_BITS-1:2] ReservationPAdrW;
-      logic             ReservationValidM, ReservationValidW; 
-      logic             lrM, scM, WriteAdrMatchM;
+      logic 		   ReservationValidM, ReservationValidW; 
+      logic 		   lrM, scM, WriteAdrMatchM;
 
       assign lrM = MemReadM && AtomicMtoLSU[0];
       assign scM = MemRWMtoLSU[0] && AtomicMtoLSU[0]; 
@@ -351,7 +352,7 @@ module lsu (
 	end
       end
       STATE_FETCH: begin
-	  LSUStall = 1'b1;
+	LSUStall = 1'b1;
 	if (MemAckW & ~StallWtoLSU) begin
 	  NextState = STATE_READY;
 	end else if (MemAckW & StallWtoLSU) begin
@@ -372,6 +373,7 @@ module lsu (
 	LSUStall = 1'b0;
 	if (DTLBWriteM) begin
 	  NextState = STATE_READY;
+	  LSUStall = 1'b1;
 	end else if (MemReadM & ~DataMisalignedMfromLSU) begin
 	  NextState = STATE_PTW_FETCH;
 	end else begin
