@@ -35,13 +35,13 @@ module csrsr (
   input  logic [`XLEN-1:0] CSRWriteValM,
   output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
   output logic [1:0]       STATUS_MPP,
-  output logic             STATUS_SPP, STATUS_TSR,
+  output logic             STATUS_SPP, STATUS_TSR, STATUS_TW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic             STATUS_MPRV, STATUS_TVM
 );
-
-  logic STATUS_SD, STATUS_TW, STATUS_SUM_INT, STATUS_MPRV_INT;
+  
+  logic STATUS_SD, STATUS_TW_INT, STATUS_TSR_INT, STATUS_TVM_INT, STATUS_MXR_INT, STATUS_SUM_INT, STATUS_MPRV_INT;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UPIE, STATUS_UIE;
 
@@ -86,18 +86,18 @@ module csrsr (
 
   // harwired STATUS bits
   generate
+    assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
+    assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
+    assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
+    assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
     // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
     assign STATUS_SXL = `S_SUPPORTED ? 2'b10 : 2'b00; // 10 if supervisor mode supported
     assign STATUS_UXL = `U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
-    assign STATUS_SUM = `S_SUPPORTED & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
+    assign STATUS_SUM = `S_SUPPORTED & `MEM_VIRTMEM & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
     assign STATUS_MPRV = `U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
     assign STATUS_FS = (`S_SUPPORTED && (`F_SUPPORTED || `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP
   endgenerate
   assign STATUS_SD = (STATUS_FS == 2'b11) || (STATUS_XS == 2'b11); // dirty state logic
-  assign STATUS_TSR = 0; // Trap SRET not supported; revisit whether this is necessary for an OS
-  assign STATUS_TW = 0; // Timeout Wait not supported
-  assign STATUS_TVM = 0; // Trap Virtual Memory not supported (revisit if supporting virtualizations, but hooks in place for it in satp)
-  assign STATUS_MXR = 0; // Make Executable Readable (may need to add support for VM later)
   assign STATUS_XS = 2'b00; // No additional user-mode state to be dirty
 
   always_comb
@@ -109,10 +109,13 @@ module csrsr (
   // complex register with reset, write enable, and the ability to update other bits in certain cases
   always_ff @(posedge clk, posedge reset)
     if (reset) begin
+      STATUS_TSR_INT <= #1 0;
+      STATUS_TW_INT <= #1 0;
+      STATUS_TVM_INT <= #1 0;
+      STATUS_MXR_INT <= #1 0;
       STATUS_SUM_INT <= #1 0;
       STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
       STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
-      //STATUS_TVM_INT <= #1 0; // when S_SUPPORTED
       STATUS_MPP <= #1 0; //`M_MODE;
       STATUS_SPP <= #1 0; //1'b1;
       STATUS_MPIE <= #1 0; //1;
@@ -122,11 +125,45 @@ module csrsr (
       STATUS_SIE <= #1 0; //`S_SUPPORTED;
       STATUS_UIE <= #1 0; //`U_SUPPORTED;
     end else if (~StallW) begin
-      if (WriteMSTATUSM) begin
+      if (FloatRegWriteW) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else
+      if (TrapM) begin
+        // Update interrupt enables per Privileged Spec p. 21
+        // y = PrivilegeModeW
+        // x = NextPrivilegeModeM
+        // Modes: 11 = Machine, 01 = Supervisor, 00 = User
+        if (NextPrivilegeModeM == `M_MODE) begin
+          STATUS_MPIE <= #1 STATUS_MIE;
+          STATUS_MIE <= #1 0;
+          STATUS_MPP <= #1 PrivilegeModeW;
+        end else if (NextPrivilegeModeM == `S_MODE) begin
+          STATUS_SPIE <= #1 STATUS_SIE;
+          STATUS_SIE <= #1 0;
+          STATUS_SPP <= #1 PrivilegeModeW[0]; // *** seems to disagree with P. 56
+        end else begin // user mode
+          STATUS_UPIE <= #1 STATUS_UIE;
+          STATUS_UIE <= #1 0;
+        end
+      end else if (mretM) begin // Privileged 3.1.6.1
+        STATUS_MIE <= #1 STATUS_MPIE;
+        STATUS_MPIE <= #1 1;
+        STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // per spec, not sure why
+        STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
+      end else if (sretM) begin
+        STATUS_SIE <= #1 STATUS_SPIE;
+        STATUS_SPIE <= #1 `S_SUPPORTED;
+        STATUS_SPP <= #1 0; // Privileged 4.1.1
+        STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
+      end else if (uretM) begin
+        STATUS_UIE <= #1 STATUS_UPIE;
+        STATUS_UPIE <= #1 `U_SUPPORTED;
+      end else if (WriteMSTATUSM) begin
+        STATUS_TSR_INT <= #1 CSRWriteValM[22];
+        STATUS_TW_INT <= #1 CSRWriteValM[21];
+        STATUS_TVM_INT <= #1 CSRWriteValM[20];
+        STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];
         STATUS_MPRV_INT <= #1 CSRWriteValM[17];
         STATUS_FS_INT <= #1 CSRWriteValM[14:13];
-        //STATUS_TVM_INT <= #1 CSRWriteValM[]
         STATUS_MPP <= #1 STATUS_MPP_NEXT;
         STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
         STATUS_MPIE <= #1 CSRWriteValM[7];
@@ -136,6 +173,7 @@ module csrsr (
         STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
         STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
+        STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];
         STATUS_FS_INT <= #1 CSRWriteValM[14:13];
         STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
@@ -147,40 +185,6 @@ module csrsr (
         STATUS_FS_INT <= #1 CSRWriteValM[14:13];
         STATUS_UPIE <= #1 `U_SUPPORTED & CSRWriteValM[4];
         STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];      
-      end else begin
-        if (FloatRegWriteW) STATUS_FS_INT <= #12'b11; // mark Float State dirty
-        if (TrapM) begin
-          // Update interrupt enables per Privileged Spec p. 21
-          // y = PrivilegeModeW
-          // x = NextPrivilegeModeM
-          // Modes: 11 = Machine, 01 = Supervisor, 00 = User
-          if (NextPrivilegeModeM == `M_MODE) begin
-            STATUS_MPIE <= #1 STATUS_MIE;
-            STATUS_MIE <= #1 0;
-            STATUS_MPP <= #1 PrivilegeModeW;
-          end else if (NextPrivilegeModeM == `S_MODE) begin
-            STATUS_SPIE <= #1 STATUS_SIE;
-            STATUS_SIE <= #1 0;
-            STATUS_SPP <= #1 PrivilegeModeW[0]; // *** seems to disagree with P. 56
-          end else begin // user mode
-            STATUS_UPIE <= #1 STATUS_UIE;
-            STATUS_UIE <= #1 0;
-          end
-        end else if (mretM) begin // Privileged 3.1.6.1
-          STATUS_MIE <= #1 STATUS_MPIE;
-          STATUS_MPIE <= #1 1;
-          STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // per spec, not sure why
-          STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
-        end else if (sretM) begin
-          STATUS_SIE <= #1 STATUS_SPIE;
-          STATUS_SPIE <= #1 `S_SUPPORTED;
-          STATUS_SPP <= #1 0; // Privileged 4.1.1
-          STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
-        end else if (uretM) begin
-          STATUS_UIE <= #1 STATUS_UPIE;
-          STATUS_UPIE <= #1 `U_SUPPORTED;
-        end
-        // *** add code to track STATUS_FS_INT for dirty floating point registers
-      end
+      end 
     end
 endmodule

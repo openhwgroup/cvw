@@ -89,13 +89,13 @@ module privileged (
   logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultF, InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic LoadAccessFaultM, StoreAccessFaultM;
-  logic IllegalInstrFaultM;
+  logic IllegalInstrFaultM, TrappedSRETM;
 
   logic BreakpointFaultM, EcallFaultM;
   logic MTrapM, STrapM, UTrapM;
   logic InterruptM; 
 
-  logic       STATUS_SPP, STATUS_TSR; 
+  logic       STATUS_SPP, STATUS_TSR, STATUS_TW; 
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
   logic md, sd;
@@ -112,10 +112,14 @@ module privileged (
   assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : SEDELEG_REGW[CauseM[`LOG_XLEN-1:0]]; // depricated
   
   // PrivilegeMode FSM
-  always_comb
-  /*  if      (reset) NextPrivilegeModeM = `M_MODE; // Privilege resets to 11 (Machine Mode) // moved reset to flop
-    else */ if (mretM) NextPrivilegeModeM = STATUS_MPP;
-    else if (sretM) NextPrivilegeModeM = {1'b0, STATUS_SPP};
+  always_comb begin
+    TrappedSRETM = 0;
+    if (mretM) NextPrivilegeModeM = STATUS_MPP;
+    else if (sretM) 
+      if (STATUS_TSR & PrivilegeModeW == `S_MODE) begin
+        TrappedSRETM = 1;
+        NextPrivilegeModeM = PrivilegeModeW;
+      end else NextPrivilegeModeM = {1'b0, STATUS_SPP};
     else if (uretM) NextPrivilegeModeM = `U_MODE;
     else if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
       if (PrivilegeModeW == `U_MODE)
@@ -127,6 +131,8 @@ module privileged (
         else                                       NextPrivilegeModeM = `M_MODE;
       else                                         NextPrivilegeModeM = `M_MODE;
     end else                                       NextPrivilegeModeM = PrivilegeModeW;
+  end
+  // *** WFI could be implemented here and depends on TW
 
   flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
 
@@ -171,6 +177,7 @@ module privileged (
   flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
                   {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
                   {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
+  // *** it should be possible to compbine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
 
   trap trap(.*);
 
