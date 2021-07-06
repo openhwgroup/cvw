@@ -135,7 +135,6 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
   assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
-  assign PageOffset = VirtualAddress[11:0];
-  assign PhysicalAddressFull = TLBHit ? {PhysicalPageNumberMixed, PageOffset} : '0; // *** in block diagram TLB just works on page numbers
+  mux2 #(`PA_BITS) hitmux('0, {PhysicalPageNumberMixed, VirtualAddress[11:0]}, TLBHit, PhysicalAddressFull); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
   mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
 endmodule
