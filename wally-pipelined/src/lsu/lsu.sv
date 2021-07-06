@@ -94,9 +94,6 @@ module lsu
    input 		       var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
 
-   output logic 	       PMALoadAccessFaultM, PMAStoreAccessFaultM,
-   output logic 	       PMPLoadAccessFaultM, PMPStoreAccessFaultM, // *** can these be parameterized? we dont need the m stage ones for the immu and vice versa.
-
    output logic 	       DSquashBusAccessM
    //  output logic [5:0]       DHSELRegionsM
 
@@ -235,6 +232,7 @@ module lsu
        .ReadAccessM(MemRWMtoLSU[1]),
        .SquashBusAccess(DSquashBusAccessM),
        .DisableTranslation(DisableTranslation),
+       .InstrAccessFaultF(),
        //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
@@ -268,9 +266,7 @@ module lsu
 
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedMfromLSU & MemRWMtoLSU[1];
-  assign LoadAccessFaultM = MemRWMtoLSU[1];
   assign StoreMisalignedFaultM = DataMisalignedMfromLSU & MemRWMtoLSU[0];
-  assign StoreAccessFaultM = MemRWMtoLSU[0];
 
   // Handle atomic load reserved / store conditional
   generate

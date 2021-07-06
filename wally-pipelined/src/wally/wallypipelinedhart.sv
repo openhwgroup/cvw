@@ -33,7 +33,6 @@ module wallypipelinedhart
    //  input  logic [31:0]      InstrF,
    // Privileged
    input logic 		    TimerIntM, ExtIntM, SwIntM,
-   input logic 		    InstrAccessFaultF, 
    input logic 		    DataAccessFaultM,
    input logic [63:0] 	    MTIME_CLINT, MTIMECMP_CLINT,
    // Bus Interface
@@ -119,9 +118,6 @@ module wallypipelinedhart
   logic [1:0] 		    PageTypeF, PageTypeM;
 
   // PMA checker signals
-
-  logic 		    PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM;
-  logic 		    PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic 		    DSquashBusAccessM, ISquashBusAccessF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
@@ -170,6 +166,8 @@ module wallypipelinedhart
   logic 		    StallWtoLSU;
   logic 		    StallWfromLSU;  
   logic [2:0] 		    SizeFromLSU;
+  logic 		    InstrAccessFaultF;
+  
 
   
   ifu ifu(.InstrInF(InstrRData),
@@ -235,10 +233,6 @@ module wallypipelinedhart
 	  .LoadAccessFaultM(LoadAccessFaultM),         // connects to privilege
 	  .StoreMisalignedFaultM(StoreMisalignedFaultM), // connects to privilege
 	  .StoreAccessFaultM(StoreAccessFaultM),     // connects to privilege
-	  .PMALoadAccessFaultM(PMALoadAccessFaultM),
-	  .PMAStoreAccessFaultM(PMAStoreAccessFaultM),
-	  .PMPLoadAccessFaultM(PMPLoadAccessFaultM),
-	  .PMPStoreAccessFaultM(PMPStoreAccessFaultM),
     
 	  // connected to hptw. Move to internal.
 	  .PCF(PCF),
