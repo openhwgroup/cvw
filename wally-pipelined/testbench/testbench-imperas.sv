@@ -44,14 +44,14 @@ module testbench();
   logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
 
-  string tests32mmu[] = '{
+  //string tests32mmu[] = '{
     //"rv32mmu/WALLY-MMU-SV32", "3000"
-    };
+  //  };
 
-  string tests64mmu[] = '{
+  //string tests64mmu[] = '{
     //"rv64mmu/WALLY-MMU-SV48", "3000",
     //"rv64mmu/WALLY-MMU-SV39", "3000"
-  };
+  //};
 
   
 string tests32f[] = '{
@@ -540,7 +540,7 @@ string tests32f[] = '{
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
+        //if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
       end
@@ -558,7 +558,7 @@ string tests32f[] = '{
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`A_SUPPORTED) tests = {tests, tests32a};
-          if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
+          //if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
       end
     end
   end

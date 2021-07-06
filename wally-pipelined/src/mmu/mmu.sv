@@ -63,15 +63,14 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
 
   // Faults
   output logic             TLBPageFault,
+  output logic             InstrAccessFaultF, LoadAccessFaultM, StoreAccessFaultM,
 
   // PMA checker signals
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
 
-  output logic             SquashBusAccess, // *** send to privileged unit
-  output logic             PMPInstrAccessFaultF, PMPLoadAccessFaultM, PMPStoreAccessFaultM,
-  output logic             PMAInstrAccessFaultF, PMALoadAccessFaultM, PMAStoreAccessFaultM
+  output logic             SquashBusAccess // *** send to privileged unit
 //  output logic [5:0]       SelRegions
 
 );
@@ -79,6 +78,11 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   logic PMPSquashBusAccess, PMASquashBusAccess;
   logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
+
+  logic PMAInstrAccessFaultF, PMPInstrAccessFaultF;
+  logic PMALoadAccessFaultM, PMPLoadAccessFaultM;
+  logic PMAStoreAccessFaultM, PMPStoreAccessFaultM;
+
 
   // only instantiate TLB if Virtual Memory is supported
   generate
@@ -105,6 +109,9 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   pmpchecker pmpchecker(.*);
 
 
-  assign SquashBusAccess = PMASquashBusAccess || PMPSquashBusAccess;
+  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;
+  assign InstrAccessFaultF = PMAInstrAccessFaultF | PMPInstrAccessFaultF;
+  assign LoadAccessFaultM = PMALoadAccessFaultM | PMPLoadAccessFaultM;
+  assign StoreAccessFaultM = PMAStoreAccessFaultM | PMPStoreAccessFaultM;  
 
 endmodule

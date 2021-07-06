@@ -171,6 +171,7 @@ module csrm #(parameter
   // verilator lint_off WIDTH
   logic [5:0] entry;
   always_comb begin
+    entry = '0;
     IllegalCSRMAccessM = !(`S_SUPPORTED | `U_SUPPORTED & `N_SUPPORTED) && 
                           (CSRAdrM == MEDELEG || CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
     if (CSRAdrM >= PMPADDR0 && CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry

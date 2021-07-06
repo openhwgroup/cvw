@@ -60,11 +60,11 @@ module privileged (
   // *** do these need to be split up into one for dmem and one for ifu?
   // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
   
-  input logic PMAInstrAccessFaultF, PMPInstrAccessFaultF,
-  input logic PMALoadAccessFaultM, PMPLoadAccessFaultM,
-  input logic PMAStoreAccessFaultM, PMPStoreAccessFaultM,
+  input logic InstrAccessFaultF,
+  input logic LoadAccessFaultM,
+  input logic StoreAccessFaultM,
 
-  output logic		         IllegalFPUInstrE,
+  output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -87,8 +87,7 @@ module privileged (
   logic IllegalFPUInstrM;
   logic LoadPageFaultM, StorePageFaultM; 
   logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
-  logic InstrAccessFaultF, InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
-  logic LoadAccessFaultM, StoreAccessFaultM;
+  logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic IllegalInstrFaultM, TrappedSRETM;
 
   logic BreakpointFaultM, EcallFaultM;
@@ -159,13 +158,11 @@ module privileged (
 
   // A page fault might occur because of insufficient privilege during a TLB
   // lookup or a improperly formatted page table during walking
+
+  // *** merge these at the lsu level.
   assign InstrPageFaultF = ITLBInstrPageFaultF || WalkerInstrPageFaultF;
   assign LoadPageFaultM = DTLBLoadPageFaultM || WalkerLoadPageFaultM;
   assign StorePageFaultM = DTLBStorePageFaultM || WalkerStorePageFaultM;
-
-  assign InstrAccessFaultF = PMAInstrAccessFaultF || PMPInstrAccessFaultF;
-  assign LoadAccessFaultM  = PMALoadAccessFaultM || PMPLoadAccessFaultM;
-  assign StoreAccessFaultM  = PMAStoreAccessFaultM || PMPStoreAccessFaultM;
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,

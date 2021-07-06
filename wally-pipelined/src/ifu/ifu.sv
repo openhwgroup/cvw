@@ -81,7 +81,8 @@ module ifu (
   input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
-  output logic 		      PMPInstrAccessFaultF, PMAInstrAccessFaultF,
+  output logic InstrAccessFaultF,
+
   output logic 		      ISquashBusAccessF
 //  output logic [5:0]       IHSELRegionsF
 
@@ -100,6 +101,8 @@ module ifu (
 
   logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
 
+  logic 	    PMPInstrAccessFaultF, PMAInstrAccessFaultF;
+  
   logic PMALoadAccessFaultM, PMAStoreAccessFaultM;
   logic PMPLoadAccessFaultM, PMPStoreAccessFaultM; // *** these are just so that the mmu has somewhere to put these outputs, they're unused in this stage
   // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
@@ -117,7 +120,7 @@ module ifu (
   endgenerate
 
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
-  itlb(.VirtualAddress(PCF),
+  immu(.VirtualAddress(PCF),
        .Size(2'b10),
        .PTE(PageTableEntryF),
        .PageTypeWriteVal(PageTypeF),
@@ -132,7 +135,8 @@ module ifu (
        .ReadAccessM(1'b0),
        .WriteAccessM(1'b0),
        .SquashBusAccess(ISquashBusAccessF),
-//       .HSELRegions(IHSELRegionsF),
+       .LoadAccessFaultM(),
+       .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
        .*);
 
