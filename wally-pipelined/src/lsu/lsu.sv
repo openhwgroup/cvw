@@ -218,10 +218,9 @@ module lsu (
   
     
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.TLBAccessType(MemRWMtoLSU),
-       .VirtualAddress(MemAdrMtoLSU),
+  dmmu(.VirtualAddress(MemAdrMtoLSU),
        .Size(SizeToLSU[1:0]),
-       .PTEWriteVal(PageTableEntryM),
+       .PTE(PageTableEntryM),
        .PageTypeWriteVal(PageTypeM),
        .TLBWrite(DTLBWriteM),
        .TLBFlush(DTLBFlushM),
