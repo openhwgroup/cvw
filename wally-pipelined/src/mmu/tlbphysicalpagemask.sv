@@ -30,9 +30,9 @@
 
 module tlbphysicalpagemask (
     input  logic [`VPN_BITS-1:0]   VirtualPageNumber,
-    input  logic [`PPN_BITS-1:0]   PhysicaPageNumber,
+    input  logic [`PPN_BITS-1:0]   PhysicalPageNumber,
     input  logic [1:0]             HitPageType,
-    output logic [`PPN_BITS-1:0]   MixedPageNumber 
+    output logic [`PPN_BITS-1:0]   PhysicalPageNumberMixed 
 );
 
   localparam EXTRA_BITS = `PPN_BITS - `VPN_BITS;
@@ -74,6 +74,6 @@ module tlbphysicalpagemask (
 
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
   assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VirtualPageNumber}; // forces the VPN to be the same width as PPN.
-  assign MixedPageNumber = (ZeroExtendedVPN & ~PageNumberMask) | (PhysicalPageNumber & PageNumberMask);
+  assign PhysicalPageNumberMixed = (ZeroExtendedVPN & ~PageNumberMask) | (PhysicalPageNumber & PageNumberMask);
 
 endmodule
