@@ -137,7 +137,7 @@ module csrm #(parameter
     else
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, MCOUNTEREN_REGW);
   endgenerate
-  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], 32'hFFFFFFFF, MCOUNTINHIBIT_REGW);
+  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], 32'h0, MCOUNTINHIBIT_REGW);
 
   // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
 
