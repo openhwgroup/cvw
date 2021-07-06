@@ -116,14 +116,22 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // Determine whether to write TLB
   assign VirtualPageNumber = Address[`VPN_BITS+11:12];
 
-  tlbcontrol tlbcontrol(.*);
+//  tlbcontrol tlbcontrol(.*);
+  tlbcontrol tlbcontrol(.SATP_REGW, .Address, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+                        .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
+                        .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, .EffectivePrivilegeMode,
+                        .SV39Mode, .Translate);
 
   // TLB entries are evicted according to the LRU algorithm
-  tlblru #(TLB_ENTRIES) lru(.*);
+  tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .ReadLines, .CAMHit, .WriteEnables);
 
-  // TLB memory
-  tlbram #(TLB_ENTRIES) tlbram(.*);
-  tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
+  //  tlbram #(TLB_ENTRIES) tlbram(.*);
+  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .ReadLines, .WriteEnables, .PhysicalPageNumber, .PTEAccessBits, .PTE_G);
+
+  // tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
+  tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
+    tlbcam(.clk, .reset, .VirtualPageNumber, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_G, .ASID,
+           .ReadLines, .HitPageType, .CAMHit);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
