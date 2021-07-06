@@ -30,10 +30,11 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   input  logic                TLBFlush,
   input  logic [TLB_ENTRIES-1:0] ReadLines,
   input  logic                CAMHit,
-  output logic [TLB_ENTRIES-1:0] WriteLines
+  output logic [TLB_ENTRIES-1:0] WriteEnables
 );
 
   logic [TLB_ENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
+  logic [TLB_ENTRIES-1:0] WriteLines;
   logic [TLB_ENTRIES-1:0] AccessLines; // One-hot encodings of which line is being accessed
   logic                AllUsed;  // High if the next access causes all RU bits to be 1
 
@@ -41,6 +42,7 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   tlbpriority #(TLB_ENTRIES) nru(~RUBits, WriteLines);
 
   // Track recently used lines, updating on a CAM Hit or TLB write
+  assign WriteEnables = WriteLines & {(TLB_ENTRIES){TLBWrite}};
   assign AccessLines = TLBWrite ? WriteLines : ReadLines;
   assign RUBitsAccessed = AccessLines | RUBits;
   assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
