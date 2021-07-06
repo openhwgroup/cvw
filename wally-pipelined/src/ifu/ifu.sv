@@ -120,7 +120,7 @@ module ifu (
   endgenerate
 
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
-  immu(.VirtualAddress(PCF),
+  immu(.Address(PCF),
        .Size(2'b10),
        .PTE(PageTableEntryF),
        .PageTypeWriteVal(PageTypeF),

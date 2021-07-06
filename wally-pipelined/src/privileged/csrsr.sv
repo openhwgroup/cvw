@@ -125,7 +125,8 @@ module csrsr (
       STATUS_SIE <= #1 0; //`S_SUPPORTED;
       STATUS_UIE <= #1 0; //`U_SUPPORTED;
     end else if (~StallW) begin
-      if (FloatRegWriteW) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else
+      if (FloatRegWriteW) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else;
+          // *** also, FS_INT needs to be set when any bits of the fcsr are written
       if (TrapM) begin
         // Update interrupt enables per Privileged Spec p. 21
         // y = PrivilegeModeW
