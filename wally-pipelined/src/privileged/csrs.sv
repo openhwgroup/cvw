@@ -130,7 +130,7 @@ module csrs #(parameter
           SATP:      if (`MEM_VIRTMEM && (PrivilegeModeW == `M_MODE || ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
                      else begin
                        CSRSReadValM = 0;
-                       IllegalCSRSAccessM = 1;
+                       if (PrivilegeModeW == `S_MODE & STATUS_TVM) IllegalCSRSAccessM = 1;
                      end
           SCOUNTEREN:CSRSReadValM = {{(`XLEN-32){1'b0}}, SCOUNTEREN_REGW};
           default: begin
