@@ -72,7 +72,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       assign Match0 = (Query0 == Key0) || (PageType[0]); // least signifcant section
       assign Match1 = (Query1 == Key1);
 
-      assign Match = Match0 & Match1 & Valid;
+      assign Match = Match0 & Match1 & MatchASID & Valid;
     end else begin
 
       logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
@@ -89,7 +89,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       assign Match2 = (Query2 == Key2) || (PageType > 2'd2);
       assign Match3 = (Query3 == Key3) || SV39Mode; // this should always match in sv39 because they aren't used
       
-      assign Match = Match0 & Match1 & Match2 & Match3 & Valid;
+      assign Match = Match0 & Match1 & Match2 & Match3 & MatchASID & Valid;
     end
   endgenerate
 
