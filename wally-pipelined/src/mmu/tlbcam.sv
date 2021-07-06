@@ -54,11 +54,10 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
   // page number segments.
 
   tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
-    .WriteEnable(WriteEnables),
-    .PageTypeRead, // *** change name to agree
-    .Match(ReadLines), // *** change name to agree
-    .*);
+    .clk, .reset, .VirtualPageNumber, .ASID, .SV39Mode, .PTE_G, .PageTypeWriteVal, .TLBFlush,
+    .WriteEnable(WriteEnables), .PageTypeRead, .Match(ReadLines));
   assign CAMHit = |ReadLines & ~TLBFlush;
   assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result
 
 endmodule
+
