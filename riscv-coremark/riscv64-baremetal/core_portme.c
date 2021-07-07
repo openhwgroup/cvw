@@ -125,14 +125,27 @@ void portable_free(void *p) {
 #if SAMPLE_TIME_IMPLEMENTATION
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
+static unsigned long start_instr_val, stop_instr_val;
 
-/* Function: minstret
+/* Function: minstretFunc
 	This function will count the number of instructions.
 */
-void minstretFunc(void)
+unsigned long minstretFunc(void)
 {
-	unsigned long minstretAttempt = read_csr(minstret);
-	ee_printf("Minstret is %lu\n", minstretAttempt);
+	unsigned long minstretRead = read_csr(minstret);
+	//ee_printf("Minstret is %lu\n", minstretRead);
+	return minstretRead;
+}
+
+/* Function: minstretDiff
+	This function will take the difference between the first and second reads from the
+	MINSTRET csr to determine the number of machine instructions retired between two points
+	of time
+*/
+unsigned long minstretDiff(void)
+{
+	unsigned long minstretDifference = MYTIMEDIFF(stop_instr_val, start_instr_val);
+	return minstretDifference;
 }
 
 /* Function: start_time
@@ -142,10 +155,10 @@ void minstretFunc(void)
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
-	minstretFunc();
+	start_instr_val = minstretFunc();
 	GETMYTIME(start_time_val);
-	ee_printf("Timer started\n");
-	ee_printf("  MTIME: %u\n", start_time_val);
+	//ee_printf("Timer started\n");
+	//ee_printf("  MTIME: %u\n", start_time_val);
 #if CALLGRIND_RUN
 	CALLGRIND_START_INSTRUMENTATION
 #endif
@@ -167,9 +180,9 @@ void stop_time(void) {
     asm volatile("int3");/*1 */
 #endif
 	GETMYTIME(stop_time_val);
-	 minstretFunc();
-	ee_printf("Timer stopped\n");
-	ee_printf("  MTIME: %u\n", stop_time_val);
+	stop_instr_val = minstretFunc();
+	//ee_printf("Timer stopped\n");
+	//ee_printf("  MTIME: %u\n", stop_time_val);
 }
 /* Function: get_time
 	Return an abstract "ticks" number that signifies time on the system.
@@ -182,7 +195,8 @@ void stop_time(void) {
 */
 CORE_TICKS get_time(void) {
 	CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
-	ee_printf("    Elapsed MTIME: %u\n", elapsed);
+	//ee_printf("    Elapsed MTIME: %u\n", elapsed);
+	//ee_printf("    Elapsed MINSTRET: %lu\n", minstretDiff());
 	return elapsed;
 }
 /* Function: time_in_secs
@@ -194,7 +208,7 @@ CORE_TICKS get_time(void) {
 secs_ret time_in_secs(CORE_TICKS ticks) {
 	secs_ret retval=((secs_ret)ticks) / (secs_ret)EE_TICKS_PER_SEC;
 	int retvalint = (int)retval;
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
+	//ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
 	return retval;
 }
 #else
