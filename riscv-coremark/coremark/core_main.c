@@ -96,7 +96,7 @@ MAIN_RETURN_TYPE main(void) {
 MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 #endif
 	//const char s[] = "Elizabeth";
-	//ee_printf("eeprint");
+	ee_printf("eeprint");
 	//ee_printf("Trying to print: %d", 0);
 	/*gg_printf("Elizabeth");*/
 	//sendstring("Elizabeth");
@@ -198,7 +198,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 		if (results[i].execs & ID_LIST) {
 			ee_printf("loop");
 			ee_printf("%d \n", MULTITHREAD);
-			ee_printf("%d \n sizethread ", results[0].size);
+			ee_printf("%d \n sizethread \n", results[0].size);
 
 
 			results[i].list=core_list_init(results[0].size,results[i].memblock[1],results[i].seed1);
@@ -211,20 +211,6 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 			core_init_state(results[0].size,results[i].seed1,results[i].memblock[3]);
 		}
 	}
-
- /*int foreverLoop = 1;
- secs_ret timing = 0;
- int timingInt;
- ee_printf("\nENTERING FOREVER WHILE LOOP\n");
- while(foreverLoop == 1)
- {
-	 start_time();
-	 //filler
-	 stop_time();
-	 timing += time_in_secs(get_time());
-	 timingInt = (int)timing;
-	 ee_printf("Timing is %d\n", timingInt);
- }/*
 
 	/* automatically determine number of iterations if not set */
 	if (results[0].iterations==0) { 
@@ -257,6 +243,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 		ee_printf("iterations is %d\n", results[0].iterations);
 	}
 	/* perform actual benchmark */
+	ee_printf("iterations is %d\n", results[0].iterations);
 	ee_printf("Starting benchmark\n");
 	start_time();
 #if (MULTITHREAD>1)
@@ -376,7 +363,7 @@ MAIN_RETURN_TYPE main(int argc, char *argv[]) {
 			unsigned long long tmp = (unsigned long long) 1000.0*default_num_contexts*results[0].iterations/time_in_secs(total_time);
 			secs_ret totalmsecs = time_in_secs(total_time);
 			int totalmint = (int) totalmsecs;
-			ee_printf("ELAPSED S: %d\n", totalmint);
+			ee_printf("ELAPSED TIME: %d\n", totalmint);
 
 			ee_printf("CoreMark 1.0 : %d / %s %s\n",tmp,COMPILER_VERSION,COMPILER_FLAGS);
 #if defined(MEM_LOCATION) && !defined(MEM_LOCATION_UNSPEC)
