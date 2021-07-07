@@ -39,13 +39,12 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
   input logic [TLB_ENTRIES-1:0]   WriteEnables,
   input logic [TLB_ENTRIES-1:0]   PTE_G,
   input logic [`ASID_BITS-1:0]    ASID,
-  output logic [TLB_ENTRIES-1:0]  ReadLines,
+  output logic [TLB_ENTRIES-1:0]  Matches,
   output logic [1:0]              HitPageType,
   output logic                    CAMHit
 );
 
   logic [1:0] PageTypeRead [TLB_ENTRIES-1:0];
-  logic [TLB_ENTRIES-1:0] Matches;
 
   // Create TLB_ENTRIES CAM lines, each of which will independently consider
   // whether the requested virtual address is a match. Each line stores the
@@ -55,8 +54,8 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
 
   tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
     .clk, .reset, .VirtualPageNumber, .ASID, .SV39Mode, .PTE_G, .PageTypeWriteVal, .TLBFlush,
-    .WriteEnable(WriteEnables), .PageTypeRead, .Match(ReadLines));
-  assign CAMHit = |ReadLines & ~TLBFlush;
+    .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
+  assign CAMHit = |Matches & ~TLBFlush;
   assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result
 
 endmodule
