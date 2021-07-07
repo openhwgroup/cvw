@@ -73,7 +73,7 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
           logic UpperEqual39, UpperEqual48;
           assign UpperEqual39 = &(Address[63:38]) | ~|(Address[63:38]);
           assign UpperEqual48 = &(Address[63:47]) | ~|(Address[63:47]); 
-          assign UpperBitsUnequalPageFault = SvMode ? ~UpperEqual39 : ~UpperEqual48;
+          assign UpperBitsUnequalPageFault = SVMode ? ~UpperEqual39 : ~UpperEqual48;
       end else begin
           assign SV39Mode = 0;
           assign UpperBitsUnequalPageFault = 0;
