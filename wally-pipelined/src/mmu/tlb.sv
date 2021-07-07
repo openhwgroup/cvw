@@ -89,7 +89,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   output logic             TLBPageFault
 );
 
-  logic [TLB_ENTRIES-1:0] ReadLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
+  logic [TLB_ENTRIES-1:0] Matches, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VirtualPageNumber;
@@ -112,11 +112,11 @@ module tlb #(parameter TLB_ENTRIES = 8,
                         .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, 
                         .SV39Mode, .Translate);
 
-  tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .ReadLines, .CAMHit, .WriteEnables);
+  tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
     tlbcam(.clk, .reset, .VirtualPageNumber, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_G, 
-           .ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]), .ReadLines, .HitPageType, .CAMHit);
-  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .ReadLines, .WriteEnables, .PhysicalPageNumber, .PTEAccessBits, .PTE_G);
+           .ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]), .Matches, .HitPageType, .CAMHit);
+  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PhysicalPageNumber, .PTEAccessBits, .PTE_G);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.

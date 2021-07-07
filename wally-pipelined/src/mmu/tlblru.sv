@@ -28,7 +28,7 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   input  logic                clk, reset,
   input  logic                TLBWrite,
   input  logic                TLBFlush,
-  input  logic [TLB_ENTRIES-1:0] ReadLines,
+  input  logic [TLB_ENTRIES-1:0] Matches,
   input  logic                CAMHit,
   output logic [TLB_ENTRIES-1:0] WriteEnables
 );
@@ -43,7 +43,7 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
 
   // Track recently used lines, updating on a CAM Hit or TLB write
   assign WriteEnables = WriteLines & {(TLB_ENTRIES){TLBWrite}};
-  assign AccessLines = TLBWrite ? WriteLines : ReadLines;
+  assign AccessLines = TLBWrite ? WriteLines : Matches;
   assign RUBitsAccessed = AccessLines | RUBits;
   assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
   assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 

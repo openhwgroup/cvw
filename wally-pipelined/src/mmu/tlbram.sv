@@ -30,7 +30,7 @@
 module tlbram #(parameter TLB_ENTRIES = 8) (
   input logic                       clk, reset,
   input logic [`XLEN-1:0]           PTE,
-  input logic [TLB_ENTRIES-1:0]     ReadLines, WriteEnables,
+  input logic [TLB_ENTRIES-1:0]     Matches, WriteEnables,
   output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
   output logic [7:0]                PTEAccessBits,
   output logic [TLB_ENTRIES-1:0]    PTE_G
@@ -40,7 +40,7 @@ module tlbram #(parameter TLB_ENTRIES = 8) (
   logic [`XLEN-1:0] PageTableEntry;
 
   // Generate a flop for every entry in the RAM
-  tlbramline #(`XLEN) tlblineram[TLB_ENTRIES-1:0](clk, reset, ReadLines, WriteEnables, PTE, RamRead, PTE_G);
+  tlbramline #(`XLEN) tlblineram[TLB_ENTRIES-1:0](clk, reset, Matches, WriteEnables, PTE, RamRead, PTE_G);
   
   assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
   assign PTEAccessBits = PageTableEntry[7:0];
