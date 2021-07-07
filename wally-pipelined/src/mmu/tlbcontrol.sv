@@ -70,12 +70,10 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
       if (`XLEN==64) begin
           assign SV39Mode = (SVMode == `SV39);
           // generate page fault if upper bits aren't all the same
-          logic UpperOnes39, UpperZeros39, UpperOnes48, UpperZeros48;
-          assign UpperOnes39 = &(Address[63:39]);
-          assign UpperZeros39 = ~|(Address[63:39]);
-          assign UpperOnes48 = &(Address[63:48]);
-          assign UpperZeros48 = ~|(Address[63:48]);
-          assign UpperBitsUnequalPageFault = SV39Mode ? (Address[38] ? UpperOnes39 : UpperZeros39) : (Address[47] ? UpperOnes48 : UpperZeros48);
+          logic UpperEqual39, UpperEqual48;
+          assign UpperEqual39 = &(Address[63:38]) | ~|(Address[63:38]);
+          assign UpperEqual48 = &(Address[63:47]) | ~|(Address[63:47]); 
+          assign UpperBitsUnequalPageFault = SVMode ? ~UpperEqual39 : ~UpperEqual48;
       end else begin
           assign SV39Mode = 0;
           assign UpperBitsUnequalPageFault = 0;

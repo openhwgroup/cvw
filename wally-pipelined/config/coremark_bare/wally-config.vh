@@ -34,7 +34,8 @@
 `define XLEN 64
 
 //`define MISA (32'h00000104)
-`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
+//`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 32
 `define ZCOUNTERS_SUPPORTED 1
@@ -53,7 +54,7 @@
 `define DTLB_ENTRIES 32
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 16
+`define PMP_ENTRIES 64
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
@@ -66,23 +67,23 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
 `define BOOTTIM_SUPPORTED 1'b1
-`define BOOTTIM_BASE   34'h00001000 
-`define BOOTTIM_RANGE  34'h00000FFF
+`define BOOTTIM_BASE   56'h00001000 
+`define BOOTTIM_RANGE  56'h00000FFF
 `define TIM_SUPPORTED 1'b1
-`define TIM_BASE       34'h80000000
-`define TIM_RANGE      34'h07FFFFFF
+`define TIM_BASE       56'h80000000
+`define TIM_RANGE      56'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
-`define CLINT_BASE  34'h02000000
-`define CLINT_RANGE 34'h0000FFFF
+`define CLINT_BASE  56'h02000000
+`define CLINT_RANGE 56'h0000FFFF
 `define GPIO_SUPPORTED 1'b1
-`define GPIO_BASE   34'h10012000
-`define GPIO_RANGE  34'h000000FF
+`define GPIO_BASE   56'h10012000
+`define GPIO_RANGE  56'h000000FF
 `define UART_SUPPORTED 1'b1
-`define UART_BASE   34'h10000000
-`define UART_RANGE  34'h00000007
+`define UART_BASE   56'h10000000
+`define UART_RANGE  56'h00000007
 `define PLIC_SUPPORTED 1'b1
-`define PLIC_BASE   34'h0C000000
-`define PLIC_RANGE  34'h03FFFFFF
+`define PLIC_BASE   56'h0C000000
+`define PLIC_RANGE  56'h03FFFFFF
 
 // Test modes
 
