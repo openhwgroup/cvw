@@ -126,6 +126,15 @@ void portable_free(void *p) {
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
 
+/* Function: minstret
+	This function will count the number of instructions.
+*/
+void minstretFunc(void)
+{
+	unsigned long minstretAttempt = read_csr(minstret);
+	ee_printf("Minstret is %lu\n", minstretAttempt);
+}
+
 /* Function: start_time
 	This function will be called right before starting the timed portion of the benchmark.
 
@@ -133,6 +142,7 @@ static CORETIMETYPE start_time_val, stop_time_val;
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
+	minstretFunc();
 	GETMYTIME(start_time_val);
 	ee_printf("Timer started\n");
 	ee_printf("  MTIME: %u\n", start_time_val);
@@ -157,6 +167,7 @@ void stop_time(void) {
     asm volatile("int3");/*1 */
 #endif
 	GETMYTIME(stop_time_val);
+	 minstretFunc();
 	ee_printf("Timer stopped\n");
 	ee_printf("  MTIME: %u\n", stop_time_val);
 }
@@ -183,7 +194,7 @@ CORE_TICKS get_time(void) {
 secs_ret time_in_secs(CORE_TICKS ticks) {
 	secs_ret retval=((secs_ret)ticks) / (secs_ret)EE_TICKS_PER_SEC;
 	int retvalint = (int)retval;
-	ee_printf("  RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
+	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
 	return retval;
 }
 #else
