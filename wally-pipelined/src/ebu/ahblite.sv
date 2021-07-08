@@ -109,16 +109,11 @@ module ahblite (
   // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: /*if      (MMUTranslate) ProposedNextBusState = MMUTRANSLATE;
-            else*/ if (AtomicMaskedM[1])   ProposedNextBusState = ATOMICREAD;
+      IDLE: if (AtomicMaskedM[1])   ProposedNextBusState = ATOMICREAD;
             else if (MemReadM)     ProposedNextBusState = MEMREAD;  // Memory has priority over instructions
             else if (MemWriteM)    ProposedNextBusState = MEMWRITE;
             else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
             else                   ProposedNextBusState = IDLE;
-/* -----\/----- EXCLUDED -----\/-----
-      MMUTRANSLATE: if (~HREADY)   ProposedNextBusState = MMUTRANSLATE;
-            else                   ProposedNextBusState = IDLE;
- -----/\----- EXCLUDED -----/\----- */
       ATOMICREAD: if (~HREADY)     ProposedNextBusState = ATOMICREAD;
             else                   ProposedNextBusState = ATOMICWRITE;
       ATOMICWRITE: if (~HREADY)    ProposedNextBusState = ATOMICWRITE;
