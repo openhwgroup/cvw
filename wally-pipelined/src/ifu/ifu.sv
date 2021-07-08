@@ -84,8 +84,6 @@ module ifu (
   output logic InstrAccessFaultF,
 
   output logic 		      ISquashBusAccessF
-//  output logic [5:0]       IHSELRegionsF
-
 );
 
   logic [`XLEN-1:0] PCCorrectE, UnalignedPCNextF, PCNextF;

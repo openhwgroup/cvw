@@ -81,6 +81,7 @@ module dcache
   logic			       SetValidM, ClearValidM, SetValidW, ClearValidW;
   logic			       SetDirtyM, ClearDirtyM, SetDirtyW, ClearDirtyW;
   logic [BLOCKLEN-1:0]	       ReadDataM, ReadDataMaskedM [NUMWAYS-1:0];
+  logic [BLOCKLEN-1:0] 	       VictimReadDataMaskedM [NUMWAYS-1:0];
   logic [TAGLEN-1:0]	       TagData [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]	       Valid, Dirty, WayHit;
   logic			       CacheHit;
@@ -102,7 +103,11 @@ module dcache
 
   logic 		       SaveSRAMRead;
   logic [1:0] 		       AtomicW;
-  
+  logic [NUMWAYS-1:0] 	       VictimWay;
+  logic [NUMWAYS-1:0] 	       VictimDirtyWay;
+  logic [BLOCKLEN-1:0] 	       VictimReadDataSelectWayM;
+  logic 		       VictimDirty;
+    
   
   
   
@@ -149,7 +154,11 @@ module dcache
 	     .Valid(Valid[way]),
 	     .Dirty(Dirty[way]));
       assign WayHit = Valid & (ReadTag[way] == MemAdrM);
-      assign ReadDataMaskedM = Valid[way] ? ReadDataM[way] : '0;  // first part of AO mux.
+      assign ReadDataMaskedM[way] = Valid[way] ? ReadDataM[way] : '0;  // first part of AO mux.
+
+      // the cache block candiate for eviction
+      assign VictimReadDataMaskedM[way] = VictimWay[way] & ReadDataM[way];
+      assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
     end
   endgenerate
 
@@ -160,9 +169,14 @@ module dcache
 
   // *** TODO add replacement policy
   assign NewReplacement = '0;
+  assign VictimWay = 4'b0001;
+  assign SRAMWriteEnable = SRAMBlockWriteEnableM ? VictimWay : '0;
 
   assign CacheHit = |WayHit;
   assign ReadDataSelectWayM = |ReadDataMaskedM; // second part of AO mux.
+  assign VictimReadDataSelectWayM = | VictimReadDataMaskedM;
+  assign VictimDirty = | VictimDirtyWay;
+  
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
@@ -344,7 +358,9 @@ module dcache
     SRAMBlockWriteEnableM = 1'b0;
     SaveSRAMRead = 1'b1;
     CntReset = 1'b0;
-
+    AHBRead = 1'b0;
+    AHBWrite = 1'b0;
+    
     case (CurrState)
       STATE_READY: begin
 	// sram busy
@@ -397,6 +413,7 @@ module dcache
       STATE_READ_MISS_FETCH_WDV: begin
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
+	AHBRead = 1'b1;
         if (FetchCountFlag & AHBAck) begin
           NextState = STATE_READ_MISS_FETCH_DONE;
         end else begin
@@ -406,7 +423,24 @@ module dcache
 
       STATE_READ_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
-	NextState = STATE_READ_MISS_CHECK_EVICTED_DIRTY;
+	if(VictimDirt) begin
+	  NextState = STATE_READ_MISS_CHECK_EVICTED_DIRTY;
+	end else begin
+	  NextState = STATE_READ_MISS_WRITE_CACHE_BLOCK;
+	end
+      end
+
+      STATE_READ_MISS_WRITE_CACHE_BLOCK: begin
+	SRAMBlockWriteEnableM = 1'b1;
+	DCacheStall = 1'b1;
+	NextState = STATE_READ_MISS_READ_WORD;
+	SelAdrM = 1'b1;
+      end
+
+      STATE_READ_MISS_READ_WORD: begin
+	DCacheStall = 1'b1;
+	SelAdrM = 1'b1;
+	NextState = STATE_READY;
       end
 
       STATE_PTW_MISS_FETCH_WDV: begin
