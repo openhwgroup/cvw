@@ -54,13 +54,13 @@ module pagetablewalker
 
 
    // *** modify to send to LSU // *** KMG: These are inputs/results from the ahblite whose addresses should have already been checked, so I don't think they need to be sent through the LSU
-   input logic [`XLEN-1:0]  MMUReadPTE,
+   input logic [`XLEN-1:0]  HPTWReadPTE,
    input logic 		    MMUReady,
    input logic 		    HPTWStall,
 
    // *** modify to send to LSU
-   output logic [`XLEN-1:0] MMUPAdr, // this probalby should be `PA_BITS wide
-   output logic 	    MMUTranslate, // *** rename to HPTWReq
+   output logic [`XLEN-1:0] HPTWPAdr, // this probalby should be `PA_BITS wide
+   output logic 	    HPTWTranslate, // *** rename to HPTWReq
    output logic 	    HPTWRead,
 
 
@@ -158,8 +158,8 @@ module pagetablewalker
           (WalkerState == LEVEL3 && ValidPTE && LeafPTE && ~AccessAlert) ||		   
           (WalkerState == FAULT);
       
-      assign MMUTranslate = (DTLBMissMQ | ITLBMissFQ) & ~EndWalk;
-      //assign MMUTranslate = DTLBMissM | ITLBMissF;
+      assign HPTWTranslate = (DTLBMissMQ | ITLBMissFQ) & ~EndWalk;
+      //assign HPTWTranslate = DTLBMissM | ITLBMissF;
 
       // unswizzle PTE bits
       assign {Dirty, Accessed, Global, User,
@@ -203,7 +203,7 @@ module pagetablewalker
 
             case (WalkerState)
               IDLE: begin
-          if (MMUTranslate && SvMode == `SV32) begin // *** Added SvMode
+          if (HPTWTranslate && SvMode == `SV32) begin // *** Added SvMode
             NextWalkerState = START;
           end else begin
                   NextWalkerState = IDLE;
@@ -303,15 +303,15 @@ module pagetablewalker
           // a load delay hazard.  This will require rewriting the walker fsm.
           // also need a new signal to save.  Should be a mealy output of the fsm
           // request followed by ~stall.
-          flopenr #(32) ptereg(clk, reset, PRegEn, MMUReadPTE, SavedPTE);
-          //mux2 #(32) ptemux(SavedPTE, MMUReadPTE, PRegEn, CurrentPTE);
+          flopenr #(32) ptereg(clk, reset, PRegEn, HPTWReadPTE, SavedPTE);
+          //mux2 #(32) ptemux(SavedPTE, HPTWReadPTE, PRegEn, CurrentPTE);
           assign CurrentPTE = SavedPTE;
           assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
           // Assign outputs to ahblite
           // *** Currently truncate address to 32 bits. This must be changed if
           // we support larger physical address spaces
-          assign MMUPAdr = TranslationPAdr[31:0];
+          assign HPTWPAdr = TranslationPAdr[31:0];
 
         end else begin
           
@@ -326,7 +326,7 @@ module pagetablewalker
           WalkerState == LEVEL2_WDV || WalkerState == LEVEL3_WDV) && ~HPTWStall;
           -----/\----- EXCLUDED -----/\----- */
 
-          //assign HPTWRead = (WalkerState == IDLE && MMUTranslate) || WalkerState == LEVEL3 ||
+          //assign HPTWRead = (WalkerState == IDLE && HPTWTranslate) || WalkerState == LEVEL3 ||
           //			WalkerState == LEVEL2 || WalkerState == LEVEL1;
           
 
@@ -345,7 +345,7 @@ module pagetablewalker
 
             case (WalkerState)
               IDLE: begin
-          if (MMUTranslate && (SvMode == `SV48 || SvMode == `SV39)) begin
+          if (HPTWTranslate && (SvMode == `SV48 || SvMode == `SV39)) begin
             NextWalkerState = START;
           end else begin
                   NextWalkerState = IDLE;
@@ -353,11 +353,11 @@ module pagetablewalker
         end
 
               START: begin
-          if (MMUTranslate && SvMode == `SV48) begin
+          if (HPTWTranslate && SvMode == `SV48) begin
             NextWalkerState = LEVEL3_WDV;
                   TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
             HPTWRead = 1'b1;
-          end else if (MMUTranslate && SvMode == `SV39) begin
+          end else if (HPTWTranslate && SvMode == `SV39) begin
             NextWalkerState = LEVEL2_WDV;
                   TranslationPAdr = {BasePageTablePPN, VPN2, 3'b000};
             HPTWRead = 1'b1;
@@ -541,20 +541,20 @@ module pagetablewalker
 
 
           // Capture page table entry from ahblite
-          flopenr #(`XLEN) ptereg(clk, reset, PRegEn, MMUReadPTE, SavedPTE);
-          //mux2 #(`XLEN) ptemux(SavedPTE, MMUReadPTE, PRegEn, CurrentPTE);
+          flopenr #(`XLEN) ptereg(clk, reset, PRegEn, HPTWReadPTE, SavedPTE);
+          //mux2 #(`XLEN) ptemux(SavedPTE, HPTWReadPTE, PRegEn, CurrentPTE);
           assign CurrentPTE = SavedPTE;
           assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
           // Assign outputs to ahblite
           // *** Currently truncate address to 32 bits. This must be changed if
           // we support larger physical address spaces
-          assign MMUPAdr = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
+          assign HPTWPAdr = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
         end
       //endgenerate
     end else begin
-      assign MMUPAdr = 0;
-      assign MMUTranslate = 0;
+      assign HPTWPAdr = 0;
+      assign HPTWTranslate = 0;
       assign HPTWRead = 0;
       assign WalkerInstrPageFaultF = 0;
       assign WalkerLoadPageFaultM = 0;
