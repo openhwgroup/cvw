@@ -28,5 +28,6 @@ wally-pipelined/linux-testgen/nohup*
 wally-pipelined/linux-testgen/x*
 !wally-pipelined/linux-testgen/linux-testvectors/tvCopier.py
 !wally-pipelined/linux-testgen/linux-testvectors/tvLinker.sh
+wally-pipelined/linux-testgen/buildroot/
 wally-pipelined/regression/slack-notifier/slack-webhook-url.txt
 
