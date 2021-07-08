@@ -413,6 +413,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   assign NextFetchCount = FetchCount + 1'b1;
   
   // This part is confusing.
+  // *** Ross Thompson reduce the complexity. This is just dumb.
   // we need to remove the offset bits (PCPTrunkF).  Because the AHB interface is XLEN wide
   // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
   // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
