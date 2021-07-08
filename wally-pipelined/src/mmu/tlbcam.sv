@@ -32,7 +32,7 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
                 parameter KEY_BITS   = 20,
                 parameter SEGMENT_BITS = 10) (
   input logic                     clk, reset,
-  input logic [`VPN_BITS-1:0]     VirtualPageNumber,
+  input logic [`VPN_BITS-1:0]     VPN,
   input logic [1:0]               PageTypeWriteVal,
   input  logic                    SV39Mode,
   input logic                     TLBFlush,
@@ -53,7 +53,7 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
   // page number segments.
 
   tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
-    .clk, .reset, .VirtualPageNumber, .SATP_ASID, .SV39Mode, .PTE_G(PTE_Gs), .PageTypeWriteVal, .TLBFlush,
+    .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .PTE_G(PTE_Gs), .PageTypeWriteVal, .TLBFlush,
     .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;
   assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result

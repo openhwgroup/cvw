@@ -93,8 +93,8 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [TLB_ENTRIES-1:0] Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
-  logic [`VPN_BITS-1:0] VirtualPageNumber;
-  logic [`PPN_BITS-1:0] PhysicalPageNumber;
+  logic [`VPN_BITS-1:0] VPN;
+  logic [`PPN_BITS-1:0] PPN;
   logic [`XLEN+1:0]     AddressExt;
 
   // Sections of the page table entry
@@ -106,7 +106,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic                  CAMHit;
   logic                  SV39Mode;
 
-  assign VirtualPageNumber = Address[`VPN_BITS+11:12];
+  assign VPN = Address[`VPN_BITS+11:12];
 
   tlbcontrol tlbcontrol(.SATP_MODE, .Address, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
                         .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
@@ -115,13 +115,13 @@ module tlb #(parameter TLB_ENTRIES = 8,
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
-    tlbcam(.clk, .reset, .VirtualPageNumber, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, 
+    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, 
            .SATP_ASID, .Matches, .HitPageType, .CAMHit);
-  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PhysicalPageNumber, .PTEAccessBits, .PTE_Gs);
+  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  tlbmixer Mixer(.VirtualPageNumber, .PhysicalPageNumber, .HitPageType, .Address(Address[11:0]), .TLBHit, .TLBPAdr);
+  tlbmixer Mixer(.VPN, .PPN, .HitPageType, .Address(Address[11:0]), .TLBHit, .TLBPAdr);
 
 endmodule

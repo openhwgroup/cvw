@@ -31,7 +31,7 @@ module tlbram #(parameter TLB_ENTRIES = 8) (
   input  logic                      clk, reset,
   input  logic [`XLEN-1:0]          PTE,
   input  logic [TLB_ENTRIES-1:0]    Matches, WriteEnables,
-  output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
+  output logic [`PPN_BITS-1:0]      PPN,
   output logic [7:0]                PTEAccessBits,
   output logic [TLB_ENTRIES-1:0]    PTE_Gs
 );
@@ -44,5 +44,5 @@ module tlbram #(parameter TLB_ENTRIES = 8) (
   
   assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
   assign PTEAccessBits = PageTableEntry[7:0];
-  assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
+  assign PPN = PageTableEntry[`PPN_BITS+9:10];
 endmodule

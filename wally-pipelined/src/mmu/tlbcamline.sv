@@ -31,7 +31,7 @@
 module tlbcamline #(parameter KEY_BITS = 20,
                     parameter SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
-  input  logic [`VPN_BITS-1:0]  VirtualPageNumber, // The requested page number to compare against the key
+  input  logic [`VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
   input  logic [`ASID_BITS-1:0] SATP_ASID,
   input  logic                  SV39Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
@@ -64,7 +64,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
     if (`XLEN == 32) begin
 
       assign {Key_ASID, Key1, Key0} = Key;
-      assign {Query1, Query0} = VirtualPageNumber;
+      assign {Query1, Query0} = VPN;
 
       // Calculate the actual match value based on the input vpn and the page type.
       // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
@@ -78,7 +78,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
       logic Match2, Match3;
 
-      assign {Query3, Query2, Query1, Query0} = VirtualPageNumber;
+      assign {Query3, Query2, Query1, Query0} = VPN;
       assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
 
       // Calculate the actual match value based on the input vpn and the page type.
@@ -102,5 +102,5 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
   flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
-  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VirtualPageNumber}, Key);
+  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VPN}, Key);
 endmodule
