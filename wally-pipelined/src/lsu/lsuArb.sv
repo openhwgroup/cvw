@@ -53,17 +53,17 @@ module lsuArb
   
    // to LSU   
    output logic 	    DisableTranslation, 
-   output logic [1:0] 	    MemRWMtoLSU,
-   output logic [2:0] 	    SizeToLSU,
-   output logic [1:0] 	    AtomicMtoLSU,
-   output logic [`XLEN-1:0] MemAdrMtoLSU,
-   output logic [`XLEN-1:0] WriteDataMtoLSU,
-   output logic 	    StallWtoLSU,
+   output logic [1:0] 	    MemRWMtoDCache,
+   output logic [2:0] 	    SizetoDCache,
+   output logic [1:0] 	    AtomicMtoDCache,
+   output logic [`XLEN-1:0] MemAdrMtoDCache,
+   output logic [`XLEN-1:0] WriteDataMtoDCache,
+   output logic 	    StallWtoDCache,
    // from LSU
-   input logic 		    CommittedMfromLSU,
-   input logic 		    SquashSCWfromLSU,
-   input logic 		    DataMisalignedMfromLSU,
-   input logic [`XLEN-1:0]  ReadDataWFromLSU,
+   input logic 		    CommittedMfromDCache,
+   input logic 		    SquashSCWfromDCache,
+   input logic 		    DataMisalignedMfromDCache,
+   input logic [`XLEN-1:0]  ReadDataWfromDCache,
    input logic 		    DataStall
   
    );
@@ -136,25 +136,25 @@ module lsuArb
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
   assign SelPTW = (CurrState == StatePTWActive && HPTWTranslate) || (CurrState == StateReady && HPTWTranslate);
-  assign MemRWMtoLSU = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
+  assign MemRWMtoDCache = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
     assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
   endgenerate
-  mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, SizeToLSU);
+  mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, SizetoDCache);
 
-  assign AtomicMtoLSU = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMtoLSU = SelPTW ? HPTWPAdr : MemAdrM;
-  assign WriteDataMtoLSU = SelPTW ? `XLEN'b0 : WriteDataM;
-  assign StallWtoLSU = SelPTW ? 1'b0 : StallW;
+  assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
+  assign MemAdrMtoDCache = SelPTW ? HPTWPAdr : MemAdrM;
+  assign WriteDataMtoDCache = SelPTW ? `XLEN'b0 : WriteDataM;
+  assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
 
   // demux the inputs from LSU to walker or cpu's data port.
 
-  assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWFromLSU;  // probably can avoid this demux
-  assign HPTWReadPTE = SelPTW ? ReadDataWFromLSU : `XLEN'b0 ;  // probably can avoid this demux
-  assign CommittedM = SelPTW ? 1'b0 : CommittedMfromLSU;
-  assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromLSU;
-  assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromLSU;
+  assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWfromDCache;  // probably can avoid this demux
+  assign HPTWReadPTE = SelPTW ? ReadDataWfromDCache : `XLEN'b0 ;  // probably can avoid this demux
+  assign CommittedM = SelPTW ? 1'b0 : CommittedMfromDCache;
+  assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromDCache;
+  assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
