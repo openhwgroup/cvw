@@ -32,7 +32,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
                     parameter SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
   input  logic [`VPN_BITS-1:0]  VirtualPageNumber, // The requested page number to compare against the key
-  input  logic [`ASID_BITS-1:0] ASID,
+  input  logic [`ASID_BITS-1:0] SATP_ASID,
   input  logic                  SV39Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
   input  logic                  PTE_G,
@@ -58,7 +58,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic MatchASID, Match0, Match1;
 
-  assign MatchASID = (ASID == Key_ASID) | PTE_G; 
+  assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G; 
 
   generate
     if (`XLEN == 32) begin
@@ -102,5 +102,5 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
   flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
-  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {ASID, VirtualPageNumber}, Key);
+  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VirtualPageNumber}, Key);
 endmodule

@@ -30,7 +30,7 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
                     parameter ITLB = 0) (
 
   // Current value of satp CSR (from privileged unit)
-  input logic  [`XLEN-1:0] SATP_REGW,
+  input logic  [`SVMODE_BITS-1:0] SATP_MODE,
   input logic  [`XLEN-1:0] Address,
   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input logic  [1:0]       STATUS_MPP,
@@ -63,17 +63,16 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
   logic                  TLBAccess;
 
   // Grab the sv mode from SATP and determine whether translation should occur
-  assign SVMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SVMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
+  assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
   generate
       if (`XLEN==64) begin
-          assign SV39Mode = (SVMode == `SV39);
+          assign SV39Mode = (SATP_MODE == `SV39);
           // generate page fault if upper bits aren't all the same
           logic UpperEqual39, UpperEqual48;
           assign UpperEqual39 = &(Address[63:38]) | ~|(Address[63:38]);
           assign UpperEqual48 = &(Address[63:47]) | ~|(Address[63:47]); 
-          assign UpperBitsUnequalPageFault = SVMode ? ~UpperEqual39 : ~UpperEqual48;
+          assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
       end else begin
           assign SV39Mode = 0;
           assign UpperBitsUnequalPageFault = 0;

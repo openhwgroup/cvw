@@ -75,7 +75,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
 
 );
 
-  logic [`PA_BITS-1:0] TLBPhysicalAddress;
+  logic [`PA_BITS-1:0] TLBPAdr;
   logic [`XLEN+1:0]    AddressExt;
   logic PMPSquashBusAccess, PMASquashBusAccess;
   logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
@@ -93,7 +93,10 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
       logic ReadAccess, WriteAccess;
       assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
       assign WriteAccess = WriteAccessM;
-      tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(.*);
+      tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) 
+        tlb(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]),
+            .SATP_ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]), .*);
+
     end else begin // just pass address through as physical
       assign Translate = 0;
       assign TLBMiss = 0;
@@ -104,7 +107,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
 
   // If translation is occuring, select translated physical address from TLB
   assign AddressExt = {2'b00, Address}; // extend length of virtual address if necessary for RV32
-  mux2 #(`PA_BITS) addressmux(AddressExt[`PA_BITS-1:0], TLBPhysicalAddress, Translate, PhysicalAddress);
+  mux2 #(`PA_BITS) addressmux(AddressExt[`PA_BITS-1:0], TLBPAdr, Translate, PhysicalAddress);
   
   ///////////////////////////////////////////
   // Check physical memory accesses
