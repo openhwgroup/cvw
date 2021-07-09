@@ -32,12 +32,13 @@ module lsu
   (
    input logic 		       clk, reset,
    input logic 		       StallM, FlushM, StallW, FlushW,
-   output logic 	       DCacheStall,
+   output logic 	       LSUStall,
    // Memory Stage
 
    // connected to cpu (controls)
    input logic [1:0] 	       MemRWM,
    input logic [2:0] 	       Funct3M,
+   input logic [6:0] 	       Funct7M, 
    input logic [1:0] 	       AtomicM,
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
@@ -45,6 +46,7 @@ module lsu
 
    // address and write data
    input logic [`XLEN-1:0]     MemAdrM,
+   input logic [`XLEN-1:0]     MemAdrE,
    input logic [`XLEN-1:0]     WriteDataM, 
    output logic [`XLEN-1:0]    ReadDataW,
 
@@ -60,14 +62,12 @@ module lsu
 
    // connect to ahb
    input logic 		       CommitM, // should this be generated in the abh interface?
-   output logic [`PA_BITS-1:0] MemPAdrM, // to ahb
-   output logic 	       MemReadM, MemWriteM,
-   output logic [1:0] 	       AtomicMaskedM,
-   input logic 		       MemAckW, // from ahb
-   input logic [`XLEN-1:0]     HRDATAW, // from ahb
-   output logic [2:0] 	       SizeFromLSU,
-   output logic 	       StallWfromLSU,
-
+   output logic [`PA_BITS-1:0] DCtoAHBPAdrM, // to ahb
+   output logic 	       DCtoAHBReadM, 
+   output logic 	       DCtoAHBWriteM,
+   input logic 		       DCfromAHBAck, // from ahb
+   input logic [`XLEN-1:0]     DCfromAHBReadData, // from ahb
+   output logic [`XLEN-1:0]    DCtoAHBWriteData, // to ahb
 
    // mmu management
 
@@ -87,14 +87,9 @@ module lsu
 
    output logic 	       DTLBHitM, // not connected 
 
-   // PMA/PMP (inside mmu) signals
-   input logic [31:0] 	       HADDR, // *** replace all of these H inputs with physical adress once pma checkers have been edited to use paddr as well.
-   input logic [2:0] 	       HSIZE, HBURST,
-   input logic 		       HWRITE,
    input 		       var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-   input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], // *** this one especially has a large note attached to it in pmpchecker.
+   input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
 
-   output logic 	       DSquashBusAccessM
    //  output logic [5:0]       DHSELRegionsM
 
    );
@@ -119,6 +114,9 @@ module lsu
   logic 		       PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
   // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
 
+
+  logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
+
   logic 		       DTLBMissM;
   logic [`XLEN-1:0] 	       PageTableEntryM;
   logic [1:0] 		       PageTypeM;
@@ -130,27 +128,21 @@ module lsu
   logic 		       HPTWTranslate;
   logic 		       HPTWRead;
   logic [1:0] 		       MemRWMtoDCache;
-  logic [2:0] 		       SizetoDCache;
+  logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
   logic [`XLEN-1:0] 	       MemAdrMtoDCache;
-  logic [`XLEN-1:0] 	       WriteDataMtoDCache;
+  logic [`XLEN-1:0] 	       MemAdrEtoDCache;  
   logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
   logic 		       CommittedMfromDCache;
   logic 		       SquashSCWfromDCache;
   logic 		       DataMisalignedMfromDCache;
   logic 		       HPTWReady;
-  logic 		       LSUStall;
   logic 		       DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
+  logic 		       DCacheStall;
   
   
   
-  
-  // for time being until we have a dcache the AHB Lite read bus HRDATAW will be connected to the
-  // CPU's read data input ReadDataW.
-  assign ReadDataWfromDCache = HRDATAW;
-
-
   pagetablewalker pagetablewalker(
 				  .clk(clk),
 				  .reset(reset),
@@ -192,32 +184,29 @@ module lsu
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
-		 .WriteDataM(WriteDataM), // *** Need to remove this.
 		 .StallW(StallW),
 		 .ReadDataW(ReadDataW),
 		 .CommittedM(CommittedM),
 		 .SquashSCW(SquashSCW),
 		 .DataMisalignedM(DataMisalignedM),
-		 .DCacheStall(DCacheStall),
-		 // LSU
+		 .LSUStall(LSUStall),
+		 // DCACHE
 		 .DisableTranslation(DisableTranslation),
 		 .MemRWMtoDCache(MemRWMtoDCache),
-		 .SizetoDCache(SizetoDCache),
+		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
 		 .MemAdrMtoDCache(MemAdrMtoDCache),          
-		 .WriteDataMtoDCache(WriteDataMtoDCache),   // *** ??????????????
 		 .StallWtoDCache(StallWtoDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),     
 		 .SquashSCWfromDCache(SquashSCWfromDCache),      
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
-		 .DataStall(LSUStall));
-
-  
+		 .DCacheStall(DCacheStall));
+    
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.VirtualAddress(MemAdrMtoDCache),
-       .Size(SizetoDCache[1:0]),
+       .Size(Funct3MtoDCache[1:0]),
        .PTE(PageTableEntryM),
        .PageTypeWriteVal(PageTypeM),
        .TLBWrite(DTLBWriteM),
@@ -227,10 +216,11 @@ module lsu
        .TLBHit(DTLBHitM),
        .TLBPageFault(DTLBPageFaultM),
        .ExecuteAccessF(1'b0),
-       .AtomicAccessM(AtomicMaskedM[1]), 
+       //.AtomicAccessM(AtomicMaskedM[1]),
+       .AtomicAccessM(1'b0),
        .WriteAccessM(MemRWMtoDCache[0]),
        .ReadAccessM(MemRWMtoDCache[1]),
-       .SquashBusAccess(DSquashBusAccessM),
+       .SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
        //       .SelRegions(DHSELRegionsM),
@@ -242,7 +232,7 @@ module lsu
 
   // Determine if an Unaligned access is taking place
   always_comb
-    case(SizetoDCache[1:0]) 
+    case(Funct3MtoDCache[1:0]) 
       2'b00:  DataMisalignedMfromDCache = 0;                       // lb, sb, lbu
       2'b01:  DataMisalignedMfromDCache = MemAdrMtoDCache[0];              // lh, sh, lhu
       2'b10:  DataMisalignedMfromDCache = MemAdrMtoDCache[1] | MemAdrMtoDCache[0]; // lw, sw, flw, fsw, lwu
@@ -254,6 +244,10 @@ module lsu
   // Changed DataMisalignedMfromDCache to a larger combination of trap sources
   // NonBusTrapM is anything that the bus doesn't contribute to producing 
   // By contrast, using TrapM results in circular logic errors
+/* -----\/----- EXCLUDED -----\/-----
+
+ // *** BUG for now leave this out. come back later after the d cache is working. July 09, 2021
+
   assign MemReadM = MemRWMtoDCache[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
   assign MemWriteM = MemRWMtoDCache[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicMtoDCache : 2'b00 ;
@@ -292,16 +286,56 @@ module lsu
       assign SquashSCWfromDCache = 0; 
     end
   endgenerate
+ -----/\----- EXCLUDED -----/\----- */
+
+
+  // *** BUG
+  assign MemAdrEtoDCache = MemAdrE; // needs to be muxed in lsuarb.
+  
+
+  dcache dcache(.clk(clk),
+		.reset(reset),
+		.StallM(StallM),
+		.StallW(StallW),
+		.FlushM(FlushM),
+		.FlushW(FlushW),
+		.MemRWM(MemRWMtoDCache),
+		.Funct3M(Funct3MtoDCache),
+		.Funct7M(Funct7M),		
+		.AtomicM(AtomicMtoDCache),
+		.MemAdrE(MemAdrEtoDCache),  // *** add to arb
+		.MemPAdrM(MemPAdrM),
+		.WriteDataM(WriteDataM),
+		.ReadDataW(ReadDataWfromDCache),
+		.DCacheStall(DCacheStall),
+		.FaultM(LoadMisalignedFaultM | StoreMisalignedFaultM), // this is wrong needs to be all faults.
+		.DTLBMissM(DTLBMissM),
+		.UncachedM(1'b0), // ***connect to PMA
+
+		// AHB connection
+		.AHBPAdr(DCtoAHBPAdrM),
+		.AHBRead(DCtoAHBReadM),
+		.AHBWrite(DCtoAHBWriteM),
+		.AHBAck(DCfromAHBAck),
+		.HWDATA(DCtoAHBWriteData),
+		.HRDATA(DCfromAHBReadData)		
+		);
+  
+//  assign AtomicMaskedM = 2'b00;  // *** Remove from AHB
+  
 
   // Data stall
   //assign LSUStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
-  assign HPTWReady = (CurrState == STATE_READY);
+  // BUG *** July 09, 2021
+  //assign HPTWReady = (CurrState == STATE_READY);
   
 
   // Ross Thompson April 22, 2021
   // for now we need to handle the issue where the data memory interface repeately
   // requests data from memory rather than issuing a single request.
 
+/* -----\/----- EXCLUDED -----\/-----
+ // *** BUG will need to modify this so we can handle the ptw. July 09, 2021
 
   flopenl #(.TYPE(statetype)) stateReg(.clk(clk),
 				       .load(reset),
@@ -331,7 +365,7 @@ module lsu
 	end
       STATE_FETCH_AMO_1: begin
 	LSUStall = 1'b1;
-	if (MemAckW) begin
+	if (DCfromAHBAck) begin
 	  NextState = STATE_FETCH_AMO_2;
 	end else begin 
 	  NextState = STATE_FETCH_AMO_1;
@@ -339,9 +373,9 @@ module lsu
       end
       STATE_FETCH_AMO_2: begin
 	LSUStall = 1'b1;	
-	if (MemAckW & ~StallWtoDCache) begin
+	if (DCfromAHBAck & ~StallWtoDCache) begin
 	  NextState = STATE_FETCH_AMO_2;
-	end else if (MemAckW & StallWtoDCache) begin
+	end else if (DCfromAHBAck & StallWtoDCache) begin
           NextState = STATE_STALLED;
 	end else begin
 	  NextState = STATE_FETCH_AMO_2;
@@ -349,9 +383,9 @@ module lsu
       end
       STATE_FETCH: begin
 	LSUStall = 1'b1;
-	if (MemAckW & ~StallWtoDCache) begin
+	if (DCfromAHBAck & ~StallWtoDCache) begin
 	  NextState = STATE_READY;
-	end else if (MemAckW & StallWtoDCache) begin
+	end else if (DCfromAHBAck & StallWtoDCache) begin
 	  NextState = STATE_STALLED;
 	end else begin
 	  NextState = STATE_FETCH;
@@ -378,9 +412,9 @@ module lsu
       end
       STATE_PTW_FETCH : begin
 	LSUStall = 1'b1;
-	if (MemAckW & ~DTLBWriteM) begin
+	if (DCfromAHBAck & ~DTLBWriteM) begin
 	  NextState = STATE_PTW_READY;
-	end else if (MemAckW & DTLBWriteM) begin
+	end else if (DCfromAHBAck & DTLBWriteM) begin
 	  NextState = STATE_READY;
 	end else begin
 	  NextState = STATE_PTW_FETCH;
@@ -395,11 +429,8 @@ module lsu
       end
     endcase
   end // always_comb
+ -----/\----- EXCLUDED -----/\----- */
 
-  // *** for now just pass through size
-  assign SizeFromLSU = SizetoDCache;
-  assign StallWfromLSU = StallWtoDCache;
-  
 
 endmodule
 

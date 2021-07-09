@@ -50,7 +50,7 @@ module datapath (
   input  logic             FWriteIntM,
   input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataM, MemAdrM,
+  output logic [`XLEN-1:0] WriteDataM, MemAdrM, MemAdrE,
   // Writeback stage signals
   input  logic             StallW, FlushW,
   input  logic             FWriteIntW,
@@ -120,6 +120,7 @@ module datapath (
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
   assign MemAdrM = ALUResultM;
+  assign MemAdrE = ALUResultE;  
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);	
   mux2  #(`XLEN)   resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);

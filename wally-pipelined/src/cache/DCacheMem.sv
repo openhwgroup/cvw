@@ -46,6 +46,9 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
    output logic 		      Dirty
    );
 
+  logic [NUMLINES-1:0] 		      ValidBits, DirtyBits;
+  
+
   genvar 			      words;
 
   generate
@@ -69,22 +72,6 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
 	      .WriteEnable(WriteEnable));
 
   
-  sram1rw #(.DEPTH(BLOCKLEN), 
-	    .WIDTH(NUMLINES))
-  CacheDataMem(.clk(clk),
-	       .Addr(Adr),
-	       .ReadData(ReadData),
-	       .WriteData(WriteData),
-	       .WriteEnable(WriteEnable));
-
-  sram1rw #(.DEPTH(TAGLEN),
-	    .WIDTH(NUMLINES))
-  CacheTagMem(.clk(clk),
-	      .Addr(Adr),
-	      .ReadData(ReadTag),
-	      .WriteData(WriteTag),
-	      .WriteEnable(WriteEnable));
-
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};

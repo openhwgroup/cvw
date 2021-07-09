@@ -196,6 +196,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
   assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
   // verilator lint_off WIDTH
+  // *** Bug width is wrong.
   assign FetchCountFlag = (FetchCount == FetchCountThreshold);
   // verilator lint_on WIDTH
   

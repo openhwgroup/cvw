@@ -49,7 +49,7 @@ module ieu (
   input logic 		   SquashSCW, // from LSU
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
-  output logic [`XLEN-1:0] MemAdrM, WriteDataM, // Address and write data to LSU
+  output logic [`XLEN-1:0] MemAdrM, MemAdrE, WriteDataM, // Address and write data to LSU
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
