@@ -3,18 +3,18 @@ target extended-remote :1234
 set logging overwrite on
 set logging redirect on
 printf "Creating bootmemGDB.txt\n"
-set logging file /courses/e190ax/buildroot_boot/bootmemGDB.txt
+set logging file ../linux-testvectors/intermediate-outputs/bootmemGDB.txt
 set logging on
 x/4096xb 0x1000
 set logging off
 printf "Creating bootmem_untrimmed_GDB.txt\n"
 printf "Warning - please verify that the second half of bootmem_untrimmed_GDB.txt is all 0s\n"
-set logging file /courses/e190ax/buildroot_boot/bootmem_untrimmed_GDB.txt
+set logging file ../linux-testvectors/intermediate-outputs/bootmem_untrimmed_GDB.txt
 set logging on
 x/8192xb 0x1000
 set logging off
 printf "Creating ramGDB.txt\n"
-set logging file /courses/e190ax/buildroot_boot/ramGDB.txt
+set logging file ../linux-testvectors/intermediate-outputs/ramGDB.txt
 set logging on
 x/134217728xb 0x80000000
 set logging off

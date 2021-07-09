@@ -13,7 +13,7 @@ as described below.
         commit 4047e10ed6e20492bae572d4929eaa5d67eed746
         Author: Gwenhael Goavec-Merou <gwenhael.goavec-merou@trabucayre.com>
         Date:   Wed Jun 30 06:27:10 2021 +0200
-    Then link ./buildroot-config-src/main.config to ./buildroot/.config.
+    Then hard link ./buildroot-config-src/main.config to ./buildroot/.config.
     That config file will in turn point to the other config files in ./buildroot-config-src.
     If you wish to modify the configs, then
     1. Copy ./buildroot-config-src/linux.config   to ./buildroot/output/build/linux-5.10.7/.config
@@ -29,7 +29,10 @@ as described below.
     "vmlinux" output.
 
 * To generate new RAMs and testvectors from a Linux image,
-    link ./buildroot-image-output to either your new image in ./buildroot/output/image 
+    sym link ./buildroot-image-output to either your new image in ./buildroot/output/image 
     or the existing image at /courses/e190ax/buildroot/output/image on Tera. 
+    (This might require first deleting the empty buildroot-image-output directory).
     Then run ./testvector-generation/logBuildrootMem.sh to generate RAMs.
     Then run ./testvector-generation/logAllBuildroot.sh to generate testvectors.
+    Note that you can only have one instance of QEMU open at a time! Check "ps -ef" to see if
+    anybody else is running QEMU.
