@@ -122,5 +122,5 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
   endgenerate
 
   assign TLBHit = CAMHit & TLBAccess;
-  assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
+  assign TLBMiss = ~CAMHit & ~TLBFlush & Translate & TLBAccess;
 endmodule
