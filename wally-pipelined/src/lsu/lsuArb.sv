@@ -42,29 +42,27 @@ module lsuArb
    input logic [2:0] 	    Funct3M,
    input logic [1:0] 	    AtomicM,
    input logic [`XLEN-1:0]  MemAdrM,
-   input logic [`XLEN-1:0]  WriteDataM,
    input logic 		    StallW,
    // to CPU
    output logic [`XLEN-1:0] ReadDataW,
    output logic 	    CommittedM, 
    output logic 	    SquashSCW,
    output logic 	    DataMisalignedM,
-   output logic 	    DCacheStall, 
+   output logic 	    LSUStall, 
   
    // to LSU   
    output logic 	    DisableTranslation, 
    output logic [1:0] 	    MemRWMtoDCache,
-   output logic [2:0] 	    SizetoDCache,
+   output logic [2:0] 	    Funct3MtoDCache,
    output logic [1:0] 	    AtomicMtoDCache,
    output logic [`XLEN-1:0] MemAdrMtoDCache,
-   output logic [`XLEN-1:0] WriteDataMtoDCache,
    output logic 	    StallWtoDCache,
    // from LSU
    input logic 		    CommittedMfromDCache,
    input logic 		    SquashSCWfromDCache,
    input logic 		    DataMisalignedMfromDCache,
    input logic [`XLEN-1:0]  ReadDataWfromDCache,
-   input logic 		    DataStall
+   input logic 		    DCacheStall
   
    );
   
@@ -141,11 +139,10 @@ module lsuArb
   generate
     assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
   endgenerate
-  mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, SizetoDCache);
+  mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoDCache);
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMtoDCache = SelPTW ? HPTWPAdr : MemAdrM;
-  assign WriteDataMtoDCache = SelPTW ? `XLEN'b0 : WriteDataM;
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
 
   // demux the inputs from LSU to walker or cpu's data port.
@@ -158,7 +155,7 @@ module lsuArb
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
-  assign HPTWStall = SelPTW ? DataStall : 1'b1;  
+  assign HPTWStall = SelPTW ? DCacheStall : 1'b1;  
   //assign HPTWStallD = SelPTW ? DataStall : 1'b1;
 /* -----\/----- EXCLUDED -----\/-----
   assign HPTWStallD = SelPTW ? DataStall : 1'b1;
@@ -168,6 +165,6 @@ module lsuArb
 			   .q(HPTWStall));
  -----/\----- EXCLUDED -----/\----- */
   
-  assign DCacheStall = SelPTW ? 1'b1 : DataStall; // *** this is probably going to change.
+  assign LSUStall = SelPTW ? 1'b1 : DCacheStall; // *** this is probably going to change.
   
 endmodule
