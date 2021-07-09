@@ -114,7 +114,7 @@ module csrc #(parameter
       // Counter adders with inhibits for power savings
       assign CYCLEPlusM = CYCLE_REGW + {63'b0, ~MCOUNTINHIBIT_REGW[0]};
       //assign TIMEPlusM = TIME_REGW + 1; // can't be inhibited
-      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidW & ~MCOUNTINHIBIT_REGW[2]};
+      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidW & ~StallW & ~MCOUNTINHIBIT_REGW[2]};
       //assign HPMCOUNTER3PlusM = HPMCOUNTER3_REGW + {63'b0, LoadStallD & ~MCOUNTINHIBIT_REGW[3]}; // count load stalls
       //assign HPMCOUNTER4PlusM = HPMCOUNTER4_REGW + {63'b0, 1'b0 & ~MCOUNTINHIBIT_REGW[4]}; // change to count signals
       assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[`XLEN-1:0];

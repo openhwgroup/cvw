@@ -64,7 +64,7 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
+  assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~DisableTranslation; 
   generate
       if (`XLEN==64) begin
           assign SV39Mode = (SATP_MODE == `SV39);
