@@ -93,7 +93,7 @@ module csrs #(parameter
       if (`MEM_VIRTMEM)
         flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
       else
-        assign SATP_REGW = 0;
+        assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
       if (`BUSYBEAR == 1)
         flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, SCOUNTEREN_REGW);
       else if (`BUILDROOT == 1)
