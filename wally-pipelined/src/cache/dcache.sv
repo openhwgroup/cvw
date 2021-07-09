@@ -69,14 +69,12 @@ module dcache
   localparam integer	       TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
   localparam integer	       WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam integer	       LOGWPL = $clog2(WORDSPERLINE);
-  
+  localparam integer 	       LOGXLENBYTES = $clog2(`XLEN/8);
 
 
   logic 		       SelAdrM;
   logic [`PA_BITS-1:0]	       MemPAdrW;
   logic [INDEXLEN-1:0]	       SRAMAdr;
-  logic [NUMWAYS-1:0]	       WriteEnable;
-  logic [NUMWAYS-1:0]	       WriteWordEnable;
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
   logic			       SetValidM, ClearValidM, SetValidW, ClearValidW;
@@ -95,7 +93,7 @@ module dcache
   logic [`XLEN-1:0]	       WriteDataW, FinalWriteDataW, FinalAMOWriteDataW;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsW;
   logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
-  logic [WORDSPERLINE-1:0]     SRAMWordEnable [NUMWAYS-1:0];
+  logic [WORDSPERLINE-1:0]     SRAMWordEnable;
   logic 		       SelMemWriteDataM, SelMemWriteDataW;
   logic [2:0] 		       Funct3W;
 
@@ -114,6 +112,7 @@ module dcache
   logic 		       SelAMOWrite;
   logic [6:0] 		       Funct7W;
   logic [INDEXLEN-1:0] 	       AdrMuxOut;
+  logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
   
   
 
@@ -144,6 +143,13 @@ module dcache
 	      .d1(MemPAdrW[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	      .s(SRAMWordWriteEnableW),
 	      .y(SRAMAdr));
+
+  oneHotDecoder #(LOGWPL)
+  oneHotDecoder(.bin(MemPAdrW[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
+		.decoded(MemPAdrDecodedW));
+  
+
+  assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
   
 
   genvar		       way;
@@ -153,9 +159,9 @@ module dcache
       MemWay(.clk(clk),
 	     .reset(reset),
 	     .Adr(SRAMAdr),
-	     .WAdr(MemPAdrW[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	     .WAdr(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	     .WriteEnable(SRAMWayWriteEnable[way]),
-	     .WriteWordEnable(SRAMWordEnable[way]),
+	     .WriteWordEnable(SRAMWordEnable),
 	     .WriteData(SRAMWriteData),
 	     .WriteTag(MemPAdrW[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	     .SetValid(SetValidW),
@@ -424,6 +430,12 @@ module dcache
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	end
+	// write miss valid cached
+	else if(MemRWM[0] & ~UncachedM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
+	  NextState = STATE_WRITE_MISS_FETCH_WDV;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	end
 	// fault
 	else if(|MemRWM & FaultM & ~DTLBMissM) begin
 	  NextState = STATE_READY;
@@ -468,8 +480,43 @@ module dcache
 
       STATE_READ_MISS_READ_WORD: begin
 	DCacheStall = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 1'b0;
 	NextState = STATE_READY;
+      end
+
+      STATE_WRITE_MISS_FETCH_WDV: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBRead = 1'b1;
+        if (FetchCountFlag & AHBAck) begin
+          NextState = STATE_WRITE_MISS_FETCH_DONE;
+        end else begin
+          NextState = STATE_WRITE_MISS_FETCH_WDV;
+        end
+      end
+
+      STATE_WRITE_MISS_FETCH_DONE: begin
+	DCacheStall = 1'b1;
+	if(VictimDirty) begin
+	  NextState = STATE_WRITE_MISS_CHECK_EVICTED_DIRTY;
+	end else begin
+	  NextState = STATE_WRITE_MISS_WRITE_CACHE_BLOCK;
+	end
+      end
+
+      STATE_WRITE_MISS_WRITE_CACHE_BLOCK: begin
+	SRAMBlockWriteEnableM = 1'b1;
+	DCacheStall = 1'b1;
+	NextState = STATE_WRITE_MISS_WRITE_WORD;
+	SelAdrM = 1'b1;
+	SetValidM = 1'b1;
+      end
+
+      STATE_WRITE_MISS_WRITE_WORD: begin
+	SRAMWordWriteEnableM = 1'b1;
+	DCacheStall = 1'b0;
+	NextState = STATE_READY;
+	SetDirtyM = 1'b1;
       end
 
       STATE_PTW_MISS_FETCH_WDV: begin
@@ -480,6 +527,11 @@ module dcache
 	end else begin
 	  NextState = STATE_PTW_MISS_FETCH_WDV;
 	end
+      end
+
+      STATE_SRAM_BUSY: begin
+	DCacheStall = 1'b0;
+	NextState = STATE_READY;
       end
       default: begin
       end

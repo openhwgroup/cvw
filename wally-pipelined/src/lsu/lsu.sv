@@ -258,9 +258,6 @@ module lsu
   flopr #(1) committedMreg(clk,reset,(CommittedMfromDCache | CommitM) & StallM,preCommittedM);
   assign CommittedMfromDCache = preCommittedM | CommitM;
 
-  // Determine if address is valid
-  assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[1];
-  assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[0];
 
   // Handle atomic load reserved / store conditional
   generate
@@ -288,6 +285,9 @@ module lsu
   endgenerate
  -----/\----- EXCLUDED -----/\----- */
 
+  // Determine if address is valid
+  assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[1];
+  assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[0];
 
   // *** BUG
   assign MemAdrEtoDCache = MemAdrE; // needs to be muxed in lsuarb.
