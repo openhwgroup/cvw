@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 test_dir = '../'
-gdbMemfileDir = '../linux-testvectors/intermediate-outputs'
-fixedMemfileDir = '../linux-testvectors'
+gdbMemfileDir = '../linux-testvectors/intermediate-outputs/'
+fixedMemfileDir = '../linux-testvectors/'
 infiles = ['bootmemGDB.txt', 'ramGDB.txt']
 outfiles = ['bootmem.txt', 'ram.txt']
 for i in range(len(infiles)):
