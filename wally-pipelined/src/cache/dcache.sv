@@ -88,7 +88,7 @@ module dcache
   logic [NUMWAYS-1:0]	       Valid, Dirty, WayHit;
   logic			       CacheHit;
   logic [NUMREPL_BITS-1:0]     ReplacementBits [NUMLINES-1:0];
-  logic [NUMREPL_BITS-1:0]     NewReplacement  [NUMLINES-1:0];
+  logic [NUMREPL_BITS-1:0]     NewReplacement;
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
   logic [`XLEN-1:0]	       ReadDataWordM, FinalReadDataWordM;
@@ -184,11 +184,7 @@ module dcache
   end
 
   // *** TODO add replacement policy
-  genvar index;
-  generate
-    for(index = 0; index < NUMLINES-1; index++)
-      assign NewReplacement[index] = '0;
-  endgenerate
+  assign NewReplacement = '0;
   assign VictimWay = 4'b0001;
   mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableW ? WayHit : '0),
 				 .d1(SRAMBlockWriteEnableM ? VictimWay : '0),
@@ -201,12 +197,13 @@ module dcache
   // ReadDataBlockWayMaskedM is a 2d array of cache block len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.
+  genvar index;
   always_comb begin
     ReadDataBlockM = '0;
     VictimReadDataBlockM = '0;
     for(int index = 0; index < NUMWAYS; index++) begin
-      ReadDataBlockM = ReadDataBlockM | ReadDataBlockWayMaskedM;
-      VictimReadDataBlockM = VictimReadDataBlockM | VictimReadDataBLockWayMaskedM;
+      ReadDataBlockM = ReadDataBlockM | ReadDataBlockWayMaskedM[index];
+      VictimReadDataBlockM = VictimReadDataBlockM | VictimReadDataBLockWayMaskedM[index];
     end
   end
   assign VictimDirty = | VictimDirtyWay;
@@ -363,7 +360,7 @@ module dcache
   SRAMWritePipeReg(.clk(clk),
 	      .reset(reset),
 	      .d({SRAMWordWriteEnableM, SetValidM, ClearValidM, SetDirtyM, ClearDirtyM, AtomicM}),
-	      .q({SRAMWordWriteEnableW, SetValidW, ClearValidM, SetDirtyM, ClearDirtyM, AtomicW}));
+	      .q({SRAMWordWriteEnableW, SetValidW, ClearValidW, SetDirtyW, ClearDirtyW, AtomicW}));
   
 
   // fsm state regs
@@ -491,4 +488,4 @@ module dcache
 
   assign CntEn = PreCntEn & AHBAck;
 
-endmodule; // dcache
+endmodule // dcache

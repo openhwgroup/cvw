@@ -89,6 +89,6 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
   end
   
 
-endmodule; // DCacheMemWay
+endmodule // DCacheMemWay
 
 
