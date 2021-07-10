@@ -73,12 +73,11 @@ module dcache
 
 
   logic 		       SelAdrM;
-  logic [`PA_BITS-1:0]	       MemPAdrW;
   logic [INDEXLEN-1:0]	       SRAMAdr;
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
-  logic			       SetValidM, ClearValidM, SetValidW, ClearValidW;
-  logic			       SetDirtyM, ClearDirtyM, SetDirtyW, ClearDirtyW;
+  logic			       SetValidM, ClearValidM;
+  logic			       SetDirtyM, ClearDirtyM;
   logic [BLOCKLEN-1:0] 	       ReadDataBlockWayM [NUMWAYS-1:0];
   logic [BLOCKLEN-1:0] 	       ReadDataBlockWayMaskedM [NUMWAYS-1:0];
   logic [BLOCKLEN-1:0] 	       VictimReadDataBLockWayMaskedM [NUMWAYS-1:0];
@@ -91,11 +90,11 @@ module dcache
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
   logic [`XLEN-1:0]	       VictimReadDataBlockSetsM [(WORDSPERLINE)-1:0];  
   logic [`XLEN-1:0]	       ReadDataWordM, FinalReadDataWordM;
-  logic [`XLEN-1:0]	       WriteDataW, FinalWriteDataW, FinalAMOWriteDataW;
-  logic [BLOCKLEN-1:0]	       FinalWriteDataWordsW;
+  logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
+  logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
   logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
   logic [WORDSPERLINE-1:0]     SRAMWordEnable;
-  logic 		       SelMemWriteDataM, SelMemWriteDataW;
+  logic 		       SelMemWriteDataM;
   logic [2:0] 		       Funct3W;
 
   logic 		       SRAMWordWriteEnableM, SRAMWordWriteEnableW;
@@ -112,7 +111,6 @@ module dcache
   logic 		       VictimDirty;
   logic 		       SelAMOWrite;
   logic [6:0] 		       Funct7W;
-  logic [INDEXLEN-1:0] 	       AdrMuxOut;
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
 
   logic [`PA_BITS-1:0] 	       BasePAdrM;
@@ -130,26 +128,12 @@ module dcache
 
   // data path
 
-  flopen #(`PA_BITS) MemPAdrWReg(.clk(clk),
-				 .en(1'b1),
-				 .d(MemPAdrM),
-				 .q(MemPAdrW));
-
   mux2 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .s(SelAdrM),
-	    .y(AdrMuxOut));
+	    .y(SRAMAdr));
 
-  assign SRAMAdr = AdrMuxOut;
-/* -----\/----- EXCLUDED -----\/-----
-  
-  mux2 #(INDEXLEN)
-  SelAdrlMux2(.d0(AdrMuxOut),
-	      .d1(MemPAdrW[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	      .s(SRAMWordWriteEnableW),
-	      .y(SRAMAdr));
- -----/\----- EXCLUDED -----/\----- */
 
   oneHotDecoder #(LOGWPL)
   oneHotDecoder(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
@@ -185,7 +169,7 @@ module dcache
 
       // the cache block candiate for eviction
       // *** this should be sharable with the read data muxing, but for now i'm doing the simple
-      // thing and makign them separate.
+      // thing and making them separate.
       assign VictimReadDataBLockWayMaskedM[way] = VictimWay[way] ? ReadDataBlockWayM[way] : '0;
       assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
       assign VictimTagWay[way] = Valid[way] ? ReadTag[way] : '0;
@@ -255,30 +239,20 @@ module dcache
 			      .q(ReadDataW));
 
   // write path
-  flopen #(`XLEN) WriteDataWReg(.clk(clk),
-			       .en(~StallW),
-			       .d(WriteDataM),
-			       .q(WriteDataW));
-
-  flopr #(3) Funct3WReg(.clk(clk),
-			.reset(reset),
-			.d(Funct3M),
-			.q(Funct3W));
-
-  subwordwrite subwordwrite(.HRDATA(ReadDataW),
+  subwordwrite subwordwrite(.HRDATA(FinalReadDataWordM),
 			    .HADDRD(MemPAdrM[2:0]),
-			    .HSIZED({Funct3W[2], 1'b0, Funct3W[1:0]}),
-			    .HWDATAIN(WriteDataW),
-			    .HWDATA(FinalWriteDataW));
+			    .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
+			    .HWDATAIN(WriteDataM),
+			    .HWDATA(FinalWriteDataM));
 
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
-      amoalu amoalu(.srca(ReadDataW), .srcb(WriteDataW), .funct(Funct7W), .width(Funct3W[1:0]), 
+      amoalu amoalu(.srca(FinalReadDataWordM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3M[1:0]), 
                     .result(AMOResult));
-      mux2 #(`XLEN) wdmux(FinalWriteDataW, AMOResult, SelAMOWrite & AtomicW[1], FinalAMOWriteDataW);
+      mux2 #(`XLEN) wdmux(FinalWriteDataM, AMOResult, SelAMOWrite & AtomicM[1], FinalAMOWriteDataM);
     end else
-      assign FinalAMOWriteDataW = FinalWriteDataW;
+      assign FinalAMOWriteDataM = FinalWriteDataM;
   endgenerate
   
 
@@ -312,11 +286,11 @@ module dcache
   // mux between the CPU's write and the cache fetch.
   generate
     for(index = 0; index < WORDSPERLINE; index++) begin
-      assign FinalWriteDataWordsW[((index+1)*`XLEN)-1 : (index*`XLEN)] = FinalAMOWriteDataW;
+      assign FinalWriteDataWordsM[((index+1)*`XLEN)-1 : (index*`XLEN)] = FinalAMOWriteDataM;
     end
   endgenerate
 
-  mux2 #(BLOCKLEN) WriteDataMux(.d0(FinalWriteDataWordsW),
+  mux2 #(BLOCKLEN) WriteDataMux(.d0(FinalWriteDataWordsM),
 				.d1(DCacheMemWriteData),
 				.s(SRAMBlockWriteEnableM),
 				.y(SRAMWriteData));
@@ -387,11 +361,11 @@ module dcache
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
-  flopr #(1+4+2)
+  flopr #(1)
   SRAMWritePipeReg(.clk(clk),
 	      .reset(reset),
-	      .d({SRAMWordWriteEnableM, SetValidM, ClearValidM, SetDirtyM, ClearDirtyM, AtomicM}),
-	      .q({SRAMWordWriteEnableW, SetValidW, ClearValidW, SetDirtyW, ClearDirtyW, AtomicW}));
+	      .d({SRAMWordWriteEnableM}),
+	      .q({SRAMWordWriteEnableW}));
   
 
   // fsm state regs
