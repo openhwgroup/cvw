@@ -89,6 +89,7 @@ module dcache
   logic [NUMREPL_BITS-1:0]     NewReplacement;
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
+  logic [`XLEN-1:0]	       VictimReadDataBlockSetsM [(WORDSPERLINE)-1:0];  
   logic [`XLEN-1:0]	       ReadDataWordM, FinalReadDataWordM;
   logic [`XLEN-1:0]	       WriteDataW, FinalWriteDataW, FinalAMOWriteDataW;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsW;
@@ -113,8 +114,11 @@ module dcache
   logic [6:0] 		       Funct7W;
   logic [INDEXLEN-1:0] 	       AdrMuxOut;
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
-  
-  
+
+  logic [`PA_BITS-1:0] 	       BasePAdrM;
+  logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
+  logic [TAGLEN-1:0] 	       VictimTag;
+    
 
   flopenr #(7) Funct7WReg(.clk(clk),
 			  .reset(reset),
@@ -180,8 +184,11 @@ module dcache
       assign ReadDataBlockWayMaskedM[way] = Valid[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
 
       // the cache block candiate for eviction
+      // *** this should be sharable with the read data muxing, but for now i'm doing the simple
+      // thing and makign them separate.
       assign VictimReadDataBLockWayMaskedM[way] = VictimWay[way] ? ReadDataBlockWayM[way] : '0;
       assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
+      assign VictimTagWay[way] = Valid[way] ? ReadTag[way] : '0;
     end
   endgenerate
 
@@ -211,24 +218,30 @@ module dcache
   always_comb begin
     ReadDataBlockM = '0;
     VictimReadDataBlockM = '0;
+    VictimTag = '0;
     for(int index = 0; index < NUMWAYS; index++) begin
       ReadDataBlockM = ReadDataBlockM | ReadDataBlockWayMaskedM[index];
       VictimReadDataBlockM = VictimReadDataBlockM | VictimReadDataBLockWayMaskedM[index];
+      VictimTag = VictimTag | VictimTagWay[index];      
     end
   end
   assign VictimDirty = | VictimDirtyWay;
-  
+
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
       assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
+      assign VictimReadDataBlockSetsM[index] = VictimReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];      
     end
   endgenerate
 
   // variable input mux
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
+
+  assign HWDATA = VictimReadDataBlockSetsM[FetchCount];
+
   // finally swr
   // *** BUG fix HSIZED? why was it this way?
   subwordread subwordread(.HRDATA(ReadDataWordM),
@@ -281,11 +294,17 @@ module dcache
 
   // *** Coding style. this is just awful. The purpose is to align FetchCount to the
   // size of XLEN so we can fetch XLEN bits.  FetchCount needs to be padded to PA_BITS length.
+  
+  mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
+			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
+			      .s(AHBWrite),
+			      .y(BasePAdrM));
+  
   generate
     if (`XLEN == 32) begin
-      assign AHBPAdr = ({ {`PA_BITS-4{1'b0}}, FetchCount} << 2) + MemPAdrM;      
+      assign AHBPAdr = ({ {`PA_BITS-4{1'b0}}, FetchCount} << 2) + BasePAdrM;
     end else begin
-      assign AHBPAdr = ({ {`PA_BITS-3{1'b0}}, FetchCount} << 3) + MemPAdrM;
+      assign AHBPAdr = ({ {`PA_BITS-3{1'b0}}, FetchCount} << 3) + BasePAdrM;
     end
   endgenerate
     
@@ -321,7 +340,7 @@ module dcache
 		STATE_READ_MISS_READ_WORD,
 		STATE_WRITE_MISS_FETCH_WDV,
 		STATE_WRITE_MISS_FETCH_DONE,
-		STATE_WRITE_MISS_CHECK_EVICTED_DIRTY,
+		STATE_WRITE_MISS_EVICT_DIRTY,
 		STATE_WRITE_MISS_WRITE_BACK_EVICTED_BLOCK,
 		STATE_WRITE_MISS_WRITE_CACHE_BLOCK,
 		STATE_WRITE_MISS_READ_WORD,
@@ -507,8 +526,9 @@ module dcache
       STATE_WRITE_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
 	SelAdrM = 1'b1;
+        CntReset = 1'b1;
 	if(VictimDirty) begin
-	  NextState = STATE_WRITE_MISS_CHECK_EVICTED_DIRTY;
+	  NextState = STATE_WRITE_MISS_EVICT_DIRTY;
 	end else begin
 	  NextState = STATE_WRITE_MISS_WRITE_CACHE_BLOCK;
 	end
@@ -534,6 +554,17 @@ module dcache
 	SetDirtyM = 1'b1;
 	NextState = STATE_READY;
 	SelAdrM = 1'b1;
+      end
+
+      STATE_WRITE_MISS_EVICT_DIRTY: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBWrite = 1'b1;
+	if( FetchCountFlag & AHBAck) begin
+	  NextState = STATE_WRITE_MISS_WRITE_CACHE_BLOCK;
+	end else begin
+	  NextState = STATE_WRITE_MISS_EVICT_DIRTY;
+	end	  
       end
 
       STATE_PTW_MISS_FETCH_WDV: begin
