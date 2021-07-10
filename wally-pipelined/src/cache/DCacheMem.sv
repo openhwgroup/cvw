@@ -33,6 +33,7 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
    input logic [$clog2(NUMLINES)-1:0] WAdr, // write address for valid and dirty only
    input logic 			      WriteEnable,
    input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
+   input logic TagWriteEnable,
    input logic [BLOCKLEN-1:0] 	      WriteData,
    input logic [TAGLEN-1:0] 	      WriteTag,
    input logic 			      SetValid,
@@ -69,7 +70,7 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
 	      .Addr(Adr),
 	      .ReadData(ReadTag),
 	      .WriteData(WriteTag),
-	      .WriteEnable(WriteEnable));
+	      .WriteEnable(TagWriteEnable));
 
   
   always_ff @(posedge clk, posedge reset) begin
