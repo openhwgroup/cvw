@@ -59,7 +59,7 @@ module dcache
    );
 
   localparam integer	       BLOCKLEN = 256;
-  localparam integer	       NUMLINES = 512;
+  localparam integer	       NUMLINES = 64;
   localparam integer	       NUMWAYS = 4;
   localparam integer	       NUMREPL_BITS = 3;
 
@@ -127,7 +127,7 @@ module dcache
   // data path
 
   flopen #(`PA_BITS) MemPAdrWReg(.clk(clk),
-				 .en(~StallW),
+				 .en(1'b1),
 				 .d(MemPAdrM),
 				 .q(MemPAdrW));
 
@@ -137,15 +137,18 @@ module dcache
 	    .s(SelAdrM),
 	    .y(AdrMuxOut));
 
-
+  assign SRAMAdr = AdrMuxOut;
+/* -----\/----- EXCLUDED -----\/-----
+  
   mux2 #(INDEXLEN)
   SelAdrlMux2(.d0(AdrMuxOut),
 	      .d1(MemPAdrW[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	      .s(SRAMWordWriteEnableW),
 	      .y(SRAMAdr));
+ -----/\----- EXCLUDED -----/\----- */
 
   oneHotDecoder #(LOGWPL)
-  oneHotDecoder(.bin(MemPAdrW[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
+  oneHotDecoder(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
 		.decoded(MemPAdrDecodedW));
   
 
@@ -154,7 +157,7 @@ module dcache
 
   genvar		       way;
   generate
-    for(way = 0; way < NUMWAYS; way = way + 1) begin
+    for(way = 0; way < NUMWAYS; way = way + 1) begin :CacheWays
       DCacheMem #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN))
       MemWay(.clk(clk),
 	     .reset(reset),
@@ -162,12 +165,13 @@ module dcache
 	     .WAdr(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	     .WriteEnable(SRAMWayWriteEnable[way]),
 	     .WriteWordEnable(SRAMWordEnable),
+	     .TagWriteEnable(SRAMBlockWriteEnableM),
 	     .WriteData(SRAMWriteData),
-	     .WriteTag(MemPAdrW[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-	     .SetValid(SetValidW),
-	     .ClearValid(ClearValidW),
-	     .SetDirty(SetDirtyW),
-	     .ClearDirty(ClearDirtyW),
+	     .WriteTag(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+	     .SetValid(SetValidM),
+	     .ClearValid(ClearValidM),
+	     .SetDirty(SetDirtyM),
+	     .ClearDirty(ClearDirtyM),
 	     .ReadData(ReadDataBlockWayM[way]),
 	     .ReadTag(ReadTag[way]),
 	     .Valid(Valid[way]),
@@ -186,13 +190,13 @@ module dcache
       for(int index = 0; index < NUMLINES-1; index++)
 	ReplacementBits[index] <= '0;
     end
-    else if (SRAMWriteEnable) ReplacementBits[MemPAdrW[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
+    else if (SRAMWriteEnable) ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
   end
 
   // *** TODO add replacement policy
   assign NewReplacement = '0;
   assign VictimWay = 4'b0001;
-  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableW ? WayHit : '0),
+  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableM ? WayHit : '0),
 				 .d1(SRAMBlockWriteEnableM ? VictimWay : '0),
 				 .s(SRAMBlockWriteEnableM),
 				 .y(SRAMWayWriteEnable));
@@ -308,39 +312,41 @@ module dcache
   logic CntReset;
   
   
-  typedef enum		       {STATE_READY,
-				STATE_READ_MISS_FETCH_WDV,
-				STATE_READ_MISS_FETCH_DONE,
-				STATE_READ_MISS_CHECK_EVICTED_DIRTY,
-				STATE_READ_MISS_WRITE_BACK_EVICTED_BLOCK,
-				STATE_READ_MISS_WRITE_CACHE_BLOCK,
-				STATE_READ_MISS_READ_WORD,
-				STATE_WRITE_MISS_FETCH_WDV,
-				STATE_WRITE_MISS_FETCH_DONE,
-				STATE_WRITE_MISS_CHECK_EVICTED_DIRTY,
-				STATE_WRITE_MISS_WRITE_BACK_EVICTED_BLOCK,
-				STATE_WRITE_MISS_WRITE_CACHE_BLOCK,
-				STATE_WRITE_MISS_WRITE_WORD,
-				STATE_AMO_MISS_FETCH_WDV,
-				STATE_AMO_MISS_FETCH_DONE,
-				STATE_AMO_MISS_CHECK_EVICTED_DIRTY,
-				STATE_AMO_MISS_WRITE_BACK_EVICTED_BLOCK,
-				STATE_AMO_MISS_WRITE_CACHE_BLOCK,
-				STATE_AMO_MISS_READ_WORD,
-				STATE_AMO_MISS_UPDATE_WORD,
-				STATE_AMO_MISS_WRITE_WORD,
-				STATE_AMO_UPDATE,
-				STATE_AMO_WRITE,
-				STATE_SRAM_BUSY,
-				STATE_PTW_READY,
-				STATE_PTW_MISS_FETCH_WDV,
-				STATE_PTW_MISS_FETCH_DONE,
-				STATE_PTW_MISS_CHECK_EVICTED_DIRTY,
-				STATE_PTW_MISS_WRITE_BACK_EVICTED_BLOCK,
-				STATE_PTW_MISS_WRITE_CACHE_BLOCK,
-				STATE_PTW_MISS_READ_SRAM,
-				STATE_UNCACHED_WDV,
-				STATE_UNCACHED_DONE} statetype;
+  typedef enum {STATE_READY,
+		STATE_READ_MISS_FETCH_WDV,
+		STATE_READ_MISS_FETCH_DONE,
+		STATE_READ_MISS_CHECK_EVICTED_DIRTY,
+		STATE_READ_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_READ_MISS_WRITE_CACHE_BLOCK,
+		STATE_READ_MISS_READ_WORD,
+		STATE_WRITE_MISS_FETCH_WDV,
+		STATE_WRITE_MISS_FETCH_DONE,
+		STATE_WRITE_MISS_CHECK_EVICTED_DIRTY,
+		STATE_WRITE_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_WRITE_MISS_WRITE_CACHE_BLOCK,
+		STATE_WRITE_MISS_READ_WORD,
+		STATE_WRITE_MISS_WRITE_WORD,
+		STATE_AMO_MISS_FETCH_WDV,
+		STATE_AMO_MISS_FETCH_DONE,
+		STATE_AMO_MISS_CHECK_EVICTED_DIRTY,
+		STATE_AMO_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_AMO_MISS_WRITE_CACHE_BLOCK,
+		STATE_AMO_MISS_READ_WORD,
+		STATE_AMO_MISS_UPDATE_WORD,
+		STATE_AMO_MISS_WRITE_WORD,
+		STATE_AMO_UPDATE,
+		STATE_AMO_WRITE,
+		STATE_SRAM_BUSY,
+		STATE_PTW_READY,
+		STATE_PTW_MISS_FETCH_WDV,
+		STATE_PTW_MISS_FETCH_DONE,
+		STATE_PTW_MISS_CHECK_EVICTED_DIRTY,
+		STATE_PTW_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_PTW_MISS_WRITE_CACHE_BLOCK,
+		STATE_PTW_MISS_READ_SRAM,
+		STATE_UNCACHED_WDV,
+		STATE_UNCACHED_DONE,
+		STATE_CPU_BUSY} statetype;
 
   statetype CurrState, NextState;
 
@@ -360,7 +366,7 @@ module dcache
 
   assign NextFetchCount = FetchCount + 1'b1;
 
-  assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableW;
+  assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
   flopr #(1+4+2)
   SRAMWritePipeReg(.clk(clk),
@@ -419,10 +425,12 @@ module dcache
 	end
 	// write hit valid cached
 	else if (MemRWM[0] & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
-	  NextState = STATE_READY;
+	  SelAdrM = 1'b1;
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
+	  if(StallW) NextState = STATE_CPU_BUSY;
+	  else NextState = STATE_READY;
 	end
 	// read miss valid cached
 	else if(MemRWM[1] & ~UncachedM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
@@ -488,6 +496,7 @@ module dcache
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBRead = 1'b1;
+	SelAdrM = 1'b1;
         if (FetchCountFlag & AHBAck) begin
           NextState = STATE_WRITE_MISS_FETCH_DONE;
         end else begin
@@ -497,6 +506,7 @@ module dcache
 
       STATE_WRITE_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
+	SelAdrM = 1'b1;
 	if(VictimDirty) begin
 	  NextState = STATE_WRITE_MISS_CHECK_EVICTED_DIRTY;
 	end else begin
@@ -507,16 +517,23 @@ module dcache
       STATE_WRITE_MISS_WRITE_CACHE_BLOCK: begin
 	SRAMBlockWriteEnableM = 1'b1;
 	DCacheStall = 1'b1;
-	NextState = STATE_WRITE_MISS_WRITE_WORD;
+	NextState = STATE_WRITE_MISS_READ_WORD;
 	SelAdrM = 1'b1;
 	SetValidM = 1'b1;
       end
 
+      STATE_WRITE_MISS_READ_WORD: begin
+	NextState = STATE_WRITE_MISS_WRITE_WORD;
+	DCacheStall = 1'b1;
+	SelAdrM = 1'b1;
+      end
+
       STATE_WRITE_MISS_WRITE_WORD: begin
-	SRAMWordWriteEnableM = 1'b1;
 	DCacheStall = 1'b0;
-	NextState = STATE_READY;
+	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
+	NextState = STATE_READY;
+	SelAdrM = 1'b1;
       end
 
       STATE_PTW_MISS_FETCH_WDV: begin
@@ -532,6 +549,11 @@ module dcache
       STATE_SRAM_BUSY: begin
 	DCacheStall = 1'b0;
 	NextState = STATE_READY;
+      end
+
+      STATE_CPU_BUSY : begin
+	if(StallW) NextState = STATE_CPU_BUSY;
+	else NextState = STATE_READY;
       end
       default: begin
       end
