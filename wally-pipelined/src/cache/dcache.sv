@@ -312,13 +312,14 @@ module dcache
 		STATE_READ_MISS_WRITE_BACK_EVICTED_BLOCK,
 		STATE_READ_MISS_WRITE_CACHE_BLOCK,
 		STATE_READ_MISS_READ_WORD,
-		STATE_WRITE_MISS_FETCH_WDV,
-		STATE_WRITE_MISS_FETCH_DONE,
-		STATE_WRITE_MISS_EVICT_DIRTY,
-		STATE_WRITE_MISS_WRITE_BACK_EVICTED_BLOCK,
-		STATE_WRITE_MISS_WRITE_CACHE_BLOCK,
-		STATE_WRITE_MISS_READ_WORD,
-		STATE_WRITE_MISS_WRITE_WORD,
+		STATE_MISS_FETCH_WDV,
+		STATE_MISS_FETCH_DONE,
+		STATE_MISS_EVICT_DIRTY,
+		STATE_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_MISS_WRITE_CACHE_BLOCK,
+		STATE_MISS_READ_WORD,
+		STATE_MISS_READ_WORD_DELAY,
+		STATE_MISS_WRITE_WORD,
 		STATE_AMO_MISS_FETCH_WDV,
 		STATE_AMO_MISS_FETCH_DONE,
 		STATE_AMO_MISS_CHECK_EVICTED_DIRTY,
@@ -425,15 +426,9 @@ module dcache
 	  if(StallW) NextState = STATE_CPU_BUSY;
 	  else NextState = STATE_READY;
 	end
-	// read miss valid cached
-	else if(MemRWM[1] & ~UncachedM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
-	  NextState = STATE_READ_MISS_FETCH_WDV;
-	  CntReset = 1'b1;
-	  DCacheStall = 1'b1;
-	end
-	// write miss valid cached
-	else if(MemRWM[0] & ~UncachedM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
-	  NextState = STATE_WRITE_MISS_FETCH_WDV;
+	// read or write miss valid cached
+	else if((|MemRWM) & ~UncachedM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
+	  NextState = STATE_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	end
@@ -452,77 +447,55 @@ module dcache
 	SelAMOWrite = 1'b1;
       end
 
-      STATE_READ_MISS_FETCH_WDV: begin
-	DCacheStall = 1'b1;
-        PreCntEn = 1'b1;
-	AHBRead = 1'b1;
-        if (FetchCountFlag & AHBAck) begin
-          NextState = STATE_READ_MISS_FETCH_DONE;
-        end else begin
-          NextState = STATE_READ_MISS_FETCH_WDV;
-        end
-      end
-
-      STATE_READ_MISS_FETCH_DONE: begin
-	DCacheStall = 1'b1;
-	if(VictimDirty) begin
-	  NextState = STATE_READ_MISS_CHECK_EVICTED_DIRTY;
-	end else begin
-	  NextState = STATE_READ_MISS_WRITE_CACHE_BLOCK;
-	end
-      end
-
-      STATE_READ_MISS_WRITE_CACHE_BLOCK: begin
-	SRAMBlockWriteEnableM = 1'b1;
-	DCacheStall = 1'b1;
-	NextState = STATE_READ_MISS_READ_WORD;
-	SelAdrM = 1'b1;
-      end
-
-      STATE_READ_MISS_READ_WORD: begin
-	DCacheStall = 1'b1;
-	SelAdrM = 1'b0;
-	NextState = STATE_READY;
-      end
-
-      STATE_WRITE_MISS_FETCH_WDV: begin
+      STATE_MISS_FETCH_WDV: begin
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBRead = 1'b1;
 	SelAdrM = 1'b1;
         if (FetchCountFlag & AHBAck) begin
-          NextState = STATE_WRITE_MISS_FETCH_DONE;
+          NextState = STATE_MISS_FETCH_DONE;
         end else begin
-          NextState = STATE_WRITE_MISS_FETCH_WDV;
+          NextState = STATE_MISS_FETCH_WDV;
         end
       end
 
-      STATE_WRITE_MISS_FETCH_DONE: begin
+      STATE_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
 	SelAdrM = 1'b1;
         CntReset = 1'b1;
 	if(VictimDirty) begin
-	  NextState = STATE_WRITE_MISS_EVICT_DIRTY;
+	  NextState = STATE_MISS_EVICT_DIRTY;
 	end else begin
-	  NextState = STATE_WRITE_MISS_WRITE_CACHE_BLOCK;
+	  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 	end
       end
 
-      STATE_WRITE_MISS_WRITE_CACHE_BLOCK: begin
+      STATE_MISS_WRITE_CACHE_BLOCK: begin
 	SRAMBlockWriteEnableM = 1'b1;
 	DCacheStall = 1'b1;
-	NextState = STATE_WRITE_MISS_READ_WORD;
+	NextState = STATE_MISS_READ_WORD;
 	SelAdrM = 1'b1;
 	SetValidM = 1'b1;
       end
 
-      STATE_WRITE_MISS_READ_WORD: begin
-	NextState = STATE_WRITE_MISS_WRITE_WORD;
-	DCacheStall = 1'b1;
+      STATE_MISS_READ_WORD: begin
 	SelAdrM = 1'b1;
+	DCacheStall = 1'b1;
+	if (MemRWM[1]) begin
+	  NextState = STATE_MISS_READ_WORD_DELAY;
+	  // delay state is required as the read signal MemRWM[1] is still high when we
+	  // return to the ready state because the cache is stalling the cpu.
+	end else begin
+	  NextState = STATE_MISS_WRITE_WORD;
+	end
       end
 
-      STATE_WRITE_MISS_WRITE_WORD: begin
+      STATE_MISS_READ_WORD_DELAY: begin
+	SelAdrM = 1'b1;
+	NextState = STATE_READY;
+      end
+
+      STATE_MISS_WRITE_WORD: begin
 	DCacheStall = 1'b0;
 	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
@@ -530,14 +503,14 @@ module dcache
 	SelAdrM = 1'b1;
       end
 
-      STATE_WRITE_MISS_EVICT_DIRTY: begin
+      STATE_MISS_EVICT_DIRTY: begin
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBWrite = 1'b1;
 	if( FetchCountFlag & AHBAck) begin
-	  NextState = STATE_WRITE_MISS_WRITE_CACHE_BLOCK;
+	  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 	end else begin
-	  NextState = STATE_WRITE_MISS_EVICT_DIRTY;
+	  NextState = STATE_MISS_EVICT_DIRTY;
 	end	  
       end
 
