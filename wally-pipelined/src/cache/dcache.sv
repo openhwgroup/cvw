@@ -370,6 +370,7 @@ module dcache
   
 
   // fsm state regs
+/* -----\/----- EXCLUDED -----\/-----
   flopenl #(.TYPE(statetype))
   FSMReg(.clk(clk),
 	 .load(reset),
@@ -377,6 +378,12 @@ module dcache
 	 .val(STATE_READY),
 	 .d(NextState),
 	 .q(CurrState));
+ -----/\----- EXCLUDED -----/\----- */
+
+  always_ff @(posedge clk, posedge reset)
+    if (reset)    CurrState <= #1 STATE_READY;
+    else CurrState <= #1 NextState;
+
 
   // next state logic and some state ouputs.
   always_comb begin
@@ -436,7 +443,9 @@ module dcache
 	else if(|MemRWM & FaultM & ~DTLBMissM) begin
 	  NextState = STATE_READY;
 	end
+	else NextState = STATE_READY;
       end
+      
       STATE_AMO_UPDATE: begin
 	NextState = STATE_AMO_WRITE;
 	SaveSRAMRead = 1'b1;
