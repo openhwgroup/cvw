@@ -40,8 +40,7 @@ module fpu (
   output logic [`XLEN-1:0] FIntResM,     
   output logic 		      FDivBusyE,        // Is the divison/sqrt unit busy
   output logic 		      IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
-  output logic [4:0] 	   SetFflagsM,       // FPU flags
-  output logic [`XLEN-1:0] FPUResultW);      // FPU result
+  output logic [4:0] 	   SetFflagsM);      // FPU result
 // *** change FMA to do 16 - 32 - 64 - 128 FEXPBITS 
 
   generate
@@ -79,6 +78,9 @@ module fpu (
       logic [63:0]   FMAResM, FMAResW;
       logic [4:0]    FMAFlgM, FMAFlgW;
 
+
+      logic [63:0]   ReadResW;
+
       // add/cvt signals
       logic [63:0] 	FAddResM, FAddResW;
       logic [4:0] 	FAddFlgM, FAddFlgW;  
@@ -102,7 +104,7 @@ module fpu (
       logic [63:0] 	ClassResE, ClassResM;
       
       // 64-bit FPU result   
-      logic [63:0] 	FPUResult64W;                                           
+      logic [63:0] 	FPUResultW;                                           
       logic [4:0] 	FPUFlagsW;
       
       
@@ -124,7 +126,7 @@ module fpu (
       // regfile instantiation
       fregfile fregfile (clk, reset, FWriteEnW,
             InstrD[19:15], InstrD[24:20], InstrD[31:27], RdW,
-            FPUResult64W,
+            FPUResultW,
             FRD1D, FRD2D, FRD3D);	
       
 
@@ -168,9 +170,9 @@ module fpu (
                         .ForwardXE, .ForwardYE, .ForwardZE);
 
       // forwarding muxs
-      mux3  #(64)  fxemux(FRD1E, FPUResult64W, FResM, ForwardXE, SrcXE);
-      mux3  #(64)  fyemux(FRD2E, FPUResult64W, FResM, ForwardYE, SrcYE);
-      mux3  #(64)  fzemux(FRD3E, FPUResult64W, FResM, ForwardZE, SrcZE);
+      mux3  #(64)  fxemux(FRD1E, FPUResultW, FResM, ForwardXE, SrcXE);
+      mux3  #(64)  fyemux(FRD2E, FPUResultW, FResM, ForwardYE, SrcYE);
+      mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, ForwardZE, SrcZE);
 
       
       // first of two-stage instance of floating-point fused multiply-add unit
@@ -218,8 +220,7 @@ module fpu (
       fcvt fcvt (.X(SrcXE), .SrcAE, .FOpCtrlE, .FmtE, .FrmE, .CvtResE, .CvtFlgE);
 
       // output for store instructions
-      assign FWriteDataE = FmtE ? SrcYE[63:64-`XLEN] : {{`XLEN-32{1'b0}}, SrcYE[63:32]};
-      //***swap to mux
+      mux2  #(`XLEN)  FWriteDataMux({{`XLEN-32{1'b0}}, SrcYE[63:32]}, SrcYE[63:64-`XLEN], FmtE, FWriteDataE);
 
 
 
@@ -265,8 +266,7 @@ module fpu (
       mux4  #(64)  FResMux(AlignedSrcAM, SgnResM, CmpResM, CvtResM, FResSelM, FResM);
       mux4  #(5)  FFlgMux(5'b0, {4'b0, SgnNVM}, {4'b0, CmpNVM}, CvtFlgM, FResSelM, FFlgM);
 
-      //***change to mux
-      assign SrcXMAligned = FmtM ? SrcXM[63:64-`XLEN] : {{`XLEN-32{1'b0}}, SrcXM[63:32]};
+      mux2  #(`XLEN)  SrcXAlignedMux({{`XLEN-32{1'b0}}, SrcXM[63:32]}, SrcXM[63:64-`XLEN], FmtM, SrcXMAligned);
       mux4  #(`XLEN)  IntResMux(CmpResM[`XLEN-1:0], SrcXMAligned, ClassResM[`XLEN-1:0], CvtResM[`XLEN-1:0], FIntResSelM, FIntResM);
 
       
@@ -318,28 +318,10 @@ module fpu (
    //#########################################
 
 
+      mux2  #(64)  ReadResMux({ReadDataW[31:0], 32'b0}, {ReadDataW, {64-`XLEN{1'b0}}}, FmtW, ReadResW);
+      mux5  #(64)  FPUResultMux(ReadResW, FMAResW, FAddResW, FDivResultW, FResW, FResultSelW, FPUResultW);
+      
 
-      always_comb begin
-         case (FResultSelW)
-      3'b000 : FPUResult64W = FmtW ? {ReadDataW, {64-`XLEN{1'b0}}} : {ReadDataW[31:0], 32'b0};
-      3'b001 : FPUResult64W = FMAResW;
-      3'b010 : FPUResult64W = FAddResW;
-      3'b011 : FPUResult64W = FDivResultW;
-      3'b100 : FPUResult64W = FResW;
-      default : FPUResult64W = 64'bxxxxx;
-         endcase
-      end
-      
-      
-      // interface between XLEN size datapath and double-precision sized
-      // floating-point results
-      //
-      // define offsets for LSB zero extension or truncation
-   always_comb begin      
-      // zero extension 
-//***turn into mux
-      FPUResultW = FmtW ? FPUResult64W[63:64-`XLEN] : {{`XLEN-32{1'b0}}, FPUResult64W[63:32]};    
-   end
    end else begin // no F_SUPPORTED; tie outputs low
      assign FStallD = 0;
      assign FWriteIntE = 0; 
@@ -350,7 +332,6 @@ module fpu (
      assign FDivBusyE = 0;
      assign IllegalFPUInstrD = 1;
      assign SetFflagsM = 0;
-     assign FPUResultW = 0;
    end
   endgenerate 
   
