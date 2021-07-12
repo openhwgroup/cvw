@@ -1022,12 +1022,35 @@ module DCacheFlushFSM
     else CurrState = NextState;
   end
 
+  integer 	       adr;
+  integer 	       tag;
+  integer 	       index;
+  integer 	       way;
+  integer 	       word;
+  logic 	       dirty, valid;
+  logic [`XLEN-1:0]    data;
+
   always_comb begin
     case (CurrState)
       IDLE: if(start) NextState = READ;
       else NextState = IDLE;
       READ: begin
 	force testbench.dut.hart.lsu.dcache.SRAMAdr = count;
+	index = count / numways;
+	way = count % numways;
+	tag = testbench.dut.hart.lsu.dcache.ReadTag[way];
+	dirty = testbench.dut.hart.lsu.dcache.Dirty[way];
+	valid = testbench.dut.hart.lsu.dcache.Valid[way];
+	adr = (tag << tagstart) + (index << logblockbytelen);
+	data = testbench.dut.hart.lsu.dcache.FinalReadDataWordM;
+	if (valid & dirty) begin
+	  $display("Index Way Tag V D %03x %d %016x %d %d %016x %016x", index, way, tag, valid, dirty, adr, data);
+	  force dut.uncore.dtim.A = adr;
+	  force dut.uncore.dtim.HWDATA = data;
+	  force dut.uncore.dtim.memwrite = 1;
+	  force dut.uncore.dtim.risingHREADYTim = 1;
+	end
+	
 	if(CountFlag) begin
 	  NextState = DONE;
 	end else begin
@@ -1036,6 +1059,10 @@ module DCacheFlushFSM
       end
       DONE: begin
 	release testbench.dut.hart.lsu.dcache.SRAMAdr;	
+	release dut.uncore.dtim.A;
+	release dut.uncore.dtim.HWDATA;
+	release dut.uncore.dtim.memwrite;
+	release dut.uncore.dtim.risingHREADYTim;
 	NextState = DONE;
       end
       default: NextState = IDLE;
@@ -1046,26 +1073,7 @@ module DCacheFlushFSM
   assign CntEn = CurrState == READ;
 
   
-  integer 	       adr;
-  integer 	       tag;
-  integer 	       index;
-  integer 	       way;
-  integer 	       word;
-  
-  logic 	       dirty, valid;
 
-  always_comb begin
-    if (CurrState == READ) begin
-      assign index = count / numways;
-      assign way = count % numways;
-      assign tag = testbench.dut.hart.lsu.dcache.ReadTag[way];
-      assign dirty = testbench.dut.hart.lsu.dcache.Dirty[way];
-      assign valid = testbench.dut.hart.lsu.dcache.Valid[way];
-      assign adr =  tag << (tagstart) + index;
-      
-      $display("Index Way Tag V D %03x %d %016x %d %d %016x", index, way, tag, valid, dirty, adr);
-    end
-  end
 		    
 endmodule
 		      
