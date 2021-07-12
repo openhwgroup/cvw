@@ -53,7 +53,7 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
   genvar 			      words;
 
   generate
-    for(words = 0; words < BLOCKLEN/`XLEN; words++) begin
+    for(words = 0; words < BLOCKLEN/`XLEN; words++) begin : word
       sram1rw #(.DEPTH(`XLEN), 
 		.WIDTH(NUMLINES))
       CacheDataMem(.clk(clk),

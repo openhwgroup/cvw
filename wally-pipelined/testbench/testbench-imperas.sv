@@ -44,14 +44,14 @@ module testbench();
   logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
 
-  //string tests32mmu[] = '{
-    //"rv32mmu/WALLY-MMU-SV32", "3000"
-  //  };
+  string tests32mmu[] = '{
+    "rv32mmu/WALLY-MMU-SV32", "3000"
+    };
 
-  //string tests64mmu[] = '{
-    //"rv64mmu/WALLY-MMU-SV48", "3000",
-    //"rv64mmu/WALLY-MMU-SV39", "3000"
-  //};
+  string tests64mmu[] = '{
+    "rv64mmu/WALLY-MMU-SV48", "3000",
+    "rv64mmu/WALLY-MMU-SV39", "3000"
+  };
 
   
 string tests32f[] = '{
@@ -216,6 +216,7 @@ string tests32f[] = '{
 
   string tests64i[] = '{
     //"rv64i/WALLY-PIPELINE-100K", "f7ff0",
+    //"rv64i/WALLY-LOAD", "11bf0",
     "rv64i/I-ADD-01", "3000",
     "rv64i/I-ADDI-01", "3000",
     "rv64i/I-ADDIW-01", "3000",
@@ -286,7 +287,7 @@ string tests32f[] = '{
     "rv64i/WALLY-SLLI", "3000",
     "rv64i/WALLY-SRLI", "3000",
     "rv64i/WALLY-SRAI", "3000",
-    "rv64i/WALLY-LOAD", "11bf0",
+
     "rv64i/WALLY-JAL", "4000",
     "rv64i/WALLY-JALR", "3000",
     "rv64i/WALLY-STORE", "3000",
@@ -513,6 +514,9 @@ string tests32f[] = '{
   logic             HCLK, HRESETn;
   logic [`XLEN-1:0] PCW;
 
+  logic 	    DCacheFlushDone, DCacheFlushStart;
+  
+
   logic [`XLEN-1:0] debug;
   assign debug = dut.uncore.dtim.RAM[536872960];
   
@@ -540,9 +544,10 @@ string tests32f[] = '{
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`A_SUPPORTED) tests = {tests, tests64a};
-        //if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
+        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
+	tests = {tests64i, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -625,9 +630,9 @@ string tests32f[] = '{
   // check results
   always @(negedge clk)
     begin    
-      if (dut.hart.priv.EcallFaultM && 
-          (dut.hart.ieu.dp.regf.rf[3] == 1 || (dut.hart.ieu.dp.regf.we3 && dut.hart.ieu.dp.regf.a3 == 3 && dut.hart.ieu.dp.regf.wd3 == 1))) begin
+      if (DCacheFlushDone) begin
         $display("Code ended with ecall with gp = 1");
+
         #60; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
         for(i=0; i<SIGNATURESIZE; i=i+1) begin
@@ -705,6 +710,18 @@ string tests32f[] = '{
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
+
+  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
+			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
+			     (dut.hart.ieu.dp.regf.we3 && 
+			      dut.hart.ieu.dp.regf.a3 == 3 && 
+			      dut.hart.ieu.dp.regf.wd3 == 1));
+  
+  DCacheFlushFSM DCacheFlushFSM(.clk(clk),
+				.reset(reset),
+				.start(DCacheFlushStart),
+				.done(DCacheFlushDone));
+  
 
   generate
     // initialize the branch predictor
@@ -959,5 +976,206 @@ module logging(
 
   always @(posedge clk)
     if (HTRANS != 2'b00 && HADDR == 0)
-      $display("Warning: access to memory address 0\n");
+      $display("%t Warning: access to memory address 0\n", $realtime);
 endmodule
+
+
+module DCacheFlushFSM
+  (input logic clk,
+   input logic reset,
+   input logic start,
+   output logic done);
+
+  localparam integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
+  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
+  localparam integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  localparam integer lognumlines = $clog2(numlines);
+  localparam integer logblockbytelen = $clog2(blockbytelen);
+  localparam integer lognumways = $clog2(numways);
+  localparam integer tagstart = lognumlines + logblockbytelen;
+
+
+  typedef enum {IDLE,
+		READ,
+		DONE} statetype;
+
+  statetype CurrState, NextState;
+
+  logic        CountFlag;
+  logic        CntEn;
+  
+  logic [lognumways + lognumlines - 1 : 0] count, countNext;
+
+  flopenr #(lognumlines + lognumways) 
+  FetchCountReg(.clk(clk),
+		.reset(reset),
+		.en(CntEn),
+		.d(countNext),
+		.q(count));
+  
+  assign countNext = count + 1;
+  assign CountFlag = count == '1;
+  
+  always_ff @(posedge clk, posedge reset) begin
+    if(reset) CurrState = IDLE;
+    else CurrState = NextState;
+  end
+
+  always_comb begin
+    case (CurrState)
+      IDLE: if(start) NextState = READ;
+      else NextState = IDLE;
+      READ: begin
+	force testbench.dut.hart.lsu.dcache.SRAMAdr = count;
+	if(CountFlag) begin
+	  NextState = DONE;
+	end else begin
+	  NextState = READ;
+	end
+      end
+      DONE: begin
+	release testbench.dut.hart.lsu.dcache.SRAMAdr;	
+	NextState = DONE;
+      end
+      default: NextState = IDLE;
+    endcase
+  end
+
+  assign done = CurrState == DONE;
+  assign CntEn = CurrState == READ;
+
+  
+  integer 	       adr;
+  integer 	       tag;
+  integer 	       index;
+  integer 	       way;
+  integer 	       word;
+  
+  logic 	       dirty, valid;
+
+  always_comb begin
+    if (CurrState == READ) begin
+      assign index = count / numways;
+      assign way = count % numways;
+      assign tag = testbench.dut.hart.lsu.dcache.ReadTag[way];
+      assign dirty = testbench.dut.hart.lsu.dcache.Dirty[way];
+      assign valid = testbench.dut.hart.lsu.dcache.Valid[way];
+      assign adr =  tag << (tagstart) + index;
+      
+      $display("Index Way Tag V D %03x %d %016x %d %d %016x", index, way, tag, valid, dirty, adr);
+    end
+  end
+		    
+endmodule
+		      
+
+task FlushDCache;
+  // takes no inputs or ouptuts but controls logics in the d cache.
+
+  // two possible implementations.
+  // 1) Can directly read/set the cache SRAM and the dtim.
+  //    The problem here is the structure of the cache is
+  //    not really easily known.
+  // 2) Use the cache's interface to read out blocks.
+  //    The problem is we must do this over clock cycles.
+  // Honestly not sure which is easier.
+  // I don't think method 1 is possible because verilog cannot convert a string into
+  // an object's hierarchy or it is not possible because verilog cannot use
+  // variable index inside a generate block.
+  
+  // path to d cache parameterization
+  //sim:/testbench/dut/hart/lsu/dcache/NUMLINES
+  //sim:/testbench/dut/hart/lsu/dcache/NUMWAYS
+  //sim:/testbench/dut/hart/lsu/dcache/BLOCKBYTELEN
+
+  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[0]/CacheDataMem/StoredData
+  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/CacheTagMem/StoredData
+  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/DirtyBits
+  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/ValidBits
+
+  static string GenericCacheDataMem = "testbench.dut.hart.lsu.dcache.CacheWays[%0d].MemWay.word[%0d].CacheDataMem.StoredData[%0d]";
+  static string GenericCacheTagMem = "testbench.dut.hart.lsu.dcache.CacheWays[%d].MemWay.CacheTagMem.StoredData[%d]";
+  static string GenericCacheValidMem = "testbench.dut.hart.lsu.dcache.CacheWays[%d].MemWay.ValidBits[%d]";
+  static string GenericCacheDirtyMem = "testbench.dut.hart.lsu.dcache.CacheWays[%d].MemWay.DirtyBits[%d]";
+  
+  
+
+  const integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
+  const integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
+  const integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
+  const integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  const integer lognumlines = $clog2(numlines);
+  const integer logblockbytelen = $clog2(blockbytelen);
+  const integer tagstart = lognumlines + logblockbytelen;
+  
+  
+
+  // drive SRAMAdr
+  //sim:/testbench/dut/hart/lsu/dcache/SRAMAdr
+  // Read ReadTag and then mux out on the NUMWAYS
+  //sim:/testbench/dut/hart/lsu/dcache/ReadTag
+  //sim:/testbench/dut/hart/lsu/dcache/Valid 
+  //sim:/testbench/dut/hart/lsu/dcache/Dirty
+
+  // if Valid and Dirty we write to dtim
+
+  logic [`PA_BITS-1:0] FullAdr;
+
+  integer 	       adr;
+  integer 	       tag;
+  integer 	       index;
+  integer 	       way;
+  integer 	       word;
+  
+  logic 	       dirty, valid;
+
+  logic [`XLEN-1:0]    value;
+
+
+  
+
+/* -----\/----- EXCLUDED -----\/-----
+  $display("%d %d", tagstart, logblockbytelen);
+  
+    
+  for(adr = 0; adr < numways * numlines; adr++) begin
+    assign way = adr % numways;
+    assign index = adr / numways;
+    force testbench.dut.hart.lsu.dcache.SRAMAdr = index;
+    assign tag = testbench.dut.hart.lsu.dcache.ReadTag[way];
+    assign dirty = testbench.dut.hart.lsu.dcache.Dirty[way];
+    assign valid = testbench.dut.hart.lsu.dcache.Valid[way];
+    assign FullAdr = tag<<tagstart;
+    
+    
+    $display("Index Way Tag V D %03x %d %016x %d %d Full Adr %08x", index, way, tag, valid, dirty, FullAdr);
+  end
+ 
+
+  release  testbench.dut.hart.lsu.dcache.SRAMAdr;
+ -----/\----- EXCLUDED -----/\----- */
+  static string path;
+  logic [`XLEN-1:0]    CacheData;
+
+  assign value = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[0];  
+  
+  for(index = 0; index < numlines; index++) begin
+    for(way = 0; way < numways; way++) begin
+      for(word = 0; word < numwords; word++) begin
+	assign CacheData = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[index];
+	
+	path = $sformatf(GenericCacheDataMem, way, word, index);
+	// I guess you cannot do this conversion.
+	//assign CacheData = path;
+	$display("%x", path);
+	$display(CacheData);
+      end
+    end
+  end
+
+  $display("%x", value);
+  
+    
+
+endtask
