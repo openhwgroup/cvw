@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// tlbpriority.sv
+// prioritycircuit.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Modified: Teo Ene 15 Apr 2021:
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module tlbpriority #(parameter ENTRIES = 8) (
+module prioritycircuit #(parameter ENTRIES = 8) (
   input  logic  [ENTRIES-1:0] a,
   output logic  [ENTRIES-1:0] y
 );

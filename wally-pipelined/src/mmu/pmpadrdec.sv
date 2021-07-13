@@ -34,9 +34,10 @@ module pmpadrdec (
   input  logic [7:0]       PMPCfg,
   input  logic [`XLEN-1:0] PMPAdr,
   input  logic             PAgePMPAdrIn,
-  input  logic             NoLowerMatchIn,
+//  input  logic             NoLowerMatchIn,
+  input  logic             FirstMatch,
   output logic             PAgePMPAdrOut,
-  output logic             NoLowerMatchOut,
+//  output logic             NoLowerMatchOut,
   output logic             Match, Active, 
   output logic             L, X, W, R
 );
@@ -47,7 +48,7 @@ module pmpadrdec (
 
   logic TORMatch, NAMatch;
   logic PAltPMPAdr;
-  logic FirstMatch;
+//  logic FirstMatch;
   logic [`PA_BITS-1:0] CurrentAdrFull;
   logic [1:0] AdrMode;
 
@@ -87,8 +88,8 @@ module pmpadrdec (
                  (AdrMode == NA4 || AdrMode == NAPOT) ? NAMatch :
                  0;
 
-  assign FirstMatch =      NoLowerMatchIn & Match;
-  assign NoLowerMatchOut = NoLowerMatchIn & ~Match;
+//  assign FirstMatch =      NoLowerMatchIn & Match;
+//  assign NoLowerMatchOut = NoLowerMatchIn & ~Match;
   assign L = PMPCfg[7] & FirstMatch;
   assign X = PMPCfg[2] & FirstMatch;
   assign W = PMPCfg[1] & FirstMatch;
