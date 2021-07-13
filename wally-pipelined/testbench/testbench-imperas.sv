@@ -1009,10 +1009,9 @@ module DCacheFlushFSM
 
   genvar index, way, cacheWord;
   logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0];
-  logic CacheValid  [numways-1:0] [numlines-1:0];
-  logic CacheDirty  [numways-1:0] [numlines-1:0];
-
+  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
   logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
   genvar adr;
 
@@ -1021,26 +1020,37 @@ module DCacheFlushFSM
   generate
     for(index = 0; index < numlines; index++) begin
       for(way = 0; way < numways; way++) begin
-	assign CacheTag[way][index] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.CacheTagMem.StoredData[index];
-	assign CacheValid[way][index] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.ValidBits[index];
-	assign CacheDirty[way][index] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.DirtyBits[index];
 	for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-	  assign CacheData[way][index][cacheWord] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.word[cacheWord].CacheDataMem.StoredData[index];
-	  assign CacheAdr[way][index][cacheWord] = ((CacheTag[way][index] << tagstart) + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8)));
+	  copyShadow #(.tagstart(tagstart))
+	  copyShadow(.clk,
+		     .start,
+		     .tag(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.CacheTagMem.StoredData[index]),
+		     .valid(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.ValidBits[index]),
+		     .dirty(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.DirtyBits[index]),
+		     .data(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.word[cacheWord].CacheDataMem.StoredData[index]),
+		     .Adr(((testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.CacheTagMem.StoredData[index] << tagstart)
+			   + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8)))),
+		     .CacheData(CacheData[way][index][cacheWord]),
+		     .CacheAdr(CacheAdr[way][index][cacheWord]),
+		     .CacheTag(CacheTag[way][index][cacheWord]),
+		     .CacheValid(CacheValid[way][index][cacheWord]),
+		     .CacheDirty(CacheDirty[way][index][cacheWord]));
 	end
       end
     end
   endgenerate
 
+  
   integer i, j, k;
   
   always @(posedge clk) begin
     if (start) begin #1
+      #1
       for(i = 0; i < numlines; i++) begin
 	for(j = 0; j < numways; j++) begin
-	  if (CacheValid[j][i] && CacheDirty[j][i]) begin
-	    for(k = 0; k < numwords; k++) begin
-	      ShadowRAM[CacheAdr[j][i][k]/8] = CacheData[j][i][k];
+	  for(k = 0; k < numwords; k++) begin
+	  if (CacheValid[j][i][k] && CacheDirty[j][i][k]) begin
+	    ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
 	    end
 	  end	
 	end
@@ -1054,114 +1064,31 @@ module DCacheFlushFSM
 		    .q(done));
 		    
 endmodule
-		      
 
-task FlushDCache;
-  // takes no inputs or ouptuts but controls logics in the d cache.
-
-  // two possible implementations.
-  // 1) Can directly read/set the cache SRAM and the dtim.
-  //    The problem here is the structure of the cache is
-  //    not really easily known.
-  // 2) Use the cache's interface to read out blocks.
-  //    The problem is we must do this over clock cycles.
-  // Honestly not sure which is easier.
-  // I don't think method 1 is possible because verilog cannot convert a string into
-  // an object's hierarchy or it is not possible because verilog cannot use
-  // variable index inside a generate block.
-  
-  // path to d cache parameterization
-  //sim:/testbench/dut/hart/lsu/dcache/NUMLINES
-  //sim:/testbench/dut/hart/lsu/dcache/NUMWAYS
-  //sim:/testbench/dut/hart/lsu/dcache/BLOCKBYTELEN
-
-  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[0]/CacheDataMem/StoredData
-  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/CacheTagMem/StoredData
-  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/DirtyBits
-  //sim:/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/ValidBits
-
-  static string GenericCacheDataMem = "testbench.dut.hart.lsu.dcache.CacheWays[%0d].MemWay.word[%0d].CacheDataMem.StoredData[%0d]";
-  static string GenericCacheTagMem = "testbench.dut.hart.lsu.dcache.CacheWays[%d].MemWay.CacheTagMem.StoredData[%d]";
-  static string GenericCacheValidMem = "testbench.dut.hart.lsu.dcache.CacheWays[%d].MemWay.ValidBits[%d]";
-  static string GenericCacheDirtyMem = "testbench.dut.hart.lsu.dcache.CacheWays[%d].MemWay.DirtyBits[%d]";
-  
+module copyShadow
+  #(parameter tagstart)
+  (input logic clk,
+   input logic 			     start,
+   input logic [`PA_BITS-1:tagstart] tag,
+   input logic 			     valid, dirty,
+   input logic [`XLEN-1:0] 	     data,
+   input logic [`PA_BITS-1:tagstart] Adr,
+   output logic [`XLEN-1:0] 	     CacheData,
+   output logic [`PA_BITS-1:0] 	     CacheAdr,
+   output logic [`XLEN-1:0] 	     CacheTag,
+   output logic 		     CacheValid,
+   output logic 		     CacheDirty);
   
 
-  const integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
-  const integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
-  const integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
-  const integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
-  const integer lognumlines = $clog2(numlines);
-  const integer logblockbytelen = $clog2(blockbytelen);
-  const integer tagstart = lognumlines + logblockbytelen;
-  
-  
-
-  // drive SRAMAdr
-  //sim:/testbench/dut/hart/lsu/dcache/SRAMAdr
-  // Read ReadTag and then mux out on the NUMWAYS
-  //sim:/testbench/dut/hart/lsu/dcache/ReadTag
-  //sim:/testbench/dut/hart/lsu/dcache/Valid 
-  //sim:/testbench/dut/hart/lsu/dcache/Dirty
-
-  // if Valid and Dirty we write to dtim
-
-  logic [`PA_BITS-1:0] FullAdr;
-
-  integer 	       adr;
-  integer 	       tag;
-  integer 	       index;
-  integer 	       way;
-  integer 	       word;
-  
-  logic 	       dirty, valid;
-
-  logic [`XLEN-1:0]    value;
-
-
-  
-
-/* -----\/----- EXCLUDED -----\/-----
-  $display("%d %d", tagstart, logblockbytelen);
-  
-    
-  for(adr = 0; adr < numways * numlines; adr++) begin
-    assign way = adr % numways;
-    assign index = adr / numways;
-    force testbench.dut.hart.lsu.dcache.SRAMAdr = index;
-    assign tag = testbench.dut.hart.lsu.dcache.ReadTag[way];
-    assign dirty = testbench.dut.hart.lsu.dcache.Dirty[way];
-    assign valid = testbench.dut.hart.lsu.dcache.Valid[way];
-    assign FullAdr = tag<<tagstart;
-    
-    
-    $display("Index Way Tag V D %03x %d %016x %d %d Full Adr %08x", index, way, tag, valid, dirty, FullAdr);
-  end
- 
-
-  release  testbench.dut.hart.lsu.dcache.SRAMAdr;
- -----/\----- EXCLUDED -----/\----- */
-  static string path;
-  logic [`XLEN-1:0]    CacheData;
-
-  assign value = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[0];  
-
-    for(index = 0; index < numlines; index++) begin
-      for(way = 0; way < numways; way++) begin
-	for(word = 0; word < numwords; word++) begin
-	  assign CacheData = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[index];
-	  
-	  path = $sformatf(GenericCacheDataMem, way, word, index);
-	  // I guess you cannot do this conversion.
-	  //assign CacheData = path;
-	  $display("%x", path);
-	  $display(CacheData);
-	end
-      end
+  always_ff @(posedge clk) begin
+    if(start) begin
+      CacheTag = tag;
+      CacheValid = valid;
+      CacheDirty = dirty;
+      CacheData = data;
+      CacheAdr = Adr;
     end
-
-  $display("%x", value);
+  end
   
-    
+endmodule		      
 
-endtask
