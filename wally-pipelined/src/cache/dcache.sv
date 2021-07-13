@@ -48,7 +48,7 @@ module dcache
    // inputs from TLB and PMA/P
    input logic 		       FaultM,
    input logic 		       DTLBMissM,
-   input logic 		       UncachedM,
+   input logic 		       CacheableM,
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    output logic 	       AHBRead,
@@ -114,6 +114,8 @@ module dcache
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
 
   logic [`PA_BITS-1:0] 	       BasePAdrM;
+  logic [OFFSETLEN-1:0]        BasePAdrOffsetM;
+  logic [`PA_BITS-1:0] 	       BasePAdrMaskedM;  
   logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 	       VictimTag;
     
@@ -224,7 +226,7 @@ module dcache
   // variable input mux
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
-  assign HWDATA = VictimReadDataBlockSetsM[FetchCount];
+  assign HWDATA = CacheableM ? VictimReadDataBlockSetsM[FetchCount] : WriteDataM;
 
   // finally swr
   // *** BUG fix HSIZED? why was it this way?
@@ -271,14 +273,17 @@ module dcache
   // *** optimize this
   mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-			      .s(AHBWrite),
+			      .s(AHBWrite & CacheableM),
 			      .y(BasePAdrM));
+
+  assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
+  assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
   generate
     if (`XLEN == 32) begin
-      assign AHBPAdr = ({ {`PA_BITS-4{1'b0}}, FetchCount} << 2) + {BasePAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
+      assign AHBPAdr = ({{`PA_BITS-4{1'b0}}, FetchCount} << 2) + BasePAdrMaskedM;
     end else begin
-      assign AHBPAdr = ({ {`PA_BITS-3{1'b0}}, FetchCount} << 3) + {BasePAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
+      assign AHBPAdr = ({{`PA_BITS-3{1'b0}}, FetchCount} << 3) + BasePAdrMaskedM;
     end
   endgenerate
     
@@ -339,6 +344,8 @@ module dcache
 		STATE_PTW_MISS_READ_SRAM,
 		STATE_UNCACHED_WDV,
 		STATE_UNCACHED_DONE,
+		STATE_UNCACHED_WRITE,
+		STATE_UNCACHED_WRITE_DONE,
 		STATE_CPU_BUSY} statetype;
 
   statetype CurrState, NextState;
@@ -398,7 +405,7 @@ module dcache
 	  NextState = STATE_PTW_MISS_FETCH_WDV;
 	end
 	// amo hit
-	else if(|AtomicM & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
+	else if(|AtomicM & CacheableM & ~FaultM & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
 
@@ -406,7 +413,7 @@ module dcache
 	  else NextState = STATE_READY;
 	end
 	// read hit valid cached
-	else if(MemRWM[1] & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
+	else if(MemRWM[1] & CacheableM & ~FaultM & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_READY;
 	  DCacheStall = 1'b0;
 
@@ -414,7 +421,7 @@ module dcache
 	  else NextState = STATE_READY;
 	end
 	// write hit valid cached
-	else if (MemRWM[0] & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
+	else if (MemRWM[0] & CacheableM & ~FaultM & CacheHit & ~DTLBMissM) begin
 	  SelAdrM = 1'b1;
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
@@ -424,10 +431,18 @@ module dcache
 	  else NextState = STATE_READY;
 	end
 	// read or write miss valid cached
-	else if((|MemRWM) & ~UncachedM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
+	else if((|MemRWM) & CacheableM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
+	end
+	// uncached write
+	else if(MemRWM[0] & ~CacheableM & ~FaultM & ~DTLBMissM) begin
+	  NextState = STATE_UNCACHED_WRITE;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  AHBWrite = 1'b1;
+	  
 	end
 	// fault
 	else if(AnyCPUReqM & FaultM & ~DTLBMissM) begin
@@ -528,6 +543,20 @@ module dcache
       STATE_CPU_BUSY : begin
 	if(StallW) NextState = STATE_CPU_BUSY;
 	else NextState = STATE_READY;
+      end
+
+      STATE_UNCACHED_WRITE : begin
+	DCacheStall = 1'b1;	
+	AHBWrite = 1'b1;
+	if(AHBAck) begin
+	  NextState = STATE_UNCACHED_WRITE_DONE;
+	end else begin
+	  NextState = STATE_UNCACHED_WRITE;
+	end
+      end
+
+      STATE_UNCACHED_WRITE_DONE: begin
+	NextState = STATE_READY;
       end
       default: begin
       end

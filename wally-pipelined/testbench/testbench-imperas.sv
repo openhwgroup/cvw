@@ -547,7 +547,6 @@ string tests32f[] = '{
         if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
-	tests = {tests64i, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
