@@ -72,7 +72,7 @@ module csrc #(parameter
 ) (
     input  logic             clk, reset,
     input  logic             StallD, StallE, StallM, StallW,
-    input  logic             InstrValidW, LoadStallD, CSRMWriteM,
+    input  logic             InstrValidM, LoadStallD, CSRMWriteM,
     input  logic             BPPredDirWrongM,
     input  logic             BTBPredPCWrongM,
     input  logic             RASPredPCWrongM,
@@ -114,7 +114,7 @@ module csrc #(parameter
       // Counter adders with inhibits for power savings
       assign CYCLEPlusM = CYCLE_REGW + {63'b0, ~MCOUNTINHIBIT_REGW[0]};
       //assign TIMEPlusM = TIME_REGW + 1; // can't be inhibited
-      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidW & ~StallW & ~MCOUNTINHIBIT_REGW[2]};
+      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidM & ~StallW & ~MCOUNTINHIBIT_REGW[2]};
       //assign HPMCOUNTER3PlusM = HPMCOUNTER3_REGW + {63'b0, LoadStallD & ~MCOUNTINHIBIT_REGW[3]}; // count load stalls
       //assign HPMCOUNTER4PlusM = HPMCOUNTER4_REGW + {63'b0, 1'b0 & ~MCOUNTINHIBIT_REGW[4]}; // change to count signals
       assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[`XLEN-1:0];
@@ -134,7 +134,7 @@ module csrc #(parameter
         // could replace special counters 0-2 with this loop for all counters
         assign CounterEvent[0] = 1'b1;
         assign CounterEvent[1] = 1'b0;
-        assign CounterEvent[2] = InstrValidW & ~StallW;
+        assign CounterEvent[2] = InstrValidM & ~StallW;
         assign CounterEvent[3] = LoadStallD & ~StallD;
         assign CounterEvent[4] = BPPredDirWrongM & ~StallM;
         assign CounterEvent[5] = InstrClassM[0] & ~StallM;
@@ -339,7 +339,7 @@ module csrc #(parameter
   HPMCOUNTERHBASE = 12'hC80,
   )(input logic 	     clk, reset,
     input logic 	     StallD, StallE, StallM, StallW,
-    input logic 	     InstrValidW, LoadStallD, CSRMWriteM,
+    input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
     input logic 	     BPPredDirWrongM,
     input logic 	     BTBPredPCWrongM,
     input logic 	     RASPredPCWrongM,
@@ -381,7 +381,7 @@ module csrc #(parameter
     logic [`COUNTERS:0] MCOUNTEN;
     assign MCOUNTEN[0] = 1'b1;
     assign MCOUNTEN[1] = 1'b0;
-    assign MCOUNTEN[2] = InstrValidW & ~StallW;
+    assign MCOUNTEN[2] = InstrValidM & ~StallW;
     assign MCOUNTEN[3] = LoadStallD & ~StallD;
     assign MCOUNTEN[4] = BPPredDirWrongM & ~StallM;
     assign MCOUNTEN[5] = InstrClassM[0] & ~StallM;

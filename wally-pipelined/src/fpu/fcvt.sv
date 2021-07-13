@@ -20,15 +20,15 @@ module fcvt (
     logic [11:0]        Bias;       // 1023 for double, 127 for single
     logic [7:0]         Bits;       // how many bits are in the integer result
     logic [7:0]         SubBits;    // subtract these bits from the exponent (FP result)
-    logic [`XLEN+51:0]  ShiftedManTmp; // Shifted mantissa
-    logic [`XLEN+51:0]  ShiftVal;       // value being shifted (to int - XMan, to FP - |integer input|)
-    logic [`XLEN+1:0]   ShiftedMan;     // shifted mantissa truncated
+    logic [64+51:0]  ShiftedManTmp; // Shifted mantissa
+    logic [64+51:0]  ShiftVal;       // value being shifted (to int - XMan, to FP - |integer input|)
+    logic [64+1:0]   ShiftedMan;     // shifted mantissa truncated
     logic [64:0]	    RoundedTmp;     // full size rounded result - in case of overfow
     logic [63:0]	    Rounded;        // rounded result
     logic [12:0]        ExpVal;         // unbiased X exponent
     logic [12:0]        ShiftCnt;       // how much is the mantissa shifted
-	logic [`XLEN-1:0]   IntIn;          // trimed integer input
-    logic [`XLEN-1:0]   PosInt;         // absolute value of the integer input
+	logic [64-1:0]   IntIn;          // trimed integer input
+    logic [64-1:0]   PosInt;         // absolute value of the integer input
     logic [63:0]        CvtIntRes;      // interger result from the fp -> int instructions
     logic [63:0]        CvtFPRes;       // floating point result from the int -> fp instructions
     logic               XFracZero;      // is the fraction of X zero?
@@ -63,9 +63,9 @@ module fcvt (
       //  {long, unsigned, to int, from int}
    
     // split the input into it's various parts
-    assign XSgn = X[63];
-    assign XExp = FmtE ? X[62:52] : {3'b0, X[62:55]};
-    assign XFrac = FmtE ? X[51:0] : {X[54:32], 29'b0};
+    assign XSgn = FmtE ? X[63] : X[31];
+    assign XExp = FmtE ? X[62:52] : {3'b0, X[30:23]};
+    assign XFrac = FmtE ? X[51:0] : {X[23:0], 29'b0};
 
     // determine if the exponent and fraction are all zero or ones
     assign XExpZero = ~|XExp;
@@ -91,7 +91,7 @@ module fcvt (
 ////////////////////////////////////////////////////////
 
     // position the input in the most significant bits
-    assign IntIn = FOpCtrlE[3] ? SrcAE : {SrcAE[31:0], 32'b0};
+    assign IntIn = FOpCtrlE[3] ? {SrcAE, {64-`XLEN{1'b0}}} : {SrcAE[31:0], 32'b0};
     // make the integer positive
     assign PosInt = IntIn[64-1]&~FOpCtrlE[2] ? -IntIn : IntIn;
     // determine the integer's sign
@@ -99,9 +99,9 @@ module fcvt (
     
     // This did not work \/
     // generate
-    //     if(`XLEN == 64) 
+    //     if(64 == 64) 
     //         lz64 lz(LZResP, LZResV, PosInt);
-    //     else if(`XLEN == 32) begin
+    //     else if(64 == 32) begin
     //         assign LZResP[5] = 1'b0;
     //         lz32 lz(LZResP[4:0], LZResV, PosInt);
     //     end 
@@ -111,12 +111,12 @@ module fcvt (
 	logic [8:0]	i;
 	always_comb begin
 			i = 0;
-			while (~PosInt[64-1-i] && i <= 64) i = i+1;  // search for leading one 
+			while (~PosInt[64-1-i] && i <= `XLEN) i = i+1;  // search for leading one 
 			LZResP = i+1;    // compute shift count
 	end
 
     // if no one was found set to zero otherwise calculate the exponent
-    assign TmpExp = i==64 ? 0 : Bias + SubBits - LZResP;
+    assign TmpExp = i==`XLEN ? 0 : Bias + SubBits - LZResP;
 
 
 
@@ -126,12 +126,12 @@ module fcvt (
 
     // select the shift value and amount based on operation (to fp or int)
     assign ShiftCnt = FOpCtrlE[1] ? ExpVal : LZResP;
-    assign ShiftVal = FOpCtrlE[1] ? {{`XLEN-2{1'b0}}, ~(XDenorm|XZero), XFrac} : {PosInt, 52'b0};
+    assign ShiftVal = FOpCtrlE[1] ? {{64-2{1'b0}}, ~(XDenorm|XZero), XFrac} : {PosInt, 52'b0};
 
 	// if shift = -1 then shift one bit right for gaurd bit (right shifting twice never rounds)
 	// if the shift is negitive add a bit for sticky bit calculation
 	// otherwise shift left
-    assign ShiftedManTmp = &ShiftCnt ? {{`XLEN-1{1'b0}}, ~(XDenorm|XZero), XFrac[51:1]} : ShiftCnt[12] ? {{`XLEN+51{1'b0}}, ~XZero} : ShiftVal << ShiftCnt;
+    assign ShiftedManTmp = &ShiftCnt ? {{64-1{1'b0}}, ~(XDenorm|XZero), XFrac[51:1]} : ShiftCnt[12] ? {{64+51{1'b0}}, ~XZero} : ShiftVal << ShiftCnt;
 
     // truncate the shifted mantissa
     assign ShiftedMan = ShiftedManTmp[64+51:50];
@@ -185,12 +185,12 @@ module fcvt (
     assign SgnRes = ~FOpCtrlE[3] & FOpCtrlE[1];
 
     // select the integer result
-    assign CvtIntRes = Of ? FOpCtrlE[2] ? SgnRes ? {32'b0, {32{1'b1}}}: {64{1'b1}} : SgnRes ? {33'b0, {31{1'b1}}}: {1'b0, {63{1'b1}}} : 
+    assign CvtIntRes = Of ? FOpCtrlE[2] ? {64{1'b1}} : SgnRes ? {33'b0, {31{1'b1}}}: {1'b0, {63{1'b1}}} : 
                     Uf ? FOpCtrlE[2] ? 64'b0 : SgnRes ? {32'b0, 1'b1, 31'b0} : {1'b1, 63'b0} :
 		            Rounded[64-1:0];
 
     // select the floating point result            
-    assign CvtFPRes = FmtE ? {ResSgn, ResExp, ResFrac} : {ResSgn, ResExp[7:0], ResFrac, 3'b0};
+    assign CvtFPRes = FmtE ? {ResSgn, ResExp, ResFrac} : {{32{1'b1}}, ResSgn, ResExp[7:0], ResFrac[51:29]};
 
     // select the result
     assign CvtResE = FOpCtrlE[0] ? CvtFPRes : CvtIntRes;
