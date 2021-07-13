@@ -100,7 +100,7 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    FIntResM;  
   logic 		    FDivBusyE;
   logic 		    IllegalFPUInstrD, IllegalFPUInstrE;
-  logic 		    FloatRegWriteW;
+  logic 		    FRegWriteM;
   logic 		    FPUStallD;
   logic [4:0] 		    SetFflagsM;
   logic [`XLEN-1:0] 	    FPUResultW;
@@ -272,8 +272,8 @@ module wallypipelinedhart
 
   fpu fpu(.*); // floating point unit
   // add FPU here, with SetFflagsM, FRM_REGW
-  // presently stub out SetFlagsM and FloatRegWriteW
+  // presently stub out SetFlagsM and FRegWriteM
   //assign SetFflagsM = 0;
-  //assign FloatRegWriteW = 0;
+  //assign FRegWriteM = 0;
   
 endmodule
