@@ -268,7 +268,7 @@ module dcache
 
   // *** Coding style. this is just awful. The purpose is to align FetchCount to the
   // size of XLEN so we can fetch XLEN bits.  FetchCount needs to be padded to PA_BITS length.
-  
+  // *** optimize this
   mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 			      .s(AHBWrite),
@@ -276,9 +276,9 @@ module dcache
   
   generate
     if (`XLEN == 32) begin
-      assign AHBPAdr = ({ {`PA_BITS-4{1'b0}}, FetchCount} << 2) + BasePAdrM;
+      assign AHBPAdr = ({ {`PA_BITS-4{1'b0}}, FetchCount} << 2) + {BasePAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
     end else begin
-      assign AHBPAdr = ({ {`PA_BITS-3{1'b0}}, FetchCount} << 3) + BasePAdrM;
+      assign AHBPAdr = ({ {`PA_BITS-3{1'b0}}, FetchCount} << 3) + {BasePAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
     end
   endgenerate
     
@@ -469,6 +469,7 @@ module dcache
 	NextState = STATE_MISS_READ_WORD;
 	SelAdrM = 1'b1;
 	SetValidM = 1'b1;
+	ClearDirtyM = 1'b1;
       end
 
       STATE_MISS_READ_WORD: begin
