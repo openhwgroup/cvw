@@ -27,7 +27,8 @@ if [file exists work] {
 vlib work
 
 # compile source files
-vlog adder_ip.sv mult_R4_64_64_cs.v sbtm_a1.sv sbtm_a0.sv sbtm.sv sbtm_a4.sv sbtm_a5.sv sbtm3.sv fsm.v divconvDP.sv convert_inputs.sv exception.sv rounder.sv fpdiv.sv tb_f32_div_rd.sv
+vlog mult_R4_64_64_cs.v  sbtm_a1.sv sbtm_a0.sv sbtm.sv sbtm_a4.sv sbtm_a5.sv sbtm3.sv fsm_div.v divconvDP.sv convert_inputs_div.sv exception_div.sv rounder_div.sv fpdiv.sv tb_f32_div_rd.sv
+
 
 # start and run simulation
 vsim -voptargs=+acc work.tb
@@ -52,5 +53,5 @@ configure wave -childrowmargin 2
 
 -- Run the Simulation 
 --   39,052 vectors, 390,565ns
-run 9269690000 ns
+run 299690000
 quit

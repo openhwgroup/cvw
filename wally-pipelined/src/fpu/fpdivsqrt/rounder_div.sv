@@ -12,19 +12,19 @@
 //      11  		round-toward-minus infinity
 //
 
-module rounder (Result, DenormIO, Flags, rm, P, OvEn, 
-		UnEn, exp_diff, sel_inv, Invalid, DenormIn, 
-		SignR, q1, qm1, qp1, q0, qm0, qp0, regr_out);
+module rounder_div (Result, DenormIO, Flags, rm, P, OvEn, 
+		    UnEn, exp_diff, sel_inv, Invalid, DenormIn, 
+		    SignR, q1, qm1, qp1, q0, qm0, qp0, regr_out);
 
-   input logic [1:0]   rm;
-   input logic         P;
-   input logic         OvEn;
-   input logic         UnEn;
-   input logic [12:0]  exp_diff;
-   input logic [2:0]   sel_inv;
-   input logic 	       Invalid;
-   input logic 	       DenormIn;
-   input logic 	       SignR;
+   input  [1:0]   rm;
+   input          P;
+   input          OvEn;
+   input          UnEn;
+   input [12:0]   exp_diff;
+   input [2:0] 	  sel_inv;
+   input	  Invalid;
+   input	  DenormIn;
+   input 	  SignR;
    
    input logic [63:0]  q1;
    input logic [63:0]  qm1;
@@ -37,7 +37,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    output logic [63:0] Result;
    output logic        DenormIO;
    output logic [4:0]  Flags;
-
+   
    supply1 	       vdd;
    supply0 	       vss;
    
@@ -146,7 +146,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    // Determine sign
    assign Rzero = UnderFlow | (~sel_inv[2]&sel_inv[1]&sel_inv[0]);
    assign Rsign = SignR;   
-   
+      
    // The exponent of the final result is zero if the final result is 
    // zero or a denorm, all ones if the final result is NaN or Infinite
    // or overflow occurred and the magnitude of the number is 

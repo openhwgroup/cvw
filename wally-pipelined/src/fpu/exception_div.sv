@@ -1,38 +1,36 @@
 // Exception logic for the floating point adder. Note: We may 
 // actually want to move to where the result is computed.
-
 module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
 
-   input [63:0] A;		// 1st input operand (op1)
-   input [63:0] B;		// 2nd input operand (op2)
-   input 	op_type;        // Determine operation   
+   input logic [63:0] A;		// 1st input operand (op1)
+   input logic [63:0] B;		// 2nd input operand (op2)
+   input logic 	      op_type;          // Determine operation   
    
-   output [2:0] Ztype;		// Indicates type of result (Z)
-   output 	Invalid;	// Invalid operation exception
-   output 	Denorm;		// Denormalized input
-   output       ANorm;          // A is not zero or Denorm
-   output       BNorm;          // B is not zero or Denorm
+   output logic [2:0] Ztype;		// Indicates type of result (Z)
+   output logic       Invalid;	        // Invalid operation exception
+   output logic       Denorm;		// Denormalized input
+   output logic       ANorm;            // A is not zero or Denorm
+   output logic       BNorm;            // B is not zero or Denorm
    
-   wire		AzeroM;	 	// '1' if the mantissa of A is zero
-   wire		BzeroM;		// '1' if the mantissa of B is zero
-   wire		AzeroE;	 	// '1' if the exponent of A is zero
-   wire		BzeroE;		// '1' if the exponent of B is zero
-   wire		AonesE;	 	// '1' if the exponent of A is all ones
-   wire		BonesE;		// '1' if the exponent of B is all ones
-   wire		ADenorm; 	// '1' if A is a denomalized number
-   wire		BDenorm; 	// '1' if B is a denomalized number
-   wire		AInf;	 	// '1' if A is infinite
-   wire		BInf;	 	// '1' if B is infinite
-   wire		AZero;	 	// '1' if A is 0
-   wire		BZero;	 	// '1' if B is 0
-   wire		ANaN;	 	// '1' if A is a not-a-number
-   wire		BNaN; 		// '1' if B is a not-a-number
-   wire		ASNaN;	 	// '1' if A is a signalling not-a-number
-   wire		BSNaN;	 	// '1' if B is a signalling not-a-number
-   wire		ZQNaN;	 	// '1' if result Z is a quiet NaN
-   wire		ZInf;	 	// '1' if result Z is an infnity
-   wire 	square_root;    // '1' if square root operation
-   wire 	Zero;           // '1' if result is zero   
+   logic 	      AzeroM;	 	// '1' if the mantissa of A is zero
+   logic 	      BzeroM;		// '1' if the mantissa of B is zero
+   logic 	      AzeroE;	 	// '1' if the exponent of A is zero
+   logic 	      BzeroE;		// '1' if the exponent of B is zero
+   logic 	      AonesE;	 	// '1' if the exponent of A is all ones
+   logic 	      BonesE;		// '1' if the exponent of B is all ones
+   logic 	      ADenorm; 	        // '1' if A is a denomalized number
+   logic 	      BDenorm; 	        // '1' if B is a denomalized number
+   logic 	      AInf;	 	// '1' if A is infinite
+   logic 	      BInf;	 	// '1' if B is infinite
+   logic 	      AZero;	 	// '1' if A is 0
+   logic 	      BZero;	 	// '1' if B is 0
+   logic 	      ANaN;	 	// '1' if A is a not-a-number
+   logic 	      BNaN; 		// '1' if B is a not-a-number
+   logic 	      ASNaN;	 	// '1' if A is a signalling not-a-number
+   logic 	      BSNaN;	 	// '1' if B is a signalling not-a-number
+   logic 	      ZQNaN;	 	// '1' if result Z is a quiet NaN
+   logic 	      ZInf;	 	// '1' if result Z is an infnity
+   logic 	      Zero;             // '1' if result is zero   
    
    parameter [51:0]  fifty_two_zeros = 52'h0; // Use parameter?
 
@@ -93,4 +91,3 @@ module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    assign Ztype[2] = BZero&~op_type;   
 
 endmodule // exception
-

@@ -1,7 +1,6 @@
 // Exception logic for the floating point adder. Note: We may 
 // actually want to move to where the result is computed.
-
-module exception (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
+module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
 
    input logic [63:0] A;		// 1st input operand (op1)
    input logic [63:0] B;		// 2nd input operand (op2)
@@ -31,7 +30,6 @@ module exception (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    logic 	      BSNaN;	 	// '1' if B is a signalling not-a-number
    logic 	      ZQNaN;	 	// '1' if result Z is a quiet NaN
    logic 	      ZInf;	 	// '1' if result Z is an infnity
-   logic 	      square_root;      // '1' if square root operation
    logic 	      Zero;             // '1' if result is zero   
    
    parameter [51:0]  fifty_two_zeros = 52'h0; // Use parameter?
@@ -93,4 +91,3 @@ module exception (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    assign Ztype[2] = BZero&~op_type;   
 
 endmodule // exception
-
