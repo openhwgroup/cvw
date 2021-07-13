@@ -57,14 +57,14 @@ module testbench();
 string tests32f[] = '{
     "rv32f/I-FADD-S-01", "2000",
     "rv32f/I-FCLASS-S-01", "2000",
-    // "rv32f/I-FCVT-S-L-01", "2000",
-    // "rv32f/I-FCVT-S-LU-01", "2000",
-    // "rv32f/I-FCVT-S-W-01", "2000",
-    // "rv32f/I-FCVT-S-WU-01", "2000",
-    // "rv32f/I-FCVT-L-S-01", "2000",
-    // "rv32f/I-FCVT-LU-S-01", "2000",
-    // "rv32f/I-FCVT-W-S-01", "2000",
-    // "rv32f/I-FCVT-WU-S-01", "2000",
+    "rv32f/I-FCVT-S-L-01", "2000",
+    "rv32f/I-FCVT-S-LU-01", "2000",
+    "rv32f/I-FCVT-S-W-01", "2000",
+    "rv32f/I-FCVT-S-WU-01", "2000",
+    "rv32f/I-FCVT-L-S-01", "2000",
+    "rv32f/I-FCVT-LU-S-01", "2000",
+    "rv32f/I-FCVT-W-S-01", "2000",
+    "rv32f/I-FCVT-WU-S-01", "2000",
     // "rv32f/I-FDIV-S-01", "2000",
     "rv32f/I-FEQ-S-01", "2000",
     "rv32f/I-FLE-S-01", "2000",
@@ -94,14 +94,14 @@ string tests32f[] = '{
     "rv64f/I-FSW-01", "2000",
     "rv64f/I-FCLASS-S-01", "2000",
     "rv64f/I-FADD-S-01", "2000",
-    // "rv64f/I-FCVT-S-L-01", "2000",
-    // "rv64f/I-FCVT-S-LU-01", "2000",
-    // "rv64f/I-FCVT-S-W-01", "2000",
-    // "rv64f/I-FCVT-S-WU-01", "2000",
-    // "rv64f/I-FCVT-L-S-01", "2000",
-    // "rv64f/I-FCVT-LU-S-01", "2000",
-    // "rv64f/I-FCVT-W-S-01", "2000",
-    // "rv64f/I-FCVT-WU-S-01", "2000",
+    "rv64f/I-FCVT-S-L-01", "2000",
+    "rv64f/I-FCVT-S-LU-01", "2000",
+    "rv64f/I-FCVT-S-W-01", "2000",
+    "rv64f/I-FCVT-S-WU-01", "2000",
+    "rv64f/I-FCVT-L-S-01", "2000",
+    "rv64f/I-FCVT-LU-S-01", "2000",
+    "rv64f/I-FCVT-W-S-01", "2000",
+    "rv64f/I-FCVT-WU-S-01", "2000",
     // "rv64f/I-FDIV-S-01", "2000",
     "rv64f/I-FEQ-S-01", "2000",
     "rv64f/I-FLE-S-01", "2000",
@@ -121,9 +121,21 @@ string tests32f[] = '{
   };
 
   string tests64d[] = '{
-    // "rv64d/I-FDIV-D-01", "2000",
     "rv64d/I-FSD-01", "2000",
     "rv64d/I-FLD-01", "2420",
+    "rv64d/I-FMV-X-D-01", "2000",
+    "rv64d/I-FMV-D-X-01", "2000",
+    // "rv64d/I-FDIV-D-01", "2000",
+    "rv64d/I-FCVT-D-L-01", "2000",
+    "rv64d/I-FCVT-D-LU-01", "2000",
+    "rv64d/I-FCVT-D-S-01", "2000", //the number to be converted is in the lower 32 bits need to change the test
+    "rv64d/I-FCVT-D-W-01", "2000",
+    "rv64d/I-FCVT-D-WU-01", "2000",
+    "rv64d/I-FCVT-L-D-01", "2000",
+    "rv64d/I-FCVT-LU-D-01", "2000",
+    "rv64d/I-FCVT-S-D-01", "2000", //the result is in the lower 32 bits needs to be changed in the imperas test
+    "rv64d/I-FCVT-W-D-01", "2000",
+    "rv64d/I-FCVT-WU-D-01", "2000", //this test needs to be fixed it expects 2^64-1 rather then 2^32-1 (specified in spec)
     "rv64d/I-FNMADD-D-01", "2000",
     "rv64d/I-FNMSUB-D-01", "2000",
     "rv64d/I-FMSUB-D-01", "2000",
@@ -134,20 +146,8 @@ string tests32f[] = '{
     "rv64d/I-FEQ-D-01", "2000",
     "rv64d/I-FADD-D-01", "2000",
     "rv64d/I-FCLASS-D-01", "2000",
-    // "rv64d/I-FCVT-D-L-01", "2000",
-    // "rv64d/I-FCVT-D-LU-01", "2000",
-    // "rv64d/I-FCVT-D-S-01", "2000",
-    // "rv64d/I-FCVT-D-W-01", "2000",
-    // "rv64d/I-FCVT-D-WU-01", "2000",
-    // "rv64d/I-FCVT-L-D-01", "2000",
-    // "rv64d/I-FCVT-LU-D-01", "2000",
-    // "rv64d/I-FCVT-S-D-01", "2000",
-    // "rv64d/I-FCVT-W-D-01", "2000",
-    // "rv64d/I-FCVT-WU-D-01", "2000",
     "rv64d/I-FMADD-D-01", "2000",
     "rv64d/I-FMUL-D-01", "2000",
-    "rv64d/I-FMV-D-X-01", "2000",
-    "rv64d/I-FMV-X-D-01", "2000",
     "rv64d/I-FSGNJ-D-01", "2000",
     "rv64d/I-FSGNJN-D-01", "2000",
     "rv64d/I-FSGNJX-D-01", "2000",
@@ -556,8 +556,8 @@ string tests32f[] = '{
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
-          if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`A_SUPPORTED) tests = {tests, tests32a};
+          if (`F_SUPPORTED) tests = {tests32f, tests};
           //if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
       end
     end
@@ -898,8 +898,22 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b01011) name = "FSQRT";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00010) name = "FCVT.L.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00011) name = "FCVT.LU.S";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00010) name = "FCVT.S.L";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00011) name = "FCVT.S.LU";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00000) name = "FCVT.W.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00001) name = "FCVT.WU.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00010) name = "FCVT.L.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00011) name = "FCVT.LU.D";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00000) name = "FCVT.D.W";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00001) name = "FCVT.D.WU";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00010) name = "FCVT.D.L";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00011) name = "FCVT.D.LU";
+                       else if (funct7 == 7'b0100000 && rs2 == 5'b00001) name = "FCVT.S.D";
+                       else if (funct7 == 7'b0100001 && rs2 == 5'b00000) name = "FCVT.D.S";
                        else if (funct7 == 7'b1110000 && rs2 == 5'b00000) name = "FMV.X.W";
                        else if (funct7 == 7'b1111000 && rs2 == 5'b00000) name = "FMV.W.X";
                        else if (funct7 == 7'b1110001 && rs2 == 5'b00000) name = "FMV.X.D"; // DOUBLE
@@ -915,22 +929,50 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b01011) name = "FSQRT";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00010) name = "FCVT.L.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00011) name = "FCVT.LU.S";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00010) name = "FCVT.S.L";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00011) name = "FCVT.S.LU";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00000) name = "FCVT.W.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00001) name = "FCVT.WU.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00010) name = "FCVT.L.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00011) name = "FCVT.LU.D";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00000) name = "FCVT.D.W";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00001) name = "FCVT.D.WU";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00010) name = "FCVT.D.L";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00011) name = "FCVT.D.LU";
+                       else if (funct7 == 7'b0100000 && rs2 == 5'b00001) name = "FCVT.S.D";
+                       else if (funct7 == 7'b0100001 && rs2 == 5'b00000) name = "FCVT.D.S";
                        else if (funct7[6:2] == 5'b00100) name = "FSGNJN";
                        else if (funct7[6:2] == 5'b00101) name = "FMAX";
                        else if (funct7[6:2] == 5'b10100) name = "FLT";
                        else if (funct7[6:2] == 5'b11100) name = "FCLASS";
                        else                              name = "ILLEGAL";
-      10'b0101111_010: if      (funct7[6:2] == 5'b00000) name = "FADD";
+      10'b1010011_010: if      (funct7[6:2] == 5'b00000) name = "FADD";
                        else if (funct7[6:2] == 5'b00001) name = "FSUB";
                        else if (funct7[6:2] == 5'b00010) name = "FMUL";
                        else if (funct7[6:2] == 5'b00011) name = "FDIV";
                        else if (funct7[6:2] == 5'b01011) name = "FSQRT";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00010) name = "FCVT.L.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00011) name = "FCVT.LU.S";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00010) name = "FCVT.S.L";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00011) name = "FCVT.S.LU";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00000) name = "FCVT.W.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00001) name = "FCVT.WU.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00010) name = "FCVT.L.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00011) name = "FCVT.LU.D";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00000) name = "FCVT.D.W";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00001) name = "FCVT.D.WU";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00010) name = "FCVT.D.L";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00011) name = "FCVT.D.LU";
+                       else if (funct7 == 7'b0100000 && rs2 == 5'b00001) name = "FCVT.S.D";
+                       else if (funct7 == 7'b0100001 && rs2 == 5'b00000) name = "FCVT.D.S";
                        else if (funct7[6:2] == 5'b00100) name = "FSGNJX";
                        else if (funct7[6:2] == 5'b10100) name = "FEQ";
                        else                              name = "ILLEGAL";
@@ -941,8 +983,22 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b01011) name = "FSQRT";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00000) name = "FCVT.W.S";
                        else if (funct7 == 7'b1100000 && rs2 == 5'b00001) name = "FCVT.WU.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00010) name = "FCVT.L.S";
+                       else if (funct7 == 7'b1100000 && rs2 == 5'b00011) name = "FCVT.LU.S";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00000) name = "FCVT.S.W";
                        else if (funct7 == 7'b1101000 && rs2 == 5'b00001) name = "FCVT.S.WU";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00010) name = "FCVT.S.L";
+                       else if (funct7 == 7'b1101000 && rs2 == 5'b00011) name = "FCVT.S.LU";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00000) name = "FCVT.W.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00001) name = "FCVT.WU.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00010) name = "FCVT.L.D";
+                       else if (funct7 == 7'b1100001 && rs2 == 5'b00011) name = "FCVT.LU.D";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00000) name = "FCVT.D.W";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00001) name = "FCVT.D.WU";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00010) name = "FCVT.D.L";
+                       else if (funct7 == 7'b1101001 && rs2 == 5'b00011) name = "FCVT.D.LU";
+                       else if (funct7 == 7'b0100000 && rs2 == 5'b00001) name = "FCVT.S.D";
+                       else if (funct7 == 7'b0100001 && rs2 == 5'b00000) name = "FCVT.D.S";
                        else                              name = "ILLEGAL";
       10'b0000111_010: name = "FLW";
       10'b0100111_010: name = "FSW";
