@@ -55,12 +55,11 @@ module controller(
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
-  output logic       InstrValidM,
+  output logic       InstrValidM, InstrValidW,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
-  output logic       InstrValidW,
   // Stall during CSRs
   output logic       CSRWritePendingDEM
 );

@@ -215,8 +215,8 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
 
    // Place either the sign-extened 32-bit value or the original 64-bit value 
    // into IntValue (to be used for integer to floating point conversion)
-   assign IntValue [31:0] = SrcXE[31:0];
-   assign IntValue [63:32] = FOpCtrlE[0] ? {32{SrcXE[31]}} : SrcXE[63:32];
+   // assign IntValue [31:0] = SrcXE[31:0];
+   // assign IntValue [63:32] = FOpCtrlE[0] ? {32{SrcXE[31]}} : SrcXE[63:32];
 
    // If doing an integer to floating point conversion, mantissaA3 is set to 
    // IntVal and the prenomalized exponent is set to 1084. Otherwise, 
