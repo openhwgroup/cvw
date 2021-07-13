@@ -55,7 +55,7 @@ module controller(
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
-  output logic       InstrValidM,
+  output logic       InstrValidM, InstrValidW,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
@@ -213,9 +213,9 @@ module controller(
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, AtomicM, InstrValidM});
   
   // Writeback stage pipeline control register
-  flopenrc #(4) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM},
-                         {RegWriteW, ResultSrcW});  
+  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
+                         {RegWriteM, ResultSrcM, InstrValidM},
+                         {RegWriteW, ResultSrcW, InstrValidW});  
 
   assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;   
 endmodule

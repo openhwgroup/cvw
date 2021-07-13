@@ -152,7 +152,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/PCTargetE
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/CSRReadValW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/PrivilegedNextPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/MemRWM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/InstrValidW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/InstrMisalignedFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/DataMisalignedM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/IllegalBaseInstrFaultD
@@ -337,7 +337,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/Funct3M
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/ReadDataW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/CSRReadValW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/PCLinkW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/InstrValidW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/StallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/FlushD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/FlushE
@@ -397,7 +397,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/RegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/FlushW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/RegWriteW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/ResultSrcW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/InstrValidW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/CSRWritePendingDEM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/RegWriteD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/RegWriteE
@@ -740,7 +740,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/CSRReadValW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/PrivilegedNextPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/RetM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/TrapM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/InstrValidW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/FRegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/PrivilegedM
@@ -842,7 +842,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/uretM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/TimerIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/ExtIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/SwIntM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/InstrValidW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/FRegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/NextPrivilegeModeM
@@ -972,7 +972,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/STATUS_UIE
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/clk
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/reset
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/InstrValidW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/CSRMWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/counters/CSRAdrM

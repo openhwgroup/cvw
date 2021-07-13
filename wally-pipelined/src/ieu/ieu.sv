@@ -60,7 +60,7 @@ module ieu (
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
   input logic 		   FWriteIntW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  output logic 		   InstrValidM,
+  output logic 		   InstrValidM, 
   // hazards
   input logic 		   StallD, StallE, StallM, StallW,
   input logic 		   FlushD, FlushE, FlushM, FlushW,
@@ -79,6 +79,7 @@ module ieu (
   logic [2:0]  ResultSrcW;
   logic        TargetSrcE;
   logic        SCE;
+  logic        InstrValidW;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
