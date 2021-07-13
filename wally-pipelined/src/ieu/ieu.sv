@@ -71,7 +71,8 @@ module ieu (
   input logic 		   DivDoneE,
   input logic 		   DivBusyE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
-  output logic 		   CSRWritePendingDEM
+  output logic 		   CSRWritePendingDEM,
+  output logic             StoreStallD
 );
 
   logic [2:0]  ImmSrcD;

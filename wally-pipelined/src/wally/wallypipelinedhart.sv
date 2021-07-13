@@ -91,7 +91,7 @@ module wallypipelinedhart
   logic 		    DivDoneE;
   logic 		    DivBusyE;
   logic 		    RegWriteD;
-  logic 		    LoadStallD, MulDivStallD, CSRRdStallD;
+  logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;
   logic 		    SquashSCM, SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
@@ -176,11 +176,9 @@ module wallypipelinedhart
 	  .StallW(StallW),
 	  .FlushW(FlushW),
 	  // CPU interface
-	  .MemRWE(MemRWE),                  	  
 	  .MemRWM(MemRWM),                  
 	  .Funct3M(Funct3M),
 	  .Funct7M(InstrM[31:25]),
-	  .AtomicE(AtomicE),
 	  .AtomicM(AtomicM),               
 	  .CommittedM(CommittedM),          
 	  .SquashSCW(SquashSCW),            

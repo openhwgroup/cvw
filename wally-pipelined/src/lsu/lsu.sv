@@ -37,11 +37,9 @@ module lsu
 
    // connected to cpu (controls)
    input logic [1:0] 	       MemRWM,
-   input logic [1:0] 	       MemRWE, 
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M, 
    input logic [1:0] 	       AtomicM,
-   input logic [1:0] 	       AtomicE,   
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
    output logic 	       DataMisalignedM,
@@ -301,12 +299,10 @@ module lsu
 		.StallW(StallW),
 		.FlushM(FlushM),
 		.FlushW(FlushW),
-		.MemRWE(MemRWE),		 // *** add to arb
 		.MemRWM(MemRWMtoDCache),
 		.Funct3M(Funct3MtoDCache),
 		.Funct7M(Funct7M),		
 		.AtomicM(AtomicMtoDCache),
-		.AtomicE(AtomicE),	    // *** add to arb
 		.MemAdrE(MemAdrEtoDCache),  // *** add to arb
 		.MemPAdrM(MemPAdrM),
 		.WriteDataM(WriteDataM),
