@@ -60,6 +60,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   output logic [`PA_BITS-1:0] PhysicalAddress,
   output logic             TLBMiss,
   output logic             TLBHit,
+  output logic             Cacheable, Idempotent, AtomicAllowed,
 
   // Faults
   output logic             TLBPageFault,
@@ -76,7 +77,6 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
 );
 
   logic PMPSquashBusAccess, PMASquashBusAccess;
-  logic Cacheable, Idempotent, AtomicAllowed; // *** here so that the pmachecker has somewhere to put these outputs. *** I'm leaving them as outputs to pma checker, but I'm stopping them here.
   // Translation lookaside buffer
 
   logic PMAInstrAccessFaultF, PMPInstrAccessFaultF;

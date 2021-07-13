@@ -239,22 +239,22 @@ add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMWordEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SelAdrM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/DCacheMemWriteData
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/WriteEnable}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/SetValid}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/SetDirty}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/Adr}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/WAdr}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -label TAG {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/CacheTagMem/StoredData}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/DirtyBits}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/ValidBits}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word1 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word1 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word2 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word2 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/WriteEnable}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/SetValid}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/SetDirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/Adr}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/WAdr}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -label TAG {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/CacheTagMem/StoredData}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/DirtyBits}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/ValidBits}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word0 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word1 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word1 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word2 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word2 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[3]/CacheDataMem/StoredData}
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/SRAMAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockWayM
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockWayMaskedM
@@ -272,8 +272,6 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU 
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/pagetablewalker/MemAdrM
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/pagetablewalker/DTLBMissM
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/pagetablewalker/MemAdrM
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/MemAdrM
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/pagetablewalker/PCF
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/Funct3M
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/Funct7M
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/AtomicM
@@ -290,6 +288,15 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memo
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/HRDATA
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/HWDATA
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/BasePAdrM
+add wave -noupdate -expand -group lsu -group pma /testbench/dut/hart/lsu/dmmu/Cacheable
+add wave -noupdate -expand -group lsu -group pma /testbench/dut/hart/lsu/dmmu/Idempotent
+add wave -noupdate -expand -group lsu -group pma /testbench/dut/hart/lsu/dmmu/AtomicAllowed
+add wave -noupdate -expand -group lsu -group pma /testbench/dut/hart/lsu/dmmu/PMAInstrAccessFaultF
+add wave -noupdate -expand -group lsu -group pma /testbench/dut/hart/lsu/dmmu/PMALoadAccessFaultM
+add wave -noupdate -expand -group lsu -group pma /testbench/dut/hart/lsu/dmmu/PMAStoreAccessFaultM
+add wave -noupdate -expand -group lsu -group pmp /testbench/dut/hart/lsu/dmmu/PMPInstrAccessFaultF
+add wave -noupdate -expand -group lsu -group pmp /testbench/dut/hart/lsu/dmmu/PMPLoadAccessFaultM
+add wave -noupdate -expand -group lsu -group pmp /testbench/dut/hart/lsu/dmmu/PMPStoreAccessFaultM
 add wave -noupdate -expand -group lsu -group old -color Gold /testbench/dut/hart/lsu/CurrState
 add wave -noupdate -expand -group lsu -group old /testbench/dut/hart/lsu/DisableTranslation
 add wave -noupdate -expand -group lsu -group old /testbench/dut/hart/lsu/MemRWM
@@ -312,20 +319,20 @@ add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/HREADPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/HRESPPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/HREADYPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/ExtIntM
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HCLK
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HSELGPIO
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HADDR
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HWDATA
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HWRITE
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HREADY
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HTRANS
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HREADGPIO
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HRESPGPIO
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/HREADYGPIO
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOPinsIn
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOPinsOut
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOPinsEn
-add wave -noupdate -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOIntr
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HCLK
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HSELGPIO
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HADDR
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HWDATA
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HWRITE
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HREADY
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HTRANS
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HREADGPIO
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HRESPGPIO
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/HREADYGPIO
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOPinsIn
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOPinsOut
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOPinsEn
+add wave -noupdate -expand -group GPIO /testbench/dut/uncore/genblk3/gpio/GPIOIntr
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/HCLK
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/HSELCLINT
 add wave -noupdate -group CLINT /testbench/dut/uncore/genblk1/clint/HADDR
@@ -394,8 +401,8 @@ add wave -noupdate /testbench/dut/uncore/dtim/risingHREADYTim
 add wave -noupdate /testbench/dut/uncore/dtim/memwrite
 add wave -noupdate /testbench/dut/uncore/dtim/HWDATA
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 12} {1978950 ns} 0} {{Cursor 4} {1979605 ns} 0} {{Cursor 5} {2053811 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 12} {4707 ns} 0} {{Cursor 4} {1979605 ns} 0} {{Cursor 5} {6253401 ns} 0}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
 configure wave -justifyvalue left
@@ -410,4 +417,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1979564 ns} {1979828 ns}
+WaveRestoreZoom {4642 ns} {4816 ns}

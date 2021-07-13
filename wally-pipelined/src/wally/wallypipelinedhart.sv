@@ -196,6 +196,7 @@ module wallypipelinedhart
 	  .DCfromAHBAck(DCfromAHBAck),
 	  .DCfromAHBReadData(DCfromAHBReadData),
 	  .DCtoAHBWriteData(DCtoAHBWriteData),
+	  .DCtoAHBSizeM(DCtoAHBSizeM),
 
 	  // connect to csr or privilege and stay the same.
 	  .PrivilegeModeW(PrivilegeModeW),           // connects to csr
@@ -231,10 +232,6 @@ module wallypipelinedhart
 	  .LSUStall(DCacheStall));                     // change to DCacheStall
 
 
-  generate
-    if (`XLEN == 32) assign DCtoAHBSizeM = 3'b010;
-    else assign DCtoAHBSizeM = 3'b011;
-  endgenerate;
   
 
   ahblite ebu(// IFU connections

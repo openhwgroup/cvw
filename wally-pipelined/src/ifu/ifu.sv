@@ -136,6 +136,9 @@ module ifu (
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
+       .Cacheable(),
+       .Idempotent(),
+       .AtomicAllowed(),
        .*);
 
 

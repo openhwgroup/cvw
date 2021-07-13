@@ -62,12 +62,13 @@ module lsu
 
    // connect to ahb
    input logic 		       CommitM, // should this be generated in the abh interface?
-   output logic [`PA_BITS-1:0] DCtoAHBPAdrM, // to ahb
+   output logic [`PA_BITS-1:0] DCtoAHBPAdrM,
    output logic 	       DCtoAHBReadM, 
    output logic 	       DCtoAHBWriteM,
-   input logic 		       DCfromAHBAck, // from ahb
-   input logic [`XLEN-1:0]     DCfromAHBReadData, // from ahb
-   output logic [`XLEN-1:0]    DCtoAHBWriteData, // to ahb
+   input logic 		       DCfromAHBAck,
+   input logic [`XLEN-1:0]     DCfromAHBReadData,
+   output logic [`XLEN-1:0]    DCtoAHBWriteData,
+   output logic [2:0] 	       DCtoAHBSizeM, 
 
    // mmu management
 
@@ -140,8 +141,8 @@ module lsu
   logic 		       HPTWReady;
   logic 		       DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
   logic 		       DCacheStall;
-  
-  
+
+  logic 		       CacheableM;
   
   pagetablewalker pagetablewalker(
 				  .clk(clk),
@@ -223,8 +224,18 @@ module lsu
        .SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
+       .Cacheable(CacheableM),
+       .Idempotent(),
+       .AtomicAllowed(),
        //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
+
+
+  generate
+    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM ? 3'b010 : Funct3MtoDCache;
+    else assign DCtoAHBSizeM = CacheableM ? 3'b011 : Funct3MtoDCache;
+  endgenerate;
+
 
   // Specify which type of page fault is occurring
   assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoDCache[1];
@@ -310,7 +321,7 @@ module lsu
 		.DCacheStall(DCacheStall),
 		.FaultM(LoadMisalignedFaultM | StoreMisalignedFaultM), // this is wrong needs to be all faults.
 		.DTLBMissM(DTLBMissM),
-		.UncachedM(1'b0), // ***connect to PMA
+		.CacheableM(CacheableM), 
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),
