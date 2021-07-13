@@ -34,9 +34,11 @@ module dcache
    input logic 		       FlushW,
 
    // cpu side
+   input logic [1:0] 	       MemRWE,
    input logic [1:0] 	       MemRWM,
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M,
+   input logic [1:0] 	       AtomicE, 
    input logic [1:0] 	       AtomicM,
    input logic [`XLEN-1:0]     MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
@@ -299,6 +301,7 @@ module dcache
   // control path *** eventually move to own module.
 
   logic AnyCPUReqM;
+  logic AnyCPUReqE;
   logic FetchCountFlag;
   logic PreCntEn;
   logic CntEn;
@@ -349,6 +352,7 @@ module dcache
   
 
   assign AnyCPUReqM = |MemRWM | (|AtomicM);
+  assign AnyCPUReqE = |MemRWE | (|AtomicE);  
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL:0]);
 
   flopenr #(LOGWPL+1) 
@@ -406,7 +410,7 @@ module dcache
     case (CurrState)
       STATE_READY: begin
 	// sram busy
-	if (AnyCPUReqM & SRAMWordWriteEnableW) begin
+	if (AnyCPUReqE & SRAMWordWriteEnableM) begin
 	  NextState = STATE_SRAM_BUSY;
 	  DCacheStall = 1'b1;
 	end
@@ -505,11 +509,16 @@ module dcache
       end
 
       STATE_MISS_WRITE_WORD: begin
-	DCacheStall = 1'b0;
 	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
-	NextState = STATE_READY;
 	SelAdrM = 1'b1;
+	if (AnyCPUReqE & SRAMWordWriteEnableM) begin
+	  NextState = STATE_SRAM_BUSY;
+	  DCacheStall = 1'b1;
+	end else begin
+	  NextState = STATE_READY;
+	  DCacheStall = 1'b0;
+	end
       end
 
       STATE_MISS_EVICT_DIRTY: begin
