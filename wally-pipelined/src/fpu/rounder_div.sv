@@ -13,10 +13,10 @@
 //
 
 module rounder_div (Result, DenormIO, Flags, rm, P, OvEn, 
-		UnEn, exp_diff, sel_inv, Invalid, DenormIn, 
-		SignR, q1, qm1, qp1, q0, qm0, qp0, regr_out);
+		    UnEn, exp_diff, sel_inv, Invalid, DenormIn, 
+		    SignR, q1, qm1, qp1, q0, qm0, qp0, regr_out);
 
-   input  [2:0]   rm;
+   input  [1:0]   rm;
    input          P;
    input          OvEn;
    input          UnEn;
@@ -26,48 +26,47 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    input	  DenormIn;
    input 	  SignR;
    
-   input [63:0]   q1;
-   input [63:0]   qm1;
-   input [63:0]   qp1;
-   input [63:0]   q0;
-   input [63:0]   qm0;
-   input [63:0]   qp0;   
-   input [127:0]  regr_out;
+   input logic [63:0]  q1;
+   input logic [63:0]  qm1;
+   input logic [63:0]  qp1;
+   input logic [63:0]  q0;
+   input logic [63:0]  qm0;
+   input logic [63:0]  qp0;   
+   input logic [127:0] regr_out;
    
-   output [63:0]  Result;
-   output 	  DenormIO;
-   output [4:0]   Flags;
-
-   supply1 	  vdd;
-   supply0 	  vss;
+   output logic [63:0] Result;
+   output logic        DenormIO;
+   output logic [4:0]  Flags;
    
-   wire 	  Rsign;
-   wire [10:0] 	  Rexp;
-   wire [12:0] 	  Texp;
-   wire [51:0] 	  Rmant;
-   wire [63:0] 	  Tmant;
-   wire [51:0] 	  Smant;   
-   wire 	  Rzero;
-   wire 	  Gdp, Gsp, G;
-   wire 	  UnFlow_SP, UnFlow_DP, UnderFlow; 
-   wire 	  OvFlow_SP, OvFlow_DP, OverFlow;		
-   wire 	  Inexact;
-   wire 	  Round_zero;
-   wire 	  Infinite;
-   wire 	  VeryLarge;
-   wire 	  Largest;
-   wire 	  Div0;      
-   wire 	  Adj_exp;
-   wire 	  Valid;
-   wire 	  NaN;
-   wire 	  Texp_l7z;
-   wire 	  Texp_l7o;
-   wire 	  OvCon;
-   wire [1:0] 	  mux_mant;
-   wire 	  sign_rem;
-   wire [63:0] 	  q, qm, qp;
-   wire 	  exp_ovf, exp_ovfSP, exp_ovfDP;
-   logic zero_rem;   
+   supply1 	       vdd;
+   supply0 	       vss;
+   
+   logic 	       Rsign;
+   logic [10:0]        Rexp;
+   logic [12:0]        Texp;
+   logic [51:0]        Rmant;
+   logic [63:0]        Tmant;
+   logic [51:0]        Smant;   
+   logic 	       Rzero;
+   logic 	       Gdp, Gsp, G;
+   logic 	       UnFlow_SP, UnFlow_DP, UnderFlow; 
+   logic 	       OvFlow_SP, OvFlow_DP, OverFlow;		
+   logic 	       Inexact;
+   logic 	       Round_zero;
+   logic 	       Infinite;
+   logic 	       VeryLarge;
+   logic 	       Largest;
+   logic 	       Div0;      
+   logic 	       Adj_exp;
+   logic 	       Valid;
+   logic 	       NaN;
+   logic 	       Texp_l7z;
+   logic 	       Texp_l7o;
+   logic 	       OvCon;
+   logic [1:0] 	       mux_mant;
+   logic 	       sign_rem;
+   logic [63:0]        q, qm, qp;
+   logic 	       exp_ovf, exp_ovfSP, exp_ovfDP;   
 
    // Remainder = 0?
    assign zero_rem = ~(|regr_out);
@@ -98,7 +97,7 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    //   1.) we choose any qm0, qp0, q0 (since we shift mant)
    //   2.) we choose qp and we overflow (for RU)
    assign exp_ovf = |{qp[62:40], (qp[39:11] & {29{~P}})};
-   assign Texp = exp_diff - {{12{vss}}, ~q1[63]} + {{12{vss}}, mux_mant[1]&qp1[63]&~exp_ovf}; // KEP used to be 13{vss}
+   assign Texp = exp_diff - {{13{vss}}, ~q1[63]} + {{13{vss}}, mux_mant[1]&qp1[63]&~exp_ovf};
    
    // Overflow only occurs for double precision, if Texp[10] to Texp[0] are 
    // all ones. To encourage sharing with single precision overflow detection,

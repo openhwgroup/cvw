@@ -1,5 +1,5 @@
 set pagination off
-target extended-remote :1234
+target extended-remote :1235
 set logging overwrite on
 set logging redirect on
 printf "Creating bootmemGDB.txt\n"
