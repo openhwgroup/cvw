@@ -39,6 +39,7 @@ module csru #(parameter
     output logic [`XLEN-1:0] CSRUReadValM,  
     input  logic [4:0]       SetFflagsM,
     output logic [2:0]       FRM_REGW,
+    output logic             WriteFRMM, WriteFFLAGSM,
     output logic             IllegalCSRUAccessM
   );
 

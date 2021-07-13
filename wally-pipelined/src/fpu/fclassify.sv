@@ -7,8 +7,6 @@ module fclassify (
     output logic [63:0] ClassResE
     );
 
-    logic [31:0] Single;
-    logic [63:0] Double;
     logic Sgn;
     logic Inf, NaN, Zero, Norm, Denorm;
     logic PInf, QNaN, PZero, PNorm, PDenorm;
@@ -16,16 +14,14 @@ module fclassify (
     logic MaxExp, ExpZero, ManZero, FirstBitFrac;
    
     // Single and Double precision layouts
-    assign Single = SrcXE[63:32];
-    assign Double = SrcXE;
-    assign Sgn = SrcXE[63];
+    assign Sgn = FmtE ? SrcXE[63] : SrcXE[31];
 
     // basic calculations for readabillity
     
-    assign ExpZero = FmtE ? ~|Double[62:52] : ~|Single[30:23];
-    assign MaxExp = FmtE ? &Double[62:52] : &Single[30:23];
-    assign ManZero = FmtE ? ~|Double[51:0] : ~|Single[22:0];
-    assign FirstBitFrac = FmtE ? Double[51] : Single[22];
+    assign ExpZero = FmtE ? ~|SrcXE[62:52] : ~|SrcXE[30:23];
+    assign MaxExp = FmtE ? &SrcXE[62:52] : &SrcXE[30:23];
+    assign ManZero = FmtE ? ~|SrcXE[51:0] : ~|SrcXE[22:0];
+    assign FirstBitFrac = FmtE ? SrcXE[51] : SrcXE[22];
 
     // determine the type of number
     assign NaN      = MaxExp & ~ManZero;
