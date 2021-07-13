@@ -63,6 +63,7 @@ module wallypipelinedhart
   // new signals that must connect through DP
   logic 		    MulDivE, W64E;
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
+  logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
   logic [`XLEN-1:0] 	    SrcAE, SrcBE;
   logic [`XLEN-1:0] 	    SrcAM;
@@ -73,6 +74,7 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
+  logic [1:0] 		    MemRWE;  
   logic [1:0] 		    MemRWM;
   logic 		    InstrValidM, InstrValidW;
   logic 		    InstrMisalignedFaultM;
@@ -174,9 +176,11 @@ module wallypipelinedhart
 	  .StallW(StallW),
 	  .FlushW(FlushW),
 	  // CPU interface
+	  .MemRWE(MemRWE),                  	  
 	  .MemRWM(MemRWM),                  
 	  .Funct3M(Funct3M),
 	  .Funct7M(InstrM[31:25]),
+	  .AtomicE(AtomicE),
 	  .AtomicM(AtomicM),               
 	  .CommittedM(CommittedM),          
 	  .SquashSCW(SquashSCW),            
