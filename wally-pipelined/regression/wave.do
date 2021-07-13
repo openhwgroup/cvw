@@ -394,8 +394,8 @@ add wave -noupdate /testbench/dut/uncore/dtim/risingHREADYTim
 add wave -noupdate /testbench/dut/uncore/dtim/memwrite
 add wave -noupdate /testbench/dut/uncore/dtim/HWDATA
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 12} {1303743 ns} 0} {{Cursor 4} {1304324 ns} 0} {{Cursor 5} {1303977 ns} 0}
-quietly wave cursor active 1
+WaveRestoreCursors {{Cursor 12} {1978950 ns} 0} {{Cursor 4} {1979605 ns} 0} {{Cursor 5} {2053811 ns} 0}
+quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
 configure wave -justifyvalue left
@@ -410,4 +410,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1303670 ns} {1304014 ns}
+WaveRestoreZoom {1979564 ns} {1979828 ns}

@@ -401,11 +401,17 @@ module dcache
 	else if(|AtomicM & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
+
+	  if(StallW) NextState = STATE_CPU_BUSY;
+	  else NextState = STATE_READY;
 	end
 	// read hit valid cached
 	else if(MemRWM[1] & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_READY;
 	  DCacheStall = 1'b0;
+
+	  if(StallW) NextState = STATE_CPU_BUSY;
+	  else NextState = STATE_READY;
 	end
 	// write hit valid cached
 	else if (MemRWM[0] & ~UncachedM & ~FaultM & CacheHit & ~DTLBMissM) begin
