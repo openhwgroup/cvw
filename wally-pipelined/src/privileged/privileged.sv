@@ -39,7 +39,7 @@ module privileged (
   output logic             RetM, TrapM, NonBusTrapM,
   output logic             ITLBFlushF, DTLBFlushM,
   input  logic             InstrValidM,InstrValidW, CommittedM,
-  input  logic             FloatRegWriteW, LoadStallD,
+  input  logic             FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
   input  logic 		   RASPredPCWrongM,
