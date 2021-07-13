@@ -239,7 +239,7 @@ module dcache
 			      .q(ReadDataW));
 
   // write path
-  subwordwrite subwordwrite(.HRDATA(FinalReadDataWordM),
+  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(MemPAdrM[2:0]),
 			    .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
 			    .HWDATAIN(WriteDataM),
