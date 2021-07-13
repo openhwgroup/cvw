@@ -40,7 +40,7 @@ module csr #(parameter
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
-  input  logic             InstrValidW, FRegWriteM, LoadStallD,
+  input  logic             InstrValidM, FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
   input  logic 		   RASPredPCWrongM,
