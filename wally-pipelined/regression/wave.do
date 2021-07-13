@@ -402,19 +402,22 @@ add wave -noupdate /testbench/dut/uncore/dtim/RAM
 add wave -noupdate /testbench/dut/uncore/dtim/A
 add wave -noupdate /testbench/dut/uncore/dtim/HWDATA
 add wave -noupdate /testbench/dut/uncore/dtim/memwrite
+add wave -noupdate /testbench/dut/uncore/dtim/risingHREADYTim
 add wave -noupdate /testbench/dut/uncore/dtim/memread
 add wave -noupdate /testbench/dut/hart/lsu/dcache/ReadDataBlockWayM
 add wave -noupdate /testbench/dut/uncore/dtim/HCLK
 add wave -noupdate /testbench/dut/hart/clk
 add wave -noupdate /testbench/DCacheFlushFSM/CacheData
-add wave -noupdate /testbench/DCacheFlushFSM/ShadowRAM
 add wave -noupdate /testbench/DCacheFlushFSM/CacheAdr
 add wave -noupdate /testbench/DCacheFlushFSM/CacheData
 add wave -noupdate /testbench/DCacheFlushFSM/CacheDirty
 add wave -noupdate /testbench/DCacheFlushFSM/CacheTag
 add wave -noupdate /testbench/DCacheFlushFSM/CacheValid
+add wave -noupdate -expand -group shadowram /testbench/DCacheFlushFSM/clk
+add wave -noupdate -expand -group shadowram /testbench/DCacheFlushFSM/start
+add wave -noupdate -expand -group shadowram -color Orchid /testbench/DCacheFlushFSM/ShadowRAM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 12} {63874 ns} 0} {{Cursor 13} {4851 ns} 0} {{Cursor 3} {58080 ns} 0}
+WaveRestoreCursors {{Cursor 12} {63589 ns} 0} {{Cursor 13} {4851 ns} 0} {{Cursor 3} {58080 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -430,4 +433,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {67394 ns}
+WaveRestoreZoom {63529 ns} {63661 ns}

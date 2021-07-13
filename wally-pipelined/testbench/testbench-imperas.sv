@@ -630,11 +630,14 @@ string tests32f[] = '{
   // check results
   always @(negedge clk)
     begin    
+/* -----\/----- EXCLUDED -----\/-----
       if (dut.hart.priv.EcallFaultM && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
 			      dut.hart.ieu.dp.regf.wd3 == 1))) begin
+ -----/\----- EXCLUDED -----/\----- */
+      if (DCacheFlushDone) begin
         $display("Code ended with ecall with gp = 1");
 
         #600; // give time for instructions in pipeline to finish
@@ -1035,16 +1038,20 @@ module DCacheFlushFSM
     if (start) begin #1
       for(i = 0; i < numlines; i++) begin
 	for(j = 0; j < numways; j++) begin
-	  for(k = 0; k < numwords; k++) begin
-	    $display("Help me!")
-	    ShadowRAM[CacheAdr[j][i][k]] = CacheData[j][i][k];
-	  end
+	  if (CacheValid[j][i] && CacheDirty[j][i]) begin
+	    for(k = 0; k < numwords; k++) begin
+	      ShadowRAM[CacheAdr[j][i][k]/8] = CacheData[j][i][k];
+	    end
+	  end	
 	end
       end
     end
   end
-  
-      
+
+
+  flop #(1) doneReg(.clk(clk),
+		    .d(start),
+		    .q(done));
 		    
 endmodule
 		      
