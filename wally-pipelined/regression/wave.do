@@ -118,18 +118,18 @@ add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/CSRReadValW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultSrcW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultW
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/a
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/b
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/alucontrol
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/result
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/flags
-add wave -noupdate -group alu -divider internals
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/overflow
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/carry
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/zero
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/neg
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/lt
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/ltu
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/a
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/b
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/alucontrol
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/result
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/flags
+add wave -noupdate -expand -group alu -divider internals
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/overflow
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/carry
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/zero
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/neg
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/lt
+add wave -noupdate -expand -group alu /testbench/dut/hart/ieu/dp/alu/ltu
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs1D
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs2D
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs1E
@@ -239,6 +239,7 @@ add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testben
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WriteDataM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMBlockWriteEnableM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMWordWriteEnableM
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/AnyCPUReqE
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMWayWriteEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMWordEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SelAdrM
@@ -258,12 +259,14 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cach
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word2 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[2]/CacheDataMem/StoredData}
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[3]/CacheDataMem/WriteEnable}
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -expand -group Way0Word3 {/testbench/dut/hart/lsu/dcache/CacheWays[0]/MemWay/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/SRAMAdr
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockWayM
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockWayMaskedM
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockM
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadTag
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/WayHit
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/SRAMAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockWayM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockWayMaskedM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataBlockM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadDataWordM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/FinalReadDataWordM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/ReadTag
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM read} /testbench/dut/hart/lsu/dcache/WayHit
 add wave -noupdate -expand -group lsu -expand -group dcache -group Victim /testbench/dut/hart/lsu/dcache/VictimReadDataBLockWayMaskedM
 add wave -noupdate -expand -group lsu -expand -group dcache -group Victim /testbench/dut/hart/lsu/dcache/VictimReadDataBlockM
 add wave -noupdate -expand -group lsu -expand -group dcache -group Victim /testbench/dut/hart/lsu/dcache/VictimWay
@@ -390,34 +393,8 @@ add wave -noupdate -group dtlb /testbench/dut/hart/lsu/dmmu/TLBHit
 add wave -noupdate -group dtlb /testbench/dut/hart/lsu/dmmu/VirtualAddress
 add wave -noupdate -group dtlb /testbench/dut/hart/lsu/dmmu/PhysicalAddress
 add wave -noupdate -group itlb /testbench/dut/hart/ifu/ITLBMissF
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268436996]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268436997]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268436998]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268436999]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268437000]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268437011]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268437012]}
-add wave -noupdate {/testbench/dut/uncore/dtim/RAM[268437268]}
-add wave -noupdate /testbench/dut/uncore/dtim/RAM
-add wave -noupdate /testbench/dut/uncore/dtim/A
-add wave -noupdate /testbench/dut/uncore/dtim/HWDATA
-add wave -noupdate /testbench/dut/uncore/dtim/memwrite
-add wave -noupdate /testbench/dut/uncore/dtim/risingHREADYTim
-add wave -noupdate /testbench/dut/uncore/dtim/memread
-add wave -noupdate /testbench/dut/hart/lsu/dcache/ReadDataBlockWayM
-add wave -noupdate /testbench/dut/uncore/dtim/HCLK
-add wave -noupdate /testbench/dut/hart/clk
-add wave -noupdate /testbench/DCacheFlushFSM/CacheData
-add wave -noupdate /testbench/DCacheFlushFSM/CacheAdr
-add wave -noupdate /testbench/DCacheFlushFSM/CacheData
-add wave -noupdate /testbench/DCacheFlushFSM/CacheDirty
-add wave -noupdate /testbench/DCacheFlushFSM/CacheTag
-add wave -noupdate /testbench/DCacheFlushFSM/CacheValid
-add wave -noupdate -expand -group shadowram /testbench/DCacheFlushFSM/clk
-add wave -noupdate -expand -group shadowram /testbench/DCacheFlushFSM/start
-add wave -noupdate -expand -group shadowram -color Orchid /testbench/DCacheFlushFSM/ShadowRAM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 12} {63589 ns} 0} {{Cursor 13} {4851 ns} 0} {{Cursor 3} {58080 ns} 0}
+WaveRestoreCursors {{Cursor 12} {1053664 ns} 0} {{Cursor 13} {4851 ns} 0} {{Cursor 3} {58080 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -433,4 +410,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {63529 ns} {63661 ns}
+WaveRestoreZoom {1053586 ns} {1053736 ns}

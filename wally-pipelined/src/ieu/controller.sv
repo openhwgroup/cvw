@@ -63,7 +63,8 @@ module controller(
   output logic [2:0] ResultSrcW,
   output logic       InstrValidW,
   // Stall during CSRs
-  output logic       CSRWritePendingDEM
+  output logic       CSRWritePendingDEM,
+  output logic       StoreStallD
 );
 
   logic [6:0] OpD;
@@ -219,5 +220,7 @@ module controller(
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 
-  assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;   
+  assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;
+
+  assign StoreStallD = MemRWE[0] & (|MemRWD | |AtomicD);
 endmodule
