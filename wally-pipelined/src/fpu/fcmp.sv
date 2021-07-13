@@ -58,8 +58,11 @@ module fcmp (
    logic	      Azero, Bzero;
    logic 	      LT;                // magnitude op1 < magnitude op2
    logic 	      EQ;                // magnitude op1 = magnitude op2
+   logic [63:0]   PosOp1, PosOp2;
    
-   magcompare64b_1 magcomp1 (w, x, {~op1[63], op1[62:0]}, {~op2[63], op2[62:0]});
+   assign PosOp1 = FmtE ? {~op1[63], op1[62:0]} : {~op1[31], op1[30:0], 32'b0};
+   assign PosOp2 = FmtE ? {~op2[63], op2[62:0]} : {~op2[31], op2[30:0], 32'b0};
+   magcompare64b_1 magcomp1 (w, x, PosOp1, PosOp2);
 
    // Determine final values based on output of magnitude comparison, 
    // sign bits, and special case testing. 

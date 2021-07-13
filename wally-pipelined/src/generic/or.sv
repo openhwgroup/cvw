@@ -1,12 +1,10 @@
 ///////////////////////////////////////////
-// tlbram.sv
+// or.sv
 //
-// Written: jtorrey@hmc.edu & tfleming@hmc.edu 16 February 2021
-// Modified:
+// Written: David_Harris@hmc.edu 13 July 2021
+// Modified: 
 //
-// Purpose: Stores page table entries of cached address translations.
-//          Outputs the physical page number and access bits of the current
-//          virtual address on a TLB hit.
+// Purpose: Various flavors of multiplexers
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -26,25 +24,26 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
+/* verilator lint_off DECLFILENAME */
+/* verilator lint_off UNOPTFLAT */
 
-module tlbram #(parameter TLB_ENTRIES = 8) (
-  input  logic                      clk, reset,
-  input  logic [`XLEN-1:0]          PTE,
-  input  logic [TLB_ENTRIES-1:0]    Matches, WriteEnables,
-  output logic [`PPN_BITS-1:0]      PPN,
-  output logic [7:0]                PTEAccessBits,
-  output logic [TLB_ENTRIES-1:0]    PTE_Gs
-);
+// perform an OR of all the rows in an array, producing one output for each column
+// equivalent to assign y = a.or
+module or_rows #(parameter ROWS = 8, COLS=2) (
+  input  var logic [COLS-1:0] a[ROWS-1:0],
+  output logic [COLS-1:0] y); 
 
-  logic [`PPN_BITS+9:0] RamRead[TLB_ENTRIES-1:0];
-  logic [`PPN_BITS+9:0] PageTableEntry;
-
-  // RAM implemented with array of flops and AND/OR read logic
-  tlbramline #(`PPN_BITS+10) tlblineram[TLB_ENTRIES-1:0](clk, reset, Matches, WriteEnables, PTE[`PPN_BITS+9:0], RamRead, PTE_Gs);
-  //assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
-  or_rows #(TLB_ENTRIES, `PPN_BITS+10) PTEOr(RamRead, PageTableEntry);
-
-  // Rename the bits read from the TLB RAM
-  assign PTEAccessBits = PageTableEntry[7:0];
-  assign PPN = PageTableEntry[`PPN_BITS+9:10];
+  logic [COLS-1:0] mid[ROWS-1:0];
+  genvar row, col;
+  generate
+      for (col = 0; col < COLS; col++) begin
+          assign mid[1][col] = a[0][col] | a[1][col];
+          for (row=2; row < ROWS; row++)
+            assign mid[row][col] = mid[row-1][col] | a[row][col];
+          assign y[col] = mid[ROWS-1][col];
+      end
+  endgenerate
 endmodule
+
+/* verilator lint_on UNOPTFLAT */
+/* verilator lint_on DECLFILENAME */

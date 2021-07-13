@@ -1,11 +1,7 @@
-// `timescale 1ps/1ps
-module divconv (q1, qm1, qp1, q0, qm0, qp0, 
-		rega_out, regb_out, regc_out, regd_out,
-		regr_out, d, n, 
-		sel_muxa, sel_muxb, sel_muxr, 
-		reset, clk,
-		load_rega, load_regb, load_regc, load_regd,
-		load_regr, load_regs, P, op_type, exp_odd);
+`timescale 1ps/1ps
+module divconv (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_out,
+		regr_out, d, n, sel_muxa, sel_muxb, sel_muxr, reset, clk, load_rega, load_regb, 
+		load_regc, load_regd, load_regr, load_regs, P, op_type, exp_odd);
 
    input logic [52:0]   d, n;
    input logic [2:0] 	sel_muxa, sel_muxb;
@@ -40,9 +36,7 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    logic [127:0] 	constant, constant2;
    logic [63:0] 	q_const, qp_const, qm_const;
    logic [63:0] 	d2, n2;   
-   logic [11:0] 	d3;  
-
-   logic cout1, cout2, cout3, cout4, cout5, cout6, cout7, muxr_out; 
+   logic [11:0] 	d3;   
 
    // Check if exponent is odd for sqrt
    // If exp_odd=1 and sqrt, then M/2 and use ia_addr=0 as IA
@@ -68,9 +62,9 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    mux2 #(64) mx5 (muxb_out, mcand_q, sel_muxr&op_type, mplier);   
    mux2 #(64) mx6 (muxa_out, mcand_q, sel_muxr, mcand);
    // TDM multiplier (carry/save)
-   multiplier mult1 (mcand, mplier, Sum, Carry);   // ***multiply
+   multiplier mult1 (mcand, mplier, Sum, Carry);
    // Q*D - N (reversed but changed in rounder.v to account for sign reversal)
-   csa #(128) csa1 (Sum, Carry, constant, Sum2, Carry2); //***adder
+   csa #(128) csa1 (Sum, Carry, constant, Sum2, Carry2);
    // Add ulp for subtraction in remainder
    mux2 #(1) mx7 (1'b0, 1'b1, sel_muxr, muxr_out);
 
@@ -80,15 +74,17 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    mux2 #(64) mxA ({64'hFFFF_FFFF_FFFF_F9FF}, {64'hFFFF_FF3F_FFFF_FFFF}, P, qm_const);
    
    // CPA (from CSA)/Remainder addition/subtraction
-   ldf128 cpa1 (cout1, mul_out, Sum2, Carry2, muxr_out); //***adder
+   adder #(128) cpa1 (Sum2, Carry2, muxr_out, mul_out, cout1);   
+   
    // Assuming [1,2) - q1
-   ldf64 cpa2 (cout2, q_out1, regb_out, q_const, 1'b0); //***adder
-   ldf64 cpa3 (cout3, qp_out1, regb_out, qp_const, 1'b0); //***adder
-   ldf64 cpa4 (cout4, qm_out1, regb_out, qm_const, 1'b1);    //***adder
-   // Assuming [0.5,1) - q0
-   ldf64 cpa5 (cout5, q_out0, {regb_out[62:0], vss}, q_const, 1'b0); //***adder
-   ldf64 cpa6 (cout6, qp_out0, {regb_out[62:0], vss}, qp_const, 1'b0); //***adder
-   ldf64 cpa7 (cout7, qm_out0, {regb_out[62:0], vss}, qm_const, 1'b1); //***adder
+   adder #(64) cpa2 (regb_out, q_const, 1'b0, q_out1, cout2);
+   adder #(64) cpa3 (regb_out, qp_const, 1'b0, qp_out1, cout3);
+   adder #(64) cpa4 (regb_out, qm_const, 1'b1, qm_out1, cout4);
+   // Assuming [0.5,1) - q0   
+   adder #(64) cpa5 ({regb_out[62:0], vss}, q_const, 1'b0, q_out0, cout5);
+   adder #(64) cpa6 ({regb_out[62:0], vss}, qp_const, 1'b0, qp_out0, cout6);
+   adder #(64) cpa7 ({regb_out[62:0], vss}, qm_const, 1'b1, qm_out0, cout7);    
+
    // One's complement instead of two's complement (for hw efficiency)
    assign three = {~mul_out[126], mul_out[126], ~mul_out[125:63]};   
    mux2 #(64) mxTC (~mul_out[126:63], three[64:1],  op_type, twocmp_out);
@@ -110,126 +106,151 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0,
    
 endmodule // divconv
 
-// module adder #(parameter WIDTH=8)
-//    (input  logic [WIDTH-1:0] a, b,
-//     output logic [WIDTH-1:0] y);
+module adder #(parameter WIDTH=8)
+   (input  logic [WIDTH-1:0] a, b,
+    input logic 	     cin,
+    output logic [WIDTH-1:0] y,
+    output logic 	     cout);
    
-//    assign y = a + b;
+   assign {cout, y} = a + b + cin;
    
-// endmodule // adder
+endmodule // adder
 
-// module flopenr #(parameter WIDTH = 8)
-//    (input  logic             clk, reset, en,
-//     input  logic [WIDTH-1:0] d, 
-//     output logic [WIDTH-1:0] q);
+module flopenr #(parameter WIDTH = 8)
+   (input  logic             clk, reset, en,
+    input  logic [WIDTH-1:0] d, 
+    output logic [WIDTH-1:0] q);
 
-//    always_ff @(posedge clk, posedge reset)
-//      if (reset)   q <= #10 0;
-//      else if (en) q <= #10 d;
+   always_ff @(posedge clk, posedge reset)
+     if (reset)   q <= #10 0;
+     else if (en) q <= #10 d;
    
-// endmodule // flopenr
+endmodule // flopenr
 
-// module flopr #(parameter WIDTH = 8)
-//    (input  logic             clk, reset,
-//     input  logic [WIDTH-1:0] d, 
-//     output logic [WIDTH-1:0] q);
+module flopr #(parameter WIDTH = 8)
+   (input  logic             clk, reset,
+    input  logic [WIDTH-1:0] d, 
+    output logic [WIDTH-1:0] q);
 
-//    always_ff @(posedge clk, posedge reset)
-//      if (reset) q <= #10 0;
-//      else       q <= #10 d;
+   always_ff @(posedge clk, posedge reset)
+     if (reset) q <= #10 0;
+     else       q <= #10 d;
    
-// endmodule // flopr
+endmodule // flopr
 
-// module flopenrc #(parameter WIDTH = 8)
-//    (input  logic             clk, reset, en, clear,
-//     input  logic [WIDTH-1:0] d, 
-//     output logic [WIDTH-1:0] q);
+module flopenrc #(parameter WIDTH = 8)
+   (input  logic             clk, reset, en, clear,
+    input  logic [WIDTH-1:0] d, 
+    output logic [WIDTH-1:0] q);
 
-//    always_ff @(posedge clk, posedge reset)
-//      if (reset)    q <= #10 0;
-//      else if (en) 
-//        if (clear) q <= #10 0;
-//        else       q <= #10 d;
+   always_ff @(posedge clk, posedge reset)
+     if (reset)    q <= #10 0;
+     else if (en) 
+       if (clear) q <= #10 0;
+       else       q <= #10 d;
    
-// endmodule // flopenrc
+endmodule // flopenrc
 
-// module floprc #(parameter WIDTH = 8)
-//    (input  logic             clk, reset, clear,
-//     input  logic [WIDTH-1:0] d, 
-//     output logic [WIDTH-1:0] q);
+module floprc #(parameter WIDTH = 8)
+   (input  logic             clk, reset, clear,
+    input  logic [WIDTH-1:0] d, 
+    output logic [WIDTH-1:0] q);
 
-//    always_ff @(posedge clk, posedge reset)
-//      if (reset) q <= #10 0;
-//      else       
-//        if (clear) q <= #10 0;
-//        else       q <= #10 d;
+   always_ff @(posedge clk, posedge reset)
+     if (reset) q <= #10 0;
+     else       
+       if (clear) q <= #10 0;
+       else       q <= #10 d;
    
-// endmodule // floprc
+endmodule // floprc
 
-// module mux2 #(parameter WIDTH = 8)
-//    (input  logic [WIDTH-1:0] d0, d1, 
-//     input  logic             s, 
-//     output logic [WIDTH-1:0] y);
+module mux2 #(parameter WIDTH = 8)
+   (input  logic [WIDTH-1:0] d0, d1, 
+    input  logic             s, 
+    output logic [WIDTH-1:0] y);
 
-//    assign y = s ? d1 : d0;
+   assign y = s ? d1 : d0;
    
-// endmodule // mux2
+endmodule // mux2
 
-// module mux3 #(parameter WIDTH = 8)
-//    (input  logic [WIDTH-1:0] d0, d1, d2,
-//     input  logic [1:0]       s, 
-//     output logic [WIDTH-1:0] y);
+module mux3 #(parameter WIDTH = 8)
+   (input  logic [WIDTH-1:0] d0, d1, d2,
+    input  logic [1:0]       s, 
+    output logic [WIDTH-1:0] y);
 
-//    assign y = s[1] ? d2 : (s[0] ? d1 : d0);
+   assign y = s[1] ? d2 : (s[0] ? d1 : d0);
    
-// endmodule // mux3
+endmodule // mux3
 
-// module mux4 #(parameter WIDTH = 8)
-//    (input  logic [WIDTH-1:0] d0, d1, d2, d3,
-//     input  logic [1:0]       s, 
-//     output logic [WIDTH-1:0] y);
+module mux4 #(parameter WIDTH = 8)
+   (input  logic [WIDTH-1:0] d0, d1, d2, d3,
+    input  logic [1:0]       s, 
+    output logic [WIDTH-1:0] y);
 
-//    assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
+   assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 
-// endmodule // mux4
+endmodule // mux4
 
-// module mux5 #(parameter WIDTH = 8)
-//    (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4,
-//     input  logic [2:0]       s,
-//     output logic [WIDTH-1:0] y);
+module mux5 #(parameter WIDTH = 8)
+   (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4,
+    input  logic [2:0]       s,
+    output logic [WIDTH-1:0] y);
    
-//    always_comb
-//      casez (s)
-//        3'b000 : y = d0;       
-//        3'b001 : y = d1;
-//        3'b010 : y = d2;
-//        3'b011 : y = d3;
-//        3'b1?? : y = d4;
-//      endcase // casez (s)
+   always_comb
+     casez (s)
+       3'b000 : y = d0;       
+       3'b001 : y = d1;
+       3'b010 : y = d2;
+       3'b011 : y = d3;
+       3'b1?? : y = d4;
+     endcase // casez (s)
 
-// endmodule // mux5
+endmodule // mux5
 
-// module mux6 #(parameter WIDTH = 8)
-//    (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5,
-//     input  logic [2:0]       s,
-//     output logic [WIDTH-1:0] y);
+module mux6 #(parameter WIDTH = 8)
+   (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5,
+    input  logic [2:0]       s,
+    output logic [WIDTH-1:0] y);
    
-//    always_comb
-//      casez (s)
-//        3'b000 : y = d0;       
-//        3'b001 : y = d1;
-//        3'b010 : y = d2;
-//        3'b011 : y = d3;
-//        3'b10? : y = d4;
-//        3'b11? : y = d5;       
-//      endcase // casez (s)
+   always_comb
+     casez (s)
+       3'b000 : y = d0;       
+       3'b001 : y = d1;
+       3'b010 : y = d2;
+       3'b011 : y = d3;
+       3'b10? : y = d4;
+       3'b11? : y = d5;       
+     endcase // casez (s)
 
-// endmodule // mux6
+endmodule // mux6
 
-// module eqcmp #(parameter WIDTH = 8)
-//    (input  logic [WIDTH-1:0] a, b,
-//     output logic             y);
+module eqcmp #(parameter WIDTH = 8)
+   (input  logic [WIDTH-1:0] a, b,
+    output logic             y);
 
-//    assign y = (a == b);
+   assign y = (a == b);
    
-// endmodule // eqcmp
+endmodule // eqcmp
+
+module fa (input logic a, b, c, output logic sum, carry);
+
+   assign sum = a^b^c;
+   assign carry = a&b|a&c|b&c;   
+
+endmodule // fa
+
+module csa #(parameter WIDTH=8) 
+   (input logic [WIDTH-1:0] a, b, c,
+    output logic [WIDTH-1:0] sum, carry);
+
+   logic [WIDTH:0] 	     carry_temp;   
+   genvar 		     i;
+   generate
+      for (i=0;i<WIDTH;i=i+1)
+	begin : genbit
+	   fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
+	end
+   endgenerate
+   assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     
+   
+endmodule // csa

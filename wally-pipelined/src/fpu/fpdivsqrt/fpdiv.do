@@ -27,7 +27,7 @@ if [file exists work] {
 vlib work
 
 # compile source files
-vlog adder_ip.sv bk15.v mult_R4_64_64_cs.v ldf128.v ldf64.v sbtm_a1.sv sbtm_a0.sv sbtm.sv sbtm_a4.sv sbtm_a5.sv sbtm3.sv fsm.v divconvDP.sv convert_inputs.sv exception.sv rounder.sv fpdiv.sv test_fpdiv.sv
+vlog mult_R4_64_64_cs.v  sbtm_a1.sv sbtm_a0.sv sbtm.sv sbtm_a4.sv sbtm_a5.sv sbtm3.sv fsm_div.v divconvDP.sv convert_inputs_div.sv exception_div.sv rounder_div.sv fpdiv.sv test_fpdiv.sv
 
 # start and run simulation
 vsim -voptargs=+acc work.tb
@@ -74,29 +74,14 @@ add wave -noupdate -divider -height 32 "Exceptions"
 add wave -hex -r /tb/dut/exc1/*
 add wave -noupdate -divider -height 32 "Rounder"
 add wave -hex -r /tb/dut/round1/*
-add wave -noupdate -divider -height 32 "Pipe State"
-add wave -hex -r /tb/dut/goldy/Sum_pipe;
-add wave -hex -r /tb/dut/goldy/Carry_pipe;
-add wave -hex -r /tb/dut/goldy/muxr_pipe;   
-add wave -hex -r /tb/dut/goldy/rega_pipe;
-add wave -hex -r /tb/dut/goldy/regb_pipe;
-add wave -hex -r /tb/dut/goldy/regc_pipe;
-add wave -hex -r /tb/dut/goldy/regd_pipe;
-add wave -hex -r /tb/dut/goldy/regs_pipe;
-add wave -hex -r /tb/dut/goldy/regr_pipe;
-add wave -hex -r /tb/dut/goldy/P_pipe;
-add wave -hex -r /tb/dut/goldy/op_type_pipe;
-add wave -hex -r /tb/dut/goldy/q_const_pipe;
-add wave -hex -r /tb/dut/goldy/qm_const_pipe;
-add wave -hex -r /tb/dut/goldy/qp_const_pipe;   
 add wave -noupdate -divider -height 32 "Goldschmidt"
 add wave -hex -r /tb/dut/goldy/*
 
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {75 ns}
-configure wave -namecolwidth 350
-configure wave -valuecolwidth 250
+configure wave -namecolwidth 150
+configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -105,5 +90,5 @@ configure wave -rowmargin 4
 configure wave -childrowmargin 2
 
 -- Run the Simulation 
-run 20ns
+run 14ns
 quit

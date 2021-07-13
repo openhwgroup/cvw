@@ -3,13 +3,16 @@ import fileinput, sys
 
 sys.stderr.write("reminder: this script takes input from stdin\n")
 parseState = "idle"
+beginPageFault = 0
 inPageFault = 0
+endPageFault = 0
 CSRs = {}
 pageFaultCSRs = {}
 regs = {}
 pageFaultRegs = {}
 instrs = {}
 instrCount = 0
+returnAdr = 0
 
 def printPC(l):
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs, instrCount
@@ -33,8 +36,8 @@ def printCSRs():
 
 def parseCSRs(l):
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
-    if l.strip() and (not l.startswith("Disassembler")) and (not l.startswith("Please")):
-        if l.startswith(' x0/zero'):
+    if l.strip() and (not l.startswith("Disassembler")) and (not l.startswith("Please")) and not inPageFault:
+        if l.startswith(' x0/zero'): 
             parseState = "regFile"
             instr = instrs[CSRs["pc"]]
             printPC(instr)
@@ -42,24 +45,31 @@ def parseCSRs(l):
         else:
             csr = l.split()[0]
             val = int(l.split()[1],16)
-            if inPageFault:
+            # Commented out this conditional because the pageFault instrs don't corrupt CSRs
+            #if inPageFault:
                 # Not sure if these CSRs should be updated or not during page fault.
-                if l.startswith("mstatus") or l.startswith("mepc") or l.startswith("mcause") or l.startswith("mtval") or l.startswith("sepc") or l.startswith("scause") or l.startswith("stval"):
+                #if l.startswith("mstatus") or l.startswith("mepc") or l.startswith("mcause") or l.startswith("mtval") or l.startswith("sepc") or l.startswith("scause") or l.startswith("stval"):
                     # We do update some CSRs
-                    CSRs[csr] = val
-                else:
+                #    CSRs[csr] = val
+                #else:
                     # Others we preserve until changed later
-                    pageFaultCSRs[csr] = val
-            elif pageFaultCSRs and (csr in pageFaultCSRs):
-                if (val != pageFaultCSRs[csr]):
-                    del pageFaultCSRs[csr]
-                    CSRs[csr] = val
+                #    pageFaultCSRs[csr] = val
+            #elif pageFaultCSRs and (csr in pageFaultCSRs):
+            #    if (val != pageFaultCSRs[csr]):
+            #        del pageFaultCSRs[csr]
+            #        CSRs[csr] = val
+            #else:
+            #    CSRs[csr] = val
+            #
+            # However SEPC and STVAL do get corrupted upon exiting
+            if endPageFault and ((csr == 'sepc') or (csr == 'stval')):
+                CSRs[csr] = returnAdr
             else:
                 CSRs[csr] = val
 
 def parseRegs(l):
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
-    if "mcounteren" in l:
+    if "pc" in l:
         printCSRs()
         # New non-disassembled instruction
         parseState = "CSRs"
@@ -100,8 +110,12 @@ for l in fileinput.input():
     elif (parseState == "instr") and l.startswith('0x'):
         if "out of bounds" in l:
             sys.stderr.write("Detected QEMU page fault error\n")
+            beginPageFault = ~(inPageFault)
+            if beginPageFault:
+                returnAdr = int(l.split()[0][2:-1], 16)
             inPageFault = 1
         else: 
+            endPageFault = inPageFault
             inPageFault = 0
             adr = int(l.split()[0][2:-1], 16)
             instrs[adr] = l
