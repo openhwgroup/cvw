@@ -6,7 +6,7 @@ module fctrl (
   input  logic [2:0] Funct3D,
   input  logic [2:0] FRM_REGW,
   output logic       IllegalFPUInstrD,
-  output logic       FWriteEnD,
+  output logic       FRegWriteD,
   output logic       FDivStartD,
   output logic [2:0] FResultSelD,
   output logic [3:0] FOpCtrlD,
@@ -21,7 +21,7 @@ module fctrl (
   // FPU Instruction Decoder
   always_comb
     case(OpD)
-    // FWriteEn_FWriteInt_FResultSel_FOpCtrl_FResSel_FIntResSel_FDivStart_IllegalFPUInstr
+    // FRegWrite_FWriteInt_FResultSel_FOpCtrl_FResSel_FIntResSel_FDivStart_IllegalFPUInstr
       7'b0000111: case(Funct3D)
                     3'b010:  ControlsD = `FCTRLW'b1_0_000_0000_00_00_0_0; // flw
                     3'b011:  ControlsD = `FCTRLW'b1_0_000_0001_00_00_0_0; // fld
@@ -101,7 +101,7 @@ module fctrl (
       default:      ControlsD = `FCTRLW'b0_0_000_0000_00_00_0_1; // non-implemented instruction
     endcase
   // unswizzle control bits
-  assign {FWriteEnD, FWriteIntD, FResultSelD, FOpCtrlD, FResSelD, FIntResSelD, FDivStartD, IllegalFPUInstrD} = ControlsD;
+  assign {FRegWriteD, FWriteIntD, FResultSelD, FOpCtrlD, FResSelD, FIntResSelD, FDivStartD, IllegalFPUInstrD} = ControlsD;
   
   // if dynamic rounding, choose FRM_REGW
   assign FrmD = &Funct3D ? FRM_REGW : Funct3D;

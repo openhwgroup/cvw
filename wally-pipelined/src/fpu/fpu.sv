@@ -34,6 +34,7 @@ module fpu (
   input logic [`XLEN-1:0]  SrcAM,      // Integer input being written into fpreg
   input logic 		         StallE, StallM, StallW,
   input logic 		         FlushE, FlushM, FlushW,
+  output logic          FRegWriteM,
   output logic 		      FStallD,    // Stall the decode stage
   output logic 		      FWriteIntE, FWriteIntM, FWriteIntW, // Write integer register enable
   output logic [`XLEN-1:0] FWriteDataE,      // Data to be written to memory
@@ -46,7 +47,7 @@ module fpu (
   generate
      if (`F_SUPPORTED | `D_SUPPORTED) begin 
       // control logic signal instantiation
-      logic 		   FWriteEnD, FWriteEnE, FWriteEnM, FWriteEnW;              // FP register write enable
+      logic 		   FRegWriteD, FRegWriteE, FRegWriteW;              // FP register write enable
       logic [2:0] 	FrmD, FrmE, FrmM;                                  // FP rounding mode
       logic 		   FmtD, FmtE, FmtM, FmtW;                                  // FP precision 0-single 1-double
       logic 		   FDivStartD, FDivStartE;                                  // Start division
@@ -120,11 +121,11 @@ module fpu (
       
       // top-level controller for FPU
       fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
-                  .FRM_REGW, .IllegalFPUInstrD, .FWriteEnD, .FDivStartD, .FResultSelD, .FOpCtrlD, .FResSelD, 
+                  .FRM_REGW, .IllegalFPUInstrD, .FRegWriteD, .FDivStartD, .FResultSelD, .FOpCtrlD, .FResSelD, 
                   .FIntResSelD, .FmtD, .FrmD, .FWriteIntD);
       
       // regfile instantiation
-      fregfile fregfile (clk, reset, FWriteEnW,
+      fregfile fregfile (clk, reset, FRegWriteW,
             InstrD[19:15], InstrD[24:20], InstrD[31:27], RdW,
             FPUResultW,
             FRD1D, FRD2D, FRD3D);	
@@ -147,8 +148,8 @@ module fpu (
       flopenrc #(15) DECtrlRegE2(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                                                             {Adr1E,         Adr2E,         Adr3E});
       flopenrc #(22) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-                           {FWriteEnD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, InstrD[11:7], FOpCtrlD, FWriteIntD},
-                           {FWriteEnE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE,          FOpCtrlE, FWriteIntE});
+                           {FRegWriteD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, InstrD[11:7], FOpCtrlD, FWriteIntD},
+                           {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE,          FOpCtrlE, FWriteIntE});
 
 
 
@@ -166,7 +167,7 @@ module fpu (
       //EXECUTION STAGE
       
       // Hazard unit for FPU
-      fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FWriteEnM, .FWriteEnW, .RdM, .RdW, .FResultSelM, .FStallD, 
+      fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResultSelM, .FStallD, 
                         .ForwardXE, .ForwardYE, .ForwardZE);
 
       // forwarding muxs
@@ -220,7 +221,8 @@ module fpu (
       fcvt fcvt (.X(SrcXE), .SrcAE, .FOpCtrlE, .FmtE, .FrmE, .CvtResE, .CvtFlgE);
 
       // output for store instructions
-      mux2  #(`XLEN)  FWriteDataMux({{`XLEN-32{1'b0}}, SrcYE[63:32]}, SrcYE[63:64-`XLEN], FmtE, FWriteDataE);
+      // mux2  #(`XLEN)  FWriteDataMux({{`XLEN-32{1'b0}}, SrcYE[63:32]}, SrcYE[63:64-`XLEN], FmtE, FWriteDataE);
+      assign FWriteDataE = SrcYE[`XLEN-1:0];
 
 
 
@@ -249,8 +251,8 @@ module fpu (
       flopenrc #(5) EMRegCvt2(clk, reset, FlushM, ~StallM, CvtFlgE, CvtFlgM);
       
       flopenrc #(22) EMCtrlReg(clk, reset, FlushM, ~StallM,
-                           {FWriteEnE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE, FOpCtrlE, FWriteIntE},
-                           {FWriteEnM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, RdM, FOpCtrlM, FWriteIntM});
+                           {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE, FOpCtrlE, FWriteIntE},
+                           {FRegWriteM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, RdM, FOpCtrlM, FWriteIntM});
 
       flopenrc #(64) EMRegClass(clk, reset, FlushM, ~StallM, ClassResE, ClassResM);
       
@@ -266,23 +268,15 @@ module fpu (
       mux4  #(64)  FResMux(AlignedSrcAM, SgnResM, CmpResM, CvtResM, FResSelM, FResM);
       mux4  #(5)  FFlgMux(5'b0, {4'b0, SgnNVM}, {4'b0, CmpNVM}, CvtFlgM, FResSelM, FFlgM);
 
-      mux2  #(`XLEN)  SrcXAlignedMux({{`XLEN-32{1'b0}}, SrcXM[63:32]}, SrcXM[63:64-`XLEN], FmtM, SrcXMAligned);
-      mux4  #(`XLEN)  IntResMux(CmpResM[`XLEN-1:0], SrcXMAligned, ClassResM[`XLEN-1:0], CvtResM[`XLEN-1:0], FIntResSelM, FIntResM);
+      // mux2  #(`XLEN)  SrcXAlignedMux({{`XLEN-32{1'b0}}, SrcXM[63:32]}, SrcXM[63:64-`XLEN], FmtM, SrcXMAligned);
+      mux4  #(`XLEN)  IntResMux(CmpResM[`XLEN-1:0], SrcXM[`XLEN-1:0], ClassResM[`XLEN-1:0], CvtResM[`XLEN-1:0], FIntResSelM, FIntResM);
 
       
       // Align SrcA to MSB when single precicion
-      mux2  #(64)  SrcAMux({SrcAM[31:0], 32'b0}, {{64-`XLEN{1'b0}}, SrcAM}, FmtM, AlignedSrcAM);
+      mux2  #(64)  SrcAMux({{32{1'b1}}, SrcAM[31:0]}, {{64-`XLEN{1'b1}}, SrcAM}, FmtM, AlignedSrcAM);
          
-      always_comb begin
-         case (FResultSelM)
-      3'b000 : SetFflagsM = 5'b0;
-      3'b001 : SetFflagsM = FMAFlgM;
-      3'b010 : SetFflagsM = FAddFlgM;
-      3'b011 : SetFflagsM = FDivSqrtFlgM;
-      3'b100 : SetFflagsM = FFlgM;
-      default : SetFflagsM = 5'bxxxxx;
-         endcase
-      end
+         
+      mux5  #(5)  FPUFlgMux(5'b0, FMAFlgM, FAddFlgM, FDivSqrtFlgM, FFlgM, FResultSelW, SetFflagsM);
 
 
 
@@ -305,8 +299,8 @@ module fpu (
       flopenrc #(64) MWRegClass2(clk, reset, FlushW, ~StallW, FResM, FResW);
       
       flopenrc #(11) MWCtrlReg(clk, reset, FlushW, ~StallW,
-                           {FWriteEnM, FResultSelM, RdM, FmtM, FWriteIntM},
-                           {FWriteEnW, FResultSelW, RdW, FmtW, FWriteIntW});
+                           {FRegWriteM, FResultSelM, RdM, FmtM, FWriteIntM},
+                           {FRegWriteW, FResultSelW, RdW, FmtW, FWriteIntW});
       
       
 
@@ -318,7 +312,7 @@ module fpu (
    //#########################################
 
 
-      mux2  #(64)  ReadResMux({ReadDataW[31:0], 32'b0}, {ReadDataW, {64-`XLEN{1'b0}}}, FmtW, ReadResW);
+      mux2  #(64)  ReadResMux({{32{1'b1}}, ReadDataW[31:0]}, {{64-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW);
       mux5  #(64)  FPUResultMux(ReadResW, FMAResW, FAddResW, FDivResultW, FResW, FResultSelW, FPUResultW);
       
 
