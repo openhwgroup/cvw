@@ -260,7 +260,7 @@ module dcache
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
       flopen #(`XLEN) fb(.clk(clk),
-			 .en(AHBAck & (index == FetchCount)),
+			 .en(AHBAck & AHBRead & (index == FetchCount)),
 			 .d(HRDATA),
 			 .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
