@@ -74,7 +74,7 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
   logic [1:0] 		    MemRWM;
-  logic 		    InstrValidM, InstrValidW;
+  logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
   logic 		    DataMisalignedM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
