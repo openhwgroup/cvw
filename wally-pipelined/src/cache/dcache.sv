@@ -516,6 +516,7 @@ module dcache
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBWrite = 1'b1;
+	SelAdrM = 1'b1;
 	if( FetchCountFlag & AHBAck) begin
 	  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 	end else begin

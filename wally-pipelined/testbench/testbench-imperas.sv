@@ -630,10 +630,14 @@ string tests32f[] = '{
   // check results
   always @(negedge clk)
     begin    
-      if (DCacheFlushDone) begin
+      if (dut.hart.priv.EcallFaultM && 
+			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
+			     (dut.hart.ieu.dp.regf.we3 && 
+			      dut.hart.ieu.dp.regf.a3 == 3 && 
+			      dut.hart.ieu.dp.regf.wd3 == 1))) begin
         $display("Code ended with ecall with gp = 1");
 
-        #60; // give time for instructions in pipeline to finish
+        #600; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
         for(i=0; i<SIGNATURESIZE; i=i+1) begin
           sig32[i] = 'bx;
@@ -666,13 +670,16 @@ string tests32f[] = '{
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i]) begin
+          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i] &&
+	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), dut.uncore.dtim.RAM[testadr+i], signature[i]);
+              $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -996,84 +1003,48 @@ module DCacheFlushFSM
   localparam integer tagstart = lognumlines + logblockbytelen;
 
 
-  typedef enum {IDLE,
-		READ,
-		DONE} statetype;
 
-  statetype CurrState, NextState;
+  genvar index, way, cacheWord;
+  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0];
+  logic CacheValid  [numways-1:0] [numlines-1:0];
+  logic CacheDirty  [numways-1:0] [numlines-1:0];
 
-  logic        CountFlag;
-  logic        CntEn;
+  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+  genvar adr;
+
+  logic [`XLEN-1:0] ShadowRAM[`TIM_BASE>>(1+`XLEN/32):(`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32)];
   
-  logic [lognumways + lognumlines - 1 : 0] count, countNext;
-
-  flopenr #(lognumlines + lognumways) 
-  FetchCountReg(.clk(clk),
-		.reset(reset),
-		.en(CntEn),
-		.d(countNext),
-		.q(count));
-  
-  assign countNext = count + 1;
-  assign CountFlag = count == '1;
-  
-  always_ff @(posedge clk, posedge reset) begin
-    if(reset) CurrState = IDLE;
-    else CurrState = NextState;
-  end
-
-  integer 	       adr;
-  integer 	       tag;
-  integer 	       index;
-  integer 	       way;
-  integer 	       word;
-  logic 	       dirty, valid;
-  logic [`XLEN-1:0]    data;
-
-  always_comb begin
-    case (CurrState)
-      IDLE: if(start) NextState = READ;
-      else NextState = IDLE;
-      READ: begin
-	force testbench.dut.hart.lsu.dcache.SRAMAdr = count;
-	index = count / numways;
-	way = count % numways;
-	tag = testbench.dut.hart.lsu.dcache.ReadTag[way];
-	dirty = testbench.dut.hart.lsu.dcache.Dirty[way];
-	valid = testbench.dut.hart.lsu.dcache.Valid[way];
-	adr = (tag << tagstart) + (index << logblockbytelen);
-	data = testbench.dut.hart.lsu.dcache.FinalReadDataWordM;
-	if (valid & dirty) begin
-	  $display("Index Way Tag V D %03x %d %016x %d %d %016x %016x", index, way, tag, valid, dirty, adr, data);
-	  force dut.uncore.dtim.A = adr;
-	  force dut.uncore.dtim.HWDATA = data;
-	  force dut.uncore.dtim.memwrite = 1;
-	  force dut.uncore.dtim.risingHREADYTim = 1;
-	end
-	
-	if(CountFlag) begin
-	  NextState = DONE;
-	end else begin
-	  NextState = READ;
+  generate
+    for(index = 0; index < numlines; index++) begin
+      for(way = 0; way < numways; way++) begin
+	assign CacheTag[way][index] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.CacheTagMem.StoredData[index];
+	assign CacheValid[way][index] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.ValidBits[index];
+	assign CacheDirty[way][index] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.DirtyBits[index];
+	for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+	  assign CacheData[way][index][cacheWord] = testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.word[cacheWord].CacheDataMem.StoredData[index];
+	  assign CacheAdr[way][index][cacheWord] = ((CacheTag[way][index] << tagstart) + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8)));
 	end
       end
-      DONE: begin
-	release testbench.dut.hart.lsu.dcache.SRAMAdr;	
-	release dut.uncore.dtim.A;
-	release dut.uncore.dtim.HWDATA;
-	release dut.uncore.dtim.memwrite;
-	release dut.uncore.dtim.risingHREADYTim;
-	NextState = DONE;
-      end
-      default: NextState = IDLE;
-    endcase
-  end
+    end
+  endgenerate
 
-  assign done = CurrState == DONE;
-  assign CntEn = CurrState == READ;
-
+  integer i, j, k;
   
-
+  always @(posedge clk) begin
+    if (start) begin #1
+      for(i = 0; i < numlines; i++) begin
+	for(j = 0; j < numways; j++) begin
+	  for(k = 0; k < numwords; k++) begin
+	    $display("Help me!")
+	    ShadowRAM[CacheAdr[j][i][k]] = CacheData[j][i][k];
+	  end
+	end
+      end
+    end
+  end
+  
+      
 		    
 endmodule
 		      
@@ -1167,20 +1138,20 @@ task FlushDCache;
   logic [`XLEN-1:0]    CacheData;
 
   assign value = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[0];  
-  
-  for(index = 0; index < numlines; index++) begin
-    for(way = 0; way < numways; way++) begin
-      for(word = 0; word < numwords; word++) begin
-	assign CacheData = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[index];
-	
-	path = $sformatf(GenericCacheDataMem, way, word, index);
-	// I guess you cannot do this conversion.
-	//assign CacheData = path;
-	$display("%x", path);
-	$display(CacheData);
+
+    for(index = 0; index < numlines; index++) begin
+      for(way = 0; way < numways; way++) begin
+	for(word = 0; word < numwords; word++) begin
+	  assign CacheData = testbench.dut.hart.lsu.dcache.CacheWays[0].MemWay.word[0].CacheDataMem.StoredData[index];
+	  
+	  path = $sformatf(GenericCacheDataMem, way, word, index);
+	  // I guess you cannot do this conversion.
+	  //assign CacheData = path;
+	  $display("%x", path);
+	  $display(CacheData);
+	end
       end
     end
-  end
 
   $display("%x", value);
   
