@@ -38,7 +38,7 @@ module privileged (
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, NonBusTrapM,
   output logic             ITLBFlushF, DTLBFlushM,
-  input  logic             InstrValidM,InstrValidW, CommittedM,
+  input  logic             InstrValidM, CommittedM,
   input  logic             FloatRegWriteW, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
