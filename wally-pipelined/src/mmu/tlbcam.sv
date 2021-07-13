@@ -56,7 +56,8 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
     .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .PTE_G(PTE_Gs), .PageTypeWriteVal, .TLBFlush,
     .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;
-  assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result
+  or_rows #(TLB_ENTRIES,2) PageTypeOr(PageTypeRead, HitPageType);
+  //assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result
 
 endmodule
 
