@@ -27,7 +27,7 @@
 
 module fhazard(
     input logic [4:0] Adr1E, Adr2E, Adr3E,
-    input logic FWriteEnM, FWriteEnW, 
+    input logic FRegWriteM, FRegWriteW, 
 	  input logic [4:0] RdM, RdW,
     input logic [2:0] FResultSelM,
     output logic FStallD,
@@ -42,25 +42,25 @@ module fhazard(
     ForwardZE = 2'b00; // choose FRD3E
     FStallD = 0;
 
-      if ((Adr1E == RdM) & FWriteEnM)
+      if ((Adr1E == RdM) & FRegWriteM)
       // if the result will be FResM
         if(FResultSelM == 3'b100) ForwardXE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
-      else if ((Adr1E == RdW) & FWriteEnW) ForwardXE = 2'b01; // choose FPUResult64W
+      else if ((Adr1E == RdW) & FRegWriteW) ForwardXE = 2'b01; // choose FPUResult64W
     
 
-      if ((Adr2E == RdM) & FWriteEnM)
+      if ((Adr2E == RdM) & FRegWriteM)
       // if the result will be FResM
         if(FResultSelM == 3'b100) ForwardYE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
-      else if ((Adr2E == RdW) & FWriteEnW) ForwardYE = 2'b01; // choose FPUResult64W
+      else if ((Adr2E == RdW) & FRegWriteW) ForwardYE = 2'b01; // choose FPUResult64W
 
  
-      if ((Adr3E == RdM) & FWriteEnM)
+      if ((Adr3E == RdM) & FRegWriteM)
       // if the result will be FResM
         if(FResultSelM == 3'b100) ForwardZE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
-      else if ((Adr3E == RdW) & FWriteEnW) ForwardZE = 2'b01; // choose FPUResult64W
+      else if ((Adr3E == RdW) & FRegWriteW) ForwardZE = 2'b01; // choose FPUResult64W
 
   end 
 

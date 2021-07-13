@@ -168,7 +168,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/CSRWritePendingDEM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/SetFflagsM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/FRM_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/FloatRegWriteW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/FRegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/MemRWAlignedM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/Funct3M
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/MemAdrM
@@ -741,7 +741,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/PrivilegedNextPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/RetM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/TrapM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/InstrValidW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/FloatRegWriteW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/FRegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/PrivilegedM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/InstrMisalignedFaultM
@@ -843,7 +843,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/TimerIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/ExtIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/SwIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/InstrValidW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/FloatRegWriteW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/FRegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/NextPrivilegeModeM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/PrivilegeModeW
@@ -937,7 +937,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/WriteSSTATUSM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/WriteUSTATUSM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/TrapM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/FloatRegWriteW
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/FRegWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/NextPrivilegeModeM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/PrivilegeModeW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrsr/mretM
