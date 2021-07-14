@@ -9,7 +9,7 @@ csrs = ['fcsr','mcause','mcounteren','medeleg','mepc','mhartid','mideleg','mie',
 list(map(csrs.remove, ['fcsr','mhartid','pmpcfg0','pmpaddr0','mip']))
 #output_path = '/courses/e190ax/busybear_boot_new/'
 #output_path = '/courses/e190ax/buildroot_boot/'
-output_path = sys.argv[1]
+output_path = sys.argv[1]+'/'
 print(f'output dir: {output_path}')
 instrs = -1
 try:

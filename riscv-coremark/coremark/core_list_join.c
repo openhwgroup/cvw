@@ -17,8 +17,8 @@ Original Author: Shay Gal-on
 */
 
 #include "coremark.h"
-#include <stdlib.h>
-#include <string.h>
+//#include <stdlib.h>
+//#include <string.h>
 /*
 Topic: Description
 	Benchmark using a linked list.
@@ -118,7 +118,7 @@ ee_s32 cmp_idx(list_data *a, list_data *b, core_results *res) {
 	return a->idx - b->idx;
 }
 
-void ehitoa(int value, char *str, int base){
+/*void ehitoa(int value, char *str, int base){
 	if (value>100000) strcpy(str,"too big");
 	else{
 		int places[6] = {100000, 10000, 1000, 100, 10, 1};
@@ -135,7 +135,7 @@ void ehitoa(int value, char *str, int base){
 		}
 		str[6]=0;
 	}
-}
+}*/
 
 void copy_info(list_data *to,list_data *from) {
 	to->data16=from->data16;
@@ -158,22 +158,22 @@ ee_u16 core_bench_list(core_results *res, ee_s16 finder_idx) {
 	list_head *finder, *remover;
 	list_data info;
 	ee_s16 i;
-	ee_printf("entered corebenchlist \n");
+	//ee_printf("entered corebenchlist \n");
 	info.idx=finder_idx;
 	/* find <find_num> values in the list, and change the list each time (reverse and cache if value found) */
 	for (i=0; i<find_num; i++) {
-		ee_printf("for loop \n");
+		//ee_printf("for loop \n");
 		info.data16= (i & 0xff) ;
 		this_find=core_list_find(list,&info);
 		list=core_list_reverse(list);
 		if (this_find==NULL) {
 			missed++;
 			retval+=(list->next->info->data16 >> 8) & 1;
-			ee_printf("if statement \n");
+			//ee_printf("if statement \n");
 		}
 		else {
 			found++;
-			ee_printf("else statement \n");
+			//ee_printf("else statement \n");
 			if (this_find->info->data16 & 0x1) /* use found value */
 				retval+=(this_find->info->data16 >> 9) & 1;
 			/* and cache next item at the head of the list (if any) */
@@ -187,7 +187,7 @@ ee_u16 core_bench_list(core_results *res, ee_s16 finder_idx) {
 		if (info.idx>=0)
 			info.idx++;
 #if CORE_DEBUG
-	ee_printf("List find %d: [%d,%d,%d]\n",i,retval,missed,found);
+	//ee_printf("List find %d: [%d,%d,%d]\n",i,retval,missed,found);
 #endif
 	}
 	retval+=found*4-missed;
@@ -204,7 +204,7 @@ ee_u16 core_bench_list(core_results *res, ee_s16 finder_idx) {
 		finder=finder->next;
 	}
 #if CORE_DEBUG
-	ee_printf("List sort 1: %04x\n",retval);
+	//ee_printf("List sort 1: %04x\n",retval);
 #endif
 	remover=core_list_undo_remove(remover,list->next);
 	/* sort the list by index, in effect returning the list to original state */
@@ -216,7 +216,7 @@ ee_u16 core_bench_list(core_results *res, ee_s16 finder_idx) {
 		finder=finder->next;
 	}
 #if CORE_DEBUG
-	ee_printf("List sort 2: %04x\n",retval);
+	//ee_printf("List sort 2: %04x\n",retval);
 #endif
 	return retval;
 }
@@ -235,26 +235,26 @@ ee_u16 core_bench_list(core_results *res, ee_s16 finder_idx) {
 */
 list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed) {
 	/* calculated pointers for the list */
-	ee_printf("%d \n blksize", blksize);
+	//ee_printf("%d \n blksize", blksize);
 	ee_u32 per_item=16+sizeof(struct list_data_s);
-	ee_printf("%d \n sizeof", sizeof(struct list_data_s));
-	ee_printf("%d \n  per_item", per_item);
+	//ee_printf("%d \n sizeof", sizeof(struct list_data_s));
+	//ee_printf("%d \n  per_item", per_item);
 	ee_u32 size=(blksize/per_item)-2; 
-	char bufftwo[200];
-	ehitoa(size, bufftwo, 10);
-	ee_printf(" size = %s done \n", bufftwo);
-	ee_printf("%d", size);/* to accomodate systems with 64b pointers, and make sure same code is executed, set max list elements */
+	//char bufftwo[200];
+	//ehitoa(size, bufftwo, 10);
+	//ee_printf(" size = %s done \n", bufftwo);
+	//ee_printf("%d", size);/* to accomodate systems with 64b pointers, and make sure same code is executed, set max list elements */
 	list_head *memblock_end=memblock+size;
 
 	list_data *datablock=(list_data *)(memblock_end);
 	list_data *datablock_end=datablock+size;
-	ee_printf("datablock_end");
+	//ee_printf("datablock_end");
 	/* some useful variables */
 	ee_u32 i;
 	list_head *finder,*list=memblock;
 	list_data info;
-	ehitoa(size, bufftwo, 10);
-	ee_printf(" size2 = %s done \n", bufftwo);
+	//ehitoa(size, bufftwo, 10);
+	//ee_printf(" size2 = %s done \n", bufftwo);
 
 	/* create a fake items for the list head and tail */
 	list->next=NULL;
@@ -265,58 +265,58 @@ list_head *core_list_init(ee_u32 blksize, list_head *memblock, ee_s16 seed) {
 	datablock++;
 	info.idx=0x7fff;
 	info.data16=(ee_s16)0xffff;
-	ehitoa(size, bufftwo, 10);
-	ee_printf(" size3 = %s done \n", bufftwo);
+	//ehitoa(size, bufftwo, 10);
+	//ee_printf(" size3 = %s done \n", bufftwo);
 	core_list_insert_new(list,&info,&memblock,&datablock,memblock_end,datablock_end);
-	ehitoa(size, bufftwo, 10);
-	ee_printf(" size4 = %s done \n", bufftwo);; 
+	//ehitoa(size, bufftwo, 10);
+	//ee_printf(" size4 = %s done \n", bufftwo);; 
 	/* then insert size items */
 	for (i=0; i<size; i++) {
 		ee_u16 datpat=((ee_u16)(seed^i) & 0xf);
 		ee_u16 dat=(datpat<<3) | (i&0x7); /* alternate between algorithms */
 		info.data16=(dat<<8) | dat;		/* fill the data with actual data and upper bits with rebuild value */
 		core_list_insert_new(list,&info,&memblock,&datablock,memblock_end,datablock_end);
-		ehitoa(i, bufftwo, 10);
-		ee_printf(" i = %s done \n", bufftwo);
+		//ehitoa(i, bufftwo, 10);
+		//ee_printf(" i = %s done \n", bufftwo);
 		//ee_printf("%d \n", i);
 		/*char grow[200];
 		char growtwo[200];
 		itoa(i, growtwo, 10);
 		sprintf(grow, "test %u buff2 %s goodbyeadd \n", i, growtwo);*/
 	}
-	ee_printf("exited for \n");
+	//ee_printf("exited for \n");
 	/* and now index the list so we know initial seed order of the list */
 	finder=list->next;
 	i=1;
-	ehitoa(i, bufftwo, 10);
-	ee_printf(" i = %s done \n", bufftwo);
+	//ehitoa(i, bufftwo, 10);
+	//ee_printf(" i = %s done \n", bufftwo);
 	while (finder->next!=NULL) {
-		ee_printf("enter while statement \n");
+		//ee_printf("enter while statement \n");
 		if (i<size/5){ /* first 20% of the list in order */
 			finder->info->idx=i++;
-			ehitoa(i, bufftwo, 10);
-			ee_printf("  if i = %s done \n", bufftwo);
+			//ehitoa(i, bufftwo, 10);
+			//ee_printf("  if i = %s done \n", bufftwo);
 		}
 		
 		else { 
 			ee_u16 pat=(ee_u16)(i++ ^ seed); /* get a pseudo random number */
 			finder->info->idx=0x3fff & (((i & 0x07) << 8) | pat); /* make sure the mixed items end up after the ones in sequence */
-			ehitoa(i, bufftwo, 10);
-			ee_printf("  else i = %s done \n", bufftwo);
+			//ehitoa(i, bufftwo, 10);
+			//ee_printf("  else i = %s done \n", bufftwo);
 		}
 		finder=finder->next;
 	}
-	ehitoa(i, bufftwo, 10);
-	ee_printf(" i2 = %s done \n", bufftwo);
+	//ehitoa(i, bufftwo, 10);
+	//ee_printf(" i2 = %s done \n", bufftwo);
 	list = core_list_mergesort(list,cmp_idx,NULL);
 #if CORE_DEBUG
-	ee_printf("Initialized list:\n");
+	//ee_printf("Initialized list:\n");
 	finder=list;
 	while (finder) {
-		ee_printf("[%04x,%04x]",finder->info->idx,(ee_u16)finder->info->data16);
+		//ee_printf("[%04x,%04x]",finder->info->idx,(ee_u16)finder->info->data16);
 		finder=finder->next;
 	}
-	ee_printf("\n");
+	//ee_printf("\n");
 #endif
 	return list;
 }
@@ -424,20 +424,22 @@ list_head *core_list_undo_remove(list_head *item_removed, list_head *item_modifi
 	Found item, or NULL if not found.
 */
 list_head *core_list_find(list_head *list,list_data *info) {
-	ee_printf("entered core_list_find \n");
+	//ee_printf("entered core_list_find \n");
 	if (info->idx>=0) {
-		ee_printf("find if \n");
+		//ee_printf("find if \n");
 		while (list && (list->info->idx != info->idx)){
 			list=list->next;
-			ee_printf("find while if \n");}
-		ee_printf("core_list_find end \n");
+			//ee_printf("find while if \n");
+			}
+		//ee_printf("core_list_find end \n");
 		return list;
 	} else {
-		ee_printf("find else");
+		//ee_printf("find else");
 		while (list && ((list->info->data16 & 0xff) != info->data16)){
 			list=list->next;
-			ee_printf("find while else \n");}
-		ee_printf("core list find end \n");
+			//ee_printf("find while else \n");
+			}
+		//ee_printf("core list find end \n");
 		return list;
 	}
 }
@@ -456,7 +458,7 @@ list_head *core_list_find(list_head *list,list_data *info) {
 */
 
 list_head *core_list_reverse(list_head *list) {
-	ee_printf("entered core_list_reverse");
+//	ee_printf("entered core_list_reverse");
 	list_head *next=NULL, *tmp;
 	while (list) {
 		tmp=list->next;
@@ -464,7 +466,7 @@ list_head *core_list_reverse(list_head *list) {
 		next=list;
 		list=tmp;
 	}
-	ee_printf("core_list_reverse done");
+	//ee_printf("core_list_reverse done");
 	return next;
 }
 /* Function: core_list_mergesort
@@ -493,27 +495,27 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
     ee_s32 insize, nmerges, psize, qsize, i;
 
     insize = 1;
-	char bufftwo[200];
+	//char bufftwo[200];
     while (1) {
         p = list;
         list = NULL;
         tail = NULL;
 
         nmerges = 0;  /* count number of merges we do in this pass */
-		ehitoa(nmerges, bufftwo, 10);
-		ee_printf(" nmerges default value = %s done \n", bufftwo);
+		//ehitoa(nmerges, bufftwo, 10);
+		//ee_printf(" nmerges default value = %s done \n", bufftwo);
         while (p) {
             nmerges++;  /* there exists a merge to be done */
-			ehitoa(nmerges, bufftwo, 10);
-			ee_printf(" current nmerges = %s done \n", bufftwo);
+			//ehitoa(nmerges, bufftwo, 10);
+			//ee_printf(" current nmerges = %s done \n", bufftwo);
             /* step `insize' places along from p */
             q = p;
             psize = 0;
-			ehitoa(insize, bufftwo, 10);
-			ee_printf(" insize = %s done \n", bufftwo);
+			//ehitoa(insize, bufftwo, 10);
+			//ee_printf(" insize = %s done \n", bufftwo);
             for (i = 0; i < insize; i++) {
-				ehitoa(i, bufftwo, 10);
-				ee_printf(" i = %s done \n", bufftwo);
+				//ehitoa(i, bufftwo, 10);
+				//ee_printf(" i = %s done \n", bufftwo);
                 psize++;
 			    q = q->next;
                 if (!q) break;
@@ -521,37 +523,37 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
 
             /* if q hasn't fallen off end, we have two lists to merge */
             qsize = insize;
-			ehitoa(qsize, bufftwo, 10);
-			ee_printf(" qsize = %s done \n", bufftwo);
+			//ehitoa(qsize, bufftwo, 10);
+			//ee_printf(" qsize = %s done \n", bufftwo);
 
             /* now we have two lists; merge them */
             while (psize > 0 || (qsize > 0 && q)) {
 
 				/* decide whether next element of merge comes from p or q */
 				if (psize == 0) {
-					ee_printf("if \n");
+					//ee_printf("if \n");
 				    /* p is empty; e must come from q. */
 				    e = q; q = q->next; qsize--;
 				} else if (qsize == 0 || !q) {
-					ee_printf("else if \n");
+					//ee_printf("else if \n");
 				    /* q is empty; e must come from p. */
 				    e = p; p = p->next; psize--;
 				} else if (cmp(p->info,q->info,res) <= 0) {
-					ee_printf("else if 2 \n");
+					//ee_printf("else if 2 \n");
 				    /* First element of p is lower (or same); e must come from p. */
 				    e = p; p = p->next; psize--;
 				} else {
-					ee_printf("else \n");
+					//ee_printf("else \n");
 				    /* First element of q is lower; e must come from q. */
 				    e = q; q = q->next; qsize--;
 				}
 
 		        /* add the next element to the merged list */
 				if (tail) {
-					ee_printf("tail if \n");
+					//ee_printf("tail if \n");
 				    tail->next = e;
 				} else {
-					ee_printf("tail else \n");
+					//ee_printf("tail else \n");
 				    list = e;
 				}
 				tail = e;
@@ -569,8 +571,8 @@ list_head *core_list_mergesort(list_head *list, list_cmp cmp, core_results *res)
 
         /* Otherwise repeat, merging lists twice the size */
         insize *= 2;
-		ehitoa(insize, bufftwo, 10);
-		ee_printf(" insize2 = %s done \n", bufftwo);
+		//ehitoa(insize, bufftwo, 10);
+		//ee_printf(" insize2 = %s done \n", bufftwo);
     }
 #if COMPILER_REQUIRES_SORT_RETURN
 	return list;

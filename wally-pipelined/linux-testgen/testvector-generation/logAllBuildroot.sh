@@ -11,16 +11,19 @@ intermedDir="../linux-testvectors/intermediate-outputs"
 outDir="../linux-testvectors"
 
 # =========== Debug the Process ========== 
-# Uncomment this version for GDB/QEMU debugging
-# - Opens up GDB interactively
-# - Logs raw QEMU output to qemu_output.txt
-$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -s -S & riscv64-unknown-elf-gdb -x gdbinit_debug
-#($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2> $intermedDir/qemu_output.txt) & riscv64-unknown-elf-gdb
+# Uncomment this version for QEMU debugging of kernel
+#  - good for poking around VM if it boots up
+#  - good for running QEMU commands (press "Ctrl-A" then "c" to open QEMU command prompt)
+#$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio 
+# Uncomment this version for GDB debugging of kernel
+#  - attempts to load in symbols from "vmlinux"
+#  - good for looking at backtraces when Linux gets stuck for some reason 
+#$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -gdb tcp::1236 -S & riscv64-unknown-elf-gdb -x gdbinit_debug
 
 # Uncomment this version to generate qemu_output.txt
 # - Uses GDB script
 # - Logs raw QEMU output to qemu_output.txt
-#($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2> $intermedDir/qemu_output.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog_debug
+#($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2> $intermedDir/qemu_output.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog_debug
 
 # Uncomment this version for parse_qemu.py debugging
 # - Uses qemu_output.txt
@@ -33,10 +36,9 @@ $customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Ima
 
 # Uncomment this version for parse_gdb_output.py debugging
 # - Uses qemu_in_gdb_format.txt
-# - Makes testvectors
-#cat $intermedDir/qemu_in_gdb_format.txt | ./parse_gdb_output.py "$outdir"
+# - Makes testvectors#cat $intermedDir/qemu_in_gdb_format.txt | ./parse_gdb_output.py "$outDir"
 
 # =========== Just Do the Thing ========== 
 # Uncomment this version for the whole thing 
 # - Logs info needed by buildroot testbench
-#($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -s -S 2>&1 >/dev/null | ./parse_qemu.py | ./parse_gdb_output.py "$outdir") & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parse_qemu.py | ./parse_gdb_output.py "$outDir") & riscv64-unknown-elf-gdb -x gdbinit_qemulog
