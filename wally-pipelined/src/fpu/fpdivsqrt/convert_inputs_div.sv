@@ -3,8 +3,7 @@
 // it conditionally converts single precision values to double 
 // precision values and modifies the sign of op1. 
 // The converted operands are Float1 and Float2.
-
-module convert_inputs(Float1, Float2b, op1, op2, op_type, P);
+module convert_inputs_div (Float1, Float2b, op1, op2, op_type, P);
    
    input logic [63:0]  op1;           // 1st input operand (A)
    input logic [63:0]  op2;           // 2nd input operand (B)
