@@ -90,7 +90,7 @@ module dcache
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
   logic [`XLEN-1:0]	       VictimReadDataBlockSetsM [(WORDSPERLINE)-1:0];  
-  logic [`XLEN-1:0]	       ReadDataWordM, FinalReadDataWordM;
+  logic [`XLEN-1:0]	       ReadDataWordM, FinalReadDataWordM, ReadDataWordMuxM;
   logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
   logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
@@ -111,6 +111,7 @@ module dcache
   logic [BLOCKLEN-1:0] 	       VictimReadDataBlockM;
   logic 		       VictimDirty;
   logic 		       SelAMOWrite;
+  logic 		       SelUncached;
   logic [6:0] 		       Funct7W;
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
 
@@ -229,12 +230,18 @@ module dcache
 
   assign HWDATA = CacheableM ? VictimReadDataBlockSetsM[FetchCount] : WriteDataM;
 
+  mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
+				.d1(DCacheMemWriteData[`XLEN-1:0]),
+				.s(SelUncached),
+				.y(ReadDataWordMuxM));
+  
   // finally swr
   // *** BUG fix HSIZED? why was it this way?
-  subwordread subwordread(.HRDATA(ReadDataWordM),
+  subwordread subwordread(.HRDATA(ReadDataWordMuxM),
 			  .HADDRD(MemPAdrM[2:0]),
 			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
 			  .HRDATAMasked(FinalReadDataWordM));
+  
 
   flopen #(`XLEN) ReadDataWReg(.clk(clk),
 			      .en(~StallW),
@@ -337,10 +344,10 @@ module dcache
 		STATE_PTW_MISS_WRITE_BACK_EVICTED_BLOCK,
 		STATE_PTW_MISS_WRITE_CACHE_BLOCK,
 		STATE_PTW_MISS_READ_SRAM,
-		STATE_UNCACHED_WDV,
-		STATE_UNCACHED_DONE,
 		STATE_UNCACHED_WRITE,
 		STATE_UNCACHED_WRITE_DONE,
+		STATE_UNCACHED_READ,
+		STATE_UNCACHED_READ_DONE,
 		STATE_CPU_BUSY} statetype;
 
   statetype CurrState, NextState;
@@ -393,6 +400,7 @@ module dcache
     AHBWrite = 1'b0;
     SelAMOWrite = 1'b0;
     CommittedM = 1'b0;        
+    SelUncached = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -438,7 +446,13 @@ module dcache
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	  AHBWrite = 1'b1;
-	  
+	end
+	// uncached read
+	else if(MemRWM[1] & ~CacheableM & ~FaultM & ~DTLBMissM) begin
+	  NextState = STATE_UNCACHED_READ;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  AHBRead = 1'b1;	  
 	end
 	// fault
 	else if(AnyCPUReqM & FaultM & ~DTLBMissM) begin
@@ -560,10 +574,28 @@ module dcache
 	end
       end
 
+      STATE_UNCACHED_READ : begin
+	DCacheStall = 1'b1;	
+	AHBRead = 1'b1;
+	CommittedM = 1'b1;
+	if(AHBAck) begin
+	  NextState = STATE_UNCACHED_READ_DONE;
+	end else begin
+	  NextState = STATE_UNCACHED_READ;
+	end
+      end
+      
       STATE_UNCACHED_WRITE_DONE: begin
 	CommittedM = 1'b1;
 	NextState = STATE_READY;
       end
+
+      STATE_UNCACHED_READ_DONE: begin
+	CommittedM = 1'b1;
+	SelUncached = 1'b1;
+	NextState = STATE_READY;
+      end
+
       default: begin
       end
     endcase
