@@ -94,6 +94,7 @@ module wallypipelinedhart
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
   logic [1:0] 		    FMemRWM, FMemRWE;
+  logic [4:0]        RdE, RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
   logic [`XLEN-1:0] 	    FWriteDataE;

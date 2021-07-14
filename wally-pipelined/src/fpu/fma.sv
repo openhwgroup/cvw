@@ -3,12 +3,23 @@ module fma(
     input logic             reset,
     input logic             FlushM,
     input logic             StallM,
-    input logic  [63:0]     SrcXE, SrcXM,  // X
-    input logic  [63:0]     SrcYE, SrcYM,  // Y
-    input logic  [63:0]     SrcZE, SrcZM,  // Z
     input logic             FmtE, FmtM,       // precision 1 = double 0 = single
     input logic  [2:0]      FOpCtrlM, FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [2:0]      FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+    input logic        XSgnE, YSgnE, ZSgnE,
+    input logic [10:0] XExpE, YExpE, ZExpE,
+    input logic [51:0] XFracE, YFracE, ZFracE,
+    input logic        XSgnM, YSgnM, ZSgnM,
+    input logic [10:0] XExpM, YExpM, ZExpM,
+    input logic [51:0] XFracM, YFracM, ZFracM,
+    input logic        XAssumed1E, YAssumed1E, ZAssumed1E,
+    input logic XDenormE, YDenormE, ZDenormE,
+    input logic XZeroE, YZeroE, ZZeroE,
+    input logic XNaNM, YNaNM, ZNaNM,
+    input logic XSNaNM, YSNaNM, ZSNaNM,
+    input logic XZeroM, YZeroM, ZZeroM,
+    input logic XInfM, YInfM, ZInfM,
+    input logic [10:0] BiasE,
 	output logic [63:0]		FMAResM,
 	output logic [4:0]		FMAFlgM);
 	
@@ -18,24 +29,23 @@ module fma(
     logic [12:0]	ProdExpE, ProdExpM;
     logic 			AddendStickyE, AddendStickyM;
     logic 			KillProdE, KillProdM;
-    logic				XZeroE, YZeroE, ZZeroE, XZeroM, YZeroM, ZZeroM;
-    logic				XInfE, YInfE, ZInfE, XInfM, YInfM, ZInfM;
-    logic				XNaNE, YNaNE, ZNaNE, XNaNM, YNaNM, ZNaNM;
     
-    fma1 fma1 (.X(SrcXE), .Y(SrcYE), .Z(SrcZE), .FOpCtrlE, .FmtE, .ProdManE, .AlignedAddendE,
-                .ProdExpE, .AddendStickyE, .KillProdE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
-                .XNaNE, .YNaNE, .ZNaNE ); 
+    fma1 fma1 (.XExpE, .YExpE, .ZExpE, .XFracE, .YFracE, .ZFracE, 
+                .BiasE, .XAssumed1E, .YAssumed1E, .ZAssumed1E, .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
+                .FOpCtrlE, .FmtE, .ProdManE, .AlignedAddendE,
+                .ProdExpE, .AddendStickyE, .KillProdE); 
                 
     flopenrc #(106) EMRegFma1(clk, reset, FlushM, ~StallM, ProdManE, ProdManM); 
     flopenrc #(162) EMRegFma2(clk, reset, FlushM, ~StallM, AlignedAddendE, AlignedAddendM); 
     flopenrc #(13) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
-    flopenrc #(11) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                            {AddendStickyE, KillProdE, XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE},
-                            {AddendStickyM, KillProdM, XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM});
+    flopenrc #(2) EMRegFma4(clk, reset, FlushM, ~StallM, 
+                            {AddendStickyE, KillProdE},
+                            {AddendStickyM, KillProdM});
 
-    fma2 fma2(.X(SrcXM), .Y(SrcYM), .Z(SrcZM), .FOpCtrlM, .FrmM, .FmtM, 
+    fma2 fma2(.XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XFracM, .YFracM, .ZFracM, 
+            .FOpCtrlM, .FrmM, .FmtM, 
             .ProdManM, .AlignedAddendM, .ProdExpM, .AddendStickyM, .KillProdM, 
-            .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, 
+            .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM,
             .FMAResM, .FMAFlgM);
 
 endmodule
@@ -43,98 +53,27 @@ endmodule
 
 
 module fma1(
- 
-    input logic     [63:0]      X,  // X
-    input logic     [63:0]      Y,  // Y
-    input logic     [63:0]      Z,  // Z
+    // input logic        XSgnE, YSgnE, ZSgnE,
+    input logic [10:0] XExpE, YExpE, ZExpE,
+    input logic [51:0] XFracE, YFracE, ZFracE,
+    input logic        XAssumed1E, YAssumed1E, ZAssumed1E,
+    input logic        XDenormE, YDenormE, ZDenormE,
+    input logic XZeroE, YZeroE, ZZeroE,
+    input logic [10:0] BiasE,
     input logic     [2:0]       FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic                 FmtE,       // precision 1 = double 0 = single
     output logic    [105:0]     ProdManE,   // 1.X frac * 1.Y frac
     output logic    [161:0]     AlignedAddendE, // Z aligned for addition
     output logic    [12:0]      ProdExpE,       // X exponent + Y exponent - bias
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
-    output logic                KillProdE,      // set the product to zero before addition if the product is too small to matter
-    output logic                XZeroE, YZeroE, ZZeroE, // inputs are zero
-    output logic                XInfE, YInfE, ZInfE,    // inputs are infinity
-    output logic                XNaNE, YNaNE, ZNaNE);   // inputs are NaN
+    output logic                KillProdE      // set the product to zero before addition if the product is too small to matter
+    );
 
-    logic [51:0]    XFrac,YFrac,ZFrac;  // input fraction
-    logic [52:0]    XMan,YMan,ZMan;     // input mantissa (with leading one)
-    logic [12:0]    XExp,YExp,ZExp;     // input exponents
-    logic           XSgn,YSgn,ZSgn;     // input signs
     logic [12:0]    AlignCnt;           // how far to shift the addend to align with the product
     logic [213:0]   ZManShifted;                // output of the alignment shifter including sticky bit
     logic [213:0]   ZManPreShifted;     // input to the alignment shifter
-    logic           XDenorm, YDenorm, ZDenorm;  // inputs are denormal
-    logic [63:0]    Addend; // value to add (Z or zero)
-    logic [12:0]    Bias;   // 1023 for double, 127 for single
-    logic           XExpZero, YExpZero, ZExpZero;   // input exponent zero
-    logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
-    logic           XExpMax, YExpMax, ZExpMax;  // input exponent all 1s
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // split inputs into the sign bit, fraction, and exponent to handle single or double precision
-    //      - single precision is in the top half of the inputs
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // Set addend to zero if FMUL instruction
-    assign Addend = FOpCtrlE[2] ? 64'b0 : Z;
-
-    assign XSgn = X[63];
-    assign YSgn = Y[63];
-    assign ZSgn = Addend[63];
-
-    assign XExp = FmtE ? {2'b0, X[62:52]} : {5'b0, X[62:55]};
-    assign YExp = FmtE ? {2'b0, Y[62:52]} : {5'b0, Y[62:55]};
-    assign ZExp = FmtE ? {2'b0, Addend[62:52]} : {5'b0, Addend[62:55]};
-
-    assign XFrac = FmtE ? X[51:0] : {X[54:32], 29'b0};
-    assign YFrac = FmtE ? Y[51:0] : {Y[54:32], 29'b0};
-    assign ZFrac = FmtE ? Addend[51:0] : {Addend[54:32], 29'b0};
-   
-    assign XMan = {~XExpZero, XFrac};
-    assign YMan = {~YExpZero, YFrac};
-    assign ZMan = {~ZExpZero, ZFrac};
-
-    assign Bias = FmtE ? 13'h3ff : 13'h7f;
-
-
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // determine if an input is a special value
-    ///////////////////////////////////////////////////////////////////////////////
-
-    assign XExpZero = ~|XExp;
-    assign YExpZero = ~|YExp;
-    assign ZExpZero = ~|ZExp;
-   
-    assign XFracZero = ~|XFrac;
-    assign YFracZero = ~|YFrac;
-    assign ZFracZero = ~|ZFrac;
-
-    assign XExpMax = FmtE ? &XExp[10:0] : &XExp[7:0];
-    assign YExpMax = FmtE ? &YExp[10:0] : &YExp[7:0];
-    assign ZExpMax = FmtE ? &ZExp[10:0] : &ZExp[7:0];
-   
-    assign XNaNE = XExpMax & ~XFracZero;
-    assign YNaNE = YExpMax & ~YFracZero;
-    assign ZNaNE = ZExpMax & ~ZFracZero;
-
-    assign XDenorm = XExpZero & ~XFracZero;
-    assign YDenorm = YExpZero & ~YFracZero;
-    assign ZDenorm = ZExpZero & ~ZFracZero;
-
-    assign XInfE = XExpMax & XFracZero;
-    assign YInfE = YExpMax & YFracZero;
-    assign ZInfE = ZExpMax & ZFracZero;
-
-    assign XZeroE = XExpZero & XFracZero;
-    assign YZeroE = YExpZero & YFracZero;
-    assign ZZeroE = ZExpZero & ZFracZero;
-
-
-
-
+    
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
     //      - When multipliying two fp numbers, add the exponents
@@ -145,11 +84,11 @@ module fma1(
    
     // verilator lint_off WIDTH
     assign ProdExpE = (XZeroE|YZeroE) ? 13'b0 :
-                 XExp + YExp - Bias + XDenorm + YDenorm;
+                 XExpE + YExpE - BiasE + XDenormE + YDenormE;
 
     // Calculate the product's mantissa
     //      - Add the assumed one. If the number is denormalized or zero, it does not have an assumed one.
-    assign ProdManE =  XMan * YMan;
+    assign ProdManE =  {XAssumed1E, XFracE} * {YAssumed1E, YFracE};
 
 
 
@@ -168,7 +107,7 @@ module fma1(
     //      - positive means the product is larger, so shift Z right
     //      - Denormal numbers have an an exponent value of 1, however they are
     //        represented with an exponent of 0. add one to the exponent if it is a denormal number
-    assign AlignCnt = ProdExpE - ZExp - ZDenorm;
+    assign AlignCnt = ProdExpE - ZExpE - ZDenormE;
     // verilator lint_on WIDTH
 
 
@@ -177,7 +116,7 @@ module fma1(
     //                       |1'b0| addnend |
 
     // the 1'b0 before the added is because the product's mantissa has two bits before the binary point (xx.xxxxxxxxxx...)
-    assign ZManPreShifted = {55'b0, ZMan, 106'b0};
+    assign ZManPreShifted = {55'b0, {ZAssumed1E, ZFracE}, 106'b0};
     always_comb
         begin
            
@@ -187,7 +126,7 @@ module fma1(
         //  | addnend |
         if ($signed(AlignCnt) <= $signed(-13'd56)) begin
             KillProdE = 1;
-            ZManShifted = ZManPreShifted;//{107'b0, ZMan, 54'b0};
+            ZManShifted = ZManPreShifted;//{107'b0, {~ZAssumed1E, ZFrac}, 54'b0};
             AddendStickyE = ~(XZeroE|YZeroE);
 
         // If the Addend is shifted left (negitive AlignCnt)
@@ -229,10 +168,10 @@ endmodule
 
 
 module fma2(
- 
-    input logic     [63:0]      X,  // X
-    input logic     [63:0]      Y,  // Y
-    input logic     [63:0]      Z,  // Z
+    
+    input logic        XSgnM, YSgnM, ZSgnM,
+    input logic [10:0] XExpM, YExpM, ZExpM,
+    input logic [51:0] XFracM, YFracM, ZFracM,
     input logic     [2:0]       FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [2:0]       FOpCtrlM,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic                 FmtM,       // precision 1 = double 0 = single
@@ -244,6 +183,7 @@ module fma2(
     input logic                 XZeroM, YZeroM, ZZeroM, // inputs are zero
     input logic                 XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                 XNaNM, YNaNM, ZNaNM,    // inputs are NaN
+    input logic                 XSNaNM, YSNaNM, ZSNaNM,    // inputs are signaling NaNs
     output logic    [63:0]      FMAResM,     // FMA final result
     output logic    [4:0]       FMAFlgM);     // FMA flags {invalid, divide by zero, overflow, underflow, inexact}
    
@@ -252,8 +192,6 @@ module fma2(
     logic [51:0]    ResultFrac; // Result fraction
     logic [10:0]    ResultExp;  // Result exponent
     logic           ResultSgn;  // Result sign
-    logic [10:0]    ZExp;   // input exponent
-    logic           XSgn, YSgn, ZSgn;   // input sign
     logic           PSgn;       // product sign
     logic [105:0]   ProdMan2;   // product being added
     logic [162:0]   AlignedAddend2; // possibly inverted aligned Z
@@ -289,28 +227,10 @@ module fma2(
     logic [63:0] XNaNResult, YNaNResult, ZNaNResult, InvalidResult, OverflowResult, KillProdResult, UnderflowResult; // possible results
 
    
-    ///////////////////////////////////////////////////////////////////////////////
-    // Select input fields
-    // The following logic duplicates fma1 because it's cheaper to recompute than provide registers
-    ///////////////////////////////////////////////////////////////////////////////
-
-    // Set addend to zero if FMUL instruction
-    assign Addend = FOpCtrlM[2] ? 64'b0 : Z;
-
-    // split inputs into the sign bit, and exponent to handle single or double precision
-    //      - single precision is in the top half of the inputs
-    assign XSgn = X[63];
-    assign YSgn = Y[63];
-    assign ZSgn = Addend[63]^FOpCtrlM[0]; //Negate Z if subtraction
-
-    assign ZExp = FmtM ? Addend[62:52] : {3'b0, Addend[62:55]};
-
-
-
-
+    
     // Calculate the product's sign
     //      Negate product's sign if FNMADD or FNMSUB
-    assign PSgn = XSgn ^ YSgn ^ FOpCtrlM[1];
+    assign PSgn = XSgnM ^ YSgnM ^ FOpCtrlM[1];
 
 
 
@@ -321,7 +241,7 @@ module fma2(
     // Negate Z  when doing one of the following opperations:
     //      -prod +  Z
     //       prod -  Z
-    assign InvZ = ZSgn ^ PSgn;
+    assign InvZ = ZSgnM ^ PSgn;
 
     // Choose an inverted or non-inverted addend - the one is added later
     assign AlignedAddend2 = InvZ ? ~{1'b0, AlignedAddendM} : {1'b0, AlignedAddendM};
@@ -376,7 +296,7 @@ module fma2(
     assign FracLen = FmtM ? 13'd52 : 13'd23;
 
     // Determine if the result is denormal
-    assign SumExpTmp = KillProdM ? {2'b0, ZExp} : ProdExpM + -({4'b0, NormCnt} - 13'd56);
+    assign SumExpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCnt} - 13'd56);
     assign ResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp)>=$signed(-FracLen)) & ~SumZero;
 
     // Determine the shift needed for denormal results
@@ -501,13 +421,13 @@ module fma2(
     // Determine the sign if the sum is zero
     //      if cancelation then 0 unless round to -infinity
     //      otherwise psign
-    assign ZeroSgn = (PSgn^ZSgn)&~Underflow ? FrmM == 3'b010 : PSgn;
+    assign ZeroSgn = (PSgn^ZSgnM)&~Underflow ? FrmM == 3'b010 : PSgn;
 
     // is the result negitive
     //  if p - z is the Sum negitive
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
-    assign ResultSgnTmp = InvZ&(ZSgn)&NegSum | InvZ&PSgn&~NegSum | ((ZSgn)&PSgn);
+    assign ResultSgnTmp = InvZ&(ZSgnM)&NegSum | InvZ&PSgn&~NegSum | ((ZSgnM)&PSgn);
     assign ResultSgn = SumZero ? ZeroSgn : ResultSgnTmp;
  
 
@@ -525,9 +445,8 @@ module fma2(
     //   2) Inf - Inf (unless x or y is NaN)
     //   3) 0 * Inf
     assign MaxExp = FmtM ? 13'd2047 : 13'd255;
-    assign SigNaN = FmtM ? (XNaNM&~X[51]) | (YNaNM&~Y[51]) | (ZNaNM&~Addend[51]) :
-                           (XNaNM&~X[54]) | (YNaNM&~Y[54]) | (ZNaNM&~Addend[54]);
-    assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgn ^ ZSgn) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
+    assign SigNaN = XSNaNM | YSNaNM | ZSNaNM;
+    assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgn ^ ZSgnM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
    
     // Set Overflow flag if the number is too big to be represented
     //      - Don't set the overflow flag if an overflowed result isn't outputed
@@ -555,28 +474,28 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
-    assign XNaNResult = FmtM ? {XSgn, X[62:52], 1'b1,X[50:0]} : {XSgn, X[62:55], 1'b1,X[53:0]};
-    assign YNaNResult = FmtM ? {YSgn, Y[62:52], 1'b1,Y[50:0]} : {YSgn, Y[62:55], 1'b1,Y[53:0]};
-    assign ZNaNResult = FmtM ? {ZSgn, Addend[62:52], 1'b1,Addend[50:0]} : {ZSgn, Addend[62:55], 1'b1,Addend[53:0]};
+    assign XNaNResult = FmtM ? {XSgnM, XExpM, 1'b1, XFracM[50:0]} : {{32{1'b1}}, XSgnM, XExpM[7:0], 1'b1, XFracM[50:29]};
+    assign YNaNResult = FmtM ? {YSgnM, YExpM, 1'b1, YFracM[50:0]} : {{32{1'b1}}, YSgnM, YExpM[7:0], 1'b1, YFracM[50:29]};
+    assign ZNaNResult = FmtM ? {ZSgnM, ZExpM, 1'b1, ZFracM[50:0]} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], 1'b1, ZFracM[50:29]};
     assign OverflowResult =  FmtM ? ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, 11'h7fe, {52{1'b1}}} :
                                                                                                                           {ResultSgn, 11'h7ff, 52'b0} :
-                                    ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, 8'hfe, {23{1'b1}}, 32'b0} :
-                                                                                                                          {ResultSgn, 8'hff, 55'b0};
-    assign InvalidResult = FmtM ? {ResultSgn, 11'h7ff, 1'b1, 51'b0} : {ResultSgn, 8'hff, 1'b1, 54'b0};
-    assign KillProdResult = FmtM ?{ResultSgn, Addend[62:0] - {62'b0, (Minus1&AddendStickyM)}} + {62'b0, (Plus1&AddendStickyM)} : {ResultSgn, Addend[62:32] - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}, 32'b0};
-    assign UnderflowResult = FmtM ? {ResultSgn, 63'b0} + {63'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))} : {{ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}, 32'b0};
+                                    ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :
+                                                                                                                          {{32{1'b1}}, ResultSgn, 8'hff, 23'b0};
+    assign InvalidResult = FmtM ? {ResultSgn, 11'h7ff, 1'b1, 51'b0} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
+    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZFracM} - {62'b0, (Minus1&AddendStickyM)}} + {62'b0, (Plus1&AddendStickyM)} : {{32{1'b1}}, ResultSgn, {ZExpM[7:0], ZFracM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
+    assign UnderflowResult = FmtM ? {ResultSgn, 63'b0} + {63'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))} : {{32{1'b1}}, {ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}};
     assign FMAResM = XNaNM ? XNaNResult :
                         YNaNM ? YNaNResult :
                         ZNaNM ? ZNaNResult :
                         Invalid ? InvalidResult : // has to be before inf
-                        XInfM ? {PSgn, X[62:0]} :
-                        YInfM ? {PSgn, Y[62:0]} :
-                        ZInfM ? {ZSgn, Addend[62:0]} :
+                        XInfM ? FmtM ? {PSgn, XExpM, XFracM} : {{32{1'b1}}, PSgn, XExpM[7:0], XFracM[51:29]} :
+                        XInfM ? FmtM ? {PSgn, YExpM, YFracM} : {{32{1'b1}}, PSgn, YExpM[7:0], YFracM[51:29]} :
+                        XInfM ? FmtM ? {ZSgnM, ZExpM, ZFracM} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], ZFracM[51:29]} :
                         Overflow ? OverflowResult :
                         KillProdM ? KillProdResult : // has to be after Underflow      
                         Underflow & ~ResultDenorm ? UnderflowResult :  
                         FmtM ? {ResultSgn, ResultExp, ResultFrac} :
-                               {ResultSgn, ResultExp[7:0], ResultFrac, 3'b0};
+                               {{32{1'b1}}, ResultSgn, ResultExp[7:0], ResultFrac[51:29]};
 
 
 
