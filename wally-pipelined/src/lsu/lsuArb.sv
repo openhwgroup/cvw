@@ -43,20 +43,25 @@ module lsuArb
    input logic [1:0] 	    AtomicM,
    input logic [`XLEN-1:0]  MemAdrM,
    input logic 		    StallW,
+   input logic 		    PendingInterruptM,
    // to CPU
    output logic [`XLEN-1:0] ReadDataW,
    output logic 	    SquashSCW,
    output logic 	    DataMisalignedM,
+   output logic 	    CommittedM,
    output logic 	    LSUStall, 
   
-   // to LSU   
+   // to D Cache
    output logic 	    DisableTranslation, 
    output logic [1:0] 	    MemRWMtoDCache,
    output logic [2:0] 	    Funct3MtoDCache,
    output logic [1:0] 	    AtomicMtoDCache,
    output logic [`XLEN-1:0] MemAdrMtoDCache,
    output logic 	    StallWtoDCache,
-   // from LSU
+   output logic 	    PendingInterruptMtoDCache,
+
+   // from D Cache
+   input logic 		    CommittedMfromDCache,
    input logic 		    SquashSCWfromDCache,
    input logic 		    DataMisalignedMfromDCache,
    input logic [`XLEN-1:0]  ReadDataWfromDCache,
@@ -82,7 +87,6 @@ module lsuArb
 
   statetype CurrState, NextState;
   logic 		    SelPTW;
-  logic 		    HPTWStallD;
   logic [2:0] PTWSize;
   
 
@@ -142,6 +146,8 @@ module lsuArb
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMtoDCache = SelPTW ? HPTWPAdr : MemAdrM;
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
+  // always block interrupts when using the hardware page table walker.
+  assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;
 
   // demux the inputs from LSU to walker or cpu's data port.
 
@@ -153,15 +159,9 @@ module lsuArb
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
   assign HPTWStall = SelPTW ? DCacheStall : 1'b1;  
-  //assign HPTWStallD = SelPTW ? DataStall : 1'b1;
-/* -----\/----- EXCLUDED -----\/-----
-  assign HPTWStallD = SelPTW ? DataStall : 1'b1;
-  flopr #(1) HPTWStallReg (.clk(clk),
-			   .reset(reset),
-			   .d(HPTWStallD),
-			   .q(HPTWStall));
- -----/\----- EXCLUDED -----/\----- */
-  
+
+  assign PendingInterruptMtoDCache = SelPTW ? 1'b0 : PendingInterruptM;
+
   assign LSUStall = SelPTW ? 1'b1 : DCacheStall; // *** this is probably going to change.
   
 endmodule
