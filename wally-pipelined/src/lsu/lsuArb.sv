@@ -45,7 +45,6 @@ module lsuArb
    input logic 		    StallW,
    // to CPU
    output logic [`XLEN-1:0] ReadDataW,
-   output logic 	    CommittedM, 
    output logic 	    SquashSCW,
    output logic 	    DataMisalignedM,
    output logic 	    LSUStall, 
@@ -58,7 +57,6 @@ module lsuArb
    output logic [`XLEN-1:0] MemAdrMtoDCache,
    output logic 	    StallWtoDCache,
    // from LSU
-   input logic 		    CommittedMfromDCache,
    input logic 		    SquashSCWfromDCache,
    input logic 		    DataMisalignedMfromDCache,
    input logic [`XLEN-1:0]  ReadDataWfromDCache,
@@ -149,7 +147,6 @@ module lsuArb
 
   assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWfromDCache;  // probably can avoid this demux
   assign HPTWReadPTE = SelPTW ? ReadDataWfromDCache : `XLEN'b0 ;  // probably can avoid this demux
-  assign CommittedM = SelPTW ? 1'b0 : CommittedMfromDCache;
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromDCache;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.
