@@ -161,6 +161,8 @@ module wallypipelinedhart
   logic 		    InstrAccessFaultF;
   logic [2:0] 		    DCtoAHBSizeM;
   
+  logic 		    ExceptionM;
+  logic 		    PendingInterruptM;
 
   
   ifu ifu(.InstrInF(InstrRData),
@@ -179,7 +181,9 @@ module wallypipelinedhart
 	  .MemRWM(MemRWM),                  
 	  .Funct3M(Funct3M),
 	  .Funct7M(InstrM[31:25]),
-	  .AtomicM(AtomicM),               
+	  .AtomicM(AtomicM),    
+	  .ExceptionM(ExceptionM),
+	  .PendingInterruptM(PendingInterruptM),		
 	  .CommittedM(CommittedM),          
 	  .SquashSCW(SquashSCW),            
 	  .DataMisalignedM(DataMisalignedM),
