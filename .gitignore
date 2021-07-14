@@ -28,6 +28,7 @@ wally-pipelined/linux-testgen/nohup*
 wally-pipelined/linux-testgen/x*
 !wally-pipelined/linux-testgen/linux-testvectors/tvCopier.py
 !wally-pipelined/linux-testgen/linux-testvectors/tvLinker.sh
+!wally-pipelined/linux-testgen/linux-testvectors/tvUnlinker.sh
 !wally-pipelined/linux-testgen/linux-testvectors/intermediate-outputs
 wally-pipelined/linux-testgen/linux-testvectors/intermediate-outputs/*
 !wally-pipelined/linux-testgen/linux-testvectors/intermediate-outputs/git_create_dir.txt
