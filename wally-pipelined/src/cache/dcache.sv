@@ -121,6 +121,50 @@ module dcache
   logic [`PA_BITS-1:0] 	       BasePAdrMaskedM;  
   logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 	       VictimTag;
+
+  logic 		       ReadDataWEn;
+  
+  logic AnyCPUReqM;
+  logic FetchCountFlag;
+  logic PreCntEn;
+  logic CntEn;
+  logic CntReset;
+  logic CPUBusy, PreviousCPUBusy;
+  
+  
+  typedef enum {STATE_READY,
+		STATE_MISS_FETCH_WDV,
+		STATE_MISS_FETCH_DONE,
+		STATE_MISS_EVICT_DIRTY,
+		STATE_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_MISS_WRITE_CACHE_BLOCK,
+		STATE_MISS_READ_WORD,
+		STATE_MISS_READ_WORD_DELAY,
+		STATE_MISS_WRITE_WORD,
+		STATE_AMO_MISS_FETCH_WDV,
+		STATE_AMO_MISS_FETCH_DONE,
+		STATE_AMO_MISS_CHECK_EVICTED_DIRTY,
+		STATE_AMO_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_AMO_MISS_WRITE_CACHE_BLOCK,
+		STATE_AMO_MISS_READ_WORD,
+		STATE_AMO_MISS_UPDATE_WORD,
+		STATE_AMO_MISS_WRITE_WORD,
+		STATE_AMO_UPDATE,
+		STATE_AMO_WRITE,
+		STATE_PTW_READY,
+		STATE_PTW_MISS_FETCH_WDV,
+		STATE_PTW_MISS_FETCH_DONE,
+		STATE_PTW_MISS_CHECK_EVICTED_DIRTY,
+		STATE_PTW_MISS_WRITE_BACK_EVICTED_BLOCK,
+		STATE_PTW_MISS_WRITE_CACHE_BLOCK,
+		STATE_PTW_MISS_READ_SRAM,
+		STATE_UNCACHED_WRITE,
+		STATE_UNCACHED_WRITE_DONE,
+		STATE_UNCACHED_READ,
+		STATE_UNCACHED_READ_DONE,
+		STATE_CPU_BUSY} statetype;
+
+  statetype CurrState, NextState;
     
 
   flopenr #(7) Funct7WReg(.clk(clk),
@@ -242,10 +286,19 @@ module dcache
 			  .HADDRD(MemPAdrM[2:0]),
 			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
 			  .HRDATAMasked(FinalReadDataWordM));
-  
 
+  // This is a confusing point.
+  // The final read data should be updated only if the CPU's StallW is low
+  // which means the CPU is ready to take data.  Or if the CPU just became
+  // busy.  Then when we exit CPU_BUSY we want to ensure the data is not
+  // updated, this is ~PreviousCPUBusy.
+  assign CPUBusy = CurrState == STATE_CPU_BUSY;
+  flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
+  
+  assign ReadDataWEn = (~StallW & ~PreviousCPUBusy) | (NextState == STATE_CPU_BUSY & CurrState == STATE_READY);
+  
   flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(~StallW),
+			      .en(ReadDataWEn),
 			      .d(FinalReadDataWordM),
 			      .q(ReadDataW));
 
@@ -312,46 +365,6 @@ module dcache
 
   // control path *** eventually move to own module.
 
-  logic AnyCPUReqM;
-  logic FetchCountFlag;
-  logic PreCntEn;
-  logic CntEn;
-  logic CntReset;
-  
-  
-  typedef enum {STATE_READY,
-		STATE_MISS_FETCH_WDV,
-		STATE_MISS_FETCH_DONE,
-		STATE_MISS_EVICT_DIRTY,
-		STATE_MISS_WRITE_BACK_EVICTED_BLOCK,
-		STATE_MISS_WRITE_CACHE_BLOCK,
-		STATE_MISS_READ_WORD,
-		STATE_MISS_READ_WORD_DELAY,
-		STATE_MISS_WRITE_WORD,
-		STATE_AMO_MISS_FETCH_WDV,
-		STATE_AMO_MISS_FETCH_DONE,
-		STATE_AMO_MISS_CHECK_EVICTED_DIRTY,
-		STATE_AMO_MISS_WRITE_BACK_EVICTED_BLOCK,
-		STATE_AMO_MISS_WRITE_CACHE_BLOCK,
-		STATE_AMO_MISS_READ_WORD,
-		STATE_AMO_MISS_UPDATE_WORD,
-		STATE_AMO_MISS_WRITE_WORD,
-		STATE_AMO_UPDATE,
-		STATE_AMO_WRITE,
-		STATE_PTW_READY,
-		STATE_PTW_MISS_FETCH_WDV,
-		STATE_PTW_MISS_FETCH_DONE,
-		STATE_PTW_MISS_CHECK_EVICTED_DIRTY,
-		STATE_PTW_MISS_WRITE_BACK_EVICTED_BLOCK,
-		STATE_PTW_MISS_WRITE_CACHE_BLOCK,
-		STATE_PTW_MISS_READ_SRAM,
-		STATE_UNCACHED_WRITE,
-		STATE_UNCACHED_WRITE_DONE,
-		STATE_UNCACHED_READ,
-		STATE_UNCACHED_READ_DONE,
-		STATE_CPU_BUSY} statetype;
-
-  statetype CurrState, NextState;
 
   
   localparam FetchCountThreshold = WORDSPERLINE - 1;
