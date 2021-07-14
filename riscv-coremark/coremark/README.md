@@ -3,6 +3,8 @@
 
 CoreMark's primary goals are simplicity and providing a method for testing only a processor's core features. For more information about EEMBC's comprehensive embedded benchmark suites, please see www.eembc.org.
 
+For a more compute-intensive version of CoreMark that uses larger datasets and execution loops taken from common applications, please check out EEMBC's [CoreMark-PRO](https://www.github.com/eembc/coremark-pro) benchmark, also on GitHub.
+
 # Building and Running
 	
 To build and run the benchmark, type 
@@ -83,7 +85,9 @@ Use `XCFLAGS=-DMULTITHREAD=N` where N is number of threads to run in parallel. S
 % make XCFLAGS="-DMULTITHREAD=4 -DUSE_PTHREAD"
 ~~~
 
-Above will compile the benchmark for execution on 4 cores, using POSIX Threads API.
+The above will compile the benchmark for execution on 4 cores, using POSIX Threads API.
+
+Note: linking may fail on the previous command if your linker does not automatically add the `pthread` library. If you encounter `undefined reference` errors, please modify the `core_portme.mak` file for your platform, (e.g. `linux/core_portme.mak`) and add `-lpthread` to the `LFLAGS_END` parameter.
 
 # Run Parameters for the Benchmark Executable
 CoreMark's executable takes several parameters as follows (but only if `main()` accepts arguments):
@@ -109,7 +113,7 @@ The default for such a target when testing different configurations could be:
 
 # Submitting Results
 
-CoreMark results can be submitted on the web. Open a web browser and go to https://www.eembc.org/coremark/login.php?url=enter_score.php. After registering an account you may enter a score.
+CoreMark results can be submitted on the web. Open a web browser and go to the [submission page](https://www.eembc.org/coremark/submit.php). After registering an account you may enter a score.
 
 # Run Rules
 What is and is not allowed.

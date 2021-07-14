@@ -1,6 +1,7 @@
 set pagination off
-target extended-remote :1234
-b *0xffffffe00020144e
+target extended-remote :1236
+file ../buildroot-image-output/vmlinux
+b arch_cpu_idle
 c
 c
 c

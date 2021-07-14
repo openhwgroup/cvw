@@ -14,4 +14,5 @@
 # 
 # Original Author: Shay Gal-on
 
+NO_LIBRT = 1
 include posix/core_portme.mak
