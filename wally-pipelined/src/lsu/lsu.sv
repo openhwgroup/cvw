@@ -146,6 +146,10 @@ module lsu
   logic 		       DCacheStall;
 
   logic 		       CacheableM;
+
+  logic 		       CommittedMfromDCache;
+  logic 		       PendingInterruptMtoDCache;
+  
   
   pagetablewalker pagetablewalker(
 				  .clk(clk),
@@ -188,6 +192,8 @@ module lsu
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
+		 .CommittedM(CommittedM),
+		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
 		 .ReadDataW(ReadDataW),
 		 .SquashSCW(SquashSCW),
@@ -203,6 +209,8 @@ module lsu
 		 .SquashSCWfromDCache(SquashSCWfromDCache),      
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
+		 .CommittedMfromDCache(CommittedMfromDCache),
+		 .PendingInterruptMtoDCache(PendingInterruptMtoDCache),
 		 .DCacheStall(DCacheStall));
     
   
@@ -320,9 +328,9 @@ module lsu
 		.WriteDataM(WriteDataM),
 		.ReadDataW(ReadDataWfromDCache),
 		.DCacheStall(DCacheStall),
-		.CommittedM(CommittedM),
+		.CommittedM(CommittedMfromDCache),
 		.ExceptionM(ExceptionM),
-		.PendingInterruptM(PendingInterruptM),		
+		.PendingInterruptM(PendingInterruptMtoDCache),		
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableM), 
 
