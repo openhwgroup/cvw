@@ -108,16 +108,8 @@ module fpu (
       logic [63:0] 	FPUResultW;                                           
       logic [4:0] 	FPUFlagsW;
       
-      
-
-
-
-
-
-
 
       //DECODE STAGE
-      
       
       // top-level controller for FPU
       fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
@@ -129,14 +121,6 @@ module fpu (
             InstrD[19:15], InstrD[24:20], InstrD[31:27], RdW,
             FPUResultW,
             FRD1D, FRD2D, FRD3D);	
-      
-
-
-
-
-
-
-
 
       //*****************
       // D/E pipe registers
@@ -150,18 +134,6 @@ module fpu (
       flopenrc #(22) DECtrlReg3(clk, reset, FlushE, ~StallE, 
                            {FRegWriteD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, InstrD[11:7], FOpCtrlD, FWriteIntD},
                            {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, RdE,          FOpCtrlE, FWriteIntE});
-
-
-
-
-
-
-
-
-
-
-
-
 
 
       //EXECUTION STAGE
@@ -198,12 +170,10 @@ module fpu (
                   .en(~HoldInputs), .clear(FDivSqrtDoneE),
                   .reset(reset),  .clk(clk));
 
-      fdivsqrt fdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .DivInput1E, .DivInput2E, 
+      fpdiv fdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .DivInput1E, .DivInput2E, 
                         .FrmE, .DivOvEn(1'b1), .DivUnEn(1'b1), .FDivStartE, .FDivResultM, .FDivSqrtFlgM, 
                         .FDivSqrtDoneE, .FDivBusyE, .HoldInputs, .reset);
       
-
-
       // first of two-stage instance of floating-point add/cvt unit
       faddcvt faddcvt (.clk, .reset, .FlushM, .StallM, .FrmM, .FOpCtrlM, .FmtE, .FmtM,
                         .SrcXE, .SrcYE, .FOpCtrlE, .FAddResM, .FAddFlgM);
@@ -223,15 +193,6 @@ module fpu (
       // output for store instructions
       // mux2  #(`XLEN)  FWriteDataMux({{`XLEN-32{1'b0}}, SrcYE[63:32]}, SrcYE[63:64-`XLEN], FmtE, FWriteDataE);
       assign FWriteDataE = SrcYE[`XLEN-1:0];
-
-
-
-
-
-
-
-
-
 
       //*****************
       // E/M pipe registers
@@ -255,36 +216,18 @@ module fpu (
                            {FRegWriteM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, RdM, FOpCtrlM, FWriteIntM});
 
       flopenrc #(64) EMRegClass(clk, reset, FlushM, ~StallM, ClassResE, ClassResM);
-      
-
-
-
-
-
-
 
       //BEGIN MEMORY STAGE
-      
       mux4  #(64)  FResMux(AlignedSrcAM, SgnResM, CmpResM, CvtResM, FResSelM, FResM);
       mux4  #(5)  FFlgMux(5'b0, {4'b0, SgnNVM}, {4'b0, CmpNVM}, CvtFlgM, FResSelM, FFlgM);
 
       // mux2  #(`XLEN)  SrcXAlignedMux({{`XLEN-32{1'b0}}, SrcXM[63:32]}, SrcXM[63:64-`XLEN], FmtM, SrcXMAligned);
       mux4  #(`XLEN)  IntResMux(CmpResM[`XLEN-1:0], SrcXM[`XLEN-1:0], ClassResM[`XLEN-1:0], CvtResM[`XLEN-1:0], FIntResSelM, FIntResM);
-
       
       // Align SrcA to MSB when single precicion
       mux2  #(64)  SrcAMux({{32{1'b1}}, SrcAM[31:0]}, {{64-`XLEN{1'b1}}, SrcAM}, FmtM, AlignedSrcAM);
-         
-         
       mux5  #(5)  FPUFlgMux(5'b0, FMAFlgM, FAddFlgM, FDivSqrtFlgM, FFlgM, FResultSelW, SetFflagsM);
 
-
-
-
-
-
-
-            
       //*****************
       // M/W pipe registers
       //*****************
@@ -302,15 +245,9 @@ module fpu (
                            {FRegWriteM, FResultSelM, RdM, FmtM, FWriteIntM},
                            {FRegWriteW, FResultSelW, RdW, FmtW, FWriteIntW});
       
-      
-
-
-
-
    //#########################################
    // BEGIN WRITEBACK STAGE
    //#########################################
-
 
       mux2  #(64)  ReadResMux({{32{1'b1}}, ReadDataW[31:0]}, {{64-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW);
       mux5  #(64)  FPUResultMux(ReadResW, FMAResW, FAddResW, FDivResultW, FResW, FResultSelW, FPUResultW);
@@ -330,4 +267,3 @@ module fpu (
   endgenerate 
   
 endmodule // fpu
-
