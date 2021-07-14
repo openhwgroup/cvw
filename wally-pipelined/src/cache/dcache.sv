@@ -485,8 +485,9 @@ module dcache
 	SRAMWordWriteEnableM = 1'b1; // pipelined 1 cycle
       end
       STATE_AMO_WRITE: begin
-	NextState = STATE_READY;
 	SelAMOWrite = 1'b1;
+	if(StallW) NextState = STATE_CPU_BUSY;
+	else NextState = STATE_READY;
       end
 
       STATE_MISS_FETCH_WDV: begin
@@ -540,17 +541,19 @@ module dcache
 
       STATE_MISS_READ_WORD_DELAY: begin
 	SelAdrM = 1'b1;
-	NextState = STATE_READY;
 	CommittedM = 1'b1;
+	if(StallW) NextState = STATE_CPU_BUSY;
+	else NextState = STATE_READY;
       end
 
       STATE_MISS_WRITE_WORD: begin
 	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
 	SelAdrM = 1'b1;
-	NextState = STATE_READY;
 	DCacheStall = 1'b0;
 	CommittedM = 1'b1;
+	if(StallW) NextState = STATE_CPU_BUSY;
+	else NextState = STATE_READY;
       end
 
       STATE_MISS_EVICT_DIRTY: begin
