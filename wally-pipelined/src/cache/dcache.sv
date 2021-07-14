@@ -44,10 +44,11 @@ module dcache
    input logic [`XLEN-1:0]     WriteDataM,
    output logic [`XLEN-1:0]    ReadDataW,
    output logic 	       DCacheStall,
-   output logic CommittedM,
+   output logic 	       CommittedM,
 
    // inputs from TLB and PMA/P
-   input logic 		       FaultM,
+   input logic 		       ExceptionM,
+   input logic 		       PendingInterruptM,   
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    // ahb side
@@ -409,7 +410,7 @@ module dcache
 	  NextState = STATE_PTW_MISS_FETCH_WDV;
 	end
 	// amo hit
-	else if(|AtomicM & CacheableM & ~FaultM & CacheHit & ~DTLBMissM) begin
+	else if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
 
@@ -417,7 +418,7 @@ module dcache
 	  else NextState = STATE_READY;
 	end
 	// read hit valid cached
-	else if(MemRWM[1] & CacheableM & ~FaultM & CacheHit & ~DTLBMissM) begin
+	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_READY;
 	  DCacheStall = 1'b0;
 
@@ -425,7 +426,7 @@ module dcache
 	  else NextState = STATE_READY;
 	end
 	// write hit valid cached
-	else if (MemRWM[0] & CacheableM & ~FaultM & CacheHit & ~DTLBMissM) begin
+	else if (MemRWM[0] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  SelAdrM = 1'b1;
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
@@ -435,27 +436,27 @@ module dcache
 	  else NextState = STATE_READY;
 	end
 	// read or write miss valid cached
-	else if((|MemRWM) & CacheableM & ~FaultM & ~CacheHit & ~DTLBMissM) begin
+	else if((|MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & ~CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	end
 	// uncached write
-	else if(MemRWM[0] & ~CacheableM & ~FaultM & ~DTLBMissM) begin
+	else if(MemRWM[0] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
 	  NextState = STATE_UNCACHED_WRITE;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	  AHBWrite = 1'b1;
 	end
 	// uncached read
-	else if(MemRWM[1] & ~CacheableM & ~FaultM & ~DTLBMissM) begin
+	else if(MemRWM[1] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
 	  NextState = STATE_UNCACHED_READ;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	  AHBRead = 1'b1;	  
 	end
 	// fault
-	else if(AnyCPUReqM & FaultM & ~DTLBMissM) begin
+	else if(AnyCPUReqM & (ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
 	  NextState = STATE_READY;
 	end
 	else NextState = STATE_READY;

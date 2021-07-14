@@ -40,6 +40,8 @@ module lsu
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M, 
    input logic [1:0] 	       AtomicM,
+   input logic 		       ExceptionM,
+   input logic 		       PendingInterruptM,
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
    output logic 	       DataMisalignedM,
@@ -319,7 +321,8 @@ module lsu
 		.ReadDataW(ReadDataWfromDCache),
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedM),
-		.FaultM(LoadMisalignedFaultM | StoreMisalignedFaultM), // this is wrong needs to be all faults.
+		.ExceptionM(ExceptionM),
+		.PendingInterruptM(PendingInterruptM),		
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableM), 
 
