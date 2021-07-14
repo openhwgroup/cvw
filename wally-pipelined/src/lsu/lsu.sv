@@ -99,7 +99,9 @@ module lsu
   logic 		       DTLBPageFaultM;
   logic 		       MemAccessM;
 
+/* -----\/----- EXCLUDED -----\/-----
   logic 		       preCommittedM;
+ -----/\----- EXCLUDED -----/\----- */
 
   typedef enum 		       {STATE_READY,
 				STATE_FETCH,
@@ -135,7 +137,6 @@ module lsu
   logic [`XLEN-1:0] 	       MemAdrEtoDCache;  
   logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
-  logic 		       CommittedMfromDCache;
   logic 		       SquashSCWfromDCache;
   logic 		       DataMisalignedMfromDCache;
   logic 		       HPTWReady;
@@ -187,7 +188,6 @@ module lsu
 		 .MemAdrM(MemAdrM),
 		 .StallW(StallW),
 		 .ReadDataW(ReadDataW),
-		 .CommittedM(CommittedM),
 		 .SquashSCW(SquashSCW),
 		 .DataMisalignedM(DataMisalignedM),
 		 .LSUStall(LSUStall),
@@ -198,7 +198,6 @@ module lsu
 		 .AtomicMtoDCache(AtomicMtoDCache),
 		 .MemAdrMtoDCache(MemAdrMtoDCache),          
 		 .StallWtoDCache(StallWtoDCache),
-		 .CommittedMfromDCache(CommittedMfromDCache),     
 		 .SquashSCWfromDCache(SquashSCWfromDCache),      
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
@@ -319,6 +318,7 @@ module lsu
 		.WriteDataM(WriteDataM),
 		.ReadDataW(ReadDataWfromDCache),
 		.DCacheStall(DCacheStall),
+		.CommittedM(CommittedM),
 		.FaultM(LoadMisalignedFaultM | StoreMisalignedFaultM), // this is wrong needs to be all faults.
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableM), 

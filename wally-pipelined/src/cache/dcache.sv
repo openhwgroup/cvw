@@ -44,6 +44,7 @@ module dcache
    input logic [`XLEN-1:0]     WriteDataM,
    output logic [`XLEN-1:0]    ReadDataW,
    output logic 	       DCacheStall,
+   output logic CommittedM,
 
    // inputs from TLB and PMA/P
    input logic 		       FaultM,
@@ -311,12 +312,6 @@ module dcache
   
   
   typedef enum {STATE_READY,
-		STATE_READ_MISS_FETCH_WDV,
-		STATE_READ_MISS_FETCH_DONE,
-		STATE_READ_MISS_CHECK_EVICTED_DIRTY,
-		STATE_READ_MISS_WRITE_BACK_EVICTED_BLOCK,
-		STATE_READ_MISS_WRITE_CACHE_BLOCK,
-		STATE_READ_MISS_READ_WORD,
 		STATE_MISS_FETCH_WDV,
 		STATE_MISS_FETCH_DONE,
 		STATE_MISS_EVICT_DIRTY,
@@ -397,7 +392,8 @@ module dcache
     AHBRead = 1'b0;
     AHBWrite = 1'b0;
     SelAMOWrite = 1'b0;
-        
+    CommittedM = 1'b0;        
+
     case (CurrState)
       STATE_READY: begin
 	// TLB Miss	
@@ -466,6 +462,8 @@ module dcache
         PreCntEn = 1'b1;
 	AHBRead = 1'b1;
 	SelAdrM = 1'b1;
+	CommittedM = 1'b1;
+	
         if (FetchCountFlag & AHBAck) begin
           NextState = STATE_MISS_FETCH_DONE;
         end else begin
@@ -477,6 +475,7 @@ module dcache
 	DCacheStall = 1'b1;
 	SelAdrM = 1'b1;
         CntReset = 1'b1;
+	CommittedM = 1'b1;
 	if(VictimDirty) begin
 	  NextState = STATE_MISS_EVICT_DIRTY;
 	end else begin
@@ -491,11 +490,13 @@ module dcache
 	SelAdrM = 1'b1;
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
+	CommittedM = 1'b1;
       end
 
       STATE_MISS_READ_WORD: begin
 	SelAdrM = 1'b1;
 	DCacheStall = 1'b1;
+	CommittedM = 1'b1;
 	if (MemRWM[1]) begin
 	  NextState = STATE_MISS_READ_WORD_DELAY;
 	  // delay state is required as the read signal MemRWM[1] is still high when we
@@ -508,6 +509,7 @@ module dcache
       STATE_MISS_READ_WORD_DELAY: begin
 	SelAdrM = 1'b1;
 	NextState = STATE_READY;
+	CommittedM = 1'b1;
       end
 
       STATE_MISS_WRITE_WORD: begin
@@ -516,6 +518,7 @@ module dcache
 	SelAdrM = 1'b1;
 	NextState = STATE_READY;
 	DCacheStall = 1'b0;
+	CommittedM = 1'b1;
       end
 
       STATE_MISS_EVICT_DIRTY: begin
@@ -523,6 +526,7 @@ module dcache
         PreCntEn = 1'b1;
 	AHBWrite = 1'b1;
 	SelAdrM = 1'b1;
+	CommittedM = 1'b1;
 	if( FetchCountFlag & AHBAck) begin
 	  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 	end else begin
@@ -548,6 +552,7 @@ module dcache
       STATE_UNCACHED_WRITE : begin
 	DCacheStall = 1'b1;	
 	AHBWrite = 1'b1;
+	CommittedM = 1'b1;
 	if(AHBAck) begin
 	  NextState = STATE_UNCACHED_WRITE_DONE;
 	end else begin
@@ -556,6 +561,7 @@ module dcache
       end
 
       STATE_UNCACHED_WRITE_DONE: begin
+	CommittedM = 1'b1;
 	NextState = STATE_READY;
       end
       default: begin
