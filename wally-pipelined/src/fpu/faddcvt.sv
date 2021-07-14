@@ -31,8 +31,8 @@ module faddcvt(
    input logic          reset,
    input logic          FlushM,
    input logic          StallM,
-   input logic  [63:0]  SrcXE,		// 1st input operand (A)
-   input logic  [63:0]  SrcYE,		// 2nd input operand (B)
+   input logic  [63:0]  FSrcXE,		// 1st input operand (A)
+   input logic  [63:0]  FSrcYE,		// 2nd input operand (B)
    input logic  [3:0]   FOpCtrlE, FOpCtrlM,	// Function opcode
    input logic          FmtE, FmtM,   		// Result Precision (0 for double, 1 for single)
    input logic  [2:0] 	FrmM,		// Rounding mode - specify values 
@@ -59,7 +59,7 @@ module faddcvt(
    logic [10:0] 	AddExponentE, AddExponentM;
 
 
-   fpuaddcvt1 fpadd1 (.SrcXE, .SrcYE, .FOpCtrlE, .FmtE, .AddFloat1E, .AddFloat2E, .AddExponentE, 
+   fpuaddcvt1 fpadd1 (.FSrcXE, .FSrcYE, .FOpCtrlE, .FmtE, .AddFloat1E, .AddFloat2E, .AddExponentE, 
                      .AddExpPostSumE, .AddExp1DenormE, .AddExp2DenormE, .AddSumE, .AddSumTcE, .AddSelInvE, 
                      .AddCorrSignE, .AddSignAE, .AddOp1NormE, .AddOp2NormE, .AddOpANormE, .AddOpBNormE, .AddInvalidE, 
                      .AddDenormInE, .AddConvertE, .AddSwapE, .AddNormOvflowE);
@@ -83,10 +83,10 @@ module faddcvt(
                      .AddSignAM, .AddCorrSignM, .AddConvertM, .AddSwapM, .FAddResM, .FAddFlgM);
 endmodule
 
-module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, SrcXE, SrcYE, FOpCtrlE, FmtE);
+module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, FSrcXE, FSrcYE, FOpCtrlE, FmtE);
 
-   input logic [63:0] SrcXE;		// 1st input operand (A)
-   input logic [63:0] SrcYE;		// 2nd input operand (B)
+   input logic [63:0] FSrcXE;		// 1st input operand (A)
+   input logic [63:0] FSrcYE;		// 2nd input operand (B)
    input logic [3:0]	FOpCtrlE;	// Function opcode
    input logic 	FmtE;   		// Result Precision (1 for double, 0 for single)
 
@@ -137,12 +137,12 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
    // and the sign of the first operand is set appropratiately based on
    // if the operation is absolute value or negation. 
 
-   convert_inputs conv1 (AddFloat1E, AddFloat2E, SrcXE, SrcYE, FOpCtrlE, P);
+   convert_inputs conv1 (AddFloat1E, AddFloat2E, FSrcXE, FSrcYE, FOpCtrlE, P);
 
    // Test for exceptions and return the "Invalid Operation" and
    // "Denormalized" Input Flags. The "AddSelInvE" is used in
    // the third pipeline stage to select the result. Also, AddOp1NormE
-   // and AddOp2NormE are one if SrcXE and SrcYE are not zero or denormalized.
+   // and AddOp2NormE are one if FSrcXE and FSrcYE are not zero or denormalized.
    // sub is one if the effective operation is subtaction. 
 
    exception exc1 (AddSelInvE, AddInvalidE, AddDenormInE, AddOp1NormE, AddOp2NormE, sub, 
@@ -215,8 +215,8 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
 
    // Place either the sign-extened 32-bit value or the original 64-bit value 
    // into IntValue (to be used for integer to floating point conversion)
-   // assign IntValue [31:0] = SrcXE[31:0];
-   // assign IntValue [63:32] = FOpCtrlE[0] ? {32{SrcXE[31]}} : SrcXE[63:32];
+   // assign IntValue [31:0] = FSrcXE[31:0];
+   // assign IntValue [63:32] = FOpCtrlE[0] ? {32{FSrcXE[31]}} : FSrcXE[63:32];
 
    // If doing an integer to floating point conversion, mantissaA3 is set to 
    // IntVal and the prenomalized exponent is set to 1084. Otherwise, 
