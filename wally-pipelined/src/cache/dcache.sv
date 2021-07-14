@@ -48,9 +48,10 @@ module dcache
 
    // inputs from TLB and PMA/P
    input logic 		       ExceptionM,
-   input logic 		       PendingInterruptM,   
+   input logic 		       PendingInterruptM, 
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
+   input logic 		       DTLBWriteM,
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    output logic 	       AHBRead,
@@ -133,6 +134,7 @@ module dcache
   
   
   typedef enum {STATE_READY,
+
 		STATE_MISS_FETCH_WDV,
 		STATE_MISS_FETCH_DONE,
 		STATE_MISS_EVICT_DIRTY,
@@ -141,6 +143,7 @@ module dcache
 		STATE_MISS_READ_WORD,
 		STATE_MISS_READ_WORD_DELAY,
 		STATE_MISS_WRITE_WORD,
+
 		STATE_AMO_MISS_FETCH_WDV,
 		STATE_AMO_MISS_FETCH_DONE,
 		STATE_AMO_MISS_CHECK_EVICTED_DIRTY,
@@ -151,17 +154,19 @@ module dcache
 		STATE_AMO_MISS_WRITE_WORD,
 		STATE_AMO_UPDATE,
 		STATE_AMO_WRITE,
+
 		STATE_PTW_READY,
-		STATE_PTW_MISS_FETCH_WDV,
-		STATE_PTW_MISS_FETCH_DONE,
-		STATE_PTW_MISS_CHECK_EVICTED_DIRTY,
-		STATE_PTW_MISS_WRITE_BACK_EVICTED_BLOCK,
-		STATE_PTW_MISS_WRITE_CACHE_BLOCK,
-		STATE_PTW_MISS_READ_SRAM,
+		STATE_PTW_READ_MISS_FETCH_WDV,
+		STATE_PTW_READ_MISS_FETCH_DONE,
+		STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK,
+		STATE_PTW_READ_MISS_READ_WORD,
+		STATE_PTW_READ_MISS_READ_WORD_DELAY,		
+
 		STATE_UNCACHED_WRITE,
 		STATE_UNCACHED_WRITE_DONE,
 		STATE_UNCACHED_READ,
 		STATE_UNCACHED_READ_DONE,
+
 		STATE_CPU_BUSY} statetype;
 
   statetype CurrState, NextState;
@@ -420,7 +425,7 @@ module dcache
       STATE_READY: begin
 	// TLB Miss	
 	if(AnyCPUReqM & DTLBMissM) begin                      
-	  NextState = STATE_PTW_MISS_FETCH_WDV;
+	  NextState = STATE_PTW_READY;
 	end
 	// amo hit
 	else if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
@@ -428,11 +433,10 @@ module dcache
 	  DCacheStall = 1'b1;
 
 	  if(StallW) NextState = STATE_CPU_BUSY;
-	  else NextState = STATE_READY;
+	  else NextState = STATE_AMO_UPDATE;
 	end
 	// read hit valid cached
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
-	  NextState = STATE_READY;
 	  DCacheStall = 1'b0;
 
 	  if(StallW) NextState = STATE_CPU_BUSY;
@@ -562,14 +566,69 @@ module dcache
 	end	  
       end
 
-      STATE_PTW_MISS_FETCH_WDV: begin
+      STATE_PTW_READY: begin
+	CommittedM = 1'b1;
+	// return to ready if page table walk completed.
+	if(DTLBWriteM) begin
+	  NextState = STATE_READY;
+
+	// read hit valid cached
+	end else if(MemRWM[1] & CacheableM & ~ExceptionM & CacheHit) begin
+	  NextState = STATE_PTW_READY;
+	  DCacheStall = 1'b0;
+	end
+
+	// read miss valid cached
+	else if((MemRWM[1]) & CacheableM & ~ExceptionM & ~CacheHit) begin
+	  NextState = STATE_PTW_READ_MISS_FETCH_WDV;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	end
+      end
+
+      STATE_PTW_READ_MISS_FETCH_WDV: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBRead = 1'b1;
+	SelAdrM = 1'b1;
+	CommittedM = 1'b1;
+	
+        if (FetchCountFlag & AHBAck) begin
+          NextState = STATE_PTW_READ_MISS_FETCH_DONE;
+        end else begin
+          NextState = STATE_PTW_READ_MISS_FETCH_WDV;
+        end
+      end
+
+      STATE_PTW_READ_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
 	SelAdrM = 1'b1;
-	if (FetchCountFlag & AHBAck) begin
-	  NextState = STATE_PTW_MISS_FETCH_DONE;
-	end else begin
-	  NextState = STATE_PTW_MISS_FETCH_WDV;
-	end
+        CntReset = 1'b1;
+	CommittedM = 1'b1;
+	NextState = STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK;
+      end
+
+      STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK: begin
+	SRAMBlockWriteEnableM = 1'b1;
+	DCacheStall = 1'b1;
+	NextState = STATE_PTW_READ_MISS_READ_WORD;
+	SelAdrM = 1'b1;
+	SetValidM = 1'b1;
+	ClearDirtyM = 1'b1;
+	CommittedM = 1'b1;
+      end
+
+      STATE_PTW_READ_MISS_READ_WORD: begin
+	SelAdrM = 1'b1;
+	DCacheStall = 1'b1;
+	CommittedM = 1'b1;
+	NextState = STATE_PTW_READ_MISS_READ_WORD_DELAY;
+      end
+
+      STATE_PTW_READ_MISS_READ_WORD_DELAY: begin
+	SelAdrM = 1'b1;
+	NextState = STATE_PTW_READY;
+	CommittedM = 1'b1;
       end
 
       STATE_CPU_BUSY : begin
@@ -601,13 +660,15 @@ module dcache
       
       STATE_UNCACHED_WRITE_DONE: begin
 	CommittedM = 1'b1;
-	NextState = STATE_READY;
+	if(StallW) NextState = STATE_CPU_BUSY;
+	else NextState = STATE_READY;
       end
 
       STATE_UNCACHED_READ_DONE: begin
 	CommittedM = 1'b1;
 	SelUncached = 1'b1;
-	NextState = STATE_READY;
+	if(StallW) NextState = STATE_CPU_BUSY;
+	else NextState = STATE_READY;
       end
 
       default: begin
