@@ -544,9 +544,9 @@ string tests32f[] = '{
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
         //if (`A_SUPPORTED) tests = {tests, tests64a};
-        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
+        if (`MEM_VIRTMEM) tests = {tests64periph, tests64mmu, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32

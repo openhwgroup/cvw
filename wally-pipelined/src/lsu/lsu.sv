@@ -333,6 +333,7 @@ module lsu
 		.PendingInterruptM(PendingInterruptMtoDCache),		
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableM), 
+		.DTLBWriteM(DTLBWriteM),
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),
