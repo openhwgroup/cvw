@@ -645,6 +645,7 @@ module dcache
       end
 
       STATE_CPU_BUSY : begin
+	CommittedM = 1'b1;
 	if(StallW) NextState = STATE_CPU_BUSY;
 	else NextState = STATE_READY;
       end
