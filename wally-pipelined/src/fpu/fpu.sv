@@ -153,7 +153,7 @@ module fpu (
       flopenrc #(1) DECtrlRegE1(clk, reset, FlushE, ~StallE, FDivStartD, FDivStartE);
       flopenrc #(15) DECtrlRegE2(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                                                             {Adr1E,         Adr2E,         Adr3E});
-      flopenrc #(22) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+      flopenrc #(17) DECtrlReg3(clk, reset, FlushE, ~StallE, 
                            {FRegWriteD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD},
                            {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE});
 
@@ -242,7 +242,7 @@ module fpu (
       flopenrc #(64) EMRegCvt1(clk, reset, FlushM, ~StallM, CvtResE, CvtResM);
       flopenrc #(5) EMRegCvt2(clk, reset, FlushM, ~StallM, CvtFlgE, CvtFlgM);
       
-      flopenrc #(22) EMCtrlReg(clk, reset, FlushM, ~StallM,
+      flopenrc #(17) EMCtrlReg(clk, reset, FlushM, ~StallM,
                            {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE},
                            {FRegWriteM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM});
 
@@ -272,7 +272,7 @@ module fpu (
 
       flopenrc #(64) MWRegClass2(clk, reset, FlushW, ~StallW, FResM, FResW);
       
-      flopenrc #(11) MWCtrlReg(clk, reset, FlushW, ~StallW,
+      flopenrc #(6) MWCtrlReg(clk, reset, FlushW, ~StallW,
                            {FRegWriteM, FResultSelM, FmtM, FWriteIntM},
                            {FRegWriteW, FResultSelW, FmtW, FWriteIntW});
       

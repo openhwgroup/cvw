@@ -57,12 +57,8 @@ module testbench();
 string tests32f[] = '{
     "rv32f/I-FADD-S-01", "2000",
     "rv32f/I-FCLASS-S-01", "2000",
-    "rv32f/I-FCVT-S-L-01", "2000",
-    "rv32f/I-FCVT-S-LU-01", "2000",
     "rv32f/I-FCVT-S-W-01", "2000",
     "rv32f/I-FCVT-S-WU-01", "2000",
-    "rv32f/I-FCVT-L-S-01", "2000",
-    "rv32f/I-FCVT-LU-S-01", "2000",
     "rv32f/I-FCVT-W-S-01", "2000",
     "rv32f/I-FCVT-WU-S-01", "2000",
     // "rv32f/I-FDIV-S-01", "2000",

@@ -93,7 +93,7 @@ module fcvt (
 	logic [8:0]	i;
 	always_comb begin
 			i = 0;
-			while (~PosInt[64-1-i] && i <= `XLEN) i = i+1;  // search for leading one 
+			while (~PosInt[64-1-i] && i < `XLEN) i = i+1;  // search for leading one 
 			LZResP = i+1;    // compute shift count
 	end
 
