@@ -152,6 +152,7 @@ module lsu
 
   logic 		       CommittedMfromDCache;
   logic 		       PendingInterruptMtoDCache;
+  logic 		       FlushWtoDCache;
   
   
   pagetablewalker pagetablewalker(
