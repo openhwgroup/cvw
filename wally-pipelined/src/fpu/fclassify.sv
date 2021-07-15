@@ -2,49 +2,52 @@
 `include "wally-config.vh"
 
 module fclassify (
-    input  logic [63:0] SrcXE,
-    input  logic        FmtE,           // 0-Single 1-Double
+    input  logic XSgnE,
+    input  logic [51:0] XFracE,
+    input logic XNaNE, 
+    input logic XSNaNE,
+    input logic XNormE,
+    input logic XDenormE,
+    input logic XZeroE,
+    input logic XInfE,
+    // input  logic        FmtE,           // 0-Single 1-Double
     output logic [63:0] ClassResE
     );
 
-    logic [31:0] Single;
-    logic [63:0] Double;
-    logic Sgn;
-    logic Inf, NaN, Zero, Norm, Denorm;
-    logic PInf, QNaN, PZero, PNorm, PDenorm;
-    logic NInf, SNaN, NZero, NNorm, NDenorm;
-    logic MaxExp, ExpZero, ManZero, FirstBitFrac;
+    // logic XSgnE;
+    // logic Inf, NaN, Zero, Norm, Denorm;
+    logic PInf, PZero, PNorm, PDenorm;
+    logic NInf, NZero, NNorm, NDenorm;
+    // logic MaxExp, ExpZero, ManZero, FirstBitFrac;
    
     // Single and Double precision layouts
-    assign Single = SrcXE[63:32];
-    assign Double = SrcXE;
-    assign Sgn = SrcXE[63];
+    // assign XSgnE = FmtE ? FSrcXE[63] : FSrcXE[31];
 
     // basic calculations for readabillity
     
-    assign ExpZero = FmtE ? ~|Double[62:52] : ~|Single[30:23];
-    assign MaxExp = FmtE ? &Double[62:52] : &Single[30:23];
-    assign ManZero = FmtE ? ~|Double[51:0] : ~|Single[22:0];
-    assign FirstBitFrac = FmtE ? Double[51] : Single[22];
+    // assign ExpZero = FmtE ? ~|FSrcXE[62:52] : ~|FSrcXE[30:23];
+    // assign MaxExp = FmtE ? &FSrcXE[62:52] : &FSrcXE[30:23];
+    // assign ManZero = FmtE ? ~|FSrcXE[51:0] : ~|FSrcXE[22:0];
+    // assign FirstBitFrac = FmtE ? FSrcXE[51] : FSrcXE[22];
 
     // determine the type of number
-    assign NaN      = MaxExp & ~ManZero;
-    assign Inf = MaxExp & ManZero;
-    assign Zero     = ExpZero & ManZero;
-    assign Denorm= ExpZero & ~ManZero;
-    assign Norm   = ~ExpZero;
+    // assign NaN      = MaxExp & ~ManZero;
+    // assign Inf = MaxExp & ManZero;
+    // assign Zero     = ExpZero & ManZero;
+    // assign Denorm= ExpZero & ~ManZero;
+    // assign Norm   = ~ExpZero;
 
     // determine the sub categories
-    assign QNaN = FirstBitFrac&NaN;
-    assign SNaN = ~FirstBitFrac&NaN;
-    assign PInf = ~Sgn&Inf;
-    assign NInf = Sgn&Inf;
-    assign PNorm = ~Sgn&Norm;
-    assign NNorm = Sgn&Norm;
-    assign PDenorm = ~Sgn&Denorm;
-    assign NDenorm = Sgn&Denorm;
-    assign PZero = ~Sgn&Zero;
-    assign NZero = Sgn&Zero;
+    // assign QNaN = FirstBitFrac&NaN;
+    // assign SNaN = ~FirstBitFrac&NaN;
+    assign PInf = ~XSgnE&XInfE;
+    assign NInf = XSgnE&XInfE;
+    assign PNorm = ~XSgnE&XNormE;
+    assign NNorm = XSgnE&XNormE;
+    assign PDenorm = ~XSgnE&XDenormE;
+    assign NDenorm = XSgnE&XDenormE;
+    assign PZero = ~XSgnE&XZeroE;
+    assign NZero = XSgnE&XZeroE;
 
     // determine sub category and combine into the result
     //  bit 0 - -Inf
@@ -57,6 +60,6 @@ module fclassify (
     //  bit 7 - +Inf
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassResE = {{54{1'b0}}, QNaN, SNaN, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+    assign ClassResE = {{54{1'b0}}, XNaNE&~XSNaNE, XSNaNE, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
 
 endmodule

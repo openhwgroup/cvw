@@ -42,28 +42,32 @@
 module fcmp (   
    input logic [63:0] op1, 
    input logic [63:0] op2,
+   input logic XNaNE, YNaNE,
+   input logic XZeroE, YZeroE,
+   input logic [63:0] FSrcXE,
+   input logic [63:0] FSrcYE,
    input logic [2:0]  FOpCtrlE,
    input logic 	      FmtE,
 
    
    output logic       Invalid, 		 // Invalid Operation
-   // output logic [1:0] FCC,  		 // Condition Codes 
    output logic [63:0] CmpResE);
+
    // Perform magnitude comparison between the 63 least signficant bits
    // of the input operands. Only LT and EQ are returned, since GT can
    // be determined from these values. 
    logic [1:0] FCC;  		 // Condition Codes 
    logic [7:0]	      w, x;
-   logic	      ANaN, BNaN;
-   logic	      Azero, Bzero;
+   // logic	      ANaN, BNaN;
+   // logic	      Azero, Bzero;
    logic 	      LT;                // magnitude op1 < magnitude op2
    logic 	      EQ;                // magnitude op1 = magnitude op2
-   
+
+
    magcompare64b_1 magcomp1 (w, x, {~op1[63], op1[62:0]}, {~op2[63], op2[62:0]});
 
    // Determine final values based on output of magnitude comparison, 
    // sign bits, and special case testing. 
-   exception_cmp_1 exc1 (ANaN, BNaN, Azero, Bzero, op1, op2, FOpCtrlE);
    
    // Perform magnitude comparison between the 63 least signficant bits
    // of the input operands. Only LT and EQ are returned, since GT can
@@ -72,24 +76,10 @@ module fcmp (
 
    // Determine final values based on output of magnitude comparison, 
    // sign bits, and special case testing. 
-   exception_cmp_2 exc2 (.invalid(Invalid), .fcc(FCC), .LT_mag(LT), .EQ_mag(EQ), .ANaN(ANaN), .BNaN(BNaN), .Azero(Azero), .Bzero(Bzero), .FOpCtrlE(FOpCtrlE), .A(op1), .B(op2), .*);
+   exception_cmp_2 exc2 (.invalid(Invalid), .fcc(FCC), .LT_mag(LT), .EQ_mag(EQ), .ANaN(XNaNE), .BNaN(YNaNE), .Azero(XZeroE), .Bzero(YZeroE), .FOpCtrlE(FOpCtrlE), .A(op1), .B(op2), .FSrcXE, .FSrcYE, .*);
 
 endmodule // fpcomp
 
-// module magcompare2b (LT, GT, A, B);
-
-//    input logic [1:0] A;
-//    input logic [1:0] B;
-   
-//    output logic     LT;
-//    output logic     GT;
-
-//    // Determine if A < B  using a minimized sum-of-products expression
-//    assign LT = ~A[1]&B[1] | ~A[1]&~A[0]&B[0] | ~A[0]&B[1]&B[0];
-//    // Determine if A > B  using a minimized sum-of-products expression
-//    assign GT = A[1]&~B[1] | A[1]&A[0]&~B[0] | A[0]&~B[1]&~B[0];
-
-// endmodule // magcompare2b
 
 // 2-bit magnitude comparator
 // This module compares two 2-bit values A and B. LT is '1' if A < B 
@@ -195,135 +185,6 @@ module magcompare64b_1 (w, x,  A, B);
 
 endmodule // magcompare64b
 
-// This module takes 64-bits inputs A and B, two magnitude comparison
-// flags LT_mag and EQ_mag, and a 2-bit signal FOpCtrlE that indicates the type of 
-// operands being compared as indicated below.
-//	FOpCtrlE	Description
-//	 00	double precision numbers
-//	 01	single precision numbers
-//	 10	half precision numbers
-//	 11	bfloat precision numbers
-//
-// The comparator produces a 2-bit signal fcc, which
-// indicates the result of the comparison as follows:
-//     fcc 	decscription
-//      00	A = B	
-//      01	A < B	
-//      10	A > B	
-//      11	A and B	are unordered (i.e., A or B is NaN)
-// It also produces a invalid operation flag, which is one
-// if either of the input operands is a signaling NaN.
-
-module exception_cmp_1 (ANaN, BNaN, Azero, Bzero, A, B, FOpCtrlE);
-
-   input logic [63:0] A;
-   input logic [63:0] B;
-   input logic [2:0]  FOpCtrlE;
-
-   logic 		      dp, sp, hp;
-
-   output logic 	      ANaN;
-   output logic 	      BNaN;
-   output logic               Azero;
-   output logic               Bzero;
-
-   assign dp = !FOpCtrlE[1]&!FOpCtrlE[0];
-   assign sp = !FOpCtrlE[1]&FOpCtrlE[0];
-   assign hp = FOpCtrlE[1]&!FOpCtrlE[0];
-
-   // Test if A or B is NaN.
-   assign ANaN = (A[62]&A[61]&A[60]&A[59]&A[58]) & 
-		 ((sp&A[57]&A[56]&A[55]&(A[54]|A[53])) | 
-		 (dp&A[57]&A[56]&A[55]&A[54]&A[53]&A[52]&(A[51]|A[50])) |
-		 (hp&(A[57]|A[56])));
-
-   assign BNaN = (B[62]&B[61]&B[60]&B[59]&B[58]) & 
-		 ((sp&B[57]&B[56]&B[55]&(B[54]|B[53])) | 
-		 (dp&B[57]&B[56]&B[55]&B[54]&B[53]&B[52]&(B[51]|B[50])) |
-		 (hp&(B[57]|B[56])));
-
-   // Test if A is +0 or -0 when viewed as a floating point number (i.e,
-   // the 63 least siginficant bits of A are zero). 
-   // Depending on how this synthesizes, it may work better to replace
-   // this with assign Azero = ~(A[62] | A[61] | ... | A[0])
-   assign Azero = (A[62:0] == 63'h0);
-   assign Bzero = (B[62:0] == 63'h0);
-
-endmodule // exception_cmp
-//
-// File name : fpcomp.v
-// Title     : Floating-Point Comparator
-// project   : FPU
-// Library   : fpcomp
-// Author(s) : James E. Stine
-// Purpose   : definition of main unit to floating-point comparator
-// notes :   
-//
-// Copyright Oklahoma State University
-//
-// Floating Point Comparator (Algorithm)
-//
-// 1.) Performs sign-extension if the inputs are 32-bit integers.
-// 2.) Perform a magnitude comparison on the lower 63 bits of the inputs
-// 3.) Check for special cases (+0=-0, unordered, and infinite values) 
-//     and correct for sign bits
-//
-// This module takes 64-bits inputs op1 and op2, VSS, and VDD
-// signals, and a 2-bit signal FOpCtrlE that indicates the type of 
-// operands being compared as indicated below.
-//	FOpCtrlE	Description
-//	 00	double precision numbers
-//	 01	single precision numbers
-//	 10	half precision numbers
-//	 11	(unused)
-//
-// The comparator produces a 2-bit signal FCC, which
-// indicates the result of the comparison:
-//
-//     fcc 	decscription
-//      00	A = B	
-//      01	A < B	
-//      10	A > B	
-//      11	A and B	are unordered (i.e., A or B is NaN)
-//
-// It also produces an invalid operation flag, which is one
-// if either of the input operands is a signaling NaN per 754
-
-
-/*module magcompare2b (LT, GT, A, B);
-
-   input logic [1:0] A;
-   input logic [1:0] B;
-   
-   output logic     LT;
-   output logic     GT;
-
-   // Determine if A < B  using a minimized sum-of-products expression
-   assign LT = ~A[1]&B[1] | ~A[1]&~A[0]&B[0] | ~A[0]&B[1]&B[0];
-   // Determine if A > B  using a minimized sum-of-products expression
-   assign GT = A[1]&~B[1] | A[1]&A[0]&~B[0] | A[0]&~B[1]&~B[0];
-
-endmodule*/ // magcompare2b
-
-// 2-bit magnitude comparator
-// This module compares two 2-bit values A and B. LT is '1' if A < B 
-// and GT is '1'if A > B. LT and GT are both '0' if A = B.  However,
-// this version actually incorporates don't cares into the equation to
-// simplify the optimization
-
-// module magcompare2c (LT, GT, A, B);
-
-//    input logic [1:0] A;
-//    input logic [1:0] B;
-   
-//    output logic      LT;
-//    output logic      GT;
-
-//    assign LT = B[1] | (!A[1]&B[0]);
-//    assign GT = A[1] | (!B[1]&A[0]);
-
-// endmodule // magcompare2b
-
 // This module compares two 64-bit values A and B. LT is '1' if A < B 
 // and EQ is '1'if A = B. LT and GT are both '0' if A > B.
 // This structure was modified so
@@ -385,6 +246,8 @@ endmodule // magcompare64b
 module exception_cmp_2 (
    input logic [63:0] A,
    input logic [63:0] B,
+   input logic [63:0] FSrcXE,
+   input logic [63:0] FSrcYE,
    input logic 	      FmtE,
    input logic 	      LT_mag,
    input logic 	      EQ_mag,
@@ -453,8 +316,8 @@ module exception_cmp_2 (
 
    always_comb begin
       case (FOpCtrlE[2:0])
-         3'b111: CmpResE = LT ? A : B;//min 
-         3'b101: CmpResE = GT ? A : B;//max
+         3'b111: CmpResE = LT ? FSrcXE : FSrcYE;//min 
+         3'b101: CmpResE = GT ? FSrcXE : FSrcYE;//max
          3'b010: CmpResE = {63'b0, EQ};//equal
          3'b001: CmpResE = {63'b0, LT};//less than
          3'b011: CmpResE = {63'b0, LT|EQ};//less than or equal

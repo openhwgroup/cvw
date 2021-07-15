@@ -21,8 +21,7 @@ module tb;
    integer 	 handle3;
    integer 	 desc3;   
 
-   fpdivP dut (done, AS_Result, Flags, Denorm, op1, op2, 
-	       rm, op_type, P, OvEn, UnEn,
+   fpdiv dut (done, AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
 	      start, reset, clk);   
    
    initial 
@@ -54,23 +53,16 @@ module tb;
 	// 10 round-toward-plus infinity
 	// 11 round-toward-minus infinity	
 	#0  rm = 2'b00;
-	#0  op_type = 1'b1;
+	#0  op_type = 1'b0;
 	
 	#0  op1 = 64'h3ffc_0000_0000_0000; // 1.75
 	#0  op2 = 64'h3ffe_0000_0000_0000; // 1.875
 
-	// P=1 divide
-	//#0  op1 = 64'h8683_F7FF_0000_0000;
-	//#0  op2 = 64'hC07F_3FFF_0000_0000;
+	#0  op1 = 64'h4020_5fff_ffff_ffff;	
+	#0  op2 = 64'hbcaf_ffff_ffff_ffff;
 
-	//#0  op1 = 64'h4F95_1295_0000_0000;
-	//#0  op2 = 64'h4F95_1295_0000_0000;	
-
-	//#0  op1 = 64'h4020_5fff_ffff_ffff;	
-	//#0  op2 = 64'hbcaf_ffff_ffff_ffff;
-
-	//#0  op1 = 64'h3fed_c505_fada_95fd; // 0.930300703
-	//#0  op2 = 64'h3ffe_0000_0000_0000; // 12.9303733
+	#0  op1 = 64'h0010_0000_0000_0001;
+	#0  op2 = 64'hc8cf_ffff_ffff_c001;	
 	
 	//#0  op1 = 64'h3ffe_e219_652b_d3c3; // 1.9302
 	//#0  op2 = 64'h3ff7_346d_c5d6_3886; // 1.4503

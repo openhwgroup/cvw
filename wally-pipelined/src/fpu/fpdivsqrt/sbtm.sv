@@ -26,8 +26,7 @@ module sbtm (input logic [11:0] a, output logic [10:0] ia_out);
    assign op2 = x2[3] ? {1'b1, {8{1'b1}}, ~y1, 1'b1} :
 		{1'b0, 8'b0, y1, 1'b1};
    // CPA
-   //bk15 cp1 (cout, p, op1, op2, 1'b0);
-   adder_ip #(15) cp1 (op1, op2, 1'b0, p, cout);   
+   adder #(15) cp1 (op1, op2, 1'b0, p, cout);  
    //assign ia_out = {p[14:4], {53{1'b0}}};
    assign ia_out = p[14:4];
 

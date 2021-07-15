@@ -115,13 +115,8 @@ module lsu
 				STATE_PTW_DONE} statetype;
   statetype CurrState, NextState;
   
-
-  logic 		       PMPInstrAccessFaultF, PMAInstrAccessFaultF; // *** these are just so that the mmu has somewhere to put these outputs since they aren't used in dmem
-  // *** if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
-
-
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
-
+ 
   logic 		       DTLBMissM;
   logic [`XLEN-1:0] 	       PageTableEntryM;
   logic [1:0] 		       PageTypeM;

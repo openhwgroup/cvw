@@ -76,7 +76,7 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
   logic [1:0] 		    MemRWE;  
   logic [1:0] 		    MemRWM;
-  logic 		    InstrValidM, InstrValidW;
+  logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
   logic 		    DataMisalignedM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
@@ -96,13 +96,14 @@ module wallypipelinedhart
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
   logic [1:0] 		    FMemRWM, FMemRWE;
+  logic [4:0]        RdE, RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
   logic [`XLEN-1:0] 	    FWriteDataE;
   logic [`XLEN-1:0] 	    FIntResM;  
   logic 		    FDivBusyE;
   logic 		    IllegalFPUInstrD, IllegalFPUInstrE;
-  logic 		    FloatRegWriteW;
+  logic 		    FRegWriteM;
   logic 		    FPUStallD;
   logic [4:0] 		    SetFflagsM;
   logic [`XLEN-1:0] 	    FPUResultW;
@@ -270,8 +271,8 @@ module wallypipelinedhart
 
   fpu fpu(.*); // floating point unit
   // add FPU here, with SetFflagsM, FRM_REGW
-  // presently stub out SetFlagsM and FloatRegWriteW
+  // presently stub out SetFlagsM and FRegWriteM
   //assign SetFflagsM = 0;
-  //assign FloatRegWriteW = 0;
+  //assign FRegWriteM = 0;
   
 endmodule

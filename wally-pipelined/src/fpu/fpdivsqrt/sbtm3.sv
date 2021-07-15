@@ -28,8 +28,7 @@ module sbtm2 (input logic [11:0] a, output logic [10:0] y);
 		{8'b0, y1, 1'b1};
    
    // CPA
-   //bk15 cp1 (cout, p, op1, op2, 1'b0);
-   adder_ip #(15) cp1 (op1, op2, 1'b0, p, cout);      
+   adder #(15) cp1 (op1, op2, 1'b0, p, cout); 
    assign y = p[14:4];
 
 endmodule // sbtm2
