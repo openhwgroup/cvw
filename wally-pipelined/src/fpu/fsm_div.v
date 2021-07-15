@@ -1,3 +1,5 @@
+
+`timescale 1ps/1ps
 module fsm_div (done, load_rega, load_regb, load_regc, 
 		load_regd, load_regr, load_regs,
 		sel_muxa, sel_muxb, sel_muxr, 

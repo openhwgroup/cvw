@@ -22,8 +22,8 @@
 // Step 7: Put quotient/remainder onto output.
 //
 
-`timescale 1ps/1ps
-module fpdiv (done, AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
+// `timescale 1ps/1ps
+module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
 	      start, reset, clk);
 
    input [63:0] op1;		// 1st input operand (A)
@@ -40,7 +40,8 @@ module fpdiv (done, AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, Un
    output [63:0] AS_Result;	// Result of operation
    output [4:0]  Flags;   	// IEEE exception flags 
    output 	 Denorm;   	// Denorm on input or output
-   output 	 done;
+   logic 	 done;
+   // output 	 done;
 
    supply1 	  vdd;
    supply0 	  vss;   

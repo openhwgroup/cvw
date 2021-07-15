@@ -2,7 +2,7 @@
 // wally-config.vh
 //
 // Written: David_Harris@hmc.edu 4 January 2021
-// Modified: Brett Mathis
+// Modified: 
 //
 // Purpose: Specify which features are configured
 //          Macros to determine which modes are supported based on MISA
@@ -31,10 +31,9 @@
 `define BUSYBEAR 0
 
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 64
+`define XLEN 32
 
-// MISA RISC-V configuration per specification
-`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 1 << 5 | 1 << 20 | 1 << 18 | 1 << 12)
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 32
 `define ZCOUNTERS_SUPPORTED 1
@@ -56,33 +55,34 @@
 `define PMP_ENTRIES 16
 
 // Address space
-`define RESET_VECTOR 64'h80000000
+`define RESET_VECTOR 32'h80000000
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
+// *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTTIM_SUPPORTED 1'b1
-`define BOOTTIM_BASE   56'h00001000 
-`define BOOTTIM_RANGE  56'h00000FFF
+`define BOOTTIM_BASE   34'h00001000 
+`define BOOTTIM_RANGE  34'h00000FFF
 `define TIM_SUPPORTED 1'b1
-`define TIM_BASE       56'h80000000
-`define TIM_RANGE      56'h07FFFFFF
+`define TIM_BASE       34'h80000000
+`define TIM_RANGE      34'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
-`define CLINT_BASE  56'h02000000
-`define CLINT_RANGE 56'h0000FFFF
+`define CLINT_BASE  34'h02000000
+`define CLINT_RANGE 34'h0000FFFF
 `define GPIO_SUPPORTED 1'b1
-`define GPIO_BASE   56'h10012000
-`define GPIO_RANGE  56'h000000FF
+`define GPIO_BASE   34'h10012000
+`define GPIO_RANGE  34'h000000FF
 `define UART_SUPPORTED 1'b1
-`define UART_BASE   56'h10000000
-`define UART_RANGE  56'h00000007
+`define UART_BASE   34'h10000000
+`define UART_RANGE  34'h00000007
 `define PLIC_SUPPORTED 1'b1
-`define PLIC_BASE   56'h0C000000
-`define PLIC_RANGE  56'h03FFFFFF
+`define PLIC_BASE   34'h0C000000
+`define PLIC_RANGE  34'h03FFFFFF
 
 // Bus Interface width
-`define AHBW 64
+`define AHBW 32
 
 // Test modes
 
@@ -99,9 +99,8 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
 
-`define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
-
+`define TWO_BIT_PRELOAD "../config/rv32icfd/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv32icfd/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
