@@ -539,14 +539,14 @@ string tests32f[] = '{
       else if (TESTSPRIV)
         tests = tests64p;
       else begin
-        tests = {tests64p,tests64i};
+        tests = {tests64periph, tests64p,tests64i};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
+        if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
         //if (`A_SUPPORTED) tests = {tests, tests64a};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
-        if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
