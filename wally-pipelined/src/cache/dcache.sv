@@ -162,7 +162,9 @@ module dcache
 		STATE_PTW_READ_MISS_FETCH_DONE,
 		STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK,
 		STATE_PTW_READ_MISS_READ_WORD,
-		STATE_PTW_READ_MISS_READ_WORD_DELAY,		
+		STATE_PTW_READ_MISS_READ_WORD_DELAY,
+    STATE_PTW_ACCESS_AFTER_WALK,		
+    STATE_PTW_UPDATE_TLB,
 
 		STATE_UNCACHED_WRITE,
 		STATE_UNCACHED_WRITE_DONE,
@@ -590,8 +592,8 @@ module dcache
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
 	// return to ready if page table walk completed.
-	if(DTLBWriteM) begin
-	  NextState = STATE_READY;
+	if (DTLBWriteM) begin
+	  NextState = STATE_PTW_ACCESS_AFTER_WALK;
 
 	// read hit valid cached
 	end else if(MemRWM[1] & CacheableM & ~ExceptionM & CacheHit) begin
@@ -648,10 +650,63 @@ module dcache
 
       STATE_PTW_READ_MISS_READ_WORD_DELAY: begin
 	SelAdrM = 1'b1;
-	NextState = STATE_PTW_READY;
+  NextState = STATE_PTW_READY;
 	CommittedM = 1'b1;
       end
+      
+      STATE_PTW_ACCESS_AFTER_WALK: begin
+  SelAdrM = 1'b1;
+	// amo hit
+	if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
+	  NextState = STATE_AMO_UPDATE;
+	  DCacheStall = 1'b1;
 
+	  if(StallW) NextState = STATE_CPU_BUSY;
+	  else NextState = STATE_AMO_UPDATE;
+	end
+	// read hit valid cached
+	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
+	  DCacheStall = 1'b0;
+
+	  if(StallW) NextState = STATE_CPU_BUSY;
+	  else NextState = STATE_READY;
+	end
+	// write hit valid cached
+	else if (MemRWM[0] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
+	  DCacheStall = 1'b0;
+	  SRAMWordWriteEnableM = 1'b1;
+	  SetDirtyM = 1'b1;
+	  
+	  if(StallW) NextState = STATE_CPU_BUSY;
+	  else NextState = STATE_READY;
+	end
+	// read or write miss valid cached
+	else if((|MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & ~CacheHit & ~DTLBMissM) begin
+	  NextState = STATE_MISS_FETCH_WDV;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	end
+	// uncached write
+	else if(MemRWM[0] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
+	  NextState = STATE_UNCACHED_WRITE;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  AHBWrite = 1'b1;
+	end
+	// uncached read
+	else if(MemRWM[1] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
+	  NextState = STATE_UNCACHED_READ;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  AHBRead = 1'b1;	  
+	end
+	// fault
+	else if(AnyCPUReqM & (ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
+	  NextState = STATE_READY;
+	end
+	else NextState = STATE_READY;
+      end
+      
       STATE_CPU_BUSY : begin
 	CommittedM = 1'b1;
 	if(StallW) NextState = STATE_CPU_BUSY;

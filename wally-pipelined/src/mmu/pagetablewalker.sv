@@ -86,6 +86,7 @@ module pagetablewalker
       logic [`PPN_BITS-1:0] 	    CurrentPPN;
       logic [`SVMODE_BITS-1:0] 	    SvMode;
       logic 			    MemStore;
+      logic           DTLBWriteM_d;
 
       // PTE Control Bits
       logic 			    Dirty, Accessed, Global, User,
@@ -122,6 +123,18 @@ module pagetablewalker
 				   .d(HPTWPAdrE),
 				   .q(HPTWPAdrM));
 
+  flop #(2) PageTypeReg(.clk(clk),
+				   .d(PageType),
+				   .q(PageTypeM));
+
+  flop #(`XLEN) PageTableEntryReg(.clk(clk),
+				   .d(PageTableEntry),
+				   .q(PageTableEntryM));   
+  
+  flop #(1) DTLBWriteReg(.clk(clk), 
+            .d(DTLBWriteM_d),
+            .q(DTLBWriteM));
+
 	flop #(1) HPTWReadMReg(.clk(clk),
 			       .d(HPTWReadE),
 			       .q(HPTWReadM));
@@ -157,9 +170,9 @@ module pagetablewalker
       assign StartWalk = WalkerState == IDLE && (DTLBMissM | ITLBMissF);
       assign EndWalk = WalkerState == LEAF || 
 		       //(WalkerState == LEVEL0 && ValidPTE && LeafPTE && ~AccessAlert) ||
-		       (WalkerState == LEVEL1 && ValidPTE && LeafPTE && ~AccessAlert) ||
-		       (WalkerState == LEVEL2 && ValidPTE && LeafPTE && ~AccessAlert) ||
-		       (WalkerState == LEVEL3 && ValidPTE && LeafPTE && ~AccessAlert) ||		   
+		       //(WalkerState == LEVEL1 && ValidPTE && LeafPTE && ~AccessAlert) ||
+		       //(WalkerState == LEVEL2 && ValidPTE && LeafPTE && ~AccessAlert) ||
+		       //(WalkerState == LEVEL3 && ValidPTE && LeafPTE && ~AccessAlert) ||		   
 		       (WalkerState == FAULT);
       
       assign HPTWTranslate = (DTLBMissMQ | ITLBMissFQ);
@@ -176,9 +189,9 @@ module pagetablewalker
 
       // Assign specific outputs to general outputs
       assign PageTableEntryF = PageTableEntry;
-      assign PageTableEntryM = PageTableEntry;
+      //assign PageTableEntryM = PageTableEntry;
       assign PageTypeF = PageType;
-      assign PageTypeM = PageType;
+      //assign PageTypeM = PageType;
 
 
       //      generate
@@ -198,7 +211,7 @@ module pagetablewalker
 	  HPTWReadE = 1'b0;
           PageTableEntry = '0;
           PageType = '0;
-          DTLBWriteM = '0;
+          DTLBWriteM_d = '0;
           ITLBWriteF = '0;
 	  
           WalkerInstrPageFaultF = 1'b0;
@@ -240,7 +253,7 @@ module pagetablewalker
 		NextWalkerState = LEAF;
                 PageTableEntry = CurrentPTE;
                 PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
-                DTLBWriteM = DTLBMissMQ;
+                DTLBWriteM_d = DTLBMissMQ;
                 ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
                 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
               end
@@ -270,7 +283,7 @@ module pagetablewalker
                 NextWalkerState = LEAF;
                 PageTableEntry = CurrentPTE;
                 PageType = (WalkerState == LEVEL1) ? 2'b01 : 2'b00;
-                DTLBWriteM = DTLBMissMQ;
+                DTLBWriteM_d = DTLBMissMQ;
                 ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
                 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
               end else begin
@@ -281,6 +294,7 @@ module pagetablewalker
             LEAF: begin
               NextWalkerState = IDLE;
             end
+
             FAULT: begin
               NextWalkerState = IDLE;
               WalkerInstrPageFaultF = ~DTLBMissMQ;
@@ -342,7 +356,7 @@ module pagetablewalker
 	  HPTWReadE = 1'b0;
           PageTableEntry = '0;
           PageType = '0;
-          DTLBWriteM = '0;
+          DTLBWriteM_d = '0;
           ITLBWriteF = '0;
 	  
           WalkerInstrPageFaultF = 1'b0;
@@ -395,7 +409,7 @@ module pagetablewalker
                 PageType = (WalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
                            ((WalkerState == LEVEL2) ? 2'b10 : 
                             ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
-                DTLBWriteM = DTLBMissMQ;
+                DTLBWriteM_d = DTLBMissMQ;
                 ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
                 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
               end 
@@ -432,7 +446,7 @@ module pagetablewalker
                 PageType = (WalkerState == LEVEL3) ? 2'b11 :
                            ((WalkerState == LEVEL2) ? 2'b10 : 
                             ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
-                DTLBWriteM = DTLBMissMQ;
+                DTLBWriteM_d = DTLBMissMQ;
                 ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
                 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
               end
@@ -469,7 +483,7 @@ module pagetablewalker
                 PageType = (WalkerState == LEVEL3) ? 2'b11 :
                            ((WalkerState == LEVEL2) ? 2'b10 : 
                             ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
-                DTLBWriteM = DTLBMissMQ;
+                DTLBWriteM_d = DTLBMissMQ;
                 ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
                 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
                 
@@ -502,7 +516,7 @@ module pagetablewalker
                 PageType = (WalkerState == LEVEL3) ? 2'b11 :
                            ((WalkerState == LEVEL2) ? 2'b10 : 
                             ((WalkerState == LEVEL1) ? 2'b01 : 2'b00));
-                DTLBWriteM = DTLBMissMQ;
+                DTLBWriteM_d = DTLBMissMQ;
                 ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
                 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
               end else begin 
