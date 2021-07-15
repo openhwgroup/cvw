@@ -129,9 +129,10 @@ module lsu
   logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       MMUReady;
   logic 		       HPTWStall;  
-  logic [`XLEN-1:0] 	       HPTWPAdr;
+  logic [`XLEN-1:0] 	       HPTWPAdrE;
+  logic [`XLEN-1:0] 	       HPTWPAdrM;  
   logic 		       HPTWTranslate;
-  logic 		       HPTWRead;
+  logic 		       HPTWReadM;
   logic [1:0] 		       MemRWMtoDCache;
   logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
@@ -146,6 +147,8 @@ module lsu
   logic 		       DCacheStall;
 
   logic 		       CacheableM;
+  logic 		       CacheableMtoDCache;
+  logic 		       SelPTW;
 
   logic 		       CommittedMfromDCache;
   logic 		       PendingInterruptMtoDCache;
@@ -169,9 +172,10 @@ module lsu
 				  .HPTWReadPTE(HPTWReadPTE),
 				  .MMUReady(HPTWReady),
 				  .HPTWStall(HPTWStall),
-				  .HPTWPAdr(HPTWPAdr),
+				  .HPTWPAdrE(HPTWPAdrE),
+				  .HPTWPAdrM(HPTWPAdrM),				  
 				  .HPTWTranslate(HPTWTranslate),
-				  .HPTWRead(HPTWRead),
+				  .HPTWReadM(HPTWReadM),
 				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
@@ -183,15 +187,17 @@ module lsu
 		 .reset(reset),
 		 // HPTW connection
 		 .HPTWTranslate(HPTWTranslate),
-		 .HPTWRead(HPTWRead),
-		 .HPTWPAdr(HPTWPAdr),
-		 .HPTWReadPTE(HPTWReadPTE),
+		 .HPTWReadM(HPTWReadM),
+		 .HPTWPAdrE(HPTWPAdrE),
+		 .HPTWPAdrM(HPTWPAdrM),		 
+		 //.HPTWReadPTE(HPTWReadPTE),
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
+		 .MemAdrE(MemAdrE),		 
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
@@ -204,14 +210,16 @@ module lsu
 		 .MemRWMtoDCache(MemRWMtoDCache),
 		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
-		 .MemAdrMtoDCache(MemAdrMtoDCache),          
+		 .MemAdrMtoDCache(MemAdrMtoDCache),
+		 .MemAdrEtoDCache(MemAdrEtoDCache),
 		 .StallWtoDCache(StallWtoDCache),
 		 .SquashSCWfromDCache(SquashSCWfromDCache),      
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
 		 .PendingInterruptMtoDCache(PendingInterruptMtoDCache),
-		 .DCacheStall(DCacheStall));
+		 .DCacheStall(DCacheStall),
+		 .SelPTW(SelPTW));
     
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
@@ -239,10 +247,10 @@ module lsu
        //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
-
+  assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
   generate
-    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM ? 3'b010 : Funct3MtoDCache;
-    else assign DCtoAHBSizeM = CacheableM ? 3'b011 : Funct3MtoDCache;
+    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableMtoDCache ? 3'b010 : Funct3MtoDCache;
+    else assign DCtoAHBSizeM = CacheableMtoDCache ? 3'b011 : Funct3MtoDCache;
   endgenerate;
 
 
@@ -309,30 +317,27 @@ module lsu
   assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[1];
   assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[0];
 
-  // *** BUG
-  assign MemAdrEtoDCache = MemAdrE; // needs to be muxed in lsuarb.
-  
-
   dcache dcache(.clk(clk),
 		.reset(reset),
 		.StallM(StallM),
-		.StallW(StallW),
+		.StallW(StallWtoDCache),
 		.FlushM(FlushM),
-		.FlushW(FlushW),
+		.FlushW(FlushWtoDCache),
 		.MemRWM(MemRWMtoDCache),
 		.Funct3M(Funct3MtoDCache),
 		.Funct7M(Funct7M),		
 		.AtomicM(AtomicMtoDCache),
-		.MemAdrE(MemAdrEtoDCache),  // *** add to arb
+		.MemAdrE(MemAdrEtoDCache),
 		.MemPAdrM(MemPAdrM),
 		.WriteDataM(WriteDataM),
 		.ReadDataW(ReadDataWfromDCache),
+		.ReadDataM(HPTWReadPTE),
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.ExceptionM(ExceptionM),
 		.PendingInterruptM(PendingInterruptMtoDCache),		
 		.DTLBMissM(DTLBMissM),
-		.CacheableM(CacheableM), 
+		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),
 
 		// AHB connection

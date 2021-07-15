@@ -31,10 +31,11 @@ module lsuArb
 
    // from page table walker
    input logic 		    HPTWTranslate,
-   input logic 		    HPTWRead,
-   input logic [`XLEN-1:0]  HPTWPAdr,
+   input logic 		    HPTWReadM,
+   input logic [`XLEN-1:0]  HPTWPAdrE,
+   input logic [`XLEN-1:0]  HPTWPAdrM, 
    // to page table walker.
-   output logic [`XLEN-1:0] HPTWReadPTE,
+   //output logic [`XLEN-1:0] HPTWReadPTE,
    output logic 	    HPTWStall, 
 
    // from CPU
@@ -42,6 +43,7 @@ module lsuArb
    input logic [2:0] 	    Funct3M,
    input logic [1:0] 	    AtomicM,
    input logic [`XLEN-1:0]  MemAdrM,
+   input logic [`XLEN-1:0]  MemAdrE,
    input logic 		    StallW,
    input logic 		    PendingInterruptM,
    // to CPU
@@ -57,8 +59,11 @@ module lsuArb
    output logic [2:0] 	    Funct3MtoDCache,
    output logic [1:0] 	    AtomicMtoDCache,
    output logic [`XLEN-1:0] MemAdrMtoDCache,
+   output logic [`XLEN-1:0] MemAdrEtoDCache, 
    output logic 	    StallWtoDCache,
    output logic 	    PendingInterruptMtoDCache,
+   output logic 	    SelPTW,
+   
 
    // from D Cache
    input logic 		    CommittedMfromDCache,
@@ -86,7 +91,6 @@ module lsuArb
   
 
   statetype CurrState, NextState;
-  logic 		    SelPTW;
   logic [2:0] PTWSize;
   
 
@@ -136,7 +140,7 @@ module lsuArb
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
   assign SelPTW = (CurrState == StatePTWActive && HPTWTranslate) || (CurrState == StateReady && HPTWTranslate);
-  assign MemRWMtoDCache = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
+  assign MemRWMtoDCache = SelPTW ? {HPTWReadM, 1'b0} : MemRWM;
   
   generate
     assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
@@ -144,7 +148,8 @@ module lsuArb
   mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoDCache);
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMtoDCache = SelPTW ? HPTWPAdr : MemAdrM;
+  assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM;
+  assign MemAdrEtoDCache = SelPTW ? HPTWPAdrE : MemAdrE;  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
   assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;
@@ -152,7 +157,7 @@ module lsuArb
   // demux the inputs from LSU to walker or cpu's data port.
 
   assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWfromDCache;  // probably can avoid this demux
-  assign HPTWReadPTE = SelPTW ? ReadDataWfromDCache : `XLEN'b0 ;  // probably can avoid this demux
+  //assign HPTWReadPTE = SelPTW ? ReadDataWfromDCache : `XLEN'b0 ;  // probably can avoid this demux
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromDCache;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.

@@ -43,6 +43,7 @@ module dcache
 
    input logic [`XLEN-1:0]     WriteDataM,
    output logic [`XLEN-1:0]    ReadDataW,
+   output logic [`XLEN-1:0]    ReadDataM,   
    output logic 	       DCacheStall,
    output logic 	       CommittedM,
 
@@ -131,6 +132,7 @@ module dcache
   logic CntEn;
   logic CntReset;
   logic CPUBusy, PreviousCPUBusy;
+  logic SelEvict;
   
   
   typedef enum {STATE_READY,
@@ -297,15 +299,21 @@ module dcache
   // which means the CPU is ready to take data.  Or if the CPU just became
   // busy.  Then when we exit CPU_BUSY we want to ensure the data is not
   // updated, this is ~PreviousCPUBusy.
+  // also must update if cpu stalled and processing a read miss
+  // which occurs if in state miss read word delay.
   assign CPUBusy = CurrState == STATE_CPU_BUSY;
   flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
   
-  assign ReadDataWEn = (~StallW & ~PreviousCPUBusy) | (NextState == STATE_CPU_BUSY & CurrState == STATE_READY);
+  assign ReadDataWEn = (~StallW & ~PreviousCPUBusy) | 
+		       (NextState == STATE_CPU_BUSY & CurrState == STATE_READY) |
+		       (CurrState == STATE_MISS_READ_WORD_DELAY);
   
   flopen #(`XLEN) ReadDataWReg(.clk(clk),
 			      .en(ReadDataWEn),
 			      .d(FinalReadDataWordM),
 			      .q(ReadDataW));
+
+  assign ReadDataM = FinalReadDataWordM;
 
   // write path
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
@@ -340,7 +348,7 @@ module dcache
   // *** optimize this
   mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-			      .s(AHBWrite & CacheableM),
+			      .s(SelEvict),
 			      .y(BasePAdrM));
 
   assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
@@ -420,6 +428,7 @@ module dcache
     SelAMOWrite = 1'b0;
     CommittedM = 1'b0;        
     SelUncached = 1'b0;
+    SelEvict = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -562,6 +571,7 @@ module dcache
 	AHBWrite = 1'b1;
 	SelAdrM = 1'b1;
 	CommittedM = 1'b1;
+	SelEvict = 1'b1;
 	if( FetchCountFlag & AHBAck) begin
 	  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 	end else begin
