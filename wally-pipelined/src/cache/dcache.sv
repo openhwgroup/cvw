@@ -433,7 +433,7 @@ module dcache
     case (CurrState)
       STATE_READY: begin
 	// TLB Miss	
-	if(AnyCPUReqM & DTLBMissM) begin                      
+	if(AnyCPUReqM & DTLBMissM) begin  
 	  NextState = STATE_PTW_READY;
 	end
 	// amo hit

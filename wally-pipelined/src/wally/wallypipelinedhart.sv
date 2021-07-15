@@ -126,7 +126,7 @@ module wallypipelinedhart
 
   // IMem stalls
   logic 		    ICacheStallF;
-  logic 		    DCacheStall;
+  logic 		    LSUStall;
 
   
 
@@ -233,7 +233,7 @@ module wallypipelinedhart
 
 	  .DTLBHitM(DTLBHitM), // not connected remove
 
-	  .LSUStall(DCacheStall));                     // change to DCacheStall
+	  .LSUStall(LSUStall));                     // change to LSUStall
 
 
   
