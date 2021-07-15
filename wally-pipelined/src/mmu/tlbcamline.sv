@@ -31,8 +31,8 @@
 module tlbcamline #(parameter KEY_BITS = 20,
                     parameter SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
-  input  logic [`VPN_BITS-1:0]  VirtualPageNumber, // The requested page number to compare against the key
-  input  logic [`ASID_BITS-1:0] ASID,
+  input  logic [`VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
+  input  logic [`ASID_BITS-1:0] SATP_ASID,
   input  logic                  SV39Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
   input  logic                  PTE_G,
@@ -58,13 +58,13 @@ module tlbcamline #(parameter KEY_BITS = 20,
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic MatchASID, Match0, Match1;
 
-  assign MatchASID = (ASID == Key_ASID) | PTE_G; 
+  assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G; 
 
   generate
     if (`XLEN == 32) begin
 
       assign {Key_ASID, Key1, Key0} = Key;
-      assign {Query1, Query0} = VirtualPageNumber;
+      assign {Query1, Query0} = VPN;
 
       // Calculate the actual match value based on the input vpn and the page type.
       // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
@@ -72,13 +72,13 @@ module tlbcamline #(parameter KEY_BITS = 20,
       assign Match0 = (Query0 == Key0) || (PageType[0]); // least signifcant section
       assign Match1 = (Query1 == Key1);
 
-      assign Match = Match0 & Match1 & Valid;
+      assign Match = Match0 & Match1 & MatchASID & Valid;
     end else begin
 
       logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
       logic Match2, Match3;
 
-      assign {Query3, Query2, Query1, Query0} = VirtualPageNumber;
+      assign {Query3, Query2, Query1, Query0} = VPN;
       assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
 
       // Calculate the actual match value based on the input vpn and the page type.
@@ -89,7 +89,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       assign Match2 = (Query2 == Key2) || (PageType > 2'd2);
       assign Match3 = (Query3 == Key3) || SV39Mode; // this should always match in sv39 because they aren't used
       
-      assign Match = Match0 & Match1 & Match2 & Match3 & Valid;
+      assign Match = Match0 & Match1 & Match2 & Match3 & MatchASID & Valid;
     end
   endgenerate
 
@@ -102,5 +102,5 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
   flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
-  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {ASID, VirtualPageNumber}, Key);
+  flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VPN}, Key);
 endmodule

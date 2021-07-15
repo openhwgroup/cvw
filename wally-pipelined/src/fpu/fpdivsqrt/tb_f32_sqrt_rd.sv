@@ -1,4 +1,4 @@
-`timescale 1ns/1ps
+`timescale 1ps/1ps
 module tb ();
 
    logic [31:0] op1;		
@@ -58,6 +58,7 @@ module tb ();
 
    always @(posedge clk)
      begin
+	repeat (19538)
 	if (~reset)
 	  begin
 	     #0; {op1, yexpected, flags_expected} = testvectors[vectornum];
@@ -66,15 +67,13 @@ module tb ();
 	       @(posedge clk);
 	     // deassert start after 2 cycles
 	     start = 1'b0;	
-	     repeat (16)
+	     repeat (15)
 	       @(posedge clk);
 	     $fdisplay(desc3, "%h_%h_%b_%b | %h_%b", op1, AS_Result, Flags, Denorm, yexpected, (AS_Result[63:32]==yexpected));
 	     vectornum = vectornum + 1;
 	  end // if (~reset)
-	if (vectornum == 19538) begin
-	   $display("%d vectors processed", vectornum);
-	   $finish;
-	end	
+	$display("%d vectors processed", vectornum);
+	$finish;					
      end // always @ (posedge clk)
    
 endmodule // tb

@@ -46,7 +46,7 @@
 `define MEM_DCACHE 0
 `define MEM_DTIM 1
 `define MEM_ICACHE 0
-`define MEM_VIRTMEM 0\1
+`define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
 
 `define ITLB_ENTRIES 32
@@ -56,10 +56,7 @@
 `define PMP_ENTRIES 16
 
 // Address space
-`define RESET_VECTOR 64'h0000000080000000
-
-// Bus Interface width
-`define AHBW 64
+`define RESET_VECTOR 64'h80000000
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -84,6 +81,9 @@
 `define PLIC_BASE   56'h0C000000
 `define PLIC_RANGE  56'h03FFFFFF
 
+// Bus Interface width
+`define AHBW 64
+
 // Test modes
 
 // Tie GPIO outputs back to inputs
@@ -101,6 +101,7 @@
 
 `define TWO_BIT_PRELOAD "../config/rv64icfd/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64icfd/BTBPredictor.txt"
+
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0

@@ -54,7 +54,8 @@ module tlb #(parameter TLB_ENTRIES = 8,
   input logic              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
-  input logic  [`XLEN-1:0] SATP_REGW,
+  input logic  [`SVMODE_BITS-1:0] SATP_MODE,
+  input logic  [`ASID_BITS-1:0] SATP_ASID,
   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input logic  [1:0]       STATUS_MPP,
 
@@ -68,8 +69,8 @@ module tlb #(parameter TLB_ENTRIES = 8,
   input logic              ReadAccess, WriteAccess,
   input logic              DisableTranslation,
 
-  // Virtual address input
-  input logic  [`XLEN-1:0] VirtualAddress,
+  // address input before translation (could be physical or virtual)
+  input logic  [`XLEN-1:0] Address,
 
   // Controls for writing a new entry to the TLB
   input logic  [`XLEN-1:0] PTE,
@@ -80,27 +81,21 @@ module tlb #(parameter TLB_ENTRIES = 8,
   input logic              TLBFlush,
 
   // Physical address outputs
-  output logic [`PA_BITS-1:0] PhysicalAddress,
+  output logic [`PA_BITS-1:0] TLBPAdr,
   output logic             TLBMiss,
   output logic             TLBHit,
+  output logic             Translate,
 
   // Faults
   output logic             TLBPageFault
 );
 
-  logic Translate;
-
-  // Store current virtual memory mode (SV32, SV39, SV48, ect...)
-  //logic [`SVMODE_BITS-1:0] SvMode;
-  logic  [1:0]       EffectivePrivilegeMode; // privilege mode, possibly modified by MPRV
-
-  logic [TLB_ENTRIES-1:0] ReadLines, WriteEnables, PTE_G; // used as the one-hot encoding of WriteIndex
+  logic [TLB_ENTRIES-1:0] Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
 
   // Sections of the virtual and physical addresses
-  logic [`VPN_BITS-1:0] VirtualPageNumber;
-  logic [`PPN_BITS-1:0] PhysicalPageNumber, PhysicalPageNumberMixed;
-  logic [`PA_BITS-1:0]  PhysicalAddressFull;
-  logic [`XLEN+1:0]     VAExt;
+  logic [`VPN_BITS-1:0] VPN;
+  logic [`PPN_BITS-1:0] PPN;
+  logic [`XLEN+1:0]     AddressExt;
 
   // Sections of the page table entry
   logic [7:0]           PTEAccessBits;
@@ -110,31 +105,23 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic [1:0]            HitPageType;
   logic                  CAMHit;
   logic                  SV39Mode;
-  logic [`ASID_BITS-1:0] ASID;
 
-  // Grab the sv mode from SATP and determine whether translation should occur
-  assign ASID = SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE];
+  assign VPN = Address[`VPN_BITS+11:12];
 
-  // Determine whether to write TLB
-  assign VirtualPageNumber = VirtualAddress[`VPN_BITS+11:12];
+  tlbcontrol tlbcontrol(.SATP_MODE, .Address, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+                        .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
+                        .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, 
+                        .SV39Mode, .Translate);
 
-  tlbcontrol tlbcontrol(.*);
-
-  // TLB entries are evicted according to the LRU algorithm
-  tlblru #(TLB_ENTRIES) lru(.*);
-
-  // TLB memory
-  tlbram #(TLB_ENTRIES) tlbram(.*);
-  tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) tlbcam(.*);
+  tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
+  tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
+    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, 
+           .SATP_ASID, .Matches, .HitPageType, .CAMHit);
+  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  tlbphysicalpagemask PageMask(VirtualPageNumber, PhysicalPageNumber, HitPageType, PhysicalPageNumberMixed);
+  tlbmixer Mixer(.VPN, .PPN, .HitPageType, .Address(Address[11:0]), .TLBHit, .TLBPAdr);
 
-  // Output the hit physical address if translation is currently on.
-  // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
-  assign VAExt = {2'b00, VirtualAddress}; // extend length of virtual address if necessary for RV32
-  mux2 #(`PA_BITS) hitmux('0, {PhysicalPageNumberMixed, VirtualAddress[11:0]}, TLBHit, PhysicalAddressFull); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
-  mux2 #(`PA_BITS) addressmux(VAExt[`PA_BITS-1:0], PhysicalAddressFull, Translate, PhysicalAddress);
 endmodule

@@ -28,21 +28,23 @@
 `include "wally-config.vh"
 
 module tlbram #(parameter TLB_ENTRIES = 8) (
-  input logic                       clk, reset,
-  input logic [`XLEN-1:0]           PTE,
-  input logic [TLB_ENTRIES-1:0]     ReadLines, WriteEnables,
-  output logic [`PPN_BITS-1:0]      PhysicalPageNumber,
+  input  logic                      clk, reset,
+  input  logic [`XLEN-1:0]          PTE,
+  input  logic [TLB_ENTRIES-1:0]    Matches, WriteEnables,
+  output logic [`PPN_BITS-1:0]      PPN,
   output logic [7:0]                PTEAccessBits,
-  output logic [TLB_ENTRIES-1:0]    PTE_G
+  output logic [TLB_ENTRIES-1:0]    PTE_Gs
 );
 
-  logic [`XLEN-1:0] RamRead[TLB_ENTRIES-1:0];
-  logic [`XLEN-1:0] PageTableEntry;
+  logic [`PPN_BITS+9:0] RamRead[TLB_ENTRIES-1:0];
+  logic [`PPN_BITS+9:0] PageTableEntry;
 
-  // Generate a flop for every entry in the RAM
-  tlbramline #(`XLEN) tlblineram[TLB_ENTRIES-1:0](clk, reset, ReadLines, WriteEnables, PTE, RamRead, PTE_G);
-  
-  assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
+  // RAM implemented with array of flops and AND/OR read logic
+  tlbramline #(`PPN_BITS+10) tlblineram[TLB_ENTRIES-1:0](clk, reset, Matches, WriteEnables, PTE[`PPN_BITS+9:0], RamRead, PTE_Gs);
+  //assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
+  or_rows #(TLB_ENTRIES, `PPN_BITS+10) PTEOr(RamRead, PageTableEntry);
+
+  // Rename the bits read from the TLB RAM
   assign PTEAccessBits = PageTableEntry[7:0];
-  assign PhysicalPageNumber = PageTableEntry[`PPN_BITS+9:10];
+  assign PPN = PageTableEntry[`PPN_BITS+9:10];
 endmodule

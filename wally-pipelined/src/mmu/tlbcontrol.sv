@@ -28,10 +28,10 @@
 // The TLB will have 2**ENTRY_BITS total entries
 module tlbcontrol #(parameter TLB_ENTRIES = 8,
                     parameter ITLB = 0) (
-//  input logic              clk, reset,
 
   // Current value of satp CSR (from privileged unit)
-  input logic  [`XLEN-1:0] SATP_REGW,
+  input logic  [`SVMODE_BITS-1:0] SATP_MODE,
+  input logic  [`XLEN-1:0] Address,
   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input logic  [1:0]       STATUS_MPP,
   input logic  [1:0]       PrivilegeModeW, // Current privilege level of the processeor
@@ -48,30 +48,42 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
   output logic             TLBMiss,
   output logic             TLBHit,
   output logic             TLBPageFault,
-  output logic [1:0]       EffectivePrivilegeMode,
   output logic             SV39Mode,
   output logic             Translate
 );
 
   // Sections of the page table entry
-  logic [11:0]          PageOffset;
+  logic [11:0]             PageOffset;
   logic [`SVMODE_BITS-1:0] SVMode;
+  logic [1:0]              EffectivePrivilegeMode;
 
   logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
-  logic                  DAFault;
+  logic                  UpperBitsUnequalPageFault;
+  logic                  DAPageFault;
   logic                  TLBAccess;
 
   // Grab the sv mode from SATP and determine whether translation should occur
-  assign SVMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SVMode != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~ DisableTranslation; 
+  assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~DisableTranslation; 
   generate
-      if (`XLEN==64) assign SV39Mode = (SVMode == `SV39);
-      else           assign SV39Mode = 0;
+      if (`XLEN==64) begin
+          assign SV39Mode = (SATP_MODE == `SV39);
+          // generate page fault if upper bits aren't all the same
+          logic UpperEqual39, UpperEqual48;
+          assign UpperEqual39 = &(Address[63:38]) | ~|(Address[63:38]);
+          assign UpperEqual48 = &(Address[63:47]) | ~|(Address[63:47]); 
+          assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
+      end else begin
+          assign SV39Mode = 0;
+          assign UpperBitsUnequalPageFault = 0;
+      end           
   endgenerate
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess || WriteAccess;
+
+  // Check whether upper bits of virtual addresss are all equal
+
 
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
@@ -87,8 +99,8 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
       assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
         ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
       // fault for software handling if access bit is off
-      assign DAFault = ~PTE_A;
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAFault);
+      assign DAPageFault = ~PTE_A;
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAPageFault || UpperBitsUnequalPageFault);
     end else begin
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
@@ -104,11 +116,11 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
       // low.
       assign InvalidWrite = WriteAccess && ~PTE_W;
       // Fault for software handling if access bit is off or writing a page with dirty bit off
-      assign DAFault = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAFault);
+      assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
+      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAPageFault || UpperBitsUnequalPageFault);
     end
   endgenerate
 
   assign TLBHit = CAMHit & TLBAccess;
-  assign TLBMiss = ~TLBHit & ~TLBFlush & Translate & TLBAccess;
+  assign TLBMiss = ~CAMHit & ~TLBFlush & Translate & TLBAccess;
 endmodule

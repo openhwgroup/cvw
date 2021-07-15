@@ -29,9 +29,10 @@
 module csrsr (
   input  logic             clk, reset, StallW,
   input  logic             WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, 
-  input  logic             TrapM, FloatRegWriteW,
+  input  logic             TrapM, FRegWriteM,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic             mretM, sretM, uretM,
+  input  logic             WriteFRMM, WriteFFLAGSM,
   input  logic [`XLEN-1:0] CSRWriteValM,
   output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
   output logic [1:0]       STATUS_MPP,
@@ -125,7 +126,8 @@ module csrsr (
       STATUS_SIE <= #1 0; //`S_SUPPORTED;
       STATUS_UIE <= #1 0; //`U_SUPPORTED;
     end else if (~StallW) begin
-      if (FloatRegWriteW) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else
+      if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else;
+ 
       if (TrapM) begin
         // Update interrupt enables per Privileged Spec p. 21
         // y = PrivilegeModeW

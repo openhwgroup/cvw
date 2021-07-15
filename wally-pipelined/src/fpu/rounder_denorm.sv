@@ -258,7 +258,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    // is being performed. 
    assign OvCon = OverFlow & OvEn & convert;
 
-   assign Result = (op_type[3]) ? {A[63:0]} : (DenormIn ? {Rsign, Rexp_denorm, ShiftMant} : ((P&~OvCon) ? {Rsign, Rexp[7:0], Rmant[51:29], {32{VSS}}}
+   assign Result = (op_type[3]) ? {A[63:0]} : (DenormIn ? {Rsign, Rexp_denorm, ShiftMant} : ((P&~OvCon) ? {{32{1'b1}}, Rsign, Rexp[7:0], Rmant[51:29]}
 	           : {Rsign, Rexp, Rmant}));
 
 endmodule // rounder

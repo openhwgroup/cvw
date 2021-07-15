@@ -1,0 +1,3 @@
+file ../buildroot-image-output/vmlinux
+set pagination off
+target extended-remote :1236

@@ -27,7 +27,8 @@ if [file exists work] {
 vlib work
 
 # compile source files
-vlog adder_ip.sv mult_R4_64_64_cs.v sbtm_a1.sv sbtm_a0.sv sbtm.sv sbtm_a4.sv sbtm_a5.sv sbtm3.sv fsm.v divconvDP.sv convert_inputs.sv exception.sv rounder.sv fpdiv.sv tb_f64_div_rz.sv
+vlog mult_R4_64_64_cs.v  sbtm_a1.sv sbtm_a0.sv sbtm.sv sbtm_a4.sv sbtm_a5.sv sbtm3.sv fsm_div.v divconvDP.sv convert_inputs_div.sv exception_div.sv rounder_div.sv fpdiv.sv tb_f64_div_rz.sv
+
 
 # start and run simulation
 vsim -voptargs=+acc work.tb
@@ -41,8 +42,8 @@ vsim -voptargs=+acc work.tb
 -- Set Wave Output Items 
 TreeUpdate [SetDefaultTree]
 WaveRestoreZoom {0 ps} {75 ns}
-configure wave -namecolwidth 350
-configure wave -valuecolwidth 250
+configure wave -namecolwidth 150
+configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 0
 configure wave -snapdistance 10
@@ -52,5 +53,5 @@ configure wave -childrowmargin 2
 
 -- Run the Simulation 
 --   39,052 vectors, 390,565ns
-run 9398600000 ns
+run 368600000
 quit

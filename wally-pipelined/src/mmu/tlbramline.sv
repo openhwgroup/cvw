@@ -34,7 +34,7 @@ module tlbramline #(parameter WIDTH)
 
    logic [WIDTH-1:0] line;
 
-   flopenr #(`XLEN) pteflop(clk, reset, we, d, line);
+   flopenr #(WIDTH) pteflop(clk, reset, we, d, line);
    assign q = re ? line : 0;
    assign PTE_G = line[5]; // send global bit to CAM as part of ASID matching
 endmodule
