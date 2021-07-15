@@ -433,7 +433,14 @@ module dcache
     case (CurrState)
       STATE_READY: begin
 	// TLB Miss	
-	if(AnyCPUReqM & DTLBMissM) begin  
+	if(AnyCPUReqM & DTLBMissM) begin
+	  // the LSU arbiter has not yet selected the PTW.
+	  // The CPU needs to be stalled until that happens.
+	  // If we set DCacheStall for 1 cycle before going to
+	  // PTW ready the CPU will stall.
+	  // The page table walker asserts it's control 1 cycle
+	  // after the TLBs miss.
+	  DCacheStall = 1'b1;
 	  NextState = STATE_PTW_READY;
 	end
 	// amo hit
@@ -580,6 +587,7 @@ module dcache
       end
 
       STATE_PTW_READY: begin
+	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
 	// return to ready if page table walk completed.
 	if(DTLBWriteM) begin

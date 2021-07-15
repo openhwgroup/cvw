@@ -77,7 +77,6 @@ module pagetablewalker
     if (`MEM_VIRTMEM) begin
       // Internal signals
       // register TLBs translation miss requests
-      logic [`XLEN-1:0] 	    TranslationVAdrQ;
       logic 			    ITLBMissFQ, DTLBMissMQ;
       
       logic [`PPN_BITS-1:0] 	    BasePageTablePPN;
@@ -138,13 +137,6 @@ module pagetablewalker
       assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF; // *** need to register TranslationVAdr
       assign SelDataTranslation = DTLBMissMQ | DTLBMissM;
 
-      flopenr #(`XLEN) 
-      TranslationVAdrReg(.clk(clk),
-			 .reset(reset),
-			 .en(StartWalk),
-			 .d(TranslationVAdr),
-			 .q(TranslationVAdrQ));
-
       flopenrc #(1)
       DTLBMissMReg(.clk(clk),
 		   .reset(reset),
@@ -170,7 +162,7 @@ module pagetablewalker
 		       (WalkerState == LEVEL3 && ValidPTE && LeafPTE && ~AccessAlert) ||		   
 		       (WalkerState == FAULT);
       
-      assign HPTWTranslate = (DTLBMissMQ | ITLBMissFQ) & ~EndWalk;
+      assign HPTWTranslate = (DTLBMissMQ | ITLBMissFQ);
       //assign HPTWTranslate = DTLBMissM | ITLBMissF;
 
       // unswizzle PTE bits
