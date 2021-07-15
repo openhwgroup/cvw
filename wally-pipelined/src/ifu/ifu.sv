@@ -101,10 +101,6 @@ module ifu (
 
   logic 	    PMPInstrAccessFaultF, PMAInstrAccessFaultF;
   
-  logic PMALoadAccessFaultM, PMAStoreAccessFaultM;
-  logic PMPLoadAccessFaultM, PMPStoreAccessFaultM; // *** these are just so that the mmu has somewhere to put these outputs, they're unused in this stage
-  // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
-
   logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width. 
 
   generate

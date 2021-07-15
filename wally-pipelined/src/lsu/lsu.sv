@@ -219,7 +219,7 @@ module lsu
     
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.VirtualAddress(MemAdrMtoDCache),
+  dmmu(.Address(MemAdrMtoDCache),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PageTableEntryM),
        .PageTypeWriteVal(PageTypeM),
