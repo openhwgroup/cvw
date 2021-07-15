@@ -1,4 +1,4 @@
-module sbtm_a3 (input  logic [7:0] a,
+module sbtm_a5 (input  logic [7:0] a,
 		output logic [5:0] y);
    always_comb
      case(a)

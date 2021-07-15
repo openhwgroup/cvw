@@ -42,6 +42,7 @@ module ieu (
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
+  output logic [4:0]    RdE,
   input logic 		   FWriteIntM,
 
   // Memory stage interface
@@ -53,12 +54,14 @@ module ieu (
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
+  output logic [4:0]    RdM,
   input logic 		   DataAccessFaultM,
   input logic [`XLEN-1:0]  FIntResM, 
 
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
   input logic 		   FWriteIntW,
+  output logic [4:0]    RdW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, 
   // hazards
@@ -82,7 +85,7 @@ module ieu (
   logic        InstrValidW;
 
   // forwarding signals
-  logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW;
+  logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;
   logic [1:0]       ForwardAE, ForwardBE;
   logic             RegWriteM, RegWriteW;
   logic             MemReadE, CSRReadE;

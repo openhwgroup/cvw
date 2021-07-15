@@ -31,36 +31,36 @@ module fhazard(
 	  input logic [4:0] RdM, RdW,
     input logic [2:0] FResultSelM,
     output logic FStallD,
-    output logic [1:0] ForwardXE, ForwardYE, ForwardZE
+    output logic [1:0] FForwardXE, FForwardYE, FForwardZE
 );
 
 
   always_comb begin
     // set ReadData as default
-    ForwardXE = 2'b00; // choose FRD1E
-    ForwardYE = 2'b00; // choose FRD2E
-    ForwardZE = 2'b00; // choose FRD3E
+    FForwardXE = 2'b00; // choose FRD1E
+    FForwardYE = 2'b00; // choose FRD2E
+    FForwardZE = 2'b00; // choose FRD3E
     FStallD = 0;
 
       if ((Adr1E == RdM) & FRegWriteM)
       // if the result will be FResM
-        if(FResultSelM == 3'b100) ForwardXE = 2'b10; // choose FResM
+        if(FResultSelM == 3'b100) FForwardXE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
-      else if ((Adr1E == RdW) & FRegWriteW) ForwardXE = 2'b01; // choose FPUResult64W
+      else if ((Adr1E == RdW) & FRegWriteW) FForwardXE = 2'b01; // choose FPUResult64W
     
 
       if ((Adr2E == RdM) & FRegWriteM)
       // if the result will be FResM
-        if(FResultSelM == 3'b100) ForwardYE = 2'b10; // choose FResM
+        if(FResultSelM == 3'b100) FForwardYE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
-      else if ((Adr2E == RdW) & FRegWriteW) ForwardYE = 2'b01; // choose FPUResult64W
+      else if ((Adr2E == RdW) & FRegWriteW) FForwardYE = 2'b01; // choose FPUResult64W
 
  
       if ((Adr3E == RdM) & FRegWriteM)
       // if the result will be FResM
-        if(FResultSelM == 3'b100) ForwardZE = 2'b10; // choose FResM
+        if(FResultSelM == 3'b100) FForwardZE = 2'b10; // choose FResM
         else FStallD = 1;   // if the result won't be ready stall
-      else if ((Adr3E == RdW) & FRegWriteW) ForwardZE = 2'b01; // choose FPUResult64W
+      else if ((Adr3E == RdW) & FRegWriteW) FForwardZE = 2'b01; // choose FPUResult64W
 
   end 
 

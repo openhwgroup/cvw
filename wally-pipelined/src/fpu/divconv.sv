@@ -1,4 +1,3 @@
-`timescale 1ps/1ps
 module divconv (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_out,
 		regr_out, d, n, sel_muxa, sel_muxb, sel_muxr, reset, clk, load_rega, load_regb, 
 		load_regc, load_regd, load_regr, load_regs, P, op_type, exp_odd);
@@ -106,123 +105,123 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_o
    
 endmodule // divconv
 
-module adder #(parameter WIDTH=8)
-   (input  logic [WIDTH-1:0] a, b,
-    input logic 	     cin,
-    output logic [WIDTH-1:0] y,
-    output logic 	     cout);
+// module adder #(parameter WIDTH=8)
+//    (input  logic [WIDTH-1:0] a, b,
+//     input logic 	     cin,
+//     output logic [WIDTH-1:0] y,
+//     output logic 	     cout);
    
-   assign {cout, y} = a + b + cin;
+//    assign {cout, y} = a + b + cin;
    
-endmodule // adder
+// endmodule // adder
 
-module flopenr #(parameter WIDTH = 8)
-   (input  logic             clk, reset, en,
-    input  logic [WIDTH-1:0] d, 
-    output logic [WIDTH-1:0] q);
+// module flopenr #(parameter WIDTH = 8)
+//    (input  logic             clk, reset, en,
+//     input  logic [WIDTH-1:0] d, 
+//     output logic [WIDTH-1:0] q);
 
-   always_ff @(posedge clk, posedge reset)
-     if (reset)   q <= #10 0;
-     else if (en) q <= #10 d;
+//    always_ff @(posedge clk, posedge reset)
+//      if (reset)   q <= #10 0;
+//      else if (en) q <= #10 d;
    
-endmodule // flopenr
+// endmodule // flopenr
 
-module flopr #(parameter WIDTH = 8)
-   (input  logic             clk, reset,
-    input  logic [WIDTH-1:0] d, 
-    output logic [WIDTH-1:0] q);
+// module flopr #(parameter WIDTH = 8)
+//    (input  logic             clk, reset,
+//     input  logic [WIDTH-1:0] d, 
+//     output logic [WIDTH-1:0] q);
 
-   always_ff @(posedge clk, posedge reset)
-     if (reset) q <= #10 0;
-     else       q <= #10 d;
+//    always_ff @(posedge clk, posedge reset)
+//      if (reset) q <= #10 0;
+//      else       q <= #10 d;
    
-endmodule // flopr
+// endmodule // flopr
 
-module flopenrc #(parameter WIDTH = 8)
-   (input  logic             clk, reset, en, clear,
-    input  logic [WIDTH-1:0] d, 
-    output logic [WIDTH-1:0] q);
+// module flopenrc #(parameter WIDTH = 8)
+//    (input  logic             clk, reset, en, clear,
+//     input  logic [WIDTH-1:0] d, 
+//     output logic [WIDTH-1:0] q);
 
-   always_ff @(posedge clk, posedge reset)
-     if (reset)    q <= #10 0;
-     else if (en) 
-       if (clear) q <= #10 0;
-       else       q <= #10 d;
+//    always_ff @(posedge clk, posedge reset)
+//      if (reset)    q <= #10 0;
+//      else if (en) 
+//        if (clear) q <= #10 0;
+//        else       q <= #10 d;
    
-endmodule // flopenrc
+// endmodule // flopenrc
 
-module floprc #(parameter WIDTH = 8)
-   (input  logic             clk, reset, clear,
-    input  logic [WIDTH-1:0] d, 
-    output logic [WIDTH-1:0] q);
+// module floprc #(parameter WIDTH = 8)
+//    (input  logic             clk, reset, clear,
+//     input  logic [WIDTH-1:0] d, 
+//     output logic [WIDTH-1:0] q);
 
-   always_ff @(posedge clk, posedge reset)
-     if (reset) q <= #10 0;
-     else       
-       if (clear) q <= #10 0;
-       else       q <= #10 d;
+//    always_ff @(posedge clk, posedge reset)
+//      if (reset) q <= #10 0;
+//      else       
+//        if (clear) q <= #10 0;
+//        else       q <= #10 d;
    
-endmodule // floprc
+// endmodule // floprc
 
-module mux2 #(parameter WIDTH = 8)
-   (input  logic [WIDTH-1:0] d0, d1, 
-    input  logic             s, 
-    output logic [WIDTH-1:0] y);
+// module mux2 #(parameter WIDTH = 8)
+//    (input  logic [WIDTH-1:0] d0, d1, 
+//     input  logic             s, 
+//     output logic [WIDTH-1:0] y);
 
-   assign y = s ? d1 : d0;
+//    assign y = s ? d1 : d0;
    
-endmodule // mux2
+// endmodule // mux2
 
-module mux3 #(parameter WIDTH = 8)
-   (input  logic [WIDTH-1:0] d0, d1, d2,
-    input  logic [1:0]       s, 
-    output logic [WIDTH-1:0] y);
+// module mux3 #(parameter WIDTH = 8)
+//    (input  logic [WIDTH-1:0] d0, d1, d2,
+//     input  logic [1:0]       s, 
+//     output logic [WIDTH-1:0] y);
 
-   assign y = s[1] ? d2 : (s[0] ? d1 : d0);
+//    assign y = s[1] ? d2 : (s[0] ? d1 : d0);
    
-endmodule // mux3
+// endmodule // mux3
 
-module mux4 #(parameter WIDTH = 8)
-   (input  logic [WIDTH-1:0] d0, d1, d2, d3,
-    input  logic [1:0]       s, 
-    output logic [WIDTH-1:0] y);
+// module mux4 #(parameter WIDTH = 8)
+//    (input  logic [WIDTH-1:0] d0, d1, d2, d3,
+//     input  logic [1:0]       s, 
+//     output logic [WIDTH-1:0] y);
 
-   assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
+//    assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0);
 
-endmodule // mux4
+// endmodule // mux4
 
-module mux5 #(parameter WIDTH = 8)
-   (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4,
-    input  logic [2:0]       s,
-    output logic [WIDTH-1:0] y);
+// module mux5 #(parameter WIDTH = 8)
+//    (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4,
+//     input  logic [2:0]       s,
+//     output logic [WIDTH-1:0] y);
    
-   always_comb
-     casez (s)
-       3'b000 : y = d0;       
-       3'b001 : y = d1;
-       3'b010 : y = d2;
-       3'b011 : y = d3;
-       3'b1?? : y = d4;
-     endcase // casez (s)
+//    always_comb
+//      casez (s)
+//        3'b000 : y = d0;       
+//        3'b001 : y = d1;
+//        3'b010 : y = d2;
+//        3'b011 : y = d3;
+//        3'b1?? : y = d4;
+//      endcase // casez (s)
 
-endmodule // mux5
+// endmodule // mux5
 
-module mux6 #(parameter WIDTH = 8)
-   (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5,
-    input  logic [2:0]       s,
-    output logic [WIDTH-1:0] y);
+// module mux6 #(parameter WIDTH = 8)
+//    (input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5,
+//     input  logic [2:0]       s,
+//     output logic [WIDTH-1:0] y);
    
-   always_comb
-     casez (s)
-       3'b000 : y = d0;       
-       3'b001 : y = d1;
-       3'b010 : y = d2;
-       3'b011 : y = d3;
-       3'b10? : y = d4;
-       3'b11? : y = d5;       
-     endcase // casez (s)
+//    always_comb
+//      casez (s)
+//        3'b000 : y = d0;       
+//        3'b001 : y = d1;
+//        3'b010 : y = d2;
+//        3'b011 : y = d3;
+//        3'b10? : y = d4;
+//        3'b11? : y = d5;       
+//      endcase // casez (s)
 
-endmodule // mux6
+// endmodule // mux6
 
 module eqcmp #(parameter WIDTH = 8)
    (input  logic [WIDTH-1:0] a, b,
@@ -232,25 +231,25 @@ module eqcmp #(parameter WIDTH = 8)
    
 endmodule // eqcmp
 
-module fa (input logic a, b, c, output logic sum, carry);
+// module fa (input logic a, b, c, output logic sum, carry);
 
-   assign sum = a^b^c;
-   assign carry = a&b|a&c|b&c;   
+//    assign sum = a^b^c;
+//    assign carry = a&b|a&c|b&c;   
 
-endmodule // fa
+// endmodule // fa
 
-module csa #(parameter WIDTH=8) 
-   (input logic [WIDTH-1:0] a, b, c,
-    output logic [WIDTH-1:0] sum, carry);
+// module csa #(parameter WIDTH=8) 
+//    (input logic [WIDTH-1:0] a, b, c,
+//     output logic [WIDTH-1:0] sum, carry);
 
-   logic [WIDTH:0] 	     carry_temp;   
-   genvar 		     i;
-   generate
-      for (i=0;i<WIDTH;i=i+1)
-	begin : genbit
-	   fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
-	end
-   endgenerate
-   assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     
+//    logic [WIDTH:0] 	     carry_temp;   
+//    genvar 		     i;
+//    generate
+//       for (i=0;i<WIDTH;i=i+1)
+// 	begin : genbit
+// 	   fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
+// 	end
+//    endgenerate
+//    assign carry = {1'b0, carry_temp[WIDTH-1:1], 1'b0};     
    
-endmodule // csa
+// endmodule // csa
