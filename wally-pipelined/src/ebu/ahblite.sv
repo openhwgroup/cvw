@@ -35,53 +35,51 @@ package ahbliteState;
 endpackage
 
 module ahblite (
-  input  logic             clk, reset,
-  input  logic             StallW, FlushW,
+  input logic 		     clk, reset,
+  input logic 		     StallW,
   // Load control
-  input  logic             UnsignedLoadM,
-  input  logic [1:0]       AtomicMaskedM,
-  input  logic [6:0]       Funct7M,
+  input logic 		     UnsignedLoadM,
+  input logic [1:0] 	     AtomicMaskedM,
+  input logic [6:0] 	     Funct7M,
   // Signals from Instruction Cache
-  input  logic [`PA_BITS-1:0] InstrPAdrF, // *** rename these to match block diagram
-  input  logic             InstrReadF,
-  output logic [`XLEN-1:0] InstrRData,
-  output logic             InstrAckF,
+  input logic [`PA_BITS-1:0] InstrPAdrF, // *** rename these to match block diagram
+  input logic 		     InstrReadF,
+  output logic [`XLEN-1:0]   InstrRData,
+  output logic 		     InstrAckF,
   // Signals from Data Cache
-  input  logic [`PA_BITS-1:0] MemPAdrM,
-  input  logic             MemReadM, MemWriteM,
-  input  logic [`XLEN-1:0] WriteDataM,
-  input  logic [1:0]       MemSizeM,
-  //output logic             DataStall,
-  // Signals from MMU
-  // Signals from PMA checker
-  input  logic             DSquashBusAccessM, ISquashBusAccessF,
-  // Signals to PMA checker (metadata of proposed access)
+  input logic [`PA_BITS-1:0] DCtoAHBPAdrM,
+  input logic 		     DCtoAHBReadM, 
+  input logic 		     DCtoAHBWriteM,
+  input logic [`XLEN-1:0]    DCtoAHBWriteData,
+  output logic [`XLEN-1:0]   DCfromAHBReadData,
+  input logic [1:0] 	     MemSizeM,     // *** remove
+  output logic 		     DCfromAHBAck,
   // Return from bus
-  output logic [`XLEN-1:0] HRDATAW,
+  output logic [`XLEN-1:0]   HRDATAW,
   // AHB-Lite external signals
-  input  logic [`AHBW-1:0] HRDATA,
-  input  logic             HREADY, HRESP,
-  output logic             HCLK, HRESETn,
-  output logic [31:0]      HADDR, 
-  output logic [`AHBW-1:0] HWDATA,
-  output logic             HWRITE, 
-  output logic [2:0]       HSIZE,
-  output logic [2:0]       HBURST,
-  output logic [3:0]       HPROT,
-  output logic [1:0]       HTRANS,
-  output logic             HMASTLOCK,
+  input logic [`AHBW-1:0]    HRDATA,
+  input logic 		     HREADY, HRESP,
+  output logic 		     HCLK, HRESETn,
+  output logic [31:0] 	     HADDR, 
+  output logic [`AHBW-1:0]   HWDATA,
+  output logic 		     HWRITE, 
+  output logic [2:0] 	     HSIZE,
+  output logic [2:0] 	     HBURST,
+  output logic [3:0] 	     HPROT,
+  output logic [1:0] 	     HTRANS,
+  output logic 		     HMASTLOCK,
   // Delayed signals for writes
-  output logic [2:0]       HADDRD,
-  output logic [3:0]       HSIZED,
-  output logic             HWRITED,
+  output logic [2:0] 	     HADDRD,
+  output logic [3:0] 	     HSIZED,
+  output logic 		     HWRITED,
   // Stalls
-  output logic CommitM, MemAckW
+  output logic 		     CommitM
 );
 
   logic GrantData;
   logic [31:0] AccessAddress;
   logic [2:0] AccessSize, PTESize, ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, CapturedHRDATAMasked, HRDATANext, WriteData;
+  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, HRDATANext, CapturedHRDATAMasked, WriteData;
   logic IReady, DReady;
   logic CaptureDataM,CapturedDataAvailable;
 
@@ -95,7 +93,7 @@ module ahblite (
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
   import ahbliteState::*;
-  statetype BusState, ProposedNextBusState, NextBusState;
+  statetype BusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
@@ -109,54 +107,32 @@ module ahblite (
   // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: /*if      (MMUTranslate) ProposedNextBusState = MMUTRANSLATE;
-            else*/ if (AtomicMaskedM[1])   ProposedNextBusState = ATOMICREAD;
-            else if (MemReadM)     ProposedNextBusState = MEMREAD;  // Memory has priority over instructions
-            else if (MemWriteM)    ProposedNextBusState = MEMWRITE;
-            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
-            else                   ProposedNextBusState = IDLE;
-/* -----\/----- EXCLUDED -----\/-----
-      MMUTRANSLATE: if (~HREADY)   ProposedNextBusState = MMUTRANSLATE;
-            else                   ProposedNextBusState = IDLE;
- -----/\----- EXCLUDED -----/\----- */
-      ATOMICREAD: if (~HREADY)     ProposedNextBusState = ATOMICREAD;
-            else                   ProposedNextBusState = ATOMICWRITE;
-      ATOMICWRITE: if (~HREADY)    ProposedNextBusState = ATOMICWRITE;
-            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
-            else                   ProposedNextBusState = IDLE;
-      MEMREAD: if (~HREADY)        ProposedNextBusState = MEMREAD;
-            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
-            else                   ProposedNextBusState = IDLE;
-      MEMWRITE: if (~HREADY)       ProposedNextBusState = MEMWRITE;
-            else if (InstrReadF)   ProposedNextBusState = INSTRREAD;
-            else                   ProposedNextBusState = IDLE;
-      INSTRREAD: if (~HREADY)      ProposedNextBusState = INSTRREAD;
-            else                   ProposedNextBusState = IDLE;  // if (InstrReadF still high)
-      default:                     ProposedNextBusState = IDLE;
+      IDLE: if (AtomicMaskedM[1])   NextBusState = ATOMICREAD;
+            else if (DCtoAHBReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (DCtoAHBWriteM)    NextBusState = MEMWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      ATOMICREAD: if (~HREADY)     NextBusState = ATOMICREAD;
+            else                   NextBusState = ATOMICWRITE;
+      ATOMICWRITE: if (~HREADY)    NextBusState = ATOMICWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
+            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;
+      INSTRREAD: if (~HREADY)      NextBusState = INSTRREAD;
+            else                   NextBusState = IDLE;  // if (InstrReadF still high)
+      default:                     NextBusState = IDLE;
     endcase
-
-  // Determine access type (important for determining whether to fault)
-//              (ProposedNextBusState == MMUTRANSLATE);
-
-  // The PMA and PMP checkers can decide to squash the access 
-  // *** this probably needs to be controlled by the caches rather than EBU dh 7/2/11
-  assign NextBusState = (DSquashBusAccessM || ISquashBusAccessF) ? IDLE : ProposedNextBusState;
-
-  // stall signals
-  // Note that we need to extend both stalls when MMUTRANSLATE goes to idle,
-  // since translation might not be complete.
-  // *** Ross Thompson remove this datastall
-/* -----\/----- EXCLUDED -----\/-----
-  assign #2 DataStall = ((NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-			 (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE));
- -----/\----- EXCLUDED -----/\----- */
-  
 
 
   //  bus outputs
-  assign #1 GrantData = (ProposedNextBusState == MEMREAD) || (ProposedNextBusState == MEMWRITE) || 
-                        (ProposedNextBusState == ATOMICREAD) || (ProposedNextBusState == ATOMICWRITE);
-  assign #1 AccessAddress = (GrantData) ? MemPAdrM[31:0] : InstrPAdrF[31:0];
+  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
+                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
+  assign #1 AccessAddress = (GrantData) ? DCtoAHBPAdrM[31:0] : InstrPAdrF[31:0];
   //assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
   assign #1 HADDR = AccessAddress;
   generate
@@ -185,11 +161,11 @@ module ahblite (
   //assign MMUReady = (BusState == MMUTRANSLATE && HREADY);
 
   assign InstrRData = HRDATA;
+  assign DCfromAHBReadData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
   assign CommitM = (BusState == MEMREAD) || (BusState == MEMWRITE) || (BusState == ATOMICREAD) || (BusState == ATOMICWRITE);
   // *** Bracker 6/5/21: why is this W stage?
-  assign MemAckW = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE) ||
-		   ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD)) || ((BusState == ATOMICWRITE) && (NextBusState != ATOMICWRITE));
+  assign DCfromAHBAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
   //assign MMUReadPTE = HRDATA;
   // Carefully decide when to update ReadDataW
   //   ReadDataMstored holds the most recent memory read.
@@ -213,17 +189,20 @@ module ahblite (
   flopr #(`XLEN) ReadDataOldWReg(clk, reset, HRDATANext, HRDATAW); 
 
   // Extract and sign-extend subwords if necessary
-  subwordread swr(.*);
+  subwordread swr(.HRDATA(HRDATA),
+		  .HADDRD(HADDRD),
+		  .HSIZED(HSIZED),
+		  .HRDATAMasked(HRDATAMasked));
 
   // Handle AMO instructions if applicable
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
-      amoalu amoalu(.srca(HRDATAW), .srcb(WriteDataM), .funct(Funct7M), .width(MemSizeM), 
+      amoalu amoalu(.srca(HRDATAW), .srcb(DCtoAHBWriteData), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
-      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicMaskedM[1], WriteData);
+      mux2 #(`XLEN) wdmux(DCtoAHBWriteData, AMOResult, AtomicMaskedM[1], WriteData);
     end else
-      assign WriteData = WriteDataM;
+      assign WriteData = DCtoAHBWriteData;
   endgenerate
 
 endmodule

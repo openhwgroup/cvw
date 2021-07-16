@@ -61,7 +61,7 @@ module pmachecker (
   assign AtomicAllowed = SelRegions[4];
 
   // Detect access faults
-  assign PMAAccessFault = (~|SelRegions) & AccessRWX;  
+  assign PMAAccessFault = SelRegions[6] & AccessRWX;  
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;

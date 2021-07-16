@@ -84,8 +84,6 @@ module ifu (
   output logic InstrAccessFaultF,
 
   output logic 		      ISquashBusAccessF
-//  output logic [5:0]       IHSELRegionsF
-
 );
 
   logic [`XLEN-1:0] PCCorrectE, UnalignedPCNextF, PCNextF;
@@ -103,10 +101,6 @@ module ifu (
 
   logic 	    PMPInstrAccessFaultF, PMAInstrAccessFaultF;
   
-  logic PMALoadAccessFaultM, PMAStoreAccessFaultM;
-  logic PMPLoadAccessFaultM, PMPStoreAccessFaultM; // *** these are just so that the mmu has somewhere to put these outputs, they're unused in this stage
-  // if you're allowed to parameterize outputs/ inputs existence, these are an easy delete.
-
   logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width. 
 
   generate
@@ -138,6 +132,9 @@ module ifu (
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
+       .Cacheable(),
+       .Idempotent(),
+       .AtomicAllowed(),
        .*);
 
 

@@ -8,8 +8,8 @@ module ICacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256)
    // If flush is high, invalidate the entire cache
    input logic 		       flush,
 
-   input logic [`PA_BITS-1:0]     PCTagF,        // physical address
-   input logic [`PA_BITS-1:0]     PCNextIndexF,  // virtual address
+   input logic [`PA_BITS-1:0]  PCTagF, // physical address
+   input logic [`PA_BITS-1:0]  PCNextIndexF, // virtual address
    input logic 		       WriteEnable,
    input logic [BLOCKLEN-1:0]  WriteLine,
    output logic [BLOCKLEN-1:0] ReadLineF,
