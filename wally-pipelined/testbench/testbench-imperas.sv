@@ -542,7 +542,7 @@ string tests32f[] = '{
         //if (`A_SUPPORTED) tests = {tests, tests64a};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
-        //if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -558,7 +558,7 @@ string tests32f[] = '{
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           //if (`A_SUPPORTED) tests = {tests, tests32a};
           if (`F_SUPPORTED) tests = {tests32f, tests};
-          //if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
+          if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
       end
     end
   end
