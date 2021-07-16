@@ -126,7 +126,6 @@ module lsu
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
   logic [`XLEN-1:0] 	       HPTWPAdrM;  
-  logic 		       HPTWTranslate;
   logic 		       HPTWReadM;
   logic [1:0] 		       MemRWMtoDCache;
   logic [2:0] 		       Funct3MtoDCache;
@@ -170,8 +169,8 @@ module lsu
 				  .HPTWStall(HPTWStall),
 				  .HPTWPAdrE(HPTWPAdrE),
 				  .HPTWPAdrM(HPTWPAdrM),				  
-				  .HPTWTranslate(HPTWTranslate),
 				  .HPTWReadM(HPTWReadM),
+				  .SelPTW(SelPTW),
 				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
@@ -182,7 +181,7 @@ module lsu
   lsuArb arbiter(.clk(clk),
 		 .reset(reset),
 		 // HPTW connection
-		 .HPTWTranslate(HPTWTranslate),
+		 .SelPTW(SelPTW),
 		 .HPTWReadM(HPTWReadM),
 		 .HPTWPAdrE(HPTWPAdrE),
 		 .HPTWPAdrM(HPTWPAdrM),		 
@@ -214,8 +213,9 @@ module lsu
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
 		 .PendingInterruptMtoDCache(PendingInterruptMtoDCache),
-		 .DCacheStall(DCacheStall),
-		 .SelPTW(SelPTW));
+		 .DCacheStall(DCacheStall));
+  
+
     
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
@@ -243,7 +243,9 @@ module lsu
        //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
+  // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
+  
   generate
     if (`XLEN == 32) assign DCtoAHBSizeM = CacheableMtoDCache ? 3'b010 : Funct3MtoDCache;
     else assign DCtoAHBSizeM = CacheableMtoDCache ? 3'b011 : Funct3MtoDCache;
@@ -335,6 +337,7 @@ module lsu
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),
+		.SelPTW(SelPTW),
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),
