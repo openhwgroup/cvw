@@ -117,9 +117,10 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   pmpchecker pmpchecker(.*);
 
 
+  // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
   assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;
-  assign InstrAccessFaultF = PMAInstrAccessFaultF | PMPInstrAccessFaultF;
-  assign LoadAccessFaultM = PMALoadAccessFaultM | PMPLoadAccessFaultM;
-  assign StoreAccessFaultM = PMAStoreAccessFaultM | PMPStoreAccessFaultM;  
+  assign InstrAccessFaultF = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
+  assign LoadAccessFaultM = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
+  assign StoreAccessFaultM = (PMAStoreAccessFaultM | PMPStoreAccessFaultM) & ~(Translate & ~TLBHit);  
 
 endmodule

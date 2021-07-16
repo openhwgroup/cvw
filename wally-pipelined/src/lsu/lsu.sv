@@ -147,6 +147,7 @@ module lsu
   logic 		       CommittedMfromDCache;
   logic 		       PendingInterruptMtoDCache;
   logic 		       FlushWtoDCache;
+  logic 		       WalkerPageFaultM;
   
   
   pagetablewalker pagetablewalker(
@@ -169,20 +170,20 @@ module lsu
 				  .HPTWStall(HPTWStall),
 				  .HPTWPAdrE(HPTWPAdrE),
 				  .HPTWPAdrM(HPTWPAdrM),				  
-				  .HPTWReadM(HPTWReadM),
+				  .HPTWRead(HPTWRead),
 				  .SelPTW(SelPTW),
 				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
   
-  
+  assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
   // arbiter between IEU and pagetablewalker
   lsuArb arbiter(.clk(clk),
 		 .reset(reset),
 		 // HPTW connection
 		 .SelPTW(SelPTW),
-		 .HPTWReadM(HPTWReadM),
+		 .HPTWRead(HPTWRead),
 		 .HPTWPAdrE(HPTWPAdrE),
 		 .HPTWPAdrM(HPTWPAdrM),		 
 		 //.HPTWReadPTE(HPTWReadPTE),
@@ -338,6 +339,7 @@ module lsu
 		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),
 		.SelPTW(SelPTW),
+		.WalkerPageFaultM(WalkerPageFaultM),
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),
