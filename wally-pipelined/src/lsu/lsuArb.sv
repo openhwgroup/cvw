@@ -30,7 +30,7 @@ module lsuArb
   (input  logic clk, reset,
 
    // from page table walker
-   input logic 		    HPTWTranslate,
+   input logic 		    SelPTW,
    input logic 		    HPTWReadM,
    input logic [`XLEN-1:0]  HPTWPAdrE,
    input logic [`XLEN-1:0]  HPTWPAdrM, 
@@ -62,7 +62,6 @@ module lsuArb
    output logic [`XLEN-1:0] MemAdrEtoDCache, 
    output logic 	    StallWtoDCache,
    output logic 	    PendingInterruptMtoDCache,
-   output logic 	    SelPTW,
    
 
    // from D Cache
@@ -73,73 +72,11 @@ module lsuArb
    input logic 		    DCacheStall
   
    );
-  
-  // HPTWTranslate is the request for memory by the page table walker.  When 
-  // this is high the page table walker gains priority over the CPU's data
-  // input.  Note the ptw only makes a request after an instruction or data
-  // tlb miss.  It is entirely possible the dcache is currently processing
-  // a data cache miss when an instruction tlb miss occurs.  If an instruction
-  // in the E stage causes a d cache miss, the d cache will immediately start
-  // processing the request.  Simultaneously the ITLB misses.  By the time
-  // the TLB miss causes the page table walker to issue the first request
-  // to data memory the d cache is already busy.  We can interlock by 
-  // leveraging Stall as a d cache busy.  We will need an FSM to handle this.
 
-  typedef enum{StateReady,
-	       StatePTWPending,
-	       StatePTWActive} statetype;
-  
-
-  statetype CurrState, NextState;
   logic [2:0] PTWSize;
   
-
-  flopenl #(.TYPE(statetype)) StateReg(.clk(clk),
-				       .load(reset),
-				       .en(1'b1),
-				       .d(NextState),
-				       .val(StateReady),
-				       .q(CurrState));
-
-  always_comb begin
-    case(CurrState)
-      StateReady: 
-        if (HPTWTranslate) NextState = StatePTWActive;
-	else NextState = StateReady;
-      StatePTWActive:
-	if (HPTWTranslate) NextState = StatePTWActive;
-	else NextState = StateReady;
-      default: NextState = StateReady;
-    endcase
-  end
-
-/* -----\/----- EXCLUDED -----\/-----
-
-  always_comb begin
-    case(CurrState)
-      StateReady: 
-	/-* -----\/----- EXCLUDED -----\/-----
-	 if      (HPTWTranslate & DataStall)  NextState = StatePTWPending;
-	 else
-	 -----/\----- EXCLUDED -----/\----- *-/
-        if (HPTWTranslate) NextState = StatePTWActive;
-	else                                 NextState = StateReady;
-      StatePTWPending:
-	if (HPTWTranslate & ~DataStall)     NextState = StatePTWActive;
-	else if (HPTWTranslate & DataStall) NextState = StatePTWPending;
-	else                                NextState = StateReady;
-      StatePTWActive:
-	if (HPTWTranslate)     NextState = StatePTWActive;
-	else                                NextState = StateReady;
-      default:                               NextState = StateReady;
-    endcase
-  end
-
- -----/\----- EXCLUDED -----/\----- */
-
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
-  assign SelPTW = (CurrState == StatePTWActive && HPTWTranslate) || (CurrState == StateReady && HPTWTranslate);
   assign MemRWMtoDCache = SelPTW ? {HPTWReadM, 1'b0} : MemRWM;
   
   generate
