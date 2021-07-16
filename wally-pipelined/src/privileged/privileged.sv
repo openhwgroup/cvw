@@ -64,6 +64,8 @@ module privileged (
   input logic LoadAccessFaultM,
   input logic StoreAccessFaultM,
 
+  output logic 		   ExceptionM,
+  output logic 		   PendingInterruptM,
   output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,

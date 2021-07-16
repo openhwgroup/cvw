@@ -44,14 +44,14 @@ module testbench();
   logic [31:0] InstrW;
   logic [`XLEN-1:0] meminit;
 
-  //string tests32mmu[] = '{
-    //"rv32mmu/WALLY-MMU-SV32", "3000"
-  //  };
+  string tests32mmu[] = '{
+    "rv32mmu/WALLY-MMU-SV32", "3000"
+    };
 
-  //string tests64mmu[] = '{
-    //"rv64mmu/WALLY-MMU-SV48", "3000",
-    //"rv64mmu/WALLY-MMU-SV39", "3000"
-  //};
+  string tests64mmu[] = '{
+    "rv64mmu/WALLY-MMU-SV48", "3000",
+    "rv64mmu/WALLY-MMU-SV39", "3000"
+  };
 
   
 string tests32f[] = '{
@@ -212,6 +212,7 @@ string tests32f[] = '{
 
   string tests64i[] = '{
     //"rv64i/WALLY-PIPELINE-100K", "f7ff0",
+    //"rv64i/WALLY-LOAD", "11bf0",
     "rv64i/I-ADD-01", "3000",
     "rv64i/I-ADDI-01", "3000",
     "rv64i/I-ADDIW-01", "3000",
@@ -282,7 +283,7 @@ string tests32f[] = '{
     "rv64i/WALLY-SLLI", "3000",
     "rv64i/WALLY-SRLI", "3000",
     "rv64i/WALLY-SRAI", "3000",
-    "rv64i/WALLY-LOAD", "11bf0",
+
     "rv64i/WALLY-JAL", "4000",
     "rv64i/WALLY-JALR", "3000",
     "rv64i/WALLY-STORE", "3000",
@@ -509,6 +510,9 @@ string tests32f[] = '{
   logic             HCLK, HRESETn;
   logic [`XLEN-1:0] PCW;
 
+  logic 	    DCacheFlushDone, DCacheFlushStart;
+  
+
   logic [`XLEN-1:0] debug;
   assign debug = dut.uncore.dtim.RAM[536872960];
   
@@ -531,14 +535,14 @@ string tests32f[] = '{
       else if (TESTSPRIV)
         tests = tests64p;
       else begin
-        tests = {tests64p,tests64i,tests64periph};
+        tests = {tests64p,tests64i, tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
-        if (`A_SUPPORTED) tests = {tests, tests64a};
-        //if (`MEM_VIRTMEM) tests = {tests, tests64mmu};
+        //if (`A_SUPPORTED) tests = {tests, tests64a};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
+        //if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -552,7 +556,7 @@ string tests32f[] = '{
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
-          if (`A_SUPPORTED) tests = {tests, tests32a};
+          //if (`A_SUPPORTED) tests = {tests, tests32a};
           if (`F_SUPPORTED) tests = {tests32f, tests};
           //if (`MEM_VIRTMEM) tests = {tests, tests32mmu};
       end
@@ -621,10 +625,17 @@ string tests32f[] = '{
   // check results
   always @(negedge clk)
     begin    
+/* -----\/----- EXCLUDED -----\/-----
       if (dut.hart.priv.EcallFaultM && 
-          (dut.hart.ieu.dp.regf.rf[3] == 1 || (dut.hart.ieu.dp.regf.we3 && dut.hart.ieu.dp.regf.a3 == 3 && dut.hart.ieu.dp.regf.wd3 == 1))) begin
+			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
+			     (dut.hart.ieu.dp.regf.we3 && 
+			      dut.hart.ieu.dp.regf.a3 == 3 && 
+			      dut.hart.ieu.dp.regf.wd3 == 1))) begin
+ -----/\----- EXCLUDED -----/\----- */
+      if (DCacheFlushDone) begin
         $display("Code ended with ecall with gp = 1");
-        #60; // give time for instructions in pipeline to finish
+
+        #600; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
         for(i=0; i<SIGNATURESIZE; i=i+1) begin
           sig32[i] = 'bx;
@@ -657,13 +668,16 @@ string tests32f[] = '{
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i]) begin
+          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i] &&
+	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), dut.uncore.dtim.RAM[testadr+i], signature[i]);
+              $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -701,6 +715,18 @@ string tests32f[] = '{
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
+
+  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
+			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
+			     (dut.hart.ieu.dp.regf.we3 && 
+			      dut.hart.ieu.dp.regf.a3 == 3 && 
+			      dut.hart.ieu.dp.regf.wd3 == 1));
+  
+  DCacheFlushFSM DCacheFlushFSM(.clk(clk),
+				.reset(reset),
+				.start(DCacheFlushStart),
+				.done(DCacheFlushDone));
+  
 
   generate
     // initialize the branch predictor
@@ -1011,5 +1037,115 @@ module logging(
 
   always @(posedge clk)
     if (HTRANS != 2'b00 && HADDR == 0)
-      $display("Warning: access to memory address 0\n");
+      $display("%t Warning: access to memory address 0\n", $realtime);
 endmodule
+
+
+module DCacheFlushFSM
+  (input logic clk,
+   input logic reset,
+   input logic start,
+   output logic done);
+
+  localparam integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
+  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
+  localparam integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  localparam integer lognumlines = $clog2(numlines);
+  localparam integer logblockbytelen = $clog2(blockbytelen);
+  localparam integer lognumways = $clog2(numways);
+  localparam integer tagstart = lognumlines + logblockbytelen;
+
+
+
+  genvar index, way, cacheWord;
+  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
+  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+  genvar adr;
+
+  logic [`XLEN-1:0] ShadowRAM[`TIM_BASE>>(1+`XLEN/32):(`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32)];
+  
+  generate
+    for(index = 0; index < numlines; index++) begin
+      for(way = 0; way < numways; way++) begin
+	for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+	  copyShadow #(.tagstart(tagstart),
+		       .logblockbytelen(logblockbytelen))
+	  copyShadow(.clk,
+		     .start,
+		     .tag(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.CacheTagMem.StoredData[index]),
+		     .valid(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.ValidBits[index]),
+		     .dirty(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.DirtyBits[index]),
+		     .data(testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.word[cacheWord].CacheDataMem.StoredData[index]),
+		     .index(index),
+		     .cacheWord(cacheWord),
+		     .CacheData(CacheData[way][index][cacheWord]),
+		     .CacheAdr(CacheAdr[way][index][cacheWord]),
+		     .CacheTag(CacheTag[way][index][cacheWord]),
+		     .CacheValid(CacheValid[way][index][cacheWord]),
+		     .CacheDirty(CacheDirty[way][index][cacheWord]));
+	end
+      end
+    end
+  endgenerate
+
+/* -----\/----- EXCLUDED -----\/-----
+		     .Adr(((testbench.dut.hart.lsu.dcache.CacheWays[way].MemWay.CacheTagMem.StoredData[index] << tagstart)
+			   + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8)))),
+ -----/\----- EXCLUDED -----/\----- */
+  
+  integer i, j, k;
+  
+  always @(posedge clk) begin
+    if (start) begin #1
+      #1
+      for(i = 0; i < numlines; i++) begin
+	for(j = 0; j < numways; j++) begin
+	  for(k = 0; k < numwords; k++) begin
+	  if (CacheValid[j][i][k] && CacheDirty[j][i][k]) begin
+	    ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+	    end
+	  end	
+	end
+      end
+    end
+  end
+
+
+  flop #(1) doneReg(.clk(clk),
+		    .d(start),
+		    .q(done));
+		    
+endmodule
+
+module copyShadow
+  #(parameter tagstart, logblockbytelen)
+  (input logic clk,
+   input logic 			     start,
+   input logic [`PA_BITS-1:tagstart] tag,
+   input logic 			     valid, dirty,
+   input logic [`XLEN-1:0] 	     data,
+   input logic [32-1:0] 	     index,
+   input logic [32-1:0] 	     cacheWord,
+   output logic [`XLEN-1:0] 	     CacheData,
+   output logic [`PA_BITS-1:0] 	     CacheAdr,
+   output logic [`XLEN-1:0] 	     CacheTag,
+   output logic 		     CacheValid,
+   output logic 		     CacheDirty);
+  
+
+  always_ff @(posedge clk) begin
+    if(start) begin
+      CacheTag = tag;
+      CacheValid = valid;
+      CacheDirty = dirty;
+      CacheData = data;
+      CacheAdr = (tag << tagstart) + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8));
+    end
+  end
+  
+endmodule		      
+
