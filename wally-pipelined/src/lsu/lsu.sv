@@ -338,6 +338,7 @@ module lsu
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),
+		.ITLBWriteF(ITLBWriteF),		
 		.SelPTW(SelPTW),
 		.WalkerPageFaultM(WalkerPageFaultM),
 

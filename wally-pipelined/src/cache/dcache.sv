@@ -53,6 +53,7 @@ module dcache
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
+   input logic 		       ITLBWriteF,   
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
@@ -164,6 +165,7 @@ module dcache
 		STATE_PTW_READ_MISS_FETCH_WDV,
 		STATE_PTW_READ_MISS_FETCH_DONE,
 		STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK,
+		STATE_PTW_READ_MISS_EVICT_DIRTY,		
 		STATE_PTW_READ_MISS_READ_WORD,
 		STATE_PTW_READ_MISS_READ_WORD_DELAY,
 		STATE_PTW_ACCESS_AFTER_WALK,		
@@ -604,10 +606,22 @@ module dcache
       STATE_PTW_READY: begin
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
-	// return to ready if page table walk completed.
-	if (~SelPTW & ~WalkerPageFaultM) begin
-	  NextState = STATE_PTW_ACCESS_AFTER_WALK;
 
+	if (ITLBWriteF) begin
+	  NextState = STATE_READY;
+	end
+
+	// return to ready if page table walk completed.
+	else if (~SelPTW & ~WalkerPageFaultM & CacheHit & CacheableM & ~ExceptionM) begin
+	  NextState = STATE_PTW_ACCESS_AFTER_WALK;
+	end
+
+	// read or write miss valid cached
+	else if (~SelPTW & ~WalkerPageFaultM & ~CacheHit & CacheableM & ~ExceptionM) begin
+	  NextState = STATE_MISS_FETCH_WDV;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  
 	// read hit valid cached
 	end else if(MemRWM[1] & CacheableM & ~ExceptionM & CacheHit) begin
 	  NextState = STATE_PTW_READY;
@@ -615,7 +629,7 @@ module dcache
 	end
 
 	// read miss valid cached
-	else if((MemRWM[1]) & CacheableM & ~ExceptionM & ~CacheHit) begin
+	else if(SelPTW & MemRWM[1] & CacheableM & ~ExceptionM & ~CacheHit) begin
 	  NextState = STATE_PTW_READ_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
@@ -647,8 +661,28 @@ module dcache
 	SelAdrM = 1'b1;
         CntReset = 1'b1;
 	CommittedM = 1'b1;
-	NextState = STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK;
+        CntReset = 1'b1;
+	if(VictimDirty) begin
+	  NextState = STATE_PTW_READ_MISS_EVICT_DIRTY;
+	end else begin
+	  NextState = STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK;
+	end
       end
+
+      STATE_PTW_READ_MISS_EVICT_DIRTY: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBWrite = 1'b1;
+	SelAdrM = 1'b1;
+	CommittedM = 1'b1;
+	SelEvict = 1'b1;
+	if( FetchCountFlag & AHBAck) begin
+	  NextState = STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK;
+	end else begin
+	  NextState = STATE_PTW_READ_MISS_EVICT_DIRTY;
+	end	  
+      end
+      
 
       STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK: begin
 	SRAMBlockWriteEnableM = 1'b1;
