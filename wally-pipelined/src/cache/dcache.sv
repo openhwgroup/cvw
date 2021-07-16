@@ -53,7 +53,9 @@ module dcache
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
-   input logic 		       SelPTW, 
+   // from ptw
+   input logic 		       SelPTW,
+   input logic 		       WalkerPageFaultM, 
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    output logic 	       AHBRead,
@@ -164,8 +166,8 @@ module dcache
 		STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK,
 		STATE_PTW_READ_MISS_READ_WORD,
 		STATE_PTW_READ_MISS_READ_WORD_DELAY,
-    STATE_PTW_ACCESS_AFTER_WALK,		
-    STATE_PTW_UPDATE_TLB,
+		STATE_PTW_ACCESS_AFTER_WALK,		
+		STATE_PTW_UPDATE_TLB,
 
 		STATE_UNCACHED_WRITE,
 		STATE_UNCACHED_WRITE_DONE,
@@ -599,7 +601,7 @@ module dcache
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
 	// return to ready if page table walk completed.
-	if (~SelPTW) begin
+	if (~SelPTW & ~WalkerPageFaultM) begin
 	  NextState = STATE_PTW_ACCESS_AFTER_WALK;
 
 	// read hit valid cached
@@ -613,6 +615,12 @@ module dcache
 	  NextState = STATE_PTW_READ_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
+	end
+
+	// walker has issue abort back to ready
+	else if(~SelPTW & WalkerPageFaultM) begin
+	  NextState = STATE_READY;
+	  DCacheStall = 1'b0;
 	end
       end
 

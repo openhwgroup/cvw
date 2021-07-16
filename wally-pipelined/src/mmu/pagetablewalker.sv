@@ -60,7 +60,7 @@ module pagetablewalker
    // *** modify to send to LSU
    output logic [`XLEN-1:0] HPTWPAdrE, // this probalby should be `PA_BITS wide
    output logic [`XLEN-1:0] HPTWPAdrM, // this probalby should be `PA_BITS wide
-   output logic		    HPTWReadM,
+   output logic		    HPTWRead,
 
 
    // Faults
@@ -69,7 +69,6 @@ module pagetablewalker
    output logic		    WalkerStorePageFaultM
    );
 
-  logic			    HPTWReadE;
 
   generate
     if (`MEM_VIRTMEM) begin
@@ -179,8 +178,10 @@ module pagetablewalker
       if (`XLEN == 32) begin
 	logic [9:0] VPN1, VPN0;
 
-	flopenl #(.TYPE(statetype)) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 
+	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
+	
 	/* -----\/----- EXCLUDED -----\/-----
 	 assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV) && ~HPTWStall;
 	 -----/\----- EXCLUDED -----/\----- */
@@ -189,7 +190,7 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  TranslationPAdr = '0;
-	  HPTWReadE = 1'b0;
+	  HPTWRead = 1'b0;
 	  PageTableEntry = '0;
 	  PageType = '0;
 	  DTLBWriteM = '0;
@@ -218,7 +219,7 @@ module pagetablewalker
 
 	    LEVEL1_WDV: begin
 	      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
-	      HPTWReadE = 1'b1;
+	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL1_WDV;
 	      end else begin
@@ -240,7 +241,7 @@ module pagetablewalker
 	      else if (ValidPTE && ~LeafPTE) begin
 		NextWalkerState = LEVEL0_SET_ADRE;
 		TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-		HPTWReadE = 1'b1;
+		HPTWRead = 1'b1;
 	      end else begin
 		NextWalkerState = FAULT;
 	      end
@@ -253,7 +254,7 @@ module pagetablewalker
 
 	    LEVEL0_WDV: begin
 	      TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-	      HPTWReadE = 1'b1;
+	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL0_WDV;
 	      end else begin
@@ -281,6 +282,7 @@ module pagetablewalker
 	    end
 
 	    FAULT: begin
+	      SelPTW = 1'b0;
 	      NextWalkerState = IDLE;
 	      WalkerInstrPageFaultF = ~DTLBMissMQ;
 	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
@@ -324,7 +326,9 @@ module pagetablewalker
 
 	logic	    TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
 
-	flopenl #(.TYPE(statetype)) mmureg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+	flopenl #(.TYPE(statetype)) WalkerStageReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+
+	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 
 	/* -----\/----- EXCLUDED -----\/-----
 	 assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV ||
@@ -338,7 +342,7 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  TranslationPAdr = '0;
-	  HPTWReadE = 1'b0;
+	  HPTWRead = 1'b0;
 	  PageTableEntry = '0;
 	  PageType = '0;
 	  DTLBWriteM = '0;
@@ -369,7 +373,7 @@ module pagetablewalker
 
 	    LEVEL3_WDV: begin
 	      TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
-	      HPTWReadE = 1'b1;
+	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL3_WDV;
 	      end else begin
@@ -403,7 +407,7 @@ module pagetablewalker
 
 	    LEVEL2_WDV:  begin
 	      TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
-	      HPTWReadE = 1'b1;
+	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL2_WDV;
 	      end else begin
@@ -437,7 +441,7 @@ module pagetablewalker
 
 	    LEVEL1_WDV: begin
 	      TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
-	      HPTWReadE = 1'b1;
+	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL1_WDV;
 	      end else begin
@@ -472,7 +476,7 @@ module pagetablewalker
 
 	    LEVEL0_WDV: begin
 	      TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-	      HPTWReadE = 1'b1;
+	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL0_WDV;
 	      end else begin
@@ -502,6 +506,7 @@ module pagetablewalker
 	    end
 
 	    FAULT: begin
+	      SelPTW = 1'b0;
 	      NextWalkerState = IDLE;
 	      WalkerInstrPageFaultF = ~DTLBMissMQ;
 	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
@@ -550,7 +555,7 @@ module pagetablewalker
       //endgenerate
     end else begin
       assign HPTWPAdrE = 0;
-      assign HPTWReadE = 0;
+      assign HPTWRead = 0;
       assign WalkerInstrPageFaultF = 0;
       assign WalkerLoadPageFaultM = 0;
       assign WalkerStorePageFaultM = 0;
