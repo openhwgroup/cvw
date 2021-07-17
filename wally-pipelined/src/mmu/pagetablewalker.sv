@@ -42,8 +42,11 @@ module pagetablewalker
    output logic [1:0]	    PageType, // page type to TLBs
    output logic		    ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic 	    SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
-   output logic [`XLEN-1:0] HPTWPAdrE, // *** this really needs to be 34 bits for RV32 and 64 bits for RV64.  Impacts lots of stuff in LSU and D$.  On Ross's list to investigate.  7/17/21
-   output logic [`XLEN-1:0] HPTWPAdrM, // *** same
+   //output logic [`XLEN-1:0] HPTWPAdrE, // *** this really needs to be 34 bits for RV32 and 64 bits for RV64.  Impacts lots of stuff in LSU and D$.  On Ross's list to investigate.  7/17/21
+   //output logic [`XLEN-1:0] HPTWPAdrM, // *** same
+   output logic [`XLEN-1:0]		    TranslationVAdr,
+   output logic [`PA_BITS-1:0]	    TranslationPAdr,
+   output logic                     UseTranslationVAdr,
    output logic		    HPTWRead, // HPTW requesting to read memory
    output logic		    WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
 );
@@ -53,9 +56,8 @@ module pagetablewalker
       // Internal signals
       logic			    DTLBWalk; // register TLBs translation miss requests
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
-      logic [`XLEN-1:0]		    TranslationVAdr;
-      logic [`PA_BITS-1:0]	    TranslationPAdr;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
+	  logic [`XLEN-1:0] HPTWPAdrE; // ***delete when done
       logic			    MemWrite;
       logic			    Executable, Writable, Readable, Valid;
 	  logic 			MegapageMisaligned, GigapageMisaligned, TerapageMisaligned;
@@ -83,7 +85,7 @@ module pagetablewalker
       assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	  // State flops
-      flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  // *** perhaps HPTW should just send PAdrE, and LSU can latch it as necessary
+      //flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  // *** perhaps HPTW should just send PAdrE, and LSU can latch it as necessary
 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk); // track whether walk is for DTLB or ITLB
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
 	
@@ -103,6 +105,7 @@ module pagetablewalker
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
+	  assign UseTranslationVAdr = (NextWalkerState == LEAF) || (WalkerState == LEAF);
 
 	  // Raise faults.  DTLBMiss
 	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBWalk;
@@ -219,8 +222,9 @@ module pagetablewalker
 		end
 	  endcase
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
-      assign HPTWPAdrE = 0; assign HPTWRead = 0; assign SelPTW = 0;
+      assign HPTWRead = 0; assign SelPTW = 0;
       assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
+	  //assign HPTWPAdrE = 0; // comment out ***, replace with Translate P/V, control signal
     end
   endgenerate
 endmodule
