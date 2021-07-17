@@ -92,7 +92,6 @@ module pagetablewalker
 
       logic			    PRegEn;
       logic			    SelDataTranslation;
-      logic			    AnyTLBMissM;
 
       logic [`SVMODE_BITS-1:0]	    SvMode;
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
@@ -111,14 +110,12 @@ module pagetablewalker
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
 	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
-      assign AnyTLBMissM = DTLBMissM | ITLBMissF;
-
-      assign StartWalk = (WalkerState == IDLE) & AnyTLBMissM;
+      assign StartWalk = (WalkerState == IDLE) & (DTLBMissM | ITLBMissF);
       assign EndWalk = (WalkerState == LEAF) || (WalkerState == FAULT);
 
       // Assign PTE descriptors common across all XLEN values
       assign {Dirty, Accessed, Global, User, Executable, Writable, Readable, Valid} = CurrentPTE[7:0];
-      assign LeafPTE = Executable | Writable | Readable;
+      assign LeafPTE = Executable | Readable; // leaf PTE never has only Writable
       assign ValidPTE = Valid && ~(Writable && ~Readable);
       assign ADPageFault = ~Accessed | (MemWrite & ~Dirty);
 
@@ -209,7 +206,7 @@ module pagetablewalker
     // Walker FSM
 	always_comb 
 	  case (WalkerState)
-	    IDLE: if (AnyTLBMissM) 		NextWalkerState = InitialWalkerState;
+	    IDLE: if (StartWalk) 		NextWalkerState = InitialWalkerState;
 		      else 					NextWalkerState = IDLE;
 	    LEVEL3_SET_ADRE: 			NextWalkerState = LEVEL3_WDV;
 	    LEVEL3_WDV: if (HPTWStall) 	NextWalkerState = LEVEL3_WDV;
