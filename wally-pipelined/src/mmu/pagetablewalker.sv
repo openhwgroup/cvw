@@ -88,7 +88,7 @@ module pagetablewalker
       logic			    Dirty, Accessed, Global, User,
 				    Executable, Writable, Readable, Valid;
       // PTE descriptions
-      logic			    ValidPTE, AccessAlert, MegapageMisaligned, BadMegapage, LeafPTE;
+      logic			    ValidPTE, ADPageFault, MegapageMisaligned, BadMegapage, LeafPTE;
 
       // Outputs of walker
       logic [`XLEN-1:0]		    PageTableEntry;
@@ -134,7 +134,7 @@ module pagetablewalker
 	  flopenrc #(2) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, {DTLBMissM, ITLBMissF}, {DTLBMissMQ, ITLBMissFQ});
 	  flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 	  flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
-	  flopenr #(`XLEN) ptereg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
+	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
 	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
 
@@ -150,7 +150,7 @@ module pagetablewalker
       // Assign PTE descriptors common across all XLEN values
       assign LeafPTE = Executable | Writable | Readable;
       assign ValidPTE = Valid && ~(Writable && ~Readable);
-      assign AccessAlert = ~Accessed | (MemStore & ~Dirty);
+      assign ADPageFault = ~Accessed | (MemStore & ~Dirty);
 
       // Assign specific outputs to general outputs
       assign PageTableEntryF = PageTableEntry;
@@ -159,6 +159,11 @@ module pagetablewalker
       //      generate
       if (`XLEN == 32) begin
 	logic [9:0] VPN1, VPN0;
+	assign VPN1 = TranslationVAdr[31:22];
+	assign VPN0 = TranslationVAdr[21:12];
+	
+	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
+	assign MegapageMisaligned = |(CurrentPPN[9:0]);
 
 	
 	// State transition logic
@@ -208,7 +213,7 @@ module pagetablewalker
 	      // fault upon finding a superpage that is misaligned or has 0
 	      // access bit. The following commented line of code is
 	      // supposed to perform that check. However, it is untested.
-	      if (ValidPTE && LeafPTE && ~BadMegapage) begin
+	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) begin
 		NextWalkerState = LEAF;
 		TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
 	      end
@@ -239,7 +244,7 @@ module pagetablewalker
 	    end
 
 	    LEVEL0: begin
-	      if (ValidPTE & LeafPTE & ~AccessAlert) begin
+	      if (ValidPTE & LeafPTE & ~ADPageFault) begin
 		NextWalkerState = LEAF;
 		TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
 	      end else begin
@@ -269,12 +274,7 @@ module pagetablewalker
 	  endcase
 	end
 
-	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
-	assign MegapageMisaligned = |(CurrentPPN[9:0]);
-	assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
 
-	assign VPN1 = TranslationVAdr[31:22];
-	assign VPN0 = TranslationVAdr[21:12];
 
 
 
@@ -286,8 +286,20 @@ module pagetablewalker
       end else begin
 
 	logic [8:0] VPN3, VPN2, VPN1, VPN0;
+	assign VPN3 = TranslationVAdr[47:39];
+	assign VPN2 = TranslationVAdr[38:30];
+	assign VPN1 = TranslationVAdr[29:21];
+	assign VPN0 = TranslationVAdr[20:12];
 
-	logic	    TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
+	logic	    TerapageMisaligned, GigapageMisaligned;
+	// A terapage is a level 3 leaf page. This page must have zero PPN[2],
+	// zero PPN[1], and zero PPN[0]
+	assign TerapageMisaligned = |(CurrentPPN[26:0]);
+	// A gigapage is a Level 2 leaf page. This page must have zero PPN[1] and
+	// zero PPN[0]
+	assign GigapageMisaligned = |(CurrentPPN[17:0]);
+	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
+	assign MegapageMisaligned = |(CurrentPPN[8:0]);
 
 	always_comb begin
 	  PRegEn = 1'b0;
@@ -337,7 +349,7 @@ module pagetablewalker
 	      // fault upon finding a superpage that is misaligned or has 0
 	      // access bit. The following commented line of code is
 	      // supposed to perform that check. However, it is untested.
-	      if (ValidPTE && LeafPTE && ~BadTerapage) begin
+	      if (ValidPTE && LeafPTE && ~(TerapageMisaligned || ADPageFault)) begin
 		NextWalkerState = LEAF;
 		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      end
@@ -371,7 +383,7 @@ module pagetablewalker
 	      // fault upon finding a superpage that is misaligned or has 0
 	      // access bit. The following commented line of code is
 	      // supposed to perform that check. However, it is untested.
-	      if (ValidPTE && LeafPTE && ~BadGigapage) begin
+	      if (ValidPTE && LeafPTE && ~(GigapageMisaligned || ADPageFault)) begin
 		NextWalkerState = LEAF;
 		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      end
@@ -405,7 +417,7 @@ module pagetablewalker
 	      // fault upon finding a superpage that is misaligned or has 0
 	      // access bit. The following commented line of code is
 	      // supposed to perform that check. However, it is untested.
-	      if (ValidPTE && LeafPTE && ~BadMegapage) begin
+	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned || ADPageFault)) begin
 		NextWalkerState = LEAF;
 		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 
@@ -436,7 +448,7 @@ module pagetablewalker
 	    end
 
 	    LEVEL0: begin
-	      if (ValidPTE && LeafPTE && ~AccessAlert) begin
+	      if (ValidPTE && LeafPTE && ~ADPageFault) begin
 		NextWalkerState = LEAF;
 		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      end else begin
@@ -471,23 +483,6 @@ module pagetablewalker
 	  endcase
 	end
 
-	// A terapage is a level 3 leaf page. This page must have zero PPN[2],
-	// zero PPN[1], and zero PPN[0]
-	assign TerapageMisaligned = |(CurrentPPN[26:0]);
-	// A gigapage is a Level 2 leaf page. This page must have zero PPN[1] and
-	// zero PPN[0]
-	assign GigapageMisaligned = |(CurrentPPN[17:0]);
-	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
-	assign MegapageMisaligned = |(CurrentPPN[8:0]);
-
-	assign BadTerapage = TerapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
-	assign BadGigapage = GigapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
-	assign BadMegapage = MegapageMisaligned || AccessAlert;  // *** Implement better access/dirty scheme
-
-	assign VPN3 = TranslationVAdr[47:39];
-	assign VPN2 = TranslationVAdr[38:30];
-	assign VPN1 = TranslationVAdr[29:21];
-	assign VPN0 = TranslationVAdr[20:12];
 
 	// *** Major issue.  We need the full virtual address here.
 	// When the TLB's are update it use use the orignal address
