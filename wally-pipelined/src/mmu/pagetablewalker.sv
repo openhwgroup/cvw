@@ -82,10 +82,10 @@ module pagetablewalker
       logic			    EndWalk;
 	  logic [1:0]       NextPageType;
 
-      typedef enum  {LEVEL0_SET_ADRE, LEVEL0_WDV, LEVEL0,
-				     LEVEL1_SET_ADRE, LEVEL1_WDV, LEVEL1,
-				     LEVEL2_SET_ADRE, LEVEL2_WDV, LEVEL2,
-				     LEVEL3_SET_ADRE, LEVEL3_WDV, LEVEL3,
+      typedef enum  {LEVEL0_SET_ADR, LEVEL0_WDV, LEVEL0,
+				     LEVEL1_SET_ADR, LEVEL1_WDV, LEVEL1,
+				     LEVEL2_SET_ADR, LEVEL2_WDV, LEVEL2,
+				     LEVEL3_SET_ADR, LEVEL3_WDV, LEVEL3,
 				     LEAF, IDLE, FAULT} statetype;
 
       statetype WalkerState, NextWalkerState, InitialWalkerState;
@@ -106,7 +106,6 @@ module pagetablewalker
       flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBMissMQ);
 	  flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
-	 // flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
 	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
@@ -132,13 +131,6 @@ module pagetablewalker
 	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemWrite;
 	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemWrite;
 
-/*	  always_comb // determine type of page being walked:
-		  case (PreviousWalkerState)
-			LEVEL3:  PageType = 2'b11; // terapage
-			LEVEL2:  PageType = 2'b10; // gigapage
-			LEVEL1:  PageType = 2'b01; // megapage
-			default: PageType = 2'b00; // kilopage
-		  endcase*/
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
 	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV);
 	  // *** is there a way to speed up HPTW?
@@ -161,11 +153,11 @@ module pagetablewalker
 		assign VPN0 = TranslationVAdr[21:12];
 		always_comb
 		  case (WalkerState)
-	    	LEVEL1_SET_ADRE: TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+	    	LEVEL1_SET_ADR:  TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
 	    	LEVEL1_WDV:      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
-			LEVEL1:          if (NextWalkerState == LEAF) TranslationPAdr = {2'b00, TranslationVAdr[31:0]}; // ***check this and similar
-			                 else 		TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-			LEVEL0_SET_ADRE: TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+			LEVEL1:          if (NextWalkerState == LEAF) TranslationPAdr = {2'b00, TranslationVAdr[31:0]}; // ***check this and similar in LEVEL0 and LEAF
+			                 else TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+			LEVEL0_SET_ADR:  TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 			LEVEL0_WDV: 	 TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 			LEVEL0: 		 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
 			LEAF:			 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
@@ -179,19 +171,19 @@ module pagetablewalker
 		assign VPN0 = TranslationVAdr[20:12];
 		always_comb
 		  case (WalkerState)
-			LEVEL3_SET_ADRE: TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+			LEVEL3_SET_ADR:  TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
 	    	LEVEL3_WDV:  	 TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
 	    	LEVEL3:          if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 			                 else TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
-			LEVEL2_SET_ADRE: TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+			LEVEL2_SET_ADR:  TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 			LEVEL2_WDV:  	 TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 	   		LEVEL2: 		 if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 			                 else TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
-	      	LEVEL1_SET_ADRE: TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	      	LEVEL1_SET_ADR:  TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 			LEVEL1_WDV: 	 TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 	     	LEVEL1: 		 if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 			                 else TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-	    	LEVEL0_SET_ADRE: TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	    	LEVEL0_SET_ADR:  TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 			LEVEL0_WDV: 	 TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 	  		LEVEL0: 		 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 			LEAF:			 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
@@ -200,43 +192,43 @@ module pagetablewalker
 	  end
 
 	  if (`XLEN == 32) begin
-		assign InitialWalkerState = LEVEL1_SET_ADRE;
+		assign InitialWalkerState = LEVEL1_SET_ADR;
 		assign TerapageMisaligned = 0; // not applicable
 		assign GigapageMisaligned = 0; // not applicable
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
 		assign HPTWPAdrE = TranslationPAdr[31:0]; // ***not right?
 	  end else begin
-		assign InitialWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
+		assign InitialWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADR : LEVEL2_SET_ADR;
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
 		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
 		assign HPTWPAdrE = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
  	  end
 
-    // Walker FSM
+    // Page Table Walker FSM
 	always_comb 
 	  case (WalkerState)
 	    IDLE: if (StartWalk) 		NextWalkerState = InitialWalkerState;
 		      else 					NextWalkerState = IDLE;
-	    LEVEL3_SET_ADRE: 			NextWalkerState = LEVEL3_WDV;
+	    LEVEL3_SET_ADR: 			NextWalkerState = LEVEL3_WDV;
 	    LEVEL3_WDV: if (HPTWStall) 	NextWalkerState = LEVEL3_WDV;
 	                else 			NextWalkerState = LEVEL3;
 	    LEVEL3: if (ValidPTE && LeafPTE && ~(TerapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
-		  		else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL2_SET_ADRE;
+		  		else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL2_SET_ADR;
 		 		else 				NextWalkerState = FAULT;
-	    LEVEL2_SET_ADRE: 			NextWalkerState = LEVEL2_WDV;
+	    LEVEL2_SET_ADR: 			NextWalkerState = LEVEL2_WDV;
 	    LEVEL2_WDV: if (HPTWStall) 	NextWalkerState = LEVEL2_WDV;
 	      			else 			NextWalkerState = LEVEL2;
 	    LEVEL2: if (ValidPTE && LeafPTE && ~(GigapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
-				else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL1_SET_ADRE;
+				else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL1_SET_ADR;
 				else 				NextWalkerState = FAULT;
-	    LEVEL1_SET_ADRE: 			NextWalkerState = LEVEL1_WDV;
+	    LEVEL1_SET_ADR: 			NextWalkerState = LEVEL1_WDV;
 	    LEVEL1_WDV: if (HPTWStall) 	NextWalkerState = LEVEL1_WDV;
 	      			else 			NextWalkerState = LEVEL1;
 	    LEVEL1: if (ValidPTE && LeafPTE && ~(MegapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
-	      		else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL0_SET_ADRE;
+	      		else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL0_SET_ADR;
 				else 				NextWalkerState = FAULT;
-	    LEVEL0_SET_ADRE: 			NextWalkerState = LEVEL0_WDV;
+	    LEVEL0_SET_ADR: 			NextWalkerState = LEVEL0_WDV;
 	    LEVEL0_WDV: if (HPTWStall) 	NextWalkerState = LEVEL0_WDV;
 	      			else 			NextWalkerState = LEVEL0;
 	    LEVEL0: if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
