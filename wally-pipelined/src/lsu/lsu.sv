@@ -118,7 +118,7 @@ module lsu
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
  
   logic 		       DTLBMissM;
-  logic [`XLEN-1:0] 	       PageTableEntryM;
+  logic [`XLEN-1:0] 	       PTE, PageTableEntryM;
   logic 		       DTLBWriteM;
   logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       HPTWStall;  
@@ -157,8 +157,8 @@ module lsu
 				  .ITLBMissF(ITLBMissF),
 				  .DTLBMissM(DTLBMissM),
 				  .MemRWM(MemRWM),
-				  .PageTableEntryF(PageTableEntryF),
-				  .PageTableEntryM(PageTableEntryM),
+				  .PTE(PTE),
+//				  .PageTableEntryM(PageTableEntryM),
 				  .PageType,
 				  .ITLBWriteF(ITLBWriteF),
 				  .DTLBWriteM(DTLBWriteM),
@@ -171,6 +171,9 @@ module lsu
 				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
+
+  assign PageTableEntryM = PTE;
+  assign PageTableEntryF = PTE;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
