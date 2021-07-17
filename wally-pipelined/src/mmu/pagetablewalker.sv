@@ -119,9 +119,7 @@ module pagetablewalker
 
 
 
-      flop #(`XLEN) HPTWPAdrMReg(.clk(clk),
-				 .d(HPTWPAdrE),
-				 .q(HPTWPAdrM));
+      flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 
 
 
