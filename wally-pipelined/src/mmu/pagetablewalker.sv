@@ -144,10 +144,18 @@ module pagetablewalker
 	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemStore;
 	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemStore;
 
-	  assign PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
+	  always_comb // determine type of page being walked:
+		  case (PreviousWalkerState)
+			LEVEL3:  PageType = 2'b11; // terapage
+			LEVEL2:  PageType = 2'b10; // gigapage
+			LEVEL1:  PageType = 2'b01; // megapage
+			default: PageType = 2'b00; // kilopage
+		  endcase
+/*	  assign PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // is
 			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
-			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
+			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));*/
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
+	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV); // is this really necessary?
 
 	  // *** is there a way to speed up HPTW?
 
@@ -203,36 +211,29 @@ module pagetablewalker
 
 	// State transition logic
 	always_comb begin
-	  //PRegEn = 1'b0;
-	  HPTWRead = 1'b0;
+	  //HPTWRead = 1'b0;
 
 	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM & SvMode == `SV32) NextWalkerState = LEVEL1_SET_ADRE;
 	      	  else NextWalkerState = IDLE;
 	    LEVEL1_SET_ADRE: NextWalkerState = LEVEL1_WDV;
 	    LEVEL1_WDV: begin
-	      HPTWRead = 1'b1;
+	      //HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL1_WDV;
-	      else begin
-			NextWalkerState = LEVEL1;
-			//PRegEn = 1'b1;
-	      end
+	      else NextWalkerState = LEVEL1;
 	    end
 	    LEVEL1: begin
 	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) NextWalkerState = LEAF;
 	      else if (ValidPTE && ~LeafPTE) begin
 			NextWalkerState = LEVEL0_SET_ADRE;
-			HPTWRead = 1'b1;
+			//HPTWRead = 1'b1; // *** seems this shouldn't be asserted here
 	      end else NextWalkerState = FAULT;
 	    end
 	    LEVEL0_SET_ADRE: NextWalkerState = LEVEL0_WDV;
 	    LEVEL0_WDV: begin
-	      HPTWRead = 1'b1;
+	      //HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL0_WDV;
-	      else begin
-			NextWalkerState = LEVEL0;
-			//PRegEn = 1'b1;
-	      end
+	      else NextWalkerState = LEVEL0;
 	    end
 	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
 				else NextWalkerState = FAULT;
@@ -260,20 +261,16 @@ module pagetablewalker
 	assign MegapageMisaligned = |(CurrentPPN[8:0]);
 
 	always_comb begin
-	  //PRegEn = 1'b0;
-	  HPTWRead = 1'b0;
+	  //HPTWRead = 1'b0;
 
 	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM) NextWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
 		      else NextWalkerState = IDLE;
 	    LEVEL3_SET_ADRE: NextWalkerState = LEVEL3_WDV;
 	    LEVEL3_WDV: begin
-	      HPTWRead = 1'b1;
+	      //HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL3_WDV;
-	      else begin
-			NextWalkerState = LEVEL3;
-			//PRegEn = 1'b1;
-	      end
+	      else NextWalkerState = LEVEL3;
 	    end
 	    LEVEL3: 
 	      if (ValidPTE && LeafPTE && ~(TerapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
@@ -281,12 +278,9 @@ module pagetablewalker
 		  else NextWalkerState = FAULT;
 	    LEVEL2_SET_ADRE: NextWalkerState = LEVEL2_WDV;
 	    LEVEL2_WDV:  begin
-	      HPTWRead = 1'b1;
+	      //HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL2_WDV;
-	      else begin
-			NextWalkerState = LEVEL2;
-			//PRegEn = 1'b1;
-	      end
+	      else NextWalkerState = LEVEL2;
 	    end
 	    LEVEL2: 
 			if (ValidPTE && LeafPTE && ~(GigapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
@@ -294,12 +288,9 @@ module pagetablewalker
 			else NextWalkerState = FAULT;
 	    LEVEL1_SET_ADRE: NextWalkerState = LEVEL1_WDV;
 	    LEVEL1_WDV: begin
-	      HPTWRead = 1'b1;
+	      //HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL1_WDV;
-	      else begin
-			NextWalkerState = LEVEL1;
-			//PRegEn = 1'b1;
-	      end
+	      else NextWalkerState = LEVEL1;
 	    end
 	    LEVEL1: 
 			if (ValidPTE && LeafPTE && ~(MegapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
@@ -307,12 +298,9 @@ module pagetablewalker
 			else NextWalkerState = FAULT;
 	    LEVEL0_SET_ADRE: NextWalkerState = LEVEL0_WDV;
 	    LEVEL0_WDV: begin
-	      HPTWRead = 1'b1;
+	      //HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL0_WDV;
-	      else begin
-			NextWalkerState = LEVEL0;
-			//PRegEn = 1'b1;
-	      end
+	      else NextWalkerState = LEVEL0;
 	    end
 	    LEVEL0: 
 			if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
