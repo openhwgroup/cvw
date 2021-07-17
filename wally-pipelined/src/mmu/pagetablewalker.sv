@@ -76,7 +76,6 @@ module pagetablewalker
       logic [`XLEN-1:0]		    CurrentPTE;
       logic [`PA_BITS-1:0]	    TranslationPAdr;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
-      logic [`SVMODE_BITS-1:0]	    SvMode;
       logic			    MemStore;
       logic			    Dirty, Accessed, Global, User, Executable, Writable, Readable, Valid;
       logic			    ValidPTE, ADPageFault, MegapageMisaligned, TerapageMisaligned, GigapageMisaligned, BadMegapage, LeafPTE;
@@ -89,13 +88,15 @@ module pagetablewalker
 				     LEVEL3_SET_ADRE, LEVEL3_WDV, LEVEL3,
 				     LEAF, IDLE, FAULT} statetype;
 
-      statetype WalkerState, NextWalkerState, PreviousWalkerState;
+      statetype WalkerState, NextWalkerState, PreviousWalkerState, InitialWalkerState;
 
       logic			    PRegEn;
       logic			    SelDataTranslation;
       logic			    AnyTLBMissM;
 
+      logic [`SVMODE_BITS-1:0]	    SvMode;
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
+	  
       assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
       assign MemStore = MemRWM[0];
 
@@ -115,11 +116,8 @@ module pagetablewalker
       assign StartWalk = (WalkerState == IDLE) & AnyTLBMissM;
       assign EndWalk = (WalkerState == LEAF) || (WalkerState == FAULT);
 
-      // unswizzle PTE bits
-      assign {Dirty, Accessed, Global, User,
-	      Executable, Writable, Readable, Valid} = CurrentPTE[7:0];
-
       // Assign PTE descriptors common across all XLEN values
+      assign {Dirty, Accessed, Global, User, Executable, Writable, Readable, Valid} = CurrentPTE[7:0];
       assign LeafPTE = Executable | Writable | Readable;
       assign ValidPTE = Valid && ~(Writable && ~Readable);
       assign ADPageFault = ~Accessed | (MemStore & ~Dirty);
@@ -144,9 +142,6 @@ module pagetablewalker
 			LEVEL1:  PageType = 2'b01; // megapage
 			default: PageType = 2'b00; // kilopage
 		  endcase
-/*	  assign PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // is
-			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
-			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));*/
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
 	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV); // is this really necessary?
 
@@ -198,57 +193,22 @@ module pagetablewalker
 	  end
 
 	  if (`XLEN == 32) begin
+		assign InitialWalkerState = LEVEL1_SET_ADRE;
 		assign TerapageMisaligned = 0; // not applicable
 		assign GigapageMisaligned = 0; // not applicable
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
 		assign HPTWPAdrE = TranslationPAdr[31:0]; // ***not right?
 	  end else begin
+		assign InitialWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
 		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
 		assign HPTWPAdrE = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
  	  end
-      //      generate
-      if (`XLEN == 32) begin
-	// State transition logic
-	always_comb begin
+
+	always_comb 
 	  case (WalkerState)
-	    IDLE: if (AnyTLBMissM & SvMode == `SV32) NextWalkerState = LEVEL1_SET_ADRE;
-	      	  else NextWalkerState = IDLE;
-	    LEVEL1_SET_ADRE: NextWalkerState = LEVEL1_WDV;
-	    LEVEL1_WDV: if (HPTWStall) NextWalkerState = LEVEL1_WDV;
-	      else NextWalkerState = LEVEL1;
-	    LEVEL1: begin
-	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) NextWalkerState = LEAF;
-	      else if (ValidPTE && ~LeafPTE) begin
-			NextWalkerState = LEVEL0_SET_ADRE;
-	      end else NextWalkerState = FAULT;
-	    end
-	    LEVEL0_SET_ADRE: NextWalkerState = LEVEL0_WDV;
-	    LEVEL0_WDV: if (HPTWStall) NextWalkerState = LEVEL0_WDV;
-	      else NextWalkerState = LEVEL0;
-	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
-				else NextWalkerState = FAULT;
-	    LEAF:  NextWalkerState = IDLE;
-	    FAULT: NextWalkerState = IDLE;
-	    default: begin
-			$error("Default state in HPTW should be unreachable");
-			NextWalkerState = IDLE; // should never be reached
-		end
-	  endcase
-	end
-
-	// Assign outputs to ahblite
-	// *** Currently truncate address to 32 bits. This must be changed if
-	// we support larger physical address spaces
-
-      end else begin
-
-	always_comb begin
-	  case (WalkerState)
-	    IDLE: if (AnyTLBMissM) 
-			    if (`XLEN == 64)  	NextWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
-				else              	NextWalkerState = LEVEL1_SET_ADRE;
+	    IDLE: if (AnyTLBMissM) 		NextWalkerState = InitialWalkerState;
 		      else 					NextWalkerState = IDLE;
 	    LEVEL3_SET_ADRE: 			NextWalkerState = LEVEL3_WDV;
 	    LEVEL3_WDV: if (HPTWStall) 	NextWalkerState = LEVEL3_WDV;
@@ -279,10 +239,7 @@ module pagetablewalker
 			$error("Default state in HPTW should be unreachable");
 									NextWalkerState = IDLE; // should never be reached
 		end
-
 	  endcase
-	end
-     end
     end else begin
       assign HPTWPAdrE = 0;
       assign HPTWRead = 0;
