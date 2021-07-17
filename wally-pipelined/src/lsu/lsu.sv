@@ -123,6 +123,9 @@ module lsu
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
   logic [`XLEN-1:0] 	       HPTWPAdrM;  
+  logic [`XLEN-1:0] TranslationVAdr;
+  logic [`PA_BITS-1:0] TranslationPAdr;
+  logic            UseTranslationVAdr;
   logic 		       HPTWRead;
   logic [1:0] 		       MemRWMtoDCache;
   logic [2:0] 		       Funct3MtoDCache;
@@ -162,15 +165,22 @@ module lsu
 				  .DTLBWriteM(DTLBWriteM),
 				  .HPTWReadPTE(HPTWReadPTE),
 				  .HPTWStall(HPTWStall),
-				  .HPTWPAdrE(HPTWPAdrE),
-				  .HPTWPAdrM(HPTWPAdrM),				  
+          .TranslationVAdr,
+          .TranslationPAdr,			  
+          .UseTranslationVAdr,
 				  .HPTWRead(HPTWRead),
 				  .SelPTW(SelPTW),
 				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
-//  assign PageTableEntryF = PTE;
+  logic [`XLEN-1:0] TranslationPAdrXLEN;
+  generate // *** needs fixing about truncation dh 7/17/21
+    if (`XLEN == 32) assign TranslationPAdrXLEN = TranslationPAdr[31:0];
+    else             assign TranslationPAdrXLEN = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
+  endgenerate
+  mux2 #(`XLEN) HPTWPAdrMux(TranslationPAdrXLEN, TranslationVAdr, UseTranslationVAdr, HPTWPAdrE); // *** misleading to call it PAdr, bad because some bits have been truncated
+  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
