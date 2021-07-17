@@ -151,6 +151,8 @@ module pagetablewalker
 		   .d(ITLBMissF),
 		   .q(ITLBMissFQ));
 
+	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 
       assign AnyTLBMissM = DTLBMissM | ITLBMissF;
 
@@ -174,9 +176,6 @@ module pagetablewalker
       if (`XLEN == 32) begin
 	logic [9:0] VPN1, VPN0;
 
-	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
-
-	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 	
 	// State transition logic
 	always_comb begin
@@ -317,19 +316,6 @@ module pagetablewalker
 	logic [8:0] VPN3, VPN2, VPN1, VPN0;
 
 	logic	    TerapageMisaligned, GigapageMisaligned, BadTerapage, BadGigapage;
-
-	flopenl #(.TYPE(statetype)) WalkerStageReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
-
-	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
-
-	/* -----\/----- EXCLUDED -----\/-----
-	 assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV ||
-	 WalkerState == LEVEL2_WDV || WalkerState == LEVEL3_WDV) && ~HPTWStall;
-	 -----/\----- EXCLUDED -----/\----- */
-
-	//assign HPTWRead = (WalkerState == IDLE && HPTWTranslate) || WalkerState == LEVEL3 ||
-	//			WalkerState == LEVEL2 || WalkerState == LEVEL1;
-
 
 	always_comb begin
 	  PRegEn = 1'b0;
