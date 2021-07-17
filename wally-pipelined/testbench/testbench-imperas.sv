@@ -283,7 +283,6 @@ string tests32f[] = '{
     "rv64i/WALLY-SLLI", "3000",
     "rv64i/WALLY-SRLI", "3000",
     "rv64i/WALLY-SRAI", "3000",
-
     "rv64i/WALLY-JAL", "4000",
     "rv64i/WALLY-JALR", "3000",
     "rv64i/WALLY-STORE", "3000",
@@ -511,11 +510,7 @@ string tests32f[] = '{
   logic [`XLEN-1:0] PCW;
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
-  
-
-  logic [`XLEN-1:0] debug;
-  assign debug = dut.uncore.dtim.RAM[536872960];
-  
+    
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
 
@@ -746,6 +741,7 @@ module riscvassertions();
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries");
     assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
+    assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
   end
 endmodule
 
