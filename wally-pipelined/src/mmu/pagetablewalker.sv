@@ -47,7 +47,7 @@ module pagetablewalker
 
    // Outputs to the TLBs (PTEs to write)
    output logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM,
-   output logic [1:0]	    PageTypeF, PageTypeM,
+   output logic [1:0]	    PageType,
    output logic		    ITLBWriteF, DTLBWriteM,
    output logic 	    SelPTW,
 
@@ -92,7 +92,6 @@ module pagetablewalker
 
       // Outputs of walker
       logic [`XLEN-1:0]		    PageTableEntry;
-      logic [1:0]		    PageType;
       logic			    StartWalk;
       logic			    EndWalk;
 
@@ -170,9 +169,6 @@ module pagetablewalker
       // Assign specific outputs to general outputs
       assign PageTableEntryF = PageTableEntry;
       assign PageTableEntryM = PageTableEntry;
-      assign PageTypeF = PageType;
-      assign PageTypeM = PageType;
-
 
       //      generate
       if (`XLEN == 32) begin
@@ -182,10 +178,6 @@ module pagetablewalker
 
 	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 	
-	/* -----\/----- EXCLUDED -----\/-----
-	 assign PRegEn = (WalkerState == LEVEL1_WDV || WalkerState == LEVEL0_WDV) && ~HPTWStall;
-	 -----/\----- EXCLUDED -----/\----- */
-
 	// State transition logic
 	always_comb begin
 	  PRegEn = 1'b0;

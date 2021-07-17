@@ -118,7 +118,7 @@ module wallypipelinedhart
   logic  [1:0]       STATUS_MPP;
   logic [1:0] 		    PrivilegeModeW;
   logic [`XLEN-1:0] 	    PageTableEntryF, PageTableEntryM;
-  logic [1:0] 		    PageTypeF, PageTypeM;
+  logic [1:0] 		    PageType;
 
   // PMA checker signals
   logic 		    DSquashBusAccessM, ISquashBusAccessF;
@@ -226,7 +226,7 @@ module wallypipelinedhart
 	  .PCF(PCF),
 	  .ITLBMissF(ITLBMissF),
 	  .PageTableEntryF(PageTableEntryF),
-	  .PageTypeF(PageTypeF),
+	  .PageType,
 	  .ITLBWriteF(ITLBWriteF),
 	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
