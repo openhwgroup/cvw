@@ -156,12 +156,59 @@ module pagetablewalker
       assign PageTableEntryF = PageTableEntry;
       assign PageTableEntryM = PageTableEntry;
 
+	  // *** is there a way to speed up HPTW?
+
+	  // TranslationPAdr mux
+	  if (`XLEN==32) begin
+		logic [9:0] VPN1, VPN0;
+		assign VPN1 = TranslationVAdr[31:22];
+		assign VPN0 = TranslationVAdr[21:12];
+		always_comb
+		  case (WalkerState)
+	    	LEVEL1_SET_ADRE: TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+	    	LEVEL1_WDV:      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+			LEVEL1:          if (NextWalkerState == LEAF) TranslationPAdr = {2'b00, TranslationVAdr[31:0]}; // ***check this and similar
+			                 else 		TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+			LEVEL0_SET_ADRE: TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+			LEVEL0_WDV: 	 TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+			LEVEL0: 		 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+			LEAF:			 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+			default:		 TranslationPAdr = 0; // cause seg fault if this is improperly used
+		  endcase
+	  end else begin
+		logic [8:0] VPN3, VPN2, VPN1, VPN0;
+		assign VPN3 = TranslationVAdr[47:39];
+		assign VPN2 = TranslationVAdr[38:30];
+		assign VPN1 = TranslationVAdr[29:21];
+		assign VPN0 = TranslationVAdr[20:12];
+		always_comb
+		  case (WalkerState)
+			LEVEL3_SET_ADRE: TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+	    	LEVEL3_WDV:  	 TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+	    	LEVEL3:          if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+			                 else TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+			LEVEL2_SET_ADRE: TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+			LEVEL2_WDV:  	 TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+	   		LEVEL2: 		 if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+			                 else TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	      	LEVEL1_SET_ADRE: TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+			LEVEL1_WDV: 	 TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	     	LEVEL1: 		 if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+			                 else TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	    	LEVEL0_SET_ADRE: TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+			LEVEL0_WDV: 	 TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	  		LEVEL0: 		 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+			LEAF:			 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+			default: 		 TranslationPAdr = 0; // cause seg fault if this is improperly used
+		  endcase 
+	  end
       //      generate
       if (`XLEN == 32) begin
-	logic [9:0] VPN1, VPN0;
-	assign VPN1 = TranslationVAdr[31:22];
-	assign VPN0 = TranslationVAdr[21:12];
-	
+		  // *** make sure 32/34 bit addresses are being handled properly
+	//logic [9:0] VPN1, VPN0;
+	//assign VPN1 = TranslationVAdr[31:22];
+	//assign VPN0 = TranslationVAdr[21:12];
+
 	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
 	assign MegapageMisaligned = |(CurrentPPN[9:0]);
 
@@ -169,7 +216,7 @@ module pagetablewalker
 	// State transition logic
 	always_comb begin
 	  PRegEn = 1'b0;
-	  TranslationPAdr = '0;
+	//  TranslationPAdr = '0;
 	  HPTWRead = 1'b0;
 	  PageTableEntry = '0;
 	  PageType = '0;
@@ -194,11 +241,11 @@ module pagetablewalker
 
 	    LEVEL1_SET_ADRE: begin
 	      NextWalkerState = LEVEL1_WDV;
-	      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+	      //TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
 	    end
 
 	    LEVEL1_WDV: begin
-	      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
+	      //TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL1_WDV;
@@ -209,18 +256,13 @@ module pagetablewalker
 	    end
 
 	    LEVEL1: begin
-	      // *** <FUTURE WORK> According to the architecture, we should
-	      // fault upon finding a superpage that is misaligned or has 0
-	      // access bit. The following commented line of code is
-	      // supposed to perform that check. However, it is untested.
 	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) begin
 		NextWalkerState = LEAF;
-		TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+		//TranslationPAdr = {2'b00, TranslationVAdr[31:0]}; // ***check this
 	      end
-	      // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
 	      else if (ValidPTE && ~LeafPTE) begin
 		NextWalkerState = LEVEL0_SET_ADRE;
-		TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+		//TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 		HPTWRead = 1'b1;
 	      end else begin
 		NextWalkerState = FAULT;
@@ -229,11 +271,11 @@ module pagetablewalker
 
 	    LEVEL0_SET_ADRE: begin
 	      NextWalkerState = LEVEL0_WDV;
-	      TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+	      //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 	    end
 
 	    LEVEL0_WDV: begin
-	      TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
+	      //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL0_WDV;
@@ -246,7 +288,7 @@ module pagetablewalker
 	    LEVEL0: begin
 	      if (ValidPTE & LeafPTE & ~ADPageFault) begin
 		NextWalkerState = LEAF;
-		TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+		//TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
 	      end else begin
 		NextWalkerState = FAULT;
 	      end
@@ -258,7 +300,7 @@ module pagetablewalker
 	      PageType = (PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
 	      DTLBWriteM = DTLBMissMQ;
 	      ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-	      TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+	      //TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
 	    end
 
 	    FAULT: begin
@@ -285,11 +327,11 @@ module pagetablewalker
 
       end else begin
 
-	logic [8:0] VPN3, VPN2, VPN1, VPN0;
+/*	logic [8:0] VPN3, VPN2, VPN1, VPN0;
 	assign VPN3 = TranslationVAdr[47:39];
 	assign VPN2 = TranslationVAdr[38:30];
 	assign VPN1 = TranslationVAdr[29:21];
-	assign VPN0 = TranslationVAdr[20:12];
+	assign VPN0 = TranslationVAdr[20:12];*/
 
 	logic	    TerapageMisaligned, GigapageMisaligned;
 	// A terapage is a level 3 leaf page. This page must have zero PPN[2],
@@ -303,7 +345,7 @@ module pagetablewalker
 
 	always_comb begin
 	  PRegEn = 1'b0;
-	  TranslationPAdr = '0;
+	  //TranslationPAdr = '0;
 	  HPTWRead = 1'b0;
 	  PageTableEntry = '0;
 	  PageType = '0;
@@ -330,11 +372,11 @@ module pagetablewalker
 
 	    LEVEL3_SET_ADRE: begin
 	      NextWalkerState = LEVEL3_WDV;
-	      TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+	      //TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
 	    end
 
 	    LEVEL3_WDV: begin
-	      TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
+	      //TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL3_WDV;
@@ -345,18 +387,13 @@ module pagetablewalker
 	    end
 
 	    LEVEL3: begin
-	      // *** <FUTURE WORK> According to the architecture, we should
-	      // fault upon finding a superpage that is misaligned or has 0
-	      // access bit. The following commented line of code is
-	      // supposed to perform that check. However, it is untested.
 	      if (ValidPTE && LeafPTE && ~(TerapageMisaligned || ADPageFault)) begin
 		NextWalkerState = LEAF;
-		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+		//TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      end
-	      // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
 	      else if (ValidPTE && ~LeafPTE) begin
 		NextWalkerState = LEVEL2_SET_ADRE;
-		TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+		//TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 	      end else begin
 		NextWalkerState = FAULT;
 	      end
@@ -364,11 +401,11 @@ module pagetablewalker
 
 	    LEVEL2_SET_ADRE: begin
 	      NextWalkerState = LEVEL2_WDV;
-	      TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+	      //TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 	    end
 
 	    LEVEL2_WDV:  begin
-	      TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
+	      //TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL2_WDV;
@@ -385,12 +422,12 @@ module pagetablewalker
 	      // supposed to perform that check. However, it is untested.
 	      if (ValidPTE && LeafPTE && ~(GigapageMisaligned || ADPageFault)) begin
 		NextWalkerState = LEAF;
-		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+		//TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      end
 	      // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
 	      else if (ValidPTE && ~LeafPTE) begin
 		NextWalkerState = LEVEL1_SET_ADRE;
-		TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+		//TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 	      end else begin
 		NextWalkerState = FAULT;
 	      end
@@ -398,11 +435,11 @@ module pagetablewalker
 
 	    LEVEL1_SET_ADRE: begin
 	      NextWalkerState = LEVEL1_WDV;
-	      TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	      //TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 	    end
 
 	    LEVEL1_WDV: begin
-	      TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
+	      //TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL1_WDV;
@@ -419,13 +456,13 @@ module pagetablewalker
 	      // supposed to perform that check. However, it is untested.
 	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned || ADPageFault)) begin
 		NextWalkerState = LEAF;
-		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+		//TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 
 	      end
 	      // else if (ValidPTE && LeafPTE)    NextWalkerState = LEAF;  // *** Once the above line is properly tested, delete this line.
 	      else if (ValidPTE && ~LeafPTE) begin
 		NextWalkerState = LEVEL0_SET_ADRE;
-		TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+		//TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 	      end else begin
 		NextWalkerState = FAULT;
 	      end
@@ -433,11 +470,11 @@ module pagetablewalker
 
 	    LEVEL0_SET_ADRE: begin
 	      NextWalkerState = LEVEL0_WDV;
-	      TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	      //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 	    end
 
 	    LEVEL0_WDV: begin
-	      TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
+	      //TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) begin
 		NextWalkerState = LEVEL0_WDV;
@@ -450,7 +487,7 @@ module pagetablewalker
 	    LEVEL0: begin
 	      if (ValidPTE && LeafPTE && ~ADPageFault) begin
 		NextWalkerState = LEAF;
-		TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+		//TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      end else begin
 		NextWalkerState = FAULT;
 	      end
@@ -463,7 +500,7 @@ module pagetablewalker
 			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
 	      DTLBWriteM = DTLBMissMQ;
 	      ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-	      TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+	      //TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
 	      NextWalkerState = IDLE;
 	    end
 
