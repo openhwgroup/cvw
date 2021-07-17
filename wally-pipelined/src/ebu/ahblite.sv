@@ -180,7 +180,7 @@ module ahblite (
       CapturedDataAvailable <= #1 1'b0;
     else
       CapturedDataAvailable <= #1 (StallW) ? (CaptureDataM | CapturedDataAvailable) : 1'b0;
-  always_comb
+/*  always_comb
     casez({StallW && (BusState != ATOMICREAD),CapturedDataAvailable})
       2'b00: HRDATANext = HRDATAMasked;
       2'b01: HRDATANext = CapturedHRDATAMasked;
@@ -192,8 +192,9 @@ module ahblite (
   subwordread swr(.HRDATA(HRDATA),
 		  .HADDRD(HADDRD),
 		  .HSIZED(HSIZED),
-		  .HRDATAMasked(HRDATAMasked));
+		  .HRDATAMasked(HRDATAMasked));*/
 
+  // *** AMO portion will go away when it is moved into the LSU
   // Handle AMO instructions if applicable
   generate
     if (`A_SUPPORTED) begin
