@@ -56,7 +56,7 @@ module trap (
   logic [11:0] PendingIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
-  logic NonBusTrapM, BusTrapM;
+  logic ExceptionNonIntM;
 
   // Determine pending enabled interrupts
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
@@ -64,7 +64,8 @@ module trap (
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
   assign InterruptM = PendingInterruptM & ~CommittedM;
-  assign ExceptionM = BusTrapM | NonBusTrapM;
+  //assign ExceptionM = BusTrapM | NonBusTrapM;
+  assign ExceptionM = TrapM;
   
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
@@ -73,13 +74,13 @@ module trap (
   // Trigger Traps and RET
   //   Created groups of trap signals so that bus could take in all traps it doesn't already produce (i.e. using just TrapM to squash access created circular paths)
   // *** Ben July 06, 2021 probably remove bus and nonbus trapm after dcache implemenation.
-  assign BusTrapM = LoadAccessFaultM | StoreAccessFaultM;
-  assign NonBusTrapM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
+  //assign BusTrapM = LoadAccessFaultM | StoreAccessFaultM;
+  assign ExceptionNonIntM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
                        LoadMisalignedFaultM | StoreMisalignedFaultM |
                        InstrPageFaultM | LoadPageFaultM | StorePageFaultM |
                        BreakpointFaultM | EcallFaultM |
-                       InterruptM;
-  assign TrapM = BusTrapM | NonBusTrapM;
+                       LoadAccessFaultM | StoreAccessFaultM;
+  assign TrapM = ExceptionNonIntM | InterruptM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
   assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
