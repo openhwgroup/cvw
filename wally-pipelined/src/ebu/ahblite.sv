@@ -55,7 +55,7 @@ module ahblite (
   input logic [1:0] 	     MemSizeM,     // *** remove
   output logic 		     DCfromAHBAck,
   // Return from bus
-  output logic [`XLEN-1:0]   HRDATAW,
+//  output logic [`XLEN-1:0]   HRDATAW,
   // AHB-Lite external signals
   input logic [`AHBW-1:0]    HRDATA,
   input logic 		     HREADY, HRESP,
@@ -180,25 +180,13 @@ module ahblite (
       CapturedDataAvailable <= #1 1'b0;
     else
       CapturedDataAvailable <= #1 (StallW) ? (CaptureDataM | CapturedDataAvailable) : 1'b0;
-/*  always_comb
-    casez({StallW && (BusState != ATOMICREAD),CapturedDataAvailable})
-      2'b00: HRDATANext = HRDATAMasked;
-      2'b01: HRDATANext = CapturedHRDATAMasked;
-      2'b1?: HRDATANext = HRDATAW;
-    endcase
-  flopr #(`XLEN) ReadDataOldWReg(clk, reset, HRDATANext, HRDATAW); 
-
-  // Extract and sign-extend subwords if necessary
-  subwordread swr(.HRDATA(HRDATA),
-		  .HADDRD(HADDRD),
-		  .HSIZED(HSIZED),
-		  .HRDATAMasked(HRDATAMasked));*/
 
   // *** AMO portion will go away when it is moved into the LSU
   // Handle AMO instructions if applicable
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
+      logic [`XLEN-1:0] HRDATAW;
       amoalu amoalu(.srca(HRDATAW), .srcb(DCtoAHBWriteData), .funct(Funct7M), .width(MemSizeM), 
                     .result(AMOResult));
       mux2 #(`XLEN) wdmux(DCtoAHBWriteData, AMOResult, AtomicMaskedM[1], WriteData);
