@@ -59,17 +59,19 @@ module trap (
   logic Exception1M;
 
   // Determine pending enabled interrupts
+  // interrupt if any sources are pending
+  // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
+  // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
   assign InterruptM = PendingInterruptM & ~CommittedM;
   assign ExceptionM = TrapM;
+  // *** as of 7/17/21, the system passes with this definition of ExceptionM as being all traps and fails if ExceptionM = Exception1M
+  // with no interrupts.  However, Ross intended the datacache to use Exception without interrupts, so there is something subtle
+  // to sort out here.
   
-  // interrupt if any sources are pending
-  // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
-  // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
- 
   // Trigger Traps and RET
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
