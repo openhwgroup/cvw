@@ -41,7 +41,7 @@ module pagetablewalker
    input logic [1:0]	    MemRWM,
 
    // Outputs to the TLBs (PTEs to write)
-   output logic [`XLEN-1:0] PageTableEntryF, PageTableEntryM,
+   output logic [`XLEN-1:0] PTE, //PageTableEntryM,
    output logic [1:0]	    PageType,
    output logic		    ITLBWriteF, DTLBWriteM,
    output logic 	    SelPTW,
@@ -120,8 +120,8 @@ module pagetablewalker
 	  
       // Assign specific outputs to general outputs
 	  // *** try to eliminate this duplication, but attempts caused MMU to hang
-      assign PageTableEntryF = CurrentPTE;
-      assign PageTableEntryM = CurrentPTE;
+      assign PTE = CurrentPTE;
+    //  assign PageTableEntryM = CurrentPTE;
 
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
