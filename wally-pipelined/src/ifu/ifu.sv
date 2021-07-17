@@ -67,7 +67,7 @@ module ifu (
   
   // mmu management
   input logic [1:0] 	      PrivilegeModeW,
-  input logic [`XLEN-1:0]     PageTableEntryF,
+  input logic [`XLEN-1:0]     PTE,
   input logic [1:0] 	      PageType,
   input logic [`XLEN-1:0]     SATP_REGW,
   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -116,7 +116,7 @@ module ifu (
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   immu(.Address(PCF),
        .Size(2'b10),
-       .PTE(PageTableEntryF),
+       .PTE(PTE),
        .PageTypeWriteVal(PageType),
        .TLBWrite(ITLBWriteF),
        .TLBFlush(ITLBFlushF),
