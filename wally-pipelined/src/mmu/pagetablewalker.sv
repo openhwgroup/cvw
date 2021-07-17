@@ -29,11 +29,6 @@
 
 `include "wally-config.vh"
 
-/* ***
- TO-DO:
- - Implement faults on accessed/dirty behavior
- */
-
 module pagetablewalker
   (
    // Control signals
@@ -152,6 +147,7 @@ module pagetablewalker
 	  assign PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
 			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
 			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
+	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
 
 	  // *** is there a way to speed up HPTW?
 
@@ -205,10 +201,9 @@ module pagetablewalker
 	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
 	assign MegapageMisaligned = |(CurrentPPN[9:0]);
 
-	
 	// State transition logic
 	always_comb begin
-	  PRegEn = 1'b0;
+	  //PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
 
 	  case (WalkerState)
@@ -220,7 +215,7 @@ module pagetablewalker
 	      if (HPTWStall) NextWalkerState = LEVEL1_WDV;
 	      else begin
 			NextWalkerState = LEVEL1;
-			PRegEn = 1'b1;
+			//PRegEn = 1'b1;
 	      end
 	    end
 	    LEVEL1: begin
@@ -236,7 +231,7 @@ module pagetablewalker
 	      if (HPTWStall) NextWalkerState = LEVEL0_WDV;
 	      else begin
 			NextWalkerState = LEVEL0;
-			PRegEn = 1'b1;
+			//PRegEn = 1'b1;
 	      end
 	    end
 	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
@@ -265,7 +260,7 @@ module pagetablewalker
 	assign MegapageMisaligned = |(CurrentPPN[8:0]);
 
 	always_comb begin
-	  PRegEn = 1'b0;
+	  //PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
 
 	  case (WalkerState)
@@ -277,7 +272,7 @@ module pagetablewalker
 	      if (HPTWStall) NextWalkerState = LEVEL3_WDV;
 	      else begin
 			NextWalkerState = LEVEL3;
-			PRegEn = 1'b1;
+			//PRegEn = 1'b1;
 	      end
 	    end
 	    LEVEL3: 
@@ -290,7 +285,7 @@ module pagetablewalker
 	      if (HPTWStall) NextWalkerState = LEVEL2_WDV;
 	      else begin
 			NextWalkerState = LEVEL2;
-			PRegEn = 1'b1;
+			//PRegEn = 1'b1;
 	      end
 	    end
 	    LEVEL2: 
@@ -303,7 +298,7 @@ module pagetablewalker
 	      if (HPTWStall) NextWalkerState = LEVEL1_WDV;
 	      else begin
 			NextWalkerState = LEVEL1;
-			PRegEn = 1'b1;
+			//PRegEn = 1'b1;
 	      end
 	    end
 	    LEVEL1: 
@@ -316,7 +311,7 @@ module pagetablewalker
 	      if (HPTWStall) NextWalkerState = LEVEL0_WDV;
 	      else begin
 			NextWalkerState = LEVEL0;
-			PRegEn = 1'b1;
+			//PRegEn = 1'b1;
 	      end
 	    end
 	    LEVEL0: 
