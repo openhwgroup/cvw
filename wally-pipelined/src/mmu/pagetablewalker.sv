@@ -119,7 +119,6 @@ module pagetablewalker
 
 
 
-      flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 
@@ -131,7 +130,6 @@ module pagetablewalker
       assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF;
       assign SelDataTranslation = DTLBMissMQ | DTLBMissM;
 
-	  flopenrc #(2) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, {DTLBMissM, ITLBMissF}, {DTLBMissMQ, ITLBMissFQ});
     /*  flopenrc #(1)
       DTLBMissMReg(.clk(clk),
 		   .reset(reset),
@@ -148,6 +146,8 @@ module pagetablewalker
 		   .d(ITLBMissF),
 		   .q(ITLBMissFQ));*/
 
+      flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
+	  flopenrc #(2) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, {DTLBMissM, ITLBMissF}, {DTLBMissMQ, ITLBMissFQ});
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 
