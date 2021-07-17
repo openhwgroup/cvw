@@ -34,8 +34,6 @@ module lsuArb
    input logic 		    HPTWRead,
    input logic [`XLEN-1:0]  HPTWPAdrE,
    input logic [`XLEN-1:0]  HPTWPAdrM, 
-   // to page table walker.
-   //output logic [`XLEN-1:0] HPTWReadPTE,
    output logic 	    HPTWStall, 
 
    // from CPU
@@ -94,7 +92,6 @@ module lsuArb
   // demux the inputs from LSU to walker or cpu's data port.
 
   assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWfromDCache;  // probably can avoid this demux
-  //assign HPTWReadPTE = SelPTW ? ReadDataWfromDCache : `XLEN'b0 ;  // probably can avoid this demux
   assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromDCache;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.

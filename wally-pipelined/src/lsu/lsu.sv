@@ -121,7 +121,6 @@ module lsu
   logic [`XLEN-1:0] 	       PageTableEntryM;
   logic 		       DTLBWriteM;
   logic [`XLEN-1:0] 	       HPTWReadPTE;
-  logic 		       MMUReady;
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
   logic [`XLEN-1:0] 	       HPTWPAdrM;  
@@ -164,7 +163,6 @@ module lsu
 				  .ITLBWriteF(ITLBWriteF),
 				  .DTLBWriteM(DTLBWriteM),
 				  .HPTWReadPTE(HPTWReadPTE),
-				  .MMUReady(HPTWReady),
 				  .HPTWStall(HPTWStall),
 				  .HPTWPAdrE(HPTWPAdrE),
 				  .HPTWPAdrM(HPTWPAdrM),				  

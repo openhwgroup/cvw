@@ -32,7 +32,6 @@ vlog -work work_busybear +incdir+../config/busybear +incdir+../config/shared  ..
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt work_busybear.testbench -o workopt_busybear
-
 vsim workopt_busybear -suppress 8852,12070
 
 run -all
