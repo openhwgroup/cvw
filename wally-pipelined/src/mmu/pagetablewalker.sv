@@ -76,7 +76,7 @@ module pagetablewalker
       logic [`XLEN-1:0]		    CurrentPTE;
       logic [`PA_BITS-1:0]	    TranslationPAdr;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
-      logic			    MemStore;
+      logic			    MemWrite;
       logic			    Dirty, Accessed, Global, User, Executable, Writable, Readable, Valid;
       logic			    ValidPTE, ADPageFault, MegapageMisaligned, TerapageMisaligned, GigapageMisaligned, BadMegapage, LeafPTE;
       logic			    StartWalk;
@@ -96,9 +96,9 @@ module pagetablewalker
 
       logic [`SVMODE_BITS-1:0]	    SvMode;
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
-	  
+
       assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-      assign MemStore = MemRWM[0];
+      assign MemWrite = MemRWM[0];
 
       // Prefer data address translations over instruction address translations
       assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF;
@@ -120,7 +120,7 @@ module pagetablewalker
       assign {Dirty, Accessed, Global, User, Executable, Writable, Readable, Valid} = CurrentPTE[7:0];
       assign LeafPTE = Executable | Writable | Readable;
       assign ValidPTE = Valid && ~(Writable && ~Readable);
-      assign ADPageFault = ~Accessed | (MemStore & ~Dirty);
+      assign ADPageFault = ~Accessed | (MemWrite & ~Dirty);
 
       // Assign specific outputs to general outputs
 	  // *** try to eliminate this duplication, but attempts caused MMU to hang
@@ -132,8 +132,8 @@ module pagetablewalker
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBMissMQ;
 
 	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBMissMQ; //*** why do these only get raised on TLB misses?  Should they always fault even for ADpagefaults, invalid addresses,etc??
-	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemStore;
-	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemStore;
+	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemWrite;
+	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemWrite;
 
 	  always_comb // determine type of page being walked:
 		  case (PreviousWalkerState)
@@ -206,6 +206,7 @@ module pagetablewalker
 		assign HPTWPAdrE = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
  	  end
 
+    // Walker FSM
 	always_comb 
 	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM) 		NextWalkerState = InitialWalkerState;
