@@ -141,6 +141,7 @@ module pagetablewalker
 		assign TranslationPAdr = {PPN, VPN, 3'b000}; 
 	  end
 
+	  // Initial state and misalignment for RV32/64
 	  if (`XLEN == 32) begin
 		assign InitialWalkerState = LEVEL1_SET_ADR;
 		assign TerapageMisaligned = 0; // not applicable

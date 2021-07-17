@@ -33,7 +33,6 @@ module lsuArb
    input logic 		    SelPTW,
    input logic 		    HPTWRead,
    input logic [`XLEN-1:0]  HPTWPAdrE,
-   input logic [`XLEN-1:0]  HPTWPAdrM, 
    output logic 	    HPTWStall, 
 
    // from CPU
@@ -72,6 +71,7 @@ module lsuArb
    );
 
   logic [2:0] PTWSize;
+  logic [`XLEN-1:0]  HPTWPAdrM;
   
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
@@ -81,6 +81,8 @@ module lsuArb
     assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
   endgenerate
   mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoDCache);
+
+  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);   // delay HPTWPAdr by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM;
