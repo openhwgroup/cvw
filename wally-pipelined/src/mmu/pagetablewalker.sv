@@ -229,8 +229,6 @@ module pagetablewalker
 	  WalkerLoadPageFaultM = 1'b0;
 	  WalkerStorePageFaultM = 1'b0;
 
-	 // SelPTW = 1'b1;
-
 	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM & SvMode == `SV32) NextWalkerState = LEVEL1_SET_ADRE;
 	      	  else NextWalkerState = IDLE;
@@ -239,8 +237,8 @@ module pagetablewalker
 	      HPTWRead = 1'b1;
 	      if (HPTWStall) NextWalkerState = LEVEL1_WDV;
 	      else begin
-		NextWalkerState = LEVEL1;
-		PRegEn = 1'b1;
+			NextWalkerState = LEVEL1;
+			PRegEn = 1'b1;
 	      end
 	    end
 
@@ -251,33 +249,19 @@ module pagetablewalker
 			HPTWRead = 1'b1;
 	      end else NextWalkerState = FAULT;
 	    end
-
-	    LEVEL0_SET_ADRE: begin
-	      NextWalkerState = LEVEL0_WDV;
-	      //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-	    end
-
+	    LEVEL0_SET_ADRE: NextWalkerState = LEVEL0_WDV;
 	    LEVEL0_WDV: begin
-	      //TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 	      HPTWRead = 1'b1;
-	      if (HPTWStall) begin
-		NextWalkerState = LEVEL0_WDV;
-	      end else begin
-		NextWalkerState = LEVEL0;
-		PRegEn = 1'b1;
+	      if (HPTWStall) NextWalkerState = LEVEL0_WDV;
+	      else begin
+			NextWalkerState = LEVEL0;
+			PRegEn = 1'b1;
 	      end
 	    end
 
-	    LEVEL0: begin
-	      if (ValidPTE & LeafPTE & ~ADPageFault) begin
-		NextWalkerState = LEAF;
-		//TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
-	      end else begin
-		NextWalkerState = FAULT;
-	      end
-	    end
-
-	    LEAF: begin
+	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
+				else NextWalkerState = FAULT;
+	    LEAF: begin // *** pull out datapath stuff
 	      NextWalkerState = IDLE;
 	      PageTableEntry = CurrentPTE;
 	      PageType = (PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
@@ -287,7 +271,6 @@ module pagetablewalker
 	    end
 
 	    FAULT: begin
-	      //SelPTW = 1'b0;
 	      NextWalkerState = IDLE;
 	      WalkerInstrPageFaultF = ~DTLBMissMQ;
 	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
@@ -309,13 +292,6 @@ module pagetablewalker
 	assign HPTWPAdrE = TranslationPAdr[31:0];
 
       end else begin
-
-/*	logic [8:0] VPN3, VPN2, VPN1, VPN0;
-	assign VPN3 = TranslationVAdr[47:39];
-	assign VPN2 = TranslationVAdr[38:30];
-	assign VPN1 = TranslationVAdr[29:21];
-	assign VPN0 = TranslationVAdr[20:12];*/
-
 	logic	    TerapageMisaligned, GigapageMisaligned;
 	// A terapage is a level 3 leaf page. This page must have zero PPN[2],
 	// zero PPN[1], and zero PPN[0]
@@ -328,7 +304,6 @@ module pagetablewalker
 
 	always_comb begin
 	  PRegEn = 1'b0;
-	  //TranslationPAdr = '0;
 	  HPTWRead = 1'b0;
 	  PageTableEntry = '0;
 	  PageType = '0;
@@ -340,16 +315,8 @@ module pagetablewalker
 	  WalkerStorePageFaultM = 1'b0;
 
 	  case (WalkerState)
-	    IDLE: begin
-	      //SelPTW = 1'b0;
-	      if (AnyTLBMissM & SvMode == `SV48) begin
-		NextWalkerState = LEVEL3_SET_ADRE;
-	      end else if (AnyTLBMissM & SvMode == `SV39) begin
-		NextWalkerState = LEVEL2_SET_ADRE;
-	      end else begin
-		NextWalkerState = IDLE;
-	      end
-	    end
+	    IDLE: if (AnyTLBMissM) NextWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
+		      else NextWalkerState = IDLE;
 
 	    LEVEL3_SET_ADRE: begin
 	      NextWalkerState = LEVEL3_WDV;
