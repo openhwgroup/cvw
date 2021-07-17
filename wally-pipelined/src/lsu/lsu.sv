@@ -122,7 +122,7 @@ module lsu
   logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
-  logic [`XLEN-1:0] 	       HPTWPAdrM;  
+//  logic [`XLEN-1:0] 	       HPTWPAdrM;  
   logic [`XLEN-1:0] TranslationVAdr;
   logic [`PA_BITS-1:0] TranslationPAdr;
   logic            UseTranslationVAdr;
@@ -180,7 +180,7 @@ module lsu
     else             assign TranslationPAdrXLEN = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
   endgenerate
   mux2 #(`XLEN) HPTWPAdrMux(TranslationPAdrXLEN, TranslationVAdr, UseTranslationVAdr, HPTWPAdrE); // *** misleading to call it PAdr, bad because some bits have been truncated
-  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  
+//  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
@@ -191,7 +191,7 @@ module lsu
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
 		 .HPTWPAdrE(HPTWPAdrE),
-		 .HPTWPAdrM(HPTWPAdrM),		 
+//		 .HPTWPAdrM(HPTWPAdrM),		 
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
