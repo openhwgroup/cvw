@@ -54,8 +54,6 @@ module ahblite (
   output logic [`XLEN-1:0]   DCfromAHBReadData,
   input logic [1:0] 	     MemSizeM,     // *** remove
   output logic 		     DCfromAHBAck,
-  // Return from bus
-//  output logic [`XLEN-1:0]   HRDATAW,
   // AHB-Lite external signals
   input logic [`AHBW-1:0]    HRDATA,
   input logic 		     HREADY, HRESP,
@@ -78,7 +76,7 @@ module ahblite (
 
   logic GrantData;
   logic [31:0] AccessAddress;
-  logic [2:0] AccessSize, PTESize, ISize;
+  logic [2:0] ISize;
   logic [`AHBW-1:0] HRDATAMasked, ReadDataM, HRDATANext, CapturedHRDATAMasked, WriteData;
   logic IReady, DReady;
   logic CaptureDataM,CapturedDataAvailable;
@@ -135,14 +133,8 @@ module ahblite (
   assign #1 AccessAddress = (GrantData) ? DCtoAHBPAdrM[31:0] : InstrPAdrF[31:0];
   //assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
   assign #1 HADDR = AccessAddress;
-  generate
-    if (`XLEN == 32) assign PTESize = 3'b010;  // in rv32, PTEs are 4 bytes
-    else             assign PTESize = 3'b011;  // in rv64, PTEs are 8 bytes
-  endgenerate
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
-  assign #1 AccessSize = (GrantData) ? {1'b0, MemSizeM} : ISize;
-  //assign #1 HSIZE = (MMUTranslate) ? PTESize : AccessSize;
-  assign #1 HSIZE = AccessSize;
+  assign HSIZE = (GrantData) ? {1'b0, MemSizeM} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
@@ -158,15 +150,12 @@ module ahblite (
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
 
-  //assign MMUReady = (BusState == MMUTRANSLATE && HREADY);
-
+ 
   assign InstrRData = HRDATA;
   assign DCfromAHBReadData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
   assign CommitM = (BusState == MEMREAD) || (BusState == MEMWRITE) || (BusState == ATOMICREAD) || (BusState == ATOMICWRITE);
-  // *** Bracker 6/5/21: why is this W stage?
   assign DCfromAHBAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
-  //assign MMUReadPTE = HRDATA;
   // Carefully decide when to update ReadDataW
   //   ReadDataMstored holds the most recent memory read.
   //   We need to wait until the pipeline actually advances before we can update the contents of ReadDataW
