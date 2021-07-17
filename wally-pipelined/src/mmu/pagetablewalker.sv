@@ -68,7 +68,7 @@ module pagetablewalker
     if (`MEM_VIRTMEM) begin
       // Internal signals
       // register TLBs translation miss requests
-      logic			    DTLBMissMQ;
+      logic			    DTLBWalk;
 
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
       logic [`XLEN-1:0]		    TranslationVAdr;
@@ -100,11 +100,11 @@ module pagetablewalker
       assign MemWrite = MemRWM[0];
 
       // Prefer data address translations over instruction address translations
-      assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF;
-      assign SelDataTranslation = DTLBMissMQ | DTLBMissM;
-
+      assign SelDataTranslation = DTLBWalk | DTLBMissM; // *** missM is probably unnecessary
+	  assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF;
+    
       flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
-	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBMissMQ);
+	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk);
 	  flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
 	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
@@ -124,16 +124,16 @@ module pagetablewalker
       assign PageTableEntryM = CurrentPTE;
 
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
-	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBMissMQ;
-	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBMissMQ;
+	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
+	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
 
-	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBMissMQ; //*** why do these only get raised on TLB misses?  Should they always fault even for ADpagefaults, invalid addresses,etc??
-	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemWrite;
-	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemWrite;
+	  // Raise faults.  DTLBMiss
+	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBWalk;
+	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBWalk & ~MemWrite;
+	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBWalk & MemWrite;
 
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
 	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV);
-	  // *** is there a way to speed up HPTW?
 
 	  // FSM to track PageType based on the levels of the page table traversed
 	  flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
@@ -206,6 +206,7 @@ module pagetablewalker
  	  end
 
     // Page Table Walker FSM
+	// ***Is there a w ay to reduce the number of cycles needed to do the walk?
 	always_comb 
 	  case (WalkerState)
 	    IDLE: if (StartWalk) 		NextWalkerState = InitialWalkerState;
