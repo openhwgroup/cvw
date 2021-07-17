@@ -1,9 +1,0 @@
-dut.HRDATA => dut.hart.lsu.dcache.ReadDataM
-HADDR => dut.hart.lsu.dcache.MemPAdrM
-HWDATA => dut.hart.lsu.dcache.WriteDataM
-HWRITE => dut.hart.lsu.dcache.MemRWM
-HTRANS => |dut.hart.lsu.dcache.MemRWM | |dut.hart.lsu.dcache.AtomicM
-
-HSIZE (probalby don't need anymore, read masking not necessary)
-HRDATA (no physical change, just rename to something else)
-
