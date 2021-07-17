@@ -82,7 +82,7 @@ module lsu
    input logic [`XLEN-1:0]     PCF,
    input logic 		       ITLBMissF,
    output logic [`XLEN-1:0]    PageTableEntryF,
-   output logic [1:0] 	       PageTypeF,
+   output logic [1:0] 	       PageType,
    output logic 	       ITLBWriteF,
    output logic 	       WalkerInstrPageFaultF,
    output logic 	       WalkerLoadPageFaultM,
@@ -119,7 +119,6 @@ module lsu
  
   logic 		       DTLBMissM;
   logic [`XLEN-1:0] 	       PageTableEntryM;
-  logic [1:0] 		       PageTypeM;
   logic 		       DTLBWriteM;
   logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       MMUReady;
@@ -161,8 +160,7 @@ module lsu
 				  .MemRWM(MemRWM),
 				  .PageTableEntryF(PageTableEntryF),
 				  .PageTableEntryM(PageTableEntryM),
-				  .PageTypeF(PageTypeF),
-				  .PageTypeM(PageTypeM),
+				  .PageType,
 				  .ITLBWriteF(ITLBWriteF),
 				  .DTLBWriteM(DTLBWriteM),
 				  .HPTWReadPTE(HPTWReadPTE),
@@ -223,7 +221,7 @@ module lsu
   dmmu(.Address(MemAdrMtoDCache),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PageTableEntryM),
-       .PageTypeWriteVal(PageTypeM),
+       .PageTypeWriteVal(PageType),
        .TLBWrite(DTLBWriteM),
        .TLBFlush(DTLBFlushM),
        .PhysicalAddress(MemPAdrM),
