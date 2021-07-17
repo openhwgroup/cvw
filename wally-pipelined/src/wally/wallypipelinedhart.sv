@@ -63,6 +63,7 @@ module wallypipelinedhart
   // new signals that must connect through DP
   logic 		    MulDivE, W64E;
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
+  logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
   logic [`XLEN-1:0] 	    SrcAE, SrcBE;
   logic [`XLEN-1:0] 	    SrcAM;
@@ -73,6 +74,7 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
+  logic [1:0] 		    MemRWE;  
   logic [1:0] 		    MemRWM;
   logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
@@ -89,7 +91,7 @@ module wallypipelinedhart
   logic 		    DivDoneE;
   logic 		    DivBusyE;
   logic 		    RegWriteD;
-  logic 		    LoadStallD, MulDivStallD, CSRRdStallD;
+  logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;
   logic 		    SquashSCM, SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
@@ -116,7 +118,7 @@ module wallypipelinedhart
   logic  [1:0]       STATUS_MPP;
   logic [1:0] 		    PrivilegeModeW;
   logic [`XLEN-1:0] 	    PageTableEntryF, PageTableEntryM;
-  logic [1:0] 		    PageTypeF, PageTypeM;
+  logic [1:0] 		    PageType;
 
   // PMA checker signals
   logic 		    DSquashBusAccessM, ISquashBusAccessF;
@@ -125,50 +127,43 @@ module wallypipelinedhart
 
   // IMem stalls
   logic 		    ICacheStallF;
-  logic 		    DCacheStall;
+  logic 		    LSUStall;
 
   
 
-  // bus interface to dmem
-  logic 		    MemReadM, MemWriteM;
-  logic [1:0] 		    AtomicMaskedM;
+  // cpu lsu interface
   logic [2:0] 		    Funct3M;
-  logic [`XLEN-1:0] 	    MemAdrM, WriteDataM;
-  logic [`PA_BITS-1:0] 	    MemPAdrM;
+  logic [`XLEN-1:0] 	    MemAdrM, MemAdrE, WriteDataM;
   logic [`XLEN-1:0] 	    ReadDataW;
+  logic 		    CommittedM;
+
+  // AHB ifu interface
   logic [`PA_BITS-1:0] 	    InstrPAdrF;
   logic [`XLEN-1:0] 	    InstrRData;
   logic 		    InstrReadF;
-  logic 		    InstrAckF, MemAckW;
-  logic 		    CommitM, CommittedM;
-
+  logic 		    InstrAckF;
+  
+  // AHB LSU interface
+  logic [`PA_BITS-1:0] 	    DCtoAHBPAdrM;
+  logic 		    DCtoAHBReadM;
+  logic 		    DCtoAHBWriteM;
+  logic 		    DCfromAHBAck;
+  logic [`XLEN-1:0] 	    DCfromAHBReadData;
+  logic [`XLEN-1:0] 	    DCtoAHBWriteData;
+  
+  logic 		    CommitM;
+  
   logic 		    BPPredWrongE;
   logic 		    BPPredDirWrongM;
   logic 		    BTBPredPCWrongM;
   logic 		    RASPredPCWrongM;
   logic 		    BPPredClassNonCFIWrongM;
-
-  logic [`XLEN-1:0] 	    WriteDatatmpM;
-
   logic [4:0] 		    InstrClassM;
-
-  logic [`XLEN-1:0] 	    HRDATAW;
-
-  // IEU vs HPTW arbitration signals to send to LSU
-  logic [1:0] 		    MemRWMtoLSU;
-  logic [2:0] 		    SizeToLSU;
-  logic [1:0] 		    AtomicMtoLSU;
-  logic [`XLEN-1:0] 	    MemAdrMtoLSU;
-  logic [`XLEN-1:0] 	    WriteDataMtoLSU;
-  logic [`XLEN-1:0] 	    ReadDataWFromLSU;
-  logic 		    CommittedMfromLSU;
-  logic 		    SquashSCWfromLSU;
-  logic 		    DataMisalignedMfromLSU;
-  logic 		    StallWtoLSU;
-  logic 		    StallWfromLSU;  
-  logic [2:0] 		    SizeFromLSU;
   logic 		    InstrAccessFaultF;
+  logic [2:0] 		    DCtoAHBSizeM;
   
+  logic 		    ExceptionM;
+  logic 		    PendingInterruptM;
 
   
   ifu ifu(.InstrInF(InstrRData),
@@ -177,43 +172,36 @@ module wallypipelinedhart
 
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
 
-  
-  // mux2  #(`XLEN)  OutputInput2mux(WriteDataM, FWriteDataM, FMemRWM[0], WriteDatatmpM);
-
-
   lsu lsu(.clk(clk),
 	  .reset(reset),
 	  .StallM(StallM),
 	  .FlushM(FlushM),
 	  .StallW(StallW),
 	  .FlushW(FlushW),
-	  // connected to arbiter (reconnect to CPU)
+	  // CPU interface
 	  .MemRWM(MemRWM),                  
-	  .Funct3M(Funct3M),                
-	  .AtomicM(AtomicM),               
+	  .Funct3M(Funct3M),
+	  .Funct7M(InstrM[31:25]),
+	  .AtomicM(AtomicM),    
+	  .ExceptionM(ExceptionM),
+	  .PendingInterruptM(PendingInterruptM),		
 	  .CommittedM(CommittedM),          
 	  .SquashSCW(SquashSCW),            
 	  .DataMisalignedM(DataMisalignedM),
+	  .MemAdrE(MemAdrE),
 	  .MemAdrM(MemAdrM),      
 	  .WriteDataM(WriteDataM),
 	  .ReadDataW(ReadDataW),
 
 	  // connected to ahb (all stay the same)
 	  .CommitM(CommitM),
-	  .MemPAdrM(MemPAdrM),
-	  .MemReadM(MemReadM),
-	  .MemWriteM(MemWriteM),
-	  .AtomicMaskedM(AtomicMaskedM),
-	  .MemAckW(MemAckW),
-	  .HRDATAW(HRDATAW),
-	  .SizeFromLSU(SizeFromLSU),           // stays the same
-	  .StallWfromLSU(StallWfromLSU),             // stays the same
-	  .DSquashBusAccessM(DSquashBusAccessM),     // probalby removed after dcache implemenation?
-	  // currently not connected (but will need to be used for lsu talking to ahb.
-	  .HADDR(HADDR),                             
-	  .HSIZE(HSIZE),
-	  .HBURST(HBURST),
-	  .HWRITE(HWRITE),
+	  .DCtoAHBPAdrM(DCtoAHBPAdrM),
+	  .DCtoAHBReadM(DCtoAHBReadM),
+	  .DCtoAHBWriteM(DCtoAHBWriteM),
+	  .DCfromAHBAck(DCfromAHBAck),
+	  .DCfromAHBReadData(DCfromAHBReadData),
+	  .DCtoAHBWriteData(DCtoAHBWriteData),
+	  .DCtoAHBSizeM(DCtoAHBSizeM),
 
 	  // connect to csr or privilege and stay the same.
 	  .PrivilegeModeW(PrivilegeModeW),           // connects to csr
@@ -235,11 +223,10 @@ module wallypipelinedhart
 	  .StoreMisalignedFaultM(StoreMisalignedFaultM), // connects to privilege
 	  .StoreAccessFaultM(StoreAccessFaultM),     // connects to privilege
     
-	  // connected to hptw. Move to internal.
 	  .PCF(PCF),
 	  .ITLBMissF(ITLBMissF),
 	  .PageTableEntryF(PageTableEntryF),
-	  .PageTypeF(PageTypeF),
+	  .PageType,
 	  .ITLBWriteF(ITLBWriteF),
 	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
@@ -247,19 +234,30 @@ module wallypipelinedhart
 
 	  .DTLBHitM(DTLBHitM), // not connected remove
 
-	  .DCacheStall(DCacheStall))                     // change to DCacheStall
-    ;
+	  .LSUStall(LSUStall));                     // change to LSUStall
 
 
-  ahblite ebu( 
-	       //.InstrReadF(1'b0),
-	       //.InstrRData(InstrF), // hook up InstrF later
-	       .ISquashBusAccessF(1'b0), // *** temporary hack to disable PMP instruction fetch checking
-	       .WriteDataM(WriteDataM),
-	       .MemSizeM(SizeFromLSU[1:0]), .UnsignedLoadM(SizeFromLSU[2]),
-	       .Funct7M(InstrM[31:25]),
-	       .HRDATAW(HRDATAW),
-	       .StallW(StallWfromLSU),
+  
+
+  ahblite ebu(// IFU connections
+	      .InstrPAdrF(InstrPAdrF),
+	      .InstrReadF(InstrReadF),
+	      .InstrRData(InstrRData),
+	      .InstrAckF(InstrAckF),
+	      // LSU connections
+	      .DCtoAHBPAdrM(DCtoAHBPAdrM), // rename to DCtoAHBPAdrM
+	      .DCtoAHBReadM(DCtoAHBReadM), // rename to DCtoAHBReadM
+	      .DCtoAHBWriteM(DCtoAHBWriteM), // rename to DCtoAHBWriteM
+	      .DCtoAHBWriteData(DCtoAHBWriteData),
+	      .DCfromAHBReadData(DCfromAHBReadData),
+	      .DCfromAHBAck(DCfromAHBAck),
+	      // remove these
+	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
+	      .UnsignedLoadM(1'b0),
+	      .Funct7M(7'b0),
+//	      .HRDATAW(),
+	      .StallW(1'b0),
+	      .AtomicMaskedM(2'b00),
 	       .*);
 
   

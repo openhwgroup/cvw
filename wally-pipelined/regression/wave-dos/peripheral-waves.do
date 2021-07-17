@@ -42,7 +42,6 @@ add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave -hex /testbench/dut/hart/ieu/c/InstrValidM
 add wave /testbench/InstrMName
 add wave /testbench/dut/uncore/dtim/memwrite
-add wave -hex /testbench/dut/hart/MemPAdrM
 add wave -hex /testbench/dut/hart/WriteDataM
 add wave -hex /testbench/dut/uncore/HADDR
 add wave -hex /testbench/dut/uncore/HWDATA
@@ -63,16 +62,50 @@ add wave -hex /testbench/dut/hart/priv/csr/TrapM
 add wave -hex /testbench/dut/hart/priv/csr/UnalignedNextEPCM
 add wave -hex /testbench/dut/hart/priv/csr/genblk1/csrm/WriteMEPCM
 add wave -hex /testbench/dut/hart/priv/csr/genblk1/csrm/MEPC_REGW
-add wave -divider
+
+add wave -divider RegFile
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[1]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[2]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[3]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[4]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[5]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[6]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[7]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[8]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[9]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[10]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[11]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[12]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[13]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[14]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[15]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[16]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[17]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[18]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[19]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[20]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[21]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[22]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[23]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[24]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[25]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[26]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[27]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[28]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[29]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[30]
+add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[31]
 
 # peripherals
-#add wave -hex /testbench/dut/uncore/plic/*
-#add wave -hex /testbench/dut/uncore/plic/intPriority
-#add wave -hex /testbench/dut/uncore/plic/pendingArray
-#add wave -divider
-#add wave -hex /testbench/dut/uncore/uart/u/*
-#add wave -divider
-#add wave -hex /testbench/dut/uncore/gpio/*
+add wave -divider PLIC
+add wave -hex /testbench/dut/hart/priv/csr/TrapM
+add wave -hex /testbench/dut/uncore/genblk2/plic/*
+add wave -hex /testbench/dut/uncore/genblk2/plic/intPriority
+add wave -hex /testbench/dut/uncore/genblk2/plic/pendingArray
+add wave -divider UART
+add wave -hex /testbench/dut/uncore/genblk4/uart/u/*
+add wave -divider GPIO
+add wave -hex /testbench/dut/uncore/genblk3/gpio/*
 #add wave -divider
 #add wave -hex /testbench/dut/hart/ebu/*
 #add wave -divider

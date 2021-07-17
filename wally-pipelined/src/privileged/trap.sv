@@ -27,23 +27,26 @@
 `include "wally-config.vh"
 
 module trap (
-  input  logic             clk, reset, 
-  input  logic             InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
-  input  logic             BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
-  input  logic             LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
-  input  logic             LoadPageFaultM, StorePageFaultM,
-  input  logic             mretM, sretM, uretM,
-  input  logic [1:0]       PrivilegeModeW, NextPrivilegeModeM,
-  input  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  input  logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
-  input  logic             STATUS_MIE, STATUS_SIE,
-  input  logic [`XLEN-1:0] PCM,
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM, 
-  input  logic [31:0]      InstrM,
-  input  logic             StallW,
-  input  logic             InstrValidM, CommittedM,
-  output logic             NonBusTrapM, TrapM, MTrapM, STrapM, UTrapM, RetM,
-  output logic             InterruptM,
+  input logic 		   clk, reset, 
+  input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
+  input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
+  input logic 		   LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
+  input logic 		   LoadPageFaultM, StorePageFaultM,
+  input logic 		   mretM, sretM, uretM,
+  input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
+  input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
+  input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
+  input logic 		   STATUS_MIE, STATUS_SIE,
+  input logic [`XLEN-1:0]  PCM,
+  input logic [`XLEN-1:0]  InstrMisalignedAdrM, MemAdrM, 
+  input logic [31:0] 	   InstrM,
+  input logic 		   StallW,
+  input logic 		   InstrValidM, CommittedM,
+  output logic 		   NonBusTrapM, TrapM, MTrapM, STrapM, UTrapM, RetM,
+  output logic 		   InterruptM,
+  output logic 		   ExceptionM,
+  output logic 		   PendingInterruptM,
+
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
@@ -59,7 +62,10 @@ module trap (
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
-  assign InterruptM = (|PendingIntsM) & InstrValidM & ~CommittedM;
+  assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
+  assign InterruptM = PendingInterruptM & ~CommittedM;
+  assign ExceptionM = BusTrapM | NonBusTrapM;
+  
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
   // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice

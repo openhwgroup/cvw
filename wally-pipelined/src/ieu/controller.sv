@@ -52,6 +52,7 @@ module controller(
   output logic [1:0] MemRWM,
   output logic       CSRReadM, CSRWriteM, PrivilegedM,
   output logic       SCE,
+  output logic [1:0] AtomicE,
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
@@ -61,7 +62,8 @@ module controller(
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   // Stall during CSRs
-  output logic       CSRWritePendingDEM
+  output logic       CSRWritePendingDEM,
+  output logic       StoreStallD
 );
 
   logic [6:0] OpD;
@@ -83,7 +85,7 @@ module controller(
   logic       TargetSrcD, W64D, MulDivD;
   logic       CSRZeroSrcD;
   logic       CSRReadD;
-  logic [1:0] AtomicD, AtomicE;
+  logic [1:0] AtomicD;
   logic       CSRWriteD, CSRWriteE;
   logic       InstrValidD, InstrValidE;
   logic       PrivilegedD, PrivilegedE;
@@ -217,5 +219,7 @@ module controller(
                          {RegWriteM, ResultSrcM, InstrValidM},
                          {RegWriteW, ResultSrcW, InstrValidW});  
 
-  assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;   
+  assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;
+
+  assign StoreStallD = MemRWE[0] & (|MemRWD | |AtomicD);
 endmodule
