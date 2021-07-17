@@ -91,7 +91,7 @@ module pagetablewalker
       logic			    ValidPTE, ADPageFault, MegapageMisaligned, BadMegapage, LeafPTE;
 
       // Outputs of walker
-      logic [`XLEN-1:0]		    PageTableEntry;
+      //logic [`XLEN-1:0]		    PageTableEntry;
       logic			    StartWalk;
       logic			    EndWalk;
 
@@ -153,11 +153,13 @@ module pagetablewalker
       assign ADPageFault = ~Accessed | (MemStore & ~Dirty);
 
       // Assign specific outputs to general outputs
-      assign PageTableEntryF = PageTableEntry;
-      assign PageTableEntryM = PageTableEntry;
+	  // *** try to eliminate this duplication, but attempts caused MMU to hang
+      assign PageTableEntryF = CurrentPTE;
+      assign PageTableEntryM = CurrentPTE;
 
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
-
+	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBMissMQ;
+	  assign DTLBWriteM = (WalkerState == LEAF) & ~DTLBMissMQ;
 
 	  // *** is there a way to speed up HPTW?
 
@@ -216,7 +218,7 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
-	  PageTableEntry = '0;
+	  //PageTableEntry = '0;
 	  PageType = '0;
 	  DTLBWriteM = '0;
 	  ITLBWriteF = '0;
@@ -259,7 +261,7 @@ module pagetablewalker
 				else NextWalkerState = FAULT;
 	    LEAF: begin // *** pull out datapath stuff
 	      NextWalkerState = IDLE;
-	      PageTableEntry = CurrentPTE;
+	      //PageTableEntry = CurrentPTE;
 	      PageType = (PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
 	      DTLBWriteM = DTLBMissMQ;
 	      ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
@@ -301,7 +303,7 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
-	  PageTableEntry = '0;
+	  //PageTableEntry = '0;
 	  PageType = '0;
 	  DTLBWriteM = '0;
 	  ITLBWriteF = '0;
@@ -365,7 +367,7 @@ module pagetablewalker
 			if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
 			else NextWalkerState = FAULT;
 	    LEAF: begin
-	      PageTableEntry = CurrentPTE;
+	      //PageTableEntry = CurrentPTE;
 	      PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
 			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
 			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
