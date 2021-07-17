@@ -201,6 +201,7 @@ module pagetablewalker
 		assign TerapageMisaligned = 0; // not applicable
 		assign GigapageMisaligned = 0; // not applicable
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
+		assign HPTWPAdrE = TranslationPAdr[31:0]; // ***not right?
 	  end else begin
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
@@ -232,15 +233,16 @@ module pagetablewalker
 				else NextWalkerState = FAULT;
 	    LEAF:  NextWalkerState = IDLE;
 	    FAULT: NextWalkerState = IDLE;
-	    // Default case should never happen, but is included for linter.
-	    default: NextWalkerState = IDLE;
+	    default: begin
+			$error("Default state in HPTW should be unreachable")
+			NextWalkerState = IDLE; // should never be reached
+		end
 	  endcase
 	end
 
 	// Assign outputs to ahblite
 	// *** Currently truncate address to 32 bits. This must be changed if
 	// we support larger physical address spaces
-	assign HPTWPAdrE = TranslationPAdr[31:0];
 
       end else begin
 
@@ -278,7 +280,10 @@ module pagetablewalker
 			else NextWalkerState = FAULT;
 	    LEAF: NextWalkerState = IDLE;
 	    FAULT:  NextWalkerState = IDLE;
-	    default: NextWalkerState = IDLE; // should never be reached
+	    default: begin
+			$error("Default state in HPTW should be unreachable")
+			NextWalkerState = IDLE; // should never be reached
+		end
 
 	  endcase
 	end
