@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*2400000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0000001; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -35,7 +35,7 @@ module testbench();
   ///////////////////////////////////////////////////////////////////////////////
   logic             clk, reset;
   
-  logic [`AHBW-1:0] HRDATA;
+  logic [`AHBW-1:0] readDataExpected;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -94,7 +94,6 @@ module testbench();
   integer regNumExpected;
   integer data_file_rf, scan_file_rf;
   // Bus Unit Read/Write Checking
-  logic [63:0] readMask;
   logic [`XLEN-1:0] readAdrExpected, readAdrTranslated;
   logic [`XLEN-1:0] writeDataExpected, writeAdrExpected, writeAdrTranslated;
   integer data_file_memR, scan_file_memR;
@@ -161,13 +160,13 @@ module testbench();
     if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 2 && instrs > 1) begin
       $display("!!!!!! illegal instruction !!!!!!!!!!");
       $display("(as a reminder, MCAUSE and MEPC are set by this)");
-      $display("at %0t ps, PCM %x, instr %0d, HADDR %x", $time, dut.hart.ifu.PCM, instrs, HADDR);
+      $display("at %0t ps, PCM %x, instr %0d, dut.hart.lsu.dcache.MemPAdrM %x", $time, dut.hart.ifu.PCM, instrs, dut.hart.lsu.dcache.MemPAdrM);
       `ERROR
     end
     if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 5 && instrs != 0) begin
       $display("!!!!!! illegal (physical) memory access !!!!!!!!!!");
       $display("(as a reminder, MCAUSE and MEPC are set by this)");
-      $display("at %0t ps, PCM %x, instr %0d, HADDR %x", $time, dut.hart.ifu.PCM, instrs, HADDR);
+      $display("at %0t ps, PCM %x, instr %0d, dut.hart.lsu.dcache.MemPAdrM %x", $time, dut.hart.ifu.PCM, instrs, dut.hart.lsu.dcache.MemPAdrM);
       `ERROR
     end
   end
@@ -195,7 +194,7 @@ module testbench();
   // Big Chunky Block
   // ----------------
   always @(reset or dut.hart.ifu.InstrRawD or dut.hart.ifu.PCD) begin// or negedge dut.hart.ifu.StallE) begin // Why do we care about StallE? Everything seems to run fine without it.
-    if(~HWRITE) begin // *** Should this need to consider HWRITE?
+    if(~dut.hart.lsu.dcache.MemRWM) begin // *** Should this need to consider dut.hart.lsu.dcache.MemRWM?
       #2;
       // If PCD/InstrD aren't garbage
       if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0) begin // && ~dut.hart.ifu.StallE) begin
@@ -298,7 +297,7 @@ module testbench();
               `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
               `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
               scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
-              scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
+              scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
               // Next force a timer interrupt (*** this may later need generalizing)
               force dut.uncore.genblk1.clint.MTIME = dut.uncore.genblk1.clint.MTIMECMP + 1;
               while (clk != 0) #1;
@@ -334,7 +333,9 @@ module testbench();
     `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
   end
 
-  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
+  // Removed because this is MMU's job
+  // and it'd take some work to upgrade away from Bus to Cache signals)
+  //logging logging(clk, reset, dut.uncore.dut.hart.lsu.dcache.MemPAdrM, dut.uncore.HWRITE);
 
   // -------------------
   // Additional Hardware
@@ -427,11 +428,6 @@ module testbench();
   // RAM and bootram are addressed in 64-bit blocks - this logic handles R/W
   // including subwords. Brief explanation on signals:
   //
-  // readMask: bitmask of bits to read / write, left-shifted to align with
-  // nearest 64-bit boundary - examples
-  //    HSIZE = 0 -> readMask = 11111111
-  //    HSIZE = 1 -> readMask = 1111111111111111
-  //
   // In the linux boot, the processor spends the first ~5 instructions in
   // bootram, before jr jumps to main RAM
 
@@ -456,33 +452,31 @@ module testbench();
   // ------------
   // Read Checker
   // ------------
-  assign readMask = ((1 << (8*(1 << HSIZE))) - 1) << 8 * HADDR[2:0];
-  always @(dut.HRDATA) begin
+  always @(dut.hart.lsu.dcache.ReadDataM) begin
     #2;
     if (dut.hart.MemRWM[1]
       && (dut.hart.ebu.CaptureDataM)
-      && dut.HRDATA !== {64{1'bx}}) begin
+      && dut.hart.lsu.dcache.ReadDataM !== {64{1'bx}}) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         `ERROR
       end
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
-      scan_file_memR = $fscanf(data_file_memR, "%x\n", HRDATA);
+      scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
       assign readAdrTranslated = adrTranslator(readAdrExpected);
-      if (~(HADDR === readAdrTranslated)) begin
-        $display("%0t ps, PCM %x %s, instr %0d: HADDR does not equal readAdrExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, HADDR, readAdrTranslated);
+      if (~(dut.hart.lsu.dcache.MemPAdrM === readAdrTranslated)) begin
+        $display("%0t ps, PCM %x %s, instr %0d: dut.hart.lsu.dcache.MemPAdrM does not equal readAdrExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.MemPAdrM, readAdrTranslated);
         `ERROR
       end
-      if ((readMask & HRDATA) !== (readMask & dut.HRDATA)) begin
-        if (HADDR inside `LINUX_FIX_READ) begin
-          if (HADDR != 'h10000005) // Suppress the warning for UART LSR so we can read UART output
-            $display("warning %0t ps, PCM %x %s, instr %0d, adr %0d: forcing HRDATA to expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, HADDR, HRDATA, dut.HRDATA);
-          force dut.uncore.HRDATA = HRDATA;
+      if (readDataExpected !== dut.hart.lsu.dcache.ReadDataM) begin
+        if (dut.hart.lsu.dcache.MemPAdrM inside `LINUX_FIX_READ) begin
+          if (dut.hart.lsu.dcache.MemPAdrM != 'h10000005) // Suppress the warning for UART LSR so we can read UART output
+            $display("warning %0t ps, PCM %x %s, instr %0d, adr %0d: forcing readDataExpected to expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.MemPAdrM, readDataExpected, dut.hart.lsu.dcache.ReadDataM);
+          force dut.hart.lsu.dcache.ReadDataM = readDataExpected;
           #9;
-          release dut.uncore.HRDATA;
-          warningCount += 1;
+          release dut.hart.lsu.dcache.ReadDataM;
         end else begin
-          $display("%0t ps, PCM %x %s, instr %0d: ExpectedHRDATA does not equal dut.HRDATA: %x, %x from address %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, HRDATA, dut.HRDATA, HADDR, HSIZE);
+          $display("%0t ps, PCM %x %s, instr %0d: ExpectedreadDataExpected does not equal dut.hart.lsu.dcache.ReadDataM: %x, %x from address %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, readDataExpected, dut.hart.lsu.dcache.ReadDataM, dut.hart.lsu.dcache.MemPAdrM);
           `ERROR
         end
       end
@@ -493,8 +487,7 @@ module testbench();
   // Write Checker
   // -------------
   // this might need to change
-  //always @(HWDATA or HADDR or HSIZE or HWRITE) begin
-  always @(negedge HWRITE) begin
+  always @(negedge dut.hart.lsu.dcache.MemRWM) begin
     //#1;
     if (($time != 0) && ~dut.hart.hzu.FlushM) begin
       if($feof(data_file_memW)) begin
@@ -505,12 +498,12 @@ module testbench();
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
       assign writeAdrTranslated = adrTranslator(writeAdrExpected);
 
-      if (writeDataExpected != HWDATA && ~dut.uncore.HSELPLICD) begin
-        $display("%0t ps, PCM %x %s, instr %0d: HWDATA does not equal writeDataExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, HWDATA, writeDataExpected);
+      if (writeDataExpected != dut.hart.lsu.dcache.WriteDataM && ~dut.uncore.HSELPLICD) begin
+        $display("%0t ps, PCM %x %s, instr %0d: dut.hart.lsu.dcache.WriteDataM does not equal writeDataExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.WriteDataM, writeDataExpected);
         `ERROR
       end
-      if (~(writeAdrTranslated === HADDR) && ~dut.uncore.HSELPLICD) begin
-        $display("%0t ps, PCM %x %s, instr %0d: HADDR does not equal writeAdrExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, HADDR, writeAdrTranslated);
+      if (~(writeAdrTranslated === dut.hart.lsu.dcache.MemPAdrM) && ~dut.uncore.HSELPLICD) begin
+        $display("%0t ps, PCM %x %s, instr %0d: dut.hart.lsu.dcache.MemPAdrM does not equal writeAdrExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.MemPAdrM, writeAdrTranslated);
         `ERROR
       end
     end
@@ -720,15 +713,15 @@ module testbench();
   endfunction
 endmodule
 
-module logging(
-  input logic clk, reset,
-  input logic [31:0] HADDR,
-  input logic [1:0]  HTRANS);
-
-  always @(posedge clk)
-    if (HTRANS != 2'b00 && HADDR == 0)
-      $display("Warning: access to memory address 0\n");
-endmodule
+//module logging(
+//  input logic clk, reset,
+//  input logic [31:0] dut.hart.lsu.dcache.MemPAdrM,
+//  input logic [1:0]  (|dut.hart.lsu.dcache.MemRWM || dut.hart.lsu.dcache.AtomicM));
+//
+//  always @(posedge clk)
+//    if ((|dut.hart.lsu.dcache.MemRWM || dut.hart.lsu.dcache.AtomicM) != 2'b00 && dut.hart.lsu.dcache.MemPAdrM == 0)
+//      $display("Warning: access to memory address 0\n");
+//endmodule
 
 
 module instrTrackerTB(
