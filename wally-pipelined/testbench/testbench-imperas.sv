@@ -746,6 +746,7 @@ module riscvassertions();
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries");
     assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
+    assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
   end
 endmodule
 
