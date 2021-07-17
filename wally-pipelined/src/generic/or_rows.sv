@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// or.sv
+// or_rows.sv
 //
 // Written: David_Harris@hmc.edu 13 July 2021
 // Modified: 
