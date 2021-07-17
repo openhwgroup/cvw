@@ -42,8 +42,6 @@ module pagetablewalker
    output logic [1:0]	    PageType, // page type to TLBs
    output logic		    ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic 	    SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
-   //output logic [`XLEN-1:0] HPTWPAdrE, // *** this really needs to be 34 bits for RV32 and 64 bits for RV64.  Impacts lots of stuff in LSU and D$.  On Ross's list to investigate.  7/17/21
-   //output logic [`XLEN-1:0] HPTWPAdrM, // *** same
    output logic [`XLEN-1:0]		    TranslationVAdr,
    output logic [`PA_BITS-1:0]	    TranslationPAdr,
    output logic                     UseTranslationVAdr,
@@ -57,8 +55,7 @@ module pagetablewalker
       logic			    DTLBWalk; // register TLBs translation miss requests
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
-	  logic [`XLEN-1:0] HPTWPAdrE; // ***delete when done
-      logic			    MemWrite;
+     logic			    MemWrite;
       logic			    Executable, Writable, Readable, Valid;
 	  logic 			MegapageMisaligned, GigapageMisaligned, TerapageMisaligned;
       logic			    ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
@@ -85,8 +82,7 @@ module pagetablewalker
       assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	  // State flops
-      //flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  // *** perhaps HPTW should just send PAdrE, and LSU can latch it as necessary
-	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk); // track whether walk is for DTLB or ITLB
+ 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk); // track whether walk is for DTLB or ITLB
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
 	
       // Assign PTE descriptors common across all XLEN values
@@ -132,12 +128,12 @@ module pagetablewalker
 		  case (WalkerState)
 	    	LEVEL1_SET_ADR:  TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
 	    	LEVEL1_READ:      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
-			LEVEL1:          if (NextWalkerState == LEAF) TranslationPAdr = {2'b00, TranslationVAdr[31:0]}; // *** 7/17/21 Ross will check this and similar in LEVEL0 and LEAF
+			LEVEL1:          if (NextWalkerState == LEAF) TranslationPAdr = 0; // {2'b00, TranslationVAdr[31:0]}; // *** 7/17/21 Ross will check this and similar in LEVEL0 and LEAF
 			                 else TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 			LEVEL0_SET_ADR:  TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
 			LEVEL0_READ: 	 TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-			LEVEL0: 		 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
-			LEAF:			 TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
+			LEVEL0: 		 TranslationPAdr = 0; // {2'b00, TranslationVAdr[31:0]};
+			LEAF:			 TranslationPAdr = 0; // {2'b00, TranslationVAdr[31:0]};
 			default:		 TranslationPAdr = 0; // cause seg fault if this is improperly used
 		  endcase
 	  end else begin // RV64
@@ -150,20 +146,20 @@ module pagetablewalker
 		  case (WalkerState)
 			LEVEL3_SET_ADR:  TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
 	    	LEVEL3_READ:  	 TranslationPAdr = {BasePageTablePPN, VPN3, 3'b000};
-	    	LEVEL3:          if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+	    	LEVEL3:          if (NextWalkerState == LEAF) TranslationPAdr = 0; //TranslationVAdr[`PA_BITS-1:0];
 			                 else TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 			LEVEL2_SET_ADR:  TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
 			LEVEL2_READ:  	 TranslationPAdr = {(SvMode == `SV48) ? CurrentPPN : BasePageTablePPN, VPN2, 3'b000};
-	   		LEVEL2: 		 if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+	   		LEVEL2: 		 if (NextWalkerState == LEAF) TranslationPAdr = 0; //TranslationVAdr[`PA_BITS-1:0];
 			                 else TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 	      	LEVEL1_SET_ADR:  TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
 			LEVEL1_READ: 	 TranslationPAdr = {CurrentPPN, VPN1, 3'b000};
-	     	LEVEL1: 		 if (NextWalkerState == LEAF) TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+	     	LEVEL1: 		 if (NextWalkerState == LEAF) TranslationPAdr = 0; //TranslationVAdr[`PA_BITS-1:0];
 			                 else TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 	    	LEVEL0_SET_ADR:  TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
 			LEVEL0_READ: 	 TranslationPAdr = {CurrentPPN, VPN0, 3'b000};
-	  		LEVEL0: 		 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
-			LEAF:			 TranslationPAdr = TranslationVAdr[`PA_BITS-1:0];
+	  		LEVEL0: 		 TranslationPAdr = 0; //TranslationVAdr[`PA_BITS-1:0];
+			LEAF:			 TranslationPAdr = 0; //TranslationVAdr[`PA_BITS-1:0];
 			default: 		 TranslationPAdr = 0; // cause seg fault if this is improperly used
 		  endcase 
 	  end
@@ -173,13 +169,11 @@ module pagetablewalker
 		assign TerapageMisaligned = 0; // not applicable
 		assign GigapageMisaligned = 0; // not applicable
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
-		assign HPTWPAdrE = TranslationPAdr[31:0]; // ***not right?
 	  end else begin
 		assign InitialWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADR : LEVEL2_SET_ADR;
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
 		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
-		assign HPTWPAdrE = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
  	  end
 
     // Page Table Walker FSM
@@ -224,7 +218,7 @@ module pagetablewalker
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
       assign HPTWRead = 0; assign SelPTW = 0;
       assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
-	  //assign HPTWPAdrE = 0; // comment out ***, replace with Translate P/V, control signal
+	  assign TranslationVAdr = 0; assign TranslationPAdr = 0; assign UseTranslationVAdr = 0;
     end
   endgenerate
 endmodule
