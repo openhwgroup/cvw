@@ -159,7 +159,7 @@ module pagetablewalker
 
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBMissMQ;
-	  assign DTLBWriteM = (WalkerState == LEAF) & ~DTLBMissMQ;
+	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBMissMQ;
 
 	  // *** is there a way to speed up HPTW?
 
@@ -218,10 +218,7 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
-	  //PageTableEntry = '0;
 	  PageType = '0;
-	  DTLBWriteM = '0;
-	  ITLBWriteF = '0;
 
 	  WalkerInstrPageFaultF = 1'b0;
 	  WalkerLoadPageFaultM = 1'b0;
@@ -239,7 +236,6 @@ module pagetablewalker
 			PRegEn = 1'b1;
 	      end
 	    end
-
 	    LEVEL1: begin
 	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) NextWalkerState = LEAF;
 	      else if (ValidPTE && ~LeafPTE) begin
@@ -256,16 +252,11 @@ module pagetablewalker
 			PRegEn = 1'b1;
 	      end
 	    end
-
 	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
 				else NextWalkerState = FAULT;
-	    LEAF: begin // *** pull out datapath stuff
+	    LEAF: begin 
 	      NextWalkerState = IDLE;
-	      //PageTableEntry = CurrentPTE;
 	      PageType = (PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
-	      DTLBWriteM = DTLBMissMQ;
-	      ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
-	      //TranslationPAdr = {2'b00, TranslationVAdr[31:0]};
 	    end
 
 	    FAULT: begin
@@ -303,10 +294,7 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
-	  //PageTableEntry = '0;
 	  PageType = '0;
-	  DTLBWriteM = '0;
-	  ITLBWriteF = '0;
 
 	  WalkerInstrPageFaultF = 1'b0;
 	  WalkerLoadPageFaultM = 1'b0;
@@ -367,12 +355,9 @@ module pagetablewalker
 			if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
 			else NextWalkerState = FAULT;
 	    LEAF: begin
-	      //PageTableEntry = CurrentPTE;
 	      PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
 			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
 			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
-	      DTLBWriteM = DTLBMissMQ;
-	      ITLBWriteF = ~DTLBMissMQ;  // Prefer data over instructions
 	      NextWalkerState = IDLE;
 	    end
 	    FAULT: begin // *** why do these only get raised on TLB misses?  Should they always fault?
@@ -381,11 +366,7 @@ module pagetablewalker
 	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
 	      WalkerStorePageFaultM = DTLBMissMQ && MemStore;
 	    end
-
-	    // Default case should never happen
-	    default: begin
-	      NextWalkerState = IDLE;
-	    end
+	    default: NextWalkerState = IDLE; // should never be reached
 
 	  endcase
 	end
