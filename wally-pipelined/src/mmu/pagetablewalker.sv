@@ -78,7 +78,7 @@ module pagetablewalker
 
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
       logic [`XLEN-1:0]		    TranslationVAdr;
-      logic [`XLEN-1:0]		    SavedPTE, CurrentPTE;
+      logic [`XLEN-1:0]		    CurrentPTE;
       logic [`PA_BITS-1:0]	    TranslationPAdr;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
       logic [`SVMODE_BITS-1:0]	    SvMode;
@@ -130,31 +130,18 @@ module pagetablewalker
       assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF;
       assign SelDataTranslation = DTLBMissMQ | DTLBMissM;
 
-    /*  flopenrc #(1)
-      DTLBMissMReg(.clk(clk),
-		   .reset(reset),
-		   .en(StartWalk | EndWalk),
-		   .clear(EndWalk),
-		   .d(DTLBMissM),
-		   .q(DTLBMissMQ));
-
-      flopenrc #(1)
-      ITLBMissMReg(.clk(clk),
-		   .reset(reset),
-		   .en(StartWalk | EndWalk),
-		   .clear(EndWalk),
-		   .d(ITLBMissF),
-		   .q(ITLBMissFQ));*/
-
       flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 	  flopenrc #(2) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, {DTLBMissM, ITLBMissF}, {DTLBMissMQ, ITLBMissFQ});
-	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
-	flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
+	  flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
+	  flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
+	  flopenr #(`XLEN) ptereg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
+	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
+
 
       assign AnyTLBMissM = DTLBMissM | ITLBMissF;
 
-      assign StartWalk = WalkerState == IDLE & AnyTLBMissM;
-      assign EndWalk = WalkerState == LEAF || WalkerState == FAULT;
+      assign StartWalk = (WalkerState == IDLE) & AnyTLBMissM;
+      assign EndWalk = (WalkerState == LEAF) || (WalkerState == FAULT);
 
       // unswizzle PTE bits
       assign {Dirty, Accessed, Global, User,
@@ -290,18 +277,6 @@ module pagetablewalker
 	assign VPN0 = TranslationVAdr[21:12];
 
 
-
-	// Capture page table entry from data cache
-	// *** may need to delay reading this value until the next clock cycle.
-	// The clk to q latency of the SRAM in the data cache will be long.
-	// I cannot see directly using this value.  This is no different than
-	// a load delay hazard.  This will require rewriting the walker fsm.
-	// also need a new signal to save.  Should be a mealy output of the fsm
-	// request followed by ~stall.
-	flopenr #(32) ptereg(clk, reset, PRegEn, HPTWReadPTE, SavedPTE);
-	//mux2 #(32) ptemux(SavedPTE, HPTWReadPTE, PRegEn, CurrentPTE);
-	assign CurrentPTE = SavedPTE;
-	assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
 	// Assign outputs to ahblite
 	// *** Currently truncate address to 32 bits. This must be changed if
@@ -513,13 +488,6 @@ module pagetablewalker
 	assign VPN2 = TranslationVAdr[38:30];
 	assign VPN1 = TranslationVAdr[29:21];
 	assign VPN0 = TranslationVAdr[20:12];
-
-
-	// Capture page table entry from ahblite
-	flopenr #(`XLEN) ptereg(clk, reset, PRegEn, HPTWReadPTE, SavedPTE);
-	//mux2 #(`XLEN) ptemux(SavedPTE, HPTWReadPTE, PRegEn, CurrentPTE);
-	assign CurrentPTE = SavedPTE;
-	assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
 	// *** Major issue.  We need the full virtual address here.
 	// When the TLB's are update it use use the orignal address
