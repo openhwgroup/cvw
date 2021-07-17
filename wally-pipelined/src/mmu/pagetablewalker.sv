@@ -206,12 +206,10 @@ module pagetablewalker
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
 		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
-	  end
+		assign HPTWPAdrE = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
+ 	  end
       //      generate
       if (`XLEN == 32) begin
-
-	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
-
 	// State transition logic
 	always_comb begin
 	  case (WalkerState)
@@ -234,7 +232,7 @@ module pagetablewalker
 	    LEAF:  NextWalkerState = IDLE;
 	    FAULT: NextWalkerState = IDLE;
 	    default: begin
-			$error("Default state in HPTW should be unreachable")
+			$error("Default state in HPTW should be unreachable");
 			NextWalkerState = IDLE; // should never be reached
 		end
 	  endcase
@@ -248,47 +246,43 @@ module pagetablewalker
 
 	always_comb begin
 	  case (WalkerState)
-	    IDLE: if (AnyTLBMissM) NextWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
-		      else NextWalkerState = IDLE;
-	    LEVEL3_SET_ADRE: NextWalkerState = LEVEL3_WDV;
-	    LEVEL3_WDV: if (HPTWStall) NextWalkerState = LEVEL3_WDV;
-	      else NextWalkerState = LEVEL3;
-	    LEVEL3: 
-	      if (ValidPTE && LeafPTE && ~(TerapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
-		  else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL2_SET_ADRE;
-		  else NextWalkerState = FAULT;
-	    LEVEL2_SET_ADRE: NextWalkerState = LEVEL2_WDV;
-	    LEVEL2_WDV:  if (HPTWStall) NextWalkerState = LEVEL2_WDV;
-	      else NextWalkerState = LEVEL2;
-	    LEVEL2: 
-			if (ValidPTE && LeafPTE && ~(GigapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
-			else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL1_SET_ADRE;
-			else NextWalkerState = FAULT;
-	    LEVEL1_SET_ADRE: NextWalkerState = LEVEL1_WDV;
-	    LEVEL1_WDV: if (HPTWStall) NextWalkerState = LEVEL1_WDV;
-	      else NextWalkerState = LEVEL1;
-	    LEVEL1: 
-			if (ValidPTE && LeafPTE && ~(MegapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
-	      	else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL0_SET_ADRE;
-			else NextWalkerState = FAULT;
-	    LEVEL0_SET_ADRE: NextWalkerState = LEVEL0_WDV;
-	    LEVEL0_WDV: 
-			if (HPTWStall) NextWalkerState = LEVEL0_WDV;
-	      	else NextWalkerState = LEVEL0;
-	    LEVEL0: 
-			if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
-			else NextWalkerState = FAULT;
-	    LEAF: NextWalkerState = IDLE;
-	    FAULT:  NextWalkerState = IDLE;
+	    IDLE: if (AnyTLBMissM) 
+			    if (`XLEN == 64)  	NextWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
+				else              	NextWalkerState = LEVEL1_SET_ADRE;
+		      else 					NextWalkerState = IDLE;
+	    LEVEL3_SET_ADRE: 			NextWalkerState = LEVEL3_WDV;
+	    LEVEL3_WDV: if (HPTWStall) 	NextWalkerState = LEVEL3_WDV;
+	                else 			NextWalkerState = LEVEL3;
+	    LEVEL3: if (ValidPTE && LeafPTE && ~(TerapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
+		  		else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL2_SET_ADRE;
+		 		else 				NextWalkerState = FAULT;
+	    LEVEL2_SET_ADRE: 			NextWalkerState = LEVEL2_WDV;
+	    LEVEL2_WDV: if (HPTWStall) 	NextWalkerState = LEVEL2_WDV;
+	      			else 			NextWalkerState = LEVEL2;
+	    LEVEL2: if (ValidPTE && LeafPTE && ~(GigapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
+				else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL1_SET_ADRE;
+				else 				NextWalkerState = FAULT;
+	    LEVEL1_SET_ADRE: 			NextWalkerState = LEVEL1_WDV;
+	    LEVEL1_WDV: if (HPTWStall) 	NextWalkerState = LEVEL1_WDV;
+	      			else 			NextWalkerState = LEVEL1;
+	    LEVEL1: if (ValidPTE && LeafPTE && ~(MegapageMisaligned || ADPageFault)) NextWalkerState = LEAF;
+	      		else if (ValidPTE && ~LeafPTE) NextWalkerState = LEVEL0_SET_ADRE;
+				else 				NextWalkerState = FAULT;
+	    LEVEL0_SET_ADRE: 			NextWalkerState = LEVEL0_WDV;
+	    LEVEL0_WDV: if (HPTWStall) 	NextWalkerState = LEVEL0_WDV;
+	      			else 			NextWalkerState = LEVEL0;
+	    LEVEL0: if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
+				else 				NextWalkerState = FAULT;
+	    LEAF: 						NextWalkerState = IDLE;
+	    FAULT:  					NextWalkerState = IDLE;
 	    default: begin
-			$error("Default state in HPTW should be unreachable")
-			NextWalkerState = IDLE; // should never be reached
+			$error("Default state in HPTW should be unreachable");
+									NextWalkerState = IDLE; // should never be reached
 		end
 
 	  endcase
 	end
-	assign HPTWPAdrE = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
-      end
+     end
     end else begin
       assign HPTWPAdrE = 0;
       assign HPTWRead = 0;
