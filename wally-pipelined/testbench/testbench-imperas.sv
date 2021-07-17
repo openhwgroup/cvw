@@ -633,7 +633,7 @@ string tests32f[] = '{
 			      dut.hart.ieu.dp.regf.wd3 == 1))) begin
  -----/\----- EXCLUDED -----/\----- */
       if (DCacheFlushDone) begin
-        $display("Code ended with ecall with gp = 1");
+        //$display("Code ended with ecall with gp = 1");
 
         #600; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
