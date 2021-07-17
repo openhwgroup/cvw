@@ -95,21 +95,11 @@ module pagetablewalker
       logic			    StartWalk;
       logic			    EndWalk;
 
-      typedef enum		    {LEVEL0_SET_ADRE,
-				     LEVEL0_WDV,
-				     LEVEL0,
-				     LEVEL1_SET_ADRE,
-				     LEVEL1_WDV,
-				     LEVEL1,
-				     LEVEL2_SET_ADRE,
-				     LEVEL2_WDV,
-				     LEVEL2,
-				     LEVEL3_SET_ADRE,
-				     LEVEL3_WDV,
-				     LEVEL3,
-				     LEAF,
-				     IDLE,
-				     FAULT} statetype;
+      typedef enum  {LEVEL0_SET_ADRE, LEVEL0_WDV, LEVEL0,
+				     LEVEL1_SET_ADRE, LEVEL1_WDV, LEVEL1,
+				     LEVEL2_SET_ADRE, LEVEL2_WDV, LEVEL2,
+				     LEVEL3_SET_ADRE, LEVEL3_WDV, LEVEL3,
+				     LEAF, IDLE, FAULT} statetype;
 
       statetype WalkerState, NextWalkerState, PreviousWalkerState;
 
@@ -117,13 +107,8 @@ module pagetablewalker
       logic			    SelDataTranslation;
       logic			    AnyTLBMissM;
 
-
-
-
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
-
       assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-
       assign MemStore = MemRWM[0];
 
       // Prefer data address translations over instruction address translations
@@ -136,7 +121,6 @@ module pagetablewalker
 	  flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
 	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
-
 
       assign AnyTLBMissM = DTLBMissM | ITLBMissF;
 
@@ -160,6 +144,14 @@ module pagetablewalker
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBMissMQ;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBMissMQ;
+
+	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBMissMQ; //*** why do these only get raised on TLB misses?  Should they always fault even for ADpagefaults, invalid addresses,etc??
+	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemStore;
+	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemStore;
+
+	  assign PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
+			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
+			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
 
 	  // *** is there a way to speed up HPTW?
 
@@ -218,11 +210,6 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
-	  PageType = '0;
-
-	  WalkerInstrPageFaultF = 1'b0;
-	  WalkerLoadPageFaultM = 1'b0;
-	  WalkerStorePageFaultM = 1'b0;
 
 	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM & SvMode == `SV32) NextWalkerState = LEVEL1_SET_ADRE;
@@ -254,26 +241,12 @@ module pagetablewalker
 	    end
 	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
 				else NextWalkerState = FAULT;
-	    LEAF: begin 
-	      NextWalkerState = IDLE;
-	      PageType = (PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00;  // *** not sure about this mux?
-	    end
-
-	    FAULT: begin
-	      NextWalkerState = IDLE;
-	      WalkerInstrPageFaultF = ~DTLBMissMQ;
-	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-	      WalkerStorePageFaultM = DTLBMissMQ && MemStore;
-	    end
-
+	    LEAF:  NextWalkerState = IDLE;
+	    FAULT: NextWalkerState = IDLE;
 	    // Default case should never happen, but is included for linter.
 	    default: NextWalkerState = IDLE;
 	  endcase
 	end
-
-
-
-
 
 	// Assign outputs to ahblite
 	// *** Currently truncate address to 32 bits. This must be changed if
@@ -294,11 +267,6 @@ module pagetablewalker
 	always_comb begin
 	  PRegEn = 1'b0;
 	  HPTWRead = 1'b0;
-	  PageType = '0;
-
-	  WalkerInstrPageFaultF = 1'b0;
-	  WalkerLoadPageFaultM = 1'b0;
-	  WalkerStorePageFaultM = 1'b0;
 
 	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM) NextWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADRE : LEVEL2_SET_ADRE;
@@ -354,18 +322,8 @@ module pagetablewalker
 	    LEVEL0: 
 			if (ValidPTE && LeafPTE && ~ADPageFault) NextWalkerState = LEAF;
 			else NextWalkerState = FAULT;
-	    LEAF: begin
-	      PageType = (PreviousWalkerState == LEVEL3) ? 2'b11 :  // *** not sure about this mux?
-			 ((PreviousWalkerState == LEVEL2) ? 2'b10 :
-			  ((PreviousWalkerState == LEVEL1) ? 2'b01 : 2'b00));
-	      NextWalkerState = IDLE;
-	    end
-	    FAULT: begin // *** why do these only get raised on TLB misses?  Should they always fault?
-	      NextWalkerState = IDLE;
-	      WalkerInstrPageFaultF = ~DTLBMissMQ;
-	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
-	      WalkerStorePageFaultM = DTLBMissMQ && MemStore;
-	    end
+	    LEAF: NextWalkerState = IDLE;
+	    FAULT:  NextWalkerState = IDLE;
 	    default: NextWalkerState = IDLE; // should never be reached
 
 	  endcase
