@@ -58,7 +58,7 @@ module wallypipelinedhart
   //  logic [1:0]  ForwardAE, ForwardBE;
   logic 		    StallF, StallD, StallE, StallM, StallW;
   logic 		    FlushF, FlushD, FlushE, FlushM, FlushW;
-  logic 		    RetM, TrapM, NonBusTrapM;
+  logic 		    RetM, TrapM;
 
   // new signals that must connect through DP
   logic 		    MulDivE, W64E;
@@ -215,7 +215,6 @@ module wallypipelinedhart
 	  .STATUS_MPP(STATUS_MPP),  // from csr	  
 
 	  .DTLBFlushM(DTLBFlushM),                   // connects to privilege
-	  .NonBusTrapM(NonBusTrapM),                 // connects to privilege
 	  .DTLBLoadPageFaultM(DTLBLoadPageFaultM),   // connects to privilege
 	  .DTLBStorePageFaultM(DTLBStorePageFaultM), // connects to privilege
 	  .LoadMisalignedFaultM(LoadMisalignedFaultM), // connects to privilege

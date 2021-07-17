@@ -42,7 +42,7 @@ module trap (
   input logic [31:0] 	   InstrM,
   input logic 		   StallW,
   input logic 		   InstrValidM, CommittedM,
-  output logic 		   NonBusTrapM, TrapM, MTrapM, STrapM, UTrapM, RetM,
+  output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic 		   InterruptM,
   output logic 		   ExceptionM,
   output logic 		   PendingInterruptM,
@@ -56,7 +56,7 @@ module trap (
   logic [11:0] PendingIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
-  logic BusTrapM;
+  logic NonBusTrapM, BusTrapM;
 
   // Determine pending enabled interrupts
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
