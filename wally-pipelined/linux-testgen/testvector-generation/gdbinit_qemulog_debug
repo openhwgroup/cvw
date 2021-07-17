@@ -1,5 +1,5 @@
 set pagination off
-target extended-remote :1234
+target extended-remote :1236
 maint print symbols symbols.txt
 b *0x000000008020103c
 c

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// or.sv
+// oneHotDecoder.sv
 //
-// Written: David_Harris@hmc.edu 13 July 2021
+// Written: ross1728@gmail.com July 09, 2021
 // Modified: 
 //
-// Purpose: Various flavors of multiplexers
+// Purpose: Bin to one hot decoder. Power of 2 only.
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -24,26 +24,16 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-/* verilator lint_off DECLFILENAME */
-/* verilator lint_off UNOPTFLAT */
 
-// perform an OR of all the rows in an array, producing one output for each column
-// equivalent to assign y = a.or
-module or_rows #(parameter ROWS = 8, COLS=2) (
-  input  var logic [COLS-1:0] a[ROWS-1:0],
-  output logic [COLS-1:0] y); 
+module oneHotDecoder
+  #(parameter WIDTH = 2)
+  (input logic [WIDTH-1:0] bin,
+   output logic [2**WIDTH-1:0] decoded
+   );
 
-  logic [COLS-1:0] mid[ROWS-1:0];
-  genvar row, col;
-  generate
-      for (col = 0; col < COLS; col++) begin
-          assign mid[1][col] = a[0][col] | a[1][col];
-          for (row=2; row < ROWS; row++)
-            assign mid[row][col] = mid[row-1][col] | a[row][col];
-          assign y[col] = mid[ROWS-1][col];
-      end
-  endgenerate
+  always_comb begin
+    decoded = '0;
+    decoded[bin] = 1'b1;
+  end
+    
 endmodule
-
-/* verilator lint_on UNOPTFLAT */
-/* verilator lint_on DECLFILENAME */

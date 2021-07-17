@@ -38,6 +38,13 @@ switch $argc {
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vopt work_$2.testbench -work work_$2 -o workopt_$2
 vsim -lib work_$2 workopt_$2
+# Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
+#vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
+#vsim -coverage -lib work_$2 workopt_$2
 
 run -all
+#coverage report -file wally-pipelined-coverage.txt
+# These aren't doing anything helpful
+#coverage report -memory 
+#profile report -calltree -file wally-pipelined-calltree.rpt -cutoff 2
 quit
