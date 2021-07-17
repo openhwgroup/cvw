@@ -255,7 +255,7 @@ module wallypipelinedhart
 	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
 	      .UnsignedLoadM(1'b0),
 	      .Funct7M(7'b0),
-	      .HRDATAW(),
+//	      .HRDATAW(),
 	      .StallW(1'b0),
 	      .AtomicMaskedM(2'b00),
 	       .*);
