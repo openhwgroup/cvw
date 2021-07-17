@@ -67,12 +67,9 @@ module pagetablewalker
   generate
     if (`MEM_VIRTMEM) begin
       // Internal signals
-      // register TLBs translation miss requests
-      logic			    DTLBWalk;
-
+      logic			    DTLBWalk; // register TLBs translation miss requests
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
       logic [`XLEN-1:0]		    TranslationVAdr;
-      logic [`XLEN-1:0]		    CurrentPTE;
       logic [`PA_BITS-1:0]	    TranslationPAdr;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
       logic			    MemWrite;
@@ -83,18 +80,17 @@ module pagetablewalker
       logic			    EndWalk;
       logic			    PRegEn;
 	  logic [1:0]       NextPageType;
+      logic [`SVMODE_BITS-1:0]	    SvMode;
 
       typedef enum  {LEVEL0_SET_ADR, LEVEL0_READ, LEVEL0,
 				     LEVEL1_SET_ADR, LEVEL1_READ, LEVEL1,
 				     LEVEL2_SET_ADR, LEVEL2_READ, LEVEL2,
 				     LEVEL3_SET_ADR, LEVEL3_READ, LEVEL3,
 				     LEAF, IDLE, FAULT} statetype;
-
       statetype WalkerState, NextWalkerState, InitialWalkerState;
 
-      logic [`SVMODE_BITS-1:0]	    SvMode;
+	  // Extract bits from CSRs and inputs
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
-
       assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
       assign MemWrite = MemRWM[0];
 
@@ -104,25 +100,22 @@ module pagetablewalker
       flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk);
 	  flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
-	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
-	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
-
-      assign StartWalk = (WalkerState == IDLE) & (DTLBMissM | ITLBMissF);
-      assign EndWalk = (WalkerState == LEAF) || (WalkerState == FAULT);
+	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
+	  assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
       // Assign PTE descriptors common across all XLEN values
 	  // For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
-      assign {Executable, Writable, Readable, Valid} = CurrentPTE[3:0]; 
+      assign {Executable, Writable, Readable, Valid} = PTE[3:0]; 
       assign LeafPTE = Executable | Writable | Readable; 
       assign ValidPTE = Valid && ~(Writable && ~Readable);
 	  assign ValidLeafPTE = ValidPTE & LeafPTE;
 	  assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
 	  
-      // Assign specific outputs to general outputs
-	  // *** try to eliminate this duplication, but attempts caused MMU to hang
-      assign PTE = CurrentPTE;
-    //  assign PageTableEntryM = CurrentPTE;
-
+	  // Enable and select signals based on states
+      assign StartWalk = (WalkerState == IDLE) & (DTLBMissM | ITLBMissF);
+      assign EndWalk = (WalkerState == LEAF) || (WalkerState == FAULT);
+	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
+	  assign HPTWRead = (WalkerState == LEVEL3_READ) | (WalkerState == LEVEL2_READ) | (WalkerState == LEVEL1_READ) | (WalkerState == LEVEL0_READ);
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
@@ -131,9 +124,6 @@ module pagetablewalker
 	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBWalk;
 	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBWalk & ~MemWrite;
 	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBWalk & MemWrite;
-
-	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
-	  assign HPTWRead = (WalkerState == LEVEL3_READ) | (WalkerState == LEVEL2_READ) | (WalkerState == LEVEL1_READ) | (WalkerState == LEVEL0_READ);
 
 	  // FSM to track PageType based on the levels of the page table traversed
 	  flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
