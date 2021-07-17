@@ -80,6 +80,7 @@ module pagetablewalker
       logic			    ValidPTE, ADPageFault, MegapageMisaligned, TerapageMisaligned, GigapageMisaligned, BadMegapage, LeafPTE;
       logic			    StartWalk;
       logic			    EndWalk;
+      logic			    PRegEn;
 	  logic [1:0]       NextPageType;
 
       typedef enum  {LEVEL0_SET_ADR, LEVEL0_WDV, LEVEL0,
@@ -90,18 +91,14 @@ module pagetablewalker
 
       statetype WalkerState, NextWalkerState, InitialWalkerState;
 
-      logic			    PRegEn;
-      logic			    SelDataTranslation;
-
       logic [`SVMODE_BITS-1:0]	    SvMode;
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 
       assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
       assign MemWrite = MemRWM[0];
 
-      // Prefer data address translations over instruction address translations
-      assign SelDataTranslation = DTLBWalk | DTLBMissM; // *** missM is probably unnecessary
-	  assign TranslationVAdr = (SelDataTranslation) ? MemAdrM : PCF;
+      // Determine which address to translate
+ 	  assign TranslationVAdr = DTLBWalk ? MemAdrM : PCF;
     
       flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk);
