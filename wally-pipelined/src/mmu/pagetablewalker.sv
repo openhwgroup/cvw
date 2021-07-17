@@ -101,7 +101,7 @@ module pagetablewalker
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
-	  assign UseTranslationVAdr = (NextWalkerState == LEAF) || (WalkerState == LEAF);
+	  assign UseTranslationVAdr = (NextWalkerState == LEAF) || (WalkerState == LEAF); // ***explain this logic
 
 	  // Raise faults.  DTLBMiss
 	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBWalk;
@@ -131,15 +131,10 @@ module pagetablewalker
 		logic [`PPN_BITS-1:0] PPN;
 		always_comb
 			case (WalkerState) // select VPN field based on HPTW state
-				LEVEL3_SET_ADR:  VPN = TranslationVAdr[47:39];
-				LEVEL3_READ:  	 VPN = TranslationVAdr[47:39];
-				LEVEL3:          VPN = TranslationVAdr[38:30];
-				LEVEL2_SET_ADR:  VPN = TranslationVAdr[38:30];
-				LEVEL2_READ:  	 VPN = TranslationVAdr[38:30];
-				LEVEL2: 		 VPN = TranslationVAdr[29:21];
-				LEVEL1_SET_ADR:  VPN = TranslationVAdr[29:21];
-				LEVEL1_READ: 	 VPN = TranslationVAdr[29:21];
-				default:		 VPN = TranslationVAdr[20:12];
+				LEVEL3_SET_ADR, LEVEL3_READ:  			VPN = TranslationVAdr[47:39];
+				LEVEL3, LEVEL2_SET_ADR, LEVEL2_READ:    VPN = TranslationVAdr[38:30];
+				LEVEL2, LEVEL1_SET_ADR, LEVEL1_READ: 	VPN = TranslationVAdr[29:21];
+				default:		 						VPN = TranslationVAdr[20:12];
 			endcase
 		assign PPN = ((WalkerState == LEVEL3_SET_ADR) | (WalkerState == LEVEL3_READ) | 
 		              (SvMode != `SV48 & ((WalkerState == LEVEL2_SET_ADR) | (WalkerState == LEVEL2_READ)))) ? BasePageTablePPN : CurrentPPN;
