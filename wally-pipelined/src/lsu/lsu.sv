@@ -56,7 +56,6 @@ module lsu
    input logic [1:0] 	       PrivilegeModeW,
    input logic 		       DTLBFlushM,
    // faults
-   input logic 		       NonBusTrapM, 
    output logic 	       DTLBLoadPageFaultM, DTLBStorePageFaultM,
    output logic 	       LoadMisalignedFaultM, LoadAccessFaultM,
    // cpu hazard unit (trap)
