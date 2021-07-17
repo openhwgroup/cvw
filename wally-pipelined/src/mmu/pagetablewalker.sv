@@ -49,7 +49,6 @@ module pagetablewalker
 
    // *** modify to send to LSU // *** KMG: These are inputs/results from the ahblite whose addresses should have already been checked, so I don't think they need to be sent through the LSU
    input logic [`XLEN-1:0]  HPTWReadPTE,
-   input logic		    MMUReady,
    input logic		    HPTWStall,
 
    // *** modify to send to LSU
@@ -140,8 +139,7 @@ module pagetablewalker
 			default: PageType = 2'b00; // kilopage
 		  endcase
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
-	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV); // is this really necessary?
-
+	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV);
 	  // *** is there a way to speed up HPTW?
 
 	  // TranslationPAdr mux
