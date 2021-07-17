@@ -80,6 +80,7 @@ module pagetablewalker
       logic			    ValidPTE, ADPageFault, MegapageMisaligned, TerapageMisaligned, GigapageMisaligned, BadMegapage, LeafPTE;
       logic			    StartWalk;
       logic			    EndWalk;
+	  logic [1:0]       NextPageType;
 
       typedef enum  {LEVEL0_SET_ADRE, LEVEL0_WDV, LEVEL0,
 				     LEVEL1_SET_ADRE, LEVEL1_WDV, LEVEL1,
@@ -87,7 +88,7 @@ module pagetablewalker
 				     LEVEL3_SET_ADRE, LEVEL3_WDV, LEVEL3,
 				     LEAF, IDLE, FAULT} statetype;
 
-      statetype WalkerState, NextWalkerState, PreviousWalkerState, InitialWalkerState;
+      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
       logic			    PRegEn;
       logic			    SelDataTranslation;
@@ -105,7 +106,7 @@ module pagetablewalker
       flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);
 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBMissMQ);
 	  flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState);
-	  flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
+	 // flopenl #(.TYPE(statetype)) PreviousWalkerStateReg(clk, reset, 1'b1, WalkerState, IDLE, PreviousWalkerState);
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, CurrentPTE); // Capture page table entry from data cache
 	  assign CurrentPPN = CurrentPTE[`PPN_BITS+9:10];
 
@@ -131,16 +132,27 @@ module pagetablewalker
 	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBMissMQ & ~MemWrite;
 	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBMissMQ & MemWrite;
 
-	  always_comb // determine type of page being walked:
+/*	  always_comb // determine type of page being walked:
 		  case (PreviousWalkerState)
 			LEVEL3:  PageType = 2'b11; // terapage
 			LEVEL2:  PageType = 2'b10; // gigapage
 			LEVEL1:  PageType = 2'b01; // megapage
 			default: PageType = 2'b00; // kilopage
-		  endcase
+		  endcase*/
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
 	  assign HPTWRead = (WalkerState == LEVEL3_WDV) | (WalkerState == LEVEL2_WDV) | (WalkerState == LEVEL1_WDV) | (WalkerState == LEVEL0_WDV);
 	  // *** is there a way to speed up HPTW?
+
+	  // FSM to track PageType based on the levels of the page table traversed
+	  flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
+	  always_comb 
+		case (WalkerState)
+			LEVEL3:  NextPageType = 2'b11; // terapage
+			LEVEL2:  NextPageType = 2'b10; // gigapage
+			LEVEL1:  NextPageType = 2'b01; // megapage
+			LEVEL0:  NextPageType = 2'b00; // kilopage
+			default: NextPageType = PageType;
+		endcase
 
 	  // TranslationPAdr mux
 	  if (`XLEN==32) begin
