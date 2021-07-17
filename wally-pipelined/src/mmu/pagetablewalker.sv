@@ -78,15 +78,8 @@ module pagetablewalker
       logic [`PPN_BITS-1:0]	    CurrentPPN;
       logic [`SVMODE_BITS-1:0]	    SvMode;
       logic			    MemStore;
-
-      // PTE Control Bits
-      logic			    Dirty, Accessed, Global, User,
-				    Executable, Writable, Readable, Valid;
-      // PTE descriptions
-      logic			    ValidPTE, ADPageFault, MegapageMisaligned, BadMegapage, LeafPTE;
-
-      // Outputs of walker
-      //logic [`XLEN-1:0]		    PageTableEntry;
+      logic			    Dirty, Accessed, Global, User, Executable, Writable, Readable, Valid;
+      logic			    ValidPTE, ADPageFault, MegapageMisaligned, TerapageMisaligned, GigapageMisaligned, BadMegapage, LeafPTE;
       logic			    StartWalk;
       logic			    EndWalk;
 
@@ -203,15 +196,24 @@ module pagetablewalker
 			default: 		 TranslationPAdr = 0; // cause seg fault if this is improperly used
 		  endcase 
 	  end
+
+	  if (`XLEN == 32) begin
+		assign TerapageMisaligned = 0; // not applicable
+		assign GigapageMisaligned = 0; // not applicable
+		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
+	  end else begin
+		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
+		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
+		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
+	  end
       //      generate
       if (`XLEN == 32) begin
 
 	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
-	assign MegapageMisaligned = |(CurrentPPN[9:0]);
 
 	// State transition logic
 	always_comb begin
-å	  case (WalkerState)
+	  case (WalkerState)
 	    IDLE: if (AnyTLBMissM & SvMode == `SV32) NextWalkerState = LEVEL1_SET_ADRE;
 	      	  else NextWalkerState = IDLE;
 	    LEVEL1_SET_ADRE: NextWalkerState = LEVEL1_WDV;
@@ -226,7 +228,6 @@ module pagetablewalker
 	    LEVEL0_SET_ADRE: NextWalkerState = LEVEL0_WDV;
 	    LEVEL0_WDV: if (HPTWStall) NextWalkerState = LEVEL0_WDV;
 	      else NextWalkerState = LEVEL0;
-	    end
 	    LEVEL0: if (ValidPTE & LeafPTE & ~ADPageFault) NextWalkerState = LEAF;
 				else NextWalkerState = FAULT;
 	    LEAF:  NextWalkerState = IDLE;
@@ -242,15 +243,6 @@ module pagetablewalker
 	assign HPTWPAdrE = TranslationPAdr[31:0];
 
       end else begin
-	logic	    TerapageMisaligned, GigapageMisaligned;
-	// A terapage is a level 3 leaf page. This page must have zero PPN[2],
-	// zero PPN[1], and zero PPN[0]
-	assign TerapageMisaligned = |(CurrentPPN[26:0]);
-	// A gigapage is a Level 2 leaf page. This page must have zero PPN[1] and
-	// zero PPN[0]
-	assign GigapageMisaligned = |(CurrentPPN[17:0]);
-	// A megapage is a Level 1 leaf page. This page must have zero PPN[0].
-	assign MegapageMisaligned = |(CurrentPPN[8:0]);
 
 	always_comb begin
 	  case (WalkerState)
