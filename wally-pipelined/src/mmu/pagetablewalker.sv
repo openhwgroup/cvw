@@ -156,6 +156,9 @@ module pagetablewalker
       assign PageTableEntryF = PageTableEntry;
       assign PageTableEntryM = PageTableEntry;
 
+	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
+
+
 	  // *** is there a way to speed up HPTW?
 
 	  // TranslationPAdr mux
@@ -216,7 +219,6 @@ module pagetablewalker
 	// State transition logic
 	always_comb begin
 	  PRegEn = 1'b0;
-	//  TranslationPAdr = '0;
 	  HPTWRead = 1'b0;
 	  PageTableEntry = '0;
 	  PageType = '0;
@@ -227,46 +229,27 @@ module pagetablewalker
 	  WalkerLoadPageFaultM = 1'b0;
 	  WalkerStorePageFaultM = 1'b0;
 
-	  SelPTW = 1'b1;
+	 // SelPTW = 1'b1;
 
 	  case (WalkerState)
-	    IDLE: begin
-	      SelPTW = 1'b0;
-	      if (AnyTLBMissM & SvMode == `SV32) begin
-		NextWalkerState = LEVEL1_SET_ADRE;
-	      end else begin
-		NextWalkerState = IDLE;
-	      end
-	    end
-
-	    LEVEL1_SET_ADRE: begin
-	      NextWalkerState = LEVEL1_WDV;
-	      //TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
-	    end
-
+	    IDLE: if (AnyTLBMissM & SvMode == `SV32) NextWalkerState = LEVEL1_SET_ADRE;
+	      	  else NextWalkerState = IDLE;
+	    LEVEL1_SET_ADRE: NextWalkerState = LEVEL1_WDV;
 	    LEVEL1_WDV: begin
-	      //TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
 	      HPTWRead = 1'b1;
-	      if (HPTWStall) begin
-		NextWalkerState = LEVEL1_WDV;
-	      end else begin
+	      if (HPTWStall) NextWalkerState = LEVEL1_WDV;
+	      else begin
 		NextWalkerState = LEVEL1;
 		PRegEn = 1'b1;
 	      end
 	    end
 
 	    LEVEL1: begin
-	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) begin
-		NextWalkerState = LEAF;
-		//TranslationPAdr = {2'b00, TranslationVAdr[31:0]}; // ***check this
-	      end
+	      if (ValidPTE && LeafPTE && ~(MegapageMisaligned | ADPageFault)) NextWalkerState = LEAF;
 	      else if (ValidPTE && ~LeafPTE) begin
-		NextWalkerState = LEVEL0_SET_ADRE;
-		//TranslationPAdr = {CurrentPPN, VPN0, 2'b00};
-		HPTWRead = 1'b1;
-	      end else begin
-		NextWalkerState = FAULT;
-	      end
+			NextWalkerState = LEVEL0_SET_ADRE;
+			HPTWRead = 1'b1;
+	      end else NextWalkerState = FAULT;
 	    end
 
 	    LEVEL0_SET_ADRE: begin
@@ -304,7 +287,7 @@ module pagetablewalker
 	    end
 
 	    FAULT: begin
-	      SelPTW = 1'b0;
+	      //SelPTW = 1'b0;
 	      NextWalkerState = IDLE;
 	      WalkerInstrPageFaultF = ~DTLBMissMQ;
 	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
@@ -356,11 +339,9 @@ module pagetablewalker
 	  WalkerLoadPageFaultM = 1'b0;
 	  WalkerStorePageFaultM = 1'b0;
 
-	  SelPTW = 1'b1;
-
 	  case (WalkerState)
 	    IDLE: begin
-	      SelPTW = 1'b0;
+	      //SelPTW = 1'b0;
 	      if (AnyTLBMissM & SvMode == `SV48) begin
 		NextWalkerState = LEVEL3_SET_ADRE;
 	      end else if (AnyTLBMissM & SvMode == `SV39) begin
@@ -505,7 +486,7 @@ module pagetablewalker
 	    end
 
 	    FAULT: begin
-	      SelPTW = 1'b0;
+	      //SelPTW = 1'b0;
 	      NextWalkerState = IDLE;
 	      WalkerInstrPageFaultF = ~DTLBMissMQ;
 	      WalkerLoadPageFaultM = DTLBMissMQ && ~MemStore;
