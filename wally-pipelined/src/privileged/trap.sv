@@ -56,7 +56,7 @@ module trap (
   logic [11:0] PendingIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
-  logic ExceptionNonIntM;
+  logic Exception1M;
 
   // Determine pending enabled interrupts
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
@@ -64,7 +64,6 @@ module trap (
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
   assign InterruptM = PendingInterruptM & ~CommittedM;
-  //assign ExceptionM = BusTrapM | NonBusTrapM;
   assign ExceptionM = TrapM;
   
   // interrupt if any sources are pending
@@ -72,15 +71,14 @@ module trap (
   // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
  
   // Trigger Traps and RET
-  //   Created groups of trap signals so that bus could take in all traps it doesn't already produce (i.e. using just TrapM to squash access created circular paths)
-  // *** Ben July 06, 2021 probably remove bus and nonbus trapm after dcache implemenation.
-  //assign BusTrapM = LoadAccessFaultM | StoreAccessFaultM;
-  assign ExceptionNonIntM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
-                       LoadMisalignedFaultM | StoreMisalignedFaultM |
-                       InstrPageFaultM | LoadPageFaultM | StorePageFaultM |
-                       BreakpointFaultM | EcallFaultM |
-                       LoadAccessFaultM | StoreAccessFaultM;
-  assign TrapM = ExceptionNonIntM | InterruptM;
+  // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
+  // Traps are the union of exceptions and interrupts.
+  assign Exception1M = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
+                      LoadMisalignedFaultM | StoreMisalignedFaultM |
+                      InstrPageFaultM | LoadPageFaultM | StorePageFaultM |
+                      BreakpointFaultM | EcallFaultM |
+                      LoadAccessFaultM | StoreAccessFaultM;
+  assign TrapM = Exception1M | InterruptM; // *** clean this up later DH
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
   assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
