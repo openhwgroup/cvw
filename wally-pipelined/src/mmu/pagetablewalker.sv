@@ -121,10 +121,14 @@ module pagetablewalker
 
 	  // TranslationPAdr mux
 	  if (`XLEN==32) begin // RV32
-		logic [9:0] VPN1, VPN0;
+		logic [9:0] VPN1, VPN0, VPN;
+		logic [`PPN_BITS-1:0] PPN;
 		assign VPN1 = TranslationVAdr[31:22];
 		assign VPN0 = TranslationVAdr[21:12];
-		always_comb
+		assign VPN = ((WalkerState == LEVEL1_SET_ADR) | (WalkerState == LEVEL1_READ)) ? VPN1 : VPN0;
+		assign PPN = ((WalkerState == LEVEL1_SET_ADR) | (WalkerState == LEVEL1_READ)) ? BasePageTablePPN : CurrentPPN;
+		assign TranslationPAdr = {PPN, VPN, 2'b00}; 
+/*		always_comb
 		  case (WalkerState)
 	    	LEVEL1_SET_ADR:  TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
 	    	LEVEL1_READ:      TranslationPAdr = {BasePageTablePPN, VPN1, 2'b00};
@@ -135,7 +139,7 @@ module pagetablewalker
 			LEVEL0: 		 TranslationPAdr = 0; // {2'b00, TranslationVAdr[31:0]};
 			LEAF:			 TranslationPAdr = 0; // {2'b00, TranslationVAdr[31:0]};
 			default:		 TranslationPAdr = 0; // cause seg fault if this is improperly used
-		  endcase
+		  endcase */
 	  end else begin // RV64
 		logic [8:0] VPN3, VPN2, VPN1, VPN0;
 		assign VPN3 = TranslationVAdr[47:39];
