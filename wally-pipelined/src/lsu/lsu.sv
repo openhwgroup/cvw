@@ -81,7 +81,7 @@ module lsu
 
    input logic [`XLEN-1:0]     PCF,
    input logic 		       ITLBMissF,
-   output logic [`XLEN-1:0]    PageTableEntryF,
+   output logic [`XLEN-1:0]    PTE,
    output logic [1:0] 	       PageType,
    output logic 	       ITLBWriteF,
    output logic 	       WalkerInstrPageFaultF,
@@ -118,7 +118,7 @@ module lsu
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
  
   logic 		       DTLBMissM;
-  logic [`XLEN-1:0] 	       PTE, PageTableEntryM;
+//  logic [`XLEN-1:0] 	       PTE;
   logic 		       DTLBWriteM;
   logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       HPTWStall;  
@@ -158,7 +158,6 @@ module lsu
 				  .DTLBMissM(DTLBMissM),
 				  .MemRWM(MemRWM),
 				  .PTE(PTE),
-//				  .PageTableEntryM(PageTableEntryM),
 				  .PageType,
 				  .ITLBWriteF(ITLBWriteF),
 				  .DTLBWriteM(DTLBWriteM),
@@ -172,8 +171,7 @@ module lsu
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
-  assign PageTableEntryM = PTE;
-  assign PageTableEntryF = PTE;
+//  assign PageTableEntryF = PTE;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
@@ -185,7 +183,6 @@ module lsu
 		 .HPTWRead(HPTWRead),
 		 .HPTWPAdrE(HPTWPAdrE),
 		 .HPTWPAdrM(HPTWPAdrM),		 
-		 //.HPTWReadPTE(HPTWReadPTE),
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
@@ -221,7 +218,7 @@ module lsu
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.Address(MemAdrMtoDCache),
        .Size(Funct3MtoDCache[1:0]),
-       .PTE(PageTableEntryM),
+       .PTE(PTE),
        .PageTypeWriteVal(PageType),
        .TLBWrite(DTLBWriteM),
        .TLBFlush(DTLBFlushM),

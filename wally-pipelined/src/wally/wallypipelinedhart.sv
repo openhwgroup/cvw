@@ -225,7 +225,7 @@ module wallypipelinedhart
     
 	  .PCF(PCF),
 	  .ITLBMissF(ITLBMissF),
-	  .PageTableEntryF(PageTableEntryF),
+	  .PTE(PageTableEntryF),
 	  .PageType,
 	  .ITLBWriteF(ITLBWriteF),
 	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
