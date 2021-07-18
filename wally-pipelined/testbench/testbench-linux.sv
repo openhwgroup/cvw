@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0000001; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0000000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -399,7 +399,7 @@ module testbench();
         if ($time == 0) begin
           scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           if (dut.hart.ieu.dp.regf.rf[i] != regExpected) begin
-            $display("%0t ps, PCW %x, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, PCW, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
+            $display("%0t ps, InstrNum %0d, PCW %x, InstrW %s: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, PCW, PCtextW, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
         end else begin
@@ -410,11 +410,11 @@ module testbench();
             scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
           end
           if (i != regNumExpected) begin
-            $display("%0t ps, PCW %x %s, instr %0d: wrong register changed: %0d, %0d expected to switch to %x from %x", $time, PCW, PCtextW, instrs, i, regNumExpected, regExpected, dut.hart.ieu.dp.regf.rf[regNumExpected]);
+            $display("%0t ps, InstrNum %0d, PCW %x, InstrW %s: wrong register changed: %0d, %0d expected to switch to %x from %x", $time, instrs, PCW, PCtextW, i, regNumExpected, regExpected, dut.hart.ieu.dp.regf.rf[regNumExpected]);
             `ERROR
           end
           if (~(dut.hart.ieu.dp.regf.rf[i] === regExpected)) begin
-            $display("%0t ps, PCW %x %s, instr %0d: rf[%0d] does not equal rf expected: %x, %x", $time, PCW, PCtextW, instrs, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
+            $display("%0t ps, InstrNum %0d, PCW %x, InstrW %s: rf[%0d] does not equal rf expected: %x, %x", $time, instrs, PCW, PCtextW, i, dut.hart.ieu.dp.regf.rf[i], regExpected);
             `ERROR
           end
         end
@@ -422,9 +422,9 @@ module testbench();
     end
   endgenerate
 
-  ///////////////////////////////////////////////////////////////////////////////
-  //////////////////////// Bus Unit Read/Write Checking /////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
+  //////////////////////// Memory Read/Write Checking /////////////////////////
+  /////////////////////////////////////////////////////////////////////////////
   // RAM and bootram are addressed in 64-bit blocks - this logic handles R/W
   // including subwords. Brief explanation on signals:
   //
@@ -452,11 +452,9 @@ module testbench();
   // ------------
   // Read Checker
   // ------------
-  always @(dut.hart.lsu.dcache.ReadDataM) begin
-    #2;
-    if (dut.hart.MemRWM[1]
-      && (dut.hart.ebu.CaptureDataM)
-      && dut.hart.lsu.dcache.ReadDataM !== {64{1'bx}}) begin
+  always @(negedge clk) begin
+    //if (dut.hart.MemRWM[1] && ~dut.hart.StallM && ~dut.hart.FlushM && dut.hart.ieu.InstrValidM) begin <-- This doesn't work because ReadDataM can be used for other things (namely page table walking) while the pipeline is stalled, leaving it in a different state when the pipeline unstalls
+    if (dut.hart.MemRWM[1] && dut.hart.lsu.dcache.ReadDataWEn) begin // <-- ReadDataWEn is a good indicator that the pipeline is using the current contents of ReadDataM
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         `ERROR
@@ -465,18 +463,18 @@ module testbench();
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
       assign readAdrTranslated = adrTranslator(readAdrExpected);
       if (~(dut.hart.lsu.dcache.MemPAdrM === readAdrTranslated)) begin
-        $display("%0t ps, PCM %x %s, instr %0d: dut.hart.lsu.dcache.MemPAdrM does not equal readAdrExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.MemPAdrM, readAdrTranslated);
+        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemPAdrM does not equal readAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, readAdrTranslated);
         `ERROR
       end
       if (readDataExpected !== dut.hart.lsu.dcache.ReadDataM) begin
         if (dut.hart.lsu.dcache.MemPAdrM inside `LINUX_FIX_READ) begin
           if (dut.hart.lsu.dcache.MemPAdrM != 'h10000005) // Suppress the warning for UART LSR so we can read UART output
-            $display("warning %0t ps, PCM %x %s, instr %0d, adr %0d: forcing readDataExpected to expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.MemPAdrM, readDataExpected, dut.hart.lsu.dcache.ReadDataM);
+            $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s:: forcing readDataExpected to expected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, readDataExpected, dut.hart.lsu.dcache.ReadDataM);
           force dut.hart.lsu.dcache.ReadDataM = readDataExpected;
           #9;
           release dut.hart.lsu.dcache.ReadDataM;
         end else begin
-          $display("%0t ps, PCM %x %s, instr %0d: ExpectedreadDataExpected does not equal dut.hart.lsu.dcache.ReadDataM: %x, %x from address %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, readDataExpected, dut.hart.lsu.dcache.ReadDataM, dut.hart.lsu.dcache.MemPAdrM);
+          $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: ReadDataM does not equal readDataExpected: %x, %x from address %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.ReadDataM, readDataExpected, dut.hart.lsu.dcache.MemPAdrM);
           `ERROR
         end
       end
@@ -486,10 +484,8 @@ module testbench();
   // -------------
   // Write Checker
   // -------------
-  // this might need to change
-  always @(negedge dut.hart.lsu.dcache.MemRWM) begin
-    //#1;
-    if (($time != 0) && ~dut.hart.hzu.FlushM) begin
+  always @(negedge clk) begin
+    if (dut.hart.MemRWM[0] && ~dut.hart.StallM && ~dut.hart.FlushM && dut.hart.ieu.InstrValidM && ($time != 0)) begin
       if($feof(data_file_memW)) begin
         $display("no more memW data to read");
         `ERROR
@@ -499,11 +495,11 @@ module testbench();
       assign writeAdrTranslated = adrTranslator(writeAdrExpected);
 
       if (writeDataExpected != dut.hart.lsu.dcache.WriteDataM && ~dut.uncore.HSELPLICD) begin
-        $display("%0t ps, PCM %x %s, instr %0d: dut.hart.lsu.dcache.WriteDataM does not equal writeDataExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.WriteDataM, writeDataExpected);
+        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: WriteDataM does not equal writeDataExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.WriteDataM, writeDataExpected);
         `ERROR
       end
       if (~(writeAdrTranslated === dut.hart.lsu.dcache.MemPAdrM) && ~dut.uncore.HSELPLICD) begin
-        $display("%0t ps, PCM %x %s, instr %0d: dut.hart.lsu.dcache.MemPAdrM does not equal writeAdrExpected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, dut.hart.lsu.dcache.MemPAdrM, writeAdrTranslated);
+        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemPAdrM does not equal writeAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, writeAdrTranslated);
         `ERROR
       end
     end
