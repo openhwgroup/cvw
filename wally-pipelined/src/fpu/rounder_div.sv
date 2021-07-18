@@ -63,6 +63,7 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    logic 	       Texp_l7z;
    logic 	       Texp_l7o;
    logic 	       OvCon;
+   logic           zero_rem;
    logic [1:0] 	       mux_mant;
    logic 	       sign_rem;
    logic [63:0]        q, qm, qp;
@@ -180,7 +181,7 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    // overflow has occurred, the overflow trap is enabled, and a conversion
    // is being performed. 
    assign OvCon = OverFlow & OvEn;
-   assign Result = (P&~OvCon) ? {Rsign, Rexp[7:0], Rmant[51:29], {32{vss}}}
+   assign Result = (P&~OvCon) ? { {32{1'b1}}, Rsign, Rexp[7:0], Rmant[51:29]}
 	           : {Rsign, Rexp, Rmant};
 
 endmodule // rounder
