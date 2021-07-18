@@ -81,7 +81,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;	
-		    holdInputs = 1'b0;	
+		    holdInputs = 1'b1;	
 		    load_rega = 1'b0;
 		    load_regb = 1'b1;
 		    load_regc = 1'b0;
@@ -97,7 +97,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
-		    holdInputs = 1'b0;	
+		    holdInputs = 1'b1;	
 		    load_rega = 1'b0;
 		    load_regb = 1'b1;
 		    load_regc = 1'b0;

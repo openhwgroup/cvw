@@ -465,7 +465,9 @@ module fma2(
     //      - Don't set the underflow flag if the result was rounded up to a normal number
     assign FMAFlgM = {Invalid, 1'b0, Overflow, UnderflowFlag, Inexact};
 
-
+// nf ne fraction and exponent bits
+// nf 52 double nf is 11
+// u2.2nf -  product unsigned 2 int bits 
 
 
 
