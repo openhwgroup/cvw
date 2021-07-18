@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
-// pagetablewalker.sv
+// hptw.sv
 //
 // Written: tfleming@hmc.edu 2 March 2021
-// Modified: kmacsaigoren@hmc.edu 1 June 2021
+// Modified:  david_harris@hmc.edu 18 July 2021 cleanup and simplification
+//            kmacsaigoren@hmc.edu 1 June 2021
 //            implemented SV48 on top of SV39. This included, adding a level of the FSM for the extra page number segment
 //            adding support for terapage encoding, and for setting the TranslationPAdr using the new level,
 //            adding the internal SvMode signal
@@ -29,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module pagetablewalker
+module hptw
   (
    input logic		    clk, reset,
    input logic [`XLEN-1:0]  SATP_REGW, // includes SATP.MODE to determine number of levels in page table
@@ -83,7 +84,8 @@ module pagetablewalker
 
 	  // State flops
  	  flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
+	  assign PRegEn = HPTWRead & ~HPTWStall;
+  	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
 	
       // Assign PTE descriptors common across all XLEN values
 	  // For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
@@ -96,7 +98,6 @@ module pagetablewalker
 	  // Enable and select signals based on states
       assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	  assign HPTWRead = (WalkerState == LEVEL3_READ) | (WalkerState == LEVEL2_READ) | (WalkerState == LEVEL1_READ) | (WalkerState == LEVEL0_READ);
-	  assign PRegEn = HPTWRead & ~HPTWStall;
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
