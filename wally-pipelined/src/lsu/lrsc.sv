@@ -31,11 +31,12 @@ module lrsc
     input  logic                clk, reset,
     input  logic                FlushW, StallWtoDCache,
     input  logic                MemReadM,
-    input  logic [1:0]          MemRWMtoDCache, // *** how does this differ from MemReadM
-    input  logic [1:0] 		    AtomicMtoDCache,
+    input  logic [1:0]          MemRWMtoLRSC,
+    output logic [1:0]          MemRWMtoDCache,
+    input  logic [1:0] 	        AtomicMtoDCache,
     input  logic [`PA_BITS-1:0] MemPAdrM,  // from mmu to dcache
     output logic                SquashSCM,
-    output logic                SquashSCWfromDCache
+    output logic                SquashSCW
 );
   // Handle atomic load reserved / store conditional
   generate
@@ -45,9 +46,10 @@ module lrsc
       logic 		            lrM, scM, WriteAdrMatchM;
 
       assign lrM = MemReadM && AtomicMtoDCache[0];
-      assign scM = MemRWMtoDCache[0] && AtomicMtoDCache[0]; 
-      assign WriteAdrMatchM = MemRWMtoDCache[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
+      assign scM = MemRWMtoLRSC[0] && AtomicMtoDCache[0]; 
+      assign WriteAdrMatchM = MemRWMtoLRSC[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
+      assign MemRWMtoDCache = SquashSCM ? 2'b00 : MemRWMtoLRSC;
       always_comb begin // ReservationValidM (next value of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve
         else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
@@ -55,10 +57,11 @@ module lrsc
       end
       flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
       flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
-      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoDCache, SquashSCM, SquashSCWfromDCache);
+      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoDCache, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported
       assign SquashSCM = 0;
-      assign SquashSCWfromDCache = 0; 
+      assign SquashSCW = 0;
+      assign MemRWMtoDCache = MemRWMtoLRSC;
     end
   endgenerate
 endmodule

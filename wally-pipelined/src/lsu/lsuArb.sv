@@ -45,14 +45,13 @@ module lsuArb
    input logic 		    PendingInterruptM,
    // to CPU
    output logic [`XLEN-1:0] ReadDataW,
-   output logic 	    SquashSCW,
    output logic 	    DataMisalignedM,
    output logic 	    CommittedM,
    output logic 	    LSUStall, 
   
    // to D Cache
    output logic 	    DisableTranslation, 
-   output logic [1:0] 	    MemRWMtoDCache,
+   output logic [1:0] 	    MemRWMtoLRSC,
    output logic [2:0] 	    Funct3MtoDCache,
    output logic [1:0] 	    AtomicMtoDCache,
    output logic [`XLEN-1:0] MemAdrMtoDCache,
@@ -63,7 +62,6 @@ module lsuArb
 
    // from D Cache
    input logic 		    CommittedMfromDCache,
-   input logic 		    SquashSCWfromDCache,
    input logic 		    DataMisalignedMfromDCache,
    input logic [`XLEN-1:0]  ReadDataWfromDCache,
    input logic 		    DCacheStall
@@ -75,7 +73,7 @@ module lsuArb
   
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
-  assign MemRWMtoDCache = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
+  assign MemRWMtoLRSC = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
     assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
@@ -94,7 +92,6 @@ module lsuArb
   // demux the inputs from LSU to walker or cpu's data port.
 
   assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWfromDCache;  // probably can avoid this demux
-  assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromDCache;
   assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,

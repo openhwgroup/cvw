@@ -128,6 +128,7 @@ module lsu
   logic            UseTranslationVAdr;
   logic 		       HPTWRead;
   logic [1:0] 		       MemRWMtoDCache;
+  logic [1:0] 		       MemRWMtoLRSC;
   logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
   logic [`XLEN-1:0] 	       MemAdrMtoDCache;
@@ -135,7 +136,6 @@ module lsu
   logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
   logic            MemReadM;
-  logic 		       SquashSCWfromDCache;
   logic 		       DataMisalignedMfromDCache;
   logic 		       HPTWReady;
   logic 		       DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
@@ -202,18 +202,16 @@ module lsu
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
 		 .ReadDataW(ReadDataW),
-		 .SquashSCW(SquashSCW),
 		 .DataMisalignedM(DataMisalignedM),
 		 .LSUStall(LSUStall),
 		 // DCACHE
 		 .DisableTranslation(DisableTranslation),
-		 .MemRWMtoDCache(MemRWMtoDCache),
+		 .MemRWMtoLRSC(MemRWMtoLRSC),
 		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
 		 .MemAdrMtoDCache(MemAdrMtoDCache),
 		 .MemAdrEtoDCache(MemAdrEtoDCache),
 		 .StallWtoDCache(StallWtoDCache),
-		 .SquashSCWfromDCache(SquashSCWfromDCache),      
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
@@ -237,8 +235,8 @@ module lsu
        .ExecuteAccessF(1'b0),
        //.AtomicAccessM(AtomicMaskedM[1]),
        .AtomicAccessM(1'b0),
-       .WriteAccessM(MemRWMtoDCache[0]),
-       .ReadAccessM(MemRWMtoDCache[1]),
+       .WriteAccessM(MemRWMtoLRSC[0]),
+       .ReadAccessM(MemRWMtoLRSC[1]),
        .SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
@@ -247,9 +245,10 @@ module lsu
        .AtomicAllowed(),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
-  assign MemReadM = MemRWMtoDCache[1]; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
-  lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoDCache, .AtomicMtoDCache, .MemPAdrM,
-            .SquashSCM, .SquashSCWfromDCache);
+
+  assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
+            .SquashSCM, .SquashSCW, .MemRWMtoDCache);
 
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
@@ -261,8 +260,8 @@ module lsu
 
 
   // Specify which type of page fault is occurring
-  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoDCache[1];
-  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoDCache[0];
+  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoLRSC[1];
+  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoLRSC[0];
 
   // Determine if an Unaligned access is taking place
   always_comb
@@ -282,8 +281,8 @@ module lsu
 
  // *** BUG for now leave this out. come back later after the d cache is working. July 09, 2021
 
-  assign MemReadM = MemRWMtoDCache[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWMtoDCache[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
+  assign MemReadM = MemRWMtoLRSC[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWMtoLRSC[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicMtoDCache : 2'b00 ;
   assign MemAccessM = MemReadM | MemWriteM;
 
@@ -296,8 +295,8 @@ module lsu
  -----/\----- EXCLUDED -----/\----- */
 
   // Determine if address is valid
-  assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[1];
-  assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[0];
+  assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[1];
+  assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[0];
 
   dcache dcache(.clk(clk),
 		.reset(reset),
@@ -317,7 +316,7 @@ module lsu
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.ExceptionM(ExceptionM),
-		.PendingInterruptM(PendingInterruptMtoDCache),		
+		.PendingInterruptM(PendingInterruptMtoDCache),
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),

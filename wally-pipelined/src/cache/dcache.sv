@@ -462,6 +462,7 @@ module dcache
 	  CommittedM = 1'b1;
 	end
 	// amo hit
+/* -----\/----- EXCLUDED -----\/-----
 	else if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
@@ -469,6 +470,7 @@ module dcache
 	  if(StallW) NextState = STATE_CPU_BUSY;
 	  else NextState = STATE_AMO_UPDATE;
 	end
+ -----/\----- EXCLUDED -----/\----- */
 	// read hit valid cached
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
@@ -493,14 +495,14 @@ module dcache
 	  DCacheStall = 1'b1;
 	end
 	// uncached write
-	else if(MemRWM[0] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
+	else if(MemRWM[0] & ~CacheableM & ~(ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
 	  NextState = STATE_UNCACHED_WRITE;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	  AHBWrite = 1'b1;
 	end
 	// uncached read
-	else if(MemRWM[1] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
+	else if(MemRWM[1] & ~CacheableM & ~(ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
 	  NextState = STATE_UNCACHED_READ;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
