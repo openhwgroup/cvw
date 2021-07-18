@@ -311,7 +311,7 @@ string tests32f[] = '{
 
   string tests32a[] = '{
     //"rv64a/WALLY-AMO", "2110",
-    "rv64a/WALLY-LRSC", "2110"
+    "rv32a/WALLY-LRSC", "2110"
   };
 
   string tests32m[] = '{
