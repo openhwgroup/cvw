@@ -51,7 +51,6 @@ module pagetablewalker
 
   generate
     if (`MEM_VIRTMEM) begin
-      // Internal signals
       logic			    DTLBWalk; // register TLBs translation miss requests
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
       logic [`PPN_BITS-1:0]	    CurrentPPN;
@@ -60,7 +59,7 @@ module pagetablewalker
 	  logic 			MegapageMisaligned, GigapageMisaligned, TerapageMisaligned;
       logic			    ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
       logic			    StartWalk;
-      logic			    EndWalk;
+ 	  logic     		TLBMiss;
       logic			    PRegEn;
 	  logic [1:0]       NextPageType;
       logic [`SVMODE_BITS-1:0]	    SvMode;
@@ -76,13 +75,14 @@ module pagetablewalker
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
       assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
       assign MemWrite = MemRWM[0];
+	  assign TLBMiss = (DTLBMissM | ITLBMissF);
 
       // Determine which address to translate
  	  assign TranslationVAdr = DTLBWalk ? MemAdrM : PCF;
       assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	  // State flops
- 	  flopenrc #(1) TLBMissMReg(clk, reset, EndWalk, StartWalk | EndWalk, DTLBMissM, DTLBWalk); // track whether walk is for DTLB or ITLB
+= 	  flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
 	
       // Assign PTE descriptors common across all XLEN values
@@ -94,8 +94,7 @@ module pagetablewalker
 	  assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
 	  
 	  // Enable and select signals based on states
-      assign StartWalk = (WalkerState == IDLE) & (DTLBMissM | ITLBMissF);
-      assign EndWalk = (WalkerState == LEAF) || (WalkerState == FAULT);
+      assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	  assign PRegEn = (NextWalkerState == LEVEL3) | (NextWalkerState == LEVEL2) | (NextWalkerState == LEVEL1) | (NextWalkerState == LEVEL0);
 	  assign HPTWRead = (WalkerState == LEVEL3_READ) | (WalkerState == LEVEL2_READ) | (WalkerState == LEVEL1_READ) | (WalkerState == LEVEL0_READ);
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
@@ -161,7 +160,7 @@ module pagetablewalker
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 	  case (WalkerState)
-	    IDLE: if (StartWalk) 		NextWalkerState = InitialWalkerState;
+	    IDLE: if (TLBMiss)	 		NextWalkerState = InitialWalkerState;
 		      else 					NextWalkerState = IDLE;
 	    LEVEL3_SET_ADR: 			NextWalkerState = LEVEL3_READ;
 	    LEVEL3_READ: if (HPTWStall) NextWalkerState = LEVEL3_READ;
