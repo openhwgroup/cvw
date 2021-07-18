@@ -41,7 +41,6 @@ module pmpadrdec (
   output logic             L, X, W, R
 );
       
-
   localparam TOR   = 2'b01;
   localparam NA4   = 2'b10;
   localparam NAPOT = 2'b11;

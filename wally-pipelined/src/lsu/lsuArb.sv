@@ -83,7 +83,7 @@ module lsuArb
   flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);   // delay HPTWPAdr by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM;
+  assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM; // *** DH: I don't understand this logic 7/18/21.  Why should PCF ever go here? 
   assign MemAdrEtoDCache = SelPTW ? HPTWPAdrE : MemAdrE;  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.

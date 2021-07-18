@@ -151,7 +151,7 @@ module lsu
   logic 		       WalkerPageFaultM;
   
   
-  pagetablewalker pagetablewalker(
+  hptw hptw(
 				  .clk(clk),
 				  .reset(reset),
 				  .SATP_REGW(SATP_REGW),
@@ -184,7 +184,7 @@ module lsu
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
-  // arbiter between IEU and pagetablewalker
+  // arbiter between IEU and hptw
   lsuArb arbiter(.clk(clk),
 		 .reset(reset),
 		 // HPTW connection
