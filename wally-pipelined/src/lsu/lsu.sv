@@ -180,7 +180,6 @@ module lsu
     else             assign TranslationPAdrXLEN = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
   endgenerate
   mux2 #(`XLEN) HPTWPAdrMux(TranslationPAdrXLEN, TranslationVAdr, UseTranslationVAdr, HPTWPAdrE); // *** misleading to call it PAdr, bad because some bits have been truncated
-//  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);  
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
@@ -191,7 +190,6 @@ module lsu
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
 		 .HPTWPAdrE(HPTWPAdrE),
-//		 .HPTWPAdrM(HPTWPAdrM),		 
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
@@ -246,7 +244,6 @@ module lsu
        .Cacheable(CacheableM),
        .Idempotent(),
        .AtomicAllowed(),
-       //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
   // *** BUG, this is most likely wrong
