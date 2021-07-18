@@ -57,7 +57,7 @@ module hptw
       logic [`PPN_BITS-1:0]	    CurrentPPN;
       logic			    MemWrite;
       logic			    Executable, Writable, Readable, Valid;
-	  logic 			MegapageMisaligned, GigapageMisaligned, TerapageMisaligned;
+	  logic 			Misaligned, MegapageMisaligned;
       logic			    ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
       logic			    StartWalk;
  	  logic     		TLBMiss;
@@ -144,20 +144,22 @@ module hptw
 	  // Initial state and misalignment for RV32/64
 	  if (`XLEN == 32) begin
 		assign InitialWalkerState = LEVEL1_SET_ADR;
-		assign TerapageMisaligned = 0; // not applicable
-		assign GigapageMisaligned = 0; // not applicable
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
+		assign Misaligned = ((WalkerState == LEVEL1) & MegapageMisaligned);
 	  end else begin
+		logic  GigapageMisaligned, TerapageMisaligned;
 		assign InitialWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADR : LEVEL2_SET_ADR;
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
 		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
+		assign Misaligned = ((WalkerState == LEVEL3) & TerapageMisaligned) | ((WalkerState == LEVEL2) & GigapageMisaligned) | ((WalkerState == LEVEL1) & MegapageMisaligned);
  	  end
 
     // Page Table Walker FSM
 	// If the setup time on the D$ RAM is short, it should be possible to merge the LEVELx_READ and LEVELx states
 	// to decrease the latency of the HPTW.  However, if the D$ is a cycle limiter, it's better to leave the
 	// HPTW as shown below to keep the D$ setup time out of the critical path.
+	// *** Is this really true.  Talk with Ross.  Seems like it's the next state logic on critical path instead.
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 	  case (WalkerState)
@@ -166,19 +168,19 @@ module hptw
 	    LEVEL3_SET_ADR: 			NextWalkerState = LEVEL3_READ;
 	    LEVEL3_READ: if (HPTWStall) NextWalkerState = LEVEL3_READ;
 	                else 			NextWalkerState = LEVEL3;
-	    LEVEL3: if (ValidLeafPTE && ~TerapageMisaligned) NextWalkerState = LEAF;
+	    LEVEL3: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
 		  		else if (ValidNonLeafPTE) NextWalkerState = LEVEL2_SET_ADR;
 		 		else 				NextWalkerState = FAULT;
 	    LEVEL2_SET_ADR: 			NextWalkerState = LEVEL2_READ;
 	    LEVEL2_READ: if (HPTWStall) NextWalkerState = LEVEL2_READ;
 	      			else 			NextWalkerState = LEVEL2;
-	    LEVEL2: if (ValidLeafPTE && ~GigapageMisaligned) NextWalkerState = LEAF;
+	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
 				else if (ValidNonLeafPTE) NextWalkerState = LEVEL1_SET_ADR;
 				else 				NextWalkerState = FAULT;
 	    LEVEL1_SET_ADR: 			NextWalkerState = LEVEL1_READ;
 	    LEVEL1_READ: if (HPTWStall) NextWalkerState = LEVEL1_READ;
 	      			else 			NextWalkerState = LEVEL1;
-	    LEVEL1: if (ValidLeafPTE && ~MegapageMisaligned) NextWalkerState = LEAF;
+	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
 	      		else if (ValidNonLeafPTE) NextWalkerState = LEVEL0_SET_ADR;
 				else 				NextWalkerState = FAULT;
 	    LEVEL0_SET_ADR: 			NextWalkerState = LEVEL0_READ;
