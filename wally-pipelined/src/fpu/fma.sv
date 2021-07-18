@@ -1,3 +1,29 @@
+///////////////////////////////////////////
+//
+// Written: Katherine Parry, David Harris
+// Modified: 6/23/2021
+//
+// Purpose: Floating point multiply-accumulate of configurable size
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+///////////////////////////////////////////
+
+`include "wally-config.vh"
+
 module fma(
     input logic             clk,
     input logic             reset,
@@ -54,25 +80,24 @@ endmodule
 
 module fma1(
     // input logic        XSgnE, YSgnE, ZSgnE,
-    input logic [10:0] XExpE, YExpE, ZExpE,
-    input logic [51:0] XFracE, YFracE, ZFracE,
+    input logic [`NE-1:0] XExpE, YExpE, ZExpE,      // biased exponents in B(NE.0) format
+    input logic [`NF-1:0] XFracE, YFracE, ZFracE,   // fractions in U(0.NF) format]
     input logic        XAssumed1E, YAssumed1E, ZAssumed1E,
     input logic        XDenormE, YDenormE, ZDenormE,
     input logic XZeroE, YZeroE, ZZeroE,
-    input logic [10:0] BiasE,
+    input logic [`NE-1:0] BiasE,
     input logic     [2:0]       FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic                 FmtE,       // precision 1 = double 0 = single
-    output logic    [105:0]     ProdManE,   // 1.X frac * 1.Y frac
-    output logic    [161:0]     AlignedAddendE, // Z aligned for addition
-    output logic    [12:0]      ProdExpE,       // X exponent + Y exponent - bias
+    output logic    [2*`NF+1:0]     ProdManE,   // 1.X frac * 1.Y frac in U(2.2Nf) format
+    output logic    [3*`NF+5:0]     AlignedAddendE, // Z aligned for addition in *** format
+    output logic    [`NE+1:0]      ProdExpE,       // X exponent + Y exponent - bias in B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
     output logic                KillProdE      // set the product to zero before addition if the product is too small to matter
     );
 
-    logic [12:0]    AlignCnt;           // how far to shift the addend to align with the product
-    logic [213:0]   ZManShifted;                // output of the alignment shifter including sticky bit
-    logic [213:0]   ZManPreShifted;     // input to the alignment shifter
-    
+    logic [`NE+1:0]    AlignCnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format *** is this enough bits?
+    logic [4*`NF+5:0]   ZManShifted;                // output of the alignment shifter including sticky bit
+    logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter
     
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
@@ -83,20 +108,13 @@ module fma1(
     ///////////////////////////////////////////////////////////////////////////////
    
     // verilator lint_off WIDTH
-    assign ProdExpE = (XZeroE|YZeroE) ? 13'b0 :
+    assign ProdExpE = (XZeroE|YZeroE) ? 0 :
                  XExpE + YExpE - BiasE + XDenormE + YDenormE;
+    // verilator lint_on WIDTH
 
     // Calculate the product's mantissa
     //      - Add the assumed one. If the number is denormalized or zero, it does not have an assumed one.
     assign ProdManE =  {XAssumed1E, XFracE} * {YAssumed1E, YFracE};
-
-
-
-
-
-
-
-
    
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
@@ -108,8 +126,6 @@ module fma1(
     //      - Denormal numbers have an an exponent value of 1, however they are
     //        represented with an exponent of 0. add one to the exponent if it is a denormal number
     assign AlignCnt = ProdExpE - ZExpE - ZDenormE;
-    // verilator lint_on WIDTH
-
 
     // Defualt Addition without shifting
     //          |   55'b0    |  106'b(product)  | 2'b0 |
@@ -160,10 +176,7 @@ module fma1(
 
         end
     end
-
-   
     assign AlignedAddendE = ZManShifted[213:52];
-
 endmodule
 
 
