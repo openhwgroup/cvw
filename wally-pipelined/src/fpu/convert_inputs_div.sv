@@ -21,28 +21,24 @@ module convert_inputs_div (Float1, Float2b, op1, op2, op_type, P);
 
    // Test if the input exponent is zero, because if it is then the
    // exponent of the converted number should be zero. 
-   assign Zexp1 = ~(op1[62] | op1[61] | op1[60] | op1[59] | 
-		    op1[58] | op1[57] | op1[56] | op1[55]);
-   assign Zexp2 = ~(op2[62] | op2[61] | op2[60] | op2[59] | 
-		    op2[58] | op2[57] | op2[56] | op2[55]);
-   assign Oexp1 =  (op1[62] & op1[61] & op1[60] & op1[59] & 
-		    op1[58] & op1[57] & op1[56] & op1[55]);
-   assign Oexp2 =  (op2[62] & op2[61] & op2[60] & op2[59] & 
-		    op2[58] & op2[57] & op2[56] &op2[55]);
+   assign Zexp1 = ~(|op1[30:23]);
+   assign Zexp2 = ~(|op2[30:23]);
+   assign Oexp1 =  (&op1[30:23]);
+   assign Oexp2 =  (&op2[30:23]);
 
    // Conditionally convert op1. Lower 29 bits are zero for single precision.
-   assign Float1[62:29] = P ? {op1[62], {3{(~op1[62]&~Zexp1)|Oexp1}}, op1[61:32]}
+   assign Float1[62:29] = P ? {op1[30], {3{(~op1[30]&~Zexp1)|Oexp1}}, op1[29:0]}
 			  : op1[62:29];
    assign Float1[28:0] = op1[28:0] & {29{~P}};
 
    // Conditionally convert op2. Lower 29 bits are zero for single precision. 
-   assign Float2[62:29] = P ? {op2[62], {3{(~op2[62]&~Zexp2)|Oexp2}}, op2[61:32]}
+   assign Float2[62:29] = P ? {op2[30], {3{(~op2[30]&~Zexp2)|Oexp2}}, op2[29:0]}
 			  : op2[62:29];
    assign Float2[28:0] = op2[28:0] & {29{~P}};
 
    // Set the sign of Float1 based on its original sign
-   assign Float1[63]  = op1[63];
-   assign Float2[63]  = op2[63];
+   assign Float1[63]  = P ? op1[31] : op1[63];
+   assign Float2[63]  = P ? op2[31] : op2[63];
 
    // For sqrt, assign Float2 same as Float1 for simplicity
    assign Float2b = op_type ? Float1 : Float2;   

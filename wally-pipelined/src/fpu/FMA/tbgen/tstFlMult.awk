@@ -1,1 +1,0 @@
-awk 'BEGIN {FS = " "; OFS = "_"} {if ($3 == "0000000000000000") print $1, $2, $4;}' testFloat | head -n 1000 > testMini

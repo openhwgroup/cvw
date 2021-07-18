@@ -44,7 +44,9 @@ module fpu (
   output logic 		      IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
   output logic [4:0] 	   SetFflagsM);      // FPU result
 // *** change FMA to do 16 - 32 - 64 - 128 FEXPBITS 
-
+// *** folder at same level of src for tests fpu tests
+// qa.b
+// u1.52 - u sunsigned, q signed
   generate
      if (`F_SUPPORTED | `D_SUPPORTED) begin 
       // control logic signal instantiation
@@ -188,16 +190,18 @@ module fpu (
       
       // capture the inputs for div/sqrt	 
       flopenrc #(64) reg_input1 (.d(FSrcXE), .q(DivInput1E),
-                  .en(~HoldInputs), .clear(FDivSqrtDoneE),
-                  .reset(reset),  .clk(clk));
+                  .en(1'b1), .clear(FDivSqrtDoneE),
+                  .reset(reset),  .clk(HoldInputs));
       flopenrc #(64) reg_input2 (.d(FSrcYE), .q(DivInput2E),
-                  .en(~HoldInputs), .clear(FDivSqrtDoneE),
-                  .reset(reset),  .clk(clk));
-
-      // fpdiv fdivsqrt (.DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .DivInput1E, .DivInput2E, 
-      //                   .FrmE, .DivOvEn(1'b1), .DivUnEn(1'b1), .FDivStartE, .FDivResultM, .FDivSqrtFlgM, 
-      //                   .FDivSqrtDoneE, .FDivBusyE, .HoldInputs, .reset);
-      assign FDivBusyE = 0;
+                  .en(1'b1), .clear(FDivSqrtDoneE),
+                  .reset(reset),  .clk(HoldInputs));
+      //*** add round to nearest ties to max magnitude
+      fpdiv fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .done(FDivSqrtDoneE), .rm(FrmE[1:0]),	.op_type(FOpCtrlE[0]), .P(~FmtE), .FDivBusyE, .HoldInputs, 
+                      .OvEn(1'b1), .UnEn(1'b1),	.start(FDivStartE), .reset, .clk(~clk), .AS_Result(FDivResultM), .Flags(FDivSqrtFlgM));
+        // .DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .DivInput1E, .DivInput2E, 
+        //                 .FrmE, .DivOvEn(1'b1), .DivUnEn(1'b1), .FDivStartE, .FDivResultM, .FDivSqrtFlgM, 
+        //                 .FDivSqrtDoneE, .FDivBusyE, .HoldInputs, .reset);
+      // assign FDivBusyE = 0;
       // first of two-stage instance of floating-point add/cvt unit
       faddcvt faddcvt (.clk, .reset, .FlushM, .StallM, .FrmM, .FOpCtrlM, .FmtE, .FmtM,
                         .FSrcXE, .FSrcYE, .FOpCtrlE, .FAddResM, .FAddFlgM);
@@ -215,7 +219,6 @@ module fpu (
       fcvt fcvt (.XSgnE, .XExpE, .XFracE, .XAssumed1E, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .SrcAE, .FOpCtrlE, .FmtE, .FrmE, .CvtResE, .CvtFlgE);
 
       // output for store instructions
-      // mux2  #(`XLEN)  FWriteDataMux({{`XLEN-32{1'b0}}, FSrcYE[63:32]}, FSrcYE[63:64-`XLEN], FmtE, FWriteDataE);
       assign FWriteDataE = FSrcYE[`XLEN-1:0];
 
       //*****************
