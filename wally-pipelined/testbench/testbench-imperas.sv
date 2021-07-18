@@ -98,7 +98,7 @@ string tests32f[] = '{
     "rv64f/I-FCVT-LU-S-01", "2000",
     "rv64f/I-FCVT-W-S-01", "2000",
     "rv64f/I-FCVT-WU-S-01", "2000",
-    // "rv64f/I-FDIV-S-01", "2000",
+    "rv64f/I-FDIV-S-01", "2000",
     "rv64f/I-FEQ-S-01", "2000",
     "rv64f/I-FLE-S-01", "2000",
     "rv64f/I-FLT-S-01", "2000",
@@ -112,7 +112,7 @@ string tests32f[] = '{
     "rv64f/I-FSGNJ-S-01", "2000",
     "rv64f/I-FSGNJN-S-01", "2000",
     "rv64f/I-FSGNJX-S-01", "2000",
-    // "rv64f/I-FSQRT-S-01", "2000",
+    "rv64f/I-FSQRT-S-01", "2000",
     "rv64f/I-FSUB-S-01", "2000"
   };
 
@@ -124,14 +124,14 @@ string tests32f[] = '{
     // "rv64d/I-FDIV-D-01", "2000",
     "rv64d/I-FCVT-D-L-01", "2000",
     "rv64d/I-FCVT-D-LU-01", "2000",
-    "rv64d/I-FCVT-D-S-01", "2000", //the number to be converted is in the lower 32 bits need to change the test
+    "rv64d/I-FCVT-D-S-01", "2000", 
     "rv64d/I-FCVT-D-W-01", "2000",
     "rv64d/I-FCVT-D-WU-01", "2000",
     "rv64d/I-FCVT-L-D-01", "2000",
     "rv64d/I-FCVT-LU-D-01", "2000",
-    "rv64d/I-FCVT-S-D-01", "2000", //the result is in the lower 32 bits needs to be changed in the imperas test
+    "rv64d/I-FCVT-S-D-01", "2000", 
     "rv64d/I-FCVT-W-D-01", "2000",
-    "rv64d/I-FCVT-WU-D-01", "2000", //this test needs to be fixed it expects 2^64-1 rather then 2^32-1 (specified in spec)
+    "rv64d/I-FCVT-WU-D-01", "2000",
     "rv64d/I-FNMADD-D-01", "2000",
     "rv64d/I-FNMSUB-D-01", "2000",
     "rv64d/I-FMSUB-D-01", "2000",
@@ -147,7 +147,7 @@ string tests32f[] = '{
     "rv64d/I-FSGNJ-D-01", "2000",
     "rv64d/I-FSGNJN-D-01", "2000",
     "rv64d/I-FSGNJX-D-01", "2000",
-    // "rv64d/I-FSQRTD-01", "2000",
+    // "rv64d/I-FSQRT-D-01", "2000",
     "rv64d/I-FSUB-D-01", "2000"
   };
 

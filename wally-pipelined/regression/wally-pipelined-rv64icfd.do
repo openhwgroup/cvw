@@ -27,7 +27,7 @@ vlib work
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
+# default to config/rv64icfd, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
     0 {vlog +incdir+../config/rv64icfd +incdir+../config/shared ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}

@@ -23,24 +23,23 @@
 //
 
 // `timescale 1ps/1ps
-module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
-	      start, reset, clk);
-
-   input [63:0] op1;		// 1st input operand (A)
-   input [63:0] op2;		// 2nd input operand (B)
-   input [1:0] 	rm;		// Rounding mode - specify values 
-   input 	op_type;	// Function opcode
-   input 	P;   		// Result Precision (0 for double, 1 for single)
-   input 	OvEn;		// Overflow trap enabled
-   input 	UnEn;   	// Underflow trap enabled
-   input 	start;
-   input 	reset;
-   input 	clk;   
-
-   output [63:0] AS_Result;	// Result of operation
-   output [4:0]  Flags;   	// IEEE exception flags 
-   output 	 Denorm;   	// Denorm on input or output
-   logic 	 done;
+module fpdiv (
+   input logic [63:0] op1,		// 1st input operand (A)
+   input logic [63:0] op2,		// 2nd input operand (B)
+   input logic [1:0] 	rm,		// Rounding mode - specify values 
+   input logic 	op_type,	// Function opcode
+   input logic 	P,   		// Result Precision (0 for double, 1 for single)
+   input logic 	OvEn,		// Overflow trap enabled
+   input logic 	UnEn,   	// Underflow trap enabled
+   input logic 	start,
+   input logic 	reset,
+   input logic 	clk,
+   output logic done,
+   output logic   FDivBusyE,
+   output logic   HoldInputs,
+   output logic [63:0] AS_Result,	// Result of operation
+   output logic [4:0]  Flags);   	// IEEE exception flags 
+   logic 	 Denorm;   	// Denorm on input or output
    // output 	 done;
 
    supply1 	  vdd;
@@ -89,7 +88,9 @@ module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
    wire 	 donev, sel_muxrv, sel_muxsv;
    wire [1:0] 	 sel_muxav, sel_muxbv;   
    wire 	 load_regav, load_regbv, load_regcv;
-   wire 	 load_regrv, load_regsv;
+   wire 	 load_regrv, load_regs;
+   logic exp_cout1, exp_cout2;
+   logic exp_odd, open;
    
    // Convert the input operands to their appropriate forms based on 
    // the orignal operands, the op_type , and their precision P. 
@@ -107,7 +108,7 @@ module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
 		       Float1, Float2, op_type);
 
    // Determine Sign/Mantissa
-   assign signResult = ((Float1[63]^Float2[63])&~op_type) | Float1[63]&op_type;
+   assign signResult = (Float1[63]^Float2[63]);
    assign mantissaA = {vdd, Float1[51:0]};
    assign mantissaB = {vdd, Float2[51:0]};
    // Perform Exponent Subtraction - expA - expB + Bias   
@@ -117,11 +118,13 @@ module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
    assign bias = {3'h0, 10'h3FF};
    // Divide exponent
    csa #(13) csa1 (exp1, ~exp2, bias, exp_s, exp_c);
-   adder #(14) explogic1 ({vss, exp_s}, {vss, exp_c}, 1'b1, {open, exp_diff}, exp_cout1);
+   // adder #(14) explogic1 ({vss, exp_s}, {vss, exp_c}, 1'b1, {open, exp_diff}, exp_cout1);
+   assign {exp_cout1, open, exp_diff} = {vss, exp_s} + {vss, exp_c} + 1'b1;
    
    // Sqrt exponent (check if exponent is odd)
    assign exp_odd = Float1[52] ? vss : vdd;
-   adder #(14) explogic2 ({vss, exp1}, {4'h0, 10'h3ff}, exp_odd, exp_sqrt, exp_cout2);
+   // adder #(14) explogic2 ({vss, exp1}, {4'h0, 10'h3ff}, exp_odd, exp_sqrt, exp_cout2);
+   assign {exp_cout2, exp_sqrt} = {vss, exp1} + {4'h0, 10'h3ff} + exp_odd;
    // Choose correct exponent
    assign expF = op_type ? exp_sqrt[13:1] : exp_diff;   
 
@@ -132,9 +135,9 @@ module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
 		  load_regr, load_regs, P, op_type, exp_odd);
 
    // FSM : control divider   
-   fsm_div control (done, load_rega, load_regb, load_regc, load_regd, 
+   fsm control (done, load_rega, load_regb, load_regc, load_regd, 
 		    load_regr, load_regs, sel_muxa, sel_muxb, sel_muxr, 
-		    clk, reset, start, error, op_type);
+		    clk, reset, start, op_type, FDivBusyE, HoldInputs);
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 
@@ -150,3 +153,4 @@ module fpdiv (AS_Result, Flags, Denorm, op1, op2, rm, op_type, P, OvEn, UnEn,
    flopenr #(5) regc (clk, reset, done, FlagsIn, Flags);   
    
 endmodule // fpadd
+
