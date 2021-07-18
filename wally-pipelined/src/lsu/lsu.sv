@@ -134,6 +134,7 @@ module lsu
   logic [`XLEN-1:0] 	       MemAdrEtoDCache;  
   logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
+  logic            MemReadM;
   logic 		       SquashSCWfromDCache;
   logic 		       DataMisalignedMfromDCache;
   logic 		       HPTWReady;
@@ -246,6 +247,10 @@ module lsu
        .AtomicAllowed(),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
 
+  assign MemReadM = MemRWMtoDCache[1]; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoDCache, .AtomicMtoDCache, .MemPAdrM,
+            .SquashSCM, .SquashSCWfromDCache);
+
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
   
@@ -288,30 +293,6 @@ module lsu
   assign CommittedMfromDCache = preCommittedM | CommitM;
 
 
-  // Handle atomic load reserved / store conditional
-  generate
-    if (`A_SUPPORTED) begin // atomic instructions supported
-      logic [`PA_BITS-1:2] ReservationPAdrW;
-      logic 		   ReservationValidM, ReservationValidW; 
-      logic 		   lrM, scM, WriteAdrMatchM;
-
-      assign lrM = MemReadM && AtomicMtoDCache[0];
-      assign scM = MemRWMtoDCache[0] && AtomicMtoDCache[0]; 
-      assign WriteAdrMatchM = MemRWMtoDCache[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
-      assign SquashSCM = scM && ~WriteAdrMatchM;
-      always_comb begin // ReservationValidM (next value of valid reservation)
-        if (lrM) ReservationValidM = 1;  // set valid on load reserve
-        else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
-        else ReservationValidM = ReservationValidW; // otherwise don't change valid
-      end
-      flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
-      flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
-      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoDCache, SquashSCM, SquashSCWfromDCache);
-    end else begin // Atomic operations not supported
-      assign SquashSCM = 0;
-      assign SquashSCWfromDCache = 0; 
-    end
-  endgenerate
  -----/\----- EXCLUDED -----/\----- */
 
   // Determine if address is valid

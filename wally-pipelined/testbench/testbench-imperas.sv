@@ -152,7 +152,7 @@ string tests32f[] = '{
   };
 
   string tests64a[] = '{
-    "rv64a/WALLY-AMO", "2110",
+    //"rv64a/WALLY-AMO", "2110",
     "rv64a/WALLY-LRSC", "2110"
   };
 
@@ -310,7 +310,7 @@ string tests32f[] = '{
   };
 
   string tests32a[] = '{
-    "rv64a/WALLY-AMO", "2110",
+    //"rv64a/WALLY-AMO", "2110",
     "rv64a/WALLY-LRSC", "2110"
   };
 
@@ -534,10 +534,10 @@ string tests32f[] = '{
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
-        //if (`A_SUPPORTED) tests = {tests, tests64a};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        if (`A_SUPPORTED) tests = {tests64a, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -551,10 +551,10 @@ string tests32f[] = '{
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
-          //if (`A_SUPPORTED) tests = {tests, tests32a};
           if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
-      end
+          if (`A_SUPPORTED) tests = {tests32a, tests};
+     end
     end
   end
 
@@ -669,10 +669,8 @@ string tests32f[] = '{
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), dut.uncore.dtim.RAM[testadr+i], signature[i]);
-              $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], signature[i]);
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
