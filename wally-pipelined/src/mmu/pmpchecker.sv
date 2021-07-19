@@ -55,12 +55,9 @@ module pmpchecker (
   // Bit i is high when the address falls in PMP region i
   logic                    EnforcePMP;
   logic [7:0]              PMPCfg[`PMP_ENTRIES-1:0];
-  logic [`PMP_ENTRIES-1:0] Match;      // PMP Entry matches
+  logic [`PMP_ENTRIES-1:0] Match, FirstMatch;      // PMP Entry matches
   logic [`PMP_ENTRIES-1:0] Active;     // PMP register i is non-null
   logic [`PMP_ENTRIES-1:0] L, X, W, R; // PMP matches and has flag set
-  // verilator lint_off UNOPTFLAT
-  logic [`PMP_ENTRIES-1:0]   NoLowerMatch; // None of the lower PMP entries match
-  // verilator lint_on UNOPTFLAT
   logic [`PMP_ENTRIES-1:0]   PAgePMPAdr;  // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
   genvar i,j;
 
@@ -70,9 +67,9 @@ module pmpchecker (
     .PMPAdr(PMPADDR_ARRAY_REGW),
     .PAgePMPAdrIn({PAgePMPAdr[`PMP_ENTRIES-2:0], 1'b1}),
     .PAgePMPAdrOut(PAgePMPAdr),
-    .NoLowerMatchIn({NoLowerMatch[`PMP_ENTRIES-2:0], 1'b1}),
-    .NoLowerMatchOut(NoLowerMatch),
-    .Match, .Active, .L, .X, .W, .R);
+    .FirstMatch, .Match, .Active, .L, .X, .W, .R);
+
+  prioritycircuit #(.ENTRIES(`PMP_ENTRIES), .FINAL_OP("AND")) pmppriority(.a(Match), .FirstPin(1'b1), .y(FirstMatch)); // Take the ripple gates/signals out of the pmpadrdec and into another unit.
 
   // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 
