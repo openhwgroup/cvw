@@ -26,12 +26,14 @@
 `include "wally-constants.vh"
 
 // macros to define supported modes
+// NOTE: No hardware support fo Q yet
 
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
 `define F_SUPPORTED ((`MISA >> 5) % 2 == 1)
 `define M_SUPPORTED ((`MISA >> 12) % 2 == 1)
+`define Q_SUPPORTED ((`MISA >> 16) % 2 == 1)
 `define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
 `define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
 
@@ -44,8 +46,12 @@
 `define LOG_XLEN (`XLEN == 32 ? 5 : 6)
 
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
-`define PMPCFG_ENTRIES (`PMP_ENTRIES\8)
+`define PMPCFG_ENTRIES (`PMP_ENTRIES/8)
 
+// Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
+`define FLEN (`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
+`define NE   (`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
+`define NF   (`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
 
 // Disable spurious Verilator warnings
 

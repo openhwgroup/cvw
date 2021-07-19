@@ -33,7 +33,7 @@
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 32
 
-`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12)
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0)
 `define ZCSR_SUPPORTED 1
 `define COUNTERS 32
 `define ZCOUNTERS_SUPPORTED 1
