@@ -4167,45 +4167,6 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/CommittedMfromDCac
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/PendingInterruptMtoDCache
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/FlushWtoDCache
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/WalkerPageFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/clk
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/reset
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/SATP_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/PCF
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/MemAdrM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/ITLBMissF
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/DTLBMissM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/MemRWM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/PageType
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/ITLBWriteF
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/DTLBWriteM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/SelPTW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/HPTWReadPTE
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/HPTWStall
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/HPTWRead
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/WalkerInstrPageFaultF
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/WalkerLoadPageFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/WalkerStorePageFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/BasePageTablePPN
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/CurrentPPN
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/SvMode
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/Executable
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/Writable
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/Readable
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/Valid
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/ValidPTE
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/MegapageMisaligned
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/LeafPTE
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/StartWalk
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/EndWalk
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerState
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/NextWalkerState
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/PRegEn
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerStateReg/clk
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerStateReg/load
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerStateReg/en
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerStateReg/d
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerStateReg/val
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerStateReg/q
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/arbiter/clk
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/arbiter/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/arbiter/SelPTW
@@ -25458,8 +25419,6 @@ add wave -noupdate -group lsu -expand -group dcache -expand -group Victim /testb
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/MemRWM
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/MemAdrE
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/MemPAdrM
-add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/pagetablewalker/DTLBMissM
-add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/pagetablewalker/MemAdrM
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/Funct3M
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/Funct7M
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/AtomicM
@@ -25502,24 +25461,7 @@ add wave -noupdate -group lsu -group pma /testbench/dut/hart/lsu/dmmu/PMAStoreAc
 add wave -noupdate -group lsu -expand -group pmp /testbench/dut/hart/lsu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -expand -group pmp /testbench/dut/hart/lsu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -group lsu -expand -group pmp /testbench/dut/hart/lsu/dmmu/PMPStoreAccessFaultM
-add wave -noupdate -group lsu -expand -group ptwalker -color Gold /testbench/dut/hart/lsu/pagetablewalker/genblk1/WalkerState
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/hart/lsu/pagetablewalker/genblk1/EndWalk
-add wave -noupdate -group lsu -expand -group ptwalker -color Salmon /testbench/dut/hart/lsu/pagetablewalker/HPTWStall
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/hart/lsu/pagetablewalker/HPTWReadPTE
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group miss/write /testbench/dut/hart/lsu/pagetablewalker/ITLBMissF
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group miss/write /testbench/dut/hart/lsu/pagetablewalker/ITLBWriteF
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group miss/write /testbench/dut/hart/lsu/pagetablewalker/DTLBMissM
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group miss/write /testbench/dut/hart/lsu/pagetablewalker/DTLBWriteM
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group pte /testbench/dut/hart/lsu/pagetablewalker/HPTWRead
 add wave -noupdate -group lsu -expand -group ptwalker -divider data
-add wave -noupdate -group lsu -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/lsu/pagetablewalker/ITLBWriteF
-add wave -noupdate -group lsu -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/lsu/pagetablewalker/DTLBWriteM
-add wave -noupdate -group lsu -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/lsu/pagetablewalker/WalkerInstrPageFaultF
-add wave -noupdate -group lsu -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/lsu/pagetablewalker/WalkerLoadPageFaultM
-add wave -noupdate -group lsu -expand -group ptwalker -group {fsm outputs} /testbench/dut/hart/lsu/pagetablewalker/WalkerStorePageFaultM
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/hart/lsu/pagetablewalker/WalkerStorePageFaultM
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/hart/lsu/pagetablewalker/WalkerLoadPageFaultM
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group faults /testbench/dut/hart/lsu/pagetablewalker/WalkerInstrPageFaultF
 add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/HCLK
 add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/HSELPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/genblk2/plic/HADDR
@@ -25594,7 +25536,7 @@ add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HADDR
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HWRITE
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HWDATA
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 8} {2495 ns} 1} {{Cursor 2} {2494 ns} 0}
+WaveRestoreCursors {{Cursor 8} {2495 ns} 1} {{Cursor 2} {210 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
