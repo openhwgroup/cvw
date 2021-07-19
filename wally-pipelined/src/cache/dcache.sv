@@ -128,7 +128,6 @@ module dcache
   logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 	       VictimTag;
 
-  logic 		       ReadDataWEn;
   
   logic AnyCPUReqM;
   logic FetchCountFlag;
@@ -316,12 +315,9 @@ module dcache
   assign CPUBusy = CurrState == STATE_CPU_BUSY;
   flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
   
-  assign ReadDataWEn = (~StallW & (~PreviousCPUBusy & (CurrState != STATE_CPU_BUSY))) | 
-		       (NextState == STATE_CPU_BUSY & CurrState == STATE_READY) |
-		       (CurrState == STATE_MISS_READ_WORD_DELAY);
-  
+
   flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(ReadDataWEn),
+			      .en(~StallW),
 			      .d(FinalReadDataWordM),
 			      .q(ReadDataW));
 
@@ -467,7 +463,9 @@ module dcache
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
 
-	  if(StallW) NextState = STATE_CPU_BUSY;
+	  if(StallW) begin 
+            NextState = STATE_CPU_BUSY;
+            SelAdrM = 1'b1; 
 	  else NextState = STATE_AMO_UPDATE;
 	end
  -----/\----- EXCLUDED -----/\----- */
@@ -475,7 +473,10 @@ module dcache
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
 
-	  if(StallW) NextState = STATE_CPU_BUSY;
+	  if(StallW) begin
+	    NextState = STATE_CPU_BUSY;
+            SelAdrM = 1'b1;
+	  end
 	  else NextState = STATE_READY;
 	end
 	// write hit valid cached
@@ -485,7 +486,10 @@ module dcache
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
 	  
-	  if(StallW) NextState = STATE_CPU_BUSY;
+	  if(StallW) begin 
+	    NextState = STATE_CPU_BUSY;
+	    SelAdrM = 1'b1;
+	  end
 	  else NextState = STATE_READY;
 	end
 	// read or write miss valid cached
@@ -522,7 +526,10 @@ module dcache
       end
       STATE_AMO_WRITE: begin
 	SelAMOWrite = 1'b1;
-	if(StallW) NextState = STATE_CPU_BUSY;
+	if(StallW) begin 
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 1'b1;
+	end
 	else NextState = STATE_READY;
       end
 
@@ -578,7 +585,10 @@ module dcache
       STATE_MISS_READ_WORD_DELAY: begin
 	//SelAdrM = 1'b1;
 	CommittedM = 1'b1;
-	if(StallW) NextState = STATE_CPU_BUSY;
+	if(StallW) begin 
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 1'b1;
+	end
 	else NextState = STATE_READY;
       end
 
@@ -593,7 +603,10 @@ module dcache
 
       STATE_MISS_WRITE_WORD_DELAY: begin
 	CommittedM = 1'b1;
-	if(StallW) NextState = STATE_CPU_BUSY;
+	if(StallW) begin 
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 1'b1;
+	end
 	else NextState = STATE_READY;
       end
 
@@ -722,9 +735,12 @@ module dcache
 	NextState = STATE_READY;
       end
       
-      STATE_CPU_BUSY : begin
+      STATE_CPU_BUSY: begin
 	CommittedM = 1'b1;
-	if(StallW) NextState = STATE_CPU_BUSY;
+	if(StallW) begin
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 1'b1;
+	end
 	else NextState = STATE_READY;
       end
 
@@ -752,14 +768,20 @@ module dcache
       
       STATE_UNCACHED_WRITE_DONE: begin
 	CommittedM = 1'b1;
-	if(StallW) NextState = STATE_CPU_BUSY;
+	if(StallW) begin
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 1'b1;
+	end
 	else NextState = STATE_READY;
       end
 
       STATE_UNCACHED_READ_DONE: begin
 	CommittedM = 1'b1;
 	SelUncached = 1'b1;
-	if(StallW) NextState = STATE_CPU_BUSY;
+	if(StallW) begin 
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 1'b1;
+	end
 	else NextState = STATE_READY;
       end
 

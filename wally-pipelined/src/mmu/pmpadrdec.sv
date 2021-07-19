@@ -34,9 +34,10 @@ module pmpadrdec (
   input  logic [7:0]       PMPCfg,
   input  logic [`XLEN-1:0] PMPAdr,
   input  logic             PAgePMPAdrIn,
-  input  logic             NoLowerMatchIn,
+//  input  logic             NoLowerMatchIn,
+  input  logic             FirstMatch,
   output logic             PAgePMPAdrOut,
-  output logic             NoLowerMatchOut,
+//  output logic             NoLowerMatchOut,
   output logic             Match, Active, 
   output logic             L, X, W, R
 );
@@ -47,7 +48,7 @@ module pmpadrdec (
 
   logic TORMatch, NAMatch;
   logic PAltPMPAdr;
-  logic FirstMatch;
+//  logic FirstMatch;
   logic [`PA_BITS-1:0] CurrentAdrFull;
   logic [1:0] AdrMode;
 
@@ -69,16 +70,30 @@ module pmpadrdec (
 
   // verilator lint_off UNOPTFLAT
   logic [`PA_BITS-1:0] Mask;
-  genvar i;
+  //genvar i;
   
   // create a mask of which bits to ignore
-  generate
-    assign Mask[1:0] = 2'b11;
-    assign Mask[2] = (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
-    for (i=3; i < `PA_BITS; i=i+1) begin:mask
-      assign Mask[i] = Mask[i-1] & PMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
-    end
-   endgenerate
+  // generate
+  //   assign Mask[1:0] = 2'b11;
+  //   assign Mask[2] = (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
+  //   for (i=3; i < `PA_BITS; i=i+1) begin:mask
+  //     assign Mask[i] = Mask[i-1] & PMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
+  //   end
+  // endgenerate
+  prioritycircuit #(.ENTRIES(`PA_BITS-2), .FINAL_OP("NONE")) maskgen(.a(~PMPAdr[`PA_BITS-3:0]), .FirstPin(AdrMode==NAPOT), .y(Mask[`PA_BITS-1:2]));
+  assign Mask[1:0] = 2'b11;
+
+  // *** possible experiments:
+  /* PA < PMP addr could be in its own module, 
+        preeserving hierarchy so we can know if this is the culprit on the critical path
+        Should take logarthmic time, so more like 6 levels than 40 should be expected
+
+    update mask generation
+        Should be concurrent with the subtraction/comparison
+        if one is the critical path, the other shouldn't be which makes us think the mask generation is the culprit.
+
+    Hopefully just use the priority circuit here
+    */
   // verilator lint_on UNOPTFLAT
 
   assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | Mask);
@@ -87,8 +102,6 @@ module pmpadrdec (
                  (AdrMode == NA4 || AdrMode == NAPOT) ? NAMatch :
                  0;
 
-  assign FirstMatch =      NoLowerMatchIn & Match;
-  assign NoLowerMatchOut = NoLowerMatchIn & ~Match;
   assign L = PMPCfg[7] & FirstMatch;
   assign X = PMPCfg[2] & FirstMatch;
   assign W = PMPCfg[1] & FirstMatch;
