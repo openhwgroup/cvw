@@ -95,7 +95,7 @@ try:
                     # Next 32 lines are the Register File
                     if lastRead == l.split()[0]:
                       readData  = int(l.split()[1][2:], 16)
-                      readData <<= (8 * (lastReadLoc % 8))
+                      #readData <<= (8 * (lastReadLoc % 8)) <-- this was used to make byte and half-word instructions match what the bus unit sees in RV64. However, it is no longer needed because the testvectors are now compared against what the hart sees (not what the bus unit sees).
                       wMem.write('{:x}\n'.format(readData))
                     if readLoc == l.split()[0]:
                       readLoc = l.split()[1][2:]
