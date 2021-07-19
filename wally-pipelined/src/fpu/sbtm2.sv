@@ -1,4 +1,3 @@
-  
 module sbtm2 (input logic [11:0] a, output logic [10:0] y);
 
    // bit partitions
@@ -7,7 +6,7 @@ module sbtm2 (input logic [11:0] a, output logic [10:0] y);
    logic [3:0] x2;
    logic [2:0] x2_1cmp;   
    // mem outputs
-   logic [12:0] y0;
+   logic [13:0] y0;
    logic [5:0] 	y1;
    // input to CPA
    logic [14:0] op1;
@@ -19,8 +18,8 @@ module sbtm2 (input logic [11:0] a, output logic [10:0] y);
    assign x1 = a[6:4];
    assign x2 = a[3:0];   
 
-   sbtm_a2 mem1 ({x0[3:0], x1}, y0);
-   assign op1 = {1'b0, y0, 1'b0};
+   sbtm_a2 mem1 ({x0, x1}, y0);
+   assign op1 = {y0, 1'b0};
    
    // 1s cmp per sbtm/stam
    assign x2_1cmp = x2[3] ? ~x2[2:0] : x2[2:0];   
@@ -30,10 +29,12 @@ module sbtm2 (input logic [11:0] a, output logic [10:0] y);
 		{8'b0, y1, 1'b1};
    
    // CPA
-   bk15 cp1 (cout, p, op1, op2, 1'b0);
+   //adder #(15) cp1 (op1, op2, 1'b0, p, cout);
+   assign {cout, p} = op1 + op2; 
    assign y = p[14:4];
 
 endmodule // sbtm2
 
 
    
+
