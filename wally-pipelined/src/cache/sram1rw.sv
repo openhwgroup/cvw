@@ -15,7 +15,7 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
     always_ff @(posedge clk) begin
         ReadData <= StoredData[Addr];
         if (WriteEnable) begin
-            StoredData[Addr] <= WriteData;
+            StoredData[Addr] <= #1 WriteData;
         end
     end
 endmodule
