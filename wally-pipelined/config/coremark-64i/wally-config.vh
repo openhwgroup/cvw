@@ -50,6 +50,17 @@
 // Bus Interface width
 `define AHBW 64
 
+// TLB configuration.  Entries should be a power of 2
+`define ITLB_ENTRIES 32
+`define DTLB_ENTRIES 32
+
+// Cache configuration.  Sizes should be a power of two
+// typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
+`define DCACHE_NUMWAYS 4
+`define DCACHE_WAYSIZEINBYTES 2048
+`define DCACHE_BLOCKLENINBITS 256
+`define DCACHE_REPLBITS 3
+
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
