@@ -82,7 +82,7 @@ module csrm #(parameter
     output logic             IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
   );
 
-  logic [`XLEN-1:0] MISA_REGW;
+  logic [`XLEN-1:0] MISA_REGW, MHARTID_REGW;
   logic [`XLEN-1:0] MSCRATCH_REGW, MCAUSE_REGW, MTVAL_REGW;
 
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
@@ -96,6 +96,9 @@ module csrm #(parameter
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
   assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, MISA_26[25:0]};
+
+  // MHARTID is hardwired. It only exists as a signal so that the testbench can easily see it.
+  assign MHARTID_REGW = 0;
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS) && ~StallW;
@@ -195,7 +198,7 @@ module csrm #(parameter
       MVENDORID: CSRMReadValM = 0;
       MARCHID:   CSRMReadValM = 0;
       MIMPID:    CSRMReadValM = `XLEN'h100; // pipelined implementation
-      MHARTID:   CSRMReadValM = 0; 
+      MHARTID:   CSRMReadValM = MHARTID_REGW; // hardwired to 0 
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = 0; // flush this out later if MBE and SBE fields are supported
       MTVEC:     CSRMReadValM = MTVEC_REGW;
