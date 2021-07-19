@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0000000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0459700; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -530,7 +530,7 @@ module testbench();
   // --------------
   // Checker Macros
   // --------------
-  string MSTATUSstring = "MSTATUS"; //string variables seem to compare more reliably than string literals
+  string MSTATUSstring = "MSTATUS"; // string variables seem to compare more reliably than string literals (they gave me a lot of hassle), but *** there's probably a better way to do this
   string SEPCstring = "SEPC";
   string SCAUSEstring = "SCAUSE";
   string SSTATUSstring = "SSTATUS";
@@ -541,9 +541,11 @@ module testbench();
     string expected``CSR``name; \
     always @(``PATH``.``CSR``_REGW) begin \
       if ($time > 1 && (`BUILDROOT != 1 || ``CSR``name != SSTATUSstring)) begin \
-        if (``CSR``name == SEPCstring) begin #1; end \
-        if (``CSR``name == SCAUSEstring) begin #2; end \
-        if (``CSR``name == SSTATUSstring) begin #3; end \
+        // This is some feeble hackery designed to control the order in which CSRs are checked \
+        // when multiple change at the same time. \
+        if (``CSR``name == SEPCstring) #1; \
+        if (``CSR``name == SCAUSEstring) #2; \
+        if (``CSR``name == SSTATUSstring) #3; \
         scan_file_csr = $fscanf(data_file_csr, "%s\n", expected``CSR``name); \
         scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
         if(expected``CSR``name.icompare(``CSR``name)) begin \
@@ -581,31 +583,36 @@ module testbench();
   // --------
   // Checking
   // --------
-  //`CHECK_CSR(FCSR)
-  `CHECK_CSR2(MCAUSE, `CSRM)
-  `CHECK_CSR(MCOUNTEREN)
-  `CHECK_CSR(MEDELEG)
-  `CHECK_CSR(MEPC)
-  //`CHECK_CSR(MHARTID)
-  `CHECK_CSR(MIDELEG)
-  `CHECK_CSR(MIE)
-  //`CHECK_CSR(MIP)
-  `CHECK_CSR2(MISA, `CSRM)
-  `CHECK_CSR2(MSCRATCH, `CSRM)
+  // Which CSRs we check depends upon which ones QEMU outputs
+  // *** can we fix QEMU to output a defined set of CSRs?
+  `CHECK_CSR2(MHARTID, `CSRM)
   `CHECK_CSR(MSTATUS)
-  `CHECK_CSR2(MTVAL, `CSRM)
+  `CHECK_CSR(MIP)
+  `CHECK_CSR(MIE)
+  `CHECK_CSR(MIDELEG)
+  `CHECK_CSR(MEDELEG)
   `CHECK_CSR(MTVEC)
+  `CHECK_CSR(STVEC)
+  `CHECK_CSR(MEPC)
+  `CHECK_CSR(SEPC)
+  `CHECK_CSR2(MCAUSE, `CSRM)
+  `CHECK_CSR2(SCAUSE, `CSRS)
+  `CHECK_CSR2(MTVAL, `CSRM)
+  `CHECK_CSR2(STVAL, `CSRS)
+
+  //`CHECK_CSR(FCSR)
+  //`CHECK_CSR(MCOUNTEREN)
+  //`CHECK_CSR2(MISA, `CSRM)
+  //`CHECK_CSR2(MSCRATCH, `CSRM)
   //`CHECK_CSR2(PMPADDR0, `CSRM)
   //`CHECK_CSR2(PMdut.PCFG0, `CSRM)
-  `CHECK_CSR(SATP)
-  `CHECK_CSR2(SCAUSE, `CSRS)
-  `CHECK_CSR(SCOUNTEREN)
-  `CHECK_CSR(SEPC)
-  `CHECK_CSR(SIE)
-  `CHECK_CSR2(SSCRATCH, `CSRS)
-  `CHECK_CSR(SSTATUS)
-  `CHECK_CSR2(STVAL, `CSRS)
-  `CHECK_CSR(STVEC)
+  //`CHECK_CSR(SATP)
+  //`CHECK_CSR(SCOUNTEREN)
+  //`CHECK_CSR(SIE)
+  //`CHECK_CSR2(SSCRATCH, `CSRS)
+  //`CHECK_CSR(SSTATUS)
+  
+  
 
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////// Miscellaneous ///////////////////////////////
