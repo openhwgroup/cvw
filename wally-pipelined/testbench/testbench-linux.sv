@@ -194,120 +194,118 @@ module testbench();
   // Big Chunky Block
   // ----------------
   always @(reset or dut.hart.ifu.InstrRawD or dut.hart.ifu.PCD) begin// or negedge dut.hart.ifu.StallE) begin // Why do we care about StallE? Everything seems to run fine without it.
-    if(~dut.hart.lsu.dcache.MemRWM) begin // *** Should this need to consider dut.hart.lsu.dcache.MemRWM?
-      #2;
-      // If PCD/InstrD aren't garbage
-      if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0) begin // && ~dut.hart.ifu.StallE) begin
-        // If Wally's PCD has updated
-        if (dut.hart.ifu.PCD !== lastPCD) begin
-          lastInstrDExpected = InstrDExpected;
-          lastPC <= dut.hart.ifu.PCD;
-          lastPC2 <= lastPC;
-          // If PCD isn't going to be flushed
-          if (~PCDwrong || lastPC == PCDexpected) begin
+    #2;
+    // If PCD/InstrD aren't garbage
+    if (~reset && dut.hart.ifu.InstrRawD[15:0] !== {16{1'bx}} && dut.hart.ifu.PCD !== 64'h0) begin // && ~dut.hart.ifu.StallE) begin
+      // If Wally's PCD has updated
+      if (dut.hart.ifu.PCD !== lastPCD) begin
+        lastInstrDExpected = InstrDExpected;
+        lastPC <= dut.hart.ifu.PCD;
+        lastPC2 <= lastPC;
+        // If PCD isn't going to be flushed
+        if (~PCDwrong || lastPC == PCDexpected) begin
 
-            // Stop if we've reached the end
-            if($feof(data_file_PCF)) begin
-              $display("no more PC data to read... CONGRATULATIONS!!!");
-              `ERROR
-            end
+          // Stop if we've reached the end
+          if($feof(data_file_PCF)) begin
+            $display("no more PC data to read... CONGRATULATIONS!!!");
+            `ERROR
+          end
 
-            // Increment PC
-            `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
-            `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
+          // Increment PC
+          `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
+          `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
 
-            // NOP out certain instructions
-            if(dut.hart.ifu.PCD===PCDexpected) begin
-              if((dut.hart.ifu.PCD == 32'h80001dc6) || // for now, NOP out any stores to PLIC
-                 (dut.hart.ifu.PCD == 32'h80001de0) ||
-                 (dut.hart.ifu.PCD == 32'h80001de2)) begin
-                $display("warning: NOPing out %s at PCD=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
-                force InstrDExpected = 32'b0010011;
-                force dut.hart.ifu.InstrRawD = 32'b0010011;
-                while (clk != 0) #1;
-                while (clk != 1) #1;                
-                release dut.hart.ifu.InstrRawD;
-                release InstrDExpected;
-                warningCount += 1;
-                forcedInstr = 1;
-              end else begin
-                forcedInstr = 0;
-              end
-            end
-
-            // Increment instruction count
-            if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
-               (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
-               (instrs <= 100000 && instrs % 10000 == 0) || (instrs % 100000 == 0)) begin
-              $display("loaded %0d instructions", instrs);
-            end
-            instrs += 1;
-            
-            // Stop before bugs so "do" file can turn on waves
-            if (instrs == waveOnICount) begin
-              $display("turning on waves at %0d instructions", instrs);
-              $stop;
-            end else if (instrs == stopICount && stopICount != 0) begin
-              $display("Ending sim at %0d instructions (set stopICount to 0 to let the sim go on)", instrs);
-              $stop;
-            end
-
-            // Check if PCD is going to be flushed due to a branch or jump
-            if (`BPRED_ENABLED) begin
-              PCDwrong = dut.hart.hzu.FlushD; //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
-            end else begin
-              casex (lastInstrDExpected[31:0])
-                32'b00000000001000000000000001110011, // URET
-                32'b00010000001000000000000001110011, // SRET
-                32'b00110000001000000000000001110011, // MRET
-                32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
-                32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
-                32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
-                32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
-                32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
-                32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
-                  PCDwrong = 1;
-                32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
-                32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
-                  PCDwrong = 0; // tbh don't really know what should happen here
-                32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
-                32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
-                32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
-                  PCDwrong = 1;
-                default:
-                  PCDwrong = 0;
-              endcase
-            end
-
-            // Check PCD, InstrD
-            if (~PCDwrong && ~(dut.hart.ifu.PCD === PCDexpected)) begin
-              $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, PCDexpected);
-              `ERROR
-            end
-            InstrMask = InstrDExpected[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
-            if ((~forcedInstr) && (~PCDwrong) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & InstrDExpected))) begin
-              $display("%0t ps, PCD %x, instr %0d: InstrD %x %s does not equal InstrDExpected %x %s", $time, dut.hart.ifu.PCD, instrs, dut.hart.ifu.InstrRawD, InstrDName, InstrDExpected, PCtextD);
-              `ERROR
-            end
-
-            // Repeated instruction means QEMU had an interrupt which we need to spoof
-            if (PCFexpected == PCDexpected) begin
-              $display("Note at %0t ps, PCM %x %s, instr %0d: spoofing an interrupt", $time, dut.hart.ifu.PCM, PCtextM, instrs);
-              // Increment file pointers past the repeated instruction.
-              `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
-              `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
-              scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
-              scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
-              // Next force a timer interrupt (*** this may later need generalizing)
-              force dut.uncore.genblk1.clint.MTIME = dut.uncore.genblk1.clint.MTIMECMP + 1;
+          // NOP out certain instructions
+          if(dut.hart.ifu.PCD===PCDexpected) begin
+            if((dut.hart.ifu.PCD == 32'h80001dc6) || // for now, NOP out any stores to PLIC
+                (dut.hart.ifu.PCD == 32'h80001de0) ||
+                (dut.hart.ifu.PCD == 32'h80001de2)) begin
+              $display("warning: NOPing out %s at PCD=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
+              force InstrDExpected = 32'b0010011;
+              force dut.hart.ifu.InstrRawD = 32'b0010011;
               while (clk != 0) #1;
-              while (clk != 1) #1;
-              release dut.uncore.genblk1.clint.MTIME;
+              while (clk != 1) #1;                
+              release dut.hart.ifu.InstrRawD;
+              release InstrDExpected;
+              warningCount += 1;
+              forcedInstr = 1;
+            end else begin
+              forcedInstr = 0;
             end
           end
+
+          // Increment instruction count
+          if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
+              (instrs <= 1000 && instrs % 100 == 0) || (instrs <= 10000 && instrs % 1000 == 0) ||
+              (instrs <= 100000 && instrs % 10000 == 0) || (instrs % 100000 == 0)) begin
+            $display("loaded %0d instructions", instrs);
+          end
+          instrs += 1;
+          
+          // Stop before bugs so "do" file can turn on waves
+          if (instrs == waveOnICount) begin
+            $display("turning on waves at %0d instructions", instrs);
+            $stop;
+          end else if (instrs == stopICount && stopICount != 0) begin
+            $display("Ending sim at %0d instructions (set stopICount to 0 to let the sim go on)", instrs);
+            $stop;
+          end
+
+          // Check if PCD is going to be flushed due to a branch or jump
+          if (`BPRED_ENABLED) begin
+            PCDwrong = dut.hart.hzu.FlushD; //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
+          end else begin
+            casex (lastInstrDExpected[31:0])
+              32'b00000000001000000000000001110011, // URET
+              32'b00010000001000000000000001110011, // SRET
+              32'b00110000001000000000000001110011, // MRET
+              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
+              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
+              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
+              32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
+              32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
+              32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
+                PCDwrong = 1;
+              32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
+              32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
+                PCDwrong = 0; // tbh don't really know what should happen here
+              32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
+              32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
+              32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
+                PCDwrong = 1;
+              default:
+                PCDwrong = 0;
+            endcase
+          end
+
+          // Check PCD, InstrD
+          if (~PCDwrong && ~(dut.hart.ifu.PCD === PCDexpected)) begin
+            $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, PCDexpected);
+            `ERROR
+          end
+          InstrMask = InstrDExpected[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
+          if ((~forcedInstr) && (~PCDwrong) && ((InstrMask & dut.hart.ifu.InstrRawD) !== (InstrMask & InstrDExpected))) begin
+            $display("%0t ps, PCD %x, instr %0d: InstrD %x %s does not equal InstrDExpected %x %s", $time, dut.hart.ifu.PCD, instrs, dut.hart.ifu.InstrRawD, InstrDName, InstrDExpected, PCtextD);
+            `ERROR
+          end
+
+          // Repeated instruction means QEMU had an interrupt which we need to spoof
+          if (PCFexpected == PCDexpected) begin
+            $display("Note at %0t ps, PCM %x %s, instr %0d: spoofing an interrupt", $time, dut.hart.ifu.PCM, PCtextM, instrs);
+            // Increment file pointers past the repeated instruction.
+            `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
+            `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
+            scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
+            scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
+            // Next force a timer interrupt (*** this may later need generalizing)
+            force dut.uncore.genblk1.clint.MTIME = dut.uncore.genblk1.clint.MTIMECMP + 1;
+            while (clk != 0) #1;
+            while (clk != 1) #1;
+            release dut.uncore.genblk1.clint.MTIME;
+          end
         end
-        lastPCD = dut.hart.ifu.PCD;
       end
+      lastPCD = dut.hart.ifu.PCD;
     end
   end
 
