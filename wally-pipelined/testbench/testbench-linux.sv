@@ -530,6 +530,7 @@ module testbench();
   // Checker Macros
   // --------------
   string MSTATUSstring = "MSTATUS"; // string variables seem to compare more reliably than string literals (they gave me a lot of hassle), but *** there's probably a better way to do this
+  string MIPstring = "MIP";
   string SEPCstring = "SEPC";
   string SCAUSEstring = "SCAUSE";
   string SSTATUSstring = "SSTATUS";
@@ -539,7 +540,8 @@ module testbench();
     string ``CSR``name = `"CSR`"; \
     string expected``CSR``name; \
     always @(``PATH``.``CSR``_REGW) begin \
-      if ($time > 1 && (`BUILDROOT != 1 || ``CSR``name != SSTATUSstring)) begin \
+      // MIP is not checked because QEMU bodges it (MTIP in particular), and even if QEMU reported it correctly, the timing would still be off \
+      if ($time > 1 && (``CSR``name != MIPstring)) begin \
         // This is some feeble hackery designed to control the order in which CSRs are checked \
         // when multiple change at the same time. \
         if (``CSR``name == SEPCstring) #1; \
