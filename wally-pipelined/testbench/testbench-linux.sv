@@ -453,8 +453,7 @@ module testbench();
   // Read Checker
   // ------------
   always @(negedge clk) begin
-    if (dut.hart.MemRWM[1] && ~dut.hart.StallM && ~dut.hart.FlushM && dut.hart.ieu.InstrValidM) begin //<-- This doesn't work because ReadDataM can be used for other things (namely page table walking) while the pipeline is stalled, leaving it in a different state when the pipeline unstalls
-    //if (dut.hart.MemRWM[1] && dut.hart.lsu.dcache.ReadDataWEn) begin // <-- ReadDataWEn is a good indicator that the pipeline is using the current contents of ReadDataM
+    if (dut.hart.MemRWM[1] && ~dut.hart.StallM && ~dut.hart.FlushM && dut.hart.ieu.InstrValidM) begin
       if($feof(data_file_memR)) begin
         $display("no more memR data to read");
         `ERROR
