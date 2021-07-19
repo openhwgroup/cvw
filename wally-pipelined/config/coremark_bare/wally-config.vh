@@ -50,8 +50,16 @@
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1
 
+// TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32
 `define DTLB_ENTRIES 32
+
+// Cache configuration.  Sizes should be a power of two
+// typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
+`define DCACHE_NUMWAYS 4
+`define DCACHE_WAYSIZEINBYTES 2048
+`define DCACHE_BLOCKLENINBITS 256
+`define DCACHE_REPLBITS 3
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64
