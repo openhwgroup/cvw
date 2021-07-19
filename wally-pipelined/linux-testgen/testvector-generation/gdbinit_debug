@@ -1,3 +1,8 @@
-file ../buildroot-image-output/vmlinux
 set pagination off
-target extended-remote :1236
+file ../buildroot-image-output/fw_jump.elf
+target extended-remote :1237
+b irqchip_plic_warm_init
+c
+file ../buildroot-image-output/vmlinux
+b plic_init
+c

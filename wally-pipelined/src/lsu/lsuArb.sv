@@ -33,7 +33,6 @@ module lsuArb
    input logic 		    SelPTW,
    input logic 		    HPTWRead,
    input logic [`XLEN-1:0]  HPTWPAdrE,
-   input logic [`XLEN-1:0]  HPTWPAdrM, 
    output logic 	    HPTWStall, 
 
    // from CPU
@@ -46,14 +45,13 @@ module lsuArb
    input logic 		    PendingInterruptM,
    // to CPU
    output logic [`XLEN-1:0] ReadDataW,
-   output logic 	    SquashSCW,
    output logic 	    DataMisalignedM,
    output logic 	    CommittedM,
    output logic 	    LSUStall, 
   
    // to D Cache
    output logic 	    DisableTranslation, 
-   output logic [1:0] 	    MemRWMtoDCache,
+   output logic [1:0] 	    MemRWMtoLRSC,
    output logic [2:0] 	    Funct3MtoDCache,
    output logic [1:0] 	    AtomicMtoDCache,
    output logic [`XLEN-1:0] MemAdrMtoDCache,
@@ -64,7 +62,6 @@ module lsuArb
 
    // from D Cache
    input logic 		    CommittedMfromDCache,
-   input logic 		    SquashSCWfromDCache,
    input logic 		    DataMisalignedMfromDCache,
    input logic [`XLEN-1:0]  ReadDataWfromDCache,
    input logic 		    DCacheStall
@@ -72,18 +69,21 @@ module lsuArb
    );
 
   logic [2:0] PTWSize;
+  logic [`XLEN-1:0]  HPTWPAdrM;
   
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
-  assign MemRWMtoDCache = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
+  assign MemRWMtoLRSC = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
   generate
     assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
   endgenerate
   mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoDCache);
 
+  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);   // delay HPTWPAdr by a cycle
+
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM;
+  assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM; // *** DH: I don't understand this logic 7/18/21.  Why should PCF ever go here? 
   assign MemAdrEtoDCache = SelPTW ? HPTWPAdrE : MemAdrE;  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
@@ -91,13 +91,14 @@ module lsuArb
 
   // demux the inputs from LSU to walker or cpu's data port.
 
-  assign ReadDataW = SelPTW ? `XLEN'b0 : ReadDataWfromDCache;  // probably can avoid this demux
-  assign SquashSCW = SelPTW ? 1'b0 : SquashSCWfromDCache;
-  assign DataMisalignedM = SelPTW ? 1'b0 : DataMisalignedMfromDCache;
+  // works without the demux 7/18/21 dh.  Suggest deleting these and removing fromDCache suffix
+  assign ReadDataW = /*SelPTW ? `XLEN'b0 : */ReadDataWfromDCache;  // probably can avoid this demux
+  assign DataMisalignedM = /*SelPTW ? 1'b0 : */DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
-  assign HPTWStall = SelPTW ? DCacheStall : 1'b1;  
+  //assign HPTWStall = SelPTW ? DCacheStall : 1'b1;  
+  assign HPTWStall = DCacheStall;  
 
   assign PendingInterruptMtoDCache = SelPTW ? 1'b0 : PendingInterruptM;
 

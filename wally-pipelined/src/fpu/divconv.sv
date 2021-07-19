@@ -36,6 +36,8 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_o
    logic [63:0] 	q_const, qp_const, qm_const;
    logic [63:0] 	d2, n2;   
    logic [11:0] 	d3;   
+   logic muxr_out;
+   logic cout1, cout2, cout3, cout4, cout5, cout6, cout7;
 
    // Check if exponent is odd for sqrt
    // If exp_odd=1 and sqrt, then M/2 and use ia_addr=0 as IA
@@ -73,16 +75,23 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_o
    mux2 #(64) mxA ({64'hFFFF_FFFF_FFFF_F9FF}, {64'hFFFF_FF3F_FFFF_FFFF}, P, qm_const);
    
    // CPA (from CSA)/Remainder addition/subtraction
-   adder #(128) cpa1 (Sum2, Carry2, muxr_out, mul_out, cout1);   
+   // adder #(128) cpa1 (Sum2, Carry2, muxr_out, mul_out, cout1); 
+   assign {cout1, mul_out} = Sum2 + Carry2 + muxr_out;  
    
    // Assuming [1,2) - q1
-   adder #(64) cpa2 (regb_out, q_const, 1'b0, q_out1, cout2);
-   adder #(64) cpa3 (regb_out, qp_const, 1'b0, qp_out1, cout3);
-   adder #(64) cpa4 (regb_out, qm_const, 1'b1, qm_out1, cout4);
+   // adder #(64) cpa2 (regb_out, q_const, 1'b0, q_out1, cout2);
+   assign {cout2, q_out1} = regb_out + q_const;  
+   // adder #(64) cpa3 (regb_out, qp_const, 1'b0, qp_out1, cout3);
+   assign {cout3, qp_out1} = regb_out + qp_const;  
+   // adder #(64) cpa4 (regb_out, qm_const, 1'b1, qm_out1, cout4);
+   assign {cout4, qm_out1} = regb_out + qm_const + 1'b1;  
    // Assuming [0.5,1) - q0   
-   adder #(64) cpa5 ({regb_out[62:0], vss}, q_const, 1'b0, q_out0, cout5);
-   adder #(64) cpa6 ({regb_out[62:0], vss}, qp_const, 1'b0, qp_out0, cout6);
-   adder #(64) cpa7 ({regb_out[62:0], vss}, qm_const, 1'b1, qm_out0, cout7);    
+   // adder #(64) cpa5 ({regb_out[62:0], vss}, q_const, 1'b0, q_out0, cout5);
+   assign {cout5, q_out0} = {regb_out[62:0], vss} + q_const;  
+   // adder #(64) cpa6 ({regb_out[62:0], vss}, qp_const, 1'b0, qp_out0, cout6);
+   assign {cout6, qp_out0} = {regb_out[62:0], vss} + qp_const;  
+   // adder #(64) cpa7 ({regb_out[62:0], vss}, qm_const, 1'b1, qm_out0, cout7);  
+   assign {cout7, qm_out0} = {regb_out[62:0], vss} + qm_const + 1'b1;    
 
    // One's complement instead of two's complement (for hw efficiency)
    assign three = {~mul_out[126], mul_out[126], ~mul_out[125:63]};   

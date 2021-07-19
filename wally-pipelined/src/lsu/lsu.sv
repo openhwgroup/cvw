@@ -56,7 +56,6 @@ module lsu
    input logic [1:0] 	       PrivilegeModeW,
    input logic 		       DTLBFlushM,
    // faults
-   input logic 		       NonBusTrapM, 
    output logic 	       DTLBLoadPageFaultM, DTLBStorePageFaultM,
    output logic 	       LoadMisalignedFaultM, LoadAccessFaultM,
    // cpu hazard unit (trap)
@@ -81,7 +80,7 @@ module lsu
 
    input logic [`XLEN-1:0]     PCF,
    input logic 		       ITLBMissF,
-   output logic [`XLEN-1:0]    PageTableEntryF,
+   output logic [`XLEN-1:0]    PTE,
    output logic [1:0] 	       PageType,
    output logic 	       ITLBWriteF,
    output logic 	       WalkerInstrPageFaultF,
@@ -118,21 +117,25 @@ module lsu
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
  
   logic 		       DTLBMissM;
-  logic [`XLEN-1:0] 	       PageTableEntryM;
+//  logic [`XLEN-1:0] 	       PTE;
   logic 		       DTLBWriteM;
   logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
-  logic [`XLEN-1:0] 	       HPTWPAdrM;  
+//  logic [`XLEN-1:0] 	       HPTWPAdrM;  
+  logic [`XLEN-1:0] TranslationVAdr;
+  logic [`PA_BITS-1:0] TranslationPAdr;
+  logic            UseTranslationVAdr;
   logic 		       HPTWRead;
   logic [1:0] 		       MemRWMtoDCache;
+  logic [1:0] 		       MemRWMtoLRSC;
   logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
   logic [`XLEN-1:0] 	       MemAdrMtoDCache;
   logic [`XLEN-1:0] 	       MemAdrEtoDCache;  
   logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
-  logic 		       SquashSCWfromDCache;
+  logic            MemReadM;
   logic 		       DataMisalignedMfromDCache;
   logic 		       HPTWReady;
   logic 		       DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
@@ -148,7 +151,7 @@ module lsu
   logic 		       WalkerPageFaultM;
   
   
-  pagetablewalker pagetablewalker(
+  hptw hptw(
 				  .clk(clk),
 				  .reset(reset),
 				  .SATP_REGW(SATP_REGW),
@@ -157,32 +160,37 @@ module lsu
 				  .ITLBMissF(ITLBMissF),
 				  .DTLBMissM(DTLBMissM),
 				  .MemRWM(MemRWM),
-				  .PageTableEntryF(PageTableEntryF),
-				  .PageTableEntryM(PageTableEntryM),
+				  .PTE(PTE),
 				  .PageType,
 				  .ITLBWriteF(ITLBWriteF),
 				  .DTLBWriteM(DTLBWriteM),
 				  .HPTWReadPTE(HPTWReadPTE),
 				  .HPTWStall(HPTWStall),
-				  .HPTWPAdrE(HPTWPAdrE),
-				  .HPTWPAdrM(HPTWPAdrM),				  
+          .TranslationVAdr,
+          .TranslationPAdr,			  
+          .UseTranslationVAdr,
 				  .HPTWRead(HPTWRead),
 				  .SelPTW(SelPTW),
 				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
+
+  logic [`XLEN-1:0] TranslationPAdrXLEN;
+  generate // *** needs fixing about truncation dh 7/17/21
+    if (`XLEN == 32) assign TranslationPAdrXLEN = TranslationPAdr[31:0];
+    else             assign TranslationPAdrXLEN = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
+  endgenerate
+  mux2 #(`XLEN) HPTWPAdrMux(TranslationPAdrXLEN, TranslationVAdr, UseTranslationVAdr, HPTWPAdrE); // *** misleading to call it PAdr, bad because some bits have been truncated
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
-  // arbiter between IEU and pagetablewalker
+  // arbiter between IEU and hptw
   lsuArb arbiter(.clk(clk),
 		 .reset(reset),
 		 // HPTW connection
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
 		 .HPTWPAdrE(HPTWPAdrE),
-		 .HPTWPAdrM(HPTWPAdrM),		 
-		 //.HPTWReadPTE(HPTWReadPTE),
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
@@ -194,18 +202,16 @@ module lsu
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
 		 .ReadDataW(ReadDataW),
-		 .SquashSCW(SquashSCW),
 		 .DataMisalignedM(DataMisalignedM),
 		 .LSUStall(LSUStall),
 		 // DCACHE
 		 .DisableTranslation(DisableTranslation),
-		 .MemRWMtoDCache(MemRWMtoDCache),
+		 .MemRWMtoLRSC(MemRWMtoLRSC),
 		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
 		 .MemAdrMtoDCache(MemAdrMtoDCache),
 		 .MemAdrEtoDCache(MemAdrEtoDCache),
 		 .StallWtoDCache(StallWtoDCache),
-		 .SquashSCWfromDCache(SquashSCWfromDCache),      
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .ReadDataWfromDCache(ReadDataWfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
@@ -218,7 +224,7 @@ module lsu
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.Address(MemAdrMtoDCache),
        .Size(Funct3MtoDCache[1:0]),
-       .PTE(PageTableEntryM),
+       .PTE(PTE),
        .PageTypeWriteVal(PageType),
        .TLBWrite(DTLBWriteM),
        .TLBFlush(DTLBFlushM),
@@ -229,16 +235,20 @@ module lsu
        .ExecuteAccessF(1'b0),
        //.AtomicAccessM(AtomicMaskedM[1]),
        .AtomicAccessM(1'b0),
-       .WriteAccessM(MemRWMtoDCache[0]),
-       .ReadAccessM(MemRWMtoDCache[1]),
+       .WriteAccessM(MemRWMtoLRSC[0]),
+       .ReadAccessM(MemRWMtoLRSC[1]),
        .SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
        .Cacheable(CacheableM),
        .Idempotent(),
        .AtomicAllowed(),
-       //       .SelRegions(DHSELRegionsM),
        .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
+
+
+  assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
+            .SquashSCM, .SquashSCW, .MemRWMtoDCache);
 
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
@@ -250,8 +260,8 @@ module lsu
 
 
   // Specify which type of page fault is occurring
-  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoDCache[1];
-  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoDCache[0];
+  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoLRSC[1];
+  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoLRSC[0];
 
   // Determine if an Unaligned access is taking place
   always_comb
@@ -271,8 +281,8 @@ module lsu
 
  // *** BUG for now leave this out. come back later after the d cache is working. July 09, 2021
 
-  assign MemReadM = MemRWMtoDCache[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWMtoDCache[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
+  assign MemReadM = MemRWMtoLRSC[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  assign MemWriteM = MemRWMtoLRSC[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
   assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicMtoDCache : 2'b00 ;
   assign MemAccessM = MemReadM | MemWriteM;
 
@@ -282,35 +292,11 @@ module lsu
   assign CommittedMfromDCache = preCommittedM | CommitM;
 
 
-  // Handle atomic load reserved / store conditional
-  generate
-    if (`A_SUPPORTED) begin // atomic instructions supported
-      logic [`PA_BITS-1:2] ReservationPAdrW;
-      logic 		   ReservationValidM, ReservationValidW; 
-      logic 		   lrM, scM, WriteAdrMatchM;
-
-      assign lrM = MemReadM && AtomicMtoDCache[0];
-      assign scM = MemRWMtoDCache[0] && AtomicMtoDCache[0]; 
-      assign WriteAdrMatchM = MemRWMtoDCache[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
-      assign SquashSCM = scM && ~WriteAdrMatchM;
-      always_comb begin // ReservationValidM (next value of valid reservation)
-        if (lrM) ReservationValidM = 1;  // set valid on load reserve
-        else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
-        else ReservationValidM = ReservationValidW; // otherwise don't change valid
-      end
-      flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
-      flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
-      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoDCache, SquashSCM, SquashSCWfromDCache);
-    end else begin // Atomic operations not supported
-      assign SquashSCM = 0;
-      assign SquashSCWfromDCache = 0; 
-    end
-  endgenerate
  -----/\----- EXCLUDED -----/\----- */
 
   // Determine if address is valid
-  assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[1];
-  assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoDCache[0];
+  assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[1];
+  assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[0];
 
   dcache dcache(.clk(clk),
 		.reset(reset),
@@ -330,7 +316,7 @@ module lsu
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.ExceptionM(ExceptionM),
-		.PendingInterruptM(PendingInterruptMtoDCache),		
+		.PendingInterruptM(PendingInterruptMtoDCache),
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),

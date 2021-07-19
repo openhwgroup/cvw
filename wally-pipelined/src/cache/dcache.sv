@@ -149,6 +149,7 @@ module dcache
 		STATE_MISS_READ_WORD,
 		STATE_MISS_READ_WORD_DELAY,
 		STATE_MISS_WRITE_WORD,
+		STATE_MISS_WRITE_WORD_DELAY,		
 
 		STATE_AMO_MISS_FETCH_WDV,
 		STATE_AMO_MISS_FETCH_DONE,
@@ -315,7 +316,7 @@ module dcache
   assign CPUBusy = CurrState == STATE_CPU_BUSY;
   flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
   
-  assign ReadDataWEn = (~StallW & ~PreviousCPUBusy) | 
+  assign ReadDataWEn = (~StallW & (~PreviousCPUBusy & (CurrState != STATE_CPU_BUSY))) | 
 		       (NextState == STATE_CPU_BUSY & CurrState == STATE_READY) |
 		       (CurrState == STATE_MISS_READ_WORD_DELAY);
   
@@ -461,6 +462,7 @@ module dcache
 	  CommittedM = 1'b1;
 	end
 	// amo hit
+/* -----\/----- EXCLUDED -----\/-----
 	else if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
@@ -468,6 +470,7 @@ module dcache
 	  if(StallW) NextState = STATE_CPU_BUSY;
 	  else NextState = STATE_AMO_UPDATE;
 	end
+ -----/\----- EXCLUDED -----/\----- */
 	// read hit valid cached
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
@@ -492,14 +495,14 @@ module dcache
 	  DCacheStall = 1'b1;
 	end
 	// uncached write
-	else if(MemRWM[0] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
+	else if(MemRWM[0] & ~CacheableM & ~(ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
 	  NextState = STATE_UNCACHED_WRITE;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	  AHBWrite = 1'b1;
 	end
 	// uncached read
-	else if(MemRWM[1] & ~CacheableM & ~ExceptionM & ~DTLBMissM) begin
+	else if(MemRWM[1] & ~CacheableM & ~(ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
 	  NextState = STATE_UNCACHED_READ;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
@@ -573,7 +576,7 @@ module dcache
       end
 
       STATE_MISS_READ_WORD_DELAY: begin
-	SelAdrM = 1'b1;
+	//SelAdrM = 1'b1;
 	CommittedM = 1'b1;
 	if(StallW) NextState = STATE_CPU_BUSY;
 	else NextState = STATE_READY;
@@ -583,7 +586,12 @@ module dcache
 	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
 	SelAdrM = 1'b1;
-	DCacheStall = 1'b0;
+	DCacheStall = 1'b1;
+	CommittedM = 1'b1;
+	NextState = STATE_MISS_WRITE_WORD_DELAY;
+      end
+
+      STATE_MISS_WRITE_WORD_DELAY: begin
 	CommittedM = 1'b1;
 	if(StallW) NextState = STATE_CPU_BUSY;
 	else NextState = STATE_READY;
