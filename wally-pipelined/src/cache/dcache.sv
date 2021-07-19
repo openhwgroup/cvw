@@ -128,7 +128,6 @@ module dcache
   logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 	       VictimTag;
 
-  logic 		       ReadDataWEn;
   
   logic AnyCPUReqM;
   logic FetchCountFlag;
@@ -317,11 +316,8 @@ module dcache
   flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
   
 
-  assign ReadDataWEn = ~StallW |
-		       (CurrState == STATE_MISS_READ_WORD_DELAY);
-  
   flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(ReadDataWEn),
+			      .en(~StallW),
 			      .d(FinalReadDataWordM),
 			      .q(ReadDataW));
 
