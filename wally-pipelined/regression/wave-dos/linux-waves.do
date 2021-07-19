@@ -282,12 +282,13 @@ add wave -noupdate -radix hexadecimal /testbench/PCW
 add wave -noupdate -radix hexadecimal /testbench/PCtextW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/InstrValidW
 add wave -noupdate /testbench/dut/hart/ieu/dp/ReadDataW
-add wave -noupdate /testbench/dut/hart/ieu/dp/RegWriteW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ResultW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/RdW
 add wave -noupdate -divider RegFile
+add wave -noupdate /testbench/dut/hart/ieu/dp/RegWriteW
+add wave -noupdate -radix unsigned /testbench/regNumExpected
+add wave -noupdate -radix unsigned /testbench/dut/hart/ieu/dp/RdW
 add wave -noupdate -radix hexadecimal /testbench/regExpected
-add wave -noupdate -radix hexadecimal /testbench/regNumExpected
+add wave -noupdate /testbench/dut/hart/ieu/dp/regf/wd3
 add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[2]}
 add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[3]}
 add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[4]}
@@ -25536,8 +25537,8 @@ add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HADDR
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HWRITE
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HWDATA
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 8} {2495 ns} 1} {{Cursor 2} {210 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 8} {203758 ns} 0} {{Cursor 2} {203765 ns} 1}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
 configure wave -justifyvalue left
@@ -25552,4 +25553,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2395 ns} {2605 ns}
+WaveRestoreZoom {203642 ns} {203852 ns}
