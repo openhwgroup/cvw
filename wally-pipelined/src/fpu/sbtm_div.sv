@@ -1,4 +1,4 @@
-module sbtm (input logic [11:0] a, output logic [10:0] ia_out);
+module sbtm_div (input logic [11:0] a, output logic [10:0] ia_out);
 
    // bit partitions
    logic [3:0] x0;
