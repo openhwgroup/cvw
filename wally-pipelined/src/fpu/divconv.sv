@@ -45,8 +45,8 @@ module divconv (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_o
    assign n2 = op_type ? d2 : {n,11'h0};
    
    // IA div/sqrt
-   sbtm ia1 (d[52:41], ia_div);
-   sbtm2 ia2 (d2[63:52], ia_sqrt);
+   sbtm_div ia1 (d[52:41], ia_div);
+   sbtm_sqrt ia2 (d2[63:52], ia_sqrt);
    assign ia_out = op_type ? {ia_sqrt, {53{1'b0}}} : {ia_div, {53{1'b0}}};
    
    // Choose IA or iteration
