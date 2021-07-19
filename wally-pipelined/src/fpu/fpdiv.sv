@@ -91,6 +91,7 @@ module fpdiv (
    wire 	 load_regrv, load_regs;
    logic exp_cout1, exp_cout2;
    logic exp_odd, open;
+   // logic reset;
    
    // Convert the input operands to their appropriate forms based on 
    // the orignal operands, the op_type , and their precision P. 
