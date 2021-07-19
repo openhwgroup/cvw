@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// tlbpriority.sv
+// prioritycircuit.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Modified: Teo Ene 15 Apr 2021:
@@ -30,8 +30,10 @@
 
 `include "wally-config.vh"
 
-module tlbpriority #(parameter ENTRIES = 8) (
+module prioritycircuit #(parameter ENTRIES = 8,
+                         parameter FINAL_OP = "AND") (
   input  logic  [ENTRIES-1:0] a,
+  input  logic                FirstPin,
   output logic  [ENTRIES-1:0] y
 );
   // verilator lint_off UNOPTFLAT
@@ -40,11 +42,19 @@ module tlbpriority #(parameter ENTRIES = 8) (
   // generate thermometer code mask
   genvar i;
   generate
-    assign nolower[0] = 1;
+    assign nolower[0] = FirstPin;
     for (i=1; i<ENTRIES; i++) begin:therm
       assign nolower[i] = nolower[i-1] & ~a[i-1];
     end
   endgenerate
   // verilator lint_on UNOPTFLAT
-  assign y = a & nolower;
+  
+  generate
+    if (FINAL_OP=="AND") begin
+      assign y = a & nolower;
+    end else if (FINAL_OP=="NONE") begin
+      assign y = nolower;
+    end // *** So far these are the only two operations I need to do at the end, but feel free to add more as needed.
+  endgenerate
+  // assign y = a & nolower;
 endmodule
