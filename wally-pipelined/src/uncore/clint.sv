@@ -82,7 +82,7 @@ module clint (
       always_ff @(posedge HCLK or negedge HRESETn) 
         if (~HRESETn) begin
           MSIP <= 0;
-          MTIMECMP <= 0;
+          MTIMECMP <= (`XLEN)'(-1);
           // MTIMECMP is not reset
         end else if (memwrite) begin
           if (entryd == 16'h0000) MSIP <= HWDATA[0];
@@ -112,7 +112,7 @@ module clint (
       always_ff @(posedge HCLK or negedge HRESETn) 
         if (~HRESETn) begin
           MSIP <= 0;
-          MTIMECMP <= 0;
+          MTIMECMP <= (`XLEN)'(-1);
           // MTIMECMP is not reset
         end else if (memwrite) begin
           if (entryd == 16'h0000) MSIP <= HWDATA[0];

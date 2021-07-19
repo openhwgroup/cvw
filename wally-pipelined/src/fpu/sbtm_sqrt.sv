@@ -1,4 +1,4 @@
-module sbtm2 (input logic [11:0] a, output logic [10:0] y);
+module sbtm_sqrt (input logic [11:0] a, output logic [10:0] y);
 
    // bit partitions
    logic [4:0] x0;
