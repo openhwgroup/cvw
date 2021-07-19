@@ -30,46 +30,47 @@ module lsuArb
   (input  logic clk, reset,
 
    // from page table walker
-   input logic 		    SelPTW,
-   input logic 		    HPTWRead,
-   input logic [`XLEN-1:0]  HPTWPAdrE,
-   output logic 	    HPTWStall, 
+   input logic 		       SelPTW,
+   input logic 		       HPTWRead,
+   input logic [`PA_BITS-1:0]  TranslationPAdrE,
+   output logic 	       HPTWStall, 
 
    // from CPU
-   input logic [1:0] 	    MemRWM,
-   input logic [2:0] 	    Funct3M,
-   input logic [1:0] 	    AtomicM,
-   input logic [`XLEN-1:0]  MemAdrM,
-   input logic [`XLEN-1:0]  MemAdrE,
-   input logic 		    StallW,
-   input logic 		    PendingInterruptM,
+   input logic [1:0] 	       MemRWM,
+   input logic [2:0] 	       Funct3M,
+   input logic [1:0] 	       AtomicM,
+   input logic [`XLEN-1:0]     MemAdrM,
+   input logic [`XLEN-1:0]     MemAdrE,
+   input logic 		       StallW,
+   input logic 		       PendingInterruptM,
    // to CPU
-   output logic [`XLEN-1:0] ReadDataW,
-   output logic 	    DataMisalignedM,
-   output logic 	    CommittedM,
-   output logic 	    LSUStall, 
+   output logic [`XLEN-1:0]    ReadDataW,
+   output logic 	       DataMisalignedM,
+   output logic 	       CommittedM,
+   output logic 	       LSUStall, 
   
    // to D Cache
-   output logic 	    DisableTranslation, 
-   output logic [1:0] 	    MemRWMtoLRSC,
-   output logic [2:0] 	    Funct3MtoDCache,
-   output logic [1:0] 	    AtomicMtoDCache,
-   output logic [`XLEN-1:0] MemAdrMtoDCache,
-   output logic [`XLEN-1:0] MemAdrEtoDCache, 
-   output logic 	    StallWtoDCache,
-   output logic 	    PendingInterruptMtoDCache,
+   output logic 	       DisableTranslation, 
+   output logic [1:0] 	       MemRWMtoLRSC,
+   output logic [2:0] 	       Funct3MtoDCache,
+   output logic [1:0] 	       AtomicMtoDCache,
+   output logic [`PA_BITS-1:0] MemPAdrMtoDCache,
+   output logic [11:0] 	       MemAdrEtoDCache, 
+   output logic 	       StallWtoDCache,
+   output logic 	       PendingInterruptMtoDCache,
    
 
    // from D Cache
-   input logic 		    CommittedMfromDCache,
-   input logic 		    DataMisalignedMfromDCache,
-   input logic [`XLEN-1:0]  ReadDataWfromDCache,
-   input logic 		    DCacheStall
+   input logic 		       CommittedMfromDCache,
+   input logic 		       DataMisalignedMfromDCache,
+   input logic [`XLEN-1:0]     ReadDataWfromDCache,
+   input logic 		       DCacheStall
   
    );
 
   logic [2:0] PTWSize;
-  logic [`XLEN-1:0]  HPTWPAdrM;
+  logic [`PA_BITS-1:0]  TranslationPAdrM;
+  logic [`XLEN+1:0]  MemAdrMExt;
   
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
@@ -80,11 +81,13 @@ module lsuArb
   endgenerate
   mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoDCache);
 
-  flop #(`XLEN) HPTWPAdrMReg(clk, HPTWPAdrE, HPTWPAdrM);   // delay HPTWPAdr by a cycle
+  // this is for the d cache SRAM.
+  flop #(`PA_BITS) TranslationPAdrMReg(clk, TranslationPAdrE, TranslationPAdrM);   // delay TranslationPAdrM by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMtoDCache = SelPTW ? HPTWPAdrM : MemAdrM; // *** DH: I don't understand this logic 7/18/21.  Why should PCF ever go here? 
-  assign MemAdrEtoDCache = SelPTW ? HPTWPAdrE : MemAdrE;  
+  assign MemAdrMExt = {2'b00, MemAdrM};
+  assign MemPAdrMtoDCache = SelPTW ? TranslationPAdrM : MemAdrMExt[`PA_BITS-1:0]; 
+  assign MemAdrEtoDCache = SelPTW ? TranslationPAdrE[11:0] : MemAdrE[11:0];  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
   assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;

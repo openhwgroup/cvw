@@ -31,7 +31,7 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
 
   // Current value of satp CSR (from privileged unit)
   input logic  [`SVMODE_BITS-1:0] SATP_MODE,
-  input logic  [`XLEN-1:0] Address,
+  input logic  [`XLEN-1:0] VAdr,
   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input logic  [1:0]       STATUS_MPP,
   input logic  [1:0]       PrivilegeModeW, // Current privilege level of the processeor
@@ -70,8 +70,8 @@ module tlbcontrol #(parameter TLB_ENTRIES = 8,
           assign SV39Mode = (SATP_MODE == `SV39);
           // generate page fault if upper bits aren't all the same
           logic UpperEqual39, UpperEqual48;
-          assign UpperEqual39 = &(Address[63:38]) | ~|(Address[63:38]);
-          assign UpperEqual48 = &(Address[63:47]) | ~|(Address[63:47]); 
+          assign UpperEqual39 = &(VAdr[63:38]) | ~|(VAdr[63:38]);
+          assign UpperEqual48 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
           assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
       end else begin
           assign SV39Mode = 0;

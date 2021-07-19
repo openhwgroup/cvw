@@ -38,7 +38,7 @@ module dcache
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M,
    input logic [1:0] 	       AtomicM,
-   input logic [`XLEN-1:0]     MemAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
 
    input logic [`XLEN-1:0]     WriteDataM,
@@ -53,7 +53,7 @@ module dcache
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
-   input logic 		       ITLBWriteF,   
+   input logic 		       ITLBWriteF, 
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 

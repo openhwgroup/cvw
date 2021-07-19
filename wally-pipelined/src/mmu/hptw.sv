@@ -43,9 +43,7 @@ module hptw
    output logic [1:0]	    PageType, // page type to TLBs
    output logic		    ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic 	    SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
-   output logic [`XLEN-1:0]		    TranslationVAdr,
    output logic [`PA_BITS-1:0]	    TranslationPAdr,
-   output logic                     UseTranslationVAdr,
    output logic		    HPTWRead, // HPTW requesting to read memory
    output logic		    WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
 );
@@ -64,6 +62,8 @@ module hptw
       logic			    PRegEn;
 	  logic [1:0]       NextPageType;
       logic [`SVMODE_BITS-1:0]	    SvMode;
+      logic [`XLEN-1:0] 	    TranslationVAdr;
+      
 
       typedef enum  {LEVEL0_SET_ADR, LEVEL0_READ, LEVEL0,
 				     LEVEL1_SET_ADR, LEVEL1_READ, LEVEL1,
@@ -101,7 +101,6 @@ module hptw
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
-	  assign UseTranslationVAdr = (NextWalkerState == LEAF) || (WalkerState == LEAF); // ***explain this logic
 
 	  // Raise faults.  DTLBMiss
 	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBWalk;
@@ -198,7 +197,7 @@ module hptw
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
       assign HPTWRead = 0; assign SelPTW = 0;
       assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
-	  assign TranslationVAdr = 0; assign TranslationPAdr = 0; assign UseTranslationVAdr = 0;
+      assign TranslationPAdr = 0; 
     end
   endgenerate
 endmodule

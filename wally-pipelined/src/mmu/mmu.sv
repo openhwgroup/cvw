@@ -44,8 +44,16 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   // 11 - TLB is accessed for both read and write
   input logic              DisableTranslation,
 
-  //  address input (could be virtual or physical)
-  input logic  [`XLEN-1:0] Address,
+  // VAdr goes to the TLB only. Virtual if the TLB is active.
+  // PAdr goes to address mux bypassing the TLB.  PAdr used when there is no translation.
+  // Comes from either the program address (instruction address or load/store address)
+  // or from the hardware pagetable walker.
+  // PAdr is intended to used as a phsycial address.  Discarded by the address mux when translation is
+  // performed.  
+  // PhysicalAddress is selected to be PAdr when no translation or the translated VAdr (TLBPAdr)
+  // when there is translation.
+  input logic  [`PA_BITS-1:0] PAdr,  // *** consider renaming this.
+  input logic  [`XLEN-1:0] VAdr,
   input logic  [1:0]       Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
 
   // Controls for writing a new entry to the TLB
@@ -77,7 +85,6 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
 );
 
   logic [`PA_BITS-1:0] TLBPAdr;
-  logic [`XLEN+1:0]    AddressExt;
   logic PMPSquashBusAccess, PMASquashBusAccess;
   // Translation lookaside buffer
 
@@ -95,7 +102,9 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
       assign WriteAccess = WriteAccessM;
       tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) 
         tlb(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]),
-            .SATP_ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]), .*);
+            .SATP_ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]),
+	    .VAdr,
+	    .*);
 
     end else begin // just pass address through as physical
       assign Translate = 0;
@@ -106,8 +115,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
   endgenerate
 
   // If translation is occuring, select translated physical address from TLB
-  assign AddressExt = {2'b00, Address}; // extend length of virtual address if necessary for RV32
-  mux2 #(`PA_BITS) addressmux(AddressExt[`PA_BITS-1:0], TLBPAdr, Translate, PhysicalAddress);
+  mux2 #(`PA_BITS) addressmux(PAdr, TLBPAdr, Translate, PhysicalAddress);
   
   ///////////////////////////////////////////
   // Check physical memory accesses
