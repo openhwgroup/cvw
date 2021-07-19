@@ -6,3 +6,5 @@ c
 file ../buildroot-image-output/vmlinux
 b plic_init
 c
+b do_idle
+c
