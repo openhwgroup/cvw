@@ -123,16 +123,14 @@ module lsu
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
 //  logic [`XLEN-1:0] 	       HPTWPAdrM;  
-  logic [`XLEN-1:0] TranslationVAdr;
   logic [`PA_BITS-1:0] TranslationPAdr;
-  logic            UseTranslationVAdr;
   logic 		       HPTWRead;
   logic [1:0] 		       MemRWMtoDCache;
   logic [1:0] 		       MemRWMtoLRSC;
   logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
-  logic [`XLEN-1:0] 	       MemAdrMtoDCache;
-  logic [`XLEN-1:0] 	       MemAdrEtoDCache;  
+  logic [`PA_BITS-1:0] 	       MemPAdrMtoDCache;
+  logic [11:0] 		       MemAdrEtoDCache;  
   logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
   logic            MemReadM;
@@ -152,35 +150,27 @@ module lsu
   
   
   hptw hptw(
-				  .clk(clk),
-				  .reset(reset),
-				  .SATP_REGW(SATP_REGW),
-				  .PCF(PCF),
-				  .MemAdrM(MemAdrM),
-				  .ITLBMissF(ITLBMissF),
-				  .DTLBMissM(DTLBMissM),
-				  .MemRWM(MemRWM),
-				  .PTE(PTE),
-				  .PageType,
-				  .ITLBWriteF(ITLBWriteF),
-				  .DTLBWriteM(DTLBWriteM),
-				  .HPTWReadPTE(HPTWReadPTE),
-				  .HPTWStall(HPTWStall),
-          .TranslationVAdr,
-          .TranslationPAdr,			  
-          .UseTranslationVAdr,
-				  .HPTWRead(HPTWRead),
-				  .SelPTW(SelPTW),
-				  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
-				  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
-				  .WalkerStorePageFaultM(WalkerStorePageFaultM));
+	    .clk(clk),
+	    .reset(reset),
+	    .SATP_REGW(SATP_REGW),
+	    .PCF(PCF),
+	    .MemAdrM(MemAdrM),
+	    .ITLBMissF(ITLBMissF),
+	    .DTLBMissM(DTLBMissM),
+	    .MemRWM(MemRWM),
+	    .PTE(PTE),
+	    .PageType,
+	    .ITLBWriteF(ITLBWriteF),
+	    .DTLBWriteM(DTLBWriteM),
+	    .HPTWReadPTE(HPTWReadPTE),
+	    .HPTWStall(HPTWStall),
+            .TranslationPAdr,			  
+	    .HPTWRead(HPTWRead),
+	    .SelPTW(SelPTW),
+	    .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	    .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
+	    .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
-  logic [`XLEN-1:0] TranslationPAdrXLEN;
-  generate // *** needs fixing about truncation dh 7/17/21
-    if (`XLEN == 32) assign TranslationPAdrXLEN = TranslationPAdr[31:0];
-    else             assign TranslationPAdrXLEN = {{(`XLEN-`PA_BITS){1'b0}}, TranslationPAdr[`PA_BITS-1:0]};
-  endgenerate
-  mux2 #(`XLEN) HPTWPAdrMux(TranslationPAdrXLEN, TranslationVAdr, UseTranslationVAdr, HPTWPAdrE); // *** misleading to call it PAdr, bad because some bits have been truncated
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
@@ -190,7 +180,7 @@ module lsu
 		 // HPTW connection
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
-		 .HPTWPAdrE(HPTWPAdrE),
+		 .TranslationPAdrE(TranslationPAdr),
 		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
@@ -209,7 +199,7 @@ module lsu
 		 .MemRWMtoLRSC(MemRWMtoLRSC),
 		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
-		 .MemAdrMtoDCache(MemAdrMtoDCache),
+		 .MemPAdrMtoDCache(MemPAdrMtoDCache),
 		 .MemAdrEtoDCache(MemAdrEtoDCache),
 		 .StallWtoDCache(StallWtoDCache),
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
@@ -222,7 +212,8 @@ module lsu
     
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.Address(MemAdrMtoDCache),
+  dmmu(.PAdr(MemPAdrMtoDCache),
+       .VAdr(MemAdrM),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PTE),
        .PageTypeWriteVal(PageType),
@@ -267,9 +258,9 @@ module lsu
   always_comb
     case(Funct3MtoDCache[1:0]) 
       2'b00:  DataMisalignedMfromDCache = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedMfromDCache = MemAdrMtoDCache[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedMfromDCache = MemAdrMtoDCache[1] | MemAdrMtoDCache[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedMfromDCache = |MemAdrMtoDCache[2:0];           // ld, sd, fld, fsd
+      2'b01:  DataMisalignedMfromDCache = MemPAdrMtoDCache[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedMfromDCache = MemPAdrMtoDCache[1] | MemPAdrMtoDCache[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedMfromDCache = |MemPAdrMtoDCache[2:0];           // ld, sd, fld, fsd
     endcase 
 
   // Squash unaligned data accesses and failed store conditionals
