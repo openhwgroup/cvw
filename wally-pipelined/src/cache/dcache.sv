@@ -46,6 +46,8 @@ module dcache
    output logic [`XLEN-1:0]    ReadDataM, 
    output logic 	       DCacheStall,
    output logic 	       CommittedM,
+   output logic 	       DCacheMiss,
+   output logic 	       DCacheAccess,
 
    // inputs from TLB and PMA/P
    input logic 		       ExceptionM,
@@ -53,7 +55,7 @@ module dcache
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
-   input logic 		       ITLBWriteF,   
+   input logic 		       ITLBWriteF, 
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
@@ -416,7 +418,7 @@ module dcache
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
 
-
+  
   // next state logic and some state ouputs.
   always_comb begin
     DCacheStall = 1'b0;
@@ -437,6 +439,8 @@ module dcache
     CommittedM = 1'b0;        
     SelUncached = 1'b0;
     SelEvict = 1'b0;
+    DCacheAccess = 1'b0;
+    DCacheMiss = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -472,7 +476,8 @@ module dcache
 	// read hit valid cached
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
-
+	  DCacheAccess = 1'b1;
+	  
 	  if(StallW) begin
 	    NextState = STATE_CPU_BUSY;
             SelAdrM = 1'b1;
@@ -485,6 +490,7 @@ module dcache
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
+	  DCacheStall = 1'b1;
 	  
 	  if(StallW) begin 
 	    NextState = STATE_CPU_BUSY;
@@ -497,6 +503,8 @@ module dcache
 	  NextState = STATE_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
+	  DCacheAccess = 1'b1;
+	  DCacheMiss = 1'b1;
 	end
 	// uncached write
 	else if(MemRWM[0] & ~CacheableM & ~(ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
