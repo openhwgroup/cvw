@@ -737,11 +737,25 @@ endmodule
 module riscvassertions();
   // Legal number of PMP entries are 0, 16, or 64
   initial begin
-    assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries");
+    assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
     assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
+    assert (`DCACHE_WAYSIZEINBYTES <= 4096 || `MEM_DCACHE == 0 || `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`DCACHE_BLOCKLENINBITS >= 128 || `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
+    assert (`DCACHE_BLOCKLENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_BLOCKLENINBITS must be smaller than way size");
+    assert (`ICACHE_WAYSIZEINBYTES <= 4096 || `MEM_ICACHE == 0 || `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`ICACHE_BLOCKLENINBITS >= 32 || `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
+    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $error("Multiple Instruction Cache ways not yet implemented");
+    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
   end
 endmodule
+
 
 /* verilator lint_on STMTDLY */
 /* verilator lint_on WIDTH */
