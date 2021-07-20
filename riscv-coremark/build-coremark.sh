@@ -4,7 +4,8 @@ set -e
 
 BASEDIR=$PWD
 CM_FOLDER=coremark
-RISCV=/home/ehedenberg/riscvcompiler
+#RISCV=/home/ehedenberg/riscvcompiler
+RISCV=/courses/e190ax/riscvcompiler
 XCFLAGS="-march=rv64im"
 cd $BASEDIR/$CM_FOLDER
 
