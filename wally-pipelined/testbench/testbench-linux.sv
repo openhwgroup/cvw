@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0459700; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0900000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -103,6 +103,7 @@ module testbench();
   logic [99:0] StartCSRexpected[63:0];
   string StartCSRname[99:0];
   integer data_file_csr, scan_file_csr;
+  logic IllegalInstrFaultd;
   
   // -----------
   // Error Macro
@@ -153,21 +154,22 @@ module testbench();
       clk <= 1; # 5; clk <= 0; # 5;
     end
 
+  // -------------------
+  // Additional Hardware
+  // -------------------
+  always @(posedge clk)
+    IllegalInstrFaultd = dut.hart.priv.IllegalInstrFaultM;
+
   // -------------------------------------
   // Special warnings for important faults
   // -------------------------------------
   always @(dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW) begin
     if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 2 && instrs > 1) begin
-      $display("!!!!!! illegal instruction !!!!!!!!!!");
-      $display("(as a reminder, MCAUSE and MEPC are set by this)");
-      $display("at %0t ps, PCM %x, instr %0d, dut.hart.lsu.dcache.MemPAdrM %x", $time, dut.hart.ifu.PCM, instrs, dut.hart.lsu.dcache.MemPAdrM);
-      `ERROR
+      // This is sometimes okay if the source code intentionally causes it.
+      $display("Warning: illegal instruction exception at %0t ps, InstrNum %0d, PCM %x, InstrM %s", $time, instrs, dut.hart.ifu.PCM, PCtextM);
     end
     if (dut.hart.priv.csr.genblk1.csrm.MCAUSE_REGW == 5 && instrs != 0) begin
-      $display("!!!!!! illegal (physical) memory access !!!!!!!!!!");
-      $display("(as a reminder, MCAUSE and MEPC are set by this)");
-      $display("at %0t ps, PCM %x, instr %0d, dut.hart.lsu.dcache.MemPAdrM %x", $time, dut.hart.ifu.PCM, instrs, dut.hart.lsu.dcache.MemPAdrM);
-      `ERROR
+      $display("Warning: illegal physical memory access exception at %0t ps, InstrNum %0d, PCM %x, InstrM %s", $time, instrs, dut.hart.ifu.PCM, PCtextM);
     end
   end
 
@@ -185,8 +187,14 @@ module testbench();
       // Hack to compensate for QEMU's incorrect MSTATUS
       end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,16) == "mstatus") begin
         force dut.hart.ieu.dp.regf.wd3 = dut.hart.ieu.dp.WriteDataW & ~64'ha00000000;
-      end else
-        release dut.hart.ieu.dp.regf.wd3;
+      end else release dut.hart.ieu.dp.regf.wd3;
+      // Hack to compensate for QEMU's correct but different MTVAL (according to spec, storing the faulting instr is an optional feature)
+      if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,14) == "mtval") begin
+        force dut.hart.ieu.dp.WriteDataW = 0;
+      // Hack to compensate for QEMU's correct but different mhpmcounter's (these too are optional)
+      end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,20) == "mhpmcounter") begin
+        force dut.hart.ieu.dp.WriteDataW = 0;
+      end else release dut.hart.ieu.dp.WriteDataW;
     end
   end
 
@@ -204,7 +212,6 @@ module testbench();
         lastPC2 <= lastPC;
         // If PCD isn't going to be flushed
         if (~PCDwrong || lastPC == PCDexpected) begin
-
           // Stop if we've reached the end
           if($feof(data_file_PCF)) begin
             $display("no more PC data to read... CONGRATULATIONS!!!");
@@ -253,29 +260,7 @@ module testbench();
 
           // Check if PCD is going to be flushed due to a branch or jump
           if (`BPRED_ENABLED) begin
-            PCDwrong = dut.hart.hzu.FlushD; //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
-          end else begin
-            casex (lastInstrDExpected[31:0])
-              32'b00000000001000000000000001110011, // URET
-              32'b00010000001000000000000001110011, // SRET
-              32'b00110000001000000000000001110011, // MRET
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
-              32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
-              32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
-              32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
-                PCDwrong = 1;
-              32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
-              32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
-                PCDwrong = 0; // tbh don't really know what should happen here
-              32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
-              32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
-              32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
-                PCDwrong = 1;
-              default:
-                PCDwrong = 0;
-            endcase
+            PCDwrong = dut.hart.hzu.FlushD || (PCtextE.substr(0,3) == "mret"); //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
           end
 
           // Check PCD, InstrD
@@ -358,9 +343,8 @@ module testbench();
       end
       `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
       `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
-      // If repeated instr
+      // If repeated or instruction, we want to skip over it (indicates an interrupt)
       if (PCMexpected == PCWexpected) begin
-        // Increment file pointers past the repeated instruction.
         `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
         `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
       end
@@ -368,6 +352,11 @@ module testbench();
         $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, PCW, PCWexpected);
         `ERROR
       end
+    end
+    // Skip over faulting instructions because they do not make it to the W stage.
+    if (IllegalInstrFaultd) begin
+      `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
+      `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
     end
   end
   
@@ -527,47 +516,61 @@ module testbench();
   // --------------
   // Checker Macros
   // --------------
-  string MSTATUSstring = "MSTATUS"; // string variables seem to compare more reliably than string literals (they gave me a lot of hassle), but *** there's probably a better way to do this
+  // String variables seem to compare more reliably than string literals (they gave me a lot of hassle),
+  // but *** there's probably a better way to do this.
+  // You can't just use the "__name" variables though because you need to declare variables before using them.
+  string MSTATUSstring = "MSTATUS";
   string MIPstring = "MIP";
+  string MEPCstring = "MEPC";
+  string MCAUSEstring = "MCAUSE";
+  string MTVALstring = "MTVAL";
   string SEPCstring = "SEPC";
   string SCAUSEstring = "SCAUSE";
   string SSTATUSstring = "SSTATUS";
+
+  logic [63:0] expectedCSR;
+  string expectedCSRname;
   `define CHECK_CSR2(CSR, PATH) \
-    logic [63:0] expected``CSR``; \
-    string CSR; \
     string ``CSR``name = `"CSR`"; \
-    string expected``CSR``name; \
     always @(``PATH``.``CSR``_REGW) begin \
-      // MIP is not checked because QEMU bodges it (MTIP in particular), and even if QEMU reported it correctly, the timing would still be off \
-      if ($time > 1 && (``CSR``name != MIPstring)) begin \
-        // This is some feeble hackery designed to control the order in which CSRs are checked \
-        // when multiple change at the same time. \
-        if (``CSR``name == SEPCstring) #1; \
-        if (``CSR``name == SCAUSEstring) #2; \
-        if (``CSR``name == SSTATUSstring) #3; \
-        scan_file_csr = $fscanf(data_file_csr, "%s\n", expected``CSR``name); \
-        scan_file_csr = $fscanf(data_file_csr, "%x\n", expected``CSR``); \
-        if(expected``CSR``name.icompare(``CSR``name)) begin \
-          $display("%0t ps, PCM %x %s, instr %0d: %s changed, expected %s", $time, dut.hart.ifu.PCM, PCtextM, instrs, `"CSR`", expected``CSR``name); \
+      if (instrs == 0 && ~reset) begin \
+        for(integer j=0; j<totalCSR; j++) begin \
+          if(!StartCSRname[j].icompare(``CSR``name)) begin \
+            if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
+              $display("%0t ps, PCM %x %s, instr %0d: %s does not equal %s expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, ``CSR``name, StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
+              `ERROR \
+            end \
+          end \
         end \
-        if (``CSR``name == MSTATUSstring) begin \
-          if (``PATH``.``CSR``_REGW != ((``expected``CSR) | 64'ha00000000)) begin \
-            $display("%0t ps, PCM %x %s, instr %0d: %s (should be MSTATUS) does not equal %s expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, (``expected``CSR) | 64'ha00000000); \
-            `ERROR \
-          end \
-        end else \
-          if (``PATH``.``CSR``_REGW != ``expected``CSR[$bits(``PATH``.``CSR``_REGW)-1:0]) begin \
-            $display("%0t ps, PCM %x %s, instr %0d: %s does not equal %s expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, ``CSR``name, expected``CSR``name, ``PATH``.``CSR``_REGW, ``expected``CSR); \
-            `ERROR \
-          end \
+        $display("CSRs' intital states look good"); \
       end else begin \
-        if (!(`BUILDROOT == 1 && ``CSR``name == MSTATUSstring)) begin \
-          for(integer j=0; j<totalCSR; j++) begin \
-            if(!StartCSRname[j].icompare(``CSR``name)) begin \
-              if(``PATH``.``CSR``_REGW != StartCSRexpected[j]) begin \
-                $display("%0t ps, PCM %x %s, instr %0d: %s does not equal %s expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, ``CSR``name, StartCSRname[j], ``PATH``.``CSR``_REGW, StartCSRexpected[j]); \
-                `ERROR \
-              end \
+        // MIP is not checked because QEMU bodges it (MTIP in particular), and even if QEMU reported it correctly, the timing would still be off \
+        // MTVAL is not checked on illegal instr faults because QEMU chooses not to implement the behavior where MTVAL is written with the faulting instruction \
+        if  (~reset && ``CSR``name != MIPstring && ~(IllegalInstrFaultd && ``CSR``name == MTVALstring)) begin \
+          // This is some feeble hackery designed to control the order in which CSRs are checked \
+          // when multiple change at the same time. \
+          // *** it would be better for each CSR to have its own testvector file \
+          // so as to avoid this awkward ordering problem. \
+          if (``CSR``name == MEPCstring) #1; \
+          if (``CSR``name == MCAUSEstring) #2; \
+          if (``CSR``name == MTVALstring) #3; \
+          if (``CSR``name == SEPCstring) #1; \
+          if (``CSR``name == SCAUSEstring) #2; \
+          if (``CSR``name == SSTATUSstring) #3; \
+          scan_file_csr = $fscanf(data_file_csr, "%s\n", expectedCSRname); \
+          scan_file_csr = $fscanf(data_file_csr, "%x\n", expectedCSR); \
+          if(expectedCSRname.icompare(``CSR``name)) begin \
+            $display("%0t ps, PCM %x %s, instr %0d: %s changed, expected %s", $time, dut.hart.ifu.PCM, PCtextM, instrs, `"CSR`", expectedCSRname); \
+          end \
+          if (``CSR``name == MSTATUSstring) begin \
+            if (``PATH``.``CSR``_REGW != ((expectedCSR) | 64'ha00000000)) begin \
+              $display("%0t ps, PCM %x %s, instr %0d: %s (should be MSTATUS) does not equal %s expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, ``CSR``name, expectedCSRname, ``PATH``.``CSR``_REGW, expectedCSR | 64'ha00000000); \
+              `ERROR \
+            end \
+          end else begin \
+            if (``PATH``.``CSR``_REGW != expectedCSR[$bits(``PATH``.``CSR``_REGW)-1:0]) begin \
+              $display("%0t ps, PCM %x %s, instr %0d: %s does not equal %s expected: %x, %x", $time, dut.hart.ifu.PCM, PCtextM, instrs, ``CSR``name, expectedCSRname, ``PATH``.``CSR``_REGW, expectedCSR); \
+              `ERROR \
             end \
           end \
         end \
