@@ -39,7 +39,7 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   logic                AllUsed;  // High if the next access causes all RU bits to be 1
 
   // Find the first line not recently used
-  tlbpriority #(TLB_ENTRIES) nru(~RUBits, WriteLines);
+  prioritycircuit #(.ENTRIES(TLB_ENTRIES), .FINAL_OP("AND")) nru(.a(~RUBits), .FirstPin(1'b1), .y(WriteLines));
 
   // Track recently used lines, updating on a CAM Hit or TLB write
   assign WriteEnables = WriteLines & {(TLB_ENTRIES){TLBWrite}};
