@@ -53,9 +53,8 @@ module icache
    );
 
   // Configuration parameters
-  // TODO Move these to a config file
-  localparam integer 	    BLOCKLEN = 256;
-  localparam integer 	    NUMLINES = 512;
+  localparam integer 	    BLOCKLEN = `ICACHE_BLOCKLENINBITS;
+  localparam integer 	    NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_BLOCKLENINBITS;
 
   // Input signals to cache memory
   logic 		    FlushMem;
