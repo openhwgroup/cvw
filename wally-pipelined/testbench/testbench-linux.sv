@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0675000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0900000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -190,6 +190,9 @@ module testbench();
       end else release dut.hart.ieu.dp.regf.wd3;
       // Hack to compensate for QEMU's correct but different MTVAL (according to spec, storing the faulting instr is an optional feature)
       if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,14) == "mtval") begin
+        force dut.hart.ieu.dp.WriteDataW = 0;
+      // Hack to compensate for QEMU's correct but different mhpmcounter's (these too are optional)
+      end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,20) == "mhpmcounter") begin
         force dut.hart.ieu.dp.WriteDataW = 0;
       end else release dut.hart.ieu.dp.WriteDataW;
     end
