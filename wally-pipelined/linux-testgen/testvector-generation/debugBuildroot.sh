@@ -14,7 +14,7 @@ outDir="../linux-testvectors"
 # Uncomment this version for QEMU debugging of kernel
 #  - good for poking around VM if it boots up
 #  - good for running QEMU commands (press "Ctrl-A" then "c" to open QEMU command prompt)
-$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio 
+#$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio 
 # Uncomment this version for GDB debugging of kernel
 #  - attempts to load in symbols from "vmlinux"
 #  - good for looking at backtraces when Linux gets stuck for some reason 
@@ -30,9 +30,9 @@ $customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Ima
 # - Makes qemu_in_gdb_format.txt
 # - Splits qemu_in_gdb_format.txt into chunks of 100,000 instrs
 #cat $intermedDir/qemu_output.txt | ./parse_qemu.py >$intermedDir/qemu_in_gdb_format.txt
-#cd $intermedDir
-#split -d -l 5600000 ./qemu_in_gdb_format.txt --verbose
-#cd ../../testvector-generation
+cd $intermedDir
+split -d -l 5000000 ./qemu_in_gdb_format.txt --verbose
+cd ../../testvector-generation
 
 # Uncomment this version for parse_gdb_output.py debugging
 # - Uses qemu_in_gdb_format.txt

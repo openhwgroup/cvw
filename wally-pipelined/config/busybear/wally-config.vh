@@ -44,14 +44,25 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DCACHE 0
+`define MEM_DCACHE 1
 `define MEM_DTIM 1
-`define MEM_ICACHE 0
+`define MEM_ICACHE 1
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 // Domenico Ottolia 4/15: Support for vectored interrupts in _tvec csrs. Just implemented in src/privileged/trap.sv around line 75. Pretty sure this should be 1.
 
+// TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32
 `define DTLB_ENTRIES 32
+
+// Cache configuration.  Sizes should be a power of two
+// typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
+`define DCACHE_NUMWAYS 4
+`define DCACHE_WAYSIZEINBYTES 2048
+`define DCACHE_BLOCKLENINBITS 256
+`define DCACHE_REPLBITS 3
+`define ICACHE_NUMWAYS 1
+`define ICACHE_WAYSIZEINBYTES 4096
+`define ICACHE_BLOCKLENINBITS 256
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 16

@@ -89,15 +89,15 @@ module fma1(
     input logic     [2:0]       FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic                 FmtE,       // precision 1 = double 0 = single
     output logic    [2*`NF+1:0]     ProdManE,   // 1.X frac * 1.Y frac in U(2.2Nf) format
-    output logic    [3*`NF+5:0]     AlignedAddendE, // Z aligned for addition in *** format
+    output logic    [3*`NF+5:0]     AlignedAddendE, // Z aligned for addition in U(NF+5.2NF+1)
     output logic    [`NE+1:0]      ProdExpE,       // X exponent + Y exponent - bias in B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
     output logic                KillProdE      // set the product to zero before addition if the product is too small to matter
     );
 
     logic [`NE+1:0]    AlignCnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format *** is this enough bits?
-    logic [4*`NF+5:0]   ZManShifted;                // output of the alignment shifter including sticky bit
-    logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter
+    logic [4*`NF+5:0]   ZManShifted;                // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
+    logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter U(NF+5.3NF+1)
     
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
@@ -132,7 +132,7 @@ module fma1(
     //                       |1'b0| addnend |
 
     // the 1'b0 before the added is because the product's mantissa has two bits before the binary point (xx.xxxxxxxxxx...)
-    assign ZManPreShifted = {55'b0, {ZAssumed1E, ZFracE}, 106'b0};
+    assign ZManPreShifted = {(`NF+3)'(0), {ZAssumed1E, ZFracE}, /*106*/(2*`NF+2)'(0)};
     always_comb
         begin
            
@@ -140,7 +140,7 @@ module fma1(
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //  | addnend |
-        if ($signed(AlignCnt) <= $signed(-13'd56)) begin
+        if ($signed(AlignCnt) <= /*$signed(-13'd56)*/-(`NF+4)) begin
             KillProdE = 1;
             ZManShifted = ZManPreShifted;//{107'b0, {~ZAssumed1E, ZFrac}, 54'b0};
             AddendStickyE = ~(XZeroE|YZeroE);
@@ -149,7 +149,7 @@ module fma1(
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //                  | addnend |
-        end else if($signed(AlignCnt) <= $signed(13'd0))  begin
+        end else if($signed(AlignCnt) <= 0)  begin
             KillProdE = 0;
             ZManShifted = ZManPreShifted << -AlignCnt;
             AddendStickyE = |(ZManShifted[51:0]);
@@ -158,7 +158,7 @@ module fma1(
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //                                  | addnend |
-        end else if ($signed(AlignCnt)<=$signed(13'd106))  begin
+        end else if ($signed(AlignCnt)<=(2*`NF+2))  begin
             KillProdE = 0;
             ZManShifted = ZManPreShifted >> AlignCnt;
             AddendStickyE = |(ZManShifted[51:0]);
@@ -176,7 +176,7 @@ module fma1(
 
         end
     end
-    assign AlignedAddendE = ZManShifted[213:52];
+    assign AlignedAddendE = ZManShifted[(4*`NF+5):`NF];
 endmodule
 
 
