@@ -103,7 +103,7 @@ module dcache
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
   logic [`XLEN-1:0]	       VictimReadDataBlockSetsM [(WORDSPERLINE)-1:0];  
-  logic [`XLEN-1:0]	       ReadDataWordM, FinalReadDataWordM, ReadDataWordMuxM;
+  logic [`XLEN-1:0]	       ReadDataWordM, ReadDataWordMuxM;
   logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
   logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
@@ -309,7 +309,7 @@ module dcache
   subwordread subwordread(.HRDATA(ReadDataWordMuxM),
 			  .HADDRD(MemPAdrM[2:0]),
 			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			  .HRDATAMasked(FinalReadDataWordM));
+			  .HRDATAMasked(ReadDataM));
 
   // This is a confusing point.
   // The final read data should be updated only if the CPU's StallW is low
@@ -324,10 +324,9 @@ module dcache
 
   flopen #(`XLEN) ReadDataWReg(.clk(clk),
 			      .en(~StallW),
-			      .d(FinalReadDataWordM),
+			      .d(ReadDataM),
 			      .q(ReadDataW));
 
-  assign ReadDataM = FinalReadDataWordM;
 
   // write path
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
@@ -339,7 +338,7 @@ module dcache
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
-      amoalu amoalu(.srca(FinalReadDataWordM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3M[1:0]), 
+      amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3M[1:0]), 
                     .result(AMOResult));
       mux2 #(`XLEN) wdmux(FinalWriteDataM, AMOResult, SelAMOWrite & AtomicM[1], FinalAMOWriteDataM);
     end else

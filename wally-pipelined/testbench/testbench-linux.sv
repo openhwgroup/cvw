@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0675000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*2790000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -191,6 +191,9 @@ module testbench();
       // Hack to compensate for QEMU's correct but different MTVAL (according to spec, storing the faulting instr is an optional feature)
       if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,14) == "mtval") begin
         force dut.hart.ieu.dp.WriteDataW = 0;
+      // Hack to compensate for QEMU's correct but different mhpmcounter's (these too are optional)
+      end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,20) == "mhpmcounter") begin
+        force dut.hart.ieu.dp.WriteDataW = 0;
       end else release dut.hart.ieu.dp.WriteDataW;
     end
   end
@@ -219,24 +222,24 @@ module testbench();
           `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
           `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
 
-          // NOP out certain instructions
-          if(dut.hart.ifu.PCD===PCDexpected) begin
-            if((dut.hart.ifu.PCD == 32'h80001dc6) || // for now, NOP out any stores to PLIC
-                (dut.hart.ifu.PCD == 32'h80001de0) ||
-                (dut.hart.ifu.PCD == 32'h80001de2)) begin
-              $display("warning: NOPing out %s at PCD=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
-              force InstrDExpected = 32'b0010011;
-              force dut.hart.ifu.InstrRawD = 32'b0010011;
-              while (clk != 0) #1;
-              while (clk != 1) #1;                
-              release dut.hart.ifu.InstrRawD;
-              release InstrDExpected;
-              warningCount += 1;
-              forcedInstr = 1;
-            end else begin
-              forcedInstr = 0;
-            end
-          end
+          // NOP out certain instructions <-- commented out because no duh hardcoded addressses break easily
+          //if(dut.hart.ifu.PCD===PCDexpected) begin
+          //  if((dut.hart.ifu.PCD == 32'h80001dc6) || // for now, NOP out any stores to PLIC
+          //      (dut.hart.ifu.PCD == 32'h80001de0) ||
+          //      (dut.hart.ifu.PCD == 32'h80001de2)) begin
+          //    $display("warning: NOPing out %s at PCD=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
+          //    force InstrDExpected = 32'b0010011;
+          //    force dut.hart.ifu.InstrRawD = 32'b0010011;
+          //    while (clk != 0) #1;
+          //    while (clk != 1) #1;                
+          //    release dut.hart.ifu.InstrRawD;
+          //    release InstrDExpected;
+          //    warningCount += 1;
+          //    forcedInstr = 1;
+          // end else begin
+          //    forcedInstr = 0;
+          //  end
+          //end
 
           // Increment instruction count
           if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
