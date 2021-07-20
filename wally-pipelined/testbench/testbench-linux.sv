@@ -154,6 +154,12 @@ module testbench();
       clk <= 1; # 5; clk <= 0; # 5;
     end
 
+  // -------------------
+  // Additional Hardware
+  // -------------------
+  always @(posedge clk)
+    IllegalInstrFaultd = dut.hart.priv.IllegalInstrFaultM;
+
   // -------------------------------------
   // Special warnings for important faults
   // -------------------------------------
@@ -181,8 +187,11 @@ module testbench();
       // Hack to compensate for QEMU's incorrect MSTATUS
       end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,16) == "mstatus") begin
         force dut.hart.ieu.dp.regf.wd3 = dut.hart.ieu.dp.WriteDataW & ~64'ha00000000;
-      end else
-        release dut.hart.ieu.dp.regf.wd3;
+      end else release dut.hart.ieu.dp.regf.wd3;
+      // Hack to compensate for QEMU's correct but different MTVAL (according to spec, storing the faulting instr is an optional feature)
+      if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,14) == "mtval") begin
+        force dut.hart.ieu.dp.WriteDataW = 0;
+      end else release dut.hart.ieu.dp.WriteDataW;
     end
   end
 
@@ -200,7 +209,6 @@ module testbench();
         lastPC2 <= lastPC;
         // If PCD isn't going to be flushed
         if (~PCDwrong || lastPC == PCDexpected) begin
-
           // Stop if we've reached the end
           if($feof(data_file_PCF)) begin
             $display("no more PC data to read... CONGRATULATIONS!!!");
@@ -249,29 +257,7 @@ module testbench();
 
           // Check if PCD is going to be flushed due to a branch or jump
           if (`BPRED_ENABLED) begin
-            PCDwrong = dut.hart.hzu.FlushD; //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
-          end else begin
-            casex (lastInstrDExpected[31:0])
-              32'b00000000001000000000000001110011, // URET
-              32'b00010000001000000000000001110011, // SRET
-              32'b00110000001000000000000001110011, // MRET
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1101111, // JAL
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100111, // JALR
-              32'bXXXXXXXXXXXXXXXXXXXXXXXXX1100011, // B
-              32'bXXXXXXXXXXXXXXXX110XXXXXXXXXXX01, // C.BEQZ
-              32'bXXXXXXXXXXXXXXXX111XXXXXXXXXXX01, // C.BNEZ
-              32'bXXXXXXXXXXXXXXXX101XXXXXXXXXXX01: // C.J
-                PCDwrong = 1;
-              32'bXXXXXXXXXXXXXXXX1001000000000010, // C.EBREAK:
-              32'bXXXXXXXXXXXXXXXXX000XXXXX1110011: // Something that's not CSRR*
-                PCDwrong = 0; // tbh don't really know what should happen here
-              32'b000110000000XXXXXXXXXXXXX1110011, // CSR* SATP, *
-              32'bXXXXXXXXXXXXXXXX1000XXXXX0000010, // C.JR
-              32'bXXXXXXXXXXXXXXXX1001XXXXX0000010: // C.JALR //this is RV64 only so no C.JAL
-                PCDwrong = 1;
-              default:
-                PCDwrong = 0;
-            endcase
+            PCDwrong = dut.hart.hzu.FlushD || (PCtextE.substr(0,3) == "mret"); //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
           end
 
           // Check PCD, InstrD
@@ -354,9 +340,8 @@ module testbench();
       end
       `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
       `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
-      // If repeated instr
+      // If repeated or instruction, we want to skip over it (indicates an interrupt)
       if (PCMexpected == PCWexpected) begin
-        // Increment file pointers past the repeated instruction.
         `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
         `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
       end
@@ -364,6 +349,11 @@ module testbench();
         $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, PCW, PCWexpected);
         `ERROR
       end
+    end
+    // Skip over faulting instructions because they do not make it to the W stage.
+    if (IllegalInstrFaultd) begin
+      `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
+      `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
     end
   end
   
@@ -519,12 +509,6 @@ module testbench();
       totalCSR = totalCSR + 1;
     end
   end
-
-  // -------------------
-  // Additional Hardware
-  // -------------------
-  always @(posedge clk)
-    IllegalInstrFaultd = dut.hart.priv.IllegalInstrFaultM;
 
   // --------------
   // Checker Macros
