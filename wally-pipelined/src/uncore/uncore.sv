@@ -87,7 +87,7 @@ module uncore (
   generate
     // tightly integrated memory
     dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
-    //if (`BOOTTIM_SUPPORTED) *** restore when naming is figured out
+    if (`BOOTTIM_SUPPORTED) 
       dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
 
     // memory-mapped I/O peripherals
