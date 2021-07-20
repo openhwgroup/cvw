@@ -68,10 +68,14 @@ module dcache
    output logic [`XLEN-1:0]    HWDATA // to ahb
    );
 
-  localparam integer	       BLOCKLEN = 256;
+/*  localparam integer	       BLOCKLEN = 256;
   localparam integer	       NUMLINES = 64;
   localparam integer	       NUMWAYS = 4;
-  localparam integer	       NUMREPL_BITS = 3;
+  localparam integer	       NUMREPL_BITS = 3;*/
+  localparam integer	       BLOCKLEN = `DCACHE_BLOCKLENINBITS;
+  localparam integer	       NUMLINES = `DCACHE_WAYSIZEINBYTES*8/BLOCKLEN;
+  localparam integer	       NUMWAYS = `DCACHE_NUMWAYS;
+  localparam integer	       NUMREPL_BITS = `DCACHE_REPLBITS;
 
   localparam integer	       BLOCKBYTELEN = BLOCKLEN/8;
   localparam integer	       OFFSETLEN = $clog2(BLOCKBYTELEN);
