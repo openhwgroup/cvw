@@ -45,6 +45,8 @@ module privileged (
   input  logic 		   RASPredPCWrongM,
   input  logic 		   BPPredClassNonCFIWrongM,
   input  logic [4:0]       InstrClassM,
+  input  logic             DCacheMiss,
+  input  logic             DCacheAccess,
   input  logic             PrivilegedM,
   input  logic             ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM,
   input  logic             WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM,
