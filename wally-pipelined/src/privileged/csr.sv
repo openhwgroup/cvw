@@ -46,6 +46,8 @@ module csr #(parameter
   input  logic 		   RASPredPCWrongM,
   input  logic 		   BPPredClassNonCFIWrongM,
   input  logic [4:0]       InstrClassM,
+  input  logic             DCacheMiss,
+  input  logic             DCacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
   input  logic             BreakpointFaultM, EcallFaultM,

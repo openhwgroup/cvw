@@ -45,6 +45,8 @@ module lsu
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
    output logic 	       DataMisalignedM,
+   output logic 	       DCacheMiss,
+   output logic 	       DCacheAccess,
 
    // address and write data
    input logic [`XLEN-1:0]     MemAdrM,
@@ -315,6 +317,8 @@ module lsu
 		.ReadDataM(HPTWReadPTE),
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
+		.DCacheMiss,
+		.DCacheAccess,		
 		.ExceptionM(ExceptionM),
 		.PendingInterruptM(PendingInterruptMtoDCache),
 		.DTLBMissM(DTLBMissM),

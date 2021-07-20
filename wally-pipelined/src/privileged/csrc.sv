@@ -78,6 +78,8 @@ module csrc #(parameter
     input  logic             RASPredPCWrongM,
     input  logic             BPPredClassNonCFIWrongM,
     input  logic [4:0]       InstrClassM,
+    input  logic             DCacheMiss,
+    input  logic             DCacheAccess,
     input  logic [11:0]      CSRAdrM,
     input  logic [1:0]       PrivilegeModeW,
     input  logic [`XLEN-1:0] CSRWriteValM,
@@ -143,7 +145,9 @@ module csrc #(parameter
         assign CounterEvent[8] = RASPredPCWrongM & ~StallM;
         assign CounterEvent[9] = InstrClassM[3] & ~StallM;
         assign CounterEvent[10] = BPPredClassNonCFIWrongM & ~StallM;
-        assign CounterEvent[`COUNTERS-1:11] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+        assign CounterEvent[11] = DCacheAccess & ~StallM;
+        assign CounterEvent[12] = DCacheMiss & ~StallM;      
+        assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
 
         for (i = 3; i < `COUNTERS; i = i+1) begin
             assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);

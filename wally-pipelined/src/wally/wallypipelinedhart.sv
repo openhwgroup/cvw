@@ -164,6 +164,8 @@ module wallypipelinedhart
   
   logic 		    ExceptionM;
   logic 		    PendingInterruptM;
+  logic 		    DCacheMiss;
+  logic 		    DCacheAccess;
 
   
   ifu ifu(.InstrInF(InstrRData),
@@ -185,7 +187,9 @@ module wallypipelinedhart
 	  .AtomicM(AtomicM),    
 	  .ExceptionM(ExceptionM),
 	  .PendingInterruptM(PendingInterruptM),		
-	  .CommittedM(CommittedM),          
+	  .CommittedM(CommittedM),
+	  .DCacheMiss,
+          .DCacheAccess,
 	  .SquashSCW(SquashSCW),            
 	  .DataMisalignedM(DataMisalignedM),
 	  .MemAdrE(MemAdrE),
