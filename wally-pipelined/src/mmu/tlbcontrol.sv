@@ -78,7 +78,7 @@ module tlbcontrol #(parameter ITLB = 0) (
   endgenerate
 
   // Determine whether TLB is being used
-  assign TLBAccess = ReadAccess || WriteAccess;
+  assign TLBAccess = ReadAccess | WriteAccess;
 
   // Check whether upper bits of virtual addresss are all equal
 
@@ -120,5 +120,5 @@ module tlbcontrol #(parameter ITLB = 0) (
   endgenerate
 
   assign TLBHit = CAMHit & TLBAccess;
-  assign TLBMiss = ~CAMHit & ~TLBFlush & Translate & TLBAccess;
+  assign TLBMiss = (~CAMHit | TLBFlush) & Translate & TLBAccess;
 endmodule

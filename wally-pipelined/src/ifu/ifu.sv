@@ -98,8 +98,6 @@ module ifu (
   logic 	    reset_q; // *** look at this later.
 
   logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
-
-  logic 	    PMPInstrAccessFaultF, PMAInstrAccessFaultF;
   
   logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width. 
 
