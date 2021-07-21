@@ -101,7 +101,8 @@ module ifu (
 
   logic 	    PMPInstrAccessFaultF, PMAInstrAccessFaultF;
   
-  logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width. 
+  logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
+  logic [`XLEN+1:0]    PCFExt;
 
   generate
     if (`XLEN==32) begin
@@ -113,8 +114,10 @@ module ifu (
     end
   endgenerate
 
+  assign PCFExt = {2'b00, PCF};
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
-  immu(.Address(PCF),
+  immu(.PAdr(PCFExt[`PA_BITS-1:0]),
+       .VAdr(PCF),
        .Size(2'b10),
        .PTE(PTE),
        .PageTypeWriteVal(PageType),

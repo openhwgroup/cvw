@@ -32,7 +32,7 @@ module tlbmixer (
     input  logic [`VPN_BITS-1:0]   VPN,
     input  logic [`PPN_BITS-1:0]   PPN,
     input  logic [1:0]             HitPageType,
-    input  logic [11:0]            Address,
+    input  logic [11:0]            Offset,
     input  logic                   TLBHit,
     output logic [`PA_BITS-1:0]    TLBPAdr
 );
@@ -63,6 +63,6 @@ module tlbmixer (
   //assign PPNMixed = (ZeroExtendedVPN & ~PageNumberMask) | (PPN & PageNumberMask);
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
-  mux2 #(`PA_BITS) hitmux('0, {PPNMixed, Address[11:0]}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
+  mux2 #(`PA_BITS) hitmux('0, {PPNMixed, Offset}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
 
 endmodule
