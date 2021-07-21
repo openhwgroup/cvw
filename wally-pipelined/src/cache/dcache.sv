@@ -244,7 +244,7 @@ module dcache
       // thing and making them separate.
       assign VictimReadDataBLockWayMaskedM[way] = VictimWay[way] ? ReadDataBlockWayM[way] : '0;
       assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
-      assign VictimTagWay[way] = Valid[way] ? ReadTag[way] : '0;
+      assign VictimTagWay[way] = VictimWay[way] ? ReadTag[way] : '0;
     end
   endgenerate
 
