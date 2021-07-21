@@ -102,6 +102,7 @@ module privileged (
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
   logic md, sd;
+  logic       StallMQ;
 
 
   ///////////////////////////////////////////
@@ -157,8 +158,16 @@ module privileged (
 
   assign BreakpointFaultM = ebreakM; // could have other causes too
   assign EcallFaultM = ecallM;
-  assign ITLBFlushF = sfencevmaM;
+
+  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
+  assign ITLBFlushF = sfencevmaM & ~StallMQ;
   assign DTLBFlushM = sfencevmaM;
+  // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
+  // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
+  // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
+  // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
+  // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
+
 
   // A page fault might occur because of insufficient privilege during a TLB
   // lookup or a improperly formatted page table during walking
