@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0900000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3160000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ module testbench();
     end
   // initial loading of memories
   initial begin
-    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.RAM, 'h1000 >> 3);
+    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
     $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
@@ -222,24 +222,24 @@ module testbench();
           `SCAN_PC(data_file_PCF, scan_file_PCF, PCtextF, PCtextF2, InstrFExpected, PCFexpected);
           `SCAN_PC(data_file_PCD, scan_file_PCD, PCtextD, PCtextD2, InstrDExpected, PCDexpected);
 
-          // NOP out certain instructions
-          if(dut.hart.ifu.PCD===PCDexpected) begin
-            if((dut.hart.ifu.PCD == 32'h80001dc6) || // for now, NOP out any stores to PLIC
-                (dut.hart.ifu.PCD == 32'h80001de0) ||
-                (dut.hart.ifu.PCD == 32'h80001de2)) begin
-              $display("warning: NOPing out %s at PCD=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
-              force InstrDExpected = 32'b0010011;
-              force dut.hart.ifu.InstrRawD = 32'b0010011;
-              while (clk != 0) #1;
-              while (clk != 1) #1;                
-              release dut.hart.ifu.InstrRawD;
-              release InstrDExpected;
-              warningCount += 1;
-              forcedInstr = 1;
-            end else begin
-              forcedInstr = 0;
-            end
-          end
+          // NOP out certain instructions <-- commented out because no duh hardcoded addressses break easily
+          //if(dut.hart.ifu.PCD===PCDexpected) begin
+          //  if((dut.hart.ifu.PCD == 32'h80001dc6) || // for now, NOP out any stores to PLIC
+          //      (dut.hart.ifu.PCD == 32'h80001de0) ||
+          //      (dut.hart.ifu.PCD == 32'h80001de2)) begin
+          //    $display("warning: NOPing out %s at PCD=%0x, instr %0d, time %0t", PCtextD, dut.hart.ifu.PCD, instrs, $time);
+          //    force InstrDExpected = 32'b0010011;
+          //    force dut.hart.ifu.InstrRawD = 32'b0010011;
+          //    while (clk != 0) #1;
+          //    while (clk != 1) #1;                
+          //    release dut.hart.ifu.InstrRawD;
+          //    release InstrDExpected;
+          //    warningCount += 1;
+          //    forcedInstr = 1;
+          // end else begin
+          //    forcedInstr = 0;
+          //  end
+          //end
 
           // Increment instruction count
           if (instrs <= 10 || (instrs <= 100 && instrs % 10 == 0) ||
@@ -260,7 +260,7 @@ module testbench();
 
           // Check if PCD is going to be flushed due to a branch or jump
           if (`BPRED_ENABLED) begin
-            PCDwrong = dut.hart.hzu.FlushD || (PCtextE.substr(0,3) == "mret"); //Old version: dut.hart.ifu.bpred.bpred.BPPredWrongE; <-- This old version failed to account for MRET.
+            PCDwrong = dut.hart.hzu.FlushD || (PCtextE.substr(0,3) == "mret") || dut.hart.priv.InstrPageFaultF || dut.hart.priv.InstrPageFaultD || dut.hart.priv.InstrPageFaultE || dut.hart.priv.InstrPageFaultM;
           end
 
           // Check PCD, InstrD
@@ -283,10 +283,10 @@ module testbench();
             scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
             scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
             // Next force a timer interrupt (*** this may later need generalizing)
-            force dut.uncore.genblk1.clint.MTIME = dut.uncore.genblk1.clint.MTIMECMP + 1;
+            force dut.uncore.clint.clint.MTIME = dut.uncore.clint.clint.MTIMECMP + 1;
             while (clk != 0) #1;
             while (clk != 1) #1;
-            release dut.uncore.genblk1.clint.MTIME;
+            release dut.uncore.clint.clint.MTIME;
           end
         end
       end
@@ -526,6 +526,7 @@ module testbench();
   string MTVALstring = "MTVAL";
   string SEPCstring = "SEPC";
   string SCAUSEstring = "SCAUSE";
+  string STVALstring = "STVAL";
   string SSTATUSstring = "SSTATUS";
 
   logic [63:0] expectedCSR;
@@ -556,6 +557,7 @@ module testbench();
           if (``CSR``name == MTVALstring) #3; \
           if (``CSR``name == SEPCstring) #1; \
           if (``CSR``name == SCAUSEstring) #2; \
+          if (``CSR``name == STVALstring) #3; \
           if (``CSR``name == SSTATUSstring) #3; \
           scan_file_csr = $fscanf(data_file_csr, "%s\n", expectedCSRname); \
           scan_file_csr = $fscanf(data_file_csr, "%x\n", expectedCSR); \
