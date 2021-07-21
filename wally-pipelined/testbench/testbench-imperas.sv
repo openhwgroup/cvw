@@ -121,7 +121,7 @@ string tests32f[] = '{
     "rv64d/I-FLD-01", "2420",
     "rv64d/I-FMV-X-D-01", "2000",
     "rv64d/I-FMV-D-X-01", "2000",
-    // "rv64d/I-FDIV-D-01", "2000",
+    "rv64d/I-FDIV-D-01", "2000",
     "rv64d/I-FCVT-D-L-01", "2000",
     "rv64d/I-FCVT-D-LU-01", "2000",
     "rv64d/I-FCVT-D-S-01", "2000", 
@@ -147,7 +147,7 @@ string tests32f[] = '{
     "rv64d/I-FSGNJ-D-01", "2000",
     "rv64d/I-FSGNJN-D-01", "2000",
     "rv64d/I-FSGNJX-D-01", "2000",
-    // "rv64d/I-FSQRT-D-01", "2000",
+    "rv64d/I-FSQRT-D-01", "2000",
     "rv64d/I-FSUB-D-01", "2000"
   };
 
@@ -753,6 +753,7 @@ module riscvassertions();
     assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $error("Multiple Instruction Cache ways not yet implemented");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
+    assert (`TIM_RANGE >= 56'h07FFFFFF) else $error("Some regression tests will fail if TIM_RANGE is less than 56'h07FFFFFF");
   end
 endmodule
 
