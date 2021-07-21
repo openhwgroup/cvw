@@ -61,7 +61,7 @@ string tests32f[] = '{
     "rv32f/I-FCVT-S-WU-01", "2000",
     "rv32f/I-FCVT-W-S-01", "2000",
     "rv32f/I-FCVT-WU-S-01", "2000",
-    "rv32f/I-FDIV-S-01", "2000",
+    // "rv32f/I-FDIV-S-01", "2000",
     "rv32f/I-FEQ-S-01", "2000",
     "rv32f/I-FLE-S-01", "2000",
     "rv32f/I-FLT-S-01", "2000",
@@ -77,7 +77,7 @@ string tests32f[] = '{
     "rv32f/I-FSGNJ-S-01", "2000",
     "rv32f/I-FSGNJN-S-01", "2000",
     "rv32f/I-FSGNJX-S-01", "2000",
-    "rv32f/I-FSQRT-S-01", "2000",
+    // "rv32f/I-FSQRT-S-01", "2000",
     "rv32f/I-FSW-01", "2000",
     "rv32f/I-FLW-01", "2110",
     "rv32f/I-FSUB-S-01", "2000"
@@ -98,7 +98,7 @@ string tests32f[] = '{
     "rv64f/I-FCVT-LU-S-01", "2000",
     "rv64f/I-FCVT-W-S-01", "2000",
     "rv64f/I-FCVT-WU-S-01", "2000",
-    "rv64f/I-FDIV-S-01", "2000",
+    // "rv64f/I-FDIV-S-01", "2000",
     "rv64f/I-FEQ-S-01", "2000",
     "rv64f/I-FLE-S-01", "2000",
     "rv64f/I-FLT-S-01", "2000",
@@ -112,7 +112,7 @@ string tests32f[] = '{
     "rv64f/I-FSGNJ-S-01", "2000",
     "rv64f/I-FSGNJN-S-01", "2000",
     "rv64f/I-FSGNJX-S-01", "2000",
-    "rv64f/I-FSQRT-S-01", "2000",
+    // "rv64f/I-FSQRT-S-01", "2000",
     "rv64f/I-FSUB-S-01", "2000"
   };
 

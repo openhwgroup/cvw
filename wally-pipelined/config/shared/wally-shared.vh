@@ -49,9 +49,9 @@
 `define PMPCFG_ENTRIES (`PMP_ENTRIES/8)
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-`define FLEN (`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
-`define NE   (`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
-`define NF   (`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
+`define FLEN 64//(`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
+`define NE   11//(`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
+`define NF   52//(`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
 
 // Disable spurious Verilator warnings
 
