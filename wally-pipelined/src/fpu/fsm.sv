@@ -476,7 +476,7 @@ module fsm (done, load_rega, load_regb, load_regc,
 	       sel_muxa = 3'b011;
 	       sel_muxb = 3'b110;
 	       sel_muxr = 1'b1;
-	       NEXT_STATE = S27;
+	       NEXT_STATE = S26;
 	    end 
 	  S26:  // done
 	    begin
