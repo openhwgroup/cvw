@@ -12,3 +12,4 @@ outDir="../linux-testvectors"
 
 # - Logs info needed by buildroot testbench
 ($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parse_qemu.py | ./parse_gdb_output.py "$outDir") & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+./fix_csrs.py "$outDir"
