@@ -101,6 +101,6 @@ module tlbcamline #(parameter KEY_BITS = 20,
   // On a flush, zero the valid bit and leave the key unchanged.
   // *** Might we want to update stored key right away to output match on the
   // write cycle? (using a mux)
-  flopenrc #(1) validbitflop(clk, reset, TLBFlush, WriteEnable, 1'b1, Valid);
+  flopenr #(1) validbitflop(clk, reset, WriteEnable | TLBFlush, ~TLBFlush, Valid);
   flopenr #(KEY_BITS) keyflop(clk, reset, WriteEnable, {SATP_ASID, VPN}, Key);
 endmodule
