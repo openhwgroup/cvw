@@ -36,12 +36,15 @@ def printCSRs():
 
 def parseCSRs(l):
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
-    if l.strip() and (not l.startswith("Disassembler")) and (not l.startswith("Please")) and not inPageFault:
+    if l.strip() and (not l.startswith("Disassembler")) and (not l.startswith("Please")):
+        # If we've hit the register file
         if l.startswith(' x0/zero'): 
             parseState = "regFile"
-            instr = instrs[CSRs["pc"]]
-            printPC(instr)
+            if not inPageFault:
+                instr = instrs[CSRs["pc"]]
+                printPC(instr)
             parseRegs(l)
+        # If we've hit a CSR
         else:
             csr = l.split()[0]
             val = int(l.split()[1],16)
@@ -64,11 +67,16 @@ def parseCSRs(l):
             # However SEPC and STVAL do get corrupted upon exiting
             if endPageFault and ((csr == 'sepc') or (csr == 'stval')):
                 CSRs[csr] = returnAdr
+                pageFaultCSRs[csr] = val
+            elif pageFaultCSRs and (csr in pageFaultCSRs):
+                if (val != pageFaultCSRs[csr]):
+                    del pageFaultCSRs[csr]
+                    CSRs[csr] = val
             else:
                 CSRs[csr] = val
 
 def parseRegs(l):
-    global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
+    global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs, pageFaultRegs
     if "pc" in l:
         printCSRs()
         # New non-disassembled instruction
@@ -86,6 +94,7 @@ def parseRegs(l):
                 val = int(s[i+1], 16)
                 if inPageFault:
                     pageFaultRegs[reg] = val
+                    sys.stderr.write(str(pageFaultRegs))
                 else:
                     if pageFaultRegs and (reg in pageFaultRegs):
                         if (val != pageFaultRegs[reg]):
@@ -110,9 +119,10 @@ for l in fileinput.input():
     elif (parseState == "instr") and l.startswith('0x'):
         if "out of bounds" in l:
             sys.stderr.write("Detected QEMU page fault error\n")
-            beginPageFault = ~(inPageFault)
+            beginPageFault = not inPageFault
             if beginPageFault:
                 returnAdr = int(l.split()[0][2:-1], 16)
+                sys.stderr.write('Saving SEPC of '+hex(returnAdr)+'\n')
             inPageFault = 1
         else: 
             endPageFault = inPageFault

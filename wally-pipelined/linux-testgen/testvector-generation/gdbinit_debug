@@ -1,10 +1,12 @@
 set pagination off
 file ../buildroot-image-output/fw_jump.elf
 target extended-remote :1237
-b irqchip_plic_warm_init
+b *0x80200040
 c
 file ../buildroot-image-output/vmlinux
-b plic_init
-c
+#b irqchip_plic_warm_init
+#c
+#b plic_init
+#c
 b do_idle
 c

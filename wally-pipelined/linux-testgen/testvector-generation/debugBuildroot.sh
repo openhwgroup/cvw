@@ -30,10 +30,11 @@ outDir="../linux-testvectors"
 # - Makes qemu_in_gdb_format.txt
 # - Splits qemu_in_gdb_format.txt into chunks of 100,000 instrs
 #cat $intermedDir/qemu_output.txt | ./parse_qemu.py >$intermedDir/qemu_in_gdb_format.txt
-cd $intermedDir
-split -d -l 5000000 ./qemu_in_gdb_format.txt --verbose
-cd ../../testvector-generation
+#cd $intermedDir
+#split -d -l 5000000 ./qemu_in_gdb_format.txt --verbose
+#cd ../../testvector-generation
 
 # Uncomment this version for parse_gdb_output.py debugging
 # - Uses qemu_in_gdb_format.txt
-# - Makes testvectors#cat $intermedDir/qemu_in_gdb_format.txt | ./parse_gdb_output.py "$outDir"
+# - Makes testvectors
+#cat $intermedDir/qemu_in_gdb_format.txt | ./parse_gdb_output.py "$outDir"
