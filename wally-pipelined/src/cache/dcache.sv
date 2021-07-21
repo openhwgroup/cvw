@@ -305,6 +305,7 @@ module dcache
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
+  // *** consider using a limited range shift to do this final muxing.
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
       assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
