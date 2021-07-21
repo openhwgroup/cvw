@@ -56,9 +56,9 @@ module unpacking (
     assign YNaNE = YExpMaxE & ~YFracZero;
     assign ZNaNE = ZExpMaxE & ~ZFracZero;
 
-    assign XSNaNE = XNaNE&~XExpE[51];
-    assign YSNaNE = YNaNE&~YExpE[51];
-    assign ZSNaNE = ZNaNE&~ZExpE[51];
+    assign XSNaNE = XNaNE&~XFracE[51];
+    assign YSNaNE = YNaNE&~YFracE[51];
+    assign ZSNaNE = ZNaNE&~ZFracE[51];
 
     assign XDenormE = XExpZero & ~XFracZero;
     assign YDenormE = YExpZero & ~YFracZero;
