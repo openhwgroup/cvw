@@ -237,7 +237,7 @@ module dcache
 	     .Valid(Valid[way]),
 	     .Dirty(Dirty[way]));
       assign WayHit[way] = Valid[way] & (ReadTag[way] == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-      assign ReadDataBlockWayMaskedM[way] = Valid[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
+      assign ReadDataBlockWayMaskedM[way] = WayHit[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
 
       // the cache block candiate for eviction
       // *** this should be sharable with the read data muxing, but for now i'm doing the simple
@@ -603,7 +603,7 @@ module dcache
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
 	CommittedM = 1'b1;
-	LRUWriteEn = 1'b1;
+	//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
 
       STATE_MISS_READ_WORD: begin
@@ -622,6 +622,7 @@ module dcache
       STATE_MISS_READ_WORD_DELAY: begin
 	//SelAdrM = 1'b1;
 	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
 	if(StallW) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
@@ -635,6 +636,7 @@ module dcache
 	SelAdrM = 1'b1;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
 	NextState = STATE_MISS_WRITE_WORD_DELAY;
       end
 
@@ -751,7 +753,7 @@ module dcache
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
 	CommittedM = 1'b1;
-	LRUWriteEn = 1'b1;
+	//LRUWriteEn = 1'b1;
       end
 
       STATE_PTW_READ_MISS_READ_WORD: begin
@@ -771,6 +773,7 @@ module dcache
 	DCacheStall = 1'b1;
 	SelAdrM = 1'b1;
 	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
 	NextState = STATE_READY;
       end
       
