@@ -419,7 +419,6 @@ add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/genb
 add wave -noupdate -expand -group itlb /testbench/dut/hart/ifu/immu/TLBWrite
 add wave -noupdate -expand -group itlb /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -expand -group itlb /testbench/dut/hart/ifu/immu/PhysicalAddress
-add wave -noupdate -expand -group itlb /testbench/dut/hart/ifu/immu/Address
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HCLK
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HSELUART
 add wave -noupdate -group UART /testbench/dut/uncore/genblk4/uart/HADDR
