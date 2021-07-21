@@ -35,17 +35,14 @@ module cacheLRU
   //  *** Only implements 2, 4, and 8 way
   // I would like parametersize this in the future.
 
-  logic [NUMWAYS-2:0] 	      NewLRUEn;
-  logic [$clog2(NUMWAYS)-1:0] EncodedWay;
-  logic 		      Hit;
-  assign Hit = |WayIn;
+  logic [NUMWAYS-2:0] 	      LRUEn, LRUMask;
+  logic [$clog2(NUMWAYS)-1:0] EncVicWay;
 
+  genvar 		      index;
   generate
     if(NUMWAYS == 2) begin : TwoWay
       
-      assign EncodedWay[0] = WayIn[1];
-
-      assign NewLRUEn[0] = 1'b0;
+      assign LRUEn[0] = 1'b0;
 
       assign LRUOut[0] = WayIn[1];
 
@@ -53,51 +50,28 @@ module cacheLRU
       assign VictimWay[0] = LRUIn[0];
       
     end else if (NUMWAYS == 4) begin : FourWay 
-      assign EncodedWay[0] = WayIn[1] | WayIn[3];
-      assign EncodedWay[1] = WayIn[2] | WayIn[3];
 
-      assign NewLRUEn[2] = 1'b1;
-      assign NewLRUEn[1] = EncodedWay[1];
-      assign NewLRUEn[0] = ~EncodedWay[1];
+      // selects
+      assign LRUEn[2] = 1'b1;
+      assign LRUEn[1] = WayIn[3];      
+      assign LRUEn[0] = WayIn[3] | WayIn[2];
 
-      assign LRUOut[2] = NewLRUEn[2] & Hit ? EncodedWay[1] : LRUIn[2];
-      assign LRUOut[1] = NewLRUEn[1] & Hit ? EncodedWay[0] : LRUIn[1];
-      assign LRUOut[0] = NewLRUEn[0] & Hit ? EncodedWay[0] : LRUIn[0];      
+      // mask
+      assign LRUMask[0] = WayIn[1];
+      assign LRUMask[1] = WayIn[3];      
+      assign LRUMask[2] = WayIn[3] | WayIn[2];
 
-      assign VictimWay[3] = LRUOut[2] & LRUOut[1];      
-      assign VictimWay[2] = LRUOut[2] & ~LRUOut[1];
-      assign VictimWay[1] = ~LRUOut[2] & LRUOut[0];
-      assign VictimWay[0] = ~LRUOut[2] & ~LRUOut[0];
+      for(index = 0; index < NUMWAYS-1; index++)
+	assign LRUOut[index] = LRUEn[index] ? LRUIn[index] : LRUMask[index];
+
+      assign EncVicWay[1] = LRUIn[2];
+      assign EncVicWay[0] = LRUIn[2] ? LRUIn[0] : LRUIn[1];
+
+      oneHotDecoder #(2) 
+      oneHotDecoder(.bin(EncVicWay),
+		    .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3]}));
 
     end else if (NUMWAYS == 8) begin : EightWay
-      assign EncodedWay[0] = WayIn[1] | WayIn[3] | WayIn[5] | WayIn[7];
-      assign EncodedWay[1] = WayIn[2] | WayIn[3] | WayIn[6] | WayIn[7];
-      assign EncodedWay[2] = WayIn[4] | WayIn[5] | WayIn[6] | WayIn[7];
-
-      assign NewLRUEn[6] = 1'b1;
-      assign NewLRUEn[5] = EncodedWay[2];
-      assign NewLRUEn[4] = ~EncodedWay[2];
-      assign NewLRUEn[3] = EncodedWay[2] & EncodedWay[1];
-      assign NewLRUEn[2] = EncodedWay[2] & ~EncodedWay[1];
-      assign NewLRUEn[1] = ~EncodedWay[2] & EncodedWay[1];
-      assign NewLRUEn[0] = ~EncodedWay[2] & ~EncodedWay[1];     
-
-      assign LRUOut[6] = NewLRUEn[6] & Hit ? EncodedWay[2] : LRUIn[6];
-      assign LRUOut[5] = NewLRUEn[5] & Hit ? EncodedWay[1] : LRUIn[5];
-      assign LRUOut[4] = NewLRUEn[4] & Hit ? EncodedWay[1] : LRUIn[4];
-      assign LRUOut[3] = NewLRUEn[3] & Hit ? EncodedWay[0] : LRUIn[3];
-      assign LRUOut[2] = NewLRUEn[2] & Hit ? EncodedWay[0] : LRUIn[2];
-      assign LRUOut[1] = NewLRUEn[1] & Hit ? EncodedWay[0] : LRUIn[1];
-      assign LRUOut[0] = NewLRUEn[0] & Hit ? EncodedWay[0] : LRUIn[0];      
-
-      assign VictimWay[7] = LRUOut[6] & LRUOut[5] & LRUOut[3];
-      assign VictimWay[6] = LRUOut[6] & LRUOut[5] & ~LRUOut[3];
-      assign VictimWay[5] = LRUOut[6] & ~LRUOut[5] & LRUOut[2];
-      assign VictimWay[4] = LRUOut[6] & ~LRUOut[5] & ~LRUOut[2];
-      assign VictimWay[3] = ~LRUOut[6] & LRUOut[4] & LRUOut[1];
-      assign VictimWay[2] = ~LRUOut[6] & LRUOut[4] & ~LRUOut[1];
-      assign VictimWay[1] = ~LRUOut[6] & ~LRUOut[4] & LRUOut[0];
-      assign VictimWay[0] = ~LRUOut[6] & ~LRUOut[4] & ~LRUOut[0];
 
     end
   endgenerate
