@@ -38,8 +38,9 @@ module dcache
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M,
    input logic [1:0] 	       AtomicM,
-   input logic [`XLEN-1:0]     MemAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
+   input logic [11:0]          VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
    input logic [`XLEN-1:0]     WriteDataM,
    output logic [`XLEN-1:0]    ReadDataW,
@@ -98,8 +99,9 @@ module dcache
   logic [TAGLEN-1:0]	       ReadTag [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]	       Valid, Dirty, WayHit;
   logic			       CacheHit;
-  logic [NUMREPL_BITS-1:0]     ReplacementBits [NUMLINES-1:0];
-  logic [NUMREPL_BITS-1:0]     NewReplacement;
+  logic [NUMWAYS-2:0] 	       ReplacementBits [NUMLINES-1:0];
+  logic [NUMWAYS-2:0] 	       BlockReplacementBits;
+  logic [NUMWAYS-2:0] 	       NewReplacement;
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
   logic [`XLEN-1:0]	       VictimReadDataBlockSetsM [(WORDSPERLINE)-1:0];  
@@ -113,6 +115,7 @@ module dcache
 
   logic 		       SRAMWordWriteEnableM, SRAMWordWriteEnableW;
   logic 		       SRAMBlockWriteEnableM;
+  logic [NUMWAYS-1:0] 	       SRAMBlockWayWriteEnableM;
   logic 		       SRAMWriteEnable;
   logic [NUMWAYS-1:0] 	       SRAMWayWriteEnable;
   
@@ -142,7 +145,8 @@ module dcache
   logic CntReset;
   logic CPUBusy, PreviousCPUBusy;
   logic SelEvict;
-  
+
+  logic LRUWriteEn;
   
   typedef enum {STATE_READY,
 
@@ -197,10 +201,11 @@ module dcache
 
   // data path
 
-  mux2 #(INDEXLEN)
+  mux3 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .s(SelAdrM),
+	    .d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .s({DTLBWriteM, SelAdrM}),
 	    .y(SRAMAdr));
 
 
@@ -222,7 +227,7 @@ module dcache
 	     .WAdr(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	     .WriteEnable(SRAMWayWriteEnable[way]),
 	     .WriteWordEnable(SRAMWordEnable),
-	     .TagWriteEnable(SRAMBlockWriteEnableM),
+	     .TagWriteEnable(SRAMBlockWayWriteEnableM[way]), 
 	     .WriteData(SRAMWriteData),
 	     .WriteTag(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	     .SetValid(SetValidM),
@@ -234,32 +239,51 @@ module dcache
 	     .Valid(Valid[way]),
 	     .Dirty(Dirty[way]));
       assign WayHit[way] = Valid[way] & (ReadTag[way] == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-      assign ReadDataBlockWayMaskedM[way] = Valid[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
+      assign ReadDataBlockWayMaskedM[way] = WayHit[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
 
       // the cache block candiate for eviction
       // *** this should be sharable with the read data muxing, but for now i'm doing the simple
       // thing and making them separate.
       assign VictimReadDataBLockWayMaskedM[way] = VictimWay[way] ? ReadDataBlockWayM[way] : '0;
       assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
-      assign VictimTagWay[way] = Valid[way] ? ReadTag[way] : '0;
+      assign VictimTagWay[way] = VictimWay[way] ? ReadTag[way] : '0;
     end
   endgenerate
 
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
-      for(int index = 0; index < NUMLINES-1; index++)
+      for(int index = 0; index < NUMLINES; index++)
 	ReplacementBits[index] <= '0;
+    end else begin
+      BlockReplacementBits <= ReplacementBits[SRAMAdr];
+      if (LRUWriteEn) begin
+	ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
+      end
     end
-    else if (SRAMWriteEnable) ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
   end
 
-  // *** TODO add replacement policy
-  assign NewReplacement = '0;
-  assign VictimWay = 4'b0001;
+  // *** TODO only supports 1, 2, 4, and 8 way
+  generate
+    if(NUMWAYS > 1) begin
+      cacheLRU #(NUMWAYS)
+      cacheLRU(.LRUIn(BlockReplacementBits),
+	       .WayIn(WayHit),
+	       .LRUOut(NewReplacement),
+	       .VictimWay(VictimWay));
+    end else begin
+      assign NewReplacement = '0;
+      assign VictimWay = 1'b1;
+    end
+  endgenerate
+
+  assign SRAMBlockWayWriteEnableM = SRAMBlockWriteEnableM ? VictimWay : '0;
+  
   mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableM ? WayHit : '0),
-				 .d1(SRAMBlockWriteEnableM ? VictimWay : '0),
+				 .d1(SRAMBlockWayWriteEnableM),
 				 .s(SRAMBlockWriteEnableM),
 				 .y(SRAMWayWriteEnable));
+
+  
   
   
 
@@ -283,6 +307,7 @@ module dcache
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
+  // *** consider using a limited range shift to do this final muxing.
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
       assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
@@ -444,6 +469,7 @@ module dcache
     SelEvict = 1'b0;
     DCacheAccess = 1'b0;
     DCacheMiss = 1'b0;
+    LRUWriteEn = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -480,6 +506,7 @@ module dcache
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
 	  DCacheAccess = 1'b1;
+	  LRUWriteEn = 1'b1;
 	  
 	  if(StallW) begin
 	    NextState = STATE_CPU_BUSY;
@@ -494,6 +521,7 @@ module dcache
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
 	  DCacheStall = 1'b1;
+	  LRUWriteEn = 1'b1;
 	  
 	  if(StallW) begin 
 	    NextState = STATE_CPU_BUSY;
@@ -578,6 +606,7 @@ module dcache
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
 	CommittedM = 1'b1;
+	//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
 
       STATE_MISS_READ_WORD: begin
@@ -596,6 +625,7 @@ module dcache
       STATE_MISS_READ_WORD_DELAY: begin
 	//SelAdrM = 1'b1;
 	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
 	if(StallW) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
@@ -609,6 +639,7 @@ module dcache
 	SelAdrM = 1'b1;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
 	NextState = STATE_MISS_WRITE_WORD_DELAY;
       end
 
@@ -658,6 +689,7 @@ module dcache
 	end else if(MemRWM[1] & CacheableM & ~ExceptionM & CacheHit) begin
 	  NextState = STATE_PTW_READY;
 	  DCacheStall = 1'b0;
+	  LRUWriteEn = 1'b1;
 	end
 
 	// read miss valid cached
@@ -724,6 +756,7 @@ module dcache
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
 	CommittedM = 1'b1;
+	//LRUWriteEn = 1'b1;
       end
 
       STATE_PTW_READ_MISS_READ_WORD: begin
@@ -743,6 +776,7 @@ module dcache
 	DCacheStall = 1'b1;
 	SelAdrM = 1'b1;
 	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
 	NextState = STATE_READY;
       end
       

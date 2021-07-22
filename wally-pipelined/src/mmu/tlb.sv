@@ -70,7 +70,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   input logic              DisableTranslation,
 
   // address input before translation (could be physical or virtual)
-  input logic  [`XLEN-1:0] Address,
+  input logic  [`XLEN-1:0] VAdr,
 
   // Controls for writing a new entry to the TLB
   input logic  [`XLEN-1:0] PTE,
@@ -95,20 +95,18 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // Sections of the virtual and physical addresses
   logic [`VPN_BITS-1:0] VPN;
   logic [`PPN_BITS-1:0] PPN;
-  logic [`XLEN+1:0]     AddressExt;
 
   // Sections of the page table entry
   logic [7:0]           PTEAccessBits;
   logic [11:0]          PageOffset;
 
-  logic                  PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
   logic [1:0]            HitPageType;
   logic                  CAMHit;
   logic                  SV39Mode;
 
-  assign VPN = Address[`VPN_BITS+11:12];
+  assign VPN = VAdr[`VPN_BITS+11:12];
 
-  tlbcontrol tlbcontrol(.SATP_MODE, .Address, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+  tlbcontrol #(ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
                         .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
                         .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, 
                         .SV39Mode, .Translate);
@@ -122,6 +120,6 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  tlbmixer Mixer(.VPN, .PPN, .HitPageType, .Address(Address[11:0]), .TLBHit, .TLBPAdr);
+  tlbmixer Mixer(.VPN, .PPN, .HitPageType, .Offset(VAdr[11:0]), .TLBHit, .TLBPAdr);
 
 endmodule
