@@ -269,7 +269,7 @@ module uartPC16550D(
         rxdataready <= #1 1;
       end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
-          rxfifotail <= #1 rxfifotail + 1;
+          if (rxfifotail+1 < rxfifohead) rxfifotail <= #1 rxfifotail + 1;
           if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
         end else rxdataready <= #1 0;
       end else if (~MEMWb & A == 3'b010)  // writes to FIFO Control Register

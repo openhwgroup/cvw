@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import fileinput, sys
 
-sys.stderr.write("reminder: this script takes input from stdin\n")
+sys.stderr.write("reminder: parse_qemu.py takes input from stdin\n")
 parseState = "idle"
 beginPageFault = 0
 inPageFault = 0
@@ -94,7 +94,6 @@ def parseRegs(l):
                 val = int(s[i+1], 16)
                 if inPageFault:
                     pageFaultRegs[reg] = val
-                    sys.stderr.write(str(pageFaultRegs))
                 else:
                     if pageFaultRegs and (reg in pageFaultRegs):
                         if (val != pageFaultRegs[reg]):
