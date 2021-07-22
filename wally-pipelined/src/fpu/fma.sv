@@ -183,7 +183,7 @@ module fma2(
     
     input logic        XSgnM, YSgnM, ZSgnM,
     input logic [`NE-1:0] XExpM, YExpM, ZExpM,
-    input logic [`NF-1:0] XManM, YManM, ZManM,
+    input logic [`NF:0] XManM, YManM, ZManM,
     input logic     [2:0]       FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [2:0]       FOpCtrlM,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic                 FmtM,       // precision 1 = double 0 = single

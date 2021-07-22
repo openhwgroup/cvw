@@ -16,7 +16,7 @@ module unpacking (
 );
  //***rename to make significand = 1.frac m = significand
     logic [51:0]    XFracE, YFracE, ZFracE;
-    logic           XAssumed1E, YAssumed1E, ZAssumed1E;
+    logic           XExpNonzero, YExpNonzero, ZExpNonzero;
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
     logic [63:0]    Addend; // value to add (Z or zero)
@@ -27,6 +27,7 @@ module unpacking (
     assign YSgnE = FmtE ? Y[63] : Y[31];
     assign ZSgnE = FmtE ? Addend[63]^FOpCtrlE[0] : Addend[31]^FOpCtrlE[0]; // *** Maybe this should be done in the FMA for modularity?
 
+   //assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
     assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]}; // *** maybe convert to full number of bits here?
     assign YExpE = FmtE ? Y[62:52] : {3'b0, Y[30:23]};
     assign ZExpE = FmtE ? Addend[62:52] : {3'b0, Addend[30:23]};
@@ -35,26 +36,26 @@ module unpacking (
     assign YFracE = FmtE ? Y[51:0] : {Y[22:0], 29'b0};
     assign ZFracE = FmtE ? Addend[51:0] : {Addend[22:0], 29'b0};
 
-    assign XAssumed1E = |XExpE; // *** should these be prepended now to create a significand?
-    assign YAssumed1E = |YExpE;
-    assign ZAssumed1E = |ZExpE;
+    assign XExpNonzero = FmtE ? |X[62:52] : |X[30:23]; 
+    assign YExpNonzero = FmtE ? |Y[62:52] : |Y[30:23];
+    assign ZExpNonzero = FmtE ? |Addend[62:52] : |Addend[30:23];
 
-    assign XManE = {XAssumed1E, XFracE};
-    assign YManE = {YAssumed1E, YFracE};
-    assign ZManE = {ZAssumed1E, ZFracE};
+    assign XManE = {XExpNonzero, XFracE};
+    assign YManE = {YExpNonzero, YFracE};
+    assign ZManE = {ZExpNonzero, ZFracE};
 
-    assign XExpZero = ~XAssumed1E;
-    assign YExpZero = ~YAssumed1E;
-    assign ZExpZero = ~ZAssumed1E;
+    assign XExpZero = ~XExpNonzero;
+    assign YExpZero = ~YExpNonzero;
+    assign ZExpZero = ~ZExpNonzero;
    
     assign XFracZero = ~|XFracE;
     assign YFracZero = ~|YFracE;
     assign ZFracZero = ~|ZFracE;
 
-    assign XExpMaxE = FmtE ? &XExpE[10:0] : &XExpE[7:0];
-    assign YExpMaxE = FmtE ? &YExpE[10:0] : &YExpE[7:0];
-    assign ZExpMaxE = FmtE ? &ZExpE[10:0] : &ZExpE[7:0];
-   
+    assign XExpMaxE = FmtE ? &X[62:52] : &X[30:23];
+    assign YExpMaxE = FmtE ? &Y[62:52] : &Y[30:23];
+    assign ZExpMaxE = FmtE ? &Z[62:52] : &Z[30:23];
+  
     assign XNormE = ~(XExpMaxE|XExpZero);
     
     assign XNaNE = XExpMaxE & ~XFracZero;
@@ -78,5 +79,6 @@ module unpacking (
     assign ZZeroE = ZExpZero & ZFracZero;
 
     assign BiasE = FmtE ? 13'h3ff : 13'h7f; // *** is it better to convert to full precision exponents so bias isn't needed?
+    //assign BiasE = 13'h3ff; // always use 1023 because exponents are unpacked to double precision
 
 endmodule
