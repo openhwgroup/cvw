@@ -204,7 +204,7 @@ module fpu (
 	fpdiv fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .done(FDivSqrtDoneE), .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]), 
 			.P(~FmtE), .FDivBusyE, .HoldInputs, 
 			.OvEn(1'b1), .UnEn(1'b1),
-			.start(FDivStartE), .reset, .clk(~clk), .AS_Result(FDivResultM), .Flags(FDivSqrtFlgM));
+			.start(FDivStartE), .reset, .clk(fpdivClk), .AS_Result(FDivResultM), .Flags(FDivSqrtFlgM));
 	
         // .DivOpType(FOpCtrlE[0]), .clk(fpdivClk), .FmtE(~FmtE), .DivInput1E, .DivInput2E, 
         //                 .FrmE, .DivOvEn(1'b1), .DivUnEn(1'b1), .FDivStartE, .FDivResultM, .FDivSqrtFlgM, 
