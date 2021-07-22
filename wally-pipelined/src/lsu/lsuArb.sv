@@ -44,7 +44,6 @@ module lsuArb
    input logic 		       StallW,
    input logic 		       PendingInterruptM,
    // to CPU
-   output logic [`XLEN-1:0]    ReadDataW,
    output logic 	       DataMisalignedM,
    output logic 	       CommittedM,
    output logic 	       LSUStall, 
@@ -63,7 +62,6 @@ module lsuArb
    // from D Cache
    input logic 		       CommittedMfromDCache,
    input logic 		       DataMisalignedMfromDCache,
-   input logic [`XLEN-1:0]     ReadDataWfromDCache,
    input logic 		       DCacheStall
   
    );
@@ -95,7 +93,6 @@ module lsuArb
   // demux the inputs from LSU to walker or cpu's data port.
 
   // works without the demux 7/18/21 dh.  Suggest deleting these and removing fromDCache suffix
-  assign ReadDataW = /*SelPTW ? `XLEN'b0 : */ReadDataWfromDCache;  // probably can avoid this demux
   assign DataMisalignedM = /*SelPTW ? 1'b0 : */DataMisalignedMfromDCache;
   // *** need to rename DcacheStall and Datastall.
   // not clear at all.  I think it should be LSUStall from the LSU,

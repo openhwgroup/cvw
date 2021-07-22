@@ -52,7 +52,7 @@ module lsu
    input logic [`XLEN-1:0]     MemAdrM,
    input logic [`XLEN-1:0]     MemAdrE,
    input logic [`XLEN-1:0]     WriteDataM, 
-   output logic [`XLEN-1:0]    ReadDataW,
+   output logic [`XLEN-1:0]    ReadDataM,
 
    // cpu privilege
    input logic [1:0] 	       PrivilegeModeW,
@@ -121,7 +121,6 @@ module lsu
   logic 		       DTLBMissM;
 //  logic [`XLEN-1:0] 	       PTE;
   logic 		       DTLBWriteM;
-  logic [`XLEN-1:0] 	       HPTWReadPTE;
   logic 		       HPTWStall;  
   logic [`XLEN-1:0] 	       HPTWPAdrE;
 //  logic [`XLEN-1:0] 	       HPTWPAdrM;  
@@ -164,7 +163,7 @@ module lsu
 	    .PageType,
 	    .ITLBWriteF(ITLBWriteF),
 	    .DTLBWriteM(DTLBWriteM),
-	    .HPTWReadPTE(HPTWReadPTE),
+	    .HPTWReadPTE(ReadDataM),
 	    .HPTWStall(HPTWStall),
             .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
@@ -193,7 +192,6 @@ module lsu
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
-		 .ReadDataW(ReadDataW),
 		 .DataMisalignedM(DataMisalignedM),
 		 .LSUStall(LSUStall),
 		 // DCACHE
@@ -205,7 +203,6 @@ module lsu
 		 .MemAdrEtoDCache(MemAdrEtoDCache),
 		 .StallWtoDCache(StallWtoDCache),
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
-		 .ReadDataWfromDCache(ReadDataWfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
 		 .PendingInterruptMtoDCache(PendingInterruptMtoDCache),
 		 .DCacheStall(DCacheStall));
@@ -294,7 +291,7 @@ module lsu
   dcache dcache(.clk(clk),
 		.reset(reset),
 		.StallM(StallM),
-		.StallW(StallWtoDCache),
+		.StallWtoDCache(StallWtoDCache),
 		.FlushM(FlushM),
 		.FlushW(FlushWtoDCache),
 		.MemRWM(MemRWMtoDCache),
@@ -305,8 +302,7 @@ module lsu
 		.MemPAdrM(MemPAdrM),
 		.VAdr(MemAdrM[11:0]),		
 		.WriteDataM(WriteDataM),
-		.ReadDataW(ReadDataWfromDCache),
-		.ReadDataM(HPTWReadPTE),
+		.ReadDataM(ReadDataM),
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.DCacheMiss,

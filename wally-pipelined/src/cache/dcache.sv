@@ -29,7 +29,7 @@ module dcache
   (input logic clk,
    input logic 		       reset,
    input logic 		       StallM,
-   input logic 		       StallW,
+   input logic 		       StallWtoDCache,
    input logic 		       FlushM,
    input logic 		       FlushW,
 
@@ -43,7 +43,6 @@ module dcache
    input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
    input logic [`XLEN-1:0]     WriteDataM,
-   output logic [`XLEN-1:0]    ReadDataW,
    output logic [`XLEN-1:0]    ReadDataM, 
    output logic 	       DCacheStall,
    output logic 	       CommittedM,
@@ -194,7 +193,7 @@ module dcache
 
   flopenr #(7) Funct7WReg(.clk(clk),
 			  .reset(reset),
-			  .en(~StallW),
+			  .en(~StallWtoDCache),
 			  .d(Funct7M),
 			  .q(Funct7W));
   
@@ -335,7 +334,7 @@ module dcache
 			  .HRDATAMasked(ReadDataM));
 
   // This is a confusing point.
-  // The final read data should be updated only if the CPU's StallW is low
+  // The final read data should be updated only if the CPU's StallWtoDCache is low
   // which means the CPU is ready to take data.  Or if the CPU just became
   // busy.  Then when we exit CPU_BUSY we want to ensure the data is not
   // updated, this is ~PreviousCPUBusy.
@@ -345,10 +344,6 @@ module dcache
   flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
   
 
-  flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(~StallW),
-			      .d(ReadDataM),
-			      .q(ReadDataW));
 
 
   // write path
@@ -488,7 +483,7 @@ module dcache
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
 
-	  if(StallW) begin 
+	  if(StallWtoDCache) begin 
             NextState = STATE_CPU_BUSY;
             SelAdrM = 1'b1; 
 	  else NextState = STATE_AMO_UPDATE;
@@ -500,7 +495,7 @@ module dcache
 	  DCacheAccess = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
-	  if(StallW) begin
+	  if(StallWtoDCache) begin
 	    NextState = STATE_CPU_BUSY;
             SelAdrM = 1'b1;
 	  end
@@ -515,7 +510,7 @@ module dcache
 	  DCacheStall = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
-	  if(StallW) begin 
+	  if(StallWtoDCache) begin 
 	    NextState = STATE_CPU_BUSY;
 	    SelAdrM = 1'b1;
 	  end
@@ -557,7 +552,7 @@ module dcache
       end
       STATE_AMO_WRITE: begin
 	SelAMOWrite = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -618,7 +613,7 @@ module dcache
 	//SelAdrM = 1'b1;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -637,7 +632,7 @@ module dcache
 
       STATE_MISS_WRITE_WORD_DELAY: begin
 	CommittedM = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -774,7 +769,7 @@ module dcache
       
       STATE_CPU_BUSY: begin
 	CommittedM = 1'b1;
-	if(StallW) begin
+	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -805,7 +800,7 @@ module dcache
       
       STATE_UNCACHED_WRITE_DONE: begin
 	CommittedM = 1'b1;
-	if(StallW) begin
+	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -815,7 +810,7 @@ module dcache
       STATE_UNCACHED_READ_DONE: begin
 	CommittedM = 1'b1;
 	SelUncached = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
