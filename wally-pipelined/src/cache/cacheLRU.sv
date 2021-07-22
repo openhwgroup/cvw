@@ -62,7 +62,7 @@ module cacheLRU
       assign LRUMask[2] = WayIn[3] | WayIn[2];
 
       for(index = 0; index < NUMWAYS-1; index++)
-	assign LRUOut[index] = LRUEn[index] ? LRUIn[index] : LRUMask[index];
+	assign LRUOut[index] = LRUEn[index] ? LRUMask[index] : LRUIn[index];
 
       assign EncVicWay[1] = LRUIn[2];
       assign EncVicWay[0] = LRUIn[2] ? LRUIn[0] : LRUIn[1];
@@ -73,6 +73,37 @@ module cacheLRU
 
     end else if (NUMWAYS == 8) begin : EightWay
 
+      // selects
+      assign LRUEn[6] = 1'b1;
+      assign LRUEn[5] = WayIn[7] | WayIn[6] | WayIn[5] | WayIn[4];
+      assign LRUEn[4] = WayIn[7] | WayIn[6];
+      assign LRUEn[3] = WayIn[5] | WayIn[4];
+      assign LRUEn[2] = WayIn[3] | WayIn[2] | WayIn[1] | WayIn[0];
+      assign LRUEn[1] = WayIn[3] | WayIn[2];
+      assign LRUEn[0] = WayIn[1] | WayIn[0];
+
+      // mask
+      assign LRUMask[6] = WayIn[7] | WayIn[6] | WayIn[5] | WayIn[4];
+      assign LRUMask[5] = WayIn[7] | WayIn[6];
+      assign LRUMask[4] = WayIn[7];
+      assign LRUMask[3] = WayIn[5];
+      assign LRUMask[2] = WayIn[3] | WayIn[2];
+      assign LRUMask[1] = WayIn[2];
+      assign LRUMask[0] = WayIn[0];
+
+      for(index = 0; index < NUMWAYS-1; index++)
+	assign LRUOut[index] = LRUEn[index] ? LRUMask[index] : LRUIn[index];
+
+      assign EncVicWay[2] = LRUIn[6];
+      assign EncVicWay[1] = LRUIn[6] ? LRUIn[5] : LRUIn[2];
+      assign EncVicWay[0] = LRUIn[6] ? LRUIn[5] ? LRUIn[4] : LRUIn[3] :
+			    LRUIn[2] ? LRUIn[1] : LRUIn[0];
+      
+
+      oneHotDecoder #(3) 
+      oneHotDecoder(.bin(EncVicWay),
+		    .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3],
+			      VictimWay[4], VictimWay[5], VictimWay[6], VictimWay[7]}));
     end
   endgenerate
   
