@@ -253,7 +253,7 @@ module fma2(
     // Negate Z  when doing one of the following opperations:
     //      -prod +  Z
     //       prod -  Z
-    assign ZSgnEffM = ZSgnM^FOpCtrlE[0]; // Swap sign of Z for subtract
+    assign ZSgnEffM = ZSgnM^FOpCtrlM[0]; // Swap sign of Z for subtract
     assign InvZ = ZSgnEffM ^ PSgn;
 
     // Choose an inverted or non-inverted addend - the one is added later
