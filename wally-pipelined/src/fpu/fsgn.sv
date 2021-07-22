@@ -2,8 +2,7 @@
 
 module fsgn (  
 	input logic        XSgnE, YSgnE,
-    input logic [10:0] XExpE,
-    input logic [51:0] XFracE,
+	input logic [63:0] FSrcXE,
 	input logic XExpMaxE,
 	input logic FmtE,
 	input  logic [1:0]   SgnOpCodeE,
@@ -21,7 +20,7 @@ module fsgn (
 	//
 	
 	assign ResSgn = SgnOpCodeE[1] ? (XSgnE ^ YSgnE) : (YSgnE ^ SgnOpCodeE[0]);
-	assign SgnResE = FmtE ? {ResSgn, XExpE, XFracE} : {{32{1'b1}}, ResSgn, XExpE[7:0], XFracE[51:29]};
+	assign SgnResE = FmtE ? {ResSgn, FSrcXE[62:0]} : {FSrcXE[63:32], ResSgn, FSrcXE[30:0]};
 
 	//If the exponent is all ones, then the value is either Inf or NaN,
 	//both of which will produce a QNaN/SNaN value of some sort. This will 

@@ -374,7 +374,7 @@ module fma2(
     assign UfLSBNormSum = FmtM ? NormSum[2] : NormSum[31];
 
     // Deterimine if a small number was supposed to be subtrated
-    assign SubBySmallNum = AddendStickyM&InvZ&~(NormSumSticky)&~ZZeroM;
+    assign SubBySmallNum = AddendStickyM & InvZ & ~(NormSumSticky) & ~ZZeroM;
 
     always_comb begin
         // Determine if you add 1

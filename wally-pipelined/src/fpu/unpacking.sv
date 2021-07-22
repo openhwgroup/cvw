@@ -24,9 +24,9 @@ module unpacking (
     assign Addend = FOpCtrlE[2] ? 64'b0 : Z; // Z is only used in the FMA, and is set to Zero if a multiply opperation
     assign XSgnE = FmtE ? X[63] : X[31];
     assign YSgnE = FmtE ? Y[63] : Y[31];
-    assign ZSgnE = FmtE ? Addend[63]^FOpCtrlE[0] : Addend[31]^FOpCtrlE[0];
+    assign ZSgnE = FmtE ? Addend[63]^FOpCtrlE[0] : Addend[31]^FOpCtrlE[0]; // *** Maybe this should be done in the FMA for modularity?
 
-    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]};
+    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]}; // *** maybe convert to full number of bits here?
     assign YExpE = FmtE ? Y[62:52] : {3'b0, Y[30:23]};
     assign ZExpE = FmtE ? Addend[62:52] : {3'b0, Addend[30:23]};
 
@@ -34,7 +34,7 @@ module unpacking (
     assign YFracE = FmtE ? Y[51:0] : {Y[22:0], 29'b0};
     assign ZFracE = FmtE ? Addend[51:0] : {Addend[22:0], 29'b0};
 
-    assign XAssumed1E = |XExpE;
+    assign XAssumed1E = |XExpE; // *** should these be prepended now to create a significand?
     assign YAssumed1E = |YExpE;
     assign ZAssumed1E = |ZExpE;
 
@@ -72,6 +72,6 @@ module unpacking (
     assign YZeroE = YExpZero & YFracZero;
     assign ZZeroE = ZExpZero & ZFracZero;
 
-    assign BiasE = FmtE ? 13'h3ff : 13'h7f;
+    assign BiasE = FmtE ? 13'h3ff : 13'h7f; // *** is it better to convert to full precision exponents so bias isn't needed?
 
 endmodule

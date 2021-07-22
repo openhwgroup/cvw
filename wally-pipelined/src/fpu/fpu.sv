@@ -216,15 +216,15 @@ module fpu (
                          .FSrcXE, .FSrcYE, .FOpCtrlE, .FAddResM, .FAddFlgM);
 	
 	// first and only instance of floating-point comparator
-	fcmp fcmp (.op1({XSgnE,XExpE,XFracE}), .op2({YSgnE,YExpE,YFracE}), .FSrcXE, 
+	fcmp fcmp (.op1({FSrcXE}), .op2({FSrcYE}), .FSrcXE, 
 		   .FSrcYE, .FOpCtrlE(FOpCtrlE[2:0]), .FmtE, 
 		   .Invalid(CmpNVE), .CmpResE, .XNaNE, .YNaNE, .XZeroE, .YZeroE);
 	
 	// first and only instance of floating-point sign converter
-	fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .XExpE, .XFracE, .FmtE, .SgnResE, .SgnNVE, .XExpMaxE);
-	
+	fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, /*.XExpE, .XFracE, */.FmtE, .SgnResE, .SgnNVE, .XExpMaxE);
+
 	// first and only instance of floating-point classify unit
-	fclassify fclassify (.XSgnE, .XFracE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
+	fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
 	
 	fcvt fcvt (.XSgnE, .XExpE, .XFracE, .XAssumed1E, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .SrcAE, .FOpCtrlE, .FmtE, .FrmE, .CvtResE, .CvtFlgE);
 	
