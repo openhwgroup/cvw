@@ -200,7 +200,6 @@ module fma2(
     output logic    [4:0]       FMAFlgM);     // FMA flags {invalid, divide by zero, overflow, underflow, inexact}
    
 
-
     logic [`NF-1:0]    ResultFrac; // Result fraction
     logic [`NE-1:0]    ResultExp;  // Result exponent
     logic           ResultSgn;  // Result sign
@@ -237,11 +236,12 @@ module fma2(
     logic           SigNaN;     // is an input a signaling NaN
     logic           UnderflowFlag;  // Underflow singal used in FMAFlgM (used to avoid a circular depencency)
     logic [`FLEN-1:0] XNaNResult, YNaNResult, ZNaNResult, InvalidResult, OverflowResult, KillProdResult, UnderflowResult; // possible results
-
+    logic           ZSgnEffM;
    
     
     // Calculate the product's sign
     //      Negate product's sign if FNMADD or FNMSUB
+ 
     assign PSgn = XSgnM ^ YSgnM ^ FOpCtrlM[1];
 
 
@@ -253,7 +253,8 @@ module fma2(
     // Negate Z  when doing one of the following opperations:
     //      -prod +  Z
     //       prod -  Z
-    assign InvZ = ZSgnM ^ PSgn;
+    assign ZSgnEffM = ZSgnM^FOpCtrlE[0]; // Swap sign of Z for subtract
+    assign InvZ = ZSgnEffM ^ PSgn;
 
     // Choose an inverted or non-inverted addend - the one is added later
     assign AlignedAddend2 = InvZ ? ~{1'b0, AlignedAddendM} : {1'b0, AlignedAddendM};
@@ -434,13 +435,13 @@ module fma2(
     // Determine the sign if the sum is zero
     //      if cancelation then 0 unless round to -infinity
     //      otherwise psign
-    assign ZeroSgn = (PSgn^ZSgnM)&~Underflow ? FrmM == 3'b010 : PSgn;
+    assign ZeroSgn = (PSgn^ZSgnEffM)&~Underflow ? FrmM == 3'b010 : PSgn;
 
     // is the result negitive
     //  if p - z is the Sum negitive
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
-    assign ResultSgnTmp = InvZ&(ZSgnM)&NegSum | InvZ&PSgn&~NegSum | ((ZSgnM)&PSgn);
+    assign ResultSgnTmp = InvZ&(ZSgnEffM)&NegSum | InvZ&PSgn&~NegSum | ((ZSgnEffM)&PSgn);
     assign ResultSgn = SumZero ? ZeroSgn : ResultSgnTmp;
  
 
@@ -459,7 +460,7 @@ module fma2(
     //   3) 0 * Inf
     assign MaxExp = FmtM ? {`NE{1'b1}} : 13'd255;
     assign SigNaN = XSNaNM | YSNaNM | ZSNaNM;
-    assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgn ^ ZSgnM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
+    assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgn ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
    
     // Set Overflow flag if the number is too big to be represented
     //      - Don't set the overflow flag if an overflowed result isn't outputed
@@ -491,7 +492,7 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
     assign XNaNResult = FmtM ? {XSgnM, XExpM, 1'b1, XManM[`NF-2:0]} : {{32{1'b1}}, XSgnM, XExpM[7:0], 1'b1, XManM[50:29]};
     assign YNaNResult = FmtM ? {YSgnM, YExpM, 1'b1, YManM[`NF-2:0]} : {{32{1'b1}}, YSgnM, YExpM[7:0], 1'b1, YManM[50:29]};
-    assign ZNaNResult = FmtM ? {ZSgnM, ZExpM, 1'b1, ZManM[`NF-2:0]} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], 1'b1, ZManM[50:29]};
+    assign ZNaNResult = FmtM ? {ZSgnEffM, ZExpM, 1'b1, ZManM[`NF-2:0]} : {{32{1'b1}}, ZSgnEffM, ZExpM[7:0], 1'b1, ZManM[50:29]};
     assign OverflowResult =  FmtM ? ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                           {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                     ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :
@@ -505,7 +506,7 @@ module fma2(
                         Invalid ? InvalidResult : // has to be before inf
                         XInfM ? FmtM ? {PSgn, XExpM, XManM[`NF-1:0]} : {{32{1'b1}}, PSgn, XExpM[7:0], XManM[51:29]} : 
                         YInfM ? FmtM ? {PSgn, YExpM, YManM[`NF-1:0]} : {{32{1'b1}}, PSgn, YExpM[7:0], YManM[51:29]} :
-                        ZInfM ? FmtM ? {ZSgnM, ZExpM, ZManM[`NF-1:0]} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], ZManM[51:29]} :
+                        ZInfM ? FmtM ? {ZSgnEffM, ZExpM, ZManM[`NF-1:0]} : {{32{1'b1}}, ZSgnEffM, ZExpM[7:0], ZManM[51:29]} :
                         Overflow ? OverflowResult :
                         KillProdM ? KillProdResult : // has to be after Underflow      
                         Underflow & ~ResultDenorm ? UnderflowResult :  
