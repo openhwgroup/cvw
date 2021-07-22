@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import sys, fileinput
 
-sys.stderr.write("reminder: this script takes input from stdin\n")
+sys.stderr.write("reminder: parse_gdb_output.py takes input from stdin\n")
 
 csrs = ['fcsr','mcause','mcounteren','medeleg','mepc','mhartid','mideleg','mie','mip','misa','mscratch','mstatus','mtval','mtvec','pmpaddr0','pmpcfg0','satp','scause','scounteren','sepc','sie','sscratch','sstatus','stval','stvec']
 
@@ -17,7 +17,7 @@ try:
       with open('{}parsedRegs.txt'.format(output_path), 'w') as wReg:
         with open('{}parsedMemRead.txt'.format(output_path), 'w') as wMem:
           with open('{}parsedMemWrite.txt'.format(output_path), 'w') as wMemW:
-            with open('{}parsedCSRs.txt'.format(output_path), 'w') as wCSRs:
+            with open('{}/intermediate-outputs/unfixedParsedCSRs.txt'.format(output_path), 'w') as wCSRs:
               firstCSR = True
               curCSRs = {}
               lastRead = ''

@@ -448,10 +448,14 @@ module testbench();
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readAdrExpected);
       scan_file_memR = $fscanf(data_file_memR, "%x\n", readDataExpected);
       assign readAdrTranslated = adrTranslator(readAdrExpected);
-      if (~(dut.hart.lsu.dcache.MemPAdrM === readAdrTranslated)) begin
-        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemPAdrM does not equal readAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, readAdrTranslated);
+      if (~(dut.hart.ieu.MemAdrM === readAdrExpected)) begin
+        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemAdrM does not equal virtual readAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.ieu.MemAdrM, readAdrExpected);
         `ERROR
       end
+      //if (~(dut.hart.lsu.dcache.MemPAdrM === readAdrTranslated)) begin
+      //  $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemPAdrM does not equal physical readAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, readAdrTranslated);
+      //  `ERROR
+      //end
       if (readDataExpected !== dut.hart.lsu.dcache.ReadDataM) begin
         if (dut.hart.lsu.dcache.MemPAdrM inside `LINUX_FIX_READ) begin
           if (dut.hart.lsu.dcache.MemPAdrM != 'h10000005) // Suppress the warning for UART LSR so we can read UART output
@@ -479,15 +483,18 @@ module testbench();
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeDataExpected);
       scan_file_memW = $fscanf(data_file_memW, "%x\n", writeAdrExpected);
       assign writeAdrTranslated = adrTranslator(writeAdrExpected);
-
+      if (~(dut.hart.ieu.MemAdrM === writeAdrExpected)) begin
+        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemAdrM does not equal virtual writeAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.ieu.MemAdrM, writeAdrExpected);
+        `ERROR
+      end
       if (writeDataExpected != dut.hart.lsu.dcache.WriteDataM && ~dut.uncore.HSELPLICD) begin
         $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: WriteDataM does not equal writeDataExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.WriteDataM, writeDataExpected);
         `ERROR
       end
-      if (~(writeAdrTranslated === dut.hart.lsu.dcache.MemPAdrM) && ~dut.uncore.HSELPLICD) begin
-        $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemPAdrM does not equal writeAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, writeAdrTranslated);
-        `ERROR
-      end
+      //if (~(writeAdrTranslated === dut.hart.lsu.dcache.MemPAdrM) && ~dut.uncore.HSELPLICD) begin
+      //  $display("%0t ps, InstrNum %0d, PCM %x, InstrM %s: MemPAdrM does not equal physical writeAdrExpected: %x, %x", $time, instrs, dut.hart.ifu.PCM, PCtextM, dut.hart.lsu.dcache.MemPAdrM, writeAdrTranslated);
+      //  `ERROR
+      //end
     end
   end
 
@@ -663,14 +670,14 @@ module testbench();
    * See section 4.3.2 of the RISC-V Privileged specification for a full
    * explanation of the below algorithm.
    */
+  logic             SvMode, PTE_R, PTE_X;
+  logic [`XLEN-1:0] SATP, PTE;
+  logic [55:0]      BaseAdr, PAdr;
+  logic [8:0]       VPN [2:0];
+  logic [11:0]      Offset;
   function logic [`XLEN-1:0] adrTranslator( 
     input logic [`XLEN-1:0] adrIn);
     begin
-      logic             SvMode, PTE_R, PTE_X;
-      logic [`XLEN-1:0] SATP, PTE;
-      logic [55:0]      BaseAdr, PAdr;
-      logic [8:0]       VPN [2:0];
-      logic [11:0]      Offset;
       int i;
       // Grab the SATP register from privileged unit
       SATP = dut.hart.priv.csr.SATP_REGW;
