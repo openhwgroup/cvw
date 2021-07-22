@@ -97,7 +97,7 @@ module fma1(
     logic [`NE+1:0]    AlignCnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format *** is this enough bits?
     logic [4*`NF+5:0]   ZManShifted;                // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
     logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter U(NF+5.3NF+1)
-    
+
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
     //      - When multipliying two fp numbers, add the exponents
@@ -305,7 +305,8 @@ module fma2(
     assign SumZero = ~(|Sum);
 
     // determine the length of the fraction based on precision
-    assign FracLen = FmtM ? `NF : 13'd23;
+    //assign FracLen = FmtM ? `NF : 13'd23;
+    assign FracLen = `NF;
 
     // Determine if the result is denormal
     assign SumExpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCnt} - (`NF+4));

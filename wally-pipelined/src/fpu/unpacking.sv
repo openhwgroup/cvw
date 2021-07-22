@@ -14,7 +14,7 @@ module unpacking (
     output logic XInfE, YInfE, ZInfE,
     output logic XExpMaxE
 );
- //***rename to make significand = 1.frac m = significand
+ 
     logic [51:0]    XFracE, YFracE, ZFracE;
     logic           XExpNonzero, YExpNonzero, ZExpNonzero;
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
