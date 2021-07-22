@@ -4,8 +4,7 @@ module unpacking (
     input logic  [2:0]  FOpCtrlE,
     output logic        XSgnE, YSgnE, ZSgnE,
     output logic [10:0] XExpE, YExpE, ZExpE,
-    output logic [51:0] XFracE, YFracE, ZFracE,
-    output logic        XAssumed1E, YAssumed1E, ZAssumed1E,
+    output logic [52:0] XManE, YManE, ZManE,
     output logic XNormE,
     output logic XNaNE, YNaNE, ZNaNE,
     output logic XSNaNE, YSNaNE, ZSNaNE,
@@ -16,6 +15,8 @@ module unpacking (
     output logic XExpMaxE
 );
  //***rename to make significand = 1.frac m = significand
+    logic [51:0]    XFracE, YFracE, ZFracE;
+    logic           XAssumed1E, YAssumed1E, ZAssumed1E;
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
     logic [63:0]    Addend; // value to add (Z or zero)
@@ -37,6 +38,10 @@ module unpacking (
     assign XAssumed1E = |XExpE; // *** should these be prepended now to create a significand?
     assign YAssumed1E = |YExpE;
     assign ZAssumed1E = |ZExpE;
+
+    assign XManE = {XAssumed1E, XFracE};
+    assign YManE = {YAssumed1E, YFracE};
+    assign ZManE = {ZAssumed1E, ZFracE};
 
     assign XExpZero = ~XAssumed1E;
     assign YExpZero = ~YAssumed1E;
