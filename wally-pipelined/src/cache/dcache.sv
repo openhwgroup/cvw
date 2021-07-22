@@ -108,7 +108,7 @@ module dcache
   logic [`XLEN-1:0]	       ReadDataWordM, ReadDataWordMuxM;
   logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
-  logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
+  logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
   logic [WORDSPERLINE-1:0]     SRAMWordEnable;
   logic 		       SelMemWriteDataM;
   logic [2:0] 		       Funct3W;
@@ -319,10 +319,7 @@ module dcache
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
 
-  // *** fix width later.
-  // verilator lint_off WIDTH
   assign HWDATA = CacheableM ? VictimReadDataBlockSetsM[FetchCount] : WriteDataM;
-  // verilator lint_on WIDTH
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
 				.d1(DCacheMemWriteData[`XLEN-1:0]),
@@ -392,13 +389,8 @@ module dcache
   assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
   assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
-  generate
-    if (`XLEN == 32) begin
-      assign AHBPAdr = ({{`PA_BITS-4{1'b0}}, FetchCount} << 2) + BasePAdrMaskedM;
-    end else begin
-      assign AHBPAdr = ({{`PA_BITS-3{1'b0}}, FetchCount} << 3) + BasePAdrMaskedM;
-    end
-  endgenerate
+  assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
+  
     
   
   // mux between the CPU's write and the cache fetch.
@@ -422,9 +414,9 @@ module dcache
   
 
   assign AnyCPUReqM = |MemRWM | (|AtomicM);
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL:0]);
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
-  flopenr #(LOGWPL+1) 
+  flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
 		.reset(reset | CntReset),
 		.en(CntEn),
