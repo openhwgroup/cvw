@@ -68,13 +68,12 @@ module fpu (
 	logic [`XLEN-1:0]  FSrcXMAligned;
 	logic [63:0] 	   FSrcXE, FSrcXM;                                     // Input 1 to the various units (after forwarding)
 	logic [63:0] 	   FSrcYE;                                             // Input 2 to the various units (after forwarding)
-	logic [63:0] 	   FSrcZE;                                             // Input 3 to the various units (after forwarding)
+	logic [63:0] 	   FPreSrcZE, FSrcZE;                                             // Input 3 to the various units (after forwarding)
 	
 	// unpacking signals
 	logic 		   XSgnE, YSgnE, ZSgnE;
 	logic [10:0] 	   XExpE, YExpE, ZExpE;
-	logic [51:0] 	   XFracE, YFracE, ZFracE;
-	logic 		   XAssumed1E, YAssumed1E, ZAssumed1E;
+	logic [52:0] 	   XManE, YManE, ZManE;
 	logic 		   XNaNE, YNaNE, ZNaNE;
 	logic 		   XSNaNE, YSNaNE, ZSNaNE;
 	logic 		   XDenormE, YDenormE, ZDenormE;
@@ -86,7 +85,7 @@ module fpu (
 	
 	logic 		   XSgnM, YSgnM, ZSgnM;
 	logic [10:0] 	   XExpM, YExpM, ZExpM;
-	logic [51:0] 	   XFracM, YFracM, ZFracM;
+	logic [52:0] 	   XManM, YManM, ZManM;
 	logic 		   XNaNM, YNaNM, ZNaNM;
 	logic 		   XSNaNM, YSNaNM, ZSNaNM;
 	logic 		   XZeroM, YZeroM, ZZeroM;
@@ -162,25 +161,26 @@ module fpu (
 	// Hazard unit for FPU
 	fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResultSelM, .FStallD, 
                         .FForwardXE, .FForwardYE, .FForwardZE);
-	
+
 	// forwarding muxs
 	mux3  #(64)  fxemux(FRD1E, FPUResultW, FResM, FForwardXE, FSrcXE);
 	mux3  #(64)  fyemux(FRD2E, FPUResultW, FResM, FForwardYE, FSrcYE);
-	mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FSrcZE);
-	
+	mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
+	mux2  #(64)  fzmulmux(FPreSrcZE, 64'b0, FOpCtrlE[2], FSrcZE); // Force Z to be 0 for multiply instructions
+ 	
 	unpacking unpacking(.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), 
 			    .FOpCtrlE(FOpCtrlE[2:0]), .FmtE, .XSgnE, .YSgnE, 
-			    .ZSgnE, .XExpE, .YExpE, .ZExpE, .XFracE, .YFracE, .ZFracE, 
-			    .XAssumed1E, .YAssumed1E, .ZAssumed1E, .XNaNE, .YNaNE, .ZNaNE, 
+			    .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
+			    .XNaNE, .YNaNE, .ZNaNE, 
 			    .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
 			    .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
       // first of two-stage instance of floating-point fused multiply-add unit
 	fma fma (.clk, .reset, .FlushM, .StallM, 
-		 .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XFracE, .YFracE, .
-		 ZFracE, .XAssumed1E, .YAssumed1E, .ZAssumed1E, .XDenormE, .YDenormE, 
+		 .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .
+		 ZManE, .XDenormE, .YDenormE, 
 		 .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .BiasE, 
-		 .XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XFracM, 
-		 .YFracM, .ZFracM, .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
+		 .XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XManM, 
+		 .YManM, .ZManM, .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
 		 //  .FSrcXE, .FSrcYE, .FSrcZE, .FSrcXM, .FSrcYM, .FSrcZM, 
 		 .FOpCtrlE(FOpCtrlE[2:0]), .FOpCtrlM(FOpCtrlM[2:0]), 
 		 .FmtE, .FmtM, .FrmM, .FMAFlgM, .FMAResM);
@@ -216,17 +216,17 @@ module fpu (
                          .FSrcXE, .FSrcYE, .FOpCtrlE, .FAddResM, .FAddFlgM);
 	
 	// first and only instance of floating-point comparator
-	fcmp fcmp (.op1({XSgnE,XExpE,XFracE}), .op2({YSgnE,YExpE,YFracE}), .FSrcXE, 
+	fcmp fcmp (.op1({XSgnE,XExpE,XManE[`NF-1:0]}), .op2({YSgnE,YExpE,YManE[`NF-1:0]}), .FSrcXE, 
 		   .FSrcYE, .FOpCtrlE(FOpCtrlE[2:0]), .FmtE, 
 		   .Invalid(CmpNVE), .CmpResE, .XNaNE, .YNaNE, .XZeroE, .YZeroE);
 	
 	// first and only instance of floating-point sign converter
-	fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .XExpE, .XFracE, .FmtE, .SgnResE, .SgnNVE, .XExpMaxE);
-	
+	fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE, .SgnNVE, .XExpMaxE);
+
 	// first and only instance of floating-point classify unit
-	fclassify fclassify (.XSgnE, .XFracE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
+	fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
 	
-	fcvt fcvt (.XSgnE, .XExpE, .XFracE, .XAssumed1E, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .SrcAE, .FOpCtrlE, .FmtE, .FrmE, .CvtResE, .CvtFlgE);
+	fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .SrcAE, .FOpCtrlE, .FmtE, .FrmE, .CvtResE, .CvtFlgE);
 	
 	// output for store instructions
 	assign FWriteDataE = FSrcYE[`XLEN-1:0];
@@ -237,9 +237,9 @@ module fpu (
 	flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
 	// flopenrc #(64) EMFpReg2(clk, reset, FlushM, ~StallM, FSrcYE, FSrcYM);
 	// flopenrc #(64) EMFpReg3(clk, reset, FlushM, ~StallM, FSrcZE, FSrcZM);
-	flopenrc #(64) EMFpReg4(clk, reset, FlushM, ~StallM, {XSgnE,XExpE,XFracE}, {XSgnM,XExpM,XFracM});
-	flopenrc #(64) EMFpReg5(clk, reset, FlushM, ~StallM, {YSgnE,YExpE,YFracE}, {YSgnM,YExpM,YFracM});
-	flopenrc #(64) EMFpReg6(clk, reset, FlushM, ~StallM, {ZSgnE,ZExpE,ZFracE}, {ZSgnM,ZExpM,ZFracM});
+	flopenrc #(65) EMFpReg4(clk, reset, FlushM, ~StallM, {XSgnE,XExpE,XManE}, {XSgnM,XExpM,XManM});
+	flopenrc #(65) EMFpReg5(clk, reset, FlushM, ~StallM, {YSgnE,YExpE,YManE}, {YSgnM,YExpM,YManM});
+	flopenrc #(65) EMFpReg6(clk, reset, FlushM, ~StallM, {ZSgnE,ZExpE,ZManE}, {ZSgnM,ZExpM,ZManM});
 	flopenrc #(12) EMFpReg7(clk, reset, FlushM, ~StallM, 
 				{XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
 				{XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});
