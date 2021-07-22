@@ -1,14 +1,11 @@
 set pagination off
 target extended-remote :1236
 file ../buildroot-image-output/vmlinux
-#b do_idle
-#c
-#c
-#c
-#c
-b *0x80200040
+stepi 1000
+b do_idle
 c
-stepi 10000
+c
+c
 set confirm off
 kill
 q
