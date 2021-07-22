@@ -57,8 +57,9 @@ module datapath (
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
+  output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  input  logic [`XLEN-1:0] CSRReadValW, ReadDataW, MulDivResultW, 
+  input  logic [`XLEN-1:0] CSRReadValW, ReadDataM, MulDivResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -86,7 +87,7 @@ module datapath (
   logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] WriteDataW;
   logic [`XLEN-1:0] ResultW;
-
+  
   // Decode stage
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
@@ -136,6 +137,11 @@ module datapath (
     else 
       assign SCResultW = 0;
   endgenerate
+
+  flopen #(`XLEN) ReadDataWReg(.clk(clk),
+			      .en(~StallW),
+			      .d(ReadDataM),
+			      .q(ReadDataW));
 
   mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	
 /* -----\/----- EXCLUDED -----\/-----
