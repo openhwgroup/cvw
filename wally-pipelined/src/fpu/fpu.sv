@@ -68,7 +68,7 @@ module fpu (
 	logic [`XLEN-1:0]  FSrcXMAligned;
 	logic [63:0] 	   FSrcXE, FSrcXM;                                     // Input 1 to the various units (after forwarding)
 	logic [63:0] 	   FSrcYE;                                             // Input 2 to the various units (after forwarding)
-	logic [63:0] 	   FSrcZE;                                             // Input 3 to the various units (after forwarding)
+	logic [63:0] 	   FPreSrcZE, FSrcZE;                                             // Input 3 to the various units (after forwarding)
 	
 	// unpacking signals
 	logic 		   XSgnE, YSgnE, ZSgnE;
@@ -161,12 +161,12 @@ module fpu (
 	// Hazard unit for FPU
 	fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResultSelM, .FStallD, 
                         .FForwardXE, .FForwardYE, .FForwardZE);
-							
+
 	// forwarding muxs
 	mux3  #(64)  fxemux(FRD1E, FPUResultW, FResM, FForwardXE, FSrcXE);
 	mux3  #(64)  fyemux(FRD2E, FPUResultW, FResM, FForwardYE, FSrcYE);
-	mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FSrcZE);
-//	mux2  #(64)  fzmulmux(FPreSrcZE, 64'b0, FOpCtrlE[2], FSrcZE);
+	mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
+	mux2  #(64)  fzmulmux(FPreSrcZE, 64'b0, FOpCtrlE[2], FSrcZE); // Force Z to be 0 for multiply instructions
  	
 	unpacking unpacking(.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), 
 			    .FOpCtrlE(FOpCtrlE[2:0]), .FmtE, .XSgnE, .YSgnE, 
