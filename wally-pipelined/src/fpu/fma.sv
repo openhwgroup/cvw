@@ -35,11 +35,10 @@ module fma(
     input logic  [2:0]      FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic        XSgnE, YSgnE, ZSgnE,
     input logic [`NE-1:0] XExpE, YExpE, ZExpE,
-    input logic [`NF-1:0] XFracE, YFracE, ZFracE,
+    input logic [`NF:0] XManE, YManE, ZManE,
     input logic        XSgnM, YSgnM, ZSgnM,
-    input logic [`NE-1:0] XExpM, YExpM, ZExpM,
-    input logic [`NF-1:0] XFracM, YFracM, ZFracM,
-    input logic        XAssumed1E, YAssumed1E, ZAssumed1E,
+    input logic [`NE-1:0] XExpM, YExpM, ZExpM, // ***needed
+    input logic [`NF:0] XManM, YManM, ZManM,
     input logic XDenormE, YDenormE, ZDenormE,
     input logic XZeroE, YZeroE, ZZeroE,
     input logic XNaNM, YNaNM, ZNaNM,
@@ -57,8 +56,8 @@ module fma(
     logic 			AddendStickyE, AddendStickyM;
     logic 			KillProdE, KillProdM;
     
-    fma1 fma1 (.XExpE, .YExpE, .ZExpE, .XFracE, .YFracE, .ZFracE, 
-                .BiasE, .XAssumed1E, .YAssumed1E, .ZAssumed1E, .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
+    fma1 fma1 (.XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
+                .BiasE, .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
                 .FOpCtrlE, .FmtE, .ProdManE, .AlignedAddendE,
                 .ProdExpE, .AddendStickyE, .KillProdE); 
                 
@@ -69,7 +68,7 @@ module fma(
                             {AddendStickyE, KillProdE},
                             {AddendStickyM, KillProdM});
 
-    fma2 fma2(.XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XFracM, .YFracM, .ZFracM, 
+    fma2 fma2(.XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
             .FOpCtrlM, .FrmM, .FmtM, 
             .ProdManM, .AlignedAddendM, .ProdExpM, .AddendStickyM, .KillProdM, 
             .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM,
@@ -82,8 +81,7 @@ endmodule
 module fma1(
     // input logic        XSgnE, YSgnE, ZSgnE,
     input logic [`NE-1:0] XExpE, YExpE, ZExpE,      // biased exponents in B(NE.0) format
-    input logic [`NF-1:0] XFracE, YFracE, ZFracE,   // fractions in U(0.NF) format]
-    input logic        XAssumed1E, YAssumed1E, ZAssumed1E,
+    input logic [`NF:0] XManE, YManE, ZManE,   // fractions in U(0.NF) format]
     input logic        XDenormE, YDenormE, ZDenormE,
     input logic XZeroE, YZeroE, ZZeroE,
     input logic [`NE-1:0] BiasE,
@@ -114,8 +112,8 @@ module fma1(
     // verilator lint_on WIDTH
 
     // Calculate the product's mantissa
-    //      - Add the assumed one. If the number is denormalized or zero, it does not have an assumed one.
-    assign ProdManE =  {XAssumed1E, XFracE} * {YAssumed1E, YFracE};
+    //      - Mantissa includes the assumed one. If the number is denormalized or zero, it does not have an assumed one.
+    assign ProdManE =  XManE * YManE;
    
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
@@ -133,7 +131,7 @@ module fma1(
     //                       |1'b0| addnend |
 
     // the 1'b0 before the added is because the product's mantissa has two bits before the binary point (xx.xxxxxxxxxx...)
-    assign ZManPreShifted = {(`NF+3)'(0), {ZAssumed1E, ZFracE}, /*106*/(2*`NF+2)'(0)};
+    assign ZManPreShifted = {(`NF+3)'(0), ZManE, /*106*/(2*`NF+2)'(0)};
     always_comb
         begin
            
@@ -143,7 +141,7 @@ module fma1(
         //  | addnend |
         if ($signed(AlignCnt) <= $signed(-(`NF+4))) begin
             KillProdE = 1;
-            ZManShifted = ZManPreShifted;//{107'b0, {~ZAssumed1E, ZFrac}, 54'b0};
+            ZManShifted = ZManPreShifted;//{107'b0, XManE, 54'b0};
             AddendStickyE = ~(XZeroE|YZeroE);
 
         // If the Addend is shifted left (negitive AlignCnt)
@@ -185,7 +183,7 @@ module fma2(
     
     input logic        XSgnM, YSgnM, ZSgnM,
     input logic [`NE-1:0] XExpM, YExpM, ZExpM,
-    input logic [`NF-1:0] XFracM, YFracM, ZFracM,
+    input logic [`NF-1:0] XManM, YManM, ZManM,
     input logic     [2:0]       FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [2:0]       FOpCtrlM,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic                 FmtM,       // precision 1 = double 0 = single
@@ -490,29 +488,29 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
-    assign XNaNResult = FmtM ? {XSgnM, XExpM, 1'b1, XFracM[`NF-2:0]} : {{32{1'b1}}, XSgnM, XExpM[7:0], 1'b1, XFracM[50:29]};
-    assign YNaNResult = FmtM ? {YSgnM, YExpM, 1'b1, YFracM[`NF-2:0]} : {{32{1'b1}}, YSgnM, YExpM[7:0], 1'b1, YFracM[50:29]};
-    assign ZNaNResult = FmtM ? {ZSgnM, ZExpM, 1'b1, ZFracM[`NF-2:0]} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], 1'b1, ZFracM[50:29]};
+    assign XNaNResult = FmtM ? {XSgnM, XExpM, 1'b1, XManM[`NF-2:0]} : {{32{1'b1}}, XSgnM, XExpM[7:0], 1'b1, XManM[50:29]};
+    assign YNaNResult = FmtM ? {YSgnM, YExpM, 1'b1, YManM[`NF-2:0]} : {{32{1'b1}}, YSgnM, YExpM[7:0], 1'b1, YManM[50:29]};
+    assign ZNaNResult = FmtM ? {ZSgnM, ZExpM, 1'b1, ZManM[`NF-2:0]} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], 1'b1, ZManM[50:29]};
     assign OverflowResult =  FmtM ? ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                           {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                     ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :
                                                                                                                           {{32{1'b1}}, ResultSgn, 8'hff, 23'b0};
     assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
-    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZFracM} - (Minus1&AddendStickyM) + (Plus1&AddendStickyM)} : {{32{1'b1}}, ResultSgn, {ZExpM[7:0], ZFracM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
+    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} - (Minus1&AddendStickyM) + (Plus1&AddendStickyM)} : {{32{1'b1}}, ResultSgn, {ZExpM[7:0], ZManM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
     assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + (CalcPlus1&(AddendStickyM|FrmM[1])) : {{32{1'b1}}, {ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}};
     assign FMAResM = XNaNM ? XNaNResult :
                         YNaNM ? YNaNResult :
                         ZNaNM ? ZNaNResult :
                         Invalid ? InvalidResult : // has to be before inf
-                        XInfM ? FmtM ? {PSgn, XExpM, XFracM} : {{32{1'b1}}, PSgn, XExpM[7:0], XFracM[51:29]} :
-                        YInfM ? FmtM ? {PSgn, YExpM, YFracM} : {{32{1'b1}}, PSgn, YExpM[7:0], YFracM[51:29]} :
-                        ZInfM ? FmtM ? {ZSgnM, ZExpM, ZFracM} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], ZFracM[51:29]} :
+                        XInfM ? FmtM ? {PSgn, XExpM, XManM[`NF-1:0]} : {{32{1'b1}}, PSgn, XExpM[7:0], XManM[51:29]} : 
+                        YInfM ? FmtM ? {PSgn, YExpM, YManM[`NF-1:0]} : {{32{1'b1}}, PSgn, YExpM[7:0], YManM[51:29]} :
+                        ZInfM ? FmtM ? {ZSgnM, ZExpM, ZManM[`NF-1:0]} : {{32{1'b1}}, ZSgnM, ZExpM[7:0], ZManM[51:29]} :
                         Overflow ? OverflowResult :
                         KillProdM ? KillProdResult : // has to be after Underflow      
                         Underflow & ~ResultDenorm ? UnderflowResult :  
                         FmtM ? {ResultSgn, ResultExp, ResultFrac} :
                                {{32{1'b1}}, ResultSgn, ResultExp[7:0], ResultFrac[51:29]};
 
-
+// *** use NF where needed
 
 endmodule

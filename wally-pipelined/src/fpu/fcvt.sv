@@ -3,8 +3,7 @@
 module fcvt (
 	input logic        XSgnE,
     input logic [10:0] XExpE,
-    input logic [51:0] XFracE,
-    input logic XAssumed1E,
+    input logic [52:0] XManE,
     input logic XZeroE,
     input logic XNaNE,
     input logic XInfE,
@@ -108,12 +107,12 @@ module fcvt (
 
     // select the shift value and amount based on operation (to fp or int)
     assign ShiftCnt = FOpCtrlE[1] ? ExpVal : LZResP;
-    assign ShiftVal = FOpCtrlE[1] ? {{64-2{1'b0}}, XAssumed1E, XFracE} : {PosInt, 52'b0};
+    assign ShiftVal = FOpCtrlE[1] ? {{64-2{1'b0}}, XManE} : {PosInt, 52'b0};
 
 	// if shift = -1 then shift one bit right for gaurd bit (right shifting twice never rounds)
 	// if the shift is negitive add a bit for sticky bit calculation
 	// otherwise shift left
-    assign ShiftedManTmp = &ShiftCnt ? {{64-1{1'b0}}, XAssumed1E, XFracE[51:1]} : ShiftCnt[12] ? {{64+51{1'b0}}, ~XZeroE} : ShiftVal << ShiftCnt;
+    assign ShiftedManTmp = &ShiftCnt ? {{64-1{1'b0}}, XManE[52:1]} : ShiftCnt[12] ? {{64+51{1'b0}}, ~XZeroE} : ShiftVal << ShiftCnt;
 
     // truncate the shifted mantissa
     assign ShiftedMan = ShiftedManTmp[64+51:50];
@@ -121,7 +120,7 @@ module fcvt (
     // calculate sticky bit 
     //  - take into account the possible right shift from before
     //  - the sticky bit calculation covers three diffrent sizes depending on the opperation
-    assign Sticky = |ShiftedManTmp[49:0] | &ShiftCnt&XFracE[0] | (FOpCtrlE[0]&|ShiftedManTmp[62:50]) | (FOpCtrlE[0]&~FmtE&|ShiftedManTmp[91:63]);
+    assign Sticky = |ShiftedManTmp[49:0] | &ShiftCnt&XManE[0] | (FOpCtrlE[0]&|ShiftedManTmp[62:50]) | (FOpCtrlE[0]&~FmtE&|ShiftedManTmp[91:63]);
 
     
     // determine guard, round, and least significant bit of the result
