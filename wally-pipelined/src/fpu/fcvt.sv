@@ -64,7 +64,8 @@ module fcvt (
     // assign Bias = FmtE ? 12'h3ff : 12'h7f;
     assign Res64 = ((FOpCtrlE==4'b1010 || FOpCtrlE==4'b1110) | (FmtE&(FOpCtrlE==4'b0001 | FOpCtrlE==4'b0101 | FOpCtrlE==4'b0000 | FOpCtrlE==4'b1001 | FOpCtrlE==4'b1101)));
     assign In64 = ((FOpCtrlE==4'b1001 || FOpCtrlE==4'b1101) | (FmtE&(FOpCtrlE==4'b0010 | FOpCtrlE==4'b0110 | FOpCtrlE==4'b1010 | FOpCtrlE==4'b1110) | (FOpCtrlE==4'b1101 & ~FmtE)));
-    assign SubBits = In64 ? 8'd64 : 8'd32;
+    //assign SubBits = In64 ? 8'd64 : 8'd32;
+    assign SubBits = 8'd64;
     assign Bits = Res64 ? 8'd64 : 8'd32;
 
     // calulate the unbiased exponent
