@@ -40,7 +40,7 @@ module dcache
    input logic [1:0] 	       AtomicM,
    input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
-   input logic [11:0]          VAdr, // when hptw writes dtlb we use this address to index SRAM.
+   input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
    input logic [`XLEN-1:0]     WriteDataM,
    output logic [`XLEN-1:0]    ReadDataW,
@@ -56,7 +56,8 @@ module dcache
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
-   input logic 		       ITLBWriteF, 
+   input logic 		       ITLBWriteF,
+   input logic 		       WalkerInstrPageFaultF,
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
@@ -378,14 +379,13 @@ module dcache
     end
   endgenerate
 
-  // *** Coding style. this is just awful. The purpose is to align FetchCount to the
-  // size of XLEN so we can fetch XLEN bits.  FetchCount needs to be padded to PA_BITS length.
-  // *** optimize this
   mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 			      .s(SelEvict),
 			      .y(BasePAdrM));
 
+  // if not cacheable the offset bits needs to be sent to the EBU.
+  // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
   assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
   assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
@@ -662,7 +662,7 @@ module dcache
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
 
-	if (ITLBWriteF) begin
+	if (ITLBWriteF | WalkerInstrPageFaultF) begin
 	  NextState = STATE_READY;
 	end
 

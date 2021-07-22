@@ -319,6 +319,7 @@ module lsu
 		.ITLBWriteF(ITLBWriteF),		
 		.SelPTW(SelPTW),
 		.WalkerPageFaultM(WalkerPageFaultM),
+		.WalkerInstrPageFaultF(WalkerInstrPageFaultF),		
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),
