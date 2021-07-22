@@ -19,28 +19,28 @@ module unpacking (
     logic           XExpNonzero, YExpNonzero, ZExpNonzero;
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
-    logic [63:0]    Addend; // value to add (Z or zero)
+//    logic [63:0]    Addend; // value to add (Z or zero)
     logic           YExpMaxE, ZExpMaxE;  // input exponent all 1s
 
-    assign Addend = FOpCtrlE[2] ? 64'b0 : Z; // Z is only used in the FMA, and is set to Zero if a multiply opperation
+//    assign Addend = FOpCtrlE[2] ? 64'b0 : Z; // Z is only used in the FMA, and is set to Zero if a multiply opperation
     assign XSgnE = FmtE ? X[63] : X[31];
     assign YSgnE = FmtE ? Y[63] : Y[31];
-    assign ZSgnE = FmtE ? Addend[63]^FOpCtrlE[0] : Addend[31]^FOpCtrlE[0]; // *** Maybe this should be done in the FMA for modularity?
+    assign ZSgnE = FmtE ? Z[63]^FOpCtrlE[0] : Z[31]^FOpCtrlE[0]; // *** Maybe this should be done in the FMA for modularity?
 
     assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
     assign YExpE = FmtE ? Y[62:52] : {Y[30], {3{~Y[30]&~YExpZero|YExpMaxE}}, Y[29:23]}; 
-    assign ZExpE = FmtE ? Addend[62:52] : {Addend[30], {3{~Addend[30]&~ZExpZero|ZExpMaxE}}, Addend[29:23]}; 
+    assign ZExpE = FmtE ? Z[62:52] : {Z[30], {3{~Z[30]&~ZExpZero|ZExpMaxE}}, Z[29:23]}; 
 /*    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]}; // *** maybe convert to full number of bits here?
     assign YExpE = FmtE ? Y[62:52] : {3'b0, Y[30:23]};
-    assign ZExpE = FmtE ? Addend[62:52] : {3'b0, Addend[30:23]};*/
+    assign ZExpE = FmtE ? Z[62:52] : {3'b0, Z[30:23]};*/
 
     assign XFracE = FmtE ? X[51:0] : {X[22:0], 29'b0};
     assign YFracE = FmtE ? Y[51:0] : {Y[22:0], 29'b0};
-    assign ZFracE = FmtE ? Addend[51:0] : {Addend[22:0], 29'b0};
+    assign ZFracE = FmtE ? Z[51:0] : {Z[22:0], 29'b0};
 
     assign XExpNonzero = FmtE ? |X[62:52] : |X[30:23]; 
     assign YExpNonzero = FmtE ? |Y[62:52] : |Y[30:23];
-    assign ZExpNonzero = FmtE ? |Addend[62:52] : |Addend[30:23];
+    assign ZExpNonzero = FmtE ? |Z[62:52] : |Z[30:23];
 
     assign XManE = {XExpNonzero, XFracE};
     assign YManE = {YExpNonzero, YFracE};
