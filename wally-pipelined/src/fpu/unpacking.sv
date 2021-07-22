@@ -27,10 +27,12 @@ module unpacking (
     assign YSgnE = FmtE ? Y[63] : Y[31];
     assign ZSgnE = FmtE ? Addend[63]^FOpCtrlE[0] : Addend[31]^FOpCtrlE[0]; // *** Maybe this should be done in the FMA for modularity?
 
-   //assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
-    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]}; // *** maybe convert to full number of bits here?
+    assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
+    assign YExpE = FmtE ? Y[62:52] : {Y[30], {3{~Y[30]&~YExpZero|YExpMaxE}}, Y[29:23]}; 
+    assign ZExpE = FmtE ? Addend[62:52] : {Addend[30], {3{~Addend[30]&~ZExpZero|ZExpMaxE}}, Addend[29:23]}; 
+/*    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]}; // *** maybe convert to full number of bits here?
     assign YExpE = FmtE ? Y[62:52] : {3'b0, Y[30:23]};
-    assign ZExpE = FmtE ? Addend[62:52] : {3'b0, Addend[30:23]};
+    assign ZExpE = FmtE ? Addend[62:52] : {3'b0, Addend[30:23]};*/
 
     assign XFracE = FmtE ? X[51:0] : {X[22:0], 29'b0};
     assign YFracE = FmtE ? Y[51:0] : {Y[22:0], 29'b0};
@@ -78,7 +80,7 @@ module unpacking (
     assign YZeroE = YExpZero & YFracZero;
     assign ZZeroE = ZExpZero & ZFracZero;
 
-    assign BiasE = FmtE ? 13'h3ff : 13'h7f; // *** is it better to convert to full precision exponents so bias isn't needed?
-    //assign BiasE = 13'h3ff; // always use 1023 because exponents are unpacked to double precision
+    //assign BiasE = FmtE ? 13'h3ff : 13'h7f; // *** is it better to convert to full precision exponents so bias isn't needed?
+    assign BiasE = 13'h3ff; // always use 1023 because exponents are unpacked to double precision
 
 endmodule
