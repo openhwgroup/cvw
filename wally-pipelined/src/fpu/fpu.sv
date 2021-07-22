@@ -216,7 +216,7 @@ module fpu (
                          .FSrcXE, .FSrcYE, .FOpCtrlE, .FAddResM, .FAddFlgM);
 	
 	// first and only instance of floating-point comparator
-	fcmp fcmp (.op1({FSrcXE}), .op2({FSrcYE}), .FSrcXE, 
+	fcmp fcmp (.op1({XSgnE,XExpE,XFracE}), .op2({YSgnE,YExpE,YFracE}), .FSrcXE, 
 		   .FSrcYE, .FOpCtrlE(FOpCtrlE[2:0]), .FmtE, 
 		   .Invalid(CmpNVE), .CmpResE, .XNaNE, .YNaNE, .XZeroE, .YZeroE);
 	
