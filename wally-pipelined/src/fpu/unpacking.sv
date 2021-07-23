@@ -25,9 +25,9 @@ module unpacking (
     assign YSgnE = FmtE ? Y[63] : Y[31];
     assign ZSgnE = FmtE ? Z[63] : Z[31];
 
-    assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
-    assign YExpE = FmtE ? Y[62:52] : {Y[30], {3{~Y[30]&~YExpZero|YExpMaxE}}, Y[29:23]}; 
-    assign ZExpE = FmtE ? Z[62:52] : {Z[30], {3{~Z[30]&~ZExpZero|ZExpMaxE}}, Z[29:23]}; 
+    assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30] & XExpNonzero | XExpMaxE}}, X[29:23]}; 
+    assign YExpE = FmtE ? Y[62:52] : {Y[30], {3{~Y[30] & YExpNonzero | YExpMaxE}}, Y[29:23]}; 
+    assign ZExpE = FmtE ? Z[62:52] : {Z[30], {3{~Z[30] & ZExpNonzero | ZExpMaxE}}, Z[29:23]}; 
 /*    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]}; // *** maybe convert to full number of bits here?
     assign YExpE = FmtE ? Y[62:52] : {3'b0, Y[30:23]};
     assign ZExpE = FmtE ? Z[62:52] : {3'b0, Z[30:23]};*/
@@ -40,10 +40,6 @@ module unpacking (
     assign YExpNonzero = FmtE ? |Y[62:52] : |Y[30:23];
     assign ZExpNonzero = FmtE ? |Z[62:52] : |Z[30:23];
 
-    assign XManE = {XExpNonzero, XFracE};
-    assign YManE = {YExpNonzero, YFracE};
-    assign ZManE = {ZExpNonzero, ZFracE};
-
     assign XExpZero = ~XExpNonzero;
     assign YExpZero = ~YExpNonzero;
     assign ZExpZero = ~ZExpNonzero;
@@ -51,6 +47,10 @@ module unpacking (
     assign XFracZero = ~|XFracE;
     assign YFracZero = ~|YFracE;
     assign ZFracZero = ~|ZFracE;
+
+    assign XManE = {XExpNonzero, XFracE};
+    assign YManE = {YExpNonzero, YFracE};
+    assign ZManE = {ZExpNonzero, ZFracE};
 
     assign XExpMaxE = FmtE ? &X[62:52] : &X[30:23];
     assign YExpMaxE = FmtE ? &Y[62:52] : &Y[30:23];
