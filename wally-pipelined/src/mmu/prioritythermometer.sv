@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// prioritycircuit.sv
+// priritythermometer.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
 // Modified: Teo Ene 15 Apr 2021:
@@ -30,31 +30,21 @@
 
 `include "wally-config.vh"
 
-module prioritycircuit #(parameter ENTRIES = 8,
-                         parameter FINAL_OP = "AND") (
-  input  logic  [ENTRIES-1:0] a,
-  input  logic                FirstPin,
-  output logic  [ENTRIES-1:0] y
+module prioritythemometer #(parameter N = 8) (
+  input  logic  [N-1:0] a,
+  output logic  [N-1:0] y
 );
-  // verilator lint_off UNOPTFLAT
-  logic [ENTRIES-1:0] nolower;
 
   // generate thermometer code mask
   genvar i;
   generate
-    assign nolower[0] = FirstPin;
-    for (i=1; i<ENTRIES; i++) begin:therm
-      assign nolower[i] = nolower[i-1] & ~a[i-1];
+    assign y[0] = a[0];
+    for (i=1; i<N; i++) begin
+      assign y[i] = y[i-1] & a[i];
     end
   endgenerate
-  // verilator lint_on UNOPTFLAT
-  
-  generate
-    if (FINAL_OP=="AND") begin
-      assign y = a & nolower;
-    end else if (FINAL_OP=="NONE") begin
-      assign y = nolower;
-    end // *** So far these are the only two operations I need to do at the end, but feel free to add more as needed.
-  endgenerate
-  // assign y = a & nolower;
+
 endmodule
+
+
+
