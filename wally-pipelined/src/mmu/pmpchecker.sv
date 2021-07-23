@@ -69,7 +69,7 @@ module pmpchecker (
     .PAgePMPAdrOut(PAgePMPAdr),
     .FirstMatch, .Match, .Active, .L, .X, .W, .R);
 
-  prioritycircuit #(.ENTRIES(`PMP_ENTRIES), .FINAL_OP("AND")) pmppriority(.a(Match), .FirstPin(1'b1), .y(FirstMatch)); // Take the ripple gates/signals out of the pmpadrdec and into another unit.
+  priorityonehot #(`PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // Take the ripple gates/signals out of the pmpadrdec and into another unit.
 
   // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 

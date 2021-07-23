@@ -43,7 +43,7 @@ module dcache
    input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
    input logic [`XLEN-1:0]     WriteDataM,
-   output logic [`XLEN-1:0]    ReadDataM, 
+   output logic [`XLEN-1:0]    ReadDataM,
    output logic 	       DCacheStall,
    output logic 	       CommittedM,
    output logic 	       DCacheMiss,
@@ -60,6 +60,7 @@ module dcache
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
+   output logic [`XLEN-1:0]    LSUData, 
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    output logic 	       AHBRead,
@@ -147,6 +148,11 @@ module dcache
   logic SelEvict;
 
   logic LRUWriteEn;
+
+  logic CaptureDataM;
+  logic [`XLEN-1:0] SavedReadDataM;
+  logic 	    SelSavedReadDataM;
+  
   
   typedef enum {STATE_READY,
 
@@ -331,7 +337,24 @@ module dcache
   subwordread subwordread(.HRDATA(ReadDataWordMuxM),
 			  .HADDRD(MemPAdrM[2:0]),
 			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			  .HRDATAMasked(ReadDataM));
+			  .HRDATAMasked(LSUData));
+
+  assign CaptureDataM = ~SelPTW & MemRWM[1];
+  
+  flopen #(`XLEN) 
+  SavedReadDataReg(.clk,
+		   .en(CaptureDataM),
+		   .d(LSUData),
+		   .q(SavedReadDataM));
+
+
+  mux2 #(`XLEN)
+  ReadDataMMux(.d0(LSUData),
+	       .d1(SavedReadDataM),
+	       .s(SelSavedReadDataM),
+	       .y(ReadDataM));
+		   
+  
 
   // This is a confusing point.
   // The final read data should be updated only if the CPU's StallWtoDCache is low
@@ -457,6 +480,7 @@ module dcache
     DCacheAccess = 1'b0;
     DCacheMiss = 1'b0;
     LRUWriteEn = 1'b0;
+    SelSavedReadDataM = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -659,6 +683,9 @@ module dcache
 
 	if (ITLBWriteF | WalkerInstrPageFaultF) begin
 	  NextState = STATE_READY;
+	  // this signal is gross.  It is used to select the saved read data m when the
+	  // CPU was stalled for an itlb miss with a simultaneous load.
+	  SelSavedReadDataM = 1'b1;
 	end
 
 	// return to ready if page table walk completed.

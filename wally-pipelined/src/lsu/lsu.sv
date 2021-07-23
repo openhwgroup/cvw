@@ -148,8 +148,9 @@ module lsu
   logic 		       PendingInterruptMtoDCache;
   logic 		       FlushWtoDCache;
   logic 		       WalkerPageFaultM;
-  
-  
+
+  logic [`XLEN-1:0] 	       LSUData;
+    
   hptw hptw(
 	    .clk(clk),
 	    .reset(reset),
@@ -163,7 +164,7 @@ module lsu
 	    .PageType,
 	    .ITLBWriteF(ITLBWriteF),
 	    .DTLBWriteM(DTLBWriteM),
-	    .HPTWReadPTE(ReadDataM),
+	    .HPTWReadPTE(LSUData),
 	    .HPTWStall(HPTWStall),
             .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
@@ -303,6 +304,7 @@ module lsu
 		.VAdr(MemAdrM[11:0]),		
 		.WriteDataM(WriteDataM),
 		.ReadDataM(ReadDataM),
+		.LSUData(LSUData),		
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.DCacheMiss,
