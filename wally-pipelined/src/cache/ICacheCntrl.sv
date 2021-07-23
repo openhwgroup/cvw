@@ -115,7 +115,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   localparam STATE_INVALIDATE = 'h12; // *** not sure if invalidate or evict? invalidate by cache block or address?
   localparam STATE_TLB_MISS = 'h13;
   localparam STATE_TLB_MISS_DONE = 'h14;
-  localparam STATE_INSTR_PAGE_FAULT = 'h15;
 
   
   localparam AHBByteLength = `XLEN / 8;
@@ -369,7 +368,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
       end
       STATE_TLB_MISS: begin
         if (WalkerInstrPageFaultF) begin
-          NextState = STATE_INSTR_PAGE_FAULT;
+          NextState = STATE_READY;
           ICacheStallF = 1'b0;
         end else if (ITLBWriteF) begin
           NextState = STATE_TLB_MISS_DONE;
@@ -378,10 +377,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
         end
       end
       STATE_TLB_MISS_DONE: begin
-        NextState = STATE_READY;
-      end
-      STATE_INSTR_PAGE_FAULT: begin
-        ICacheStallF = 1'b0;
         NextState = STATE_READY;
       end
       default: begin
