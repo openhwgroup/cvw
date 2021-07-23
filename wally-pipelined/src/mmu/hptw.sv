@@ -48,6 +48,12 @@ module hptw
    output logic		    WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
 );
 
+      typedef enum  {L0_ADR, L0_RD, 
+				     L1_ADR, L1_RD, 
+				     L2_ADR, L2_RD, 
+				     L3_ADR, L3_RD, 
+				     LEAF, IDLE, FAULT} statetype; // *** placed outside generate statement to remove synthesis errors
+
   generate
     if (`MEM_VIRTMEM) begin
       logic			    DTLBWalk; // register TLBs translation miss requests
@@ -64,12 +70,6 @@ module hptw
       logic [`SVMODE_BITS-1:0]	    SvMode;
       logic [`XLEN-1:0] 	    TranslationVAdr;
       
-
-      typedef enum  {L0_ADR, L0_RD, 
-				     L1_ADR, L1_RD, 
-				     L2_ADR, L2_RD, 
-				     L3_ADR, L3_RD, 
-				     LEAF, IDLE, FAULT} statetype;
       statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 	  // Extract bits from CSRs and inputs
