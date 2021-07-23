@@ -46,6 +46,8 @@ module testbench();
 
   string tests32mmu[] = '{
     "rv32mmu/WALLY-MMU-SV32", "3000"
+    //"rv32mmu/WALLY-PMA", "3000",
+    //"rv32mmu/WALLY-PMA", "3000"
     };
 
   string tests64mmu[] = '{
