@@ -65,10 +65,10 @@ module hptw
       logic [`XLEN-1:0] 	    TranslationVAdr;
       
 
-      typedef enum  {LEVEL0_SET_ADR, LEVEL0_READ, LEVEL0,
-				     LEVEL1_SET_ADR, LEVEL1_READ, LEVEL1,
-				     LEVEL2_SET_ADR, LEVEL2_READ, LEVEL2,
-				     LEVEL3_SET_ADR, LEVEL3_READ, LEVEL3,
+      typedef enum  {L0_ADR, L0_RD, 
+				     L1_ADR, L1_RD, 
+				     L2_ADR, L2_RD, 
+				     L3_ADR, L3_RD, 
 				     LEAF, IDLE, FAULT} statetype;
       statetype WalkerState, NextWalkerState, InitialWalkerState;
 
@@ -97,7 +97,7 @@ module hptw
 	  
 	  // Enable and select signals based on states
       assign StartWalk = (WalkerState == IDLE) & TLBMiss;
-	  assign HPTWRead = (WalkerState == LEVEL3_READ) | (WalkerState == LEVEL2_READ) | (WalkerState == LEVEL1_READ) | (WalkerState == LEVEL0_READ);
+	  assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
 	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
@@ -111,10 +111,10 @@ module hptw
 	  flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
 	  always_comb 
 		case (WalkerState)
-			LEVEL3:  NextPageType = 2'b11; // terapage
-			LEVEL2:  NextPageType = 2'b10; // gigapage
-			LEVEL1:  NextPageType = 2'b01; // megapage
-			LEVEL0:  NextPageType = 2'b00; // kilopage
+			L3_RD:  NextPageType = 2'b11; // terapage
+			L2_RD:  NextPageType = 2'b10; // gigapage
+			L1_RD:  NextPageType = 2'b01; // megapage
+			L0_RD:  NextPageType = 2'b00; // kilopage
 			default: NextPageType = PageType;
 		endcase
 
@@ -122,36 +122,36 @@ module hptw
 	  if (`XLEN==32) begin // RV32
 		logic [9:0] VPN;
 		logic [`PPN_BITS-1:0] PPN;
-		assign VPN = ((WalkerState == LEVEL1_SET_ADR) | (WalkerState == LEVEL1_READ)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
-		assign PPN = ((WalkerState == LEVEL1_SET_ADR) | (WalkerState == LEVEL1_READ)) ? BasePageTablePPN : CurrentPPN; 
+		assign VPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
+		assign PPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? BasePageTablePPN : CurrentPPN; 
 		assign TranslationPAdr = {PPN, VPN, 2'b00}; 
 	  end else begin // RV64
 		logic [8:0] VPN;
 		logic [`PPN_BITS-1:0] PPN;
 		always_comb
 			case (WalkerState) // select VPN field based on HPTW state
-				LEVEL3_SET_ADR, LEVEL3_READ:  			VPN = TranslationVAdr[47:39];
-				LEVEL3, LEVEL2_SET_ADR, LEVEL2_READ:    VPN = TranslationVAdr[38:30];
-				LEVEL2, LEVEL1_SET_ADR, LEVEL1_READ: 	VPN = TranslationVAdr[29:21];
+				L3_ADR, L3_RD:  			VPN = TranslationVAdr[47:39];
+				L2_ADR, L2_RD:    VPN = TranslationVAdr[38:30];
+				L1_ADR, L1_RD: 	VPN = TranslationVAdr[29:21];
 				default:		 						VPN = TranslationVAdr[20:12];
 			endcase
-		assign PPN = ((WalkerState == LEVEL3_SET_ADR) | (WalkerState == LEVEL3_READ) | 
-		              (SvMode != `SV48 & ((WalkerState == LEVEL2_SET_ADR) | (WalkerState == LEVEL2_READ)))) ? BasePageTablePPN : CurrentPPN;
+		assign PPN = ((WalkerState == L3_ADR) | (WalkerState == L3_RD) | 
+		              (SvMode != `SV48 & ((WalkerState == L2_ADR) | (WalkerState == L2_RD)))) ? BasePageTablePPN : CurrentPPN;
 		assign TranslationPAdr = {PPN, VPN, 3'b000}; 
 	  end
 
 	  // Initial state and misalignment for RV32/64
 	  if (`XLEN == 32) begin
-		assign InitialWalkerState = LEVEL1_SET_ADR;
+		assign InitialWalkerState = L1_ADR;
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
-		assign Misaligned = ((WalkerState == LEVEL1) & MegapageMisaligned);
+		assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
 	  end else begin
 		logic  GigapageMisaligned, TerapageMisaligned;
-		assign InitialWalkerState = (SvMode == `SV48) ? LEVEL3_SET_ADR : LEVEL2_SET_ADR;
+		assign InitialWalkerState = (SvMode == `SV48) ? L3_ADR : L2_ADR;
 		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
 		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
 		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
-		assign Misaligned = ((WalkerState == LEVEL3) & TerapageMisaligned) | ((WalkerState == LEVEL2) & GigapageMisaligned) | ((WalkerState == LEVEL1) & MegapageMisaligned);
+		assign Misaligned = ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned);
  	  end
 
     // Page Table Walker FSM
@@ -164,29 +164,37 @@ module hptw
 	  case (WalkerState)
 	    IDLE: if (TLBMiss)	 		NextWalkerState = InitialWalkerState;
 		      else 					NextWalkerState = IDLE;
-	    LEVEL3_SET_ADR: 			NextWalkerState = LEVEL3_READ;
-	    LEVEL3_READ: if (HPTWStall) NextWalkerState = LEVEL3_READ;
-	                else 			NextWalkerState = LEVEL3;
-	    LEVEL3: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
-		  		else if (ValidNonLeafPTE) NextWalkerState = LEVEL2_SET_ADR;
+	    L3_ADR: 			NextWalkerState = L3_RD; // first access in SV48
+	    L3_RD: if (HPTWStall) NextWalkerState = L3_RD;
+	                else 			NextWalkerState = L2_ADR;
+//	    LEVEL3: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
+//		  		else if (ValidNonLeafPTE) NextWalkerState = L2_ADR;
+//		 		else 				NextWalkerState = FAULT;
+	    L2_ADR: if (InitialWalkerState == L2_ADR) NextWalkerState = L2_RD; // first access in SV39
+				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+		  		else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
+		 		else 				NextWalkerState = FAULT;			
+	    L2_RD: if (HPTWStall) NextWalkerState = L2_RD;
+	      			else 			NextWalkerState = L1_ADR;
+//	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
+//				else if (ValidNonLeafPTE) NextWalkerState = L1_ADR;
+//				else 				NextWalkerState = FAULT;
+	    L1_ADR: if (InitialWalkerState == L1_ADR) NextWalkerState = L1_RD; // first access in SV32
+				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+		  		else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
+		 		else 				NextWalkerState = FAULT;	
+	    L1_RD: if (HPTWStall) NextWalkerState = L1_RD;
+	      			else 			NextWalkerState = L0_ADR;
+//	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
+//	      		else if (ValidNonLeafPTE) NextWalkerState = L0_ADR;
+//				else 				NextWalkerState = FAULT;
+	    L0_ADR: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+		  		else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
 		 		else 				NextWalkerState = FAULT;
-	    LEVEL2_SET_ADR: 			NextWalkerState = LEVEL2_READ;
-	    LEVEL2_READ: if (HPTWStall) NextWalkerState = LEVEL2_READ;
-	      			else 			NextWalkerState = LEVEL2;
-	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
-				else if (ValidNonLeafPTE) NextWalkerState = LEVEL1_SET_ADR;
-				else 				NextWalkerState = FAULT;
-	    LEVEL1_SET_ADR: 			NextWalkerState = LEVEL1_READ;
-	    LEVEL1_READ: if (HPTWStall) NextWalkerState = LEVEL1_READ;
-	      			else 			NextWalkerState = LEVEL1;
-	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
-	      		else if (ValidNonLeafPTE) NextWalkerState = LEVEL0_SET_ADR;
-				else 				NextWalkerState = FAULT;
-	    LEVEL0_SET_ADR: 			NextWalkerState = LEVEL0_READ;
-	    LEVEL0_READ: if (HPTWStall) NextWalkerState = LEVEL0_READ;
-	      			else 			NextWalkerState = LEVEL0;
-	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
-				else 				NextWalkerState = FAULT;
+	    L0_RD: if (HPTWStall) NextWalkerState = L0_RD;
+	      			else 			NextWalkerState = LEAF;
+//	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
+//				else 				NextWalkerState = FAULT;
 	    LEAF: 						NextWalkerState = IDLE;
 	    FAULT:  					NextWalkerState = IDLE;
 	    default: begin
