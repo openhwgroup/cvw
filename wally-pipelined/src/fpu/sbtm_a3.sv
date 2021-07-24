@@ -1,5 +1,5 @@
 module sbtm_a3 (input  logic [7:0] a,
-		output logic [5:0] y);
+		            output logic [5:0] y);
    always_comb
      case(a)
        8'b01000000: y = 6'b100110;

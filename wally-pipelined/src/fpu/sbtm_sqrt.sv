@@ -7,12 +7,12 @@ module sbtm_sqrt (input logic [11:0] a, output logic [10:0] y);
    logic [2:0] x2_1cmp;   
    // mem outputs
    logic [13:0] y0;
-   logic [5:0] 	y1;
+   logic [5:0]  y1;
    // input to CPA
    logic [14:0] op1;
    logic [14:0] op2;
    logic [14:0] p; 
-   logic cout;  
+   logic        cout;  
 
    assign x0 = a[11:7];
    assign x1 = a[6:4];
@@ -29,7 +29,6 @@ module sbtm_sqrt (input logic [11:0] a, output logic [10:0] y);
 		{8'b0, y1, 1'b1};
    
    // CPA
-   //adder #(15) cp1 (op1, op2, 1'b0, p, cout);
    assign {cout, p} = op1 + op2; 
    assign y = p[14:4];
 

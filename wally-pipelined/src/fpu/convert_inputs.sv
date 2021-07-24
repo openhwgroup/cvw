@@ -5,19 +5,19 @@
 // and modifies the sign of op1. The converted operands are Float1
 // and Float2.
 
-module convert_inputs(Float1, Float2, op1, op2, op_type, P);
-   
-   input [63:0]  op1;            // 1st input operand (A)
-   input [63:0]  op2;            // 2nd input operand (B)
-   input [3:0] 	 op_type;        // Function opcode
-   input 	 P;              // Result Precision (0 for double, 1 for single)
+module convert_inputs(
+   input [63:0]  op1,      // 1st input operand (A)
+   input [63:0]  op2,      // 2nd input operand (B)
+   input [3:0]   op_type,  // Function opcode
+   input 	     P,        // Result Precision (0 for double, 1 for single)
 
-   output [63:0] Float1;	// Converted 1st input operand
-   output [63:0] Float2;	// Converted 2nd input operand   
-   
-   wire 	 conv_SP;        // Convert from SP to DP
-   wire 	 negate;         // Operation is negation
-   wire 	 abs_val;        // Operation is absolute value
+   output [63:0] Float1,	// Converted 1st input operand
+   output [63:0] Float2	   // Converted 2nd input operand   
+);
+
+   wire 	 conv_SP;   // Convert from SP to DP
+   wire 	 negate;    // Operation is negation
+   wire 	 abs_val;   // Operation is absolute value
    wire 	 Zexp1;		// One if the exponent of op1 is zero
    wire 	 Zexp2;		// One if the exponent of op2 is zero
    wire 	 Oexp1;		// One if the exponent of op1 is all ones
@@ -33,14 +33,6 @@ module convert_inputs(Float1, Float2, op1, op2, op_type, P);
    assign Zexp2 = ~(|op2[30:23]);
    assign Oexp1 =  (&op1[30:23]);
    assign Oexp2 =  (&op2[30:23]);
-   // assign Zexp1 = ~(op1[62] | op1[61] | op1[60] | op1[59] | 
-	// 	    op1[58] | op1[57] | op1[56] | op1[55]);
-   // assign Zexp2 = ~(op2[62] | op2[61] | op2[60] | op2[59] | 
-	// 	    op2[58] | op2[57] | op2[56] | op2[55]);
-   // assign Oexp1 =  (op1[62] & op1[61] & op1[60] & op1[59] & 
-	// 	    op1[58] & op1[57] & op1[56] & op1[55]);
-   // assign Oexp2 =  (op2[62] & op2[61] & op2[60] & op2[59] & 
-	// 	    op2[58] & op2[57] & op2[56] &op2[55]);
 
    // Conditionally convert op1. Lower 29 bits are zero for single precision.
    assign Float1[62:29] = conv_SP ? {op1[30], {3{(~op1[30]&~Zexp1)|Oexp1}}, op1[29:0]}
@@ -57,7 +49,7 @@ module convert_inputs(Float1, Float2, op1, op2, op_type, P);
    // is negation (op_type = 101) or absolute value (op_type = 100)
 
    assign negate  = op_type[2] & ~op_type[1] & op_type[0];
-   assign abs_val = op_type[2] & ~op_type[1] & ~op_type[0];
+   assign abs_val = op_type[2] & ~op_type[1] & ~op_type[0]; //*** remove abs_val
    assign Float1[63]  = conv_SP ? (op1[31] ^ negate) & ~abs_val : (op1[63] ^ negate) & ~abs_val;
    assign Float2[63]  = conv_SP ? op2[31] : op2[63];
 

@@ -1,16 +1,13 @@
 // Exception logic for the floating point adder. Note: We may 
 // actually want to move to where the result is computed.
-module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
+module exception_div (
 
-   input logic [63:0] A;		// 1st input operand (op1)
-   input logic [63:0] B;		// 2nd input operand (op2)
-   input logic 	      op_type;          // Determine operation   
-   
-   output logic [2:0] Ztype;		// Indicates type of result (Z)
-   output logic       Invalid;	        // Invalid operation exception
-   output logic       Denorm;		// Denormalized input
-   output logic       ANorm;            // A is not zero or Denorm
-   output logic       BNorm;            // B is not zero or Denorm
+   input logic [63:0] A,		// 1st input operand (op1)
+   input logic [63:0] B,		// 2nd input operand (op2)
+   input logic 	    op_type,   // Determine operation   
+   output logic [2:0] Ztype,		// Indicates type of result (Z)
+   output logic       Invalid	// Invalid operation exception
+);
    
    logic 	      AzeroM;	 	// '1' if the mantissa of A is zero
    logic 	      BzeroM;		// '1' if the mantissa of B is zero
@@ -18,8 +15,6 @@ module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    logic 	      BzeroE;		// '1' if the exponent of B is zero
    logic 	      AonesE;	 	// '1' if the exponent of A is all ones
    logic 	      BonesE;		// '1' if the exponent of B is all ones
-   logic 	      ADenorm; 	        // '1' if A is a denomalized number
-   logic 	      BDenorm; 	        // '1' if B is a denomalized number
    logic 	      AInf;	 	// '1' if A is infinite
    logic 	      BInf;	 	// '1' if B is infinite
    logic 	      AZero;	 	// '1' if A is 0
@@ -32,11 +27,10 @@ module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    logic 	      ZInf;	 	// '1' if result Z is an infnity
    logic 	      Zero;             // '1' if result is zero   
    
-   parameter [51:0]  fifty_two_zeros = 52'h0; // Use parameter?
 
    // Determine if mantissas are all zeros
-   assign AzeroM = (A[51:0] == fifty_two_zeros);
-   assign BzeroM = (B[51:0] == fifty_two_zeros);
+   assign AzeroM = (A[51:0] == 52'h0);
+   assign BzeroM = (B[51:0] == 52'h0);
 
    // Determine if exponents are all ones or all zeros 
    assign AonesE = A[62]&A[61]&A[60]&A[59]&A[58]&A[57]&A[56]&A[55]&A[54]&A[53]&A[52];
@@ -45,8 +39,6 @@ module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    assign BzeroE = ~(B[62]|B[61]|B[60]|B[59]|B[58]|B[57]|B[56]|B[55]|B[54]|B[53]|B[52]);
 
    // Determine special cases. Note: Zero is not really a special case. 
-   assign ADenorm = AzeroE & ~AzeroM;
-   assign BDenorm = BzeroE & ~BzeroM;
    assign AInf = AonesE & AzeroM;
    assign BInf = BonesE & BzeroM;
    assign ANaN = AonesE & ~AzeroM;
@@ -56,17 +48,11 @@ module exception_div (Ztype, Invalid, Denorm, ANorm, BNorm, A, B, op_type);
    assign AZero = AzeroE & AzeroM;
    assign BZero = BzeroE & BzeroE;
 
-   // A and B are normalized if their exponents are not zero. 
-   assign ANorm = ~AzeroE;
-   assign BNorm = ~BzeroE;
-
    // An "Invalid Operation" exception occurs if (A or B is a signalling NaN)
    // or (A and B are both Infinite)
    assign Invalid = ASNaN | BSNaN | (((AInf & BInf) | (AZero & BZero))&~op_type) | 
 		    (A[63] & op_type);
 
-   // The Denorm flag is set if A is denormlized or if B is normalized 
-   assign Denorm = ADenorm | BDenorm;
 
    // The result is a quiet NaN if (an "Invalid Operation" exception occurs) 
    // or (A is a NaN) or (B is a NaN).

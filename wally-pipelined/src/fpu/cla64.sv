@@ -207,7 +207,7 @@ module cla64 (S, X, Y, Sub);
    assign Bbar = B ^ {64{Sub}};
    
 endmodule // cla64
-
+ 
 // This module performs 64-bit subtraction. It is used to get the two's complement
 // of main addition or subtraction in the floating point adder. 
 

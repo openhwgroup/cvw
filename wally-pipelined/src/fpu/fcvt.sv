@@ -1,36 +1,37 @@
 
-`include "wally-config.vh"
+//`include "wally-config.vh"
+`include "../../config/rv64icfd/wally-config.vh"
 module fcvt (
-	input logic        XSgnE,
-    input logic [10:0] XExpE,
-    input logic [52:0] XManE,
-    input logic XZeroE,
-    input logic XNaNE,
-    input logic XInfE,
-    input logic XDenormE,
-    input logic [10:0] BiasE,
-    input logic [`XLEN-1:0] SrcAE,  // integer input
-    input logic [3:0] FOpCtrlE,     // chooses which instruction is done (full list below)
-    input logic [2:0] FrmE,         // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic FmtE,               // precision 1 = double 0 = single
-    output logic [63:0] CvtResE,    // convert final result
-    output logic [4:0] CvtFlgE);     // convert flags {invalid, divide by zero, overflow, underflow, inexact}
+	input logic             XSgnE,      // X's sign
+    input logic [10:0]      XExpE,      // X's exponent
+    input logic [52:0]      XManE,     // X's fraction
+    input logic             XZeroE,     // is X zero
+    input logic             XNaNE,      // is X NaN 
+    input logic             XInfE,      // is X infinity
+    input logic             XDenormE,   // is X denormalized
+    input logic [10:0]      BiasE,      // bias - depends on precision (max exponent/2)
+    input logic [`XLEN-1:0] SrcAE,      // integer input
+    input logic [3:0]       FOpCtrlE,   // chooses which instruction is done (full list below)
+    input logic [2:0]       FrmE,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+    input logic             FmtE,       // precision 1 = double 0 = single
+    output logic [63:0]     CvtResE,    // convert final result
+    output logic [4:0]      CvtFlgE);   // convert flags {invalid, divide by zero, overflow, underflow, inexact}
 
-    logic               ResSgn; // FP result's sign
-    logic [10:0]        ResExp,TmpExp; // FP result's exponent
-    logic [51:0]        ResFrac;    // FP result's fraction
-    logic [5:0]         LZResP;     // lz output
-    logic [7:0]         Bits;       // how many bits are in the integer result
-    logic [7:0]         SubBits;    // subtract these bits from the exponent (FP result)
-    logic [64+51:0]  ShiftedManTmp; // Shifted mantissa
-    logic [64+51:0]  ShiftVal;       // value being shifted (to int - XMan, to FP - |integer input|)
-    logic [64+1:0]   ShiftedMan;     // shifted mantissa truncated
+    logic               ResSgn;         // FP result's sign
+    logic [10:0]        ResExp,TmpExp;  // FP result's exponent
+    logic [51:0]        ResFrac;        // FP result's fraction
+    logic [5:0]         LZResP;         // lz output
+    logic [7:0]         Bits;           // how many bits are in the integer result
+    logic [7:0]         SubBits;        // subtract these bits from the exponent (FP result)
+    logic [64+51:0]     ShiftedManTmp;  // Shifted mantissa
+    logic [64+51:0]     ShiftVal;       // value being shifted (to int - XMan, to FP - |integer input|)
+    logic [64+1:0]      ShiftedMan;     // shifted mantissa truncated
     logic [64:0]	    RoundedTmp;     // full size rounded result - in case of overfow
     logic [63:0]	    Rounded;        // rounded result
     logic [12:0]        ExpVal;         // unbiased X exponent
     logic [12:0]        ShiftCnt;       // how much is the mantissa shifted
-	logic [64-1:0]   IntIn;          // trimed integer input
-    logic [64-1:0]   PosInt;         // absolute value of the integer input
+	logic [64-1:0]      IntIn;          // trimed integer input
+    logic [64-1:0]      PosInt;         // absolute value of the integer input
     logic [63:0]        CvtIntRes;      // interger result from the fp -> int instructions
     logic [63:0]        CvtFPRes;       // floating point result from the int -> fp instructions
     logic               Of, Uf;         // did the integer result underflow or overflow
@@ -61,11 +62,9 @@ module fcvt (
       //  {long, unsigned, to int, from int}
    
     // calculate signals based off the input and output's size
-    // assign Bias = FmtE ? 12'h3ff : 12'h7f;
-    assign Res64 = ((FOpCtrlE==4'b1010 || FOpCtrlE==4'b1110) | (FmtE&(FOpCtrlE==4'b0001 | FOpCtrlE==4'b0101 | FOpCtrlE==4'b0000 | FOpCtrlE==4'b1001 | FOpCtrlE==4'b1101)));
-    assign In64 = ((FOpCtrlE==4'b1001 || FOpCtrlE==4'b1101) | (FmtE&(FOpCtrlE==4'b0010 | FOpCtrlE==4'b0110 | FOpCtrlE==4'b1010 | FOpCtrlE==4'b1110) | (FOpCtrlE==4'b1101 & ~FmtE)));
-    //assign SubBits = In64 ? 8'd64 : 8'd32;
-    assign SubBits = 8'd64;
+    assign Res64 = (FOpCtrlE[1]&FOpCtrlE[3]) | (FmtE&FOpCtrlE[0]);
+    assign In64 =  (FOpCtrlE[0]&FOpCtrlE[3]) | (FmtE&FOpCtrlE[1]);
+    assign SubBits = In64 ? 8'd64 : 8'd32;
     assign Bits = Res64 ? 8'd64 : 8'd32;
 
     // calulate the unbiased exponent
@@ -80,15 +79,6 @@ module fcvt (
     // determine the integer's sign
     assign ResSgn = ~FOpCtrlE[2] ? IntIn[64-1] : 1'b0;
     
-    // generate
-    //     if(`XLEN == 64) 
-    //         lz64 lz(LZResP, LZResV, PosInt);
-    //     else if(`XLEN == 32) begin
-    //         assign LZResP[5] = 1'b0;
-    //         lz32 lz(LZResP[4:0], LZResV, PosInt);
-    //     end 
-    // endgenerate
-
 	// Leading one detector
 	logic [8:0]	i;
 	always_comb begin
@@ -98,7 +88,7 @@ module fcvt (
 	end
 
     // if no one was found set to zero otherwise calculate the exponent
-    assign TmpExp = i==`XLEN ? 0 : BiasE + SubBits - LZResP;
+    assign TmpExp = i==`XLEN ? 0 : FmtE ? 1023 + SubBits - LZResP : 127 + SubBits - LZResP;
 
 
 

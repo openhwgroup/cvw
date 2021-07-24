@@ -1,20 +1,21 @@
 
 module fctrl (
-  input  logic [6:0] Funct7D,
-  input  logic [6:0] OpD,
-  input  logic [4:0] Rs2D,
-  input  logic [2:0] Funct3D,
-  input  logic [2:0] FRM_REGW,
-  output logic       IllegalFPUInstrD,
-  output logic       FRegWriteD,
-  output logic       FDivStartD,
-  output logic [2:0] FResultSelD,
-  output logic [3:0] FOpCtrlD,
-  output logic [1:0] FResSelD,
-  output logic [1:0] FIntResSelD,
-  output logic       FmtD,
-  output logic [2:0] FrmD,
-  output logic       FWriteIntD);
+  input  logic [6:0] Funct7D,   // bits 31:25 of instruction - may contain percision
+  input  logic [6:0] OpD,       // bits 6:0 of instruction
+  input  logic [4:0] Rs2D,      // bits 24:20 of instruction
+  input  logic [2:0] Funct3D,   // bits 14:12 of instruction - may contain rounding mode
+  input  logic [2:0] FRM_REGW,  // rounding mode from CSR
+  output logic       IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+  output logic       FRegWriteD,  // FP register write enable
+  output logic       FDivStartD,  // Start division or squareroot
+  output logic [2:0] FResultSelD, // select result to be written to fp register
+  output logic [3:0] FOpCtrlD,    // chooses which opperation to do - specifics shown at bottom of module and in each unit
+  output logic [1:0] FResSelD,    // select one of the results done in the memory stage
+  output logic [1:0] FIntResSelD, // select the result that will be written to the integer register
+  output logic       FmtD,        // precision - single-0 double-1
+  output logic [2:0] FrmD,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+  output logic       FWriteIntD   // is the result written to the integer register
+  );
 
   `define FCTRLW 15
   logic [`FCTRLW-1:0] ControlsD;
@@ -100,16 +101,43 @@ module fctrl (
                   endcase
       default:      ControlsD = `FCTRLW'b0_0_000_0000_00_00_0_1; // non-implemented instruction
     endcase
+
   // unswizzle control bits
   assign {FRegWriteD, FWriteIntD, FResultSelD, FOpCtrlD, FResSelD, FIntResSelD, FDivStartD, IllegalFPUInstrD} = ControlsD;
   
-  // if dynamic rounding, choose FRM_REGW
+  // rounding modes:
+  //    000 - round to nearest, ties to even
+  //    001 - round twords 0 - round to min magnitude
+  //    010 - round down - round twords negitive infinity
+  //    011 - round up - round twords positive infinity
+  //    100 - round to nearest, ties to max magnitude - round to nearest, ties away from zero
+  //    111 - dynamic - choose FRM_REGW as rounding mode
   assign FrmD = &Funct3D ? FRM_REGW : Funct3D;
 
   // Precision
-  //  0-single
-  //  1-double
+  //    0-single
+  //    1-double
   assign FmtD = FResultSelD == 3'b000 ? Funct3D[0] : OpD[6:1] == 6'b010000 ? ~Funct7D[0] : Funct7D[0];
+
+  // FResultSel:
+  //    000 - ReadRes - load
+  //    001 - FMARes  - FMA and multiply
+  //    010 - FAddRes - add and fp to fp
+  //    011 - FDivRes - divide and squareroot
+  //    100 - FRes    - anything that is written to the fp register and is ready in the memory stage
+  //        FResSel:
+  //            00 - SrcA   - move to fp register 
+  //            01 - SgnRes - sign injection
+  //            10 - CmpRes - min/max
+  //            11 - CvtRes - convert to fp
+  
+  // FIntResSel:
+  //    00 - CmpRes   - less than, equal, or less than or equal 
+  //    01 - FSrcX    - move to int register
+  //    10 - ClassRes - classify
+  //    11 - CvtRes   - convert to signed/unsigned int
+
+  // OpCtrl values: 
   // div/sqrt
       //  fdiv  = ???0
       //  fsqrt = ???1
@@ -120,7 +148,7 @@ module fctrl (
       //  feq  = ?010
       //  flt  = ?001
       //  fle  = ?011
-      //		   {?,    is min or max, is eq or le, is lt or le}
+      //  {?,  is min or max,   is eq or le,   is lt or le}
 
   //fma/mult	
       //  fmadd  = ?000
@@ -128,7 +156,7 @@ module fctrl (
       //  fnmsub = ?010	-(a*b)+c
       //  fnmadd = ?011 -(a*b)-c
       //  fmul   = ?100
-      //		  {?, is mul, is negitive, is sub}
+      //	{?, is mul, negate product, negate addend}
 
   // sgn inj
       //  fsgnj  = ??00
@@ -138,37 +166,28 @@ module fctrl (
   // add/sub/cnvt
       //  fadd      = 0000
       //  fsub      = 0001
-  // cnvt
+      //  fcvt.s.d  = 0111
+      //  fcvt.d.s  = 0111
+      //  Fmt controls the output for fp -> fp
+      
+  // convert
       //  fcvt.w.s  = 0010
       //  fcvt.wu.s = 0110
       //  fcvt.s.w  = 0001
       //  fcvt.s.wu = 0101
-      //  fcvt.s.d  = 0000
       //  fcvt.l.s  = 1010
       //  fcvt.lu.s = 1110
       //  fcvt.s.l  = 1001
       //  fcvt.s.lu = 1101
-      //  fcvt.w.d  = 0010
+      //  fcvt.w.d  = 0010 
       //  fcvt.wu.d = 0110
       //  fcvt.d.w  = 0001
       //  fcvt.d.wu = 0101
-      //  fcvt.d.s  = 0000
       //  fcvt.l.d  = 1010
       //  fcvt.lu.d = 1110
       //  fcvt.d.l  = 1001
       //  fcvt.d.lu = 1101
-      //  {long, unsigned, to int, from int} Fmt controls the output for fp -> fp
-
-      //  fmv.w.x = ???0
-      //  fmv.w.d = ???1
-
-      //  flw       = ?000
-      //  fld       = ?001 
-      //  fsw       = ?010
-      //  fsd       = ?011
-      //  fmv.x.w  = ?100
-      //  fmv.x.d  = ?101
-      //		   {?, is mv, is store, is double or fmv}
+      //  {long, unsigned, to int, from int}
     
 
 endmodule
