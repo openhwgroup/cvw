@@ -40,10 +40,6 @@ module unpacking (
     assign YExpNonzero = FmtE ? |Y[62:52] : |Y[30:23];
     assign ZExpNonzero = FmtE ? |Z[62:52] : |Z[30:23];
 
-    assign XManE = {XExpNonzero, XFracE};
-    assign YManE = {YExpNonzero, YFracE};
-    assign ZManE = {ZExpNonzero, ZFracE};
-
     assign XExpZero = ~XExpNonzero;
     assign YExpZero = ~YExpNonzero;
     assign ZExpZero = ~ZExpNonzero;
@@ -51,6 +47,10 @@ module unpacking (
     assign XFracZero = ~|XFracE;
     assign YFracZero = ~|YFracE;
     assign ZFracZero = ~|ZFracE;
+
+    assign XManE = {XExpNonzero, XFracE};
+    assign YManE = {YExpNonzero, YFracE};
+    assign ZManE = {ZExpNonzero, ZFracE};
 
     assign XExpMaxE = FmtE ? &X[62:52] : &X[30:23];
     assign YExpMaxE = FmtE ? &Y[62:52] : &Y[30:23];
