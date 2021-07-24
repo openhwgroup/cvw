@@ -16,7 +16,7 @@
 //    xxxxxL,Rxxxxxxx
 // where , denotes the rounding boundary. S is the logical OR of all the
 // bits to the right of R. 
-
+ 
 module rounder (Result, DenormIO, Flags, rm, P, OvEn, 
 		UnEn, exp_valid, sel_inv, Invalid, DenormIn, convert, Asign, Aexp, 
 		norm_shift, A, exponent_postsum, A_Norm, B_Norm, exp_A_unmodified, exp_B_unmodified,

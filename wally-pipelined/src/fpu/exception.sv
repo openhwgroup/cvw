@@ -115,6 +115,6 @@ module exception (Ztype, Invalid, Denorm, ANorm, BNorm, Sub, A, B, op_type);
 
    // Determine if the effective operation is subtraction
    assign Sub = ~(op_type[3] & ~op_type[0]) & ( (op_type[3] & op_type[0]) | (add_sub & (A[63]^B[63]^op_type[0])) );
-
+ 
 endmodule // exception
 

@@ -5,48 +5,41 @@
 // It produces a rounded 52-bit result, Z, the exponent of the rounded 
 // result, Z_exp, and a flag that indicates if the result was rounded,
 // Inexact. The rounding mode has the following values.
-//	rm		Modee
+//	    rm		Mode
 //      00 		round-to-nearest-even
-//	01 		round-toward-zero
+//	    01 		round-toward-zero
 //      10 		round-toward-plus infinity
-//      11  		round-toward-minus infinity
+//      11  	round-toward-minus infinity
 //
 
-module rounder_div (Result, DenormIO, Flags, rm, P, OvEn, 
-		    UnEn, exp_diff, sel_inv, Invalid, DenormIn, 
-		    SignR, q1, qm1, qp1, q0, qm0, qp0, regr_out);
-
-   input  [1:0]   rm;
-   input          P;
-   input          OvEn;
-   input          UnEn;
-   input [12:0]   exp_diff;
-   input [2:0] 	  sel_inv;
-   input	  Invalid;
-   input	  DenormIn;
-   input 	  SignR;
+module rounder_div (
+    input logic [1:0]   rm,
+    input logic         P,
+    input logic         OvEn,
+    input logic         UnEn,
+    input logic [12:0]  exp_diff,
+    input logic [2:0]   sel_inv,
+    input logic         Invalid,
+    input logic 	    SignR,
    
-   input logic [63:0]  q1;
-   input logic [63:0]  qm1;
-   input logic [63:0]  qp1;
-   input logic [63:0]  q0;
-   input logic [63:0]  qm0;
-   input logic [63:0]  qp0;   
-   input logic [127:0] regr_out;
+    input logic [63:0]  q1,
+    input logic [63:0]  qm1,
+    input logic [63:0]  qp1,
+    input logic [63:0]  q0,
+    input logic [63:0]  qm0,
+    input logic [63:0]  qp0,   
+    input logic [127:0] regr_out,
    
-   output logic [63:0] Result;
-   output logic        DenormIO;
-   output logic [4:0]  Flags;
-   
-   supply1 	       vdd;
-   supply0 	       vss;
-   
+    output logic [63:0] Result,
+    output logic [4:0]  Flags
+    );
+      
    logic 	       Rsign;
-   logic [10:0]        Rexp;
-   logic [12:0]        Texp;
-   logic [51:0]        Rmant;
-   logic [63:0]        Tmant;
-   logic [51:0]        Smant;   
+   logic [10:0]    Rexp;
+   logic [12:0]    Texp;
+   logic [51:0]    Rmant;
+   logic [63:0]    Tmant;
+   logic [51:0]    Smant;   
    logic 	       Rzero;
    logic 	       Gdp, Gsp, G;
    logic 	       UnFlow_SP, UnFlow_DP, UnderFlow; 
@@ -64,10 +57,10 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    logic 	       Texp_l7o;
    logic 	       OvCon;
    logic           zero_rem;
-   logic [1:0] 	       mux_mant;
+   logic [1:0] 	   mux_mant;
    logic 	       sign_rem;
-   logic [63:0]        q, qm, qp;
-   logic 	       exp_ovf, exp_ovfSP, exp_ovfDP;   
+   logic [63:0]    q, qm, qp;
+   logic 	       exp_ovf;   
 
    // Remainder = 0?
    assign zero_rem = ~(|regr_out);
@@ -98,7 +91,7 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    //   1.) we choose any qm0, qp0, q0 (since we shift mant)
    //   2.) we choose qp and we overflow (for RU)
    assign exp_ovf = |{qp[62:40], (qp[39:11] & {29{~P}})};
-   assign Texp = exp_diff - {{13{vss}}, ~q1[63]} + {{13{vss}}, mux_mant[1]&qp1[63]&~exp_ovf};
+   assign Texp = exp_diff - {{13{1'b0}}, ~q1[63]} + {{13{1'b0}}, mux_mant[1]&qp1[63]&~exp_ovf};
    
    // Overflow only occurs for double precision, if Texp[10] to Texp[0] are 
    // all ones. To encourage sharing with single precision overflow detection,
@@ -130,9 +123,6 @@ module rounder_div (Result, DenormIO, Flags, rm, P, OvEn,
    assign OverFlow  = (P & OvFlow_SP | OvFlow_DP) & Valid;
    assign Div0 = sel_inv[2]&sel_inv[1]&~sel_inv[0];
 
-   // The DenormIO is set if underflow has occurred or if their was a
-   // denormalized input. 
-   assign DenormIO = DenormIn | UnderFlow;
 
    // The final result is Inexact if any rounding occurred ((i.e., R or S 
    // is one), or (if the result overflows ) or (if the result underflows and the 

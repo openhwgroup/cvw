@@ -26,6 +26,7 @@
 
 // include shared configuration
 `include "wally-shared.vh"
+// `include "../../../config/shared/wally-shared.vh"
 
 `define BUILDROOT 0
 `define BUSYBEAR 0
