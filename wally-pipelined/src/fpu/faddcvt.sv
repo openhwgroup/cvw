@@ -246,7 +246,7 @@ module fpuaddcvt1 (
  
    // Finds normal underflow result to determine whether to round final exponent down
    //***KEP used to be (AddSumE == 16'h0) I am unsure what it's supposed to be
-   assign AddNormOvflowE = (AddDenormInE & (AddSumE == 64'h0) & (AddOpANormE | AddOpBNormE) & ~FOpCtrlE[0]) ? 1'b1 : (AddSumE[63] ? AddSumTcE[52] : AddSumE[52]);
+   // assign AddNormOvflowE = (AddDenormInE & (AddSumE == 64'h0) & (AddOpANormE | AddOpBNormE) & ~FOpCtrlE[0]) ? 1'b1 : (AddSumE[63] ? AddSumTcE[52] : AddSumE[52]);
 
 endmodule // fpadd
 

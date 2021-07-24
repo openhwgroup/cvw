@@ -1,6 +1,6 @@
 
-//`include "wally-config.vh"
-`include "../../config/rv64icfd/wally-config.vh"
+`include "wally-config.vh"
+// `include "../../config/rv64icfd/wally-config.vh"
 module fcvt (
 	input logic             XSgnE,      // X's sign
     input logic [10:0]      XExpE,      // X's exponent
