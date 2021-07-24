@@ -134,7 +134,8 @@ module wallypipelinedhart
   // cpu lsu interface
   logic [2:0] 		    Funct3M;
   logic [`XLEN-1:0] 	    MemAdrM, MemAdrE, WriteDataM;
-  logic [`XLEN-1:0] 	    ReadDataW;
+  logic [`XLEN-1:0] 	    ReadDataM;
+  logic [`XLEN-1:0] 	    ReadDataW;  
   logic 		    CommittedM;
 
   // AHB ifu interface
@@ -195,7 +196,7 @@ module wallypipelinedhart
 	  .MemAdrE(MemAdrE),
 	  .MemAdrM(MemAdrM),      
 	  .WriteDataM(WriteDataM),
-	  .ReadDataW(ReadDataW),
+	  .ReadDataM(ReadDataM),
 
 	  // connected to ahb (all stay the same)
 	  .CommitM(CommitM),

@@ -115,7 +115,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   localparam STATE_INVALIDATE = 'h12; // *** not sure if invalidate or evict? invalidate by cache block or address?
   localparam STATE_TLB_MISS = 'h13;
   localparam STATE_TLB_MISS_DONE = 'h14;
-  localparam STATE_INSTR_PAGE_FAULT = 'h15;
 
   
   localparam AHBByteLength = `XLEN / 8;
@@ -141,7 +140,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   logic 		       FetchCountFlag;
   localparam FetchCountThreshold = WORDSPERLINE - 1;
   
-  logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
+  logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
 
   logic [`PA_BITS-1:0] 	       PCPreFinalF, PCPSpillF;
   logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
@@ -195,10 +194,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
 
   assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
   assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
-  // verilator lint_off WIDTH
-  // *** Bug width is wrong.
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold);
-  // verilator lint_on WIDTH
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
   
   // Next state logic
   always_comb begin
@@ -372,7 +368,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
       end
       STATE_TLB_MISS: begin
         if (WalkerInstrPageFaultF) begin
-          NextState = STATE_INSTR_PAGE_FAULT;
+          NextState = STATE_READY;
           ICacheStallF = 1'b0;
         end else if (ITLBWriteF) begin
           NextState = STATE_TLB_MISS_DONE;
@@ -381,10 +377,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
         end
       end
       STATE_TLB_MISS_DONE: begin
-        NextState = STATE_READY;
-      end
-      STATE_INSTR_PAGE_FAULT: begin
-        ICacheStallF = 1'b0;
         NextState = STATE_READY;
       end
       default: begin
@@ -404,7 +396,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   // to compute the fetch address we need to add the bit shifted
   // counter output to the address.
 
-  flopenr #(LOGWPL+1) 
+  flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
 		.reset(reset | CntReset),
 		.en(CntEn),

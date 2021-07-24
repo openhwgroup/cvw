@@ -29,7 +29,7 @@ module dcache
   (input logic clk,
    input logic 		       reset,
    input logic 		       StallM,
-   input logic 		       StallW,
+   input logic 		       StallWtoDCache,
    input logic 		       FlushM,
    input logic 		       FlushW,
 
@@ -40,11 +40,10 @@ module dcache
    input logic [1:0] 	       AtomicM,
    input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
-   input logic [11:0]          VAdr, // when hptw writes dtlb we use this address to index SRAM.
+   input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
    input logic [`XLEN-1:0]     WriteDataM,
-   output logic [`XLEN-1:0]    ReadDataW,
-   output logic [`XLEN-1:0]    ReadDataM, 
+   output logic [`XLEN-1:0]    ReadDataM,
    output logic 	       DCacheStall,
    output logic 	       CommittedM,
    output logic 	       DCacheMiss,
@@ -56,10 +55,12 @@ module dcache
    input logic 		       DTLBMissM,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
-   input logic 		       ITLBWriteF, 
+   input logic 		       ITLBWriteF,
+   input logic 		       WalkerInstrPageFaultF,
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
+   output logic [`XLEN-1:0]    LSUData, 
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    output logic 	       AHBRead,
@@ -108,7 +109,7 @@ module dcache
   logic [`XLEN-1:0]	       ReadDataWordM, ReadDataWordMuxM;
   logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
-  logic [LOGWPL:0] 	       FetchCount, NextFetchCount;
+  logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
   logic [WORDSPERLINE-1:0]     SRAMWordEnable;
   logic 		       SelMemWriteDataM;
   logic [2:0] 		       Funct3W;
@@ -147,6 +148,11 @@ module dcache
   logic SelEvict;
 
   logic LRUWriteEn;
+
+  logic CaptureDataM;
+  logic [`XLEN-1:0] SavedReadDataM;
+  logic 	    SelSavedReadDataM;
+  
   
   typedef enum {STATE_READY,
 
@@ -193,7 +199,7 @@ module dcache
 
   flopenr #(7) Funct7WReg(.clk(clk),
 			  .reset(reset),
-			  .en(~StallW),
+			  .en(~StallWtoDCache),
 			  .d(Funct7M),
 			  .q(Funct7W));
   
@@ -319,10 +325,7 @@ module dcache
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
 
-  // *** fix width later.
-  // verilator lint_off WIDTH
   assign HWDATA = CacheableM ? VictimReadDataBlockSetsM[FetchCount] : WriteDataM;
-  // verilator lint_on WIDTH
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
 				.d1(DCacheMemWriteData[`XLEN-1:0]),
@@ -334,10 +337,27 @@ module dcache
   subwordread subwordread(.HRDATA(ReadDataWordMuxM),
 			  .HADDRD(MemPAdrM[2:0]),
 			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			  .HRDATAMasked(ReadDataM));
+			  .HRDATAMasked(LSUData));
+
+  assign CaptureDataM = ~SelPTW & MemRWM[1];
+  
+  flopen #(`XLEN) 
+  SavedReadDataReg(.clk,
+		   .en(CaptureDataM),
+		   .d(LSUData),
+		   .q(SavedReadDataM));
+
+
+  mux2 #(`XLEN)
+  ReadDataMMux(.d0(LSUData),
+	       .d1(SavedReadDataM),
+	       .s(SelSavedReadDataM),
+	       .y(ReadDataM));
+		   
+  
 
   // This is a confusing point.
-  // The final read data should be updated only if the CPU's StallW is low
+  // The final read data should be updated only if the CPU's StallWtoDCache is low
   // which means the CPU is ready to take data.  Or if the CPU just became
   // busy.  Then when we exit CPU_BUSY we want to ensure the data is not
   // updated, this is ~PreviousCPUBusy.
@@ -347,10 +367,6 @@ module dcache
   flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
   
 
-  flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(~StallW),
-			      .d(ReadDataM),
-			      .q(ReadDataW));
 
 
   // write path
@@ -381,24 +397,18 @@ module dcache
     end
   endgenerate
 
-  // *** Coding style. this is just awful. The purpose is to align FetchCount to the
-  // size of XLEN so we can fetch XLEN bits.  FetchCount needs to be padded to PA_BITS length.
-  // *** optimize this
   mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 			      .s(SelEvict),
 			      .y(BasePAdrM));
 
+  // if not cacheable the offset bits needs to be sent to the EBU.
+  // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
   assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
   assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
-  generate
-    if (`XLEN == 32) begin
-      assign AHBPAdr = ({{`PA_BITS-4{1'b0}}, FetchCount} << 2) + BasePAdrMaskedM;
-    end else begin
-      assign AHBPAdr = ({{`PA_BITS-3{1'b0}}, FetchCount} << 3) + BasePAdrMaskedM;
-    end
-  endgenerate
+  assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
+  
     
   
   // mux between the CPU's write and the cache fetch.
@@ -422,9 +432,9 @@ module dcache
   
 
   assign AnyCPUReqM = |MemRWM | (|AtomicM);
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL:0]);
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
-  flopenr #(LOGWPL+1) 
+  flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
 		.reset(reset | CntReset),
 		.en(CntEn),
@@ -470,6 +480,7 @@ module dcache
     DCacheAccess = 1'b0;
     DCacheMiss = 1'b0;
     LRUWriteEn = 1'b0;
+    SelSavedReadDataM = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -496,7 +507,7 @@ module dcache
 	  NextState = STATE_AMO_UPDATE;
 	  DCacheStall = 1'b1;
 
-	  if(StallW) begin 
+	  if(StallWtoDCache) begin 
             NextState = STATE_CPU_BUSY;
             SelAdrM = 1'b1; 
 	  else NextState = STATE_AMO_UPDATE;
@@ -508,7 +519,7 @@ module dcache
 	  DCacheAccess = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
-	  if(StallW) begin
+	  if(StallWtoDCache) begin
 	    NextState = STATE_CPU_BUSY;
             SelAdrM = 1'b1;
 	  end
@@ -523,7 +534,7 @@ module dcache
 	  DCacheStall = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
-	  if(StallW) begin 
+	  if(StallWtoDCache) begin 
 	    NextState = STATE_CPU_BUSY;
 	    SelAdrM = 1'b1;
 	  end
@@ -565,7 +576,7 @@ module dcache
       end
       STATE_AMO_WRITE: begin
 	SelAMOWrite = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -626,7 +637,7 @@ module dcache
 	//SelAdrM = 1'b1;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -645,7 +656,7 @@ module dcache
 
       STATE_MISS_WRITE_WORD_DELAY: begin
 	CommittedM = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -670,8 +681,11 @@ module dcache
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
 
-	if (ITLBWriteF) begin
+	if (ITLBWriteF | WalkerInstrPageFaultF) begin
 	  NextState = STATE_READY;
+	  // this signal is gross.  It is used to select the saved read data m when the
+	  // CPU was stalled for an itlb miss with a simultaneous load.
+	  SelSavedReadDataM = 1'b1;
 	end
 
 	// return to ready if page table walk completed.
@@ -782,7 +796,7 @@ module dcache
       
       STATE_CPU_BUSY: begin
 	CommittedM = 1'b1;
-	if(StallW) begin
+	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -813,7 +827,7 @@ module dcache
       
       STATE_UNCACHED_WRITE_DONE: begin
 	CommittedM = 1'b1;
-	if(StallW) begin
+	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end
@@ -823,7 +837,7 @@ module dcache
       STATE_UNCACHED_READ_DONE: begin
 	CommittedM = 1'b1;
 	SelUncached = 1'b1;
-	if(StallW) begin 
+	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 1'b1;
 	end

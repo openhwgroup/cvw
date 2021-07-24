@@ -61,9 +61,10 @@ module ieu (
   input logic [`XLEN-1:0]  FIntResM, 
 
   // Writeback stage
-  input logic [`XLEN-1:0]  CSRReadValW, ReadDataW, MulDivResultW,
+  input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MulDivResultW,
   input logic 		   FWriteIntW,
-  output logic [4:0]    RdW,
+  output logic [4:0]       RdW,
+  output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, 
   // hazards
