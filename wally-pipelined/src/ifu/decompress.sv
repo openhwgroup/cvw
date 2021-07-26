@@ -53,10 +53,10 @@ module decompress (
       assign rdp = {2'b01, instr16[4:2]};
       
       // many compressed immediate formats
-      assign immCILSP = {{4{instr16[3]}}, instr16[3:2], instr16[12], instr16[6:4], 2'b00};
-      assign immCILSPD = {{3{instr16[4]}}, instr16[4:2], instr16[12], instr16[6:5], 3'b000};
-      assign immCSS = {{4{instr16[8]}}, instr16[8:7], instr16[12:9], 2'b00};
-      assign immCSSD = {{3{instr16[9]}}, instr16[9:7], instr16[12:10], 3'b000};
+      assign immCILSP = {4'b0000, instr16[3:2], instr16[12], instr16[6:4], 2'b00};
+      assign immCILSPD = {3'b000, instr16[4:2], instr16[12], instr16[6:5], 3'b000};
+      assign immCSS = {4'b0000, instr16[8:7], instr16[12:9], 2'b00}; 
+      assign immCSSD = {3'b000, instr16[9:7], instr16[12:10], 3'b000}; 
       assign immCL = {5'b0, instr16[5], instr16[12:10], instr16[6], 2'b00};
       assign immCLD = {4'b0, instr16[6:5], instr16[12:10], 3'b000};
       assign immCS = {5'b0, instr16[5], instr16[12:10], instr16[6], 2'b00};
