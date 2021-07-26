@@ -53,6 +53,7 @@ module dcache
    input logic 		       ExceptionM,
    input logic 		       PendingInterruptM, 
    input logic 		       DTLBMissM,
+   input logic 		       ITLBMissF,
    input logic 		       CacheableM,
    input logic 		       DTLBWriteM,
    input logic 		       ITLBWriteF,
@@ -60,7 +61,8 @@ module dcache
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
-   output logic [`XLEN-1:0]    LSUData, 
+   output logic [`XLEN-1:0]    LSUData,
+   output logic 	       MemAfterIWalkDone,
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    output logic 	       AHBRead,
@@ -88,7 +90,7 @@ module dcache
   localparam integer 	       LOGXLENBYTES = $clog2(`XLEN/8);
 
 
-  logic 		       SelAdrM;
+  logic [1:0] 		       SelAdrM;
   logic [INDEXLEN-1:0]	       SRAMAdr;
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
@@ -151,8 +153,7 @@ module dcache
 
   logic CaptureDataM;
   logic [`XLEN-1:0] SavedReadDataM;
-  logic 	    SelSavedReadDataM;
-  
+
   
   typedef enum {STATE_READY,
 
@@ -192,6 +193,22 @@ module dcache
 		STATE_UNCACHED_READ,
 		STATE_UNCACHED_READ_DONE,
 
+		STATE_PTW_FAULT_READY,
+		STATE_PTW_FAULT_CPU_BUSY,
+		STATE_PTW_FAULT_MISS_FETCH_WDV,
+		STATE_PTW_FAULT_MISS_FETCH_DONE,
+		STATE_PTW_FAULT_MISS_WRITE_CACHE_BLOCK,
+		STATE_PTW_FAULT_MISS_READ_WORD,
+		STATE_PTW_FAULT_MISS_READ_WORD_DELAY,
+		STATE_PTW_FAULT_MISS_WRITE_WORD,
+		STATE_PTW_FAULT_MISS_WRITE_WORD_DELAY,
+		STATE_PTW_FAULT_MISS_EVICT_DIRTY,
+
+		STATE_PTW_FAULT_UNCACHED_WRITE,
+		STATE_PTW_FAULT_UNCACHED_WRITE_DONE,
+		STATE_PTW_FAULT_UNCACHED_READ,
+		STATE_PTW_FAULT_UNCACHED_READ_DONE,
+
 		STATE_CPU_BUSY} statetype;
 
   statetype CurrState, NextState;
@@ -211,7 +228,7 @@ module dcache
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .s({DTLBWriteM, SelAdrM}),
+	    .s(SelAdrM),
 	    .y(SRAMAdr));
 
 
@@ -347,11 +364,11 @@ module dcache
 		   .d(LSUData),
 		   .q(SavedReadDataM));
 
-
+// *** BUG remove mux
   mux2 #(`XLEN)
   ReadDataMMux(.d0(LSUData),
 	       .d1(SavedReadDataM),
-	       .s(SelSavedReadDataM),
+	       .s(1'b0),
 	       .y(ReadDataM));
 		   
   
@@ -450,8 +467,8 @@ module dcache
 	      .reset(reset),
 	      .d({SRAMWordWriteEnableM}),
 	      .q({SRAMWordWriteEnableW}));
-  
 
+  
   always_ff @(posedge clk, posedge reset)
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
@@ -460,7 +477,7 @@ module dcache
   // next state logic and some state ouputs.
   always_comb begin
     DCacheStall = 1'b0;
-    SelAdrM = 1'b0;
+    SelAdrM = 2'b00;
     PreCntEn = 1'b0;
     SetValidM = 1'b0;
     ClearValidM = 1'b0;
@@ -480,27 +497,30 @@ module dcache
     DCacheAccess = 1'b0;
     DCacheMiss = 1'b0;
     LRUWriteEn = 1'b0;
-    SelSavedReadDataM = 1'b0;
+    MemAfterIWalkDone = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
 	// TLB Miss	
-	if(AnyCPUReqM & DTLBMissM) begin
+	if((AnyCPUReqM & DTLBMissM) | ITLBMissF) begin
 	  // the LSU arbiter has not yet selected the PTW.
 	  // The CPU needs to be stalled until that happens.
 	  // If we set DCacheStall for 1 cycle before going to
 	  // PTW ready the CPU will stall.
 	  // The page table walker asserts it's control 1 cycle
 	  // after the TLBs miss.
+	  CommittedM = 1'b1;
 	  DCacheStall = 1'b1;
-	  NextState = STATE_READY;
+	  NextState = STATE_PTW_READY;
 	end
+/* -----\/----- EXCLUDED -----\/-----
 	else if(SelPTW) begin
 	  // Now we have activated the ptw.
 	  // Do not assert Stall as we are now directing the stall the ptw.
 	  NextState = STATE_PTW_READY;
 	  CommittedM = 1'b1;
 	end
+ -----/\----- EXCLUDED -----/\----- */
 	// amo hit
 /* -----\/----- EXCLUDED -----\/-----
 	else if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
@@ -509,7 +529,7 @@ module dcache
 
 	  if(StallWtoDCache) begin 
             NextState = STATE_CPU_BUSY;
-            SelAdrM = 1'b1; 
+            SelAdrM = 2'b01; 
 	  else NextState = STATE_AMO_UPDATE;
 	end
  -----/\----- EXCLUDED -----/\----- */
@@ -521,13 +541,15 @@ module dcache
 	  
 	  if(StallWtoDCache) begin
 	    NextState = STATE_CPU_BUSY;
-            SelAdrM = 1'b1;
+            SelAdrM = 2'b01;
 	  end
-	  else NextState = STATE_READY;
+	  else begin
+	    NextState = STATE_READY;
+	    end
 	end
 	// write hit valid cached
 	else if (MemRWM[0] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
@@ -536,9 +558,11 @@ module dcache
 	  
 	  if(StallWtoDCache) begin 
 	    NextState = STATE_CPU_BUSY;
-	    SelAdrM = 1'b1;
+	    SelAdrM = 2'b01;
 	  end
-	  else NextState = STATE_READY;
+	  else begin
+	    NextState = STATE_READY;
+	  end
 	end
 	// read or write miss valid cached
 	else if((|MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & ~CacheHit & ~DTLBMissM) begin
@@ -578,16 +602,18 @@ module dcache
 	SelAMOWrite = 1'b1;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	end
-	else NextState = STATE_READY;
+	else begin
+	  NextState = STATE_READY;
+	end	  
       end
 
       STATE_MISS_FETCH_WDV: begin
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBRead = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	
         if (FetchCountFlag & AHBAck) begin
@@ -599,7 +625,7 @@ module dcache
 
       STATE_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
         CntReset = 1'b1;
 	CommittedM = 1'b1;
 	if(VictimDirty) begin
@@ -613,7 +639,7 @@ module dcache
 	SRAMBlockWriteEnableM = 1'b1;
 	DCacheStall = 1'b1;
 	NextState = STATE_MISS_READ_WORD;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
 	CommittedM = 1'b1;
@@ -621,7 +647,7 @@ module dcache
       end
 
       STATE_MISS_READ_WORD: begin
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
 	if (MemRWM[1]) begin
@@ -634,20 +660,22 @@ module dcache
       end
 
       STATE_MISS_READ_WORD_DELAY: begin
-	//SelAdrM = 1'b1;
+	//SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	end
-	else NextState = STATE_READY;
+	else begin
+	  NextState = STATE_READY;
+	end
       end
 
       STATE_MISS_WRITE_WORD: begin
 	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
@@ -658,16 +686,18 @@ module dcache
 	CommittedM = 1'b1;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	end
-	else NextState = STATE_READY;
+	else begin
+	  NextState = STATE_READY;
+	end
       end
 
       STATE_MISS_EVICT_DIRTY: begin
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBWrite = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	SelEvict = 1'b1;
 	if( FetchCountFlag & AHBAck) begin
@@ -681,23 +711,41 @@ module dcache
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
 
-	if (ITLBWriteF | WalkerInstrPageFaultF) begin
+	// In this branch we remove stall and go back to ready.  There is no request for memory from the
+	// datapath or the walker had a fault.
+	// types 3b, 4a, 4b, and 7c.
+	if ((DTLBMissM & WalkerPageFaultM) | // 3b
+	    (ITLBMissF & (WalkerInstrPageFaultF | ITLBWriteF) & ~AnyCPUReqM & ~DTLBMissM) | // 4a and 4b
+	    (DTLBMissM & ITLBMissF & WalkerPageFaultM)) begin // 7c
 	  NextState = STATE_READY;
-	  // this signal is gross.  It is used to select the saved read data m when the
-	  // CPU was stalled for an itlb miss with a simultaneous load.
-	  SelSavedReadDataM = 1'b1;
+	  DCacheStall = 1'b0;
 	end
-
-	// return to ready if page table walk completed.
-	else if (~SelPTW & ~WalkerPageFaultM & CacheHit & CacheableM & ~ExceptionM) begin
-	  NextState = STATE_PTW_ACCESS_AFTER_WALK;
-	end
-
-	// read or write miss valid cached
-	else if (~SelPTW & ~WalkerPageFaultM & ~CacheHit & CacheableM & ~ExceptionM) begin
-	  NextState = STATE_MISS_FETCH_WDV;
-	  CntReset = 1'b1;
+	// in this branch we go back to ready, but there is a memory operation from
+	// the datapath so we MUST stall and replay the operation.
+	// types 3a and 5a
+	else if ((DTLBMissM & DTLBWriteM) |  // 3a
+		 (ITLBMissF & ITLBWriteF & AnyCPUReqM)) begin // 5a
+	  NextState = STATE_READY;
 	  DCacheStall = 1'b1;
+	  SelAdrM = 2'b10;
+	end
+
+	// like 5a we want to stall and go to the ready state, but we also have to save
+	// the WalkerInstrPageFaultF so it is held until the end of the memory operation
+	// from the datapath.
+	// types 5b
+	else if (ITLBMissF & WalkerInstrPageFaultF & AnyCPUReqM) begin // 5b
+	  NextState = STATE_PTW_FAULT_READY;
+	  DCacheStall = 1'b1;
+	  SelAdrM = 2'b10;
+	end
+
+	// in this branch we stay in ptw_ready because we are doing an itlb walk
+	// after a dtlb walk.
+	// types 7a and 7b.
+	else if (DTLBMissM & DTLBWriteM & ITLBMissF)begin
+	  NextState = STATE_PTW_READY;
+	  DCacheStall = 1'b0;
 	  
 	// read hit valid cached
 	end else if(MemRWM[1] & CacheableM & ~ExceptionM & CacheHit) begin
@@ -713,9 +761,8 @@ module dcache
 	  DCacheStall = 1'b1;
 	end
 
-	// walker has issue abort back to ready
-	else if(~SelPTW & WalkerPageFaultM) begin
-	  NextState = STATE_READY;
+	else begin
+	  NextState = STATE_PTW_READY;
 	  DCacheStall = 1'b0;
 	end
       end
@@ -724,7 +771,7 @@ module dcache
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBRead = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	
         if (FetchCountFlag & AHBAck) begin
@@ -736,7 +783,7 @@ module dcache
 
       STATE_PTW_READ_MISS_FETCH_DONE: begin
 	DCacheStall = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
         CntReset = 1'b1;
 	CommittedM = 1'b1;
         CntReset = 1'b1;
@@ -751,7 +798,7 @@ module dcache
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
 	AHBWrite = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	SelEvict = 1'b1;
 	if( FetchCountFlag & AHBAck) begin
@@ -766,7 +813,7 @@ module dcache
 	SRAMBlockWriteEnableM = 1'b1;
 	DCacheStall = 1'b1;
 	NextState = STATE_PTW_READ_MISS_READ_WORD;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	SetValidM = 1'b1;
 	ClearDirtyM = 1'b1;
 	CommittedM = 1'b1;
@@ -774,21 +821,21 @@ module dcache
       end
 
       STATE_PTW_READ_MISS_READ_WORD: begin
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
 	NextState = STATE_PTW_READ_MISS_READ_WORD_DELAY;
       end
 
       STATE_PTW_READ_MISS_READ_WORD_DELAY: begin
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	NextState = STATE_PTW_READY;
 	CommittedM = 1'b1;
       end
       
       STATE_PTW_ACCESS_AFTER_WALK: begin
 	DCacheStall = 1'b1;
-	SelAdrM = 1'b1;
+	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
 	NextState = STATE_READY;
@@ -798,9 +845,11 @@ module dcache
 	CommittedM = 1'b1;
 	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	end
-	else NextState = STATE_READY;
+	else begin
+	  NextState = STATE_READY;
+	end
       end
 
       STATE_UNCACHED_WRITE : begin
@@ -829,9 +878,11 @@ module dcache
 	CommittedM = 1'b1;
 	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	end
-	else NextState = STATE_READY;
+	else begin
+	  NextState = STATE_READY;
+	end
       end
 
       STATE_UNCACHED_READ_DONE: begin
@@ -839,9 +890,236 @@ module dcache
 	SelUncached = 1'b1;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 1'b1;
+	  SelAdrM = 2'b01;
 	end
-	else NextState = STATE_READY;
+	else begin
+	  NextState = STATE_READY;
+	end 
+      end
+
+
+      // itlb => instruction page fault states with memory request.
+      STATE_PTW_FAULT_READY: begin
+	// read hit valid cached
+	if(MemRWM[1] & CacheableM & CacheHit & ~DTLBMissM) begin
+	  DCacheStall = 1'b0;
+	  DCacheAccess = 1'b1;
+	  LRUWriteEn = 1'b1;
+	  
+	  if(StallWtoDCache) begin
+	    NextState = STATE_PTW_FAULT_CPU_BUSY;
+            SelAdrM = 2'b01;
+	  end
+	  else begin
+	    MemAfterIWalkDone = 1'b1;
+	    NextState = STATE_READY;
+	  end
+	end
+	
+	// write hit valid cached
+	else if (MemRWM[0] & CacheableM & CacheHit & ~DTLBMissM) begin
+	  SelAdrM = 2'b01;
+	  DCacheStall = 1'b0;
+	  SRAMWordWriteEnableM = 1'b1;
+	  SetDirtyM = 1'b1;
+	  DCacheStall = 1'b1;
+	  LRUWriteEn = 1'b1;
+	  
+	  if(StallWtoDCache) begin 
+	    NextState = STATE_PTW_FAULT_CPU_BUSY;
+	    SelAdrM = 2'b01;
+	  end
+	  else begin
+	    MemAfterIWalkDone = 1'b1;
+	    NextState = STATE_READY;
+	  end
+	end
+	// read or write miss valid cached
+	else if((|MemRWM) & CacheableM & ~CacheHit & ~DTLBMissM) begin
+	  NextState = STATE_PTW_FAULT_MISS_FETCH_WDV;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  DCacheAccess = 1'b1;
+	  DCacheMiss = 1'b1;
+	end
+	// uncached write
+	else if(MemRWM[0] & ~CacheableM & ~DTLBMissM) begin
+	  NextState = STATE_PTW_FAULT_UNCACHED_WRITE;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  AHBWrite = 1'b1;
+	end
+	// uncached read
+	else if(MemRWM[1] & ~CacheableM & ~DTLBMissM) begin
+	  NextState = STATE_PTW_FAULT_UNCACHED_READ;
+	  CntReset = 1'b1;
+	  DCacheStall = 1'b1;
+	  AHBRead = 1'b1;	  
+	end
+	// fault
+	else  begin
+	  MemAfterIWalkDone = 1'b1;
+	  NextState = STATE_READY;
+	end
+      end
+      
+      STATE_PTW_FAULT_CPU_BUSY: begin
+	CommittedM = 1'b1;
+	if(StallWtoDCache) begin
+	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  SelAdrM = 2'b01;
+	end
+	else begin
+	  MemAfterIWalkDone = 1'b1;
+	  NextState = STATE_READY;
+	end
+      end
+
+      STATE_PTW_FAULT_MISS_FETCH_WDV: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBRead = 1'b1;
+	SelAdrM = 2'b01;
+	CommittedM = 1'b1;
+	
+        if (FetchCountFlag & AHBAck) begin
+          NextState = STATE_PTW_FAULT_MISS_FETCH_DONE;
+        end else begin
+          NextState = STATE_PTW_FAULT_MISS_FETCH_WDV;
+        end
+      end
+
+      STATE_PTW_FAULT_MISS_FETCH_DONE: begin
+	DCacheStall = 1'b1;
+	SelAdrM = 2'b01;
+        CntReset = 1'b1;
+	CommittedM = 1'b1;
+	if(VictimDirty) begin
+	  NextState = STATE_PTW_FAULT_MISS_EVICT_DIRTY;
+	end else begin
+	  NextState = STATE_PTW_FAULT_MISS_WRITE_CACHE_BLOCK;
+	end
+      end
+
+      STATE_PTW_FAULT_MISS_WRITE_CACHE_BLOCK: begin
+	SRAMBlockWriteEnableM = 1'b1;
+	DCacheStall = 1'b1;
+	NextState = STATE_PTW_FAULT_MISS_READ_WORD;
+	SelAdrM = 2'b01;
+	SetValidM = 1'b1;
+	ClearDirtyM = 1'b1;
+	CommittedM = 1'b1;
+	//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
+      end
+
+      STATE_PTW_FAULT_MISS_READ_WORD: begin
+	SelAdrM = 2'b01;
+	DCacheStall = 1'b1;
+	CommittedM = 1'b1;
+	if (MemRWM[1]) begin
+	  NextState = STATE_PTW_FAULT_MISS_READ_WORD_DELAY;
+	  // delay state is required as the read signal MemRWM[1] is still high when we
+	  // return to the ready state because the cache is stalling the cpu.
+	end else begin
+	  NextState = STATE_PTW_FAULT_MISS_WRITE_WORD;
+	end
+      end
+
+      STATE_PTW_FAULT_MISS_READ_WORD_DELAY: begin
+	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
+	if(StallWtoDCache) begin 
+	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  SelAdrM = 2'b01;
+	end
+	else begin
+	  MemAfterIWalkDone = 1'b1;
+	  NextState = STATE_READY;
+	end
+      end
+
+      STATE_PTW_FAULT_MISS_WRITE_WORD: begin
+	SRAMWordWriteEnableM = 1'b1;
+	SetDirtyM = 1'b1;
+	SelAdrM = 2'b01;
+	DCacheStall = 1'b1;
+	CommittedM = 1'b1;
+	LRUWriteEn = 1'b1;
+	NextState = STATE_PTW_FAULT_MISS_WRITE_WORD_DELAY;
+      end
+
+      STATE_PTW_FAULT_MISS_WRITE_WORD_DELAY: begin
+	CommittedM = 1'b1;
+	if(StallWtoDCache) begin 
+	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  SelAdrM = 2'b01;
+	end
+	else begin
+	  MemAfterIWalkDone = 1'b1;
+	  NextState = STATE_READY;
+	end
+      end
+
+      STATE_PTW_FAULT_MISS_EVICT_DIRTY: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBWrite = 1'b1;
+	SelAdrM = 2'b01;
+	CommittedM = 1'b1;
+	SelEvict = 1'b1;
+	if( FetchCountFlag & AHBAck) begin
+	  NextState = STATE_PTW_FAULT_MISS_WRITE_CACHE_BLOCK;
+	end else begin
+	  NextState = STATE_PTW_FAULT_MISS_EVICT_DIRTY;
+	end	  
+      end
+
+
+      STATE_PTW_FAULT_UNCACHED_WRITE : begin
+	DCacheStall = 1'b1;	
+	AHBWrite = 1'b1;
+	CommittedM = 1'b1;
+	if(AHBAck) begin
+	  NextState = STATE_PTW_FAULT_UNCACHED_WRITE_DONE;
+	end else begin
+	  NextState = STATE_PTW_FAULT_UNCACHED_WRITE;
+	end
+      end
+
+      STATE_PTW_FAULT_UNCACHED_READ : begin
+	DCacheStall = 1'b1;	
+	AHBRead = 1'b1;
+	CommittedM = 1'b1;
+	if(AHBAck) begin
+	  NextState = STATE_PTW_FAULT_UNCACHED_READ_DONE;
+	end else begin
+	  NextState = STATE_PTW_FAULT_UNCACHED_READ;
+	end
+      end
+      
+      STATE_PTW_FAULT_UNCACHED_WRITE_DONE: begin
+	CommittedM = 1'b1;
+	if(StallWtoDCache) begin
+	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  SelAdrM = 2'b01;
+	end
+	else begin
+	  MemAfterIWalkDone = 1'b1;
+	  NextState = STATE_READY;
+	end
+      end
+
+      STATE_PTW_FAULT_UNCACHED_READ_DONE: begin
+	CommittedM = 1'b1;
+	SelUncached = 1'b1;
+	if(StallWtoDCache) begin 
+	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  SelAdrM = 2'b01;
+	end
+	else begin
+	  MemAfterIWalkDone = 1'b1;
+	  NextState = STATE_READY;
+	end 
       end
 
       default: begin

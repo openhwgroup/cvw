@@ -150,9 +150,12 @@ module lsu
   logic 		       WalkerPageFaultM;
 
   logic [`XLEN-1:0] 	       LSUData;
-    
-  hptw hptw(
-	    .clk(clk),
+  logic 		       AnyCPUReqM;
+  logic 		       MemAfterIWalkDone;
+
+  assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
+  
+  hptw hptw(.clk(clk),
 	    .reset(reset),
 	    .SATP_REGW(SATP_REGW),
 	    .PCF(PCF),
@@ -169,6 +172,8 @@ module lsu
             .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
 	    .SelPTW(SelPTW),
+	    .AnyCPUReqM,
+	    .MemAfterIWalkDone,
 	    .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	    .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 	    .WalkerStorePageFaultM(WalkerStorePageFaultM));
@@ -304,7 +309,7 @@ module lsu
 		.VAdr(MemAdrM[11:0]),		
 		.WriteDataM(WriteDataM),
 		.ReadDataM(ReadDataM),
-		.LSUData(LSUData),		
+		.LSUData(LSUData),
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.DCacheMiss,
@@ -314,10 +319,12 @@ module lsu
 		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
 		.DTLBWriteM(DTLBWriteM),
-		.ITLBWriteF(ITLBWriteF),		
+		.ITLBWriteF(ITLBWriteF),
+		.ITLBMissF,
+		.MemAfterIWalkDone,
 		.SelPTW(SelPTW),
 		.WalkerPageFaultM(WalkerPageFaultM),
-		.WalkerInstrPageFaultF(WalkerInstrPageFaultF),		
+		.WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),

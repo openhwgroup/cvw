@@ -32,20 +32,22 @@
 
 module hptw
   (
-   input logic		    clk, reset,
-   input logic [`XLEN-1:0]  SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0]  PCF, MemAdrM, // addresses to translate
-   input logic		    ITLBMissF, DTLBMissM, // TLB Miss
-   input logic [1:0]	    MemRWM, // 10 = read, 01 = write
-   input logic [`XLEN-1:0]  HPTWReadPTE, // page table entry from LSU
-   input logic		    HPTWStall, // stall from LSU
-   output logic [`XLEN-1:0] PTE,  // page table entry to TLBs
-   output logic [1:0]	    PageType, // page type to TLBs
-   output logic		    ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   output logic 	    SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
-   output logic [`PA_BITS-1:0]	    TranslationPAdr,
-   output logic		    HPTWRead, // HPTW requesting to read memory
-   output logic		    WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
+   input logic 		       clk, reset,
+   input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
+   input logic [`XLEN-1:0]     PCF, MemAdrM, // addresses to translate
+   input logic 		       ITLBMissF, DTLBMissM, // TLB Miss
+   input logic [1:0] 	       MemRWM, // 10 = read, 01 = write
+   input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
+   input logic 		       HPTWStall, // stall from LSU
+   input logic 		       MemAfterIWalkDone,
+   input logic 		       AnyCPUReqM,
+   output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
+   output logic [1:0] 	       PageType, // page type to TLBs
+   output logic 	       ITLBWriteF, DTLBWriteM, // write TLB with new entry
+   output logic 	       SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
+   output logic [`PA_BITS-1:0] TranslationPAdr,
+   output logic 	       HPTWRead, // HPTW requesting to read memory
+   output logic 	       WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
 );
 
   generate
@@ -98,7 +100,7 @@ module hptw
 	  // Enable and select signals based on states
       assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	  assign HPTWRead = (WalkerState == LEVEL3_READ) | (WalkerState == LEVEL2_READ) | (WalkerState == LEVEL1_READ) | (WalkerState == LEVEL0_READ);
-	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT);
+	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT) & (WalkerState != LEAF);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
 
@@ -188,7 +190,8 @@ module hptw
 	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 				else 				NextWalkerState = FAULT;
 	    LEAF: 						NextWalkerState = IDLE;
-	    FAULT:  					NextWalkerState = IDLE;
+	    FAULT: if (ITLBMissF & AnyCPUReqM & ~MemAfterIWalkDone) NextWalkerState = FAULT;
+ 	                        else NextWalkerState = IDLE;
 	    default: begin
 			$error("Default state in HPTW should be unreachable");
 									NextWalkerState = IDLE; // should never be reached
