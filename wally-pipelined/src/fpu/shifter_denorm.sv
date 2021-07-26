@@ -28,7 +28,7 @@ module mux21x64 (Z, A, B, Sel);
    assign Z = Sel ? B : A;
    
 endmodule // mux21x64
-
+ 
 // The implementation of the barrel shifter was modified to use 
 // fewer gates. It is now implemented using six 64-bit 2-to-1 muxes. The 
 // barrel shifter takes a 64-bit input A and shifts it left by up to 

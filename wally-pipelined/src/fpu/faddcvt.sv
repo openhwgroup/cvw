@@ -29,14 +29,14 @@
 module faddcvt(
    input logic          clk,
    input logic          reset,
-   input logic          FlushM,
-   input logic          StallM,
+   input logic          FlushM,     // flush the memory stage
+   input logic          StallM,     // stall the memory stage
    input logic  [63:0]  FSrcXE,		// 1st input operand (A)
    input logic  [63:0]  FSrcYE,		// 2nd input operand (B)
    input logic  [3:0]   FOpCtrlE, FOpCtrlM,	// Function opcode
-   input logic          FmtE, FmtM,   		// Result Precision (0 for double, 1 for single)
-   input logic  [2:0] 	FrmM,		// Rounding mode - specify values 
-   output logic [63:0]  FAddResM,	// Result of operation
+   input logic          FmtE, FmtM,   	// Result Precision (0 for double, 1 for single)
+   input logic  [2:0] 	FrmM,		      // Rounding mode - specify values 
+   output logic [63:0]  FAddResM,	   // Result of operation
    output logic [4:0]   FAddFlgM);   	// IEEE exception flags 
    
    logic [63:0] 	AddSumE, AddSumM;
@@ -51,7 +51,6 @@ module faddcvt(
    logic          AddInvalidE, AddInvalidM;
    logic 		   AddDenormInE, AddDenormInM;
    logic          AddSwapE, AddSwapM;
-   logic          AddNormOvflowE, AddNormOvflowM; //***this isn't used in addcvt2
    logic          AddSignAE, AddSignAM;
    logic 		   AddConvertE, AddConvertM;
    logic [63:0] 	AddFloat1E, AddFloat2E, AddFloat1M, AddFloat2M;
@@ -62,8 +61,9 @@ module faddcvt(
    fpuaddcvt1 fpadd1 (.FSrcXE, .FSrcYE, .FOpCtrlE, .FmtE, .AddFloat1E, .AddFloat2E, .AddExponentE, 
                      .AddExpPostSumE, .AddExp1DenormE, .AddExp2DenormE, .AddSumE, .AddSumTcE, .AddSelInvE, 
                      .AddCorrSignE, .AddSignAE, .AddOp1NormE, .AddOp2NormE, .AddOpANormE, .AddOpBNormE, .AddInvalidE, 
-                     .AddDenormInE, .AddConvertE, .AddSwapE, .AddNormOvflowE);
+                     .AddDenormInE, .AddConvertE, .AddSwapE);
 
+   // E/M pipeline registers
    flopenrc #(64) EMRegAdd1(clk, reset, FlushM, ~StallM, AddSumE, AddSumM); 
    flopenrc #(64) EMRegAdd2(clk, reset, FlushM, ~StallM, AddSumTcE, AddSumTcM); 
    flopenrc #(11) EMRegAdd3(clk, reset, FlushM, ~StallM, AddExpPostSumE, AddExpPostSumM); 
@@ -72,9 +72,9 @@ module faddcvt(
    flopenrc #(12) EMRegAdd6(clk, reset, FlushM, ~StallM, AddExp1DenormE, AddExp1DenormM); 
    flopenrc #(12) EMRegAdd7(clk, reset, FlushM, ~StallM, AddExp2DenormE, AddExp2DenormM); 
    flopenrc #(11) EMRegAdd8(clk, reset, FlushM, ~StallM, AddExponentE, AddExponentM);
-   flopenrc #(15) EMRegAdd9(clk, reset, FlushM, ~StallM, 
-                           {AddSelInvE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE},
-                           {AddSelInvM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddNormOvflowM, AddSignAM}); 
+   flopenrc #(14) EMRegAdd9(clk, reset, FlushM, ~StallM, 
+                           {AddSelInvE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddSignAE},
+                           {AddSelInvM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddSignAM}); 
 
                      
    fpuaddcvt2 fpadd2 (.FrmM, .FOpCtrlM, .FmtM, .AddSumM, .AddSumTcM, .AddFloat1M, .AddFloat2M, 
@@ -83,53 +83,52 @@ module faddcvt(
                      .AddSignAM, .AddCorrSignM, .AddConvertM, .AddSwapM, .FAddResM, .FAddFlgM);
 endmodule
 
-module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddNormOvflowE, AddSignAE, AddFloat1E, AddFloat2E, AddExp1DenormE, AddExp2DenormE, AddExponentE, FSrcXE, FSrcYE, FOpCtrlE, FmtE);
+module fpuaddcvt1 (
+   input logic [63:0]   FSrcXE,		// 1st input operand (A)
+   input logic [63:0]   FSrcYE,		// 2nd input operand (B)
+   input logic [3:0]	   FOpCtrlE,	// Function opcode
+   input logic 	      FmtE,   		// Result Precision (1 for double, 0 for single)
 
-   input logic [63:0] FSrcXE;		// 1st input operand (A)
-   input logic [63:0] FSrcYE;		// 2nd input operand (B)
-   input logic [3:0]	FOpCtrlE;	// Function opcode
-   input logic 	FmtE;   		// Result Precision (1 for double, 0 for single)
+   output logic [63:0] 	AddFloat1E, 
+   output logic [63:0] 	AddFloat2E,
+   output logic [10:0] 	AddExponentE,
+   output logic [10:0]	AddExpPostSumE,
+   output logic [11:0]  AddExp1DenormE, AddExp2DenormE,//KEP used to be [10:0]
+   output logic [63:0]  AddSumE, AddSumTcE,
+   output logic [3:0]   AddSelInvE,
+   output logic         AddCorrSignE,
+   output logic 	      AddSignAE,
+   output logic	      AddOp1NormE, AddOp2NormE,
+   output logic	      AddOpANormE, AddOpBNormE,
+   output logic	      AddInvalidE,
+   output logic 	      AddDenormInE,
+   output logic 	      AddConvertE,
+   output logic         AddSwapE
+   );
+
+   wire [5:0]	 ZP_mantissaA;
+   wire [5:0]	 ZP_mantissaB;
+   wire		    ZV_mantissaA;
+   wire		    ZV_mantissaB;
 
    wire          P;
    assign P = ~FmtE;
 
-   wire [63:0] 	 IntValue;
-   wire [11:0] 	 exp1, exp2;
-   wire [11:0] 	 exp_diff1, exp_diff2;
-   wire [11:0] 	 exp_shift;
-   wire [51:0] 	 mantissaA;
-   wire [56:0] 	 mantissaA1;
-   wire [63:0] 	 mantissaA3;
-   wire [51:0] 	 mantissaB; 
-   wire [56:0] 	 mantissaB1, mantissaB2;
-   wire [63:0] 	 mantissaB3;
-   wire 	 exp_gt63;
-   wire 	 Sticky_out;
-   wire          sub;
-   wire 	 zeroB;
-   wire [5:0]	 align_shift; 
-
-   output logic [63:0] 	 AddFloat1E; 
-   output logic [63:0] 	 AddFloat2E;
-   output logic [10:0] 	 AddExponentE;
-   output logic [10:0]	 AddExpPostSumE;
-   output logic [11:0]	 AddExp1DenormE, AddExp2DenormE;//KEP used to be [10:0]
-   output logic [63:0] AddSumE, AddSumTcE;
-   output logic [3:0]  AddSelInvE;
-   output logic        AddCorrSignE;
-   output logic 	 AddSignAE;
-   output logic	 AddOp1NormE, AddOp2NormE;
-   output logic	 AddOpANormE, AddOpBNormE;
-   output logic	 AddInvalidE;
-   output logic 	 AddDenormInE;
-//   output logic 	 exp_valid;
-   output logic 	 AddConvertE;
-   output logic        AddSwapE;
-   output logic 	 AddNormOvflowE;
-   wire [5:0]	 ZP_mantissaA;
-   wire [5:0]	 ZP_mantissaB;
-   wire		 ZV_mantissaA;
-   wire		 ZV_mantissaB;
+   wire [63:0] IntValue;
+   wire [11:0] exp1, exp2;
+   wire [11:0] exp_diff1, exp_diff2;
+   wire [11:0] exp_shift;
+   wire [51:0] mantissaA;
+   wire [56:0] mantissaA1;
+   wire [63:0] mantissaA3;
+   wire [51:0] mantissaB; 
+   wire [56:0] mantissaB1, mantissaB2;
+   wire [63:0] mantissaB3;
+   wire 	      exp_gt63;
+   wire 	      Sticky_out;
+   wire        sub;
+   wire 	      zeroB;
+   wire [5:0]	align_shift;
 
    // Convert the input operands to their appropriate forms based on 
    // the orignal operands, the FOpCtrlE , and their precision P. 
@@ -137,7 +136,7 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
    // and the sign of the first operand is set appropratiately based on
    // if the operation is absolute value or negation. 
 
-   convert_inputs conv1 (AddFloat1E, AddFloat2E, FSrcXE, FSrcYE, FOpCtrlE, P);
+   convert_inputs conv1 (.Float1(AddFloat1E), .Float2(AddFloat2E), .op1(FSrcXE), .op2(FSrcYE), .op_type(FOpCtrlE), .P);
 
    // Test for exceptions and return the "Invalid Operation" and
    // "Denormalized" Input Flags. The "AddSelInvE" is used in
@@ -247,7 +246,7 @@ module fpuaddcvt1 (AddSumE, AddSumTcE, AddSelInvE, AddExpPostSumE, AddCorrSignE,
  
    // Finds normal underflow result to determine whether to round final exponent down
    //***KEP used to be (AddSumE == 16'h0) I am unsure what it's supposed to be
-   assign AddNormOvflowE = (AddDenormInE & (AddSumE == 64'h0) & (AddOpANormE | AddOpBNormE) & ~FOpCtrlE[0]) ? 1'b1 : (AddSumE[63] ? AddSumTcE[52] : AddSumE[52]);
+   // assign AddNormOvflowE = (AddDenormInE & (AddSumE == 64'h0) & (AddOpANormE | AddOpBNormE) & ~FOpCtrlE[0]) ? 1'b1 : (AddSumE[63] ? AddSumTcE[52] : AddSumE[52]);
 
 endmodule // fpadd
 
@@ -281,32 +280,28 @@ endmodule // fpadd
 //
 
 
-module fpuaddcvt2 (FAddResM, FAddFlgM, AddSumM, AddSumTcM, AddSelInvM, AddExpPostSumM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddSignAM, AddFloat1M, AddFloat2M, AddExp1DenormM, AddExp2DenormM, AddExponentM, FrmM, FOpCtrlM, FmtM);
+module fpuaddcvt2 (
+   input [2:0] 	FrmM,		// Rounding mode - specify values 
+   input [3:0]	FOpCtrlM,	// Function opcode
+   input 	FmtM,   		// Result Precision (0 for double, 1 for single)
+   input [63:0] AddSumM, AddSumTcM,
+   input [63:0] 	 AddFloat1M, 
+   input [63:0] 	 AddFloat2M,
+   input [11:0]	 AddExp1DenormM, AddExp2DenormM,
+   input [10:0] 	 AddExponentM, AddExpPostSumM,
+   input [3:0] 	 AddSelInvM,
+   input		 AddOp1NormM, AddOp2NormM,
+   input		 AddOpANormM, AddOpBNormM,
+   input		 AddInvalidM,
+   input 	 AddDenormInM, 
+   input 	 AddSignAM, 
+   input         AddCorrSignM,
+   input 	 AddConvertM,
+   input          AddSwapM,
 
-   input [2:0] 	FrmM;		// Rounding mode - specify values 
-   input [3:0]	FOpCtrlM;	// Function opcode
-   input 	FmtM;   		// Result Precision (0 for double, 1 for single)
-   // input 	AddOvEnM;		// Overflow trap enabled
-   // input 	AddUnEnM;   	// Underflow trap enabled
-   input [63:0] AddSumM, AddSumTcM;
-   input [63:0] 	 AddFloat1M; 
-   input [63:0] 	 AddFloat2M;
-   input [11:0]	 AddExp1DenormM, AddExp2DenormM;
-   input [10:0] 	 AddExponentM, AddExpPostSumM; //exp_pre;
-   //input		 exp_valid;
-   input [3:0] 	 AddSelInvM;
-   input		 AddOp1NormM, AddOp2NormM;
-   input		 AddOpANormM, AddOpBNormM;
-   input		 AddInvalidM;
-   input 	 AddDenormInM; 
-   input 	 AddSignAM; 
-   input         AddCorrSignM;
-   input 	 AddConvertM;
-   input          AddSwapM;
-   // input 	 AddNormOvflowM;
-
-   output [63:0] FAddResM;	// Result of operation
-   output [4:0]  FAddFlgM;   	// IEEE exception flags 
+   output [63:0] FAddResM,	// Result of operation
+   output [4:0]  FAddFlgM   	// IEEE exception flags 
+);
    wire 	 AddDenormM;   	// AddDenormM on input or output   
 
    wire          P;
@@ -322,7 +317,6 @@ module fpuaddcvt2 (FAddResM, FAddFlgM, AddSumM, AddSumTcM, AddSelInvM, AddExpPos
    wire 	 Sticky_out;
    wire 	 sign_corr;
    wire 	 zeroB;         
-   wire [10:0]	 AddExpPostSumM;
    wire 	 mantissa_comp;
    wire 	 mantissa_comp_sum;
    wire 	 mantissa_comp_sum_tc;

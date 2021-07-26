@@ -27,7 +27,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3160000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3080000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -184,9 +184,12 @@ module testbench();
         scan_file_rf = $fscanf(data_file_rf, "%d\n", regNumExpected);
         scan_file_rf = $fscanf(data_file_rf, "%x\n", regExpected);
         force dut.hart.ieu.dp.regf.wd3 = regExpected;
-      // Hack to compensate for QEMU's incorrect MSTATUS
+      // Hack to compensate for QEMU's incorrect MSTATUS (Wally correctly identifies MXL, SXL to be 2 whereas QEMU sets them to an invalid value of 0
       end else if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,16) == "mstatus") begin
         force dut.hart.ieu.dp.regf.wd3 = dut.hart.ieu.dp.WriteDataW & ~64'ha00000000;
+            // Hack to compensate for QEMU's incorrect SSTATUS (Wally correctly identifies UXL to be 2 whereas QEMU sets it to an invalid value of 0
+      end else if (PCtextW.substr(0,3) == "csrr" && ((PCtextW.substr(10,16) == "sstatus") || (PCtextW.substr(11,17) == "sstatus"))) begin
+        force dut.hart.ieu.dp.regf.wd3 = dut.hart.ieu.dp.WriteDataW & ~64'h200000000;
       end else release dut.hart.ieu.dp.regf.wd3;
       // Hack to compensate for QEMU's correct but different MTVAL (according to spec, storing the faulting instr is an optional feature)
       if (PCtextW.substr(0,3) == "csrr" && PCtextW.substr(10,14) == "mtval") begin
@@ -265,7 +268,7 @@ module testbench();
 
           // Check PCD, InstrD
           if (~PCDwrong && ~(dut.hart.ifu.PCD === PCDexpected)) begin
-            $display("%0t ps, instr %0d: PC does not equal PC expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, PCDexpected);
+            $display("%0t ps, instr %0d: PCD does not equal PCD expected: %x, %x", $time, instrs, dut.hart.ifu.PCD, PCDexpected);
             `ERROR
           end
           InstrMask = InstrDExpected[1:0] == 2'b11 ? 32'hFFFFFFFF : 32'h0000FFFF;
