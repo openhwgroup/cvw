@@ -2,19 +2,21 @@
 `include "wally-config.vh"
 
 module fclassify (
-    input  logic XSgnE,
-    input logic XNaNE, 
-    input logic XSNaNE,
-    input logic XNormE,
-    input logic XDenormE,
-    input logic XZeroE,
-    input logic XInfE,
-    output logic [63:0] ClassResE
+    input logic         XSgnE,  // sign bit
+    input logic         XNaNE,  // is NaN
+    input logic         XSNaNE, // is signaling NaN
+    input logic         XNormE, // is normal
+    input logic         XDenormE, // is denormal
+    input logic         XZeroE, // is zero
+    input logic         XInfE,  // is infinity
+    output logic [63:0] ClassResE // classify result
     );
 
     logic PInf, PZero, PNorm, PDenorm;
     logic NInf, NZero, NNorm, NDenorm;
 
+   
+    // determine the sub categories
     assign PInf = ~XSgnE&XInfE;
     assign NInf = XSgnE&XInfE;
     assign PNorm = ~XSgnE&XNormE;

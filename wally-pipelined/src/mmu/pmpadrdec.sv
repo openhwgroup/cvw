@@ -67,9 +67,7 @@ module pmpadrdec (
   assign TORMatch = PAgePMPAdrIn && PAltPMPAdr;
 
   // Naturally aligned regions
-
-  // verilator lint_off UNOPTFLAT
-  logic [`PA_BITS-1:0] Mask;
+  logic [`PA_BITS-1:0] NAMask;
   //genvar i;
   
   // create a mask of which bits to ignore
@@ -80,23 +78,14 @@ module pmpadrdec (
   //     assign Mask[i] = Mask[i-1] & PMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
   //   end
   // endgenerate
-  prioritycircuit #(.ENTRIES(`PA_BITS-2), .FINAL_OP("NONE")) maskgen(.a(~PMPAdr[`PA_BITS-3:0]), .FirstPin(AdrMode==NAPOT), .y(Mask[`PA_BITS-1:2]));
-  assign Mask[1:0] = 2'b11;
 
-  // *** possible experiments:
-  /* PA < PMP addr could be in its own module, 
-        preeserving hierarchy so we can know if this is the culprit on the critical path
-        Should take logarthmic time, so more like 6 levels than 40 should be expected
+  assign NAMask[1:0] = {2'b11};
 
-    update mask generation
-        Should be concurrent with the subtraction/comparison
-        if one is the critical path, the other shouldn't be which makes us think the mask generation is the culprit.
+  prioritythemometer #(`PA_BITS-2) namaskgen(
+    .a({PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}),
+    .y(NAMask[`PA_BITS-1:2]));
 
-    Hopefully just use the priority circuit here
-    */
-  // verilator lint_on UNOPTFLAT
-
-  assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | Mask);
+  assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | NAMask);
 
   assign Match = (AdrMode == TOR) ? TORMatch : 
                  (AdrMode == NA4 || AdrMode == NAPOT) ? NAMatch :

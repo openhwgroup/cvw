@@ -3,21 +3,22 @@
 // it conditionally converts single precision values to double 
 // precision values and modifies the sign of op1. 
 // The converted operands are Float1 and Float2.
-module convert_inputs_div (Float1, Float2b, op1, op2, op_type, P);
+module convert_inputs_div (
    
-   input logic [63:0]  op1;           // 1st input operand (A)
-   input logic [63:0]  op2;           // 2nd input operand (B)
-   input logic 	       P;             // Result Precision (0 for double, 1 for single)
-   input logic 	       op_type;       // Operation   
+   input logic [63:0]  op1,           // 1st input operand (A)
+   input logic [63:0]  op2,           // 2nd input operand (B)
+   input logic 	     P,             // Result Precision (0 for double, 1 for single)
+   input logic 	     op_type,       // Operation   
 
-   output logic [63:0] Float1;	      // Converted 1st input operand
-   output logic [63:0] Float2b;	      // Converted 2nd input operand   
+   output logic [63:0] Float1,	      // Converted 1st input operand
+   output logic [63:0] Float2b	      // Converted 2nd input operand   
+);
 
    logic [63:0]        Float2;   
-   logic 	       Zexp1;	      // One if the exponent of op1 is zero
-   logic 	       Zexp2;	      // One if the exponent of op2 is zero
-   logic 	       Oexp1;	      // One if the exponent of op1 is all ones
-   logic 	       Oexp2;	      // One if the exponent of op2 is all ones
+   logic 	           Zexp1;	      // One if the exponent of op1 is zero
+   logic 	           Zexp2;	      // One if the exponent of op2 is zero
+   logic 	           Oexp1;	      // One if the exponent of op1 is all ones
+   logic 	           Oexp2;	      // One if the exponent of op2 is all ones
 
    // Test if the input exponent is zero, because if it is then the
    // exponent of the converted number should be zero. 

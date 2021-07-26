@@ -26,10 +26,10 @@
 `include "wally-config.vh"
 
 module fregfile (
-  input  logic             clk, reset,
-  input  logic             we4, 
-  input  logic [ 4:0]      a1, a2, a3, a4, 
-  input  logic [63:0] wd4,    //KEP `XLEN-1 changed to 63 (lint warning) *** figure out if double can be suported when XLEN = 32
+  input  logic        clk, reset,
+  input  logic        we4, 
+  input  logic [ 4:0] a1, a2, a3, a4, 
+  input  logic [63:0] wd4,
   output logic [63:0] rd1, rd2, rd3);
 
   logic [63:0] rf[31:0];

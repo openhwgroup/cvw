@@ -46,11 +46,15 @@ module testbench();
 
   string tests32mmu[] = '{
     "rv32mmu/WALLY-MMU-SV32", "3000"
+    //"rv32mmu/WALLY-PMA", "3000",
+    //"rv32mmu/WALLY-PMA", "3000"
     };
 
   string tests64mmu[] = '{
     "rv64mmu/WALLY-MMU-SV48", "3000",
     "rv64mmu/WALLY-MMU-SV39", "3000"
+    //"rv64mmu/WALLY-PMA", "3000",
+    //"rv64mmu/WALLY-PMA", "3000"
   };
 
   
@@ -558,7 +562,7 @@ string tests32f[] = '{
     end
   end
 
-  string signame, memfilename;
+  string signame, memfilename, romfilename;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -604,7 +608,9 @@ string tests32f[] = '{
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
+      romfilename = {"../../imperas-riscv-tests/imperas-boottim.txt"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -886,6 +892,7 @@ module instrNameDecTB(
                        else if (imm == 2) name = "URET";
                        else if (imm == 258) name = "SRET";
                        else if (imm == 770) name = "MRET";
+                       else if (funct7 == 9) name = "SFENCE.VMA";
                        else              name = "ILLEGAL";
       10'b1110011_001: name = "CSRRW";
       10'b1110011_010: name = "CSRRS";
