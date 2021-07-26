@@ -553,7 +553,6 @@ module dcache
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
-	  DCacheStall = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin 
@@ -922,7 +921,6 @@ module dcache
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
 	  SetDirtyM = 1'b1;
-	  DCacheStall = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin 
