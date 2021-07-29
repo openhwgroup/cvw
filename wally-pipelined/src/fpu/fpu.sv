@@ -57,7 +57,7 @@ module fpu (
   //                single stored in a double: | 32 1s | single precision value |
   //    - sets the underflow after rounding
   
-  generate if (`F_SUPPORTED | `D_SUPPORTED) begin 
+  generate if (`F_SUPPORTED | `D_SUPPORTED) begin : fpu
 
   // control signals
 	logic 		  FRegWriteD, FRegWriteE, FRegWriteW; // FP register write enable
@@ -67,7 +67,7 @@ module fpu (
 	logic 		  FWriteIntD;                         // Write to integer register
 	logic [1:0] FForwardXE, FForwardYE, FForwardZE; // forwarding mux control signals
 	logic [2:0] FResultSelD, FResultSelE, FResultSelM, FResultSelW; // Select the result written to FP register
-	logic [3:0] FOpCtrlD, FOpCtrlE, FOpCtrlM;           // Select which opperation to do in each component
+	logic [2:0] FOpCtrlD, FOpCtrlE, FOpCtrlM;           // Select which opperation to do in each component
 	logic [1:0] FResSelD, FResSelE, FResSelM;           // Select one of the results that finish in the memory stage
 	logic [1:0] FIntResSelD, FIntResSelE, FIntResSelM;  // Select the result written to the integer resister
 	logic [4:0] Adr1E, Adr2E, Adr3E;                    // adresses of each input
@@ -97,7 +97,8 @@ module fpu (
 	logic 		   XInfE, YInfE, ZInfE;           // is the input infinity - execute stage
 	logic 		   XInfM, YInfM, ZInfM;           // is the input infinity - memory stage
 	logic 		   XExpMaxE;                      // is the exponent all ones (max value)
-	logic 		   XNormE;                        // is X normal
+	logic 		   XNormE,YNormE;                 // is normal
+	logic 		   XNormM,YNormM;                 // is normal
 	
 	
 	// result and flag signals
@@ -171,7 +172,7 @@ module fpu (
 	flopenrc #(64) DEReg3(clk, reset, FlushE, ~StallE, FRD3D, FRD3E);
 	flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                                                        {Adr1E,         Adr2E,         Adr3E});
-	flopenrc #(18) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+	flopenrc #(17) DECtrlReg3(clk, reset, FlushE, ~StallE, 
 				  {FRegWriteD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD, FDivStartD},
 				  {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, FDivStartE});
 	
@@ -203,11 +204,11 @@ module fpu (
   // unpacking unit
   //    - splits FP inputs into their various parts
   //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-	unpacking unpacking(.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE(FOpCtrlE[2:0]), .FmtE, 
+	unpacking unpacking(.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE, .FResultSelE, .FmtE, 
                       // outputs:
                       .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
                       .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
-                      .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
+                      .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE, .YNormE);
 
   // FMA
   //    - two stage FMA
@@ -222,7 +223,7 @@ module fpu (
 		 .XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
      .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
      .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
-		 .FOpCtrlE(FOpCtrlE[2:0]), .FOpCtrlM(FOpCtrlM[2:0]), 
+		 .FOpCtrlE, .FOpCtrlM, 
 		 .FmtE, .FmtM, .FrmM, 
      // outputs:
      .FMAFlgM, .FMAResM);
@@ -240,10 +241,10 @@ module fpu (
   //    - if not captured any forwarded inputs will change durring computation
   //        - this problem is caused by stalling the execute stage
   //    - the other units don't have this problem, only div/sqrt stalls the execute stage
-	flopenrc #(64) reg_input1 (.d(FSrcXE), .q(DivInput1E),
+	flopenrc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
 				   .en(1'b1), .clear(FDivSqrtDoneE),
 				   .reset(reset),  .clk(FDivBusyE));
-	flopenrc #(64) reg_input2 (.d(FSrcYE), .q(DivInput2E),
+	flopenrc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
 				   .en(1'b1), .clear(FDivSqrtDoneE),
 				   .reset(reset),  .clk(FDivBusyE));
 	
@@ -261,6 +262,8 @@ module fpu (
   //*** remove uneeded logic
   //*** change to use the unpacking unit if possible
 	faddcvt faddcvt (.clk, .reset, .FlushM, .StallM, .FrmM, .FOpCtrlM, .FmtE, .FmtM, .FSrcXE, .FSrcYE, .FOpCtrlE, 
+   .XSgnM, .YSgnM, .XManM, .YManM, .XExpM, .YExpM,
+   .XSgnE, .YSgnE, .XManE, .YManE, .XExpE, .YExpE, .XDenormE, .YDenormE, .XNormE, .YNormE, .XNormM, .YNormM,  .XZeroE, .YZeroE, .XInfE, .YInfE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE,
                   // outputs:
                   .FAddResM, .FAddFlgM);
 	
@@ -269,7 +272,7 @@ module fpu (
   //    - writes to FP file durring min/max instructions
   //    - other comparisons write a 1 or 0 to the integer register
 	fcmp fcmp (.op1({XSgnE,XExpE,XManE[`NF-1:0]}), .op2({YSgnE,YExpE,YManE[`NF-1:0]}), 
-            .FSrcXE, .FSrcYE, .FOpCtrlE(FOpCtrlE[2:0]), 
+            .FSrcXE, .FSrcYE, .FOpCtrlE, 
             .FmtE, .XNaNE, .YNaNE, .XZeroE, .YZeroE, 
             // outputs:
 		        .Invalid(CmpNVE), .CmpResE);
@@ -325,9 +328,9 @@ module fpu (
   
 	flopenrc #(64) EMRegClass(clk, reset, FlushM, ~StallM, ClassResE, ClassResM);
 	
-	flopenrc #(17) EMCtrlReg(clk, reset, FlushM, ~StallM,
-				 {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE},
-				 {FRegWriteM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM});
+	flopenrc #(18) EMCtrlReg(clk, reset, FlushM, ~StallM,
+				 {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, XNormE, YNormE},
+				 {FRegWriteM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM, XNormM, YNormM});
 	
 	
 

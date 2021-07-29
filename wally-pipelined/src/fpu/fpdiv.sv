@@ -75,15 +75,8 @@ module fpdiv (
    // div/sqrt
          //  fdiv  = 0
          //  fsqrt = 1
-
-   // Convert the input operands to their appropriate forms based on 
-   // the orignal operands, the op_type , and their precision P. 
-   // Single precision inputs are converted to double precision 
-   // and the sign of the first operand is set appropratiately based on
-   // if the operation is absolute value or negation.   
-   convert_inputs_div conv1 (.op1, .op2, .op_type, .P, 
-                           // outputs:
-                           .Float1, .Float2b(Float2));
+   assign Float1 = op1;
+   assign Float2 = op_type ? op1 : op2;   
 
    // Test for exceptions and return the "Invalid Operation" and
    // "Denormalized" Input Flags. The "sel_inv" is used in

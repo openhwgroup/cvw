@@ -8,7 +8,7 @@
 module convert_inputs(
    input [63:0]  op1,      // 1st input operand (A)
    input [63:0]  op2,      // 2nd input operand (B)
-   input [3:0]   op_type,  // Function opcode
+   input [2:0]   op_type,  // Function opcode
    input 	     P,        // Result Precision (0 for double, 1 for single)
 
    output [63:0] Float1,	// Converted 1st input operand
@@ -16,8 +16,6 @@ module convert_inputs(
 );
 
    wire 	 conv_SP;   // Convert from SP to DP
-   wire 	 negate;    // Operation is negation
-   wire 	 abs_val;   // Operation is absolute value
    wire 	 Zexp1;		// One if the exponent of op1 is zero
    wire 	 Zexp2;		// One if the exponent of op2 is zero
    wire 	 Oexp1;		// One if the exponent of op1 is all ones
@@ -25,7 +23,7 @@ module convert_inputs(
 
    // Convert from single precision to double precision if (op_type is 11X
    // and P is 0) or (op_type is not 11X and P is one). 
-   assign conv_SP = (op_type[2]&op_type[1]) ^ P;
+   assign conv_SP = ~P;
 
    // Test if the input exponent is zero, because if it is then the
    // exponent of the converted number should be zero. 
@@ -40,17 +38,14 @@ module convert_inputs(
    assign Float1[28:0] = op1[28:0] & {29{~conv_SP}};
 
    // Conditionally convert op2. Lower 29 bits are zero for single precision. 
-   assign Float2[62:29] = conv_SP ? {op2[30], 
-				     {3{(~op2[30]&~Zexp2)|Oexp2}}, op2[29:0]}
+   assign Float2[62:29] = conv_SP ? {op2[30], {3{(~op2[30]&~Zexp2)|Oexp2}}, op2[29:0]}
 			  : op2[62:29];
    assign Float2[28:0] = op2[28:0] & {29{~conv_SP}};
 
    // Set the sign of Float1 based on its original sign and if the operation
    // is negation (op_type = 101) or absolute value (op_type = 100)
 
-   assign negate  = op_type[2] & ~op_type[1] & op_type[0];
-   assign abs_val = op_type[2] & ~op_type[1] & ~op_type[0]; //*** remove abs_val
-   assign Float1[63]  = conv_SP ? (op1[31] ^ negate) & ~abs_val : (op1[63] ^ negate) & ~abs_val;
+   assign Float1[63]  = conv_SP ? op1[31] : op1[63];
    assign Float2[63]  = conv_SP ? op2[31] : op2[63];
 
 endmodule // convert_inputs

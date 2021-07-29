@@ -1,4 +1,4 @@
-// The rounder takes as inputs a 64-bit value to be rounded, A, the 
+// The rounder takes as input logics a 64-bit value to be rounded, A, the 
 // exponent of the value to be rounded, the sign of the final result, Sign, 
 // the precision of the results, P, and the two-bit rounding mode, rm. 
 // It produces a rounded 52-bit result, Z, the exponent of the rounded 
@@ -17,38 +17,34 @@
 // where , denotes the rounding boundary. S is the logical OR of all the
 // bits to the right of R. 
  
-module rounder (Result, DenormIO, Flags, rm, P, OvEn, 
-		UnEn, exp_valid, sel_inv, Invalid, DenormIn, convert, Asign, Aexp, 
-		norm_shift, A, exponent_postsum, A_Norm, B_Norm, exp_A_unmodified, exp_B_unmodified,
-		normal_overflow, normal_underflow, swap, op_type, sum);
-
-   input  [2:0]  rm;
-   input         P;
-   input         OvEn;
-   input         UnEn;
-   input         exp_valid;
-   input [3:0] 	 sel_inv;
-   input	 Invalid;
-   input	 DenormIn;
-   input         convert;
-   input         Asign;
-   input [10:0]  Aexp;
-   input [5:0] 	 norm_shift;
-   input [63:0]  A;
-   input [10:0]  exponent_postsum;
-   input 	 A_Norm;
-   input 	 B_Norm;
-   input [11:0]  exp_A_unmodified;
-   input [11:0]  exp_B_unmodified;
-   input 	 normal_overflow;
-   input 	 normal_underflow;
-   input 	 swap;
-   input [3:0]	 op_type;
-   input [63:0]  sum;
+module rounder (
+   input logic  [2:0]  rm,
+   input logic         P,
+   input logic         OvEn,
+   input logic         UnEn,
+   input logic         exp_valid,
+   input logic [3:0] 	 sel_inv,
+   input logic	 Invalid,
+   input logic	 DenormIn,
+   input logic         Asign,
+   input logic [10:0]  Aexp,
+   input logic [5:0] 	 norm_shift,
+   input logic [63:0]  A,
+   input logic [10:0]  exponent_postsum,
+   input logic 	 A_Norm,
+   input logic 	 B_Norm,
+   input logic [11:0]  exp_A_unmodified,
+   input logic [11:0]  exp_B_unmodified,
+   input logic 	 normal_overflow,
+   input logic 	 normal_underflow,
+   input logic 	 swap,
+   input logic [2:0]	 op_type,
+   input logic [63:0]  sum,
    
-   output [63:0] Result;
-   output 	 DenormIO;
-   output [4:0]  Flags;
+   output logic [63:0] Result,
+   output logic 	 DenormIO,
+   output logic [4:0]  Flags
+);
    
    wire          Rsign;
    wire 	 Sticky_out;
@@ -87,7 +83,6 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    wire 	 Cout_overflow;
    wire		 Texp_l7z;
    wire		 Texp_l7o;
-   wire		 OvCon;
 
    // Determine the sticky bits for double and single precision
    assign S_DP= A[9]|A[8]|A[7]|A[6]|A[5]|A[4]|A[3]|A[2]|A[1]|A[0];
@@ -152,7 +147,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    assign UnFlow_SP = (~Texp[10]&(~Texp[9]|~Texp[8]|~Texp[7]|Texp_l7z));
    
    // Set the overflow and underflow flags. They should not be set if
-   // the input was infinite or NaN or the output of the adder is zero.
+   // the input logic was infinite or NaN or the output logic of the adder is zero.
    // 00 = Valid
    // 10 = NaN
    assign Valid = (~sel_inv[2]&~sel_inv[1]&~sel_inv[0]);
@@ -164,7 +159,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    assign OverFlow  = (P & OvFlow_SP | OvFlow_DP)&Valid&~UnderFlow&exp_valid;
 
    // The DenormIO is set if underflow has occurred or if their was a
-   // denormalized input. 
+   // denormalized input logic. 
    assign DenormIO = DenormIn | UnderFlow;
 
    // The final result is Inexact if any rounding occurred ((i.e., R or S 
@@ -192,7 +187,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    // -0 + +0 = -0 (for RD) 
    assign Rzero = ~exp_valid | UnderFlow;
    assign Rsign = DenormIn ?
-		  ( ~(op_type[2] | op_type[1] | op_type[0]) ? 
+		  ( ~(op_type[1] | op_type[0]) ? 
 		  ( (sum[63] & (A_Norm | B_Norm) & (exp_A_unmodified[11] ^ exp_B_unmodified[11])) ?
 		  ~Asign : Asign) 
    		  : ( ((A_Norm ^ B_Norm) & (exp_A_unmodified[11] ~^ exp_B_unmodified[11])) ?
@@ -202,7 +197,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
      	          (sel_inv[2]&~sel_inv[1]&sel_inv[0]&rm[1]&rm[0] |
 	          sel_inv[2]&sel_inv[1]&~sel_inv[0] |		  
 	          ~exp_valid&rm[1]&rm[0]&~sel_inv[2] | 
-	          UnderFlow&rm[1]&rm[0]) & ~convert) & ~sel_inv[3]) |
+	          UnderFlow&rm[1]&rm[0])) & ~sel_inv[3]) |
 		  (Asign & sel_inv[3]) );
    
    // The exponent of the final result is zero if the final result is 
@@ -218,7 +213,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    assign VeryLarge = OverFlow & ~OvEn;
    assign Infinite   = (VeryLarge & ~Round_zero) | (~sel_inv[2] & sel_inv[1]);
    assign Largest = VeryLarge & Round_zero;
-   assign Adj_exp = OverFlow & OvEn & ~convert;
+   assign Adj_exp = OverFlow & OvEn;
    assign Rexp[10:1] = ({10{~Valid}} | 
 			{Texp[10]&~Adj_exp, Texp[9]&~Adj_exp, Texp[8], 
 			 (Texp[7]^P)&~(Adj_exp&P), Texp[6]&~(Adj_exp&P), Texp[5:1]} | 
@@ -230,7 +225,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    // Depending on the operation and the signs of the orignal operands,
    // underflow may or may not be needed to round.
    assign Rexp_denorm = DenormIn ? 
-			((~op_type[2] & ~op_type[1] & op_type[0]) ? 
+			((~op_type[1] & op_type[0]) ? 
 				( ((A_Norm != B_Norm) & (exp_A_unmodified[11] == exp_B_unmodified[11])) ? 
 					( (normal_overflow == normal_underflow) ? Texp[10:0] : (normal_overflow ? Texp_addone[10:0] : Texp_subone[10:0]) ) 
 					: ( normal_overflow ? Texp_addone[10:0] : Texp[10:0] ) ) 
@@ -238,7 +233,7 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
 					( (normal_overflow == normal_underflow) ? Texp[10:0] : (normal_overflow ? Texp_addone[10:0] : Texp_subone[10:0]) ) 
 					: ( normal_overflow ? Texp_addone[10:0] : Texp[10:0] ) ) 
 				) : 
-			(op_type[3]) ? exp_A_unmodified[10:0] : Rexp; //KEP used to be all of exp_A_unmodified
+			Rexp; //KEP used to be all of exp_A_unmodified
 
    // If the result is zero or infinity, the mantissa is all zeros. 
    // If the result is NaN, the mantissa is 10...0
@@ -256,10 +251,9 @@ module rounder (Result, DenormIO, Flags, rm, P, OvEn,
    // for the final result. A double precision result is returned if 
    // overflow has occurred, the overflow trap is enabled, and a conversion
    // is being performed. 
-   assign OvCon = OverFlow & OvEn & convert;
 
-   assign Result = (op_type[3]) ? {A[63:0]} : (DenormIn ? {Rsign, Rexp_denorm, ShiftMant} : ((P&~OvCon) ? {{32{1'b1}}, Rsign, Rexp[7:0], Rmant[51:29]}
-	           : {Rsign, Rexp, Rmant}));
+   assign Result = DenormIn ? {Rsign, Rexp_denorm, ShiftMant} : (P ? {{32{1'b1}}, Rsign, Rexp[7:0], Rmant[51:29]}
+	           : {Rsign, Rexp, Rmant});
 
 endmodule // rounder
 
