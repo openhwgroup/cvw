@@ -48,7 +48,7 @@ assign FOpCtrlE = 3'b0;
 // up - 011
 // nearest max mag - 100  
 assign FrmE = 3'b000;
-assign FmtE = 1'b0;
+assign FmtE = 1'b1;
 
     logic  [`FLEN-1:0] X, Y, Z;
     // logic         FmtE;
@@ -76,9 +76,9 @@ assign FmtE = 1'b0;
     assign YSgnE = FmtE ? Y[`FLEN-1] : Y[31];
     assign ZSgnE = FmtE ? Addend[`FLEN-1] : Addend[31];
 
-    assign XExpE = FmtE ? X[62:52] : {3'b0, X[30:23]};//{X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
-    assign YExpE = FmtE ? Y[62:52] : {3'b0, Y[30:23]};//{Y[30], {3{~Y[30]&~YExpZero|YExpMaxE}}, Y[29:23]}; 
-    assign ZExpE = FmtE ? Addend[62:52] : {3'b0, Addend[30:23]};//{Addend[30], {3{~Addend[30]&~ZExpZero|ZExpMaxE}}, Addend[29:23]}; 
+    assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
+    assign YExpE = FmtE ? Y[62:52] : {Y[30], {3{~Y[30]&~YExpZero|YExpMaxE}}, Y[29:23]}; 
+    assign ZExpE = FmtE ? Addend[62:52] : {Addend[30], {3{~Addend[30]&~ZExpZero|ZExpMaxE}}, Addend[29:23]}; 
 
     assign XFracE = FmtE ? X[`NF-1:0] : {X[22:0], 29'b0};
     assign YFracE = FmtE ? Y[`NF-1:0] : {Y[22:0], 29'b0};
@@ -122,7 +122,7 @@ assign FmtE = 1'b0;
     assign YZeroE = YExpZero & YFracZero;
     assign ZZeroE = ZExpZero & ZFracZero;
 
-    assign BiasE = FmtE ? {1'b0, {`NE-1{1'b1}}} : 13'h7f;
+    assign BiasE = 13'h3ff;
 
 assign	wnan = FmtE ? &FMAResM[`FLEN-2:`NF] && |FMAResM[`NF-1:0] : &FMAResM[30:23] && |FMAResM[22:0]; 
 // assign	XNaNE = FmtE ? &X[62:52] && |X[51:0] : &X[62:55] && |X[54:32]; 
@@ -203,7 +203,7 @@ always @(posedge clk)
 		if(&ans[30:23] && |ans[22:0] && ~ans[22] ) $display( "ans=sigNaN ");
 		if(&ans[30:23] && |ans[22:0] && ans[22]) $display( "ans=qutNaN ");
         errors = errors + 1;
-	  //if (errors == 10)
+	  if (errors == 10)
 		$stop;
     end
  vectornum = vectornum + 1;

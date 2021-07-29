@@ -33,9 +33,22 @@ module faddcvt(
    input logic          StallM,     // stall the memory stage
    input logic  [63:0]  FSrcXE,		// 1st input operand (A)
    input logic  [63:0]  FSrcYE,		// 2nd input operand (B)
-   input logic  [3:0]   FOpCtrlE, FOpCtrlM,	// Function opcode
+   input logic  [2:0]   FOpCtrlE, FOpCtrlM,	// Function opcode
    input logic          FmtE, FmtM,   	// Result Precision (0 for double, 1 for single)
    input logic  [2:0] 	FrmM,		      // Rounding mode - specify values 
+   input logic XSgnE, YSgnE,
+   input logic [52:0] XManE, YManE,
+   input logic [10:0] XExpE, YExpE,
+   input logic XSgnM, YSgnM,
+   input logic [52:0] XManM, YManM,
+   input logic [10:0] XExpM, YExpM,
+   input logic XDenormE, YDenormE,
+   input logic XNormE, YNormE,
+   input logic XNormM, YNormM,
+   input logic XZeroE, YZeroE,
+   input logic XInfE, YInfE,
+   input logic XNaNE, YNaNE,
+   input logic XSNaNE, YSNaNE,
    output logic [63:0]  FAddResM,	   // Result of operation
    output logic [4:0]   FAddFlgM);   	// IEEE exception flags 
    
@@ -44,53 +57,53 @@ module faddcvt(
    logic [3:0] 	AddSelInvE, AddSelInvM;
    logic [10:0] 	AddExpPostSumE,AddExpPostSumM;
    logic 		   AddCorrSignE, AddCorrSignM;
-   logic          AddOp1NormE, AddOp1NormM;
-   logic          AddOp2NormE, AddOp2NormM;
    logic          AddOpANormE,  AddOpANormM;
    logic          AddOpBNormE, AddOpBNormM;
    logic          AddInvalidE, AddInvalidM;
    logic 		   AddDenormInE, AddDenormInM;
    logic          AddSwapE, AddSwapM;
    logic          AddSignAE, AddSignAM;
-   logic 		   AddConvertE, AddConvertM;
-   logic [63:0] 	AddFloat1E, AddFloat2E, AddFloat1M, AddFloat2M;
    logic [11:0] 	AddExp1DenormE, AddExp2DenormE, AddExp1DenormM, AddExp2DenormM;
    logic [10:0] 	AddExponentE, AddExponentM;
 
 
-   fpuaddcvt1 fpadd1 (.FSrcXE, .FSrcYE, .FOpCtrlE, .FmtE, .AddFloat1E, .AddFloat2E, .AddExponentE, 
+   fpuaddcvt1 fpadd1 (.FOpCtrlE, .FmtE, .AddExponentE, 
                      .AddExpPostSumE, .AddExp1DenormE, .AddExp2DenormE, .AddSumE, .AddSumTcE, .AddSelInvE, 
-                     .AddCorrSignE, .AddSignAE, .AddOp1NormE, .AddOp2NormE, .AddOpANormE, .AddOpBNormE, .AddInvalidE, 
-                     .AddDenormInE, .AddConvertE, .AddSwapE);
+   .XSgnE, .YSgnE,.XManE, .YManE, .XExpE, .YExpE,  .XDenormE, .YDenormE, .XNormE, .YNormE, .XZeroE, .YZeroE, .XInfE, .YInfE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE,
+                     .AddCorrSignE, .AddSignAE, .AddOpANormE, .AddOpBNormE, .AddInvalidE, 
+                     .AddDenormInE, .AddSwapE);
 
    // E/M pipeline registers
    flopenrc #(64) EMRegAdd1(clk, reset, FlushM, ~StallM, AddSumE, AddSumM); 
    flopenrc #(64) EMRegAdd2(clk, reset, FlushM, ~StallM, AddSumTcE, AddSumTcM); 
    flopenrc #(11) EMRegAdd3(clk, reset, FlushM, ~StallM, AddExpPostSumE, AddExpPostSumM); 
-   flopenrc #(64) EMRegAdd4(clk, reset, FlushM, ~StallM, AddFloat1E, AddFloat1M); 
-   flopenrc #(64) EMRegAdd5(clk, reset, FlushM, ~StallM, AddFloat2E, AddFloat2M); 
    flopenrc #(12) EMRegAdd6(clk, reset, FlushM, ~StallM, AddExp1DenormE, AddExp1DenormM); 
    flopenrc #(12) EMRegAdd7(clk, reset, FlushM, ~StallM, AddExp2DenormE, AddExp2DenormM); 
    flopenrc #(11) EMRegAdd8(clk, reset, FlushM, ~StallM, AddExponentE, AddExponentM);
-   flopenrc #(14) EMRegAdd9(clk, reset, FlushM, ~StallM, 
-                           {AddSelInvE, AddCorrSignE, AddOp1NormE, AddOp2NormE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddConvertE, AddSwapE, AddSignAE},
-                           {AddSelInvM, AddCorrSignM, AddOp1NormM, AddOp2NormM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddConvertM, AddSwapM, AddSignAM}); 
+   flopenrc #(11) EMRegAdd9(clk, reset, FlushM, ~StallM, 
+                           {AddSelInvE, AddCorrSignE, AddOpANormE, AddOpBNormE, AddInvalidE, AddDenormInE, AddSwapE, AddSignAE},
+                           {AddSelInvM, AddCorrSignM, AddOpANormM, AddOpBNormM, AddInvalidM, AddDenormInM, AddSwapM, AddSignAM}); 
 
                      
-   fpuaddcvt2 fpadd2 (.FrmM, .FOpCtrlM, .FmtM, .AddSumM, .AddSumTcM, .AddFloat1M, .AddFloat2M, 
-                     .AddExp1DenormM, .AddExp2DenormM, .AddExponentM, .AddExpPostSumM, .AddSelInvM, 
-                     .AddOp1NormM, .AddOp2NormM, .AddOpANormM, .AddOpBNormM, .AddInvalidM, .AddDenormInM, 
-                     .AddSignAM, .AddCorrSignM, .AddConvertM, .AddSwapM, .FAddResM, .FAddFlgM);
+   fpuaddcvt2 fpadd2 (.FrmM, .FOpCtrlM, .FmtM, .AddSumM, .AddSumTcM,  .XNormM, .YNormM, 
+                     .AddExp1DenormM, .AddExp2DenormM, .AddExponentM, .AddExpPostSumM, .AddSelInvM, .XSgnM, .YSgnM, .XManM, .YManM, .XExpM, .YExpM,
+                     .AddOpANormM, .AddOpBNormM, .AddInvalidM, .AddDenormInM, 
+                     .AddSignAM, .AddCorrSignM, .AddSwapM, .FAddResM, .FAddFlgM);
 endmodule
 
 module fpuaddcvt1 (
-   input logic [63:0]   FSrcXE,		// 1st input operand (A)
-   input logic [63:0]   FSrcYE,		// 2nd input operand (B)
-   input logic [3:0]	   FOpCtrlE,	// Function opcode
+   input logic [2:0]	   FOpCtrlE,	// Function opcode
    input logic 	      FmtE,   		// Result Precision (1 for double, 0 for single)
+   input logic XSgnE, YSgnE,
+   input logic [10:0] XExpE, YExpE,
+   input logic [52:0] XManE, YManE,
+   input logic XDenormE, YDenormE,
+   input logic XNormE, YNormE,
+   input logic XZeroE, YZeroE,
+   input logic XInfE, YInfE,
+   input logic XNaNE, YNaNE,
+   input logic XSNaNE, YSNaNE,
 
-   output logic [63:0] 	AddFloat1E, 
-   output logic [63:0] 	AddFloat2E,
    output logic [10:0] 	AddExponentE,
    output logic [10:0]	AddExpPostSumE,
    output logic [11:0]  AddExp1DenormE, AddExp2DenormE,//KEP used to be [10:0]
@@ -98,11 +111,9 @@ module fpuaddcvt1 (
    output logic [3:0]   AddSelInvE,
    output logic         AddCorrSignE,
    output logic 	      AddSignAE,
-   output logic	      AddOp1NormE, AddOp2NormE,
    output logic	      AddOpANormE, AddOpBNormE,
    output logic	      AddInvalidE,
    output logic 	      AddDenormInE,
-   output logic 	      AddConvertE,
    output logic         AddSwapE
    );
 
@@ -112,7 +123,7 @@ module fpuaddcvt1 (
    wire		    ZV_mantissaB;
 
    wire          P;
-   assign P = ~FmtE;
+   assign P = ~(FmtE^FOpCtrlE[1]);
 
    wire [63:0] IntValue;
    wire [11:0] exp1, exp2;
@@ -130,22 +141,15 @@ module fpuaddcvt1 (
    wire 	      zeroB;
    wire [5:0]	align_shift;
 
-   // Convert the input operands to their appropriate forms based on 
-   // the orignal operands, the FOpCtrlE , and their precision P. 
-   // Single precision inputs are converted to double precision 
-   // and the sign of the first operand is set appropratiately based on
-   // if the operation is absolute value or negation. 
-
-   convert_inputs conv1 (.Float1(AddFloat1E), .Float2(AddFloat2E), .op1(FSrcXE), .op2(FSrcYE), .op_type(FOpCtrlE), .P);
-
    // Test for exceptions and return the "Invalid Operation" and
    // "Denormalized" Input Flags. The "AddSelInvE" is used in
    // the third pipeline stage to select the result. Also, AddOp1NormE
    // and AddOp2NormE are one if FSrcXE and FSrcYE are not zero or denormalized.
    // sub is one if the effective operation is subtaction. 
 
-   exception exc1 (AddSelInvE, AddInvalidE, AddDenormInE, AddOp1NormE, AddOp2NormE, sub, 
-		   AddFloat1E, AddFloat2E, FOpCtrlE);
+   exception exc1 (.Ztype(AddSelInvE), .Invalid(AddInvalidE), .Denorm(AddDenormInE), .Sub(sub), 
+   .XSgnE, .YSgnE, .XDenormE, .YDenormE, .XNormE, .YNormE, .XZeroE, .YZeroE, .XInfE, .YInfE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE,
+	.op_type(FOpCtrlE));
 
    // Perform Exponent Subtraction (used for alignment). For performance
    // both exponent subtractions are performed in parallel. This was 
@@ -153,25 +157,25 @@ module fpuaddcvt1 (
    // the two parallel additions. The input values are zero-extended to 12 
    // bits prior to performing the addition. 
 
-   assign exp1 = {1'b0, AddFloat1E[62:52]};
-   assign exp2 = {1'b0, AddFloat2E[62:52]};
+   assign exp1 = {1'b0, XExpE};
+   assign exp2 = {1'b0, YExpE};
    assign exp_diff1 = exp1 - exp2;
-   assign exp_diff2 = AddDenormInE ? ({AddFloat2E[63], exp2[10:0]} - {AddFloat1E[63], exp1[10:0]}): exp2 - exp1;
+   assign exp_diff2 = AddDenormInE ? ({YSgnE, YExpE} - {XSgnE, XExpE}): exp2 - exp1;
 
    // The second operand (B) should be set to zero, if FOpCtrlE does not
    // specify addition or subtraction
-   assign zeroB = FOpCtrlE[2] | FOpCtrlE[1];
+   assign zeroB = FOpCtrlE[1];
 
    // Swapped operands if zeroB is not one and exp1 < exp2. 
    // Swapping causes exp2 to be used for the result exponent. 
    // Only the exponent of the larger operand is used to determine
    // the final result. 
    assign AddSwapE = exp_diff1[11] & ~zeroB;
-   assign AddExponentE = AddSwapE ? exp2[10:0] : exp1[10:0];
-   assign AddExpPostSumE = AddSwapE ? exp2[10:0] : exp1[10:0];
-   assign mantissaA = AddSwapE ? AddFloat2E[51:0] : AddFloat1E[51:0];
-   assign mantissaB = AddSwapE ? AddFloat1E[51:0] : AddFloat2E[51:0];
-   assign AddSignAE     = AddSwapE ? AddFloat2E[63] : AddFloat1E[63];   
+   assign AddExponentE = AddSwapE ? YExpE : XExpE;
+   assign AddExpPostSumE = AddSwapE ? YExpE : XExpE;
+   assign mantissaA = AddSwapE ? YManE[51:0] : XManE[51:0];
+   assign mantissaB = AddSwapE ? XManE[51:0] : YManE[51:0];
+   assign AddSignAE     = AddSwapE ? YSgnE : XSgnE;   
 
    // Leading-Zero Detector. Determine the size of the shift needed for
    // normalization. If sum_corrected is all zeros, the exp_valid is 
@@ -201,8 +205,8 @@ module fpuaddcvt1 (
    // and loss of sign information. The two bits to the right of the 
    // original mantissa form the "guard" and "round" bits that are used
    // to round the result. 
-   assign AddOpANormE = AddSwapE ? AddOp2NormE : AddOp1NormE;
-   assign AddOpBNormE = AddSwapE ? AddOp1NormE : AddOp2NormE;
+   assign AddOpANormE = AddSwapE ? YNormE : XNormE;
+   assign AddOpBNormE = AddSwapE ? XNormE : YNormE;
    assign mantissaA1 = {2'h0, AddOpANormE, mantissaA[51:0]&{52{AddOpANormE}}, 2'h0};
    assign mantissaB1 = {2'h0, AddOpBNormE, mantissaB[51:0]&{52{AddOpBNormE}}, 2'h0};
 
@@ -223,19 +227,18 @@ module fpuaddcvt1 (
    // and the exponent value is left unchanged. 
    // Under denormalized cases, the exponent before the rounder is set to 1
    // if the normal shift value is 11.
-   assign AddConvertE       = ~FOpCtrlE[2] & FOpCtrlE[1];
-   assign mantissaA3    = (FOpCtrlE[3]) ? (FOpCtrlE[0] ? AddFloat1E : ~AddFloat1E) : (AddDenormInE ? ({12'h0, mantissaA}) : (AddConvertE ? IntValue : {mantissaA1, 7'h0}));
+   assign mantissaA3    = AddDenormInE ? ({12'h0, mantissaA}) : {mantissaA1, 7'h0};
 
    // Put zero in for mantissaB3, if zeroB is one. Otherwise, B is extended to 
    // 64-bits by setting the 7 LSBs to the Sticky_out bit followed by six  
    // zeros. 
-   assign mantissaB3[63:7] = (FOpCtrlE[3]) ? (57'h0) : (AddDenormInE ? {12'h0, mantissaB[51:7]} : mantissaB2 & {57{~zeroB}});
-   assign mantissaB3[6]    = (FOpCtrlE[3]) ? (1'b0) : (AddDenormInE ? mantissaB[6] : Sticky_out & ~zeroB);
-   assign mantissaB3[5:0]  = (FOpCtrlE[3]) ? (6'h01) : (AddDenormInE ? mantissaB[5:0] : 6'h0);
+   assign mantissaB3[63:7] = AddDenormInE ? {12'h0, mantissaB[51:7]} : mantissaB2 & {57{~zeroB}};
+   assign mantissaB3[6]    = AddDenormInE ? mantissaB[6] : Sticky_out & ~zeroB;
+   assign mantissaB3[5:0]  = AddDenormInE ? mantissaB[5:0] : 6'h0;
 
    // The sign of the result needs to be corrected if the true
    // operation is subtraction and the input operands were swapped. 
-   assign AddCorrSignE = ~FOpCtrlE[2]&~FOpCtrlE[1]&FOpCtrlE[0]&AddSwapE;
+   assign AddCorrSignE = ~FOpCtrlE[1]&FOpCtrlE[0]&AddSwapE;
 
    // 64-bit Mantissa Adder/Subtractor
    cla64 add1 (AddSumE, mantissaA3, mantissaB3, sub); //***adder
@@ -281,31 +284,31 @@ endmodule // fpadd
 
 
 module fpuaddcvt2 (
-   input [2:0] 	FrmM,		// Rounding mode - specify values 
-   input [3:0]	FOpCtrlM,	// Function opcode
-   input 	FmtM,   		// Result Precision (0 for double, 1 for single)
-   input [63:0] AddSumM, AddSumTcM,
-   input [63:0] 	 AddFloat1M, 
-   input [63:0] 	 AddFloat2M,
-   input [11:0]	 AddExp1DenormM, AddExp2DenormM,
-   input [10:0] 	 AddExponentM, AddExpPostSumM,
-   input [3:0] 	 AddSelInvM,
-   input		 AddOp1NormM, AddOp2NormM,
-   input		 AddOpANormM, AddOpBNormM,
-   input		 AddInvalidM,
-   input 	 AddDenormInM, 
-   input 	 AddSignAM, 
-   input         AddCorrSignM,
-   input 	 AddConvertM,
-   input          AddSwapM,
+   input logic [2:0] 	FrmM,		// Rounding mode - specify values 
+   input logic [2:0]	FOpCtrlM,	// Function opcode
+   input logic 	FmtM,   		// Result Precision (0 for double, 1 for single)
+   input logic [63:0] AddSumM, AddSumTcM,
+   input logic [11:0]	 AddExp1DenormM, AddExp2DenormM,
+   input logic [10:0] 	 AddExponentM, AddExpPostSumM,
+   input logic [3:0] 	 AddSelInvM,
+   input logic XSgnM, YSgnM,
+   input logic [52:0] XManM, YManM,
+   input logic [10:0] XExpM, YExpM,
+   input logic XNormM, YNormM,
+   input logic		 AddOpANormM, AddOpBNormM,
+   input logic		 AddInvalidM,
+   input logic 	 AddDenormInM, 
+   input logic 	 AddSignAM, 
+   input logic         AddCorrSignM,
+   input logic          AddSwapM,
 
-   output [63:0] FAddResM,	// Result of operation
-   output [4:0]  FAddFlgM   	// IEEE exception flags 
+   output logic [63:0] FAddResM,	// Result of operation
+   output logic [4:0]  FAddFlgM   	// IEEE exception flags 
 );
    wire 	 AddDenormM;   	// AddDenormM on input or output   
 
    wire          P;
-   assign P = ~FmtM;
+   assign P = ~(FmtM^FOpCtrlM[1]);
 
    wire [10:0]   exp_pre;
    wire [63:0] 	 Result;   
@@ -338,15 +341,15 @@ module fpuaddcvt2 (
    //cases/conversion cases
    assign exp_pre       = AddDenormInM ?
                           ((norm_shift == 6'b001011) ? 11'b00000000001 : (AddSwapM ? AddExp2DenormM[10:0] : AddExp1DenormM[10:0]))
-                          : (AddConvertM ? 11'b10000111100 : AddExponentM);
+                          : AddExponentM;
 
 
    // Finds normal underflow result to determine whether to round final AddExponentM down
    // Comparison between each float and the resulting AddSumM of the primary cla adder/subtractor and cla subtractor
-   assign Float1_sum_comp = (AddFloat1M[51:0] > AddSumM[51:0]) ? 1'b0 : 1'b1;
-   assign Float2_sum_comp = (AddFloat2M[51:0] > AddSumM[51:0]) ? 1'b0 : 1'b1;
-   assign Float1_sum_tc_comp = (AddFloat1M[51:0] > AddSumTcM[51:0]) ? 1'b0 : 1'b1;
-   assign Float2_sum_tc_comp = (AddFloat2M[51:0] > AddSumTcM[51:0]) ? 1'b0 : 1'b1;
+   assign Float1_sum_comp = ~(XManM[51:0] > AddSumM[51:0]);
+   assign Float2_sum_comp = ~(YManM[51:0] > AddSumM[51:0]);
+   assign Float1_sum_tc_comp = ~(XManM[51:0] > AddSumTcM[51:0]);
+   assign Float2_sum_tc_comp = ~(YManM[51:0] > AddSumTcM[51:0]);
 
    // Determines the correct Float value to compare based on AddSwapM result
    assign mantissa_comp_sum = AddSwapM ? Float2_sum_comp : Float1_sum_comp;
@@ -357,16 +360,16 @@ module fpuaddcvt2 (
 
    // If the signs are different and both operands aren't denormalized
    // the normal underflow bit is needed and therefore updated.
-   assign normal_underflow = ((AddFloat1M[63] ~^ AddFloat2M[63]) & (AddOpANormM | AddOpBNormM)) ? mantissa_comp : 1'b0;
+   assign normal_underflow = ((XSgnM ^ YSgnM) & (AddOpANormM | AddOpBNormM)) ? mantissa_comp : 1'b0;
 
    // Determine the correct sign of the result
-   assign sign_corr = ((AddCorrSignM ^ AddSignAM) & ~AddConvertM) ^ AddSumM[63];   
+   assign sign_corr = (AddCorrSignM ^ AddSignAM) ^ AddSumM[63];   
    
    // If the AddSumM is negative, use its two complement instead. 
    // This value has to be 64-bits to correctly handle the 
    // case 10...00
-   assign sum_corr = (AddDenormInM & (AddOpANormM | AddOpBNormM) & ( ( (AddFloat1M[63] ~^ AddFloat2M[63]) & FOpCtrlM[0] ) | ((AddFloat1M[63] ^ AddFloat2M[63]) & ~FOpCtrlM[0]) ))
-			 ? (AddSumM[63] ? AddSumM : AddSumTcM) : ( (FOpCtrlM[3]) ? AddSumM : (AddSumM[63] ? AddSumTcM : AddSumM));
+   assign sum_corr = (AddDenormInM & (AddOpANormM | AddOpBNormM) & ( ( (XSgnM ~^ YSgnM) & FOpCtrlM[0] ) | ((XSgnM ^ YSgnM) & ~FOpCtrlM[0]) ))
+			 ? (AddSumM[63] ? AddSumM : AddSumTcM) : (AddSumM[63] ? AddSumTcM : AddSumM);
 
    // Finds normal underflow result to determine whether to round final AddExponentM down
    //KEP used to be (AddSumM == 16'h0) not sure what it is supposed to be
@@ -384,7 +387,7 @@ module fpuaddcvt2 (
    // be right shifted. It outputs the normalized AddSumM. 
    barrel_shifter_l64 bs2 (sum_norm, sum_corr, norm_shift_denorm);
   
-   assign sum_norm_w_bypass = (FOpCtrlM[3]) ? (FOpCtrlM[0] ? ~sum_corr : sum_corr) : (sum_norm);
+   assign sum_norm_w_bypass = sum_norm;
 
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. If the result is a single precision number, the actual 
@@ -397,10 +400,10 @@ module fpuaddcvt2 (
    // help in processor reservation station detection of load/stores. In
    // other words, the processor would like to know ahead of time that
    // if the result is an exception then don't load or store.
-   rounder round1 (Result, DenormIO, FlagsIn, FrmM, P, AddOvEnM, AddUnEnM, exp_valid, 
-		   AddSelInvM, AddInvalidM, AddDenormInM, AddConvertM, sign_corr, exp_pre, norm_shift, sum_norm_w_bypass,
-		   AddExpPostSumM, AddOp1NormM, AddOp2NormM, AddFloat1M[63:52], AddFloat2M[63:52],
-		   AddNormOvflowM, normal_underflow, AddSwapM, FOpCtrlM, AddSumM);
+   rounder round1 (.Result, .DenormIO, .Flags(FlagsIn), .rm(FrmM), .P, .OvEn(AddOvEnM), .UnEn(AddUnEnM), .exp_valid, 
+		   .sel_inv(AddSelInvM), .Invalid(AddInvalidM), .DenormIn(AddDenormInM), .Asign(sign_corr), .Aexp(exp_pre), .norm_shift, .A(sum_norm_w_bypass),
+		   .exponent_postsum(AddExpPostSumM), .A_Norm(XNormM), .B_Norm(YNormM), .exp_A_unmodified({XSgnM, XExpM}), .exp_B_unmodified({YSgnM, YExpM}),
+		   .normal_overflow(AddNormOvflowM), .normal_underflow, .swap(AddSwapM), .op_type(FOpCtrlM), .sum(AddSumM));
 
    // Store the final result and the exception flags in registers.
    assign FAddResM = Result;
