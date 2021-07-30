@@ -10,7 +10,6 @@ add wave /testbench/reset
 add wave -divider
 
 #add wave /testbench/dut/hart/DataStall
-add wave /testbench/debug
 add wave /testbench/dut/hart/StallF
 add wave /testbench/dut/hart/StallD
 add wave /testbench/dut/hart/StallE
@@ -99,13 +98,13 @@ add wave -hex /testbench/dut/hart/ieu/dp/regf/rf[31]
 # peripherals
 add wave -divider PLIC
 add wave -hex /testbench/dut/hart/priv/csr/TrapM
-add wave -hex /testbench/dut/uncore/genblk2/plic/*
-add wave -hex /testbench/dut/uncore/genblk2/plic/intPriority
-add wave -hex /testbench/dut/uncore/genblk2/plic/pendingArray
+add wave -hex /testbench/dut/uncore/plic/plic/*
+add wave -hex /testbench/dut/uncore/plic/plic/intPriority
+add wave -hex /testbench/dut/uncore/plic/plic/pendingArray
 add wave -divider UART
-add wave -hex /testbench/dut/uncore/genblk4/uart/u/*
+add wave -hex /testbench/dut/uncore/uart/uart/u/*
 add wave -divider GPIO
-add wave -hex /testbench/dut/uncore/genblk3/gpio/*
+add wave -hex /testbench/dut/uncore/gpio/gpio/*
 #add wave -divider
 #add wave -hex /testbench/dut/hart/ebu/*
 #add wave -divider
