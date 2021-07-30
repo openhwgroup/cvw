@@ -25,7 +25,7 @@ vlib work-buildroot
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
-vlog +incdir+../config/buildroot +incdir+../config/shared ../testbench/testbench-linux.sv ../src/*/*.sv -suppress 2583
+vlog +incdir+../config/buildroot +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583
 
 
 # start and run simulation
@@ -34,10 +34,15 @@ vopt +acc work.testbench -o workopt
 
 vsim workopt -suppress 8852,12070
 
+run 100 ns
 
+add log -r /*
 #-- Run the Simulation 
-run -all
-do ./wave-dos/linux-waves.do
-run -all
+#run -all
+#do ./wave-dos/linux-waves.do
+#run 60 ms
+do wave.do
+#run -all
+
 exec ./slack-notifier/slack-notifier.py
 ##quit
