@@ -25,6 +25,8 @@
 
 `include "wally-config.vh"
 
+`define DEBUG_TRACE 0
+
 module testbench();
   
   parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3080000; // # of instructions at which to turn on waves in graphical sim
@@ -81,8 +83,10 @@ module testbench();
   integer data_file_PCD, scan_file_PCD;
   integer data_file_PCM, scan_file_PCM;
   integer data_file_PCW, scan_file_PCW;
+  integer data_file_all;
   string PCtextF, PCtextF2;
   string PCtextD, PCtextD2;
+  string PCtextW2;
   string PCtextE;
   string PCtextM;
   string PCtextW;
@@ -104,6 +108,33 @@ module testbench();
   string StartCSRname[99:0];
   integer data_file_csr, scan_file_csr;
   logic IllegalInstrFaultd;
+
+  logic checkInstrW;
+  logic [`XLEN-1:0] ExpectedPCW;
+  logic [31:0] 	    ExpectedInstrW;
+  string 	    textW;
+  integer 	    matchCount;
+  string 	    line;
+  string 	    token;
+  string 	    ExpectedTokens [31:0];
+  integer 	    index;
+  integer 	    StartIndex, EndIndex;
+  string 	    command;
+  integer 	    TokenIndex;
+
+  integer 	    MarkerIndex;
+  integer 	    RegAdr;
+  logic [`XLEN-1:0] RegValue;
+  logic [`XLEN-1:0] ExpectedMemAdr, ExpectedMemReadData, ExpectedMemWriteData;
+  logic [`XLEN-1:0] MemAdrW, WriteDataW;
+
+  logic [`XLEN-1:0] CSRMap [string];
+  logic [`XLEN-1:0] ExpectedCSRValue;
+  string 	    ExpectedCSR;
+  integer 	    tempIndex;
+  integer 	    processingCSR;
+  integer 	    fault;
+  
   
   // -----------
   // Error Macro
@@ -113,6 +144,244 @@ module testbench();
     $display("processed %0d instructions with %0d warnings", instrs, warningCount); \
     $stop;
 
+  initial begin
+    data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+  end
+
+  assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW;
+
+  flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
+  flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
+
+  always @(negedge clk) begin
+    // always check PC, instruction bits
+    if (checkInstrW) begin
+      // read 1 line of the trace file
+      matchCount =  $fgets(line, data_file_all);
+      if(`DEBUG_TRACE > 0) $display("line %x", line);
+      matchCount = $sscanf(line, "%x %x %s", ExpectedPCW, ExpectedInstrW, textW);
+      //$display("matchCount %d, PCW %x ExpectedInstrW %x textW %x", matchCount, ExpectedPCW, ExpectedInstrW, textW);
+
+      // for the life of me I cannot get any build in C or C++ string parsing functions/methods to work.
+      // Just going to do this char by char.
+      StartIndex = 0;
+      TokenIndex = 0;
+      //$display("len = %d", line.len());
+      for(index = 0; index < line.len(); index++) begin
+	//$display("char = %s", line[index]);
+	if (line[index] == " " || line[index] == "\n") begin
+	  EndIndex = index;
+	  ExpectedTokens[TokenIndex] = line.substr(StartIndex, EndIndex-1);
+	  //$display("In Tokenizer %s", line.substr(StartIndex, EndIndex-1));
+	  StartIndex = EndIndex + 1;
+	  TokenIndex++;
+	end
+      end
+
+
+      // check PCW
+      if(PCW != ExpectedPCW) begin
+	$display("PCW: %016x does not equal ExpectedPCW: %016x", PCW, ExpectedPCW);
+      end
+
+      // check instruction value
+      if(dut.hart.ifu.InstrW != ExpectedInstrW) begin
+	$display("InstrW: %x does not equal ExpectedInstrW: %x", dut.hart.ifu.InstrW, ExpectedInstrW);
+      end
+
+      MarkerIndex = 3;
+      processingCSR = 0;
+      fault = 0;
+
+      #2;
+      while(TokenIndex > MarkerIndex) begin
+	// check GPR
+	if (ExpectedTokens[MarkerIndex] == "GPR") begin
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", RegAdr);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", RegValue);
+	  if(`DEBUG_TRACE > 1) begin
+	    $display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, RegAdr);
+	    $display("RF[%02d]: %016x ? expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
+	  end
+	  if (dut.hart.ieu.dp.regf.a3 != RegAdr) begin
+	    $display("Reg Write Address: %02d does not equal expected value: %016x", dut.hart.ieu.dp.regf.a3, RegAdr);
+	    fault = 1;
+	  end
+	  
+	  if (dut.hart.ieu.dp.regf.rf[RegAdr] != RegValue) begin
+	    $display("RF[%02d] does not equal expected value: %016x", RegAdr, RegValue);
+	    fault = 1;
+	  end
+	  MarkerIndex += 3;
+
+	  // check memory address, read data, and/or write data
+	end else if(ExpectedTokens[MarkerIndex].substr(0, 2) == "Mem") begin
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedMemAdr);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedMemWriteData);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadData);	  
+
+	  if(`DEBUG_TRACE > 2) $display("\tMemAdrW: %016x ? expected: %016x", MemAdrW, ExpectedMemAdr);
+	  
+	  // always check address
+	  if (MemAdrW != ExpectedMemAdr) begin
+	    $display("MemAdrW: %016x does not equal expected value: %016x", MemAdrW, ExpectedMemAdr);
+	    fault = 1;
+	  end
+
+	  // check read data
+	  if(ExpectedTokens[MarkerIndex] == "MemR" || ExpectedTokens[MarkerIndex] == "MemRW") begin
+	    if(`DEBUG_TRACE > 2) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
+	    if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadData) begin
+	      $display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
+	      fault = 1;
+	    end
+	  end
+
+	  // check write data
+	  else if(ExpectedTokens[MarkerIndex] == "MemW" || ExpectedTokens[MarkerIndex] == "MemRW") begin
+	    if(`DEBUG_TRACE > 2) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteData);
+	    if (WriteDataW != ExpectedMemWriteData) begin
+	      $display("WriteDataW: %016x does not equal expected value: %016x", WriteDataW, ExpectedMemWriteData);
+	      fault = 1;
+	    end
+	  end
+	  MarkerIndex += 4;
+	end
+	else if(ExpectedTokens[MarkerIndex] == "CSR" || processingCSR) begin
+	  MarkerIndex++;
+	  processingCSR = 1;
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSR);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRValue);
+
+	  case(ExpectedCSR) 
+	    "mhartid": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRValue);	      
+	      end 
+	      if (dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRValue);	      
+		fault = 1;
+	      end
+	    end
+	    "mstatus": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "mtvec": begin
+	      if(`DEBUG_TRACE > 3) begin
+		 $display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "mip": begin
+	      if(`DEBUG_TRACE > 3) begin
+		  $display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MIP_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "mie": begin
+	      if(`DEBUG_TRACE > 3) begin
+		  $display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MIE_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "mideleg": begin
+	      if(`DEBUG_TRACE > 3) begin
+		  $display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "medeleg": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "mepc": begin
+	      if(`DEBUG_TRACE > 3) begin
+		  $display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MEPC_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "mtval": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+
+	    "sepc": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrs.SEPC_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "scause": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "stvec": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrs.STVEC_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	    "stval": begin
+	      if(`DEBUG_TRACE > 3) begin
+		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRValue);
+	      end
+	      if (dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW != ExpectedCSRValue) begin
+		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRValue);
+		fault = 1;
+	      end
+	    end
+	  endcase
+	  MarkerIndex += 2;
+	end
+      end // while (TokenIndex > MarkerIndex)
+      if (fault == 1) begin
+	`ERROR
+      end
+    end
+  end
+  
   // ----------------
   // PC Updater Macro
   // ----------------
@@ -160,6 +429,7 @@ module testbench();
   always @(posedge clk)
     IllegalInstrFaultd = dut.hart.priv.IllegalInstrFaultM;
 
+/* -----\/----- EXCLUDED -----\/-----
   // -------------------------------------
   // Special warnings for important faults
   // -------------------------------------
@@ -172,10 +442,13 @@ module testbench();
       $display("Warning: illegal physical memory access exception at %0t ps, InstrNum %0d, PCM %x, InstrM %s", $time, instrs, dut.hart.ifu.PCM, PCtextM);
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
+  // *** BUG BUG BUG Come back to this.
   // -----------------------
   // RegFile Write Hijacking
   // -----------------------
+/* -----\/----- EXCLUDED -----\/-----
   always @(PCW or dut.hart.ieu.InstrValidW) begin
     if(dut.hart.ieu.InstrValidW && PCW != 0) begin
       // Hack to compensate for how Wally's MTIME may diverge from QEMU's MTIME (and that is okay)
@@ -200,10 +473,12 @@ module testbench();
       end else release dut.hart.ieu.dp.WriteDataW;
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   // ----------------
   // Big Chunky Block
   // ----------------
+/* -----\/----- EXCLUDED -----\/-----
   always @(reset or dut.hart.ifu.InstrRawD or dut.hart.ifu.PCD) begin// or negedge dut.hart.ifu.StallE) begin // Why do we care about StallE? Everything seems to run fine without it.
     #2;
     // If PCD/InstrD aren't garbage
@@ -263,7 +538,7 @@ module testbench();
 
           // Check if PCD is going to be flushed due to a branch or jump
           if (`BPRED_ENABLED) begin
-            PCDwrong = dut.hart.hzu.FlushD || (PCtextE.substr(0,3) == "mret") || dut.hart.priv.InstrPageFaultF || dut.hart.priv.InstrPageFaultD || dut.hart.priv.InstrPageFaultE || dut.hart.priv.InstrPageFaultM;
+            PCDwrong = dut.hart.hzu.FlushD || (PCtextE.substr(0,3) == "mret") || (PCtextE.substr(0,4) == "ecall")  || dut.hart.priv.InstrPageFaultF || dut.hart.priv.InstrPageFaultD || dut.hart.priv.InstrPageFaultE || dut.hart.priv.InstrPageFaultM;
           end
 
           // Check PCD, InstrD
@@ -296,6 +571,7 @@ module testbench();
       lastPCD = dut.hart.ifu.PCD;
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////// PC,Instr Checking ///////////////////////////////
@@ -304,11 +580,13 @@ module testbench();
   // --------------
   // Initialization
   // --------------
+/* -----\/----- EXCLUDED -----\/-----
   initial begin
     data_file_PCF = $fopen({`LINUX_TEST_VECTORS,"parsedPC.txt"}, "r");
     data_file_PCD = $fopen({`LINUX_TEST_VECTORS,"parsedPC.txt"}, "r");
     data_file_PCM = $fopen({`LINUX_TEST_VECTORS,"parsedPC.txt"}, "r");
     data_file_PCW = $fopen({`LINUX_TEST_VECTORS,"parsedPC.txt"}, "r");
+    data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
     if (data_file_PCW == 0) begin
       $display("file couldn't be opened");
       $stop;
@@ -318,6 +596,7 @@ module testbench();
     // This makes sure PCM is one instr ahead of PCW
     `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   // Removed because this is MMU's job
   // and it'd take some work to upgrade away from Bus to Cache signals)
@@ -338,6 +617,7 @@ module testbench();
   // ------------
   // PCW Checking
   // ------------
+/* -----\/----- EXCLUDED -----\/-----
   always @(PCW or dut.hart.ieu.InstrValidW) begin
    if(dut.hart.ieu.InstrValidW && PCW != 0) begin
       if($feof(data_file_PCW)) begin
@@ -345,15 +625,20 @@ module testbench();
         `ERROR
       end
       `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
-      `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
+      `SCAN_PC(data_file_PCW, scan_file_PCW, PCtextW, PCtextW2, InstrWExpected, PCWexpected);
       // If repeated or instruction, we want to skip over it (indicates an interrupt)
       if (PCMexpected == PCWexpected) begin
         `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
         `SCAN_PC(data_file_PCW, scan_file_PCW, trashString, trashString, InstrWExpected, PCWexpected);
       end
       if(~(PCW === PCWexpected)) begin
-        $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, PCW, PCWexpected);
-        `ERROR
+	if(PCtextW.substr(0,4) != "ecall") begin
+          $display("%0t ps, instr %0d: PCW does not equal PCW expected: %x, %x", $time, instrs, PCW, PCWexpected);
+          `ERROR
+        end else begin
+         `SCAN_PC(data_file_PCM, scan_file_PCM, trashString, trashString, InstrMExpected, PCMexpected);
+         `SCAN_PC(data_file_PCW, scan_file_PCW, PCtextW, PCtextW2, InstrWExpected, PCWexpected);
+        end
       end
     end
     // Skip over faulting instructions because they do not make it to the W stage.
@@ -364,12 +649,14 @@ module testbench();
   end
   
 
+ -----/\----- EXCLUDED -----/\----- */
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////// RegFile Write Checking ////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   // --------------
   // Initialization
   // --------------
+/* -----\/----- EXCLUDED -----\/-----
   initial begin
     data_file_rf = $fopen({`LINUX_TEST_VECTORS,"parsedRegs.txt"}, "r");
     if (data_file_rf == 0) begin
@@ -412,6 +699,7 @@ module testbench();
     end
   endgenerate
 
+ -----/\----- EXCLUDED -----/\----- */
   /////////////////////////////////////////////////////////////////////////////
   //////////////////////// Memory Read/Write Checking /////////////////////////
   /////////////////////////////////////////////////////////////////////////////
@@ -442,6 +730,7 @@ module testbench();
   // ------------
   // Read Checker
   // ------------
+/* -----\/----- EXCLUDED -----\/-----
   always @(negedge clk) begin
     if (dut.hart.MemRWM[1] && ~dut.hart.StallM && ~dut.hart.FlushM && dut.hart.ieu.InstrValidM) begin
       if($feof(data_file_memR)) begin
@@ -500,6 +789,7 @@ module testbench();
       //end
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////////////// CSR Checking /////////////////////////////////
@@ -507,6 +797,7 @@ module testbench();
   // --------------
   // Initialization
   // --------------
+/* -----\/----- EXCLUDED -----\/-----
   initial begin
     data_file_csr = $fopen({`LINUX_TEST_VECTORS,"parsedCSRs.txt"}, "r");
     if (data_file_csr == 0) begin
@@ -611,8 +902,8 @@ module testbench();
   `CHECK_CSR(SEPC)
   `CHECK_CSR2(MCAUSE, `CSRM)
   `CHECK_CSR2(SCAUSE, `CSRS)
-  `CHECK_CSR2(MTVAL, `CSRM)
-  `CHECK_CSR2(STVAL, `CSRS)
+//  `CHECK_CSR2(MTVAL, `CSRM)
+//  `CHECK_CSR2(STVAL, `CSRS)
 
   //`CHECK_CSR(FCSR)
   //`CHECK_CSR(MCOUNTEREN)
@@ -626,6 +917,7 @@ module testbench();
   //`CHECK_CSR2(SSCRATCH, `CSRS)
   //`CHECK_CSR(SSTATUS)
   
+ -----/\----- EXCLUDED -----/\----- */
   
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -650,11 +942,13 @@ module testbench();
     if (reset) begin
       PCtextE = "(reset)";
       PCtextM = "(reset)";
-      PCtextW = "(reset)";
+      //PCtextW = "(reset)";
     end else begin
+/* -----\/----- EXCLUDED -----\/-----
       if (~dut.hart.StallW) 
         if (dut.hart.FlushW) PCtextW = "(flushed)";
         else                 PCtextW = PCtextM;
+ -----/\----- EXCLUDED -----/\----- */
       if (~dut.hart.StallM) 
         if (dut.hart.FlushM) PCtextM = "(flushed)";
         else                 PCtextM = PCtextE;
