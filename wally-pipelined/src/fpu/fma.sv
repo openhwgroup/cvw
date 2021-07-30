@@ -23,7 +23,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-// `include "../../../config/rv64icfd/wally-config.vh"
+//  `include "../../../config/rv64icfd/wally-config.vh"
 
 module fma(
     input logic                 clk,
@@ -106,6 +106,7 @@ module fma1(
     logic [`NE+1:0]     AlignCnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
     logic [4*`NF+5:0]   ZManShifted;        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
     logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter U(NF+5.3NF+1)
+    logic [`NE-2:0]     Denorm;             // Denormalized input value
 
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
@@ -116,8 +117,9 @@ module fma1(
     ///////////////////////////////////////////////////////////////////////////////
    
     // verilator lint_off WIDTH
+    assign Denorm = FmtE ? 1 : -126+1023;
     assign ProdExpE = (XZeroE|YZeroE) ? 0 :
-                 XExpE + YExpE - BiasE + XDenormE + YDenormE;
+                 XExpE + YExpE - BiasE + ({`NE-1{XDenormE}}&Denorm) + ({`NE-1{YDenormE}}&Denorm);
     // verilator lint_on WIDTH
 
     // Calculate the product's mantissa
@@ -133,7 +135,7 @@ module fma1(
     //      - positive means the product is larger, so shift Z right
     //      - Denormal numbers have an an exponent value of 1, however they are
     //        represented with an exponent of 0. add one to the exponent if it is a denormal number
-    assign AlignCnt = ProdExpE - ZExpE - ZDenormE;
+    assign AlignCnt = ProdExpE - (ZExpE + ({`NE-1{ZDenormE}}&Denorm));
 
     // Defualt Addition without shifting
     //          |   54'b0    |  106'b(product)  | 2'b0 |
@@ -320,7 +322,9 @@ module fma2(
     //assign FracLen = `NF;
 
     // Determine if the result is denormal
-    assign SumExpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCnt} - (`NF+4));
+    logic [`NE+1:0] SumExpTmpTmp;
+    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCnt} - (`NF+4));
+    assign SumExpTmp = FmtM ? SumExpTmpTmp : (SumExpTmpTmp-1023+127)&{`NE+2{|SumExpTmpTmp}};
 
     assign ResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp)>=$signed(-FracLen)) & ~SumZero;
 
@@ -511,7 +515,7 @@ module fma2(
                                     ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :
                                                                                                                           {{32{1'b1}}, ResultSgn, 8'hff, 23'b0};
     assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
-    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} - (Minus1&AddendStickyM) + (Plus1&AddendStickyM)} : {{32{1'b1}}, ResultSgn, {ZExpM[7:0], ZManM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
+    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} - (Minus1&AddendStickyM) + (Plus1&AddendStickyM)} : {{32{1'b1}}, ResultSgn, {ZExpM[`NE-1],ZExpM[6:0], ZManM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
     assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + (CalcPlus1&(AddendStickyM|FrmM[1])) : {{32{1'b1}}, {ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}};
     assign FMAResM = XNaNM ? XNaNResult :
                         YNaNM ? YNaNResult :

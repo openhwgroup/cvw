@@ -11,7 +11,7 @@ module fcvt (
     input logic             XDenormE,   // is X denormalized
     input logic [10:0]      BiasE,      // bias - depends on precision (max exponent/2)
     input logic [`XLEN-1:0] SrcAE,      // integer input
-    input logic [3:0]       FOpCtrlE,   // chooses which instruction is done (full list below)
+    input logic [2:0]       FOpCtrlE,   // chooses which instruction is done (full list below)
     input logic [2:0]       FrmE,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic             FmtE,       // precision 1 = double 0 = single
     output logic [63:0]     CvtResE,    // convert final result
@@ -43,27 +43,27 @@ module fcvt (
     logic               RoundSgn;           // sign of the rounded result
 
     // FOpCtrlE:
-      //  fcvt.w.s  = 0010
-      //  fcvt.wu.s = 0110
-      //  fcvt.s.w  = 0001
-      //  fcvt.s.wu = 0101
-      //  fcvt.l.s  = 1010
-      //  fcvt.lu.s = 1110
-      //  fcvt.s.l  = 1001
-      //  fcvt.s.lu = 1101
-      //  fcvt.w.d  = 0010 
-      //  fcvt.wu.d = 0110
-      //  fcvt.d.w  = 0001
-      //  fcvt.d.wu = 0101
-      //  fcvt.l.d  = 1010
-      //  fcvt.lu.d = 1110
-      //  fcvt.d.l  = 1001
-      //  fcvt.d.lu = 1101
+      //  fcvt.w.s  = 001
+      //  fcvt.wu.s = 011
+      //  fcvt.s.w  = 000
+      //  fcvt.s.wu = 010
+      //  fcvt.l.s  = 101
+      //  fcvt.lu.s = 111
+      //  fcvt.s.l  = 100
+      //  fcvt.s.lu = 110
+      //  fcvt.w.d  = 001 
+      //  fcvt.wu.d = 011
+      //  fcvt.d.w  = 000
+      //  fcvt.d.wu = 010
+      //  fcvt.l.d  = 101
+      //  fcvt.lu.d = 111
+      //  fcvt.d.l  = 100
+      //  fcvt.d.lu = 110
       //  {long, unsigned, to int, from int}
    
     // calculate signals based off the input and output's size
-    assign Res64 = (FOpCtrlE[1]&FOpCtrlE[3]) | (FmtE&FOpCtrlE[0]);
-    assign In64 =  (FOpCtrlE[0]&FOpCtrlE[3]) | (FmtE&FOpCtrlE[1]);
+    assign Res64 = (FOpCtrlE[0]&FOpCtrlE[2]) | (FmtE&~FOpCtrlE[0]);
+    assign In64 =  (~FOpCtrlE[0]&FOpCtrlE[2]) | (FmtE&FOpCtrlE[0]);
     assign SubBits = In64 ? 8'd64 : 8'd32;
     assign Bits = Res64 ? 8'd64 : 8'd32;
 
@@ -73,11 +73,11 @@ module fcvt (
 ////////////////////////////////////////////////////////
 
     // position the input in the most significant bits
-    assign IntIn = FOpCtrlE[3] ? {SrcAE, {64-`XLEN{1'b0}}} : {SrcAE[31:0], 32'b0};
+    assign IntIn = FOpCtrlE[2] ? {SrcAE, {64-`XLEN{1'b0}}} : {SrcAE[31:0], 32'b0};
     // make the integer positive
-    assign PosInt = IntIn[64-1]&~FOpCtrlE[2] ? -IntIn : IntIn;
+    assign PosInt = IntIn[64-1]&~FOpCtrlE[1] ? -IntIn : IntIn;
     // determine the integer's sign
-    assign ResSgn = ~FOpCtrlE[2] ? IntIn[64-1] : 1'b0;
+    assign ResSgn = ~FOpCtrlE[1] ? IntIn[64-1] : 1'b0;
     
 	// Leading one detector
 	logic [8:0]	i;
@@ -97,8 +97,8 @@ module fcvt (
 
 
     // select the shift value and amount based on operation (to fp or int)
-    assign ShiftCnt = FOpCtrlE[1] ? ExpVal : LZResP;
-    assign ShiftVal = FOpCtrlE[1] ? {{64-2{1'b0}}, XManE} : {PosInt, 52'b0};
+    assign ShiftCnt = FOpCtrlE[0] ? ExpVal : LZResP;
+    assign ShiftVal = FOpCtrlE[0] ? {{64-2{1'b0}}, XManE} : {PosInt, 52'b0};
 
 	// if shift = -1 then shift one bit right for gaurd bit (right shifting twice never rounds)
 	// if the shift is negitive add a bit for sticky bit calculation
@@ -111,35 +111,35 @@ module fcvt (
     // calculate sticky bit 
     //  - take into account the possible right shift from before
     //  - the sticky bit calculation covers three diffrent sizes depending on the opperation
-    assign Sticky = |ShiftedManTmp[49:0] | &ShiftCnt&XManE[0] | (FOpCtrlE[0]&|ShiftedManTmp[62:50]) | (FOpCtrlE[0]&~FmtE&|ShiftedManTmp[91:63]);
+    assign Sticky = |ShiftedManTmp[49:0] | &ShiftCnt&XManE[0] | (~FOpCtrlE[0]&|ShiftedManTmp[62:50]) | (~FOpCtrlE[0]&~FmtE&|ShiftedManTmp[91:63]);
 
     
     // determine guard, round, and least significant bit of the result
-    assign Guard = FOpCtrlE[1] ? ShiftedMan[1] : FmtE ? ShiftedMan[13] : ShiftedMan[42];
-    assign Round = FOpCtrlE[1] ? ShiftedMan[0] : FmtE ? ShiftedMan[12] : ShiftedMan[41];
-    assign LSB = FOpCtrlE[1] ? ShiftedMan[2] : FmtE ? ShiftedMan[14] : ShiftedMan[43];
+    assign Guard = FOpCtrlE[0] ? ShiftedMan[1] : FmtE ? ShiftedMan[13] : ShiftedMan[42];
+    assign Round = FOpCtrlE[0] ? ShiftedMan[0] : FmtE ? ShiftedMan[12] : ShiftedMan[41];
+    assign LSB = FOpCtrlE[0] ? ShiftedMan[2] : FmtE ? ShiftedMan[14] : ShiftedMan[43];
 
     always_comb begin
         // Determine if you add 1
         case (FrmE)
             3'b000: CalcPlus1 = Guard & (Round | Sticky | (~Round&~Sticky&LSB));//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
-            3'b010: CalcPlus1 = (XSgnE&FOpCtrlE[1]) | (ResSgn&FOpCtrlE[0]);//round down
-            3'b011: CalcPlus1 = (~XSgnE&FOpCtrlE[1]) | (~ResSgn&FOpCtrlE[0]);//round up
+            3'b010: CalcPlus1 = (XSgnE&FOpCtrlE[0]) | (ResSgn&~FOpCtrlE[0]);//round down
+            3'b011: CalcPlus1 = (~XSgnE&FOpCtrlE[0]) | (~ResSgn&~FOpCtrlE[0]);//round up
             3'b100: CalcPlus1 = Guard & (Round | Sticky | (~Round&~Sticky));//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
     end
 
     // dont tound if the result is exact
-    assign Plus1 = CalcPlus1 & (Guard|Round|Sticky)&~(XZeroE&FOpCtrlE[1]);
+    assign Plus1 = CalcPlus1 & (Guard|Round|Sticky)&~(XZeroE&FOpCtrlE[0]);
 
     // round the shifted mantissa
     assign RoundedTmp = ShiftedMan[64+1:2] + Plus1;
     assign {ResExp, ResFrac} = FmtE ? {TmpExp, ShiftedMan[64+1:14]} + Plus1 :  {{TmpExp, ShiftedMan[64+1:43]} + Plus1, 29'b0} ;
 
     // fit the rounded result into the appropriate size and take the 2's complement if needed
-     assign Rounded = Res64 ? XSgnE&FOpCtrlE[1] ? -RoundedTmp[63:0] : RoundedTmp[63:0] : 
+     assign Rounded = Res64 ? XSgnE&FOpCtrlE[0] ? -RoundedTmp[63:0] : RoundedTmp[63:0] : 
 			      XSgnE ? {{32{1'b1}}, -RoundedTmp[31:0]} : {32'b0, RoundedTmp[31:0]};
 
     // extract the MSB and Sign for later use (will be used to determine underflow and overflow)
@@ -148,29 +148,29 @@ module fcvt (
 
 
     // check if the result overflows
-    assign Of = (~XSgnE&($signed(ShiftCnt) >= $signed(Bits))) | (~XSgnE&RoundSgn&~FOpCtrlE[2]) | (RoundMSB&(ShiftCnt==(Bits-1))) | (~XSgnE&XInfE) | XNaNE;
+    assign Of = (~XSgnE&($signed(ShiftCnt) >= $signed(Bits))) | (~XSgnE&RoundSgn&~FOpCtrlE[1]) | (RoundMSB&(ShiftCnt==(Bits-1))) | (~XSgnE&XInfE) | XNaNE;
 
     // check if the result underflows (this calculation changes if the result is signed or unsigned)
-    assign Uf = FOpCtrlE[2] ? XSgnE&~XZeroE | (XSgnE&XInfE) | (XSgnE&~XZeroE&(~ShiftCnt[12]|CalcPlus1)) | (ShiftCnt[12]&Plus1) : (XSgnE&XInfE) | (XSgnE&($signed(ShiftCnt) >= $signed(Bits))) | (XSgnE&~RoundSgn&~ShiftCnt[12]);    // assign CvtIntRes =  (XSgnE | ShiftCnt[12]) ? {64{1'b0}}  : (ShiftCnt >= 64) ? {64{1'b1}} : Rounded;
+    assign Uf = FOpCtrlE[1] ? XSgnE&~XZeroE | (XSgnE&XInfE) | (XSgnE&~XZeroE&(~ShiftCnt[12]|CalcPlus1)) | (ShiftCnt[12]&Plus1) : (XSgnE&XInfE) | (XSgnE&($signed(ShiftCnt) >= $signed(Bits))) | (XSgnE&~RoundSgn&~ShiftCnt[12]);    // assign CvtIntRes =  (XSgnE | ShiftCnt[12]) ? {64{1'b0}}  : (ShiftCnt >= 64) ? {64{1'b1}} : Rounded;
     
     // calculate the result's sign
-    assign SgnRes = ~FOpCtrlE[3] & FOpCtrlE[1];
+    assign SgnRes = ~FOpCtrlE[2] & FOpCtrlE[0];
 
     // select the integer result
-    assign CvtIntRes = Of ? FOpCtrlE[2] ? {64{1'b1}} : SgnRes ? {33'b0, {31{1'b1}}}: {1'b0, {63{1'b1}}} : 
-                    Uf ? FOpCtrlE[2] ? 64'b0 : SgnRes ? {32'b0, 1'b1, 31'b0} : {1'b1, 63'b0} :
+    assign CvtIntRes = Of ? FOpCtrlE[1] ? {64{1'b1}} : SgnRes ? {33'b0, {31{1'b1}}}: {1'b0, {63{1'b1}}} : 
+                    Uf ? FOpCtrlE[1] ? 64'b0 : SgnRes ? {32'b0, 1'b1, 31'b0} : {1'b1, 63'b0} :
 		            Rounded[64-1:0];
 
     // select the floating point result            
     assign CvtFPRes = FmtE ? {ResSgn, ResExp, ResFrac} : {{32{1'b1}}, ResSgn, ResExp[7:0], ResFrac[51:29]};
 
     // select the result
-    assign CvtResE = FOpCtrlE[0] ? CvtFPRes : CvtIntRes;
+    assign CvtResE = ~FOpCtrlE[0] ? CvtFPRes : CvtIntRes;
 
     // calculate the flags
     //      - to int only sets the invalid flag
     //      - from int only sets the inexact flag
-    assign CvtFlgE = {(Of | Uf)&FOpCtrlE[1], 3'b0, (Guard|Round|Sticky)&FOpCtrlE[0]};
+    assign CvtFlgE = {(Of | Uf)&FOpCtrlE[0], 3'b0, (Guard|Round|Sticky)&~FOpCtrlE[0]};
 
 
 
