@@ -29,9 +29,9 @@ vlib work_$2
 
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 switch $argc {
-    0 {vlog +incdir+../config/rv32icfd +incdir+../config/shared ../testbench/testbench-imperas.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas.sv  ../src/*/*.sv -suppress 2583}
-    2 {vlog -work work_$2 +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas.sv  ../src/*/*.sv -suppress 2583}
+    0 {vlog +incdir+../config/rv32icfd +incdir+../config/shared ../testbench/testbench-imperas.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas.sv ../testbench/common/*.sv  ../src/*/*.sv -suppress 2583}
+    2 {vlog -work work_$2 +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas.sv ../testbench/common/*.sv  ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
