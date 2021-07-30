@@ -146,7 +146,6 @@ module dcache
   logic PreCntEn;
   logic CntEn;
   logic CntReset;
-  logic CPUBusy, PreviousCPUBusy;
   logic SelEvict;
 
   logic LRUWriteEn;
@@ -364,28 +363,8 @@ module dcache
 		   .d(LSUData),
 		   .q(SavedReadDataM));
 
-// *** BUG remove mux
-  mux2 #(`XLEN)
-  ReadDataMMux(.d0(LSUData),
-	       .d1(SavedReadDataM),
-	       .s(1'b0),
-	       .y(ReadDataM));
-		   
+  assign ReadDataM = LSUData;
   
-
-  // This is a confusing point.
-  // The final read data should be updated only if the CPU's StallWtoDCache is low
-  // which means the CPU is ready to take data.  Or if the CPU just became
-  // busy.  Then when we exit CPU_BUSY we want to ensure the data is not
-  // updated, this is ~PreviousCPUBusy.
-  // also must update if cpu stalled and processing a read miss
-  // which occurs if in state miss read word delay.
-  assign CPUBusy = CurrState == STATE_CPU_BUSY;
-  flop #(1) CPUBusyReg(.clk, .d(CPUBusy), .q(PreviousCPUBusy));
-  
-
-
-
   // write path
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(MemPAdrM[2:0]),
@@ -398,7 +377,7 @@ module dcache
       logic [`XLEN-1:0] AMOResult;
       amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3M[1:0]), 
                     .result(AMOResult));
-      mux2 #(`XLEN) wdmux(FinalWriteDataM, AMOResult, SelAMOWrite & AtomicM[1], FinalAMOWriteDataM);
+      mux2 #(`XLEN) wdmux(FinalWriteDataM, AMOResult, AtomicM[1], FinalAMOWriteDataM);
     end else
       assign FinalAMOWriteDataM = FinalWriteDataM;
   endgenerate
@@ -513,26 +492,22 @@ module dcache
 	  DCacheStall = 1'b1;
 	  NextState = STATE_PTW_READY;
 	end
-/* -----\/----- EXCLUDED -----\/-----
-	else if(SelPTW) begin
-	  // Now we have activated the ptw.
-	  // Do not assert Stall as we are now directing the stall the ptw.
-	  NextState = STATE_PTW_READY;
-	  CommittedM = 1'b1;
-	end
- -----/\----- EXCLUDED -----/\----- */
 	// amo hit
-/* -----\/----- EXCLUDED -----\/-----
-	else if(|AtomicM & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
-	  NextState = STATE_AMO_UPDATE;
-	  DCacheStall = 1'b1;
-
+	else if(AtomicM[1] & (&MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
+	  SelAdrM = 2'b01;
+	  DCacheStall = 1'b0;
+	  SRAMWordWriteEnableM = 1'b1;
+	  SetDirtyM = 1'b1;
+	  LRUWriteEn = 1'b1;
+	  
 	  if(StallWtoDCache) begin 
-            NextState = STATE_CPU_BUSY;
-            SelAdrM = 2'b01; 
-	  else NextState = STATE_AMO_UPDATE;
+	    NextState = STATE_CPU_BUSY;
+	    SelAdrM = 2'b01;
+	  end
+	  else begin
+	    NextState = STATE_READY;
+	  end
 	end
- -----/\----- EXCLUDED -----/\----- */
 	// read hit valid cached
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
@@ -592,22 +567,6 @@ module dcache
 	else NextState = STATE_READY;
       end
       
-      STATE_AMO_UPDATE: begin
-	NextState = STATE_AMO_WRITE;
-	SaveSRAMRead = 1'b1;
-	SRAMWordWriteEnableM = 1'b1; // pipelined 1 cycle
-      end
-      STATE_AMO_WRITE: begin
-	SelAMOWrite = 1'b1;
-	if(StallWtoDCache) begin 
-	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 2'b01;
-	end
-	else begin
-	  NextState = STATE_READY;
-	end	  
-      end
-
       STATE_MISS_FETCH_WDV: begin
 	DCacheStall = 1'b1;
         PreCntEn = 1'b1;
@@ -649,12 +608,12 @@ module dcache
 	SelAdrM = 2'b01;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
-	if (MemRWM[1]) begin
+	if (MemRWM[0]) begin // handles stores and amo write.
+	  NextState = STATE_MISS_WRITE_WORD;
+	end else begin
 	  NextState = STATE_MISS_READ_WORD_DELAY;
 	  // delay state is required as the read signal MemRWM[1] is still high when we
 	  // return to the ready state because the cache is stalling the cpu.
-	end else begin
-	  NextState = STATE_MISS_WRITE_WORD;
 	end
       end
 
@@ -675,14 +634,8 @@ module dcache
 	SRAMWordWriteEnableM = 1'b1;
 	SetDirtyM = 1'b1;
 	SelAdrM = 2'b01;
-	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
-	NextState = STATE_MISS_WRITE_WORD_DELAY;
-      end
-
-      STATE_MISS_WRITE_WORD_DELAY: begin
-	CommittedM = 1'b1;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 2'b01;
