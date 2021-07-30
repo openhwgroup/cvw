@@ -153,6 +153,7 @@ module testbench();
   flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
   flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
 
+  // make all checks in the write back stage.
   always @(negedge clk) begin
     // always check PC, instruction bits
     if (checkInstrW) begin
@@ -163,6 +164,9 @@ module testbench();
       //$display("matchCount %d, PCW %x ExpectedInstrW %x textW %x", matchCount, ExpectedPCW, ExpectedInstrW, textW);
 
       // for the life of me I cannot get any build in C or C++ string parsing functions/methods to work.
+      // strtok was the best idea but it cannot be used correctly as system verilog does not have null
+      // terminated strings.
+
       // Just going to do this char by char.
       StartIndex = 0;
       TokenIndex = 0;
