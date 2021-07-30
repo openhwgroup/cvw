@@ -27,7 +27,7 @@ module exception_div (
    logic 	      ZInf;	 	// '1' if result Z is an infnity
    logic 	      Zero;             // '1' if result is zero   
    
-
+   //***take this module out and add more registers or just recalculate it all
    // Determine if mantissas are all zeros
    assign AzeroM = (A[51:0] == 52'h0);
    assign BzeroM = (B[51:0] == 52'h0);
