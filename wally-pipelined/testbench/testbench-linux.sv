@@ -134,13 +134,14 @@ module testbench();
   integer 	    tempIndex;
   integer 	    processingCSR;
   integer 	    fault;
+  logic 	    TrapW;
   
+  localparam [`XLEN-1:0] MSTATUS_MASK = 64'hFFF5_FFFF;
   
   // -----------
   // Error Macro
   // -----------
   `define ERROR \
-    #10; \
     $display("processed %0d instructions with %0d warnings", instrs, warningCount); \
     $stop;
 
@@ -148,10 +149,13 @@ module testbench();
     data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
   end
 
-  assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW;
+  assign checkInstrW = (dut.hart.ieu.InstrValidW | TrapW ) & ~dut.hart.StallW;
 
   flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
   flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
+  flopenr #(1) TrapWReg(clk, reset, ~dut.hart.StallW, dut.hart.hzu.TrapM, TrapW);
+			 
 
   // make all checks in the write back stage.
   always @(negedge clk) begin
@@ -159,7 +163,7 @@ module testbench();
     if (checkInstrW) begin
       // read 1 line of the trace file
       matchCount =  $fgets(line, data_file_all);
-      if(`DEBUG_TRACE > 0) $display("line %x", line);
+      if(`DEBUG_TRACE > 0) $display("Time %t, line %x", $time, line);
       matchCount = $sscanf(line, "%x %x %s", ExpectedPCW, ExpectedInstrW, textW);
       //$display("matchCount %d, PCW %x ExpectedInstrW %x textW %x", matchCount, ExpectedPCW, ExpectedInstrW, textW);
 
@@ -213,7 +217,7 @@ module testbench();
 	  end
 	  
 	  if (dut.hart.ieu.dp.regf.rf[RegAdr] != RegValue) begin
-	    $display("RF[%02d] does not equal expected value: %016x", RegAdr, RegValue);
+	    $display("RF[%02d]: %016x does not equal expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
 	    fault = 1;
 	  end
 	  MarkerIndex += 3;
@@ -271,7 +275,7 @@ module testbench();
 	      if(`DEBUG_TRACE > 3) begin
 		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRValue);
 	      end
-	      if (dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW != ExpectedCSRValue) begin
+	      if ((dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW & MSTATUS_MASK) != (ExpectedCSRValue & MSTATUS_MASK)) begin
 		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRValue);
 		fault = 1;
 	      end
@@ -452,7 +456,6 @@ module testbench();
   // -----------------------
   // RegFile Write Hijacking
   // -----------------------
-/* -----\/----- EXCLUDED -----\/-----
   always @(PCW or dut.hart.ieu.InstrValidW) begin
     if(dut.hart.ieu.InstrValidW && PCW != 0) begin
       // Hack to compensate for how Wally's MTIME may diverge from QEMU's MTIME (and that is okay)
@@ -477,7 +480,6 @@ module testbench();
       end else release dut.hart.ieu.dp.WriteDataW;
     end
   end
- -----/\----- EXCLUDED -----/\----- */
 
   // ----------------
   // Big Chunky Block
@@ -609,7 +611,6 @@ module testbench();
   // -------------------
   // Additional Hardware
   // -------------------
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
 
   // PCF stuff isn't actually checked
   //   it only exists for helping detecting duplicate instructions in PCD

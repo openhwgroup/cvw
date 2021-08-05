@@ -87,17 +87,19 @@ def PrintInstr(instr, fp):
     GPR = ''
     CSR = []
     for key in ChangedRegisters:
-        if(RegNumber[key] < 32):
-            # GPR
-            if(HUMAN_READABLE):
-                GPR = '{:-2d} {:016x}'.format(RegNumber[key], ChangedRegisters[key])
+        # filter out csr which are not checked.
+        if(key in RegNumber):
+            if(RegNumber[key] < 32):
+                # GPR
+                if(HUMAN_READABLE):
+                    GPR = '{:-2d} {:016x}'.format(RegNumber[key], ChangedRegisters[key])
+                else:
+                    GPR = '{:d} {:x}'.format(RegNumber[key], ChangedRegisters[key])
             else:
-                GPR = '{:d} {:x}'.format(RegNumber[key], ChangedRegisters[key])
-        else:
-            if(HUMAN_READABLE):
-                CSR.extend([key, '{:016x}'.format(ChangedRegisters[key])])
-            else:
-                CSR.extend([key, '{:x}'.format(ChangedRegisters[key])])                
+                if(HUMAN_READABLE):
+                    CSR.extend([key, '{:016x}'.format(ChangedRegisters[key])])
+                else:
+                    CSR.extend([key, '{:x}'.format(ChangedRegisters[key])])                
 
     CSRStr = ' '.join(CSR)
 
