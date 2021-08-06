@@ -27,6 +27,7 @@
 // include shared configuration
 `include "wally-shared.vh"
 
+`define QEMU 1
 `define BUILDROOT 1
 `define BUSYBEAR 0
 `define LINUX_FIX_READ {'h10000005}

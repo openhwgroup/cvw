@@ -136,6 +136,9 @@ module csrc #(parameter
         // could replace special counters 0-2 with this loop for all counters
         assign CounterEvent[0] = 1'b1;
         assign CounterEvent[1] = 1'b0;
+      if(`QEMU) begin
+        assign CounterEvent[`COUNTERS-1:2] = 0;
+      end else begin
         assign CounterEvent[2] = InstrValidM & ~StallW;
         assign CounterEvent[3] = LoadStallD & ~StallD;
         assign CounterEvent[4] = BPPredDirWrongM & ~StallM;
@@ -148,7 +151,8 @@ module csrc #(parameter
         assign CounterEvent[11] = DCacheAccess & ~StallM;
         assign CounterEvent[12] = DCacheMiss & ~StallM;      
         assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
-
+      end
+      
         for (i = 3; i < `COUNTERS; i = i+1) begin
             assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
             assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];

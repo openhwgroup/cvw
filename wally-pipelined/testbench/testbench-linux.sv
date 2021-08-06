@@ -136,8 +136,6 @@ module testbench();
   integer 	    fault;
   logic 	    TrapW;
   
-  localparam [`XLEN-1:0] MSTATUS_MASK = 64'hFFF5_FFFF;
-  
   // -----------
   // Error Macro
   // -----------
@@ -197,29 +195,45 @@ module testbench();
 	$display("InstrW: %x does not equal ExpectedInstrW: %x", dut.hart.ifu.InstrW, ExpectedInstrW);
       end
 
+
       MarkerIndex = 3;
       processingCSR = 0;
       fault = 0;
 
       #2;
+
       while(TokenIndex > MarkerIndex) begin
 	// check GPR
 	if (ExpectedTokens[MarkerIndex] == "GPR") begin
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", RegAdr);
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", RegValue);
+
 	  if(`DEBUG_TRACE > 1) begin
 	    $display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, RegAdr);
 	    $display("RF[%02d]: %016x ? expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
 	  end
-	  if (dut.hart.ieu.dp.regf.a3 != RegAdr) begin
-	    $display("Reg Write Address: %02d does not equal expected value: %016x", dut.hart.ieu.dp.regf.a3, RegAdr);
-	    fault = 1;
+
+	  // Some instructions from qemu needs to overwrite the value in wally's modelsim simulation.
+	  // Qemu does not model for example the pipeline hazards or cache misses. This means the
+	  // free running timer will not be the correct value when read and will not generate a
+	  // timer interrupt at the correct time to match the exact instruction stream.
+	  // A way we could get around this is to not increment the timer when the cpu is stalled.  This would
+	  // be a QEMU hack to wally.
+
+	  if(textW.substr(0,5) == "rdtime") begin
+	    force dut.hart.ieu.dp.regf.wd3 = RegValue;
+	  end else begin
+	    if (dut.hart.ieu.dp.regf.a3 != RegAdr) begin
+	      $display("Reg Write Address: %02d does not equal expected value: %016x", dut.hart.ieu.dp.regf.a3, RegAdr);
+	      fault = 1;
+	    end
+	    
+	    if (dut.hart.ieu.dp.regf.rf[RegAdr] != RegValue) begin
+	      $display("RF[%02d]: %016x does not equal expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
+	      fault = 1;
+	    end
 	  end
-	  
-	  if (dut.hart.ieu.dp.regf.rf[RegAdr] != RegValue) begin
-	    $display("RF[%02d]: %016x does not equal expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
-	    fault = 1;
-	  end
+
 	  MarkerIndex += 3;
 
 	  // check memory address, read data, and/or write data
@@ -229,7 +243,7 @@ module testbench();
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadData);	  
 
 	  if(`DEBUG_TRACE > 2) $display("\tMemAdrW: %016x ? expected: %016x", MemAdrW, ExpectedMemAdr);
-	  
+
 	  // always check address
 	  if (MemAdrW != ExpectedMemAdr) begin
 	    $display("MemAdrW: %016x does not equal expected value: %016x", MemAdrW, ExpectedMemAdr);
@@ -239,9 +253,14 @@ module testbench();
 	  // check read data
 	  if(ExpectedTokens[MarkerIndex] == "MemR" || ExpectedTokens[MarkerIndex] == "MemRW") begin
 	    if(`DEBUG_TRACE > 2) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
-	    if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadData) begin
-	      $display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
-	      fault = 1;
+	    if (ExpectedMemAdr == 'h10000005) begin
+              force dut.hart.ieu.dp.ReadDataW = ExpectedMemReadData;
+	      force dut.hart.ieu.dp.regf.wd3 = RegValue;
+	    end else begin
+	      if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadData) begin
+		$display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
+		fault = 1;
+	      end
 	    end
 	  end
 
@@ -275,7 +294,7 @@ module testbench();
 	      if(`DEBUG_TRACE > 3) begin
 		$display("CSR: %s = %016x, expected = %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRValue);
 	      end
-	      if ((dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW & MSTATUS_MASK) != (ExpectedCSRValue & MSTATUS_MASK)) begin
+	      if ((dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW) != (ExpectedCSRValue)) begin
 		$display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSR, dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRValue);
 		fault = 1;
 	      end
@@ -389,7 +408,13 @@ module testbench();
       end
     end
   end
-  
+
+
+  always_ff @(posedge clk) begin
+    release dut.hart.ieu.dp.regf.wd3;
+    release dut.hart.ieu.dp.ReadDataW;
+  end
+
   // ----------------
   // PC Updater Macro
   // ----------------

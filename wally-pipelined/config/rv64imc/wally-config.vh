@@ -26,6 +26,7 @@
 
 `include "wally-shared.vh"
 
+`define QEMU 0
 `define BUILDROOT 0
 `define BUSYBEAR 0
 
