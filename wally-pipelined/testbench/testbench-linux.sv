@@ -254,6 +254,12 @@ module testbench();
 	  NumCSRM++;	  
 	end
       end
+      // override on special conditions
+      if (ExpectedMemAdrM == 'h10000005) begin
+	$display("%t: Overwriting read data from CLINT.", $time);
+        force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM;
+      end
+
     end // if (checkInstrM)
   end
 
@@ -291,11 +297,10 @@ module testbench();
 	$display("%t: Overwrite register write on read of MTIME.", $time);
         force dut.hart.ieu.dp.regf.wd3 = ExpectedRegValueM;
       end
-      
-      else if (ExpectedMemAdrM == 'h10000005) begin
-	$display("%t: Overwriting read data from CLINT.", $time);
-        force dut.hart.ieu.dp.ReadDataW = ExpectedMemReadDataW;
-	force dut.hart.ieu.dp.regf.wd3 = ExpectedRegValueM;
+
+      if (ExpectedMemAdrM == 'h10000005) begin
+	$display("%t: releasing force of ReadDataM.", $time);
+        release dut.hart.ieu.dp.ReadDataM;
       end
       
     end
@@ -326,11 +331,6 @@ module testbench();
         release dut.hart.ieu.dp.regf.wd3;
       end
       
-      else if (ExpectedMemAdrW == 'h10000005) begin
-	$display("%t: releasing force of ReadDataW.", $time);
-        release dut.hart.ieu.dp.ReadDataW;
-	release dut.hart.ieu.dp.regf.wd3;
-      end
       
       if(`DEBUG_TRACE > 1) begin
 	$display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
