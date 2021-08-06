@@ -109,32 +109,63 @@ module testbench();
   integer data_file_csr, scan_file_csr;
   logic IllegalInstrFaultd;
 
+
+  // Write Back stage signals needed for trace compare, but don't actually
+  // exist in CPU.
+  logic [`XLEN-1:0] MemAdrW, WriteDataW;
+
+  // Write Back trace signals
   logic checkInstrW;
-  logic [`XLEN-1:0] ExpectedPCW;
-  logic [31:0] 	    ExpectedInstrW;
-  string 	    textW;
+
+
+  integer 	    RegAdr;
+  logic [`XLEN-1:0] RegValue;
+  logic [`XLEN-1:0] ExpectedMemAdr, ExpectedMemReadData, ExpectedMemWriteData;
+
+
+  logic [`XLEN-1:0] ExpectedCSRValue;
+  string 	    ExpectedCSR;
+  integer 	    NumCSRMW;  
+  integer 	    fault;
+  logic 	    TrapW;
+
+
+  // Signals used to parse the trace file.
+  logic checkInstrM;  
   integer 	    matchCount;
   string 	    line;
+  logic [`XLEN-1:0] ExpectedPCM;
+  logic [31:0] 	    ExpectedInstrM;
+  string 	    textM;
   string 	    token;
   string 	    ExpectedTokens [31:0];
   integer 	    index;
   integer 	    StartIndex, EndIndex;
-  string 	    command;
   integer 	    TokenIndex;
-
   integer 	    MarkerIndex;
-  integer 	    RegAdr;
-  logic [`XLEN-1:0] RegValue;
-  logic [`XLEN-1:0] ExpectedMemAdr, ExpectedMemReadData, ExpectedMemWriteData;
-  logic [`XLEN-1:0] MemAdrW, WriteDataW;
+  integer 	    NumCSRM;
 
-  logic [`XLEN-1:0] CSRMap [string];
-  logic [`XLEN-1:0] ExpectedCSRValue;
-  string 	    ExpectedCSR;
-  integer 	    tempIndex;
-  integer 	    processingCSR;
-  integer 	    fault;
-  logic 	    TrapW;
+  // Memory stage expected values from trace
+  string 	    RegWriteM;
+  integer 	    ExpectedRegAdrM;
+  logic [`XLEN-1:0] ExpectedRegValueM;
+  string 	    MemOpM;
+  logic [`XLEN-1:0] ExpectedMemAdrM, ExpectedMemReadDataM, ExpectedMemWriteDataM;
+  logic [`XLEN-1:0] ExpectedCSRArrayM[integer];
+  logic [`XLEN-1:0] ExpectedCSRArrayValueM[integer];
+
+  // Write back stage expected values from trace
+  logic [`XLEN-1:0] ExpectedPCW;
+  logic [31:0] 	    ExpectedInstrW;
+  string 	    textW;
+  string 	    RegWriteW;
+  integer 	    ExpectedRegAdrW;
+  logic [`XLEN-1:0] ExpectedRegValueW;
+  string 	    MemOpW;
+  logic [`XLEN-1:0] ExpectedMemAdrW, ExpectedMemReadDataW, ExpectedMemWriteDataW;
+  integer 	    NumCSRW;
+  logic [`XLEN-1:0] ExpectedCSRArrayW[integer];
+  logic [`XLEN-1:0] ExpectedCSRArrayValueW[integer];
   
   // -----------
   // Error Macro
@@ -147,23 +178,30 @@ module testbench();
     data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
   end
 
+  assign checkInstrM = (dut.hart.ieu.InstrValidM | dut.hart.hzu.TrapM ) & ~dut.hart.StallM;
   assign checkInstrW = (dut.hart.ieu.InstrValidW | TrapW ) & ~dut.hart.StallW;
 
   flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
   flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
+  flopenrc #(`XLEN) PCWReg(clk, reset, dut.hart.FlushW, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
   flopenr #(1) TrapWReg(clk, reset, ~dut.hart.StallW, dut.hart.hzu.TrapM, TrapW);
-			 
 
-  // make all checks in the write back stage.
+  // because qemu does not match exactly to wally it is necessary to read the the
+  // trace in the memory stage and detect if anything in wally must be overwritten.
+  // This includes mtimer, interrupts, and various bits in mstatus and xtval.
+
+  // then on the next posedge the expected state is registered.
+  // on the next falling edge the expected state is compared to the wally state.
+
+  // step 0: read the expected state
   always @(negedge clk) begin
     // always check PC, instruction bits
-    if (checkInstrW) begin
+    if (checkInstrM) begin
       // read 1 line of the trace file
       matchCount =  $fgets(line, data_file_all);
       if(`DEBUG_TRACE > 0) $display("Time %t, line %x", $time, line);
-      matchCount = $sscanf(line, "%x %x %s", ExpectedPCW, ExpectedInstrW, textW);
-      //$display("matchCount %d, PCW %x ExpectedInstrW %x textW %x", matchCount, ExpectedPCW, ExpectedInstrW, textW);
+      matchCount = $sscanf(line, "%x %x %s", ExpectedPCM, ExpectedInstrM, textM);
+      //$display("matchCount %d, PCM %x ExpectedInstrM %x textM %x", matchCount, ExpectedPCM, ExpectedInstrM, textM);
 
       // for the life of me I cannot get any build in C or C++ string parsing functions/methods to work.
       // strtok was the best idea but it cannot be used correctly as system verilog does not have null
@@ -184,34 +222,173 @@ module testbench();
 	end
       end
 
+      MarkerIndex = 3;
+      NumCSRM = 0;
+      MemOpM = "";
+      RegWriteM = "";
 
+      #2;
+      while(TokenIndex > MarkerIndex) begin
+	// parse the GPR
+	if (ExpectedTokens[MarkerIndex] == "GPR") begin
+	  RegWriteM = ExpectedTokens[MarkerIndex];
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", ExpectedRegAdrM);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedRegValueM);
+	  
+	  MarkerIndex += 3;
+
+	  // parse memory address, read data, and/or write data
+	end else if(ExpectedTokens[MarkerIndex].substr(0, 2) == "Mem") begin
+	  MemOpM = ExpectedTokens[MarkerIndex];
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedMemAdrM);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedMemWriteDataM);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadDataM);
+
+	  MarkerIndex += 4;
+
+	  // parse CSRs
+	end else if(ExpectedTokens[MarkerIndex] == "CSR" || NumCSRM > 0) begin
+	  MarkerIndex++;
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSRArrayM[NumCSRM]);
+	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRArrayValueM[NumCSRM]);
+	  NumCSRM++;	  
+	end
+      end
+    end // if (checkInstrM)
+  end
+
+  // step 1: register expected state into the write back stage.
+  always @(posedge clk) begin
+    if (dut.hart.FlushW | reset) begin
+      ExpectedPCW <= '0;
+      ExpectedInstrW <= '0;
+      textW <= "";
+      RegWriteW <= "";
+      ExpectedRegAdrW <= '0;
+      ExpectedRegValueW <= '0;
+      ExpectedMemAdrW <= '0;
+      MemOpW <= "";
+      ExpectedMemWriteDataW <= '0;
+      ExpectedMemReadDataW <= '0;
+      NumCSRW <= '0;
+    end
+    else if(~dut.hart.StallW) begin
+      ExpectedPCW <= ExpectedPCM;
+      ExpectedInstrW <= ExpectedInstrM;
+      textW <= textM;
+      RegWriteW <= RegWriteM;
+      ExpectedRegAdrW <= ExpectedRegAdrM;
+      ExpectedRegValueW <= ExpectedRegValueM;
+      ExpectedMemAdrW <= ExpectedMemAdrM;
+      MemOpW <= MemOpM;
+      ExpectedMemWriteDataW <= ExpectedMemWriteDataM;
+      ExpectedMemReadDataW <= ExpectedMemReadDataM;
+      NumCSRW <= NumCSRM;
+
+      // override on special conditions
+      #1;
+      if(textM.substr(0,5) == "rdtime") begin
+	$display("%t: Overwrite register write on read of MTIME.", $time);
+        force dut.hart.ieu.dp.regf.wd3 = ExpectedRegValueM;
+      end
+      
+      
+    end
+  end
+  
+  // step2: make all checks in the write back stage.
+  always @(negedge clk) begin
+    // always check PC, instruction bits
+    if (checkInstrW) begin
       // check PCW
+      fault = 0;
       if(PCW != ExpectedPCW) begin
 	$display("PCW: %016x does not equal ExpectedPCW: %016x", PCW, ExpectedPCW);
+	fault = 1;
       end
 
       // check instruction value
       if(dut.hart.ifu.InstrW != ExpectedInstrW) begin
 	$display("InstrW: %x does not equal ExpectedInstrW: %x", dut.hart.ifu.InstrW, ExpectedInstrW);
+	fault = 1;
       end
 
 
-      MarkerIndex = 3;
-      processingCSR = 0;
-      fault = 0;
+      #2; // delay 2 ns.
 
-      #2;
+      if(textW.substr(0,5) == "rdtime") begin
+	$display("%t:Releasing force of wd3.", $time);
+        release dut.hart.ieu.dp.regf.wd3;
+      end
+      
+      
+      if(`DEBUG_TRACE > 1) begin
+	$display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
+	$display("RF[%02d]: %016x ? expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
+      end
 
+      if (RegWriteW == "GPR") begin
+	if (dut.hart.ieu.dp.regf.a3 != ExpectedRegAdrW) begin
+	  $display("Reg Write Address: %02d does not equal expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
+	  fault = 1;
+	end
+	
+	if (dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW] != ExpectedRegValueW) begin
+	  $display("RF[%02d]: %016x does not equal expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
+	  fault = 1;
+	end
+      end
+
+      if (MemOpW.substr(0,2) == "Mem") begin
+	if(`DEBUG_TRACE > 2) $display("\tMemAdrW: %016x ? expected: %016x", MemAdrW, ExpectedMemAdr);
+
+	// always check address
+	if (MemAdrW != ExpectedMemAdr) begin
+	  $display("MemAdrW: %016x does not equal expected value: %016x", MemAdrW, ExpectedMemAdr);
+	  fault = 1;
+	end
+
+	// check read data
+	if(MemOpW == "MemR" || MemOpW == "MemRW") begin
+	  if(`DEBUG_TRACE > 2) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
+	  if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadData) begin
+	    $display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
+	    fault = 1;
+	  end
+/* -----\/----- EXCLUDED -----\/-----
+	  if (ExpectedMemAdr == 'h10000005) begin
+            force dut.hart.ieu.dp.ReadDataW = ExpectedMemReadData;
+	    force dut.hart.ieu.dp.regf.wd3 = RegValue;
+	  end else begin
+	  end
+ -----/\----- EXCLUDED -----/\----- */
+	end
+
+	// check write data
+	else if(ExpectedTokens[MarkerIndex] == "MemW" || ExpectedTokens[MarkerIndex] == "MemRW") begin
+	  if(`DEBUG_TRACE > 2) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteData);
+	  if (WriteDataW != ExpectedMemWriteData) begin
+	    $display("WriteDataW: %016x does not equal expected value: %016x", WriteDataW, ExpectedMemWriteData);
+	    fault = 1;
+	  end
+	end
+	
+      end
+      if (fault == 1) begin
+	`ERROR
+      end
+    end // if (checkInstrW)
+  end // always @ (negedge clk)
+  
+
+
+/* -----\/----- EXCLUDED -----\/-----
       while(TokenIndex > MarkerIndex) begin
 	// check GPR
 	if (ExpectedTokens[MarkerIndex] == "GPR") begin
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", RegAdr);
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", RegValue);
 
-	  if(`DEBUG_TRACE > 1) begin
-	    $display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, RegAdr);
-	    $display("RF[%02d]: %016x ? expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
-	  end
 
 	  // Some instructions from qemu needs to overwrite the value in wally's modelsim simulation.
 	  // Qemu does not model for example the pipeline hazards or cache misses. This means the
@@ -220,19 +397,6 @@ module testbench();
 	  // A way we could get around this is to not increment the timer when the cpu is stalled.  This would
 	  // be a QEMU hack to wally.
 
-	  if(textW.substr(0,5) == "rdtime") begin
-	    force dut.hart.ieu.dp.regf.wd3 = RegValue;
-	  end else begin
-	    if (dut.hart.ieu.dp.regf.a3 != RegAdr) begin
-	      $display("Reg Write Address: %02d does not equal expected value: %016x", dut.hart.ieu.dp.regf.a3, RegAdr);
-	      fault = 1;
-	    end
-	    
-	    if (dut.hart.ieu.dp.regf.rf[RegAdr] != RegValue) begin
-	      $display("RF[%02d]: %016x does not equal expected value: %016x", RegAdr, dut.hart.ieu.dp.regf.rf[RegAdr], RegValue);
-	      fault = 1;
-	    end
-	  end
 
 	  MarkerIndex += 3;
 
@@ -408,12 +572,15 @@ module testbench();
       end
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
 
+/* -----\/----- EXCLUDED -----\/-----
   always_ff @(posedge clk) begin
     release dut.hart.ieu.dp.regf.wd3;
     release dut.hart.ieu.dp.ReadDataW;
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   // ----------------
   // PC Updater Macro
@@ -481,6 +648,7 @@ module testbench();
   // -----------------------
   // RegFile Write Hijacking
   // -----------------------
+/* -----\/----- EXCLUDED -----\/-----
   always @(PCW or dut.hart.ieu.InstrValidW) begin
     if(dut.hart.ieu.InstrValidW && PCW != 0) begin
       // Hack to compensate for how Wally's MTIME may diverge from QEMU's MTIME (and that is okay)
@@ -505,6 +673,7 @@ module testbench();
       end else release dut.hart.ieu.dp.WriteDataW;
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   // ----------------
   // Big Chunky Block
