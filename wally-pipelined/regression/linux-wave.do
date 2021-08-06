@@ -450,7 +450,7 @@ add wave -noupdate /testbench/textW
 add wave -noupdate /testbench/dut/hart/ieu/dp/WriteDataW
 add wave -noupdate /testbench/dut/hart/ieu/dp/regf/wd3
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {8224344 ns} 0} {{Cursor 2} {8220387 ns} 0}
+WaveRestoreCursors {{Cursor 6} {10872631 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -466,4 +466,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {8224272 ns} {8224400 ns}
+WaveRestoreZoom {10872596 ns} {10872666 ns}
