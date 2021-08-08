@@ -178,8 +178,9 @@ module testbench();
     data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
   end
 
-  assign checkInstrM = (dut.hart.ieu.InstrValidM | dut.hart.hzu.TrapM ) & ~dut.hart.StallM;
-  assign checkInstrW = (dut.hart.ieu.InstrValidW | TrapW ) & ~dut.hart.StallW;
+  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.StallM;
+  // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
+  assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW;
 
   flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
   flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
@@ -360,9 +361,9 @@ module testbench();
 
 	// check read data
 	if(MemOpW == "MemR" || MemOpW == "MemRW") begin
-	  if(`DEBUG_TRACE > 2) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
-	  if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadData) begin
-	    $display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadData);
+	  if(`DEBUG_TRACE > 2) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
+	  if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadDataW) begin
+	    $display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
 	    fault = 1;
 	  end
 /* -----\/----- EXCLUDED -----\/-----
@@ -376,9 +377,9 @@ module testbench();
 
 	// check write data
 	else if(ExpectedTokens[MarkerIndex] == "MemW" || ExpectedTokens[MarkerIndex] == "MemRW") begin
-	  if(`DEBUG_TRACE > 2) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteData);
-	  if (WriteDataW != ExpectedMemWriteData) begin
-	    $display("WriteDataW: %016x does not equal expected value: %016x", WriteDataW, ExpectedMemWriteData);
+	  if(`DEBUG_TRACE > 2) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
+	  if (WriteDataW != ExpectedMemWriteDataW) begin
+	    $display("WriteDataW: %016x does not equal expected value: %016x", WriteDataW, ExpectedMemWriteDataW);
 	    fault = 1;
 	  end
 	end

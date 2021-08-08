@@ -365,23 +365,24 @@ module dcache
 
   assign ReadDataM = LSUData;
   
-  // write path
-  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
-			    .HADDRD(MemPAdrM[2:0]),
-			    .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			    .HWDATAIN(WriteDataM),
-			    .HWDATA(FinalWriteDataM));
-
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
       amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3M[1:0]), 
                     .result(AMOResult));
-      mux2 #(`XLEN) wdmux(FinalWriteDataM, AMOResult, AtomicM[1], FinalAMOWriteDataM);
+      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicM[1], FinalAMOWriteDataM);
     end else
-      assign FinalAMOWriteDataM = FinalWriteDataM;
+      assign FinalAMOWriteDataM = WriteDataM;
   endgenerate
   
+
+  // write path
+  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
+			    .HADDRD(MemPAdrM[2:0]),
+			    .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
+			    .HWDATAIN(FinalAMOWriteDataM),
+			    .HWDATA(FinalWriteDataM));
+
 
   // register the fetch data from the next level of memory.
   generate
@@ -410,7 +411,7 @@ module dcache
   // mux between the CPU's write and the cache fetch.
   generate
     for(index = 0; index < WORDSPERLINE; index++) begin
-      assign FinalWriteDataWordsM[((index+1)*`XLEN)-1 : (index*`XLEN)] = FinalAMOWriteDataM;
+      assign FinalWriteDataWordsM[((index+1)*`XLEN)-1 : (index*`XLEN)] = FinalWriteDataM;
     end
   endgenerate
 
