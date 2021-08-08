@@ -37,7 +37,7 @@ vsim workopt -suppress 8852,12070
 add log -r /*
 do linux-wave.do
 
-run 100 ms
+run 300 ms
 
 #-- Run the Simulation 
 #run -all

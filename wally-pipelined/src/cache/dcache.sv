@@ -208,7 +208,8 @@ module dcache
 		STATE_PTW_FAULT_UNCACHED_READ,
 		STATE_PTW_FAULT_UNCACHED_READ_DONE,
 
-		STATE_CPU_BUSY} statetype;
+		STATE_CPU_BUSY,
+		STATE_CPU_BUSY_FINISH_AMO} statetype;
 
   statetype CurrState, NextState;
     
@@ -497,15 +498,15 @@ module dcache
 	else if(AtomicM[1] & (&MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  SelAdrM = 2'b01;
 	  DCacheStall = 1'b0;
-	  SRAMWordWriteEnableM = 1'b1;
-	  SetDirtyM = 1'b1;
-	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin 
-	    NextState = STATE_CPU_BUSY;
+	    NextState = STATE_CPU_BUSY_FINISH_AMO;
 	    SelAdrM = 2'b01;
 	  end
 	  else begin
+	    SRAMWordWriteEnableM = 1'b1;
+	    SetDirtyM = 1'b1;
+	    LRUWriteEn = 1'b1;
 	    NextState = STATE_READY;
 	  end
 	end
@@ -801,6 +802,20 @@ module dcache
 	  SelAdrM = 2'b01;
 	end
 	else begin
+	  NextState = STATE_READY;
+	end
+      end
+
+      STATE_CPU_BUSY_FINISH_AMO: begin
+	CommittedM = 1'b1;
+	if(StallWtoDCache) begin
+	  NextState = STATE_CPU_BUSY;
+	  SelAdrM = 2'b01;
+	end
+	else begin
+	  SRAMWordWriteEnableM = 1'b1;
+	  SetDirtyM = 1'b1;
+	  LRUWriteEn = 1'b1;
 	  NextState = STATE_READY;
 	end
       end
