@@ -622,13 +622,26 @@ module dcache
       STATE_MISS_READ_WORD_DELAY: begin
 	//SelAdrM = 2'b01;
 	CommittedM = 1'b1;
-	LRUWriteEn = 1'b1;
-	if(StallWtoDCache) begin 
-	  NextState = STATE_CPU_BUSY;
+	if(&MemRWM & AtomicM[1]) begin // amo write
 	  SelAdrM = 2'b01;
-	end
-	else begin
-	  NextState = STATE_READY;
+	  if(StallWtoDCache) begin 
+	    NextState = STATE_CPU_BUSY_FINISH_AMO;
+	  end
+	  else begin
+	    SRAMWordWriteEnableM = 1'b1;
+	    SetDirtyM = 1'b1;
+	    LRUWriteEn = 1'b1;
+	    NextState = STATE_READY;
+	  end
+	end else begin
+	  LRUWriteEn = 1'b1;
+	  if(StallWtoDCache) begin 
+	    NextState = STATE_CPU_BUSY;
+	    SelAdrM = 2'b01;
+	  end
+	  else begin
+	    NextState = STATE_READY;
+	  end
 	end
       end
 
@@ -808,9 +821,9 @@ module dcache
 
       STATE_CPU_BUSY_FINISH_AMO: begin
 	CommittedM = 1'b1;
+	SelAdrM = 2'b01;
 	if(StallWtoDCache) begin
-	  NextState = STATE_CPU_BUSY;
-	  SelAdrM = 2'b01;
+	  NextState = STATE_CPU_BUSY_FINISH_AMO;
 	end
 	else begin
 	  SRAMWordWriteEnableM = 1'b1;
