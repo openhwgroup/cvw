@@ -257,7 +257,7 @@ module testbench();
       end
       // override on special conditions
       if (ExpectedMemAdrM == 'h10000005) begin
-	$display("%t: Overwriting read data from CLINT.", $time);
+	//$display("%t: Overwriting read data from CLINT.", $time);
         force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM;
       end
 
@@ -266,7 +266,7 @@ module testbench();
 
   // step 1: register expected state into the write back stage.
   always @(posedge clk) begin
-    if (dut.hart.FlushW | reset) begin
+    if (reset) begin
       ExpectedPCW <= '0;
       ExpectedInstrW <= '0;
       textW <= "";
@@ -280,27 +280,40 @@ module testbench();
       NumCSRW <= '0;
     end
     else if(~dut.hart.StallW) begin
-      ExpectedPCW <= ExpectedPCM;
-      ExpectedInstrW <= ExpectedInstrM;
-      textW <= textM;
-      RegWriteW <= RegWriteM;
-      ExpectedRegAdrW <= ExpectedRegAdrM;
-      ExpectedRegValueW <= ExpectedRegValueM;
-      ExpectedMemAdrW <= ExpectedMemAdrM;
-      MemOpW <= MemOpM;
-      ExpectedMemWriteDataW <= ExpectedMemWriteDataM;
-      ExpectedMemReadDataW <= ExpectedMemReadDataM;
-      NumCSRW <= NumCSRM;
-
+      if(dut.hart.FlushW) begin
+	ExpectedPCW <= '0;
+	ExpectedInstrW <= '0;
+	textW <= "";
+	RegWriteW <= "";
+	ExpectedRegAdrW <= '0;
+	ExpectedRegValueW <= '0;
+	ExpectedMemAdrW <= '0;
+	MemOpW <= "";
+	ExpectedMemWriteDataW <= '0;
+	ExpectedMemReadDataW <= '0;
+	NumCSRW <= '0;
+      end else begin 
+	ExpectedPCW <= ExpectedPCM;
+	ExpectedInstrW <= ExpectedInstrM;
+	textW <= textM;
+	RegWriteW <= RegWriteM;
+	ExpectedRegAdrW <= ExpectedRegAdrM;
+	ExpectedRegValueW <= ExpectedRegValueM;
+	ExpectedMemAdrW <= ExpectedMemAdrM;
+	MemOpW <= MemOpM;
+	ExpectedMemWriteDataW <= ExpectedMemWriteDataM;
+	ExpectedMemReadDataW <= ExpectedMemReadDataM;
+	NumCSRW <= NumCSRM;
+      end
       // override on special conditions
       #1;
       if(textM.substr(0,5) == "rdtime") begin
-	$display("%t: Overwrite register write on read of MTIME.", $time);
+	//$display("%t: Overwrite register write on read of MTIME.", $time);
         force dut.hart.ieu.dp.regf.wd3 = ExpectedRegValueM;
       end
 
       if (ExpectedMemAdrM == 'h10000005) begin
-	$display("%t: releasing force of ReadDataM.", $time);
+	//$display("%t: releasing force of ReadDataM.", $time);
         release dut.hart.ieu.dp.ReadDataM;
       end
       
