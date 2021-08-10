@@ -117,8 +117,8 @@ module fpuaddcvt1 (
    output logic         AddSwapE
    );
 
-   wire [5:0]	 ZP_mantissaA;
-   wire [5:0]	 ZP_mantissaB;
+   logic [5:0]	 ZP_mantissaA;
+   logic [5:0]	 ZP_mantissaB;
    wire		    ZV_mantissaA;
    wire		    ZV_mantissaB;
 
@@ -181,8 +181,20 @@ module fpuaddcvt1 (
    // normalization. If sum_corrected is all zeros, the exp_valid is 
    // zero; otherwise, it is one. 
    // modified to 52 bits to detect leading zeroes on denormalized mantissas
-   lz52 lz_norm_1 (ZP_mantissaA, ZV_mantissaA, mantissaA);
-   lz52 lz_norm_2 (ZP_mantissaB, ZV_mantissaB, mantissaB);
+   // lz52 lz_norm_1 (ZP_mantissaA, ZV_mantissaA, mantissaA);
+   // lz52 lz_norm_2 (ZP_mantissaB, ZV_mantissaB, mantissaB);    
+   logic [8:0] i;
+   logic [8:0] j;
+    always_comb begin
+            i = 0;
+            while (~mantissaA[52-i] && $unsigned(i) <= $unsigned(52)) i = i+1;  // search for leading one
+            ZP_mantissaA = i;
+    end
+    always_comb begin
+            j = 0;
+            while (~mantissaB[52-j] && $unsigned(j) <= $unsigned(52)) j = j+1;  // search for leading one
+            ZP_mantissaB = j;
+    end
 
    // Denormalized exponents created by subtracting the leading zeroes from the original exponents
    assign AddExp1DenormE = AddSwapE ? (exp1 - {6'b0, ZP_mantissaB}) : (exp1 - {6'b0, ZP_mantissaA}); //KEP extended ZP_mantissa 

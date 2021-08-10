@@ -38,8 +38,8 @@ module fctrl (
       7'b1001011:   ControlsD = `FCTRLW'b1_0_001_010_00_00_0_0; // fnmsub
       7'b1001111:   ControlsD = `FCTRLW'b1_0_001_011_00_00_0_0; // fnmadd
       7'b1010011: casez(Funct7D)
-                    7'b00000??: ControlsD = `FCTRLW'b1_0_010_000_00_00_0_0; // fadd
-                    7'b00001??: ControlsD = `FCTRLW'b1_0_010_001_00_00_0_0; // fsub
+                    7'b00000??: ControlsD = `FCTRLW'b1_0_001_110_00_00_0_0; // fadd
+                    7'b00001??: ControlsD = `FCTRLW'b1_0_001_111_00_00_0_0; // fsub
                     7'b00010??: ControlsD = `FCTRLW'b1_0_001_100_00_00_0_0; // fmul
                     7'b00011??: ControlsD = `FCTRLW'b1_0_011_000_00_00_1_0; // fdiv
                     7'b01011??: ControlsD = `FCTRLW'b1_0_011_001_00_00_1_0; // fsqrt
