@@ -76,7 +76,7 @@ module fpu (
 	logic [63:0] 	    FRD1D, FRD2D, FRD3D;  // Read Data from FP register - decode stage
 	logic [63:0] 	    FRD1E, FRD2E, FRD3E;  // Read Data from FP register - execute stage
 	logic [63:0] 	    FSrcXE, FSrcXM;       // Input 1 to the various units (after forwarding)
-	logic [63:0] 	    FSrcYE;               // Input 2 to the various units (after forwarding)
+	logic [63:0] 	    FPreSrcYE, FSrcYE;               // Input 2 to the various units (after forwarding)
 	logic [63:0] 	    FPreSrcZE, FSrcZE;     // Input 3 to the various units (after forwarding)
 	
 	// unpacking signals
@@ -110,8 +110,8 @@ module fpu (
 	
 	logic [63:0] 	ReadResW;           // read result (load instruction)
 
-	logic [63:0] 	FAddResM, FAddResW; // add/FP -> FP convert result
-	logic [4:0] 	FAddFlgM, FAddFlgW; // add/FP -> FP convert flags
+	logic [63:0] 	CvtFpResE, CvtFpResM, CvtFpResW; // add/FP -> FP convert result
+	logic [4:0] 	CvtFpFlgE, CvtFpFlgM, CvtFpFlgW; // add/FP -> FP convert flags
 
 	logic [63:0] 	CvtResE, CvtResM;   // FP <-> int convert result
 	logic [4:0] 	CvtFlgE, CvtFlgM;   // FP <-> int convert flags //*** trim this
@@ -196,9 +196,10 @@ module fpu (
 
 	// forwarding muxs
 	mux3  #(64)  fxemux(FRD1E, FPUResultW, FResM, FForwardXE, FSrcXE);
-	mux3  #(64)  fyemux(FRD2E, FPUResultW, FResM, FForwardYE, FSrcYE);
+	mux3  #(64)  fyemux(FRD2E, FPUResultW, FResM, FForwardYE, FPreSrcYE);
 	mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
-	mux2  #(64)  fzmulmux(FPreSrcZE, 64'b0, FOpCtrlE[2], FSrcZE); // Force Z to be 0 for multiply instructions
+	mux3  #(64)  fyaddmux(FPreSrcYE, {{32{1'b1}}, 2'b0, {7{1'b1}}, 23'b0}, {2'b0, {10{1'b1}}, 52'b0}, {FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==3'b001), ~FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==3'b001)}, FSrcYE); // Force Z to be 0 for multiply instructions
+	mux3  #(64)  fzmulmux(FPreSrcZE, 64'b0, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE); // Force Z to be 0 for multiply instructions
  	
    
   // unpacking unit
@@ -261,11 +262,14 @@ module fpu (
   //    - contains some E/M pipleine registers
   //*** remove uneeded logic
   //*** change to use the unpacking unit if possible
-	faddcvt faddcvt (.clk, .reset, .FlushM, .StallM, .FrmM, .FOpCtrlM, .FmtE, .FmtM, .FSrcXE, .FSrcYE, .FOpCtrlE, 
-   .XSgnM, .YSgnM, .XManM, .YManM, .XExpM, .YExpM,
-   .XSgnE, .YSgnE, .XManE, .YManE, .XExpE, .YExpE, .XDenormE, .YDenormE, .XNormE, .YNormE, .XNormM, .YNormM,  .XZeroE, .YZeroE, .XInfE, .YInfE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE,
-                  // outputs:
-                  .FAddResM, .FAddFlgM);
+// 	faddcvt faddcvt (.clk, .reset, .FlushM, .StallM, .FrmM, .FOpCtrlM, .FmtE, .FmtM, .FSrcXE, .FSrcYE, .FOpCtrlE, 
+//    .XSgnM, .YSgnM, .XManM, .YManM, .XExpM, .YExpM,
+//    .XSgnE, .YSgnE, .XManE, .YManE, .XExpE, .YExpE, .XDenormE, .YDenormE, .XNormE, .YNormE, .XNormM, .YNormM,  .XZeroE, .YZeroE, .XInfE, .YInfE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE,
+//                   // outputs:
+//                   .CvtFpResM, .CvtFpFlgM);
+
+
+	cvtfp cvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
 	
 	// compare unit
   //    - computation is done in one stage
@@ -322,6 +326,9 @@ module fpu (
 	
 	flopenrc #(64) EMRegSgnRes(clk, reset, FlushM, ~StallM, SgnResE, SgnResM);
 	flopenrc #(1) EMRegSgnFlg(clk, reset, FlushM, ~StallM, SgnNVE, SgnNVM);
+
+	flopenrc #(64) EMRegCvtFpRes(clk, reset, FlushM, ~StallM, CvtFpResE, CvtFpResM);
+	flopenrc #(5) EMRegCvtFpFlg(clk, reset, FlushM, ~StallM, CvtFpFlgE, CvtFpFlgM);
 	
 	flopenrc #(64) EMRegCvtRes(clk, reset, FlushM, ~StallM, CvtResE, CvtResM);
 	flopenrc #(5) EMRegCvtFlg(clk, reset, FlushM, ~StallM, CvtFlgE, CvtFlgM);
@@ -352,7 +359,7 @@ module fpu (
 	mux4  #(`XLEN)  IntResMux(CmpResM[`XLEN-1:0], FSrcXM[`XLEN-1:0], ClassResM[`XLEN-1:0], CvtResM[`XLEN-1:0], FIntResSelM, FIntResM);
 	
   // FPU flag selection - to privileged
-	mux5  #(5)  FPUFlgMux(5'b0, FMAFlgM, FAddFlgM, FDivFlgM, FFlgM, FResultSelW, SetFflagsM);
+	mux5  #(5)  FPUFlgMux(5'b0, FMAFlgM, CvtFpFlgM, FDivFlgM, FFlgM, FResultSelW, SetFflagsM);
 	
 
 
@@ -363,7 +370,7 @@ module fpu (
 	////////////////////////////////////////////////////////////////////////////////////////
 	flopenrc #(64) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
 	flopenrc #(64) MWRegDiv(clk, reset, FlushW, ~StallW, FDivResM, FDivResW); 
-	flopenrc #(64) MWRegAdd(clk, reset, FlushW, ~StallW, FAddResM, FAddResW); 
+	flopenrc #(64) MWRegAdd(clk, reset, FlushW, ~StallW, CvtFpResM, CvtFpResW); 
 	flopenrc #(64) MWRegClass(clk, reset, FlushW, ~StallW, FResM, FResW);
 	flopenrc #(6)  MWCtrlReg(clk, reset, FlushW, ~StallW,
 				{FRegWriteM, FResultSelM, FmtM, FWriteIntM},
@@ -382,7 +389,7 @@ module fpu (
 	mux2  #(64)  ReadResMux({{32{1'b1}}, ReadDataW[31:0]}, {{64-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW);
 
   // select the result to be written to the FP register
-	mux5  #(64)  FPUResultMux(ReadResW, FMAResW, FAddResW, FDivResW, FResW, FResultSelW, FPUResultW);
+	mux5  #(64)  FPUResultMux(ReadResW, FMAResW, CvtFpResW, FDivResW, FResW, FResultSelW, FPUResultW);
 	
 	
   end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
