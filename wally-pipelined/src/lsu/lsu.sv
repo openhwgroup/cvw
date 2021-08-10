@@ -93,38 +93,18 @@ module lsu
 
    input 		       var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
-
-   //  output logic [5:0]       DHSELRegionsM
-
    );
 
   logic 		       SquashSCM;
   logic 		       DTLBPageFaultM;
-  logic 		       MemAccessM;
 
-/* -----\/----- EXCLUDED -----\/-----
-  logic 		       preCommittedM;
- -----/\----- EXCLUDED -----/\----- */
-
-  typedef enum 		       {STATE_READY,
-				STATE_FETCH,
-				STATE_FETCH_AMO_1,
-				STATE_FETCH_AMO_2,
-				STATE_STALLED,
-				STATE_PTW_READY,
-				STATE_PTW_FETCH,
-				STATE_PTW_DONE} statetype;
-  statetype CurrState, NextState;
   
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
  
   logic 		       DTLBMissM;
-//  logic [`XLEN-1:0] 	       PTE;
   logic 		       DTLBWriteM;
   logic 		       HPTWStall;  
-  logic [`XLEN-1:0] 	       HPTWPAdrE;
-//  logic [`XLEN-1:0] 	       HPTWPAdrM;  
-  logic [`PA_BITS-1:0] TranslationPAdr;
+  logic [`PA_BITS-1:0] 	       TranslationPAdr;
   logic 		       HPTWRead;
   logic [1:0] 		       MemRWMtoDCache;
   logic [1:0] 		       MemRWMtoLRSC;
@@ -132,11 +112,9 @@ module lsu
   logic [1:0] 		       AtomicMtoDCache;
   logic [`PA_BITS-1:0] 	       MemPAdrMtoDCache;
   logic [11:0] 		       MemAdrEtoDCache;  
-  logic [`XLEN-1:0] 	       ReadDataWfromDCache;
   logic 		       StallWtoDCache;
-  logic            MemReadM;
+  logic 		       MemReadM;
   logic 		       DataMisalignedMfromDCache;
-  logic 		       HPTWReady;
   logic 		       DisableTranslation;  // used to stop intermediate PTE physical addresses being saved to TLB.
   logic 		       DCacheStall;
 
@@ -149,7 +127,6 @@ module lsu
   logic 		       FlushWtoDCache;
   logic 		       WalkerPageFaultM;
 
-  logic [`XLEN-1:0] 	       LSUData;
   logic 		       AnyCPUReqM;
   logic 		       MemAfterIWalkDone;
 
@@ -167,7 +144,7 @@ module lsu
 	    .PageType,
 	    .ITLBWriteF(ITLBWriteF),
 	    .DTLBWriteM(DTLBWriteM),
-	    .HPTWReadPTE(LSUData),
+	    .HPTWReadPTE(ReadDataM),
 	    .HPTWStall(HPTWStall),
             .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
@@ -212,9 +189,6 @@ module lsu
 		 .CommittedMfromDCache(CommittedMfromDCache),
 		 .PendingInterruptMtoDCache(PendingInterruptMtoDCache),
 		 .DCacheStall(DCacheStall));
-  
-
-    
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.PAdr(MemPAdrMtoDCache),
@@ -268,28 +242,6 @@ module lsu
       2'b11:  DataMisalignedMfromDCache = |MemPAdrMtoDCache[2:0];           // ld, sd, fld, fsd
     endcase 
 
-  // Squash unaligned data accesses and failed store conditionals
-  // *** this is also the place to squash if the cache is hit
-  // Changed DataMisalignedMfromDCache to a larger combination of trap sources
-  // NonBusTrapM is anything that the bus doesn't contribute to producing 
-  // By contrast, using TrapM results in circular logic errors
-/* -----\/----- EXCLUDED -----\/-----
-
- // *** BUG for now leave this out. come back later after the d cache is working. July 09, 2021
-
-  assign MemReadM = MemRWMtoLRSC[1] & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
-  assign MemWriteM = MemRWMtoLRSC[0] & ~NonBusTrapM & ~DTLBMissM & ~SquashSCM & CurrState != STATE_STALLED;
-  assign AtomicMaskedM = CurrState != STATE_STALLED ? AtomicMtoDCache : 2'b00 ;
-  assign MemAccessM = MemReadM | MemWriteM;
-
-  // Determine if M stage committed
-  // Reset whenever unstalled. Set when access successfully occurs
-  flopr #(1) committedMreg(clk,reset,(CommittedMfromDCache | CommitM) & StallM,preCommittedM);
-  assign CommittedMfromDCache = preCommittedM | CommitM;
-
-
- -----/\----- EXCLUDED -----/\----- */
-
   // Determine if address is valid
   assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[1];
   assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[0];
@@ -309,7 +261,6 @@ module lsu
 		.VAdr(MemAdrM[11:0]),		
 		.WriteDataM(WriteDataM),
 		.ReadDataM(ReadDataM),
-		.LSUData(LSUData),
 		.DCacheStall(DCacheStall),
 		.CommittedM(CommittedMfromDCache),
 		.DCacheMiss,
@@ -334,117 +285,6 @@ module lsu
 		.HWDATA(DCtoAHBWriteData),
 		.HRDATA(DCfromAHBReadData)		
 		);
-  
-//  assign AtomicMaskedM = 2'b00;  // *** Remove from AHB
-  
-
-  // Data stall
-  //assign LSUStall = (NextState == STATE_FETCH) || (NextState == STATE_FETCH_AMO_1) || (NextState == STATE_FETCH_AMO_2);
-  // BUG *** July 09, 2021
-  //assign HPTWReady = (CurrState == STATE_READY);
-  
-
-  // Ross Thompson April 22, 2021
-  // for now we need to handle the issue where the data memory interface repeately
-  // requests data from memory rather than issuing a single request.
-
-/* -----\/----- EXCLUDED -----\/-----
- // *** BUG will need to modify this so we can handle the ptw. July 09, 2021
-
-  flopenl #(.TYPE(statetype)) stateReg(.clk(clk),
-				       .load(reset),
-				       .en(1'b1),
-				       .d(NextState),
-				       .val(STATE_READY),
-				       .q(CurrState));
-
-  always_comb begin
-    case (CurrState)
-      STATE_READY:
-	if (DTLBMissM) begin
-	  NextState = STATE_PTW_READY;
-	  LSUStall = 1'b1;
-	end else if (AtomicMaskedM[1]) begin 
-	  NextState = STATE_FETCH_AMO_1; // *** should be some misalign check
-	  LSUStall = 1'b1;
-	end else if((MemReadM & AtomicMtoDCache[0]) | (MemWriteM & AtomicMtoDCache[0])) begin
-	  NextState = STATE_FETCH_AMO_2; 
-	  LSUStall = 1'b1;
-	end else if (MemAccessM & ~DataMisalignedMfromDCache) begin
-	  NextState = STATE_FETCH;
-	  LSUStall = 1'b1;
-	end else begin
-          NextState = STATE_READY;
-	  LSUStall = 1'b0;
-	end
-      STATE_FETCH_AMO_1: begin
-	LSUStall = 1'b1;
-	if (DCfromAHBAck) begin
-	  NextState = STATE_FETCH_AMO_2;
-	end else begin 
-	  NextState = STATE_FETCH_AMO_1;
-	end
-      end
-      STATE_FETCH_AMO_2: begin
-	LSUStall = 1'b1;	
-	if (DCfromAHBAck & ~StallWtoDCache) begin
-	  NextState = STATE_FETCH_AMO_2;
-	end else if (DCfromAHBAck & StallWtoDCache) begin
-          NextState = STATE_STALLED;
-	end else begin
-	  NextState = STATE_FETCH_AMO_2;
-	end
-      end
-      STATE_FETCH: begin
-	LSUStall = 1'b1;
-	if (DCfromAHBAck & ~StallWtoDCache) begin
-	  NextState = STATE_READY;
-	end else if (DCfromAHBAck & StallWtoDCache) begin
-	  NextState = STATE_STALLED;
-	end else begin
-	  NextState = STATE_FETCH;
-	end
-      end
-      STATE_STALLED: begin
-	LSUStall = 1'b0;
-	if (~StallWtoDCache) begin
-	  NextState = STATE_READY;
-	end else begin
-	  NextState = STATE_STALLED;
-	end
-      end
-      STATE_PTW_READY: begin
-	LSUStall = 1'b0;
-	if (DTLBWriteM) begin
-	  NextState = STATE_READY;
-	  LSUStall = 1'b1;
-	end else if (MemReadM & ~DataMisalignedMfromDCache) begin
-	  NextState = STATE_PTW_FETCH;
-	end else begin
-	  NextState = STATE_PTW_READY;
-	end
-      end
-      STATE_PTW_FETCH : begin
-	LSUStall = 1'b1;
-	if (DCfromAHBAck & ~DTLBWriteM) begin
-	  NextState = STATE_PTW_READY;
-	end else if (DCfromAHBAck & DTLBWriteM) begin
-	  NextState = STATE_READY;
-	end else begin
-	  NextState = STATE_PTW_FETCH;
-	end
-      end
-      STATE_PTW_DONE: begin
-	NextState = STATE_READY;
-      end
-      default: begin
-	LSUStall = 1'b0;
-	NextState = STATE_READY;
-      end
-    endcase
-  end // always_comb
- -----/\----- EXCLUDED -----/\----- */
-
 
 endmodule
 

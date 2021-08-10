@@ -61,7 +61,6 @@ module dcache
    // from ptw
    input logic 		       SelPTW,
    input logic 		       WalkerPageFaultM, 
-   output logic [`XLEN-1:0]    LSUData,
    output logic 	       MemAfterIWalkDone,
    // ahb side
    output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
@@ -79,7 +78,7 @@ module dcache
   localparam integer	       BLOCKLEN = `DCACHE_BLOCKLENINBITS;
   localparam integer	       NUMLINES = `DCACHE_WAYSIZEINBYTES*8/BLOCKLEN;
   localparam integer	       NUMWAYS = `DCACHE_NUMWAYS;
-  localparam integer	       NUMREPL_BITS = `DCACHE_REPLBITS;
+  localparam integer	       NUMREPL_BITS = `DCACHE_REPLBITS; // *** not used
 
   localparam integer	       BLOCKBYTELEN = BLOCKLEN/8;
   localparam integer	       OFFSETLEN = $clog2(BLOCKBYTELEN);
@@ -113,25 +112,19 @@ module dcache
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
   logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
   logic [WORDSPERLINE-1:0]     SRAMWordEnable;
-  logic 		       SelMemWriteDataM;
-  logic [2:0] 		       Funct3W;
 
-  logic 		       SRAMWordWriteEnableM, SRAMWordWriteEnableW;
+  logic 		       SRAMWordWriteEnableM;
   logic 		       SRAMBlockWriteEnableM;
   logic [NUMWAYS-1:0] 	       SRAMBlockWayWriteEnableM;
   logic 		       SRAMWriteEnable;
   logic [NUMWAYS-1:0] 	       SRAMWayWriteEnable;
   
 
-  logic 		       SaveSRAMRead;
-  logic [1:0] 		       AtomicW;
   logic [NUMWAYS-1:0] 	       VictimWay;
   logic [NUMWAYS-1:0] 	       VictimDirtyWay;
   logic [BLOCKLEN-1:0] 	       VictimReadDataBlockM;
   logic 		       VictimDirty;
-  logic 		       SelAMOWrite;
   logic 		       SelUncached;
-  logic [6:0] 		       Funct7W;
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
 
   logic [`PA_BITS-1:0] 	       BasePAdrM;
@@ -149,10 +142,6 @@ module dcache
   logic SelEvict;
 
   logic LRUWriteEn;
-
-  logic CaptureDataM;
-  logic [`XLEN-1:0] SavedReadDataM;
-
   
   typedef enum {STATE_READY,
 
@@ -212,15 +201,6 @@ module dcache
 		STATE_CPU_BUSY_FINISH_AMO} statetype;
 
   statetype CurrState, NextState;
-    
-
-  flopenr #(7) Funct7WReg(.clk(clk),
-			  .reset(reset),
-			  .en(~StallWtoDCache),
-			  .d(Funct7M),
-			  .q(Funct7W));
-  
-  
 
   // data path
 
@@ -354,18 +334,8 @@ module dcache
   subwordread subwordread(.HRDATA(ReadDataWordMuxM),
 			  .HADDRD(MemPAdrM[2:0]),
 			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			  .HRDATAMasked(LSUData));
+			  .HRDATAMasked(ReadDataM));
 
-  assign CaptureDataM = ~SelPTW & MemRWM[1];
-  
-  flopen #(`XLEN) 
-  SavedReadDataReg(.clk,
-		   .en(CaptureDataM),
-		   .d(LSUData),
-		   .q(SavedReadDataM));
-
-  assign ReadDataM = LSUData;
-  
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
@@ -443,13 +413,6 @@ module dcache
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
-  flopr #(1)
-  SRAMWritePipeReg(.clk(clk),
-	      .reset(reset),
-	      .d({SRAMWordWriteEnableM}),
-	      .q({SRAMWordWriteEnableW}));
-
-  
   always_ff @(posedge clk, posedge reset)
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
@@ -464,14 +427,11 @@ module dcache
     ClearValidM = 1'b0;
     SetDirtyM = 1'b0;    
     ClearDirtyM = 1'b0;
-    SelMemWriteDataM = 1'b0;
     SRAMWordWriteEnableM = 1'b0;
     SRAMBlockWriteEnableM = 1'b0;
-    SaveSRAMRead = 1'b1;
     CntReset = 1'b0;
     AHBRead = 1'b0;
     AHBWrite = 1'b0;
-    SelAMOWrite = 1'b0;
     CommittedM = 1'b0;        
     SelUncached = 1'b0;
     SelEvict = 1'b0;
