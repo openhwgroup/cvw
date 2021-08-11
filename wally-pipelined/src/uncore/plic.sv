@@ -139,7 +139,7 @@ module plic (
             Dout <= #1 {26'b0,intClaim};
             intInProgress <= #1 intInProgress | (4'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
-          default: Dout <= #1 32'hdeadbeef; // invalid access
+          default: Dout <= #1 32'h0; // invalid access
         endcase
       else
         Dout <= #1 32'h0;
