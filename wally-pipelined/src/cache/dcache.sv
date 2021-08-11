@@ -97,9 +97,8 @@ module dcache
   logic			       SetDirtyM, ClearDirtyM;
   logic [BLOCKLEN-1:0] 	       ReadDataBlockWayM [NUMWAYS-1:0];
   logic [BLOCKLEN-1:0] 	       ReadDataBlockWayMaskedM [NUMWAYS-1:0];
-  logic [BLOCKLEN-1:0] 	       VictimReadDataBLockWayMaskedM [NUMWAYS-1:0];
   logic [TAGLEN-1:0]	       ReadTag [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0]	       Valid, Dirty, WayHit;
+  logic [NUMWAYS-1:0]	       Valid, Dirty, WayHit, SelectedWay;
   logic			       CacheHit;
   logic [NUMWAYS-2:0] 	       ReplacementBits [NUMLINES-1:0];
   logic [NUMWAYS-2:0] 	       BlockReplacementBits;
@@ -242,12 +241,10 @@ module dcache
 	     .Valid(Valid[way]),
 	     .Dirty(Dirty[way]));
       assign WayHit[way] = Valid[way] & (ReadTag[way] == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-      assign ReadDataBlockWayMaskedM[way] = WayHit[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
+      assign SelectedWay[way] = SelEvict ? VictimWay[way] : WayHit[way];
+      assign ReadDataBlockWayMaskedM[way] = SelectedWay[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
 
       // the cache block candiate for eviction
-      // *** this should be sharable with the read data muxing, but for now i'm doing the simple
-      // thing and making them separate.
-      assign VictimReadDataBLockWayMaskedM[way] = VictimWay[way] ? ReadDataBlockWayM[way] : '0;
       assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
       assign VictimTagWay[way] = VictimWay[way] ? ReadTag[way] : '0;
     end
@@ -301,7 +298,6 @@ module dcache
     VictimTag = '0;
     for(int index = 0; index < NUMWAYS; index++) begin
       ReadDataBlockM = ReadDataBlockM | ReadDataBlockWayMaskedM[index];
-      VictimReadDataBlockM = VictimReadDataBlockM | VictimReadDataBLockWayMaskedM[index];
       VictimTag = VictimTag | VictimTagWay[index];      
     end
   end
@@ -314,7 +310,6 @@ module dcache
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
       assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
-      assign VictimReadDataBlockSetsM[index] = VictimReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];      
     end
   endgenerate
 
@@ -322,7 +317,7 @@ module dcache
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
 
-  assign HWDATA = CacheableM ? VictimReadDataBlockSetsM[FetchCount] : WriteDataM;
+  assign HWDATA = CacheableM ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
 				.d1(DCacheMemWriteData[`XLEN-1:0]),
