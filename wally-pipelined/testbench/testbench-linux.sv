@@ -609,6 +609,7 @@ module testbench();
   // ----------------
   // PC Updater Macro
   // ----------------
+/* -----\/----- EXCLUDED -----\/-----
   `define SCAN_PC(DATAFILE,SCANFILE,PCTEXT,PCTEXT2,CHECKINSTR,PCEXPECTED) \
     SCANFILE = $fscanf(DATAFILE, "%s\n", PCTEXT); \
     PCTEXT2 = ""; \
@@ -619,6 +620,7 @@ module testbench();
     SCANFILE = $fscanf(DATAFILE, "%x\n", CHECKINSTR); \
     SCANFILE = $fscanf(DATAFILE, "%x\n", PCEXPECTED);
 
+ -----/\----- EXCLUDED -----/\----- */
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////////////// Testbench Core ///////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
@@ -935,6 +937,7 @@ module testbench();
   // --------------
   // Initialization
   // --------------
+/* -----\/----- EXCLUDED -----\/-----
   initial begin
     data_file_memR = $fopen({`LINUX_TEST_VECTORS,"parsedMemRead.txt"}, "r");
     if (data_file_memR == 0) begin
@@ -949,6 +952,7 @@ module testbench();
       $stop;
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 
   // ------------
   // Read Checker
@@ -1161,17 +1165,18 @@ module testbench();
   //   PCtextF, PCtextD are read from testvectors
   //   You could just as well read the others from testvectors,
   //   but I really like how the pipeline synchronizes with Wally so cleanly
+/* -----\/----- EXCLUDED -----\/-----
   always_ff @(posedge clk, posedge reset)
     if (reset) begin
       PCtextE = "(reset)";
       PCtextM = "(reset)";
       //PCtextW = "(reset)";
     end else begin
-/* -----\/----- EXCLUDED -----\/-----
+/-* -----\/----- EXCLUDED -----\/-----
       if (~dut.hart.StallW) 
         if (dut.hart.FlushW) PCtextW = "(flushed)";
         else                 PCtextW = PCtextM;
- -----/\----- EXCLUDED -----/\----- */
+ -----/\----- EXCLUDED -----/\----- *-/
       if (~dut.hart.StallM) 
         if (dut.hart.FlushM) PCtextM = "(flushed)";
         else                 PCtextM = PCtextE;
@@ -1180,6 +1185,7 @@ module testbench();
         else                 PCtextE = PCtextD;
     end
   
+ -----/\----- EXCLUDED -----/\----- */
   // ------------------
   // Address Translator
   // ------------------
