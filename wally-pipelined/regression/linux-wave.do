@@ -13,41 +13,41 @@ add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/MemAdrM
 add wave -noupdate -expand -group {WriteBack stage} /testbench/dut/hart/ieu/InstrValidW
 add wave -noupdate -expand -group {WriteBack stage} /testbench/PCW
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/IllegalInstrFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/BreakpointFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StoreMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StoreAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/EcallFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StorePageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InterruptM
-add wave -noupdate -group HDU -group interrupts /testbench/dut/hart/priv/trap/PendingIntsM
-add wave -noupdate -group HDU -group interrupts /testbench/dut/hart/priv/trap/CommittedM
-add wave -noupdate -group HDU -group interrupts /testbench/dut/hart/priv/trap/InstrValidM
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/BPPredWrongE
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/CSRWritePendingDEM
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/RetM
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/TrapM
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/LoadStallD
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/StoreStallD
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/ICacheStallF
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/hzu/LSUStall
-add wave -noupdate -group HDU -group hazards /testbench/dut/hart/MulDivStallD
-add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/hzu/FlushF
-add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushD
-add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushE
-add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushM
-add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushW
-add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallF
-add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallD
-add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallE
-add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallM
-add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallW
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrMisalignedFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrAccessFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/IllegalInstrFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/BreakpointFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadMisalignedFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StoreMisalignedFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadAccessFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StoreAccessFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/EcallFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrPageFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/LoadPageFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/StorePageFaultM
+add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InterruptM
+add wave -noupdate -expand -group HDU -expand -group interrupts /testbench/dut/hart/priv/trap/PendingIntsM
+add wave -noupdate -expand -group HDU -expand -group interrupts /testbench/dut/hart/priv/trap/CommittedM
+add wave -noupdate -expand -group HDU -expand -group interrupts /testbench/dut/hart/priv/trap/InstrValidM
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/BPPredWrongE
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/CSRWritePendingDEM
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/RetM
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/TrapM
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/LoadStallD
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/StoreStallD
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/ICacheStallF
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/hzu/LSUStall
+add wave -noupdate -expand -group HDU -group hazards /testbench/dut/hart/MulDivStallD
+add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/hzu/FlushF
+add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushD
+add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushE
+add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushM
+add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/hart/FlushW
+add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallF
+add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallD
+add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallE
+add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallM
+add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallW
 add wave -noupdate -group Bpred -color Orange /testbench/dut/hart/ifu/bpred/bpred/Predictor/DirPredictor/GHR
 add wave -noupdate -group Bpred -expand -group {branch update selection inputs} /testbench/dut/hart/ifu/bpred/bpred/Predictor/DirPredictor/BPPredF
 add wave -noupdate -group Bpred -expand -group {branch update selection inputs} {/testbench/dut/hart/ifu/bpred/bpred/Predictor/DirPredictor/InstrClassE[0]}
@@ -371,6 +371,8 @@ add wave -noupdate -expand -group csr /testbench/dut/hart/priv/csr/STVEC_REGW
 add wave -noupdate -expand -group csr /testbench/dut/hart/priv/csr/MTVEC_REGW
 add wave -noupdate -expand -group csr /testbench/dut/hart/priv/csr/genblk1/csrm/MCAUSE_REGW
 add wave -noupdate -expand -group csr /testbench/dut/hart/priv/csr/genblk1/csrs/genblk1/SCAUSE_REGW
+add wave -noupdate -expand -group csr /testbench/dut/hart/priv/csr/genblk1/csrm/MEDELEG_REGW
+add wave -noupdate -expand -group csr /testbench/dut/hart/priv/csr/genblk1/csrm/MIDELEG_REGW
 add wave -noupdate -group itlb /testbench/dut/hart/ifu/immu/TLBWrite
 add wave -noupdate -group itlb /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -group itlb /testbench/dut/hart/ifu/immu/PhysicalAddress
@@ -444,20 +446,20 @@ add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HSELUART
 add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HADDR
 add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HWRITE
 add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HWDATA
-add wave -noupdate -expand -group {debug trace} -expand -group wb /testbench/dut/hart/ieu/c/InstrValidW
-add wave -noupdate -expand -group {debug trace} -expand -group wb /testbench/checkInstrW
-add wave -noupdate -expand -group {debug trace} -expand -group wb /testbench/PCW
-add wave -noupdate -expand -group {debug trace} -expand -group wb /testbench/ExpectedPCW
-add wave -noupdate -expand -group {debug trace} /testbench/line
-add wave -noupdate -expand -group {debug trace} /testbench/textM
-add wave -noupdate -expand -group {debug trace} /testbench/textW
-add wave -noupdate -expand -group {debug trace} /testbench/TrapW
-add wave -noupdate -expand -group {debug trace} -color Brown /testbench/dut/hart/hzu/TrapM
-add wave -noupdate -expand -group {debug trace} -expand -group mem -color Yellow /testbench/dut/hart/FlushW
-add wave -noupdate -expand -group {debug trace} -expand -group mem /testbench/dut/hart/priv/trap/InstrValidM
-add wave -noupdate -expand -group {debug trace} -expand -group mem /testbench/checkInstrM
-add wave -noupdate -expand -group {debug trace} -expand -group mem /testbench/dut/hart/PCM
-add wave -noupdate -expand -group {debug trace} -expand -group mem /testbench/ExpectedPCM
+add wave -noupdate -group {debug trace} -expand -group wb /testbench/dut/hart/ieu/c/InstrValidW
+add wave -noupdate -group {debug trace} -expand -group wb /testbench/checkInstrW
+add wave -noupdate -group {debug trace} -expand -group wb /testbench/PCW
+add wave -noupdate -group {debug trace} -expand -group wb /testbench/ExpectedPCW
+add wave -noupdate -group {debug trace} /testbench/line
+add wave -noupdate -group {debug trace} /testbench/textM
+add wave -noupdate -group {debug trace} /testbench/textW
+add wave -noupdate -group {debug trace} /testbench/TrapW
+add wave -noupdate -group {debug trace} -color Brown /testbench/dut/hart/hzu/TrapM
+add wave -noupdate -group {debug trace} -expand -group mem -color Yellow /testbench/dut/hart/FlushW
+add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/hart/priv/trap/InstrValidM
+add wave -noupdate -group {debug trace} -expand -group mem /testbench/checkInstrM
+add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/hart/PCM
+add wave -noupdate -group {debug trace} -expand -group mem /testbench/ExpectedPCM
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedChangePCM
@@ -488,8 +490,10 @@ add wave -noupdate /testbench/dut/hart/priv/TimerIntM
 add wave -noupdate /testbench/dut/hart/priv/ExtIntM
 add wave -noupdate /testbench/dut/hart/priv/SwIntM
 add wave -noupdate /testbench/ExpectedIntType
+add wave -noupdate /testbench/dut/hart/priv/csr/genblk1/csri/IntInM
+add wave -noupdate /testbench/dut/hart/priv/trap/PendingIntsM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {161345764 ns} 0} {{Cursor 21} {161370961 ns} 0} {{Cursor 22} {8214887 ns} 0}
+WaveRestoreCursors {{Cursor 6} {161370951 ns} 0} {{Cursor 21} {161370962 ns} 0} {{Cursor 22} {8229601 ns} 0} {{Cursor 23} {8229287 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -505,4 +509,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {161370915 ns} {161371077 ns}
+WaveRestoreZoom {161370870 ns} {161371032 ns}
