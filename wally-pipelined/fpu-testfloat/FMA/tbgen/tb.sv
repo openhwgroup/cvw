@@ -130,10 +130,21 @@ assign	wnan = FmtE ? &FMAResM[`FLEN-2:`NF] && |FMAResM[`NF-1:0] : &FMAResM[30:23
 // assign	ZNaNE = FmtE ? &Z[62:52] && |Z[51:0] : &Z[62:55] && |Z[54:32]; 
 assign	ansnan = FmtE ? &ans[`FLEN-2:`NF] && |ans[`NF-1:0] : &ans[30:23] && |ans[22:0]; 
  // instantiate device under test
-fma1 UUT1(.XManE({XAssumed1E,XFracE}), .YManE({YAssumed1E,YFracE}), .ZManE({ZAssumed1E,ZFracE}), .*);
+
+    logic [3*`NF+5:0]	SumE, SumM;       
+    logic 			    InvZE, InvZM;
+    logic 			    NegSumE, NegSumM;
+    logic 			    ZSgnEffE, ZSgnEffM;
+    logic 			    PSgnE, PSgnM;
+    logic [8:0]			NormCntE, NormCntM;
+    
+    fma1 fma1 (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE({XAssumed1E,XFracE}), .YManE({YAssumed1E,YFracE}), .ZManE({ZAssumed1E,ZFracE}),
+                .BiasE, .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
+                .FOpCtrlE, .FmtE, .SumE, .NegSumE, .InvZE, .NormCntE, .ZSgnEffE, .PSgnE,
+                .ProdExpE, .AddendStickyE, .KillProdE); 
 fma2 UUT2(.XSgnM(XSgnE), .YSgnM(YSgnE), .ZSgnM(ZSgnE), .XExpM(XExpE), .YExpM(YExpE), .ZExpM(ZExpE), .XManM({XAssumed1E,XFracE}), .YManM({YAssumed1E,YFracE}), .ZManM({ZAssumed1E,ZFracE}), .XNaNM(XNaNE), .YNaNM(YNaNE), .ZNaNM(ZNaNE), .XZeroM(XZeroE), .YZeroM(YZeroE), .ZZeroM(ZZeroE), .XInfM(XInfE), .YInfM(YInfE), .ZInfM(ZInfE), .XSNaNM(XSNaNE), .YSNaNM(YSNaNE), .ZSNaNM(ZSNaNE),
               //  .FSrcXE, .FSrcYE, .FSrcZE, .FSrcXM, .FSrcYM, .FSrcZM, 
-               .FOpCtrlM(FOpCtrlE[2:0]), .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), .AlignedAddendM(AlignedAddendE), .ProdManM(ProdManE),
+               .FOpCtrlM(FOpCtrlE[2:0]), .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .NormCntM(NormCntE), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE),
                .FmtM(FmtE), .FrmM(FrmE), .FMAFlgM, .FMAResM);
 
 
