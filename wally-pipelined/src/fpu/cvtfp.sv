@@ -41,12 +41,10 @@ module cvtfp (
     logic [12:0] ShiftCnt;
 	logic [51:0] SFrac;
 	logic [25:0] DFrac;
-	logic [77:0] DFracTmp,tmp, tmp2;
+	logic [77:0] DFracTmp;
     //assign ShiftCnt = FmtE ? -DExpCalc&{13{Denorm}} : NormCnt;
     assign SFrac = XManE[51:0] << NormCnt;
 logic Shift;
-assign tmp = (-DExpCalc+1)&{13{Shift}};
-assign tmp2 = {XManE, 23'b0};
 assign Shift = {13{Denorm|(($signed(DExpCalc) > $signed(-25)) & DExpCalc[12])}};
 	assign DFracTmp = {XManE, 25'b0} >> ((-DExpCalc+1)&{13{Shift}});
 assign DFrac = DFracTmp[76:51];

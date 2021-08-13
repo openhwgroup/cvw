@@ -124,8 +124,10 @@ module fpu (
 	logic [63:0] 	SgnResE, SgnResM; // sign injection result
 	logic 		    SgnNVE, SgnNVM;   // sign injection invalid flag (Not Valid)
 
-	logic [63:0] 	FResM, FResW;     // selected result that is ready in the memory stage
-	logic [4:0] 	FFlgM;            // selected flag that is ready in the memory stage
+	logic [63:0] 	FResE, FResM, FResW;     // selected result that is ready in the memory stage
+	logic [4:0] 	FFlgE, FFlgM;            // selected flag that is ready in the memory stage
+
+	logic [`XLEN-1:0]  FIntResE;
 
 	logic [63:0] 	   FPUResultW;    // final FP result being written to the FP register
 		
@@ -133,7 +135,7 @@ module fpu (
 	logic 		    FDivSqrtDoneE;          // is divide done
 	logic [63:0] 	DivInput1E, DivInput2E; // inputs to divide/squareroot unit
 	logic 		    FDivClk;                // clock for divide/squareroot unit
-	logic [63:0] 	AlignedSrcAM;           // align SrcA to the floating point format
+	logic [63:0] 	AlignedSrcAE;           // align SrcA to the floating point format
 
 
 
@@ -305,7 +307,16 @@ module fpu (
 	assign FWriteDataE = FSrcYE[`XLEN-1:0];
 	
 
+	// Align SrcA to MSB when single precicion
+	mux2  #(64)  SrcAMux({{32{1'b1}}, SrcAE[31:0]}, {{64-`XLEN{1'b1}}, SrcAE}, FmtE, AlignedSrcAE);
 
+  // select a result that may be written to the FP register
+	mux4  #(64) FResMux(AlignedSrcAE, SgnResE, CmpResE, CvtResE, FResSelE, FResE);
+	mux4  #(5)  FFlgMux(5'b0, {4'b0, SgnNVE}, {4'b0, CmpNVE}, CvtFlgE, FResSelE, FFlgE);
+	
+  // select the result that may be written to the integer register - to IEU
+	mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE[`XLEN-1:0], CvtResE[`XLEN-1:0], FIntResSelE, FIntResE);
+	
 
 
   //***will synth remove registers of values that are always zero?
@@ -313,7 +324,7 @@ module fpu (
 	// E/M pipe registers
 	////////////////////////////////////////////////////////////////////////////////////////
 
-	flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
+	// flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
 	flopenrc #(65) EMFpReg2(clk, reset, FlushM, ~StallM, {XSgnE,XExpE,XManE}, {XSgnM,XExpM,XManM});
 	flopenrc #(65) EMFpReg3(clk, reset, FlushM, ~StallM, {YSgnE,YExpE,YManE}, {YSgnM,YExpM,YManM});
 	flopenrc #(65) EMFpReg4(clk, reset, FlushM, ~StallM, {ZSgnE,ZExpE,ZManE}, {ZSgnM,ZExpM,ZManM});
@@ -321,23 +332,23 @@ module fpu (
 				{XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
 				{XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});
 	
-	flopenrc #(64) EMRegCmpRes(clk, reset, FlushM, ~StallM, CmpResE, CmpResM); 
-	flopenrc #(1)  EMRegCmpFlg(clk, reset, FlushM, ~StallM, CmpNVE, CmpNVM); 
+	flopenrc #(64) EMRegCmpRes(clk, reset, FlushM, ~StallM, FResE, FResM); 
+	flopenrc #(5)  EMRegCmpFlg(clk, reset, FlushM, ~StallM, FFlgE, FFlgM); 
 	
-	flopenrc #(64) EMRegSgnRes(clk, reset, FlushM, ~StallM, SgnResE, SgnResM);
-	flopenrc #(1) EMRegSgnFlg(clk, reset, FlushM, ~StallM, SgnNVE, SgnNVM);
+	flopenrc #(`XLEN) EMRegSgnRes(clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
+	// flopenrc #(1) EMRegSgnFlg(clk, reset, FlushM, ~StallM, SgnNVE, SgnNVM);
 
 	flopenrc #(64) EMRegCvtFpRes(clk, reset, FlushM, ~StallM, CvtFpResE, CvtFpResM);
 	flopenrc #(5) EMRegCvtFpFlg(clk, reset, FlushM, ~StallM, CvtFpFlgE, CvtFpFlgM);
 	
-	flopenrc #(64) EMRegCvtRes(clk, reset, FlushM, ~StallM, CvtResE, CvtResM);
-	flopenrc #(5) EMRegCvtFlg(clk, reset, FlushM, ~StallM, CvtFlgE, CvtFlgM);
+	// flopenrc #(64) EMRegCvtRes(clk, reset, FlushM, ~StallM, CvtResE, CvtResM);
+	// flopenrc #(5) EMRegCvtFlg(clk, reset, FlushM, ~StallM, CvtFlgE, CvtFlgM);
   
-	flopenrc #(64) EMRegClass(clk, reset, FlushM, ~StallM, ClassResE, ClassResM);
+	// flopenrc #(64) EMRegClass(clk, reset, FlushM, ~StallM, ClassResE, ClassResM);
 	
-	flopenrc #(18) EMCtrlReg(clk, reset, FlushM, ~StallM,
-				 {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, XNormE, YNormE},
-				 {FRegWriteM, FResultSelM, FResSelM, FIntResSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM, XNormM, YNormM});
+	flopenrc #(14) EMCtrlReg(clk, reset, FlushM, ~StallM,
+				 {FRegWriteE, FResultSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, XNormE, YNormE},
+				 {FRegWriteM, FResultSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM, XNormM, YNormM});
 	
 	
 
@@ -348,16 +359,7 @@ module fpu (
 	//BEGIN MEMORY STAGE
 	////////////////////////////////////////////////////////////////////////////////////////
 
-	// Align SrcA to MSB when single precicion
-	mux2  #(64)  SrcAMux({{32{1'b1}}, SrcAM[31:0]}, {{64-`XLEN{1'b1}}, SrcAM}, FmtM, AlignedSrcAM);
 
-  // select a result that may be written to the FP register
-	mux4  #(64) FResMux(AlignedSrcAM, SgnResM, CmpResM, CvtResM, FResSelM, FResM);
-	mux4  #(5)  FFlgMux(5'b0, {4'b0, SgnNVM}, {4'b0, CmpNVM}, CvtFlgM, FResSelM, FFlgM);
-	
-  // select the result that may be written to the integer register - to IEU
-	mux4  #(`XLEN)  IntResMux(CmpResM[`XLEN-1:0], FSrcXM[`XLEN-1:0], ClassResM[`XLEN-1:0], CvtResM[`XLEN-1:0], FIntResSelM, FIntResM);
-	
   // FPU flag selection - to privileged
 	mux5  #(5)  FPUFlgMux(5'b0, FMAFlgM, CvtFpFlgM, FDivFlgM, FFlgM, FResultSelW, SetFflagsM);
 	
