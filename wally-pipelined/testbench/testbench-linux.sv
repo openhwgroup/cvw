@@ -210,11 +210,18 @@ module testbench();
 
 	  MarkerIndex += 4;
 
-	  // parse CSRs
+	  // parse CSRs, because there are 1 or more CSRs after the CSR token
+	  // we check if the CSR token or the number of CSRs is greater than 0.
+	  // if so then we want to parse for a CSR.
 	end else if(ExpectedTokens[MarkerIndex] == "CSR" || NumCSRM > 0) begin
-	  MarkerIndex++;
+	  if(ExpectedTokens[MarkerIndex] == "CSR") begin
+	    // all additional CSR's won't have this token.
+	    MarkerIndex++;
+	  end
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSRArrayM[NumCSRM]);
 	  matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRArrayValueM[NumCSRM]);
+
+	  MarkerIndex += 2;
 
 	  // if we get an xcause with the interrupt bit set we must generate an interrupt as interrupts
 	  // are imprecise.  Forcing the trap at this time will allow wally to track what qemu does.
