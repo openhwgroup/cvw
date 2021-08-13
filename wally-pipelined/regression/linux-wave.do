@@ -489,7 +489,7 @@ add wave -noupdate /testbench/dut/hart/priv/ExtIntM
 add wave -noupdate /testbench/dut/hart/priv/SwIntM
 add wave -noupdate /testbench/ExpectedIntType
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {161345764 ns} 0} {{Cursor 21} {161370961 ns} 0}
+WaveRestoreCursors {{Cursor 6} {161345764 ns} 0} {{Cursor 21} {161370961 ns} 0} {{Cursor 22} {8214887 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
