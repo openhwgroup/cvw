@@ -311,30 +311,31 @@ module testbench();
       // override on special conditions
       #1;
 
-      
-      if(textW.substr(0,5) == "rdtime") begin
-	$display("%t:Releasing force of CSRReadValM.", $time);
-        release dut.hart.priv.csr.CSRReadValM;
-        //release dut.hart.ieu.dp.regf.wd3;
-      end
-      
-      if (ExpectedMemAdrM == 'h10000005) begin
-	//$display("%t: releasing force of ReadDataM.", $time);
-        release dut.hart.ieu.dp.ReadDataM;
-      end
 
-      // remove forces on interrupts
-      for(NumCSRMIndex = 0; NumCSRMIndex < NumCSRM; NumCSRMIndex++) begin
-	if(ExpectedCSRArrayM[NumCSRMIndex].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRMIndex][`XLEN-1] == 1'b1)) begin
-	  //what type?
-	  $display("$t: Releasing all forces on interrupts", $time);
-	  
-	  release dut.hart.priv.SwIntM;
-	  release dut.hart.priv.TimerIntM;
-	  release dut.hart.priv.ExtIntM;	    
+      if(~dut.hart.StallW) begin
+	if(textM.substr(0,5) == "rdtime") begin
+	  $display("%t:Releasing force of CSRReadValM.", $time);
+          release dut.hart.priv.csr.CSRReadValM;
+          //release dut.hart.ieu.dp.regf.wd3;
+	end
+	
+	if (ExpectedMemAdrM == 'h10000005) begin
+	  //$display("%t: releasing force of ReadDataM.", $time);
+          release dut.hart.ieu.dp.ReadDataM;
+	end
+	
+	// remove forces on interrupts
+	for(NumCSRMIndex = 0; NumCSRMIndex < NumCSRM; NumCSRMIndex++) begin
+	  if(ExpectedCSRArrayM[NumCSRMIndex].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRMIndex][`XLEN-1] == 1'b1)) begin
+	    //what type?
+	    $display("%t: Releasing all forces on interrupts", $time);
+	    
+	    release dut.hart.priv.SwIntM;
+	    release dut.hart.priv.TimerIntM;
+	    release dut.hart.priv.ExtIntM;	    
+	  end
 	end
       end
-      
     end
   end
   

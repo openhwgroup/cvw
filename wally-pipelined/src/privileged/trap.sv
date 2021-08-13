@@ -67,10 +67,13 @@ module trap (
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
   assign InterruptM = PendingInterruptM & ~CommittedM;
-  assign ExceptionM = TrapM;
+  //assign ExceptionM = TrapM;
+  assign ExceptionM = Exception1M;
   // *** as of 7/17/21, the system passes with this definition of ExceptionM as being all traps and fails if ExceptionM = Exception1M
   // with no interrupts.  However, Ross intended the datacache to use Exception without interrupts, so there is something subtle
   // to sort out here.
+  // *** as of 8/13/21, switching to Exception1M does not seem to cause any failures.  It's possible the bug was
+  // fixed inadvertantly as the dcache was debugged.
   
   // Trigger Traps and RET
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
