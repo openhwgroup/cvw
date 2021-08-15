@@ -38,6 +38,7 @@ add log -r /*
 do linux-wave.do
 
 run 300 ms
+#run 180 us
 
 #-- Run the Simulation 
 #run -all
