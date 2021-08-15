@@ -3,7 +3,7 @@ module shifter_right(input logic signed [63:0] a,
 		     output logic signed [63:0] y);
 
 
-   y = a >> shamt;
+  assign y = a >> shamt;
 
 endmodule // shifter_right
 
@@ -12,7 +12,7 @@ module shifter_left(input logic signed [63:0] a,
 		    output logic signed [63:0] y);
 
 
-   y = a << shamt;
+   assign y = a << shamt;
 
 endmodule // shifter_right
 
