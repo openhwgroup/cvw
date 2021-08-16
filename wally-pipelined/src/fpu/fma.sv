@@ -36,7 +36,7 @@ module fma(
     input logic                 XSgnE, YSgnE, ZSgnE,    // input signs - execute stage
     input logic [`NE-1:0]       XExpE, YExpE, ZExpE,    // input exponents - execute stage
     input logic [`NF:0]         XManE, YManE, ZManE,    // input mantissa - execute stage
-    input logic                 XSgnM, YSgnM, ZSgnM,    // input signs - memory stage
+    input logic                 XSgnM, YSgnM,    // input signs - memory stage
     input logic [`NE-1:0]       XExpM, YExpM, ZExpM,    // input exponents - memory stage
     input logic [`NF:0]         XManM, YManM, ZManM,    // input mantissa - memory stage
     input logic                 XDenormE, YDenormE, ZDenormE, // is denorm
@@ -83,7 +83,7 @@ module fma(
                             {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE},
                             {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM});
 
-    fma2 fma2(.XSgnM, .YSgnM, .ZSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
+    fma2 fma2(.XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
             .FOpCtrlM, .FrmM, .FmtM,  .ProdExpM, .AddendStickyM, .KillProdM, .SumM, .NegSumM, .InvZM, .NormCntM, .ZSgnEffM, .PSgnM,
             .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM,
             .FMAResM, .FMAFlgM);
@@ -217,7 +217,7 @@ endmodule
 
 module fma2(
     
-    input logic        XSgnM, YSgnM, ZSgnM,
+    input logic        XSgnM, YSgnM,
     input logic [`NE-1:0] XExpM, YExpM, ZExpM,
     input logic [`NF:0] XManM, YManM, ZManM,
     input logic     [2:0]       FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude

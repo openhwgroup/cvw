@@ -1,12 +1,11 @@
 module unpacking ( 
     input logic  [63:0] X, Y, Z,
     input logic         FmtE,
-    input logic  [2:0]  FResultSelE,
     input logic  [2:0]  FOpCtrlE,
     output logic        XSgnE, YSgnE, ZSgnE,
     output logic [10:0] XExpE, YExpE, ZExpE,
     output logic [52:0] XManE, YManE, ZManE,
-    output logic XNormE, YNormE,
+    output logic XNormE,
     output logic XNaNE, YNaNE, ZNaNE,
     output logic XSNaNE, YSNaNE, ZSNaNE,
     output logic XDenormE, YDenormE, ZDenormE,
@@ -55,7 +54,6 @@ module unpacking (
     assign ZExpMaxE = FmtE ? &Z[62:52] : &Z[30:23];
   
     assign XNormE = ~(XExpMaxE|XExpZero);
-    assign YNormE = ~YExpZero; // only used in addcvt - checks inf and NaN seperately
     
     assign XNaNE = XExpMaxE & ~XFracZero;
     assign YNaNE = YExpMaxE & ~YFracZero;
