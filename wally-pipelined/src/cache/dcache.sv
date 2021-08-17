@@ -212,7 +212,6 @@ module dcache
       MemWay(.clk(clk),
 	     .reset(reset),
 	     .Adr(SRAMAdr),
-	     .WAdr(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	     .WriteEnable(SRAMWayWriteEnable[way]),
 	     .WriteWordEnable(SRAMWordEnable),
 	     .TagWriteEnable(SRAMBlockWayWriteEnableM[way]), 
@@ -709,7 +708,7 @@ module dcache
 	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	SelEvict = 1'b1;
-	if( FetchCountFlag & AHBAck) begin
+	if(FetchCountFlag & AHBAck) begin
 	  NextState = STATE_PTW_READ_MISS_WRITE_CACHE_BLOCK;
 	end else begin
 	  NextState = STATE_PTW_READ_MISS_EVICT_DIRTY;
@@ -988,7 +987,7 @@ module dcache
 	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	SelEvict = 1'b1;
-	if( FetchCountFlag & AHBAck) begin
+	if(FetchCountFlag & AHBAck) begin
 	  NextState = STATE_PTW_FAULT_MISS_WRITE_CACHE_BLOCK;
 	end else begin
 	  NextState = STATE_PTW_FAULT_MISS_EVICT_DIRTY;
