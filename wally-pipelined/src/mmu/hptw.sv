@@ -201,9 +201,11 @@ module hptw
 	    FAULT: if (ITLBMissF & AnyCPUReqM & ~MemAfterIWalkDone) NextWalkerState = FAULT;
  	                        else NextWalkerState = IDLE;
 	    default: begin
-			$error("Default state in HPTW should be unreachable");
-									NextWalkerState = IDLE; // should never be reached
-		end
+	      // synthesis translate_off
+	      $error("Default state in HPTW should be unreachable");
+	      // synthesis translate_on
+	      NextWalkerState = IDLE; // should never be reached
+	    end
 	  endcase
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
       assign HPTWRead = 0; assign SelPTW = 0;
