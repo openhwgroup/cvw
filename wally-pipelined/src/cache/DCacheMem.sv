@@ -30,7 +30,6 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
    input logic 			      reset,
 
    input logic [$clog2(NUMLINES)-1:0] Adr,
-   input logic [$clog2(NUMLINES)-1:0] WAdr, // write address for valid and dirty only
    input logic 			      WriteEnable,
    input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
    input logic TagWriteEnable,
@@ -76,16 +75,16 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & WriteEnable) ValidBits[WAdr] <= 1'b1;
-    else if (ClearValid & WriteEnable) ValidBits[WAdr] <= 1'b0;
+    else if (SetValid & WriteEnable) ValidBits[Adr] <= 1'b1;
+    else if (ClearValid & WriteEnable) ValidBits[Adr] <= 1'b0;
     Valid <= ValidBits[Adr];
   end
 
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	DirtyBits <= {NUMLINES{1'b0}};
-    else if (SetDirty & WriteEnable) DirtyBits[WAdr] <= 1'b1;
-    else if (ClearDirty & WriteEnable) DirtyBits[WAdr] <= 1'b0;
+    else if (SetDirty & WriteEnable) DirtyBits[Adr] <= 1'b1;
+    else if (ClearDirty & WriteEnable) DirtyBits[Adr] <= 1'b0;
     Dirty <= DirtyBits[Adr];
   end
   
