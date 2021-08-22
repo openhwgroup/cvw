@@ -51,13 +51,18 @@ module csri #(parameter
   // assumes no N-mode user interrupts
 
   always_comb begin
-    IntInM     = 0; // *** does this overwriting technique really synthesize
+    IntInM     = 0; 
     IntInM[11] = ExtIntM & ~MIDELEG_REGW[9];   // MEIP
     IntInM[9]  = ExtIntM &  MIDELEG_REGW[9];   // SEIP
     IntInM[7]  = TimerIntM & ~MIDELEG_REGW[5]; // MTIP
     IntInM[5]  = TimerIntM &  MIDELEG_REGW[5]; // STIP
     IntInM[3]  = SwIntM & ~MIDELEG_REGW[1];    // MSIP
     IntInM[1]  = SwIntM &  MIDELEG_REGW[1];    // SSIP
+    /* maybe only machine mode interrupts should be directly triggered:
+    IntInM[11] = ExtIntM;   // MEIP
+    IntInM[7]  = TimerIntM; // MTIP
+    IntInM[3]  = SwIntM;    // MSIP
+    */
    end
 
   // Interrupt Write Enables
