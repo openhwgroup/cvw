@@ -15,4 +15,4 @@ outDir="../linux-testvectors"
 #($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parseNew.py "$outDir") & riscv64-unknown-elf-gdb -x gdbinit_qemulog
 #./fix_csrs.py "$outDir"
 
-($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parse_qemu.py | ./parseNew.py | ./remove_dup.awk > allNew2.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parse_qemu.py | ./parseNew.py | ./remove_dup.awk > all.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog
