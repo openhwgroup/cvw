@@ -167,6 +167,7 @@ module wallypipelinedhart
   logic 		    PendingInterruptM;
   logic 		    DCacheMiss;
   logic 		    DCacheAccess;
+  logic 		    BreakpointFaultM, EcallFaultM;
 
   
   ifu ifu(.InstrInF(InstrRData),
