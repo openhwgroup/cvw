@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 1
+`define DEBUG_TRACE 0
 `define DontHaltOnCSRMisMatch 1
 
 module testbench();
@@ -129,6 +129,7 @@ module testbench();
   integer 	    NumCSRWIndex;
   integer 	    NumCSRPostWIndex;    
 //  logic 	    CurrentInterruptForce;
+  logic [`XLEN-1:0] InstrCountW;
   
   // -----------
   // Error Macro
@@ -139,6 +140,7 @@ module testbench();
 
   initial begin
     data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+    InstrCountW = '0;
   end
 
 /* -----\/----- EXCLUDED -----\/-----
@@ -350,6 +352,7 @@ module testbench();
   always @(negedge clk) begin
     // always check PC, instruction bits
     if (checkInstrW) begin
+      InstrCountW += 1;
       // check PCW
       fault = 0;
       if(PCW != ExpectedPCW) begin
@@ -363,7 +366,12 @@ module testbench();
 	fault = 1;
       end
 
-
+      // check the number of instructions
+      if(dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW != InstrCountW) begin
+	$display("%t, Number of instruction Retired = %d does not equal number of instructions in trace = %d", $time, dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW, InstrCountW);
+	if(!`DontHaltOnCSRMisMatch) fault = 1;
+      end
+      
       #2; // delay 2 ns.
 
       
@@ -427,7 +435,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);	      
 	    end 
 	    if (dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);	      
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);	      
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -436,7 +444,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if ((dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW) != (ExpectedCSRArrayValueW[NumCSRPostWIndex])) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -445,7 +453,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -454,7 +462,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MIP_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -463,7 +471,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MIE_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -472,7 +480,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -481,7 +489,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -490,7 +498,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MEPC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -500,7 +508,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -510,7 +518,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrs.SEPC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -519,7 +527,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -528,7 +536,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrs.STVEC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
@@ -537,7 +545,7 @@ module testbench();
 	      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	    end
 	    if (dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-	      $display("CSR: %s = %016x, does not equal expected value %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
+	      $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
 	      if(!`DontHaltOnCSRMisMatch) fault = 1;
 	    end
 	  end
