@@ -33,6 +33,8 @@ module testbench();
   parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3080000; // # of instructions at which to turn on waves in graphical sim
   parameter stopICount   = `BUSYBEAR*143898 + `BUILDROOT*0000000; // # instructions at which to halt sim completely (set to 0 to let it run as far as it can)  
 
+  string ProgramAddrMapFile, ProgramLabelMapFile;
+
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////// DUT /////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
@@ -569,11 +571,19 @@ module testbench();
       end
     end // if (checkInstrW)
   end // always @ (negedge clk)
+
+
+  // track the current function
+  FunctionName FunctionName(.reset(reset),
+			    .clk(clk),
+			    .ProgramAddrMapFile(ProgramAddrMapFile),
+			    .ProgramLabelMapFile(ProgramLabelMapFile));
   
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////////////// Testbench Core ///////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
+
   // --------------
   // Initialization
   // --------------
@@ -588,6 +598,8 @@ module testbench();
     $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
+    ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
+    ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
   end
   
   // -------
@@ -597,7 +609,6 @@ module testbench();
     begin
       clk <= 1; # 5; clk <= 0; # 5;
     end
-
   
 
   ///////////////////////////////////////////////////////////////////////////////

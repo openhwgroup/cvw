@@ -85,7 +85,7 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
 	end else if( array[mid] > pc) begin
 	  right = mid -1;
 	end else begin
-	  $display("Critical Error in FunctionName. PC, %x not found.", pc);
+	  //$display("Critical Error in FunctionName. PC, %x not found.", pc);
 	  return;
 	  //$stop();
 	end	  
