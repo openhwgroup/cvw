@@ -95,17 +95,14 @@ module dcache
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
   logic			       SetValidM, ClearValidM;
   logic			       SetDirtyM, ClearDirtyM;
-  logic [BLOCKLEN-1:0] 	       ReadDataBlockWayM [NUMWAYS-1:0];
   logic [BLOCKLEN-1:0] 	       ReadDataBlockWayMaskedM [NUMWAYS-1:0];
-  logic [TAGLEN-1:0]	       ReadTag [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0]	       Valid, Dirty, WayHit, SelectedWay;
+  logic [NUMWAYS-1:0]	       WayHit;
   logic			       CacheHit;
   logic [NUMWAYS-2:0] 	       ReplacementBits [NUMLINES-1:0];
   logic [NUMWAYS-2:0] 	       BlockReplacementBits;
   logic [NUMWAYS-2:0] 	       NewReplacement;
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
-  logic [`XLEN-1:0]	       VictimReadDataBlockSetsM [(WORDSPERLINE)-1:0];  
   logic [`XLEN-1:0]	       ReadDataWordM, ReadDataWordMuxM;
   logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
   logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
@@ -223,17 +220,15 @@ module dcache
 	     .ClearValid(ClearValidM),
 	     .SetDirty(SetDirtyM),
 	     .ClearDirty(ClearDirtyM),
-	     .ReadData(ReadDataBlockWayM[way]),
-	     .ReadTag(ReadTag[way]),
-	     .Valid(Valid[way]),
-	     .Dirty(Dirty[way]),
-	     .WayHit(WayHit[way]));
-      assign SelectedWay[way] = SelEvict ? VictimWay[way] : WayHit[way];
-      assign ReadDataBlockWayMaskedM[way] = SelectedWay[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
+	     .SelEvict,
+	     .VictimWay(VictimWay[way]),
+	     .ReadDataBlockWayMaskedM(ReadDataBlockWayMaskedM[way]),
+	     .WayHit(WayHit[way]),
+	     .VictimDirtyWay(VictimDirtyWay[way]),
+	     .VictimTagWay(VictimTagWay[way]));
+
 
       // the cache block candiate for eviction
-      assign VictimDirtyWay[way] = VictimWay[way] & Dirty[way] & Valid[way];
-      assign VictimTagWay[way] = VictimWay[way] ? ReadTag[way] : '0;
     end
   endgenerate
 

@@ -41,16 +41,20 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
    input logic 				       ClearValid,
    input logic 				       SetDirty,
    input logic 				       ClearDirty,
+   input logic 				       SelEvict,
+   input logic 				       VictimWay,
 
-   output logic [BLOCKLEN-1:0] 		       ReadData,
-   output logic [TAGLEN-1:0] 		       ReadTag,
-   output logic 			       Valid,
-   output logic 			       Dirty,
-   output logic 			       WayHit
+   output logic [BLOCKLEN-1:0] 		       ReadDataBlockWayMaskedM,
+   output logic 			       WayHit,
+   output logic 			       VictimDirtyWay,
+   output logic [TAGLEN-1:0] 		       VictimTagWay
    );
 
   logic [NUMLINES-1:0] 		      ValidBits, DirtyBits;
-  
+  logic [BLOCKLEN-1:0] 		      ReadDataBlockWayM;
+  logic [TAGLEN-1:0] 		      ReadTag;
+  logic 			      Valid;
+  logic 			      Dirty;
 
   genvar 			      words;
 
@@ -60,7 +64,7 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
 		.WIDTH(NUMLINES))
       CacheDataMem(.clk(clk),
 		   .Addr(Adr),
-		   .ReadData(ReadData[(words+1)*`XLEN-1:words*`XLEN]),
+		   .ReadData(ReadDataBlockWayM[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteEnable(WriteEnable & WriteWordEnable[words]));
     end
@@ -75,8 +79,11 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
 	      .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  
+  assign SelectedWay = SelEvict ? VictimWay : WayHit;  
+  assign ReadDataBlockWayMaskedM = SelectedWay ? ReadDataBlockWayM : '0;  // first part of AO mux.
 
+  assign VictimDirtyWay = VictimWay & Dirty & Valid;
+  assign VictimTagWay = VictimWay ? ReadTag : '0;
   
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
