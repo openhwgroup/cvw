@@ -34,6 +34,7 @@ module hazard(
 	      input logic  LSUStall, ICacheStallF,
               input logic  FPUStallD, FStallD,
 	      input logic  DivBusyE,FDivBusyE,
+	      input logic  EcallFaultM, BreakpointFaultM,
   // Stall & flush outputs
 	      output logic StallF, StallD, StallE, StallM, StallW,
 	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
@@ -79,5 +80,7 @@ module hazard(
   assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE;
   assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE;
   assign FlushM = FirstUnstalledM | TrapM | RetM;
-  assign FlushW = FirstUnstalledW | TrapM;
+  // on Trap the memory stage should be flushed going into the W stage,
+  // except if the instruction causing the Trap is an ecall or ebreak.
+  assign FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
 endmodule

@@ -9,9 +9,10 @@ import sys, fileinput, re
 InstrStartDelim = '=>'
 InstrEndDelim = '-----'
 
-InputFile = 'noparse.txt'
+#InputFile = 'noparse.txt'
+#InputFile = sys.stdin
 #InputFile = 'temp.txt'
-OutputFile = 'parsedAll.txt'
+#OutputFile = 'parsedAll.txt'
 
 HUMAN_READABLE = False
 
@@ -134,67 +135,67 @@ RegNumber = {'zero': 0, 'ra': 1, 'sp': 2, 'gp': 3, 'tp': 4, 't0': 5, 't1': 6, 't
 # initial state
 CurrentInstr = ['0', '0', None, 'other', {'zero': 0, 'ra': 0, 'sp': 0, 'gp': 0, 'tp': 0, 't0': 0, 't1': 0, 't2': 0, 's0': 0, 's1': 0, 'a0': 0, 'a1': 0, 'a2': 0, 'a3': 0, 'a4': 0, 'a5': 0, 'a6': 0, 'a7': 0, 's2': 0, 's3': 0, 's4': 0, 's5': 0, 's6': 0, 's7': 0, 's8': 0, 's9': 0, 's10': 0, 's11': 0, 't3': 0, 't4': 0, 't5': 0, 't6': 0, 'mhartid': 0, 'mstatus': 0, 'mip': 0, 'mie': 0, 'mideleg': 0, 'medeleg': 0, 'mtvec': 0, 'stvec': 0, 'mepc': 0, 'sepc': 0, 'mcause': 0, 'scause': 0, 'mtval': 0, 'stval': 0}, {}, None, None, None]
 
-with open (InputFile, 'r') as InputFileFP:
-    #lines = InputFileFP.readlines()
-    lineNum = 0
-    StartLine = 0
-    EndLine = 0
-    #instructions = []
-    MemAdr = 0
-    lines = []
-    for line in InputFileFP:
-        lines.insert(lineNum, line)
-        if InstrStartDelim in line:
-            lineNum = 0
-            StartLine = lineNum
-        elif InstrEndDelim in line:
-            EndLine = lineNum
-            (InstrBits, text) = lines[StartLine].split(':')
-            InstrBits = int(InstrBits.strip('=> '), 16)
-            text = text.strip()
-            PC = int(lines[StartLine+1].split(':')[0][2:], 16)
-            Regs = toDict(lines[StartLine+2:EndLine])
-            (Class, Addr, WriteReg, ReadReg) = whichClass(text, Regs)
-            #print("CWR", Class, WriteReg, ReadReg)
-            PreviousInstr = CurrentInstr
+#with open (InputFile, 'r') as InputFileFP:
+#lines = InputFileFP.readlines()
+lineNum = 0
+StartLine = 0
+EndLine = 0
+#instructions = []
+MemAdr = 0
+lines = []
+for line in fileinput.input('-'):
+    lines.insert(lineNum, line)
+    if InstrStartDelim in line:
+        lineNum = 0
+        StartLine = lineNum
+    elif InstrEndDelim in line:
+        EndLine = lineNum
+        (InstrBits, text) = lines[StartLine].split(':')
+        InstrBits = int(InstrBits.strip('=> '), 16)
+        text = text.strip()
+        PC = int(lines[StartLine+1].split(':')[0][2:], 16)
+        Regs = toDict(lines[StartLine+2:EndLine])
+        (Class, Addr, WriteReg, ReadReg) = whichClass(text, Regs)
+        #print("CWR", Class, WriteReg, ReadReg)
+        PreviousInstr = CurrentInstr
 
-            Changed = whatChanged(PreviousInstr[4], Regs)
+        Changed = whatChanged(PreviousInstr[4], Regs)
 
-            if (ReadReg !=None): ReadData = ReadReg
-            else: ReadData = None
+        if (ReadReg !=None): ReadData = ReadReg
+        else: ReadData = None
 
-            if (WriteReg !=None): WriteData = WriteReg
-            else: WriteData = None
+        if (WriteReg !=None): WriteData = WriteReg
+        else: WriteData = None
 
-            CurrentInstr = [PC, InstrBits, text, Class, Regs, Changed, Addr, WriteData, ReadData]
+        CurrentInstr = [PC, InstrBits, text, Class, Regs, Changed, Addr, WriteData, ReadData]
 
-            #print(CurrentInstr[0:4], PreviousInstr[5], CurrentInstr[6:7], PreviousInstr[8])
+        #print(CurrentInstr[0:4], PreviousInstr[5], CurrentInstr[6:7], PreviousInstr[8])
 
-            # pc, instrbits, text and class come from the last line.
-            MoveInstrToRegWriteLst = PreviousInstr[0:4]
-            # updated registers come from the current line.
-            MoveInstrToRegWriteLst.append(CurrentInstr[5])   # destination regs
-            # memory address if present comes from the last line.
-            MoveInstrToRegWriteLst.append(PreviousInstr[6])  # MemAdrM
-            # write data from the previous line
-            #MoveInstrToRegWriteLst.append(PreviousInstr[7])   # WriteDataM
+        # pc, instrbits, text and class come from the last line.
+        MoveInstrToRegWriteLst = PreviousInstr[0:4]
+        # updated registers come from the current line.
+        MoveInstrToRegWriteLst.append(CurrentInstr[5])   # destination regs
+        # memory address if present comes from the last line.
+        MoveInstrToRegWriteLst.append(PreviousInstr[6])  # MemAdrM
+        # write data from the previous line
+        #MoveInstrToRegWriteLst.append(PreviousInstr[7])   # WriteDataM
 
-            if (PreviousInstr[7] != None):
-                MoveInstrToRegWriteLst.append(Regs[PreviousInstr[7]])   # WriteDataM
-            else:
-                MoveInstrToRegWriteLst.append(None)
+        if (PreviousInstr[7] != None):
+            MoveInstrToRegWriteLst.append(Regs[PreviousInstr[7]])   # WriteDataM
+        else:
+            MoveInstrToRegWriteLst.append(None)
 
-            # read data from the current line
-            #MoveInstrToRegWriteLst.append(PreviousInstr[8])   # ReadDataM
-            if (PreviousInstr[8] != None):
-                MoveInstrToRegWriteLst.append(Regs[PreviousInstr[8]])   # ReadDataM
-            else:
-                MoveInstrToRegWriteLst.append(None)
+        # read data from the current line
+        #MoveInstrToRegWriteLst.append(PreviousInstr[8])   # ReadDataM
+        if (PreviousInstr[8] != None):
+            MoveInstrToRegWriteLst.append(Regs[PreviousInstr[8]])   # ReadDataM
+        else:
+            MoveInstrToRegWriteLst.append(None)
 
-            lines.clear()
-            #instructions.append(MoveInstrToRegWriteLst)
-            PrintInstr(MoveInstrToRegWriteLst, sys.stdout)
-        lineNum += 1
+        lines.clear()
+        #instructions.append(MoveInstrToRegWriteLst)
+        PrintInstr(MoveInstrToRegWriteLst, sys.stdout)
+    lineNum += 1
 
 
 #for instruction in instructions[1::]:

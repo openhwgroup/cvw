@@ -70,23 +70,24 @@ module csrc #(parameter
   //  ... more counters
   //HPMCOUNTER31H = 12'hC9F
 ) (
-    input  logic             clk, reset,
-    input  logic             StallD, StallE, StallM, StallW,
-    input  logic             InstrValidM, LoadStallD, CSRMWriteM,
-    input  logic             BPPredDirWrongM,
-    input  logic             BTBPredPCWrongM,
-    input  logic             RASPredPCWrongM,
-    input  logic             BPPredClassNonCFIWrongM,
-    input  logic [4:0]       InstrClassM,
-    input  logic             DCacheMiss,
-    input  logic             DCacheAccess,
-    input  logic [11:0]      CSRAdrM,
-    input  logic [1:0]       PrivilegeModeW,
-    input  logic [`XLEN-1:0] CSRWriteValM,
-    input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-    input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
+    input logic 	     clk, reset,
+    input logic 	     StallD, StallE, StallM, StallW,
+    input  logic             FlushD, FlushE, FlushM, FlushW,   
+    input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
+    input logic 	     BPPredDirWrongM,
+    input logic 	     BTBPredPCWrongM,
+    input logic 	     RASPredPCWrongM,
+    input logic 	     BPPredClassNonCFIWrongM,
+    input logic [4:0] 	     InstrClassM,
+    input logic 	     DCacheMiss,
+    input logic 	     DCacheAccess,
+    input logic [11:0] 	     CSRAdrM,
+    input logic [1:0] 	     PrivilegeModeW,
+    input logic [`XLEN-1:0]  CSRWriteValM,
+    input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input logic [63:0] 	     MTIME_CLINT, MTIMECMP_CLINT,
     output logic [`XLEN-1:0] CSRCReadValM,
-    output logic             IllegalCSRCAccessM
+    output logic 	     IllegalCSRCAccessM
   );
 
   generate
@@ -103,6 +104,10 @@ module csrc #(parameter
       logic        WriteHPMCOUNTER3M, WriteHPMCOUNTER4M;
       logic [4:0]  CounterNumM;
       logic [`COUNTERS-1:3][`XLEN-1:0] HPMCOUNTER_REGW, HPMCOUNTERH_REGW;
+      logic 			       InstrValidNotFlushedM;
+
+      assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
+      
       //logic [`COUNTERS-1:3][`XLEN-1:0] HPMCOUNTERH_REGW;
 
       // Write enables
@@ -116,7 +121,7 @@ module csrc #(parameter
       // Counter adders with inhibits for power savings
       assign CYCLEPlusM = CYCLE_REGW + {63'b0, ~MCOUNTINHIBIT_REGW[0]};
       //assign TIMEPlusM = TIME_REGW + 1; // can't be inhibited
-      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidM & ~StallW & ~MCOUNTINHIBIT_REGW[2]};
+      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidNotFlushedM & ~MCOUNTINHIBIT_REGW[2]};
       //assign HPMCOUNTER3PlusM = HPMCOUNTER3_REGW + {63'b0, LoadStallD & ~MCOUNTINHIBIT_REGW[3]}; // count load stalls
       //assign HPMCOUNTER4PlusM = HPMCOUNTER4_REGW + {63'b0, 1'b0 & ~MCOUNTINHIBIT_REGW[4]}; // change to count signals
       assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[`XLEN-1:0];
@@ -139,17 +144,23 @@ module csrc #(parameter
       if(`QEMU) begin
         assign CounterEvent[`COUNTERS-1:2] = 0;
       end else begin
-        assign CounterEvent[2] = InstrValidM & ~StallW;
-        assign CounterEvent[3] = LoadStallD & ~StallD;
-        assign CounterEvent[4] = BPPredDirWrongM & ~StallM;
-        assign CounterEvent[5] = InstrClassM[0] & ~StallM;
-        assign CounterEvent[6] = BTBPredPCWrongM & ~StallM;
-        assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & ~StallM;
-        assign CounterEvent[8] = RASPredPCWrongM & ~StallM;
-        assign CounterEvent[9] = InstrClassM[3] & ~StallM;
-        assign CounterEvent[10] = BPPredClassNonCFIWrongM & ~StallM;
-        assign CounterEvent[11] = DCacheAccess & ~StallM;
-        assign CounterEvent[12] = DCacheMiss & ~StallM;      
+
+	logic LoadStallE, LoadStallM;
+	
+	flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(FlushE), .en(~StallE), .d(LoadStallD), .q(LoadStallE));
+	flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
+	
+        assign CounterEvent[2] = InstrValidNotFlushedM;
+        assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;
+        assign CounterEvent[4] = BPPredDirWrongM & InstrValidNotFlushedM;
+        assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
+        assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;
+        assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & InstrValidNotFlushedM;
+        assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;
+        assign CounterEvent[9] = InstrClassM[3] & InstrValidNotFlushedM;
+        assign CounterEvent[10] = BPPredClassNonCFIWrongM & InstrValidNotFlushedM;
+        assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;
+        assign CounterEvent[12] = DCacheMiss & InstrValidNotFlushedM;      
         assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
       end
       
