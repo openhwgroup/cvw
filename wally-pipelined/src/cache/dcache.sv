@@ -202,35 +202,27 @@ module dcache
   assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
   
 
-  genvar		       way;
-  generate
-    for(way = 0; way < NUMWAYS; way = way + 1) begin :CacheWays
-      DCacheMem #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
-		  .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
-      MemWay(.clk(clk),
-	     .reset(reset),
-	     .Adr(SRAMAdr),
-	     .MemPAdrM(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-	     .WriteEnable(SRAMWayWriteEnable[way]),
-	     .WriteWordEnable(SRAMWordEnable),
-	     .TagWriteEnable(SRAMBlockWayWriteEnableM[way]), 
-	     .WriteData(SRAMWriteData),
-	     .WriteTag(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-	     .SetValid(SetValidM),
-	     .ClearValid(ClearValidM),
-	     .SetDirty(SetDirtyM),
-	     .ClearDirty(ClearDirtyM),
-	     .SelEvict,
-	     .VictimWay(VictimWay[way]),
-	     .ReadDataBlockWayMaskedM(ReadDataBlockWayMaskedM[way]),
-	     .WayHit(WayHit[way]),
-	     .VictimDirtyWay(VictimDirtyWay[way]),
-	     .VictimTagWay(VictimTagWay[way]));
-
-
-      // the cache block candiate for eviction
-    end
-  endgenerate
+  DCacheMem #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
+	      .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
+  MemWay[NUMWAYS-1:0](.clk(clk),
+	 .reset(reset),
+	 .Adr(SRAMAdr),
+	 .MemPAdrM(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+	 .WriteEnable(SRAMWayWriteEnable),
+	 .WriteWordEnable(SRAMWordEnable),
+	 .TagWriteEnable(SRAMBlockWayWriteEnableM), 
+	 .WriteData(SRAMWriteData),
+	 .WriteTag(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+	 .SetValid(SetValidM),
+	 .ClearValid(ClearValidM),
+	 .SetDirty(SetDirtyM),
+	 .ClearDirty(ClearDirtyM),
+	 .SelEvict,
+	 .VictimWay(VictimWay),
+	 .ReadDataBlockWayMaskedM(ReadDataBlockWayMaskedM),
+	 .WayHit(WayHit),
+	 .VictimDirtyWay(VictimDirtyWay),
+	 .VictimTagWay(VictimTagWay));
 
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
