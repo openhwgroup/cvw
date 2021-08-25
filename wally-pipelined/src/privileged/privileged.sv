@@ -75,7 +75,9 @@ module privileged (
   output logic  [1:0]      STATUS_MPP,
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
-  output logic [2:0]       FRM_REGW
+  output logic [2:0]       FRM_REGW,
+  output logic             BreakpointFaultM, EcallFaultM
+
 );
 
   logic [1:0] NextPrivilegeModeM;
@@ -94,7 +96,6 @@ module privileged (
   logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic IllegalInstrFaultM, TrappedSRETM;
 
-  logic BreakpointFaultM, EcallFaultM;
   logic MTrapM, STrapM, UTrapM;
   logic InterruptM; 
 
