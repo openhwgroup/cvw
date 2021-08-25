@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
+module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 		   parameter OFFSETLEN, parameter INDEXLEN) 
   (input logic 		       clk,
    input logic 				       reset,
