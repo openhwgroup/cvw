@@ -205,13 +205,12 @@ module dcache
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk,
 	 .reset,
-	 .Adr(SRAMAdr),
+	 .RAdr(SRAMAdr),
 	 .MemPAdrM(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	 .WriteEnable(SRAMWayWriteEnable),
 	 .WriteWordEnable(SRAMWordEnable),
 	 .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 	 .WriteData(SRAMWriteData),
-	 .WriteTag(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	 .SetValid(SetValidM),
 	 .ClearValid(ClearValidM),
 	 .SetDirty(SetDirtyM),
@@ -264,22 +263,17 @@ module dcache
   // ReadDataBlockWayMaskedM is a 2d array of cache block len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.
-  genvar index;
-  always_comb begin
-    ReadDataBlockM = '0;
-    VictimReadDataBlockM = '0;
-    VictimTag = '0;
-    for(int index = 0; index < NUMWAYS; index++) begin
-      ReadDataBlockM = ReadDataBlockM | ReadDataBlockWayMaskedM[index];
-      VictimTag = VictimTag | VictimTagWay[index];      
-    end
-  end
+  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataBlockWayMaskedM), .y(ReadDataBlockM));
+  or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
+
   assign VictimDirty = | VictimDirtyWay;
 
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
   // *** consider using a limited range shift to do this final muxing.
+  genvar index;
+  
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
       assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
