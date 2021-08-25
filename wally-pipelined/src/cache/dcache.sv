@@ -202,10 +202,9 @@ module dcache
   assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
   
 
-  DCacheMem #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
-	      .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
-  MemWay[NUMWAYS-1:0](.clk(clk),
-	 .reset(reset),
+  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
+  MemWay[NUMWAYS-1:0](.clk,
+	 .reset,
 	 .Adr(SRAMAdr),
 	 .MemPAdrM(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	 .WriteEnable(SRAMWayWriteEnable),
@@ -218,11 +217,11 @@ module dcache
 	 .SetDirty(SetDirtyM),
 	 .ClearDirty(ClearDirtyM),
 	 .SelEvict,
-	 .VictimWay(VictimWay),
-	 .ReadDataBlockWayMaskedM(ReadDataBlockWayMaskedM),
-	 .WayHit(WayHit),
-	 .VictimDirtyWay(VictimDirtyWay),
-	 .VictimTagWay(VictimTagWay));
+	 .VictimWay,
+	 .ReadDataBlockWayMaskedM,
+	 .WayHit,
+	 .VictimDirtyWay,
+	 .VictimTagWay);
 
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
