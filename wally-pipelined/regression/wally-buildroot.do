@@ -34,10 +34,11 @@ vopt +acc work.testbench -o workopt
 
 vsim workopt -suppress 8852,12070
 
+run 150 ms
 add log -r /*
 do linux-wave.do
 
-run 300 ms
+run 150 ms
 #run 180 us
 
 #-- Run the Simulation 
