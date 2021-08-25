@@ -197,8 +197,8 @@ module dcache
 	    .y(SRAMAdr));
 
 
-  oneHotDecoder #(LOGWPL)
-  oneHotDecoder(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
+  onehotdecoder #(LOGWPL)
+  adrdec(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
 		.decoded(MemPAdrDecodedW));
   
 
