@@ -26,7 +26,7 @@
 
 `include "wally-config.vh"
 
-module mmu #(parameter TLB_ENTRIES = 8, // nuber of TLB Entries
+module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
              parameter IMMU = 0) (
 
   input logic              clk, reset,
