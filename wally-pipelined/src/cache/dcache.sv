@@ -208,10 +208,12 @@ module dcache
   genvar		       way;
   generate
     for(way = 0; way < NUMWAYS; way = way + 1) begin :CacheWays
-      DCacheMem #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN))
+      DCacheMem #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
+		  .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
       MemWay(.clk(clk),
 	     .reset(reset),
 	     .Adr(SRAMAdr),
+	     .MemPAdrM(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	     .WriteEnable(SRAMWayWriteEnable[way]),
 	     .WriteWordEnable(SRAMWordEnable),
 	     .TagWriteEnable(SRAMBlockWayWriteEnableM[way]), 
@@ -224,8 +226,8 @@ module dcache
 	     .ReadData(ReadDataBlockWayM[way]),
 	     .ReadTag(ReadTag[way]),
 	     .Valid(Valid[way]),
-	     .Dirty(Dirty[way]));
-      assign WayHit[way] = Valid[way] & (ReadTag[way] == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+	     .Dirty(Dirty[way]),
+	     .WayHit(WayHit[way]));
       assign SelectedWay[way] = SelEvict ? VictimWay[way] : WayHit[way];
       assign ReadDataBlockWayMaskedM[way] = SelectedWay[way] ? ReadDataBlockWayM[way] : '0;  // first part of AO mux.
 

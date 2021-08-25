@@ -25,25 +25,28 @@
 
 `include "wally-config.vh"
 
-module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26) 
+module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
+		   parameter OFFSETLEN, parameter INDEXLEN) 
   (input logic 		       clk,
-   input logic 			      reset,
+   input logic 				       reset,
 
-   input logic [$clog2(NUMLINES)-1:0] Adr,
-   input logic 			      WriteEnable,
-   input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
-   input logic TagWriteEnable,
-   input logic [BLOCKLEN-1:0] 	      WriteData,
-   input logic [TAGLEN-1:0] 	      WriteTag,
-   input logic 			      SetValid,
-   input logic 			      ClearValid,
-   input logic 			      SetDirty,
-   input logic 			      ClearDirty,
+   input logic [$clog2(NUMLINES)-1:0] 	       Adr,
+   input logic [`PA_BITS-1:OFFSETLEN+INDEXLEN] MemPAdrM,
+   input logic 				       WriteEnable,
+   input logic [BLOCKLEN/`XLEN-1:0] 	       WriteWordEnable,
+   input logic 				       TagWriteEnable,
+   input logic [BLOCKLEN-1:0] 		       WriteData,
+   input logic [TAGLEN-1:0] 		       WriteTag,
+   input logic 				       SetValid,
+   input logic 				       ClearValid,
+   input logic 				       SetDirty,
+   input logic 				       ClearDirty,
 
-   output logic [BLOCKLEN-1:0] 	      ReadData,
-   output logic [TAGLEN-1:0] 	      ReadTag,
-   output logic 		      Valid,
-   output logic 		      Dirty
+   output logic [BLOCKLEN-1:0] 		       ReadData,
+   output logic [TAGLEN-1:0] 		       ReadTag,
+   output logic 			       Valid,
+   output logic 			       Dirty,
+   output logic 			       WayHit
    );
 
   logic [NUMLINES-1:0] 		      ValidBits, DirtyBits;
@@ -70,6 +73,9 @@ module DCacheMem #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26
 	      .ReadData(ReadTag),
 	      .WriteData(WriteTag),
 	      .WriteEnable(TagWriteEnable));
+
+  assign WayHit = Valid & (ReadTag == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  
 
   
   always_ff @(posedge clk, posedge reset) begin
