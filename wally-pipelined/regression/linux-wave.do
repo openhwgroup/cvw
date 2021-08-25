@@ -6,6 +6,7 @@ add wave -noupdate /testbench/dut/hart/SATP_REGW
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
+add wave -noupdate -expand -group {Execution Stage} -color {Cornflower Blue} /testbench/FunctionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/priv/trap/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
@@ -469,13 +470,9 @@ add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedChang
 add wave -noupdate -group {pc selection} /testbench/dut/hart/priv/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/hart/priv/trap/PrivilegedVectoredTrapVector
 add wave -noupdate -group {pc selection} /testbench/dut/hart/priv/trap/PrivilegedTrapVector
-add wave -noupdate /testbench/FunctionName/FunctionAddr
-add wave -noupdate /testbench/FunctionName/FunctionName
-add wave -noupdate /testbench/FunctionName/ProgramAddrMapFile
-add wave -noupdate /testbench/FunctionName/ProgramLabelMapFile
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {161370956 ns} 0} {{Cursor 21} {161371350 ns} 0} {{Cursor 22} {39985218 ns} 0} {{Cursor 23} {8750281 ns} 0}
-quietly wave cursor active 4
+WaveRestoreCursors {{Cursor 6} {161370956 ns} 0} {{Cursor 21} {161371350 ns} 0} {{Cursor 22} {72228581 ns} 0} {{Cursor 23} {11297671 ns} 0}
+quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 354
 configure wave -justifyvalue left
@@ -490,4 +487,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {9232357 ns}
+WaveRestoreZoom {72227242 ns} {72229920 ns}
