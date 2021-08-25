@@ -67,8 +67,8 @@ module cacheLRU
       assign EncVicWay[1] = LRUIn[2];
       assign EncVicWay[0] = LRUIn[2] ? LRUIn[0] : LRUIn[1];
 
-      oneHotDecoder #(2) 
-      oneHotDecoder(.bin(EncVicWay),
+      onehotdecoder #(2) 
+      waydec(.bin(EncVicWay),
 		    .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3]}));
 
     end else if (NUMWAYS == 8) begin : EightWay
@@ -100,8 +100,8 @@ module cacheLRU
 			    LRUIn[2] ? LRUIn[1] : LRUIn[0];
       
 
-      oneHotDecoder #(3) 
-      oneHotDecoder(.bin(EncVicWay),
+      onehotdecoder #(3) 
+      waydec(.bin(EncVicWay),
 		    .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3],
 			      VictimWay[4], VictimWay[5], VictimWay[6], VictimWay[7]}));
     end
