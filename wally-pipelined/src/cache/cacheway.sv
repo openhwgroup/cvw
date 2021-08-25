@@ -30,13 +30,12 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   (input logic 		       clk,
    input logic 				       reset,
 
-   input logic [$clog2(NUMLINES)-1:0] 	       Adr,
+   input logic [$clog2(NUMLINES)-1:0] 	       RAdr,
    input logic [`PA_BITS-1:OFFSETLEN+INDEXLEN] MemPAdrM,
    input logic 				       WriteEnable,
    input logic [BLOCKLEN/`XLEN-1:0] 	       WriteWordEnable,
    input logic 				       TagWriteEnable,
    input logic [BLOCKLEN-1:0] 		       WriteData,
-   input logic [TAGLEN-1:0] 		       WriteTag,
    input logic 				       SetValid,
    input logic 				       ClearValid,
    input logic 				       SetDirty,
@@ -63,7 +62,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
       sram1rw #(.DEPTH(`XLEN), 
 		.WIDTH(NUMLINES))
       CacheDataMem(.clk(clk),
-		   .Addr(Adr),
+		   .Addr(RAdr),
 		   .ReadData(ReadDataBlockWayM[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteEnable(WriteEnable & WriteWordEnable[words]));
@@ -73,9 +72,9 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   sram1rw #(.DEPTH(TAGLEN),
 	    .WIDTH(NUMLINES))
   CacheTagMem(.clk(clk),
-	      .Addr(Adr),
+	      .Addr(RAdr),
 	      .ReadData(ReadTag),
-	      .WriteData(WriteTag),
+	      .WriteData(MemPAdrM),
 	      .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
@@ -88,17 +87,17 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & WriteEnable) ValidBits[Adr] <= 1'b1;
-    else if (ClearValid & WriteEnable) ValidBits[Adr] <= 1'b0;
-    Valid <= ValidBits[Adr];
+    else if (SetValid & WriteEnable) ValidBits[RAdr] <= 1'b1;
+    else if (ClearValid & WriteEnable) ValidBits[RAdr] <= 1'b0;
+    Valid <= ValidBits[RAdr];
   end
 
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	DirtyBits <= {NUMLINES{1'b0}};
-    else if (SetDirty & WriteEnable) DirtyBits[Adr] <= 1'b1;
-    else if (ClearDirty & WriteEnable) DirtyBits[Adr] <= 1'b0;
-    Dirty <= DirtyBits[Adr];
+    else if (SetDirty & WriteEnable) DirtyBits[RAdr] <= 1'b1;
+    else if (ClearDirty & WriteEnable) DirtyBits[RAdr] <= 1'b0;
+    Dirty <= DirtyBits[RAdr];
   end
   
 
