@@ -103,19 +103,18 @@ module icache
   logic 		       SavePC;
   
 
-  
-/* -----\/----- EXCLUDED -----\/-----
-  ICacheMem #(.BLOCKLEN(BLOCKLEN), .NUMLINES(NUMLINES)) 
-  cachemem(.clk,
-	   .reset,
-           .flush(FlushMem),
-	   .PCTagF,
-	   .PCNextIndexF,
-           .WriteEnable(ICacheMemWriteEnable),
-           .WriteLine(ICacheMemWriteData),
-	   .ReadLineF,
-           .HitF(ICacheMemReadValid));
- -----/\----- EXCLUDED -----/\----- */
+  // on spill we want to get the first 2 bytes of the next cache block.
+  // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
+  // simply add 2 to land on the next cache block.
+  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
+
+  // now we have to select between these three PCs
+  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
+  // for the data cache i used a cpu busy state which is triggered by StallW.  In the case of the icache I
+  // modified the select on this address mux. Both are not ideal; however the cpu_busy state is required for the
+  // dcache as a write would repeatedly update the sram or worse for an uncached write multiple times.
+  // I like reducing some complexity of the fsm; however I weight commonality between the i/d cache more.
+  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
 	     .DIRTY_BITS(0))
@@ -226,14 +225,6 @@ module icache
     end
   endgenerate
 
-  // on spill we want to get the first 2 bytes of the next cache block.
-  // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
-  // simply add 2 to land on the next cache block.
-  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
-
-  // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
-  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
@@ -249,7 +240,7 @@ module icache
   assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
   
 
-  ICacheCntrl #(.BLOCKLEN(BLOCKLEN)) 
+  icachefsm #(.BLOCKLEN(BLOCKLEN)) 
   controller(.clk,
 	     .reset,
 	     .ICacheReadEn,
