@@ -152,8 +152,6 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    DCfromAHBReadData;
   logic [`XLEN-1:0] 	    DCtoAHBWriteData;
   
-  logic 		    CommitM;
-  
   logic 		    BPPredWrongE;
   logic 		    BPPredDirWrongM;
   logic 		    BTBPredPCWrongM;
@@ -200,7 +198,6 @@ module wallypipelinedhart
 	  .ReadDataM(ReadDataM),
 
 	  // connected to ahb (all stay the same)
-	  .CommitM(CommitM),
 	  .DCtoAHBPAdrM(DCtoAHBPAdrM),
 	  .DCtoAHBReadM(DCtoAHBReadM),
 	  .DCtoAHBWriteM(DCtoAHBWriteM),

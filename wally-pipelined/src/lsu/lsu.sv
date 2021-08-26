@@ -64,7 +64,6 @@ module lsu
    output logic 	       StoreMisalignedFaultM, StoreAccessFaultM,
 
    // connect to ahb
-   input logic 		       CommitM, // should this be generated in the abh interface?
    output logic [`PA_BITS-1:0] DCtoAHBPAdrM,
    output logic 	       DCtoAHBReadM, 
    output logic 	       DCtoAHBWriteM,
