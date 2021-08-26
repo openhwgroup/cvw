@@ -24,13 +24,13 @@
 
 `include "wally-config.vh"
 
-module cacheLRU
+module cachereplacementpolicy
   #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
   (input logic clk, reset,
-   input logic [NUMWAYS-1:0] 			WayIn,
+   input logic [NUMWAYS-1:0] 			WayHit,
    output logic [NUMWAYS-1:0] 			VictimWay,
    input logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] MemPAdrM,
-   input logic [INDEXLEN-1:0] 			SRAMAdr,
+   input logic [INDEXLEN-1:0] 			RAdr,
    input logic 					LRUWriteEn
    );
 
@@ -48,7 +48,7 @@ module cacheLRU
       for(int index = 0; index < NUMLINES; index++)
 	ReplacementBits[index] <= '0;
     end else begin
-      BlockReplacementBits <= ReplacementBits[SRAMAdr];
+      BlockReplacementBits <= ReplacementBits[RAdr];
       if (LRUWriteEn) begin
 	ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
       end
@@ -62,7 +62,7 @@ module cacheLRU
       
       assign LRUEn[0] = 1'b0;
 
-      assign NewReplacement[0] = WayIn[1];
+      assign NewReplacement[0] = WayHit[1];
 
       assign VictimWay[1] = ~BlockReplacementBits[0];
       assign VictimWay[0] = BlockReplacementBits[0];
@@ -71,13 +71,13 @@ module cacheLRU
 
       // selects
       assign LRUEn[2] = 1'b1;
-      assign LRUEn[1] = WayIn[3];      
-      assign LRUEn[0] = WayIn[3] | WayIn[2];
+      assign LRUEn[1] = WayHit[3];      
+      assign LRUEn[0] = WayHit[3] | WayHit[2];
 
       // mask
-      assign LRUMask[0] = WayIn[1];
-      assign LRUMask[1] = WayIn[3];      
-      assign LRUMask[2] = WayIn[3] | WayIn[2];
+      assign LRUMask[0] = WayHit[1];
+      assign LRUMask[1] = WayHit[3];      
+      assign LRUMask[2] = WayHit[3] | WayHit[2];
 
       for(index = 0; index < NUMWAYS-1; index++)
 	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
@@ -93,21 +93,21 @@ module cacheLRU
 
       // selects
       assign LRUEn[6] = 1'b1;
-      assign LRUEn[5] = WayIn[7] | WayIn[6] | WayIn[5] | WayIn[4];
-      assign LRUEn[4] = WayIn[7] | WayIn[6];
-      assign LRUEn[3] = WayIn[5] | WayIn[4];
-      assign LRUEn[2] = WayIn[3] | WayIn[2] | WayIn[1] | WayIn[0];
-      assign LRUEn[1] = WayIn[3] | WayIn[2];
-      assign LRUEn[0] = WayIn[1] | WayIn[0];
+      assign LRUEn[5] = WayHit[7] | WayHit[6] | WayHit[5] | WayHit[4];
+      assign LRUEn[4] = WayHit[7] | WayHit[6];
+      assign LRUEn[3] = WayHit[5] | WayHit[4];
+      assign LRUEn[2] = WayHit[3] | WayHit[2] | WayHit[1] | WayHit[0];
+      assign LRUEn[1] = WayHit[3] | WayHit[2];
+      assign LRUEn[0] = WayHit[1] | WayHit[0];
 
       // mask
-      assign LRUMask[6] = WayIn[7] | WayIn[6] | WayIn[5] | WayIn[4];
-      assign LRUMask[5] = WayIn[7] | WayIn[6];
-      assign LRUMask[4] = WayIn[7];
-      assign LRUMask[3] = WayIn[5];
-      assign LRUMask[2] = WayIn[3] | WayIn[2];
-      assign LRUMask[1] = WayIn[2];
-      assign LRUMask[0] = WayIn[0];
+      assign LRUMask[6] = WayHit[7] | WayHit[6] | WayHit[5] | WayHit[4];
+      assign LRUMask[5] = WayHit[7] | WayHit[6];
+      assign LRUMask[4] = WayHit[7];
+      assign LRUMask[3] = WayHit[5];
+      assign LRUMask[2] = WayHit[3] | WayHit[2];
+      assign LRUMask[1] = WayHit[2];
+      assign LRUMask[0] = WayHit[0];
 
       for(index = 0; index < NUMWAYS-1; index++)
 	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];

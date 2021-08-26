@@ -90,7 +90,7 @@ module dcache
 
 
   logic [1:0] 		       SelAdrM;
-  logic [INDEXLEN-1:0]	       SRAMAdr;
+  logic [INDEXLEN-1:0]	       RAdr;
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
   logic			       SetValid, ClearValid;
@@ -135,84 +135,65 @@ module dcache
 
   logic LRUWriteEn;
   
-  // data path
+  // Read Path CPU (IEU) side
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .s(SelAdrM),
-	    .y(SRAMAdr));
+	    .y(RAdr));
 
-
-  onehotdecoder #(LOGWPL)
-  adrdec(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
-		.decoded(MemPAdrDecodedW));
-  
-
-  assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
-  
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk,
-	 .reset,
-	 .RAdr(SRAMAdr),
-	 .MemPAdrM(MemPAdrM[`PA_BITS-1:0]),
-	 .WriteEnable(SRAMWayWriteEnable),
-	 .WriteWordEnable(SRAMWordEnable),
-	 .TagWriteEnable(SRAMBlockWayWriteEnableM), 
-	 .WriteData(SRAMWriteData),
-	 .SetValid,
-	 .ClearValid,
-	 .SetDirty,
-	 .ClearDirty,
-	 .SelEvict,
-	 .VictimWay,
-	 .ReadDataBlockWayMaskedM,
-	 .WayHit,
-	 .VictimDirtyWay,
-	 .VictimTagWay);
+		      .reset,
+		      .RAdr,
+		      .MemPAdrM(MemPAdrM[`PA_BITS-1:0]),
+		      .WriteEnable(SRAMWayWriteEnable),
+		      .WriteWordEnable(SRAMWordEnable),
+		      .TagWriteEnable(SRAMBlockWayWriteEnableM), 
+		      .WriteData(SRAMWriteData),
+		      .SetValid,
+		      .ClearValid,
+		      .SetDirty,
+		      .ClearDirty,
+		      .SelEvict,
+		      .VictimWay,
+		      .ReadDataBlockWayMaskedM,
+		      .WayHit,
+		      .VictimDirtyWay,
+		      .VictimTagWay);
 
   generate
     if(NUMWAYS > 1) begin
-      cacheLRU #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
-      cacheLRU(.clk, .reset,
-	       .WayIn(WayHit),
-	       .VictimWay,
-	       .MemPAdrM(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	       .SRAMAdr,
-	       .LRUWriteEn);
+      cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+      cachereplacementpolicy(.clk, .reset,
+			     .WayHit,
+			     .VictimWay,
+			     .MemPAdrM(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			     .RAdr,
+			     .LRUWriteEn);
     end else begin
-      assign VictimWay = 1'b1;
+      assign VictimWay = 1'b1; // one hot.
     end
   endgenerate
 
-  assign SRAMBlockWayWriteEnableM = SRAMBlockWriteEnableM ? VictimWay : '0;
-  
-  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableM ? WayHit : '0),
-				 .d1(SRAMBlockWayWriteEnableM),
-				 .s(SRAMBlockWriteEnableM),
-				 .y(SRAMWayWriteEnable));
+  assign CacheHit = | WayHit;
+  assign VictimDirty = | VictimDirtyWay;
 
   
-  
-  
-
-  assign CacheHit = |WayHit;
   // ReadDataBlockWayMaskedM is a 2d array of cache block len by number of ways.
   // Need to OR together each way in a bitwise manner.
-  // Final part of the AO Mux.
+  // Final part of the AO Mux.  First is the AND in the cacheway.
   or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataBlockWayMaskedM), .y(ReadDataBlockM));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
-
-  assign VictimDirty = | VictimDirtyWay;
 
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
   // *** consider using a limited range shift to do this final muxing.
   genvar index;
-  
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
       assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
@@ -222,20 +203,31 @@ module dcache
   // variable input mux
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
-
-  assign HWDATA = CacheableM ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
-
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
 				.d1(DCacheMemWriteData[`XLEN-1:0]),
 				.s(SelUncached),
 				.y(ReadDataWordMuxM));
   
   // finally swr
-  // *** BUG fix HSIZED? why was it this way?
-  subwordread subwordread(.HRDATA(ReadDataWordMuxM),
-			  .HADDRD(MemPAdrM[2:0]),
-			  .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			  .HRDATAMasked(ReadDataM));
+  subwordread subwordread(.ReadDataWordMuxM,
+			  .MemPAdrM(MemPAdrM[2:0]),
+			  .Funct3M,
+			  .ReadDataM);
+
+  // Write Path CPU (IEU) side
+
+  onehotdecoder #(LOGWPL)
+  adrdec(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
+		.decoded(MemPAdrDecodedW));
+
+  assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
+  
+  assign SRAMBlockWayWriteEnableM = SRAMBlockWriteEnableM ? VictimWay : '0;
+  
+  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableM ? WayHit : '0),
+				 .d1(SRAMBlockWayWriteEnableM),
+				 .s(SRAMBlockWriteEnableM),
+				 .y(SRAMWayWriteEnable));
 
   generate
     if (`A_SUPPORTED) begin
@@ -247,8 +239,6 @@ module dcache
       assign FinalAMOWriteDataM = WriteDataM;
   endgenerate
   
-
-  // write path
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(MemPAdrM[2:0]),
 			    .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
@@ -256,7 +246,15 @@ module dcache
 			    .HWDATA(FinalWriteDataM));
 
 
+  mux2 #(BLOCKLEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
+				.d1(DCacheMemWriteData),
+				.s(SRAMBlockWriteEnableM),
+				.y(SRAMWriteData));
+
+  // Bus Side logic
   // register the fetch data from the next level of memory.
+  // This register should be necessary for timing.  There is no register in the uncore or
+  // ahblite controller between the memories and this cache.
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
       flopen #(`XLEN) fb(.clk(clk),
@@ -278,13 +276,7 @@ module dcache
   
   assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
-
-
-  mux2 #(BLOCKLEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
-				.d1(DCacheMemWriteData),
-				.s(SRAMBlockWriteEnableM),
-				.y(SRAMWriteData));
-
+  assign HWDATA = CacheableM ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
 
   localparam FetchCountThreshold = WORDSPERLINE - 1;
   
@@ -302,9 +294,8 @@ module dcache
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
+  // controller
 
-  // control path *** eventually move to own module.
-  
   dcachefsm dcachefsm(.clk,
  		      .reset,
 		      .MemRWM,
