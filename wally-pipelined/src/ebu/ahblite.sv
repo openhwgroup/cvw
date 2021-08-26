@@ -69,9 +69,7 @@ module ahblite (
   // Delayed signals for writes
   output logic [2:0] 	     HADDRD,
   output logic [3:0] 	     HSIZED,
-  output logic 		     HWRITED,
-  // Stalls
-  output logic 		     CommitM
+  output logic 		     HWRITED
 );
 
   logic GrantData;
@@ -141,7 +139,7 @@ module ahblite (
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE);
   // delay write data by one cycle for
-  flop #(`XLEN) wdreg(HCLK, WriteData, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flop #(`XLEN) wdreg(HCLK, DCtoAHBWriteData, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
@@ -154,33 +152,6 @@ module ahblite (
   assign InstrRData = HRDATA;
   assign DCfromAHBReadData = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
-  assign CommitM = (BusState == MEMREAD) || (BusState == MEMWRITE) || (BusState == ATOMICREAD) || (BusState == ATOMICWRITE);
   assign DCfromAHBAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
-  // Carefully decide when to update ReadDataW
-  //   ReadDataMstored holds the most recent memory read.
-  //   We need to wait until the pipeline actually advances before we can update the contents of ReadDataW
-  //   (or else the W stage will accidentally get the M stage's data when the pipeline does advance).
-  assign CaptureDataM = ((BusState == MEMREAD) && (NextBusState != MEMREAD)) ||
-                        ((BusState == ATOMICREAD) && (NextBusState != ATOMICREAD));
-  flopenr #(`XLEN) ReadDataNewWReg(clk, reset, CaptureDataM, HRDATAMasked, CapturedHRDATAMasked);
-
-  always @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn)
-      CapturedDataAvailable <= #1 1'b0;
-    else
-      CapturedDataAvailable <= #1 (StallW) ? (CaptureDataM | CapturedDataAvailable) : 1'b0;
-
-  // *** AMO portion will go away when it is moved into the LSU
-  // Handle AMO instructions if applicable
-  generate
-    if (`A_SUPPORTED) begin
-      logic [`XLEN-1:0] AMOResult;
-      logic [`XLEN-1:0] HRDATAW;
-      amoalu amoalu(.srca(HRDATAW), .srcb(DCtoAHBWriteData), .funct(Funct7M), .width(MemSizeM), 
-                    .result(AMOResult));
-      mux2 #(`XLEN) wdmux(DCtoAHBWriteData, AMOResult, AtomicMaskedM[1], WriteData);
-    end else
-      assign WriteData = DCtoAHBWriteData;
-  endgenerate
 
 endmodule
