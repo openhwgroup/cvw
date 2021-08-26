@@ -55,6 +55,11 @@ module icache
   // Configuration parameters
   localparam integer 	    BLOCKLEN = `ICACHE_BLOCKLENINBITS;
   localparam integer 	    NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_BLOCKLENINBITS;
+  localparam integer 	    BLOCKBYTELEN = BLOCKLEN/8;
+
+  localparam integer 	    OFFSETLEN = $clog2(BLOCKBYTELEN);
+  localparam integer 	    INDEXLEN = $clog2(NUMLINES);
+  localparam integer 	    TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
 
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
@@ -99,6 +104,7 @@ module icache
   
 
   
+/* -----\/----- EXCLUDED -----\/-----
   ICacheMem #(.BLOCKLEN(BLOCKLEN), .NUMLINES(NUMLINES)) 
   cachemem(.clk,
 	   .reset,
@@ -109,6 +115,30 @@ module icache
            .WriteLine(ICacheMemWriteData),
 	   .ReadLineF,
            .HitF(ICacheMemReadValid));
+ -----/\----- EXCLUDED -----/\----- */
+
+  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
+	     .DIRTY_BITS(0))
+  icachemem(.clk,
+	    .reset,
+	    .RAdr(PCNextIndexF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .PAdr(PCTagF),
+	    .WriteEnable(ICacheMemWriteEnable),
+	    .WriteWordEnable('1),
+	    .TagWriteEnable(ICacheMemWriteEnable),
+	    .WriteData(ICacheMemWriteData),
+	    .SetValid(ICacheMemWriteEnable),
+	    .ClearValid(1'b0),
+	    .SetDirty(1'b0),
+	    .ClearDirty(1'b0),
+	    .SelEvict(1'b0),
+	    .VictimWay(1'b0),
+	    .ReadDataBlockWayMasked(ReadLineF),
+	    .WayHit(ICacheMemReadValid),
+	    .VictimDirtyWay(),
+	    .VictimTagWay()
+	    );
+  
 
   always_comb begin
     case (PCTagF[4:1])
