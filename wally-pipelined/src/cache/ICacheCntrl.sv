@@ -150,7 +150,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   
   localparam [31:0]  	     NOP = 32'h13;
 
-  logic 			 reset_q;
   logic [1:0] 			 PCMux_q;
   
   
@@ -455,19 +454,5 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
 		      .d(PCPreFinalF[1]),
 		      .q(PCPreFinalF_q[1]));
   assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
-
-  // There is a frustrating issue on the first access.
-  // The cache will not contain any valid data but will contain x's on
-  // reset. This makes FinalInstrRawF invalid.  On the first cycle out of
-  // reset this register will pickup this x and it will propagate throughout
-  // the cpu causing simulation failure, most likely a trap for invalid instruction.
-  // Reset must be held 1 cycle longer to prevent this issue. additionally the
-  // reset should be to a NOP rather than 0.
-
-  // register reset
-  flop #(1) resetReg (.clk(clk),
-		      .d(reset),
-		      .q(reset_q));
-  
   
 endmodule
