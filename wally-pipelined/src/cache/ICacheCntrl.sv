@@ -48,12 +48,8 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
    output logic 	       ICacheMemWriteEnable,
    output logic [BLOCKLEN-1:0] ICacheMemWriteData,
 
-   // Outputs to rest of ifu
-   // High if the instruction in the fetch stage is compressed
-   output logic 	       CompressedF,
    // The instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-   output logic [31:0] 	       FinalInstrRawF,
 
    // Outputs to pipeline control stuff
    output logic 	       ICacheStallF, EndFetchState,
@@ -67,7 +63,10 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
    input logic 		       InstrAckF,
    // The read we request from main memory
    output logic [`PA_BITS-1:0] InstrPAdrF,
-   output logic 	       InstrReadF
+   output logic 	       InstrReadF,
+
+   output logic 	       spill,
+   output logic 	       spillSave
    );
 
   // FSM states
@@ -130,12 +129,11 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   
 
   statetype CurrState, NextState;
-  logic 		       hit, spill;
+  logic 		       hit;
   logic 		       SavePC;
   logic [1:0] 		       PCMux;
   logic 		       CntReset;
   logic 		       PreCntEn, CntEn;
-  logic 		       spillSave;
   logic 		       UnalignedSelect;
   logic 		       FetchCountFlag;
   localparam FetchCountThreshold = WORDSPERLINE - 1;
@@ -146,7 +144,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
 
   
-  logic [15:0] 			 SpillDataBlock0;
   
   localparam [31:0]  	     NOP = 32'h13;
 
@@ -181,9 +178,6 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   // truncate the offset from PCPF for memory address generation
   assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
   
-  // Detect if the instruction is compressed
-  assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-
 
   // the FSM is always runing, do not stall.
   always_ff @(posedge clk, posedge reset)
@@ -436,23 +430,5 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   // what address is used to write the SRAM?
   
 
-  // spills require storing the first cache block so it can merged
-  // with the second
-  // can optimize size, for now just make it the size of the data
-  // leaving the cache memory. 
-  flopenr #(16) SpillInstrReg(.clk(clk),
-			      .en(spillSave),
-			      .reset(reset),
-			      .d(ICacheMemReadData[15:0]),
-			      .q(SpillDataBlock0));
-
-  // use the not quite final PC to do the final selection.
-  logic [1:1] PCPreFinalF_q;
-  flopenr #(1) PCFReg(.clk(clk),
-		      .reset(reset),
-		      .en(~StallF),
-		      .d(PCPreFinalF[1]),
-		      .q(PCPreFinalF_q[1]));
-  assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
   
 endmodule

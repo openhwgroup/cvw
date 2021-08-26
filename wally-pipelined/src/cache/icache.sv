@@ -68,6 +68,11 @@ module icache
   logic 		    ICacheReadEn;
   logic [BLOCKLEN-1:0] 	    ReadLineF;
   
+
+  logic [15:0] 			 SpillDataBlock0;
+  logic 			 spill;
+  logic 			 spillSave;
+ 
   
   ICacheMem #(.BLOCKLEN(BLOCKLEN), .NUMLINES(NUMLINES)) 
   cachemem(.clk,
@@ -104,6 +109,21 @@ module icache
     endcase
   end
 
+  // spills require storing the first cache block so it can merged
+  // with the second
+  // can optimize size, for now just make it the size of the data
+  // leaving the cache memory. 
+  flopenr #(16) SpillInstrReg(.clk(clk),
+			      .en(spillSave),
+			      .reset(reset),
+			      .d(ICacheMemReadData[15:0]),
+			      .q(SpillDataBlock0));
+
+  assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
+
+  // Detect if the instruction is compressed
+  assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
+  
 
   ICacheCntrl #(.BLOCKLEN(BLOCKLEN)) 
   controller(.clk,
@@ -120,8 +140,6 @@ module icache
 	     .ICacheReadEn,
 	     .ICacheMemWriteEnable,
 	     .ICacheMemWriteData,
-	     .CompressedF,
-	     .FinalInstrRawF,
 	     .ICacheStallF,
 	     . EndFetchState,
 	     .ITLBMissF,
@@ -130,7 +148,9 @@ module icache
 	     .InstrInF,
 	     .InstrAckF,
 	     .InstrPAdrF,
-	     .InstrReadF);
+	     .InstrReadF,
+	     .spill,
+	     .spillSave);
 
   // For now, assume no writes to executable memory
   assign FlushMem = 1'b0;
