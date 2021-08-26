@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module ICacheCntrl #(parameter BLOCKLEN = 256) 
+module icachefsm #(parameter BLOCKLEN = 256) 
   (
    // Inputs from pipeline
    input logic 	      clk, reset,
