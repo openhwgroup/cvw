@@ -70,15 +70,15 @@ module icache
   
   
   ICacheMem #(.BLOCKLEN(BLOCKLEN), .NUMLINES(NUMLINES)) 
-  cachemem(
-           .*,
-           // Stall it if the pipeline is stalled, unless we're stalling it and we're ending our stall
+  cachemem(.clk,
+	   .reset,
            .flush(FlushMem),
+	   .PCTagF,
+	   .PCNextIndexF,
            .WriteEnable(ICacheMemWriteEnable),
            .WriteLine(ICacheMemWriteData),
-           .ReadLineF(ReadLineF),
-           .HitF(ICacheMemReadValid)
-	   );
+	   .ReadLineF,
+           .HitF(ICacheMemReadValid));
 
   always_comb begin
     case (PCTagF[4:1])
@@ -105,7 +105,32 @@ module icache
   end
 
 
-  ICacheCntrl #(.BLOCKLEN(BLOCKLEN)) controller(.*);
+  ICacheCntrl #(.BLOCKLEN(BLOCKLEN)) 
+  controller(.clk,
+	     .reset,
+	     .StallF,
+	     .StallD,
+	     .FlushD,
+	     .PCNextF,
+	     .PCPF,
+	     .ICacheMemReadData,
+	     .ICacheMemReadValid,
+	     .PCTagF,
+	     .PCNextIndexF, 
+	     .ICacheReadEn,
+	     .ICacheMemWriteEnable,
+	     .ICacheMemWriteData,
+	     .CompressedF,
+	     .FinalInstrRawF,
+	     .ICacheStallF,
+	     . EndFetchState,
+	     .ITLBMissF,
+	     .ITLBWriteF,
+	     .WalkerInstrPageFaultF,
+	     .InstrInF,
+	     .InstrAckF,
+	     .InstrPAdrF,
+	     .InstrReadF);
 
   // For now, assume no writes to executable memory
   assign FlushMem = 1'b0;

@@ -71,50 +71,50 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
    );
 
   // FSM states
-  localparam STATE_READY = 'h0;
-  localparam STATE_HIT_SPILL = 'h1; // spill, block 0 hit
-  localparam STATE_HIT_SPILL_MISS_FETCH_WDV = 'h2; // block 1 miss, issue read to AHB and wait data.
-  localparam STATE_HIT_SPILL_MISS_FETCH_DONE = 'h3; // write data into SRAM/LUT
-  localparam STATE_HIT_SPILL_MERGE = 'h4;   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
+  typedef enum {STATE_READY,
+		STATE_HIT_SPILL, // spill, block 0 hit
+		STATE_HIT_SPILL_MISS_FETCH_WDV, // block 1 miss, issue read to AHB and wait data.
+		STATE_HIT_SPILL_MISS_FETCH_DONE, // write data into SRAM/LUT
+		STATE_HIT_SPILL_MERGE,   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
 
-  // a challenge is the spill signal gets us out of the ready state and moves us to
-  // 1 of the 2 spill branches.  However the original fsm design had us return to
-  // the ready state when the spill + hits/misses were fully resolved.  The problem
-  // is the spill signal is based on PCPF so when we return to READY to check if the
-  // cache has a hit it still expresses spill.  We can fix in 1 of two ways.
-  // 1. we can add 1 extra state at the end of each spill branch to returns the instruction
-  // to the CPU advancing the CPU and icache to the next instruction.
-  // 2. We can assert a signal which is delayed 1 cycle to suppress the spill when we get
-  // to the READY state.
-  // The first first option is more robust and increases the number of states by 2.  The
-  // second option is seams like it should work, but I worry there is a hidden interaction 
-  // between CPU stalling and that register.
-  // Picking option 1.
+		// a challenge is the spill signal gets us out of the ready state and moves us to
+		// 1 of the 2 spill branches.  However the original fsm design had us return to
+		// the ready state when the spill + hits/misses were fully resolved.  The problem
+		// is the spill signal is based on PCPF so when we return to READY to check if the
+		// cache has a hit it still expresses spill.  We can fix in 1 of two ways.
+		// 1. we can add 1 extra state at the end of each spill branch to returns the instruction
+		// to the CPU advancing the CPU and icache to the next instruction.
+		// 2. We can assert a signal which is delayed 1 cycle to suppress the spill when we get
+		// to the READY state.
+		// The first first option is more robust and increases the number of states by 2.  The
+		// second option is seams like it should work, but I worry there is a hidden interaction 
+		// between CPU stalling and that register.
+		// Picking option 1.
 
-  localparam STATE_HIT_SPILL_FINAL = 'h5; // this state replicates STATE_READY's replay of the
-  // spill access but does nto consider spill.  It also does not do another operation.
+		STATE_HIT_SPILL_FINAL, // this state replicates STATE_READY's replay of the
+		// spill access but does nto consider spill.  It also does not do another operation.
   
+		STATE_MISS_FETCH_WDV, // aligned miss, issue read to AHB and wait for data.
+		STATE_MISS_FETCH_DONE, // write data into SRAM/LUT
+		STATE_MISS_READ, // read block 1 from SRAM/LUT  
 
-  localparam STATE_MISS_FETCH_WDV = 'h6; // aligned miss, issue read to AHB and wait for data.
-  localparam STATE_MISS_FETCH_DONE = 'h7; // write data into SRAM/LUT
-  localparam STATE_MISS_READ = 'h8; // read block 1 from SRAM/LUT  
+		STATE_MISS_SPILL_FETCH_WDV, // spill, miss on block 0, issue read to AHB and wait
+		STATE_MISS_SPILL_FETCH_DONE, // write data into SRAM/LUT
+		STATE_MISS_SPILL_READ1, // read block 0 from SRAM/LUT
+		STATE_MISS_SPILL_2, // return to ready if hit or do second block update.
+		STATE_MISS_SPILL_2_START, // return to ready if hit or do second block update.  
+		STATE_MISS_SPILL_MISS_FETCH_WDV, // miss on block 1, issue read to AHB and wait
+		STATE_MISS_SPILL_MISS_FETCH_DONE, // write data to SRAM/LUT
+		STATE_MISS_SPILL_MERGE, // read block 0 of CPU access,
 
-  localparam STATE_MISS_SPILL_FETCH_WDV = 'h9; // spill, miss on block 0, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_FETCH_DONE = 'ha; // write data into SRAM/LUT
-  localparam STATE_MISS_SPILL_READ1 = 'hb; // read block 0 from SRAM/LUT
-  localparam STATE_MISS_SPILL_2 = 'hc; // return to ready if hit or do second block update.
-  localparam STATE_MISS_SPILL_2_START = 'hd; // return to ready if hit or do second block update.  
-  localparam STATE_MISS_SPILL_MISS_FETCH_WDV = 'he; // miss on block 1, issue read to AHB and wait
-  localparam STATE_MISS_SPILL_MISS_FETCH_DONE = 'hf; // write data to SRAM/LUT
-  localparam STATE_MISS_SPILL_MERGE = 'h10; // read block 0 of CPU access,
+		STATE_MISS_SPILL_FINAL, // this state replicates STATE_READY's replay of the
+		// spill access but does nto consider spill.  It also does not do another operation.
 
-  localparam STATE_MISS_SPILL_FINAL = 'h11; // this state replicates STATE_READY's replay of the
-  // spill access but does nto consider spill.  It also does not do another operation.
+		STATE_INVALIDATE, // *** not sure if invalidate or evict? invalidate by cache block or address?
+		STATE_TLB_MISS,
+		STATE_TLB_MISS_DONE
+		} statetype;
   
-
-  localparam STATE_INVALIDATE = 'h12; // *** not sure if invalidate or evict? invalidate by cache block or address?
-  localparam STATE_TLB_MISS = 'h13;
-  localparam STATE_TLB_MISS_DONE = 'h14;
 
   
   localparam AHBByteLength = `XLEN / 8;
@@ -129,7 +129,7 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
   localparam integer 	       PA_WIDTH = `PA_BITS - 2;
   
 
-  logic [4:0] 		       CurrState, NextState;
+  statetype CurrState, NextState;
   logic 		       hit, spill;
   logic 		       SavePC;
   logic [1:0] 		       PCMux;
@@ -187,10 +187,9 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
 
 
   // the FSM is always runing, do not stall.
-  flopr #(5) stateReg(.clk(clk),
-		      .reset(reset),
-		      .d(NextState),
-		      .q(CurrState));
+  always_ff @(posedge clk, posedge reset)
+    if (reset)    CurrState <= #1 STATE_READY;
+    else CurrState <= #1 NextState;
 
   assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
   assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
