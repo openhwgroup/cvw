@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 package ahbliteState;
-  typedef enum logic [3:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD, ATOMICREAD, ATOMICWRITE, MMUTRANSLATE} statetype;
+  typedef enum logic [3:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
 endpackage
 
 module ahblite (
@@ -103,14 +103,8 @@ module ahblite (
   // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: if (AtomicMaskedM[1])   NextBusState = ATOMICREAD;
-            else if (DCtoAHBReadM)     NextBusState = MEMREAD;  // Memory has priority over instructions
-            else if (DCtoAHBWriteM)    NextBusState = MEMWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      ATOMICREAD: if (~HREADY)     NextBusState = ATOMICREAD;
-            else                   NextBusState = ATOMICWRITE;
-      ATOMICWRITE: if (~HREADY)    NextBusState = ATOMICWRITE;
+      IDLE: if (DCtoAHBReadM)      NextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (DCtoAHBWriteM)NextBusState = MEMWRITE;
             else if (InstrReadF)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
@@ -126,10 +120,8 @@ module ahblite (
 
 
   //  bus outputs
-  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE) || 
-                        (NextBusState == ATOMICREAD) || (NextBusState == ATOMICWRITE);
+  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE);
   assign #1 AccessAddress = (GrantData) ? DCtoAHBPAdrM[31:0] : InstrPAdrF[31:0];
-  //assign #1 HADDR = (MMUTranslate) ? MMUPAdr[31:0] : AccessAddress;
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, MemSizeM} : ISize;
@@ -137,7 +129,7 @@ module ahblite (
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
-  assign HWRITE = (NextBusState == MEMWRITE) || (NextBusState == ATOMICWRITE);
+  assign HWRITE = NextBusState == MEMWRITE;
   // delay write data by one cycle for
   flop #(`XLEN) wdreg(HCLK, DCtoAHBWriteData, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
