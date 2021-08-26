@@ -149,7 +149,7 @@ module dcache
   MemWay[NUMWAYS-1:0](.clk,
 		      .reset,
 		      .RAdr,
-		      .MemPAdrM(MemPAdrM[`PA_BITS-1:0]),
+		      .PAdr(MemPAdrM[`PA_BITS-1:0]),
 		      .WriteEnable(SRAMWayWriteEnable),
 		      .WriteWordEnable(SRAMWordEnable),
 		      .TagWriteEnable(SRAMBlockWayWriteEnableM), 
@@ -160,7 +160,7 @@ module dcache
 		      .ClearDirty,
 		      .SelEvict,
 		      .VictimWay,
-		      .ReadDataBlockWayMaskedM,
+		      .ReadDataBlockWayMasked(ReadDataBlockWayMaskedM),
 		      .WayHit,
 		      .VictimDirtyWay,
 		      .VictimTagWay);
