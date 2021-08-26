@@ -25,18 +25,36 @@
 `include "wally-config.vh"
 
 module cacheLRU
-  #(NUMWAYS)
-  (input logic [NUMWAYS-2:0] LRUIn,
-   input logic [NUMWAYS-1:0] WayIn,
-   output logic [NUMWAYS-2:0] LRUOut,
-   output logic [NUMWAYS-1:0] VictimWay
+  #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+  (input logic clk, reset,
+   input logic [NUMWAYS-1:0] 			WayIn,
+   output logic [NUMWAYS-1:0] 			VictimWay,
+   input logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] MemPAdrM,
+   input logic [INDEXLEN-1:0] 			SRAMAdr,
+   input logic 					LRUWriteEn
    );
 
   //  *** Only implements 2, 4, and 8 way
   // I would like parametersize this in the future.
 
-  logic [NUMWAYS-2:0] 	      LRUEn, LRUMask;
-  logic [$clog2(NUMWAYS)-1:0] EncVicWay;
+  logic [NUMWAYS-2:0] 				LRUEn, LRUMask;
+  logic [$clog2(NUMWAYS)-1:0] 			EncVicWay;
+  logic [NUMWAYS-2:0] 				ReplacementBits [NUMLINES-1:0];
+  logic [NUMWAYS-2:0] 				BlockReplacementBits;
+  logic [NUMWAYS-2:0] 				NewReplacement;
+
+  always_ff @(posedge clk, posedge reset) begin
+    if (reset) begin
+      for(int index = 0; index < NUMLINES; index++)
+	ReplacementBits[index] <= '0;
+    end else begin
+      BlockReplacementBits <= ReplacementBits[SRAMAdr];
+      if (LRUWriteEn) begin
+	ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
+      end
+    end
+  end
+
 
   genvar 		      index;
   generate
@@ -44,10 +62,10 @@ module cacheLRU
       
       assign LRUEn[0] = 1'b0;
 
-      assign LRUOut[0] = WayIn[1];
+      assign NewReplacement[0] = WayIn[1];
 
-      assign VictimWay[1] = ~LRUIn[0];
-      assign VictimWay[0] = LRUIn[0];
+      assign VictimWay[1] = ~BlockReplacementBits[0];
+      assign VictimWay[0] = BlockReplacementBits[0];
       
     end else if (NUMWAYS == 4) begin : FourWay 
 
@@ -62,14 +80,14 @@ module cacheLRU
       assign LRUMask[2] = WayIn[3] | WayIn[2];
 
       for(index = 0; index < NUMWAYS-1; index++)
-	assign LRUOut[index] = LRUEn[index] ? LRUMask[index] : LRUIn[index];
+	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
 
-      assign EncVicWay[1] = LRUIn[2];
-      assign EncVicWay[0] = LRUIn[2] ? LRUIn[0] : LRUIn[1];
+      assign EncVicWay[1] = BlockReplacementBits[2];
+      assign EncVicWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[0] : BlockReplacementBits[1];
 
       onehotdecoder #(2) 
       waydec(.bin(EncVicWay),
-		    .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3]}));
+	     .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3]}));
 
     end else if (NUMWAYS == 8) begin : EightWay
 
@@ -92,21 +110,21 @@ module cacheLRU
       assign LRUMask[0] = WayIn[0];
 
       for(index = 0; index < NUMWAYS-1; index++)
-	assign LRUOut[index] = LRUEn[index] ? LRUMask[index] : LRUIn[index];
+	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
 
-      assign EncVicWay[2] = LRUIn[6];
-      assign EncVicWay[1] = LRUIn[6] ? LRUIn[5] : LRUIn[2];
-      assign EncVicWay[0] = LRUIn[6] ? LRUIn[5] ? LRUIn[4] : LRUIn[3] :
-			    LRUIn[2] ? LRUIn[1] : LRUIn[0];
+      assign EncVicWay[2] = BlockReplacementBits[6];
+      assign EncVicWay[1] = BlockReplacementBits[6] ? BlockReplacementBits[5] : BlockReplacementBits[2];
+      assign EncVicWay[0] = BlockReplacementBits[6] ? BlockReplacementBits[5] ? BlockReplacementBits[4] : BlockReplacementBits[3] :
+			    BlockReplacementBits[2] ? BlockReplacementBits[1] : BlockReplacementBits[0];
       
 
       onehotdecoder #(3) 
       waydec(.bin(EncVicWay),
-		    .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3],
-			      VictimWay[4], VictimWay[5], VictimWay[6], VictimWay[7]}));
+	     .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3],
+		       VictimWay[4], VictimWay[5], VictimWay[6], VictimWay[7]}));
     end
   endgenerate
   
 endmodule
 
-  
+
