@@ -56,11 +56,20 @@ module icache
   localparam integer 	    BLOCKLEN = `ICACHE_BLOCKLENINBITS;
   localparam integer 	    NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_BLOCKLENINBITS;
 
+  localparam WORDSPERLINE = BLOCKLEN/`XLEN;
+  localparam LOGWPL = $clog2(WORDSPERLINE);
+
+  localparam FetchCountThreshold = WORDSPERLINE - 1;
+  localparam BlockByteLength = BLOCKLEN / 8;
+
+  localparam OFFSETWIDTH = $clog2(BlockByteLength);
+
+  localparam integer 	       PA_WIDTH = `PA_BITS - 2;
+
   // Input signals to cache memory
   logic 		    FlushMem;
   logic 		    ICacheMemWriteEnable;
   logic [BLOCKLEN-1:0] 	    ICacheMemWriteData;
-  logic 		    EndFetchState;
   logic [`PA_BITS-1:0] 	    PCTagF, PCNextIndexF;  
   // Output signals from cache memory
   logic [31:0] 		    ICacheMemReadData;
@@ -72,7 +81,23 @@ module icache
   logic [15:0] 			 SpillDataBlock0;
   logic 			 spill;
   logic 			 spillSave;
+
+  logic 			 FetchCountFlag;
+  logic 			 CntEn;
+  
+  logic [1:0] 			 PCMux_q;
+  
+  
+  logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
  
+  logic [`PA_BITS-1:0] 	       PCPreFinalF, PCPSpillF;
+  logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
+
+  logic 		       CntReset;
+  logic [1:0] 		       PCMux;
+  logic 		       SavePC;
+  
+
   
   ICacheMem #(.BLOCKLEN(BLOCKLEN), .NUMLINES(NUMLINES)) 
   cachemem(.clk,
@@ -125,32 +150,95 @@ module icache
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
   
 
+  assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
+  assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
+
+  // to compute the fetch address we need to add the bit shifted
+  // counter output to the address.
+
+  flopenr #(LOGWPL) 
+  FetchCountReg(.clk(clk),
+		.reset(reset | CntReset),
+		.en(CntEn),
+		.d(NextFetchCount),
+		.q(FetchCount));
+
+  assign NextFetchCount = FetchCount + 1'b1;
+
+  // This part is confusing.
+  // *** Ross Thompson reduce the complexity. This is just dumb.
+  // we need to remove the offset bits (PCPTrunkF).  Because the AHB interface is XLEN wide
+  // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
+  // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
+  // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
+  logic [`PA_BITS-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
+
+  assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
+  // verilator lint_off WIDTH
+  assign InstrPAdrTrunkF = PCPTrunkExtF + FetchCount;
+  // verilator lint_on WIDTH
+  
+  //assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
+  assign InstrPAdrF = {InstrPAdrTrunkF, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
+  
+
+
+  // store read data from memory interface before writing into SRAM.
+  genvar 				i;
+  generate
+    for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
+      flopenr #(`XLEN) sb(.clk(clk),
+			    .reset(reset), 
+			    .en(InstrAckF & (i == FetchCount)),
+			    .d(InstrInF),
+			    .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
+    end
+  endgenerate
+
+  // on spill we want to get the first 2 bytes of the next cache block.
+  // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
+  // simply add 2 to land on the next cache block.
+  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
+
+  // now we have to select between these three PCs
+  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
+  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
+
+  // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
+  // *** read enable may not be necessary.
+  flopenr #(2) PCMuxReg(.clk(clk),
+			.reset(reset),
+			.en(ICacheReadEn),
+			.d(PCMux),
+			.q(PCMux_q));
+  
+  assign PCTagF = PCMux_q[1] ? PCPSpillF : PCPF;
+  
+  // truncate the offset from PCPF for memory address generation
+  assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
+  
+
   ICacheCntrl #(.BLOCKLEN(BLOCKLEN)) 
   controller(.clk,
 	     .reset,
-	     .StallF,
-	     .StallD,
-	     .FlushD,
-	     .PCNextF,
-	     .PCPF,
-	     .ICacheMemReadData,
-	     .ICacheMemReadValid,
-	     .PCTagF,
-	     .PCNextIndexF, 
 	     .ICacheReadEn,
 	     .ICacheMemWriteEnable,
-	     .ICacheMemWriteData,
 	     .ICacheStallF,
-	     . EndFetchState,
 	     .ITLBMissF,
 	     .ITLBWriteF,
 	     .WalkerInstrPageFaultF,
-	     .InstrInF,
 	     .InstrAckF,
-	     .InstrPAdrF,
 	     .InstrReadF,
+	     .hit(ICacheMemReadValid),
+	     .FetchCountFlag,
 	     .spill,
-	     .spillSave);
+	     .spillSave,
+	     .CntEn,
+	     .CntReset,
+	     .PCMux,
+    	     .SavePC
+	     );
 
   // For now, assume no writes to executable memory
   assign FlushMem = 1'b0;

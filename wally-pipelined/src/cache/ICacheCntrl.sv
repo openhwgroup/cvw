@@ -28,45 +28,38 @@
 module ICacheCntrl #(parameter BLOCKLEN = 256) 
   (
    // Inputs from pipeline
-   input logic 		       clk, reset,
-   input logic 		       StallF, StallD,
-   input logic 		       FlushD,
+   input logic 	      clk, reset,
 
-   // Input the address to read
-   // The upper bits of the physical pc
-   input logic [`PA_BITS-1:0]  PCNextF,
-   input logic [`PA_BITS-1:0]  PCPF,
-   // Signals to/from cache memory
-   // The read coming out of it
-   input logic [31:0] 	       ICacheMemReadData,
-   input logic 		       ICacheMemReadValid,
-   // The address at which we want to search the cache memory
-   output logic [`PA_BITS-1:0] PCTagF,
-   output logic [`PA_BITS-1:0] PCNextIndexF, 
-   output logic 	       ICacheReadEn,
+   // inputs from mmu
+   input logic 	      ITLBMissF,
+   input logic 	      ITLBWriteF,
+   input logic 	      WalkerInstrPageFaultF,
+
+   // BUS interface
+   input logic 	      InstrAckF,
+
+   // icache internal inputs
+   input logic 	      hit,
+   input logic 	      FetchCountFlag,
+   input logic 	      spill,
+
+   // icache internal outputs
+   output logic       ICacheReadEn,
    // Load data into the cache
-   output logic 	       ICacheMemWriteEnable,
-   output logic [BLOCKLEN-1:0] ICacheMemWriteData,
-
-   // The instruction that was requested
-   // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
+   output logic       ICacheMemWriteEnable,
 
    // Outputs to pipeline control stuff
-   output logic 	       ICacheStallF, EndFetchState,
-   input logic 		       ITLBMissF,
-   input logic 		       ITLBWriteF,
-   input logic 		       WalkerInstrPageFaultF,
+   output logic       ICacheStallF,
 
-   // Signals to/from ahblite interface
-   // A read containing the requested data
-   input logic [`XLEN-1:0]     InstrInF,
-   input logic 		       InstrAckF,
-   // The read we request from main memory
-   output logic [`PA_BITS-1:0] InstrPAdrF,
-   output logic 	       InstrReadF,
+   // Bus interface outputs
+   output logic       InstrReadF,
 
-   output logic 	       spill,
-   output logic 	       spillSave
+   // icache internal outputs
+   output logic       spillSave,
+   output logic       CntEn,
+   output logic       CntReset,
+   output logic [1:0] PCMux,
+   output logic       SavePC
    );
 
   // FSM states
@@ -114,80 +107,15 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
 		STATE_TLB_MISS_DONE
 		} statetype;
   
-
-  
-  localparam AHBByteLength = `XLEN / 8;
-  localparam AHBOFFETWIDTH = $clog2(AHBByteLength);
-  
-  
-  localparam BlockByteLength = BLOCKLEN / 8;
-  localparam OFFSETWIDTH = $clog2(BlockByteLength);
-  
-  localparam WORDSPERLINE = BLOCKLEN/`XLEN;
-  localparam LOGWPL = $clog2(WORDSPERLINE);
-  localparam integer 	       PA_WIDTH = `PA_BITS - 2;
-  
-
   statetype CurrState, NextState;
-  logic 		       hit;
-  logic 		       SavePC;
-  logic [1:0] 		       PCMux;
-  logic 		       CntReset;
-  logic 		       PreCntEn, CntEn;
+  logic 		       PreCntEn;
   logic 		       UnalignedSelect;
-  logic 		       FetchCountFlag;
-  localparam FetchCountThreshold = WORDSPERLINE - 1;
-  
-  logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
-
-  logic [`PA_BITS-1:0] 	       PCPreFinalF, PCPSpillF;
-  logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
-
-  
-  
-  localparam [31:0]  	     NOP = 32'h13;
-
-  logic [1:0] 			 PCMux_q;
-  
-  
-  // Misaligned signals
-  //logic [`XLEN:0] MisalignedInstrRawF;
-  //logic           MisalignedStall;
-  // Cache fault signals
-  //logic           FaultStall;
-  
-  // on spill we want to get the first 2 bytes of the next cache block.
-  // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
-  // simply add 2 to land on the next cache block.
-  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
-
-  // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
-  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
-
-  // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
-  // *** read enable may not be necessary.
-  flopenr #(2) PCMuxReg(.clk(clk),
-			.reset(reset),
-			.en(ICacheReadEn),
-			.d(PCMux),
-			.q(PCMux_q));
-  
-  assign PCTagF = PCMux_q[1] ? PCPSpillF : PCPF;
-  
-  // truncate the offset from PCPF for memory address generation
-  assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
-  
 
   // the FSM is always runing, do not stall.
   always_ff @(posedge clk, posedge reset)
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
 
-  assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
-  assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
-  
   // Next state logic
   always_comb begin
     UnalignedSelect = 1'b0;
@@ -384,51 +312,5 @@ module ICacheCntrl #(parameter BLOCKLEN = 256)
 		      (CurrState == STATE_MISS_FETCH_WDV) ||
 		      (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
 		      (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
-
-  // to compute the fetch address we need to add the bit shifted
-  // counter output to the address.
-
-  flopenr #(LOGWPL) 
-  FetchCountReg(.clk(clk),
-		.reset(reset | CntReset),
-		.en(CntEn),
-		.d(NextFetchCount),
-		.q(FetchCount));
-
-  assign NextFetchCount = FetchCount + 1'b1;
-  
-  // This part is confusing.
-  // *** Ross Thompson reduce the complexity. This is just dumb.
-  // we need to remove the offset bits (PCPTrunkF).  Because the AHB interface is XLEN wide
-  // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
-  // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
-  // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
-  logic [`PA_BITS-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
-
-  assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
-  // verilator lint_off WIDTH
-  assign InstrPAdrTrunkF = PCPTrunkExtF + FetchCount;
-  // verilator lint_on WIDTH
-  
-  //assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
-  assign InstrPAdrF = {InstrPAdrTrunkF, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
-  
-
-
-  // store read data from memory interface before writing into SRAM.
-  genvar 				i;
-  generate
-    for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
-      flopenr #(`XLEN) sb(.clk(clk),
-			    .reset(reset), 
-			    .en(InstrAckF & (i == FetchCount)),
-			    .d(InstrInF),
-			    .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
-    end
-  endgenerate
-
-  // what address is used to write the SRAM?
-  
-
   
 endmodule
