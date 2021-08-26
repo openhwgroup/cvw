@@ -93,19 +93,15 @@ module dcache
   logic [INDEXLEN-1:0]	       SRAMAdr;
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
-  logic			       SetValidM, ClearValidM;
-  logic			       SetDirtyM, ClearDirtyM;
+  logic			       SetValid, ClearValid;
+  logic			       SetDirty, ClearDirty;
   logic [BLOCKLEN-1:0] 	       ReadDataBlockWayMaskedM [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]	       WayHit;
   logic			       CacheHit;
-  logic [NUMWAYS-2:0] 	       ReplacementBits [NUMLINES-1:0];
-  logic [NUMWAYS-2:0] 	       BlockReplacementBits;
-  logic [NUMWAYS-2:0] 	       NewReplacement;
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
   logic [`XLEN-1:0]	       ReadDataWordM, ReadDataWordMuxM;
   logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
-  logic [BLOCKLEN-1:0]	       FinalWriteDataWordsM;
   logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
   logic [WORDSPERLINE-1:0]     SRAMWordEnable;
 
@@ -206,15 +202,15 @@ module dcache
   MemWay[NUMWAYS-1:0](.clk,
 	 .reset,
 	 .RAdr(SRAMAdr),
-	 .MemPAdrM(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+	 .MemPAdrM(MemPAdrM[`PA_BITS-1:0]),
 	 .WriteEnable(SRAMWayWriteEnable),
 	 .WriteWordEnable(SRAMWordEnable),
 	 .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 	 .WriteData(SRAMWriteData),
-	 .SetValid(SetValidM),
-	 .ClearValid(ClearValidM),
-	 .SetDirty(SetDirtyM),
-	 .ClearDirty(ClearDirtyM),
+	 .SetValid,
+	 .ClearValid,
+	 .SetDirty,
+	 .ClearDirty,
 	 .SelEvict,
 	 .VictimWay,
 	 .ReadDataBlockWayMaskedM,
@@ -222,28 +218,16 @@ module dcache
 	 .VictimDirtyWay,
 	 .VictimTagWay);
 
-  always_ff @(posedge clk, posedge reset) begin
-    if (reset) begin
-      for(int index = 0; index < NUMLINES; index++)
-	ReplacementBits[index] <= '0;
-    end else begin
-      BlockReplacementBits <= ReplacementBits[SRAMAdr];
-      if (LRUWriteEn) begin
-	ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
-      end
-    end
-  end
-
-  // *** TODO only supports 1, 2, 4, and 8 way
   generate
     if(NUMWAYS > 1) begin
-      cacheLRU #(NUMWAYS)
-      cacheLRU(.LRUIn(BlockReplacementBits),
+      cacheLRU #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+      cacheLRU(.clk, .reset,
 	       .WayIn(WayHit),
-	       .LRUOut(NewReplacement),
-	       .VictimWay(VictimWay));
+	       .VictimWay,
+	       .MemPAdrM(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	       .SRAMAdr,
+	       .LRUWriteEn);
     end else begin
-      assign NewReplacement = '0;
       assign VictimWay = 1'b1;
     end
   endgenerate
@@ -339,25 +323,14 @@ module dcache
   
   assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
-    
-  
-  // mux between the CPU's write and the cache fetch.
-  generate
-    for(index = 0; index < WORDSPERLINE; index++) begin
-      assign FinalWriteDataWordsM[((index+1)*`XLEN)-1 : (index*`XLEN)] = FinalWriteDataM;
-    end
-  endgenerate
 
-  mux2 #(BLOCKLEN) WriteDataMux(.d0(FinalWriteDataWordsM),
+
+  mux2 #(BLOCKLEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
 				.d1(DCacheMemWriteData),
 				.s(SRAMBlockWriteEnableM),
 				.y(SRAMWriteData));
 
 
-  // control path *** eventually move to own module.
-
-
-  
   localparam FetchCountThreshold = WORDSPERLINE - 1;
   
 
@@ -375,6 +348,9 @@ module dcache
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
+
+  // control path *** eventually move to own module.
+  
   always_ff @(posedge clk, posedge reset)
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
@@ -385,10 +361,10 @@ module dcache
     DCacheStall = 1'b0;
     SelAdrM = 2'b00;
     PreCntEn = 1'b0;
-    SetValidM = 1'b0;
-    ClearValidM = 1'b0;
-    SetDirtyM = 1'b0;    
-    ClearDirtyM = 1'b0;
+    SetValid = 1'b0;
+    ClearValid = 1'b0;
+    SetDirty = 1'b0;    
+    ClearDirty = 1'b0;
     SRAMWordWriteEnableM = 1'b0;
     SRAMBlockWriteEnableM = 1'b0;
     CntReset = 1'b0;
@@ -427,7 +403,7 @@ module dcache
 	  end
 	  else begin
 	    SRAMWordWriteEnableM = 1'b1;
-	    SetDirtyM = 1'b1;
+	    SetDirty = 1'b1;
 	    LRUWriteEn = 1'b1;
 	    NextState = STATE_READY;
 	  end
@@ -451,7 +427,7 @@ module dcache
 	  SelAdrM = 2'b01;
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
-	  SetDirtyM = 1'b1;
+	  SetDirty = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin 
@@ -522,8 +498,8 @@ module dcache
 	DCacheStall = 1'b1;
 	NextState = STATE_MISS_READ_WORD;
 	SelAdrM = 2'b01;
-	SetValidM = 1'b1;
-	ClearDirtyM = 1'b1;
+	SetValid = 1'b1;
+	ClearDirty = 1'b1;
 	CommittedM = 1'b1;
 	//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
@@ -551,7 +527,7 @@ module dcache
 	  end
 	  else begin
 	    SRAMWordWriteEnableM = 1'b1;
-	    SetDirtyM = 1'b1;
+	    SetDirty = 1'b1;
 	    LRUWriteEn = 1'b1;
 	    NextState = STATE_READY;
 	  end
@@ -569,7 +545,7 @@ module dcache
 
       STATE_MISS_WRITE_WORD: begin
 	SRAMWordWriteEnableM = 1'b1;
-	SetDirtyM = 1'b1;
+	SetDirty = 1'b1;
 	SelAdrM = 2'b01;
 	CommittedM = 1'b1;
 	LRUWriteEn = 1'b1;
@@ -703,8 +679,8 @@ module dcache
 	DCacheStall = 1'b1;
 	NextState = STATE_PTW_READ_MISS_READ_WORD;
 	SelAdrM = 2'b01;
-	SetValidM = 1'b1;
-	ClearDirtyM = 1'b1;
+	SetValid = 1'b1;
+	ClearDirty = 1'b1;
 	CommittedM = 1'b1;
 	//LRUWriteEn = 1'b1;
       end
@@ -749,7 +725,7 @@ module dcache
 	end
 	else begin
 	  SRAMWordWriteEnableM = 1'b1;
-	  SetDirtyM = 1'b1;
+	  SetDirty = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  NextState = STATE_READY;
 	end
@@ -824,7 +800,7 @@ module dcache
 	  SelAdrM = 2'b01;
 	  DCacheStall = 1'b0;
 	  SRAMWordWriteEnableM = 1'b1;
-	  SetDirtyM = 1'b1;
+	  SetDirty = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin 
@@ -908,8 +884,8 @@ module dcache
 	DCacheStall = 1'b1;
 	NextState = STATE_PTW_FAULT_MISS_READ_WORD;
 	SelAdrM = 2'b01;
-	SetValidM = 1'b1;
-	ClearDirtyM = 1'b1;
+	SetValid = 1'b1;
+	ClearDirty = 1'b1;
 	CommittedM = 1'b1;
 	//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
@@ -942,7 +918,7 @@ module dcache
 
       STATE_PTW_FAULT_MISS_WRITE_WORD: begin
 	SRAMWordWriteEnableM = 1'b1;
-	SetDirtyM = 1'b1;
+	SetDirty = 1'b1;
 	SelAdrM = 2'b01;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;

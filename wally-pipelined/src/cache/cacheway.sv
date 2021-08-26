@@ -28,25 +28,25 @@
 module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 		   parameter OFFSETLEN, parameter INDEXLEN) 
   (input logic 		       clk,
-   input logic 				       reset,
+   input logic 			      reset,
 
-   input logic [$clog2(NUMLINES)-1:0] 	       RAdr,
-   input logic [`PA_BITS-1:OFFSETLEN+INDEXLEN] MemPAdrM,
-   input logic 				       WriteEnable,
-   input logic [BLOCKLEN/`XLEN-1:0] 	       WriteWordEnable,
-   input logic 				       TagWriteEnable,
-   input logic [BLOCKLEN-1:0] 		       WriteData,
-   input logic 				       SetValid,
-   input logic 				       ClearValid,
-   input logic 				       SetDirty,
-   input logic 				       ClearDirty,
-   input logic 				       SelEvict,
-   input logic 				       VictimWay,
+   input logic [$clog2(NUMLINES)-1:0] RAdr,
+   input logic [`PA_BITS-1:0] 	      MemPAdrM,
+   input logic 			      WriteEnable,
+   input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
+   input logic 			      TagWriteEnable,
+   input logic [BLOCKLEN-1:0] 	      WriteData,
+   input logic 			      SetValid,
+   input logic 			      ClearValid,
+   input logic 			      SetDirty,
+   input logic 			      ClearDirty,
+   input logic 			      SelEvict,
+   input logic 			      VictimWay,
 
-   output logic [BLOCKLEN-1:0] 		       ReadDataBlockWayMaskedM,
-   output logic 			       WayHit,
-   output logic 			       VictimDirtyWay,
-   output logic [TAGLEN-1:0] 		       VictimTagWay
+   output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMaskedM,
+   output logic 		      WayHit,
+   output logic 		      VictimDirtyWay,
+   output logic [TAGLEN-1:0] 	      VictimTagWay
    );
 
   logic [NUMLINES-1:0] 		      ValidBits, DirtyBits;
@@ -74,7 +74,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   CacheTagMem(.clk(clk),
 	      .Addr(RAdr),
 	      .ReadData(ReadTag),
-	      .WriteData(MemPAdrM),
+	      .WriteData(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	      .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
@@ -87,16 +87,16 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & WriteEnable) ValidBits[RAdr] <= 1'b1;
-    else if (ClearValid & WriteEnable) ValidBits[RAdr] <= 1'b0;
+    else if (SetValid & WriteEnable) ValidBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
+    else if (ClearValid & WriteEnable) ValidBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
     Valid <= ValidBits[RAdr];
   end
 
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	DirtyBits <= {NUMLINES{1'b0}};
-    else if (SetDirty & WriteEnable) DirtyBits[RAdr] <= 1'b1;
-    else if (ClearDirty & WriteEnable) DirtyBits[RAdr] <= 1'b0;
+    else if (SetDirty & WriteEnable) DirtyBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
+    else if (ClearDirty & WriteEnable) DirtyBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
     Dirty <= DirtyBits[RAdr];
   end
   
