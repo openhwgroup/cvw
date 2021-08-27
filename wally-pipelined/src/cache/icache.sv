@@ -109,7 +109,7 @@ module icache
   assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
 
   // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] | StallF ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
+  assign PCPreFinalF = PCMux[0] ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
   // for the data cache i used a cpu busy state which is triggered by StallW.  In the case of the icache I
   // modified the select on this address mux. Both are not ideal; however the cpu_busy state is required for the
   // dcache as a write would repeatedly update the sram or worse for an uncached write multiple times.
@@ -243,6 +243,7 @@ module icache
   icachefsm #(.BLOCKLEN(BLOCKLEN)) 
   controller(.clk,
 	     .reset,
+	     .StallF,
 	     .ICacheReadEn,
 	     .ICacheMemWriteEnable,
 	     .ICacheStallF,
