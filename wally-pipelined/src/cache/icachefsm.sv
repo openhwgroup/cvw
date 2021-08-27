@@ -324,8 +324,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
         SavePC = 1'b1;
         ICacheStallF = 1'b0;	
 	if(StallF) begin
-	  NextState = STATE_CPU_BUSY;
-	  SelAdr = 2'b01;
+	  NextState = STATE_CPU_BUSY_SPILL;
+	  SelAdr = 2'b10;
 	end else begin
           NextState = STATE_READY;
 	end
