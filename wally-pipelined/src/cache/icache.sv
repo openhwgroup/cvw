@@ -90,7 +90,7 @@ module icache
   logic 			 FetchCountFlag;
   logic 			 CntEn;
   
-  logic [1:0] 			 PCMux_q;
+  logic [1:0] 			 SelAdr_q;
   
   
   logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
@@ -99,8 +99,9 @@ module icache
   logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
 
   logic 		       CntReset;
-  logic [1:0] 		       PCMux;
+  logic [1:0] 		       SelAdr;
   logic 		       SavePC;
+  logic [INDEXLEN-1:0]	       RAdr;
   
 
   // on spill we want to get the first 2 bytes of the next cache block.
@@ -108,19 +109,20 @@ module icache
   // simply add 2 to land on the next cache block.
   assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
 
-  // now we have to select between these three PCs
-  assign PCPreFinalF = PCMux[0] ? PCPF : PCNextF; // *** don't like the stallf, but it is necessary
-  // for the data cache i used a cpu busy state which is triggered by StallW.  In the case of the icache I
-  // modified the select on this address mux. Both are not ideal; however the cpu_busy state is required for the
-  // dcache as a write would repeatedly update the sram or worse for an uncached write multiple times.
-  // I like reducing some complexity of the fsm; however I weight commonality between the i/d cache more.
-  assign PCNextIndexF = PCMux[1] ? PCPSpillF : PCPreFinalF;
+  mux3 #(INDEXLEN)
+  AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d1(PCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d2(PCPSpillF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .s(SelAdr),
+	    .y(RAdr));
+
+  
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
 	     .DIRTY_BITS(0))
   icachemem(.clk,
 	    .reset,
-	    .RAdr(PCNextIndexF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .RAdr(RAdr),
 	    .PAdr(PCTagF),
 	    .WriteEnable(ICacheMemWriteEnable),
 	    .WriteWordEnable('1),
@@ -228,13 +230,13 @@ module icache
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
-  flopenr #(2) PCMuxReg(.clk(clk),
+  flopenr #(2) SelAdrReg(.clk(clk),
 			.reset(reset),
 			.en(ICacheReadEn),
-			.d(PCMux),
-			.q(PCMux_q));
+			.d(SelAdr),
+			.q(SelAdr_q));
   
-  assign PCTagF = PCMux_q[1] ? PCPSpillF : PCPF;
+  assign PCTagF = SelAdr_q[1] ? PCPSpillF : PCPF;
   
   // truncate the offset from PCPF for memory address generation
   assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
@@ -258,7 +260,7 @@ module icache
 	     .spillSave,
 	     .CntEn,
 	     .CntReset,
-	     .PCMux,
+	     .SelAdr,
     	     .SavePC
 	     );
 

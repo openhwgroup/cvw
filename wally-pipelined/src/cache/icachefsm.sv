@@ -60,7 +60,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
    output logic       spillSave,
    output logic       CntEn,
    output logic       CntReset,
-   output logic [1:0] PCMux,
+   output logic [1:0] SelAdr,
    output logic       SavePC
    );
 
@@ -130,14 +130,14 @@ module icachefsm #(parameter BLOCKLEN = 256)
     //InstrReadF = 1'b0;
     ICacheMemWriteEnable = 1'b0;
     spillSave = 1'b0;
-    PCMux = 2'b00;
+    SelAdr = 2'b00;
     ICacheReadEn = 1'b0;
     SavePC = 1'b0;
     ICacheStallF = 1'b1;
     
     case (CurrState)
       STATE_READY: begin
-        PCMux = 2'b00;
+        SelAdr = 2'b00;
         ICacheReadEn = 1'b1;
         if (ITLBMissF) begin
           NextState = STATE_TLB_MISS;
@@ -146,25 +146,25 @@ module icachefsm #(parameter BLOCKLEN = 256)
           ICacheStallF = 1'b0;
 	  if(StallF) begin
 	    NextState = STATE_CPU_BUSY;
-	    PCMux = 2'b01;
+	    SelAdr = 2'b01;
 	  end else begin
             NextState = STATE_READY;
 	  end
         end else if (hit & spill) begin
           spillSave = 1'b1;
-          PCMux = 2'b10;
+          SelAdr = 2'b10;
           NextState = STATE_HIT_SPILL;
         end else if (~hit & ~spill) begin
           CntReset = 1'b1;
           NextState = STATE_MISS_FETCH_WDV;
         end else if (~hit & spill) begin
           CntReset = 1'b1;
-          PCMux = 2'b01;
+          SelAdr = 2'b01;
           NextState = STATE_MISS_SPILL_FETCH_WDV;
         end else begin
 	  if(StallF) begin
 	    NextState = STATE_CPU_BUSY;
-	    PCMux = 2'b01;
+	    SelAdr = 2'b01;
 	  end else begin
             NextState = STATE_READY;
 	  end
@@ -172,7 +172,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
       end
       // branch 1,  hit spill and 2, miss spill hit
       STATE_HIT_SPILL: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         UnalignedSelect = 1'b1;
         ICacheReadEn = 1'b1;
         if (hit) begin
@@ -183,7 +183,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_HIT_SPILL_MISS_FETCH_WDV: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         //InstrReadF = 1'b1;
         PreCntEn = 1'b1;
         if (FetchCountFlag & InstrAckF) begin
@@ -193,25 +193,25 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_HIT_SPILL_MISS_FETCH_DONE: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         ICacheMemWriteEnable = 1'b1;
         NextState = STATE_HIT_SPILL_MERGE;
       end
       STATE_HIT_SPILL_MERGE: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         UnalignedSelect = 1'b1;
         ICacheReadEn = 1'b1;
         NextState = STATE_HIT_SPILL_FINAL;
       end
       STATE_HIT_SPILL_FINAL: begin
         ICacheReadEn = 1'b1;
-        PCMux = 2'b00;
+        SelAdr = 2'b00;
         UnalignedSelect = 1'b1;
         SavePC = 1'b1;
         ICacheStallF = 1'b0;
 	if(StallF) begin
 	  NextState = STATE_CPU_BUSY_SPILL;
-	  PCMux = 2'b10;
+	  SelAdr = 2'b10;
 	end else begin
           NextState = STATE_READY;
 	end
@@ -219,7 +219,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
       end
       // branch 3 miss no spill
       STATE_MISS_FETCH_WDV: begin
-        PCMux = 2'b01;
+        SelAdr = 2'b01;
         //InstrReadF = 1'b1;
         PreCntEn = 1'b1;
         if (FetchCountFlag & InstrAckF) begin
@@ -229,30 +229,30 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_MISS_FETCH_DONE: begin
-        PCMux = 2'b01;
+        SelAdr = 2'b01;
         ICacheMemWriteEnable = 1'b1;
         NextState = STATE_MISS_READ;
       end
       STATE_MISS_READ: begin
-        PCMux = 2'b01;
+        SelAdr = 2'b01;
         ICacheReadEn = 1'b1;
         NextState = STATE_MISS_READ_DELAY;
       end
       STATE_MISS_READ_DELAY: begin
-        //PCMux = 2'b01;
+        //SelAdr = 2'b01;
         ICacheReadEn = 1'b1;
 	ICacheStallF = 1'b0;
 	if(StallF) begin
-	  PCMux = 2'b01;
+	  SelAdr = 2'b01;
 	  NextState = STATE_CPU_BUSY;
-	  PCMux = 2'b01;
+	  SelAdr = 2'b01;
 	end else begin
           NextState = STATE_READY;
 	end
       end
       // branch 4 miss spill hit, and 5 miss spill miss
       STATE_MISS_SPILL_FETCH_WDV: begin
-        PCMux = 2'b01;
+        SelAdr = 2'b01;
         PreCntEn = 1'b1;
         //InstrReadF = 1'b1;	
         if (FetchCountFlag & InstrAckF) begin 
@@ -262,17 +262,17 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_MISS_SPILL_FETCH_DONE: begin
-        PCMux = 2'b01;	
+        SelAdr = 2'b01;	
         ICacheMemWriteEnable = 1'b1;
         NextState = STATE_MISS_SPILL_READ1;
       end
       STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
-        PCMux = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
+        SelAdr = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
         ICacheReadEn = 1'b1;	
         NextState = STATE_MISS_SPILL_2;
       end
       STATE_MISS_SPILL_2: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         UnalignedSelect = 1'b1;
         spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
         ICacheReadEn = 1'b1;
@@ -284,20 +284,20 @@ module icachefsm #(parameter BLOCKLEN = 256)
           NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
         end else begin
           ICacheReadEn = 1'b1;
-          PCMux = 2'b00;
+          SelAdr = 2'b00;
           UnalignedSelect = 1'b1;
           SavePC = 1'b1;
           ICacheStallF = 1'b0;
 	  if(StallF) begin
 	    NextState = STATE_CPU_BUSY;
-	    PCMux = 2'b01;
+	    SelAdr = 2'b01;
 	  end else begin
             NextState = STATE_READY;
 	  end
         end
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         PreCntEn = 1'b1;
         //InstrReadF = 1'b1;	
         if (FetchCountFlag & InstrAckF) begin
@@ -307,25 +307,25 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_MISS_SPILL_MISS_FETCH_DONE: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         ICacheMemWriteEnable = 1'b1;
         NextState = STATE_MISS_SPILL_MERGE;
       end
       STATE_MISS_SPILL_MERGE: begin
-        PCMux = 2'b10;
+        SelAdr = 2'b10;
         UnalignedSelect = 1'b1;
         ICacheReadEn = 1'b1;	
         NextState = STATE_MISS_SPILL_FINAL;
       end
       STATE_MISS_SPILL_FINAL: begin
         ICacheReadEn = 1'b1;
-        PCMux = 2'b00;
+        SelAdr = 2'b00;
         UnalignedSelect = 1'b1;
         SavePC = 1'b1;
         ICacheStallF = 1'b0;	
 	if(StallF) begin
 	  NextState = STATE_CPU_BUSY;
-	  PCMux = 2'b01;
+	  SelAdr = 2'b01;
 	end else begin
           NextState = STATE_READY;
 	end
@@ -341,7 +341,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_TLB_MISS_DONE: begin
-	PCMux = 2'b01;
+	SelAdr = 2'b01;
         NextState = STATE_READY;
       end
       STATE_CPU_BUSY: begin
@@ -350,7 +350,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
           NextState = STATE_TLB_MISS;
 	end else if(StallF) begin
 	  NextState = STATE_CPU_BUSY;
-	  PCMux = 2'b01;
+	  SelAdr = 2'b01;
 	end
 	else begin
 	  NextState = STATE_READY;
@@ -363,14 +363,14 @@ module icachefsm #(parameter BLOCKLEN = 256)
           NextState = STATE_TLB_MISS;
 	end else if(StallF) begin
 	  NextState = STATE_CPU_BUSY_SPILL;
-	  PCMux = 2'b10;
+	  SelAdr = 2'b10;
 	end
 	else begin
 	  NextState = STATE_READY;
 	end
       end
       default: begin
-        PCMux = 2'b01;
+        SelAdr = 2'b01;
         NextState = STATE_READY;
       end
       // *** add in error handling and invalidate/evict
