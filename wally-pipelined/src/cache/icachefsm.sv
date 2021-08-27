@@ -30,6 +30,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
    // Inputs from pipeline
    input logic 	      clk, reset,
 
+   input logic 	      StallF,
+
    // inputs from mmu
    input logic 	      ITLBMissF,
    input logic 	      ITLBWriteF,
@@ -88,7 +90,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
   
 		STATE_MISS_FETCH_WDV, // aligned miss, issue read to AHB and wait for data.
 		STATE_MISS_FETCH_DONE, // write data into SRAM/LUT
-		STATE_MISS_READ, // read block 1 from SRAM/LUT  
+		STATE_MISS_READ, // read block 1 from SRAM/LUT
+		STATE_MISS_READ_DELAY, // read block 1 from SRAM/LUT  		
 
 		STATE_MISS_SPILL_FETCH_WDV, // spill, miss on block 0, issue read to AHB and wait
 		STATE_MISS_SPILL_FETCH_DONE, // write data into SRAM/LUT
@@ -104,7 +107,10 @@ module icachefsm #(parameter BLOCKLEN = 256)
 
 		STATE_INVALIDATE, // *** not sure if invalidate or evict? invalidate by cache block or address?
 		STATE_TLB_MISS,
-		STATE_TLB_MISS_DONE
+		STATE_TLB_MISS_DONE,
+
+		STATE_CPU_BUSY,
+		STATE_CPU_BUSY_SPILL		
 		} statetype;
   
   statetype CurrState, NextState;
@@ -138,7 +144,12 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end else if (hit & ~spill) begin
           SavePC = 1'b1;
           ICacheStallF = 1'b0;
-          NextState = STATE_READY;
+	  if(StallF) begin
+	    NextState = STATE_CPU_BUSY;
+	    PCMux = 2'b01;
+	  end else begin
+            NextState = STATE_READY;
+	  end
         end else if (hit & spill) begin
           spillSave = 1'b1;
           PCMux = 2'b10;
@@ -151,7 +162,12 @@ module icachefsm #(parameter BLOCKLEN = 256)
           PCMux = 2'b01;
           NextState = STATE_MISS_SPILL_FETCH_WDV;
         end else begin
-          NextState = STATE_READY;
+	  if(StallF) begin
+	    NextState = STATE_CPU_BUSY;
+	    PCMux = 2'b01;
+	  end else begin
+            NextState = STATE_READY;
+	  end
         end
       end
       // branch 1,  hit spill and 2, miss spill hit
@@ -192,8 +208,14 @@ module icachefsm #(parameter BLOCKLEN = 256)
         PCMux = 2'b00;
         UnalignedSelect = 1'b1;
         SavePC = 1'b1;
-        NextState = STATE_READY;
-        ICacheStallF = 1'b0;	
+        ICacheStallF = 1'b0;
+	if(StallF) begin
+	  NextState = STATE_CPU_BUSY_SPILL;
+	  PCMux = 2'b10;
+	end else begin
+          NextState = STATE_READY;
+	end
+	
       end
       // branch 3 miss no spill
       STATE_MISS_FETCH_WDV: begin
@@ -214,7 +236,19 @@ module icachefsm #(parameter BLOCKLEN = 256)
       STATE_MISS_READ: begin
         PCMux = 2'b01;
         ICacheReadEn = 1'b1;
-        NextState = STATE_READY;
+        NextState = STATE_MISS_READ_DELAY;
+      end
+      STATE_MISS_READ_DELAY: begin
+        //PCMux = 2'b01;
+        ICacheReadEn = 1'b1;
+	ICacheStallF = 1'b0;
+	if(StallF) begin
+	  PCMux = 2'b01;
+	  NextState = STATE_CPU_BUSY;
+	  PCMux = 2'b01;
+	end else begin
+          NextState = STATE_READY;
+	end
       end
       // branch 4 miss spill hit, and 5 miss spill miss
       STATE_MISS_SPILL_FETCH_WDV: begin
@@ -249,12 +283,17 @@ module icachefsm #(parameter BLOCKLEN = 256)
           CntReset = 1'b1;
           NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
         end else begin
-          NextState = STATE_READY;
           ICacheReadEn = 1'b1;
           PCMux = 2'b00;
           UnalignedSelect = 1'b1;
           SavePC = 1'b1;
-          ICacheStallF = 1'b0;	
+          ICacheStallF = 1'b0;
+	  if(StallF) begin
+	    NextState = STATE_CPU_BUSY;
+	    PCMux = 2'b01;
+	  end else begin
+            NextState = STATE_READY;
+	  end
         end
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
@@ -284,7 +323,12 @@ module icachefsm #(parameter BLOCKLEN = 256)
         UnalignedSelect = 1'b1;
         SavePC = 1'b1;
         ICacheStallF = 1'b0;	
-        NextState = STATE_READY;
+	if(StallF) begin
+	  NextState = STATE_CPU_BUSY;
+	  PCMux = 2'b01;
+	end else begin
+          NextState = STATE_READY;
+	end
       end
       STATE_TLB_MISS: begin
         if (WalkerInstrPageFaultF) begin
@@ -297,7 +341,33 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end
       end
       STATE_TLB_MISS_DONE: begin
+	PCMux = 2'b01;
         NextState = STATE_READY;
+      end
+      STATE_CPU_BUSY: begin
+	ICacheStallF = 1'b0;
+	if (ITLBMissF) begin
+          NextState = STATE_TLB_MISS;
+	end else if(StallF) begin
+	  NextState = STATE_CPU_BUSY;
+	  PCMux = 2'b01;
+	end
+	else begin
+	  NextState = STATE_READY;
+	end
+      end
+      STATE_CPU_BUSY_SPILL: begin
+	ICacheStallF = 1'b0;
+	ICacheReadEn = 1'b1;
+	if (ITLBMissF) begin
+          NextState = STATE_TLB_MISS;
+	end else if(StallF) begin
+	  NextState = STATE_CPU_BUSY_SPILL;
+	  PCMux = 2'b10;
+	end
+	else begin
+	  NextState = STATE_READY;
+	end
       end
       default: begin
         PCMux = 2'b01;
