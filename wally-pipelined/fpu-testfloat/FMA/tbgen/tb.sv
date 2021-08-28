@@ -142,7 +142,7 @@ assign	ansnan = FmtE ? &ans[`FLEN-2:`NF] && |ans[`NF-1:0] : &ans[30:23] && |ans[
                 .BiasE, .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
                 .FOpCtrlE, .FmtE, .SumE, .NegSumE, .InvZE, .NormCntE, .ZSgnEffE, .PSgnE,
                 .ProdExpE, .AddendStickyE, .KillProdE); 
-fma2 UUT2(.XSgnM(XSgnE), .YSgnM(YSgnE), .ZSgnM(ZSgnE), .XExpM(XExpE), .YExpM(YExpE), .ZExpM(ZExpE), .XManM({XAssumed1E,XFracE}), .YManM({YAssumed1E,YFracE}), .ZManM({ZAssumed1E,ZFracE}), .XNaNM(XNaNE), .YNaNM(YNaNE), .ZNaNM(ZNaNE), .XZeroM(XZeroE), .YZeroM(YZeroE), .ZZeroM(ZZeroE), .XInfM(XInfE), .YInfM(YInfE), .ZInfM(ZInfE), .XSNaNM(XSNaNE), .YSNaNM(YSNaNE), .ZSNaNM(ZSNaNE),
+fma2 UUT2(.XSgnM(XSgnE), .YSgnM(YSgnE), .XExpM(XExpE), .YExpM(YExpE), .ZExpM(ZExpE), .XManM({XAssumed1E,XFracE}), .YManM({YAssumed1E,YFracE}), .ZManM({ZAssumed1E,ZFracE}), .XNaNM(XNaNE), .YNaNM(YNaNE), .ZNaNM(ZNaNE), .XZeroM(XZeroE), .YZeroM(YZeroE), .ZZeroM(ZZeroE), .XInfM(XInfE), .YInfM(YInfE), .ZInfM(ZInfE), .XSNaNM(XSNaNE), .YSNaNM(YSNaNE), .ZSNaNM(ZSNaNE),
               //  .FSrcXE, .FSrcYE, .FSrcZE, .FSrcXM, .FSrcYM, .FSrcZM, 
                .FOpCtrlM(FOpCtrlE[2:0]), .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .NormCntM(NormCntE), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE),
                .FmtM(FmtE), .FrmM(FrmE), .FMAFlgM, .FMAResM);

@@ -225,7 +225,7 @@ module fpu (
 		 .XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
      .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
      .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
-		 .FOpCtrlE, .FOpCtrlM, 
+		 .FOpCtrlE,
 		 .FmtE, .FmtM, .FrmM, 
      // outputs:
      .FMAFlgM, .FMAResM);
@@ -257,19 +257,7 @@ module fpu (
                    // outputs:
 			             .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 	
-	
-	// add/FP <-> FP convert
-  //    - computation is done in two stages
-  //    - contains some E/M pipleine registers
-  //*** remove uneeded logic
-  //*** change to use the unpacking unit if possible
-// 	faddcvt faddcvt (.clk, .reset, .FlushM, .StallM, .FrmM, .FOpCtrlM, .FmtE, .FmtM, .FSrcXE, .FSrcYE, .FOpCtrlE, 
-//    .XSgnM, .YSgnM, .XManM, .YManM, .XExpM, .YExpM,
-//    .XSgnE, .YSgnE, .XManE, .YManE, .XExpE, .YExpE, .XDenormE, .YDenormE, .XNormE, .XNormM, .YNormM,  .XZeroE, .YZeroE, .XInfE, .YInfE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE,
-//                   // outputs:
-//                   .CvtFpResM, .CvtFpFlgM);
-
-
+	// convert from signle to double and vice versa
 	cvtfp cvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
 	
 	// compare unit
