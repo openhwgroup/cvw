@@ -70,6 +70,8 @@ module icache
   localparam OFFSETWIDTH = $clog2(BlockByteLength);
 
   localparam integer 	       PA_WIDTH = `PA_BITS - 2;
+  localparam integer 	       NUMWAYS = 4;
+  
 
   // Input signals to cache memory
   logic 		    FlushMem;
@@ -95,13 +97,26 @@ module icache
   
   logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
  
-  logic [`PA_BITS-1:0] 	       PCPreFinalF, PCPSpillF;
-  logic [`PA_BITS-1:OFFSETWIDTH] PCPTrunkF;
+  logic [`PA_BITS-1:0] 	       PCPSpillF;
 
   logic 		       CntReset;
   logic [1:0] 		       SelAdr;
   logic 		       SavePC;
   logic [INDEXLEN-1:0]	       RAdr;
+  logic [NUMWAYS-1:0] 	       VictimWay;
+  logic 		       LRUWriteEn;
+  logic [NUMWAYS-1:0] 	       WayHit;
+  logic 		       hit;
+  
+  
+  logic [BLOCKLEN-1:0] 	       ReadDataBlockWayMasked [NUMWAYS-1:0];
+
+
+  logic 		       CacheableF;
+  
+  logic [`PA_BITS-1:0] 	       BasePAdrF, BasePAdrMaskedF;
+  logic [OFFSETLEN-1:0]        BasePAdrOffsetF;
+  
   
 
   // on spill we want to get the first 2 bytes of the next cache block.
@@ -120,27 +135,48 @@ module icache
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
 	     .DIRTY_BITS(0))
-  icachemem(.clk,
-	    .reset,
-	    .RAdr(RAdr),
-	    .PAdr(PCTagF),
-	    .WriteEnable(ICacheMemWriteEnable),
-	    .WriteWordEnable('1),
-	    .TagWriteEnable(ICacheMemWriteEnable),
-	    .WriteData(ICacheMemWriteData),
-	    .SetValid(ICacheMemWriteEnable),
-	    .ClearValid(1'b0),
-	    .SetDirty(1'b0),
-	    .ClearDirty(1'b0),
-	    .SelEvict(1'b0),
-	    .VictimWay(1'b0),
-	    .ReadDataBlockWayMasked(ReadLineF),
-	    .WayHit(ICacheMemReadValid),
-	    .VictimDirtyWay(),
-	    .VictimTagWay()
-	    );
+  icachemem[NUMWAYS-1:0](.clk,
+			 .reset,
+			 .RAdr(RAdr),
+			 .PAdr(PCTagF),
+			 .WriteEnable(ICacheMemWriteEnable), // *** connect
+			 .WriteWordEnable('1),
+			 .TagWriteEnable(ICacheMemWriteEnable), // *** connect
+			 .WriteData(ICacheMemWriteData),
+			 .SetValid(ICacheMemWriteEnable),
+			 .ClearValid(1'b0),
+			 .SetDirty(1'b0),
+			 .ClearDirty(1'b0),
+			 .SelEvict(1'b0),
+			 .VictimWay,
+			 .ReadDataBlockWayMasked,
+			 .WayHit,
+			 .VictimDirtyWay(),
+			 .VictimTagWay()
+			 );
   
+  generate
+    if(NUMWAYS > 1) begin
+      cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+      cachereplacementpolicy(.clk, .reset,
+			     .WayHit,
+			     .VictimWay,
+			     .MemPAdrM(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			     .RAdr,
+			     .LRUWriteEn); // *** connect
+    end else begin
+      assign VictimWay = 1'b1; // one hot.
+    end
+  endgenerate
 
+  assign hit = | WayHit;
+
+  // ReadDataBlockWayMasked is a 2d array of cache block len by number of ways.
+  // Need to OR together each way in a bitwise manner.
+  // Final part of the AO Mux.  First is the AND in the cacheway.
+  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataBlockWayMasked), .y(ReadLineF));
+  
+  
   always_comb begin
     case (PCTagF[4:1])
       0: ICacheMemReadData = ReadLineF[31:0];
@@ -179,14 +215,12 @@ module icache
 
   // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-  
-
   assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
-  assign hit = ICacheMemReadValid; // note ICacheMemReadValid is hit.
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
+
 
   // to compute the fetch address we need to add the bit shifted
   // counter output to the address.
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
   flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
@@ -196,24 +230,7 @@ module icache
 		.q(FetchCount));
 
   assign NextFetchCount = FetchCount + 1'b1;
-
-  // This part is confusing.
-  // *** Ross Thompson reduce the complexity. This is just dumb.
-  // we need to remove the offset bits (PCPTrunkF).  Because the AHB interface is XLEN wide
-  // we need to address on that number of bits so the PC is extended to the right by AHBByteLength with zeros.
-  // fetch count is already aligned to AHBByteLength, but we need to extend back to the full address width with
-  // more zeros after the addition.  This will be the number of offset bits less the AHBByteLength.
-  logic [`PA_BITS-1:OFFSETWIDTH-LOGWPL] PCPTrunkExtF, InstrPAdrTrunkF ;
-
-  assign PCPTrunkExtF = {PCPTrunkF, {{LOGWPL}{1'b0}}};
-  // verilator lint_off WIDTH
-  assign InstrPAdrTrunkF = PCPTrunkExtF + FetchCount;
-  // verilator lint_on WIDTH
   
-  //assign InstrPAdrF = {{PCPTrunkF, {{LOGWPL}{1'b0}}} + FetchCount, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
-  assign InstrPAdrF = {InstrPAdrTrunkF, {{OFFSETWIDTH-LOGWPL}{1'b0}}};
-  
-
 
   // store read data from memory interface before writing into SRAM.
   genvar 				i;
@@ -237,10 +254,25 @@ module icache
 			.q(SelAdr_q));
   
   assign PCTagF = SelAdr_q[1] ? PCPSpillF : PCPF;
+
+  // unlike the dcache the victim is never dirty so no eviction is necessary.
+/* -----\/----- EXCLUDED -----\/-----
+  mux2 #(`PA_BITS) BaseAdrMux(.d0(PCTagF),
+			      .d1({VictimTag, PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
+			      .s(SelEvict),
+			      .y(BasePAdrF));
+ -----/\----- EXCLUDED -----/\----- */
+  assign BasePAdrF = PCTagF;
+
+  // if not cacheable the offset bits needs to be sent to the EBU.
+  // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
+  assign CacheableF = 1'b1; // *** BUG needs to be an input from MMU.
+  assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : BasePAdrF[OFFSETLEN-1:0];
+  assign BasePAdrMaskedF = {BasePAdrF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
+  
+  assign InstrPAdrF = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedF;
   
   // truncate the offset from PCPF for memory address generation
-  assign PCPTrunkF = PCTagF[`PA_BITS-1:OFFSETWIDTH];
-  
 
   icachefsm #(.BLOCKLEN(BLOCKLEN)) 
   controller(.clk,
@@ -254,7 +286,7 @@ module icache
 	     .WalkerInstrPageFaultF,
 	     .InstrAckF,
 	     .InstrReadF,
-	     .hit(ICacheMemReadValid),
+	     .hit,
 	     .FetchCountFlag,
 	     .spill,
 	     .spillSave,
