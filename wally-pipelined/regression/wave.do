@@ -191,22 +191,21 @@ add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/controll
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/ITLBWriteF
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/ReadLineF
-add wave -noupdate -expand -group icache {/testbench/dut/hart/ifu/icache/icachemem/word[0]/CacheDataMem/Addr}
-add wave -noupdate -expand -group icache {/testbench/dut/hart/ifu/icache/icachemem/word[0]/CacheDataMem/WriteData}
-add wave -noupdate -expand -group icache {/testbench/dut/hart/ifu/icache/icachemem/word[0]/CacheDataMem/WriteEnable}
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/PCNextIndexF
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/ReadLineF
+add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/BasePAdrF
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/hit
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spill
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/ICacheStallF
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/SavePC
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/UnalignedSelect
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PCMux
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntReset
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
 add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntEn
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrPAdrF
+add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrInF
 add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/FetchCountFlag
 add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/FetchCount
 add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrReadF
@@ -475,21 +474,11 @@ add wave -noupdate /testbench/dut/hart/ifu/immu/Translate
 add wave -noupdate /testbench/dut/hart/ifu/icache/FinalInstrRawF
 add wave -noupdate /testbench/dut/hart/ifu/icache/StallF
 add wave -noupdate /testbench/dut/hart/ifu/icache/ICacheMemReadData
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[0]/CacheDataMem/Addr}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[0]/CacheDataMem/ReadData}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[1]/CacheDataMem/Addr}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[1]/CacheDataMem/ReadData}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[2]/CacheDataMem/Addr}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[2]/CacheDataMem/ReadData}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[3]/CacheDataMem/Addr}
-add wave -noupdate {/testbench/dut/hart/ifu/icache/icachemem/word[3]/CacheDataMem/ReadData}
-add wave -noupdate /testbench/dut/hart/ifu/icache/icachemem/WayHit
 add wave -noupdate /testbench/dut/hart/ifu/icache/PCTagF
 add wave -noupdate /testbench/dut/hart/ifu/icache/PCPSpillF
 add wave -noupdate /testbench/dut/hart/ifu/icache/ICacheReadEn
-add wave -noupdate /testbench/dut/hart/ifu/icache/PCMux_q
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {53451 ns} 0}
+WaveRestoreCursors {{Cursor 6} {183 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -505,4 +494,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {53011 ns} {53891 ns}
+WaveRestoreZoom {0 ns} {456 ns}
