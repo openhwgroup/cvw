@@ -126,6 +126,7 @@ module testbench();
   string            ExpectedCSRArrayW[10:0];
   logic [`XLEN-1:0] ExpectedCSRArrayValueW[10:0];
   logic [`XLEN-1:0] ExpectedIntType;
+  logic             forcedInterrupt;
   integer           NumCSRMIndex;
   integer           NumCSRWIndex;
   integer           NumCSRPostWIndex;    
@@ -207,61 +208,59 @@ module testbench();
       #2;
 
       while(TokenIndex > MarkerIndex) begin
-    // parse the GPR
-    if (ExpectedTokens[MarkerIndex] == "GPR") begin
-      RegWriteM = ExpectedTokens[MarkerIndex];
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", ExpectedRegAdrM);
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedRegValueM);
-      
-      MarkerIndex += 3;
+        // parse the GPR
+        if (ExpectedTokens[MarkerIndex] == "GPR") begin
+          RegWriteM = ExpectedTokens[MarkerIndex];
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", ExpectedRegAdrM);
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedRegValueM);
+          
+          MarkerIndex += 3;
 
-      // parse memory address, read data, and/or write data
-    end else if(ExpectedTokens[MarkerIndex].substr(0, 2) == "Mem") begin
-      MemOpM = ExpectedTokens[MarkerIndex];
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedMemAdrM);
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedMemWriteDataM);
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadDataM);
+          // parse memory address, read data, and/or write data
+        end else if(ExpectedTokens[MarkerIndex].substr(0, 2) == "Mem") begin
+          MemOpM = ExpectedTokens[MarkerIndex];
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedMemAdrM);
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedMemWriteDataM);
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadDataM);
 
-      MarkerIndex += 4;
+          MarkerIndex += 4;
 
-      // parse CSRs, because there are 1 or more CSRs after the CSR token
-      // we check if the CSR token or the number of CSRs is greater than 0.
-      // if so then we want to parse for a CSR.
-    end else if(ExpectedTokens[MarkerIndex] == "CSR" || NumCSRM > 0) begin
-      if(ExpectedTokens[MarkerIndex] == "CSR") begin
-        // all additional CSR's won't have this token.
-        MarkerIndex++;
-      end
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSRArrayM[NumCSRM]);
-      matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRArrayValueM[NumCSRM]);
+          // parse CSRs, because there are 1 or more CSRs after the CSR token
+          // we check if the CSR token or the number of CSRs is greater than 0.
+          // if so then we want to parse for a CSR.
+        end else if(ExpectedTokens[MarkerIndex] == "CSR" || NumCSRM > 0) begin
+          if(ExpectedTokens[MarkerIndex] == "CSR") begin
+            // all additional CSR's won't have this token.
+            MarkerIndex++;
+          end
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSRArrayM[NumCSRM]);
+          matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRArrayValueM[NumCSRM]);
 
-      MarkerIndex += 2;
+          MarkerIndex += 2;
 
-      // if we get an xcause with the interrupt bit set we must generate an interrupt as interrupts
-      // are imprecise.  Forcing the trap at this time will allow wally to track what qemu does.
-      // the msb of xcause will be set.
-      // bits 1:0 select mode; 0 = user, 1 = superviser, 3 = machine
-      // bits 3:2 select the type of interrupt, 0 = software, 1 = timer, 2 = external
-      if(ExpectedCSRArrayM[NumCSRM].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRM][`XLEN-1] == 1'b1)) begin
-        //what type?
-        ExpectedIntType = ExpectedCSRArrayValueM[NumCSRM] & 64'h0000_000C;
-        $display("%tns, %d instrs: CSR = %s. Forcing interrupt of cause = %x", $time, InstrCountW, ExpectedCSRArrayM[NumCSRM], ExpectedCSRArrayValueM[NumCSRM]);
-        
-        if(ExpectedIntType == 0) begin
-          force dut.hart.priv.SwIntM = 1'b1;
-          $display("Force SwIntM");
+          // if we get an xcause with the interrupt bit set we must generate an interrupt as interrupts
+          // are imprecise.  Forcing the trap at this time will allow wally to track what qemu does.
+          // the msb of xcause will be set.
+          // bits 1:0 select mode; 0 = user, 1 = superviser, 3 = machine
+          // bits 3:2 select the type of interrupt, 0 = software, 1 = timer, 2 = external
+          if(ExpectedCSRArrayM[NumCSRM].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRM][`XLEN-1] == 1'b1)) begin
+            //what type?
+            ExpectedIntType = ExpectedCSRArrayValueM[NumCSRM] & 64'h0000_000C;
+            $display("%tns, %d instrs: CSR = %s. Forcing interrupt of cause = %x", $time, InstrCountW, ExpectedCSRArrayM[NumCSRM], ExpectedCSRArrayValueM[NumCSRM]);
+            forcedInterrupt = 1;
+            if(ExpectedIntType == 0) begin
+              force dut.hart.priv.SwIntM = 1'b1;
+              $display("Force SwIntM");
+            end else if(ExpectedIntType == 4) begin
+              force dut.hart.priv.TimerIntM = 1'b1;
+              $display("Force TimeIntM");
+            end else if(ExpectedIntType == 8) begin
+              force dut.hart.priv.ExtIntM = 1'b1;
+              $display("Force ExtIntM");
+            end else forcedInterrupt = 0;
+          end      
+          NumCSRM++;      
         end
-        else if(ExpectedIntType == 4) begin
-          force dut.hart.priv.TimerIntM = 1'b1;
-          $display("Force TimeIntM");
-        end
-        else if(ExpectedIntType == 8) begin
-          force dut.hart.priv.ExtIntM = 1'b1;
-          $display("Force ExtIntM");
-        end
-      end      
-      NumCSRM++;      
-    end
       end
       // override on special conditions
       if (ExpectedMemAdrM == 'h10000005) begin
@@ -338,24 +337,19 @@ module testbench();
         end
 
         // force interrupts to 0
-        for(NumCSRMIndex = 0; NumCSRMIndex < NumCSRM; NumCSRMIndex++) begin
-          if(ExpectedCSRArrayM[NumCSRMIndex].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRMIndex][`XLEN-1] == 1'b1)) begin
-            //what type?
-            ExpectedIntType = ExpectedCSRArrayValueM[NumCSRM] & 64'h0000_000C;
-            $display("%tns, %d instrs: CSR = %s. Forcing interrupt of cause = %x back to 0", $time, InstrCountW, ExpectedCSRArrayM[NumCSRM], ExpectedCSRArrayValueM[NumCSRM]);
-            
-            if(ExpectedIntType == 0) begin
-              force dut.hart.priv.SwIntM = 1'b0;
-              $display("Force SwIntM");
-            end
-            else if(ExpectedIntType == 4) begin
-              force dut.hart.priv.TimerIntM = 1'b0;
-              $display("Force TimeIntM");
-            end
-            else if(ExpectedIntType == 8) begin
-              force dut.hart.priv.ExtIntM = 1'b0;
-              $display("Force ExtIntM");
-                end
+        if (forcedInterrupt) begin
+          forcedInterrupt = 0;
+          if(ExpectedIntType == 0) begin
+            force dut.hart.priv.SwIntM = 1'b0;
+            $display("Force SwIntM");
+          end
+          else if(ExpectedIntType == 4) begin
+            force dut.hart.priv.TimerIntM = 1'b0;
+            $display("Force TimeIntM");
+          end
+          else if(ExpectedIntType == 8) begin
+            force dut.hart.priv.ExtIntM = 1'b0;
+            $display("Force ExtIntM");
           end
         end
       end
