@@ -61,7 +61,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
    output logic       CntEn,
    output logic       CntReset,
    output logic [1:0] SelAdr,
-   output logic       SavePC
+   output logic       SavePC,
+   output logic       LRUWriteEn
    );
 
   // FSM states
@@ -134,7 +135,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
     ICacheReadEn = 1'b0;
     SavePC = 1'b0;
     ICacheStallF = 1'b1;
-    
+    LRUWriteEn = 1'b0;
     case (CurrState)
       STATE_READY: begin
         SelAdr = 2'b00;
@@ -144,6 +145,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end else if (hit & ~spill) begin
           SavePC = 1'b1;
           ICacheStallF = 1'b0;
+	  LRUWriteEn = 1'b1;
 	  if(StallF) begin
 	    NextState = STATE_CPU_BUSY;
 	    SelAdr = 2'b01;
@@ -153,7 +155,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end else if (hit & spill) begin
           spillSave = 1'b1;
           SelAdr = 2'b10;
-          NextState = STATE_HIT_SPILL;
+          LRUWriteEn = 1'b1;
+	  NextState = STATE_HIT_SPILL;
         end else if (~hit & ~spill) begin
           CntReset = 1'b1;
           NextState = STATE_MISS_FETCH_WDV;
@@ -209,6 +212,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
         UnalignedSelect = 1'b1;
         SavePC = 1'b1;
         ICacheStallF = 1'b0;
+	LRUWriteEn = 1'b1;
+	
 	if(StallF) begin
 	  NextState = STATE_CPU_BUSY_SPILL;
 	  SelAdr = 2'b10;
@@ -242,6 +247,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
         //SelAdr = 2'b01;
         ICacheReadEn = 1'b1;
 	ICacheStallF = 1'b0;
+	LRUWriteEn = 1'b1;
 	if(StallF) begin
 	  SelAdr = 2'b01;
 	  NextState = STATE_CPU_BUSY;
@@ -268,7 +274,8 @@ module icachefsm #(parameter BLOCKLEN = 256)
       end
       STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
         SelAdr = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
-        ICacheReadEn = 1'b1;	
+        ICacheReadEn = 1'b1;
+	LRUWriteEn = 1'b1;
         NextState = STATE_MISS_SPILL_2;
       end
       STATE_MISS_SPILL_2: begin
@@ -288,6 +295,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
           UnalignedSelect = 1'b1;
           SavePC = 1'b1;
           ICacheStallF = 1'b0;
+	  LRUWriteEn = 1'b1;
 	  if(StallF) begin
 	    NextState = STATE_CPU_BUSY;
 	    SelAdr = 2'b01;
@@ -323,6 +331,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
         UnalignedSelect = 1'b1;
         SavePC = 1'b1;
         ICacheStallF = 1'b0;	
+	LRUWriteEn = 1'b1;
 	if(StallF) begin
 	  NextState = STATE_CPU_BUSY_SPILL;
 	  SelAdr = 2'b10;
