@@ -135,7 +135,7 @@ module icache
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
 	     .DIRTY_BITS(0))
-  icachemem[NUMWAYS-1:0](.clk,
+  MemWay[NUMWAYS-1:0](.clk,
 			 .reset,
 			 .RAdr(RAdr),
 			 .PAdr(PCTagF),
