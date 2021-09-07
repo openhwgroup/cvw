@@ -70,7 +70,7 @@ module icache
   localparam OFFSETWIDTH = $clog2(BlockByteLength);
 
   localparam integer 	       PA_WIDTH = `PA_BITS - 2;
-  localparam integer 	       NUMWAYS = 4;
+  localparam integer 	       NUMWAYS = `ICACHE_NUMWAYS;
   
 
   // Input signals to cache memory
@@ -118,6 +118,8 @@ module icache
   logic [OFFSETLEN-1:0]        BasePAdrOffsetF;
   
   
+  logic [NUMWAYS-1:0] 	       SRAMWayWriteEnable;
+
 
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
@@ -139,9 +141,9 @@ module icache
 			 .reset,
 			 .RAdr(RAdr),
 			 .PAdr(PCTagF),
-			 .WriteEnable(ICacheMemWriteEnable), // *** connect
+			 .WriteEnable(SRAMWayWriteEnable), 
 			 .WriteWordEnable('1),
-			 .TagWriteEnable(ICacheMemWriteEnable), // *** connect
+			 .TagWriteEnable(SRAMWayWriteEnable),
 			 .WriteData(ICacheMemWriteData),
 			 .SetValid(ICacheMemWriteEnable),
 			 .ClearValid(1'b0),
@@ -274,6 +276,8 @@ module icache
   
   // truncate the offset from PCPF for memory address generation
 
+  assign SRAMWayWriteEnable = ICacheMemWriteEnable ? VictimWay : '0;
+
   icachefsm #(.BLOCKLEN(BLOCKLEN)) 
   controller(.clk,
 	     .reset,
@@ -293,7 +297,8 @@ module icache
 	     .CntEn,
 	     .CntReset,
 	     .SelAdr,
-    	     .SavePC
+    	     .SavePC,
+	     .LRUWriteEn
 	     );
 
   // For now, assume no writes to executable memory
