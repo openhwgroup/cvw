@@ -250,13 +250,13 @@ module testbench();
             forcedInterrupt = 1;
             if(ExpectedIntType == 0) begin
               force dut.hart.priv.SwIntM = 1'b1;
-              $display("Force SwIntM");
+              $display("Activate spoofed SwIntM");
             end else if(ExpectedIntType == 4) begin
               force dut.hart.priv.TimerIntM = 1'b1;
-              $display("Force TimeIntM");
+              $display("Activate spoofed TimeIntM");
             end else if(ExpectedIntType == 8) begin
               force dut.hart.priv.ExtIntM = 1'b1;
-              $display("Force ExtIntM");
+              $display("Activate spoofed ExtIntM");
             end else forcedInterrupt = 0;
           end      
           NumCSRM++;      
@@ -341,15 +341,15 @@ module testbench();
           forcedInterrupt = 0;
           if(ExpectedIntType == 0) begin
             force dut.hart.priv.SwIntM = 1'b0;
-            $display("Force SwIntM");
+            $display("Deactivate spoofed SwIntM");
           end
           else if(ExpectedIntType == 4) begin
             force dut.hart.priv.TimerIntM = 1'b0;
-            $display("Force TimeIntM");
+            $display("Deactivate spoofed TimeIntM");
           end
           else if(ExpectedIntType == 8) begin
             force dut.hart.priv.ExtIntM = 1'b0;
-            $display("Force ExtIntM");
+            $display("Deactivate spoofed ExtIntM");
           end
         end
       end

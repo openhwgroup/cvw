@@ -63,7 +63,7 @@ module trap (
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
   // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
-  assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || STATUS_SIE; // if S ints enabled or lower priv 3.1.9
+  assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || ((PrivilegeModeW == `S_MODE) && STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
   assign InterruptM = PendingInterruptM & ~CommittedM;
