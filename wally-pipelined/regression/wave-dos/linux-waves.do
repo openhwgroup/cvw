@@ -33,6 +33,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ALUResultE
 add wave -noupdate -divider M
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/PCM
 add wave -noupdate /testbench/InstrMName
+add wave -noupdate /testbench/textM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/InstrM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/dcache/MemPAdrM
@@ -114,77 +115,76 @@ add wave -noupdate -group EBU /testbench/dut/hart/ebu/NextBusState
 add wave -noupdate -divider W
 add wave -noupdate -radix hexadecimal /testbench/PCW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/InstrValidW
+add wave -noupdate /testbench/textM
 add wave -noupdate /testbench/dut/hart/ieu/dp/ReadDataW
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ResultW
-add wave -noupdate -divider RegFile
-add wave -noupdate /testbench/dut/hart/ieu/dp/RegWriteW
-add wave -noupdate -radix unsigned /testbench/dut/hart/ieu/dp/RdW
-add wave -noupdate /testbench/dut/hart/ieu/dp/regf/wd3
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[2]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[3]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[4]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[5]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[6]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[7]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[8]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[9]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[10]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[11]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[12]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[13]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[14]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[15]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[16]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[17]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[18]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[19]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[20]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[21]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[22]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[23]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[24]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[25]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[26]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[27]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[28]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[29]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[30]}
-add wave -noupdate -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[31]}
-add wave -noupdate -divider CSRs
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/MSTATUS_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/MCOUNTINHIBIT_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/MCOUNTEREN_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/MIDELEG_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/MIP_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/MIE_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MEPC_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MTVEC_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MCOUNTEREN_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MCOUNTINHIBIT_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MEDELEG_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MIDELEG_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MSCRATCH_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MCAUSE_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MTVAL_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/SSTATUS_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/SCOUNTEREN_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/SIP_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/SIE_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SEPC_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/STVEC_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SCOUNTEREN_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SEDELEG_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SIDELEG_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SATP_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/USTATUS_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UEPC_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UTVEC_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UIP_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UIE_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG_ARRAY_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/PMPADDR_ARRAY_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MISA_REGW
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csru/FRM_REGW
+add wave -noupdate -group RF /testbench/dut/hart/ieu/dp/RegWriteW
+add wave -noupdate -group RF -radix unsigned /testbench/dut/hart/ieu/dp/RdW
+add wave -noupdate -group RF /testbench/dut/hart/ieu/dp/regf/wd3
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[2]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[3]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[4]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[5]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[6]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[7]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[8]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[9]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[10]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[11]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[12]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[13]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[14]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[15]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[16]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[17]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[18]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[19]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[20]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[21]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[22]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[23]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[24]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[25]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[26]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[27]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[28]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[29]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[30]}
+add wave -noupdate -group RF -radix hexadecimal {/testbench/dut/hart/ieu/dp/regf/rf[31]}
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/MSTATUS_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/MCOUNTINHIBIT_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/MCOUNTEREN_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/MIDELEG_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/MIP_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/MIE_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MEPC_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MTVEC_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MCOUNTEREN_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MCOUNTINHIBIT_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MEDELEG_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MIDELEG_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MSCRATCH_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MCAUSE_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MTVAL_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/SSTATUS_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/SCOUNTEREN_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/SIP_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csri/SIE_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SEPC_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/STVEC_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SCOUNTEREN_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SEDELEG_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SIDELEG_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrs/SATP_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/USTATUS_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UEPC_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UTVEC_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UIP_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrn/UIE_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/PMPCFG_ARRAY_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/PMPADDR_ARRAY_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csrm/MISA_REGW
+add wave -noupdate -group CSR -radix hexadecimal /testbench/dut/hart/priv/csr/genblk1/csru/FRM_REGW
 add wave -noupdate -divider <NULL>
 add wave -hex -r /testbench/*
 TreeUpdate [SetDefaultTree]

@@ -265,13 +265,13 @@ module testbench();
       end
       // override on special conditions
       if (ExpectedMemAdrM == 'h10000005) begin
-    //$display("%tns, %d instrs: Overwriting read data from CLINT.", $time, InstrCountW);
+        //$display("%tns, %d instrs: Overwriting read data from CLINT.", $time, InstrCountW);
         force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM;
       end
       if(textM.substr(0,5) == "rdtime") begin
-    $display("%tns, %d instrs: Overwrite read value of CSR on read of MTIME in memory stage.", $time, InstrCountW);
-        force dut.hart.priv.csr.CSRReadValM = ExpectedRegValueM;
-    //dut.hart.ieu.dp.regf.wd3
+        $display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW);
+        force dut.uncore.clint.clint.MTIME = ExpectedRegValueM;
+        //dut.hart.ieu.dp.regf.wd3
       end
 
     end // if (checkInstrM)
@@ -291,74 +291,73 @@ module testbench();
       ExpectedMemWriteDataW <= '0;
       ExpectedMemReadDataW <= '0;
       NumCSRW <= '0;
-    end
-    else if(~dut.hart.StallW) begin
+    end else if(~dut.hart.StallW) begin
       if(dut.hart.FlushW) begin
-    ExpectedPCW <= '0;
-    ExpectedInstrW <= '0;
-    textW <= "";
-    RegWriteW <= "";
-    ExpectedRegAdrW <= '0;
-    ExpectedRegValueW <= '0;
-    ExpectedMemAdrW <= '0;
-    MemOpW <= "";
-    ExpectedMemWriteDataW <= '0;
-    ExpectedMemReadDataW <= '0;
-    NumCSRW <= '0;
+        ExpectedPCW <= '0;
+        ExpectedInstrW <= '0;
+        textW <= "";
+        RegWriteW <= "";
+        ExpectedRegAdrW <= '0;
+        ExpectedRegValueW <= '0;
+        ExpectedMemAdrW <= '0;
+        MemOpW <= "";
+        ExpectedMemWriteDataW <= '0;
+        ExpectedMemReadDataW <= '0;
+        NumCSRW <= '0;
       end else begin 
-    ExpectedPCW <= ExpectedPCM;
-    ExpectedInstrW <= ExpectedInstrM;
-    textW <= textM;
-    RegWriteW <= RegWriteM;
-    ExpectedRegAdrW <= ExpectedRegAdrM;
-    ExpectedRegValueW <= ExpectedRegValueM;
-    ExpectedMemAdrW <= ExpectedMemAdrM;
-    MemOpW <= MemOpM;
-    ExpectedMemWriteDataW <= ExpectedMemWriteDataM;
-    ExpectedMemReadDataW <= ExpectedMemReadDataM;
-    NumCSRW <= NumCSRM;
-    for(NumCSRWIndex = 0; NumCSRWIndex < NumCSRM; NumCSRWIndex++) begin
-      ExpectedCSRArrayW[NumCSRWIndex] = ExpectedCSRArrayM[NumCSRWIndex];
-      ExpectedCSRArrayValueW[NumCSRWIndex] = ExpectedCSRArrayValueM[NumCSRWIndex];
-    end
+        ExpectedPCW <= ExpectedPCM;
+        ExpectedInstrW <= ExpectedInstrM;
+        textW <= textM;
+        RegWriteW <= RegWriteM;
+        ExpectedRegAdrW <= ExpectedRegAdrM;
+        ExpectedRegValueW <= ExpectedRegValueM;
+        ExpectedMemAdrW <= ExpectedMemAdrM;
+        MemOpW <= MemOpM;
+        ExpectedMemWriteDataW <= ExpectedMemWriteDataM;
+        ExpectedMemReadDataW <= ExpectedMemReadDataM;
+        NumCSRW <= NumCSRM;
+        for(NumCSRWIndex = 0; NumCSRWIndex < NumCSRM; NumCSRWIndex++) begin
+          ExpectedCSRArrayW[NumCSRWIndex] = ExpectedCSRArrayM[NumCSRWIndex];
+          ExpectedCSRArrayValueW[NumCSRWIndex] = ExpectedCSRArrayValueM[NumCSRWIndex];
+        end
       end
       // override on special conditions
       #1;
 
 
       if(~dut.hart.StallW) begin
-    if(textM.substr(0,5) == "rdtime") begin
-      $display("%tns, %d instrs: Releasing force of CSRReadValM.", $time, InstrCountW);
-          release dut.hart.priv.csr.CSRReadValM;
+        if(textW.substr(0,5) == "rdtime") begin
+          $display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
+          release dut.uncore.clint.clint.MTIME;
           //release dut.hart.ieu.dp.regf.wd3;
-    end
-    
-    if (ExpectedMemAdrM == 'h10000005) begin
-      //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, InstrCountW);
-          release dut.hart.ieu.dp.ReadDataM;
-    end
-
-    // force interrupts to 0
-    for(NumCSRMIndex = 0; NumCSRMIndex < NumCSRM; NumCSRMIndex++) begin
-      if(ExpectedCSRArrayM[NumCSRMIndex].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRMIndex][`XLEN-1] == 1'b1)) begin
-        //what type?
-        ExpectedIntType = ExpectedCSRArrayValueM[NumCSRM] & 64'h0000_000C;
-        $display("%tns, %d instrs: CSR = %s. Forcing interrupt of cause = %x back to 0", $time, InstrCountW, ExpectedCSRArrayM[NumCSRM], ExpectedCSRArrayValueM[NumCSRM]);
+        end
         
-        if(ExpectedIntType == 0) begin
-          force dut.hart.priv.SwIntM = 1'b0;
-          $display("Force SwIntM");
+        if (ExpectedMemAdrM == 'h10000005) begin
+          //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, InstrCountW);
+              release dut.hart.ieu.dp.ReadDataM;
         end
-        else if(ExpectedIntType == 4) begin
-          force dut.hart.priv.TimerIntM = 1'b0;
-          $display("Force TimeIntM");
-        end
-        else if(ExpectedIntType == 8) begin
-          force dut.hart.priv.ExtIntM = 1'b0;
-          $display("Force ExtIntM");
+
+        // force interrupts to 0
+        for(NumCSRMIndex = 0; NumCSRMIndex < NumCSRM; NumCSRMIndex++) begin
+          if(ExpectedCSRArrayM[NumCSRMIndex].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRMIndex][`XLEN-1] == 1'b1)) begin
+            //what type?
+            ExpectedIntType = ExpectedCSRArrayValueM[NumCSRM] & 64'h0000_000C;
+            $display("%tns, %d instrs: CSR = %s. Forcing interrupt of cause = %x back to 0", $time, InstrCountW, ExpectedCSRArrayM[NumCSRM], ExpectedCSRArrayValueM[NumCSRM]);
+            
+            if(ExpectedIntType == 0) begin
+              force dut.hart.priv.SwIntM = 1'b0;
+              $display("Force SwIntM");
             end
-      end
-    end
+            else if(ExpectedIntType == 4) begin
+              force dut.hart.priv.TimerIntM = 1'b0;
+              $display("Force TimeIntM");
+            end
+            else if(ExpectedIntType == 8) begin
+              force dut.hart.priv.ExtIntM = 1'b0;
+              $display("Force ExtIntM");
+                end
+          end
+        end
       end
     end
   end
