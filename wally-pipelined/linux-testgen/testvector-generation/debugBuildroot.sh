@@ -14,16 +14,16 @@ outDir="../linux-testvectors"
 # Uncomment this version for QEMU debugging of kernel
 #  - good for poking around VM if it boots up
 #  - good for running QEMU commands (press "Ctrl-A" then "c" to open QEMU command prompt)
-#$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio 
+#$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -rtc clock=vm -icount shift=1
 # Uncomment this version for GDB debugging of kernel
 #  - attempts to load in symbols from "vmlinux"
 #  - good for looking at backtraces when Linux gets stuck for some reason 
-#$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -gdb tcp::1237 -S & riscv64-unknown-elf-gdb -x gdbinit_debug
+$customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -rtc clock=vm -icount shift=1 -gdb tcp::1237 -S & riscv64-unknown-elf-gdb -x gdbinit_debug
 
 # Uncomment this version to generate qemu_output.txt
 # - Uses GDB script
 # - Logs raw QEMU output to qemu_output.txt
-($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1237 -S 2> $intermedDir/qemu_output.txt) & riscv64-unknown-elf-gdb -x gdbinit_debug
+#($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -rtc clock=vm -icount shift=1 -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1237 -S 2> $intermedDir/qemu_output.txt) & riscv64-unknown-elf-gdb -x gdbinit_debug
 
 # Uncomment this version for parse_qemu.py debugging
 # - Uses qemu_output.txt
