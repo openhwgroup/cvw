@@ -189,7 +189,9 @@ add wave -noupdate -group divider /testbench/dut/hart/mdu/genblk1/div/rem0
 add wave -noupdate -expand -group icache -color Gold /testbench/dut/hart/ifu/icache/controller/CurrState
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/BasePAdrF
 add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/WayHit
-add wave -noupdate -expand -group icache -expand -group {Cache SRAM writes} /testbench/dut/hart/ifu/icache/VictimWay
+add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/genblk1/cachereplacementpolicy/BlockReplacementBits
+add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/genblk1/cachereplacementpolicy/EncVicWay
+add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/VictimWay
 add wave -noupdate -expand -group icache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/WriteEnable}
 add wave -noupdate -expand -group icache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/SetValid}
 add wave -noupdate -expand -group icache -expand -group {Cache SRAM writes} -expand -group way0 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[0]/CacheTagMem/StoredData}
