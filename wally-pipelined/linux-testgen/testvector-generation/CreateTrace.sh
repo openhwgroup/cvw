@@ -15,4 +15,11 @@ outDir="../linux-testvectors"
 
 # - Logs info needed by buildroot testbench
 
-($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parse_qemu.py | ./parseNew.py | ./remove_dup.awk > all.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+read -p "Warning: running this script will overwrite the contents of $outDir/all.txt.
+Would you like to proceed? (y/n) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+    ($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -rtc clock=vm -icount shift=1 -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1236 -S 2>&1 >/dev/null | ./parse_qemu.py | ./parseNew.py | ./remove_dup.awk > $outDir/all.txt) & riscv64-unknown-elf-gdb -x gdbinit_qemulog
+fi
+

@@ -78,7 +78,7 @@ module csri #(parameter
       assign MIP_WRITE_MASK = 12'h000;
       assign SIP_WRITE_MASK = 12'h000;
     end
-    always @(posedge clk, posedge reset) begin
+    always @(posedge clk, posedge reset) begin // *** I strongly feel that IntInM should go directly to IP_REGW -- Ben 9/7/21
       if (reset)          IP_REGW_writeable <= 10'b0;
       else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
       else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
