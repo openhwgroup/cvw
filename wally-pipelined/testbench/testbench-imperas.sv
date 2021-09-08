@@ -577,7 +577,7 @@ string tests32f[] = '{
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.controller.FinalInstrRawF,
+                dut.hart.ifu.icache.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
