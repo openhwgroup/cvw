@@ -30,10 +30,13 @@
 
 `include "wally-config.vh"
 
+/* verilator lint_off UNOPTFLAT */
+
 module prioritythemometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y
 );
+
 
   // generate thermometer code mask
   genvar i;
@@ -47,4 +50,5 @@ module prioritythemometer #(parameter N = 8) (
 endmodule
 
 
+/* verilator lint_on UNOPTFLAT */
 
