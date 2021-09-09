@@ -230,7 +230,7 @@ module bpred
   assign FallThroughWrongE = PCLinkE != PCD;
   // If the target is taken check the target rather than fallthrough.  The instruction needs to be a branch if PCSrcE is selected
   // Remember the bpred can incorrectly predict a non cfi instruction as a branch taken.  If the real instruction is non cfi
-  // it must have selected teh fall through.
+  // it must have selected the fall through.
   assign PredictionPCWrongE = (PCSrcE  & (|InstrClassE) ? TargetWrongE : FallThroughWrongE);
 
   // The branch direction also need to checked.
