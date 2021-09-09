@@ -142,7 +142,7 @@ module icache
 			 .RAdr(RAdr),
 			 .PAdr(PCTagF),
 			 .WriteEnable(SRAMWayWriteEnable), 
-			 .WriteWordEnable({NUMWAYS{1'b1}}),
+			 .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
 			 .TagWriteEnable(SRAMWayWriteEnable),
 			 .WriteData(ICacheMemWriteData),
 			 .SetValid(ICacheMemWriteEnable),

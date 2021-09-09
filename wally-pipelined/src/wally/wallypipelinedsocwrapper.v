@@ -31,54 +31,71 @@
 
 `include "wally-config.vh"
 
-module wallypipelinedsoc (
-  input logic 		   clk, reset, 
+module wallypipelinedsocwrapper (
+  input 	     clk, reset, 
   // AHB Lite Interface
   // inputs from external memory
-  input logic [`AHBW-1:0]  HRDATAEXT,
-  input logic 		   HREADYEXT, HRESPEXT,
-  output logic 		   HSELEXT,
+  input [`AHBW-1:0]  HRDATAEXT,
+  input 	     HREADYEXT, HRESPEXT,
+  output             HSELEXT,
   // outputs to external memory, shared with uncore memory
-  output logic 		   HCLK, HRESETn,
-  output logic [31:0] 	   HADDR,
-  output logic [`AHBW-1:0] HWDATA,
-  output logic 		   HWRITE,
-  output logic [2:0] 	   HSIZE,
-  output logic [2:0] 	   HBURST,
-  output logic [3:0] 	   HPROT,
-  output logic [1:0] 	   HTRANS,
-  output logic 		   HMASTLOCK,
-  output logic 		   HREADY,
+  output 	     HCLK, HRESETn,
+  output [31:0]      HADDR,
+  output [`AHBW-1:0] HWDATA,
+  output 	     HWRITE,
+  output [2:0] 	     HSIZE,
+  output [2:0] 	     HBURST,
+  output [3:0] 	     HPROT,
+  output [1:0] 	     HTRANS,
+  output 	     HMASTLOCK,
+  output             HREADY,				 
   // I/O Interface
-  input logic [31:0] 	   GPIOPinsIn,
-  output logic [31:0] 	   GPIOPinsOut, GPIOPinsEn,
-  input logic 		   UARTSin,
-  output logic 		   UARTSout
+  input [31:0] 	     GPIOPinsIn,
+  output [31:0]      GPIOPinsOut, GPIOPinsEn,
+  input 	     UARTSin,
+  output 	     UARTSout
 );
 
   // to instruction memory *** remove later
-  logic [`XLEN-1:0] PCF;
+  wire [`XLEN-1:0] PCF;
 
   // Uncore signals
-  logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
-  //logic             HREADY, HRESP;
-  logic [5:0]       HSELRegions;
-  logic             InstrAccessFaultF, DataAccessFaultM;
-  logic             TimerIntM, SwIntM; // from CLINT
-  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
-  logic             ExtIntM; // from PLIC
-  logic [2:0]       HADDRD;
-  logic [3:0]       HSIZED;
-  logic             HWRITED;
-  logic [15:0]      rd2; // bogus, delete when real multicycle fetch works
-  logic [31:0]      InstrF;
-  logic 	    HRESP;
-  
-   
-  // instantiate processor and memories
-  wallypipelinedhart hart(.*);
+  wire [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
+  wire             HREADY, HRESP;
+  wire [5:0]       HSELRegions;
+  wire             InstrAccessFaultF, DataAccessFaultM;
+  wire             TimerIntM, SwIntM; // from CLINT
+  wire [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
+  wire             ExtIntM; // from PLIC
+  wire [2:0]       HADDRD;
+  wire [3:0]       HSIZED;
+  wire             HWRITED;
+  wire [15:0]      rd2; // bogus, delete when real multicycle fetch works
+  wire [31:0]      InstrF;
 
-  // instructions now come from uncore memory. This line can be removed at any time.
-  // imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
-  uncore uncore(.HWDATAIN(HWDATA), .*);
+  // wrapper for fpga
+  wallypipelinedsoc wallypipelinedsoc
+    (.clk(clk),
+     .reset(reset),
+     .HRDATAEXT(HRDATAEXT),
+     .HREADYEXT(HREADYEXT),
+     .HRESPEXT(HRESPEXT),
+     .HSELEXT(HSELEXT),     
+     .HCLK(HCLK),
+     .HRESETn(HRESETn),
+     .HADDR(HADDR),
+     .HWDATA(HWDATA),
+     .HWRITE(HWRITE),
+     .HSIZE(HSIZE),
+     .HBURST(HBURST),
+     .HPROT(HPROT),
+     .HTRANS(HTRANS),
+     .HMASTLOCK(HMASTLOCK),
+     .HREADY(HREADY),     
+     .GPIOPinsIn(GPIOPinsIn),
+     .GPIOPinsOut(GPIOPinsOut),
+     .GPIOPinsEn(GPIOPinsEn),
+     .UARTSin(UARTSin),
+     .UARTSout(UARTSout));
+  
 endmodule
