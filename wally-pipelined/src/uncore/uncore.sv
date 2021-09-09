@@ -43,6 +43,7 @@ module uncore (
   input  logic             HREADYEXT, HRESPEXT,
   output logic [`AHBW-1:0] HRDATA,
   output logic             HREADY, HRESP,
+  output logic             HSELEXT,
   // delayed signals
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
@@ -81,12 +82,14 @@ module uncore (
   // unswizzle HSEL signals
   assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC} = HSELRegions[5:0];
 
+  assign HSELEXT = HSELRegions[4];
+
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
 
   generate
     // tightly integrated memory
-    dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
+    //dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
     if (`BOOTTIM_SUPPORTED) begin : bootdtim
       dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
     end
@@ -119,19 +122,22 @@ module uncore (
 
   // mux could also include external memory  
   // AHB Read Multiplexer
-  assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) | 
+  //assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) | 
+  assign HRDATA = ({`XLEN{HSELTimD}} & HRDATAEXT) | 
                   ({`XLEN{HSELCLINTD}} & HREADCLINT) |
                   ({`XLEN{HSELPLICD}} & HREADPLIC) | 
                   ({`XLEN{HSELGPIOD}} & HREADGPIO) |
                   ({`XLEN{HSELBootTimD}} & HREADBootTim) |
                   ({`XLEN{HSELUARTD}} & HREADUART);
-  assign HRESP = HSELTimD & HRESPTim |
+  //assign HRESP = HSELTimD & HRESPTim |
+  assign HRESP = HSELTimD & HRESPEXT |
                  HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
                  HSELGPIOD & HRESPGPIO | 
                  HSELBootTimD & HRESPBootTim |
                  HSELUARTD & HRESPUART;
-  assign HREADY = HSELTimD & HREADYTim |
+  //assign HREADY = HSELTimD & HREADYTim |
+  assign HREADY = HSELTimD & HREADYEXT |
                   HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
                   HSELGPIOD & HREADYGPIO | 
