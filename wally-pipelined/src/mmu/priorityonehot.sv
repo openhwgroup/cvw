@@ -35,6 +35,8 @@ module priorityonehot #(parameter ENTRIES = 8) (
   output logic  [ENTRIES-1:0] y
 );
 
+  /* verilator lint_off UNOPTFLAT */
+
   logic [ENTRIES-1:0] nolower;
 
   // generate thermometer code mask
@@ -47,5 +49,7 @@ module priorityonehot #(parameter ENTRIES = 8) (
   endgenerate
 
   assign y = a & nolower;
-  
+
+  /* verilator lint_on UNOPTFLAT */
+
 endmodule

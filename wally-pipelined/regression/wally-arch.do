@@ -17,10 +17,10 @@
 onbreak {resume}
 
 # create library
-if [file exists work] {
+if [file exists work-arch] {
     vdel -all
 }
-vlib work
+vlib work-arch
 
 # compile source files
 # suppress spurious warnngs about 
@@ -35,7 +35,7 @@ switch $argc {
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt +acc work.testbench -o workopt 
+vopt +acc work-arch.testbench -o workopt 
 vsim workopt
 
 view wave

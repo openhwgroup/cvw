@@ -755,7 +755,7 @@ module riscvassertions();
     assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $error("Multiple Instruction Cache ways not yet implemented");
+    assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $warning("Multiple Instruction Cache ways not yet implemented");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`TIM_RANGE >= 56'h07FFFFFF) else $error("Some regression tests will fail if TIM_RANGE is less than 56'h07FFFFFF");
