@@ -16,7 +16,8 @@ then
     ($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1235 -S 2>/dev/null >/dev/null) &
     riscv64-unknown-elf-gdb -x gdbinit_mem
     echo "Translating Mem from GDB to Questa format"
-    ./fix_mem.py
+    ./fix_mem.py "$testVecDir/intermediate-outputs/bootmemGDB.txt" "$testVecDir/bootmem.txt"
+    ./fix_mem.py "$testVecDir/intermediate-outputs/ramGDB.txt" "$testVecDir/ram.txt"
     echo "Done"
 
     echo "Creating debugging objdump of linux image"
