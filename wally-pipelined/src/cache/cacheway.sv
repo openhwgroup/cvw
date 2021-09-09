@@ -41,7 +41,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic 			      SetDirty,
    input logic 			      ClearDirty,
    input logic 			      SelEvict,
-   input logic 			      VictimWay,
+   input logic 			      VictimWay, 
 
    output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMasked,
    output logic 		      WayHit,
@@ -55,7 +55,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   logic 			      Valid;
   logic 			      Dirty;
   logic 			      SelectedWay;
-  
+
   genvar 			      words;
 
   generate
