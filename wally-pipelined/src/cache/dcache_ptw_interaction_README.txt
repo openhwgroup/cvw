@@ -9,7 +9,7 @@ should continue.
 It is important to note ITLB misses and faults DO NOT flush a memory operation
 in the memory stage.  This is the core reason for the complexity.
 
-| Type | ITLB miss | DTLB miss | mem op |              |
+| Type | ITLB miss | DTLB miss | mem op |               |
 |-------+-----------+-----------+--------+--------------|
 |     0 |         0 |         0 |      0 |              |
 |     1 |         0 |         0 |      1 |              |

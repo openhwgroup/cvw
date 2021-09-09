@@ -26,12 +26,12 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
-		   parameter OFFSETLEN, parameter INDEXLEN) 
+		   parameter OFFSETLEN, parameter INDEXLEN, parameter DIRTY_BITS = 1) 
   (input logic 		       clk,
    input logic 			      reset,
 
    input logic [$clog2(NUMLINES)-1:0] RAdr,
-   input logic [`PA_BITS-1:0] 	      MemPAdrM,
+   input logic [`PA_BITS-1:0] 	      PAdr,
    input logic 			      WriteEnable,
    input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
    input logic 			      TagWriteEnable,
@@ -41,19 +41,20 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic 			      SetDirty,
    input logic 			      ClearDirty,
    input logic 			      SelEvict,
-   input logic 			      VictimWay,
+   input logic 			      VictimWay, 
 
-   output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMaskedM,
+   output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMasked,
    output logic 		      WayHit,
    output logic 		      VictimDirtyWay,
    output logic [TAGLEN-1:0] 	      VictimTagWay
    );
 
   logic [NUMLINES-1:0] 		      ValidBits, DirtyBits;
-  logic [BLOCKLEN-1:0] 		      ReadDataBlockWayM;
+  logic [BLOCKLEN-1:0] 		      ReadDataBlockWay;
   logic [TAGLEN-1:0] 		      ReadTag;
   logic 			      Valid;
   logic 			      Dirty;
+  logic             SelectedWay; // dh: *** do ways need to have more than 1 bit?
 
   genvar 			      words;
 
@@ -63,7 +64,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 		.WIDTH(NUMLINES))
       CacheDataMem(.clk(clk),
 		   .Addr(RAdr),
-		   .ReadData(ReadDataBlockWayM[(words+1)*`XLEN-1:words*`XLEN]),
+		   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteEnable(WriteEnable & WriteWordEnable[words]));
     end
@@ -74,12 +75,12 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   CacheTagMem(.clk(clk),
 	      .Addr(RAdr),
 	      .ReadData(ReadTag),
-	      .WriteData(MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+	      .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
 	      .WriteEnable(TagWriteEnable));
 
-  assign WayHit = Valid & (ReadTag == MemPAdrM[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
   assign SelectedWay = SelEvict ? VictimWay : WayHit;  
-  assign ReadDataBlockWayMaskedM = SelectedWay ? ReadDataBlockWayM : '0;  // first part of AO mux.
+  assign ReadDataBlockWayMasked = SelectedWay ? ReadDataBlockWay : '0;  // first part of AO mux.
 
   assign VictimDirtyWay = VictimWay & Dirty & Valid;
   assign VictimTagWay = VictimWay ? ReadTag : '0;
@@ -87,20 +88,25 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & WriteEnable) ValidBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
-    else if (ClearValid & WriteEnable) ValidBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
+    else if (SetValid & WriteEnable) ValidBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
+    else if (ClearValid & WriteEnable) ValidBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
     Valid <= ValidBits[RAdr];
   end
 
-  always_ff @(posedge clk, posedge reset) begin
-    if (reset) 
-  	DirtyBits <= {NUMLINES{1'b0}};
-    else if (SetDirty & WriteEnable) DirtyBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
-    else if (ClearDirty & WriteEnable) DirtyBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
-    Dirty <= DirtyBits[RAdr];
-  end
+  generate
+    if(DIRTY_BITS) begin
+      always_ff @(posedge clk, posedge reset) begin
+	if (reset) 
+  	  DirtyBits <= {NUMLINES{1'b0}};
+	else if (SetDirty & WriteEnable) DirtyBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
+	else if (ClearDirty & WriteEnable) DirtyBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
+	Dirty <= DirtyBits[RAdr];
+      end
+    end else begin
+      assign Dirty = 1'b0;
+    end
+  endgenerate
   
-
 endmodule // DCacheMemWay
 
 
