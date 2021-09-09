@@ -54,7 +54,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   logic [TAGLEN-1:0] 		      ReadTag;
   logic 			      Valid;
   logic 			      Dirty;
-
+  logic 			      SelectedWay;
+  
   genvar 			      words;
 
   generate
@@ -63,7 +64,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 		.WIDTH(NUMLINES))
       CacheDataMem(.clk(clk),
 		   .Addr(RAdr),
-		   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN]),
+		   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN] ),
 		   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
 		   .WriteEnable(WriteEnable & WriteWordEnable[words]));
     end
