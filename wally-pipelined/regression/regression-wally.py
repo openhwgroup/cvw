@@ -34,6 +34,11 @@ configs = [
         grepstr="loaded 6000 instructions"
     ),
     TestCase(
+        name="arch64",
+        cmd="vsim > {} -c <<!\ndo wally-arch.do ../config/rv64ic rv64ic\n!",
+        grepstr="All tests ran without failures"
+    ),
+    TestCase(
         name="rv32ic",
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv32ic rv32ic\n!",
         grepstr="All tests ran without failures"
