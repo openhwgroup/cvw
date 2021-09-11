@@ -136,6 +136,16 @@ module dcachefsm
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
 
+/* -----\/----- EXCLUDED -----\/-----
+  flopenl #(.TYPE(statetype))
+  StateReg(.clk,
+	   .load(reset),
+	   .en(1'b1),
+	   .d(NextState),
+	   .q(CurrState),
+	   .val(STATE_READY));
+ -----/\----- EXCLUDED -----/\----- */
+  
   
   // next state logic and some state ouputs.
   always_comb begin
@@ -158,9 +168,23 @@ module dcachefsm
     DCacheMiss = 1'b0;
     LRUWriteEn = 1'b0;
     MemAfterIWalkDone = 1'b0;
+    NextState = STATE_READY;
 
     case (CurrState)
       STATE_READY: begin
+
+	CntReset = 1'b0;
+	DCacheStall = 1'b0;
+	AHBRead = 1'b0;	  
+	AHBWrite = 1'b0;
+	DCacheAccess = 1'b0;
+	DCacheMiss = 1'b0;
+	SelAdrM = 2'b00;
+	SRAMWordWriteEnableM = 1'b0;
+	SetDirty = 1'b0;
+	LRUWriteEn = 1'b0;
+	CommittedM = 1'b0;
+	
 	// TLB Miss	
 	if((AnyCPUReqM & DTLBMissM) | ITLBMissF) begin
 	  // the LSU arbiter has not yet selected the PTW.
@@ -301,6 +325,9 @@ module dcachefsm
       STATE_MISS_READ_WORD_DELAY: begin
 	//SelAdrM = 2'b10;
 	CommittedM = 1'b1;
+	SRAMWordWriteEnableM = 1'b0;
+	SetDirty = 1'b0;
+	LRUWriteEn = 1'b0;
 	if(&MemRWM & AtomicM[1]) begin // amo write
 	  SelAdrM = 2'b10;
 	  if(StallWtoDCache) begin 
@@ -356,6 +383,10 @@ module dcachefsm
       STATE_PTW_READY: begin
 	// now all output connect to PTW instead of CPU.
 	CommittedM = 1'b1;
+	SelAdrM = 2'b00;
+	DCacheStall = 1'b0;
+	LRUWriteEn = 1'b0;
+	CntReset = 1'b0;
 
 	// In this branch we remove stall and go back to ready.  There is no request for memory from the
 	// datapath or the walker had a fault.
@@ -489,6 +520,7 @@ module dcachefsm
       
       STATE_CPU_BUSY: begin
 	CommittedM = 1'b1;
+	SelAdrM = 2'b00;
 	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 2'b10;
@@ -501,6 +533,9 @@ module dcachefsm
       STATE_CPU_BUSY_FINISH_AMO: begin
 	CommittedM = 1'b1;
 	SelAdrM = 2'b10;
+	SRAMWordWriteEnableM = 1'b0;
+	SetDirty = 1'b0;
+	LRUWriteEn = 1'b0;
 	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY_FINISH_AMO;
 	end
@@ -523,7 +558,7 @@ module dcachefsm
 	end
       end
 
-      STATE_UNCACHED_READ : begin
+      STATE_UNCACHED_READ: begin
 	DCacheStall = 1'b1;	
 	AHBRead = 1'b1;
 	CommittedM = 1'b1;
@@ -536,6 +571,7 @@ module dcachefsm
       
       STATE_UNCACHED_WRITE_DONE: begin
 	CommittedM = 1'b1;
+	SelAdrM = 2'b00;
 	if(StallWtoDCache) begin
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 2'b10;
@@ -548,6 +584,7 @@ module dcachefsm
       STATE_UNCACHED_READ_DONE: begin
 	CommittedM = 1'b1;
 	SelUncached = 1'b1;
+	SelAdrM = 2'b00;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_CPU_BUSY;
 	  SelAdrM = 2'b10;
@@ -560,6 +597,21 @@ module dcachefsm
 
       // itlb => instruction page fault states with memory request.
       STATE_PTW_FAULT_READY: begin
+	DCacheStall = 1'b0;
+	DCacheAccess = 1'b0;
+	DCacheMiss = 1'b0;
+	LRUWriteEn = 1'b0;
+	SelAdrM = 2'b00;
+	MemAfterIWalkDone = 1'b0;
+	SetDirty = 1'b0;
+	LRUWriteEn = 1'b0;
+	CntReset = 1'b0;
+	AHBWrite = 1'b0;
+	AHBRead = 1'b0;
+	CommittedM = 1'b0;
+	NextState = STATE_READY;
+	
+	
 	// read hit valid cached
 	if(MemRWM[1] & CacheableM & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
@@ -614,6 +666,7 @@ module dcachefsm
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
 	  AHBRead = 1'b1;	  
+	  MemAfterIWalkDone = 1'b0;
 	end
 	// fault
 	else  begin
@@ -626,11 +679,13 @@ module dcachefsm
 	CommittedM = 1'b1;
 	if(StallWtoDCache) begin
 	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  MemAfterIWalkDone = 1'b0;
 	  SelAdrM = 2'b10;
 	end
 	else begin
 	  MemAfterIWalkDone = 1'b1;
 	  NextState = STATE_READY;
+	  SelAdrM = 2'b00;
 	end
       end
 
@@ -690,10 +745,12 @@ module dcachefsm
 	if(StallWtoDCache) begin 
 	  NextState = STATE_PTW_FAULT_CPU_BUSY;
 	  SelAdrM = 2'b10;
+	  MemAfterIWalkDone = 1'b0;
 	end
 	else begin
 	  MemAfterIWalkDone = 1'b1;
 	  NextState = STATE_READY;
+	  SelAdrM = 2'b00;
 	end
       end
 
@@ -711,11 +768,13 @@ module dcachefsm
 	CommittedM = 1'b1;
 	if(StallWtoDCache) begin 
 	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  MemAfterIWalkDone = 1'b0;
 	  SelAdrM = 2'b10;
 	end
 	else begin
 	  MemAfterIWalkDone = 1'b1;
 	  NextState = STATE_READY;
+	  SelAdrM = 2'b00;
 	end
       end
 
@@ -760,11 +819,13 @@ module dcachefsm
 	CommittedM = 1'b1;
 	if(StallWtoDCache) begin
 	  NextState = STATE_PTW_FAULT_CPU_BUSY;
+	  MemAfterIWalkDone = 1'b0;
 	  SelAdrM = 2'b10;
 	end
 	else begin
 	  MemAfterIWalkDone = 1'b1;
 	  NextState = STATE_READY;
+	  SelAdrM = 2'b00;
 	end
       end
 
@@ -782,6 +843,7 @@ module dcachefsm
       end
 
       default: begin
+	NextState = STATE_READY;
       end
     endcase
   end
