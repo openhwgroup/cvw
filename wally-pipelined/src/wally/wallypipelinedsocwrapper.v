@@ -53,7 +53,8 @@ module wallypipelinedsocwrapper (
   input [31:0] 	     GPIOPinsIn,
   output [31:0]      GPIOPinsOut, GPIOPinsEn,
   input 	     UARTSin,
-  output 	     UARTSout
+  output 	     UARTSout,
+  input              ddr4_calib_complete				 
 );
 
   // to instruction memory *** remove later
@@ -61,7 +62,7 @@ module wallypipelinedsocwrapper (
 
   // Uncore signals
   wire [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
-  wire             HREADY, HRESP;
+  wire             HRESP;
   wire [5:0]       HSELRegions;
   wire             InstrAccessFaultF, DataAccessFaultM;
   wire             TimerIntM, SwIntM; // from CLINT
@@ -76,7 +77,7 @@ module wallypipelinedsocwrapper (
   // wrapper for fpga
   wallypipelinedsoc wallypipelinedsoc
     (.clk(clk),
-     .reset(reset),
+     .reset(reset | ~ddr4_calib_complete),
      .HRDATAEXT(HRDATAEXT),
      .HREADYEXT(HREADYEXT),
      .HRESPEXT(HRESPEXT),
