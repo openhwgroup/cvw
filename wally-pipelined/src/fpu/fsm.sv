@@ -90,7 +90,22 @@ module fsm (
 		    sel_muxb = 3'b000;		    
 		    sel_muxr = 1'b0;
 		    NEXT_STATE = S13;
-		 end 	       
+		 end 	   
+	       else
+		 begin
+		    done = 1'b0;
+		    divBusy = 1'b0;
+		    load_rega = 1'b0;
+		    load_regb = 1'b0;
+		    load_regc = 1'b0;
+		    load_regd = 1'b0;		    
+		    load_regr = 1'b0;
+		    load_regs = 1'b0;		    		    
+		    sel_muxa = 3'b000;
+		    sel_muxb = 3'b000;		    
+		    sel_muxr = 1'b0;
+		    NEXT_STATE = S0;
+		 end
 	    end // case: S0
 	  S1:
 	    begin
