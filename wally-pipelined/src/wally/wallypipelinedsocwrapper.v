@@ -50,13 +50,17 @@ module wallypipelinedsocwrapper (
   output 	     HMASTLOCK,
   output             HREADY,				 
   // I/O Interface
-  input [31:0] 	     GPIOPinsIn,
-  output [31:0]      GPIOPinsOut, GPIOPinsEn,
+  input [3:0] 	     GPIOPinsIn_IO,
+  output [4:0]       GPIOPinsOut_IO,
   input 	     UARTSin,
   output 	     UARTSout,
   input              ddr4_calib_complete				 
 );
 
+  wire [31:0] 	     GPIOPinsEn;
+  wire [31:0] 	     GPIOPinsIn;
+  wire [31:0] 	     GPIOPinsOut;
+    
   // to instruction memory *** remove later
   wire [`XLEN-1:0] PCF;
 
@@ -74,10 +78,14 @@ module wallypipelinedsocwrapper (
   wire [15:0]      rd2; // bogus, delete when real multicycle fetch works
   wire [31:0]      InstrF;
 
+
+  assign GPIOPinsOut_IO = GPIOPinsOut[4:0];
+  assign GPIOPinsIn = {28'b0, GPIOPinsIn_IO};
+
   // wrapper for fpga
   wallypipelinedsoc wallypipelinedsoc
     (.clk(clk),
-     .reset(reset | ~ddr4_calib_complete),
+     .reset(reset),
      .HRDATAEXT(HRDATAEXT),
      .HREADYEXT(HREADYEXT),
      .HRESPEXT(HRESPEXT),
