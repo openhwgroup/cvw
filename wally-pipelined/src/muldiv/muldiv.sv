@@ -88,8 +88,8 @@ module muldiv (
 				    .reset(reset),  .clk(~gclk));
 	 
 	 assign signedDivide = (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
-	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
-	 intdiv_restoring div(.clk, .reset, .signedDivide, .start(startDivideE), .X(N), .D(D), .busy(DivBusyE), .done(DivDoneE), .Q(QuotE), .REM(RemE));
+	 intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
+	 //intdiv_restoring div(.clk, .reset, .signedDivide, .start(startDivideE), .X(N), .D(D), .busy(DivBusyE), .done(DivDoneE), .Q(QuotE), .REM(RemE));
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
