@@ -159,6 +159,7 @@ module trap (
     if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = MemAdrM;
     else if (StoreMisalignedFaultM) NextFaultMtvalM = MemAdrM;
+    else if (BreakpointFaultM)      NextFaultMtvalM = PCM;
     else if (InstrPageFaultM)       NextFaultMtvalM = PCM;
     else if (LoadPageFaultM)        NextFaultMtvalM = MemAdrM;
     else if (StorePageFaultM)       NextFaultMtvalM = MemAdrM;
