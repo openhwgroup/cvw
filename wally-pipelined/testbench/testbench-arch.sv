@@ -288,48 +288,47 @@ string tests32f[] = '{
   };
 
     string tests32priv[] = '{
-    "rv32i_m/privilege/ebreak", "2090",
-    "rv32i_m/privilege/ecall", "2090",
-    "rv32i_m/privilege/misalign-beq-01", "20a0",
-    "rv32i_m/privilege/misalign-bge-01", "20a0",
-    "rv32i_m/privilege/misalign-bgeu-01", "20a0",
-    "rv32i_m/privilege/misalign-blt-01", "20a0",
-    "rv32i_m/privilege/misalign-bltu-01", "20a0",
-    "rv32i_m/privilege/misalign-bne-01", "20a0",
-    "rv32i_m/privilege/misalign-jal-01", "20a0",
-    "rv32i_m/privilege/misalign-lh-01", "20a0",
-    "rv32i_m/privilege/misalign-lhu-01", "20a0",
-    "rv32i_m/privilege/misalign-lw-01", "20a0",
-    "rv32i_m/privilege/misalign-lwu-01", "20a0",
-    "rv32i_m/privilege/misalign-sh-01", "20a0",
-    "rv32i_m/privilege/misalign-sw-01", "20a0",
-    "rv32i_m/privilege/misalign1-jalr-01", "20a0",
-    "rv32i_m/privilege/misalign2-jalr-01", "20a0"
+    "rv32i_m/privilege/ebreak", "2070",
+    "rv32i_m/privilege/ecall", "2070",
+    "rv32i_m/privilege/misalign-beq-01", "2080",
+    "rv32i_m/privilege/misalign-bge-01", "2080",
+    "rv32i_m/privilege/misalign-bgeu-01", "2080",
+    "rv32i_m/privilege/misalign-blt-01", "2080",
+    "rv32i_m/privilege/misalign-bltu-01", "2080",
+    "rv32i_m/privilege/misalign-bne-01", "2080",
+    "rv32i_m/privilege/misalign-jal-01", "2080",
+    "rv32i_m/privilege/misalign-lh-01", "2080",
+    "rv32i_m/privilege/misalign-lhu-01", "2080",
+    "rv32i_m/privilege/misalign-lw-01", "2080",
+    "rv32i_m/privilege/misalign-sh-01", "2080",
+    "rv32i_m/privilege/misalign-sw-01", "2080",
+    "rv32i_m/privilege/misalign1-jalr-01", "2080",
+    "rv32i_m/privilege/misalign2-jalr-01", "2080"
     };
 
   string tests32m[] = '{
-    "rv32i_m/M/div-01", "9010",
-    "rv32i_m/M/divu-01", "a010",
-    "rv32i_m/M/mul-01", "9010",
-    "rv32i_m/M/mulh-01", "9010",
-    "rv32i_m/M/mulhsu-01", "9010",
-    "rv32i_m/M/mulhu-01", "a010",
-    "rv32i_m/M/rem-01", "9010",
-    "rv32i_m/M/remu-01", "a010",
+    "rv32i_m/M/div-01", "5010",
+    "rv32i_m/M/divu-01", "5010",
+    "rv32i_m/M/mul-01", "5010",
+    "rv32i_m/M/mulh-01", "5010",
+    "rv32i_m/M/mulhsu-01", "5010",
+    "rv32i_m/M/mulhu-01", "5010",
+    "rv32i_m/M/rem-01", "5010",
+    "rv32i_m/M/remu-01", "5010"
    };
 
   string tests32ic[] = '{
-    "rv32i_m/C/cadd-01", "8010",
-    "rv32i_m/C/caddi-01", "4010",
+    "rv32i_m/C/cadd-01", "4010",
+    "rv32i_m/C/caddi-01", "3010",
     "rv32i_m/C/caddi16sp-01", "2010",
     "rv32i_m/C/caddi4spn-01", "2010",
-    "rv32i_m/C/cand-01", "8010",
-    "rv32i_m/C/candi-01", "4010",
-    "rv32i_m/C/cbeqz-01", "4010",
-    "rv32i_m/C/cbnez-01", "5010",
-    "rv32i_m/C/cebreak-01", "2070",
+    "rv32i_m/C/cand-01", "4010",
+    "rv32i_m/C/candi-01", "3010",
+    "rv32i_m/C/cbeqz-01", "3010",
+    "rv32i_m/C/cbnez-01", "3010",
+    "rv32i_m/C/cebreak-01", "2050",
     "rv32i_m/C/cj-01", "3010",
-    "rv32i_m/C/cjal-01", "",
+    "rv32i_m/C/cjal-01", "3010",
     "rv32i_m/C/cjalr-01", "2010",
     "rv32i_m/C/cjr-01", "2010",
     "rv32i_m/C/cli-01", "2010",
@@ -338,30 +337,30 @@ string tests32f[] = '{
     "rv32i_m/C/clwsp-01", "2010",
     "rv32i_m/C/cmv-01", "2010",
     "rv32i_m/C/cnop-01", "2010",
-    "rv32i_m/C/cor-01", "8010",
+    "rv32i_m/C/cor-01", "4010",
     "rv32i_m/C/cslli-01", "2010",
     "rv32i_m/C/csrai-01", "2010",
     "rv32i_m/C/csrli-01", "2010",
-    "rv32i_m/C/csub-01", "8010",
-    "rv32i_m/C/csw-01", "3010",
-    "rv32i_m/C/cswsp-01", "3010",
-    "rv32i_m/C/cxor-01", "8010"
+    "rv32i_m/C/csub-01", "4010",
+    "rv32i_m/C/csw-01", "2010",
+    "rv32i_m/C/cswsp-01", "2010",
+    "rv32i_m/C/cxor-01", "4010"
   };
 
   string tests32i[] = '{
-    "rv32i_m/I/add-01", "9010",
-    "rv32i_m/I/addi-01", "6010",
-    "rv32i_m/I/and-01", "9010",
-    "rv32i_m/I/andi-01", "6010",
+    "rv32i_m/I/add-01", "5010",
+    "rv32i_m/I/addi-01", "4010",
+    "rv32i_m/I/and-01", "5010",
+    "rv32i_m/I/andi-01", "4010",
     "rv32i_m/I/auipc-01", "2010",
-    "rv32i_m/I/beq-01", "47010",
-    "rv32i_m/I/bge-01", "47010",
-    "rv32i_m/I/bgeu-01", "56010",
-    "rv32i_m/I/blt-01", "4d010",
-    "rv32i_m/I/bltu-01", "57010",
-    "rv32i_m/I/bne-01", "43010",
+    "rv32i_m/I/beq-01", "39010",
+    "rv32i_m/I/bge-01", "3a010",
+    "rv32i_m/I/bgeu-01", "4a010",
+    "rv32i_m/I/blt-01", "38010",
+    "rv32i_m/I/bltu-01", "4b010",
+    "rv32i_m/I/bne-01", "39010",
     "rv32i_m/I/fence-01", "2010",
-    "rv32i_m/I/jal-01", "122010",
+    "rv32i_m/I/jal-01", "1ad010",
     "rv32i_m/I/jalr-01", "2010",
     "rv32i_m/I/lb-align-01", "2010",
     "rv32i_m/I/lbu-align-01", "2010",
@@ -369,24 +368,24 @@ string tests32f[] = '{
     "rv32i_m/I/lhu-align-01", "2010",
     "rv32i_m/I/lui-01", "2010",
     "rv32i_m/I/lw-align-01", "2010",
-    "rv32i_m/I/or-01", "9010",
-    "rv32i_m/I/ori-01", "6010",
-    "rv32i_m/I/sb-align-01", "3010",
-    "rv32i_m/I/sh-align-01", "3010",
-    "rv32i_m/I/sll-01", "3010",
+    "rv32i_m/I/or-01", "5010",
+    "rv32i_m/I/ori-01", "4010",
+    "rv32i_m/I/sb-align-01", "2010",
+    "rv32i_m/I/sh-align-01", "2010",
+    "rv32i_m/I/sll-01", "2010",
     "rv32i_m/I/slli-01", "2010",
-    "rv32i_m/I/slt-01", "9010",
-    "rv32i_m/I/slti-01", "6010",
-    "rv32i_m/I/sltiu-01", "6010",
-    "rv32i_m/I/sltu-01", "a010",
-    "rv32i_m/I/sra-01", "3010",
+    "rv32i_m/I/slt-01", "5010",
+    "rv32i_m/I/slti-01", "4010",
+    "rv32i_m/I/sltiu-01", "4010",
+    "rv32i_m/I/sltu-01", "5010",
+    "rv32i_m/I/sra-01", "2010",
     "rv32i_m/I/srai-01", "2010",
-    "rv32i_m/I/srl-01", "3010",
+    "rv32i_m/I/srl-01", "2010",
     "rv32i_m/I/srli-01", "2010",
-    "rv32i_m/I/sub-01", "9010",
-    "rv32i_m/I/sw-align-01", "3010",
-    "rv32i_m/I/xor-01", "9010",
-    "rv32i_m/I/xori-01", "6010"
+    "rv32i_m/I/sub-01", "5010",
+    "rv32i_m/I/sw-align-01", "2010",
+    "rv32i_m/I/xor-01", "5010",
+    "rv32i_m/I/xori-01", "4010"
   };
 
    string tests[];
@@ -417,13 +416,15 @@ string tests32f[] = '{
   initial begin
     if (`XLEN == 64) begin // RV64
       if (`TESTSBP) begin
-        tests = testsBP64;
+        //tests = testsBP64;
 	// testsbp should not run the other tests. It starts at address 0 rather than
 	// 0x8000_0000, the next if must remain an else if.	
       end else if (TESTSPERIPH)
-        tests = tests64periph;
+        //tests = tests64periph;
+        tests = {};
       else if (TESTSPRIV)
-        tests = tests64p;
+        //tests = tests64p;
+        tests = {};
       else begin
         tests = {tests64priv, tests64i};
 //        tests = {tests64p,tests64i, tests64periph};
@@ -439,17 +440,25 @@ string tests32f[] = '{
     end else begin // RV32
       // *** add the 32 bit bp tests
       if (TESTSPERIPH)
-        tests = tests32periph;
+        //tests = tests32periph;
+        tests = {};
       else if (TESTSPRIV)
-        tests = tests32p;
+        //tests = tests32p;
+        tests = {};
       else begin
-          tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
+        tests = {tests32priv, tests32i};
+        //tests = {tests32i, tests32priv};
+        if (`C_SUPPORTED) tests = {tests, tests32ic};
+        if (`M_SUPPORTED) tests = {tests, tests32m};
+        //if (`C_SUPPORTED) tests = {tests32ic, tests};
+        //if (`M_SUPPORTED) tests = {tests32m, tests};
+/*          tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
           if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
-          if (`A_SUPPORTED) tests = {tests32a, tests};
+          if (`A_SUPPORTED) tests = {tests32a, tests}; */
      end
     end
   end
