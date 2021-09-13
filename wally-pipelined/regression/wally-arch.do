@@ -17,10 +17,10 @@
 onbreak {resume}
 
 # create library
-if [file exists work-arch] {
-    vdel -all
+if [file exists work_arch_$2] {
+    vdel -lib work_arch_$2 -all
 }
-vlib work-arch
+vlib work_arch_$2
 
 # compile source files
 # suppress spurious warnngs about 
@@ -30,13 +30,14 @@ vlib work-arch
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
-    0 {vlog +incdir+../config/rv64ic +incdir+../config/shared ../testbench/testbench-arch.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
-    1 {vlog +incdir+$1  +incdir+../config/shared ../testbench/testbench-arch.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
+    0 {vlog -work work_arch_$2 +incdir+../config/rv64ic +incdir+../config/shared ../testbench/testbench-arch.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
+    1 {vlog -work work_arch_$2 +incdir+$1 +incdir+../config/shared ../testbench/testbench-arch.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
+    2 {vlog -work work_arch_$2 +incdir+$1 +incdir+../config/shared ../testbench/testbench-arch.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt +acc work-arch.testbench -o workopt 
-vsim workopt
+vopt +acc work_arch_$2.testbench -work work_arch_$2 -o workopt_arch 
+vsim -lib work_arch_$2 workopt_arch
 
 view wave
 -- display input and output signals as hexidecimal values

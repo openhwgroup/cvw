@@ -160,6 +160,28 @@ string tests32f[] = '{
     "rv64a/WALLY-LRSC", "2110"
   };
 
+  string tests64priv[] = '{
+    "rv64i_m/privilege/ebreak", "2090",
+    "rv64i_m/privilege/ecall", "2090",
+    "rv64i_m/privilege/misalign-beq-01", "20a0",
+    "rv64i_m/privilege/misalign-bge-01", "20a0",
+    "rv64i_m/privilege/misalign-bgeu-01", "20a0",
+    "rv64i_m/privilege/misalign-blt-01", "20a0",
+    "rv64i_m/privilege/misalign-bltu-01", "20a0",
+    "rv64i_m/privilege/misalign-bne-01", "20a0",
+    "rv64i_m/privilege/misalign-jal-01", "20a0",
+    "rv64i_m/privilege/misalign-ld-01", "20a0",
+    "rv64i_m/privilege/misalign-lh-01", "20a0",
+    "rv64i_m/privilege/misalign-lhu-01", "20a0",
+    "rv64i_m/privilege/misalign-lw-01", "20a0",
+    "rv64i_m/privilege/misalign-lwu-01", "20a0",
+    "rv64i_m/privilege/misalign-sd-01", "20a0",
+    "rv64i_m/privilege/misalign-sh-01", "20a0",
+    "rv64i_m/privilege/misalign-sw-01", "20a0",
+    "rv64i_m/privilege/misalign1-jalr-01", "20a0",
+    "rv64i_m/privilege/misalign2-jalr-01", "20a0"
+    };
+
   string tests64m[] = '{
     "rv64i_m/M/div-01", "9010",
     "rv64i_m/M/divu-01", "a010",
@@ -210,10 +232,6 @@ string tests32f[] = '{
     "rv64i_m/C/csw-01", "3010",
     "rv64i_m/C/cswsp-01", "3010",
     "rv64i_m/C/cxor-01", "8010"
-  };
-
-  string tests64iNOc[] = {
-    "rv64i/I-MISALIGN_JMP-01","2000"
   };
 
   string tests64i[] = '{
@@ -269,189 +287,106 @@ string tests32f[] = '{
     "rv64i_m/I/xori-01", "6010"
   };
 
-  string tests32a[] = '{
-    "rv32a/WALLY-AMO", "2110",
-    "rv32a/WALLY-LRSC", "2110"
-  };
+    string tests32priv[] = '{
+    "rv32i_m/privilege/ebreak", "2090",
+    "rv32i_m/privilege/ecall", "2090",
+    "rv32i_m/privilege/misalign-beq-01", "20a0",
+    "rv32i_m/privilege/misalign-bge-01", "20a0",
+    "rv32i_m/privilege/misalign-bgeu-01", "20a0",
+    "rv32i_m/privilege/misalign-blt-01", "20a0",
+    "rv32i_m/privilege/misalign-bltu-01", "20a0",
+    "rv32i_m/privilege/misalign-bne-01", "20a0",
+    "rv32i_m/privilege/misalign-jal-01", "20a0",
+    "rv32i_m/privilege/misalign-lh-01", "20a0",
+    "rv32i_m/privilege/misalign-lhu-01", "20a0",
+    "rv32i_m/privilege/misalign-lw-01", "20a0",
+    "rv32i_m/privilege/misalign-lwu-01", "20a0",
+    "rv32i_m/privilege/misalign-sh-01", "20a0",
+    "rv32i_m/privilege/misalign-sw-01", "20a0",
+    "rv32i_m/privilege/misalign1-jalr-01", "20a0",
+    "rv32i_m/privilege/misalign2-jalr-01", "20a0"
+    };
 
   string tests32m[] = '{
-    "rv32m/I-MUL-01", "2000",
-    "rv32m/I-MULH-01", "2000",
-    "rv32m/I-MULHSU-01", "2000",
-    "rv32m/I-MULHU-01", "2000",
-    "rv32m/I-DIV-01", "2000",
-    "rv32m/I-DIVU-01", "2000",
-    "rv32m/I-REM-01", "2000",
-    "rv32m/I-REMU-01", "2000"
-  };
+    "rv32i_m/M/div-01", "9010",
+    "rv32i_m/M/divu-01", "a010",
+    "rv32i_m/M/mul-01", "9010",
+    "rv32i_m/M/mulh-01", "9010",
+    "rv32i_m/M/mulhsu-01", "9010",
+    "rv32i_m/M/mulhu-01", "a010",
+    "rv32i_m/M/rem-01", "9010",
+    "rv32i_m/M/remu-01", "a010",
+   };
 
   string tests32ic[] = '{
-    "rv32ic/I-C-ADD-01", "2000",
-    "rv32ic/I-C-ADDI-01", "2000",
-    "rv32ic/I-C-AND-01", "2000",
-    "rv32ic/I-C-ANDI-01", "2000",
-    "rv32ic/I-C-BEQZ-01", "2000",
-    "rv32ic/I-C-BNEZ-01", "2000",
-    "rv32ic/I-C-EBREAK-01", "2000",
-    "rv32ic/I-C-J-01", "2000",
-    "rv32ic/I-C-JALR-01", "3000",
-    "rv32ic/I-C-JR-01", "3000",
-    "rv32ic/I-C-LI-01", "2000",
-    "rv32ic/I-C-LUI-01", "2000",
-    "rv32ic/I-C-LW-01", "2110",
-    "rv32ic/I-C-LWSP-01", "2110",
-    "rv32ic/I-C-MV-01", "2000",
-    "rv32ic/I-C-NOP-01", "2000",
-    "rv32ic/I-C-OR-01", "2000",
-    "rv32ic/I-C-SLLI-01", "2000",
-    "rv32ic/I-C-SRAI-01", "2000",
-    "rv32ic/I-C-SRLI-01", "2000",
-    "rv32ic/I-C-SUB-01", "2000",
-    "rv32ic/I-C-SW-01", "2000",
-    "rv32ic/I-C-SWSP-01", "2000",
-    "rv32ic/I-C-XOR-01", "2000"
+    "rv32i_m/C/cadd-01", "8010",
+    "rv32i_m/C/caddi-01", "4010",
+    "rv32i_m/C/caddi16sp-01", "2010",
+    "rv32i_m/C/caddi4spn-01", "2010",
+    "rv32i_m/C/cand-01", "8010",
+    "rv32i_m/C/candi-01", "4010",
+    "rv32i_m/C/cbeqz-01", "4010",
+    "rv32i_m/C/cbnez-01", "5010",
+    "rv32i_m/C/cebreak-01", "2070",
+    "rv32i_m/C/cj-01", "3010",
+    "rv32i_m/C/cjal-01", "",
+    "rv32i_m/C/cjalr-01", "2010",
+    "rv32i_m/C/cjr-01", "2010",
+    "rv32i_m/C/cli-01", "2010",
+    "rv32i_m/C/clui-01", "2010",
+    "rv32i_m/C/clw-01", "2010",
+    "rv32i_m/C/clwsp-01", "2010",
+    "rv32i_m/C/cmv-01", "2010",
+    "rv32i_m/C/cnop-01", "2010",
+    "rv32i_m/C/cor-01", "8010",
+    "rv32i_m/C/cslli-01", "2010",
+    "rv32i_m/C/csrai-01", "2010",
+    "rv32i_m/C/csrli-01", "2010",
+    "rv32i_m/C/csub-01", "8010",
+    "rv32i_m/C/csw-01", "3010",
+    "rv32i_m/C/cswsp-01", "3010",
+    "rv32i_m/C/cxor-01", "8010"
   };
 
-  string tests32iNOc[] = {
-    "rv32i/I-MISALIGN_JMP-01","2000"
-  };
-
-  string tests32i[] = {
-    //"rv32i/WALLY-PIPELINE-100K", "10a800",
-    "rv32i/I-ADD-01", "2000",
-    "rv32i/I-ADDI-01","2000",
-    "rv32i/I-AND-01","2000",
-    "rv32i/I-ANDI-01","2000",
-    "rv32i/I-AUIPC-01","2000",
-    "rv32i/I-BEQ-01","3000",
-    "rv32i/I-BGE-01","3000",
-    "rv32i/I-BGEU-01","3000",
-    "rv32i/I-BLT-01","3000",
-    "rv32i/I-BLTU-01","3000",
-    "rv32i/I-BNE-01","3000",
-    "rv32i/I-DELAY_SLOTS-01","2000",
-    "rv32i/I-EBREAK-01","2000",
-    "rv32i/I-ECALL-01","2000",
-    "rv32i/I-ENDIANESS-01","2010",
-    "rv32i/I-IO-01","2030rv",
-    "rv32i/I-JAL-01","3000",
-    "rv32i/I-JALR-01","3000",
-    "rv32i/I-LB-01","3020",
-    "rv32i/I-LBU-01","3020",
-    "rv32i/I-LH-01","3050",
-    "rv32i/I-LHU-01","3050",
-    "rv32i/I-LUI-01","2000",
-    "rv32i/I-LW-01","3110",
-    "rv32i/I-MISALIGN_LDST-01","2010",
-    "rv32i/I-NOP-01","2000",
-    "rv32i/I-OR-01","2000",
-    "rv32i/I-ORI-01","2000",
-    "rv32i/I-RF_size-01","2000",
-    "rv32i/I-RF_width-01","2000",
-    "rv32i/I-RF_x0-01","2010",
-    "rv32i/I-SB-01","3000",
-    "rv32i/I-SH-01","3000",
-    "rv32i/I-SLL-01","2000",
-    "rv32i/I-SLLI-01","2000",
-    "rv32i/I-SLT-01","2000",
-    "rv32i/I-SLTI-01","2000",
-    "rv32i/I-SLTIU-01","2000",
-    "rv32i/I-SLTU-01","2000",
-    "rv32i/I-SRA-01","2000",
-    "rv32i/I-SRAI-01","2000",
-    "rv32i/I-SRL-01","2000",
-    "rv32i/I-SRLI-01","2000",
-    "rv32i/I-SUB-01","2000",
-    "rv32i/I-SW-01","3000",
-    "rv32i/I-XOR-01","2000",
-    "rv32i/I-XORI-01","2000",
-    "rv32i/WALLY-ADD", "3000",
-    "rv32i/WALLY-SUB", "3000",
-    "rv32i/WALLY-ADDI", "2000",
-    "rv32i/WALLY-ANDI", "2000",
-    "rv32i/WALLY-ORI", "2000",
-    "rv32i/WALLY-XORI", "2000",
-    "rv32i/WALLY-SLTI", "2000",
-    "rv32i/WALLY-SLTIU", "2000",
-    "rv32i/WALLY-SLLI", "2000",
-    "rv32i/WALLY-SRLI", "2000",
-    "rv32i/WALLY-SRAI", "2000",
-    "rv32i/WALLY-LOAD", "11c00",
-    "rv32i/WALLY-SUB", "3000",
-    "rv32i/WALLY-STORE", "2000",
-    "rv32i/WALLY-JAL", "3000",
-    "rv32i/WALLY-JALR", "2000",
-    "rv32i/WALLY-BEQ" ,"4000",
-    "rv32i/WALLY-BNE", "4000 ",
-    "rv32i/WALLY-BLTU", "4000 ",
-    "rv32i/WALLY-BLT", "4000",
-    "rv32i/WALLY-BGE", "4000 ",
-    "rv32i/WALLY-BGEU", "4000 ",
-    "rv32i/WALLY-CSRRW", "3000",
-    "rv32i/WALLY-CSRRS", "3000",
-    "rv32i/WALLY-CSRRC", "4000",
-    "rv32i/WALLY-CSRRWI", "3000",
-    "rv32i/WALLY-CSRRSI", "3000",
-    "rv32i/WALLY-CSRRCI", "3000"
-  };
-
-  string testsBP64[] = '{
-    "rv64BP/simple", "10000",
-    "rv64BP/mmm", "1000000",
-    "rv64BP/linpack_bench", "1000000",
-    "rv64BP/sieve", "1000000",
-    "rv64BP/qsort", "1000000",
-    "rv64BP/dhrystone", "1000000"
-  };
-
-  string tests64p[] = '{
-    "rv64p/WALLY-MSTATUS", "2000",
-    "rv64p/WALLY-MCAUSE", "3000",
-    "rv64p/WALLY-SCAUSE", "2000",
-    "rv64p/WALLY-MEPC", "5000",
-    "rv64p/WALLY-SEPC", "4000",
-    "rv64p/WALLY-MTVAL", "6000",
-    "rv64p/WALLY-STVAL", "4000",
-    "rv64p/WALLY-MTVEC", "2000",
-    "rv64p/WALLY-STVEC", "2000",
-    "rv64p/WALLY-MARCHID", "4000",
-    "rv64p/WALLY-MIMPID", "4000",
-    "rv64p/WALLY-MHARTID", "4000",
-    "rv64p/WALLY-MVENDORID", "4000",
-    "rv64p/WALLY-MIE", "3000",
-    "rv64p/WALLY-MEDELEG", "4000",
-    "rv64p/WALLY-IP", "2000",
-    "rv64p/WALLY-CSR-PERMISSIONS-M", "5000",
-    "rv64p/WALLY-CSR-PERMISSIONS-S", "3000"
-  };
-
-  string tests32p[] = '{
-    "rv32p/WALLY-MSTATUS", "2000",
-    "rv32p/WALLY-MCAUSE", "3000",
-    "rv32p/WALLY-SCAUSE", "2000",
-    "rv32p/WALLY-MEPC", "5000",
-    "rv32p/WALLY-SEPC", "4000",
-    "rv32p/WALLY-MTVAL", "5000",
-    "rv32p/WALLY-STVAL", "4000",
-    "rv32p/WALLY-MARCHID", "4000",
-    "rv32p/WALLY-MIMPID", "4000",
-    "rv32p/WALLY-MHARTID", "4000",
-    "rv32p/WALLY-MVENDORID", "4000",
-    "rv32p/WALLY-MTVEC", "2000",
-    "rv32p/WALLY-STVEC", "2000",
-    "rv32p/WALLY-MIE", "3000",
-    "rv32p/WALLY-MEDELEG", "4000",
-    "rv32p/WALLY-IP", "3000",
-    "rv32p/WALLY-CSR-PERMISSIONS-M", "5000",
-    "rv32p/WALLY-CSR-PERMISSIONS-S", "3000"
-  };
-
-  string tests64periph[] = '{
-    "rv64i-periph/WALLY-PERIPH", "2000"
-  };
-
-  string tests32periph[] = '{
-    "rv32i-periph/WALLY-PLIC", "2080"
+  string tests32i[] = '{
+    "rv32i_m/I/add-01", "9010",
+    "rv32i_m/I/addi-01", "6010",
+    "rv32i_m/I/and-01", "9010",
+    "rv32i_m/I/andi-01", "6010",
+    "rv32i_m/I/auipc-01", "2010",
+    "rv32i_m/I/beq-01", "47010",
+    "rv32i_m/I/bge-01", "47010",
+    "rv32i_m/I/bgeu-01", "56010",
+    "rv32i_m/I/blt-01", "4d010",
+    "rv32i_m/I/bltu-01", "57010",
+    "rv32i_m/I/bne-01", "43010",
+    "rv32i_m/I/fence-01", "2010",
+    "rv32i_m/I/jal-01", "122010",
+    "rv32i_m/I/jalr-01", "2010",
+    "rv32i_m/I/lb-align-01", "2010",
+    "rv32i_m/I/lbu-align-01", "2010",
+    "rv32i_m/I/lh-align-01", "2010",
+    "rv32i_m/I/lhu-align-01", "2010",
+    "rv32i_m/I/lui-01", "2010",
+    "rv32i_m/I/lw-align-01", "2010",
+    "rv32i_m/I/or-01", "9010",
+    "rv32i_m/I/ori-01", "6010",
+    "rv32i_m/I/sb-align-01", "3010",
+    "rv32i_m/I/sh-align-01", "3010",
+    "rv32i_m/I/sll-01", "3010",
+    "rv32i_m/I/slli-01", "2010",
+    "rv32i_m/I/slt-01", "9010",
+    "rv32i_m/I/slti-01", "6010",
+    "rv32i_m/I/sltiu-01", "6010",
+    "rv32i_m/I/sltu-01", "a010",
+    "rv32i_m/I/sra-01", "3010",
+    "rv32i_m/I/srai-01", "2010",
+    "rv32i_m/I/srl-01", "3010",
+    "rv32i_m/I/srli-01", "2010",
+    "rv32i_m/I/sub-01", "9010",
+    "rv32i_m/I/sw-align-01", "3010",
+    "rv32i_m/I/xor-01", "9010",
+    "rv32i_m/I/xori-01", "6010"
   };
 
    string tests[];
@@ -490,7 +425,7 @@ string tests32f[] = '{
       else if (TESTSPRIV)
         tests = tests64p;
       else begin
-        tests = {tests64i};
+        tests = {tests64priv, tests64i};
 //        tests = {tests64p,tests64i, tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
 //        else              tests = {tests, tests64iNOc};
@@ -720,7 +655,7 @@ module riscvassertions();
     assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $error("Multiple Instruction Cache ways not yet implemented");
+    assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $warning("Multiple Instruction Cache ways not yet implemented");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`TIM_RANGE >= 56'h07FFFFFF) else $error("Some regression tests will fail if TIM_RANGE is less than 56'h07FFFFFF");
