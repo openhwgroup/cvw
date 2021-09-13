@@ -79,6 +79,7 @@ module uartPC16550D(
   logic [9:0] rxshiftreg;
   logic [10:0] rxfifo[15:0];
   logic [7:0] txfifo[15:0];
+  logic [4:0] rxfifotailunwrapped;
   logic [3:0] rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
   logic [3:0] rxfifoentries, txfifoentries;
   logic [3:0] rxbitsexpected, txbitsexpected;
@@ -95,6 +96,7 @@ module uartPC16550D(
   logic [8:0] rxdata9;
   logic [7:0] rxdata;
   logic [15:0] RXerrbit, rxfullbit;
+  logic [31:0] rxfullbitunwrapped;
 
   // transmit data
   logic [7:0] TXHR, nexttxdata;
@@ -289,14 +291,21 @@ module uartPC16550D(
 
   // detect any errors in rx fifo
   // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
+  // tail is normally higher than head, but might wrap around.  unwrapped variable adds 16 to eliminate wrapping
   generate
+    assign rxfifotailunwrapped = rxfifotail < rxfifohead ? {1'b1, rxfifotail} : {1'b0, rxfifotail};
     genvar i;
+    for (i=0; i<32; i++) begin:rxfull
+      if (i == 0) assign rxfullbitunwrapped[i] = (rxfifohead==0) & (rxfifotail != 0);
+      else        assign rxfullbitunwrapped[i] = ({1'b0,rxfifohead}==i | rxfullbitunwrapped[i-1]) & (rxfifotailunwrapped != i);
+    end
     for (i=0; i<16; i++) begin:rx
       assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
-      if (i > 0)
+      assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
+/*      if (i > 0)
         assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
       else
-        assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);
+        assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
     end
   endgenerate
   assign rxfifohaserr = |(RXerrbit & rxfullbit);
