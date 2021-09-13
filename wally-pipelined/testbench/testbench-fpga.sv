@@ -160,233 +160,344 @@ string tests32f[] = '{
     "rv64a/WALLY-LRSC", "2110"
   };
 
-  string tests64priv[] = '{
-    "rv64i_m/privilege/ebreak", "2090",
-    "rv64i_m/privilege/ecall", "2090",
-    "rv64i_m/privilege/misalign-beq-01", "20a0",
-    "rv64i_m/privilege/misalign-bge-01", "20a0",
-    "rv64i_m/privilege/misalign-bgeu-01", "20a0",
-    "rv64i_m/privilege/misalign-blt-01", "20a0",
-    "rv64i_m/privilege/misalign-bltu-01", "20a0",
-    "rv64i_m/privilege/misalign-bne-01", "20a0",
-    "rv64i_m/privilege/misalign-jal-01", "20a0",
-    "rv64i_m/privilege/misalign-ld-01", "20a0",
-    "rv64i_m/privilege/misalign-lh-01", "20a0",
-    "rv64i_m/privilege/misalign-lhu-01", "20a0",
-    "rv64i_m/privilege/misalign-lw-01", "20a0",
-    "rv64i_m/privilege/misalign-lwu-01", "20a0",
-    "rv64i_m/privilege/misalign-sd-01", "20a0",
-    "rv64i_m/privilege/misalign-sh-01", "20a0",
-    "rv64i_m/privilege/misalign-sw-01", "20a0",
-    "rv64i_m/privilege/misalign1-jalr-01", "20a0",
-    "rv64i_m/privilege/misalign2-jalr-01", "20a0"
-    };
-
   string tests64m[] = '{
-    "rv64i_m/M/div-01", "9010",
-    "rv64i_m/M/divu-01", "a010",
-    "rv64i_m/M/divuw-01", "a010",
-    "rv64i_m/M/divw-01", "9010",
-    "rv64i_m/M/mul-01", "9010",
-    "rv64i_m/M/mulh-01", "9010",
-    "rv64i_m/M/mulhsu-01", "9010",
-    "rv64i_m/M/mulhu-01", "a010",
-    "rv64i_m/M/mulw-01", "9010",
-    "rv64i_m/M/rem-01", "9010",
-    "rv64i_m/M/remu-01", "a010",
-    "rv64i_m/M/remuw-01", "a010",
-    "rv64i_m/M/remw-01", "9010"
-   };
+    "rv64m/I-MUL-01", "3000",
+    "rv64m/I-MULH-01", "3000",
+    "rv64m/I-MULHSU-01", "3000",
+    "rv64m/I-MULHU-01", "3000",
+    "rv64m/I-MULW-01", "3000",
+    "rv64m/I-DIV-01", "3000",
+    "rv64m/I-DIVU-01", "3000",
+    "rv64m/I-DIVUW-01", "3000",
+    "rv64m/I-DIVW-01", "3000",
+    "rv64m/I-REM-01", "3000",
+    "rv64m/I-REMU-01", "3000",
+    "rv64m/I-REMUW-01", "3000",
+    "rv64m/I-REMW-01", "3000"
+  };
 
   string tests64ic[] = '{
-    "rv64i_m/C/cadd-01", "8010",
-    "rv64i_m/C/caddi-01", "4010",
-    "rv64i_m/C/caddi16sp-01", "2010",
-    "rv64i_m/C/caddi4spn-01", "2010",
-    "rv64i_m/C/caddiw-01", "4010",
-    "rv64i_m/C/caddw-01", "8010",
-    "rv64i_m/C/cand-01", "8010",
-    "rv64i_m/C/candi-01", "4010",
-    "rv64i_m/C/cbeqz-01", "4010",
-    "rv64i_m/C/cbnez-01", "5010",
-    "rv64i_m/C/cebreak-01", "2070",
-    "rv64i_m/C/cj-01", "3010",
-    "rv64i_m/C/cjalr-01", "2010",
-    "rv64i_m/C/cjr-01", "2010",
-    "rv64i_m/C/cld-01", "2010",
-    "rv64i_m/C/cldsp-01", "2010",
-    "rv64i_m/C/cli-01", "2010",
-    "rv64i_m/C/clui-01", "2010",
-    "rv64i_m/C/clw-01", "2010",
-    "rv64i_m/C/clwsp-01", "2010",
-    "rv64i_m/C/cmv-01", "2010",
-    "rv64i_m/C/cnop-01", "2010",
-    "rv64i_m/C/cor-01", "8010",
-    "rv64i_m/C/csd-01", "3010",
-    "rv64i_m/C/csdsp-01", "3010",
-    "rv64i_m/C/cslli-01", "2010",
-    "rv64i_m/C/csrai-01", "2010",
-    "rv64i_m/C/csrli-01", "2010",
-    "rv64i_m/C/csub-01", "8010",
-    "rv64i_m/C/csubw-01", "8010",
-    "rv64i_m/C/csw-01", "3010",
-    "rv64i_m/C/cswsp-01", "3010",
-    "rv64i_m/C/cxor-01", "8010"
+    "rv64ic/I-C-ADD-01", "3000",
+    "rv64ic/I-C-ADDI-01", "3000",
+    "rv64ic/I-C-ADDIW-01", "3000",
+    "rv64ic/I-C-ADDW-01", "3000",
+    "rv64ic/I-C-AND-01", "3000",
+    "rv64ic/I-C-ANDI-01", "3000",
+    "rv64ic/I-C-BEQZ-01", "3000",
+    "rv64ic/I-C-BNEZ-01", "3000",
+    "rv64ic/I-C-EBREAK-01", "2000",
+    "rv64ic/I-C-J-01", "3000",
+    "rv64ic/I-C-JALR-01", "4000",
+    "rv64ic/I-C-JR-01", "4000",
+    "rv64ic/I-C-LD-01", "3420",
+    "rv64ic/I-C-LDSP-01", "3420",
+    "rv64ic/I-C-LI-01", "3000",
+    "rv64ic/I-C-LUI-01", "2000",
+    "rv64ic/I-C-LW-01", "3110",
+    "rv64ic/I-C-LWSP-01", "3110",
+    "rv64ic/I-C-MV-01", "3000",
+    "rv64ic/I-C-NOP-01", "2000",
+    "rv64ic/I-C-OR-01", "3000",
+    "rv64ic/I-C-SD-01", "3000",
+    "rv64ic/I-C-SDSP-01", "3000",
+    "rv64ic/I-C-SLLI-01", "3000",
+    "rv64ic/I-C-SRAI-01", "3000",
+    "rv64ic/I-C-SRLI-01", "3000",
+    "rv64ic/I-C-SUB-01", "3000",
+    "rv64ic/I-C-SUBW-01", "3000",
+    "rv64ic/I-C-SW-01", "3000",
+    "rv64ic/I-C-SWSP-01", "3000",
+    "rv64ic/I-C-XOR-01", "3000"
+  };
+
+  string tests64iNOc[] = {
+    "rv64i/I-MISALIGN_JMP-01","2000"
   };
 
   string tests64i[] = '{
-    "rv64i_m/I/add-01", "9010",
-    "rv64i_m/I/addi-01", "6010",
-    "rv64i_m/I/addiw-01", "6010",
-    "rv64i_m/I/addw-01", "9010",
-    "rv64i_m/I/and-01", "9010",
-    "rv64i_m/I/andi-01", "6010",
-    "rv64i_m/I/auipc-01", "2010",
-    "rv64i_m/I/beq-01", "47010",
-    "rv64i_m/I/bge-01", "47010",
-    "rv64i_m/I/bgeu-01", "56010",
-    "rv64i_m/I/blt-01", "4d010",
-    "rv64i_m/I/bltu-01", "57010",
-    "rv64i_m/I/bne-01", "43010",
-    "rv64i_m/I/fence-01", "2010",
-    "rv64i_m/I/jal-01", "122010",
-    "rv64i_m/I/jalr-01", "2010",
-    "rv64i_m/I/lb-align-01", "2010",
-    "rv64i_m/I/lbu-align-01", "2010",
-    "rv64i_m/I/ld-align-01", "2010",
-    "rv64i_m/I/lh-align-01", "2010",
-    "rv64i_m/I/lhu-align-01", "2010",
-    "rv64i_m/I/lui-01", "2010",
-    "rv64i_m/I/lw-align-01", "2010",
-    "rv64i_m/I/lwu-align-01", "2010",
-    "rv64i_m/I/or-01", "9010",
-    "rv64i_m/I/ori-01", "6010",
-    "rv64i_m/I/sb-align-01", "3010",
-    "rv64i_m/I/sd-align-01", "3010",
-    "rv64i_m/I/sh-align-01", "3010",
-    "rv64i_m/I/sll-01", "3010",
-    "rv64i_m/I/slli-01", "2010",
-    "rv64i_m/I/slliw-01", "2010",
-    "rv64i_m/I/sllw-01", "3010",
-    "rv64i_m/I/slt-01", "9010",
-    "rv64i_m/I/slti-01", "6010",
-    "rv64i_m/I/sltiu-01", "6010",
-    "rv64i_m/I/sltu-01", "a010",
-    "rv64i_m/I/sra-01", "3010",
-    "rv64i_m/I/srai-01", "2010",
-    "rv64i_m/I/sraiw-01", "2010",
-    "rv64i_m/I/sraw-01", "3010",
-    "rv64i_m/I/srl-01", "3010",
-    "rv64i_m/I/srli-01", "2010",
-    "rv64i_m/I/srliw-01", "2010",
-    "rv64i_m/I/srlw-01", "3010",
-    "rv64i_m/I/sub-01", "9010",
-    "rv64i_m/I/subw-01", "9010",
-    "rv64i_m/I/sw-align-01", "3010",
-    "rv64i_m/I/xor-01", "9010",
-    "rv64i_m/I/xori-01", "6010"
+    //"rv64i/WALLY-PIPELINE-100K", "f7ff0",
+    "rv64i/I-ADD-01", "3000",
+    "rv64i/I-ADDI-01", "3000",
+    "rv64i/I-ADDIW-01", "3000",
+    "rv64i/I-ADDW-01", "3000",
+    "rv64i/I-AND-01", "3000",
+    "rv64i/I-ANDI-01", "3000",
+    "rv64i/I-AUIPC-01", "3000",
+    "rv64i/I-BEQ-01", "4000",
+    "rv64i/I-BGE-01", "4000",
+    "rv64i/I-BGEU-01", "4000",
+    "rv64i/I-BLT-01", "4000",
+    "rv64i/I-BLTU-01", "4000",
+    "rv64i/I-BNE-01", "4000",
+    "rv64i/I-DELAY_SLOTS-01", "2000",
+    "rv64i/I-EBREAK-01", "2000",
+    "rv64i/I-ECALL-01", "2000",
+    "rv64i/I-ENDIANESS-01", "2010",
+    "rv64i/I-IO-01", "2050",
+    "rv64i/I-JAL-01", "3000",
+    "rv64i/I-JALR-01", "4000",
+    "rv64i/I-LB-01", "4020",
+    "rv64i/I-LBU-01", "4020",
+    "rv64i/I-LD-01", "4420",
+    "rv64i/I-LH-01", "4050",
+    "rv64i/I-LHU-01", "4050",
+    "rv64i/I-LUI-01", "2000",
+    "rv64i/I-LW-01", "4110",
+    "rv64i/I-LWU-01", "4110", 
+    "rv64i/I-MISALIGN_LDST-01", "2010",
+    "rv64i/I-NOP-01", "2000",
+    "rv64i/I-OR-01", "3000",
+    "rv64i/I-ORI-01", "3000",
+    "rv64i/I-RF_size-01", "2000",
+    "rv64i/I-RF_width-01", "2000",
+    "rv64i/I-RF_x0-01", "2010",
+    "rv64i/I-SB-01", "4000",
+    "rv64i/I-SD-01", "4000",
+    "rv64i/I-SH-01", "4000",
+    "rv64i/I-SLL-01", "3000",
+    "rv64i/I-SLLI-01", "3000",
+    "rv64i/I-SLLIW-01", "3000",
+    "rv64i/I-SLLW-01", "3000",
+    "rv64i/I-SLT-01", "3000",
+    "rv64i/I-SLTI-01", "3000",
+    "rv64i/I-SLTIU-01", "3000",
+    "rv64i/I-SLTU-01", "3000",
+    "rv64i/I-SRA-01", "3000",
+    "rv64i/I-SRAI-01", "3000",
+    "rv64i/I-SRAIW-01", "3000",
+    "rv64i/I-SRAW-01", "3000",
+    "rv64i/I-SRL-01", "3000",
+    "rv64i/I-SRLI-01", "3000",
+    "rv64i/I-SRLIW-01", "3000",
+    "rv64i/I-SRLW-01", "3000",
+    "rv64i/I-SUB-01", "3000",
+    "rv64i/I-SUBW-01", "3000",
+    "rv64i/I-SW-01", "4000",
+    "rv64i/I-XOR-01", "3000",
+    "rv64i/I-XORI-01", "3000",
+    "rv64i/WALLY-ADD", "4000",
+    "rv64i/WALLY-SUB", "4000",
+    "rv64i/WALLY-ADDI", "3000",
+    "rv64i/WALLY-ANDI", "3000",
+    "rv64i/WALLY-ORI", "3000",
+    "rv64i/WALLY-XORI", "3000",
+    "rv64i/WALLY-SLTI", "3000",
+    "rv64i/WALLY-SLTIU", "3000",
+    "rv64i/WALLY-SLLI", "3000",
+    "rv64i/WALLY-SRLI", "3000",
+    "rv64i/WALLY-SRAI", "3000",
+    "rv64i/WALLY-JAL", "4000",
+    "rv64i/WALLY-JALR", "3000",
+    "rv64i/WALLY-STORE", "3000",
+    "rv64i/WALLY-ADDIW", "3000",
+    "rv64i/WALLY-SLLIW", "3000",
+    "rv64i/WALLY-SRLIW", "3000",
+    "rv64i/WALLY-SRAIW", "3000",
+    "rv64i/WALLY-ADDW", "4000",
+    "rv64i/WALLY-SUBW", "4000",
+    "rv64i/WALLY-SLLW", "3000",
+    "rv64i/WALLY-SRLW", "3000",
+    "rv64i/WALLY-SRAW", "3000",
+    "rv64i/WALLY-BEQ" ,"5000",
+    "rv64i/WALLY-BNE", "5000 ",
+    "rv64i/WALLY-BLTU", "5000 ",
+    "rv64i/WALLY-BLT", "5000",
+    "rv64i/WALLY-BGE", "5000 ",
+    "rv64i/WALLY-BGEU", "5000 ",
+    "rv64i/WALLY-CSRRW", "4000",
+    "rv64i/WALLY-CSRRS", "4000",
+    "rv64i/WALLY-CSRRC", "5000",
+    "rv64i/WALLY-CSRRWI", "4000",
+    "rv64i/WALLY-CSRRSI", "4000",
+    "rv64i/WALLY-CSRRCI", "4000"
   };
 
-    string tests32priv[] = '{
-    "rv32i_m/privilege/ebreak", "2090",
-    "rv32i_m/privilege/ecall", "2090",
-    "rv32i_m/privilege/misalign-beq-01", "20a0",
-    "rv32i_m/privilege/misalign-bge-01", "20a0",
-    "rv32i_m/privilege/misalign-bgeu-01", "20a0",
-    "rv32i_m/privilege/misalign-blt-01", "20a0",
-    "rv32i_m/privilege/misalign-bltu-01", "20a0",
-    "rv32i_m/privilege/misalign-bne-01", "20a0",
-    "rv32i_m/privilege/misalign-jal-01", "20a0",
-    "rv32i_m/privilege/misalign-lh-01", "20a0",
-    "rv32i_m/privilege/misalign-lhu-01", "20a0",
-    "rv32i_m/privilege/misalign-lw-01", "20a0",
-    "rv32i_m/privilege/misalign-lwu-01", "20a0",
-    "rv32i_m/privilege/misalign-sh-01", "20a0",
-    "rv32i_m/privilege/misalign-sw-01", "20a0",
-    "rv32i_m/privilege/misalign1-jalr-01", "20a0",
-    "rv32i_m/privilege/misalign2-jalr-01", "20a0"
-    };
+  string tests32a[] = '{
+    "rv32a/WALLY-AMO", "2110",
+    "rv32a/WALLY-LRSC", "2110"
+  };
 
   string tests32m[] = '{
-    "rv32i_m/M/div-01", "9010",
-    "rv32i_m/M/divu-01", "a010",
-    "rv32i_m/M/mul-01", "9010",
-    "rv32i_m/M/mulh-01", "9010",
-    "rv32i_m/M/mulhsu-01", "9010",
-    "rv32i_m/M/mulhu-01", "a010",
-    "rv32i_m/M/rem-01", "9010",
-    "rv32i_m/M/remu-01", "a010",
-   };
-
-  string tests32ic[] = '{
-    "rv32i_m/C/cadd-01", "8010",
-    "rv32i_m/C/caddi-01", "4010",
-    "rv32i_m/C/caddi16sp-01", "2010",
-    "rv32i_m/C/caddi4spn-01", "2010",
-    "rv32i_m/C/cand-01", "8010",
-    "rv32i_m/C/candi-01", "4010",
-    "rv32i_m/C/cbeqz-01", "4010",
-    "rv32i_m/C/cbnez-01", "5010",
-    "rv32i_m/C/cebreak-01", "2070",
-    "rv32i_m/C/cj-01", "3010",
-    "rv32i_m/C/cjal-01", "",
-    "rv32i_m/C/cjalr-01", "2010",
-    "rv32i_m/C/cjr-01", "2010",
-    "rv32i_m/C/cli-01", "2010",
-    "rv32i_m/C/clui-01", "2010",
-    "rv32i_m/C/clw-01", "2010",
-    "rv32i_m/C/clwsp-01", "2010",
-    "rv32i_m/C/cmv-01", "2010",
-    "rv32i_m/C/cnop-01", "2010",
-    "rv32i_m/C/cor-01", "8010",
-    "rv32i_m/C/cslli-01", "2010",
-    "rv32i_m/C/csrai-01", "2010",
-    "rv32i_m/C/csrli-01", "2010",
-    "rv32i_m/C/csub-01", "8010",
-    "rv32i_m/C/csw-01", "3010",
-    "rv32i_m/C/cswsp-01", "3010",
-    "rv32i_m/C/cxor-01", "8010"
+    "rv32m/I-MUL-01", "2000",
+    "rv32m/I-MULH-01", "2000",
+    "rv32m/I-MULHSU-01", "2000",
+    "rv32m/I-MULHU-01", "2000",
+    "rv32m/I-DIV-01", "2000",
+    "rv32m/I-DIVU-01", "2000",
+    "rv32m/I-REM-01", "2000",
+    "rv32m/I-REMU-01", "2000"
   };
 
-  string tests32i[] = '{
-    "rv32i_m/I/add-01", "9010",
-    "rv32i_m/I/addi-01", "6010",
-    "rv32i_m/I/and-01", "9010",
-    "rv32i_m/I/andi-01", "6010",
-    "rv32i_m/I/auipc-01", "2010",
-    "rv32i_m/I/beq-01", "47010",
-    "rv32i_m/I/bge-01", "47010",
-    "rv32i_m/I/bgeu-01", "56010",
-    "rv32i_m/I/blt-01", "4d010",
-    "rv32i_m/I/bltu-01", "57010",
-    "rv32i_m/I/bne-01", "43010",
-    "rv32i_m/I/fence-01", "2010",
-    "rv32i_m/I/jal-01", "122010",
-    "rv32i_m/I/jalr-01", "2010",
-    "rv32i_m/I/lb-align-01", "2010",
-    "rv32i_m/I/lbu-align-01", "2010",
-    "rv32i_m/I/lh-align-01", "2010",
-    "rv32i_m/I/lhu-align-01", "2010",
-    "rv32i_m/I/lui-01", "2010",
-    "rv32i_m/I/lw-align-01", "2010",
-    "rv32i_m/I/or-01", "9010",
-    "rv32i_m/I/ori-01", "6010",
-    "rv32i_m/I/sb-align-01", "3010",
-    "rv32i_m/I/sh-align-01", "3010",
-    "rv32i_m/I/sll-01", "3010",
-    "rv32i_m/I/slli-01", "2010",
-    "rv32i_m/I/slt-01", "9010",
-    "rv32i_m/I/slti-01", "6010",
-    "rv32i_m/I/sltiu-01", "6010",
-    "rv32i_m/I/sltu-01", "a010",
-    "rv32i_m/I/sra-01", "3010",
-    "rv32i_m/I/srai-01", "2010",
-    "rv32i_m/I/srl-01", "3010",
-    "rv32i_m/I/srli-01", "2010",
-    "rv32i_m/I/sub-01", "9010",
-    "rv32i_m/I/sw-align-01", "3010",
-    "rv32i_m/I/xor-01", "9010",
-    "rv32i_m/I/xori-01", "6010"
+  string tests32ic[] = '{
+    "rv32ic/I-C-ADD-01", "2000",
+    "rv32ic/I-C-ADDI-01", "2000",
+    "rv32ic/I-C-AND-01", "2000",
+    "rv32ic/I-C-ANDI-01", "2000",
+    "rv32ic/I-C-BEQZ-01", "2000",
+    "rv32ic/I-C-BNEZ-01", "2000",
+    "rv32ic/I-C-EBREAK-01", "2000",
+    "rv32ic/I-C-J-01", "2000",
+    "rv32ic/I-C-JALR-01", "3000",
+    "rv32ic/I-C-JR-01", "3000",
+    "rv32ic/I-C-LI-01", "2000",
+    "rv32ic/I-C-LUI-01", "2000",
+    "rv32ic/I-C-LW-01", "2110",
+    "rv32ic/I-C-LWSP-01", "2110",
+    "rv32ic/I-C-MV-01", "2000",
+    "rv32ic/I-C-NOP-01", "2000",
+    "rv32ic/I-C-OR-01", "2000",
+    "rv32ic/I-C-SLLI-01", "2000",
+    "rv32ic/I-C-SRAI-01", "2000",
+    "rv32ic/I-C-SRLI-01", "2000",
+    "rv32ic/I-C-SUB-01", "2000",
+    "rv32ic/I-C-SW-01", "2000",
+    "rv32ic/I-C-SWSP-01", "2000",
+    "rv32ic/I-C-XOR-01", "2000"
+  };
+
+  string tests32iNOc[] = {
+    "rv32i/I-MISALIGN_JMP-01","2000"
+  };
+
+  string tests32i[] = {
+    //"rv32i/WALLY-PIPELINE-100K", "10a800",
+    "rv32i/I-ADD-01", "2000",
+    "rv32i/I-ADDI-01","2000",
+    "rv32i/I-AND-01","2000",
+    "rv32i/I-ANDI-01","2000",
+    "rv32i/I-AUIPC-01","2000",
+    "rv32i/I-BEQ-01","3000",
+    "rv32i/I-BGE-01","3000",
+    "rv32i/I-BGEU-01","3000",
+    "rv32i/I-BLT-01","3000",
+    "rv32i/I-BLTU-01","3000",
+    "rv32i/I-BNE-01","3000",
+    "rv32i/I-DELAY_SLOTS-01","2000",
+    "rv32i/I-EBREAK-01","2000",
+    "rv32i/I-ECALL-01","2000",
+    "rv32i/I-ENDIANESS-01","2010",
+    "rv32i/I-IO-01","2030rv",
+    "rv32i/I-JAL-01","3000",
+    "rv32i/I-JALR-01","3000",
+    "rv32i/I-LB-01","3020",
+    "rv32i/I-LBU-01","3020",
+    "rv32i/I-LH-01","3050",
+    "rv32i/I-LHU-01","3050",
+    "rv32i/I-LUI-01","2000",
+    "rv32i/I-LW-01","3110",
+    "rv32i/I-MISALIGN_LDST-01","2010",
+    "rv32i/I-NOP-01","2000",
+    "rv32i/I-OR-01","2000",
+    "rv32i/I-ORI-01","2000",
+    "rv32i/I-RF_size-01","2000",
+    "rv32i/I-RF_width-01","2000",
+    "rv32i/I-RF_x0-01","2010",
+    "rv32i/I-SB-01","3000",
+    "rv32i/I-SH-01","3000",
+    "rv32i/I-SLL-01","2000",
+    "rv32i/I-SLLI-01","2000",
+    "rv32i/I-SLT-01","2000",
+    "rv32i/I-SLTI-01","2000",
+    "rv32i/I-SLTIU-01","2000",
+    "rv32i/I-SLTU-01","2000",
+    "rv32i/I-SRA-01","2000",
+    "rv32i/I-SRAI-01","2000",
+    "rv32i/I-SRL-01","2000",
+    "rv32i/I-SRLI-01","2000",
+    "rv32i/I-SUB-01","2000",
+    "rv32i/I-SW-01","3000",
+    "rv32i/I-XOR-01","2000",
+    "rv32i/I-XORI-01","2000",
+    "rv32i/WALLY-ADD", "3000",
+    "rv32i/WALLY-SUB", "3000",
+    "rv32i/WALLY-ADDI", "2000",
+    "rv32i/WALLY-ANDI", "2000",
+    "rv32i/WALLY-ORI", "2000",
+    "rv32i/WALLY-XORI", "2000",
+    "rv32i/WALLY-SLTI", "2000",
+    "rv32i/WALLY-SLTIU", "2000",
+    "rv32i/WALLY-SLLI", "2000",
+    "rv32i/WALLY-SRLI", "2000",
+    "rv32i/WALLY-SRAI", "2000",
+    "rv32i/WALLY-LOAD", "11c00",
+    "rv32i/WALLY-SUB", "3000",
+    "rv32i/WALLY-STORE", "2000",
+    "rv32i/WALLY-JAL", "3000",
+    "rv32i/WALLY-JALR", "2000",
+    "rv32i/WALLY-BEQ" ,"4000",
+    "rv32i/WALLY-BNE", "4000 ",
+    "rv32i/WALLY-BLTU", "4000 ",
+    "rv32i/WALLY-BLT", "4000",
+    "rv32i/WALLY-BGE", "4000 ",
+    "rv32i/WALLY-BGEU", "4000 ",
+    "rv32i/WALLY-CSRRW", "3000",
+    "rv32i/WALLY-CSRRS", "3000",
+    "rv32i/WALLY-CSRRC", "4000",
+    "rv32i/WALLY-CSRRWI", "3000",
+    "rv32i/WALLY-CSRRSI", "3000",
+    "rv32i/WALLY-CSRRCI", "3000"
+  };
+
+  string testsBP64[] = '{
+    "rv64BP/blink-led", "10000"
+/* -----\/----- EXCLUDED -----\/-----
+    "rv64BP/simple", "10000",
+    "rv64BP/mmm", "1000000",
+    "rv64BP/linpack_bench", "1000000",
+    "rv64BP/sieve", "1000000",
+    "rv64BP/qsort", "1000000",
+    "rv64BP/dhrystone", "1000000"
+ -----/\----- EXCLUDED -----/\----- */
+  };
+
+  string tests64p[] = '{
+    "rv64p/WALLY-MSTATUS", "2000",
+    "rv64p/WALLY-MCAUSE", "3000",
+    "rv64p/WALLY-SCAUSE", "2000",
+    "rv64p/WALLY-MEPC", "5000",
+    "rv64p/WALLY-SEPC", "4000",
+    "rv64p/WALLY-MTVAL", "6000",
+    "rv64p/WALLY-STVAL", "4000",
+    "rv64p/WALLY-MTVEC", "2000",
+    "rv64p/WALLY-STVEC", "2000",
+    "rv64p/WALLY-MARCHID", "4000",
+    "rv64p/WALLY-MIMPID", "4000",
+    "rv64p/WALLY-MHARTID", "4000",
+    "rv64p/WALLY-MVENDORID", "4000",
+    "rv64p/WALLY-MIE", "3000",
+    "rv64p/WALLY-MEDELEG", "4000",
+    "rv64p/WALLY-IP", "2000",
+    "rv64p/WALLY-CSR-PERMISSIONS-M", "5000",
+    "rv64p/WALLY-CSR-PERMISSIONS-S", "3000"
+  };
+
+  string tests32p[] = '{
+    "rv32p/WALLY-MSTATUS", "2000",
+    "rv32p/WALLY-MCAUSE", "3000",
+    "rv32p/WALLY-SCAUSE", "2000",
+    "rv32p/WALLY-MEPC", "5000",
+    "rv32p/WALLY-SEPC", "4000",
+    "rv32p/WALLY-MTVAL", "5000",
+    "rv32p/WALLY-STVAL", "4000",
+    "rv32p/WALLY-MARCHID", "4000",
+    "rv32p/WALLY-MIMPID", "4000",
+    "rv32p/WALLY-MHARTID", "4000",
+    "rv32p/WALLY-MVENDORID", "4000",
+    "rv32p/WALLY-MTVEC", "2000",
+    "rv32p/WALLY-STVEC", "2000",
+    "rv32p/WALLY-MIE", "3000",
+    "rv32p/WALLY-MEDELEG", "4000",
+    "rv32p/WALLY-IP", "3000",
+    "rv32p/WALLY-CSR-PERMISSIONS-M", "5000",
+    "rv32p/WALLY-CSR-PERMISSIONS-S", "3000"
+  };
+
+  string tests64periph[] = '{
+    "rv64i-periph/WALLY-PERIPH", "2000"
+  };
+
+  string tests32periph[] = '{
+    "rv32i-periph/WALLY-PLIC", "2080"
   };
 
    string tests[];
@@ -425,15 +536,14 @@ string tests32f[] = '{
       else if (TESTSPRIV)
         tests = tests64p;
       else begin
-        tests = {tests64priv, tests64i};
-//        tests = {tests64p,tests64i, tests64periph};
+        tests = {tests64p,tests64i, tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
-//        else              tests = {tests, tests64iNOc};
+        else              tests = {tests, tests64iNOc};
         if (`M_SUPPORTED) tests = {tests, tests64m};
-/*        if (`F_SUPPORTED) tests = {tests64f, tests};
+        if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
-        if (`A_SUPPORTED) tests = {tests64a, tests}; */
+        if (`A_SUPPORTED) tests = {tests64a, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -454,7 +564,7 @@ string tests32f[] = '{
     end
   end
 
-  string tvroot, bootroot, signame, memfilename, romfilename;
+  string signame, memfilename, romfilename;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -493,20 +603,20 @@ string tests32f[] = '{
       if (`XLEN == 32) meminit = 32'hFEDC0123;
       else meminit = 64'hFEDCBA9876543210;
       // *** broken because DTIM also drives RAM
+/* -----\/----- EXCLUDED -----\/-----
       if (`TESTSBP) begin
 	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
 	  dut.uncore.dtim.RAM[i] = meminit;
 	end
       end
+ -----/\----- EXCLUDED -----/\----- */
       // read test vectors into memory
-      bootroot = "../../imperas-riscv-tests/";
-      tvroot = "/home/harris/github/riscv-arch-test/";
-      memfilename = {tvroot, "work/", tests[test], ".elf.memfile"};
-//      romfilename = {bootroot, "imperas-boottim.txt"};
+      memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
+      romfilename = {"../../imperas-riscv-tests/work/rv64BP/blink-led.memfile"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-//      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
-      ProgramAddrMapFile = {tvroot, "work/", tests[test], ".elf.objdump.addr"};
-      ProgramLabelMapFile = {tvroot, "work/", tests[test], ".elf.objdump.lab"};
+      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
+      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
+      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
       reset = 1; # 42; reset = 0;
     end
@@ -537,7 +647,7 @@ string tests32f[] = '{
         end
 
         // read signature, reformat in 64 bits if necessary
-        signame = {tvroot, "work/", tests[test], ".signature.output"};
+        signame = {"../../imperas-riscv-tests/work/", tests[test], ".signature.output"};
         $readmemh(signame, sig32);
         i = 0;
         while (i < SIGNATURESIZE) begin
@@ -591,11 +701,11 @@ string tests32f[] = '{
           $stop;
         end
         else begin
-          memfilename = {tvroot, "work/",tests[test], ".elf.memfile"};
+          memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
           $readmemh(memfilename, dut.uncore.dtim.RAM);
           $display("Read memfile %s", memfilename);
-	  ProgramAddrMapFile = {tvroot, "work/", tests[test], ".elf.objdump.addr"};
-	  ProgramLabelMapFile = {tvroot, "work/", tests[test], ".elf.objdump.lab"};
+	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
+	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
           reset = 1; # 17; reset = 0;
         end
       end
@@ -609,17 +719,12 @@ string tests32f[] = '{
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-    // flush cache and halt on infinite loop at end of riscv-arch-test
-    assign DCacheFlushStart = dut.hart.ifu.InstrM == 32'h6f && dut.hart.ieu.c.InstrValidM;
-//  assign DCacheFlushStart = dut.hart.lsu.dcache.MemPAdrM[31:0] == 32'h80008000 & 
-//            dut.hart.lsu.dcache.MemRWM == 2'b01;
-
-/*  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
+  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
 			      dut.hart.ieu.dp.regf.wd3 == 1));
- */ 
+  
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
 				.reset(reset),
 				.start(DCacheFlushStart),
