@@ -51,7 +51,7 @@ module muldiv (
 
 	 logic 		     enable_q;	 
 	 logic [2:0] 	     Funct3E_Q;
-	 logic 		     div0error;
+	 logic 		     div0error; // ***unused
 	 logic [`XLEN-1:0]   N, D;
 	 logic [`XLEN-1:0]   Num0, Den0;	 
 
@@ -89,11 +89,13 @@ module muldiv (
 	 
 	 assign signedDivide = (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
 	 intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
+	 //intdiv_restoring div(.clk, .reset, .signedDivide, .start(startDivideE), .X(N), .D(D), .busy(DivBusyE), .done(DivDoneE), .Q(QuotE), .REM(RemE));
 
 	 // Added for debugging of start signal for divide
 	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
 	 
 	 // capture the start control signals since they are not held constant.
+	 // *** appears to be unused
 	 flopenrc #(3) funct3ereg (.d(Funct3E),
 				   .q(Funct3E_Q),
 				   .en(DivStartE),
@@ -114,7 +116,7 @@ module muldiv (
              3'b111: PrelimResultE = RemE;
            endcase // case (Funct3E)
 
-	 // Start Divide process
+	 // Start Divide process.  This simplifies to DivStartE = Funct3E[2];
 	 always_comb
            case (Funct3E)
              3'b000: DivStartE = 1'b0;
