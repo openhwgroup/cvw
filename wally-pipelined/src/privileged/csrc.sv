@@ -91,7 +91,7 @@ module csrc #(parameter
   );
 
   generate
-    if (`ZCOUNTERS_SUPPORTED) begin
+    if (`ZICOUNTERS_SUPPORTED) begin
       //  logic [63:0] TIME_REGW, TIMECMP_REGW;
       logic [63:0] CYCLE_REGW, INSTRET_REGW;
       logic [63:0] HPMCOUNTER3_REGW, HPMCOUNTER4_REGW; // add more performance counters here if desired
@@ -413,7 +413,7 @@ module csrc #(parameter
 
     genvar j;       
     generate
-        if (`ZCOUNTERS_SUPPORTED) begin
+        if (`ZICOUNTERS_SUPPORTED) begin
             logic [`COUNTERS:0][63:0] HPMCOUNTER_REGW;
             logic [`COUNTERS:0][63:0] HPMCOUNTERPlusM;
             logic [`COUNTERS:0][`XLEN-1:0] NextHPMCOUNTERM;
