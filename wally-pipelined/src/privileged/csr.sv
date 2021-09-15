@@ -90,7 +90,7 @@ module csr #(parameter
   logic IllegalCSRMWriteReadonlyM;
   
   generate
-    if (`ZCSR_SUPPORTED) begin
+    if (`ZICSR_SUPPORTED) begin
       // modify CSRs
       always_comb begin
         // Choose either rs1 or uimm[4:0] as source
