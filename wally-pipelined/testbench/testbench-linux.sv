@@ -363,38 +363,40 @@ module testbench();
       InstrCountW += 1;
       // turn on waves at certain point
       if (InstrCountW == waveOnICount) $stop;
+      // print progress message
+      if (InstrCountW % 'd100000 == 0) $display("Reached %d instructions", InstrCountW);
       // check PCW
       fault = 0;
       if(PCW != ExpectedPCW) begin
-    $display("PCW: %016x does not equal ExpectedPCW: %016x", PCW, ExpectedPCW);
-    fault = 1;
+        $display("PCW: %016x does not equal ExpectedPCW: %016x", PCW, ExpectedPCW);
+        fault = 1;
       end
 
       // check instruction value
       if(dut.hart.ifu.InstrW != ExpectedInstrW) begin
-    $display("InstrW: %x does not equal ExpectedInstrW: %x", dut.hart.ifu.InstrW, ExpectedInstrW);
-    fault = 1;
+        $display("InstrW: %x does not equal ExpectedInstrW: %x", dut.hart.ifu.InstrW, ExpectedInstrW);
+        fault = 1;
       end
 
       // check the number of instructions
       if(dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW != InstrCountW) begin
-    $display("%t, Number of instruction Retired = %d does not equal number of instructions in trace = %d", $time, dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW, InstrCountW);
-    if(!`DontHaltOnCSRMisMatch) fault = 1;
+        $display("%t, Number of instruction Retired = %d does not equal number of instructions in trace = %d", $time, dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW, InstrCountW);
+        if(!`DontHaltOnCSRMisMatch) fault = 1;
       end
       
       #2; // delay 2 ns.
 
       
       if(`DEBUG_TRACE > 2) begin
-    $display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
-    $display("RF[%02d]: %016x ? expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
+        $display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
+        $display("RF[%02d]: %016x ? expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
       end
 
       if (RegWriteW == "GPR") begin
-    if (dut.hart.ieu.dp.regf.a3 != ExpectedRegAdrW) begin
-      $display("Reg Write Address: %02d does not equal expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
-      fault = 1;
-    end
+        if (dut.hart.ieu.dp.regf.a3 != ExpectedRegAdrW) begin
+          $display("Reg Write Address: %02d does not equal expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
+          fault = 1;
+        end
     
     if (dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW] != ExpectedRegValueW) begin
       $display("RF[%02d]: %016x does not equal expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
