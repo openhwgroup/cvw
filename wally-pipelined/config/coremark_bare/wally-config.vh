@@ -37,9 +37,10 @@
 //`define MISA (32'h00000104)
 //`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
-`define ZCSR_SUPPORTED 1
+`define ZICSR_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
-`define ZCOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 1
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1

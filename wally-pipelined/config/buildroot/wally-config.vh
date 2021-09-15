@@ -37,8 +37,9 @@
 `define XLEN 64
 
 `define MISA (32'h0014112D)
-`define ZCSR_SUPPORTED 1
-`define ZCOUNTERS_SUPPORTED 1
+`define ZICSR_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 1
 `define COUNTERS 32
 
 // Microarchitectural Features

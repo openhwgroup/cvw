@@ -35,6 +35,7 @@ module hazard(
               input logic  FPUStallD, FStallD,
 	      input logic  DivBusyE,FDivBusyE,
 	      input logic  EcallFaultM, BreakpointFaultM,
+        input logic  InvalidateICacheM,
   // Stall & flush outputs
 	      output logic StallF, StallD, StallE, StallM, StallW,
 	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
@@ -68,17 +69,15 @@ module hazard(
   assign StallM = StallMCause | StallW;
   assign StallW = StallWCause;
 
-  //assign FirstUnstalledD = (~StallD & StallF & ~MulDivStallD);
-  //assign FirstUnstalledE = (~StallE & StallD & ~MulDivStallD);
   assign FirstUnstalledD = (~StallD && StallF);
   assign FirstUnstalledE = (~StallE && StallD);
   assign FirstUnstalledM = (~StallM && StallE);
   assign FirstUnstalledW = (~StallW && StallM);
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushF = BPPredWrongE;
-  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE;
-  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE;
+  assign FlushF = BPPredWrongE | InvalidateICacheM;
+  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | InvalidateICacheM;
+  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | InvalidateICacheM;
   assign FlushM = FirstUnstalledM | TrapM | RetM;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
