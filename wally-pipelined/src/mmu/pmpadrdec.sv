@@ -82,7 +82,7 @@ module pmpadrdec (
   assign NAMask[1:0] = {2'b11};
 
   prioritythemometer #(`PA_BITS-2) namaskgen(
-    .a({PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}),
+    .a({~PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}), // *** confusing bit bussing to match the logic for the inside of the thermometer.
     .y(NAMask[`PA_BITS-1:2]));
 
   assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | NAMask);
