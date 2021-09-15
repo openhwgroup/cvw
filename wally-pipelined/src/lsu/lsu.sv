@@ -42,6 +42,7 @@ module lsu
    input logic [1:0] 	       AtomicM,
    input logic 		       ExceptionM,
    input logic 		       PendingInterruptM,
+   input logic           FlushDCacheM,
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
    output logic 	       DataMisalignedM,

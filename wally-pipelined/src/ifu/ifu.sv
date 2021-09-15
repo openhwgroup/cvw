@@ -48,6 +48,7 @@ module ifu (
   // Mem
   input logic 		      RetM, TrapM, 
   input logic [`XLEN-1:0]     PrivilegedNextPCM, 
+  input logic                 InvalidateICacheM,
   output logic [31:0] 	      InstrD, InstrE, InstrM, InstrW,
   output logic [`XLEN-1:0]    PCM, 
   output logic [4:0] 	      InstrClassM,
