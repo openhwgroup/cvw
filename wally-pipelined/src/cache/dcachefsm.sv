@@ -77,7 +77,8 @@ module dcachefsm
    output logic      CntReset,
    output logic      SelUncached,
    output logic      SelEvict,
-   output logic      LRUWriteEn
+   output logic      LRUWriteEn,
+   output logic      SelFlush
    );
   
   logic 	     PreCntEn;
@@ -168,6 +169,7 @@ module dcachefsm
     DCacheMiss = 1'b0;
     LRUWriteEn = 1'b0;
     MemAfterIWalkDone = 1'b0;
+    SelFlush = 1'b0;
     NextState = STATE_READY;
 
     case (CurrState)
