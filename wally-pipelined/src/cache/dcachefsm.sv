@@ -27,58 +27,64 @@
 
 module dcachefsm
   (input logic clk,
-   input logic 	     reset,
+   input logic 	      reset,
    // inputs from IEU
-   input logic [1:0] MemRWM,
-   input logic [1:0] AtomicM,
-
+   input logic [1:0]  MemRWM,
+   input logic [1:0]  AtomicM,
+   input logic 	      FlushDCacheM,
    // hazard inputs
-   input logic 	     ExceptionM,
-   input logic 	     PendingInterruptM,
-   input logic 	     StallWtoDCache,
+   input logic 	      ExceptionM,
+   input logic 	      PendingInterruptM,
+   input logic 	      StallWtoDCache,
    // mmu inputs
-   input logic 	     DTLBMissM,
-   input logic 	     ITLBMissF,
-   input logic 	     CacheableM,
-   input logic 	     DTLBWriteM,
-   input logic 	     ITLBWriteF,
-   input logic 	     WalkerInstrPageFaultF,
+   input logic 	      DTLBMissM,
+   input logic 	      ITLBMissF,
+   input logic 	      CacheableM,
+   input logic 	      DTLBWriteM,
+   input logic 	      ITLBWriteF,
+   input logic 	      WalkerInstrPageFaultF,
    // hptw inputs
-   input logic 	     SelPTW,
-   input logic 	     WalkerPageFaultM,
+   input logic 	      SelPTW,
+   input logic 	      WalkerPageFaultM,
    // Bus inputs
-   input logic 	     AHBAck, // from ahb
+   input logic 	      AHBAck, // from ahb
    // dcache internals
-   input logic 	     CacheHit,
-   input logic 	     FetchCountFlag,
-   input logic 	     VictimDirty,
+   input logic 	      CacheHit,
+   input logic 	      FetchCountFlag,
+   input logic 	      VictimDirty,
+   input logic 	      FlushAdrFlag,
    
    // hazard outputs
-   output logic      DCacheStall,
-   output logic      CommittedM,
+   output logic       DCacheStall,
+   output logic       CommittedM,
    // counter outputs
-   output logic      DCacheMiss,
-   output logic      DCacheAccess,
+   output logic       DCacheMiss,
+   output logic       DCacheAccess,
    // hptw outputs
-   output logic      MemAfterIWalkDone,
+   output logic       MemAfterIWalkDone,
    // Bus outputs
-   output logic      AHBRead,
-   output logic      AHBWrite,
+   output logic       AHBRead,
+   output logic       AHBWrite,
 
    // dcache internals
    output logic [1:0] SelAdrM,
-   output logic      CntEn,
-   output logic      SetValid,
-   output logic      ClearValid,
-   output logic      SetDirty,
-   output logic      ClearDirty,
-   output logic      SRAMWordWriteEnableM,
-   output logic      SRAMBlockWriteEnableM,
-   output logic      CntReset,
-   output logic      SelUncached,
-   output logic      SelEvict,
-   output logic      LRUWriteEn,
-   output logic      SelFlush
+   output logic       CntEn,
+   output logic       SetValid,
+   output logic       ClearValid,
+   output logic       SetDirty,
+   output logic       ClearDirty,
+   output logic       SRAMWordWriteEnableM,
+   output logic       SRAMBlockWriteEnableM,
+   output logic       CntReset,
+   output logic       SelUncached,
+   output logic       SelEvict,
+   output logic       LRUWriteEn,
+   output logic       SelFlush,
+   output logic       FlushAdrCntEn,
+   output logic       FlushWayCntEn,   
+   output logic       FlushAdrCntRst,
+   output logic       FlushWayCntRst   
+   
    );
   
   logic 	     PreCntEn;
@@ -125,7 +131,11 @@ module dcachefsm
 		STATE_PTW_FAULT_UNCACHED_READ_DONE,
 
 		STATE_CPU_BUSY,
-		STATE_CPU_BUSY_FINISH_AMO} statetype;
+		STATE_CPU_BUSY_FINISH_AMO,
+		
+		STATE_FLUSH,
+		STATE_FLUSH_WRITE_BACK,
+		STATE_FLUSH_CLEAR_DIRTY} statetype;
 
   statetype CurrState, NextState;
 
@@ -170,6 +180,10 @@ module dcachefsm
     LRUWriteEn = 1'b0;
     MemAfterIWalkDone = 1'b0;
     SelFlush = 1'b0;
+    FlushAdrCntEn = 1'b0;
+    FlushWayCntEn = 1'b0;
+    FlushAdrCntRst = 1'b0;
+    FlushWayCntRst = 1'b0;	
     NextState = STATE_READY;
 
     case (CurrState)
@@ -186,9 +200,17 @@ module dcachefsm
 	SetDirty = 1'b0;
 	LRUWriteEn = 1'b0;
 	CommittedM = 1'b0;
-	
+
+	if(FlushDCacheM) begin
+	  NextState = STATE_FLUSH;
+	  DCacheStall = 1'b1;
+	  SelAdrM = 2'b11;
+	  FlushAdrCntRst = 1'b1;
+	  FlushWayCntRst = 1'b1;	
+	end
+
 	// TLB Miss	
-	if((AnyCPUReqM & DTLBMissM) | ITLBMissF) begin
+	else if((AnyCPUReqM & DTLBMissM) | ITLBMissF) begin
 	  // the LSU arbiter has not yet selected the PTW.
 	  // The CPU needs to be stalled until that happens.
 	  // If we set DCacheStall for 1 cycle before going to
@@ -842,6 +864,48 @@ module dcachefsm
 	  MemAfterIWalkDone = 1'b1;
 	  NextState = STATE_READY;
 	end 
+      end
+
+      STATE_FLUSH: begin
+	DCacheStall = 1'b1;
+	CommittedM = 1'b1;
+	FlushAdrCntEn = 1'b1;
+	FlushWayCntEn = 1'b1;	
+	SelAdrM = 2'b11;
+	SelFlush = 1'b1;
+	if(VictimDirty) begin
+	  NextState = STATE_FLUSH_WRITE_BACK;
+	end else if (FlushAdrFlag) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_FLUSH;
+	end
+      end
+
+      STATE_FLUSH_WRITE_BACK: begin
+	DCacheStall = 1'b1;
+        PreCntEn = 1'b1;
+	AHBWrite = 1'b1;
+	SelAdrM = 2'b11;
+	CommittedM = 1'b1;
+	SelFlush = 1'b1;
+	if(FetchCountFlag & AHBAck) begin
+	  NextState = STATE_FLUSH_WRITE_BACK;
+	end else begin
+	  NextState = STATE_FLUSH_CLEAR_DIRTY;
+	end	  
+      end
+
+      STATE_FLUSH_CLEAR_DIRTY: begin
+	DCacheStall = 1'b1;
+	ClearDirty = 1'b1;
+	SelFlush = 1'b1;
+	SelAdrM = 2'b11;
+	if(FlushAdrFlag) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_FLUSH;
+	end
       end
 
       default: begin

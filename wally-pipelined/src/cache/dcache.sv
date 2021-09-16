@@ -38,6 +38,7 @@ module dcache
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M,
    input logic [1:0] 	       AtomicM,
+   input logic 		       FlushDCacheM,
    input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
    input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
@@ -88,9 +89,12 @@ module dcache
   localparam integer	       LOGWPL = $clog2(WORDSPERLINE);
   localparam integer 	       LOGXLENBYTES = $clog2(`XLEN/8);
 
+  localparam integer FetchCountThreshold = WORDSPERLINE - 1;
+  localparam integer FlushAdrThreshold   = NUMLINES - 1;
 
   logic [1:0] 		       SelAdrM;
   logic [INDEXLEN-1:0]	       RAdr;
+  logic [INDEXLEN-1:0]	       WAdr;  
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
   logic			       SetValid, ClearValid;
@@ -157,11 +161,19 @@ module dcache
 	    .s(SelAdrM),
 	    .y(RAdr));
 
+  mux2 #(INDEXLEN)
+  WAdrSelMux(.d0(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	     .d1(FlushAdr),
+	     .s(&SelAdrM),
+	     .y(WAdr));
+  
+
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk,
 		      .reset,
 		      .RAdr,
+		      .WAdr,
 		      .PAdr(MemPAdrM[`PA_BITS-1:0]),
 		      .WriteEnable(SRAMWayWriteEnable),
 		      .WriteWordEnable(SRAMWordEnable),
@@ -282,7 +294,7 @@ module dcache
 
   mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-			      .s(SelEvict),
+			      .s(SelEvict | SelFlush),
 			      .y(BasePAdrM));
 
   // if not cacheable the offset bits needs to be sent to the EBU.
@@ -293,9 +305,6 @@ module dcache
   assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
   assign HWDATA = CacheableM ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
-
-  localparam FetchCountThreshold = WORDSPERLINE - 1;
-  
 
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
@@ -312,7 +321,7 @@ module dcache
   flopenr #(INDEXLEN)
   FlushAdrReg(.clk,
 	      .reset(reset | FlushAdrCntRst),
-	      .en(FlushAdrCntEn),
+	      .en(FlushAdrCntEn & FlushWay[NUMWAYS-1]),
 	      .d(FlushAdrP1),
 	      .q(FlushAdr));
 
@@ -323,7 +332,9 @@ module dcache
 	      .val({{NUMWAYS-1{1'b0}}, 1'b1}),
 	      .d(NextFlushWay),
 	      .q(FlushWay));
-  
+
+  assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
+
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
@@ -367,6 +378,12 @@ module dcache
 		      .SelUncached,
 		      .SelEvict,
 		      .SelFlush,
+		      .FlushAdrCntEn,
+		      .FlushWayCntEn,
+		      .FlushAdrCntRst,
+		      .FlushWayCntRst,		      
+		      .FlushAdrFlag,
+		      .FlushDCacheM,
 		      .LRUWriteEn);
   
 
