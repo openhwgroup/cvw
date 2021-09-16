@@ -31,6 +31,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic 			      reset,
 
    input logic [$clog2(NUMLINES)-1:0] RAdr,
+   input logic [$clog2(NUMLINES)-1:0] WAdr,   
    input logic [`PA_BITS-1:0] 	      PAdr,
    input logic 			      WriteEnable,
    input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
@@ -86,16 +87,18 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 		       SelEvict ? VictimWay : WayHit;  
   assign ReadDataBlockWayMasked = SelectedWay ? ReadDataBlockWay : '0;  // first part of AO mux.
 
-  assign VictimDirtyWay = VictimWay & Dirty & Valid;
-  assign VictimTagWay = VictimWay ? ReadTag : '0;
+  assign VictimDirtyWay = SelFlush ? FlushWay & Dirty & Valid :
+			  VictimWay & Dirty & Valid;
+  assign VictimTagWay = SelFlush & FlushWay ? ReadTag :
+			VictimWay ? ReadTag : '0;
   
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
     else if (InvalidateAll) 
   	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & WriteEnable) ValidBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
-    else if (ClearValid & WriteEnable) ValidBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
+    else if (SetValid & WriteEnable) ValidBits[WAdr] <= 1'b1;
+    else if (ClearValid & WriteEnable) ValidBits[WAdr] <= 1'b0;
     Valid <= ValidBits[RAdr];
   end
 
@@ -104,8 +107,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
       always_ff @(posedge clk, posedge reset) begin
 	if (reset) 
   	  DirtyBits <= {NUMLINES{1'b0}};
-	else if (SetDirty & WriteEnable) DirtyBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
-	else if (ClearDirty & WriteEnable) DirtyBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
+	else if (SetDirty & WriteEnable) DirtyBits[WAdr] <= 1'b1;
+	else if (ClearDirty & WriteEnable) DirtyBits[WAdr] <= 1'b0;
 	Dirty <= DirtyBits[RAdr];
       end
     end else begin

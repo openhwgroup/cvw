@@ -141,6 +141,7 @@ module icache
   MemWay[NUMWAYS-1:0](.clk,
 		      .reset,
 		      .RAdr(RAdr),
+		      .WAdr(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),		      
 		      .PAdr(PCTagF),
 		      .WriteEnable(SRAMWayWriteEnable), 
 		      .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
