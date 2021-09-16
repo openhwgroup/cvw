@@ -43,6 +43,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic 			      SelEvict,
    input logic 			      VictimWay,
    input logic 			      InvalidateAll,
+   input logic 			      SelFlush,
+   input logic 			      FlushWay,
 
    output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMasked,
    output logic 		      WayHit,
@@ -80,7 +82,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 	      .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  assign SelectedWay = SelEvict ? VictimWay : WayHit;  
+  assign SelectedWay = SelFlush ? FlushWay : 
+		       SelEvict ? VictimWay : WayHit;  
   assign ReadDataBlockWayMasked = SelectedWay ? ReadDataBlockWay : '0;  // first part of AO mux.
 
   assign VictimDirtyWay = VictimWay & Dirty & Valid;

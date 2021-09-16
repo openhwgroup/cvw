@@ -152,6 +152,8 @@ module icache
 		      .ClearDirty(1'b0),
 		      .SelEvict(1'b0),
 		      .VictimWay,
+		      .FlushWay(1'b0),
+		      .SelFlush(1'b0),
 		      .ReadDataBlockWayMasked,
 		      .WayHit,
 		      .VictimDirtyWay(),

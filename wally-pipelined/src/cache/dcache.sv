@@ -125,6 +125,9 @@ module dcache
   logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 	       VictimTag;
 
+  logic [INDEXLEN-1:0] 	       FlushAdr;
+  logic [NUMWAYS-1:0] 	       FlushWay;
+  logic 		       SelFlush;
   
   logic AnyCPUReqM;
   logic FetchCountFlag;
@@ -137,10 +140,11 @@ module dcache
   
   // Read Path CPU (IEU) side
 
-  mux3 #(INDEXLEN)
+  mux4 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d3(FlushAdr),
 	    .s(SelAdrM),
 	    .y(RAdr));
 
@@ -160,6 +164,8 @@ module dcache
 		      .ClearDirty,
 		      .SelEvict,
 		      .VictimWay,
+		      .FlushWay,
+		      .SelFlush,
 		      .ReadDataBlockWayMasked(ReadDataBlockWayMaskedM),
 		      .WayHit,
 		      .VictimDirtyWay,
@@ -334,6 +340,7 @@ module dcache
 		      .CntReset,
 		      .SelUncached,
 		      .SelEvict,
+		      .SelFlush,
 		      .LRUWriteEn);
   
 
