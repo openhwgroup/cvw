@@ -126,7 +126,16 @@ module dcache
   logic [TAGLEN-1:0] 	       VictimTag;
 
   logic [INDEXLEN-1:0] 	       FlushAdr;
+  logic [INDEXLEN-1:0] 	       FlushAdrP1;
+  logic 		       FlushAdrCntEn;
+  logic 		       FlushAdrCntRst;
+  logic 		       FlushAdrFlag;
+  
   logic [NUMWAYS-1:0] 	       FlushWay;
+  logic [NUMWAYS-1:0] 	       NextFlushWay;
+  logic 		       FlushWayCntEn;
+  logic 		       FlushWayCntRst;  
+  
   logic 		       SelFlush;
   
   logic AnyCPUReqM;
@@ -298,6 +307,23 @@ module dcache
 		.q(FetchCount));
 
   assign NextFetchCount = FetchCount + 1'b1;
+
+  // flush address and way generation.
+  flopenr #(INDEXLEN)
+  FlushAdrReg(.clk,
+	      .reset(reset | FlushAdrCntRst),
+	      .en(FlushAdrCntEn),
+	      .d(FlushAdrP1),
+	      .q(FlushAdr));
+
+  flopenl #(NUMWAYS)
+  FlushWayReg(.clk,
+	      .load(reset | FlushWayCntRst),
+	      .en(FlushWayCntEn),
+	      .val({{NUMWAYS-1{1'b0}}, 1'b1}),
+	      .d(NextFlushWay),
+	      .q(FlushWay));
+  
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
