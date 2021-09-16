@@ -163,7 +163,8 @@ module dcache
 		      .ReadDataBlockWayMasked(ReadDataBlockWayMaskedM),
 		      .WayHit,
 		      .VictimDirtyWay,
-		      .VictimTagWay);
+		      .VictimTagWay,
+		      .InvalidateAll(1'b0));
 
   generate
     if(NUMWAYS > 1) begin

@@ -154,7 +154,8 @@ module ifu (
   icache icache(.*,
 		.PCNextF(PCNextFPhys),
 		.PCPF(PCPFmmu),
-		.WalkerInstrPageFaultF(WalkerInstrPageFaultF));
+		.WalkerInstrPageFaultF,
+		.InvalidateICacheM);
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
 

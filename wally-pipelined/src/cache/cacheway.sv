@@ -41,7 +41,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic 			      SetDirty,
    input logic 			      ClearDirty,
    input logic 			      SelEvict,
-   input logic 			      VictimWay, 
+   input logic 			      VictimWay,
+   input logic 			      InvalidateAll,
 
    output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMasked,
    output logic 		      WayHit,
@@ -87,6 +88,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk, posedge reset) begin
     if (reset) 
+  	ValidBits <= {NUMLINES{1'b0}};
+    else if (InvalidateAll) 
   	ValidBits <= {NUMLINES{1'b0}};
     else if (SetValid & WriteEnable) ValidBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b1;
     else if (ClearValid & WriteEnable) ValidBits[PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= 1'b0;
