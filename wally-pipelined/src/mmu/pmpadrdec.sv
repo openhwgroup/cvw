@@ -84,7 +84,7 @@ module pmpadrdec (
 // *** BAD DELETE LATER ADDED for hopefully fixing synth
   logic [`PA_BITS-3:0] maskInput;
 
-  assign maskInput = `PA_BITS'd39; // *** added to really just try anything with the inputs of the thermometer.
+  assign maskInput = 'd39; // *** added to really just try anything with the inputs of the thermometer.
 
   // *** maskinput used to be {~PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}
 // ****
