@@ -141,7 +141,8 @@ module dcache
   logic 		       FlushWayCntRst;  
   
   logic 		       SelFlush;
-  
+  logic 		       VDWriteEnable;
+    
   logic AnyCPUReqM;
   logic FetchCountFlag;
   logic PreCntEn;
@@ -176,6 +177,7 @@ module dcache
 		      .WAdr,
 		      .PAdr(MemPAdrM[`PA_BITS-1:0]),
 		      .WriteEnable(SRAMWayWriteEnable),
+		      .VDWriteEnable,		      
 		      .WriteWordEnable(SRAMWordEnable),
 		      .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 		      .WriteData(SRAMWriteData),
@@ -292,9 +294,10 @@ module dcache
     end
   endgenerate
 
-  mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
+  mux3 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-			      .s(SelEvict | SelFlush),
+			      .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
+			      .s({SelFlush, SelEvict}),
 			      .y(BasePAdrM));
 
   // if not cacheable the offset bits needs to be sent to the EBU.
@@ -324,6 +327,8 @@ module dcache
 	      .en(FlushAdrCntEn & FlushWay[NUMWAYS-1]),
 	      .d(FlushAdrP1),
 	      .q(FlushAdr));
+  assign FlushAdrP1 = FlushAdr + 1'b1;
+
 
   flopenl #(NUMWAYS)
   FlushWayReg(.clk,
@@ -332,6 +337,8 @@ module dcache
 	      .val({{NUMWAYS-1{1'b0}}, 1'b1}),
 	      .d(NextFlushWay),
 	      .q(FlushWay));
+
+  assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
   assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
 
@@ -384,6 +391,7 @@ module dcache
 		      .FlushWayCntRst,		      
 		      .FlushAdrFlag,
 		      .FlushDCacheM,
+		      .VDWriteEnable,
 		      .LRUWriteEn);
   
 

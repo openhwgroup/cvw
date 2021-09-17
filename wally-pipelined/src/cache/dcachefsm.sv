@@ -81,10 +81,11 @@ module dcachefsm
    output logic       LRUWriteEn,
    output logic       SelFlush,
    output logic       FlushAdrCntEn,
-   output logic       FlushWayCntEn,   
+   output logic       FlushWayCntEn, 
    output logic       FlushAdrCntRst,
-   output logic       FlushWayCntRst   
-   
+   output logic       FlushWayCntRst,
+   output logic       VDWriteEnable
+
    );
   
   logic 	     PreCntEn;
@@ -184,6 +185,7 @@ module dcachefsm
     FlushWayCntEn = 1'b0;
     FlushAdrCntRst = 1'b0;
     FlushWayCntRst = 1'b0;	
+    VDWriteEnable = 1'b0;
     NextState = STATE_READY;
 
     case (CurrState)
@@ -869,14 +871,20 @@ module dcachefsm
       STATE_FLUSH: begin
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
-	FlushAdrCntEn = 1'b1;
-	FlushWayCntEn = 1'b1;	
 	SelAdrM = 2'b11;
 	SelFlush = 1'b1;
+	FlushAdrCntEn = 1'b1;
+	FlushWayCntEn = 1'b1;
+	CntReset = 1'b1;
 	if(VictimDirty) begin
 	  NextState = STATE_FLUSH_WRITE_BACK;
+	  FlushAdrCntEn = 1'b0;
+	  FlushWayCntEn = 1'b0;
 	end else if (FlushAdrFlag) begin
 	  NextState = STATE_READY;
+	  DCacheStall = 1'b0;
+	  FlushAdrCntEn = 1'b0;
+	  FlushWayCntEn = 1'b0;	
 	end else begin
 	  NextState = STATE_FLUSH;
 	end
@@ -884,27 +892,34 @@ module dcachefsm
 
       STATE_FLUSH_WRITE_BACK: begin
 	DCacheStall = 1'b1;
-        PreCntEn = 1'b1;
 	AHBWrite = 1'b1;
 	SelAdrM = 2'b11;
 	CommittedM = 1'b1;
 	SelFlush = 1'b1;
+        PreCntEn = 1'b1;
 	if(FetchCountFlag & AHBAck) begin
-	  NextState = STATE_FLUSH_WRITE_BACK;
-	end else begin
 	  NextState = STATE_FLUSH_CLEAR_DIRTY;
+	end else begin
+	  NextState = STATE_FLUSH_WRITE_BACK;
 	end	  
       end
 
       STATE_FLUSH_CLEAR_DIRTY: begin
 	DCacheStall = 1'b1;
 	ClearDirty = 1'b1;
+	VDWriteEnable = 1'b1;
 	SelFlush = 1'b1;
 	SelAdrM = 2'b11;
+	FlushAdrCntEn = 1'b0;
+	FlushWayCntEn = 1'b0;	
 	if(FlushAdrFlag) begin
 	  NextState = STATE_READY;
+	  DCacheStall = 1'b0;
+	  SelAdrM = 2'b00;
 	end else begin
 	  NextState = STATE_FLUSH;
+	  FlushAdrCntEn = 1'b1;
+	  FlushWayCntEn = 1'b1;	
 	end
       end
 

@@ -38,6 +38,7 @@ switch $argc {
 vopt -fsmdebug  +acc -gDEBUG=1 work.testbench -o workopt 
 vsim workopt -fsmdebug
 
+#profile on
 
 do wave.do
 add log -r /*

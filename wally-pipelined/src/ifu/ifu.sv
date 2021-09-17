@@ -173,11 +173,16 @@ module ifu (
 		       .y(PCNext1F));
 
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
+		       .d1(PCE),
+		       .s(InvalidateICacheM),
+		       .y(PCNext2F));
+  
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
 		       .d1(PrivilegedNextPCM),
 		       .s(PrivilegedChangePCM),
-		       .y(PCNext2F));
+		       .y(PCNext3F));
 
-  mux2 #(`XLEN) pcmux4(.d0(PCNext2F),
+  mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
 		       .d1(`RESET_VECTOR),
 		       .s(reset_q),
 		       .y(UnalignedPCNextF)); 
