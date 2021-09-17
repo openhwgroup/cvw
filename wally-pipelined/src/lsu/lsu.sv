@@ -223,11 +223,6 @@ module lsu
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
   
-  generate
-    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableMtoDCache ? 3'b010 : Funct3MtoDCache;
-    else assign DCtoAHBSizeM = CacheableMtoDCache ? 3'b011 : Funct3MtoDCache;
-  endgenerate;
-
 
   // Specify which type of page fault is occurring
   assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoLRSC[1];
@@ -284,7 +279,8 @@ module lsu
 		.AHBWrite(DCtoAHBWriteM),
 		.AHBAck(DCfromAHBAck),
 		.HWDATA(DCtoAHBWriteData),
-		.HRDATA(DCfromAHBReadData)		
+		.HRDATA(DCfromAHBReadData),
+		.DCtoAHBSizeM
 		);
 
 endmodule
