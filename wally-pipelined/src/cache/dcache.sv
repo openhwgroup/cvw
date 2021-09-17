@@ -69,7 +69,8 @@ module dcache
    output logic 	       AHBWrite,
    input logic 		       AHBAck, // from ahb
    input logic [`XLEN-1:0]     HRDATA, // from ahb
-   output logic [`XLEN-1:0]    HWDATA // to ahb
+   output logic [`XLEN-1:0]    HWDATA, // to ahb
+   output logic [2:0] 	       DCtoAHBSizeM
    );
 
 /*  localparam integer	       BLOCKLEN = 256;
@@ -231,6 +232,7 @@ module dcache
   endgenerate
 
   // variable input mux
+  
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
@@ -307,7 +309,7 @@ module dcache
   
   assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
-  assign HWDATA = CacheableM ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
+  assign HWDATA = CacheableM | SelFlush ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
 
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
@@ -342,6 +344,10 @@ module dcache
 
   assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
 
+  generate
+    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b010 : Funct3M;
+    else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : Funct3M;
+  endgenerate;
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
