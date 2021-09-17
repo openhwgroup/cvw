@@ -78,7 +78,7 @@ module hazard(
   assign FlushF = BPPredWrongE | InvalidateICacheM;
   assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | InvalidateICacheM;
   assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | InvalidateICacheM;
-  assign FlushM = FirstUnstalledM | TrapM | RetM;
+  assign FlushM = FirstUnstalledM | TrapM | RetM | InvalidateICacheM;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
   assign FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
