@@ -339,7 +339,7 @@ module dcachefsm
 	SelAdrM = 2'b10;
 	DCacheStall = 1'b1;
 	CommittedM = 1'b1;
-	if (MemRWM[0]) begin // handles stores and amo write.
+	if (MemRWM[0] & ~AtomicM[1]) begin // handles stores and amo write.
 	  NextState = STATE_MISS_WRITE_WORD;
 	end else begin
 	  NextState = STATE_MISS_READ_WORD_DELAY;
