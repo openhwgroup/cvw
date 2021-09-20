@@ -81,8 +81,16 @@ module pmpadrdec (
 
   assign NAMask[1:0] = {2'b11};
 
+// *** BAD DELETE LATER ADDED for hopefully fixing synth
+  logic [`PA_BITS-3:0] maskInput;
+
+  assign maskInput = 'd39; // *** added to really just try anything with the inputs of the thermometer.
+
+  // *** maskinput used to be {~PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}
+// ****
+
   prioritythemometer #(`PA_BITS-2) namaskgen(
-    .a({PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}),
+    .a(maskInput), // *** confusing bit bussing to match the logic for the inside of the thermometer.
     .y(NAMask[`PA_BITS-1:2]));
 
   assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | NAMask);
