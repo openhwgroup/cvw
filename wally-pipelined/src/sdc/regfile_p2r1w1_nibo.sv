@@ -29,11 +29,13 @@ module regfile_p2r1w1_nibo #(parameter integer DEPTH = 10, parameter integer WID
    input logic 		    we1,
    input logic [DEPTH-1:0]  ra1,
    output logic [WIDTH-1:0] rd1,
+   output logic [(2**DEPTH)*WIDTH-1:0] Rd1All,   
    input logic [DEPTH-1:0]  wa1,
    input logic [WIDTH-1:0]  wd1);
   
   logic [WIDTH-1:0] 	    regs [2**DEPTH-1:0];
-
+  genvar 		    index;
+  
   always_ff @(posedge clk) begin
     if(we1) begin
       regs[wa1] <= wd1;
@@ -41,5 +43,7 @@ module regfile_p2r1w1_nibo #(parameter integer DEPTH = 10, parameter integer WID
   end
 
   assign rd1 = regs[ra1];
-
+  for(index = 0; index < 2**DEPTH; index++)
+    assign Rd1All[index*WIDTH+WIDTH-1:index*WIDTH] = regs[index];
+  
 endmodule

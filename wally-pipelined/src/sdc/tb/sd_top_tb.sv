@@ -43,7 +43,8 @@ module sd_top_tb();
   logic [3:0] o_DATA_TO_CORE;
   logic o_DATA_VALID;
   logic o_LAST_NIBBLE;
-
+  logic [4095:0] ReadData;
+  
   // Driver
   wire PAD;
 
@@ -64,6 +65,7 @@ module sd_top_tb();
     .o_READY_FOR_READ(o_READY_FOR_READ),
     .i_READ_REQUEST(i_READ_REQUEST),
     .o_DATA_TO_CORE(o_DATA_TO_CORE),
+    .ReadData(ReadData),     
     .o_DATA_VALID(o_DATA_VALID),
     .o_LAST_NIBBLE(o_LAST_NIBBLE),
     .i_COUNT_IN_MAX(i_COUNT_IN_MAX),

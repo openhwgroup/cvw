@@ -107,6 +107,7 @@ add wave -noupdate /sd_top_tb/DUT/w_BLOCK_ADDR
 add wave -noupdate /sd_top_tb/DUT/i_BLOCK_ADDR
 add wave -noupdate /sd_top_tb/DUT/regfile_cmd17_data_block/regs
 add wave -noupdate /sd_top_tb/DUT/regfile_cmd17_data_block/ra1
+add wave -noupdate /sd_top_tb/ReadData
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 1} {2028326 ns} 0} {{Cursor 2} {4831 ns} 0}
 quietly wave cursor active 1
@@ -124,4 +125,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2013966 ns} {2038576 ns}
+WaveRestoreZoom {1979107 ns} {2077545 ns}
