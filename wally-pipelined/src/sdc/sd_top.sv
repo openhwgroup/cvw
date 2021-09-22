@@ -46,6 +46,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
    input logic 			   i_READ_REQUEST, // After Ready for read is sent to the core, the core will
    // pulse this bit high to indicate it wants the block at this address
    output logic [3:0] 		   o_DATA_TO_CORE, // nibble being sent to core when DATA block is
+   output logic [4095:0] 	   ReadData, // full 512 bytes to Bus
    // being published
    output logic 		   o_DATA_VALID, // held high while data being read to core to indicate that it is valid
    output logic 		   o_LAST_NIBBLE, // pulse when last nibble is sent
@@ -408,6 +409,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
     .we1(w_NIBO_EN),
     .ra1(r_DAT_COUNTER_OUT[9:0]),       // Nibble Read (to core) Address
     .rd1(r_DATA_TO_CORE),                    // output nibble to core
+     .Rd1All(ReadData),
     .wa1(r_DAT_COUNTER_OUT[9:0]),     // Nibble Write (to host) Address
     .wd1(r_DAT_Q));                          // input nibble from card
   
