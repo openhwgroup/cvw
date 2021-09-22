@@ -1,0 +1,55 @@
+SD Flash interface
+
+regsiter map:
+1. clock divider
+2. address
+3. data register
+4. command register
+5. size register
+   Number of bytes to read or write.
+6. status register
+   1. bits 11 to 0: bytes currently in the buffer
+   2. bits 12 to 29: reservered
+   3. bit 30: fault
+   4. bit 31: busy
+   5. bits XLEN-1 to 32: reservered
+
+
+
+non dma read operation
+1. write the address regsiter
+2. write the command register to read
+3. wait for interrupt or pool on status
+4. Check status for fault and number of bytes.
+5. read the data register for 512 bytes. (64 ld, or 128 lw)
+
+
+non dma write operation
+1. write address register
+2. write data register for 512 bytes. (64 sd, or 128 sw)
+3. write command register to write data to flash
+4. wait for interrupt or pool on status
+5. check status for fault and number of bytes written.
+
+implement dma transfers later
+
+
+interrupts
+1. operation done
+2. bus error (more of an exception)
+   Occurs if attempting to do an operation while the flash controller is busy.
+   ie. if status[31] is set generate an interrupt
+   This is tricky in a multiprocessor environment.
+
+
+
+
+tasks
+1. [-] Remove all AFRL identifiers
+2. [X] get the existing sdc compiled on wally.
+   1. [X] use wally primatives over tcore's
+3. build abhlite interface with the above registers and necessary fsm.
+   1. [ ]  The sd card reader uses a 4 bit data interface.  We can change this to be something
+      more pratical.
+4. write test programs
+5. [X] Convert VHDL to system verilog
