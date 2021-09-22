@@ -28,7 +28,7 @@
 module clockgater
   (input logic 	E,
    input logic 	SE,
-   input logic 	CLK,
+   (* gated_clock = "yes" *) input logic 	CLK,
    output logic ECLK);
 
   // VERY IMPORTANT.
@@ -37,6 +37,7 @@ module clockgater
 
   logic 	enable_q;
   
+/* -----\/----- EXCLUDED -----\/-----
 
   always_latch begin
     if(~CLK) begin
@@ -44,5 +45,18 @@ module clockgater
     end
   end
   assign ECLK = enable_q & CLK;
+ -----/\----- EXCLUDED -----/\----- */
+  assign ECLK = CLK;
+  
+
+/* -----\/----- EXCLUDED -----\/-----
+  if (`XILINX) begin
+    BUFGCE bufgce_i0 (   
+   .I(CLK),
+   .CE(E | SE),
+   .O(ECLK)    
+   );
+  end
+ -----/\----- EXCLUDED -----/\----- */
 
 endmodule

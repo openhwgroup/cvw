@@ -91,7 +91,8 @@ module uncore (
     // tightly integrated memory
     //dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
     if (`BOOTTIM_SUPPORTED) begin : bootdtim
-      dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE)) bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+      dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE), .PRELOAD("blink-led.mem"))
+      bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
     end
 
     // memory-mapped I/O peripherals
