@@ -277,4 +277,15 @@ module wallypipelinedhart
   //assign SetFflagsM = 0;
   //assign FRegWriteM = 0;
   
+  
+  // ILA probe most important signals in CPU.
+  ila_0 ila_0(.clk(clk),
+              .probe0(PCM),
+              .probe1(MemAdrM),
+              .probe2(WriteDataM),
+              .probe3(ReadDataM),
+              .probe4(TrapM),
+              .probe5(MemRWM),
+	      .probe6(InstrM));
+
 endmodule
