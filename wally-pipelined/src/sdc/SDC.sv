@@ -59,7 +59,7 @@ module SDC
 
 
   // Register outputs
-  logic [31:0] 		    CLKDiv;
+  logic [7:0] 		    CLKDiv;
   logic [2:0] 		    Command;
   logic [`XLEN-1:9] 	    Address;
   
@@ -125,7 +125,7 @@ module SDC
   
   assign StartCLKDivUpdate = HADDRDelay == '0 & RegWrite;
   
-  flopenl #(32) CLKDivReg(HCLK, ~HRESETn, CLKDivUpdateEn, HWDATA[31:0], `SDCCLKDIV, CLKDiv);
+  flopenl #(8) CLKDivReg(HCLK, ~HRESETn, CLKDivUpdateEn, HWDATA[31:0], `SDCCLKDIV, CLKDiv);
 
   // Control reg
   flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (SDCDone), 
@@ -141,7 +141,7 @@ module SDC
     if(`XLEN == 64) begin
       always_comb
 	case(HADDRDelay[4:2]) 
-	  'h0: HREADSDC = {32'b0, CLKDiv};
+	  'h0: HREADSDC = {`XLEN-8'b0, CLKDiv};
 	  'h4: HREADSDC = {`XLEN-6'b0, ErrorCode, InvalidCommand, Done, Busy};
 	  'h8: HREADSDC = {`XLEN-3'b0, Command};
 	  'hC: HREADSDC = 'h200;
@@ -183,9 +183,9 @@ module SDC
 
   statetype CurrState, NextState;
   
-  always_ff @(posedge HCLK, posedge ~HRESETn)
-    if (~HRESETn)    CurrState <= #1 STATE_READY;
-    else CurrState <= #1 NextState;
+  always_ff @(posedge HCLK, negedge HRESETn)
+    if (~HRESETn)    CurrState <=  STATE_READY;
+    else CurrState <= NextState;
 
   always_comb begin
     CLKDivUpdateEn = 1'b0;
@@ -224,6 +224,21 @@ module SDC
       end
     endcase
   end
+
+  // clock generation divider
+
+  clockgater clockgater(.E(SDCLKEN),
+			.SE(1'b0),
+			.CLK(HCLK),
+			.ECLK(CLKGate));
+
+
+  clkdivider #(8) clkdivider(.i_COUNT_IN_MAX(CLKDiv),
+			     .i_EN(CLKDiv != 'b1),
+			     .i_CLK(CLKGate),
+			     .i_RST(~HRESETn),
+			     .o_CLK(CLKSDC));
+  
   
   
 endmodule
