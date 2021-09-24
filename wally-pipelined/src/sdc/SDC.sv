@@ -68,7 +68,7 @@ module SDC
   
   logic [2:0] 		    ErrorCode;
   logic 		    InvalidCommand;
-  logic 		    Busy;
+  logic 		    SDCBusy;
 
   logic 		    StartCLKDivUpdate;
   logic 		    CLKDivUpdateEn;
@@ -148,8 +148,8 @@ module SDC
   flopenl #(8) CLKDivReg(HCLK, ~HRESETn, CLKDivUpdateEn, HWDATA[7:0], `SDCCLKDIV, CLKDiv);
 
   // Control reg
-  flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (SDCDone), 
-			   SDCDone ? '0 : HWDATA[2:0], '0, Command);
+  flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (~SDCBusy), 
+			   SDCBusy ? '0 : HWDATA[2:0], '0, Command);
 
   generate
     if (`XLEN == 64) begin  
@@ -168,7 +168,7 @@ module SDC
 
   assign InvalidCommand = (Command[2] | Command[1]) & Command[0];
   
-  assign Status = {ErrorCode, InvalidCommand, Busy, SDCReady};
+  assign Status = {ErrorCode, InvalidCommand, SDCBusy, SDCReady};
   
   generate
     if(`XLEN == 64) begin
@@ -329,8 +329,7 @@ module SDC
 		       .reset(~HRESETn),
 		       .en(SDCDataValid | (Command[2] & WordCountRst)),
 		       .d(SDCDataValid ? 1'b1 : 1'b0),
-		       .q(Busy));
-  
+		       .q(SDCBusy));
   
   
   
