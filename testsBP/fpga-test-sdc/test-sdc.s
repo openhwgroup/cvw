@@ -70,7 +70,7 @@ wait_sdc_done_init:
 
 	# send read by writting to command register
 	li	x7, 0x4
-	sw	x7, 0xC(x3)
+	sw	x7, 0x8(x3)
 
 	li 	x4, 0x2
 wait_sdc_done_read:	
