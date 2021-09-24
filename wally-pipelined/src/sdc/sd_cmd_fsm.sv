@@ -204,7 +204,9 @@ module sd_cmd_fsm
   localparam logic [7:0] c_NCC_min = 8'd7;   // counter_in
   localparam logic [7:0] c_NRC_min = 8'd8;   // counter_in
 
-  localparam logic [18:0] c_1000ms = 18'd400000;  // ACMD41 timeout
+  //localparam logic [18:0] c_1000ms = 18'd400000;  // ACMD41 timeout
+  //*** BUG this value is too bit to fit into 19 bits.
+  localparam logic [18:0] c_1000ms = 18'd40000;  // ACMD41 timeout
   
   // command instruction type (opcode(6))
   localparam c_CMD = 1'b0; 
