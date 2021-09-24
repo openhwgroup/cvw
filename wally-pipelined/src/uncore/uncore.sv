@@ -144,7 +144,7 @@ module uncore (
                   ({`XLEN{HSELGPIOD}} & HREADGPIO) |
                   ({`XLEN{HSELBootTimD}} & HREADBootTim) |
                   ({`XLEN{HSELUARTD}} & HREADUART) |
-                  ({`XLEN{HSELSDC}} & HREADSDC);
+                  ({`XLEN{HSELSDCD}} & HREADSDC);
   assign HRESP = HSELTimD & HRESPTim |
                  HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
