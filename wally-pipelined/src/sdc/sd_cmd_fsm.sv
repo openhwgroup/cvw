@@ -101,7 +101,7 @@ module sd_cmd_fsm
 
   logic 	w_ACMD41_busy_timer_START, w_ACMD41_times_out_FLAG, w_ACMD41_busy_timer_RST; //give up after 1000 ms of ACMD41
   logic [2:0] 	w_ERROR_CODE_D, r_ERROR_CODE_Q ; // Error Codes for fatal error on SD CMD FSM
-  logic 	w_error_code_rst, w_error_code_en;
+  logic 	w_ERROR_CODE_RST, w_ERROR_CODE_EN;
   logic [18:0] 	Timer_In;
 
 
@@ -204,9 +204,9 @@ module sd_cmd_fsm
   localparam logic [7:0] c_NCC_min = 8'd7;   // counter_in
   localparam logic [7:0] c_NRC_min = 8'd8;   // counter_in
 
-  //localparam logic [18:0] c_1000ms = 18'd400000;  // ACMD41 timeout
+  //localparam logic [18:0] c_1000ms = 19'd400000;  // ACMD41 timeout
   //*** BUG this value is too bit to fit into 19 bits.
-  localparam logic [18:0] c_1000ms = 18'd40000;  // ACMD41 timeout
+  localparam logic [18:0] c_1000ms = 19'd40000;  // ACMD41 timeout
   
   // command instruction type (opcode(6))
   localparam c_CMD = 1'b0; 
@@ -296,12 +296,16 @@ module sd_cmd_fsm
                   ((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX != c_start_bit) & 
                    (i_COUNTER_OUT == 0)) ? s_error_no_response :
 
-                  (((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX == c_start_bit) & 
+                  (((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX == c_start_bit) &
+		    /* verilator lint_off UNSIGNED */
                     (i_COUNTER_OUT >= 0) & (i_R_TYPE == c_response_type_R2_CID_CSD)) | 
+		    /* verilator lint_on UNSIGNED */
                    ((r_curr_state == s_rx_136) & (i_COUNTER_OUT > 0))) ? s_rx_136 :
 
-                  (((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX == c_start_bit) & 
+                  (((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX == c_start_bit) &
+		    /* verilator lint_off UNSIGNED */
                     (i_COUNTER_OUT >= 0) & (i_R_TYPE != c_response_type_R2_CID_CSD)) | 
+		    /* verilator lint_on UNSIGNED */
                    ((r_curr_state == s_rx_48) & (i_COUNTER_OUT > 0))) ? s_rx_48 :
 
                   (((r_curr_state == s_rx_136) & (i_COUNTER_OUT == 0)) | 
