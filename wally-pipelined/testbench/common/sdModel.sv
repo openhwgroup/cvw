@@ -24,7 +24,7 @@ module    sdModel
    inout tri1       cmd,
    inout tri1 [3:0] dat
    );
-   parameter SD_FILE = "ramdisk2.hex";
+   //parameter SD_FILE = "ramdisk2.hex";
    
    reg 	     oeCmd;
    reg 	     oeDat;
@@ -142,7 +142,7 @@ module    sdModel
    reg 	     q_start_bit;
    
    //Card initialization DAT contents
-   initial $readmemh(SD_FILE, FLASHmem);
+   //initial $readmemh(SD_FILE, FLASHmem);
 
    initial begin
       wide_data[0] <= 00;
