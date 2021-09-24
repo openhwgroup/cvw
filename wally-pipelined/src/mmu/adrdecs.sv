@@ -41,7 +41,7 @@ module adrdecs (
   adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[3]);
   adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[2]);
   adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[1]);
-  adrdec sdcdec(PhysicalAddress, `SDC_BASE, `SDC_RANGE, `SDC_SUPPORTED, AccessRW, Size, 4'b0011, SelRegions[0]);
+  adrdec sdcdec(PhysicalAddress, `SDC_BASE, `SDC_RANGE, `SDC_SUPPORTED, AccessRW, Size, 4'b1100, SelRegions[0]);
 
   assign SelRegions[7] = ~|(SelRegions[6:0]);
 

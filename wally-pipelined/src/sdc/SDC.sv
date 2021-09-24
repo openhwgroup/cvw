@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-`define SDCCLKDIV 8'd2
+`define SDCCLKDIV -8'd2
 
 module SDC 
   (input  logic             HCLK, 
@@ -69,7 +69,6 @@ module SDC
   logic [2:0] 		    ErrorCode;
   logic 		    InvalidCommand;
   logic 		    Done;
-  logic 		    Busy;
 
   logic 		    StartCLKDivUpdate;
   logic 		    CLKDivUpdateEn;
@@ -80,15 +79,22 @@ module SDC
   
   logic 		    SDCDataValid;
   logic [`XLEN-1:0] 	    SDCReadData;
-  logic [`XLEN-1:0] 	    ReadData;
+  logic [`XLEN-1:0] 	    SDCWriteData;
   logic 		    FatalError;
   
   logic [4095:0] 	    ReadData512Byte;
+  logic [`XLEN-1:0] 	    ReadData512ByteWords [4096/`XLEN-1:0] ;
   logic 		    SDCReady;
   logic 		    SDCRestarting;
   logic 		    SDCLast;
+
+  logic [$clog2(4096/`XLEN)-1:0] WordCount;
+  logic WordCountRst;
   
+
+  genvar 			 index;
   
+    
   // registers
   //| Offset | Name    | Size   | Purpose                                        |
   //|--------+---------+--------+------------------------------------------------|
@@ -154,35 +160,51 @@ module SDC
     end
   endgenerate
   
-  flopen #(`XLEN) DataReg(HCLK, (HADDRDelay == 'h18 & RegWrite) | (SDCDataValid),
-			  SDCDataValid ? SDCReadData : HWDATA, ReadData);
+  flopen #(`XLEN) DataReg(HCLK, (HADDRDelay == 'h18 & RegWrite),
+			  HWDATA, SDCWriteData);
 
   generate
     if(`XLEN == 64) begin
       always_comb
 	case(HADDRDelay[4:0]) 
 	  'h0: HREADSDC = {56'b0, CLKDiv};
-	  'h4: HREADSDC = {58'b0, ErrorCode, InvalidCommand, Done, Busy};
+	  'h4: HREADSDC = {58'b0, ErrorCode, InvalidCommand, Done, ~SDCReady};
 	  'h8: HREADSDC = {61'b0, Command};
 	  'hC: HREADSDC = 'h200;
 	  'h10: HREADSDC = {Address, 9'b0};
-	  'h18: HREADSDC = ReadData;
+	  'h18: HREADSDC = SDCReadData;
 	  default: HREADSDC = {56'b0, CLKDiv};
-	endcase
+	endcase // case (HADDRDelay[4:0])
     end  else begin
       always_comb
 	case(HADDRDelay[4:0]) 
 	  'h0: HREADSDC = {24'b0, CLKDiv};
-	  'h4: HREADSDC = {26'b0, ErrorCode, InvalidCommand, Done, Busy};
+	  'h4: HREADSDC = {26'b0, ErrorCode, InvalidCommand, Done, ~SDCReady};
 	  'h8: HREADSDC = {29'b0, Command};
 	  'hC: HREADSDC = 'h200;
 	  'h10: HREADSDC = {Address[31:9], 9'b0};
 	  'h14: HREADSDC = Address[63:32];	  
-	  'h18: HREADSDC = ReadData[31:0];
+	  'h18: HREADSDC = SDCReadData[31:0];
 	  default: HREADSDC = {24'b0, CLKDiv};
 	endcase
     end
   endgenerate
+
+  
+  for(index = 0; index < 4096/`XLEN; index++) begin
+    assign ReadData512ByteWords[index] = ReadData512Byte[(index+1)*`XLEN-1:index*`XLEN];
+  end
+
+  assign SDCReadData = ReadData512ByteWords[WordCount];
+
+  flopenr #($clog2(4096/`XLEN)) WordCountReg
+    (.clk(HCLK),
+     .reset(~HRESETn | WordCountRst),
+     .en(HADDRDelay[4:0] == 'h18 & HREADYSDC),
+     .d(WordCount + 1'b1),
+     .q(WordCount));
+  
+  
 
   typedef enum {STATE_READY,
 
@@ -196,7 +218,9 @@ module SDC
 		STATE_RESTART,
 
 		// SDC operation
-		STATE_PROCESS_CMD
+		STATE_PROCESS_CMD,
+
+		STATE_READ
 		} statetype;
 
 
@@ -210,16 +234,19 @@ module SDC
     CLKDivUpdateEn = 1'b0;
     HREADYSDC = 1'b0;
     SDCCLKEN = 1'b1;
+    WordCountRst = 1'b0;
     case (CurrState)
 
       STATE_READY : begin
 	if (StartCLKDivUpdate)begin
 	  NextState = STATE_CLK_DIV1;
 	  HREADYSDC = 1'b0;
-/* -----\/----- EXCLUDED -----\/-----
-	end else if () begin
- -----/\----- EXCLUDED -----/\----- */
-	  
+	end else if (Command[2] | Command[1]) begin
+	  NextState = STATE_PROCESS_CMD;
+	  HREADYSDC = 1'b0;
+	end else if(HADDRDelay[4:0] == 'h18) begin
+	  NextState = STATE_READ;
+	  HREADYSDC = 1'b0;
 	end else begin
 	  NextState = STATE_READY;
 	  HREADYSDC = 1'b1;
@@ -241,6 +268,19 @@ module SDC
       STATE_CLK_DIV4: begin
 	NextState = STATE_READY;
       end
+      STATE_PROCESS_CMD: begin
+	HREADYSDC = 1'b1;
+	WordCountRst = 1'b1;
+	if(SDCDataValid) begin
+	  NextState = STATE_READY;
+	end else begin
+	  NextState = STATE_PROCESS_CMD;
+	end
+      end
+      STATE_READ: begin
+	NextState = STATE_READY;
+	HREADYSDC = 1'b1;
+      end
     endcase
   end
 
@@ -255,7 +295,7 @@ module SDC
   clkdivider #(8) clkdivider(.i_COUNT_IN_MAX(CLKDiv),
 			     .i_EN(CLKDiv != 'b1),
 			     .i_CLK(CLKGate),
-			     .i_RST(~HRESETn),
+			     .i_RST(~HRESETn | CLKDivUpdateEn),
 			     .o_CLK(SDCCLKIn));
 
   sd_top sd_top(.CLK(SDCCLKIn),
@@ -277,6 +317,13 @@ module SDC
 		.o_FATAL_ERROR(FatalError),
 		.i_COUNT_IN_MAX(-8'd62),
 		.LIMIT_SD_TIMERS(1'b1)); // *** must change this to 0 for real hardware.
+
+/* -----\/----- EXCLUDED -----\/-----
+  flopenr #(1) DoneReg(.clk(HCLK),
+		       .reset(~HRESETn),
+		       .en(SDCDataValid | Command[2]),
+		       .d(SDCDataValid ? 1'b1 : 
+ -----/\----- EXCLUDED -----/\----- */
   
   
   

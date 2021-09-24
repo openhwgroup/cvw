@@ -621,7 +621,7 @@ string tests32f[] = '{
  -----/\----- EXCLUDED -----/\----- */
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      romfilename = {"../../imperas-riscv-tests/work/rv64BP/blink-led.memfile"};
+      romfilename = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.memfile"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
