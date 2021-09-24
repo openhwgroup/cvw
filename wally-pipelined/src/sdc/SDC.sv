@@ -43,16 +43,16 @@ module SDC
    //sd card interface
    // place the tristate drivers at the top.  this level
    // will use dedicated 1 direction ports.
-   output logic 	    SDCmdOut,
-   input logic 		    SDCmdIn,
-   output logic 	    SDCmdOE,
-   input logic 		    SDDatIn,
-   output logic 	    SDCLK,
+   output logic 	    SDCCmdOut,
+   input logic 		    SDCCmdIn,
+   output logic 	    SDCCmdOE,
+   input logic [3:0] 	    SDCDatIn,
+   output logic 	    SDCCLK,
 
    // interrupt to PLIC
    output logic 	    SDCIntM);
 
-  logic 		    initTrans;
+  logic 		    InitTrans;
   logic 		    RegRead;
   logic 		    RegWrite;
   logic [4:0] 		    HADDRDelay;
@@ -61,7 +61,7 @@ module SDC
   // Register outputs
   logic [7:0] 		    CLKDiv;
   logic [2:0] 		    Command;
-  logic [`XLEN-1:9] 	    Address;
+  logic [63:9] 		    Address;
   
 
   logic 		    SDCDone;
@@ -73,23 +73,26 @@ module SDC
 
   logic 		    StartCLKDivUpdate;
   logic 		    CLKDivUpdateEn;
-  logic 		    SDCLKEN;
+  logic 		    SDCCLKEN;
+  logic 		    CLKGate;
   
-  
+  logic 		    SDCDataValid;
+  logic [`XLEN-1:0] 	    SDCReadData;
+  logic [`XLEN-1:0] 	    ReadData;
   
 
   // registers
-  //| Offset | Name    | Size | Purpose                                        |
-  //|--------+---------+------+------------------------------------------------|
-  //|    0x0 | CLKDiv  |    4 | Divide HCLK to produce SDCLK                   |
-  //|    0x4 | Status  |    4 | Provide status to software                     |
-  //|    0x8 | Control |    4 | Send commands to SDC                           |
-  //|    0xC | Size    |    4 | Size of data command (only 512 byte supported) |
-  //|   0x10 | address |    8 | address of operation                           |
-  //|   0x18 | data    |    8 | Data Bus interface                             |
+  //| Offset | Name    | Size   | Purpose                                        |
+  //|--------+---------+--------+------------------------------------------------|
+  //|    0x0 | CLKDiv  |    4   | Divide HCLK to produce SDCLK                   |
+  //|    0x4 | Status  |    4   | Provide status to software                     |
+  //|    0x8 | Control |    4   | Send commands to SDC                           |
+  //|    0xC | Size    |    4   | Size of data command (only 512 byte supported) |
+  //|   0x10 | address |    8   | address of operation                           |
+  //|   0x18 | data    | XLEN/8 | Data Bus interface                             |
 
   // Status contains
-  // Status[0] busy
+  // Status[0] 		    busy
   // Status[1] done
   // Status[2] invalid command
   // Status[5:3] error code
@@ -125,42 +128,50 @@ module SDC
   
   assign StartCLKDivUpdate = HADDRDelay == '0 & RegWrite;
   
-  flopenl #(8) CLKDivReg(HCLK, ~HRESETn, CLKDivUpdateEn, HWDATA[31:0], `SDCCLKDIV, CLKDiv);
+  flopenl #(8) CLKDivReg(HCLK, ~HRESETn, CLKDivUpdateEn, HWDATA[7:0], `SDCCLKDIV, CLKDiv);
 
   // Control reg
   flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (SDCDone), 
 			   SDCDone ? '0 : HWDATA[2:0], '0, Command);
-  
-  flopenr #(`XLEN-9) AddressReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
-			      HWDATA[`XLEN-1:9], Address);
 
+  generate
+    if (`XLEN == 64) begin  
+      flopenr #(64-9) AddressReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
+				 HWDATA[`XLEN-1:9], Address);
+    end else begin
+      flopenr #(32-9) AddressLowReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
+				    HWDATA[`XLEN-1:9], Address[31:9]);
+      flopenr #(32) AddressHighReg(HCLK, ~HRESETn, (HADDRDelay == 'h14 & RegWrite),
+				   HWDATA, Address[63:32]);
+    end
+  endgenerate
+  
   flopen #(`XLEN) DataReg(HCLK, (HADDRDelay == 'h18 & RegWrite) | (SDCDataValid),
 			  SDCDataValid ? SDCReadData : HWDATA, ReadData);
 
   generate
     if(`XLEN == 64) begin
       always_comb
-	case(HADDRDelay[4:2]) 
-	  'h0: HREADSDC = {`XLEN-8'b0, CLKDiv};
-	  'h4: HREADSDC = {`XLEN-6'b0, ErrorCode, InvalidCommand, Done, Busy};
-	  'h8: HREADSDC = {`XLEN-3'b0, Command};
+	case(HADDRDelay[4:0]) 
+	  'h0: HREADSDC = {56'b0, CLKDiv};
+	  'h4: HREADSDC = {58'b0, ErrorCode, InvalidCommand, Done, Busy};
+	  'h8: HREADSDC = {61'b0, Command};
 	  'hC: HREADSDC = 'h200;
-	  'h10: HREADSDC = Address;
+	  'h10: HREADSDC = {Address, 9'b0};
 	  'h18: HREADSDC = ReadData;
-	  default: HREADSDC = {32'b0, CLKDiv};
+	  default: HREADSDC = {56'b0, CLKDiv};
 	endcase
     end  else begin
       always_comb
-	case(HADDRDelay[4:2]) 
-	  'h0: HREADSDC = CLKDiv;
-	  'h4: HREADSDC = {ErrorCode, InvalidCommand, Done, Busy};
-	  'h8: HREADSDC = Command;
+	case(HADDRDelay[4:0]) 
+	  'h0: HREADSDC = {24'b0, CLKDiv};
+	  'h4: HREADSDC = {26'b0, ErrorCode, InvalidCommand, Done, Busy};
+	  'h8: HREADSDC = {29'b0, Command};
 	  'hC: HREADSDC = 'h200;
-	  'h10: HREADSDC = Address[31:0];
+	  'h10: HREADSDC = {Address[31:9], 9'b0};
 	  'h14: HREADSDC = Address[63:32];	  
 	  'h18: HREADSDC = ReadData[31:0];
-	  'h1C: HREADSDC = ReadData[63:32];
-	  default: HREADSDC = CLKDiv;
+	  default: HREADSDC = {24'b0, CLKDiv};
 	endcase
     end
   endgenerate
@@ -190,7 +201,7 @@ module SDC
   always_comb begin
     CLKDivUpdateEn = 1'b0;
     HREADYSDC = 1'b0;
-    SDCLKEN = 1'b1;
+    SDCCLKEN = 1'b1;
     case (CurrState)
 
       STATE_READY : begin
@@ -208,16 +219,16 @@ module SDC
       end
       STATE_CLK_DIV1: begin
 	NextState = STATE_CLK_DIV2;
-	SDCLKEN = 1'b0;
+	SDCCLKEN = 1'b0;
       end
       STATE_CLK_DIV2: begin
 	NextState = STATE_CLK_DIV3;
 	CLKDivUpdateEn = 1'b1;
-	SDCLKEN = 1'b0;
+	SDCCLKEN = 1'b0;
       end
       STATE_CLK_DIV3: begin
 	NextState = STATE_CLK_DIV4;
-	SDCLKEN = 1'b0;
+	SDCCLKEN = 1'b0;
       end
       STATE_CLK_DIV4: begin
 	NextState = STATE_READY;
@@ -227,7 +238,7 @@ module SDC
 
   // clock generation divider
 
-  clockgater clockgater(.E(SDCLKEN),
+  clockgater clockgater(.E(SDCCLKEN),
 			.SE(1'b0),
 			.CLK(HCLK),
 			.ECLK(CLKGate));
@@ -237,7 +248,7 @@ module SDC
 			     .i_EN(CLKDiv != 'b1),
 			     .i_CLK(CLKGate),
 			     .i_RST(~HRESETn),
-			     .o_CLK(CLKSDC));
+			     .o_CLK(SDCCLK));
   
   
   

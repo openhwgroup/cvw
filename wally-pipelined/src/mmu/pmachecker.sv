@@ -45,7 +45,7 @@ module pmachecker (
 
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
-  logic [6:0]  SelRegions;
+  logic [7:0]  SelRegions;
 
   // Determine what type of access is being made
   assign AccessRW = ReadAccessM | WriteAccessM;
@@ -61,7 +61,7 @@ module pmachecker (
   assign AtomicAllowed = SelRegions[4];
 
   // Detect access faults
-  assign PMAAccessFault = SelRegions[6] & AccessRWX;  
+  assign PMAAccessFault = SelRegions[7] & AccessRWX;  
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
