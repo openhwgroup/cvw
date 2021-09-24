@@ -569,6 +569,15 @@ string tests32f[] = '{
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
 
+  logic SDCCLK;
+  tri1 SDCCmd;
+  tri1 [3:0] SDCDat;
+
+  sdModel sdcard
+    (.sdClk(SDCCLK),
+    .cmd(SDCCmd), 
+    .dat(SDCDat));
+
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;

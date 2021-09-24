@@ -588,10 +588,14 @@ string tests32f[] = '{
 
   // SD card model
 
+  assign SDCmd = 1'bz;
+  assign SDCDat = 4'bz;
+/* -----\/----- EXCLUDED -----\/-----
   sdModel sdcard
     (.sdClk(SDCCLK),
     .cmd(SDCCmd), 
     .dat(SDCDat));
+ -----/\----- EXCLUDED -----/\----- */
   
 
   // initialize tests
