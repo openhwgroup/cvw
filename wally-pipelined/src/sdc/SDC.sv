@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-`define SDCCLKDIV 2
+`define SDCCLKDIV 8'd2
 
 module SDC 
   (input  logic             HCLK, 

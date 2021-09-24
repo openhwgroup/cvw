@@ -516,25 +516,10 @@ add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HSELUART
 add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HADDR
 add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HWRITE
 add wave -noupdate -group UART /testbench/dut/uncore/uart/uart/HWDATA
-add wave -noupdate -color Gold /testbench/dut/hart/lsu/dcache/subwordread/offset0
-add wave -noupdate /testbench/dut/hart/lsu/dcache/subwordread/offset1
-add wave -noupdate /testbench/dut/hart/lsu/dcache/subwordread/offset2
-add wave -noupdate /testbench/dut/hart/lsu/dcache/subwordread/offset3
-add wave -noupdate /testbench/dut/hart/ExceptionM
-add wave -noupdate /testbench/dut/hart/PendingInterruptM
-add wave -noupdate /testbench/dut/hart/TrapM
-add wave -noupdate /testbench/dut/hart/ifu/icache/CompressedF
-add wave -noupdate /testbench/dut/hart/ifu/icache/PCPF
-add wave -noupdate /testbench/dut/hart/ifu/PCPFmmu
-add wave -noupdate /testbench/dut/hart/ifu/PCPF
-add wave -noupdate /testbench/dut/hart/ifu/PCF
-add wave -noupdate /testbench/dut/hart/ifu/immu/Translate
-add wave -noupdate /testbench/dut/hart/ifu/icache/FinalInstrRawF
-add wave -noupdate /testbench/dut/hart/ifu/icache/StallF
-add wave -noupdate /testbench/dut/hart/ifu/icache/ICacheMemReadData
-add wave -noupdate /testbench/dut/hart/ifu/icache/PCTagF
-add wave -noupdate /testbench/dut/hart/ifu/icache/PCPSpillF
-add wave -noupdate /testbench/dut/hart/ifu/icache/ICacheReadEn
+add wave -noupdate -expand -group SDC -color Gold /testbench/dut/uncore/sdc/SDC/CurrState
+add wave -noupdate -expand -group SDC /testbench/dut/uncore/sdc/SDC/HCLK
+add wave -noupdate -expand -group SDC /testbench/dut/uncore/sdc/SDC/CLKGate
+add wave -noupdate -expand -group SDC /testbench/dut/uncore/sdc/SDC/SDCCLK
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 6} {122378 ns} 0}
 quietly wave cursor active 1
@@ -552,4 +537,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {122227 ns} {122479 ns}
+WaveRestoreZoom {122134 ns} {122622 ns}
