@@ -88,6 +88,8 @@ module sd_top_tb();
     end
   
 
+  initial $readmemh("ramdisk2.hex", sdcard.FLASHmem);
+  
   initial begin
 
     a_RST          = 1'b0;
