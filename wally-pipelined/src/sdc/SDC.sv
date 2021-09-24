@@ -75,12 +75,20 @@ module SDC
   logic 		    CLKDivUpdateEn;
   logic 		    SDCCLKEN;
   logic 		    CLKGate;
+  logic 		    SDCCLKIn;
+  
   
   logic 		    SDCDataValid;
   logic [`XLEN-1:0] 	    SDCReadData;
   logic [`XLEN-1:0] 	    ReadData;
+  logic 		    FatalError;
   
-
+  logic [4095:0] 	    ReadData512Byte;
+  logic 		    SDCReady;
+  logic 		    SDCRestarting;
+  logic 		    SDCLast;
+  
+  
   // registers
   //| Offset | Name    | Size   | Purpose                                        |
   //|--------+---------+--------+------------------------------------------------|
@@ -248,7 +256,27 @@ module SDC
 			     .i_EN(CLKDiv != 'b1),
 			     .i_CLK(CLKGate),
 			     .i_RST(~HRESETn),
-			     .o_CLK(SDCCLK));
+			     .o_CLK(SDCCLKIn));
+
+  sd_top sd_top(.CLK(SDCCLKIn),
+		.a_RST(~HRESETn),
+		.i_SD_CMD(SDCCmdIn),
+		.o_SD_CMD(SDCCmdOut),
+		.o_SD_CMD_OE(SDCCmdOE),
+		.i_SD_DAT(SDCDatIn),
+		.o_SD_CLK(SDCCLK),
+		.i_BLOCK_ADDR(Address[32:9]),
+		.o_READY_FOR_READ(SDCReady),
+		.o_SD_RESTARTING(SDCRestarting),
+		.i_READ_REQUEST(Command[2]),
+		.o_DATA_TO_CORE(),
+		.ReadData(ReadData512Byte),
+		.o_DATA_VALID(SDCDataValid),
+		.o_LAST_NIBBLE(SDCLast),
+		.o_ERROR_CODE_Q(ErrorCode),
+		.o_FATAL_ERROR(FatalError),
+		.i_COUNT_IN_MAX(-8'd62),
+		.LIMIT_SD_TIMERS(1'b1)); // *** must change this to 0 for real hardware.
   
   
   

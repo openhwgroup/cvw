@@ -93,6 +93,9 @@
 `define PLIC_SUPPORTED 1'b1
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
+`define SDC_SUPPORTED 1'b1
+`define SDC_BASE   56'h00012100
+`define SDC_RANGE  56'h00000020
 
 // Test modes
 
