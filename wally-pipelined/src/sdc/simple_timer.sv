@@ -34,7 +34,7 @@ module simple_timer #(parameter BUS_WIDTH = 4)
    input logic 		       CLK);
 
 
-  logic [0:2**BUS_WIDTH-1]     count;
+  logic [BUS_WIDTH-1:0]     count;
   logic timer_en;
 
   assign timer_en = count != 0;
