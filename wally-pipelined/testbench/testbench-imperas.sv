@@ -566,6 +566,10 @@ string tests32f[] = '{
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
 
+  logic SDCCLK;
+  tri1 SDCCmd;
+  tri1 [3:0] SDCDat;
+
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
@@ -581,6 +585,14 @@ string tests32f[] = '{
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+
+  // SD card model
+
+  sdModel sdcard
+    (.sdClk(SDCCLK),
+    .cmd(SDCCmd), 
+    .dat(SDCDat));
+  
 
   // initialize tests
   localparam integer 	   MemStartAddr = `TIM_BASE>>(1+`XLEN/32);

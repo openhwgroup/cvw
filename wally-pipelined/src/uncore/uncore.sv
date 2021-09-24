@@ -129,8 +129,10 @@ module uncore (
 	      // interrupt to PLIC
 	      .SDCIntM	      
 	      );
-    end else begin : uart
-      assign UARTSout = 0; assign UARTIntr = 0; 
+    end else begin : sdc
+      assign SDCCLK = 0; 
+      assign SDCCmdOut = 0;
+      assign SDCCmdOE = 0;
     end
   endgenerate
 
