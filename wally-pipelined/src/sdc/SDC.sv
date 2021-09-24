@@ -68,7 +68,7 @@ module SDC
   
   logic [2:0] 		    ErrorCode;
   logic 		    InvalidCommand;
-  logic 		    Done;
+  logic 		    Busy;
 
   logic 		    StartCLKDivUpdate;
   logic 		    CLKDivUpdateEn;
@@ -90,11 +90,14 @@ module SDC
 
   logic [$clog2(4096/`XLEN)-1:0] WordCount;
   logic WordCountRst;
+  logic [5:0] Status;
+  
   
 
   genvar 			 index;
   
-    
+  assign HRESPSDC = 1'b0;
+
   // registers
   //| Offset | Name    | Size   | Purpose                                        |
   //|--------+---------+--------+------------------------------------------------|
@@ -106,8 +109,8 @@ module SDC
   //|   0x18 | data    | XLEN/8 | Data Bus interface                             |
 
   // Status contains
-  // Status[0] 		    busy
-  // Status[1] done
+  // Status[0] initialized
+  // Status[1] Busy on read
   // Status[2] invalid command
   // Status[5:3] error code
   
@@ -138,7 +141,7 @@ module SDC
   // AHBLite Spec has write data 1 cycle after write command
   flopr #(1) RegWriteReg(HCLK, ~HRESETn, InitTrans & HWRITE, RegWrite);
   
-  flopr #(5) HADDRReg(HCLK, ~HRESETn, HADDR, HADDRDelay);
+  flopenr #(5) HADDRReg(HCLK, ~HRESETn, InitTrans, HADDR, HADDRDelay);
   
   assign StartCLKDivUpdate = HADDRDelay == '0 & RegWrite;
   
@@ -163,23 +166,27 @@ module SDC
   flopen #(`XLEN) DataReg(HCLK, (HADDRDelay == 'h18 & RegWrite),
 			  HWDATA, SDCWriteData);
 
+  assign InvalidCommand = (Command[2] | Command[1]) & Command[0];
+  
+  assign Status = {ErrorCode, InvalidCommand, Busy, SDCReady};
+  
   generate
     if(`XLEN == 64) begin
       always_comb
 	case(HADDRDelay[4:0]) 
-	  'h0: HREADSDC = {56'b0, CLKDiv};
-	  'h4: HREADSDC = {58'b0, ErrorCode, InvalidCommand, Done, ~SDCReady};
-	  'h8: HREADSDC = {61'b0, Command};
-	  'hC: HREADSDC = 'h200;
+	  'h0: HREADSDC = {24'b0, CLKDiv, 26'b0, Status};
+	  'h4: HREADSDC = {26'b0, Status, 29'b0, Command};
+	  'h8: HREADSDC = {29'b0, Command, 32'h200};
+	  'hC: HREADSDC = {32'h200, Address[31:9], 9'b0};
 	  'h10: HREADSDC = {Address, 9'b0};
 	  'h18: HREADSDC = SDCReadData;
-	  default: HREADSDC = {56'b0, CLKDiv};
+	  default: HREADSDC = {24'b0, CLKDiv, 26'b0, Status};
 	endcase // case (HADDRDelay[4:0])
     end  else begin
       always_comb
 	case(HADDRDelay[4:0]) 
 	  'h0: HREADSDC = {24'b0, CLKDiv};
-	  'h4: HREADSDC = {26'b0, ErrorCode, InvalidCommand, Done, ~SDCReady};
+	  'h4: HREADSDC = {26'b0, Status};
 	  'h8: HREADSDC = {29'b0, Command};
 	  'hC: HREADSDC = 'h200;
 	  'h10: HREADSDC = {Address[31:9], 9'b0};
@@ -318,12 +325,12 @@ module SDC
 		.i_COUNT_IN_MAX(-8'd62),
 		.LIMIT_SD_TIMERS(1'b1)); // *** must change this to 0 for real hardware.
 
-/* -----\/----- EXCLUDED -----\/-----
   flopenr #(1) DoneReg(.clk(HCLK),
 		       .reset(~HRESETn),
-		       .en(SDCDataValid | Command[2]),
-		       .d(SDCDataValid ? 1'b1 : 
- -----/\----- EXCLUDED -----/\----- */
+		       .en(SDCDataValid | (Command[2] & WordCountRst)),
+		       .d(SDCDataValid ? 1'b1 : 1'b0),
+		       .q(Busy));
+  
   
   
   

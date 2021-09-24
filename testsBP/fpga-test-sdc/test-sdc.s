@@ -58,11 +58,11 @@ _start:
 
 
 	# wait until the SDC is done with initialization
-	li	x4, 0x2
-wait_sdc_done:	
+	li	x4, 0x1
+wait_sdc_done_init:	
 	lw	x5, 4(x3)
 	and	x5, x5, x4
-	bne	x5, x4, wait_sdc_done
+	bne	x5, x4, wait_sdc_done_init
 
 	# now that it is done lets setup for a read
 	li	x6, 0x20000000
@@ -71,11 +71,12 @@ wait_sdc_done:
 	# send read by writting to command register
 	li	x7, 0x4
 	sw	x7, 0xC(x3)
-	
+
+	li 	x4, 0x2
 wait_sdc_done_read:	
 	lw	x5, 4(x3)
 	and	x5, x5, x4
-	bne	x5, x4, wait_sdc_done_read
+	beq	x5, x4, wait_sdc_done_read
 
 	# copy data from mailbox
 copy_sdc:	
