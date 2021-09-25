@@ -84,13 +84,15 @@ module SDC
   
   logic [4095:0] 	    ReadData512Byte;
   logic [`XLEN-1:0] 	    ReadData512ByteWords [4096/`XLEN-1:0] ;
-  logic 		    SDCReady;
+  logic 		    SDCInitialized;
   logic 		    SDCRestarting;
   logic 		    SDCLast;
 
   logic [$clog2(4096/`XLEN)-1:0] WordCount;
   logic WordCountRst;
   logic [5:0] Status;
+  logic       CommandCompleted;
+  logic       ReadDone;
   
   
 
@@ -148,8 +150,8 @@ module SDC
   flopenl #(8) CLKDivReg(HCLK, ~HRESETn, CLKDivUpdateEn, HWDATA[7:0], `SDCCLKDIV, CLKDiv);
 
   // Control reg
-  flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (~SDCBusy), 
-			   SDCBusy ? '0 : HWDATA[2:0], '0, Command);
+  flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (CommandCompleted), 
+			   CommandCompleted ? '0 : HWDATA[2:0], '0, Command);
 
   generate
     if (`XLEN == 64) begin  
@@ -168,7 +170,7 @@ module SDC
 
   assign InvalidCommand = (Command[2] | Command[1]) & Command[0];
   
-  assign Status = {ErrorCode, InvalidCommand, SDCBusy, SDCReady};
+  assign Status = {ErrorCode, InvalidCommand, SDCBusy, SDCInitialized};
   
   generate
     if(`XLEN == 64) begin
@@ -207,7 +209,7 @@ module SDC
   flopenr #($clog2(4096/`XLEN)) WordCountReg
     (.clk(HCLK),
      .reset(~HRESETn | WordCountRst),
-     .en(HADDRDelay[4:0] == 'h18 & HREADYSDC),
+     .en(HADDRDelay[4:0] == 'h18 & ReadDone),
      .d(WordCount + 1'b1),
      .q(WordCount));
   
@@ -242,8 +244,11 @@ module SDC
     HREADYSDC = 1'b0;
     SDCCLKEN = 1'b1;
     WordCountRst = 1'b0;
-    case (CurrState)
+    SDCBusy = 1'b0;
+    CommandCompleted = 1'b0;
+    ReadDone = 1'b0;
 
+    case (CurrState)
       STATE_READY : begin
 	if (StartCLKDivUpdate)begin
 	  NextState = STATE_CLK_DIV1;
@@ -251,7 +256,7 @@ module SDC
 	end else if (Command[2] | Command[1]) begin
 	  NextState = STATE_PROCESS_CMD;
 	  HREADYSDC = 1'b0;
-	end else if(HADDRDelay[4:0] == 'h18) begin
+	end else if(HADDR[4:0] == 'h18 & RegRead) begin
 	  NextState = STATE_READ;
 	  HREADYSDC = 1'b0;
 	end else begin
@@ -278,15 +283,19 @@ module SDC
       STATE_PROCESS_CMD: begin
 	HREADYSDC = 1'b1;
 	WordCountRst = 1'b1;
+	SDCBusy = 1'b1;
 	if(SDCDataValid) begin
 	  NextState = STATE_READY;
+	  CommandCompleted = 1'b1;
 	end else begin
 	  NextState = STATE_PROCESS_CMD;
+	  CommandCompleted = 1'b0;
 	end
       end
       STATE_READ: begin
 	NextState = STATE_READY;
 	HREADYSDC = 1'b1;
+	ReadDone = 1'b1;
       end
     endcase
   end
@@ -313,7 +322,7 @@ module SDC
 		.i_SD_DAT(SDCDatIn),
 		.o_SD_CLK(SDCCLK),
 		.i_BLOCK_ADDR(Address[32:9]),
-		.o_READY_FOR_READ(SDCReady),
+		.o_READY_FOR_READ(SDCInitialized),
 		.o_SD_RESTARTING(SDCRestarting),
 		.i_READ_REQUEST(Command[2]),
 		.o_DATA_TO_CORE(),
@@ -325,13 +334,6 @@ module SDC
 		.i_COUNT_IN_MAX(-8'd62),
 		.LIMIT_SD_TIMERS(1'b1)); // *** must change this to 0 for real hardware.
 
-  flopenr #(1) DoneReg(.clk(HCLK),
-		       .reset(~HRESETn),
-		       .en(SDCDataValid | (Command[2] & WordCountRst)),
-		       .d(SDCDataValid ? 1'b1 : 1'b0),
-		       .q(SDCBusy));
-  
-  
   
 endmodule
 	    

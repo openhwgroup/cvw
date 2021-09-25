@@ -79,12 +79,41 @@ wait_sdc_done_read:
 	beq	x5, x4, wait_sdc_done_read
 
 	# copy data from mailbox
-copy_sdc:	
-	li 	x8, 512
+	li	x11, 0x80000000
 	li	x9, 0
+copy_sdc:	
+	li 	x8, 512/8
 	ld	x10, 0x18(x3)  # read the mailbox
+	sd	x10, 0x0(x11)  # write to dram
 	addi	x9, x9, 1
-	blt	x8, x9, copy_sdc
+	addi	x11, x11, 8
+	blt	x9, x8, copy_sdc
+
+	# second read of sdc
+	# now that it is done lets setup for a read
+	li	x6, 0x20000200
+	sd	x6, 0x10(x3)    # write address register
+
+	# send read by writting to command register
+	li	x7, 0x4
+	sw	x7, 0x8(x3)
+
+	li 	x4, 0x2
+wait_sdc_done_read2:	
+	lw	x5, 4(x3)
+	and	x5, x5, x4
+	beq	x5, x4, wait_sdc_done_read2
+
+	# copy data from mailbox
+	li	x11, 0x80000200
+	li	x9, 0
+copy_sdc2:	
+	li 	x8, 512/8
+	ld	x10, 0x18(x3)  # read the mailbox
+	sd	x10, 0x0(x11)  # write to dram
+	addi	x9, x9, 1
+	addi	x11, x11, 8
+	blt	x9, x8, copy_sdc2
 	
 
 

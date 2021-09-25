@@ -165,8 +165,7 @@ module sd_dat_fsm
                   ((r_curr_state == s_rx_crc16) &
                    (i_USES_DAT == c_DAT_block) & (i_COUNTER_OUT == 1040) & (i_DATA_CRC16_GOOD)) ? s_reset_nibble_counter :
 
-                  ((r_curr_state == s_reset_nibble_counter) | 
-                   ((r_curr_state == s_publish_block_data) & (i_COUNTER_OUT < 1023))) ? s_publish_block_data : 
+                  ((r_curr_state == s_reset_nibble_counter)) ? s_publish_block_data : 
                   
                   s_reset;
 
