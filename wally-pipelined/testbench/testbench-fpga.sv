@@ -503,7 +503,9 @@ string tests32f[] = '{
    string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT;
+  logic             HREADYEXT, HRESPEXT, HREADY;
+  logic 	    HSELEXT;
+  
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -581,9 +583,13 @@ string tests32f[] = '{
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  assign HREADYEXT = 1;
-  assign HRESPEXT = 0;
-  assign HRDATAEXT = 0;
+ 
+  dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) 
+  dtim (.*, .HSELTim(HSELEXT),
+	.HREADTim(HRDATAEXT),
+	.HREADYTim(HREADYEXT),
+	.HRESPTim(HRESPEXT));
+ 
 
   wallypipelinedsoc dut(.*); 
 
@@ -615,7 +621,7 @@ string tests32f[] = '{
 /* -----\/----- EXCLUDED -----\/-----
       if (`TESTSBP) begin
 	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  dut.uncore.dtim.RAM[i] = meminit;
+	  dtim.RAM[i] = meminit;
 	end
       end
  -----/\----- EXCLUDED -----/\----- */
@@ -623,7 +629,7 @@ string tests32f[] = '{
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       romfilename = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.memfile"};
       sdcfilename = {"../src/sdc/tb/ramdisk2.hex"};      
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dtim.RAM);
       $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
       $readmemh(sdcfilename, sdcard.FLASHmem);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.addr"};
@@ -684,14 +690,14 @@ string tests32f[] = '{
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i] &&
+          if (signature[i] !== dtim.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dtim.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -713,7 +719,7 @@ string tests32f[] = '{
         end
         else begin
           memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-          $readmemh(memfilename, dut.uncore.dtim.RAM);
+          $readmemh(memfilename, dtim.RAM);
           $display("Read memfile %s", memfilename);
 	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
 	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
