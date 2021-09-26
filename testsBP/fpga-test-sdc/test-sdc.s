@@ -1,5 +1,5 @@
-PERIOD = 22000000
-#PERIOD = 100
+#PERIOD = 22000000
+PERIOD = 20
 
 .section .init
 .global _start
@@ -53,6 +53,35 @@ _start:
 	li a1, 0x80000000
 	li a2, 2
 	jal ra, copyFlash
+	
+
+	# now toggle led so we know the copy completed.
+
+	# write to gpio
+	li	t2, 0xFF
+	la	t3, 0x1001200C
+	li	t4, 5
+
+loop:
+
+	# delay
+	li	t0, PERIOD/2
+delay1:	
+	addi	t0, t0, -1
+	bge	t0, x0, delay1
+	sw	t2, 0x0(t3)
+
+	li	t0, PERIOD/2
+delay2:	
+	addi	t0, t0, -1
+	bge	t0, x0, delay2
+	sw	x0, 0x0(t3)
+
+	addi	t4, t4, -1
+	bgt	t4, x0, loop
+
+	
+
 	jal ra, _halt
 
 .section .text
@@ -64,159 +93,5 @@ _halt:
 	ecall
 	j _halt
 	
-
-
-	# start by writting the clock divider to 4 setting SDC to 25MHz
-	la	x3, 0x12100
-	li	x4, -4
-	sw	x4, 0x0(x3)
-
-	# start by writting the clock divider to 1 setting SDC to 100MHZ
-	la	x3, 0x12100
-	li	x4, 1
-	sw	x4, 0x0(x3)
-
-
-	# wait until the SDC is done with initialization
-	li	x4, 0x1
-wait_sdc_done_init:	
-	lw	x5, 4(x3)
-	and	x5, x5, x4
-	bne	x5, x4, wait_sdc_done_init
-
-	# now that it is done lets setup for a read
-	li	x6, 0x20000000
-	sd	x6, 0x10(x3)    # write address register
-
-	# send read by writting to command register
-	li	x7, 0x4
-	sw	x7, 0x8(x3)
-
-	li 	x4, 0x2
-wait_sdc_done_read:	
-	lw	x5, 4(x3)
-	and	x5, x5, x4
-	beq	x5, x4, wait_sdc_done_read
-
-	# copy data from mailbox
-	li	x11, 0x80000000
-	li	x9, 0
-copy_sdc:	
-	li 	x8, 512/8
-	ld	x10, 0x18(x3)  # read the mailbox
-	sd	x10, 0x0(x11)  # write to dram
-	addi	x9, x9, 1
-	addi	x11, x11, 8
-	blt	x9, x8, copy_sdc
-
-	# second read of sdc
-	# now that it is done lets setup for a read
-	li	x6, 0x20000200
-	sd	x6, 0x10(x3)    # write address register
-
-	# send read by writting to command register
-	li	x7, 0x4
-	sw	x7, 0x8(x3)
-
-	li 	x4, 0x2
-wait_sdc_done_read2:	
-	lw	x5, 4(x3)
-	and	x5, x5, x4
-	beq	x5, x4, wait_sdc_done_read2
-
-	# copy data from mailbox
-	li	x11, 0x80000200
-	li	x9, 0
-copy_sdc2:	
-	li 	x8, 512/8
-	ld	x10, 0x18(x3)  # read the mailbox
-	sd	x10, 0x0(x11)  # write to dram
-	addi	x9, x9, 1
-	addi	x11, x11, 8
-	blt	x9, x8, copy_sdc2
-	
-
-
-	# write to gpio
-	li	x2, 0xFF
-	la	x3, 0x10012000
-
-	# +8 is output enable
-	# +C is output value
-
-	addi	x4, x3, 8
-	addi	x5, x3, 0xC
-
-	# write initial value of 0xFF to GPO
-	sw	x2, 0x0(x5)
-	# enable output
-	sw	x2, 0x0(x4)
-
-	# before jumping to led loop
-	# lets try writting to dram.
-
-	li	x21, 0
-	li	x23, 4096*16    # 64KB of data
-
-	li	x22, 0x80000000
-	li	x24, 0
-
-write_loop:
-	add	x25, x22, x24
-	sw	x24, 0(x25)
-	addi	x24, x24, 4
-	blt	x24, x23, write_loop
-
-	li	x24, 0
-read_loop:
-	add	x25, x22, x24
-	lw	x21, 0(x25)
-
-	# check value
-	bne	x21, x24, fail_loop
-
-	addi	x24, x24, 4
-	
-	#
-	blt	x24, x23, read_loop
-
-	
-
-loop:
-
-	# delay
-	li	x20, PERIOD
-delay1:	
-	addi	x20, x20, -1
-	bge	x20, x0, delay1
-
-	# new GPO
-	addi	x2, x2, 1
-	sw	x2, 0x0(x5)
-
-	j	loop
-
-
-fail_loop:
-
-	# delay
-	li	x20, PERIOD/20
-fail_delay1:	
-	addi	x20, x20, -1
-	bge	x20, x0, fail_delay1
-
-	# clear GPO
-	sw	x0, 0x0(x5)
-
-	# delay
-	li	x20, PERIOD/20
-fail_delay2:	
-	addi	x20, x20, -1
-	bge	x20, x0, fail_delay2
-
-	# write GPO
-	sw	x2, 0x0(x5)
-
-	j	fail_loop
 
 
