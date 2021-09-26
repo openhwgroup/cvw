@@ -1,5 +1,5 @@
-#PERIOD = 22000000
-PERIOD = 20
+PERIOD = 22000000
+#PERIOD = 20
 
 .section .init
 .global _start

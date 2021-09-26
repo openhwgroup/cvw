@@ -139,7 +139,8 @@ module SDC
   // currently does not support writes
 
   assign InitTrans = HREADY & HSELSDC & (HTRANS != 2'b00);
-  assign RegRead = InitTrans & ~HWRITE;
+  //assign RegRead = InitTrans & ~HWRITE;
+  flopr #(1) RegReadReg(HCLK, ~HRESETn, InitTrans & ~HWRITE, RegRead);
   // AHBLite Spec has write data 1 cycle after write command
   flopr #(1) RegWriteReg(HCLK, ~HRESETn, InitTrans & HWRITE, RegWrite);
   
@@ -256,7 +257,7 @@ module SDC
 	end else if (Command[2] | Command[1]) begin
 	  NextState = STATE_PROCESS_CMD;
 	  HREADYSDC = 1'b0;
-	end else if(HADDR[4:0] == 'h18 & RegRead) begin
+	end else if(HADDRDelay[4:0] == 'h18 & RegRead) begin
 	  NextState = STATE_READ;
 	  HREADYSDC = 1'b0;
 	end else begin
