@@ -35,9 +35,10 @@
 `define XLEN 32
 
 `define MISA (32'h00000104 | 1 << 5 | 1 << 20 | 1 << 18 | 1 << 12)
-`define ZCSR_SUPPORTED 1
+`define ZICSR_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
-`define ZCOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 1
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -92,6 +93,9 @@
 `define PLIC_SUPPORTED 1'b1
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
+`define SDC_SUPPORTED 1'b1
+`define SDC_BASE   34'h00012100
+`define SDC_RANGE  34'h00000020
 
 // Bus Interface width
 `define AHBW 32

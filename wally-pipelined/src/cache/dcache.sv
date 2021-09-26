@@ -38,6 +38,7 @@ module dcache
    input logic [2:0] 	       Funct3M,
    input logic [6:0] 	       Funct7M,
    input logic [1:0] 	       AtomicM,
+   input logic 		       FlushDCacheM,
    input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
    input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
@@ -68,7 +69,8 @@ module dcache
    output logic 	       AHBWrite,
    input logic 		       AHBAck, // from ahb
    input logic [`XLEN-1:0]     HRDATA, // from ahb
-   output logic [`XLEN-1:0]    HWDATA // to ahb
+   output logic [`XLEN-1:0]    HWDATA, // to ahb
+   output logic [2:0] 	       DCtoAHBSizeM
    );
 
 /*  localparam integer	       BLOCKLEN = 256;
@@ -88,9 +90,12 @@ module dcache
   localparam integer	       LOGWPL = $clog2(WORDSPERLINE);
   localparam integer 	       LOGXLENBYTES = $clog2(`XLEN/8);
 
+  localparam integer FetchCountThreshold = WORDSPERLINE - 1;
+  localparam integer FlushAdrThreshold   = NUMLINES - 1;
 
   logic [1:0] 		       SelAdrM;
   logic [INDEXLEN-1:0]	       RAdr;
+  logic [INDEXLEN-1:0]	       WAdr;  
   logic [BLOCKLEN-1:0]	       SRAMWriteData;
   logic [BLOCKLEN-1:0] 	       DCacheMemWriteData;
   logic			       SetValid, ClearValid;
@@ -125,7 +130,20 @@ module dcache
   logic [TAGLEN-1:0] 	       VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 	       VictimTag;
 
+  logic [INDEXLEN-1:0] 	       FlushAdr;
+  logic [INDEXLEN-1:0] 	       FlushAdrP1;
+  logic 		       FlushAdrCntEn;
+  logic 		       FlushAdrCntRst;
+  logic 		       FlushAdrFlag;
   
+  logic [NUMWAYS-1:0] 	       FlushWay;
+  logic [NUMWAYS-1:0] 	       NextFlushWay;
+  logic 		       FlushWayCntEn;
+  logic 		       FlushWayCntRst;  
+  
+  logic 		       SelFlush;
+  logic 		       VDWriteEnable;
+    
   logic AnyCPUReqM;
   logic FetchCountFlag;
   logic PreCntEn;
@@ -137,20 +155,30 @@ module dcache
   
   // Read Path CPU (IEU) side
 
-  mux3 #(INDEXLEN)
+  mux4 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d3(FlushAdr),
 	    .s(SelAdrM),
 	    .y(RAdr));
+
+  mux2 #(INDEXLEN)
+  WAdrSelMux(.d0(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	     .d1(FlushAdr),
+	     .s(&SelAdrM),
+	     .y(WAdr));
+  
 
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk,
 		      .reset,
 		      .RAdr,
+		      .WAdr,
 		      .PAdr(MemPAdrM[`PA_BITS-1:0]),
 		      .WriteEnable(SRAMWayWriteEnable),
+		      .VDWriteEnable,		      
 		      .WriteWordEnable(SRAMWordEnable),
 		      .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 		      .WriteData(SRAMWriteData),
@@ -160,10 +188,13 @@ module dcache
 		      .ClearDirty,
 		      .SelEvict,
 		      .VictimWay,
+		      .FlushWay,
+		      .SelFlush,
 		      .ReadDataBlockWayMasked(ReadDataBlockWayMaskedM),
 		      .WayHit,
 		      .VictimDirtyWay,
-		      .VictimTagWay);
+		      .VictimTagWay,
+		      .InvalidateAll(1'b0));
 
   generate
     if(NUMWAYS > 1) begin
@@ -201,6 +232,7 @@ module dcache
   endgenerate
 
   // variable input mux
+  
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
@@ -264,9 +296,10 @@ module dcache
     end
   endgenerate
 
-  mux2 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
+  mux3 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-			      .s(SelEvict),
+			      .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
+			      .s({SelFlush, SelEvict}),
 			      .y(BasePAdrM));
 
   // if not cacheable the offset bits needs to be sent to the EBU.
@@ -276,10 +309,7 @@ module dcache
   
   assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
-  assign HWDATA = CacheableM ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
-
-  localparam FetchCountThreshold = WORDSPERLINE - 1;
-  
+  assign HWDATA = CacheableM | SelFlush ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
 
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
@@ -291,6 +321,33 @@ module dcache
 		.q(FetchCount));
 
   assign NextFetchCount = FetchCount + 1'b1;
+
+  // flush address and way generation.
+  flopenr #(INDEXLEN)
+  FlushAdrReg(.clk,
+	      .reset(reset | FlushAdrCntRst),
+	      .en(FlushAdrCntEn & FlushWay[NUMWAYS-1]),
+	      .d(FlushAdrP1),
+	      .q(FlushAdr));
+  assign FlushAdrP1 = FlushAdr + 1'b1;
+
+
+  flopenl #(NUMWAYS)
+  FlushWayReg(.clk,
+	      .load(reset | FlushWayCntRst),
+	      .en(FlushWayCntEn),
+	      .val({{NUMWAYS-1{1'b0}}, 1'b1}),
+	      .d(NextFlushWay),
+	      .q(FlushWay));
+
+  assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
+
+  assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
+
+  generate
+    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b010 : Funct3M;
+    else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : Funct3M;
+  endgenerate;
 
   assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
@@ -333,6 +390,14 @@ module dcache
 		      .CntReset,
 		      .SelUncached,
 		      .SelEvict,
+		      .SelFlush,
+		      .FlushAdrCntEn,
+		      .FlushWayCntEn,
+		      .FlushAdrCntRst,
+		      .FlushWayCntRst,		      
+		      .FlushAdrFlag,
+		      .FlushDCacheM,
+		      .VDWriteEnable,
 		      .LRUWriteEn);
   
 

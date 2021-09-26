@@ -50,10 +50,13 @@ module wallypipelinedsoc (
   output logic 		   HMASTLOCK,
   output logic 		   HREADY,
   // I/O Interface
-  input logic [31:0] 	   GPIOPinsIn,
-  output logic [31:0] 	   GPIOPinsOut, GPIOPinsEn,
-  input logic 		   UARTSin,
-  output logic 		   UARTSout
+  input  logic [31:0]      GPIOPinsIn,
+  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,
+  input  logic             UARTSin,
+  output logic             UARTSout,
+  output tri1              SDCCmd,
+  input  logic [3:0]       SDCDat,
+  output logic             SDCCLK			  
 );
 
   // to instruction memory *** remove later
@@ -73,7 +76,15 @@ module wallypipelinedsoc (
   logic [15:0]      rd2; // bogus, delete when real multicycle fetch works
   logic [31:0]      InstrF;
   logic 	    HRESP;
-  
+
+  logic             SDCCmdOut;
+  logic             SDCCmdOE;
+  logic             SDCCmdIn;
+  logic [3:0] 	    SDCDatIn;
+
+  assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+  assign SDCCmdIn = SDCCmd;
+  assign SDCDatIn = SDCDat; // when write supported this will be a tristate
    
   // instantiate processor and memories
   wallypipelinedhart hart(.*);

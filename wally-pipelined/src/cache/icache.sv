@@ -46,6 +46,7 @@ module icache
    input logic 		       ITLBMissF,
    input logic 		       ITLBWriteF,
    input logic 		       WalkerInstrPageFaultF,
+   input logic 		       InvalidateICacheM,
    
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
@@ -138,24 +139,29 @@ module icache
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
 	     .DIRTY_BITS(0))
   MemWay[NUMWAYS-1:0](.clk,
-			 .reset,
-			 .RAdr(RAdr),
-			 .PAdr(PCTagF),
-			 .WriteEnable(SRAMWayWriteEnable), 
-			 .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
-			 .TagWriteEnable(SRAMWayWriteEnable),
-			 .WriteData(ICacheMemWriteData),
-			 .SetValid(ICacheMemWriteEnable),
-			 .ClearValid(1'b0),
-			 .SetDirty(1'b0),
-			 .ClearDirty(1'b0),
-			 .SelEvict(1'b0),
-			 .VictimWay,
-			 .ReadDataBlockWayMasked,
-			 .WayHit,
-			 .VictimDirtyWay(),
-			 .VictimTagWay()
-			 );
+		      .reset,
+		      .RAdr(RAdr),
+		      .WAdr(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),		      
+		      .PAdr(PCTagF),
+		      .WriteEnable(SRAMWayWriteEnable),
+		      .VDWriteEnable(1'b0),
+		      .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
+		      .TagWriteEnable(SRAMWayWriteEnable),
+		      .WriteData(ICacheMemWriteData),
+		      .SetValid(ICacheMemWriteEnable),
+		      .ClearValid(1'b0),
+		      .SetDirty(1'b0),
+		      .ClearDirty(1'b0),
+		      .SelEvict(1'b0),
+		      .VictimWay,
+		      .FlushWay(1'b0),
+		      .SelFlush(1'b0),
+		      .ReadDataBlockWayMasked,
+		      .WayHit,
+		      .VictimDirtyWay(),
+		      .VictimTagWay(),
+		      .InvalidateAll(InvalidateICacheM)
+		      );
   
   generate
     if(NUMWAYS > 1) begin

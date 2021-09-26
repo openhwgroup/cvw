@@ -59,6 +59,7 @@ module ieu (
   output logic [4:0]    RdM,
   input logic 		   DataAccessFaultM,
   input logic [`XLEN-1:0]  FIntResM, 
+  output logic       InvalidateICacheM, FlushDCacheM,
 
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MulDivResultW,

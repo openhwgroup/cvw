@@ -564,10 +564,19 @@ string tests32f[] = '{
     end
   end
 
-  string signame, memfilename, romfilename;
+  string signame, memfilename, romfilename, sdcfilename;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
+
+  logic SDCCLK;
+  tri1 SDCCmd;
+  tri1 [3:0] SDCDat;
+
+  sdModel sdcard
+    (.sdClk(SDCCLK),
+    .cmd(SDCCmd), 
+    .dat(SDCDat));
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
@@ -612,11 +621,13 @@ string tests32f[] = '{
  -----/\----- EXCLUDED -----/\----- */
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      romfilename = {"../../imperas-riscv-tests/work/rv64BP/blink-led.memfile"};
+      romfilename = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.memfile"};
+      sdcfilename = {"../src/sdc/tb/ramdisk2.hex"};      
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
-      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
-      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
+      $readmemh(sdcfilename, sdcard.FLASHmem);
+      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.addr"};
+      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.lab"};
       $display("Read memfile %s", memfilename);
       reset = 1; # 42; reset = 0;
     end

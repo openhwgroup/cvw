@@ -31,11 +31,16 @@ configs = [
     TestCase(
         name="buildroot",
         cmd="vsim -do wally-buildroot-batch.do -c > {}",
-        grepstr="loaded 6000 instructions"
+        grepstr="8900000 instructions"
     ),
     TestCase(
         name="arch64",
         cmd="vsim > {} -c <<!\ndo wally-arch.do ../config/rv64ic rv64ic\n!",
+        grepstr="All tests ran without failures"
+    ),
+    TestCase(
+        name="arch32",
+        cmd="vsim > {} -c <<!\ndo wally-arch.do ../config/rv32ic rv32ic\n!",
         grepstr="All tests ran without failures"
     ),
     TestCase(
@@ -81,7 +86,7 @@ def main():
     """Run the tests and count the failures"""
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at 12 concurrent processes to not overwhelm the system
-    TIMEOUT_DUR = 600 # seconds
+    TIMEOUT_DUR = 1800 # seconds
     try:
         os.mkdir("regression_logs")
     except:
