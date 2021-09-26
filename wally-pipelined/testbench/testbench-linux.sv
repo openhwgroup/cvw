@@ -30,15 +30,13 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*6779000; // # of instructions at which to turn on waves in graphical sim
-
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*8700000; // # of instructions at which to turn on waves in graphical sim
   string ProgramAddrMapFile, ProgramLabelMapFile;
 
   ///////////////////////////////////////////////////////////////////////////////
   ///////////////////////////////////// DUT /////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   logic             clk, reset;
-  
   logic [`AHBW-1:0] readDataExpected;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
@@ -51,7 +49,6 @@ module testbench();
   logic             HCLK, HRESETn;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
-
   logic [31:0]      GPIOPinsIn;
   logic [31:0]      GPIOPinsOut, GPIOPinsEn;
   logic             UARTSin, UARTSout;
@@ -81,6 +78,7 @@ module testbench();
   // Testbench Core
   integer warningCount = 0;
   integer errorCount = 0;
+  integer MIPexpected;
   // P, Instr Checking
   logic [`XLEN-1:0] PCW;
   integer data_file_all;
@@ -93,7 +91,6 @@ module testbench();
   logic checkInstrW;
 
   //integer        RegAdr;
-
   integer         fault;
   logic           TrapW;
 
@@ -137,17 +134,28 @@ module testbench();
   logic             forcedInterrupt;
   integer           NumCSRMIndex;
   integer           NumCSRWIndex;
-  integer           NumCSRPostWIndex;    
-//  logic           CurrentInterruptForce;
+  integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
   
-  // -----------
-  // Error Macro
-  // -----------
+  // ------------
+  // Error Macros
+  // ------------
   `define ERROR \
     errorCount +=1; \
     $display("processed %0d instructions with %0d warnings", InstrCountW, warningCount); \
     $stop;
+
+  `define CSRwarn(CSR) \
+    begin \
+      if(`DEBUG_TRACE > 0) begin \
+        $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
+      end \
+      if (CSR != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin \
+        $display("%tns, %d instrs: CSR %s = %016x, does not equal expected value %016x", $time, InstrCountW, ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
+        if(!`DontHaltOnCSRMisMatch) fault = 1; \
+      end \
+    end
+  
 
   initial begin
     data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
@@ -157,16 +165,12 @@ module testbench();
     force dut.hart.priv.ExtIntM = 0;    
   end
 
-/* -----\/----- EXCLUDED -----\/-----
-  initial begin
-    CurrentInterruptForce = 1'b0;
-  end
- -----/\----- EXCLUDED -----/\----- */
 
   assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
   // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
   assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW;
 
+  // Additonal W stage registers
   flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
   flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
   flopenrc #(`XLEN) PCWReg(clk, reset, dut.hart.FlushW, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
@@ -184,8 +188,9 @@ module testbench();
     // always check PC, instruction bits
     if (checkInstrM) begin
       // read 1 line of the trace file
-      matchCount =  $fgets(line, data_file_all);
+      matchCount = $fgets(line, data_file_all);
       if(`DEBUG_TRACE > 1) $display("Time %t, line %x", $time, line);
+      // extract PC, Instr
       matchCount = $sscanf(line, "%x %x %s", ExpectedPCM, ExpectedInstrM, textM);
       //$display("matchCount %d, PCM %x ExpectedInstrM %x textM %x", matchCount, ExpectedPCM, ExpectedInstrM, textM);
 
@@ -221,21 +226,17 @@ module testbench();
           RegWriteM = ExpectedTokens[MarkerIndex];
           matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", ExpectedRegAdrM);
           matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedRegValueM);
-          
           MarkerIndex += 3;
-
-          // parse memory address, read data, and/or write data
+        // parse memory address, read data, and/or write data
         end else if(ExpectedTokens[MarkerIndex].substr(0, 2) == "Mem") begin
           MemOpM = ExpectedTokens[MarkerIndex];
           matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedMemAdrM);
           matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedMemWriteDataM);
           matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadDataM);
-
           MarkerIndex += 4;
-
-          // parse CSRs, because there are 1 or more CSRs after the CSR token
-          // we check if the CSR token or the number of CSRs is greater than 0.
-          // if so then we want to parse for a CSR.
+        // parse CSRs, because there are 1 or more CSRs after the CSR token
+        // we check if the CSR token or the number of CSRs is greater than 0.
+        // if so then we want to parse for a CSR.
         end else if(ExpectedTokens[MarkerIndex] == "CSR" || NumCSRM > 0) begin
           if(ExpectedTokens[MarkerIndex] == "CSR") begin
             // all additional CSR's won't have this token.
@@ -243,30 +244,13 @@ module testbench();
           end
           matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSRArrayM[NumCSRM]);
           matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRArrayValueM[NumCSRM]);
-
           MarkerIndex += 2;
-
-          // if we get an xcause with the interrupt bit set we must generate an interrupt as interrupts
-          // are imprecise.  Forcing the trap at this time will allow wally to track what qemu does.
-          // the msb of xcause will be set.
-          // bits 1:0 select mode; 0 = user, 1 = superviser, 3 = machine
-          // bits 3:2 select the type of interrupt, 0 = software, 1 = timer, 2 = external
-          if(ExpectedCSRArrayM[NumCSRM].substr(1, 5) == "cause" && (ExpectedCSRArrayValueM[NumCSRM][`XLEN-1] == 1'b1)) begin
-            //what type?
-            ExpectedIntType = ExpectedCSRArrayValueM[NumCSRM] & 64'h0000_000C;
-            $display("%tns, %d instrs: CSR = %s. Forcing interrupt of cause = %x", $time, InstrCountW, ExpectedCSRArrayM[NumCSRM], ExpectedCSRArrayValueM[NumCSRM]);
-            forcedInterrupt = 1;
-            if(ExpectedIntType == 0) begin
-              force dut.hart.priv.SwIntM = 1'b1;
-              $display("Activate spoofed SwIntM");
-            end else if(ExpectedIntType == 4) begin
-              force dut.hart.priv.TimerIntM = 1'b1;
-              $display("Activate spoofed TimeIntM");
-            end else if(ExpectedIntType == 8) begin
-              force dut.hart.priv.ExtIntM = 1'b1;
-              $display("Activate spoofed ExtIntM");
-            end else forcedInterrupt = 0;
-          end      
+          // match MIP to QEMU's because interrupts are imprecise
+          if(ExpectedCSRArrayM[NumCSRM].substr(0, 2) == "mip") begin
+            $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
+            MIPexpected = ExpectedCSRArrayValueM[NumCSRM];
+            force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+          end 
           NumCSRM++;      
         end
       end
@@ -276,12 +260,10 @@ module testbench();
         force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM;
       end
       if(textM.substr(0,5) == "rdtime") begin
-        $display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW);
+        //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW);
         force dut.uncore.clint.clint.MTIME = ExpectedRegValueM;
-        //dut.hart.ieu.dp.regf.wd3
       end
-
-    end // if (checkInstrM)
+    end
   end
 
   // step 1: register expected state into the write back stage.
@@ -328,37 +310,16 @@ module testbench();
           ExpectedCSRArrayValueW[NumCSRWIndex] = ExpectedCSRArrayValueM[NumCSRWIndex];
         end
       end
-      // override on special conditions
       #1;
-
-
+      // override on special conditions
       if(~dut.hart.StallW) begin
         if(textW.substr(0,5) == "rdtime") begin
-          $display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
+          //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
           release dut.uncore.clint.clint.MTIME;
-          //release dut.hart.ieu.dp.regf.wd3;
-        end
-        
+        end 
         if (ExpectedMemAdrM == 'h10000005) begin
           //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, InstrCountW);
-              release dut.hart.ieu.dp.ReadDataM;
-        end
-
-        // force interrupts to 0
-        if (forcedInterrupt) begin
-          forcedInterrupt = 0;
-          if(ExpectedIntType == 0) begin
-            force dut.hart.priv.SwIntM = 1'b0;
-            $display("Deactivate spoofed SwIntM");
-          end
-          else if(ExpectedIntType == 4) begin
-            force dut.hart.priv.TimerIntM = 1'b0;
-            $display("Deactivate spoofed TimeIntM");
-          end
-          else if(ExpectedIntType == 8) begin
-            force dut.hart.priv.ExtIntM = 1'b0;
-            $display("Deactivate spoofed ExtIntM");
-          end
+          release dut.hart.ieu.dp.ReadDataM;
         end
       end
     end
@@ -376,197 +337,75 @@ module testbench();
       // check PCW
       fault = 0;
       if(PCW != ExpectedPCW) begin
-        $display("PCW: %016x does not equal ExpectedPCW: %016x", PCW, ExpectedPCW);
+        $display("%tns, %d instrs: PCW %016x does not equal ExpectedPCW: %016x", $time, InstrCountW, PCW, ExpectedPCW);
         fault = 1;
       end
-
       // check instruction value
       if(dut.hart.ifu.InstrW != ExpectedInstrW) begin
-        $display("InstrW: %x does not equal ExpectedInstrW: %x", dut.hart.ifu.InstrW, ExpectedInstrW);
+        $display("%tns, %d instrs: InstrW %x does not equal ExpectedInstrW: %x", $time, InstrCountW, dut.hart.ifu.InstrW, ExpectedInstrW);
         fault = 1;
       end
-
       // check the number of instructions
       if(dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW != InstrCountW) begin
         $display("%t, Number of instruction Retired = %d does not equal number of instructions in trace = %d", $time, dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW, InstrCountW);
         if(!`DontHaltOnCSRMisMatch) fault = 1;
       end
-      
       #2; // delay 2 ns.
-
-      
       if(`DEBUG_TRACE > 2) begin
-        $display("Reg Write Address: %02d ? expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
-        $display("RF[%02d]: %016x ? expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
+        $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, InstrCountW, dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
+        $display("%tns, %d instrs: RF[%02d] %016x ? expected value: %016x", $time, InstrCountW, ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
       end
-
       if (RegWriteW == "GPR") begin
         if (dut.hart.ieu.dp.regf.a3 != ExpectedRegAdrW) begin
-          $display("Reg Write Address: %02d does not equal expected value: %02d", dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
+          $display("%tns, %d instrs: Reg Write Address %02d does not equal expected value: %02d", $time, InstrCountW, dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
           fault = 1;
         end
-    
-    if (dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW] != ExpectedRegValueW) begin
-      $display("RF[%02d]: %016x does not equal expected value: %016x", ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
-      fault = 1;
-    end
+        if (dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW] != ExpectedRegValueW) begin
+          $display("%tns, %d instrs: RF[%02d] %016x does not equal expected value: %016x", $time, InstrCountW, ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
+          fault = 1;
+        end
       end
 
       if (MemOpW.substr(0,2) == "Mem") begin
-    if(`DEBUG_TRACE > 3) $display("\tMemAdrW: %016x ? expected: %016x", MemAdrW, ExpectedMemAdrW);
-
-    // always check address
-    if (MemAdrW != ExpectedMemAdrW) begin
-      $display("MemAdrW: %016x does not equal expected value: %016x", MemAdrW, ExpectedMemAdrW);
-      fault = 1;
-    end
-
-    // check read data
-    if(MemOpW == "MemR" || MemOpW == "MemRW") begin
-      if(`DEBUG_TRACE > 3) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
-      if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadDataW) begin
-        $display("ReadDataW: %016x does not equal expected value: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
-        fault = 1;
+        if(`DEBUG_TRACE > 3) $display("\tMemAdrW: %016x ? expected: %016x", MemAdrW, ExpectedMemAdrW);
+        // always check address
+        if (MemAdrW != ExpectedMemAdrW) begin
+          $display("%tns, %d instrs: MemAdrW %016x does not equal expected value: %016x", $time, InstrCountW, MemAdrW, ExpectedMemAdrW);
+          fault = 1;
+        end
+        // check read data
+        if(MemOpW == "MemR" || MemOpW == "MemRW") begin
+          if(`DEBUG_TRACE > 3) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
+          if (dut.hart.ieu.dp.ReadDataW != ExpectedMemReadDataW) begin
+            $display("%tns, %d instrs: ReadDataW %016x does not equal expected value: %016x", $time, InstrCountW, dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
+            fault = 1;
+          end
+        // check write data
+        end else if(ExpectedTokens[MarkerIndex] == "MemW" || ExpectedTokens[MarkerIndex] == "MemRW") begin
+          if(`DEBUG_TRACE > 3) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
+          if (WriteDataW != ExpectedMemWriteDataW) begin
+            $display("%tns, %d instrs: WriteDataW %016x does not equal expected value: %016x", $time, InstrCountW, WriteDataW, ExpectedMemWriteDataW);
+            fault = 1;
+          end
+        end
       end
-    end
-
-    // check write data
-    else if(ExpectedTokens[MarkerIndex] == "MemW" || ExpectedTokens[MarkerIndex] == "MemRW") begin
-      if(`DEBUG_TRACE > 3) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
-      if (WriteDataW != ExpectedMemWriteDataW) begin
-        $display("WriteDataW: %016x does not equal expected value: %016x", WriteDataW, ExpectedMemWriteDataW);
-        fault = 1;
-      end
-    end
-      end
-
 
       // check csr
-      //$display("%t, about to check csr, NumCSRW = %d", $time, NumCSRW);
       for(NumCSRPostWIndex = 0; NumCSRPostWIndex < NumCSRW; NumCSRPostWIndex++) begin
-        /* -----\/----- EXCLUDED -----\/-----
-            if(`DEBUG_TRACE > 0) begin
-              $display("%t, NumCSRPostWIndex = %d, Expected CSR: %s = %016x", $time, NumCSRPostWIndex, ExpectedCSRArrayW[NumCSRPostWIndex], ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-         -----/\----- EXCLUDED -----/\----- */
         case(ExpectedCSRArrayW[NumCSRPostWIndex])
-          "mhartid": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);          
-            end 
-            if (dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);          
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mstatus": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if ((dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW) != (ExpectedCSRArrayValueW[NumCSRPostWIndex])) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mtvec": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mip": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MIP_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIP_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mie": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MIE_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mideleg": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "medeleg": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mepc": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MEPC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "mtval": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "sepc": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrs.SEPC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.SEPC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "scause": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "stvec": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrs.STVEC_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.STVEC_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
-          "stval": begin
-            if(`DEBUG_TRACE > 0) begin
-              $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-            end
-            if (dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin
-              $display("%t, CSR: %s = %016x, does not equal expected value %016x", $time, ExpectedCSRArrayW[NumCSRPostWIndex], dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW, ExpectedCSRArrayValueW[NumCSRPostWIndex]);
-              if(!`DontHaltOnCSRMisMatch) fault = 1;
-            end
-          end
+          "mhartid": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW)
+          "mstatus": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW)
+          "mtvec": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW)
+          "mip": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MIP_REGW)
+          "mie": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MIE_REGW)
+          "mideleg":`CSRwarn(dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW)
+          "medeleg": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW)
+          "mepc": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MEPC_REGW)
+          "mtval": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW)
+          "sepc": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.SEPC_REGW)
+          "scause": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW)
+          "stvec": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.STVEC_REGW)
+          "stval": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW)
         endcase // case (ExpectedCSRArrayW[NumCSRPostWIndex])
       end // for (NumCSRPostWIndex = 0; NumCSRPostWIndex < NumCSRW; NumCSRPostWIndex++)
       if (fault == 1) begin `ERROR end
