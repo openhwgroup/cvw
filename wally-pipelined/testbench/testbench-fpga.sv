@@ -626,8 +626,8 @@ string tests32f[] = '{
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
       $readmemh(sdcfilename, sdcard.FLASHmem);
-      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
-      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
+      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.addr"};
+      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.lab"};
       $display("Read memfile %s", memfilename);
       reset = 1; # 42; reset = 0;
     end
