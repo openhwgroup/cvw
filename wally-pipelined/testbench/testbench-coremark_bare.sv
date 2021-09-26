@@ -52,6 +52,14 @@ module testbench();
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
+  logic SDCCLK;
+  tri1 SDCCmd;
+  tri1 [3:0] SDCDat;
+
+  assign SDCmd = 1'bz;
+  assign SDCDat = 4'bz;
+  
+
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;

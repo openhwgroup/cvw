@@ -39,3 +39,13 @@ wally-pipelined/linux-testgen/buildroot-config-src/linux.config.old
 wally-pipelined/linux-testgen/buildroot-config-src/busybox.config.old
 wally-pipelined/regression/slack-notifier/slack-webhook-url.txt
 
+/testsBP/fpga-test-dram/bin/blink-led
+/testsBP/fpga-test-dram/bin/blink-led.memfile
+/testsBP/fpga-test-dram/bin/blink-led.objdump
+/testsBP/fpga-test-dram/bin/blink-led.objdump.addr
+/testsBP/fpga-test-dram/bin/blink-led.objdump.lab
+/testsBP/fpga-test-sdc/bin/fpga-test-sdc
+/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile
+/testsBP/fpga-test-sdc/bin/fpga-test-sdc.objdump
+/testsBP/fpga-test-sdc/bin/fpga-test-sdc.objdump.addr
+/testsBP/fpga-test-sdc/bin/fpga-test-sdc.objdump.lab

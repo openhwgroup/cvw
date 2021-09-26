@@ -85,7 +85,7 @@ module wallypipelinedhart
   logic 		    LoadMisalignedFaultM, LoadAccessFaultM;
   logic 		    StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] 	    InstrMisalignedAdrM;
-
+  logic       InvalidateICacheM, FlushDCacheM;
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
   logic 		    DivDoneE;
@@ -196,6 +196,7 @@ module wallypipelinedhart
 	  .MemAdrM(MemAdrM),      
 	  .WriteDataM(WriteDataM),
 	  .ReadDataM(ReadDataM),
+    .FlushDCacheM,
 
 	  // connected to ahb (all stay the same)
 	  .DCtoAHBPAdrM(DCtoAHBPAdrM),

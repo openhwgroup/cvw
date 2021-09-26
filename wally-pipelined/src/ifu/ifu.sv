@@ -48,6 +48,7 @@ module ifu (
   // Mem
   input logic 		      RetM, TrapM, 
   input logic [`XLEN-1:0]     PrivilegedNextPCM, 
+  input logic                 InvalidateICacheM,
   output logic [31:0] 	      InstrD, InstrE, InstrM, InstrW,
   output logic [`XLEN-1:0]    PCM, 
   output logic [4:0] 	      InstrClassM,
@@ -153,7 +154,8 @@ module ifu (
   icache icache(.*,
 		.PCNextF(PCNextFPhys),
 		.PCPF(PCPFmmu),
-		.WalkerInstrPageFaultF(WalkerInstrPageFaultF));
+		.WalkerInstrPageFaultF,
+		.InvalidateICacheM);
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
 
@@ -171,11 +173,16 @@ module ifu (
 		       .y(PCNext1F));
 
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
+		       .d1(PCE),
+		       .s(InvalidateICacheM),
+		       .y(PCNext2F));
+  
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
 		       .d1(PrivilegedNextPCM),
 		       .s(PrivilegedChangePCM),
-		       .y(PCNext2F));
+		       .y(PCNext3F));
 
-  mux2 #(`XLEN) pcmux4(.d0(PCNext2F),
+  mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
 		       .d1(`RESET_VECTOR),
 		       .s(reset_q),
 		       .y(UnalignedPCNextF)); 

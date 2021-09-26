@@ -37,9 +37,10 @@
 
 //`define MISA (32'h00000105)
 `define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
-`define ZCSR_SUPPORTED 1
+`define ZICSR_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
-`define ZCOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 1
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -58,15 +59,18 @@
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
 `define DCACHE_NUMWAYS 4
-`define DCACHE_WAYSIZEINBYTES 2048
+`define DCACHE_WAYSIZEINBYTES 4096
 `define DCACHE_BLOCKLENINBITS 256
 `define DCACHE_REPLBITS 3
-`define ICACHE_NUMWAYS 1
+`define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_BLOCKLENINBITS 256
 
+// Legal number of PMP entries are 0, 16, or 64
+`define PMP_ENTRIES 64
+
 // Address space
-`define RESET_VECTOR 64'h0000000000000000
+`define RESET_VECTOR 64'h0000000000001000
 
 // Bus Interface width
 `define AHBW 64
@@ -93,6 +97,9 @@
 `define PLIC_SUPPORTED 1'b1
 `define PLIC_BASE   56'h0C000000
 `define PLIC_RANGE  56'h03FFFFFF
+`define SDC_SUPPORTED 1'b1
+`define SDC_BASE   56'h00012100
+`define SDC_RANGE  56'h0000001F
 
 // Test modes
 
