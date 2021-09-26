@@ -37,7 +37,7 @@ module wallypipelinedsocwrapper (
   // inputs from external memory
   input [`AHBW-1:0]  HRDATAEXT,
   input 	     HREADYEXT, HRESPEXT,
-  output             HSELEXT,
+  output 	     HSELEXT,
   // outputs to external memory, shared with uncore memory
   output 	     HCLK, HRESETn,
   output [31:0]      HADDR,
@@ -48,13 +48,16 @@ module wallypipelinedsocwrapper (
   output [3:0] 	     HPROT,
   output [1:0] 	     HTRANS,
   output 	     HMASTLOCK,
-  output             HREADY,				 
+  output 	     HREADY, 
   // I/O Interface
   input [3:0] 	     GPIOPinsIn_IO,
-  output [4:0]       GPIOPinsOut_IO,
+  output [4:0] 	     GPIOPinsOut_IO,
   input 	     UARTSin,
   output 	     UARTSout,
-  input              ddr4_calib_complete				 
+  input 	     ddr4_calib_complete,
+  input [3:0] 	     SDCDat,
+  output 	     SDCCLK,
+  inout              SDCCmd	     
 );
 
   wire [31:0] 	     GPIOPinsEn;
@@ -105,6 +108,9 @@ module wallypipelinedsocwrapper (
      .GPIOPinsOut(GPIOPinsOut),
      .GPIOPinsEn(GPIOPinsEn),
      .UARTSin(UARTSin),
-     .UARTSout(UARTSout));
+     .UARTSout(UARTSout),
+     .SDCDat(SDCDat),
+     .SDCCLK(SDCCLK),
+     .SDCCmd(SDCCmd));
   
 endmodule
