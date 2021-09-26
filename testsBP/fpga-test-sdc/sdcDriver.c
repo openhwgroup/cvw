@@ -47,7 +47,7 @@ void copySDC512(long int blockAddr, long int * Dst) {
 
   // wait until the mailbox has valid data
   // this occurs when status[1] = 0
-  while(*mailBoxStatus & 0x2 == 0x2);
+  while((*mailBoxStatus & 0x2) == 0x2);
 
   int index;
   for(index = 0; index < 512/8; index++) {
@@ -58,7 +58,7 @@ void copySDC512(long int blockAddr, long int * Dst) {
 volatile void waitInitSDC(){
   volatile int * mailBoxStatus;
   mailBoxStatus = (int *) (SDC_MAIL_BOX + 0x4);
-  while(*mailBoxStatus & 0x1 != 0x1);
+  while((*mailBoxStatus & 0x1) != 0x1);
 }
 
 void setSDCCLK(int divider){
