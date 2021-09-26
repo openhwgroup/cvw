@@ -46,6 +46,26 @@ _start:
 	li x31, 0
 
 
+	# set the stack pointer to the top of memory - 8 bytes (pointer size)
+	li sp, 0x87FFFFF8
+
+	li a0, 0x20000000
+	li a1, 0x80000000
+	li a2, 2
+	jal ra, copyFlash
+	jal ra, _halt
+
+.section .text
+.global _halt
+.type _halt, @function
+_halt:
+	li gp, 1
+	li a0, 0
+	ecall
+	j _halt
+	
+
+
 	# start by writting the clock divider to 4 setting SDC to 25MHz
 	la	x3, 0x12100
 	li	x4, -4
