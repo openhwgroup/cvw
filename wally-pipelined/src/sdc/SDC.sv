@@ -297,6 +297,9 @@ module SDC
 	HREADYSDC = 1'b1;
 	ReadDone = 1'b1;
       end
+      default: begin
+	NextState = STATE_READY;
+      end
     endcase
   end
 
