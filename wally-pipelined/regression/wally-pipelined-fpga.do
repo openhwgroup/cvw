@@ -30,7 +30,7 @@ vlib work
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined.do ../config/rv32ic
 switch $argc {
-    0 {vlog +incdir+../config/rv64BP +incdir+../config/shared ../testbench/testbench-fpga.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
+    0 {vlog +incdir+../config/rv64BP +incdir+../config/shared ../testbench/testbench-fpga.sv ../testbench/common/*.sv ../src/*/*.sv ../src/wally/wallypipelinedsocwrapper.v -suppress 2583}
     1 {vlog +incdir+$1 +incdir+../config/shared ../testbench/testbench-imperas.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
 }
 # start and run simulation

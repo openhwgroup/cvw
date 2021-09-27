@@ -28,14 +28,14 @@
 
 module trap (
   input logic 		   clk, reset, 
-  input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
-  input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
-  input logic 		   LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
-  input logic 		   LoadPageFaultM, StorePageFaultM,
-  input logic 		   mretM, sretM, uretM,
+  (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
+  (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
+  (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
+  (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StorePageFaultM,
+  (* mark_debug = "true" *) input logic 		   mretM, sretM, uretM,
   input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
-  input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
+  (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
+  (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic [`XLEN-1:0]  PCM,
   input logic [`XLEN-1:0]  InstrMisalignedAdrM, MemAdrM, 
@@ -53,7 +53,7 @@ module trap (
 );
 
   logic MIntGlobalEnM, SIntGlobalEnM;
-  logic [11:0] PendingIntsM; 
+  (* mark_debug = "true" *) logic [11:0] PendingIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
   logic Exception1M;

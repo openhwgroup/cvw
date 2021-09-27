@@ -140,6 +140,7 @@ module SDC
 
   assign InitTrans = HREADY & HSELSDC & (HTRANS != 2'b00);
   //assign RegRead = InitTrans & ~HWRITE;
+  // register resolve combo loop
   flopr #(1) RegReadReg(HCLK, ~HRESETn, InitTrans & ~HWRITE, RegRead);
   // AHBLite Spec has write data 1 cycle after write command
   flopr #(1) RegWriteReg(HCLK, ~HRESETn, InitTrans & HWRITE, RegWrite);

@@ -591,7 +591,7 @@ string tests32f[] = '{
 	.HRESPTim(HRESPEXT));
  
 
-  wallypipelinedsoc dut(.*); 
+  wallypipelinedsocwrapper dut(.*); 
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
