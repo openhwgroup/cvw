@@ -47,7 +47,7 @@ module sd_clk_fsm
 
 
   logic [3:0] 	w_next_state;
-  logic [3:0] 	r_curr_state;
+  (* mark_debug = "true" *) logic [3:0] 	r_curr_state;
   
 
   // clock selection

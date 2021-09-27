@@ -61,7 +61,7 @@ module sd_dat_fsm
     input logic LIMIT_SD_TIMERS
    );
 
-  logic [3:0] 	w_next_state, r_curr_state;
+  (* mark_debug = "true" *) logic [3:0] 	w_next_state, r_curr_state;
   
   logic w_error_crc16_fd_en, w_error_crc16_fd_rst, w_error_crc16_fd_d; // Save ERROR_CRC16 so CMD FSM sees it in IDLE_NRC (not just in IDLE_DAT)
   logic r_error_crc16_fd_Q;

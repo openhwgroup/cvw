@@ -95,7 +95,7 @@
 `define PLIC_RANGE  56'h03FFFFFF
 `define SDC_SUPPORTED 1'b1
 `define SDC_BASE   56'h00012100
-`define SDC_RANGE  56'h00000020
+`define SDC_RANGE  56'h0000001F
 
 // Bus Interface width
 `define AHBW 64

@@ -91,7 +91,7 @@ module sd_cmd_fsm
 
 
 
-  logic  [4:0]  w_next_state, r_curr_state;
+  (* mark_debug = "true" *) logic  [4:0]  w_next_state, r_curr_state;
   logic 	w_resend_last_command, w_rx_crc7_check, w_rx_index_check, w_rx_bad_crc7, w_rx_bad_index, w_rx_bad_reply, w_bad_card;
   
   logic [31:0] 	w_redo_result, w_error_result;

@@ -46,21 +46,22 @@ module csrs #(parameter
    SEDELEG_MASK = ~(ZERO | `XLEN'b111 << 9)
 
   ) (
-    input  logic             clk, reset, 
-    input  logic             StallW,
-    input  logic             CSRSWriteM, STrapM,
-    input  logic [11:0]      CSRAdrM,
-    input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
-    input  logic             STATUS_TVM,
-    input  logic [`XLEN-1:0] CSRWriteValM,
-    input  logic [1:0]       PrivilegeModeW,
-    output logic [`XLEN-1:0] CSRSReadValM, SEPC_REGW, STVEC_REGW, 
-    output logic [31:0]      SCOUNTEREN_REGW,     
-    output logic [`XLEN-1:0]      SEDELEG_REGW, SIDELEG_REGW, 
+    input logic 	     clk, reset, 
+    input logic 	     StallW,
+    input logic 	     CSRSWriteM, STrapM,
+    input logic [11:0] 	     CSRAdrM,
+    input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
+    input logic 	     STATUS_TVM,
+    input logic [`XLEN-1:0]  CSRWriteValM,
+    input logic [1:0] 	     PrivilegeModeW,
+    output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
+    (* mark_debug = "true" *) output logic [`XLEN-1:0] SEPC_REGW,      
+    output logic [31:0]      SCOUNTEREN_REGW, 
+    output logic [`XLEN-1:0] SEDELEG_REGW, SIDELEG_REGW, 
     output logic [`XLEN-1:0] SATP_REGW,
-    input  logic [11:0]      SIP_REGW, SIE_REGW,
-    output logic             WriteSSTATUSM,
-    output logic             IllegalCSRSAccessM
+    (* mark_debug = "true" *) input logic [11:0] SIP_REGW, SIE_REGW,
+    output logic 	     WriteSSTATUSM,
+    output logic 	     IllegalCSRSAccessM
   );
 
   //logic [`XLEN-1:0] zero = 0;
@@ -73,7 +74,8 @@ module csrs #(parameter
       logic WriteSTVECM;
       logic WriteSSCRATCHM, WriteSEPCM;
       logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
-      logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW;
+      logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
+      (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
       
       assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS)  && ~StallW;
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC) && ~StallW;
