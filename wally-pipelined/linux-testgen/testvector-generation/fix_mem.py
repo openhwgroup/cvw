@@ -6,9 +6,10 @@ if len(sys.argv) != 3:
 inputFile = sys.argv[1]
 outputFile = sys.argv[2]
 if not os.path.exists(inputFile):
-    sys.exit('Error input file '+inputFile+'not found')
-print('Translating '+os.path.basename(inputFile)+' to '+os.path.basename(outputFile))
+    sys.exit('Error input file '+inputFile+' not found')
+print('Begin translating '+os.path.basename(inputFile)+' to '+os.path.basename(outputFile))
 with open(inputFile, 'r') as f:
     with open(outputFile, 'w') as w:
         for l in f:
             w.write(f'{"".join([x[2:] for x in l.split()[:0:-1]])}\n')
+print('Finished translating '+os.path.basename(inputFile)+' to '+os.path.basename(outputFile)+'!')
