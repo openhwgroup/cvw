@@ -25,6 +25,8 @@
 
 `include "wally-config.vh"
 /* verilator lint_off DECLFILENAME */
+// Note that non-zero RESET_VAL's are only ever intended for simulation purposes (to start mid-execution from a checkpoint)
+
 
 // ordinary flip-flop
 module flop #(parameter WIDTH = 8) ( 
@@ -40,10 +42,11 @@ endmodule
 module flopr #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
+  output logic [WIDTH-1:0] q,
+  input  var   [WIDTH-1:0] RESET_VAL=0);
 
   always_ff @(posedge clk, posedge reset)
-    if (reset) q <= #1 0;
+    if (reset) q <= #1 RESET_VAL;
     else       q <= #1 d;
 endmodule
 
@@ -61,10 +64,11 @@ endmodule
 module flopenrc #(parameter WIDTH = 8) (
   input  logic             clk, reset, clear, en,
   input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
+  output logic [WIDTH-1:0] q,
+  input  var   [WIDTH-1:0] RESET_VAL=0);
 
   always_ff @(posedge clk, posedge reset)
-    if (reset)   q <= #1 0;
+    if (reset)   q <= #1 RESET_VAL;
     else if (en) 
       if (clear) q <= #1 0;
       else       q <= #1 d;
@@ -74,10 +78,11 @@ endmodule
 module flopenr #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
   input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
+  output logic [WIDTH-1:0] q,
+  input  var   [WIDTH-1:0] RESET_VAL=0);
 
   always_ff @(posedge clk, posedge reset)
-    if (reset)   q <= #1 0;
+    if (reset)   q <= #1 RESET_VAL;
     else if (en) q <= #1 d;
 endmodule
 
@@ -99,10 +104,11 @@ module floprc #(parameter WIDTH = 8) (
   input  logic reset,
   input  logic clear,
   input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
+  output logic [WIDTH-1:0] q,
+  input  var RESET_VAL=0);
 
   always_ff @(posedge clk, posedge reset)
-    if (reset) q <= #1 0;
+    if (reset) q <= #1 RESET_VAL;
     else       
       if (clear) q <= #1 0;
       else       q <= #1 d;

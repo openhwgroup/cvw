@@ -44,7 +44,13 @@ module regfile (
   // reset is intended for simulation only, not synthesis
     
   always_ff @(negedge clk or posedge reset)
-    if (reset) for(i=1; i<32; i++) rf[i] <= 0;
+    if (reset)
+    `ifdef CHECKPOINT
+      $readmemh({`LINUX_CHECKPOINT,"checkpoint-regfile.txt"}, rf);
+    `else
+      for(i=1; i<32; i++) rf[i] <= 0;
+    `endif
+    
     else if (we3) rf[a3] <= wd3;	
 
   assign #2 rd1 = (a1 != 0) ? rf[a1] : 0;
