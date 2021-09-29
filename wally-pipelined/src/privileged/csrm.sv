@@ -85,14 +85,44 @@ module csrm #(parameter
   logic [`XLEN-1:0] MISA_REGW, MHARTID_REGW;
   logic [`XLEN-1:0] MSCRATCH_REGW, MCAUSE_REGW, MTVAL_REGW;
 
-  logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
-  logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
-  logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+  var [`XLEN-1:0] initMSCRATCH, initMCAUSE, initMEPC, initMTVEC, initMEDELEG, initMIDELEG;
+  var [31:0] initMCOUNTEREN, initMCOUNTINHIBIT;
+  var [`PMP_ENTRIES-1:0][7:0] initPMPCFG_ARRAY;
+  var [`PMP_ENTRIES-1:0][`XLEN-1:0] initPMPADDR_ARRAY;
+
+  logic WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
+  logic WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
+  logic WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
   logic [`PMP_ENTRIES-1:0] WritePMPCFGM;
   logic [`PMP_ENTRIES-1:0] WritePMPADDRM ; 
   logic [`PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
 
   localparam MISA_26 = (`MISA) & 32'h03ffffff;
+
+  initial begin
+  `ifdef CHECKPOINT
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MSCRATCH.txt"}, initMSCRATCH);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MCAUSE.txt"}, initMCAUSE);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MEPC.txt"}, initMEPC);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MTVEC.txt"}, initMTVEC);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MEDELEG.txt"}, initMEDELEG);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MIDELEG.txt"}, initMIDELEG);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-MCOUNTEREN.txt"}, initMCOUNTEREN);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-PMPCFG.txt"}, initPMPCFG_ARRAY);
+    $readmemh({`LINUX_CHECKPOINT,"checkpoint-PMPADDR.txt"}, initPMPADDR_ARRAY);
+  `else
+    initMSCRATCH = `XLEN'b0;
+    initMCAUSE = `XLEN'b0;
+    initMEPC = `XLEN'b0;
+    initMTVEC = `XLEN'b0;
+    initMEDELEG = `XLEN'b0;
+    initMIDELEG = `XLEN'b0;
+    initMCOUNTEREN = 32'b0;
+    initMCOUNTINHIBIT = 32'b0;
+    initPMPCFG_ARRAY = {`PMP_ENTRIES{8'b0}};
+    initPMPADDR_ARRAY = {`PMP_ENTRIES{`XLEN'b0}};
+  `endif
+  end
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
   assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, MISA_26[25:0]};
@@ -115,33 +145,31 @@ module csrm #(parameter
   assign IllegalCSRMWriteReadonlyM = CSRMWriteM && (CSRAdrM == MVENDORID || CSRAdrM == MARCHID || CSRAdrM == MIMPID || CSRAdrM == MHARTID);
 
   // CSRs
-  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `XLEN'b0, MTVEC_REGW); //busybear: changed reset value to 0
+  flopenl #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, initMTVEC, MTVEC_REGW); //busybear: changed reset value to 0
   generate
     if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
-      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, `XLEN'b0, MEDELEG_REGW);
-      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, `XLEN'b0, MIDELEG_REGW);
+      flopenl #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, initMEDELEG, MEDELEG_REGW);
+      flopenl #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, initMIDELEG, MIDELEG_REGW);
     end else begin
       assign MEDELEG_REGW = 0;
       assign MIDELEG_REGW = 0;
     end
   endgenerate
 
-//  flopenl #(`XLEN) MIPreg(clk, reset, WriteMIPM, CSRWriteValM, zero, MIP_REGW);
-//  flopenl #(`XLEN) MIEreg(clk, reset, WriteMIEM, CSRWriteValM, zero, MIE_REGW);
-  flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
-  flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
-  flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
+  flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW, initMSCRATCH);
+  flopenr #(`XLEN)     MEPCreg(clk, reset, WriteMEPCM,     NextEPCM,     MEPC_REGW,     initMEPC); 
+  flopenr #(`XLEN)   MCAUSEreg(clk, reset, WriteMCAUSEM,   NextCauseM,   MCAUSE_REGW,   initMCAUSE);
   if(`QEMU) assign MTVAL_REGW = `XLEN'b0;
   else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
   generate
     if (`BUSYBEAR == 1)
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, MCOUNTEREN_REGW);
     else if (`BUILDROOT == 1)
-      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], 32'h0, MCOUNTEREN_REGW);
+      flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], initMCOUNTEREN, MCOUNTEREN_REGW);
     else
       flopenl #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, MCOUNTEREN_REGW);
   endgenerate
-  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], 32'h0, MCOUNTINHIBIT_REGW);
+  flopenl #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], initMCOUNTINHIBIT, MCOUNTINHIBIT_REGW);
 
   // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
 
@@ -158,14 +186,14 @@ module csrm #(parameter
         assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
       
       assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~StallW & ~ADDRLocked[i];
-      flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
+      flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i], initPMPADDR_ARRAY[i]);
       if (`XLEN==64) begin
         assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~StallW & ~CFGLocked[i];
-        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
+        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i], initPMPCFG_ARRAY[i]);
       end else begin
         assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~StallW & ~CFGLocked[i];
 //        assign WritePMPCFGHM[i] = (CSRMWriteM && (CSRAdrM == PMPCFG0+2*i+1)) && ~StallW;
-        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
+        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i], initPMPCFG_ARRAY[i]);
 //        flopenr #(`XLEN) PMPCFGHreg(clk, reset, WritePMPCFGHM[i], CSRWriteValM, PMPCFG_ARRAY_REGW[i][63:32]);
       end
     end

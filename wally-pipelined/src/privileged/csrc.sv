@@ -70,24 +70,24 @@ module csrc #(parameter
   //  ... more counters
   //HPMCOUNTER31H = 12'hC9F
 ) (
-    input logic 	     clk, reset,
-    input logic 	     StallD, StallE, StallM, StallW,
+    input logic              clk, reset,
+    input logic              StallD, StallE, StallM, StallW,
     input  logic             FlushD, FlushE, FlushM, FlushW,   
-    input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
-    input logic 	     BPPredDirWrongM,
-    input logic 	     BTBPredPCWrongM,
-    input logic 	     RASPredPCWrongM,
-    input logic 	     BPPredClassNonCFIWrongM,
-    input logic [4:0] 	     InstrClassM,
-    input logic 	     DCacheMiss,
-    input logic 	     DCacheAccess,
-    input logic [11:0] 	     CSRAdrM,
-    input logic [1:0] 	     PrivilegeModeW,
+    input logic              InstrValidM, LoadStallD, CSRMWriteM,
+    input logic              BPPredDirWrongM,
+    input logic              BTBPredPCWrongM,
+    input logic              RASPredPCWrongM,
+    input logic              BPPredClassNonCFIWrongM,
+    input logic [4:0]              InstrClassM,
+    input logic              DCacheMiss,
+    input logic              DCacheAccess,
+    input logic [11:0]              CSRAdrM,
+    input logic [1:0]              PrivilegeModeW,
     input logic [`XLEN-1:0]  CSRWriteValM,
-    input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-    input logic [63:0] 	     MTIME_CLINT, MTIMECMP_CLINT,
+    input logic [31:0]              MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input logic [63:0]              MTIME_CLINT, MTIMECMP_CLINT,
     output logic [`XLEN-1:0] CSRCReadValM,
-    output logic 	     IllegalCSRCAccessM
+    output logic              IllegalCSRCAccessM
   );
 
   generate
@@ -97,14 +97,22 @@ module csrc #(parameter
       logic [63:0] HPMCOUNTER3_REGW, HPMCOUNTER4_REGW; // add more performance counters here if desired
       logic [63:0] CYCLEPlusM, INSTRETPlusM;
       logic [63:0] HPMCOUNTER3PlusM, HPMCOUNTER4PlusM;
-    //  logic [`XLEN-1:0] NextTIMEM;
+      //  logic [`XLEN-1:0] NextTIMEM;
       logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic [`XLEN-1:0] NextHPMCOUNTER3M, NextHPMCOUNTER4M;
       logic        WriteCYCLEM, WriteINSTRETM;
       logic        WriteHPMCOUNTER3M, WriteHPMCOUNTER4M;
       logic [4:0]  CounterNumM;
       logic [`COUNTERS-1:3][`XLEN-1:0] HPMCOUNTER_REGW, HPMCOUNTERH_REGW;
-      logic 			       InstrValidNotFlushedM;
+      var [`COUNTERS-1:3][`XLEN-1:0] initHPMCOUNTER;
+      logic                            InstrValidNotFlushedM;
+
+      initial
+      `ifdef CHECKPOINT
+        $readmemh({`LINUX_CHECKPOINT,"checkpoint-HPMCOUNTER.txt"}, initHPMCOUNTER);
+      `else
+        initHPMCOUNTER = {(`COUNTERS-3){`XLEN'b0}};
+      `endif
 
       assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
       
@@ -130,121 +138,116 @@ module csrc #(parameter
       //assign NextHPMCOUNTER3M = WriteHPMCOUNTER3M ? CSRWriteValM : HPMCOUNTER3PlusM[`XLEN-1:0]; 
       //assign NextHPMCOUNTER4M = WriteHPMCOUNTER4M ? CSRWriteValM : HPMCOUNTER4PlusM[`XLEN-1:0];
 
-    // parameterized number of additional counters
-    if (`COUNTERS > 3) begin
+      // parameterized number of additional counters
+      if (`COUNTERS > 3) begin
         logic [`COUNTERS-1:3] WriteHPMCOUNTERM;
         logic [`COUNTERS-1:0] CounterEvent;
         logic [63:0] /*HPMCOUNTER_REGW[`COUNTERS-1:3], */ HPMCOUNTERPlusM[`COUNTERS-1:3];
         logic [`XLEN-1:0] NextHPMCOUNTERM[`COUNTERS-1:3];
         genvar i;
-
         // could replace special counters 0-2 with this loop for all counters
         assign CounterEvent[0] = 1'b1;
         assign CounterEvent[1] = 1'b0;
-      if(`QEMU) begin
-        assign CounterEvent[`COUNTERS-1:2] = 0;
-      end else begin
-
-	logic LoadStallE, LoadStallM;
-	
-	flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(FlushE), .en(~StallE), .d(LoadStallD), .q(LoadStallE));
-	flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
-	
-        assign CounterEvent[2] = InstrValidNotFlushedM;
-        assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;
-        assign CounterEvent[4] = BPPredDirWrongM & InstrValidNotFlushedM;
-        assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
-        assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;
-        assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & InstrValidNotFlushedM;
-        assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;
-        assign CounterEvent[9] = InstrClassM[3] & InstrValidNotFlushedM;
-        assign CounterEvent[10] = BPPredClassNonCFIWrongM & InstrValidNotFlushedM;
-        assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;
-        assign CounterEvent[12] = DCacheMiss & InstrValidNotFlushedM;      
-        assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
-      end
-      
-        for (i = 3; i < `COUNTERS; i = i+1) begin
-            assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
-            assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
-            always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-              if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
-              else if (~StallW) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
-            //flopr #(`XLEN) HPMCOUNTERreg[i](clk, reset, NextHPMCOUNTERM[i], HPMCOUNTER_REGW[i]);
-
-            if (`XLEN==32) begin
-                logic [`COUNTERS-1:3] WriteHPMCOUNTERHM;
-                logic [`XLEN-1:0] NextHPMCOUNTERHM[`COUNTERS-1:3];
-                assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
-                assign WriteHPMCOUNTERHM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERHBASE + i);
-                assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
-                always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-                    if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
-                    else if (~StallW) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
-                //flopr #(`XLEN) HPMCOUNTERHreg[i](clk, reset, NextHPMCOUNTERHM[i], HPMCOUNTER_REGW[i][63:32]);
-            end else begin
-                assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
-            end
+        if(`QEMU) assign CounterEvent[`COUNTERS-1:2] = 0;
+        else begin
+          logic LoadStallE, LoadStallM;
+          flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(FlushE), .en(~StallE), .d(LoadStallD), .q(LoadStallE));
+          flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));        
+          
+          assign CounterEvent[2] = InstrValidNotFlushedM;
+          assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;
+          assign CounterEvent[4] = BPPredDirWrongM & InstrValidNotFlushedM;
+          assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
+          assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;
+          assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & InstrValidNotFlushedM;
+          assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;
+          assign CounterEvent[9] = InstrClassM[3] & InstrValidNotFlushedM;
+          assign CounterEvent[10] = BPPredClassNonCFIWrongM & InstrValidNotFlushedM;
+          assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;
+          assign CounterEvent[12] = DCacheMiss & InstrValidNotFlushedM;      
+          assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
         end
-    end
+        
+        for (i = 3; i < `COUNTERS; i = i+1) begin
+          assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
+          assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
+          always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+            if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 initHPMCOUNTER[i];
+            else if (~StallW) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
+          //flopr #(`XLEN) HPMCOUNTERreg[i](clk, reset, NextHPMCOUNTERM[i], HPMCOUNTER_REGW[i]);
+
+          if (`XLEN==32) begin
+            logic [`COUNTERS-1:3] WriteHPMCOUNTERHM;
+            logic [`XLEN-1:0] NextHPMCOUNTERHM[`COUNTERS-1:3];
+            assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+            assign WriteHPMCOUNTERHM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERHBASE + i);
+            assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
+            always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+              if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
+              else if (~StallW) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
+            //flopr #(`XLEN) HPMCOUNTERHreg[i](clk, reset, NextHPMCOUNTERHM[i], HPMCOUNTER_REGW[i][63:32]);
+          end else begin
+            assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+          end
+        end
+      end
 
       // Write / update counters
       // Only the Machine mode versions of the counter CSRs are writable
-        if (`XLEN==64) begin// 64-bit counters
-    //      flopr   #(64) TIMEreg(clk, reset,  WriteTIMEM ? CSRWriteValM : TIME_REGW + 1, TIME_REGW); // may count off a different clock***
-    //      flopenr #(64) TIMECMPreg(clk, reset, WriteTIMECMPM, CSRWriteValM, TIMECMP_REGW);
-          flopr   #(64) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW);
-          flopr   #(64) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW);
-          //flopr   #(64) HPMCOUNTER3reg(clk, reset, NextHPMCOUNTER3M, HPMCOUNTER3_REGW);
-          //flopr   #(64) HPMCOUNTER4reg(clk, reset, NextHPMCOUNTER4M, HPMCOUNTER4_REGW);
-        end else begin // 32-bit low and high counters
-          logic  WriteTIMEHM, WriteTIMECMPHM, WriteCYCLEHM, WriteINSTRETHM;
-          //logic  WriteHPMCOUNTER3HM, WriteHPMCOUNTER4HM;
-          logic  [`XLEN-1:0] NextCYCLEHM, NextTIMEHM, NextINSTRETHM;
-          //logic  [`XLEN-1:0] NextHPMCOUNTER3HM, NextHPMCOUNTER4HM;
+      if (`XLEN==64) begin// 64-bit counters
+        // flopr   #(64) TIMEreg(clk, reset,  WriteTIMEM ? CSRWriteValM : TIME_REGW + 1, TIME_REGW); // may count off a different clock***
+        // flopenr #(64) TIMECMPreg(clk, reset, WriteTIMECMPM, CSRWriteValM, TIMECMP_REGW);
+        flopr   #(64) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW);
+        flopr   #(64) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW);
+        //flopr   #(64) HPMCOUNTER3reg(clk, reset, NextHPMCOUNTER3M, HPMCOUNTER3_REGW);
+        //flopr   #(64) HPMCOUNTER4reg(clk, reset, NextHPMCOUNTER4M, HPMCOUNTER4_REGW);
+      end else begin // 32-bit low and high counters
+        logic  WriteTIMEHM, WriteTIMECMPHM, WriteCYCLEHM, WriteINSTRETHM;
+        //logic  WriteHPMCOUNTER3HM, WriteHPMCOUNTER4HM;
+        logic  [`XLEN-1:0] NextCYCLEHM, NextTIMEHM, NextINSTRETHM;
+        //logic  [`XLEN-1:0] NextHPMCOUNTER3HM, NextHPMCOUNTER4HM;
 
-          // Write Enables
-    //      assign WriteTIMEHM = CSRMWriteM && (CSRAdrM == MTIMEH);
-    //      assign WriteTIMECMPHM = CSRMWriteM && (CSRAdrM == MTIMECMPH);
-          assign WriteCYCLEHM = CSRMWriteM && (CSRAdrM == MCYCLEH);
-          assign WriteINSTRETHM = CSRMWriteM && (CSRAdrM == MINSTRETH);
-          //assign WriteHPMCOUNTER3HM = CSRMWriteM && (CSRAdrM == MHPMCOUNTER3H);
-          //assign WriteHPMCOUNTER4HM = CSRMWriteM && (CSRAdrM == MHPMCOUNTER4H);
-          assign NextCYCLEHM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[63:32];
-    //      assign NextTIMEHM = WriteTIMEHM ? CSRWriteValM : TIMEPlusM[63:32];
-          assign NextINSTRETHM = WriteINSTRETHM ? CSRWriteValM : INSTRETPlusM[63:32];
-          //assign NextHPMCOUNTER3HM = WriteHPMCOUNTER3HM ? CSRWriteValM : HPMCOUNTER3PlusM[63:32]; 
-          //assign NextHPMCOUNTER4HM = WriteHPMCOUNTER4HM ? CSRWriteValM : HPMCOUNTER4PlusM[63:32];
+        // Write Enables
+        // assign WriteTIMEHM = CSRMWriteM && (CSRAdrM == MTIMEH);
+        // assign WriteTIMECMPHM = CSRMWriteM && (CSRAdrM == MTIMECMPH);
+        assign WriteCYCLEHM = CSRMWriteM && (CSRAdrM == MCYCLEH);
+        assign WriteINSTRETHM = CSRMWriteM && (CSRAdrM == MINSTRETH);
+        //assign WriteHPMCOUNTER3HM = CSRMWriteM && (CSRAdrM == MHPMCOUNTER3H);
+        //assign WriteHPMCOUNTER4HM = CSRMWriteM && (CSRAdrM == MHPMCOUNTER4H);
+        assign NextCYCLEHM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[63:32];
+        // assign NextTIMEHM = WriteTIMEHM ? CSRWriteValM : TIMEPlusM[63:32];
+        assign NextINSTRETHM = WriteINSTRETHM ? CSRWriteValM : INSTRETPlusM[63:32];
+        //assign NextHPMCOUNTER3HM = WriteHPMCOUNTER3HM ? CSRWriteValM : HPMCOUNTER3PlusM[63:32]; 
+        //assign NextHPMCOUNTER4HM = WriteHPMCOUNTER4HM ? CSRWriteValM : HPMCOUNTER4PlusM[63:32];
 
-          // Counter CSRs
-    //      flopr   #(32) TIMEreg(clk, reset,  NextTIMEM, TIME_REGW); // may count off a different clock***
-    //      flopenr #(32) TIMECMPreg(clk, reset, WriteTIMECMPM, CSRWriteValM, TIMECMP_REGW[31:0]);
-          flopr   #(32) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW[31:0]);
-          flopr   #(32) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW[31:0]);
-          //flopr   #(32) HPMCOUNTER3reg(clk, reset, NextHPMCOUNTER3M, HPMCOUNTER3_REGW[31:0]);
-          //flopr   #(32) HPMCOUNTER4reg(clk, reset, NextHPMCOUNTER4M, HPMCOUNTER4_REGW[31:0]);
-    //      flopr   #(32) TIMEHreg(clk, reset,  NextTIMEHM, TIME_REGW); // may count off a different clock***
-    //      flopenr #(32) TIMECMPHreg(clk, reset, WriteTIMECMPHM, CSRWriteValM, TIMECMP_REGW[63:32]);
-          flopr   #(32) CYCLEHreg(clk, reset, NextCYCLEHM, CYCLE_REGW[63:32]);
-          flopr   #(32) INSTRETHreg(clk, reset, NextINSTRETHM, INSTRET_REGW[63:32]);
-          //flopr   #(32) HPMCOUNTER3Hreg(clk, reset, NextHPMCOUNTER3HM, HPMCOUNTER3_REGW[63:32]);
-          //flopr   #(32) HPMCOUNTER4Hreg(clk, reset, NextHPMCOUNTER4HM, HPMCOUNTER4_REGW[63:32]);
-        end
+        // Counter CSRs
+        // flopr   #(32) TIMEreg(clk, reset,  NextTIMEM, TIME_REGW); // may count off a different clock***
+        // flopenr #(32) TIMECMPreg(clk, reset, WriteTIMECMPM, CSRWriteValM, TIMECMP_REGW[31:0]);
+        flopr   #(32) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW[31:0]);
+        flopr   #(32) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW[31:0]);
+        // flopr   #(32) HPMCOUNTER3reg(clk, reset, NextHPMCOUNTER3M, HPMCOUNTER3_REGW[31:0]);
+        // flopr   #(32) HPMCOUNTER4reg(clk, reset, NextHPMCOUNTER4M, HPMCOUNTER4_REGW[31:0]);
+        // flopr   #(32) TIMEHreg(clk, reset,  NextTIMEHM, TIME_REGW); // may count off a different clock***
+        // flopenr #(32) TIMECMPHreg(clk, reset, WriteTIMECMPHM, CSRWriteValM, TIMECMP_REGW[63:32]);
+        flopr   #(32) CYCLEHreg(clk, reset, NextCYCLEHM, CYCLE_REGW[63:32]);
+        flopr   #(32) INSTRETHreg(clk, reset, NextINSTRETHM, INSTRET_REGW[63:32]);
+        //flopr   #(32) HPMCOUNTER3Hreg(clk, reset, NextHPMCOUNTER3HM, HPMCOUNTER3_REGW[63:32]);
+        //flopr   #(32) HPMCOUNTER4Hreg(clk, reset, NextHPMCOUNTER4HM, HPMCOUNTER4_REGW[63:32]);
+      end
 
-    // eventually move TIME and TIMECMP to the CLINT -- Ben 06/17/21: sure let's give that a shot!
-    //  run TIME off asynchronous reference clock
-    //  synchronize write enable to TIME
-    //  four phase handshake to synchronize reads from TIME
+      // eventually move TIME and TIMECMP to the CLINT -- Ben 06/17/21: sure let's give that a shot!
+      //  run TIME off asynchronous reference clock
+      //  synchronize write enable to TIME
+      //  four phase handshake to synchronize reads from TIME
 
-    // interrupt on timer compare
-    // ability to disable optional CSRs
+      // interrupt on timer compare
+      // ability to disable optional CSRs
     
       // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
       assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
         if (`XLEN==64) // 64-bit counter reads
           always_comb 
-            if (PrivilegeModeW == `M_MODE || 
-                MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
+            if (PrivilegeModeW == `M_MODE || MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
               IllegalCSRCAccessM = 0;
               if      (CSRAdrM >= MHPMCOUNTERBASE+3 && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-MHPMCOUNTERBASE];
               else if (CSRAdrM >= HPMCOUNTERBASE+3 && CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-HPMCOUNTERBASE];
@@ -309,7 +312,7 @@ module csrc #(parameter
               IllegalCSRCAccessM = 1; // no privileges for this csr
               CSRCReadValM = 0;
             end
-    end else begin
+    end else begin // not `ZICOUNTERS_SUPPORTED
       assign CSRCReadValM = 0;
       assign IllegalCSRCAccessM = 1;
     end
@@ -356,20 +359,20 @@ module csrc #(parameter
   MPHMEVENTBASE = 12'h320,
   HPMCOUNTERBASE = 12'hC00,
   HPMCOUNTERHBASE = 12'hC80,
-  )(input logic 	     clk, reset,
-    input logic 	     StallD, StallE, StallM, StallW,
-    input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
-    input logic 	     BPPredDirWrongM,
-    input logic 	     BTBPredPCWrongM,
-    input logic 	     RASPredPCWrongM,
-    input logic 	     BPPredClassNonCFIWrongM,
-    input logic [4:0] 	     InstrClassM,
-    input logic [11:0] 	     CSRAdrM,
-    input logic [1:0] 	     PrivilegeModeW,
+  )(input logic              clk, reset,
+    input logic              StallD, StallE, StallM, StallW,
+    input logic              InstrValidM, LoadStallD, CSRMWriteM,
+    input logic              BPPredDirWrongM,
+    input logic              BTBPredPCWrongM,
+    input logic              RASPredPCWrongM,
+    input logic              BPPredClassNonCFIWrongM,
+    input logic [4:0]              InstrClassM,
+    input logic [11:0]              CSRAdrM,
+    input logic [1:0]              PrivilegeModeW,
     input logic [`XLEN-1:0]  CSRWriteValM,
-    input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+    input logic [31:0]              MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
     output logic [`XLEN-1:0] CSRCReadValM,
-    output logic 	     IllegalCSRCAccessM);
+    output logic              IllegalCSRCAccessM);
 
     // counters
 
