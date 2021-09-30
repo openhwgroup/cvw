@@ -318,14 +318,14 @@ string tests32f[] = '{
   };
 
   string tests32m[] = '{
+    "rv32m/I-DIVU-01", "2000",
+    "rv32m/I-REMU-01", "2000",
+    "rv32m/I-DIV-01", "2000",
+    "rv32m/I-REM-01", "2000",
     "rv32m/I-MUL-01", "2000",
     "rv32m/I-MULH-01", "2000",
     "rv32m/I-MULHSU-01", "2000",
-    "rv32m/I-MULHU-01", "2000",
-    "rv32m/I-DIV-01", "2000",
-    "rv32m/I-DIVU-01", "2000",
-    "rv32m/I-REM-01", "2000",
-    "rv32m/I-REMU-01", "2000"
+    "rv32m/I-MULHU-01", "2000"
   };
 
   string tests32ic[] = '{
@@ -551,12 +551,12 @@ string tests32f[] = '{
         tests = tests32p;
       else begin
           tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
-          if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
+          if (`C_SUPPORTED) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
-          if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
           if (`A_SUPPORTED) tests = {tests32a, tests};
+          if (`M_SUPPORTED) tests = {tests32m, tests};
      end
     end
   end
@@ -607,9 +607,9 @@ string tests32f[] = '{
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      romfilename = {"../../imperas-riscv-tests/imperas-boottim.txt"};
+//      romfilename = {"../../imperas-riscv-tests/imperas-boottim.txt"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
+//      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);

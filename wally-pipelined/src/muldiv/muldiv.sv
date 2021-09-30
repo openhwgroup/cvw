@@ -50,14 +50,13 @@ module muldiv (
 	 logic [`XLEN*2-1:0] ProdE; 
 
 	 logic 		     enable_q;	 
-	 logic [2:0] 	     Funct3E_Q;
+	 //logic [2:0] 	     Funct3E_Q;
 	 logic 		     div0error; // ***unused
-	 logic [`XLEN-1:0]   N, D;
-	 logic [`XLEN-1:0]   Num0, Den0;	 
+	 logic [`XLEN-1:0]   X, D;
+	 //logic [`XLEN-1:0]   Num0, Den0;	 
 
 	 logic 		     gclk;
-	 logic 		     DivStartE;
-	 logic 		     startDivideE;
+	 logic 		     startDivideE, busy;
 	 logic 		     signedDivide;	 
 	 
 	 // Multiplier
@@ -72,37 +71,21 @@ module muldiv (
 
 	 // Handle sign extension for W-type instructions
 	 if (`XLEN == 64) begin // RV64 has W-type instructions
-            assign Num0 = W64E ? {{32{SrcAE[31]&signedDivide}}, SrcAE[31:0]} : SrcAE;
-            assign Den0 = W64E ? {{32{SrcBE[31]&signedDivide}}, SrcBE[31:0]} : SrcBE;
+            assign X = W64E ? {{32{SrcAE[31]&signedDivide}}, SrcAE[31:0]} : SrcAE;
+            assign D = W64E ? {{32{SrcBE[31]&signedDivide}}, SrcBE[31:0]} : SrcBE;
 	 end else begin // RV32 has no W-type instructions
-            assign Num0 = SrcAE;
-            assign Den0 = SrcBE;	    
+            assign X = SrcAE;
+            assign D = SrcBE;	    
 	 end	    
 
-	 // capture the Numerator/Denominator	 
-	 flopenrc #(`XLEN) reg_num (.d(Num0), .q(N),
-				    .en(startDivideE), .clear(DivDoneE),
-				    .reset(reset),  .clk(~gclk));
-	 flopenrc #(`XLEN) reg_den (.d(Den0), .q(D),
-				    .en(startDivideE), .clear(DivDoneE),
-				    .reset(reset),  .clk(~gclk));
-	 
-	 assign signedDivide = (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
-	 intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
-	 //intdiv_restoring div(.clk, .reset, .signedDivide, .start(startDivideE), .X(N), .D(D), .busy(DivBusyE), .done(DivDoneE), .Q(QuotE), .REM(RemE));
+	 assign signedDivide = ~Funct3E[0]; // simplified from (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
+	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
+	 intdiv_restoring div(.clk, .reset, .signedDivide, .start(startDivideE), .X(X), .D(D), .busy(busy), .done(DivDoneE), .Q(QuotE), .REM(RemE));
 
-	 // Added for debugging of start signal for divide
-	 assign startDivideE = MulDivE&DivStartE&~DivBusyE;
-	 
-	 // capture the start control signals since they are not held constant.
-	 // *** appears to be unused
-	 flopenrc #(3) funct3ereg (.d(Funct3E),
-				   .q(Funct3E_Q),
-				   .en(DivStartE),
-				   .clear(DivDoneE),
-				   .reset(reset),
-				   .clk(clk));
-	 
+	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
+	 assign startDivideE = MulDivE & Funct3E[2] & ~busy & ~DivDoneE;
+	 assign DivBusyE = startDivideE | busy;
+	 	 
 	 // Select result
 	 always_comb
            case (Funct3E)	   
@@ -115,19 +98,6 @@ module muldiv (
              3'b110: PrelimResultE = RemE;
              3'b111: PrelimResultE = RemE;
            endcase // case (Funct3E)
-
-	 // Start Divide process.  This simplifies to DivStartE = Funct3E[2];
-	 always_comb
-           case (Funct3E)
-             3'b000: DivStartE = 1'b0;
-             3'b001: DivStartE = 1'b0;
-             3'b010: DivStartE = 1'b0;
-             3'b011: DivStartE = 1'b0;
-             3'b100: DivStartE = 1'b1;
-             3'b101: DivStartE = 1'b1;
-             3'b110: DivStartE = 1'b1;
-             3'b111: DivStartE = 1'b1;
-           endcase
 	 
 	 // Handle sign extension for W-type instructions
 	 if (`XLEN == 64) begin // RV64 has W-type instructions
@@ -136,7 +106,7 @@ module muldiv (
             assign MulDivResultE = PrelimResultE;
 	 end
 
-	 flopenrc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, ~StallM, MulDivResultE, MulDivResultM);
+	 flopenrc #(`XLEN) MulDivResultMReg(clk, reset, FlushM, ~StallM, MulDivResultE, MulDivResultM); // could let part of multiplication spill into Memory stage
 	 flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);	 
 
       end else begin // no M instructions supported
