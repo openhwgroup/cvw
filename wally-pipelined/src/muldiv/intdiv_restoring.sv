@@ -35,11 +35,12 @@ module intdiv_restoring (
   output logic [`XLEN-1:0] Q, REM
  );
 
-  logic [`XLEN-1:0] W, Win, Wshift, Wprime, Wnext, XQ, XQin, XQshift, Dsaved, Din, Dabs, D2, Xabs, Xinit;
+  logic [`XLEN-1:0] W, W2, Win, Wshift, Wprime, Wn, Wnn, Wnext, XQ, XQin, XQshift, XQn, XQnn, XQnext, Dsaved, Din, Dabs, D2, Xabs, Xinit;
   logic qi, qib; // curent quotient bit
   localparam STEPBITS = $clog2(`XLEN);
   logic [STEPBITS:0] step;
   logic div0;
+  logic negate, init, startd, SignX, SignD, NegW, NegQ;
 
   // Setup for signed division
   abs #(`XLEN) absd(D, Dabs);
@@ -51,14 +52,22 @@ module intdiv_restoring (
   mux2 #(`XLEN) xabsmux(X, Xabs, signedDivide, Xinit);
   
   // restoring division
-  mux2 #(`XLEN) wmux(W, 0, start, Win);
-  mux2 #(`XLEN) xmux(XQ, Xinit, start, XQin);
+  mux2 #(`XLEN) wmux(W, {`XLEN{1'b0}}, init, Win);
+  mux2 #(`XLEN) xmux(XQ, Xinit, init, XQin);
   assign {Wshift, XQshift} = {Win[`XLEN-2:0], XQin, qi};
   assign {qib, Wprime} = {1'b0, Wshift} + ~{1'b0, Din} + 1; // subtractor, carry out determines quotient bit
   assign qi = ~qib;
-  mux2 #(`XLEN) wrestoremux(Wshift, Wprime, qi, Wnext);
+  mux2 #(`XLEN) wrestoremux(Wshift, Wprime, qi, W2);
+
+  // conditionally negate outputs at end of signed operation
+  neg #(`XLEN) wneg(W, Wn);
+  mux2 #(`XLEN) wnegmux(W, Wn, NegW, Wnn);
+  mux2 #(`XLEN) wnextmux(W2, Wnn, negate, Wnext);
+  neg #(`XLEN) qneg(XQ, XQn);
+  mux2 #(`XLEN) qnegmux(XQ, XQn, NegQ, XQnn);
+  mux2 #(`XLEN) qnextmux(XQshift, XQnn, negate, XQnext);
   flopen #(`XLEN) wreg(clk, start | busy, Wnext, W);
-  flopen #(`XLEN) xreg(clk, start | busy, XQshift, XQ);
+  flopen #(`XLEN) xreg(clk, start | busy, XQnext, XQ);
 
   // save D, which comes from SrcAE forwarding mux and could change because register file read is stalled during divide
  // flopen #(`XLEN) dreg(clk, start, D, Dsaved);
@@ -70,29 +79,42 @@ module intdiv_restoring (
   mux2 #(`XLEN) qmux(XQ, {`XLEN{1'b1}}, div0, Q); // Q taken from XQ register, or all 1s when dividing by zero
   mux2 #(`XLEN) remmux(W, X, div0, REM); // REM taken from W register, or from X when dividing by zero
  
- 
   // busy logic
   always_ff @(posedge clk) 
     if (reset) begin
-        busy = 0; done = 0; step = 0;
+        busy = 0; done = 0; step = 0; negate = 0;
     end else if (start) begin
         if (div0) done = 1;
         else begin
-            busy = 1; done = 0; step = 1;
+            busy = 1; step = 1;
         end
-    end else if (busy & ~done) begin
+    end else if (busy & ~done & ~(startd & signedDivide)) begin // pause one cycle at beginning of signed operations for absolute value
         step = step + 1;
-        if (step[STEPBITS] | div0) begin // *** early terminate on division by 0
+        if (step[STEPBITS]) begin // *** early terminate on division by 0
+          if (signedDivide & ~negate) begin
+            negate = 1;
+          end else begin
             step = 0;
             busy = 0;
+            negate = 0;
             done = 1;
+          end
         end
     end else if (done) begin
         done = 0;
         busy = 0;
+        negate = 0;
     end
  
-    
+  // initialize on the start cycle for unsigned operations, or one cycle later for signed operations (giving time for abs)
+  flop #(1) initflop(clk, start, startd);
+  mux2 #(1) initmux(start, startd, signedDivide, init);
+
+  // save signs of original inputs
+  flopen #(2) signflops(clk, start, {D[`XLEN-1], X[`XLEN-1]}, {SignD, SignX});
+  // On final setp of signed operations, negate outputs as needed
+  assign NegW = SignX & negate;
+  assign NegQ = (SignX ^ SignD) & negate;
 
 endmodule // muldiv
 
