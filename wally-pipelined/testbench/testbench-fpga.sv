@@ -577,7 +577,15 @@ string tests32f[] = '{
   logic SDCCLK;
   tri1 SDCCmd;
   tri1 [3:0] SDCDat;
+  logic      SDCCmdIn;
+  logic      SDCCmdOut;
+  logic      SDCCmdOE;
+  logic [3:0] SDCDatIn;
 
+  assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+  assign SDCCmdIn = SDCCmd;
+  assign SDCDatIn = SDCDat;
+    
   sdModel sdcard
     (.sdClk(SDCCLK),
     .cmd(SDCCmd), 

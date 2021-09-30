@@ -523,20 +523,24 @@ add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sd
 add wave -noupdate -expand -group SDC -color Gold -label {cmd fsm} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/r_curr_state
 add wave -noupdate -expand -group SDC -color Gold -label {dat fsm} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_dat_fsm/r_curr_state
 add wave -noupdate -expand -group SDC -color Gold -label {clk fsm} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_clk_fsm/r_curr_state
-add wave -noupdate -expand -group SDC -expand -group registers /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/CLKDiv
-add wave -noupdate -expand -group SDC -expand -group registers /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/Command
-add wave -noupdate -expand -group SDC -expand -group registers -color {Medium Orchid} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/Status
-add wave -noupdate -expand -group SDC -expand -group registers /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/Address
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} -color Aquamarine /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HSELSDC
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HADDR
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HADDRDelay
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HWRITE
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADY
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HTRANS
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HWDATA
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADSDC
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HRESPSDC
-add wave -noupdate -expand -group SDC -expand -group {AHBLite interface} -color Goldenrod /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADYSDC
+add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/SDCDat
+add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/SDCCmd
+add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/SDCCLK
+add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/o_SD_CMD_OE
+add wave -noupdate -expand -group SDC -group registers /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/CLKDiv
+add wave -noupdate -expand -group SDC -group registers /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/Command
+add wave -noupdate -expand -group SDC -group registers -color {Medium Orchid} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/Status
+add wave -noupdate -expand -group SDC -group registers /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/Address
+add wave -noupdate -expand -group SDC -group {AHBLite interface} -color Aquamarine /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HSELSDC
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HADDR
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HADDRDelay
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HWRITE
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADY
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HTRANS
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HWDATA
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADSDC
+add wave -noupdate -expand -group SDC -group {AHBLite interface} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HRESPSDC
+add wave -noupdate -expand -group SDC -group {AHBLite interface} -color Goldenrod /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADYSDC
 add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/InitTrans
 add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/o_ERROR_CODE_Q
 add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/o_DATA_VALID
@@ -544,20 +548,32 @@ add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sd
 add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/WordCount
 add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/HREADSDC
 add wave -noupdate -expand -group SDC /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/o_READY_FOR_READ
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HADDR
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/A
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HWADDR
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HSELTim
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HREADYTim
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HRESPTim
-add wave -noupdate -expand -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/initTrans
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HADDR
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/A
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HWADDR
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HSELTim
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HREADYTim
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HRESPTim
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/initTrans
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/SDCDataValid
-add wave -noupdate /testbench/dut/wallypipelinedsoc/SDCDat
-add wave -noupdate /testbench/dut/wallypipelinedsoc/SDCCmd
-add wave -noupdate /testbench/dut/wallypipelinedsoc/SDCCLK
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_instruction_control_bits
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/w_error_result
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/o_RX_SIPO48_EN
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_RESPONSE_CONTENT
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_NO_ERROR_MASK
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_NO_ERROR_ANS
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_command_head
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_command_content
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_ERROR_CRC16
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_DAT3_CRC16
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_DAT2_CRC16
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_DAT1_CRC16
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_DAT0_CRC16
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_DATA_CRC16_GOOD
+add wave -noupdate -radix binary /testbench/sdcard/dataState
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {7456569 ns} 0} {{Cursor 3} {234330 ns} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 6} {598422 ns} 0} {{Cursor 3} {603500 ns} 1}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
 configure wave -justifyvalue left
@@ -572,4 +588,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {232051 ns} {249113 ns}
+WaveRestoreZoom {209690 ns} {1301658 ns}

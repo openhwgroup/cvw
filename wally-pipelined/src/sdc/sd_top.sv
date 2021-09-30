@@ -142,8 +142,8 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
 
   localparam logic [127:96] 	   c_ACMD41_mask_check_redo_bits = 32'h80000000;  // SD_Send_OCR
   localparam logic [127:96] 	   c_ACMD41_ans_dont_redo = 32'h80000000;
-  localparam logic [127:96] 	   c_ACMD41_mask_check_error_bits = 32'h41FF8000;
-  localparam logic [127:96] 	   c_ACMD41_ans_error_free = 32'h40FF8000;
+  localparam logic [127:96] 	   c_ACMD41_mask_check_error_bits = 32'h01FF8000; // 32'h41FF8000;
+  localparam logic [127:96] 	   c_ACMD41_ans_error_free = 32'h00FF8000; // 32'h40FF8000
 
   localparam logic [127:96] 	   c_CMD55_mask_check_redo_bits = 32'h00000000;  // App_Command
   localparam logic [127:96] 	   c_CMD55_ans_dont_redo = 32'h00000000;
