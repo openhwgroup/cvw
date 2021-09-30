@@ -55,9 +55,11 @@ module wallypipelinedsocwrapper (
   input 	     UARTSin,
   output 	     UARTSout,
   input 	     ddr4_calib_complete,
-  input [3:0] 	     SDCDat,
+  input [3:0] 	     SDCDatIn,
   output 	     SDCCLK,
-  inout              SDCCmd	     
+  input              SDCCmdIn,
+  output             SDCCmdOut,
+  output             SDCCmdOE
 );
 
   wire [31:0] 	     GPIOPinsEn;
@@ -109,8 +111,10 @@ module wallypipelinedsocwrapper (
      .GPIOPinsEn(GPIOPinsEn),
      .UARTSin(UARTSin),
      .UARTSout(UARTSout),
-     .SDCDat(SDCDat),
+     .SDCDatIn(SDCDatIn),
      .SDCCLK(SDCCLK),
-     .SDCCmd(SDCCmd));
+     .SDCCmdIn(SDCCmdIn),
+     .SDCCmdOut(SDCCmdOut),
+     .SDCCmdOE(SDCCmdOE));
   
 endmodule

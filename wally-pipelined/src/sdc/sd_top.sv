@@ -31,11 +31,11 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
    input logic 			   a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
    // a_RST MUST COME OUT OF RESET SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
    // io_SD_CMD_z    : inout std_logic;   // SD CMD Bus
-   input logic 			   i_SD_CMD, // CMD Response from card
-   output logic 		   o_SD_CMD, // CMD Command from host
-   output logic 		   o_SD_CMD_OE, // Direction of SD_CMD
-   input logic [3:0] 		   i_SD_DAT, // SD DAT Bus
-   output logic 		   o_SD_CLK, // SD CLK Bus
+   (* mark_debug = "true" *)input logic 			   i_SD_CMD, // CMD Response from card
+   (* mark_debug = "true" *)output logic 		   o_SD_CMD, // CMD Command from host
+   (* mark_debug = "true" *)output logic 		   o_SD_CMD_OE, // Direction of SD_CMD
+   (* mark_debug = "true" *)input logic [3:0] 		   i_SD_DAT, // SD DAT Bus
+   (* mark_debug = "true" *)output logic 		   o_SD_CLK, // SD CLK Bus
    // For communication with core cpu
    input logic [32:9] 		   i_BLOCK_ADDR, // see "Addressing" in parts.fods (only 8GB total capacity is used)
    output logic 		   o_READY_FOR_READ, // tells core that initialization sequence is completed and
@@ -222,7 +222,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   logic [15:0] 			   r_RCA_Q2;
 
   // Multiplexer Logics
-  logic [132:0] 		   w_instruction_control_bits;
+  (* mark_debug = "true" *) logic [132:0] 		   w_instruction_control_bits;
   logic [132:130] 		   w_R_TYPE                  ;
   logic [129:128] 		   w_USES_DAT                ;
   logic [127:96] 		   w_NO_REDO_MASK            ;
@@ -255,7 +255,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
 
   // Tri state IO Driver BC18MIMS
   logic 			   w_SD_CMD_TX_Q;  // Write Data
-  logic 			   w_SD_CMD_RX;         // Read Data
+  (* mark_debug = "true" *) logic 			   w_SD_CMD_RX;         // Read Data
 
 
   // CLOCKS
