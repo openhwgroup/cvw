@@ -50,13 +50,15 @@ module wallypipelinedsoc (
   output logic 		   HMASTLOCK,
   output logic 		   HREADY,
   // I/O Interface
-  input  logic [31:0]      GPIOPinsIn,
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,
-  input  logic             UARTSin,
-  output logic             UARTSout,
-  output tri1              SDCCmd,
-  input  logic [3:0]       SDCDat,
-  output logic             SDCCLK			  
+  input logic [31:0] 	   GPIOPinsIn,
+  output logic [31:0] 	   GPIOPinsOut, GPIOPinsEn,
+  input logic 		   UARTSin,
+  output logic 		   UARTSout,
+  input logic 		   SDCCmdIn,
+  output logic 		   SDCCmdOut,
+  output logic 		   SDCCmdOE,			  
+  input logic [3:0] 	   SDCDatIn,
+  output logic 		   SDCCLK			  
 );
 
   // to instruction memory *** remove later
@@ -77,14 +79,17 @@ module wallypipelinedsoc (
   logic [31:0]      InstrF;
   logic 	    HRESP;
 
+/* -----\/----- EXCLUDED -----\/-----
   logic             SDCCmdOut;
   logic             SDCCmdOE;
   logic             SDCCmdIn;
-  logic [3:0] 	    SDCDatIn;
+ -----/\----- EXCLUDED -----/\----- */
+//  logic [3:0] 	    SDCDatIn;
 
-  assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
-  assign SDCCmdIn = SDCCmd;
-  assign SDCDatIn = SDCDat; // when write supported this will be a tristate
+  // it turn out vivado cannot infer these at this level of the hierarchy.
+  //assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+  //assign SDCCmdIn = SDCCmd;
+  //assign SDCDatIn = SDCDat; // when write supported this will be a tristate
    
   // instantiate processor and memories
   wallypipelinedhart hart(.*);

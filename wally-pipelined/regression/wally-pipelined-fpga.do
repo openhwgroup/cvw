@@ -40,7 +40,7 @@ vsim workopt -fsmdebug
 
 #profile on
 
-do wave.do
+do fpga-wave.do
 add log -r /*
 
 -- Run the Simulation 
