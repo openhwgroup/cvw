@@ -79,24 +79,14 @@ module csri #(parameter
       assign SIP_WRITE_MASK = 12'h000;
     end
     always @(posedge clk, posedge reset) begin // *** I strongly feel that IntInM should go directly to IP_REGW -- Ben 9/7/21
-      if (reset)          
-      `ifdef CHECKPOINT
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-MIP.txt"}, IP_REGW_writeable);
-      `else
-        IP_REGW_writeable <= 10'b0;
-      `endif
+      if (reset)          IP_REGW_writeable <= 10'b0;
       else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
       else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
 //      else if (WriteUIPM) IP_REGW = (CSRWriteValM & 12'hBBB) | (NextIPM & 12'h080); // MTIP unclearable
       else                IP_REGW_writeable <= IP_REGW_writeable | IntInM[9:0]; // *** check this turns off interrupts properly even when MIDELEG changes
     end
     always @(posedge clk, posedge reset) begin
-      if (reset)
-      `ifdef CHECKPOINT
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-MIE.txt"}, IE_REGW);
-      `else
-        IE_REGW <= 12'b0;
-      `endif
+      if (reset)          IE_REGW <= 12'b0;
       else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'hAAA); // MIE controls M and S fields
       else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
 //      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field
