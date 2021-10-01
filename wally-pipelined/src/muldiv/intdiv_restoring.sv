@@ -28,6 +28,7 @@
 module intdiv_restoring (
   input  logic clk,
   input  logic reset,
+  input  logic StallM,
   input  logic signedDivide,
   input  logic start,
   input  logic [`XLEN-1:0] X, D,
@@ -35,7 +36,7 @@ module intdiv_restoring (
   output logic [`XLEN-1:0] Q, REM
  );
 
-  logic [`XLEN-1:0] W, W2, Win, Wshift, Wprime, Wn, Wnn, Wnext, XQ, XQin, XQshift, XQn, XQnn, XQnext, Dsaved, Din, Dabs, D2, Xabs, Xinit;
+  logic [`XLEN-1:0] W, W2, Win, Wshift, Wprime, Wn, Wnn, Wnext, XQ, XQin, XQshift, XQn, XQnn, XQnext, Dsaved, Din, Dabs, D2, Xabs, X2, Xsaved, Xinit;
   logic qi, qib; // curent quotient bit
   localparam STEPBITS = $clog2(`XLEN);
   logic [STEPBITS:0] step;
@@ -46,10 +47,12 @@ module intdiv_restoring (
   abs #(`XLEN) absd(D, Dabs);
   mux2 #(`XLEN) dabsmux(D, Dabs, signedDivide, D2);
   flopen #(`XLEN) dsavereg(clk, start, D2, Dsaved);
-  mux2 #(`XLEN) dfirstmux(Dsaved, D, start, Din); // *** change start to init (could be delayed one from start)
+  mux2 #(`XLEN) dfirstmux(Dsaved, D, start, Din); 
 
   abs #(`XLEN) absx(X, Xabs);
-  mux2 #(`XLEN) xabsmux(X, Xabs, signedDivide, Xinit);
+  mux2 #(`XLEN) xabsmux(X, Xabs, signedDivide & ~div0, X2);  // need original X as remainder if doing divide by 0
+  flopen #(`XLEN) xsavereg(clk, start, X2, Xsaved);
+  mux2 #(`XLEN) xfirstmux(Xsaved, X, start, Xinit); 
   
   // restoring division
   mux2 #(`XLEN) wmux(W, {`XLEN{1'b0}}, init, Win);
@@ -61,13 +64,15 @@ module intdiv_restoring (
 
   // conditionally negate outputs at end of signed operation
   neg #(`XLEN) wneg(W, Wn);
-  mux2 #(`XLEN) wnegmux(W, Wn, NegW, Wnn);
-  mux2 #(`XLEN) wnextmux(W2, Wnn, negate, Wnext);
+//  mux2 #(`XLEN) wnegmux(W, Wn, NegW, Wnn);
+//  mux2 #(`XLEN) wnextmux(W2, Wnn, negate, Wnext);
+  mux2 #(`XLEN) wnextmux(W2, Wn, NegW, Wnext);
   neg #(`XLEN) qneg(XQ, XQn);
-  mux2 #(`XLEN) qnegmux(XQ, XQn, NegQ, XQnn);
-  mux2 #(`XLEN) qnextmux(XQshift, XQnn, negate, XQnext);
-  flopen #(`XLEN) wreg(clk, start | busy, Wnext, W);
-  flopen #(`XLEN) xreg(clk, start | busy, XQnext, XQ);
+//  mux2 #(`XLEN) qnegmux(XQ, XQn, NegQ, XQnn);
+//  mux2 #(`XLEN) qnextmux(XQshift, XQnn, negate, XQnext);
+  mux2 #(`XLEN) qnextmux(XQshift, XQn, NegQ, XQnext);
+  flopen #(`XLEN) wreg(clk, start | (busy & (~negate | NegW)), Wnext, W);
+  flopen #(`XLEN) xreg(clk, start | (busy & (~negate | NegQ)), XQnext, XQ);
 
   // save D, which comes from SrcAE forwarding mux and could change because register file read is stalled during divide
  // flopen #(`XLEN) dreg(clk, start, D, Dsaved);
@@ -77,13 +82,13 @@ module intdiv_restoring (
   // *** sign extension, handling W instructions
   assign div0 = (Din == 0);
   mux2 #(`XLEN) qmux(XQ, {`XLEN{1'b1}}, div0, Q); // Q taken from XQ register, or all 1s when dividing by zero
-  mux2 #(`XLEN) remmux(W, X, div0, REM); // REM taken from W register, or from X when dividing by zero
+  mux2 #(`XLEN) remmux(W, Xsaved, div0, REM); // REM taken from W register, or from X when dividing by zero
  
   // busy logic
   always_ff @(posedge clk) 
     if (reset) begin
         busy = 0; done = 0; step = 0; negate = 0;
-    end else if (start) begin
+    end else if (start & ~StallM) begin 
         if (div0) done = 1;
         else begin
             busy = 1; step = 1;
