@@ -47,7 +47,7 @@ module muldiv (
 	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultE;
 	 logic [`XLEN-1:0] QuotE, RemE;
-	 logic [`XLEN*2-1:0] ProdE; 
+	 logic [`XLEN*2-1:0] ProdE, ProdM; 
 
 	 logic 		     enable_q;	 
 	 //logic [2:0] 	     Funct3E_Q;
@@ -55,19 +55,21 @@ module muldiv (
 	 logic [`XLEN-1:0]   X, D;
 	 //logic [`XLEN-1:0]   Num0, Den0;	 
 
-	 logic 		     gclk;
+	// logic 		     gclk;
 	 logic 		     startDivideE, busy;
 	 logic 		     signedDivide;	 
 	 
 	 // Multiplier
 	 mul mul(.*);
+	 flopenrc #(`XLEN*2) ProdMReg(clk, reset, FlushM, ~StallM, ProdE, ProdM); 
+
 	 // Divide
 
-	// *** replace this clock gater
+	/*// *** replace this clock gater
 	 always @(negedge clk) begin
 	    enable_q <= ~StallM;
 	 end
-	 assign gclk = enable_q & clk;
+	 assign gclk = enable_q & clk; */
 
 	 // Handle sign extension for W-type instructions
 	 if (`XLEN == 64) begin // RV64 has W-type instructions
@@ -80,7 +82,8 @@ module muldiv (
 
 	 assign signedDivide = ~Funct3E[0]; // simplified from (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
 	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, startDivideE, signedDivide);
-	 intdiv_restoring div(.clk, .reset, .StallM, .signedDivide, .start(startDivideE), .X(X), .D(D), .busy(busy), .done(DivDoneE), .Q(QuotE), .REM(RemE));
+//	 intdivrestoring div(.clk, .reset, .StallM, .signedDivide, .start(startDivideE), .X(X), .D(D), .busy(busy), .done(DivDoneE), .Q(QuotE), .REM(RemE));
+	 intdivrestoring div(.clk, .reset, .StallM, .signedDivide, .start(startDivideE), .X(X), .D(D), .busy(busy), .done(DivDoneE), .Q(QuotE), .REM(RemE));
 
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	 assign startDivideE = MulDivE & Funct3E[2] & ~busy & ~DivDoneE;
