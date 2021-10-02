@@ -54,35 +54,33 @@ module intdivrestoring (
   assign SignX = Xsaved[`XLEN-1];
   assign div0 = (Dsaved == 0); // *** eventually replace with just the negedge saved D
 
-  // Setup for signed division
+  // Take absolute value for signed operations
   neg #(`XLEN) negd(Dsaved, Dn);
   mux2 #(`XLEN) dabsmux(Dsaved, Dn, SignedDivideE & SignD, Din);  // take absolute value for signed operations
-  assign DAbsB = ~Din;
-//  mux2 #(`XLEN) dfirstmux(Dsaved, D, StartDivideE, Din); 
-
   neg #(`XLEN) negx(Xsaved, Xn);
   mux2 #(`XLEN) xabsmux(Xsaved, Xn, SignedDivideE & SignX, Xinit);  // need original X as remainder if doing divide by 0
-//  mux2 #(`XLEN) xfirstmux(Xsaved, X, StartDivideE, Xinit); 
 
+  // Negate D for subtraction
+  assign DAbsB = ~Din;
+
+  // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
   mux2 #(`XLEN) wmux(W, {`XLEN{1'b0}}, init, Win);
   mux2 #(`XLEN) xmux(XQ, Xinit, init, XQin);
-
 
   // *** parameterize steps per cycle
   intdivrestoringstep step1(Win, XQin, DAbsB, W1, XQ1);
   intdivrestoringstep step2(W1, XQ1, DAbsB, Wnext, XQnext);
 
-  flopen #(`XLEN) wreg(clk, StartDivideE | BusyE, Wnext, W); // *** could become just busy once start moves to its own cycle
-  flopen #(`XLEN) xreg(clk, StartDivideE | BusyE, XQnext, XQ);
+  flopen #(`XLEN) wreg(clk, /*StartDivideE | */BusyE, Wnext, W); // *** could become just busy once start moves to its own cycle
+  flopen #(`XLEN) xreg(clk, /*StartDivideE | */BusyE, XQnext, XQ);
 
-  // outputs
+  // Output selection logic in Memory Stage
   // On final setp of signed operations, negate outputs as needed
-  //flopen #(2) signflops(clk, StartDivideE, {D[`XLEN-1], X[`XLEN-1]}, {SignD, SignX}); // *** shouldn't be necessary when capturing inputs properly
-
   assign NegW = SignedDivideM & SignX; 
   assign NegQ = SignedDivideM & (SignX ^ SignD); 
   neg #(`XLEN) wneg(W, Wn);
   neg #(`XLEN) qneg(XQ, XQn);
+  // Select appropriate output: normal, negated, or for divide by zero
   mux3 #(`XLEN) qmux(XQ, XQn, {`XLEN{1'b1}}, {div0, NegQ}, Q); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
   mux3 #(`XLEN) remmux(W, Wn, Xsaved, {div0, NegW}, REM); // REM taken from W register, negated if necessary, or from X when dividing by zero
  
@@ -108,10 +106,6 @@ module intdivrestoring (
     end
     assign init = (step == 0);
  
-  // initialize on the start cycle for unsigned operations, or one cycle later for signed operations (giving time for abs)
-//  flop #(1) initflop(clk, StartDivideE, startd);
-//  mux2 #(1) initmux(StartDivideE, startd, SignedDivideE, init);
-
   // save signs of original inputs
 	flopenrc #(1) SignedDivideMReg(clk, reset, FlushM, ~StallM, SignedDivideE, SignedDivideM);
 
