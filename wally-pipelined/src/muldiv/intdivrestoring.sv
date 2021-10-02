@@ -32,7 +32,7 @@ module intdivrestoring (
   input  logic SignedDivideE,
   input  logic StartDivideE,
   input  logic [`XLEN-1:0] X, D,
-  output logic busy, done,
+  output logic BusyE, done,
   output logic [`XLEN-1:0] Q, REM
  );
 
@@ -64,49 +64,39 @@ module intdivrestoring (
 
   // *** parameterize steps per cycle
   intdivrestoringstep step1(Win, XQin, DAbsB, W1, XQ1);
-//  intdivrestoringstep step2(W1, XQ1, DAbsB, W2, XQshift);
   intdivrestoringstep step2(W1, XQ1, DAbsB, Wnext, XQnext);
 
-  // conditionally negate outputs at end of signed operation
-
-//  flopen #(`XLEN) wreg(clk, StartDivideE | (busy & (~negate | NegW)), Wnext, W);
-//  flopen #(`XLEN) xreg(clk, StartDivideE | (busy & (~negate | NegQ)), XQnext, XQ);
-  flopen #(`XLEN) wreg(clk, StartDivideE | busy, Wnext, W); // *** could become just busy once start moves to its own cycle
-  flopen #(`XLEN) xreg(clk, StartDivideE | busy, XQnext, XQ);
+  flopen #(`XLEN) wreg(clk, StartDivideE | BusyE, Wnext, W); // *** could become just busy once start moves to its own cycle
+  flopen #(`XLEN) xreg(clk, StartDivideE | BusyE, XQnext, XQ);
 
   // outputs
+  // On final setp of signed operations, negate outputs as needed
+  assign NegW = SignedDivideM & SignX; 
+  assign NegQ = SignedDivideM & (SignX ^ SignD); 
   neg #(`XLEN) wneg(W, Wn);
-//  mux2 #(`XLEN) wnextmux(W2, Wn, NegW, Wnext); //***
   neg #(`XLEN) qneg(XQ, XQn);
-//  mux2 #(`XLEN) qnextmux(XQshift, XQn, NegQ, XQnext);
-  mux3 #(`XLEN) qmux(XQ, XQn, {`XLEN{1'b1}}, {div0, NegQ}, Q); // Q taken from XQ register, or all 1s when dividing by zero ***
-  mux3 #(`XLEN) remmux(W, Wn, Xsaved, {div0, NegW}, REM); // REM taken from W register, or from X when dividing by zero
+  mux3 #(`XLEN) qmux(XQ, XQn, {`XLEN{1'b1}}, {div0, NegQ}, Q); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
+  mux3 #(`XLEN) remmux(W, Wn, Xsaved, {div0, NegW}, REM); // REM taken from W register, negated if necessary, or from X when dividing by zero
  
   // busy logic
   always_ff @(posedge clk) 
     if (reset) begin
-        busy = 0; done = 0; step = 0; //negate = 0;
+        BusyE = 0; done = 0; step = 0; 
     end else if (StartDivideE & ~StallM) begin 
         if (div0) done = 1;
         else begin
-            busy = 1; step = 1;
+            BusyE = 1; step = 1;
         end
-    end else if (busy & ~done & ~(startd & SignedDivideE)) begin // pause one cycle at beginning of signed operations for absolute value
+    end else if (BusyE & ~done & ~(startd & SignedDivideE)) begin // pause one cycle at beginning of signed operations for absolute value
         step = step + 1;
-        if (step[STEPBITS]) begin // *** early terminate on division by 0
-/*          if (SignedDivideE & ~negate) begin
-            negate = 1;
-          end else begin*/
+        if (step[STEPBITS]) begin 
             step = 0;
-            busy = 0;
-            //negate = 0;
+            BusyE = 0;
             done = 1;
-          //end
         end
     end else if (done) begin
         done = 0;
-        busy = 0;
-        //negate = 0;
+        BusyE = 0;
     end
  
   // initialize on the start cycle for unsigned operations, or one cycle later for signed operations (giving time for abs)
@@ -115,10 +105,7 @@ module intdivrestoring (
 
   // save signs of original inputs
 	flopenrc #(1) SignedDivideMReg(clk, reset, FlushM, ~StallM, SignedDivideE, SignedDivideM);
-  flopen #(2) signflops(clk, StartDivideE, {D[`XLEN-1], X[`XLEN-1]}, {SignD, SignX});
-  // On final setp of signed operations, negate outputs as needed
-  assign NegW = SignedDivideM & SignX; // & negate;
-  assign NegQ = SignedDivideM & (SignX ^ SignD); // & negate;
+  flopen #(2) signflops(clk, StartDivideE, {D[`XLEN-1], X[`XLEN-1]}, {SignD, SignX}); // *** shouldn't be necessary when capturing inputs properly
 
 endmodule // muldiv
 
