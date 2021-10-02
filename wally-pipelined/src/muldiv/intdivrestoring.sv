@@ -59,6 +59,7 @@ module intdivrestoring (
 
   assign DAbsB = ~Din;
 
+  // *** parameterize steps per cycle
   intdivrestoringstep step1(Win, XQin, DAbsB, W1, XQ1);
   intdivrestoringstep step2(W1, XQ1, DAbsB, W2, XQshift);
 
