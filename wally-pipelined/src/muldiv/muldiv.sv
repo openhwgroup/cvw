@@ -56,7 +56,7 @@ module muldiv (
 	 //logic [`XLEN-1:0]   Num0, Den0;	 
 
 	// logic 		     gclk;
-	 logic 		     StartDivideE, busy;
+	 logic 		     StartDivideE, BusyE;
 	 logic 		     SignedDivideE;	
 	 logic           W64M; 
 	 
@@ -79,11 +79,11 @@ module muldiv (
 	 assign SignedDivideE = ~Funct3E[0]; // simplified from (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
 	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, StartDivideE, SignedDivideE);
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .StartDivideE, .X(X), .D(D), .busy(busy), .done(DivDoneE), .Q(QuotM), .REM(RemM));
+	   .SignedDivideE, .StartDivideE, .X(X), .D(D), .BusyE, .done(DivDoneE), .Q(QuotM), .REM(RemM));
 
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
-	 assign StartDivideE = MulDivE & Funct3E[2] & ~busy & ~DivDoneE; // *** mabye DivDone should be M stage
-	 assign DivBusyE = StartDivideE | busy;
+	 assign StartDivideE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneE; // *** mabye DivDone should be M stage
+	 assign DivBusyE = StartDivideE | BusyE;
 	 	 
 	 // Select result
 	 always_comb
