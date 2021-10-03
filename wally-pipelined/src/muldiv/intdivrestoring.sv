@@ -25,6 +25,8 @@
 
 `include "wally-config.vh"
 
+  /* verilator lint_off UNOPTFLAT */
+
 module intdivrestoring (
   input  logic clk,
   input  logic reset,
@@ -36,8 +38,10 @@ module intdivrestoring (
   output logic [`XLEN-1:0] QuotM, RemM
  );
 
-  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DnE, DAbsBE, XnE, XInitE, WE, XQE, W1E, XQ1E, WNextE, XQNextE, WM, XQM, WnM, XQnM;
-  localparam STEPBITS = $clog2(`XLEN)-1;
+  logic [`XLEN-1:0] WE[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] XQE[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DnE, DAbsBE, XnE, XInitE, WM, XQM, WnM, XQnM;
+  localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
   logic DivInitE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
@@ -66,16 +70,19 @@ module intdivrestoring (
   mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, XInitE);  // need original X as remainder if doing divide by 0
 
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
-  mux2 #(`XLEN) wmux(WM, {`XLEN{1'b0}}, DivInitE, WE);
-  mux2 #(`XLEN) xmux(XQM, XInitE, DivInitE, XQE);
+  mux2 #(`XLEN) wmux(WM, {`XLEN{1'b0}}, DivInitE, WE[0]);
+  mux2 #(`XLEN) xmux(XQM, XInitE, DivInitE, XQE[0]);
 
-  // *** parameterize steps per cycle
-  intdivrestoringstep step1(WE, XQE, DAbsBE, W1E, XQ1E);
-  intdivrestoringstep step2(W1E, XQ1E, DAbsBE, WNextE, XQNextE);
+  // one copy of divstep for each bit produced per cycle
+  generate
+      genvar i;
+      for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
+        intdivrestoringstep divstep(WE[i], XQE[i], DAbsBE, WE[i+1], XQE[i+1]);
+  endgenerate
 
   // registers after division steps
-  flopen #(`XLEN) wreg(clk, BusyE, WNextE, WM); 
-  flopen #(`XLEN) xreg(clk, BusyE, XQNextE, XQM);
+  flopen #(`XLEN) wreg(clk, BusyE, WE[`DIV_BITSPERCYCLE], WM); 
+  flopen #(`XLEN) xreg(clk, BusyE, XQE[`DIV_BITSPERCYCLE], XQM);
 
   // Output selection logic in Memory Stage
   // On final setp of signed operations, negate outputs as needed
@@ -112,4 +119,4 @@ module intdivrestoring (
 
 endmodule 
 
-// *** clean up internal signals
+/* verilator lint_on UNOPTFLAT */

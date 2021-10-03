@@ -25,6 +25,8 @@
 
 `include "wally-config.vh"
 
+/* verilator lint_off UNOPTFLAT */
+
 module intdivrestoringstep(
   input  logic [`XLEN-1:0] W, XQ, DAbsB,
   output logic [`XLEN-1:0] WOut, XQOut);
@@ -39,3 +41,4 @@ module intdivrestoringstep(
   mux2 #(`XLEN) wrestoremux(WShift, WPrime, qi, WOut);
 endmodule
 
+/* verilator lint_on UNOPTFLAT */
