@@ -50,10 +50,10 @@ module intdivrestoring (
   // Saving the inputs is the most hardware-efficient way to fix the issue.
   flopen #(`XLEN) dsavereg(~clk, StartDivideE, DE, DSavedE); 
   flopen #(`XLEN) xsavereg(~clk, StartDivideE, XE, XSavedE);
-	flopenrc #(1) SignedDivideMReg(clk, reset, FlushM, ~StallM, SignedDivideE, SignedDivideM);
+  flopenrc #(1) SignedDivideMReg(clk, reset, FlushM, ~StallM, SignedDivideE, SignedDivideM);
   assign SignD = DSavedE[`XLEN-1]; // *** do some of these need pipelining for consecutive divides?
   assign SignX = XSavedE[`XLEN-1];
-  assign div0 = (DSavedE == 0); // *** eventually replace with just the negedge saved D
+  assign div0 = (DSavedE == 0);
 
   // Take absolute value for signed operations
   neg #(`XLEN) negd(DSavedE, DnE);
@@ -72,7 +72,7 @@ module intdivrestoring (
   intdivrestoringstep step1(Win, XQin, DAbsB, W1, XQ1);
   intdivrestoringstep step2(W1, XQ1, DAbsB, Wnext, XQnext);
 
-  flopen #(`XLEN) wreg(clk, BusyE, Wnext, W); // *** could become just busy once start moves to its own cycle
+  flopen #(`XLEN) wreg(clk, BusyE, Wnext, W); 
   flopen #(`XLEN) xreg(clk, BusyE, XQnext, XQ);
 
   // Output selection logic in Memory Stage
@@ -105,24 +105,8 @@ module intdivrestoring (
     end else if (done) begin
         done = 0;
         BusyE = 0;
-    end
-    //assign init = (step == 0);
- 
+    end 
 
-endmodule // muldiv
-
-
-module intdivrestoringstep(
-  input  logic [`XLEN-1:0] W, XQ, DAbsB,
-  output logic [`XLEN-1:0] WOut, XQOut);
-
-  logic [`XLEN-1:0] WShift, WPrime;
-  logic qi, qib;
-  
-  assign {WShift, XQOut} = {W[`XLEN-2:0], XQ, qi};
-  assign {qib, WPrime} = {1'b0, WShift} + {1'b1, DAbsB} + 1; // subtractor, carry out determines quotient bit ***replace with add
-  assign qi = ~qib;
-  mux2 #(`XLEN) wrestoremux(WShift, WPrime, qi, WOut);
-endmodule
+endmodule 
 
 // *** clean up internal signals
