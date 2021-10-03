@@ -27,9 +27,6 @@
 
 `include "wally-config.vh"
 
-//`define CHECKPOINT
-`define LINUX_CHECKPOINT "../linux-testgen/linux-testvectors/checkpoint1K"
-
 `define DEBUG_TRACE 0
 // Debug Levels
 // 0: don't check against QEMU
@@ -411,11 +408,7 @@ module testbench();
   // initial loading of memories
   initial begin
     $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
-    `ifdef CHECKPOINT
-      $readmemh({`LINUX_CHECKPOINT,"ram.txt"}, dut.uncore.dtim.RAM);
-    `else
-      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
-    `endif
+    $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};

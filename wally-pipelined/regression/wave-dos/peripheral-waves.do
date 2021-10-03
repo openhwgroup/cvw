@@ -35,6 +35,24 @@ add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
 add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
 add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 #add wave /testbench/dut/hart/ieu/dp/PCSrcE
+add wave /testbench/dut/hart/mdu/genblk1/div/StartDivideE
+add wave /testbench/dut/hart/mdu/DivBusyE
+add wave /testbench/dut/hart/mdu/DivDoneE
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/DE
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/Din
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/XE
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/Win
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/XQin
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/Wshift
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/XQshift
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/Wnext
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/qi
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/Wprime
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/W
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/XQ
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/RemM
+add wave -hex /testbench/dut/hart/mdu/genblk1/div/QuotM
+
 add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
@@ -48,9 +66,9 @@ add wave -hex /testbench/dut/hart/lsu/dcache/ReadDataM
 add wave -hex /testbench/dut/hart/ebu/ReadDataM
 add wave -divider
 add wave -hex /testbench/PCW
-add wave -hex /testbench/InstrW
+#add wave -hex /testbench/InstrW
 add wave -hex /testbench/dut/hart/ieu/c/InstrValidW
-add wave /testbench/InstrWName
+#add wave /testbench/InstrWName
 add wave -hex /testbench/dut/hart/ReadDataW
 add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RegWriteW

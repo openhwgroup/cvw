@@ -46,15 +46,6 @@ module csrsr (
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UPIE, STATUS_UIE;
 
-  var [`XLEN-1:0] initMSTATUS;
-  initial begin
-  `ifdef CHECKPOINT
-      $readmemh({`LINUX_CHECKPOINT,"checkpoint-MSTATUS.txt"}, initMSTATUS);
-    `else
-      initMSTATUS = `XLEN'b0;
-    `endif
-  end
-
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
@@ -117,33 +108,23 @@ module csrsr (
 
   // registers for STATUS bits
   // complex register with reset, write enable, and the ability to update other bits in certain cases
-  // these null things are needed to make the following LHS assignment legal; this is probably a crappy way of doing things
   always_ff @(posedge clk, posedge reset)
     if (reset) begin
-      //STATUS_TSR_INT <= #1 0;
-      //STATUS_TW_INT <= #1 0;
-      //STATUS_TVM_INT <= #1 0;
-      //STATUS_MXR_INT <= #1 0;
-      //STATUS_SUM_INT <= #1 0;
-      //STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
-      //STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
-      //STATUS_MPP <= #1 0; //`M_MODE;
-      //STATUS_SPP <= #1 0; //1'b1;
-      //STATUS_MPIE <= #1 0; //1;
-      //STATUS_SPIE <= #1 0; //`S_SUPPORTED;
-      //STATUS_UPIE <= #1 0; // `U_SUPPORTED;
-      //STATUS_MIE <= #1 0; // Per Priv 3.3
-      //STATUS_SIE <= #1 0; //`S_SUPPORTED;
-      //STATUS_UIE <= #1 0; //`U_SUPPORTED;
-      //
-      // *** this assumes XLEN == 64.
-      // I don't like using generates to respond to XLEN.
-      // I'd rather have an XLEN64 so that we could use `ifdefs -- Ben 9/21
-      {STATUS_TSR_INT,STATUS_TW_INT,STATUS_TVM_INT,STATUS_MXR_INT,STATUS_SUM_INT,STATUS_MPRV_INT} <= #1 initMSTATUS[22:17];
-      {STATUS_FS_INT,STATUS_MPP} <= #1 initMSTATUS[14:11];
-      {STATUS_SPP,STATUS_MPIE} <= #1 initMSTATUS[8:7];
-      {STATUS_SPIE,STATUS_UPIE,STATUS_MIE} <= #1 initMSTATUS[5:3];
-      {STATUS_SIE,STATUS_UIE} <= #1 initMSTATUS[1:0];
+      STATUS_TSR_INT <= #1 0;
+      STATUS_TW_INT <= #1 0;
+      STATUS_TVM_INT <= #1 0;
+      STATUS_MXR_INT <= #1 0;
+      STATUS_SUM_INT <= #1 0;
+      STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
+      STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
+      STATUS_MPP <= #1 0; //`M_MODE;
+      STATUS_SPP <= #1 0; //1'b1;
+      STATUS_MPIE <= #1 0; //1;
+      STATUS_SPIE <= #1 0; //`S_SUPPORTED;
+      STATUS_UPIE <= #1 0; // `U_SUPPORTED;
+      STATUS_MIE <= #1 0; // Per Priv 3.3
+      STATUS_SIE <= #1 0; //`S_SUPPORTED;
+      STATUS_UIE <= #1 0; //`U_SUPPORTED;
     end else if (~StallW) begin
       if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else;
  

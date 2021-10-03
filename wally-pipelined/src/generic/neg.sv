@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// regfile.sv
+// neg.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu 28 September 2021
 // Modified: 
 //
-// Purpose: 3-port register file
+// Purpose: 2's complement negator
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,28 +25,10 @@
 
 `include "wally-config.vh"
 
-module regfile (
-  input  logic             clk, reset,
-  input  logic             we3, 
-  input  logic [ 4:0]      a1, a2, a3, 
-  input  logic [`XLEN-1:0] wd3, 
-  output logic [`XLEN-1:0] rd1, rd2);
+module neg #(parameter WIDTH = 8) (
+  input  logic [WIDTH-1:0] a,
+  output logic [WIDTH-1:0] y);
 
-  logic [`XLEN-1:0] rf[31:1];
-  integer i;
-
-  // three ported register file
-  // read two ports combinationally (A1/RD1, A2/RD2)
-  // write third port on rising edge of clock (A3/WD3/WE3)
-  // write occurs on falling edge of clock
-  // register 0 hardwired to 0
-  
-  // reset is intended for simulation only, not synthesis
-    
-  always_ff @(negedge clk or posedge reset)
-    if (reset) for(i=1; i<32; i++) rf[i] <= 0;
-    else if (we3) rf[a3] <= wd3;	
-
-  assign #2 rd1 = (a1 != 0) ? rf[a1] : 0;
-  assign #2 rd2 = (a2 != 0) ? rf[a2] : 0;
+  assign y = ~a + 1;
 endmodule
+
