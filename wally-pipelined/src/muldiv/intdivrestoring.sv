@@ -61,16 +61,13 @@ module intdivrestoring (
   flopenrc #(1) SignXMReg(clk, reset, FlushM, ~StallM, SignXE, SignXM);
   flopenrc #(`XLEN) XSavedMReg(clk, reset, FlushM, ~StallM, XSavedE, XSavedM); // is this truly necessary?
 
-  // Take absolute value for signed operations
+  // Take absolute value for signed operations, and negate D to handle subtraction in divider stages
   neg #(`XLEN) negd(DSavedE, DnE);
   mux2 #(`XLEN) dabsmux(DnE, DSavedE, SignedDivideE & SignDE, DAbsB);  // take absolute value for signed operations, and negate for subtraction setp
   neg #(`XLEN) negx(XSavedE, XnE);
   mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, Xinit);  // need original X as remainder if doing divide by 0
 
-  // Negate D for subtraction
-  //assign DAbsB = ~Din;
-  // *** merge this into dabsmux if possible
-  // Put suffixes on Xinit, init->DivInitE, Wn, XQn
+   // Put suffixes on Xinit, init->DivInitE, Wn, XQn
 
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
   mux2 #(`XLEN) wmux(W, {`XLEN{1'b0}}, init, Win);
