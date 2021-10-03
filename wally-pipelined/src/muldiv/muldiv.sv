@@ -65,20 +65,12 @@ module muldiv (
 	 flopenrc #(`XLEN*2) ProdMReg(clk, reset, FlushM, ~StallM, ProdE, ProdM); 
 
 	 // Divide
-
-	 // Handle sign extension for W-type instructions
-	 if (`XLEN == 64) begin // RV64 has W-type instructions
-            assign XE = W64E ? {{32{SrcAE[31]&SignedDivideE}}, SrcAE[31:0]} : SrcAE;
-            assign DE = W64E ? {{32{SrcBE[31]&SignedDivideE}}, SrcBE[31:0]} : SrcBE;
-	 end else begin // RV32 has no W-type instructions
-            assign XE = SrcAE;
-            assign DE = SrcBE;	    
-	 end	    
-
+	 assign XE = SrcAE;
+	 assign DE = SrcBE;
 	 assign SignedDivideE = ~Funct3E[0]; // simplified from (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
 	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, StartDivideE, SignedDivideE);
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .StartDivideE, .XE, .DE, .BusyE, .DivDoneM, .QuotM, .RemM);
+	   .SignedDivideE, .W64E, .StartDivideE, .XE, .DE, .BusyE, .DivDoneM, .QuotM, .RemM);
 
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	 assign StartDivideE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneM; 

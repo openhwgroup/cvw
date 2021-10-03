@@ -161,6 +161,10 @@ string tests32f[] = '{
   };
 
   string tests64m[] = '{
+    "rv64m/I-REMUW-01", "3000",
+    "rv64m/I-REMW-01", "3000",
+    "rv64m/I-DIVUW-01", "3000",
+    "rv64m/I-DIVW-01", "3000",
     "rv64m/I-MUL-01", "3000",
     "rv64m/I-MULH-01", "3000",
     "rv64m/I-MULHSU-01", "3000",
@@ -168,12 +172,8 @@ string tests32f[] = '{
     "rv64m/I-MULW-01", "3000",
     "rv64m/I-DIV-01", "3000",
     "rv64m/I-DIVU-01", "3000",
-    "rv64m/I-DIVUW-01", "3000",
-    "rv64m/I-DIVW-01", "3000",
     "rv64m/I-REM-01", "3000",
-    "rv64m/I-REMU-01", "3000",
-    "rv64m/I-REMUW-01", "3000",
-    "rv64m/I-REMW-01", "3000"
+    "rv64m/I-REMU-01", "3000"
   };
 
   string tests64ic[] = '{
@@ -536,11 +536,11 @@ string tests32f[] = '{
         tests = {tests64p,tests64i, tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
-        if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
         if (`A_SUPPORTED) tests = {tests64a, tests};
+        if (`M_SUPPORTED) tests = {tests64m, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
