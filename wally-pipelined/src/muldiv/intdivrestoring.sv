@@ -88,13 +88,14 @@ module intdivrestoring (
   // busy logic
   always_ff @(posedge clk) 
     if (reset) begin
-        BusyE = 0; done = 0; step = 0; 
+        BusyE = 0; done = 0; step = 0; init = 0;
     end else if (StartDivideE & ~StallM) begin 
         if (div0) done = 1;
         else begin
-            BusyE = 1; step = 0;
+            BusyE = 1; step = 0; init = 1;
         end
     end else if (BusyE & ~done) begin // pause one cycle at beginning of signed operations for absolute value
+        init = 0;
         step = step + 1;
         if (step[STEPBITS]) begin 
             step = 0;
@@ -105,7 +106,7 @@ module intdivrestoring (
         done = 0;
         BusyE = 0;
     end
-    assign init = (step == 0);
+    //assign init = (step == 0);
  
 
 endmodule // muldiv
