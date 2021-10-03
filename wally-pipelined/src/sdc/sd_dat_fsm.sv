@@ -33,41 +33,41 @@ module sd_dat_fsm
    input logic i_RST,
     // Timer module control
    input logic i_SD_CLK_SELECTED,   // Which frequency I'm in determines what count in to load for a 100ms timer
-    output logic o_TIMER_LOAD, o_TIMER_EN,   // Timer Control signals
-   output logic [22:0] o_TIMER_IN, // Need Enough bits for 100 milliseconds at 48MHz
-    input logic [22:0] i_TIMER_OUT, // (ceiling(log((clk freq)(delay desired)-1)/log(2))-1) downto 0
+    (* mark_debug = "true" *)output logic o_TIMER_LOAD, o_TIMER_EN,   // Timer Control signals
+   (* mark_debug = "true" *)output logic [22:0] o_TIMER_IN, // Need Enough bits for 100 milliseconds at 48MHz
+    (* mark_debug = "true" *)input logic [22:0] i_TIMER_OUT, // (ceiling(log((clk freq)(delay desired)-1)/log(2))-1) downto 0
     // Nibble counter module control
-    output logic o_COUNTER_RST, o_COUNTER_EN, // nibble counter
-    input logic [10:0] i_COUNTER_OUT,   // max nibbles is 1024 + crc16 bits = 1040 bits
+    (* mark_debug = "true" *)output logic o_COUNTER_RST, o_COUNTER_EN, // nibble counter
+    (* mark_debug = "true" *)input logic [10:0] i_COUNTER_OUT,   // max nibbles is 1024 + crc16 bits = 1040 bits
     // CRC16 Generation control
-    output logic o_CRC16_EN, o_CRC16_RST,   // shared signals for  all 4 CRC16_SIPO (one for each of 4 DAT lines)
-    input logic i_DATA_CRC16_GOOD,   // indicates that no errors in transmission when CRC16 are all zero
+    (* mark_debug = "true" *)output logic o_CRC16_EN, o_CRC16_RST,   // shared signals for  all 4 CRC16_SIPO (one for each of 4 DAT lines)
+    (* mark_debug = "true" *)input logic i_DATA_CRC16_GOOD,   // indicates that no errors in transmission when CRC16 are all zero
     // For R1b
-    output logic o_BUSY_RST, o_BUSY_EN,   // busy signal for R1b
-    input logic i_DAT0_Q,
+    (* mark_debug = "true" *)output logic o_BUSY_RST, o_BUSY_EN,   // busy signal for R1b
+    (* mark_debug = "true" *)input logic i_DAT0_Q,
     // Storage Buffers for DAT bits read
-    output logic o_NIBO_EN, // 512 bytes block data (Nibble In Block Out)
+    (* mark_debug = "true" *)output logic o_NIBO_EN, // 512 bytes block data (Nibble In Block Out)
     // From LUT
-    input logic [1:0] i_USES_DAT,   // current command needs use of DAT bus
+    (* mark_debug = "true" *)input logic [1:0] i_USES_DAT,   // current command needs use of DAT bus
     // For communicating with core
-    output logic o_DATA_VALID,  // indicates that DATA being send over o_DATA to core is valid
-    output logic o_LAST_NIBBLE,      // indicates that the last nibble has been sent
+    (* mark_debug = "true" *)output logic o_DATA_VALID,  // indicates that DATA being send over o_DATA to core is valid
+    (* mark_debug = "true" *)output logic o_LAST_NIBBLE,      // indicates that the last nibble has been sent
     // For communication with sd_cmd_fsm
-    input logic i_CMD_TX_DONE,   // command transmission completed, begin waiting for DATA
-    output logic o_DAT_RX_DONE,   // tell SD_CMD_FSM that DAT communication is completed, send next instruction to sd card
-    output logic o_ERROR_DAT_TIMES_OUT,   // error flag for when DAT times out (so don't fetch more instructions)
-    output logic o_DAT_ERROR_FD_RST,
-    output logic o_DAT_ERROR_FD_EN,  // tell SD_CMD_FSM to resend command due to error in transmission
+    (* mark_debug = "true" *)input logic i_CMD_TX_DONE,   // command transmission completed, begin waiting for DATA
+    (* mark_debug = "true" *)output logic o_DAT_RX_DONE,   // tell SD_CMD_FSM that DAT communication is completed, send next instruction to sd card
+    (* mark_debug = "true" *)output logic o_ERROR_DAT_TIMES_OUT,   // error flag for when DAT times out (so don't fetch more instructions)
+    (* mark_debug = "true" *)output logic o_DAT_ERROR_FD_RST,
+    (* mark_debug = "true" *)output logic o_DAT_ERROR_FD_EN,  // tell SD_CMD_FSM to resend command due to error in transmission
     input logic LIMIT_SD_TIMERS
    );
 
   (* mark_debug = "true" *) logic [3:0] 	w_next_state, r_curr_state;
   
-  logic w_error_crc16_fd_en, w_error_crc16_fd_rst, w_error_crc16_fd_d; // Save ERROR_CRC16 so CMD FSM sees it in IDLE_NRC (not just in IDLE_DAT)
+  (* mark_debug = "true" *) logic w_error_crc16_fd_en, w_error_crc16_fd_rst, w_error_crc16_fd_d; // Save ERROR_CRC16 so CMD FSM sees it in IDLE_NRC (not just in IDLE_DAT)
   logic r_error_crc16_fd_Q;
 
-  logic [22:0] Identify_Timer_In;
-  logic [22:0] Data_TX_Timer_In;
+  (* mark_debug = "true" *) logic [22:0] Identify_Timer_In;
+  (* mark_debug = "true" *) logic [22:0] Data_TX_Timer_In;
 
   localparam logic [3:0] s_reset = 4'b0000;
   localparam logic [3:0] s_idle = 4'b0001;
