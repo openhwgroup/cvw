@@ -575,8 +575,15 @@ add wave -noupdate -radix binary /testbench/sdcard/dataState
 add wave -noupdate /testbench/sdcard/last_din
 add wave -noupdate /testbench/sdcard/wide_data
 add wave -noupdate /testbench/sdcard/write_out_index
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_R_TYPE
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_command_index
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_ACMD_Q
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_command_content
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_IC_EN
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_IC_RST
+add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_IC_OUT
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {1166 ns} 0} {{Cursor 3} {603500 ns} 1}
+WaveRestoreCursors {{Cursor 6} {8741 ns} 0} {{Cursor 3} {603500 ns} 1}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -592,4 +599,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {820 ns} {1562 ns}
+WaveRestoreZoom {0 ns} {5272104 ns}
