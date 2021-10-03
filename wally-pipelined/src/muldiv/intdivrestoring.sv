@@ -42,8 +42,7 @@ module intdivrestoring (
   logic Div0E, Div0M;
   logic DivInitE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
   logic SignedDivideM;
-  // *** add pipe stages to everything
-
+ 
   // save inputs on the negative edge of the execute clock.  
   // This is unusual practice, but the inputs are not guaranteed to be stable due to some hazard and forwarding logic.
   // Saving the inputs is the most hardware-efficient way to fix the issue.
@@ -66,8 +65,6 @@ module intdivrestoring (
   neg #(`XLEN) negx(XSavedE, XnE);
   mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, XInitE);  // need original X as remainder if doing divide by 0
 
-   // Put suffixes on XInitE, init->DivInitE, Wn, XQn
-
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
   mux2 #(`XLEN) wmux(WM, {`XLEN{1'b0}}, DivInitE, WE);
   mux2 #(`XLEN) xmux(XQM, XInitE, DivInitE, XQE);
@@ -76,6 +73,7 @@ module intdivrestoring (
   intdivrestoringstep step1(WE, XQE, DAbsBE, W1E, XQ1E);
   intdivrestoringstep step2(W1E, XQ1E, DAbsBE, WNextE, XQNextE);
 
+  // registers after division steps
   flopen #(`XLEN) wreg(clk, BusyE, WNextE, WM); 
   flopen #(`XLEN) xreg(clk, BusyE, XQNextE, XQM);
 
