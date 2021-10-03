@@ -33,7 +33,7 @@ module intdivrestoringstep(
   logic qi, qib;
   
   assign {WShift, XQOut} = {W[`XLEN-2:0], XQ, qi};
-  assign {qib, WPrime} = {1'b0, WShift} + {1'b1, DAbsB} + 1; // subtractor, carry out determines quotient bit ***replace with add
+  assign {qib, WPrime} = {1'b0, WShift} + {1'b1, DAbsB} /*+ 1*/; // subtractor, carry out determines quotient bit ***replace with add
   assign qi = ~qib;
   mux2 #(`XLEN) wrestoremux(WShift, WPrime, qi, WOut);
 endmodule
