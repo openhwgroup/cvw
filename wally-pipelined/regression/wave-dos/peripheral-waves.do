@@ -37,8 +37,6 @@ add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 #add wave /testbench/dut/hart/ieu/dp/PCSrcE
 add wave /testbench/dut/hart/mdu/genblk1/div/StartDivideE
 add wave /testbench/dut/hart/mdu/DivBusyE
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/DE
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/XE
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/RemM
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/QuotM
 

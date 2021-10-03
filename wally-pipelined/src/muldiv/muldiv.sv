@@ -67,10 +67,10 @@ module muldiv (
 	 // Divide
 	 assign XE = SrcAE;
 	 assign DE = SrcBE;
-	 assign SignedDivideE = ~Funct3E[0]; // simplified from (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
+	 assign SignedDivideE = ~Funct3E[0];
 	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, StartDivideE, SignedDivideE);
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .W64E, .StartDivideE, .XE, .DE, .BusyE, .DivDoneM, .QuotM, .RemM);
+	   .SignedDivideE, .W64E, .StartDivideE, .XE(SrcAE), .DE(SrcBE), .BusyE, .DivDoneM, .QuotM, .RemM);
 
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	 assign StartDivideE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneM; 
