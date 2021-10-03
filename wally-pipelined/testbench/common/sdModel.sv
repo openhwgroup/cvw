@@ -145,6 +145,71 @@ module    sdModel
    //initial $readmemh(SD_FILE, FLASHmem);
 
    initial begin
+      wide_data[0] <= 'h00;
+      wide_data[1] <= 'hc8;
+      wide_data[2] <= 'h80;
+      wide_data[3] <= 'h01;
+      wide_data[4] <= 'h80;
+      wide_data[5] <= 'h01;
+      wide_data[6] <= 'h80;
+      wide_data[7] <= 'h01;
+      wide_data[8] <= 'h80;
+      wide_data[9] <= 'h01;
+      wide_data[10] <= 'hc0;
+      wide_data[11] <= 'h01;
+      wide_data[12] <= 'h80;
+      wide_data[13] <= 'h03;
+      wide_data[14] <= 'h00;
+      wide_data[15] <= 'h00;
+      wide_data[16] <= 'h01;
+      wide_data[17] <= 00;
+      wide_data[18] <= 00;
+      wide_data[19] <= 00;
+      wide_data[20] <= 00;
+      wide_data[21] <= 00;
+      wide_data[22] <= 00;
+      wide_data[23] <= 00;
+      wide_data[24] <= 00;
+      wide_data[25] <= 00;
+      wide_data[26] <= 00;
+      wide_data[27] <= 00;
+      wide_data[28] <= 00;
+      wide_data[29] <= 00;
+      wide_data[30] <= 00;
+      wide_data[31] <= 00;
+      wide_data[32] <= 00;
+      wide_data[33] <= 00;
+      wide_data[34] <= 00;
+      wide_data[35] <= 00;
+      wide_data[36] <= 00;
+      wide_data[37] <= 00;
+      wide_data[38] <= 00;
+      wide_data[39] <= 00;
+      wide_data[40] <= 00;
+      wide_data[41] <= 00;
+      wide_data[42] <= 00;
+      wide_data[43] <= 00;
+      wide_data[44] <= 00;
+      wide_data[45] <= 00;
+      wide_data[46] <= 00;
+      wide_data[47] <= 00;
+      wide_data[48] <= 00;
+      wide_data[49] <= 00;
+      wide_data[50] <= 00;
+      wide_data[51] <= 00;
+      wide_data[52] <= 00;
+      wide_data[53] <= 00;
+      wide_data[54] <= 00;
+      wide_data[55] <= 00;
+      wide_data[56] <= 00;
+      wide_data[57] <= 00;
+      wide_data[58] <= 00;
+      wide_data[59] <= 00;
+      wide_data[60] <= 00;
+      wide_data[61] <= 00;
+      wide_data[62] <= 00;
+      wide_data[63] <= 00;
+/* -----\/----- EXCLUDED -----\/-----
       wide_data[0] <= 00;
       wide_data[1] <= 20;
       wide_data[2] <= 80;
@@ -209,6 +274,7 @@ module    sdModel
       wide_data[61] <= 00;
       wide_data[62] <= 00;
       wide_data[63] <= 00;
+ -----/\----- EXCLUDED -----/\----- */
    end
    
    

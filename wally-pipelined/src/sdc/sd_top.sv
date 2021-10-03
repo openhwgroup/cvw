@@ -156,16 +156,16 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   localparam logic [127:96] 	   c_ACMD55_ans_error_free = 32'h00000000;
 
   // SD_CMD_FSM Connections
-  logic 			   w_TIMER_LOAD, w_TIMER_EN;
-  logic [18:0] 			   w_TIMER_IN;
-  logic [18:0] 			   r_TIMER_OUT;
-  logic 			   w_COUNTER_LOAD, w_COUNTER_EN;
-  logic [7:0] 			   w_COUNTER_IN;
-  logic [7:0] 			   r_COUNTER_OUT;
-  logic 			   w_SD_CLK_EN;
-  logic 			   w_CLOCK_CHANGE_DONE, w_START_CLOCK_CHANGE;  // to clk fsm
-  logic 			   w_HS_TO_INIT_CLK_DIVIDER_RST;
-  logic 			   w_IC_RST, w_IC_EN, w_IC_UP_DOWN;
+  (* mark_debug = "true" *)logic 			   w_TIMER_LOAD, w_TIMER_EN;
+  (* mark_debug = "true" *)logic [18:0] 			   w_TIMER_IN;
+  (* mark_debug = "true" *)logic [18:0] 			   r_TIMER_OUT;
+  (* mark_debug = "true" *)logic 			   w_COUNTER_LOAD, w_COUNTER_EN;
+  (* mark_debug = "true" *)logic [7:0] 			   w_COUNTER_IN;
+  (* mark_debug = "true" *)logic [7:0] 			   r_COUNTER_OUT;
+  (* mark_debug = "true" *)logic 			   w_SD_CLK_EN;
+  (* mark_debug = "true" *)logic 			   w_CLOCK_CHANGE_DONE, w_START_CLOCK_CHANGE;  // to clk fsm
+  (* mark_debug = "true" *)logic 			   w_HS_TO_INIT_CLK_DIVIDER_RST;
+  (* mark_debug = "true" *)logic 			   w_IC_RST, w_IC_EN, w_IC_UP_DOWN;
   //logic w_USES_DAT                            : std_logic_vector(1 downto 0);
   //logic w_OPCODE_Q                              : std_logic_vector(6 downto 0);
   //logic w_R_TYPE                              : std_logic_vector(2 downto 0);
@@ -173,88 +173,88 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   //logic w_NO_REDO_ANS                         : std_logic_vector(31 downto 0);
   //logic w_NO_ERROR_MASK                       : std_logic_vector(31 downto 0);
   //logic w_NO_ERROR_ANS                        : std_logic_vector(31 downto 0);
-  logic 			   w_SD_CMD_OE;
+  (* mark_debug = "true" *)logic 			   w_SD_CMD_OE;
   //logic w_SD_CMD_IE                           : std_logic;  // tri-state buffer - input enable (for simulation only)
-  logic 			   w_TX_PISO40_LOAD, w_TX_PISO40_EN;
-  logic 			   w_TX_PISO8_LOAD, w_TX_PISO8_EN;
-  logic 			   w_TX_CRC7_PIPO_RST, w_TX_CRC7_PIPO_EN;
-  logic [1:0] 			   w_TX_SOURCE_SELECT;
-  logic 			   w_CMD_TX_IS_CMD55_RST;
-  logic 			   w_CMD_TX_IS_CMD55_EN;
+  (* mark_debug = "true" *)logic 			   w_TX_PISO40_LOAD, w_TX_PISO40_EN;
+  (* mark_debug = "true" *)logic 			   w_TX_PISO8_LOAD, w_TX_PISO8_EN;
+  (* mark_debug = "true" *)logic 			   w_TX_CRC7_PIPO_RST, w_TX_CRC7_PIPO_EN;
+  (* mark_debug = "true" *)logic [1:0] 			   w_TX_SOURCE_SELECT;
+  (* mark_debug = "true" *)logic 			   w_CMD_TX_IS_CMD55_RST;
+  (* mark_debug = "true" *)logic 			   w_CMD_TX_IS_CMD55_EN;
   //logic w_CMD_RX;
-  logic 			   w_RX_SIPO48_RST, w_RX_SIPO48_EN;
-  logic [39:8] 			   r_RESPONSE_CONTENT;
-  logic [45:40] 		   r_RESPONSE_INDEX;
-  logic 			   w_RX_CRC7_SIPO_RST, w_RX_CRC7_SIPO_EN;
-  logic [6:0] 			   r_RX_CRC7_Q;
-  logic 			   w_RCA_REGISTER_RST, w_RCA_REGISTER_EN;
-  logic 			   w_CMD_TX_DONE;
-  logic 			   w_DAT_RX_DONE;
-  logic 			   w_DAT_ERROR_FD_RST_DAT, w_DAT_ERROR_FD_RST_CMD, w_DAT_ERROR_FD_RST, w_DAT_ERROR_FD_EN;
-  logic 			   r_DAT_ERROR_Q;     // CRC16 error or time out
-  logic 			   w_NOT_DAT_ERROR_Q;  // '0'=no error, '1'=tx error on DAT bus
-  logic 			   w_ERROR_DAT_TIMES_OUT;
-  logic 			   w_FATAL_ERROR;
-  logic [2:0] 			   r_ERROR_CODE_Q;  // indicates which fatal error occured
+  (* mark_debug = "true" *)logic 			   w_RX_SIPO48_RST, w_RX_SIPO48_EN;
+  (* mark_debug = "true" *)logic [39:8] 			   r_RESPONSE_CONTENT;
+  (* mark_debug = "true" *)logic [45:40] 		   r_RESPONSE_INDEX;
+  (* mark_debug = "true" *)logic 			   w_RX_CRC7_SIPO_RST, w_RX_CRC7_SIPO_EN;
+  (* mark_debug = "true" *)logic [6:0] 			   r_RX_CRC7_Q;
+  (* mark_debug = "true" *)logic 			   w_RCA_REGISTER_RST, w_RCA_REGISTER_EN;
+  (* mark_debug = "true" *)logic 			   w_CMD_TX_DONE;
+  (* mark_debug = "true" *)logic 			   w_DAT_RX_DONE;
+  (* mark_debug = "true" *)logic 			   w_DAT_ERROR_FD_RST_DAT, w_DAT_ERROR_FD_RST_CMD, w_DAT_ERROR_FD_RST, w_DAT_ERROR_FD_EN;
+  (* mark_debug = "true" *)logic 			   r_DAT_ERROR_Q;     // CRC16 error or time out
+  (* mark_debug = "true" *)logic 			   w_NOT_DAT_ERROR_Q;  // '0'=no error, '1'=tx error on DAT bus
+  (* mark_debug = "true" *)logic 			   w_ERROR_DAT_TIMES_OUT;
+  (* mark_debug = "true" *)logic 			   w_FATAL_ERROR;
+  (* mark_debug = "true" *)logic [2:0] 			   r_ERROR_CODE_Q;  // indicates which fatal error occured
 
   // Communication with core
-  logic 			   w_READY_FOR_READ;
-  logic 			   w_READ_REQUEST;
-  logic [3:0] 			   r_DATA_TO_CORE;
-  logic 			   w_DATA_VALID;
-  logic 			   w_LAST_NIBBLE;
+  (* mark_debug = "true" *)logic 			   w_READY_FOR_READ;
+  (* mark_debug = "true" *)logic 			   w_READ_REQUEST;
+  (* mark_debug = "true" *)logic [3:0] 			   r_DATA_TO_CORE;
+  (* mark_debug = "true" *)logic 			   w_DATA_VALID;
+  (* mark_debug = "true" *)logic 			   w_LAST_NIBBLE;
 
   //SD_DAT_FSM Connections
-  logic 			   w_DAT_TIMER_LOAD, w_DAT_TIMER_EN;
-  logic 			   w_DAT_COUNTER_RST, w_DAT_COUNTER_EN;
-  logic 			   w_CRC16_EN, w_CRC16_RST;
-  logic 			   w_BUSY_RST, w_BUSY_EN;
-  logic 			   w_NIBO_EN;
-  logic 			   w_DATA_CRC16_GOOD;
-  logic 			   w_VALID_BLOCK_D, w_VALID_BLOCK_EN, w_VALID_WIDE_D, w_VALID_WIDE_EN;
-  logic [22:0] 			   w_DAT_TIMER_IN;
-  logic [22:0] 			   r_DAT_TIMER_OUT;
-  logic [10:0] 			   r_DAT_COUNTER_OUT;
-  logic [3:0] 			   r_DAT_Q;
+  (* mark_debug = "true" *)logic 			   w_DAT_TIMER_LOAD, w_DAT_TIMER_EN;
+  (* mark_debug = "true" *)logic 			   w_DAT_COUNTER_RST, w_DAT_COUNTER_EN;
+  (* mark_debug = "true" *)logic 			   w_CRC16_EN, w_CRC16_RST;
+  (* mark_debug = "true" *)logic 			   w_BUSY_RST, w_BUSY_EN;
+  (* mark_debug = "true" *)logic 			   w_NIBO_EN;
+  (* mark_debug = "true" *)logic 			   w_DATA_CRC16_GOOD;
+  (* mark_debug = "true" *)logic 			   w_VALID_BLOCK_D, w_VALID_BLOCK_EN, w_VALID_WIDE_D, w_VALID_WIDE_EN;
+  (* mark_debug = "true" *)logic [22:0] 			   w_DAT_TIMER_IN;
+  (* mark_debug = "true" *)logic [22:0] 			   r_DAT_TIMER_OUT;
+  (* mark_debug = "true" *)logic [10:0] 			   r_DAT_COUNTER_OUT;
+  (* mark_debug = "true" *)logic [3:0] 			   r_DAT_Q;
 
   // RCA Register
-  logic [15:0] 			   w_RCA_D_Q;
-  logic [15:0] 			   r_RCA_Q2;
+  (* mark_debug = "true" *)logic [15:0] 			   w_RCA_D_Q;
+  (* mark_debug = "true" *)logic [15:0] 			   r_RCA_Q2;
 
   // Multiplexer Logics
   (* mark_debug = "true" *) logic [132:0] 		   w_instruction_control_bits;
-  logic [132:130] 		   w_R_TYPE                  ;
-  logic [129:128] 		   w_USES_DAT                ;
-  logic [127:96] 		   w_NO_REDO_MASK            ;
-  logic [95:64] 		   w_NO_REDO_ANS             ;
-  logic [63:32] 		   w_NO_ERROR_MASK           ;
-  logic [31:0] 			   w_NO_ERROR_ANS            ;
-  logic [45:40] 		   w_command_index           ;
-  logic [39:8] 			   w_command_arguments       ;
-  logic [47:8] 			   w_command_head            ;
-  logic [6:0] 			   w_OPCODE_Q                ;
+  (* mark_debug = "true" *)logic [132:130] 		   w_R_TYPE                  ;
+  (* mark_debug = "true" *)logic [129:128] 		   w_USES_DAT                ;
+  (* mark_debug = "true" *)logic [127:96] 		   w_NO_REDO_MASK            ;
+  (* mark_debug = "true" *)logic [95:64] 		   w_NO_REDO_ANS             ;
+  (* mark_debug = "true" *)logic [63:32] 		   w_NO_ERROR_MASK           ;
+  (* mark_debug = "true" *)logic [31:0] 			   w_NO_ERROR_ANS            ;
+  (* mark_debug = "true" *)logic [45:40] 		   w_command_index           ;
+  (* mark_debug = "true" *)logic [39:8] 			   w_command_arguments       ;
+  (* mark_debug = "true" *)logic [47:8] 			   w_command_head            ;
+  (* mark_debug = "true" *)logic [6:0] 			   w_OPCODE_Q                ;
 
   // TOP_LEVEL Connections
-  logic [40:9] 			   w_BLOCK_ADDR                     ;
-  logic [3:0] 			   r_IC_OUT                         ;
-  logic [2:0] 			   r_command_index_is_55_history    ;  // [0] is live index, [1] is currently saved index, [2] is index of previous command
-  logic 			   r_previous_command_index_was_55_q;  // is index of previous command 55, wired to r_command_index_is_55_history[2]
-  logic 			   r_ACMD_Q;  // if the previous command sent to the SD card successfully had index 55, then the SD card thinks the current command is ACMD
-  logic [4095:0] 		   r_block_data                     ;  // data block from CMD17
+  (* mark_debug = "true" *)logic [40:9] 			   w_BLOCK_ADDR                     ;
+  (* mark_debug = "true" *)logic [3:0] 			   r_IC_OUT                         ;
+  (* mark_debug = "true" *)logic [2:0] 			   r_command_index_is_55_history    ;  // [0] is live index, [1] is currently saved index, [2] is index of previous command
+  (* mark_debug = "true" *)logic 			   r_previous_command_index_was_55_q;  // is index of previous command 55, wired to r_command_index_is_55_history[2]
+  (* mark_debug = "true" *)logic 			   r_ACMD_Q;  // if the previous command sent to the SD card successfully had index 55, then the SD card thinks the current command is ACMD
+  (* mark_debug = "true" *)logic [4095:0] 		   r_block_data                     ;  // data block from CMD17
 
   // TX
-  logic [45:8] 			   w_command_content;                  // first 40 bits of command packet
-  logic 			   w_tx_head_Q;            // transmission of first part of command packet
-  logic 			   w_tx_tail_Q;            // transmission of last part of command packet
-  logic [7:0] 			   r_command_tail;  // last 8 bits of command packet
-  logic [6:0] 			   r_TX_CRC7;
+  (* mark_debug = "true" *)logic [45:8] 			   w_command_content;                  // first 40 bits of command packet
+  (* mark_debug = "true" *)logic 			   w_tx_head_Q;            // transmission of first part of command packet
+  (* mark_debug = "true" *)logic 			   w_tx_tail_Q;            // transmission of last part of command packet
+  (* mark_debug = "true" *)logic [7:0] 			   r_command_tail;  // last 8 bits of command packet
+  (* mark_debug = "true" *)logic [6:0] 			   r_TX_CRC7;
   //logic w_TX_Q:= '0';  // actual transmission when tx is enabled
 
   // RX
-  logic [47:0] 			   r_RX_RESPONSE;
+  (* mark_debug = "true" *)logic [47:0] 			   r_RX_RESPONSE;
 
   // Tri state IO Driver BC18MIMS
-  logic 			   w_SD_CMD_TX_Q;  // Write Data
+  (* mark_debug = "true" *)logic 			   w_SD_CMD_TX_Q;  // Write Data
   (* mark_debug = "true" *) logic 			   w_SD_CMD_RX;         // Read Data
 
 
@@ -263,17 +263,17 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   //logic r_SD_CLK_ungated := '0';  // Selected clock before it is clock gated
 
   //logic r_SD_CLK := '0';  // GATED CLOCKS
-  logic 			   r_TO_SD_CLK;  // What is actually sent to the SD card
+  (* mark_debug = "true" *)logic 			   r_TO_SD_CLK;  // What is actually sent to the SD card
 
-  logic 			   w_G_CLK_SD_EN;
-  logic 			   r_CLK_SD, r_G_CLK_SD;              // clocks
-  logic 			   r_G_CLK_SD_n;
-  logic [15:0] 			   r_CLK_FSM_RST                 ;  // a_rst logic delayed by one 1.2 GHz period
-  logic 			   w_SD_CLK_SELECTED;
+  (* mark_debug = "true" *)logic 			   w_G_CLK_SD_EN;
+  (* mark_debug = "true" *)logic 			   r_CLK_SD, r_G_CLK_SD;              // clocks
+  (* mark_debug = "true" *)logic 			   r_G_CLK_SD_n;
+  (* mark_debug = "true" *)logic [15:0] 			   r_CLK_FSM_RST                 ;  // a_rst logic delayed by one 1.2 GHz period
+  (* mark_debug = "true" *)logic 			   w_SD_CLK_SELECTED;
 
   //DAT FSM Connections
-  logic [15:0]			   r_DAT3_CRC16, r_DAT2_CRC16, r_DAT1_CRC16;
-  logic [15:0] 			   r_DAT0_CRC16;
+  (* mark_debug = "true" *)logic [15:0] 			   r_DAT3_CRC16, r_DAT2_CRC16, r_DAT1_CRC16;
+  (* mark_debug = "true" *)logic [15:0] 			   r_DAT0_CRC16;
   
   
   assign w_BLOCK_ADDR = {8'h00, i_BLOCK_ADDR};  // (40 downto 36 are zero since card is 64 GB)
@@ -491,7 +491,8 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   // Clock selection
   clkdivider #(g_COUNT_WIDTH) slow_clk_divider        // Divide 50 MHz to <400 KHz (Initial clock)
     (.i_COUNT_IN_MAX(i_COUNT_IN_MAX),
-    .i_EN(w_SD_CLK_SELECTED),
+    //.i_EN(w_SD_CLK_SELECTED),
+     .i_EN(1'b1),
     .i_RST(w_HS_TO_INIT_CLK_DIVIDER_RST),
     .i_CLK(CLK),
     .o_CLK(r_CLK_SD));
