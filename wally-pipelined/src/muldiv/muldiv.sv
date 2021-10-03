@@ -52,7 +52,7 @@ module muldiv (
 	 logic 		     enable_q;	 
 	 //logic [2:0] 	     Funct3E_Q;
 	 logic 		     div0error; // ***unused
-	 logic [`XLEN-1:0]   X, D;
+	 logic [`XLEN-1:0]   XE, DE;
 	 //logic [`XLEN-1:0]   Num0, Den0;	 
 
 	// logic 		     gclk;
@@ -69,17 +69,17 @@ module muldiv (
 
 	 // Handle sign extension for W-type instructions
 	 if (`XLEN == 64) begin // RV64 has W-type instructions
-            assign X = W64E ? {{32{SrcAE[31]&SignedDivideE}}, SrcAE[31:0]} : SrcAE;
-            assign D = W64E ? {{32{SrcBE[31]&SignedDivideE}}, SrcBE[31:0]} : SrcBE;
+            assign XE = W64E ? {{32{SrcAE[31]&SignedDivideE}}, SrcAE[31:0]} : SrcAE;
+            assign DE = W64E ? {{32{SrcBE[31]&SignedDivideE}}, SrcBE[31:0]} : SrcBE;
 	 end else begin // RV32 has no W-type instructions
-            assign X = SrcAE;
-            assign D = SrcBE;	    
+            assign XE = SrcAE;
+            assign DE = SrcBE;	    
 	 end	    
 
 	 assign SignedDivideE = ~Funct3E[0]; // simplified from (Funct3E[2]&~Funct3E[1]&~Funct3E[0]) | (Funct3E[2]&Funct3E[1]&~Funct3E[0]);	 
 	 //intdiv #(`XLEN) div (QuotE, RemE, DivDoneE, DivBusyE, div0error, N, D, gclk, reset, StartDivideE, SignedDivideE);
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .StartDivideE, .X(X), .D(D), .BusyE, .done(DivDoneE), .Q(QuotM), .REM(RemM));
+	   .SignedDivideE, .StartDivideE, .XE, .DE, .BusyE, .done(DivDoneE), .QuotM, .RemM);
 
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	 assign StartDivideE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneE; // *** mabye DivDone should be M stage
