@@ -10,7 +10,7 @@ customQemu="/courses/e190ax/qemu_sim/rv64_initrd/qemu_experimental/qemu/build/qe
 # use on other systems
 #customQemu="qemu-system-riscv64"
 
-instrs=8500000
+instrs=50000000
 
 imageDir="../buildroot-image-output"
 outDir="../linux-testvectors/checkpoint$instrs"
@@ -24,9 +24,11 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     mkdir -p $outDir
     mkdir -p $intermedDir
+    # Simulate QEMU, parse QEMU trace, run GDB script which logs a bunch of data at the checkpoint
     ($customQemu -M virt -nographic -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio -rtc clock=vm -icount shift=1 -d nochain,cpu,in_asm -serial /dev/null -singlestep -gdb tcp::1240 -S 2>&1 1>&2 | ./parse_qemu.py | ./parseNew.py | ./remove_dup.awk > $intermedDir/rawTrace.txt) & riscv64-unknown-elf-gdb -x ./checkpoint.gdb -ex "createCheckpoint $instrs \"$intermedDir\""
-    ./fix_mem.py "$intermedDir/ramGDB.txt" "$outDir/ram.txt"
+    # Post-Process GDB outputs
     ./parseState.py "$outDir"
+    ./fix_mem.py "$intermedDir/ramGDB.txt" "$outDir/ram.txt"
 else
     echo "You can change the number of instructions by editing the \"instrs\" variable in this script."
     echo "Have a nice day!"
