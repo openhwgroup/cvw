@@ -36,7 +36,7 @@ module intdivrestoring (
   output logic [`XLEN-1:0] QuotM, RemM
  );
 
-  logic [`XLEN-1:0] W, W2, Win, Wshift, Wprime, Wn, Wnn, Wnext, XQ, XQin, XQshift, XQn, XQnn, XQnext, DSavedE, Din, Dabs, D2, Dn, Xn, Xabs, X2, XSavedE, Xinit, DAbsB, W1, XQ1;
+  logic [`XLEN-1:0] W, W2, Win, Wshift, Wprime, Wn, Wnn, Wnext, XQ, XQin, XQshift, XQn, XQnn, XQnext, DSavedE, Din, Dabs, D2, DnE, XnE, Xabs, X2, XSavedE, Xinit, DAbsB, W1, XQ1;
   logic qi, qib; // curent quotient bit
   localparam STEPBITS = $clog2(`XLEN)-1;
   logic [STEPBITS:0] step;
@@ -56,10 +56,10 @@ module intdivrestoring (
   assign div0 = (DSavedE == 0); // *** eventually replace with just the negedge saved D
 
   // Take absolute value for signed operations
-  neg #(`XLEN) negd(DSavedE, Dn);
-  mux2 #(`XLEN) dabsmux(DSavedE, Dn, SignedDivideE & SignD, Din);  // take absolute value for signed operations
-  neg #(`XLEN) negx(XSavedE, Xn);
-  mux2 #(`XLEN) xabsmux(XSavedE, Xn, SignedDivideE & SignX, Xinit);  // need original X as remainder if doing divide by 0
+  neg #(`XLEN) negd(DSavedE, DnE);
+  mux2 #(`XLEN) dabsmux(DSavedE, DnE, SignedDivideE & SignD, Din);  // take absolute value for signed operations
+  neg #(`XLEN) negx(XSavedE, XnE);
+  mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignX, Xinit);  // need original X as remainder if doing divide by 0
 
   // Negate D for subtraction
   assign DAbsB = ~Din;
