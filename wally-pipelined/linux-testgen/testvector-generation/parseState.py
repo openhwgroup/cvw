@@ -1,5 +1,5 @@
 #! /usr/bin/python3
-import sys
+import sys, os
 
 ################
 # Helper Funcs #
@@ -29,8 +29,8 @@ print("Begin parsing state.")
 # Parse Args
 if len(sys.argv) != 2:
     sys.exit('Error parseState.py expects 1 arg:\n parseState.py <path_to_checkpoint_dir>')
-outDir = sys.argv[1]
-stateGDBpath = outDir+'/intermediate-outputs/stateGDB1K.txt'
+outDir = sys.argv[1]+'/'
+stateGDBpath = outDir+'intermediate-outputs/stateGDB.txt'
 if not os.path.exists(stateGDBpath):
     sys.exit('Error input file '+stateGDBpath+'not found')
 
