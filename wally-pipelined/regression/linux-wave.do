@@ -176,7 +176,7 @@ add wave -noupdate -group muldiv /testbench/dut/hart/mdu/FlushM
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/FlushW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/MulDivResultW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/genblk1/div/start
-add wave -noupdate -group muldiv /testbench/dut/hart/mdu/DivDoneE
+add wave -noupdate -group muldiv /testbench/dut/hart/mdu/DivDoneM
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/DivBusyE
 add wave -noupdate -group divider /testbench/dut/hart/mdu/genblk1/div/fsm1/CURRENT_STATE
 add wave -noupdate -group divider /testbench/dut/hart/mdu/genblk1/div/N

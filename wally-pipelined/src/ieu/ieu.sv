@@ -73,7 +73,6 @@ module ieu (
   input logic 		   FlushD, FlushE, FlushM, FlushW,
   output logic 		   FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD,
   output logic 		   PCSrcE,
-  input logic 		   DivDoneE,
   input logic 		   DivBusyE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
   output logic 		   CSRWritePendingDEM,
