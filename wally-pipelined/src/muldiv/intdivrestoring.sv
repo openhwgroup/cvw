@@ -36,12 +36,11 @@ module intdivrestoring (
   output logic [`XLEN-1:0] QuotM, RemM
  );
 
-  logic [`XLEN-1:0] W, W2, Win, Wshift, Wprime, Wn, Wnn, Wnext, XQ, XQin, XQshift, XQn, XQnn, XQnext, DSavedE, Din, Dabs, D2, DnE, XnE, Xabs, X2, XSavedE, XSavedM, Xinit, DAbsB, W1, XQ1;
-  logic qi, qib; // curent quotient bit
+  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DnE, DAbsBE, XnE, XInitE, WE, XQE, W1E, XQ1E, WNextE, XQNextE, WM, XQM, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN)-1;
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
-  logic init, startd, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
+  logic DivInitE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
   logic SignedDivideM;
   // *** add pipe stages to everything
 
@@ -50,7 +49,7 @@ module intdivrestoring (
   // Saving the inputs is the most hardware-efficient way to fix the issue.
   flopen #(`XLEN) dsavereg(~clk, StartDivideE, DE, DSavedE); 
   flopen #(`XLEN) xsavereg(~clk, StartDivideE, XE, XSavedE);
-  assign SignDE = DSavedE[`XLEN-1]; // *** do some of these need pipelining for consecutive divides?
+  assign SignDE = DSavedE[`XLEN-1]; 
   assign SignXE = XSavedE[`XLEN-1];
   assign Div0E = (DSavedE == 0);
 
@@ -63,45 +62,45 @@ module intdivrestoring (
 
   // Take absolute value for signed operations, and negate D to handle subtraction in divider stages
   neg #(`XLEN) negd(DSavedE, DnE);
-  mux2 #(`XLEN) dabsmux(DnE, DSavedE, SignedDivideE & SignDE, DAbsB);  // take absolute value for signed operations, and negate for subtraction setp
+  mux2 #(`XLEN) dabsmux(DnE, DSavedE, SignedDivideE & SignDE, DAbsBE);  // take absolute value for signed operations, and negate for subtraction setp
   neg #(`XLEN) negx(XSavedE, XnE);
-  mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, Xinit);  // need original X as remainder if doing divide by 0
+  mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, XInitE);  // need original X as remainder if doing divide by 0
 
-   // Put suffixes on Xinit, init->DivInitE, Wn, XQn
+   // Put suffixes on XInitE, init->DivInitE, Wn, XQn
 
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
-  mux2 #(`XLEN) wmux(W, {`XLEN{1'b0}}, init, Win);
-  mux2 #(`XLEN) xmux(XQ, Xinit, init, XQin);
+  mux2 #(`XLEN) wmux(WM, {`XLEN{1'b0}}, DivInitE, WE);
+  mux2 #(`XLEN) xmux(XQM, XInitE, DivInitE, XQE);
 
   // *** parameterize steps per cycle
-  intdivrestoringstep step1(Win, XQin, DAbsB, W1, XQ1);
-  intdivrestoringstep step2(W1, XQ1, DAbsB, Wnext, XQnext);
+  intdivrestoringstep step1(WE, XQE, DAbsBE, W1E, XQ1E);
+  intdivrestoringstep step2(W1E, XQ1E, DAbsBE, WNextE, XQNextE);
 
-  flopen #(`XLEN) wreg(clk, BusyE, Wnext, W); 
-  flopen #(`XLEN) xreg(clk, BusyE, XQnext, XQ);
+  flopen #(`XLEN) wreg(clk, BusyE, WNextE, WM); 
+  flopen #(`XLEN) xreg(clk, BusyE, XQNextE, XQM);
 
   // Output selection logic in Memory Stage
   // On final setp of signed operations, negate outputs as needed
   assign NegWM = SignedDivideM & SignXM; 
   assign NegQM = SignedDivideM & (SignXM ^ SignDM); 
-  neg #(`XLEN) wneg(W, Wn);
-  neg #(`XLEN) qneg(XQ, XQn);
+  neg #(`XLEN) wneg(WM, WnM);
+  neg #(`XLEN) qneg(XQM, XQnM);
   // Select appropriate output: normal, negated, or for divide by zero
-  mux3 #(`XLEN) qmux(XQ, XQn, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
-  mux3 #(`XLEN) remmux(W, Wn, XSavedM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
+  mux3 #(`XLEN) qmux(XQM, XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
+  mux3 #(`XLEN) remmux(WM, WnM, XSavedM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
         // verify it's really necessary to have XSavedM
 
-  // busy logic
+  // Divider FSM to sequence Init, Busy, and Done
   always_ff @(posedge clk) 
     if (reset) begin
-        BusyE = 0; DivDoneM = 0; step = 0; init = 0;
+        BusyE = 0; DivDoneM = 0; step = 0; DivInitE = 0;
     end else if (StartDivideE & ~StallM) begin 
         if (Div0E) DivDoneM = 1;
         else begin
-            BusyE = 1; step = 0; init = 1;
+            BusyE = 1; step = 0; DivInitE = 1;
         end
     end else if (BusyE & ~DivDoneM) begin // pause one cycle at beginning of signed operations for absolute value
-        init = 0;
+        DivInitE = 0;
         step = step + 1;
         if (step[STEPBITS]) begin 
             step = 0;

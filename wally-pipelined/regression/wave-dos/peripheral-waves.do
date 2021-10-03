@@ -38,17 +38,7 @@ add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 add wave /testbench/dut/hart/mdu/genblk1/div/StartDivideE
 add wave /testbench/dut/hart/mdu/DivBusyE
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/DE
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/Din
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/XE
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/Win
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/XQin
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/Wshift
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/XQshift
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/Wnext
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/qi
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/Wprime
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/W
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/XQ
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/RemM
 add wave -hex /testbench/dut/hart/mdu/genblk1/div/QuotM
 
