@@ -31,7 +31,7 @@ module intdivrestoring (
   input  logic clk,
   input  logic reset,
   input  logic StallM, FlushM,
-  input  logic SignedDivideE,
+  input  logic SignedDivideE, W64E,
   input  logic StartDivideE,
   input  logic [`XLEN-1:0] XE, DE,
   output logic BusyE, DivDoneM,
@@ -40,7 +40,7 @@ module intdivrestoring (
 
   logic [`XLEN-1:0] WE[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] XQE[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DnE, DAbsBE, XnE, XInitE, WM, XQM, WnM, XQnM;
+  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DinE, XinE, DnE, DAbsBE, XnE, XInitE, WM, XQM, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
@@ -52,9 +52,22 @@ module intdivrestoring (
   // Saving the inputs is the most hardware-efficient way to fix the issue.
   flopen #(`XLEN) dsavereg(~clk, StartDivideE, DE, DSavedE); 
   flopen #(`XLEN) xsavereg(~clk, StartDivideE, XE, XSavedE);
-  assign SignDE = DSavedE[`XLEN-1]; 
-  assign SignXE = XSavedE[`XLEN-1];
-  assign Div0E = (DSavedE == 0);
+
+  // Handle sign extension for W-type instructions
+  generate
+    if (`XLEN == 64) begin // RV64 has W-type instructions
+      mux2 #(`XLEN) xinmux(XSavedE, {XSavedE[31:0], 32'b0}, W64E, XinE);
+      mux2 #(`XLEN) dinmux(DSavedE, {{32{DSavedE[31]&SignedDivideE}}, DSavedE[31:0]}, W64E, DinE);
+	end else begin // RV32 has no W-type instructions
+      assign XinE = XSavedE;
+      assign DinE = DSavedE;	    
+    end   
+  endgenerate 
+
+  // Extract sign bits and check fo division by zero
+  assign SignDE = DinE[`XLEN-1]; 
+  assign SignXE = XinE[`XLEN-1];
+  assign Div0E = (DinE == 0);
 
   // pipeline registers
   flopenrc #(1) SignedDivideMReg(clk, reset, FlushM, ~StallM, SignedDivideE, SignedDivideM);
@@ -64,10 +77,10 @@ module intdivrestoring (
   flopenrc #(`XLEN) XSavedMReg(clk, reset, FlushM, ~StallM, XSavedE, XSavedM); // is this truly necessary?
 
   // Take absolute value for signed operations, and negate D to handle subtraction in divider stages
-  neg #(`XLEN) negd(DSavedE, DnE);
-  mux2 #(`XLEN) dabsmux(DnE, DSavedE, SignedDivideE & SignDE, DAbsBE);  // take absolute value for signed operations, and negate for subtraction setp
-  neg #(`XLEN) negx(XSavedE, XnE);
-  mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, XInitE);  // need original X as remainder if doing divide by 0
+  neg #(`XLEN) negd(DinE, DnE);
+  mux2 #(`XLEN) dabsmux(DnE, DinE, SignedDivideE & SignDE, DAbsBE);  // take absolute value for signed operations, and negate for subtraction setp
+  neg #(`XLEN) negx(XinE, XnE);
+  mux2 #(`XLEN) xabsmux(XinE, XnE, SignedDivideE & SignXE, XInitE);  // need original X as remainder if doing divide by 0
 
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
   mux2 #(`XLEN) wmux(WM, {`XLEN{1'b0}}, DivInitE, WE[0]);
@@ -106,7 +119,7 @@ module intdivrestoring (
     end else if (BusyE & ~DivDoneM) begin // pause one cycle at beginning of signed operations for absolute value
         DivInitE = 0;
         step = step + 1;
-        if (step[STEPBITS]) begin 
+        if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
             step = 0;
             BusyE = 0;
             DivDoneM = 1;
