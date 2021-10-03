@@ -86,14 +86,13 @@ module intdivrestoring (
 
   // Output selection logic in Memory Stage
   // On final setp of signed operations, negate outputs as needed
-  assign NegWM = SignedDivideM & SignXM; 
-  assign NegQM = SignedDivideM & (SignXM ^ SignDM); 
+  assign NegWM = SignedDivideM & SignXM; // Remainder should have same sign as X 
+  assign NegQM = SignedDivideM & (SignXM ^ SignDM); // Quotient should be negative if one operand is positive and the other is negative
   neg #(`XLEN) wneg(WM, WnM);
   neg #(`XLEN) qneg(XQM, XQnM);
   // Select appropriate output: normal, negated, or for divide by zero
   mux3 #(`XLEN) qmux(XQM, XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
   mux3 #(`XLEN) remmux(WM, WnM, XSavedM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
-        // verify it's really necessary to have XSavedM
 
   // Divider FSM to sequence Init, Busy, and Done
   always_ff @(posedge clk) 
