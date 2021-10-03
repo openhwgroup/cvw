@@ -62,7 +62,7 @@ module muldiv (
 	 assign DivBusyE = StartDivideE | BusyE;
 	 assign SignedDivideE = ~Funct3E[0];
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .W64E, .StartDivideE, .XE(SrcAE), .DE(SrcBE), .BusyE, .DivDoneM, .QuotM, .RemM);
+	   .SignedDivideE, .W64E, .StartDivideE, .SrcAE, .SrcBE, .BusyE, .DivDoneM, .QuotM, .RemM);
 	 	 
 	 // Result multiplexer
 	 always_comb
@@ -86,7 +86,7 @@ module muldiv (
 	 end
 
      // Writeback stage pipeline register
-	 
+
 	 flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);	 
 
       end else begin // no M instructions supported
