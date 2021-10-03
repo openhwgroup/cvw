@@ -7,6 +7,9 @@ define createCheckpoint
 
     # QEMU must also use TCP port 1240
     target extended-remote :1240
+    
+    # QEMU Config
+    maintenance packet Qqemu.PhyMemMode:1
 
     # Argument Parsing
     set $statePath=$arg1
@@ -29,14 +32,14 @@ define createCheckpoint
 
     # Log all registers to a file
     printf "GDB storing state to %s\n", $statePath
-    set logging file $statePath
+    eval "set logging file %s", $statePath
     set logging on
     info all-registers
     set logging off
 
     # Log main memory to a file
     printf "GDB storing RAM to %s\n", $ramPath
-    set logging file ../linux-testvectors/intermediate-outputs/ramGDB.txt
+    eval "set logging file %s", $ramPath
     set logging on
     x/134217728xb 0x80000000
     set logging off
