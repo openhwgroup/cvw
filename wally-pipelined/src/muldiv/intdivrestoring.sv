@@ -63,12 +63,12 @@ module intdivrestoring (
 
   // Take absolute value for signed operations
   neg #(`XLEN) negd(DSavedE, DnE);
-  mux2 #(`XLEN) dabsmux(DSavedE, DnE, SignedDivideE & SignDE, Din);  // take absolute value for signed operations
+  mux2 #(`XLEN) dabsmux(DnE, DSavedE, SignedDivideE & SignDE, DAbsB);  // take absolute value for signed operations, and negate for subtraction setp
   neg #(`XLEN) negx(XSavedE, XnE);
   mux2 #(`XLEN) xabsmux(XSavedE, XnE, SignedDivideE & SignXE, Xinit);  // need original X as remainder if doing divide by 0
 
   // Negate D for subtraction
-  assign DAbsB = ~Din;
+  //assign DAbsB = ~Din;
   // *** merge this into dabsmux if possible
   // Put suffixes on Xinit, init->DivInitE, Wn, XQn
 
