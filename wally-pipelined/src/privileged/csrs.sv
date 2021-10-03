@@ -74,30 +74,6 @@ module csrs #(parameter
       logic WriteSSCRATCHM, WriteSEPCM;
       logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
       logic [`XLEN-1:0] SSCRATCH_REGW, SCAUSE_REGW, STVAL_REGW;
-      var [`XLEN-1:0] initSSCRATCH, initSCAUSE, initSEPC, initSTVEC, initSEDELEG, initSIDELEG, initSATP;
-      var [31:0] initSCOUNTEREN;
-
-      initial begin
-      `ifdef CHECKPOINT
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SSCRATCH.txt"}, initSSCRATCH);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SCAUSE.txt"}, initSCAUSE);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SEPC.txt"}, initSEPC);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-STVEC.txt"}, initSTVEC);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SEDELEG.txt"}, initSEDELEG);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SIDELEG.txt"}, initSIDELEG);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SCOUNTEREN.txt"}, initSCOUNTEREN);
-        $readmemh({`LINUX_CHECKPOINT,"checkpoint-SATP.txt"}, initSATP);
-      `else
-        initSSCRATCH = `XLEN'b0;
-        initSCAUSE = `XLEN'b0;
-        initSEPC = `XLEN'b0;
-        initSTVEC = `XLEN'b0;
-        initSEDELEG = `XLEN'b0;
-        initSIDELEG = `XLEN'b0;
-        initSCOUNTEREN = 32'b0;
-        initSATP = `XLEN'b0;
-      `endif
-      end
       
       assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS)  && ~StallW;
       assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC) && ~StallW;
@@ -109,28 +85,28 @@ module csrs #(parameter
       assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN) && ~StallW;
 
       // CSRs
-      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, initSTVEC, STVEC_REGW); //busybear: change reset to 0
-      flopenr #(`XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW, initSSCRATCH);
-      flopenr #(`XLEN)     SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW, initSEPC); 
-      flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, initSCAUSE, SCAUSE_REGW);
+      flopenl #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `XLEN'b0, STVEC_REGW); //busybear: change reset to 0
+      flopenr #(`XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
+      flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
+      flopenl #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, `XLEN'b0, SCAUSE_REGW);
       if(`QEMU) assign STVAL_REGW = `XLEN'b0;
       else flopenr #(`XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
       if (`MEM_VIRTMEM)
-        flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW, initSATP);
+        flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
       else
         assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
       if (`BUSYBEAR == 1)
         flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, 32'b0, SCOUNTEREN_REGW);
       else if (`BUILDROOT == 1)
-        flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], initSCOUNTEREN, SCOUNTEREN_REGW);
+        flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], 32'h0, SCOUNTEREN_REGW);
       else
         flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, SCOUNTEREN_REGW);
       if (`N_SUPPORTED) begin
         logic WriteSEDELEGM, WriteSIDELEGM;
         assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
         assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
-        flopenl #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK /* 12'h1FF */, initSEDELEG, SEDELEG_REGW);
-        flopenl #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, initSIDELEG, SIDELEG_REGW);
+        flopenl #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK /* 12'h1FF */, `XLEN'b0, SEDELEG_REGW);
+        flopenl #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, `XLEN'b0, SIDELEG_REGW);
       end else begin
         assign SEDELEG_REGW = 0;
         assign SIDELEG_REGW = 0;

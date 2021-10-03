@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// regfile.sv
+// intdivrestoringstep.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu 2 October 2021
 // Modified: 
 //
-// Purpose: 3-port register file
+// Purpose: Restoring integer division using a shift register and subtractor
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,28 +25,16 @@
 
 `include "wally-config.vh"
 
-module regfile (
-  input  logic             clk, reset,
-  input  logic             we3, 
-  input  logic [ 4:0]      a1, a2, a3, 
-  input  logic [`XLEN-1:0] wd3, 
-  output logic [`XLEN-1:0] rd1, rd2);
+module intdivrestoringstep(
+  input  logic [`XLEN-1:0] W, XQ, DAbsB,
+  output logic [`XLEN-1:0] WOut, XQOut);
 
-  logic [`XLEN-1:0] rf[31:1];
-  integer i;
-
-  // three ported register file
-  // read two ports combinationally (A1/RD1, A2/RD2)
-  // write third port on rising edge of clock (A3/WD3/WE3)
-  // write occurs on falling edge of clock
-  // register 0 hardwired to 0
+  logic [`XLEN-1:0] WShift, WPrime;
+  logic qi, qib;
   
-  // reset is intended for simulation only, not synthesis
-    
-  always_ff @(negedge clk or posedge reset)
-    if (reset) for(i=1; i<32; i++) rf[i] <= 0;
-    else if (we3) rf[a3] <= wd3;	
-
-  assign #2 rd1 = (a1 != 0) ? rf[a1] : 0;
-  assign #2 rd2 = (a2 != 0) ? rf[a2] : 0;
+  assign {WShift, XQOut} = {W[`XLEN-2:0], XQ, qi};
+  assign {qib, WPrime} = {1'b0, WShift} + {1'b1, DAbsB} + 1; // subtractor, carry out determines quotient bit ***replace with add
+  assign qi = ~qib;
+  mux2 #(`XLEN) wrestoremux(WShift, WPrime, qi, WOut);
 endmodule
+

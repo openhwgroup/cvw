@@ -43,7 +43,7 @@ view wave
 do ./wave-dos/peripheral-waves.do
 
 -- Run the Simulation 
-#run 5000 
+#run 3600 
 run -all
 #quit
 noview ../testbench/testbench-imperas.sv
