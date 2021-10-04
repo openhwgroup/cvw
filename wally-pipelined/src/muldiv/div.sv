@@ -278,13 +278,14 @@ module otf #(parameter WIDTH=8)
    assign QMstar = R1Q;
 
 endmodule // otf8
-
+/*
 module adder #(parameter WIDTH=8) (input logic [WIDTH-1:0] a, b,
 				   output logic [WIDTH-1:0] y);
 
    assign y = a + b;
 
 endmodule // adder
+*/
 
 module fa (input logic a, b, c, output logic sum, carry);
 
