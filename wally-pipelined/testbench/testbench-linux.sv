@@ -38,7 +38,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*8700000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3100000; // # of instructions at which to turn on waves in graphical sim
   string ProgramAddrMapFile, ProgramLabelMapFile;
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -137,6 +137,7 @@ module testbench();
   integer           NumCSRWIndex;
   integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
+  integer           RequestDelayedMIP;
   
   // ------
   // Macros
@@ -246,9 +247,16 @@ module testbench();
           MarkerIndex += 2;
           // match MIP to QEMU's because interrupts are imprecise
           if(ExpectedCSRArrayM[NumCSRM].substr(0, 2) == "mip") begin
-            $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
-            MIPexpected = ExpectedCSRArrayValueM[NumCSRM];
-            force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+            $display("%tn: ExpectedCSRArrayM[7] (MEPC) = %x",$time,ExpectedCSRArrayM[7]);
+            $display("%tn: ExpectedPCM = %x",$time,ExpectedPCM);
+            // if PC does not equal MEPC, request delayed MIP is True
+            if(ExpectedPCM != ExpectedCSRArrayM[7]) begin
+              RequestDelayedMIP = 1;
+            end else begin
+              $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
+              MIPexpected = ExpectedCSRArrayValueM[NumCSRM];
+              force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+            end
           end 
           NumCSRM++;      
         end
@@ -326,6 +334,12 @@ module testbench();
   
   // step2: make all checks in the write back stage.
   always @(negedge clk) begin
+    if(RequestDelayedMIP) begin
+      $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueW[NumCSRM]);
+      MIPexpected = ExpectedCSRArrayValueW[NumCSRM];
+      force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+      RequestDelayedMIP = 0;
+    end
     // always check PC, instruction bits
     if (checkInstrW) begin
       InstrCountW += 1;
