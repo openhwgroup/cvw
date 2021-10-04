@@ -161,6 +161,10 @@ string tests32f[] = '{
   };
 
   string tests64m[] = '{
+    "rv64m/I-REMUW-01", "3000",
+    "rv64m/I-REMW-01", "3000",
+    "rv64m/I-DIVUW-01", "3000",
+    "rv64m/I-DIVW-01", "3000",
     "rv64m/I-MUL-01", "3000",
     "rv64m/I-MULH-01", "3000",
     "rv64m/I-MULHSU-01", "3000",
@@ -168,12 +172,8 @@ string tests32f[] = '{
     "rv64m/I-MULW-01", "3000",
     "rv64m/I-DIV-01", "3000",
     "rv64m/I-DIVU-01", "3000",
-    "rv64m/I-DIVUW-01", "3000",
-    "rv64m/I-DIVW-01", "3000",
     "rv64m/I-REM-01", "3000",
-    "rv64m/I-REMU-01", "3000",
-    "rv64m/I-REMUW-01", "3000",
-    "rv64m/I-REMW-01", "3000"
+    "rv64m/I-REMU-01", "3000"
   };
 
   string tests64ic[] = '{
@@ -318,14 +318,14 @@ string tests32f[] = '{
   };
 
   string tests32m[] = '{
+    "rv32m/I-DIVU-01", "2000",
+    "rv32m/I-REMU-01", "2000",
+    "rv32m/I-DIV-01", "2000",
+    "rv32m/I-REM-01", "2000",
     "rv32m/I-MUL-01", "2000",
     "rv32m/I-MULH-01", "2000",
     "rv32m/I-MULHSU-01", "2000",
-    "rv32m/I-MULHU-01", "2000",
-    "rv32m/I-DIV-01", "2000",
-    "rv32m/I-DIVU-01", "2000",
-    "rv32m/I-REM-01", "2000",
-    "rv32m/I-REMU-01", "2000"
+    "rv32m/I-MULHU-01", "2000"
   };
 
   string tests32ic[] = '{
@@ -536,11 +536,11 @@ string tests32f[] = '{
         tests = {tests64p,tests64i, tests64periph};
         if (`C_SUPPORTED) tests = {tests, tests64ic};
         else              tests = {tests, tests64iNOc};
-        if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
         if (`A_SUPPORTED) tests = {tests64a, tests};
+        if (`M_SUPPORTED) tests = {tests64m, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -551,12 +551,12 @@ string tests32f[] = '{
         tests = tests32p;
       else begin
           tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
-          if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
+          if (`C_SUPPORTED) tests = {tests, tests32ic};    
           else                       tests = {tests, tests32iNOc};
-          if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           if (`F_SUPPORTED) tests = {tests32f, tests};
           if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
           if (`A_SUPPORTED) tests = {tests32a, tests};
+          if (`M_SUPPORTED) tests = {tests32m, tests};
      end
     end
   end
@@ -607,9 +607,9 @@ string tests32f[] = '{
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      romfilename = {"../../imperas-riscv-tests/imperas-boottim.txt"};
+//      romfilename = {"../../imperas-riscv-tests/imperas-boottim.txt"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
-      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
+//      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -743,6 +743,7 @@ module riscvassertions();
   // Legal number of PMP entries are 0, 16, or 64
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
+    assert (`DIV_BITSPERCYCLE == 1 || `DIV_BITSPERCYCLE==2 || `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
     assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
     assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 || `MEM_DCACHE == 0 || `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
