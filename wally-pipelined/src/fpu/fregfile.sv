@@ -1,10 +1,9 @@
 ///////////////////////////////////////////
-// regfile.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Modified: James Stine 
 //
-// Purpose: 4-port register file
+// Purpose: 3-port output register file
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -26,22 +25,20 @@
 `include "wally-config.vh"
 
 module fregfile (
-  input  logic        clk, reset,
-  input  logic        we4, 
-  input  logic [ 4:0] a1, a2, a3, a4, 
-  input  logic [63:0] wd4,
+  input logic 	      clk, reset,
+  input logic 	      we4, 
+  input logic [4:0]   a1, a2, a3, a4, 
+  input logic [63:0]  wd4,
   output logic [63:0] rd1, rd2, rd3);
-
-  logic [63:0] rf[31:0];
-  integer i;
-
-  // three ported register file
-  // read three ports combinationally (A1/RD1, A2/RD2, A3/RD3)
-  // write fourth port on rising edge of clock (A4/WD4/WE4)
-  // write occurs on falling edge of clock
-  
-  // reset is intended for simulation only, not synthesis
-    
+   
+   logic [63:0]       rf[31:0];
+   integer 	      i;
+   
+   // three ported register file
+   // read three ports combinationally (A1/RD1, A2/RD2, A3/RD3)
+   // write fourth port on rising edge of clock (A4/WD4/WE4)
+   // write occurs on falling edge of clock   
+   
    always_ff @(negedge clk or posedge reset)
      if (reset) for(i=0; i<32; i++) rf[i] <= 0;
      else if (we4) rf[a4] <= wd4;	
