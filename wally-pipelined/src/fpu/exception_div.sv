@@ -23,9 +23,10 @@ module exception_div (
    logic 	      BNaN; 		// '1' if B is a not-a-number
    logic 	      ASNaN;	 	// '1' if A is a signalling not-a-number
    logic 	      BSNaN;	 	// '1' if B is a signalling not-a-number
-   logic 	      ZQNaN;	 	// '1' if result Z is a quiet NaN
+   logic 	      ZSNaN;	 	// '1' if result Z is a quiet NaN
    logic 	      ZInf;	 	// '1' if result Z is an infnity
-   logic 	      Zero;             // '1' if result is zero   
+   logic 	      Zero;             // '1' if result is zero
+   logic              NegSqrt;          // '1' if sqrt and operand is negative   
    
    //***take this module out and add more registers or just recalculate it all
    // Determine if mantissas are all zeros
@@ -48,32 +49,34 @@ module exception_div (
    assign AZero = AzeroE & AzeroM;
    assign BZero = BzeroE & BzeroE;
 
+   // Is NaN if operand is negative and its a sqrt
+   assign NegSqrt = (A[63] & op_type & ~AZero);
+
    // An "Invalid Operation" exception occurs if (A or B is a signalling NaN)
    // or (A and B are both Infinite)
    assign Invalid = ASNaN | BSNaN | (((AInf & BInf) | (AZero & BZero))&~op_type) | 
-		    (A[63] & op_type);
-
+		    NegSqrt;
 
    // The result is a quiet NaN if (an "Invalid Operation" exception occurs) 
    // or (A is a NaN) or (B is a NaN).
-   assign ZQNaN = Invalid | ANaN | BNaN;
+   assign ZSNaN = Invalid | ANaN | BNaN;
 
    //  The result is zero
    assign Zero = (AZero | BInf)&~op_type | AZero&op_type;   
 
    // The result is +Inf if ((A is Inf) or (B is 0)) and (the
    // result is not a quiet NaN).  
-   assign ZInf = (AInf | BZero)&~ZQNaN&~op_type | AInf&op_type&~ZQNaN;   
+   assign ZInf = (AInf | BZero)&~ZSNaN&~op_type | AInf&op_type&~ZSNaN;   
 
    // Set the type of the result as follows:
    // Ztype	Result 
    //  000     Normal
-   //  001     Quiet NaN
    //  010     Infinity
    //  011     Zero
-   //  110     DivZero
-   assign Ztype[0] = ZQNaN | Zero;
-   assign Ztype[1] = ZInf | Zero;
-   assign Ztype[2] = BZero&~op_type;   
-
+   //  110     Div by 0
+   //  111     SNaN
+   assign Ztype[2] = (ZSNaN);
+   assign Ztype[1] = (ZSNaN) | (Zero) | (ZInf);
+   assign Ztype[0] = (ZSNaN) | (Zero);
+   
 endmodule // exception
