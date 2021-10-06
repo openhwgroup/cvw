@@ -9,16 +9,6 @@
 ./testfloat_gen -rmax f64_sub > f64_sub_ru.tv
 ./testfloat_gen -rmin f64_sub > f64_sub_rd.tv
 
-./testfloat_gen -rnear_even f64_mul > f64_mul_rne.tv
-./testfloat_gen -rminMag f64_mul > f64_mul_rz.tv
-./testfloat_gen -rmax f64_mul > f64_mul_ru.tv
-./testfloat_gen -rmin f64_mul > f64_mul_rd.tv
-
-./testfloat_gen -rnear_even f64_mulAdd > f64_fma_rne.tv
-./testfloat_gen -rminMag f64_mulAdd > f64_fma_rz.tv
-./testfloat_gen -rmax f64_mulAdd > f64_fma_ru.tv
-./testfloat_gen -rmin f64_mulAdd > f64_fma_rd.tv
-
 ./testfloat_gen -rnear_even f64_div > f64_div_rne.tv
 ./testfloat_gen -rminMag f64_div > f64_div_rz.tv
 ./testfloat_gen -rmax f64_div > f64_div_ru.tv
