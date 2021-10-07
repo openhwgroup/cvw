@@ -34,12 +34,14 @@ stateGDBpath = outDir+'intermediate-outputs/stateGDB.txt'
 if not os.path.exists(stateGDBpath):
     sys.exit('Error input file '+stateGDBpath+'not found')
 
-listCSRs = ['hpmcounter','pmpcfg','pmpaddr']
-singleCSRs = ['mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','mcounteren','sscratch','scause','sepc','stvec','sedeleg','sideleg','scounteren','satp','mstatus']
+singleCSRs = ['mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus']
+thirtyTwoBitCSRs = ['mcounteren','scounteren']
+listCSRs = ['hpmcounter','pmpaddr']
+pmpcfg = ['pmpcfg']
 
 # Initialize List CSR files to empty
 # (because later we'll open them in append mode)
-for csr in listCSRs:
+for csr in listCSRs+pmpcfg:
     outFileName = 'checkpoint-'+csr.upper() 
     outFile = open(outDir+outFileName, 'w')
     outFile.close()
@@ -73,9 +75,24 @@ with open(stateGDBpath, 'r') as stateGDB:
                 outFile = open(outDir+outFileName, 'w')
                 outFile.write(val+'\n')
                 outFile.close()
+            if name in thirtyTwoBitCSRs: 
+                outFileName = 'checkpoint-'+name.upper() 
+                outFile = open(outDir+outFileName, 'w')
+                val = int(val,16) & 0xffffffff
+                outFile.write(hex(val)[2:]+'\n')
+                outFile.close()
             elif name.strip('0123456789') in listCSRs:
                 outFileName = 'checkpoint-'+name.upper().strip('0123456789')
                 outFile = open(outDir+outFileName, 'a')
                 outFile.write(val+'\n')
                 outFile.close()
+            elif name.strip('0123456789') in pmpcfg:
+                outFileName = 'checkpoint-'+name.upper().strip('0123456789')
+                outFile = open(outDir+outFileName, 'a')
+                fourPmp = int(val,16)
+                for i in range(4):
+                    byte = (fourPmp >> 4*i) & 0xf
+                    outFile.write(hex(byte)[2:]+'\n')
+                outFile.close()
+
 print("Finished parsing state!")
