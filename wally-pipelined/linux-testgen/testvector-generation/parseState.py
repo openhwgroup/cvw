@@ -47,7 +47,7 @@ for csr in listCSRs:
 # Initial State for Main Loop
 currState = 'regFile'
 regFileIndex = 0
-outFileName = 'checkpoint-regfile.txt'
+outFileName = 'checkpoint-RF'
 outFile = open(outDir+outFileName, 'w')
 
 # Main Loop
@@ -60,7 +60,9 @@ with open(stateGDBpath, 'r') as stateGDB:
             if (regFileIndex == 0 and name != 'zero'):
                 print('Whoops! Expected regFile registers to come first, starting with zero')
                 exit(1)
-            outFile.write(val+'\n')
+            if (name != 'zero'):
+                # Wally doesn't need to know zero=0
+                outFile.write(val+'\n')
             regFileIndex += 1
             if (regFileIndex == 32):
                 outFile.close()
