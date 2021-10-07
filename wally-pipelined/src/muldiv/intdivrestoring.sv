@@ -125,7 +125,7 @@ module intdivrestoring (
             DivDoneM = 1;
         end
     end else if (DivDoneM) begin
-        DivDoneM = 0;
+        DivDoneM = StallM;
         BusyE = 0;
     end 
 
