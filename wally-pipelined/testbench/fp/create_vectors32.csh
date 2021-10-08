@@ -9,16 +9,6 @@
 ./testfloat_gen -rmax f32_sub > f32_sub_ru.tv
 ./testfloat_gen -rmin f32_sub > f32_sub_rd.tv
 
-./testfloat_gen -rnear_even f32_mul > f32_mul_rne.tv
-./testfloat_gen -rminMag f32_mul > f32_mul_rz.tv
-./testfloat_gen -rmax f32_mul > f32_mul_ru.tv
-./testfloat_gen -rmin f32_mul > f32_mul_rd.tv
-
-./testfloat_gen -rnear_even f32_mulAdd > f32_fma_rne.tv
-./testfloat_gen -rminMag f32_mulAdd > f32_fma_rz.tv
-./testfloat_gen -rmax f32_mulAdd > f32_fma_ru.tv
-./testfloat_gen -rmin f32_mulAdd > f32_fma_rd.tv
-
 ./testfloat_gen -rnear_even f32_div > f32_div_rne.tv
 ./testfloat_gen -rminMag f32_div > f32_div_rz.tv
 ./testfloat_gen -rmax f32_div > f32_div_ru.tv
