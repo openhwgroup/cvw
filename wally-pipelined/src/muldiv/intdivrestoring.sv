@@ -40,26 +40,28 @@ module intdivrestoring (
 
   logic [`XLEN-1:0] WE[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] XQE[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DinE, XinE, DnE, DAbsBE, XnE, XInitE, WM, XQM, WnM, XQnM;
+  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WM, XQM, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
   logic DivInitE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
+
+  logic [`XLEN-1:0] WNextE, XQNextE;
  
   // save inputs on the negative edge of the execute clock.  
   // This is unusual practice, but the inputs are not guaranteed to be stable due to some hazard and forwarding logic.
   // Saving the inputs is the most hardware-efficient way to fix the issue.
-  flopen #(`XLEN) xsavereg(~clk, DivStartE, SrcAE, XSavedE);
-  flopen #(`XLEN) dsavereg(~clk, DivStartE, SrcBE, DSavedE); 
+  //flopen #(`XLEN) xsavereg(~clk, DivStartE, SrcAE, XSavedE);
+ // flopen #(`XLEN) dsavereg(~clk, DivStartE, SrcBE, DSavedE); 
 
   // Handle sign extension for W-type instructions
   generate
     if (`XLEN == 64) begin // RV64 has W-type instructions
-      mux2 #(`XLEN) xinmux(XSavedE, {XSavedE[31:0], 32'b0}, W64E, XinE);
-      mux2 #(`XLEN) dinmux(DSavedE, {{32{DSavedE[31]&DivSignedE}}, DSavedE[31:0]}, W64E, DinE);
+      mux2 #(`XLEN) xinmux(SrcAE, {SrcAE[31:0], 32'b0}, W64E, XinE);
+      mux2 #(`XLEN) dinmux(SrcBE, {{32{SrcBE[31]&DivSignedE}}, SrcBE[31:0]}, W64E, DinE);
 	end else begin // RV32 has no W-type instructions
-      assign XinE = XSavedE;
-      assign DinE = DSavedE;	    
+      assign XinE = SrcAE;
+      assign DinE = SrcBE;	    
     end   
   endgenerate 
 
@@ -69,10 +71,9 @@ module intdivrestoring (
   assign Div0E = (DinE == 0);
 
   // pipeline registers
-  flopenrc #(1) Div0eMReg(clk, reset, FlushM, ~StallM, Div0E, Div0M);
-  flopenrc #(1) SignDMReg(clk, reset, FlushM, ~StallM, SignDE, SignDM);
-  flopenrc #(1) SignXMReg(clk, reset, FlushM, ~StallM, SignXE, SignXM);
-  flopenrc #(`XLEN) XSavedMReg(clk, reset, FlushM, ~StallM, XSavedE, XSavedM); // is this truly necessary?
+  flopen #(1) Div0eMReg(clk, DivStartE, Div0E, Div0M);
+  flopen #(1) SignDMReg(clk, DivStartE, SignDE, SignDM);
+  flopen #(1) SignXMReg(clk, DivStartE, SignXE, SignXM);
 
   // Take absolute value for signed operations, and negate D to handle subtraction in divider stages
   neg #(`XLEN) negd(DinE, DnE);
@@ -81,19 +82,25 @@ module intdivrestoring (
   mux2 #(`XLEN) xabsmux(XinE, XnE, SignXE, XInitE);  // need original X as remainder if doing divide by 0
 
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
-  mux2 #(`XLEN) wmux(WM, {`XLEN{1'b0}}, DivInitE, WE[0]);
-  mux2 #(`XLEN) xmux(XQM, XInitE, DivInitE, XQE[0]);
+  mux2 #(`XLEN) wmux(WE[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNextE);
+  mux2 #(`XLEN) xmux(XQE[`DIV_BITSPERCYCLE], XInitE, DivStartE, XQNextE);
 
+  // registers before division steps
+  // *** maybe change this stuff to M stage
+  flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
+  flopen #(`XLEN) wreg(clk, BusyE | DivStartE, WNextE, WE[0]); // *** merge Busy and start without combinational loop
+  flopen #(`XLEN) xreg(clk, BusyE | DivStartE, XQNextE, XQE[0]);
+  flopen #(`XLEN) XSavedMReg(clk, DivStartE, SrcAE, XSavedM); 
+  
   // one copy of divstep for each bit produced per cycle
   generate
       genvar i;
       for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
-        intdivrestoringstep divstep(WE[i], XQE[i], DAbsBE, WE[i+1], XQE[i+1]);
+        intdivrestoringstep divstep(WE[i], XQE[i], DAbsBM, WE[i+1], XQE[i+1]);
   endgenerate
 
-  // registers after division steps
-  flopen #(`XLEN) wreg(clk, BusyE, WE[`DIV_BITSPERCYCLE], WM); 
-  flopen #(`XLEN) xreg(clk, BusyE, XQE[`DIV_BITSPERCYCLE], XQM);
+  assign WM = WE[0];
+  assign XQM = XQE[0];
 
   // Output selection logic in Memory Stage
   // On final setp of signed operations, negate outputs as needed
@@ -112,7 +119,7 @@ module intdivrestoring (
     end else if (DivStartE & ~StallM) begin 
         if (Div0E) DivDoneM = 1;
         else begin
-            BusyE = 1; step = 0; DivInitE = 1;
+            BusyE = 1; step = 0; DivInitE = 1; // *** can drop DivInit
         end
     end else if (BusyE & ~DivDoneM) begin // pause one cycle at beginning of signed operations for absolute value
         DivInitE = 0;
