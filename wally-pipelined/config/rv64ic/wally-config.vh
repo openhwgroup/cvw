@@ -35,7 +35,7 @@
 `define XLEN 64
 
 // MISA RISC-V configuration per specification
-`define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
@@ -67,7 +67,7 @@
 
 // Integer Divider Configuration
 // DIV_BITSPERCYCLE must be 1, 2, or 4
-`define DIV_BITSPERCYCLE 1
+`define DIV_BITSPERCYCLE 4
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64
