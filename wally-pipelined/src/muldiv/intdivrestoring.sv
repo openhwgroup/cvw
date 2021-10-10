@@ -32,9 +32,9 @@ module intdivrestoring (
   input  logic reset,
   input  logic StallM, FlushM,
   input  logic DivSignedE, W64E,
-  input  logic DivStartE,
+  input  logic DivE,
   input  logic [`XLEN-1:0] SrcAE, SrcBE,
-  output logic BusyE, DivDoneM,
+  output logic DivBusyE, 
   output logic [`XLEN-1:0] QuotM, RemM
  );
 
@@ -44,7 +44,8 @@ module intdivrestoring (
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
-  logic DivInitE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
+  logic DivStartE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
+  logic BusyE, DivDoneM;
 
   logic [`XLEN-1:0] WNextE, XQNextE;
  
@@ -53,6 +54,9 @@ module intdivrestoring (
   // Saving the inputs is the most hardware-efficient way to fix the issue.
   //flopen #(`XLEN) xsavereg(~clk, DivStartE, SrcAE, XSavedE);
  // flopen #(`XLEN) dsavereg(~clk, DivStartE, SrcBE, DSavedE); 
+
+  assign DivStartE = DivE & ~BusyE & ~DivDoneM; 
+  assign DivBusyE = BusyE | DivStartE;
 
   // Handle sign extension for W-type instructions
   generate
@@ -112,26 +116,23 @@ module intdivrestoring (
   mux3 #(`XLEN) qmux(XQM, XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
   mux3 #(`XLEN) remmux(WM, WnM, XSavedM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
 
-  // Divider FSM to sequence Init, Busy, and Done
+  // Divider FSM to sequence Busy, and Done
   always_ff @(posedge clk) 
     if (reset) begin
-        BusyE = 0; DivDoneM = 0; step = 0; DivInitE = 0;
+        BusyE = 0; DivDoneM = 0; step = 0; 
     end else if (DivStartE & ~StallM) begin 
         if (Div0E) DivDoneM = 1;
         else begin
-            BusyE = 1; step = 0; DivInitE = 1; // *** can drop DivInit
+            BusyE = 1; step = 0; 
         end
     end else if (BusyE & ~DivDoneM) begin // pause one cycle at beginning of signed operations for absolute value
-        DivInitE = 0;
         step = step + 1;
         if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
-            step = 0;
             BusyE = 0;
             DivDoneM = 1;
         end
     end else if (DivDoneM) begin
         DivDoneM = StallM;
-        BusyE = 0;
     end 
 
 endmodule 
