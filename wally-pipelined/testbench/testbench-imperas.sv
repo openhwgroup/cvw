@@ -46,14 +46,14 @@ module testbench();
 
   string tests32mmu[] = '{
     "rv32mmu/WALLY-MMU-SV32", "3000"
-    //"rv32mmu/WALLY-PMA", "3000",
+    //"rv32mmu/WALLY-PMP", "3000",
     //"rv32mmu/WALLY-PMA", "3000"
     };
 
   string tests64mmu[] = '{
     "rv64mmu/WALLY-MMU-SV48", "3000",
-    "rv64mmu/WALLY-MMU-SV39", "3000"
-    //"rv64mmu/WALLY-PMA", "3000",
+    "rv64mmu/WALLY-MMU-SV39", "3000",
+    "rv64mmu/WALLY-PMP", "3000"
     //"rv64mmu/WALLY-PMA", "3000"
   };
 
@@ -539,8 +539,8 @@ string tests32f[] = '{
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
         if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
-        if (`A_SUPPORTED) tests = {tests64a, tests};
-        if (`M_SUPPORTED) tests = {tests64m, tests};
+        //if (`A_SUPPORTED) tests = {tests64a, tests};
+        //if (`M_SUPPORTED) tests = {tests64m, tests};
       end
       //tests = {tests64a, tests};
     end else begin // RV32
@@ -676,7 +676,7 @@ string tests32f[] = '{
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.RAM[testadr+i], signature[i]);
-              $stop;//***debug
+              //$stop;//***debug
             end
           end
           i = i + 1;
