@@ -49,7 +49,7 @@ module muldiv (
 	 logic [`XLEN*2-1:0] ProdE, ProdM; 
 
 	 logic 		     StartDivideE, BusyE, DivDoneM;
-	 logic 		     SignedDivideE;	
+	 logic 		     DivSignedE;	
 	 logic           W64M; 
 	 
 	 // Multiplier
@@ -60,9 +60,9 @@ module muldiv (
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	 assign StartDivideE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneM; 
 	 assign DivBusyE = StartDivideE | BusyE;
-	 assign SignedDivideE = ~Funct3E[0];
+	 assign DivSignedE = ~Funct3E[0];
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .W64E, .StartDivideE, .SrcAE, .SrcBE, .BusyE, .DivDoneM, .QuotM, .RemM);
+	   .DivSignedE, .W64E, .StartDivideE, .SrcAE, .SrcBE, .BusyE, .DivDoneM, .QuotM, .RemM);
 	 	 
 	 // Result multiplexer
 	 always_comb
