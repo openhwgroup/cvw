@@ -89,13 +89,16 @@ module fpu (
      logic [10:0] 	  BiasE;                   // bias based on precision (single=7f double=3ff - max expoent/2)
      logic 		  XNaNE, YNaNE, ZNaNE;           // is the input a NaN - execute stage
      logic 		  XNaNM, YNaNM, ZNaNM;           // is the input a NaN - memory stage
+     logic       XNaNQ, YNaNQ;                  // is the input a NaN - divide
      logic 		  XSNaNE, YSNaNE, ZSNaNE;        // is the input a signaling NaN - execute stage
      logic 		  XSNaNM, YSNaNM, ZSNaNM;        // is the input a signaling NaN - memory stage
      logic 		  XDenormE, YDenormE, ZDenormE;  // is the input denormalized
      logic 		  XZeroE, YZeroE, ZZeroE;        // is the input zero - execute stage
      logic 		  XZeroM, YZeroM, ZZeroM;        // is the input zero - memory stage
+     logic       XZeroQ, YZeroQ;                // is the input zero - divide
      logic 		  XInfE, YInfE, ZInfE;           // is the input infinity - execute stage
      logic 		  XInfM, YInfM, ZInfM;           // is the input infinity - memory stage
+     logic       XInfQ, YInfQ;                  // is the input infinity - divide
      logic 		  XExpMaxE;                      // is the exponent all ones (max value)
      logic 		  XNormE;                 // is normal     
      
@@ -180,7 +183,7 @@ module fpu (
      //   - handles FMA and multiply instructions
      fma fma (.clk, .reset, .FlushM, .StallM, 
 	      .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
-	      .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .BiasE, 
+	      .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE,
 	      .XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
 	      .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
 	      .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
