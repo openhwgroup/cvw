@@ -34,31 +34,28 @@ configs = [
         grepstr="8500000 instructions"
     ),
     TestCase(
-        name="arch64",
-        cmd="vsim > {} -c <<!\ndo wally-arch.do ../config/rv64ic rv64ic\n!",
-        grepstr="All tests ran without failures"
-    ),
-    TestCase(
-        name="arch32",
-        cmd="vsim > {} -c <<!\ndo wally-arch.do ../config/rv32ic rv32ic\n!",
-        grepstr="All tests ran without failures"
-    ),
-    TestCase(
-        name="rv32ic",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv32ic rv32ic\n!",
-        grepstr="All tests ran without failures"
-    ),
-    TestCase(
-        name="rv64ic",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do ../config/rv64ic rv64ic\n!",
-        grepstr="All tests ran without failures"
-    ),
-    TestCase(
         name="lints",
         cmd="../lint-wally &> {}",
         grepstr="All lints run with no errors or warnings"
     ),
 ]
+
+tests64 = ["arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
+for test in tests64:
+  tc = TestCase(
+        name=test,
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64g "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
+for test in tests32:
+  tc = TestCase(
+        name=test,
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32g "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
 
 import os
 from multiprocessing import Pool, TimeoutError
@@ -70,7 +67,7 @@ def search_log_for_text(text, logfile):
 
 def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
-    logname = "regression_logs/wally_"+config.name+".log"
+    logname = "logs/wally_"+config.name+".log"
     cmd = config.cmd.format(logname)
     print(cmd)
     os.system(cmd)
@@ -85,13 +82,13 @@ def run_test_case(config):
 def main():
     """Run the tests and count the failures"""
     # Scale the number of concurrent processes to the number of test cases, but
-    # max out at 12 concurrent processes to not overwhelm the system
+    # max out at a limited number of concurrent processes to not overwhelm the system
     TIMEOUT_DUR = 1800 # seconds
     try:
-        os.mkdir("regression_logs")
+        os.mkdir("logs")
     except:
         pass
-    with Pool(processes=min(len(configs),12)) as pool:
+    with Pool(processes=min(len(configs),25)) as pool:
        num_fail = 0
        results = {}
        for config in configs:
