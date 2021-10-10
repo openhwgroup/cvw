@@ -38,9 +38,9 @@ module intdivrestoring (
   output logic [`XLEN-1:0] QuotM, RemM
  );
 
-  logic [`XLEN-1:0] WE[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] XQE[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WM, XQM, WnM, XQnM;
+  logic [`XLEN-1:0] WM[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] XQM[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
@@ -49,6 +49,10 @@ module intdivrestoring (
 
   logic [`XLEN-1:0] WNextE, XQNextE;
  
+  //////////////////////////////
+  // Execute Stage: prepare for division calculation with control logic, W logic and absolute values, initialize W and XQ
+  //////////////////////////////
+
   // Divider control signals
   assign DivStartE = DivE & ~BusyE & ~DivDoneM; 
   assign DivBusyE = BusyE | DivStartE;
@@ -75,41 +79,43 @@ module intdivrestoring (
   neg #(`XLEN) negx(XinE, XnE);
   mux3 #(`XLEN) xabsmux(XinE, XnE, SrcAE, {Div0E, SignXE}, XInitE);  // take absolute value for signed operations, or keep original value for divide by 0
 
-  // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
-  mux2 #(`XLEN) wmux(WE[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNextE);
-  mux2 #(`XLEN) xmux(XQE[`DIV_BITSPERCYCLE], XInitE, DivStartE, XQNextE);
+  // initialization multiplexers on first cycle of operation
+  mux2 #(`XLEN) wmux(WM[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNextE);
+  mux2 #(`XLEN) xmux(XQM[`DIV_BITSPERCYCLE], XInitE, DivStartE, XQNextE);
+
+  //////////////////////////////
+  // Memory Stage: division iterations, output sign correction
+  //////////////////////////////
 
   // registers before division steps
   // *** maybe change this stuff to M stage
-  flopen #(`XLEN) wreg(clk, DivBusyE, WNextE, WE[0]); 
-  flopen #(`XLEN) xreg(clk, DivBusyE, XQNextE, XQE[0]);
+  flopen #(`XLEN) wreg(clk, DivBusyE, WNextE, WM[0]); 
+  flopen #(`XLEN) xreg(clk, DivBusyE, XQNextE, XQM[0]);
   flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
-  flopen #(1) Div0eMReg(clk, DivStartE, Div0E, Div0M);
-  flopen #(1) SignDMReg(clk, DivStartE, SignDE, SignDM);
-  flopen #(1) SignXMReg(clk, DivStartE, SignXE, SignXM);
+  flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, SignDE, SignXE}, {Div0M, SignDM, SignXM});
   
   // one copy of divstep for each bit produced per cycle
   generate
       genvar i;
       for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
-        intdivrestoringstep divstep(WE[i], XQE[i], DAbsBM, WE[i+1], XQE[i+1]);
+        intdivrestoringstep divstep(WM[i], XQM[i], DAbsBM, WM[i+1], XQM[i+1]);
   endgenerate
-
-  assign WM = WE[0]; // *** move to M stage
-  assign XQM = XQE[0];
 
   // Output selection logic in Memory Stage
   // On final setp of signed operations, negate outputs as needed
   assign NegWM = SignXM; // Remainder should have same sign as X 
   assign NegQM = SignXM ^ SignDM; // Quotient should be negative if one operand is positive and the other is negative
-  neg #(`XLEN) wneg(WM, WnM);
-  neg #(`XLEN) qneg(XQM, XQnM);
+  neg #(`XLEN) qneg(XQM[0], XQnM);
+  neg #(`XLEN) wneg(WM[0], WnM);
   // Select appropriate output: normal, negated, or for divide by zero
-  mux3 #(`XLEN) qmux(XQM, XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
-  mux3 #(`XLEN) remmux(WM, WnM, XQM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
+  mux3 #(`XLEN) qmux(XQM[0], XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
+  mux3 #(`XLEN) remmux(WM[0], WnM, XQM[0], {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
 
-  // Divider FSM to sequence Busy, and Done
-  always_ff @(posedge clk) 
+  //////////////////////////////
+  // Divider FSM to sequence Busy and Done
+  //////////////////////////////
+
+ always_ff @(posedge clk) 
     if (reset) begin
         BusyE = 0; DivDoneM = 0; step = 0; 
     end else if (DivStartE & ~StallM) begin 
@@ -126,6 +132,8 @@ module intdivrestoring (
     end else if (DivDoneM) begin
         DivDoneM = StallM;
     end 
+
+  //counter #(STEPBITS+1) stepcnt(clk, cntrst, cnten, step);
 
 endmodule 
 
