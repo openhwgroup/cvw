@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 0
+`define DEBUG_TRACE 2
 // Debug Levels
 // 0: don't check against QEMU
 // 1: print disagreements with QEMU, but only halt on PCW disagreements
@@ -359,7 +359,7 @@ module testbench();
         end
         if (RegWriteW == "GPR") begin
           `checkEQ("Reg Write Address",dut.hart.ieu.dp.regf.a3,ExpectedRegAdrW)
-          $sprintf(name,"RF[%02d]",ExpectedRegAdrW);
+          $sformat(name,"RF[%02d]",ExpectedRegAdrW);
           `checkEQ(name, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
