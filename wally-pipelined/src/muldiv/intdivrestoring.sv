@@ -42,7 +42,7 @@ module intdivrestoring (
   logic [`XLEN-1:0] XQM[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
-  logic [STEPBITS:0] step;
+  logic [STEPBITS:0] step, step2;
   logic Div0E, Div0M;
   logic DivStartE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
   logic BusyE, DivDoneM;
@@ -118,11 +118,10 @@ module intdivrestoring (
     if (reset) begin
         BusyE = 0; DivDoneM = 0; step = 0; 
     end else if (DivStartE) begin 
+        step = 0;
         if (Div0E) DivDoneM = 1;
-        else begin
-            BusyE = 1; step = 0; 
-        end
-    end else if (BusyE & ~DivDoneM) begin // pause one cycle at beginning of signed operations for absolute value
+        else       BusyE = 1;
+    end else if (BusyE) begin // pause one cycle at beginning of signed operations for absolute value
         step = step + 1;
         if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
             BusyE = 0;
@@ -131,8 +130,30 @@ module intdivrestoring (
     end else if (DivDoneM) begin
         DivDoneM = StallM;
     end 
+ /*
+  logic NextDivDoneE, NextDivBusyE;
+  always_comb begin
+    if (DivStartE) 
+      if (Div0E) begin
+        NextDivDoneM = 1; NextDivBusyE = 0;
+      end else begin
+        NextDivDoneM = 0; NextDivBusyE = 1;
+      end
+    else if (BusyE)
+      if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin
+        NextDivDoneM = 1; NextDivBusyE = 0;
+      end else begin
+        NextDivDoneM = 0; NextDivBusyE = 1;
+      end
+    else if (DivDoneE) begin
+      NextDivDoneE = StallM;
+      NextDivBusyE = 0;
+    end
+  end
 
-  //counter #(STEPBITS+1) stepcnt(clk, cntrst, cnten, step);
+  flopr #(2) divfsmregs(clk, reset, {NextDivDoneM, NextBusyE}, {DivDoneM, BusyE}); */
+  counter #(STEPBITS+1) stepcnt(.clk, .reset(DivStartE), .en(BusyE), .q(step2));
+//  assert (step == step2) else $warning("counters disagree");
 
 endmodule 
 
