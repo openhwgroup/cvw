@@ -40,7 +40,7 @@ module intdivrestoring (
 
   logic [`XLEN-1:0] WE[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] XQE[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] DSavedE, XSavedE, XSavedM, DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WM, XQM, WnM, XQnM;
+  logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WM, XQM, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
@@ -49,12 +49,7 @@ module intdivrestoring (
 
   logic [`XLEN-1:0] WNextE, XQNextE;
  
-  // save inputs on the negative edge of the execute clock.  
-  // This is unusual practice, but the inputs are not guaranteed to be stable due to some hazard and forwarding logic.
-  // Saving the inputs is the most hardware-efficient way to fix the issue.
-  //flopen #(`XLEN) xsavereg(~clk, DivStartE, SrcAE, XSavedE);
- // flopen #(`XLEN) dsavereg(~clk, DivStartE, SrcBE, DSavedE); 
-
+  // Divider control signals
   assign DivStartE = DivE & ~BusyE & ~DivDoneM; 
   assign DivBusyE = BusyE | DivStartE;
 
@@ -63,7 +58,7 @@ module intdivrestoring (
     if (`XLEN == 64) begin // RV64 has W-type instructions
       mux2 #(`XLEN) xinmux(SrcAE, {SrcAE[31:0], 32'b0}, W64E, XinE);
       mux2 #(`XLEN) dinmux(SrcBE, {{32{SrcBE[31]&DivSignedE}}, SrcBE[31:0]}, W64E, DinE);
-	end else begin // RV32 has no W-type instructions
+	  end else begin // RV32 has no W-type instructions
       assign XinE = SrcAE;
       assign DinE = SrcBE;	    
     end   
@@ -74,16 +69,11 @@ module intdivrestoring (
   assign SignXE = DivSignedE & XinE[`XLEN-1];
   assign Div0E = (DinE == 0);
 
-  // pipeline registers
-  flopen #(1) Div0eMReg(clk, DivStartE, Div0E, Div0M);
-  flopen #(1) SignDMReg(clk, DivStartE, SignDE, SignDM);
-  flopen #(1) SignXMReg(clk, DivStartE, SignXE, SignXM);
-
   // Take absolute value for signed operations, and negate D to handle subtraction in divider stages
   neg #(`XLEN) negd(DinE, DnE);
   mux2 #(`XLEN) dabsmux(DnE, DinE, SignDE, DAbsBE);  // take absolute value for signed operations, and negate for subtraction setp
   neg #(`XLEN) negx(XinE, XnE);
-  mux2 #(`XLEN) xabsmux(XinE, XnE, SignXE, XInitE);  // need original X as remainder if doing divide by 0
+  mux3 #(`XLEN) xabsmux(XinE, XnE, SrcAE, {Div0E, SignXE}, XInitE);  // take absolute value for signed operations, or keep original value for divide by 0
 
   // initialization multiplexers on first cycle of operation (one cycle after start is asserted)
   mux2 #(`XLEN) wmux(WE[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNextE);
@@ -91,10 +81,12 @@ module intdivrestoring (
 
   // registers before division steps
   // *** maybe change this stuff to M stage
+  flopen #(`XLEN) wreg(clk, DivBusyE, WNextE, WE[0]); 
+  flopen #(`XLEN) xreg(clk, DivBusyE, XQNextE, XQE[0]);
   flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
-  flopen #(`XLEN) wreg(clk, BusyE | DivStartE, WNextE, WE[0]); // *** merge Busy and start without combinational loop
-  flopen #(`XLEN) xreg(clk, BusyE | DivStartE, XQNextE, XQE[0]);
-  flopen #(`XLEN) XSavedMReg(clk, DivStartE, SrcAE, XSavedM); 
+  flopen #(1) Div0eMReg(clk, DivStartE, Div0E, Div0M);
+  flopen #(1) SignDMReg(clk, DivStartE, SignDE, SignDM);
+  flopen #(1) SignXMReg(clk, DivStartE, SignXE, SignXM);
   
   // one copy of divstep for each bit produced per cycle
   generate
@@ -103,7 +95,7 @@ module intdivrestoring (
         intdivrestoringstep divstep(WE[i], XQE[i], DAbsBM, WE[i+1], XQE[i+1]);
   endgenerate
 
-  assign WM = WE[0];
+  assign WM = WE[0]; // *** move to M stage
   assign XQM = XQE[0];
 
   // Output selection logic in Memory Stage
@@ -114,7 +106,7 @@ module intdivrestoring (
   neg #(`XLEN) qneg(XQM, XQnM);
   // Select appropriate output: normal, negated, or for divide by zero
   mux3 #(`XLEN) qmux(XQM, XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
-  mux3 #(`XLEN) remmux(WM, WnM, XSavedM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
+  mux3 #(`XLEN) remmux(WM, WnM, XQM, {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
 
   // Divider FSM to sequence Busy, and Done
   always_ff @(posedge clk) 
