@@ -204,15 +204,15 @@ module fpu (
      //    - if not captured any forwarded inputs will change durring computation
      //        - this problem is caused by stalling the execute stage
      //    - the other units don't have this problem, only div/sqrt stalls the execute stage
-     flopenrc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
-				.en(1'b1), .clear(FDivSqrtDoneE),
+     floprc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
+				.clear(FDivSqrtDoneE),
 				.reset(reset),  .clk(FDivBusyE));
-     flopenrc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
-				.en(1'b1), .clear(FDivSqrtDoneE),
+     floprc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
+				.clear(FDivSqrtDoneE),
 				.reset(reset),  .clk(FDivBusyE));
-      flopenrc #(6) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE}), 
+     floprc #(6) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE}), 
 				.q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ}),
-				.en(1'b1), .clear(FDivSqrtDoneE),
+			   .clear(FDivSqrtDoneE),
 				.reset(reset),  .clk(FDivBusyE));
             
       // fpdivsqrt using Goldschmidt's iteration
