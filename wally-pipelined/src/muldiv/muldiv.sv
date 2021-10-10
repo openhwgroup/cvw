@@ -58,9 +58,10 @@ module muldiv (
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
+	 assign DivE = MulDivE & Funct3E[2];
 	 assign DivStartE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneM; 
-	 assign DivBusyE = DivStartE | BusyE;
 	 assign DivSignedE = ~Funct3E[0];
+	 assign DivBusyE = BusyE | DivStartE;
 	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
 	   .DivSignedE, .W64E, .DivStartE, .SrcAE, .SrcBE, .BusyE, .DivDoneM, .QuotM, .RemM);
 	 	 
