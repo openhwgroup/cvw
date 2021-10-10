@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 0
+`define DEBUG_TRACE 2
 // Debug Levels
 // 0: don't check against QEMU
 // 1: print disagreements with QEMU, but only halt on PCW disagreements
