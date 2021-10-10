@@ -32,7 +32,7 @@ module intdivrestoring (
   input  logic reset,
   input  logic StallM, FlushM,
   input  logic DivSignedE, W64E,
-  input  logic StartDivideE,
+  input  logic DivStartE,
   input  logic [`XLEN-1:0] SrcAE, SrcBE,
   output logic BusyE, DivDoneM,
   output logic [`XLEN-1:0] QuotM, RemM
@@ -50,8 +50,8 @@ module intdivrestoring (
   // save inputs on the negative edge of the execute clock.  
   // This is unusual practice, but the inputs are not guaranteed to be stable due to some hazard and forwarding logic.
   // Saving the inputs is the most hardware-efficient way to fix the issue.
-  flopen #(`XLEN) xsavereg(~clk, StartDivideE, SrcAE, XSavedE);
-  flopen #(`XLEN) dsavereg(~clk, StartDivideE, SrcBE, DSavedE); 
+  flopen #(`XLEN) xsavereg(~clk, DivStartE, SrcAE, XSavedE);
+  flopen #(`XLEN) dsavereg(~clk, DivStartE, SrcBE, DSavedE); 
 
   // Handle sign extension for W-type instructions
   generate
@@ -111,7 +111,7 @@ module intdivrestoring (
   always_ff @(posedge clk) 
     if (reset) begin
         BusyE = 0; DivDoneM = 0; step = 0; DivInitE = 0;
-    end else if (StartDivideE & ~StallM) begin 
+    end else if (DivStartE & ~StallM) begin 
         if (Div0E) DivDoneM = 1;
         else begin
             BusyE = 1; step = 0; DivInitE = 1;
