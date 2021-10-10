@@ -54,7 +54,7 @@ module intdivrestoring (
   //////////////////////////////
 
   // Divider control signals
-  assign DivStartE = DivE & ~BusyE & ~DivDoneM; 
+  assign DivStartE = DivE & ~BusyE & ~DivDoneM & ~StallM; 
   assign DivBusyE = BusyE | DivStartE;
 
   // Handle sign extension for W-type instructions
@@ -88,7 +88,6 @@ module intdivrestoring (
   //////////////////////////////
 
   // registers before division steps
-  // *** maybe change this stuff to M stage
   flopen #(`XLEN) wreg(clk, DivBusyE, WNextE, WM[0]); 
   flopen #(`XLEN) xreg(clk, DivBusyE, XQNextE, XQM[0]);
   flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
@@ -118,7 +117,7 @@ module intdivrestoring (
  always_ff @(posedge clk) 
     if (reset) begin
         BusyE = 0; DivDoneM = 0; step = 0; 
-    end else if (DivStartE & ~StallM) begin 
+    end else if (DivStartE) begin 
         if (Div0E) DivDoneM = 1;
         else begin
             BusyE = 1; step = 0; 
