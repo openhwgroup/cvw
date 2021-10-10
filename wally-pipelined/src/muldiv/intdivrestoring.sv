@@ -100,8 +100,7 @@ module intdivrestoring (
         intdivrestoringstep divstep(WM[i], XQM[i], DAbsBM, WM[i+1], XQM[i+1]);
   endgenerate
 
-  // Output selection logic in Memory Stage
-  // On final setp of signed operations, negate outputs as needed
+  // On final setp of signed operations, negate outputs as needed to get correct sign
   assign NegWM = SignXM; // Remainder should have same sign as X 
   assign NegQM = SignXM ^ SignDM; // Quotient should be negative if one operand is positive and the other is negative
   neg #(`XLEN) qneg(XQM[0], XQnM);
@@ -130,31 +129,6 @@ module intdivrestoring (
     end else if (DivDoneM) begin
         DivDoneM = StallM;
     end 
- /*
-  logic NextDivDoneE, NextDivBusyE;
-  always_comb begin
-    if (DivStartE) 
-      if (Div0E) begin
-        NextDivDoneM = 1; NextDivBusyE = 0;
-      end else begin
-        NextDivDoneM = 0; NextDivBusyE = 1;
-      end
-    else if (BusyE)
-      if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin
-        NextDivDoneM = 1; NextDivBusyE = 0;
-      end else begin
-        NextDivDoneM = 0; NextDivBusyE = 1;
-      end
-    else if (DivDoneE) begin
-      NextDivDoneE = StallM;
-      NextDivBusyE = 0;
-    end
-  end
-
-  flopr #(2) divfsmregs(clk, reset, {NextDivDoneM, NextBusyE}, {DivDoneM, BusyE}); */
-  counter #(STEPBITS+1) stepcnt(.clk, .reset(DivStartE), .en(BusyE), .q(step2));
-//  assert (step == step2) else $warning("counters disagree");
-
 endmodule 
 
 /* verilator lint_on UNOPTFLAT */
