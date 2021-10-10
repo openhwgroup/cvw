@@ -359,7 +359,7 @@ module testbench();
         end
         if (RegWriteW == "GPR") begin
           `checkEQ("Reg Write Address",dut.hart.ieu.dp.regf.a3,ExpectedRegAdrW)
-          $sprintf(name,"RF[%02d]",ExpectedRegAdrW);
+          $sformat(name,"RF[%02d]",ExpectedRegAdrW);
           `checkEQ(name, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
