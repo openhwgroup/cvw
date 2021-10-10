@@ -42,7 +42,7 @@ module intdivrestoring (
   logic [`XLEN-1:0] XQM[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
-  logic [STEPBITS:0] step, step2;
+  logic [STEPBITS:0] step;
   logic Div0E, Div0M;
   logic DivStartE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
   logic BusyE, DivDoneM;
