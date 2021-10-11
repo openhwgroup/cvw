@@ -43,10 +43,10 @@ module muldiv (
 
    generate
       if (`M_SUPPORTED) begin
-	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
+	 logic [`XLEN-1:0] MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultM;
 	 logic [`XLEN-1:0] QuotM, RemM;
-	 logic [`XLEN*2-1:0] ProdE, ProdM; 
+	 logic [`XLEN*2-1:0] ProdM; 
 
 	 logic 		     DivE;
 	 logic 		     DivSignedE;	
@@ -54,7 +54,6 @@ module muldiv (
 	 
 	 // Multiplier
 	 mul mul(.*);
-	 flopenrc #(`XLEN*2) ProdMReg(clk, reset, FlushM, ~StallM, ProdE, ProdM); 
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
