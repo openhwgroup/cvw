@@ -34,10 +34,8 @@ module pmpadrdec (
   input  logic [7:0]       PMPCfg,
   input  logic [`XLEN-1:0] PMPAdr,
   input  logic             PAgePMPAdrIn,
-//  input  logic             NoLowerMatchIn,
   input  logic             FirstMatch,
   output logic             PAgePMPAdrOut,
-//  output logic             NoLowerMatchOut,
   output logic             Match, Active, 
   output logic             L, X, W, R
 );
@@ -48,7 +46,6 @@ module pmpadrdec (
 
   logic TORMatch, NAMatch;
   logic PAltPMPAdr;
-//  logic FirstMatch;
   logic [`PA_BITS-1:0] CurrentAdrFull;
   logic [1:0] AdrMode;
 
@@ -67,25 +64,15 @@ module pmpadrdec (
   assign TORMatch = PAgePMPAdrIn && PAltPMPAdr;
 
   // Naturally aligned regions
-  logic [`PA_BITS-1:0] NAMask;
-  //genvar i;
-  
-  // create a mask of which bits to ignore
-  // generate
-  //   assign Mask[1:0] = 2'b11;
-  //   assign Mask[2] = (AdrMode == NAPOT); // mask has 0s in upper bis for NA4 region
-  //   for (i=3; i < `PA_BITS; i=i+1) begin:mask
-  //     assign Mask[i] = Mask[i-1] & PMPAdr[i-3]; // NAPOT mask: 1's indicate bits to ignore
-  //   end
-  // endgenerate
+  logic [`PA_BITS-1:0] NAMask, NABase;
 
   assign NAMask[1:0] = {2'b11};
-
-  prioritythemometer #(`PA_BITS-2) namaskgen(
-    .a({PMPAdr[`PA_BITS-4:0], (AdrMode == NAPOT)}),
-    .y(NAMask[`PA_BITS-1:2]));
-
-  assign NAMatch = &((PhysicalAddress ~^ CurrentAdrFull) | NAMask);
+  assign NAMask[`PA_BITS-1:2] = (PMPAdr[`PA_BITS-3:0] + {{(`PA_BITS-3){1'b0}}, (AdrMode == NAPOT)}) ^ PMPAdr[`PA_BITS-3:0];
+  // generates a mask where the bottom k bits are 1, corresponding to a size of 2^k bytes for this memory region. 
+  // This assumes we're using at least an NA4 region, but works for any size NAPOT region.
+  assign NABase = {(PMPAdr[`PA_BITS-3:0] & ~NAMask[`PA_BITS-1:2]), 2'b00}; // base physical address of the pmp. 
+  
+  assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits correspoonding to inside the memory range
 
   assign Match = (AdrMode == TOR) ? TORMatch : 
                  (AdrMode == NA4 || AdrMode == NAPOT) ? NAMatch :

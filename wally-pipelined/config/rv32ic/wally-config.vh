@@ -30,11 +30,12 @@
 `define QEMU 0
 `define BUILDROOT 0
 `define BUSYBEAR 0
+`define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 32
 
-`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
@@ -64,6 +65,10 @@
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_BLOCKLENINBITS 256
 
+// Integer Divider Configuration
+// DIV_BITSPERCYCLE must be 1, 2, or 4
+`define DIV_BITSPERCYCLE 4
+
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 16
 
@@ -73,8 +78,6 @@
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-
-// *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTTIM_SUPPORTED 1'b1
 `define BOOTTIM_BASE   34'h00001000 
 `define BOOTTIM_RANGE  34'h00000FFF

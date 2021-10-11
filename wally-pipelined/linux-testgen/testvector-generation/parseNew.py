@@ -140,6 +140,7 @@ CurrentInstr = ['0', '0', None, 'other', {'zero': 0, 'ra': 0, 'sp': 0, 'gp': 0, 
 lineNum = 0
 StartLine = 0
 EndLine = 0
+numInstrs = 0
 #instructions = []
 MemAdr = 0
 lines = []
@@ -195,6 +196,10 @@ for line in fileinput.input('-'):
         lines.clear()
         #instructions.append(MoveInstrToRegWriteLst)
         PrintInstr(MoveInstrToRegWriteLst, sys.stdout)
+        numInstrs +=1
+        if (numInstrs % 1e4 == 0):
+            sys.stderr.write('Trace parser reached '+str(numInstrs/1.0e6)+' million instrs.\n')
+            sys.stderr.flush()
     lineNum += 1
 
 

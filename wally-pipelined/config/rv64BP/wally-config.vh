@@ -31,6 +31,7 @@
 `define QEMU 0
 `define BUILDROOT 0
 `define BUSYBEAR 0
+`define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
@@ -68,6 +69,9 @@
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64
+// Integer Divider Configuration
+// DIV_BITSPERCYCLE must be 1, 2, or 4
+`define DIV_BITSPERCYCLE 4
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000

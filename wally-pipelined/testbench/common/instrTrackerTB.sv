@@ -13,5 +13,5 @@ module instrTrackerTB(
   instrNameDecTB ddec(InstrD, InstrDName);
   instrNameDecTB edec(InstrE, InstrEName);
   instrNameDecTB mdec(InstrM, InstrMName);
-  instrNameDecTB wdec(InstrW, InstrWName);
+  instrNameDecTB wdec(InstrW, InstrWName); // *** delete this because InstrW is deleted from IFU
 endmodule
