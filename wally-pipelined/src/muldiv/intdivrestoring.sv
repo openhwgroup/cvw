@@ -55,7 +55,7 @@ module intdivrestoring (
   //////////////////////////////
 
   // Divider control signals
-  assign DivStartE = DivE & (state == IDLE); // & ~StallM; 
+  assign DivStartE = DivE & (state == IDLE); 
   assign DivBusyE = (state == BUSY) | DivStartE;
 
   // Handle sign extension for W-type instructions
