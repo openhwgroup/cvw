@@ -66,8 +66,7 @@ module mul (
     // *** assumes unsigned multiplication
     assign Aprime = {1'b0, SrcAE[`XLEN-2:0]};
     assign Bprime = {1'b0, SrcBE[`XLEN-2:0]};
-    DW02_multp #(`XLEN, `XLEN, 2*`XLEN) bigmul(.a(Aprime), .b(Bprime), .tc(1'b0), .out0(PP0E), .out1(PP1E));
-    // DW02_multp #((`XLEN-1), (`XLEN-1), 2*(`XLEN-1)) multp_dw( .a(SrcAE[`XLEN-2:0]),   .b(SrcBE[`XLEN-2:0]), .tc(1'b0), .out0(Pprime0), .out1(Pprime1) );
+    redundantmul #(`XLEN) bigmul(.a(Aprime), .b(Bprime), .out0(PP0E), .out1(PP1E));
     assign PA = {(`XLEN-1){SrcAE[`XLEN-1]}} & SrcBE[`XLEN-2:0];  
     assign PB = {(`XLEN-1){SrcBE[`XLEN-1]}} & SrcAE[`XLEN-2:0];
     assign PP = SrcAE[`XLEN-1] & SrcBE[`XLEN-1];
