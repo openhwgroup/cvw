@@ -37,36 +37,56 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
    ); 
 
 
-  logic [g_COUNT_WIDTH-1:0] r_count_out;  // wider for sign
-  logic w_counter_overflowed;
+  generate
+    if(`FPGA) begin
+      logic CLKDiv8, CLKDiv64;
+      
+      BUFGCE_DIV #("8") clkDivider1(.I(i_CLK),
+				    .CLR(i_RST),
+				    .CE(1'b1),
+				    .O(CLKDiv8));
+      BUFGCE_DIV #("8") clkDivider2(.I(CLKDiv8),
+				    .CLR(i_RST),
+				    .CE(1'b1),
+				    .O(CLKDiv64));
 
-  logic r_fd_Q;
-  logic w_fd_D;
+      BUFGMUX clkMux(.I1(CLKDiv64),
+		     .I0(i_CLK),
+		     .S(i_EN),
+		     .O(o_CLK));
+      
+    end else begin
+      logic [g_COUNT_WIDTH-1:0] 	   r_count_out;  // wider for sign
+      logic 				   w_counter_overflowed;
 
-  logic w_load;
+      logic 				   r_fd_Q;
+      logic 				   w_fd_D;
 
-  assign  w_load = i_RST | w_counter_overflowed;  // reload when zero occurs or when set by outside
+      logic 				   w_load;
 
-  counter #(.WIDTH(g_COUNT_WIDTH))  // wider for sign, this way the (MSB /= '1') only for zero
-  my_counter (.clk(i_CLK),
-	      .Load(w_load), //  reload when zero occurs or when set by outside
-	      .CountIn(i_COUNT_IN_MAX), // negative signed integer
-	      .CountOut(r_count_out),
-	      .Enable(1'b1), // ALWAYS COUNT
-	      .reset(1'b0)); // no reset, only load
-  
+      assign  w_load = i_RST | w_counter_overflowed;  // reload when zero occurs or when set by outside
 
-  assign w_counter_overflowed = r_count_out[g_COUNT_WIDTH-1] == '0;
-  
-  flopenr #(1) toggle_flip_flop
-      (.d(w_fd_D),
-       .q(r_fd_Q),
-       .clk(i_CLK),
-       .reset(i_RST),                     // reset when told by outside
-       .en(w_counter_overflowed));        // only update when counter overflows
+      counter #(.WIDTH(g_COUNT_WIDTH))  // wider for sign, this way the (MSB /= '1') only for zero
+      my_counter (.clk(i_CLK),
+		  .Load(w_load), //  reload when zero occurs or when set by outside
+		  .CountIn(i_COUNT_IN_MAX), // negative signed integer
+		  .CountOut(r_count_out),
+		  .Enable(1'b1), // ALWAYS COUNT
+		  .reset(1'b0)); // no reset, only load
+      
 
-  assign w_fd_D = ~ r_fd_Q;
+      assign w_counter_overflowed = r_count_out[g_COUNT_WIDTH-1] == '0;
+      
+      flopenr #(1) toggle_flip_flop
+	(.d(w_fd_D),
+	 .q(r_fd_Q),
+	 .clk(i_CLK),
+	 .reset(i_RST),                     // reset when told by outside
+	 .en(w_counter_overflowed));        // only update when counter overflows
 
-  assign o_CLK = i_EN ? r_fd_Q : i_CLK;
+      assign w_fd_D = ~ r_fd_Q;
 
+      assign o_CLK = i_EN ? r_fd_Q : i_CLK;
+    end
+  endgenerate
 endmodule

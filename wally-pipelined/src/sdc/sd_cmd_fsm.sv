@@ -136,7 +136,7 @@ module sd_cmd_fsm
   localparam s_idle_for_read_request = 5'b11101;  // After power up and initialization sequence is completed
   localparam s_Error_TX_Failed       = 5'b11110;  // when fail_cnt_out exceeds c_max_attempts
 
-  localparam c_MAX_ATTEMPTS  = 3;  // Give up sending a command after 3 failed attempts
+  localparam c_MAX_ATTEMPTS  = 1500;  // Give up sending a command after 3 failed attempts
   // (except ACMD41) so the processor is not locked up forever
 
   localparam c_response_type_R0_NONE    = 0;
@@ -252,6 +252,20 @@ module sd_cmd_fsm
      .clk(CLK));
 
   assign o_ERROR_CODE_Q = r_ERROR_CODE_Q;
+  assign COUNTER_OUT_GT_ZERO = i_COUNTER_OUT > 0;
+  assign COUNTER_OUT_GE_ZERO = i_COUNTER_OUT >= 0;  
+  assign COUNTER_OUT_GT_8 = i_COUNTER_OUT > 8;
+  assign COUNTER_OUT_EQ_8 = i_COUNTER_OUT == 8;
+  assign COUNTER_OUT_EQ_ZERO = i_COUNTER_OUT == 0;
+  assign TIMER_OUT_GT_ZERO = i_TIMER_OUT > 0;
+  assign TIMER_OUT_EQ_ZERO = i_TIMER_OUT == 0;
+  assign fail_count_out_le_max_attempts = r_fail_count_out <= (c_MAX_ATTEMPTS-1);
+  assign fail_count_out_lt_max_attempts = r_fail_count_out < (c_MAX_ATTEMPTS-1);  
+  assign fail_count_out_gt_max_attempts = r_fail_count_out > (c_MAX_ATTEMPTS-1);  
+  assign IC_OUT_EQ_2 = i_IC_OUT == 2;
+  assign IC_OUT_EQ_3 = i_IC_OUT == 3;
+  assign IC_OUT_LT_9 = i_IC_OUT < 9;
+  assign IC_OUT_GE_9 = i_IC_OUT >= 9;    
 
   assign w_next_state = i_RST ? s_reset_clear_error_reg :
 		  
@@ -263,53 +277,53 @@ module sd_cmd_fsm
 
 
                   ((r_curr_state == s_reset_from_error) |
-                   ((r_curr_state == s_idle_supply_no_clk) & (i_TIMER_OUT > 0))) ? s_idle_supply_no_clk :
+                   ((r_curr_state == s_idle_supply_no_clk) & (TIMER_OUT_GT_ZERO))) ? s_idle_supply_no_clk :
 
-                  (((r_curr_state == s_idle_supply_no_clk) & (i_TIMER_OUT == 0)) |
-                   ((r_curr_state == s_idle_supply_sd_clk) & (i_COUNTER_OUT > 0))) ? s_idle_supply_sd_clk :
+                  (((r_curr_state == s_idle_supply_no_clk) & (TIMER_OUT_EQ_ZERO)) |
+                   ((r_curr_state == s_idle_supply_sd_clk) & (COUNTER_OUT_GT_ZERO))) ? s_idle_supply_sd_clk :
                   
 		  (r_curr_state == s_ld_head) ? s_count_attempt : 
 
-		  (((r_curr_state == s_count_attempt) & (r_fail_count_out <= (c_MAX_ATTEMPTS-1))) | 
+		  (((r_curr_state == s_count_attempt) & (fail_count_out_le_max_attempts)) | 
                    ((r_curr_state == s_count_attempt) & 
-                    (((i_IC_OUT == 2) & (i_OPCODE[5:0] == c_App_Command)) |
-                     ((i_IC_OUT == 3) & (i_OPCODE == ({c_ACMD, c_SD_Send_OCR}))))   // to work CMD55, ACMD41 MUST be lines 2, 3 of instruction fetch mux of sd_top.vhd
+                    (((IC_OUT_EQ_2) & (i_OPCODE[5:0] == c_App_Command)) |
+                     ((IC_OUT_EQ_3) & (i_OPCODE == ({c_ACMD, c_SD_Send_OCR}))))   // to work CMD55, ACMD41 MUST be lines 2, 3 of instruction fetch mux of sd_top.vhd
                                                      & (w_ACMD41_times_out_FLAG)
-                                                     & (r_fail_count_out > (c_MAX_ATTEMPTS-1)))) ? s_tx_head : 
+                                                     & (fail_count_out_gt_max_attempts))) ? s_tx_head : 
 
-		  ((r_curr_state == s_count_attempt) & (r_fail_count_out > (c_MAX_ATTEMPTS-1))) ? s_Error_TX_Failed :
+		  ((r_curr_state == s_count_attempt) & (fail_count_out_gt_max_attempts)) ? s_Error_TX_Failed :
 
-		  ((r_curr_state == s_tx_head) | ((r_curr_state == s_ld_tail) & (i_COUNTER_OUT > 8))) ? s_ld_tail : 
+		  ((r_curr_state == s_tx_head) | ((r_curr_state == s_ld_tail) & (COUNTER_OUT_GT_8))) ? s_ld_tail : 
 
-		  (((r_curr_state == s_ld_tail) & (i_COUNTER_OUT == 8)) | 
-                   ((r_curr_state == s_tx_tail) & (i_COUNTER_OUT > 0))) ? s_tx_tail : 
+		  (((r_curr_state == s_ld_tail) & (COUNTER_OUT_EQ_8)) | 
+                   ((r_curr_state == s_tx_tail) & (COUNTER_OUT_GT_ZERO))) ? s_tx_tail : 
 
-		  (r_curr_state == s_tx_tail) & (i_COUNTER_OUT == 0) ? s_setup_rx : 
+		  (r_curr_state == s_tx_tail) & (COUNTER_OUT_EQ_ZERO) ? s_setup_rx : 
 		    
                   (((r_curr_state == s_setup_rx) & (i_R_TYPE == c_response_type_R0_NONE)) |
-                   ((r_curr_state == s_idle_ncc) & (i_COUNTER_OUT > 0))) ? s_idle_ncc :
+                   ((r_curr_state == s_idle_ncc) & (COUNTER_OUT_GT_ZERO))) ? s_idle_ncc :
 
                   (((r_curr_state == s_setup_rx) & (i_R_TYPE != c_response_type_R0_NONE)) |
                    ((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX != c_start_bit) & 
-                    (i_COUNTER_OUT > 0))) ? s_idle_for_start_bit : 
+                    (COUNTER_OUT_GT_ZERO))) ? s_idle_for_start_bit : 
 
                   ((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX != c_start_bit) & 
-                   (i_COUNTER_OUT == 0)) ? s_error_no_response :
+                   (COUNTER_OUT_EQ_ZERO)) ? s_error_no_response :
 
                   (((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX == c_start_bit) &
 		    /* verilator lint_off UNSIGNED */
-                    (i_COUNTER_OUT >= 0) & (i_R_TYPE == c_response_type_R2_CID_CSD)) | 
+                    (COUNTER_OUT_GE_ZERO) & (i_R_TYPE == c_response_type_R2_CID_CSD)) | 
 		    /* verilator lint_on UNSIGNED */
-                   ((r_curr_state == s_rx_136) & (i_COUNTER_OUT > 0))) ? s_rx_136 :
+                   ((r_curr_state == s_rx_136) & (COUNTER_OUT_GT_ZERO))) ? s_rx_136 :
 
                   (((r_curr_state == s_idle_for_start_bit) & (i_SD_CMD_RX == c_start_bit) &
 		    /* verilator lint_off UNSIGNED */
-                    (i_COUNTER_OUT >= 0) & (i_R_TYPE != c_response_type_R2_CID_CSD)) | 
+                    (COUNTER_OUT_GE_ZERO) & (i_R_TYPE != c_response_type_R2_CID_CSD)) | 
 		    /* verilator lint_on UNSIGNED */
-                   ((r_curr_state == s_rx_48) & (i_COUNTER_OUT > 0))) ? s_rx_48 :
+                   ((r_curr_state == s_rx_48) & (COUNTER_OUT_GT_ZERO))) ? s_rx_48 :
 
-                  (((r_curr_state == s_rx_136) & (i_COUNTER_OUT == 0)) | 
-                   ((r_curr_state == s_rx_48) & (i_COUNTER_OUT) == 0)) ? s_study_response :
+                  (((r_curr_state == s_rx_136) & (COUNTER_OUT_EQ_ZERO)) | 
+                   ((r_curr_state == s_rx_48) & COUNTER_OUT_EQ_ZERO)) ? s_study_response :
 
                   (r_curr_state == s_study_response) & w_bad_card ? s_error_bad_card :
 
@@ -322,32 +336,32 @@ module sd_cmd_fsm
                                                   (~i_ERROR_DAT_TIMES_OUT)) | 
                                                 ((r_curr_state == s_study_response) & (~w_bad_card) &
                                                   (i_USES_DAT == c_DAT_none)) |
-                                                ((r_curr_state == s_idle_nrc) & (i_COUNTER_OUT > 0))) ? s_idle_nrc :
+                                                ((r_curr_state == s_idle_nrc) & (COUNTER_OUT_GT_ZERO))) ? s_idle_nrc :
 
-                  ((r_curr_state == s_idle_nrc) & (i_COUNTER_OUT == 0) & 
+                  ((r_curr_state == s_idle_nrc) & (COUNTER_OUT_EQ_ZERO) & 
                                                  (w_resend_last_command) & ((i_OPCODE[6] == c_ACMD) & 
                                                  ((i_OPCODE[5:0]) != c_App_Command))) ? s_fetch_prev_cmd :
 
                   ((r_curr_state == s_fetch_prev_cmd) |
-                   ((r_curr_state == s_idle_supply_sd_clk) & (i_COUNTER_OUT == 0)) | 
+                   ((r_curr_state == s_idle_supply_sd_clk) & (COUNTER_OUT_EQ_ZERO)) | 
                    ((r_curr_state == s_fetch_next_cmd) & // before CMD17
-                    (i_IC_OUT < 9)) |        // blindly load head of next command
+                    (IC_OUT_LT_9)) |        // blindly load head of next command
                    ((r_curr_state == s_idle_for_read_request) & (i_READ_REQUEST)) | // got the request, load head
-                   ((r_curr_state == s_idle_nrc) & (i_COUNTER_OUT == 0) & 
+                   ((r_curr_state == s_idle_nrc) & (COUNTER_OUT_EQ_ZERO) & 
                     (w_resend_last_command) & ((i_OPCODE[6] == c_CMD) |
                                                ((i_OPCODE[5:0]) == c_App_Command)))) ? s_ld_head :
 
-                  (((r_curr_state == s_idle_nrc) & (i_COUNTER_OUT == 0) &
+                  (((r_curr_state == s_idle_nrc) & (COUNTER_OUT_EQ_ZERO) &
                     (~w_resend_last_command) & ((i_OPCODE) == ({c_CMD, c_Switch_Function}))) |
                    ((r_curr_state == s_idle_for_clock_change) & (~i_CLOCK_CHANGE_DONE))) ? s_idle_for_clock_change :
 
-                  (((r_curr_state == s_idle_ncc) & (i_COUNTER_OUT == 0)) | 
-                   ((r_curr_state == s_idle_nrc) & (i_COUNTER_OUT == 0) & 
+                  (((r_curr_state == s_idle_ncc) & (COUNTER_OUT_EQ_ZERO)) | 
+                   ((r_curr_state == s_idle_nrc) & (COUNTER_OUT_EQ_ZERO) & 
                     (~w_resend_last_command) & ((i_OPCODE) != ({c_CMD, c_Switch_Function}))) | 
                    ((r_curr_state == s_idle_for_clock_change) & (i_CLOCK_CHANGE_DONE))) ? s_fetch_next_cmd :
                   
                   (((r_curr_state == s_fetch_next_cmd) &
-                    (i_IC_OUT >= 9)) | // During and after CMD17, wait for request to send CMD17 from core
+                    (IC_OUT_GE_9)) | // During and after CMD17, wait for request to send CMD17 from core
                                                                                  // waiting for request
                    (r_curr_state == s_idle_for_read_request)) ? s_idle_for_read_request :
 
