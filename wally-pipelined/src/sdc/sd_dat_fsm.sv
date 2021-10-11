@@ -98,6 +98,18 @@ module sd_dat_fsm
   localparam logic c_HS_clock = 1'b0;  // use after CMD6 switches clock frequency (CMD17)
 
 
+  logic 	   TIMER_OUT_GT_0;
+  logic 	   TIMER_OUT_EQ_0;
+  logic 	   COUNTER_OUT_EQ_1023;
+  logic 	   COUNTER_OUT_LT_1023;
+  logic 	   COUNTER_OUT_LT_128;
+  logic 	   COUNTER_OUT_EQ_128;
+  logic 	   COUNTER_OUT_LT_144;
+  logic 	   COUNTER_OUT_EQ_144;
+  logic 	   COUNTER_OUT_LT_1040;
+  logic 	   COUNTER_OUT_EQ_1040;
+
+
   assign Identify_Timer_In = LIMIT_SD_TIMERS ? 23'b00000000000000001100011 : 23'b00000001001110001000000; // 40,000 unsigned.
   assign Data_TX_Timer_In  = LIMIT_SD_TIMERS ? 23'b00000000000000001100011 : 23'b11110100001001000000000; // 8,000,000 unsigned.
 
@@ -107,12 +119,23 @@ module sd_dat_fsm
 			.d(w_next_state),
 			.q(r_curr_state));
 
+  assign TIMER_OUT_GT_0 = i_TIMER_OUT > 0;
+  assign TIMER_OUT_EQ_0 = i_TIMER_OUT == 0;
+  assign COUNTER_OUT_EQ_1023 = i_COUNTER_OUT == 1023;
+  assign COUNTER_OUT_LT_1023 = i_COUNTER_OUT < 1023;  
+  assign COUNTER_OUT_LT_128 = i_COUNTER_OUT < 128;
+  assign COUNTER_OUT_EQ_128 = i_COUNTER_OUT == 128;
+  assign COUNTER_OUT_LT_144 = i_COUNTER_OUT < 144;  
+  assign COUNTER_OUT_EQ_144 = i_COUNTER_OUT == 144;  
+  assign COUNTER_OUT_LT_1040 = i_COUNTER_OUT < 1040;
+  assign COUNTER_OUT_EQ_1040 = i_COUNTER_OUT == 1040;
+
   assign w_next_state = ((i_RST) | 
                          (r_curr_state == s_error_time_out) |  // noticed this change is needed during emulation
                          (r_curr_state == s_notify_r1b_completed) |
                          (r_curr_state == s_error_crc16_fail) |
                          (r_curr_state == s_publish_wide_data) | 
-                         ((r_curr_state == s_publish_block_data) & (i_COUNTER_OUT == 1023))) ? s_reset  : 
+                         ((r_curr_state == s_publish_block_data) & (COUNTER_OUT_EQ_1023))) ? s_reset  : 
 
                   ((r_curr_state == s_reset) | 
                    ((r_curr_state == s_idle) & ((i_USES_DAT == c_DAT_none) | ((i_USES_DAT != c_DAT_none) & (~i_CMD_TX_DONE))))) ? s_idle : 
@@ -124,46 +147,46 @@ module sd_dat_fsm
                   ((r_curr_state == s_reset_wide_data) | 
                    ((r_curr_state == s_idle) & (i_USES_DAT == c_DAT_busy) & (i_CMD_TX_DONE)) | 
                    (r_curr_state == s_reset_block_data) |
-                   ((r_curr_state == s_idle_for_start_bit) & (i_TIMER_OUT > 0) & (i_DAT0_Q != c_start_bit))) ? s_idle_for_start_bit :
+                   ((r_curr_state == s_idle_for_start_bit) & (TIMER_OUT_GT_0) & (i_DAT0_Q != c_start_bit))) ? s_idle_for_start_bit :
 			
                   ((r_curr_state == s_idle_for_start_bit) &  // Apparently R1b's busy signal is optional,
-                   (i_TIMER_OUT == 0) &          // Even if it never shows up,
+                   (TIMER_OUT_EQ_0) &          // Even if it never shows up,
                    (i_USES_DAT == c_DAT_busy)) ? s_notify_r1b_completed :          // pretend it did, & move on
 
-                  (((r_curr_state == s_idle_for_start_bit) & (i_TIMER_OUT > 0) &
+                  (((r_curr_state == s_idle_for_start_bit) & (TIMER_OUT_GT_0) &
                     (i_DAT0_Q == c_start_bit) & (i_USES_DAT == c_DAT_busy)) | 
-                   ((r_curr_state == s_read_r1b) & (i_TIMER_OUT > 0) & (i_DAT0_Q == c_busy_bit))) ? s_read_r1b :
+                   ((r_curr_state == s_read_r1b) & (TIMER_OUT_GT_0) & (i_DAT0_Q == c_busy_bit))) ? s_read_r1b :
 
-                  (((r_curr_state == s_read_r1b) & (i_TIMER_OUT == 0)) | 
-                   ((r_curr_state == s_idle_for_start_bit) & (i_TIMER_OUT == 0) & 
+                  (((r_curr_state == s_read_r1b) & (TIMER_OUT_EQ_0)) | 
+                   ((r_curr_state == s_idle_for_start_bit) & (TIMER_OUT_EQ_0) & 
                     (i_USES_DAT != c_DAT_busy))) ? s_error_time_out :
 
                   ((r_curr_state == s_read_r1b) & (i_DAT0_Q != c_busy_bit)) ? s_notify_r1b_completed :
 
-                  (((r_curr_state == s_idle_for_start_bit) & (i_TIMER_OUT > 0) & (i_DAT0_Q == c_start_bit) &
+                  (((r_curr_state == s_idle_for_start_bit) & (TIMER_OUT_GT_0) & (i_DAT0_Q == c_start_bit) &
                     (i_USES_DAT == c_DAT_wide)) |
-                   ((r_curr_state == s_rx_wide_data) & (i_COUNTER_OUT < 128))) ? s_rx_wide_data :
+                   ((r_curr_state == s_rx_wide_data) & (COUNTER_OUT_LT_128))) ? s_rx_wide_data :
 
-                  (((r_curr_state == s_idle_for_start_bit) & (i_TIMER_OUT > 0) & 
+                  (((r_curr_state == s_idle_for_start_bit) & (TIMER_OUT_GT_0) & 
                     (i_DAT0_Q == c_start_bit) & (i_USES_DAT == c_DAT_block)) | 
-                   ((r_curr_state == s_rx_block_data) & (i_COUNTER_OUT < 1023))) ? s_rx_block_data :
+                   ((r_curr_state == s_rx_block_data) & (COUNTER_OUT_LT_1023))) ? s_rx_block_data :
 
-                  (((r_curr_state == s_rx_wide_data) & (i_COUNTER_OUT == 128)) | 
-                   ((r_curr_state == s_rx_block_data) & (i_COUNTER_OUT == 1023)) | 
+                  (((r_curr_state == s_rx_wide_data) & (COUNTER_OUT_EQ_128)) | 
+                   ((r_curr_state == s_rx_block_data) & (COUNTER_OUT_EQ_1023)) | 
                    ((r_curr_state == s_rx_crc16) & 
-                    (((i_USES_DAT == c_DAT_wide) & (i_COUNTER_OUT < 144)) | 
-                     ((i_USES_DAT == c_DAT_block) & (i_COUNTER_OUT < 1040))))) ? s_rx_crc16 :
+                    (((i_USES_DAT == c_DAT_wide) & (COUNTER_OUT_LT_144)) | 
+                     ((i_USES_DAT == c_DAT_block) & (COUNTER_OUT_LT_1040))))) ? s_rx_crc16 :
 
                   ((r_curr_state == s_rx_crc16) &
-                   (((i_USES_DAT == c_DAT_wide) & (i_COUNTER_OUT == 144)) |
-                    ((i_USES_DAT == c_DAT_block) & (i_COUNTER_OUT == 1040))) &
+                   (((i_USES_DAT == c_DAT_wide) & (COUNTER_OUT_EQ_144)) |
+                    ((i_USES_DAT == c_DAT_block) & (COUNTER_OUT_EQ_1040))) &
                    (~i_DATA_CRC16_GOOD)) ? s_error_crc16_fail :
 
-                  ((r_curr_state == s_rx_crc16) & (i_USES_DAT == c_DAT_wide) & (i_COUNTER_OUT == 144) &
+                  ((r_curr_state == s_rx_crc16) & (i_USES_DAT == c_DAT_wide) & (COUNTER_OUT_EQ_144) &
                    (i_DATA_CRC16_GOOD)) ? s_publish_wide_data :
 
                   ((r_curr_state == s_rx_crc16) &
-                   (i_USES_DAT == c_DAT_block) & (i_COUNTER_OUT == 1040) & (i_DATA_CRC16_GOOD)) ? s_reset_nibble_counter :
+                   (i_USES_DAT == c_DAT_block) & (COUNTER_OUT_EQ_1040) & (i_DATA_CRC16_GOOD)) ? s_reset_nibble_counter :
 
                   ((r_curr_state == s_reset_nibble_counter)) ? s_publish_block_data : 
                   
@@ -219,7 +242,7 @@ module sd_dat_fsm
   assign o_DATA_VALID = (r_curr_state == s_publish_block_data);
   
   assign o_LAST_NIBBLE = ((r_curr_state == s_publish_block_data)
-                     & (i_COUNTER_OUT == 1023)) | (r_curr_state == s_error_time_out); // notify done if errors occur
+                     & (COUNTER_OUT_EQ_1023)) | (r_curr_state == s_error_time_out); // notify done if errors occur
 
   // o_ERROR_CRC16 (note: saved to flip flop because otherwise is only 1 clock cycle, not what I want)
   assign o_DAT_ERROR_FD_RST = (r_curr_state == s_reset_block_data) | (r_curr_state == s_reset_wide_data);
