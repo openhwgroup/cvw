@@ -33,7 +33,7 @@ void copyFlash(long int blockAddr, long int * Dst, int numBlocks) {
   int index;
 
   for(index = 0; index < numBlocks; index++) {
-    copySDC512(blockAddr+(index*512), Dst+(512/8));
+    copySDC512(blockAddr+(index*512), Dst+(index*512/8));
   }
   
     

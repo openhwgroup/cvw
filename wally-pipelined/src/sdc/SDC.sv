@@ -352,7 +352,7 @@ module SDC
 		.o_ERROR_CODE_Q(ErrorCode),
 		.o_FATAL_ERROR(FatalError),
 		.i_COUNT_IN_MAX(-8'd62),
-		.LIMIT_SD_TIMERS(1'b1)); // *** must change this to 0 for real hardware.
+		.LIMIT_SD_TIMERS(1'b0)); // *** must change this to 0 for real hardware.
 
   
 endmodule
