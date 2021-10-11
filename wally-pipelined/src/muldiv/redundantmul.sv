@@ -25,16 +25,19 @@
 
 `include "wally-config.vh"
 
-/* verilator lint_off UNOPTFLAT */
-
 module redundantmul #(parameter WIDTH =8)(
   input  logic [WIDTH-1:0] a,b,
   output logic [2*WIDTH-1:0] out0, out1);
 
-  assign out0 = 0;
-  assign out1 = a*b;
-    // DW02_multp #(`XLEN, `XLEN, 2*`XLEN) bigmul(.a(Aprime), .b(Bprime), .tc(1'b0), .out0(PP0E), .out1(PP1E));
+  generate 
+    if (`DESIGN_COMPILER == 1) 
+        DW02_multp #(WIDTH, WIDTH, 2*WIDTH) bigmul(.a, .b, .tc(1'b0), .out0, .out1);
+    else begin
+      assign out0 = 0;
+      assign out1 = a*b;
+    end 
+  endgenerate
 
 endmodule
 
-/* verilator lint_on UNOPTFLAT */
+
