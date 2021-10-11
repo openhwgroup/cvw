@@ -91,7 +91,6 @@ module wallypipelinedhart
   logic       InvalidateICacheM, FlushDCacheM;
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
-  logic 		    DivDoneE;
   logic 		    DivBusyE;
   logic 		    RegWriteD;
   logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;

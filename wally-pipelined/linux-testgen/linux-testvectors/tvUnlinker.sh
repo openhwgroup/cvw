@@ -3,4 +3,7 @@
 unlink all.txt
 unlink bootmem.txt
 unlink ram.txt
+unlink vmlinux.objdump
+unlink vmlinux.objdump.addr
+unlink vmlinux.objdump.lab
 echo "Done!"
