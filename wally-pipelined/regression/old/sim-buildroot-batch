@@ -1,3 +1,0 @@
-vsim -c <<!
-do wally-buildroot-batch.do 
-!

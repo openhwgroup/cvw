@@ -38,15 +38,16 @@ module intdivrestoring (
   output logic [`XLEN-1:0] QuotM, RemM
  );
 
+  typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
+  statetype state;
+
   logic [`XLEN-1:0] WM[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] XQM[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
-  logic DivStartE, SignXE, SignXM, SignDE, SignDM, NegWM, NegQM;
-  logic BusyE, DivDoneM;
-
+  logic DivStartE, SignXE, SignXM, SignDE, NegQE, NegWM, NegQM;
   logic [`XLEN-1:0] WNextE, XQNextE;
  
   //////////////////////////////
@@ -54,8 +55,8 @@ module intdivrestoring (
   //////////////////////////////
 
   // Divider control signals
-  assign DivStartE = DivE & ~BusyE & ~DivDoneM & ~StallM; 
-  assign DivBusyE = BusyE | DivStartE;
+  assign DivStartE = DivE & (state == IDLE); // & ~StallM; 
+  assign DivBusyE = (state == BUSY) | DivStartE;
 
   // Handle sign extension for W-type instructions
   generate
@@ -71,6 +72,7 @@ module intdivrestoring (
   // Extract sign bits and check fo division by zero
   assign SignDE = DivSignedE & DinE[`XLEN-1]; 
   assign SignXE = DivSignedE & XinE[`XLEN-1];
+  assign NegQE = SignDE ^ SignXE;
   assign Div0E = (DinE == 0);
 
   // Take absolute value for signed operations, and negate D to handle subtraction in divider stages
@@ -91,7 +93,7 @@ module intdivrestoring (
   flopen #(`XLEN) wreg(clk, DivBusyE, WNextE, WM[0]); 
   flopen #(`XLEN) xreg(clk, DivBusyE, XQNextE, XQM[0]);
   flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
-  flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, SignDE, SignXE}, {Div0M, SignDM, SignXM});
+  flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, NegQE, SignXE}, {Div0M, NegQM, NegWM});
   
   // one copy of divstep for each bit produced per cycle
   generate
@@ -101,8 +103,6 @@ module intdivrestoring (
   endgenerate
 
   // On final setp of signed operations, negate outputs as needed to get correct sign
-  assign NegWM = SignXM; // Remainder should have same sign as X 
-  assign NegQM = SignXM ^ SignDM; // Quotient should be negative if one operand is positive and the other is negative
   neg #(`XLEN) qneg(XQM[0], XQnM);
   neg #(`XLEN) wneg(WM[0], WnM);
   // Select appropriate output: normal, negated, or for divide by zero
@@ -115,19 +115,19 @@ module intdivrestoring (
 
  always_ff @(posedge clk) 
     if (reset) begin
-        BusyE = 0; DivDoneM = 0; step = 0; 
+        state = IDLE; 
     end else if (DivStartE) begin 
         step = 0;
-        if (Div0E) DivDoneM = 1;
-        else       BusyE = 1;
-    end else if (BusyE) begin // pause one cycle at beginning of signed operations for absolute value
+        if (Div0E) state = DONE;
+        else       state = BUSY;
+     end else if (state == BUSY) begin // pause one cycle at beginning of signed operations for absolute value
         step = step + 1;
         if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
-            BusyE = 0;
-            DivDoneM = 1;
+            state = DONE;
         end
-    end else if (DivDoneM) begin
-        DivDoneM = StallM;
+    end else if (state == DONE) begin
+      if (StallM) state = DONE;
+      else        state = IDLE;
     end 
 endmodule 
 
