@@ -216,6 +216,23 @@ module sd_cmd_fsm
   localparam c_increment = 1'b1;  // count <= count + 1
   localparam c_decrement = 1'b0;  // count <= count - 1
 
+
+  logic 		  COUNTER_OUT_GT_ZERO;
+  logic 		  COUNTER_OUT_GE_ZERO;
+  logic 		  COUNTER_OUT_GT_8;
+  logic 		  COUNTER_OUT_EQ_8;
+  logic 		  COUNTER_OUT_EQ_ZERO;
+  logic 		  TIMER_OUT_GT_ZERO;
+  logic 		  TIMER_OUT_EQ_ZERO;
+  logic 		  fail_count_out_le_max_attempts;
+  logic 		  fail_count_out_lt_max_attempts;
+  logic 		  fail_count_out_gt_max_attempts;
+  logic 		  IC_OUT_EQ_2;
+  logic 		  IC_OUT_EQ_3;
+  logic 		  IC_OUT_LT_9;
+  logic 		  IC_OUT_GE_9;
+
+
   assign Timer_In = LIMIT_SD_TIMERS ? 19'b0000000000000000011 : 19'b0011000011010100000; // 250 ms
 
   //Fail Counter, tracks how many failed attempts at command transmission
@@ -260,12 +277,12 @@ module sd_cmd_fsm
   assign TIMER_OUT_GT_ZERO = i_TIMER_OUT > 0;
   assign TIMER_OUT_EQ_ZERO = i_TIMER_OUT == 0;
   assign fail_count_out_le_max_attempts = r_fail_count_out <= (c_MAX_ATTEMPTS-1);
-  assign fail_count_out_lt_max_attempts = r_fail_count_out < (c_MAX_ATTEMPTS-1);  
-  assign fail_count_out_gt_max_attempts = r_fail_count_out > (c_MAX_ATTEMPTS-1);  
+  assign fail_count_out_lt_max_attempts = r_fail_count_out < (c_MAX_ATTEMPTS-1);
+  assign fail_count_out_gt_max_attempts = r_fail_count_out > (c_MAX_ATTEMPTS-1);
   assign IC_OUT_EQ_2 = i_IC_OUT == 2;
   assign IC_OUT_EQ_3 = i_IC_OUT == 3;
   assign IC_OUT_LT_9 = i_IC_OUT < 9;
-  assign IC_OUT_GE_9 = i_IC_OUT >= 9;    
+  assign IC_OUT_GE_9 = i_IC_OUT >= 9;
 
   assign w_next_state = i_RST ? s_reset_clear_error_reg :
 		  
