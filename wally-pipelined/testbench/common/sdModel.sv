@@ -11,7 +11,7 @@
 `define BLOCKSIZE 512
 `define MEMSIZE 24643590 // 2mb block
 `define BLOCK_BUFFER_SIZE 1
-`define TIME_BUSY 63
+`define TIME_BUSY 512
 
 `define PRG 7
 `define RCV 6
@@ -137,7 +137,7 @@ module    sdModel
    reg stop;
 
    reg appendCrc;
-   reg [5:0] startUppCnt;
+   reg [31:0] startUppCnt;
 
    reg 	     q_start_bit;
    

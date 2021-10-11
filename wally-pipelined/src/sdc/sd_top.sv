@@ -28,14 +28,14 @@
 module sd_top #(parameter g_COUNT_WIDTH = 8)
   (
    input logic 			   CLK, // 1.2 GHz (1.0 GHz typical)
-   input logic 			   a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
+   (* mark_debug = "true" *)input logic a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
    // a_RST MUST COME OUT OF RESET SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
    // io_SD_CMD_z    : inout std_logic;   // SD CMD Bus
-   (* mark_debug = "true" *)input logic 			   i_SD_CMD, // CMD Response from card
-   (* mark_debug = "true" *)output logic 		   o_SD_CMD, // CMD Command from host
-   (* mark_debug = "true" *)output logic 		   o_SD_CMD_OE, // Direction of SD_CMD
-   (* mark_debug = "true" *)input logic [3:0] 		   i_SD_DAT, // SD DAT Bus
-   (* mark_debug = "true" *)output logic 		   o_SD_CLK, // SD CLK Bus
+   (* mark_debug = "true" *)input logic i_SD_CMD, // CMD Response from card
+   (* mark_debug = "true" *)output logic o_SD_CMD, // CMD Command from host
+   (* mark_debug = "true" *)output logic o_SD_CMD_OE, // Direction of SD_CMD
+   (* mark_debug = "true" *)input logic [3:0] i_SD_DAT, // SD DAT Bus
+   (* mark_debug = "true" *)output logic o_SD_CLK, // SD CLK Bus
    // For communication with core cpu
    input logic [32:9] 		   i_BLOCK_ADDR, // see "Addressing" in parts.fods (only 8GB total capacity is used)
    output logic 		   o_READY_FOR_READ, // tells core that initialization sequence is completed and
@@ -140,10 +140,10 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   localparam logic [127:96] 	   c_CMD17_mask_check_error_bits = 32'hCF398000;
   localparam logic [127:96] 	   c_CMD17_ans_error_free = 32'h00000000;
 
-  localparam logic [127:96] 	   c_ACMD41_mask_check_redo_bits = 32'h80000000;  // SD_Send_OCR
-  localparam logic [127:96] 	   c_ACMD41_ans_dont_redo = 32'h80000000;
-  localparam logic [127:96] 	   c_ACMD41_mask_check_error_bits = 32'h01FF8000; // 32'h41FF8000;
-  localparam logic [127:96] 	   c_ACMD41_ans_error_free = 32'h00FF8000; // 32'h40FF8000
+  localparam logic [127:96] 	   c_ACMD41_mask_check_redo_bits = 32'h80000000; //32'h80000000;  // SD_Send_OCR
+  localparam logic [127:96] 	   c_ACMD41_ans_dont_redo = 32'h80000000; //32'h80000000;
+  localparam logic [127:96] 	   c_ACMD41_mask_check_error_bits = 32'h41FF8000; // 32'h41FF8000;
+  localparam logic [127:96] 	   c_ACMD41_ans_error_free = 32'h40FF8000; // 32'h40FF8000
 
   localparam logic [127:96] 	   c_CMD55_mask_check_redo_bits = 32'h00000000;  // App_Command
   localparam logic [127:96] 	   c_CMD55_ans_dont_redo = 32'h00000000;
@@ -491,8 +491,8 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   // Clock selection
   clkdivider #(g_COUNT_WIDTH) slow_clk_divider        // Divide 50 MHz to <400 KHz (Initial clock)
     (.i_COUNT_IN_MAX(i_COUNT_IN_MAX),
-    //.i_EN(w_SD_CLK_SELECTED),
-     .i_EN(1'b1),
+    .i_EN(w_SD_CLK_SELECTED),
+    //.i_EN(1'b1),
     .i_RST(w_HS_TO_INIT_CLK_DIVIDER_RST),
     .i_CLK(CLK),
     .o_CLK(r_CLK_SD));
@@ -596,20 +596,19 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
                    1'b0;
 
   assign w_SD_CMD_RX = i_SD_CMD;
-  assign r_G_CLK_SD_n = ~r_G_CLK_SD;
 
   flopenr #(1) sd_cmd_out_reg
     (.d(w_SD_CMD_TX_Q),
     .q(o_SD_CMD),
     .en(1'b1),
-    .clk(r_G_CLK_SD_n),
+    .clk(~r_G_CLK_SD),
     .reset(a_RST));
   
   flopenr #(1) sd_cmd_out_oe_reg
     (.d(w_SD_CMD_OE),
     .q(o_SD_CMD_OE),
     .en(1'b1),
-    .clk(r_G_CLK_SD_n),
+    .clk(~r_G_CLK_SD),
     .reset(a_RST));
   
   // RX
