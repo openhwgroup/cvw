@@ -17,7 +17,7 @@ module fctrl (
   output logic       FWriteIntD   // is the result written to the integer register
   );
 
-  `define FCTRLW 15
+  `define FCTRLW 14
   logic [`FCTRLW-1:0] ControlsD;
   // FPU Instruction Decoder
   always_comb

@@ -35,8 +35,8 @@ module cvtfp (
 
     logic [12:0] DExpCalc;
     // logic Overflow, Underflow;
-    assign DExpCalc = (XExpE-1023+127)&{13{~XZeroE}};
-    assign Denorm = $signed(DExpCalc) <= 0 & $signed(DExpCalc) > $signed(-23);
+    assign DExpCalc = ({2'b0,XExpE}-13'd1023+13'd127)&{13{~XZeroE}};
+    assign Denorm = $signed(DExpCalc) <= 0 & $signed(DExpCalc) > $signed(-(13'd23));
 
     logic [12:0] ShiftCnt;
 	logic [51:0] SFrac;
@@ -45,7 +45,7 @@ module cvtfp (
     //assign ShiftCnt = FmtE ? -DExpCalc&{13{Denorm}} : NormCnt;
     assign SFrac = XManE[51:0] << NormCnt;
 logic Shift;
-assign Shift = {13{Denorm|(($signed(DExpCalc) > $signed(-25)) & DExpCalc[12])}};
+assign Shift = Denorm | (($signed(DExpCalc) > $signed(-(13'd25))) & DExpCalc[12]);
 	assign DFracTmp = {XManE, 25'b0} >> ((-DExpCalc+1)&{13{Shift}});
 assign DFrac = DFracTmp[76:51];
 
@@ -93,19 +93,19 @@ assign DFrac = DFracTmp[76:51];
     logic [12:0] DExpFull;
 logic [22:0] DResFrac;
 logic [7:0] DResExp;
-    assign {DExpFull, DResFrac} = {DExpCalc&{13{~Denorm}}, DFrac[25:3]} + Plus1;
+    assign {DExpFull, DResFrac} = {DExpCalc&{13{~Denorm}}, DFrac[25:3]} + {35'b0,Plus1};
     assign DResExp = DExpFull[7:0];
 
 	logic [10:0] SExp;
-	assign SExp = XExpE-(NormCnt&{8{~XZeroE}})+({11{XDenormE}}&1024-127);
+	assign SExp = XExpE-({2'b0,NormCnt&{9{~XZeroE}}})+({11{XDenormE}}&1024-127);
 
     logic Overflow, Underflow, Inexact;
-    assign Overflow = $signed(DExpFull) >= $signed({1'b0, {8{1'b1}}}) & ~(XNaNE|XInfE);
+    assign Overflow = $signed(DExpFull) >= $signed({5'b0, {8{1'b1}}}) & ~(XNaNE|XInfE);
     assign Underflow = (($signed(DExpFull) <= 0) & ((Sticky|Guard|Round) | (XManE[52]&~|DFrac) | (|DFrac&~Denorm)) | ((DExpFull == 1) & Denorm & ~(UfPlus1&UfLSBFrac))) & ~(XNaNE|XInfE);
     assign Inexact = (Sticky|Guard|Round|Underflow|Overflow) &~(XNaNE);
 
 logic [31:0] DRes;
-    assign DRes = XNaNE ? {XSgnE, XExpE, 1'b1, XManE[50:29]} : 
+    assign DRes = XNaNE ? {XSgnE, {8{1'b1}}, 1'b1, XManE[50:29]} : 
 			Underflow & ~Denorm ? {XSgnE, 30'b0, CalcPlus1&(|FrmE[1:0]|Shift)} : 
 			    Overflow | XInfE ? ((FrmE[1:0]==2'b01) | (FrmE[1:0]==2'b10&~XSgnE) | (FrmE[1:0]==2'b11&XSgnE)) & ~XInfE ? {XSgnE, 8'hfe, {23{1'b1}}} :
                                                                                                                  {XSgnE, 8'hff, 23'b0} : 
