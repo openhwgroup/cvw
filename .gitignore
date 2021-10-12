@@ -38,4 +38,5 @@ wally-pipelined/linux-testgen/buildroot-config-src/main.config.old
 wally-pipelined/linux-testgen/buildroot-config-src/linux.config.old
 wally-pipelined/linux-testgen/buildroot-config-src/busybox.config.old
 wally-pipelined/regression/slack-notifier/slack-webhook-url.txt
+wally-pipelined/regression/logs
 
