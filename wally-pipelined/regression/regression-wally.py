@@ -31,7 +31,7 @@ configs = [
     TestCase(
         name="buildroot",
         cmd="vsim -do wally-buildroot-batch.do -c > {}",
-        grepstr="8500000 instructions"
+        grepstr="6300000 instructions"
     ),
     TestCase(
         name="lints",
