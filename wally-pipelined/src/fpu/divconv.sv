@@ -68,7 +68,7 @@ module divconv (
    mux2 #(64) mxA ({64'hFFFF_FFFF_FFFF_F9FF}, {64'hFFFF_FF3F_FFFF_FFFF}, P, qm_const);
    
    // CPA (from CSA)/Remainder addition/subtraction 
-   assign {cout1, mul_out} = (mcand*mplier) + constant + muxr_out;  
+   assign {cout1, mul_out} = (mcand*mplier) + constant + {127'b0, muxr_out};  
    
    // Assuming [1,2) - q1
    assign {cout2, q_out1} = regb_out + q_const;  

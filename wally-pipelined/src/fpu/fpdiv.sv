@@ -90,11 +90,11 @@ module fpdiv (
    assign exp2 = {2'b0, Float2[62:52]};
    assign bias = {3'h0, 10'h3FF};
    // Divide exponent
-   assign {exp_cout1, open, exp_diff} = exp1 - exp2 + bias;
+   assign {exp_cout1, open, exp_diff} = {2'b0, exp1} - {2'b0, exp2} + {2'b0, bias};
    
    // Sqrt exponent (check if exponent is odd)
    assign exp_odd = Float1[52] ? 1'b0 : 1'b1;
-   assign {exp_cout2, exp_sqrt} = {1'b0, exp1} + {4'h0, 10'h3ff} + exp_odd;
+   assign {exp_cout2, exp_sqrt} = {1'b0, exp1} + {4'h0, 10'h3ff} + {13'b0, exp_odd};
    // Choose correct exponent
    assign expF = op_type ? exp_sqrt[13:1] : exp_diff;   
    

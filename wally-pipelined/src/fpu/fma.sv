@@ -179,7 +179,7 @@ module expadd(
     assign XExpVal = XDenormE ? Denorm : XExpE;
     assign YExpVal = YDenormE ? Denorm : YExpE;
     // kill the exponent if the product is zero - either X or Y is 0
-    assign ProdExpE = (XExpVal + YExpVal - `NE'h3ff)&{`NE+2{~(XZeroE|YZeroE)}};
+    assign ProdExpE = ({2'b0, XExpVal} + {2'b0, YExpVal} - {2'b0, `NE'h3ff})&{`NE+2{~(XZeroE|YZeroE)}};
 
 endmodule
 
@@ -251,7 +251,7 @@ module align(
     //      - positive means the product is larger, so shift Z right
     //      - Denormal numbers have a diffrent exponent value depending on the precision
     assign ZExpVal = ZDenormE ? Denorm : ZExpE;
-    assign AlignCnt = ProdExpE - ZExpVal + (`NF+3);
+    assign AlignCnt = ProdExpE - {2'b0, ZExpVal} + (`NF+3);
 
     // Defualt Addition without shifting
     //          |   54'b0    |  106'b(product)  | 2'b0 |
@@ -266,7 +266,7 @@ module align(
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //  | addnend |
-        if ($signed(AlignCnt) < $signed(0)) begin
+        if ($signed(AlignCnt) < $signed(13'b0)) begin
             KillProdE = 1;
             ZManShifted = ZManPreShifted;
             AddendStickyE = ~(XZeroE|YZeroE);
@@ -274,7 +274,7 @@ module align(
         // If the Addend is shifted right
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //                                  | addnend |
-        end else if ($signed(AlignCnt)<=$signed(3*`NF+4))  begin
+        end else if ($signed(AlignCnt)<=$signed(13'd3*13'd`NF+13'd4))  begin
             KillProdE = 0;
             ZManShifted = ZManPreShifted >> AlignCnt;
             AddendStickyE = |(ZManShifted[`NF-1:0]);
@@ -337,7 +337,7 @@ module add(
 
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = AlignedAddendInv + {ProdManKilled, 2'b0};
+    assign PreSum = AlignedAddendInv + {55'b0, ProdManKilled, 2'b0};
     assign NegPreSum = AlignedAddendE + NegProdManKilled;
      
     // Is the sum negitive
@@ -387,7 +387,7 @@ module posloa(
     logic [8:0] i;
     always_comb begin
         i = 0;
-        while (~pf[3*`NF+6-i] && $unsigned(i) <= $unsigned(3*`NF+6)) i = i+1;  // search for leading one
+        while (~pf[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
         PCnt = i;
     end
   
@@ -413,7 +413,7 @@ module negloa(
     logic [8:0] i;
     always_comb begin
         i = 0;
-        while (~f[3*`NF+6-i] && $unsigned(i) <= $unsigned(3*`NF+6)) i = i+1;  // search for leading one
+        while (~f[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
         NCnt = i;
     end
   
@@ -594,8 +594,8 @@ module resultselect(
                                     ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :
                                                                                                                           {{32{1'b1}}, ResultSgn, 8'hff, 23'b0};
     assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
-    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} - (Minus1&AddendStickyM) + (Plus1&AddendStickyM)} : {{32{1'b1}}, ResultSgn, {ZExpM[`NE-1],ZExpM[6:0], ZManM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
-    assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + (CalcPlus1&(AddendStickyM|FrmM[1])) : {{32{1'b1}}, {ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}};
+    assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} - {62'b0, (Minus1&AddendStickyM) + (Plus1&AddendStickyM)}} : {{32{1'b1}}, ResultSgn, {ZExpM[`NE-1],ZExpM[6:0], ZManM[51:29]} - {30'b0, (Minus1&AddendStickyM)} + {30'b0, (Plus1&AddendStickyM)}};
+    assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + {63'b0,(CalcPlus1&(AddendStickyM|FrmM[1]))} : {{32{1'b1}}, {ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}};
     assign FMAResM = XNaNM ? XNaNResult :
                         YNaNM ? YNaNResult :
                         ZNaNM ? ZNaNResult :
@@ -666,7 +666,7 @@ module normalize(
     assign UfSticky = AddendStickyM | NormSumSticky;
 
     // Determine sum's exponent
-    assign SumExp = (SumExpTmp+LZAPlus1+(~|SumExpTmp&SumShifted[3*`NF+6])) & {`NE+2{~(SumZero|ResultDenorm)}};
+    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1}+{12'b0, ~|SumExpTmp&SumShifted[3*`NF+6]}) & {`NE+2{~(SumZero|ResultDenorm)}};
     // recalculate if the result is denormalized
     assign ResultDenorm = PreResultDenorm&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
 
