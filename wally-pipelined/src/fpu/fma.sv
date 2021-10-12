@@ -172,7 +172,7 @@ module expadd(
 
     // denormalized numbers have diffrent values depending on which precison it is.
     //      double - 1
-    //      single - 1024-128+1 = 897
+    //      single - 1023-127+1 = 897
     assign Denorm = FmtE ? 1 : 897;
 
     // pick denormalized value or exponent

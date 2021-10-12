@@ -163,7 +163,7 @@ module fpu (
      mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
      mux3  #(64)  fyaddmux(FPreSrcYE, {{32{1'b1}}, 2'b0, {7{1'b1}}, 23'b0}, 
 			   {2'b0, {10{1'b1}}, 52'b0}, 
-			   {FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==3'b01), ~FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==3'b01)}, 
+			   {FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01), ~FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01)}, 
 			   FSrcYE); // Force Z to be 0 for multiply instructions
      // Force Z to be 0 for multiply instructions     
      mux3  #(64)  fzmulmux(FPreSrcZE, 64'b0, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE);
