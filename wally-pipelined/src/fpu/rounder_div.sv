@@ -113,7 +113,7 @@ module rounder_div (
    //   1.) we choose any qm0, qp0, q0 (since we shift mant)
    //   2.) we choose qp and we overflow (for RU)
    assign exp_ovf = |{qp[62:40], (qp[39:11] & {29{~P}})};
-   assign Texp = exp_diff - {{13{1'b0}}, ~q1[63]} + {{13{1'b0}}, mux_mant[1]&qp1[63]&~exp_ovf};
+   assign Texp = exp_diff - {{12{1'b0}}, ~q1[63]} + {{12{1'b0}}, mux_mant[1]&qp1[63]&~exp_ovf};
    
    // Overflow only occurs for double precision, if Texp[10] to Texp[0] are 
    // all ones. To encourage sharing with single precision overflow detection,

@@ -68,7 +68,7 @@ module fcvt (
     assign Bits = Res64 ? 8'd64 : 8'd32;
 
     // calulate the unbiased exponent
-    assign ExpVal = XExpE - BiasE + XDenormE;
+    assign ExpVal = {1'b0,XExpE} - {1'b0,BiasE} + {12'b0, XDenormE};
 
 ////////////////////////////////////////////////////////
 
@@ -84,11 +84,11 @@ module fcvt (
 	always_comb begin
 			i = 0;
 			while (~PosInt[64-1-i] && i < `XLEN) i = i+1;  // search for leading one 
-			LZResP = i+1;    // compute shift count
+			LZResP = i[5:0]+1;    // compute shift count
 	end
 
     // if no one was found set to zero otherwise calculate the exponent
-    assign TmpExp = i==`XLEN ? 0 : FmtE ? 1023 + SubBits - LZResP : 127 + SubBits - LZResP;
+    assign TmpExp = i==`XLEN ? 0 : FmtE ? 11'd1023 + {3'b0, SubBits} - {5'b0, LZResP} : 11'd127 + {3'b0, SubBits} - {5'b0, LZResP};
 
 
 
@@ -97,13 +97,13 @@ module fcvt (
 
 
     // select the shift value and amount based on operation (to fp or int)
-    assign ShiftCnt = FOpCtrlE[0] ? ExpVal : LZResP;
-    assign ShiftVal = FOpCtrlE[0] ? {{64-2{1'b0}}, XManE} : {PosInt, 52'b0};
+    assign ShiftCnt = FOpCtrlE[0] ? ExpVal : {7'b0, LZResP};
+    assign ShiftVal = FOpCtrlE[0] ? {{64-1{1'b0}}, XManE} : {PosInt, 52'b0};
 
 	// if shift = -1 then shift one bit right for gaurd bit (right shifting twice never rounds)
 	// if the shift is negitive add a bit for sticky bit calculation
 	// otherwise shift left
-    assign ShiftedManTmp = &ShiftCnt ? {{64-1{1'b0}}, XManE[52:1]} : ShiftCnt[12] ? {{64+51{1'b0}}, ~XZeroE} : ShiftVal << ShiftCnt;
+    assign ShiftedManTmp = &ShiftCnt ? {{64{1'b0}}, XManE[52:1]} : ShiftCnt[12] ? {{64+51{1'b0}}, ~XZeroE} : ShiftVal << ShiftCnt;
 
     // truncate the shifted mantissa
     assign ShiftedMan = ShiftedManTmp[64+51:50];
@@ -135,8 +135,8 @@ module fcvt (
     assign Plus1 = CalcPlus1 & (Guard|Round|Sticky)&~(XZeroE&FOpCtrlE[0]);
 
     // round the shifted mantissa
-    assign RoundedTmp = ShiftedMan[64+1:2] + Plus1;
-    assign {ResExp, ResFrac} = FmtE ? {TmpExp, ShiftedMan[64+1:14]} + Plus1 :  {{TmpExp, ShiftedMan[64+1:43]} + Plus1, 29'b0} ;
+    assign RoundedTmp = ShiftedMan[64+1:2] + {64'b0, Plus1};
+    assign {ResExp, ResFrac} = FmtE ? {TmpExp, ShiftedMan[64+1:14]} + {62'b0, Plus1} :  {{TmpExp, ShiftedMan[64+1:43]} + {33'b0,Plus1}, 29'b0} ;
 
     // fit the rounded result into the appropriate size and take the 2's complement if needed
      assign Rounded = Res64 ? XSgnE&FOpCtrlE[0] ? -RoundedTmp[63:0] : RoundedTmp[63:0] : 
@@ -148,10 +148,10 @@ module fcvt (
 
 
     // check if the result overflows
-    assign Of = (~XSgnE&($signed(ShiftCnt) >= $signed(Bits))) | (~XSgnE&RoundSgn&~FOpCtrlE[1]) | (RoundMSB&(ShiftCnt==(Bits-1))) | (~XSgnE&XInfE) | XNaNE;
+    assign Of = (~XSgnE&($signed(ShiftCnt) >= $signed({{5{Bits[7]}}, Bits}))) | (~XSgnE&RoundSgn&~FOpCtrlE[1]) | (RoundMSB&(ShiftCnt==({{5{Bits[7]}}, Bits}-1))) | (~XSgnE&XInfE) | XNaNE;
 
     // check if the result underflows (this calculation changes if the result is signed or unsigned)
-    assign Uf = FOpCtrlE[1] ? XSgnE&~XZeroE | (XSgnE&XInfE) | (XSgnE&~XZeroE&(~ShiftCnt[12]|CalcPlus1)) | (ShiftCnt[12]&Plus1) : (XSgnE&XInfE) | (XSgnE&($signed(ShiftCnt) >= $signed(Bits))) | (XSgnE&~RoundSgn&~ShiftCnt[12]);    // assign CvtIntRes =  (XSgnE | ShiftCnt[12]) ? {64{1'b0}}  : (ShiftCnt >= 64) ? {64{1'b1}} : Rounded;
+    assign Uf = FOpCtrlE[1] ? XSgnE&~XZeroE | (XSgnE&XInfE) | (XSgnE&~XZeroE&(~ShiftCnt[12]|CalcPlus1)) | (ShiftCnt[12]&Plus1) : (XSgnE&XInfE) | (XSgnE&($signed(ShiftCnt) >= $signed({{5{Bits[7]}}, Bits}))) | (XSgnE&~RoundSgn&~ShiftCnt[12]);    // assign CvtIntRes =  (XSgnE | ShiftCnt[12]) ? {64{1'b0}}  : (ShiftCnt >= 64) ? {64{1'b1}} : Rounded;
     
     // calculate the result's sign
     assign SgnRes = ~FOpCtrlE[2] & FOpCtrlE[0];

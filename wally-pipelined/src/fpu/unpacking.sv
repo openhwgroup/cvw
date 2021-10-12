@@ -75,6 +75,6 @@ module unpacking (
     assign YZeroE = YExpZero & YFracZero;
     assign ZZeroE = ZExpZero & ZFracZero;
 
-    assign BiasE = 13'h3ff; // always use 1023 because exponents are unpacked to double precision
+    assign BiasE = 11'h3ff; // always use 1023 because exponents are unpacked to double precision
 
 endmodule
