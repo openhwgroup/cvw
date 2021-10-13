@@ -30,7 +30,7 @@ module testbench ();
    logic 	XExpMaxE;  
    logic 	XNormE;
    logic 	FDivBusyE;   
-   
+    
    logic 	start;
    logic 	reset;
 
@@ -57,16 +57,13 @@ module testbench ();
 		       .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
 		       .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
    fpdiv fdivsqrt (.op1, .op2, .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]),
-		   .reset, .clk, .start, .P(FmtE), .OvEn(1'b1), .UnEn(1'b1),
+		   .reset, .clk, .start, .P(~FmtE), .OvEn(1'b0), .UnEn(1'b0),
 		   .XNaNQ(XNaNE), .YNaNQ(YNaNE), .XInfQ(XInfE), .YInfQ(YInfE), .XZeroQ(XZeroE), .YZeroQ(YZeroE),
 		   .FDivBusyE, .done(done), .AS_Result(AS_Result), .Flags(Flags));
 
+
    // current fpdivsqrt does not operation on denorms yet
-   assign XZeroM = (op1[51:0] == 52'h0);
-   assign YZeroM = (op2[51:0] == 52'h0);   
-   assign XDenorm = XZeroE & ~XZeroM;
-   assign YDenorm = YZeroE & ~YZeroM;
-   assign Denorm = XDenorm | YDenorm;   
+   assign Denorm = XDenormE | YDenormE | Flags[3];   
 
   // generate clock to sequence tests
   always
@@ -77,7 +74,7 @@ module testbench ();
    initial
      begin
 	handle3 = $fopen("f64_div_rne.out");
-	$readmemh("../testbench/fp/f64_div_rne.tv", testvectors);
+	$readmemh("../testbench/fp/vectors/f64_div_rne.tv", testvectors);
 	vectornum = 0; errors = 0;
 	start = 1'b0;
 	// reset
@@ -90,7 +87,7 @@ module testbench ();
 	// Operation (if applicable)
 	#0  op_type = 1'b0;
 	// Precision (32-bit or 64-bit)
-	#0  FmtE = 1'b0;
+	#0  FmtE = 1'b1;
 	// From fctrl logic to dictate operation
 	#0  FOpCtrlE = 3'b000;
 	// Rounding Mode
@@ -114,7 +111,7 @@ module testbench ();
 	       @(posedge clk);
 	     $fdisplay(desc3, "%h_%h_%h_%b_%b | %h_%b", op1, op2, AS_Result, Flags, Denorm, yexpected, (AS_Result==yexpected));
 	     vectornum = vectornum + 1;
-	     if (vectornum == 1)
+	     if (vectornum == 40)
 	       $finish;	     
 	     if (testvectors[vectornum] === 200'bx) begin
 		$display("%d tests completed", vectornum);

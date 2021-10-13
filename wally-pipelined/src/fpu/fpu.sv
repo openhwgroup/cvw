@@ -191,33 +191,20 @@ module fpu (
 	      .FmtE, .FmtM, .FrmM, 
 	      .FMAFlgM, .FMAResM);
      
-     // clock gater
-     //    - creates a clock that only runs durring divide/sqrt instructions
-     //    - using the seperate clock gives the divide/sqrt unit some to get set up
-     // *** the module says not to use in synthisis
-     clockgater fpdivclkg(.E(FDivStartE),
-			  .SE(1'b0),
-			  .CLK(clk),
-			  .ECLK(FDivClk));
-     
      // capture the inputs for divide/sqrt
-     //    - if not captured any forwarded inputs will change durring computation
-     //        - this problem is caused by stalling the execute stage
-     //    - the other units don't have this problem, only div/sqrt stalls the execute stage
      floprc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
-				.clear(FDivSqrtDoneE),
-				.reset(reset),  .clk(FDivBusyE));
+			      .clear(FDivSqrtDoneE),
+			      .reset(reset),  .clk(FDivBusyE));
      floprc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
-				.clear(FDivSqrtDoneE),
-				.reset(reset),  .clk(FDivBusyE));
+			      .clear(FDivSqrtDoneE),
+			      .reset(reset),  .clk(FDivBusyE));
      floprc #(6) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE}), 
-				.q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ}),
-			   .clear(FDivSqrtDoneE),
-				.reset(reset),  .clk(FDivBusyE));
-            
-      // fpdivsqrt using Goldschmidt's iteration
-      fpdiv fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]), 
-		      .reset, .clk(FDivClk), .start(FDivStartE), .P(~FmtE), .OvEn(1'b1), .UnEn(1'b1),
+			     .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ}),
+			     .clear(FDivSqrtDoneE),
+			     .reset(reset),  .clk(FDivBusyE));            
+     // fpdivsqrt using Goldschmidt's iteration
+     fpdiv fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]), 
+		      .reset, .clk(clk), .start(FDivStartE), .P(~FmtE), .OvEn(1'b1), .UnEn(1'b1),
 		      .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ,
 		      .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 

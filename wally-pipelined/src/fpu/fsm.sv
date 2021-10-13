@@ -47,7 +47,7 @@ module fsm (
    
    statetype current_state, next_state;
    
-   always @(negedge clk)
+   always @(posedge clk)
      begin
 	if (reset == 1'b1)
 	  current_state = S0;
@@ -269,8 +269,23 @@ module fsm (
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
+	       next_state = S11;
+	    end // case: S10
+	  S11:  // done
+	    begin
+	       done = 1'b0;
+	       divBusy = 1'b0;
+	       load_rega = 1'b0;
+	       load_regb = 1'b0;
+	       load_regc = 1'b0;
+	       load_regd = 1'b0;	       
+	       load_regr = 1'b0;
+	       load_regs = 1'b0;		    	       
+	       sel_muxa = 3'b000;
+	       sel_muxb = 3'b000;
+	       sel_muxr = 1'b0;
 	       next_state = S0;
-	    end 
+	    end 	  
 	  S13:  // start of sqrt path
 	    begin
 	       done = 1'b0;
@@ -479,8 +494,23 @@ module fsm (
 	       sel_muxa = 3'b000;
 	       sel_muxb = 3'b000;
 	       sel_muxr = 1'b0;
+	       next_state = S27;
+	    end // case: S26
+	  S27:  // done
+	    begin
+	       done = 1'b0;
+	       divBusy = 1'b0;
+	       load_rega = 1'b0;
+	       load_regb = 1'b0;
+	       load_regc = 1'b0;
+	       load_regd = 1'b0;	       
+	       load_regr = 1'b0;
+	       load_regs = 1'b0;		    	       
+	       sel_muxa = 3'b000;
+	       sel_muxb = 3'b000;
+	       sel_muxr = 1'b0;
 	       next_state = S0;
-	    end 
+	    end 	  
 	  default: 
 	    begin
 	       done = 1'b0;
