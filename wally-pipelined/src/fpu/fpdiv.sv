@@ -60,8 +60,6 @@ module fpdiv (
    logic 	      Invalid;
    logic [4:0] 	      FlagsIn;   	
    logic 	      signResult;      
-   logic 	      convert;
-   logic 	      sub;
    
    logic [63:0]       q1, qm1, qp1, q0, qm0, qp0;
    logic [63:0]       rega_out, regb_out, regc_out, regd_out;
@@ -105,10 +103,10 @@ module fpdiv (
 		  .load_regr, .load_regs, .P, .op_type, .exp_odd);
    
    // FSM : control divider   
-   fsm control (.clk, .reset, .start, .op_type,
-		.done, .load_rega, .load_regb, .load_regc, .load_regd, 
-		.load_regr, .load_regs, .sel_muxa, .sel_muxb, .sel_muxr, 
-		.divBusy(FDivBusyE));
+   fsm_fpdiv control (.clk, .reset, .start, .op_type,
+		      .done, .load_rega, .load_regb, .load_regc, .load_regd, 
+		      .load_regr, .load_regs, .sel_muxa, .sel_muxb, .sel_muxr, 
+		      .divBusy(FDivBusyE));
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 

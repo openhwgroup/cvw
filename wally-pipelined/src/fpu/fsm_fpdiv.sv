@@ -22,7 +22,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-module fsm (
+module fsm_fpdiv (
    input logic 	      clk,
    input logic 	      reset,
    input logic 	      start,
