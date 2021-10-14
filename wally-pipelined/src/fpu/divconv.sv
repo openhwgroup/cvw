@@ -1,18 +1,41 @@
-module divconv (
+///////////////////////////////////////////
+//
+// Written: James Stine
+// Modified: 9/28/2021
+//
+// Purpose: Main convergence routine for floating point divider/square root unit (Goldschmidt)
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+///////////////////////////////////////////
 
-   input logic [52:0]   d, n,
+module divconv (
+   input logic [52:0] 	d, n,
    input logic [2:0] 	sel_muxa, sel_muxb,
-   input logic 	      sel_muxr,   
-   input logic 	      load_rega, load_regb, load_regc, load_regd,
-   input logic 		   load_regr, load_regs,
-   input logic 		   P,
-   input logic 		   op_type,
-   input logic 		   exp_odd,   
-   input logic 	      reset,
-   input logic 	      clk,   
-   
+   input logic 		sel_muxr, 
+   input logic 		load_rega, load_regb, load_regc, load_regd,
+   input logic 		load_regr, load_regs,
+   input logic 		P,
+   input logic 		op_type,
+   input logic 		exp_odd, 
+   input logic 		reset,
+   input logic 		clk, 
+		
    output logic [63:0] 	q1, qp1, qm1,
-   output logic [63:0] 	q0, qp0, qm0,   
+   output logic [63:0] 	q0, qp0, qm0, 
    output logic [63:0] 	rega_out, regb_out, regc_out, regd_out,
    output logic [127:0] regr_out
 );
@@ -26,14 +49,11 @@ module divconv (
    logic [63:0] 	mcand, mplier, mcand_q;   
    logic [63:0] 	twocmp_out;
    logic [64:0] 	three;   
-   logic [127:0] 	Carry, Carry2;
-   logic [127:0] 	Sum, Sum2;
    logic [127:0] 	constant, constant2;
    logic [63:0] 	q_const, qp_const, qm_const;
    logic [63:0] 	d2, n2;   
-   logic [11:0] 	d3;   
-   logic          muxr_out;
-   logic          cout1, cout2, cout3, cout4, cout5, cout6, cout7;
+   logic 		muxr_out;
+   logic 		cout1, cout2, cout3, cout4, cout5, cout6, cout7;
 
    // Check if exponent is odd for sqrt
    // If exp_odd=1 and sqrt, then M/2 and use ia_addr=0 as IA
@@ -99,4 +119,3 @@ module divconv (
    flopenr #(64) regk (clk, reset, load_regs, {qp_out0[63:39], (qp_out0[38:10] & {29{~P}}), 10'h0}, qp0);
    
 endmodule // divconv
-

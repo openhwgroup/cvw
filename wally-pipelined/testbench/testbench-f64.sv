@@ -49,7 +49,6 @@ module testbench ();
 
    integer 	handle3;
    integer 	desc3;  
-   integer 	desc4; 
    
    // instantiate device under test
    unpacking unpacking(.X(op1), .Y(op2), .Z(64'h0), .FOpCtrlE, .FmtE, 
@@ -111,8 +110,6 @@ module testbench ();
 	       @(posedge clk);
 	     $fdisplay(desc3, "%h_%h_%h_%b_%b | %h_%b", op1, op2, AS_Result, Flags, Denorm, yexpected, (AS_Result==yexpected));
 	     vectornum = vectornum + 1;
-	     if (vectornum == 40)
-	       $finish;	     
 	     if (testvectors[vectornum] === 200'bx) begin
 		$display("%d tests completed", vectornum);
 		$finish;

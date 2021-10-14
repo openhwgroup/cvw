@@ -52,13 +52,13 @@ module rounder_div (
     output logic [4:0] 	Flags
     );
       
-   logic 	       Rsign;
-   logic [10:0]    Rexp;
-   logic [12:0]    Texp;
-   logic [51:0]    Rmant;
-   logic [63:0]    Tmant;
-   logic [51:0]    Smant;   
-   logic 	       Rzero;
+   logic 		Rsign;
+   logic [10:0] 	Rexp;
+   logic [12:0] 	Texp;
+   logic [51:0] 	Rmant;
+   logic [63:0] 	Tmant;
+   logic [51:0] 	Smant;   
+   logic 		Rzero;
    logic 	       Gdp, Gsp, G;
    logic 	       UnFlow_SP, UnFlow_DP, UnderFlow; 
    logic 	       OvFlow_SP, OvFlow_DP, OverFlow;		
@@ -187,9 +187,9 @@ module rounder_div (
    assign NaN_Sign_out = ~XNaNQ&YNaNQ ? Float2[63] : Float1[63];
    assign Sign_out = (XZeroQ&YZeroQ | XInfQ&YInfQ)&~op_type | Rsign&~XNaNQ&~YNaNQ | 
    		     NaN_Sign_out&(XNaNQ|YNaNQ);
-
    // FIXME (jes) - Imperas gives sNaN a Sign=0 where x86 gives Sign=1
-   // | Float1[63]&op_type;
+   // | Float1[63]&op_type;  (logic to fix this but removed for now)
+   
    assign Rmant[51] = Largest | NaN | (Smant[51]&~Infinite&~Rzero);
    assign Rmant[50:0] = ({51{Largest}} | (Smant[50:0]&{51{~Infinite&Valid&~Rzero}}) |
 			(NaN_out&{51{NaN}}))&({51{~(op_type&Float1[63]&~XZeroQ)}});
