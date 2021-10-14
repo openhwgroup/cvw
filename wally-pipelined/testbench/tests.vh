@@ -34,15 +34,15 @@ string tvpaths[] = '{
   string imperas32mmu[] = '{
     `IMPERASTEST, 
     "rv32mmu/WALLY-MMU-SV32", "3000"
-    //"rv32mmu/WALLY-PMA", "3000",
+    //"rv32mmu/WALLY-PMP", "3000",
     //"rv32mmu/WALLY-PMA", "3000"
     };
 
   string imperas64mmu[] = '{
     `IMPERASTEST,
     "rv64mmu/WALLY-MMU-SV48", "3000",
-    "rv64mmu/WALLY-MMU-SV39", "3000"
-    //"rv64mmu/WALLY-PMA", "3000",
+    "rv64mmu/WALLY-MMU-SV39", "3000",
+    "rv64mmu/WALLY-PMP", "3000"
     //"rv64mmu/WALLY-PMA", "3000"
   };
 
