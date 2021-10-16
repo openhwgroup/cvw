@@ -29,13 +29,11 @@ module redundantmul #(parameter WIDTH =8)(
   input  logic [WIDTH-1:0] a,b,
   output logic [2*WIDTH-1:0] out0, out1);
 
-  generate 
-    if (`DESIGN_COMPILER == 1) 
-        DW02_multp #(WIDTH, WIDTH, 2*WIDTH) bigmul(.a, .b, .tc(1'b0), .out0, .out1);
-    else begin
-      assign out0 = 0;
-      assign out1 = a*b;
-    end 
+  generate
+     if (`DESIGN_COMPILER == 1)
+       DW02_multp #(WIDTH, WIDTH, 2*WIDTH) bigmul(.a, .b, .tc(1'b0), .out0, .out1);
+     else if (`DESIGN_COMPILER == 2)
+       mult_cs #(WIDTH) hackymul (.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
   endgenerate
 
 endmodule
