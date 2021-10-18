@@ -27,6 +27,7 @@ edit Makefile.include
   add line export RISCV_PREFIX = riscv64-unknown-elf-  # this might not be needed if you have 32-bit versions of the riscv gcc compiler built separately
 make
 make XLEN=32
+exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
 ```
 
 Notes:
