@@ -28,7 +28,7 @@
 
 string tvpaths[] = '{
     "../../imperas-riscv-tests/work/",
-    "/home/harris/github/riscv-arch-test/work/"
+    "../../addins/riscv-arch-test/work/"
 };
 
   string imperas32mmu[] = '{

@@ -31,9 +31,13 @@ module redundantmul #(parameter WIDTH =8)(
 
   generate
      if (`DESIGN_COMPILER == 1)
-       DW02_multp #(WIDTH, WIDTH, 2*WIDTH) bigmul(.a, .b, .tc(1'b0), .out0, .out1);
+       DW02_multp #(WIDTH, WIDTH, 2*WIDTH) mul(.a, .b, .tc(1'b0), .out0, .out1);
      else if (`DESIGN_COMPILER == 2)
-       mult_cs #(WIDTH) hackymul (.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
+       mult_cs #(WIDTH) mul(.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
+     else begin // force a nonredunant multipler.  This will simulate properly and also is appropriate for FPGAs.
+       assign out0 = a * b;
+       assign out1 = 0;
+     end
   endgenerate
 
 endmodule
