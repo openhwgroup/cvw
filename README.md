@@ -23,7 +23,7 @@ sudo make install
 cd ../../riscv-arch-test
 cp ../riscv-isa-sim/arch_test_target/spike/Makefile.include .
 edit Makefile.include
-  change line with TARGETDIR to /home/harris/test/riscv-wally/addins/riscv-isa-sim/arch_test_target (or whatever your path is) ***fix
+  change line with TARGETDIR to ~/riscv-wally/addins/riscv-isa-sim/arch_test_target (or whatever your path is) ***fix
   add line export RISCV_PREFIX = riscv64-unknown-elf-  # this might not be needed if you have 32-bit versions of the riscv gcc compiler built separately
 make
 make XLEN=32
@@ -33,4 +33,4 @@ exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read
 Notes:
 Eventually download imperas-riscv-tests separately
 Move our custom tests to another directory
-Handle exe2memfile separately.
+Eventually replace exe2memfile.pl with objcopy
