@@ -5,15 +5,22 @@ Wally is a 5-stage pipelined processor configurable to support all the standard 
 
 To use Wally on Linux:
 
+```
 git clone https://github.com/davidharrishmc/riscv-wally
-
 cd riscv-wally
-
 cd imperas-riscv-tests
 make
 cd ../addins
 git clone https://github.com/riscv-non-isa/riscv-arch-test
-
+git clone https://github.com/riscv-software-src/riscv-isa-sim
+cd riscv-isa-sim
+mkdir build
+cd build
+set RISCV=/cad/riscv/gcc/bin   (or whatever your path is)
+../configure --prefix=$RISCV
+make
+sudo make install
+```
 
 Notes:
 Eventually download imperas-riscv-tests separately
