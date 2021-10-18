@@ -75,24 +75,22 @@ module mult_cs #(parameter WIDTH = 8)
 				 (pp_array[i*3] & pp_array[i*3+2]);
 		  next_pp_array[i*2+1] = tmp_pp_carry << 1;
 	       end
+	     // Reasssign not divisible by 3 rows to next_pp_array
 	     if ((height % 3) > 0)
 	       begin
 		  for (i=0; i < (height % 3); i=i+1)
 		    next_pp_array[2 * (height/3) + i] = pp_array[3 * (height/3) + i];
 	       end
+	     // Put back values in pp_array to start again
 	     for (i=0; i < WIDTH; i=i+1) 
                pp_array[i] = next_pp_array[i];
+	     // Reduce height
 	     height = height - (height/3);
 	  end
-
 	// Sum is first row in reduced array
 	tmp_sum = pp_array[0];
-
 	// Carry is second row in reduced array
-	if (height > 1)
-	  tmp_carry = pp_array[1];
-	else
-	  tmp_carry = {2*WIDTH-1{1'b0}};
+	tmp_carry = pp_array[1];
      end 
 
    assign sum = tmp_sum;
