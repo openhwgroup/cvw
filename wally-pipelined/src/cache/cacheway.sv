@@ -26,7 +26,7 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
-		   parameter OFFSETLEN, parameter INDEXLEN, parameter DIRTY_BITS = 1) 
+		   parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) 
   (input logic 		       clk,
    input logic 			      reset,
 
@@ -109,6 +109,9 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   	ValidBits <= {NUMLINES{1'b0}};
     else if (SetValid & (WriteEnable | VDWriteEnable)) ValidBits[WAdr] <= 1'b1;
     else if (ClearValid & (WriteEnable | VDWriteEnable)) ValidBits[WAdr] <= 1'b0;
+  end
+
+  always_ff @(posedge clk) begin
     Valid <= ValidBits[RAdr];
   end
 
@@ -119,6 +122,14 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   	  DirtyBits <= {NUMLINES{1'b0}};
 	else if (SetDirty & (WriteEnable | VDWriteEnable)) DirtyBits[WAdr] <= 1'b1;
 	else if (ClearDirty & (WriteEnable | VDWriteEnable)) DirtyBits[WAdr] <= 1'b0;
+      end
+    end
+  endgenerate
+
+  // Since this is always updated on a clock edge we cannot include reset.
+  generate
+    if(DIRTY_BITS) begin
+      always_ff @(posedge clk) begin
 	Dirty <= DirtyBits[RAdr];
       end
     end else begin
