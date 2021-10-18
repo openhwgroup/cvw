@@ -77,7 +77,7 @@ module flopenr #(parameter WIDTH = 8) (
     if (reset)    q <= #1 0;
     else if (en) q <= #1 d;
 endmodule
-
+/*
 // flop with enable, asynchronous load
 module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   input  logic clk, load, en,
@@ -89,7 +89,7 @@ module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
     if (load)    q <= #1 val;
     else if (en) q <= #1 d;
 endmodule
-
+*/
 // flop with asynchronous reset, synchronous clear
 module floprc #(parameter WIDTH = 8) (
   input  logic clk,
