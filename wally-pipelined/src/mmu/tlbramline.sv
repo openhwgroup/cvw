@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module tlbramline #(parameter WIDTH)
+module tlbramline #(parameter WIDTH = 22)
   (input  logic             clk, reset,
    input  logic             re, we,
    input  logic [WIDTH-1:0] d,
