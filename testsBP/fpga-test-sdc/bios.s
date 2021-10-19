@@ -51,10 +51,12 @@ _start:
 
 	li a0, 0x00000000
 	li a1, 0x80000000
-	li a2, 128*1024*1024 # copy 128MB
+	#li a2, 128*1024*1024/512 # copy 128MB
+	li a2, 127*1024*1024/512 # copy 127MB upper 1MB contains the return address (ra)
+	#li a2, 4 # copy 2KB
 	jal ra, copyFlash
 	
-
+	fence.i
 	# now toggle led so we know the copy completed.
 
 	# write to gpio
@@ -89,6 +91,7 @@ jumpToLinux:
 	li	a1, 0x87000000  # end of memory? not 100% sure on this but it's 112MB
 	la	a2, end_of_bios
 	li	t0, 0x80000000  # start of code
+	
 	jalr	x0, t0, 0
 
 end_of_bios:	

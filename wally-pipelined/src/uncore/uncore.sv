@@ -88,7 +88,7 @@ module uncore (
   // unswizzle HSEL signals
   assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[6:0];
 
-  assign HSELEXT = HSELRegions[4];
+  assign HSELEXT = HSELTim;
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
