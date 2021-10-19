@@ -100,7 +100,7 @@ module csrs #(parameter
       else if (`BUILDROOT == 1)
         flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
       else
-        flopenl #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], 32'hFFFFFFFF, SCOUNTEREN_REGW);
+        flopens #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
       if (`N_SUPPORTED) begin
         logic WriteSEDELEGM, WriteSIDELEGM;
         assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
