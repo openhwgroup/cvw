@@ -6,6 +6,9 @@
 __pycache__/
 .vscode/
 
+#External repos
+addins
+
 #vsim work files to ignore
 transcript
 vsim.wlf
