@@ -30,7 +30,8 @@ module mult_cs #(parameter WIDTH = 8)
    input logic [WIDTH-1:0]    b;
    input logic 		      tc;
    
-   output logic [2*WIDTH-1:0] sum, carry;
+   output logic [2*WIDTH-1:0] sum;
+   output logic [2*WIDTH-1:0] carry;
 
    // PP array
    logic [2*WIDTH-1:0] 	      pp_array [0:WIDTH-1];
@@ -38,18 +39,18 @@ module mult_cs #(parameter WIDTH = 8)
    logic [2*WIDTH-1:0] 	      tmp_sum, tmp_carry;
    logic [2*WIDTH-1:0] 	      temp_pp;
    logic [2*WIDTH-1:0] 	      tmp_pp_carry;
-   logic [WIDTH-1:0] 	      temp_b_padded;
+   logic [WIDTH-1:0] 	      temp_b;
    logic 		      temp_bitgroup;	
    integer 		      bit_pair, height, i;      
 
    always_comb 
      begin 
-	// For each multiplicand
+	// For each multiplicand PP generation
 	for (bit_pair=0; bit_pair < WIDTH; bit_pair=bit_pair+1)
 	  begin
 	     // Shift to the right via P&H
-	     temp_b_padded = (b >> (bit_pair));	     	     
-	     temp_bitgroup = temp_b_padded[0];
+	     temp_b = (b >> (bit_pair));	     	     
+	     temp_bitgroup = temp_b[0];
 	     // PP generation
 	     case (temp_bitgroup)
                1'b0 : temp_pp = {2*WIDTH-1{1'b0}};
@@ -64,7 +65,7 @@ module mult_cs #(parameter WIDTH = 8)
 	// Height is multiplier
 	height = WIDTH;
 
-	// Wallace Tree Reduction
+	// Wallace Tree PP reduction
 	while (height > 2)
 	  begin
 	     for (i=0; i < (height/3); i=i+1)
