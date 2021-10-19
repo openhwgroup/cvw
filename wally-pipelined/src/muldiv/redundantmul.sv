@@ -26,18 +26,25 @@
 `include "wally-config.vh"
 
 module redundantmul #(parameter WIDTH =8)(
-  input  logic [WIDTH-1:0] a,b,
+  input logic [WIDTH-1:0]    a,b,
   output logic [2*WIDTH-1:0] out0, out1);
 
-  generate
-     if (`DESIGN_COMPILER == 1)
-       DW02_multp #(WIDTH, WIDTH, 2*WIDTH) mul(.a, .b, .tc(1'b0), .out0, .out1);
-     else if (`DESIGN_COMPILER == 2)
-       mult_cs #(WIDTH) mul(.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
-     else begin // force a nonredunant multipler.  This will simulate properly and also is appropriate for FPGAs.
-       assign out0 = a * b;
-       assign out1 = 0;
-     end
+   logic [2*WIDTH-1+2:0]     tmp_out0;
+   logic [2*WIDTH-1+2:0]     tmp_out1;   
+
+   generate
+      if (`DESIGN_COMPILER == 1)
+	begin
+	   DW02_multp #(WIDTH, WIDTH, 2*WIDTH+2) mul(.a, .b, .tc(1'b0), .out0(tmp_out0), .out1(tmp_out1));
+	   assign out0 = tmp_out0[2*WIDTH-1:0];
+	   assign out1 = tmp_out1[2*WIDTH-1:0];
+	end
+      else if (`DESIGN_COMPILER == 2)
+	mult_cs #(WIDTH) mul(.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
+      else begin // force a nonredunant multipler.  This will simulate properly and also is appropriate for FPGAs.
+	 assign out0 = a * b;
+	 assign out1 = 0;
+      end
   endgenerate
 
 endmodule
