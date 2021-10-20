@@ -60,10 +60,6 @@ module mul (
   // Execute Stage: Compute partial products
   //////////////////////////////
 
-    // portions of product
-    //assign Pprime = {1'b0, SrcAE[`XLEN-2:0]} * {1'b0, SrcBE[`XLEN-2:0]};
-
-    // *** assumes unsigned multiplication
     assign Aprime = {1'b0, SrcAE[`XLEN-2:0]};
     assign Bprime = {1'b0, SrcBE[`XLEN-2:0]};
     redundantmul #(`XLEN) bigmul(.a(Aprime), .b(Bprime), .out0(PP0E), .out1(PP1E));
@@ -77,8 +73,6 @@ module mul (
     // assign MULHU = (Funct3E == 2'b11); // signal unused
 
     // Handle signs
-//    assign PP0E = 0;
-//    assign PP1E = Pprime; // same for all flavors
     assign PP2E = {2'b00, (MULH | MULHSU) ? ~PA : PA, {(`XLEN-1){1'b0}}};
     assign PP3E = {2'b00, (MULH) ? ~PB : PB, {(`XLEN-1){1'b0}}};
     always_comb 

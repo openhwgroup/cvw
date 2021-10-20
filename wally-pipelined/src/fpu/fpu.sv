@@ -129,16 +129,16 @@ module fpu (
      logic [63:0] 	  AlignedSrcAE;           // align SrcA to the floating point format
 
      // DECODE STAGE
+     
      // calculate FP control signals
      fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .FRM_REGW,
 		  .IllegalFPUInstrD, .FRegWriteD, .FDivStartD, .FResultSelD, .FOpCtrlD, .FResSelD, 
 		  .FIntResSelD, .FmtD, .FrmD, .FWriteIntD);
 	
      // FP register file
-     //    - can read 3 registers and write 1 register every cycle
      fregfile fregfile (.clk, .reset, .we4(FRegWriteW),
-			.a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), .a4(RdW), 
-			.wd4(FPUResultW),
+			.a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
+			.a4(RdW), .wd4(FPUResultW),
 			.rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));	
 
      // D/E pipeline registers
@@ -158,23 +158,23 @@ module fpu (
                      .FStallD, .FForwardXE, .FForwardYE, .FForwardZE);
      
      // forwarding muxs
-     mux3  #(64)  fxemux(FRD1E, FPUResultW, FResM, FForwardXE, FSrcXE);
-     mux3  #(64)  fyemux(FRD2E, FPUResultW, FResM, FForwardYE, FPreSrcYE);
-     mux3  #(64)  fzemux(FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
-     mux3  #(64)  fyaddmux(FPreSrcYE, {{32{1'b1}}, 2'b0, {7{1'b1}}, 23'b0}, 
-			   {2'b0, {10{1'b1}}, 52'b0}, 
-			   {FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==3'b01), ~FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==3'b01)}, 
-			   FSrcYE); // Force Z to be 0 for multiply instructions
+     mux3  #(64)  fxemux (FRD1E, FPUResultW, FResM, FForwardXE, FSrcXE);
+     mux3  #(64)  fyemux (FRD2E, FPUResultW, FResM, FForwardYE, FPreSrcYE);
+     mux3  #(64)  fzemux (FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
+     mux3  #(64)  fyaddmux (FPreSrcYE, {{32{1'b1}}, 2'b0, {7{1'b1}}, 23'b0}, 
+			    {2'b0, {10{1'b1}}, 52'b0}, 
+			    {FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01), ~FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01)}, 
+			    FSrcYE); // Force Z to be 0 for multiply instructions
      // Force Z to be 0 for multiply instructions     
-     mux3  #(64)  fzmulmux(FPreSrcZE, 64'b0, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE);
+     mux3  #(64)  fzmulmux (FPreSrcZE, 64'b0, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE);
        
      // unpacking unit
      //    - splits FP inputs into their various parts
      //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-     unpacking unpacking(.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE, .FmtE, 
-			 .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
-			 .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
-			 .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
+     unpacking unpacking (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE, .FmtE, 
+			  .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
+			  .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
+			  .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
      
      // FMA
      //   - two stage FMA
@@ -191,35 +191,21 @@ module fpu (
 	      .FmtE, .FmtM, .FrmM, 
 	      .FMAFlgM, .FMAResM);
      
-     // clock gater
-     //    - creates a clock that only runs durring divide/sqrt instructions
-     //    - using the seperate clock gives the divide/sqrt unit some to get set up
-     // *** the module says not to use in synthisis
-     clockgater fpdivclkg(.E(FDivStartE),
-			  .SE(1'b0),
-			  .CLK(clk),
-			  .ECLK(FDivClk));
-     
-     // capture the inputs for divide/sqrt
-     //    - if not captured any forwarded inputs will change durring computation
-     //        - this problem is caused by stalling the execute stage
-     //    - the other units don't have this problem, only div/sqrt stalls the execute stage
+     // fpdivsqrt using Goldschmidt's iteration
      floprc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
-				.clear(FDivSqrtDoneE),
-				.reset(reset),  .clk(FDivBusyE));
+			      .clear(FDivSqrtDoneE),
+			      .reset(reset),  .clk(FDivBusyE));
      floprc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
-				.clear(FDivSqrtDoneE),
-				.reset(reset),  .clk(FDivBusyE));
+			      .clear(FDivSqrtDoneE),
+			      .reset(reset),  .clk(FDivBusyE));
      floprc #(6) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE}), 
-				.q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ}),
-			   .clear(FDivSqrtDoneE),
-				.reset(reset),  .clk(FDivBusyE));
-            
-      // fpdivsqrt using Goldschmidt's iteration
-      fpdiv fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]), 
-		      .reset, .clk(FDivClk), .start(FDivStartE), .P(~FmtE), .OvEn(1'b1), .UnEn(1'b1),
-		      .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ,
-		      .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
+			     .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ}),
+			     .clear(FDivSqrtDoneE),
+			     .reset(reset),  .clk(FDivBusyE));     
+     fpdiv fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]), 
+		     .reset, .clk(clk), .start(FDivStartE), .P(~FmtE), .OvEn(1'b1), .UnEn(1'b1),
+		     .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ,
+		     .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 
      // convert from signle to double and vice versa
      cvtfp cvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
@@ -234,17 +220,14 @@ module fpu (
 		.Invalid(CmpNVE), .CmpResE);
      
      // sign injection unit
-     //    - computation is done in one stage
      fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .XExpMaxE,
 		.SgnNVE, .SgnResE);
      
      // classify
-     //    - computation is done in one stage
-     //    - most of the work is done in the unpacking unit
-     //    - result is written to the integer register
      fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, 
 			  .XSNaNE, .ClassResE);
-     
+
+     // Convert
      fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .SrcAE, .FOpCtrlE, .FmtE, .FrmE,
 		.CvtResE, .CvtFlgE);
      
@@ -267,22 +250,23 @@ module fpu (
      // E/M pipe registers
 
      // flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
-     flopenrc #(65) EMFpReg2(clk, reset, FlushM, ~StallM, {XSgnE,XExpE,XManE}, {XSgnM,XExpM,XManM});
-     flopenrc #(65) EMFpReg3(clk, reset, FlushM, ~StallM, {YSgnE,YExpE,YManE}, {YSgnM,YExpM,YManM});
-     flopenrc #(64) EMFpReg4(clk, reset, FlushM, ~StallM, {ZExpE,ZManE}, {ZExpM,ZManM});
-     flopenrc #(12) EMFpReg5(clk, reset, FlushM, ~StallM, 
-			     {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
-			     {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});     
-     flopenrc #(64) EMRegCmpRes(clk, reset, FlushM, ~StallM, FResE, FResM); 
-     flopenrc #(5)  EMRegCmpFlg(clk, reset, FlushM, ~StallM, FFlgE, FFlgM);      
-     flopenrc #(`XLEN) EMRegSgnRes(clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
-     flopenrc #(11) EMCtrlReg(clk, reset, FlushM, ~StallM,
-			      {FRegWriteE, FResultSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE},
-			      {FRegWriteM, FResultSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM});
+     flopenrc #(65) EMFpReg2 (clk, reset, FlushM, ~StallM, {XSgnE,XExpE,XManE}, {XSgnM,XExpM,XManM});
+     flopenrc #(65) EMFpReg3 (clk, reset, FlushM, ~StallM, {YSgnE,YExpE,YManE}, {YSgnM,YExpM,YManM});
+     flopenrc #(64) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZExpE,ZManE}, {ZExpM,ZManM});
+     flopenrc #(12) EMFpReg5 (clk, reset, FlushM, ~StallM, 
+			      {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
+			      {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});     
+     flopenrc #(64) EMRegCmpRes (clk, reset, FlushM, ~StallM, FResE, FResM); 
+     flopenrc #(5)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, FFlgE, FFlgM);      
+     flopenrc #(`XLEN) EMRegSgnRes (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
+     flopenrc #(11) EMCtrlReg (clk, reset, FlushM, ~StallM,
+			       {FRegWriteE, FResultSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE},
+			       {FRegWriteM, FResultSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM});
      
      // BEGIN MEMORY STAGE
+     
      // FPU flag selection - to privileged
-     mux4  #(5)  FPUFlgMux(5'b0, FMAFlgM, FDivFlgM, FFlgM, FResultSelW, SetFflagsM);
+     mux4  #(5)  FPUFlgMux (5'b0, FMAFlgM, FDivFlgM, FFlgM, FResultSelW, SetFflagsM);
   
      // M/W pipe registers
      flopenrc #(64) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
@@ -298,10 +282,10 @@ module fpu (
      // put ReadData into NaN-blocking format
      //    - if there are any unsused bits the most significant bits are filled with 1s
      //    - for load instruction
-     mux2  #(64)  ReadResMux({{32{1'b1}}, ReadDataW[31:0]}, {{64-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW);
+     mux2  #(64)  ReadResMux ({{32{1'b1}}, ReadDataW[31:0]}, {{64-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW);
      
      // select the result to be written to the FP register
-     mux4  #(64)  FPUResultMux(ReadResW, FMAResW, FDivResW, FResW, FResultSelW, FPUResultW);
+     mux4  #(64)  FPUResultMux (ReadResW, FMAResW, FDivResW, FResW, FResultSelW, FPUResultW);
 
   end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
      assign FStallD = 0;

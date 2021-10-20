@@ -81,6 +81,18 @@ module flopenr #(parameter WIDTH = 8) (
     else if (en) q <= #1 d;
 endmodule
 
+// flop with enable, asynchronous set
+module flopens #(parameter WIDTH = 8) (
+  input  logic             clk, set, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk, posedge set)
+    if (set)   q <= #1 1;
+    else if (en) q <= #1 d;
+endmodule
+
+
 // flop with enable, asynchronous load
 module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   input  logic clk, load, en,

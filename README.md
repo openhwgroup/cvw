@@ -5,15 +5,32 @@ Wally is a 5-stage pipelined processor configurable to support all the standard 
 
 To use Wally on Linux:
 
+```
 git clone https://github.com/davidharrishmc/riscv-wally
 cd riscv-wally
 cd imperas-riscv-tests
 make
 cd ../addins
 git clone https://github.com/riscv-non-isa/riscv-arch-test
-
+git clone https://github.com/riscv-software-src/riscv-isa-sim
+cd riscv-isa-sim
+mkdir build
+cd build
+set RISCV=/cad/riscv/gcc/bin   (or whatever your path is)
+../configure --prefix=$RISCV
+make (this will take a while to build SPIKE)
+sudo make install
+cd ../../riscv-arch-test
+cp ../riscv-isa-sim/arch_test_target/spike/Makefile.include .
+edit Makefile.include
+  change line with TARGETDIR to /home/harris/riscv-wally/addins/riscv-isa-sim/arch_test_target (or whatever your path is) 
+  add line export RISCV_PREFIX = riscv64-unknown-elf-  # this might not be needed if you have 32-bit versions of the riscv gcc compiler built separately
+make
+make XLEN=32
+exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
+```
 
 Notes:
 Eventually download imperas-riscv-tests separately
 Move our custom tests to another directory
-Handle exe2memfile separately.
+Eventually replace exe2memfile.pl with objcopy

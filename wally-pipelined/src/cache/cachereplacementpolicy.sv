@@ -25,7 +25,7 @@
 `include "wally-config.vh"
 
 module cachereplacementpolicy
-  #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+  #(parameter NUMWAYS = 4, INDEXLEN = 9, OFFSETLEN = 5, NUMLINES = 128)
   (input logic clk, reset,
    input logic [NUMWAYS-1:0] 			WayHit,
    output logic [NUMWAYS-1:0] 			VictimWay,

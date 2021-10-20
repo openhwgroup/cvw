@@ -40,25 +40,25 @@ module rounder_div (
     input logic 	XInfQ,
     input logic 	YInfQ,
     input logic 	op_type, 
-    input logic [63:0] 	q1,
-    input logic [63:0] 	qm1,
-    input logic [63:0] 	qp1,
-    input logic [63:0] 	q0,
-    input logic [63:0] 	qm0,
-    input logic [63:0] 	qp0, 
-    input logic [127:0] regr_out,
+    input logic [59:0] 	q1,
+    input logic [59:0] 	qm1,
+    input logic [59:0] 	qp1,
+    input logic [59:0] 	q0,
+    input logic [59:0] 	qm0,
+    input logic [59:0] 	qp0, 
+    input logic [119:0] regr_out,
    
     output logic [63:0] Result,
     output logic [4:0] 	Flags
     );
       
-   logic 	       Rsign;
-   logic [10:0]    Rexp;
-   logic [12:0]    Texp;
-   logic [51:0]    Rmant;
-   logic [63:0]    Tmant;
-   logic [51:0]    Smant;   
-   logic 	       Rzero;
+   logic 		Rsign;
+   logic [10:0] 	Rexp;
+   logic [12:0] 	Texp;
+   logic [51:0] 	Rmant;
+   logic [59:0] 	Tmant;
+   logic [51:0] 	Smant;   
+   logic 		Rzero;
    logic 	       Gdp, Gsp, G;
    logic 	       UnFlow_SP, UnFlow_DP, UnderFlow; 
    logic 	       OvFlow_SP, OvFlow_DP, OverFlow;		
@@ -77,7 +77,7 @@ module rounder_div (
    logic 	       zero_rem;
    logic [1:0] 	       mux_mant;
    logic 	       sign_rem;
-   logic [63:0]        q, qm, qp;
+   logic [59:0]        q, qm, qp;
    logic 	       exp_ovf;
 
    logic [50:0]        NaN_out;
@@ -87,10 +87,10 @@ module rounder_div (
    // Remainder = 0?
    assign zero_rem = ~(|regr_out);
    // Remainder Sign
-   assign sign_rem = ~regr_out[127];
+   assign sign_rem = ~regr_out[119];
    // choose correct Guard bit [1,2) or [0,1)
-   assign Gdp = q1[63] ? q1[10] : q0[10];
-   assign Gsp = q1[63] ? q1[39] : q0[39];
+   assign Gdp = q1[59] ? q1[6] : q0[6];
+   assign Gsp = q1[59] ? q1[35] : q0[35];
    assign G = P ? Gsp : Gdp;   
    // Selection of Rounding (from logic/switching)
    assign mux_mant[1] = (SignR&rm[1]&rm[0]&G) | (!SignR&rm[1]&!rm[0]&G) | 
@@ -102,18 +102,18 @@ module rounder_div (
 			(SignR&rm[1]&!rm[0]&!G&!zero_rem&sign_rem);
    
    // Which Q?
-   mux2 #(64) mx1 (q0, q1, q1[63], q);
-   mux2 #(64) mx2 (qm0, qm1, q1[63], qm);   
-   mux2 #(64) mx3 (qp0, qp1, q1[63], qp);
+   mux2 #(60) mx1 (q0, q1, q1[59], q);
+   mux2 #(60) mx2 (qm0, qm1, q1[59], qm);   
+   mux2 #(60) mx3 (qp0, qp1, q1[59], qp);
    // Choose Q, Q+1, Q-1
-   mux3 #(64) mx4 (q, qm, qp, mux_mant, Tmant);
-   assign Smant = Tmant[62:11];
+   mux3 #(60) mx4 (q, qm, qp, mux_mant, Tmant);
+   assign Smant = Tmant[58:7];
    // Compute the value of the exponent
    //   exponent is modified if we choose:
    //   1.) we choose any qm0, qp0, q0 (since we shift mant)
    //   2.) we choose qp and we overflow (for RU)
-   assign exp_ovf = |{qp[62:40], (qp[39:11] & {29{~P}})};
-   assign Texp = exp_diff - {{13{1'b0}}, ~q1[63]} + {{13{1'b0}}, mux_mant[1]&qp1[63]&~exp_ovf};
+   assign exp_ovf = |{qp[58:36], (qp[35:7] & {29{~P}})};
+   assign Texp = exp_diff - {{12{1'b0}}, ~q1[59]} + {{12{1'b0}}, mux_mant[1]&qp1[59]&~exp_ovf};
    
    // Overflow only occurs for double precision, if Texp[10] to Texp[0] are 
    // all ones. To encourage sharing with single precision overflow detection,
@@ -187,9 +187,9 @@ module rounder_div (
    assign NaN_Sign_out = ~XNaNQ&YNaNQ ? Float2[63] : Float1[63];
    assign Sign_out = (XZeroQ&YZeroQ | XInfQ&YInfQ)&~op_type | Rsign&~XNaNQ&~YNaNQ | 
    		     NaN_Sign_out&(XNaNQ|YNaNQ);
-
    // FIXME (jes) - Imperas gives sNaN a Sign=0 where x86 gives Sign=1
-   // | Float1[63]&op_type;
+   // | Float1[63]&op_type;  (logic to fix this but removed for now)
+   
    assign Rmant[51] = Largest | NaN | (Smant[51]&~Infinite&~Rzero);
    assign Rmant[50:0] = ({51{Largest}} | (Smant[50:0]&{51{~Infinite&Valid&~Rzero}}) |
 			(NaN_out&{51{NaN}}))&({51{~(op_type&Float1[63]&~XZeroQ)}});

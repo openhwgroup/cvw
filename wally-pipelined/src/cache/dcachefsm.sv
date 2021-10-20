@@ -146,18 +146,7 @@ module dcachefsm
 
   always_ff @(posedge clk, posedge reset)
     if (reset)    CurrState <= #1 STATE_READY;
-    else CurrState <= #1 NextState;
-
-/* -----\/----- EXCLUDED -----\/-----
-  flopenl #(.TYPE(statetype))
-  StateReg(.clk,
-	   .load(reset),
-	   .en(1'b1),
-	   .d(NextState),
-	   .q(CurrState),
-	   .val(STATE_READY));
- -----/\----- EXCLUDED -----/\----- */
-  
+    else CurrState <= #1 NextState;  
   
   // next state logic and some state ouputs.
   always_comb begin
