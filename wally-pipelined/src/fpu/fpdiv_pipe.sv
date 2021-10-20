@@ -3,7 +3,7 @@
 // Written: James Stine
 // Modified: 8/1/2018
 //
-// Purpose: Floating point divider/square root top unit (Goldschmidt)
+// Purpose: Floating point divider/square root top unit pipelined version (Goldschmidt)
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -22,8 +22,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-// `timescale 1ps/1ps
-module fpdiv (
+module fpdiv_pipe (
   input logic 	      clk,
   input logic 	      reset,
   input logic 	      start,
@@ -45,13 +44,18 @@ module fpdiv (
   output logic 	      FDivBusyE,
   output logic [63:0] AS_Result, 
   output logic [4:0]  Flags);
+
+   supply1 	      vdd;
+   supply0 	      vss;   
    
    logic [63:0]       Float1; 
    logic [63:0]       Float2;
+   logic [63:0]       IntValue;
    
    logic [12:0]       exp1, exp2, expF;
    logic [12:0]       exp_diff, bias;
    logic [13:0]       exp_sqrt;
+   
    logic [63:0]       Result;   
    logic [52:0]       mantissaA;
    logic [52:0]       mantissaB; 
@@ -59,7 +63,14 @@ module fpdiv (
    logic [2:0] 	      sel_inv;
    logic 	      Invalid;
    logic [4:0] 	      FlagsIn;   	
-   logic 	      signResult;      
+   logic 	      exp_gt63;
+   logic 	      Sticky_out;
+   logic 	      signResult, sign_corr;
+   logic 	      corr_sign;
+   logic 	      zeroB;         
+   logic 	      convert;
+   logic 	      swap;
+   logic 	      sub;
    
    logic [59:0]       q1, qm1, qp1, q0, qm0, qp0;
    logic [59:0]       rega_out, regb_out, regc_out, regd_out;
@@ -67,50 +78,84 @@ module fpdiv (
    logic [2:0] 	      sel_muxa, sel_muxb;
    logic 	      sel_muxr;   
    logic 	      load_rega, load_regb, load_regc, load_regd, load_regr;
+   logic 	      load_regp;   
    
-   logic 	      load_regs;
-   logic 	      exp_cout1, exp_cout2;
-   logic 	      exp_odd, open;
-   
-   //  op_type : fdiv=0, fsqrt=1
+   logic 	      donev, sel_muxrv, sel_muxsv;
+   logic [1:0] 	      sel_muxav, sel_muxbv;   
+   logic 	      load_regav, load_regbv, load_regcv;
+   logic 	      load_regrv, load_regsv;
+
+
+  //  op_type : fdiv=0, fsqrt=1
    assign Float1 = op1;
    assign Float2 = op_type ? op1 : op2;   
    
    // Exception detection
    exception_div exc1 (.A(Float1), .B(Float2), .op_type, .Ztype(sel_inv), .Invalid);
-   
+
    // Determine Sign/Mantissa
-   assign signResult = (Float1[63]^Float2[63]);
-   assign mantissaA = {1'b1, Float1[51:0]};
-   assign mantissaB = {1'b1, Float2[51:0]};
+   assign signResult = ((Float1[63]^Float2[63])&~op_type) | Float1[63]&op_type;
+   assign mantissaA = {vdd, Float1[51:0]};
+   assign mantissaB = {vdd, Float2[51:0]};
+   // Early-ending detection
+   assign early_detection = |mantissaB[31:0];
+   
    // Perform Exponent Subtraction - expA - expB + Bias   
    assign exp1 = {2'b0, Float1[62:52]};
    assign exp2 = {2'b0, Float2[62:52]};
+   // bias : DP = 2^{11-1}-1 = 1023
    assign bias = {3'h0, 10'h3FF};
    // Divide exponent
-   assign {exp_cout1, open, exp_diff} = {2'b0, exp1} - {2'b0, exp2} + {2'b0, bias};
+   assign {exp_cout1, open, exp_diff} = {2'b0, exp1} - {2'b0, exp2} + {2'b0, bias};      
    
    // Sqrt exponent (check if exponent is odd)
-   assign exp_odd = Float1[52] ? 1'b0 : 1'b1;
+   assign exp_odd = Float1[52] ? vss : vdd;   
    assign {exp_cout2, exp_sqrt} = {1'b0, exp1} + {4'h0, 10'h3ff} + {13'b0, exp_odd};
+   
    // Choose correct exponent
    assign expF = op_type ? exp_sqrt[13:1] : exp_diff;   
+
+   logic 		exp_odd1;
+   logic 		P1;
+   logic 		op_type1;
+   logic [12:0] 	expF1;
+   logic [52:0] 	mantissaA1;
+   logic [52:0] 	mantissaB1;
+   logic [2:0]		sel_inv1;
+   logic 		DenormIn1;
+   logic 		signResult1;
+   logic 		Invalid1;   
    
-   // Main Goldschmidt/Division Routine   
-   divconv goldy (.q1, .qm1, .qp1, .q0, .qm0, .qp0, .rega_out, .regb_out, .regc_out, .regd_out,
-		  .regr_out, .d(mantissaB), .n(mantissaA), .sel_muxa, .sel_muxb, .sel_muxr, 
-		  .reset, .clk,  .load_rega, .load_regb, .load_regc, .load_regd,
-		  .load_regr, .load_regs, .P, .op_type, .exp_odd);
+   flopenr #(1) rega (clk, reset, 1'b1, exp_odd, exp_odd1);
+   flopenr #(1) regb (clk, reset, 1'b1, P, P1);
+   flopenr #(1) regc (clk, reset, 1'b1, op_type, op_type1);
+   flopenr #(13) regd (clk, reset, 1'b1, expF, expF1);
+   flopenr #(53) rege (clk, reset, 1'b1, mantissaA, mantissaA1);
+   flopenr #(53) regf (clk, reset, 1'b1, mantissaB, mantissaB1);
+   flopenr #(1) regg (clk, reset, 1'b1, start, start1);
+   flopenr #(3) regh (clk, reset, 1'b1, sel_inv, sel_inv1);
+   flopenr #(1) regi (clk, reset, 1'b1, DenormIn, DenormIn1);
+   flopenr #(1) regj (clk, reset, 1'b1, signResult, signResult1);
+   flopenr #(1) regk (clk, reset, 1'b1, Invalid, Invalid1);      
    
-   // FSM : control divider   
-   fsm_fpdiv control (.clk, .reset, .start, .op_type,
-		      .done, .load_rega, .load_regb, .load_regc, .load_regd, 
-		      .load_regr, .load_regs, .sel_muxa, .sel_muxb, .sel_muxr, 
-		      .divBusy(FDivBusyE));
+   // Main Goldschmidt/Division Routine
+   divconv_pipe goldy (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, regd_out,
+		       regr_out, mantissaB1, mantissaA1, 
+		       sel_muxa, sel_muxb, sel_muxr, reset, clk,
+		       load_rega, load_regb, load_regc, load_regd,
+		       load_regr, load_regs, load_regp,
+		       P1, op_type1, exp_odd1);
+
+   // FSM : control divider
+   fsm_fpdiv_pipe control (.clk, .reset, .start, .op_type, .P,
+			   .done, .load_rega, .load_regb, .load_regc, .load_regd, 
+			   .load_regr, .load_regs, .load_regp,
+			   .sel_muxa, .sel_muxb, .sel_muxr, .divBusy(FDivBusyE));
+
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 
-   // set the exception flags.   
+   // set the exception flags.
    rounder_div round1 (.rm, .P, .OvEn, .UnEn, .exp_diff(expF), 
    		       .sel_inv, .Invalid, .SignR(signResult),
 		       .Float1(op1), .Float2(op2),
@@ -118,10 +163,10 @@ module fpdiv (
 		       .XInfQ, .YInfQ, .op_type,		       
 		       .q1, .qm1, .qp1, .q0, .qm0, .qp0, .regr_out, 
                        .Result, .Flags(FlagsIn));
-   
+
    // Store the final result and the exception flags in registers.
-   flopenr #(64) rega (clk, reset, done, Result, AS_Result);  
-   flopenr #(5) regc (clk, reset, done, FlagsIn, Flags);   
+   flopenr #(64) regl (clk, reset, done, Result, AS_Result);
+   flopenr #(5) regn (clk, reset, done, FlagsIn, Flags);   
    
-endmodule // fpadd
+endmodule // fpdiv_pipe
 

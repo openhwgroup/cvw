@@ -92,9 +92,19 @@ module wallypipelinedsoc (
   //assign SDCDatIn = SDCDat; // when write supported this will be a tristate
    
   // instantiate processor and memories
-  wallypipelinedhart hart(.*);
+  wallypipelinedhart hart(.clk, .reset,
+    .PCF,  .TimerIntM, .ExtIntM, .SwIntM, .DataAccessFaultM, 
+    .MTIME_CLINT, .MTIMECMP_CLINT, .rd2, 
+    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
+    .HSELRegions, .HADDRD, .HSIZED, .HWRITED
+   );
 
   // instructions now come from uncore memory. This line can be removed at any time.
   // imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
-  uncore uncore(.HWDATAIN(HWDATA), .*);
+  uncore uncore(.HCLK, .HRESETn,
+    .HADDR, .HWDATAIN(HWDATA), .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
+    .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,
+    .TimerIntM, .SwIntM, .ExtIntM, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, .MTIMECMP_CLINT
+);
 endmodule

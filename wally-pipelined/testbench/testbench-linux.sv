@@ -38,7 +38,7 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*3100000; // # of instructions at which to turn on waves in graphical sim
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*6300000; // # of instructions at which to turn on waves in graphical sim
   string ProgramAddrMapFile, ProgramLabelMapFile;
 
   ///////////////////////////////////////////////////////////////////////////////
