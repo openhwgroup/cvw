@@ -15,28 +15,25 @@
 /////////
 // srt //
 /////////
-module divider(clk, req, a, b, rp, rm);
+module srt(input  logic clk, 
+           input  logic req, 
+           input  logic sqrt,  // 1 to compute sqrt(a), 0 to compute a/b
+           input  logic [51:0] a, b, 
+           output logic [54:0] rp, rm);
  
-  // A simple Radix 2 SRT divider
- 
-  // Interface (neglect fact adder is clocked)
-  input         clk;
-  input         req;  // request a new division
-  input  [51:0] a;    // a has an implied leading 1
-  input  [51:0] b;    // b has an implied leading 1
-  output [54:0] rp;   // positive quotient digits
-  output [54:0] rm;   // positive quotient digits
- 
+  // A simple Radix 2 SRT divider/sqrt
+
+  
   // Internal signals
 
-  wire   [55:0] ps, pc;     // partial remainder in carry-save form
-  wire   [55:0] d;          // divisor
-  wire   [55:0] psa, pca;   // partial remainder result of csa
-  wire   [55:0] psn, pcn;   // partial remainder for next cycle
-  wire   [55:0] dn;         // divisor for next cycle
-  wire   [55:0] dsel;       // selected divisor multiple
-  wire          qp, qz, qm; // quotient is +1, 0, or -1
-  wire   [55:0] d_b;        // inverse of divisor
+  logic   [55:0] ps, pc;     // partial remainder in carry-save form
+  logic   [55:0] d;          // divisor
+  logic   [55:0] psa, pca;   // partial remainder result of csa
+  logic   [55:0] psn, pcn;   // partial remainder for next cycle
+  logic   [55:0] dn;         // divisor for next cycle
+  logic   [55:0] dsel;       // selected divisor multiple
+  logic          qp, qz, qm; // quotient is +1, 0, or -1
+  logic   [55:0] d_b;        // inverse of divisor
  
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -66,13 +63,11 @@ endmodule
 //////////
 // mux2 //
 //////////
-module mux2(in0, in1, sel, out);
-  input [55:0] 	in0;
-  input [55:0] 	in1;
-  input  	sel;
-  output [55:0] out;
-
-  assign #1 out = sel ? in1 : in0;
+module mux2(input  logic [55:0] in0, in1, 
+            input  logic        sel, 
+            output logic [55:0] out);
+ 
+   assign #1 out = sel ? in1 : in0;
 endmodule
 
 //////////
@@ -94,27 +89,29 @@ endmodule
 //////////
 // qsel //
 //////////
-module qsel(ps, pc, qp, qz, qm);
-  input  [55:52] ps;
-  input  [55:52] pc;
-  output 	qp;
-  output 	qz;
-  output 	qm;
-
-  wire          magnitude;
-  wire          sign;
+module qsel(input  logic [55:52] ps, pc, 
+            output logic         qp, qz, qm);
+ 
+  logic [55:52]  p, g;
+  logic          magnitude, sign, cout;
 
   // The quotient selection logic is presented for simplicity, not
   // for efficiency.  You can probably optimize your logic to
   // select the proper divisor with less delay.
 
   // Quotient equations from EE371 lecture notes 13-20
-  assign #1 magnitude = ~((ps[54]^pc[54]) && (ps[53]^pc[53]) && 
+  assign p = ps ^ pc;
+  assign g = ps & pc;
+
+  assign #1 magnitude = ~(&p[54:52]);
+  assign #1 cout = g[54] | (p[54] & (g[53] | p[53] & g[52]));
+  assign #1 sign = p[55] ^ cout;
+/*  assign #1 magnitude = ~((ps[54]^pc[54]) && (ps[53]^pc[53]) && 
 			  (ps[52]^pc[52]));
   assign #1 sign = (ps[55]^pc[55])^
       (ps[54] && pc[54] || ((ps[54]^pc[54]) &&
 			    (ps[53]&&pc[53] || ((ps[53]^pc[53]) &&
-						(ps[52]&&pc[52])))));
+						(ps[52]&&pc[52]))))); */
 
   // Produce quotient = +1, 0, or -1
   assign #1 qp = magnitude && ~sign;
@@ -155,9 +152,8 @@ endmodule
 /////////
 // inv //
 /////////
-module inv(in, out);
-  input  [55:0] in;
-  output [55:0] out;
+module inv(input  logic [55:0] in, 
+           output logic [55:0] out);
 
   assign #1 out = ~in;
 endmodule
@@ -211,7 +207,7 @@ module finaladd(rp, rm, r);
   input  [54:0] rm;
   output [51:0] r;
 
-  wire   [54:0] diff;
+  logic   [54:0] diff;
 
   // this magic block performs the final addition for you
   // to convert the positive and negative quotient digits
@@ -232,13 +228,11 @@ endmodule
 /////////////
 // counter //
 /////////////
-module counter(clk, req, done);
-  input 	clk;
-  input         req;
-  output        done;
-
-  logic           done;
-  logic    [5:0]  count;
+module counter(input  logic clk, 
+               input  logic req, 
+               output logic done);
+ 
+   logic    [5:0]  count;
 
   // This block of control logic sequences the divider
   // through its iterations.  You may modify it if you
@@ -248,10 +242,10 @@ module counter(clk, req, done);
 
   always @(posedge clk)
     begin
-      if (count == 54) done <= #1 1;
-      if (done || req) done <= #1 0;	
+      if      (count == 54) done <= #1 1;
+      else if (done || req) done <= #1 0;	
       if (req) count <= #1 0;
-      else count <= #1 count+1;
+      else     count <= #1 count+1;
     end
 endmodule
 
@@ -294,7 +288,7 @@ module testbench;
   integer testnum, errors;
 
   // Divider
-  divider  srt(clk, req, a, b, rp, rm);
+  srt  srt(clk, req, a, b, rp, rm);
 
   // Final adder converts quotient digits to 2's complement & normalizes
   finaladd finaladd(rp, rm, r);
