@@ -138,7 +138,7 @@ module dcachefsm
 		STATE_FLUSH_WRITE_BACK,
 		STATE_FLUSH_CLEAR_DIRTY} statetype;
 
-  statetype CurrState, NextState;
+  (* mark_debug = "true" *) statetype CurrState, NextState;
 
   assign AnyCPUReqM = |MemRWM | (|AtomicM);
   assign CntEn = PreCntEn & AHBAck;
