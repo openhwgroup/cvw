@@ -64,13 +64,13 @@ module dcache
    input logic 		       WalkerPageFaultM, 
    output logic 	       MemAfterIWalkDone,
    // ahb side
-   output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
-   output logic 	       AHBRead,
-   output logic 	       AHBWrite,
-   input logic 		       AHBAck, // from ahb
-   input logic [`XLEN-1:0]     HRDATA, // from ahb
-   output logic [`XLEN-1:0]    HWDATA, // to ahb
-   output logic [2:0] 	       DCtoAHBSizeM
+   (* mark_debug = "true" *)output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
+   (* mark_debug = "true" *)output logic 	       AHBRead,
+   (* mark_debug = "true" *)output logic 	       AHBWrite,
+   (* mark_debug = "true" *)input logic 		       AHBAck, // from ahb
+   (* mark_debug = "true" *)input logic [`XLEN-1:0]     HRDATA, // from ahb
+   (* mark_debug = "true" *)output logic [`XLEN-1:0]    HWDATA, // to ahb
+   (* mark_debug = "true" *)output logic [2:0] 	       DCtoAHBSizeM
    );
 
 /*  localparam integer	       BLOCKLEN = 256;
