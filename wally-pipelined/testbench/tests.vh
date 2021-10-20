@@ -27,7 +27,7 @@
 `define RISCVARCHTEST "1"
 
 string tvpaths[] = '{
-    "../../imperas-riscv-tests/work/",
+    "../../tests/imperas-riscv-tests/work/",
     "../../addins/riscv-arch-test/work/"
 };
 

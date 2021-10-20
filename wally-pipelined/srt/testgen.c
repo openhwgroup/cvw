@@ -3,7 +3,7 @@
 /* Written 10/31/96 by David Harris
 
    This program creates test vectors for mantissa component
-   of an IEEE floating point divider.  It does dumb SRT division
+   of an IEEE floating point divider. 
    */
 
 /* #includes */
