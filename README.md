@@ -23,7 +23,7 @@ sudo make install
 cd ../../riscv-arch-test
 cp ../riscv-isa-sim/arch_test_target/spike/Makefile.include .
 edit Makefile.include
-  change line with TARGETDIR to ~/riscv-wally/addins/riscv-isa-sim/arch_test_target (or whatever your path is) ***fix
+  change line with TARGETDIR to /home/harris/riscv-wally/addins/riscv-isa-sim/arch_test_target (or whatever your path is) 
   add line export RISCV_PREFIX = riscv64-unknown-elf-  # this might not be needed if you have 32-bit versions of the riscv gcc compiler built separately
 make
 make XLEN=32
