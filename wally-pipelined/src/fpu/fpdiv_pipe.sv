@@ -53,6 +53,7 @@ module fpdiv_pipe (
    logic [63:0]       IntValue;
    
    logic [12:0]       exp1, exp2, expF;
+   logic [14:0]       exp_pre_diff;   
    logic [12:0]       exp_diff, bias;
    logic [13:0]       exp_sqrt;
    
@@ -109,7 +110,8 @@ module fpdiv_pipe (
    // bias : DP = 2^{11-1}-1 = 1023
    assign bias = {3'h0, 10'h3FF};
    // Divide exponent
-   assign exp_diff = {2'b0, exp1} - {2'b0, exp2} + {2'b0, bias};      
+   assign exp_pre_diff = {2'b0, exp1} - {2'b0, exp2} + {2'b0, bias};
+   assign exp_diff = exp_pre_diff[12:0];   
    
    // Sqrt exponent (check if exponent is odd)
    assign exp_odd = Float1[52] ? 1'b0 : 1'b1;
