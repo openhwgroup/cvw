@@ -103,7 +103,8 @@ module fpu (
      logic 		  XExpMaxE;                           // is the exponent all ones (max value)
      logic 		  XNormE;                             // is normal
      logic 		  FmtQ;
-     logic 		  FDivStartQ;     
+     logic 		  FDivStartQ;
+     logic 		  FOpCtrlQ;     
      
      // result and flag signals
      logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -128,6 +129,7 @@ module fpu (
      logic 		  FDivSqrtDoneE;                      // is divide done
      logic [63:0] 	  DivInput1E, DivInput2E;             // inputs to divide/squareroot unit
      logic 		  FDivClk;                            // clock for divide/squareroot unit
+     logic 		  load_preload;                       // enable for FF on fpdivsqrt     
      logic [63:0] 	  AlignedSrcAE;                       // align SrcA to the floating point format
 
      // DECODE STAGE
@@ -194,19 +196,19 @@ module fpu (
 	      .FMAFlgM, .FMAResM);
      
      // fpdivsqrt using Goldschmidt's iteration
-     floprc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
-			      .clear(FDivSqrtDoneE),
-			      .reset(reset),  .clk(FDivBusyE));
-     floprc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
-			      .clear(FDivSqrtDoneE),
-			      .reset(reset),  .clk(FDivBusyE));
-     floprc #(7) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE, FmtE}), 
-			     .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ, FmtQ}),
-			     .clear(FDivSqrtDoneE),
-			     .reset(reset),  .clk(FDivBusyE));
-     fpdiv_pipe fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlE[0]), 
+     flopenrc #(64) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
+				.clear(FDivSqrtDoneE), .en(load_preload),
+				.reset(reset),  .clk(clk));
+     flopenrc #(64) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
+			      .clear(FDivSqrtDoneE), .en(load_preload),
+			      .reset(reset),  .clk(clk));
+     flopenrc #(8) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE, FmtE, FOpCtrlE[0]}), 
+			     .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ, FmtQ, FOpCtrlQ}),
+			     .clear(FDivSqrtDoneE), .en(load_preload),
+			     .reset(reset),  .clk(clk));
+     fpdiv_pipe fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlQ), 
 			  .reset, .clk(clk), .start(FDivStartE), .P(~FmtQ), .OvEn(1'b1), .UnEn(1'b1),
-			  .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ,
+			  .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
 			  .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 
      // convert from signle to double and vice versa
