@@ -28,7 +28,8 @@ module fsm_fpdiv_pipe (
    input logic 	      start,
    input logic 	      op_type,
    input logic 	      P,
-   output logic       done, 
+   output logic       done,
+   output logic       load_preload,
    output logic       load_rega, 
    output logic       load_regb, 
    output logic       load_regc, 
@@ -52,7 +53,7 @@ module fsm_fpdiv_pipe (
 				   S30, S31, S32, S33, S34, S35, S36, S37, S38, S39,
 				   S40, S41, S42, S43, S44, S45, S46, S47, S48, S49,
 				   S50, S51, S52, S53, S54, S55, S56, S57, S58, S59,
-				   S60, S61, S62, S63, S64, S65} statetype;
+				   S60, S61, S62, S63, S64, S65, S66} statetype;
    
    statetype current_state, next_state;   
    
@@ -73,6 +74,7 @@ module fsm_fpdiv_pipe (
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b0;
+		    load_preload = 1'b0;
 		    load_rega = 1'b0;
 		    load_regb = 1'b0;
 		    load_regc = 1'b0;
@@ -89,6 +91,7 @@ module fsm_fpdiv_pipe (
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
+		    load_preload = 1'b1;		    
 		    load_rega = 1'b0;
 		    load_regb = 1'b0;
 		    load_regc = 1'b0;
@@ -99,15 +102,33 @@ module fsm_fpdiv_pipe (
 		    sel_muxa = 3'b000;
 		    sel_muxb = 3'b000;
 		    sel_muxr = 1'b0;
-		    next_state = S65;
+		    next_state = S66;
 		 end 
-	    end
+	    end // case: S0
+	  S66:
+	    begin
+	       done = 1'b0;
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;
+	       load_rega = 1'b0;
+	       load_regb = 1'b0;
+	       load_regc = 1'b0;
+	       load_regd = 1'b0;
+	       load_regr = 1'b0;
+	       load_regs = 1'b0;
+	       load_regp = 1'b0;		    
+	       sel_muxa = 3'b000;
+	       sel_muxb = 3'b000;
+	       sel_muxr = 1'b0;
+	       next_state = S65;
+	    end // if (start==1'b0)
 	  S65:
 	    begin
 	       if (op_type==1'b0 && P==1'b0) 
 		 begin
 		    done = 1'b0;
-		    divBusy = 1'b1;		    
+		    divBusy = 1'b1;
+		    load_preload = 1'b0;		    
 		    load_rega = 1'b1;
 		    load_regb = 1'b0;
 		    load_regc = 1'b1;
@@ -123,7 +144,8 @@ module fsm_fpdiv_pipe (
 	       else if (op_type==1'b0 && P==1'b1) 
 		 begin
 		    done = 1'b0;
-		    divBusy = 1'b1;		    
+		    divBusy = 1'b1;
+		    load_preload = 1'b0;		    
 		    load_rega = 1'b1;
 		    load_regb = 1'b0;
 		    load_regc = 1'b1;
@@ -139,7 +161,8 @@ module fsm_fpdiv_pipe (
 	       else if (op_type==1'b1 && P==1'b0) 
 		 begin
 		    done = 1'b0;
-		    divBusy = 1'b1;		    
+		    divBusy = 1'b1;
+		    load_preload = 1'b0;		    
 		    load_rega = 1'b0;
 		    load_regb = 1'b0;
 		    load_regc = 1'b0;
@@ -155,7 +178,8 @@ module fsm_fpdiv_pipe (
 	       else if (op_type==1'b1 && P==1'b1) 
 		 begin
 		    done = 1'b0;
-		    divBusy = 1'b1;		    
+		    divBusy = 1'b1;
+		    load_preload = 1'b0;		    
 		    load_rega = 1'b0;
 		    load_regb = 1'b0;
 		    load_regc = 1'b0;
@@ -171,7 +195,8 @@ module fsm_fpdiv_pipe (
 	       else
 		 begin
 		    done = 1'b0;
-		    divBusy = 1'b0;		    
+		    divBusy = 1'b0;
+		    load_preload = 1'b0;		    
 		    load_rega = 1'b0;
 		    load_regb = 1'b0;
 		    load_regc = 1'b0;
@@ -189,7 +214,8 @@ module fsm_fpdiv_pipe (
 	  S1:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -205,7 +231,8 @@ module fsm_fpdiv_pipe (
 	  S2: // iteration 1	  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+		    load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -221,7 +248,8 @@ module fsm_fpdiv_pipe (
 	  S3:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -237,7 +265,8 @@ module fsm_fpdiv_pipe (
 	  S4: // iteration 2
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -253,7 +282,8 @@ module fsm_fpdiv_pipe (
 	  S5:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -269,7 +299,8 @@ module fsm_fpdiv_pipe (
 	  S6: // iteration 3
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;	       
@@ -285,7 +316,8 @@ module fsm_fpdiv_pipe (
 	  S7:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -301,7 +333,8 @@ module fsm_fpdiv_pipe (
 	  S8:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -317,7 +350,8 @@ module fsm_fpdiv_pipe (
 	  S9: // q,qm,qp
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -333,7 +367,8 @@ module fsm_fpdiv_pipe (
 	  S10:  // rem
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;	   
+	       load_preload = 1'b0;    
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -349,7 +384,8 @@ module fsm_fpdiv_pipe (
 	  S11:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -365,7 +401,8 @@ module fsm_fpdiv_pipe (
 	  S12:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -381,7 +418,8 @@ module fsm_fpdiv_pipe (
 	  S13:  
 	    begin
 	       done = 1'b1;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -397,7 +435,8 @@ module fsm_fpdiv_pipe (
 	  S14:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -414,7 +453,8 @@ module fsm_fpdiv_pipe (
 	  S15:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -430,7 +470,8 @@ module fsm_fpdiv_pipe (
 	  S16:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -446,7 +487,8 @@ module fsm_fpdiv_pipe (
 	  S17:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -462,7 +504,8 @@ module fsm_fpdiv_pipe (
 	  S18:  // iteration 1
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -478,7 +521,8 @@ module fsm_fpdiv_pipe (
 	  S19:  // iteration 1
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -494,7 +538,8 @@ module fsm_fpdiv_pipe (
 	  S20:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -510,7 +555,8 @@ module fsm_fpdiv_pipe (
 	  S21:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -526,7 +572,8 @@ module fsm_fpdiv_pipe (
 	  S22:  // iteration 2
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -542,7 +589,8 @@ module fsm_fpdiv_pipe (
 	  S23:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -558,7 +606,8 @@ module fsm_fpdiv_pipe (
 	  S24:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -574,7 +623,8 @@ module fsm_fpdiv_pipe (
 	  S25:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -590,7 +640,8 @@ module fsm_fpdiv_pipe (
 	  S26:  // iteration 3
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -606,7 +657,8 @@ module fsm_fpdiv_pipe (
 	  S27: 
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -622,7 +674,8 @@ module fsm_fpdiv_pipe (
 	  S28:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -638,7 +691,8 @@ module fsm_fpdiv_pipe (
 	  S29:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -654,7 +708,8 @@ module fsm_fpdiv_pipe (
 	  S30: // q,qm,qp
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -670,7 +725,8 @@ module fsm_fpdiv_pipe (
 	  S31:  // rem
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -686,7 +742,8 @@ module fsm_fpdiv_pipe (
 	  S32:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -702,7 +759,8 @@ module fsm_fpdiv_pipe (
 	  S33:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -718,7 +776,8 @@ module fsm_fpdiv_pipe (
 	  S34:  // done
 	    begin
 	       done = 1'b1;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -734,7 +793,8 @@ module fsm_fpdiv_pipe (
 	  S35:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -751,7 +811,8 @@ module fsm_fpdiv_pipe (
 	  S36: 
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -767,7 +828,8 @@ module fsm_fpdiv_pipe (
 	  S37: // iteration 1	  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -783,7 +845,8 @@ module fsm_fpdiv_pipe (
 	  S38:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -799,7 +862,8 @@ module fsm_fpdiv_pipe (
 	  S39: // iteration 2
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -815,7 +879,8 @@ module fsm_fpdiv_pipe (
 	  S40:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -831,7 +896,8 @@ module fsm_fpdiv_pipe (
 	  S41:
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -847,7 +913,8 @@ module fsm_fpdiv_pipe (
 	  S42: // q,qm,qp
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -863,7 +930,8 @@ module fsm_fpdiv_pipe (
 	  S43:  // rem
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -879,7 +947,8 @@ module fsm_fpdiv_pipe (
 	  S44:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -895,7 +964,8 @@ module fsm_fpdiv_pipe (
 	  S45:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -911,7 +981,8 @@ module fsm_fpdiv_pipe (
 	  S46:  // done
 	    begin
 	       done = 1'b1;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -927,7 +998,8 @@ module fsm_fpdiv_pipe (
 	  S47:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -944,7 +1016,8 @@ module fsm_fpdiv_pipe (
 	  S48:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -960,7 +1033,8 @@ module fsm_fpdiv_pipe (
 	  S49:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -976,7 +1050,8 @@ module fsm_fpdiv_pipe (
 	  S50:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -992,7 +1067,8 @@ module fsm_fpdiv_pipe (
 	  S51:  // iteration 1
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1008,7 +1084,8 @@ module fsm_fpdiv_pipe (
 	  S52:  // iteration 1
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1024,7 +1101,8 @@ module fsm_fpdiv_pipe (
 	  S53:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -1040,7 +1118,8 @@ module fsm_fpdiv_pipe (
 	  S54:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -1056,7 +1135,8 @@ module fsm_fpdiv_pipe (
 	  S55:  // iteration 2
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1072,7 +1152,8 @@ module fsm_fpdiv_pipe (
 	  S56:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1088,7 +1169,8 @@ module fsm_fpdiv_pipe (
 	  S57:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b1;
 	       load_regb = 1'b0;
 	       load_regc = 1'b1;
@@ -1104,7 +1186,8 @@ module fsm_fpdiv_pipe (
 	  S58:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b1;
 	       load_regc = 1'b0;
@@ -1120,7 +1203,8 @@ module fsm_fpdiv_pipe (
 	  S59: // q,qm,qp
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1136,7 +1220,8 @@ module fsm_fpdiv_pipe (
 	  S60:  // rem
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1152,7 +1237,8 @@ module fsm_fpdiv_pipe (
 	  S61:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1168,7 +1254,8 @@ module fsm_fpdiv_pipe (
 	  S62:  
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b1;	       
+	       divBusy = 1'b1;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1184,7 +1271,8 @@ module fsm_fpdiv_pipe (
 	  S63:  // done
 	    begin
 	       done = 1'b1;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1200,7 +1288,8 @@ module fsm_fpdiv_pipe (
 	  S64: 
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;
@@ -1216,7 +1305,8 @@ module fsm_fpdiv_pipe (
 	  default: 
 	    begin
 	       done = 1'b0;
-	       divBusy = 1'b0;	       
+	       divBusy = 1'b0;
+	       load_preload = 1'b0;	       
 	       load_rega = 1'b0;
 	       load_regb = 1'b0;
 	       load_regc = 1'b0;

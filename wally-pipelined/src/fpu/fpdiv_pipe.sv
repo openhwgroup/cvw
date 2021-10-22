@@ -42,6 +42,7 @@ module fpdiv_pipe (
 
   output logic 	      done,
   output logic 	      FDivBusyE,
+  output logic 	      load_preload,
   output logic [63:0] AS_Result, 
   output logic [4:0]  Flags);
 
@@ -137,18 +138,18 @@ module fpdiv_pipe (
 		       .sel_muxa, .sel_muxb, .sel_muxr, .reset, .clk,
 		       .load_rega, .load_regb, .load_regc, .load_regd,
 		       .load_regr, .load_regs, .load_regp,
-		       .P(P1), .op_type(op_type1), .exp_odd(exp_odd1));
+		       .P(P), .op_type(op_type1), .exp_odd(exp_odd1));
 
    // FSM : control divider
-   fsm_fpdiv_pipe control (.clk, .reset, .start(start), .op_type(op_type1), .P(P1),
+   fsm_fpdiv_pipe control (.clk, .reset, .start(start), .op_type(op_type1), .P(P),
 			   .done, .load_rega, .load_regb, .load_regc, .load_regd, 
-			   .load_regr, .load_regs, .load_regp,
+			   .load_regr, .load_regs, .load_regp, .load_preload,
 			   .sel_muxa, .sel_muxb, .sel_muxr, .divBusy(FDivBusyE));
    
    // Round the mantissa to a 52-bit value, with the leading one
    // removed. The rounding units also handles special cases and 
    // set the exception flags.
-   rounder_div round1 (.rm, .P(P1), .OvEn(1'b0), .UnEn(1'b0), .exp_diff(expF1), 
+   rounder_div round1 (.rm, .P(P), .OvEn(1'b0), .UnEn(1'b0), .exp_diff(expF1), 
    		       .sel_inv(sel_inv1), .Invalid(Invalid1), .SignR(signResult1),
 		       .Float1(op1), .Float2(op2),
 		       .XNaNQ, .YNaNQ, .XZeroQ, .YZeroQ, 
