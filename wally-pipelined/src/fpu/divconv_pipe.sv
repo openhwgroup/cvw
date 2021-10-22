@@ -50,6 +50,7 @@ module divconv_pipe (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, r
    supply0 		vss;   
 
    logic [59:0] 	muxa_out, muxb_out;
+   logic 		muxr_out;
    logic [10:0] 	ia_div, ia_sqrt;
    logic [59:0] 	ia_out;
    logic [119:0] 	mul_out;
@@ -67,8 +68,8 @@ module divconv_pipe (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, r
 
    // Check if exponent is odd for sqrt
    // If exp_odd=1 and sqrt, then M/2 and use ia_addr=0 as IA
-   assign d2 = (exp_odd&op_type) ? {vss,d,6'h0} : {d,7'h0};
-   assign n2 = op_type ? d2 : {n,7'h0};
+   assign d2 = (exp_odd&op_type) ? {vss, d, 6'h0} : {d, 7'h0};
+   assign n2 = op_type ? d2 : {n, 7'h0};
    
    // IA div/sqrt
    sbtm_div ia1 (d[52:41], ia_div);
@@ -137,7 +138,7 @@ module divconv_pipe (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, r
    flopenr #(60) regpE (clk, reset, load_regp, qm_const, qm_const_pipe);
 
    // CPA (from CSA)/Remainder addition/subtraction
-   assign {cout1, mul_out} = Sum_pipe + Carry_pipe + muxr_pipe;   
+   assign mul_out = Sum_pipe + Carry_pipe + {119'h0, muxr_pipe};   
    // One's complement instead of two's complement (for hw efficiency)
    assign three = {~mul_out[118] , mul_out[118], ~mul_out[117:59]};   
    mux2 #(60) mxTC (~mul_out[118:59], three[60:1],  op_type_pipe, twocmp_out);
@@ -154,13 +155,13 @@ module divconv_pipe (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, r
    flopenr #(60) rego (clk, reset, regs_pipe, qm_const_pipe, qm_const_pipe2);   
 
    // Assuming [1,2) - q1
-   assign {cout2, q_out1} = regb_out + q_const;  
-   assign {cout3, qp_out1} = regb_out + qp_const;  
-   assign {cout4, qm_out1} = regb_out + qm_const + 1'b1;  
+   assign q_out1 = regb_out + q_const;  
+   assign qp_out1 = regb_out + qp_const;  
+   assign qm_out1 = regb_out + qm_const + 1'b1;  
    // Assuming [0.5,1) - q0   
-   assign {cout5, q_out0} = {regb_out[58:0], 1'b0} + q_const;  
-   assign {cout6, qp_out0} = {regb_out[58:0], 1'b0} + qp_const;  
-   assign {cout7, qm_out0} = {regb_out[58:0], 1'b0} + qm_const + 1'b1;    
+   assign q_out0 = {regb_out[58:0], 1'b0} + q_const;  
+   assign qp_out0 = {regb_out[58:0], 1'b0} + qp_const;  
+   assign qm_out0 = {regb_out[58:0], 1'b0} + qm_const + 1'b1;    
 
    // Stage 3
    // Assuming [1,2)
