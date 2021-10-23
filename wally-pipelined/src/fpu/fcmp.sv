@@ -271,7 +271,6 @@ module exception_cmp_2 (
    logic 	      GT;
    logic 	      LT;
    logic 	      EQ;
-   logic [62:0]       sixtythreezeros = 63'h0;
 
    assign dp = !FOpCtrlE[1]&!FOpCtrlE[0];
    assign sp = !FOpCtrlE[1]&FOpCtrlE[0];
