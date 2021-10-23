@@ -94,8 +94,7 @@ module wallypipelinedhart
   logic 		    SquashSCM, SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
-  logic [1:0] 		    FMemRWM, FMemRWE;
-  logic [4:0]        RdE, RdM, RdW;
+   logic [4:0]        RdE, RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
   logic [`XLEN-1:0] 	    FWriteDataE;
@@ -108,10 +107,10 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    FPUResultW;
 
   // memory management unit signals
-  logic 		    ITLBWriteF, DTLBWriteM;
+  logic 		    ITLBWriteF;
   logic 		    ITLBFlushF, DTLBFlushM;
-  logic 		    ITLBMissF, ITLBHitF;
-  logic 		    DTLBMissM, DTLBHitM;
+  logic 		    ITLBMissF;
+  logic 		    DTLBHitM;
   logic [`XLEN-1:0] 	    SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic  [1:0]       STATUS_MPP;
@@ -120,7 +119,6 @@ module wallypipelinedhart
   logic [1:0] 		    PageType;
 
   // PMA checker signals
-  logic 		    DSquashBusAccessM, ISquashBusAccessF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
@@ -233,9 +231,6 @@ module wallypipelinedhart
 	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
 	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
-
-	  .DTLBHitM(DTLBHitM), // not connected remove
-
 	  .LSUStall(LSUStall));                     // change to LSUStall
 
 
@@ -256,9 +251,6 @@ module wallypipelinedhart
 	      // remove these
 	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
 	      .UnsignedLoadM(1'b0),
-	      .Funct7M(7'b0),
-//	      .HRDATAW(),
-	      .StallW(1'b0),
 	      .AtomicMaskedM(2'b00),
 	       .*);
 
@@ -272,9 +264,5 @@ module wallypipelinedhart
   
 
   fpu fpu(.*); // floating point unit
-  // add FPU here, with SetFflagsM, FRM_REGW
-  // presently stub out SetFlagsM and FRegWriteM
-  //assign SetFflagsM = 0;
-  //assign FRegWriteM = 0;
   
 endmodule
