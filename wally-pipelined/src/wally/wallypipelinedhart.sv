@@ -26,14 +26,10 @@
 `include "wally-config.vh"
 /* verilator lint_on UNUSED */
 
-module wallypipelinedhart 
-  (
+module wallypipelinedhart (
    input logic 		    clk, reset,
-   output logic [`XLEN-1:0] PCF,
-   //  input  logic [31:0]      InstrF,
    // Privileged
    input logic 		    TimerIntM, ExtIntM, SwIntM,
-   input logic 		    DataAccessFaultM,
    input logic [63:0] 	    MTIME_CLINT, MTIMECMP_CLINT,
    // Bus Interface
    input logic [`AHBW-1:0]  HRDATA,
@@ -68,7 +64,7 @@ module wallypipelinedhart
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
   logic [31:0] 		    InstrD, InstrE, InstrM, InstrW;
-  logic [`XLEN-1:0] 	    PCD, PCE, PCM, PCLinkE;
+  logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCM, PCLinkE;
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
