@@ -38,7 +38,9 @@
 
 module testbench();
   
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*6300000; // # of instructions at which to turn on waves in graphical sim
+  parameter INSTR_LIMIT = 0; // # of instructions at which to stop
+  parameter INSTR_WAVEON = (INSTR_LIMIT > 10000) ? INSTR_LIMIT-10000 : 1; // # of instructions at which to turn on waves in graphical sim
+
   string ProgramAddrMapFile, ProgramLabelMapFile;
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -343,10 +345,12 @@ module testbench();
     // always check PC, instruction bits
     if (checkInstrW) begin
       InstrCountW += 1;
-      // turn on waves at certain point
-      if (InstrCountW == waveOnICount) $stop;
       // print progress message
       if (InstrCountW % 'd100000 == 0) $display("Reached %d instructions", InstrCountW);
+      // turn on waves
+      if (InstrCountW == INSTR_WAVEON) $stop;
+      // end sim
+      if ((InstrCountW == INSTR_LIMIT) && (INSTR_LIMIT!=0)) $stop;
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
@@ -423,8 +427,8 @@ module testbench();
   initial begin
     $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
     $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
   end
