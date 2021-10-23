@@ -76,15 +76,13 @@ module ifu (
   input logic 		      ITLBWriteF, ITLBFlushF,
   input logic 		      WalkerInstrPageFaultF,
 
-  output logic 		      ITLBMissF, ITLBHitF,
+  output logic 		      ITLBMissF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
   input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
-  output logic InstrAccessFaultF,
-
-  output logic 		      ISquashBusAccessF
+  output logic InstrAccessFaultF
 );
 
   logic [`XLEN-1:0] PCCorrectE, UnalignedPCNextF, PCNextF;

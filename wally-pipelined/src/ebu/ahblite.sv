@@ -36,11 +36,9 @@ endpackage
 
 module ahblite (
   input logic 		     clk, reset,
-  input logic 		     StallW,
   // Load control
   input logic 		     UnsignedLoadM,
   input logic [1:0] 	     AtomicMaskedM,
-  input logic [6:0] 	     Funct7M,
   // Signals from Instruction Cache
   input logic [`PA_BITS-1:0] InstrPAdrF, // *** rename these to match block diagram
   input logic 		     InstrReadF,
@@ -75,14 +73,11 @@ module ahblite (
   logic GrantData;
   logic [31:0] AccessAddress;
   logic [2:0] ISize;
-  logic [`AHBW-1:0] HRDATAMasked, ReadDataM, HRDATANext, CapturedHRDATAMasked, WriteData;
-  logic IReady, DReady;
-  logic CaptureDataM,CapturedDataAvailable;
 
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
-  // *** initially support AHBW = XLEN
+  // initially support AHBW = XLEN
 
   // track bus state
   // Data accesses have priority over instructions.  However, if a data access comes
