@@ -381,15 +381,10 @@ module posloa(
     
 
     // Apply function to determine Leading pattern
-    logic [3*`NF+6:0] pf;
-    assign pf = T^{Z[3*`NF+5:0], 1'b0};
+    logic [3*`NF+6:0] f;
+    assign f = T^{Z[3*`NF+5:0], 1'b0};
 
-    logic [8:0] i;
-    always_comb begin
-        i = 0;
-        while (~pf[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
-        PCnt = i;
-    end
+    lzc lzc(.f, .Cnt(PCnt));
   
 endmodule
 
@@ -410,17 +405,23 @@ module negloa(
     logic [3*`NF+6:0] f;
     assign f = T^{~Z, 1'b0};
     
-    logic [8:0] i;
-    always_comb begin
-        i = 0;
-        while (~f[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
-        NCnt = i;
-    end
+    lzc lzc(.f, .Cnt(NCnt));
   
 endmodule
 
 
-
+module lzc(
+    input logic  [3*`NF+6:0]    f,
+    output logic [8:0]          Cnt    // normalization shift count for the negitive result
+);
+    
+    logic [8:0] i;
+    always_comb begin
+        i = 0;
+        while (~f[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
+        Cnt = i;
+    end
+endmodule
 
 
 
