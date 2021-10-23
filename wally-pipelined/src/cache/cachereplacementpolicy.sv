@@ -43,10 +43,11 @@ module cachereplacementpolicy
   logic [NUMWAYS-2:0] 				BlockReplacementBits;
   logic [NUMWAYS-2:0] 				NewReplacement;
 
+  /* verilator lint_off BLKLOOPINIT */
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
       for(int index = 0; index < NUMLINES; index++)
-	      ReplacementBits[index] = '0;
+	      ReplacementBits[index] <= '0;
     end else begin
       BlockReplacementBits <= ReplacementBits[RAdr];
       if (LRUWriteEn) begin
@@ -54,6 +55,7 @@ module cachereplacementpolicy
       end
     end
   end
+  /* verilator lint_on BLKLOOPINIT */
 
 
   genvar 		      index;

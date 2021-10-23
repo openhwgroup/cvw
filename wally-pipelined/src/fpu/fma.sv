@@ -804,7 +804,6 @@ module fmaflags(
     output logic                Invalid, Overflow, Underflow, // flags used to select the result
     output logic [4:0]          FMAFlgM // FMA flags
 );
-    logic [`NE+1:0]     MaxExp;     // maximum value of the exponent
     logic               SigNaN;     // is an input a signaling NaN
     logic               UnderflowFlag, Inexact; // flags
 
@@ -819,7 +818,6 @@ module fmaflags(
     //   2) Inf - Inf (unless x or y is NaN)
     //   3) 0 * Inf
 
-    // assign MaxExp = FmtM ? {`NE{1'b1}} : {8{1'b1}};
     assign SigNaN = XSNaNM | YSNaNM | ZSNaNM;
     assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
    

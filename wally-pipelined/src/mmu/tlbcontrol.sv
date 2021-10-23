@@ -89,7 +89,7 @@ module tlbcontrol #(parameter ITLB = 0) (
  
   // Check whether the access is allowed, page faulting if not.
   generate
-    if (ITLB == 1) begin
+    if (ITLB == 1) begin // Instruction TLB fault checking
       logic ImproperPrivilege;
 
       // User mode may only execute user mode pages, and supervisor mode may
@@ -99,7 +99,7 @@ module tlbcontrol #(parameter ITLB = 0) (
       // fault for software handling if access bit is off
       assign DAPageFault = ~PTE_A;
       assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAPageFault || UpperBitsUnequalPageFault);
-    end else begin
+    end else begin // Data TLB fault checking
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
       // User mode may only load/store from user mode pages, and supervisor mode
