@@ -85,8 +85,6 @@ module ieu (
   logic        TargetSrcE;
   logic        SCE;
   logic        InstrValidW;
-  logic [1:0]  MemRWE;
-  logic        RegWriteD;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;
