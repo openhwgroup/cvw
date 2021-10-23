@@ -29,8 +29,7 @@ module icache
   (
    // Basic pipeline stuff
    input logic 		       clk, reset,
-   input logic 		       StallF, StallD,
-   input logic 		       FlushD,
+   input logic 		       StallF, 
    input logic [`PA_BITS-1:0]  PCNextF,
    input logic [`PA_BITS-1:0]  PCPF, 
    // Data read in from the ebu unit

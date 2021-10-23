@@ -63,15 +63,14 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] 		    InstrD, InstrE, InstrM, InstrW;
-  logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCM, PCLinkE;
+  logic [31:0] 		    InstrD, InstrM;
+  logic [`XLEN-1:0] 	    PCF, PCE, PCM, PCLinkE;
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
   logic [1:0] 		    MemRWM;
   logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
-  logic 		    DataMisalignedM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
   logic 		    WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM;
@@ -86,7 +85,7 @@ module wallypipelinedhart (
   logic 		    SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
-   logic [4:0]        RdE, RdM, RdW;
+   logic [4:0]        RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
   logic [`XLEN-1:0] 	    FWriteDataE;
@@ -178,7 +177,7 @@ module wallypipelinedhart (
 	  .DCacheMiss,
           .DCacheAccess,
 	  .SquashSCW(SquashSCW),            
-	  .DataMisalignedM(DataMisalignedM),
+	  //.DataMisalignedM(DataMisalignedM),
 	  .MemAdrE(MemAdrE),
 	  .MemAdrM(MemAdrM),      
 	  .WriteDataM(WriteDataM),

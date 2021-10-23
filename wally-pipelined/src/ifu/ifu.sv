@@ -37,8 +37,6 @@ module ifu (
   output logic [`PA_BITS-1:0] InstrPAdrF,
   output logic 		      InstrReadF,
   output logic 		      ICacheStallF,
-  // Decode
-  output logic [`XLEN-1:0]    PCD, 
   // Execute
   output logic [`XLEN-1:0]    PCLinkE,
   input logic 		      PCSrcE, 
@@ -49,7 +47,7 @@ module ifu (
   input logic 		      RetM, TrapM, 
   input logic [`XLEN-1:0]     PrivilegedNextPCM, 
   input logic                 InvalidateICacheM,
-  output logic [31:0] 	      InstrD, InstrE, InstrM, InstrW,
+  output logic [31:0] 	      InstrD, InstrM, 
   output logic [`XLEN-1:0]    PCM, 
   output logic [4:0] 	      InstrClassM,
   output logic 		      BPPredDirWrongM,
@@ -89,10 +87,13 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCPF;
+  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD;
   logic [`XLEN-3:0] PCPlusUpperF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, FinalInstrRawF;
+  logic [31:0] 	    InstrE;
+  logic [`XLEN-1:0] PCD;
+
   localparam [31:0]      nop = 32'h00000013; // instruction for NOP
   logic 	    reset_q; // *** look at this later.
 
@@ -100,14 +101,13 @@ module ifu (
   
   logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]    PCFExt;
-  logic                ITLBHitF;
 
   generate
     if (`XLEN==32) begin
-      assign PCPF = PCPFmmu[31:0];
+      //assign PCPF = PCPFmmu[31:0];
       assign PCNextFPhys = {{(`PA_BITS-`XLEN){1'b0}}, PCNextF};
     end else begin
-      assign PCPF = {8'b0, PCPFmmu};
+      //assign PCPF = {8'b0, PCPFmmu};
       assign PCNextFPhys = PCNextF[`PA_BITS-1:0];
     end
   endgenerate
@@ -270,10 +270,8 @@ module ifu (
   
   flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);
   flopenr  #(32)   InstrMReg(clk, reset, ~StallM, FlushM ? nop : InstrE, InstrM);
-  // flopenr  #(32)   InstrWReg(clk, reset, ~StallW, FlushW ? nop : InstrM, InstrW); // just for testbench, delete later
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  // flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
 
   flopenrc #(5) InstrClassRegE(.clk(clk),
 			       .reset(reset),
@@ -302,8 +300,5 @@ module ifu (
   // *** redo this 
   flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
   flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
-  // flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
-  // /flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
-
 endmodule
 
