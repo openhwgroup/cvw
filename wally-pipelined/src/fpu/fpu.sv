@@ -31,10 +31,9 @@ module fpu (
   input logic [31:0] 	   InstrD, // instruction from IFU
   input logic [`XLEN-1:0]  ReadDataW,// Read data from memory
   input logic [`XLEN-1:0]  SrcAE, // Integer input being processed (from IEU)
-  input logic [`XLEN-1:0]  SrcAM, // Integer input being written into fpreg (from IEU)
   input logic 		   StallE, StallM, StallW, // stall signals from HZU
   input logic 		   FlushE, FlushM, FlushW, // flush signals from HZU
-  input logic [4:0] 	   RdE, RdM, RdW, // which FP register to write to (from IEU)
+  input logic [4:0] 	   RdM, RdW, // which FP register to write to (from IEU)
   output logic 		   FRegWriteM, // FP register write enable
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, FWriteIntM, FWriteIntW, // integer register write enable
@@ -68,8 +67,8 @@ module fpu (
      logic [1:0] 	  FForwardXE, FForwardYE, FForwardZE; // forwarding mux control signals
      logic [1:0] 	  FResultSelD, FResultSelE;           // Select the result written to FP register
      logic [1:0] 	  FResultSelM, FResultSelW;           // Select the result written to FP register
-     logic [2:0] 	  FOpCtrlD, FOpCtrlE, FOpCtrlM;       // Select which opperation to do in each component
-     logic [2:0] 	  FResSelD, FResSelE, FResSelM;       // Select one of the results that finish in the memory stage
+     logic [2:0] 	  FOpCtrlD, FOpCtrlE;       // Select which opperation to do in each component
+     logic [2:0] 	  FResSelD, FResSelE;       // Select one of the results that finish in the memory stage
      logic [1:0] 	  FIntResSelD, FIntResSelE;           // Select the result written to the integer resister
      logic [4:0] 	  Adr1E, Adr2E, Adr3E;                // adresses of each input
      
@@ -103,24 +102,23 @@ module fpu (
      logic 		  XExpMaxE;                           // is the exponent all ones (max value)
      logic 		  XNormE;                             // is normal
      logic 		  FmtQ;
-     logic 		  FDivStartQ;
      logic 		  FOpCtrlQ;     
      
      // result and flag signals
      logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
-     logic [4:0] 	  FDivFlgM, FDivFlgW;                 // divide/squareroot flags  
+     logic [4:0] 	  FDivFlgM;                 // divide/squareroot flags  
      logic [63:0] 	  FMAResM, FMAResW;                   // FMA/multiply result
-     logic [4:0] 	  FMAFlgM, FMAFlgW;                   // FMA/multiply result	
+     logic [4:0] 	  FMAFlgM;                   // FMA/multiply result	
      logic [63:0] 	  ReadResW;                           // read result (load instruction)
-     logic [63:0] 	  CvtFpResE, CvtFpResM, CvtFpResW;    // add/FP -> FP convert result
-     logic [4:0] 	  CvtFpFlgE, CvtFpFlgM, CvtFpFlgW;    // add/FP -> FP convert flags
-     logic [63:0] 	  CvtResE, CvtResM;                   // FP <-> int convert result
-     logic [4:0] 	  CvtFlgE, CvtFlgM;                   // FP <-> int convert flags //*** trim this	
-     logic [63:0] 	  ClassResE, ClassResM;               // classify result
-     logic [63:0] 	  CmpResE, CmpResM;                   // compare result
-     logic 		  CmpNVE, CmpNVM;                     // compare invalid flag (Not Valid)     
-     logic [63:0] 	  SgnResE, SgnResM;                   // sign injection result
-     logic 		  SgnNVE, SgnNVM;                     // sign injection invalid flag (Not Valid)     
+     logic [63:0] 	  CvtFpResE;    // add/FP -> FP convert result
+     logic [4:0] 	  CvtFpFlgE;    // add/FP -> FP convert flags
+     logic [63:0] 	  CvtResE;                   // FP <-> int convert result
+     logic [4:0] 	  CvtFlgE;                   // FP <-> int convert flags //*** trim this	
+     logic [63:0] 	  ClassResE;               // classify result
+     logic [63:0] 	  CmpResE;                   // compare result
+     logic 		  CmpNVE;                     // compare invalid flag (Not Valid)     
+     logic [63:0] 	  SgnResE;                   // sign injection result
+     logic 		  SgnNVE;                     // sign injection invalid flag (Not Valid)     
      logic [63:0] 	  FResE, FResM, FResW;                // selected result that is ready in the memory stage
      logic [4:0] 	  FFlgE, FFlgM;                       // selected flag that is ready in the memory stage     
      logic [`XLEN-1:0] 	  FIntResE;     
@@ -128,7 +126,6 @@ module fpu (
      // other signals
      logic 		  FDivSqrtDoneE;                      // is divide done
      logic [63:0] 	  DivInput1E, DivInput2E;             // inputs to divide/squareroot unit
-     logic 		  FDivClk;                            // clock for divide/squareroot unit
      logic 		  load_preload;                       // enable for FF on fpdivsqrt     
      logic [63:0] 	  AlignedSrcAE;                       // align SrcA to the floating point format
 
@@ -263,9 +260,9 @@ module fpu (
      flopenrc #(64) EMRegCmpRes (clk, reset, FlushM, ~StallM, FResE, FResM); 
      flopenrc #(5)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, FFlgE, FFlgM);      
      flopenrc #(`XLEN) EMRegSgnRes (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
-     flopenrc #(11) EMCtrlReg (clk, reset, FlushM, ~StallM,
-			       {FRegWriteE, FResultSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE},
-			       {FRegWriteM, FResultSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM});
+     flopenrc #(8) EMCtrlReg (clk, reset, FlushM, ~StallM,
+			       {FRegWriteE, FResultSelE, FrmE, FmtE, FWriteIntE},
+			       {FRegWriteM, FResultSelM, FrmM, FmtM, FWriteIntM});
      
      // BEGIN MEMORY STAGE
      
@@ -275,7 +272,6 @@ module fpu (
      // M/W pipe registers
      flopenrc #(64) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
      flopenrc #(64) MWRegDiv(clk, reset, FlushW, ~StallW, FDivResM, FDivResW); 
-     flopenrc #(64) MWRegAdd(clk, reset, FlushW, ~StallW, CvtFpResM, CvtFpResW); 
      flopenrc #(64) MWRegClass(clk, reset, FlushW, ~StallW, FResM, FResW);
      flopenrc #(5)  MWCtrlReg(clk, reset, FlushW, ~StallW,
 			      {FRegWriteM, FResultSelM, FmtM, FWriteIntM},
