@@ -26,8 +26,6 @@
 `include "wally-config.vh"
 
 module hazard(
-	      input logic  clk,
-	      input logic  reset,
   // Detect hazards
 	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
 	      input logic  LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD,

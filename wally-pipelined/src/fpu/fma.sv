@@ -468,9 +468,8 @@ module fma2(
     logic               Plus1, Minus1, CalcPlus1;   // do you add or subtract one for rounding
     logic               UfPlus1;                    // do you add one (for determining underflow flag)
     logic               Invalid,Underflow,Overflow; // flags
-    logic               ResultSgnTmp;   // the result's sign assuming the result is not zero
     logic               Guard, Round;   // bits needed to determine rounding
-    logic               UfRound, UfLSBNormSum;   // bits needed to determine rounding for underflow flag
+    logic               UfLSBNormSum;   // bits needed to determine rounding for underflow flag
    
     
 
@@ -497,7 +496,7 @@ module fma2(
     // round to nearest max magnitude
 
     fmaround fmaround(.FmtM, .FrmM, .Sticky, .UfSticky, .NormSum, .AddendStickyM, .NormSumSticky, .ZZeroM, .InvZM, .ResultSgn, .SumExp,
-        .CalcPlus1, .Plus1, .UfPlus1, .Minus1, .FullResultExp, .ResultFrac, .ResultExp, .Round, .Guard, .UfRound, .UfLSBNormSum);
+        .CalcPlus1, .Plus1, .UfPlus1, .Minus1, .FullResultExp, .ResultFrac, .ResultExp, .Round, .Guard, .UfLSBNormSum);
 
 
 
@@ -688,7 +687,7 @@ module fmaround(
     output logic [`NF-1:0]  ResultFrac,         // Result fraction
     output logic [`NE-1:0]  ResultExp,          // Result exponent
     output logic            Sticky,             // sticky bit
-    output logic            Round, Guard, UfRound, UfLSBNormSum // bits needed to calculate rounding
+    output logic            Round, Guard, UfLSBNormSum // bits needed to calculate rounding
 );
     logic           LSBNormSum;         // bit used for rounding - least significant bit of the normalized sum
     logic           SubBySmallNum, UfSubBySmallNum;  // was there supposed to be a subtraction by a small number
@@ -696,6 +695,7 @@ module fmaround(
     logic           UfCalcPlus1, CalcMinus1;    // do you add or subtract on from the result
     logic [`FLEN:0] RoundAdd;           // how much to add to the result
     logic [`NF-1:0] NormSumTruncated;   // the normalized sum trimed to fit the mantissa
+    logic           UfRound;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding

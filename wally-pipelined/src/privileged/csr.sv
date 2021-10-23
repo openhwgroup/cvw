@@ -33,8 +33,8 @@ module csr #(parameter
   UIE_REGW = 12'b0
   ) (
   input  logic             clk, reset,
-  input  logic             FlushD, FlushE, FlushM, FlushW,
-  input  logic             StallD, StallE, StallM, StallW,
+  input  logic             FlushE, FlushM, FlushW,
+  input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,

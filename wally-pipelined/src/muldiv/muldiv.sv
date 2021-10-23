@@ -27,8 +27,6 @@
 
 module muldiv (
 	       input logic 		clk, reset,
-	       // Decode Stage interface
-	       input logic [31:0] 	InstrD, 
 	       // Execute Stage interface
 	       input logic [`XLEN-1:0] 	SrcAE, SrcBE,
 	       input logic [2:0] 	Funct3E, Funct3M,
@@ -38,7 +36,7 @@ module muldiv (
 	       // Divide Done
 	       output logic 		DivBusyE, 
 	       // hazards
-	       input logic 		StallE, StallM, StallW, FlushM, FlushW 
+	       input logic 		StallM, StallW, FlushM, FlushW 
 	       );
 
    generate

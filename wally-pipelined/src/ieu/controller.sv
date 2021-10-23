@@ -34,9 +34,8 @@ module controller(
   output logic [2:0] ImmSrcD,
   input  logic       IllegalIEUInstrFaultD, 
   output logic       IllegalBaseInstrFaultD,
-  output logic       RegWriteD,
   // Execute stage control signals
-  input logic 	     StallE, FlushE, 
+  input logic 	     StallE, FlushE,  
   input logic  [2:0] FlagsE, 
   output logic       PCSrcE,        // for datapath and Hazard Unit
   output logic [4:0] ALUControlE, 
@@ -46,7 +45,6 @@ module controller(
   output logic [2:0] Funct3E,
   output logic       MulDivE, W64E,
   output logic       JumpE,	
-  output logic [1:0] MemRWE,	  
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
@@ -57,7 +55,7 @@ module controller(
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit
   output logic       InvalidateICacheM, FlushDCacheM,
-  output logic       InstrValidM, InstrValidW,
+  output logic       InstrValidM, 
   // Writeback stage control signals
   input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
@@ -75,9 +73,9 @@ module controller(
   `define CTRLW 24
 
   // pipelined control signals
-  logic 	    RegWriteE;
+  logic 	    RegWriteD, RegWriteE;
   logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
-  logic [1:0] MemRWD;
+  logic [1:0] MemRWD, MemRWE;
   logic		    JumpD;
   logic		    BranchD, BranchE;
   logic	[1:0] ALUOpD;
@@ -232,9 +230,9 @@ module controller(
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, AtomicM, InvalidateICacheM, FlushDCacheM, InstrValidM});
   
   // Writeback stage pipeline control register
-  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM, InstrValidM},
-                         {RegWriteW, ResultSrcW, InstrValidW});  
+  flopenrc #(4) controlregW(clk, reset, FlushW, ~StallW,
+                         {RegWriteM, ResultSrcM},
+                         {RegWriteW, ResultSrcW});  
 
   assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;
 
