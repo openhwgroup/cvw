@@ -41,7 +41,6 @@ module ieu (
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] SrcAE, SrcBE,
-  output logic [4:0]    RdE,
   input logic 		   FWriteIntM,
 
   // Memory stage interface
@@ -81,6 +80,7 @@ module ieu (
   logic [2:0]  ResultSrcW;
   logic        TargetSrcE;
   logic        SCE;
+  logic [4:0]  RdE;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;

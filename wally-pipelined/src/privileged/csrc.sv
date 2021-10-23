@@ -71,8 +71,8 @@ module csrc #(parameter
   //HPMCOUNTER31H = 12'hC9F
 ) (
     input logic 	     clk, reset,
-    input logic 	     StallD, StallE, StallM, StallW,
-    input  logic             FlushD, FlushE, FlushM, FlushW,   
+    input logic 	     StallE, StallM, StallW,
+    input  logic       FlushE, FlushM, FlushW,   
     input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
     input logic 	     BPPredDirWrongM,
     input logic 	     BTBPredPCWrongM,
