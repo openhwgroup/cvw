@@ -26,17 +26,12 @@
 `include "wally-config.vh"
 /* verilator lint_on UNUSED */
 
-module wallypipelinedhart 
-  (
+module wallypipelinedhart (
    input logic 		    clk, reset,
-   output logic [`XLEN-1:0] PCF,
-   //  input  logic [31:0]      InstrF,
    // Privileged
    input logic 		    TimerIntM, ExtIntM, SwIntM,
-   input logic 		    DataAccessFaultM,
    input logic [63:0] 	    MTIME_CLINT, MTIMECMP_CLINT,
    // Bus Interface
-   input logic [15:0] 	    rd2, // bogus, delete when real multicycle fetch works
    input logic [`AHBW-1:0]  HRDATA,
    input logic 		    HREADY, HRESP,
    output logic 	    HCLK, HRESETn,
@@ -48,7 +43,6 @@ module wallypipelinedhart
    output logic [3:0] 	    HPROT,
    output logic [1:0] 	    HTRANS,
    output logic 	    HMASTLOCK,
-   output logic [5:0] 	    HSELRegions,
    // Delayed signals for subword write
    output logic [2:0] 	    HADDRD,
    output logic [3:0] 	    HSIZED,
@@ -69,16 +63,14 @@ module wallypipelinedhart
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] 		    InstrD, InstrE, InstrM, InstrW;
-  logic [`XLEN-1:0] 	    PCD, PCE, PCM, PCLinkE, PCLinkW;
+  logic [31:0] 		    InstrD, InstrM;
+  logic [`XLEN-1:0] 	    PCF, PCE, PCM, PCLinkE;
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
-  logic [1:0] 		    MemRWE;  
   logic [1:0] 		    MemRWM;
   logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
-  logic 		    DataMisalignedM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
   logic 		    WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM;
@@ -89,13 +81,11 @@ module wallypipelinedhart
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
   logic 		    DivBusyE;
-  logic 		    RegWriteD;
   logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;
-  logic 		    SquashSCM, SquashSCW;
+  logic 		    SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
-  logic [1:0] 		    FMemRWM, FMemRWE;
-  logic [4:0]        RdE, RdM, RdW;
+   logic [4:0]        RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
   logic [`XLEN-1:0] 	    FWriteDataE;
@@ -105,13 +95,11 @@ module wallypipelinedhart
   logic 		    FRegWriteM;
   logic 		    FPUStallD;
   logic [4:0] 		    SetFflagsM;
-  logic [`XLEN-1:0] 	    FPUResultW;
 
   // memory management unit signals
-  logic 		    ITLBWriteF, DTLBWriteM;
+  logic 		    ITLBWriteF;
   logic 		    ITLBFlushF, DTLBFlushM;
-  logic 		    ITLBMissF, ITLBHitF;
-  logic 		    DTLBMissM, DTLBHitM;
+  logic 		    ITLBMissF;
   logic [`XLEN-1:0] 	    SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic  [1:0]       STATUS_MPP;
@@ -120,7 +108,6 @@ module wallypipelinedhart
   logic [1:0] 		    PageType;
 
   // PMA checker signals
-  logic 		    DSquashBusAccessM, ISquashBusAccessF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
@@ -190,7 +177,7 @@ module wallypipelinedhart
 	  .DCacheMiss,
           .DCacheAccess,
 	  .SquashSCW(SquashSCW),            
-	  .DataMisalignedM(DataMisalignedM),
+	  //.DataMisalignedM(DataMisalignedM),
 	  .MemAdrE(MemAdrE),
 	  .MemAdrM(MemAdrM),      
 	  .WriteDataM(WriteDataM),
@@ -233,9 +220,6 @@ module wallypipelinedhart
 	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
 	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
-
-	  .DTLBHitM(DTLBHitM), // not connected remove
-
 	  .LSUStall(LSUStall));                     // change to LSUStall
 
 
@@ -256,9 +240,6 @@ module wallypipelinedhart
 	      // remove these
 	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
 	      .UnsignedLoadM(1'b0),
-	      .Funct7M(7'b0),
-//	      .HRDATAW(),
-	      .StallW(1'b0),
 	      .AtomicMaskedM(2'b00),
 	       .*);
 
@@ -272,9 +253,5 @@ module wallypipelinedhart
   
 
   fpu fpu(.*); // floating point unit
-  // add FPU here, with SetFflagsM, FRM_REGW
-  // presently stub out SetFlagsM and FRegWriteM
-  //assign SetFflagsM = 0;
-  //assign FRegWriteM = 0;
   
 endmodule

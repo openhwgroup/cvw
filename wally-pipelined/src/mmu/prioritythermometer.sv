@@ -32,7 +32,7 @@
 
 /* verilator lint_off UNOPTFLAT */
 
-module prioritythemometer #(parameter N = 8) (
+module prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y
 );

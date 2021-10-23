@@ -61,7 +61,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
    output logic       CntEn,
    output logic       CntReset,
    output logic [1:0] SelAdr,
-   output logic       SavePC,
    output logic       LRUWriteEn
    );
 
@@ -117,6 +116,7 @@ module icachefsm #(parameter BLOCKLEN = 256)
   statetype CurrState, NextState;
   logic 		       PreCntEn;
   logic 		       UnalignedSelect;
+  logic            SavePC; // unused right now *** consider deleting
 
   // the FSM is always runing, do not stall.
   always_ff @(posedge clk, posedge reset)

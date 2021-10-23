@@ -46,7 +46,6 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
 
   logic        prevHREADYTim, risingHREADYTim;
   logic        initTrans;
-  logic [15:0] entry;
   logic        memwrite;
   logic [3:0]  busycount;
 

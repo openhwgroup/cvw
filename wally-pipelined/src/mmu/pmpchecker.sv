@@ -41,11 +41,7 @@ module pmpchecker (
   // which we might not intend.
   input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
-
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
-
-  output logic             PMPSquashBusAccess,
-
   output logic             PMPInstrAccessFaultF,
   output logic             PMPLoadAccessFaultM,
   output logic             PMPStoreAccessFaultM
@@ -79,6 +75,6 @@ module pmpchecker (
   assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W;
   assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R;
 
-  assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
+  //assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
 
 endmodule
