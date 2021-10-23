@@ -50,10 +50,9 @@ module mul (
 
     logic [`XLEN*2-1:0] PP0E, PP1E, PP2E, PP3E, PP4E;
     logic [`XLEN*2-1:0] PP0M, PP1M, PP2M, PP3M, PP4M;
-    logic [`XLEN*2-1:0] Pprime;
     logic [`XLEN-2:0]   PA, PB;
     logic               PP;
-    logic               MULH, MULHSU, MULHU;
+    logic               MULH, MULHSU;
     logic [`XLEN-1:0]   Aprime, Bprime;
 
   //////////////////////////////
@@ -70,7 +69,6 @@ module mul (
     // flavor of multiplication
     assign MULH   = (Funct3E == 3'b001);
     assign MULHSU = (Funct3E == 3'b010);
-    // assign MULHU = (Funct3E == 2'b11); // signal unused
 
     // Handle signs
     assign PP2E = {2'b00, (MULH | MULHSU) ? ~PA : PA, {(`XLEN-1){1'b0}}};

@@ -30,7 +30,7 @@
 module intdivrestoring (
   input  logic clk,
   input  logic reset,
-  input  logic StallM, FlushM,
+  input  logic StallM,
   input  logic DivSignedE, W64E,
   input  logic DivE,
   input  logic [`XLEN-1:0] SrcAE, SrcBE,
@@ -47,7 +47,7 @@ module intdivrestoring (
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
-  logic DivStartE, SignXE, SignXM, SignDE, NegQE, NegWM, NegQM;
+  logic DivStartE, SignXE, SignDE, NegQE, NegWM, NegQM;
   logic [`XLEN-1:0] WNextE, XQNextE;
  
   //////////////////////////////

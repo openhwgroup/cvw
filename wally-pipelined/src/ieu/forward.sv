@@ -30,10 +30,8 @@ module forward(
   input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
   input logic        MemReadE, MulDivE, CSRReadE,
   input logic        RegWriteM, RegWriteW,
-  input logic        DivBusyE,
   input logic	       FWriteIntE, FWriteIntM, FWriteIntW,
   input logic        SCE,
-  input logic        StallD,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
   output logic       FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
