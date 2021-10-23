@@ -30,7 +30,7 @@ vlog +incdir+../config/buildroot +incdir+../config/shared ../testbench/testbench
 
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vopt work.testbench -o workopt 
+vopt work.testbench -G INSTR_LIMIT=$1 -o workopt 
 
 vsim workopt -suppress 8852,12070
 

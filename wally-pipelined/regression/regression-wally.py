@@ -10,6 +10,7 @@
 # output.
 #
 ##################################
+import sys
 
 from collections import namedtuple
 TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
@@ -23,22 +24,22 @@ TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
 
 # edit this list to add more test cases
 configs = [
-    #TestCase(
-    #    name="busybear",
-    #    cmd="vsim -do wally-busybear-batch.do -c > {}",
-    #    grepstr="loaded 100000 instructions"
-    #),
-    TestCase(
-        name="buildroot",
-        cmd="vsim -do wally-buildroot-batch.do -c > {}",
-        grepstr="6300000 instructions"
-    ),
     TestCase(
         name="lints",
         cmd="./lint-wally &> {}",
         grepstr="All lints run with no errors or warnings"
-    ),
+    )
 ]
+def getBuildrootTC(short):
+    INSTR_LIMIT = 100000 # multiple of 100000
+    MAX_EXPECTED = 6.3e6
+    if short:
+        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+"\n!"
+        BRgrepstr=str(INSTR_LIMIT)+" instructions"
+    else:
+        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 0\n!"
+        BRgrepstr=str(MAX_EXPECTED)+" instructions"
+    return  TestCase(name="buildroot",cmd=BRcmd,grepstr=BRgrepstr)
 
 tests64 = ["arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
 for test in tests64:
@@ -83,7 +84,15 @@ def main():
     """Run the tests and count the failures"""
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    TIMEOUT_DUR = 1800 # seconds
+
+    if '-all' in sys.argv:
+        TIMEOUT_DUR = 3600 
+        configs.append(getBuildrootTC(short=False))
+    else:
+        TIMEOUT_DUR = 300
+        configs.append(getBuildrootTC(short=True))
+    print(configs)
+
     try:
         os.mkdir("logs")
     except:
