@@ -89,14 +89,13 @@ module lsu
    output logic 	       WalkerLoadPageFaultM,
    output logic 	       WalkerStorePageFaultM,
 
-   output logic 	       DTLBHitM, // not connected 
-
    input 		       var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
    );
 
   logic 		       SquashSCM;
   logic 		       DTLBPageFaultM;
+  logic            DTLBHitM;
 
   
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
