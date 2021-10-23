@@ -28,10 +28,7 @@
 module dcache
   (input logic clk,
    input logic 		       reset,
-   input logic 		       StallM,
    input logic 		       StallWtoDCache,
-   input logic 		       FlushM,
-   input logic 		       FlushW,
 
    // cpu side
    input logic [1:0] 	       MemRWM,
@@ -113,13 +110,12 @@ module dcache
   logic 		       SRAMWordWriteEnableM;
   logic 		       SRAMBlockWriteEnableM;
   logic [NUMWAYS-1:0] 	       SRAMBlockWayWriteEnableM;
-  logic 		       SRAMWriteEnable;
+  //logic 		       SRAMWriteEnable;
   logic [NUMWAYS-1:0] 	       SRAMWayWriteEnable;
   
 
   logic [NUMWAYS-1:0] 	       VictimWay;
   logic [NUMWAYS-1:0] 	       VictimDirtyWay;
-  logic [BLOCKLEN-1:0] 	       VictimReadDataBlockM;
   logic 		       VictimDirty;
   logic 		       SelUncached;
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
@@ -144,9 +140,7 @@ module dcache
   logic 		       SelFlush;
   logic 		       VDWriteEnable;
     
-  logic AnyCPUReqM;
   logic FetchCountFlag;
-  logic PreCntEn;
   logic CntEn;
   logic CntReset;
   logic SelEvict;
@@ -349,7 +343,7 @@ module dcache
     else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : Funct3M;
   endgenerate;
 
-  assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
+  //assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
   // controller
 

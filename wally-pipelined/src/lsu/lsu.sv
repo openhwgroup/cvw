@@ -94,7 +94,6 @@ module lsu
    );
 
   logic 		       DTLBPageFaultM;
-  logic            DTLBHitM;
 
   
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
@@ -122,7 +121,7 @@ module lsu
 
   logic 		       CommittedMfromDCache;
   logic 		       PendingInterruptMtoDCache;
-  logic 		       FlushWtoDCache;
+//  logic 		       FlushWtoDCache;
   logic 		       WalkerPageFaultM;
 
   logic 		       AnyCPUReqM;
@@ -198,20 +197,18 @@ module lsu
        .TLBFlush(DTLBFlushM),
        .PhysicalAddress(MemPAdrM),
        .TLBMiss(DTLBMissM),
-       //.TLBHit(DTLBHitM),
        .TLBPageFault(DTLBPageFaultM),
        .ExecuteAccessF(1'b0),
        //.AtomicAccessM(AtomicMaskedM[1]),
        .AtomicAccessM(1'b0),
        .WriteAccessM(MemRWMtoLRSC[0]),
        .ReadAccessM(MemRWMtoLRSC[1]),
-       //.SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
        .Cacheable(CacheableM),
        .Idempotent(),
        .AtomicAllowed(),
-       .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
+       .*); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
 
   assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
@@ -241,10 +238,7 @@ module lsu
 
   dcache dcache(.clk(clk),
 		.reset(reset),
-		.StallM(StallM),
 		.StallWtoDCache(StallWtoDCache),
-		.FlushM(FlushM),
-		.FlushW(FlushWtoDCache),
 		.MemRWM(MemRWMtoDCache),
 		.Funct3M(Funct3MtoDCache),
 		.Funct7M(Funct7M),
