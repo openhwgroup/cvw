@@ -93,13 +93,9 @@ module csrc #(parameter
   generate
     if (`ZICOUNTERS_SUPPORTED) begin
       logic [63:0] CYCLE_REGW, INSTRET_REGW;
-      logic [63:0] HPMCOUNTER3_REGW, HPMCOUNTER4_REGW; // add more performance counters here if desired
-      logic [63:0] CYCLEPlusM, INSTRETPlusM;
-      logic [63:0] HPMCOUNTER3PlusM, HPMCOUNTER4PlusM;
-      logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
-      logic [`XLEN-1:0] NextHPMCOUNTER3M, NextHPMCOUNTER4M;
+     logic [63:0] CYCLEPlusM, INSTRETPlusM;
+       logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic        WriteCYCLEM, WriteINSTRETM;
-      logic        WriteHPMCOUNTER3M, WriteHPMCOUNTER4M;
       logic [4:0]  CounterNumM;
       logic [`COUNTERS-1:3][`XLEN-1:0] HPMCOUNTER_REGW, HPMCOUNTERH_REGW;
       logic 			       InstrValidNotFlushedM;
