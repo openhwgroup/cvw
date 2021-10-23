@@ -1,4 +1,7 @@
 // Depth is number of bits in one "word" of the memory, width is number of such words
+
+/* verilator lint_off ASSIGNDLY */
+
 module sram1rw #(parameter DEPTH=128, WIDTH=256) (
     input logic 		    clk,
     // port 1 is read only
@@ -19,3 +22,6 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
         end
     end
 endmodule
+
+/* verilator lint_on ASSIGNDLY */
+
