@@ -45,7 +45,6 @@ module ieu (
   input logic 		   FWriteIntM,
 
   // Memory stage interface
-  input logic 		   DataMisalignedM, // from LSU
   input logic 		   SquashSCW, // from LSU
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
@@ -70,7 +69,6 @@ module ieu (
   input logic 		   FlushD, FlushE, FlushM, FlushW,
   output logic 		   FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD,
   output logic 		   PCSrcE,
-  input logic 		   DivBusyE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
   output logic 		   CSRWritePendingDEM,
   output logic             StoreStallD
