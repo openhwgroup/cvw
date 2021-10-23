@@ -60,7 +60,6 @@ module wallypipelinedsoc (
   // Uncore signals
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HREADY, HRESP;
-  logic [5:0]       HSELRegions;
   logic             InstrAccessFaultF, DataAccessFaultM;
   logic             TimerIntM, SwIntM; // from CLINT
   logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
@@ -68,16 +67,15 @@ module wallypipelinedsoc (
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
   logic             HWRITED;
-  logic [15:0]      rd2; // bogus, delete when real multicycle fetch works
   logic [31:0]      InstrF;
    
   // instantiate processor and memories
   wallypipelinedhart hart(.clk, .reset,
     .PCF,  .TimerIntM, .ExtIntM, .SwIntM, .DataAccessFaultM, 
-    .MTIME_CLINT, .MTIMECMP_CLINT, .rd2, 
+    .MTIME_CLINT, .MTIMECMP_CLINT, 
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HSELRegions, .HADDRD, .HSIZED, .HWRITED
+    .HADDRD, .HSIZED, .HWRITED
    );
 
   // instructions now come from uncore memory. This line can be removed at any time.

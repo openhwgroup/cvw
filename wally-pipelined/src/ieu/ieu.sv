@@ -31,7 +31,6 @@ module ieu (
   input logic [31:0] 	   InstrD,
   input logic 		   IllegalIEUInstrFaultD, 
   output logic 		   IllegalBaseInstrFaultD,
-  output logic 		   RegWriteD,
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
@@ -48,7 +47,6 @@ module ieu (
   // Memory stage interface
   input logic 		   DataMisalignedM, // from LSU
   input logic 		   SquashSCW, // from LSU
-  output logic [1:0] 	   MemRWE, // read/write control goes to LSU	    
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
@@ -87,6 +85,8 @@ module ieu (
   logic        TargetSrcE;
   logic        SCE;
   logic        InstrValidW;
+  logic [1:0]  MemRWE;
+  logic        RegWriteD;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;

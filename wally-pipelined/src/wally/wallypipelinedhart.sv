@@ -36,7 +36,6 @@ module wallypipelinedhart
    input logic 		    DataAccessFaultM,
    input logic [63:0] 	    MTIME_CLINT, MTIMECMP_CLINT,
    // Bus Interface
-   input logic [15:0] 	    rd2, // bogus, delete when real multicycle fetch works
    input logic [`AHBW-1:0]  HRDATA,
    input logic 		    HREADY, HRESP,
    output logic 	    HCLK, HRESETn,
@@ -48,7 +47,6 @@ module wallypipelinedhart
    output logic [3:0] 	    HPROT,
    output logic [1:0] 	    HTRANS,
    output logic 	    HMASTLOCK,
-   output logic [5:0] 	    HSELRegions,
    // Delayed signals for subword write
    output logic [2:0] 	    HADDRD,
    output logic [3:0] 	    HSIZED,
@@ -70,11 +68,10 @@ module wallypipelinedhart
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
   logic [31:0] 		    InstrD, InstrE, InstrM, InstrW;
-  logic [`XLEN-1:0] 	    PCD, PCE, PCM, PCLinkE, PCLinkW;
+  logic [`XLEN-1:0] 	    PCD, PCE, PCM, PCLinkE;
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
-  logic [1:0] 		    MemRWE;  
   logic [1:0] 		    MemRWM;
   logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
@@ -89,9 +86,8 @@ module wallypipelinedhart
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
   logic 		    DivBusyE;
-  logic 		    RegWriteD;
   logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;
-  logic 		    SquashSCM, SquashSCW;
+  logic 		    SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
    logic [4:0]        RdE, RdM, RdW;
@@ -104,13 +100,11 @@ module wallypipelinedhart
   logic 		    FRegWriteM;
   logic 		    FPUStallD;
   logic [4:0] 		    SetFflagsM;
-  logic [`XLEN-1:0] 	    FPUResultW;
 
   // memory management unit signals
   logic 		    ITLBWriteF;
   logic 		    ITLBFlushF, DTLBFlushM;
   logic 		    ITLBMissF;
-  logic 		    DTLBHitM;
   logic [`XLEN-1:0] 	    SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic  [1:0]       STATUS_MPP;

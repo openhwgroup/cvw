@@ -100,6 +100,7 @@ module ifu (
   
   logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]    PCFExt;
+  logic                ITLBHitF, ISquashBusAccessF;
 
   generate
     if (`XLEN==32) begin
