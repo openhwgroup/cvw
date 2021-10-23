@@ -93,7 +93,6 @@ module lsu
    input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
    );
 
-  logic 		       SquashSCM;
   logic 		       DTLBPageFaultM;
   logic            DTLBHitM;
 
@@ -199,14 +198,14 @@ module lsu
        .TLBFlush(DTLBFlushM),
        .PhysicalAddress(MemPAdrM),
        .TLBMiss(DTLBMissM),
-       .TLBHit(DTLBHitM),
+       //.TLBHit(DTLBHitM),
        .TLBPageFault(DTLBPageFaultM),
        .ExecuteAccessF(1'b0),
        //.AtomicAccessM(AtomicMaskedM[1]),
        .AtomicAccessM(1'b0),
        .WriteAccessM(MemRWMtoLRSC[0]),
        .ReadAccessM(MemRWMtoLRSC[1]),
-       .SquashBusAccess(),
+       //.SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
        .Cacheable(CacheableM),
@@ -217,7 +216,7 @@ module lsu
 
   assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
   lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
-            .SquashSCM, .SquashSCW, .MemRWMtoDCache);
+            .SquashSCW, .MemRWMtoDCache);
 
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;

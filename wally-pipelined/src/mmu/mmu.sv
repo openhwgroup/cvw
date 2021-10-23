@@ -67,7 +67,6 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // Physical address outputs
   output logic [`PA_BITS-1:0] PhysicalAddress,
   output logic             TLBMiss,
-  output logic             TLBHit,
   output logic             Cacheable, Idempotent, AtomicAllowed,
 
   // Faults
@@ -77,11 +76,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // PMA checker signals
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
   input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
-
-  output logic             SquashBusAccess // *** send to privileged unit
-//  output logic [5:0]       SelRegions
-
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0]
 );
 
   logic [`PA_BITS-1:0] TLBPAdr;
@@ -92,6 +87,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   logic PMALoadAccessFaultM, PMPLoadAccessFaultM;
   logic PMAStoreAccessFaultM, PMPStoreAccessFaultM;
   logic Translate;
+  logic TLBHit;
 
 
   // only instantiate TLB if Virtual Memory is supported
@@ -126,7 +122,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 
 
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
-  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;
+//  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;
   assign InstrAccessFaultF = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
   assign LoadAccessFaultM = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
   assign StoreAccessFaultM = (PMAStoreAccessFaultM | PMPStoreAccessFaultM) & ~(Translate & ~TLBHit);  

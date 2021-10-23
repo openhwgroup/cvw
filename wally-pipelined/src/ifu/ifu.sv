@@ -100,7 +100,7 @@ module ifu (
   
   logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]    PCFExt;
-  logic                ITLBHitF, ISquashBusAccessF;
+  logic                ITLBHitF;
 
   generate
     if (`XLEN==32) begin
@@ -123,13 +123,11 @@ module ifu (
        .TLBFlush(ITLBFlushF),
        .PhysicalAddress(PCPFmmu),
        .TLBMiss(ITLBMissF),
-       .TLBHit(ITLBHitF),
        .TLBPageFault(ITLBInstrPageFaultF),
        .ExecuteAccessF(1'b1), // ***dh -- this should eventually change to only true if an instruction fetch is occurring
        .AtomicAccessM(1'b0),
        .ReadAccessM(1'b0),
        .WriteAccessM(1'b0),
-       .SquashBusAccess(ISquashBusAccessF),
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
