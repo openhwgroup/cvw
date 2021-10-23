@@ -519,7 +519,7 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
 
     fmaflags fmaflags(.XSNaNM, .YSNaNM, .ZSNaNM, .XInfM, .YInfM, .ZInfM, .XZeroM, .YZeroM,
-        .XNaNM, .YNaNM, .ZNaNM, .FullResultExp, .SumExp, .ZSgnEffM, .PSgnM, .Round, .Guard, .UfRound, .UfLSBNormSum, .Sticky, .UfPlus1,
+        .XNaNM, .YNaNM, .ZNaNM, .FullResultExp, .SumExp, .ZSgnEffM, .PSgnM, .Round, .Guard, .UfLSBNormSum, .Sticky, .UfPlus1,
         .FmtM, .Invalid, .Overflow, .Underflow, .FMAFlgM);
 
 
@@ -799,7 +799,7 @@ module fmaflags(
     input logic  [`NE+1:0]      FullResultExp,          // ResultExp with bits to determine sign and overflow
     input logic  [`NE+1:0]      SumExp,                 // exponent of the normalized sum
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
-    input logic                 Round, Guard, UfRound, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
+    input logic                 Round, Guard, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
     input logic                 FmtM,                   // precision 1 = double 0 = single
     output logic                Invalid, Overflow, Underflow, // flags used to select the result
     output logic [4:0]          FMAFlgM // FMA flags
