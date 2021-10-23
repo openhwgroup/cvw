@@ -82,13 +82,15 @@ module testbench();
   integer errorCount = 0;
   integer MIPexpected;
   // P, Instr Checking
-  logic [`XLEN-1:0] PCW;
   integer data_file_all;
   string name;
 
   // Write Back stage signals needed for trace compare, but don't actually
   // exist in CPU.
   logic [`XLEN-1:0] MemAdrW, WriteDataW;
+  logic [`XLEN-1:0] PCW;
+  logic [31:0] InstrW;
+  logic InstrValidW;
 
   // Write Back trace signals
   logic checkInstrW;
@@ -170,13 +172,19 @@ module testbench();
 
 
   assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
-  assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
+  assign checkInstrW =              InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
 
   // Additonal W stage registers
-  flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
-  flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
-  flopenrc #(`XLEN) PCWReg(clk, reset, dut.hart.FlushW, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
-  flopenr #(1) TrapWReg(clk, reset, ~dut.hart.StallW, dut.hart.hzu.TrapM, TrapW);
+  `define FLUSHW dut.hart.FlushW
+  `define STALLW dut.hart.StallW
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.hart.ifu.InstrM, InstrW);
+  flopenrc #(`XLEN)     MemAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.WriteDataM, WriteDataW);  
+  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ifu.PCM, PCW);
+  flopenr #(1) TrapWReg(clk, reset, ~`STALLW, dut.hart.hzu.TrapM, TrapW);
+  flopenrc #(5) controlregW(clk, reset, `FLUSHW, ~`STALLW,
+                            {dut.hart.ieu.c.RegWriteM, dut.hart.ieu.c.ResultSrcM, dut.hart.ieu.c.InstrValidM},
+                            {dut.hart.ieu.c.RegWriteW, dut.hart.ieu.c.ResultSrcW, InstrValidW});
 
   // Because qemu does not match exactly to wally it is necessary to read the the
   // trace in the memory stage and detect if anything in wally must be overwritten.
@@ -354,7 +362,7 @@ module testbench();
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
-        `checkEQ("InstrW",dut.hart.ifu.InstrW,ExpectedInstrW)
+        `checkEQ("InstrW",InstrW,ExpectedInstrW)
         `checkEQ("Instr Count",dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW,InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
@@ -448,11 +456,10 @@ module testbench();
   // Instr Opcode Tracking
   //   For waveview convenience
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.icache.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // ------------------
