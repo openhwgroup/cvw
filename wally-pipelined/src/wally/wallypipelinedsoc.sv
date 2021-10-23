@@ -54,32 +54,25 @@ module wallypipelinedsoc (
   output logic             UARTSout
 );
 
-  // to instruction memory *** remove later
-  logic [`XLEN-1:0] PCF;
-
   // Uncore signals
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HREADY, HRESP;
-  logic             InstrAccessFaultF, DataAccessFaultM;
   logic             TimerIntM, SwIntM; // from CLINT
   logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
   logic             ExtIntM; // from PLIC
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
   logic             HWRITED;
-  logic [31:0]      InstrF;
    
   // instantiate processor and memories
   wallypipelinedhart hart(.clk, .reset,
-    .PCF,  .TimerIntM, .ExtIntM, .SwIntM, .DataAccessFaultM, 
+    .TimerIntM, .ExtIntM, .SwIntM, 
     .MTIME_CLINT, .MTIMECMP_CLINT, 
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
     .HADDRD, .HSIZED, .HWRITED
    );
 
-  // instructions now come from uncore memory. This line can be removed at any time.
-  // imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
   uncore uncore(.HCLK, .HRESETn,
     .HADDR, .HWDATAIN(HWDATA), .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
     .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,
