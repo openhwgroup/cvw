@@ -45,7 +45,6 @@ module lsu
    input logic           FlushDCacheM,
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
-   output logic 	       DataMisalignedM,
    output logic 	       DCacheMiss,
    output logic 	       DCacheAccess,
 
@@ -94,6 +93,7 @@ module lsu
    );
 
   logic 		       DTLBPageFaultM;
+  logic 	         DataMisalignedM;
 
   
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache

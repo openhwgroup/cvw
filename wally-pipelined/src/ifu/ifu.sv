@@ -87,7 +87,7 @@ module ifu (
   logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic             PrivilegedChangePCM;
   logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD;
+  logic [`XLEN-1:0] PCPlus2or4F, PCLinkD;
   logic [`XLEN-3:0] PCPlusUpperF;
   logic             CompressedF;
   logic [31:0]      InstrRawD, FinalInstrRawF;
