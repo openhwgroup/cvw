@@ -27,7 +27,7 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-module testbench ();
+module testbench;
   parameter TESTSPERIPH = 0; // set to 0 for regression
   parameter TESTSPRIV = 0; // set to 0 for regression
   parameter DEBUG=0;
@@ -331,7 +331,7 @@ logic [3:0] dummy;
   
 endmodule
 
-module riscvassertions();
+module riscvassertions;
   // Legal number of PMP entries are 0, 16, or 64
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");

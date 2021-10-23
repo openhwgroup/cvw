@@ -65,6 +65,8 @@ module divconv_pipe (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, r
    logic [59:0] 	d2, n2;   
    logic [11:0] 	d3;   
 
+   logic muxr_out, cout1, cout2, cout3, cout4, cout5, cout6, cout7;
+
    // Check if exponent is odd for sqrt
    // If exp_odd=1 and sqrt, then M/2 and use ia_addr=0 as IA
    assign d2 = (exp_odd&op_type) ? {vss,d,6'h0} : {d,7'h0};

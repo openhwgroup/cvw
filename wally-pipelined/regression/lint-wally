@@ -4,7 +4,7 @@
 export PATH=$PATH:/usr/local/bin/
 verilator=`which verilator`
 
-basepath=$(dirname $0)
+basepath=$(dirname $0)/..
 for config in rv64g rv32g; do
     echo "$config linting..."
     if !($verilator --lint-only "$@" --top-module wallypipelinedsoc "-I$basepath/config/shared" "-I$basepath/config/$config" $basepath/src/*/*.sv --relative-includes); then
