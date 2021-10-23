@@ -468,7 +468,6 @@ module fma2(
     logic               Plus1, Minus1, CalcPlus1;   // do you add or subtract one for rounding
     logic               UfPlus1;                    // do you add one (for determining underflow flag)
     logic               Invalid,Underflow,Overflow; // flags
-    logic               ZeroSgn;        // the result's sign if the sum is zero
     logic               ResultSgnTmp;   // the result's sign assuming the result is not zero
     logic               Guard, Round;   // bits needed to determine rounding
     logic               UfRound, UfLSBNormSum;   // bits needed to determine rounding for underflow flag
