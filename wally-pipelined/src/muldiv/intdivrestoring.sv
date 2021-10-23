@@ -115,19 +115,19 @@ module intdivrestoring (
 
  always_ff @(posedge clk) 
     if (reset) begin
-        state = IDLE; 
+        state <= IDLE; 
     end else if (DivStartE) begin 
-        step = 0;
-        if (Div0E) state = DONE;
-        else       state = BUSY;
+        step <= 1;
+        if (Div0E) state <= DONE;
+        else       state <= BUSY;
      end else if (state == BUSY) begin // pause one cycle at beginning of signed operations for absolute value
-        step = step + 1;
         if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
-            state = DONE;
+            state <= DONE;
         end
+        step <= step + 1;
     end else if (state == DONE) begin
-      if (StallM) state = DONE;
-      else        state = IDLE;
+      if (StallM) state <= DONE;
+      else        state <= IDLE;
     end 
 endmodule 
 

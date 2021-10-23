@@ -46,11 +46,11 @@ module cachereplacementpolicy
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
       for(int index = 0; index < NUMLINES; index++)
-	      ReplacementBits[index] = '0;
+	      ReplacementBits[index] <= '0;
     end else begin
-      BlockReplacementBits = ReplacementBits[RAdr];
+      BlockReplacementBits <= ReplacementBits[RAdr];
       if (LRUWriteEn) begin
-	      ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacement;
+	      ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
       end
     end
   end
