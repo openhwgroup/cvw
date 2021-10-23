@@ -230,7 +230,7 @@ module controller(
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, AtomicM, InvalidateICacheM, FlushDCacheM, InstrValidM});
   
   // Writeback stage pipeline control register
-  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
+  flopenrc #(4) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM},
                          {RegWriteW, ResultSrcW});  
 
