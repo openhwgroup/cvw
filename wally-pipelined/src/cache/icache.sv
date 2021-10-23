@@ -77,10 +77,9 @@ module icache
   logic 		    FlushMem;
   logic 		    ICacheMemWriteEnable;
   logic [BLOCKLEN-1:0] 	    ICacheMemWriteData;
-  logic [`PA_BITS-1:0] 	    PCTagF, PCNextIndexF;  
+  logic [`PA_BITS-1:0] 	    PCTagF;  
   // Output signals from cache memory
   logic [31:0] 		    ICacheMemReadData;
-  logic 		    ICacheMemReadValid;
   logic 		    ICacheReadEn;
   logic [BLOCKLEN-1:0] 	    ReadLineF;
   
@@ -101,7 +100,6 @@ module icache
 
   logic 		       CntReset;
   logic [1:0] 		       SelAdr;
-  logic 		       SavePC;
   logic [INDEXLEN-1:0]	       RAdr;
   logic [NUMWAYS-1:0] 	       VictimWay;
   logic 		       LRUWriteEn;
@@ -302,7 +300,6 @@ module icache
 	     .CntEn,
 	     .CntReset,
 	     .SelAdr,
-    	     .SavePC,
 	     .LRUWriteEn
 	     );
 

@@ -80,7 +80,6 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 );
 
   logic [`PA_BITS-1:0] TLBPAdr;
-  logic PMPSquashBusAccess, PMASquashBusAccess;
   // Translation lookaside buffer
 
   logic PMAInstrAccessFaultF, PMPInstrAccessFaultF;
