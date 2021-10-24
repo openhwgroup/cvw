@@ -21,4 +21,4 @@ define genTrace
 
     kill
     q
-emd
+end
