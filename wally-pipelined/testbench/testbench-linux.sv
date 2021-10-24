@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 0
+`define DEBUG_TRACE 2
 // Debug Levels
 // 0: don't check against QEMU
 // 1: print disagreements with QEMU, but only halt on PCW disagreements
@@ -35,10 +35,16 @@
 // 3: halt on all disagreements with QEMU
 // 4: print memory accesses whenever they happen
 // 5: print everything
+//
+// uncomment the following line to activate checkpoint
+`define CHECKPOINT 8500000
+`ifdef CHECKPOINT
+    `define CHECKPOINT_DIR {`LINUX_TEST_VECTORS, "checkpoint", `"`CHECKPOINT`", "/"}
+`endif
 
 module testbench();
-  
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*8700000; // # of instructions at which to turn on waves in graphical sim
+
+  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0; // # of instructions at which to turn on waves in graphical sim
   string ProgramAddrMapFile, ProgramLabelMapFile;
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -91,9 +97,8 @@ module testbench();
   // Write Back trace signals
   logic checkInstrW;
 
-  //integer        RegAdr;
-  integer         fault;
-  logic           TrapW;
+  integer           fault;
+  logic             TrapW;
 
   // Signals used to parse the trace file.
   logic checkInstrM;  
@@ -141,7 +146,6 @@ module testbench();
   // ------
   // Macros
   // ------
-
   `define CSRwarn(CSR) \
     begin \
       $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
@@ -158,13 +162,20 @@ module testbench();
     end
 
   initial begin
-    data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
-    InstrCountW = '0;
+    `ifdef CHECKPOINT
+      data_file_all = $fopen({`CHECKPOINT_DIR,"all.txt"}, "r");
+    `else
+      data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+    `endif
+    `ifdef CHECKPOINT
+      InstrCountW = `CHECKPOINT;
+    `else
+      InstrCountW = '0;
+    `endif
     force dut.hart.priv.SwIntM = 0;
     force dut.hart.priv.TimerIntM = 0;
     force dut.hart.priv.ExtIntM = 0;    
   end
-
 
   assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
   assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
@@ -345,7 +356,7 @@ module testbench();
         end
         if (RegWriteW == "GPR") begin
           `checkEQ("Reg Write Address",dut.hart.ieu.dp.regf.a3,ExpectedRegAdrW)
-          $sprintf(name,"RF[%02d]",ExpectedRegAdrW);
+          $sformat(name,"RF[%02d]",ExpectedRegAdrW);
           `checkEQ(name, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
@@ -394,21 +405,163 @@ module testbench();
                             .ProgramLabelMapFile(ProgramLabelMapFile));
   
 
-  ///////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////// Testbench Core ///////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////// Testbench Core /////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
   // --------------
   // Initialization
   // --------------
-  initial
-    begin
-      reset <= 1; # 22; reset <= 0;
+  /*`ifdef CHECKPOINT
+      var [`XLEN-1:0] initRF[31:1];
+      var [`COUNTERS-1:3][`XLEN-1:0] initHPMCOUNTER;
+      var [7:0][`PMP_ENTRIES-1:0] initPMPCFG;
+      var [`XLEN-1:0][`PMP_ENTRIES-1:0] initPMPADDR;
+      var initMIDELEG, initMCAUSE, initMCOUNTEREN, initMEDELEG, initMEPC, initMTVEC, initMIE,
+          initMIP, initMSCRATCH, initMSTATUS, initSCAUSE, initSSCRATCH, initSATP, initSCOUNTEREN,
+          initSEPC, initSTVEC;
+      
+  `endif*/
+  `ifdef CHECKPOINT
+    `define RF          dut.hart.ieu.dp.regf.rf
+    `define PC          dut.hart.ifu.pcreg.q
+    `define CSR_BASE    dut.hart.priv.csr.genblk1
+    `define HPMCOUNTER  `CSR_BASE.counters.genblk1.HPMCOUNTER_REGW
+    `define PMP_BASE    `CSR_BASE.csrm.genblk4
+    `define PMPCFG      genblk2.PMPCFGreg.q
+    `define PMPADDR     PMPADDRreg.q
+    `define MEDELEG     `CSR_BASE.csrm.genblk1.MEDELEGreg.q
+    `define MIDELEG     `CSR_BASE.csrm.genblk1.MIDELEGreg.q
+    `define MIE         `CSR_BASE.csri.MIE_REGW
+    `define MIP         `CSR_BASE.csri.MIP_REGW
+    `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
+    `define SCAUSE      `CSR_BASE.csrs.genblk1.SCAUSEreg.q
+    `define MEPC        `CSR_BASE.csrm.MEPCreg.q
+    `define SEPC        `CSR_BASE.csrs.genblk1.SEPCreg.q
+    `define MCOUNTEREN  `CSR_BASE.csrm.genblk3.MCOUNTERENreg.q
+    `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk3.SCOUNTERENreg.q
+    `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
+    `define SSCRATCH    `CSR_BASE.csrs.genblk1.SSCRATCHreg.q
+    `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
+    `define STVEC       `CSR_BASE.csrs.genblk1.STVECreg.q
+    `define SATP        `CSR_BASE.csrs.genblk1.genblk2.SATPreg.q
+    `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
+    `define STATUS_TSR  `CSR_BASE.csrsr.STATUS_TSR_INT
+    `define STATUS_TW   `CSR_BASE.csrsr.STATUS_TW_INT
+    `define STATUS_TVM  `CSR_BASE.csrsr.STATUS_TVM_INT
+    `define STATUS_MXR  `CSR_BASE.csrsr.STATUS_MXR_INT
+    `define STATUS_SUM  `CSR_BASE.csrsr.STATUS_SUM_INT
+    `define STATUS_MPRV `CSR_BASE.csrsr.STATUS_MPRV_INT
+    `define STATUS_FS   `CSR_BASE.csrsr.STATUS_FS_INT
+    `define STATUS_MPP  `CSR_BASE.csrsr.STATUS_MPP
+    `define STATUS_SPP  `CSR_BASE.csrsr.STATUS_SPP
+    `define STATUS_MPIE `CSR_BASE.csrsr.STATUS_MPIE
+    `define STATUS_SPIE `CSR_BASE.csrsr.STATUS_SPIE
+    `define STATUS_UPIE `CSR_BASE.csrsr.STATUS_UPIE
+    `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
+    `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
+    `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
+    `define CURR_PRIV   dut.hart.priv.privmodereg.q
+    `define INSTRET     dut.hart.priv.csr.genblk1.counters.genblk1.genblk2.INSTRETreg.q
+    
+    `define INIT_CHECKPOINT_VAL(SIGNAL_BASE,SIGNAL,DIM,LARGE_INDEX,SMALL_INDEX) \
+      logic DIM init``SIGNAL [LARGE_INDEX:SMALL_INDEX]; \
+      initial $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
+      for (i=SMALL_INDEX; i<LARGE_INDEX+1; i=i+1) begin \
+        initial begin \
+          force `SIGNAL_BASE[i].`SIGNAL = init``SIGNAL[i]; \
+          #23; \
+          release `SIGNAL_BASE[i].`SIGNAL; \
+        end \
+      end
+
+    `define INIT_CHECKPOINT_SIMPLE_ARRAY(SIGNAL,DIM,FIRST_INDEX,LAST_INDEX) \
+      logic DIM init``SIGNAL [FIRST_INDEX:LAST_INDEX]; \
+      initial begin \
+        $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
+        force `SIGNAL = init``SIGNAL; \
+        #23; \
+        release `SIGNAL; \
+      end
+
+    `define INIT_CHECKPOINT_VAL_SINGLE(SIGNAL,DIM) \
+      logic DIM init``SIGNAL[0:0]; \
+      initial begin \
+        $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
+        force `SIGNAL = init``SIGNAL[0]; \
+        #23; \
+        release `SIGNAL; \
+      end
+
+    `define MAKE_INIT_SIGNAL(SIGNAL,DIM) \
+      logic DIM init``SIGNAL[0:0]; \
+      initial begin \
+        $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
+      end
+
+    generate
+    genvar i;
+    `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
+    `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,3);
+    `INIT_CHECKPOINT_VAL(PMP_BASE, PMPCFG,  [7:0],`PMP_ENTRIES-1,0);
+    `INIT_CHECKPOINT_VAL(PMP_BASE, PMPADDR, [`XLEN-1:0],`PMP_ENTRIES-1,0);
+    endgenerate
+    `INIT_CHECKPOINT_VAL_SINGLE(PC,         [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MEDELEG,    [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MIE,        [11:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MIP,        [11:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MCAUSE,     [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(SCAUSE,     [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MEPC,       [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(SEPC,       [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MCOUNTEREN, [31:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(SCOUNTEREN, [31:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MSCRATCH,   [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(SSCRATCH,   [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(MTVEC,      [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(STVEC,      [`XLEN-1:0]);
+    `INIT_CHECKPOINT_VAL_SINGLE(SATP,       [`XLEN-1:0]);
+    `MAKE_INIT_SIGNAL(MSTATUS,      [`XLEN-1:0]);
+    initial begin
+      force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
+      force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
+      force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
+      force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
+      force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
+      #23;
+      release {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV};
+      release {`STATUS_FS,`STATUS_MPP};
+      release {`STATUS_SPP,`STATUS_MPIE};
+      release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
+      release {`STATUS_SIE,`STATUS_UIE};
     end
+    logic [1:0] initPriv;
+    assign initPriv = (initPC[0][`XLEN-1]) ? 2'h2 : 2'h3; // *** a hacky way to detect privilege level
+    initial begin
+      force `CURR_PRIV = initPriv;
+      #23;
+      release `CURR_PRIV;
+    end
+    initial begin
+      force `INSTRET = `CHECKPOINT;
+      #23;
+      release `INSTRET;
+    end
+
+
+  `endif
+  initial begin
+    reset <= 1; # 22; reset <= 0;
+    $stop;
+  end
   // initial loading of memories
   initial begin
     $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
-    $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
+    `ifdef CHECKPOINT
+      $readmemh({`CHECKPOINT_DIR,"ram.txt"}, dut.uncore.dtim.RAM);
+    `else
+
+      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
+    `endif
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
