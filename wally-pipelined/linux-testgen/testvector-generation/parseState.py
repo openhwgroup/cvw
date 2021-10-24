@@ -34,7 +34,7 @@ stateGDBpath = outDir+'intermediate-outputs/stateGDB.txt'
 if not os.path.exists(stateGDBpath):
     sys.exit('Error input file '+stateGDBpath+'not found')
 
-singleCSRs = ['mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus']
+singleCSRs = ['pc','mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus']
 thirtyTwoBitCSRs = ['mcounteren','scounteren']
 listCSRs = ['hpmcounter','pmpaddr']
 pmpcfg = ['pmpcfg']
@@ -90,7 +90,7 @@ with open(stateGDBpath, 'r') as stateGDB:
                 outFileName = 'checkpoint-'+name.upper().strip('0123456789')
                 outFile = open(outDir+outFileName, 'a')
                 fourPmp = int(val,16)
-                for i in range(4):
+                for i in range(3,-1,-1):
                     byte = (fourPmp >> 4*i) & 0xf
                     outFile.write(hex(byte)[2:]+'\n')
                 outFile.close()
