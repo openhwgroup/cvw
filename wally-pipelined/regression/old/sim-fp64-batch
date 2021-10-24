@@ -1,0 +1,3 @@
+vsim -c <<!
+do wally-fp64-batch.do ../config/rv64icfd rv64icfd
+!

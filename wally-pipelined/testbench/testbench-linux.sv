@@ -43,8 +43,10 @@
 `endif
 
 module testbench();
+  
+  parameter INSTR_LIMIT = 0; // # of instructions at which to stop
+  parameter INSTR_WAVEON = (INSTR_LIMIT > 10000) ? INSTR_LIMIT-10000 : 1; // # of instructions at which to turn on waves in graphical sim
 
-  parameter waveOnICount = `BUSYBEAR*140000 + `BUILDROOT*0; // # of instructions at which to turn on waves in graphical sim
   string ProgramAddrMapFile, ProgramLabelMapFile;
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -86,13 +88,15 @@ module testbench();
   integer errorCount = 0;
   integer MIPexpected;
   // P, Instr Checking
-  logic [`XLEN-1:0] PCW;
   integer data_file_all;
   string name;
 
   // Write Back stage signals needed for trace compare, but don't actually
   // exist in CPU.
   logic [`XLEN-1:0] MemAdrW, WriteDataW;
+  logic [`XLEN-1:0] PCW;
+  logic [31:0] InstrW;
+  logic InstrValidW;
 
   // Write Back trace signals
   logic checkInstrW;
@@ -142,6 +146,7 @@ module testbench();
   integer           NumCSRWIndex;
   integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
+  integer           RequestDelayedMIP;
   
   // ------
   // Macros
@@ -178,13 +183,17 @@ module testbench();
   end
 
   assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
-  assign checkInstrW = dut.hart.ieu.InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
+  assign checkInstrW =              InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
 
   // Additonal W stage registers
-  flopenrc #(`XLEN) MemAdrWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
-  flopenrc #(`XLEN) WriteDataWReg(clk, reset, dut.hart.FlushW, ~dut.hart.StallW, dut.hart.WriteDataM, WriteDataW);  
-  flopenrc #(`XLEN) PCWReg(clk, reset, dut.hart.FlushW, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
-  flopenr #(1) TrapWReg(clk, reset, ~dut.hart.StallW, dut.hart.hzu.TrapM, TrapW);
+  `define FLUSHW dut.hart.FlushW
+  `define STALLW dut.hart.StallW
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.hart.ifu.InstrM, InstrW);
+  flopenrc #(`XLEN)     MemAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.WriteDataM, WriteDataW);  
+  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ifu.PCM, PCW);
+  flopenr #(1) TrapWReg(clk, reset, ~`STALLW, dut.hart.hzu.TrapM, TrapW);
+  flopenrc #(5) controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.c.InstrValidM, InstrValidW);
 
   // Because qemu does not match exactly to wally it is necessary to read the the
   // trace in the memory stage and detect if anything in wally must be overwritten.
@@ -257,9 +266,16 @@ module testbench();
           MarkerIndex += 2;
           // match MIP to QEMU's because interrupts are imprecise
           if(ExpectedCSRArrayM[NumCSRM].substr(0, 2) == "mip") begin
-            $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
-            MIPexpected = ExpectedCSRArrayValueM[NumCSRM];
-            force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+            $display("%tn: ExpectedCSRArrayM[7] (MEPC) = %x",$time,ExpectedCSRArrayM[7]);
+            $display("%tn: ExpectedPCM = %x",$time,ExpectedPCM);
+            // if PC does not equal MEPC, request delayed MIP is True
+            if(ExpectedPCM != ExpectedCSRArrayM[7]) begin
+              RequestDelayedMIP = 1;
+            end else begin
+              $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
+              MIPexpected = ExpectedCSRArrayValueM[NumCSRM];
+              force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+            end
           end 
           NumCSRM++;      
         end
@@ -337,17 +353,25 @@ module testbench();
   
   // step2: make all checks in the write back stage.
   always @(negedge clk) begin
+    if(RequestDelayedMIP) begin
+      $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueW[NumCSRM]);
+      MIPexpected = ExpectedCSRArrayValueW[NumCSRM];
+      force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+      RequestDelayedMIP = 0;
+    end
     // always check PC, instruction bits
     if (checkInstrW) begin
       InstrCountW += 1;
-      // turn on waves at certain point
-      if (InstrCountW == waveOnICount) $stop;
       // print progress message
       if (InstrCountW % 'd100000 == 0) $display("Reached %d instructions", InstrCountW);
+      // turn on waves
+      if (InstrCountW == INSTR_WAVEON) $stop;
+      // end sim
+      if ((InstrCountW == INSTR_LIMIT) && (INSTR_LIMIT!=0)) $stop;
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
-        `checkEQ("InstrW",dut.hart.ifu.InstrW,ExpectedInstrW)
+        `checkEQ("InstrW",InstrW,ExpectedInstrW)
         `checkEQ("Instr Count",dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW,InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
@@ -562,8 +586,8 @@ module testbench();
 
       $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
     `endif
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
   end
@@ -583,11 +607,10 @@ module testbench();
   // Instr Opcode Tracking
   //   For waveview convenience
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.icache.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+                dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // ------------------

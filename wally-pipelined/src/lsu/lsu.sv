@@ -45,7 +45,6 @@ module lsu
    input logic           FlushDCacheM,
    output logic 	       CommittedM, 
    output logic 	       SquashSCW,
-   output logic 	       DataMisalignedM,
    output logic 	       DCacheMiss,
    output logic 	       DCacheAccess,
 
@@ -89,14 +88,12 @@ module lsu
    output logic 	       WalkerLoadPageFaultM,
    output logic 	       WalkerStorePageFaultM,
 
-   output logic 	       DTLBHitM, // not connected 
-
    input 		       var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input 		       var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
    );
 
-  logic 		       SquashSCM;
   logic 		       DTLBPageFaultM;
+  logic 	         DataMisalignedM;
 
   
   logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
@@ -124,7 +121,7 @@ module lsu
 
   logic 		       CommittedMfromDCache;
   logic 		       PendingInterruptMtoDCache;
-  logic 		       FlushWtoDCache;
+//  logic 		       FlushWtoDCache;
   logic 		       WalkerPageFaultM;
 
   logic 		       AnyCPUReqM;
@@ -160,7 +157,6 @@ module lsu
 
   // arbiter between IEU and hptw
   lsuArb arbiter(.clk(clk),
-		 .reset(reset),
 		 // HPTW connection
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
@@ -171,7 +167,7 @@ module lsu
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
-		 .MemAdrE(MemAdrE),		 
+		 .MemAdrE(MemAdrE[11:0]),		 
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
@@ -200,25 +196,23 @@ module lsu
        .TLBFlush(DTLBFlushM),
        .PhysicalAddress(MemPAdrM),
        .TLBMiss(DTLBMissM),
-       .TLBHit(DTLBHitM),
        .TLBPageFault(DTLBPageFaultM),
        .ExecuteAccessF(1'b0),
        //.AtomicAccessM(AtomicMaskedM[1]),
        .AtomicAccessM(1'b0),
        .WriteAccessM(MemRWMtoLRSC[0]),
        .ReadAccessM(MemRWMtoLRSC[1]),
-       .SquashBusAccess(),
        .DisableTranslation(DisableTranslation),
        .InstrAccessFaultF(),
        .Cacheable(CacheableM),
        .Idempotent(),
        .AtomicAllowed(),
-       .*); // *** the pma/pmp instruction acess faults don't really matter here. is it possible to parameterize which outputs exist?
+       .*); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
 
   assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
   lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
-            .SquashSCM, .SquashSCW, .MemRWMtoDCache);
+            .SquashSCW, .MemRWMtoDCache);
 
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
@@ -243,10 +237,7 @@ module lsu
 
   dcache dcache(.clk(clk),
 		.reset(reset),
-		.StallM(StallM),
 		.StallWtoDCache(StallWtoDCache),
-		.FlushM(FlushM),
-		.FlushW(FlushWtoDCache),
 		.MemRWM(MemRWMtoDCache),
 		.Funct3M(Funct3MtoDCache),
 		.Funct7M(Funct7M),

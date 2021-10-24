@@ -17,7 +17,7 @@ module fctrl (
   output logic       FWriteIntD   // is the result written to the integer register
   );
 
-  `define FCTRLW 15
+  `define FCTRLW 14
   logic [`FCTRLW-1:0] ControlsD;
   // FPU Instruction Decoder
   always_comb
@@ -69,7 +69,7 @@ module fctrl (
                                   2'b01:    ControlsD = `FCTRLW'b1_0_11_010_011_00_0_0; // fcvt.s.wu
                                   2'b10:    ControlsD = `FCTRLW'b1_0_11_100_011_00_0_0; // fcvt.s.l
                                   2'b11:    ControlsD = `FCTRLW'b1_0_11_110_011_00_0_0; // fcvt.s.lu
-                                  default: ControlsD = `FCTRLW'b0_0_00_0000_000_00_0_1; // non-implemented instruction
+                                  default: ControlsD = `FCTRLW'b0_0_00_000_000_00_0_1; // non-implemented instruction
                                 endcase
                     7'b1100000: case(Rs2D[1:0])
                                   2'b00:    ControlsD = `FCTRLW'b0_1_11_001_011_11_0_0; // fcvt.w.s
@@ -98,7 +98,7 @@ module fctrl (
                     //7'b0100001: ControlsD = `FCTRLW'b1_0_11_000_100_00_0_0; // fcvt.d.s
                     default:    ControlsD = `FCTRLW'b0_0_00_000_100_00_0_1; // non-implemented instruction
                   endcase
-      default:      ControlsD = `FCTRLW'b0_0_000_000_000_00_0_1; // non-implemented instruction
+      default:      ControlsD = `FCTRLW'b0_0_00_000_000_00_0_1; // non-implemented instruction
     endcase
 
   // unswizzle control bits

@@ -1,46 +1,64 @@
+///////////////////////////////////////////
 //
-// The rounder takes as inputs a 64-bit value to be rounded, A, the 
-// exponent of the value to be rounded, the sign of the final result, Sign, 
-// the precision of the results, P, and the two-bit rounding mode, rm. 
-// It produces a rounded 52-bit result, Z, the exponent of the rounded 
-// result, Z_exp, and a flag that indicates if the result was rounded,
-// Inexact. The rounding mode has the following values.
-//	    rm		Mode
-//      00 		round-to-nearest-even
-//	    01 		round-toward-zero
-//      10 		round-toward-plus infinity
-//      11  	round-toward-minus infinity
+// Written: James Stine
+// Modified: 8/1/2018
 //
+// Purpose: Floating point divider/square root rounder unit (Goldschmidt)
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+///////////////////////////////////////////
 
 module rounder_div (
-    input logic [1:0]   rm,
-    input logic         P,
-    input logic         OvEn,
-    input logic         UnEn,
-    input logic [12:0]  exp_diff,
-    input logic [2:0]   sel_inv,
-    input logic         Invalid,
-    input logic 	    SignR,
-   
-    input logic [63:0]  q1,
-    input logic [63:0]  qm1,
-    input logic [63:0]  qp1,
-    input logic [63:0]  q0,
-    input logic [63:0]  qm0,
-    input logic [63:0]  qp0,   
-    input logic [127:0] regr_out,
+    input logic [1:0] 	rm,
+    input logic 	P,
+    input logic 	OvEn,
+    input logic 	UnEn,
+    input logic [12:0] 	exp_diff,
+    input logic [2:0] 	sel_inv,
+    input logic 	Invalid,
+    input logic 	SignR,
+    input logic [63:0] 	Float1,
+    input logic [63:0] 	Float2,
+    input logic 	XNaNQ,
+    input logic 	YNaNQ,
+    input logic 	XZeroQ,
+    input logic 	YZeroQ, 
+    input logic 	XInfQ,
+    input logic 	YInfQ,
+    input logic 	op_type, 
+    input logic [59:0] 	q1,
+    input logic [59:0] 	qm1,
+    input logic [59:0] 	qp1,
+    input logic [59:0] 	q0,
+    input logic [59:0] 	qm0,
+    input logic [59:0] 	qp0, 
+    input logic [119:0] regr_out,
    
     output logic [63:0] Result,
-    output logic [4:0]  Flags
+    output logic [4:0] 	Flags
     );
       
-   logic 	       Rsign;
-   logic [10:0]    Rexp;
-   logic [12:0]    Texp;
-   logic [51:0]    Rmant;
-   logic [63:0]    Tmant;
-   logic [51:0]    Smant;   
-   logic 	       Rzero;
+   logic 		Rsign;
+   logic [10:0] 	Rexp;
+   logic [12:0] 	Texp;
+   logic [51:0] 	Rmant;
+   logic [59:0] 	Tmant;
+   logic [51:0] 	Smant;   
+   logic 		Rzero;
    logic 	       Gdp, Gsp, G;
    logic 	       UnFlow_SP, UnFlow_DP, UnderFlow; 
    logic 	       OvFlow_SP, OvFlow_DP, OverFlow;		
@@ -56,19 +74,23 @@ module rounder_div (
    logic 	       Texp_l7z;
    logic 	       Texp_l7o;
    logic 	       OvCon;
-   logic           zero_rem;
-   logic [1:0] 	   mux_mant;
+   logic 	       zero_rem;
+   logic [1:0] 	       mux_mant;
    logic 	       sign_rem;
-   logic [63:0]    q, qm, qp;
-   logic 	       exp_ovf;   
+   logic [59:0]        q, qm, qp;
+   logic 	       exp_ovf;
+
+   logic [50:0]        NaN_out;
+   logic 	       NaN_Sign_out;   
+   logic 	       Sign_out;     
 
    // Remainder = 0?
    assign zero_rem = ~(|regr_out);
    // Remainder Sign
-   assign sign_rem = ~regr_out[127];
+   assign sign_rem = ~regr_out[119];
    // choose correct Guard bit [1,2) or [0,1)
-   assign Gdp = q1[63] ? q1[10] : q0[10];
-   assign Gsp = q1[63] ? q1[39] : q0[39];
+   assign Gdp = q1[59] ? q1[6] : q0[6];
+   assign Gsp = q1[59] ? q1[35] : q0[35];
    assign G = P ? Gsp : Gdp;   
    // Selection of Rounding (from logic/switching)
    assign mux_mant[1] = (SignR&rm[1]&rm[0]&G) | (!SignR&rm[1]&!rm[0]&G) | 
@@ -80,18 +102,18 @@ module rounder_div (
 			(SignR&rm[1]&!rm[0]&!G&!zero_rem&sign_rem);
    
    // Which Q?
-   mux2 #(64) mx1 (q0, q1, q1[63], q);
-   mux2 #(64) mx2 (qm0, qm1, q1[63], qm);   
-   mux2 #(64) mx3 (qp0, qp1, q1[63], qp);
+   mux2 #(60) mx1 (q0, q1, q1[59], q);
+   mux2 #(60) mx2 (qm0, qm1, q1[59], qm);   
+   mux2 #(60) mx3 (qp0, qp1, q1[59], qp);
    // Choose Q, Q+1, Q-1
-   mux3 #(64) mx4 (q, qm, qp, mux_mant, Tmant);
-   assign Smant = Tmant[62:11];
+   mux3 #(60) mx4 (q, qm, qp, mux_mant, Tmant);
+   assign Smant = Tmant[58:7];
    // Compute the value of the exponent
    //   exponent is modified if we choose:
    //   1.) we choose any qm0, qp0, q0 (since we shift mant)
    //   2.) we choose qp and we overflow (for RU)
-   assign exp_ovf = |{qp[62:40], (qp[39:11] & {29{~P}})};
-   assign Texp = exp_diff - {{13{1'b0}}, ~q1[63]} + {{13{1'b0}}, mux_mant[1]&qp1[63]&~exp_ovf};
+   assign exp_ovf = |{qp[58:36], (qp[35:7] & {29{~P}})};
+   assign Texp = exp_diff - {{12{1'b0}}, ~q1[59]} + {{12{1'b0}}, mux_mant[1]&qp1[59]&~exp_ovf};
    
    // Overflow only occurs for double precision, if Texp[10] to Texp[0] are 
    // all ones. To encourage sharing with single precision overflow detection,
@@ -117,12 +139,11 @@ module rounder_div (
    // the input was infinite or NaN or the output of the adder is zero.
    // 00 = Valid
    // 10 = NaN
-   assign Valid = (~sel_inv[2]&~sel_inv[1]&~sel_inv[0]);
-   assign NaN = ~sel_inv[1]& sel_inv[0];
+   assign Valid = ~sel_inv[2]&~sel_inv[1]&~sel_inv[0];
+   assign NaN = sel_inv[2]&sel_inv[1]&sel_inv[0]; 
    assign UnderFlow = (P & UnFlow_SP | UnFlow_DP) & Valid;
    assign OverFlow  = (P & OvFlow_SP | OvFlow_DP) & Valid;
-   assign Div0 = sel_inv[2]&sel_inv[1]&~sel_inv[0];
-
+   assign Div0 = YZeroQ&~XZeroQ&~op_type&~NaN;   
 
    // The final result is Inexact if any rounding occurred ((i.e., R or S 
    // is one), or (if the result overflows ) or (if the result underflows and the 
@@ -161,18 +182,26 @@ module rounder_div (
    // If the result is zero or infinity, the mantissa is all zeros. 
    // If the result is NaN, the mantissa is 10...0
    // If the result the largest floating point number, the mantissa
-   // is all ones. Otherwise, the mantissa is not changed. 
+   // is all ones. Otherwise, the mantissa is not changed.
+   assign NaN_out = ~XNaNQ&YNaNQ ? Float2[50:0] : Float1[50:0];
+   assign NaN_Sign_out = ~XNaNQ&YNaNQ ? Float2[63] : Float1[63];
+   assign Sign_out = (XZeroQ&YZeroQ | XInfQ&YInfQ)&~op_type | Rsign&~XNaNQ&~YNaNQ | 
+   		     NaN_Sign_out&(XNaNQ|YNaNQ);
+   // FIXME (jes) - Imperas gives sNaN a Sign=0 where x86 gives Sign=1
+   // | Float1[63]&op_type;  (logic to fix this but removed for now)
+   
    assign Rmant[51] = Largest | NaN | (Smant[51]&~Infinite&~Rzero);
-   assign Rmant[50:0] = {51{Largest}} | (Smant[50:0]&{51{~Infinite&Valid&~Rzero}});
-
+   assign Rmant[50:0] = ({51{Largest}} | (Smant[50:0]&{51{~Infinite&Valid&~Rzero}}) |
+			(NaN_out&{51{NaN}}))&({51{~(op_type&Float1[63]&~XZeroQ)}});
+   
    // For single precision, the 8 least significant bits of the exponent
    // and 23 most significant bits of the mantissa contain bits used 
    // for the final result. A double precision result is returned if 
    // overflow has occurred, the overflow trap is enabled, and a conversion
    // is being performed. 
    assign OvCon = OverFlow & OvEn;
-   assign Result = (P&~OvCon) ? { {32{1'b1}}, Rsign, Rexp[7:0], Rmant[51:29]}
-	           : {Rsign, Rexp, Rmant};
+   assign Result = (P&~OvCon) ? { {32{1'b1}}, Sign_out, Rexp[7:0], Rmant[51:29]}
+	           : {Sign_out, Rexp, Rmant};
 
 endmodule // rounder
 

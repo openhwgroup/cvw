@@ -33,7 +33,7 @@ module localHistoryPredictor
       )
   (input logic clk,
    input logic 		   reset,
-   input logic 		   StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		   StallF,  StallE, FlushF,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0] 	   Prediction,
    // update

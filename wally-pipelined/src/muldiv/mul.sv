@@ -27,9 +27,11 @@
 
 module mul (
   // Execute Stage interface
+  input  logic             clk, reset,
+  input  logic             StallM, FlushM,
   input  logic [`XLEN-1:0] SrcAE, SrcBE,
   input  logic [2:0]       Funct3E,
-  output logic [`XLEN*2-1:0] ProdE
+  output logic [`XLEN*2-1:0] ProdM
 );
 
     // Number systems
@@ -46,14 +48,20 @@ module mul (
     // Signed * Unsigned   = P' + ( PA - PB)*2^(XLEN-1) - PP*2^(2XLEN-2)
     // Unsigned * Unsigned = P' + ( PA + PB)*2^(XLEN-1) + PP*2^(2XLEN-2)
 
-    logic [`XLEN*2-1:0] PP1, PP2, PP3, PP4;
-    logic [`XLEN*2-1:0] Pprime;
+    logic [`XLEN*2-1:0] PP0E, PP1E, PP2E, PP3E, PP4E;
+    logic [`XLEN*2-1:0] PP0M, PP1M, PP2M, PP3M, PP4M;
     logic [`XLEN-2:0]   PA, PB;
     logic               PP;
-    logic               MULH, MULHSU, MULHU;
+    logic               MULH, MULHSU;
+    logic [`XLEN-1:0]   Aprime, Bprime;
 
-    // portions of product
-    assign Pprime = {1'b0, SrcAE[`XLEN-2:0]} * {1'b0, SrcBE[`XLEN-2:0]};
+  //////////////////////////////
+  // Execute Stage: Compute partial products
+  //////////////////////////////
+
+    assign Aprime = {1'b0, SrcAE[`XLEN-2:0]};
+    assign Bprime = {1'b0, SrcBE[`XLEN-2:0]};
+    redundantmul #(`XLEN) bigmul(.a(Aprime), .b(Bprime), .out0(PP0E), .out1(PP1E));
     assign PA = {(`XLEN-1){SrcAE[`XLEN-1]}} & SrcBE[`XLEN-2:0];  
     assign PB = {(`XLEN-1){SrcBE[`XLEN-1]}} & SrcAE[`XLEN-2:0];
     assign PP = SrcAE[`XLEN-1] & SrcBE[`XLEN-1];
@@ -61,17 +69,25 @@ module mul (
     // flavor of multiplication
     assign MULH   = (Funct3E == 3'b001);
     assign MULHSU = (Funct3E == 3'b010);
-    // assign MULHU = (Funct3E == 2'b11); // signal unused
 
     // Handle signs
-    assign PP1 = Pprime; // same for all flavors
-    assign PP2 = {2'b00, (MULH | MULHSU) ? ~PA : PA, {(`XLEN-1){1'b0}}};
-    assign PP3 = {2'b00, (MULH) ? ~PB : PB, {(`XLEN-1){1'b0}}};
+    assign PP2E = {2'b00, (MULH | MULHSU) ? ~PA : PA, {(`XLEN-1){1'b0}}};
+    assign PP3E = {2'b00, (MULH) ? ~PB : PB, {(`XLEN-1){1'b0}}};
     always_comb 
-    if (MULH)        PP4 = {1'b1, PP, {(`XLEN-3){1'b0}}, 1'b1, {(`XLEN){1'b0}}}; 
-    else if (MULHSU) PP4 = {1'b1, ~PP, {(`XLEN-2){1'b0}}, 1'b1, {(`XLEN-1){1'b0}}};
-    else             PP4 = {1'b0, PP, {(`XLEN*2-2){1'b0}}};
+    if (MULH)        PP4E = {1'b1, PP, {(`XLEN-3){1'b0}}, 1'b1, {(`XLEN){1'b0}}}; 
+    else if (MULHSU) PP4E = {1'b1, ~PP, {(`XLEN-2){1'b0}}, 1'b1, {(`XLEN-1){1'b0}}};
+    else             PP4E = {1'b0, PP, {(`XLEN*2-2){1'b0}}};
 
-    assign ProdE = PP1 + PP2 + PP3 + PP4; //SrcAE * SrcBE;
+  //////////////////////////////
+  // Memory Stage: Sum partial proudcts
+  //////////////////////////////
+
+	 flopenrc #(`XLEN*2) PP0Reg(clk, reset, FlushM, ~StallM, PP0E, PP0M); 
+	 flopenrc #(`XLEN*2) PP1Reg(clk, reset, FlushM, ~StallM, PP1E, PP1M); 
+	 flopenrc #(`XLEN*2) PP2Reg(clk, reset, FlushM, ~StallM, PP2E, PP2M); 
+	 flopenrc #(`XLEN*2) PP3Reg(clk, reset, FlushM, ~StallM, PP3E, PP3M); 
+	 flopenrc #(`XLEN*2) PP4Reg(clk, reset, FlushM, ~StallM, PP4E, PP4M); 
+
+    assign ProdM = PP0M + PP1M + PP2M + PP3M + PP4M; //SrcAE * SrcBE;
  endmodule
 

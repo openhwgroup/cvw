@@ -30,8 +30,8 @@
 
 module bpred 
   (input logic clk, reset,
-   input logic 		    StallF, StallD, StallE, StallM, StallW, 
-   input logic 		    FlushF, FlushD, FlushE, FlushM, FlushW,
+   input logic 		    StallF, StallD, StallE, 
+   input logic 		    FlushF, FlushD, FlushE,
    // Fetch stage
    // the prediction
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
@@ -67,8 +67,6 @@ module bpred
   logic 		    PredictionPCWrongE;
   logic 		    PredictionInstrClassWrongE;
   
-  logic [`XLEN-1:0] 	    CorrectPCE;
-
 
   // Part 1 branch direction prediction
 
@@ -171,10 +169,6 @@ module bpred
 			       .UpdateInvalid(PredictionInstrClassWrongE),
 			       .UpdateInstrClass(InstrClassE));
 
-  // need to forward when updating to the same address as reading.
-  //assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
-  //assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCF;
-
   // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
@@ -192,17 +186,15 @@ module bpred
   // The prediction and its results need to be passed through the pipeline
   // *** for other predictors will will be different.
   
-  flopenrc #(2) BPPredRegD(.clk(clk),
+  flopenr #(2) BPPredRegD(.clk(clk),
 			   .reset(reset),
 			   .en(~StallD),
-			   .clear(1'b0),
 			   .d(BPPredF),
 			   .q(BPPredD));
 
-  flopenrc #(2) BPPredRegE(.clk(clk),
+  flopenr #(2) BPPredRegE(.clk(clk),
 			   .reset(reset),
 			   .en(~StallE),
-			   .clear(1'b0),
 			   .d(BPPredD),
 			   .q(BPPredE));
 

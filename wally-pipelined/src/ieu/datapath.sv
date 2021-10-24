@@ -38,7 +38,6 @@ module datapath (
   input  logic             TargetSrcE, 
   input  logic             JumpE,
   input  logic             IllegalFPUInstrE,
-  input  logic [1:0]       MemRWE,
   input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
@@ -84,7 +83,6 @@ module datapath (
   logic [`XLEN-1:0] ResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
-  logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] WriteDataW;
   logic [`XLEN-1:0] ResultW;
   
@@ -143,12 +141,5 @@ module datapath (
 			      .d(ReadDataM),
 			      .q(ReadDataW));
 
-  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	
-/* -----\/----- EXCLUDED -----\/-----
-  // This mux4:1 no longer needs to include PCLinkW.  This is set correctly in the execution stage.
-  // *** need to look at how the decoder is coded to fix.
-  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, ResultSrcW, WriteDataW);	
->>>>>>> bp
- -----/\----- EXCLUDED -----/\----- */
- 
+  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
 endmodule

@@ -1,3 +1,4 @@
+INSTR_LIMIT=${1:-0}
 vsim -c <<!
-do wally-buildroot-batch.do 
+do wally-buildroot-batch.do $INSTR_LIMIT
 !
