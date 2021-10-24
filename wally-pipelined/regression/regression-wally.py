@@ -32,7 +32,7 @@ configs = [
 ]
 def getBuildrootTC(short):
     INSTR_LIMIT = 100000 # multiple of 100000
-    MAX_EXPECTED = 8700000
+    MAX_EXPECTED = 3000000
     if short:
         BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+"\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
