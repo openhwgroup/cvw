@@ -32,20 +32,24 @@
 
 /* verilator lint_off UNOPTFLAT */
 
-module prioritythemometer #(parameter N = 8) (
+module prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y
 );
 
+// Carefully crafted so design compiler would synthesize into a fast tree structure
+//  Rather than linear.
 
   // generate thermometer code mask
   genvar i;
   generate
     assign y[0] = a[0];
-    for (i=1; i<N; i++) begin
-      assign y[i] = y[i-1] & a[i];
+    for (i=1; i<N; i++) begin:therm
+      assign y[i] = y[i-1] & ~a[i]; // *** made to be the same as onehot (without the inverter) to see if the probelme is something weird with synthesis
+      // assign y[i] = y[i-1] & a[i];
     end
   endgenerate
+
 
 endmodule
 

@@ -41,11 +41,7 @@ module pmpchecker (
   // which we might not intend.
   input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
-
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
-
-  output logic             PMPSquashBusAccess,
-
   output logic             PMPInstrAccessFaultF,
   output logic             PMPLoadAccessFaultM,
   output logic             PMPStoreAccessFaultM
@@ -54,8 +50,9 @@ module pmpchecker (
 
   // Bit i is high when the address falls in PMP region i
   logic                    EnforcePMP;
-  logic [7:0]              PMPCfg[`PMP_ENTRIES-1:0];
-  logic [`PMP_ENTRIES-1:0] Match, FirstMatch;      // PMP Entry matches
+//  logic [7:0]              PMPCfg[`PMP_ENTRIES-1:0];
+  logic [`PMP_ENTRIES-1:0] Match; // physical address matches one of the pmp ranges
+  logic [`PMP_ENTRIES-1:0] FirstMatch; // onehot encoding for the first pmpaddr to match the current address.
   logic [`PMP_ENTRIES-1:0] Active;     // PMP register i is non-null
   logic [`PMP_ENTRIES-1:0] L, X, W, R; // PMP matches and has flag set
   logic [`PMP_ENTRIES-1:0]   PAgePMPAdr;  // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
@@ -69,7 +66,7 @@ module pmpchecker (
     .PAgePMPAdrOut(PAgePMPAdr),
     .FirstMatch, .Match, .Active, .L, .X, .W, .R);
 
-  priorityonehot #(`PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // Take the ripple gates/signals out of the pmpadrdec and into another unit.
+  priorityonehot #(`PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the adress decoders to find the first one that matches.
 
   // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
   assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 
@@ -78,6 +75,6 @@ module pmpchecker (
   assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W;
   assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R;
 
-  assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
+  //assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
 
 endmodule

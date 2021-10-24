@@ -25,7 +25,7 @@
 `include "wally-config.vh"
 
 module cachereplacementpolicy
-  #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+  #(parameter NUMWAYS = 4, INDEXLEN = 9, OFFSETLEN = 5, NUMLINES = 128)
   (input logic clk, reset,
    input logic [NUMWAYS-1:0] 			WayHit,
    output logic [NUMWAYS-1:0] 			VictimWay,
@@ -43,17 +43,19 @@ module cachereplacementpolicy
   logic [NUMWAYS-2:0] 				BlockReplacementBits;
   logic [NUMWAYS-2:0] 				NewReplacement;
 
+  /* verilator lint_off BLKLOOPINIT */
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
       for(int index = 0; index < NUMLINES; index++)
-	      ReplacementBits[index] = '0;
+	      ReplacementBits[index] <= '0;
     end else begin
-      BlockReplacementBits = ReplacementBits[RAdr];
+      BlockReplacementBits <= ReplacementBits[RAdr];
       if (LRUWriteEn) begin
-	      ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacement;
+	      ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
       end
     end
   end
+  /* verilator lint_on BLKLOOPINIT */
 
 
   genvar 		      index;

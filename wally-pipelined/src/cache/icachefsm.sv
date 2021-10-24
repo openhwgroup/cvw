@@ -25,9 +25,8 @@
 
 `include "wally-config.vh"
 
-module icachefsm #(parameter BLOCKLEN = 256) 
-  (
-   // Inputs from pipeline
+module icachefsm
+  (// Inputs from pipeline
    input logic 	      clk, reset,
 
    input logic 	      StallF,
@@ -61,7 +60,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
    output logic       CntEn,
    output logic       CntReset,
    output logic [1:0] SelAdr,
-   output logic       SavePC,
    output logic       LRUWriteEn
    );
 
@@ -116,7 +114,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
   
   statetype CurrState, NextState;
   logic 		       PreCntEn;
-  logic 		       UnalignedSelect;
 
   // the FSM is always runing, do not stall.
   always_ff @(posedge clk, posedge reset)
@@ -125,7 +122,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
 
   // Next state logic
   always_comb begin
-    UnalignedSelect = 1'b0;
     CntReset = 1'b0;
     PreCntEn = 1'b0;
     //InstrReadF = 1'b0;
@@ -133,7 +129,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
     spillSave = 1'b0;
     SelAdr = 2'b00;
     ICacheReadEn = 1'b0;
-    SavePC = 1'b0;
     ICacheStallF = 1'b1;
     LRUWriteEn = 1'b0;
     case (CurrState)
@@ -143,7 +138,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
         if (ITLBMissF) begin
           NextState = STATE_TLB_MISS;
         end else if (hit & ~spill) begin
-          SavePC = 1'b1;
           ICacheStallF = 1'b0;
 	  LRUWriteEn = 1'b1;
 	  if(StallF) begin
@@ -176,7 +170,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
       // branch 1,  hit spill and 2, miss spill hit
       STATE_HIT_SPILL: begin
         SelAdr = 2'b10;
-        UnalignedSelect = 1'b1;
         ICacheReadEn = 1'b1;
         if (hit) begin
           NextState = STATE_HIT_SPILL_FINAL;
@@ -202,15 +195,12 @@ module icachefsm #(parameter BLOCKLEN = 256)
       end
       STATE_HIT_SPILL_MERGE: begin
         SelAdr = 2'b10;
-        UnalignedSelect = 1'b1;
         ICacheReadEn = 1'b1;
         NextState = STATE_HIT_SPILL_FINAL;
       end
       STATE_HIT_SPILL_FINAL: begin
         ICacheReadEn = 1'b1;
         SelAdr = 2'b00;
-        UnalignedSelect = 1'b1;
-        SavePC = 1'b1;
         ICacheStallF = 1'b0;
 	LRUWriteEn = 1'b1;
 	
@@ -280,7 +270,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
       end
       STATE_MISS_SPILL_2: begin
         SelAdr = 2'b10;
-        UnalignedSelect = 1'b1;
         spillSave = 1'b1; /// *** Could pipeline these to make it clearer in the fsm.
         ICacheReadEn = 1'b1;
         NextState = STATE_MISS_SPILL_2_START;
@@ -292,8 +281,6 @@ module icachefsm #(parameter BLOCKLEN = 256)
         end else begin
           ICacheReadEn = 1'b1;
           SelAdr = 2'b00;
-          UnalignedSelect = 1'b1;
-          SavePC = 1'b1;
           ICacheStallF = 1'b0;
 	  LRUWriteEn = 1'b1;
 	  if(StallF) begin
@@ -321,15 +308,12 @@ module icachefsm #(parameter BLOCKLEN = 256)
       end
       STATE_MISS_SPILL_MERGE: begin
         SelAdr = 2'b10;
-        UnalignedSelect = 1'b1;
         ICacheReadEn = 1'b1;	
         NextState = STATE_MISS_SPILL_FINAL;
       end
       STATE_MISS_SPILL_FINAL: begin
         ICacheReadEn = 1'b1;
         SelAdr = 2'b00;
-        UnalignedSelect = 1'b1;
-        SavePC = 1'b1;
         ICacheStallF = 1'b0;	
 	LRUWriteEn = 1'b1;
 	if(StallF) begin

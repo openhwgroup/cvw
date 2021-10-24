@@ -44,18 +44,15 @@ module dtim #(parameter BASE=0, RANGE = 65535) (
   logic [31:0] HWADDR, A;
   logic [`XLEN-1:0] HREADTim0;
 
-//  logic [`XLEN-1:0] write;
   logic        prevHREADYTim, risingHREADYTim;
   logic        initTrans;
-  logic [15:0] entry;
-  logic        memread, memwrite;
+  logic        memwrite;
   logic [3:0]  busycount;
 
 
   assign initTrans = HREADY & HSELTim & (HTRANS != 2'b00);
 
   // *** this seems like a weird way to use reset
-  flopenr #(1)  memreadreg(HCLK, 1'b0, initTrans | ~HRESETn, HSELTim & ~HWRITE, memread);
   flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELTim &  HWRITE, memwrite);
   flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
 

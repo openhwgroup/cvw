@@ -27,8 +27,6 @@
 
 module muldiv (
 	       input logic 		clk, reset,
-	       // Decode Stage interface
-	       input logic [31:0] 	InstrD, 
 	       // Execute Stage interface
 	       input logic [`XLEN-1:0] 	SrcAE, SrcBE,
 	       input logic [2:0] 	Funct3E, Funct3M,
@@ -38,31 +36,29 @@ module muldiv (
 	       // Divide Done
 	       output logic 		DivBusyE, 
 	       // hazards
-	       input logic 		StallE, StallM, StallW, FlushM, FlushW 
+	       input logic 		StallM, StallW, FlushM, FlushW 
 	       );
 
    generate
       if (`M_SUPPORTED) begin
-	 logic [`XLEN-1:0] MulDivResultE, MulDivResultM;
+	 logic [`XLEN-1:0] MulDivResultM;
 	 logic [`XLEN-1:0] PrelimResultM;
 	 logic [`XLEN-1:0] QuotM, RemM;
-	 logic [`XLEN*2-1:0] ProdE, ProdM; 
+	 logic [`XLEN*2-1:0] ProdM; 
 
-	 logic 		     StartDivideE, BusyE, DivDoneM;
-	 logic 		     SignedDivideE;	
+	 logic 		     DivE;
+	 logic 		     DivSignedE;	
 	 logic           W64M; 
 	 
 	 // Multiplier
 	 mul mul(.*);
-	 flopenrc #(`XLEN*2) ProdMReg(clk, reset, FlushM, ~StallM, ProdE, ProdM); 
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
-	 assign StartDivideE = MulDivE & Funct3E[2] & ~BusyE & ~DivDoneM; 
-	 assign DivBusyE = StartDivideE | BusyE;
-	 assign SignedDivideE = ~Funct3E[0];
-	 intdivrestoring div(.clk, .reset, .StallM, .FlushM, 
-	   .SignedDivideE, .W64E, .StartDivideE, .SrcAE, .SrcBE, .BusyE, .DivDoneM, .QuotM, .RemM);
+	 assign DivE = MulDivE & Funct3E[2];
+	 assign DivSignedE = ~Funct3E[0];
+	 intdivrestoring div(.clk, .reset, .StallM,
+	   .DivSignedE, .W64E, .DivE, .SrcAE, .SrcBE, .DivBusyE, .QuotM, .RemM);
 	 	 
 	 // Result multiplexer
 	 always_comb
