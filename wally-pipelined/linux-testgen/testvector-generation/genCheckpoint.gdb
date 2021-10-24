@@ -5,15 +5,6 @@ define genCheckpoint
     set logging redirect on
     set confirm off
 
-    # QEMU must also use TCP port 1240
-    target extended-remote :1240
-    
-    # QEMU Config
-    maintenance packet Qqemu.PhyMemMode:1
-
-    # Symbol file
-    file ../buildroot-image-output/vmlinux
-
     # Argument Parsing
     set $tcpPort=$arg0
     set $instrCount=$arg1
@@ -24,6 +15,14 @@ define genCheckpoint
     eval "set $statePath = \"%s/stateGDB.txt\"", $statePath
     eval "set $ramPath = \"%s/ramGDB.txt\"", $ramPath
 
+    # Connect to QEMU session
+    eval "target extended-remote :%d",$tcpPort
+
+    # QEMU Config
+    maintenance packet Qqemu.PhyMemMode:1
+
+    # Symbol file
+    file ../buildroot-image-output/vmlinux
 
     # Step over reset vector into actual code
     stepi 100
@@ -52,13 +51,6 @@ define genCheckpoint
     x/134217728xb 0x80000000
     set logging off
     
-    # Continue to checkpoint; stop on the 3rd time
-    # Should reach login prompt by then
-    printf "GDB continuing execution to login prompt\n"
-    ignore 1 2
-    c
-    
-    printf "GDB reached login prompt!\n"
     kill
     q
 end
