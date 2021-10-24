@@ -3,7 +3,7 @@
 source  genSettings.sh
 tcpPort=1236
 
-instrs=8500000
+instrs=50000000
 checkOutDir="$outDir/checkpoint$instrs"
 checkIntermedDir="$checkOutDir/intermediate-outputs"
 
@@ -31,7 +31,7 @@ then
     & riscv64-unknown-elf-gdb -quiet -x genCheckpoint.gdb -ex "genCheckpoint $tcpPort $instrs \"$checkIntermedDir\" 0x$pc $occurences"
     # Post-Process GDB outputs
     ./parseState.py "$checkOutDir"
-    ./fix_mem.py "$intermedDir/ramGDB.txt" "$checkOutDir/ram.txt"
+    ./fix_mem.py "$checkIntermedDir/ramGDB.txt" "$checkOutDir/ram.txt"
     tail -n+$(($instrs-9)) "$outDir/$traceFile" > "$checkOutDir/$traceFile"
 else
     echo "You can change the number of instructions by editing the \"instrs\" variable in this script."

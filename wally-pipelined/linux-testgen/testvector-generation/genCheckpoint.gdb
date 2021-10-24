@@ -8,10 +8,10 @@ define genCheckpoint
     # Argument Parsing
     set $tcpPort=$arg0
     set $instrCount=$arg1
-    set $statePath=$arg2
-    set $ramPath=$arg3
-    set $checkPC=$arg4
-    set $checkPCoccurences=$arg5
+    set $statePath=$arg1
+    set $ramPath=$arg2
+    set $checkPC=$arg3
+    set $checkPCoccurences=$arg4
     eval "set $statePath = \"%s/stateGDB.txt\"", $statePath
     eval "set $ramPath = \"%s/ramGDB.txt\"", $ramPath
 
