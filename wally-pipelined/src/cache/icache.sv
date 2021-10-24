@@ -65,16 +65,12 @@ module icache
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
   localparam FetchCountThreshold = WORDSPERLINE - 1;
-  localparam BlockByteLength = BLOCKLEN / 8;
-
-  localparam OFFSETWIDTH = $clog2(BlockByteLength);
 
   localparam integer 	       PA_WIDTH = `PA_BITS - 2;
   localparam integer 	       NUMWAYS = `ICACHE_NUMWAYS;
   
 
   // Input signals to cache memory
-  logic 		    FlushMem;
   logic 		    ICacheMemWriteEnable;
   logic [BLOCKLEN-1:0] 	    ICacheMemWriteData;
   logic [`PA_BITS-1:0] 	    PCTagF;  
@@ -91,7 +87,7 @@ module icache
   logic 			 FetchCountFlag;
   logic 			 CntEn;
   
-  logic [1:0] 			 SelAdr_q;
+  logic [1:1] 			 SelAdr_q;
   
   
   logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
@@ -252,11 +248,11 @@ module icache
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
-  flopenr #(2) SelAdrReg(.clk(clk),
+  flopenr #(1) SelAdrReg(.clk(clk),
 			.reset(reset),
 			.en(ICacheReadEn),
-			.d(SelAdr),
-			.q(SelAdr_q));
+			.d(SelAdr[1]),
+			.q(SelAdr_q[1]));
   
   assign PCTagF = SelAdr_q[1] ? PCPSpillF : PCPF;
 
@@ -281,29 +277,25 @@ module icache
 
   assign SRAMWayWriteEnable = ICacheMemWriteEnable ? VictimWay : '0;
 
-  icachefsm #(.BLOCKLEN(BLOCKLEN)) 
-  controller(.clk,
-	     .reset,
-	     .StallF,
-	     .ICacheReadEn,
-	     .ICacheMemWriteEnable,
-	     .ICacheStallF,
-	     .ITLBMissF,
-	     .ITLBWriteF,
-	     .WalkerInstrPageFaultF,
-	     .InstrAckF,
-	     .InstrReadF,
-	     .hit,
-	     .FetchCountFlag,
-	     .spill,
-	     .spillSave,
-	     .CntEn,
-	     .CntReset,
-	     .SelAdr,
-	     .LRUWriteEn
-	     );
+  icachefsm  controller(.clk,
+			.reset,
+			.StallF,
+			.ICacheReadEn,
+			.ICacheMemWriteEnable,
+			.ICacheStallF,
+			.ITLBMissF,
+			.ITLBWriteF,
+			.WalkerInstrPageFaultF,
+			.InstrAckF,
+			.InstrReadF,
+			.hit,
+			.FetchCountFlag,
+			.spill,
+			.spillSave,
+			.CntEn,
+			.CntReset,
+			.SelAdr,
+			.LRUWriteEn);
 
-  // For now, assume no writes to executable memory
-  assign FlushMem = 1'b0;
 endmodule
 

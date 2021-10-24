@@ -32,7 +32,7 @@ module globalHistoryPredictor
     )
   (input logic clk,
    input logic 		   reset,
-   input logic 		   StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		   StallF, StallE,
    input logic [`XLEN-1:0] PCNextF,
    output logic [1:0] 	   BPPredF,
    // update
