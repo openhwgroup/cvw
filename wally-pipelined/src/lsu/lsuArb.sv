@@ -27,7 +27,7 @@
 `include "wally-config.vh"
 
 module lsuArb 
-  (input  logic clk, reset,
+  (input  logic clk,
 
    // from page table walker
    input logic 		       SelPTW,
@@ -40,7 +40,7 @@ module lsuArb
    input logic [2:0] 	       Funct3M,
    input logic [1:0] 	       AtomicM,
    input logic [`XLEN-1:0]     MemAdrM,
-   input logic [`XLEN-1:0]     MemAdrE,
+   input logic [11:0] 	       MemAdrE,
    input logic 		       StallW,
    input logic 		       PendingInterruptM,
    // to CPU

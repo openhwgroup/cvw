@@ -157,7 +157,6 @@ module lsu
 
   // arbiter between IEU and hptw
   lsuArb arbiter(.clk(clk),
-		 .reset(reset),
 		 // HPTW connection
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
@@ -168,7 +167,7 @@ module lsu
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
-		 .MemAdrE(MemAdrE),		 
+		 .MemAdrE(MemAdrE[11:0]),		 
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),

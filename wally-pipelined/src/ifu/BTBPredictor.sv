@@ -33,7 +33,7 @@ module BTBPredictor
     )
   (input  logic clk,
    input logic 		    reset,
-   input logic 		    StallF, StallD, StallE, FlushF, FlushD, FlushE,
+   input logic 		    StallF, StallE,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
    output logic [4:0] 	    InstrClass,
@@ -77,18 +77,7 @@ module BTBPredictor
   end
   assign Valid = ValidBits[LookUpPCIndexQ];
 
-/* -----\/----- EXCLUDED -----\/-----
 
-  regfile2p1r1w #(10, 1) validMem(.clk(clk),
-				  .reset(reset),
-				  .RA1(LookUpPCIndexQ),
-				  .RD1(Valid),
-				  .REN1(1'b1),
-				  .WA1(UpdatePCIndexQ),
-				  .WD1(1'b1),
-				  .WEN1(UpdateEN));
- -----/\----- EXCLUDED -----/\----- */
-  
   flopenr #(1) UpdateENReg(.clk(clk),
 			  .reset(reset),
 			  .en(~StallF),

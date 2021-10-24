@@ -34,7 +34,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic [$clog2(NUMLINES)-1:0] WAdr, 
    input logic [`PA_BITS-1:0] 	      PAdr,
    input logic 			      WriteEnable,
-   input logic 			      VDWriteEnable,   
+   input logic 			      VDWriteEnable, 
    input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
    input logic 			      TagWriteEnable,
    input logic [BLOCKLEN-1:0] 	      WriteData,
@@ -54,7 +54,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    output logic [TAGLEN-1:0] 	      VictimTagWay
    );
 
-  logic [NUMLINES-1:0] 		      ValidBits, DirtyBits;
+  logic [NUMLINES-1:0] 		      ValidBits;
+  logic [NUMLINES-1:0] 		      DirtyBits;
   logic [BLOCKLEN-1:0] 		      ReadDataBlockWay;
   logic [TAGLEN-1:0] 		      ReadTag;
   logic 			      Valid;
@@ -117,21 +118,18 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 
   generate
     if(DIRTY_BITS) begin
+
       always_ff @(posedge clk, posedge reset) begin
 	if (reset) 
   	  DirtyBits <= {NUMLINES{1'b0}};
 	else if (SetDirty & (WriteEnable | VDWriteEnable)) DirtyBits[WAdr] <= 1'b1;
 	else if (ClearDirty & (WriteEnable | VDWriteEnable)) DirtyBits[WAdr] <= 1'b0;
       end
-    end
-  endgenerate
 
-  // Since this is always updated on a clock edge we cannot include reset.
-  generate
-    if(DIRTY_BITS) begin
       always_ff @(posedge clk) begin
 	Dirty <= DirtyBits[RAdr];
       end
+
     end else begin
       assign Dirty = 1'b0;
     end
