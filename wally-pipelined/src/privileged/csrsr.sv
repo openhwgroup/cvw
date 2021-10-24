@@ -51,7 +51,7 @@ module csrsr (
   // Lower privilege status registers are a subset of the full status register
   // *** consider adding MBE, SBE, UBE fields later from 20210108 draft spec
   generate
-    if (`XLEN==64) begin// RV64
+    if (`XLEN==64) begin: csrsr64 // RV64
       assign MSTATUS_REGW = {STATUS_SD, 27'b0, STATUS_SXL, STATUS_UXL, 9'b0,
                             STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                             STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
@@ -67,7 +67,7 @@ module csrsr (
                             /* STATUS_XS, STATUS_FS, /*STATUS_MPP,  8'b0, */
                             /*STATUS_SPP, STATUS_MPIE, 1'b0 2'b0, STATUS_SPIE,*/ STATUS_UPIE, 
                             /*STATUS_MIE, 1'b0*/ 3'b0, /*STATUS_SIE, */STATUS_UIE};
-    end else begin// RV32
+    end else begin: csrsr32 // RV32
       assign MSTATUS_REGW = {STATUS_SD, 8'b0,
                             STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                             STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
