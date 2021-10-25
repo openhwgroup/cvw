@@ -639,7 +639,7 @@ string tests32f[] = '{
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
       //romfilename = {"../../testsBP/fpga-test-sdc/bin/fpga-test-sdc.hex"};
-      romfilename = {"../../testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+      romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
       sdcfilename = {"../src/sdc/tb/ramdisk2.hex"};      
       $readmemh(memfilename, dtim.RAM);
       $readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootdtim.bootdtim.RAM);

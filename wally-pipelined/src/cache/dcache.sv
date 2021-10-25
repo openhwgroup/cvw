@@ -152,6 +152,9 @@ module dcache
   logic SelEvict;
 
   logic LRUWriteEn;
+
+  logic [NUMWAYS-1:0] VDWriteEnableWay;
+  
   
   // Read Path CPU (IEU) side
 
@@ -178,7 +181,7 @@ module dcache
 		      .WAdr,
 		      .PAdr(MemPAdrM[`PA_BITS-1:0]),
 		      .WriteEnable(SRAMWayWriteEnable),
-		      .VDWriteEnable,		      
+		      .VDWriteEnable(VDWriteEnableWay),		      
 		      .WriteWordEnable(SRAMWordEnable),
 		      .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 		      .WriteData(SRAMWriteData),
@@ -339,6 +342,8 @@ module dcache
 	      .val({{NUMWAYS-1{1'b0}}, 1'b1}),
 	      .d(NextFlushWay),
 	      .q(FlushWay));
+
+  assign VDWriteEnableWay = FlushWay & {NUMWAYS{VDWriteEnable}};
 
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 

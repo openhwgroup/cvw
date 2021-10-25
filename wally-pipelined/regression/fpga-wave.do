@@ -292,6 +292,10 @@ add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wally
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/SelAdrM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/ReadDataBlockM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/DCacheMemWriteData
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/FlushWay
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/VictimDirty
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/VDWriteEnableWay
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/hart/lsu/dcache/ClearDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/hart/lsu/dcache/MemWay[0]/WriteEnable}
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/hart/lsu/dcache/MemWay[0]/SetValid}
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/hart/lsu/dcache/MemWay[0]/SetDirty}
@@ -600,17 +604,8 @@ add wave -noupdate -group other -expand -group response /testbench/dut/wallypipe
 add wave -noupdate -group other -expand -group response /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_NO_ERROR_MASK
 add wave -noupdate -group other -expand -group response /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_NO_ERROR_ANS
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/my_sd_dat_fsm/i_DATA_CRC16_GOOD
-add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/RAM
-add wave -noupdate /testbench/dtim/RAM
-add wave -noupdate /testbench/dtim/A
-add wave -noupdate /testbench/dtim/HADDR
-add wave -noupdate /testbench/dtim/HRESPTim
-add wave -noupdate /testbench/dtim/HSELTim
-add wave -noupdate /testbench/dtim/HWRITE
-add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/adrdecs/SelRegions
-add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HSELTim
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {1090427 ns} 1} {{Cursor 3} {1157417 ns} 1} {{Cursor 4} {1156308 ns} 0}
+WaveRestoreCursors {{Cursor 6} {1090427 ns} 1} {{Cursor 3} {1157417 ns} 1} {{Cursor 4} {17457065 ns} 0}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -626,4 +621,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1156224 ns} {1156384 ns}
+WaveRestoreZoom {17456867 ns} {17457201 ns}
