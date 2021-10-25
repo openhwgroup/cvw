@@ -25,13 +25,13 @@
 
 `include "wally-config.vh"
 
-// flop with enable, asynchronous set
+// flop with enable, synchronous set
 module flopens #(parameter WIDTH = 8) (
   input  logic             clk, set, en,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge set)
+  always_ff @(posedge clk) 
     if (set)   q <= #1 1;
     else if (en) q <= #1 d;
 endmodule

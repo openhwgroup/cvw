@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-// flop with asynchronous reset, synchronous clear
+// flop with synchronous reset, synchronous clear
 module floprc #(parameter WIDTH = 8) (
   input  logic clk,
   input  logic reset,
@@ -33,9 +33,7 @@ module floprc #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge reset)
-    if (reset) q <= #1 0;
-    else       
-      if (clear) q <= #1 0;
-      else       q <= #1 d;
+  always_ff @(posedge clk)
+    if (reset | clear ) q <= #1 0;
+    else                q <= #1 d;
 endmodule
