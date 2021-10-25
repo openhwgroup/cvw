@@ -97,7 +97,8 @@ module csrc #(parameter
        logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic        WriteCYCLEM, WriteINSTRETM;
       logic [4:0]  CounterNumM;
-      logic [`COUNTERS-1:3][`XLEN-1:0] HPMCOUNTER_REGW, HPMCOUNTERH_REGW;
+      logic [`XLEN-1:0] HPMCOUNTER_REGW [`COUNTERS-1:3];
+      logic [`XLEN-1:0] HPMCOUNTERH_REGW [`COUNTERS-1:3];
       logic 			       InstrValidNotFlushedM;
 
       assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;

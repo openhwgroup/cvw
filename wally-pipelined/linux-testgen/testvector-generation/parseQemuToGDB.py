@@ -110,6 +110,7 @@ def parseRegs(l):
 # Main Code #
 #############
 for l in fileinput.input():
+    #sys.stderr.write(l)
     if l.startswith('qemu-system-riscv64: QEMU: Terminated via GDBstub'):
         break
     elif l.startswith('IN:'):

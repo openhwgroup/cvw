@@ -37,17 +37,24 @@
 // 5: print everything
 
 module testbench();
-  
-  parameter INSTR_LIMIT = 0; // # of instructions at which to stop
-  parameter INSTR_WAVEON = (INSTR_LIMIT > 10000) ? INSTR_LIMIT-10000 : 1; // # of instructions at which to turn on waves in graphical sim
-
-  string ProgramAddrMapFile, ProgramLabelMapFile;
+  ///////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////// CONFIG ////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  // Recommend setting all of these in do script using -G option
+  parameter INSTR_LIMIT  = 0; // # of instructions at which to stop
+  parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
+  parameter CHECKPOINT   = 0;
 
   ///////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////////// DUT /////////////////////////////////////
+  ////////////////////////////////// HARDWARE ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  logic             clk, reset;
-  logic [`AHBW-1:0] readDataExpected;
+  logic clk, reset, reset_ext; 
+  initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
+  always begin clk <= 1; # 5; clk <= 0; # 5; end
+
+  logic [`AHBW-1:0] HRDATAEXT;
+  logic             HREADYEXT, HRESPEXT;
+  logic             HCLK, HRESETn;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -56,51 +63,48 @@ module testbench();
   logic [3:0]       HPROT;
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
-  logic             HCLK, HRESETn;
-  logic [`AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT;
   logic [31:0]      GPIOPinsIn;
   logic [31:0]      GPIOPinsOut, GPIOPinsEn;
-  logic             UARTSin, UARTSout;
+  logic             UARTSin;
+  logic             UARTSout;
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
+  wallypipelinedsoc dut(.clk, .reset_ext, .reset,
+                        .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HCLK, .HRESETn, .HADDR,
+                        .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
+                        .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout);
 
-  wallypipelinedsoc dut(.*);
+  // Write Back stage signals not needed by Wally itself 
+  parameter nop = 'h13;
+  logic [`XLEN-1:0] PCW;
+  logic [31:0]      InstrW;
+  logic             InstrValidW;
+  logic [`XLEN-1:0] MemAdrW, WriteDataW;
+  logic             TrapW;
+  `define FLUSHW dut.hart.FlushW
+  `define STALLW dut.hart.StallW
+  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ifu.PCM, PCW);
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.hart.ifu.InstrM, InstrW);
+  flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.c.InstrValidM, InstrValidW);
+  flopenrc #(`XLEN)     MemAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.WriteDataM, WriteDataW);  
+  flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.hart.hzu.TrapM, TrapW);
 
   ///////////////////////////////////////////////////////////////////////////////
-  ////////////////////////   Signals & Shared Macros  ///////////////////////////
-  //////////////////////// AKA stuff that comes first ///////////////////////////
+  //////////////////////// Signals & Macro DECLARATIONS /////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  // Sorry if these have gotten decontextualized.
-  // Verilog expects them to be defined before they are used.
-
-  // -------------------
-  // Signal Declarations
-  // -------------------
   // Testbench Core
   integer warningCount = 0;
   integer errorCount = 0;
-  integer MIPexpected;
-  // P, Instr Checking
-  integer data_file_all;
-  string name;
-
-  // Write Back stage signals needed for trace compare, but don't actually
-  // exist in CPU.
-  logic [`XLEN-1:0] MemAdrW, WriteDataW;
-  logic [`XLEN-1:0] PCW;
-  logic [31:0] InstrW;
-  logic InstrValidW;
-
-  // Write Back trace signals
-  logic checkInstrW;
-
-  //integer        RegAdr;
-  integer         fault;
-  logic           TrapW;
-
-  // Signals used to parse the trace file.
-  logic checkInstrM;  
+  integer fault;
+  string  ProgramAddrMapFile, ProgramLabelMapFile;
+  // Checkpointing
+  string checkpointDir;
+  logic [1:0] initPriv;
+  // Signals used to parse the trace file
+  integer           data_file_all;
+  string            name;
   integer           matchCount;
   string            line;
   logic [`XLEN-1:0] ExpectedPCM;
@@ -113,8 +117,9 @@ module testbench();
   integer           TokenIndex;
   integer           MarkerIndex;
   integer           NumCSRM;
-
   // Memory stage expected values from trace
+  logic             checkInstrM;
+  integer           MIPexpected;
   string            RegWriteM;
   integer           ExpectedRegAdrM;
   logic [`XLEN-1:0] ExpectedRegValueM;
@@ -122,8 +127,9 @@ module testbench();
   logic [`XLEN-1:0] ExpectedMemAdrM, ExpectedMemReadDataM, ExpectedMemWriteDataM;
   string            ExpectedCSRArrayM[10:0];
   logic [`XLEN-1:0] ExpectedCSRArrayValueM[10:0];
-
+  logic [`AHBW-1:0] readDataExpected;
   // Write back stage expected values from trace
+  logic             checkInstrW;
   logic [`XLEN-1:0] ExpectedPCW;
   logic [31:0]      ExpectedInstrW;
   string            textW;
@@ -142,50 +148,182 @@ module testbench();
   integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
   integer           RequestDelayedMIP;
-  
-  // ------
-  // Macros
-  // ------
-
-  `define CSRwarn(CSR) \
+  // Useful Aliases
+  `define RF          dut.hart.ieu.dp.regf.rf
+  `define PC          dut.hart.ifu.pcreg.q
+  `define CSR_BASE    dut.hart.priv.csr.genblk1
+  `define HPMCOUNTER  `CSR_BASE.counters.genblk1.HPMCOUNTER_REGW
+  `define PMP_BASE    `CSR_BASE.csrm.genblk4
+  `define PMPCFG      genblk2.PMPCFGreg.q
+  `define PMPADDR     PMPADDRreg.q
+  `define MEDELEG     `CSR_BASE.csrm.genblk1.MEDELEGreg.q
+  `define MIDELEG     `CSR_BASE.csrm.genblk1.MIDELEGreg.q
+  `define MIE         `CSR_BASE.csri.MIE_REGW
+  `define MIP         `CSR_BASE.csri.MIP_REGW
+  `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
+  `define SCAUSE      `CSR_BASE.csrs.genblk1.SCAUSEreg.q
+  `define MEPC        `CSR_BASE.csrm.MEPCreg.q
+  `define SEPC        `CSR_BASE.csrs.genblk1.SEPCreg.q
+  `define MCOUNTEREN  `CSR_BASE.csrm.genblk3.MCOUNTERENreg.q
+  `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk3.SCOUNTERENreg.q
+  `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
+  `define SSCRATCH    `CSR_BASE.csrs.genblk1.SSCRATCHreg.q
+  `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
+  `define STVEC       `CSR_BASE.csrs.genblk1.STVECreg.q
+  `define SATP        `CSR_BASE.csrs.genblk1.genblk2.SATPreg.q
+  `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
+  `define STATUS_TSR  `CSR_BASE.csrsr.STATUS_TSR_INT
+  `define STATUS_TW   `CSR_BASE.csrsr.STATUS_TW_INT
+  `define STATUS_TVM  `CSR_BASE.csrsr.STATUS_TVM_INT
+  `define STATUS_MXR  `CSR_BASE.csrsr.STATUS_MXR_INT
+  `define STATUS_SUM  `CSR_BASE.csrsr.STATUS_SUM_INT
+  `define STATUS_MPRV `CSR_BASE.csrsr.STATUS_MPRV_INT
+  `define STATUS_FS   `CSR_BASE.csrsr.STATUS_FS_INT
+  `define STATUS_MPP  `CSR_BASE.csrsr.STATUS_MPP
+  `define STATUS_SPP  `CSR_BASE.csrsr.STATUS_SPP
+  `define STATUS_MPIE `CSR_BASE.csrsr.STATUS_MPIE
+  `define STATUS_SPIE `CSR_BASE.csrsr.STATUS_SPIE
+  `define STATUS_UPIE `CSR_BASE.csrsr.STATUS_UPIE
+  `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
+  `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
+  `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
+  `define CURR_PRIV   dut.hart.priv.privmodereg.q
+  `define INSTRET     dut.hart.priv.csr.genblk1.counters.genblk1.genblk2.INSTRETreg.q
+  // Common Macros
+  `define checkCSR(CSR) \
     begin \
-      $display("CSR: %s = %016x, expected = %016x", ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
       if (CSR != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin \
         $display("%tns, %d instrs: CSR %s = %016x, does not equal expected value %016x", $time, InstrCountW, ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
         if(`DEBUG_TRACE >= 3) fault = 1; \
       end \
     end
-  
   `define checkEQ(NAME, VAL, EXPECTED) \
     if(VAL != EXPECTED) begin \
       $display("%tns, %d instrs: %s %x differs from expected %x", $time, InstrCountW, NAME, VAL, EXPECTED); \
       if ((NAME == "PCW") || (`DEBUG_TRACE >= 2)) fault = 1; \
     end
 
+  ///////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////// INITIALIZATION ////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  // Checkpoint initializations
+  `define MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    logic DIM init``SIGNAL[ARRAY_MAX:ARRAY_MIN]; \
+    initial begin \
+      #1; \
+      if (CHECKPOINT!=0) $readmemh({checkpointDir,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
+    end
+
+  `define INIT_CHECKPOINT_SIMPLE_ARRAY(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    initial begin \
+      if (CHECKPOINT!=0) begin \
+        force `SIGNAL = init``SIGNAL[ARRAY_MAX:ARRAY_MIN]; \
+        while (reset!==1) #1; \
+        while (reset!==0) #1; \
+        #1; \
+        release `SIGNAL; \
+      end \
+    end
+
+  // For the annoying case where the pathname to the array elements includes
+  // a "genblk<i>" in the signal name
+  `define INIT_CHECKPOINT_GENBLK_ARRAY(SIGNAL_BASE,SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    for (i=ARRAY_MIN; i<ARRAY_MAX+1; i=i+1) begin \
+      initial begin \
+        if (CHECKPOINT!=0) begin \
+          force `SIGNAL_BASE[i].`SIGNAL = init``SIGNAL[i]; \
+          while (reset!==1) #1; \
+          while (reset!==0) #1; \
+          #1; \
+          release `SIGNAL_BASE[i].`SIGNAL; \
+        end \
+      end \
+    end
+
+  // Note that dimension usage is very intentional here.
+  // We are dancing around (un)packed type requirements.
+  `define INIT_CHECKPOINT_VAL(SIGNAL,DIM) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,0,0) \
+    initial begin \
+      if (CHECKPOINT!=0) begin \
+        force `SIGNAL = init``SIGNAL[0]; \
+        while (reset!==1) #1; \
+        while (reset!==0) #1; \
+        #1; \
+        release `SIGNAL; \
+      end \
+    end
+
+  `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
+  `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,3);
+  generate
+    genvar i;
+    `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPCFG,  [7:0],`PMP_ENTRIES-1,0);
+    `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPADDR, [`XLEN-1:0],`PMP_ENTRIES-1,0);
+  endgenerate
+  `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
+  `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
+  `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SCAUSE,     [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MEPC,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SEPC,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MCOUNTEREN, [31:0]);
+  `INIT_CHECKPOINT_VAL(SCOUNTEREN, [31:0]);
+  `INIT_CHECKPOINT_VAL(MSCRATCH,   [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SSCRATCH,   [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MTVEC,      [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(STVEC,      [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
+
+  assign initPriv = (initPC[0][`XLEN-1]) ? 2'h2 : 2'h3; // *** a hacky way to detect initial privilege level
   initial begin
-    data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
-    InstrCountW = '0;
     force dut.hart.priv.SwIntM = 0;
     force dut.hart.priv.TimerIntM = 0;
     force dut.hart.priv.ExtIntM = 0;    
+    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
+    ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
+    ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
+    if (CHECKPOINT==0) begin // normal
+      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
+      data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+      InstrCountW = '0;
+    end else begin // checkpoint
+      $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
+      checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
+      $readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
+      data_file_all = $fopen({checkpointDir,"all.txt"}, "r");
+      InstrCountW = CHECKPOINT;
+      // manual checkpoint initializations that don't neatly fit into MACRO
+      force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
+      force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
+      force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
+      force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
+      force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
+      force `INSTRET = CHECKPOINT;
+      force `CURR_PRIV = initPriv;
+      while (reset!==1) #1;
+      while (reset!==0) #1;
+      #1;
+      release {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV};
+      release {`STATUS_FS,`STATUS_MPP};
+      release {`STATUS_SPP,`STATUS_MPIE};
+      release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
+      release {`STATUS_SIE,`STATUS_UIE};
+      release `INSTRET;
+      release `CURR_PRIV;
+    end
   end
 
-
-  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
-  assign checkInstrW =              InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
-
-  // Additonal W stage registers
-  `define FLUSHW dut.hart.FlushW
-  `define STALLW dut.hart.StallW
-  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.hart.ifu.InstrM, InstrW);
-  flopenrc #(`XLEN)     MemAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.dp.MemAdrM, MemAdrW);
-  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.WriteDataM, WriteDataW);  
-  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ifu.PCM, PCW);
-  flopenr #(1) TrapWReg(clk, reset, ~`STALLW, dut.hart.hzu.TrapM, TrapW);
-  flopenrc #(5) controlregW(clk, reset, `FLUSHW, ~`STALLW,
-                            {dut.hart.ieu.c.RegWriteM, dut.hart.ieu.c.ResultSrcM, dut.hart.ieu.c.InstrValidM},
-                            {dut.hart.ieu.c.RegWriteW, dut.hart.ieu.c.ResultSrcW, InstrValidW});
-
+  ///////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////// CORE /////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   // Because qemu does not match exactly to wally it is necessary to read the the
   // trace in the memory stage and detect if anything in wally must be overwritten.
   // This includes mtimer, interrupts, and various bits in mstatus and xtval.
@@ -194,6 +332,7 @@ module testbench();
   // on the next falling edge the expected state is compared to the wally state.
 
   // step 0: read the expected state
+  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
   always @(negedge clk) begin
     // always check PC, instruction bits
     if (checkInstrM) begin
@@ -343,6 +482,7 @@ module testbench();
   end
   
   // step2: make all checks in the write back stage.
+  assign checkInstrW =              InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
   always @(negedge clk) begin
     if(RequestDelayedMIP) begin
       $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueW[NumCSRM]);
@@ -362,7 +502,8 @@ module testbench();
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
-        `checkEQ("InstrW",InstrW,ExpectedInstrW)
+        //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
+        // compressed to uncompressed conversion
         `checkEQ("Instr Count",dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW,InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
@@ -388,19 +529,19 @@ module testbench();
         // check csr
         for(NumCSRPostWIndex = 0; NumCSRPostWIndex < NumCSRW; NumCSRPostWIndex++) begin
           case(ExpectedCSRArrayW[NumCSRPostWIndex])
-            "mhartid": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW)
-            "mstatus": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW)
-            "mtvec": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW)
-            "mip": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MIP_REGW)
-            "mie": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MIE_REGW)
-            "mideleg":`CSRwarn(dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW)
-            "medeleg": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW)
-            "mepc": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MEPC_REGW)
-            "mtval": `CSRwarn(dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW)
-            "sepc": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.SEPC_REGW)
-            "scause": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW)
-            "stvec": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.STVEC_REGW)
-            "stval": `CSRwarn(dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW)
+            "mhartid": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW)
+            "mstatus": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW)
+            "mtvec":   `checkCSR(dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW)
+            "mip":     `checkCSR(dut.hart.priv.csr.genblk1.csrm.MIP_REGW)
+            "mie":     `checkCSR(dut.hart.priv.csr.genblk1.csrm.MIE_REGW)
+            "mideleg": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW)
+            "medeleg": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW)
+            "mepc":    `checkCSR(dut.hart.priv.csr.genblk1.csrm.MEPC_REGW)
+            "mtval":   `checkCSR(dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW)
+            "sepc":    `checkCSR(dut.hart.priv.csr.genblk1.csrs.SEPC_REGW)
+            "scause":  `checkCSR(dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW)
+            "stvec":   `checkCSR(dut.hart.priv.csr.genblk1.csrs.STVEC_REGW)
+            "stval":   `checkCSR(dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW)
           endcase
         end
         if (fault == 1) begin
@@ -420,38 +561,10 @@ module testbench();
                             .ProgramLabelMapFile(ProgramLabelMapFile));
   
 
-  ///////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////// Testbench Core ///////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-
-  // --------------
-  // Initialization
-  // --------------
-  initial
-    begin
-      reset <= 1; # 22; reset <= 0;
-    end
-  // initial loading of memories
-  initial begin
-    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
-    $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
-    ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
-    ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
-  end
-  
-  // -------
-  // Running
-  // -------
-  always
-    begin
-      clk <= 1; # 5; clk <= 0; # 5;
-    end
   
 
   ///////////////////////////////////////////////////////////////////////////////
-  ///////////////////////////////// Miscellaneous ///////////////////////////////
+  //////////////////////////////// Extra Features ///////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   // Instr Opcode Tracking
   //   For waveview convenience
@@ -528,4 +641,3 @@ module testbench();
     end
   endfunction
 endmodule
-

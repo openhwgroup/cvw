@@ -34,10 +34,10 @@ def getBuildrootTC(short):
     INSTR_LIMIT = 100000 # multiple of 100000
     MAX_EXPECTED = 3000000
     if short:
-        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+"\n!"
+        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     else:
-        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 0\n!"
+        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 0 1 0\n!"
         BRgrepstr=str(MAX_EXPECTED)+" instructions"
     return  TestCase(name="buildroot",cmd=BRcmd,grepstr=BRgrepstr)
 
