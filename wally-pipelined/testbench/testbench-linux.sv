@@ -35,20 +35,15 @@
 // 3: halt on all disagreements with QEMU
 // 4: print memory accesses whenever they happen
 // 5: print everything
-//
-// uncomment the following line to activate checkpoint
-`define CHECKPOINT 8500000
-`ifdef CHECKPOINT
-    `define CHECKPOINT_DIR {`LINUX_TEST_VECTORS, "checkpoint", `"`CHECKPOINT`", "/"}
-`endif
 
 module testbench();
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////// CONFIG ////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  parameter INSTR_LIMIT = 0; // # of instructions at which to stop
-  parameter INSTR_WAVEON = 8.7e6;//(INSTR_LIMIT > 10000) ? INSTR_LIMIT-10000 : 1; // # of instructions at which to turn on waves in graphical sim
-  //parameter CHECKPOINT = 0;
+  // Recommend setting all of these in do script using -G option
+  parameter INSTR_LIMIT  = 0; // # of instructions at which to stop
+  parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
+  parameter CHECKPOINT   = 0;
 
   ///////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// HARDWARE ///////////////////////////////////
@@ -80,7 +75,8 @@ module testbench();
                         .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout);
 
-  // Write Back stage signals not needed by Wally itself
+  // Write Back stage signals not needed by Wally itself 
+  parameter nop = 'h13;
   logic [`XLEN-1:0] PCW;
   logic [31:0]      InstrW;
   logic             InstrValidW;
@@ -103,6 +99,9 @@ module testbench();
   integer errorCount = 0;
   integer fault;
   string  ProgramAddrMapFile, ProgramLabelMapFile;
+  // Checkpointing
+  string checkpointDir;
+  logic [1:0] initPriv;
   // Signals used to parse the trace file
   integer           data_file_all;
   string            name;
@@ -207,30 +206,111 @@ module testbench();
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////// INITIALIZATION ////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
+  // Checkpoint initializations
+  `define MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    logic DIM init``SIGNAL[ARRAY_MAX:ARRAY_MIN]; \
+    initial begin \
+      #1; \
+      if (CHECKPOINT!=0) $readmemh({checkpointDir,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
+    end
+
+  `define INIT_CHECKPOINT_SIMPLE_ARRAY(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    initial begin \
+      if (CHECKPOINT!=0) begin \
+        force `SIGNAL = init``SIGNAL[ARRAY_MAX:ARRAY_MIN]; \
+        #23; \
+        release `SIGNAL; \
+      end \
+    end
+
+  // For the annoying case where the pathname to the array elements includes
+  // a "genblk<i>" in the signal name
+  `define INIT_CHECKPOINT_GENBLK_ARRAY(SIGNAL_BASE,SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    for (i=ARRAY_MIN; i<ARRAY_MAX+1; i=i+1) begin \
+      initial begin \
+        if (CHECKPOINT!=0) begin \
+          force `SIGNAL_BASE[i].`SIGNAL = init``SIGNAL[i]; \
+          #23; \
+          release `SIGNAL_BASE[i].`SIGNAL; \
+        end \
+      end \
+    end
+
+  // Note that dimension usage is very intentional here.
+  // We are dancing around (un)packed type requirements.
+  `define INIT_CHECKPOINT_VAL(SIGNAL,DIM) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,0,0) \
+    initial begin \
+      if (CHECKPOINT!=0) begin \
+        force `SIGNAL = init``SIGNAL[0]; \
+        #23; \
+        release `SIGNAL; \
+      end \
+    end
+
+  `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
+  `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,3);
+  generate
+    genvar i;
+    `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPCFG,  [7:0],`PMP_ENTRIES-1,0);
+    `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPADDR, [`XLEN-1:0],`PMP_ENTRIES-1,0);
+  endgenerate
+  `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
+  `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
+  `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SCAUSE,     [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MEPC,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SEPC,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MCOUNTEREN, [31:0]);
+  `INIT_CHECKPOINT_VAL(SCOUNTEREN, [31:0]);
+  `INIT_CHECKPOINT_VAL(MSCRATCH,   [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SSCRATCH,   [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MTVEC,      [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(STVEC,      [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
+
+  assign initPriv = (initPC[0][`XLEN-1]) ? 2'h2 : 2'h3; // *** a hacky way to detect initial privilege level
   initial begin
+    force dut.hart.priv.SwIntM = 0;
+    force dut.hart.priv.TimerIntM = 0;
+    force dut.hart.priv.ExtIntM = 0;    
     $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
-    `ifdef CHECKPOINT
-      $readmemh({`CHECKPOINT_DIR,"ram.txt"}, dut.uncore.dtim.RAM);
-    `else
-      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
-    `endif
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
-    `ifdef CHECKPOINT
-      data_file_all = $fopen({`CHECKPOINT_DIR,"all.txt"}, "r");
-    `else
+    if (CHECKPOINT==0) begin // normal
+      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
       data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
-    `endif
-    `ifdef CHECKPOINT
-      InstrCountW = `CHECKPOINT;
-    `else
       InstrCountW = '0;
-    `endif
-    force dut.hart.priv.SwIntM = 0;
-    force dut.hart.priv.TimerIntM = 0;
-    force dut.hart.priv.ExtIntM = 0;    
+    end else begin // checkpoint
+      $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
+      checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
+      $readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
+      data_file_all = $fopen({checkpointDir,"all.txt"}, "r");
+      InstrCountW = CHECKPOINT;
+      // manual checkpoint initializations that don't neatly fit into MACRO
+      force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
+      force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
+      force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
+      force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
+      force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
+      force `INSTRET = CHECKPOINT;
+      force `CURR_PRIV = initPriv;
+      #23;
+      release {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV};
+      release {`STATUS_FS,`STATUS_MPP};
+      release {`STATUS_SPP,`STATUS_MPIE};
+      release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
+      release {`STATUS_SIE,`STATUS_UIE};
+      release `INSTRET;
+      release `CURR_PRIV;
+    end
   end
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -473,94 +553,6 @@ module testbench();
                             .ProgramLabelMapFile(ProgramLabelMapFile));
   
 
-  `ifdef CHECKPOINT
-    
-    `define INIT_CHECKPOINT_VAL(SIGNAL_BASE,SIGNAL,DIM,LARGE_INDEX,SMALL_INDEX) \
-      logic DIM init``SIGNAL [LARGE_INDEX:SMALL_INDEX]; \
-      initial $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
-      for (i=SMALL_INDEX; i<LARGE_INDEX+1; i=i+1) begin \
-        initial begin \
-          force `SIGNAL_BASE[i].`SIGNAL = init``SIGNAL[i]; \
-          #23; \
-          release `SIGNAL_BASE[i].`SIGNAL; \
-        end \
-      end
-
-    `define INIT_CHECKPOINT_SIMPLE_ARRAY(SIGNAL,DIM,FIRST_INDEX,LAST_INDEX) \
-      logic DIM init``SIGNAL [FIRST_INDEX:LAST_INDEX]; \
-      initial begin \
-        $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
-        force `SIGNAL = init``SIGNAL; \
-        #23; \
-        release `SIGNAL; \
-      end
-
-    `define INIT_CHECKPOINT_VAL_SINGLE(SIGNAL,DIM) \
-      logic DIM init``SIGNAL[0:0]; \
-      initial begin \
-        $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
-        force `SIGNAL = init``SIGNAL[0]; \
-        #23; \
-        release `SIGNAL; \
-      end
-
-    `define MAKE_INIT_SIGNAL(SIGNAL,DIM) \
-      logic DIM init``SIGNAL[0:0]; \
-      initial begin \
-        $readmemh({`CHECKPOINT_DIR,"checkpoint-",`"SIGNAL`"}, init``SIGNAL); \
-      end
-
-    generate
-    genvar i;
-    `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
-    `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,3);
-    `INIT_CHECKPOINT_VAL(PMP_BASE, PMPCFG,  [7:0],`PMP_ENTRIES-1,0);
-    `INIT_CHECKPOINT_VAL(PMP_BASE, PMPADDR, [`XLEN-1:0],`PMP_ENTRIES-1,0);
-    endgenerate
-    `INIT_CHECKPOINT_VAL_SINGLE(PC,         [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MEDELEG,    [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MIE,        [11:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MIP,        [11:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MCAUSE,     [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(SCAUSE,     [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MEPC,       [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(SEPC,       [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MCOUNTEREN, [31:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(SCOUNTEREN, [31:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MSCRATCH,   [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(SSCRATCH,   [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(MTVEC,      [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(STVEC,      [`XLEN-1:0]);
-    `INIT_CHECKPOINT_VAL_SINGLE(SATP,       [`XLEN-1:0]);
-    `MAKE_INIT_SIGNAL(MSTATUS,      [`XLEN-1:0]);
-    initial begin
-      force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
-      force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
-      force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
-      force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
-      force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
-      #23;
-      release {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV};
-      release {`STATUS_FS,`STATUS_MPP};
-      release {`STATUS_SPP,`STATUS_MPIE};
-      release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
-      release {`STATUS_SIE,`STATUS_UIE};
-    end
-    logic [1:0] initPriv;
-    assign initPriv = (initPC[0][`XLEN-1]) ? 2'h2 : 2'h3; // *** a hacky way to detect privilege level
-    initial begin
-      force `CURR_PRIV = initPriv;
-      #23;
-      release `CURR_PRIV;
-    end
-    initial begin
-      force `INSTRET = `CHECKPOINT;
-      #23;
-      release `INSTRET;
-    end
-
-
-  `endif
   
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -641,4 +633,3 @@ module testbench();
     end
   endfunction
 endmodule
-
