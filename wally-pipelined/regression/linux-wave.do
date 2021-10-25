@@ -2,6 +2,7 @@ onerror {resume}
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
+add wave -noupdate /testbench/reset_ext
 add wave -noupdate -radix unsigned /testbench/InstrCountW
 add wave -noupdate /testbench/dut/hart/SATP_REGW
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrMisalignedFaultM
@@ -509,7 +510,7 @@ add wave -noupdate /testbench/dut/uncore/dtim/memwrite
 add wave -noupdate /testbench/dut/uncore/dtim/HWDATA
 add wave -noupdate /testbench/dut/uncore/dtim/risingHREADYTim
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 23} {209183247 ns} 0} {{Cursor 5} {197 ns} 0}
+WaveRestoreCursors {{Cursor 23} {209183247 ns} 0} {{Cursor 5} {229 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
