@@ -32,7 +32,8 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input  logic             clk, reset, 
+  input  logic             clk, reset_ext, 
+  output logic             reset,
   // AHB Lite Interface
   // inputs from external memory
   input  logic [`AHBW-1:0] HRDATAEXT,
@@ -63,6 +64,9 @@ module wallypipelinedsoc (
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
   logic             HWRITED;
+
+  // synchronize reset to SOC clock domain
+  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
    
   // instantiate processor and memories
   wallypipelinedhart hart(.clk, .reset,
