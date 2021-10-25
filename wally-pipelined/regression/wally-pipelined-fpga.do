@@ -42,6 +42,13 @@ vsim workopt -fsmdebug
 
 do fpga-wave.do
 add log -r /*
+#add wave /testbench/dtim/RAM[268435456]
+#add wave /testbench/dtim/RAM[268435457]
+#add wave /testbench/dtim/RAM[268435458]
+#add wave /testbench/dtim/RAM[268435459]
+#add wave /testbench/dtim/RAM[268435460]
+#add wave /testbench/dtim/RAM[268435461]
+#xadd wave /testbench/dtim/RAM[268435462]
 
 -- Run the Simulation 
 #run 1000

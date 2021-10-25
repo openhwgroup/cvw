@@ -1,4 +1,4 @@
-PERIOD = 22000000
+PERIOD = 11000000
 #PERIOD = 20
 
 .section .init
@@ -53,7 +53,7 @@ _start:
 	li a1, 0x80000000
 	#li a2, 128*1024*1024/512 # copy 128MB
 	li a2, 127*1024*1024/512 # copy 127MB upper 1MB contains the return address (ra)
-	#li a2, 4 # copy 2KB
+	#li a2, 800 # copy 400KB
 	jal ra, copyFlash
 	
 	fence.i
