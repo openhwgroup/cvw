@@ -14,13 +14,19 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
 );
 
     logic [WIDTH-1:0][DEPTH-1:0] StoredData;
+    logic [$clog2(WIDTH)-1:0] 	 AddrD;
+  
 
     always_ff @(posedge clk) begin
-        ReadData <= StoredData[Addr];
+      AddrD <= Addr;
         if (WriteEnable) begin
             StoredData[Addr] <= #1 WriteData;
         end
     end
+
+      
+  assign ReadData = StoredData[AddrD];
+  
 endmodule
 
 /* verilator lint_on ASSIGNDLY */

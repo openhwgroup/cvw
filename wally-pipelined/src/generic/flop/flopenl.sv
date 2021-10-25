@@ -25,14 +25,14 @@
 
 `include "wally-config.vh"
 
-// flop with enable, asynchronous load
+// flop with enable, synchronous load
 module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   input  logic clk, load, en,
   input  TYPE d,
   input  TYPE val,
   output TYPE q);
 
-  always_ff @(posedge clk, posedge load)
+  always_ff @(posedge clk)
     if (load)    q <= #1 val;
     else if (en) q <= #1 d;
 endmodule
