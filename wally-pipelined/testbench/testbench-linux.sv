@@ -48,8 +48,8 @@ module testbench();
   ///////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// HARDWARE ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  logic clk, reset; 
-  initial begin reset <= 1; # 22; reset <= 0; end
+  logic clk, reset, reset_ext; 
+  initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
   always begin clk <= 1; # 5; clk <= 0; # 5; end
 
   logic [`AHBW-1:0] HRDATAEXT;
@@ -69,7 +69,7 @@ module testbench();
   logic             UARTSout;
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  wallypipelinedsoc dut(.clk, .reset, 
+  wallypipelinedsoc dut(.clk, .reset_ext, .reset,
                         .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HCLK, .HRESETn, .HADDR,
                         .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
                         .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
@@ -219,7 +219,9 @@ module testbench();
     initial begin \
       if (CHECKPOINT!=0) begin \
         force `SIGNAL = init``SIGNAL[ARRAY_MAX:ARRAY_MIN]; \
-        #23; \
+        while (reset!==1) #1; \
+        while (reset!==0) #1; \
+        #1; \
         release `SIGNAL; \
       end \
     end
@@ -232,7 +234,9 @@ module testbench();
       initial begin \
         if (CHECKPOINT!=0) begin \
           force `SIGNAL_BASE[i].`SIGNAL = init``SIGNAL[i]; \
-          #23; \
+          while (reset!==1) #1; \
+          while (reset!==0) #1; \
+          #1; \
           release `SIGNAL_BASE[i].`SIGNAL; \
         end \
       end \
@@ -245,7 +249,9 @@ module testbench();
     initial begin \
       if (CHECKPOINT!=0) begin \
         force `SIGNAL = init``SIGNAL[0]; \
-        #23; \
+        while (reset!==1) #1; \
+        while (reset!==0) #1; \
+        #1; \
         release `SIGNAL; \
       end \
     end
@@ -302,7 +308,9 @@ module testbench();
       force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
       force `INSTRET = CHECKPOINT;
       force `CURR_PRIV = initPriv;
-      #23;
+      while (reset!==1) #1;
+      while (reset!==0) #1;
+      #1;
       release {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV};
       release {`STATUS_FS,`STATUS_MPP};
       release {`STATUS_SPP,`STATUS_MPIE};
