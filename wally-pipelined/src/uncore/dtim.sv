@@ -67,10 +67,10 @@ module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
     RAM[11] = 64'h05a000ef8006061b;
     RAM[12] = 64'h0ff003930000100f;
     RAM[13] = 64'h4e952e3110012e37;
-    RAM[14] = 64'h8c02829b00a7e2b7;
+    RAM[14] = 64'hc602829b0053f2b7;
     RAM[15] = 64'h2023fe02dfe312fd;
-    RAM[16] = 64'h829b00a7e2b7007e;
-    RAM[17] = 64'hfe02dfe312fd8c02;
+    RAM[16] = 64'h829b0053f2b7007e;
+    RAM[17] = 64'hfe02dfe312fdc602;
     RAM[18] = 64'h4de31efd000e2023;
     RAM[19] = 64'h059bf1402573fdd0;
     RAM[20] = 64'h0000061705e20870;
