@@ -57,6 +57,6 @@ pyTee('_____________________________________________________________________')
 
 for tvFile in copyList:
     pyTee('Copying '+tvFile+' from Tera')
-    os.system('scp '+tera+':/courses/e190ax/buildroot_boot/'+tvFile+' ./')
+    os.system('scp -r'+tera+':/courses/e190ax/buildroot_boot/'+tvFile+' ./')
 pyTee('Done!')
 logFile.close()

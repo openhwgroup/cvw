@@ -1,4 +1,35 @@
-INSTR_LIMIT=${1:-0}
+#!/bin/bash
+
+# Defaults
+INSTR_LIMIT=0
+INSTR_WAVEON=1
+CHECKPOINT=0
+
+# Arg Parsing
+for i in "$@"; do
+  case $i in
+    --INSTR_LIMIT=*)
+      INSTR_LIMIT="${i#*=}"
+      shift # past argument=value
+      ;;
+    --INSTR_WAVEON=*)
+      INSTR_WAVEON="${i#*=}"
+      shift # past argument=value
+      ;;
+    --CHECKPOINT=*)
+      CHECKPOINT="${i#*=}"
+      shift # past argument=value
+      ;;
+    *)
+      # unknown option
+      ;;
+  esac
+done
+
+echo "INSTR_LIMIT  = ${INSTR_LIMIT}"
+echo "INSTR_WAVEON = ${INSTR_WAVEON}"
+echo "CHECKPOINT   = ${CHECKPOINT}"
+
 vsim -c <<!
-do wally-buildroot-batch.do $INSTR_LIMIT
+do wally-buildroot-batch.do $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
 !
