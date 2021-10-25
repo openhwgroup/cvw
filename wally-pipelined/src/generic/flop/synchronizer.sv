@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// flopenrc.sv
+// synchronizer.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu 25 October 2021
 // Modified: 
 //
-// Purpose: various flavors of flip-flops
+// Purpose: Two-stage flip-flop synchronizer
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,16 +25,17 @@
 
 `include "wally-config.vh"
 
-// flop with enable, synchronous reset, enabled clear
-module flopenrc #(parameter WIDTH = 8) (
-  input  logic             clk, reset, clear, en,
-  input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
+// ordinary flip-flop
+module synchronizer ( 
+  input  logic clk,
+  input  logic d, 
+  output logic q);
 
-  always_ff @(posedge clk) 
-    if (reset)   q <= #1 0;
-    else if (en) 
-      if (clear) q <= #1 0;
-      else       q <= #1 d;
+  logic mid;
+
+  always_ff @(posedge clk) begin
+    mid <= #1 d;
+    q <= #1 d;
+  end
 endmodule
 

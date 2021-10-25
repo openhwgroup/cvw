@@ -34,7 +34,7 @@ module testbench;
   parameter TEST="none";
  
   logic        clk;
-  logic        reset;
+  logic        reset_ext, reset;
 
   parameter SIGNATURESIZE = 5000000;
 
@@ -209,7 +209,7 @@ logic [3:0] dummy;
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
-      reset = 1; # 42; reset = 0;
+      reset_ext = 1; # 42; reset_ext = 0;
     end
 
   // generate clock to sequence tests
@@ -290,7 +290,7 @@ logic [3:0] dummy;
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);
-            reset = 1; # 17; reset = 0;
+            reset_ext = 1; # 47; reset_ext = 0;
         end
       end
     end // always @ (negedge clk)
