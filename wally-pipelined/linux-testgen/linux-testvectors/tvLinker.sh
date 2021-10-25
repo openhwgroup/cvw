@@ -5,4 +5,5 @@ ln -s /courses/e190ax/buildroot_boot/ram.txt ram.txt
 ln -s /courses/e190ax/buildroot_boot/vmlinux.objdump vmlinux.objdump
 ln -s /courses/e190ax/buildroot_boot/vmlinux.objdump.addr vmlinux.objdump.addr
 ln -s /courses/e190ax/buildroot_boot/vmlinux.objdump.lab vmlinux.objdump.lab
+ln -s /courses/e190ax/buildroot_boot/checkpoint8500000 ./checkpoint8500000
 echo "Done!"
