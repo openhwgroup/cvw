@@ -25,13 +25,13 @@
 
 `include "wally-config.vh"
 
-// flop with enable, asynchronous reset
+// flop with enable, synchronous reset
 module flopenr #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk)
     if (reset)   q <= #1 0;
     else if (en) q <= #1 d;
 endmodule
