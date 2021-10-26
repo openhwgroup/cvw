@@ -64,6 +64,14 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   logic [TAGLEN-1:0] 		      VicDirtyWay;
   logic [TAGLEN-1:0] 		      FlushThisWay;
 
+  logic [$clog2(NUMLINES)-1:0] 	      RAdrD, WAdrD;
+  logic 			      SetValidD, ClearValidD;
+  logic 			      SetDirtyD, ClearDirtyD;
+  logic 			      WriteEnableD, VDWriteEnableD;
+  
+  
+  
+
   genvar 			      words;
 
   generate
@@ -104,28 +112,48 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
     
   
   always_ff @(posedge clk, posedge reset) begin
+<<<<<<< HEAD
     if (reset)                                           ValidBits <= {NUMLINES{1'b0}};
     else if (InvalidateAll)                              ValidBits <= {NUMLINES{1'b0}};
     else if (SetValid & (WriteEnable | VDWriteEnable))   ValidBits[WAdr] <= 1'b1;
     else if (ClearValid & (WriteEnable | VDWriteEnable)) ValidBits[WAdr] <= 1'b0;
+=======
+    if (reset) 
+  	ValidBits <= {NUMLINES{1'b0}};
+    else if (InvalidateAll) 
+  	ValidBits <= {NUMLINES{1'b0}};
+    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b1;
+    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b0;
+>>>>>>> 520b9f17d7e813e4be9ef79613d6d9ab07b90817
   end
 
   always_ff @(posedge clk) begin
-    Valid <= ValidBits[RAdr];
+    RAdrD <= RAdr;
+    WAdrD <= WAdr;
+    SetValidD <= SetValid;
+    ClearValidD <= ClearValid;    
+    WriteEnableD <= WriteEnable;
+    VDWriteEnableD <= VDWriteEnable;
   end
+
+    
+  assign Valid = ValidBits[RAdrD];
 
   generate
     if(DIRTY_BITS) begin
       always_ff @(posedge clk, posedge reset) begin
 	if (reset) 
   	  DirtyBits <= {NUMLINES{1'b0}};
-	else if (SetDirty & (WriteEnable | VDWriteEnable)) DirtyBits[WAdr] <= 1'b1;
-	else if (ClearDirty & (WriteEnable | VDWriteEnable)) DirtyBits[WAdr] <= 1'b0;
+	else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b1;
+	else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b0;
       end
 
-      always_ff @(posedge clk) begin
-	Dirty <= DirtyBits[RAdr];
+      always_ff @(posedge clk, posedge reset) begin
+	SetDirtyD <= SetDirty;
+	ClearDirtyD <= ClearDirty;
       end
+
+      assign Dirty = DirtyBits[RAdrD];
 
     end else begin
       assign Dirty = 1'b0;
