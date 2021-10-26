@@ -150,7 +150,7 @@ module csrc #(parameter
         for (i = 3; i < `COUNTERS; i = i+1) begin
             assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
             assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
-            always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+            always @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
               if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
               else if (~StallW) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
 
@@ -160,7 +160,7 @@ module csrc #(parameter
                 assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
                 assign WriteHPMCOUNTERHM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERHBASE + i);
                 assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
-                always @(posedge clk, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+                always @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
                     if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
                     else if (~StallW) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
             end else begin
