@@ -668,11 +668,12 @@ string imperas32f[] = '{
     "rv32i_m/M/remu-01", "5010"
    };
 
-  string arch32m[] = '{
+/*
+  string arch32f[] = '{
     `RISCVARCHTEST,
     "rv32i_m/M/div-01", "5010",
-     "fadd_b1-01", "",
-     "fadd_b10-01", "",
+    "fadd_b1-01", "",
+    "fadd_b10-01", "",
     "fadd_b11-01", "",
     "fadd_b12-01", "",
     "fadd_b13-01", "",
@@ -818,8 +819,7 @@ string imperas32f[] = '{
     "fsub_b8-01", "",
     "fsw-align-01, ""
 };
-
-
+*/
 
   string arch32c[] = '{
     `RISCVARCHTEST,
