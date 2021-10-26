@@ -28,7 +28,6 @@
 # Description: Makefrag for RV32I architectural tests
 
 rv32i_sc_tests = \
-  Fencei
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 
