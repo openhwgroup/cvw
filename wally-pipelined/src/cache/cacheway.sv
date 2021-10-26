@@ -104,11 +104,9 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
     
   
   always_ff @(posedge clk, posedge reset) begin
-    if (reset) 
-  	ValidBits <= {NUMLINES{1'b0}};
-    else if (InvalidateAll) 
-  	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & (WriteEnable | VDWriteEnable)) ValidBits[WAdr] <= 1'b1;
+    if (reset)                                           ValidBits <= {NUMLINES{1'b0}};
+    else if (InvalidateAll)                              ValidBits <= {NUMLINES{1'b0}};
+    else if (SetValid & (WriteEnable | VDWriteEnable))   ValidBits[WAdr] <= 1'b1;
     else if (ClearValid & (WriteEnable | VDWriteEnable)) ValidBits[WAdr] <= 1'b0;
   end
 
@@ -118,7 +116,6 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 
   generate
     if(DIRTY_BITS) begin
-
       always_ff @(posedge clk, posedge reset) begin
 	if (reset) 
   	  DirtyBits <= {NUMLINES{1'b0}};
