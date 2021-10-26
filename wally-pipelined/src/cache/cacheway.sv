@@ -112,19 +112,12 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
     
   
   always_ff @(posedge clk, posedge reset) begin
-<<<<<<< HEAD
-    if (reset)                                           ValidBits <= {NUMLINES{1'b0}};
-    else if (InvalidateAll)                              ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValid & (WriteEnable | VDWriteEnable))   ValidBits[WAdr] <= 1'b1;
-    else if (ClearValid & (WriteEnable | VDWriteEnable)) ValidBits[WAdr] <= 1'b0;
-=======
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
     else if (InvalidateAll) 
   	ValidBits <= {NUMLINES{1'b0}};
     else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b1;
     else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b0;
->>>>>>> 520b9f17d7e813e4be9ef79613d6d9ab07b90817
   end
 
   always_ff @(posedge clk) begin
