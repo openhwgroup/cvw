@@ -42,21 +42,34 @@ module cachereplacementpolicy
   logic [NUMWAYS-2:0] 				ReplacementBits [NUMLINES-1:0];
   logic [NUMWAYS-2:0] 				BlockReplacementBits;
   logic [NUMWAYS-2:0] 				NewReplacement;
+  logic [NUMWAYS-2:0] 				NewReplacementD;  
 
+  logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] 	MemPAdrMD;
+  logic [INDEXLEN-1:0] 				RAdrD;
+  logic 					LRUWriteEnD;
+  
   /* verilator lint_off BLKLOOPINIT */
   always_ff @(posedge clk, posedge reset) begin
     if (reset) begin
+      RAdrD <= '0;
+      MemPAdrMD <= '0;
+      LRUWriteEnD <= 0;
+      NewReplacementD <= '0;
       for(int index = 0; index < NUMLINES; index++)
-	      ReplacementBits[index] <= '0;
+	ReplacementBits[index] <= '0;
     end else begin
-      BlockReplacementBits <= ReplacementBits[RAdr];
-      if (LRUWriteEn) begin
-	      ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacement;
+      RAdrD <= RAdr;
+      MemPAdrMD <= MemPAdrMD;
+      LRUWriteEnD <= LRUWriteEn;
+      NewReplacementD <= NewReplacement;
+      if (LRUWriteEnD) begin
+	ReplacementBits[MemPAdrMD[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacementD;
       end
     end
   end
   /* verilator lint_on BLKLOOPINIT */
 
+  assign BlockReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;
   generate
