@@ -3,7 +3,7 @@
 source  genSettings.sh
 tcpPort=1236
 
-instrs=50000000
+instrs=10000000
 checkOutDir="$outDir/checkpoint$instrs"
 checkIntermedDir="$checkOutDir/intermediate-outputs"
 
@@ -28,7 +28,7 @@ then
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=1,align=off,sleep=on,rr=replay,rrfile="$intermedDir/$recordFile" \
     -gdb tcp::$tcpPort -S) \
-    & riscv64-unknown-elf-gdb -quiet -x genCheckpoint.gdb -ex "genCheckpoint $tcpPort $instrs \"$checkIntermedDir\" 0x$pc $occurences"
+    & riscv64-unknown-elf-gdb -x genCheckpoint.gdb -ex "genCheckpoint $tcpPort $instrs \"$checkIntermedDir\" \"$pc\" $occurences"
     # Post-Process GDB outputs
     ./parseState.py "$checkOutDir"
     ./fix_mem.py "$checkIntermedDir/ramGDB.txt" "$checkOutDir/ram.txt"
