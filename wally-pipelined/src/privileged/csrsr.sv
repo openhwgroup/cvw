@@ -108,7 +108,7 @@ module csrsr (
 
   // registers for STATUS bits
   // complex register with reset, write enable, and the ability to update other bits in certain cases
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk) //, posedge reset)
     if (reset) begin
       STATUS_TSR_INT <= #1 0;
       STATUS_TW_INT <= #1 0;
