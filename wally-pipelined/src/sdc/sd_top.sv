@@ -275,6 +275,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   (* mark_debug = "true" *)logic [15:0] 			   r_DAT3_CRC16, r_DAT2_CRC16, r_DAT1_CRC16;
   (* mark_debug = "true" *)logic [15:0] 			   r_DAT0_CRC16;
   
+  (* mark_debug = "true" *) logic 			   w_IC_EN_Q;
   
   assign w_BLOCK_ADDR = {8'h00, i_BLOCK_ADDR};  // (40 downto 36 are zero since card is 64 GB)
                                        // (35 downto 32 are zero since memeory is only 8GB total)
@@ -483,10 +484,17 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
     (.CountIn('0),     // No CountIn, only RESET
     .CountOut(r_IC_OUT),
     .Load(1'b0),                // No LOAD, only RESET
-    .Enable(w_IC_EN),
+    .Enable(w_IC_EN_Q),
     .UpDown(w_IC_UP_DOWN),
     .clk(r_G_CLK_SD),
     .reset(w_IC_RST));
+
+  flopr #(1) w_IC_EN_Q_reg
+    (.clk(~r_G_CLK_SD),
+     .reset(a_RST),
+     .d(w_IC_EN),
+     .q(w_IC_EN_Q));
+  
 
   // Clock selection
   clkdivider #(g_COUNT_WIDTH) slow_clk_divider        // Divide 50 MHz to <400 KHz (Initial clock)
