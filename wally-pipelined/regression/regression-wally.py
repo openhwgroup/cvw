@@ -48,6 +48,7 @@ for test in tests64:
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64g "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
+#tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
 tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
 for test in tests32:
   tc = TestCase(
