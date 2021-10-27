@@ -49,7 +49,7 @@ module cachereplacementpolicy
   logic 					LRUWriteEnD;
   
   /* verilator lint_off BLKLOOPINIT */
-  always_ff @(posedge clk, posedge reset) begin
+  always_ff @(posedge clk) begin
     if (reset) begin
       RAdrD <= '0;
       MemPAdrMD <= '0;

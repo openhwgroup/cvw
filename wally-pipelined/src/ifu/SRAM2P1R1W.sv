@@ -40,68 +40,68 @@ module SRAM2P1R1W
     parameter int WIDTH = 2
     )
 
-  (input logic clk,
+  (input logic              clk,
    // *** have to remove reset eventually
-   input logic 		    reset,
+   input logic              reset,
   
    // port 1 is read only
    input logic [DEPTH-1:0]  RA1,
    output logic [WIDTH-1:0] RD1,
-   input logic 		    REN1,
+   input logic              REN1,
   
    // port 2 is write only
    input logic [DEPTH-1:0]  WA1,
    input logic [WIDTH-1:0]  WD1,
-   input logic 		    WEN1,
+   input logic              WEN1,
    input logic [WIDTH-1:0]  BitWEN1
    );
   
 
-  logic [DEPTH-1:0] 	    RA1Q, WA1Q;
-  logic 		    WEN1Q;
-  logic [WIDTH-1:0] 	    WD1Q;
+  logic [DEPTH-1:0]         RA1Q, WA1Q;
+  logic                     WEN1Q;
+  logic [WIDTH-1:0]         WD1Q;
 
-  logic [WIDTH-1:0] 	    mem[2**DEPTH-1:0];
+  logic [WIDTH-1:0]         mem[2**DEPTH-1:0];
 
   
   // SRAMs address busses are always registered first.
 
   flopenr #(DEPTH) RA1Reg(.clk(clk),
-			  .reset(reset),
-			  .en(REN1),
-			  .d(RA1),
-			  .q(RA1Q));
+     .reset(reset),
+     .en(REN1),
+     .d(RA1),
+     .q(RA1Q));
   
 
   flopenr #(DEPTH) WA1Reg(.clk(clk),
-			  .reset(reset),
-			  .en(REN1),
-			  .d(WA1),
-			  .q(WA1Q));
+     .reset(reset),
+     .en(REN1),
+     .d(WA1),
+     .q(WA1Q));
 
   flopenr #(1) WEN1Reg(.clk(clk),
-		       .reset(reset),
-		       .en(1'b1),
-		       .d(WEN1),
-		       .q(WEN1Q));
+         .reset(reset),
+         .en(1'b1),
+         .d(WEN1),
+         .q(WEN1Q));
   
   flopenr #(WIDTH) WD1Reg(.clk(clk),
-			  .reset(reset),
-			  .en(REN1),
-			  .d(WD1),
-			  .q(WD1Q));
+     .reset(reset),
+     .en(REN1),
+     .d(WD1),
+     .q(WD1Q));
   // read port
   assign RD1 = mem[RA1Q];
 
-  genvar 		    index;
+  genvar       index;
   
   // write port
   generate
     for (index = 0; index < WIDTH; index = index + 1) begin:bitwrite
       always_ff @ (posedge clk) begin
-	      if (WEN1Q & BitWEN1[index]) begin
-	        mem[WA1Q][index] <= WD1Q[index];
-	      end
+       if (WEN1Q & BitWEN1[index]) begin
+         mem[WA1Q][index] <= WD1Q[index];
+       end
       end
     end
   endgenerate
