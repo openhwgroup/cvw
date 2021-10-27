@@ -14,6 +14,8 @@ cd ../addins
 git clone https://github.com/riscv-non-isa/riscv-arch-test
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 cd riscv-isa-sim
+cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv32i_m/F
+<edit arch_test_target/spike/device/rv32i_m/F/Makefile.include line 35 and change --isa=rv32i to --isa=rv32if>
 mkdir build
 cd build
 set RISCV=/cad/riscv/gcc/bin   (or whatever your path is)
