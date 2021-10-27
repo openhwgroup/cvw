@@ -62,7 +62,7 @@ module RASPredictor
 			   .q(PtrQ));
 
   // RAS must be reset. 
-  always_ff @ (posedge clk, posedge reset) begin
+  always_ff @ (posedge clk) begin
     if(reset) begin
       for(index=0; index<StackSize; index++)
 	memory[index] <= {`XLEN{1'b0}};
