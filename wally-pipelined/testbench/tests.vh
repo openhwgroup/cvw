@@ -671,28 +671,28 @@ string imperas32f[] = '{
   string arch32f[] = '{
     `RISCVARCHTEST,
     // tests repeated up here for basic sanity
-    //"rv32i_m/F/flw-align-01", "2010", // passes
-    //"rv32i_m/F/fmv.w.x_b25-01", "2090", // passes
+    "rv32i_m/F/flw-align-01", "2010", // passes
+    "rv32i_m/F/fmv.w.x_b25-01", "2090", // passes
     "rv32i_m/F/fmadd_b14-01", "23d0", // fails test 1
     "rv32i_m/F/fcvt.s.w_b25-01", "20a0", // fails test 3
     // main tests
-    "rv32i_m/F/fadd_b1-01", "7220",
-    "rv32i_m/F/fadd_b10-01", "2270", 
-    "rv32i_m/F/fadd_b11-01", "3fb40",
-    "rv32i_m/F/fadd_b12-01", "21b0",
-    "rv32i_m/F/fadd_b13-01", "3660",
-    "rv32i_m/F/fadd_b2-01", "38b0",
-    "rv32i_m/F/fadd_b3-01", "b320",
-    "rv32i_m/F/fadd_b4-01", "3480",
-    "rv32i_m/F/fadd_b5-01", "3700",
-    "rv32i_m/F/fadd_b7-01", "3520",
-    "rv32i_m/F/fadd_b8-01", "104a0",
+    // "rv32i_m/F/fadd_b1-01", "7220",
+    // "rv32i_m/F/fadd_b10-01", "2270", 
+    // "rv32i_m/F/fadd_b11-01", "3fb40",
+    // "rv32i_m/F/fadd_b12-01", "21b0",
+    // "rv32i_m/F/fadd_b13-01", "3660",
+    // "rv32i_m/F/fadd_b2-01", "38b0",
+    // "rv32i_m/F/fadd_b3-01", "b320",
+    // "rv32i_m/F/fadd_b4-01", "3480",
+    // "rv32i_m/F/fadd_b5-01", "3700",
+    // "rv32i_m/F/fadd_b7-01", "3520",
+    // "rv32i_m/F/fadd_b8-01", "104a0",
     "rv32i_m/F/fclass_b1-01", "2090",
     "rv32i_m/F/fcvt.s.w_b25-01", "20a0",
     "rv32i_m/F/fcvt.s.w_b26-01", "3290",
     "rv32i_m/F/fcvt.s.wu_b25-01", "20a0",
     "rv32i_m/F/fcvt.s.wu_b26-01", "3290",
-    "rv32i_m/F/fcvt.w.s_b1-01", "2090",
+//    "rv32i_m/F/fcvt.w.s_b1-01", "2090",
     "rv32i_m/F/fcvt.w.s_b22-01", "20b0",
     "rv32i_m/F/fcvt.w.s_b23-01", "20c0",
     "rv32i_m/F/fcvt.w.s_b24-01", "21b0",
