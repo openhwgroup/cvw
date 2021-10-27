@@ -101,6 +101,7 @@ logic [3:0] dummy;
         "arch32priv":                     tests = arch32priv;
         "arch32c":      if (`C_SUPPORTED) tests = arch32c;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
+        "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
         "imperas32p":                     tests = imperas32p;
         "imperas32mmu": if (`MEM_VIRTMEM) tests = imperas32mmu;

@@ -116,7 +116,7 @@ module icachefsm
   logic 		       PreCntEn;
 
   // the FSM is always runing, do not stall.
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
 

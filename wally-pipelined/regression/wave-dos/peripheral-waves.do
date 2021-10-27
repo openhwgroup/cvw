@@ -53,7 +53,7 @@ add wave -hex /testbench/dut/hart/lsu/dcache/ReadDataM
 add wave -divider
 add wave -hex /testbench/PCW
 #add wave -hex /testbench/InstrW
-add wave -hex /testbench/dut/hart/ieu/c/InstrValidW
+#add wave -hex /testbench/dut/hart/ieu/c/InstrValidW
 #add wave /testbench/InstrWName
 add wave -hex /testbench/dut/hart/ReadDataW
 add wave -hex /testbench/dut/hart/ieu/dp/ResultW

@@ -111,7 +111,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   assign VictimTagWay = SelFlush ? FlushThisWay : VicDirtyWay;
     
   
-  always_ff @(posedge clk, posedge reset) begin
+  always_ff @(posedge clk) begin
     if (reset) 
   	ValidBits <= {NUMLINES{1'b0}};
     else if (InvalidateAll) 
@@ -134,14 +134,14 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 
   generate
     if(DIRTY_BITS) begin
-      always_ff @(posedge clk, posedge reset) begin
+      always_ff @(posedge clk) begin
 	if (reset) 
   	  DirtyBits <= {NUMLINES{1'b0}};
 	else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b1;
 	else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b0;
       end
 
-      always_ff @(posedge clk, posedge reset) begin
+      always_ff @(posedge clk) begin
 	SetDirtyD <= SetDirty;
 	ClearDirtyD <= ClearDirty;
       end

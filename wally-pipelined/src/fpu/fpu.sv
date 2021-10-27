@@ -41,7 +41,7 @@ module fpu (
   output logic [`XLEN-1:0] FIntResM, // data to be written to integer register
   output logic 		   FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
   output logic 		   IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
-  output logic [4:0] 	   SetFflagsM        // FMA flags (to privileged unit)
+  output logic [4:0] 	   SetFflagsM        // FPU flags (to privileged unit)
   );
 
   //*** make everything FLEN at some point
@@ -267,7 +267,7 @@ module fpu (
      // BEGIN MEMORY STAGE
      
      // FPU flag selection - to privileged
-     mux4  #(5)  FPUFlgMux (5'b0, FMAFlgM, FDivFlgM, FFlgM, FResultSelW, SetFflagsM);
+     mux4  #(5)  FPUFlgMux (5'b0, FMAFlgM, FDivFlgM, FFlgM, FResultSelM, SetFflagsM);
   
      // M/W pipe registers
      flopenrc #(64) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
