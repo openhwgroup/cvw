@@ -30,21 +30,21 @@
 module twoBitPredictor
   #(parameter int Depth = 10
     )
-  (input logic clk,
-   input logic 		   reset,
-   input logic 		   StallF,
+  (input logic             clk,
+   input logic             reset,
+   input logic             StallF,
    input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0] 	   Prediction,
+   output logic [1:0]      Prediction,
    // update
    input logic [`XLEN-1:0] UpdatePC,
-   input logic 		   UpdateEN,
-   input logic [1:0] 	   UpdatePrediction
+   input logic             UpdateEN,
+   input logic [1:0]       UpdatePrediction
    );
 
-  logic [Depth-1:0] 	   LookUpPCIndex, UpdatePCIndex;
-  logic [1:0] 		   PredictionMemory;
-  logic 		   DoForwarding, DoForwardingF;
-  logic [1:0] 		   UpdatePredictionF;
+  logic [Depth-1:0]        LookUpPCIndex, UpdatePCIndex;
+  logic [1:0]              PredictionMemory;
+  logic                    DoForwarding, DoForwardingF;
+  logic [1:0]              UpdatePredictionF;
   
 
   // hashing function for indexing the PC
@@ -56,14 +56,14 @@ module twoBitPredictor
 
 
   SRAM2P1R1W #(Depth, 2) PHT(.clk(clk),
-				.reset(reset),
-				.RA1(LookUpPCIndex),
-				.RD1(PredictionMemory),
-				.REN1(~StallF),
-				.WA1(UpdatePCIndex),
-				.WD1(UpdatePrediction),
-				.WEN1(UpdateEN),
-				.BitWEN1(2'b11));
+    .reset(reset),
+    .RA1(LookUpPCIndex),
+    .RD1(PredictionMemory),
+    .REN1(~StallF),
+    .WA1(UpdatePCIndex),
+    .WD1(UpdatePrediction),
+    .WEN1(UpdateEN),
+    .BitWEN1(2'b11));
 
   // need to forward when updating to the same address as reading.
   // first we compare to see if the update and lookup addreses are the same
@@ -71,14 +71,14 @@ module twoBitPredictor
 
   // register the update value and the forwarding signal into the Fetch stage
   flopr #(1) DoForwardingReg(.clk(clk),
-			     .reset(reset),
-			     .d(DoForwarding),
-			     .q(DoForwardingF));
+        .reset(reset),
+        .d(DoForwarding),
+        .q(DoForwardingF));
   
   flopr #(2) UpdatePredictionReg(.clk(clk),
-				 .reset(reset),
-				 .d(UpdatePrediction),
-				 .q(UpdatePredictionF));
+     .reset(reset),
+     .d(UpdatePrediction),
+     .q(UpdatePredictionF));
 
   assign Prediction = DoForwardingF ? UpdatePredictionF : PredictionMemory;
   

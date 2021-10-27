@@ -26,16 +26,16 @@
 `include "wally-config.vh"
 
 module decompress (
-  input  logic [31:0]     InstrRawD,
-  output logic [31:0]     InstrD,
-  output logic            IllegalCompInstrD);
+  input  logic [31:0] InstrRawD,
+  output logic [31:0] InstrD,
+  output logic        IllegalCompInstrD);
                         
-  logic [15:0] instr16;
-  logic [4:0] rds1, rs2, rs1p, rs2p, rds1p, rdp;
-  logic [11:0] immCILSP, immCILSPD, immCSS, immCSSD, immCL, immCLD, immCI, immCS, immCSD, immCB, immCIASP, immCIW;
-  logic [19:0] immCJ, immCILUI;
-  logic [5:0] immSH;
-  logic [1:0] op;
+  logic [15:0]        instr16;
+  logic [4:0]         rds1, rs2, rs1p, rs2p, rds1p, rdp;
+  logic [11:0]        immCILSP, immCILSPD, immCSS, immCSSD, immCL, immCLD, immCI, immCS, immCSD, immCB, immCIASP, immCIW;
+  logic [19:0]        immCJ, immCILUI;
+  logic [5:0]         immSH;
+  logic [1:0]         op;
     
   // if the system handles compressed instructions, decode appropriately
   generate
