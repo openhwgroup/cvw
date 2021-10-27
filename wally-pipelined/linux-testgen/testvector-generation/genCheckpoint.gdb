@@ -1,4 +1,4 @@
-define genCheckpoint 
+define genCheckpoint
     # GDB config
     set pagination off
     set logging overwrite on
@@ -8,7 +8,7 @@ define genCheckpoint
     # Argument Parsing
     set $tcpPort=$arg0
     set $instrCount=$arg1
-    set $statePath=$arg1
+    set $statePath=$arg2
     set $ramPath=$arg2
     set $checkPC=$arg3
     set $checkPCoccurences=$arg4
@@ -31,7 +31,7 @@ define genCheckpoint
     # Proceed to checkpoint 
     printf "GDB proceeding to checkpoint at %d instrs\n", $instrCount
     #stepi $instrCount-1000
-    b *$checkPC
+    eval "b *0x%s",$checkPC
     ignore 2 $checkPCoccurences
     c
  
