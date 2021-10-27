@@ -31,24 +31,24 @@ module localHistoryPredictor
   #(  parameter int m = 6, // 2^m = number of local history branches
       parameter int k = 10 // number of past branches stored
       )
-  (input logic clk,
-   input logic 		   reset,
-   input logic 		   StallF,  StallE, FlushF,
+  (input logic             clk,
+   input logic             reset,
+   input logic             StallF,  StallE, FlushF,
    input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0] 	   Prediction,
+   output logic [1:0]      Prediction,
    // update
    input logic [`XLEN-1:0] UpdatePC,
-   input logic 		   UpdateEN, PCSrcE, 
-   input logic [1:0] 	   UpdatePrediction
+   input logic             UpdateEN, PCSrcE, 
+   input logic [1:0]       UpdatePrediction
   
    );
 
-  logic [2**m-1:0][k-1:0]  LHRNextF;
-  logic [k-1:0] 	   LHRF, ForwardLHRNext, LHRFNext;
-  logic [m-1:0] 	   LookUpPCIndex, UpdatePCIndex;
-  logic [1:0] 		   PredictionMemory;
-  logic 		   DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
-  logic [1:0] 		   UpdatePredictionF;
+  logic [2**m-1:0]         [k-1:0]  LHRNextF;
+  logic [k-1:0]            LHRF, ForwardLHRNext, LHRFNext;
+  logic [m-1:0]            LookUpPCIndex, UpdatePCIndex;
+  logic [1:0]              PredictionMemory;
+  logic                    DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
+  logic [1:0]              UpdatePredictionF;
 
   assign LHRFNext = {PCSrcE, LHRF[k-1:1]}; 
   assign UpdatePCIndex = {UpdatePC[m+1] ^ UpdatePC[1], UpdatePC[m:2]};
@@ -65,15 +65,15 @@ module localHistoryPredictor
   //                 .WEN1(UpdateEN),
   //                 .BitWEN1(2'b11));  
 
-  genvar 		   index;
+  genvar      index;
   generate
     for (index = 0; index < 2**m; index = index +1) begin:localhist
       
       flopenr #(k) LocalHistoryRegister(.clk(clk),
-					.reset(reset),
-					.en(UpdateEN && (index == UpdatePCIndex)),
-					.d(LHRFNext),
-					.q(LHRNextF[index]));
+     .reset(reset),
+     .en(UpdateEN && (index == UpdatePCIndex)),
+     .d(LHRFNext),
+     .q(LHRNextF[index]));
     end 
   endgenerate
 
@@ -86,14 +86,14 @@ module localHistoryPredictor
   // LHR referes to the address that the past k branches points to in the prediction stage 
   // LHRE refers to the address that the past k branches points to in the exectution stage
   SRAM2P1R1W #(k, 2) PHT(.clk(clk), 
-			 .reset(reset),
-			 .RA1(ForwardLHRNext),
-			 .RD1(PredictionMemory),
-			 .REN1(~StallF),
-			 .WA1(LHRFNext),
-			 .WD1(UpdatePrediction),
-			 .WEN1(UpdateEN),
-			 .BitWEN1(2'b11));
+    .reset(reset),
+    .RA1(ForwardLHRNext),
+    .RD1(PredictionMemory),
+    .REN1(~StallF),
+    .WA1(LHRFNext),
+    .WD1(UpdatePrediction),
+    .WEN1(UpdateEN),
+    .BitWEN1(2'b11));
 
 
   
@@ -102,24 +102,24 @@ module localHistoryPredictor
   // register the update value and the forwarding signal into the Fetch stage
   // TODO: add stall logic ***
   flopr #(1) DoForwardingReg(.clk(clk),
-			     .reset(reset),
-			     .d(DoForwardingPHT),
-			     .q(DoForwardingPHTF));
+        .reset(reset),
+        .d(DoForwardingPHT),
+        .q(DoForwardingPHTF));
   
   flopr #(2) UpdatePredictionReg(.clk(clk),
-				 .reset(reset),
-				 .d(UpdatePrediction),
-				 .q(UpdatePredictionF));
+     .reset(reset),
+     .d(UpdatePrediction),
+     .q(UpdatePredictionF));
 
   assign Prediction = DoForwardingPHTF ? UpdatePredictionF : PredictionMemory;
   
   //pipeline for LHR
   flopenrc #(k) LHRFReg(.clk(clk),
-			.reset(reset),
-			.en(~StallF),
-			.clear(FlushF),
-			.d(ForwardLHRNext),
-			.q(LHRF));
+   .reset(reset),
+   .en(~StallF),
+   .clear(FlushF),
+   .d(ForwardLHRNext),
+   .q(LHRF));
   /*
    flopenrc #(k) LHRDReg(.clk(clk),
    .reset(reset),

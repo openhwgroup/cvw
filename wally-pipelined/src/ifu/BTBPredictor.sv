@@ -31,25 +31,25 @@
 module BTBPredictor
   #(parameter int Depth = 10
     )
-  (input  logic clk,
-   input logic 		    reset,
-   input logic 		    StallF, StallE,
+  (input  logic             clk,
+   input logic              reset,
+   input logic              StallF, StallE,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
-   output logic [4:0] 	    InstrClass,
-   output logic 	    Valid,
+   output logic [4:0]       InstrClass,
+   output logic             Valid,
    // update
-   input logic 		    UpdateEN,
+   input logic              UpdateEN,
    input logic [`XLEN-1:0]  UpdatePC,
    input logic [`XLEN-1:0]  UpdateTarget,
-   input logic [4:0] 	    UpdateInstrClass,
-   input logic 		    UpdateInvalid
+   input logic [4:0]        UpdateInstrClass,
+   input logic              UpdateInvalid
    );
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
-  logic [Depth-1:0] 	    LookUpPCIndex, UpdatePCIndex, LookUpPCIndexQ, UpdatePCIndexQ;
-  logic 		    UpdateENQ;
+  logic [Depth-1:0]         LookUpPCIndex, UpdatePCIndex, LookUpPCIndexQ, UpdatePCIndexQ;
+  logic                     UpdateENQ;
   
 
   // hashing function for indexing the PC
@@ -61,10 +61,10 @@ module BTBPredictor
   
 
   flopenr #(Depth) UpdatePCIndexReg(.clk(clk),
-				    .reset(reset),
-				    .en(~StallE),
-				    .d(UpdatePCIndex),
-				    .q(UpdatePCIndexQ));
+        .reset(reset),
+        .en(~StallE),
+        .d(UpdatePCIndex),
+        .q(UpdatePCIndexQ));
   
   // The valid bit must be resetable.
   always_ff @ (posedge clk) begin
@@ -79,17 +79,17 @@ module BTBPredictor
 
 
   flopenr #(1) UpdateENReg(.clk(clk),
-			  .reset(reset),
-			  .en(~StallF),
-			  .d(UpdateEN),
-			  .q(UpdateENQ));
+     .reset(reset),
+     .en(~StallF),
+     .d(UpdateEN),
+     .q(UpdateENQ));
 
 
   flopenr #(Depth) LookupPCIndexReg(.clk(clk),
-				    .reset(reset),
-				    .en(~StallF),
-				    .d(LookUpPCIndex),
-				    .q(LookUpPCIndexQ));
+        .reset(reset),
+        .en(~StallF),
+        .d(LookUpPCIndex),
+        .q(LookUpPCIndexQ));
 
 
 
@@ -98,14 +98,14 @@ module BTBPredictor
   // *** need to add forwarding.
 
   SRAM2P1R1W #(Depth, `XLEN+5) memory(.clk(clk),
-				      .reset(reset),
-				      .RA1(LookUpPCIndex),
-				      .RD1({{InstrClass, TargetPC}}),
-				      .REN1(~StallF),
-				      .WA1(UpdatePCIndex),
-				      .WD1({UpdateInstrClass, UpdateTarget}),
-				      .WEN1(UpdateEN),
-				      .BitWEN1({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
+          .reset(reset),
+          .RA1(LookUpPCIndex),
+          .RD1({{InstrClass, TargetPC}}),
+          .REN1(~StallF),
+          .WA1(UpdatePCIndex),
+          .WD1({UpdateInstrClass, UpdateTarget}),
+          .WEN1(UpdateEN),
+          .BitWEN1({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
 
 
 endmodule
