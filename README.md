@@ -8,6 +8,7 @@ To use Wally on Linux:
 ```
 git clone https://github.com/davidharrishmc/riscv-wally
 cd riscv-wally
+cd tests
 cd imperas-riscv-tests
 make
 cd ../addins
@@ -30,6 +31,8 @@ edit Makefile.include
 make
 make XLEN=32
 exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
+cd ../../wally-pipelined/linux-testgen/linux-testvectors
+./tvLinker.sh
 ```
 
 Notes:
