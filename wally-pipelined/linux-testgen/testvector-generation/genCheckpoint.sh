@@ -3,7 +3,7 @@
 source  genSettings.sh
 tcpPort=1236
 
-instrs=10000000
+instrs=480000000
 checkOutDir="$outDir/checkpoint$instrs"
 checkIntermedDir="$checkOutDir/intermediate-outputs"
 
@@ -32,7 +32,7 @@ then
     # Post-Process GDB outputs
     ./parseState.py "$checkOutDir"
     ./fix_mem.py "$checkIntermedDir/ramGDB.txt" "$checkOutDir/ram.txt"
-    tail -n+$instrs "$outDir/$traceFile" > "$checkOutDir/$traceFile"
+    tail -n+$($instrs+1) "$outDir/$traceFile" > "$checkOutDir/$traceFile"
 else
     echo "You can change the number of instructions by editing the \"instrs\" variable in this script."
     echo "Have a nice day!"
