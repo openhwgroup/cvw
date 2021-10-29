@@ -82,7 +82,31 @@ module cachereplacementpolicy
       assign VictimWay[1] = ~BlockReplacementBits[0];
       assign VictimWay[0] = BlockReplacementBits[0];
       
-    end else if (NUMWAYS == 4) begin : FourWay 
+    end else if (NUMWAYS == 4) begin : FourWay
+
+
+      // VictimWay is a function only of the current value of the LRU.
+      // binary encoding
+      //assign VictimWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[1] : BlockReplacementBits[0];
+      //assign VictimWay[1] = BlockReplacementBits[2];
+
+      // 1 hot encoding
+      assign VictimWay[0] = ~BlockReplacementBits[2] & ~BlockReplacementBits[0];
+      assign VictimWay[1] = ~BlockReplacementBits[2] & BlockReplacementBits[0];
+      assign VictimWay[2] = BlockReplacementBits[2] & ~BlockReplacementBits[1];
+      assign VictimWay[3] = BlockReplacementBits[2] & BlockReplacementBits[1];      
+
+      // New LRU bits which are updated is function only of the WayHit.
+      // However the not updated bits come from the old LRU.
+      assign LRUEn[2] = |WayHit;
+      assign LRUEn[1] = WayHit[3] | WayHit[2];
+      assign LRUEn[0] = WayHit[1] | WayHit[0];
+
+      assign LRUMask[2] = WayHit[1] | WayHit[0];
+      assign LRUMask[1] = WayHit[2];
+      assign LRUMask[0] = WayHit[0];
+      
+/* -----\/----- EXCLUDED -----\/-----
 
       // selects
       assign LRUEn[2] = 1'b1;
@@ -93,16 +117,19 @@ module cachereplacementpolicy
       assign LRUMask[0] = WayHit[1];
       assign LRUMask[1] = WayHit[3];      
       assign LRUMask[2] = WayHit[3] | WayHit[2];
+ -----/\----- EXCLUDED -----/\----- */
 
       for(index = 0; index < NUMWAYS-1; index++)
 	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
 
+/* -----\/----- EXCLUDED -----\/-----
       assign EncVicWay[1] = BlockReplacementBits[2];
       assign EncVicWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[0] : BlockReplacementBits[1];
 
       onehotdecoder #(2) 
       waydec(.bin(EncVicWay),
 	     .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3]}));
+ -----/\----- EXCLUDED -----/\----- */
 
     end else if (NUMWAYS == 8) begin : EightWay
 
