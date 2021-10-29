@@ -59,7 +59,7 @@ module cachereplacementpolicy
 	ReplacementBits[index] <= '0;
     end else begin
       RAdrD <= RAdr;
-      MemPAdrMD <= MemPAdrMD;
+      MemPAdrMD <= MemPAdrM;
       LRUWriteEnD <= LRUWriteEn;
       NewReplacementD <= NewReplacement;
       if (LRUWriteEnD) begin
@@ -91,6 +91,14 @@ module cachereplacementpolicy
       //assign VictimWay[1] = BlockReplacementBits[2];
 
       // 1 hot encoding
+      //| WayHit | LRU 2 | LRU 1 | LRU 0 |
+      //|--------+-------+-------+-------|
+      //|   0000 |     - | -     | -     |
+      //|   0001 |     1 | -     | 1     |
+      //|   0010 |     1 | -     | 0     |
+      //|   0100 |     0 | 1     | -     |
+      //|   1000 |     0 | 0     | -     |
+
       assign VictimWay[0] = ~BlockReplacementBits[2] & ~BlockReplacementBits[0];
       assign VictimWay[1] = ~BlockReplacementBits[2] & BlockReplacementBits[0];
       assign VictimWay[2] = BlockReplacementBits[2] & ~BlockReplacementBits[1];
