@@ -83,6 +83,7 @@ logic [3:0] dummy;
         "arch64priv":                     tests = arch64priv;
         "arch64c":      if (`C_SUPPORTED) tests = arch64c;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
+        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
         "imperas64p":                     tests = imperas64p;
         "imperas64mmu": if (`MEM_VIRTMEM) tests = imperas64mmu;
