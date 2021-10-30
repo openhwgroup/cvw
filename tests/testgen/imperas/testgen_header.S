@@ -1,5 +1,6 @@
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Adapted from Imperas RISCV-TEST_SUITE
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 // files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
@@ -14,18 +15,24 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "model_test.h"
-#include "arch_test.h"
-RVTEST_ISA("RV64I")
+#include "riscv_test_macros.h"
+#include "compliance_test.h"
+#include "compliance_io.h"
 
-.section .text.init
-.globl rvtest_entry_point
-rvtest_entry_point:
-RVMODEL_BOOT
-RVTEST_CODE_BEGIN
+RV_COMPLIANCE_RV64M
 
-#ifdef TEST_CASE_1
+RV_COMPLIANCE_CODE_BEGIN
 
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",add)
 
-RVTEST_SIGBASE( x8,signature_x8_1)
+	RVTEST_IO_INIT
+	RVTEST_IO_ASSERT_GPR_EQ(x31, x0, 0x00000000)
+	RVTEST_IO_WRITE_STR(x31, "Test Begin\n")
+
+	# ---------------------------------------------------------------------------------------------
+
+	#RVTEST_IO_WRITE_STR(x31, "# Test group 1\n")
+
+
+    # address for test results
+    la x6, test_1_res
+		
