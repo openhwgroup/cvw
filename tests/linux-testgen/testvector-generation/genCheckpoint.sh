@@ -3,7 +3,7 @@
 source  genSettings.sh
 tcpPort=1236
 
-instrs=480000000
+instrs=450000000
 checkOutDir="$outDir/checkpoint$instrs"
 checkIntermedDir="$checkOutDir/intermediate-outputs"
 
