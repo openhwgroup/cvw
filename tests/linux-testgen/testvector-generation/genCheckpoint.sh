@@ -32,7 +32,7 @@ then
     # Post-Process GDB outputs
     ./parseState.py "$checkOutDir"
     ./fix_mem.py "$checkIntermedDir/ramGDB.txt" "$checkOutDir/ram.txt"
-    tail -n+$($instrs+1) "$outDir/$traceFile" > "$checkOutDir/$traceFile"
+    tail -n+$(($instrs+1)) "$outDir/$traceFile" > "$checkOutDir/$traceFile"
 else
     echo "You can change the number of instructions by editing the \"instrs\" variable in this script."
     echo "Have a nice day!"
