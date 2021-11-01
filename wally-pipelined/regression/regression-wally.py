@@ -41,7 +41,7 @@ def getBuildrootTC(short):
         BRgrepstr=str(MAX_EXPECTED)+" instructions"
     return  TestCase(name="buildroot",cmd=BRcmd,grepstr=BRgrepstr)
 
-tests64 = ["arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
+tests64 = ["wally64i", "arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
 for test in tests64:
   tc = TestCase(
         name=test,
