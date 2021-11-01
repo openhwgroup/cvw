@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# wally-I-PIPELINE.py
+# PIPELINE.py
 #
 # David_Harris@hmc.edu 27 October 2021
 #
@@ -108,7 +108,7 @@ for xlen in xlens:
     storecmd = "sd"
     wordsize = 8
   pathname = "../wally-riscv-arch-test/riscv-test-suite/rv" + str(xlen) + "i_m/I/"
-  fname = pathname + "src/WALLY-PIPELINE.S"
+  fname = pathname + "src/PIPELINE.S"
   testnum = 0
 
   # print custom header part
@@ -124,6 +124,19 @@ for xlen in xlens:
   # insert generic header
   h = open("testgen_header.S", "r")
   for line in h:  
+    f.write(line)
+
+  maxreg = 5
+  for i in range(1):
+    instr = instrs[randint(0,len(instrs)-1)]
+    reg1 = randint(0,maxreg)
+    reg2 = randint(0,maxreg)
+    reg3 = randint(1,maxreg)
+    line = instr + " x" +str(reg3) + ", x" + str(reg1) + ", x" + str(reg2) + "\n"
+    f.write(line)
+
+  for i in range(1,maxreg+1):
+    line = storecmd + " x" + str(i) + ", " + str(wordsize*(i-1)) + "(x8)\n"
     f.write(line)
 
   # print directed and random test vectors

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ../wally-riscv-arch-test/riscv-test-suite/rv32i_m/I/src/WALLY-PIPELINE.S
 // David_Harris@hmc.edu
-// Created 2021-11-01 08:46:04.665699//
+// Created 2021-11-01 11:43:39.219968//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -32,6 +32,13 @@ RVTEST_CODE_BEGIN
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",add)
 
 RVTEST_SIGBASE( x8,signature_x8_1)
+AND x1, x3, x3
+sw x1, 0(x8)
+sw x2, 4(x8)
+sw x3, 8(x8)
+sw x4, 12(x8)
+sw x5, 16(x8)
+#endif
 RVTEST_CODE_END
 RVMODEL_HALT
 
