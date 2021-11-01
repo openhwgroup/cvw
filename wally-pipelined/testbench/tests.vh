@@ -1072,7 +1072,7 @@ string imperas32f[] = '{
  string wally64i[] = '{
     `WALLYTEST,
     "rv64i_m/I/add-01", "9010",
-    "rv64i_m/I/PIPELINE", "2010"
+    "rv64i_m/I/PIPELINE", "3010"
  };
 
  string wally64priv[] = '{
@@ -1085,7 +1085,7 @@ string imperas32f[] = '{
 
 string wally32i[] = '{
     `WALLYTEST,
-    "rv64i_m/I/pipeline-01", "9010"
+    "rv32i_m/I/PIPELINE", "3010"
  };
 
  string wally32priv[] = '{

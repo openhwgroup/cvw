@@ -88,10 +88,10 @@ def writeVector(a, b, storecmd, xlen):
 ##################################
 
 # change these to suite your tests
-instrs = ["ADD", "SUB", "SLT", "SLTU", "XOR", "OR", "AND"]
+instrs = ["ADD"] # "SUB", "XOR", "OR", "AND", "SLT", "SLTU", ]
 author = "David_Harris@hmc.edu"
 xlens = [32, 64]
-numrand = 100
+numrand = 1000
 
 # setup
 seed(0) # make tests reproducible
@@ -127,10 +127,10 @@ for xlen in xlens:
     f.write(line)
 
   maxreg = 5
-  for i in range(1):
+  for i in range(numrand):
     instr = instrs[randint(0,len(instrs)-1)]
     reg1 = randint(0,maxreg)
-    reg2 = randint(0,maxreg)
+    reg2 = randint(1,maxreg)
     reg3 = randint(1,maxreg)
     line = instr + " x" +str(reg3) + ", x" + str(reg1) + ", x" + str(reg2) + "\n"
     f.write(line)
