@@ -1,4 +1,3 @@
-#endif
 RVTEST_CODE_END
 RVMODEL_HALT
 
