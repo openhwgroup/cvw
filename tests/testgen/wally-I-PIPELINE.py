@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# wally-I.py
+# wally-I-PIPELINE.py
 #
 # David_Harris@hmc.edu 27 October 2021
 #
