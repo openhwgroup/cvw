@@ -28,7 +28,7 @@
 # Description: Makefrag for RV32I architectural tests
 
 rv32i_sc_tests = \
-	       WALLY-PIPELINE \
+	       PIPELINE \
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 
