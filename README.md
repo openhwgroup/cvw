@@ -15,7 +15,7 @@ git clone https://github.com/riscv-software-src/riscv-isa-sim
 cd riscv-isa-sim
 cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv32i_m/F
 <edit arch_test_target/spike/device/rv32i_m/F/Makefile.include line 35 and change --isa=rv32i to --isa=rv32if>
-cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv64i_m/D
+cp -r arch_test_target/spike/device/rv64i_m/I arch_test_target/spike/device/rv64i_m/D
 <edit arch_test_target/spike/device/rv64i_m/D/Makefile.include line 35 and change --isa=rv64i to --isa=rv64id>
 mkdir build
 cd build
