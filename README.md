@@ -13,6 +13,7 @@ cd addins
 git clone https://github.com/riscv-non-isa/riscv-arch-test
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 cd riscv-isa-sim
+*** replace these with a copy from ../install/F and ../install/D containing the Makefile.includes already updated
 cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv32i_m/F
 <edit arch_test_target/spike/device/rv32i_m/F/Makefile.include line 35 and change --isa=rv32i to --isa=rv32if>
 cp -r arch_test_target/spike/device/rv64i_m/I arch_test_target/spike/device/rv64i_m/D
