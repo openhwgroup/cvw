@@ -83,6 +83,7 @@ logic [3:0] dummy;
         "arch64priv":                     tests = arch64priv;
         "arch64c":      if (`C_SUPPORTED) tests = arch64c;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
+        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
         "imperas64p":                     tests = imperas64p;
         "imperas64mmu": if (`MEM_VIRTMEM) tests = imperas64mmu;
@@ -93,7 +94,9 @@ logic [3:0] dummy;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
         "testsBP64":                      tests = testsBP64;
-        // *** add arch f and d tests, peripheral tests
+        "wally64i":                       tests = wally64i;
+        "wally64priv":                    tests = wally64priv;
+        "wally64periph":                  tests = wally64periph;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -110,51 +113,15 @@ logic [3:0] dummy;
         "imperas32a":   if (`A_SUPPORTED) tests = imperas32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
-        // ***add arch f and d tests
+        "wally32i":                       tests = wally32i;
+        "wally32priv":                    tests = wally32priv;
+        "wally32periph":                  tests = wally32periph;
       endcase
     end
     if (tests.size() == 1) begin
       $display("TEST %s not supported in this configuration", TEST);
       $stop;
     end
-    //if (TEST == "arch-64m") //tests = {archtests64m};
- /*   if (`XLEN == 64) begin // RV64
-      if (`TESTSBP) begin
-        tests = testsBP64;
-	// testsbp should not run the other tests. It starts at address 0 rather than
-	// 0x8000_0000, the next if must remain an else if.	
-      end else if (TESTSPERIPH)
-        tests = imperastests64periph;
-      else if (TESTSPRIV)
-        tests = imperastests64p;
-      else begin
-        tests = {imperastests64p,imperastests64i, imperastests64periph};
-        if (`C_SUPPORTED) tests = {tests, imperastests64ic};
-        else              tests = {tests, imperastests64iNOc};
-        if (`F_SUPPORTED) tests = {imperastests64f, tests};
-        if (`D_SUPPORTED) tests = {imperastests64d, tests};
-        if (`MEM_VIRTMEM) tests = {imperastests64mmu, tests};
-        if (`A_SUPPORTED) tests = {imperastests64a, tests};
-        if (`M_SUPPORTED) tests = {imperastests64m, tests};
-      end
-      //tests = {imperastests64a, tests};
-    end else begin // RV32
-      // *** add the 32 bit bp tests
-      if (TESTSPERIPH)
-        tests = imperastests32periph;
-      else if (TESTSPRIV)
-        tests = imperastests32p;
-      else begin
-          tests = {archtests32i, imperastests32i, imperastests32p};//,imperastests32periph}; *** broken at the moment
-          if (`C_SUPPORTED) tests = {tests, imperastests32ic};    
-          else                       tests = {tests, imperastests32iNOc};
-          if (`F_SUPPORTED) tests = {imperastests32f, tests};
-          if (`MEM_VIRTMEM) tests = {imperastests32mmu, tests};
-          if (`A_SUPPORTED) tests = {imperastests32a, tests};
-          if (`M_SUPPORTED) tests = {imperastests32m, tests};
-          tests = {archtests32i};
-     end
-    end */
   end
 
   string signame, memfilename, pathname;
@@ -202,9 +169,10 @@ logic [3:0] dummy;
 	end
       end
       // read test vectors into memory
-      if (tests[0] == `IMPERASTEST)
+      pathname = tvpaths[tests[0].atoi()];
+/*      if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
-      else pathname = tvpaths[1];
+      else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.uncore.dtim.RAM);
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};

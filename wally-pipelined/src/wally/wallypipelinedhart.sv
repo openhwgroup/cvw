@@ -154,9 +154,30 @@ module wallypipelinedhart (
   logic 		    BreakpointFaultM, EcallFaultM;
 
   
-  ifu ifu(.InstrInF(InstrRData),
-	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
-	  .*); // instruction fetch unit: PC, branch prediction, instruction cache
+  ifu ifu(
+    .clk, .reset, 
+    .StallF, .StallD, .StallE, .StallM, .StallW, 
+    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW, 
+    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF, .InstrReadF, .ICacheStallF, 
+    .PCLinkE, .PCSrcE, .PCTargetE, .PCE,
+    .BPPredWrongE, 
+    .RetM, .TrapM, 
+    .PrivilegedNextPCM, .InvalidateICacheM,
+    .InstrD, .InstrM, 
+    .PCM, .InstrClassM, 
+    .BPPredDirWrongM,.BTBPredPCWrongM,.RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF, .IllegalIEUInstrFaultD,
+    .InstrMisalignedFaultM, .InstrMisalignedAdrM,
+    .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
+    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+    .ITLBWriteF, .ITLBFlushF,
+    .WalkerInstrPageFaultF,
+    .ITLBMissF,
+    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
+    .InstrAccessFaultF
+	  
+	  ); // instruction fetch unit: PC, branch prediction, instruction cache
+    
 
   ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
 

@@ -62,7 +62,8 @@ for(my $i=0; $i<=$#ARGV; $i++) {
             }
                 if (/Disassembly of section .data:/) { $mode = 1;}
             } elsif ($mode == 1) { # Parse data segment
-                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
+#                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) { # changed to \t 30 Oct 2021 dmh to fix parsing issue in d_fmadd_b17
+                if (/^\s*(\S\S\S\S\S\S\S\S):\t+(.*)/) {
                     $address = &fixadr($1);
     #		print "addresss $address maxaddress $maxaddress\n";
             if ($address > $maxaddress) { $maxaddress = $address; }
