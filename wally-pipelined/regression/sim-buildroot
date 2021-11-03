@@ -30,4 +30,4 @@ echo "INSTR_LIMIT  = ${INSTR_LIMIT}"
 echo "INSTR_WAVEON = ${INSTR_WAVEON}"
 echo "CHECKPOINT   = ${CHECKPOINT}"
 
-vsim -do wally-buildroot.do $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
+vsim -do "do ./wally-buildroot.do $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT"
