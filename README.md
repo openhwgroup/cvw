@@ -8,10 +8,8 @@ To use Wally on Linux:
 ```
 git clone https://github.com/davidharrishmc/riscv-wally
 cd riscv-wally
-cd tests
-cd imperas-riscv-tests
-make
-cd ../../addins
+cd addins
+*** can these clones be replaced with git submodule commands?
 git clone https://github.com/riscv-non-isa/riscv-arch-test
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 cd riscv-isa-sim
@@ -30,6 +28,13 @@ cp ../riscv-isa-sim/arch_test_target/spike/Makefile.include .
 edit Makefile.include
   change line with TARGETDIR to /home/harris/riscv-wally/addins/riscv-isa-sim/arch_test_target (or whatever your path is) 
   add line export RISCV_PREFIX = riscv64-unknown-elf-  # this might not be needed if you have 32-bit versions of the riscv gcc compiler built separately
+make
+make XLEN=32
+exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
+cd ../../tests
+cd imperas-riscv-tests
+make
+cd ../wally-riscv-arch-test
 make
 make XLEN=32
 exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
