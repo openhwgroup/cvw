@@ -87,12 +87,26 @@ def Mod_Space_at(Ln,loc,diff):
     
     return NewString
 
-def main_filehandler(overwrite=False):
+'''def main_filehandler(overwrite=False):
     for filename in os.listdir():
-        if ".py" not in filename:
+        if ".sv" in filename:
             GiantString = read_input(filename)
             SOV = ID_start(GiantString)
             ModifiedGS = modified_logNew(GiantString,SOV)
-            Newname = write_to_output(filename,ModifiedGS,overwrite)
+            Newname = write_to_output(filename,ModifiedGS,overwrite)'''
+def root_filehandler(path,overwrite=False):
+    for f in os.listdir(path):
+        if os.path.isdir(f):
+            root_filehandler(path+"/"+f)
+        else:
+            if ".sv" in f:
+                GiantString = read_input(f)
+                SOV = ID_start(GiantString)
+                ModifiedGS = modified_logNew(GiantString,SOV)
+                Newname = write_to_output(f,ModifiedGS,overwrite)
+                
+                
+def driver(overwrite=False):
+    root_filehandler(os.getcwd())
  
-main_filehandler(True)
+driver(True)
