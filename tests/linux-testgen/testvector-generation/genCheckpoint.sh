@@ -22,6 +22,7 @@ Is that what you wanted? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
+    echo "Creating checkpoint at $instrs instructions!"
     mkdir -p $checkOutDir
     mkdir -p $checkIntermedDir
     
