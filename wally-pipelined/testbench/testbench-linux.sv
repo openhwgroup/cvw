@@ -275,6 +275,7 @@ module testbench();
   endgenerate
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
   `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
   `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
