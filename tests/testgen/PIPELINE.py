@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 ##################################
-# wally-I.py
+# PIPELINE.py
 #
 # David_Harris@hmc.edu 27 October 2021
 #
@@ -88,10 +88,10 @@ def writeVector(a, b, storecmd, xlen):
 ##################################
 
 # change these to suite your tests
-instrs = ["ADD", "SUB", "SLT", "SLTU", "XOR", "OR", "AND"]
+instrs = ["ADD"] # "SUB", "XOR", "OR", "AND", "SLT", "SLTU", ]
 author = "David_Harris@hmc.edu"
 xlens = [32, 64]
-numrand = 100
+numrand = 1000
 
 # setup
 seed(0) # make tests reproducible
@@ -108,7 +108,7 @@ for xlen in xlens:
     storecmd = "sd"
     wordsize = 8
   pathname = "../wally-riscv-arch-test/riscv-test-suite/rv" + str(xlen) + "i_m/I/"
-  fname = pathname + "src/WALLY-PIPELINE.S"
+  fname = pathname + "src/PIPELINE.S"
   testnum = 0
 
   # print custom header part
@@ -124,6 +124,19 @@ for xlen in xlens:
   # insert generic header
   h = open("testgen_header.S", "r")
   for line in h:  
+    f.write(line)
+
+  maxreg = 5
+  for i in range(numrand):
+    instr = instrs[randint(0,len(instrs)-1)]
+    reg1 = randint(0,maxreg)
+    reg2 = randint(1,maxreg)
+    reg3 = randint(1,maxreg)
+    line = instr + " x" +str(reg3) + ", x" + str(reg1) + ", x" + str(reg2) + "\n"
+    f.write(line)
+
+  for i in range(1,maxreg+1):
+    line = storecmd + " x" + str(i) + ", " + str(wordsize*(i-1)) + "(x8)\n"
     f.write(line)
 
   # print directed and random test vectors

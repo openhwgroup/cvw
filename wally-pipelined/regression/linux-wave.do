@@ -60,20 +60,26 @@ add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/c/RegWriteD
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/dp/RdD
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/dp/Rs1D
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/dp/Rs2D
-add wave -noupdate -group {Execution Stage} /testbench/dut/hart/ifu/PCE
-add wave -noupdate -group {Execution Stage} /testbench/InstrEName
-add wave -noupdate -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
-add wave -noupdate -group {Execution Stage} -color {Cornflower Blue} /testbench/FunctionName/FunctionName
-add wave -noupdate -group {Memory Stage} /testbench/dut/hart/priv/trap/InstrValidM
-add wave -noupdate -group {Memory Stage} /testbench/dut/hart/PCM
-add wave -noupdate -group {Memory Stage} /testbench/InstrMName
-add wave -noupdate -group {Memory Stage} /testbench/dut/hart/InstrM
-add wave -noupdate -group {Memory Stage} /testbench/dut/hart/lsu/MemAdrM
-add wave -noupdate -group {WriteBack stage} /testbench/PCW
-add wave -noupdate -group {WriteBack stage} /testbench/InstrW
-add wave -noupdate -group {WriteBack stage} /testbench/InstrWName
-add wave -noupdate -group {WriteBack stage} /testbench/InstrValidW
-add wave -noupdate -group {WriteBack stage} /testbench/checkInstrW
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/PCE
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/hart/ifu/InstrE
+add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
+add wave -noupdate -expand -group {Execution Stage} /testbench/textE
+add wave -noupdate -expand -group {Execution Stage} -color {Cornflower Blue} /testbench/FunctionName/FunctionName
+add wave -noupdate -expand -group {Memory Stage} /testbench/checkInstrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/priv/trap/InstrValidM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/PCM
+add wave -noupdate -expand -group {Memory Stage} /testbench/ExpectedPCM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/InstrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
+add wave -noupdate -expand -group {Memory Stage} /testbench/textM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/MemAdrM
+add wave -noupdate -expand -group {WriteBack stage} /testbench/checkInstrW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrValidW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/PCW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/ExpectedPCW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrW
+add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrWName
+add wave -noupdate -expand -group {WriteBack stage} /testbench/textW
 add wave -noupdate -group Bpred -color Orange /testbench/dut/hart/ifu/bpred/bpred/Predictor/DirPredictor/GHR
 add wave -noupdate -group Bpred -expand -group {branch update selection inputs} /testbench/dut/hart/ifu/bpred/bpred/Predictor/DirPredictor/BPPredF
 add wave -noupdate -group Bpred -expand -group {branch update selection inputs} {/testbench/dut/hart/ifu/bpred/bpred/Predictor/DirPredictor/InstrClassE[0]}
@@ -484,7 +490,6 @@ add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/hart/p
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/checkInstrM
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/hart/PCM
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/ExpectedPCM
-add wave -noupdate -group {debug trace} -expand -group mem /testbench/line
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/textM
 add wave -noupdate -group {debug trace} -expand -group mem -color Brown /testbench/dut/hart/hzu/TrapM
 add wave -noupdate -group {debug trace} -expand -group wb /testbench/checkInstrW
@@ -510,7 +515,7 @@ add wave -noupdate /testbench/dut/uncore/dtim/memwrite
 add wave -noupdate /testbench/dut/uncore/dtim/HWDATA
 add wave -noupdate /testbench/dut/uncore/dtim/risingHREADYTim
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 23} {209183247 ns} 0} {{Cursor 5} {229 ns} 0}
+WaveRestoreCursors {{Cursor 23} {209183247 ns} 0} {{Cursor 5} {5672440 ns} 0}
 quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -526,4 +531,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {182 ns} {330 ns}
+WaveRestoreZoom {5672937 ns} {5673085 ns}

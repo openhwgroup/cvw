@@ -55,7 +55,7 @@ module fpudivsqrtrecur (
   // Special Cases
   // *** shift to handle denorms in hardware
 
-  assign FDivSqrtResSign = FDivE & (XSgnE ^ YSgnE); // Sign is negative for division if inputs have opposite signs
+  assign FDivSqrtResSgn = FDivE & (XSgnE ^ YSgnE); // Sign is negative for division if inputs have opposite signs
 
   always_comb begin 
       if (FSqrtE & XSgnE | FDivE & XZeroE & YZeroE | XNaNE | FDivE & YNaNE) FDivSqrtResM = 0; // ***replace with NAN; // *** which one

@@ -25,10 +25,12 @@
 
 `define IMPERASTEST   "0"
 `define RISCVARCHTEST "1"
+`define WALLYTEST "2"
 
 string tvpaths[] = '{
     "../../tests/imperas-riscv-tests/work/",
-    "../../addins/riscv-arch-test/work/"
+    "../../addins/riscv-arch-test/work/",
+    "../../tests/wally-riscv-arch-test/work/"
 };
 
   string imperas32mmu[] = '{
@@ -1067,4 +1069,30 @@ string imperas32f[] = '{
     "rv32i_m/I/xori-01", "4010"
   };
 
+ string wally64i[] = '{
+    `WALLYTEST,
+    "rv64i_m/I/add-01", "9010",
+    "rv64i_m/I/PIPELINE", "3010"
+ };
+
+ string wally64priv[] = '{
+    `WALLYTEST
+ };
+
+ string wally64periph[] = '{
+    `WALLYTEST
+ };
+
+string wally32i[] = '{
+    `WALLYTEST,
+    "rv32i_m/I/PIPELINE", "3010"
+ };
+
+ string wally32priv[] = '{
+    `WALLYTEST
+ };
+
+ string wally32periph[] = '{
+    `WALLYTEST
+ };
 

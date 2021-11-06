@@ -16,16 +16,11 @@
 
 #include "model_test.h"
 #include "arch_test.h"
-RVTEST_ISA("RV64I")
 
 .section .text.init
 .globl rvtest_entry_point
 rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
-
-#ifdef TEST_CASE_1
-
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",add)
 
 RVTEST_SIGBASE( x8,signature_x8_1)
