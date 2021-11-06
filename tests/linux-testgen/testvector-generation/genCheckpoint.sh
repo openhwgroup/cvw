@@ -2,8 +2,6 @@
 
 source  genSettings.sh
 tcpPort=1236
-checkOutDir="$outDir/checkpoint$instrs"
-checkIntermedDir="$checkOutDir/intermediate-outputs"
 
 # Parse Commandline Arg
 if [ "$#" -ne 1 ]; then
@@ -16,6 +14,8 @@ then
     echo "Error expected integer number of instructions, got $instrs" >&2
     exit 1
 fi
+checkOutDir="$outDir/checkpoint$instrs"
+checkIntermedDir="$checkOutDir/intermediate-outputs"
 
 read -p "This scripts is going to create a checkpoint at $instrs instrs.
 Is that what you wanted? (y/n) " -n 1 -r
