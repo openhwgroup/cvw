@@ -39,7 +39,7 @@ cd ../wally-riscv-arch-test
 make
 make XLEN=32
 exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
-cd ../../wally-pipelined/linux-testgen/linux-testvectors
+cd ../../tests/linux-testgen/linux-testvectors
 ./tvLinker.sh
 ```
 
