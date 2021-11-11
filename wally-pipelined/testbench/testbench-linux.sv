@@ -470,8 +470,12 @@ module testbench();
     if(CheckMIPFutureE) CheckMIPFutureE <= 0;
     CheckMIPFutureM <= CheckMIPFutureE;
     if(CheckMIPFutureM) begin
-      if((ExpectedPCM != MepcExpected) & ((MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM) <= 16)) begin
-        RequestDelayedMIP = 1;
+      $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
+      $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
+      $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 16)) begin
+      // if((ExpectedPCM != MepcExpected) & ((MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM) <= 16)) begin
+        RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
         $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
@@ -488,14 +492,14 @@ module testbench();
       $display("%tn: ExpectedCSRArrayM[NumCSRM] %x",$time,ExpectedCSRArrayM[NumCSRM]);
       $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
         
-      if((ExpectedPCM != MepcExpected) & ((MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM) <= 16)) begin
-        RequestDelayedMIP = 1;
-        $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
-      end else begin
-        $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
-        MIPexpected = NextMIPexpected;
-        force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
-      end
+      // if((ExpectedPCM != MepcExpected) & ((MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM) <= 16)) begin
+      //   RequestDelayedMIP = 1;
+      //   $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
+      // end else begin
+      //   $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
+      //   MIPexpected = NextMIPexpected;
+      //   force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+      // end
     end
     if(RequestDelayedMIP) begin
       $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.csr.genblk1.csrm.MEPC_REGW);
