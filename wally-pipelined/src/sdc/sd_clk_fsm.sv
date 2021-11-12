@@ -66,10 +66,10 @@ module sd_clk_fsm
   localparam s_safe_state = 4'b1111;  //always provide a safe state return if all states are not used
 
   flopenr #(4) stateReg(.clk(CLK),
-		       .reset(i_RST),
-		       .en(1'b1),
-		       .d(w_next_state),
-		       .q(r_curr_state));
+			.reset(i_RST),
+			.en(1'b1),
+			.d(w_next_state),
+			.q(r_curr_state));
 
   assign w_next_state = i_RST ? s_reset :
 			r_curr_state == s_reset | (r_curr_state == s_enable_init_clk & ~i_START) | (r_curr_state == s_select_init_clk) ? s_enable_init_clk :

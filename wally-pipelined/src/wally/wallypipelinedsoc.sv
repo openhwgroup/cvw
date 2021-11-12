@@ -61,6 +61,8 @@ module wallypipelinedsoc (
   output logic 		   SDCCLK			  
 );
 
+  logic 		   sreset;
+  
   // to instruction memory *** remove later
   logic [`XLEN-1:0] PCF;
 
@@ -90,9 +92,11 @@ module wallypipelinedsoc (
   //assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
   //assign SDCCmdIn = SDCCmd;
   //assign SDCDatIn = SDCDat; // when write supported this will be a tristate
-   
+
+  arrs arrs(.clk, .areset(reset), .reset(sreset));
+  
   // instantiate processor and memories
-  wallypipelinedhart hart(.clk, .reset,
+  wallypipelinedhart hart(.clk, .reset(sreset),
     .PCF,  .TimerIntM, .ExtIntM, .SwIntM, .DataAccessFaultM, 
     .MTIME_CLINT, .MTIMECMP_CLINT, .rd2, 
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
