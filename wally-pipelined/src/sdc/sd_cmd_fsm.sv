@@ -33,76 +33,77 @@ module sd_cmd_fsm
    input logic i_RST, // reset FSM,
    // MUST COME OUT OF RESET
    // SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
-   (* mark_debug = "true" *) output logic o_TIMER_LOAD, o_TIMER_EN, // Timer
-   (* mark_debug = "true" *) output logic [18:0] o_TIMER_IN,
-   (* mark_debug = "true" *) input logic [18:0] i_TIMER_OUT,
-   (* mark_debug = "true" *) output logic o_COUNTER_LOAD, o_COUNTER_EN, // Counter
-   (* mark_debug = "true" *) output logic [7:0] o_COUNTER_IN,
-   (* mark_debug = "true" *) input logic [7:0] i_COUNTER_OUT,
-   (* mark_debug = "true" *) output logic o_SD_CLK_EN, // Clock Gaters
-   (* mark_debug = "true" *) input logic i_CLOCK_CHANGE_DONE, // Communication with CLK_FSM
-   (* mark_debug = "true" *) output logic o_START_CLOCK_CHANGE, // Communication with CLK_FSM
-   (* mark_debug = "true" *) output logic o_IC_RST, o_IC_EN, o_IC_UP_DOWN, // Instruction counter
-   (* mark_debug = "true" *) input logic [3:0] i_IC_OUT, // stop when you get to 10 because that is CMD17
-   (* mark_debug = "true" *) input logic [1:0] i_USES_DAT,
-   (* mark_debug = "true" *) input logic [6:0] i_OPCODE,
-   (* mark_debug = "true" *) input logic [2:0] i_R_TYPE,
+   output logic o_TIMER_LOAD, o_TIMER_EN, // Timer
+   output logic [18:0] o_TIMER_IN,
+   input logic [18:0] i_TIMER_OUT,
+   output logic o_COUNTER_LOAD, o_COUNTER_EN, // Counter
+   output logic [7:0] o_COUNTER_IN,
+   input logic [7:0] i_COUNTER_OUT,
+   output logic o_SD_CLK_EN, // Clock Gaters
+   input logic i_CLOCK_CHANGE_DONE, // Communication with CLK_FSM
+   output logic o_START_CLOCK_CHANGE, // Communication with CLK_FSM
+   output logic o_IC_RST, o_IC_EN, o_IC_UP_DOWN, // Instruction counter
+   input logic [3:0] i_IC_OUT, // stop when you get to 10 because that is CMD17
+   input logic [1:0] i_USES_DAT,
+   input logic [6:0] i_OPCODE,
+   input logic [2:0] i_R_TYPE,
    // bit masks
-   (* mark_debug = "true" *) input logic [31:0] i_NO_REDO_MASK,
-   (* mark_debug = "true" *) input logic [31:0] i_NO_REDO_ANS,
-   (* mark_debug = "true" *) input logic [31:0] i_NO_ERROR_MASK,
-   (* mark_debug = "true" *) input logic [31:0] i_NO_ERROR_ANS,
+   input logic [31:0] i_NO_REDO_MASK,
+   input logic [31:0] i_NO_REDO_ANS,
+   input logic [31:0] i_NO_ERROR_MASK,
+   input logic [31:0] i_NO_ERROR_ANS,
    (* mark_debug = "true" *) output logic o_SD_CMD_OE, // Enable ouptut on tri-state SD_CMD line
    // TX Components
-   (* mark_debug = "true" *) output logic o_TX_PISO40_LOAD, o_TX_PISO40_EN, // Shift register for TX command head
-   (* mark_debug = "true" *) output logic o_TX_PISO8_LOAD, o_TX_PISO8_EN, // Shift register for TX command tail
-   (* mark_debug = "true" *) output logic o_TX_CRC7_PIPO_RST, o_TX_CRC7_PIPO_EN, // Parallel-to-Parallel CRC7 Generator
-   (* mark_debug = "true" *) output logic [1:0] o_TX_SOURCE_SELECT, // What gets sent to CMD_TX
+    output logic o_TX_PISO40_LOAD, o_TX_PISO40_EN, // Shift register for TX command head
+    output logic o_TX_PISO8_LOAD, o_TX_PISO8_EN, // Shift register for TX command tail
+    output logic o_TX_CRC7_PIPO_RST, o_TX_CRC7_PIPO_EN, // Parallel-to-Parallel CRC7 Generator
+    output logic [1:0] o_TX_SOURCE_SELECT, // What gets sent to CMD_TX
    // TX Memory
-   (* mark_debug = "true" *) output logic o_CMD_TX_IS_CMD55_RST,
-   (* mark_debug = "true" *) output logic o_CMD_TX_IS_CMD55_EN, // '1' means that the command that was just sent has index
+    output logic o_CMD_TX_IS_CMD55_RST,
+    output logic o_CMD_TX_IS_CMD55_EN, // '1' means that the command that was just sent has index
    // 55, so the subsequent command is to be
    // viewed as ACMD by the SD card.
    // RX Components
-   (* mark_debug = "true" *) input logic i_SD_CMD_RX, // serial response input on SD_CMD
-   (* mark_debug = "true" *) output logic o_RX_SIPO48_RST, o_RX_SIPO48_EN, // Shift Register for all 48 bits of Response
+    input logic i_SD_CMD_RX, // serial response input on SD_CMD
+    output logic o_RX_SIPO48_RST, o_RX_SIPO48_EN, // Shift Register for all 48 bits of Response
 
-   (* mark_debug = "true" *) input logic [39:8] i_RESPONSE_CONTENT, // last 32 bits of RX_SIPO_40_OUT
-   (* mark_debug = "true" *) input logic [45:40] i_RESPONSE_INDEX, // 6 bits from RX_SIPO_40_OUT
-   (* mark_debug = "true" *) output logic o_RX_CRC7_SIPO_RST, o_RX_CRC7_SIPO_EN, // Serial-to-parallel CRC7 Generator
-   (* mark_debug = "true" *) input logic [6:0] i_RX_CRC7,
+    input logic [39:8] i_RESPONSE_CONTENT, // last 32 bits of RX_SIPO_40_OUT
+    input logic [45:40] i_RESPONSE_INDEX, // 6 bits from RX_SIPO_40_OUT
+    output logic o_RX_CRC7_SIPO_RST, o_RX_CRC7_SIPO_EN, // Serial-to-parallel CRC7 Generator
+    input logic [6:0] i_RX_CRC7,
    // RX Memory
-   (* mark_debug = "true" *) output logic o_RCA_REGISTER_RST, o_RCA_REGISTER_EN, // Relative Card Address
+    output logic o_RCA_REGISTER_RST, o_RCA_REGISTER_EN, // Relative Card Address
    // Communication to sd_dat_fsm
-   (* mark_debug = "true" *) output logic o_CMD_TX_DONE, // begin waiting for DAT_RX to complete
-   (* mark_debug = "true" *) input logic i_DAT_RX_DONE, // now go to next state since data block rx was completed
+    output logic o_CMD_TX_DONE, // begin waiting for DAT_RX to complete
+    input logic i_DAT_RX_DONE, // now go to next state since data block rx was completed
    (* mark_debug = "true" *) input logic i_ERROR_CRC16, // repeat last command
    (* mark_debug = "true" *) input logic i_ERROR_DAT_TIMES_OUT,
    // Commnuication to core
-   (* mark_debug = "true" *) output logic o_READY_FOR_READ, // tell core that I have completed initialization
-   (* mark_debug = "true" *) output logic o_SD_RESTARTING, // inform core the need to restart
-   (* mark_debug = "true" *) input logic i_READ_REQUEST, // core tells me to execute CMD17
+    output logic o_READY_FOR_READ, // tell core that I have completed initialization
+    output logic o_SD_RESTARTING, // inform core the need to restart
+    input logic i_READ_REQUEST, // core tells me to execute CMD17
    // Communication to Host
-   (* mark_debug = "true" *) output logic o_DAT_ERROR_FD_RST,
-   (* mark_debug = "true" *) output logic [2:0] o_ERROR_CODE_Q, // Indicates what caused the fatal error
-   (* mark_debug = "true" *) output logic o_FATAL_ERROR, // SD Card is damaged beyond recovery, restart entire initialization procedure of card
-   (* mark_debug = "true" *) input logic LIMIT_SD_TIMERS
+    output logic o_DAT_ERROR_FD_RST,
+    output logic [2:0] o_ERROR_CODE_Q, // Indicates what caused the fatal error
+    output logic o_FATAL_ERROR, // SD Card is damaged beyond recovery, restart entire initialization procedure of card
+    input logic LIMIT_SD_TIMERS
    );
 
 
 
-  (* mark_debug = "true" *) logic  [4:0]  w_next_state, r_curr_state;
-  (* mark_debug = "true" *) logic 	w_resend_last_command, w_rx_crc7_check, w_rx_index_check, w_rx_bad_crc7, w_rx_bad_index, w_rx_bad_reply, w_bad_card;
+  logic  [4:0]  w_next_state;
+  (* mark_debug = "true" *) logic  [4:0]  r_curr_state;
+  logic 	w_resend_last_command, w_rx_crc7_check, w_rx_index_check, w_rx_bad_crc7, w_rx_bad_index, w_rx_bad_reply, w_bad_card;
   
-  (* mark_debug = "true" *) logic [31:0] 	w_redo_result, w_error_result;
-  (* mark_debug = "true" *) logic 	w_ACMD41_init_done;
-  (* mark_debug = "true" *) logic 	w_fail_cnt_en, w_fail_count_rst;
-  (* mark_debug = "true" *) logic [10:0] 	r_fail_count_out;
+  logic [31:0] 	w_redo_result, w_error_result;
+  logic 	w_ACMD41_init_done;
+  logic 	w_fail_cnt_en, w_fail_count_rst;
+  logic [10:0] 	r_fail_count_out;
 
-  (* mark_debug = "true" *) logic 	w_ACMD41_busy_timer_START, w_ACMD41_times_out_FLAG, w_ACMD41_busy_timer_RST; //give up after 1000 ms of ACMD41
-  (* mark_debug = "true" *) logic [2:0] 	w_ERROR_CODE_D, r_ERROR_CODE_Q ; // Error Codes for fatal error on SD CMD FSM
-  (* mark_debug = "true" *) logic 	w_ERROR_CODE_RST, w_ERROR_CODE_EN;
-  (* mark_debug = "true" *) logic [18:0] 	Timer_In;
+  logic 	w_ACMD41_busy_timer_START, w_ACMD41_times_out_FLAG, w_ACMD41_busy_timer_RST; //give up after 1000 ms of ACMD41
+  logic [2:0] 	w_ERROR_CODE_D, r_ERROR_CODE_Q ; // Error Codes for fatal error on SD CMD FSM
+  logic 	w_ERROR_CODE_RST, w_ERROR_CODE_EN;
+  logic [18:0] 	Timer_In;
 
 
   localparam s_reset_clear_error_reg = 5'b00000;
