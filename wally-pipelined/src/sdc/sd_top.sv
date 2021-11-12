@@ -484,30 +484,24 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
     (.CountIn('0),     // No CountIn, only RESET
     .CountOut(r_IC_OUT),
     .Load(1'b0),                // No LOAD, only RESET
-    .Enable(w_IC_EN_Q),
+    .Enable(w_IC_EN),
     .UpDown(w_IC_UP_DOWN),
     .clk(r_G_CLK_SD),
-    .reset(w_IC_RST));
-
-  flopr #(1) w_IC_EN_Q_reg
-    (.clk(~r_G_CLK_SD),
-     .reset(a_RST),
-     .d(w_IC_EN),
-     .q(w_IC_EN_Q));
-  
+    .reset(w_IC_RST | a_RST));
 
   // Clock selection
   clkdivider #(g_COUNT_WIDTH) slow_clk_divider        // Divide 50 MHz to <400 KHz (Initial clock)
     (.i_COUNT_IN_MAX(i_COUNT_IN_MAX),
-    .i_EN(w_SD_CLK_SELECTED),
-    //.i_EN(1'b1),
-    .i_RST(w_HS_TO_INIT_CLK_DIVIDER_RST),
-    .i_CLK(CLK),
-    .o_CLK(r_CLK_SD));
+     .i_EN(w_SD_CLK_SELECTED),
+     //.i_EN(1'b1),
+     //.i_RST(w_HS_TO_INIT_CLK_DIVIDER_RST),
+     .i_RST(a_RST),
+     .i_CLK(CLK),
+     .o_CLK(r_CLK_SD));
 
   clockgater sd_clk_gater              // Select which clock goes to components
     (.CLK(r_CLK_SD),
-    .E(w_G_CLK_SD_EN),
+    .E(w_G_CLK_SD_EN | a_RST),
     .SE(1'b0),
     .ECLK(r_G_CLK_SD));
 

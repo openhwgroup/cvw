@@ -37,8 +37,60 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
    ); 
 
 
+  logic [g_COUNT_WIDTH-1:0] 	   r_count_out;  // wider for sign
+  logic 			   w_counter_overflowed;
+
+  logic 			   r_fd_Q;
+  logic 			   w_fd_D;
+
+  logic 			   w_load;
+
+  logic 			   resetD, resetDD, resetPulse;
+
+  assign  w_load = resetPulse | w_counter_overflowed;  // reload when zero occurs or when set by outside
+
+  counter #(.WIDTH(g_COUNT_WIDTH))  // wider for sign, this way the (MSB /= '1') only for zero
+  my_counter (.clk(i_CLK),
+	      .Load(w_load), //  reload when zero occurs or when set by outside
+	      .CountIn(i_COUNT_IN_MAX), // negative signed integer
+	      .CountOut(r_count_out),
+	      .Enable(1'b1), // ALWAYS COUNT
+	      .reset(1'b0)); // no reset, only load
+  
+
+  assign w_counter_overflowed = r_count_out[g_COUNT_WIDTH-1] == '0;
+
+  // to ensure the clock keeps running we need to make the reset last 1 cycle
+  // rather than until the reset is released.  Alternatively we could do
+  // two resets.  The first which resets this and the clk_fsm and the second
+  // which resets the rest of the design.
+  // Or we can make this clock divider not depend on reset.
+
+  flop #(1) pulseReset
+    (.d(i_RST),
+    .q(resetD),
+    .clk(i_CLK));
+
+  flop #(1) pulseReset2
+    (.d(resetD),
+    .q(resetDD),
+    .clk(i_CLK));
+  
+  assign resetPulse = i_RST & ~resetDD;
+  
+  flopenr #(1) toggle_flip_flop
+    (.d(w_fd_D),
+     .q(r_fd_Q),
+     .clk(i_CLK),
+     .reset(resetPulse),
+     .en(w_counter_overflowed));        // only update when counter overflows
+
+  assign w_fd_D = ~ r_fd_Q;
+
+
   generate
     if(`FPGA) begin
+/* -----\/----- EXCLUDED -----\/-----
       logic CLKDiv8, CLKDiv64;
       
       BUFGCE_DIV #("8") clkDivider1(.I(i_CLK),
@@ -49,43 +101,19 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
 				    .CLR(i_RST),
 				    .CE(1'b1),
 				    .O(CLKDiv64));
-
       BUFGMUX clkMux(.I1(CLKDiv64),
 		     .I0(i_CLK),
 		     .S(i_EN),
 		     .O(o_CLK));
+ -----/\----- EXCLUDED -----/\----- */
+
+      BUFGMUX
+      clkMux(.I1(r_fd_Q),
+	     .I0(i_CLK),
+	     .S(i_EN),
+	     .O(o_CLK));
       
     end else begin
-      logic [g_COUNT_WIDTH-1:0] 	   r_count_out;  // wider for sign
-      logic 				   w_counter_overflowed;
-
-      logic 				   r_fd_Q;
-      logic 				   w_fd_D;
-
-      logic 				   w_load;
-
-      assign  w_load = i_RST | w_counter_overflowed;  // reload when zero occurs or when set by outside
-
-      counter #(.WIDTH(g_COUNT_WIDTH))  // wider for sign, this way the (MSB /= '1') only for zero
-      my_counter (.clk(i_CLK),
-		  .Load(w_load), //  reload when zero occurs or when set by outside
-		  .CountIn(i_COUNT_IN_MAX), // negative signed integer
-		  .CountOut(r_count_out),
-		  .Enable(1'b1), // ALWAYS COUNT
-		  .reset(1'b0)); // no reset, only load
-      
-
-      assign w_counter_overflowed = r_count_out[g_COUNT_WIDTH-1] == '0;
-      
-      flopenr #(1) toggle_flip_flop
-	(.d(w_fd_D),
-	 .q(r_fd_Q),
-	 .clk(i_CLK),
-	 .reset(i_RST),                     // reset when told by outside
-	 .en(w_counter_overflowed));        // only update when counter overflows
-
-      assign w_fd_D = ~ r_fd_Q;
-
       assign o_CLK = i_EN ? r_fd_Q : i_CLK;
     end
   endgenerate

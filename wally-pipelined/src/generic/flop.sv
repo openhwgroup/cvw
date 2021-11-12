@@ -42,7 +42,7 @@ module flopr #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk)
     if (reset) q <= #1 0;
     else       q <= #1 d;
 endmodule
@@ -63,7 +63,7 @@ module flopenrc #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk)
     if (reset)   q <= #1 0;
     else if (en) 
       if (clear) q <= #1 0;
@@ -72,6 +72,17 @@ endmodule
 
 // flop with enable, asynchronous reset
 module flopenr #(parameter WIDTH = 8) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset)   q <= #1 0;
+    else if (en) q <= #1 d;
+endmodule
+
+// flop with enable, asynchronous reset
+module flopenar #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -87,7 +98,7 @@ module flopens #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge set)
+  always_ff @(posedge clk)
     if (set)   q <= #1 1;
     else if (en) q <= #1 d;
 endmodule
@@ -100,7 +111,7 @@ module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   input  TYPE val,
   output TYPE q);
 
-  always_ff @(posedge clk, posedge load)
+  always_ff @(posedge clk)
     if (load)    q <= #1 val;
     else if (en) q <= #1 d;
 endmodule
@@ -113,7 +124,7 @@ module floprc #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk)
     if (reset) q <= #1 0;
     else       
       if (clear) q <= #1 0;

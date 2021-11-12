@@ -647,7 +647,7 @@ string tests32f[] = '{
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.addr"};
       ProgramLabelMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.lab"};
       $display("Read memfile %s", memfilename);
-      reset = 1; # 42; reset = 0;
+      reset = 0; #97; reset = 1; # 1000; reset = 0;
     end
 
   // generate clock to sequence tests
@@ -735,7 +735,7 @@ string tests32f[] = '{
           $display("Read memfile %s", memfilename);
 	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
 	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
-          reset = 1; # 17; reset = 0;
+	  reset = 0; #97; reset = 1; # 1000; reset = 0;
         end
       end
     end // always @ (negedge clk)
