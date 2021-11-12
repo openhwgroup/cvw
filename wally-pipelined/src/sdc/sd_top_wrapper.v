@@ -26,14 +26,14 @@ module sd_top_wrapper #(parameter g_COUNT_WIDTH = 8)
   wire 		     CLK;
   wire 		     LIMIT_SD_TIMERS;
   wire [g_COUNT_WIDTH-1:0] i_COUNT_IN_MAX;
-  (* mark_debug = "true" *) wire [4095:0] 	   ReadData; // full 512 bytes to Bus
+  wire [4095:0] 	   ReadData; // full 512 bytes to Bus
   wire [32:9] 		   i_BLOCK_ADDR; // see "Addressing" in parts.fods (only 8GB total capacity is used)
   wire 			   o_SD_CMD; // CMD Command from host
   wire 			   i_SD_CMD; // CMD Command from host  
   wire 			   o_SD_CMD_OE; // Direction of SD_CMD
-  (* mark_debug = "true" *) wire [2:0] 		   o_ERROR_CODE_Q; // indicates which error occured
-  (* mark_debug = "true" *) wire 			   o_FATAL_ERROR; // indicates that the FATAL ERROR register has updated
-  (* mark_debug = "true" *) wire 			   o_LAST_NIBBLE; // pulse when last nibble is sent
+  wire [2:0] 		   o_ERROR_CODE_Q; // indicates which error occured
+  wire 			   o_FATAL_ERROR; // indicates that the FATAL ERROR register has updated
+  wire 			   o_LAST_NIBBLE; // pulse when last nibble is sent
 
   assign LIMIT_SD_TIMERS = 1'b0;
   assign i_COUNT_IN_MAX = -8'd62;

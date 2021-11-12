@@ -35,9 +35,9 @@ module up_down_counter #(parameter integer WIDTH=32)
    input logic 		    clk,
    input logic 		    reset);
 
-  (* mark_debug = "true" *)logic [WIDTH-1:0] NextCount;
+  logic [WIDTH-1:0] NextCount;
   logic [WIDTH-1:0] count_q;
-  (* mark_debug = "true" *)logic [WIDTH-1:0] CountP1;
+  logic [WIDTH-1:0] CountP1;
 
   flopenr #(WIDTH) reg1(.clk,
 			.reset,

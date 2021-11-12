@@ -90,23 +90,6 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
 
   generate
     if(`FPGA) begin
-/* -----\/----- EXCLUDED -----\/-----
-      logic CLKDiv8, CLKDiv64;
-      
-      BUFGCE_DIV #("8") clkDivider1(.I(i_CLK),
-				    .CLR(i_RST),
-				    .CE(1'b1),
-				    .O(CLKDiv8));
-      BUFGCE_DIV #("8") clkDivider2(.I(CLKDiv8),
-				    .CLR(i_RST),
-				    .CE(1'b1),
-				    .O(CLKDiv64));
-      BUFGMUX clkMux(.I1(CLKDiv64),
-		     .I0(i_CLK),
-		     .S(i_EN),
-		     .O(o_CLK));
- -----/\----- EXCLUDED -----/\----- */
-
       BUFGMUX
       clkMux(.I1(r_fd_Q),
 	     .I0(i_CLK),
