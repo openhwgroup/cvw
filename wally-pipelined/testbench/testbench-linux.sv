@@ -197,7 +197,7 @@ module testbench();
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
-  `define CURR_PRIV   dut.hart.priv.privmodereg.q
+  `define PRIV        dut.hart.priv.privmodereg.q
   `define INSTRET     dut.hart.priv.csr.genblk1.counters.genblk1.genblk2.INSTRETreg.q
   // Common Macros
   `define checkCSR(CSR) \
@@ -289,11 +289,11 @@ module testbench();
   `INIT_CHECKPOINT_VAL(MTVEC,      [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(STVEC,      [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
   `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
 
   integer ramFile;
   integer readResult;
-  assign initPriv = (initPC[0][`XLEN-1]) ? 2'h1 : 2'h3; // *** a hacky way to detect initial privilege level
   initial begin
     force dut.hart.priv.SwIntM = 0;
     force dut.hart.priv.TimerIntM = 0;
@@ -325,7 +325,6 @@ module testbench();
       force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
       force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
       force `INSTRET = CHECKPOINT;
-      force `CURR_PRIV = initPriv;
       while (reset!==1) #1;
       while (reset!==0) #1;
       #1;
@@ -335,7 +334,6 @@ module testbench();
       release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
       release {`STATUS_SIE,`STATUS_UIE};
       release `INSTRET;
-      release `CURR_PRIV;
     end
     // Get the E-stage trace reader ahead of the M-stage trace reader
     matchCountE = $fgets(lineE,traceFileE);
