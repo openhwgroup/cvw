@@ -103,30 +103,35 @@ module testbench();
   string checkpointDir;
   logic [1:0] initPriv;
   // Signals used to parse the trace file
-  integer           data_file_all;
-  string            name;
-  integer           matchCount;
-  string            line;
-  logic [`XLEN-1:0] ExpectedPCM;
-  logic [31:0]      ExpectedInstrM;
-  string            textM;
-  string            token;
-  string            ExpectedTokens [31:0];
-  integer           index;
-  integer           StartIndex, EndIndex;
-  integer           TokenIndex;
-  integer           MarkerIndex;
-  integer           NumCSRM;
+  `define DECLARE_TRACE_SCANNER_SIGNALS(STAGE) \
+      integer traceFile``STAGE; \
+      integer matchCount``STAGE; \
+      string  line``STAGE; \
+      string  token``STAGE; \
+      string  ExpectedTokens``STAGE [31:0]; \
+      integer index``STAGE; \
+      integer StartIndex``STAGE, EndIndex``STAGE; \
+      integer TokenIndex``STAGE; \
+      integer MarkerIndex``STAGE; \
+      integer NumCSR``STAGE; \
+      logic [`XLEN-1:0] ExpectedPC``STAGE; \
+      logic [31:0]      ExpectedInstr``STAGE; \
+      string            text``STAGE; \
+      string            MemOp``STAGE; \
+      string            RegWrite``STAGE; \
+      integer           ExpectedRegAdr``STAGE; \
+      logic [`XLEN-1:0] ExpectedRegValue``STAGE; \
+      logic [`XLEN-1:0] ExpectedMemAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
+      string            ExpectedCSRArray``STAGE[10:0]; \
+      logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0];
+  `DECLARE_TRACE_SCANNER_SIGNALS(E)
+  `DECLARE_TRACE_SCANNER_SIGNALS(M)
+  integer           NextMIPexpected;
+  integer           NextMepcExpected;
   // Memory stage expected values from trace
   logic             checkInstrM;
   integer           MIPexpected;
-  string            RegWriteM;
-  integer           ExpectedRegAdrM;
-  logic [`XLEN-1:0] ExpectedRegValueM;
-  string            MemOpM;
-  logic [`XLEN-1:0] ExpectedMemAdrM, ExpectedMemReadDataM, ExpectedMemWriteDataM;
-  string            ExpectedCSRArrayM[10:0];
-  logic [`XLEN-1:0] ExpectedCSRArrayValueM[10:0];
+  string            name;
   logic [`AHBW-1:0] readDataExpected;
   // Write back stage expected values from trace
   logic             checkInstrW;
@@ -148,6 +153,11 @@ module testbench();
   integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
   integer           RequestDelayedMIP;
+  integer           ForceMIPFuture;
+  integer           CSRIndex;
+  longint           MepcExpected;
+  integer           CheckMIPFutureE;
+  integer           CheckMIPFutureM;
   // Useful Aliases
   `define RF          dut.hart.ieu.dp.regf.rf
   `define PC          dut.hart.ifu.pcreg.q
@@ -187,7 +197,7 @@ module testbench();
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
-  `define CURR_PRIV   dut.hart.priv.privmodereg.q
+  `define PRIV        dut.hart.priv.privmodereg.q
   `define INSTRET     dut.hart.priv.csr.genblk1.counters.genblk1.genblk2.INSTRETreg.q
   // Common Macros
   `define checkCSR(CSR) \
@@ -265,6 +275,7 @@ module testbench();
   endgenerate
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
   `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
   `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
@@ -278,9 +289,11 @@ module testbench();
   `INIT_CHECKPOINT_VAL(MTVEC,      [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(STVEC,      [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
   `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
 
-  assign initPriv = (initPC[0][`XLEN-1]) ? 2'h2 : 2'h3; // *** a hacky way to detect initial privilege level
+  integer ramFile;
+  integer readResult;
   initial begin
     force dut.hart.priv.SwIntM = 0;
     force dut.hart.priv.TimerIntM = 0;
@@ -292,13 +305,18 @@ module testbench();
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
     if (CHECKPOINT==0) begin // normal
       $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
-      data_file_all = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+      traceFileM = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+      traceFileE = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
       InstrCountW = '0;
     end else begin // checkpoint
       $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
       checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
-      $readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
-      data_file_all = $fopen({checkpointDir,"all.txt"}, "r");
+      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
+      ramFile = $fopen({checkpointDir,"ram.bin"}, "rb");
+      readResult = $fread(dut.uncore.dtim.RAM,ramFile);
+      $fclose(ramFile);
+      traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
+      traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
       // manual checkpoint initializations that don't neatly fit into MACRO
       force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
@@ -307,7 +325,6 @@ module testbench();
       force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
       force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
       force `INSTRET = CHECKPOINT;
-      force `CURR_PRIV = initPriv;
       while (reset!==1) #1;
       while (reset!==0) #1;
       #1;
@@ -317,9 +334,12 @@ module testbench();
       release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
       release {`STATUS_SIE,`STATUS_UIE};
       release `INSTRET;
-      release `CURR_PRIV;
     end
+    // Get the E-stage trace reader ahead of the M-stage trace reader
+    matchCountE = $fgets(lineE,traceFileE);
   end
+
+
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// CORE /////////////////////////////////////
@@ -332,93 +352,161 @@ module testbench();
   // on the next falling edge the expected state is compared to the wally state.
 
   // step 0: read the expected state
-  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM  & ~dut.hart.StallM;
+  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM & ~dut.hart.StallM;
+  `define SCAN_NEW_INSTR_FROM_TRACE(STAGE) \
+    // always check PC, instruction bits \
+    if (checkInstrM) begin \
+      // read 1 line of the trace file \
+      matchCount``STAGE = $fgets(line``STAGE, traceFile``STAGE); \
+      if(`DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line``STAGE); \
+      // extract PC, Instr \
+      matchCount``STAGE = $sscanf(line``STAGE, "%x %x %s", ExpectedPC``STAGE, ExpectedInstr``STAGE, text``STAGE); \
+ \
+      // for the life of me I cannot get any build in C or C++ string parsing functions/methods to work. \
+      // strtok was the best idea but it cannot be used correctly as system verilog does not have null \
+      // terminated strings. \
+ \
+      // Just going to do this char by char. \
+      StartIndex``STAGE = 0; \
+      TokenIndex``STAGE = 0; \
+      //$display("len = %d", line``STAGE.len()); \
+      for(index``STAGE = 0; index``STAGE < line``STAGE.len(); index``STAGE++) begin \
+        //$display("char = %s", line``STAGE[index]); \
+        if (line``STAGE[index``STAGE] == " " || line``STAGE[index``STAGE] == "\n") begin \
+          EndIndex``STAGE = index``STAGE; \
+          ExpectedTokens``STAGE[TokenIndex``STAGE] = line``STAGE.substr(StartIndex``STAGE, EndIndex``STAGE-1); \
+          //$display("In Tokenizer %s", line``STAGE.substr(StartIndex, EndIndex-1)); \
+          StartIndex``STAGE = EndIndex``STAGE + 1; \
+          TokenIndex``STAGE++; \
+        end \
+      end \
+ \
+      MarkerIndex``STAGE = 3; \
+      NumCSR``STAGE = 0; \
+      MemOp``STAGE = ""; \
+      RegWrite``STAGE = ""; \
+ \
+      #2; \
+ \
+      while(TokenIndex``STAGE > MarkerIndex``STAGE) begin \
+        // parse the GPR \
+        if (ExpectedTokens``STAGE[MarkerIndex``STAGE] == "GPR") begin \
+          RegWrite``STAGE = ExpectedTokens``STAGE[MarkerIndex``STAGE]; \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+1], "%d", ExpectedRegAdr``STAGE); \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+2], "%x", ExpectedRegValue``STAGE); \
+          MarkerIndex``STAGE += 3; \
+        // parse memory address, read data, and/or write data \
+        end else if(ExpectedTokens``STAGE[MarkerIndex``STAGE].substr(0, 2) == "Mem") begin \
+          MemOp``STAGE = ExpectedTokens``STAGE[MarkerIndex``STAGE]; \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+1], "%x", ExpectedMemAdr``STAGE); \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+2], "%x", ExpectedMemWriteData``STAGE); \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+3], "%x", ExpectedMemReadData``STAGE); \
+          MarkerIndex``STAGE += 4; \
+        // parse CSRs, because there are 1 or more CSRs after the CSR token \
+        // we check if the CSR token or the number of CSRs is greater than 0. \
+        // if so then we want to parse for a CSR. \
+        end else if(ExpectedTokens``STAGE[MarkerIndex``STAGE] == "CSR" || NumCSR``STAGE > 0) begin \
+          if(ExpectedTokens``STAGE[MarkerIndex``STAGE] == "CSR") begin \
+            // all additional CSR's won't have this token. \
+            MarkerIndex``STAGE++; \
+          end \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE], "%s", ExpectedCSRArray``STAGE[NumCSR``STAGE]); \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+1], "%x", ExpectedCSRArrayValue``STAGE[NumCSR``STAGE]); \
+          MarkerIndex``STAGE += 2; \
+          if(`"STAGE`"=="E") begin \
+            // match MIP to QEMU's because interrupts are imprecise \
+            if(ExpectedCSRArrayE[NumCSRE].substr(0, 2) == "mip") begin \
+              CheckMIPFutureE = 1; \
+              NextMIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
+            end \
+            //   $display("%tn: ExpectedCSRArrayM[7] (MEPC) = %x",$time,ExpectedCSRArrayM[7]); \
+            //   $display("%tn: ExpectedPCM = %x",$time,ExpectedPCM); \
+            //   // if PC does not equal MEPC, request delayed MIP is True \
+            //   if(ExpectedPCM != ExpectedCSRArrayM[7]) begin \
+            //     RequestDelayedMIP = 1; \
+            //   end else begin \
+            //     $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]); \
+            //     MIPexpected = ExpectedCSRArrayValueM[NumCSRM]; \
+            //     force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected; \
+            //   end \
+            // end  \
+            // $display("%tns: ExpectedCSRArrayM::: %p",$time,ExpectedCSRArrayM); \
+            if(ExpectedCSRArrayE[NumCSRE].substr(0,3) == "mepc") begin \
+              $display("hello! we are here."); \
+              MepcExpected = ExpectedCSRArrayValueE[NumCSRE]; \
+              $display("%tns: MepcExpected: %x",$time,MepcExpected); \
+            end \
+          end \
+           \
+          NumCSR``STAGE++; \
+        end \
+      end \
+      if(`"STAGE`"=="M") begin \
+        // override on special conditions \
+        if (ExpectedMemAdrM == 'h10000005) begin \
+          //$display("%tns, %d instrs: Overwriting read data from CLINT.", $time, InstrCountW); \
+          force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
+        end \
+        if(textM.substr(0,5) == "rdtime") begin \
+          //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW); \
+          force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
+        end \
+      end \
+    end \
+    
   always @(negedge clk) begin
-    // always check PC, instruction bits
-    if (checkInstrM) begin
-      // read 1 line of the trace file
-      matchCount = $fgets(line, data_file_all);
-      if(`DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line);
-      // extract PC, Instr
-      matchCount = $sscanf(line, "%x %x %s", ExpectedPCM, ExpectedInstrM, textM);
-      //$display("matchCount %d, PCM %x ExpectedInstrM %x textM %x", matchCount, ExpectedPCM, ExpectedInstrM, textM);
+    `SCAN_NEW_INSTR_FROM_TRACE(E)
+  end
 
-      // for the life of me I cannot get any build in C or C++ string parsing functions/methods to work.
-      // strtok was the best idea but it cannot be used correctly as system verilog does not have null
-      // terminated strings.
-
-      // Just going to do this char by char.
-      StartIndex = 0;
-      TokenIndex = 0;
-      //$display("len = %d", line.len());
-      for(index = 0; index < line.len(); index++) begin
-        //$display("char = %s", line[index]);
-        if (line[index] == " " || line[index] == "\n") begin
-          EndIndex = index;
-          ExpectedTokens[TokenIndex] = line.substr(StartIndex, EndIndex-1);
-          //$display("In Tokenizer %s", line.substr(StartIndex, EndIndex-1));
-          StartIndex = EndIndex + 1;
-          TokenIndex++;
-        end
+  always @(negedge clk) begin
+    `SCAN_NEW_INSTR_FROM_TRACE(M)
+  end
+  
+  // MIP spoofing
+  always @(posedge clk) begin
+    #1;
+    if(CheckMIPFutureE) CheckMIPFutureE <= 0;
+    CheckMIPFutureM <= CheckMIPFutureE;
+    if(CheckMIPFutureM) begin
+      $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
+      $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
+      $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 16)) begin
+      // if((ExpectedPCM != MepcExpected) & ((MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM) <= 16)) begin
+        RequestDelayedMIP <= 1;
+        $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
+      end else begin // update MIP immediately
+        $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
+        MIPexpected = NextMIPexpected;
+        force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
       end
-
-      MarkerIndex = 3;
-      NumCSRM = 0;
-      MemOpM = "";
-      RegWriteM = "";
-
-      #2;
-
-      while(TokenIndex > MarkerIndex) begin
-        // parse the GPR
-        if (ExpectedTokens[MarkerIndex] == "GPR") begin
-          RegWriteM = ExpectedTokens[MarkerIndex];
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%d", ExpectedRegAdrM);
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedRegValueM);
-          MarkerIndex += 3;
-        // parse memory address, read data, and/or write data
-        end else if(ExpectedTokens[MarkerIndex].substr(0, 2) == "Mem") begin
-          MemOpM = ExpectedTokens[MarkerIndex];
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedMemAdrM);
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex+2], "%x", ExpectedMemWriteDataM);
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex+3], "%x", ExpectedMemReadDataM);
-          MarkerIndex += 4;
-        // parse CSRs, because there are 1 or more CSRs after the CSR token
-        // we check if the CSR token or the number of CSRs is greater than 0.
-        // if so then we want to parse for a CSR.
-        end else if(ExpectedTokens[MarkerIndex] == "CSR" || NumCSRM > 0) begin
-          if(ExpectedTokens[MarkerIndex] == "CSR") begin
-            // all additional CSR's won't have this token.
-            MarkerIndex++;
-          end
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex], "%s", ExpectedCSRArrayM[NumCSRM]);
-          matchCount = $sscanf(ExpectedTokens[MarkerIndex+1], "%x", ExpectedCSRArrayValueM[NumCSRM]);
-          MarkerIndex += 2;
-          // match MIP to QEMU's because interrupts are imprecise
-          if(ExpectedCSRArrayM[NumCSRM].substr(0, 2) == "mip") begin
-            $display("%tn: ExpectedCSRArrayM[7] (MEPC) = %x",$time,ExpectedCSRArrayM[7]);
-            $display("%tn: ExpectedPCM = %x",$time,ExpectedPCM);
-            // if PC does not equal MEPC, request delayed MIP is True
-            if(ExpectedPCM != ExpectedCSRArrayM[7]) begin
-              RequestDelayedMIP = 1;
-            end else begin
-              $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
-              MIPexpected = ExpectedCSRArrayValueM[NumCSRM];
-              force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
-            end
-          end 
-          NumCSRM++;      
-        end
-      end
-      // override on special conditions
-      if (ExpectedMemAdrM == 'h10000005) begin
-        //$display("%tns, %d instrs: Overwriting read data from CLINT.", $time, InstrCountW);
-        force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM;
-      end
-      if(textM.substr(0,5) == "rdtime") begin
-        //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW);
-        force dut.uncore.clint.clint.MTIME = ExpectedRegValueM;
-      end
+      $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
+      $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
+      $display("%tn: ExpectedTokens = %p",$time,ExpectedTokensM);
+      $display("%tn: MepcExpected = %x",$time,MepcExpected);
+      $display("%tn: ExpectedPCM = %x",$time,ExpectedPCM);
+      // if PC does not equal MEPC, request delayed MIP is True
+      $display("%tns: Difference/multiplication thing: %x",$time,(MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM));
+      $display("%tn: ExpectedCSRArrayM[NumCSRM] %x",$time,ExpectedCSRArrayM[NumCSRM]);
+      $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
+        
+      // if((ExpectedPCM != MepcExpected) & ((MepcExpected - ExpectedPCM) * (MepcExpected - ExpectedPCM) <= 16)) begin
+      //   RequestDelayedMIP = 1;
+      //   $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
+      // end else begin
+      //   $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
+      //   MIPexpected = NextMIPexpected;
+      //   force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+      // end
+    end
+    if(RequestDelayedMIP) begin
+      $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.csr.genblk1.csrm.MEPC_REGW);
+      $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
+      $display("%tns: MepcExpected %x",$time,MepcExpected);
+      MIPexpected = NextMIPexpected;
+      force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+      $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.csr.genblk1.csrm.MEPC_REGW);
+      RequestDelayedMIP = 0;
     end
   end
 
@@ -449,7 +537,7 @@ module testbench();
         ExpectedMemWriteDataW <= '0;
         ExpectedMemReadDataW <= '0;
         NumCSRW <= '0;
-      end else begin 
+      end else if (dut.hart.ieu.c.InstrValidM) begin 
         ExpectedPCW <= ExpectedPCM;
         ExpectedInstrW <= ExpectedInstrM;
         textW <= textM;
@@ -484,12 +572,6 @@ module testbench();
   // step2: make all checks in the write back stage.
   assign checkInstrW =              InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
   always @(negedge clk) begin
-    if(RequestDelayedMIP) begin
-      $display("%tns: Updating MIP to %x",$time,ExpectedCSRArrayValueW[NumCSRM]);
-      MIPexpected = ExpectedCSRArrayValueW[NumCSRM];
-      force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
-      RequestDelayedMIP = 0;
-    end
     // always check PC, instruction bits
     if (checkInstrW) begin
       InstrCountW += 1;
@@ -521,7 +603,7 @@ module testbench();
           if(MemOpW == "MemR" || MemOpW == "MemRW") begin
             if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
             `checkEQ("ReadDataW",dut.hart.ieu.dp.ReadDataW,ExpectedMemReadDataW)
-          end else if(ExpectedTokens[MarkerIndex] == "MemW" || ExpectedTokens[MarkerIndex] == "MemRW") begin
+          end else if(MemOpW == "MemW" || MemOpW == "MemRW") begin
             if(`DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
             `checkEQ("WriteDataW",ExpectedMemWriteDataW,ExpectedMemWriteDataW)
           end

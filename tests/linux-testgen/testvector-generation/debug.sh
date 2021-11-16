@@ -5,6 +5,7 @@ tcpPort=1237
 # Run without GDB
 ($customQemu \
 -M virt \
+-m 128M \
 -nographic \
 -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
 -singlestep -rtc clock=vm -icount shift=1,align=off,sleep=on)
