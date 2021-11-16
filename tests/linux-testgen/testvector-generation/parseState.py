@@ -34,7 +34,8 @@ stateGDBpath = outDir+'intermediate-outputs/stateGDB.txt'
 if not os.path.exists(stateGDBpath):
     sys.exit('Error input file '+stateGDBpath+'not found')
 
-singleCSRs = ['pc','mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus']
+singleCSRs = ['pc','mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus','priv']
+# priv (current privilege mode) isn't technically a CSR but we can log it with the same machinery
 thirtyTwoBitCSRs = ['mcounteren','scounteren']
 listCSRs = ['hpmcounter','pmpaddr']
 pmpcfg = ['pmpcfg']
@@ -75,7 +76,7 @@ with open(stateGDBpath, 'r') as stateGDB:
                 outFile = open(outDir+outFileName, 'w')
                 outFile.write(val+'\n')
                 outFile.close()
-            if name in thirtyTwoBitCSRs: 
+            elif name in thirtyTwoBitCSRs: 
                 outFileName = 'checkpoint-'+name.upper() 
                 outFile = open(outDir+outFileName, 'w')
                 val = int(val,16) & 0xffffffff
