@@ -68,9 +68,9 @@ module uncore (
   logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART, HREADSDC;
 
-  logic [7:0]      HSELRegions;
+  logic [8:0]      HSELRegions;
   logic            HSELTim, HSELCLINT, HSELPLIC, HSELGPIO, PreHSELUART, HSELUART, HSELSDC;
-  logic            HSELTimD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic            HSELEXTD, HSELTimD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
   logic            HRESPTim, HRESPCLINT, HRESPPLIC, HRESPGPIO, HRESPUART, HRESPSDC;
   logic            HREADYTim, HREADYCLINT, HREADYPLIC, HREADYGPIO, HREADYUART, HRESPSDCD;
   logic [`XLEN-1:0] HREADBootTim; 
@@ -86,16 +86,17 @@ module uncore (
   adrdecs adrdecs({{(`PA_BITS-32){1'b0}}, HADDR}, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[6:0];
-
-  assign HSELEXT = HSELTim;
+  assign {HSELEXT, HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(.*);
 
   generate
     // tightly integrated memory
-    //dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
+    if (`TIM_SUPPORTED) begin : dtim
+      dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
+    end
+
     if (`BOOTTIM_SUPPORTED) begin : bootdtim
       dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE), .PRELOAD("blink-led.mem"))
       bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
@@ -142,8 +143,8 @@ module uncore (
 
   // mux could also include external memory  
   // AHB Read Multiplexer
-  //assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) | 
-  assign HRDATA = ({`XLEN{HSELTimD}} & HRDATAEXT) | 
+  assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) |
+		  ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
                   ({`XLEN{HSELCLINTD}} & HREADCLINT) |
                   ({`XLEN{HSELPLICD}} & HREADPLIC) | 
                   ({`XLEN{HSELGPIOD}} & HREADGPIO) |
@@ -151,7 +152,8 @@ module uncore (
                   ({`XLEN{HSELUARTD}} & HREADUART) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
-  assign HRESP = HSELTimD & HRESPEXT |
+  assign HRESP = HSELTimD & HRESPTim |
+		 HSELEXTD & HRESPEXT |
                  HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
                  HSELGPIOD & HRESPGPIO | 
@@ -159,7 +161,8 @@ module uncore (
                  HSELUARTD & HRESPUART |
                  HSELSDC & HRESPSDC;		 
 
-  assign HREADY = HSELTimD & HREADYEXT |
+  assign HREADY = HSELTimD & HREADTim |
+		  HSELEXTD & HREADYEXT |		  
                   HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
                   HSELGPIOD & HREADYGPIO | 
@@ -169,6 +172,6 @@ module uncore (
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
-  flopr #(8) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELBootTimD, HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
+  flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootTimD, HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
 endmodule
 

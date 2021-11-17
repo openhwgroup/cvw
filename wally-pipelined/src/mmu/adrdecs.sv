@@ -30,20 +30,22 @@ module adrdecs (
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic                AccessRW, AccessRX, AccessRWX,
   input  logic [1:0]          Size,
-  output logic [7:0]          SelRegions
+  output logic [8:0]          SelRegions
 );
 
  // Determine which region of physical memory (if any) is being accessed
  // *** eventually uncomment Access signals
+  adrdec ddr4dec(PhysicalAddress, `EXT_MEM_BASE, `EXT_MEM_RANGE, `EXT_MEM_SUPPORTED, AccessRWX, Size, 4'b1111, SelRegions[7]);  
   adrdec boottimdec(PhysicalAddress, `BOOTTIM_BASE, `BOOTTIM_RANGE, `BOOTTIM_SUPPORTED, /*1'b1*/AccessRX, Size, 4'b1111, SelRegions[6]);
   adrdec timdec(PhysicalAddress, `TIM_BASE, `TIM_RANGE, `TIM_SUPPORTED, /*1'b1*/AccessRWX, Size, 4'b1111, SelRegions[5]);
+
   adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, 4'b1111, SelRegions[4]);
   adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[3]);
   adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[2]);
   adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[1]);
   adrdec sdcdec(PhysicalAddress, `SDC_BASE, `SDC_RANGE, `SDC_SUPPORTED, AccessRW, Size, 4'b1100, SelRegions[0]);
 
-  assign SelRegions[7] = ~|(SelRegions[6:0]);
+  assign SelRegions[8] = ~|(SelRegions[7:0]);
 
 endmodule
 

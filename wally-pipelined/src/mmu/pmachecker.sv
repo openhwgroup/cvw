@@ -45,7 +45,7 @@ module pmachecker (
 
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
-  logic [7:0]  SelRegions;
+  logic [8:0]  SelRegions;
 
   // Determine what type of access is being made
   assign AccessRW = ReadAccessM | WriteAccessM;
@@ -56,12 +56,13 @@ module pmachecker (
   adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only RAM memory regions are cacheable
-  assign Cacheable = SelRegions[5] | SelRegions[4];
-  assign Idempotent = SelRegions[4];
-  assign AtomicAllowed = SelRegions[4];
+  // *** Ross Thompson fix these.  They should be part of adrdec
+  assign Cacheable = SelRegions[7] | SelRegions[6] | SelRegions[5];
+  assign Idempotent = SelRegions[7] | SelRegions[5];
+  assign AtomicAllowed = SelRegions[7] | SelRegions[5];
 
   // Detect access faults
-  assign PMAAccessFault = SelRegions[7] & AccessRWX;  
+  assign PMAAccessFault = SelRegions[8] & AccessRWX;  
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
