@@ -117,7 +117,7 @@
 `define GPIO_LOOPBACK_TEST 0
 
 // Hardware configuration
-`define UART_PRESCALE 1
+`define UART_PRESCALE 0
 
 // Interrupt configuration
 `define PLIC_NUM_SRC 53
