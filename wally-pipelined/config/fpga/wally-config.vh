@@ -84,9 +84,13 @@
 `define BOOTTIM_BASE   56'h00001000 
 `define BOOTTIM_RANGE  56'h00000FFF
 
-`define TIM_SUPPORTED 1'b1
-`define TIM_BASE       56'h80000000
+`define TIM_SUPPORTED 1'b0
+`define TIM_BASE       56'h100000000
 `define TIM_RANGE      56'h07FFFFFF
+
+`define EXT_MEM_SUPPORTED 1'b1
+`define EXT_MEM_BASE       56'h80000000
+`define EXT_MEM_RANGE      56'h07FFFFFF
 
 `define EXT_SUPPORTED 1'b0
 `define EXT_BASE       56'h80000000
