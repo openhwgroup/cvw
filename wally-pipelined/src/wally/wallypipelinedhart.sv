@@ -59,7 +59,7 @@ module wallypipelinedhart (
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
-  logic [`XLEN-1:0] 	    SrcAE, SrcBE;
+  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, SrcAE, SrcBE;
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
@@ -155,31 +155,82 @@ module wallypipelinedhart (
 
   
   ifu ifu(
-    .clk, .reset, 
-    .StallF, .StallD, .StallE, .StallM, .StallW, 
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW, 
-    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF, .InstrReadF, .ICacheStallF, 
+    .clk, .reset,
+    .StallF, .StallD, .StallE, .StallM, .StallW,
+    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
+
+    // Fetch
+    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF,
+    .InstrReadF, .ICacheStallF,
+
+    // Execute
     .PCLinkE, .PCSrcE, .PCTargetE, .PCE,
     .BPPredWrongE, 
-    .RetM, .TrapM, 
-    .PrivilegedNextPCM, .InvalidateICacheM,
-    .InstrD, .InstrM, 
-    .PCM, .InstrClassM, 
-    .BPPredDirWrongM,.BTBPredPCWrongM,.RASPredPCWrongM, .BPPredClassNonCFIWrongM,
-    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF, .IllegalIEUInstrFaultD,
-    .InstrMisalignedFaultM, .InstrMisalignedAdrM,
+  
+    // Mem
+    .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
+    .InstrD, .InstrM, . PCM, .InstrClassM, .BPPredDirWrongM,
+    .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+  
+    // Writeback
+
+    // output logic
+    // Faults
+    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF,
+    .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
+    .InstrMisalignedAdrM,
+
+    // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
-    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-    .ITLBWriteF, .ITLBFlushF,
-    .WalkerInstrPageFaultF,
-    .ITLBMissF,
-    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
+    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
+    .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
+    .WalkerInstrPageFaultF, .ITLBMissF,
+
+    // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
     .InstrAccessFaultF
+
 	  
 	  ); // instruction fetch unit: PC, branch prediction, instruction cache
     
 
-  ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
+  ieu ieu(
+      .clk, .reset,
+
+      // Decode Stage interface
+      .InstrD, .IllegalIEUInstrFaultD, 
+      .IllegalBaseInstrFaultD,
+
+      // Execute Stage interface
+      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
+      .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
+      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+      .SrcAE, .SrcBE, .FWriteIntM,
+
+      // Memory stage interface
+      .SquashSCW, // from LSU
+      .MemRWM, // read/write control goes to LSU
+      .AtomicE, // atomic control goes to LSU	    
+      .AtomicM, // atomic control goes to LSU
+      .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
+      .Funct3M, // size and signedness to LSU
+      .SrcAM, // to privilege and fpu
+      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+
+      // Writeback stage
+      .CSRReadValW, .ReadDataM, .MulDivResultW,
+      .FWriteIntW, .RdW, .ReadDataW,
+      .InstrValidM, 
+
+      // hazards
+      .StallD, .StallE, .StallM, .StallW,
+      .FlushD, .FlushE, .FlushM, .FlushW,
+      .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
+      .PCSrcE,
+      .CSRReadM, .CSRWriteM, .PrivilegedM,
+      .CSRWritePendingDEM, .StoreStallD
+
+  ); // integer execution unit: integer register file, datapath and controller
 
   lsu lsu(.clk(clk),
 	  .reset(reset),
