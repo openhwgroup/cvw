@@ -16,8 +16,8 @@ then
     & riscv64-unknown-elf-gdb -quiet -x genInitMem.gdb -ex "genInitMem $tcpPort \"$intermedDir\""
 
     echo "Translating Mem from GDB to Questa format"
-    ./fix_mem.py "$intermedDir/bootmemGDB.txt" "$outDir/bootmem.txt"
-    ./fix_mem.py "$intermedDir/ramGDB.txt"     "$outDir/ram.txt"
+    ./fixTxtMem.py "$intermedDir/bootmemGDB.txt" "$outDir/bootmem.txt"
+    ./fixTxtMem.py "$intermedDir/ramGDB.txt"     "$outDir/ram.txt"
     echo "Done"
 
     echo "Creating debugging objdump of linux image"

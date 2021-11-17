@@ -8,16 +8,15 @@ To use Wally on Linux:
 ```
 git clone https://github.com/davidharrishmc/riscv-wally
 cd riscv-wally
-cd tests
-cd imperas-riscv-tests
-make
-cd ../addins
+cd addins
+*** can these clones be replaced with git submodule commands?
 git clone https://github.com/riscv-non-isa/riscv-arch-test
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 cd riscv-isa-sim
+*** replace these with a copy from ../install/F and ../install/D containing the Makefile.includes already updated
 cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv32i_m/F
 <edit arch_test_target/spike/device/rv32i_m/F/Makefile.include line 35 and change --isa=rv32i to --isa=rv32if>
-cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv64i_m/D
+cp -r arch_test_target/spike/device/rv64i_m/I arch_test_target/spike/device/rv64i_m/D
 <edit arch_test_target/spike/device/rv64i_m/D/Makefile.include line 35 and change --isa=rv64i to --isa=rv64id>
 mkdir build
 cd build
@@ -33,7 +32,14 @@ edit Makefile.include
 make
 make XLEN=32
 exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
-cd ../../wally-pipelined/linux-testgen/linux-testvectors
+cd ../../tests
+cd imperas-riscv-tests
+make
+cd ../wally-riscv-arch-test
+make
+make XLEN=32
+exe2memfile.pl work/*/*/*.elf  # converts ELF files to a format that can be read by Modelsim
+cd ../linux-testgen/linux-testvectors
 ./tvLinker.sh
 ```
 

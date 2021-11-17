@@ -13,7 +13,7 @@ define genCheckpoint
     set $checkPC=$arg3
     set $checkPCoccurences=$arg4
     eval "set $statePath = \"%s/stateGDB.txt\"", $statePath
-    eval "set $ramPath = \"%s/ramGDB.txt\"", $ramPath
+    eval "set $ramPath = \"%s/ramGDB.bin\"", $ramPath
 
     # Connect to QEMU session
     eval "target extended-remote :%d",$tcpPort
@@ -46,10 +46,7 @@ define genCheckpoint
 
     # Log main memory to a file
     printf "GDB storing RAM to %s\n", $ramPath
-    eval "set logging file %s", $ramPath
-    set logging on
-    x/134217728xb 0x80000000
-    set logging off
+    eval "dump binary memory %s 0x80000000 0xffffffff", $ramPath
     
     kill
     q
