@@ -194,7 +194,43 @@ module wallypipelinedhart (
 	  ); // instruction fetch unit: PC, branch prediction, instruction cache
     
 
-  ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
+  ieu ieu(
+      .clk, .reset,
+
+      // Decode Stage interface
+      .InstrD, .IllegalIEUInstrFaultD, 
+      .IllegalBaseInstrFaultD,
+
+      // Execute Stage interface
+      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
+      .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
+      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+      .SrcAE, .SrcBE, .FWriteIntM,
+
+      // Memory stage interface
+      .SquashSCW, // from LSU
+      .MemRWM, // read/write control goes to LSU
+      .AtomicE, // atomic control goes to LSU	    
+      .AtomicM, // atomic control goes to LSU
+      .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
+      .Funct3M, // size and signedness to LSU
+      .SrcAM, // to privilege and fpu
+      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+
+      // Writeback stage
+      .CSRReadValW, .ReadDataM, .MulDivResultW,
+      .FWriteIntW, .RdW, .ReadDataW,
+      .InstrValidM, 
+
+      // hazards
+      .StallD, .StallE, .StallM, .StallW,
+      .FlushD, .FlushE, .FlushM, .FlushW,
+      .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
+      .PCSrcE,
+      .CSRReadM, .CSRWriteM, .PrivilegedM,
+      .CSRWritePendingDEM, .StoreStallD
+
+  ); // integer execution unit: integer register file, datapath and controller
 
   lsu lsu(.clk(clk),
 	  .reset(reset),
