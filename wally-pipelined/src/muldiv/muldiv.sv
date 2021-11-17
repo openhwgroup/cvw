@@ -53,10 +53,12 @@ module muldiv (
 	 
 	 // Multiplier
 	 mul mul(
-		.clk, .reset,
-		.StallM, .FlushM,
-   		.SrcAE, .SrcBE,
-  		.Funct3E, .ProdM);
+	 .clk, .reset,
+  	 .StallM, .FlushM,
+	 .ForwardedSrcAE, .ForwardedSrcBE,
+	 .Funct3E,
+  	 .ProdM
+	 );
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
