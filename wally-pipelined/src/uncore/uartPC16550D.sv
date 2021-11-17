@@ -114,6 +114,8 @@ module uartPC16550D(
   logic rxdataavailintr, modemstatusintr, intrpending;
   logic [2:0] intrID;
 
+  logic baudpulseComb;
+
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
   ///////////////////////////////////////////
@@ -196,14 +198,26 @@ module uartPC16550D(
   // Unlike PC16550D, this unit is hardwired with same rx and tx baud clock
   // *** add table of scale factors to get 16x uart clk
   ///////////////////////////////////////////
+  // Ross Thompson: Found a bug.  If the baud rate dividers DLM, and DLL are reloaded
+  // the baudcount is not reset to  {DLM, DLL, UART_PRESCALE}
   always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
-      baudcount <= #1 0;
+      baudcount <= #1 1;
       baudpulse <= #1 0;
+    end else if (~MEMWb & DLAB & (A == 3'b0 || A == 3'b1)) begin
+      baudcount <= #1 '0;
     end else begin
-      baudpulse <= #1 (baudcount == {DLM, DLL, {(`UART_PRESCALE){1'b0}}});
-      baudcount <= #1 baudpulse ? 0 :  baudcount +1;
+      // the baudpulse is too long by 2 clock cycles.
+      // This is cause baudpulse is registered adding 1 cycle and
+      // baudcount is reset when baudcount equals the threshold {DLM, DLL, UART_PRESCALE}
+      // rather than 1 less than that value.  Alternatively the reset value could be 1 rather 
+      // than 0.
+      baudpulse <= #1 baudpulseComb;
+      baudcount <= #1 baudpulseComb ? 1 :  baudcount +1;
     end
+
+  assign baudpulseComb = (baudcount == {DLM, DLL, {(`UART_PRESCALE){1'b0}}});
+  
   assign txbaudpulse = baudpulse;
   assign BAUDOUTb = ~baudpulse;
   assign rxbaudpulse = ~RCLK; // usually BAUDOUTb tied to RCLK externally
@@ -371,14 +385,14 @@ module uartPC16550D(
     endcase
     case({LCR[3], LCR[1:0]}) // parity, data bits
       // load up start bit (0), 5-8 data bits, 0-1 parity bits, 2 stop bits (only one sometimes used), padding
-      3'b000: txdata = {1'b0, nexttxdata[4:0], 6'b111111};          // 5 data, no parity
-      3'b001: txdata = {1'b0, nexttxdata[5:0], 5'b11111};           // 6 data, no parity
-      3'b010: txdata = {1'b0, nexttxdata[6:0], 4'b1111};            // 7 data, no parity
-      3'b011: txdata = {1'b0, nexttxdata[7:0], 3'b111};             // 8 data, no parity
-      3'b100: txdata = {1'b0, nexttxdata[4:0], txparity, 5'b11111}; // 5 data, parity
-      3'b101: txdata = {1'b0, nexttxdata[5:0], txparity, 4'b1111};  // 6 data, parity
-      3'b110: txdata = {1'b0, nexttxdata[6:0], txparity, 3'b111};   // 7 data, parity
-      3'b111: txdata = {1'b0, nexttxdata[7:0], txparity, 2'b11};    // 8 data, parity
+      3'b000: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], 6'b111111};          // 5 data, no parity
+      3'b001: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], 5'b11111};           // 6 data, no parity
+      3'b010: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], 4'b1111};            // 7 data, no parity
+      3'b011: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], nexttxdata[7], 3'b111};             // 8 data, no parity
+      3'b100: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], txparity, 5'b11111}; // 5 data, parity
+      3'b101: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], txparity, 4'b1111};  // 6 data, parity
+      3'b110: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], txparity, 3'b111};   // 7 data, parity
+      3'b111: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], nexttxdata[7], txparity, 2'b11};    // 8 data, parity
     endcase
   end
        
