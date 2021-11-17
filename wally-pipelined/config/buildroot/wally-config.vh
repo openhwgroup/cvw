@@ -31,8 +31,7 @@
 `define BUILDROOT 1
 `define BUSYBEAR 0
 `define LINUX_FIX_READ {'h10000005}
-`define LINUX_TEST_VECTORS "../linux-testgen/linux-testvectors/"
-//`define LINUX_TEST_VECTORS "/courses/e190ax/buildroot_boot/"
+`define LINUX_TEST_VECTORS "../../tests/linux-testgen/linux-testvectors/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -114,8 +113,8 @@
 `define PLIC_NUM_SRC 53
 `define PLIC_UART_ID 4
 
-`define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/buildroot/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/buildroot/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0

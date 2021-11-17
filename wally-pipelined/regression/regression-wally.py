@@ -32,7 +32,7 @@ configs = [
 ]
 def getBuildrootTC(short):
     INSTR_LIMIT = 100000 # multiple of 100000
-    MAX_EXPECTED = 3000000
+    MAX_EXPECTED = 14000000
     if short:
         BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
@@ -87,7 +87,7 @@ def main():
     # max out at a limited number of concurrent processes to not overwhelm the system
 
     if '-all' in sys.argv:
-        TIMEOUT_DUR = 3600 
+        TIMEOUT_DUR = 4*3600 
         configs.append(getBuildrootTC(short=False))
     else:
         TIMEOUT_DUR = 300

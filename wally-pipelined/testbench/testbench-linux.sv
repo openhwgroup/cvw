@@ -275,6 +275,7 @@ module testbench();
   endgenerate
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
   `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
   `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
@@ -290,7 +291,9 @@ module testbench();
   `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
   `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
 
-  assign initPriv = (initPC[0][`XLEN-1]) ? 2'h2 : 2'h3; // *** a hacky way to detect initial privilege level
+  integer ramFile;
+  integer readResult;
+  assign initPriv = (initPC[0][`XLEN-1]) ? 2'h1 : 2'h3; // *** a hacky way to detect initial privilege level
   initial begin
     force dut.hart.priv.SwIntM = 0;
     force dut.hart.priv.TimerIntM = 0;
@@ -308,7 +311,10 @@ module testbench();
     end else begin // checkpoint
       $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
       checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
-      $readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
+      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
+      ramFile = $fopen({checkpointDir,"ram.bin"}, "rb");
+      readResult = $fread(dut.uncore.dtim.RAM,ramFile);
+      $fclose(ramFile);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
