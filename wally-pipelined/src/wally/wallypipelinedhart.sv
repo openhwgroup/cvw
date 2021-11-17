@@ -59,7 +59,7 @@ module wallypipelinedhart (
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
-  logic [`XLEN-1:0] 	    SrcAE, SrcBE;
+  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, SrcAE, SrcBE;
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
@@ -155,26 +155,41 @@ module wallypipelinedhart (
 
   
   ifu ifu(
-    .clk, .reset, 
-    .StallF, .StallD, .StallE, .StallM, .StallW, 
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW, 
-    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF, .InstrReadF, .ICacheStallF, 
+    .clk, .reset,
+    .StallF, .StallD, .StallE, .StallM, .StallW,
+    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
+
+    // Fetch
+    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF,
+    .InstrReadF, .ICacheStallF,
+
+    // Execute
     .PCLinkE, .PCSrcE, .PCTargetE, .PCE,
     .BPPredWrongE, 
-    .RetM, .TrapM, 
-    .PrivilegedNextPCM, .InvalidateICacheM,
-    .InstrD, .InstrM, 
-    .PCM, .InstrClassM, 
-    .BPPredDirWrongM,.BTBPredPCWrongM,.RASPredPCWrongM, .BPPredClassNonCFIWrongM,
-    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF, .IllegalIEUInstrFaultD,
-    .InstrMisalignedFaultM, .InstrMisalignedAdrM,
+  
+    // Mem
+    .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
+    .InstrD, .InstrM, . PCM, .InstrClassM, .BPPredDirWrongM,
+    .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+  
+    // Writeback
+
+    // output logic
+    // Faults
+    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF,
+    .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
+    .InstrMisalignedAdrM,
+
+    // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
-    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-    .ITLBWriteF, .ITLBFlushF,
-    .WalkerInstrPageFaultF,
-    .ITLBMissF,
-    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
+    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
+    .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
+    .WalkerInstrPageFaultF, .ITLBMissF,
+
+    // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
     .InstrAccessFaultF
+
 	  
 	  ); // instruction fetch unit: PC, branch prediction, instruction cache
     
