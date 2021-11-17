@@ -55,7 +55,8 @@ module muldiv (
 	 mul mul(
 	 .clk, .reset,
   	 .StallM, .FlushM,
-	 .ForwardedSrcAE, .ForwardedSrcBE,
+	    // .SrcAE, .SrcBE,
+	 .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	 .Funct3E,
   	 .ProdM
 	 );
