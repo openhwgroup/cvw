@@ -51,7 +51,11 @@ module muldiv (
 	 logic           W64M; 
 	 
 	 // Multiplier
-	 mul mul(.*);
+	 mul mul(
+		.clk, .reset,
+		.StallM, .FlushM,
+   		.SrcAE, .SrcBE,
+  		.Funct3E, .ProdM);
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
