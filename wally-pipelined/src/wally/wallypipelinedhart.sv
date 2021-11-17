@@ -318,7 +318,17 @@ module wallypipelinedhart (
   
   muldiv mdu(.*); // multiply and divide unit
   
-  hazard     hzu(.*);	// global stall and flush control
+  hazard     hzu(
+        .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+        .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
+	      .LSUStall, .ICacheStallF,
+        .FPUStallD, .FStallD,
+	      .DivBusyE, .FDivBusyE,
+	      .EcallFaultM, .BreakpointFaultM,
+        .InvalidateICacheM,
+  // Stall & flush outputs
+	      .StallF, .StallD, .StallE, .StallM, .StallW,
+	      .FlushF, .FlushD, .FlushE, .FlushM, .FlushW);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);
