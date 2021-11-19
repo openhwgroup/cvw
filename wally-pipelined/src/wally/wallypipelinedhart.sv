@@ -316,9 +316,32 @@ module wallypipelinedhart (
 	       .*);
 
   
-  muldiv mdu(.*); // multiply and divide unit
+  muldiv mdu(
+    .clk, .reset,
+	       // Execute Stage interface
+	       //   .SrcAE, .SrcBE,
+		.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	  .Funct3E, .Funct3M,
+	  .MulDivE, .W64E,
+	       // Writeback stage
+	  .MulDivResultW,
+	       // Divide Done
+	  .DivBusyE, 
+	       // hazards
+	  .StallM, .StallW, .FlushM, .FlushW 
+  ); // multiply and divide unit
   
-  hazard     hzu(.*);	// global stall and flush control
+  hazard     hzu(
+        .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+        .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
+	      .LSUStall, .ICacheStallF,
+        .FPUStallD, .FStallD,
+	      .DivBusyE, .FDivBusyE,
+	      .EcallFaultM, .BreakpointFaultM,
+        .InvalidateICacheM,
+  // Stall & flush outputs
+	      .StallF, .StallD, .StallE, .StallM, .StallW,
+	      .FlushF, .FlushD, .FlushE, .FlushM, .FlushW);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);

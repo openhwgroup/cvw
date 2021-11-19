@@ -52,7 +52,14 @@ module muldiv (
 	 logic           W64M; 
 	 
 	 // Multiplier
-	 mul mul(.*);
+	 mul mul(
+	 .clk, .reset,
+  	 .StallM, .FlushM,
+	    // .SrcAE, .SrcBE,
+	 .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	 .Funct3E,
+  	 .ProdM
+	 );
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
