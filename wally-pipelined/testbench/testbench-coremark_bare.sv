@@ -49,7 +49,7 @@ module testbench();
   // pick tests based on modes supported
   initial 
 //  tests = {"../../tests/imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremarkcodemod.bare.riscv.memfile", "1000"};
-  tests = {"../../benchmarks/riscv-coremark/coremark.bare.riscv.memfile", "1000"};
+  tests = {"../../benchmarks/riscv-coremark/work/coremark.bare.riscv.memfile", "1000"};
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
