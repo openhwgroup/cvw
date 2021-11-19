@@ -26,7 +26,7 @@
 `include "wally-config.vh"
 module testbench();
   logic        clk;
-  logic        reset;
+  logic        reset, reset_ext;
   int test, i, errors, totalerrors;
   logic [31:0] sig32[10000:0];
   logic [`XLEN-1:0] signature[10000:0];
@@ -48,7 +48,7 @@ module testbench();
   
   // pick tests based on modes supported
   initial 
-  tests = {"../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremarkcodemod.bare.riscv.memfile", "1000"};
+  tests = {"../../tests/imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremarkcodemod.bare.riscv.memfile", "1000"};
   string signame, memfilename;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -64,12 +64,18 @@ module testbench();
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
 
   // Track names of instructions
+    instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
+                dut.hart.ifu.icache.FinalInstrRawF,
+                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
+                dut.hart.ifu.InstrM,  InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+/*
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
                 dut.hart.ifu.icache.controller.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM, InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
-
+*/
   logic [`XLEN-1:0] PCW;
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
   
@@ -86,7 +92,7 @@ module testbench();
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
         //dut.uncore.dtim.RAM[268437713]=64'b1;
-    reset = 1; # 22; reset = 0;
+    reset_ext = 1; # 22; reset_ext = 0;
     end
   // generate clock to sequence tests
   always
@@ -103,8 +109,11 @@ module testbench();
     end
 
   initial begin
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
+//    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
+//    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+	  $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
+
   end
    
 endmodule
