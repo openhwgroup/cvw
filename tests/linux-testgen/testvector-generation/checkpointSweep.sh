@@ -1,5 +1,5 @@
-for index in {0..105}
+for index in {89..181}
 do 
-    instrs=$(((400+$index)*1000000))
-    echo "y" | ./genCheckpoint.sh $instrs
+    instrs=$(($index*1000000))
+    echo "y" | nice -n 5 ./genCheckpoint.sh $instrs
 done
