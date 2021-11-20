@@ -19,10 +19,12 @@ my $maxaddress = 0;
 
 STDOUT->autoflush(1);
 my $numfiles = $#ARGV+1;
-print ("Processing $numfiles memfiles: ");
+if ($numfiles > 1) { 
+    print ("Processing $numfiles memfiles: ");
+}
 my $frac = $#ARGV/10;
 for(my $i=0; $i<=$#ARGV; $i++) {
-    if ($i < 10 || $i % $frac == 0) { print ("$i ") };
+    if ($i > 0 && ($i < 10 || $i % $frac == 0)) { print ("$i ") };
     my $fname = $ARGV[$i];
 #    print "fname = $fname";
     my $ofile = $fname.".objdump";
