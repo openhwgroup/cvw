@@ -159,6 +159,7 @@ module wallypipelinedhart (
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
 
+    .ExceptionM, .PendingInterruptM,
     // Fetch
     .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF,
     .InstrReadF, .ICacheStallF,

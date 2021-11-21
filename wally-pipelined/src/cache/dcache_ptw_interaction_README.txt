@@ -24,7 +24,7 @@ in the memory stage.  This is the core reason for the complexity.
 The above table classifies the operations into 8 categories.
 2 of the 8 are not possible because a DTLB miss implies a memory operation.
 Each (I/D)TLB miss results in either a write to the corresponding TLB or a TLB fault.
-To complicate things it is possilbe to have current ITLB and DTLB misses, which
+To complicate things it is possilbe to have concurrent ITLB and DTLB misses, which
 both can result in either a write or a fault. The table belows shows the possible
 scenarios and the sequence of operations.
 
@@ -72,3 +72,19 @@ to normal mode.
 
 Type 5a is a Type 4a with a current memory operation.  The Dcache first switches to walker mode
 
+Other traps.
+A new problem has emerged.  What happens when an interrupt occurs during a page table walk?
+The dcache has an output called CommittedM which tells the CPU if the memory operation is
+committed into the memory system.  It would be wrong to pin the interrupt to a memory operation
+when it is already or partially committed to the memory system.  Instead the next instruction
+has to be pinned to the interrupt.  The complexity occurs with the ITLB miss; types 4, 5 and 7.
+
+Type 4: The ITLB misses and starts using the dcache to fetch the page table.  There is no memory
+operation. Depending on where in the walk the operations could be aborted.  If the tlb is not yet
+updated then the walk could be aborted. However if the TLB is updated then the interrupt must be
+delayed until the next instruction.
+
+What is the meaning of CommittedM?
+This signal informs the CPU if a memory operation is not started or if it is between started
+and done. Once a memory op is started it should not be interrupted.  This is used to prevent the
+CPU from generating an interrupt after the operation is partially or completely done.

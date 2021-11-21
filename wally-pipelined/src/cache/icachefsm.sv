@@ -36,6 +36,8 @@ module icachefsm
    input logic 	      ITLBWriteF,
    input logic 	      WalkerInstrPageFaultF,
 
+   input logic ExceptionM, PendingInterruptM,
+
    // BUS interface
    input logic 	      InstrAckF,
 
@@ -135,7 +137,7 @@ module icachefsm
       STATE_READY: begin
         SelAdr = 2'b00;
         ICacheReadEn = 1'b1;
-        if (ITLBMissF) begin
+        if (ITLBMissF & ~(ExceptionM | PendingInterruptM)) begin
           NextState = STATE_TLB_MISS;
         end else if (hit & ~spill) begin
           ICacheStallF = 1'b0;
