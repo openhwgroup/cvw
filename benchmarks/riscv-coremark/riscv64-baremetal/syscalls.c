@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <sys/signal.h>
 #include "util.h"
+#include <stdlib.h>
 
 #define SYS_write 64
 
@@ -80,6 +81,7 @@ void __attribute__((noreturn)) tohost_exit(uintptr_t code)
 {
   tohost = (code << 1) | 1;
   asm ("ecall");
+  exit(0);
 }
 
 uintptr_t __attribute__((weak)) handle_trap(uintptr_t cause, uintptr_t epc, uintptr_t regs[32])

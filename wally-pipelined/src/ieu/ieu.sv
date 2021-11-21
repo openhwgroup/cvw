@@ -40,6 +40,7 @@ module ieu (
   output logic [`XLEN-1:0] PCTargetE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
+  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   input logic 		   FWriteIntM,
 

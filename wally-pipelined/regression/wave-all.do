@@ -492,7 +492,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/RdD
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/RD1E
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/RD2E
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ExtImmE
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/PreSrcAE
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ForwardedSrcAE
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/SrcAE
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/SrcBE
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ALUResultE
