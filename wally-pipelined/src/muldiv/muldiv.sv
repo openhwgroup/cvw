@@ -28,7 +28,8 @@
 module muldiv (
 	       input logic 		clk, reset,
 	       // Execute Stage interface
-	       input logic [`XLEN-1:0] 	SrcAE, SrcBE,
+	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
+		   input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	       input logic [2:0] 	Funct3E, Funct3M,
 	       input logic 		MulDivE, W64E,
 	       // Writeback stage
@@ -51,14 +52,21 @@ module muldiv (
 	 logic           W64M; 
 	 
 	 // Multiplier
-	 mul mul(.*);
+	 mul mul(
+	 .clk, .reset,
+  	 .StallM, .FlushM,
+	    // .SrcAE, .SrcBE,
+	 .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	 .Funct3E,
+  	 .ProdM
+	 );
 
 	 // Divide
 	 // Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	 assign DivE = MulDivE & Funct3E[2];
 	 assign DivSignedE = ~Funct3E[0];
 	 intdivrestoring div(.clk, .reset, .StallM,
-	   .DivSignedE, .W64E, .DivE, .SrcAE, .SrcBE, .DivBusyE, .QuotM, .RemM);
+	   .DivSignedE, .W64E, .DivE, .ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	 	 
 	 // Result multiplexer
 	 always_comb

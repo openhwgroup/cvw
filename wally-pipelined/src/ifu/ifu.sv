@@ -27,60 +27,62 @@
 `include "wally-config.vh"
 
 module ifu (
-  input logic                  clk, reset,
-  input logic                  StallF, StallD, StallE, StallM, StallW,
-  input logic                  FlushF, FlushD, FlushE, FlushM, FlushW,
+  input logic 		      clk, reset,
+  input logic 		      StallF, StallD, StallE, StallM, StallW,
+  input logic 		      FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
-  input logic [`XLEN-1:0]      InstrInF,
-  input logic                  InstrAckF,
-  output logic [`XLEN-1:0]     PCF, 
-  output logic [`PA_BITS-1:0]  InstrPAdrF,
-  output logic                 InstrReadF,
-  output logic                 ICacheStallF,
+  input logic [`XLEN-1:0]     InstrInF,
+  input logic 		      InstrAckF,
+  output logic [`XLEN-1:0]    PCF, 
+  output logic [`PA_BITS-1:0] InstrPAdrF,
+  output logic 		      InstrReadF,
+  output logic 		      ICacheStallF,
   // Execute
-  output logic [`XLEN-1:0]     PCLinkE,
-  input logic                  PCSrcE, 
-  input logic [`XLEN-1:0]      PCTargetE,
-  output logic [`XLEN-1:0]     PCE,
-  output logic                 BPPredWrongE, 
+  output logic [`XLEN-1:0]    PCLinkE,
+  input logic 		      PCSrcE, 
+  input logic [`XLEN-1:0]     PCTargetE,
+  output logic [`XLEN-1:0]    PCE,
+  output logic 		      BPPredWrongE, 
   // Mem
-  input logic                  RetM, TrapM, 
-  input logic [`XLEN-1:0]      PrivilegedNextPCM, 
-  input logic                  InvalidateICacheM,
-  output logic [31:0]          InstrD, InstrM, 
-  output logic [`XLEN-1:0]     PCM, 
-  output logic [4:0]           InstrClassM,
-  output logic                 BPPredDirWrongM,
-  output logic                 BTBPredPCWrongM,
-  output logic                 RASPredPCWrongM,
-  output logic                 BPPredClassNonCFIWrongM,
+  input logic 		      RetM, TrapM, 
+  input logic [`XLEN-1:0]     PrivilegedNextPCM, 
+  input logic 		      InvalidateICacheM,
+  output logic [31:0] 	      InstrD, InstrM, 
+  output logic [`XLEN-1:0]    PCM, 
+  output logic [4:0] 	      InstrClassM,
+  output logic 		      BPPredDirWrongM,
+  output logic 		      BTBPredPCWrongM,
+  output logic 		      RASPredPCWrongM,
+  output logic 		      BPPredClassNonCFIWrongM,
   // Writeback
   // output logic [`XLEN-1:0] PCLinkW,
   // Faults
-  input logic                  IllegalBaseInstrFaultD,
-  output logic                 ITLBInstrPageFaultF,
-  output logic                 IllegalIEUInstrFaultD,
-  output logic                 InstrMisalignedFaultM,
-  output logic [`XLEN-1:0]     InstrMisalignedAdrM,
+  input logic 		      IllegalBaseInstrFaultD,
+  output logic 		      ITLBInstrPageFaultF,
+  output logic 		      IllegalIEUInstrFaultD,
+  output logic 		      InstrMisalignedFaultM,
+  output logic [`XLEN-1:0]    InstrMisalignedAdrM,
+  input logic 		      ExceptionM, PendingInterruptM,
+	    
 
   
   // mmu management
-  input logic [1:0]            PrivilegeModeW,
-  input logic [`XLEN-1:0]      PTE,
-  input logic [1:0]            PageType,
-  input logic [`XLEN-1:0]      SATP_REGW,
-  input logic                  STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic  [1:0]           STATUS_MPP,
-  input logic                  ITLBWriteF, ITLBFlushF,
-  input logic                  WalkerInstrPageFaultF,
+  input logic [1:0] 	      PrivilegeModeW,
+  input logic [`XLEN-1:0]     PTE,
+  input logic [1:0] 	      PageType,
+  input logic [`XLEN-1:0]     SATP_REGW,
+  input logic 		      STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic [1:0] 	      STATUS_MPP,
+  input logic 		      ITLBWriteF, ITLBFlushF,
+  input logic 		      WalkerInstrPageFaultF,
 
-  output logic                 ITLBMissF,
+  output logic 		      ITLBMissF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input  var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
+  input 		      var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
-  output logic                 InstrAccessFaultF
+  output logic 		      InstrAccessFaultF
 );
 
   logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;

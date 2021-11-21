@@ -31,7 +31,10 @@ module icache
    input logic 		       clk, reset,
    input logic 		       StallF, 
    input logic [`PA_BITS-1:0]  PCNextF,
-   input logic [`PA_BITS-1:0]  PCPF, 
+   input logic [`PA_BITS-1:0]  PCPF,
+
+   input logic ExceptionM, PendingInterruptM,
+   
    // Data read in from the ebu unit
    input logic [`XLEN-1:0]     InstrInF,
    input logic 		       InstrAckF,
@@ -286,6 +289,8 @@ module icache
 			.ITLBMissF,
 			.ITLBWriteF,
 			.WalkerInstrPageFaultF,
+			.ExceptionM,
+			.PendingInterruptM,
 			.InstrAckF,
 			.InstrReadF,
 			.hit,

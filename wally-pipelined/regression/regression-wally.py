@@ -32,7 +32,7 @@ configs = [
 ]
 def getBuildrootTC(short):
     INSTR_LIMIT = 100000 # multiple of 100000
-    MAX_EXPECTED = 14000000
+    MAX_EXPECTED = 182000000
     if short:
         BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
@@ -40,6 +40,12 @@ def getBuildrootTC(short):
         BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 0 1 0\n!"
         BRgrepstr=str(MAX_EXPECTED)+" instructions"
     return  TestCase(name="buildroot",cmd=BRcmd,grepstr=BRgrepstr)
+
+tc = TestCase(
+      name="buildroot-checkpoint",
+      cmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 400100000 400000001 400000000\n!",
+      grepstr="400100000 instructions")
+configs.append(tc)
 
 tests64 = ["wally64i", "arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
 for test in tests64:
@@ -87,7 +93,7 @@ def main():
     # max out at a limited number of concurrent processes to not overwhelm the system
 
     if '-all' in sys.argv:
-        TIMEOUT_DUR = 4*3600 
+        TIMEOUT_DUR = 20*3600 
         configs.append(getBuildrootTC(short=False))
     else:
         TIMEOUT_DUR = 300
