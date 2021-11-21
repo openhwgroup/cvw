@@ -175,12 +175,12 @@ module testbench();
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
   `define SEPC        `CSR_BASE.csrs.genblk1.SEPCreg.q
   `define MCOUNTEREN  `CSR_BASE.csrm.genblk3.MCOUNTERENreg.q
-  `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk3.SCOUNTERENreg.q
+  `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk2.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
   `define SSCRATCH    `CSR_BASE.csrs.genblk1.SSCRATCHreg.q
   `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
   `define STVEC       `CSR_BASE.csrs.genblk1.STVECreg.q
-  `define SATP        `CSR_BASE.csrs.genblk1.genblk2.SATPreg.q
+  `define SATP        `CSR_BASE.csrs.genblk1.genblk1.SATPreg.q
   `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
   `define STATUS_TSR  `CSR_BASE.csrsr.STATUS_TSR_INT
   `define STATUS_TW   `CSR_BASE.csrsr.STATUS_TW_INT
