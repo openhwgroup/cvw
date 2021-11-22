@@ -133,7 +133,7 @@ module uartPC16550D(
     if (~HRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
-      LCR <= #1 8'b11;
+      if (~QEMU) LCR <= #1 8'b11 else LCR <= #1 8'b0;
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
