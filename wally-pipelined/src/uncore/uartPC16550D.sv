@@ -133,7 +133,7 @@ module uartPC16550D(
     if (~HRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
-      if (~QEMU) LCR <= #1 8'b11 else LCR <= #1 8'b0;
+      if (`QEMU) LCR <= #1 8'b11; else LCR <= #1 8'b0;
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
@@ -261,7 +261,6 @@ module uartPC16550D(
       assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE      
   endgenerate
 
-  assign rxcentered = rxbaudpulse & (rxoversampledcnt == 2'b10);  // implies rxstate = UART_ACTIVE  
   assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
   ///////////////////////////////////////////
@@ -382,7 +381,7 @@ module uartPC16550D(
 
   assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s)
   generate
-    if `QEMU
+    if (`QEMU)
       assign txnextbit = txbaudpulse & (txoversampledcnt == 2'b00);  // implies txstate = UART_ACTIVE
     else
       assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
