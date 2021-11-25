@@ -196,81 +196,81 @@ module wallypipelinedhart (
     
 
   ieu ieu(
-      .clk, .reset,
+     .clk, .reset,
 
-      // Decode Stage interface
-      .InstrD, .IllegalIEUInstrFaultD, 
-      .IllegalBaseInstrFaultD,
+     // Decode Stage interface
+     .InstrD, .IllegalIEUInstrFaultD, 
+     .IllegalBaseInstrFaultD,
 
-      // Execute Stage interface
-      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
-      .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
-      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-      .SrcAE, .SrcBE, .FWriteIntM,
+     // Execute Stage interface
+     .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
+     .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+     .SrcAE, .SrcBE, .FWriteIntM,
 
-      // Memory stage interface
-      .SquashSCW, // from LSU
-      .MemRWM, // read/write control goes to LSU
-      .AtomicE, // atomic control goes to LSU	    
-      .AtomicM, // atomic control goes to LSU
-      .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
-      .Funct3M, // size and signedness to LSU
-      .SrcAM, // to privilege and fpu
-      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     // Memory stage interface
+     .SquashSCW, // from LSU
+     .MemRWM, // read/write control goes to LSU
+     .AtomicE, // atomic control goes to LSU	    
+     .AtomicM, // atomic control goes to LSU
+     .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
+     .Funct3M, // size and signedness to LSU
+     .SrcAM, // to privilege and fpu
+     .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
-      // Writeback stage
-      .CSRReadValW, .ReadDataM, .MulDivResultW,
-      .FWriteIntW, .RdW, .ReadDataW,
-      .InstrValidM, 
+     // Writeback stage
+     .CSRReadValW, .ReadDataM, .MulDivResultW,
+     .FWriteIntW, .RdW, .ReadDataW,
+     .InstrValidM, 
 
-      // hazards
-      .StallD, .StallE, .StallM, .StallW,
-      .FlushD, .FlushE, .FlushM, .FlushW,
-      .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
-      .PCSrcE,
-      .CSRReadM, .CSRWriteM, .PrivilegedM,
-      .CSRWritePendingDEM, .StoreStallD
+     // hazards
+     .StallD, .StallE, .StallM, .StallW,
+     .FlushD, .FlushE, .FlushM, .FlushW,
+     .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
+     .PCSrcE,
+     .CSRReadM, .CSRWriteM, .PrivilegedM,
+     .CSRWritePendingDEM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
   lsu lsu(
-       .clk, .reset, .StallM, .FlushM, .StallW,
-	  .FlushW,
-	  // CPU interface
-	  .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
-	  .AtomicM, .ExceptionM, .PendingInterruptM,		
-	  .CommittedM, .DCacheMiss, .DCacheAccess,
-	  .SquashSCW,            
-	  //.DataMisalignedM(DataMisalignedM),
-	  .MemAdrE, .MemAdrM, .WriteDataM,
-	  .ReadDataM, .FlushDCacheM,
-	  // connected to ahb (all stay the same)
-	  .DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
-	  .DCfromAHBReadData, .DCtoAHBWriteData, .DCtoAHBSizeM,
+     .clk, .reset, .StallM, .FlushM, .StallW,
+	.FlushW,
+	// CPU interface
+	.MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
+	.AtomicM, .ExceptionM, .PendingInterruptM,		
+	.CommittedM, .DCacheMiss, .DCacheAccess,
+	.SquashSCW,            
+	//.DataMisalignedM(DataMisalignedM),
+	.MemAdrE, .MemAdrM, .WriteDataM,
+	.ReadDataM, .FlushDCacheM,
+	// connected to ahb (all stay the same)
+	.DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
+	.DCfromAHBReadData, .DCtoAHBWriteData, .DCtoAHBSizeM,
 
-	  // connect to csr or privilege and stay the same.
-	  .PrivilegeModeW,           // connects to csr
-	  .PMPCFG_ARRAY_REGW,     // connects to csr
-	  .PMPADDR_ARRAY_REGW,    // connects to csr
-	  // hptw keep i/o
-	  .SATP_REGW, // from csr
-	  .STATUS_MXR, // from csr
-	  .STATUS_SUM,  // from csr
-	  .STATUS_MPRV,  // from csr	  	  
-	  .STATUS_MPP,  // from csr	  
+	// connect to csr or privilege and stay the same.
+	.PrivilegeModeW,           // connects to csr
+	.PMPCFG_ARRAY_REGW,     // connects to csr
+	.PMPADDR_ARRAY_REGW,    // connects to csr
+	// hptw keep i/o
+	.SATP_REGW, // from csr
+	.STATUS_MXR, // from csr
+	.STATUS_SUM,  // from csr
+	.STATUS_MPRV,  // from csr	  	  
+	.STATUS_MPP,  // from csr	  
 
-	  .DTLBFlushM,                   // connects to privilege
-	  .DTLBLoadPageFaultM,   // connects to privilege
-	  .DTLBStorePageFaultM, // connects to privilege
-	  .LoadMisalignedFaultM, // connects to privilege
-	  .LoadAccessFaultM,         // connects to privilege
-	  .StoreMisalignedFaultM, // connects to privilege
-	  .StoreAccessFaultM,     // connects to privilege
+	.DTLBFlushM,                   // connects to privilege
+	.DTLBLoadPageFaultM,   // connects to privilege
+	.DTLBStorePageFaultM, // connects to privilege
+	.LoadMisalignedFaultM, // connects to privilege
+	.LoadAccessFaultM,         // connects to privilege
+	.StoreMisalignedFaultM, // connects to privilege
+	.StoreAccessFaultM,     // connects to privilege
     
-	  .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
-       .WalkerInstrPageFaultF, .WalkerLoadPageFaultM,
-	  .WalkerStorePageFaultM,
-	  .LSUStall);                     // change to LSUStall
+	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
+     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM,
+	.WalkerStorePageFaultM,
+	.LSUStall);                     // change to LSUStall
 
 
   
@@ -354,6 +354,23 @@ module wallypipelinedhart (
   );
   
 
-  fpu fpu(.*); // floating point unit
+  fpu fpu(
+     .clk, .reset,
+     .FRM_REGW, // Rounding mode from CSR
+     .InstrD, // instruction from IFU
+     .ReadDataW,// Read data from memory
+     .SrcAE, // Integer input being processed (from IEU)
+     .StallE, .StallM, .StallW, // stall signals from HZU
+     .FlushE, .FlushM, .FlushW, // flush signals from HZU
+     .RdM, .RdW, // which FP register to write to (from IEU)
+     .FRegWriteM, // FP register write enable
+     .FStallD, // Stall the decode stage
+     .FWriteIntE, .FWriteIntM, .FWriteIntW, // integer register write enable
+     .FWriteDataE, // Data to be written to memory
+     .FIntResM, // data to be written to integer register
+     .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
+     .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+     .SetFflagsM        // FPU flags (to privileged unit)
+  ); // floating point unit
   
 endmodule
