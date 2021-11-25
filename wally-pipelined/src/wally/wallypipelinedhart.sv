@@ -233,67 +233,44 @@ module wallypipelinedhart (
 
   ); // integer execution unit: integer register file, datapath and controller
 
-  lsu lsu(.clk(clk),
-	  .reset(reset),
-	  .StallM(StallM),
-	  .FlushM(FlushM),
-	  .StallW(StallW),
-	  .FlushW(FlushW),
+  lsu lsu(
+       .clk, .reset, .StallM, .FlushM, .StallW,
+	  .FlushW,
 	  // CPU interface
-	  .MemRWM(MemRWM),                  
-	  .Funct3M(Funct3M),
-	  .Funct7M(InstrM[31:25]),
-	  .AtomicM(AtomicM),    
-	  .ExceptionM(ExceptionM),
-	  .PendingInterruptM(PendingInterruptM),		
-	  .CommittedM(CommittedM),
-	  .DCacheMiss,
-          .DCacheAccess,
-	  .SquashSCW(SquashSCW),            
+	  .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
+	  .AtomicM, .ExceptionM, .PendingInterruptM,		
+	  .CommittedM, .DCacheMiss, .DCacheAccess,
+	  .SquashSCW,            
 	  //.DataMisalignedM(DataMisalignedM),
-	  .MemAdrE(MemAdrE),
-	  .MemAdrM(MemAdrM),      
-	  .WriteDataM(WriteDataM),
-	  .ReadDataM(ReadDataM),
-    .FlushDCacheM,
-
+	  .MemAdrE, .MemAdrM, .WriteDataM,
+	  .ReadDataM, .FlushDCacheM,
 	  // connected to ahb (all stay the same)
-	  .DCtoAHBPAdrM(DCtoAHBPAdrM),
-	  .DCtoAHBReadM(DCtoAHBReadM),
-	  .DCtoAHBWriteM(DCtoAHBWriteM),
-	  .DCfromAHBAck(DCfromAHBAck),
-	  .DCfromAHBReadData(DCfromAHBReadData),
-	  .DCtoAHBWriteData(DCtoAHBWriteData),
-	  .DCtoAHBSizeM(DCtoAHBSizeM),
+	  .DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
+	  .DCfromAHBReadData, .DCtoAHBWriteData, .DCtoAHBSizeM,
 
 	  // connect to csr or privilege and stay the same.
-	  .PrivilegeModeW(PrivilegeModeW),           // connects to csr
-	  .PMPCFG_ARRAY_REGW(PMPCFG_ARRAY_REGW),     // connects to csr
-	  .PMPADDR_ARRAY_REGW(PMPADDR_ARRAY_REGW),    // connects to csr
+	  .PrivilegeModeW,           // connects to csr
+	  .PMPCFG_ARRAY_REGW,     // connects to csr
+	  .PMPADDR_ARRAY_REGW,    // connects to csr
 	  // hptw keep i/o
-	  .SATP_REGW(SATP_REGW), // from csr
-	  .STATUS_MXR(STATUS_MXR), // from csr
-	  .STATUS_SUM(STATUS_SUM),  // from csr
-	  .STATUS_MPRV(STATUS_MPRV),  // from csr	  	  
-	  .STATUS_MPP(STATUS_MPP),  // from csr	  
+	  .SATP_REGW, // from csr
+	  .STATUS_MXR, // from csr
+	  .STATUS_SUM,  // from csr
+	  .STATUS_MPRV,  // from csr	  	  
+	  .STATUS_MPP,  // from csr	  
 
-	  .DTLBFlushM(DTLBFlushM),                   // connects to privilege
-	  .DTLBLoadPageFaultM(DTLBLoadPageFaultM),   // connects to privilege
-	  .DTLBStorePageFaultM(DTLBStorePageFaultM), // connects to privilege
-	  .LoadMisalignedFaultM(LoadMisalignedFaultM), // connects to privilege
-	  .LoadAccessFaultM(LoadAccessFaultM),         // connects to privilege
-	  .StoreMisalignedFaultM(StoreMisalignedFaultM), // connects to privilege
-	  .StoreAccessFaultM(StoreAccessFaultM),     // connects to privilege
+	  .DTLBFlushM,                   // connects to privilege
+	  .DTLBLoadPageFaultM,   // connects to privilege
+	  .DTLBStorePageFaultM, // connects to privilege
+	  .LoadMisalignedFaultM, // connects to privilege
+	  .LoadAccessFaultM,         // connects to privilege
+	  .StoreMisalignedFaultM, // connects to privilege
+	  .StoreAccessFaultM,     // connects to privilege
     
-	  .PCF(PCF),
-	  .ITLBMissF(ITLBMissF),
-	  .PTE(PTE),
-	  .PageType,
-	  .ITLBWriteF(ITLBWriteF),
-	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
-	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
-	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
-	  .LSUStall(LSUStall));                     // change to LSUStall
+	  .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
+       .WalkerInstrPageFaultF, .WalkerLoadPageFaultM,
+	  .WalkerStorePageFaultM,
+	  .LSUStall);                     // change to LSUStall
 
 
   
