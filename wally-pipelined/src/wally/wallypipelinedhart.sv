@@ -276,50 +276,49 @@ module wallypipelinedhart (
   
 
   ahblite ebu(// IFU connections
-	      .InstrPAdrF(InstrPAdrF),
-	      .InstrReadF(InstrReadF),
-	      .InstrRData(InstrRData),
-	      .InstrAckF(InstrAckF),
-	      // LSU connections
-	      .DCtoAHBPAdrM(DCtoAHBPAdrM), // rename to DCtoAHBPAdrM
-	      .DCtoAHBReadM(DCtoAHBReadM), // rename to DCtoAHBReadM
-	      .DCtoAHBWriteM(DCtoAHBWriteM), // rename to DCtoAHBWriteM
-	      .DCtoAHBWriteData(DCtoAHBWriteData),
-	      .DCfromAHBReadData(DCfromAHBReadData),
-	      .DCfromAHBAck(DCfromAHBAck),
-	      // remove these
-	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
-	      .UnsignedLoadM(1'b0),
-	      .AtomicMaskedM(2'b00),
-	       .*);
+     .clk, .reset,
+     .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
+     .InstrPAdrF, // *** rename these to match block diagram
+     .InstrReadF, .InstrRData, .InstrAckF,
+     // Signals from Data Cache
+     .DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCtoAHBWriteData,
+     .DCfromAHBReadData,
+     .MemSizeM(DCtoAHBSizeM[1:0]),     // *** remove
+     .DCfromAHBAck,
+ 
+     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
+     .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
+     .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
+     .HWRITED);
 
   
   muldiv mdu(
     .clk, .reset,
-	       // Execute Stage interface
-	       //   .SrcAE, .SrcBE,
-		.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	  .Funct3E, .Funct3M,
-	  .MulDivE, .W64E,
-	       // Writeback stage
-	  .MulDivResultW,
-	       // Divide Done
-	  .DivBusyE, 
-	       // hazards
-	  .StallM, .StallW, .FlushM, .FlushW 
+	// Execute Stage interface
+	//   .SrcAE, .SrcBE,
+	.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	.Funct3E, .Funct3M,
+     .MulDivE, .W64E,
+	// Writeback stage
+     .MulDivResultW,
+     // Divide Done
+	.DivBusyE, 
+	// hazards
+	.StallM, .StallW, .FlushM, .FlushW 
   ); // multiply and divide unit
   
   hazard     hzu(
-        .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
-        .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
-	      .LSUStall, .ICacheStallF,
-        .FPUStallD, .FStallD,
-	      .DivBusyE, .FDivBusyE,
-	      .EcallFaultM, .BreakpointFaultM,
-        .InvalidateICacheM,
-  // Stall & flush outputs
-	      .StallF, .StallD, .StallE, .StallM, .StallW,
-	      .FlushF, .FlushD, .FlushE, .FlushM, .FlushW);	// global stall and flush control
+     .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+     .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
+     .LSUStall, .ICacheStallF,
+     .FPUStallD, .FStallD,
+	.DivBusyE, .FDivBusyE,
+	.EcallFaultM, .BreakpointFaultM,
+     .InvalidateICacheM,
+     // Stall & flush outputs
+	.StallF, .StallD, .StallE, .StallM, .StallW,
+	.FlushF, .FlushD, .FlushE, .FlushM, .FlushW
+     );	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);
