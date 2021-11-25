@@ -91,8 +91,8 @@ with open(stateGDBpath, 'r') as stateGDB:
                 outFileName = 'checkpoint-'+name.upper().strip('0123456789')
                 outFile = open(outDir+outFileName, 'a')
                 fourPmp = int(val,16)
-                for i in range(3,-1,-1):
-                    byte = (fourPmp >> 4*i) & 0xf
+                for i in range(0,4):
+                    byte = (fourPmp >> 8*i) & 0xff
                     outFile.write(hex(byte)[2:]+'\n')
                 outFile.close()
 
