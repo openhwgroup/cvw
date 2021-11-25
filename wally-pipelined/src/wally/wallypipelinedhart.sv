@@ -293,7 +293,7 @@ module wallypipelinedhart (
 
   
   muldiv mdu(
-    .clk, .reset,
+     .clk, .reset,
 	// Execute Stage interface
 	//   .SrcAE, .SrcBE,
 	.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
@@ -321,7 +321,37 @@ module wallypipelinedhart (
      );	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
-  privileged priv(.*);
+  privileged priv(
+     .clk, .reset,
+     .FlushD, .FlushE, .FlushM, .FlushW, 
+     .StallD, .StallE, .StallM, .StallW,
+     .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
+     .InstrM, .CSRReadValW, .PrivilegedNextPCM,
+     .RetM, .TrapM, 
+     .ITLBFlushF, .DTLBFlushM,
+     .InstrValidM, .CommittedM,
+     .FRegWriteM, .LoadStallD,
+     .BPPredDirWrongM, .BTBPredPCWrongM,
+     .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+     .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
+     .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
+     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM, .WalkerStorePageFaultM,
+     .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+     .LoadMisalignedFaultM, .StoreMisalignedFaultM,
+     .TimerIntM, .ExtIntM, .SwIntM,
+     .MTIME_CLINT, .MTIMECMP_CLINT,
+     .InstrMisalignedAdrM, .MemAdrM,
+     .SetFflagsM,
+     // Trap signals from pmp/pma in mmu
+     // *** do these need to be split up into one for dmem and one for ifu?
+     // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
+     .InstrAccessFaultF, .LoadAccessFaultM, .StoreAccessFaultM,
+     .ExceptionM, .PendingInterruptM, .IllegalFPUInstrE,
+     .PrivilegeModeW, .SATP_REGW,
+     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+     .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
+     .FRM_REGW,.BreakpointFaultM, .EcallFaultM
+  );
   
 
   fpu fpu(.*); // floating point unit
