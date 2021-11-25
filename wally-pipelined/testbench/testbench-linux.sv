@@ -431,12 +431,12 @@ module testbench();
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (ExpectedMemAdrM == 'h10000005) begin \
-          //$display("%tns, %d instrs: Overwriting read data from CLINT.", $time, InstrCountW); \
+        if (dut.hart.lsu.MemPAdrM == 'h10000005) begin \
+          //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
           force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         end \
         if(textM.substr(0,5) == "rdtime") begin \
-          //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW); \
+          $display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
           force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
       end \
