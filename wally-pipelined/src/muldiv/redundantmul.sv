@@ -4,7 +4,15 @@
 // Written: David_Harris@hmc.edu and ssanghai@hm.edu 10/11/2021
 // Modified: 
 //
-// Purpose: redundant multiplier 
+// Purpose: multiplier with output in redundant carry-sum form
+//          This can be faster than a mutiplier that requires a final adder to obtain the nonredundant answer.
+//          The module has several implementations controlled by the DESIGN_COMPILER flag.
+//          When DESIGN_COMPILER = 1, use the Synopsys DesignWare DW02_multp block.  This will give highest quality results
+//                                    but doesn't work in simulation or when using different tools
+//          When DESIGN_COMPILER = 2, use the Wally mult_cs block with Radix 2 Booth encoding and a Wallace Tree
+//                                    This simulates and synthesizes, but quality of results ae lower than DesignWare
+//          Otherwise, just use a nonredundant multiplier and set one word to 0.  This is best for FPGAs, which have
+//                                    block multipliers, and also simulates fastest.
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -29,18 +37,19 @@ module redundantmul #(parameter WIDTH =8)(
   input logic [WIDTH-1:0]    a,b,
   output logic [2*WIDTH-1:0] out0, out1);
 
-   logic [2*WIDTH-1+2:0]     tmp_out0;
-   logic [2*WIDTH-1+2:0]     tmp_out1;   
+  // 
 
    generate
-      if (`DESIGN_COMPILER == 1)
+      if (`DESIGN_COMPILER == 1) 
 	begin
-	   DW02_multp #(WIDTH, WIDTH, 2*WIDTH+2) mul(.a, .b, .tc(1'b0), .out0(tmp_out0), .out1(tmp_out1));
-	   assign out0 = tmp_out0[2*WIDTH-1:0];
-	   assign out1 = tmp_out1[2*WIDTH-1:0];
+        logic [2*WIDTH-1+2:0]     tmp_out0; // DW02_
+        logic [2*WIDTH-1+2:0]     tmp_out1;   
+	  DW02_multp #(WIDTH, WIDTH, 2*WIDTH+2) mul(.a, .b, .tc(1'b0), .out0(tmp_out0), .out1(tmp_out1));
+	  assign out0 = tmp_out0[2*WIDTH-1:0];
+	  assign out1 = tmp_out1[2*WIDTH-1:0];
 	end
       else if (`DESIGN_COMPILER == 2)
-	mult_cs #(WIDTH) mul(.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
+	  mult_cs #(WIDTH) mul(.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
       else begin // force a nonredunant multipler.  This will simulate properly and also is appropriate for FPGAs.
 	 assign out0 = a * b;
 	 assign out1 = 0;

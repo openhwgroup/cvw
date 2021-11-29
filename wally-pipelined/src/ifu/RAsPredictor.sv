@@ -30,21 +30,21 @@
 module RASPredictor
   #(parameter int StackSize = 16
     )
-  (input logic clk,
-   input logic 		    reset,
-   input logic 		    pop,
+  (input logic              clk,
+   input logic              reset,
+   input logic              pop,
    output logic [`XLEN-1:0] popPC,
-   input logic 		    push,
-   input logic 		    incr,
+   input logic              push,
+   input logic              incr,
    input logic [`XLEN-1:0]  pushPC
    );
 
-  logic 		    CounterEn;
+  logic                     CounterEn;
   localparam Depth = $clog2(StackSize);
 
-  logic [Depth-1:0] 	    PtrD, PtrQ, PtrP1, PtrM1;
-  logic [StackSize-1:0] [`XLEN-1:0] memory;
-  integer 			    index;
+  logic [Depth-1:0]         PtrD, PtrQ, PtrP1, PtrM1;
+  logic [StackSize-1:0]     [`XLEN-1:0] memory;
+  integer        index;
   
   assign CounterEn = pop | push | incr;
 
@@ -56,16 +56,16 @@ module RASPredictor
   // *** what happens if jal is executing and there is a return being flushed in Decode?
 
   flopenr #(Depth) PTR(.clk(clk),
-			   .reset(reset),
-			   .en(CounterEn),
-			   .d(PtrD),
-			   .q(PtrQ));
+      .reset(reset),
+      .en(CounterEn),
+      .d(PtrD),
+      .q(PtrQ));
 
   // RAS must be reset. 
-  always_ff @ (posedge clk, posedge reset) begin
+  always_ff @ (posedge clk) begin
     if(reset) begin
       for(index=0; index<StackSize; index++)
-	memory[index] <= {`XLEN{1'b0}};
+ memory[index] <= {`XLEN{1'b0}};
     end else if(push) begin
       memory[PtrP1] <= #1 pushPC;
     end

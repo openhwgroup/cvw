@@ -38,12 +38,12 @@ module datapath (
   input  logic             TargetSrcE, 
   input  logic             JumpE,
   input  logic             IllegalFPUInstrE,
-  input  logic [1:0]       MemRWE,
   input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
   output logic [2:0]       FlagsE,
   output logic [`XLEN-1:0] PCTargetE,
+  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             StallM, FlushM,
@@ -74,7 +74,8 @@ module datapath (
   logic [`XLEN-1:0] RD1E, RD2E;
   logic [`XLEN-1:0] ExtImmE;
 
-  logic [`XLEN-1:0] PreSrcAE, PreSrcBE, SrcAE2, SrcBE2;
+  // logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, SrcAE2, SrcBE2; // *** MAde forwardedsrcae an output to get rid of a mux in the critical path.
+  logic [`XLEN-1:0] SrcAE2, SrcBE2;
 
   logic [`XLEN-1:0] ALUResultE;
   logic [`XLEN-1:0] WriteDataE;
@@ -84,7 +85,6 @@ module datapath (
   logic [`XLEN-1:0] ResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
-  logic [`XLEN-1:0] ALUResultW;
   logic [`XLEN-1:0] WriteDataW;
   logic [`XLEN-1:0] ResultW;
   
@@ -106,12 +106,12 @@ module datapath (
   flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, PreSrcAE);
-  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, PreSrcBE);
-  mux2  #(`XLEN)  writedatamux(PreSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
-  mux2  #(`XLEN)  srcamux(PreSrcAE, PCE, ALUSrcAE, SrcAE);
+  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
+  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
+  mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+  mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
-  mux2  #(`XLEN)  srcbmux(PreSrcBE, ExtImmE, ALUSrcBE, SrcBE);
+  mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
   mux2  #(`XLEN)  srcbmux2(SrcBE, {`XLEN{1'b0}}, JumpE, SrcBE2); // *** May be able to remove this mux.
   alu   #(`XLEN)  alu(SrcAE2, SrcBE2, ALUControlE, ALUResultE, FlagsE);
   mux2  #(`XLEN)  targetsrcmux(PCE, SrcAE, TargetSrcE, TargetBaseE);
@@ -143,12 +143,5 @@ module datapath (
 			      .d(ReadDataM),
 			      .q(ReadDataW));
 
-  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	
-/* -----\/----- EXCLUDED -----\/-----
-  // This mux4:1 no longer needs to include PCLinkW.  This is set correctly in the execution stage.
-  // *** need to look at how the decoder is coded to fix.
-  mux4  #(`XLEN) resultmux(ALUResultW, ReadDataW, PCLinkW, CSRReadValW, ResultSrcW, WriteDataW);	
->>>>>>> bp
- -----/\----- EXCLUDED -----/\----- */
- 
+  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
 endmodule

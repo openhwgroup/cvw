@@ -127,8 +127,8 @@
 `define PLIC_NUM_SRC 53
 `define PLIC_UART_ID 4
 
-`define TWO_BIT_PRELOAD "../config/busybear/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/busybear/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/fpga/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/fpga/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 1

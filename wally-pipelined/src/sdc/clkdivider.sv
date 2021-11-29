@@ -49,7 +49,7 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
 
   assign  w_load = resetPulse | w_counter_overflowed;  // reload when zero occurs or when set by outside
 
-  counter #(.WIDTH(g_COUNT_WIDTH))  // wider for sign, this way the (MSB /= '1') only for zero
+  SDCcounter #(.WIDTH(g_COUNT_WIDTH))  // wider for sign, this way the (MSB /= '1') only for zero
   my_counter (.clk(i_CLK),
 	      .Load(w_load), //  reload when zero occurs or when set by outside
 	      .CountIn(i_COUNT_IN_MAX), // negative signed integer

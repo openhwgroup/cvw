@@ -26,17 +26,12 @@
 `include "wally-config.vh"
 /* verilator lint_on UNUSED */
 
-module wallypipelinedhart 
-  (
+module wallypipelinedhart (
    input logic 		    clk, reset,
-   output logic [`XLEN-1:0] PCF,
-   //  input  logic [31:0]      InstrF,
    // Privileged
    input logic 		    TimerIntM, ExtIntM, SwIntM,
-   input logic 		    DataAccessFaultM,
    input logic [63:0] 	    MTIME_CLINT, MTIMECMP_CLINT,
    // Bus Interface
-   input logic [15:0] 	    rd2, // bogus, delete when real multicycle fetch works
    input logic [`AHBW-1:0]  HRDATA,
    input logic 		    HREADY, HRESP,
    output logic 	    HCLK, HRESETn,
@@ -48,7 +43,6 @@ module wallypipelinedhart
    output logic [3:0] 	    HPROT,
    output logic [1:0] 	    HTRANS,
    output logic 	    HMASTLOCK,
-   output logic [5:0] 	    HSELRegions,
    // Delayed signals for subword write
    output logic [2:0] 	    HADDRD,
    output logic [3:0] 	    HSIZED,
@@ -66,22 +60,20 @@ module wallypipelinedhart
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
-  logic [`XLEN-1:0] 	    SrcAE, SrcBE;
+  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, SrcAE, SrcBE;
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] 		    InstrD, InstrE, InstrW;
+  logic [31:0] 		    InstrD, InstrW;
   (* mark_debug = "true" *) logic [31:0] 		    InstrM;
-  logic [`XLEN-1:0] 	    PCD, PCE, PCLinkE, PCLinkW;
+  logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    PCM;
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
-  logic [1:0] 		    MemRWE;  
   (* mark_debug = "true" *) logic [1:0] 		    MemRWM;
   (* mark_debug = "true" *) logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
-  logic 		    DataMisalignedM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
   logic 		    WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM;
@@ -92,13 +84,11 @@ module wallypipelinedhart
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
   logic 		    DivBusyE;
-  logic 		    RegWriteD;
   logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;
-  logic 		    SquashSCM, SquashSCW;
+  logic 		    SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
-  logic [1:0] 		    FMemRWM, FMemRWE;
-  logic [4:0]        RdE, RdM, RdW;
+   logic [4:0]        RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
   logic [`XLEN-1:0] 	    FWriteDataE;
@@ -108,13 +98,11 @@ module wallypipelinedhart
   logic 		    FRegWriteM;
   logic 		    FPUStallD;
   logic [4:0] 		    SetFflagsM;
-  logic [`XLEN-1:0] 	    FPUResultW;
 
   // memory management unit signals
-  logic 		    ITLBWriteF, DTLBWriteM;
+  logic 		    ITLBWriteF;
   logic 		    ITLBFlushF, DTLBFlushM;
-  logic 		    ITLBMissF, ITLBHitF;
-  logic 		    DTLBMissM, DTLBHitM;
+  logic 		    ITLBMissF;
   logic [`XLEN-1:0] 	    SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic  [1:0]       STATUS_MPP;
@@ -123,7 +111,6 @@ module wallypipelinedhart
   logic [1:0] 		    PageType;
 
   // PMA checker signals
-  logic 		    DSquashBusAccessM, ISquashBusAccessF;
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
@@ -172,11 +159,84 @@ module wallypipelinedhart
   logic 		    BreakpointFaultM, EcallFaultM;
 
   
-  ifu ifu(.InstrInF(InstrRData),
-	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
-	  .*); // instruction fetch unit: PC, branch prediction, instruction cache
+  ifu ifu(
+    .clk, .reset,
+    .StallF, .StallD, .StallE, .StallM, .StallW,
+    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
 
-  ieu ieu(.*); // integer execution unit: integer register file, datapath and controller
+    .ExceptionM, .PendingInterruptM,
+    // Fetch
+    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF,
+    .InstrReadF, .ICacheStallF,
+
+    // Execute
+    .PCLinkE, .PCSrcE, .PCTargetE, .PCE,
+    .BPPredWrongE, 
+  
+    // Mem
+    .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
+    .InstrD, .InstrM, . PCM, .InstrClassM, .BPPredDirWrongM,
+    .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+  
+    // Writeback
+
+    // output logic
+    // Faults
+    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF,
+    .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
+    .InstrMisalignedAdrM,
+
+    // mmu management
+    .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
+    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
+    .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
+    .WalkerInstrPageFaultF, .ITLBMissF,
+
+    // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
+    .InstrAccessFaultF
+
+	  
+	  ); // instruction fetch unit: PC, branch prediction, instruction cache
+    
+
+  ieu ieu(
+      .clk, .reset,
+
+      // Decode Stage interface
+      .InstrD, .IllegalIEUInstrFaultD, 
+      .IllegalBaseInstrFaultD,
+
+      // Execute Stage interface
+      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
+      .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
+      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+      .SrcAE, .SrcBE, .FWriteIntM,
+
+      // Memory stage interface
+      .SquashSCW, // from LSU
+      .MemRWM, // read/write control goes to LSU
+      .AtomicE, // atomic control goes to LSU	    
+      .AtomicM, // atomic control goes to LSU
+      .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
+      .Funct3M, // size and signedness to LSU
+      .SrcAM, // to privilege and fpu
+      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+
+      // Writeback stage
+      .CSRReadValW, .ReadDataM, .MulDivResultW,
+      .FWriteIntW, .RdW, .ReadDataW,
+      .InstrValidM, 
+
+      // hazards
+      .StallD, .StallE, .StallM, .StallW,
+      .FlushD, .FlushE, .FlushM, .FlushW,
+      .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
+      .PCSrcE,
+      .CSRReadM, .CSRWriteM, .PrivilegedM,
+      .CSRWritePendingDEM, .StoreStallD
+
+  ); // integer execution unit: integer register file, datapath and controller
 
   lsu lsu(.clk(clk),
 	  .reset(reset),
@@ -195,7 +255,7 @@ module wallypipelinedhart
 	  .DCacheMiss,
           .DCacheAccess,
 	  .SquashSCW(SquashSCW),            
-	  .DataMisalignedM(DataMisalignedM),
+	  //.DataMisalignedM(DataMisalignedM),
 	  .MemAdrE(MemAdrE),
 	  .MemAdrM(MemAdrM),      
 	  .WriteDataM(WriteDataM),
@@ -238,9 +298,6 @@ module wallypipelinedhart
 	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
 	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
-
-	  .DTLBHitM(DTLBHitM), // not connected remove
-
 	  .LSUStall(LSUStall));                     // change to LSUStall
 
 
@@ -261,16 +318,36 @@ module wallypipelinedhart
 	      // remove these
 	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
 	      .UnsignedLoadM(1'b0),
-	      .Funct7M(7'b0),
-//	      .HRDATAW(),
-	      .StallW(1'b0),
 	      .AtomicMaskedM(2'b00),
 	       .*);
 
   
-  muldiv mdu(.*); // multiply and divide unit
+  muldiv mdu(
+    .clk, .reset,
+	       // Execute Stage interface
+	       //   .SrcAE, .SrcBE,
+		.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	  .Funct3E, .Funct3M,
+	  .MulDivE, .W64E,
+	       // Writeback stage
+	  .MulDivResultW,
+	       // Divide Done
+	  .DivBusyE, 
+	       // hazards
+	  .StallM, .StallW, .FlushM, .FlushW 
+  ); // multiply and divide unit
   
-  hazard     hzu(.*);	// global stall and flush control
+  hazard     hzu(
+        .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+        .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
+	      .LSUStall, .ICacheStallF,
+        .FPUStallD, .FStallD,
+	      .DivBusyE, .FDivBusyE,
+	      .EcallFaultM, .BreakpointFaultM,
+        .InvalidateICacheM,
+  // Stall & flush outputs
+	      .StallF, .StallD, .StallE, .StallM, .StallW,
+	      .FlushF, .FlushD, .FlushE, .FlushM, .FlushW);	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
   privileged priv(.*);
@@ -281,34 +358,5 @@ module wallypipelinedhart
   // presently stub out SetFlagsM and FRegWriteM
   //assign SetFflagsM = 0;
   //assign FRegWriteM = 0;
-/* -----\/----- EXCLUDED -----\/-----
-  
-  
-  // ILA probe most important signals in CPU.
-  ila_0 ila_0(.clk(clk),
-              .probe0(PCM),
-              .probe1(MemAdrM),
-              .probe2(WriteDataM),
-              .probe3(ReadDataM),
-              .probe4(TrapM),
-              .probe5(MemRWM),
-	      .probe6(InstrM),
-
-	      .probe7(InstrValidM),
-	      .probe8({PendingIntsM, InstrMisalignedFaultM , InstrAccessFaultM , IllegalInstrFaultM ,
-                      LoadMisalignedFaultM , StoreMisalignedFaultM ,
-                      InstrPageFaultM , LoadPageFaultM , StorePageFaultM ,
-                      BreakpointFaultM , EcallFaultM ,
-                      LoadAccessFaultM , StoreAccessFaultM}),
-	      .probe9(MEPC_REGW),
-	      .probe10(MCAUSE_REGW),
-	      .probe11(MTVAL_REGW),
-	      .probe12(MIP_REGW),
-	      .probe13(MIE_REGW),
-	      .probe14(SIP_REGW),
-	      .probe15(SIE_REGW),
-	      .probe16({Match, SizeValid, Supported, AccessValid}));
-
- -----/\----- EXCLUDED -----/\----- */
 
 endmodule

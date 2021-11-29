@@ -42,19 +42,34 @@ module cachereplacementpolicy
   logic [NUMWAYS-2:0] 				ReplacementBits [NUMLINES-1:0];
   logic [NUMWAYS-2:0] 				BlockReplacementBits;
   logic [NUMWAYS-2:0] 				NewReplacement;
+  logic [NUMWAYS-2:0] 				NewReplacementD;  
 
-  always_ff @(posedge clk, posedge reset) begin
+  logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] 	MemPAdrMD;
+  logic [INDEXLEN-1:0] 				RAdrD;
+  logic 					LRUWriteEnD;
+  
+  /* verilator lint_off BLKLOOPINIT */
+  always_ff @(posedge clk) begin
     if (reset) begin
+      RAdrD <= '0;
+      MemPAdrMD <= '0;
+      LRUWriteEnD <= 0;
+      NewReplacementD <= '0;
       for(int index = 0; index < NUMLINES; index++)
-	      ReplacementBits[index] = '0;
+	ReplacementBits[index] <= '0;
     end else begin
-      BlockReplacementBits = ReplacementBits[RAdr];
-      if (LRUWriteEn) begin
-	      ReplacementBits[MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacement;
+      RAdrD <= RAdr;
+      MemPAdrMD <= MemPAdrM;
+      LRUWriteEnD <= LRUWriteEn;
+      NewReplacementD <= NewReplacement;
+      if (LRUWriteEnD) begin
+	ReplacementBits[MemPAdrMD[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacementD;
       end
     end
   end
+  /* verilator lint_on BLKLOOPINIT */
 
+  assign BlockReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;
   generate
@@ -67,7 +82,39 @@ module cachereplacementpolicy
       assign VictimWay[1] = ~BlockReplacementBits[0];
       assign VictimWay[0] = BlockReplacementBits[0];
       
-    end else if (NUMWAYS == 4) begin : FourWay 
+    end else if (NUMWAYS == 4) begin : FourWay
+
+
+      // VictimWay is a function only of the current value of the LRU.
+      // binary encoding
+      //assign VictimWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[1] : BlockReplacementBits[0];
+      //assign VictimWay[1] = BlockReplacementBits[2];
+
+      // 1 hot encoding
+      //| WayHit | LRU 2 | LRU 1 | LRU 0 |
+      //|--------+-------+-------+-------|
+      //|   0000 |     - | -     | -     |
+      //|   0001 |     1 | -     | 1     |
+      //|   0010 |     1 | -     | 0     |
+      //|   0100 |     0 | 1     | -     |
+      //|   1000 |     0 | 0     | -     |
+
+      assign VictimWay[0] = ~BlockReplacementBits[2] & ~BlockReplacementBits[0];
+      assign VictimWay[1] = ~BlockReplacementBits[2] & BlockReplacementBits[0];
+      assign VictimWay[2] = BlockReplacementBits[2] & ~BlockReplacementBits[1];
+      assign VictimWay[3] = BlockReplacementBits[2] & BlockReplacementBits[1];      
+
+      // New LRU bits which are updated is function only of the WayHit.
+      // However the not updated bits come from the old LRU.
+      assign LRUEn[2] = |WayHit;
+      assign LRUEn[1] = WayHit[3] | WayHit[2];
+      assign LRUEn[0] = WayHit[1] | WayHit[0];
+
+      assign LRUMask[2] = WayHit[1] | WayHit[0];
+      assign LRUMask[1] = WayHit[2];
+      assign LRUMask[0] = WayHit[0];
+      
+/* -----\/----- EXCLUDED -----\/-----
 
       // selects
       assign LRUEn[2] = 1'b1;
@@ -78,16 +125,19 @@ module cachereplacementpolicy
       assign LRUMask[0] = WayHit[1];
       assign LRUMask[1] = WayHit[3];      
       assign LRUMask[2] = WayHit[3] | WayHit[2];
+ -----/\----- EXCLUDED -----/\----- */
 
       for(index = 0; index < NUMWAYS-1; index++)
 	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
 
+/* -----\/----- EXCLUDED -----\/-----
       assign EncVicWay[1] = BlockReplacementBits[2];
       assign EncVicWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[0] : BlockReplacementBits[1];
 
       onehotdecoder #(2) 
       waydec(.bin(EncVicWay),
 	     .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3]}));
+ -----/\----- EXCLUDED -----/\----- */
 
     end else if (NUMWAYS == 8) begin : EightWay
 

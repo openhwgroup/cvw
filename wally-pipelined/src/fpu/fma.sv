@@ -468,10 +468,8 @@ module fma2(
     logic               Plus1, Minus1, CalcPlus1;   // do you add or subtract one for rounding
     logic               UfPlus1;                    // do you add one (for determining underflow flag)
     logic               Invalid,Underflow,Overflow; // flags
-    logic               ZeroSgn;        // the result's sign if the sum is zero
-    logic               ResultSgnTmp;   // the result's sign assuming the result is not zero
     logic               Guard, Round;   // bits needed to determine rounding
-    logic               UfRound, UfLSBNormSum;   // bits needed to determine rounding for underflow flag
+    logic               UfLSBNormSum;   // bits needed to determine rounding for underflow flag
    
     
 
@@ -498,7 +496,7 @@ module fma2(
     // round to nearest max magnitude
 
     fmaround fmaround(.FmtM, .FrmM, .Sticky, .UfSticky, .NormSum, .AddendStickyM, .NormSumSticky, .ZZeroM, .InvZM, .ResultSgn, .SumExp,
-        .CalcPlus1, .Plus1, .UfPlus1, .Minus1, .FullResultExp, .ResultFrac, .ResultExp, .Round, .Guard, .UfRound, .UfLSBNormSum);
+        .CalcPlus1, .Plus1, .UfPlus1, .Minus1, .FullResultExp, .ResultFrac, .ResultExp, .Round, .Guard, .UfLSBNormSum);
 
 
 
@@ -519,7 +517,7 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
 
     fmaflags fmaflags(.XSNaNM, .YSNaNM, .ZSNaNM, .XInfM, .YInfM, .ZInfM, .XZeroM, .YZeroM,
-        .XNaNM, .YNaNM, .ZNaNM, .FullResultExp, .SumExp, .ZSgnEffM, .PSgnM, .Round, .Guard, .UfRound, .UfLSBNormSum, .Sticky, .UfPlus1,
+        .XNaNM, .YNaNM, .ZNaNM, .FullResultExp, .SumExp, .ZSgnEffM, .PSgnM, .Round, .Guard, .UfLSBNormSum, .Sticky, .UfPlus1,
         .FmtM, .Invalid, .Overflow, .Underflow, .FMAFlgM);
 
 
@@ -689,7 +687,7 @@ module fmaround(
     output logic [`NF-1:0]  ResultFrac,         // Result fraction
     output logic [`NE-1:0]  ResultExp,          // Result exponent
     output logic            Sticky,             // sticky bit
-    output logic            Round, Guard, UfRound, UfLSBNormSum // bits needed to calculate rounding
+    output logic            Round, Guard, UfLSBNormSum // bits needed to calculate rounding
 );
     logic           LSBNormSum;         // bit used for rounding - least significant bit of the normalized sum
     logic           SubBySmallNum, UfSubBySmallNum;  // was there supposed to be a subtraction by a small number
@@ -697,6 +695,7 @@ module fmaround(
     logic           UfCalcPlus1, CalcMinus1;    // do you add or subtract on from the result
     logic [`FLEN:0] RoundAdd;           // how much to add to the result
     logic [`NF-1:0] NormSumTruncated;   // the normalized sum trimed to fit the mantissa
+    logic           UfRound;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
@@ -799,12 +798,11 @@ module fmaflags(
     input logic  [`NE+1:0]      FullResultExp,          // ResultExp with bits to determine sign and overflow
     input logic  [`NE+1:0]      SumExp,                 // exponent of the normalized sum
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
-    input logic                 Round, Guard, UfRound, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
+    input logic                 Round, Guard, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
     input logic                 FmtM,                   // precision 1 = double 0 = single
     output logic                Invalid, Overflow, Underflow, // flags used to select the result
     output logic [4:0]          FMAFlgM // FMA flags
 );
-    logic [`NE+1:0]     MaxExp;     // maximum value of the exponent
     logic               SigNaN;     // is an input a signaling NaN
     logic               UnderflowFlag, Inexact; // flags
 
@@ -819,7 +817,6 @@ module fmaflags(
     //   2) Inf - Inf (unless x or y is NaN)
     //   3) 0 * Inf
 
-    // assign MaxExp = FmtM ? {`NE{1'b1}} : {8{1'b1}};
     assign SigNaN = XSNaNM | YSNaNM | ZSNaNM;
     assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
    

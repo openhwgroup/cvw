@@ -32,7 +32,7 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input logic 		   clk, reset, 
+  input logic 		   clk, reset_ext, 
   // AHB Lite Interface
   // inputs from external memory
   input logic [`AHBW-1:0]  HRDATAEXT,
@@ -61,51 +61,29 @@ module wallypipelinedsoc (
   output logic 		   SDCCLK			  
 );
 
-  logic 		   sreset;
-  
-  // to instruction memory *** remove later
-  logic [`XLEN-1:0] PCF;
-
   // Uncore signals
+  logic 		   reset;
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
-  //logic             HREADY, HRESP;
-  logic [5:0]       HSELRegions;
-  logic             InstrAccessFaultF, DataAccessFaultM;
+  logic             HRESP;
   logic             TimerIntM, SwIntM; // from CLINT
   logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
   logic             ExtIntM; // from PLIC
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
   logic             HWRITED;
-  logic [15:0]      rd2; // bogus, delete when real multicycle fetch works
-  logic [31:0]      InstrF;
-  logic 	    HRESP;
 
-/* -----\/----- EXCLUDED -----\/-----
-  logic             SDCCmdOut;
-  logic             SDCCmdOE;
-  logic             SDCCmdIn;
- -----/\----- EXCLUDED -----/\----- */
-//  logic [3:0] 	    SDCDatIn;
-
-  // it turn out vivado cannot infer these at this level of the hierarchy.
-  //assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
-  //assign SDCCmdIn = SDCCmd;
-  //assign SDCDatIn = SDCDat; // when write supported this will be a tristate
-
-  arrs arrs(.clk, .areset(reset), .reset(sreset));
-  
+  // synchronize reset to SOC clock domain
+  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
+   
   // instantiate processor and memories
-  wallypipelinedhart hart(.clk, .reset(sreset),
-    .PCF,  .TimerIntM, .ExtIntM, .SwIntM, .DataAccessFaultM, 
-    .MTIME_CLINT, .MTIMECMP_CLINT, .rd2, 
+  wallypipelinedhart hart(.clk, .reset,
+    .TimerIntM, .ExtIntM, .SwIntM, 
+    .MTIME_CLINT, .MTIMECMP_CLINT, 
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HSELRegions, .HADDRD, .HSIZED, .HWRITED
+    .HADDRD, .HSIZED, .HWRITED
    );
 
-  // instructions now come from uncore memory. This line can be removed at any time.
-  // imem imem(.AdrF(PCF[`XLEN-1:1]), .*); // temporary until uncore memory is finished***
   uncore uncore(.HCLK, .HRESETn,
     .HADDR, .HWDATAIN(HWDATA), .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
     .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,

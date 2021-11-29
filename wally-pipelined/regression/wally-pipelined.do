@@ -37,7 +37,7 @@ vlib work
 #}
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv -suppress 2583
+vlog -lint +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
 vopt +acc work.testbench -G TEST=$2 -o workopt 
 vsim workopt
 

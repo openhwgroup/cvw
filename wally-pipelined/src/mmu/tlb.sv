@@ -98,7 +98,6 @@ module tlb #(parameter TLB_ENTRIES = 8,
 
   // Sections of the page table entry
   logic [7:0]           PTEAccessBits;
-  logic [11:0]          PageOffset;
 
   logic [1:0]            HitPageType;
   logic                  CAMHit;

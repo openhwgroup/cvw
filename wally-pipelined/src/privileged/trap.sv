@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: dottolia@hmc.edu 14 April 2021: Add support for vectored interrupts
 //
-// Purpose: Handle Traps: Exceptions and Interrupt
+// Purpose: Handle Traps: Exceptions and Interrupts
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
 // A component of the Wally configurable RISC-V project.
@@ -27,7 +27,8 @@
 `include "wally-config.vh"
 
 module trap (
-  input logic 		   clk, reset, 
+  input logic 		   clk,
+  input logic 		   reset, 
   (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
   (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
@@ -40,7 +41,6 @@ module trap (
   input logic [`XLEN-1:0]  PCM,
   input logic [`XLEN-1:0]  InstrMisalignedAdrM, MemAdrM, 
   input logic [31:0] 	   InstrM,
-  input logic 		   StallW,
   input logic 		   InstrValidM, CommittedM,
   output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic 		   InterruptM,

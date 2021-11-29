@@ -37,8 +37,6 @@ module ifu (
   output logic [`PA_BITS-1:0] InstrPAdrF,
   output logic 		      InstrReadF,
   output logic 		      ICacheStallF,
-  // Decode
-  output logic [`XLEN-1:0]    PCD, 
   // Execute
   output logic [`XLEN-1:0]    PCLinkE,
   input logic 		      PCSrcE, 
@@ -48,8 +46,8 @@ module ifu (
   // Mem
   input logic 		      RetM, TrapM, 
   input logic [`XLEN-1:0]     PrivilegedNextPCM, 
-  input logic                 InvalidateICacheM,
-  output logic [31:0] 	      InstrD, InstrE, InstrM, InstrW,
+  input logic 		      InvalidateICacheM,
+  output logic [31:0] 	      InstrD, InstrM, 
   output logic [`XLEN-1:0]    PCM, 
   output logic [4:0] 	      InstrClassM,
   output logic 		      BPPredDirWrongM,
@@ -64,6 +62,8 @@ module ifu (
   output logic 		      IllegalIEUInstrFaultD,
   output logic 		      InstrMisalignedFaultM,
   output logic [`XLEN-1:0]    InstrMisalignedAdrM,
+  input logic 		      ExceptionM, PendingInterruptM,
+	    
 
   
   // mmu management
@@ -71,44 +71,45 @@ module ifu (
   input logic [`XLEN-1:0]     PTE,
   input logic [1:0] 	      PageType,
   input logic [`XLEN-1:0]     SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic  [1:0]       STATUS_MPP,
+  input logic 		      STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic [1:0] 	      STATUS_MPP,
   input logic 		      ITLBWriteF, ITLBFlushF,
   input logic 		      WalkerInstrPageFaultF,
 
-  output logic 		      ITLBMissF, ITLBHitF,
+  output logic 		      ITLBMissF,
 
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
+  input 		      var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 
-  output logic InstrAccessFaultF,
-
-  output logic 		      ISquashBusAccessF
+  output logic 		      InstrAccessFaultF
 );
 
-  logic [`XLEN-1:0] PCCorrectE, UnalignedPCNextF, PCNextF;
-  logic             misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
-  logic             PrivilegedChangePCM;
-  logic             IllegalCompInstrD;
-  logic [`XLEN-1:0] PCPlus2or4F, PCW, PCLinkD, PCLinkM, PCPF;
-  logic [`XLEN-3:0] PCPlusUpperF;
-  logic             CompressedF;
-  logic [31:0]      InstrRawD, FinalInstrRawF;
-  localparam [31:0]      nop = 32'h00000013; // instruction for NOP
-  logic 	    reset_q; // *** look at this later.
+  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
+  logic                        misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
+  logic                        PrivilegedChangePCM;
+  logic                        IllegalCompInstrD;
+  logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
+  logic [`XLEN-3:0]            PCPlusUpperF;
+  logic                        CompressedF;
+  logic [31:0]                 InstrRawD, FinalInstrRawF;
+  logic [31:0]                 InstrE;
+  logic [`XLEN-1:0]            PCD;
 
-  logic 	    BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+  localparam [31:0]      nop = 32'h00000013; // instruction for NOP
+  logic                        reset_q; // *** look at this later.
+
+  logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
-  logic [`PA_BITS-1:0] PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
-  logic [`XLEN+1:0]    PCFExt;
+  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
+  logic [`XLEN+1:0]            PCFExt;
 
   generate
     if (`XLEN==32) begin
-      assign PCPF = PCPFmmu[31:0];
+      //assign PCPF = PCPFmmu[31:0];
       assign PCNextFPhys = {{(`PA_BITS-`XLEN){1'b0}}, PCNextF};
     end else begin
-      assign PCPF = {8'b0, PCPFmmu};
+      //assign PCPF = {8'b0, PCPFmmu};
       assign PCNextFPhys = PCNextF[`PA_BITS-1:0];
     end
   endgenerate
@@ -124,13 +125,11 @@ module ifu (
        .TLBFlush(ITLBFlushF),
        .PhysicalAddress(PCPFmmu),
        .TLBMiss(ITLBMissF),
-       .TLBHit(ITLBHitF),
        .TLBPageFault(ITLBInstrPageFaultF),
        .ExecuteAccessF(1'b1), // ***dh -- this should eventually change to only true if an instruction fetch is occurring
        .AtomicAccessM(1'b0),
        .ReadAccessM(1'b0),
        .WriteAccessM(1'b0),
-       .SquashBusAccess(ISquashBusAccessF),
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
@@ -141,9 +140,9 @@ module ifu (
 
 
   // branch predictor signals
-  logic 	          SelBPPredF;
-  logic [`XLEN-1:0] BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
-  logic [4:0] 	    InstrClassD, InstrClassE;
+  logic                        SelBPPredF;
+  logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
+  logic [4:0]                  InstrClassD, InstrClassE;
   
 
   // *** put memory interface on here, InstrF becomes output
@@ -152,10 +151,10 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   icache icache(.*,
-		.PCNextF(PCNextFPhys),
-		.PCPF(PCPFmmu),
-		.WalkerInstrPageFaultF,
-		.InvalidateICacheM);
+  .PCNextF(PCNextFPhys),
+  .PCPF(PCPFmmu),
+  .WalkerInstrPageFaultF,
+  .InvalidateICacheM);
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
 
@@ -163,33 +162,33 @@ module ifu (
   assign PrivilegedChangePCM = RetM | TrapM;
 
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),
-		       .d1(BPPredPCF),
-		       .s(SelBPPredF),
-		       .y(PCNext0F));
+         .d1(BPPredPCF),
+         .s(SelBPPredF),
+         .y(PCNext0F));
 
   mux2 #(`XLEN) pcmux1(.d0(PCNext0F),
-		       .d1(PCCorrectE),
-		       .s(BPPredWrongE),
-		       .y(PCNext1F));
+         .d1(PCCorrectE),
+         .s(BPPredWrongE),
+         .y(PCNext1F));
 
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
-		       .d1(PCE),
-		       .s(InvalidateICacheM),
-		       .y(PCNext2F));
+         .d1(PCE),
+         .s(InvalidateICacheM),
+         .y(PCNext2F));
   
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
-		       .d1(PrivilegedNextPCM),
-		       .s(PrivilegedChangePCM),
-		       .y(PCNext3F));
+         .d1(PrivilegedNextPCM),
+         .s(PrivilegedChangePCM),
+         .y(PCNext3F));
 
   mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
-		       .d1(`RESET_VECTOR),
-		       .s(reset_q),
-		       .y(UnalignedPCNextF)); 
+         .d1(`RESET_VECTOR),
+         .s(reset_q),
+         .y(UnalignedPCNextF)); 
  
   flop #(1) resetReg (.clk(clk),
-		      .d(reset),
-		      .q(reset_q));
+        .d(reset),
+        .q(reset_q));
   
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
@@ -200,20 +199,20 @@ module ifu (
     if (`BPRED_ENABLED == 1) begin : bpred
       // I am making the port connection explicit for now as I want to see them and they will be changing.
       bpred bpred(.*,
-		  .PCNextF(PCNextF),
-		  .BPPredPCF(BPPredPCF),
-		  .SelBPPredF(SelBPPredF),
-		  .PCE(PCE),
-		  .PCSrcE(PCSrcE),
-		  .PCTargetE(PCTargetE),
-		  .PCD(PCD),
-		  .PCLinkE(PCLinkE),
-		  .InstrClassE(InstrClassE),
-		  .BPPredWrongE(BPPredWrongE),
- 		  .BPPredDirWrongE(BPPredDirWrongE),
- 		  .BTBPredPCWrongE(BTBPredPCWrongE),
- 		  .RASPredPCWrongE(RASPredPCWrongE),
- 		  .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
+    .PCNextF(PCNextF),
+    .BPPredPCF(BPPredPCF),
+    .SelBPPredF(SelBPPredF),
+    .PCE(PCE),
+    .PCSrcE(PCSrcE),
+    .PCTargetE(PCTargetE),
+    .PCD(PCD),
+    .PCLinkE(PCLinkE),
+    .InstrClassE(InstrClassE),
+    .BPPredWrongE(BPPredWrongE),
+     .BPPredDirWrongE(BPPredDirWrongE),
+     .BTBPredPCWrongE(BTBPredPCWrongE),
+     .RASPredPCWrongE(RASPredPCWrongE),
+     .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
     end else begin : bpred
       assign BPPredPCF = {`XLEN{1'b0}};
       assign SelBPPredF = 1'b0;
@@ -273,31 +272,29 @@ module ifu (
   
   flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);
   flopenr  #(32)   InstrMReg(clk, reset, ~StallM, FlushM ? nop : InstrE, InstrM);
-  // flopenr  #(32)   InstrWReg(clk, reset, ~StallW, FlushW ? nop : InstrM, InstrW); // just for testbench, delete later
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  // flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW); // *** probably not needed; delete later
 
   flopenrc #(5) InstrClassRegE(.clk(clk),
-			       .reset(reset),
-			       .en(~StallE),
-			       .clear(FlushE),
-			       .d(InstrClassD),
-			       .q(InstrClassE));
+          .reset(reset),
+          .en(~StallE),
+          .clear(FlushE),
+          .d(InstrClassD),
+          .q(InstrClassE));
 
   flopenrc #(5) InstrClassRegM(.clk(clk),
-			       .reset(reset),
-			       .en(~StallM),
-			       .clear(FlushM),
-			       .d(InstrClassE),
-			       .q(InstrClassM));
+          .reset(reset),
+          .en(~StallM),
+          .clear(FlushM),
+          .d(InstrClassE),
+          .q(InstrClassM));
 
   flopenrc #(4) BPPredWrongRegM(.clk(clk),
-			       .reset(reset),
-			       .en(~StallM),
-			       .clear(FlushM),
-			       .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
-			       .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
+          .reset(reset),
+          .en(~StallM),
+          .clear(FlushM),
+          .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
+          .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or
@@ -305,8 +302,5 @@ module ifu (
   // *** redo this 
   flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
   flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
-  // flopenr #(`XLEN) PCPMReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
-  // /flopenr #(`XLEN) PCPWReg(clk, reset, ~StallW, PCLinkM, PCLinkW);
-
 endmodule
 

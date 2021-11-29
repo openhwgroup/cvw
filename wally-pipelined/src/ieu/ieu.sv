@@ -31,7 +31,6 @@ module ieu (
   input logic [31:0] 	   InstrD,
   input logic 		   IllegalIEUInstrFaultD, 
   output logic 		   IllegalBaseInstrFaultD,
-  output logic 		   RegWriteD,
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
@@ -41,14 +40,12 @@ module ieu (
   output logic [`XLEN-1:0] PCTargetE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
+  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   output logic [`XLEN-1:0] SrcAE, SrcBE,
-  output logic [4:0]    RdE,
   input logic 		   FWriteIntM,
 
   // Memory stage interface
-  input logic 		   DataMisalignedM, // from LSU
   input logic 		   SquashSCW, // from LSU
-  output logic [1:0] 	   MemRWE, // read/write control goes to LSU	    
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
@@ -57,7 +54,6 @@ module ieu (
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
   output logic [4:0]    RdM,
-  input logic 		   DataAccessFaultM,
   input logic [`XLEN-1:0]  FIntResM, 
   output logic       InvalidateICacheM, FlushDCacheM,
 
@@ -73,7 +69,6 @@ module ieu (
   input logic 		   FlushD, FlushE, FlushM, FlushW,
   output logic 		   FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD,
   output logic 		   PCSrcE,
-  input logic 		   DivBusyE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
   output logic 		   CSRWritePendingDEM,
   output logic             StoreStallD
@@ -86,7 +81,7 @@ module ieu (
   logic [2:0]  ResultSrcW;
   logic        TargetSrcE;
   logic        SCE;
-  logic        InstrValidW;
+  logic [4:0]  RdE;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;

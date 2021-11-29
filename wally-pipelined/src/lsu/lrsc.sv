@@ -35,7 +35,6 @@ module lrsc
     output logic [1:0]          MemRWMtoDCache,
     input  logic [1:0] 	        AtomicMtoDCache,
     input  logic [`PA_BITS-1:0] MemPAdrM,  // from mmu to dcache
-    output logic                SquashSCM,
     output logic                SquashSCW
 );
   // Handle atomic load reserved / store conditional
@@ -44,6 +43,7 @@ module lrsc
       logic [`PA_BITS-1:2]  ReservationPAdrW;
       logic 		            ReservationValidM, ReservationValidW; 
       logic 		            lrM, scM, WriteAdrMatchM;
+      logic                 SquashSCM;
 
       assign lrM = MemReadM && AtomicMtoDCache[0];
       assign scM = MemRWMtoLRSC[0] && AtomicMtoDCache[0]; 
@@ -59,7 +59,6 @@ module lrsc
       flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
       flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoDCache, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported
-      assign SquashSCM = 0;
       assign SquashSCW = 0;
       assign MemRWMtoDCache = MemRWMtoLRSC;
     end

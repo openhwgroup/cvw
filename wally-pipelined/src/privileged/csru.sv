@@ -47,7 +47,6 @@ module csru #(parameter
   generate
     if (`F_SUPPORTED | `D_SUPPORTED) begin
       logic [4:0] FFLAGS_REGW;
-      logic WriteFFLAGSM, WriteFRMM; //, WriteFCSRM;
       logic [2:0] NextFRMM;
       logic [4:0] NextFFLAGSM;
         
