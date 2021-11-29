@@ -71,7 +71,7 @@ module uartPC16550D(
   // Baud and rx/tx timing
   logic baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
   logic [16+`UART_PRESCALE-1:0] baudcount;
-  logic [3:0] rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
+  logic [3:0] 			rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
   logic [3:0] rxbitsreceived, txbitssent;
   statetype rxstate, txstate;
 
@@ -133,23 +133,27 @@ module uartPC16550D(
     if (~HRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
-      LCR <= #1 8'b0;
+      if (`QEMU) LCR <= #1 8'b0; else LCR <= #1 8'b11; // fpga only **** BUG
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
+      DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
+      DLM <= #1 8'b0;
+/* -----\/----- EXCLUDED -----\/-----
       DLL <= #1 8'd11;
       DLM <= #1 8'b0;
+ -----/\----- EXCLUDED -----/\----- */
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
         case (A)
-/* -----\/----- EXCLUDED -----\/-----
           3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
           3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
- -----/\----- EXCLUDED -----/\----- */
 	  // *** BUG FIX ME for now for the divider to be 11.  Our clock is 10 Mhz.  10Mhz /(11 * 16) = 56818 baud, which is close enough to 57600 baud
-          3'b000: if (DLAB) DLL <= #1 8'd11; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+/* -----\/----- EXCLUDED -----\/-----
+          3'b000: if (DLAB) DLL <= #1 8'd11 else TXHR <= #1 Din; // TX handled in TX register/FIFO section
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
+ -----/\----- EXCLUDED -----/\----- */
 
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
@@ -205,7 +209,7 @@ module uartPC16550D(
       baudcount <= #1 1;
       baudpulse <= #1 0;
     end else if (~MEMWb & DLAB & (A == 3'b0 || A == 3'b1)) begin
-      baudcount <= #1 '0;
+      baudcount <= #1 1;
     end else begin
       // the baudpulse is too long by 2 clock cycles.
       // This is cause baudpulse is registered adding 1 cycle and
@@ -250,7 +254,13 @@ module uartPC16550D(
       else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // *** not right
     end
 
-  assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE
+  generate
+    if(`QEMU)
+      assign rxcentered = rxbaudpulse & (rxoversampledcnt[1:0] == 2'b10);  // implies rxstate = UART_ACTIVE
+    else
+      assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE      
+  endgenerate
+
   assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
   ///////////////////////////////////////////
@@ -370,7 +380,13 @@ module uartPC16550D(
     end
 
   assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s)
-  assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
+  generate
+    if (`QEMU)
+      assign txnextbit = txbaudpulse & (txoversampledcnt[1:0] == 2'b00);  // implies txstate = UART_ACTIVE
+    else
+      assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
+  endgenerate
+
 
   ///////////////////////////////////////////
   // transmit holding register, shift register, FIFO
