@@ -144,7 +144,7 @@ module dcachefsm
   assign CntEn = PreCntEn & AHBAck;
 
 
-  always_ff @(posedge clk, posedge reset)
+  always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;  
   
@@ -192,16 +192,9 @@ module dcachefsm
 	LRUWriteEn = 1'b0;
 	CommittedM = 1'b0;
 
-	if(FlushDCacheM) begin
-	  NextState = STATE_FLUSH;
-	  DCacheStall = 1'b1;
-	  SelAdrM = 2'b11;
-	  FlushAdrCntRst = 1'b1;
-	  FlushWayCntRst = 1'b1;	
-	end
 
 	// TLB Miss	
-	else if((AnyCPUReqM & DTLBMissM) | ITLBMissF) begin
+	if(((AnyCPUReqM & DTLBMissM) | ITLBMissF) & ~(ExceptionM | PendingInterruptM)) begin
 	  // the LSU arbiter has not yet selected the PTW.
 	  // The CPU needs to be stalled until that happens.
 	  // If we set DCacheStall for 1 cycle before going to
@@ -212,6 +205,16 @@ module dcachefsm
 	  DCacheStall = 1'b1;
 	  NextState = STATE_PTW_READY;
 	end
+
+	// Flush dcache to next level of memory
+	else if(FlushDCacheM  & ~(ExceptionM | PendingInterruptM)) begin
+	  NextState = STATE_FLUSH;
+	  DCacheStall = 1'b1;
+	  SelAdrM = 2'b11;
+	  FlushAdrCntRst = 1'b1;
+	  FlushWayCntRst = 1'b1;	
+	end
+	
 	// amo hit
 	else if(AtomicM[1] & (&MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  SelAdrM = 2'b10;
@@ -623,7 +626,7 @@ module dcachefsm
 	CntReset = 1'b0;
 	AHBWrite = 1'b0;
 	AHBRead = 1'b0;
-	CommittedM = 1'b0;
+	CommittedM = 1'b1;
 	NextState = STATE_READY;
 	
 	

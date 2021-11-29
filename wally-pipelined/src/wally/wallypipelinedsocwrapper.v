@@ -90,7 +90,7 @@ module wallypipelinedsocwrapper (
   // wrapper for fpga
   wallypipelinedsoc wallypipelinedsoc
     (.clk(clk),
-     .reset(reset),
+     .reset_ext(reset),
      .HRDATAEXT(HRDATAEXT),
      .HREADYEXT(HREADYEXT),
      .HRESPEXT(HRESPEXT),

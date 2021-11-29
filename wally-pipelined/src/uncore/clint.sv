@@ -42,11 +42,10 @@ module clint (
   logic        MSIP;
 
   logic [15:0] entry, entryd;
-  logic memread, memwrite;
+  logic memwrite;
   logic initTrans;
 
   assign initTrans = HREADY & HSELCLINT & (HTRANS != 2'b00);
-  assign memread = initTrans & ~HWRITE;
   // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
   flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
   flopr #(16) entrydflop(HCLK, ~HRESETn, entry, entryd);

@@ -48,9 +48,6 @@ module uncore (
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
-  // bus interface
-  // PMA checker now handles access faults. *** This can be deleted
-  // output logic             DataAccessFaultM,
   // peripheral pins
   output logic             TimerIntM, SwIntM, ExtIntM,
   input  logic [31:0]      GPIOPinsIn,
@@ -69,14 +66,13 @@ module uncore (
   logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART, HREADSDC;
 
   logic [8:0]      HSELRegions;
-  logic            HSELTim, HSELCLINT, HSELPLIC, HSELGPIO, PreHSELUART, HSELUART, HSELSDC;
+  logic            HSELTim, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
   logic            HSELEXTD, HSELTimD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
   logic            HRESPTim, HRESPCLINT, HRESPPLIC, HRESPGPIO, HRESPUART, HRESPSDC;
   logic            HREADYTim, HREADYCLINT, HREADYPLIC, HREADYGPIO, HREADYUART, HRESPSDCD;
   logic [`XLEN-1:0] HREADBootTim; 
   logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim, HREADYSDC;
   logic            HSELNoneD;
-  logic [1:0]      MemRWboottim;
   logic            UARTIntr,GPIOIntr;
   logic 	   SDCIntM;
   

@@ -237,7 +237,7 @@ module sd_cmd_fsm
   assign Timer_In = LIMIT_SD_TIMERS ? 19'b0000000000000000011 : 19'b0011000011010100000; // 250 ms
 
   //Fail Counter, tracks how many failed attempts at command transmission
-  counter #(11) fail_counter
+  SDCcounter #(11) fail_counter
     (.CountIn(11'b0),
      .CountOut(r_fail_count_out),
      .Load(1'b0),

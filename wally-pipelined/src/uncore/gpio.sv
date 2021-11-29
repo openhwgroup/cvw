@@ -45,14 +45,13 @@ module gpio (
   logic [31:0] input_val, input_en, output_en, output_val;
   logic [31:0] rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
 
-  logic initTrans, memread, memwrite;
-  logic [7:0] entry, entryd, HADDRd;
+  logic initTrans, memwrite;
+  logic [7:0] entry, entryd;
   logic [31:0] Din, Dout;
   
   // AHB I/O
   assign entry = {HADDR[7:2],2'b0};
   assign initTrans = HREADY & HSELGPIO & (HTRANS != 2'b00);
-  assign memread = initTrans & ~HWRITE;
   // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
   flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
   flopr #(8) entrydflop(HCLK, ~HRESETn, entry, entryd);

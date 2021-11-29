@@ -40,7 +40,7 @@ module priorityonehot #(parameter ENTRIES = 8) (
   logic [ENTRIES-1:0] nolower;
 
   // generate thermometer code mask
-  prioritythemometer #(ENTRIES) maskgen(.a({a[ENTRIES-2:0], 1'b1}), .y(nolower));
+  prioritythermometer #(ENTRIES) maskgen(.a({a[ENTRIES-2:0], 1'b1}), .y(nolower));
   // genvar i;
   // generate
   //   assign nolower[0] = 1'b1;

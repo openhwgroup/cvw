@@ -32,12 +32,8 @@ module pmachecker (
 
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
-
   input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
-
   output logic        Cacheable, Idempotent, AtomicAllowed,
-  output logic        PMASquashBusAccess,
-
   output logic        PMAInstrAccessFaultF,
   output logic        PMALoadAccessFaultM,
   output logic        PMAStoreAccessFaultM
@@ -66,6 +62,5 @@ module pmachecker (
   assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
   assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
-  assign PMASquashBusAccess = PMAAccessFault;
 endmodule
 

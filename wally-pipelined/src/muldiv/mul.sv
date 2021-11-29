@@ -29,7 +29,8 @@ module mul (
   // Execute Stage interface
   input  logic             clk, reset,
   input  logic             StallM, FlushM,
-  input  logic [`XLEN-1:0] SrcAE, SrcBE,
+    //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
+  input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic [2:0]       Funct3E,
   output logic [`XLEN*2-1:0] ProdM
 );
@@ -50,27 +51,25 @@ module mul (
 
     logic [`XLEN*2-1:0] PP0E, PP1E, PP2E, PP3E, PP4E;
     logic [`XLEN*2-1:0] PP0M, PP1M, PP2M, PP3M, PP4M;
-    logic [`XLEN*2-1:0] Pprime;
     logic [`XLEN-2:0]   PA, PB;
     logic               PP;
-    logic               MULH, MULHSU, MULHU;
+    logic               MULH, MULHSU;
     logic [`XLEN-1:0]   Aprime, Bprime;
 
   //////////////////////////////
   // Execute Stage: Compute partial products
   //////////////////////////////
 
-    assign Aprime = {1'b0, SrcAE[`XLEN-2:0]};
-    assign Bprime = {1'b0, SrcBE[`XLEN-2:0]};
+    assign Aprime = {1'b0, ForwardedSrcAE[`XLEN-2:0]};
+    assign Bprime = {1'b0, ForwardedSrcBE[`XLEN-2:0]};
     redundantmul #(`XLEN) bigmul(.a(Aprime), .b(Bprime), .out0(PP0E), .out1(PP1E));
-    assign PA = {(`XLEN-1){SrcAE[`XLEN-1]}} & SrcBE[`XLEN-2:0];  
-    assign PB = {(`XLEN-1){SrcBE[`XLEN-1]}} & SrcAE[`XLEN-2:0];
-    assign PP = SrcAE[`XLEN-1] & SrcBE[`XLEN-1];
+    assign PA = {(`XLEN-1){ForwardedSrcAE[`XLEN-1]}} & ForwardedSrcBE[`XLEN-2:0];  
+    assign PB = {(`XLEN-1){ForwardedSrcBE[`XLEN-1]}} & ForwardedSrcAE[`XLEN-2:0];
+    assign PP = ForwardedSrcAE[`XLEN-1] & ForwardedSrcBE[`XLEN-1];
 
     // flavor of multiplication
     assign MULH   = (Funct3E == 3'b001);
     assign MULHSU = (Funct3E == 3'b010);
-    // assign MULHU = (Funct3E == 2'b11); // signal unused
 
     // Handle signs
     assign PP2E = {2'b00, (MULH | MULHSU) ? ~PA : PA, {(`XLEN-1){1'b0}}};
@@ -90,6 +89,6 @@ module mul (
 	 flopenrc #(`XLEN*2) PP3Reg(clk, reset, FlushM, ~StallM, PP3E, PP3M); 
 	 flopenrc #(`XLEN*2) PP4Reg(clk, reset, FlushM, ~StallM, PP4E, PP4M); 
 
-    assign ProdM = PP0M + PP1M + PP2M + PP3M + PP4M; //SrcAE * SrcBE;
+    assign ProdM = PP0M + PP1M + PP2M + PP3M + PP4M; //ForwardedSrcAE * ForwardedSrcBE;
  endmodule
 

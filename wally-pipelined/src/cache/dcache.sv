@@ -28,10 +28,7 @@
 module dcache
   (input logic clk,
    input logic 		       reset,
-   input logic 		       StallM,
    input logic 		       StallWtoDCache,
-   input logic 		       FlushM,
-   input logic 		       FlushW,
 
    // cpu side
    input logic [1:0] 	       MemRWM,
@@ -73,14 +70,9 @@ module dcache
    (* mark_debug = "true" *)output logic [2:0] 	       DCtoAHBSizeM
    );
 
-/*  localparam integer	       BLOCKLEN = 256;
-  localparam integer	       NUMLINES = 64;
-  localparam integer	       NUMWAYS = 4;
-  localparam integer	       NUMREPL_BITS = 3;*/
   localparam integer	       BLOCKLEN = `DCACHE_BLOCKLENINBITS;
   localparam integer	       NUMLINES = `DCACHE_WAYSIZEINBYTES*8/BLOCKLEN;
   localparam integer	       NUMWAYS = `DCACHE_NUMWAYS;
-  localparam integer	       NUMREPL_BITS = `DCACHE_REPLBITS; // *** not used
 
   localparam integer	       BLOCKBYTELEN = BLOCKLEN/8;
   localparam integer	       OFFSETLEN = $clog2(BLOCKBYTELEN);
@@ -113,13 +105,12 @@ module dcache
   logic 		       SRAMWordWriteEnableM;
   logic 		       SRAMBlockWriteEnableM;
   logic [NUMWAYS-1:0] 	       SRAMBlockWayWriteEnableM;
-  logic 		       SRAMWriteEnable;
+  //logic 		       SRAMWriteEnable;
   logic [NUMWAYS-1:0] 	       SRAMWayWriteEnable;
   
 
   logic [NUMWAYS-1:0] 	       VictimWay;
   logic [NUMWAYS-1:0] 	       VictimDirtyWay;
-  logic [BLOCKLEN-1:0] 	       VictimReadDataBlockM;
   logic 		       VictimDirty;
   logic 		       SelUncached;
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
@@ -144,9 +135,7 @@ module dcache
   logic 		       SelFlush;
   logic 		       VDWriteEnable;
     
-  logic AnyCPUReqM;
   logic FetchCountFlag;
-  logic PreCntEn;
   logic CntEn;
   logic CntReset;
   logic SelEvict;
@@ -154,8 +143,7 @@ module dcache
   logic LRUWriteEn;
 
   logic [NUMWAYS-1:0] VDWriteEnableWay;
-  
-  
+
   // Read Path CPU (IEU) side
 
   mux4 #(INDEXLEN)
@@ -179,9 +167,9 @@ module dcache
 		      .reset,
 		      .RAdr,
 		      .WAdr,
-		      .PAdr(MemPAdrM[`PA_BITS-1:0]),
+		      .PAdr(MemPAdrM),
 		      .WriteEnable(SRAMWayWriteEnable),
-		      .VDWriteEnable(VDWriteEnableWay),		      
+		      .VDWriteEnable(VDWriteEnableWay),
 		      .WriteWordEnable(SRAMWordEnable),
 		      .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 		      .WriteData(SRAMWriteData),
@@ -354,7 +342,7 @@ module dcache
     else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : Funct3M;
   endgenerate;
 
-  assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
+  //assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 
   // controller
 

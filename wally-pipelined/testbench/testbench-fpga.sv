@@ -608,7 +608,7 @@ string tests32f[] = '{
   instrTrackerTB it(clk, reset, dut.wallypipelinedsoc.hart.ieu.dp.FlushE,
                 dut.wallypipelinedsoc.hart.ifu.icache.FinalInstrRawF,
                 dut.wallypipelinedsoc.hart.ifu.InstrD, dut.wallypipelinedsoc.hart.ifu.InstrE,
-                dut.wallypipelinedsoc.hart.ifu.InstrM,  dut.wallypipelinedsoc.hart.ifu.InstrW,
+                dut.wallypipelinedsoc.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -767,8 +767,8 @@ string tests32f[] = '{
     if (`BPRED_ENABLED == 1) begin : bpred
       
       initial begin
-	$readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
-	$readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);    
+	$readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+	$readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
       end
     end
   endgenerate

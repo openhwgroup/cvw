@@ -10,6 +10,7 @@
 # output.
 #
 ##################################
+import sys
 
 from collections import namedtuple
 TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
@@ -23,31 +24,38 @@ TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
 
 # edit this list to add more test cases
 configs = [
-    #TestCase(
-    #    name="busybear",
-    #    cmd="vsim -do wally-busybear-batch.do -c > {}",
-    #    grepstr="loaded 100000 instructions"
-    #),
-    TestCase(
-        name="buildroot",
-        cmd="vsim -do wally-buildroot-batch.do -c > {}",
-        grepstr="6300000 instructions"
-    ),
     TestCase(
         name="lints",
-        cmd="../lint-wally &> {}",
+        cmd="./lint-wally &> {}",
         grepstr="All lints run with no errors or warnings"
-    ),
+    )
 ]
+def getBuildrootTC(short):
+    INSTR_LIMIT = 100000 # multiple of 100000
+    MAX_EXPECTED = 182000000
+    if short:
+        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+" 1 0\n!"
+        BRgrepstr=str(INSTR_LIMIT)+" instructions"
+    else:
+        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 0 1 0\n!"
+        BRgrepstr=str(MAX_EXPECTED)+" instructions"
+    return  TestCase(name="buildroot",cmd=BRcmd,grepstr=BRgrepstr)
 
-tests64 = ["arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
+tc = TestCase(
+      name="buildroot-checkpoint",
+      cmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 400100000 400000001 400000000\n!",
+      grepstr="400100000 instructions")
+configs.append(tc)
+
+tests64 = ["wally64i", "arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64p", "imperas64mmu", "imperas64f", "imperas64d", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"]
 for test in tests64:
   tc = TestCase(
         name=test,
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64g "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
-tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
+#tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
+tests32 = ["wally32i", "arch32i", "arch32priv", "arch32c",  "arch32m", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
 for test in tests32:
   tc = TestCase(
         name=test,
@@ -83,7 +91,15 @@ def main():
     """Run the tests and count the failures"""
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    TIMEOUT_DUR = 1800 # seconds
+
+    if '-all' in sys.argv:
+        TIMEOUT_DUR = 20*3600 
+        configs.append(getBuildrootTC(short=False))
+    else:
+        TIMEOUT_DUR = 300
+        configs.append(getBuildrootTC(short=True))
+    print(configs)
+
     try:
         os.mkdir("logs")
     except:

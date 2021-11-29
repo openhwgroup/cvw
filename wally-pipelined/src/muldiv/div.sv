@@ -64,7 +64,10 @@ module intdiv #(parameter WIDTH=64)
    logic [WIDTH-1:0] 	     QT, remT;
    logic 		     D_NegOne;
    logic 		     Max_N;      
-   
+
+   logic otfzerov;
+   logic tcQ;
+   logic tcR;   
 
    // Check if negative (two's complement)
    //   If so, convert to positive
@@ -182,7 +185,9 @@ module divide4 #(parameter WIDTH=64)
    logic 		     CshiftQ, CshiftQM;
    logic [WIDTH+3:0] 	     rem1, rem2, rem3;
    logic [WIDTH+3:0] 	     SumR, CarryR;
-   logic [WIDTH:0] 	     Qt;   
+   logic [WIDTH:0] 	     Qt;  
+
+   logic ulp;
 
    // Create one's complement values of Divisor (for q*D)
    assign divi1 = {3'h0, op2, 1'b0};

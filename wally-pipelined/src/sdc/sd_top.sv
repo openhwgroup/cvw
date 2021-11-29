@@ -386,7 +386,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
     .clk(r_G_CLK_SD),
     .reset(1'b0));                // No Reset, Just Load
   
-  counter #(11) dat_nibble_counter
+  SDCcounter #(11) dat_nibble_counter
     (
     .CountIn('0),
     .CountOut(r_DAT_COUNTER_OUT),

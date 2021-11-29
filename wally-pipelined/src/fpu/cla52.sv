@@ -215,6 +215,7 @@ module cla_sub52 (S, X, Y);
    wire 	 LOGIC0;
    wire 	 CIN;
    wire 	 CO_52;
+   wire   CO_64;
    
    assign Bbar = ~B;
    assign LOGIC0 = 0;

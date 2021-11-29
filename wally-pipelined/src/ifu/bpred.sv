@@ -29,115 +29,113 @@
 `include "wally-config.vh"
 
 module bpred 
-  (input logic clk, reset,
-   input logic 		    StallF, StallD, StallE, StallM, StallW, 
-   input logic 		    FlushF, FlushD, FlushE, FlushM, FlushW,
+  (input logic              clk, reset,
+   input logic              StallF, StallD, StallE, 
+   input logic              FlushF, FlushD, FlushE,
    // Fetch stage
    // the prediction
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
    output logic [`XLEN-1:0] BPPredPCF,
-   output logic 	    SelBPPredF,
+   output logic             SelBPPredF,
    // Update Predictor
    input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
    // 1 hot encoding
    // return, jump register, jump, branch
    // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
    // *** the specifics of how this is encode is subject to change.
-   input logic 		    PCSrcE, // AKA Branch Taken
+   input logic              PCSrcE, // AKA Branch Taken
    // Signals required to check the branch prediction accuracy.
    input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
-   input logic [4:0] 	    InstrClassE,
+   input logic [4:0]        InstrClassE,
    // Report branch prediction status
-   output logic 	    BPPredWrongE,
-   output logic 	    BPPredDirWrongE,
-   output logic 	    BTBPredPCWrongE,
-   output logic 	    RASPredPCWrongE,
-   output logic 	    BPPredClassNonCFIWrongE
+   output logic             BPPredWrongE,
+   output logic             BPPredDirWrongE,
+   output logic             BTBPredPCWrongE,
+   output logic             RASPredPCWrongE,
+   output logic             BPPredClassNonCFIWrongE
    );
 
-  logic 		    BTBValidF;
-  logic [1:0] 		    BPPredF, BPPredD, BPPredE, UpdateBPPredE;
+  logic                     BTBValidF;
+  logic [1:0]               BPPredF, BPPredD, BPPredE, UpdateBPPredE;
 
-  logic [4:0] 		    BPInstrClassF, BPInstrClassD, BPInstrClassE;
-  logic [`XLEN-1:0] 	    BTBPredPCF, RASPCF;
-  logic 		    TargetWrongE;
-  logic 		    FallThroughWrongE;
-  logic 		    PredictionPCWrongE;
-  logic 		    PredictionInstrClassWrongE;
+  logic [4:0]               BPInstrClassF, BPInstrClassD, BPInstrClassE;
+  logic [`XLEN-1:0]         BTBPredPCF, RASPCF;
+  logic                     TargetWrongE;
+  logic                     FallThroughWrongE;
+  logic                     PredictionPCWrongE;
+  logic                     PredictionInstrClassWrongE;
   
-  logic [`XLEN-1:0] 	    CorrectPCE;
-
 
   // Part 1 branch direction prediction
 
   generate
     if (`BPTYPE == "BPTWOBIT") begin:Predictor
       twoBitPredictor DirPredictor(.clk(clk),
-				   .reset(reset),
-				   .StallF(StallF),
-				   .LookUpPC(PCNextF),
-				   .Prediction(BPPredF),
-				   // update
-				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0] & ~StallE),
-				   .UpdatePrediction(UpdateBPPredE));
+       .reset(reset),
+       .StallF(StallF),
+       .LookUpPC(PCNextF),
+       .Prediction(BPPredF),
+       // update
+       .UpdatePC(PCE),
+       .UpdateEN(InstrClassE[0] & ~StallE),
+       .UpdatePrediction(UpdateBPPredE));
 
     end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
 
       globalHistoryPredictor DirPredictor(.clk(clk),
-					  .reset(reset),
-					  .*, // Stalls and flushes
-					  .PCNextF(PCNextF),
-					  .BPPredF(BPPredF),
-					  // update
-					  .InstrClassE(InstrClassE),
-					  .BPInstrClassE(BPInstrClassE),
-					  .BPPredDirWrongE(BPPredDirWrongE),
-					  .PCE(PCE),
-					  .PCSrcE(PCSrcE),
-					  .UpdateBPPredE(UpdateBPPredE));
+       .reset(reset),
+       .*, // Stalls and flushes
+       .PCNextF(PCNextF),
+       .BPPredF(BPPredF),
+       // update
+       .InstrClassE(InstrClassE),
+       .BPInstrClassE(BPInstrClassE),
+       .BPPredDirWrongE(BPPredDirWrongE),
+       .PCE(PCE),
+       .PCSrcE(PCSrcE),
+       .UpdateBPPredE(UpdateBPPredE));
     end else if (`BPTYPE == "BPGSHARE") begin:Predictor
 
       gsharePredictor DirPredictor(.clk(clk),
-					  .reset(reset),
-					  .*, // Stalls and flushes
-					  .PCNextF(PCNextF),
-					  .BPPredF(BPPredF),
-					  // update
-					  .InstrClassE(InstrClassE),
-					  .BPInstrClassE(BPInstrClassE),
-					  .BPPredDirWrongE(BPPredDirWrongE),
-					  .PCE(PCE),
-					  .PCSrcE(PCSrcE),
-					  .UpdateBPPredE(UpdateBPPredE));
+       .reset(reset),
+       .*, // Stalls and flushes
+       .PCNextF(PCNextF),
+       .BPPredF(BPPredF),
+       // update
+       .InstrClassE(InstrClassE),
+       .BPInstrClassE(BPInstrClassE),
+       .BPPredDirWrongE(BPPredDirWrongE),
+       .PCE(PCE),
+       .PCSrcE(PCSrcE),
+       .UpdateBPPredE(UpdateBPPredE));
     end 
     else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
       localHistoryPredictor DirPredictor(.clk(clk),
-				   .reset(reset),
-				   .*, // Stalls and flushes
-				   .LookUpPC(PCNextF),
-				   .Prediction(BPPredF),
-				   // update
-				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0] & ~StallE),
-				   .PCSrcE(PCSrcE),
-				   .UpdatePrediction(UpdateBPPredE));
+       .reset(reset),
+       .*, // Stalls and flushes
+       .LookUpPC(PCNextF),
+       .Prediction(BPPredF),
+       // update
+       .UpdatePC(PCE),
+       .UpdateEN(InstrClassE[0] & ~StallE),
+       .PCSrcE(PCSrcE),
+       .UpdatePrediction(UpdateBPPredE));
     end 
     else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
       localHistoryPredictor DirPredictor(.clk(clk),
-				   .reset(reset),
-				   .*, // Stalls and flushes
-				   .LookUpPC(PCNextF),
-				   .Prediction(BPPredF),
-				   // update
-				   .UpdatePC(PCE),
-				   .UpdateEN(InstrClassE[0] & ~StallE),
-				   .PCSrcE(PCSrcE),
-				   .UpdatePrediction(UpdateBPPredE));
+       .reset(reset),
+       .*, // Stalls and flushes
+       .LookUpPC(PCNextF),
+       .Prediction(BPPredF),
+       // update
+       .UpdatePC(PCE),
+       .UpdateEN(InstrClassE[0] & ~StallE),
+       .PCSrcE(PCSrcE),
+       .UpdatePrediction(UpdateBPPredE));
     end 
   endgenerate
 
@@ -148,9 +146,9 @@ module bpred
   // For a 2 bit table this is the prediction count.
 
   assign SelBPPredF = ((BPInstrClassF[0] & BPPredF[1] & BTBValidF) | 
-		       BPInstrClassF[3] |
-		       (BPInstrClassF[2] & BTBValidF) | 
-		       BPInstrClassF[1] & BTBValidF) ;
+         BPInstrClassF[3] |
+         (BPInstrClassF[2] & BTBValidF) | 
+         BPInstrClassF[1] & BTBValidF) ;
 
 
   // Part 2 Branch target address prediction
@@ -158,32 +156,28 @@ module bpred
 
   // *** getting to many false positivies from the BTB, we need a partial TAG to reduce this.
   BTBPredictor TargetPredictor(.clk(clk),
-			       .reset(reset),
-			       .*, // Stalls and flushes
-			       .LookUpPC(PCNextF),
-			       .TargetPC(BTBPredPCF),
-			       .InstrClass(BPInstrClassF),
-			       .Valid(BTBValidF),
-			       // update
-			       .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
-			       .UpdatePC(PCE),
-			       .UpdateTarget(PCTargetE),
-			       .UpdateInvalid(PredictionInstrClassWrongE),
-			       .UpdateInstrClass(InstrClassE));
-
-  // need to forward when updating to the same address as reading.
-  //assign CorrectPCE = PCSrcE ? PCTargetE : PCLinkE;
-  //assign TargetPC = (PCE == PCNextF) ? CorrectPCE : BTBPredPCF;
+          .reset(reset),
+          .*, // Stalls and flushes
+          .LookUpPC(PCNextF),
+          .TargetPC(BTBPredPCF),
+          .InstrClass(BPInstrClassF),
+          .Valid(BTBValidF),
+          // update
+          .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
+          .UpdatePC(PCE),
+          .UpdateTarget(PCTargetE),
+          .UpdateInvalid(PredictionInstrClassWrongE),
+          .UpdateInstrClass(InstrClassE));
 
   // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
-			    .reset(reset),
-			    .pop(BPInstrClassF[3] & ~StallF),
-			    .popPC(RASPCF),
-			    .push(InstrClassE[4] & ~StallE),
-			    .incr(1'b0),
-			    .pushPC(PCLinkE));
+       .reset(reset),
+       .pop(BPInstrClassF[3] & ~StallF),
+       .popPC(RASPCF),
+       .push(InstrClassE[4] & ~StallE),
+       .incr(1'b0),
+       .pushPC(PCLinkE));
 
   assign BPPredPCF = BPInstrClassF[3] ? RASPCF : BTBPredPCF;
   
@@ -193,31 +187,31 @@ module bpred
   // *** for other predictors will will be different.
   
   flopenr #(2) BPPredRegD(.clk(clk),
-			   .reset(reset),
-			   .en(~StallD),
-			   .d(BPPredF),
-			   .q(BPPredD));
+      .reset(reset),
+      .en(~StallD),
+      .d(BPPredF),
+      .q(BPPredD));
 
   flopenr #(2) BPPredRegE(.clk(clk),
-			   .reset(reset),
-			   .en(~StallE),
-			   .d(BPPredD),
-			   .q(BPPredE));
+      .reset(reset),
+      .en(~StallE),
+      .d(BPPredD),
+      .q(BPPredE));
 
   // pipeline the class
   flopenrc #(5) InstrClassRegD(.clk(clk),
-			       .reset(reset),
-			       .en(~StallD),
-			       .clear(FlushD),
-			       .d(BPInstrClassF),
-			       .q(BPInstrClassD));
+          .reset(reset),
+          .en(~StallD),
+          .clear(FlushD),
+          .d(BPInstrClassF),
+          .q(BPInstrClassD));
 
   flopenrc #(5) InstrClassRegE(.clk(clk),
-			       .reset(reset),
-			       .en(~StallE),
-			       .clear(FlushE),
-			       .d(BPInstrClassD),
-			       .q(BPInstrClassE));
+          .reset(reset),
+          .en(~StallE),
+          .clear(FlushE),
+          .d(BPInstrClassD),
+          .q(BPInstrClassE));
 
   
 
@@ -259,7 +253,7 @@ module bpred
   // Update predictors
 
   satCounter2 BPDirUpdate(.BrDir(PCSrcE),
-			  .OldState(BPPredE),
-			  .NewState(UpdateBPPredE));
+     .OldState(BPPredE),
+     .NewState(UpdateBPPredE));
 
 endmodule

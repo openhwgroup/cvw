@@ -30,10 +30,11 @@
 module intdivrestoring (
   input  logic clk,
   input  logic reset,
-  input  logic StallM, FlushM,
+  input  logic StallM,
   input  logic DivSignedE, W64E,
   input  logic DivE,
-  input  logic [`XLEN-1:0] SrcAE, SrcBE,
+  //input logic [`XLEN-1:0] 	SrcAE, SrcBE,
+	input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   output logic DivBusyE, 
   output logic [`XLEN-1:0] QuotM, RemM
  );
@@ -47,7 +48,7 @@ module intdivrestoring (
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
-  logic DivStartE, SignXE, SignXM, SignDE, NegQE, NegWM, NegQM;
+  logic DivStartE, SignXE, SignDE, NegQE, NegWM, NegQM;
   logic [`XLEN-1:0] WNextE, XQNextE;
  
   //////////////////////////////
@@ -61,11 +62,11 @@ module intdivrestoring (
   // Handle sign extension for W-type instructions
   generate
     if (`XLEN == 64) begin // RV64 has W-type instructions
-      mux2 #(`XLEN) xinmux(SrcAE, {SrcAE[31:0], 32'b0}, W64E, XinE);
-      mux2 #(`XLEN) dinmux(SrcBE, {{32{SrcBE[31]&DivSignedE}}, SrcBE[31:0]}, W64E, DinE);
+      mux2 #(`XLEN) xinmux(ForwardedSrcAE, {ForwardedSrcAE[31:0], 32'b0}, W64E, XinE);
+      mux2 #(`XLEN) dinmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31]&DivSignedE}}, ForwardedSrcBE[31:0]}, W64E, DinE);
 	  end else begin // RV32 has no W-type instructions
-      assign XinE = SrcAE;
-      assign DinE = SrcBE;	    
+      assign XinE = ForwardedSrcAE;
+      assign DinE = ForwardedSrcBE;	    
     end   
   endgenerate 
 
@@ -79,7 +80,7 @@ module intdivrestoring (
   neg #(`XLEN) negd(DinE, DnE);
   mux2 #(`XLEN) dabsmux(DnE, DinE, SignDE, DAbsBE);  // take absolute value for signed operations, and negate for subtraction setp
   neg #(`XLEN) negx(XinE, XnE);
-  mux3 #(`XLEN) xabsmux(XinE, XnE, SrcAE, {Div0E, SignXE}, XInitE);  // take absolute value for signed operations, or keep original value for divide by 0
+  mux3 #(`XLEN) xabsmux(XinE, XnE, ForwardedSrcAE, {Div0E, SignXE}, XInitE);  // take absolute value for signed operations, or keep original value for divide by 0
 
   // initialization multiplexers on first cycle of operation
   mux2 #(`XLEN) wmux(WM[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNextE);
@@ -115,19 +116,19 @@ module intdivrestoring (
 
  always_ff @(posedge clk) 
     if (reset) begin
-        state = IDLE; 
+        state <= IDLE; 
     end else if (DivStartE) begin 
-        step = 0;
-        if (Div0E) state = DONE;
-        else       state = BUSY;
+        step <= 1;
+        if (Div0E) state <= DONE;
+        else       state <= BUSY;
      end else if (state == BUSY) begin // pause one cycle at beginning of signed operations for absolute value
-        step = step + 1;
         if (step[STEPBITS] | (`XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
-            state = DONE;
+            state <= DONE;
         end
+        step <= step + 1;
     end else if (state == DONE) begin
-      if (StallM) state = DONE;
-      else        state = IDLE;
+      if (StallM) state <= DONE;
+      else        state <= IDLE;
     end 
 endmodule 
 
