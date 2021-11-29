@@ -201,162 +201,181 @@ module wallypipelinedhart (
     
 
   ieu ieu(
-      .clk, .reset,
+     .clk, .reset,
 
-      // Decode Stage interface
-      .InstrD, .IllegalIEUInstrFaultD, 
-      .IllegalBaseInstrFaultD,
+     // Decode Stage interface
+     .InstrD, .IllegalIEUInstrFaultD, 
+     .IllegalBaseInstrFaultD,
 
-      // Execute Stage interface
-      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
-      .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
-      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-      .SrcAE, .SrcBE, .FWriteIntM,
+     // Execute Stage interface
+     .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
+     .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+     .SrcAE, .SrcBE, .FWriteIntM,
 
-      // Memory stage interface
-      .SquashSCW, // from LSU
-      .MemRWM, // read/write control goes to LSU
-      .AtomicE, // atomic control goes to LSU	    
-      .AtomicM, // atomic control goes to LSU
-      .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
-      .Funct3M, // size and signedness to LSU
-      .SrcAM, // to privilege and fpu
-      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     // Memory stage interface
+     .SquashSCW, // from LSU
+     .MemRWM, // read/write control goes to LSU
+     .AtomicE, // atomic control goes to LSU	    
+     .AtomicM, // atomic control goes to LSU
+     .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
+     .Funct3M, // size and signedness to LSU
+     .SrcAM, // to privilege and fpu
+     .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
-      // Writeback stage
-      .CSRReadValW, .ReadDataM, .MulDivResultW,
-      .FWriteIntW, .RdW, .ReadDataW,
-      .InstrValidM, 
+     // Writeback stage
+     .CSRReadValW, .ReadDataM, .MulDivResultW,
+     .FWriteIntW, .RdW, .ReadDataW,
+     .InstrValidM, 
 
-      // hazards
-      .StallD, .StallE, .StallM, .StallW,
-      .FlushD, .FlushE, .FlushM, .FlushW,
-      .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
-      .PCSrcE,
-      .CSRReadM, .CSRWriteM, .PrivilegedM,
-      .CSRWritePendingDEM, .StoreStallD
+     // hazards
+     .StallD, .StallE, .StallM, .StallW,
+     .FlushD, .FlushE, .FlushM, .FlushW,
+     .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
+     .PCSrcE,
+     .CSRReadM, .CSRWriteM, .PrivilegedM,
+     .CSRWritePendingDEM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
-  lsu lsu(.clk(clk),
-	  .reset(reset),
-	  .StallM(StallM),
-	  .FlushM(FlushM),
-	  .StallW(StallW),
-	  .FlushW(FlushW),
-	  // CPU interface
-	  .MemRWM(MemRWM),                  
-	  .Funct3M(Funct3M),
-	  .Funct7M(InstrM[31:25]),
-	  .AtomicM(AtomicM),    
-	  .ExceptionM(ExceptionM),
-	  .PendingInterruptM(PendingInterruptM),		
-	  .CommittedM(CommittedM),
-	  .DCacheMiss,
-          .DCacheAccess,
-	  .SquashSCW(SquashSCW),            
-	  //.DataMisalignedM(DataMisalignedM),
-	  .MemAdrE(MemAdrE),
-	  .MemAdrM(MemAdrM),      
-	  .WriteDataM(WriteDataM),
-	  .ReadDataM(ReadDataM),
-    .FlushDCacheM,
+  lsu lsu(
+     .clk, .reset, .StallM, .FlushM, .StallW,
+	.FlushW,
+	// CPU interface
+	.MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
+	.AtomicM, .ExceptionM, .PendingInterruptM,		
+	.CommittedM, .DCacheMiss, .DCacheAccess,
+	.SquashSCW,            
+	//.DataMisalignedM(DataMisalignedM),
+	.MemAdrE, .MemAdrM, .WriteDataM,
+	.ReadDataM, .FlushDCacheM,
+	// connected to ahb (all stay the same)
+	.DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
+	.DCfromAHBReadData, .DCtoAHBWriteData, .DCtoAHBSizeM,
 
-	  // connected to ahb (all stay the same)
-	  .DCtoAHBPAdrM(DCtoAHBPAdrM),
-	  .DCtoAHBReadM(DCtoAHBReadM),
-	  .DCtoAHBWriteM(DCtoAHBWriteM),
-	  .DCfromAHBAck(DCfromAHBAck),
-	  .DCfromAHBReadData(DCfromAHBReadData),
-	  .DCtoAHBWriteData(DCtoAHBWriteData),
-	  .DCtoAHBSizeM(DCtoAHBSizeM),
+	// connect to csr or privilege and stay the same.
+	.PrivilegeModeW,           // connects to csr
+	.PMPCFG_ARRAY_REGW,     // connects to csr
+	.PMPADDR_ARRAY_REGW,    // connects to csr
+	// hptw keep i/o
+	.SATP_REGW, // from csr
+	.STATUS_MXR, // from csr
+	.STATUS_SUM,  // from csr
+	.STATUS_MPRV,  // from csr	  	  
+	.STATUS_MPP,  // from csr	  
 
-	  // connect to csr or privilege and stay the same.
-	  .PrivilegeModeW(PrivilegeModeW),           // connects to csr
-	  .PMPCFG_ARRAY_REGW(PMPCFG_ARRAY_REGW),     // connects to csr
-	  .PMPADDR_ARRAY_REGW(PMPADDR_ARRAY_REGW),    // connects to csr
-	  // hptw keep i/o
-	  .SATP_REGW(SATP_REGW), // from csr
-	  .STATUS_MXR(STATUS_MXR), // from csr
-	  .STATUS_SUM(STATUS_SUM),  // from csr
-	  .STATUS_MPRV(STATUS_MPRV),  // from csr	  	  
-	  .STATUS_MPP(STATUS_MPP),  // from csr	  
-
-	  .DTLBFlushM(DTLBFlushM),                   // connects to privilege
-	  .DTLBLoadPageFaultM(DTLBLoadPageFaultM),   // connects to privilege
-	  .DTLBStorePageFaultM(DTLBStorePageFaultM), // connects to privilege
-	  .LoadMisalignedFaultM(LoadMisalignedFaultM), // connects to privilege
-	  .LoadAccessFaultM(LoadAccessFaultM),         // connects to privilege
-	  .StoreMisalignedFaultM(StoreMisalignedFaultM), // connects to privilege
-	  .StoreAccessFaultM(StoreAccessFaultM),     // connects to privilege
+	.DTLBFlushM,                   // connects to privilege
+	.DTLBLoadPageFaultM,   // connects to privilege
+	.DTLBStorePageFaultM, // connects to privilege
+	.LoadMisalignedFaultM, // connects to privilege
+	.LoadAccessFaultM,         // connects to privilege
+	.StoreMisalignedFaultM, // connects to privilege
+	.StoreAccessFaultM,     // connects to privilege
     
-	  .PCF(PCF),
-	  .ITLBMissF(ITLBMissF),
-	  .PTE(PTE),
-	  .PageType,
-	  .ITLBWriteF(ITLBWriteF),
-	  .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
-	  .WalkerLoadPageFaultM(WalkerLoadPageFaultM),
-	  .WalkerStorePageFaultM(WalkerStorePageFaultM),
-	  .LSUStall(LSUStall));                     // change to LSUStall
+	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
+     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM,
+	.WalkerStorePageFaultM,
+	.LSUStall);                     // change to LSUStall
 
 
   
 
   ahblite ebu(// IFU connections
-	      .InstrPAdrF(InstrPAdrF),
-	      .InstrReadF(InstrReadF),
-	      .InstrRData(InstrRData),
-	      .InstrAckF(InstrAckF),
-	      // LSU connections
-	      .DCtoAHBPAdrM(DCtoAHBPAdrM), // rename to DCtoAHBPAdrM
-	      .DCtoAHBReadM(DCtoAHBReadM), // rename to DCtoAHBReadM
-	      .DCtoAHBWriteM(DCtoAHBWriteM), // rename to DCtoAHBWriteM
-	      .DCtoAHBWriteData(DCtoAHBWriteData),
-	      .DCfromAHBReadData(DCfromAHBReadData),
-	      .DCfromAHBAck(DCfromAHBAck),
-	      // remove these
-	      .MemSizeM(DCtoAHBSizeM[1:0]),  // *** depends on XLEN  should be removed
-	      .UnsignedLoadM(1'b0),
-	      .AtomicMaskedM(2'b00),
-	       .*);
+     .clk, .reset,
+     .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
+     .InstrPAdrF, // *** rename these to match block diagram
+     .InstrReadF, .InstrRData, .InstrAckF,
+     // Signals from Data Cache
+     .DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCtoAHBWriteData,
+     .DCfromAHBReadData,
+     .MemSizeM(DCtoAHBSizeM[1:0]),     // *** remove
+     .DCfromAHBAck,
+ 
+     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
+     .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
+     .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
+     .HWRITED);
 
   
   muldiv mdu(
-    .clk, .reset,
-	       // Execute Stage interface
-	       //   .SrcAE, .SrcBE,
-		.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	  .Funct3E, .Funct3M,
-	  .MulDivE, .W64E,
-	       // Writeback stage
-	  .MulDivResultW,
-	       // Divide Done
-	  .DivBusyE, 
-	       // hazards
-	  .StallM, .StallW, .FlushM, .FlushW 
+     .clk, .reset,
+	// Execute Stage interface
+	//   .SrcAE, .SrcBE,
+	.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	.Funct3E, .Funct3M,
+     .MulDivE, .W64E,
+	// Writeback stage
+     .MulDivResultW,
+     // Divide Done
+	.DivBusyE, 
+	// hazards
+	.StallM, .StallW, .FlushM, .FlushW 
   ); // multiply and divide unit
   
   hazard     hzu(
-        .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
-        .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
-	      .LSUStall, .ICacheStallF,
-        .FPUStallD, .FStallD,
-	      .DivBusyE, .FDivBusyE,
-	      .EcallFaultM, .BreakpointFaultM,
-        .InvalidateICacheM,
-  // Stall & flush outputs
-	      .StallF, .StallD, .StallE, .StallM, .StallW,
-	      .FlushF, .FlushD, .FlushE, .FlushM, .FlushW);	// global stall and flush control
+     .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+     .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
+     .LSUStall, .ICacheStallF,
+     .FPUStallD, .FStallD,
+	.DivBusyE, .FDivBusyE,
+	.EcallFaultM, .BreakpointFaultM,
+     .InvalidateICacheM,
+     // Stall & flush outputs
+	.StallF, .StallD, .StallE, .StallM, .StallW,
+	.FlushF, .FlushD, .FlushE, .FlushM, .FlushW
+     );	// global stall and flush control
 
   // Priveleged block operates in M and W stages, handling CSRs and exceptions
-  privileged priv(.*);
+  privileged priv(
+     .clk, .reset,
+     .FlushD, .FlushE, .FlushM, .FlushW, 
+     .StallD, .StallE, .StallM, .StallW,
+     .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
+     .InstrM, .CSRReadValW, .PrivilegedNextPCM,
+     .RetM, .TrapM, 
+     .ITLBFlushF, .DTLBFlushM,
+     .InstrValidM, .CommittedM,
+     .FRegWriteM, .LoadStallD,
+     .BPPredDirWrongM, .BTBPredPCWrongM,
+     .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+     .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
+     .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
+     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM, .WalkerStorePageFaultM,
+     .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+     .LoadMisalignedFaultM, .StoreMisalignedFaultM,
+     .TimerIntM, .ExtIntM, .SwIntM,
+     .MTIME_CLINT, .MTIMECMP_CLINT,
+     .InstrMisalignedAdrM, .MemAdrM,
+     .SetFflagsM,
+     // Trap signals from pmp/pma in mmu
+     // *** do these need to be split up into one for dmem and one for ifu?
+     // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
+     .InstrAccessFaultF, .LoadAccessFaultM, .StoreAccessFaultM,
+     .ExceptionM, .PendingInterruptM, .IllegalFPUInstrE,
+     .PrivilegeModeW, .SATP_REGW,
+     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+     .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
+     .FRM_REGW,.BreakpointFaultM, .EcallFaultM
+  );
   
 
-  fpu fpu(.*); // floating point unit
-  // add FPU here, with SetFflagsM, FRM_REGW
-  // presently stub out SetFlagsM and FRegWriteM
-  //assign SetFflagsM = 0;
-  //assign FRegWriteM = 0;
-
+  fpu fpu(
+     .clk, .reset,
+     .FRM_REGW, // Rounding mode from CSR
+     .InstrD, // instruction from IFU
+     .ReadDataW,// Read data from memory
+     .SrcAE, // Integer input being processed (from IEU)
+     .StallE, .StallM, .StallW, // stall signals from HZU
+     .FlushE, .FlushM, .FlushW, // flush signals from HZU
+     .RdM, .RdW, // which FP register to write to (from IEU)
+     .FRegWriteM, // FP register write enable
+     .FStallD, // Stall the decode stage
+     .FWriteIntE, .FWriteIntM, .FWriteIntW, // integer register write enable
+     .FWriteDataE, // Data to be written to memory
+     .FIntResM, // data to be written to integer register
+     .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
+     .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+     .SetFflagsM        // FPU flags (to privileged unit)
+  ); // floating point unit
+  
 endmodule
