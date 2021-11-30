@@ -36,3 +36,4 @@ tests/linux-testgen/buildroot-config-src/busybox.config.old
 wally-pipelined/regression/slack-notifier/slack-webhook-url.txt
 wally-pipelined/regression/logs
 fpga/generator/IP
+fpga/generator/vivado.*

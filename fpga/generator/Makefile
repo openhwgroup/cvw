@@ -10,3 +10,6 @@ $(dst)/%.log: %.tcl
 	mkdir -p IP
 	cd IP;\
 	vivado -mode batch -source ../$*.tcl | tee $*.log
+
+clean:
+	rm -rf IP vivado.jou vivado.log
