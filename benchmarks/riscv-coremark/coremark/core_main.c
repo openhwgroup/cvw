@@ -240,6 +240,7 @@ for (i = 0; i < MULTITHREAD; i++)
     }
 
     /* automatically determine number of iterations if not set */
+    // results[0].iterations = 2; // temporary for speed
     if (results[0].iterations == 0)
     {
         secs_ret secs_passed = 0;
@@ -289,7 +290,7 @@ for (i = 0; i < MULTITHREAD; i++)
     seedcrc = crc16(results[0].seed2, seedcrc);
     seedcrc = crc16(results[0].seed3, seedcrc);
     seedcrc = crc16(results[0].size, seedcrc);
-
+ 
     switch (seedcrc)
     {                /* test known output for common seeds */
         case 0x8a02: /* seed1=0, seed2=0, seed3=0x66, size 2000 per algorithm */
@@ -359,11 +360,11 @@ for (i = 0; i < MULTITHREAD; i++)
     ee_printf("CoreMark Size    : %lu\n", (long unsigned)results[0].size);
     ee_printf("Total ticks      : %lu\n", (long unsigned)total_time);
 #if HAS_FLOAT
-    ee_printf("Total time (secs): %f\n", time_in_secs(total_time));
+    ee_printf("Total time (msecs): %ld\n", (long unsigned)(1000*time_in_secs(total_time)));
     if (time_in_secs(total_time) > 0)
-        ee_printf("Iterations/Sec   : %f\n",
-                  default_num_contexts * results[0].iterations
-                      / time_in_secs(total_time));
+        ee_printf("Iterations/Sec   : %lu / %lu\n",
+                  default_num_contexts * results[0].iterations,
+                      total_time);
 #else
     ee_printf("Total time (secs): %d\n", time_in_secs(total_time));
     if (time_in_secs(total_time) > 0)

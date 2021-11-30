@@ -196,10 +196,10 @@ void stop_time(void) {
 CORE_TICKS get_time(void) {
 	CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
 	unsigned long instructions = minstretDiff();
-/*	double CPI = elapsed / instructions;
+	ee_printf("   Called get_time\n");
 	ee_printf("    Elapsed MTIME: %u\n", elapsed);
 	ee_printf("    Elapsed MINSTRET: %lu\n", instructions);
-	ee_printf("    CPI: %lf", CPI); */
+	ee_printf("    CPI: %lu / %lu\n", elapsed, instructions); 
 	return elapsed;
 }
 /* Function: time_in_secs
