@@ -7,7 +7,6 @@
 make all:
 	cp -r addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/I addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F
 	cp -r addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/I addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/D
-	cat addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F/Makefile.include
 	sed -i 's/--isa=rv32i /--isa=32if/' addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F/Makefile.include
 	sed -i 's/--isa=rv64i /--isa=64if/' addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/D/Makefile.include
 	if [ -d "addins/riscv-isa-sim/build" ]; then echo "Build exists"; else mkdir addins/riscv-isa-sim/build; fi
