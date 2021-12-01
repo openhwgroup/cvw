@@ -1,8 +1,10 @@
-make all: submodules other
-submodules: addins/riscv-isa-sim addins/riscv-arch-test
-	git pull --recurse-submodules
-
-other:
+#make all: submodules other
+#make all: submodules other
+#submodules: addins/riscv-isa-sim addins/riscv-arch-test
+#	git pull --recurse-submodules
+#
+#other:
+make all:
 	cp -r addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/I addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F
 	cp -r addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/I addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/D
 	cat addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F/Makefile.include
