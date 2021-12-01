@@ -69,7 +69,8 @@ module fpgaTop
   wire 		peripheral_reset;
   wire 		interconnect_aresetn;
   wire 		peripheral_aresetn;
-
+  wire 		mb_reset;
+  
   wire [`AHBW-1:0] HRDATAEXT;
   wire 		   HREADYEXT;
   wire 		   HRESPEXT;
@@ -130,12 +131,17 @@ module fpgaTop
   wire 		   m_axi_rlast;
   wire 		   m_axi_rready;
 
+  wire [3:0] 	   BUS_axi_arregion;
+  wire [3:0] 	   BUS_axi_arqos;
+  wire [3:0] 	   BUS_axi_awregion;
+  wire [3:0] 	   BUS_axi_awqos;
+
   wire [3:0] 	   BUS_axi_awid;
   wire [7:0] 	   BUS_axi_awlen;
   wire [2:0] 	   BUS_axi_awsize;
   wire [1:0] 	   BUS_axi_awburst;
   wire [3:0] 	   BUS_axi_awcache;
-  wire [31:0] 	   BUS_axi_awaddr;
+  wire [30:0] 	   BUS_axi_awaddr;
   wire [2:0] 	   BUS_axi_awprot;
   wire 		   BUS_axi_awvalid;
   wire 		   BUS_axi_awready;
@@ -156,7 +162,7 @@ module fpgaTop
   wire [2:0] 	   BUS_axi_arprot;
   wire [3:0] 	   BUS_axi_arcache;
   wire 		   BUS_axi_arvalid;
-  wire [31:0] 	   BUS_axi_araddr;
+  wire [30:0] 	   BUS_axi_araddr;
   wire 		   BUS_axi_arlock;
   wire 		   BUS_axi_arready;
   wire [3:0] 	   BUS_axi_rid;
@@ -189,16 +195,16 @@ module fpgaTop
   IOBUF iobufSDCMD(.T(~SDCCmdOE), // iobuf's T is active low
 		   .I(SDCCmdIn),
 		   .O(SDCCmdOut),
-		   .IO(SDCmd));
+		   .IO(SDCCmd));
 
   // reset controller XILINX IP
-  wrapper_proc_sys_reset_0_0 wrapper_proc_sys_reset_0_0
+  xlnx_proc_sys_reset xlnx_proc_sys_reset_0
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(c0_ddr4_ui_clk_sync_rst),
      .aux_reset_in(south_rst),
      .mb_debug_sys_rst(1'b0),
      .dcm_locked(c0_init_calib_complete),
-     //.mb_reset,  //open
+     .mb_reset(mb_reset),  //open
      .bus_struct_reset(bus_struct_reset),
      .peripheral_reset(peripheral_reset), //open
      .interconnect_aresetn(interconnect_aresetn), //open
@@ -208,7 +214,7 @@ module fpgaTop
   // wally
   wallypipelinedsoc wallypipelinedsoc
     (.clk(CPUCLK),
-     .reset(bus_struct_reset),
+     .reset_ext(bus_struct_reset),
      // bus interface
      .HRDATAEXT(HRDATAEXT),
      .HREADYEXT(HREADYEXT),
@@ -237,13 +243,12 @@ module fpgaTop
      .SDCCmdIn(SDCCmdIn),     
      .SDCCmdOut(SDCCmdOut),
      .SDCCmdOE(SDCCmdOE),
-     
-     );
+     .SDCCLK(SDCCLK));
 
   // ahb lite to axi bridge
   xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
     (.s_ahb_hclk(CPUCLK),
-     .s_ahb_hresetn(peripheral_aresetn)
+     .s_ahb_hresetn(peripheral_aresetn),
      .s_ahb_hsel(HSELEXT),
      .s_ahb_haddr(HADDR),
      .s_ahb_hprot(HPROT),
@@ -300,8 +305,10 @@ module fpgaTop
      .s_axi_awsize(m_axi_awsize),
      .s_axi_awburst(m_axi_awburst),
      .s_axi_awcache(m_axi_awcache),
-     .s_axi_awaddr(m_axi_awaddr),
+     .s_axi_awaddr(m_axi_awaddr[30:0]),
      .s_axi_awprot(m_axi_awprot),
+     .s_axi_awregion(4'b0), // this could be a bug. bridge does not have these outputs
+     .s_axi_awqos(4'b0),    // this could be a bug. bridge does not have these outputs
      .s_axi_awvalid(m_axi_awvalid),
      .s_axi_awready(m_axi_awready),
      .s_axi_awlock(m_axi_awlock),
@@ -319,9 +326,11 @@ module fpgaTop
      .s_axi_arsize(m_axi_arsize),
      .s_axi_arburst(m_axi_arburst),
      .s_axi_arprot(m_axi_arprot),
+     .s_axi_arregion(4'b0), // this could be a bug. bridge does not have these outputs
+     .s_axi_arqos(4'b0),    // this could be a bug. bridge does not have these outputs
      .s_axi_arcache(m_axi_arcache),
      .s_axi_arvalid(m_axi_arvalid),
-     .s_axi_araddr(m_axi_araddr),
+     .s_axi_araddr(m_axi_araddr[30:0]),
      .s_axi_arlock(m_axi_arlock),
      .s_axi_arready(m_axi_arready),
      .s_axi_rid(m_axi_rid),
@@ -340,6 +349,8 @@ module fpgaTop
      .m_axi_awcache(BUS_axi_awcache),
      .m_axi_awaddr(BUS_axi_awaddr),
      .m_axi_awprot(BUS_axi_awprot),
+     .m_axi_awregion(BUS_axi_awregion),
+     .m_axi_awqos(BUS_axi_awqos),
      .m_axi_awvalid(BUS_axi_awvalid),
      .m_axi_awready(BUS_axi_awready),
      .m_axi_awlock(BUS_axi_awlock),
@@ -357,6 +368,8 @@ module fpgaTop
      .m_axi_arsize(BUS_axi_arsize),
      .m_axi_arburst(BUS_axi_arburst),
      .m_axi_arprot(BUS_axi_arprot),
+     .m_axi_arregion(BUS_axi_arregion),
+     .m_axi_arqos(BUS_axi_arqos),
      .m_axi_arcache(BUS_axi_arcache),
      .m_axi_arvalid(BUS_axi_arvalid),
      .m_axi_araddr(BUS_axi_araddr),
@@ -398,7 +411,7 @@ module fpgaTop
 
      // axi
      .c0_ddr4_s_axi_awid(BUS_axi_awid),
-     .c0_ddr4_s_axi_awaddr(BUS_axi_awaddr),
+     .c0_ddr4_s_axi_awaddr(BUS_axi_awaddr[30:0]),
      .c0_ddr4_s_axi_awlen(BUS_axi_awlen),
      .c0_ddr4_s_axi_awsize(BUS_axi_awsize),
      .c0_ddr4_s_axi_awburst(BUS_axi_awburst),
@@ -418,7 +431,7 @@ module fpgaTop
      .c0_ddr4_s_axi_bresp(BUS_axi_bresp),
      .c0_ddr4_s_axi_bvalid(BUS_axi_bvalid),
      .c0_ddr4_s_axi_arid(BUS_axi_arid),
-     .c0_ddr4_s_axi_araddr(BUS_axi_araddr),
+     .c0_ddr4_s_axi_araddr(BUS_axi_araddr[30:0]),
      .c0_ddr4_s_axi_arlen(BUS_axi_arlen),
      .c0_ddr4_s_axi_arsize(BUS_axi_arsize),
      .c0_ddr4_s_axi_arburst(BUS_axi_arburst),
