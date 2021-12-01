@@ -8,8 +8,11 @@ make all:
 # move these parts into compiling archtest separtately
 	cp -r addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/I addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F
 	cp -r addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/I addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/D
+<<<<<<< HEAD
 #why cat
 	cat addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F/Makefile.include
+=======
+>>>>>>> 29f2a1c5479d7a80debdb1ac337fcda628cc57a3
 	sed -i 's/--isa=rv32i /--isa=32if/' addins/riscv-isa-sim/arch_test_target/spike/device/rv32i_m/F/Makefile.include
 	sed -i 's/--isa=rv64i /--isa=64if/' addins/riscv-isa-sim/arch_test_target/spike/device/rv64i_m/D/Makefile.include
 	if [ -d "addins/riscv-isa-sim/build" ]; then echo "Build exists"; else mkdir addins/riscv-isa-sim/build; fi
