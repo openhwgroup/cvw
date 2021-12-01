@@ -6,12 +6,9 @@ Wally is a 5-stage pipelined processor configurable to support all the standard 
 To use Wally on Linux:
 
 ```
-git clone https://github.com/davidharrishmc/riscv-wally
+git clone https://github.com/davidharrishmc/riscv-wally --recurse-submodules
 cd riscv-wally
 cd addins
-*** can these clones be replaced with git submodule commands?
-git clone https://github.com/riscv-non-isa/riscv-arch-test
-git clone https://github.com/riscv-software-src/riscv-isa-sim
 cd riscv-isa-sim
 *** replace these with a copy from ../install/F and ../install/D containing the Makefile.includes already updated
 cp -r arch_test_target/spike/device/rv32i_m/I arch_test_target/spike/device/rv32i_m/F
