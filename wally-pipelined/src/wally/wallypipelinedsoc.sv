@@ -32,32 +32,39 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input  logic             clk, reset_ext, 
-  output logic             reset,
+  input logic 		   clk, reset_ext, 
   // AHB Lite Interface
   // inputs from external memory
-  input  logic [`AHBW-1:0] HRDATAEXT,
-  input  logic             HREADYEXT, HRESPEXT,
+  input logic [`AHBW-1:0]  HRDATAEXT,
+  input logic 		   HREADYEXT, HRESPEXT,
+  output logic 		   HSELEXT,
   // outputs to external memory, shared with uncore memory
-  output logic             HCLK, HRESETn,
-  output logic [31:0]      HADDR,
+  output logic 		   HCLK, HRESETn,
+  output logic [31:0] 	   HADDR,
   output logic [`AHBW-1:0] HWDATA,
-  output logic             HWRITE,
-  output logic [2:0]       HSIZE,
-  output logic [2:0]       HBURST,
-  output logic [3:0]       HPROT,
-  output logic [1:0]       HTRANS,
-  output logic             HMASTLOCK,
+  output logic 		   HWRITE,
+  output logic [2:0] 	   HSIZE,
+  output logic [2:0] 	   HBURST,
+  output logic [3:0] 	   HPROT,
+  output logic [1:0] 	   HTRANS,
+  output logic 		   HMASTLOCK,
+  output logic 		   HREADY,
   // I/O Interface
-  input  logic [31:0]      GPIOPinsIn,
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,
-  input  logic             UARTSin,
-  output logic             UARTSout
+  input logic [31:0] 	   GPIOPinsIn,
+  output logic [31:0] 	   GPIOPinsOut, GPIOPinsEn,
+  input logic 		   UARTSin,
+  output logic 		   UARTSout,
+  input logic 		   SDCCmdIn,
+  output logic 		   SDCCmdOut,
+  output logic 		   SDCCmdOE,			  
+  input logic [3:0] 	   SDCDatIn,
+  output logic 		   SDCCLK			  
 );
 
   // Uncore signals
+  logic 		   reset;
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
-  logic             HREADY, HRESP;
+  logic             HRESP;
   logic             TimerIntM, SwIntM; // from CLINT
   logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
   logic             ExtIntM; // from PLIC
@@ -80,6 +87,9 @@ module wallypipelinedsoc (
   uncore uncore(.HCLK, .HRESETn,
     .HADDR, .HWDATAIN(HWDATA), .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
     .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,
-    .TimerIntM, .SwIntM, .ExtIntM, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, .MTIMECMP_CLINT
+    .TimerIntM, .SwIntM, .ExtIntM, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, .MTIMECMP_CLINT,
+		.HSELEXT,
+		.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK
+		
 );
 endmodule

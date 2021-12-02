@@ -31,18 +31,26 @@ module clockgater
    input logic 	CLK,
    output logic ECLK);
 
-  // VERY IMPORTANT.
-  // This part functionally models a clock gater, but does not necessarily meet the timing constrains a real standard cell would.
-  // Do not use this in synthesis!
 
-  logic 	enable_q;
-  
 
-  always_latch begin
-    if(~CLK) begin
-      enable_q <= E | SE;
+  if (`FPGA) begin
+    BUFGCE bufgce_i0 (   
+   .I(CLK),
+   .CE(E | SE),
+   .O(ECLK)    
+   );
+  end else begin
+    // *** BUG 
+    // VERY IMPORTANT.
+    // This part functionally models a clock gater, but does not necessarily meet the timing constrains a real standard cell would.
+    // Do not use this in synthesis!
+    logic 	enable_q;
+    always_latch begin
+      if(~CLK) begin
+	enable_q <= E | SE;
+      end
     end
-  end
-  assign ECLK = enable_q & CLK;
+    assign ECLK = enable_q & CLK;
+  end    
 
 endmodule
