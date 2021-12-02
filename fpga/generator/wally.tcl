@@ -74,3 +74,28 @@ report_timing -nworst 1 -delay_type max -sort_by group                  -file re
 report_utilization -hierarchical                                        -file reports/utilization.rpt
 report_cdc                                                              -file reports/cdc.rpt
 report_clock_interaction                                                -file reports/clock_interaction.rpt
+
+
+# set for RuntimeOptimized implementation
+#set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+#set_property "steps.route_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
+
+launch_runs impl_1
+wait_on_run impl_1
+launch_runs impl_1 -to_step write_bitstream
+wait_on_run impl_1
+open_run impl_1
+
+# output Verilog netlist + SDC for timing simulation
+exec mkdir -p sim/
+exec rm -rf sim/*
+
+write_verilog -force -mode funcsim sim/funcsim.v
+write_verilog -force -mode timesim sim/timesim.v
+write_sdf     -force sim/timesim.sdf
+
+# reports
+check_timing                                                              -file reports/imp_check_timing.rpt
+report_timing -max_paths 10 -nworst 10 -delay_type max -sort_by slack     -file reports/imp_timing_WORST_10.rpt
+report_timing -nworst 1 -delay_type max -sort_by group                    -file reports/imp_timing.rpt
+report_utilization -hierarchical                                          -file reports/imp_utilization.rpt
