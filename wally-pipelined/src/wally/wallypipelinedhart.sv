@@ -52,7 +52,8 @@ module wallypipelinedhart (
   //  logic [1:0]  ForwardAE, ForwardBE;
   logic 		    StallF, StallD, StallE, StallM, StallW;
   logic 		    FlushF, FlushD, FlushE, FlushM, FlushW;
-  logic 		    RetM, TrapM;
+  logic 		    RetM;
+  (* mark_debug = "true" *) logic TrapM;
 
   // new signals that must connect through DP
   logic 		    MulDivE, W64E;
@@ -63,13 +64,15 @@ module wallypipelinedhart (
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] 		    InstrD, InstrM;
-  logic [`XLEN-1:0] 	    PCF, PCE, PCM, PCLinkE;
+  logic [31:0] 		    InstrD, InstrW;
+  (* mark_debug = "true" *) logic [31:0] 		    InstrM;
+  logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCLinkE;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    PCM;
   logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
-  logic [1:0] 		    MemRWM;
-  logic 		    InstrValidM;
+  (* mark_debug = "true" *) logic [1:0] 		    MemRWM;
+  (* mark_debug = "true" *) logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
@@ -119,8 +122,10 @@ module wallypipelinedhart (
 
   // cpu lsu interface
   logic [2:0] 		    Funct3M;
-  logic [`XLEN-1:0] 	    MemAdrM, MemAdrE, WriteDataM;
-  logic [`XLEN-1:0] 	    ReadDataM;
+  logic [`XLEN-1:0] 	    MemAdrE;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    MemAdrM;  
+  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
   logic [`XLEN-1:0] 	    ReadDataW;  
   logic 		    CommittedM;
 

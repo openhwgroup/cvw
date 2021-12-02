@@ -65,8 +65,15 @@ module testbench();
   logic             HMASTLOCK;
   logic [31:0]      GPIOPinsIn;
   logic [31:0]      GPIOPinsOut, GPIOPinsEn;
-  logic             UARTSin;
-  logic             UARTSout;
+  logic             UARTSin, UARTSout;
+
+  logic SDCCLK;
+  tri1 SDCCmd;
+  tri1 [3:0] SDCDat;
+
+  assign SDCmd = 1'bz;
+  assign SDCDat = 4'bz;
+  
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
   wallypipelinedsoc dut(.clk, .reset_ext, .reset,
