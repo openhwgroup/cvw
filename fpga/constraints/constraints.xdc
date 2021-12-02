@@ -10,6 +10,14 @@
 
 #create_clock -period 4.000 [get_ports default_250mhz_clk1_0_p]
 
+# need to create a clock for mmcm_clkout1. In the gui flow this was auto generated somehow.
+# turns out this clock is auto generated but has a different name. wtf
+# 10 Mhz
+#create_clock -name mmcm_clkout1 -period 100 [get_pins xlnx_ddr4_c0/addn_ui_clkout1]
+
+#create_generated_clock -name mmcm_clkout1 -source [get_pins xlnx_ddr4_c0/c0_sys_clk_p] -edges {1 2 3} -edge_shift {0.000 48.000 96.000} [get_pins xlnx_ddr4_c0/addn_ui_clkout1]
+
+create_generated_clock -name mmcm_clkout1 xlnx_ddr4_c0/addn_ui_clkout1
 
 create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
 
