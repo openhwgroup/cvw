@@ -44,6 +44,11 @@ module sd_top_tb();
   logic o_DATA_VALID;
   logic o_LAST_NIBBLE;
   logic [4095:0] ReadData;
+  logic o_SD_RESTARTING;
+  logic [2:0] o_ERROR_CODE_Q;
+  logic o_FATAL_ERROR;
+  
+  
   
   // Driver
   wire PAD;
@@ -63,6 +68,9 @@ module sd_top_tb();
     .o_SD_CLK(o_SD_CLK),
     .i_BLOCK_ADDR(i_BLOCK_ADDR),
     .o_READY_FOR_READ(o_READY_FOR_READ),
+     .o_SD_RESTARTING(o_SD_RESTARTING),
+     .o_ERROR_CODE_Q(o_ERROR_CODE_Q),
+     .o_FATAL_ERROR(o_FATAL_ERROR),
     .i_READ_REQUEST(i_READ_REQUEST),
     .o_DATA_TO_CORE(o_DATA_TO_CORE),
     .ReadData(ReadData),     

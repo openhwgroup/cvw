@@ -51,6 +51,8 @@ module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
 
   initial begin
     //$readmemh(PRELOAD, RAM);
+/* -----\/----- EXCLUDED -----\/-----
+ // FPGA only
     RAM[0] =  64'h94e1819300002197;
     RAM[1] =  64'h4281420141014081;
     RAM[2] =  64'h4481440143814301;
@@ -93,6 +95,7 @@ module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
     RAM[39] = 64'h1047278367498082;
     RAM[40] = 64'h67c98082dfed8b85;
     RAM[41] = 64'h0000808210a7a023;
+ -----/\----- EXCLUDED -----/\----- */
   end
 
   assign initTrans = HREADY & HSELTim & (HTRANS != 2'b00);

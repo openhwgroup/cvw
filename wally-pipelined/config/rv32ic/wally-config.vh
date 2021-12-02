@@ -27,6 +27,7 @@
 // include shared configuration
 `include "wally-shared.vh"
 
+`define FPGA 0
 `define QEMU 0
 `define BUILDROOT 0
 `define BUSYBEAR 0
@@ -84,6 +85,9 @@
 `define TIM_SUPPORTED 1'b1
 `define TIM_BASE       34'h80000000
 `define TIM_RANGE      34'h07FFFFFF
+`define EXT_MEM_SUPPORTED 1'b0
+`define EXT_MEM_BASE       34'h80000000
+`define EXT_MEM_RANGE      34'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
 `define CLINT_BASE  34'h02000000
 `define CLINT_RANGE 34'h0000FFFF
@@ -96,7 +100,7 @@
 `define PLIC_SUPPORTED 1'b1
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
-`define SDC_SUPPORTED 1'b1
+`define SDC_SUPPORTED 1'b0
 `define SDC_BASE   34'h00012100
 `define SDC_RANGE  34'h0000001F
 
