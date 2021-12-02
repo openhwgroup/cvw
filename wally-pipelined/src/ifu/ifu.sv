@@ -133,13 +133,21 @@ module ifu (
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
-       .Cacheable(),
-       .Idempotent(),
-       .AtomicAllowed(),
-       .*);
+       .Cacheable(), .Idempotent(), .AtomicAllowed(),
+
+       .clk, .reset,
+       .SATP_REGW,
+       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
+       .STATUS_MPP,
+       .PrivilegeModeW,
+       .InstrAccessFaultF,
+       .PMPCFG_ARRAY_REGW, //bitfields?
+       .PMPADDR_ARRAY_REGW      
+       );
 
 
-  // branch predictor signals
+
+  // branch predictor signal
   logic                        SelBPPredF;
   logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [4:0]                  InstrClassD, InstrClassE;
