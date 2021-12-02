@@ -157,7 +157,7 @@ module uncore (
                  HSELUARTD & HRESPUART |
                  HSELSDC & HRESPSDC;		 
 
-  assign HREADY = HSELTimD & HREADTim |
+  assign HREADY = HSELTimD & HREADYTim |
 		  HSELEXTD & HREADYEXT |		  
                   HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
