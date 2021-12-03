@@ -430,7 +430,7 @@ module testbench();
               NextMIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
             end \
             if(ExpectedCSRArrayE[NumCSRE].substr(0,3) == "mepc") begin \
-              $display("hello! we are here."); \
+              // $display("hello! we are here."); \
               MepcExpected = ExpectedCSRArrayValueE[NumCSRE]; \
               $display("%tns: MepcExpected: %x",$time,MepcExpected); \
             end \
@@ -469,7 +469,7 @@ module testbench();
       // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
       // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
       // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
-      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 16)) begin
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) || ~dut.hart.ieu.c.InstrValidM) begin
         RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
