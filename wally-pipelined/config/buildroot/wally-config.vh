@@ -86,9 +86,9 @@
 `define TIM_SUPPORTED 1'b1
 `define TIM_BASE       56'h80000000
 `define TIM_RANGE      56'h07FFFFFF
-`define EXT_SUPPORTED 1'b0
-`define EXT_BASE       56'h80000000
-`define EXT_RANGE      56'h07FFFFFF
+`define EXT_MEM_SUPPORTED 1'b0
+`define EXT_MEM_BASE       56'h80000000
+`define EXT_MEM_RANGE      56'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
 `define CLINT_BASE  56'h02000000
 `define CLINT_RANGE 56'h0000FFFF
