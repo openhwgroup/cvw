@@ -130,6 +130,8 @@ report_utilization -hierarchical                                        -file re
 report_cdc                                                              -file reports/cdc.rpt
 report_clock_interaction                                                -file reports/clock_interaction.rpt
 
+source ../constraints/debug2.xdc
+
 
 # set for RuntimeOptimized implementation
 #set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
