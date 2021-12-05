@@ -21,6 +21,7 @@ wlft*
 /imperas-riscv-tests/logs
 *.o
 *.d
+*.vstf
 testsBP/*/*/*.elf*
 testsBP/*/OBJ/*
 testsBP/*/*.a
