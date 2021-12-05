@@ -64,27 +64,28 @@ module csrm #(parameter
    MEDELEG_MASK = ~(ZERO | `XLEN'b1 << 11),
    MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}
 ) (
-    input  logic             clk, reset, 
-    input  logic             StallW,
-    input  logic             CSRMWriteM, MTrapM,
-    input  logic [11:0]      CSRAdrM,
-    input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
-    input  logic [`XLEN-1:0] CSRWriteValM,
-    output logic [`XLEN-1:0] CSRMReadValM, MEPC_REGW, MTVEC_REGW, 
+    input logic 	     clk, reset, 
+    input logic 	     StallW,
+    input logic 	     CSRMWriteM, MTrapM,
+    input logic [11:0] 	     CSRAdrM,
+    input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
+    input logic [`XLEN-1:0]  CSRWriteValM,
+    output logic [`XLEN-1:0] CSRMReadValM, MTVEC_REGW,
+    (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
     output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-    output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW,
+    output logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW,
     // 64-bit registers in RV64, or two 32-bit registers in RV32
     //output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-    output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-    output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
-    input  logic [11:0]      MIP_REGW, MIE_REGW,
-    output logic             WriteMSTATUSM,
-    output logic             IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
+    output 		     var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+    output 		     var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
+    (* mark_debug = "true" *)  input logic [11:0] 	     MIP_REGW, MIE_REGW,
+    output logic 	     WriteMSTATUSM,
+    output logic 	     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
   );
 
   logic [`XLEN-1:0] MISA_REGW, MHARTID_REGW;
-  logic [`XLEN-1:0] MSCRATCH_REGW, MCAUSE_REGW, MTVAL_REGW;
-
+  logic [`XLEN-1:0] MSCRATCH_REGW;
+  (* mark_debug = "true" *)   logic [`XLEN-1:0] MCAUSE_REGW, MTVAL_REGW;
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;

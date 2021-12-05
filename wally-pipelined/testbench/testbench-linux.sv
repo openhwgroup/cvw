@@ -55,6 +55,8 @@ module testbench();
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic             HCLK, HRESETn;
+  logic             HREADY;
+  logic 	    HSELEXT;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -65,15 +67,23 @@ module testbench();
   logic             HMASTLOCK;
   logic [31:0]      GPIOPinsIn;
   logic [31:0]      GPIOPinsOut, GPIOPinsEn;
-  logic             UARTSin;
-  logic             UARTSout;
+  logic             UARTSin, UARTSout;
+
+  logic SDCCLK;
+  logic      SDCCmdIn;
+  logic      SDCCmdOut;
+  logic      SDCCmdOE;
+  logic [3:0] SDCDatIn;
+  
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  wallypipelinedsoc dut(.clk, .reset_ext, .reset,
-                        .HRDATAEXT, .HREADYEXT, .HRESPEXT, .HCLK, .HRESETn, .HADDR,
-                        .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-                        .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
-                        .UARTSin, .UARTSout);
+  wallypipelinedsoc dut(.clk, .reset_ext,
+                        .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
+			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
+			.HTRANS, .HMASTLOCK, 
+			.GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout,
+			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
   // Write Back stage signals not needed by Wally itself 
   parameter nop = 'h13;
@@ -304,16 +314,16 @@ module testbench();
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
     if (CHECKPOINT==0) begin // normal
-      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.RAM);
+      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.dtim.RAM);
       traceFileM = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
       traceFileE = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
       InstrCountW = '0;
     end else begin // checkpoint
       $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
       checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
-      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.RAM);
+      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.dtim.RAM);
       ramFile = $fopen({checkpointDir,"ram.bin"}, "rb");
-      readResult = $fread(dut.uncore.dtim.RAM,ramFile);
+      readResult = $fread(dut.uncore.dtim.dtim.RAM,ramFile);
       $fclose(ramFile);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
@@ -420,7 +430,7 @@ module testbench();
               NextMIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
             end \
             if(ExpectedCSRArrayE[NumCSRE].substr(0,3) == "mepc") begin \
-              $display("hello! we are here."); \
+              // $display("hello! we are here."); \
               MepcExpected = ExpectedCSRArrayValueE[NumCSRE]; \
               $display("%tns: MepcExpected: %x",$time,MepcExpected); \
             end \
@@ -459,7 +469,7 @@ module testbench();
       // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
       // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
       // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
-      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 16)) begin
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) || ~dut.hart.ieu.c.InstrValidM) begin
         RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
@@ -669,7 +679,7 @@ module testbench();
           PAdr = BaseAdr + (VPN[i] << 3);
           // dtim.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
           // by 3 (the PTE size) to get the requested 64-bit PTE.
-          PTE = dut.uncore.dtim.RAM[PAdr >> 3];
+          PTE = dut.uncore.dtim.dtim.RAM[PAdr >> 3];
           PTE_R = PTE[1];
           PTE_X = PTE[3];
           if (PTE_R || PTE_X) begin
