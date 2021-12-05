@@ -44,7 +44,6 @@ module fpgaTop
 
    output 	   calib,
    output 	   cpu_reset,
-   output 	   ddr4_sdram_c1_062,
    output 	   ahblite_resetn,
 
    output [16 : 0] c0_ddr4_adr,
