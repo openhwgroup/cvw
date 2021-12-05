@@ -129,6 +129,16 @@ logic [3:0] dummy;
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
 
+  logic SDCCLK;
+  logic      SDCCmdIn;
+  logic      SDCCmdOut;
+  logic      SDCCmdOE;
+  logic [3:0] SDCDatIn;
+
+  logic             HREADY;
+  logic 	    HSELEXT;
+  
+
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
@@ -165,7 +175,7 @@ logic [3:0] dummy;
       // *** broken because DTIM also drives RAM
       if (`TESTSBP) begin
 	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  dut.uncore.dtim.RAM[i] = meminit;
+	  dut.uncore.dtim.dtim.RAM[i] = meminit;
 	end
       end
       // read test vectors into memory
@@ -174,7 +184,7 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -225,14 +235,14 @@ logic [3:0] dummy;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i] &&
+          if (signature[i] !== dut.uncore.dtim.dtim.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.dtim.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -255,7 +265,7 @@ logic [3:0] dummy;
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
-            $readmemh(memfilename, dut.uncore.dtim.RAM);
+            $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);

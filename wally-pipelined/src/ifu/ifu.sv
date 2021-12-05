@@ -133,13 +133,21 @@ module ifu (
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
-       .Cacheable(),
-       .Idempotent(),
-       .AtomicAllowed(),
-       .*);
+       .Cacheable(), .Idempotent(), .AtomicAllowed(),
+
+       .clk, .reset,
+       .SATP_REGW,
+       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
+       .STATUS_MPP,
+       .PrivilegeModeW,
+       .InstrAccessFaultF,
+       .PMPCFG_ARRAY_REGW,
+       .PMPADDR_ARRAY_REGW      
+       );
 
 
-  // branch predictor signals
+
+  // branch predictor signal
   logic                        SelBPPredF;
   logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [4:0]                  InstrClassD, InstrClassE;
@@ -150,7 +158,9 @@ module ifu (
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
-  icache icache(.*,
+  icache icache(.clk, .reset, .StallF, .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
+  .InstrPAdrF, .InstrReadF, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
+
   .PCNextF(PCNextFPhys),
   .PCPF(PCPFmmu),
   .WalkerInstrPageFaultF,
@@ -198,7 +208,11 @@ module ifu (
   generate
     if (`BPRED_ENABLED == 1) begin : bpred
       // I am making the port connection explicit for now as I want to see them and they will be changing.
-      bpred bpred(.*,
+    
+      bpred bpred(.clk, .reset,
+    .StallF, .StallD, .StallE,
+    .FlushF, .FlushD, .FlushE,
+
     .PCNextF(PCNextF),
     .BPPredPCF(BPPredPCF),
     .SelBPPredF(SelBPPredF),
@@ -240,7 +254,8 @@ module ifu (
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  decompress decomp(.*);
+
+  decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD);
   assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   // *** combine these with others in better way, including M, F
 

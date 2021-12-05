@@ -55,7 +55,7 @@ module fsm_fpdiv (
 	  current_state = next_state;
      end
 
-   always @(*)
+   always_comb
      begin
  	case(current_state)
 	  S0:  // iteration 0

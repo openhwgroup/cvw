@@ -137,23 +137,26 @@ module uartPC16550D(
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
-      DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
-      DLM <= #1 8'b0;
+      if (`FPGA) begin
+	DLL <= #1 8'd11;
+	DLM <= #1 8'b0;
+      end else begin
+	DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
+	DLM <= #1 8'b0;
+      end	
 /* -----\/----- EXCLUDED -----\/-----
-      DLL <= #1 8'd11;
-      DLM <= #1 8'b0;
  -----/\----- EXCLUDED -----/\----- */
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
         case (A)
+/* -----\/----- EXCLUDED -----\/-----
           3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
           3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
-	  // *** BUG FIX ME for now for the divider to be 11.  Our clock is 10 Mhz.  10Mhz /(11 * 16) = 56818 baud, which is close enough to 57600 baud
-/* -----\/----- EXCLUDED -----\/-----
-          3'b000: if (DLAB) DLL <= #1 8'd11 else TXHR <= #1 Din; // TX handled in TX register/FIFO section
-          3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
  -----/\----- EXCLUDED -----/\----- */
+	  // *** BUG FIX ME for now for the divider to be 11.  Our clock is 10 Mhz.  10Mhz /(11 * 16) = 56818 baud, which is close enough to 57600 baud
+          3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+          3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
 
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;

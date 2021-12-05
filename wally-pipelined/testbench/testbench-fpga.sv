@@ -503,7 +503,9 @@ string tests32f[] = '{
    string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT;
+  logic             HREADYEXT, HRESPEXT, HREADY;
+  logic 	    HSELEXT;
+  
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -517,12 +519,12 @@ string tests32f[] = '{
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.wallypipelinedsoc.hart.ieu.dp.StallW, dut.wallypipelinedsoc.hart.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.wallypipelinedsoc.hart.ieu.dp.StallW,  dut.wallypipelinedsoc.hart.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
-  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
+  logging logging(clk, reset, dut.wallypipelinedsoc.uncore.HADDR, dut.wallypipelinedsoc.uncore.HTRANS);
 
   // pick tests based on modes supported
   initial begin
@@ -564,25 +566,49 @@ string tests32f[] = '{
     end
   end
 
-  string signame, memfilename, romfilename;
+  string signame, memfilename, romfilename, sdcfilename;
 
-  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+  logic [3:0] GPIOPinsIn_IO;
+  logic [4:0] GPIOPinsOut_IO;
   logic UARTSin, UARTSout;
+  logic ddr4_calib_complete;
+  
+
+  logic SDCCLK;
+  tri1 SDCCmd;
+  tri1 [3:0] SDCDat;
+  logic      SDCCmdIn;
+  logic      SDCCmdOut;
+  logic      SDCCmdOE;
+  logic [3:0] SDCDatIn;
+
+  assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+  assign SDCCmdIn = SDCCmd;
+  assign SDCDatIn = SDCDat;
+    
+  sdModel sdcard
+    (.sdClk(SDCCLK),
+    .cmd(SDCCmd), 
+    .dat(SDCDat));
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  assign HREADYEXT = 1;
-  assign HRESPEXT = 0;
-  assign HRDATAEXT = 0;
+ 
+  dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) 
+  dtim (.*, .HSELTim(HSELEXT),
+	.HREADTim(HRDATAEXT),
+	.HREADYTim(HREADYEXT),
+	.HRESPTim(HRESPEXT));
+ 
 
-  wallypipelinedsoc dut(.*); 
+  wallypipelinedsocwrapper dut(.*); 
 
   // Track names of instructions
-  instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.FinalInstrRawF,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  dut.hart.ifu.InstrW,
+  instrTrackerTB it(clk, reset, dut.wallypipelinedsoc.hart.ieu.dp.FlushE,
+                dut.wallypipelinedsoc.hart.ifu.icache.FinalInstrRawF,
+                dut.wallypipelinedsoc.hart.ifu.InstrD, dut.wallypipelinedsoc.hart.ifu.InstrE,
+                dut.wallypipelinedsoc.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -606,19 +632,22 @@ string tests32f[] = '{
 /* -----\/----- EXCLUDED -----\/-----
       if (`TESTSBP) begin
 	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  dut.uncore.dtim.RAM[i] = meminit;
+	  dtim.RAM[i] = meminit;
 	end
       end
  -----/\----- EXCLUDED -----/\----- */
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      romfilename = {"../../imperas-riscv-tests/work/rv64BP/blink-led.memfile"};
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
-      $readmemh(romfilename, dut.uncore.bootdtim.bootdtim.RAM);
-      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
-      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
+      //romfilename = {"../../testsBP/fpga-test-sdc/bin/fpga-test-sdc.hex"};
+      romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+      sdcfilename = {"../src/sdc/tb/ramdisk2.hex"};      
+      $readmemh(memfilename, dtim.RAM);
+      $readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootdtim.bootdtim.RAM);
+      $readmemh(sdcfilename, sdcard.FLASHmem);
+      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.addr"};
+      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.lab"};
       $display("Read memfile %s", memfilename);
-      reset = 1; # 42; reset = 0;
+      reset = 0; #97; reset = 1; # 1000; reset = 0;
     end
 
   // generate clock to sequence tests
@@ -631,11 +660,11 @@ string tests32f[] = '{
   always @(negedge clk)
     begin    
 /* -----\/----- EXCLUDED -----\/-----
-      if (dut.hart.priv.EcallFaultM && 
-			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
-			     (dut.hart.ieu.dp.regf.we3 && 
-			      dut.hart.ieu.dp.regf.a3 == 3 && 
-			      dut.hart.ieu.dp.regf.wd3 == 1))) begin
+      if (dut.wallypipelinedsoc.hart.priv.EcallFaultM && 
+			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 || 
+			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 && 
+			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 && 
+			      dut.wallypipelinedsoc.hart.ieu.dp.regf.wd3 == 1))) begin
  -----/\----- EXCLUDED -----/\----- */
       if (DCacheFlushDone) begin
         //$display("Code ended with ecall with gp = 1");
@@ -673,14 +702,14 @@ string tests32f[] = '{
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i] &&
+          if (signature[i] !== dtim.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dtim.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -702,28 +731,30 @@ string tests32f[] = '{
         end
         else begin
           memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-          $readmemh(memfilename, dut.uncore.dtim.RAM);
+          $readmemh(memfilename, dtim.RAM);
           $display("Read memfile %s", memfilename);
 	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
 	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
-          reset = 1; # 17; reset = 0;
+	  reset = 0; #97; reset = 1; # 1000; reset = 0;
         end
       end
     end // always @ (negedge clk)
 
   // track the current function or global label
+/* -----\/----- EXCLUDED -----\/-----
   if (DEBUG == 1) begin : FunctionName
     FunctionName FunctionName(.reset(reset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
+ -----/\----- EXCLUDED -----/\----- */
 
-  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
-			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
-			     (dut.hart.ieu.dp.regf.we3 && 
-			      dut.hart.ieu.dp.regf.a3 == 3 && 
-			      dut.hart.ieu.dp.regf.wd3 == 1));
+  assign DCacheFlushStart = dut.wallypipelinedsoc.hart.priv.EcallFaultM && 
+			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 || 
+			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 && 
+			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 && 
+			      dut.wallypipelinedsoc.hart.ieu.dp.regf.wd3 == 1));
   
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
 				.reset(reset),
@@ -736,8 +767,8 @@ string tests32f[] = '{
     if (`BPRED_ENABLED == 1) begin : bpred
       
       initial begin
-	$readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
-	$readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);    
+	$readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+	$readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
       end
     end
   endgenerate
@@ -777,10 +808,10 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
-  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
-  localparam integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  localparam integer numlines = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.NUMWAYS;
+  localparam integer blockbytelen = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.BLOCKBYTELEN;
+  localparam integer numwords = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.BLOCKLEN/`XLEN;  
   localparam integer lognumlines = $clog2(numlines);
   localparam integer logblockbytelen = $clog2(blockbytelen);
   localparam integer lognumways = $clog2(numways);
@@ -806,10 +837,10 @@ module DCacheFlushFSM
 		       .logblockbytelen(logblockbytelen))
 	  copyShadow(.clk,
 		     .start,
-		     .tag(testbench.dut.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-		     .valid(testbench.dut.hart.lsu.dcache.MemWay[way].ValidBits[index]),
-		     .dirty(testbench.dut.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
-		     .data(testbench.dut.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+		     .tag(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+		     .valid(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].ValidBits[index]),
+		     .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
+		     .data(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
 		     .index(index),
 		     .cacheWord(cacheWord),
 		     .CacheData(CacheData[way][index][cacheWord]),
