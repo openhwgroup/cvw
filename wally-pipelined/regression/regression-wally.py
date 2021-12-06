@@ -93,10 +93,13 @@ def main():
     # max out at a limited number of concurrent processes to not overwhelm the system
 
     if '-all' in sys.argv:
-        TIMEOUT_DUR = 20*3600 
+        TIMEOUT_DUR = 20*3600 # seconds
         configs.append(getBuildrootTC(short=False))
+    elif '-buildroot' in sys.argv:
+        TIMEOUT_DUR = 20*3600 # seconds
+        configs=[getBuildrootTC(short=False)]
     else:
-        TIMEOUT_DUR = 300
+        TIMEOUT_DUR = 5*60 # seconds
         configs.append(getBuildrootTC(short=True))
     print(configs)
 
