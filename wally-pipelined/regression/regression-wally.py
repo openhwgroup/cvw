@@ -89,8 +89,13 @@ def run_test_case(config):
 
 def main():
     """Run the tests and count the failures"""
-    # Scale the number of concurrent processes to the number of test cases, but
-    # max out at a limited number of concurrent processes to not overwhelm the system
+    try:
+        os.mkdir("logs")
+    except:
+        pass
+
+    if '-makeTests' in sys.argv:
+        os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
     if '-all' in sys.argv:
         TIMEOUT_DUR = 20*3600 # seconds
@@ -101,12 +106,9 @@ def main():
     else:
         TIMEOUT_DUR = 5*60 # seconds
         configs.append(getBuildrootTC(short=True))
-    print(configs)
 
-    try:
-        os.mkdir("logs")
-    except:
-        pass
+    # Scale the number of concurrent processes to the number of test cases, but
+    # max out at a limited number of concurrent processes to not overwhelm the system
     with Pool(processes=min(len(configs),25)) as pool:
        num_fail = 0
        results = {}
