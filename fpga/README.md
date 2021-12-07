@@ -14,6 +14,12 @@ wallypipelinedsoc.sv and the 4 IP blocks.  The FPGA include and ILA (In logic
 analyzer) which provides the current instruction PCM, instrM, etc along with
 a large number of debuging signals.
 
+* Programming the flash card
+You'll need to write the linux image to the flash card.  Use the convert2bin.py 
+script in wally-pipelined/linux-testgen/linux-testvectors/ to convert the ram.txt
+file from QEMU's preload to generate the binary.  Then to copy
+ sudo dd if=ram.bin of=<path to flash card>.
+
 * Loading the FPGA
 
 After the build process is complete about 2 hrs on an i9-7900x. Launch vivado's
