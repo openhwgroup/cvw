@@ -282,7 +282,7 @@ set_property PACKAGE_PIN G22 [get_ports {c0_ddr4_dm_dbi_n[7]}]
 
 
 
-set_max_delay -datapath_only -from [get_pins wrapper_i/ddr4_0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins wrapper_i/proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10.000
+set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10.000
 
 
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports c0_ddr4_reset_n]
