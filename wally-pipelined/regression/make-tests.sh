@@ -9,4 +9,6 @@ make allclean
 make
 make XLEN=32
 exe2memfile.pl work/*/*/*.elf
-cd ../../wally-pipelined/regression
+cd ../linux-testgen/linux-testvectors
+./tvLinker.sh
+cd ../../../wally-pipelined/regression
