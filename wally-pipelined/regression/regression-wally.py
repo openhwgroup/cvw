@@ -89,6 +89,7 @@ def run_test_case(config):
 
 def main():
     """Run the tests and count the failures"""
+    global configs
     try:
         os.mkdir("logs")
     except:
