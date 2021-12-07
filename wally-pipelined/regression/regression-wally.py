@@ -10,9 +10,11 @@
 # output.
 #
 ##################################
-import sys
+import sys,os
 
 from collections import namedtuple
+regressionDir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(regressionDir)
 TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
