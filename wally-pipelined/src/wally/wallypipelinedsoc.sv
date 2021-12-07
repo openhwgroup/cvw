@@ -79,7 +79,7 @@ module wallypipelinedsoc (
   wallypipelinedhart hart(.clk, .reset,
     .TimerIntM, .ExtIntM, .SwIntM, 
     .MTIME_CLINT, .MTIMECMP_CLINT, 
-    .HRDATA('0), .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
+    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
     .HADDRD, .HSIZED, .HWRITED
    );
