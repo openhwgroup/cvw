@@ -80,6 +80,7 @@ def run_test_case(config):
     logname = "logs/wally_"+config.name+".log"
     cmd = config.cmd.format(logname)
     print(cmd)
+    os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
         print("%s: Success" % config.name)
@@ -93,11 +94,13 @@ def main():
     """Run the tests and count the failures"""
     global configs
     try:
+        os.chdir(regressionDir)
         os.mkdir("logs")
     except:
         pass
 
     if '-makeTests' in sys.argv:
+        os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
     if '-all' in sys.argv:
