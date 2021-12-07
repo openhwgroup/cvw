@@ -10,9 +10,11 @@
 # output.
 #
 ##################################
-import sys
+import sys,os
 
 from collections import namedtuple
+regressionDir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(regressionDir)
 TestCase = namedtuple("TestCase", ['name', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
@@ -78,6 +80,7 @@ def run_test_case(config):
     logname = "logs/wally_"+config.name+".log"
     cmd = config.cmd.format(logname)
     print(cmd)
+    os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
         print("%s: Success" % config.name)
@@ -89,21 +92,29 @@ def run_test_case(config):
 
 def main():
     """Run the tests and count the failures"""
-    # Scale the number of concurrent processes to the number of test cases, but
-    # max out at a limited number of concurrent processes to not overwhelm the system
-
-    if '-all' in sys.argv:
-        TIMEOUT_DUR = 20*3600 
-        configs.append(getBuildrootTC(short=False))
-    else:
-        TIMEOUT_DUR = 300
-        configs.append(getBuildrootTC(short=True))
-    print(configs)
-
+    global configs
     try:
+        os.chdir(regressionDir)
         os.mkdir("logs")
     except:
         pass
+
+    if '-makeTests' in sys.argv:
+        os.chdir(regressionDir)
+        os.system('./make-tests.sh | tee ./logs/make-tests.log')
+
+    if '-all' in sys.argv:
+        TIMEOUT_DUR = 20*3600 # seconds
+        configs.append(getBuildrootTC(short=False))
+    elif '-buildroot' in sys.argv:
+        TIMEOUT_DUR = 20*3600 # seconds
+        configs=[getBuildrootTC(short=False)]
+    else:
+        TIMEOUT_DUR = 5*60 # seconds
+        configs.append(getBuildrootTC(short=True))
+
+    # Scale the number of concurrent processes to the number of test cases, but
+    # max out at a limited number of concurrent processes to not overwhelm the system
     with Pool(processes=min(len(configs),25)) as pool:
        num_fail = 0
        results = {}
