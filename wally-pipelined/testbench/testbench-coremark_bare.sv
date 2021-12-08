@@ -54,8 +54,13 @@ module testbench();
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
   logic SDCCLK;
-  tri1 SDCCmd;
-  tri1 [3:0] SDCDat;
+  logic      SDCCmdIn;
+  logic      SDCCmdOut;
+  logic      SDCCmdOE;
+  logic [3:0] SDCDatIn;
+
+  logic             HREADY;
+  logic 	    HSELEXT;
 
   assign SDCmd = 1'bz;
   assign SDCDat = 4'bz;
@@ -95,7 +100,7 @@ module testbench();
       totalerrors = 0;
       // read test vectors into memory
       memfilename = tests[0];
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
       //for(j=268437955; j < 268566528; j = j+1)
         //dut.uncore.dtim.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";

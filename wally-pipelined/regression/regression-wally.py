@@ -34,7 +34,7 @@ configs = [
 ]
 def getBuildrootTC(short):
     INSTR_LIMIT = 100000 # multiple of 100000
-    MAX_EXPECTED = 182000000
+    MAX_EXPECTED = 246000000
     if short:
         BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
@@ -80,6 +80,7 @@ def run_test_case(config):
     logname = "logs/wally_"+config.name+".log"
     cmd = config.cmd.format(logname)
     print(cmd)
+    os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):
         print("%s: Success" % config.name)
@@ -93,11 +94,13 @@ def main():
     """Run the tests and count the failures"""
     global configs
     try:
+        os.chdir(regressionDir)
         os.mkdir("logs")
     except:
         pass
 
     if '-makeTests' in sys.argv:
+        os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
     if '-all' in sys.argv:
