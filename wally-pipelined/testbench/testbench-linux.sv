@@ -48,7 +48,7 @@ module testbench();
   ///////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// HARDWARE ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  logic clk, reset, reset_ext; 
+  logic clk, reset_ext; 
   initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
   always begin clk <= 1; # 5; clk <= 0; # 5; end
 
@@ -84,6 +84,9 @@ module testbench();
 			.GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
+
+  logic reset;
+  assign reset = dut.reset;
 
   // Write Back stage signals not needed by Wally itself 
   parameter nop = 'h13;

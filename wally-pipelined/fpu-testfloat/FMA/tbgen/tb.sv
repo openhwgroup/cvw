@@ -1,5 +1,10 @@
 
-`include "../../../config/rv64icfd/wally-config.vh"
+//`include "../../../config/old/rv64icfd/wally-config.vh"
+
+`define FLEN 64//(`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
+`define NE   11//(`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
+`define NF   52//(`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
+`define XLEN 64
 module testbench3();
 
  logic [31:0] errors=0;
@@ -174,8 +179,9 @@ always @(posedge clk)
  // check results on falling edge of clk
   always @(negedge clk) begin
  
-  //  fp = $fopen("/home/kparry/riscv-wally/wally-pipelined/src/fpu/FMA/tbgen/results.dat","w");
 	if((FmtE==1'b1) & (FMAFlgM != flags[4:0] || (!wnan && (FMAResM != ans)) || (wnan && ansnan && ~((XNaNE && (FMAResM[`FLEN-2:0] == {XExpE,1'b1,X[`NF-2:0]})) || (YNaNE && (FMAResM[`FLEN-2:0] == {YExpE,1'b1,Y[`NF-2:0]}))  || (ZNaNE && (FMAResM[`FLEN-2:0] == {ZExpE,1'b1,Z[`NF-2:0]})) || (FMAResM[`FLEN-2:0] == ans[`FLEN-2:0]))))) begin
+  //  fp = $fopen("/home/kparry/riscv-wally/wally-pipelined/src/fpu/FMA/tbgen/results.dat","w");
+	// if((FmtE==1'b1) & (FMAFlgM != flags[4:0] || (FMAResM != ans))) begin
         $display( "%h %h %h %h %h %h %h  Wrong ",X,Y, Z, FMAResM, ans, FMAFlgM, flags);
 		if(FMAResM == 64'h8000000000000000) $display( "FMAResM=-zero ");
 		if(XDenormE) $display( "xdenorm ");
@@ -193,7 +199,7 @@ always @(posedge clk)
 		if(ans[`FLEN-2:`NF] == {`NE{1'b1}} && ans[`NF-1:0] != 0 && ~ans[`NF-1]) $display( "ans=sigNaN ");
 		if(ans[`FLEN-2:`NF] == {`NE{1'b1}} && ans[`NF-1:0] != 0 && ans[`NF-1]) $display( "ans=qutNaN ");
         errors = errors + 1;
-
+	  //if (errors == 10)
 		$stop;
     end
     if((FmtE==1'b0)&(FMAFlgM != flags[4:0] || (!wnan && (FMAResM != ans)) || (wnan && ansnan && ~(((XNaNE && (FMAResM[30:0] == {X[30:23],1'b1,X[21:0]})) || (YNaNE && (FMAResM[30:0] == {Y[30:23],1'b1,Y[21:0]}))  || (ZNaNE && (FMAResM[30:0] == {Z[30:23],1'b1,Z[21:0]})) || (FMAResM[30:0] == ans[30:0]))) ))) begin
