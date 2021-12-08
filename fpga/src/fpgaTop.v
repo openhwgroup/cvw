@@ -192,8 +192,8 @@ module fpgaTop
   
   // SD Card Tristate
   IOBUF iobufSDCMD(.T(~SDCCmdOE), // iobuf's T is active low
-		   .I(SDCCmdIn),
-		   .O(SDCCmdOut),
+		   .I(SDCCmdOut),
+		   .O(SDCCmdIn),
 		   .IO(SDCCmd));
 
   // reset controller XILINX IP
