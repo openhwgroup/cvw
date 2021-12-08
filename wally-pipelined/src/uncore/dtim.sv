@@ -25,7 +25,7 @@
 
 `include "wally-config.vh"
 
-module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
+module dtim #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic             HSELTim,
   input  logic [31:0]      HADDR,
