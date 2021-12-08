@@ -35,7 +35,7 @@ vlog +incdir+../config/coremark_bare +incdir+../config/shared ../testbench/testb
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
-mem load -startaddress 268435456 -endaddress 268566527 -filltype value -fillradix hex -filldata 0 /testbench/dut/uncore/dtim/RAM
+mem load -startaddress 268435456 -endaddress 268566527 -filltype value -fillradix hex -filldata 0 /testbench/dut/uncore/dtim/dtim/RAM
 
 view wave
 
