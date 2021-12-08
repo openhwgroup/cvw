@@ -96,7 +96,7 @@ module datapath (
   //Mux for writting floating point 
   
   regfile regf(clk, reset, {RegWriteW | FWriteIntW}, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
-  extend ext(.InstrD(InstrD[31:7]), .*);
+  extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
  
   // Execute stage pipeline register and logic
   flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, RD1D, RD1E);
