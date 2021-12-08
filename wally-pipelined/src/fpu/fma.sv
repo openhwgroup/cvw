@@ -23,8 +23,11 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-//    `include "../../../config/rv64icfd/wally-config.vh"
 
+// `define FLEN 64//(`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
+// `define NE   11//(`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
+// `define NF   52//(`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
+// `define XLEN 64
 module fma(
     input logic                 clk,
     input logic                 reset,
@@ -113,7 +116,7 @@ module fma1(
     logic [3*`NF+5:0]   AlignedAddendE;     // Z aligned for addition in U(NF+5.2NF+1)
     logic [3*`NF+6:0]   AlignedAddendInv;   // aligned addend possibly inverted
     logic [2*`NF+1:0]   ProdManKilled;      // the product's mantissa possibly killed
-    logic [3*`NF+6:0]   NegProdManKilled;   // a negated ProdManKilled
+    logic [3*`NF+4:0]   NegProdManKilled;   // a negated ProdManKilled
     logic [8:0]         PNormCnt, NNormCnt; // the positive and nagitive LOA results
     logic [3*`NF+6:0]   PreSum, NegPreSum;  // positive and negitve versions of the sum
 
@@ -149,11 +152,11 @@ module fma1(
         
     add add(.AlignedAddendE, .ProdManE, .PSgnE, .ZSgnEffE, .KillProdE, .AlignedAddendInv, .ProdManKilled, .NegProdManKilled, .NegSumE, .PreSum, .NegPreSum, .InvZE, .XZeroE, .YZeroE);
     
-    loa loa(.AlignedAddendE, .AlignedAddendInv, .ProdManKilled, .NegProdManKilled, .PNormCnt, .NNormCnt);
+    loa loa(.A(AlignedAddendInv+{162'b0,InvZE}), .P(ProdManKilled), .NegSumE, .NormCntE);
 
     // Choose the positive sum and accompanying LZA result.
     assign SumE = NegSumE ? NegPreSum[3*`NF+5:0] : PreSum[3*`NF+5:0];
-    assign NormCntE = NegSumE ? NNormCnt : PNormCnt;
+    // assign NormCntE = NegSumE ? NNormCnt : PNormCnt;
 
 
 endmodule
@@ -311,7 +314,7 @@ module add(
     input logic                 XZeroE, YZeroE, // is the input zero
     output logic [3*`NF+6:0] AlignedAddendInv,  // aligned addend possibly inverted
     output logic [2*`NF+1:0] ProdManKilled,     // the product's mantissa possibly killed
-    output logic [3*`NF+6:0] NegProdManKilled,  // a negated ProdManKilled
+    output logic [3*`NF+4:0] NegProdManKilled,  // a negated ProdManKilled
     output logic                NegSumE,        // was the sum negitive
     output logic                InvZE,          // do you invert Z
     output logic [3*`NF+6:0]   PreSum, NegPreSum// possibly negitive sum
@@ -327,99 +330,65 @@ module add(
     assign InvZE = ZSgnEffE ^ PSgnE;
 
     // Choose an inverted or non-inverted addend - the one has to be added now for the LZA
-    assign AlignedAddendInv = InvZE ? -{1'b0, AlignedAddendE} : {1'b0, AlignedAddendE};
+    assign AlignedAddendInv = InvZE ? {1'b1, ~AlignedAddendE} : {1'b0, AlignedAddendE};
     // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
     assign ProdManKilled = ProdManE&{2*`NF+2{~KillProdE}};
     // Negate ProdMan for LZA and the negitive sum calculation
-    assign NegProdManKilled = {{`NF+3{~(XZeroE|YZeroE|KillProdE)}}, -ProdManKilled, 2'b0};
+    assign NegProdManKilled = {{`NF+3{~(XZeroE|YZeroE|KillProdE)}}, ~ProdManKilled&{2*`NF+2{~(XZeroE|YZeroE)}}};
 
 
+    // Is the sum negitive
+    assign NegSumE = (AlignedAddendE > {54'b0, ProdManKilled, 2'b0})&InvZE; //***use this to avoid addition and final muxing???
 
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = AlignedAddendInv + {55'b0, ProdManKilled, 2'b0};
-    assign NegPreSum = AlignedAddendE + NegProdManKilled;
+    assign PreSum = AlignedAddendInv + {55'b0, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
+    assign NegPreSum = AlignedAddendE + {NegProdManKilled, 2'b0} + {{(3*`NF+3){1'b0}},~(XZeroE|YZeroE),2'b0};
      
-    // Is the sum negitive
-    assign NegSumE = PreSum[3*`NF+6];
 
 endmodule
 
 
-module loa(
-    input logic [3*`NF+5:0] AlignedAddendE,     // Z aligned for addition in U(NF+5.2NF+1)
-    input logic [3*`NF+6:0] AlignedAddendInv,   // aligned addend possibly inverted
-    input logic [2*`NF+1:0] ProdManKilled,      // the product's mantissa possibly killed
-    input logic [3*`NF+6:0] NegProdManKilled,   // a negated ProdManKilled
-    output logic [8:0]      PNormCnt, NNormCnt  // positive and negitive LOA result    
-);
-
-    // LZAs one for the positive result and one for the negitive
-    //      - the +1 from inverting causes problems for normalization
-    posloa posloa(AlignedAddendInv, ProdManKilled, PNormCnt);
-    negloa negloa({1'b0,AlignedAddendE}, NegProdManKilled, NNormCnt);
-
-endmodule
-
-
-module posloa(
+module loa( //https://ieeexplore.ieee.org/abstract/document/930098
     input logic  [3*`NF+6:0] A,     // addend
     input logic  [2*`NF+1:0] P,     // product
-    output logic [8:0]       PCnt   // normalization shift count for the positive result
+    input logic              NegSumE, // is the sum negitive
+    output logic [8:0]       NormCntE   // normalization shift count for the positive result
     ); 
     
 
-    // calculate the propagate (T) and kill (Z) bits
     logic [3*`NF+6:0] T;
+    logic [3*`NF+5:0] G;
     logic [3*`NF+5:0] Z;
     assign T[3*`NF+6:2*`NF+4] = A[3*`NF+6:2*`NF+4];
-    assign Z[3*`NF+5:2*`NF+4] = A[3*`NF+5:2*`NF+4];
+    assign G[3*`NF+5:2*`NF+4] = 0;
+    assign Z[3*`NF+5:2*`NF+4] = ~A[3*`NF+5:2*`NF+4];
     assign T[2*`NF+3:2] = A[2*`NF+3:2]^P;
-    assign Z[2*`NF+3:2] = A[2*`NF+3:2]|P;
+    assign G[2*`NF+3:2] = A[2*`NF+3:2]&P;
+    assign Z[2*`NF+3:2] = ~A[2*`NF+3:2]&~P;
     assign T[1:0] = A[1:0];
-    assign Z[1:0] = A[1:0];
+    assign G[1:0] = 0;
+    assign Z[1:0] = ~A[1:0];
     
 
     // Apply function to determine Leading pattern
     logic [3*`NF+6:0] f;
-    assign f = T^{Z[3*`NF+5:0], 1'b0};
+    assign f = NegSumE ? T^{~G[3*`NF+5:0],1'b1} : T^{~Z[3*`NF+5:0], 1'b1};
 
-    lzc lzc(.f, .Cnt(PCnt));
+    lzc lzc(.f, .NormCntE);
   
 endmodule
-
-module negloa(
-    input logic  [3*`NF+6:0]    A,      // addend
-    input logic  [3*`NF+6:0]    P,      // product
-    output logic [8:0]          NCnt    // normalization shift count for the negitive result
-    ); 
-    
-    // calculate the propagate (T) and kill (Z) bits
-    logic [3*`NF+6:0] T;
-    logic [3*`NF+5:0] Z;
-    assign T = A^P;
-    assign Z = ~(A[3*`NF+5:0]|P[3*`NF+5:0]);
-    
-
-    // Apply function to determine Leading pattern
-    logic [3*`NF+6:0] f;
-    assign f = T^{~Z, 1'b0};
-    
-    lzc lzc(.f, .Cnt(NCnt));
-  
-endmodule
-
 
 module lzc(
     input logic  [3*`NF+6:0]    f,
-    output logic [8:0]          Cnt    // normalization shift count for the negitive result
+    output logic [8:0]          NormCntE    // normalization shift
 );
     
     logic [8:0] i;
     always_comb begin
         i = 0;
         while (~f[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
-        Cnt = i;
+        NormCntE = i;
     end
 endmodule
 
@@ -479,7 +448,7 @@ module fma2(
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
 
-    normalize normalize(.SumM, .ZExpM, .ProdExpM, .NormCntM, .FmtM, .KillProdM, .AddendStickyM, .NormSum,
+    normalize normalize(.SumM, .ZExpM, .ProdExpM, .NormCntM, .FmtM, .KillProdM, .AddendStickyM, .NormSum, .NegSumM,
             .SumZero, .NormSumSticky, .UfSticky, .SumExp, .ResultDenorm);
 
 
@@ -611,6 +580,80 @@ module resultselect(
 endmodule
 
 
+// module normalize(
+//     input logic  [3*`NF+5:0]    SumM,       // the positive sum
+//     input logic  [`NE-1:0]      ZExpM,      // exponent of Z
+//     input logic  [`NE+1:0]      ProdExpM,   // X exponent + Y exponent - bias
+//     input logic  [8:0]          NormCntM,   // normalization shift count
+//     input logic                 FmtM,       // precision 1 = double 0 = single
+//     input logic                 KillProdM,  // is the product set to zero
+//     input logic                 AddendStickyM,  // the sticky bit caclulated from the aligned addend
+//     input logic                 NegSumM,    // was the sum negitive
+//     output logic [`NF+2:0]      NormSum,        // normalized sum
+//     output logic                SumZero,        // is the sum zero
+//     output logic                NormSumSticky, UfSticky,    // sticky bits
+//     output logic [`NE+1:0]      SumExp,         // exponent of the normalized sum
+//     output logic                ResultDenorm    // is the result denormalized
+// );
+//     logic [`NE+1:0]     FracLen;            // length of the fraction
+//     logic [`NE+1:0]     SumExpTmp;          // exponent of the normalized sum not taking into account denormal or zero results
+//     logic [8:0]         DenormShift;        // right shift if the result is denormalized //***change this later
+//     logic [3*`NF+5:0]   CorrSumShifted;     // the shifted sum after LZA correction
+//     logic [3*`NF+7:0]   SumShifted;         // the shifted sum before LZA correction
+//     logic [`NE+1:0]     SumExpTmpTmp;       // the exponent of the normalized sum with the `FLEN bias
+//     logic               PreResultDenorm;    // is the result denormalized - calculated before LZA corection
+//     logic               PreResultDenorm2;    // is the result denormalized - calculated before LZA corection
+//     logic               LZAPlus1;           // add one to the sum's exponent due to LZA correction
+
+//     ///////////////////////////////////////////////////////////////////////////////
+//     // Normalization
+//     ///////////////////////////////////////////////////////////////////////////////
+
+//     // Determine if the sum is zero
+//     assign SumZero = ~(|SumM);
+
+//     // determine the length of the fraction based on precision
+//     assign FracLen = FmtM ? `NF+1 : 13'd24;
+
+//     // calculate the sum's exponent
+//     assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4)); // ****try moving this into previous stage
+//     assign SumExpTmp = FmtM ? SumExpTmpTmp : (SumExpTmpTmp-1023+127)&{`NE+2{|SumExpTmpTmp}}; // ***move this ^ the subtraction by a constant isn't simplified
+    
+//     logic SumDLTEZ, SumDGEFL, SumSLTEZ, SumSGEFL;
+//     assign SumDLTEZ = SumExpTmpTmp[`NE+1] | ~|SumExpTmpTmp;
+//     assign SumDGEFL = ($signed(SumExpTmpTmp)>=$signed(-(13'd`NF+13'd1)));
+//     assign SumSLTEZ = $signed(SumExpTmpTmp) <= $signed(13'd1023-13'd127);
+//     assign SumSGEFL = ($signed(SumExpTmpTmp)>=$signed(-13'd24+13'd1023-13'd127)) | ~|SumExpTmpTmp;
+//     assign PreResultDenorm2 = (FmtM ? SumDLTEZ : SumSLTEZ) & (FmtM ? SumDGEFL : SumSGEFL) & ~SumZero; //***make sure math good
+//     // always_comb begin
+//     //     assert (PreResultDenorm == PreResultDenorm2) else $fatal ("PreResultDenorms not equal");
+//     // end
+
+
+
+//     // Determine if the result is denormal
+//     // assign PreResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp)>=$signed(-FracLen)) & ~SumZero;
+
+//     // Determine the shift needed for denormal results
+//     //  - if not denorm add 1 to shift out the leading 1
+//     assign DenormShift = PreResultDenorm2 ? SumExpTmp[8:0] : 1; //*** change this when changing the size of DenormShift also change to an and opperation
+//     // Normalize the sum
+//     assign SumShifted = {2'b0, SumM} << NormCntM+DenormShift; //*** fix mux's with constants in them //***NormCnt can be simplified
+//     // LZA correction
+//     assign LZAPlus1 = SumShifted[3*`NF+7];
+//     assign CorrSumShifted =  LZAPlus1 ? SumShifted[3*`NF+6:1] : SumShifted[3*`NF+5:0];
+//     assign NormSum = CorrSumShifted[3*`NF+5:2*`NF+3];
+//     // Calculate the sticky bit
+//     assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | (|CorrSumShifted[136:2*`NF+3]&~FmtM);
+//     assign UfSticky = AddendStickyM | NormSumSticky;
+
+//     // Determine sum's exponent
+//     assign SumExp = (SumExpTmp+{12'b0, LZAPlus1}+{12'b0, ~|SumExpTmp&SumShifted[3*`NF+6]}) & {`NE+2{~(SumZero|ResultDenorm)}};
+//     // recalculate if the result is denormalized
+//     assign ResultDenorm = PreResultDenorm2&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
+
+// endmodule
+
 module normalize(
     input logic  [3*`NF+5:0]    SumM,       // the positive sum
     input logic  [`NE-1:0]      ZExpM,      // exponent of Z
@@ -619,6 +662,7 @@ module normalize(
     input logic                 FmtM,       // precision 1 = double 0 = single
     input logic                 KillProdM,  // is the product set to zero
     input logic                 AddendStickyM,  // the sticky bit caclulated from the aligned addend
+    input logic                 NegSumM,    // was the sum negitive
     output logic [`NF+2:0]      NormSum,        // normalized sum
     output logic                SumZero,        // is the sum zero
     output logic                NormSumSticky, UfSticky,    // sticky bits
@@ -629,14 +673,28 @@ module normalize(
     logic [`NE+1:0]     SumExpTmp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic [8:0]         DenormShift;        // right shift if the result is denormalized //***change this later
     logic [3*`NF+5:0]   CorrSumShifted;     // the shifted sum after LZA correction
-    logic [3*`NF+7:0]   SumShifted;         // the shifted sum before LZA correction
+    logic [3*`NF+8:0]   SumShifted;         // the shifted sum before LZA correction
     logic [`NE+1:0]     SumExpTmpTmp;       // the exponent of the normalized sum with the `FLEN bias
     logic               PreResultDenorm;    // is the result denormalized - calculated before LZA corection
-    logic               LZAPlus1;           // add one to the sum's exponent due to LZA correction
+    logic               PreResultDenorm2;   // is the result denormalized - calculated before LZA corection
+    logic               LZAPlus1, LZAPlus2; // add one or two to the sum's exponent due to LZA correction
 
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
+
+
+    // logic [8:0] supposedNormCnt;
+    // logic [8:0] i;
+    // always_comb begin
+    //         i = 0;
+    //         while (~SumM[3*`NF+5-i] && $unsigned(i) <= $unsigned(3*`NF+5)) i = i+1;  // search for leading one
+    //         supposedNormCnt = i;    // compute shift count
+    // end
+
+    // always_comb begin
+    //     assert (NormCntM == supposedNormCnt | NormCntM == supposedNormCnt+1 | NormCntM == supposedNormCnt+2) else $fatal ("normcnt not expected");
+    // end
 
     // Determine if the sum is zero
     assign SumZero = ~(|SumM);
@@ -645,19 +703,36 @@ module normalize(
     assign FracLen = FmtM ? `NF+1 : 13'd24;
 
     // calculate the sum's exponent
-    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
-    assign SumExpTmp = FmtM ? SumExpTmpTmp : (SumExpTmpTmp-1023+127)&{`NE+2{|SumExpTmpTmp}};
+    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4)); // ****try moving this into previous stage
+    assign SumExpTmp = FmtM ? SumExpTmpTmp : (SumExpTmpTmp-1023+127)&{`NE+2{|SumExpTmpTmp}}; // ***move this ^ the subtraction by a constant isn't simplified
+    
+    logic SumDLTEZ, SumDGEFL, SumSLTEZ, SumSGEFL;
+    assign SumDLTEZ = SumExpTmpTmp[`NE+1] | ~|SumExpTmpTmp;
+    assign SumDGEFL = ($signed(SumExpTmpTmp)>=$signed(-(13'd`NF+13'd1)));
+    assign SumSLTEZ = $signed(SumExpTmpTmp) <= $signed(13'd1023-13'd127);
+    assign SumSGEFL = ($signed(SumExpTmpTmp)>=$signed(-13'd24+13'd1023-13'd127)) | ~|SumExpTmpTmp;
+    assign PreResultDenorm2 = (FmtM ? SumDLTEZ : SumSLTEZ) & (FmtM ? SumDGEFL : SumSGEFL) & ~SumZero; //***make sure math good
+    // always_comb begin
+    //     assert (PreResultDenorm == PreResultDenorm2) else $fatal ("PreResultDenorms not equal");
+    // end
+
+    // 010. when should be 001.
+    //      - shift left one
+    //      - add one from exp
+    //      - if kill prod dont add to exp
 
     // Determine if the result is denormal
-    assign PreResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp)>=$signed(-FracLen)) & ~SumZero;
+    // assign PreResultDenorm = $signed(SumExpTmp)<=0 & ($signed(SumExpTmp)>=$signed(-FracLen)) & ~SumZero;
 
     // Determine the shift needed for denormal results
     //  - if not denorm add 1 to shift out the leading 1
-    assign DenormShift = PreResultDenorm ? SumExpTmp[8:0] : 1; //*** change this when changing the size of DenormShift also change to an and opperation
+    assign DenormShift = PreResultDenorm2 ? SumExpTmp[8:0] : 1; //*** change this when changing the size of DenormShift also change to an and opperation
     // Normalize the sum
-    assign SumShifted = {2'b0, SumM} << NormCntM+DenormShift; //*** fix mux's with constants in them //***NormCnt can be simplified
+    assign SumShifted = {3'b0, SumM} << NormCntM+DenormShift; //*** fix mux's with constants in them //***NormCnt can be simplified
     // LZA correction
     assign LZAPlus1 = SumShifted[3*`NF+7];
+    assign LZAPlus2 = SumShifted[3*`NF+8];
+	// the only possible mantissa for a plus two is all zeroes - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
     assign CorrSumShifted =  LZAPlus1 ? SumShifted[3*`NF+6:1] : SumShifted[3*`NF+5:0];
     assign NormSum = CorrSumShifted[3*`NF+5:2*`NF+3];
     // Calculate the sticky bit
@@ -665,9 +740,10 @@ module normalize(
     assign UfSticky = AddendStickyM | NormSumSticky;
 
     // Determine sum's exponent
-    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1}+{12'b0, ~|SumExpTmp&SumShifted[3*`NF+6]}) & {`NE+2{~(SumZero|ResultDenorm)}};
+    //                          if plus1                     If plus2                                      if said denorm but norm plus 1     if said denorm (-1 val) but norm plus 2
+    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1&~KillProdM}+{11'b0, LZAPlus2&~KillProdM, 1'b0}+{12'b0, ~|SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}+{11'b0, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM, 1'b0}) & {`NE+2{~(SumZero|ResultDenorm)}};
     // recalculate if the result is denormalized
-    assign ResultDenorm = PreResultDenorm&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
+    assign ResultDenorm = PreResultDenorm2&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
 
 endmodule
 
