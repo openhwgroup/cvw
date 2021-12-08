@@ -173,7 +173,7 @@ module controller(
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
 
-  assign SubArithD = subD | sraD | sltD | sltuD; // TRUE for R-type subtracts and sra, slt, sltu
+  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
 //  assign SubArithD = aluc3D; // ***cleanup
 
   // *** replace all of this

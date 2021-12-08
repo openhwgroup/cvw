@@ -111,14 +111,9 @@ module datapath (
   mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
   mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
-//  mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
-//  mux2  #(`XLEN)  srcbmux2(SrcBE, {`XLEN{1'b0}}, JumpE, SrcBE2); // *** May be able to remove this mux.
-  alu   #(`XLEN)  alu(SrcAE/*SrcAE2*/, SrcBE/*SrcBE2*/, ALUControlE, Funct3E, ALUPreResultE, AddressE /*, FlagsE */);
-  // redo ALUControlE to simplify - jus needs ALUAddE, Funct3E, W64E
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUPreResultE, AddressE);
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
-//  mux2  #(`XLEN)  targetsrcmux(PCE, SrcAE, TargetSrcE, TargetBaseE); // *** PCE alsready should be selectable for SrcAE
-//  assign  PCTargetE = ExtImmE + TargetBaseE;
   mux2 #(`XLEN) altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN) aluresultmux(ALUPreResultE, AltResultE, ALUResultSrcE, ALUResultE);
 
