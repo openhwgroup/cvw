@@ -99,7 +99,7 @@ module ieu (
     .StallE, .FlushE, .FlagsE, 
     .PCSrcE,        // for datapath and Hazard Unit
     .ALUControlE, .ALUSrcAE, .ALUSrcBE,
-    .TargetSrcE,
+    .ALUResultSrcE,
     .MemReadE, .CSRReadE, // for Hazard Unit
     .Funct3E, .MulDivE, .W64E,
     .JumpE,	
@@ -124,12 +124,11 @@ module ieu (
     .ImmSrcD, .InstrD,
     // Execute stage signals
     .StallE, .FlushE, .ForwardAE, .ForwardBE,
-    .ALUControlE, .ALUSrcAE, .ALUSrcBE,
-    .TargetSrcE, .JumpE, .IllegalFPUInstrE,
+    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE,
+    .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE,
     .PCTargetE,
     .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-    .SrcAE, .SrcBE,
     // Memory stage signals
     .StallM, .FlushM, .FWriteIntM, .FIntResM, 
     .SrcAM, .WriteDataM, .MemAdrM, .MemAdrE,
