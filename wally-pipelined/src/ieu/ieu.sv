@@ -90,9 +90,69 @@ module ieu (
   logic             MemReadE, CSRReadE;
   logic             JumpE;
            
-  controller c(.*);
-  datapath   dp(.*);             
-  forward    fw(.*);
+  controller c(
+    .clk, .reset,
+    // Decode stage control signals
+    .StallD, .FlushD, .InstrD, .ImmSrcD,
+    .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
+    // Execute stage control signals
+    .StallE, .FlushE, .FlagsE, 
+    .PCSrcE,        // for datapath and Hazard Unit
+    .ALUControlE, .ALUSrcAE, .ALUSrcBE,
+    .TargetSrcE,
+    .MemReadE, .CSRReadE, // for Hazard Unit
+    .Funct3E, .MulDivE, .W64E,
+    .JumpE,	
+    // Memory stage control signals
+    .StallM, .FlushM, .MemRWM,
+    .CSRReadM, .CSRWriteM, .PrivilegedM,
+    .SCE, .AtomicE, .AtomicM, .Funct3M,
+    .RegWriteM,     // for Hazard Unit
+    .InvalidateICacheM, .FlushDCacheM, .InstrValidM, 
+    // Writeback stage control signals
+    .StallW, .FlushW,
+    .RegWriteW,     // for datapath and Hazard Unit
+    .ResultSrcW,
+    // Stall during CSRs
+    .CSRWritePendingDEM,
+    .StoreStallD
+  );
+
+  datapath   dp(
+    .clk, .reset,
+    // Decode stage signals
+    .ImmSrcD, .InstrD,
+    // Execute stage signals
+    .StallE, .FlushE, .ForwardAE, .ForwardBE,
+    .ALUControlE, .ALUSrcAE, .ALUSrcBE,
+    .TargetSrcE, .JumpE, .IllegalFPUInstrE,
+    .FWriteDataE, .PCE, .PCLinkE, .FlagsE,
+    .PCTargetE,
+    .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+    .SrcAE, .SrcBE,
+    // Memory stage signals
+    .StallM, .FlushM, .FWriteIntM, .FIntResM, 
+    .SrcAM, .WriteDataM, .MemAdrM, .MemAdrE,
+    // Writeback stage signals
+    .StallW, .FlushW, .FWriteIntW, .RegWriteW, 
+    .SquashSCW, .ResultSrcW, .ReadDataW,
+    // input  logic [`XLEN-1:0] PCLinkW,
+    .CSRReadValW, .ReadDataM, .MulDivResultW, 
+    // Hazard Unit signals 
+    .Rs1D, .Rs2D, .Rs1E, .Rs2E,
+    .RdE, .RdM, .RdW 
+  );             
+  
+  forward    fw(
+    .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
+    .MemReadE, .MulDivE, .CSRReadE,
+    .RegWriteM, .RegWriteW,
+    .FWriteIntE, .FWriteIntM, .FWriteIntW,
+    .SCE,
+    // Forwarding controls
+    .ForwardAE, .ForwardBE,
+    .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD
+    );
 
 endmodule
 
