@@ -27,62 +27,66 @@
 
 module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] a, b,
-  input  logic [4:0]       alucontrol,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
   output logic [WIDTH-1:0] result,
-  output logic [2:0]       flags);
+  output logic [WIDTH-1:0] sum);
 
-  logic [WIDTH-1:0] condinvb, presum, sum, shift, slt, sltu, bor;
-  logic        right, arith, w64;
-  logic        carry, zero, neg;
+  logic [WIDTH-1:0] condinvb, sumtrunc, shift, slt, sltu, bor;
+  logic        right; //, arith, w64;
+  logic        carry, neg;
   logic        lt, ltu;
   logic        overflow;
+  logic        W64, SubArith, ALUOp;
 
+  assign {W64, SubArith, ALUOp} = ALUControl;
   // addition
-  assign condinvb = alucontrol[3] ? ~b : b;
-  assign {carry, presum} = a + condinvb + {{(WIDTH-1){1'b0}},alucontrol[3]};
+  // *** make sure condinvb is only applied when it should be (sub, slt/sltu)
+  assign condinvb = SubArith ? ~b : b;
+  assign {carry, sum} = a + condinvb + {{(WIDTH-1){1'b0}}, SubArith};
   
   // support W-type RV64I ADDW/SUBW/ADDIW that sign-extend 32-bit result to 64 bits
   generate
     if (WIDTH==64)
-      assign sum = w64 ? {{32{presum[31]}}, presum[31:0]} : presum;
+      assign sumtrunc = W64 ? {{32{sum[31]}}, sum[31:0]} : sum;
     else
-      assign sum = presum;
+      assign sumtrunc = sum;
   endgenerate
   
   // shifts
-  assign arith = alucontrol[3]; // sra
-  assign w64 = alucontrol[4];
-  assign right = (alucontrol[2:0] == 3'b101); // sra or srl
-  shifter sh(a, b[5:0], right, arith, w64, shift);
+ // assign arith = alucontrol[3]; // sra
+ // assign w64 = alucontrol[4];
+  assign right = (Funct3[2:0] == 3'b101); // sra or srl
+  shifter sh(a, b[5:0], right, SubArith, W64, shift);
   
   // OR optionally passes zero when ALUControl[3] is set, supporting lui
-  assign bor = alucontrol[3] ? b : a|b;
+  // *** not needed anymore; simplify control
+  //assign bor = alucontrol[3] ? b : a|b;
   
   // condition code flags based on add/subtract output
-  assign zero = (sum == 0);
   assign neg  = sum[WIDTH-1];
   // overflow occurs when the numbers being added have the same sign 
   // and the result has the opposite sign
   assign overflow = (a[WIDTH-1] ~^ condinvb[WIDTH-1]) & (a[WIDTH-1] ^ sum[WIDTH-1]);
   assign lt = neg ^ overflow;
   assign ltu = ~carry;
-  assign flags = {zero, lt, ltu};
-
+ 
   // slt
   assign slt = {{(WIDTH-1){1'b0}}, lt};
   assign sltu = {{(WIDTH-1){1'b0}}, ltu};
  
   always_comb
-    case (alucontrol[2:0])
-      3'b000: result = sum;       // add or sub
-      3'b001: result = shift;     // sll
-      3'b010: result = slt;       // slt
-      3'b011: result = sltu;      // sltu
-      3'b100: result = a ^ b;     // xor
-      3'b101: result = shift;     // sra or srl
-      3'b110: result = bor;       // or / pass through input b for lui
-      3'b111: result = a & b;     // and
-    endcase
-
+    if (~ALUOp) result = sumtrunc;
+    else 
+      case (Funct3)
+        3'b000: result = sumtrunc;       // add or sub
+        3'b001: result = shift;     // sll
+        3'b010: result = slt;       // slt
+        3'b011: result = sltu;      // sltu
+        3'b100: result = a ^ b;     // xor
+        3'b101: result = shift;     // sra or srl
+        3'b110: result = a | b;     // or 
+        3'b111: result = a & b;     // and
+      endcase
 endmodule
 

@@ -10,7 +10,7 @@ module fcvt (
     input logic             XInfE,      // is X infinity
     input logic             XDenormE,   // is X denormalized
     input logic [10:0]      BiasE,      // bias - depends on precision (max exponent/2)
-    input logic [`XLEN-1:0] SrcAE,      // integer input
+    input logic [`XLEN-1:0] ForwardedSrcAE,      // integer input
     input logic [2:0]       FOpCtrlE,   // chooses which instruction is done (full list below)
     input logic [2:0]       FrmE,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic             FmtE,       // precision 1 = double 0 = single
@@ -73,7 +73,7 @@ module fcvt (
 ////////////////////////////////////////////////////////
 
     // position the input in the most significant bits
-    assign IntIn = FOpCtrlE[2] ? {SrcAE, {64-`XLEN{1'b0}}} : {SrcAE[31:0], 32'b0};
+    assign IntIn = FOpCtrlE[2] ? {ForwardedSrcAE, {64-`XLEN{1'b0}}} : {ForwardedSrcAE[31:0], 32'b0};
     // make the integer positive
     assign PosInt = IntIn[64-1]&~FOpCtrlE[1] ? -IntIn : IntIn;
     // determine the integer's sign

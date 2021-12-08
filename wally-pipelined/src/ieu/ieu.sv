@@ -41,7 +41,7 @@ module ieu (
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-  output logic [`XLEN-1:0] SrcAE, SrcBE,
+//  output logic [`XLEN-1:0] SrcAE, SrcBE,
   input logic 		   FWriteIntM,
 
   // Memory stage interface
@@ -76,10 +76,10 @@ module ieu (
 
   logic [2:0]  ImmSrcD;
   logic [2:0]  FlagsE;
-  logic [4:0]  ALUControlE;
+  logic [2:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
   logic [2:0]  ResultSrcW;
-  logic        TargetSrcE;
+  logic        ALUResultSrcE;
   logic        SCE;
   logic [4:0]  RdE;
 

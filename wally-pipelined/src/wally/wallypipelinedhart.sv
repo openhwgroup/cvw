@@ -60,7 +60,7 @@ module wallypipelinedhart (
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
-  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, SrcAE, SrcBE;
+  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
   logic [`XLEN-1:0] 	    SrcAM;
   logic [2:0] 		    Funct3E;
   //  logic [31:0] InstrF;
@@ -211,7 +211,8 @@ module wallypipelinedhart (
      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
      .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-     .SrcAE, .SrcBE, .FWriteIntM,
+     //.SrcAE, .SrcBE, 
+     .FWriteIntM,
 
      // Memory stage interface
      .SquashSCW, // from LSU
@@ -364,7 +365,7 @@ module wallypipelinedhart (
      .FRM_REGW, // Rounding mode from CSR
      .InstrD, // instruction from IFU
      .ReadDataW,// Read data from memory
-     .SrcAE, // Integer input being processed (from IEU)
+     .ForwardedSrcAE, // Integer input being processed (from IEU)
      .StallE, .StallM, .StallW, // stall signals from HZU
      .FlushE, .FlushM, .FlushW, // flush signals from HZU
      .RdM, .RdW, // which FP register to write to (from IEU)
