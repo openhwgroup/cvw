@@ -64,7 +64,6 @@ module sd_dat_fsm
   (* mark_debug = "true" *) logic [3:0] 	r_curr_state;
    logic [3:0] 	w_next_state;  
   
-  (* mark_debug = "true" *) logic w_error_crc16_fd_en, w_error_crc16_fd_rst, w_error_crc16_fd_d; // Save ERROR_CRC16 so CMD FSM sees it in IDLE_NRC (not just in IDLE_DAT)
   logic r_error_crc16_fd_Q;
 
   logic [22:0] Identify_Timer_In;
