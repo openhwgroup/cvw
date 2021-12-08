@@ -187,7 +187,9 @@ module lsu
 		 .DCacheStall(DCacheStall));
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.PAdr(MemPAdrMtoDCache),
+  dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+       .PrivilegeModeW, .DisableTranslation(DisableTranslation),
+       .PAdr(MemPAdrMtoDCache),
        .VAdr(MemAdrM),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PTE),
@@ -196,18 +198,16 @@ module lsu
        .TLBFlush(DTLBFlushM),
        .PhysicalAddress(MemPAdrM),
        .TLBMiss(DTLBMissM),
-       .TLBPageFault(DTLBPageFaultM),
-       .ExecuteAccessF(1'b0),
-       //.AtomicAccessM(AtomicMaskedM[1]),
-       .AtomicAccessM(1'b0),
-       .WriteAccessM(MemRWMtoLRSC[0]),
-       .ReadAccessM(MemRWMtoLRSC[1]),
-       .DisableTranslation(DisableTranslation),
-       .InstrAccessFaultF(),
        .Cacheable(CacheableM),
        .Idempotent(),
        .AtomicAllowed(),
-       .*); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
+       .TLBPageFault(DTLBPageFaultM),
+       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
+       .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0), 
+       .WriteAccessM(MemRWMtoLRSC[0]), .ReadAccessM(MemRWMtoLRSC[1]),
+       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
+       //.AtomicAccessM(AtomicMaskedM[1]),
+       ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
 
   assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;

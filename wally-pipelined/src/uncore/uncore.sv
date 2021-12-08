@@ -85,40 +85,85 @@ module uncore (
   assign {HSELEXT, HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // subword accesses: converts HWDATAIN to HWDATA
-  subwordwrite sww(.*);
+  subwordwrite sww(
+    .HRDATA, 
+    .HADDRD, .HSIZED, 
+    .HWDATAIN, .HWDATA);
 
   generate
     // tightly integrated memory
     if (`TIM_SUPPORTED) begin : dtim
-      dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (.*);
+      dtim #(
+        .BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (
+        .HCLK, .HRESETn, 
+        .HSELTim, .HADDR,
+        .HWRITE, .HREADY,
+        .HTRANS, .HWDATA, .HREADTim,
+        .HRESPTim, .HREADYTim);
     end
 
     if (`BOOTTIM_SUPPORTED) begin : bootdtim
       dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE), .PRELOAD("blink-led.mem"))
-      bootdtim(.HSELTim(HSELBootTim), .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim), .*);
+      bootdtim(
+        .HCLK, .HRESETn, 
+        .HSELTim(HSELBootTim), .HADDR,
+        .HWRITE, .HREADY, .HTRANS,
+        .HWDATA,
+        .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim));
     end
 
     // memory-mapped I/O peripherals
     if (`CLINT_SUPPORTED == 1) begin : clint
-      clint clint(.HADDR(HADDR[15:0]), .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT), .*);
+      clint clint(
+        .HCLK, .HRESETn,
+        .HSELCLINT, .HADDR(HADDR[15:0]), .HWRITE,
+        .HWDATA, .HREADY, .HTRANS,
+        .HREADCLINT,
+        .HRESPCLINT, .HREADYCLINT,
+        .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT),
+        .TimerIntM, .SwIntM);
+
     end else begin : clint
       assign MTIME_CLINT = 0; assign MTIMECMP_CLINT = 0;
       assign TimerIntM = 0; assign SwIntM = 0;
     end
     if (`PLIC_SUPPORTED == 1) begin : plic
-      plic plic(.HADDR(HADDR[27:0]), .*);
+      plic plic(
+        .HCLK, .HRESETn, 
+        .HSELPLIC, .HADDR(HADDR[27:0]),
+        .HWRITE, .HREADY, .HTRANS, .HWDATA,
+        .UARTIntr, .GPIOIntr,
+        .HREADPLIC, .HRESPPLIC, .HREADYPLIC,
+        .ExtIntM);
     end else begin : plic
       assign ExtIntM = 0;
     end
     if (`GPIO_SUPPORTED == 1) begin : gpio
-      gpio gpio(.HADDR(HADDR[7:0]), .*); 
+      gpio gpio(
+        .HCLK, .HRESETn, .HSELGPIO,
+        .HADDR(HADDR[7:0]), 
+        .HWDATA,
+        .HWRITE, .HREADY, 
+        .HTRANS,
+        .HREADGPIO,
+        .HRESPGPIO, .HREADYGPIO,
+        .GPIOPinsIn,
+        .GPIOPinsOut, .GPIOPinsEn,
+        .GPIOIntr);
+
     end else begin : gpio
       assign GPIOPinsOut = 0; assign GPIOPinsEn = 0; assign GPIOIntr = 0;
     end
     if (`UART_SUPPORTED == 1) begin : uart
-      uart uart(.HADDR(HADDR[2:0]), .TXRDYb(), .RXRDYb(), .INTR(UARTIntr), .SIN(UARTSin), .SOUT(UARTSout),
-                .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), 
-                .RTSb(), .DTRb(), .OUT1b(), .OUT2b(), .*);
+      uart uart(
+        .HCLK, .HRESETn, 
+        .HSELUART,
+        .HADDR(HADDR[2:0]), 
+        .HWRITE, .HWDATA,
+        .HREADUART, .HRESPUART, .HREADYUART,
+        .SIN(UARTSin), .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), // from E1A driver from RS232 interface
+        .SOUT(UARTSout), .RTSb(), .DTRb(),                                // to E1A driver to RS232 interface
+        .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU
     end else begin : uart
       assign UARTSout = 0; assign UARTIntr = 0; 
     end
