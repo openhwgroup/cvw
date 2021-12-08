@@ -76,7 +76,12 @@ module fcmp (
 
    // Determine final values based on output of magnitude comparison, 
    // sign bits, and special case testing. 
-   exception_cmp_2 exc2 (.invalid(Invalid), .fcc(FCC), .LT_mag(LT), .EQ_mag(EQ), .ANaN(XNaNE), .BNaN(YNaNE), .Azero(XZeroE), .Bzero(YZeroE), .FOpCtrlE(FOpCtrlE), .A(op1), .B(op2), .FSrcXE, .FSrcYE, .*);
+   exception_cmp_2 exc2 (
+      .invalid(Invalid), .fcc(FCC), .LT_mag(LT), .EQ_mag(EQ), 
+      .ANaN(XNaNE), .BNaN(YNaNE), .Azero(XZeroE), .Bzero(YZeroE), 
+      .FOpCtrlE, .A(op1), .B(op2), .FSrcXE, .FSrcYE, 
+      .FmtE, .CmpResE
+      );
 
 endmodule // fpcomp
 
