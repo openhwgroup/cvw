@@ -37,7 +37,7 @@
 
 //`define MISA (32'h00000104)
 //`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
-`define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
@@ -62,10 +62,9 @@
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
 `define DCACHE_NUMWAYS 4
-`define DCACHE_WAYSIZEINBYTES 2048
+`define DCACHE_WAYSIZEINBYTES 4096
 `define DCACHE_BLOCKLENINBITS 256
-`define DCACHE_REPLBITS 3
-`define ICACHE_NUMWAYS 1
+`define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_BLOCKLENINBITS 256
 

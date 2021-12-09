@@ -154,8 +154,29 @@ void _init(int cid, int nc)
     if (counters[i])
       pbuf += sprintf(pbuf, "%s = %d\n", counter_names[i], counters[i]);
   if (pbuf != buf)
-    //printstr(buf);
-    ee_printf(buf);
+    printstr(buf);
+  counters[3] = read_csr(mhpmcounter3) - counters[3];
+  counters[4] = read_csr(mhpmcounter4) - counters[4];
+  counters[5] = read_csr(mhpmcounter5) - counters[5];
+  counters[6] = read_csr(mhpmcounter6) - counters[6];
+  counters[7] = read_csr(mhpmcounter7) - counters[7];
+  counters[8] = read_csr(mhpmcounter8) - counters[8];
+  counters[9] = read_csr(mhpmcounter9) - counters[9];
+  counters[10] = read_csr(mhpmcounter10) - counters[10];
+  counters[11] = read_csr(mhpmcounter11) - counters[11];
+  counters[12] = read_csr(mhpmcounter12) - counters[12];    
+
+  ee_printf("Load Stalls %d\n", counters[3]);
+  ee_printf("D-Cache Accesses %d\n", counters[11]);
+  ee_printf("D-Cache Misses %d\n", counters[12]);    
+  ee_printf("Branches %d\n", counters[5]);
+  ee_printf("Branches Miss Predictions %d\n", counters[4]);
+  ee_printf("BTB Misses %d\n", counters[6]);
+  ee_printf("Jump, JAL, JALR %d\n", counters[7]);
+  ee_printf("RAS Wrong %d\n", counters[8]);
+  ee_printf("Returns %d\n", counters[9]);
+  ee_printf("BP Class Wrong %d\n", counters[10]);
+  ee_printf("Done printing performance counters\n");
 
   exit(ret);
 }
