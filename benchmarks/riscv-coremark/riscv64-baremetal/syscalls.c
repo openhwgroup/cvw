@@ -7,6 +7,7 @@
 #include <limits.h>
 #include <sys/signal.h>
 #include "util.h"
+#include "coremark.h"
 #include <stdlib.h>
 
 #define SYS_write 64
@@ -57,7 +58,7 @@ static uintptr_t syscall(uintptr_t which, uint64_t arg0, uint64_t arg1, uint64_t
   return magic_mem[0];
 }
 
-#define NUM_COUNTERS 2
+#define NUM_COUNTERS 3
 static uintptr_t counters[NUM_COUNTERS];
 static char* counter_names[NUM_COUNTERS];
 
@@ -73,6 +74,16 @@ void setStats(int enable)
 
   READ_CTR(mcycle);
   READ_CTR(minstret);
+  READ_CTR(mhpmcounter3);
+  READ_CTR(mhpmcounter4);
+  READ_CTR(mhpmcounter5);
+  READ_CTR(mhpmcounter6);
+  READ_CTR(mhpmcounter7);
+  READ_CTR(mhpmcounter8);
+  READ_CTR(mhpmcounter9);
+  READ_CTR(mhpmcounter10);
+  READ_CTR(mhpmcounter11);
+  READ_CTR(mhpmcounter12);  
 
 #undef READ_CTR
 }
@@ -143,7 +154,8 @@ void _init(int cid, int nc)
     if (counters[i])
       pbuf += sprintf(pbuf, "%s = %d\n", counter_names[i], counters[i]);
   if (pbuf != buf)
-    printstr(buf);
+    //printstr(buf);
+    ee_printf(buf);
 
   exit(ret);
 }
