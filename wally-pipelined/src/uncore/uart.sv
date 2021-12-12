@@ -84,7 +84,19 @@ module uart (
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
   // *** make sure reads don't occur on UART unless fully selected because they could change state.  This applies to all peripherals
-  uartPC16550D u(.RCLK(BAUDOUTb), .*);
+  uartPC16550D u(  
+    // Processor Interface
+    .HCLK, .HRESETn,
+    .A, .Din, 
+    .Dout,
+    .MEMRb, .MEMWb, 
+    .INTR, .TXRDYb, .RXRDYb,
+    // Clocks
+    .BAUDOUTb, .RCLK(BAUDOUTb),
+    // E1A Driver
+    .SIN, .DSRb, .DCDb, .CTSb, .RIb,
+    .SOUT, .RTSb, .DTRb, .OUT1b, .OUT2b
+);
 
 endmodule
 
