@@ -143,6 +143,9 @@ module dcachefsm
   assign AnyCPUReqM = |MemRWM | (|AtomicM);
   assign CntEn = PreCntEn & AHBAck;
 
+  // outputs for the performance counters.
+  assign DCacheAccess = AnyCPUReqM & CacheableM & CurrState == STATE_READY;
+  assign DCacheMiss = DCacheAccess & CacheableM & ~CacheHit;
 
   always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_READY;
@@ -165,8 +168,6 @@ module dcachefsm
     CommittedM = 1'b0;        
     SelUncached = 1'b0;
     SelEvict = 1'b0;
-    DCacheAccess = 1'b0;
-    DCacheMiss = 1'b0;
     LRUWriteEn = 1'b0;
     MemAfterIWalkDone = 1'b0;
     SelFlush = 1'b0;
@@ -184,8 +185,6 @@ module dcachefsm
 	DCacheStall = 1'b0;
 	AHBRead = 1'b0;	  
 	AHBWrite = 1'b0;
-	DCacheAccess = 1'b0;
-	DCacheMiss = 1'b0;
 	SelAdrM = 2'b00;
 	SRAMWordWriteEnableM = 1'b0;
 	SetDirty = 1'b0;
@@ -234,7 +233,6 @@ module dcachefsm
 	// read hit valid cached
 	else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
-	  DCacheAccess = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin
@@ -266,8 +264,6 @@ module dcachefsm
 	  NextState = STATE_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
-	  DCacheAccess = 1'b1;
-	  DCacheMiss = 1'b1;
 	end
 	// uncached write
 	else if(MemRWM[0] & ~CacheableM & ~(ExceptionM | PendingInterruptM) & ~DTLBMissM) begin
@@ -616,8 +612,6 @@ module dcachefsm
       // itlb => instruction page fault states with memory request.
       STATE_PTW_FAULT_READY: begin
 	DCacheStall = 1'b0;
-	DCacheAccess = 1'b0;
-	DCacheMiss = 1'b0;
 	LRUWriteEn = 1'b0;
 	SelAdrM = 2'b00;
 	MemAfterIWalkDone = 1'b0;
@@ -633,7 +627,6 @@ module dcachefsm
 	// read hit valid cached
 	if(MemRWM[1] & CacheableM & CacheHit & ~DTLBMissM) begin
 	  DCacheStall = 1'b0;
-	  DCacheAccess = 1'b1;
 	  LRUWriteEn = 1'b1;
 	  
 	  if(StallWtoDCache) begin
@@ -668,8 +661,6 @@ module dcachefsm
 	  NextState = STATE_PTW_FAULT_MISS_FETCH_WDV;
 	  CntReset = 1'b1;
 	  DCacheStall = 1'b1;
-	  DCacheAccess = 1'b1;
-	  DCacheMiss = 1'b1;
 	end
 	// uncached write
 	else if(MemRWM[0] & ~CacheableM & ~DTLBMissM) begin
