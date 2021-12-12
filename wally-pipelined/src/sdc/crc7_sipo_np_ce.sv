@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // crc16 sipo np ce
 //
-// Written: Ross Thompson September 18, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 18, 2021
 //
 // Purpose: CRC7 generator SIPO using register_ce
 //          w/o appending any zero-bits othe message
