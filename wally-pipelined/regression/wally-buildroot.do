@@ -37,8 +37,8 @@ vsim workopt -suppress 8852,12070
 #-- Run the Simulation 
 run -all
 do linux-wave.do
-add log -r /*
+add log -recursive /*
 run -all
 
 exec ./slack-notifier/slack-notifier.py
-##quit
+#quit

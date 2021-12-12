@@ -103,7 +103,7 @@ module uncore (
     end
 
     if (`BOOTTIM_SUPPORTED) begin : bootdtim
-      dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE), .PRELOAD("blink-led.mem"))
+      dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE))
       bootdtim(
         .HCLK, .HRESETn, 
         .HSELTim(HSELBootTim), .HADDR,
