@@ -389,7 +389,7 @@ connect_debug_port u_ila_0/probe87 [get_nets [list wallypipelinedsoc/hart/hzu/Br
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe88]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe88]
-connect_debug_port u_ila_0/probe88 [get_nets [list wallypipelinedsoc/hart/hzu/InvalidateICacheMp ]]
+connect_debug_port u_ila_0/probe88 [get_nets [list wallypipelinedsoc/hart/hzu/InvalidateICacheM ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe89]
@@ -411,10 +411,11 @@ set_property port_width 1 [get_debug_ports u_ila_0/probe92]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe92]
 connect_debug_port u_ila_0/probe92 [get_nets [list wallypipelinedsoc/hart/hzu/StallM ]]
 
+# StallW is StallM.  trying to connect to StallW causes issues.
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe93]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe93]
-connect_debug_port u_ila_0/probe93 [get_nets [list wallypipelinedsoc/hart/hzu/StallW ]]
+connect_debug_port u_ila_0/probe93 [get_nets [list wallypipelinedsoc/hart/hzu/StallM ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe94]
@@ -445,3 +446,4 @@ create_debug_port u_ila_0 probe
 set_property port_width 24 [get_debug_ports u_ila_0/probe99]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe99]
 connect_debug_port u_ila_0/probe99 [get_nets [list {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[0]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[1]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[2]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[3]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[4]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[5]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[6]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[7]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[8]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[9]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[10]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[11]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[12]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[13]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[14]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[15]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[16]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[17]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[18]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[19]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[20]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[21]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[22]} {wallypipelinedsoc/hart/ifu/icache/controller/CurrState[23]}]]
+
