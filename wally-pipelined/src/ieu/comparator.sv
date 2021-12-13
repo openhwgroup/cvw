@@ -37,7 +37,7 @@ module comparator #(parameter WIDTH=32) (
 
   // subtraction
   assign bbar = ~b;
-  assign {carry, diff} = a + bbar;
+  assign {carry, diff} = a + bbar + 1;
 
   // condition code flags based on add/subtract output
   assign zero = (diff == 0);
