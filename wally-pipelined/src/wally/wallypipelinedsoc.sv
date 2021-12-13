@@ -32,11 +32,12 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input logic 		   clk, reset_ext, 
+  input  logic 		   clk, reset_ext, 
+  output logic       reset,
   // AHB Lite Interface
   // inputs from external memory
-  input logic [`AHBW-1:0]  HRDATAEXT,
-  input logic 		   HREADYEXT, HRESPEXT,
+  input  logic [`AHBW-1:0]  HRDATAEXT,
+  input  logic 		   HREADYEXT, HRESPEXT,
   output logic 		   HSELEXT,
   // outputs to external memory, shared with uncore memory
   output logic 		   HCLK, HRESETn,
@@ -62,7 +63,7 @@ module wallypipelinedsoc (
 );
 
   // Uncore signals
-  logic 		   reset;
+//  logic 		   reset;
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HRESP;
   logic             TimerIntM, SwIntM; // from CLINT

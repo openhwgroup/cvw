@@ -30,7 +30,7 @@ module fpu (
   input logic [2:0] 	   FRM_REGW, // Rounding mode from CSR
   input logic [31:0] 	   InstrD, // instruction from IFU
   input logic [`XLEN-1:0]  ReadDataW,// Read data from memory
-  input logic [`XLEN-1:0]  SrcAE, // Integer input being processed (from IEU)
+  input logic [`XLEN-1:0]  ForwardedSrcAE, // Integer input being processed (from IEU)
   input logic 		   StallE, StallM, StallW, // stall signals from HZU
   input logic 		   FlushE, FlushM, FlushW, // flush signals from HZU
   input logic [4:0] 	   RdM, RdW, // which FP register to write to (from IEU)
@@ -229,7 +229,7 @@ module fpu (
 			  .XSNaNE, .ClassResE);
 
      // Convert
-     fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .SrcAE, .FOpCtrlE, .FmtE, .FrmE,
+     fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
 		.CvtResE, .CvtFlgE);
      
      // data to be stored in memory - to IEU
@@ -238,7 +238,7 @@ module fpu (
      assign FWriteDataE = FSrcYE[`XLEN-1:0];     
      
      // Align SrcA to MSB when single precicion
-     mux2  #(64)  SrcAMux({{32{1'b1}}, SrcAE[31:0]}, {{64-`XLEN{1'b1}}, SrcAE}, FmtE, AlignedSrcAE);
+     mux2  #(64)  SrcAMux({{32{1'b1}}, ForwardedSrcAE[31:0]}, {{64-`XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE);
      
      // select a result that may be written to the FP register
      mux5  #(64) FResMux(AlignedSrcAE, SgnResE, CmpResE, CvtResE, CvtFpResE, FResSelE, FResE);
