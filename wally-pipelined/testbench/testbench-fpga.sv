@@ -596,13 +596,14 @@ string tests32f[] = '{
   assign UARTSin = 1;
  
   dtim #(.BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) 
-  dtim (.*, .HSELTim(HSELEXT),
-	.HREADTim(HRDATAEXT),
-	.HREADYTim(HREADYEXT),
-	.HRESPTim(HRESPEXT));
+  dtim (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELTim(HSELEXT), 
+        .HREADTim(HRDATAEXT), .HREADYTim(HREADYEXT), .HRESPTim(HRESPEXT));
  
 
-  wallypipelinedsocwrapper dut(.*); 
+  wallypipelinedsocwrapper dut(.clk, .reset_ext, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HTRANS, .HMASTLOCK, .HREADY, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.wallypipelinedsoc.hart.ieu.dp.FlushE,

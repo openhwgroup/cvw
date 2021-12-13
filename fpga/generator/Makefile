@@ -3,7 +3,7 @@ dst := IP
 all: FPGA
 
 FPGA: IP
-	vivado -mode batch -source wally.tcl | tee wally.log
+	vivado -mode batch -source wally.tcl 2>&1 | tee wally.log
 
 IP: $(dst)/xlnx_proc_sys_reset.log \
 	$(dst)/xlnx_ddr4.log \
