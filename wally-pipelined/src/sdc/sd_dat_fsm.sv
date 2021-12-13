@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // sd_dat_fsm.sv
 //
-// Written: Ross Thompson September 19, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 19, 2021
 //
 // Purpose: Runs in parallel with sd_cmd_fsm to control activity on the DAT
 // bus of the SD card.

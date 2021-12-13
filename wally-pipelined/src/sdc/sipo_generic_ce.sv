@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // sipo_generic_ce
 //
-// Written: Ross Thompson September 20, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 20, 2021
 //
 // Purpose:  serial to n-bit parallel shift register using register_ce.
 // When given a n-bit word as input transmit the message serially MSB (leftmost)

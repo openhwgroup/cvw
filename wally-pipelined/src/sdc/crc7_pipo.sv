@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // crc7 sipo np ce
 //
-// Written: Ross Thompson September 18, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 18, 2021
+// Converted to system verilog.
 //
 // Purpose:  takes 40 bits of input, generates 7 bit CRC after a single
 // clock cycle!
