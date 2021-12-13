@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // piso generic ce
 //
-// Written: Ross Thompson September 18, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 18, 2021
 //
 // 
 // A component of the Wally configurable RISC-V project.

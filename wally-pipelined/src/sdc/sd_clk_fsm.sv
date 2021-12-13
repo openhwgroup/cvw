@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // sd_clk_fsm.sv
 //
-// Written: Ross Thompson September 19, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 19, 2021
 //
 // Purpose: Controls clock dividers.
 // Replaces s_disable_sd_clocks, s_select_hs_clk, s_enable_hs_clk
