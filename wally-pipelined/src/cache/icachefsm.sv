@@ -114,7 +114,7 @@ module icachefsm
 		STATE_CPU_BUSY_SPILL		
 		} statetype;
   
-  statetype CurrState, NextState;
+  (* mark_debug = "true" *)  statetype CurrState, NextState;
   logic 		       PreCntEn;
 
   // the FSM is always runing, do not stall.
