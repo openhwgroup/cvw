@@ -145,9 +145,9 @@ module controller(
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
         //7'b1010011:   ControlsD = `CTRLW'b0_000_00_00_101_0_00_0_0_0_0_0_0_0_00_1; // FP
-        7'b1100011:   ControlsD = `CTRLW'b0_010_00_00_000_1_0_0_0_0_0_0_0_0_00_0; // beq
-        7'b1100111:   ControlsD = `CTRLW'b1_000_00_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
-        7'b1101111:   ControlsD = `CTRLW'b1_011_00_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
+        7'b1100011:   ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
+        7'b1100111:   ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
+        7'b1101111:   ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
         7'b1110011: if (Funct3D == 3'b000)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in priveleged modules
                     else

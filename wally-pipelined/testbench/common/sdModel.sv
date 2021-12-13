@@ -118,6 +118,8 @@ module    sdModel
    reg [3:0] 	  crcDat_in; 
    wire [15:0] 	  crcDat_out [3:0];
 
+   integer sdModel_file_desc;
+
    genvar 	  i;
    generate
       for(i=0; i<4; i=i+1) begin:CRC_16_gen
@@ -1049,8 +1051,6 @@ module    sdModel
 	end // case: WRITE_FLASH
       endcase // case (dataState)
    end // always @ (negedge sdClk)
-
-   integer sdModel_file_desc;
 
    initial
      begin
