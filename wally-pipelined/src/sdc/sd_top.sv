@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // sd_top.sv
 //
-// Written: Ross Thompson September 19, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 19, 2021
 //
 // Purpose: SD card controller
 // 

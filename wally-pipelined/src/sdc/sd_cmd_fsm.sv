@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // sd_clk_fsm.sv
 //
-// Written: Ross Thompson September 19, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 19, 2021
 //
 // Purpose: Finite state machine for the SD CMD bus
 // 

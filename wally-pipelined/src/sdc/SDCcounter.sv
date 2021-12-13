@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // counter.sv
 //
-// Written: Ross Thompson
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson
+// Converted to system verilog.
 //
 // Purpose: basic up counter
 // 

@@ -27,16 +27,16 @@
 
 module hazard(
   // Detect hazards
-	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
-	      input logic  LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD,
-	      input logic  LSUStall, ICacheStallF,
-              input logic  FPUStallD, FStallD,
-	      input logic  DivBusyE,FDivBusyE,
-	      input logic  EcallFaultM, BreakpointFaultM,
-        input logic  InvalidateICacheM,
+(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
+(* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD,
+(* mark_debug = "true" *)	      input logic  LSUStall, ICacheStallF,
+(* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
+(* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
+(* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
+(* mark_debug = "true" *)        input logic  InvalidateICacheM,
   // Stall & flush outputs
-	      output logic StallF, StallD, StallE, StallM, StallW,
-	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
+(* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
+(* mark_debug = "true" *)	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
 );
 
   logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
