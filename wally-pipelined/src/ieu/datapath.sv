@@ -30,12 +30,13 @@ module datapath (
   // Decode stage signals
   input  logic [2:0]       ImmSrcD,
   input  logic [31:0]      InstrD,
+  input  logic [2:0]       Funct3E,
   // Execute stage signals
   input  logic             StallE, FlushE,
   input  logic [1:0]       ForwardAE, ForwardBE,
-  input  logic [4:0]       ALUControlE,
+  input  logic [2:0]       ALUControlE,
   input  logic             ALUSrcAE, ALUSrcBE,
-  input  logic             TargetSrcE, 
+  input  logic             ALUResultSrcE, 
   input  logic             JumpE,
   input  logic             IllegalFPUInstrE,
   input  logic [`XLEN-1:0] FWriteDataE,
@@ -44,7 +45,6 @@ module datapath (
   output logic [2:0]       FlagsE,
   output logic [`XLEN-1:0] PCTargetE,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-  output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             StallM, FlushM,
   input  logic             FWriteIntM,
@@ -75,11 +75,12 @@ module datapath (
   logic [`XLEN-1:0] ExtImmE;
 
   // logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, SrcAE2, SrcBE2; // *** MAde forwardedsrcae an output to get rid of a mux in the critical path.
+  logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAE2, SrcBE2;
 
-  logic [`XLEN-1:0] ALUResultE;
+  logic [`XLEN-1:0] ALUResultE, AltResultE, ALUPreResultE;
   logic [`XLEN-1:0] WriteDataE;
-  logic [`XLEN-1:0] TargetBaseE;
+  logic [`XLEN-1:0] AddressE;
   // Memory stage signals
   logic [`XLEN-1:0] ALUResultM;
   logic [`XLEN-1:0] ResultM;
@@ -110,18 +111,18 @@ module datapath (
   mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
   mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
-  mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
-  mux2  #(`XLEN)  srcbmux2(SrcBE, {`XLEN{1'b0}}, JumpE, SrcBE2); // *** May be able to remove this mux.
-  alu   #(`XLEN)  alu(SrcAE2, SrcBE2, ALUControlE, ALUResultE, FlagsE);
-  mux2  #(`XLEN)  targetsrcmux(PCE, SrcAE, TargetSrcE, TargetBaseE);
-  assign  PCTargetE = ExtImmE + TargetBaseE;
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUPreResultE, AddressE);
+  comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
+  mux2 #(`XLEN) altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
+  mux2 #(`XLEN) aluresultmux(ALUPreResultE, AltResultE, ALUResultSrcE, ALUResultE);
 
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
-  assign MemAdrM = ALUResultM;
-  assign MemAdrE = ALUResultE;  
+  assign MemAdrE = AddressE;   // *** clean up this naming
+  assign PCTargetE = AddressE; // *** clean up this naming
+  flopenrc #(`XLEN) AddressNReg(clk, reset, FlushM, ~StallM, MemAdrE, MemAdrM);
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);	
   mux2  #(`XLEN)   resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);
