@@ -147,7 +147,7 @@ module privileged (
 
 
   ///////////////////////////////////////////
-  
+  //privdec pmd(.InstrM(InstrM[31:20]),.*);
   privdec pmd(.InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM,
               .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
@@ -156,8 +156,8 @@ module privileged (
   ///////////////////////////////////////////
   // Control and Status Registers
   ///////////////////////////////////////////
-  
-  csr csr(.clk,. reset,
+  //csr csr(.*);
+  csr csr(.clk, .reset,
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
@@ -171,9 +171,9 @@ module privileged (
           .CauseM, .NextFaultMtvalM, .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR,
           .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
-          .MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
+          .MEDELEG_REGW, .MIDELEG_REGW, .SEDELEG_REGW, .SIDELEG_REGW, 
           .SATP_REGW,
-          .MIP_REGW, .MIE_REGW, .SIP_REGW, S.IE_REGW,
+          .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
           .STATUS_MIE, .STATUS_SIE,
           .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW,
           .PMPCFG_ARRAY_REGW,
@@ -219,17 +219,17 @@ module privileged (
                   {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
                   {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
   // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
-  
+  //trap trap(.*);
   trap trap(.clk, .reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreMisalignedFaultM,
             .LoadAccessFaultM, .StoreAccessFaultM, .EcallFaultM, .InstrPageFaultM,
             .LoadPageFaultM, .StorePageFaultM,
             .mretM, .sretM, .uretM,
-            .PrivilegeModeW, .NextPrivilegeModeM
+            .PrivilegeModeW, .NextPrivilegeModeM,
             .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
-            .STATUS_MIE, .STATUS_SIE
+            .STATUS_MIE, .STATUS_SIE,
             .PCM,
             .InstrMisalignedAdrM, .MemAdrM, 
             .InstrM,
