@@ -1,8 +1,8 @@
 Intractions betwen the dcache and hardware page table walker are complex.
 In particular the complications arise when a fault occurs concurrently with a memory operation.
 
-At the begining of very memory operation there are 8 combinations of three signals;
-ITBL miss, DTLB miss, and memory operation.  By looking at each combination we
+At the begining of every memory operation there are 8 combinations of three signals;
+ITBL miss, DTLB miss, and a memory operation.  By looking at each combination we
 can understand exactly the correct sequence of operations and if the operation
 should continue.
 
@@ -47,7 +47,7 @@ Dcache handles the operation.
 
 Type 3a is a memory operation with a DTLB miss.  The Dcache enters a special set of states
 designed to handle the page table walker (HTPW).  Secondly the HPTW takes control over the
-LSU via a set of multiplexors in the LSU Arbiter, driving the Dcache with addresses into the
+LSU via a set of multiplexors in the LSU Arbiter, driving the Dcache with addresses of the
 page table.  Interally to the HPTW an FSM checks each node of the Page Table and eventually
 signals either a TLB write or a TLB Fault.  In Type 3a the DTLB is written with the leaf
 page table entry and returns control of the Dcache back to the IEU.  Now the Dcache finishes
@@ -70,7 +70,7 @@ Type 4b is also an ITLB miss.  As with 4a the Dcache switches into page table wa
 until it finds a leaf or in this case a fault.  The fault is deteched and the Dcaches switches back
 to normal mode.
 
-Type 5a is a Type 4a with a current memory operation.  The Dcache first switches to walker mode
+Type 5a is a Type 4a with a current memory operation.  The Dcache first switches to walker mode.
 
 Other traps.
 A new problem has emerged.  What happens when an interrupt occurs during a page table walk?
