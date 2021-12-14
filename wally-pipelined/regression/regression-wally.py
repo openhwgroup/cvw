@@ -53,7 +53,7 @@ tests64 = ["wally64i", "arch64i", "arch64priv", "arch64c",  "arch64m", "imperas6
 for test in tests64:
   tc = TestCase(
         name=test,
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64g "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64gc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 #tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
@@ -61,7 +61,7 @@ tests32 = ["wally32i", "arch32i", "arch32priv", "arch32c",  "arch32m", "imperas3
 for test in tests32:
   tc = TestCase(
         name=test,
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32g "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32gc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
