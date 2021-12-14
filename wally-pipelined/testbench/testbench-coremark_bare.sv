@@ -103,12 +103,12 @@ module testbench();
       totalerrors = 0;
       // read test vectors into memory
       memfilename = tests[0];
-      $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.ram.RAM);
       //for(j=268437955; j < 268566528; j = j+1)
-        //dut.uncore.dtim.RAM[j] = 64'b0;
+        //dut.uncore.ram.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
-        //dut.uncore.dtim.RAM[268437713]=64'b1;
+        //dut.uncore.ram.RAM[268437713]=64'b1;
     reset_ext = 1; # 22; reset_ext = 0;
     end
   // generate clock to sequence tests

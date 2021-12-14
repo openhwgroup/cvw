@@ -119,7 +119,7 @@ module testbench();
       end
       // read test vectors into memory
       memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.RAM);
       ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -162,19 +162,19 @@ module testbench();
         i = 0;
         errors = 0;
         if (`XLEN == 32)
-          testadr = (`TIM_BASE+tests[test+1].atohex())/4;
+          testadr = (`RAM_BASE+tests[test+1].atohex())/4;
         else
-          testadr = (`TIM_BASE+tests[test+1].atohex())/8;
+          testadr = (`RAM_BASE+tests[test+1].atohex())/8;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.RAM[testadr+i]) begin
+          if (signature[i] !== dut.uncore.ram.RAM[testadr+i]) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*`XLEN/8, dut.uncore.ram.RAM[testadr+i], signature[i]);
             end
           end
           i = i + 1;
@@ -193,7 +193,7 @@ module testbench();
         end
         else begin
           memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-          $readmemh(memfilename, dut.uncore.dtim.RAM);
+          $readmemh(memfilename, dut.uncore.ram.RAM);
           $display("Read memfile %s", memfilename);
     ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
     ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};

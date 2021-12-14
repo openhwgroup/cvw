@@ -160,7 +160,7 @@ module ifu (
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
   // conditional
-  // 1. dtim // controlled by `MEM_IROM
+  // 1. ram // controlled by `MEM_IROM
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
   icache icache(.clk, .reset, .StallF, .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
