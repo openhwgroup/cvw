@@ -331,8 +331,10 @@ module icachefsm
           ICacheStallF = 1'b0;
         end else if (ITLBWriteF) begin
           NextState = STATE_TLB_MISS_DONE;
+          ICacheStallF = 1'b1;		  
         end else begin
           NextState = STATE_TLB_MISS;
+		  ICacheStallF = 1'b0;
         end
       end
       STATE_TLB_MISS_DONE: begin
