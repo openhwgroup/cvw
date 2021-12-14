@@ -27,95 +27,95 @@
 
 module icachefsm
   (// Inputs from pipeline
-   input logic 	      clk, reset,
+   input logic 		  clk, reset,
 
-   input logic 	      StallF,
+   input logic 		  StallF,
 
    // inputs from mmu
-   input logic 	      ITLBMissF,
-   input logic 	      ITLBWriteF,
-   input logic 	      WalkerInstrPageFaultF,
+   input logic 		  ITLBMissF,
+   input logic 		  ITLBWriteF,
+   input logic 		  WalkerInstrPageFaultF,
 
-   input logic ExceptionM, PendingInterruptM,
+   input logic 		  ExceptionM, PendingInterruptM,
 
    // BUS interface
-   input logic 	      InstrAckF,
+   input logic 		  InstrAckF,
 
    // icache internal inputs
-   input logic 	      hit,
-   input logic 	      FetchCountFlag,
-   input logic 	      spill,
+   input logic 		  hit,
+   input logic 		  FetchCountFlag,
+   input logic 		  spill,
 
    // icache internal outputs
-   output logic       ICacheReadEn,
+   output logic 	  ICacheReadEn,
    // Load data into the cache
-   output logic       ICacheMemWriteEnable,
+   output logic 	  ICacheMemWriteEnable,
 
    // Outputs to pipeline control stuff
-   output logic       ICacheStallF,
+   output logic 	  ICacheStallF,
 
    // Bus interface outputs
-   output logic       InstrReadF,
+   output logic 	  InstrReadF,
 
    // icache internal outputs
-   output logic       spillSave,
-   output logic       CntEn,
-   output logic       CntReset,
+   output logic 	  spillSave,
+   output logic 	  CntEn,
+   output logic 	  CntReset,
    output logic [1:0] SelAdr,
-   output logic       LRUWriteEn
+   output logic 	  LRUWriteEn
    );
 
   // FSM states
-  typedef enum {STATE_READY,
-		STATE_HIT_SPILL, // spill, block 0 hit
-		STATE_HIT_SPILL_MISS_FETCH_WDV, // block 1 miss, issue read to AHB and wait data.
-		STATE_HIT_SPILL_MISS_FETCH_DONE, // write data into SRAM/LUT
-		STATE_HIT_SPILL_MERGE,   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
+  typedef enum 		  {STATE_READY,
+					   STATE_HIT_SPILL, // spill, block 0 hit
+					   STATE_HIT_SPILL_MISS_FETCH_WDV, // block 1 miss, issue read to AHB and wait data.
+					   STATE_HIT_SPILL_MISS_FETCH_DONE, // write data into SRAM/LUT
+					   STATE_HIT_SPILL_MERGE,   // Read block 0 of CPU access, should be able to optimize into STATE_HIT_SPILL.
 
-		// a challenge is the spill signal gets us out of the ready state and moves us to
-		// 1 of the 2 spill branches.  However the original fsm design had us return to
-		// the ready state when the spill + hits/misses were fully resolved.  The problem
-		// is the spill signal is based on PCPF so when we return to READY to check if the
-		// cache has a hit it still expresses spill.  We can fix in 1 of two ways.
-		// 1. we can add 1 extra state at the end of each spill branch to returns the instruction
-		// to the CPU advancing the CPU and icache to the next instruction.
-		// 2. We can assert a signal which is delayed 1 cycle to suppress the spill when we get
-		// to the READY state.
-		// The first first option is more robust and increases the number of states by 2.  The
-		// second option is seams like it should work, but I worry there is a hidden interaction 
-		// between CPU stalling and that register.
-		// Picking option 1.
+					   // a challenge is the spill signal gets us out of the ready state and moves us to
+					   // 1 of the 2 spill branches.  However the original fsm design had us return to
+					   // the ready state when the spill + hits/misses were fully resolved.  The problem
+					   // is the spill signal is based on PCPF so when we return to READY to check if the
+					   // cache has a hit it still expresses spill.  We can fix in 1 of two ways.
+					   // 1. we can add 1 extra state at the end of each spill branch to returns the instruction
+					   // to the CPU advancing the CPU and icache to the next instruction.
+					   // 2. We can assert a signal which is delayed 1 cycle to suppress the spill when we get
+					   // to the READY state.
+					   // The first first option is more robust and increases the number of states by 2.  The
+					   // second option is seams like it should work, but I worry there is a hidden interaction 
+					   // between CPU stalling and that register.
+					   // Picking option 1.
 
-		STATE_HIT_SPILL_FINAL, // this state replicates STATE_READY's replay of the
-		// spill access but does nto consider spill.  It also does not do another operation.
+					   STATE_HIT_SPILL_FINAL, // this state replicates STATE_READY's replay of the
+					   // spill access but does nto consider spill.  It also does not do another operation.
   
-		STATE_MISS_FETCH_WDV, // aligned miss, issue read to AHB and wait for data.
-		STATE_MISS_FETCH_DONE, // write data into SRAM/LUT
-		STATE_MISS_READ, // read block 1 from SRAM/LUT
-		STATE_MISS_READ_DELAY, // read block 1 from SRAM/LUT  		
+					   STATE_MISS_FETCH_WDV, // aligned miss, issue read to AHB and wait for data.
+					   STATE_MISS_FETCH_DONE, // write data into SRAM/LUT
+					   STATE_MISS_READ, // read block 1 from SRAM/LUT
+					   STATE_MISS_READ_DELAY, // read block 1 from SRAM/LUT  		
 
-		STATE_MISS_SPILL_FETCH_WDV, // spill, miss on block 0, issue read to AHB and wait
-		STATE_MISS_SPILL_FETCH_DONE, // write data into SRAM/LUT
-		STATE_MISS_SPILL_READ1, // read block 0 from SRAM/LUT
-		STATE_MISS_SPILL_2, // return to ready if hit or do second block update.
-		STATE_MISS_SPILL_2_START, // return to ready if hit or do second block update.  
-		STATE_MISS_SPILL_MISS_FETCH_WDV, // miss on block 1, issue read to AHB and wait
-		STATE_MISS_SPILL_MISS_FETCH_DONE, // write data to SRAM/LUT
-		STATE_MISS_SPILL_MERGE, // read block 0 of CPU access,
+					   STATE_MISS_SPILL_FETCH_WDV, // spill, miss on block 0, issue read to AHB and wait
+					   STATE_MISS_SPILL_FETCH_DONE, // write data into SRAM/LUT
+					   STATE_MISS_SPILL_READ1, // read block 0 from SRAM/LUT
+					   STATE_MISS_SPILL_2, // return to ready if hit or do second block update.
+					   STATE_MISS_SPILL_2_START, // return to ready if hit or do second block update.  
+					   STATE_MISS_SPILL_MISS_FETCH_WDV, // miss on block 1, issue read to AHB and wait
+					   STATE_MISS_SPILL_MISS_FETCH_DONE, // write data to SRAM/LUT
+					   STATE_MISS_SPILL_MERGE, // read block 0 of CPU access,
 
-		STATE_MISS_SPILL_FINAL, // this state replicates STATE_READY's replay of the
-		// spill access but does nto consider spill.  It also does not do another operation.
+					   STATE_MISS_SPILL_FINAL, // this state replicates STATE_READY's replay of the
+					   // spill access but does nto consider spill.  It also does not do another operation.
 
-		STATE_INVALIDATE, // *** not sure if invalidate or evict? invalidate by cache block or address?
-		STATE_TLB_MISS,
-		STATE_TLB_MISS_DONE,
+					   STATE_INVALIDATE, // *** not sure if invalidate or evict? invalidate by cache block or address?
+					   STATE_TLB_MISS,
+					   STATE_TLB_MISS_DONE,
 
-		STATE_CPU_BUSY,
-		STATE_CPU_BUSY_SPILL		
-		} statetype;
+					   STATE_CPU_BUSY,
+					   STATE_CPU_BUSY_SPILL		
+					   } statetype;
   
   (* mark_debug = "true" *)  statetype CurrState, NextState;
-  logic 		       PreCntEn;
+  logic 			  PreCntEn;
 
   // the FSM is always runing, do not stall.
   always_ff @(posedge clk)
@@ -141,18 +141,18 @@ module icachefsm
           NextState = STATE_TLB_MISS;
         end else if (hit & ~spill) begin
           ICacheStallF = 1'b0;
-	  LRUWriteEn = 1'b1;
-	  if(StallF) begin
-	    NextState = STATE_CPU_BUSY;
-	    SelAdr = 2'b01;
-	  end else begin
+		  LRUWriteEn = 1'b1;
+		  if(StallF) begin
+			NextState = STATE_CPU_BUSY;
+			SelAdr = 2'b01;
+		  end else begin
             NextState = STATE_READY;
-	  end
+		  end
         end else if (hit & spill) begin
           spillSave = 1'b1;
           SelAdr = 2'b10;
           LRUWriteEn = 1'b1;
-	  NextState = STATE_HIT_SPILL;
+		  NextState = STATE_HIT_SPILL;
         end else if (~hit & ~spill) begin
           CntReset = 1'b1;
           NextState = STATE_MISS_FETCH_WDV;
@@ -161,12 +161,12 @@ module icachefsm
           SelAdr = 2'b01;
           NextState = STATE_MISS_SPILL_FETCH_WDV;
         end else begin
-	  if(StallF) begin
-	    NextState = STATE_CPU_BUSY;
-	    SelAdr = 2'b01;
-	  end else begin
+		  if(StallF) begin
+			NextState = STATE_CPU_BUSY;
+			SelAdr = 2'b01;
+		  end else begin
             NextState = STATE_READY;
-	  end
+		  end
         end
       end
       // branch 1,  hit spill and 2, miss spill hit
@@ -204,15 +204,15 @@ module icachefsm
         ICacheReadEn = 1'b1;
         SelAdr = 2'b00;
         ICacheStallF = 1'b0;
-	LRUWriteEn = 1'b1;
-	
-	if(StallF) begin
-	  NextState = STATE_CPU_BUSY_SPILL;
-	  SelAdr = 2'b10;
-	end else begin
+		LRUWriteEn = 1'b1;
+		
+		if(StallF) begin
+		  NextState = STATE_CPU_BUSY_SPILL;
+		  SelAdr = 2'b10;
+		end else begin
           NextState = STATE_READY;
-	end
-	
+		end
+		
       end
       // branch 3 miss no spill
       STATE_MISS_FETCH_WDV: begin
@@ -238,15 +238,15 @@ module icachefsm
       STATE_MISS_READ_DELAY: begin
         //SelAdr = 2'b01;
         ICacheReadEn = 1'b1;
-	ICacheStallF = 1'b0;
-	LRUWriteEn = 1'b1;
-	if(StallF) begin
-	  SelAdr = 2'b01;
-	  NextState = STATE_CPU_BUSY;
-	  SelAdr = 2'b01;
-	end else begin
+		ICacheStallF = 1'b0;
+		LRUWriteEn = 1'b1;
+		if(StallF) begin
+		  SelAdr = 2'b01;
+		  NextState = STATE_CPU_BUSY;
+		  SelAdr = 2'b01;
+		end else begin
           NextState = STATE_READY;
-	end
+		end
       end
       // branch 4 miss spill hit, and 5 miss spill miss
       STATE_MISS_SPILL_FETCH_WDV: begin
@@ -267,7 +267,7 @@ module icachefsm
       STATE_MISS_SPILL_READ1: begin // always be a hit as we just wrote that cache block.
         SelAdr = 2'b01;	 // there is a 1 cycle delay after setting the address before the date arrives.
         ICacheReadEn = 1'b1;
-	LRUWriteEn = 1'b1;
+		LRUWriteEn = 1'b1;
         NextState = STATE_MISS_SPILL_2;
       end
       STATE_MISS_SPILL_2: begin
@@ -284,13 +284,13 @@ module icachefsm
           ICacheReadEn = 1'b1;
           SelAdr = 2'b00;
           ICacheStallF = 1'b0;
-	  LRUWriteEn = 1'b1;
-	  if(StallF) begin
-	    NextState = STATE_CPU_BUSY;
-	    SelAdr = 2'b01;
-	  end else begin
+		  LRUWriteEn = 1'b1;
+		  if(StallF) begin
+			NextState = STATE_CPU_BUSY;
+			SelAdr = 2'b01;
+		  end else begin
             NextState = STATE_READY;
-	  end
+		  end
         end
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
@@ -317,13 +317,13 @@ module icachefsm
         ICacheReadEn = 1'b1;
         SelAdr = 2'b00;
         ICacheStallF = 1'b0;	
-	LRUWriteEn = 1'b1;
-	if(StallF) begin
-	  NextState = STATE_CPU_BUSY_SPILL;
-	  SelAdr = 2'b10;
-	end else begin
+		LRUWriteEn = 1'b1;
+		if(StallF) begin
+		  NextState = STATE_CPU_BUSY_SPILL;
+		  SelAdr = 2'b10;
+		end else begin
           NextState = STATE_READY;
-	end
+		end
       end
       STATE_TLB_MISS: begin
         if (WalkerInstrPageFaultF) begin
@@ -331,38 +331,40 @@ module icachefsm
           ICacheStallF = 1'b0;
         end else if (ITLBWriteF) begin
           NextState = STATE_TLB_MISS_DONE;
+          ICacheStallF = 1'b1;		  
         end else begin
           NextState = STATE_TLB_MISS;
+		  ICacheStallF = 1'b0;
         end
       end
       STATE_TLB_MISS_DONE: begin
-	SelAdr = 2'b01;
+		SelAdr = 2'b01;
         NextState = STATE_READY;
       end
       STATE_CPU_BUSY: begin
-	ICacheStallF = 1'b0;
-	if (ITLBMissF) begin
+		ICacheStallF = 1'b0;
+		if (ITLBMissF) begin
           NextState = STATE_TLB_MISS;
-	end else if(StallF) begin
-	  NextState = STATE_CPU_BUSY;
-	  SelAdr = 2'b01;
-	end
-	else begin
-	  NextState = STATE_READY;
-	end
+		end else if(StallF) begin
+		  NextState = STATE_CPU_BUSY;
+		  SelAdr = 2'b01;
+		end
+		else begin
+		  NextState = STATE_READY;
+		end
       end
       STATE_CPU_BUSY_SPILL: begin
-	ICacheStallF = 1'b0;
-	ICacheReadEn = 1'b1;
-	if (ITLBMissF) begin
+		ICacheStallF = 1'b0;
+		ICacheReadEn = 1'b1;
+		if (ITLBMissF) begin
           NextState = STATE_TLB_MISS;
-	end else if(StallF) begin
-	  NextState = STATE_CPU_BUSY_SPILL;
-	  SelAdr = 2'b10;
-	end
-	else begin
-	  NextState = STATE_READY;
-	end
+		end else if(StallF) begin
+		  NextState = STATE_CPU_BUSY_SPILL;
+		  SelAdr = 2'b10;
+		end
+		else begin
+		  NextState = STATE_READY;
+		end
       end
       default: begin
         SelAdr = 2'b01;
@@ -374,8 +376,8 @@ module icachefsm
 
   assign CntEn = PreCntEn & InstrAckF;
   assign InstrReadF = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
-		      (CurrState == STATE_MISS_FETCH_WDV) ||
-		      (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
-		      (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
+					  (CurrState == STATE_MISS_FETCH_WDV) ||
+					  (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
+					  (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
   
 endmodule
