@@ -63,15 +63,15 @@ module uncore (
 );
   
   logic [`XLEN-1:0] HWDATA;
-  logic [`XLEN-1:0] HREADTim, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART, HREADSDC;
+  logic [`XLEN-1:0] HREADRam, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART, HREADSDC;
 
   logic [8:0]      HSELRegions;
-  logic            HSELTim, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic            HSELEXTD, HSELTimD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
-  logic            HRESPTim, HRESPCLINT, HRESPPLIC, HRESPGPIO, HRESPUART, HRESPSDC;
-  logic            HREADYTim, HREADYCLINT, HREADYPLIC, HREADYGPIO, HREADYUART, HRESPSDCD;
-  logic [`XLEN-1:0] HREADBootTim; 
-  logic            HSELBootTim, HSELBootTimD, HRESPBootTim, HREADYBootTim, HREADYSDC;
+  logic            HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
+  logic            HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic            HRESPRam, HRESPCLINT, HRESPPLIC, HRESPGPIO, HRESPUART, HRESPSDC;
+  logic            HREADYRam, HREADYCLINT, HREADYPLIC, HREADYGPIO, HREADYUART, HRESPSDCD;
+  logic [`XLEN-1:0] HREADBootRom; 
+  logic            HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic            HSELNoneD;
   logic            UARTIntr,GPIOIntr;
   logic 	   SDCIntM;
@@ -82,7 +82,7 @@ module uncore (
   adrdecs adrdecs({{(`PA_BITS-32){1'b0}}, HADDR}, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELEXT, HSELBootTim, HSELTim, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
+  assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // subword accesses: converts HWDATAIN to HWDATA
   subwordwrite sww(
@@ -91,25 +91,25 @@ module uncore (
     .HWDATAIN, .HWDATA);
 
   generate
-    // tightly integrated memory
-    if (`TIM_SUPPORTED) begin : dtim
-      dtim #(
-        .BASE(`TIM_BASE), .RANGE(`TIM_RANGE)) dtim (
+    // on-chip RAM outside hart
+    if (`RAM_SUPPORTED) begin : ram
+      ram #(
+        .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK, .HRESETn, 
-        .HSELTim, .HADDR,
+        .HSELRam, .HADDR,
         .HWRITE, .HREADY,
-        .HTRANS, .HWDATA, .HREADTim,
-        .HRESPTim, .HREADYTim);
+        .HTRANS, .HWDATA, .HREADRam,
+        .HRESPRam, .HREADYRam);
     end
 
-    if (`BOOTTIM_SUPPORTED) begin : bootdtim
-      dtim #(.BASE(`BOOTTIM_BASE), .RANGE(`BOOTTIM_RANGE))
-      bootdtim(
+    if (`BOOTROM_SUPPORTED) begin : bootrom
+      ram #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
+      bootrom(
         .HCLK, .HRESETn, 
-        .HSELTim(HSELBootTim), .HADDR,
+        .HSELRam(HSELBootRom), .HADDR,
         .HWRITE, .HREADY, .HTRANS,
         .HWDATA,
-        .HREADTim(HREADBootTim), .HRESPTim(HRESPBootTim), .HREADYTim(HREADYBootTim));
+        .HREADRam(HREADBootRom), .HRESPRam(HRESPBootRom), .HREADYRam(HREADYBootRom));
     end
 
     // memory-mapped I/O peripherals
@@ -184,35 +184,35 @@ module uncore (
 
   // mux could also include external memory  
   // AHB Read Multiplexer
-  assign HRDATA = ({`XLEN{HSELTimD}} & HREADTim) |
+  assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
 		  ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
                   ({`XLEN{HSELCLINTD}} & HREADCLINT) |
                   ({`XLEN{HSELPLICD}} & HREADPLIC) | 
                   ({`XLEN{HSELGPIOD}} & HREADGPIO) |
-                  ({`XLEN{HSELBootTimD}} & HREADBootTim) |
+                  ({`XLEN{HSELBootRomD}} & HREADBootRom) |
                   ({`XLEN{HSELUARTD}} & HREADUART) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
-  assign HRESP = HSELTimD & HRESPTim |
+  assign HRESP = HSELRamD & HRESPRam |
 		 HSELEXTD & HRESPEXT |
                  HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
                  HSELGPIOD & HRESPGPIO | 
-                 HSELBootTimD & HRESPBootTim |
+                 HSELBootRomD & HRESPBootRom |
                  HSELUARTD & HRESPUART |
                  HSELSDC & HRESPSDC;		 
 
-  assign HREADY = HSELTimD & HREADYTim |
+  assign HREADY = HSELRamD & HREADYRam |
 		  HSELEXTD & HREADYEXT |		  
                   HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
                   HSELGPIOD & HREADYGPIO | 
-                  HSELBootTimD & HREADYBootTim |
+                  HSELBootRomD & HREADYBootRom |
                   HSELUARTD & HREADYUART |
                   HSELSDCD & HREADYSDC |		  
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
-  flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootTimD, HSELTimD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
+  flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
 endmodule
 

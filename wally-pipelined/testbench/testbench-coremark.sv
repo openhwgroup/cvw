@@ -87,9 +87,9 @@ module testbench();
       totalerrors = 0;
       // read test vectors into memory
       memfilename = tests[0];
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.RAM);
       for(j=18710; j < 65535; j = j+1)
-        dut.uncore.dtim.RAM[j] = 64'b0;
+        dut.uncore.ram.RAM[j] = 64'b0;
       reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests

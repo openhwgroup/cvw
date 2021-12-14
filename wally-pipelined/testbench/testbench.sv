@@ -146,7 +146,7 @@ logic [3:0] dummy;
   assign HRESPEXT = 0;
   assign HRDATAEXT = 0;
 
-  wallypipelinedsoc dut(.clk, .reset_ext, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
@@ -159,8 +159,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = `TIM_BASE>>(1+`XLEN/32);
-  localparam integer 	   MemEndAddr = (`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32);
+  localparam integer 	   MemStartAddr = `RAM_BASE>>(1+`XLEN/32);
+  localparam integer 	   MemEndAddr = (`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32);
 
   initial
     begin
@@ -178,7 +178,7 @@ logic [3:0] dummy;
       // *** broken because DTIM also drives RAM
       if (`TESTSBP) begin
 	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  dut.uncore.dtim.dtim.RAM[i] = meminit;
+	  dut.uncore.ram.ram.RAM[i] = meminit;
 	end
       end
       // read test vectors into memory
@@ -187,7 +187,7 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.ram.RAM);
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -234,18 +234,18 @@ logic [3:0] dummy;
         // Check errors
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
-        testadr = (`TIM_BASE+tests[test+1].atohex())/(`XLEN/8);
+        testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.dtim.RAM[testadr+i] &&
+          if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -268,7 +268,7 @@ logic [3:0] dummy;
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
-            $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
+            $readmemh(memfilename, dut.uncore.ram.ram.RAM);
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);
@@ -332,7 +332,7 @@ module riscvassertions;
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
-    assert (`TIM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if TIM_RANGE is less than 56'h07FFFFFF");
+    assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
   end
 endmodule
 
@@ -365,7 +365,7 @@ module DCacheFlushFSM
   logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
   genvar adr;
 
-  logic [`XLEN-1:0] ShadowRAM[`TIM_BASE>>(1+`XLEN/32):(`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32)];
+  logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
   generate
     for(index = 0; index < numlines; index++) begin

@@ -240,7 +240,7 @@ module lsu
   assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[0];
 
   // conditional
-  // 1. dtim // controlled by `MEM_DTIM
+  // 1. ram // controlled by `MEM_DTIM
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
   dcache dcache(.clk(clk),

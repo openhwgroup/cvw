@@ -35,7 +35,7 @@ vlog +incdir+../config/coremark_bare +incdir+../config/shared ../testbench/testb
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
-mem load -startaddress 268435456 -endaddress 268566527 -filltype value -fillradix hex -filldata 0 /testbench/dut/uncore/dtim/dtim/RAM
+mem load -startaddress 268435456 -endaddress 268566527 -filltype value -fillradix hex -filldata 0 /testbench/dut/uncore/ram/ram/RAM
 
 view wave
 
@@ -79,7 +79,7 @@ add wave /testbench/InstrWName
 #add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
 #add wave /testbench/dut/hart/ieu/dp/PCSrcE
 add wave -divider Regfile_signals
-#add wave /testbench/dut/uncore/dtim/memwrite
+#add wave /testbench/dut/uncore/ram/memwrite
 #add wave -hex /testbench/dut/uncore/HADDR
 #add wave -hex /testbench/dut/uncore/HWDATA
 #add wave -divider
@@ -92,7 +92,7 @@ add wave -hex -r /testbench/dut/hart/ieu/dp/regf/*
 add wave -divider Regfile_itself
 add wave -hex -r /testbench/dut/hart/ieu/dp/regf/rf
 add wave -divider RAM
-#add wave -hex -r /testbench/dut/uncore/dtim/RAM
+#add wave -hex -r /testbench/dut/uncore/ram/RAM
 add wave -divider Misc
 add wave -divider
 #add wave -hex -r /testbench/*

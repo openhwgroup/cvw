@@ -41,7 +41,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/dp/ALUResultE
 add wave -noupdate /testbench/dut/hart/ieu/dp/PCSrcE
 add wave -noupdate -divider <NULL>
 add wave -noupdate /testbench/InstrMName
-add wave -noupdate /testbench/dut/uncore/dtim/memwrite
+add wave -noupdate /testbench/dut/uncore/ram/memwrite
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/HADDR
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/HWDATA
 add wave -noupdate -divider <NULL>
@@ -1388,19 +1388,19 @@ add wave -noupdate -radix hexadecimal /testbench/dut/uncore/sww/ByteM
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/sww/HalfwordM
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/sww/WriteDataSubwordDuplicated
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/sww/ByteMaskM
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HCLK
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HRESETn
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/MemRWtim
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HADDR
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HWDATA
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HSELTim
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HREADTim
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HRESPTim
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/HREADYTim
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/entry
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/memread
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/memwrite
-add wave -noupdate -radix hexadecimal /testbench/dut/uncore/dtim/busycount
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HCLK
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HRESETn
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/MemRWtim
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HADDR
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HWDATA
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HSELTim
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HREADTim
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HRESPTim
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/HREADYTim
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/entry
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/memread
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/memwrite
+add wave -noupdate -radix hexadecimal /testbench/dut/uncore/ram/busycount
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/clint/HCLK
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/clint/HRESETn
 add wave -noupdate -radix hexadecimal /testbench/dut/uncore/clint/MemRWclint

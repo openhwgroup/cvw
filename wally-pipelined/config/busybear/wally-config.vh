@@ -53,7 +53,7 @@
 `define MEM_IROM 1
 `define MEM_ICACHE 1
 `define MEM_VIRTMEM 1
-`define VECTORED_INTERRUPTS_SUPPORTED 1 // Domenico Ottolia 4/15: Support for vectored interrupts in _tvec csrs. Just implemented in src/privileged/trap.sv around line 75. Pretty sure this should be 1.
+`define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32
@@ -83,14 +83,14 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIM_SUPPORTED 1'b1
-//`define BOOTTIM_BASE   56'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-//`define BOOTTIM_RANGE  56'h00003FFF
-`define BOOTTIM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
-`define BOOTTIM_RANGE  56'h00000FFF
-`define TIM_SUPPORTED 1'b1
-`define TIM_BASE       56'h80000000
-`define TIM_RANGE      56'h07FFFFFF
+`define BOOTROM_SUPPORTED 1'b1
+//`define BOOTROM_BASE   56'h00000000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+//`define BOOTROM_RANGE  56'h00003FFF
+`define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+`define BOOTROM_RANGE  56'h00000FFF
+`define RAM_SUPPORTED 1'b1
+`define RAM_BASE       56'h80000000
+`define RAM_RANGE      56'h07FFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       56'h80000000
 `define EXT_MEM_RANGE      56'h07FFFFFF

@@ -52,7 +52,7 @@ add wave -divider
 add wave -hex /testbench/dut/hart/ifu/PCM
 add wave -hex /testbench/dut/hart/ifu/InstrM
 add wave /testbench/InstrMName
-add wave /testbench/dut/uncore/dtim/memwrite
+add wave /testbench/dut/uncore/ram/memwrite
 add wave -hex /testbench/dut/uncore/HADDR
 add wave -hex /testbench/dut/uncore/HWDATA
 add wave -divider
@@ -70,7 +70,7 @@ add wave -hex /testbench/dut/hart/ebu/HWDATA
 add wave -hex /testbench/dut/hart/ebu/CaptureDataM
 add wave -divider
 
-add wave -hex /testbench/dut/uncore/dtim/*
+add wave -hex /testbench/dut/uncore/ram/*
 add wave -divider
 
 add wave -hex /testbench/dut/hart/ifu/PCW
@@ -82,7 +82,7 @@ add wave -hex /testbench/dut/hart/ieu/dp/ResultW
 add wave -hex /testbench/dut/hart/ieu/dp/RdW
 add wave -divider
 
-add wave -hex /testbench/dut/uncore/dtim/*
+add wave -hex /testbench/dut/uncore/ram/*
 add wave -divider
 
 # appearance

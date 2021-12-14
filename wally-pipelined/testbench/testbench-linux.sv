@@ -311,22 +311,22 @@ module testbench();
     force dut.hart.priv.SwIntM = 0;
     force dut.hart.priv.TimerIntM = 0;
     force dut.hart.priv.ExtIntM = 0;    
-    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootdtim.bootdtim.RAM, 'h1000 >> 3);
+    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootrom.bootrom.RAM, 'h1000 >> 3);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
     if (CHECKPOINT==0) begin // normal
-      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.dtim.dtim.RAM);
+      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.ram.ram.RAM);
       traceFileM = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
       traceFileE = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
       InstrCountW = '0;
     end else begin // checkpoint
       $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
       checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
-      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.dtim.dtim.RAM);
+      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
       ramFile = $fopen({checkpointDir,"ram.bin"}, "rb");
-      readResult = $fread(dut.uncore.dtim.dtim.RAM,ramFile);
+      readResult = $fread(dut.uncore.ram.ram.RAM,ramFile);
       $fclose(ramFile);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
@@ -449,7 +449,7 @@ module testbench();
           force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
           release dut.hart.ieu.dp.ReadDataM; \
-        if(textM.substr(0,5) == "rdtime") begin \
+        if(textM.substr(0,5) == "rrame") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
           force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
@@ -547,7 +547,7 @@ module testbench();
       #1;
       // override on special conditions
       if(~dut.hart.StallW) begin
-        if(textW.substr(0,5) == "rdtime") begin
+        if(textW.substr(0,5) == "rrame") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
           release dut.uncore.clint.clint.MTIME;
         end 
@@ -651,7 +651,7 @@ module testbench();
   // Address Translator
   // ------------------
    /**
-   * Walk the page table stored in dtim according to sv39 logic and translate a
+   * Walk the page table stored in ram according to sv39 logic and translate a
    * virtual address to a physical address.
    *
    * See section 4.3.2 of the RISC-V Privileged specification for a full
@@ -681,9 +681,9 @@ module testbench();
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);
-          // dtim.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
+          // ram.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
           // by 3 (the PTE size) to get the requested 64-bit PTE.
-          PTE = dut.uncore.dtim.dtim.RAM[PAdr >> 3];
+          PTE = dut.uncore.ram.ram.RAM[PAdr >> 3];
           PTE_R = PTE[1];
           PTE_X = PTE[3];
           if (PTE_R || PTE_X) begin
