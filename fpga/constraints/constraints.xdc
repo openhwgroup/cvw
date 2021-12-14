@@ -3,40 +3,7 @@
 # mmcm_clkout0 is the clock output of the DDR4 memory interface / 4.
 # This clock is not used by wally or the AHBLite Bus. However it is used by the AXI BUS on the DD4 IP.
 
-# generate 1 clock for the slow speed SD Card hardware. However we need to time at the mmcm_clkout1
-# clock speed.
-
-#create_generated_clock -name r_fd_Q -source [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/toggle_flip_flop/i_CLK] -divide_by 50 [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/toggle_flip_flop/r_fd_Q]
-
-#create_clock -period 4.000 [get_ports default_250mhz_clk1_0_p]
-
-# need to create a clock for mmcm_clkout1. In the gui flow this was auto generated somehow.
-# turns out this clock is auto generated but has a different name. wtf
-# 10 Mhz
-#create_clock -name mmcm_clkout1 -period 100 [get_pins xlnx_ddr4_c0/addn_ui_clkout1]
-
-#create_generated_clock -name mmcm_clkout1 -source [get_pins xlnx_ddr4_c0/c0_sys_clk_p] -edges {1 2 3} -edge_shift {0.000 48.000 96.000} [get_pins xlnx_ddr4_c0/addn_ui_clkout1]
-
-#create_generated_clock -name mmcm_clkout1 xlnx_ddr4_c0/addn_ui_clkout1
-#create_generated_clock -name mmcm_clkout1 mmcm_clkout1 
-
 create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
-
-
-
-#create_generated_clock -name mmcm_clkout1_Gen -source [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -divide_by 1 -add -master_clock mmcm_clkout1 [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
-
-#create_generated_clock -name CLKDiv64_Gen -source [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I1] -divide_by 1 -add -master_clock mmcm_clkout1_Gen [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
-
-
-
-#create_generated_clock -name mmcm_clkout1_Gen_slow -source [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -divide_by 8 -add -master_clock mmcm_clkout1 [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
-
-#create_generated_clock -name CLKDiv64_Gen_slow -source [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I1] -divide_by 8 -add -master_clock mmcm_clkout1_Gen_slow [get_pins wrapper_i/wallypipelinedsocwra_0/inst/wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
-
-#set_clock_groups -logically_exclusive -group [get_clocks -include_generated_clocks mmcm_clkout1_Gen] -group [get_clocks -include_generated_clocks CLKDiv64_Gen]
-#set_clock_groups -logically_exclusive -group [get_clocks -include_generated_clocks mmcm_clkout1_Gen] -group [get_clocks -include_generated_clocks CLKDiv64_Gen_slow]
-
 
 ##### GPI ####
 set_property PACKAGE_PIN BB24 [get_ports {GPI[0]}]
