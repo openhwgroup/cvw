@@ -115,6 +115,7 @@ module ifu (
   endgenerate
 
   assign PCFExt = {2'b00, PCF};
+  //
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   immu(.PAdr(PCFExt[`PA_BITS-1:0]),
        .VAdr(PCF),
@@ -158,6 +159,10 @@ module ifu (
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
+  // conditional
+  // 1. dtim // controlled by `MEM_IROM
+  // 2. cache // `MEM_ICACHE
+  // 3. wire pass-through
   icache icache(.clk, .reset, .StallF, .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
   .InstrPAdrF, .InstrReadF, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
 

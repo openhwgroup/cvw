@@ -128,7 +128,9 @@ module lsu
   logic 		       MemAfterIWalkDone;
 
   assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
-  
+
+  // *** add generate to conditionally create hptw, lsuArb, and mmu
+  // based on `MEM_VIRTMEM
   hptw hptw(.clk(clk),
 	    .reset(reset),
 	    .SATP_REGW(SATP_REGW),
@@ -210,6 +212,7 @@ module lsu
        ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
 
+  // Move generate from lrsc to outside this module.
   assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
   lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
             .SquashSCW, .MemRWMtoDCache);
@@ -219,6 +222,7 @@ module lsu
   
 
   // Specify which type of page fault is occurring
+  // *** `MEM_VIRTMEM
   assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoLRSC[1];
   assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoLRSC[0];
 
@@ -235,6 +239,10 @@ module lsu
   assign LoadMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[1];
   assign StoreMisalignedFaultM = DataMisalignedMfromDCache & MemRWMtoLRSC[0];
 
+  // conditional
+  // 1. dtim // controlled by `MEM_DTIM
+  // 2. cache `MEM_DCACHE
+  // 3. wire pass-through
   dcache dcache(.clk(clk),
 		.reset(reset),
 		.StallWtoDCache(StallWtoDCache),
