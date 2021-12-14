@@ -26,67 +26,68 @@
 `include "wally-config.vh"
 
 module alu #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] a, b,
+  input  logic [WIDTH-1:0] A, B,
   input  logic [2:0]       ALUControl,
   input  logic [2:0]       Funct3,
-  output logic [WIDTH-1:0] result,
-  output logic [WIDTH-1:0] sum);
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
 
-  logic [WIDTH-1:0] condinvb, sumtrunc, shift, slt, sltu, bor;
-  logic        right; //, arith, w64;
-  logic        carry, neg;
-  logic        lt, ltu;
-  logic        overflow;
+  logic [WIDTH-1:0] CondInvB, SumTrunc, Shift, SLT, SLTU, bor;
+  logic        Right;
+  logic        Carry, Neg;
+  logic        LT, LTU;
+  logic        Overflow;
   logic        W64, SubArith, ALUOp;
+  logic [2:0]  ALUFunct;
 
+  // Extract control signals
+  // W64 indicates RV64 W-suffix instructions acting on lower 32-bit word
+  // SubArith indicates subtraction
+  // ALUOp = 0 for address generation addition or 1 for regular ALU
   assign {W64, SubArith, ALUOp} = ALUControl;
+
   // addition
-  // *** make sure condinvb is only applied when it should be (sub, slt/sltu)
-  assign condinvb = SubArith ? ~b : b;
-  assign {carry, sum} = a + condinvb + {{(WIDTH-1){1'b0}}, SubArith};
+  assign CondInvB = SubArith ? ~B : B;
+  assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // support W-type RV64I ADDW/SUBW/ADDIW that sign-extend 32-bit result to 64 bits
   generate
     if (WIDTH==64)
-      assign sumtrunc = W64 ? {{32{sum[31]}}, sum[31:0]} : sum;
+      assign SumTrunc = W64 ? {{32{Sum[31]}}, Sum[31:0]} : Sum;
     else
-      assign sumtrunc = sum;
+      assign SumTrunc = Sum;
   endgenerate
   
-  // shifts
- // assign arith = alucontrol[3]; // sra
- // assign w64 = alucontrol[4];
-  assign right = (Funct3[2:0] == 3'b101); // sra or srl
-  shifter sh(a, b[5:0], right, SubArith, W64, shift);
-  
-  // OR optionally passes zero when ALUControl[3] is set, supporting lui
-  // *** not needed anymore; simplify control
-  //assign bor = alucontrol[3] ? b : a|b;
+  // Shifts
+  // assign arith = alucontrol[3]; // sra
+  // assign w64 = alucontrol[4];
+  assign Right = (Funct3[2:0] == 3'b101); // sra or srl
+  shifter sh(A, B[5:0], Right, SubArith, W64, Shift);
   
   // condition code flags based on add/subtract output
-  assign neg  = sum[WIDTH-1];
-  // overflow occurs when the numbers being added have the same sign 
+  // Overflow occurs when the numbers being added have the same sign 
   // and the result has the opposite sign
-  assign overflow = (a[WIDTH-1] ~^ condinvb[WIDTH-1]) & (a[WIDTH-1] ^ sum[WIDTH-1]);
-  assign lt = neg ^ overflow;
-  assign ltu = ~carry;
+  assign Overflow = (A[WIDTH-1] ~^ CondInvB[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
+  assign Neg  = Sum[WIDTH-1];
+  assign LT = Neg ^ Overflow;
+  assign LTU = ~Carry;
  
-  // slt
-  assign slt = {{(WIDTH-1){1'b0}}, lt};
-  assign sltu = {{(WIDTH-1){1'b0}}, ltu};
+  // SLT
+  assign SLT = {{(WIDTH-1){1'b0}}, LT};
+  assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
  
+  // Select appropriate ALU Result
+  assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0
   always_comb
-    if (~ALUOp) result = sumtrunc;
-    else 
-      case (Funct3)
-        3'b000: result = sumtrunc;       // add or sub
-        3'b001: result = shift;     // sll
-        3'b010: result = slt;       // slt
-        3'b011: result = sltu;      // sltu
-        3'b100: result = a ^ b;     // xor
-        3'b101: result = shift;     // sra or srl
-        3'b110: result = a | b;     // or 
-        3'b111: result = a & b;     // and
-      endcase
+    case (ALUFunct)
+      3'b000: Result = SumTrunc;  // add or sub
+      3'b001: Result = Shift;     // sll
+      3'b010: Result = SLT;       // slt
+      3'b011: Result = SLTU;      // sltu
+      3'b100: Result = A ^ B;     // xor
+      3'b101: Result = Shift;     // sra or srl
+      3'b110: Result = A | B;     // or 
+      3'b111: Result = A & B;     // and
+    endcase
 endmodule
 

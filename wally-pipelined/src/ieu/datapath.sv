@@ -93,9 +93,7 @@ module datapath (
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-
-  //Mux for writting floating point 
-  
+  // *** can FWriteIntW be merged with RegWriteW
   regfile regf(clk, reset, {RegWriteW | FWriteIntW}, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
   extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
  
@@ -103,9 +101,9 @@ module datapath (
   flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, RD1D, RD1E);
   flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, RD2D, RD2E);
   flopenrc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ~StallE, ExtImmD, ExtImmE);
-  flopenrc #(5)    Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
-  flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
-  flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
+  flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
+  flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
   mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
@@ -114,35 +112,31 @@ module datapath (
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
   alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUPreResultE, AddressE);
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
-  mux2 #(`XLEN) altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
-  mux2 #(`XLEN) aluresultmux(ALUPreResultE, AltResultE, ALUResultSrcE, ALUResultE);
+  mux2 #(`XLEN)   altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
+  mux2 #(`XLEN)   aluresultmux(ALUPreResultE, AltResultE, ALUResultSrcE, ALUResultE);
 
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
   assign MemAdrE = AddressE;   // *** clean up this naming
   assign PCTargetE = AddressE; // *** clean up this naming
-  flopenrc #(`XLEN) AddressNReg(clk, reset, FlushM, ~StallM, MemAdrE, MemAdrM);
+  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, MemAdrE, MemAdrM);
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
-  flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);	
-  mux2  #(`XLEN)   resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);
+  flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
+  mux2  #(`XLEN)    resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
-  flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
+  flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
+  flopen #(`XLEN)   ReadDataWReg(.clk, .en(~StallW), .d(ReadDataM), .q(ReadDataW));
 
   // handle Store Conditional result if atomic extension supported
   generate
     if (`A_SUPPORTED)
-      assign SCResultW = SquashSCW ? {{(`XLEN-1){1'b0}}, 1'b1} : {{(`XLEN-1){1'b0}}, 1'b0};
+      assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
     else 
       assign SCResultW = 0;
   endgenerate
-
-  flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(~StallW),
-			      .d(ReadDataM),
-			      .q(ReadDataW));
 
   mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
 endmodule
