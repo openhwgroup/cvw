@@ -38,3 +38,8 @@ wally-pipelined/regression/slack-notifier/slack-webhook-url.txt
 wally-pipelined/regression/logs
 fpga/generator/IP
 fpga/generator/vivado.*
+fpga/generator/.Xil/*
+fpga/generator/WallyFPGA*
+fpga/generator/reports/
+fpga/generator/*.log
+fpga/generator/*.jou
