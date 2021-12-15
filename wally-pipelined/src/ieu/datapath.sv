@@ -78,11 +78,11 @@ module datapath (
   logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAE2, SrcBE2;
 
-  logic [`XLEN-1:0] ALUResultE, AltResultE, ALUPreResultE;
+  logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE;
   logic [`XLEN-1:0] WriteDataE;
   logic [`XLEN-1:0] AddressE;
   // Memory stage signals
-  logic [`XLEN-1:0] ALUResultM;
+  logic [`XLEN-1:0] IEUResultM;
   logic [`XLEN-1:0] ResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
@@ -108,22 +108,22 @@ module datapath (
   mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
   mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+  comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUPreResultE, AddressE);
-  comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, AddressE);
   mux2 #(`XLEN)   altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
-  mux2 #(`XLEN)   aluresultmux(ALUPreResultE, AltResultE, ALUResultSrcE, ALUResultE);
+  mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
+  assign MemAdrE = AddressE;   // *** clean up this naming
+  assign PCTargetE = AddressE; // *** clean up this naming
 
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
-  flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
-  assign MemAdrE = AddressE;   // *** clean up this naming
-  assign PCTargetE = AddressE; // *** clean up this naming
+  flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, MemAdrE, MemAdrM);
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
-  mux2  #(`XLEN)    resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);
+  mux2  #(`XLEN)    resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
