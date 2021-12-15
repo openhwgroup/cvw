@@ -40,7 +40,7 @@ module ifu (
   // Execute
   output logic [`XLEN-1:0]    PCLinkE,
   input logic 		      PCSrcE, 
-  input logic [`XLEN-1:0]     PCTargetE,
+  input logic [`XLEN-1:0]     IEUAdrE,
   output logic [`XLEN-1:0]    PCE,
   output logic 		      BPPredWrongE, 
   // Mem
@@ -223,7 +223,7 @@ module ifu (
     .SelBPPredF(SelBPPredF),
     .PCE(PCE),
     .PCSrcE(PCSrcE),
-    .PCTargetE(PCTargetE),
+    .IEUAdrE(IEUAdrE),
     .PCD(PCD),
     .PCLinkE(PCLinkE),
     .InstrClassE(InstrClassE),
@@ -242,8 +242,8 @@ module ifu (
       assign BPPredClassNonCFIWrongE = 1'b0;
     end      
   endgenerate
-  // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
-  assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
+  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
+  assign PCCorrectE =  PCSrcE ? IEUAdrE : PCLinkE;
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
