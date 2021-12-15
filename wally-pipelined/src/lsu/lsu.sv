@@ -49,9 +49,9 @@ module lsu
    output logic 	       DCacheAccess,
 
    // address and write data
-   input logic [`XLEN-1:0]     MemAdrM,
-   input logic [`XLEN-1:0]     MemAdrE,
-   input logic [`XLEN-1:0]     WriteDataM, 
+   input  logic [`XLEN-1:0]    IEUAdrE,
+   output logic [`XLEN-1:0]    MemAdrM,
+   input  logic [`XLEN-1:0]    WriteDataM, 
    output logic [`XLEN-1:0]    ReadDataM,
 
    // cpu privilege
@@ -129,6 +129,8 @@ module lsu
 
   assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
 
+  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, MemAdrM);
+
   // *** add generate to conditionally create hptw, lsuArb, and mmu
   // based on `MEM_VIRTMEM
   hptw hptw(.clk(clk),
@@ -169,7 +171,7 @@ module lsu
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
 		 .MemAdrM(MemAdrM),
-		 .MemAdrE(MemAdrE[11:0]),		 
+		 .IEUAdrE(IEUAdrE[11:0]),		 
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
@@ -251,7 +253,7 @@ module lsu
 		.Funct7M(Funct7M),
 		.FlushDCacheM,
 		.AtomicM(AtomicMtoDCache),
-		.MemAdrE(MemAdrEtoDCache),
+		.IEUAdrE(MemAdrEtoDCache),
 		.MemPAdrM(MemPAdrM),
 		.VAdr(MemAdrM[11:0]),		
 		.WriteDataM(WriteDataM),

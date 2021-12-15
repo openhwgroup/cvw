@@ -68,7 +68,6 @@ module wallypipelinedhart (
   (* mark_debug = "true" *) logic [31:0] 		    InstrM;
   logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    PCM;
-  logic [`XLEN-1:0] 	    PCTargetE;
   logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
   (* mark_debug = "true" *) logic [1:0] 		    MemRWM;
@@ -122,7 +121,7 @@ module wallypipelinedhart (
 
   // cpu lsu interface
   logic [2:0] 		    Funct3M;
-  logic [`XLEN-1:0] 	    MemAdrE;
+  logic [`XLEN-1:0] 	    IEUAdrE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    MemAdrM;  
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
@@ -170,7 +169,7 @@ module wallypipelinedhart (
     .InstrReadF, .ICacheStallF,
 
     // Execute
-    .PCLinkE, .PCSrcE, .PCTargetE, .PCE,
+    .PCLinkE, .PCSrcE, .IEUAdrE, .PCE,
     .BPPredWrongE, 
   
     // Mem
@@ -209,7 +208,7 @@ module wallypipelinedhart (
 
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
-     .FWriteDataE, .PCTargetE, .MulDivE, .W64E,
+     .FWriteDataE, .IEUAdrE, .MulDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
      //.SrcAE, .SrcBE, 
      .FWriteIntM,
@@ -219,7 +218,7 @@ module wallypipelinedhart (
      .MemRWM, // read/write control goes to LSU
      .AtomicE, // atomic control goes to LSU	    
      .AtomicM, // atomic control goes to LSU
-     .MemAdrM, .MemAdrE, .WriteDataM, // Address and write data to LSU
+     .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
@@ -248,7 +247,7 @@ module wallypipelinedhart (
 	.CommittedM, .DCacheMiss, .DCacheAccess,
 	.SquashSCW,            
 	//.DataMisalignedM(DataMisalignedM),
-	.MemAdrE, .MemAdrM, .WriteDataM,
+	.IEUAdrE, .MemAdrM, .WriteDataM,
 	.ReadDataM, .FlushDCacheM,
 	// connected to ahb (all stay the same)
 	.DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,

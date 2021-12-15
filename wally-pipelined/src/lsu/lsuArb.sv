@@ -40,7 +40,7 @@ module lsuArb
    input logic [2:0] 	       Funct3M,
    input logic [1:0] 	       AtomicM,
    input logic [`XLEN-1:0]     MemAdrM,
-   input logic [11:0] 	       MemAdrE,
+   input logic [11:0] 	       IEUAdrE,
    input logic 		       StallW,
    input logic 		       PendingInterruptM,
    // to CPU
@@ -85,7 +85,7 @@ module lsuArb
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
   assign MemAdrMExt = {2'b00, MemAdrM};
   assign MemPAdrMtoDCache = SelPTW ? TranslationPAdrM : MemAdrMExt[`PA_BITS-1:0]; 
-  assign MemAdrEtoDCache = SelPTW ? TranslationPAdrE[11:0] : MemAdrE[11:0];  
+  assign MemAdrEtoDCache = SelPTW ? TranslationPAdrE[11:0] : IEUAdrE[11:0];  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
   assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;

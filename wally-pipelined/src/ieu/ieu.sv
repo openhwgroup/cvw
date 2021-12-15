@@ -37,7 +37,7 @@ module ieu (
   input logic 		   FWriteIntE, 
   input logic 		   IllegalFPUInstrE,
   input logic [`XLEN-1:0]  FWriteDataE,
-  output logic [`XLEN-1:0] PCTargetE,
+  output logic [`XLEN-1:0] IEUAdrE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
@@ -49,7 +49,7 @@ module ieu (
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
-  output logic [`XLEN-1:0] MemAdrM, MemAdrE, WriteDataM, // Address and write data to LSU
+  output logic [`XLEN-1:0] WriteDataM, // Address and write data to LSU
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
@@ -127,11 +127,11 @@ module ieu (
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE,
     .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE,
-    .PCTargetE,
+    .IEUAdrE,
     .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
     // Memory stage signals
     .StallM, .FlushM, .FWriteIntM, .FIntResM, 
-    .SrcAM, .WriteDataM, .MemAdrM, .MemAdrE,
+    .SrcAM, .WriteDataM,
     // Writeback stage signals
     .StallW, .FlushW, .FWriteIntW, .RegWriteW, 
     .SquashSCW, .ResultSrcW, .ReadDataW,

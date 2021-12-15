@@ -36,7 +36,7 @@ module dcache
    input logic [6:0] 	       Funct7M,
    input logic [1:0] 	       AtomicM,
    input logic 		       FlushDCacheM,
-   input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [11:0] 	       IEUAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
    input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
@@ -147,7 +147,7 @@ module dcache
   // Read Path CPU (IEU) side
 
   mux4 #(INDEXLEN)
-  AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+  AdrSelMux(.d0(IEUAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d3(FlushAdr),

@@ -43,14 +43,14 @@ module datapath (
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
   output logic [2:0]       FlagsE,
-  output logic [`XLEN-1:0] PCTargetE,
+  output logic [`XLEN-1:0] IEUAdrE,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   // Memory stage signals
   input  logic             StallM, FlushM,
   input  logic             FWriteIntM,
   input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataM, MemAdrM, MemAdrE,
+  output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
   input  logic             FWriteIntW,
@@ -80,7 +80,6 @@ module datapath (
 
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE;
   logic [`XLEN-1:0] WriteDataE;
-  logic [`XLEN-1:0] AddressE;
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;
   logic [`XLEN-1:0] ResultM;
@@ -111,16 +110,13 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, AddressE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
-  assign MemAdrE = AddressE;   // *** clean up this naming
-  assign PCTargetE = AddressE; // *** clean up this naming
 
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
-  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, MemAdrE, MemAdrM);
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
   mux2  #(`XLEN)    resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
