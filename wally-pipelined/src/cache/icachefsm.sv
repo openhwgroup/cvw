@@ -137,9 +137,16 @@ module icachefsm
       STATE_READY: begin
         SelAdr = 2'b00;
         ICacheReadEn = 1'b1;
+/* -----\/----- EXCLUDED -----\/-----
         if (ITLBMissF & ~(ExceptionM | PendingInterruptM)) begin
           NextState = STATE_TLB_MISS;
-        end else if (hit & ~spill) begin
+        end else 
+ -----/\----- EXCLUDED -----/\----- */
+		if(ITLBMissF) begin
+		  NextState = STATE_READY;
+		  ICacheStallF = 1'b0;
+		end
+		else if (hit & ~spill) begin
           ICacheStallF = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  if(StallF) begin
@@ -325,6 +332,7 @@ module icachefsm
           NextState = STATE_READY;
 		end
       end
+/* -----\/----- EXCLUDED -----\/-----
       STATE_TLB_MISS: begin
         if (WalkerInstrPageFaultF) begin
           NextState = STATE_READY;
@@ -341,11 +349,15 @@ module icachefsm
 		SelAdr = 2'b01;
         NextState = STATE_READY;
       end
+ -----/\----- EXCLUDED -----/\----- */
       STATE_CPU_BUSY: begin
 		ICacheStallF = 1'b0;
+/* -----\/----- EXCLUDED -----\/-----
 		if (ITLBMissF) begin
           NextState = STATE_TLB_MISS;
-		end else if(StallF) begin
+		end else
+ -----/\----- EXCLUDED -----/\----- */
+        if(StallF) begin
 		  NextState = STATE_CPU_BUSY;
 		  SelAdr = 2'b01;
 		end
@@ -356,9 +368,12 @@ module icachefsm
       STATE_CPU_BUSY_SPILL: begin
 		ICacheStallF = 1'b0;
 		ICacheReadEn = 1'b1;
+/* -----\/----- EXCLUDED -----\/-----
 		if (ITLBMissF) begin
           NextState = STATE_TLB_MISS;
-		end else if(StallF) begin
+		end else 
+ -----/\----- EXCLUDED -----/\----- */
+		if(StallF) begin
 		  NextState = STATE_CPU_BUSY_SPILL;
 		  SelAdr = 2'b10;
 		end
