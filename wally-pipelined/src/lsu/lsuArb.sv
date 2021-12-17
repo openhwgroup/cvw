@@ -33,7 +33,6 @@ module lsuArb
    input logic 		       SelPTW,
    input logic 		       HPTWRead,
    input logic [`PA_BITS-1:0]  TranslationPAdrE,
-   output logic 	       HPTWStall, 
 
    // from CPU
    input logic [1:0] 	       MemRWM,
@@ -46,7 +45,7 @@ module lsuArb
    // to CPU
    output logic 	       DataMisalignedM,
    output logic 	       CommittedM,
-   output logic 	       LSUStall, 
+   //output logic 	       LSUStall, 
   
    // to D Cache
    output logic 	       DisableTranslation, 
@@ -98,10 +97,9 @@ module lsuArb
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
   //assign HPTWStall = SelPTW ? DCacheStall : 1'b1;  
-  assign HPTWStall = DCacheStall;  
 
   assign PendingInterruptMtoDCache = SelPTW ? 1'b0 : PendingInterruptM;
 
-  assign LSUStall = SelPTW ? 1'b1 : DCacheStall; // *** this is probably going to change.
+  //assign LSUStall = SelPTW ? 1'b1 : DCacheStall; // *** this is probably going to change.
   
 endmodule
