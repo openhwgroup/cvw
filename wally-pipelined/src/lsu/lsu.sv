@@ -96,7 +96,7 @@ module lsu
   logic 	         DataMisalignedM;
 
   
-  logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
+  (* mark_debug = "true" *) logic [`PA_BITS-1:0] 	       MemPAdrM;  // from mmu to dcache
  
   logic 		       DTLBMissM;
   logic 		       DTLBWriteM;

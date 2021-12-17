@@ -35,7 +35,7 @@ module hptw
    input logic 		       clk, reset,
    input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
    input logic [`XLEN-1:0]     PCF, MemAdrM, // addresses to translate
-   input logic 		       ITLBMissF, DTLBMissM, // TLB Miss
+   (* mark_debug = "true" *) input logic 		       ITLBMissF, DTLBMissM, // TLB Miss
    input logic [1:0] 	       MemRWM, // 10 = read, 01 = write
    input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
    input logic 		       HPTWStall, // stall from LSU
@@ -43,7 +43,7 @@ module hptw
    input logic 		       AnyCPUReqM,
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 	       PageType, // page type to TLBs
-   output logic 	       ITLBWriteF, DTLBWriteM, // write TLB with new entry
+   (* mark_debug = "true" *) output logic 	       ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic 	       SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
    output logic [`PA_BITS-1:0] TranslationPAdr,
    output logic 	       HPTWRead, // HPTW requesting to read memory
@@ -72,7 +72,7 @@ module hptw
       logic [`SVMODE_BITS-1:0]	    SvMode;
       logic [`XLEN-1:0] 	    TranslationVAdr;
       
-      statetype WalkerState, NextWalkerState, InitialWalkerState;
+	  (* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 	  // Extract bits from CSRs and inputs
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];

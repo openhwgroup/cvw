@@ -92,7 +92,7 @@ module csrc #(parameter
 
   generate
     if (`ZICOUNTERS_SUPPORTED) begin
-      logic [63:0] CYCLE_REGW, INSTRET_REGW;
+     (* mark_debug = "true" *) logic [63:0] CYCLE_REGW, INSTRET_REGW;
      logic [63:0] CYCLEPlusM, INSTRETPlusM;
        logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic        WriteCYCLEM, WriteINSTRETM;
