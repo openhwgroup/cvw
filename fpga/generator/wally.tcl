@@ -69,9 +69,9 @@ open_run impl_1
 exec mkdir -p sim/
 exec rm -rf sim/*
 
-write_verilog -force -mode funcsim sim/funcsim.v
-write_verilog -force -mode timesim sim/timesim.v
-write_sdf     -force sim/timesim.sdf
+write_verilog -force -mode funcsim sim/imp-funcsim.v
+write_verilog -force -mode timesim sim/imp-timesim.v
+write_sdf     -force sim/imp-timesim.sdf
 
 # reports
 check_timing                                                              -file reports/imp_check_timing.rpt
