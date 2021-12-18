@@ -31,40 +31,28 @@ module shifter (
   input  logic             right, arith, w64,
   output logic [`XLEN-1:0] y);
 
+  localparam BITS = $clog2(`XLEN);
+
+  logic [2*`XLEN-2:0]      z, zshift;
+  logic [BITS-1:0]         amttrunc, offset;
+
   // The best shifter architecture differs based on `XLEN.
   // for RV32, only 32-bit shifts are needed.  These are 
   // most efficiently implemented with a funnel shifter.  
   // For RV64, 32 and 64-bit shifts are needed, with sign
   // extension.
 
+  // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
   generate
-    if (`XLEN==32) begin:shifter
-      // funnel shifter (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-      logic [62:0]        z, zshift;
-      logic [4:0]         offset;
-  
-      // funnel input
-      always_comb  
-        if (right)
+    if (`XLEN==32) begin:shifter // RV32
+      always_comb  // funnel mux
+        if (right) 
           if (arith) z = {{31{a[31]}}, a};
           else       z = {31'b0, a};
         else         z = {a, 31'b0};
-    
-      // shift amount
-      assign offset = right ? amt[4:0] : ~amt[4:0];
-    
-      // funnel operation
-      assign zshift = z >> offset;
-      assign y = zshift[31:0];      
+      assign amttrunc = amt[4:0]; // shift amount
     end else begin:shifter  // RV64
-      // funnel shifter followed by masking
-      // research idea: investigate shifter designs for mixed 32/64-bit shifts
-      logic [126:0] z, zshift;
-      logic [31:0]   ylower, yupper;
-      logic [5:0]         offset, amt6;
-  
-      // funnel input
-      always_comb  
+      always_comb  // funnel mux
         if (w64) begin // 32-bit shifts
           if (right)
             if (arith) z = {64'b0, {31{a[31]}}, a[31:0]};
@@ -76,16 +64,16 @@ module shifter (
             else       z = {63'b0, a};
           else         z = {a, 63'b0};         
         end
-    
-      // shift amount
-      assign amt6 = w64 ? {1'b0, amt[4:0]} : amt[5:0]; // 32 or 64-bit shift
-      assign offset = right ? amt6 : ~amt6;
-  
-      // funnel operation
-      assign zshift = z >> offset;
-      assign y = zshift[63:0];    
+      assign amttrunc = w64 ? {1'b0, amt[4:0]} : amt[5:0]; // 32 or 64-bit shift
     end
   endgenerate
+
+  // opposite offset for right shfits
+  assign offset = right ? amttrunc : ~amttrunc;
+  
+  // funnel operation
+  assign zshift = z >> offset;
+  assign y = zshift[`XLEN-1:0];    
 endmodule
 
 
