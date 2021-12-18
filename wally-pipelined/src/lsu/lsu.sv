@@ -146,16 +146,18 @@ module lsu
 	    .ITLBWriteF(ITLBWriteF),
 	    .DTLBWriteM(DTLBWriteM),
 	    .HPTWReadPTE(ReadDataM),
-	    .HPTWStall(HPTWStall),
-            .TranslationPAdr,			  
+	    .DCacheStall(DCacheStall),
+        .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
 	    .SelPTW(SelPTW),
+		.HPTWStall,
 	    .AnyCPUReqM,
 	    .MemAfterIWalkDone,
 	    .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 	    .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 	    .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
+  assign LSUStall = DCacheStall | HPTWStall;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
@@ -165,7 +167,6 @@ module lsu
 		 .SelPTW(SelPTW),
 		 .HPTWRead(HPTWRead),
 		 .TranslationPAdrE(TranslationPAdr),
-		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
 		 .Funct3M(Funct3M),
@@ -176,7 +177,6 @@ module lsu
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
 		 .DataMisalignedM(DataMisalignedM),
-		 .LSUStall(LSUStall),
 		 // DCACHE
 		 .DisableTranslation(DisableTranslation),
 		 .MemRWMtoLRSC(MemRWMtoLRSC),
