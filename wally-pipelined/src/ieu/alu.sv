@@ -69,13 +69,12 @@ module alu #(parameter WIDTH=32) (
   // Select appropriate ALU Result
   assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0
   always_comb
-    case (ALUFunct)
+    casez (ALUFunct)
       3'b000: FullResult = Sum;       // add or sub
-      3'b001: FullResult = Shift;     // sll
+      3'b?01: FullResult = Shift;     // sll, sra, or srl
       3'b010: FullResult = SLT;       // slt
       3'b011: FullResult = SLTU;      // sltu
       3'b100: FullResult = A ^ B;     // xor
-      3'b101: FullResult = Shift;     // sra or srl
       3'b110: FullResult = A | B;     // or 
       3'b111: FullResult = A & B;     // and
     endcase
