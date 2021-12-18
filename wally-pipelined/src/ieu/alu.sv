@@ -51,8 +51,8 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  assign Right = (Funct3[2:0] == 3'b101); // sra or srl
-  shifter sh(A, B[5:0], Right, SubArith, W64, Shift);
+  assign Right = Funct3[2]; // sra or srl
+  shifter sh(A, B[`LOG_XLEN-1:0], Right, SubArith, W64, Shift);
   
   // condition code flags based on add/subtract output
   // Overflow occurs when the numbers being added have the same sign 
