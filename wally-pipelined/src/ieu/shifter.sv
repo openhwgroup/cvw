@@ -27,20 +27,16 @@
 
 module shifter (
   input  logic [`XLEN-1:0] a,
-  input  logic [5:0]       amt,
+  input  logic [`LOG_XLEN-1:0]       amt,
   input  logic             right, arith, w64,
   output logic [`XLEN-1:0] y);
 
-  localparam BITS = $clog2(`XLEN);
-
   logic [2*`XLEN-2:0]      z, zshift;
-  logic [BITS-1:0]         amttrunc, offset;
+  logic [`LOG_XLEN-1:0]    amttrunc, offset;
 
-  // The best shifter architecture differs based on `XLEN.
-  // for RV32, only 32-bit shifts are needed.  These are 
-  // most efficiently implemented with a funnel shifter.  
-  // For RV64, 32 and 64-bit shifts are needed, with sign
-  // extension.
+  // Handle left and right shifts with a funnel shifter.
+  // For RV32, only 32-bit shifts are needed.   
+  // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
   generate
@@ -50,7 +46,7 @@ module shifter (
           if (arith) z = {{31{a[31]}}, a};
           else       z = {31'b0, a};
         else         z = {a, 31'b0};
-      assign amttrunc = amt[4:0]; // shift amount
+      assign amttrunc = amt; // shift amount
     end else begin:shifter  // RV64
       always_comb  // funnel mux
         if (w64) begin // 32-bit shifts
@@ -64,7 +60,7 @@ module shifter (
             else       z = {63'b0, a};
           else         z = {a, 63'b0};         
         end
-      assign amttrunc = w64 ? {1'b0, amt[4:0]} : amt[5:0]; // 32 or 64-bit shift
+      assign amttrunc = w64 ? {1'b0, amt[4:0]} : amt; // 32 or 64-bit shift
     end
   endgenerate
 
