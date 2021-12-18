@@ -89,7 +89,7 @@ module wallypipelinedhart (
   logic [2:0] 		    FRM_REGW;
    logic [4:0]        RdM, RdW;
   logic 		    FStallD;
-  logic 		    FWriteIntE, FWriteIntM, FWriteIntW;
+  logic 		    FWriteIntE;
   logic [`XLEN-1:0] 	    FWriteDataE;
   logic [`XLEN-1:0] 	    FIntResM;  
   logic 		    FDivBusyE;
@@ -210,8 +210,6 @@ module wallypipelinedhart (
      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
      .FWriteDataE, .IEUAdrE, .MulDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-     //.SrcAE, .SrcBE, 
-     .FWriteIntM,
 
      // Memory stage interface
      .SquashSCW, // from LSU
@@ -225,7 +223,7 @@ module wallypipelinedhart (
 
      // Writeback stage
      .CSRReadValW, .ReadDataM, .MulDivResultW,
-     .FWriteIntW, .RdW, .ReadDataW,
+     .RdW, .ReadDataW,
      .InstrValidM, 
 
      // hazards
@@ -370,7 +368,7 @@ module wallypipelinedhart (
      .RdM, .RdW, // which FP register to write to (from IEU)
      .FRegWriteM, // FP register write enable
      .FStallD, // Stall the decode stage
-     .FWriteIntE, .FWriteIntM, .FWriteIntW, // integer register write enable
+     .FWriteIntE, // integer register write enable
      .FWriteDataE, // Data to be written to memory
      .FIntResM, // data to be written to integer register
      .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)

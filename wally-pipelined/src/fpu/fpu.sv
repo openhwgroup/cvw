@@ -36,7 +36,7 @@ module fpu (
   input logic [4:0] 	   RdM, RdW, // which FP register to write to (from IEU)
   output logic 		   FRegWriteM, // FP register write enable
   output logic 		   FStallD, // Stall the decode stage
-  output logic 		   FWriteIntE, FWriteIntM, FWriteIntW, // integer register write enable
+  output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
   output logic [`XLEN-1:0] FIntResM, // data to be written to integer register
   output logic 		   FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
@@ -260,9 +260,9 @@ module fpu (
      flopenrc #(64) EMRegCmpRes (clk, reset, FlushM, ~StallM, FResE, FResM); 
      flopenrc #(5)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, FFlgE, FFlgM);      
      flopenrc #(`XLEN) EMRegSgnRes (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
-     flopenrc #(8) EMCtrlReg (clk, reset, FlushM, ~StallM,
-			       {FRegWriteE, FResultSelE, FrmE, FmtE, FWriteIntE},
-			       {FRegWriteM, FResultSelM, FrmM, FmtM, FWriteIntM});
+     flopenrc #(7) EMCtrlReg (clk, reset, FlushM, ~StallM,
+			       {FRegWriteE, FResultSelE, FrmE, FmtE},
+			       {FRegWriteM, FResultSelM, FrmM, FmtM});
      
      // BEGIN MEMORY STAGE
      
@@ -273,9 +273,9 @@ module fpu (
      flopenrc #(64) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
      flopenrc #(64) MWRegDiv(clk, reset, FlushW, ~StallW, FDivResM, FDivResW); 
      flopenrc #(64) MWRegClass(clk, reset, FlushW, ~StallW, FResM, FResW);
-     flopenrc #(5)  MWCtrlReg(clk, reset, FlushW, ~StallW,
-			      {FRegWriteM, FResultSelM, FmtM, FWriteIntM},
-			      {FRegWriteW, FResultSelW, FmtW, FWriteIntW});
+     flopenrc #(4)  MWCtrlReg(clk, reset, FlushW, ~StallW,
+			      {FRegWriteM, FResultSelM, FmtM},
+			      {FRegWriteW, FResultSelW, FmtW});
      
      // BEGIN WRITEBACK STAGE
      
@@ -290,8 +290,6 @@ module fpu (
   end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
      assign FStallD = 0;
      assign FWriteIntE = 0; 
-     assign FWriteIntM = 0;
-     assign FWriteIntW = 0;
      assign FWriteDataE = 0;
      assign FIntResM = 0;
      assign FDivBusyE = 0;
