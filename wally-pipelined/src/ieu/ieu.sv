@@ -40,9 +40,7 @@ module ieu (
   output logic [`XLEN-1:0] IEUAdrE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
-  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-//  output logic [`XLEN-1:0] SrcAE, SrcBE,
-  input logic 		   FWriteIntM,
+  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
   // Memory stage interface
   input logic 		   SquashSCW, // from LSU
@@ -59,7 +57,6 @@ module ieu (
 
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MulDivResultW,
-  input logic 		   FWriteIntW,
   output logic [4:0]       RdW,
   output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
@@ -82,6 +79,7 @@ module ieu (
   logic        ALUResultSrcE;
   logic        SCE;
   logic [4:0]  RdE;
+  logic        FWriteIntM;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;
@@ -96,7 +94,7 @@ module ieu (
     .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
     // Execute stage control signals
-    .StallE, .FlushE, .FlagsE, 
+    .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE,        // for datapath and Hazard Unit
     .ALUControlE, .ALUSrcAE, .ALUSrcBE,
     .ALUResultSrcE,
@@ -109,6 +107,7 @@ module ieu (
     .SCE, .AtomicE, .AtomicM, .Funct3M,
     .RegWriteM,     // for Hazard Unit
     .InvalidateICacheM, .FlushDCacheM, .InstrValidM, 
+    .FWriteIntM,
     // Writeback stage control signals
     .StallW, .FlushW,
     .RegWriteW,     // for datapath and Hazard Unit
@@ -133,7 +132,7 @@ module ieu (
     .StallM, .FlushM, .FWriteIntM, .FIntResM, 
     .SrcAM, .WriteDataM,
     // Writeback stage signals
-    .StallW, .FlushW, .FWriteIntW, .RegWriteW, 
+    .StallW, .FlushW, .RegWriteW, 
     .SquashSCW, .ResultSrcW, .ReadDataW,
     // input  logic [`XLEN-1:0] PCLinkW,
     .CSRReadValW, .ReadDataM, .MulDivResultW, 
@@ -146,7 +145,7 @@ module ieu (
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
     .MemReadE, .MulDivE, .CSRReadE,
     .RegWriteM, .RegWriteW,
-    .FWriteIntE, .FWriteIntM, .FWriteIntW,
+    .FWriteIntE,
     .SCE,
     // Forwarding controls
     .ForwardAE, .ForwardBE,

@@ -37,6 +37,7 @@ module controller(
   // Execute stage control signals
   input logic 	     StallE, FlushE,  
   input logic  [2:0] FlagsE, 
+  input  logic       FWriteIntE,
   output logic       PCSrcE,        // for datapath and Hazard Unit
   output logic [2:0] ALUControlE, 
   output logic 	     ALUSrcAE, ALUSrcBE,
@@ -56,6 +57,7 @@ module controller(
   output logic       RegWriteM,     // for Hazard Unit
   output logic       InvalidateICacheM, FlushDCacheM,
   output logic       InstrValidM, 
+  output logic       FWriteIntM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
   output logic 	     RegWriteW,     // for datapath and Hazard Unit
@@ -98,6 +100,7 @@ module controller(
   logic        zeroE, ltE, ltuE;
   logic        unused;
 	logic        BranchFlagE;
+  logic        IEURegWriteE;
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -167,25 +170,13 @@ module controller(
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD && InstrD[13]); // Don't write if setting or clearing zeros
 
-  // ALU Decoding *** should move to ALU for better modularity
+  // ALU Decoding
   assign sltD = (Funct3D == 3'b010);
   assign sltuD = (Funct3D == 3'b011);
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-
   assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
-//  assign SubArithD = aluc3D; // ***cleanup
-
-  // *** replace all of this
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
-/*  always_comb
-    case(ALUOpD)
-      2'b00:                ALUControlD = 5'b00000; // addition
-      2'b01:                ALUControlD = 5'b00000;  // add for branch offset
-//      2'b01:                ALUControlD = 5'b01000;  // subtraction
-//      2'b11:                ALUControlD = 5'b01110;  // pass B through for lui ***no longer used
-      default:              ALUControlD = {W64D, aluc3D, Funct3D}; // R-type instructions
-    endcase*/
 
   // Fences
   // Ordinary fence is presently a nop
@@ -208,32 +199,24 @@ module controller(
   // Execute stage pipeline control register and logic
   flopenrc #(27) controlregE(clk, reset, FlushE, ~StallE,
                            {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, AtomicD, InvalidateICacheD, FlushDCacheD, InstrValidD},
-                           {RegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE});
+                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE});
 
   // Branch Logic
   assign {zeroE, ltE, ltuE} = FlagsE;
   mux4 #(1) branchflagmux(zeroE, 1'b0, ltE, ltuE, Funct3E[2:1], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];
-/*  always_comb
-    case(Funct3E)
-      3'b000:  BranchTakenE = zeroE;  // beq
-      3'b001:  BranchTakenE = ~zeroE; // bne
-      3'b100:  BranchTakenE = ltE;    // blt
-      3'b101:  BranchTakenE = ~ltE;   // bge
-      3'b110:  BranchTakenE = ltuE;   // bltu
-      3'b111:  BranchTakenE = ~ltuE;  // bgeu
-      default: BranchTakenE = 1'b0; // undefined mode
-    endcase*/
     
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
 
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
+
+  assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
   
   // Memory stage pipeline control register
-  flopenrc #(17) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, AtomicM, InvalidateICacheM, FlushDCacheM, InstrValidM});
+  flopenrc #(18) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, InstrValidM});
   
   // Writeback stage pipeline control register
   flopenrc #(4) controlregW(clk, reset, FlushW, ~StallW,

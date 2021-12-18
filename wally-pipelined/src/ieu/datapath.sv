@@ -53,7 +53,6 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
-  input  logic             FWriteIntW,
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
@@ -92,8 +91,7 @@ module datapath (
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-  // *** can FWriteIntW be merged with RegWriteW
-  regfile regf(clk, reset, {RegWriteW | FWriteIntW}, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
+  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
   extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
  
   // Execute stage pipeline register and logic
@@ -106,7 +104,6 @@ module datapath (
 	
   mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
-  mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
@@ -119,12 +116,23 @@ module datapath (
   flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
-  mux2  #(`XLEN)    resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
   flopen #(`XLEN)   ReadDataWReg(.clk, .en(~StallW), .d(ReadDataM), .q(ReadDataW));
+  mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
+
+  // floating point interactions: fcvt, fp stores
+  generate
+    if (`F_SUPPORTED) begin:fpmux
+      mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
+      mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+    end else begin
+      assign ResultM = IEUResultM;
+      assign WriteDataE = ForwardedSrcBE;
+    end
+  endgenerate
 
   // handle Store Conditional result if atomic extension supported
   generate
@@ -133,6 +141,4 @@ module datapath (
     else 
       assign SCResultW = 0;
   endgenerate
-
-  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
 endmodule
