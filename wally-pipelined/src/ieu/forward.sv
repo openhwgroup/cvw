@@ -36,6 +36,8 @@ module forward(
   output logic [1:0] ForwardAE, ForwardBE,
   output logic       FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
 );
+
+  logic MatchDE;
   
   always_comb begin
     ForwardAE = 2'b00;
@@ -50,9 +52,10 @@ module forward(
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
-   assign FPUStallD = FWriteIntE & ((Rs1D == RdE) | (Rs2D == RdE)); 
-   assign LoadStallD = (MemReadE|SCE) & ((Rs1D == RdE) | (Rs2D == RdE));  
-   assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)); 
-   assign CSRRdStallD = CSRReadE & ((Rs1D == RdE) | (Rs2D == RdE));
+  assign MatchDE = (Rs1D == RdE) | (Rs2D == RdE); // Decode-stage instruction source depends on result from execute stage instruction
+  assign FPUStallD = FWriteIntE & MatchDE; 
+  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
+  assign MulDivStallD = MulDivE & MatchDE; 
+  assign CSRRdStallD = CSRReadE & MatchDE;
 
 endmodule
