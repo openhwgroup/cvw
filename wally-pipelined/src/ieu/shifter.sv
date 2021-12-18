@@ -38,7 +38,7 @@ module shifter (
   // extension.
 
   generate
-    if (`XLEN==32) begin
+    if (`XLEN==32) begin:shifter
       // funnel shifter (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
       logic [62:0]        z, zshift;
       logic [4:0]         offset;
@@ -56,7 +56,7 @@ module shifter (
       // funnel operation
       assign zshift = z >> offset;
       assign y = zshift[31:0];      
-    end else begin  // RV64
+    end else begin:shifter  // RV64
       // funnel shifter followed by masking
       // research idea: investigate shifter designs for mixed 32/64-bit shifts
       logic [126:0] z, zshift;
@@ -83,12 +83,7 @@ module shifter (
   
       // funnel operation
       assign zshift = z >> offset;
-      assign ylower = zshift[31:0];    
-
-      // mask upper 32 bits for W-type 32-bit shifts
-      // harris: is there a clever way to get zshift[31] earlier for arithmetic right shifts to speed up critical path?
-      assign yupper = w64 ? {32{zshift[31]}} : zshift[63:32];
-      assign y = {yupper, ylower};
+      assign y = zshift[63:0];    
     end
   endgenerate
 endmodule
