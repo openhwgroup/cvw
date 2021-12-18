@@ -26,10 +26,10 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN-1:0] a,
-  input  logic [`LOG_XLEN-1:0]       amt,
-  input  logic             right, arith, w64,
-  output logic [`XLEN-1:0] y);
+  input  logic [`XLEN-1:0]     A,
+  input  logic [`LOG_XLEN-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [`XLEN-1:0]     Y);
 
   logic [2*`XLEN-2:0]      z, zshift;
   logic [`LOG_XLEN-1:0]    amttrunc, offset;
@@ -42,34 +42,34 @@ module shifter (
   generate
     if (`XLEN==32) begin:shifter // RV32
       always_comb  // funnel mux
-        if (right) 
-          if (arith) z = {{31{a[31]}}, a};
-          else       z = {31'b0, a};
-        else         z = {a, 31'b0};
-      assign amttrunc = amt; // shift amount
+        if (Right) 
+          if (Arith) z = {{31{A[31]}}, A};
+          else       z = {31'b0, A};
+        else         z = {A, 31'b0};
+      assign amttrunc = Amt; // shift amount
     end else begin:shifter  // RV64
       always_comb  // funnel mux
-        if (w64) begin // 32-bit shifts
-          if (right)
-            if (arith) z = {64'b0, {31{a[31]}}, a[31:0]};
-            else       z = {95'b0, a[31:0]};
-          else         z = {32'b0, a[31:0], 63'b0};
+        if (W64) begin // 32-bit shifts
+          if (Right)
+            if (Arith) z = {64'b0, {31{A[31]}}, A[31:0]};
+            else       z = {95'b0, A[31:0]};
+          else         z = {32'b0, A[31:0], 63'b0};
         end else begin
-          if (right)
-            if (arith) z = {{63{a[63]}}, a};
-            else       z = {63'b0, a};
-          else         z = {a, 63'b0};         
+          if (Right)
+            if (Arith) z = {{63{A[63]}}, A};
+            else       z = {63'b0, A};
+          else         z = {A, 63'b0};         
         end
-      assign amttrunc = w64 ? {1'b0, amt[4:0]} : amt; // 32 or 64-bit shift
+      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
     end
   endgenerate
 
   // opposite offset for right shfits
-  assign offset = right ? amttrunc : ~amttrunc;
+  assign offset = Right ? amttrunc : ~amttrunc;
   
   // funnel operation
   assign zshift = z >> offset;
-  assign y = zshift[`XLEN-1:0];    
+  assign Y = zshift[`XLEN-1:0];    
 endmodule
 
 
