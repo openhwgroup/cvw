@@ -136,9 +136,7 @@ module datapath (
 
   // handle Store Conditional result if atomic extension supported
   generate
-    if (`A_SUPPORTED)
-      assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
-    else 
-      assign SCResultW = 0;
+    if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
+    else              assign SCResultW = 0;
   endgenerate
 endmodule
