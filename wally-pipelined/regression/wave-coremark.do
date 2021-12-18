@@ -130,11 +130,11 @@ add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/CSRReadValW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultSrcW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultW
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/a
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/b
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/alucontrol
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/A
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/B
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/ALUControl
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/result
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/flags
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/FlagsE
 add wave -noupdate -group alu -divider internals
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/overflow
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/carry

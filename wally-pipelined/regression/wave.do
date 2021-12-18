@@ -127,23 +127,17 @@ add wave -noupdate -group RegFile /testbench/dut/hart/ieu/dp/regf/rd1
 add wave -noupdate -group RegFile /testbench/dut/hart/ieu/dp/regf/rd2
 add wave -noupdate -group RegFile /testbench/dut/hart/ieu/dp/regf/we3
 add wave -noupdate -group RegFile /testbench/dut/hart/ieu/dp/regf/wd3
-add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ALUResultW
+add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/IntResultW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ReadDataW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/CSRReadValW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultSrcW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultW
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/a
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/b
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/alucontrol
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/A
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/B
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/ALUControl
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/result
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/flags
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/FlagsE
 add wave -noupdate -group alu -divider internals
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/overflow
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/carry
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/zero
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/neg
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/lt
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/ltu
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs1D
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs2D
 add wave -noupdate -group Forward /testbench/dut/hart/ieu/fw/Rs1E
@@ -168,8 +162,8 @@ add wave -noupdate -expand -group PCS /testbench/dut/hart/PCE
 add wave -noupdate -expand -group PCS /testbench/dut/hart/PCM
 add wave -noupdate -expand -group PCS /testbench/PCW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/InstrD
-add wave -noupdate -group muldiv /testbench/dut/hart/mdu/SrcAE
-add wave -noupdate -group muldiv /testbench/dut/hart/mdu/SrcBE
+add wave -noupdate -group muldiv /testbench/dut/hart/mdu/ForwardedSrcAE
+add wave -noupdate -group muldiv /testbench/dut/hart/mdu/ForwardedSrcBE
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/Funct3E
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/MulDivE
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/W64E
@@ -178,8 +172,6 @@ add wave -noupdate -group muldiv /testbench/dut/hart/mdu/StallW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/FlushM
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/FlushW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/MulDivResultW
-add wave -noupdate -group muldiv /testbench/dut/hart/mdu/genblk1/div/start
-add wave -noupdate -group muldiv /testbench/dut/hart/mdu/DivDoneM
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/DivBusyE
 add wave -noupdate -group divider /testbench/dut/hart/mdu/genblk1/div/fsm1/CURRENT_STATE
 add wave -noupdate -group divider /testbench/dut/hart/mdu/genblk1/div/N
