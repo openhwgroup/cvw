@@ -36,7 +36,7 @@ module dcache
    input logic [6:0] 	       Funct7M,
    input logic [1:0] 	       AtomicM,
    input logic 		       FlushDCacheM,
-   input logic [11:0] 	       IEUAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
    input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
 
@@ -50,15 +50,9 @@ module dcache
    // inputs from TLB and PMA/P
    input logic 		       ExceptionM,
    input logic 		       PendingInterruptM, 
-   input logic 		       DTLBMissM,
-   input logic 		       ITLBMissF,
    input logic 		       CacheableM,
-   input logic 		       DTLBWriteM,
-   input logic 		       ITLBWriteF,
-   input logic 		       WalkerInstrPageFaultF,
    // from ptw
-   input logic 		       SelPTW,
-   input logic 		       WalkerPageFaultM, 
+   input logic 		       IgnoreRequest,
    output logic 	       MemAfterIWalkDone,
    // ahb side
    (* mark_debug = "true" *)output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
@@ -147,8 +141,8 @@ module dcache
   // Read Path CPU (IEU) side
 
   mux4 #(INDEXLEN)
-  AdrSelMux(.d0(IEUAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+  AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]), // *** REMOVE
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 		//.d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d3(FlushAdr),
@@ -354,14 +348,8 @@ module dcache
  		      .ExceptionM,
  		      .PendingInterruptM,
  		      .StallWtoDCache,
- 		      .DTLBMissM,
- 		      .ITLBMissF,
  		      .CacheableM,
- 		      .DTLBWriteM,
- 		      .ITLBWriteF,
- 		      .WalkerInstrPageFaultF,
- 		      .SelPTW,
- 		      .WalkerPageFaultM,
+			  .IgnoreRequest,
  		      .AHBAck, // from ahb
  		      .CacheHit,
  		      .FetchCountFlag,

@@ -107,8 +107,8 @@ module lsu
   logic [1:0] 		       MemRWMtoLRSC;
   logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
-  logic [`PA_BITS-1:0] 	       MemPAdrMtoDCache;
-  logic [11:0] 		       MemAdrEtoDCache;  
+  logic [`PA_BITS-1:0] 	       MemPAdrNoTranslate;
+  logic [11:0] 		       MemAdrE, MemAdrE_RENAME;  
   logic 		       StallWtoDCache;
   logic 		       MemReadM;
   logic 		       DataMisalignedMfromDCache;
@@ -127,9 +127,6 @@ module lsu
   logic 		       AnyCPUReqM;
   logic 		       MemAfterIWalkDone;
 
-  assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
-
-
   typedef enum {STATE_T0_READY,
 				STATE_T0_REPLAY,
 				STATE_T0_FAULT_REPLAY,				
@@ -142,8 +139,11 @@ module lsu
   logic 	   InterlockStall;
   logic SelReplayCPURequest;
   logic WalkerInstrPageFaultRaw;
+  logic IgnoreRequest;
   
-  
+
+  assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
+
   always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_T0_READY;
     else CurrState <= #1 NextState;
@@ -226,9 +226,10 @@ module lsu
 						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultF) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-  assign SelReplayCPURequest = NextState == STATE_T0_READY;
+  assign SelReplayCPURequest = NextState == STATE_T0_REPLAY;
   assign SelPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
 				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
+  assign IgnoreRequest = CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM);
   
   
 
@@ -284,8 +285,8 @@ module lsu
 		 .MemRWMtoLRSC(MemRWMtoLRSC),
 		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
-		 .MemPAdrMtoDCache(MemPAdrMtoDCache),
-		 .MemAdrEtoDCache(MemAdrEtoDCache),
+		 .MemPAdrNoTranslate(MemPAdrNoTranslate),
+		 .MemAdrE(MemAdrE),
 		 .StallWtoDCache(StallWtoDCache),
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
@@ -295,7 +296,7 @@ module lsu
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
        .PrivilegeModeW, .DisableTranslation(DisableTranslation),
-       .PAdr(MemPAdrMtoDCache),
+       .PAdr(MemPAdrNoTranslate),
        .VAdr(IEUAdrM),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PTE),
@@ -334,9 +335,9 @@ module lsu
   always_comb
     case(Funct3MtoDCache[1:0]) 
       2'b00:  DataMisalignedMfromDCache = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedMfromDCache = MemPAdrMtoDCache[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedMfromDCache = MemPAdrMtoDCache[1] | MemPAdrMtoDCache[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedMfromDCache = |MemPAdrMtoDCache[2:0];           // ld, sd, fld, fsd
+      2'b01:  DataMisalignedMfromDCache = MemPAdrNoTranslate[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedMfromDCache = MemPAdrNoTranslate[1] | MemPAdrNoTranslate[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedMfromDCache = |MemPAdrNoTranslate[2:0];           // ld, sd, fld, fsd
     endcase 
 
   // Determine if address is valid
@@ -347,6 +348,8 @@ module lsu
   // 1. ram // controlled by `MEM_DTIM
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
+  assign MemAdrE_RENAME = SelReplayCPURequest ? IEUAdrM[11:0] : MemAdrE[11:0];
+  
   dcache dcache(.clk(clk),
 		.reset(reset),
 		.StallWtoDCache(StallWtoDCache),
@@ -355,9 +358,9 @@ module lsu
 		.Funct7M(Funct7M),
 		.FlushDCacheM,
 		.AtomicM(AtomicMtoDCache),
-		.IEUAdrE(MemAdrEtoDCache),
+		.MemAdrE(MemAdrE_RENAME),
 		.MemPAdrM(MemPAdrM),
-		.VAdr(IEUAdrM[11:0]),		
+		.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
 		.WriteDataM(WriteDataM),
 		.ReadDataM(ReadDataM),
 		.DCacheStall(DCacheStall),
@@ -365,16 +368,10 @@ module lsu
 		.DCacheMiss,
 		.DCacheAccess,		
 		.ExceptionM(ExceptionM),
+		.IgnoreRequest,
 		.PendingInterruptM(PendingInterruptMtoDCache),
-		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
-		.DTLBWriteM(DTLBWriteM),
-		.ITLBWriteF(ITLBWriteF),
-		.ITLBMissF,
 		.MemAfterIWalkDone,
-		.SelPTW,
-		.WalkerPageFaultM(WalkerPageFaultM),
-		.WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),

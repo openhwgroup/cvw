@@ -103,15 +103,15 @@ add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/InstrD
 add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/InstrE
 add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/InstrM
 add wave -noupdate -group {instruction pipeline} /testbench/InstrW
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/PCNextF
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/PCF
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/PCPlus2or4F
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/BPPredPCF
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/PCNext0F
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/PCNext1F
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/SelBPPredF
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/BPPredWrongE
-add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/hart/ifu/PrivilegedChangePCM
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/PCNextF
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/PCF
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/PCPlus2or4F
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/BPPredPCF
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/PCNext0F
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/PCNext1F
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/SelBPPredF
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/BPPredWrongE
+add wave -noupdate -group {PCNext Generation} /testbench/dut/hart/ifu/PrivilegedChangePCM
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ifu/InstrD
 add wave -noupdate -group {Decode Stage} /testbench/InstrDName
 add wave -noupdate -group {Decode Stage} /testbench/dut/hart/ieu/c/RegWriteD
@@ -168,86 +168,86 @@ add wave -noupdate -group muldiv /testbench/dut/hart/mdu/FlushM
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/FlushW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/MulDivResultW
 add wave -noupdate -group muldiv /testbench/dut/hart/mdu/DivBusyE
-add wave -noupdate -expand -group icache -color Gold /testbench/dut/hart/ifu/icache/controller/CurrState
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/BasePAdrF
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/WayHit
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/genblk1/cachereplacementpolicy/BlockReplacementBits
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/genblk1/cachereplacementpolicy/EncVicWay
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/VictimWay
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/SetValid}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[0]/CacheTagMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/ValidBits}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/hart/ifu/icache/MemWay[1]/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/hart/ifu/icache/MemWay[1]/WriteWordEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[1]/CacheTagMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/hart/ifu/icache/MemWay[1]/ValidBits}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/hart/ifu/icache/MemWay[2]/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/hart/ifu/icache/MemWay[2]/SetValid}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[2]/CacheTagMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/hart/ifu/icache/MemWay[2]/ValidBits}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/SetValid}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[3]/CacheTagMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/DirtyBits}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/ValidBits}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -expand -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/controller/NextState
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/ITLBMissF
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/ITLBWriteF
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/ReadLineF
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/ReadLineF
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/BasePAdrF
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/hit
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spill
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/ICacheStallF
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntReset
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
-add wave -noupdate -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntEn
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/SelAdr
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/RAdr
-add wave -noupdate -expand -group icache /testbench/dut/hart/ifu/icache/FinalInstrRawF
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrPAdrF
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrInF
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/FetchCountFlag
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/FetchCount
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrReadF
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrAckF
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheMemWriteData
+add wave -noupdate -group icache -color Gold /testbench/dut/hart/ifu/icache/controller/CurrState
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/BasePAdrF
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/WayHit
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/genblk1/cachereplacementpolicy/BlockReplacementBits
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/genblk1/cachereplacementpolicy/EncVicWay
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/VictimWay
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/SetValid}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[0]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/ifu/icache/MemWay[0]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/hart/ifu/icache/MemWay[0]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/hart/ifu/icache/MemWay[1]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/hart/ifu/icache/MemWay[1]/WriteWordEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[1]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/hart/ifu/icache/MemWay[1]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/hart/ifu/icache/MemWay[1]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/hart/ifu/icache/MemWay[2]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/hart/ifu/icache/MemWay[2]/SetValid}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[2]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/hart/ifu/icache/MemWay[2]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/hart/ifu/icache/MemWay[2]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/SetValid}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -label TAG {/testbench/dut/hart/ifu/icache/MemWay[3]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/DirtyBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/hart/ifu/icache/MemWay[3]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/hart/ifu/icache/MemWay[3]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/controller/NextState
+add wave -noupdate -group icache /testbench/dut/hart/ifu/ITLBMissF
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/ITLBWriteF
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/ReadLineF
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/ReadLineF
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/BasePAdrF
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/hit
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spill
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/ICacheStallF
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntReset
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntEn
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/SelAdr
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/RAdr
+add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/FinalInstrRawF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrPAdrF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrInF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/FetchCountFlag
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/FetchCount
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrReadF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrAckF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheMemWriteData
 add wave -noupdate -group AHB -color Gold /testbench/dut/hart/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/AtomicMaskedM
@@ -272,7 +272,6 @@ add wave -noupdate -group AHB /testbench/dut/hart/ebu/HWRITED
 add wave -noupdate -expand -group lsu /testbench/dut/hart/hzu/LSUStall
 add wave -noupdate -expand -group lsu -expand -group {LSU ARB} /testbench/dut/hart/lsu/arbiter/SelPTW
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/hart/lsu/dcache/dcachefsm/CurrState
-add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WalkerPageFaultM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WriteDataM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMBlockWriteEnableM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMWordWriteEnableM
@@ -341,10 +340,10 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM w
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group valid/dirty /testbench/dut/hart/lsu/dcache/ClearValid
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group valid/dirty /testbench/dut/hart/lsu/dcache/SetDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group valid/dirty /testbench/dut/hart/lsu/dcache/ClearDirty
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/WayHit}
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/Valid}
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/Dirty}
-add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/ReadTag}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/WayHit}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/Valid}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/Dirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/ReadTag}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/hart/lsu/dcache/MemWay[1]/WayHit}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/hart/lsu/dcache/MemWay[1]/Valid}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/hart/lsu/dcache/MemWay[1]/Dirty}
@@ -501,8 +500,13 @@ add wave -noupdate /testbench/dut/hart/lsu/CurrState
 add wave -noupdate /testbench/dut/hart/lsu/InterlockStall
 add wave -noupdate /testbench/dut/hart/ifu/icache/PCNextF
 add wave -noupdate /testbench/dut/hart/ifu/icache/PCPF
+add wave -noupdate /testbench/dut/hart/lsu/WalkerInstrPageFaultF
+add wave -noupdate /testbench/dut/hart/lsu/WalkerPageFaultM
+add wave -noupdate /testbench/dut/hart/lsu/dcache/RAdr
+add wave -noupdate /testbench/dut/hart/lsu/dcache/SelAdrM
+add wave -noupdate /testbench/dut/hart/lsu/SelReplayCPURequest
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 6} {24475 ns} 1} {{Cursor 2} {22501 ns} 1} {{Cursor 3} {23208 ns} 0}
+WaveRestoreCursors {{Cursor 6} {24475 ns} 1} {{Cursor 2} {22501 ns} 1} {{Cursor 3} {3615 ns} 0}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 297
@@ -518,4 +522,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {23041 ns} {23377 ns}
+WaveRestoreZoom {3453 ns} {3729 ns}
