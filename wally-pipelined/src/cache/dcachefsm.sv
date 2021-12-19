@@ -108,7 +108,7 @@ module dcachefsm
 					   STATE_PTW_READ_MISS_EVICT_DIRTY,		
 					   STATE_PTW_READ_MISS_READ_WORD,
 					   STATE_PTW_READ_MISS_READ_WORD_DELAY,
-					   STATE_PTW_ACCESS_AFTER_WALK,		
+					   STATE_PTW_ACCESS_AFTER_WALK,		// dead state remove
 
 					   STATE_UNCACHED_WRITE,
 					   STATE_UNCACHED_WRITE_DONE,
@@ -623,7 +623,8 @@ module dcachefsm
 		CommittedM = 1'b1;
 		NextState = STATE_READY;
 		
-		
+		/// *** BUG BUG BUG missing AMO states.
+
 		// read hit valid cached
 		if(MemRWM[1] & CacheableM & CacheHit & ~DTLBMissM) begin
 		  DCacheStall = 1'b0;

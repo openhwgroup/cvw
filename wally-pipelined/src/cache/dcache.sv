@@ -150,6 +150,7 @@ module dcache
   AdrSelMux(.d0(IEUAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+		//.d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d3(FlushAdr),
 	    .s(SelAdrM),
 	    .y(RAdr));
