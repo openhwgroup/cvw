@@ -129,6 +129,107 @@ module lsu
 
   assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
 
+
+  typedef enum {STATE_T0_READY,
+				STATE_T0_REPLAY,
+				STATE_T0_FAULT_REPLAY,				
+				STATE_T3_DTLB_MISS,
+				STATE_T4_ITLB_MISS,
+				STATE_T5_ITLB_MISS,
+				STATE_T7_DITLB_MISS} statetype;
+
+  statetype CurrState, NextState;
+  logic 	   InterlockStall;
+  logic SelReplayCPURequest;
+  logic SelPTW2;
+  logic WalkerInstrPageFaultRaw;
+  
+  
+  always_ff @(posedge clk)
+    if (reset)    CurrState <= #1 STATE_T0_READY;
+    else CurrState <= #1 NextState;
+
+  always_comb begin
+	case(CurrState)
+	  STATE_T0_READY: begin
+		if(~ITLBMissF & DTLBMissM & AnyCPUReqM) begin
+		  NextState = STATE_T3_DTLB_MISS;
+		end
+		else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM) begin
+		  NextState = STATE_T4_ITLB_MISS;
+		end
+		else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM) begin
+		  NextState = STATE_T5_ITLB_MISS;
+		end
+		else if(ITLBMissF & DTLBMissM & AnyCPUReqM) begin
+		  NextState = STATE_T7_DITLB_MISS;
+		end else begin
+		  NextState = STATE_T0_READY;
+		end
+	  end
+	  STATE_T0_REPLAY: begin
+		if(DCacheStall) begin
+		  NextState = STATE_T0_REPLAY;
+		end else begin
+		  NextState = STATE_T0_READY;
+		end
+	  end
+	  STATE_T3_DTLB_MISS: begin
+		if(WalkerLoadPageFaultM | WalkerStorePageFaultM) begin
+		  NextState = STATE_T0_READY;
+		end else if(DTLBWriteM) begin
+		  NextState = STATE_T0_REPLAY;
+		end else begin
+		  NextState = STATE_T3_DTLB_MISS;
+		end
+	  end
+	  STATE_T4_ITLB_MISS: begin
+		if(WalkerInstrPageFaultRaw | ITLBWriteF) begin
+		  NextState = STATE_T0_READY;
+		end else begin
+		  NextState = STATE_T4_ITLB_MISS;
+		end
+	  end
+	  STATE_T5_ITLB_MISS: begin
+		if(ITLBWriteF) begin
+		  NextState = STATE_T0_REPLAY;
+		end else if(WalkerInstrPageFaultRaw) begin
+		  NextState = STATE_T0_FAULT_REPLAY;
+		end else begin
+		  NextState = STATE_T5_ITLB_MISS;
+		end
+	  end
+	  STATE_T0_FAULT_REPLAY: begin
+		if(DCacheStall) begin
+		  NextState = STATE_T0_FAULT_REPLAY;
+		end else begin
+		  NextState = STATE_T0_READY;
+		end
+	  end
+	  STATE_T7_DITLB_MISS: begin
+		if(WalkerStorePageFaultM | WalkerLoadPageFaultM) begin
+		  NextState = STATE_T0_READY;
+		end else if(DTLBWriteM) begin
+		  NextState = STATE_T5_ITLB_MISS;
+		end else begin
+		  NextState = STATE_T7_DITLB_MISS;
+		end
+	  end
+	  default: begin
+		NextState = STATE_T0_READY;
+	  end
+	endcase
+  end // always_comb
+
+  // signal to CPU it needs to wait on HPTW.
+  assign InterlockStall = (NextState != STATE_T0_READY) | (NextState != STATE_T0_FAULT_REPLAY) | (NextState != STATE_T0_READY);
+  // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
+  assign SelReplayCPURequest = NextState == STATE_T0_READY;
+  assign SelPTW2 = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
+				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
+  
+  
+
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, MemAdrM);
 
   // *** add generate to conditionally create hptw, lsuArb, and mmu
