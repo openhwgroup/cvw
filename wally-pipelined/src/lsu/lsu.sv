@@ -141,7 +141,6 @@ module lsu
   statetype CurrState, NextState;
   logic 	   InterlockStall;
   logic SelReplayCPURequest;
-  logic SelPTW2;
   logic WalkerInstrPageFaultRaw;
   
   
@@ -222,10 +221,13 @@ module lsu
   end // always_comb
 
   // signal to CPU it needs to wait on HPTW.
-  assign InterlockStall = (NextState != STATE_T0_READY) | (NextState != STATE_T0_FAULT_REPLAY) | (NextState != STATE_T0_READY);
+  assign InterlockStall = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+						  (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
+						  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
+  
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
   assign SelReplayCPURequest = NextState == STATE_T0_READY;
-  assign SelPTW2 = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
+  assign SelPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
 				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
   
   
@@ -250,7 +252,6 @@ module lsu
 	    .DCacheStall(DCacheStall),
         .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
-	    .SelPTW(SelPTW),
 		.HPTWStall,
 	    .AnyCPUReqM,
 	    .MemAfterIWalkDone,
@@ -258,14 +259,14 @@ module lsu
 	    .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 	    .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
-  assign LSUStall = DCacheStall | HPTWStall;
+  assign LSUStall = DCacheStall | InterlockStall;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
   // arbiter between IEU and hptw
   lsuArb arbiter(.clk(clk),
 		 // HPTW connection
-		 .SelPTW(SelPTW),
+		 .SelPTW,
 		 .HPTWRead(HPTWRead),
 		 .TranslationPAdrE(TranslationPAdr),
 		 // CPU connection
@@ -371,7 +372,7 @@ module lsu
 		.ITLBWriteF(ITLBWriteF),
 		.ITLBMissF,
 		.MemAfterIWalkDone,
-		.SelPTW(SelPTW),
+		.SelPTW,
 		.WalkerPageFaultM(WalkerPageFaultM),
 		.WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 

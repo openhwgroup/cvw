@@ -44,7 +44,6 @@ module hptw
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 	       PageType, // page type to TLBs
    output logic 	       ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   output logic 	       SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
    output logic            HPTWStall,
    output logic [`PA_BITS-1:0] TranslationPAdr,
    output logic 	       HPTWRead, // HPTW requesting to read memory
@@ -101,7 +100,6 @@ module hptw
 	  // Enable and select signals based on states
       assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	  assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
-	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT) & (WalkerState != LEAF) & (WalkerState != LEAF_DELAY);
 	  assign HPTWStall = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
@@ -213,7 +211,7 @@ module hptw
 	    end
 	  endcase
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
-      assign HPTWRead = 0; assign SelPTW = 0;
+      assign HPTWRead = 0;
       assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
       assign TranslationPAdr = 0; 
     end
