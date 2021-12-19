@@ -34,7 +34,7 @@ module hptw
   (
    input logic 		       clk, reset,
    input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0]     PCF, MemAdrM, // addresses to translate
+   input logic [`XLEN-1:0]     PCF, IEUAdrM, // addresses to translate
    input logic 		       ITLBMissF, DTLBMissM, // TLB Miss
    input logic [1:0] 	       MemRWM, // 10 = read, 01 = write
    input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
@@ -82,7 +82,7 @@ module hptw
 	  assign TLBMiss = (DTLBMissM | ITLBMissF);
 
       // Determine which address to translate
- 	  assign TranslationVAdr = DTLBWalk ? MemAdrM : PCF;
+ 	  assign TranslationVAdr = DTLBWalk ? IEUAdrM : PCF;
       assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	  // State flops

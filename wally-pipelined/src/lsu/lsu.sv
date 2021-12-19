@@ -50,7 +50,7 @@ module lsu
 
    // address and write data
    input  logic [`XLEN-1:0]    IEUAdrE,
-   output logic [`XLEN-1:0]    MemAdrM,
+   output logic [`XLEN-1:0]    IEUAdrM,
    input  logic [`XLEN-1:0]    WriteDataM, 
    output logic [`XLEN-1:0]    ReadDataM,
 
@@ -230,7 +230,7 @@ module lsu
   
   
 
-  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, MemAdrM);
+  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
 
   // *** add generate to conditionally create hptw, lsuArb, and mmu
   // based on `MEM_VIRTMEM
@@ -238,7 +238,7 @@ module lsu
 	    .reset(reset),
 	    .SATP_REGW(SATP_REGW),
 	    .PCF(PCF),
-	    .MemAdrM(MemAdrM),
+	    .IEUAdrM(IEUAdrM),
 	    .ITLBMissF(ITLBMissF & ~PendingInterruptM),
 	    .DTLBMissM(DTLBMissM & ~PendingInterruptM),
 	    .MemRWM(MemRWM),
@@ -272,7 +272,7 @@ module lsu
 		 .MemRWM(MemRWM),
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
-		 .MemAdrM(MemAdrM),
+		 .IEUAdrM(IEUAdrM),
 		 .IEUAdrE(IEUAdrE[11:0]),		 
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
@@ -295,7 +295,7 @@ module lsu
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
        .PrivilegeModeW, .DisableTranslation(DisableTranslation),
        .PAdr(MemPAdrMtoDCache),
-       .VAdr(MemAdrM),
+       .VAdr(IEUAdrM),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PTE),
        .PageTypeWriteVal(PageType),
@@ -356,7 +356,7 @@ module lsu
 		.AtomicM(AtomicMtoDCache),
 		.IEUAdrE(MemAdrEtoDCache),
 		.MemPAdrM(MemPAdrM),
-		.VAdr(MemAdrM[11:0]),		
+		.VAdr(IEUAdrM[11:0]),		
 		.WriteDataM(WriteDataM),
 		.ReadDataM(ReadDataM),
 		.DCacheStall(DCacheStall),

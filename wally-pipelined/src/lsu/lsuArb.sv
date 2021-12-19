@@ -38,7 +38,7 @@ module lsuArb
    input logic [1:0] 	       MemRWM,
    input logic [2:0] 	       Funct3M,
    input logic [1:0] 	       AtomicM,
-   input logic [`XLEN-1:0]     MemAdrM,
+   input logic [`XLEN-1:0]     IEUAdrM,
    input logic [11:0] 	       IEUAdrE,
    input logic 		       StallW,
    input logic 		       PendingInterruptM,
@@ -67,7 +67,7 @@ module lsuArb
 
   logic [2:0] PTWSize;
   logic [`PA_BITS-1:0]  TranslationPAdrM;
-  logic [`XLEN+1:0]  MemAdrMExt;
+  logic [`XLEN+1:0]  IEUAdrMExt;
   
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
@@ -82,8 +82,8 @@ module lsuArb
   flop #(`PA_BITS) TranslationPAdrMReg(clk, TranslationPAdrE, TranslationPAdrM);   // delay TranslationPAdrM by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMExt = {2'b00, MemAdrM};
-  assign MemPAdrMtoDCache = SelPTW ? TranslationPAdrM : MemAdrMExt[`PA_BITS-1:0]; 
+  assign IEUAdrMExt = {2'b00, IEUAdrM};
+  assign MemPAdrMtoDCache = SelPTW ? TranslationPAdrM : IEUAdrMExt[`PA_BITS-1:0]; 
   assign MemAdrEtoDCache = SelPTW ? TranslationPAdrE[11:0] : IEUAdrE[11:0];  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
