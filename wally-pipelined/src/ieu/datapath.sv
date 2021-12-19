@@ -66,11 +66,11 @@ module datapath (
 
   // Fetch stage signals
   // Decode stage signals
-  logic [`XLEN-1:0] RD1D, RD2D;
+  logic [`XLEN-1:0] R1D, R2D;
   logic [`XLEN-1:0] ExtImmD;
   logic [4:0]      RdD;
   // Execute stage signals
-  logic [`XLEN-1:0] RD1E, RD2E;
+  logic [`XLEN-1:0] R1E, R2E;
   logic [`XLEN-1:0] ExtImmE;
 
   // logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, SrcAE2, SrcBE2; // *** MAde forwardedsrcae an output to get rid of a mux in the critical path.
@@ -91,19 +91,19 @@ module datapath (
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
+  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, WriteDataW, R1D, R2D);
   extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
  
   // Execute stage pipeline register and logic
-  flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, RD1D, RD1E);
-  flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, RD2D, RD2E);
+  flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
+  flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);
   flopenrc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ~StallE, ExtImmD, ExtImmE);
   flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
-  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
+  mux3  #(`XLEN)  faemux(R1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
+  mux3  #(`XLEN)  fbemux(R2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
