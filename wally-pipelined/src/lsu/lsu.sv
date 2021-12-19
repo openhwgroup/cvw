@@ -221,9 +221,12 @@ module lsu
   end // always_comb
 
   // signal to CPU it needs to wait on HPTW.
-  assign InterlockStall = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+  assign InterlockStall_BUG = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
 						  (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultF) |
 						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultF) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
+
+  assign InterlockStall = InterlockStall_BUG === 1'bx ? 1'b0 : InterlockStall_BUG;
+  
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
   assign SelReplayCPURequest = NextState == STATE_T0_REPLAY;
