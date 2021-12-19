@@ -12,7 +12,7 @@ add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/priv/trap/I
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/InstrM
-add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/MemAdrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/IEUAdrM
 add wave -noupdate /testbench/dut/hart/ieu/dp/ResultM
 add wave -noupdate /testbench/dut/hart/ieu/dp/ResultW
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/trap/InstrMisalignedFaultM
