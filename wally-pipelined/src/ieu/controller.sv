@@ -170,10 +170,10 @@ module controller(
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD && InstrD[13]); // Don't write if setting or clearing zeros
 
-  // ALU Decoding
+  // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
   assign sltD = (Funct3D == 3'b010);
   assign sltuD = (Funct3D == 3'b011);
-  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed; ***explain why
+  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
   assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
@@ -205,12 +205,11 @@ module controller(
   assign {eqE, ltE, ltuE} = FlagsE;
   mux4 #(1) branchflagmux(eqE, 1'b0, ltE, ltuE, Funct3E[2:1], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];
-    
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
 
+  // Other execute stage controller signals
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
-
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
   
   // Memory stage pipeline control register
