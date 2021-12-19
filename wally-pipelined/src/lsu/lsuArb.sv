@@ -52,8 +52,8 @@ module lsuArb
    output logic [1:0] 	       MemRWMtoLRSC,
    output logic [2:0] 	       Funct3MtoDCache,
    output logic [1:0] 	       AtomicMtoDCache,
-   output logic [`PA_BITS-1:0] MemPAdrMtoDCache,
-   output logic [11:0] 	       MemAdrEtoDCache, 
+   output logic [`PA_BITS-1:0] MemPAdrNoTranslate,   // THis name is very bad. need a better name. This is the raw address from either the ieu or the hptw.
+   output logic [11:0] 	       MemAdrE, 
    output logic 	       StallWtoDCache,
    output logic 	       PendingInterruptMtoDCache,
    
@@ -83,8 +83,8 @@ module lsuArb
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
   assign IEUAdrMExt = {2'b00, IEUAdrM};
-  assign MemPAdrMtoDCache = SelPTW ? TranslationPAdrM : IEUAdrMExt[`PA_BITS-1:0]; 
-  assign MemAdrEtoDCache = SelPTW ? TranslationPAdrE[11:0] : IEUAdrE[11:0];  
+  assign MemPAdrNoTranslate = SelPTW ? TranslationPAdrM : IEUAdrMExt[`PA_BITS-1:0]; 
+  assign MemAdrE = SelPTW ? TranslationPAdrE[11:0] : IEUAdrE[11:0];  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
   assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;
