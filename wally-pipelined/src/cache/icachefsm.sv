@@ -144,6 +144,7 @@ module icachefsm
  -----/\----- EXCLUDED -----/\----- */
 		if(ITLBMissF) begin
 		  NextState = STATE_READY;
+		  SelAdr = 2'b01;
 		  ICacheStallF = 1'b0;
 		end
 		else if (hit & ~spill) begin
