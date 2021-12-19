@@ -173,7 +173,7 @@ module controller(
   // ALU Decoding
   assign sltD = (Funct3D == 3'b010);
   assign sltuD = (Funct3D == 3'b011);
-  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);
+  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed; ***explain why
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
   assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
