@@ -30,7 +30,7 @@ module comparator #(parameter WIDTH=32) (
   output logic [2:0]       flags);
 
   logic [WIDTH-1:0] bbar, diff;
-  logic             carry, zero, neg, overflow, lt, ltu;
+  logic             carry, eq, neg, overflow, lt, ltu;
 
   // NOTE: This can be replaced by some faster logic optimized
   // to just compute flags and not the difference.
@@ -40,13 +40,13 @@ module comparator #(parameter WIDTH=32) (
   assign {carry, diff} = a + bbar + 1;
 
   // condition code flags based on add/subtract output
-  assign zero = (diff == 0);
+  assign eq = (diff == 0);
   assign neg  = diff[WIDTH-1];
   // overflow occurs when the numbers being subtracted have the opposite sign 
   // and the result has the opposite sign fron the first
   assign overflow = (a[WIDTH-1] ^ b[WIDTH-1]) & (a[WIDTH-1] ^ diff[WIDTH-1]);
   assign lt = neg ^ overflow;
   assign ltu = ~carry;
-  assign flags = {zero, lt, ltu};
+  assign flags = {eq, lt, ltu};
 endmodule
 

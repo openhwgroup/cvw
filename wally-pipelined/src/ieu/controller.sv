@@ -97,7 +97,7 @@ module controller(
   logic        SubArithD;
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;
-  logic        zeroE, ltE, ltuE;
+  logic        eqE, ltE, ltuE;
   logic        unused;
 	logic        BranchFlagE;
   logic        IEURegWriteE;
@@ -202,8 +202,8 @@ module controller(
                            {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE});
 
   // Branch Logic
-  assign {zeroE, ltE, ltuE} = FlagsE;
-  mux4 #(1) branchflagmux(zeroE, 1'b0, ltE, ltuE, Funct3E[2:1], BranchFlagE);
+  assign {eqE, ltE, ltuE} = FlagsE;
+  mux4 #(1) branchflagmux(eqE, 1'b0, ltE, ltuE, Funct3E[2:1], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];
     
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
