@@ -52,10 +52,10 @@ module alu #(parameter WIDTH=32) (
   // Shifts
   shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
 
-  // condition code flags based on add/subtract output
-  // Overflow occurs when the numbers being added have the same sign 
-  // and the result has the opposite sign
-  assign Overflow = (A[WIDTH-1] ~^ CondInvB[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
+  // condition code flags based on subtract output
+  // Overflow occurs when the numbers being subtracted have the opposite sign 
+  // and the result has the opposite sign of A
+  assign Overflow = (A[WIDTH-1] ^ B[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
   assign Neg  = Sum[WIDTH-1];
   assign LT = Neg ^ Overflow;
   assign LTU = ~Carry;
