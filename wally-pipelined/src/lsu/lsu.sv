@@ -222,8 +222,8 @@ module lsu
 
   // signal to CPU it needs to wait on HPTW.
   assign InterlockStall_BUG = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
-						  (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultF) |
-						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultF) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
+						  (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultRaw) |
+						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultRaw) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
 
   assign InterlockStall = InterlockStall_BUG === 1'bx ? 1'b0 : InterlockStall_BUG;
   
@@ -234,6 +234,7 @@ module lsu
 				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequest = CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM);
   
+  assign WalkerInstrPageFaultF = WalkerInstrPageFaultRaw | CurrState == STATE_T0_FAULT_REPLAY;
   
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -259,7 +260,7 @@ module lsu
 		.HPTWStall,
 	    .AnyCPUReqM,
 	    .MemAfterIWalkDone,
-	    .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	    .WalkerInstrPageFaultF(WalkerInstrPageFaultRaw),
 	    .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 	    .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
