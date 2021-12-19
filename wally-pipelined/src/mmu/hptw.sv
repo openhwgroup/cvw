@@ -199,7 +199,7 @@ module hptw
 //	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 //				else 				NextWalkerState = FAULT;
 	    LEAF: 	if (DTLBWalk)		NextWalkerState = IDLE; // updates TLB
-		        else                NextWalkerState = LEAF_DELAY;
+		        else                NextWalkerState = IDLE;
 	    LEAF_DELAY: 				NextWalkerState = IDLE;		 // give time to allow address translation
 	    FAULT: if (ITLBMissF & AnyCPUReqM & ~MemAfterIWalkDone) NextWalkerState = FAULT;
  	                        else NextWalkerState = IDLE;

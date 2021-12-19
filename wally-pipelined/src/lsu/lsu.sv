@@ -222,8 +222,8 @@ module lsu
 
   // signal to CPU it needs to wait on HPTW.
   assign InterlockStall = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
-						  (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
-						  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
+						  (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultF) |
+						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultF) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
   assign SelReplayCPURequest = NextState == STATE_T0_READY;
