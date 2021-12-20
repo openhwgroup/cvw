@@ -39,7 +39,6 @@ module hptw
    input logic [1:0] 	       MemRWM, // 10 = read, 01 = write
    input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
    input logic 		       DCacheStall, // stall from LSU
-   input logic 		       MemAfterIWalkDone,
    input logic 		       AnyCPUReqM,
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 	       PageType, // page type to TLBs
@@ -54,7 +53,7 @@ module hptw
 				     L1_ADR, L1_RD, 
 				     L2_ADR, L2_RD, 
 				     L3_ADR, L3_RD, 
-				     LEAF, LEAF_DELAY, IDLE, FAULT} statetype; // *** placed outside generate statement to remove synthesis errors
+				     LEAF, IDLE, FAULT} statetype; // *** placed outside generate statement to remove synthesis errors
 
   generate
     if (`MEM_VIRTMEM) begin
@@ -198,10 +197,8 @@ module hptw
 	      			else 			NextWalkerState = LEAF;
 //	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 //				else 				NextWalkerState = FAULT;
-	    LEAF: 	if (DTLBWalk)		NextWalkerState = IDLE; // updates TLB
-		        else                NextWalkerState = IDLE;
-	    LEAF_DELAY: 				NextWalkerState = IDLE;		 // give time to allow address translation
-	    FAULT: if (ITLBMissF & AnyCPUReqM & ~MemAfterIWalkDone) NextWalkerState = FAULT;
+	    LEAF:                       NextWalkerState = IDLE; // updates TLB
+	    FAULT: if (ITLBMissF & AnyCPUReqM) NextWalkerState = FAULT;
  	                        else NextWalkerState = IDLE;
 	    default: begin
 	      // synthesis translate_off
