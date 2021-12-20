@@ -5,7 +5,7 @@
 // Modified:  david_harris@hmc.edu 18 July 2021 cleanup and simplification
 //            kmacsaigoren@hmc.edu 1 June 2021
 //            implemented SV48 on top of SV39. This included, adding a level of the FSM for the extra page number segment
-//            adding support for terapage encoding, and for setting the TranslationPAdr using the new level,
+//            adding support for terapage encoding, and for setting the HPTWAdr using the new level,
 //            adding the internal SvMode signal
 //
 // Purpose: Page Table Walker
@@ -43,7 +43,7 @@ module hptw
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 		   PageType, // page type to TLBs
    output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   output logic [`PA_BITS-1:0] TranslationPAdr,
+   output logic [`PA_BITS-1:0] HPTWAdr,
    output logic 			   HPTWRead, // HPTW requesting to read memory
    output logic [2:0] 		   HPTWSize, // 32 or 64 bit access.
    output logic 			   WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
@@ -118,13 +118,13 @@ module hptw
 			default: NextPageType = PageType;
 		endcase
 
-	  // TranslationPAdr muxing
+	  // HPTWAdr muxing
 	  if (`XLEN==32) begin // RV32
 		logic [9:0] VPN;
 		logic [`PPN_BITS-1:0] PPN;
 		assign VPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
 		assign PPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? BasePageTablePPN : CurrentPPN; 
-		assign TranslationPAdr = {PPN, VPN, 2'b00};
+		assign HPTWAdr = {PPN, VPN, 2'b00};
 		assign HPTWSize = 3'b010;
 	  end else begin // RV64
 		logic [8:0] VPN;
@@ -138,7 +138,7 @@ module hptw
 			endcase
 		assign PPN = ((WalkerState == L3_ADR) | (WalkerState == L3_RD) | 
 		              (SvMode != `SV48 & ((WalkerState == L2_ADR) | (WalkerState == L2_RD)))) ? BasePageTablePPN : CurrentPPN;
-		assign TranslationPAdr = {PPN, VPN, 3'b000};
+		assign HPTWAdr = {PPN, VPN, 3'b000};
 		assign HPTWSize = 3'b011;
 	  end
 
@@ -211,7 +211,7 @@ module hptw
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
       assign HPTWRead = 0;
       assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
-      assign TranslationPAdr = 0;
+      assign HPTWAdr = 0;
 	  assign HPTWSize = 3'b000;
     end
   endgenerate
