@@ -93,14 +93,14 @@ module testbench();
   logic [`XLEN-1:0] PCW;
   logic [31:0]      InstrW;
   logic             InstrValidW;
-  logic [`XLEN-1:0] MemAdrW, WriteDataW;
+  logic [`XLEN-1:0] IEUAdrW, WriteDataW;
   logic             TrapW;
   `define FLUSHW dut.hart.FlushW
   `define STALLW dut.hart.StallW
   flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ifu.PCM, PCW);
   flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.hart.ifu.InstrM, InstrW);
   flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.c.InstrValidM, InstrValidW);
-  flopenrc #(`XLEN)     MemAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.MemAdrM, MemAdrW);
+  flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.IEUAdrM, IEUAdrW);
   flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.WriteDataM, WriteDataW);  
   flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.hart.hzu.TrapM, TrapW);
 
@@ -134,7 +134,7 @@ module testbench();
       string            RegWrite``STAGE; \
       integer           ExpectedRegAdr``STAGE; \
       logic [`XLEN-1:0] ExpectedRegValue``STAGE; \
-      logic [`XLEN-1:0] ExpectedMemAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
+      logic [`XLEN-1:0] ExpectedIEUAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
       string            ExpectedCSRArray``STAGE[10:0]; \
       logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0];
   `DECLARE_TRACE_SCANNER_SIGNALS(E)
@@ -155,7 +155,7 @@ module testbench();
   integer           ExpectedRegAdrW;
   logic [`XLEN-1:0] ExpectedRegValueW;
   string            MemOpW;
-  logic [`XLEN-1:0] ExpectedMemAdrW, ExpectedMemReadDataW, ExpectedMemWriteDataW;
+  logic [`XLEN-1:0] ExpectedIEUAdrW, ExpectedMemReadDataW, ExpectedMemWriteDataW;
   integer           NumCSRW;
   string            ExpectedCSRArrayW[10:0];
   logic [`XLEN-1:0] ExpectedCSRArrayValueW[10:0];
@@ -411,7 +411,7 @@ module testbench();
         // parse memory address, read data, and/or write data \
         end else if(ExpectedTokens``STAGE[MarkerIndex``STAGE].substr(0, 2) == "Mem") begin \
           MemOp``STAGE = ExpectedTokens``STAGE[MarkerIndex``STAGE]; \
-          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+1], "%x", ExpectedMemAdr``STAGE); \
+          matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+1], "%x", ExpectedIEUAdr``STAGE); \
           matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+2], "%x", ExpectedMemWriteData``STAGE); \
           matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+3], "%x", ExpectedMemReadData``STAGE); \
           MarkerIndex``STAGE += 4; \
@@ -509,7 +509,7 @@ module testbench();
       RegWriteW <= "";
       ExpectedRegAdrW <= '0;
       ExpectedRegValueW <= '0;
-      ExpectedMemAdrW <= '0;
+      ExpectedIEUAdrW <= '0;
       MemOpW <= "";
       ExpectedMemWriteDataW <= '0;
       ExpectedMemReadDataW <= '0;
@@ -522,7 +522,7 @@ module testbench();
         RegWriteW <= "";
         ExpectedRegAdrW <= '0;
         ExpectedRegValueW <= '0;
-        ExpectedMemAdrW <= '0;
+        ExpectedIEUAdrW <= '0;
         MemOpW <= "";
         ExpectedMemWriteDataW <= '0;
         ExpectedMemReadDataW <= '0;
@@ -534,7 +534,7 @@ module testbench();
         RegWriteW <= RegWriteM;
         ExpectedRegAdrW <= ExpectedRegAdrM;
         ExpectedRegValueW <= ExpectedRegValueM;
-        ExpectedMemAdrW <= ExpectedMemAdrM;
+        ExpectedIEUAdrW <= ExpectedIEUAdrM;
         MemOpW <= MemOpM;
         ExpectedMemWriteDataW <= ExpectedMemWriteDataM;
         ExpectedMemReadDataW <= ExpectedMemReadDataM;
@@ -551,7 +551,7 @@ module testbench();
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
           release dut.uncore.clint.clint.MTIME;
         end 
-        //if (ExpectedMemAdrM == 'h10000005) begin
+        //if (ExpectedIEUAdrM == 'h10000005) begin
           //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, InstrCountW);
           //release dut.hart.ieu.dp.ReadDataM;
         //end
@@ -588,8 +588,8 @@ module testbench();
           `checkEQ(name, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
-          if(`DEBUG_TRACE >= 4) $display("\tMemAdrW: %016x ? expected: %016x", MemAdrW, ExpectedMemAdrW);
-          `checkEQ("MemAdrW",MemAdrW,ExpectedMemAdrW)
+          if(`DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
+          `checkEQ("IEUAdrW",IEUAdrW,ExpectedIEUAdrW)
           if(MemOpW == "MemR" || MemOpW == "MemRW") begin
             if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
             `checkEQ("ReadDataW",dut.hart.ieu.dp.ReadDataW,ExpectedMemReadDataW)
