@@ -123,7 +123,7 @@ module wallypipelinedhart (
   logic [2:0] 		    Funct3M;
   logic [`XLEN-1:0] 	    IEUAdrE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    MemAdrM;  
+  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    IEUAdrM;  
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
   logic [`XLEN-1:0] 	    ReadDataW;  
   logic 		    CommittedM;
@@ -244,7 +244,7 @@ module wallypipelinedhart (
 	.CommittedM, .DCacheMiss, .DCacheAccess,
 	.SquashSCW,            
 	//.DataMisalignedM(DataMisalignedM),
-	.IEUAdrE, .MemAdrM, .WriteDataM,
+	.IEUAdrE, .IEUAdrM, .WriteDataM,
 	.ReadDataM, .FlushDCacheM,
 	// connected to ahb (all stay the same)
 	.DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
@@ -328,7 +328,7 @@ module wallypipelinedhart (
             .LoadMisalignedFaultM, .StoreMisalignedFaultM,
             .TimerIntM, .ExtIntM, .SwIntM,
             .MTIME_CLINT, .MTIMECMP_CLINT,
-            .InstrMisalignedAdrM, .MemAdrM,
+            .InstrMisalignedAdrM, .IEUAdrM,
             .SetFflagsM,
             // Trap signals from pmp/pma in mmu
             // *** do these need to be split up into one for dmem and one for ifu?

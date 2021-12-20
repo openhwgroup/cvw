@@ -75,7 +75,7 @@ add wave -noupdate -expand -group {Memory Stage} /testbench/ExpectedPCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
 add wave -noupdate -expand -group {Memory Stage} /testbench/textM
-add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/MemAdrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/IEUAdrM
 add wave -noupdate -expand -group {WriteBack stage} /testbench/checkInstrW
 add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrValidW
 add wave -noupdate -expand -group {WriteBack stage} /testbench/PCW
