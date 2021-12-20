@@ -1,0 +1,3 @@
+If you need to compile for different abi, below is an example of how to configure the gnu riscv toolchain.
+
+./configure --prefix=/import/eager1/ross/riscv-multilib-bin --enable-multilib --multilib-generate="rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv64ic-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--"
