@@ -174,7 +174,7 @@ module testbench();
   // Useful Aliases
   `define RF          dut.hart.ieu.dp.regf.rf
   `define PC          dut.hart.ifu.pcreg.q
-  `define CSR_BASE    dut.hart.priv.csr.genblk1
+  `define CSR_BASE    dut.hart.priv.priv.csr
   `define HPMCOUNTER  `CSR_BASE.counters.genblk1.HPMCOUNTER_REGW
   `define PMP_BASE    `CSR_BASE.csrm.genblk4
   `define PMPCFG      genblk2.PMPCFGreg.q
@@ -210,8 +210,8 @@ module testbench();
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
-  `define PRIV        dut.hart.priv.privmodereg.q
-  `define INSTRET     dut.hart.priv.csr.genblk1.counters.genblk1.genblk2.INSTRETreg.q
+  `define PRIV        dut.hart.priv.priv.privmodereg.q
+  `define INSTRET     dut.hart.priv.priv.csr.counters.genblk1.genblk2.INSTRETreg.q
   // Common Macros
   `define checkCSR(CSR) \
     begin \
@@ -308,9 +308,9 @@ module testbench();
   integer ramFile;
   integer readResult;
   initial begin
-    force dut.hart.priv.SwIntM = 0;
-    force dut.hart.priv.TimerIntM = 0;
-    force dut.hart.priv.ExtIntM = 0;    
+    force dut.hart.priv.priv.SwIntM = 0;
+    force dut.hart.priv.priv.TimerIntM = 0;
+    force dut.hart.priv.priv.ExtIntM = 0;    
     $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootrom.bootrom.RAM, 'h1000 >> 3);
     $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
@@ -365,7 +365,7 @@ module testbench();
   // on the next falling edge the expected state is compared to the wally state.
 
   // step 0: read the expected state
-  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.trap.InstrPageFaultM & ~dut.hart.priv.trap.InterruptM & ~dut.hart.StallM;
+  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.priv.trap.InstrPageFaultM & ~dut.hart.priv.priv.trap.InterruptM & ~dut.hart.StallM;
   `define SCAN_NEW_INSTR_FROM_TRACE(STAGE) \
     // always check PC, instruction bits \
     if (checkInstrM) begin \
@@ -479,7 +479,7 @@ module testbench();
       end else begin // update MIP immediately
         $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
         MIPexpected = NextMIPexpected;
-        force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
+        force dut.hart.priv.priv.csr.csri.MIP_REGW = MIPexpected;
       end
       // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
       // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
@@ -491,11 +491,11 @@ module testbench();
       // $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
     end
     if(RequestDelayedMIP & checkInstrM) begin
-      $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.csr.genblk1.csrm.MEPC_REGW);
+      $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.priv.csr.csrm.MEPC_REGW);
       $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
       MIPexpected = NextMIPexpected;
-      force dut.hart.priv.csr.genblk1.csri.MIP_REGW = MIPexpected;
-      $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.csr.genblk1.csrm.MEPC_REGW);
+      force dut.hart.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+      $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.priv.csr.csrm.MEPC_REGW);
       RequestDelayedMIP = 0;
     end
   end
@@ -576,7 +576,7 @@ module testbench();
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
-        `checkEQ("Instr Count",dut.hart.priv.csr.genblk1.counters.genblk1.INSTRET_REGW,InstrCountW)
+        `checkEQ("Instr Count",dut.hart.priv.priv.csr.counters.genblk1.INSTRET_REGW,InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
           $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, InstrCountW, dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
@@ -601,19 +601,19 @@ module testbench();
         // check csr
         for(NumCSRPostWIndex = 0; NumCSRPostWIndex < NumCSRW; NumCSRPostWIndex++) begin
           case(ExpectedCSRArrayW[NumCSRPostWIndex])
-            "mhartid": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MHARTID_REGW)
-            "mstatus": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MSTATUS_REGW)
-            "mtvec":   `checkCSR(dut.hart.priv.csr.genblk1.csrm.MTVEC_REGW)
-            "mip":     `checkCSR(dut.hart.priv.csr.genblk1.csrm.MIP_REGW)
-            "mie":     `checkCSR(dut.hart.priv.csr.genblk1.csrm.MIE_REGW)
-            "mideleg": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MIDELEG_REGW)
-            "medeleg": `checkCSR(dut.hart.priv.csr.genblk1.csrm.MEDELEG_REGW)
-            "mepc":    `checkCSR(dut.hart.priv.csr.genblk1.csrm.MEPC_REGW)
-            "mtval":   `checkCSR(dut.hart.priv.csr.genblk1.csrm.MTVAL_REGW)
-            "sepc":    `checkCSR(dut.hart.priv.csr.genblk1.csrs.SEPC_REGW)
-            "scause":  `checkCSR(dut.hart.priv.csr.genblk1.csrs.genblk1.SCAUSE_REGW)
-            "stvec":   `checkCSR(dut.hart.priv.csr.genblk1.csrs.STVEC_REGW)
-            "stval":   `checkCSR(dut.hart.priv.csr.genblk1.csrs.genblk1.STVAL_REGW)
+            "mhartid": `checkCSR(dut.hart.priv.priv.csr.csrm.MHARTID_REGW)
+            "mstatus": `checkCSR(dut.hart.priv.priv.csr.csrm.MSTATUS_REGW)
+            "mtvec":   `checkCSR(dut.hart.priv.priv.csr.csrm.MTVEC_REGW)
+            "mip":     `checkCSR(dut.hart.priv.priv.csr.csrm.MIP_REGW)
+            "mie":     `checkCSR(dut.hart.priv.priv.csr.csrm.MIE_REGW)
+            "mideleg": `checkCSR(dut.hart.priv.priv.csr.csrm.MIDELEG_REGW)
+            "medeleg": `checkCSR(dut.hart.priv.priv.csr.csrm.MEDELEG_REGW)
+            "mepc":    `checkCSR(dut.hart.priv.priv.csr.csrm.MEPC_REGW)
+            "mtval":   `checkCSR(dut.hart.priv.priv.csr.csrm.MTVAL_REGW)
+            "sepc":    `checkCSR(dut.hart.priv.priv.csr.csrs.SEPC_REGW)
+            "scause":  `checkCSR(dut.hart.priv.priv.csr.csrs.genblk1.SCAUSE_REGW)
+            "stvec":   `checkCSR(dut.hart.priv.priv.csr.csrs.STVEC_REGW)
+            "stval":   `checkCSR(dut.hart.priv.priv.csr.csrs.genblk1.STVAL_REGW)
           endcase
         end
         if (fault == 1) begin
@@ -667,7 +667,7 @@ module testbench();
     begin
       int i;
       // Grab the SATP register from privileged unit
-      SATP = dut.hart.priv.csr.SATP_REGW;
+      SATP = dut.hart.priv.priv.csr.SATP_REGW;
       // Split the virtual address into page number segments and offset
       VPN[2] = adrIn[38:30];
       VPN[1] = adrIn[29:21];
@@ -677,7 +677,7 @@ module testbench();
       SvMode = SATP[63];
       // Only perform translation if translation is on and the processor is not
       // in machine mode
-      if (SvMode && (dut.hart.priv.PrivilegeModeW != `M_MODE)) begin
+      if (SvMode && (dut.hart.priv.priv.PrivilegeModeW != `M_MODE)) begin
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);

@@ -198,7 +198,6 @@ module wallypipelinedhart (
 	  
 	  ); // instruction fetch unit: PC, branch prediction, instruction cache
     
-
   ieu ieu(
      .clk, .reset,
 
@@ -276,7 +275,7 @@ module wallypipelinedhart (
 	.LSUStall);                     // change to LSUStall
 
 
-  
+   // *** Ross: please make EBU conditional when only supporting internal memories
 
   ahblite ebu(// IFU connections
      .clk, .reset,
@@ -295,22 +294,7 @@ module wallypipelinedhart (
      .HWRITED);
 
   
-  muldiv mdu(
-     .clk, .reset,
-	// Execute Stage interface
-	//   .SrcAE, .SrcBE,
-	.ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	.Funct3E, .Funct3M,
-     .MulDivE, .W64E,
-	// Writeback stage
-     .MulDivResultW,
-     // Divide Done
-	.DivBusyE, 
-	// hazards
-	.StallM, .StallW, .FlushM, .FlushW 
-  ); // multiply and divide unit
-  
-  hazard     hzu(
+   hazard     hzu(
      .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
      .LSUStall, .ICacheStallF,
@@ -323,57 +307,89 @@ module wallypipelinedhart (
 	.FlushF, .FlushD, .FlushE, .FlushM, .FlushW
      );	// global stall and flush control
 
-  // Priveleged block operates in M and W stages, handling CSRs and exceptions
-  privileged priv(
-     .clk, .reset,
-     .FlushD, .FlushE, .FlushM, .FlushW, 
-     .StallD, .StallE, .StallM, .StallW,
-     .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
-     .InstrM, .CSRReadValW, .PrivilegedNextPCM,
-     .RetM, .TrapM, 
-     .ITLBFlushF, .DTLBFlushM,
-     .InstrValidM, .CommittedM,
-     .FRegWriteM, .LoadStallD,
-     .BPPredDirWrongM, .BTBPredPCWrongM,
-     .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
-     .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
-     .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
-     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM, .WalkerStorePageFaultM,
-     .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
-     .LoadMisalignedFaultM, .StoreMisalignedFaultM,
-     .TimerIntM, .ExtIntM, .SwIntM,
-     .MTIME_CLINT, .MTIMECMP_CLINT,
-     .InstrMisalignedAdrM, .MemAdrM,
-     .SetFflagsM,
-     // Trap signals from pmp/pma in mmu
-     // *** do these need to be split up into one for dmem and one for ifu?
-     // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
-     .InstrAccessFaultF, .LoadAccessFaultM, .StoreAccessFaultM,
-     .ExceptionM, .PendingInterruptM, .IllegalFPUInstrE,
-     .PrivilegeModeW, .SATP_REGW,
-     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-     .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-     .FRM_REGW,.BreakpointFaultM, .EcallFaultM
-  );
-  
+   generate
+      if (`ZICSR_SUPPORTED) begin:priv
+         privileged priv(
+            .clk, .reset,
+            .FlushD, .FlushE, .FlushM, .FlushW, 
+            .StallD, .StallE, .StallM, .StallW,
+            .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
+            .InstrM, .CSRReadValW, .PrivilegedNextPCM,
+            .RetM, .TrapM, 
+            .ITLBFlushF, .DTLBFlushM,
+            .InstrValidM, .CommittedM,
+            .FRegWriteM, .LoadStallD,
+            .BPPredDirWrongM, .BTBPredPCWrongM,
+            .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+            .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
+            .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
+            .WalkerInstrPageFaultF, .WalkerLoadPageFaultM, .WalkerStorePageFaultM,
+            .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+            .LoadMisalignedFaultM, .StoreMisalignedFaultM,
+            .TimerIntM, .ExtIntM, .SwIntM,
+            .MTIME_CLINT, .MTIMECMP_CLINT,
+            .InstrMisalignedAdrM, .MemAdrM,
+            .SetFflagsM,
+            // Trap signals from pmp/pma in mmu
+            // *** do these need to be split up into one for dmem and one for ifu?
+            // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
+            .InstrAccessFaultF, .LoadAccessFaultM, .StoreAccessFaultM,
+            .ExceptionM, .PendingInterruptM, .IllegalFPUInstrE,
+            .PrivilegeModeW, .SATP_REGW,
+            .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+            .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
+            .FRM_REGW,.BreakpointFaultM, .EcallFaultM
+         );
+      end else begin
+         assign CSRReadValW = 0;
+         assign PrivilegedNextPCM = 0;
+         assign RetM = 0;
+         assign TrapM = 0;
+         assign ITLBFlushF = 0;
+         assign DTLBFlushM = 0;
+      end
+      if (`M_SUPPORTED) begin:mdu
+         muldiv mdu(
+            .clk, .reset,
+            .ForwardedSrcAE, .ForwardedSrcBE, 
+            .Funct3E, .Funct3M, .MulDivE, .W64E,
+            .MulDivResultW, .DivBusyE, 
+            .StallM, .StallW, .FlushM, .FlushW 
+         ); 
+      end else begin // no M instructions supported
+         assign MulDivResultW = 0; 
+         assign DivBusyE = 0;
+      end
 
-  fpu fpu(
-     .clk, .reset,
-     .FRM_REGW, // Rounding mode from CSR
-     .InstrD, // instruction from IFU
-     .ReadDataW,// Read data from memory
-     .ForwardedSrcAE, // Integer input being processed (from IEU)
-     .StallE, .StallM, .StallW, // stall signals from HZU
-     .FlushE, .FlushM, .FlushW, // flush signals from HZU
-     .RdM, .RdW, // which FP register to write to (from IEU)
-     .FRegWriteM, // FP register write enable
-     .FStallD, // Stall the decode stage
-     .FWriteIntE, // integer register write enable
-     .FWriteDataE, // Data to be written to memory
-     .FIntResM, // data to be written to integer register
-     .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
-     .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
-     .SetFflagsM        // FPU flags (to privileged unit)
-  ); // floating point unit
-  
+      if (`F_SUPPORTED) begin:fpu
+         fpu fpu(
+            .clk, .reset,
+            .FRM_REGW, // Rounding mode from CSR
+            .InstrD, // instruction from IFU
+            .ReadDataW,// Read data from memory
+            .ForwardedSrcAE, // Integer input being processed (from IEU)
+            .StallE, .StallM, .StallW, // stall signals from HZU
+            .FlushE, .FlushM, .FlushW, // flush signals from HZU
+            .RdM, .RdW, // which FP register to write to (from IEU)
+            .FRegWriteM, // FP register write enable
+            .FStallD, // Stall the decode stage
+            .FWriteIntE, // integer register write enable
+            .FWriteDataE, // Data to be written to memory
+            .FIntResM, // data to be written to integer register
+            .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
+            .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+            .SetFflagsM        // FPU flags (to privileged unit)
+         ); // floating point unit
+      end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
+         assign FStallD = 0;
+         assign FWriteIntE = 0; 
+         assign FWriteDataE = 0;
+         assign FIntResM = 0;
+         assign FDivBusyE = 0;
+         assign IllegalFPUInstrD = 1;
+         assign SetFflagsM = 0;
+      end
+
+   endgenerate
+  // Priveleged block operates in M and W stages, handling CSRs and exceptions  
 endmodule
