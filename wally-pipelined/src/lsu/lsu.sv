@@ -94,6 +94,7 @@ module lsu
   logic 					   DTLBPageFaultM;
   
   logic [`PA_BITS-1:0] 		   MemPAdrM;  // from mmu to dcache
+  logic [`XLEN+1:0] 		   IEUAdrExtM;
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
   logic 					   HPTWStall;  
@@ -230,7 +231,8 @@ module lsu
   //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
 
   assign AtomicMtoDCache = SelHPTW ? 2'b00 : AtomicM;
-  assign MemPAdrNoTranslate = SelHPTW ? HPTWAdr : {2'b00, IEUAdrM}[`PA_BITS-1:0]; 
+  assign IEUAdrExtM = {2'b00, IEUAdrM};
+  assign MemPAdrNoTranslate = SelHPTW ? HPTWAdr : IEUAdrExtM[`PA_BITS-1:0]; 
   assign MemAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
   assign CPUBusy = SelHPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
