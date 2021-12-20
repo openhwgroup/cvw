@@ -150,76 +150,30 @@ module lsu
 
   always_comb begin
 	case(CurrState)
-	  STATE_T0_READY: begin
-		if(~ITLBMissF & DTLBMissM & AnyCPUReqM) begin
-		  NextState = STATE_T3_DTLB_MISS;
-		end
-		else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM) begin
-		  NextState = STATE_T4_ITLB_MISS;
-		end
-		else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM) begin
-		  NextState = STATE_T5_ITLB_MISS;
-		end
-		else if(ITLBMissF & DTLBMissM & AnyCPUReqM) begin
-		  NextState = STATE_T7_DITLB_MISS;
-		end else begin
-		  NextState = STATE_T0_READY;
-		end
-	  end
-	  STATE_T0_REPLAY: begin
-		if(DCacheStall) begin
-		  NextState = STATE_T0_REPLAY;
-		end else begin
-		  NextState = STATE_T0_READY;
-		end
-	  end
-	  STATE_T3_DTLB_MISS: begin
-		if(WalkerLoadPageFaultM | WalkerStorePageFaultM) begin
-		  NextState = STATE_T0_READY;
-		end else if(DTLBWriteM) begin
-		  NextState = STATE_T0_REPLAY;
-		end else begin
-		  NextState = STATE_T3_DTLB_MISS;
-		end
-	  end
-	  STATE_T4_ITLB_MISS: begin
-		if(WalkerInstrPageFaultRaw | ITLBWriteF) begin
-		  NextState = STATE_T0_READY;
-		end else begin
-		  NextState = STATE_T4_ITLB_MISS;
-		end
-	  end
-	  STATE_T5_ITLB_MISS: begin
-		if(ITLBWriteF) begin
-		  NextState = STATE_T0_REPLAY;
-		end else if(WalkerInstrPageFaultRaw) begin
-		  NextState = STATE_T0_FAULT_REPLAY;
-		end else begin
-		  NextState = STATE_T5_ITLB_MISS;
-		end
-	  end
-	  STATE_T0_FAULT_REPLAY: begin
-		if(DCacheStall) begin
-		  NextState = STATE_T0_FAULT_REPLAY;
-		end else begin
-		  NextState = STATE_T0_READY;
-		end
-	  end
-	  STATE_T7_DITLB_MISS: begin
-		if(WalkerStorePageFaultM | WalkerLoadPageFaultM) begin
-		  NextState = STATE_T0_READY;
-		end else if(DTLBWriteM) begin
-		  NextState = STATE_T5_ITLB_MISS;
-		end else begin
-		  NextState = STATE_T7_DITLB_MISS;
-		end
-	  end
-	  default: begin
-		NextState = STATE_T0_READY;
-	  end
+	  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          NextState = STATE_T3_DTLB_MISS;
+	                         else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    NextState = STATE_T4_ITLB_MISS;
+                             else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     NextState = STATE_T5_ITLB_MISS;
+					         else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      NextState = STATE_T7_DITLB_MISS;
+					         else                                             NextState = STATE_T0_READY;
+	  STATE_T0_REPLAY:       if(DCacheStall)                                  NextState = STATE_T0_REPLAY;
+	                         else                                             NextState = STATE_T0_READY;
+	  STATE_T3_DTLB_MISS:    if(WalkerLoadPageFaultM | WalkerStorePageFaultM) NextState = STATE_T0_READY;
+	                         else if(DTLBWriteM)                              NextState = STATE_T0_REPLAY;
+						     else                                             NextState = STATE_T3_DTLB_MISS;
+	  STATE_T4_ITLB_MISS:    if(WalkerInstrPageFaultRaw | ITLBWriteF)         NextState = STATE_T0_READY;
+	                         else                                             NextState = STATE_T4_ITLB_MISS;
+	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   NextState = STATE_T0_REPLAY;
+	                         else if(WalkerInstrPageFaultRaw)                 NextState = STATE_T0_FAULT_REPLAY;
+						     else                                             NextState = STATE_T5_ITLB_MISS;
+	  STATE_T0_FAULT_REPLAY: if(DCacheStall)                                  NextState = STATE_T0_FAULT_REPLAY;
+	                         else                                             NextState = STATE_T0_READY;
+	  STATE_T7_DITLB_MISS:   if(WalkerStorePageFaultM | WalkerLoadPageFaultM) NextState = STATE_T0_READY;
+	                         else if(DTLBWriteM)                              NextState = STATE_T5_ITLB_MISS;
+						     else                                             NextState = STATE_T7_DITLB_MISS;
+	  default: NextState = STATE_T0_READY;
 	endcase
   end // always_comb
-
+  
   // signal to CPU it needs to wait on HPTW.
   /* -----\/----- EXCLUDED -----\/-----
    // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
@@ -330,12 +284,13 @@ module lsu
   assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoLRSC[0];
 
   // Determine if an Unaligned access is taking place
+  // hptw guarantees alignment, only check inputs from IEU.
   always_comb
-    case(Funct3MtoDCache[1:0]) 
+    case(Funct3M[1:0]) 
       2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedM = MemPAdrNoTranslate[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedM = MemPAdrNoTranslate[1] | MemPAdrNoTranslate[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedM = |MemPAdrNoTranslate[2:0];           // ld, sd, fld, fsd
+      2'b01:  DataMisalignedM = IEUAdrM[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedM = IEUAdrM[1] | IEUAdrM[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
     endcase 
 
   // Determine if address is valid
