@@ -35,7 +35,7 @@ module dcachefsm
    // hazard inputs
    input logic 		  ExceptionM,
    input logic 		  PendingInterruptM,
-   input logic 		  StallWtoDCache,
+   input logic 		  CPUBusy,
    input logic 		  CacheableM,
    // hptw inputs
    input logic 		  IgnoreRequest,
@@ -182,7 +182,7 @@ module dcachefsm
 		  SelAdrM = 2'b10;
 		  DCacheStall = 1'b0;
 		  
-		  if(StallWtoDCache) begin 
+		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
 			SelAdrM = 2'b10;
 		  end
@@ -198,7 +198,7 @@ module dcachefsm
 		  DCacheStall = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  
-		  if(StallWtoDCache) begin
+		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
             SelAdrM = 2'b10;
 		  end
@@ -214,7 +214,7 @@ module dcachefsm
 		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
 		  
-		  if(StallWtoDCache) begin 
+		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
 			SelAdrM = 2'b10;
 		  end
@@ -307,7 +307,7 @@ module dcachefsm
 		LRUWriteEn = 1'b0;
 		if(&MemRWM & AtomicM[1]) begin // amo write
 		  SelAdrM = 2'b10;
-		  if(StallWtoDCache) begin 
+		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
 		  end
 		  else begin
@@ -318,7 +318,7 @@ module dcachefsm
 		  end
 		end else begin
 		  LRUWriteEn = 1'b1;
-		  if(StallWtoDCache) begin 
+		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
 			SelAdrM = 2'b10;
 		  end
@@ -334,7 +334,7 @@ module dcachefsm
 		SelAdrM = 2'b10;
 		CommittedM = 1'b1;
 		LRUWriteEn = 1'b1;
-		if(StallWtoDCache) begin 
+		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
 		  SelAdrM = 2'b10;
 		end
@@ -361,7 +361,7 @@ module dcachefsm
       STATE_CPU_BUSY: begin
 		CommittedM = 1'b1;
 		SelAdrM = 2'b00;
-		if(StallWtoDCache) begin
+		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
 		  SelAdrM = 2'b10;
 		end
@@ -376,7 +376,7 @@ module dcachefsm
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
-		if(StallWtoDCache) begin
+		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY_FINISH_AMO;
 		end
 		else begin
@@ -412,7 +412,7 @@ module dcachefsm
       STATE_UNCACHED_WRITE_DONE: begin
 		CommittedM = 1'b1;
 		SelAdrM = 2'b00;
-		if(StallWtoDCache) begin
+		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
 		  SelAdrM = 2'b10;
 		end
@@ -425,7 +425,7 @@ module dcachefsm
 		CommittedM = 1'b1;
 		SelUncached = 1'b1;
 		SelAdrM = 2'b00;
-		if(StallWtoDCache) begin 
+		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
 		  SelAdrM = 2'b10;
 		end

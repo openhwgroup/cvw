@@ -27,7 +27,6 @@
 
 `include "wally-config.vh"
 
-// *** Ross Thompson amo misalignment check?
 module lsu 
   (
    input logic 				   clk, reset,
@@ -100,8 +99,8 @@ module lsu
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
   logic 					   HPTWStall;  
-  logic [`PA_BITS-1:0] 		   TranslationPAdr;
-  //logic [`PA_BITS-1:0] 		   TranslationPAdrM;
+  logic [`PA_BITS-1:0] 		   HPTWAdr;
+  //logic [`PA_BITS-1:0] 		   HPTWAdrM;
   logic 					   HPTWRead;
   logic [1:0] 				   MemRWMtoDCache;
   logic [1:0] 				   MemRWMtoLRSC;
@@ -109,7 +108,7 @@ module lsu
   logic [1:0] 				   AtomicMtoDCache;
   logic [`PA_BITS-1:0] 		   MemPAdrNoTranslate;
   logic [11:0] 				   MemAdrE, MemAdrE_RENAME;  
-  logic 					   StallWtoDCache;
+  logic 					   CPUBusy;
   logic 					   MemReadM;
   logic 					   DataMisalignedM;
   logic 					   DCacheStall;
@@ -262,7 +261,7 @@ module lsu
 			.DTLBMissM(DTLBMissM & ~PendingInterruptM),
 			.MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
 			.HPTWReadPTE(ReadDataM),
-			.DCacheStall, .TranslationPAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM,
+			.DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM,
 			.WalkerInstrPageFaultF(WalkerInstrPageFaultRaw),
 			.WalkerLoadPageFaultM, .WalkerStorePageFaultM);
 
@@ -279,12 +278,12 @@ module lsu
 
   // this is for the d cache SRAM.
   // turns out because we cannot pipeline hptw requests we don't need this register
-  //flop #(`PA_BITS) TranslationPAdrMReg(clk, TranslationPAdr, TranslationPAdrM);   // delay TranslationPAdrM by a cycle
+  //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemPAdrNoTranslate = SelPTW ? TranslationPAdr : {2'b00, IEUAdrM}[`PA_BITS-1:0]; 
-  assign MemAdrE = SelPTW ? TranslationPAdr[11:0] : IEUAdrE[11:0];  
-  assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
+  assign MemPAdrNoTranslate = SelPTW ? HPTWAdr : {2'b00, IEUAdrM}[`PA_BITS-1:0]; 
+  assign MemAdrE = SelPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
+  assign CPUBusy = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
   assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;
 
@@ -318,7 +317,7 @@ module lsu
 
   // Move generate from lrsc to outside this module.
   assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
-  lrsc lrsc(.clk, .reset, .FlushW, .StallWtoDCache, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
+  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
             .SquashSCW, .MemRWMtoDCache);
 
   // *** BUG, this is most likely wrong
@@ -351,7 +350,7 @@ module lsu
   
   dcache dcache(.clk(clk),
 				.reset(reset),
-				.StallWtoDCache(StallWtoDCache),
+				.CPUBusy(CPUBusy),
 				.MemRWM(MemRWMtoDCache),
 				.Funct3M(Funct3MtoDCache),
 				.Funct7M(Funct7M),

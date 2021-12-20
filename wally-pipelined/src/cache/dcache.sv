@@ -28,7 +28,7 @@
 module dcache
   (input logic clk,
    input logic 		       reset,
-   input logic 		       StallWtoDCache,
+   input logic 		       CPUBusy,
 
    // cpu side
    input logic [1:0] 	       MemRWM,
@@ -346,7 +346,7 @@ module dcache
 		      .AtomicM,
  		      .ExceptionM,
  		      .PendingInterruptM,
- 		      .StallWtoDCache,
+ 		      .CPUBusy,
  		      .CacheableM,
 			  .IgnoreRequest,
  		      .AHBAck, // from ahb
