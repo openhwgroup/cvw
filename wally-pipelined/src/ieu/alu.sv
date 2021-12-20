@@ -33,7 +33,6 @@ module alu #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] Sum);
 
   logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;
-  logic        Right;
   logic        Carry, Neg;
   logic        LT, LTU;
   logic        Overflow;
@@ -51,13 +50,12 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  assign Right = (Funct3[2:0] == 3'b101); // sra or srl
-  shifter sh(A, B[5:0], Right, SubArith, W64, Shift);
-  
-  // condition code flags based on add/subtract output
-  // Overflow occurs when the numbers being added have the same sign 
-  // and the result has the opposite sign
-  assign Overflow = (A[WIDTH-1] ~^ CondInvB[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
+
+  // condition code flags based on subtract output
+  // Overflow occurs when the numbers being subtracted have the opposite sign 
+  // and the result has the opposite sign of A
+  assign Overflow = (A[WIDTH-1] ^ B[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
   assign Neg  = Sum[WIDTH-1];
   assign LT = Neg ^ Overflow;
   assign LTU = ~Carry;
