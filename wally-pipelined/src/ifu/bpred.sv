@@ -45,7 +45,7 @@ module bpred
    // *** the specifics of how this is encode is subject to change.
    input logic              PCSrcE, // AKA Branch Taken
    // Signals required to check the branch prediction accuracy.
-   input logic [`XLEN-1:0]  PCTargetE, // The branch destination if the branch is taken.
+   input logic [`XLEN-1:0]  IEUAdrE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
    input logic [4:0]        InstrClassE,
@@ -165,7 +165,7 @@ module bpred
           // update
           .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
           .UpdatePC(PCE),
-          .UpdateTarget(PCTargetE),
+          .UpdateTarget(IEUAdrE),
           .UpdateInvalid(PredictionInstrClassWrongE),
           .UpdateInstrClass(InstrClassE));
 
@@ -218,7 +218,7 @@ module bpred
   // Check the prediction makes execution.
 
   // first check if the target or fallthrough address matches what was predicted.
-  assign TargetWrongE = PCTargetE != PCD;
+  assign TargetWrongE = IEUAdrE != PCD;
   assign FallThroughWrongE = PCLinkE != PCD;
   // If the target is taken check the target rather than fallthrough.  The instruction needs to be a branch if PCSrcE is selected
   // Remember the bpred can incorrectly predict a non cfi instruction as a branch taken.  If the real instruction is non cfi

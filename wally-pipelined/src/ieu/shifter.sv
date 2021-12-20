@@ -26,71 +26,50 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN-1:0] a,
-  input  logic [5:0]       amt,
-  input  logic             right, arith, w64,
-  output logic [`XLEN-1:0] y);
+  input  logic [`XLEN-1:0]     A,
+  input  logic [`LOG_XLEN-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [`XLEN-1:0]     Y);
 
-  // The best shifter architecture differs based on `XLEN.
-  // for RV32, only 32-bit shifts are needed.  These are 
-  // most efficiently implemented with a funnel shifter.  
-  // For RV64, 32 and 64-bit shifts are needed, with sign
-  // extension.
+  logic [2*`XLEN-2:0]      z, zshift;
+  logic [`LOG_XLEN-1:0]    amttrunc, offset;
 
+  // Handle left and right shifts with a funnel shifter.
+  // For RV32, only 32-bit shifts are needed.   
+  // For RV64, 32 and 64-bit shifts are needed, with sign extension.
+
+  // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
   generate
-    if (`XLEN==32) begin
-      // funnel shifter (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-      logic [62:0]        z, zshift;
-      logic [4:0]         offset;
-  
-      // funnel input
-      always_comb  
-        if (right)
-          if (arith) z = {{31{a[31]}}, a};
-          else       z = {31'b0, a};
-        else         z = {a, 31'b0};
-    
-      // shift amount
-      assign offset = right ? amt[4:0] : ~amt[4:0];
-    
-      // funnel operation
-      assign zshift = z >> offset;
-      assign y = zshift[31:0];      
-    end else begin  // RV64
-      // funnel shifter followed by masking
-      // research idea: investigate shifter designs for mixed 32/64-bit shifts
-      logic [126:0] z, zshift;
-      logic [31:0]   ylower, yupper;
-      logic [5:0]         offset, amt6;
-  
-      // funnel input
-      always_comb  
-        if (w64) begin // 32-bit shifts
-          if (right)
-            if (arith) z = {64'b0, {31{a[31]}}, a[31:0]};
-            else       z = {95'b0, a[31:0]};
-          else         z = {32'b0, a[31:0], 63'b0};
+    if (`XLEN==32) begin:shifter // RV32
+      always_comb  // funnel mux
+        if (Right) 
+          if (Arith) z = {{31{A[31]}}, A};
+          else       z = {31'b0, A};
+        else         z = {A, 31'b0};
+      assign amttrunc = Amt; // shift amount
+    end else begin:shifter  // RV64
+      always_comb  // funnel mux
+        if (W64) begin // 32-bit shifts
+          if (Right)
+            if (Arith) z = {64'b0, {31{A[31]}}, A[31:0]};
+            else       z = {95'b0, A[31:0]};
+          else         z = {32'b0, A[31:0], 63'b0};
         end else begin
-          if (right)
-            if (arith) z = {{63{a[63]}}, a};
-            else       z = {63'b0, a};
-          else         z = {a, 63'b0};         
+          if (Right)
+            if (Arith) z = {{63{A[63]}}, A};
+            else       z = {63'b0, A};
+          else         z = {A, 63'b0};         
         end
-    
-      // shift amount
-      assign amt6 = w64 ? {1'b0, amt[4:0]} : amt[5:0]; // 32 or 64-bit shift
-      assign offset = right ? amt6 : ~amt6;
-  
-      // funnel operation
-      assign zshift = z >> offset;
-      assign ylower = zshift[31:0];    
-
-      // mask upper 32 bits for W-type 32-bit shifts
-      // harris: is there a clever way to get zshift[31] earlier for arithmetic right shifts to speed up critical path?
-      assign yupper = w64 ? {32{zshift[31]}} : zshift[63:32];
-      assign y = {yupper, ylower};
+      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
     end
   endgenerate
+
+  // opposite offset for right shfits
+  assign offset = Right ? amttrunc : ~amttrunc;
+  
+  // funnel operation
+  assign zshift = z >> offset;
+  assign Y = zshift[`XLEN-1:0];    
 endmodule
 
 

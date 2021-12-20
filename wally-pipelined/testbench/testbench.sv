@@ -287,7 +287,7 @@ logic [3:0] dummy;
 
   // Termination condition
   // terminate on a specific ECALL for Imperas tests, or on a jump to self infinite loop for RISC-V Arch tests
-  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
+  assign DCacheFlushStart = dut.hart.priv.priv.EcallFaultM && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
@@ -318,7 +318,7 @@ module riscvassertions;
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (`DIV_BITSPERCYCLE == 1 || `DIV_BITSPERCYCLE==2 || `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
-    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
+    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 || `MEM_DCACHE == 0 || `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_BLOCKLENINBITS >= 128 || `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");

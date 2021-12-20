@@ -29,7 +29,7 @@
 module lrsc
   (
     input  logic                clk, reset,
-    input  logic                FlushW, StallWtoDCache,
+    input  logic                FlushW, CPUBusy,
     input  logic                MemReadM,
     input  logic [1:0]          MemRWMtoLRSC,
     output logic [1:0]          MemRWMtoDCache,
@@ -57,7 +57,7 @@ module lrsc
       end
       flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, MemPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
       flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
-      flopenrc #(1) squashreg(clk, reset, FlushW, ~StallWtoDCache, SquashSCM, SquashSCW);
+      flopenrc #(1) squashreg(clk, reset, FlushW, ~CPUBusy, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported
       assign SquashSCW = 0;
       assign MemRWMtoDCache = MemRWMtoLRSC;

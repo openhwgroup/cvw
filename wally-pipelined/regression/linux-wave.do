@@ -75,7 +75,7 @@ add wave -noupdate -expand -group {Memory Stage} /testbench/ExpectedPCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
 add wave -noupdate -expand -group {Memory Stage} /testbench/textM
-add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/MemAdrM
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/hart/lsu/IEUAdrM
 add wave -noupdate -expand -group {WriteBack stage} /testbench/checkInstrW
 add wave -noupdate -expand -group {WriteBack stage} /testbench/InstrValidW
 add wave -noupdate -expand -group {WriteBack stage} /testbench/PCW
@@ -151,11 +151,11 @@ add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/CSRReadValW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultSrcW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/hart/ieu/dp/ResultW
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/a
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/b
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/alucontrol
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/A
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/B
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/ALUControl
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/result
-add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/flags
+add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/FlagsE
 add wave -noupdate -group alu -divider internals
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/overflow
 add wave -noupdate -group alu /testbench/dut/hart/ieu/dp/alu/carry
@@ -239,7 +239,7 @@ add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3
 add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3/amoalu/srca
 add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3/amoalu/srcb
 add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3/amoalu/width
-add wave -noupdate -expand -group lsu -group {LSU ARB} /testbench/dut/hart/lsu/arbiter/SelPTW
+add wave -noupdate -expand -group lsu -group {LSU ARB} /testbench/dut/hart/lsu/arbiter/SelHPTW
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/hart/lsu/dcache/dcachefsm/CurrState
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WalkerPageFaultM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WriteDataM

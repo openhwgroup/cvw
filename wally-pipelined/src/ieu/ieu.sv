@@ -37,19 +37,17 @@ module ieu (
   input logic 		   FWriteIntE, 
   input logic 		   IllegalFPUInstrE,
   input logic [`XLEN-1:0]  FWriteDataE,
-  output logic [`XLEN-1:0] PCTargetE,
+  output logic [`XLEN-1:0] IEUAdrE,
   output logic 		   MulDivE, W64E,
   output logic [2:0] 	   Funct3E,
-  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-//  output logic [`XLEN-1:0] SrcAE, SrcBE,
-  input logic 		   FWriteIntM,
+  output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
   // Memory stage interface
   input logic 		   SquashSCW, // from LSU
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
-  output logic [`XLEN-1:0] MemAdrM, MemAdrE, WriteDataM, // Address and write data to LSU
+  output logic [`XLEN-1:0] WriteDataM, // Address and write data to LSU
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
@@ -59,7 +57,6 @@ module ieu (
 
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MulDivResultW,
-  input logic 		   FWriteIntW,
   output logic [4:0]       RdW,
   output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
@@ -82,6 +79,7 @@ module ieu (
   logic        ALUResultSrcE;
   logic        SCE;
   logic [4:0]  RdE;
+  logic        FWriteIntM;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;
@@ -96,7 +94,7 @@ module ieu (
     .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
     // Execute stage control signals
-    .StallE, .FlushE, .FlagsE, 
+    .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE,        // for datapath and Hazard Unit
     .ALUControlE, .ALUSrcAE, .ALUSrcBE,
     .ALUResultSrcE,
@@ -109,6 +107,7 @@ module ieu (
     .SCE, .AtomicE, .AtomicM, .Funct3M,
     .RegWriteM,     // for Hazard Unit
     .InvalidateICacheM, .FlushDCacheM, .InstrValidM, 
+    .FWriteIntM,
     // Writeback stage control signals
     .StallW, .FlushW,
     .RegWriteW,     // for datapath and Hazard Unit
@@ -127,13 +126,13 @@ module ieu (
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE,
     .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE,
-    .PCTargetE,
+    .IEUAdrE,
     .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
     // Memory stage signals
     .StallM, .FlushM, .FWriteIntM, .FIntResM, 
-    .SrcAM, .WriteDataM, .MemAdrM, .MemAdrE,
+    .SrcAM, .WriteDataM,
     // Writeback stage signals
-    .StallW, .FlushW, .FWriteIntW, .RegWriteW, 
+    .StallW, .FlushW, .RegWriteW, 
     .SquashSCW, .ResultSrcW, .ReadDataW,
     // input  logic [`XLEN-1:0] PCLinkW,
     .CSRReadValW, .ReadDataM, .MulDivResultW, 
@@ -146,7 +145,7 @@ module ieu (
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
     .MemReadE, .MulDivE, .CSRReadE,
     .RegWriteM, .RegWriteW,
-    .FWriteIntE, .FWriteIntM, .FWriteIntW,
+    .FWriteIntE,
     .SCE,
     // Forwarding controls
     .ForwardAE, .ForwardBE,
