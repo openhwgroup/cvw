@@ -56,7 +56,7 @@ module privileged (
   input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, IEUAdrM,
   input  logic [4:0]       SetFflagsM,
 
   // Trap signals from pmp/pma in mmu
@@ -231,7 +231,7 @@ module privileged (
             .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,
-            .InstrMisalignedAdrM, .MemAdrM, 
+            .InstrMisalignedAdrM, .IEUAdrM, 
             .InstrM,
             .InstrValidM, .CommittedM,
             .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,

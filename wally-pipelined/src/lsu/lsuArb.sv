@@ -33,28 +33,27 @@ module lsuArb
    input logic 		       SelPTW,
    input logic 		       HPTWRead,
    input logic [`PA_BITS-1:0]  TranslationPAdrE,
-   output logic 	       HPTWStall, 
 
    // from CPU
    input logic [1:0] 	       MemRWM,
    input logic [2:0] 	       Funct3M,
    input logic [1:0] 	       AtomicM,
-   input logic [`XLEN-1:0]     MemAdrM,
+   input logic [`XLEN-1:0]     IEUAdrM,
    input logic [11:0] 	       IEUAdrE,
    input logic 		       StallW,
    input logic 		       PendingInterruptM,
    // to CPU
    output logic 	       DataMisalignedM,
    output logic 	       CommittedM,
-   output logic 	       LSUStall, 
+   //output logic 	       LSUStall, 
   
    // to D Cache
    output logic 	       DisableTranslation, 
    output logic [1:0] 	       MemRWMtoLRSC,
    output logic [2:0] 	       Funct3MtoDCache,
    output logic [1:0] 	       AtomicMtoDCache,
-   output logic [`PA_BITS-1:0] MemPAdrMtoDCache,
-   output logic [11:0] 	       MemAdrEtoDCache, 
+   output logic [`PA_BITS-1:0] MemPAdrNoTranslate,   // THis name is very bad. need a better name. This is the raw address from either the ieu or the hptw.
+   output logic [11:0] 	       MemAdrE, 
    output logic 	       StallWtoDCache,
    output logic 	       PendingInterruptMtoDCache,
    
@@ -68,7 +67,7 @@ module lsuArb
 
   logic [2:0] PTWSize;
   logic [`PA_BITS-1:0]  TranslationPAdrM;
-  logic [`XLEN+1:0]  MemAdrMExt;
+  logic [`XLEN+1:0]  IEUAdrMExt;
   
   // multiplex the outputs to LSU
   assign DisableTranslation = SelPTW;  // change names between SelPTW would be confusing in DTLB.
@@ -83,9 +82,9 @@ module lsuArb
   flop #(`PA_BITS) TranslationPAdrMReg(clk, TranslationPAdrE, TranslationPAdrM);   // delay TranslationPAdrM by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemAdrMExt = {2'b00, MemAdrM};
-  assign MemPAdrMtoDCache = SelPTW ? TranslationPAdrM : MemAdrMExt[`PA_BITS-1:0]; 
-  assign MemAdrEtoDCache = SelPTW ? TranslationPAdrE[11:0] : IEUAdrE[11:0];  
+  assign IEUAdrMExt = {2'b00, IEUAdrM};
+  assign MemPAdrNoTranslate = SelPTW ? TranslationPAdrM : IEUAdrMExt[`PA_BITS-1:0]; 
+  assign MemAdrE = SelPTW ? TranslationPAdrE[11:0] : IEUAdrE[11:0];  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
   assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;
@@ -98,10 +97,9 @@ module lsuArb
   // not clear at all.  I think it should be LSUStall from the LSU,
   // which is demuxed to HPTWStall and CPUDataStall? (not sure on this last one).
   //assign HPTWStall = SelPTW ? DCacheStall : 1'b1;  
-  assign HPTWStall = DCacheStall;  
 
   assign PendingInterruptMtoDCache = SelPTW ? 1'b0 : PendingInterruptM;
 
-  assign LSUStall = SelPTW ? 1'b1 : DCacheStall; // *** this is probably going to change.
+  //assign LSUStall = SelPTW ? 1'b1 : DCacheStall; // *** this is probably going to change.
   
 endmodule

@@ -32,6 +32,7 @@ module icache
    input logic 		       StallF, 
    input logic [`PA_BITS-1:0]  PCNextF,
    input logic [`PA_BITS-1:0]  PCPF,
+   input logic [`XLEN-1:0]  PCF,
 
    input logic ExceptionM, PendingInterruptM,
    
@@ -125,7 +126,7 @@ module icache
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(PCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d1(PCF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(PCPSpillF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .s(SelAdr),
 	    .y(RAdr));
@@ -219,7 +220,7 @@ module icache
 
   // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-  assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
+  assign spill = PCF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
 
 
   // to compute the fetch address we need to add the bit shifted

@@ -50,7 +50,7 @@ module lsu
 
    // address and write data
    input  logic [`XLEN-1:0]    IEUAdrE,
-   output logic [`XLEN-1:0]    MemAdrM,
+   output logic [`XLEN-1:0]    IEUAdrM,
    input  logic [`XLEN-1:0]    WriteDataM, 
    output logic [`XLEN-1:0]    ReadDataM,
 
@@ -107,8 +107,8 @@ module lsu
   logic [1:0] 		       MemRWMtoLRSC;
   logic [2:0] 		       Funct3MtoDCache;
   logic [1:0] 		       AtomicMtoDCache;
-  logic [`PA_BITS-1:0] 	       MemPAdrMtoDCache;
-  logic [11:0] 		       MemAdrEtoDCache;  
+  logic [`PA_BITS-1:0] 	       MemPAdrNoTranslate;
+  logic [11:0] 		       MemAdrE, MemAdrE_RENAME;  
   logic 		       StallWtoDCache;
   logic 		       MemReadM;
   logic 		       DataMisalignedMfromDCache;
@@ -127,9 +127,132 @@ module lsu
   logic 		       AnyCPUReqM;
   logic 		       MemAfterIWalkDone;
 
+  typedef enum {STATE_T0_READY,
+				STATE_T0_REPLAY,
+				STATE_T0_FAULT_REPLAY,				
+				STATE_T3_DTLB_MISS,
+				STATE_T4_ITLB_MISS,
+				STATE_T5_ITLB_MISS,
+				STATE_T7_DITLB_MISS} statetype;
+
+  statetype CurrState, NextState;
+  logic 	   InterlockStall;
+  logic SelReplayCPURequest;
+  logic WalkerInstrPageFaultRaw;
+  logic IgnoreRequest;
+  
+
   assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
 
-  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, MemAdrM);
+  always_ff @(posedge clk)
+    if (reset)    CurrState <= #1 STATE_T0_READY;
+    else CurrState <= #1 NextState;
+
+  always_comb begin
+	case(CurrState)
+	  STATE_T0_READY: begin
+		if(~ITLBMissF & DTLBMissM & AnyCPUReqM) begin
+		  NextState = STATE_T3_DTLB_MISS;
+		end
+		else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM) begin
+		  NextState = STATE_T4_ITLB_MISS;
+		end
+		else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM) begin
+		  NextState = STATE_T5_ITLB_MISS;
+		end
+		else if(ITLBMissF & DTLBMissM & AnyCPUReqM) begin
+		  NextState = STATE_T7_DITLB_MISS;
+		end else begin
+		  NextState = STATE_T0_READY;
+		end
+	  end
+	  STATE_T0_REPLAY: begin
+		if(DCacheStall) begin
+		  NextState = STATE_T0_REPLAY;
+		end else begin
+		  NextState = STATE_T0_READY;
+		end
+	  end
+	  STATE_T3_DTLB_MISS: begin
+		if(WalkerLoadPageFaultM | WalkerStorePageFaultM) begin
+		  NextState = STATE_T0_READY;
+		end else if(DTLBWriteM) begin
+		  NextState = STATE_T0_REPLAY;
+		end else begin
+		  NextState = STATE_T3_DTLB_MISS;
+		end
+	  end
+	  STATE_T4_ITLB_MISS: begin
+		if(WalkerInstrPageFaultRaw | ITLBWriteF) begin
+		  NextState = STATE_T0_READY;
+		end else begin
+		  NextState = STATE_T4_ITLB_MISS;
+		end
+	  end
+	  STATE_T5_ITLB_MISS: begin
+		if(ITLBWriteF) begin
+		  NextState = STATE_T0_REPLAY;
+		end else if(WalkerInstrPageFaultRaw) begin
+		  NextState = STATE_T0_FAULT_REPLAY;
+		end else begin
+		  NextState = STATE_T5_ITLB_MISS;
+		end
+	  end
+	  STATE_T0_FAULT_REPLAY: begin
+		if(DCacheStall) begin
+		  NextState = STATE_T0_FAULT_REPLAY;
+		end else begin
+		  NextState = STATE_T0_READY;
+		end
+	  end
+	  STATE_T7_DITLB_MISS: begin
+		if(WalkerStorePageFaultM | WalkerLoadPageFaultM) begin
+		  NextState = STATE_T0_READY;
+		end else if(DTLBWriteM) begin
+		  NextState = STATE_T5_ITLB_MISS;
+		end else begin
+		  NextState = STATE_T7_DITLB_MISS;
+		end
+	  end
+	  default: begin
+		NextState = STATE_T0_READY;
+	  end
+	endcase
+  end // always_comb
+
+  // signal to CPU it needs to wait on HPTW.
+/* -----\/----- EXCLUDED -----\/-----
+  // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
+  // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
+  assign InterlockStall = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+						  (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultRaw) |
+						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultRaw) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
+
+ -----/\----- EXCLUDED -----/\----- */
+
+  always_comb begin
+	InterlockStall = 1'b0;
+	case(CurrState) 
+	  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
+	  STATE_T3_DTLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
+	  STATE_T4_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
+	  STATE_T5_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
+	  STATE_T7_DITLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
+	  default: InterlockStall = 1'b0;
+	endcase
+  end
+  
+  
+  // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
+  assign SelReplayCPURequest = NextState == STATE_T0_REPLAY;
+  assign SelPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
+				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
+  assign IgnoreRequest = CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM);
+  
+  assign WalkerInstrPageFaultF = WalkerInstrPageFaultRaw | CurrState == STATE_T0_FAULT_REPLAY;
+  
+
+  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
 
   // *** add generate to conditionally create hptw, lsuArb, and mmu
   // based on `MEM_VIRTMEM
@@ -137,7 +260,7 @@ module lsu
 	    .reset(reset),
 	    .SATP_REGW(SATP_REGW),
 	    .PCF(PCF),
-	    .MemAdrM(MemAdrM),
+	    .IEUAdrM(IEUAdrM),
 	    .ITLBMissF(ITLBMissF & ~PendingInterruptM),
 	    .DTLBMissM(DTLBMissM & ~PendingInterruptM),
 	    .MemRWM(MemRWM),
@@ -146,44 +269,43 @@ module lsu
 	    .ITLBWriteF(ITLBWriteF),
 	    .DTLBWriteM(DTLBWriteM),
 	    .HPTWReadPTE(ReadDataM),
-	    .HPTWStall(HPTWStall),
-            .TranslationPAdr,			  
+	    .DCacheStall(DCacheStall),
+        .TranslationPAdr,			  
 	    .HPTWRead(HPTWRead),
-	    .SelPTW(SelPTW),
+		.HPTWStall,
 	    .AnyCPUReqM,
 	    .MemAfterIWalkDone,
-	    .WalkerInstrPageFaultF(WalkerInstrPageFaultF),
+	    .WalkerInstrPageFaultF(WalkerInstrPageFaultRaw),
 	    .WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
 	    .WalkerStorePageFaultM(WalkerStorePageFaultM));
 
+  assign LSUStall = DCacheStall | InterlockStall;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
   // arbiter between IEU and hptw
   lsuArb arbiter(.clk(clk),
 		 // HPTW connection
-		 .SelPTW(SelPTW),
+		 .SelPTW,
 		 .HPTWRead(HPTWRead),
 		 .TranslationPAdrE(TranslationPAdr),
-		 .HPTWStall(HPTWStall),		 
 		 // CPU connection
 		 .MemRWM(MemRWM),
 		 .Funct3M(Funct3M),
 		 .AtomicM(AtomicM),
-		 .MemAdrM(MemAdrM),
+		 .IEUAdrM(IEUAdrM),
 		 .IEUAdrE(IEUAdrE[11:0]),		 
 		 .CommittedM(CommittedM),
 		 .PendingInterruptM(PendingInterruptM),		
 		 .StallW(StallW),
 		 .DataMisalignedM(DataMisalignedM),
-		 .LSUStall(LSUStall),
 		 // DCACHE
 		 .DisableTranslation(DisableTranslation),
 		 .MemRWMtoLRSC(MemRWMtoLRSC),
 		 .Funct3MtoDCache(Funct3MtoDCache),
 		 .AtomicMtoDCache(AtomicMtoDCache),
-		 .MemPAdrMtoDCache(MemPAdrMtoDCache),
-		 .MemAdrEtoDCache(MemAdrEtoDCache),
+		 .MemPAdrNoTranslate(MemPAdrNoTranslate),
+		 .MemAdrE(MemAdrE),
 		 .StallWtoDCache(StallWtoDCache),
 		 .DataMisalignedMfromDCache(DataMisalignedMfromDCache),
 		 .CommittedMfromDCache(CommittedMfromDCache),
@@ -193,8 +315,8 @@ module lsu
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
        .PrivilegeModeW, .DisableTranslation(DisableTranslation),
-       .PAdr(MemPAdrMtoDCache),
-       .VAdr(MemAdrM),
+       .PAdr(MemPAdrNoTranslate),
+       .VAdr(IEUAdrM),
        .Size(Funct3MtoDCache[1:0]),
        .PTE(PTE),
        .PageTypeWriteVal(PageType),
@@ -232,9 +354,9 @@ module lsu
   always_comb
     case(Funct3MtoDCache[1:0]) 
       2'b00:  DataMisalignedMfromDCache = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedMfromDCache = MemPAdrMtoDCache[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedMfromDCache = MemPAdrMtoDCache[1] | MemPAdrMtoDCache[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedMfromDCache = |MemPAdrMtoDCache[2:0];           // ld, sd, fld, fsd
+      2'b01:  DataMisalignedMfromDCache = MemPAdrNoTranslate[0];              // lh, sh, lhu
+      2'b10:  DataMisalignedMfromDCache = MemPAdrNoTranslate[1] | MemPAdrNoTranslate[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedMfromDCache = |MemPAdrNoTranslate[2:0];           // ld, sd, fld, fsd
     endcase 
 
   // Determine if address is valid
@@ -245,6 +367,8 @@ module lsu
   // 1. ram // controlled by `MEM_DTIM
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
+  assign MemAdrE_RENAME = SelReplayCPURequest ? IEUAdrM[11:0] : MemAdrE[11:0];
+  
   dcache dcache(.clk(clk),
 		.reset(reset),
 		.StallWtoDCache(StallWtoDCache),
@@ -253,9 +377,9 @@ module lsu
 		.Funct7M(Funct7M),
 		.FlushDCacheM,
 		.AtomicM(AtomicMtoDCache),
-		.IEUAdrE(MemAdrEtoDCache),
+		.MemAdrE(MemAdrE_RENAME),
 		.MemPAdrM(MemPAdrM),
-		.VAdr(MemAdrM[11:0]),		
+		.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
 		.WriteDataM(WriteDataM),
 		.ReadDataM(ReadDataM),
 		.DCacheStall(DCacheStall),
@@ -263,16 +387,10 @@ module lsu
 		.DCacheMiss,
 		.DCacheAccess,		
 		.ExceptionM(ExceptionM),
+		.IgnoreRequest,
 		.PendingInterruptM(PendingInterruptMtoDCache),
-		.DTLBMissM(DTLBMissM),
 		.CacheableM(CacheableMtoDCache), 
-		.DTLBWriteM(DTLBWriteM),
-		.ITLBWriteF(ITLBWriteF),
-		.ITLBMissF,
 		.MemAfterIWalkDone,
-		.SelPTW(SelPTW),
-		.WalkerPageFaultM(WalkerPageFaultM),
-		.WalkerInstrPageFaultF(WalkerInstrPageFaultF),
 
 		// AHB connection
 		.AHBPAdr(DCtoAHBPAdrM),

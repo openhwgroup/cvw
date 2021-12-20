@@ -168,6 +168,7 @@ module ifu (
 
   .PCNextF(PCNextFPhys),
   .PCPF(PCPFmmu),
+  .PCF,
   .WalkerInstrPageFaultF,
   .InvalidateICacheM);
   
