@@ -53,7 +53,6 @@ module dcache
    input logic 		       CacheableM,
    // from ptw
    input logic 		       IgnoreRequest,
-   output logic 	       MemAfterIWalkDone,
    // ahb side
    (* mark_debug = "true" *)output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    (* mark_debug = "true" *)output logic 	       AHBRead,
@@ -358,7 +357,6 @@ module dcache
 		      .CommittedM,
 		      .DCacheMiss,
 		      .DCacheAccess,
-		      .MemAfterIWalkDone,
 		      .AHBRead,
 		      .AHBWrite,
 		      .SelAdrM,

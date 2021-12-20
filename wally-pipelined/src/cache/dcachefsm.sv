@@ -53,8 +53,6 @@ module dcachefsm
    // counter outputs
    output logic 	  DCacheMiss,
    output logic 	  DCacheAccess,
-   // hptw outputs
-   output logic 	  MemAfterIWalkDone,
    // Bus outputs
    output logic 	  AHBRead,
    output logic 	  AHBWrite,
@@ -137,7 +135,6 @@ module dcachefsm
     SelUncached = 1'b0;
     SelEvict = 1'b0;
     LRUWriteEn = 1'b0;
-    MemAfterIWalkDone = 1'b0;
     SelFlush = 1'b0;
     FlushAdrCntEn = 1'b0;
     FlushWayCntEn = 1'b0;
