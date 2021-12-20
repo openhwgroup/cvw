@@ -101,6 +101,7 @@ module lsu
   logic 					   DTLBWriteM;
   logic 					   HPTWStall;  
   logic [`PA_BITS-1:0] 		   TranslationPAdr;
+  //logic [`PA_BITS-1:0] 		   TranslationPAdrM;
   logic 					   HPTWRead;
   logic [1:0] 				   MemRWMtoDCache;
   logic [1:0] 				   MemRWMtoLRSC;
@@ -116,6 +117,8 @@ module lsu
   logic 					   CacheableM;
   logic 					   CacheableMtoDCache;
   logic 					   SelPTW;
+  logic [2:0] 				   HPTWSize;
+
 
   logic 					   CommittedMfromDCache;
   logic 					   PendingInterruptMtoDCache;
@@ -254,50 +257,32 @@ module lsu
 
   // *** add generate to conditionally create hptw, lsuArb, and mmu
   // based on `MEM_VIRTMEM
-  hptw hptw(.clk(clk),
-			.reset(reset),
-			.SATP_REGW(SATP_REGW),
-			.PCF(PCF),
-			.IEUAdrM(IEUAdrM),
+  hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
 			.ITLBMissF(ITLBMissF & ~PendingInterruptM),
 			.DTLBMissM(DTLBMissM & ~PendingInterruptM),
-			.MemRWM(MemRWM),
-			.PTE(PTE),
-			.PageType,
-			.ITLBWriteF(ITLBWriteF),
-			.DTLBWriteM(DTLBWriteM),
+			.MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
 			.HPTWReadPTE(ReadDataM),
-			.DCacheStall(DCacheStall),
-			.TranslationPAdr,			  
-			.HPTWRead(HPTWRead),
-			.AnyCPUReqM,
+			.DCacheStall, .TranslationPAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM,
 			.WalkerInstrPageFaultF(WalkerInstrPageFaultRaw),
-			.WalkerLoadPageFaultM(WalkerLoadPageFaultM),  
-			.WalkerStorePageFaultM(WalkerStorePageFaultM));
+			.WalkerLoadPageFaultM, .WalkerStorePageFaultM);
 
   assign LSUStall = DCacheStall | InterlockStall;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
   // arbiter between IEU and hptw
-  logic [2:0] PTWSize;
-  logic [`PA_BITS-1:0]  TranslationPAdrM;
-  logic [`XLEN+1:0]  IEUAdrMExt;
   
   // multiplex the outputs to LSU
   assign MemRWMtoLRSC = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
   
-  generate
-    assign PTWSize = (`XLEN==32 ? 3'b010 : 3'b011); // 32 or 64-bit access from htpw
-  endgenerate
-  mux2 #(3) sizemux(Funct3M, PTWSize, SelPTW, Funct3MtoDCache);
+  mux2 #(3) sizemux(Funct3M, HPTWSize, SelPTW, Funct3MtoDCache);
 
   // this is for the d cache SRAM.
-  flop #(`PA_BITS) TranslationPAdrMReg(clk, TranslationPAdr, TranslationPAdrM);   // delay TranslationPAdrM by a cycle
+  // turns out because we cannot pipeline hptw requests we don't need this register
+  //flop #(`PA_BITS) TranslationPAdrMReg(clk, TranslationPAdr, TranslationPAdrM);   // delay TranslationPAdrM by a cycle
 
   assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign IEUAdrMExt = {2'b00, IEUAdrM};
-  assign MemPAdrNoTranslate = SelPTW ? TranslationPAdrM : IEUAdrMExt[`PA_BITS-1:0]; 
+  assign MemPAdrNoTranslate = SelPTW ? TranslationPAdr : {2'b00, IEUAdrM}[`PA_BITS-1:0]; 
   assign MemAdrE = SelPTW ? TranslationPAdr[11:0] : IEUAdrE[11:0];  
   assign StallWtoDCache = SelPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
