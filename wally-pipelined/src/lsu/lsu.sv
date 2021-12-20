@@ -92,15 +92,12 @@ module lsu
    );
 
   logic 					   DTLBPageFaultM;
-
   
   logic [`PA_BITS-1:0] 		   MemPAdrM;  // from mmu to dcache
-  
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
   logic 					   HPTWStall;  
   logic [`PA_BITS-1:0] 		   HPTWAdr;
-  //logic [`PA_BITS-1:0] 		   HPTWAdrM;
   logic 					   HPTWRead;
   logic [1:0] 				   MemRWMtoDCache;
   logic [1:0] 				   MemRWMtoLRSC;
@@ -121,7 +118,6 @@ module lsu
 
   logic 					   CommittedMfromDCache;
   logic 					   PendingInterruptMtoDCache;
-  //  logic 		       FlushWtoDCache;
   logic 					   WalkerPageFaultM;
 
   logic 					   AnyCPUReqM;
@@ -251,21 +247,19 @@ module lsu
        .PAdr(MemPAdrNoTranslate),
        .VAdr(IEUAdrM),
        .Size(Funct3MtoDCache[1:0]),
-       .PTE(PTE),
+       .PTE,
        .PageTypeWriteVal(PageType),
        .TLBWrite(DTLBWriteM),
        .TLBFlush(DTLBFlushM),
        .PhysicalAddress(MemPAdrM),
        .TLBMiss(DTLBMissM),
        .Cacheable(CacheableM),
-       .Idempotent(),
-       .AtomicAllowed(),
+       .Idempotent(), .AtomicAllowed(),
        .TLBPageFault(DTLBPageFaultM),
        .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
        .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0), 
        .WriteAccessM(MemRWMtoLRSC[0]), .ReadAccessM(MemRWMtoLRSC[1]),
        .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
-       //.AtomicAccessM(AtomicMaskedM[1]),
        ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
 
@@ -303,25 +297,17 @@ module lsu
   // 3. wire pass-through
   assign MemAdrE_RENAME = SelReplayCPURequest ? IEUAdrM[11:0] : MemAdrE[11:0];
   
-  dcache dcache(.clk(clk),
-				.reset(reset),
-				.CPUBusy(CPUBusy),
+  dcache dcache(.clk, .reset, .CPUBusy,
 				.MemRWM(MemRWMtoDCache),
 				.Funct3M(Funct3MtoDCache),
-				.Funct7M(Funct7M),
-				.FlushDCacheM,
+				.Funct7M, .FlushDCacheM,
 				.AtomicM(AtomicMtoDCache),
 				.MemAdrE(MemAdrE_RENAME),
-				.MemPAdrM(MemPAdrM),
+				.MemPAdrM,
 				.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
-				.WriteDataM(WriteDataM),
-				.ReadDataM(ReadDataM),
-				.DCacheStall(DCacheStall),
+				.WriteDataM, .ReadDataM, .DCacheStall,
 				.CommittedM(CommittedMfromDCache),
-				.DCacheMiss,
-				.DCacheAccess,		
-				.ExceptionM(ExceptionM),
-				.IgnoreRequest,
+				.DCacheMiss, .DCacheAccess, .ExceptionM, .IgnoreRequest,
 				.PendingInterruptM(PendingInterruptMtoDCache),
 				.CacheableM(CacheableMtoDCache), 
 
