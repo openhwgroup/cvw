@@ -115,7 +115,7 @@ module lsu
 
   logic 					   CacheableM;
   logic 					   CacheableMtoDCache;
-  logic 					   SelPTW;
+  logic 					   SelHPTW;
   logic [2:0] 				   HPTWSize;
 
 
@@ -245,7 +245,7 @@ module lsu
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
   assign SelReplayCPURequest = NextState == STATE_T0_REPLAY;
-  assign SelPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
+  assign SelHPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
 				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequest = CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM);
   
@@ -272,28 +272,28 @@ module lsu
   // arbiter between IEU and hptw
   
   // multiplex the outputs to LSU
-  assign MemRWMtoLRSC = SelPTW ? {HPTWRead, 1'b0} : MemRWM;
+  assign MemRWMtoLRSC = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
   
-  mux2 #(3) sizemux(Funct3M, HPTWSize, SelPTW, Funct3MtoDCache);
+  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, Funct3MtoDCache);
 
   // this is for the d cache SRAM.
   // turns out because we cannot pipeline hptw requests we don't need this register
   //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
 
-  assign AtomicMtoDCache = SelPTW ? 2'b00 : AtomicM;
-  assign MemPAdrNoTranslate = SelPTW ? HPTWAdr : {2'b00, IEUAdrM}[`PA_BITS-1:0]; 
-  assign MemAdrE = SelPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
-  assign CPUBusy = SelPTW ? 1'b0 : StallW;
+  assign AtomicMtoDCache = SelHPTW ? 2'b00 : AtomicM;
+  assign MemPAdrNoTranslate = SelHPTW ? HPTWAdr : {2'b00, IEUAdrM}[`PA_BITS-1:0]; 
+  assign MemAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
+  assign CPUBusy = SelHPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
-  assign CommittedM = SelPTW ? 1'b1 : CommittedMfromDCache;
+  assign CommittedM = SelHPTW ? 1'b1 : CommittedMfromDCache;
 
 
-  assign PendingInterruptMtoDCache = SelPTW ? 1'b0 : PendingInterruptM;
+  assign PendingInterruptMtoDCache = SelHPTW ? 1'b0 : PendingInterruptM;
   
   
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-       .PrivilegeModeW, .DisableTranslation(SelPTW),
+       .PrivilegeModeW, .DisableTranslation(SelHPTW),
        .PAdr(MemPAdrNoTranslate),
        .VAdr(IEUAdrM),
        .Size(Funct3MtoDCache[1:0]),
@@ -321,7 +321,7 @@ module lsu
             .SquashSCW, .MemRWMtoDCache);
 
   // *** BUG, this is most likely wrong
-  assign CacheableMtoDCache = SelPTW ? 1'b1 : CacheableM;
+  assign CacheableMtoDCache = SelHPTW ? 1'b1 : CacheableM;
   
 
   // Specify which type of page fault is occurring
