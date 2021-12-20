@@ -221,11 +221,26 @@ module lsu
   end // always_comb
 
   // signal to CPU it needs to wait on HPTW.
-  assign InterlockStall_BUG = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+/* -----\/----- EXCLUDED -----\/-----
+  // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
+  // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
+  assign InterlockStall = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
 						  (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultRaw) |
 						  (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultRaw) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
 
-  assign InterlockStall = InterlockStall_BUG === 1'bx ? 1'b0 : InterlockStall_BUG;
+ -----/\----- EXCLUDED -----/\----- */
+
+  always_comb begin
+	InterlockStall = 1'b0;
+	case(CurrState) 
+	  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
+	  STATE_T3_DTLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
+	  STATE_T4_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
+	  STATE_T5_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
+	  STATE_T7_DITLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
+	  default: InterlockStall = 1'b0;
+	endcase
+  end
   
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
