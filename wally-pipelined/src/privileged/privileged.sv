@@ -239,8 +239,6 @@ module privileged (
             .ExceptionM,
             .PendingInterruptM,
             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
-
-
 endmodule
 
 
