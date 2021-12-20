@@ -43,7 +43,6 @@ module hptw
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 	       PageType, // page type to TLBs
    output logic 	       ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   output logic            HPTWStall,
    output logic [`PA_BITS-1:0] TranslationPAdr,
    output logic 	       HPTWRead, // HPTW requesting to read memory
    output logic 	       WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
@@ -99,7 +98,6 @@ module hptw
 	  // Enable and select signals based on states
       assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	  assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
-	  assign HPTWStall = (WalkerState != IDLE) & (WalkerState != FAULT);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
 
