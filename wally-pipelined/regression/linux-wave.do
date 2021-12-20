@@ -239,7 +239,7 @@ add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3
 add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3/amoalu/srca
 add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3/amoalu/srcb
 add wave -noupdate -expand -group AMO_ALU /testbench/dut/hart/lsu/dcache/genblk3/amoalu/width
-add wave -noupdate -expand -group lsu -group {LSU ARB} /testbench/dut/hart/lsu/arbiter/SelPTW
+add wave -noupdate -expand -group lsu -group {LSU ARB} /testbench/dut/hart/lsu/arbiter/SelHPTW
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/hart/lsu/dcache/dcachefsm/CurrState
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WalkerPageFaultM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WriteDataM
