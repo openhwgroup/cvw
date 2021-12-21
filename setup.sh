@@ -15,7 +15,7 @@ export LD_LIBRARY_PATH=$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain
 export PATH=$RISCV/riscv-gnu-toolchain/bin:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin:$PATH       # GCC tools
 # Spike
 export LD_LIBRARY_PATH=$RISCV/lib:$LD_LIBRARY_PATH
-export PATH=$RISCV/bin:$LD_LIBRARY_PATH
+export PATH=$RISCV/bin:$PATH
 # exe2memfile
 export PATH=~/riscv-wally/bin:$PATH    # exe2memfile; change this if riscv-wally isn't at your home directory
 # Verilator
