@@ -46,6 +46,7 @@ create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe7]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe7]
 connect_debug_port u_ila_0/probe7 [get_nets [list {wallypipelinedsoc/hart/PCM[0]} {wallypipelinedsoc/hart/PCM[1]} {wallypipelinedsoc/hart/PCM[2]} {wallypipelinedsoc/hart/PCM[3]} {wallypipelinedsoc/hart/PCM[4]} {wallypipelinedsoc/hart/PCM[5]} {wallypipelinedsoc/hart/PCM[6]} {wallypipelinedsoc/hart/PCM[7]} {wallypipelinedsoc/hart/PCM[8]} {wallypipelinedsoc/hart/PCM[9]} {wallypipelinedsoc/hart/PCM[10]} {wallypipelinedsoc/hart/PCM[11]} {wallypipelinedsoc/hart/PCM[12]} {wallypipelinedsoc/hart/PCM[13]} {wallypipelinedsoc/hart/PCM[14]} {wallypipelinedsoc/hart/PCM[15]} {wallypipelinedsoc/hart/PCM[16]} {wallypipelinedsoc/hart/PCM[17]} {wallypipelinedsoc/hart/PCM[18]} {wallypipelinedsoc/hart/PCM[19]} {wallypipelinedsoc/hart/PCM[20]} {wallypipelinedsoc/hart/PCM[21]} {wallypipelinedsoc/hart/PCM[22]} {wallypipelinedsoc/hart/PCM[23]} {wallypipelinedsoc/hart/PCM[24]} {wallypipelinedsoc/hart/PCM[25]} {wallypipelinedsoc/hart/PCM[26]} {wallypipelinedsoc/hart/PCM[27]} {wallypipelinedsoc/hart/PCM[28]} {wallypipelinedsoc/hart/PCM[29]} {wallypipelinedsoc/hart/PCM[30]} {wallypipelinedsoc/hart/PCM[31]} {wallypipelinedsoc/hart/PCM[32]} {wallypipelinedsoc/hart/PCM[33]} {wallypipelinedsoc/hart/PCM[34]} {wallypipelinedsoc/hart/PCM[35]} {wallypipelinedsoc/hart/PCM[36]} {wallypipelinedsoc/hart/PCM[37]} {wallypipelinedsoc/hart/PCM[38]} {wallypipelinedsoc/hart/PCM[39]} {wallypipelinedsoc/hart/PCM[40]} {wallypipelinedsoc/hart/PCM[41]} {wallypipelinedsoc/hart/PCM[42]} {wallypipelinedsoc/hart/PCM[43]} {wallypipelinedsoc/hart/PCM[44]} {wallypipelinedsoc/hart/PCM[45]} {wallypipelinedsoc/hart/PCM[46]} {wallypipelinedsoc/hart/PCM[47]} {wallypipelinedsoc/hart/PCM[48]} {wallypipelinedsoc/hart/PCM[49]} {wallypipelinedsoc/hart/PCM[50]} {wallypipelinedsoc/hart/PCM[51]} {wallypipelinedsoc/hart/PCM[52]} {wallypipelinedsoc/hart/PCM[53]} {wallypipelinedsoc/hart/PCM[54]} {wallypipelinedsoc/hart/PCM[55]} {wallypipelinedsoc/hart/PCM[56]} {wallypipelinedsoc/hart/PCM[57]} {wallypipelinedsoc/hart/PCM[58]} {wallypipelinedsoc/hart/PCM[59]} {wallypipelinedsoc/hart/PCM[60]} {wallypipelinedsoc/hart/PCM[61]} {wallypipelinedsoc/hart/PCM[62]} {wallypipelinedsoc/hart/PCM[63]} ]]
+
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe8]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe8]
@@ -467,3 +468,104 @@ create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe103]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe103]
 connect_debug_port u_ila_0/probe103 [get_nets [list wallypipelinedsoc/hart/ifu/icache/InstrReadF ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 64 [get_debug_ports u_ila_0/probe104]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe104]
+connect_debug_port u_ila_0/probe104 [get_nets [list {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[0]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[1]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[2]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[3]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[4]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[5]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[6]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[7]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[8]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[9]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[10]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[11]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[12]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[13]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[14]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[15]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[16]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[17]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[18]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[19]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[20]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[21]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[22]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[23]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[24]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[25]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[26]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[27]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[28]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[29]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[30]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[31]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[32]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[33]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[34]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[35]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[36]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[37]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[38]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[39]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[40]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[41]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[42]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[43]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[44]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[45]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[46]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[47]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[48]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[49]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[50]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[51]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[52]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[53]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[54]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[55]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[56]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[57]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[58]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[59]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[60]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[61]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[62]} {wallypipelinedsoc/hart/priv/csr/counters/INSTRET_REGW[63]}]]
+
+
+create_debug_port u_ila_0 probe
+set_property port_width 32 [get_debug_ports u_ila_0/probe105]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe105]
+connect_debug_port u_ila_0/probe105 [get_nets [list {wallypipelinedsoc/hart/ebu/HRDATA[0]} {wallypipelinedsoc/hart/ebu/HRDATA[1]} {wallypipelinedsoc/hart/ebu/HRDATA[2]} {wallypipelinedsoc/hart/ebu/HRDATA[3]} {wallypipelinedsoc/hart/ebu/HRDATA[4]} {wallypipelinedsoc/hart/ebu/HRDATA[5]} {wallypipelinedsoc/hart/ebu/HRDATA[6]} {wallypipelinedsoc/hart/ebu/HRDATA[7]} {wallypipelinedsoc/hart/ebu/HRDATA[8]} {wallypipelinedsoc/hart/ebu/HRDATA[9]} {wallypipelinedsoc/hart/ebu/HRDATA[10]} {wallypipelinedsoc/hart/ebu/HRDATA[11]} {wallypipelinedsoc/hart/ebu/HRDATA[12]} {wallypipelinedsoc/hart/ebu/HRDATA[13]} {wallypipelinedsoc/hart/ebu/HRDATA[14]} {wallypipelinedsoc/hart/ebu/HRDATA[15]} {wallypipelinedsoc/hart/ebu/HRDATA[16]} {wallypipelinedsoc/hart/ebu/HRDATA[17]} {wallypipelinedsoc/hart/ebu/HRDATA[18]} {wallypipelinedsoc/hart/ebu/HRDATA[19]} {wallypipelinedsoc/hart/ebu/HRDATA[20]} {wallypipelinedsoc/hart/ebu/HRDATA[21]} {wallypipelinedsoc/hart/ebu/HRDATA[22]} {wallypipelinedsoc/hart/ebu/HRDATA[23]} {wallypipelinedsoc/hart/ebu/HRDATA[24]} {wallypipelinedsoc/hart/ebu/HRDATA[25]} {wallypipelinedsoc/hart/ebu/HRDATA[26]} {wallypipelinedsoc/hart/ebu/HRDATA[27]} {wallypipelinedsoc/hart/ebu/HRDATA[28]} {wallypipelinedsoc/hart/ebu/HRDATA[29]} {wallypipelinedsoc/hart/ebu/HRDATA[30]} {wallypipelinedsoc/hart/ebu/HRDATA[31]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 32 [get_debug_ports u_ila_0/probe106]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe106]
+connect_debug_port u_ila_0/probe106 [get_nets [list {wallypipelinedsoc/hart/ebu/HWDATA[0]} {wallypipelinedsoc/hart/ebu/HWDATA[1]} {wallypipelinedsoc/hart/ebu/HWDATA[2]} {wallypipelinedsoc/hart/ebu/HWDATA[3]} {wallypipelinedsoc/hart/ebu/HWDATA[4]} {wallypipelinedsoc/hart/ebu/HWDATA[5]} {wallypipelinedsoc/hart/ebu/HWDATA[6]} {wallypipelinedsoc/hart/ebu/HWDATA[7]} {wallypipelinedsoc/hart/ebu/HWDATA[8]} {wallypipelinedsoc/hart/ebu/HWDATA[9]} {wallypipelinedsoc/hart/ebu/HWDATA[10]} {wallypipelinedsoc/hart/ebu/HWDATA[11]} {wallypipelinedsoc/hart/ebu/HWDATA[12]} {wallypipelinedsoc/hart/ebu/HWDATA[13]} {wallypipelinedsoc/hart/ebu/HWDATA[14]} {wallypipelinedsoc/hart/ebu/HWDATA[15]} {wallypipelinedsoc/hart/ebu/HWDATA[16]} {wallypipelinedsoc/hart/ebu/HWDATA[17]} {wallypipelinedsoc/hart/ebu/HWDATA[18]} {wallypipelinedsoc/hart/ebu/HWDATA[19]} {wallypipelinedsoc/hart/ebu/HWDATA[20]} {wallypipelinedsoc/hart/ebu/HWDATA[21]} {wallypipelinedsoc/hart/ebu/HWDATA[22]} {wallypipelinedsoc/hart/ebu/HWDATA[23]} {wallypipelinedsoc/hart/ebu/HWDATA[24]} {wallypipelinedsoc/hart/ebu/HWDATA[25]} {wallypipelinedsoc/hart/ebu/HWDATA[26]} {wallypipelinedsoc/hart/ebu/HWDATA[27]} {wallypipelinedsoc/hart/ebu/HWDATA[28]} {wallypipelinedsoc/hart/ebu/HWDATA[29]} {wallypipelinedsoc/hart/ebu/HWDATA[30]} {wallypipelinedsoc/hart/ebu/HWDATA[31]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 32 [get_debug_ports u_ila_0/probe107]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe107]
+connect_debug_port u_ila_0/probe107 [get_nets [list {wallypipelinedsoc/hart/ebu/HADDR[0]} {wallypipelinedsoc/hart/ebu/HADDR[1]} {wallypipelinedsoc/hart/ebu/HADDR[2]} {wallypipelinedsoc/hart/ebu/HADDR[3]} {wallypipelinedsoc/hart/ebu/HADDR[4]} {wallypipelinedsoc/hart/ebu/HADDR[5]} {wallypipelinedsoc/hart/ebu/HADDR[6]} {wallypipelinedsoc/hart/ebu/HADDR[7]} {wallypipelinedsoc/hart/ebu/HADDR[8]} {wallypipelinedsoc/hart/ebu/HADDR[9]} {wallypipelinedsoc/hart/ebu/HADDR[10]} {wallypipelinedsoc/hart/ebu/HADDR[11]} {wallypipelinedsoc/hart/ebu/HADDR[12]} {wallypipelinedsoc/hart/ebu/HADDR[13]} {wallypipelinedsoc/hart/ebu/HADDR[14]} {wallypipelinedsoc/hart/ebu/HADDR[15]} {wallypipelinedsoc/hart/ebu/HADDR[16]} {wallypipelinedsoc/hart/ebu/HADDR[17]} {wallypipelinedsoc/hart/ebu/HADDR[18]} {wallypipelinedsoc/hart/ebu/HADDR[19]} {wallypipelinedsoc/hart/ebu/HADDR[20]} {wallypipelinedsoc/hart/ebu/HADDR[21]} {wallypipelinedsoc/hart/ebu/HADDR[22]} {wallypipelinedsoc/hart/ebu/HADDR[23]} {wallypipelinedsoc/hart/ebu/HADDR[24]} {wallypipelinedsoc/hart/ebu/HADDR[25]} {wallypipelinedsoc/hart/ebu/HADDR[26]} {wallypipelinedsoc/hart/ebu/HADDR[27]} {wallypipelinedsoc/hart/ebu/HADDR[28]} {wallypipelinedsoc/hart/ebu/HADDR[29]} {wallypipelinedsoc/hart/ebu/HADDR[30]} {wallypipelinedsoc/hart/ebu/HADDR[31]}]]
+
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe108]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe108]
+connect_debug_port u_ila_0/probe108 [get_nets [list {wallypipelinedsoc/hart/ebu/HREADY}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe109]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe109]
+connect_debug_port u_ila_0/probe109 [get_nets [list {wallypipelinedsoc/hart/ebu/HRESP}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe110]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe110]
+connect_debug_port u_ila_0/probe110 [get_nets [list {wallypipelinedsoc/hart/ebu/HWRITE}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe111]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe111]
+connect_debug_port u_ila_0/probe111 [get_nets [list {wallypipelinedsoc/hart/ebu/HSIZE[0]} {wallypipelinedsoc/hart/ebu/HSIZE[1]} {wallypipelinedsoc/hart/ebu/HSIZE[2]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe112]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe112]
+connect_debug_port u_ila_0/probe112 [get_nets [list {wallypipelinedsoc/hart/ebu/HBURST[0]} {wallypipelinedsoc/hart/ebu/HBURST[1]} {wallypipelinedsoc/hart/ebu/HBURST[2]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 4 [get_debug_ports u_ila_0/probe113]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe113]
+connect_debug_port u_ila_0/probe113 [get_nets [list {wallypipelinedsoc/hart/ebu/HPROT[0]} {wallypipelinedsoc/hart/ebu/HPROT[1]} {wallypipelinedsoc/hart/ebu/HPROT[2]} {wallypipelinedsoc/hart/ebu/HPROT[3]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe114]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe114]
+connect_debug_port u_ila_0/probe114 [get_nets [list {wallypipelinedsoc/hart/ebu/HMASTLOCK}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe115]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe115]
+connect_debug_port u_ila_0/probe115 [get_nets [list {wallypipelinedsoc/hart/priv/InterruptM}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe116]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe116]
+connect_debug_port u_ila_0/probe116 [get_nets [list wallypipelinedsoc/hart/lsu/hptw/ITLBMissF]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe117]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe117]
+connect_debug_port u_ila_0/probe117 [get_nets [list wallypipelinedsoc/hart/lsu/hptw/DTLBMissM]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe118]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe118]
+connect_debug_port u_ila_0/probe118 [get_nets [list wallypipelinedsoc/hart/lsu/hptw/ITLBWriteF]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe119]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe119]
+connect_debug_port u_ila_0/probe119 [get_nets [list wallypipelinedsoc/hart/lsu/hptw/DTLBWriteM]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 11 [get_debug_ports u_ila_0/probe120]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe120]
+connect_debug_port u_ila_0/probe120 [get_nets [list {wallypipelinedsoc/hart/lsu/hptw/WalkerState[0]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[1]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[2]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[3]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[4]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[5]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[6]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[7]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[8]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[9]} {wallypipelinedsoc/hart/lsu/hptw/WalkerState[10]}]]
+
+
+create_debug_port u_ila_0 probe
+set_property port_width 56 [get_debug_ports u_ila_0/probe121]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe121]
+connect_debug_port u_ila_0/probe121 [get_nets [list {wallypipelinedsoc/hart/lsu/MemPAdrM[0]} {wallypipelinedsoc/hart/lsu/MemPAdrM[1]} {wallypipelinedsoc/hart/lsu/MemPAdrM[2]} {wallypipelinedsoc/hart/lsu/MemPAdrM[3]} {wallypipelinedsoc/hart/lsu/MemPAdrM[4]} {wallypipelinedsoc/hart/lsu/MemPAdrM[5]} {wallypipelinedsoc/hart/lsu/MemPAdrM[6]} {wallypipelinedsoc/hart/lsu/MemPAdrM[7]} {wallypipelinedsoc/hart/lsu/MemPAdrM[8]} {wallypipelinedsoc/hart/lsu/MemPAdrM[9]} {wallypipelinedsoc/hart/lsu/MemPAdrM[10]} {wallypipelinedsoc/hart/lsu/MemPAdrM[11]} {wallypipelinedsoc/hart/lsu/MemPAdrM[12]} {wallypipelinedsoc/hart/lsu/MemPAdrM[13]} {wallypipelinedsoc/hart/lsu/MemPAdrM[14]} {wallypipelinedsoc/hart/lsu/MemPAdrM[15]} {wallypipelinedsoc/hart/lsu/MemPAdrM[16]} {wallypipelinedsoc/hart/lsu/MemPAdrM[17]} {wallypipelinedsoc/hart/lsu/MemPAdrM[18]} {wallypipelinedsoc/hart/lsu/MemPAdrM[19]} {wallypipelinedsoc/hart/lsu/MemPAdrM[20]} {wallypipelinedsoc/hart/lsu/MemPAdrM[21]} {wallypipelinedsoc/hart/lsu/MemPAdrM[22]} {wallypipelinedsoc/hart/lsu/MemPAdrM[23]} {wallypipelinedsoc/hart/lsu/MemPAdrM[24]} {wallypipelinedsoc/hart/lsu/MemPAdrM[25]} {wallypipelinedsoc/hart/lsu/MemPAdrM[26]} {wallypipelinedsoc/hart/lsu/MemPAdrM[27]} {wallypipelinedsoc/hart/lsu/MemPAdrM[28]} {wallypipelinedsoc/hart/lsu/MemPAdrM[29]} {wallypipelinedsoc/hart/lsu/MemPAdrM[30]} {wallypipelinedsoc/hart/lsu/MemPAdrM[31]} {wallypipelinedsoc/hart/lsu/MemPAdrM[32]} {wallypipelinedsoc/hart/lsu/MemPAdrM[33]} {wallypipelinedsoc/hart/lsu/MemPAdrM[34]} {wallypipelinedsoc/hart/lsu/MemPAdrM[35]} {wallypipelinedsoc/hart/lsu/MemPAdrM[36]} {wallypipelinedsoc/hart/lsu/MemPAdrM[37]} {wallypipelinedsoc/hart/lsu/MemPAdrM[38]} {wallypipelinedsoc/hart/lsu/MemPAdrM[39]} {wallypipelinedsoc/hart/lsu/MemPAdrM[40]} {wallypipelinedsoc/hart/lsu/MemPAdrM[41]} {wallypipelinedsoc/hart/lsu/MemPAdrM[42]} {wallypipelinedsoc/hart/lsu/MemPAdrM[43]} {wallypipelinedsoc/hart/lsu/MemPAdrM[44]} {wallypipelinedsoc/hart/lsu/MemPAdrM[45]} {wallypipelinedsoc/hart/lsu/MemPAdrM[46]} {wallypipelinedsoc/hart/lsu/MemPAdrM[47]} {wallypipelinedsoc/hart/lsu/MemPAdrM[48]} {wallypipelinedsoc/hart/lsu/MemPAdrM[49]} {wallypipelinedsoc/hart/lsu/MemPAdrM[50]} {wallypipelinedsoc/hart/lsu/MemPAdrM[51]} {wallypipelinedsoc/hart/lsu/MemPAdrM[52]} {wallypipelinedsoc/hart/lsu/MemPAdrM[53]} {wallypipelinedsoc/hart/lsu/MemPAdrM[54]} {wallypipelinedsoc/hart/lsu/MemPAdrM[55]} ]]
+
+
+create_debug_port u_ila_0 probe
+set_property port_width 56 [get_debug_ports u_ila_0/probe122]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe122]
+connect_debug_port u_ila_0/probe122 [get_nets [list {wallypipelinedsoc/hart/ifu/PCPFmmu[0]} {wallypipelinedsoc/hart/ifu/PCPFmmu[1]} {wallypipelinedsoc/hart/ifu/PCPFmmu[2]} {wallypipelinedsoc/hart/ifu/PCPFmmu[3]} {wallypipelinedsoc/hart/ifu/PCPFmmu[4]} {wallypipelinedsoc/hart/ifu/PCPFmmu[5]} {wallypipelinedsoc/hart/ifu/PCPFmmu[6]} {wallypipelinedsoc/hart/ifu/PCPFmmu[7]} {wallypipelinedsoc/hart/ifu/PCPFmmu[8]} {wallypipelinedsoc/hart/ifu/PCPFmmu[9]} {wallypipelinedsoc/hart/ifu/PCPFmmu[10]} {wallypipelinedsoc/hart/ifu/PCPFmmu[11]} {wallypipelinedsoc/hart/ifu/PCPFmmu[12]} {wallypipelinedsoc/hart/ifu/PCPFmmu[13]} {wallypipelinedsoc/hart/ifu/PCPFmmu[14]} {wallypipelinedsoc/hart/ifu/PCPFmmu[15]} {wallypipelinedsoc/hart/ifu/PCPFmmu[16]} {wallypipelinedsoc/hart/ifu/PCPFmmu[17]} {wallypipelinedsoc/hart/ifu/PCPFmmu[18]} {wallypipelinedsoc/hart/ifu/PCPFmmu[19]} {wallypipelinedsoc/hart/ifu/PCPFmmu[20]} {wallypipelinedsoc/hart/ifu/PCPFmmu[21]} {wallypipelinedsoc/hart/ifu/PCPFmmu[22]} {wallypipelinedsoc/hart/ifu/PCPFmmu[23]} {wallypipelinedsoc/hart/ifu/PCPFmmu[24]} {wallypipelinedsoc/hart/ifu/PCPFmmu[25]} {wallypipelinedsoc/hart/ifu/PCPFmmu[26]} {wallypipelinedsoc/hart/ifu/PCPFmmu[27]} {wallypipelinedsoc/hart/ifu/PCPFmmu[28]} {wallypipelinedsoc/hart/ifu/PCPFmmu[29]} {wallypipelinedsoc/hart/ifu/PCPFmmu[30]} {wallypipelinedsoc/hart/ifu/PCPFmmu[31]} {wallypipelinedsoc/hart/ifu/PCPFmmu[32]} {wallypipelinedsoc/hart/ifu/PCPFmmu[33]} {wallypipelinedsoc/hart/ifu/PCPFmmu[34]} {wallypipelinedsoc/hart/ifu/PCPFmmu[35]} {wallypipelinedsoc/hart/ifu/PCPFmmu[36]} {wallypipelinedsoc/hart/ifu/PCPFmmu[37]} {wallypipelinedsoc/hart/ifu/PCPFmmu[38]} {wallypipelinedsoc/hart/ifu/PCPFmmu[39]} {wallypipelinedsoc/hart/ifu/PCPFmmu[40]} {wallypipelinedsoc/hart/ifu/PCPFmmu[41]} {wallypipelinedsoc/hart/ifu/PCPFmmu[42]} {wallypipelinedsoc/hart/ifu/PCPFmmu[43]} {wallypipelinedsoc/hart/ifu/PCPFmmu[44]} {wallypipelinedsoc/hart/ifu/PCPFmmu[45]} {wallypipelinedsoc/hart/ifu/PCPFmmu[46]} {wallypipelinedsoc/hart/ifu/PCPFmmu[47]} {wallypipelinedsoc/hart/ifu/PCPFmmu[48]} {wallypipelinedsoc/hart/ifu/PCPFmmu[49]} {wallypipelinedsoc/hart/ifu/PCPFmmu[50]} {wallypipelinedsoc/hart/ifu/PCPFmmu[51]} {wallypipelinedsoc/hart/ifu/PCPFmmu[52]} {wallypipelinedsoc/hart/ifu/PCPFmmu[53]} {wallypipelinedsoc/hart/ifu/PCPFmmu[54]} {wallypipelinedsoc/hart/ifu/PCPFmmu[55]} ]]
+
+

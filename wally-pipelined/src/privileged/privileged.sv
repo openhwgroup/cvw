@@ -98,7 +98,7 @@ module privileged (
   logic IllegalInstrFaultM, TrappedSRETM;
 
   logic MTrapM, STrapM, UTrapM;
-  logic InterruptM; 
+  (* mark_debug = "true" *)  logic InterruptM; 
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW; 
   logic       STATUS_MIE, STATUS_SIE;
