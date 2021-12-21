@@ -187,6 +187,7 @@ module ifu (
          .s(BPPredWrongE),
          .y(PCNext1F));
 
+  // *** December 20, 2021 BUG Ross Thompson, If instructions in ID and IF are already invalid we don't pick PCE on icache invalidate.
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
          .d1(PCE),
          .s(InvalidateICacheM),
