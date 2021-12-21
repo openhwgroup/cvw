@@ -186,7 +186,8 @@ module lsu
 	  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
 	  STATE_T3_DTLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
 	  STATE_T4_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
-	  STATE_T5_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
+	  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
+	  //STATE_T0_FAULT_REPLAY: if (~WalkerInstrPageFaultF) InterlockStall = 1'b1;
 	  STATE_T7_DITLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
 	  default: InterlockStall = 1'b0;
 	endcase
@@ -194,7 +195,7 @@ module lsu
   
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-  assign SelReplayCPURequest = NextState == STATE_T0_REPLAY;
+  assign SelReplayCPURequest = (NextState == STATE_T0_REPLAY) | (NextState == STATE_T0_FAULT_REPLAY);
   assign SelHPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
 				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequest = CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM);
