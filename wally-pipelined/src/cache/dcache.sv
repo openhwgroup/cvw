@@ -28,7 +28,7 @@
 module dcache
   (input logic clk,
    input logic 		       reset,
-   input logic 		       StallWtoDCache,
+   input logic 		       CPUBusy,
 
    // cpu side
    input logic [1:0] 	       MemRWM,
@@ -53,7 +53,6 @@ module dcache
    input logic 		       CacheableM,
    // from ptw
    input logic 		       IgnoreRequest,
-   output logic 	       MemAfterIWalkDone,
    // ahb side
    (* mark_debug = "true" *)output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    (* mark_debug = "true" *)output logic 	       AHBRead,
@@ -347,7 +346,7 @@ module dcache
 		      .AtomicM,
  		      .ExceptionM,
  		      .PendingInterruptM,
- 		      .StallWtoDCache,
+ 		      .CPUBusy,
  		      .CacheableM,
 			  .IgnoreRequest,
  		      .AHBAck, // from ahb
@@ -358,7 +357,6 @@ module dcache
 		      .CommittedM,
 		      .DCacheMiss,
 		      .DCacheAccess,
-		      .MemAfterIWalkDone,
 		      .AHBRead,
 		      .AHBWrite,
 		      .SelAdrM,

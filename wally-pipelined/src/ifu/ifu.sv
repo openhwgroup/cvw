@@ -33,7 +33,7 @@ module ifu (
   // Fetch
   input logic [`XLEN-1:0]     InstrInF,
   input logic 		      InstrAckF,
-  output logic [`XLEN-1:0]    PCF, 
+  (* mark_debug = "true" *) output logic [`XLEN-1:0]    PCF, 
   output logic [`PA_BITS-1:0] InstrPAdrF,
   output logic 		      InstrReadF,
   output logic 		      ICacheStallF,
@@ -101,7 +101,7 @@ module ifu (
 
   logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
-  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
+(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
 
   generate
