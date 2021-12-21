@@ -199,7 +199,7 @@ module hptw
 //	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 //				else 				NextWalkerState = FAULT;
 	    LEAF:                       NextWalkerState = IDLE; // updates TLB
-	    FAULT: if (ITLBMissF & AnyCPUReqM) NextWalkerState = FAULT;
+	    FAULT: if (ITLBMissF & AnyCPUReqM) NextWalkerState = FAULT; /// **** BUG: Stays in fault 1 cycle longer than it should.
  	                        else NextWalkerState = IDLE;
 	    default: begin
 	      // synthesis translate_off
