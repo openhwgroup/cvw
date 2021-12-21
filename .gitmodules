@@ -4,6 +4,3 @@
 [submodule "addins/riscv-arch-test"]
 	path = addins/riscv-arch-test
 	url = https://github.com/riscv-non-isa/riscv-arch-test
-[submodule "addins/riscv-isa-sim"]
-	path = addins/riscv-isa-sim
-	url = https://github.com/riscv-software-src/riscv-isa-sim
