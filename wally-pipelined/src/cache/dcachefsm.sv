@@ -169,7 +169,7 @@ module dcachefsm
 		end
 
 		// Flush dcache to next level of memory
-		else if(FlushDCacheM  & ~(ExceptionM | PendingInterruptM)) begin
+		else if(FlushDCacheM) begin
 		  NextState = STATE_FLUSH;
 		  DCacheStall = 1'b1;
 		  SelAdrM = 2'b11;
@@ -178,7 +178,7 @@ module dcachefsm
 		end
 		
 		// amo hit
-		else if(AtomicM[1] & (&MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit) begin
+		else if(AtomicM[1] & (&MemRWM) & CacheableM & CacheHit) begin
 		  SelAdrM = 2'b10;
 		  DCacheStall = 1'b0;
 		  
@@ -194,7 +194,7 @@ module dcachefsm
 		  end
 		end
 		// read hit valid cached
-		else if(MemRWM[1] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit) begin
+		else if(MemRWM[1] & CacheableM & CacheHit) begin
 		  DCacheStall = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  
@@ -207,7 +207,7 @@ module dcachefsm
 	      end
 		end
 		// write hit valid cached
-		else if (MemRWM[0] & CacheableM & ~(ExceptionM | PendingInterruptM) & CacheHit) begin
+		else if (MemRWM[0] & CacheableM & CacheHit) begin
 		  SelAdrM = 2'b10;
 		  DCacheStall = 1'b0;
 		  SRAMWordWriteEnableM = 1'b1;
@@ -223,28 +223,24 @@ module dcachefsm
 		  end
 		end
 		// read or write miss valid cached
-		else if((|MemRWM) & CacheableM & ~(ExceptionM | PendingInterruptM) & ~CacheHit) begin
+		else if((|MemRWM) & CacheableM & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
 		  CntReset = 1'b1;
 		  DCacheStall = 1'b1;
 		end
 		// uncached write
-		else if(MemRWM[0] & ~CacheableM & ~(ExceptionM | PendingInterruptM)) begin
+		else if(MemRWM[0] & ~CacheableM) begin
 		  NextState = STATE_UNCACHED_WRITE;
 		  CntReset = 1'b1;
 		  DCacheStall = 1'b1;
 		  AHBWrite = 1'b1;
 		end
 		// uncached read
-		else if(MemRWM[1] & ~CacheableM & ~(ExceptionM | PendingInterruptM)) begin
+		else if(MemRWM[1] & ~CacheableM) begin
 		  NextState = STATE_UNCACHED_READ;
 		  CntReset = 1'b1;
 		  DCacheStall = 1'b1;
 		  AHBRead = 1'b1;	  
-		end
-		// fault
-		else if(AnyCPUReqM & (ExceptionM | PendingInterruptM)) begin
-		  NextState = STATE_READY;
 		end
 		else NextState = STATE_READY;
       end
