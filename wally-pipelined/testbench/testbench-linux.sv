@@ -283,8 +283,10 @@ module testbench();
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,3);
   generate
     genvar i;
+/* -----\/----- EXCLUDED -----\/-----
     `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPCFG,  [7:0],`PMP_ENTRIES-1,0);
     `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPADDR, [`XLEN-1:0],`PMP_ENTRIES-1,0);
+ -----/\----- EXCLUDED -----/\----- */
   endgenerate
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
@@ -449,7 +451,7 @@ module testbench();
           force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
           release dut.hart.ieu.dp.ReadDataM; \
-        if(textM.substr(0,5) == "rrame") begin \
+        if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
           force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
@@ -547,7 +549,7 @@ module testbench();
       #1;
       // override on special conditions
       if(~dut.hart.StallW) begin
-        if(textW.substr(0,5) == "rrame") begin
+        if(textW.substr(0,5) == "rdtime") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
           release dut.uncore.clint.clint.MTIME;
         end 
