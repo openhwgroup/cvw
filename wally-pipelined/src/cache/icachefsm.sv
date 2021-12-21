@@ -163,6 +163,7 @@ module icachefsm
 		  NextState = STATE_HIT_SPILL;
         end else if (~hit & ~spill) begin
           CntReset = 1'b1;
+		  SelAdr = 2'b01;                                         /// *********(
           NextState = STATE_MISS_FETCH_WDV;
         end else if (~hit & spill) begin
           CntReset = 1'b1;
