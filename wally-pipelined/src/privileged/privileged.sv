@@ -144,11 +144,9 @@ module privileged (
 
   ///////////////////////////////////////////
   // decode privileged instructions
-
-
   ///////////////////////////////////////////
-  //privdec pmd(.InstrM(InstrM[31:20]),.*);
-  privdec pmd(.InstrM(InstrM[31:20]), 
+
+   privdec pmd(.InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM,
               .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
               .uretM, .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
