@@ -35,39 +35,39 @@ package ahbliteState;
 endpackage
 
 module ahblite (
-  input logic 		     clk, reset,
+  input logic 				 clk, reset,
   // Load control
-  input logic 		     UnsignedLoadM,
-  input logic [1:0] 	     AtomicMaskedM,
+  input logic 				 UnsignedLoadM,
+  input logic [1:0] 		 AtomicMaskedM,
   // Signals from Instruction Cache
   input logic [`PA_BITS-1:0] InstrPAdrF, // *** rename these to match block diagram
-  input logic 		     InstrReadF,
-  output logic [`XLEN-1:0]   InstrRData,
-  output logic 		     InstrAckF,
+  input logic 				 InstrReadF,
+  output logic [`XLEN-1:0] 	 InstrRData,
+  output logic 				 InstrAckF,
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] DCtoAHBPAdrM,
-  input logic 		     DCtoAHBReadM, 
-  input logic 		     DCtoAHBWriteM,
-  input logic [`XLEN-1:0]    DCtoAHBWriteData,
-  output logic [`XLEN-1:0]   DCfromAHBReadData,
-  input logic [1:0] 	     MemSizeM,     // *** remove
-  output logic 		     DCfromAHBAck,
+  input logic 				 DCtoAHBReadM, 
+  input logic 				 DCtoAHBWriteM,
+  input logic [`XLEN-1:0] 	 DCtoAHBWriteData,
+  output logic [`XLEN-1:0] 	 DCfromAHBReadData,
+  input logic [1:0] 		 MemSizeM, // *** remove
+  output logic 				 DCfromAHBAck,
   // AHB-Lite external signals
-  input logic [`AHBW-1:0]    HRDATA,
-  input logic 		     HREADY, HRESP,
-  output logic 		     HCLK, HRESETn,
-  output logic [31:0] 	     HADDR, 
-  output logic [`AHBW-1:0]   HWDATA,
-  output logic 		     HWRITE, 
-  output logic [2:0] 	     HSIZE,
-  output logic [2:0] 	     HBURST,
-  output logic [3:0] 	     HPROT,
-  output logic [1:0] 	     HTRANS,
-  output logic 		     HMASTLOCK,
+  (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,
+  (* mark_debug = "true" *) input logic HREADY, HRESP,
+  (* mark_debug = "true" *) output logic HCLK, HRESETn,
+  (* mark_debug = "true" *) output logic [31:0] HADDR, 
+  (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
+  (* mark_debug = "true" *) output logic HWRITE, 
+  (* mark_debug = "true" *) output logic [2:0] HSIZE,
+  (* mark_debug = "true" *) output logic [2:0] HBURST,
+  (* mark_debug = "true" *) output logic [3:0] HPROT,
+  (* mark_debug = "true" *) output logic [1:0] HTRANS,
+  (* mark_debug = "true" *) output logic HMASTLOCK,
   // Delayed signals for writes
-  output logic [2:0] 	     HADDRD,
-  output logic [3:0] 	     HSIZED,
-  output logic 		     HWRITED
+  (* mark_debug = "true" *) output logic [2:0] HADDRD,
+  (* mark_debug = "true" *) output logic [3:0] HSIZED,
+  (* mark_debug = "true" *) output logic HWRITED
 );
 
   logic GrantData;

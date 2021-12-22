@@ -49,6 +49,5 @@ module privdec (
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(uretM|sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
   assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | TrappedSRETM; // *** generalize this for other instructions
 
-  // *** initially, wfi and sfencevma are nop
-  // *** zfenci extension?
+  // *** initially, wfi is nop
 endmodule

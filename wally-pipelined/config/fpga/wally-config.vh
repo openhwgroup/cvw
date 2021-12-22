@@ -47,11 +47,12 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DCACHE 1
 `define MEM_DTIM 1
+`define MEM_DCACHE 1
+`define MEM_IROM 1
 `define MEM_ICACHE 1
 `define MEM_VIRTMEM 1
-`define VECTORED_INTERRUPTS_SUPPORTED 1 // Domenico Ottolia 4/15: Support for vectored interrupts in _tvec csrs. Just implemented in src/privileged/trap.sv around line 75. Pretty sure this should be 1.
+`define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32
@@ -80,13 +81,13 @@
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-`define BOOTTIM_SUPPORTED 1'b1
-`define BOOTTIM_BASE   56'h00001000 
-`define BOOTTIM_RANGE  56'h00000FFF
+`define BOOTROM_SUPPORTED 1'b1
+`define BOOTROM_BASE   56'h00001000 
+`define BOOTROM_RANGE  56'h00000FFF
 
-`define TIM_SUPPORTED 1'b0
-`define TIM_BASE       56'h100000000
-`define TIM_RANGE      56'h07FFFFFF
+`define RAM_SUPPORTED 1'b0
+`define RAM_BASE       56'h100000000
+`define RAM_RANGE      56'h07FFFFFF
 
 `define EXT_MEM_SUPPORTED 1'b1
 `define EXT_MEM_BASE       56'h80000000

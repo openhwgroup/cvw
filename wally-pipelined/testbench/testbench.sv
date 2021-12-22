@@ -146,7 +146,10 @@ logic [3:0] dummy;
   assign HRESPEXT = 0;
   assign HRDATAEXT = 0;
 
-  wallypipelinedsoc dut(.*); 
+  wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HTRANS, .HMASTLOCK, .HREADY, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
@@ -156,8 +159,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = `TIM_BASE>>(1+`XLEN/32);
-  localparam integer 	   MemEndAddr = (`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32);
+  localparam integer 	   MemStartAddr = `RAM_BASE>>(1+`XLEN/32);
+  localparam integer 	   MemEndAddr = (`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32);
 
   initial
     begin
@@ -175,7 +178,7 @@ logic [3:0] dummy;
       // *** broken because DTIM also drives RAM
       if (`TESTSBP) begin
 	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  dut.uncore.dtim.dtim.RAM[i] = meminit;
+	  dut.uncore.ram.ram.RAM[i] = meminit;
 	end
       end
       // read test vectors into memory
@@ -184,7 +187,7 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.ram.RAM);
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -231,18 +234,18 @@ logic [3:0] dummy;
         // Check errors
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
-        testadr = (`TIM_BASE+tests[test+1].atohex())/(`XLEN/8);
+        testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== dut.uncore.dtim.dtim.RAM[testadr+i] &&
+          if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.dtim.dtim.RAM[testadr+i], signature[i]);
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -265,7 +268,7 @@ logic [3:0] dummy;
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
-            $readmemh(memfilename, dut.uncore.dtim.dtim.RAM);
+            $readmemh(memfilename, dut.uncore.ram.ram.RAM);
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);
@@ -284,7 +287,7 @@ logic [3:0] dummy;
 
   // Termination condition
   // terminate on a specific ECALL for Imperas tests, or on a jump to self infinite loop for RISC-V Arch tests
-  assign DCacheFlushStart = dut.hart.priv.EcallFaultM && 
+  assign DCacheFlushStart = dut.hart.priv.priv.EcallFaultM && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
@@ -315,7 +318,7 @@ module riscvassertions;
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (`DIV_BITSPERCYCLE == 1 || `DIV_BITSPERCYCLE==2 || `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
-    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
+    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 || `MEM_DCACHE == 0 || `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_BLOCKLENINBITS >= 128 || `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
@@ -329,7 +332,7 @@ module riscvassertions;
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
-    assert (`TIM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if TIM_RANGE is less than 56'h07FFFFFF");
+    assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
   end
 endmodule
 
@@ -362,7 +365,7 @@ module DCacheFlushFSM
   logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
   genvar adr;
 
-  logic [`XLEN-1:0] ShadowRAM[`TIM_BASE>>(1+`XLEN/32):(`TIM_RANGE+`TIM_BASE)>>1+(`XLEN/32)];
+  logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
   generate
     for(index = 0; index < numlines; index++) begin

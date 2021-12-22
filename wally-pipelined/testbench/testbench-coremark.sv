@@ -64,7 +64,10 @@ module testbench();
   assign HREADYEXT = 1;
   assign HRESPEXT = 0;
   assign HRDATAEXT = 0;
-  wallypipelinedsoc dut(.*); 
+  wallypipelinedsoc dut(.clk, .reset_ext, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HTRANS, .HMASTLOCK, .HREADY, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
   // Track names of instructions
   logic [31:0] InstrW;
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.InstrM, InstrW);
@@ -84,9 +87,9 @@ module testbench();
       totalerrors = 0;
       // read test vectors into memory
       memfilename = tests[0];
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.RAM);
       for(j=18710; j < 65535; j = j+1)
-        dut.uncore.dtim.RAM[j] = 64'b0;
+        dut.uncore.ram.RAM[j] = 64'b0;
       reset = 1; # 22; reset = 0;
     end
   // generate clock to sequence tests

@@ -37,23 +37,23 @@
 
 //`define MISA (32'h00000104)
 //`define MISA (32'h00001104 | 1<<5 | 1<<18 | 1 << 20 | 1 << 12 | 1 << 0)
-`define MISA (32'h00000104 | 0 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
+`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
 `define DESIGN_COMPILER 0
 
-
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DCACHE 1
 `define MEM_DTIM 1
+`define MEM_DCACHE 1
+`define MEM_IROM 1
 `define MEM_ICACHE 1
 `define MEM_VIRTMEM 1
-`define VECTORED_INTERRUPTS_SUPPORTED 1
+`define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32
@@ -62,10 +62,9 @@
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
 `define DCACHE_NUMWAYS 4
-`define DCACHE_WAYSIZEINBYTES 2048
+`define DCACHE_WAYSIZEINBYTES 4096
 `define DCACHE_BLOCKLENINBITS 256
-`define DCACHE_REPLBITS 3
-`define ICACHE_NUMWAYS 1
+`define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_BLOCKLENINBITS 256
 
@@ -86,12 +85,12 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
-`define BOOTTIM_SUPPORTED 1'b1
-`define BOOTTIM_BASE   56'h00001000 
-`define BOOTTIM_RANGE  56'h00000FFF
-`define TIM_SUPPORTED 1'b1
-`define TIM_BASE       56'h80000000
-`define TIM_RANGE      56'h07FFFFFF
+`define BOOTROM_SUPPORTED 1'b1
+`define BOOTROM_BASE   56'h00001000 
+`define BOOTROM_RANGE  56'h00000FFF
+`define RAM_SUPPORTED 1'b1
+`define RAM_BASE       56'h80000000
+`define RAM_RANGE      56'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
 `define CLINT_BASE  56'h02000000
 `define CLINT_RANGE 56'h0000FFFF

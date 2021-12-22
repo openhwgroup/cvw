@@ -32,15 +32,16 @@ module icache
    input logic 		       StallF, 
    input logic [`PA_BITS-1:0]  PCNextF,
    input logic [`PA_BITS-1:0]  PCPF,
+   input logic [`XLEN-1:0]  PCF,
 
    input logic ExceptionM, PendingInterruptM,
    
    // Data read in from the ebu unit
-   input logic [`XLEN-1:0]     InstrInF,
-   input logic 		       InstrAckF,
+   (* mark_debug = "true" *) input logic [`XLEN-1:0]     InstrInF,
+   (* mark_debug = "true" *) input logic 		       InstrAckF,
    // Read requested from the ebu unit
-   output logic [`PA_BITS-1:0] InstrPAdrF,
-   output logic 	       InstrReadF,
+   (* mark_debug = "true" *) output logic [`PA_BITS-1:0] InstrPAdrF,
+   (* mark_debug = "true" *) output logic 	       InstrReadF,
    // High if the instruction currently in the fetch stage is compressed
    output logic 	       CompressedF,
    // High if the icache is requesting a stall
@@ -52,7 +53,7 @@ module icache
    
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-   output logic [31:0] 	       FinalInstrRawF
+   (* mark_debug = "true" *) output logic [31:0] 	       FinalInstrRawF
    );
 
   // Configuration parameters
@@ -125,7 +126,7 @@ module icache
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(PCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d1(PCF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d2(PCPSpillF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .s(SelAdr),
 	    .y(RAdr));
@@ -219,7 +220,7 @@ module icache
 
   // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-  assign spill = PCPF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
+  assign spill = PCF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
 
 
   // to compute the fetch address we need to add the bit shifted

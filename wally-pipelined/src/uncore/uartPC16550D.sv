@@ -31,90 +31,90 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-  /* verilator lint_off UNOPTFLAT */
+/* verilator lint_off UNOPTFLAT */
 
 module uartPC16550D(
-  // Processor Interface
-  input  logic       HCLK, HRESETn,
-  input  logic [2:0] A,
-  input  logic [7:0] Din,
-  output logic [7:0] Dout,
-  input  logic       MEMRb, MEMWb, 
-  output logic       INTR, TXRDYb, RXRDYb,
-  // Clocks
-  output  logic      BAUDOUTb,
-  input   logic      RCLK,
-  // E1A Driver
-  input  logic       SIN, DSRb, DCDb, CTSb, RIb,
-  output logic       SOUT, RTSb, DTRb, OUT1b, OUT2b
-);
+	// Processor Interface
+	input logic 	   HCLK, HRESETn,
+	input logic [2:0]  A,
+	input logic [7:0]  Din,
+	output logic [7:0] Dout,
+	input logic 	   MEMRb, MEMWb, 
+	output logic 	   INTR, TXRDYb, RXRDYb,
+	// Clocks
+	output logic 	   BAUDOUTb,
+	input logic 	   RCLK,
+	// E1A Driver
+	input logic 	   SIN, DSRb, DCDb, CTSb, RIb,
+	output logic 	   SOUT, RTSb, DTRb, OUT1b, OUT2b
+	);
 
   // transmit and receive states // *** neeed to work on synth warning -- it wants to make enums 32 bits by default
   typedef enum {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
 
   // Registers
   logic [10:0] RBR;
-  logic [7:0] FCR, LCR, LSR, SCR, DLL, DLM;
-  logic [3:0] IER, MSR;
-  logic [4:0] MCR;
+  logic [7:0]  FCR, LCR, LSR, SCR, DLL, DLM;
+  logic [3:0]  IER, MSR;
+  logic [4:0]  MCR;
 
   // Syncrhonized and delayed UART signals
-  logic SINd, DSRbd, DCDbd, CTSbd, RIbd;
-  logic SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync;
-  logic DSRb2, DCDb2, CTSb2, RIb2;
-  logic SOUTbit;
+  logic 	   SINd, DSRbd, DCDbd, CTSbd, RIbd;
+  logic 	   SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync;
+  logic 	   DSRb2, DCDb2, CTSb2, RIb2;
+  logic 	   SOUTbit;
 
   // Control signals
-  logic loop; // loopback mode
-  logic DLAB; // Divisor Latch Access Bit (LCR bit 7)
+  logic 	   loop; // loopback mode
+  logic 	   DLAB; // Divisor Latch Access Bit (LCR bit 7)
 
   // Baud and rx/tx timing
-  logic baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
+  logic 	   baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
   logic [16+`UART_PRESCALE-1:0] baudcount;
-  logic [3:0] 			rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
-  logic [3:0] rxbitsreceived, txbitssent;
+  logic [3:0] 					rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
+  logic [3:0] 					rxbitsreceived, txbitssent;
   statetype rxstate, txstate;
 
   // shift registrs and FIFOs
-  logic [9:0] rxshiftreg;
-  logic [10:0] rxfifo[15:0];
-  logic [7:0] txfifo[15:0];
-  logic [4:0] rxfifotailunwrapped;
-  logic [3:0] rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
-  logic [3:0] rxfifoentries, txfifoentries;
-  logic [3:0] rxbitsexpected, txbitsexpected;
+  logic [9:0] 					rxshiftreg;
+  logic [10:0] 					rxfifo[15:0];
+  logic [7:0] 					txfifo[15:0];
+  logic [4:0] 					rxfifotailunwrapped;
+  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
+  logic [3:0] 					rxfifoentries, txfifoentries;
+  logic [3:0] 					rxbitsexpected, txbitsexpected;
 
   // receive data
-  logic [10:0] RXBR;
-  logic [6:0] rxtimeoutcnt;
-  logic rxcentered;
-  logic rxparity, rxparitybit, rxstopbit;
-  logic rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
-  logic rxdataready;
-  logic rxfifoempty, rxfifotriggered, rxfifotimeout;
-  logic rxfifodmaready;
-  logic [8:0] rxdata9;
-  logic [7:0] rxdata;
-  logic [15:0] RXerrbit, rxfullbit;
-  logic [31:0] rxfullbitunwrapped;
+  logic [10:0] 					RXBR;
+  logic [6:0] 					rxtimeoutcnt;
+  logic 						rxcentered;
+  logic 						rxparity, rxparitybit, rxstopbit;
+  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
+  logic 						rxdataready;
+  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
+  logic 						rxfifodmaready;
+  logic [8:0] 					rxdata9;
+  logic [7:0] 					rxdata;
+  logic [15:0] 					RXerrbit, rxfullbit;
+  logic [31:0] 					rxfullbitunwrapped;
 
   // transmit data
-  logic [7:0] TXHR, nexttxdata;
-  logic [11:0] txdata, txsr;
-  logic txnextbit, txhrfull, txsrfull;
-  logic txparity;
-  logic txfifoempty, txfifofull, txfifodmaready;
+  logic [7:0] 					TXHR, nexttxdata;
+  logic [11:0] 					txdata, txsr;
+  logic 						txnextbit, txhrfull, txsrfull;
+  logic 						txparity;
+  logic 						txfifoempty, txfifofull, txfifodmaready;
 
   // control signals
-  logic fifoenabled, fifodmamodesel, evenparitysel;
+  logic 						fifoenabled, fifodmamodesel, evenparitysel;
 
   // interrupts
-  logic RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
-  logic THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
-  logic rxdataavailintr, modemstatusintr, intrpending;
-  logic [2:0] intrID;
+  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
+  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
+  logic 						rxdataavailintr, modemstatusintr, intrpending;
+  logic [2:0] 					intrID;
 
-  logic baudpulseComb;
+  logic 						baudpulseComb;
 
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
@@ -122,7 +122,7 @@ module uartPC16550D(
   always_ff @(posedge HCLK) begin
     {SINd, DSRbd, DCDbd, CTSbd, RIbd} <= #1 {SIN, DSRb, DCDb, CTSb, RIb};
     {SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync} <= #1 loop ? {SOUTbit, ~MCR[0], ~MCR[3], ~MCR[1], ~MCR[2]} : 
-        {SINd, DSRbd, DCDbd, CTSbd, RIbd}; // syncrhonized signals, handle loopback testing
+														{SINd, DSRbd, DCDbd, CTSbd, RIbd}; // syncrhonized signals, handle loopback testing
     {DSRb2, DCDb2, CTSb2, RIb2} <= #1 {DSRbsync, DCDbsync, CTSbsync, RIbsync}; // for detecting state changes
   end
 
@@ -138,23 +138,23 @@ module uartPC16550D(
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
       if (`FPGA) begin
-	DLL <= #1 8'd11;
-	DLM <= #1 8'b0;
+		DLL <= #1 8'd11;
+		DLM <= #1 8'b0;
       end else begin
-	DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
-	DLM <= #1 8'b0;
+		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
+		DLM <= #1 8'b0;
       end	
-/* -----\/----- EXCLUDED -----\/-----
- -----/\----- EXCLUDED -----/\----- */
+	  /* -----\/----- EXCLUDED -----\/-----
+	   -----/\----- EXCLUDED -----/\----- */
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
         case (A)
-/* -----\/----- EXCLUDED -----\/-----
-          3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
-          3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
- -----/\----- EXCLUDED -----/\----- */
-	  // *** BUG FIX ME for now for the divider to be 11.  Our clock is 10 Mhz.  10Mhz /(11 * 16) = 56818 baud, which is close enough to 57600 baud
+		  /* -----\/----- EXCLUDED -----\/-----
+           3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+           3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
+		   -----/\----- EXCLUDED -----/\----- */
+		  // *** BUG FIX ME for now for the divider to be 11.  Our clock is 23 Mhz.  23Mhz /(25 * 16) = 57600 baud, which is close enough to 57600 baud
           3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
 
@@ -316,7 +316,7 @@ module uartPC16550D(
   assign rxfifoempty = (rxfifohead == rxfifotail);
   // verilator lint_off WIDTH
   assign rxfifoentries = (rxfifohead >= rxfifotail) ? (rxfifohead-rxfifotail) : 
-                                                      (rxfifohead + 16 - rxfifotail);
+                         (rxfifohead + 16 - rxfifotail);
   // verilator lint_on WIDTH
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
   //assign rxfifotimeout = rxtimeoutcnt[6]; // time out after 4 character periods; *** probably not right yet
@@ -335,10 +335,10 @@ module uartPC16550D(
     for (i=0; i<16; i++) begin:rx
       assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
       assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
-/*      if (i > 0)
-        assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
-      else
-        assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
+	  /*      if (i > 0)
+       assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
+       else
+       assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
     end
   endgenerate
   assign rxfifohaserr = |(RXerrbit & rxfullbit);
@@ -361,7 +361,7 @@ module uartPC16550D(
     end
 
   ///////////////////////////////////////////
-  // transmit timing and control
+	// transmit timing and control
   ///////////////////////////////////////////
   always_ff @(posedge HCLK, negedge HRESETn)
     if (~HRESETn) begin
@@ -414,7 +414,7 @@ module uartPC16550D(
       3'b111: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], nexttxdata[7], txparity, 2'b11};    // 8 data, parity
     endcase
   end
-       
+  
   // registers & FIFO
   always_ff @(posedge HCLK, negedge HRESETn)
     if (~HRESETn) begin
@@ -429,7 +429,7 @@ module uartPC16550D(
           txhrfull <= #1 1;
         end
         $write("%c",Din); // for testbench
-       end
+      end
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin 
           if (~txfifoempty) begin
@@ -453,7 +453,7 @@ module uartPC16550D(
   assign txfifoempty = (txfifohead == txfifotail);
   // verilator lint_off WIDTH
   assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
-                                                      (txfifohead + 16 - txfifotail);
+                         (txfifohead + 16 - txfifotail);
   // verilator lint_on WIDTH
   assign txfifofull = (txfifoentries == 4'b1111);
 
@@ -480,7 +480,7 @@ module uartPC16550D(
   assign THRE = fifoenabled ? txfifoempty : ~txhrfull;
   assign THRE_IP = THRE & ~squashTHRE_IP; // THRE_IP squashed upon reading IIR
   assign modemstatusintr = |MSR[3:0]; // set interrupt when modem pins change
- 
+  
   // IIR: interrupt priority (Table 5)
   // set intrID based on highest priority pending interrupt source; otherwise, no interrupt is pending
   always_comb begin
@@ -532,4 +532,4 @@ module uartPC16550D(
 
 endmodule
 
-  /* verilator lint_on UNOPTFLAT */
+/* verilator lint_on UNOPTFLAT */

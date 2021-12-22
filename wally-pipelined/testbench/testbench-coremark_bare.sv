@@ -54,8 +54,13 @@ module testbench();
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
   logic SDCCLK;
-  tri1 SDCCmd;
-  tri1 [3:0] SDCDat;
+  logic      SDCCmdIn;
+  logic      SDCCmdOut;
+  logic      SDCCmdOE;
+  logic [3:0] SDCDatIn;
+
+  logic             HREADY;
+  logic 	    HSELEXT;
 
   assign SDCmd = 1'bz;
   assign SDCDat = 4'bz;
@@ -67,7 +72,10 @@ module testbench();
   assign HREADYEXT = 1;
   assign HRESPEXT = 0;
   assign HRDATAEXT = 0;
-  wallypipelinedsoc dut(.*); 
+  wallypipelinedsoc dut(.clk, .reset_ext, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HTRANS, .HMASTLOCK, .HREADY, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   logic [31:0] InstrW;
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
@@ -95,12 +103,12 @@ module testbench();
       totalerrors = 0;
       // read test vectors into memory
       memfilename = tests[0];
-      $readmemh(memfilename, dut.uncore.dtim.RAM);
+      $readmemh(memfilename, dut.uncore.ram.ram.RAM);
       //for(j=268437955; j < 268566528; j = j+1)
-        //dut.uncore.dtim.RAM[j] = 64'b0;
+        //dut.uncore.ram.RAM[j] = 64'b0;
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.addr";
 //      ProgramAddrMapFile = "../../imperas-riscv-tests/riscv-ovpsim-plus/examples/CoreMark/coremark.RV64IM.bare.elf.objdump.lab";
-        //dut.uncore.dtim.RAM[268437713]=64'b1;
+        //dut.uncore.ram.RAM[268437713]=64'b1;
     reset_ext = 1; # 22; reset_ext = 0;
     end
   // generate clock to sequence tests

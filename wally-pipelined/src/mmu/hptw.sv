@@ -5,7 +5,7 @@
 // Modified:  david_harris@hmc.edu 18 July 2021 cleanup and simplification
 //            kmacsaigoren@hmc.edu 1 June 2021
 //            implemented SV48 on top of SV39. This included, adding a level of the FSM for the extra page number segment
-//            adding support for terapage encoding, and for setting the TranslationPAdr using the new level,
+//            adding support for terapage encoding, and for setting the HPTWAdr using the new level,
 //            adding the internal SvMode signal
 //
 // Purpose: Page Table Walker
@@ -32,22 +32,21 @@
 
 module hptw
   (
-   input logic 		       clk, reset,
-   input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0]     PCF, MemAdrM, // addresses to translate
-   input logic 		       ITLBMissF, DTLBMissM, // TLB Miss
-   input logic [1:0] 	       MemRWM, // 10 = read, 01 = write
-   input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
-   input logic 		       HPTWStall, // stall from LSU
-   input logic 		       MemAfterIWalkDone,
-   input logic 		       AnyCPUReqM,
+   input logic 				   clk, reset,
+   input logic [`XLEN-1:0] 	   SATP_REGW, // includes SATP.MODE to determine number of levels in page table
+   input logic [`XLEN-1:0] 	   PCF, IEUAdrM, // addresses to translate
+   (* mark_debug = "true" *) input logic 				   ITLBMissF, DTLBMissM, // TLB Miss
+   input logic [1:0] 		   MemRWM, // 10 = read, 01 = write
+   input logic [`XLEN-1:0] 	   HPTWReadPTE, // page table entry from LSU
+   input logic 				   DCacheStall, // stall from LSU
+   input logic 				   AnyCPUReqM,
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
-   output logic [1:0] 	       PageType, // page type to TLBs
-   output logic 	       ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   output logic 	       SelPTW, // LSU Arbiter should select signals from the PTW rather than from the IEU
-   output logic [`PA_BITS-1:0] TranslationPAdr,
-   output logic 	       HPTWRead, // HPTW requesting to read memory
-   output logic 	       WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
+   output logic [1:0] 		   PageType, // page type to TLBs
+   (* mark_debug = "true" *) output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
+   output logic [`PA_BITS-1:0] HPTWAdr,
+   output logic 			   HPTWRead, // HPTW requesting to read memory
+   output logic [2:0] 		   HPTWSize, // 32 or 64 bit access.
+   output logic 			   WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
 );
 
       typedef enum  {L0_ADR, L0_RD, 
@@ -72,7 +71,7 @@ module hptw
       logic [`SVMODE_BITS-1:0]	    SvMode;
       logic [`XLEN-1:0] 	    TranslationVAdr;
       
-      statetype WalkerState, NextWalkerState, InitialWalkerState;
+	  (* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 	  // Extract bits from CSRs and inputs
       assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
@@ -81,12 +80,12 @@ module hptw
 	  assign TLBMiss = (DTLBMissM | ITLBMissF);
 
       // Determine which address to translate
- 	  assign TranslationVAdr = DTLBWalk ? MemAdrM : PCF;
+ 	  assign TranslationVAdr = DTLBWalk ? IEUAdrM : PCF;
       assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	  // State flops
  	  flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	  assign PRegEn = HPTWRead & ~HPTWStall;
+	  assign PRegEn = HPTWRead & ~DCacheStall;
   	  flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
 	
       // Assign PTE descriptors common across all XLEN values
@@ -100,7 +99,6 @@ module hptw
 	  // Enable and select signals based on states
       assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	  assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
-	  assign SelPTW = (WalkerState != IDLE) & (WalkerState != FAULT) & (WalkerState != LEAF);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
 
@@ -120,13 +118,14 @@ module hptw
 			default: NextPageType = PageType;
 		endcase
 
-	  // TranslationPAdr muxing
+	  // HPTWAdr muxing
 	  if (`XLEN==32) begin // RV32
 		logic [9:0] VPN;
 		logic [`PPN_BITS-1:0] PPN;
 		assign VPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
 		assign PPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? BasePageTablePPN : CurrentPPN; 
-		assign TranslationPAdr = {PPN, VPN, 2'b00}; 
+		assign HPTWAdr = {PPN, VPN, 2'b00};
+		assign HPTWSize = 3'b010;
 	  end else begin // RV64
 		logic [8:0] VPN;
 		logic [`PPN_BITS-1:0] PPN;
@@ -139,7 +138,8 @@ module hptw
 			endcase
 		assign PPN = ((WalkerState == L3_ADR) | (WalkerState == L3_RD) | 
 		              (SvMode != `SV48 & ((WalkerState == L2_ADR) | (WalkerState == L2_RD)))) ? BasePageTablePPN : CurrentPPN;
-		assign TranslationPAdr = {PPN, VPN, 3'b000}; 
+		assign HPTWAdr = {PPN, VPN, 3'b000};
+		assign HPTWSize = 3'b011;
 	  end
 
 	  // Initial state and misalignment for RV32/64
@@ -168,7 +168,7 @@ module hptw
 	    IDLE: if (TLBMiss)	 		NextWalkerState = InitialWalkerState;
 		      else 					NextWalkerState = IDLE;
 	    L3_ADR: 			NextWalkerState = L3_RD; // first access in SV48
-	    L3_RD: if (HPTWStall) NextWalkerState = L3_RD;
+	    L3_RD: if (DCacheStall) NextWalkerState = L3_RD;
 	                else 			NextWalkerState = L2_ADR;
 //	    LEVEL3: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
 //		  		else if (ValidNonLeafPTE) NextWalkerState = L2_ADR;
@@ -177,7 +177,7 @@ module hptw
 				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
 		 		else 				NextWalkerState = FAULT;			
-	    L2_RD: if (HPTWStall) NextWalkerState = L2_RD;
+	    L2_RD: if (DCacheStall) NextWalkerState = L2_RD;
 	      			else 			NextWalkerState = L1_ADR;
 //	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
 //				else if (ValidNonLeafPTE) NextWalkerState = L1_ADR;
@@ -186,7 +186,7 @@ module hptw
 				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
 		 		else 				NextWalkerState = FAULT;	
-	    L1_RD: if (HPTWStall) NextWalkerState = L1_RD;
+	    L1_RD: if (DCacheStall) NextWalkerState = L1_RD;
 	      			else 			NextWalkerState = L0_ADR;
 //	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
 //	      		else if (ValidNonLeafPTE) NextWalkerState = L0_ADR;
@@ -194,12 +194,12 @@ module hptw
 	    L0_ADR: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
 		 		else 				NextWalkerState = FAULT;
-	    L0_RD: if (HPTWStall) NextWalkerState = L0_RD;
+	    L0_RD: if (DCacheStall) NextWalkerState = L0_RD;
 	      			else 			NextWalkerState = LEAF;
 //	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 //				else 				NextWalkerState = FAULT;
-	    LEAF: 						NextWalkerState = IDLE;
-	    FAULT: if (ITLBMissF & AnyCPUReqM & ~MemAfterIWalkDone) NextWalkerState = FAULT;
+	    LEAF:                       NextWalkerState = IDLE; // updates TLB
+	    FAULT: if (ITLBMissF & AnyCPUReqM) NextWalkerState = FAULT; /// **** BUG: Stays in fault 1 cycle longer than it should.
  	                        else NextWalkerState = IDLE;
 	    default: begin
 	      // synthesis translate_off
@@ -209,9 +209,10 @@ module hptw
 	    end
 	  endcase
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
-      assign HPTWRead = 0; assign SelPTW = 0;
+      assign HPTWRead = 0;
       assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
-      assign TranslationPAdr = 0; 
+      assign HPTWAdr = 0;
+	  assign HPTWSize = 3'b000;
     end
   endgenerate
 endmodule

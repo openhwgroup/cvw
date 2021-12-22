@@ -21,7 +21,8 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
 // OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
 // BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
-// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -55,7 +56,7 @@ module privileged (
   input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, MemAdrM,
+  input  logic [`XLEN-1:0] InstrMisalignedAdrM, IEUAdrM,
   input  logic [4:0]       SetFflagsM,
 
   // Trap signals from pmp/pma in mmu
@@ -84,7 +85,7 @@ module privileged (
 
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
-//  logic [11:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
+  //  logic [11:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
 
   logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
@@ -97,7 +98,7 @@ module privileged (
   logic IllegalInstrFaultM, TrappedSRETM;
 
   logic MTrapM, STrapM, UTrapM;
-  logic InterruptM; 
+  (* mark_debug = "true" *)  logic InterruptM; 
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW; 
   logic       STATUS_MIE, STATUS_SIE;
@@ -111,8 +112,8 @@ module privileged (
   ///////////////////////////////////////////
 
   // get bits of DELEG registers based on CAUSE
-//  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]];
-//  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[3:0]] : SEDELEG_REGW[CauseM[3:0]]; // depricated
+  //  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]];
+  //  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[3:0]] : SEDELEG_REGW[CauseM[3:0]]; // depricated
   assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
   assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : SEDELEG_REGW[CauseM[`LOG_XLEN-1:0]]; // depricated
   
@@ -145,13 +146,40 @@ module privileged (
   // decode privileged instructions
   ///////////////////////////////////////////
 
-  privdec pmd(.InstrM(InstrM[31:20]), .*);
+   privdec pmd(.InstrM(InstrM[31:20]), 
+              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM,
+              .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
+              .uretM, .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
   // Control and Status Registers
   ///////////////////////////////////////////
-
-  csr csr(.*);
+  //csr csr(.*);
+  csr csr(.clk, .reset,
+          .FlushE, .FlushM, .FlushW,
+          .StallE, .StallM, .StallW,
+          .InstrM, .PCM, .SrcAM,
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .uretM,
+          .TimerIntM, .ExtIntM, .SwIntM,
+          .MTIME_CLINT, .MTIMECMP_CLINT,
+          .InstrValidM, .FRegWriteM, .LoadStallD,
+          .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
+          .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess,
+          .NextPrivilegeModeM, .PrivilegeModeW,
+          .CauseM, .NextFaultMtvalM, .STATUS_MPP,
+          .STATUS_SPP, .STATUS_TSR,
+          .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
+          .MEDELEG_REGW, .MIDELEG_REGW, .SEDELEG_REGW, .SIDELEG_REGW, 
+          .SATP_REGW,
+          .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
+          .STATUS_MIE, .STATUS_SIE,
+          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW,
+          .PMPCFG_ARRAY_REGW,
+          .PMPADDR_ARRAY_REGW,
+          .SetFflagsM,
+          .FRM_REGW, 
+          .CSRReadValW,
+          .IllegalCSRAccessM);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 
@@ -188,11 +216,29 @@ module privileged (
   flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
                   {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
                   {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
-  // *** it should be possible to compbine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
-
-  trap trap(.*);
-
+  // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
+  //trap trap(.*);
+  trap trap(.clk, .reset,
+            .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
+            .BreakpointFaultM, .LoadMisalignedFaultM, .StoreMisalignedFaultM,
+            .LoadAccessFaultM, .StoreAccessFaultM, .EcallFaultM, .InstrPageFaultM,
+            .LoadPageFaultM, .StorePageFaultM,
+            .mretM, .sretM, .uretM,
+            .PrivilegeModeW, .NextPrivilegeModeM,
+            .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
+            .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
+            .STATUS_MIE, .STATUS_SIE,
+            .PCM,
+            .InstrMisalignedAdrM, .IEUAdrM, 
+            .InstrM,
+            .InstrValidM, .CommittedM,
+            .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,
+            .InterruptM,
+            .ExceptionM,
+            .PendingInterruptM,
+            .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
 endmodule
+
 
 
 
