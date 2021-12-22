@@ -163,6 +163,7 @@ module icachefsm
 		  NextState = STATE_HIT_SPILL;
         end else if (~hit & ~spill) begin
           CntReset = 1'b1;
+		  SelAdr = 2'b01;                                         /// *********(
           NextState = STATE_MISS_FETCH_WDV;
         end else if (~hit & spill) begin
           CntReset = 1'b1;
@@ -294,8 +295,8 @@ module icachefsm
           ICacheStallF = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  if(StallF) begin
-			NextState = STATE_CPU_BUSY;
-			SelAdr = 2'b01;
+			NextState = STATE_CPU_BUSY_SPILL;
+			SelAdr = 2'b10;
 		  end else begin
             NextState = STATE_READY;
 		  end

@@ -103,6 +103,9 @@ module ifu (
   
 (* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
+  logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
+  logic 					   BPPredWrongM;
+  
 
   generate
     if (`XLEN==32) begin
@@ -187,8 +190,13 @@ module ifu (
          .s(BPPredWrongE),
          .y(PCNext1F));
 
+  // December 20, 2021 Ross Thompson, If instructions in ID and IF are already invalid we don't pick PCE on icache invalidate.
+  // this only happens because of branch class miss prediction.  The Fence instruction was incorrectly predicted as a branch
+  // this means on the previous cycle the BPPredWrongE updated PCNextF to the correct fall through address.
+  // to fix we need to select the correct address PCF as the next PCNextF. Unforunately we must still flush the instruction in IF
+  // as we are deliberately invalidating the icache.  This address has to be refetched by the icache.
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
-         .d1(PCE),
+         .d1(PCBPWrongInvalidate),
          .s(InvalidateICacheM),
          .y(PCNext2F));
   
@@ -205,6 +213,14 @@ module ifu (
   flop #(1) resetReg (.clk(clk),
         .d(reset),
         .q(reset_q));
+
+
+  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM),
+								.d(BPPredWrongE), .q(BPPredWrongM));
+
+  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
+											.s(BPPredWrongM & InvalidateICacheM), 
+											.y(PCBPWrongInvalidate));
   
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
