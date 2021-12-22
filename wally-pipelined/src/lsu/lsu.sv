@@ -198,7 +198,9 @@ module lsu
   assign SelReplayCPURequest = (NextState == STATE_T0_REPLAY) | (NextState == STATE_T0_FAULT_REPLAY);
   assign SelHPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
 				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
-  assign IgnoreRequest = CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM);
+  assign IgnoreRequest = (CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
+						 ((CurrState == STATE_T0_REPLAY | CurrState == STATE_T0_FAULT_REPLAY)
+						  & (ExceptionM | PendingInterruptM));
   
   assign WalkerInstrPageFaultF = WalkerInstrPageFaultRaw | CurrState == STATE_T0_FAULT_REPLAY;
   
