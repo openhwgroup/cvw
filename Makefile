@@ -1,7 +1,7 @@
 all:
-	install
-	compile
-	regression
+	make install
+	make compile
+	make regression
 
 # install copies over the Makefile.include from riscv-isa-sim
 # And corrects the TARGETDIR path and the RISCV_PREFIXZ
@@ -14,7 +14,7 @@ install:
 compile:
 	make -C addins/riscv-arch-test
 	make -C addins/riscv-arch-test XLEN=32
-	cd tests/wally-riscv-arch-test; exe2memfile.pl work/*/*/*.elf
+	cd addins/riscv-arch-test; exe2memfile.pl work/*/*/*.elf
 
 regression:
 	make -C wally-pipelined/regression
