@@ -33,14 +33,14 @@ module ifu (
   // Fetch
   input logic [`XLEN-1:0]     InstrInF,
   input logic 		      InstrAckF,
-  output logic [`XLEN-1:0]    PCF, 
+  (* mark_debug = "true" *) output logic [`XLEN-1:0]    PCF, 
   output logic [`PA_BITS-1:0] InstrPAdrF,
   output logic 		      InstrReadF,
   output logic 		      ICacheStallF,
   // Execute
   output logic [`XLEN-1:0]    PCLinkE,
   input logic 		      PCSrcE, 
-  input logic [`XLEN-1:0]     PCTargetE,
+  input logic [`XLEN-1:0]     IEUAdrE,
   output logic [`XLEN-1:0]    PCE,
   output logic 		      BPPredWrongE, 
   // Mem
@@ -101,8 +101,11 @@ module ifu (
 
   logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
-  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
+(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
+  logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
+  logic 					   BPPredWrongM;
+  
 
   generate
     if (`XLEN==32) begin
@@ -115,6 +118,7 @@ module ifu (
   endgenerate
 
   assign PCFExt = {2'b00, PCF};
+  //
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   immu(.PAdr(PCFExt[`PA_BITS-1:0]),
        .VAdr(PCF),
@@ -158,11 +162,16 @@ module ifu (
   //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
   // assign InstrReadF = 1; // *** & ICacheMissF; add later
 
+  // conditional
+  // 1. ram // controlled by `MEM_IROM
+  // 2. cache // `MEM_ICACHE
+  // 3. wire pass-through
   icache icache(.clk, .reset, .StallF, .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
   .InstrPAdrF, .InstrReadF, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
 
   .PCNextF(PCNextFPhys),
   .PCPF(PCPFmmu),
+  .PCF,
   .WalkerInstrPageFaultF,
   .InvalidateICacheM);
   
@@ -181,8 +190,13 @@ module ifu (
          .s(BPPredWrongE),
          .y(PCNext1F));
 
+  // December 20, 2021 Ross Thompson, If instructions in ID and IF are already invalid we don't pick PCE on icache invalidate.
+  // this only happens because of branch class miss prediction.  The Fence instruction was incorrectly predicted as a branch
+  // this means on the previous cycle the BPPredWrongE updated PCNextF to the correct fall through address.
+  // to fix we need to select the correct address PCF as the next PCNextF. Unforunately we must still flush the instruction in IF
+  // as we are deliberately invalidating the icache.  This address has to be refetched by the icache.
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
-         .d1(PCE),
+         .d1(PCBPWrongInvalidate),
          .s(InvalidateICacheM),
          .y(PCNext2F));
   
@@ -199,6 +213,14 @@ module ifu (
   flop #(1) resetReg (.clk(clk),
         .d(reset),
         .q(reset_q));
+
+
+  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM),
+								.d(BPPredWrongE), .q(BPPredWrongM));
+
+  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
+											.s(BPPredWrongM & InvalidateICacheM), 
+											.y(PCBPWrongInvalidate));
   
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
@@ -218,7 +240,7 @@ module ifu (
     .SelBPPredF(SelBPPredF),
     .PCE(PCE),
     .PCSrcE(PCSrcE),
-    .PCTargetE(PCTargetE),
+    .IEUAdrE(IEUAdrE),
     .PCD(PCD),
     .PCLinkE(PCLinkE),
     .InstrClassE(InstrClassE),
@@ -237,8 +259,8 @@ module ifu (
       assign BPPredClassNonCFIWrongE = 1'b0;
     end      
   endgenerate
-  // The true correct target is PCTargetE if PCSrcE is 1 else it is the fall through PCLinkE.
-  assign PCCorrectE =  PCSrcE ? PCTargetE : PCLinkE;
+  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
+  assign PCCorrectE =  PCSrcE ? IEUAdrE : PCLinkE;
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32

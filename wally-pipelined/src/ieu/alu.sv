@@ -26,63 +26,61 @@
 `include "wally-config.vh"
 
 module alu #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] a, b,
-  input  logic [4:0]       alucontrol,
-  output logic [WIDTH-1:0] result,
-  output logic [2:0]       flags);
+  input  logic [WIDTH-1:0] A, B,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
 
-  logic [WIDTH-1:0] condinvb, presum, sum, shift, slt, sltu, bor;
-  logic        right, arith, w64;
-  logic        carry, zero, neg;
-  logic        lt, ltu;
-  logic        overflow;
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;
+  logic        Carry, Neg;
+  logic        LT, LTU;
+  logic        Overflow;
+  logic        W64, SubArith, ALUOp;
+  logic [2:0]  ALUFunct;
+
+  // Extract control signals
+  // W64 indicates RV64 W-suffix instructions acting on lower 32-bit word
+  // SubArith indicates subtraction
+  // ALUOp = 0 for address generation addition or 1 for regular ALU
+  assign {W64, SubArith, ALUOp} = ALUControl;
 
   // addition
-  assign condinvb = alucontrol[3] ? ~b : b;
-  assign {carry, presum} = a + condinvb + {{(WIDTH-1){1'b0}},alucontrol[3]};
+  assign CondInvB = SubArith ? ~B : B;
+  assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
-  // support W-type RV64I ADDW/SUBW/ADDIW that sign-extend 32-bit result to 64 bits
-  generate
-    if (WIDTH==64)
-      assign sum = w64 ? {{32{presum[31]}}, presum[31:0]} : presum;
-    else
-      assign sum = presum;
-  endgenerate
-  
-  // shifts
-  assign arith = alucontrol[3]; // sra
-  assign w64 = alucontrol[4];
-  assign right = (alucontrol[2:0] == 3'b101); // sra or srl
-  shifter sh(a, b[5:0], right, arith, w64, shift);
-  
-  // OR optionally passes zero when ALUControl[3] is set, supporting lui
-  assign bor = alucontrol[3] ? b : a|b;
-  
-  // condition code flags based on add/subtract output
-  assign zero = (sum == 0);
-  assign neg  = sum[WIDTH-1];
-  // overflow occurs when the numbers being added have the same sign 
-  // and the result has the opposite sign
-  assign overflow = (a[WIDTH-1] ~^ condinvb[WIDTH-1]) & (a[WIDTH-1] ^ sum[WIDTH-1]);
-  assign lt = neg ^ overflow;
-  assign ltu = ~carry;
-  assign flags = {zero, lt, ltu};
+  // Shifts
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
 
-  // slt
-  assign slt = {{(WIDTH-1){1'b0}}, lt};
-  assign sltu = {{(WIDTH-1){1'b0}}, ltu};
+  // condition code flags based on subtract output
+  // Overflow occurs when the numbers being subtracted have the opposite sign 
+  // and the result has the opposite sign of A
+  assign Overflow = (A[WIDTH-1] ^ B[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
+  assign Neg  = Sum[WIDTH-1];
+  assign LT = Neg ^ Overflow;
+  assign LTU = ~Carry;
  
+  // SLT
+  assign SLT = {{(WIDTH-1){1'b0}}, LT};
+  assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
+ 
+  // Select appropriate ALU Result
+  assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0
   always_comb
-    case (alucontrol[2:0])
-      3'b000: result = sum;       // add or sub
-      3'b001: result = shift;     // sll
-      3'b010: result = slt;       // slt
-      3'b011: result = sltu;      // sltu
-      3'b100: result = a ^ b;     // xor
-      3'b101: result = shift;     // sra or srl
-      3'b110: result = bor;       // or / pass through input b for lui
-      3'b111: result = a & b;     // and
+    casez (ALUFunct)
+      3'b000: FullResult = Sum;       // add or sub
+      3'b?01: FullResult = Shift;     // sll, sra, or srl
+      3'b010: FullResult = SLT;       // slt
+      3'b011: FullResult = SLTU;      // sltu
+      3'b100: FullResult = A ^ B;     // xor
+      3'b110: FullResult = A | B;     // or 
+      3'b111: FullResult = A & B;     // and
     endcase
 
+  // support W-type RV64I ADDW/SUBW/ADDIW/Shifts that sign-extend 32-bit result to 64 bits
+  generate
+    if (WIDTH==64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+    else            assign Result = FullResult;
+  endgenerate
 endmodule
 

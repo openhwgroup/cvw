@@ -126,23 +126,17 @@ add wave -noupdate -group RegFile /testbench/dut/wallypipelinedsoc/hart/ieu/dp/r
 add wave -noupdate -group RegFile /testbench/dut/wallypipelinedsoc/hart/ieu/dp/regf/rd2
 add wave -noupdate -group RegFile /testbench/dut/wallypipelinedsoc/hart/ieu/dp/regf/we3
 add wave -noupdate -group RegFile /testbench/dut/wallypipelinedsoc/hart/ieu/dp/regf/wd3
-add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/wallypipelinedsoc/hart/ieu/dp/ALUResultW
+add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/wallypipelinedsoc/hart/ieu/dp/IntResultW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/wallypipelinedsoc/hart/ieu/dp/ReadDataW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/wallypipelinedsoc/hart/ieu/dp/CSRReadValW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/wallypipelinedsoc/hart/ieu/dp/ResultSrcW
 add wave -noupdate -group RegFile -group {write regfile mux} /testbench/dut/wallypipelinedsoc/hart/ieu/dp/ResultW
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/a
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/b
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/alucontrol
+add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/A
+add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/B
+add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/ALUControl
 add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/result
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/flags
+add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/FlagsEEEEE
 add wave -noupdate -group alu -divider internals
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/overflow
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/carry
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/zero
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/neg
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/lt
-add wave -noupdate -group alu /testbench/dut/wallypipelinedsoc/hart/ieu/dp/alu/ltu
 add wave -noupdate -group Forward /testbench/dut/wallypipelinedsoc/hart/ieu/fw/Rs1D
 add wave -noupdate -group Forward /testbench/dut/wallypipelinedsoc/hart/ieu/fw/Rs2D
 add wave -noupdate -group Forward /testbench/dut/wallypipelinedsoc/hart/ieu/fw/Rs1E
@@ -167,8 +161,8 @@ add wave -noupdate -group PCS /testbench/dut/wallypipelinedsoc/hart/PCE
 add wave -noupdate -group PCS /testbench/dut/wallypipelinedsoc/hart/PCM
 add wave -noupdate -group PCS /testbench/PCW
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/InstrD
-add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/SrcAE
-add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/SrcBE
+add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/ForwardedSrcAE
+add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/ForwardedSrcBE
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/Funct3E
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/MulDivE
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/hart/mdu/W64E
@@ -550,31 +544,31 @@ add wave -noupdate -group SDC -group {Instruction Counter control} /testbench/du
 add wave -noupdate -group SDC -group {Instruction Counter control} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_IC_RST
 add wave -noupdate -group SDC -group {Instruction Counter control} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/w_IC_UP_DOWN
 add wave -noupdate -group SDC -group {Instruction Counter control} /testbench/dut/wallypipelinedsoc/uncore/sdc/SDC/sd_top/r_IC_OUT
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HADDR
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/A
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HWADDR
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HSELTim
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HREADYTim
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/HRESPTim
-add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootdtim/bootdtim/initTrans
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/HADDR
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/A
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/HWADDR
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/HSELTim
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/HREADYTim
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/HRESPTim
+add wave -noupdate -group boottim /testbench/dut/wallypipelinedsoc/uncore/bootram/bootram/initTrans
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HSELRegions
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HSELDDR4
-add wave -noupdate /testbench/dtim/HSELTim
+add wave -noupdate /testbench/ram/HSELTim
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HRDATAEXT
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HREADYEXT
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HRESPEXT
 add wave -noupdate /testbench/dut/wallypipelinedsoc/uncore/HSELEXT
-add wave -noupdate /testbench/dtim/HCLK
-add wave -noupdate /testbench/dtim/HRESETn
-add wave -noupdate /testbench/dtim/HSELTim
-add wave -noupdate /testbench/dtim/HADDR
-add wave -noupdate /testbench/dtim/HWRITE
-add wave -noupdate /testbench/dtim/HREADY
-add wave -noupdate /testbench/dtim/HTRANS
-add wave -noupdate /testbench/dtim/HWDATA
-add wave -noupdate /testbench/dtim/HREADTim
-add wave -noupdate /testbench/dtim/HRESPTim
-add wave -noupdate /testbench/dtim/HREADYTim
+add wave -noupdate /testbench/ram/HCLK
+add wave -noupdate /testbench/ram/HRESETn
+add wave -noupdate /testbench/ram/HSELTim
+add wave -noupdate /testbench/ram/HADDR
+add wave -noupdate /testbench/ram/HWRITE
+add wave -noupdate /testbench/ram/HREADY
+add wave -noupdate /testbench/ram/HTRANS
+add wave -noupdate /testbench/ram/HWDATA
+add wave -noupdate /testbench/ram/HREADTim
+add wave -noupdate /testbench/ram/HRESPTim
+add wave -noupdate /testbench/ram/HREADYTim
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 6} {1090427 ns} 1} {{Cursor 3} {1157417 ns} 1} {{Cursor 4} {2324620 ns} 0}
 quietly wave cursor active 3

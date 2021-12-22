@@ -28,7 +28,7 @@
 module dcache
   (input logic clk,
    input logic 		       reset,
-   input logic 		       StallWtoDCache,
+   input logic 		       CPUBusy,
 
    // cpu side
    input logic [1:0] 	       MemRWM,
@@ -50,16 +50,9 @@ module dcache
    // inputs from TLB and PMA/P
    input logic 		       ExceptionM,
    input logic 		       PendingInterruptM, 
-   input logic 		       DTLBMissM,
-   input logic 		       ITLBMissF,
    input logic 		       CacheableM,
-   input logic 		       DTLBWriteM,
-   input logic 		       ITLBWriteF,
-   input logic 		       WalkerInstrPageFaultF,
    // from ptw
-   input logic 		       SelPTW,
-   input logic 		       WalkerPageFaultM, 
-   output logic 	       MemAfterIWalkDone,
+   input logic 		       IgnoreRequest,
    // ahb side
    (* mark_debug = "true" *)output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
    (* mark_debug = "true" *)output logic 	       AHBRead,
@@ -148,8 +141,9 @@ module dcache
 
   mux4 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]), // *** REMOVE
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+		//.d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d3(FlushAdr),
 	    .s(SelAdrM),
 	    .y(RAdr));
@@ -352,15 +346,9 @@ module dcache
 		      .AtomicM,
  		      .ExceptionM,
  		      .PendingInterruptM,
- 		      .StallWtoDCache,
- 		      .DTLBMissM,
- 		      .ITLBMissF,
+ 		      .CPUBusy,
  		      .CacheableM,
- 		      .DTLBWriteM,
- 		      .ITLBWriteF,
- 		      .WalkerInstrPageFaultF,
- 		      .SelPTW,
- 		      .WalkerPageFaultM,
+			  .IgnoreRequest,
  		      .AHBAck, // from ahb
  		      .CacheHit,
  		      .FetchCountFlag,
@@ -369,7 +357,6 @@ module dcache
 		      .CommittedM,
 		      .DCacheMiss,
 		      .DCacheAccess,
-		      .MemAfterIWalkDone,
 		      .AHBRead,
 		      .AHBWrite,
 		      .SelAdrM,

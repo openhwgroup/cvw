@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// counter.sv
+// comparator.sv
 //
-// Written: Ross Thompson
+// Written: David_Harris@hmc.edu 8 December 2021
 // Modified: 
 //
-// Purpose: basic up counter
+// Purpose: Branch comparison
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,30 +25,28 @@
 
 `include "wally-config.vh"
 
-module SDCcounter #(parameter integer WIDTH=32)
-  (
-   input logic [WIDTH-1:0]  CountIn,
-   output logic [WIDTH-1:0] CountOut,
-   input logic 		    Load,
-   input logic 		    Enable,
-   input logic 		    clk,
-   input logic 		    reset);
+module comparator #(parameter WIDTH=32) (
+  input  logic [WIDTH-1:0] a, b,
+  output logic [2:0]       flags);
 
-  logic [WIDTH-1:0] NextCount;
-  logic [WIDTH-1:0] count_q;
-  logic [WIDTH-1:0] CountP1;
+  logic [WIDTH-1:0] bbar, diff;
+  logic             carry, eq, neg, overflow, lt, ltu;
 
-  flopenr #(WIDTH) reg1(.clk,
-			.reset,
-			.en(Enable | Load),
-			.d(NextCount),
-			.q(CountOut));
+  // NOTE: This can be replaced by some faster logic optimized
+  // to just compute flags and not the difference.
 
-  assign CountP1 = CountOut + 1'b1;
+  // subtraction
+  assign bbar = ~b;
+  assign {carry, diff} = a + bbar + 1;
 
-  // mux between load and P1
-  assign NextCount = Load ? CountIn : CountP1;
-
+  // condition code flags based on add/subtract output
+  assign eq = (diff == 0);
+  assign neg  = diff[WIDTH-1];
+  // overflow occurs when the numbers being subtracted have the opposite sign 
+  // and the result has the opposite sign fron the first
+  assign overflow = (a[WIDTH-1] ^ b[WIDTH-1]) & (a[WIDTH-1] ^ diff[WIDTH-1]);
+  assign lt = neg ^ overflow;
+  assign ltu = ~carry;
+  assign flags = {eq, lt, ltu};
 endmodule
-  
-   
+

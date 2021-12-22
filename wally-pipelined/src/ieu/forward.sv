@@ -30,29 +30,32 @@ module forward(
   input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
   input logic        MemReadE, MulDivE, CSRReadE,
   input logic        RegWriteM, RegWriteW,
-  input logic	       FWriteIntE, FWriteIntM, FWriteIntW,
+  input logic	       FWriteIntE, 
   input logic        SCE,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
   output logic       FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
 );
+
+  logic MatchDE;
   
   always_comb begin
     ForwardAE = 2'b00;
     ForwardBE = 2'b00;
     if (Rs1E != 5'b0)
-      if      ((Rs1E == RdM) & (RegWriteM|FWriteIntM)) ForwardAE = 2'b10;
-      else if ((Rs1E == RdW) & (RegWriteW|FWriteIntW)) ForwardAE = 2'b01;
+      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
+      else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
  
     if (Rs2E != 5'b0)
-      if      ((Rs2E == RdM) & (RegWriteM|FWriteIntM)) ForwardBE = 2'b10;
-      else if ((Rs2E == RdW) & (RegWriteW|FWriteIntW)) ForwardBE = 2'b01;
+      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
+      else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
-   assign FPUStallD = FWriteIntE & ((Rs1D == RdE) | (Rs2D == RdE)); 
-   assign LoadStallD = (MemReadE|SCE) & ((Rs1D == RdE) | (Rs2D == RdE));  
-   assign MulDivStallD = MulDivE & ((Rs1D == RdE) | (Rs2D == RdE)); 
-   assign CSRRdStallD = CSRReadE & ((Rs1D == RdE) | (Rs2D == RdE));
+  assign MatchDE = (Rs1D == RdE) | (Rs2D == RdE); // Decode-stage instruction source depends on result from execute stage instruction
+  assign FPUStallD = FWriteIntE & MatchDE; 
+  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
+  assign MulDivStallD = MulDivE & MatchDE; 
+  assign CSRRdStallD = CSRReadE & MatchDE;
 
 endmodule

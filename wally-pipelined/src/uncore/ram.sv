@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// dtim.sv
+// ram.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Data tightly integrated memory
+// Purpose: On-chip RAM, external to hart
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -25,16 +25,16 @@
 
 `include "wally-config.vh"
 
-module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
+module ram #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
-  input  logic             HSELTim,
+  input  logic             HSELRam,
   input  logic [31:0]      HADDR,
   input  logic             HWRITE,
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
-  output logic [`XLEN-1:0] HREADTim,
-  output logic             HRESPTim, HREADYTim
+  output logic [`XLEN-1:0] HREADRam,
+  output logic             HRESPRam, HREADYRam
 );
 
   localparam MemStartAddr = BASE>>(1+`XLEN/32);
@@ -42,9 +42,9 @@ module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
   
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   logic [31:0] HWADDR, A;
-  logic [`XLEN-1:0] HREADTim0;
+  logic [`XLEN-1:0] HREADRam0;
 
-  logic        prevHREADYTim, risingHREADYTim;
+  logic        prevHREADYRam, risingHREADYRam;
   logic        initTrans;
   logic        memwrite;
   logic [3:0]  busycount;
@@ -100,37 +100,37 @@ module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
     end // if (FPGA)
   endgenerate
 
-  assign initTrans = HREADY & HSELTim & (HTRANS != 2'b00);
+  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
   // *** this seems like a weird way to use reset
-  flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELTim &  HWRITE, memwrite);
+  flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELRam &  HWRITE, memwrite);
   flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
 
   // busy FSM to extend READY signal
   always_ff @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       busycount <= 0;
-      HREADYTim <= #1 0;
+      HREADYRam <= #1 0;
     end else begin
       if (initTrans) begin
         busycount <= 0;
-        HREADYTim <= #1 0;
-      end else if (~HREADYTim) begin
-        if (busycount == 0) begin // TIM latency, for testing purposes.  *** test with different values such as 2
-          HREADYTim <= #1 1;
+        HREADYRam <= #1 0;
+      end else if (~HREADYRam) begin
+        if (busycount == 0) begin // Ram latency, for testing purposes.  *** test with different values such as 2
+          HREADYRam <= #1 1;
         end else begin
           busycount <= busycount + 1;
         end
       end
     end
-  assign HRESPTim = 0; // OK
+  assign HRESPRam = 0; // OK
   
   // Rising HREADY edge detector
-  //   Indicates when dtim is finishing up
+  //   Indicates when ram is finishing up
   //   Needed because HREADY may go high for other reasons,
   //   and we only want to write data when finishing up.
-  flopr #(1) prevhreadytimreg(HCLK,~HRESETn,HREADYTim,prevHREADYTim);
-  assign risingHREADYTim = HREADYTim & ~prevHREADYTim;
+  flopr #(1) prevhreadyRamreg(HCLK,~HRESETn,HREADYRam,prevHREADYRam);
+  assign risingHREADYRam = HREADYRam & ~prevHREADYRam;
 
   // Model memory read and write
 /* -----\/----- EXCLUDED -----\/-----
@@ -148,22 +148,22 @@ module dtim #(parameter BASE=0, RANGE = 65535, string PRELOAD="") (
     if (`XLEN == 64)  begin
       always_ff @(posedge HCLK) begin
         HWADDR <= #1 A;
-        HREADTim0 <= #1 RAM[A[31:3]];
-	if (memwrite & risingHREADYTim) RAM[HWADDR[31:3]] <= #1 HWDATA;
+        HREADRam0 <= #1 RAM[A[31:3]];
+	if (memwrite & risingHREADYRam) RAM[HWADDR[31:3]] <= #1 HWDATA;
       end
     end else begin 
       always_ff @(posedge HCLK) begin
         HWADDR <= #1 A;  
-        HREADTim0 <= #1 RAM[A[31:2]];
-        if (memwrite & risingHREADYTim) RAM[HWADDR[31:2]] <= #1 HWDATA;
+        HREADRam0 <= #1 RAM[A[31:2]];
+        if (memwrite & risingHREADYRam) RAM[HWADDR[31:2]] <= #1 HWDATA;
       end
     end
   endgenerate
   /* verilator lint_on WIDTH */
 
-  //assign HREADTim = HREADYTim ? HREADTim0 : `XLEN'bz;
+  //assign HREADRam = HREADYRam ? HREADRam0 : `XLEN'bz;
   // *** Ross Thompson: removed tristate as fpga synthesis removes.
-  assign HREADTim = HREADTim0;
+  assign HREADRam = HREADRam0;
   
 endmodule
 

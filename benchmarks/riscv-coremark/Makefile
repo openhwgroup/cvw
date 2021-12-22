@@ -14,8 +14,9 @@ work/coremark.bare.riscv.objdump: work/coremark.bare.riscv
 
 work/coremark.bare.riscv: $(sources)
 #	make -C $(cmbase) PORT_DIR=/home/harris/riscv-wally/benchmarks/riscv-coremark/riscv64-baremetal compile RISCV=/courses/e190ax/riscvcompiler XCFLAGS="-march=rv64g"
-	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=/courses/e190ax/riscvcompiler XCFLAGS="-march=rv64im"
-	mv $(cmbase)/coremark.bare.riscv work
+	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=/opt/riscv XCFLAGS="-march=rv64imd"
+	mkdir -p work/
+	mv $(cmbase)/coremark.bare.riscv work/
 
 .PHONY: clean
 

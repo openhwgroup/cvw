@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // clock divider.sv
 //
-// Written: Ross Thompson September 18, 2021
-// Modified: 
+// Written: Richard Davis
+// Modified: Ross Thompson September 18, 2021
+// Converted to system verilog.
 //
 // Purpose: clock divider for sd flash
 // 

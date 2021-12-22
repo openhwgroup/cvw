@@ -30,30 +30,29 @@ module datapath (
   // Decode stage signals
   input  logic [2:0]       ImmSrcD,
   input  logic [31:0]      InstrD,
+  input  logic [2:0]       Funct3E,
   // Execute stage signals
   input  logic             StallE, FlushE,
   input  logic [1:0]       ForwardAE, ForwardBE,
-  input  logic [4:0]       ALUControlE,
+  input  logic [2:0]       ALUControlE,
   input  logic             ALUSrcAE, ALUSrcBE,
-  input  logic             TargetSrcE, 
+  input  logic             ALUResultSrcE, 
   input  logic             JumpE,
   input  logic             IllegalFPUInstrE,
   input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
   output logic [2:0]       FlagsE,
-  output logic [`XLEN-1:0] PCTargetE,
+  output logic [`XLEN-1:0] IEUAdrE,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-  output logic [`XLEN-1:0] SrcAE, SrcBE,
   // Memory stage signals
   input  logic             StallM, FlushM,
   input  logic             FWriteIntM,
   input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataM, MemAdrM, MemAdrE,
+  output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
-  input  logic             FWriteIntW,
   input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
@@ -67,21 +66,21 @@ module datapath (
 
   // Fetch stage signals
   // Decode stage signals
-  logic [`XLEN-1:0] RD1D, RD2D;
+  logic [`XLEN-1:0] R1D, R2D;
   logic [`XLEN-1:0] ExtImmD;
   logic [4:0]      RdD;
   // Execute stage signals
-  logic [`XLEN-1:0] RD1E, RD2E;
+  logic [`XLEN-1:0] R1E, R2E;
   logic [`XLEN-1:0] ExtImmE;
 
   // logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, SrcAE2, SrcBE2; // *** MAde forwardedsrcae an output to get rid of a mux in the critical path.
+  logic [`XLEN-1:0] SrcAE, SrcBE;
   logic [`XLEN-1:0] SrcAE2, SrcBE2;
 
-  logic [`XLEN-1:0] ALUResultE;
+  logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE;
   logic [`XLEN-1:0] WriteDataE;
-  logic [`XLEN-1:0] TargetBaseE;
   // Memory stage signals
-  logic [`XLEN-1:0] ALUResultM;
+  logic [`XLEN-1:0] IEUResultM;
   logic [`XLEN-1:0] ResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
@@ -92,56 +91,52 @@ module datapath (
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-
-  //Mux for writting floating point 
-  
-  regfile regf(clk, reset, {RegWriteW | FWriteIntW}, Rs1D, Rs2D, RdW, WriteDataW, RD1D, RD2D);
-  extend ext(.InstrD(InstrD[31:7]), .*);
+  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, WriteDataW, R1D, R2D);
+  extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
  
   // Execute stage pipeline register and logic
-  flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, RD1D, RD1E);
-  flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, RD2D, RD2E);
+  flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
+  flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);
   flopenrc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ~StallE, ExtImmD, ExtImmE);
-  flopenrc #(5)    Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
-  flopenrc #(5)    Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
-  flopenrc #(5)    RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
+  flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
+  flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux3  #(`XLEN)  faemux(RD1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
-  mux3  #(`XLEN)  fbemux(RD2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
-  mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+  mux3  #(`XLEN)  faemux(R1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
+  mux3  #(`XLEN)  fbemux(R2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
+  comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
-  mux2  #(`XLEN)  srcamux2(SrcAE, PCLinkE, JumpE, SrcAE2);  
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
-  mux2  #(`XLEN)  srcbmux2(SrcBE, {`XLEN{1'b0}}, JumpE, SrcBE2); // *** May be able to remove this mux.
-  alu   #(`XLEN)  alu(SrcAE2, SrcBE2, ALUControlE, ALUResultE, FlagsE);
-  mux2  #(`XLEN)  targetsrcmux(PCE, SrcAE, TargetSrcE, TargetBaseE);
-  assign  PCTargetE = ExtImmE + TargetBaseE;
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
+  mux2 #(`XLEN)   altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
+  mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
-  flopenrc #(`XLEN) ALUResultMReg(clk, reset, FlushM, ~StallM, ALUResultE, ALUResultM);
-  assign MemAdrM = ALUResultM;
-  assign MemAdrE = ALUResultE;  
+  flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
-  flopenrc #(5)    RdMEg(clk, reset, FlushM, ~StallM, RdE, RdM);	
-  mux2  #(`XLEN)   resultmuxM(ALUResultM, FIntResM, FWriteIntM, ResultM);
+  flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
-  flopenrc #(5)    RdWEg(clk, reset, FlushW, ~StallW, RdM, RdW);
+  flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
+  flopen #(`XLEN)   ReadDataWReg(.clk, .en(~StallW), .d(ReadDataM), .q(ReadDataW));
+  mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
+
+  // floating point interactions: fcvt, fp stores
+  generate
+    if (`F_SUPPORTED) begin:fpmux
+      mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
+      mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+    end else begin
+      assign ResultM = IEUResultM;
+      assign WriteDataE = ForwardedSrcBE;
+    end
+  endgenerate
 
   // handle Store Conditional result if atomic extension supported
   generate
-    if (`A_SUPPORTED)
-      assign SCResultW = SquashSCW ? {{(`XLEN-1){1'b0}}, 1'b1} : {{(`XLEN-1){1'b0}}, 1'b0};
-    else 
-      assign SCResultW = 0;
+    if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
+    else              assign SCResultW = 0;
   endgenerate
-
-  flopen #(`XLEN) ReadDataWReg(.clk(clk),
-			      .en(~StallW),
-			      .d(ReadDataM),
-			      .q(ReadDataW));
-
-  mux5  #(`XLEN) resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
 endmodule

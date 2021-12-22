@@ -92,7 +92,7 @@ module csrc #(parameter
 
   generate
     if (`ZICOUNTERS_SUPPORTED) begin
-      logic [63:0] CYCLE_REGW, INSTRET_REGW;
+     (* mark_debug = "true" *) logic [63:0] CYCLE_REGW, INSTRET_REGW;
      logic [63:0] CYCLEPlusM, INSTRETPlusM;
        logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic        WriteCYCLEM, WriteINSTRETM;
@@ -130,11 +130,11 @@ module csrc #(parameter
 
 	logic LoadStallE, LoadStallM;
 	
-	flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(FlushE), .en(~StallE), .d(LoadStallD), .q(LoadStallE));
+	flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
 	flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
 	
         assign CounterEvent[2] = InstrValidNotFlushedM;
-        assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;
+        assign CounterEvent[3] = LoadStallM;  // don't want to suppress on flush as this only happens if flushed.
         assign CounterEvent[4] = BPPredDirWrongM & InstrValidNotFlushedM;
         assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
         assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;
@@ -142,8 +142,8 @@ module csrc #(parameter
         assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;
         assign CounterEvent[9] = InstrClassM[3] & InstrValidNotFlushedM;
         assign CounterEvent[10] = BPPredClassNonCFIWrongM & InstrValidNotFlushedM;
-        assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;
-        assign CounterEvent[12] = DCacheMiss & InstrValidNotFlushedM;      
+        assign CounterEvent[11] = DCacheAccess;
+        assign CounterEvent[12] = DCacheMiss;      
         assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
       end
       
@@ -152,7 +152,7 @@ module csrc #(parameter
             assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
             always @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
               if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
-              else if (~StallW) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
+              else HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
 
             if (`XLEN==32) begin
                 logic [`COUNTERS-1:3] WriteHPMCOUNTERHM;
@@ -162,7 +162,7 @@ module csrc #(parameter
                 assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
                 always @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
                     if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
-                    else if (~StallW) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
+                    else  HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
             end else begin
                 assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
             end

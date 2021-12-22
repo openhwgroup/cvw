@@ -25,6 +25,8 @@
 
 `include "wally-config.vh"
 
+// *** this should probably be moved into the LSU because it is instantiated in the D$
+
 module amoalu (
   input  logic [`XLEN-1:0] srca, srcb,
   input  logic [6:0]       funct,
