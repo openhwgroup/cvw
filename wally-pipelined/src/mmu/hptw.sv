@@ -176,7 +176,8 @@ module hptw
 	    L2_ADR: if (InitialWalkerState == L2_ADR) NextWalkerState = L2_RD; // first access in SV39
 				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
-		 		else 				NextWalkerState = FAULT;			
+		 		//else 				NextWalkerState = FAULT;
+        		else 				NextWalkerState = LEAF;
 	    L2_RD: if (DCacheStall) NextWalkerState = L2_RD;
 	      			else 			NextWalkerState = L1_ADR;
 //	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
@@ -185,7 +186,8 @@ module hptw
 	    L1_ADR: if (InitialWalkerState == L1_ADR) NextWalkerState = L1_RD; // first access in SV32
 				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
-		 		else 				NextWalkerState = FAULT;	
+		 		//else 				NextWalkerState = FAULT;	
+		 		else 				NextWalkerState = LEAF;	
 	    L1_RD: if (DCacheStall) NextWalkerState = L1_RD;
 	      			else 			NextWalkerState = L0_ADR;
 //	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
@@ -193,14 +195,17 @@ module hptw
 //				else 				NextWalkerState = FAULT;
 	    L0_ADR: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
-		 		else 				NextWalkerState = FAULT;
+		 		//else 				NextWalkerState = FAULT;
+		 		else 				NextWalkerState = LEAF;
 	    L0_RD: if (DCacheStall) NextWalkerState = L0_RD;
 	      			else 			NextWalkerState = LEAF;
 //	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 //				else 				NextWalkerState = FAULT;
 	    LEAF:                       NextWalkerState = IDLE; // updates TLB
+/* -----\/----- EXCLUDED -----\/-----
 	    FAULT: if (ITLBMissF & AnyCPUReqM) NextWalkerState = FAULT; /// **** BUG: Stays in fault 1 cycle longer than it should.
  	                        else NextWalkerState = IDLE;
+ -----/\----- EXCLUDED -----/\----- */
 	    default: begin
 	      // synthesis translate_off
 	      $error("Default state in HPTW should be unreachable");

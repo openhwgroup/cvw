@@ -43,6 +43,7 @@ module tlbcontrol #(parameter ITLB = 0) (
   input logic              TLBFlush, // Invalidate all TLB entries
   input logic [7:0]        PTEAccessBits,
   input logic              CAMHit,
+  input logic              Misaligned,
   output logic             TLBMiss,
   output logic             TLBHit,
   output logic             TLBPageFault,
@@ -55,7 +56,7 @@ module tlbcontrol #(parameter ITLB = 0) (
   logic [`SVMODE_BITS-1:0] SVMode;
   logic [1:0]              EffectivePrivilegeMode;
 
-  logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R; // Useful PTE Control Bits
+  logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
   logic                  UpperBitsUnequalPageFault;
   logic                  DAPageFault;
   logic                  TLBAccess;
@@ -85,7 +86,7 @@ module tlbcontrol #(parameter ITLB = 0) (
 
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
-  assign {PTE_U, PTE_X, PTE_W, PTE_R} = PTEAccessBits[4:1];
+  assign {PTE_U, PTE_X, PTE_W, PTE_R, PTE_V} = PTEAccessBits[4:0];
  
   // Check whether the access is allowed, page faulting if not.
   generate
@@ -98,7 +99,7 @@ module tlbcontrol #(parameter ITLB = 0) (
         ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
       // fault for software handling if access bit is off
       assign DAPageFault = ~PTE_A;
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || ~PTE_X || DAPageFault || UpperBitsUnequalPageFault);
+      assign TLBPageFault = (Translate  && TLBHit && (ImproperPrivilege || ~PTE_X || DAPageFault || UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end else begin // Data TLB fault checking
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
@@ -115,7 +116,7 @@ module tlbcontrol #(parameter ITLB = 0) (
       assign InvalidWrite = WriteAccess && ~PTE_W;
       // Fault for software handling if access bit is off or writing a page with dirty bit off
       assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault = Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAPageFault || UpperBitsUnequalPageFault);
+      assign TLBPageFault =  (Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAPageFault || UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end
   endgenerate
 
