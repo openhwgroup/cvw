@@ -103,11 +103,30 @@ module tlb #(parameter TLB_ENTRIES = 8,
   logic                  CAMHit;
   logic                  SV39Mode;
 
+  logic 				 Misaligned;
+  logic 				 MegapageMisaligned;
+
+  // Ross Thompson.  If we are going to write invalid PTEs into the TLB should
+  // we cache Misaligned along with the PTE?  This only has to be computed once
+  // in the hptw as it is always the same regardless of the VPN.
+  if(`XLEN == 32) begin
+	assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
+	assign Misaligned = (HitPageType == 2'b01) & MegapageMisaligned;
+  end else begin
+	logic 				 GigapageMisaligned, TerapageMisaligned;
+	assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
+	assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
+	assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0		  
+	assign Misaligned = ((HitPageType == 2'b11) & TerapageMisaligned) | 
+						((HitPageType == 2'b10) & GigapageMisaligned) | 
+						((HitPageType == 2'b01) & MegapageMisaligned);
+  end
+
   assign VPN = VAdr[`VPN_BITS+11:12];
 
   tlbcontrol #(ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
                         .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
-                        .PTEAccessBits, .CAMHit, .TLBMiss, .TLBHit, .TLBPageFault, 
+                        .PTEAccessBits, .CAMHit, .Misaligned, .TLBMiss, .TLBHit, .TLBPageFault, 
                         .SV39Mode, .Translate);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
