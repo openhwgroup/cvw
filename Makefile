@@ -1,6 +1,5 @@
 all:
 	make install
-	make compile
 	make regression
 
 # install copies over the Makefile.include from riscv-isa-sim
@@ -10,11 +9,6 @@ install:
 	cp ${RISCV}/riscv-isa-sim/arch_test_target/spike/Makefile.include addins/riscv-arch-test/
 	sed -i '/export TARGETDIR ?=/c\export TARGETDIR ?= ${RISCV}/riscv-isa-sim/arch_test_target' addins/riscv-arch-test/Makefile.include
 	echo export RISCV_PREFIX = riscv64-unknown-elf- >> addins/riscv-arch-test/Makefile.include
-
-compile:
-	make -C addins/riscv-arch-test
-	make -C addins/riscv-arch-test XLEN=32
-	cd addins/riscv-arch-test; exe2memfile.pl work/*/*/*.elf
 
 regression:
 	make -C wally-pipelined/regression
