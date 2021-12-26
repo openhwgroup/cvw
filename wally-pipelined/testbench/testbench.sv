@@ -289,13 +289,14 @@ logic [3:0] dummy;
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests, 
   // or sw	gp,-56(t0) for new Imperas tests
+  // or sw gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   assign DCacheFlushStart = dut.hart.priv.priv.EcallFaultM && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
 			      dut.hart.ieu.dp.regf.wd3 == 1)) ||
-          (dut.hart.ifu.InstrM == 32'h6f || dut.hart.ifu.InstrM == 32'hfc32a423) && dut.hart.ieu.c.InstrValidM;
+          (dut.hart.ifu.InstrM == 32'h6f || dut.hart.ifu.InstrM == 32'hfc32a423 || dut.hart.ifu.InstrM == 32'hfc32a823) && dut.hart.ieu.c.InstrValidM;
   
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
 				.reset(reset),

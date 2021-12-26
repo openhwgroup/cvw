@@ -1,6 +1,5 @@
 # set TARGETDIR to point to the directory which contains a sub-folder in the same name as the target
-export TARGETDIR ?= /home/harris/riscv-wally/addins/riscv-isa-sim/arch_test_target
-#export TARGETDIR ?= ~/riscv-wally/addins/riscv-isa-sim/arch_test_target
+export TARGETDIR ?= ${RISCV}/riscv-isa-sim/arch_test_target
 
 export RISCV_PREFIX = riscv64-unknown-elf-
 
