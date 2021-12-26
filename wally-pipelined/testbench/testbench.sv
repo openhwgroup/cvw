@@ -198,6 +198,7 @@ logic [3:0] dummy;
   always
     begin
       clk = 1; # 5; clk = 0; # 5;
+      if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
   // check results
