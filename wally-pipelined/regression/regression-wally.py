@@ -49,15 +49,14 @@ tc = TestCase(
       grepstr="400100000 instructions")
 configs.append(tc)
 
-tests64 = ["wally64i", "arch64i", "arch64priv", "arch64c",  "arch64m", "imperas64i", "imperas64f", "imperas64d", "imperas64p", "imperas64mmu", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"] 
+tests64 = ["wally64i", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64d", "imperas64i", "imperas64f", "imperas64d", "imperas64p", "imperas64mmu", "imperas64m", "imperas64a",  "imperas64c"] #,  "testsBP64"] 
 for test in tests64:
   tc = TestCase(
         name=test,
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64gc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
-#tests32 = ["arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32p", "imperas32mmu", "imperas32f", "imperas32m", "imperas32a",  "imperas32c"]
-tests32 = ["wally32i", "arch32i", "arch32priv", "arch32c",  "arch32m", "imperas32i", "imperas32f", "imperas32p", "imperas32mmu", "imperas32m", "imperas32a",  "imperas32c"] 
+tests32 = ["wally32i", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32f", "imperas32p", "imperas32mmu", "imperas32m", "imperas32a",  "imperas32c"] 
 for test in tests32:
   tc = TestCase(
         name=test,
