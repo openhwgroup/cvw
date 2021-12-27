@@ -63,11 +63,11 @@ module lsu
    output logic 			   StoreMisalignedFaultM, StoreAccessFaultM,
 
    // connect to ahb
-   output logic [`PA_BITS-1:0] DCtoAHBPAdrM,
+(* mark_debug = "true" *)   output logic [`PA_BITS-1:0] DCtoAHBPAdrM,
    output logic 			   DCtoAHBReadM, 
    output logic 			   DCtoAHBWriteM,
    input logic 				   DCfromAHBAck,
-   input logic [`XLEN-1:0] 	   DCfromAHBReadData,
+(* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   DCfromAHBReadData,
    output logic [`XLEN-1:0]    DCtoAHBWriteData,
    output logic [2:0] 		   DCtoAHBSizeM, 
 
@@ -301,18 +301,40 @@ module lsu
   // 3. wire pass-through
   assign MemAdrE_RENAME = SelReplayCPURequest ? IEUAdrM[11:0] : MemAdrE[11:0];
 
+  localparam integer   WORDSPERLINE = `DCACHE_BLOCKLENINBITS/`XLEN;
+  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   BLOCKLEN = `DCACHE_BLOCKLENINBITS;
+  
+  localparam integer   FetchCountThreshold = WORDSPERLINE - 1;
+  localparam integer   BLOCKBYTELEN = BLOCKLEN/8;
+  localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
+
   // temp
   logic 		       SelUncached;
+  logic 			   FetchCountFlag;
+  
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
-  logic [`XLEN-1:0]    DC_HWDATA_FIXNAME;
+  (* mark_debug = "true" *) logic [`XLEN-1:0]    DC_HWDATA_FIXNAME;
   logic 			   SelFlush;
   logic [`XLEN-1:0]    ReadDataWordM;
-  logic [`XLEN-1:0]    DCacheMemWriteDataFirstWord;
+  logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData;
 
   // keep
   logic [`XLEN-1:0]    ReadDataWordMuxM;
+
+
+  logic [LOGWPL-1:0]   FetchCount, NextFetchCount;
+  logic [`PA_BITS-1:0] 	       BasePAdrMaskedM;  
+  logic [OFFSETLEN-1:0]        BasePAdrOffsetM;
+
+  logic 			   CntEn;
+  logic 			   CntReset;
+  logic [`PA_BITS-1:0] BasePAdrM;
+  logic [`XLEN-1:0]    ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0];
   
-  
+
+
+
   
   dcache dcache(.clk, .reset, .CPUBusy,
 				.MemRWM(MemRWMtoDCache),
@@ -328,24 +350,26 @@ module lsu
 				.PendingInterruptM(PendingInterruptMtoDCache),
 				.CacheableM(CacheableMtoDCache), 
 
+				.BasePAdrM,
+				.ReadDataBlockSetsM,
 				// temp
 				.SelUncached,
 				.SelFlush,
-				.DCacheMemWriteDataFirstWord,
+				.DCacheMemWriteData,
+				.FetchCountFlag,
+				.CntEn,
+				.CntReset,
 
 				// AHB connection
-				.AHBPAdr(DCtoAHBPAdrM),
 				.AHBRead(DCtoAHBReadM),
 				.AHBWrite(DCtoAHBWriteM),
 				.AHBAck(DCfromAHBAck),
-				.DC_HWDATA_FIXNAME(DC_HWDATA_FIXNAME),
-				.HRDATA(DCfromAHBReadData),
 				.DCtoAHBSizeM
 				);
 
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
-				.d1(DCacheMemWriteDataFirstWord),
+				.d1(DCacheMemWriteData[`XLEN-1:0]),
 				.s(SelUncached),
 				.y(ReadDataWordMuxM));
   
@@ -372,8 +396,43 @@ module lsu
 			    .HWDATA(FinalWriteDataM));
 
   assign DCtoAHBWriteData = CacheableMtoDCache | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
+
+
+  // Bus Side logic
+  // register the fetch data from the next level of memory.
+  // This register should be necessary for timing.  There is no register in the uncore or
+  // ahblite controller between the memories and this cache.
+
+  genvar index;
+  generate
+    for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
+      flopen #(`XLEN) fb(.clk(clk),
+			 .en(DCfromAHBAck & DCtoAHBReadM & (index == FetchCount)),
+			 .d(DCfromAHBReadData),
+			 .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+    end
+  endgenerate
+
+
+  // if not cacheable the offset bits needs to be sent to the EBU.
+  // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
+  assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
+  assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
+  assign DCtoAHBPAdrM = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
+  assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[FetchCount];
+
+  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
+  
+  flopenr #(LOGWPL) 
+  FetchCountReg(.clk(clk),
+		.reset(reset | CntReset),
+		.en(CntEn),
+		.d(NextFetchCount),
+		.q(FetchCount));
+
+  assign NextFetchCount = FetchCount + 1'b1;
 
 endmodule
 
