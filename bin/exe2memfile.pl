@@ -65,51 +65,65 @@ for(my $i=0; $i<=$#ARGV; $i++) {
                 if (/Disassembly of section .data:/) { $mode = 1;}
             } elsif ($mode == 1) { # Parse data segment
 #                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) { # changed to \t 30 Oct 2021 dmh to fix parsing issue in d_fmadd_b17
-                if (/^\s*(\S\S\S\S\S\S\S\S):\t+(.*)/) {
+                if (/^\s*(\S\S\S\S\S\S\S\S):\s+(.*)/) {
                     $address = &fixadr($1);
-    #		print "addresss $address maxaddress $maxaddress\n";
-            if ($address > $maxaddress) { $maxaddress = $address; }
+    #		        print "addresss $address maxaddress $maxaddress\n";
+                    if ($address > $maxaddress) { $maxaddress = $address; }
+                    #print "test $address $1 $2\n";
+                    my $lineorig = $2;
                     my $line = $2;
+                    # strip off leading 0x
+                    $line =~ s/^0x//;
                     # merge chunks with spaces
                     $line =~ s/(\S)\s(\S)/$1$2/g;
+                    my $linemerge = $line;
                     # strip off comments
                     $line =~ /^(\S*)/;
                     $payload = $1;
+#                    if ($address >= 17520 && $address <= 17552) { # was 12304
+#                        print "Address: $address\n  orig: $lineorig \n  merge: $linemerge \n  line: $line \n  payload: $payload\n";
+#                    }
                     &emitData($address, $payload);
-                }
+                } 
                 if (/Disassembly of section .riscv.attributes:/) { $mode = 2; }
             }
         }
         close(FILE);
+#        print("maxaddress: $maxaddress\n");
         $maxaddress += 32; # pad some zeros at the end
+#        print("maxaddress: $maxaddress\n");
 
         # print to memory file
         if ($fname =~ /rv32/) {
-        open(MEMFILE, ">$memfile") || die("Can't write $memfile");
-        for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
-            for ($j=3; $j>=0; $j--) {
-		if (defined($memfilebytes[$i+$j])) {
-		    print MEMFILE "$memfilebytes[$i+$j]";
-		} else {
-		    print MEMFILE "00";
-		}
+            open(MEMFILE, ">$memfile") || die("Can't write $memfile");
+            for (my $i=0; $i<= $maxaddress; $i = $i + 4) {
+                for ($j=3; $j>=0; $j--) {
+            if (defined($memfilebytes[$i+$j])) {
+                print MEMFILE "$memfilebytes[$i+$j]";
+            } else {
+                print MEMFILE "00";
             }
-            print MEMFILE "\n";
-        }
-        close(MEMFILE);
+                }
+                print MEMFILE "\n";
+            }
+            close(MEMFILE);
         } else {
-        open(MEMFILE, ">$memfile") || die("Can't write $memfile");
-        for (my $i=0; $i<= $maxaddress; $i = $i + 8) {
-            for ($j=7; $j>=0; $j--) {
-		if (defined($memfilebytes[$i+$j])) {
-		    print MEMFILE "$memfilebytes[$i+$j]";
-		} else {
-		    print MEMFILE "00";
-		}
+            open(MEMFILE, ">$memfile") || die("Can't write $memfile");
+            for (my $i=0; $i<= $maxaddress; $i = $i + 8) {
+                for ($j=7; $j>=0; $j--) {
+                    my $loc = $i+$j;
+#                    if ($loc >= 17520 && $loc <= 17552) {
+#                        print "loc: $loc  val $memfilebytes[$loc]\n";
+#                    }
+                    if (defined($memfilebytes[$loc])) {
+                        print MEMFILE "$memfilebytes[$loc]";
+                    } else {
+                        print MEMFILE "00";
+                    }
+                }
+                print MEMFILE "\n";
             }
-            print MEMFILE "\n";
-        }
-        close(MEMFILE);
+            close(MEMFILE);
         }
     }
 }
@@ -121,7 +135,9 @@ sub emitData {
     my $address = shift;
     my $payload = shift;
 
-#    print("Emitting data.  address = $address payload = $payload\n");
+#    if ($address > 17520 && $address < 17552) { # was 12304
+#        print("Emitting data.  address = $address payload = $payload\n");
+#    }
 
     my $len = length($payload);
     if ($len <= 8) { 
@@ -130,6 +146,9 @@ sub emitData {
             my $adr = $address+$i;
             my $b = substr($payload, $len-2-2*$i, 2);
             $memfilebytes[$adr] = $b;
+#            if ($address >= 17520 && $address <= 17552) {
+#                print("  Wrote $b to $adr\n");
+#            }
 #            print(" $adr $b\n");
         }
     }  elsif ($len == 12) {
