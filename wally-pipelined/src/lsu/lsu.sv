@@ -300,6 +300,19 @@ module lsu
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
   assign MemAdrE_RENAME = SelReplayCPURequest ? IEUAdrM[11:0] : MemAdrE[11:0];
+
+  // temp
+  logic 		       SelUncached;
+  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
+  logic [`XLEN-1:0]    DC_HWDATA_FIXNAME;
+  logic 			   SelFlush;
+  logic [`XLEN-1:0]    ReadDataWordM;
+  logic [`XLEN-1:0]    DCacheMemWriteDataFirstWord;
+
+  // keep
+  logic [`XLEN-1:0]    ReadDataWordMuxM;
+  
+  
   
   dcache dcache(.clk, .reset, .CPUBusy,
 				.MemRWM(MemRWMtoDCache),
@@ -309,21 +322,58 @@ module lsu
 				.MemAdrE(MemAdrE_RENAME),
 				.MemPAdrM,
 				.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
-				.WriteDataM, .ReadDataM, .DCacheStall,
+				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
 				.CommittedM(CommittedMfromDCache),
 				.DCacheMiss, .DCacheAccess, .ExceptionM, .IgnoreRequest,
 				.PendingInterruptM(PendingInterruptMtoDCache),
 				.CacheableM(CacheableMtoDCache), 
+
+				// temp
+				.SelUncached,
+				.SelFlush,
+				.DCacheMemWriteDataFirstWord,
 
 				// AHB connection
 				.AHBPAdr(DCtoAHBPAdrM),
 				.AHBRead(DCtoAHBReadM),
 				.AHBWrite(DCtoAHBWriteM),
 				.AHBAck(DCfromAHBAck),
-				.HWDATA(DCtoAHBWriteData),
+				.DC_HWDATA_FIXNAME(DC_HWDATA_FIXNAME),
 				.HRDATA(DCfromAHBReadData),
 				.DCtoAHBSizeM
 				);
+
+
+  mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
+				.d1(DCacheMemWriteDataFirstWord),
+				.s(SelUncached),
+				.y(ReadDataWordMuxM));
+  
+  // finally swr
+  subwordread subwordread(.ReadDataWordMuxM,
+			  .MemPAdrM(MemPAdrM[2:0]),
+			  .Funct3M(Funct3MtoDCache),
+			  .ReadDataM);
+
+  generate
+    if (`A_SUPPORTED) begin
+      logic [`XLEN-1:0] AMOResult;
+      amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3MtoDCache[1:0]), 
+                    .result(AMOResult));
+      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicMtoDCache[1], FinalAMOWriteDataM);
+    end else
+      assign FinalAMOWriteDataM = WriteDataM;
+  endgenerate
+  
+  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
+			    .HADDRD(MemPAdrM[2:0]),
+			    .HSIZED({Funct3MtoDCache[2], 1'b0, Funct3MtoDCache[1:0]}),
+			    .HWDATAIN(FinalAMOWriteDataM),
+			    .HWDATA(FinalWriteDataM));
+
+  assign DCtoAHBWriteData = CacheableMtoDCache | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
+  
+  
 
 endmodule
 

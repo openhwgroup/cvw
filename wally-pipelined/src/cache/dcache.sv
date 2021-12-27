@@ -27,40 +27,45 @@
 
 module dcache
   (input logic clk,
-   input logic 		       reset,
-   input logic 		       CPUBusy,
+   input logic 				  reset,
+   input logic 				  CPUBusy,
 
    // cpu side
-   input logic [1:0] 	       MemRWM,
-   input logic [2:0] 	       Funct3M,
-   input logic [6:0] 	       Funct7M,
-   input logic [1:0] 	       AtomicM,
-   input logic 		       FlushDCacheM,
-   input logic [11:0] 	       MemAdrE, // virtual address, but we only use the lower 12 bits.
-   input logic [`PA_BITS-1:0]  MemPAdrM, // physical address
-   input logic [11:0] 	       VAdr, // when hptw writes dtlb we use this address to index SRAM.
+   input logic [1:0] 		  MemRWM,
+   input logic [2:0] 		  Funct3M,
+   input logic [6:0] 		  Funct7M,
+   input logic [1:0] 		  AtomicM,
+   input logic 				  FlushDCacheM,
+   input logic [11:0] 		  MemAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [`PA_BITS-1:0] MemPAdrM, // physical address
+   input logic [11:0] 		  VAdr, // when hptw writes dtlb we use this address to index SRAM.
+							  
+   input logic [`XLEN-1:0] 	  FinalWriteDataM,
+   output logic [`XLEN-1:0]   ReadDataWordM,
+   output logic 			  DCacheStall,
+   output logic 			  CommittedM,
+   output logic 			  DCacheMiss,
+   output logic 			  DCacheAccess,
 
-   input logic [`XLEN-1:0]     WriteDataM,
-   output logic [`XLEN-1:0]    ReadDataM,
-   output logic 	       DCacheStall,
-   output logic 	       CommittedM,
-   output logic 	       DCacheMiss,
-   output logic 	       DCacheAccess,
+   // temp
+   output logic 			  SelUncached,
+   output logic 			  SelFlush,
+   output logic [`XLEN-1:0]   DCacheMemWriteDataFirstWord,
 
    // inputs from TLB and PMA/P
-   input logic 		       ExceptionM,
-   input logic 		       PendingInterruptM, 
-   input logic 		       CacheableM,
+   input logic 				  ExceptionM,
+   input logic 				  PendingInterruptM, 
+   input logic 				  CacheableM,
    // from ptw
-   input logic 		       IgnoreRequest,
+   input logic 				  IgnoreRequest,
    // ahb side
    (* mark_debug = "true" *)output logic [`PA_BITS-1:0] AHBPAdr, // to ahb
-   (* mark_debug = "true" *)output logic 	       AHBRead,
-   (* mark_debug = "true" *)output logic 	       AHBWrite,
-   (* mark_debug = "true" *)input logic 		       AHBAck, // from ahb
-   (* mark_debug = "true" *)input logic [`XLEN-1:0]     HRDATA, // from ahb
-   (* mark_debug = "true" *)output logic [`XLEN-1:0]    HWDATA, // to ahb
-   (* mark_debug = "true" *)output logic [2:0] 	       DCtoAHBSizeM
+   (* mark_debug = "true" *)output logic AHBRead,
+   (* mark_debug = "true" *)output logic AHBWrite,
+   (* mark_debug = "true" *)input logic AHBAck, // from ahb
+   (* mark_debug = "true" *)input logic [`XLEN-1:0] HRDATA, // from ahb
+   (* mark_debug = "true" *)output logic [`XLEN-1:0] DC_HWDATA_FIXNAME, // to ahb
+   (* mark_debug = "true" *)output logic [2:0] DCtoAHBSizeM
    );
 
   localparam integer	       BLOCKLEN = `DCACHE_BLOCKLENINBITS;
@@ -90,8 +95,7 @@ module dcache
   logic			       CacheHit;
   logic [BLOCKLEN-1:0]	       ReadDataBlockM;
   logic [`XLEN-1:0]	       ReadDataBlockSetsM [(WORDSPERLINE)-1:0];
-  logic [`XLEN-1:0]	       ReadDataWordM, ReadDataWordMuxM;
-  logic [`XLEN-1:0]	       FinalWriteDataM, FinalAMOWriteDataM;
+  logic [`XLEN-1:0]	       ReadDataWordMuxM;
   logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
   logic [WORDSPERLINE-1:0]     SRAMWordEnable;
 
@@ -105,7 +109,7 @@ module dcache
   logic [NUMWAYS-1:0] 	       VictimWay;
   logic [NUMWAYS-1:0] 	       VictimDirtyWay;
   logic 		       VictimDirty;
-  logic 		       SelUncached;
+
   logic [2**LOGWPL-1:0]	       MemPAdrDecodedW;
 
   logic [`PA_BITS-1:0] 	       BasePAdrM;
@@ -125,7 +129,6 @@ module dcache
   logic 		       FlushWayCntEn;
   logic 		       FlushWayCntRst;  
   
-  logic 		       SelFlush;
   logic 		       VDWriteEnable;
     
   logic FetchCountFlag;
@@ -220,16 +223,6 @@ module dcache
   
   assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
-  mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
-				.d1(DCacheMemWriteData[`XLEN-1:0]),
-				.s(SelUncached),
-				.y(ReadDataWordMuxM));
-  
-  // finally swr
-  subwordread subwordread(.ReadDataWordMuxM,
-			  .MemPAdrM(MemPAdrM[2:0]),
-			  .Funct3M,
-			  .ReadDataM);
 
   // Write Path CPU (IEU) side
 
@@ -246,21 +239,6 @@ module dcache
 				 .s(SRAMBlockWriteEnableM),
 				 .y(SRAMWayWriteEnable));
 
-  generate
-    if (`A_SUPPORTED) begin
-      logic [`XLEN-1:0] AMOResult;
-      amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3M[1:0]), 
-                    .result(AMOResult));
-      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicM[1], FinalAMOWriteDataM);
-    end else
-      assign FinalAMOWriteDataM = WriteDataM;
-  endgenerate
-  
-  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
-			    .HADDRD(MemPAdrM[2:0]),
-			    .HSIZED({Funct3M[2], 1'b0, Funct3M[1:0]}),
-			    .HWDATAIN(FinalAMOWriteDataM),
-			    .HWDATA(FinalWriteDataM));
 
 
   mux2 #(BLOCKLEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
@@ -272,6 +250,7 @@ module dcache
   // register the fetch data from the next level of memory.
   // This register should be necessary for timing.  There is no register in the uncore or
   // ahblite controller between the memories and this cache.
+
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
       flopen #(`XLEN) fb(.clk(clk),
@@ -280,6 +259,9 @@ module dcache
 			 .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
   endgenerate
+
+  // temp
+  assign DCacheMemWriteDataFirstWord = DCacheMemWriteData[`XLEN-1:0];
 
   mux3 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
@@ -294,7 +276,8 @@ module dcache
   
   assign AHBPAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
-  assign HWDATA = CacheableM | SelFlush ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
+  //assign HWDATA = CacheableM | SelFlush ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
+  assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[FetchCount];
 
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
 
