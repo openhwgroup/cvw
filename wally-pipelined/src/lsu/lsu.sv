@@ -357,13 +357,8 @@ module lsu
 
 				.BasePAdrM,
 				.ReadDataBlockSetsM,
-				// temp
-				//.SelUncached,
 				.SelFlush,
 				.DCacheMemWriteData,
-				//.FetchCountFlag,
-				//.CntEn,
-				//.CntReset,
 				.DCFetchLine,
 				.DCWriteLine,
 				.BUSACK,
@@ -443,9 +438,7 @@ module lsu
 
   typedef enum {STATE_BUS_READY,
 				STATE_BUS_FETCH_WDV,
-				STATE_BUS_FETCH_DONE,
-				STATE_BUS_EVICT_DIRTY,
-				STATE_BUS_WRITE_CACHE_BLOCK,
+				STATE_BUS_WRITE_WDV,
 				STATE_BUS_UNCACHED_WRITE,
 				STATE_BUS_UNCACHED_WRITE_DONE,
 				STATE_BUS_UNCACHED_READ,
@@ -495,7 +488,7 @@ module lsu
 		end
 		// D$ Write Line
 		else if(DCWriteLine) begin
-		  BusNextState = STATE_BUS_EVICT_DIRTY;
+		  BusNextState = STATE_BUS_WRITE_WDV;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
 		end
@@ -547,7 +540,7 @@ module lsu
         end
       end
 
-      STATE_BUS_EVICT_DIRTY: begin
+      STATE_BUS_WRITE_WDV: begin
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
 		DCtoAHBWriteM = 1'b1;
@@ -556,7 +549,7 @@ module lsu
 		  BusNextState = STATE_BUS_READY;
 		  BUSACK = 1'b1;
 		end else begin
-		  BusNextState = STATE_BUS_EVICT_DIRTY;
+		  BusNextState = STATE_BUS_WRITE_WDV;
 		end	  
       end
 	endcase

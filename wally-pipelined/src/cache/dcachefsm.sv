@@ -40,10 +40,9 @@ module dcachefsm
    // hptw inputs
    input logic 		  IgnoreRequest,
    // Bus inputs
-   input logic 		  AHBAck, // from ahb
+   input logic 		  BUSACK,
    // dcache internals
    input logic 		  CacheHit,
-   input logic 		  FetchCountFlag,
    input logic 		  VictimDirty,
    input logic 		  FlushAdrFlag,
   
@@ -54,24 +53,18 @@ module dcachefsm
    output logic 	  DCacheMiss,
    output logic 	  DCacheAccess,
    // Bus outputs
-   output logic 	  AHBRead,
-   output logic 	  AHBWrite,
 
    output logic 	  DCWriteLine,
    output logic 	  DCFetchLine,
-   input logic 		  BUSACK,
 
    // dcache internals
    output logic [1:0] SelAdrM,
-   output logic 	  CntEn,
    output logic 	  SetValid,
    output logic 	  ClearValid,
    output logic 	  SetDirty,
    output logic 	  ClearDirty,
    output logic 	  SRAMWordWriteEnableM,
    output logic 	  SRAMBlockWriteEnableM,
-   output logic 	  CntReset,
-   output logic 	  SelUncached,
    output logic 	  SelEvict,
    output logic 	  LRUWriteEn,
    output logic 	  SelFlush,
@@ -83,7 +76,6 @@ module dcachefsm
 
    );
   
-  logic 			  PreCntEn;
   logic 			  AnyCPUReqM;
   
   typedef enum 		  {STATE_READY,
@@ -96,11 +88,6 @@ module dcachefsm
 					   STATE_MISS_READ_WORD_DELAY,
 					   STATE_MISS_WRITE_WORD,
 
-					   STATE_UNCACHED_WRITE,
-					   STATE_UNCACHED_WRITE_DONE,
-					   STATE_UNCACHED_READ,
-					   STATE_UNCACHED_READ_DONE,
-
 					   STATE_CPU_BUSY,
 					   STATE_CPU_BUSY_FINISH_AMO,
   
@@ -111,7 +98,6 @@ module dcachefsm
   (* mark_debug = "true" *) statetype CurrState, NextState;
 
   assign AnyCPUReqM = |MemRWM | (|AtomicM);
-  assign CntEn = PreCntEn & AHBAck;
 
   // outputs for the performance counters.
   assign DCacheAccess = AnyCPUReqM & CacheableM & CurrState == STATE_READY;
@@ -125,18 +111,13 @@ module dcachefsm
   always_comb begin
     DCacheStall = 1'b0;
     SelAdrM = 2'b00;
-    PreCntEn = 1'b0;
     SetValid = 1'b0;
     ClearValid = 1'b0;
     SetDirty = 1'b0;    
     ClearDirty = 1'b0;
     SRAMWordWriteEnableM = 1'b0;
     SRAMBlockWriteEnableM = 1'b0;
-    CntReset = 1'b0;
-    AHBRead = 1'b0;
-    AHBWrite = 1'b0;
     CommittedM = 1'b0;        
-    SelUncached = 1'b0;
     SelEvict = 1'b0;
     LRUWriteEn = 1'b0;
     SelFlush = 1'b0;
@@ -152,10 +133,7 @@ module dcachefsm
     case (CurrState)
       STATE_READY: begin
 
-		CntReset = 1'b0;
 		DCacheStall = 1'b0;
-		AHBRead = 1'b0;	  
-		AHBWrite = 1'b0;
 		SelAdrM = 2'b00;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
@@ -231,35 +209,17 @@ module dcachefsm
 		// read or write miss valid cached
 		else if((|MemRWM) & CacheableM & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
-		  CntReset = 1'b1;
 		  DCacheStall = 1'b1;
 		  DCFetchLine = 1'b1;
-		end
-		// uncached write
-		else if(MemRWM[0] & ~CacheableM) begin
-		  NextState = STATE_UNCACHED_WRITE;
-		  CntReset = 1'b1;
-		  DCacheStall = 1'b1;
-		  AHBWrite = 1'b1;
-		end
-		// uncached read
-		else if(MemRWM[1] & ~CacheableM) begin
-		  NextState = STATE_UNCACHED_READ;
-		  CntReset = 1'b1;
-		  DCacheStall = 1'b1;
-		  AHBRead = 1'b1;	  
 		end
 		else NextState = STATE_READY;
       end
       
       STATE_MISS_FETCH_WDV: begin
 		DCacheStall = 1'b1;
-        PreCntEn = 1'b1;
-		AHBRead = 1'b1;
 		SelAdrM = 2'b10;
 		CommittedM = 1'b1;
 		
-        //if (FetchCountFlag & AHBAck) begin
 		if (BUSACK) begin
           NextState = STATE_MISS_FETCH_DONE;
         end else begin
@@ -270,7 +230,6 @@ module dcachefsm
       STATE_MISS_FETCH_DONE: begin
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b10;
-        CntReset = 1'b1;
 		CommittedM = 1'b1;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
@@ -350,12 +309,9 @@ module dcachefsm
 
       STATE_MISS_EVICT_DIRTY: begin
 		DCacheStall = 1'b1;
-        PreCntEn = 1'b1;
-		AHBWrite = 1'b1;
 		SelAdrM = 2'b10;
 		CommittedM = 1'b1;
 		SelEvict = 1'b1;
-		//if(FetchCountFlag & AHBAck) begin
 		if(BUSACK) begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end else begin
@@ -393,53 +349,6 @@ module dcachefsm
 		end
       end
 
-      STATE_UNCACHED_WRITE : begin
-		DCacheStall = 1'b1;	
-		AHBWrite = 1'b1;
-		CommittedM = 1'b1;
-		if(AHBAck) begin
-		  NextState = STATE_UNCACHED_WRITE_DONE;
-		end else begin
-		  NextState = STATE_UNCACHED_WRITE;
-		end
-      end
-
-      STATE_UNCACHED_READ: begin
-		DCacheStall = 1'b1;	
-		AHBRead = 1'b1;
-		CommittedM = 1'b1;
-		if(AHBAck) begin
-		  NextState = STATE_UNCACHED_READ_DONE;
-		end else begin
-		  NextState = STATE_UNCACHED_READ;
-		end
-      end
-      
-      STATE_UNCACHED_WRITE_DONE: begin
-		CommittedM = 1'b1;
-		SelAdrM = 2'b00;
-		if(CPUBusy) begin
-		  NextState = STATE_CPU_BUSY;
-		  SelAdrM = 2'b10;
-		end
-		else begin
-		  NextState = STATE_READY;
-		end
-      end
-
-      STATE_UNCACHED_READ_DONE: begin
-		CommittedM = 1'b1;
-		SelUncached = 1'b1;
-		SelAdrM = 2'b00;
-		if(CPUBusy) begin 
-		  NextState = STATE_CPU_BUSY;
-		  SelAdrM = 2'b10;
-		end
-		else begin
-		  NextState = STATE_READY;
-		end 
-      end
-
       STATE_FLUSH: begin
 		DCacheStall = 1'b1;
 		CommittedM = 1'b1;
@@ -447,7 +356,6 @@ module dcachefsm
 		SelFlush = 1'b1;
 		FlushAdrCntEn = 1'b1;
 		FlushWayCntEn = 1'b1;
-		CntReset = 1'b1;
 		if(VictimDirty) begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
 		  FlushAdrCntEn = 1'b0;
@@ -465,12 +373,9 @@ module dcachefsm
 
       STATE_FLUSH_WRITE_BACK: begin
 		DCacheStall = 1'b1;
-		AHBWrite = 1'b1;
 		SelAdrM = 2'b11;
 		CommittedM = 1'b1;
 		SelFlush = 1'b1;
-        PreCntEn = 1'b1;
-		//if(FetchCountFlag & AHBAck) begin
 		if(BUSACK) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
