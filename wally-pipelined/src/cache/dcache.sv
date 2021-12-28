@@ -42,7 +42,6 @@ module dcache
    input logic [`XLEN-1:0] 					FinalWriteDataM,
    output logic [`XLEN-1:0] 				ReadDataWordM,
    output logic 							DCacheStall,
-   output logic 							CommittedM,
    output logic 							DCacheMiss,
    output logic 							DCacheAccess,
 
@@ -282,7 +281,6 @@ module dcache
  		      .CacheHit,
  		      .VictimDirty,
 		      .DCacheStall,
-		      .CommittedM,
 		      .DCacheMiss,
 		      .DCacheAccess,
 		      .SelAdrM,

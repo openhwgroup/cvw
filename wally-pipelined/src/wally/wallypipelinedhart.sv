@@ -125,7 +125,6 @@ module wallypipelinedhart (
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    IEUAdrM;  
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
   logic [`XLEN-1:0] 	    ReadDataW;  
-  logic 		    CommittedM;
 
   // AHB ifu interface
   logic [`PA_BITS-1:0] 	    InstrPAdrF;
@@ -240,7 +239,7 @@ module wallypipelinedhart (
 	// CPU interface
 	.MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
 	.AtomicM, .ExceptionM, .PendingInterruptM,		
-	.CommittedM, .DCacheMiss, .DCacheAccess,
+	.DCacheMiss, .DCacheAccess,
 	.SquashSCW,            
 	//.DataMisalignedM(DataMisalignedM),
 	.IEUAdrE, .IEUAdrM, .WriteDataM,
@@ -314,7 +313,7 @@ module wallypipelinedhart (
             .InstrM, .CSRReadValW, .PrivilegedNextPCM,
             .RetM, .TrapM, 
             .ITLBFlushF, .DTLBFlushM,
-            .InstrValidM, .CommittedM,
+            .InstrValidM, .LSUStall,
             .FRegWriteM, .LoadStallD,
             .BPPredDirWrongM, .BTBPredPCWrongM,
             .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
