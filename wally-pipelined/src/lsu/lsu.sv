@@ -42,7 +42,6 @@ module lsu
    input logic 				   ExceptionM,
    input logic 				   PendingInterruptM,
    input logic 				   FlushDCacheM,
-   output logic 			   CommittedM, 
    output logic 			   SquashSCW,
    output logic 			   DCacheMiss,
    output logic 			   DCacheAccess,
@@ -109,9 +108,6 @@ module lsu
   logic 					   CacheableM;
   logic 					   SelHPTW;
 
-
-  logic 					   DCCommittedM;
-  logic 					   CommittedMfromBus;
 
   logic 					   BusStall;
   
@@ -221,7 +217,6 @@ module lsu
 
 	  assign CPUBusy = StallW & ~SelHPTW;  
 	  // always block interrupts when using the hardware page table walker.
-	  assign CommittedM = SelHPTW | DCCommittedM | CommittedMfromBus;
 
 	  // this is for the d cache SRAM.
 	  // turns out because we cannot pipeline hptw requests we don't need this register
@@ -259,12 +254,12 @@ module lsu
 	  assign LsuAdrE = IEUAdrE[11:0];
 	  assign LsuPAdrM = IEUAdrExtM;
 	  assign CPUBusy = StallW;
-	  assign CommittedM = CommittedMfromBus;
 	  
 	  assign DTLBLoadPageFaultM = 1'b0;
 	  assign DTLBStorePageFaultM = 1'b0;
 	end
   endgenerate
+
 
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
@@ -369,7 +364,6 @@ module lsu
 				.MemAdrE(DCAdrE),
 				.MemPAdrM,
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
-				.CommittedM(DCCommittedM),
 				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
 				.CacheableM(CacheableM), 
 
@@ -475,7 +469,6 @@ module lsu
 	PreCntEn = 1'b0;
 	LsuBusWrite = 1'b0;
 	LsuBusRead = 1'b0;
-	CommittedMfromBus = 1'b0;
 	BUSACK = 1'b0;
 	SelUncached = 1'b0;
 	
@@ -515,7 +508,6 @@ module lsu
       STATE_BUS_UNCACHED_WRITE : begin
 		BusStall = 1'b1;	
 		LsuBusWrite = 1'b1;
-		CommittedMfromBus = 1'b1;
 		if(LsuBusAck) begin
 		  BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		end else begin
@@ -526,7 +518,6 @@ module lsu
       STATE_BUS_UNCACHED_READ: begin
 		BusStall = 1'b1;	
 		LsuBusRead = 1'b1;
-		CommittedMfromBus = 1'b1;
 		if(LsuBusAck) begin
 		  BusNextState = STATE_BUS_UNCACHED_READ_DONE;
 		end else begin
@@ -535,12 +526,10 @@ module lsu
       end
       
       STATE_BUS_UNCACHED_WRITE_DONE: begin
-		CommittedMfromBus = 1'b1;
 		BusNextState = STATE_BUS_READY;
       end
 
       STATE_BUS_UNCACHED_READ_DONE: begin
-		CommittedMfromBus = 1'b1;
 		SelUncached = 1'b1;
       end
 
@@ -548,7 +537,6 @@ module lsu
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
 		LsuBusRead = 1'b1;
-		CommittedMfromBus = 1'b1;
 		
         if (FetchCountFlag & LsuBusAck) begin
           BusNextState = STATE_BUS_READY;
@@ -562,7 +550,6 @@ module lsu
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
 		LsuBusWrite = 1'b1;
-		CommittedMfromBus = 1'b1;
 		if(FetchCountFlag & LsuBusAck) begin
 		  BusNextState = STATE_BUS_READY;
 		  BUSACK = 1'b1;

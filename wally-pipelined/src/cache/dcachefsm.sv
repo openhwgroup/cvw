@@ -46,7 +46,6 @@ module dcachefsm
   
    // hazard outputs
    output logic 	  DCacheStall,
-   output logic 	  CommittedM,
    // counter outputs
    output logic 	  DCacheMiss,
    output logic 	  DCacheAccess,
@@ -115,7 +114,6 @@ module dcachefsm
     ClearDirty = 1'b0;
     SRAMWordWriteEnableM = 1'b0;
     SRAMBlockWriteEnableM = 1'b0;
-    CommittedM = 1'b0;        
     SelEvict = 1'b0;
     LRUWriteEn = 1'b0;
     SelFlush = 1'b0;
@@ -136,7 +134,6 @@ module dcachefsm
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
-		CommittedM = 1'b0;
 
 		// TLB Miss	
 		if(IgnoreRequest) begin
@@ -146,7 +143,6 @@ module dcachefsm
 		  // PTW ready the CPU will stall.
 		  // The page table walker asserts it's control 1 cycle
 		  // after the TLBs miss.
-		  // CommittedM = 1'b1; ??? *** Not Sure yet.
 		  NextState = STATE_READY;
 		end
 
@@ -216,7 +212,6 @@ module dcachefsm
       STATE_MISS_FETCH_WDV: begin
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b10;
-		CommittedM = 1'b1;
 		
 		if (BUSACK) begin
           NextState = STATE_MISS_FETCH_DONE;
@@ -228,7 +223,6 @@ module dcachefsm
       STATE_MISS_FETCH_DONE: begin
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b10;
-		CommittedM = 1'b1;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
 		  DCWriteLine = 1'b1;
@@ -244,14 +238,12 @@ module dcachefsm
 		SelAdrM = 2'b10;
 		SetValid = 1'b1;
 		ClearDirty = 1'b1;
-		CommittedM = 1'b1;
 		//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
 
       STATE_MISS_READ_WORD: begin
 		SelAdrM = 2'b10;
 		DCacheStall = 1'b1;
-		CommittedM = 1'b1;
 		if (MemRWM[0] & ~AtomicM[1]) begin // handles stores and amo write.
 		  NextState = STATE_MISS_WRITE_WORD;
 		end else begin
@@ -263,7 +255,6 @@ module dcachefsm
 
       STATE_MISS_READ_WORD_DELAY: begin
 		//SelAdrM = 2'b10;
-		CommittedM = 1'b1;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
@@ -294,7 +285,6 @@ module dcachefsm
 		SRAMWordWriteEnableM = 1'b1;
 		SetDirty = 1'b1;
 		SelAdrM = 2'b10;
-		CommittedM = 1'b1;
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
@@ -308,7 +298,6 @@ module dcachefsm
       STATE_MISS_EVICT_DIRTY: begin
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b10;
-		CommittedM = 1'b1;
 		SelEvict = 1'b1;
 		if(BUSACK) begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
@@ -319,7 +308,6 @@ module dcachefsm
 
 
       STATE_CPU_BUSY: begin
-		CommittedM = 1'b1;
 		SelAdrM = 2'b00;
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
@@ -331,7 +319,6 @@ module dcachefsm
       end
 
       STATE_CPU_BUSY_FINISH_AMO: begin
-		CommittedM = 1'b1;
 		SelAdrM = 2'b10;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
@@ -349,7 +336,6 @@ module dcachefsm
 
       STATE_FLUSH: begin
 		DCacheStall = 1'b1;
-		CommittedM = 1'b1;
 		SelAdrM = 2'b11;
 		SelFlush = 1'b1;
 		FlushAdrCntEn = 1'b1;
@@ -372,7 +358,6 @@ module dcachefsm
       STATE_FLUSH_WRITE_BACK: begin
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b11;
-		CommittedM = 1'b1;
 		SelFlush = 1'b1;
 		if(BUSACK) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;

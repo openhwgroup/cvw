@@ -41,7 +41,7 @@ module trap (
   input logic [`XLEN-1:0]  PCM,
   input logic [`XLEN-1:0]  InstrMisalignedAdrM, IEUAdrM, 
   input logic [31:0] 	   InstrM,
-  input logic 		   InstrValidM, CommittedM,
+  input logic 		   InstrValidM, LSUStall,
   output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic 		   InterruptM,
   output logic 		   ExceptionM,
@@ -61,12 +61,12 @@ module trap (
   // Determine pending enabled interrupts
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
-  // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
+  // & with ~LSUStall to make sure MEPC isn't chosen so as to rerun the same instr twice
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || ((PrivilegeModeW == `S_MODE) && STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
-  assign InterruptM = PendingInterruptM & ~CommittedM;
+  assign InterruptM = PendingInterruptM & ~LSUStall; // previously CommittedM.  The purpose is to delay an interrupt if the instruction in the memory stage is busy in the LSU.  LSUStall directly provides this.
   //assign ExceptionM = TrapM;
   assign ExceptionM = Exception1M;
   // *** as of 7/17/21, the system passes with this definition of ExceptionM as being all traps and fails if ExceptionM = Exception1M
