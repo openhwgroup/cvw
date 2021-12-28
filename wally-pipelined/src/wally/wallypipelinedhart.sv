@@ -75,7 +75,6 @@ module wallypipelinedhart (
   logic 		    InstrMisalignedFaultM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
-  logic 		    WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM;
   logic 		    LoadMisalignedFaultM, LoadAccessFaultM;
   logic 		    StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] 	    InstrMisalignedAdrM;
@@ -189,7 +188,7 @@ module wallypipelinedhart (
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
-    .WalkerInstrPageFaultF, .ITLBMissF,
+    .ITLBMissF,
 
     // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
@@ -270,8 +269,6 @@ module wallypipelinedhart (
 	.StoreAccessFaultM,     // connects to privilege
     
 	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
-     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM,
-	.WalkerStorePageFaultM,
 	.LSUStall);                     // change to LSUStall
 
 
@@ -323,7 +320,6 @@ module wallypipelinedhart (
             .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
             .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
             .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
-            .WalkerInstrPageFaultF, .WalkerLoadPageFaultM, .WalkerStorePageFaultM,
             .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
             .LoadMisalignedFaultM, .StoreMisalignedFaultM,
             .TimerIntM, .ExtIntM, .SwIntM,

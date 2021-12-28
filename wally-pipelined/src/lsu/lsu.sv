@@ -83,9 +83,6 @@ module lsu
    output logic [`XLEN-1:0]    PTE,
    output logic [1:0] 		   PageType,
    output logic 			   ITLBWriteF,
-   output logic 			   WalkerInstrPageFaultF,
-   output logic 			   WalkerLoadPageFaultM,
-   output logic 			   WalkerStorePageFaultM,
 
    input 					   var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input 					   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
@@ -120,7 +117,6 @@ module lsu
   logic 					   CommittedMfromDCache;
     logic 					   CommittedMfromBus;
   logic 					   PendingInterruptMtoDCache;
-  logic 					   WalkerPageFaultM;
 
   logic 					   AnyCPUReqM;
   logic 					   MemAfterIWalkDone;
@@ -129,7 +125,6 @@ module lsu
 
   typedef enum 				   {STATE_T0_READY,
 								STATE_T0_REPLAY,
-								STATE_T0_FAULT_REPLAY,				
 								STATE_T3_DTLB_MISS,
 								STATE_T4_ITLB_MISS,
 								STATE_T5_ITLB_MISS,
@@ -138,8 +133,9 @@ module lsu
   statetype InterlockCurrState, InterlockNextState;
   logic 					   InterlockStall;
   logic 					   SelReplayCPURequest;
-  logic 					   WalkerInstrPageFaultRaw;
   logic 					   IgnoreRequest;
+
+
   
   assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
 
@@ -156,18 +152,13 @@ module lsu
 					         else                                             InterlockNextState = STATE_T0_READY;
 	  STATE_T0_REPLAY:       if(DCacheStall)                                  InterlockNextState = STATE_T0_REPLAY;
 	                         else                                             InterlockNextState = STATE_T0_READY;
-	  STATE_T3_DTLB_MISS:    if(WalkerLoadPageFaultM | WalkerStorePageFaultM) InterlockNextState = STATE_T0_READY;
-	                         else if(DTLBWriteM)                              InterlockNextState = STATE_T0_REPLAY;
+	  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
 						     else                                             InterlockNextState = STATE_T3_DTLB_MISS;
-	  STATE_T4_ITLB_MISS:    if(WalkerInstrPageFaultRaw | ITLBWriteF)         InterlockNextState = STATE_T0_READY;
+	  STATE_T4_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_READY;
 	                         else                                             InterlockNextState = STATE_T4_ITLB_MISS;
 	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
-	                         else if(WalkerInstrPageFaultRaw)                 InterlockNextState = STATE_T0_FAULT_REPLAY;
 						     else                                             InterlockNextState = STATE_T5_ITLB_MISS;
-	  STATE_T0_FAULT_REPLAY: if(DCacheStall)                                  InterlockNextState = STATE_T0_FAULT_REPLAY;
-	                         else                                             InterlockNextState = STATE_T0_READY;
-	  STATE_T7_DITLB_MISS:   if(WalkerStorePageFaultM | WalkerLoadPageFaultM) InterlockNextState = STATE_T0_READY;
-	                         else if(DTLBWriteM)                              InterlockNextState = STATE_T5_ITLB_MISS;
+	  STATE_T7_DITLB_MISS:   if(DTLBWriteM)                                   InterlockNextState = STATE_T5_ITLB_MISS;
 						     else                                             InterlockNextState = STATE_T7_DITLB_MISS;
 	  default: InterlockNextState = STATE_T0_READY;
 	endcase
@@ -178,8 +169,8 @@ module lsu
    // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
    // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
    assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
-   (InterlockCurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (InterlockCurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultRaw) |
-   (InterlockCurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultRaw) | (InterlockCurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
+   (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
 
    -----/\----- EXCLUDED -----/\----- */
 
@@ -187,25 +178,23 @@ module lsu
 	InterlockStall = 1'b0;
 	case(InterlockCurrState) 
 	  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
-	  STATE_T3_DTLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
-	  STATE_T4_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
+	  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
+	  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
 	  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
-	  //STATE_T0_FAULT_REPLAY: if (~WalkerInstrPageFaultF) InterlockStall = 1'b1;
-	  STATE_T7_DITLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
+	  STATE_T7_DITLB_MISS: InterlockStall = 1'b1;
 	  default: InterlockStall = 1'b0;
 	endcase
   end
   
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY) | (InterlockNextState == STATE_T0_FAULT_REPLAY);
+  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 				  (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
-						 ((InterlockCurrState == STATE_T0_REPLAY | InterlockCurrState == STATE_T0_FAULT_REPLAY)
+						 ((InterlockCurrState == STATE_T0_REPLAY)
 						  & (ExceptionM | PendingInterruptM));
   
-  assign WalkerInstrPageFaultF = WalkerInstrPageFaultRaw | InterlockCurrState == STATE_T0_FAULT_REPLAY;
   
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -217,13 +206,13 @@ module lsu
 			.DTLBMissM(DTLBMissM & ~PendingInterruptM),
 			.MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
 			.HPTWReadPTE(ReadDataM),
-			.DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM,
-			.WalkerInstrPageFaultF(WalkerInstrPageFaultRaw),
-			.WalkerLoadPageFaultM, .WalkerStorePageFaultM);
+			.DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
+  
+
+
 
   assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
-  assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
   // arbiter between IEU and hptw
   
