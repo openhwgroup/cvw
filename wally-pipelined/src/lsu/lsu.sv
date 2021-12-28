@@ -258,9 +258,16 @@ module lsu
 
 
   // Move generate from lrsc to outside this module.
-  assign MemReadM = LsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
-  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .LsuRWM, .LsuAtomicM, .MemPAdrM,
-            .SquashSCW, .DCRWM);
+  generate
+	if (`A_SUPPORTED) begin
+	  assign MemReadM = LsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
+	  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .LsuRWM, .LsuAtomicM, .MemPAdrM,
+				.SquashSCW, .DCRWM);
+	end else begin
+      assign SquashSCW = 0;
+      assign DCRWM = LsuRWM;
+	end
+  endgenerate
 
   // Specify which type of page fault is occurring
   // *** `MEM_VIRTMEM
