@@ -186,7 +186,7 @@ add wave -noupdate -group AHB -color Gold /testbench/dut/hart/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/AtomicMaskedM
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/InstrReadF
-add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/MemSizeM
+add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/LsuBusSize
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HCLK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRESETn
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRDATA

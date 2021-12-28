@@ -63,13 +63,13 @@ module lsu
    output logic 			   StoreMisalignedFaultM, StoreAccessFaultM,
 
    // connect to ahb
-(* mark_debug = "true" *)   output logic [`PA_BITS-1:0] DCtoAHBPAdrM,
-   output logic 			   DCtoAHBReadM, 
-   output logic 			   DCtoAHBWriteM,
-   input logic 				   DCfromAHBAck,
-(* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   DCfromAHBReadData,
-   output logic [`XLEN-1:0]    DCtoAHBWriteData,
-   output logic [2:0] 		   DCtoAHBSizeM, 
+(* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LsuBusAdr,
+   output logic 			   LsuBusRead, 
+   output logic 			   LsuBusWrite,
+   input logic 				   LsuBusAck,
+(* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   LsuBusHRDATA,
+   output logic [`XLEN-1:0]    LsuBusHWDATA,
+   output logic [2:0] 		   LsuBusSize, 
 
    // mmu management
 
@@ -410,11 +410,11 @@ module lsu
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
-  assign DCtoAHBWriteData = CacheableM | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
+  assign LsuBusHWDATA = CacheableM | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
 
   generate
-    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b010 : LsuFunct3M;
-    else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : LsuFunct3M;
+    if (`XLEN == 32) assign LsuBusSize = CacheableM | SelFlush ? 3'b010 : LsuFunct3M;
+    else assign LsuBusSize = CacheableM | SelFlush ? 3'b011 : LsuFunct3M;
   endgenerate;
 
   // Bus Side logic
@@ -426,8 +426,8 @@ module lsu
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
       flopen #(`XLEN) fb(.clk(clk),
-			 .en(DCfromAHBAck & DCtoAHBReadM & (index == FetchCount)),
-			 .d(DCfromAHBReadData),
+			 .en(LsuBusAck & LsuBusRead & (index == FetchCount)),
+			 .d(LsuBusHRDATA),
 			 .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
   endgenerate
@@ -438,12 +438,12 @@ module lsu
   assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
   assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
-  assign DCtoAHBPAdrM = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
+  assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
   assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[FetchCount];
 
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
-  assign CntEn = PreCntEn & DCfromAHBAck;
+  assign CntEn = PreCntEn & LsuBusAck;
 
   flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
@@ -473,8 +473,8 @@ module lsu
 	CntReset = 1'b0;
 	BusStall = 1'b0;
 	PreCntEn = 1'b0;
-	DCtoAHBWriteM = 1'b0;
-	DCtoAHBReadM = 1'b0;
+	LsuBusWrite = 1'b0;
+	LsuBusRead = 1'b0;
 	CommittedMfromBus = 1'b0;
 	BUSACK = 1'b0;
 	SelUncached = 1'b0;
@@ -489,14 +489,14 @@ module lsu
 		  BusNextState = STATE_BUS_UNCACHED_WRITE;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
-		  DCtoAHBWriteM = 1'b1;
+		  LsuBusWrite = 1'b1;
 		end
 		// uncached read
 		else if(DCRWM[1] & ~CacheableM) begin
 		  BusNextState = STATE_BUS_UNCACHED_READ;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
-		  DCtoAHBReadM = 1'b1;
+		  LsuBusRead = 1'b1;
 		end
 		// D$ Fetch Line
 		else if(DCFetchLine) begin
@@ -514,9 +514,9 @@ module lsu
 
       STATE_BUS_UNCACHED_WRITE : begin
 		BusStall = 1'b1;	
-		DCtoAHBWriteM = 1'b1;
+		LsuBusWrite = 1'b1;
 		CommittedMfromBus = 1'b1;
-		if(DCfromAHBAck) begin
+		if(LsuBusAck) begin
 		  BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		end else begin
 		  BusNextState = STATE_BUS_UNCACHED_WRITE;
@@ -525,9 +525,9 @@ module lsu
 
       STATE_BUS_UNCACHED_READ: begin
 		BusStall = 1'b1;	
-		DCtoAHBReadM = 1'b1;
+		LsuBusRead = 1'b1;
 		CommittedMfromBus = 1'b1;
-		if(DCfromAHBAck) begin
+		if(LsuBusAck) begin
 		  BusNextState = STATE_BUS_UNCACHED_READ_DONE;
 		end else begin
 		  BusNextState = STATE_BUS_UNCACHED_READ;
@@ -547,10 +547,10 @@ module lsu
       STATE_BUS_FETCH: begin
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
-		DCtoAHBReadM = 1'b1;
+		LsuBusRead = 1'b1;
 		CommittedMfromBus = 1'b1;
 		
-        if (FetchCountFlag & DCfromAHBAck) begin
+        if (FetchCountFlag & LsuBusAck) begin
           BusNextState = STATE_BUS_READY;
 		  BUSACK = 1'b1;
         end else begin
@@ -561,9 +561,9 @@ module lsu
       STATE_BUS_WRITE: begin
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
-		DCtoAHBWriteM = 1'b1;
+		LsuBusWrite = 1'b1;
 		CommittedMfromBus = 1'b1;
-		if(FetchCountFlag & DCfromAHBAck) begin
+		if(FetchCountFlag & LsuBusAck) begin
 		  BusNextState = STATE_BUS_READY;
 		  BUSACK = 1'b1;
 		end else begin
