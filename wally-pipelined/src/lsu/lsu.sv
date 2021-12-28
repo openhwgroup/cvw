@@ -101,22 +101,20 @@ module lsu
   logic [1:0] 				   LsuRWM;
   logic [2:0] 				   LsuFunct3M;
   logic [1:0] 				   LsuAtomicM;
-  logic [`PA_BITS-1:0] 		   MemPAdrNoTranslate;
-  logic [11:0] 				   MemAdrE, MemAdrE_RENAME;  
+  logic [`PA_BITS-1:0] 		   LsuPAdrM;
+  logic [11:0] 				   LsuAdrE, DCAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
   logic 					   DataMisalignedM;
   logic 					   DCacheStall;
 
   logic 					   CacheableM;
-  logic 					   CacheableMtoDCache;
   logic 					   SelHPTW;
   logic [2:0] 				   HPTWSize;
 
 
   logic 					   DCCommittedM;
-    logic 					   CommittedMfromBus;
-  logic 					   PendingInterruptMtoDCache;
+  logic 					   CommittedMfromBus;
 
   logic 					   AnyCPUReqM;
   logic 					   MemAfterIWalkDone;
@@ -217,30 +215,30 @@ module lsu
   // arbiter between IEU and hptw
   
   // multiplex the outputs to LSU
-  assign LsuRWM = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
-  
+  mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, LsuRWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
+  mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
+  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, LsuAdrE);
+  assign IEUAdrExtM = {2'b00, IEUAdrM};
+  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, LsuPAdrM);
+
+  assign CPUBusy = StallW & ~SelHPTW;  
+  // always block interrupts when using the hardware page table walker.
+  assign CommittedM = SelHPTW | DCCommittedM | CommittedMfromBus;
 
   // this is for the d cache SRAM.
   // turns out because we cannot pipeline hptw requests we don't need this register
   //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
-
-  assign LsuAtomicM = SelHPTW ? 2'b00 : AtomicM;
-  assign IEUAdrExtM = {2'b00, IEUAdrM};
-  assign MemPAdrNoTranslate = SelHPTW ? HPTWAdr : IEUAdrExtM[`PA_BITS-1:0]; 
-  assign MemAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
-  assign CPUBusy = SelHPTW ? 1'b0 : StallW;
-  // always block interrupts when using the hardware page table walker.
-  assign CommittedM = SelHPTW ? 1'b1 : DCCommittedM | CommittedMfromBus;
-
-
-  assign PendingInterruptMtoDCache = SelHPTW ? 1'b0 : PendingInterruptM;
   
-  
+  //assign LsuRWM = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
+  //assign LsuAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
+  //assign LsuAtomicM = SelHPTW ? 2'b00 : AtomicM;
+  //assign LsuPAdrM = SelHPTW ? HPTWAdr : IEUAdrExtM[`PA_BITS-1:0]; 
+
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
        .PrivilegeModeW, .DisableTranslation(SelHPTW),
-       .PAdr(MemPAdrNoTranslate),
+       .PAdr(LsuPAdrM),
        .VAdr(IEUAdrM),
        .Size(LsuFunct3M[1:0]),
        .PTE,
@@ -260,13 +258,9 @@ module lsu
 
 
   // Move generate from lrsc to outside this module.
-  assign MemReadM = LsuRWM[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & InterlockCurrState != STATE_STALLED;
+  assign MemReadM = LsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
   lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .LsuRWM, .LsuAtomicM, .MemPAdrM,
             .SquashSCW, .DCRWM);
-
-  // *** BUG, this is most likely wrong
-  assign CacheableMtoDCache = SelHPTW ? 1'b1 : CacheableM;
-  
 
   // Specify which type of page fault is occurring
   // *** `MEM_VIRTMEM
@@ -283,15 +277,15 @@ module lsu
       2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
     endcase 
 
-  // Determine if address is valid
-  assign LoadMisalignedFaultM = DataMisalignedM & LsuRWM[1];
-  assign StoreMisalignedFaultM = DataMisalignedM & LsuRWM[0];
+  // If the CPU's (not HPTW's) request is a page fault.
+  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
+  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
 
   // conditional
   // 1. ram // controlled by `MEM_DTIM
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
-  assign MemAdrE_RENAME = SelReplayCPURequest ? IEUAdrM[11:0] : MemAdrE[11:0];
+  assign DCAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : LsuAdrE[11:0];
 
   localparam integer   WORDSPERLINE = `DCACHE_BLOCKLENINBITS/`XLEN;
   localparam integer   LOGWPL = $clog2(WORDSPERLINE);
@@ -335,13 +329,13 @@ module lsu
 				.Funct3M(LsuFunct3M),
 				.Funct7M, .FlushDCacheM,
 				.AtomicM(LsuAtomicM),
-				.MemAdrE(MemAdrE_RENAME),
+				.MemAdrE(DCAdrE),
 				.MemPAdrM,
 				.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
 				.CommittedM(DCCommittedM),
 				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
-				.CacheableM(CacheableMtoDCache), 
+				.CacheableM(CacheableM), 
 
 				.BasePAdrM,
 				.ReadDataBlockSetsM,
@@ -384,7 +378,7 @@ module lsu
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
-  assign DCtoAHBWriteData = CacheableMtoDCache | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
+  assign DCtoAHBWriteData = CacheableM | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
 
 
   // Bus Side logic
@@ -455,14 +449,14 @@ module lsu
 		  BusNextState = STATE_BUS_READY;
 		end else
 		// uncache write
-		if(DCRWM[0] & ~CacheableMtoDCache) begin
+		if(DCRWM[0] & ~CacheableM) begin
 		  BusNextState = STATE_BUS_UNCACHED_WRITE;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
 		  DCtoAHBWriteM = 1'b1;
 		end
 		// uncached read
-		else if(DCRWM[1] & ~CacheableMtoDCache) begin
+		else if(DCRWM[1] & ~CacheableM) begin
 		  BusNextState = STATE_BUS_UNCACHED_READ;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
