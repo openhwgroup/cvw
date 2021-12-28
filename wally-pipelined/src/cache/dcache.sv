@@ -38,7 +38,6 @@ module dcache
    input logic 								FlushDCacheM,
    input logic [11:0] 						MemAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0] 				MemPAdrM, // physical address
-   input logic [11:0] 						VAdr, // when hptw writes dtlb we use this address to index SRAM.
 							  
    input logic [`XLEN-1:0] 					FinalWriteDataM,
    output logic [`XLEN-1:0] 				ReadDataWordM,
@@ -63,14 +62,7 @@ module dcache
    // inputs from TLB and PMA/P
    input logic 								CacheableM,
    // from ptw
-   input logic 								IgnoreRequest,
-   // ahb side
-/* -----\/----- EXCLUDED -----\/-----
-   (* mark_debug = "true" *)output logic 	AHBRead,
-   (* mark_debug = "true" *)output logic 	AHBWrite,
- -----/\----- EXCLUDED -----/\----- */
-   (* mark_debug = "true" *)input logic 	AHBAck, // from ahb
-   (* mark_debug = "true" *)output logic [2:0] DCtoAHBSizeM
+   input logic 								IgnoreRequest
    );
 
   localparam integer	       BLOCKLEN = `DCACHE_BLOCKLENINBITS;
@@ -139,9 +131,8 @@ module dcache
 
   mux4 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]), // *** REMOVE
+	    .d1(0), // *** REMOVE
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-		//.d2(VAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d3(FlushAdr),
 	    .s(SelAdrM),
 	    .y(RAdr));
@@ -242,7 +233,6 @@ module dcache
 				.y(SRAMWriteData));
 
   
-  //assign HWDATA = CacheableM | SelFlush ? ReadDataBlockSetsM[FetchCount] : WriteDataM;
   mux3 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 			      .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
@@ -274,10 +264,6 @@ module dcache
 
   assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
 
-  generate
-    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b010 : Funct3M;
-    else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : Funct3M;
-  endgenerate;
 
   //assign SRAMWriteEnable = SRAMBlockWriteEnableM | SRAMWordWriteEnableM;
 

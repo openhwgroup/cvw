@@ -331,7 +331,6 @@ module lsu
 				.AtomicM(LsuAtomicM),
 				.MemAdrE(DCAdrE),
 				.MemPAdrM,
-				.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
 				.CommittedM(DCCommittedM),
 				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
@@ -343,11 +342,7 @@ module lsu
 				.DCacheMemWriteData,
 				.DCFetchLine,
 				.DCWriteLine,
-				.BUSACK,
-
-				// AHB connection
-				.AHBAck(1'b0),
-				.DCtoAHBSizeM
+				.BUSACK
 				);
 
 
@@ -380,6 +375,10 @@ module lsu
 
   assign DCtoAHBWriteData = CacheableM | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
 
+  generate
+    if (`XLEN == 32) assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b010 : LsuFunct3M;
+    else assign DCtoAHBSizeM = CacheableM | SelFlush ? 3'b011 : LsuFunct3M;
+  endgenerate;
 
   // Bus Side logic
   // register the fetch data from the next level of memory.
