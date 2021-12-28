@@ -94,9 +94,7 @@ module lsu
   logic [`XLEN+1:0] 		   IEUAdrExtM;
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
-  logic 					   HPTWStall;  
-  logic [`PA_BITS-1:0] 		   HPTWAdr;
-  logic 					   HPTWRead;
+
   logic [1:0] 				   DCRWM;
   logic [1:0] 				   LsuRWM;
   logic [2:0] 				   LsuFunct3M;
@@ -110,151 +108,191 @@ module lsu
 
   logic 					   CacheableM;
   logic 					   SelHPTW;
-  logic [2:0] 				   HPTWSize;
 
 
   logic 					   DCCommittedM;
   logic 					   CommittedMfromBus;
 
-  logic 					   AnyCPUReqM;
-  logic 					   MemAfterIWalkDone;
   logic 					   BusStall;
   
 
-  typedef enum 				   {STATE_T0_READY,
-								STATE_T0_REPLAY,
-								STATE_T3_DTLB_MISS,
-								STATE_T4_ITLB_MISS,
-								STATE_T5_ITLB_MISS,
-								STATE_T7_DITLB_MISS} statetype;
-
-  statetype InterlockCurrState, InterlockNextState;
   logic 					   InterlockStall;
-  logic 					   SelReplayCPURequest;
   logic 					   IgnoreRequest;
 
 
-  
-  assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
-
-  always_ff @(posedge clk)
-    if (reset)    InterlockCurrState <= #1 STATE_T0_READY;
-    else InterlockCurrState <= #1 InterlockNextState;
-
-  always_comb begin
-	case(InterlockCurrState)
-	  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          InterlockNextState = STATE_T3_DTLB_MISS;
-	                         else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
-                             else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
-					         else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
-					         else                                             InterlockNextState = STATE_T0_READY;
-	  STATE_T0_REPLAY:       if(DCacheStall)                                  InterlockNextState = STATE_T0_REPLAY;
-	                         else                                             InterlockNextState = STATE_T0_READY;
-	  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
-						     else                                             InterlockNextState = STATE_T3_DTLB_MISS;
-	  STATE_T4_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_READY;
-	                         else                                             InterlockNextState = STATE_T4_ITLB_MISS;
-	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
-						     else                                             InterlockNextState = STATE_T5_ITLB_MISS;
-	  STATE_T7_DITLB_MISS:   if(DTLBWriteM)                                   InterlockNextState = STATE_T5_ITLB_MISS;
-						     else                                             InterlockNextState = STATE_T7_DITLB_MISS;
-	  default: InterlockNextState = STATE_T0_READY;
-	endcase
-  end // always_comb
-  
-  // signal to CPU it needs to wait on HPTW.
-  /* -----\/----- EXCLUDED -----\/-----
-   // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
-   // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
-   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
-   (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
-   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-
-   -----/\----- EXCLUDED -----/\----- */
-
-  always_comb begin
-	InterlockStall = 1'b0;
-	case(InterlockCurrState) 
-	  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
-	  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
-	  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
-	  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
-	  STATE_T7_DITLB_MISS: InterlockStall = 1'b1;
-	  default: InterlockStall = 1'b0;
-	endcase
-  end
-  
-  
-  // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
-  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
-				  (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
-						 ((InterlockCurrState == STATE_T0_REPLAY)
-						  & (ExceptionM | PendingInterruptM));
-  
-  
-
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  assign IEUAdrExtM = {2'b00, IEUAdrM};
 
-  // *** add generate to conditionally create hptw, lsuArb, and mmu
-  // based on `MEM_VIRTMEM
-  hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
-			.ITLBMissF(ITLBMissF & ~PendingInterruptM),
-			.DTLBMissM(DTLBMissM & ~PendingInterruptM),
-			.MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
-			.HPTWReadPTE(ReadDataM),
-			.DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
+  generate
+	if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
+	  logic 					   AnyCPUReqM;
+	  logic [`PA_BITS-1:0] 		   HPTWAdr;
+	  logic 					   HPTWRead;
+	  logic [2:0] 				   HPTWSize;
+	  logic 					   SelReplayCPURequest;
+
+	  typedef enum 				   {STATE_T0_READY,
+									STATE_T0_REPLAY,
+									STATE_T3_DTLB_MISS,
+									STATE_T4_ITLB_MISS,
+									STATE_T5_ITLB_MISS,
+									STATE_T7_DITLB_MISS} statetype;
+
+	  statetype InterlockCurrState, InterlockNextState;
+
+	  assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
+
+	  always_ff @(posedge clk)
+		if (reset)    InterlockCurrState <= #1 STATE_T0_READY;
+		else InterlockCurrState <= #1 InterlockNextState;
+
+	  always_comb begin
+		case(InterlockCurrState)
+		  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          InterlockNextState = STATE_T3_DTLB_MISS;
+	      else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
+          else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
+		  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
+		  else                                             InterlockNextState = STATE_T0_READY;
+		  STATE_T0_REPLAY:       if(DCacheStall)                                  InterlockNextState = STATE_T0_REPLAY;
+	      else                                             InterlockNextState = STATE_T0_READY;
+		  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
+		  else                                             InterlockNextState = STATE_T3_DTLB_MISS;
+		  STATE_T4_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_READY;
+	      else                                             InterlockNextState = STATE_T4_ITLB_MISS;
+		  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
+		  else                                             InterlockNextState = STATE_T5_ITLB_MISS;
+		  STATE_T7_DITLB_MISS:   if(DTLBWriteM)                                   InterlockNextState = STATE_T5_ITLB_MISS;
+		  else                                             InterlockNextState = STATE_T7_DITLB_MISS;
+		  default: InterlockNextState = STATE_T0_READY;
+		endcase
+	  end // always_comb
+	  
+	  // signal to CPU it needs to wait on HPTW.
+	  /* -----\/----- EXCLUDED -----\/-----
+	   // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
+	   // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
+	   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+	   (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+	   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
+
+	   -----/\----- EXCLUDED -----/\----- */
+
+	  always_comb begin
+		InterlockStall = 1'b0;
+		case(InterlockCurrState) 
+		  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
+		  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
+		  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
+		  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
+		  STATE_T7_DITLB_MISS: InterlockStall = 1'b1;
+		  default: InterlockStall = 1'b0;
+		endcase
+	  end
   
+  
+	  // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
+	  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
+	  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+					   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
+	  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
+							 ((InterlockCurrState == STATE_T0_REPLAY)
+							  & (ExceptionM | PendingInterruptM));
+	  
+	  
 
 
+	  // *** add generate to conditionally create hptw, lsuArb, and mmu
+	  // based on `MEM_VIRTMEM
+	  hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
+				.ITLBMissF(ITLBMissF & ~PendingInterruptM),
+				.DTLBMissM(DTLBMissM & ~PendingInterruptM),
+				.MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
+				.HPTWReadPTE(ReadDataM),
+				.DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
+
+	  // arbiter between IEU and hptw
+	  
+	  // multiplex the outputs to LSU
+	  mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, LsuRWM);
+	  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
+	  mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
+	  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, LsuAdrE);
+	  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, LsuPAdrM);
+
+	  assign CPUBusy = StallW & ~SelHPTW;  
+	  // always block interrupts when using the hardware page table walker.
+	  assign CommittedM = SelHPTW | DCCommittedM | CommittedMfromBus;
+
+	  // this is for the d cache SRAM.
+	  // turns out because we cannot pipeline hptw requests we don't need this register
+	  //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
+	  
+	  //assign LsuRWM = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
+	  //assign LsuAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
+	  //assign LsuAtomicM = SelHPTW ? 2'b00 : AtomicM;
+	  //assign LsuPAdrM = SelHPTW ? HPTWAdr : IEUAdrExtM[`PA_BITS-1:0]; 
+
+
+	  // Specify which type of page fault is occurring
+	  // *** `MEM_VIRTMEM
+	  assign DTLBLoadPageFaultM = DTLBPageFaultM & LsuRWM[1];
+	  assign DTLBStorePageFaultM = DTLBPageFaultM & LsuRWM[0];
+
+	  assign DCAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : LsuAdrE;
+
+	end // if (`MEM_VIRTMEM)
+	else begin
+	  assign InterlockStall = 1'b0;
+	  
+	  assign DCAdrE = LsuAdrE;
+	  assign SelHPTW = 1'b0;
+	  assign IgnoreRequest = 1'b0;
+
+	  assign PTE = '0;
+	  assign PageType = '0;
+	  assign DTLBWriteM = 1'b0;
+	  assign ITLBWriteF = 1'b0;	  
+	  
+	  assign LsuRWM = MemRWM;
+	  assign LsuFunct3M = Funct3M;
+	  assign LsuAtomicM = AtomicM;
+	  assign LsuAdrE = IEUAdrE[11:0];
+	  assign LsuPAdrM = IEUAdrExtM;
+	  assign CPUBusy = StallW;
+	  assign CommittedM = CommittedMfromBus;
+	  
+	  assign DTLBLoadPageFaultM = 1'b0;
+	  assign DTLBStorePageFaultM = 1'b0;
+	end
+  endgenerate
+
+  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
+  dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+	   .PrivilegeModeW, .DisableTranslation(SelHPTW),
+	   .PAdr(LsuPAdrM),
+	   .VAdr(IEUAdrM),
+	   .Size(LsuFunct3M[1:0]),
+	   .PTE,
+	   .PageTypeWriteVal(PageType),
+	   .TLBWrite(DTLBWriteM),
+	   .TLBFlush(DTLBFlushM),
+	   .PhysicalAddress(MemPAdrM),
+	   .TLBMiss(DTLBMissM),
+	   .Cacheable(CacheableM),
+	   .Idempotent(), .AtomicAllowed(),
+	   .TLBPageFault(DTLBPageFaultM),
+	   .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
+	   .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0), 
+	   .WriteAccessM(LsuRWM[0]), .ReadAccessM(LsuRWM[1]),
+	   .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
+	   ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
   assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
 
-  // arbiter between IEU and hptw
-  
-  // multiplex the outputs to LSU
-  mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, LsuRWM);
-  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
-  mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
-  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, LsuAdrE);
-  assign IEUAdrExtM = {2'b00, IEUAdrM};
-  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, LsuPAdrM);
-
-  assign CPUBusy = StallW & ~SelHPTW;  
-  // always block interrupts when using the hardware page table walker.
-  assign CommittedM = SelHPTW | DCCommittedM | CommittedMfromBus;
-
-  // this is for the d cache SRAM.
-  // turns out because we cannot pipeline hptw requests we don't need this register
-  //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
-  
-  //assign LsuRWM = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
-  //assign LsuAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
-  //assign LsuAtomicM = SelHPTW ? 2'b00 : AtomicM;
-  //assign LsuPAdrM = SelHPTW ? HPTWAdr : IEUAdrExtM[`PA_BITS-1:0]; 
-
-  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-       .PrivilegeModeW, .DisableTranslation(SelHPTW),
-       .PAdr(LsuPAdrM),
-       .VAdr(IEUAdrM),
-       .Size(LsuFunct3M[1:0]),
-       .PTE,
-       .PageTypeWriteVal(PageType),
-       .TLBWrite(DTLBWriteM),
-       .TLBFlush(DTLBFlushM),
-       .PhysicalAddress(MemPAdrM),
-       .TLBMiss(DTLBMissM),
-       .Cacheable(CacheableM),
-       .Idempotent(), .AtomicAllowed(),
-       .TLBPageFault(DTLBPageFaultM),
-       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
-       .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0), 
-       .WriteAccessM(LsuRWM[0]), .ReadAccessM(LsuRWM[1]),
-       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
-       ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
+  // If the CPU's (not HPTW's) request is a page fault.
+  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
+  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
 
 
   // Move generate from lrsc to outside this module.
@@ -269,10 +307,6 @@ module lsu
 	end
   endgenerate
 
-  // Specify which type of page fault is occurring
-  // *** `MEM_VIRTMEM
-  assign DTLBLoadPageFaultM = DTLBPageFaultM & LsuRWM[1];
-  assign DTLBStorePageFaultM = DTLBPageFaultM & LsuRWM[0];
 
   // Determine if an Unaligned access is taking place
   // hptw guarantees alignment, only check inputs from IEU.
@@ -284,15 +318,11 @@ module lsu
       2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
     endcase 
 
-  // If the CPU's (not HPTW's) request is a page fault.
-  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
 
   // conditional
   // 1. ram // controlled by `MEM_DTIM
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
-  assign DCAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : LsuAdrE[11:0];
 
   localparam integer   WORDSPERLINE = `DCACHE_BLOCKLENINBITS/`XLEN;
   localparam integer   LOGWPL = $clog2(WORDSPERLINE);
