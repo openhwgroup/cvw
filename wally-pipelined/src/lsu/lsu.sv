@@ -464,101 +464,44 @@ module lsu
   
   always_comb begin
 	BusNextState = STATE_BUS_READY;
-	CntReset = 1'b0;
-	BusStall = 1'b0;
-	PreCntEn = 1'b0;
-	LsuBusWrite = 1'b0;
-	LsuBusRead = 1'b0;
-	BUSACK = 1'b0;
-	SelUncached = 1'b0;
 	
 	case(BusCurrState)
-	  STATE_BUS_READY: begin
-		if(IgnoreRequest) begin
-		  BusNextState = STATE_BUS_READY;
-		end else
-		// uncache write
-		if(DCRWM[0] & ~CacheableM) begin
-		  BusNextState = STATE_BUS_UNCACHED_WRITE;
-		  CntReset = 1'b1;
-		  BusStall = 1'b1;
-		  LsuBusWrite = 1'b1;
-		end
-		// uncached read
-		else if(DCRWM[1] & ~CacheableM) begin
-		  BusNextState = STATE_BUS_UNCACHED_READ;
-		  CntReset = 1'b1;
-		  BusStall = 1'b1;
-		  LsuBusRead = 1'b1;
-		end
-		// D$ Fetch Line
-		else if(DCFetchLine) begin
-		  BusNextState = STATE_BUS_FETCH;
-		  CntReset = 1'b1;
-		  BusStall = 1'b1;
-		end
-		// D$ Write Line
-		else if(DCWriteLine) begin
-		  BusNextState = STATE_BUS_WRITE;
-		  CntReset = 1'b1;
-		  BusStall = 1'b1;
-		end
-	  end
-
-      STATE_BUS_UNCACHED_WRITE : begin
-		BusStall = 1'b1;	
-		LsuBusWrite = 1'b1;
-		if(LsuBusAck) begin
-		  BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
-		end else begin
-		  BusNextState = STATE_BUS_UNCACHED_WRITE;
-		end
-      end
-
-      STATE_BUS_UNCACHED_READ: begin
-		BusStall = 1'b1;	
-		LsuBusRead = 1'b1;
-		if(LsuBusAck) begin
-		  BusNextState = STATE_BUS_UNCACHED_READ_DONE;
-		end else begin
-		  BusNextState = STATE_BUS_UNCACHED_READ;
-		end
-      end
-      
-      STATE_BUS_UNCACHED_WRITE_DONE: begin
-		BusNextState = STATE_BUS_READY;
-      end
-
-      STATE_BUS_UNCACHED_READ_DONE: begin
-		SelUncached = 1'b1;
-      end
-
-      STATE_BUS_FETCH: begin
-		BusStall = 1'b1;
-        PreCntEn = 1'b1;
-		LsuBusRead = 1'b1;
-		
-        if (FetchCountFlag & LsuBusAck) begin
-          BusNextState = STATE_BUS_READY;
-		  BUSACK = 1'b1;
-        end else begin
-          BusNextState = STATE_BUS_FETCH;
-        end
-      end
-
-      STATE_BUS_WRITE: begin
-		BusStall = 1'b1;
-        PreCntEn = 1'b1;
-		LsuBusWrite = 1'b1;
-		if(FetchCountFlag & LsuBusAck) begin
-		  BusNextState = STATE_BUS_READY;
-		  BUSACK = 1'b1;
-		end else begin
-		  BusNextState = STATE_BUS_WRITE;
-		end	  
-      end
+	  STATE_BUS_READY:           if(IgnoreRequest)               BusNextState = STATE_BUS_READY;
+	                             else if(DCRWM[0] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(DCRWM[1] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_READ;
+		                         else if(DCFetchLine)            BusNextState = STATE_BUS_FETCH;
+		                         else if(DCWriteLine)            BusNextState = STATE_BUS_WRITE;
+      STATE_BUS_UNCACHED_WRITE:  if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
+		                         else                            BusNextState = STATE_BUS_UNCACHED_WRITE;
+      STATE_BUS_UNCACHED_READ:   if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_READ_DONE;
+		                         else                            BusNextState = STATE_BUS_UNCACHED_READ;
+      STATE_BUS_UNCACHED_WRITE_DONE:                             BusNextState = STATE_BUS_READY;
+      STATE_BUS_UNCACHED_READ_DONE:                              BusNextState = STATE_BUS_READY;
+      STATE_BUS_FETCH:           if (FetchCountFlag & LsuBusAck) BusNextState = STATE_BUS_READY;
+	                             else                            BusNextState = STATE_BUS_FETCH;
+      STATE_BUS_WRITE:           if(FetchCountFlag & LsuBusAck)  BusNextState = STATE_BUS_READY;
+	                             else                            BusNextState = STATE_BUS_WRITE;
 	endcase
   end
 
+
+  assign CntReset = BusCurrState == STATE_BUS_READY;
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((~CacheableM & (|DCRWM)) | DCFetchLine | DCWriteLine)) |
+					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
+					(BusCurrState == STATE_BUS_UNCACHED_READ) |
+					(BusCurrState == STATE_BUS_FETCH)  |
+					(BusCurrState == STATE_BUS_WRITE);
+  assign SelUncached = BusCurrState == STATE_BUS_UNCACHED_READ_DONE;
+  assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
+  assign LsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (DCRWM[0])) |
+					   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
+					   (BusCurrState == STATE_BUS_WRITE);
+
+  assign LsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|DCRWM[1])) |
+					  (BusCurrState == STATE_BUS_UNCACHED_READ) |
+					  (BusCurrState == STATE_BUS_FETCH);
+  assign BUSACK = (BusCurrState == STATE_BUS_FETCH & FetchCountFlag & LsuBusAck) |
+				  (BusCurrState == STATE_BUS_WRITE & FetchCountFlag & LsuBusAck);
+    
 endmodule
 
