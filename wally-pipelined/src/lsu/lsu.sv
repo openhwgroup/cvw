@@ -455,8 +455,8 @@ module lsu
   assign NextFetchCount = FetchCount + 1'b1;
 
   typedef enum {STATE_BUS_READY,
-				STATE_BUS_FETCH_WDV,
-				STATE_BUS_WRITE_WDV,
+				STATE_BUS_FETCH,
+				STATE_BUS_WRITE,
 				STATE_BUS_UNCACHED_WRITE,
 				STATE_BUS_UNCACHED_WRITE_DONE,
 				STATE_BUS_UNCACHED_READ,
@@ -500,13 +500,13 @@ module lsu
 		end
 		// D$ Fetch Line
 		else if(DCFetchLine) begin
-		  BusNextState = STATE_BUS_FETCH_WDV;
+		  BusNextState = STATE_BUS_FETCH;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
 		end
 		// D$ Write Line
 		else if(DCWriteLine) begin
-		  BusNextState = STATE_BUS_WRITE_WDV;
+		  BusNextState = STATE_BUS_WRITE;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
 		end
@@ -544,7 +544,7 @@ module lsu
 		SelUncached = 1'b1;
       end
 
-      STATE_BUS_FETCH_WDV: begin
+      STATE_BUS_FETCH: begin
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
 		DCtoAHBReadM = 1'b1;
@@ -554,11 +554,11 @@ module lsu
           BusNextState = STATE_BUS_READY;
 		  BUSACK = 1'b1;
         end else begin
-          BusNextState = STATE_BUS_FETCH_WDV;
+          BusNextState = STATE_BUS_FETCH;
         end
       end
 
-      STATE_BUS_WRITE_WDV: begin
+      STATE_BUS_WRITE: begin
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
 		DCtoAHBWriteM = 1'b1;
@@ -567,7 +567,7 @@ module lsu
 		  BusNextState = STATE_BUS_READY;
 		  BUSACK = 1'b1;
 		end else begin
-		  BusNextState = STATE_BUS_WRITE_WDV;
+		  BusNextState = STATE_BUS_WRITE;
 		end	  
       end
 	endcase
