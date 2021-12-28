@@ -55,13 +55,7 @@ module dcache
    output logic [`PA_BITS-1:0] 				BasePAdrM,
    output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
 
-   // temp
-   //output logic 							SelUncached,
    output logic 							SelFlush,
-   //input logic 								FetchCountFlag,
-   //output logic 							CntEn,
-   //output logic 							CntReset,
-
 
    input logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData,
 
@@ -303,26 +297,19 @@ module dcache
  		      .CPUBusy,
  		      .CacheableM,
 			  .IgnoreRequest,
- 		      .AHBAck, // from ahb
  		      .CacheHit,
- 		      .FetchCountFlag(1'b0),
  		      .VictimDirty,
 		      .DCacheStall,
 		      .CommittedM,
 		      .DCacheMiss,
 		      .DCacheAccess,
-		      .AHBRead(),
-		      .AHBWrite(),
 		      .SelAdrM,
-		      .CntEn(),
 		      .SetValid,
 		      .ClearValid,
 		      .SetDirty,
 		      .ClearDirty,
 		      .SRAMWordWriteEnableM,
 		      .SRAMBlockWriteEnableM,
-		      .CntReset(),
-		      .SelUncached(),
 		      .SelEvict,
 		      .SelFlush,
 		      .FlushAdrCntEn,
