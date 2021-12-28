@@ -470,6 +470,9 @@ module lsu
 	
 	case(BusCurrState)
 	  STATE_BUS_READY: begin
+		if(IgnoreRequest) begin
+		  BusNextState = STATE_BUS_READY;
+		end else
 		// uncache write
 		if(MemRWMtoDCache[0] & ~CacheableMtoDCache) begin
 		  BusNextState = STATE_BUS_UNCACHED_WRITE;
@@ -537,38 +540,24 @@ module lsu
 		CommittedMfromBus = 1'b1;
 		
         if (FetchCountFlag & DCfromAHBAck) begin
-          BusNextState = STATE_BUS_FETCH_DONE;
+          BusNextState = STATE_BUS_READY;
+		  BUSACK = 1'b1;
         end else begin
           BusNextState = STATE_BUS_FETCH_WDV;
         end
       end
 
-      STATE_BUS_FETCH_DONE: begin
-		BusStall = 1'b1;
-        CntReset = 1'b1;
-		CommittedMfromBus = 1'b1;
-		BusNextState = STATE_BUS_READY;
-		BUSACK = 1'b1;
-      end
-	  
       STATE_BUS_EVICT_DIRTY: begin
 		BusStall = 1'b1;
         PreCntEn = 1'b1;
 		DCtoAHBWriteM = 1'b1;
 		CommittedMfromBus = 1'b1;
 		if(FetchCountFlag & DCfromAHBAck) begin
-		  BusNextState = STATE_BUS_WRITE_CACHE_BLOCK;
+		  BusNextState = STATE_BUS_READY;
+		  BUSACK = 1'b1;
 		end else begin
 		  BusNextState = STATE_BUS_EVICT_DIRTY;
 		end	  
-      end
-		
-      STATE_BUS_WRITE_CACHE_BLOCK: begin
-		BusStall = 1'b1;
-        CntReset = 1'b1;
-		CommittedMfromBus = 1'b1;
-		BusNextState = STATE_BUS_READY;
-		BUSACK = 1'b1;
       end
 	endcase
   end
