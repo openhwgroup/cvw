@@ -118,11 +118,14 @@ module lsu
 
 
   logic 					   CommittedMfromDCache;
+    logic 					   CommittedMfromBus;
   logic 					   PendingInterruptMtoDCache;
   logic 					   WalkerPageFaultM;
 
   logic 					   AnyCPUReqM;
   logic 					   MemAfterIWalkDone;
+  logic 					   BusStall;
+  
 
   typedef enum 				   {STATE_T0_READY,
 								STATE_T0_REPLAY,
@@ -132,7 +135,7 @@ module lsu
 								STATE_T5_ITLB_MISS,
 								STATE_T7_DITLB_MISS} statetype;
 
-  statetype CurrState, NextState;
+  statetype InterlockCurrState, InterlockNextState;
   logic 					   InterlockStall;
   logic 					   SelReplayCPURequest;
   logic 					   WalkerInstrPageFaultRaw;
@@ -141,32 +144,32 @@ module lsu
   assign AnyCPUReqM = (|MemRWM)  | (|AtomicM);
 
   always_ff @(posedge clk)
-    if (reset)    CurrState <= #1 STATE_T0_READY;
-    else CurrState <= #1 NextState;
+    if (reset)    InterlockCurrState <= #1 STATE_T0_READY;
+    else InterlockCurrState <= #1 InterlockNextState;
 
   always_comb begin
-	case(CurrState)
-	  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          NextState = STATE_T3_DTLB_MISS;
-	                         else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    NextState = STATE_T4_ITLB_MISS;
-                             else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     NextState = STATE_T5_ITLB_MISS;
-					         else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      NextState = STATE_T7_DITLB_MISS;
-					         else                                             NextState = STATE_T0_READY;
-	  STATE_T0_REPLAY:       if(DCacheStall)                                  NextState = STATE_T0_REPLAY;
-	                         else                                             NextState = STATE_T0_READY;
-	  STATE_T3_DTLB_MISS:    if(WalkerLoadPageFaultM | WalkerStorePageFaultM) NextState = STATE_T0_READY;
-	                         else if(DTLBWriteM)                              NextState = STATE_T0_REPLAY;
-						     else                                             NextState = STATE_T3_DTLB_MISS;
-	  STATE_T4_ITLB_MISS:    if(WalkerInstrPageFaultRaw | ITLBWriteF)         NextState = STATE_T0_READY;
-	                         else                                             NextState = STATE_T4_ITLB_MISS;
-	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   NextState = STATE_T0_REPLAY;
-	                         else if(WalkerInstrPageFaultRaw)                 NextState = STATE_T0_FAULT_REPLAY;
-						     else                                             NextState = STATE_T5_ITLB_MISS;
-	  STATE_T0_FAULT_REPLAY: if(DCacheStall)                                  NextState = STATE_T0_FAULT_REPLAY;
-	                         else                                             NextState = STATE_T0_READY;
-	  STATE_T7_DITLB_MISS:   if(WalkerStorePageFaultM | WalkerLoadPageFaultM) NextState = STATE_T0_READY;
-	                         else if(DTLBWriteM)                              NextState = STATE_T5_ITLB_MISS;
-						     else                                             NextState = STATE_T7_DITLB_MISS;
-	  default: NextState = STATE_T0_READY;
+	case(InterlockCurrState)
+	  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          InterlockNextState = STATE_T3_DTLB_MISS;
+	                         else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
+                             else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
+					         else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
+					         else                                             InterlockNextState = STATE_T0_READY;
+	  STATE_T0_REPLAY:       if(DCacheStall)                                  InterlockNextState = STATE_T0_REPLAY;
+	                         else                                             InterlockNextState = STATE_T0_READY;
+	  STATE_T3_DTLB_MISS:    if(WalkerLoadPageFaultM | WalkerStorePageFaultM) InterlockNextState = STATE_T0_READY;
+	                         else if(DTLBWriteM)                              InterlockNextState = STATE_T0_REPLAY;
+						     else                                             InterlockNextState = STATE_T3_DTLB_MISS;
+	  STATE_T4_ITLB_MISS:    if(WalkerInstrPageFaultRaw | ITLBWriteF)         InterlockNextState = STATE_T0_READY;
+	                         else                                             InterlockNextState = STATE_T4_ITLB_MISS;
+	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
+	                         else if(WalkerInstrPageFaultRaw)                 InterlockNextState = STATE_T0_FAULT_REPLAY;
+						     else                                             InterlockNextState = STATE_T5_ITLB_MISS;
+	  STATE_T0_FAULT_REPLAY: if(DCacheStall)                                  InterlockNextState = STATE_T0_FAULT_REPLAY;
+	                         else                                             InterlockNextState = STATE_T0_READY;
+	  STATE_T7_DITLB_MISS:   if(WalkerStorePageFaultM | WalkerLoadPageFaultM) InterlockNextState = STATE_T0_READY;
+	                         else if(DTLBWriteM)                              InterlockNextState = STATE_T5_ITLB_MISS;
+						     else                                             InterlockNextState = STATE_T7_DITLB_MISS;
+	  default: InterlockNextState = STATE_T0_READY;
 	endcase
   end // always_comb
   
@@ -174,15 +177,15 @@ module lsu
   /* -----\/----- EXCLUDED -----\/-----
    // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
    // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
-   assign InterlockStall = (CurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
-   (CurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (CurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultRaw) |
-   (CurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultRaw) | (CurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
+   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+   (InterlockCurrState == STATE_T3_DTLB_MISS & ~WalkerPageFaultM) | (InterlockCurrState == STATE_T4_ITLB_MISS & ~WalkerInstrPageFaultRaw) |
+   (InterlockCurrState == STATE_T5_ITLB_MISS & ~WalkerInstrPageFaultRaw) | (InterlockCurrState == STATE_T7_DITLB_MISS & ~WalkerPageFaultM);
 
    -----/\----- EXCLUDED -----/\----- */
 
   always_comb begin
 	InterlockStall = 1'b0;
-	case(CurrState) 
+	case(InterlockCurrState) 
 	  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
 	  STATE_T3_DTLB_MISS: if (~WalkerPageFaultM) InterlockStall = 1'b1;
 	  STATE_T4_ITLB_MISS: if (~WalkerInstrPageFaultRaw) InterlockStall = 1'b1;
@@ -195,14 +198,14 @@ module lsu
   
   
   // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-  assign SelReplayCPURequest = (NextState == STATE_T0_REPLAY) | (NextState == STATE_T0_FAULT_REPLAY);
-  assign SelHPTW = (CurrState == STATE_T3_DTLB_MISS) | (CurrState == STATE_T4_ITLB_MISS) |
-				  (CurrState == STATE_T5_ITLB_MISS) | (CurrState == STATE_T7_DITLB_MISS);
-  assign IgnoreRequest = (CurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
-						 ((CurrState == STATE_T0_REPLAY | CurrState == STATE_T0_FAULT_REPLAY)
+  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY) | (InterlockNextState == STATE_T0_FAULT_REPLAY);
+  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+				  (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
+  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
+						 ((InterlockCurrState == STATE_T0_REPLAY | InterlockCurrState == STATE_T0_FAULT_REPLAY)
 						  & (ExceptionM | PendingInterruptM));
   
-  assign WalkerInstrPageFaultF = WalkerInstrPageFaultRaw | CurrState == STATE_T0_FAULT_REPLAY;
+  assign WalkerInstrPageFaultF = WalkerInstrPageFaultRaw | InterlockCurrState == STATE_T0_FAULT_REPLAY;
   
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -218,7 +221,7 @@ module lsu
 			.WalkerInstrPageFaultF(WalkerInstrPageFaultRaw),
 			.WalkerLoadPageFaultM, .WalkerStorePageFaultM);
 
-  assign LSUStall = DCacheStall | InterlockStall;
+  assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
   assign WalkerPageFaultM = WalkerStorePageFaultM | WalkerLoadPageFaultM;
 
@@ -239,7 +242,7 @@ module lsu
   assign MemAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
   assign CPUBusy = SelHPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
-  assign CommittedM = SelHPTW ? 1'b1 : CommittedMfromDCache;
+  assign CommittedM = SelHPTW ? 1'b1 : CommittedMfromDCache | CommittedMfromBus;
 
 
   assign PendingInterruptMtoDCache = SelHPTW ? 1'b0 : PendingInterruptM;
@@ -268,7 +271,7 @@ module lsu
 
 
   // Move generate from lrsc to outside this module.
-  assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & CurrState != STATE_STALLED;
+  assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & InterlockCurrState != STATE_STALLED;
   lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
             .SquashSCW, .MemRWMtoDCache);
 
@@ -327,14 +330,16 @@ module lsu
   logic [`PA_BITS-1:0] 	       BasePAdrMaskedM;  
   logic [OFFSETLEN-1:0]        BasePAdrOffsetM;
 
-  logic 			   CntEn;
+  logic 			   CntEn, PreCntEn;
   logic 			   CntReset;
   logic [`PA_BITS-1:0] BasePAdrM;
   logic [`XLEN-1:0]    ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0];
   
 
 
-
+  logic 			   DCWriteLine;
+  logic 			   DCFetchLine;
+  logic 			   BUSACK;
   
   dcache dcache(.clk, .reset, .CPUBusy,
 				.MemRWM(MemRWMtoDCache),
@@ -353,17 +358,18 @@ module lsu
 				.BasePAdrM,
 				.ReadDataBlockSetsM,
 				// temp
-				.SelUncached,
+				//.SelUncached,
 				.SelFlush,
 				.DCacheMemWriteData,
-				.FetchCountFlag,
-				.CntEn,
-				.CntReset,
+				//.FetchCountFlag,
+				//.CntEn,
+				//.CntReset,
+				.DCFetchLine,
+				.DCWriteLine,
+				.BUSACK,
 
 				// AHB connection
-				.AHBRead(DCtoAHBReadM),
-				.AHBWrite(DCtoAHBWriteM),
-				.AHBAck(DCfromAHBAck),
+				.AHBAck(1'b0),
 				.DCtoAHBSizeM
 				);
 
@@ -424,7 +430,8 @@ module lsu
   assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[FetchCount];
 
   assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
-  
+  assign CntEn = PreCntEn & DCfromAHBAck;
+
   flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
 		.reset(reset | CntReset),
@@ -433,6 +440,138 @@ module lsu
 		.q(FetchCount));
 
   assign NextFetchCount = FetchCount + 1'b1;
+
+  typedef enum {STATE_BUS_READY,
+				STATE_BUS_FETCH_WDV,
+				STATE_BUS_FETCH_DONE,
+				STATE_BUS_EVICT_DIRTY,
+				STATE_BUS_WRITE_CACHE_BLOCK,
+				STATE_BUS_UNCACHED_WRITE,
+				STATE_BUS_UNCACHED_WRITE_DONE,
+				STATE_BUS_UNCACHED_READ,
+				STATE_BUS_UNCACHED_READ_DONE} busstatetype;
+
+  (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
+
+  always_ff @(posedge clk)
+    if (reset)    BusCurrState <= #1 STATE_BUS_READY;
+    else BusCurrState <= #1 BusNextState;  
+  
+  always_comb begin
+	BusNextState = STATE_BUS_READY;
+	CntReset = 1'b0;
+	BusStall = 1'b0;
+	PreCntEn = 1'b0;
+	DCtoAHBWriteM = 1'b0;
+	DCtoAHBReadM = 1'b0;
+	CommittedMfromBus = 1'b0;
+	BUSACK = 1'b0;
+	SelUncached = 1'b0;
+	
+	case(BusCurrState)
+	  STATE_BUS_READY: begin
+		// uncache write
+		if(MemRWMtoDCache[0] & ~CacheableMtoDCache) begin
+		  BusNextState = STATE_BUS_UNCACHED_WRITE;
+		  CntReset = 1'b1;
+		  BusStall = 1'b1;
+		  DCtoAHBWriteM = 1'b1;
+		end
+		// uncached read
+		else if(MemRWMtoDCache[1] & ~CacheableMtoDCache) begin
+		  BusNextState = STATE_BUS_UNCACHED_READ;
+		  CntReset = 1'b1;
+		  BusStall = 1'b1;
+		  DCtoAHBReadM = 1'b1;
+		end
+		// D$ Fetch Line
+		else if(DCFetchLine) begin
+		  BusNextState = STATE_BUS_FETCH_WDV;
+		  CntReset = 1'b1;
+		  BusStall = 1'b1;
+		end
+		// D$ Write Line
+		else if(DCWriteLine) begin
+		  BusNextState = STATE_BUS_EVICT_DIRTY;
+		  CntReset = 1'b1;
+		  BusStall = 1'b1;
+		end
+	  end
+
+      STATE_BUS_UNCACHED_WRITE : begin
+		BusStall = 1'b1;	
+		DCtoAHBWriteM = 1'b1;
+		CommittedMfromBus = 1'b1;
+		if(DCfromAHBAck) begin
+		  BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
+		end else begin
+		  BusNextState = STATE_BUS_UNCACHED_WRITE;
+		end
+      end
+
+      STATE_BUS_UNCACHED_READ: begin
+		BusStall = 1'b1;	
+		DCtoAHBReadM = 1'b1;
+		CommittedMfromBus = 1'b1;
+		if(DCfromAHBAck) begin
+		  BusNextState = STATE_BUS_UNCACHED_READ_DONE;
+		end else begin
+		  BusNextState = STATE_BUS_UNCACHED_READ;
+		end
+      end
+      
+      STATE_BUS_UNCACHED_WRITE_DONE: begin
+		CommittedMfromBus = 1'b1;
+		BusNextState = STATE_BUS_READY;
+      end
+
+      STATE_BUS_UNCACHED_READ_DONE: begin
+		CommittedMfromBus = 1'b1;
+		SelUncached = 1'b1;
+      end
+
+      STATE_BUS_FETCH_WDV: begin
+		BusStall = 1'b1;
+        PreCntEn = 1'b1;
+		DCtoAHBReadM = 1'b1;
+		CommittedMfromBus = 1'b1;
+		
+        if (FetchCountFlag & DCfromAHBAck) begin
+          BusNextState = STATE_BUS_FETCH_DONE;
+        end else begin
+          BusNextState = STATE_BUS_FETCH_WDV;
+        end
+      end
+
+      STATE_BUS_FETCH_DONE: begin
+		BusStall = 1'b1;
+        CntReset = 1'b1;
+		CommittedMfromBus = 1'b1;
+		BusNextState = STATE_BUS_READY;
+		BUSACK = 1'b1;
+      end
+	  
+      STATE_BUS_EVICT_DIRTY: begin
+		BusStall = 1'b1;
+        PreCntEn = 1'b1;
+		DCtoAHBWriteM = 1'b1;
+		CommittedMfromBus = 1'b1;
+		if(FetchCountFlag & DCfromAHBAck) begin
+		  BusNextState = STATE_BUS_WRITE_CACHE_BLOCK;
+		end else begin
+		  BusNextState = STATE_BUS_EVICT_DIRTY;
+		end	  
+      end
+		
+      STATE_BUS_WRITE_CACHE_BLOCK: begin
+		BusStall = 1'b1;
+        CntReset = 1'b1;
+		CommittedMfromBus = 1'b1;
+		BusNextState = STATE_BUS_READY;
+		BUSACK = 1'b1;
+      end
+	endcase
+  end
 
 endmodule
 

@@ -27,50 +27,57 @@
 
 module dcache
   (input logic clk,
-   input logic 								 reset,
-   input logic 								 CPUBusy,
+   input logic 								reset,
+   input logic 								CPUBusy,
 
    // cpu side
-   input logic [1:0] 						 MemRWM,
-   input logic [2:0] 						 Funct3M,
-   input logic [6:0] 						 Funct7M,
-   input logic [1:0] 						 AtomicM,
-   input logic 								 FlushDCacheM,
-   input logic [11:0] 						 MemAdrE, // virtual address, but we only use the lower 12 bits.
-   input logic [`PA_BITS-1:0] 				 MemPAdrM, // physical address
-   input logic [11:0] 						 VAdr, // when hptw writes dtlb we use this address to index SRAM.
+   input logic [1:0] 						MemRWM,
+   input logic [2:0] 						Funct3M,
+   input logic [6:0] 						Funct7M,
+   input logic [1:0] 						AtomicM,
+   input logic 								FlushDCacheM,
+   input logic [11:0] 						MemAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [`PA_BITS-1:0] 				MemPAdrM, // physical address
+   input logic [11:0] 						VAdr, // when hptw writes dtlb we use this address to index SRAM.
 							  
-   input logic [`XLEN-1:0] 					 FinalWriteDataM,
-   output logic [`XLEN-1:0] 				 ReadDataWordM,
-   output logic 							 DCacheStall,
-   output logic 							 CommittedM,
-   output logic 							 DCacheMiss,
-   output logic 							 DCacheAccess,
+   input logic [`XLEN-1:0] 					FinalWriteDataM,
+   output logic [`XLEN-1:0] 				ReadDataWordM,
+   output logic 							DCacheStall,
+   output logic 							CommittedM,
+   output logic 							DCacheMiss,
+   output logic 							DCacheAccess,
 
-   output logic [`PA_BITS-1:0] 				 BasePAdrM,
-   output logic [`XLEN-1:0] 				 ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
+   output logic 	  DCWriteLine,
+   output logic 	  DCFetchLine,
+   input logic 		  BUSACK,
+   
+
+   output logic [`PA_BITS-1:0] 				BasePAdrM,
+   output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
 
    // temp
-   output logic 							 SelUncached,
-   output logic 							 SelFlush,
-   input logic 								 FetchCountFlag,
-   output logic 							 CntEn,
-   output logic 							 CntReset,
+   //output logic 							SelUncached,
+   output logic 							SelFlush,
+   //input logic 								FetchCountFlag,
+   //output logic 							CntEn,
+   //output logic 							CntReset,
 
 
    input logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData,
 
 
    // inputs from TLB and PMA/P
-   input logic 								 ExceptionM,
-   input logic 								 PendingInterruptM, 
-   input logic 								 CacheableM,
+   input logic 								ExceptionM,
+   input logic 								PendingInterruptM, 
+   input logic 								CacheableM,
    // from ptw
-   input logic 								 IgnoreRequest,
+   input logic 								IgnoreRequest,
    // ahb side
-   (* mark_debug = "true" *)output logic 	 AHBRead,
-   (* mark_debug = "true" *)output logic 	 AHBWrite,
-   (* mark_debug = "true" *)input logic 	 AHBAck, // from ahb
+/* -----\/----- EXCLUDED -----\/-----
+   (* mark_debug = "true" *)output logic 	AHBRead,
+   (* mark_debug = "true" *)output logic 	AHBWrite,
+ -----/\----- EXCLUDED -----/\----- */
+   (* mark_debug = "true" *)input logic 	AHBAck, // from ahb
    (* mark_debug = "true" *)output logic [2:0] DCtoAHBSizeM
    );
 
@@ -286,6 +293,9 @@ module dcache
 
   dcachefsm dcachefsm(.clk,
  		      .reset,
+					  .DCFetchLine,
+					  .DCWriteLine,
+					  .BUSACK,
 		      .MemRWM,
 		      .AtomicM,
  		      .ExceptionM,
@@ -295,24 +305,24 @@ module dcache
 			  .IgnoreRequest,
  		      .AHBAck, // from ahb
  		      .CacheHit,
- 		      .FetchCountFlag,
+ 		      .FetchCountFlag(1'b0),
  		      .VictimDirty,
 		      .DCacheStall,
 		      .CommittedM,
 		      .DCacheMiss,
 		      .DCacheAccess,
-		      .AHBRead,
-		      .AHBWrite,
+		      .AHBRead(),
+		      .AHBWrite(),
 		      .SelAdrM,
-		      .CntEn,
+		      .CntEn(),
 		      .SetValid,
 		      .ClearValid,
 		      .SetDirty,
 		      .ClearDirty,
 		      .SRAMWordWriteEnableM,
 		      .SRAMBlockWriteEnableM,
-		      .CntReset,
-		      .SelUncached,
+		      .CntReset(),
+		      .SelUncached(),
 		      .SelEvict,
 		      .SelFlush,
 		      .FlushAdrCntEn,
