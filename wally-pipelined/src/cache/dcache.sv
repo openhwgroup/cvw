@@ -131,7 +131,7 @@ module dcache
 
   mux4 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(0), // *** REMOVE
+	    .d1(7'b0), // *** REMOVE
 	    .d2(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 	    .d3(FlushAdr),
 	    .s(SelAdrM),
