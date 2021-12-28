@@ -61,8 +61,6 @@ module dcache
 
 
    // inputs from TLB and PMA/P
-   input logic 								ExceptionM,
-   input logic 								PendingInterruptM, 
    input logic 								CacheableM,
    // from ptw
    input logic 								IgnoreRequest,
@@ -292,8 +290,6 @@ module dcache
 					  .BUSACK,
 		      .MemRWM,
 		      .AtomicM,
- 		      .ExceptionM,
- 		      .PendingInterruptM,
  		      .CPUBusy,
  		      .CacheableM,
 			  .IgnoreRequest,

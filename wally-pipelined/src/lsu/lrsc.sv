@@ -31,9 +31,9 @@ module lrsc
     input  logic                clk, reset,
     input  logic                FlushW, CPUBusy,
     input  logic                MemReadM,
-    input  logic [1:0]          MemRWMtoLRSC,
-    output logic [1:0]          MemRWMtoDCache,
-    input  logic [1:0] 	        AtomicMtoDCache,
+    input  logic [1:0]          LsuRWM,
+    output logic [1:0]          DCRWM,
+    input  logic [1:0] 	        LsuAtomicM,
     input  logic [`PA_BITS-1:0] MemPAdrM,  // from mmu to dcache
     output logic                SquashSCW
 );
@@ -45,11 +45,11 @@ module lrsc
       logic 		            lrM, scM, WriteAdrMatchM;
       logic                 SquashSCM;
 
-      assign lrM = MemReadM && AtomicMtoDCache[0];
-      assign scM = MemRWMtoLRSC[0] && AtomicMtoDCache[0]; 
-      assign WriteAdrMatchM = MemRWMtoLRSC[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
+      assign lrM = MemReadM && LsuAtomicM[0];
+      assign scM = LsuRWM[0] && LsuAtomicM[0]; 
+      assign WriteAdrMatchM = LsuRWM[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
       assign SquashSCM = scM && ~WriteAdrMatchM;
-      assign MemRWMtoDCache = SquashSCM ? 2'b00 : MemRWMtoLRSC;
+      assign DCRWM = SquashSCM ? 2'b00 : LsuRWM;
       always_comb begin // ReservationValidM (next value of valid reservation)
         if (lrM) ReservationValidM = 1;  // set valid on load reserve
         else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
@@ -60,7 +60,7 @@ module lrsc
       flopenrc #(1) squashreg(clk, reset, FlushW, ~CPUBusy, SquashSCM, SquashSCW);
     end else begin // Atomic operations not supported
       assign SquashSCW = 0;
-      assign MemRWMtoDCache = MemRWMtoLRSC;
+      assign DCRWM = LsuRWM;
     end
   endgenerate
 endmodule

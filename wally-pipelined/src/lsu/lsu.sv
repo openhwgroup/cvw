@@ -97,10 +97,10 @@ module lsu
   logic 					   HPTWStall;  
   logic [`PA_BITS-1:0] 		   HPTWAdr;
   logic 					   HPTWRead;
-  logic [1:0] 				   MemRWMtoDCache;
-  logic [1:0] 				   MemRWMtoLRSC;
-  logic [2:0] 				   Funct3MtoDCache;
-  logic [1:0] 				   AtomicMtoDCache;
+  logic [1:0] 				   DCRWM;
+  logic [1:0] 				   LsuRWM;
+  logic [2:0] 				   LsuFunct3M;
+  logic [1:0] 				   LsuAtomicM;
   logic [`PA_BITS-1:0] 		   MemPAdrNoTranslate;
   logic [11:0] 				   MemAdrE, MemAdrE_RENAME;  
   logic 					   CPUBusy;
@@ -114,7 +114,7 @@ module lsu
   logic [2:0] 				   HPTWSize;
 
 
-  logic 					   CommittedMfromDCache;
+  logic 					   DCCommittedM;
     logic 					   CommittedMfromBus;
   logic 					   PendingInterruptMtoDCache;
 
@@ -217,21 +217,21 @@ module lsu
   // arbiter between IEU and hptw
   
   // multiplex the outputs to LSU
-  assign MemRWMtoLRSC = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
+  assign LsuRWM = SelHPTW ? {HPTWRead, 1'b0} : MemRWM;
   
-  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, Funct3MtoDCache);
+  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
 
   // this is for the d cache SRAM.
   // turns out because we cannot pipeline hptw requests we don't need this register
   //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
 
-  assign AtomicMtoDCache = SelHPTW ? 2'b00 : AtomicM;
+  assign LsuAtomicM = SelHPTW ? 2'b00 : AtomicM;
   assign IEUAdrExtM = {2'b00, IEUAdrM};
   assign MemPAdrNoTranslate = SelHPTW ? HPTWAdr : IEUAdrExtM[`PA_BITS-1:0]; 
   assign MemAdrE = SelHPTW ? HPTWAdr[11:0] : IEUAdrE[11:0];  
   assign CPUBusy = SelHPTW ? 1'b0 : StallW;
   // always block interrupts when using the hardware page table walker.
-  assign CommittedM = SelHPTW ? 1'b1 : CommittedMfromDCache | CommittedMfromBus;
+  assign CommittedM = SelHPTW ? 1'b1 : DCCommittedM | CommittedMfromBus;
 
 
   assign PendingInterruptMtoDCache = SelHPTW ? 1'b0 : PendingInterruptM;
@@ -242,7 +242,7 @@ module lsu
        .PrivilegeModeW, .DisableTranslation(SelHPTW),
        .PAdr(MemPAdrNoTranslate),
        .VAdr(IEUAdrM),
-       .Size(Funct3MtoDCache[1:0]),
+       .Size(LsuFunct3M[1:0]),
        .PTE,
        .PageTypeWriteVal(PageType),
        .TLBWrite(DTLBWriteM),
@@ -254,15 +254,15 @@ module lsu
        .TLBPageFault(DTLBPageFaultM),
        .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
        .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0), 
-       .WriteAccessM(MemRWMtoLRSC[0]), .ReadAccessM(MemRWMtoLRSC[1]),
+       .WriteAccessM(LsuRWM[0]), .ReadAccessM(LsuRWM[1]),
        .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
        ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
 
   // Move generate from lrsc to outside this module.
-  assign MemReadM = MemRWMtoLRSC[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & InterlockCurrState != STATE_STALLED;
-  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .MemRWMtoLRSC, .AtomicMtoDCache, .MemPAdrM,
-            .SquashSCW, .MemRWMtoDCache);
+  assign MemReadM = LsuRWM[1] & ~(ExceptionM | PendingInterruptMtoDCache) & ~DTLBMissM; // & ~NonBusTrapM & ~DTLBMissM & InterlockCurrState != STATE_STALLED;
+  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .LsuRWM, .LsuAtomicM, .MemPAdrM,
+            .SquashSCW, .DCRWM);
 
   // *** BUG, this is most likely wrong
   assign CacheableMtoDCache = SelHPTW ? 1'b1 : CacheableM;
@@ -270,8 +270,8 @@ module lsu
 
   // Specify which type of page fault is occurring
   // *** `MEM_VIRTMEM
-  assign DTLBLoadPageFaultM = DTLBPageFaultM & MemRWMtoLRSC[1];
-  assign DTLBStorePageFaultM = DTLBPageFaultM & MemRWMtoLRSC[0];
+  assign DTLBLoadPageFaultM = DTLBPageFaultM & LsuRWM[1];
+  assign DTLBStorePageFaultM = DTLBPageFaultM & LsuRWM[0];
 
   // Determine if an Unaligned access is taking place
   // hptw guarantees alignment, only check inputs from IEU.
@@ -284,8 +284,8 @@ module lsu
     endcase 
 
   // Determine if address is valid
-  assign LoadMisalignedFaultM = DataMisalignedM & MemRWMtoLRSC[1];
-  assign StoreMisalignedFaultM = DataMisalignedM & MemRWMtoLRSC[0];
+  assign LoadMisalignedFaultM = DataMisalignedM & LsuRWM[1];
+  assign StoreMisalignedFaultM = DataMisalignedM & LsuRWM[0];
 
   // conditional
   // 1. ram // controlled by `MEM_DTIM
@@ -331,17 +331,16 @@ module lsu
   logic 			   BUSACK;
   
   dcache dcache(.clk, .reset, .CPUBusy,
-				.MemRWM(MemRWMtoDCache),
-				.Funct3M(Funct3MtoDCache),
+				.MemRWM(DCRWM),
+				.Funct3M(LsuFunct3M),
 				.Funct7M, .FlushDCacheM,
-				.AtomicM(AtomicMtoDCache),
+				.AtomicM(LsuAtomicM),
 				.MemAdrE(MemAdrE_RENAME),
 				.MemPAdrM,
 				.VAdr(IEUAdrM[11:0]),	 // this will be removed once the dcache hptw interlock is removed.
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
-				.CommittedM(CommittedMfromDCache),
-				.DCacheMiss, .DCacheAccess, .ExceptionM, .IgnoreRequest,
-				.PendingInterruptM(PendingInterruptMtoDCache),
+				.CommittedM(DCCommittedM),
+				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
 				.CacheableM(CacheableMtoDCache), 
 
 				.BasePAdrM,
@@ -366,22 +365,22 @@ module lsu
   // finally swr
   subwordread subwordread(.ReadDataWordMuxM,
 			  .MemPAdrM(MemPAdrM[2:0]),
-			  .Funct3M(Funct3MtoDCache),
+			  .Funct3M(LsuFunct3M),
 			  .ReadDataM);
 
   generate
     if (`A_SUPPORTED) begin
       logic [`XLEN-1:0] AMOResult;
-      amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(Funct3MtoDCache[1:0]), 
+      amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(LsuFunct3M[1:0]), 
                     .result(AMOResult));
-      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, AtomicMtoDCache[1], FinalAMOWriteDataM);
+      mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LsuAtomicM[1], FinalAMOWriteDataM);
     end else
       assign FinalAMOWriteDataM = WriteDataM;
   endgenerate
   
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(MemPAdrM[2:0]),
-			    .HSIZED({Funct3MtoDCache[2], 1'b0, Funct3MtoDCache[1:0]}),
+			    .HSIZED({LsuFunct3M[2], 1'b0, LsuFunct3M[1:0]}),
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
@@ -456,14 +455,14 @@ module lsu
 		  BusNextState = STATE_BUS_READY;
 		end else
 		// uncache write
-		if(MemRWMtoDCache[0] & ~CacheableMtoDCache) begin
+		if(DCRWM[0] & ~CacheableMtoDCache) begin
 		  BusNextState = STATE_BUS_UNCACHED_WRITE;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
 		  DCtoAHBWriteM = 1'b1;
 		end
 		// uncached read
-		else if(MemRWMtoDCache[1] & ~CacheableMtoDCache) begin
+		else if(DCRWM[1] & ~CacheableMtoDCache) begin
 		  BusNextState = STATE_BUS_UNCACHED_READ;
 		  CntReset = 1'b1;
 		  BusStall = 1'b1;
