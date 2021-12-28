@@ -134,12 +134,12 @@ module wallypipelinedhart (
   logic 		    InstrAckF;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0] 	    DCtoAHBPAdrM;
-  logic 		    DCtoAHBReadM;
-  logic 		    DCtoAHBWriteM;
-  logic 		    DCfromAHBAck;
-  logic [`XLEN-1:0] 	    DCfromAHBReadData;
-  logic [`XLEN-1:0] 	    DCtoAHBWriteData;
+  logic [`PA_BITS-1:0] 	    LsuBusAdr;
+  logic 		    LsuBusRead;
+  logic 		    LsuBusWrite;
+  logic 		    LsuBusAck;
+  logic [`XLEN-1:0] 	    LsuBusHRDATA;
+  logic [`XLEN-1:0] 	    LsuBusHWDATA;
   
   logic 		    BPPredWrongE;
   logic 		    BPPredDirWrongM;
@@ -148,7 +148,7 @@ module wallypipelinedhart (
   logic 		    BPPredClassNonCFIWrongM;
   logic [4:0] 		    InstrClassM;
   logic 		    InstrAccessFaultF;
-  logic [2:0] 		    DCtoAHBSizeM;
+  logic [2:0] 		    LsuBusSize;
   
   logic 		    ExceptionM;
   logic 		    PendingInterruptM;
@@ -246,8 +246,8 @@ module wallypipelinedhart (
 	.IEUAdrE, .IEUAdrM, .WriteDataM,
 	.ReadDataM, .FlushDCacheM,
 	// connected to ahb (all stay the same)
-	.DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
-	.DCfromAHBReadData, .DCtoAHBWriteData, .DCtoAHBSizeM,
+	.LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusAck,
+	.LsuBusHRDATA, .LsuBusHWDATA, .LsuBusSize,
 
 	// connect to csr or privilege and stay the same.
 	.PrivilegeModeW,           // connects to csr
@@ -280,10 +280,10 @@ module wallypipelinedhart (
      .InstrPAdrF, // *** rename these to match block diagram
      .InstrReadF, .InstrRData, .InstrAckF,
      // Signals from Data Cache
-     .DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCtoAHBWriteData,
-     .DCfromAHBReadData,
-     .MemSizeM(DCtoAHBSizeM[1:0]),     // *** remove
-     .DCfromAHBAck,
+     .LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusHWDATA,
+     .LsuBusHRDATA,
+     .LsuBusSize,
+     .LsuBusAck,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
