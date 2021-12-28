@@ -57,6 +57,10 @@ module dcachefsm
    output logic 	  AHBRead,
    output logic 	  AHBWrite,
 
+   output logic 	  DCWriteLine,
+   output logic 	  DCFetchLine,
+   input logic 		  BUSACK,
+
    // dcache internals
    output logic [1:0] SelAdrM,
    output logic 	  CntEn,
@@ -142,6 +146,8 @@ module dcachefsm
     FlushWayCntRst = 1'b0;	
     VDWriteEnable = 1'b0;
     NextState = STATE_READY;
+	DCFetchLine = 1'b0;
+	DCWriteLine = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -227,6 +233,7 @@ module dcachefsm
 		  NextState = STATE_MISS_FETCH_WDV;
 		  CntReset = 1'b1;
 		  DCacheStall = 1'b1;
+		  DCFetchLine = 1'b1;
 		end
 		// uncached write
 		else if(MemRWM[0] & ~CacheableM) begin
@@ -252,7 +259,8 @@ module dcachefsm
 		SelAdrM = 2'b10;
 		CommittedM = 1'b1;
 		
-        if (FetchCountFlag & AHBAck) begin
+        //if (FetchCountFlag & AHBAck) begin
+		if (BUSACK) begin
           NextState = STATE_MISS_FETCH_DONE;
         end else begin
           NextState = STATE_MISS_FETCH_WDV;
@@ -266,6 +274,7 @@ module dcachefsm
 		CommittedM = 1'b1;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
+		  DCWriteLine = 1'b1;
 		end else begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end
@@ -346,7 +355,8 @@ module dcachefsm
 		SelAdrM = 2'b10;
 		CommittedM = 1'b1;
 		SelEvict = 1'b1;
-		if(FetchCountFlag & AHBAck) begin
+		//if(FetchCountFlag & AHBAck) begin
+		if(BUSACK) begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end else begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
@@ -442,6 +452,7 @@ module dcachefsm
 		  NextState = STATE_FLUSH_WRITE_BACK;
 		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;
+		  DCWriteLine = 1'b1;
 		end else if (FlushAdrFlag) begin
 		  NextState = STATE_READY;
 		  DCacheStall = 1'b0;
@@ -459,7 +470,8 @@ module dcachefsm
 		CommittedM = 1'b1;
 		SelFlush = 1'b1;
         PreCntEn = 1'b1;
-		if(FetchCountFlag & AHBAck) begin
+		//if(FetchCountFlag & AHBAck) begin
+		if(BUSACK) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
