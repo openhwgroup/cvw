@@ -33,8 +33,6 @@ module dcachefsm
    input logic [1:0]  AtomicM,
    input logic 		  FlushDCacheM,
    // hazard inputs
-   input logic 		  ExceptionM,
-   input logic 		  PendingInterruptM,
    input logic 		  CPUBusy,
    input logic 		  CacheableM,
    // hptw inputs
