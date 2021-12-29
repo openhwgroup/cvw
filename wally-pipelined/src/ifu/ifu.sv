@@ -74,7 +74,6 @@ module ifu (
   input logic 		      STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input logic [1:0] 	      STATUS_MPP,
   input logic 		      ITLBWriteF, ITLBFlushF,
-  input logic 		      WalkerInstrPageFaultF,
 
   output logic 		      ITLBMissF,
 
@@ -172,7 +171,6 @@ module ifu (
   .PCNextF(PCNextFPhys),
   .PCPF(PCPFmmu),
   .PCF,
-  .WalkerInstrPageFaultF,
   .InvalidateICacheM);
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);

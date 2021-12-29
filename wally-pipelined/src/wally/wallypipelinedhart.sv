@@ -75,7 +75,6 @@ module wallypipelinedhart (
   logic 		    InstrMisalignedFaultM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
-  logic 		    WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM;
   logic 		    LoadMisalignedFaultM, LoadAccessFaultM;
   logic 		    StoreMisalignedFaultM, StoreAccessFaultM;
   logic [`XLEN-1:0] 	    InstrMisalignedAdrM;
@@ -126,7 +125,6 @@ module wallypipelinedhart (
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    IEUAdrM;  
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
   logic [`XLEN-1:0] 	    ReadDataW;  
-  logic 		    CommittedM;
 
   // AHB ifu interface
   logic [`PA_BITS-1:0] 	    InstrPAdrF;
@@ -135,12 +133,12 @@ module wallypipelinedhart (
   logic 		    InstrAckF;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0] 	    DCtoAHBPAdrM;
-  logic 		    DCtoAHBReadM;
-  logic 		    DCtoAHBWriteM;
-  logic 		    DCfromAHBAck;
-  logic [`XLEN-1:0] 	    DCfromAHBReadData;
-  logic [`XLEN-1:0] 	    DCtoAHBWriteData;
+  logic [`PA_BITS-1:0] 	    LsuBusAdr;
+  logic 		    LsuBusRead;
+  logic 		    LsuBusWrite;
+  logic 		    LsuBusAck;
+  logic [`XLEN-1:0] 	    LsuBusHRDATA;
+  logic [`XLEN-1:0] 	    LsuBusHWDATA;
   
   logic 		    BPPredWrongE;
   logic 		    BPPredDirWrongM;
@@ -149,7 +147,7 @@ module wallypipelinedhart (
   logic 		    BPPredClassNonCFIWrongM;
   logic [4:0] 		    InstrClassM;
   logic 		    InstrAccessFaultF;
-  logic [2:0] 		    DCtoAHBSizeM;
+  logic [2:0] 		    LsuBusSize;
   
   logic 		    ExceptionM;
   logic 		    PendingInterruptM;
@@ -189,7 +187,7 @@ module wallypipelinedhart (
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
-    .WalkerInstrPageFaultF, .ITLBMissF,
+    .ITLBMissF,
 
     // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
@@ -241,14 +239,14 @@ module wallypipelinedhart (
 	// CPU interface
 	.MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
 	.AtomicM, .ExceptionM, .PendingInterruptM,		
-	.CommittedM, .DCacheMiss, .DCacheAccess,
+	.DCacheMiss, .DCacheAccess,
 	.SquashSCW,            
 	//.DataMisalignedM(DataMisalignedM),
 	.IEUAdrE, .IEUAdrM, .WriteDataM,
 	.ReadDataM, .FlushDCacheM,
 	// connected to ahb (all stay the same)
-	.DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCfromAHBAck,
-	.DCfromAHBReadData, .DCtoAHBWriteData, .DCtoAHBSizeM,
+	.LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusAck,
+	.LsuBusHRDATA, .LsuBusHWDATA, .LsuBusSize,
 
 	// connect to csr or privilege and stay the same.
 	.PrivilegeModeW,           // connects to csr
@@ -270,8 +268,6 @@ module wallypipelinedhart (
 	.StoreAccessFaultM,     // connects to privilege
     
 	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
-     .WalkerInstrPageFaultF, .WalkerLoadPageFaultM,
-	.WalkerStorePageFaultM,
 	.LSUStall);                     // change to LSUStall
 
 
@@ -283,10 +279,10 @@ module wallypipelinedhart (
      .InstrPAdrF, // *** rename these to match block diagram
      .InstrReadF, .InstrRData, .InstrAckF,
      // Signals from Data Cache
-     .DCtoAHBPAdrM, .DCtoAHBReadM, .DCtoAHBWriteM, .DCtoAHBWriteData,
-     .DCfromAHBReadData,
-     .MemSizeM(DCtoAHBSizeM[1:0]),     // *** remove
-     .DCfromAHBAck,
+     .LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusHWDATA,
+     .LsuBusHRDATA,
+     .LsuBusSize,
+     .LsuBusAck,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
@@ -317,13 +313,12 @@ module wallypipelinedhart (
             .InstrM, .CSRReadValW, .PrivilegedNextPCM,
             .RetM, .TrapM, 
             .ITLBFlushF, .DTLBFlushM,
-            .InstrValidM, .CommittedM,
+            .InstrValidM, .LSUStall,
             .FRegWriteM, .LoadStallD,
             .BPPredDirWrongM, .BTBPredPCWrongM,
             .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
             .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
             .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
-            .WalkerInstrPageFaultF, .WalkerLoadPageFaultM, .WalkerStorePageFaultM,
             .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
             .LoadMisalignedFaultM, .StoreMisalignedFaultM,
             .TimerIntM, .ExtIntM, .SwIntM,

@@ -48,7 +48,6 @@ module icache
    output logic 	       ICacheStallF,
    input logic 		       ITLBMissF,
    input logic 		       ITLBWriteF,
-   input logic 		       WalkerInstrPageFaultF,
    input logic 		       InvalidateICacheM,
    
    // The raw (not decompressed) instruction that was requested
@@ -289,7 +288,6 @@ module icache
 			.ICacheStallF,
 			.ITLBMissF,
 			.ITLBWriteF,
-			.WalkerInstrPageFaultF,
 			.ExceptionM,
 			.PendingInterruptM,
 			.InstrAckF,

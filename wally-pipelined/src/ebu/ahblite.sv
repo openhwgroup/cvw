@@ -45,13 +45,13 @@ module ahblite (
   output logic [`XLEN-1:0] 	 InstrRData,
   output logic 				 InstrAckF,
   // Signals from Data Cache
-  input logic [`PA_BITS-1:0] DCtoAHBPAdrM,
-  input logic 				 DCtoAHBReadM, 
-  input logic 				 DCtoAHBWriteM,
-  input logic [`XLEN-1:0] 	 DCtoAHBWriteData,
-  output logic [`XLEN-1:0] 	 DCfromAHBReadData,
-  input logic [1:0] 		 MemSizeM, // *** remove
-  output logic 				 DCfromAHBAck,
+  input logic [`PA_BITS-1:0] LsuBusAdr,
+  input logic 				 LsuBusRead, 
+  input logic 				 LsuBusWrite,
+  input logic [`XLEN-1:0] 	 LsuBusHWDATA,
+  output logic [`XLEN-1:0] 	 LsuBusHRDATA,
+  input logic [2:0] 		 LsuBusSize,
+  output logic 				 LsuBusAck,
   // AHB-Lite external signals
   (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,
   (* mark_debug = "true" *) input logic HREADY, HRESP,
@@ -98,8 +98,8 @@ module ahblite (
   // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: if (DCtoAHBReadM)      NextBusState = MEMREAD;  // Memory has priority over instructions
-            else if (DCtoAHBWriteM)NextBusState = MEMWRITE;
+      IDLE: if (LsuBusRead)      NextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (LsuBusWrite)NextBusState = MEMWRITE;
             else if (InstrReadF)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
@@ -116,17 +116,17 @@ module ahblite (
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE);
-  assign #1 AccessAddress = (GrantData) ? DCtoAHBPAdrM[31:0] : InstrPAdrF[31:0];
+  assign #1 AccessAddress = (GrantData) ? LsuBusAdr[31:0] : InstrPAdrF[31:0];
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
-  assign HSIZE = (GrantData) ? {1'b0, MemSizeM} : ISize;
+  assign HSIZE = (GrantData) ? {1'b0, LsuBusSize[1:0]} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = NextBusState == MEMWRITE;
   // delay write data by one cycle for
-  flop #(`XLEN) wdreg(HCLK, DCtoAHBWriteData, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flop #(`XLEN) wdreg(HCLK, LsuBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
@@ -137,8 +137,8 @@ module ahblite (
 
  
   assign InstrRData = HRDATA;
-  assign DCfromAHBReadData = HRDATA;
+  assign LsuBusHRDATA = HRDATA;
   assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
-  assign DCfromAHBAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
+  assign LsuBusAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
 
 endmodule
