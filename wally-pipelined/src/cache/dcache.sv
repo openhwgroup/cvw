@@ -44,13 +44,13 @@ module dcache
    output logic 							DCacheStall,
    output logic 							DCacheMiss,
    output logic 							DCacheAccess,
-
-   output logic 	  DCWriteLine,
-   output logic 	  DCFetchLine,
-   input logic 		  BUSACK,
+   output logic 							DCCommittedM,
+   output logic 							DCWriteLine,
+   output logic 							DCFetchLine,
+   input logic 								BUSACK,
    
 
-   output logic [`PA_BITS-1:0] 				BasePAdrM,
+   output logic [`PA_BITS-1:0] 				DCacheBusAdr,
    output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
 
    output logic 							SelFlush,
@@ -232,11 +232,11 @@ module dcache
 				.y(SRAMWriteData));
 
   
-  mux3 #(`PA_BITS) BaseAdrMux(.d0(MemPAdrM),
+  mux3 #(`PA_BITS) BaseAdrMux(.d0({MemPAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 			      .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 			      .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
 			      .s({SelFlush, SelEvict}),
-			      .y(BasePAdrM));
+			      .y(DCacheBusAdr));
 
 
   // flush address and way generation.
@@ -281,6 +281,7 @@ module dcache
  		      .CacheHit,
  		      .VictimDirty,
 		      .DCacheStall,
+					 .DCCommittedM, 
 		      .DCacheMiss,
 		      .DCacheAccess,
 		      .SelAdrM,
