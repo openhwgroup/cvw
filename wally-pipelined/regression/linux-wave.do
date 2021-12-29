@@ -342,7 +342,7 @@ add wave -noupdate -expand -group lsu -group dcache -group Victim /testbench/dut
 add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/MemRWM
 add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/MemAdrE
 add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/IEUAdrM
-add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/MemPAdrM
+add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/LsuPAdrM
 add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/Funct3M
 add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/Funct7M
 add wave -noupdate -expand -group lsu -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/AtomicM

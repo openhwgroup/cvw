@@ -29,7 +29,7 @@ module cachereplacementpolicy
   (input logic clk, reset,
    input logic [NUMWAYS-1:0] 			WayHit,
    output logic [NUMWAYS-1:0] 			VictimWay,
-   input logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] MemPAdrM,
+   input logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] LsuPAdrM,
    input logic [INDEXLEN-1:0] 			RAdr,
    input logic 					LRUWriteEn
    );
@@ -44,7 +44,7 @@ module cachereplacementpolicy
   logic [NUMWAYS-2:0] 				NewReplacement;
   logic [NUMWAYS-2:0] 				NewReplacementD;  
 
-  logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] 	MemPAdrMD;
+  logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] 	LsuPAdrMD;
   logic [INDEXLEN-1:0] 				RAdrD;
   logic 					LRUWriteEnD;
   
@@ -52,18 +52,18 @@ module cachereplacementpolicy
   always_ff @(posedge clk) begin
     if (reset) begin
       RAdrD <= '0;
-      MemPAdrMD <= '0;
+      LsuPAdrMD <= '0;
       LRUWriteEnD <= 0;
       NewReplacementD <= '0;
       for(int index = 0; index < NUMLINES; index++)
 	ReplacementBits[index] <= '0;
     end else begin
       RAdrD <= RAdr;
-      MemPAdrMD <= MemPAdrM;
+      LsuPAdrMD <= LsuPAdrM;
       LRUWriteEnD <= LRUWriteEn;
       NewReplacementD <= NewReplacement;
       if (LRUWriteEnD) begin
-	ReplacementBits[MemPAdrMD[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacementD;
+	ReplacementBits[LsuPAdrMD[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] <= NewReplacementD;
       end
     end
   end

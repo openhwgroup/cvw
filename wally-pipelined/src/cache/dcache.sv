@@ -37,7 +37,7 @@ module dcache
    input logic [1:0] 						AtomicM,
    input logic 								FlushDCacheM,
    input logic [11:0] 						MemAdrE, // virtual address, but we only use the lower 12 bits.
-   input logic [`PA_BITS-1:0] 				MemPAdrM, // physical address
+   input logic [`PA_BITS-1:0] 				LsuPAdrM, // physical address
   
    input logic [`XLEN-1:0] 					FinalWriteDataM,
    output logic [`XLEN-1:0] 				ReadDataWordM,
@@ -124,7 +124,7 @@ module dcache
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d1(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			.d1(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d2(FlushAdr),
 			.s(SelAdrM),
 			.y(RAdr));
@@ -134,7 +134,7 @@ module dcache
 					  .reset,
 					  .RAdr,
 					  .WAdr(RAdr),  // *** Reduce after addressing in icache also
-					  .PAdr(MemPAdrM),
+					  .PAdr(LsuPAdrM),
 					  .WriteEnable(SRAMWayWriteEnable),
 					  .VDWriteEnable(VDWriteEnableWay),
 					  .WriteWordEnable(SRAMWordEnable),
@@ -160,7 +160,7 @@ module dcache
       cachereplacementpolicy(.clk, .reset,
 							 .WayHit,
 							 .VictimWay,
-							 .MemPAdrM(MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+							 .LsuPAdrM(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 							 .RAdr,
 							 .LRUWriteEn);
     end else begin
@@ -191,12 +191,12 @@ module dcache
 
   // variable input mux
   
-  assign ReadDataWordM = ReadDataBlockSetsM[MemPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
+  assign ReadDataWordM = ReadDataBlockSetsM[LsuPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
 
   // Write Path CPU (IEU) side
 
   onehotdecoder #(LOGWPL)
-  adrdec(.bin(MemPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
+  adrdec(.bin(LsuPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
 		 .decoded(MemPAdrDecodedW));
 
   assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
@@ -216,8 +216,8 @@ module dcache
 								.y(SRAMWriteData));
 
   
-  mux3 #(`PA_BITS) BaseAdrMux(.d0({MemPAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-							  .d1({VictimTag, MemPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
+  mux3 #(`PA_BITS) BaseAdrMux(.d0({LsuPAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
+							  .d1({VictimTag, LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 							  .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
 							  .s({SelFlush, SelEvict}),
 							  .y(DCacheBusAdr));
