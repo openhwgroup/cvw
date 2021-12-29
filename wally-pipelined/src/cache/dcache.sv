@@ -53,8 +53,6 @@ module dcache
    output logic [`PA_BITS-1:0] 				DCacheBusAdr,
    output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
 
-   output logic 							SelFlush,
-
    input logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData,
 
 
@@ -119,6 +117,7 @@ module dcache
   logic 									SelEvict;
   logic 									LRUWriteEn;
   logic [NUMWAYS-1:0] 						VDWriteEnableWay;
+  logic 									SelFlush;
 
   // Read Path CPU (IEU) side
 
