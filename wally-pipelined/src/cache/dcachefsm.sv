@@ -50,7 +50,7 @@ module dcachefsm
    output logic 	  DCacheMiss,
    output logic 	  DCacheAccess,
    // Bus outputs
-
+   output logic       DCCommittedM,
    output logic 	  DCWriteLine,
    output logic 	  DCFetchLine,
 
@@ -391,7 +391,7 @@ module dcachefsm
     endcase
   end
 
-
+  assign DCCommittedM = CurrState != STATE_READY;
 
 endmodule // dcachefsm
 

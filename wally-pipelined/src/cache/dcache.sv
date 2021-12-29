@@ -44,10 +44,10 @@ module dcache
    output logic 							DCacheStall,
    output logic 							DCacheMiss,
    output logic 							DCacheAccess,
-
-   output logic 	  DCWriteLine,
-   output logic 	  DCFetchLine,
-   input logic 		  BUSACK,
+   output logic 							DCCommittedM,
+   output logic 							DCWriteLine,
+   output logic 							DCFetchLine,
+   input logic 								BUSACK,
    
 
    output logic [`PA_BITS-1:0] 				BasePAdrM,
@@ -281,6 +281,7 @@ module dcache
  		      .CacheHit,
  		      .VictimDirty,
 		      .DCacheStall,
+					 .DCCommittedM, 
 		      .DCacheMiss,
 		      .DCacheAccess,
 		      .SelAdrM,
