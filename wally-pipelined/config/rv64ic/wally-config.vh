@@ -36,6 +36,9 @@
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
+// IEEE 754 compliance
+`define IEEE754 0
+
 // MISA RISC-V configuration per specification
 `define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1

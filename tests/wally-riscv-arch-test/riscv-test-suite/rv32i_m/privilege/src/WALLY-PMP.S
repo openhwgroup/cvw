@@ -1,0 +1,111 @@
+///////////////////////////////////////////
+//
+// WALLY-PMP
+//
+// Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
+//
+// Created 2021-06-15
+//
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT
+// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+///////////////////////////////////////////
+
+#include "WALLY-TEST-LIB-32.S" 
+// Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
+// Ideally this should mean that a test can be written by simply adding .8byte statements as below.
+
+# ---------------------------------------------------------------------------------------------
+# Test Contents
+#
+#   Here is where the actual tests are held, or rather, what the actual tests do.
+#   each entry consists of 3 values that will be read in as follows:
+#   
+#   '.8byte [x28 Value], [x29 Value], [x30 value]'
+#                     or
+#   '.8byte [address], [value], [test type]'
+#
+#   The encoding for x30 test type values can be found in the test handler in the framework file
+# 
+# ---------------------------------------------------------------------------------------------
+
+# These tests follow the testing plan in Chapter 12 of the riscv-wally textbook *** what is it called and how do I refer to it?
+# =========== test 12.3.2.2 PMPs ===========
+
+# Test 12.3.2.2.1 Config: Write known values and set PMP config according to table 12.4 in the *** riscv book, copied below
+.8byte 0x0, 0x0018900C0009001F, 0xD # write pmpcfg0, output 0x0018900C0009001F
+.8byte 0x2, 0x1F00000000000000, 0xD # write pmpcfg2, output 0x1F00000000000000
+
+# write pmpaddr regs
+                            # | Reg   | pmpaddr   | pmpcfg    | L | A     | X | W | R | Comments 		                |
+.8byte 0x0, 0x0FFFFFFF, 0xE # | 0     | 0FFFFFFF  | 1F        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
+.8byte 0x1, 0x80100000, 0xE # | 1     | 80100000  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                        |
+.8byte 0x2, 0x801000FF, 0xE # | 2     | 801000FF  | 09        | 0 | TOR   | 0 | 0 | 1 | 80100000-801000FF R 		    |
+.8byte 0x3, 0x80100200, 0xE # | 3     | 80100200  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                        |
+.8byte 0x4, 0x80100210, 0xE # | 4     | 80100210  | 0C        | 0 | TOR   | 1 | 0 | 0 | 80100200-80100210 X 		    |
+.8byte 0x5, 0x80100300, 0xE # | 5     | 80100300  | 90        | 1 | NA4   | 0 | 0 | 0 | 80100300-80100303 locked out 	|
+.8byte 0x6, 0x2004013F, 0xE # | 6     | 2004013F  | 18        | 0 | NAPOT | 0 | 0 | 0 | 80100400-801004FF no access 	|
+# Pmpaddr 7-14 are all zeroed out in this test, so they don't need writes.
+.8byte 0xF, 0x8FFFFFFF, 0xE # | 15    | 8FFFFFFF  | 1F        | 0 | NAPOT | 1 | 1 | 1 | Main mem 80000000-FFFFFFFF RWX  |
+
+
+# write known values to memory where W=0. This should be possible since we're in machine mode.
+.8byte 0x80100010, 0x600DAA, 0x0 # write to pmpaddr 1-2 range
+.8byte 0x80100400, 0x600DBB, 0x0 # write to pmpaddr 6 range
+
+# Write RET to regions where X = 0, 1 in main memory
+# *** This is currently impossible due to the fact that writing ret gets put into the datacache but
+#       The values in datacache never get synced with icache values so when we try to fetch the written ret,
+#       We get an instr of all 0x0
+#     It may also be impossible to do the exe tests version from the library since we have no way to guarantee that theyll be
+#       compiled into in the address range with the right permissions.
+
+# attempt to write to pmpcfg5 after lockout
+.8byte 0x0, 0x0018EE0C0009001F, 0xD # instruction ignored, output 0x0018900C0009001F, NOT 0x0018EE0C0009001F 
+
+
+
+# Test 12.3.2.2.2 Machine mode access
+.8byte 0x80100300, 0x0, 0x1 # access fault to region with L=1, R=0
+.8byte 0x80100400, 0x0, 0x1 # successful access to region with L=X=W=R=0
+
+
+
+# Test 12.3.2.2.3 System mode access
+.8byte 0x0, 0x0, 0x9 # go to S mode. 0xb written to output
+# test a write followed by a read to each region with R=W=1
+.8byte 0x80200000, 0x600D15, 0x0 # Write "good value" to RW range (PMP15)
+.8byte 0x80200000, 0x600D15, 0x1 # confirm write with read
+
+# test a write followed by a read on the edges of a read-only range
+.8byte 0x800FFFF8, 0x600D02, 0x0 # Write "good value" just below read-only range (PMP2)
+.8byte 0x800FFFF8, 0x600D02, 0x1 # confirm write with read
+.8byte 0x80100100, 0x600D12, 0x0 # Write "good value" just above read-only range (PMP2)
+.8byte 0x80100100, 0x600D12, 0x1 # confirm write with read
+
+# test a read from each read only range verify a write causes an access fault
+.8byte 0x80100010, 0xBAD, 0x0 # Write fault in read-only range (PMP2)
+.8byte 0x80100010, 0x600DAA, 0x1 # read correct value out
+
+# test read and write fault on region with no access
+.8byte 0x80100208, 0x600D15, 0x0 # Write fault on no-access range (PMP6)
+.8byte 0x80100208, 0x600D15, 0x1 # read fault on no-access range (PMP6)
+
+# test jalr to region with X=0 causes access fault
+.8byte 0x80100400, 0xF, 0x2 # instr fault on no-execute range (PMP6)
+
+# test jalr to region with X=1 returns successfully
+# *** This has the same problem as the note above where we want actual instructions to be in this range, 
+#       but it's difficult to make sure the exe_code in the library will compile into the right pmp range for this to work
+
+.8byte 0x0, 0x0, 0x3 // terminate tests
