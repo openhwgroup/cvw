@@ -215,6 +215,13 @@ add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/WriteDataM
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/SelUncachedAdr
 add wave -noupdate -expand -group lsu -expand -group bus -color Gold /testbench/dut/hart/lsu/BusCurrState
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/BusStall
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusRead
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusWrite
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusAdr
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusAck
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusHWDATA
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/UnCachedLsuBusRead
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/UnCachedLsuBusWrite
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/hart/lsu/dcache/dcachefsm/CurrState
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/WayHit
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/SRAMBlockWriteEnableM
@@ -468,9 +475,8 @@ add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedChang
 add wave -noupdate /testbench/dut/hart/priv/priv/csr/MEPC_REGW
 add wave -noupdate /testbench/dut/hart/lsu/LocalLsuBusAdr
 add wave -noupdate /testbench/dut/hart/lsu/BasePAdrMaskedM
-add wave -noupdate /testbench/dut/hart/lsu/match
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {35021 ns} 0} {{Cursor 4} {49574 ns} 1}
+WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {35522 ns} 0} {{Cursor 4} {49574 ns} 1}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -486,4 +492,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {34887 ns} {35269 ns}
+WaveRestoreZoom {35088 ns} {35954 ns}

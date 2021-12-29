@@ -351,7 +351,7 @@ module lsu
   logic 			   WordCountFlag;
   
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
-  (* mark_debug = "true" *) logic [`XLEN-1:0]    DC_HWDATA_FIXNAME;
+  (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLsuBusHWDATA;
   logic 			   SelFlush;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData;
@@ -428,11 +428,10 @@ module lsu
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
-  assign LsuBusHWDATA = CacheableM | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
 
   generate
-    if (`XLEN == 32) assign LsuBusSize = UnCachedLsuBusWrite | UnCachedLsuBusRead ? LsuFunct3M : 3'b010;
-    else assign LsuBusSize = UnCachedLsuBusWrite | UnCachedLsuBusRead ? LsuFunct3M : 3'b011;
+    if (`XLEN == 32) assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b010;
+    else assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b011;
   endgenerate;
 
   // Bus Side logic
@@ -452,13 +451,17 @@ module lsu
 
 
 
-  //assign LocalLsuBusAdr = SelUncachedAdr ? LsuPAdrM : {DCacheBusAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}} ;
   assign LocalLsuBusAdr = SelUncachedAdr ? LsuPAdrM : DCacheBusAdr ;
 
   assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLsuBusAdr;
   
-  assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[WordCount];
+  assign PreLsuBusHWDATA = ReadDataBlockSetsM[WordCount];
 
+  assign LsuBusHWDATA = SelUncachedAdr ? WriteDataM : PreLsuBusHWDATA;  // *** why is this not FinalWriteDataM? which does not work.
+
+
+
+  
   assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
   assign CntEn = PreCntEn & LsuBusAck;
 
