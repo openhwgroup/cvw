@@ -472,8 +472,11 @@ add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedNextP
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedChangePCM
 add wave -noupdate /testbench/dut/hart/priv/priv/csr/MEPC_REGW
 add wave -noupdate /testbench/dut/hart/lsu/LocalLsuBusAdr
+add wave -noupdate /testbench/dut/hart/lsu/busfsm/BusNextState
+add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheFetchLine
+add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheWriteLine
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {35522 ns} 0} {{Cursor 4} {49574 ns} 1}
+WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {9745 ns} 0} {{Cursor 4} {49574 ns} 1}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -489,4 +492,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {35088 ns} {35954 ns}
+WaveRestoreZoom {9530 ns} {9952 ns}
