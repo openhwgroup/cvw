@@ -49,6 +49,7 @@ module testbench();
   ////////////////////////////////// HARDWARE ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   logic clk, reset_ext; 
+  logic reset;
   initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
   always begin clk <= 1; # 5; clk <= 0; # 5; end
 
@@ -77,7 +78,7 @@ module testbench();
   
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  wallypipelinedsoc dut(.clk, .reset_ext,
+  wallypipelinedsoc dut(.clk, .reset, .reset_ext,
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
@@ -85,8 +86,6 @@ module testbench();
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
-  logic reset;
-  assign reset = dut.reset;
 
   // Write Back stage signals not needed by Wally itself 
   parameter nop = 'h13;
@@ -446,7 +445,7 @@ module testbench();
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (dut.hart.lsu.MemPAdrM == 'h10000005) \
+        if (dut.hart.lsu.LsuPAdrM == 'h10000005) \
           //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
           force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
