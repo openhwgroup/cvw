@@ -99,7 +99,7 @@ module lsu
   logic [1:0] 				   LsuRWM;
   logic [2:0] 				   LsuFunct3M;
   logic [1:0] 				   LsuAtomicM;
-  logic [`PA_BITS-1:0] 		   LsuPAdrM;
+  logic [`PA_BITS-1:0] 		   LsuPAdrM, LocalLsuBusAdr;
   logic [11:0] 				   LsuAdrE, DCAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
@@ -332,7 +332,6 @@ module lsu
   localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
 
   // temp
-  logic 		       SelUncached;
   logic 			   WordCountFlag;
   
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
@@ -351,7 +350,7 @@ module lsu
 
   logic 			   CntEn, PreCntEn;
   logic 			   CntReset;
-  logic [`PA_BITS-1:0] BasePAdrM;
+  logic [`PA_BITS-1:0] DCacheBusAdr;
   logic [`XLEN-1:0]    ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0];
   
 
@@ -362,7 +361,8 @@ module lsu
 
   logic 			   UnCachedLsuBusRead;
   logic 			   UnCachedLsuBusWrite;
-  
+  logic 			   SelUncachedAdr;
+
   
   dcache dcache(.clk, .reset, .CPUBusy,
 				.MemRWM(DCRWM),
@@ -375,7 +375,7 @@ module lsu
 				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
 				.CacheableM(CacheableM), 
 				.DCCommittedM,
-				.BasePAdrM,
+				.DCacheBusAdr,
 				.ReadDataBlockSetsM,
 				.SelFlush,
 				.DCacheMemWriteData,
@@ -387,7 +387,7 @@ module lsu
 
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
 				.d1(DCacheMemWriteData[`XLEN-1:0]),
-				.s(SelUncached),
+				.s(SelUncachedAdr),
 				.y(ReadDataWordMuxM));
   
   // finally swr
@@ -435,12 +435,11 @@ module lsu
   endgenerate
 
 
-  // if not cacheable the offset bits needs to be sent to the EBU.
-  // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
-  assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
-  assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
-  
-  assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
+
+  //assign LocalLsuBusAdr = SelUncachedAdr ? MemPAdrM : {DCacheBusAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}} ;
+  assign LocalLsuBusAdr = SelUncachedAdr ? MemPAdrM : DCacheBusAdr ;
+
+  assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLsuBusAdr;
   
   assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[WordCount];
 
@@ -504,7 +503,6 @@ module lsu
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
-  assign SelUncached = BusCurrState == STATE_BUS_UNCACHED_READ_DONE | BusCurrState == STATE_BUS_CPU_BUSY;
   assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
   assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (DCRWM[0])) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
@@ -517,6 +515,11 @@ module lsu
   assign BUSACK = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
 				  (BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
   assign BusCommittedM = BusCurrState != STATE_BUS_READY;
+  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|DCRWM & ~CacheableM)) |
+						  (BusCurrState == STATE_BUS_UNCACHED_READ |
+						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
+						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
+						   BusCurrState == STATE_BUS_UNCACHED_WRITE_DONE);
     
 endmodule
 
