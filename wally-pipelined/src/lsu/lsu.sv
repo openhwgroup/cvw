@@ -488,7 +488,7 @@ module lsu
       STATE_BUS_UNCACHED_READ_DONE:  if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
                                      else                        BusNextState = STATE_BUS_READY;
 	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
-                                     else                            BusNextState = STATE_BUS_READY;
+                                     else                        BusNextState = STATE_BUS_READY;
       STATE_BUS_FETCH:           if (WordCountFlag & LsuBusAck)  BusNextState = STATE_BUS_READY;
 	                             else                            BusNextState = STATE_BUS_FETCH;
       STATE_BUS_WRITE:           if(WordCountFlag & LsuBusAck)   BusNextState = STATE_BUS_READY;
