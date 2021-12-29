@@ -76,7 +76,7 @@ logic [3:0] dummy;
   // pick tests based on modes supported
   initial begin
     $display("TEST is %s", TEST);
-    tests = '{"empty"};
+    tests = '{};
     if (`XLEN == 64) begin // RV64
       case (TEST)
         "arch64i":                        tests = arch64i;
@@ -94,9 +94,9 @@ logic [3:0] dummy;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
         "testsBP64":                      tests = testsBP64;
-        "wally64i":                       tests = wally64i;
-        "wally64priv":                    tests = wally64priv;
-        "wally64periph":                  tests = wally64periph;
+        "wally64i":                       tests = wally64i; // *** redo
+        "wally64priv":                    tests = wally64priv;// *** redo
+        "imperas64periph":                  tests = imperas64periph;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -113,12 +113,12 @@ logic [3:0] dummy;
         "imperas32a":   if (`A_SUPPORTED) tests = imperas32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
-        "wally32i":                       tests = wally32i;
-        "wally32priv":                    tests = wally32priv;
-        "wally32periph":                  tests = wally32periph;
+        "wally32i":                       tests = wally32i; // *** redo
+        "wally32priv":                    tests = wally32priv; // *** redo
+        "imperas32periph":                  tests = imperas32periph;
       endcase
     end
-    if (tests.size() == 1) begin
+    if (tests.size() == 0) begin
       $display("TEST %s not supported in this configuration", TEST);
       $stop;
     end
@@ -198,6 +198,7 @@ logic [3:0] dummy;
   always
     begin
       clk = 1; # 5; clk = 0; # 5;
+      if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
   // check results
@@ -286,13 +287,16 @@ logic [3:0] dummy;
   end
 
   // Termination condition
-  // terminate on a specific ECALL for Imperas tests, or on a jump to self infinite loop for RISC-V Arch tests
+  // terminate on a specific ECALL after li x3,1 for old Imperas tests, 
+  // or sw	gp,-56(t0) for new Imperas tests
+  // or sw gp, -56(t0) 
+  // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   assign DCacheFlushStart = dut.hart.priv.priv.EcallFaultM && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
 			      dut.hart.ieu.dp.regf.wd3 == 1)) ||
-          dut.hart.ifu.InstrM == 32'h6f && dut.hart.ieu.c.InstrValidM;
+          (dut.hart.ifu.InstrM == 32'h6f || dut.hart.ifu.InstrM == 32'hfc32a423 || dut.hart.ifu.InstrM == 32'hfc32a823) && dut.hart.ieu.c.InstrValidM;
   
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
 				.reset(reset),

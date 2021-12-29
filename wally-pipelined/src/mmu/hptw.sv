@@ -45,15 +45,14 @@ module hptw
    (* mark_debug = "true" *) output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
    output logic 			   HPTWRead, // HPTW requesting to read memory
-   output logic [2:0] 		   HPTWSize, // 32 or 64 bit access.
-   output logic 			   WalkerInstrPageFaultF, WalkerLoadPageFaultM,WalkerStorePageFaultM // faults
+   output logic [2:0] 		   HPTWSize // 32 or 64 bit access.
 );
 
       typedef enum  {L0_ADR, L0_RD, 
 				     L1_ADR, L1_RD, 
 				     L2_ADR, L2_RD, 
 				     L3_ADR, L3_RD, 
-				     LEAF, IDLE, FAULT} statetype; // *** placed outside generate statement to remove synthesis errors
+				     LEAF, IDLE} statetype; // *** placed outside generate statement to remove synthesis errors
 
   generate
     if (`MEM_VIRTMEM) begin
@@ -101,11 +100,6 @@ module hptw
 	  assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
 	  assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	  assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
-
-	  // Raise faults.  DTLBMiss
-	  assign WalkerInstrPageFaultF = (WalkerState == FAULT) & ~DTLBWalk;
-	  assign WalkerLoadPageFaultM  = (WalkerState == FAULT) & DTLBWalk & ~MemWrite;
-	  assign WalkerStorePageFaultM = (WalkerState == FAULT) & DTLBWalk & MemWrite;
 
 	  // FSM to track PageType based on the levels of the page table traversed
 	  flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
@@ -176,7 +170,7 @@ module hptw
 	    L2_ADR: if (InitialWalkerState == L2_ADR) NextWalkerState = L2_RD; // first access in SV39
 				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
-		 		else 				NextWalkerState = FAULT;			
+        		else 				NextWalkerState = LEAF;
 	    L2_RD: if (DCacheStall) NextWalkerState = L2_RD;
 	      			else 			NextWalkerState = L1_ADR;
 //	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
@@ -185,7 +179,7 @@ module hptw
 	    L1_ADR: if (InitialWalkerState == L1_ADR) NextWalkerState = L1_RD; // first access in SV32
 				else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
-		 		else 				NextWalkerState = FAULT;	
+		 		else 				NextWalkerState = LEAF;	
 	    L1_RD: if (DCacheStall) NextWalkerState = L1_RD;
 	      			else 			NextWalkerState = L0_ADR;
 //	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
@@ -193,14 +187,12 @@ module hptw
 //				else 				NextWalkerState = FAULT;
 	    L0_ADR: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 		  		else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
-		 		else 				NextWalkerState = FAULT;
+		 		else 				NextWalkerState = LEAF;
 	    L0_RD: if (DCacheStall) NextWalkerState = L0_RD;
 	      			else 			NextWalkerState = LEAF;
 //	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 //				else 				NextWalkerState = FAULT;
 	    LEAF:                       NextWalkerState = IDLE; // updates TLB
-	    FAULT: if (ITLBMissF & AnyCPUReqM) NextWalkerState = FAULT; /// **** BUG: Stays in fault 1 cycle longer than it should.
- 	                        else NextWalkerState = IDLE;
 	    default: begin
 	      // synthesis translate_off
 	      $error("Default state in HPTW should be unreachable");
@@ -210,7 +202,6 @@ module hptw
 	  endcase
     end else begin // No Virtual memory supported; tie HPTW outputs to 0
       assign HPTWRead = 0;
-      assign WalkerInstrPageFaultF = 0; assign WalkerLoadPageFaultM = 0; assign WalkerStorePageFaultM = 0;
       assign HPTWAdr = 0;
 	  assign HPTWSize = 3'b000;
     end

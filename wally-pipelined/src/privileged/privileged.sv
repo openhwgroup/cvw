@@ -50,7 +50,6 @@ module privileged (
   input  logic             DCacheAccess,
   input  logic             PrivilegedM,
   input  logic             ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM,
-  input  logic             WalkerInstrPageFaultF, WalkerLoadPageFaultM, WalkerStorePageFaultM,
   input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrD,
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreMisalignedFaultM,
@@ -202,9 +201,9 @@ module privileged (
   // lookup or a improperly formatted page table during walking
 
   // *** merge these at the lsu level.
-  assign InstrPageFaultF = ITLBInstrPageFaultF || WalkerInstrPageFaultF;
-  assign LoadPageFaultM = DTLBLoadPageFaultM || WalkerLoadPageFaultM;
-  assign StorePageFaultM = DTLBStorePageFaultM || WalkerStorePageFaultM;
+  assign InstrPageFaultF = ITLBInstrPageFaultF;
+  assign LoadPageFaultM = DTLBLoadPageFaultM;
+  assign StorePageFaultM = DTLBStorePageFaultM;
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
