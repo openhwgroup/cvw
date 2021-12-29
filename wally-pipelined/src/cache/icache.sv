@@ -165,7 +165,7 @@ module icache
       cachereplacementpolicy(.clk, .reset,
 			     .WayHit,
 			     .VictimWay,
-			     .MemPAdrM(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			     .LsuPAdrM(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			     .RAdr,
 			     .LRUWriteEn); // *** connect
     end else begin

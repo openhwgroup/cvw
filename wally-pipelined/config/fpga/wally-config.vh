@@ -37,6 +37,9 @@
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
+// IEEE 754 compliance
+`define IEEE754 0
+
 `define MISA (32'h0014112D)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
