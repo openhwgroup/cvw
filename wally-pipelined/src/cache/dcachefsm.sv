@@ -38,7 +38,7 @@ module dcachefsm
    // hptw inputs
    input logic 		  IgnoreRequest,
    // Bus inputs
-   input logic 		  BUSACK,
+   input logic 		  DCacheBusAck,
    // dcache internals
    input logic 		  CacheHit,
    input logic 		  VictimDirty,
@@ -50,9 +50,9 @@ module dcachefsm
    output logic 	  DCacheMiss,
    output logic 	  DCacheAccess,
    // Bus outputs
-   output logic       DCCommittedM,
-   output logic 	  DCWriteLine,
-   output logic 	  DCFetchLine,
+   output logic       DCacheCommittedM,
+   output logic 	  DCacheWriteLine,
+   output logic 	  DCacheFetchLine,
 
    // dcache internals
    output logic [1:0] SelAdrM,
@@ -123,8 +123,8 @@ module dcachefsm
     FlushWayCntRst = 1'b0;	
     VDWriteEnable = 1'b0;
     NextState = STATE_READY;
-	DCFetchLine = 1'b0;
-	DCWriteLine = 1'b0;
+	DCacheFetchLine = 1'b0;
+	DCacheWriteLine = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -150,19 +150,19 @@ module dcachefsm
 		else if(FlushDCacheM) begin
 		  NextState = STATE_FLUSH;
 		  DCacheStall = 1'b1;
-		  SelAdrM = 2'b11;
+		  SelAdrM = 2'b10;
 		  FlushAdrCntRst = 1'b1;
 		  FlushWayCntRst = 1'b1;	
 		end
 		
 		// amo hit
 		else if(AtomicM[1] & (&MemRWM) & CacheableM & CacheHit) begin
-		  SelAdrM = 2'b10;
+		  SelAdrM = 2'b01;
 		  DCacheStall = 1'b0;
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
-			SelAdrM = 2'b10;
+			SelAdrM = 2'b01;
 		  end
 		  else begin
 			SRAMWordWriteEnableM = 1'b1;
@@ -178,7 +178,7 @@ module dcachefsm
 		  
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-            SelAdrM = 2'b10;
+            SelAdrM = 2'b01;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -186,7 +186,7 @@ module dcachefsm
 		end
 		// write hit valid cached
 		else if (MemRWM[0] & CacheableM & CacheHit) begin
-		  SelAdrM = 2'b10;
+		  SelAdrM = 2'b01;
 		  DCacheStall = 1'b0;
 		  SRAMWordWriteEnableM = 1'b1;
 		  SetDirty = 1'b1;
@@ -194,7 +194,7 @@ module dcachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			SelAdrM = 2'b10;
+			SelAdrM = 2'b01;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -204,16 +204,16 @@ module dcachefsm
 		else if((|MemRWM) & CacheableM & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
 		  DCacheStall = 1'b1;
-		  DCFetchLine = 1'b1;
+		  DCacheFetchLine = 1'b1;
 		end
 		else NextState = STATE_READY;
       end
       
       STATE_MISS_FETCH_WDV: begin
 		DCacheStall = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		
-		if (BUSACK) begin
+		if (DCacheBusAck) begin
           NextState = STATE_MISS_FETCH_DONE;
         end else begin
           NextState = STATE_MISS_FETCH_WDV;
@@ -222,10 +222,10 @@ module dcachefsm
 
       STATE_MISS_FETCH_DONE: begin
 		DCacheStall = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
-		  DCWriteLine = 1'b1;
+		  DCacheWriteLine = 1'b1;
 		end else begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end
@@ -235,14 +235,14 @@ module dcachefsm
 		SRAMBlockWriteEnableM = 1'b1;
 		DCacheStall = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		SetValid = 1'b1;
 		ClearDirty = 1'b1;
 		//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
 
       STATE_MISS_READ_WORD: begin
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		DCacheStall = 1'b1;
 		if (MemRWM[0] & ~AtomicM[1]) begin // handles stores and amo write.
 		  NextState = STATE_MISS_WRITE_WORD;
@@ -254,12 +254,12 @@ module dcachefsm
       end
 
       STATE_MISS_READ_WORD_DELAY: begin
-		//SelAdrM = 2'b10;
+		//SelAdrM = 2'b01;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 		if(&MemRWM & AtomicM[1]) begin // amo write
-		  SelAdrM = 2'b10;
+		  SelAdrM = 2'b01;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
 		  end
@@ -273,7 +273,7 @@ module dcachefsm
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			SelAdrM = 2'b10;
+			SelAdrM = 2'b01;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -284,11 +284,11 @@ module dcachefsm
       STATE_MISS_WRITE_WORD: begin
 		SRAMWordWriteEnableM = 1'b1;
 		SetDirty = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
-		  SelAdrM = 2'b10;
+		  SelAdrM = 2'b01;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -297,9 +297,9 @@ module dcachefsm
 
       STATE_MISS_EVICT_DIRTY: begin
 		DCacheStall = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		SelEvict = 1'b1;
-		if(BUSACK) begin
+		if(DCacheBusAck) begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end else begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
@@ -311,7 +311,7 @@ module dcachefsm
 		SelAdrM = 2'b00;
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
-		  SelAdrM = 2'b10;
+		  SelAdrM = 2'b01;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -319,7 +319,7 @@ module dcachefsm
       end
 
       STATE_CPU_BUSY_FINISH_AMO: begin
-		SelAdrM = 2'b10;
+		SelAdrM = 2'b01;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
@@ -336,7 +336,7 @@ module dcachefsm
 
       STATE_FLUSH: begin
 		DCacheStall = 1'b1;
-		SelAdrM = 2'b11;
+		SelAdrM = 2'b10;
 		SelFlush = 1'b1;
 		FlushAdrCntEn = 1'b1;
 		FlushWayCntEn = 1'b1;
@@ -344,7 +344,7 @@ module dcachefsm
 		  NextState = STATE_FLUSH_WRITE_BACK;
 		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;
-		  DCWriteLine = 1'b1;
+		  DCacheWriteLine = 1'b1;
 		end else if (FlushAdrFlag) begin
 		  NextState = STATE_READY;
 		  DCacheStall = 1'b0;
@@ -357,9 +357,9 @@ module dcachefsm
 
       STATE_FLUSH_WRITE_BACK: begin
 		DCacheStall = 1'b1;
-		SelAdrM = 2'b11;
+		SelAdrM = 2'b10;
 		SelFlush = 1'b1;
-		if(BUSACK) begin
+		if(DCacheBusAck) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
@@ -371,7 +371,7 @@ module dcachefsm
 		ClearDirty = 1'b1;
 		VDWriteEnable = 1'b1;
 		SelFlush = 1'b1;
-		SelAdrM = 2'b11;
+		SelAdrM = 2'b10;
 		FlushAdrCntEn = 1'b0;
 		FlushWayCntEn = 1'b0;	
 		if(FlushAdrFlag) begin
@@ -391,7 +391,7 @@ module dcachefsm
     endcase
   end
 
-  assign DCCommittedM = CurrState != STATE_READY;
+  assign DCacheCommittedM = CurrState != STATE_READY;
 
 endmodule // dcachefsm
 
