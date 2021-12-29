@@ -323,13 +323,13 @@ module lsu
   localparam integer   LOGWPL = $clog2(WORDSPERLINE);
   localparam integer   BLOCKLEN = `DCACHE_BLOCKLENINBITS;
   
-  localparam integer   FetchCountThreshold = WORDSPERLINE - 1;
+  localparam integer   WordCountThreshold = WORDSPERLINE - 1;
   localparam integer   BLOCKBYTELEN = BLOCKLEN/8;
   localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
 
   // temp
   logic 		       SelUncached;
-  logic 			   FetchCountFlag;
+  logic 			   WordCountFlag;
   
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0]    DC_HWDATA_FIXNAME;
@@ -341,7 +341,7 @@ module lsu
   logic [`XLEN-1:0]    ReadDataWordMuxM;
 
 
-  logic [LOGWPL-1:0]   FetchCount, NextFetchCount;
+  logic [LOGWPL-1:0]   WordCount, NextWordCount;
   logic [`PA_BITS-1:0] 	       BasePAdrMaskedM;  
   logic [OFFSETLEN-1:0]        BasePAdrOffsetM;
 
@@ -355,6 +355,10 @@ module lsu
   logic 			   DCWriteLine;
   logic 			   DCFetchLine;
   logic 			   BUSACK;
+
+  logic 			   UnCachedLsuBusRead;
+  logic 			   UnCachedLsuBusWrite;
+  
   
   dcache dcache(.clk, .reset, .CPUBusy,
 				.MemRWM(DCRWM),
@@ -407,8 +411,8 @@ module lsu
   assign LsuBusHWDATA = CacheableM | SelFlush ? DC_HWDATA_FIXNAME : WriteDataM;
 
   generate
-    if (`XLEN == 32) assign LsuBusSize = CacheableM | SelFlush ? 3'b010 : LsuFunct3M;
-    else assign LsuBusSize = CacheableM | SelFlush ? 3'b011 : LsuFunct3M;
+    if (`XLEN == 32) assign LsuBusSize = UnCachedLsuBusWrite | UnCachedLsuBusRead ? LsuFunct3M : 3'b010;
+    else assign LsuBusSize = UnCachedLsuBusWrite | UnCachedLsuBusRead ? LsuFunct3M : 3'b011;
   endgenerate;
 
   // Bus Side logic
@@ -420,7 +424,7 @@ module lsu
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
       flopen #(`XLEN) fb(.clk(clk),
-			 .en(LsuBusAck & LsuBusRead & (index == FetchCount)),
+			 .en(LsuBusAck & LsuBusRead & (index == WordCount)),
 			 .d(LsuBusHRDATA),
 			 .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
@@ -432,21 +436,21 @@ module lsu
   assign BasePAdrOffsetM = CacheableM ? {{OFFSETLEN}{1'b0}} : BasePAdrM[OFFSETLEN-1:0];
   assign BasePAdrMaskedM = {BasePAdrM[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetM};
   
-  assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
+  assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + BasePAdrMaskedM;
   
-  assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[FetchCount];
+  assign DC_HWDATA_FIXNAME = ReadDataBlockSetsM[WordCount];
 
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
+  assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
   assign CntEn = PreCntEn & LsuBusAck;
 
   flopenr #(LOGWPL) 
-  FetchCountReg(.clk(clk),
+  WordCountReg(.clk(clk),
 		.reset(reset | CntReset),
 		.en(CntEn),
-		.d(NextFetchCount),
-		.q(FetchCount));
+		.d(NextWordCount),
+		.q(WordCount));
 
-  assign NextFetchCount = FetchCount + 1'b1;
+  assign NextWordCount = WordCount + 1'b1;
 
   typedef enum {STATE_BUS_READY,
 				STATE_BUS_FETCH,
@@ -454,7 +458,8 @@ module lsu
 				STATE_BUS_UNCACHED_WRITE,
 				STATE_BUS_UNCACHED_WRITE_DONE,
 				STATE_BUS_UNCACHED_READ,
-				STATE_BUS_UNCACHED_READ_DONE} busstatetype;
+				STATE_BUS_UNCACHED_READ_DONE,
+				STATE_BUS_CPU_BUSY} busstatetype;
 
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
@@ -475,11 +480,15 @@ module lsu
 		                         else                            BusNextState = STATE_BUS_UNCACHED_WRITE;
       STATE_BUS_UNCACHED_READ:   if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_READ_DONE;
 		                         else                            BusNextState = STATE_BUS_UNCACHED_READ;
-      STATE_BUS_UNCACHED_WRITE_DONE:                             BusNextState = STATE_BUS_READY;
-      STATE_BUS_UNCACHED_READ_DONE:                              BusNextState = STATE_BUS_READY;
-      STATE_BUS_FETCH:           if (FetchCountFlag & LsuBusAck) BusNextState = STATE_BUS_READY;
+      STATE_BUS_UNCACHED_WRITE_DONE: if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
+                                     else                        BusNextState = STATE_BUS_READY;
+      STATE_BUS_UNCACHED_READ_DONE:  if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
+                                     else                        BusNextState = STATE_BUS_READY;
+	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
+                                     else                            BusNextState = STATE_BUS_READY;
+      STATE_BUS_FETCH:           if (WordCountFlag & LsuBusAck)  BusNextState = STATE_BUS_READY;
 	                             else                            BusNextState = STATE_BUS_FETCH;
-      STATE_BUS_WRITE:           if(FetchCountFlag & LsuBusAck)  BusNextState = STATE_BUS_READY;
+      STATE_BUS_WRITE:           if(WordCountFlag & LsuBusAck)   BusNextState = STATE_BUS_READY;
 	                             else                            BusNextState = STATE_BUS_WRITE;
 	endcase
   end
@@ -491,17 +500,18 @@ module lsu
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
-  assign SelUncached = BusCurrState == STATE_BUS_UNCACHED_READ_DONE;
+  assign SelUncached = BusCurrState == STATE_BUS_UNCACHED_READ_DONE | BusCurrState == STATE_BUS_CPU_BUSY;
   assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
-  assign LsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (DCRWM[0])) |
-					   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
-					   (BusCurrState == STATE_BUS_WRITE);
+  assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (DCRWM[0])) |
+							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
+  assign LsuBusWrite = UnCachedLsuBusWrite | (BusCurrState == STATE_BUS_WRITE);
 
-  assign LsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|DCRWM[1])) |
-					  (BusCurrState == STATE_BUS_UNCACHED_READ) |
-					  (BusCurrState == STATE_BUS_FETCH);
-  assign BUSACK = (BusCurrState == STATE_BUS_FETCH & FetchCountFlag & LsuBusAck) |
-				  (BusCurrState == STATE_BUS_WRITE & FetchCountFlag & LsuBusAck);
+  assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|DCRWM[1])) |
+							  (BusCurrState == STATE_BUS_UNCACHED_READ);
+  assign LsuBusRead = UnCachedLsuBusRead | (BusCurrState == STATE_BUS_FETCH);
+
+  assign BUSACK = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
+				  (BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
     
 endmodule
 
