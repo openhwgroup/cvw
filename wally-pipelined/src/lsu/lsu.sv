@@ -103,7 +103,6 @@ module lsu
   logic [11:0] 				   LsuAdrE, DCacheAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
-  logic 					   DataMisalignedM;
   logic 					   DCacheStall;
 
   logic 					   CacheableM;
@@ -263,38 +262,65 @@ module lsu
 	end
   endgenerate
 
+  // **** look into this confusing signal.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
-  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-  dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-	   .PrivilegeModeW, .DisableTranslation(SelHPTW),
-	   .PAdr(LsuPAdrM),
-	   .VAdr(IEUAdrM),
-	   .Size(LsuFunct3M[1:0]),
-	   .PTE,
-	   .PageTypeWriteVal(PageType),
-	   .TLBWrite(DTLBWriteM),
-	   .TLBFlush(DTLBFlushM),
-	   .PhysicalAddress(MemPAdrM),
-	   .TLBMiss(DTLBMissM),
-	   .Cacheable(CacheableM),
-	   .Idempotent(), .AtomicAllowed(),
-	   .TLBPageFault(DTLBPageFaultM),
-	   .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
-	   .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0), 
-	   .WriteAccessM(LsuRWM[0]), .ReadAccessM(LsuRWM[1]),
-	   .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
-	   ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
+  generate
+	if(`ZICSR_SUPPORTED == 1) begin : dmmu
+	  logic 					   DataMisalignedM;
 
+	  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
+	  dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+		   .PrivilegeModeW, .DisableTranslation(SelHPTW),
+		   .PAdr(LsuPAdrM),
+		   .VAdr(IEUAdrM),
+		   .Size(LsuFunct3M[1:0]),
+		   .PTE,
+		   .PageTypeWriteVal(PageType),
+		   .TLBWrite(DTLBWriteM),
+		   .TLBFlush(DTLBFlushM),
+		   .PhysicalAddress(MemPAdrM),
+		   .TLBMiss(DTLBMissM),
+		   .Cacheable(CacheableM),
+		   .Idempotent(), .AtomicAllowed(),
+		   .TLBPageFault(DTLBPageFaultM),
+		   .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
+		   .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0),  ///  atomicaccessm is probably a bug
+		   .WriteAccessM(LsuRWM[0]), .ReadAccessM(LsuRWM[1]),
+		   .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
+		   ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
+
+	  // Determine if an Unaligned access is taking place
+	  // hptw guarantees alignment, only check inputs from IEU.
+	  always_comb
+		case(Funct3M[1:0]) 
+		  2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
+		  2'b01:  DataMisalignedM = IEUAdrM[0];              // lh, sh, lhu
+		  2'b10:  DataMisalignedM = IEUAdrM[1] | IEUAdrM[0]; // lw, sw, flw, fsw, lwu
+		  2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
+		endcase 
+
+	  // If the CPU's (not HPTW's) request is a page fault.
+	  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
+	  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
+	  
+	end else begin
+	  assign MemPAdrM = LsuPAdrM;
+	  assign DTLBMissM = 0;
+	  assign CacheableM = 1;
+	  assign DTLBPageFaultM = 0;
+	  assign LoadAccessFaultM = 0;
+	  assign StoreMisalignedFaultM = 0;
+	  assign LoadMisalignedFaultM = 0;
+	  assign StoreMisalignedFaultM = 0;
+	end
+  endgenerate
   assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
 
-  // If the CPU's (not HPTW's) request is a page fault.
-  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
-
 
   // Move generate from lrsc to outside this module.
+  // use PreLsu as prefix for lrsc 
   generate
 	if (`A_SUPPORTED) begin
 	  assign MemReadM = LsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
@@ -306,16 +332,6 @@ module lsu
 	end
   endgenerate
 
-
-  // Determine if an Unaligned access is taking place
-  // hptw guarantees alignment, only check inputs from IEU.
-  always_comb
-    case(Funct3M[1:0]) 
-      2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedM = IEUAdrM[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedM = IEUAdrM[1] | IEUAdrM[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
-    endcase 
 
 
   // conditional
@@ -397,7 +413,7 @@ module lsu
 			  .ReadDataM);
 
   generate
-    if (`A_SUPPORTED) begin
+    if (`A_SUPPORTED) begin : amo
       logic [`XLEN-1:0] AMOResult;
       amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(LsuFunct3M[1:0]), 
                     .result(AMOResult));
