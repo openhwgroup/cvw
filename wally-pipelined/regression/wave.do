@@ -232,7 +232,6 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group flush -radix 
 add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/hart/lsu/dcache/FlushWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/hart/lsu/dcache/VictimDirtyWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/hart/lsu/dcache/VictimTag
-add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/hart/lsu/dcache/BasePAdrM
 add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/hart/lsu/dcache/CacheableM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/DCacheMemWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -group way0 {/testbench/dut/hart/lsu/dcache/MemWay[0]/WriteEnable}
@@ -337,7 +336,6 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group status /testb
 add wave -noupdate -expand -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/hart/lsu/dcache/CacheHit
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/DCFetchLine
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/DCWriteLine
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/BasePAdrM
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/DCacheMemWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/hart/lsu/dcache/BUSACK
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/FlushWay
@@ -469,8 +467,11 @@ add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedChangePCM
 add wave -noupdate /testbench/dut/hart/priv/priv/csr/MEPC_REGW
+add wave -noupdate /testbench/dut/hart/lsu/LocalLsuBusAdr
+add wave -noupdate /testbench/dut/hart/lsu/BasePAdrMaskedM
+add wave -noupdate /testbench/dut/hart/lsu/match
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {47921 ns} 0} {{Cursor 4} {49574 ns} 1}
+WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {35021 ns} 0} {{Cursor 4} {49574 ns} 1}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -486,4 +487,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {47459 ns} {48279 ns}
+WaveRestoreZoom {34887 ns} {35269 ns}
