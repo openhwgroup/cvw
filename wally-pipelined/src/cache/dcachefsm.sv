@@ -38,7 +38,7 @@ module dcachefsm
    // hptw inputs
    input logic 		  IgnoreRequest,
    // Bus inputs
-   input logic 		  BUSACK,
+   input logic 		  DCacheBusAck,
    // dcache internals
    input logic 		  CacheHit,
    input logic 		  VictimDirty,
@@ -50,9 +50,9 @@ module dcachefsm
    output logic 	  DCacheMiss,
    output logic 	  DCacheAccess,
    // Bus outputs
-   output logic       DCCommittedM,
-   output logic 	  DCWriteLine,
-   output logic 	  DCFetchLine,
+   output logic       DCacheCommittedM,
+   output logic 	  DCacheWriteLine,
+   output logic 	  DCacheFetchLine,
 
    // dcache internals
    output logic [1:0] SelAdrM,
@@ -123,8 +123,8 @@ module dcachefsm
     FlushWayCntRst = 1'b0;	
     VDWriteEnable = 1'b0;
     NextState = STATE_READY;
-	DCFetchLine = 1'b0;
-	DCWriteLine = 1'b0;
+	DCacheFetchLine = 1'b0;
+	DCacheWriteLine = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -204,7 +204,7 @@ module dcachefsm
 		else if((|MemRWM) & CacheableM & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
 		  DCacheStall = 1'b1;
-		  DCFetchLine = 1'b1;
+		  DCacheFetchLine = 1'b1;
 		end
 		else NextState = STATE_READY;
       end
@@ -213,7 +213,7 @@ module dcachefsm
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b01;
 		
-		if (BUSACK) begin
+		if (DCacheBusAck) begin
           NextState = STATE_MISS_FETCH_DONE;
         end else begin
           NextState = STATE_MISS_FETCH_WDV;
@@ -225,7 +225,7 @@ module dcachefsm
 		SelAdrM = 2'b01;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
-		  DCWriteLine = 1'b1;
+		  DCacheWriteLine = 1'b1;
 		end else begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end
@@ -299,7 +299,7 @@ module dcachefsm
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b01;
 		SelEvict = 1'b1;
-		if(BUSACK) begin
+		if(DCacheBusAck) begin
 		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
 		end else begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
@@ -344,7 +344,7 @@ module dcachefsm
 		  NextState = STATE_FLUSH_WRITE_BACK;
 		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;
-		  DCWriteLine = 1'b1;
+		  DCacheWriteLine = 1'b1;
 		end else if (FlushAdrFlag) begin
 		  NextState = STATE_READY;
 		  DCacheStall = 1'b0;
@@ -359,7 +359,7 @@ module dcachefsm
 		DCacheStall = 1'b1;
 		SelAdrM = 2'b10;
 		SelFlush = 1'b1;
-		if(BUSACK) begin
+		if(DCacheBusAck) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
@@ -391,7 +391,7 @@ module dcachefsm
     endcase
   end
 
-  assign DCCommittedM = CurrState != STATE_READY;
+  assign DCacheCommittedM = CurrState != STATE_READY;
 
 endmodule // dcachefsm
 

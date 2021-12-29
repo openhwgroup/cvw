@@ -95,12 +95,12 @@ module lsu
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
 
-  logic [1:0] 				   DCRWM;
+  logic [1:0] 				   DCacheRWM;
   logic [1:0] 				   LsuRWM;
   logic [2:0] 				   LsuFunct3M;
   logic [1:0] 				   LsuAtomicM;
   logic [`PA_BITS-1:0] 		   LsuPAdrM, LocalLsuBusAdr;
-  logic [11:0] 				   LsuAdrE, DCAdrE;  
+  logic [11:0] 				   LsuAdrE, DCacheAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
   logic 					   DataMisalignedM;
@@ -115,7 +115,7 @@ module lsu
 
   logic 					   InterlockStall;
   logic 					   IgnoreRequest;
-  logic 					   BusCommittedM, DCCommittedM;
+  logic 					   BusCommittedM, DCacheCommittedM;
   
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -236,13 +236,13 @@ module lsu
 	  assign DTLBLoadPageFaultM = DTLBPageFaultM & LsuRWM[1];
 	  assign DTLBStorePageFaultM = DTLBPageFaultM & LsuRWM[0];
 
-	  assign DCAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : LsuAdrE;
+	  assign DCacheAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : LsuAdrE;
 
 	end // if (`MEM_VIRTMEM)
 	else begin
 	  assign InterlockStall = 1'b0;
 	  
-	  assign DCAdrE = LsuAdrE;
+	  assign DCacheAdrE = LsuAdrE;
 	  assign SelHPTW = 1'b0;
 	  assign IgnoreRequest = 1'b0;
 
@@ -263,7 +263,7 @@ module lsu
 	end
   endgenerate
 
-  assign CommittedM = SelHPTW | DCCommittedM | BusCommittedM;
+  assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
@@ -299,10 +299,10 @@ module lsu
 	if (`A_SUPPORTED) begin
 	  assign MemReadM = LsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
 	  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .LsuRWM, .LsuAtomicM, .MemPAdrM,
-				.SquashSCW, .DCRWM);
+				.SquashSCW, .DCacheRWM);
 	end else begin
       assign SquashSCW = 0;
-      assign DCRWM = LsuRWM;
+      assign DCacheRWM = LsuRWM;
 	end
   endgenerate
 
@@ -355,9 +355,9 @@ module lsu
   
 
 
-  logic 			   DCWriteLine;
-  logic 			   DCFetchLine;
-  logic 			   BUSACK;
+  logic 			   DCacheWriteLine;
+  logic 			   DCacheFetchLine;
+  logic 			   DCacheBusAck;
 
   logic 			   UnCachedLsuBusRead;
   logic 			   UnCachedLsuBusWrite;
@@ -365,23 +365,23 @@ module lsu
 
   
   dcache dcache(.clk, .reset, .CPUBusy,
-				.MemRWM(DCRWM),
+				.MemRWM(DCacheRWM),
 				.Funct3M(LsuFunct3M),
 				.Funct7M, .FlushDCacheM,
 				.AtomicM(LsuAtomicM),
-				.MemAdrE(DCAdrE),
+				.MemAdrE(DCacheAdrE),
 				.MemPAdrM,
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
 				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
 				.CacheableM(CacheableM), 
-				.DCCommittedM,
+				.DCacheCommittedM,
 				.DCacheBusAdr,
 				.ReadDataBlockSetsM,
 				.SelFlush,
 				.DCacheMemWriteData,
-				.DCFetchLine,
-				.DCWriteLine,
-				.BUSACK
+				.DCacheFetchLine,
+				.DCacheWriteLine,
+				.DCacheBusAck
 				);
 
 
@@ -475,10 +475,10 @@ module lsu
 	
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)               BusNextState = STATE_BUS_READY;
-	                             else if(DCRWM[0] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(DCRWM[1] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_READ;
-		                         else if(DCFetchLine)            BusNextState = STATE_BUS_FETCH;
-		                         else if(DCWriteLine)            BusNextState = STATE_BUS_WRITE;
+	                             else if(DCacheRWM[0] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(DCacheRWM[1] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_READ;
+		                         else if(DCacheFetchLine)            BusNextState = STATE_BUS_FETCH;
+		                         else if(DCacheWriteLine)            BusNextState = STATE_BUS_WRITE;
       STATE_BUS_UNCACHED_WRITE:  if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		                         else                            BusNextState = STATE_BUS_UNCACHED_WRITE;
       STATE_BUS_UNCACHED_READ:   if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_READ_DONE;
@@ -498,24 +498,24 @@ module lsu
 
 
   assign CntReset = BusCurrState == STATE_BUS_READY;
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((~CacheableM & (|DCRWM)) | DCFetchLine | DCWriteLine)) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((~CacheableM & (|DCacheRWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
   assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
-  assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (DCRWM[0])) |
+  assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (DCacheRWM[0])) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign LsuBusWrite = UnCachedLsuBusWrite | (BusCurrState == STATE_BUS_WRITE);
 
-  assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|DCRWM[1])) |
+  assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|DCacheRWM[1])) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign LsuBusRead = UnCachedLsuBusRead | (BusCurrState == STATE_BUS_FETCH);
 
-  assign BUSACK = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
-				  (BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
+  assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
+						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
   assign BusCommittedM = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|DCRWM & ~CacheableM)) |
+  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|DCacheRWM & ~CacheableM)) |
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
