@@ -32,7 +32,7 @@ module lrsc
     input  logic                FlushW, CPUBusy,
     input  logic                MemReadM,
     input  logic [1:0]          LsuRWM,
-    output logic [1:0]          DCRWM,
+    output logic [1:0]          DCacheRWM,
     input  logic [1:0] 	        LsuAtomicM,
     input  logic [`PA_BITS-1:0] MemPAdrM,  // from mmu to dcache
     output logic                SquashSCW
@@ -47,7 +47,7 @@ module lrsc
   assign scM = LsuRWM[0] && LsuAtomicM[0]; 
   assign WriteAdrMatchM = LsuRWM[0] && (MemPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
   assign SquashSCM = scM && ~WriteAdrMatchM;
-  assign DCRWM = SquashSCM ? 2'b00 : LsuRWM;
+  assign DCacheRWM = SquashSCM ? 2'b00 : LsuRWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
     if (lrM) ReservationValidM = 1;  // set valid on load reserve
     else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
