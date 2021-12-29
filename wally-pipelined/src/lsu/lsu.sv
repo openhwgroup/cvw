@@ -42,6 +42,7 @@ module lsu
    input logic 				   ExceptionM,
    input logic 				   PendingInterruptM,
    input logic 				   FlushDCacheM,
+   output logic 			   CommittedM, 
    output logic 			   SquashSCW,
    output logic 			   DCacheMiss,
    output logic 			   DCacheAccess,
@@ -114,7 +115,8 @@ module lsu
 
   logic 					   InterlockStall;
   logic 					   IgnoreRequest;
-
+  logic 					   BusCommittedM, DCCommittedM;
+  
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM};
@@ -215,7 +217,8 @@ module lsu
 	  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, LsuAdrE);
 	  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, LsuPAdrM);
 
-	  assign CPUBusy = StallW & ~SelHPTW;  
+	  assign CPUBusy = StallW & ~SelHPTW;
+	  
 	  // always block interrupts when using the hardware page table walker.
 
 	  // this is for the d cache SRAM.
@@ -260,6 +263,7 @@ module lsu
 	end
   endgenerate
 
+  assign CommittedM = SelHPTW | DCCommittedM | BusCommittedM;
 
   mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
   dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
@@ -370,7 +374,7 @@ module lsu
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
 				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
 				.CacheableM(CacheableM), 
-
+				.DCCommittedM,
 				.BasePAdrM,
 				.ReadDataBlockSetsM,
 				.SelFlush,
@@ -512,6 +516,7 @@ module lsu
 
   assign BUSACK = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
 				  (BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
+  assign BusCommittedM = BusCurrState != STATE_BUS_READY;
     
 endmodule
 
