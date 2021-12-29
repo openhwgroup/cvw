@@ -205,7 +205,7 @@ add wave -noupdate -group AHB /testbench/dut/hart/ebu/HMASTLOCK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HADDRD
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HSIZED
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HWRITED
-add wave -noupdate -expand -group lsu -color Gold /testbench/dut/hart/lsu/MEM_VIRTMEM/InterlockCurrState
+add wave -noupdate -expand -group lsu -color Gold /testbench/dut/hart/lsu/MEM_VIRTMEM/interlockfsm/InterlockCurrState
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/SelHPTW
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/InterlockStall
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/LSUStall
