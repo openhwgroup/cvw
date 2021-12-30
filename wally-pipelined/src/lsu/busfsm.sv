@@ -27,7 +27,7 @@
 
 
 module busfsm #(parameter integer   WordCountThreshold,
-				parameter integer LOGWPL, parameter integer CacheEnabled )
+				parameter integer LOGWPL, parameter logic CacheEnabled )
   (input logic clk,
    input logic 				 reset,
 
@@ -82,7 +82,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
   assign CntEn = PreCntEn & LsuBusAck;
 
-  assign UnCachedAccess = ~CacheableM | ~CacheEnabled;
+  assign UnCachedAccess = ~CacheEnabled | ~CacheableM;
 
   always_ff @(posedge clk)
     if (reset)    BusCurrState <= #1 STATE_BUS_READY;
