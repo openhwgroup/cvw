@@ -79,10 +79,10 @@ module dcache
   logic [BLOCKLEN-1:0] 						SRAMWriteData;
   logic 									SetValid, ClearValid;
   logic 									SetDirty, ClearDirty;
-  logic [BLOCKLEN-1:0] 						ReadDataBlockWayMaskedM [NUMWAYS-1:0];
+  logic [BLOCKLEN-1:0] 						ReadDataLineWayMasked [NUMWAYS-1:0];
   logic [NUMWAYS-1:0] 						WayHit;
   logic 									CacheHit;
-  logic [BLOCKLEN-1:0] 						ReadDataBlockM;
+  logic [BLOCKLEN-1:0] 						ReadDataLineM;
   logic [WORDSPERLINE-1:0] 					SRAMWordEnable;
 
   logic 									SRAMWordWriteEnableM;
@@ -137,7 +137,7 @@ module dcache
 					  .WriteData(SRAMWriteData),
 					  .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict,
 					  .VictimWay, .FlushWay, .SelFlush,
-					  .ReadDataBlockWayMasked(ReadDataBlockWayMaskedM),
+					  .ReadDataLineWayMasked,
 					  .WayHit, .VictimDirtyWay, .VictimTagWay,
 					  .InvalidateAll(1'b0));
 
@@ -159,10 +159,10 @@ module dcache
   assign VictimDirty = | VictimDirtyWay;
 
   
-  // ReadDataBlockWayMaskedM is a 2d array of cache block len by number of ways.
+  // ReadDataLineWayMaskedM is a 2d array of cache block len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataBlockWayMaskedM), .y(ReadDataBlockM));
+  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadDataLineM));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
 
 
@@ -172,13 +172,13 @@ module dcache
   genvar index;
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin
-      assign ReadDataBlockSetsM[index] = ReadDataBlockM[((index+1)*`XLEN)-1: (index*`XLEN)];
+      assign ReadDataBlockSetsM[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
     end
   endgenerate
 
   // variable input mux
   
-  assign ReadDataWordM = ReadDataBlockSetsM[LsuPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
+  assign ReadDataWordM = ReadDataBlockSetsM[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
 
   // Write Path CPU (IEU) side
 
