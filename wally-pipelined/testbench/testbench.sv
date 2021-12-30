@@ -76,12 +76,14 @@ logic [3:0] dummy;
   // pick tests based on modes supported
   initial begin
     $display("TEST is %s", TEST);
-    tests = '{};
+    //tests = '{};
     if (`XLEN == 64) begin // RV64
       case (TEST)
         "arch64i":                        tests = arch64i;
         "arch64priv":                     tests = arch64priv;
-        "arch64c":      if (`C_SUPPORTED) tests = arch64c;
+        "arch64c":      if (`C_SUPPORTED) 
+                          if (`ZICSR_SUPPORTED) tests = {arch64c, arch64cpriv};
+                          else                  tests = {arch64c};
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
@@ -102,7 +104,9 @@ logic [3:0] dummy;
       case (TEST)
         "arch32i":                        tests = arch32i;
         "arch32priv":                     tests = arch32priv;
-        "arch32c":      if (`C_SUPPORTED) tests = arch32c;
+        "arch32c":      if (`C_SUPPORTED) 
+                          if (`ZICSR_SUPPORTED) tests = {arch32c, arch32cpriv};
+                          else                  tests = {arch32c};
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
@@ -239,6 +243,7 @@ logic [3:0] dummy;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
+		  // *** have to figure out how to exclude shadowram when not using a dcache.
           if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
@@ -291,17 +296,26 @@ logic [3:0] dummy;
   // or sw	gp,-56(t0) for new Imperas tests
   // or sw gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
-  assign DCacheFlushStart = dut.hart.priv.priv.EcallFaultM && 
+  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
+  generate
+    if (`ZICSR_SUPPORTED) begin
+      assign ecf = dut.hart.priv.priv.EcallFaultM;
+    end else begin
+      assign ecf = 0;
+    end
+  endgenerate
+  assign DCacheFlushStart = ecf && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
 			      dut.hart.ieu.dp.regf.wd3 == 1)) ||
           (dut.hart.ifu.InstrM == 32'h6f || dut.hart.ifu.InstrM == 32'hfc32a423 || dut.hart.ifu.InstrM == 32'hfc32a823) && dut.hart.ieu.c.InstrValidM;
-  
+
+  // **** Fix when the check in the shadow ram is fixed.
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
-				.reset(reset),
-				.start(DCacheFlushStart),
-				.done(DCacheFlushDone));
+    			.reset(reset),
+	    		.start(DCacheFlushStart),
+		    	.done(DCacheFlushDone));
   
 
   generate
@@ -330,13 +344,14 @@ module riscvassertions;
     assert (`ICACHE_WAYSIZEINBYTES <= 4096 || `MEM_ICACHE == 0 || `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`ICACHE_BLOCKLENINBITS >= 32 || `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
-    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS || `MEM_DCACHE==0) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES || `MEM_DCACHE==0) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS || `MEM_ICACHE==0) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES || `MEM_ICACHE==0) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES || `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES || `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
+	assert (`ZICSR_SUPPORTED == 1 || (`PMP_ENTRIES == 0 && `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
   end
 endmodule
 
@@ -350,10 +365,10 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
-  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
-  localparam integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
+  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.dcache.BLOCKBYTELEN;
+  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.BLOCKLEN/`XLEN;  
   localparam integer lognumlines = $clog2(numlines);
   localparam integer logblockbytelen = $clog2(blockbytelen);
   localparam integer lognumways = $clog2(numways);
@@ -379,10 +394,10 @@ module DCacheFlushFSM
 		       .logblockbytelen(logblockbytelen))
 	  copyShadow(.clk,
 		     .start,
-		     .tag(testbench.dut.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-		     .valid(testbench.dut.hart.lsu.dcache.MemWay[way].ValidBits[index]),
-		     .dirty(testbench.dut.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
-		     .data(testbench.dut.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+		     .tag(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+		     .valid(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].ValidBits[index]),
+		     .dirty(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].DirtyBits[index]),
+		     .data(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
 		     .index(index),
 		     .cacheWord(cacheWord),
 		     .CacheData(CacheData[way][index][cacheWord]),

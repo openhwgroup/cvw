@@ -271,7 +271,7 @@ module sd_cmd_fsm
 
   assign o_ERROR_CODE_Q = r_ERROR_CODE_Q;
   assign COUNTER_OUT_GT_ZERO = i_COUNTER_OUT > 0;
-  assign COUNTER_OUT_GE_ZERO = i_COUNTER_OUT >= 0;  
+  assign COUNTER_OUT_GE_ZERO = $signed(i_COUNTER_OUT) >= $signed(8'b0);
   assign COUNTER_OUT_GT_8 = i_COUNTER_OUT > 8;
   assign COUNTER_OUT_EQ_8 = i_COUNTER_OUT == 8;
   assign COUNTER_OUT_EQ_ZERO = i_COUNTER_OUT == 0;

@@ -41,9 +41,9 @@
 
 `define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 0
 `define COUNTERS 32
-`define ZICOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 0
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -53,12 +53,12 @@
 `define MEM_DCACHE 1
 `define MEM_IROM 1
 `define MEM_ICACHE 1
-`define MEM_VIRTMEM 1
+`define MEM_VIRTMEM 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
-`define ITLB_ENTRIES 32
-`define DTLB_ENTRIES 32
+`define ITLB_ENTRIES 0
+`define DTLB_ENTRIES 0
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
@@ -75,7 +75,7 @@
 `define DIV_BITSPERCYCLE 4
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 16
+`define PMP_ENTRIES 0
 
 // Address space
 `define RESET_VECTOR 32'h80000000

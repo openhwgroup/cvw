@@ -49,6 +49,7 @@ module testbench();
   ////////////////////////////////// HARDWARE ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   logic clk, reset_ext; 
+  logic reset;
   initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
   always begin clk <= 1; # 5; clk <= 0; # 5; end
 
@@ -77,7 +78,7 @@ module testbench();
   
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  wallypipelinedsoc dut(.clk, .reset_ext,
+  wallypipelinedsoc dut(.clk, .reset, .reset_ext,
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
@@ -85,8 +86,6 @@ module testbench();
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
-  logic reset;
-  assign reset = dut.reset;
 
   // Write Back stage signals not needed by Wally itself 
   parameter nop = 'h13;
@@ -176,18 +175,18 @@ module testbench();
   `define PC          dut.hart.ifu.pcreg.q
   `define CSR_BASE    dut.hart.priv.priv.csr
   `define HPMCOUNTER  `CSR_BASE.counters.genblk1.HPMCOUNTER_REGW
-  `define PMP_BASE    `CSR_BASE.csrm.genblk4
+  `define PMP_BASE    `CSR_BASE.csrm.pmp
   `define PMPCFG      genblk2.PMPCFGreg.q
   `define PMPADDR     PMPADDRreg.q
-  `define MEDELEG     `CSR_BASE.csrm.genblk1.MEDELEGreg.q
-  `define MIDELEG     `CSR_BASE.csrm.genblk1.MIDELEGreg.q
+  `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
+  `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q
   `define MIE         `CSR_BASE.csri.MIE_REGW
   `define MIP         `CSR_BASE.csri.MIP_REGW
   `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
   `define SCAUSE      `CSR_BASE.csrs.genblk1.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
   `define SEPC        `CSR_BASE.csrs.genblk1.SEPCreg.q
-  `define MCOUNTEREN  `CSR_BASE.csrm.genblk3.MCOUNTERENreg.q
+  `define MCOUNTEREN  `CSR_BASE.csrm.counters.MCOUNTERENreg.q
   `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk2.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
   `define SSCRATCH    `CSR_BASE.csrs.genblk1.SSCRATCHreg.q
@@ -446,7 +445,7 @@ module testbench();
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (dut.hart.lsu.MemPAdrM == 'h10000005) \
+        if (dut.hart.lsu.LsuPAdrM == 'h10000005) \
           //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
           force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
