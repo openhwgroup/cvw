@@ -175,11 +175,11 @@ add wave -noupdate -group icache -expand -group {fsm out and control} /testbench
 add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
 add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/CntEn
 add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/FinalInstrRawF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrReadF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/InstrPAdrF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/IfuBusFetch
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheBusAdr
 add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/FetchCountFlag
 add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/FetchCount
-add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/InstrAckF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheBusAck
 add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
 add wave -noupdate -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheMemWriteData
 add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/ICacheMemReadData
@@ -187,7 +187,7 @@ add wave -noupdate -group icache /testbench/dut/hart/ifu/icache/SpillDataBlock0
 add wave -noupdate -group AHB -color Gold /testbench/dut/hart/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/AtomicMaskedM
-add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/InstrReadF
+add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/IfuBusFetch
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/LsuBusSize
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HCLK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRESETn

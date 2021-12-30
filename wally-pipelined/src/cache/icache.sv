@@ -37,11 +37,11 @@ module icache
    input logic 				  ExceptionM, PendingInterruptM,
   
    // Data read in from the ebu unit
-   (* mark_debug = "true" *) input logic [`XLEN-1:0] InstrInF,
-   (* mark_debug = "true" *) input logic InstrAckF,
+   (* mark_debug = "true" *) input logic [`XLEN-1:0] IfuBusHRDATA,
+   (* mark_debug = "true" *) input logic ICacheBusAck,
    // Read requested from the ebu unit
-   (* mark_debug = "true" *) output logic [`PA_BITS-1:0] InstrPAdrF,
-   (* mark_debug = "true" *) output logic InstrReadF,
+   (* mark_debug = "true" *) output logic [`PA_BITS-1:0] ICacheBusAdr,
+   (* mark_debug = "true" *) output logic IfuBusFetch,
    // High if the instruction currently in the fetch stage is compressed
    output logic 			  CompressedF,
    // High if the icache is requesting a stall
@@ -77,7 +77,7 @@ module icache
   // Input signals to cache memory
   logic 					  ICacheMemWriteEnable;
   logic [BLOCKLEN-1:0] 		  ICacheMemWriteData;
-  logic [`PA_BITS-1:0] 		  PCTagF;  
+  logic [`PA_BITS-1:0] 		  FinalPCPF;  
   // Output signals from cache memory
   logic [31:0] 				  ICacheMemReadData;
   logic 					  ICacheReadEn;
@@ -111,7 +111,7 @@ module icache
 
   logic [31:0] 				  ReadLineSetsF [`ICACHE_BLOCKLENINBITS/16-1:0];
   
-  logic [`PA_BITS-1:0] 		  BasePAdrF, BasePAdrMaskedF;
+  logic [`PA_BITS-1:0] 		  BasePAdrMaskedF;
   logic [OFFSETLEN-1:0] 	  BasePAdrOffsetF;
   
   
@@ -121,7 +121,7 @@ module icache
   // on spill we want to get the first 2 bytes of the next cache block.
   // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
   // simply add 2 to land on the next cache block.
-  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; // *** modelsim does not allow the use of PA_BITS for literal width.
+  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; 
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
@@ -134,7 +134,7 @@ module icache
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN), .DIRTY_BITS(0))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
-					  .PAdr(PCTagF),
+					  .PAdr(FinalPCPF),
 					  .WriteEnable(SRAMWayWriteEnable),
 					  .VDWriteEnable(1'b0),
 					  .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
@@ -154,7 +154,7 @@ module icache
       cachereplacementpolicy(.clk, .reset,
 							 .WayHit,
 							 .VictimWay,
-							 .LsuPAdrM(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+							 .LsuPAdrM(FinalPCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 							 .RAdr,
 							 .LRUWriteEn);
     end else begin
@@ -177,7 +177,7 @@ module icache
 	assign ReadLineSetsF[BLOCKLEN/16-1] = {16'b0, ReadLineF[BLOCKLEN-1:BLOCKLEN-16]};
   endgenerate
 
-  assign ICacheMemReadData = ReadLineSetsF[PCTagF[$clog2(BLOCKLEN / 32) + 1 : 1]];
+  assign ICacheMemReadData = ReadLineSetsF[FinalPCPF[$clog2(BLOCKLEN / 32) + 1 : 1]];
   
   // spills require storing the first cache block so it can merged
   // with the second
@@ -216,8 +216,8 @@ module icache
     for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
       flopenr #(`XLEN) sb(.clk(clk),
 						  .reset(reset), 
-						  .en(InstrAckF & (i == FetchCount)),
-						  .d(InstrInF),
+						  .en(ICacheBusAck & (i == FetchCount)),
+						  .d(IfuBusHRDATA),
 						  .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
     end
   endgenerate
@@ -231,17 +231,14 @@ module icache
 						 .d(SelAdr[1]),
 						 .q(SelAdr_q[1]));
   
-  assign PCTagF = SelAdr_q[1] ? PCPSpillF : PCPF;
-
-  // unlike the dcache the victim is never dirty so no eviction is necessary.
-  assign BasePAdrF = PCTagF;
+  assign FinalPCPF = SelAdr_q[1] ? PCPSpillF : PCPF;
 
   // if not cacheable the offset bits needs to be sent to the EBU.
   // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
-  assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : BasePAdrF[OFFSETLEN-1:0];
-  assign BasePAdrMaskedF = {BasePAdrF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
+  assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : FinalPCPF[OFFSETLEN-1:0];
+  assign BasePAdrMaskedF = {FinalPCPF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
   
-  assign InstrPAdrF = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedF;
+  assign ICacheBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedF;
   
   // truncate the offset from PCPF for memory address generation
 
@@ -257,8 +254,8 @@ module icache
 						.ITLBWriteF,
 						.ExceptionM,
 						.PendingInterruptM,
-						.InstrAckF,
-						.InstrReadF,
+						.ICacheBusAck,
+						.IfuBusFetch,
 						.hit,
 						.FetchCountFlag,
 						.spill,
