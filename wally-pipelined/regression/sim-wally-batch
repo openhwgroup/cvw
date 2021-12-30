@@ -1,3 +1,3 @@
 vsim -c <<!
-do wally-pipelined-batch.do rv32ic arch32i
+do wally-pipelined-batch.do rv64gc wally64priv
 !

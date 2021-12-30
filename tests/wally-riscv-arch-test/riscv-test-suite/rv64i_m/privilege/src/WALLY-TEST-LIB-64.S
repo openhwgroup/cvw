@@ -629,40 +629,6 @@ terminate_test:
     ecall #  writes mcause to the output.
     csrw mtvec, x4  # restore original trap handler to halt program
 
-/*
-	# ---------------------------------------------------------------------------------------------
-
-	RVTEST_IO_WRITE_STR(x31, "Test End\n")
-
-	# ---------------------------------------------------------------------------------------------
-
-	RV_COMPLIANCE_HALT
-
-RV_COMPLIANCE_CODE_END
-
-# Input data section.
-	.data
-
-.align 3 # align stack to 8 byte boundary
-bottom_of_stack:
-    .fill 1024, 4, -1 
-top_of_stack:
-
-
-# Output data section.
-RV_COMPLIANCE_DATA_BEGIN
-
-.align 3 # align output to 8 byte boundary
-test_1_res:
-    .fill 1024, 4, -1 
-
-RV_COMPLIANCE_DATA_END
-
-
-.align 3
-test_cases:
-*/
-
 RVTEST_CODE_END
 RVMODEL_HALT
 
@@ -678,36 +644,12 @@ bottom_of_stack:
 top_of_stack:
 
 
-
 RVMODEL_DATA_BEGIN
 
-// next lines through test cases copied over from old framework
 test_1_res:
     .fill 1024, 4, -1 
 
 RVMODEL_DATA_END
-
-
-/*
-signature_x8_0:
-    .fill 0*(XLEN/32),4,0xdeadbeef
-
-
-signature_x8_1:
-    .fill 19*(XLEN/32),4,0xdeadbeef
-
-
-signature_x1_0:
-    .fill 256*(XLEN/32),4,0xdeadbeef
-
-
-signature_x1_1:
-    .fill 256*(XLEN/32),4,0xdeadbeef
-
-
-signature_x1_2:
-    .fill 148*(XLEN/32),4,0xdeadbeef
-*/
 
 #ifdef rvtest_mtrap_routine
 
