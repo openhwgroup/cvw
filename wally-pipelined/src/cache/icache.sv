@@ -132,12 +132,9 @@ module icache
 
   
 
-  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN),
-	     .DIRTY_BITS(0))
-  MemWay[NUMWAYS-1:0](.clk,
-		      .reset,
-		      .RAdr(RAdr),
-		      .WAdr(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),		      
+  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
+			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN), .DIRTY_BITS(0))
+  MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
 		      .PAdr(PCTagF),
 		      .WriteEnable(SRAMWayWriteEnable),
 		      .VDWriteEnable(1'b0),
@@ -145,19 +142,12 @@ module icache
 		      .TagWriteEnable(SRAMWayWriteEnable),
 		      .WriteData(ICacheMemWriteData),
 		      .SetValid(ICacheMemWriteEnable),
-		      .ClearValid(1'b0),
-		      .SetDirty(1'b0),
-		      .ClearDirty(1'b0),
-		      .SelEvict(1'b0),
+		      .ClearValid(1'b0), .SetDirty(1'b0), .ClearDirty(1'b0), .SelEvict(1'b0),
 		      .VictimWay,
-		      .FlushWay(1'b0),
-		      .SelFlush(1'b0),
-		      .ReadDataBlockWayMasked,
-		      .WayHit,
-		      .VictimDirtyWay(),
-		      .VictimTagWay(),
-		      .InvalidateAll(InvalidateICacheM)
-		      );
+		      .FlushWay(1'b0), .SelFlush(1'b0),
+		      .ReadDataBlockWayMasked, .WayHit,
+		      .VictimDirtyWay(), .VictimTagWay(),
+		      .InvalidateAll(InvalidateICacheM));
   
   generate
     if(NUMWAYS > 1) begin

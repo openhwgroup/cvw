@@ -243,6 +243,7 @@ logic [3:0] dummy;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
+		  // *** have to figure out how to exclude shadowram when not using a dcache.
           if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &&
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
@@ -309,11 +310,12 @@ logic [3:0] dummy;
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
 			      dut.hart.ieu.dp.regf.wd3 == 1)) ||
           (dut.hart.ifu.InstrM == 32'h6f || dut.hart.ifu.InstrM == 32'hfc32a423 || dut.hart.ifu.InstrM == 32'hfc32a823) && dut.hart.ieu.c.InstrValidM;
-  
+
+  // **** Fix when the check in the shadow ram is fixed.
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
-				.reset(reset),
-				.start(DCacheFlushStart),
-				.done(DCacheFlushDone));
+    			.reset(reset),
+	    		.start(DCacheFlushStart),
+		    	.done(DCacheFlushDone));
   
 
   generate
@@ -363,10 +365,10 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.hart.lsu.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.hart.lsu.dcache.NUMWAYS;
-  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.BLOCKBYTELEN;
-  localparam integer numwords = testbench.dut.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
+  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.dcache.BLOCKBYTELEN;
+  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.BLOCKLEN/`XLEN;  
   localparam integer lognumlines = $clog2(numlines);
   localparam integer logblockbytelen = $clog2(blockbytelen);
   localparam integer lognumways = $clog2(numways);
@@ -392,10 +394,10 @@ module DCacheFlushFSM
 		       .logblockbytelen(logblockbytelen))
 	  copyShadow(.clk,
 		     .start,
-		     .tag(testbench.dut.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-		     .valid(testbench.dut.hart.lsu.dcache.MemWay[way].ValidBits[index]),
-		     .dirty(testbench.dut.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
-		     .data(testbench.dut.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+		     .tag(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+		     .valid(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].ValidBits[index]),
+		     .dirty(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].DirtyBits[index]),
+		     .data(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
 		     .index(index),
 		     .cacheWord(cacheWord),
 		     .CacheData(CacheData[way][index][cacheWord]),
