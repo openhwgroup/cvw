@@ -117,18 +117,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   ///////////////////////////////////////////
 
   pmachecker pmachecker(.*);
-
-  // if the number of entries is zero  or no csr no pmp checker
-  generate
-	if(`PMP_ENTRIES > 0) begin : pmpchecker
-	  pmpchecker pmpchecker(.*);
-	end else begin
-	  assign PMPInstrAccessFaultF = 1'b0;
-	  assign PMPLoadAccessFaultM = 1'b0;
-	  assign PMPStoreAccessFaultM = 1'b0;
-	end
-  endgenerate
-
+  pmpchecker pmpchecker(.*);
 
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
 //  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;

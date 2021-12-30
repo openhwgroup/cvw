@@ -73,6 +73,10 @@ module pmpchecker (
       assign PMPInstrAccessFaultF = EnforcePMP && ExecuteAccessF && ~|X;
       assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W;
       assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R;
+    end else begin: pmpchecker  // no checker
+      assign PMPInstrAccessFaultF = 0;
+      assign PMPLoadAccessFaultM = 0;
+      assign PMPStoreAccessFaultM = 0;
     end
   endgenerate
   //assign PMPSquashBusAccess = PMPInstrAccessFaultF | PMPLoadAccessFaultM | PMPStoreAccessFaultM;
