@@ -89,9 +89,35 @@ module csrm #(parameter
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
-  logic [`PMP_ENTRIES-1:0] WritePMPCFGM;
-  logic [`PMP_ENTRIES-1:0] WritePMPADDRM ; 
-  logic [`PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
+
+ // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
+  genvar i;
+  generate
+    if (`PMP_ENTRIES > 0) begin:pmp
+      logic [`PMP_ENTRIES-1:0] WritePMPCFGM;
+      logic [`PMP_ENTRIES-1:0] WritePMPADDRM ; 
+      logic [`PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
+      for(i=0; i<`PMP_ENTRIES; i++) begin
+        // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
+        // also, when the lock bit of the next entry is set and the next entry is TOR, don't allow writes to this entry PMPADDR
+        assign CFGLocked[i] = PMPCFG_ARRAY_REGW[i][7];
+        if (i == `PMP_ENTRIES-1) 
+          assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7];
+        else
+          assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
+        
+        assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~StallW & ~ADDRLocked[i];
+        flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
+        if (`XLEN==64) begin
+          assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~StallW & ~CFGLocked[i];
+          flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
+        end else begin
+          assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~StallW & ~CFGLocked[i];
+          flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
+        end
+      end
+    end
+  endgenerate
 
   localparam MISA_26 = (`MISA) & 32'h03ffffff;
 
@@ -142,33 +168,6 @@ module csrm #(parameter
   endgenerate
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
 
-  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
-
-  // *** need to add support for locked PMPCFG and PMPADR
-  genvar i;
-  generate
-    for(i=0; i<`PMP_ENTRIES; i++) begin
-      // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
-      // also, when the lock bit of the next entry is set and the next entry is TOR, don't allow writes to this entry PMPADDR
-      assign CFGLocked[i] = PMPCFG_ARRAY_REGW[i][7];
-      if (i == `PMP_ENTRIES-1) 
-        assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7];
-      else
-        assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
-      
-      assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~StallW & ~ADDRLocked[i];
-      flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
-      if (`XLEN==64) begin
-        assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~StallW & ~CFGLocked[i];
-        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
-      end else begin
-        assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~StallW & ~CFGLocked[i];
-//        assign WritePMPCFGHM[i] = (CSRMWriteM && (CSRAdrM == PMPCFG0+2*i+1)) && ~StallW;
-        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
-//        flopenr #(`XLEN) PMPCFGHreg(clk, reset, WritePMPCFGHM[i], CSRWriteValM, PMPCFG_ARRAY_REGW[i][63:32]);
-      end
-    end
-  endgenerate
 
   // Read machine mode CSRs
   // verilator lint_off WIDTH
