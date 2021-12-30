@@ -31,7 +31,6 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
    input logic 			      reset,
 
    input logic [$clog2(NUMLINES)-1:0] RAdr,
-   input logic [$clog2(NUMLINES)-1:0] WAdr, 
    input logic [`PA_BITS-1:0] 	      PAdr,
    input logic 			      WriteEnable,
    input logic 			      VDWriteEnable, 
@@ -64,7 +63,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   logic [TAGLEN-1:0] 		      VicDirtyWay;
   logic [TAGLEN-1:0] 		      FlushThisWay;
 
-  logic [$clog2(NUMLINES)-1:0] 	      RAdrD, WAdrD;
+  logic [$clog2(NUMLINES)-1:0] 	      RAdrD;
   logic 			      SetValidD, ClearValidD;
   logic 			      SetDirtyD, ClearDirtyD;
   logic 			      WriteEnableD, VDWriteEnableD;
@@ -76,23 +75,20 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 
   generate
     for(words = 0; words < BLOCKLEN/`XLEN; words++) begin : word
-      sram1rw #(.DEPTH(`XLEN), 
-		.WIDTH(NUMLINES))
-      CacheDataMem(.clk(clk),
-		   .Addr(RAdr),
-		   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN] ),
-		   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-		   .WriteEnable(WriteEnable & WriteWordEnable[words]));
+      sram1rw #(.DEPTH(`XLEN), .WIDTH(NUMLINES))
+      CacheDataMem(.clk(clk), .Addr(RAdr),
+				   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN] ),
+				   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
+				   .WriteEnable(WriteEnable & WriteWordEnable[words]));
     end
   endgenerate
 
-  sram1rw #(.DEPTH(TAGLEN),
-	    .WIDTH(NUMLINES))
+  sram1rw #(.DEPTH(TAGLEN), .WIDTH(NUMLINES))
   CacheTagMem(.clk(clk),
-	      .Addr(RAdr),
-	      .ReadData(ReadTag),
-	      .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-	      .WriteEnable(TagWriteEnable));
+			  .Addr(RAdr),
+			  .ReadData(ReadTag),
+			  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+			  .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
   assign SelectedWay = SelFlush ? FlushWay : 
@@ -101,10 +97,6 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 
   assign VictimDirtyWay = SelFlush ? FlushWay & Dirty & Valid :
 			  VictimWay & Dirty & Valid;
-/* -----\/----- EXCLUDED -----\/-----
-  assign VictimTagWay = SelFlush & FlushWay ? ReadTag :
-			VictimWay ? ReadTag : '0;
- -----/\----- EXCLUDED -----/\----- */
 
   assign VicDirtyWay = VictimWay ? ReadTag : '0;
   assign FlushThisWay = FlushWay ? ReadTag : '0;
@@ -116,13 +108,12 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   	ValidBits <= {NUMLINES{1'b0}};
     else if (InvalidateAll) 
   	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b1;
-    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b0;
+    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b1;
+    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b0;
   end
 
   always_ff @(posedge clk) begin
     RAdrD <= RAdr;
-    WAdrD <= WAdr;
     SetValidD <= SetValid;
     ClearValidD <= ClearValid;    
     WriteEnableD <= WriteEnable;
@@ -137,8 +128,8 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
       always_ff @(posedge clk) begin
 	if (reset) 
   	  DirtyBits <= {NUMLINES{1'b0}};
-	else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b1;
-	else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b0;
+	else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b1;
+	else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b0;
       end
 
       always_ff @(posedge clk) begin

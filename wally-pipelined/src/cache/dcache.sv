@@ -126,29 +126,19 @@ module dcache
 			.s(SelAdrM),
 			.y(RAdr));
 
-  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
-  MemWay[NUMWAYS-1:0](.clk,
-					  .reset,
-					  .RAdr,
-					  .WAdr(RAdr),  // *** Reduce after addressing in icache also
+  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
+			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
+  MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
 					  .PAdr(LsuPAdrM),
 					  .WriteEnable(SRAMWayWriteEnable),
 					  .VDWriteEnable(VDWriteEnableWay),
 					  .WriteWordEnable(SRAMWordEnable),
 					  .TagWriteEnable(SRAMBlockWayWriteEnableM), 
 					  .WriteData(SRAMWriteData),
-					  .SetValid,
-					  .ClearValid,
-					  .SetDirty,
-					  .ClearDirty,
-					  .SelEvict,
-					  .VictimWay,
-					  .FlushWay,
-					  .SelFlush,
+					  .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict,
+					  .VictimWay, .FlushWay, .SelFlush,
 					  .ReadDataBlockWayMasked(ReadDataBlockWayMaskedM),
-					  .WayHit,
-					  .VictimDirtyWay,
-					  .VictimTagWay,
+					  .WayHit, .VictimDirtyWay, .VictimTagWay,
 					  .InvalidateAll(1'b0));
 
   generate
