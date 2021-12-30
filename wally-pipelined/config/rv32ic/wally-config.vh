@@ -50,7 +50,7 @@
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 `define MEM_DTIM 1
-`define MEM_DCACHE 1
+`define MEM_DCACHE 0
 `define MEM_IROM 1
 `define MEM_ICACHE 1
 `define MEM_VIRTMEM 0
