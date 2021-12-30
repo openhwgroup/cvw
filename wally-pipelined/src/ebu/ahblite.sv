@@ -40,10 +40,10 @@ module ahblite (
   input logic 				 UnsignedLoadM,
   input logic [1:0] 		 AtomicMaskedM,
   // Signals from Instruction Cache
-  input logic [`PA_BITS-1:0] InstrPAdrF, // *** rename these to match block diagram
-  input logic 				 InstrReadF,
-  output logic [`XLEN-1:0] 	 InstrRData,
-  output logic 				 InstrAckF,
+  input logic [`PA_BITS-1:0] ICacheBusAdr, // *** rename these to match block diagram
+  input logic 				 IfuBusFetch,
+  output logic [`XLEN-1:0] 	 IfuBusHRDATA,
+  output logic 				 ICacheBusAck,
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LsuBusAdr,
   input logic 				 LsuBusRead, 
@@ -100,23 +100,23 @@ module ahblite (
     case (BusState) 
       IDLE: if (LsuBusRead)      NextBusState = MEMREAD;  // Memory has priority over instructions
             else if (LsuBusWrite)NextBusState = MEMWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else if (IfuBusFetch)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else if (IfuBusFetch)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
-            else if (InstrReadF)   NextBusState = INSTRREAD;
+            else if (IfuBusFetch)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       INSTRREAD: if (~HREADY)      NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;  // if (InstrReadF still high)
+            else                   NextBusState = IDLE;  // if (IfuBusFetch still high)
       default:                     NextBusState = IDLE;
     endcase
 
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE);
-  assign #1 AccessAddress = (GrantData) ? LsuBusAdr[31:0] : InstrPAdrF[31:0];
+  assign #1 AccessAddress = (GrantData) ? LsuBusAdr[31:0] : ICacheBusAdr[31:0];
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LsuBusSize[1:0]} : ISize;
@@ -136,9 +136,9 @@ module ahblite (
   // *** assumes AHBW = XLEN
 
  
-  assign InstrRData = HRDATA;
+  assign IfuBusHRDATA = HRDATA;
   assign LsuBusHRDATA = HRDATA;
-  assign InstrAckF = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
+  assign ICacheBusAck = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
   assign LsuBusAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
 
 endmodule
