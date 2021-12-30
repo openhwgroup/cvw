@@ -125,7 +125,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|LsuRWM[1])) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign LsuBusRead = UnCachedLsuBusRead | (BusCurrState == STATE_BUS_FETCH);
+  assign LsuBusRead = UnCachedLsuBusRead | (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
 
   assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
