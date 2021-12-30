@@ -273,8 +273,8 @@ module lsu
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
-  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   BLOCKLEN = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
 
@@ -384,7 +384,7 @@ module lsu
     else assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b011;
   endgenerate;
 
-  busfsm #(WordCountThreshold, LOGWPL)
+  busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
   busfsm(.clk, .reset, .IgnoreRequest, .LsuRWM, .DCacheFetchLine, .DCacheWriteLine,
 		 .LsuBusAck, .CPUBusy, .CacheableM, .BusStall, .LsuBusWrite, .LsuBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);

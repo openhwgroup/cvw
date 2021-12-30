@@ -27,7 +27,7 @@
 
 
 module busfsm #(parameter integer   WordCountThreshold,
-				parameter integer LOGWPL)
+				parameter integer LOGWPL, parameter logic CacheEnabled )
   (input logic clk,
    input logic 				 reset,
 
@@ -55,7 +55,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   logic 			   CntReset;
   logic 			   WordCountFlag;
   logic [LOGWPL-1:0]   NextWordCount;
-
+  logic 			   UnCachedAccess;
+  
 
   typedef enum {STATE_BUS_READY,
 				STATE_BUS_FETCH,
@@ -81,6 +82,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
   assign CntEn = PreCntEn & LsuBusAck;
 
+  assign UnCachedAccess = ~CacheEnabled | ~CacheableM;
+
   always_ff @(posedge clk)
     if (reset)    BusCurrState <= #1 STATE_BUS_READY;
     else BusCurrState <= #1 BusNextState;  
@@ -88,8 +91,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   always_comb begin
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)               BusNextState = STATE_BUS_READY;
-	                             else if(LsuRWM[0] & (~CacheableM | ~`MEM_DCACHE)) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(LsuRWM[1] & (~CacheableM | ~`MEM_DCACHE)) BusNextState = STATE_BUS_UNCACHED_READ;
+	                             else if(LsuRWM[0] & (UnCachedAccess)) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(LsuRWM[1] & (UnCachedAccess)) BusNextState = STATE_BUS_UNCACHED_READ;
 		                         else if(DCacheFetchLine)            BusNextState = STATE_BUS_FETCH;
 		                         else if(DCacheWriteLine)            BusNextState = STATE_BUS_WRITE;
                                  else                             BusNextState = STATE_BUS_READY;
@@ -113,27 +116,27 @@ module busfsm #(parameter integer   WordCountThreshold,
 
 
   assign CntReset = BusCurrState == STATE_BUS_READY;
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((~CacheableM & (|LsuRWM)) | DCacheFetchLine | DCacheWriteLine)) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LsuRWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
   assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
-  assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & ~CacheableM & (LsuRWM[0])) |
+  assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (LsuRWM[0])) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign LsuBusWrite = UnCachedLsuBusWrite | (BusCurrState == STATE_BUS_WRITE);
 
-  assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & ~CacheableM & (|LsuRWM[1])) |
+  assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (|LsuRWM[1])) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign LsuBusRead = UnCachedLsuBusRead | (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
 
   assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
   assign BusCommittedM = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|LsuRWM & ~CacheableM)) |
+  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|LsuRWM & UnCachedAccess)) |
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE_DONE) |
-						  ~`MEM_DCACHE; // if no dcache always select uncachedadr.
+						  ~CacheEnabled; // if no dcache always select uncachedadr.
 endmodule
