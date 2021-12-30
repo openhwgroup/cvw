@@ -28,28 +28,29 @@
 module icache
   (
    // Basic pipeline stuff
-   input logic 				  clk, reset,
-   input logic 				  CPUBusy, 
-   input logic [`PA_BITS-1:0] PCNextF,
-   input logic [`PA_BITS-1:0] PCPF,
-   input logic [`XLEN-1:0] 	  PCF,
+   input logic 								clk, reset,
+   input logic 								CPUBusy, 
+   input logic [`PA_BITS-1:0] 				PCNextF,
+   input logic [`PA_BITS-1:0] 				PCPF,
+   input logic [`XLEN-1:0] 					PCF,
 
-   input logic 				  ExceptionM, PendingInterruptM,
+   input logic 								IgnoreRequest,
   
    // Data read in from the ebu unit
-   (* mark_debug = "true" *) input logic [`XLEN-1:0] IfuBusHRDATA,
-   (* mark_debug = "true" *) input logic ICacheBusAck,
+   input logic [`ICACHE_BLOCKLENINBITS-1:0] ICacheMemWriteData,
+   output logic								ICacheFetchLine,
+
+   (* mark_debug = "true" *) input logic 	ICacheBusAck,
    // Read requested from the ebu unit
    (* mark_debug = "true" *) output logic [`PA_BITS-1:0] ICacheBusAdr,
-   (* mark_debug = "true" *) output logic IfuBusFetch,
    // High if the instruction currently in the fetch stage is compressed
-   output logic 			  CompressedF,
+   output logic 							CompressedF,
    // High if the icache is requesting a stall
-   output logic 			  ICacheStallF,
-   input logic 				  CacheableF,
-   input logic 				  ITLBMissF,
-   input logic 				  ITLBWriteF,
-   input logic 				  InvalidateICacheM,
+   output logic 							ICacheStallF,
+   input logic 								CacheableF,
+   input logic 								ITLBMissF,
+   input logic 								ITLBWriteF,
+   input logic 								InvalidateICacheM,
   
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
@@ -68,15 +69,12 @@ module icache
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
-  localparam FetchCountThreshold = WORDSPERLINE - 1;
-
   localparam integer 		  PA_WIDTH = `PA_BITS - 2;
   localparam integer 		  NUMWAYS = `ICACHE_NUMWAYS;
   
 
   // Input signals to cache memory
   logic 					  ICacheMemWriteEnable;
-  logic [BLOCKLEN-1:0] 		  ICacheMemWriteData;
   logic [`PA_BITS-1:0] 		  FinalPCPF;  
   // Output signals from cache memory
   logic [31:0] 				  ICacheMemReadData;
@@ -87,18 +85,11 @@ module icache
   logic [15:0] 				  SpillDataBlock0;
   logic 					  spill;
   logic 					  spillSave;
-
-  logic 					  FetchCountFlag;
-  logic 					  CntEn;
   
   logic [1:1] 				  SelAdr_q;
-  
-  
-  logic [LOGWPL-1:0] 		  FetchCount, NextFetchCount;
-  
+
   logic [`PA_BITS-1:0] 		  PCPSpillF;
 
-  logic 					  CntReset;
   logic [1:0] 				  SelAdr;
   logic [INDEXLEN-1:0] 		  RAdr;
   logic [NUMWAYS-1:0] 		  VictimWay;
@@ -196,32 +187,6 @@ module icache
   assign spill = &PCF[$clog2(BLOCKLEN/32)+1:1];
 
 
-  // to compute the fetch address we need to add the bit shifted
-  // counter output to the address.
-  assign FetchCountFlag = (FetchCount == FetchCountThreshold[LOGWPL-1:0]);
-
-  flopenr #(LOGWPL) 
-  FetchCountReg(.clk(clk),
-				.reset(reset | CntReset),
-				.en(CntEn),
-				.d(NextFetchCount),
-				.q(FetchCount));
-
-  assign NextFetchCount = FetchCount + 1'b1;
-  
-
-  // store read data from memory interface before writing into SRAM.
-  genvar 				i;
-  generate
-    for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
-      flopenr #(`XLEN) sb(.clk(clk),
-						  .reset(reset), 
-						  .en(ICacheBusAck & (i == FetchCount)),
-						  .d(IfuBusHRDATA),
-						  .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
-    end
-  endgenerate
-
 
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
@@ -233,16 +198,21 @@ module icache
   
   assign FinalPCPF = SelAdr_q[1] ? PCPSpillF : PCPF;
 
+
+  // *** CHANGE ME
   // if not cacheable the offset bits needs to be sent to the EBU.
   // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
-  assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : FinalPCPF[OFFSETLEN-1:0];
-  assign BasePAdrMaskedF = {FinalPCPF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
+  //assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : FinalPCPF[OFFSETLEN-1:0];
+  //assign BasePAdrMaskedF = {FinalPCPF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
   
-  assign ICacheBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedF;
+  //assign ICacheBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedF;
+  assign ICacheBusAdr = {FinalPCPF[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
+  
   
   // truncate the offset from PCPF for memory address generation
 
   assign SRAMWayWriteEnable = ICacheMemWriteEnable ? VictimWay : '0;
+
 
   icachefsm  controller(.clk,
 						.reset,
@@ -252,16 +222,13 @@ module icache
 						.ICacheStallF,
 						.ITLBMissF,
 						.ITLBWriteF,
-						.ExceptionM,
-						.PendingInterruptM,
+						.IgnoreRequest,
 						.ICacheBusAck,
-						.IfuBusFetch,
+						.ICacheFetchLine,
+						.CacheableF,
 						.hit,
-						.FetchCountFlag,
 						.spill,
 						.spillSave,
-						.CntEn,
-						.CntReset,
 						.SelAdr,
 						.LRUWriteEn);
 
