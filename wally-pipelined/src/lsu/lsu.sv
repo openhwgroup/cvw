@@ -384,7 +384,7 @@ module lsu
     else assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b011;
   endgenerate;
 
-  busfsm #(WordCountThreshold, LOGWPL)
+  busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
   busfsm(.clk, .reset, .IgnoreRequest, .LsuRWM, .DCacheFetchLine, .DCacheWriteLine,
 		 .LsuBusAck, .CPUBusy, .CacheableM, .BusStall, .LsuBusWrite, .LsuBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
