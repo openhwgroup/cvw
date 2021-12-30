@@ -100,7 +100,7 @@ module lsu
   logic [2:0] 				   LsuFunct3M;
   logic [1:0] 				   LsuAtomicM;
   logic [`PA_BITS-1:0] 		   PreLsuPAdrM, LocalLsuBusAdr;
-  logic [11:0] 				   LsuAdrE, DCacheAdrE;  
+  logic [11:0] 				   PreLsuAdrE, LsuAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
   logic 					   DCacheStall;
@@ -148,7 +148,7 @@ module lsu
 	  mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLsuRWM);
 	  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
 	  mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
-	  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, LsuAdrE);
+	  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLsuAdrE);
 	  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLsuPAdrM);
 
 	  // always block interrupts when using the hardware page table walker.
@@ -163,13 +163,13 @@ module lsu
 	  assign DTLBStorePageFaultM = DTLBPageFaultM & PreLsuRWM[0];
 
 	  // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-	  assign DCacheAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : LsuAdrE;
+	  assign LsuAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLsuAdrE;
 
 	end // if (`MEM_VIRTMEM)
 	else begin
 	  assign InterlockStall = 1'b0;
 	  
-	  assign DCacheAdrE = LsuAdrE;
+	  assign LsuAdrE = PreLsuAdrE;
 	  assign SelHPTW = 1'b0;
 	  assign IgnoreRequest = 1'b0;
 
@@ -181,7 +181,7 @@ module lsu
 	  assign PreLsuRWM = MemRWM;
 	  assign LsuFunct3M = Funct3M;
 	  assign LsuAtomicM = AtomicM;
-	  assign LsuAdrE = IEUAdrE[11:0];
+	  assign PreLsuAdrE = IEUAdrE[11:0];
 	  assign PreLsuPAdrM = IEUAdrExtM;
 	  assign CPUBusy = StallW;
 	  
@@ -304,26 +304,14 @@ module lsu
   logic 			   DCacheBusAck;
 
   logic 			   SelUncachedAdr;
-
   
   dcache dcache(.clk, .reset, .CPUBusy,
-				.MemRWM(LsuRWM),
-				.Funct3M(LsuFunct3M),
-				.Funct7M, .FlushDCacheM,
-				.AtomicM(LsuAtomicM),
-				.MemAdrE(DCacheAdrE),
-				.LsuPAdrM,
+				.LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM,
 				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
-				.DCacheMiss, .DCacheAccess, .IgnoreRequest,
-				.CacheableM(CacheableM), 
-				.DCacheCommittedM,
-				.DCacheBusAdr,
-				.ReadDataBlockSetsM,
-				.DCacheMemWriteData,
-				.DCacheFetchLine,
-				.DCacheWriteLine,
-				.DCacheBusAck
-				);
+				.DCacheMiss, .DCacheAccess, 
+				.IgnoreRequest, .CacheableM, .DCacheCommittedM,
+				.DCacheBusAdr, .ReadDataBlockSetsM, .DCacheMemWriteData,
+				.DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
 
 
 

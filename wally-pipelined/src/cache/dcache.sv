@@ -31,12 +31,10 @@ module dcache
    input logic 								CPUBusy,
 
    // cpu side
-   input logic [1:0] 						MemRWM,
-   input logic [2:0] 						Funct3M,
-   input logic [6:0] 						Funct7M,
-   input logic [1:0] 						AtomicM,
+   input logic [1:0] 						LsuRWM,
+   input logic [1:0] 						LsuAtomicM,
    input logic 								FlushDCacheM,
-   input logic [11:0] 						MemAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [11:0] 						LsuAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0] 				LsuPAdrM, // physical address
   
    input logic [`XLEN-1:0] 					FinalWriteDataM,
@@ -122,7 +120,7 @@ module dcache
   // Read Path CPU (IEU) side
 
   mux3 #(INDEXLEN)
-  AdrSelMux(.d0(MemAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+  AdrSelMux(.d0(LsuAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d1(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d2(FlushAdr),
 			.s(SelAdrM),
@@ -249,7 +247,7 @@ module dcache
   // controller
 
   dcachefsm dcachefsm(.clk, .reset, .DCacheFetchLine, .DCacheWriteLine, .DCacheBusAck, 
-					  .MemRWM, .AtomicM, .CPUBusy, .CacheableM, .IgnoreRequest,
+					  .LsuRWM, .LsuAtomicM, .CPUBusy, .CacheableM, .IgnoreRequest,
  					  .CacheHit, .VictimDirty, .DCacheStall, .DCacheCommittedM, 
 					  .DCacheMiss, .DCacheAccess, .SelAdrM, .SetValid, 
 					  .ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
