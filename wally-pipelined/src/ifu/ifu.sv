@@ -218,7 +218,7 @@ module ifu (
   assign LocalIfuBusAdr = SelUncachedAdr ? PCPFmmu : ICacheBusAdr;
   assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
 
-  busfsm #(WordCountThreshold, LOGWPL)
+  busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
   busfm(.clk, .reset, .IgnoreRequest,
 		.LsuRWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
 		.LsuBusAck(IfuBusAck),

@@ -365,68 +365,74 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
-  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.dcache.BLOCKBYTELEN;
-  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.BLOCKLEN/`XLEN;  
-  localparam integer lognumlines = $clog2(numlines);
-  localparam integer logblockbytelen = $clog2(blockbytelen);
-  localparam integer lognumways = $clog2(numways);
-  localparam integer tagstart = lognumlines + logblockbytelen;
-
-
-
-  genvar index, way, cacheWord;
-  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
   genvar adr;
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
   generate
-    for(index = 0; index < numlines; index++) begin
-      for(way = 0; way < numways; way++) begin
-	for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-	  copyShadow #(.tagstart(tagstart),
-		       .logblockbytelen(logblockbytelen))
-	  copyShadow(.clk,
-		     .start,
-		     .tag(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-		     .valid(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].ValidBits[index]),
-		     .dirty(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].DirtyBits[index]),
-		     .data(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
-		     .index(index),
-		     .cacheWord(cacheWord),
-		     .CacheData(CacheData[way][index][cacheWord]),
-		     .CacheAdr(CacheAdr[way][index][cacheWord]),
-		     .CacheTag(CacheTag[way][index][cacheWord]),
-		     .CacheValid(CacheValid[way][index][cacheWord]),
-		     .CacheDirty(CacheDirty[way][index][cacheWord]));
-	end
+	if(`MEM_DCACHE) begin
+	  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
+	  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
+	  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.dcache.BLOCKBYTELEN;
+	  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.BLOCKLEN/`XLEN;  
+	  localparam integer lognumlines = $clog2(numlines);
+	  localparam integer logblockbytelen = $clog2(blockbytelen);
+	  localparam integer lognumways = $clog2(numways);
+	  localparam integer tagstart = lognumlines + logblockbytelen;
+
+
+
+	  genvar 			 index, way, cacheWord;
+	  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+      for(index = 0; index < numlines; index++) begin
+		for(way = 0; way < numways; way++) begin
+		  for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+			copyShadow #(.tagstart(tagstart),
+						 .logblockbytelen(logblockbytelen))
+			copyShadow(.clk,
+					   .start,
+					   .tag(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+					   .valid(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].ValidBits[index]),
+					   .dirty(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].DirtyBits[index]),
+					   .data(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+					   .index(index),
+					   .cacheWord(cacheWord),
+					   .CacheData(CacheData[way][index][cacheWord]),
+					   .CacheAdr(CacheAdr[way][index][cacheWord]),
+					   .CacheTag(CacheTag[way][index][cacheWord]),
+					   .CacheValid(CacheValid[way][index][cacheWord]),
+					   .CacheDirty(CacheDirty[way][index][cacheWord]));
+		  end
+		end
       end
-    end
+
+	  integer i, j, k;
+
+	  always @(posedge clk) begin
+		if (start) begin #1
+		  #1
+			for(i = 0; i < numlines; i++) begin
+			  for(j = 0; j < numways; j++) begin
+				for(k = 0; k < numwords; k++) begin
+				  if (CacheValid[j][i][k] && CacheDirty[j][i][k]) begin
+					ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+				  end
+				end	
+			  end
+			end
+		end
+	  end
+
+	  
+	end
   endgenerate
 
-  integer i, j, k;
-  
-  always @(posedge clk) begin
-    if (start) begin #1
-      #1
-      for(i = 0; i < numlines; i++) begin
-	for(j = 0; j < numways; j++) begin
-	  for(k = 0; k < numwords; k++) begin
-	  if (CacheValid[j][i][k] && CacheDirty[j][i][k]) begin
-	    ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
-	    end
-	  end	
-	end
-      end
-    end
-  end
 
+  
 
   flop #(1) doneReg(.clk(clk),
 		    .d(start),
