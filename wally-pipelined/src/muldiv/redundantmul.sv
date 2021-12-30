@@ -47,8 +47,6 @@ module redundantmul #(parameter WIDTH =8)(
 	    DW02_multp #(WIDTH, WIDTH, 2*WIDTH+2) mul(.a, .b, .tc(1'b0), .out0(tmp_out0), .out1(tmp_out1));
 	    assign out0 = tmp_out0[2*WIDTH-1:0];
 	    assign out1 = tmp_out1[2*WIDTH-1:0];
-    end else if (`DESIGN_COMPILER == 2) begin:mul // *** need to remove this
-	    mult_cs #(WIDTH) mul(.a, .b, .tc(1'b0), .sum(out0), .carry(out1));
     end else begin:mul // force a nonredunant multipler.  This will simulate properly and also is appropriate for FPGAs.
 	    assign out0 = a * b;
 	    assign out1 = 0;
