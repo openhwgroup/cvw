@@ -88,8 +88,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   always_comb begin
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)               BusNextState = STATE_BUS_READY;
-	                             else if(LsuRWM[0] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(LsuRWM[1] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_READ;
+	                             else if(LsuRWM[0] & (~CacheableM | ~`MEM_DCACHE)) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(LsuRWM[1] & (~CacheableM | ~`MEM_DCACHE)) BusNextState = STATE_BUS_UNCACHED_READ;
 		                         else if(DCacheFetchLine)            BusNextState = STATE_BUS_FETCH;
 		                         else if(DCacheWriteLine)            BusNextState = STATE_BUS_WRITE;
                                  else                             BusNextState = STATE_BUS_READY;
@@ -134,5 +134,6 @@ module busfsm #(parameter integer   WordCountThreshold,
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
-						   BusCurrState == STATE_BUS_UNCACHED_WRITE_DONE);
+						   BusCurrState == STATE_BUS_UNCACHED_WRITE_DONE) |
+						  ~`MEM_DCACHE; // if no dcache always select uncachedadr.
 endmodule
