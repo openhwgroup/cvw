@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // busfsm.sv
 //
-// Written: Ross Thompson ross1728@gmail.com
+// Written: Ross Thompson ross1728@gmail.com December 29, 2021
 // Modified: 
 //
 // Purpose: Load/Store Unit's interface to BUS
@@ -92,6 +92,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 		                         else if(LsuRWM[1] & ~CacheableM) BusNextState = STATE_BUS_UNCACHED_READ;
 		                         else if(DCacheFetchLine)            BusNextState = STATE_BUS_FETCH;
 		                         else if(DCacheWriteLine)            BusNextState = STATE_BUS_WRITE;
+                                 else                             BusNextState = STATE_BUS_READY;
       STATE_BUS_UNCACHED_WRITE:  if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		                         else                            BusNextState = STATE_BUS_UNCACHED_WRITE;
       STATE_BUS_UNCACHED_READ:   if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_READ_DONE;
@@ -106,6 +107,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 	                             else                            BusNextState = STATE_BUS_FETCH;
       STATE_BUS_WRITE:           if(WordCountFlag & LsuBusAck)   BusNextState = STATE_BUS_READY;
 	                             else                            BusNextState = STATE_BUS_WRITE;
+	  default:                                                   BusNextState = STATE_BUS_READY;
 	endcase
   end
 
