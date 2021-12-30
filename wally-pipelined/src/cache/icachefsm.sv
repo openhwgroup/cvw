@@ -35,14 +35,13 @@ module icachefsm
    input logic 		  ITLBMissF,
    input logic 		  ITLBWriteF,
 
-   input logic 		  ExceptionM, PendingInterruptM,
+   input logic 		  IgnoreRequest,
 
    // BUS interface
    input logic 		  ICacheBusAck,
 
    // icache internal inputs
    input logic 		  hit,
-   input logic 		  FetchCountFlag,
    input logic 		  spill,
 
    // icache internal outputs
@@ -54,12 +53,10 @@ module icachefsm
    output logic 	  ICacheStallF,
 
    // Bus interface outputs
-   output logic 	  IfuBusFetch,
+   output logic 	  ICacheFetchLine,
 
    // icache internal outputs
    output logic 	  spillSave,
-   output logic 	  CntEn,
-   output logic 	  CntReset,
    output logic [1:0] SelAdr,
    output logic 	  LRUWriteEn
    );
@@ -119,8 +116,6 @@ module icachefsm
 
   // Next state logic
   always_comb begin
-    CntReset = 1'b0;
-    PreCntEn = 1'b0;
     //IfuBusFetch = 1'b0;
     ICacheMemWriteEnable = 1'b0;
     spillSave = 1'b0;
@@ -132,11 +127,6 @@ module icachefsm
       STATE_READY: begin
         SelAdr = 2'b00;
         ICacheReadEn = 1'b1;
-/* -----\/----- EXCLUDED -----\/-----
-        if (ITLBMissF & ~(ExceptionM | PendingInterruptM)) begin
-          NextState = STATE_TLB_MISS;
-        end else 
- -----/\----- EXCLUDED -----/\----- */
 		if(ITLBMissF) begin
 		  NextState = STATE_READY;
 		  SelAdr = 2'b01;
@@ -157,11 +147,9 @@ module icachefsm
           LRUWriteEn = 1'b1;
 		  NextState = STATE_HIT_SPILL;
         end else if (~hit & ~spill) begin
-          CntReset = 1'b1;
 		  SelAdr = 2'b01;                                         /// *********(
           NextState = STATE_MISS_FETCH_WDV;
         end else if (~hit & spill) begin
-          CntReset = 1'b1;
           SelAdr = 2'b01;
           NextState = STATE_MISS_SPILL_FETCH_WDV;
         end else begin
@@ -180,15 +168,13 @@ module icachefsm
         if (hit) begin
           NextState = STATE_HIT_SPILL_FINAL;
         end else begin
-          CntReset = 1'b1;
           NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
         end
       end
       STATE_HIT_SPILL_MISS_FETCH_WDV: begin
         SelAdr = 2'b10;
         //IfuBusFetch = 1'b1;
-        PreCntEn = 1'b1;
-        if (FetchCountFlag & ICacheBusAck) begin
+        if (ICacheBusAck) begin
           NextState = STATE_HIT_SPILL_MISS_FETCH_DONE;
         end else begin
           NextState = STATE_HIT_SPILL_MISS_FETCH_WDV;
@@ -222,8 +208,7 @@ module icachefsm
       STATE_MISS_FETCH_WDV: begin
         SelAdr = 2'b01;
         //IfuBusFetch = 1'b1;
-        PreCntEn = 1'b1;
-        if (FetchCountFlag & ICacheBusAck) begin
+        if (ICacheBusAck) begin
           NextState = STATE_MISS_FETCH_DONE;	  
         end else begin
           NextState = STATE_MISS_FETCH_WDV;
@@ -255,9 +240,8 @@ module icachefsm
       // branch 4 miss spill hit, and 5 miss spill miss
       STATE_MISS_SPILL_FETCH_WDV: begin
         SelAdr = 2'b01;
-        PreCntEn = 1'b1;
         //IfuBusFetch = 1'b1;	
-        if (FetchCountFlag & ICacheBusAck) begin 
+        if (ICacheBusAck) begin 
           NextState = STATE_MISS_SPILL_FETCH_DONE;
         end else begin
           NextState = STATE_MISS_SPILL_FETCH_WDV;
@@ -282,7 +266,6 @@ module icachefsm
       end
       STATE_MISS_SPILL_2_START: begin
         if (~hit) begin
-          CntReset = 1'b1;
           NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
         end else begin
           ICacheReadEn = 1'b1;
@@ -299,9 +282,8 @@ module icachefsm
       end
       STATE_MISS_SPILL_MISS_FETCH_WDV: begin
         SelAdr = 2'b10;
-        PreCntEn = 1'b1;
         //IfuBusFetch = 1'b1;	
-        if (FetchCountFlag & ICacheBusAck) begin
+        if (ICacheBusAck) begin
           NextState = STATE_MISS_SPILL_MISS_FETCH_DONE;	  
         end else begin
           NextState = STATE_MISS_SPILL_MISS_FETCH_WDV;
@@ -358,10 +340,9 @@ module icachefsm
     endcase
   end
 
-  assign CntEn = PreCntEn & ICacheBusAck;
-  assign IfuBusFetch = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
-					  (CurrState == STATE_MISS_FETCH_WDV) ||
-					  (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
-					  (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
+  assign ICacheFetchLine = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
+						   (CurrState == STATE_MISS_FETCH_WDV) ||
+						   (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
+						   (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
   
 endmodule

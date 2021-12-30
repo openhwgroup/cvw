@@ -32,11 +32,11 @@ module ifu (
   input logic 		      FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
   input logic [`XLEN-1:0]     IfuBusHRDATA,
-  input logic 		      ICacheBusAck,
+  input logic 		      IfuBusAck,
   (* mark_debug = "true" *) output logic [`XLEN-1:0]    PCF, 
-  output logic [`PA_BITS-1:0] ICacheBusAdr,
-  output logic 		      IfuBusFetch,
-  output logic 		      ICacheStallF,
+  output logic [`PA_BITS-1:0] IfuBusAdr,
+  output logic 		      IfuBusRead,
+  output logic 		      IfuStallF,
   // Execute
   output logic [`XLEN-1:0]    PCLinkE,
   input logic 		      PCSrcE, 
@@ -156,6 +156,12 @@ module ifu (
   logic                        SelBPPredF;
   logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [4:0]                  InstrClassD, InstrClassE;
+
+  logic 					   ICacheFetchLine;
+  logic 					   BusStall;
+  logic 					   ICacheStallF;
+  logic 					   IgnoreRequest;
+  
   
 
   // *** put memory interface on here, InstrF becomes output
@@ -167,13 +173,62 @@ module ifu (
   // 1. ram // controlled by `MEM_IROM
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
-  icache icache(.clk, .reset, .CPUBusy(StallF), .ExceptionM, .PendingInterruptM, .IfuBusHRDATA, .ICacheBusAck,
-  .ICacheBusAdr, .IfuBusFetch, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
+
+  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
+  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   BLOCKLEN = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS : `XLEN;
+  localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
+
+  localparam integer   BLOCKBYTELEN = BLOCKLEN/8;
+  localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
+
+  logic [LOGWPL-1:0]   WordCount;
+  logic [BLOCKLEN-1:0] ICacheMemWriteData;
+  logic 			   ICacheBusAck;
+  logic [`PA_BITS-1:0] LocalIfuBusAdr;
+  logic [`PA_BITS-1:0] ICacheBusAdr;
+  logic 			   SelUncachedAdr;
+  
+    
+  
+  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
+				.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
+				.ICacheFetchLine,
 				.CacheableF,
-  .PCNextF(PCNextFPhys),
-  .PCPF(PCPFmmu),
-  .PCF,
-  .InvalidateICacheM);
+				.PCNextF(PCNextFPhys),
+				.PCPF(PCPFmmu),
+				.PCF,
+				.InvalidateICacheM);
+
+  
+  genvar 			   index;
+  generate
+    for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
+      flopen #(`XLEN) fb(.clk(clk),
+			 .en(IfuBusAck & IfuBusRead & (index == WordCount)),
+			 .d(IfuBusHRDATA),
+			 .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+    end
+  endgenerate
+
+  assign LocalIfuBusAdr = SelUncachedAdr ? PCPFmmu : ICacheBusAdr;
+  assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
+
+  busfsm #(WordCountThreshold, LOGWPL)
+  busfm(.clk, .reset, .IgnoreRequest,
+		.LsuRWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
+		.LsuBusAck(IfuBusAck),
+		.CPUBusy(StallF), .CacheableM(CacheableF),
+		.BusStall, .LsuBusWrite(), .LsuBusRead(IfuBusRead), .DCacheBusAck(ICacheBusAck),
+		.BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
+
+  assign IfuStallF = ICacheStallF | BusStall;
+
+  assign IgnoreRequest = ITLBMissF | ExceptionM | PendingInterruptM;
+
+
+
+
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
 
@@ -232,23 +287,12 @@ module ifu (
       // I am making the port connection explicit for now as I want to see them and they will be changing.
     
       bpred bpred(.clk, .reset,
-    .StallF, .StallD, .StallE,
-    .FlushF, .FlushD, .FlushE,
-
-    .PCNextF(PCNextF),
-    .BPPredPCF(BPPredPCF),
-    .SelBPPredF(SelBPPredF),
-    .PCE(PCE),
-    .PCSrcE(PCSrcE),
-    .IEUAdrE(IEUAdrE),
-    .PCD(PCD),
-    .PCLinkE(PCLinkE),
-    .InstrClassE(InstrClassE),
-    .BPPredWrongE(BPPredWrongE),
-     .BPPredDirWrongE(BPPredDirWrongE),
-     .BTBPredPCWrongE(BTBPredPCWrongE),
-     .RASPredPCWrongE(RASPredPCWrongE),
-     .BPPredClassNonCFIWrongE(BPPredClassNonCFIWrongE));
+				  .StallF, .StallD, .StallE,
+				  .FlushF, .FlushD, .FlushE,
+				  .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
+				  .PCD, .PCLinkE, .InstrClassE, .BPPredWrongE, .BPPredDirWrongE,
+				  .BTBPredPCWrongE, .RASPredPCWrongE, .BPPredClassNonCFIWrongE);
+	  
     end else begin : bpred
       assign BPPredPCF = {`XLEN{1'b0}};
       assign SelBPPredF = 1'b0;
@@ -291,13 +335,11 @@ module ifu (
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
 
   // Misaligned PC logic
-
-  generate
-    if (`C_SUPPORTED) // C supports compressed instructions on halfword boundaries
-      assign misaligned = PCNextF[0];
-    else // instructions must be on word boundaries
-      assign misaligned = |PCNextF[1:0];
-  endgenerate
+  // instruction address misalignment is generated by the target of control flow instructions, not
+  // the fetch itself.
+  assign misaligned = PCNextF[0] | (PCNextF[1] & ~`C_SUPPORTED);
+  // do we really need to have check if the instruction is control flow? Yes
+  // Branches are updated in the execution stage but traps are updated in the memory stage.
 
   // pipeline misaligned faults to M stage
   assign BranchMisalignedFaultE = misaligned & PCSrcE; // E-stage (Branch/Jump) misaligned
