@@ -1,6 +1,7 @@
 
 `include "wally-config.vh"
 // `include "../../config/rv64icfd/wally-config.vh"
+//  `define XLEN 64
 module fcvt (
 	input logic             XSgnE,      // X's sign
     input logic [10:0]      XExpE,      // X's exponent
@@ -59,7 +60,7 @@ module fcvt (
       //  fcvt.lu.d = 111
       //  fcvt.d.l  = 100
       //  fcvt.d.lu = 110
-      //  {long, unsigned, to int, from int}
+      //  {long, unsigned, to int}
    
     // calculate signals based off the input and output's size
     assign Res64 = (FOpCtrlE[0]&FOpCtrlE[2]) | (FmtE&~FOpCtrlE[0]);
@@ -158,19 +159,24 @@ module fcvt (
 
     // select the integer result
     assign CvtIntRes = Of ? FOpCtrlE[1] ? {64{1'b1}} : SgnRes ? {33'b0, {31{1'b1}}}: {1'b0, {63{1'b1}}} : 
-                    Uf ? FOpCtrlE[1] ? 64'b0 : SgnRes ? {32'b0, 1'b1, 31'b0} : {1'b1, 63'b0} :
+                    Uf ? FOpCtrlE[1] ? {63'b0, Plus1&~XSgnE} : SgnRes ? {32'b0, 1'b1, 31'b0} : {1'b1, 63'b0} :
 		            Rounded[64-1:0];
 
     // select the floating point result            
     assign CvtFPRes = FmtE ? {ResSgn, ResExp, ResFrac} : {{32{1'b1}}, ResSgn, ResExp[7:0], ResFrac[51:29]};
 
     // select the result
-    assign CvtResE = ~FOpCtrlE[0] ? CvtFPRes : CvtIntRes;
+    assign CvtResE = FOpCtrlE[0] ? CvtIntRes : CvtFPRes;
 
     // calculate the flags
-    //      - to int only sets the invalid flag
-    //      - from int only sets the inexact flag
-    assign CvtFlgE = {(Of | Uf)&FOpCtrlE[0], 3'b0, (Guard|Round|Sticky)&~FOpCtrlE[0]};
+    //      - only set invalid flag for out-of-range vales if it isn't be indicated by the inexact
+    //      - don't set inexact flag if converting a really large number (closest __ bit integer value is the max value)
+    //      - don't set inexact flag if converting negitive or tiny number to unsigned (closest integer value is 0 or 1)
+    logic Invalid, Inexact;
+    assign Invalid = (Of | Uf)&FOpCtrlE[0];
+    assign Inexact = (Guard|Round|Sticky)&~((&FOpCtrlE[1:0]&Uf&~(Plus1&~XSgnE))|(FOpCtrlE[0]&Of));
+    assign CvtFlgE = {Invalid&~Inexact, 3'b0, Inexact};
+    // assign CvtFlgE = {(Of | Uf)&FOpCtrlE[0], 3'b0, (Guard|Round|Sticky)&~FOpCtrlE[0]};
 
 
 
