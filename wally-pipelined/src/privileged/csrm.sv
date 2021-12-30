@@ -144,7 +144,7 @@ module csrm #(parameter
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); //busybear: changed reset value to 0
   generate
-    if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin // DELEG registers should exist
+    if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin:deleg // DELEG registers should exist
       flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, MEDELEG_REGW);
       flopenr #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, MIDELEG_REGW);
     end else begin
@@ -158,13 +158,12 @@ module csrm #(parameter
   flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
   if(`QEMU) assign MTVAL_REGW = `XLEN'b0;
   else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
-  generate
-    if (`BUSYBEAR == 1)
+  generate // *** needs comment about bit 1
+    if (`BUSYBEAR == 1) begin:counters
       flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, MCOUNTEREN_REGW);
-    else if (`BUILDROOT == 1)
+    end else  begin:counters
       flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
-    else
-      flopens #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
+    end
   endgenerate
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
 
@@ -187,10 +186,6 @@ module csrm #(parameter
         entry = (CSRAdrM - PMPCFG0)*4;
         CSRMReadValM = {PMPCFG_ARRAY_REGW[entry+3],PMPCFG_ARRAY_REGW[entry+2],PMPCFG_ARRAY_REGW[entry+1],PMPCFG_ARRAY_REGW[entry]};
       end
-
-      /*
-      if (~CSRAdrM[0]) CSRMReadValM = {PMPCFG_ARRAY_REGW[]};
-      else             CSRMReadValM = {{(`XLEN-32){1'b0}}, PMPCFG_ARRAY_REGW[(CSRAdrM - PMPCFG0-1)/2][63:32]};*/
     end
     else case (CSRAdrM) 
       MISA_ADR:  CSRMReadValM = MISA_REGW;
@@ -201,8 +196,6 @@ module csrm #(parameter
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = 0; // flush this out later if MBE and SBE fields are supported
       MTVEC:     CSRMReadValM = MTVEC_REGW;
-      //MEDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MEDELEG_REGW};
-      //MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
       MEDELEG:   CSRMReadValM = MEDELEG_REGW;
       MIDELEG:   CSRMReadValM = MIDELEG_REGW;
       MIP:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW};
