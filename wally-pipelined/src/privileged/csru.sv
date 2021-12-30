@@ -45,7 +45,7 @@ module csru #(parameter
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
   generate
-    if (`F_SUPPORTED | `D_SUPPORTED) begin
+    if (`F_SUPPORTED | `D_SUPPORTED) begin:csru
       logic [4:0] FFLAGS_REGW;
       logic [2:0] NextFRMM;
       logic [4:0] NextFFLAGSM;

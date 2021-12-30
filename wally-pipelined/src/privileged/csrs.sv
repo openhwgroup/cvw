@@ -70,7 +70,7 @@ module csrs #(parameter
 
   // Supervisor mode CSRs sometimes supported
   generate
-    if (`S_SUPPORTED) begin
+    if (`S_SUPPORTED) begin:csrs
       logic WriteSTVECM;
       logic WriteSSCRATCHM, WriteSEPCM;
       logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
@@ -96,13 +96,14 @@ module csrs #(parameter
         flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
       else
         assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
-      if (`BUSYBEAR == 1)
+      if (`BUSYBEAR == 1) begin:scounteren
         flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, SCOUNTEREN_REGW);
-      else if (`BUILDROOT == 1)
+      end else if (`BUILDROOT == 1) begin:scounteren
         flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
-      else
+      end else begin:scounteren
         flopens #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
-      if (`N_SUPPORTED) begin
+      end
+      if (`N_SUPPORTED) begin:nregs
         logic WriteSEDELEGM, WriteSIDELEGM;
         assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
         assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
@@ -114,7 +115,7 @@ module csrs #(parameter
       end
 
       // CSR Reads
-      always_comb begin
+      always_comb begin:csrr
         IllegalCSRSAccessM = !(`N_SUPPORTED)  && (CSRAdrM == SEDELEG || CSRAdrM == SIDELEG); // trap on DELEG register access when no N-mode
         case (CSRAdrM) 
           SSTATUS:   CSRSReadValM = SSTATUS_REGW;

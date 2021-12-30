@@ -128,7 +128,7 @@ module datapath (
     if (`F_SUPPORTED) begin:fpmux
       mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
       mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
-    end else begin
+    end else begin:fpmux
       assign ResultM = IEUResultM;
       assign WriteDataE = ForwardedSrcBE;
     end

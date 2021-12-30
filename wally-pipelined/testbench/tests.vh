@@ -26,7 +26,8 @@
 `define IMPERASTEST   "0"
 `define RISCVARCHTEST "1"
 `define WALLYTEST "2"
-`define MYIMPERASTEST   "3"
+`define MYIMPERASTEST   "3" 
+// *** remove MYIMPERASTEST cases when ported 
 
 string tvpaths[] = '{
     "../../addins/imperas-riscv-tests/work/",
@@ -1484,7 +1485,11 @@ string imperas32f[] = '{
  };
 
  string wally64priv[] = '{
-    `WALLYTEST
+    `WALLYTEST,
+    "rv64i_m/privilege/WALLY-MMU-SV39", "30A0",
+    "rv64i_m/privilege/WALLY-MMU-SV48", "30A0",
+    "rv64i_m/privilege/WALLY-PMA", "30A0",
+    "rv64i_m/privilege/WALLY-PMP", "30A0"
  };
 
  string wally64periph[] = '{
@@ -1497,7 +1502,10 @@ string wally32i[] = '{
  };
 
  string wally32priv[] = '{
-    `WALLYTEST
+    `WALLYTEST,
+    "rv32i_m/privilege/WALLY-MMU-SV32", "3080",
+    "rv32i_m/privilege/WALLY-PMA", "3080",
+    "rv32i_m/privilege/WALLY-PMP", "3080"
  };
 
  string wally32periph[] = '{
