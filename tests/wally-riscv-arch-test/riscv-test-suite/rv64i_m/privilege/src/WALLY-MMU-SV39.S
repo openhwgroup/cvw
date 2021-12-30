@@ -47,22 +47,22 @@ test_contents:
 # test 12.3.1.1.1 write page tables / entries to phyiscal memory
 # sv39 page table (See Figure 12.12***):
 # Level 2 page table, situated at 0x8000D000
-.8byte 0x000000008000D000, 0x0000000020004CC1, 0x0 # points to level 1 page table A
-.8byte 0x000000008000D008, 0x00000000200050C1, 0x0 # points to level 1 page table B
+.8byte 0x000000008000D000, 0x0000000020004C01, 0x0 # points to level 1 page table A
+.8byte 0x000000008000D008, 0x0000000020005001, 0x0 # points to level 1 page table B
 .8byte 0x000000008000D010, 0x00000000200000CF, 0x0 # Vaddr 0x8000_0000, Paddr 0x80000000: aligned gigapage (program and data memory)
 .8byte 0x000000008000D018, 0x00004000004000C7, 0x0 # Vaddr 0xC000_0000: misaligned gigapage
-.8byte 0x000000008000DFF8, 0x00000000200054E1, 0x0 # points to level 1 page table C
+.8byte 0x000000008000DFF8, 0x0000000020005421, 0x0 # points to level 1 page table C
 # Level 1 page table A
-.8byte 0x0000000080013000, 0x00000000200060C1, 0x0 # points to level 0 page table A
+.8byte 0x0000000080013000, 0x0000000020006001, 0x0 # points to level 0 page table A
 # Level 1 page table B
 .8byte 0x0000000080014000, 0x00000000200000CB, 0x0 # Vaddr 0x4000_0000, Paddr 0x80000000: aligned megapage, W=0, used for execution tests
 .8byte 0x0000000080014008, 0x00000400000080C3, 0x0 # Vaddr 0x4020_0000: misaligned megapage
 .8byte 0x0000000080014010, 0x00000000200000DF, 0x0 # Vaddr 0x4040_0000, Paddr 0x80000000: aligned megapage, aliased with program, U=1
 .8byte 0x0000000080014018, 0x00000000210800C9, 0x0 # Vaddr 0x4060_0000, Paddr 0x84200000: R=0, reads should fault
 # Level 1 page table C
-.8byte 0x0000000080015FF8, 0x00000000200058C1, 0x0 # points to level 0 page table B
+.8byte 0x0000000080015FF8, 0x0000000020005801, 0x0 # points to level 0 page table B
 # Level 0 page table A
-.8byte 0x0000000080018000, 0x00000000200070D1, 0x0 # Vaddr 0x0000: bad PTE points to level -1 table
+.8byte 0x0000000080018000, 0x0000000020007001, 0x0 # Vaddr 0x0000: bad PTE points to level -1 table
 .8byte 0x0000000080018008, 0x00000000200800DF, 0x0 # Vaddr 0x1000, Paddr = 0x80200000: aligned kilopage
 .8byte 0x0000000080018010, 0x00000000200810D5, 0x0 # Vaddr 0x2000: bad PTE has W but not R
 .8byte 0x0000000080018018, 0x0000000020080817, 0x0 # Vaddr 0x3000 Paddr 0x80202000: A=0, should cause read fault
