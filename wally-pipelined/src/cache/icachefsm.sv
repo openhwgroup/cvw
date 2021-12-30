@@ -29,7 +29,7 @@ module icachefsm
   (// Inputs from pipeline
    input logic 		  clk, reset,
 
-   input logic 		  StallF,
+   input logic 		  CPUBusy,
 
    // inputs from mmu
    input logic 		  ITLBMissF,
@@ -105,10 +105,6 @@ module icachefsm
 					   STATE_MISS_SPILL_FINAL, // this state replicates STATE_READY's replay of the
 					   // spill access but does nto consider spill.  It also does not do another operation.
 
-					   STATE_INVALIDATE, // *** not sure if invalidate or evict? invalidate by cache block or address?
-					   STATE_TLB_MISS,
-					   STATE_TLB_MISS_DONE,
-
 					   STATE_CPU_BUSY,
 					   STATE_CPU_BUSY_SPILL		
 					   } statetype;
@@ -149,7 +145,7 @@ module icachefsm
 		else if (hit & ~spill) begin
           ICacheStallF = 1'b0;
 		  LRUWriteEn = 1'b1;
-		  if(StallF) begin
+		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
 			SelAdr = 2'b01;
 		  end else begin
@@ -169,7 +165,7 @@ module icachefsm
           SelAdr = 2'b01;
           NextState = STATE_MISS_SPILL_FETCH_WDV;
         end else begin
-		  if(StallF) begin
+		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
 			SelAdr = 2'b01;
 		  end else begin
@@ -214,7 +210,7 @@ module icachefsm
         ICacheStallF = 1'b0;
 		LRUWriteEn = 1'b1;
 		
-		if(StallF) begin
+		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY_SPILL;
 		  SelAdr = 2'b10;
 		end else begin
@@ -248,7 +244,7 @@ module icachefsm
         ICacheReadEn = 1'b1;
 		ICacheStallF = 1'b0;
 		LRUWriteEn = 1'b1;
-		if(StallF) begin
+		if(CPUBusy) begin
 		  SelAdr = 2'b01;
 		  NextState = STATE_CPU_BUSY;
 		  SelAdr = 2'b01;
@@ -293,7 +289,7 @@ module icachefsm
           SelAdr = 2'b00;
           ICacheStallF = 1'b0;
 		  LRUWriteEn = 1'b1;
-		  if(StallF) begin
+		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY_SPILL;
 			SelAdr = 2'b10;
 		  end else begin
@@ -326,7 +322,7 @@ module icachefsm
         SelAdr = 2'b00;
         ICacheStallF = 1'b0;	
 		LRUWriteEn = 1'b1;
-		if(StallF) begin
+		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY_SPILL;
 		  SelAdr = 2'b10;
 		end else begin
@@ -335,7 +331,7 @@ module icachefsm
       end
       STATE_CPU_BUSY: begin
 		ICacheStallF = 1'b0;
-        if(StallF) begin
+        if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
 		  SelAdr = 2'b01;
 		end
@@ -346,7 +342,7 @@ module icachefsm
       STATE_CPU_BUSY_SPILL: begin
 		ICacheStallF = 1'b0;
 		ICacheReadEn = 1'b1;
-		if(StallF) begin
+		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY_SPILL;
 		  SelAdr = 2'b10;
 		end

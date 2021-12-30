@@ -104,6 +104,8 @@ module ifu (
   logic [`XLEN+1:0]            PCFExt;
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   logic 					   BPPredWrongM;
+  logic 					   CacheableF;
+  
   
 
   generate
@@ -136,7 +138,7 @@ module ifu (
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
-       .Cacheable(), .Idempotent(), .AtomicAllowed(),
+       .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
 
        .clk, .reset,
        .SATP_REGW,
@@ -165,9 +167,9 @@ module ifu (
   // 1. ram // controlled by `MEM_IROM
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
-  icache icache(.clk, .reset, .StallF, .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
+  icache icache(.clk, .reset, .CPUBusy(StallF), .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
   .InstrPAdrF, .InstrReadF, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
-
+				.CacheableF,
   .PCNextF(PCNextFPhys),
   .PCPF(PCPFmmu),
   .PCF,
