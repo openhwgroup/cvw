@@ -109,7 +109,7 @@ module icache
   
   logic [BLOCKLEN-1:0] 		  ReadDataLineWayMasked [NUMWAYS-1:0];
 
-
+  logic [31:0] 				  ReadLineSetsF [`ICACHE_BLOCKLENINBITS/16-1:0];
   
   logic [`PA_BITS-1:0] 		  BasePAdrF, BasePAdrMaskedF;
   logic [OFFSETLEN-1:0] 	  BasePAdrOffsetF;
@@ -168,32 +168,17 @@ module icache
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
   or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadLineF));
+
+  genvar index;
+  generate
+	for(index = 0; index < BLOCKLEN / 16 - 1; index++) begin
+	  assign ReadLineSetsF[index] = ReadLineF[((index+1)*16)+16-1 : (index*16)];
+	end
+	assign ReadLineSetsF[BLOCKLEN/16-1] = {16'b0, ReadLineF[BLOCKLEN-1:BLOCKLEN-16]};
+  endgenerate
+
+  assign ICacheMemReadData = ReadLineSetsF[PCTagF[$clog2(BLOCKLEN / 32) + 1 : 1]];
   
-  
-  always_comb begin
-    case (PCTagF[4:1])
-      0: ICacheMemReadData = ReadLineF[31:0];
-      1: ICacheMemReadData = ReadLineF[47:16];
-      2: ICacheMemReadData = ReadLineF[63:32];
-      3: ICacheMemReadData = ReadLineF[79:48];
-
-      4: ICacheMemReadData = ReadLineF[95:64];
-      5: ICacheMemReadData = ReadLineF[111:80];
-      6: ICacheMemReadData = ReadLineF[127:96];
-      7: ICacheMemReadData = ReadLineF[143:112];      
-
-      8: ICacheMemReadData = ReadLineF[159:128];      
-      9: ICacheMemReadData = ReadLineF[175:144];      
-      10: ICacheMemReadData = ReadLineF[191:160];      
-      11: ICacheMemReadData = ReadLineF[207:176];
-
-      12: ICacheMemReadData = ReadLineF[223:192];
-      13: ICacheMemReadData = ReadLineF[239:208];
-      14: ICacheMemReadData = ReadLineF[255:224];
-      15: ICacheMemReadData = {16'b0, ReadLineF[255:240]};
-    endcase
-  end
-
   // spills require storing the first cache block so it can merged
   // with the second
   // can optimize size, for now just make it the size of the data
@@ -208,7 +193,7 @@ module icache
 
   // Detect if the instruction is compressed
   assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-  assign spill = PCF[4:1] == 4'b1111 ? 1'b1 : 1'b0;
+  assign spill = &PCF[$clog2(BLOCKLEN/32)+1:1];
 
 
   // to compute the fetch address we need to add the bit shifted
