@@ -28,94 +28,94 @@
 module icache
   (
    // Basic pipeline stuff
-   input logic 		       clk, reset,
-   input logic 		       StallF, 
-   input logic [`PA_BITS-1:0]  PCNextF,
-   input logic [`PA_BITS-1:0]  PCPF,
-   input logic [`XLEN-1:0]  PCF,
+   input logic 				  clk, reset,
+   input logic 				  CPUBusy, 
+   input logic [`PA_BITS-1:0] PCNextF,
+   input logic [`PA_BITS-1:0] PCPF,
+   input logic [`XLEN-1:0] 	  PCF,
 
-   input logic ExceptionM, PendingInterruptM,
-   
+   input logic 				  ExceptionM, PendingInterruptM,
+  
    // Data read in from the ebu unit
-   (* mark_debug = "true" *) input logic [`XLEN-1:0]     InstrInF,
-   (* mark_debug = "true" *) input logic 		       InstrAckF,
+   (* mark_debug = "true" *) input logic [`XLEN-1:0] InstrInF,
+   (* mark_debug = "true" *) input logic InstrAckF,
    // Read requested from the ebu unit
    (* mark_debug = "true" *) output logic [`PA_BITS-1:0] InstrPAdrF,
-   (* mark_debug = "true" *) output logic 	       InstrReadF,
+   (* mark_debug = "true" *) output logic InstrReadF,
    // High if the instruction currently in the fetch stage is compressed
-   output logic 	       CompressedF,
+   output logic 			  CompressedF,
    // High if the icache is requesting a stall
-   output logic 	       ICacheStallF,
-   input logic 		       ITLBMissF,
-   input logic 		       ITLBWriteF,
-   input logic 		       InvalidateICacheM,
-   
+   output logic 			  ICacheStallF,
+   input logic 				  CacheableF,
+   input logic 				  ITLBMissF,
+   input logic 				  ITLBWriteF,
+   input logic 				  InvalidateICacheM,
+  
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
-   (* mark_debug = "true" *) output logic [31:0] 	       FinalInstrRawF
+   (* mark_debug = "true" *) output logic [31:0] FinalInstrRawF
    );
 
   // Configuration parameters
-  localparam integer 	    BLOCKLEN = `ICACHE_BLOCKLENINBITS;
-  localparam integer 	    NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_BLOCKLENINBITS;
-  localparam integer 	    BLOCKBYTELEN = BLOCKLEN/8;
+  localparam integer 		  BLOCKLEN = `ICACHE_BLOCKLENINBITS;
+  localparam integer 		  NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_BLOCKLENINBITS;
+  localparam integer 		  BLOCKBYTELEN = BLOCKLEN/8;
 
-  localparam integer 	    OFFSETLEN = $clog2(BLOCKBYTELEN);
-  localparam integer 	    INDEXLEN = $clog2(NUMLINES);
-  localparam integer 	    TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
+  localparam integer 		  OFFSETLEN = $clog2(BLOCKBYTELEN);
+  localparam integer 		  INDEXLEN = $clog2(NUMLINES);
+  localparam integer 		  TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
 
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
   localparam FetchCountThreshold = WORDSPERLINE - 1;
 
-  localparam integer 	       PA_WIDTH = `PA_BITS - 2;
-  localparam integer 	       NUMWAYS = `ICACHE_NUMWAYS;
+  localparam integer 		  PA_WIDTH = `PA_BITS - 2;
+  localparam integer 		  NUMWAYS = `ICACHE_NUMWAYS;
   
 
   // Input signals to cache memory
-  logic 		    ICacheMemWriteEnable;
-  logic [BLOCKLEN-1:0] 	    ICacheMemWriteData;
-  logic [`PA_BITS-1:0] 	    PCTagF;  
+  logic 					  ICacheMemWriteEnable;
+  logic [BLOCKLEN-1:0] 		  ICacheMemWriteData;
+  logic [`PA_BITS-1:0] 		  PCTagF;  
   // Output signals from cache memory
-  logic [31:0] 		    ICacheMemReadData;
-  logic 		    ICacheReadEn;
-  logic [BLOCKLEN-1:0] 	    ReadLineF;
+  logic [31:0] 				  ICacheMemReadData;
+  logic 					  ICacheReadEn;
+  logic [BLOCKLEN-1:0] 		  ReadLineF;
   
 
-  logic [15:0] 			 SpillDataBlock0;
-  logic 			 spill;
-  logic 			 spillSave;
+  logic [15:0] 				  SpillDataBlock0;
+  logic 					  spill;
+  logic 					  spillSave;
 
-  logic 			 FetchCountFlag;
-  logic 			 CntEn;
+  logic 					  FetchCountFlag;
+  logic 					  CntEn;
   
-  logic [1:1] 			 SelAdr_q;
+  logic [1:1] 				  SelAdr_q;
   
   
-  logic [LOGWPL-1:0] 	       FetchCount, NextFetchCount;
- 
-  logic [`PA_BITS-1:0] 	       PCPSpillF;
+  logic [LOGWPL-1:0] 		  FetchCount, NextFetchCount;
+  
+  logic [`PA_BITS-1:0] 		  PCPSpillF;
 
-  logic 		       CntReset;
-  logic [1:0] 		       SelAdr;
-  logic [INDEXLEN-1:0]	       RAdr;
-  logic [NUMWAYS-1:0] 	       VictimWay;
-  logic 		       LRUWriteEn;
-  logic [NUMWAYS-1:0] 	       WayHit;
-  logic 		       hit;
+  logic 					  CntReset;
+  logic [1:0] 				  SelAdr;
+  logic [INDEXLEN-1:0] 		  RAdr;
+  logic [NUMWAYS-1:0] 		  VictimWay;
+  logic 					  LRUWriteEn;
+  logic [NUMWAYS-1:0] 		  WayHit;
+  logic 					  hit;
   
   
-  logic [BLOCKLEN-1:0] 	       ReadDataBlockWayMasked [NUMWAYS-1:0];
+  logic [BLOCKLEN-1:0] 		  ReadDataLineWayMasked [NUMWAYS-1:0];
 
 
-  logic 		       CacheableF;
   
-  logic [`PA_BITS-1:0] 	       BasePAdrF, BasePAdrMaskedF;
-  logic [OFFSETLEN-1:0]        BasePAdrOffsetF;
+  logic [`PA_BITS-1:0] 		  BasePAdrF, BasePAdrMaskedF;
+  logic [OFFSETLEN-1:0] 	  BasePAdrOffsetF;
   
   
-  logic [NUMWAYS-1:0] 	       SRAMWayWriteEnable;
+  logic [NUMWAYS-1:0] 		  SRAMWayWriteEnable;
 
 
   // on spill we want to get the first 2 bytes of the next cache block.
@@ -125,39 +125,38 @@ module icache
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d1(PCF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .d2(PCPSpillF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-	    .s(SelAdr),
-	    .y(RAdr));
+			.d1(PCF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			.d2(PCPSpillF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			.s(SelAdr),
+			.y(RAdr));
 
-  
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN), .DIRTY_BITS(0))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
-		      .PAdr(PCTagF),
-		      .WriteEnable(SRAMWayWriteEnable),
-		      .VDWriteEnable(1'b0),
-		      .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
-		      .TagWriteEnable(SRAMWayWriteEnable),
-		      .WriteData(ICacheMemWriteData),
-		      .SetValid(ICacheMemWriteEnable),
-		      .ClearValid(1'b0), .SetDirty(1'b0), .ClearDirty(1'b0), .SelEvict(1'b0),
-		      .VictimWay,
-		      .FlushWay(1'b0), .SelFlush(1'b0),
-		      .ReadDataBlockWayMasked, .WayHit,
-		      .VictimDirtyWay(), .VictimTagWay(),
-		      .InvalidateAll(InvalidateICacheM));
+					  .PAdr(PCTagF),
+					  .WriteEnable(SRAMWayWriteEnable),
+					  .VDWriteEnable(1'b0),
+					  .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
+					  .TagWriteEnable(SRAMWayWriteEnable),
+					  .WriteData(ICacheMemWriteData),
+					  .SetValid(ICacheMemWriteEnable),
+					  .ClearValid(1'b0), .SetDirty(1'b0), .ClearDirty(1'b0), .SelEvict(1'b0),
+					  .VictimWay,
+					  .FlushWay(1'b0), .SelFlush(1'b0),
+					  .ReadDataLineWayMasked, .WayHit,
+					  .VictimDirtyWay(), .VictimTagWay(),
+					  .InvalidateAll(InvalidateICacheM));
   
   generate
     if(NUMWAYS > 1) begin
       cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
       cachereplacementpolicy(.clk, .reset,
-			     .WayHit,
-			     .VictimWay,
-			     .LsuPAdrM(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			     .RAdr,
-			     .LRUWriteEn); // *** connect
+							 .WayHit,
+							 .VictimWay,
+							 .LsuPAdrM(PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+							 .RAdr,
+							 .LRUWriteEn);
     end else begin
       assign VictimWay = 1'b1; // one hot.
     end
@@ -165,10 +164,10 @@ module icache
 
   assign hit = | WayHit;
 
-  // ReadDataBlockWayMasked is a 2d array of cache block len by number of ways.
+  // ReadDataLineWayMasked is a 2d array of cache block len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataBlockWayMasked), .y(ReadLineF));
+  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadLineF));
   
   
   always_comb begin
@@ -200,10 +199,10 @@ module icache
   // can optimize size, for now just make it the size of the data
   // leaving the cache memory. 
   flopenr #(16) SpillInstrReg(.clk(clk),
-			      .en(spillSave),
-			      .reset(reset),
-			      .d(ICacheMemReadData[15:0]),
-			      .q(SpillDataBlock0));
+							  .en(spillSave),
+							  .reset(reset),
+							  .d(ICacheMemReadData[15:0]),
+							  .q(SpillDataBlock0));
 
   assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
 
@@ -218,10 +217,10 @@ module icache
 
   flopenr #(LOGWPL) 
   FetchCountReg(.clk(clk),
-		.reset(reset | CntReset),
-		.en(CntEn),
-		.d(NextFetchCount),
-		.q(FetchCount));
+				.reset(reset | CntReset),
+				.en(CntEn),
+				.d(NextFetchCount),
+				.q(FetchCount));
 
   assign NextFetchCount = FetchCount + 1'b1;
   
@@ -231,10 +230,10 @@ module icache
   generate
     for (i = 0; i < WORDSPERLINE; i++) begin:storebuffer
       flopenr #(`XLEN) sb(.clk(clk),
-			    .reset(reset), 
-			    .en(InstrAckF & (i == FetchCount)),
-			    .d(InstrInF),
-			    .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
+						  .reset(reset), 
+						  .en(InstrAckF & (i == FetchCount)),
+						  .d(InstrInF),
+						  .q(ICacheMemWriteData[(i+1)*`XLEN-1:i*`XLEN]));
     end
   endgenerate
 
@@ -242,25 +241,18 @@ module icache
   // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
   // *** read enable may not be necessary.
   flopenr #(1) SelAdrReg(.clk(clk),
-			.reset(reset),
-			.en(ICacheReadEn),
-			.d(SelAdr[1]),
-			.q(SelAdr_q[1]));
+						 .reset(reset),
+						 .en(ICacheReadEn),
+						 .d(SelAdr[1]),
+						 .q(SelAdr_q[1]));
   
   assign PCTagF = SelAdr_q[1] ? PCPSpillF : PCPF;
 
   // unlike the dcache the victim is never dirty so no eviction is necessary.
-/* -----\/----- EXCLUDED -----\/-----
-  mux2 #(`PA_BITS) BaseAdrMux(.d0(PCTagF),
-			      .d1({VictimTag, PCTagF[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-			      .s(SelEvict),
-			      .y(BasePAdrF));
- -----/\----- EXCLUDED -----/\----- */
   assign BasePAdrF = PCTagF;
 
   // if not cacheable the offset bits needs to be sent to the EBU.
   // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
-  assign CacheableF = 1'b1; // *** BUG needs to be an input from MMU.
   assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : BasePAdrF[OFFSETLEN-1:0];
   assign BasePAdrMaskedF = {BasePAdrF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
   
@@ -271,25 +263,25 @@ module icache
   assign SRAMWayWriteEnable = ICacheMemWriteEnable ? VictimWay : '0;
 
   icachefsm  controller(.clk,
-			.reset,
-			.StallF,
-			.ICacheReadEn,
-			.ICacheMemWriteEnable,
-			.ICacheStallF,
-			.ITLBMissF,
-			.ITLBWriteF,
-			.ExceptionM,
-			.PendingInterruptM,
-			.InstrAckF,
-			.InstrReadF,
-			.hit,
-			.FetchCountFlag,
-			.spill,
-			.spillSave,
-			.CntEn,
-			.CntReset,
-			.SelAdr,
-			.LRUWriteEn);
+						.reset,
+						.CPUBusy,
+						.ICacheReadEn,
+						.ICacheMemWriteEnable,
+						.ICacheStallF,
+						.ITLBMissF,
+						.ITLBWriteF,
+						.ExceptionM,
+						.PendingInterruptM,
+						.InstrAckF,
+						.InstrReadF,
+						.hit,
+						.FetchCountFlag,
+						.spill,
+						.spillSave,
+						.CntEn,
+						.CntReset,
+						.SelAdr,
+						.LRUWriteEn);
 
 endmodule
 
