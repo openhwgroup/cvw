@@ -182,12 +182,12 @@ module controller(
   // Ordinary fence is presently a nop
   // FENCE.I flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
   generate
-    if (`ZIFENCEI_SUPPORTED & `MEM_ICACHE) begin
+    if (`ZIFENCEI_SUPPORTED & `MEM_ICACHE) begin:fencei
       logic FenceID;
       assign FenceID = FenceD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
       assign InvalidateICacheD = FenceID;
       assign FlushDCacheD = FenceID;
-    end else begin
+    end else begin:fencei
       assign InvalidateICacheD = 0;
       assign FlushDCacheD = 0;
     end

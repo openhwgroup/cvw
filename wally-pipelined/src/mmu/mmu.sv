@@ -91,7 +91,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 
   // only instantiate TLB if Virtual Memory is supported
   generate
-    if (`MEM_VIRTMEM) begin
+    if (`MEM_VIRTMEM) begin:tlb
       logic ReadAccess, WriteAccess;
       assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
       assign WriteAccess = WriteAccessM;
@@ -101,7 +101,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 	    .VAdr,
 	    .*);
 
-    end else begin // just pass address through as physical
+    end else begin:tlb// just pass address through as physical
       assign Translate = 0;
       assign TLBMiss = 0;
       assign TLBHit = 1; // *** is this necessary
@@ -117,18 +117,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   ///////////////////////////////////////////
 
   pmachecker pmachecker(.*);
-
-  // if the number of entries is zero  or no csr no pmp checker
-  generate
-	if(`PMP_ENTRIES > 0) begin : pmpchecker
-	  pmpchecker pmpchecker(.*);
-	end else begin
-	  assign PMPInstrAccessFaultF = 1'b0;
-	  assign PMPLoadAccessFaultM = 1'b0;
-	  assign PMPStoreAccessFaultM = 1'b0;
-	end
-  endgenerate
-
+  pmpchecker pmpchecker(.*);
 
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
 //  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;

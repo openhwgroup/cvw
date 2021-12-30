@@ -142,7 +142,7 @@ module dcache
 					  .InvalidateAll(1'b0));
 
   generate
-    if(NUMWAYS > 1) begin
+    if(NUMWAYS > 1) begin:vict
       cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
       cachereplacementpolicy(.clk, .reset,
 							 .WayHit,
@@ -150,7 +150,7 @@ module dcache
 							 .LsuPAdrM(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 							 .RAdr,
 							 .LRUWriteEn);
-    end else begin
+    end else begin:vict
       assign VictimWay = 1'b1; // one hot.
     end
   endgenerate
@@ -171,7 +171,7 @@ module dcache
   // *** consider using a limited range shift to do this final muxing.
   genvar index;
   generate
-    for (index = 0; index < WORDSPERLINE; index++) begin
+    for (index = 0; index < WORDSPERLINE; index++) begin:readdatablocksetsmux
       assign ReadDataBlockSetsM[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
     end
   endgenerate

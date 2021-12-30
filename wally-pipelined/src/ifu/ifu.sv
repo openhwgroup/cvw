@@ -109,10 +109,10 @@ module ifu (
   
 
   generate
-    if (`XLEN==32) begin
+    if (`XLEN==32) begin:pcnextfphys
       //assign PCPF = PCPFmmu[31:0];
       assign PCNextFPhys = {{(`PA_BITS-`XLEN){1'b0}}, PCNextF};
-    end else begin
+    end else begin:pcnextfphys
       //assign PCPF = {8'b0, PCPFmmu};
       assign PCNextFPhys = PCNextF[`PA_BITS-1:0];
     end
