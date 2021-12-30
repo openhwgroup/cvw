@@ -113,7 +113,7 @@ module wallypipelinedhart (
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
-  logic 		    ICacheStallF;
+  logic 		    IfuStallF;
   logic 		    LSUStall;
 
   
@@ -128,10 +128,10 @@ module wallypipelinedhart (
   logic 		    CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0] 	    ICacheBusAdr;
+  logic [`PA_BITS-1:0] 	    IfuBusAdr;
   logic [`XLEN-1:0] 	    IfuBusHRDATA;
-  logic 		    IfuBusFetch;
-  logic 		    ICacheBusAck;
+  logic 		    IfuBusRead;
+  logic 		    IfuBusAck;
   
   // AHB LSU interface
   logic [`PA_BITS-1:0] 	    LsuBusAdr;
@@ -164,8 +164,8 @@ module wallypipelinedhart (
 
     .ExceptionM, .PendingInterruptM,
     // Fetch
-    .IfuBusHRDATA, .ICacheBusAck, .PCF, .ICacheBusAdr,
-    .IfuBusFetch, .ICacheStallF,
+    .IfuBusHRDATA, .IfuBusAck, .PCF, .IfuBusAdr,
+    .IfuBusRead, .IfuStallF,
 
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .PCE,
@@ -277,8 +277,8 @@ module wallypipelinedhart (
   ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .ICacheBusAdr, // *** rename these to match block diagram
-     .IfuBusFetch, .IfuBusHRDATA, .ICacheBusAck,
+     .IfuBusAdr,
+     .IfuBusRead, .IfuBusHRDATA, .IfuBusAck,
      // Signals from Data Cache
      .LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusHWDATA,
      .LsuBusHRDATA,
@@ -294,7 +294,7 @@ module wallypipelinedhart (
    hazard     hzu(
      .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
-     .LSUStall, .ICacheStallF,
+     .LSUStall, .IfuStallF,
      .FPUStallD, .FStallD,
 	.DivBusyE, .FDivBusyE,
 	.EcallFaultM, .BreakpointFaultM,
