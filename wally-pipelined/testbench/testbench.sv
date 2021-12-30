@@ -76,7 +76,7 @@ logic [3:0] dummy;
   // pick tests based on modes supported
   initial begin
     $display("TEST is %s", TEST);
-    tests = '{};
+    //tests = '{};
     if (`XLEN == 64) begin // RV64
       case (TEST)
         "arch64i":                        tests = arch64i;
@@ -291,7 +291,15 @@ logic [3:0] dummy;
   // or sw	gp,-56(t0) for new Imperas tests
   // or sw gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
-  assign DCacheFlushStart = dut.hart.priv.priv.EcallFaultM && 
+  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
+  generate
+    if (`ZICSR_SUPPORTED) begin
+      assign ecf = dut.hart.priv.priv.EcallFaultM;
+    end else begin
+      assign ecf = 0;
+    end
+  endgenerate
+  assign DCacheFlushStart = ecf && 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
 			     (dut.hart.ieu.dp.regf.we3 && 
 			      dut.hart.ieu.dp.regf.a3 == 3 && 
@@ -330,12 +338,12 @@ module riscvassertions;
     assert (`ICACHE_WAYSIZEINBYTES <= 4096 || `MEM_ICACHE == 0 || `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`ICACHE_BLOCKLENINBITS >= 32 || `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
-    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS || `MEM_DCACHE==0) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES || `MEM_DCACHE==0) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS || `MEM_ICACHE==0) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES || `MEM_ICACHE==0) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES || `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES || `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
 	assert (`ZICSR_SUPPORTED == 1 || (`PMP_ENTRIES == 0 && `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
   end
