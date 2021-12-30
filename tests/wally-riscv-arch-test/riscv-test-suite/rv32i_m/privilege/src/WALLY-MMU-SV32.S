@@ -44,14 +44,14 @@
 # test 12.3.1.1.1 write page tables / entries to phyiscal memory
 # sv32 Page table (See Figure 12.12***):
 # Level 1 page table, situated at 0x8000D000
-.4byte 0x8000D000, 0x20004CC1, 0x0  # points to level 0 page table A
+.4byte 0x8000D000, 0x20004C01, 0x0  # points to level 0 page table A
 .4byte 0x8000D004, 0x200000CB, 0x0  # Vaddr 0x400000 Paddr 0x80000000: aligned megapage, W=0, used for execute tests
-.4byte 0x8000D008, 0x200054E1, 0x0  # points to level 0 page table B 
+.4byte 0x8000D008, 0x20005421, 0x0  # points to level 0 page table B 
 .4byte 0x8000D00C, 0x000800C7, 0x0  # Vaddr 0xC00000: misaligned megapage
 .4byte 0x8000D800, 0x200000CF, 0x0  # Vaddr 0x80000000 Paddr 0x80000000: aligned megapage (program and data memory)
 .4byte 0x8000D804, 0x200000DF, 0x0  # Vaddr 0x80400000 Paddr 0x80000000: aligned megapage, U=1 (aliased with program and data memory)
 # Level 0 page table A
-.4byte 0x80013000, 0x200070D1, 0x0  # Vaddr 0x0000: bad PTE points to level -1 table
+.4byte 0x80013000, 0x20007011, 0x0  # Vaddr 0x0000: bad PTE points to level -1 table
 .4byte 0x80013004, 0x202000DF, 0x0  # Vaddr 0x1000 Paddr 0x80800000: aligned kilopage, U=1
 .4byte 0x80013008, 0x202010D5, 0x0  # Vaddr 0x2000: pad PTE has W but not R
 .4byte 0x8001300C, 0x20200817, 0x0  # Vaddr 0x3000: A=0, should cause read fault

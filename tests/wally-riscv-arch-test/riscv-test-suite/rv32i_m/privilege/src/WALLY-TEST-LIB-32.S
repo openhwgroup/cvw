@@ -21,18 +21,15 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "riscv_test_macros.h"
-#include "compliance_test.h"
-#include "compliance_io.h"
+#include "model_test.h"
+#include "arch_test.h"
+RVTEST_ISA("RV32I")
 
-RV_COMPLIANCE_RV64M
-
-RV_COMPLIANCE_CODE_BEGIN
-
-
-	RVTEST_IO_INIT
-	RVTEST_IO_ASSERT_GPR_EQ(x31, x0, 0x00000000)
-	RVTEST_IO_WRITE_STR(x31, "Test Begin\n")
+.section .text.init
+.globl rvtest_entry_point
+rvtest_entry_point:
+RVMODEL_BOOT
+RVTEST_CODE_BEGIN
 
 	# ---------------------------------------------------------------------------------------------
 
@@ -624,18 +621,15 @@ terminate_test:
     ecall #  writes mcause to the output.
     csrw mtvec, x4  # restore original trap handler to halt program
 
-	# ---------------------------------------------------------------------------------------------
 
-	RVTEST_IO_WRITE_STR(x31, "Test End\n")
+RVTEST_CODE_END
+RVMODEL_HALT
 
-	# ---------------------------------------------------------------------------------------------
-
-	RV_COMPLIANCE_HALT
-
-RV_COMPLIANCE_CODE_END
-
-# Input data section.
-	.data
+RVTEST_DATA_BEGIN
+.align 4
+rvtest_data:
+.word 0xbabecafe
+RVTEST_DATA_END
 
 .align 2 # align stack to 4 byte boundary
 bottom_of_stack:
@@ -643,15 +637,29 @@ bottom_of_stack:
 top_of_stack:
 
 
-# Output data section.
-RV_COMPLIANCE_DATA_BEGIN
 
-.align 2 # align output to 4 byte boundary
+RVMODEL_DATA_BEGIN
+
+// next lines through test cases copied over from old framework
 test_1_res:
     .fill 1024, 4, -1 
 
-RV_COMPLIANCE_DATA_END
+RVMODEL_DATA_END
+
+#ifdef rvtest_mtrap_routine
+
+mtrap_sigptr:
+    .fill 64*(XLEN/32),4,0xdeadbeef
+
+#endif
+
+#ifdef rvtest_gpr_save
+
+gpr_save:
+    .fill 32*(XLEN/32),4,0xdeadbeef
+
+#endif
 
 .align 2
 test_cases:
-    # These tests follow the testing plan in Chapter 12 of the riscv-wally textbook *** what is it called and how do I refer to it?
+

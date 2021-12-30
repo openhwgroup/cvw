@@ -26,124 +26,115 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
-		   parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) 
+				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) 
   (input logic 		       clk,
-   input logic 			      reset,
+   input logic 						  reset,
 
    input logic [$clog2(NUMLINES)-1:0] RAdr,
-   input logic [$clog2(NUMLINES)-1:0] WAdr, 
-   input logic [`PA_BITS-1:0] 	      PAdr,
-   input logic 			      WriteEnable,
-   input logic 			      VDWriteEnable, 
+   input logic [`PA_BITS-1:0] 		  PAdr,
+   input logic 						  WriteEnable,
+   input logic 						  VDWriteEnable, 
    input logic [BLOCKLEN/`XLEN-1:0]   WriteWordEnable,
-   input logic 			      TagWriteEnable,
-   input logic [BLOCKLEN-1:0] 	      WriteData,
-   input logic 			      SetValid,
-   input logic 			      ClearValid,
-   input logic 			      SetDirty,
-   input logic 			      ClearDirty,
-   input logic 			      SelEvict,
-   input logic 			      VictimWay,
-   input logic 			      InvalidateAll,
-   input logic 			      SelFlush,
-   input logic 			      FlushWay,
+   input logic 						  TagWriteEnable,
+   input logic [BLOCKLEN-1:0] 		  WriteData,
+   input logic 						  SetValid,
+   input logic 						  ClearValid,
+   input logic 						  SetDirty,
+   input logic 						  ClearDirty,
+   input logic 						  SelEvict,
+   input logic 						  VictimWay,
+   input logic 						  InvalidateAll,
+   input logic 						  SelFlush,
+   input logic 						  FlushWay,
 
-   output logic [BLOCKLEN-1:0] 	      ReadDataBlockWayMasked,
-   output logic 		      WayHit,
-   output logic 		      VictimDirtyWay,
-   output logic [TAGLEN-1:0] 	      VictimTagWay
+   output logic [BLOCKLEN-1:0] 		  ReadDataLineWayMasked,
+   output logic 					  WayHit,
+   output logic 					  VictimDirtyWay,
+   output logic [TAGLEN-1:0] 		  VictimTagWay
    );
 
-  logic [NUMLINES-1:0] 		      ValidBits;
-  logic [NUMLINES-1:0] 		      DirtyBits;
-  logic [BLOCKLEN-1:0] 		      ReadDataBlockWay;
-  logic [TAGLEN-1:0] 		      ReadTag;
-  logic 			      Valid;
-  logic 			      Dirty;
-  logic 			      SelectedWay;
-  logic [TAGLEN-1:0] 		      VicDirtyWay;
-  logic [TAGLEN-1:0] 		      FlushThisWay;
+  logic [NUMLINES-1:0] 				  ValidBits;
+  logic [NUMLINES-1:0] 				  DirtyBits;
+  logic [BLOCKLEN-1:0] 				  ReadDataBlockWay;
+  logic [TAGLEN-1:0] 				  ReadTag;
+  logic 							  Valid;
+  logic 							  Dirty;
+  logic 							  SelectedWay;
+  logic [TAGLEN-1:0] 				  VicDirtyWay;
+  logic [TAGLEN-1:0] 				  FlushThisWay;
 
-  logic [$clog2(NUMLINES)-1:0] 	      RAdrD, WAdrD;
-  logic 			      SetValidD, ClearValidD;
-  logic 			      SetDirtyD, ClearDirtyD;
-  logic 			      WriteEnableD, VDWriteEnableD;
+  logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
+  logic 							  SetValidD, ClearValidD;
+  logic 							  SetDirtyD, ClearDirtyD;
+  logic 							  WriteEnableD, VDWriteEnableD;
   
   
   
 
-  genvar 			      words;
+  genvar 							  words;
 
   generate
     for(words = 0; words < BLOCKLEN/`XLEN; words++) begin : word
-      sram1rw #(.DEPTH(`XLEN), 
-		.WIDTH(NUMLINES))
-      CacheDataMem(.clk(clk),
-		   .Addr(RAdr),
-		   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN] ),
-		   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-		   .WriteEnable(WriteEnable & WriteWordEnable[words]));
+      sram1rw #(.DEPTH(`XLEN), .WIDTH(NUMLINES))
+      CacheDataMem(.clk(clk), .Addr(RAdr),
+				   .ReadData(ReadDataBlockWay[(words+1)*`XLEN-1:words*`XLEN] ),
+				   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
+				   .WriteEnable(WriteEnable & WriteWordEnable[words]));
     end
   endgenerate
 
-  sram1rw #(.DEPTH(TAGLEN),
-	    .WIDTH(NUMLINES))
+  sram1rw #(.DEPTH(TAGLEN), .WIDTH(NUMLINES))
   CacheTagMem(.clk(clk),
-	      .Addr(RAdr),
-	      .ReadData(ReadTag),
-	      .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-	      .WriteEnable(TagWriteEnable));
+			  .Addr(RAdr),
+			  .ReadData(ReadTag),
+			  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
+			  .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
   assign SelectedWay = SelFlush ? FlushWay : 
-		       SelEvict ? VictimWay : WayHit;  
-  assign ReadDataBlockWayMasked = SelectedWay ? ReadDataBlockWay : '0;  // first part of AO mux.
+					   SelEvict ? VictimWay : WayHit;  
+  assign ReadDataLineWayMasked = SelectedWay ? ReadDataBlockWay : '0;  // first part of AO mux.
 
   assign VictimDirtyWay = SelFlush ? FlushWay & Dirty & Valid :
-			  VictimWay & Dirty & Valid;
-/* -----\/----- EXCLUDED -----\/-----
-  assign VictimTagWay = SelFlush & FlushWay ? ReadTag :
-			VictimWay ? ReadTag : '0;
- -----/\----- EXCLUDED -----/\----- */
+						  VictimWay & Dirty & Valid;
 
   assign VicDirtyWay = VictimWay ? ReadTag : '0;
   assign FlushThisWay = FlushWay ? ReadTag : '0;
   assign VictimTagWay = SelFlush ? FlushThisWay : VicDirtyWay;
-    
+  
   
   always_ff @(posedge clk) begin
     if (reset) 
-  	ValidBits <= {NUMLINES{1'b0}};
+  	  ValidBits <= {NUMLINES{1'b0}};
     else if (InvalidateAll) 
-  	ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b1;
-    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[WAdrD] <= 1'b0;
-  end
+  	  ValidBits <= {NUMLINES{1'b0}};
+    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b1;
+    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b0;
+	   end
 
   always_ff @(posedge clk) begin
     RAdrD <= RAdr;
-    WAdrD <= WAdr;
     SetValidD <= SetValid;
     ClearValidD <= ClearValid;    
     WriteEnableD <= WriteEnable;
     VDWriteEnableD <= VDWriteEnable;
   end
 
-    
+  
   assign Valid = ValidBits[RAdrD];
 
   generate
     if(DIRTY_BITS) begin
       always_ff @(posedge clk) begin
-	if (reset) 
-  	  DirtyBits <= {NUMLINES{1'b0}};
-	else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b1;
-	else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[WAdrD] <= 1'b0;
+		if (reset) 
+  		  DirtyBits <= {NUMLINES{1'b0}};
+		else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b1;
+		else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b0;
       end
 
       always_ff @(posedge clk) begin
-	SetDirtyD <= SetDirty;
-	ClearDirtyD <= ClearDirty;
+		SetDirtyD <= SetDirty;
+		ClearDirtyD <= ClearDirty;
       end
 
       assign Dirty = DirtyBits[RAdrD];

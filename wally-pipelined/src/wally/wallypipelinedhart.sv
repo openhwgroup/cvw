@@ -128,10 +128,10 @@ module wallypipelinedhart (
   logic 		    CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0] 	    InstrPAdrF;
-  logic [`XLEN-1:0] 	    InstrRData;
-  logic 		    InstrReadF;
-  logic 		    InstrAckF;
+  logic [`PA_BITS-1:0] 	    ICacheBusAdr;
+  logic [`XLEN-1:0] 	    IfuBusHRDATA;
+  logic 		    IfuBusFetch;
+  logic 		    ICacheBusAck;
   
   // AHB LSU interface
   logic [`PA_BITS-1:0] 	    LsuBusAdr;
@@ -164,8 +164,8 @@ module wallypipelinedhart (
 
     .ExceptionM, .PendingInterruptM,
     // Fetch
-    .InstrInF(InstrRData), .InstrAckF, .PCF, .InstrPAdrF,
-    .InstrReadF, .ICacheStallF,
+    .IfuBusHRDATA, .ICacheBusAck, .PCF, .ICacheBusAdr,
+    .IfuBusFetch, .ICacheStallF,
 
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .PCE,
@@ -277,8 +277,8 @@ module wallypipelinedhart (
   ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .InstrPAdrF, // *** rename these to match block diagram
-     .InstrReadF, .InstrRData, .InstrAckF,
+     .ICacheBusAdr, // *** rename these to match block diagram
+     .IfuBusFetch, .IfuBusHRDATA, .ICacheBusAck,
      // Signals from Data Cache
      .LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusHWDATA,
      .LsuBusHRDATA,

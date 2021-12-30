@@ -31,11 +31,11 @@ module ifu (
   input logic 		      StallF, StallD, StallE, StallM, StallW,
   input logic 		      FlushF, FlushD, FlushE, FlushM, FlushW,
   // Fetch
-  input logic [`XLEN-1:0]     InstrInF,
-  input logic 		      InstrAckF,
+  input logic [`XLEN-1:0]     IfuBusHRDATA,
+  input logic 		      ICacheBusAck,
   (* mark_debug = "true" *) output logic [`XLEN-1:0]    PCF, 
-  output logic [`PA_BITS-1:0] InstrPAdrF,
-  output logic 		      InstrReadF,
+  output logic [`PA_BITS-1:0] ICacheBusAdr,
+  output logic 		      IfuBusFetch,
   output logic 		      ICacheStallF,
   // Execute
   output logic [`XLEN-1:0]    PCLinkE,
@@ -104,6 +104,8 @@ module ifu (
   logic [`XLEN+1:0]            PCFExt;
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   logic 					   BPPredWrongM;
+  logic 					   CacheableF;
+  
   
 
   generate
@@ -136,7 +138,7 @@ module ifu (
        .LoadAccessFaultM(),
        .StoreAccessFaultM(),
        .DisableTranslation(1'b0),
-       .Cacheable(), .Idempotent(), .AtomicAllowed(),
+       .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
 
        .clk, .reset,
        .SATP_REGW,
@@ -157,17 +159,17 @@ module ifu (
   
 
   // *** put memory interface on here, InstrF becomes output
-  //assign InstrPAdrF = PCF; // *** no MMU
-  //assign InstrReadF = ~StallD; // *** & ICacheMissF; add later
-  // assign InstrReadF = 1; // *** & ICacheMissF; add later
+  //assign ICacheBusAdr = PCF; // *** no MMU
+  //assign IfuBusFetch = ~StallD; // *** & ICacheMissF; add later
+  // assign IfuBusFetch = 1; // *** & ICacheMissF; add later
 
   // conditional
   // 1. ram // controlled by `MEM_IROM
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
-  icache icache(.clk, .reset, .StallF, .ExceptionM, .PendingInterruptM, .InstrInF, .InstrAckF,
-  .InstrPAdrF, .InstrReadF, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
-
+  icache icache(.clk, .reset, .CPUBusy(StallF), .ExceptionM, .PendingInterruptM, .IfuBusHRDATA, .ICacheBusAck,
+  .ICacheBusAdr, .IfuBusFetch, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
+				.CacheableF,
   .PCNextF(PCNextFPhys),
   .PCPF(PCPFmmu),
   .PCF,
