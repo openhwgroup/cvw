@@ -189,7 +189,11 @@ module ifu (
   logic [`PA_BITS-1:0] ICacheBusAdr;
   logic 			   SelUncachedAdr;
   
-    
+
+  // *** bug: on spill the second memory request does not go through the mmu(skips tlb, pmp, and pma checkers)
+  // also it is possible to have any above fault on the spilled accesses.
+  // I think the solution is to move the spill logic into the ifu using the busfsm and ensuring
+  // the mmu sees the spilled address.
   
   icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
 				.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,

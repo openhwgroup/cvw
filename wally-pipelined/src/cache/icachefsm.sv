@@ -36,6 +36,7 @@ module icachefsm
    input logic 		  ITLBWriteF,
 
    input logic 		  IgnoreRequest,
+   input logic 		  CacheableF,
 
    // BUS interface
    input logic 		  ICacheBusAck,
@@ -132,7 +133,7 @@ module icachefsm
 		  SelAdr = 2'b01;
 		  ICacheStallF = 1'b0;
 		end
-		else if (hit & ~spill) begin
+		else if (CacheableF & hit & ~spill) begin
           ICacheStallF = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin
@@ -141,15 +142,15 @@ module icachefsm
 		  end else begin
             NextState = STATE_READY;
 		  end
-        end else if (hit & spill) begin
+        end else if (CacheableF & hit & spill) begin
           spillSave = 1'b1;
           SelAdr = 2'b10;
           LRUWriteEn = 1'b1;
 		  NextState = STATE_HIT_SPILL;
-        end else if (~hit & ~spill) begin
+        end else if (CacheableF & ~hit & ~spill) begin
 		  SelAdr = 2'b01;                                         /// *********(
           NextState = STATE_MISS_FETCH_WDV;
-        end else if (~hit & spill) begin
+        end else if (CacheableF & ~hit & spill) begin
           SelAdr = 2'b01;
           NextState = STATE_MISS_SPILL_FETCH_WDV;
         end else begin

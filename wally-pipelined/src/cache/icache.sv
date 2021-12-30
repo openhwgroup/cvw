@@ -225,6 +225,7 @@ module icache
 						.IgnoreRequest,
 						.ICacheBusAck,
 						.ICacheFetchLine,
+						.CacheableF,
 						.hit,
 						.spill,
 						.spillSave,
