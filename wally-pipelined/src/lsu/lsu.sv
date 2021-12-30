@@ -274,10 +274,10 @@ module lsu
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `DCACHE_BLOCKLENINBITS/`XLEN;
+  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
   localparam integer   LOGWPL = $clog2(WORDSPERLINE);
-  localparam integer   BLOCKLEN = `DCACHE_BLOCKLENINBITS;
-  localparam integer   WordCountThreshold = WORDSPERLINE - 1;
+  localparam integer   BLOCKLEN = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS : `XLEN;
+  localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
 
   localparam integer   BLOCKBYTELEN = BLOCKLEN/8;
   localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
@@ -287,7 +287,7 @@ module lsu
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLsuBusHWDATA;
   logic [`XLEN-1:0]    ReadDataWordM;
-  logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData;
+  logic [BLOCKLEN-1:0] DCacheMemWriteData;
 
   // keep
   logic [`XLEN-1:0]    ReadDataWordMuxM;
@@ -295,7 +295,7 @@ module lsu
 
 
   logic [`PA_BITS-1:0] DCacheBusAdr;
-  logic [`XLEN-1:0]    ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0];
+  logic [`XLEN-1:0]    ReadDataBlockSetsM [WORDSPERLINE-1:0];
   
 
 
@@ -304,23 +304,37 @@ module lsu
   logic 			   DCacheBusAck;
 
   logic 			   SelUncachedAdr;
-  
-  dcache dcache(.clk, .reset, .CPUBusy,
-				.LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM,
-				.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
-				.DCacheMiss, .DCacheAccess, 
-				.IgnoreRequest, .CacheableM, .DCacheCommittedM,
-				.DCacheBusAdr, .ReadDataBlockSetsM, .DCacheMemWriteData,
-				.DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
+
+  generate
+	if(`MEM_DCACHE) begin : dcache
+	  dcache dcache(.clk, .reset, .CPUBusy,
+					.LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM,
+					.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
+					.DCacheMiss, .DCacheAccess, 
+					.IgnoreRequest, .CacheableM, .DCacheCommittedM,
+					.DCacheBusAdr, .ReadDataBlockSetsM, .DCacheMemWriteData,
+					.DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
+	end else begin : passthrough
+	  assign ReadDataWordM = 0;
+	  assign DCacheStall = 0;
+	  assign DCacheMiss = 1;
+	  assign DCacheAccess = CacheableM;
+	  assign DCacheCommittedM = 0;
+	  assign DCacheWriteLine = 0;
+	  assign DCacheFetchLine = 0;
+	  assign DCacheBusAdr = 0;
+	  assign ReadDataBlockSetsM[0] = 0;
+	end
+  endgenerate
 
 
-
-  // sub word selection for read and writes and optional amo alu.
+  // select between dcache and direct from the BUS. Always selected if no dcache.
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
 				.d1(DCacheMemWriteData[`XLEN-1:0]),
 				.s(SelUncachedAdr),
 				.y(ReadDataWordMuxM));
   
+  // sub word selection for read and writes and optional amo alu.
   // finally swr
   subwordread subwordread(.ReadDataWordMuxM,
 			  .LsuPAdrM(LsuPAdrM[2:0]),
@@ -336,14 +350,14 @@ module lsu
     end else
       assign FinalAMOWriteDataM = WriteDataM;
   endgenerate
-  
+
+  // this might only get instantiated if there is a dcache or dtim.
+  // There is a copy in the ebu.
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(LsuPAdrM[2:0]),
 			    .HSIZED({LsuFunct3M[2], 1'b0, LsuFunct3M[1:0]}),
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
-
-
 
   // Bus Side logic
   // register the fetch data from the next level of memory.
@@ -360,8 +374,6 @@ module lsu
 			 .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
   endgenerate
-
-
 
   assign LocalLsuBusAdr = SelUncachedAdr ? LsuPAdrM : DCacheBusAdr ;
   assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLsuBusAdr;
