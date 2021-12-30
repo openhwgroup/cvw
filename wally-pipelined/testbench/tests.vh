@@ -958,7 +958,6 @@ string imperas32f[] = '{
     "rv64i_m/C/candi-01", "4010",
     "rv64i_m/C/cbeqz-01", "4010",
     "rv64i_m/C/cbnez-01", "5010",
-    "rv64i_m/C/cebreak-01", "2070",
     "rv64i_m/C/cj-01", "3010",
     "rv64i_m/C/cjalr-01", "2010",
     "rv64i_m/C/cjr-01", "2010",
@@ -981,6 +980,11 @@ string imperas32f[] = '{
     "rv64i_m/C/csw-01", "3010",
     "rv64i_m/C/cswsp-01", "3010",
     "rv64i_m/C/cxor-01", "8010"
+  };
+
+  string arch64cpriv[] = '{
+//    `RISCVARCHTEST,
+      "rv64i_m/C/cebreak-01", "2070"
   };
 
   string arch64i[] = '{
@@ -1405,7 +1409,6 @@ string imperas32f[] = '{
     "rv32i_m/C/candi-01", "3010",
     "rv32i_m/C/cbeqz-01", "3010",
     "rv32i_m/C/cbnez-01", "3010",
-    "rv32i_m/C/cebreak-01", "2050",
     "rv32i_m/C/cj-01", "3010",
     "rv32i_m/C/cjal-01", "3010",
     "rv32i_m/C/cjalr-01", "2010",
@@ -1425,6 +1428,12 @@ string imperas32f[] = '{
     "rv32i_m/C/cswsp-01", "2010",
     "rv32i_m/C/cxor-01", "4010"
   };
+
+  string arch32cpriv[] = '{
+  //  `RISCVARCHTEST,
+      "rv32i_m/C/cebreak-01", "2050"
+  };      
+
 
   string arch32i[] = '{
     `RISCVARCHTEST,
