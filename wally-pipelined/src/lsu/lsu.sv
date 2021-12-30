@@ -274,8 +274,8 @@ module lsu
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
-  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   BLOCKLEN = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
 
