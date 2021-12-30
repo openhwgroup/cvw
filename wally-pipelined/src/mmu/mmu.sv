@@ -91,7 +91,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 
   // only instantiate TLB if Virtual Memory is supported
   generate
-    if (`MEM_VIRTMEM) begin
+    if (`MEM_VIRTMEM) begin:tlb
       logic ReadAccess, WriteAccess;
       assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
       assign WriteAccess = WriteAccessM;
@@ -101,7 +101,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 	    .VAdr,
 	    .*);
 
-    end else begin // just pass address through as physical
+    end else begin:tlb// just pass address through as physical
       assign Translate = 0;
       assign TLBMiss = 0;
       assign TLBHit = 1; // *** is this necessary

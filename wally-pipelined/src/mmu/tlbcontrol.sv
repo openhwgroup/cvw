@@ -65,7 +65,7 @@ module tlbcontrol #(parameter ITLB = 0) (
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
   assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~DisableTranslation; 
   generate
-      if (`XLEN==64) begin
+      if (`XLEN==64) begin:rv64
           assign SV39Mode = (SATP_MODE == `SV39);
           // generate page fault if upper bits aren't all the same
           logic UpperEqual39, UpperEqual48;
@@ -90,7 +90,7 @@ module tlbcontrol #(parameter ITLB = 0) (
  
   // Check whether the access is allowed, page faulting if not.
   generate
-    if (ITLB == 1) begin // Instruction TLB fault checking
+    if (ITLB == 1) begin:itlb // Instruction TLB fault checking
       logic ImproperPrivilege;
 
       // User mode may only execute user mode pages, and supervisor mode may
@@ -100,7 +100,7 @@ module tlbcontrol #(parameter ITLB = 0) (
       // fault for software handling if access bit is off
       assign DAPageFault = ~PTE_A;
       assign TLBPageFault = (Translate  && TLBHit && (ImproperPrivilege || ~PTE_X || DAPageFault || UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
-    end else begin // Data TLB fault checking
+    end else begin:dtlb // Data TLB fault checking
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
       // User mode may only load/store from user mode pages, and supervisor mode

@@ -55,7 +55,7 @@ module hptw
 				     LEAF, IDLE} statetype; // *** placed outside generate statement to remove synthesis errors
 
   generate
-    if (`MEM_VIRTMEM) begin
+    if (`MEM_VIRTMEM) begin:virtmem
       logic			    DTLBWalk; // register TLBs translation miss requests
       logic [`PPN_BITS-1:0]	    BasePageTablePPN;
       logic [`PPN_BITS-1:0]	    CurrentPPN;

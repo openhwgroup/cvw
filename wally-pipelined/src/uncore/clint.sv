@@ -69,7 +69,7 @@ module clint (
 
   // register access
   generate
-    if (`XLEN==64) begin
+    if (`XLEN==64) begin:clint
       always @(posedge HCLK) begin
         case(entry)
           16'h0000: HREADCLINT <= {63'b0, MSIP};
@@ -97,7 +97,7 @@ module clint (
           // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
 	  MTIME <= HWDATA;
         end else MTIME <= MTIME + 1;
-    end else begin // 32-bit
+    end else begin:clint // 32-bit
       always @(posedge HCLK) begin
         case(entry)
           16'h0000: HREADCLINT <= {31'b0, MSIP};

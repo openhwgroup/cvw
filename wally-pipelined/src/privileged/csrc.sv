@@ -91,7 +91,7 @@ module csrc #(parameter
   );
 
   generate
-    if (`ZICOUNTERS_SUPPORTED) begin
+    if (`ZICOUNTERS_SUPPORTED) begin:counters
      (* mark_debug = "true" *) logic [63:0] CYCLE_REGW, INSTRET_REGW;
      logic [63:0] CYCLEPlusM, INSTRETPlusM;
        logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
@@ -114,7 +114,7 @@ module csrc #(parameter
       assign NextINSTRETM = WriteINSTRETM ? CSRWriteValM : INSTRETPlusM[`XLEN-1:0];
 
     // parameterized number of additional counters
-    if (`COUNTERS > 3) begin
+    if (`COUNTERS > 3) begin:cntarry
         logic [`COUNTERS-1:3] WriteHPMCOUNTERM;
         logic [`COUNTERS-1:0] CounterEvent;
         logic [63:0] /*HPMCOUNTER_REGW[`COUNTERS-1:3], */ HPMCOUNTERPlusM[`COUNTERS-1:3];
@@ -171,10 +171,10 @@ module csrc #(parameter
 
       // Write / update counters
       // Only the Machine mode versions of the counter CSRs are writable
-        if (`XLEN==64) begin// 64-bit counters
+        if (`XLEN==64) begin:cntreg// 64-bit counters
           flopr   #(64) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW);
           flopr   #(64) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW);
-         end else begin // 32-bit low and high counters
+         end else begin:cntreg // 32-bit low and high counters
           logic  WriteTIMEHM, WriteTIMECMPHM, WriteCYCLEHM, WriteINSTRETHM;
           logic  [`XLEN-1:0] NextCYCLEHM, NextTIMEHM, NextINSTRETHM;
 

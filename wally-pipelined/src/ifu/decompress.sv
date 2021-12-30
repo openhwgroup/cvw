@@ -39,10 +39,10 @@ module decompress (
     
   // if the system handles compressed instructions, decode appropriately
   generate
-    if (!(`C_SUPPORTED)) begin // no compressed mode
+    if (!(`C_SUPPORTED)) begin:decompress // no compressed mode
       assign InstrD = InstrRawD;
       assign IllegalCompInstrD = 0;
-    end else begin // COMPRESSED mode supported
+    end else begin : decompress // COMPRESSED mode supported
       assign instr16 = InstrRawD[15:0]; // instruction is alreay aligned
       assign op = instr16[1:0];
       assign rds1 = instr16[11:7];
