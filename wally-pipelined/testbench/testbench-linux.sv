@@ -210,7 +210,7 @@ module testbench();
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
   `define PRIV        dut.hart.priv.priv.privmodereg.q
-  `define INSTRET     dut.hart.priv.priv.csr.counters.counters.cntreg.INSTRETreg.q
+  `define INSTRET     dut.hart.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]
   // Common Macros
   `define checkCSR(CSR) \
     begin \

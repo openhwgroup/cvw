@@ -27,48 +27,11 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-// Ben 06/17/21: I brought in MTIME, MTIMECMP from CLINT. *** this probably isn't perfect though because it doesn't yet provide the ability to change these through CSR writes; overall this whole thing might need some rethinking
 module csrc #(parameter 
-  MCYCLE = 12'hB00,
-  MTIME = 12'hB01, // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
-  MTIMECMP = 12'hB21, // not specified in privileged spec.  Move to CLINT
-  MINSTRET = 12'hB02,
   MHPMCOUNTERBASE = 12'hB00,
-  //MHPMCOUNTER3 = 12'hB03,
-  //MHPMCOUNTER4 = 12'hB04,
-  // ... more counters
-  //MHPMCOUNTER31 = 12'hB1F,
-  MCYCLEH = 12'hB80,
-  MTIMEH = 12'hB81,  // address not specified in privileged spec.  Consider moving to CLINT to match SiFive
-  MTIMECMPH = 12'hBA1, // not specified in privileged spec.  Move to CLINT
-  MINSTRETH = 12'hB82,
   MHPMCOUNTERHBASE = 12'hB80,
-  //MHPMCOUNTER3H = 12'hB83,
-  //MHPMCOUNTER4H = 12'hB84,
-  // ... more counters
-  //MHPMCOUNTER31H = 12'hB9F,
-  MCOUNTERINHIBIT = 12'h320,
-  MHPMEVENTBASE = 12'h320,
-  //MHPMEVENT3 = 12'h323,
-  //MHPMEVENT4 = 12'h324,
-  // ... more counters
-  //MHPMEVENT31 = 12'h33F,
-  CYCLE = 12'hC00, 
-  TIME = 12'hC01, 
-  INSTRET = 12'hC02,
   HPMCOUNTERBASE = 12'hC00,
-  //HPMCOUNTER3 = 12'hC03,
-  //HPMCOUNTER4 = 12'hC04,
-  //  ...more counters
-  //HPMCOUNTER31 = 12'hC1F,
-  CYCLEH = 12'hC80,
-  TIMEH = 12'hC81, // not specified
-  INSTRETH = 12'hC82,
   HPMCOUNTERHBASE = 12'hC80
-  //HPMCOUNTER3H = 12'hC83,
-  //HPMCOUNTER4H = 12'hC84,
-  //  ... more counters
-  //HPMCOUNTER31H = 12'hC9F
 ) (
     input logic 	     clk, reset,
     input logic 	     StallE, StallM, StallW,
@@ -97,43 +60,28 @@ module csrc #(parameter
       logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
       logic        WriteCYCLEM, WriteINSTRETM;
       logic [4:0]  CounterNumM;
-      logic [`XLEN-1:0] HPMCOUNTER_REGW [`COUNTERS-1:3];
-      logic [`XLEN-1:0] HPMCOUNTERH_REGW [`COUNTERS-1:3];
+      logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
+      logic [`XLEN-1:0] HPMCOUNTERH_REGW[`COUNTERS-1:0];
       logic 			       InstrValidNotFlushedM;
+      logic LoadStallE, LoadStallM;
+      logic [`COUNTERS-1:0] WriteHPMCOUNTERM;
+      logic [`COUNTERS-1:0] CounterEvent;
+      logic [63:0]      HPMCOUNTERPlusM[`COUNTERS-1:0];
+      logic [`XLEN-1:0] NextHPMCOUNTERM[`COUNTERS-1:0];
+      genvar i;
 
+      // Interface signals
+      flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
+      flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
       assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
       
-      // Write enables
-      assign WriteCYCLEM = CSRMWriteM && (CSRAdrM == MCYCLE);
-      assign WriteINSTRETM = CSRMWriteM && (CSRAdrM == MINSTRET);
- 
-      // Counter adders with inhibits for power savings
-      assign CYCLEPlusM = CYCLE_REGW + {63'b0, ~MCOUNTINHIBIT_REGW[0]};
-      assign INSTRETPlusM = INSTRET_REGW + {63'b0, InstrValidNotFlushedM & ~MCOUNTINHIBIT_REGW[2]};
-      assign NextCYCLEM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[`XLEN-1:0];
-      assign NextINSTRETM = WriteINSTRETM ? CSRWriteValM : INSTRETPlusM[`XLEN-1:0];
-
-    // parameterized number of additional counters
-    if (`COUNTERS > 3) begin:cntarry
-        logic [`COUNTERS-1:3] WriteHPMCOUNTERM;
-        logic [`COUNTERS-1:0] CounterEvent;
-        logic [63:0] /*HPMCOUNTER_REGW[`COUNTERS-1:3], */ HPMCOUNTERPlusM[`COUNTERS-1:3];
-        logic [`XLEN-1:0] NextHPMCOUNTERM[`COUNTERS-1:3];
-        genvar i;
-
-        // could replace special counters 0-2 with this loop for all counters
-        assign CounterEvent[0] = 1'b1;
-        assign CounterEvent[1] = 1'b0;
-      if(`QEMU) begin
-        assign CounterEvent[`COUNTERS-1:2] = 0;
-      end else begin
-
-	logic LoadStallE, LoadStallM;
-	
-	flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
-	flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
-	
-        assign CounterEvent[2] = InstrValidNotFlushedM;
+      // Determine when to increment each counter
+      assign CounterEvent[0] = 1'b1;  // MCYCLE always increments
+      assign CounterEvent[1] = 1'b0;  // Counter 0 doesn't exist
+      assign CounterEvent[2] = InstrValidNotFlushedM;
+     if(`QEMU) begin // No other performance counters in QEMU
+        assign CounterEvent[`COUNTERS-1:3] = 0;
+      end else begin // User-defined counters
         assign CounterEvent[3] = LoadStallM;  // don't want to suppress on flush as this only happens if flushed.
         assign CounterEvent[4] = BPPredDirWrongM & InstrValidNotFlushedM;
         assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
@@ -147,119 +95,58 @@ module csrc #(parameter
         assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
       end
       
-        for (i = 3; i < `COUNTERS; i = i+1) begin
-            assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
-            assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
-            always @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-              if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
-              else HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
+      // Counter update and write logic
+      for (i = 0; i < `COUNTERS; i = i+1) begin
+          assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
+          assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
+          always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+            if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
+            else       HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERM[i];
 
-            if (`XLEN==32) begin
-                logic [`COUNTERS-1:3] WriteHPMCOUNTERHM;
-                logic [`XLEN-1:0] NextHPMCOUNTERHM[`COUNTERS-1:3];
-                assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
-                assign WriteHPMCOUNTERHM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERHBASE + i);
-                assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
-                always @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
-                    if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
-                    else  HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
-            end else begin
-                assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
-            end
-        end
-    end
+          if (`XLEN==32) begin // write high and low separately
+            logic [`COUNTERS-1:0] WriteHPMCOUNTERHM;
+            logic [`XLEN-1:0] NextHPMCOUNTERHM[`COUNTERS-1:0];
+            assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+            assign WriteHPMCOUNTERHM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERHBASE + i);
+            assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
+            always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
+                if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
+                else       HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 NextHPMCOUNTERHM[i];
+          end else begin // XLEN=64; write entire register
+              assign HPMCOUNTERPlusM[i] = HPMCOUNTER_REGW[i] + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
+          end
+      end
 
-      // Write / update counters
-      // Only the Machine mode versions of the counter CSRs are writable
-        if (`XLEN==64) begin:cntreg// 64-bit counters
-          flopr   #(64) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW);
-          flopr   #(64) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW);
-         end else begin:cntreg // 32-bit low and high counters
-          logic  WriteTIMEHM, WriteTIMECMPHM, WriteCYCLEHM, WriteINSTRETHM;
-          logic  [`XLEN-1:0] NextCYCLEHM, NextTIMEHM, NextINSTRETHM;
-
-          // Write Enables
-          assign WriteCYCLEHM = CSRMWriteM && (CSRAdrM == MCYCLEH);
-          assign WriteINSTRETHM = CSRMWriteM && (CSRAdrM == MINSTRETH);
-          assign NextCYCLEHM = WriteCYCLEM ? CSRWriteValM : CYCLEPlusM[63:32];
-          assign NextINSTRETHM = WriteINSTRETHM ? CSRWriteValM : INSTRETPlusM[63:32];
-
-          // Counter CSRs
-          flopr   #(32) CYCLEreg(clk, reset, NextCYCLEM, CYCLE_REGW[31:0]);
-          flopr   #(32) INSTRETreg(clk, reset, NextINSTRETM, INSTRET_REGW[31:0]);
-          flopr   #(32) CYCLEHreg(clk, reset, NextCYCLEHM, CYCLE_REGW[63:32]);
-          flopr   #(32) INSTRETHreg(clk, reset, NextINSTRETHM, INSTRET_REGW[63:32]);
-        end
-
-    // eventually move TIME and TIMECMP to the CLINT -- Ben 06/17/21: sure let's give that a shot!
-    //  run TIME off asynchronous reference clock
-    //  synchronize write enable to TIME
-    //  four phase handshake to synchronize reads from TIME
-
-    // interrupt on timer compare
-    // ability to disable optional CSRs
-    
       // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
       assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
-        if (`XLEN==64) // 64-bit counter reads
-          always_comb 
-            if (PrivilegeModeW == `M_MODE || 
-                MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
-              IllegalCSRCAccessM = 0;
-              if      (CSRAdrM >= MHPMCOUNTERBASE+3 && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-MHPMCOUNTERBASE];
-              else if (CSRAdrM >= HPMCOUNTERBASE+3 && CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-HPMCOUNTERBASE];
-              else case (CSRAdrM) 
-                MTIME:     CSRCReadValM = MTIME_CLINT;
-                MTIMECMP:  CSRCReadValM = MTIMECMP_CLINT;
-                MCYCLE:       CSRCReadValM = CYCLE_REGW;
-                MINSTRET:     CSRCReadValM = INSTRET_REGW;
-                TIME:         CSRCReadValM = MTIME_CLINT;
-                CYCLE:        CSRCReadValM = CYCLE_REGW;
-                INSTRET:      CSRCReadValM = INSTRET_REGW;
-                default:   begin
-                  CSRCReadValM = 0;
-                  IllegalCSRCAccessM = 1;
-                end
-              endcase
-            end else begin 
-              IllegalCSRCAccessM = 1; // no privileges for this csr
-              CSRCReadValM = 0;
+      always_comb 
+        if (PrivilegeModeW == `M_MODE || 
+            MCOUNTEREN_REGW[CounterNumM] && (!`S_SUPPORTED || PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
+          IllegalCSRCAccessM = 0;
+          if (`XLEN==64) begin // 64-bit counter reads
+            if      (CSRAdrM >= MHPMCOUNTERBASE && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERBASE && CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else begin
+                CSRCReadValM = 0;
+                IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
             end
-        else // 32-bit counter reads
-          always_comb 
-            if (PrivilegeModeW == `M_MODE || MCOUNTEREN_REGW[CounterNumM] && (PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
-              IllegalCSRCAccessM = 0;
-              if      (CSRAdrM >= MHPMCOUNTERBASE+3 && CSRAdrM  < MHPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-MHPMCOUNTERBASE];
-              else if (CSRAdrM >= HPMCOUNTERBASE+3 && CSRAdrM   < HPMCOUNTERBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTER_REGW[CSRAdrM-HPMCOUNTERBASE];
-              else if (CSRAdrM >= MHPMCOUNTERHBASE+3 && CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS) CSRCReadValM = HPMCOUNTERH_REGW[CSRAdrM-MHPMCOUNTERHBASE];
-              else if (CSRAdrM >= HPMCOUNTERHBASE+3 && CSRAdrM  < HPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CSRAdrM-HPMCOUNTERHBASE];
-              else case (CSRAdrM) 
-                MTIME:     CSRCReadValM = MTIME_CLINT[31:0];
-                MTIMECMP:  CSRCReadValM = MTIMECMP_CLINT[31:0];
-                MCYCLE:       CSRCReadValM = CYCLE_REGW[31:0];
-                MINSTRET:     CSRCReadValM = INSTRET_REGW[31:0];
-                TIME:         CSRCReadValM = MTIME_CLINT[31:0];
-                CYCLE:        CSRCReadValM = CYCLE_REGW[31:0];
-                INSTRET:      CSRCReadValM = INSTRET_REGW[31:0];
-                MTIMEH:     CSRCReadValM = MTIME_CLINT[63:32];
-                MTIMECMPH:  CSRCReadValM = MTIMECMP_CLINT[63:32];
-                MCYCLEH:       CSRCReadValM = CYCLE_REGW[63:32];
-                MINSTRETH:     CSRCReadValM = INSTRET_REGW[63:32];
-                TIMEH:         CSRCReadValM = MTIME_CLINT[63:32];
-                CYCLEH:        CSRCReadValM = CYCLE_REGW[63:32];
-                INSTRETH:      CSRCReadValM = INSTRET_REGW[63:32];
-                default:   begin
-                  CSRCReadValM = 0;
-                  IllegalCSRCAccessM = 1;
-                end
-              endcase
-            end else begin 
-              IllegalCSRCAccessM = 1; // no privileges for this csr
+          end else begin // 32-bit counter reads
+            if      (CSRAdrM >= MHPMCOUNTERBASE  && CSRAdrM  < MHPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERBASE   && CSRAdrM   < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= MHPMCOUNTERHBASE && CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERHBASE  && CSRAdrM  < HPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+            else begin
               CSRCReadValM = 0;
-            end
+              IllegalCSRCAccessM = 1; // requested CSR doesn't exist
+            end            
+          end
+        end else begin 
+          CSRCReadValM = 0;
+          IllegalCSRCAccessM = 1; // no privileges for this csr
+        end
     end else begin
       assign CSRCReadValM = 0;
-      assign IllegalCSRCAccessM = 1;
+      assign IllegalCSRCAccessM = 1; // counters aren't enabled
     end
   endgenerate
 endmodule
