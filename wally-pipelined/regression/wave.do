@@ -434,33 +434,36 @@ add wave -noupdate /testbench/dut/hart/lsu/busfsm/BusNextState
 add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheFetchLine
 add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheWriteLine
 add wave -noupdate -expand -group ifu -color Gold /testbench/dut/hart/ifu/busfm/BusCurrState
-add wave -noupdate -expand -group ifu -group icache -color Gold /testbench/dut/hart/ifu/icache/controller/CurrState
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/controller/NextState
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/ITLBMissF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/ITLBWriteF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/ReadLineF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/SelAdr
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/PCNextF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/PCPF
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/PCPSpillF
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/hit
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spill
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/ICacheStallF
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
-add wave -noupdate -expand -group ifu -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/FinalInstrRawF
-add wave -noupdate -expand -group ifu -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheBusAdr
-add wave -noupdate -expand -group ifu -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheBusAck
-add wave -noupdate -expand -group ifu -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -expand -group ifu -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheMemWriteData
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/ICacheMemReadData
-add wave -noupdate -expand -group ifu -group icache /testbench/dut/hart/ifu/icache/SpillDataBlock0
+add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/busfm/LsuBusAck
+add wave -noupdate -expand -group ifu -expand -group icache -color Gold /testbench/dut/hart/ifu/icache/controller/CurrState
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/controller/NextState
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/ITLBMissF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/ITLBWriteF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/ReadLineF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/SelAdr
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/PCNextF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/PCPF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/PCPSpillF
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/hit
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spill
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/ICacheStallF
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/FinalInstrRawF
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheBusAdr
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheBusAck
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheMemWriteData
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/ICacheMemReadData
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/SpillDataBlock0
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/immu/TLBWrite
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/immu/PhysicalAddress
+add wave -noupdate /testbench/dut/hart/ifu/IfuBusRead
+add wave -noupdate /testbench/dut/hart/ifu/icache/ICacheFetchLine
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {0 ns} 0} {{Cursor 4} {49574 ns} 1}
+WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {1239086 ns} 0} {{Cursor 4} {49574 ns} 1}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -476,4 +479,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {752 ns}
+WaveRestoreZoom {1238897 ns} {1239273 ns}
