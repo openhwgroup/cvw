@@ -61,7 +61,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
   assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G; 
 
   generate
-    if (`XLEN == 32) begin
+    if (`XLEN == 32) begin:match
 
       assign {Key_ASID, Key1, Key0} = Key;
       assign {Query1, Query0} = VPN;
@@ -73,7 +73,7 @@ module tlbcamline #(parameter KEY_BITS = 20,
       assign Match1 = (Query1 == Key1);
 
       assign Match = Match0 & Match1 & MatchASID & Valid;
-    end else begin
+    end else begin:match
 
       logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
       logic Match2, Match3;

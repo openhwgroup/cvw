@@ -55,7 +55,7 @@ module uart (
   assign HREADYUART = 1; // should idle high during address phase and respond high when done; will need to be modified if UART ever needs more than 1 cycle to do something
 
   generate
-    if (`XLEN == 64) begin
+    if (`XLEN == 64) begin:uart
       always_comb begin
         HREADUART = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
         case (A)
@@ -69,7 +69,7 @@ module uart (
           3'b111: Din = HWDATA[63:56];
         endcase 
       end 
-    end else begin // 32-bit
+    end else begin:uart // 32-bit
       always_comb begin
         HREADUART = {Dout, Dout, Dout, Dout};
         case (A[1:0])

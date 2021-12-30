@@ -149,7 +149,7 @@ module icache
 					  .InvalidateAll(InvalidateICacheM));
   
   generate
-    if(NUMWAYS > 1) begin
+    if(NUMWAYS > 1) begin:vict
       cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
       cachereplacementpolicy(.clk, .reset,
 							 .WayHit,
@@ -157,7 +157,7 @@ module icache
 							 .LsuPAdrM(FinalPCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 							 .RAdr,
 							 .LRUWriteEn);
-    end else begin
+    end else begin:vict
       assign VictimWay = 1'b1; // one hot.
     end
   endgenerate
@@ -171,7 +171,7 @@ module icache
 
   genvar index;
   generate
-	for(index = 0; index < BLOCKLEN / 16 - 1; index++) begin
+	for(index = 0; index < BLOCKLEN / 16 - 1; index++) begin:readlinesetsmux
 	  assign ReadLineSetsF[index] = ReadLineF[((index+1)*16)+16-1 : (index*16)];
 	end
 	assign ReadLineSetsF[BLOCKLEN/16-1] = {16'b0, ReadLineF[BLOCKLEN-1:BLOCKLEN-16]};

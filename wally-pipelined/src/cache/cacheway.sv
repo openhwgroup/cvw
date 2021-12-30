@@ -124,7 +124,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
   assign Valid = ValidBits[RAdrD];
 
   generate
-    if(DIRTY_BITS) begin
+    if(DIRTY_BITS) begin:dirty
       always_ff @(posedge clk) begin
 		if (reset) 
   		  DirtyBits <= {NUMLINES{1'b0}};
@@ -139,7 +139,7 @@ module cacheway #(parameter NUMLINES=512, parameter BLOCKLEN = 256, TAGLEN = 26,
 
       assign Dirty = DirtyBits[RAdrD];
 
-    end else begin
+    end else begin:dirty
       assign Dirty = 1'b0;
     end
   endgenerate

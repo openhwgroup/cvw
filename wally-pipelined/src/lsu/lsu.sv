@@ -257,11 +257,11 @@ module lsu
   // Move generate from lrsc to outside this module.
   // use PreLsu as prefix for lrsc 
   generate
-	if (`A_SUPPORTED) begin
+	if (`A_SUPPORTED) begin:lrsc
 	  assign MemReadM = PreLsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
 	  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLsuRWM, .LsuAtomicM, .LsuPAdrM,
 				.SquashSCW, .LsuRWM);
-	end else begin
+	end else begin:lrsc
       assign SquashSCW = 0;
       assign LsuRWM = PreLsuRWM;
 	end
