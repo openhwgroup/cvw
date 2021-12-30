@@ -175,18 +175,18 @@ module testbench();
   `define PC          dut.hart.ifu.pcreg.q
   `define CSR_BASE    dut.hart.priv.priv.csr
   `define HPMCOUNTER  `CSR_BASE.counters.genblk1.HPMCOUNTER_REGW
-  `define PMP_BASE    `CSR_BASE.csrm.genblk4
+  `define PMP_BASE    `CSR_BASE.csrm.pmp
   `define PMPCFG      genblk2.PMPCFGreg.q
   `define PMPADDR     PMPADDRreg.q
-  `define MEDELEG     `CSR_BASE.csrm.genblk1.MEDELEGreg.q
-  `define MIDELEG     `CSR_BASE.csrm.genblk1.MIDELEGreg.q
+  `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
+  `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q
   `define MIE         `CSR_BASE.csri.MIE_REGW
   `define MIP         `CSR_BASE.csri.MIP_REGW
   `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
   `define SCAUSE      `CSR_BASE.csrs.genblk1.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
   `define SEPC        `CSR_BASE.csrs.genblk1.SEPCreg.q
-  `define MCOUNTEREN  `CSR_BASE.csrm.genblk3.MCOUNTERENreg.q
+  `define MCOUNTEREN  `CSR_BASE.csrm.counters.MCOUNTERENreg.q
   `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk2.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
   `define SSCRATCH    `CSR_BASE.csrs.genblk1.SSCRATCHreg.q
