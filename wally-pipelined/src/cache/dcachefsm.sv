@@ -29,8 +29,8 @@ module dcachefsm
   (input logic clk,
    input logic 		  reset,
    // inputs from IEU
-   input logic [1:0]  MemRWM,
-   input logic [1:0]  AtomicM,
+   input logic [1:0]  LsuRWM,
+   input logic [1:0]  LsuAtomicM,
    input logic 		  FlushDCacheM,
    // hazard inputs
    input logic 		  CPUBusy,
@@ -94,7 +94,7 @@ module dcachefsm
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
 
-  assign AnyCPUReqM = |MemRWM | (|AtomicM);
+  assign AnyCPUReqM = |LsuRWM | (|LsuAtomicM);
 
   // outputs for the performance counters.
   assign DCacheAccess = AnyCPUReqM & CacheableM & CurrState == STATE_READY;
@@ -156,7 +156,7 @@ module dcachefsm
 		end
 		
 		// amo hit
-		else if(AtomicM[1] & (&MemRWM) & CacheableM & CacheHit) begin
+		else if(LsuAtomicM[1] & (&LsuRWM) & CacheableM & CacheHit) begin
 		  SelAdrM = 2'b01;
 		  DCacheStall = 1'b0;
 		  
@@ -172,7 +172,7 @@ module dcachefsm
 		  end
 		end
 		// read hit valid cached
-		else if(MemRWM[1] & CacheableM & CacheHit) begin
+		else if(LsuRWM[1] & CacheableM & CacheHit) begin
 		  DCacheStall = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  
@@ -185,7 +185,7 @@ module dcachefsm
 	      end
 		end
 		// write hit valid cached
-		else if (MemRWM[0] & CacheableM & CacheHit) begin
+		else if (LsuRWM[0] & CacheableM & CacheHit) begin
 		  SelAdrM = 2'b01;
 		  DCacheStall = 1'b0;
 		  SRAMWordWriteEnableM = 1'b1;
@@ -201,7 +201,7 @@ module dcachefsm
 		  end
 		end
 		// read or write miss valid cached
-		else if((|MemRWM) & CacheableM & ~CacheHit) begin
+		else if((|LsuRWM) & CacheableM & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
 		  DCacheStall = 1'b1;
 		  DCacheFetchLine = 1'b1;
@@ -244,11 +244,11 @@ module dcachefsm
       STATE_MISS_READ_WORD: begin
 		SelAdrM = 2'b01;
 		DCacheStall = 1'b1;
-		if (MemRWM[0] & ~AtomicM[1]) begin // handles stores and amo write.
+		if (LsuRWM[0] & ~LsuAtomicM[1]) begin // handles stores and amo write.
 		  NextState = STATE_MISS_WRITE_WORD;
 		end else begin
 		  NextState = STATE_MISS_READ_WORD_DELAY;
-		  // delay state is required as the read signal MemRWM[1] is still high when we
+		  // delay state is required as the read signal LsuRWM[1] is still high when we
 		  // return to the ready state because the cache is stalling the cpu.
 		end
       end
@@ -258,7 +258,7 @@ module dcachefsm
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
-		if(&MemRWM & AtomicM[1]) begin // amo write
+		if(&LsuRWM & LsuAtomicM[1]) begin // amo write
 		  SelAdrM = 2'b01;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
