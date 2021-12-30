@@ -310,7 +310,7 @@ module lsu
 	  assign CacheableM = 1;
 	  assign DTLBPageFaultM = 0;
 	  assign LoadAccessFaultM = 0;
-	  assign StoreMisalignedFaultM = 0;
+	  assign StoreAccessFaultM = 0;
 	  assign LoadMisalignedFaultM = 0;
 	  assign StoreMisalignedFaultM = 0;
 	end

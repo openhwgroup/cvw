@@ -79,7 +79,7 @@ module SDC
   
   logic 		    SDCDataValid;
   logic [`XLEN-1:0] 	    SDCReadData;
-    logic [`XLEN-1:0] 	    SDCReadDataPreNibbleSwap;
+  logic [`XLEN-1:0] 	    SDCReadDataPreNibbleSwap;
   logic [`XLEN-1:0] 	    SDCWriteData;
   logic 		    FatalError;
   
