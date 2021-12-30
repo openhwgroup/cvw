@@ -174,8 +174,8 @@ module ifu (
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
-  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   BLOCKLEN = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
 
@@ -194,16 +194,25 @@ module ifu (
   // also it is possible to have any above fault on the spilled accesses.
   // I think the solution is to move the spill logic into the ifu using the busfsm and ensuring
   // the mmu sees the spilled address.
-  
-  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-				.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
-				.ICacheFetchLine,
-				.CacheableF,
-				.PCNextF(PCNextFPhys),
-				.PCPF(PCPFmmu),
-				.PCF,
-				.InvalidateICacheM);
+  generate
+	if(`MEM_ICACHE) begin : icache
+	  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
+					.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, // need mux to select between cached and uncached instr.
+					.ICacheFetchLine,
+					.CacheableF,
+					.PCNextF(PCNextFPhys),
+					.PCPF(PCPFmmu),
+					.PCF,
+					.InvalidateICacheM);
 
+	end else begin : passthrough
+	  assign ICacheFetchLine = 0;
+	  assign ICacheBusAdr = 0;
+	  assign CompressedF = 0; //?
+	  assign ICacheStallF = 0;
+	end
+  endgenerate
+	
   
   genvar 			   index;
   generate
@@ -219,7 +228,7 @@ module ifu (
   assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
 
   busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
-  busfm(.clk, .reset, .IgnoreRequest,
+  busfsm(.clk, .reset, .IgnoreRequest,
 		.LsuRWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
 		.LsuBusAck(IfuBusAck),
 		.CPUBusy(StallF), .CacheableM(CacheableF),

@@ -38,7 +38,7 @@ add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallM
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/hart/StallW
 add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
-add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/icache/FinalInstrRawF
+add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/FinalInstrRawF
 add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/InstrD
 add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/InstrE
 add wave -noupdate -group {instruction pipeline} /testbench/dut/hart/ifu/InstrM
@@ -435,33 +435,33 @@ add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheFetchLine
 add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheWriteLine
 add wave -noupdate -expand -group ifu -color Gold /testbench/dut/hart/ifu/busfm/BusCurrState
 add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/busfm/LsuBusAck
-add wave -noupdate -expand -group ifu -expand -group icache -color Gold /testbench/dut/hart/ifu/icache/controller/CurrState
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/controller/NextState
+add wave -noupdate -expand -group ifu -expand -group icache -color Gold /testbench/dut/hart/ifu/icache/icache/controller/CurrState
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/controller/NextState
 add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/ITLBMissF
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/ITLBWriteF
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/ReadLineF
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/SelAdr
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/PCNextF
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/PCPF
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/PCPSpillF
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/hit
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spill
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/ICacheStallF
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/spillSave
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/controller/PreCntEn
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/FinalInstrRawF
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheBusAdr
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheBusAck
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/ICacheMemWriteData
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/ICacheMemReadData
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/SpillDataBlock0
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/ITLBWriteF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/ReadLineF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/SelAdr
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/PCNextF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/PCPF
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/PCPSpillF
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/controller/hit
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/controller/spill
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/controller/ICacheStallF
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/controller/spillSave
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/controller/spillSave
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/controller/PreCntEn
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/hart/ifu/icache/icache/FinalInstrRawF
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/icache/ICacheBusAdr
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/icache/controller/ICacheBusAck
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/icache/controller/ICacheMemWriteEnable
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/hart/ifu/icache/icache/ICacheMemWriteData
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/ICacheMemReadData
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/SpillDataBlock0
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/immu/TLBWrite
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/immu/PhysicalAddress
 add wave -noupdate /testbench/dut/hart/ifu/IfuBusRead
-add wave -noupdate /testbench/dut/hart/ifu/icache/ICacheFetchLine
+add wave -noupdate /testbench/dut/hart/ifu/icache/icache/ICacheFetchLine
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 7} {36865 ns} 1} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {1239086 ns} 0} {{Cursor 4} {49574 ns} 1}
 quietly wave cursor active 3
