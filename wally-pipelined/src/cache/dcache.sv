@@ -178,7 +178,7 @@ module dcache
 
   // variable input mux
   
-  assign ReadDataWordM = ReadDataBlockSetsM[LsuPAdrM[$clog2(WORDSPERLINE+`XLEN/8) : $clog2(`XLEN/8)]];
+  assign ReadDataWordM = ReadDataBlockSetsM[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
 
   // Write Path CPU (IEU) side
 
