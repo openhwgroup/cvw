@@ -208,15 +208,23 @@ module SDC
   end
 
   assign SDCReadDataPreNibbleSwap = ReadData512ByteWords[WordCount];
-  assign SDCReadData = {SDCReadDataPreNibbleSwap[59:56], SDCReadDataPreNibbleSwap[63:60],
-			SDCReadDataPreNibbleSwap[51:48], SDCReadDataPreNibbleSwap[55:52],
-			SDCReadDataPreNibbleSwap[43:40], SDCReadDataPreNibbleSwap[47:44],
-			SDCReadDataPreNibbleSwap[35:32], SDCReadDataPreNibbleSwap[39:36],
-			SDCReadDataPreNibbleSwap[27:24], SDCReadDataPreNibbleSwap[31:28],
-			SDCReadDataPreNibbleSwap[19:16], SDCReadDataPreNibbleSwap[23:20],
-			SDCReadDataPreNibbleSwap[11:8], SDCReadDataPreNibbleSwap[15:12],
-			SDCReadDataPreNibbleSwap[3:0], SDCReadDataPreNibbleSwap[7:4]};
-  
+  generate
+	if(`XLEN == 64) begin
+	  assign SDCReadData = {SDCReadDataPreNibbleSwap[59:56], SDCReadDataPreNibbleSwap[63:60],
+							SDCReadDataPreNibbleSwap[51:48], SDCReadDataPreNibbleSwap[55:52],
+							SDCReadDataPreNibbleSwap[43:40], SDCReadDataPreNibbleSwap[47:44],
+							SDCReadDataPreNibbleSwap[35:32], SDCReadDataPreNibbleSwap[39:36],
+							SDCReadDataPreNibbleSwap[27:24], SDCReadDataPreNibbleSwap[31:28],
+							SDCReadDataPreNibbleSwap[19:16], SDCReadDataPreNibbleSwap[23:20],
+							SDCReadDataPreNibbleSwap[11:8], SDCReadDataPreNibbleSwap[15:12],
+							SDCReadDataPreNibbleSwap[3:0], SDCReadDataPreNibbleSwap[7:4]};
+	end else begin
+	  assign SDCReadData = {SDCReadDataPreNibbleSwap[27:24], SDCReadDataPreNibbleSwap[31:28],
+							SDCReadDataPreNibbleSwap[19:16], SDCReadDataPreNibbleSwap[23:20],
+							SDCReadDataPreNibbleSwap[11:8], SDCReadDataPreNibbleSwap[15:12],
+							SDCReadDataPreNibbleSwap[3:0], SDCReadDataPreNibbleSwap[7:4]};
+	end
+  endgenerate
 
   flopenr #($clog2(4096/`XLEN)) WordCountReg
     (.clk(HCLK),
