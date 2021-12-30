@@ -81,7 +81,9 @@ logic [3:0] dummy;
       case (TEST)
         "arch64i":                        tests = arch64i;
         "arch64priv":                     tests = arch64priv;
-        "arch64c":      if (`C_SUPPORTED) tests = arch64c;
+        "arch64c":      if (`C_SUPPORTED) 
+                          if (`ZICSR_SUPPORTED) tests = {arch64c, arch64cpriv};
+                          else                  tests = {arch64c};
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
@@ -102,7 +104,9 @@ logic [3:0] dummy;
       case (TEST)
         "arch32i":                        tests = arch32i;
         "arch32priv":                     tests = arch32priv;
-        "arch32c":      if (`C_SUPPORTED) tests = arch32c;
+        "arch32c":      if (`C_SUPPORTED) 
+                          if (`ZICSR_SUPPORTED) tests = {arch32c, arch32cpriv};
+                          else                  tests = {arch32c};
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
