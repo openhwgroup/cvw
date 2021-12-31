@@ -91,7 +91,7 @@ module ifu (
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
   logic [`XLEN-3:0]            PCPlusUpperF;
   logic                        CompressedF;
-  logic [31:0]                 InstrRawD, FinalInstrRawF;
+  logic [31:0]                 InstrRawD, FinalInstrRawF, InstrRawF;
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
 
@@ -174,8 +174,8 @@ module ifu (
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
-  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   BLOCKLEN = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
 
@@ -194,15 +194,31 @@ module ifu (
   // also it is possible to have any above fault on the spilled accesses.
   // I think the solution is to move the spill logic into the ifu using the busfsm and ensuring
   // the mmu sees the spilled address.
-  
-  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-				.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF,
-				.ICacheFetchLine,
-				.CacheableF,
-				.PCNextF(PCNextFPhys),
-				.PCPF(PCPFmmu),
-				.PCF,
-				.InvalidateICacheM);
+  generate
+	if(`MEM_ICACHE) begin : icache
+	  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
+					.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, 
+					.ICacheFetchLine,
+					.CacheableF,
+					.PCNextF(PCNextFPhys),
+					.PCPF(PCPFmmu),
+					.PCF,
+					.InvalidateICacheM);
+
+	end else begin : passthrough
+	  assign ICacheFetchLine = 0;
+	  assign ICacheBusAdr = 0;
+	  assign CompressedF = 0; //?
+	  assign ICacheStallF = 0;
+	  assign FinalInstrRawF = 0;
+	end
+  endgenerate
+	
+  // select between dcache and direct from the BUS. Always selected if no dcache.
+  mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF),
+				.d1(ICacheMemWriteData[31:0]),
+				.s(SelUncachedAdr),
+				.y(InstrRawF));
 
   
   genvar 			   index;
@@ -219,7 +235,7 @@ module ifu (
   assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
 
   busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
-  busfm(.clk, .reset, .IgnoreRequest,
+  busfsm(.clk, .reset, .IgnoreRequest,
 		.LsuRWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
 		.LsuBusAck(IfuBusAck),
 		.CPUBusy(StallF), .CacheableM(CacheableF),
@@ -234,7 +250,7 @@ module ifu (
 
 
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : InstrRawF, nop, InstrRawD);
 
 
   assign PrivilegedChangePCM = RetM | TrapM;

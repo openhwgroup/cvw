@@ -214,23 +214,23 @@ module icache
   assign SRAMWayWriteEnable = ICacheMemWriteEnable ? VictimWay : '0;
 
 
-  icachefsm  controller(.clk,
-						.reset,
-						.CPUBusy,
-						.ICacheReadEn,
-						.ICacheMemWriteEnable,
-						.ICacheStallF,
-						.ITLBMissF,
-						.ITLBWriteF,
-						.IgnoreRequest,
-						.ICacheBusAck,
-						.ICacheFetchLine,
-						.CacheableF,
-						.hit,
-						.spill,
-						.spillSave,
-						.SelAdr,
-						.LRUWriteEn);
+  icachefsm  icachefsm(.clk,
+					   .reset,
+					   .CPUBusy,
+					   .ICacheReadEn,
+					   .ICacheMemWriteEnable,
+					   .ICacheStallF,
+					   .ITLBMissF,
+					   .ITLBWriteF,
+					   .IgnoreRequest,
+					   .ICacheBusAck,
+					   .ICacheFetchLine,
+					   .CacheableF,
+					   .hit,
+					   .spill,
+					   .spillSave,
+					   .SelAdr,
+					   .LRUWriteEn);
 
 endmodule
 
