@@ -31,7 +31,9 @@ module csrc #(parameter
   MHPMCOUNTERBASE = 12'hB00,
   MHPMCOUNTERHBASE = 12'hB80,
   HPMCOUNTERBASE = 12'hC00,
-  HPMCOUNTERHBASE = 12'hC80
+  HPMCOUNTERHBASE = 12'hC80,
+  TIME  = 12'hC01,
+  TIMEH = 12'hC81
 ) (
     input logic 	     clk, reset,
     input logic 	     StallE, StallM, StallW,
@@ -48,7 +50,7 @@ module csrc #(parameter
     input logic [1:0] 	     PrivilegeModeW,
     input logic [`XLEN-1:0]  CSRWriteValM,
     input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-    input logic [63:0] 	     MTIME_CLINT, MTIMECMP_CLINT,
+    input logic [63:0] 	     MTIME_CLINT, 
     output logic [`XLEN-1:0] CSRCReadValM,
     output logic 	     IllegalCSRCAccessM
   );
@@ -124,17 +126,26 @@ module csrc #(parameter
             MCOUNTEREN_REGW[CounterNumM] && (!`S_SUPPORTED || PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
           IllegalCSRCAccessM = 0;
           if (`XLEN==64) begin // 64-bit counter reads
-            if      (CSRAdrM >= MHPMCOUNTERBASE && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            // Veri lator doesn't realize this only occurs for XLEN=64
+            /* verilator lint_off WIDTH */  
+            if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
+            /* verilator lint_on WIDTH */  
+            else if (CSRAdrM >= MHPMCOUNTERBASE && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
             else if (CSRAdrM >= HPMCOUNTERBASE && CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
             else begin
                 CSRCReadValM = 0;
                 IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
             end
           end else begin // 32-bit counter reads
-            if      (CSRAdrM >= MHPMCOUNTERBASE  && CSRAdrM  < MHPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-            else if (CSRAdrM >= HPMCOUNTERBASE   && CSRAdrM   < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            // Veri lator doesn't realize this only occurs for XLEN=32
+            /* verilator lint_off WIDTH */  
+            if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
+            else if (CSRAdrM == TIMEH) CSRCReadValM = MTIME_CLINT[63:32];
+            /* verilator lint_on WIDTH */  
+            else if (CSRAdrM >= MHPMCOUNTERBASE  && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERBASE   && CSRAdrM < HPMCOUNTERBASE+`COUNTERS)    CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
             else if (CSRAdrM >= MHPMCOUNTERHBASE && CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-            else if (CSRAdrM >= HPMCOUNTERHBASE  && CSRAdrM  < HPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERHBASE  && CSRAdrM < HPMCOUNTERHBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
             else begin
               CSRCReadValM = 0;
               IllegalCSRCAccessM = 1; // requested CSR doesn't exist

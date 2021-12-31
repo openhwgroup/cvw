@@ -36,7 +36,7 @@ module clint (
   input  logic [1:0]       HTRANS,
   output logic [`XLEN-1:0] HREADCLINT,
   output logic             HRESPCLINT, HREADYCLINT,
-  output logic [63:0]      MTIME, MTIMECMP,
+  output logic [63:0]      MTIME, 
   output logic             TimerIntM, SwIntM);
 
   logic        MSIP;
@@ -44,6 +44,7 @@ module clint (
   logic [15:0] entry, entryd;
   logic memwrite;
   logic initTrans;
+  logic [63:0] MTIMECMP;
 
   assign initTrans = HREADY & HSELCLINT & (HTRANS != 2'b00);
   // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data

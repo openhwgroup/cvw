@@ -54,7 +54,7 @@ module privileged (
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
-  input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
+  input  logic [63:0]      MTIME_CLINT, 
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, IEUAdrM,
   input  logic [4:0]       SetFflagsM,
 
@@ -160,7 +160,7 @@ module privileged (
           .InstrM, .PCM, .SrcAM,
           .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .uretM,
           .TimerIntM, .ExtIntM, .SwIntM,
-          .MTIME_CLINT, .MTIMECMP_CLINT,
+          .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
           .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
           .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess,
