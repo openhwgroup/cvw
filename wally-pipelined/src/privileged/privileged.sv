@@ -153,7 +153,6 @@ module privileged (
   ///////////////////////////////////////////
   // Control and Status Registers
   ///////////////////////////////////////////
-  //csr csr(.*);
   csr csr(.clk, .reset,
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
@@ -216,7 +215,6 @@ module privileged (
                   {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
                   {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
   // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
-  //trap trap(.*);
   trap trap(.clk, .reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreMisalignedFaultM,
