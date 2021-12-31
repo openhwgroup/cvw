@@ -91,7 +91,7 @@ module ifu (
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
   logic [`XLEN-3:0]            PCPlusUpperF;
   logic                        CompressedF;
-  logic [31:0]                 InstrRawD, FinalInstrRawF;
+  logic [31:0]                 InstrRawD, FinalInstrRawF, InstrRawF;
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
 
@@ -197,7 +197,7 @@ module ifu (
   generate
 	if(`MEM_ICACHE) begin : icache
 	  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-					.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, // need mux to select between cached and uncached instr.
+					.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, 
 					.ICacheFetchLine,
 					.CacheableF,
 					.PCNextF(PCNextFPhys),
@@ -210,9 +210,16 @@ module ifu (
 	  assign ICacheBusAdr = 0;
 	  assign CompressedF = 0; //?
 	  assign ICacheStallF = 0;
+	  assign FinalInstrRawF = 0;
 	end
   endgenerate
 	
+  // select between dcache and direct from the BUS. Always selected if no dcache.
+  mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF),
+				.d1(ICacheMemWriteData[31:0]),
+				.s(SelUncachedAdr),
+				.y(InstrRawF));
+
   
   genvar 			   index;
   generate
@@ -243,7 +250,7 @@ module ifu (
 
 
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : FinalInstrRawF, nop, InstrRawD);
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : InstrRawF, nop, InstrRawD);
 
 
   assign PrivilegedChangePCM = RetM | TrapM;
