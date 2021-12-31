@@ -30,7 +30,7 @@ module wallypipelinedhart (
    input logic 		    clk, reset,
    // Privileged
    input logic 		    TimerIntM, ExtIntM, SwIntM,
-   input logic [63:0] 	    MTIME_CLINT, MTIMECMP_CLINT,
+   input logic [63:0] 	    MTIME_CLINT, 
    // Bus Interface
    input logic [`AHBW-1:0]  HRDATA,
    input logic 		    HREADY, HRESP,
@@ -323,7 +323,7 @@ module wallypipelinedhart (
             .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
             .LoadMisalignedFaultM, .StoreMisalignedFaultM,
             .TimerIntM, .ExtIntM, .SwIntM,
-            .MTIME_CLINT, .MTIMECMP_CLINT,
+            .MTIME_CLINT, 
             .InstrMisalignedAdrM, .IEUAdrM,
             .SetFflagsM,
             // Trap signals from pmp/pma in mmu

@@ -680,6 +680,7 @@ string imperas32f[] = '{
 
   string imperas64i[] = '{
     `IMPERASTEST,
+		"rv64i_m/I/I-DELAY_SLOTS-01", "002010",
 		"rv64i_m/I/ADD-01", "004010",
 		"rv64i_m/I/ADDI-01", "003010",
 		"rv64i_m/I/ADDIW-01", "003010",

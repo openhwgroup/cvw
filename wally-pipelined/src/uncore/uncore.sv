@@ -59,7 +59,7 @@ module uncore (
   input  logic             SDCCmdIn,
   input  logic [3:0]       SDCDatIn,
   output logic             SDCCLK,
-  output logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT
+  output logic [63:0]      MTIME_CLINT
 );
   
   logic [`XLEN-1:0] HWDATA;
@@ -120,11 +120,11 @@ module uncore (
         .HWDATA, .HREADY, .HTRANS,
         .HREADCLINT,
         .HRESPCLINT, .HREADYCLINT,
-        .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT),
+        .MTIME(MTIME_CLINT), 
         .TimerIntM, .SwIntM);
 
     end else begin : clint
-      assign MTIME_CLINT = 0; assign MTIMECMP_CLINT = 0;
+      assign MTIME_CLINT = 0;
       assign TimerIntM = 0; assign SwIntM = 0;
     end
     if (`PLIC_SUPPORTED == 1) begin : plic
