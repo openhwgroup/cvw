@@ -1,5 +1,5 @@
 
-// `include "wally-config.vh"
+`include "wally-config.vh"
 module cvtfp (
     input logic [10:0] XExpE,   // input's exponent
     input logic [52:0] XManE,   // input's mantissa
@@ -157,15 +157,28 @@ module cvtfp (
     // Result Selection
     ///////////////////////////////////////////////////////////////////////////////
 
-    // select the double to single precision result
-    assign DSRes = XNaNE ? {XSgnE, {8{1'b1}}, 1'b1, XManE[50:29]} : 
-			Underflow & ~Denorm ? {XSgnE, 30'b0, CalcPlus1&(|FrmE[1:0]|Shift)} : 
-			Overflow | XInfE ? ((FrmE[1:0]==2'b01) | (FrmE[1:0]==2'b10&~XSgnE) | (FrmE[1:0]==2'b11&XSgnE)) & ~XInfE ? {XSgnE, 8'hfe, {23{1'b1}}} :
-                                                                                                                      {XSgnE, 8'hff, 23'b0} : 
-			{XSgnE, DSResExp, DSResFrac};
+    generate if(`IEEE754) begin
+        // select the double to single precision result
+        assign DSRes = XNaNE ? {XSgnE, {8{1'b1}}, 1'b1, XManE[50:29]} : 
+                Underflow & ~Denorm ? {XSgnE, 30'b0, CalcPlus1&(|FrmE[1:0]|Shift)} : 
+                Overflow | XInfE ? ((FrmE[1:0]==2'b01) | (FrmE[1:0]==2'b10&~XSgnE) | (FrmE[1:0]==2'b11&XSgnE)) & ~XInfE ? {XSgnE, 8'hfe, {23{1'b1}}} :
+                                                                                                                        {XSgnE, 8'hff, 23'b0} : 
+                {XSgnE, DSResExp, DSResFrac};
 
-    // select the final result based on the opperation
-    assign CvtFpResE = FmtE ? {{32{1'b1}},DSRes} : {XSgnE, SDExp, SDFrac[51]|XNaNE, SDFrac[50:0]};
+        // select the final result based on the opperation
+        assign CvtFpResE = FmtE ? {{32{1'b1}},DSRes} : {XSgnE, SDExp, SDFrac[51]|XNaNE, SDFrac[50:0]};
+    end else begin
+        // select the double to single precision result
+        assign DSRes = XNaNE ? {1'b0, {8{1'b1}}, 1'b1, 22'b0} : 
+                Underflow & ~Denorm ? {XSgnE, 30'b0, CalcPlus1&(|FrmE[1:0]|Shift)} : 
+                Overflow | XInfE ? ((FrmE[1:0]==2'b01) | (FrmE[1:0]==2'b10&~XSgnE) | (FrmE[1:0]==2'b11&XSgnE)) & ~XInfE ? {XSgnE, 8'hfe, {23{1'b1}}} :
+                                                                                                                        {XSgnE, 8'hff, 23'b0} : 
+                {XSgnE, DSResExp, DSResFrac};
+
+        // select the final result based on the opperation
+        assign CvtFpResE = FmtE ? {{32{1'b1}},DSRes} : {XSgnE&~XNaNE, SDExp, SDFrac[51]|XNaNE, SDFrac[50:0]&{51{~XNaNE}}};
+    end
+    endgenerate
 
 endmodule // fpadd
 

@@ -55,9 +55,9 @@ module fctrl (
                                   default: ControlsD = `FCTRLW'b0_0_00_000_000_00_0_1; // non-implemented instruction
                                 endcase
                     7'b10100??: case(Funct3D)
-                                  3'b010:  ControlsD = `FCTRLW'b0_1_11_010_000_00_0_0; // feq
-                                  3'b001:  ControlsD = `FCTRLW'b0_1_11_001_000_00_0_0; // flt
-                                  3'b000:  ControlsD = `FCTRLW'b0_1_11_011_000_00_0_0; // fle
+                                  3'b010:  ControlsD = `FCTRLW'b0_1_11_010_010_00_0_0; // feq
+                                  3'b001:  ControlsD = `FCTRLW'b0_1_11_001_010_00_0_0; // flt
+                                  3'b000:  ControlsD = `FCTRLW'b0_1_11_011_010_00_0_0; // fle
                                   default: ControlsD = `FCTRLW'b0_0_00_000_000_00_0_1; // non-implemented instruction
                                 endcase
                     7'b11100??: if (Funct3D == 3'b001) ControlsD = `FCTRLW'b0_1_11_000_000_10_0_0; // fclass

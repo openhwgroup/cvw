@@ -24,17 +24,18 @@
 
 `include "wally-config.vh"
 
-// `define FLEN 64//(`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
-// `define NE   11//(`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
-// `define NF   52//(`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
-// `define XLEN 64
+//  `define FLEN 64//(`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
+//  `define NE   11//(`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
+//  `define NF   52//(`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
+//  `define XLEN 64
+//  `define IEEE754 1
 module fma(
     input logic                 clk,
     input logic                 reset,
     input logic                 FlushM,     // flush the memory stage
     input logic                 StallM,     // stall memory stage
     input logic                 FmtE, FmtM, // precision 1 = double 0 = single
-    input logic  [2:0]          FOpCtrlE, // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
+    input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [2:0]          FrmM,               // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic                 XSgnE, YSgnE, ZSgnE,    // input signs - execute stage
     input logic [`NE-1:0]       XExpE, YExpE, ZExpE,    // input exponents - execute stage
@@ -70,6 +71,7 @@ module fma(
     logic 			    ZSgnEffE, ZSgnEffM;
     logic 			    PSgnE, PSgnM;
     logic [8:0]			NormCntE, NormCntM;
+    logic               Mult;
     
     fma1 fma1 (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
                 .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
@@ -79,13 +81,13 @@ module fma(
     // E/M pipeline registers
     flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
     flopenrc #(13) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
-    flopenrc #(15) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                            {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE},
-                            {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM});
+    flopenrc #(16) EMRegFma4(clk, reset, FlushM, ~StallM, 
+                            {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0]},
+                            {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult});
 
     fma2 fma2(.XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
             .FrmM, .FmtM,  .ProdExpM, .AddendStickyM, .KillProdM, .SumM, .NegSumM, .InvZM, .NormCntM, .ZSgnEffM, .PSgnM,
-            .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM,
+            .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .Mult,
             .FMAResM, .FMAFlgM);
 
 endmodule
@@ -420,6 +422,7 @@ module fma2(
     input logic                 InvZM,      // do you invert Z
     input logic                 ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                 PSgnM,      // the product's sign
+    input logic                 Mult,       // multiply opperation
     input logic     [8:0]       NormCntM,   // the normalization shift count
     output logic    [`FLEN-1:0] FMAResM,    // FMA final result
     output logic    [4:0]       FMAFlgM);   // FMA flags {invalid, divide by zero, overflow, underflow, inexact}
@@ -479,7 +482,7 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
 
  
-    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .Underflow, .InvZM, .NegSumM, .SumZero, .ResultSgnTmp, .ResultSgn);
+    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .Underflow, .InvZM, .NegSumM, .SumZero, .Mult, .ResultSgnTmp, .ResultSgn);
 
 
 
@@ -515,6 +518,7 @@ module resultsign(
     input logic         InvZM,
     input logic         NegSumM,
     input logic         SumZero,
+    input logic         Mult,
     output logic        ResultSgnTmp,
     output logic        ResultSgn
 );
@@ -524,8 +528,9 @@ module resultsign(
 
     // Determine the sign if the sum is zero
     //      if cancelation then 0 unless round to -infinity
+    //      if multiply then Psgn
     //      otherwise psign
-    assign ZeroSgn = (PSgnM^ZSgnEffM)&~Underflow ? FrmM[1:0] == 2'b10 : PSgnM;
+    assign ZeroSgn = (PSgnM^ZSgnEffM)&~Underflow&~Mult ? FrmM[1:0] == 2'b10 : PSgnM;
 
     // is the result negitive
     //  if p - z is the Sum negitive
@@ -607,8 +612,8 @@ module normalize(
     assign UfSticky = AddendStickyM | NormSumSticky;
 
     // Determine sum's exponent
-    //                          if plus1                     If plus2                                      if said denorm but norm plus 1     if said denorm (-1 val) but norm plus 2
-    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1&~KillProdM}+{11'b0, LZAPlus2&~KillProdM, 1'b0}+{12'b0, ~|SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}+{11'b0, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM, 1'b0}) & {`NE+2{~(SumZero|ResultDenorm)}};
+    //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
+    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1&~KillProdM}+{11'b0, LZAPlus2&~KillProdM, 1'b0}+{12'b0, ~ResultDenorm&PreResultDenorm2&~KillProdM}+{12'b0, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
     // recalculate if the result is denormalized
     assign ResultDenorm = PreResultDenorm2&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
 
@@ -814,10 +819,12 @@ module resultselect(
         assign XNaNResult = FmtM ? {XSgnM, XExpM, 1'b1, XManM[`NF-2:0]} : {{32{1'b1}}, XSgnM, XExpM[7:0], 1'b1, XManM[50:29]};
         assign YNaNResult = FmtM ? {YSgnM, YExpM, 1'b1, YManM[`NF-2:0]} : {{32{1'b1}}, YSgnM, YExpM[7:0], 1'b1, YManM[50:29]};
         assign ZNaNResult = FmtM ? {ZSgnEffM, ZExpM, 1'b1, ZManM[`NF-2:0]} : {{32{1'b1}}, ZSgnEffM, ZExpM[7:0], 1'b1, ZManM[50:29]};
+        assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
       end else begin:nan
         assign XNaNResult = FmtM ? {1'b0, XExpM, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpM[7:0], 1'b1, 22'b0};
         assign YNaNResult = FmtM ? {1'b0, YExpM, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, YExpM[7:0], 1'b1, 22'b0};
         assign ZNaNResult = FmtM ? {1'b0, ZExpM, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, ZExpM[7:0], 1'b1, 22'b0};
+        assign InvalidResult = FmtM ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, 1'b0, 8'hff, 1'b1, 22'b0};
     end
     endgenerate
     
@@ -826,7 +833,6 @@ module resultselect(
                                                                                                                           {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                     ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :
                                                                                                                           {{32{1'b1}}, ResultSgn, 8'hff, 23'b0};
-    assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
     assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{32{1'b1}}, ResultSgn, {ZExpM[`NE-1],ZExpM[6:0], ZManM[51:29]} + (RoundAdd[59:29]&{31{AddendStickyM}})};
     assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + {63'b0,(CalcPlus1&(AddendStickyM|FrmM[1]))} : {{32{1'b1}}, {ResultSgn, 31'b0} + {31'b0, (CalcPlus1&(AddendStickyM|FrmM[1]))}};
     assign FMAResM = XNaNM ? XNaNResult :
