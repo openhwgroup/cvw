@@ -21,7 +21,7 @@ module fcvt (
     logic               ResSgn;         // FP result's sign
     logic [10:0]        ResExp,TmpExp;  // FP result's exponent
     logic [51:0]        ResFrac;        // FP result's fraction
-    logic [5:0]         LZResP;         // lz output
+    logic [6:0]         LZResP;         // lz output
     logic [7:0]         Bits;           // how many bits are in the integer result
     logic [7:0]         SubBits;        // subtract these bits from the exponent (FP result)
     logic [64+51:0]     ShiftedManTmp;  // Shifted mantissa
@@ -42,6 +42,7 @@ module fcvt (
     logic               Res64, In64;        // is the result or input 64 bits
     logic               RoundMSB;           // most significant bit of the fraction
     logic               RoundSgn;           // sign of the rounded result
+    logic               Invalid, Inexact;   // flags
 
     // FOpCtrlE:
       //  fcvt.w.s  = 001
@@ -78,7 +79,7 @@ module fcvt (
     // make the integer positive
     assign PosInt = IntIn[64-1]&~FOpCtrlE[1] ? -IntIn : IntIn;
     // determine the integer's sign
-    assign ResSgn = ~FOpCtrlE[1] ? IntIn[64-1] : 1'b0;
+    assign ResSgn = ~FOpCtrlE[1]&IntIn[64-1];
     
 	// Leading one detector
 	logic [8:0]	i;
@@ -89,7 +90,7 @@ module fcvt (
 	end
 
     // if no one was found set to zero otherwise calculate the exponent
-    assign TmpExp = i==`XLEN ? 0 : FmtE ? 11'd1023 + {3'b0, SubBits} - {5'b0, LZResP} : 11'd127 + {3'b0, SubBits} - {5'b0, LZResP};
+    assign TmpExp = i==`XLEN ? 0 : FmtE ? 11'd1023 + {3'b0, SubBits} - {4'b0, LZResP} : 11'd127 + {3'b0, SubBits} - {4'b0, LZResP};
 
 
 
@@ -98,7 +99,7 @@ module fcvt (
 
 
     // select the shift value and amount based on operation (to fp or int)
-    assign ShiftCnt = FOpCtrlE[0] ? ExpVal : {7'b0, LZResP};
+    assign ShiftCnt = FOpCtrlE[0] ? ExpVal : {6'b0, LZResP};
     assign ShiftVal = FOpCtrlE[0] ? {{64-1{1'b0}}, XManE} : {PosInt, 52'b0};
 
 	// if shift = -1 then shift one bit right for gaurd bit (right shifting twice never rounds)
@@ -159,8 +160,8 @@ module fcvt (
 
     // select the integer result
     assign CvtIntRes = Of ? FOpCtrlE[1] ? {64{1'b1}} : SgnRes ? {33'b0, {31{1'b1}}}: {1'b0, {63{1'b1}}} : 
-                    Uf ? FOpCtrlE[1] ? {63'b0, Plus1&~XSgnE} : SgnRes ? {32'b0, 1'b1, 31'b0} : {1'b1, 63'b0} :
-		            Rounded[64-1:0];
+                    Uf ? FOpCtrlE[1] ? {63'b0, Plus1&~XSgnE} : SgnRes ? {{33{1'b1}}, 31'b0} : {1'b1, 63'b0} :
+		    |RoundedTmp ? Rounded[64-1:0] : 64'b0;
 
     // select the floating point result            
     assign CvtFPRes = FmtE ? {ResSgn, ResExp, ResFrac} : {{32{1'b1}}, ResSgn, ResExp[7:0], ResFrac[51:29]};
@@ -169,15 +170,19 @@ module fcvt (
     assign CvtResE = FOpCtrlE[0] ? CvtIntRes : CvtFPRes;
 
     // calculate the flags
-    //      - only set invalid flag for out-of-range vales if it isn't be indicated by the inexact
-    //      - don't set inexact flag if converting a really large number (closest __ bit integer value is the max value)
-    //      - don't set inexact flag if converting negitive or tiny number to unsigned (closest integer value is 0 or 1)
-    logic Invalid, Inexact;
-    assign Invalid = (Of | Uf)&FOpCtrlE[0];
-    assign Inexact = (Guard|Round|Sticky)&~((&FOpCtrlE[1:0]&Uf&~(Plus1&~XSgnE))|(FOpCtrlE[0]&Of));
-    assign CvtFlgE = {Invalid&~Inexact, 3'b0, Inexact};
-    // assign CvtFlgE = {(Of | Uf)&FOpCtrlE[0], 3'b0, (Guard|Round|Sticky)&~FOpCtrlE[0]};
+    //      - only set invalid flag for out-of-range vales
+    //      - set inexact if in representable range and not exact
 
+    generate if(`IEEE754) begin // checks before rounding
+        assign Invalid = (Of | Uf)&FOpCtrlE[0];
+        assign Inexact = (Guard|Round|Sticky)&~(&FOpCtrlE[1:0]&(XSgnE|Of))&~((Of|Uf)&~FOpCtrlE[1]&FOpCtrlE[0]);
+        assign CvtFlgE = {Invalid&~Inexact, 3'b0, Inexact};
+    end else begin // RISC-V checks if the result is in range after rounding
+        assign Invalid = (Of | Uf)&FOpCtrlE[0];
+        assign Inexact = (Guard|Round|Sticky)&~(&FOpCtrlE[1:0]&((XSgnE&~(ShiftCnt[12]&~Plus1))|Of))&~((Of|Uf)&~FOpCtrlE[1]&FOpCtrlE[0]);
+        assign CvtFlgE = {Invalid&~Inexact, 3'b0, Inexact};
+    end
+    endgenerate
 
 
 
