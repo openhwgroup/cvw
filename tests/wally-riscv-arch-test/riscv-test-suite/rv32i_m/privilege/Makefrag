@@ -29,8 +29,8 @@
 
 rv32i_sc_tests = \
     WALLY-MMU-SV32 \
-    WALLY-PMA \
     WALLY-PMP
+#    WALLY-PMA \
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 

@@ -51,6 +51,7 @@ module wallypipelinedsoc (
   output logic 		   HMASTLOCK,
   output logic 		   HREADY,
   // I/O Interface
+  input  logic       TIMECLK,
   input logic [31:0] 	   GPIOPinsIn,
   output logic [31:0] 	   GPIOPinsOut, GPIOPinsEn,
   input logic 		   UARTSin,
@@ -85,7 +86,7 @@ module wallypipelinedsoc (
     .HADDRD, .HSIZED, .HWRITED
    );
 
-  uncore uncore(.HCLK, .HRESETn,
+  uncore uncore(.HCLK, .HRESETn, .TIMECLK,
     .HADDR, .HWDATAIN(HWDATA), .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
     .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,
     .TimerIntM, .SwIntM, .ExtIntM, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 

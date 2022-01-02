@@ -152,7 +152,7 @@ logic [3:0] dummy;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
@@ -332,9 +332,9 @@ logic [3:0] dummy;
 endmodule
 
 module riscvassertions;
-  // Legal number of PMP entries are 0, 16, or 64
   initial begin
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
+    assert (`S_SUPPORTED || `MEM_VIRTMEM == 0) else $error("Virtual memory requires S mode support");
     assert (`DIV_BITSPERCYCLE == 1 || `DIV_BITSPERCYCLE==2 || `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
     assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
@@ -351,7 +351,9 @@ module riscvassertions;
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES || `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES || `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
-	assert (`ZICSR_SUPPORTED == 1 || (`PMP_ENTRIES == 0 && `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
+	  assert (`ZICSR_SUPPORTED == 1 || (`PMP_ENTRIES == 0 && `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
+    assert (`ZICSR_SUPPORTED == 1 || (`S_SUPPORTED == 0 && `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
+    assert (`U_SUPPORTED || (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
   end
 endmodule
 
