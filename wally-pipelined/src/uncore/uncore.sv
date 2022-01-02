@@ -31,6 +31,7 @@
 module uncore (
   // AHB Bus Interface
   input  logic             HCLK, HRESETn,
+  input  logic             TIMECLK,
   input  logic [31:0]      HADDR,
   input  logic [`AHBW-1:0] HWDATAIN,
   input  logic             HWRITE,
@@ -115,7 +116,7 @@ module uncore (
     // memory-mapped I/O peripherals
     if (`CLINT_SUPPORTED == 1) begin : clint
       clint clint(
-        .HCLK, .HRESETn,
+        .HCLK, .HRESETn, .TIMECLK,
         .HSELCLINT, .HADDR(HADDR[15:0]), .HWRITE,
         .HWDATA, .HREADY, .HTRANS,
         .HREADCLINT,

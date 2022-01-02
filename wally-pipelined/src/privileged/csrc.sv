@@ -30,6 +30,7 @@
 module csrc #(parameter 
   MHPMCOUNTERBASE = 12'hB00,
   MHPMCOUNTERHBASE = 12'hB80,
+  MHPMEVENTBASE = 12'h320,
   HPMCOUNTERBASE = 12'hC00,
   HPMCOUNTERHBASE = 12'hC80,
   TIME  = 12'hC01,
@@ -162,3 +163,8 @@ module csrc #(parameter
   endgenerate
 endmodule
 
+// To Do:
+//  review couunter spec
+//  upper unimplemented counters should read as 0 rather than illegal access
+//  mounteren should only exist if u-mode exists
+//  Implement MHPMEVENT

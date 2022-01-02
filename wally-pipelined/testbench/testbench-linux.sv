@@ -82,7 +82,7 @@ module testbench();
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
-			.GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+			.TIMECLK(0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
