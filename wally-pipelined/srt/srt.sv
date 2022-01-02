@@ -106,17 +106,17 @@ module qsel(input  logic [55:52] ps, pc,
   assign #1 magnitude = ~(&p[54:52]);
   assign #1 cout = g[54] | (p[54] & (g[53] | p[53] & g[52]));
   assign #1 sign = p[55] ^ cout;
-/*  assign #1 magnitude = ~((ps[54]^pc[54]) && (ps[53]^pc[53]) && 
+/*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
 			  (ps[52]^pc[52]));
   assign #1 sign = (ps[55]^pc[55])^
-      (ps[54] && pc[54] || ((ps[54]^pc[54]) &&
-			    (ps[53]&&pc[53] || ((ps[53]^pc[53]) &&
-						(ps[52]&&pc[52]))))); */
+      (ps[54] & pc[54] | ((ps[54]^pc[54]) &
+			    (ps[53]&pc[53] | ((ps[53]^pc[53]) &
+						(ps[52]&pc[52]))))); */
 
   // Produce quotient = +1, 0, or -1
-  assign #1 qp = magnitude && ~sign;
+  assign #1 qp = magnitude & ~sign;
   assign #1 qz = ~magnitude;
-  assign #1 qm = magnitude && sign;
+  assign #1 qm = magnitude & sign;
 endmodule
 
 //////////
@@ -243,7 +243,7 @@ module counter(input  logic clk,
   always @(posedge clk)
     begin
       if      (count == 54) done <= #1 1;
-      else if (done || req) done <= #1 0;	
+      else if (done | req) done <= #1 0;	
       if (req) count <= #1 0;
       else     count <= #1 count+1;
     end

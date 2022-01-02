@@ -124,7 +124,7 @@ module decompress (
                           InstrD = {7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011}; // c.or
                         else // if (instr16[6:5] == 2'b11) 
                           InstrD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
-                      else if (instr16[12:10] == 3'b111 && `XLEN > 32)
+                      else if (instr16[12:10] == 3'b111 & `XLEN > 32)
                         if (instr16[6:5] == 2'b00)
                           InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
                         else if (instr16[6:5] == 2'b01)

@@ -46,7 +46,7 @@ module adrdec (
   // determine if legal size of access is being made (byte, halfword, word, doubleword)
   assign SizeValid = SizeMask[Size]; 
   
-  assign Sel = Match && Supported && AccessValid && SizeValid;
+  assign Sel = Match & Supported & AccessValid & SizeValid;
 
 endmodule
 

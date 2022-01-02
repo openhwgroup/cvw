@@ -95,28 +95,28 @@ module tlbcontrol #(parameter ITLB = 0) (
 
       // User mode may only execute user mode pages, and supervisor mode may
       // only execute non-user mode pages.
-      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
-        ((EffectivePrivilegeMode == `S_MODE) && PTE_U);
+      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
+        ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
       // fault for software handling if access bit is off
       assign DAPageFault = ~PTE_A;
-      assign TLBPageFault = (Translate  && TLBHit && (ImproperPrivilege || ~PTE_X || DAPageFault || UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+      assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end else begin:dtlb // Data TLB fault checking
       logic ImproperPrivilege, InvalidRead, InvalidWrite;
 
       // User mode may only load/store from user mode pages, and supervisor mode
       // may only access user mode pages when STATUS_SUM is low.
-      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) && ~PTE_U) ||
-        ((EffectivePrivilegeMode == `S_MODE) && PTE_U && ~STATUS_SUM);
+      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
+        ((EffectivePrivilegeMode == `S_MODE) & PTE_U & ~STATUS_SUM);
       // Check for read error. Reads are invalid when the page is not readable
       // (and executable pages are not readable) or when the page is neither
       // readable nor executable (and executable pages are readable).
-      assign InvalidRead = ReadAccess && ~PTE_R && (~STATUS_MXR | ~PTE_X);
+      assign InvalidRead = ReadAccess & ~PTE_R & (~STATUS_MXR | ~PTE_X);
       // Check for write error. Writes are invalid when the page's write bit is
       // low.
-      assign InvalidWrite = WriteAccess && ~PTE_W;
+      assign InvalidWrite = WriteAccess & ~PTE_W;
       // Fault for software handling if access bit is off or writing a page with dirty bit off
       assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault =  (Translate && TLBHit && (ImproperPrivilege || InvalidRead || InvalidWrite || DAPageFault || UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+      assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end
   endgenerate
 

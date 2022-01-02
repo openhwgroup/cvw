@@ -55,7 +55,7 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
-  assign StallFCause = CSRWritePendingDEM && ~(TrapM | RetM | BPPredWrongE);
+  assign StallFCause = CSRWritePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   assign StallDCause = (LoadStallD | StoreStallD | MulDivStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallECause = DivBusyE | FDivBusyE;
   assign StallMCause = 0; 
@@ -67,10 +67,10 @@ module hazard(
   assign StallM = StallMCause | StallW;
   assign StallW = StallWCause;
 
-  assign FirstUnstalledD = (~StallD && StallF);
-  assign FirstUnstalledE = (~StallE && StallD);
-  assign FirstUnstalledM = (~StallM && StallE);
-  assign FirstUnstalledW = (~StallW && StallM);
+  assign FirstUnstalledD = ~StallD & StallF;
+  assign FirstUnstalledE = ~StallE & StallD;
+  assign FirstUnstalledM = ~StallM & StallE;
+  assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
   assign FlushF = BPPredWrongE | InvalidateICacheM;

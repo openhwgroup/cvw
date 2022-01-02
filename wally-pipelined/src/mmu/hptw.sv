@@ -89,7 +89,7 @@ module hptw
 	// For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
 	assign {Executable, Writable, Readable, Valid} = PTE[3:0]; 
 	assign LeafPTE = Executable | Writable | Readable; 
-	assign ValidPTE = Valid && ~(Writable && ~Readable);
+	assign ValidPTE = Valid & ~(Writable & ~Readable);
 	assign ValidLeafPTE = ValidPTE & LeafPTE;
 	assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
 
@@ -162,28 +162,28 @@ module hptw
 	L3_ADR: 			NextWalkerState = L3_RD; // first access in SV48
 	L3_RD: if (DCacheStall) NextWalkerState = L3_RD;
 				else 			NextWalkerState = L2_ADR;
-	//	    LEVEL3: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
+	//	    LEVEL3: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
 	//		  		else if (ValidNonLeafPTE) NextWalkerState = L2_ADR;
 	//		 		else 				NextWalkerState = FAULT;
 	L2_ADR: if (InitialWalkerState == L2_ADR) NextWalkerState = L2_RD; // first access in SV39
-			else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
 			else 				NextWalkerState = LEAF;
 	L2_RD: if (DCacheStall) NextWalkerState = L2_RD;
 				else 			NextWalkerState = L1_ADR;
-	//	    LEVEL2: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
+	//	    LEVEL2: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
 	//				else if (ValidNonLeafPTE) NextWalkerState = L1_ADR;
 	//				else 				NextWalkerState = FAULT;
 	L1_ADR: if (InitialWalkerState == L1_ADR) NextWalkerState = L1_RD; // first access in SV32
-			else if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
 			else 				NextWalkerState = LEAF;	
 	L1_RD: if (DCacheStall) NextWalkerState = L1_RD;
 				else 			NextWalkerState = L0_ADR;
-	//	    LEVEL1: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF;
+	//	    LEVEL1: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
 	//	      		else if (ValidNonLeafPTE) NextWalkerState = L0_ADR;
 	//				else 				NextWalkerState = FAULT;
-	L0_ADR: if (ValidLeafPTE && ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+	L0_ADR: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
 			else 				NextWalkerState = LEAF;
 	L0_RD: if (DCacheStall) NextWalkerState = L0_RD;

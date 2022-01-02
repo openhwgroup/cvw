@@ -43,14 +43,14 @@ module lrsc
   logic 						lrM, scM, WriteAdrMatchM;
   logic 						SquashSCM;
 
-  assign lrM = MemReadM && LsuAtomicM[0];
-  assign scM = PreLsuRWM[0] && LsuAtomicM[0]; 
-  assign WriteAdrMatchM = PreLsuRWM[0] && (LsuPAdrM[`PA_BITS-1:2] == ReservationPAdrW) && ReservationValidW;
-  assign SquashSCM = scM && ~WriteAdrMatchM;
+  assign lrM = MemReadM & LsuAtomicM[0];
+  assign scM = PreLsuRWM[0] & LsuAtomicM[0]; 
+  assign WriteAdrMatchM = PreLsuRWM[0] & (LsuPAdrM[`PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
+  assign SquashSCM = scM & ~WriteAdrMatchM;
   assign LsuRWM = SquashSCM ? 2'b00 : PreLsuRWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
     if (lrM) ReservationValidM = 1;  // set valid on load reserve
-    else if (scM || WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
+    else if (scM | WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
   flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, LsuPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid

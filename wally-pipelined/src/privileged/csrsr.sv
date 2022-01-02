@@ -96,14 +96,14 @@ module csrsr (
     assign STATUS_UXL = `U_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if user mode supported
     assign STATUS_SUM = `S_SUPPORTED & `MEM_VIRTMEM & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
     assign STATUS_MPRV = `U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
-    assign STATUS_FS = (`S_SUPPORTED && (`F_SUPPORTED || `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP
+    assign STATUS_FS = (`S_SUPPORTED & (`F_SUPPORTED | `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP
   endgenerate
-  assign STATUS_SD = (STATUS_FS == 2'b11) || (STATUS_XS == 2'b11); // dirty state logic
+  assign STATUS_SD = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
   assign STATUS_XS = 2'b00; // No additional user-mode state to be dirty
 
   always_comb
-    if      (CSRWriteValM[12:11] == `U_MODE && `U_SUPPORTED) STATUS_MPP_NEXT = `U_MODE;
-    else if (CSRWriteValM[12:11] == `S_MODE && `S_SUPPORTED) STATUS_MPP_NEXT = `S_MODE;
+    if      (CSRWriteValM[12:11] == `U_MODE & `U_SUPPORTED) STATUS_MPP_NEXT = `U_MODE;
+    else if (CSRWriteValM[12:11] == `S_MODE & `S_SUPPORTED) STATUS_MPP_NEXT = `S_MODE;
     else                                                     STATUS_MPP_NEXT = `M_MODE;
 
   // registers for STATUS bits
