@@ -661,10 +661,10 @@ string tests32f[] = '{
   always @(negedge clk)
     begin    
 /* -----\/----- EXCLUDED -----\/-----
-      if (dut.wallypipelinedsoc.hart.priv.EcallFaultM && 
-			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 || 
-			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 && 
-			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 && 
+      if (dut.wallypipelinedsoc.hart.priv.EcallFaultM & 
+			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 & 
+			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 & 
 			      dut.wallypipelinedsoc.hart.ieu.dp.regf.wd3 == 1))) begin
  -----/\----- EXCLUDED -----/\----- */
       if (DCacheFlushDone) begin
@@ -703,9 +703,9 @@ string tests32f[] = '{
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== ram.RAM[testadr+i] &&
+          if (signature[i] !== ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
-            if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
+            if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
@@ -751,10 +751,10 @@ string tests32f[] = '{
   end
  -----/\----- EXCLUDED -----/\----- */
 
-  assign DCacheFlushStart = dut.wallypipelinedsoc.hart.priv.EcallFaultM && 
-			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 || 
-			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 && 
-			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 && 
+  assign DCacheFlushStart = dut.wallypipelinedsoc.hart.priv.EcallFaultM & 
+			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 & 
+			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 & 
 			      dut.wallypipelinedsoc.hart.ieu.dp.regf.wd3 == 1));
   
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
@@ -779,20 +779,20 @@ endmodule
 module riscvassertions();
   // Legal number of PMP entries are 0, 16, or 64
   initial begin
-    assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
-    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double without supporting float");
-    assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
-    assert (`DCACHE_WAYSIZEINBYTES <= 4096 || `MEM_DCACHE == 0 || `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_BLOCKLENINBITS >= 128 || `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
+    assert (`PMP_ENTRIES == 0 | `PMP_ENTRIES==16 | `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
+    assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double without supporting float");
+    assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
+    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | `MEM_DCACHE == 0 | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`DCACHE_BLOCKLENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_BLOCKLENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (`ICACHE_WAYSIZEINBYTES <= 4096 || `MEM_ICACHE == 0 || `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`ICACHE_BLOCKLENINBITS >= 32 || `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | `MEM_ICACHE == 0 | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`ICACHE_BLOCKLENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
     assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
     assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (`ICACHE_NUMWAYS == 1 || `MEM_ICACHE == 0) else $warning("Multiple Instruction Cache ways not yet implemented");
+    assert (`ICACHE_NUMWAYS == 1 | `MEM_ICACHE == 0) else $warning("Multiple Instruction Cache ways not yet implemented");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`RAM_RANGE >= 56'h07FFFFFF) else $error("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
@@ -862,7 +862,7 @@ module DCacheFlushFSM
       for(i = 0; i < numlines; i++) begin
 	for(j = 0; j < numways; j++) begin
 	  for(k = 0; k < numwords; k++) begin
-	  if (CacheValid[j][i][k] && CacheDirty[j][i][k]) begin
+	  if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
 	    ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
 	    end
 	  end	

@@ -71,7 +71,7 @@ module localHistoryPredictor
       
       flopenr #(k) LocalHistoryRegister(.clk(clk),
      .reset(reset),
-     .en(UpdateEN && (index == UpdatePCIndex)),
+     .en(UpdateEN & (index == UpdatePCIndex)),
      .d(LHRFNext),
      .q(LHRNextF[index]));
     end 

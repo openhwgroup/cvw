@@ -108,8 +108,8 @@ module csr #(parameter
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
-  assign CSRMWriteM = CSRWriteM && (PrivilegeModeW == `M_MODE);
-  assign CSRSWriteM = CSRWriteM && (|PrivilegeModeW);
+  assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
+  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
   assign CSRUWriteM = CSRWriteM;  
 
   csri  csri(.clk, .reset, .StallW, .CSRMWriteM, .CSRSWriteM,
@@ -161,9 +161,9 @@ module csr #(parameter
   flopenrc #(`XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
-  assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 && PrivilegeModeW != `M_MODE) ||
-                                    (CSRAdrM[9:8] == 2'b01 && PrivilegeModeW == `U_MODE);
-  assign IllegalCSRAccessM = ((IllegalCSRCAccessM && IllegalCSRMAccessM && 
-    IllegalCSRSAccessM && IllegalCSRUAccessM  && IllegalCSRNAccessM ||
-    InsufficientCSRPrivilegeM) && CSRReadM) || IllegalCSRMWriteReadonlyM;
+  assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != `M_MODE) |
+                                    (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == `U_MODE);
+  assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM & 
+    IllegalCSRSAccessM & IllegalCSRUAccessM  & IllegalCSRNAccessM |
+    InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
 endmodule

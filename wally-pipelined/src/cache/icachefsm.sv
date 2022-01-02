@@ -341,9 +341,9 @@ module icachefsm
     endcase
   end
 
-  assign ICacheFetchLine = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) ||
-						   (CurrState == STATE_MISS_FETCH_WDV) ||
-						   (CurrState == STATE_MISS_SPILL_FETCH_WDV) ||
+  assign ICacheFetchLine = (CurrState == STATE_HIT_SPILL_MISS_FETCH_WDV) |
+						   (CurrState == STATE_MISS_FETCH_WDV) |
+						   (CurrState == STATE_MISS_SPILL_FETCH_WDV) |
 						   (CurrState == STATE_MISS_SPILL_MISS_FETCH_WDV);
   
 endmodule

@@ -59,8 +59,8 @@ module pmachecker (
 
   // Detect access faults
   assign PMAAccessFault = SelRegions[8] & AccessRWX;  
-  assign PMAInstrAccessFaultF = ExecuteAccessF && PMAAccessFault;
-  assign PMALoadAccessFaultM  = ReadAccessM    && PMAAccessFault;
-  assign PMAStoreAccessFaultM = WriteAccessM   && PMAAccessFault;
+  assign PMAInstrAccessFaultF = ExecuteAccessF & PMAAccessFault;
+  assign PMALoadAccessFaultM  = ReadAccessM    & PMAAccessFault;
+  assign PMAStoreAccessFaultM = WriteAccessM   & PMAAccessFault;
 endmodule
 

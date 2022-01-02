@@ -70,9 +70,9 @@ module pmpchecker (
       // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
       assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 
 
-      assign PMPInstrAccessFaultF = EnforcePMP && ExecuteAccessF && ~|X;
-      assign PMPStoreAccessFaultM = EnforcePMP && WriteAccessM   && ~|W;
-      assign PMPLoadAccessFaultM  = EnforcePMP && ReadAccessM    && ~|R;
+      assign PMPInstrAccessFaultF = EnforcePMP & ExecuteAccessF & ~|X;
+      assign PMPStoreAccessFaultM = EnforcePMP & WriteAccessM   & ~|W;
+      assign PMPLoadAccessFaultM  = EnforcePMP & ReadAccessM    & ~|R;
     end else begin: pmpchecker  // no checker
       assign PMPInstrAccessFaultF = 0;
       assign PMPLoadAccessFaultM = 0;

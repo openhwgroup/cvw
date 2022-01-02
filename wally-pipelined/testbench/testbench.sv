@@ -244,9 +244,9 @@ logic [3:0] dummy;
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
 		  // *** have to figure out how to exclude shadowram when not using a dcache.
-          if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &&
+          if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
-            if (signature[i+4] !== 'bx || signature[i] !== 32'hFFFFFFFF) begin
+            if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
@@ -304,12 +304,12 @@ logic [3:0] dummy;
       assign ecf = 0;
     end
   endgenerate
-  assign DCacheFlushStart = ecf && 
-			    (dut.hart.ieu.dp.regf.rf[3] == 1 || 
-			     (dut.hart.ieu.dp.regf.we3 && 
-			      dut.hart.ieu.dp.regf.a3 == 3 && 
-			      dut.hart.ieu.dp.regf.wd3 == 1)) ||
-          (dut.hart.ifu.InstrM == 32'h6f || dut.hart.ifu.InstrM == 32'hfc32a423 || dut.hart.ifu.InstrM == 32'hfc32a823) && dut.hart.ieu.c.InstrValidM;
+  assign DCacheFlushStart = ecf & 
+			    (dut.hart.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.hart.ieu.dp.regf.we3 & 
+			      dut.hart.ieu.dp.regf.a3 == 3 & 
+			      dut.hart.ieu.dp.regf.wd3 == 1)) |
+          (dut.hart.ifu.InstrM == 32'h6f | dut.hart.ifu.InstrM == 32'hfc32a423 | dut.hart.ifu.InstrM == 32'hfc32a823) & dut.hart.ieu.c.InstrValidM;
 
   // **** Fix when the check in the shadow ram is fixed.
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
@@ -333,27 +333,27 @@ endmodule
 
 module riscvassertions;
   initial begin
-    assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
-    assert (`S_SUPPORTED || `MEM_VIRTMEM == 0) else $error("Virtual memory requires S mode support");
-    assert (`DIV_BITSPERCYCLE == 1 || `DIV_BITSPERCYCLE==2 || `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
-    assert (`F_SUPPORTED || ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
-    assert (`XLEN == 64 || ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
-    assert (`DCACHE_WAYSIZEINBYTES <= 4096 || `MEM_DCACHE == 0 || `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_BLOCKLENINBITS >= 128 || `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
+    assert (`PMP_ENTRIES == 0 | `PMP_ENTRIES==16 | `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
+    assert (`S_SUPPORTED | `MEM_VIRTMEM == 0) else $error("Virtual memory requires S mode support");
+    assert (`DIV_BITSPERCYCLE == 1 | `DIV_BITSPERCYCLE==2 | `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
+    assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
+    assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
+    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | `MEM_DCACHE == 0 | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`DCACHE_BLOCKLENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_BLOCKLENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (`ICACHE_WAYSIZEINBYTES <= 4096 || `MEM_ICACHE == 0 || `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`ICACHE_BLOCKLENINBITS >= 32 || `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | `MEM_ICACHE == 0 | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`ICACHE_BLOCKLENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS || `MEM_DCACHE==0) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES || `MEM_DCACHE==0) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS || `MEM_ICACHE==0) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES || `MEM_ICACHE==0) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES || `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
-    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES || `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS | `MEM_DCACHE==0) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | `MEM_DCACHE==0) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS | `MEM_ICACHE==0) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | `MEM_ICACHE==0) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
-	  assert (`ZICSR_SUPPORTED == 1 || (`PMP_ENTRIES == 0 && `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
-    assert (`ZICSR_SUPPORTED == 1 || (`S_SUPPORTED == 0 && `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
-    assert (`U_SUPPORTED || (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
+	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
+    assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
+    assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
   end
 endmodule
 
@@ -420,7 +420,7 @@ module DCacheFlushFSM
 			for(i = 0; i < numlines; i++) begin
 			  for(j = 0; j < numways; j++) begin
 				for(k = 0; k < numwords; k++) begin
-				  if (CacheValid[j][i][k] && CacheDirty[j][i][k]) begin
+				  if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
 					ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
 				  end
 				end	

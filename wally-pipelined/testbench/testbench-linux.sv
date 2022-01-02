@@ -222,7 +222,7 @@ module testbench();
   `define checkEQ(NAME, VAL, EXPECTED) \
     if(VAL != EXPECTED) begin \
       $display("%tns, %d instrs: %s %x differs from expected %x", $time, InstrCountW, NAME, VAL, EXPECTED); \
-      if ((NAME == "PCW") || (`DEBUG_TRACE >= 2)) fault = 1; \
+      if ((NAME == "PCW") | (`DEBUG_TRACE >= 2)) fault = 1; \
     end
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -571,7 +571,7 @@ module testbench();
       // turn on waves
       if (InstrCountW == INSTR_WAVEON) $stop;
       // end sim
-      if ((InstrCountW == INSTR_LIMIT) && (INSTR_LIMIT!=0)) $stop;
+      if ((InstrCountW == INSTR_LIMIT) & (INSTR_LIMIT!=0)) $stop;
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
@@ -678,7 +678,7 @@ module testbench();
       SvMode = SATP[63];
       // Only perform translation if translation is on and the processor is not
       // in machine mode
-      if (SvMode && (dut.hart.priv.priv.PrivilegeModeW != `M_MODE)) begin
+      if (SvMode & (dut.hart.priv.priv.PrivilegeModeW != `M_MODE)) begin
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);

@@ -211,7 +211,7 @@ module uartPC16550D(
     if (~HRESETn) begin
       baudcount <= #1 1;
       baudpulse <= #1 0;
-    end else if (~MEMWb & DLAB & (A == 3'b0 || A == 3'b1)) begin
+    end else if (~MEMWb & DLAB & (A == 3'b0 | A == 3'b1)) begin
       baudcount <= #1 1;
     end else begin
       // the baudpulse is too long by 2 clock cycles.
@@ -248,7 +248,7 @@ module uartPC16550D(
         rxoversampledcnt <= #1 rxoversampledcnt + 1;  // 16x oversampled counter
         if (rxcentered) rxbitsreceived <= #1 rxbitsreceived + 1;
         if (rxbitsreceived == rxbitsexpected) rxstate <= #1 UART_DONE; // pulse rxdone for a cycle
-      end else if (rxstate == UART_DONE || rxstate == UART_BREAK) begin
+      end else if (rxstate == UART_DONE | rxstate == UART_BREAK) begin
         if (rxbreak & ~SINsync) rxstate <= #1 UART_BREAK;
         else rxstate <= #1 UART_IDLE;
       end

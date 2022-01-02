@@ -100,7 +100,7 @@ module csrc #(parameter
       
       // Counter update and write logic
       for (i = 0; i < `COUNTERS; i = i+1) begin
-          assign WriteHPMCOUNTERM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERBASE + i);
+          assign WriteHPMCOUNTERM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERBASE + i);
           assign NextHPMCOUNTERM[i][`XLEN-1:0] = WriteHPMCOUNTERM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][`XLEN-1:0];
           always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
             if (reset) HPMCOUNTER_REGW[i][`XLEN-1:0] <= #1 0;
@@ -110,7 +110,7 @@ module csrc #(parameter
             logic [`COUNTERS-1:0] WriteHPMCOUNTERHM;
             logic [`XLEN-1:0] NextHPMCOUNTERHM[`COUNTERS-1:0];
             assign HPMCOUNTERPlusM[i] = {HPMCOUNTERH_REGW[i], HPMCOUNTER_REGW[i]} + {63'b0, CounterEvent[i] & ~MCOUNTINHIBIT_REGW[i]};
-            assign WriteHPMCOUNTERHM[i] = CSRMWriteM && (CSRAdrM == MHPMCOUNTERHBASE + i);
+            assign WriteHPMCOUNTERHM[i] = CSRMWriteM & (CSRAdrM == MHPMCOUNTERHBASE + i);
             assign NextHPMCOUNTERHM[i] = WriteHPMCOUNTERHM[i] ? CSRWriteValM : HPMCOUNTERPlusM[i][63:32];
             always_ff @(posedge clk) //, posedge reset) // ModelSim doesn't like syntax of passing array element to flop
                 if (reset) HPMCOUNTERH_REGW[i][`XLEN-1:0] <= #1 0;
@@ -123,16 +123,16 @@ module csrc #(parameter
       // Read Counters, or cause excepiton if insufficient privilege in light of COUNTEREN flags
       assign CounterNumM = CSRAdrM[4:0]; // which counter to read?
       always_comb 
-        if (PrivilegeModeW == `M_MODE || 
-            MCOUNTEREN_REGW[CounterNumM] && (!`S_SUPPORTED || PrivilegeModeW == `S_MODE || SCOUNTEREN_REGW[CounterNumM])) begin
+        if (PrivilegeModeW == `M_MODE | 
+            MCOUNTEREN_REGW[CounterNumM] & (!`S_SUPPORTED | PrivilegeModeW == `S_MODE | SCOUNTEREN_REGW[CounterNumM])) begin
           IllegalCSRCAccessM = 0;
           if (`XLEN==64) begin // 64-bit counter reads
             // Veri lator doesn't realize this only occurs for XLEN=64
             /* verilator lint_off WIDTH */  
             if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
             /* verilator lint_on WIDTH */  
-            else if (CSRAdrM >= MHPMCOUNTERBASE && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-            else if (CSRAdrM >= HPMCOUNTERBASE && CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERBASE & CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
             else begin
                 CSRCReadValM = 0;
                 IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
@@ -143,10 +143,10 @@ module csrc #(parameter
             if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
             else if (CSRAdrM == TIMEH) CSRCReadValM = MTIME_CLINT[63:32];
             /* verilator lint_on WIDTH */  
-            else if (CSRAdrM >= MHPMCOUNTERBASE  && CSRAdrM < MHPMCOUNTERBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-            else if (CSRAdrM >= HPMCOUNTERBASE   && CSRAdrM < HPMCOUNTERBASE+`COUNTERS)    CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-            else if (CSRAdrM >= MHPMCOUNTERHBASE && CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-            else if (CSRAdrM >= HPMCOUNTERHBASE  && CSRAdrM < HPMCOUNTERHBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+            else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+`COUNTERS)    CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+            else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+            else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
             else begin
               CSRCReadValM = 0;
               IllegalCSRCAccessM = 1; // requested CSR doesn't exist

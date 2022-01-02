@@ -77,14 +77,14 @@ module csrs #(parameter
       logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
       (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
       
-      assign WriteSSTATUSM = CSRSWriteM && (CSRAdrM == SSTATUS)  && ~StallW;
-      assign WriteSTVECM = CSRSWriteM && (CSRAdrM == STVEC) && ~StallW;
-      assign WriteSSCRATCHM = CSRSWriteM && (CSRAdrM == SSCRATCH) && ~StallW;
-      assign WriteSEPCM = STrapM | (CSRSWriteM && (CSRAdrM == SEPC)) && ~StallW;
-      assign WriteSCAUSEM = STrapM | (CSRSWriteM && (CSRAdrM == SCAUSE)) && ~StallW;
-      assign WriteSTVALM = STrapM | (CSRSWriteM && (CSRAdrM == STVAL)) && ~StallW;
-      assign WriteSATPM = CSRSWriteM && (CSRAdrM == SATP) && (PrivilegeModeW == `M_MODE || ~STATUS_TVM) && ~StallW;
-      assign WriteSCOUNTERENM = CSRSWriteM && (CSRAdrM == SCOUNTEREN) && ~StallW;
+      assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & ~StallW;
+      assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC) & ~StallW;
+      assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH) & ~StallW;
+      assign WriteSEPCM = STrapM | (CSRSWriteM & (CSRAdrM == SEPC)) & ~StallW;
+      assign WriteSCAUSEM = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE)) & ~StallW;
+      assign WriteSTVALM = STrapM | (CSRSWriteM & (CSRAdrM == STVAL)) & ~StallW;
+      assign WriteSATPM = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == `M_MODE | ~STATUS_TVM) & ~StallW;
+      assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN) & ~StallW;
 
       // CSRs
       flopenr #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); //busybear: change reset to 0
@@ -105,8 +105,8 @@ module csrs #(parameter
       end
       if (`N_SUPPORTED) begin:nregs
         logic WriteSEDELEGM, WriteSIDELEGM;
-        assign WriteSEDELEGM = CSRSWriteM && (CSRAdrM == SEDELEG);
-        assign WriteSIDELEGM = CSRSWriteM && (CSRAdrM == SIDELEG);
+        assign WriteSEDELEGM = CSRSWriteM & (CSRAdrM == SEDELEG);
+        assign WriteSIDELEGM = CSRSWriteM & (CSRAdrM == SIDELEG);
         flopenr #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK, SEDELEG_REGW);
         flopenr #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, SIDELEG_REGW);
       end else begin
@@ -116,7 +116,7 @@ module csrs #(parameter
 
       // CSR Reads
       always_comb begin:csrr
-        IllegalCSRSAccessM = !(`N_SUPPORTED)  && (CSRAdrM == SEDELEG || CSRAdrM == SIDELEG); // trap on DELEG register access when no N-mode
+        IllegalCSRSAccessM = !(`N_SUPPORTED)  & (CSRAdrM == SEDELEG | CSRAdrM == SIDELEG); // trap on DELEG register access when no N-mode
         case (CSRAdrM) 
           SSTATUS:   CSRSReadValM = SSTATUS_REGW;
           STVEC:     CSRSReadValM = STVEC_REGW;
@@ -130,7 +130,7 @@ module csrs #(parameter
           SEPC:      CSRSReadValM = SEPC_REGW;
           SCAUSE:    CSRSReadValM = SCAUSE_REGW;
           STVAL:     CSRSReadValM = STVAL_REGW;
-          SATP:      if (`MEM_VIRTMEM && (PrivilegeModeW == `M_MODE || ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
+          SATP:      if (`MEM_VIRTMEM & (PrivilegeModeW == `M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
                      else begin
                        CSRSReadValM = 0;
                        if (PrivilegeModeW == `S_MODE & STATUS_TVM) IllegalCSRSAccessM = 1;

@@ -61,10 +61,10 @@ module csri #(parameter
    end
 
   // Interrupt Write Enables
-  assign WriteMIPM = CSRMWriteM && (CSRAdrM == MIP) && ~StallW;
-  assign WriteMIEM = CSRMWriteM && (CSRAdrM == MIE) && ~StallW;
-  assign WriteSIPM = CSRSWriteM && (CSRAdrM == SIP) && ~StallW;
-  assign WriteSIEM = CSRSWriteM && (CSRAdrM == SIE) && ~StallW;
+  assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP) & ~StallW;
+  assign WriteMIEM = CSRMWriteM & (CSRAdrM == MIE) & ~StallW;
+  assign WriteSIPM = CSRSWriteM & (CSRAdrM == SIP) & ~StallW;
+  assign WriteSIEM = CSRSWriteM & (CSRAdrM == SIE) & ~StallW;
 
   // Interrupt Pending and Enable Registers
   // MEIP, MTIP, MSIP are read-only

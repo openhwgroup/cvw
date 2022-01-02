@@ -115,7 +115,7 @@ module ahblite (
 
 
   //  bus outputs
-  assign #1 GrantData = (NextBusState == MEMREAD) || (NextBusState == MEMWRITE);
+  assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
   assign #1 AccessAddress = (GrantData) ? LsuBusAdr[31:0] : IfuBusAdr[31:0];
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
@@ -138,7 +138,7 @@ module ahblite (
  
   assign IfuBusHRDATA = HRDATA;
   assign LsuBusHRDATA = HRDATA;
-  assign IfuBusAck = (BusState == INSTRREAD) && (NextBusState != INSTRREAD);
-  assign LsuBusAck = (BusState == MEMREAD) && (NextBusState != MEMREAD) || (BusState == MEMWRITE) && (NextBusState != MEMWRITE);
+  assign IfuBusAck = (BusState == INSTRREAD) & (NextBusState != INSTRREAD);
+  assign LsuBusAck = (BusState == MEMREAD) & (NextBusState != MEMREAD) | (BusState == MEMWRITE) & (NextBusState != MEMWRITE);
 
 endmodule
