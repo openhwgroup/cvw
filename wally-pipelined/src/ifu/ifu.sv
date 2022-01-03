@@ -244,7 +244,8 @@ module ifu (
 
   assign IfuStallF = ICacheStallF | BusStall;
 
-  assign IgnoreRequest = ITLBMissF | ExceptionM | PendingInterruptM;
+  //assign IgnoreRequest = ITLBMissF | ExceptionM | PendingInterruptM;
+  assign IgnoreRequest = ITLBMissF;
 
 
 
