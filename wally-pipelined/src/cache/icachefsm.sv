@@ -128,6 +128,9 @@ module icachefsm
       STATE_READY: begin
         SelAdr = 2'b00;
         ICacheReadEn = 1'b1;
+		if(IgnoreRequest) begin
+		  NextState = STATE_READY;
+		end else 
 		if(ITLBMissF) begin
 		  NextState = STATE_READY;
 		  SelAdr = 2'b01;
