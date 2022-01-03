@@ -30,7 +30,7 @@ module icache
    // Basic pipeline stuff
    input logic 								clk, reset,
    input logic 								CPUBusy, 
-   input logic [`PA_BITS-1:0] 				PCNextF,
+   input logic [11:0] 						PCNextF,
    input logic [`PA_BITS-1:0] 				PCPF,
    input logic [`XLEN-1:0] 					PCF,
 
@@ -38,7 +38,7 @@ module icache
   
    // Data read in from the ebu unit
    input logic [`ICACHE_BLOCKLENINBITS-1:0] ICacheMemWriteData,
-   output logic								ICacheFetchLine,
+   output logic 							ICacheFetchLine,
 
    (* mark_debug = "true" *) input logic 	ICacheBusAck,
    // Read requested from the ebu unit
