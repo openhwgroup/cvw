@@ -129,6 +129,7 @@ module icachefsm
         SelAdr = 2'b00;
         ICacheReadEn = 1'b1;
 		if(IgnoreRequest) begin
+		  SelAdr = 2'b01;
 		  NextState = STATE_READY;
 		end else 
 		if(ITLBMissF) begin
