@@ -100,35 +100,44 @@ module ifu (
 
   logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
-(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPFmmu, PCNextFPhys; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
+(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   logic 					   BPPredWrongM;
   logic 					   CacheableF;
+  logic [11:0] 				   PCNextFMux;
+  logic [`XLEN-1:0] 		   PCFMux;
+
+  logic [`XLEN-1:0] 		   PCFp2;
+  logic 					   SelNextSpill, SelSpill, SpillSave;
+  logic 			   Spill;
+  
+
+  assign PCFp2 = PCF + `XLEN'b10;
+  
+  assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
+  assign PCFMux = SelSpill ? PCFp2 : PCF;  
+  
+
+  // temp
+  assign SelSpill = 0;
+  assign SelNextSpill = 0;
+  assign Spill = 0;
+  assign SpillSave = 0;
   
   
 
-  generate
-    if (`XLEN==32) begin:pcnextfphys
-      //assign PCPF = PCPFmmu[31:0];
-      assign PCNextFPhys = {{(`PA_BITS-`XLEN){1'b0}}, PCNextF};
-    end else begin:pcnextfphys
-      //assign PCPF = {8'b0, PCPFmmu};
-      assign PCNextFPhys = PCNextF[`PA_BITS-1:0];
-    end
-  endgenerate
-
-  assign PCFExt = {2'b00, PCF};
+  assign PCFExt = {2'b00, PCFMux};
   //
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   immu(.PAdr(PCFExt[`PA_BITS-1:0]),
-       .VAdr(PCF),
+       .VAdr(PCFMux),
        .Size(2'b10),
        .PTE(PTE),
        .PageTypeWriteVal(PageType),
        .TLBWrite(ITLBWriteF),
        .TLBFlush(ITLBFlushF),
-       .PhysicalAddress(PCPFmmu),
+       .PhysicalAddress(PCPF),
        .TLBMiss(ITLBMissF),
        .TLBPageFault(ITLBInstrPageFaultF),
        .ExecuteAccessF(1'b1), // ***dh -- this should eventually change to only true if an instruction fetch is occurring
@@ -188,6 +197,10 @@ module ifu (
   logic [`PA_BITS-1:0] LocalIfuBusAdr;
   logic [`PA_BITS-1:0] ICacheBusAdr;
   logic 			   SelUncachedAdr;
+  logic [15:0] 		   SpillDataBlock0;
+  logic [31:0] 		   PostSpillInstrRawF;
+  
+  
   
 
   // *** bug: on spill the second memory request does not go through the mmu(skips tlb, pmp, and pma checkers)
@@ -200,9 +213,9 @@ module ifu (
 					.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, 
 					.ICacheFetchLine,
 					.CacheableF,
-					.PCNextF(PCNextFPhys),
-					.PCPF(PCPFmmu),
-					.PCF,
+					.PCNextF(PCNextFMux),
+					.PCPF(PCPF),
+					.PCF(PCFMux),
 					.InvalidateICacheM);
 
 	end else begin : passthrough
@@ -220,6 +233,16 @@ module ifu (
 				.s(SelUncachedAdr),
 				.y(InstrRawF));
 
+  flopenr #(16) SpillInstrReg(.clk(clk),
+							  .en(SpillSave),
+							  .reset(reset),
+							  .d(InstrRawF[15:0]),
+							  .q(SpillDataBlock0));
+
+  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataBlock0} : InstrRawF;
+  
+  
+
   
   genvar 			   index;
   generate
@@ -231,7 +254,7 @@ module ifu (
     end
   endgenerate
 
-  assign LocalIfuBusAdr = SelUncachedAdr ? PCPFmmu : ICacheBusAdr;
+  assign LocalIfuBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
   assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
 
   busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
@@ -251,7 +274,7 @@ module ifu (
 
 
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : InstrRawF, nop, InstrRawD);
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
 
 
   assign PrivilegedChangePCM = RetM | TrapM;
