@@ -118,11 +118,13 @@ module ifu (
   logic 					   IgnoreRequest;
   logic 					   CPUBusy;
   
+  logic [15:0] 		   SpillDataBlock0;
+  logic [31:0] 		   PostSpillInstrRawF;
 
   assign PCFp2 = PCF + `XLEN'b10;
   
   assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
-  assign PCFMux = SelSpill ? PCFp2 : PCF;  
+  assign PCFMux = SelSpill ? PCFp2 : PCF;
   
 
   assign Spill = &PCF[$clog2(`ICACHE_BLOCKLENINBITS/32)+1:1];
@@ -136,36 +138,30 @@ module ifu (
     else CurrState <= #1 NextState;
 
   always_comb begin
-	NextState = STATE_SPILL_READY;
-	SelSpill = 0;
-	SelNextSpill = 0;
-	SpillSave = 0;
 	case(CurrState)
-	  STATE_SPILL_READY: begin
-		if (Spill & ~(ICacheStallF | BusStall)) begin
-		  NextState = STATE_SPILL_SPILL;
-		  SpillSave = 1;
-		  SelNextSpill = 1;
-		end else begin
-		  NextState = STATE_SPILL_READY;
-		end
-	  end
-	  STATE_SPILL_SPILL: begin
-		SelSpill = 1;
-		if(ICacheStallF | BusStall) begin
-		  SelNextSpill = 1;
-		end
-		if(ICacheStallF | BusStall | StallF) begin
-		  NextState = STATE_SPILL_SPILL;
-		end else begin
-		  NextState = STATE_SPILL_READY;
-		end
-	  end
-	  default: NextState = STATE_SPILL_READY;
+	  STATE_SPILL_READY: if (Spill & ~(ICacheStallF | BusStall)) NextState = STATE_SPILL_SPILL;
+                         else                                    NextState = STATE_SPILL_READY;
+	  STATE_SPILL_SPILL: if(ICacheStallF | BusStall | StallF)    NextState = STATE_SPILL_SPILL;
+	                     else                                    NextState = STATE_SPILL_READY;
+	  default:                                                   NextState = STATE_SPILL_READY;
 	endcase
   end
 
+  assign SelSpill = CurrState == STATE_SPILL_SPILL;
+  assign SelNextSpill = (CurrState == STATE_SPILL_READY & (Spill & ~(ICacheStallF | BusStall))) |
+						 (CurrState == STATE_SPILL_SPILL & (ICacheStallF | BusStall));
+  assign SpillSave = CurrState == STATE_SPILL_READY & (Spill & ~(ICacheStallF | BusStall));
   
+
+  flopenr #(16) SpillInstrReg(.clk(clk),
+							  .en(SpillSave),
+							  .reset(reset),
+							  .d(InstrRawF[15:0]),
+							  .q(SpillDataBlock0));
+
+  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataBlock0} : InstrRawF;
+  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
+
   
 
   assign PCFExt = {2'b00, PCFMux};
@@ -233,21 +229,14 @@ module ifu (
   logic [`PA_BITS-1:0] LocalIfuBusAdr;
   logic [`PA_BITS-1:0] ICacheBusAdr;
   logic 			   SelUncachedAdr;
-  logic [15:0] 		   SpillDataBlock0;
-  logic [31:0] 		   PostSpillInstrRawF;
   
   
-  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
   
 
-  // *** bug: on spill the second memory request does not go through the mmu(skips tlb, pmp, and pma checkers)
-  // also it is possible to have any above fault on the spilled accesses.
-  // I think the solution is to move the spill logic into the ifu using the busfsm and ensuring
-  // the mmu sees the spilled address.
   generate
 	if(`MEM_ICACHE) begin : icache
 	  icache icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF, 
+					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF,
 					.ICacheFetchLine,
 					.CacheableF,
 					.PCNextF(PCNextFMux),
@@ -270,13 +259,6 @@ module ifu (
 				.s(SelUncachedAdr),
 				.y(InstrRawF));
 
-  flopenr #(16) SpillInstrReg(.clk(clk),
-							  .en(SpillSave),
-							  .reset(reset),
-							  .d(InstrRawF[15:0]),
-							  .q(SpillDataBlock0));
-
-  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataBlock0} : InstrRawF;
   
   
 
@@ -306,6 +288,8 @@ module ifu (
   assign CPUBusy = StallF & ~SelNextSpill;
 
   //assign IgnoreRequest = ITLBMissF | ExceptionM | PendingInterruptM;
+  // this is a difference with the dcache.
+  // uses interlock fsm.
   assign IgnoreRequest = ITLBMissF;
 
 
