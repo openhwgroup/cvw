@@ -61,7 +61,7 @@ module pmpadrdec (
   assign CurrentAdrFull  = {PMPAdr[`PA_BITS-3:0],  2'b00};
   assign PAltPMPAdr = {1'b0, PhysicalAddress} < {1'b0, CurrentAdrFull}; // unsigned comparison
   assign PAgePMPAdrOut = ~PAltPMPAdr;
-  assign TORMatch = PAgePMPAdrIn && PAltPMPAdr;
+  assign TORMatch = PAgePMPAdrIn & PAltPMPAdr;
 
   // Naturally aligned regions
   logic [`PA_BITS-1:0] NAMask, NABase;
@@ -75,7 +75,7 @@ module pmpadrdec (
   assign NAMatch = &((NABase ~^ PhysicalAddress) | NAMask); // check if upper bits of base address match, ignore lower bits correspoonding to inside the memory range
 
   assign Match = (AdrMode == TOR) ? TORMatch : 
-                 (AdrMode == NA4 || AdrMode == NAPOT) ? NAMatch :
+                 (AdrMode == NA4 | AdrMode == NAPOT) ? NAMatch :
                  0;
 
   assign L = PMPCfg[7] & FirstMatch;

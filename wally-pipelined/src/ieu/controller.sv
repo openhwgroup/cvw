@@ -134,16 +134,16 @@ module controller(
                         ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0;; // amo
                     end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
-        7'b0110011: if (Funct7D == 7'b0000000 || Funct7D == 7'b0100000)
+        7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
-                    else if (Funct7D == 7'b0000001 && `M_SUPPORTED)
+                    else if (Funct7D == 7'b0000001 & `M_SUPPORTED)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/Divide
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
         7'b0110111:   ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
-        7'b0111011: if ((Funct7D == 7'b0000000 || Funct7D == 7'b0100000) && `XLEN == 64)
+        7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000) & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
-                    else if (Funct7D == 7'b0000001 && `M_SUPPORTED && `XLEN == 64)
+                    else if (Funct7D == 7'b0000001 & `M_SUPPORTED & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
                     else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
@@ -168,7 +168,7 @@ module controller(
           // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
 
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
-  assign CSRWriteD = CSRReadD & !(CSRZeroSrcD && InstrD[13]); // Don't write if setting or clearing zeros
+  assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]); // Don't write if setting or clearing zeros
 
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
   assign sltD = (Funct3D == 3'b010);
@@ -182,12 +182,12 @@ module controller(
   // Ordinary fence is presently a nop
   // FENCE.I flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
   generate
-    if (`ZIFENCEI_SUPPORTED & `MEM_ICACHE) begin
+    if (`ZIFENCEI_SUPPORTED & `MEM_ICACHE) begin:fencei
       logic FenceID;
       assign FenceID = FenceD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
       assign InvalidateICacheD = FenceID;
       assign FlushDCacheD = FenceID;
-    end else begin
+    end else begin:fencei
       assign InvalidateICacheD = 0;
       assign FlushDCacheD = 0;
     end

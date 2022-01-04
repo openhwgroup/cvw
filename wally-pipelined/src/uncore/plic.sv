@@ -78,7 +78,7 @@ module plic (
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
   generate
-    if (`XLEN == 64) begin
+    if (`XLEN == 64) begin:plic
       always_comb
         if (entryd[2]) begin
           Din = HWDATA[63:32];
@@ -87,7 +87,7 @@ module plic (
           Din = HWDATA[31:0];
           HREADPLIC = {32'b0,Dout};
         end
-    end else begin // 32-bit
+    end else begin:plic // 32-bit
       always_comb begin
         Din = HWDATA[31:0];
         HREADPLIC = Dout;

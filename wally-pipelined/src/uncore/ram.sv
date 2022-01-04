@@ -50,7 +50,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   logic [3:0]  busycount;
 
   generate
-    if(`FPGA) begin
+    if(`FPGA) begin:ram
       initial begin
 	//$readmemh(PRELOAD, RAM);
 	// FPGA only
@@ -145,14 +145,14 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   
   /* verilator lint_off WIDTH */
   generate
-    if (`XLEN == 64)  begin
+    if (`XLEN == 64)  begin:ramrd
       always_ff @(posedge HCLK) begin
         HWADDR <= #1 A;
         HREADRam0 <= #1 RAM[A[31:3]];
 	if (memwrite & risingHREADYRam) RAM[HWADDR[31:3]] <= #1 HWDATA;
       end
     end else begin 
-      always_ff @(posedge HCLK) begin
+      always_ff @(posedge HCLK) begin:ramrd
         HWADDR <= #1 A;  
         HREADRam0 <= #1 RAM[A[31:2]];
         if (memwrite & risingHREADYRam) RAM[HWADDR[31:2]] <= #1 HWDATA;

@@ -91,17 +91,20 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 
   // only instantiate TLB if Virtual Memory is supported
   generate
-    if (`MEM_VIRTMEM) begin
+    if (`MEM_VIRTMEM) begin:tlb
       logic ReadAccess, WriteAccess;
       assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
       assign WriteAccess = WriteAccessM;
       tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) 
-        tlb(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]),
+        tlb(.clk, .reset,
+            .SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]),
             .SATP_ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]),
-	    .VAdr,
-	    .*);
-
-    end else begin // just pass address through as physical
+            .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+            .PrivilegeModeW, .ReadAccess, .WriteAccess,
+            .DisableTranslation, .PTE, .PageTypeWriteVal,
+            .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
+            .Translate, .TLBPageFault);
+    end else begin:tlb// just pass address through as physical
       assign Translate = 0;
       assign TLBMiss = 0;
       assign TLBHit = 1; // *** is this necessary
@@ -116,8 +119,15 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // Check physical memory accesses
   ///////////////////////////////////////////
 
-  pmachecker pmachecker(.*);
-  pmpchecker pmpchecker(.*);
+  pmachecker pmachecker(.PhysicalAddress, .Size,
+                        .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+                        .Cacheable, .Idempotent, .AtomicAllowed,
+                        .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAccessFaultM);
+
+  pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
+                        .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+                        .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+                        .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAccessFaultM);
 
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
 //  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;

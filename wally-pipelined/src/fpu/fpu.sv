@@ -116,7 +116,6 @@ module fpu (
    logic [63:0] 	  CmpResE;                   // compare result
    logic 		  CmpNVE;                     // compare invalid flag (Not Valid)     
    logic [63:0] 	  SgnResE;                   // sign injection result
-   logic 		  SgnNVE;                     // sign injection invalid flag (Not Valid)     
    logic [63:0] 	  FResE, FResM, FResW;                // selected result that is ready in the memory stage
    logic [4:0] 	  FFlgE, FFlgM;                       // selected flag that is ready in the memory stage     
    logic [`XLEN-1:0] 	  FIntResE;     
@@ -213,14 +212,12 @@ module fpu (
    //    - computation is done in one stage
    //    - writes to FP file durring min/max instructions
    //    - other comparisons write a 1 or 0 to the integer register
-   fcmp fcmp (.op1({XSgnE,XExpE,XManE[`NF-1:0]}), .op2({YSgnE,YExpE,YManE[`NF-1:0]}), 
-   .FSrcXE, .FSrcYE, .FOpCtrlE, 
-   .FmtE, .XNaNE, .YNaNE, .XZeroE, .YZeroE, 
-   .Invalid(CmpNVE), .CmpResE);
+   fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
+            .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
 
    // sign injection unit
    fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .XExpMaxE,
-   .SgnNVE, .SgnResE);
+    .SgnResE);
 
    // classify
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, 
@@ -240,7 +237,7 @@ module fpu (
 
    // select a result that may be written to the FP register
    mux5  #(64) FResMux(AlignedSrcAE, SgnResE, CmpResE, CvtResE, CvtFpResE, FResSelE, FResE);
-   mux5  #(5)  FFlgMux(5'b0, {4'b0, SgnNVE}, {4'b0, CmpNVE}, CvtFlgE, CvtFpFlgE, FResSelE, FFlgE);
+   mux5  #(5)  FFlgMux(5'b0, 5'b0, {CmpNVE, 4'b0}, CvtFlgE, CvtFpFlgE, FResSelE, FFlgE);
 
    // select the result that may be written to the integer register - to IEU
    mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE[`XLEN-1:0], 

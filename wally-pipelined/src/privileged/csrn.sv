@@ -50,7 +50,7 @@ module csrn #(parameter
 
   // User mode CSRs below only needed when user mode traps are supported
   generate
-    if (`N_SUPPORTED) begin
+    if (`N_SUPPORTED) begin:nmode
       logic WriteUTVECM;
       logic WriteUSCRATCHM, WriteUEPCM;
       logic WriteUCAUSEM, WriteUTVALM;
@@ -58,11 +58,11 @@ module csrn #(parameter
       logic [`XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
       
       // Write enables
-      assign WriteUSTATUSM = CSRNWriteM && (CSRAdrM == USTATUS) && ~StallW;
-      assign WriteUTVECM = CSRNWriteM && (CSRAdrM == UTVEC) && ~StallW;
-      assign WriteUEPCM = UTrapM | (CSRNWriteM && (CSRAdrM == UEPC)) && ~StallW;
-      assign WriteUCAUSEM = UTrapM | (CSRNWriteM && (CSRAdrM == UCAUSE)) && ~StallW;
-      assign WriteUTVALM = UTrapM | (CSRNWriteM && (CSRAdrM == UTVAL)) && ~StallW;
+      assign WriteUSTATUSM = CSRNWriteM & (CSRAdrM == USTATUS) & ~StallW;
+      assign WriteUTVECM = CSRNWriteM & (CSRAdrM == UTVEC) & ~StallW;
+      assign WriteUEPCM = UTrapM | (CSRNWriteM & (CSRAdrM == UEPC)) & ~StallW;
+      assign WriteUCAUSEM = UTrapM | (CSRNWriteM & (CSRAdrM == UCAUSE)) & ~StallW;
+      assign WriteUTVALM = UTrapM | (CSRNWriteM & (CSRAdrM == UTVAL)) & ~StallW;
 
       // CSRs
       flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `RESET_VECTOR, UTVEC_REGW);

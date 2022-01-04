@@ -36,7 +36,7 @@ module subwordwrite (
   logic [`XLEN-1:0] WriteDataSubwordDuplicated;
   
   generate
-    if (`XLEN == 64) begin
+    if (`XLEN == 64) begin:sww
       logic [7:0]      ByteMaskM;
       // Compute write mask
       always_comb 
@@ -74,7 +74,7 @@ module subwordwrite (
 	      if (ByteMaskM[7]) HWDATA[63:56] = WriteDataSubwordDuplicated[63:56];
       end 
 
-    end else begin // 32-bit
+    end else begin:sww // 32-bit
       logic [3:0]      ByteMaskM;
       // Compute write mask
       always_comb 

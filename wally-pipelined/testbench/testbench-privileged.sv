@@ -135,8 +135,8 @@ module testbench();
   // check results
   always @(negedge clk)
     begin    
-      if (dut.hart.priv.EcallFaultM && 
-          (dut.hart.ieu.dp.regf.rf[3] == 1 || (dut.hart.ieu.dp.regf.we3 && dut.hart.ieu.dp.regf.a3 == 3 && dut.hart.ieu.dp.regf.wd3 == 1))) begin
+      if (dut.hart.priv.EcallFaultM & 
+          (dut.hart.ieu.dp.regf.rf[3] == 1 || (dut.hart.ieu.dp.regf.we3 & dut.hart.ieu.dp.regf.a3 == 3 & dut.hart.ieu.dp.regf.wd3 == 1))) begin
         $display("Code ended with ecall with gp = 1");
         #60; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests

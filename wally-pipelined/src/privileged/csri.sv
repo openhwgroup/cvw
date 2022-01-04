@@ -61,20 +61,20 @@ module csri #(parameter
    end
 
   // Interrupt Write Enables
-  assign WriteMIPM = CSRMWriteM && (CSRAdrM == MIP) && ~StallW;
-  assign WriteMIEM = CSRMWriteM && (CSRAdrM == MIE) && ~StallW;
-  assign WriteSIPM = CSRSWriteM && (CSRAdrM == SIP) && ~StallW;
-  assign WriteSIEM = CSRSWriteM && (CSRAdrM == SIE) && ~StallW;
+  assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP) & ~StallW;
+  assign WriteMIEM = CSRMWriteM & (CSRAdrM == MIE) & ~StallW;
+  assign WriteSIPM = CSRSWriteM & (CSRAdrM == SIP) & ~StallW;
+  assign WriteSIEM = CSRSWriteM & (CSRAdrM == SIE) & ~StallW;
 
   // Interrupt Pending and Enable Registers
   // MEIP, MTIP, MSIP are read-only
   // SEIP, STIP, SSIP is writable in MIP if S mode exists
   // SSIP is writable in SIP if S mode exists
   generate
-    if (`S_SUPPORTED) begin
+    if (`S_SUPPORTED) begin:mask
       assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writable in MIP (20210108-draft 3.1.9)
       assign SIP_WRITE_MASK = 12'h002; // SSIP is writable in SIP (privileged 20210108-draft 4.1.3)
-    end else begin
+    end else begin:mask
       assign MIP_WRITE_MASK = 12'h000;
       assign SIP_WRITE_MASK = 12'h000;
     end
@@ -93,7 +93,7 @@ module csri #(parameter
 
   // restricted views of registers
   generate
-    always_comb begin
+    always_comb begin:regs
       // Add MEIP read-only signal
       IP_REGW = {IntInM[11],1'b0,IP_REGW_writeable};
 

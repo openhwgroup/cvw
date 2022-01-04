@@ -31,6 +31,7 @@
 module uncore (
   // AHB Bus Interface
   input  logic             HCLK, HRESETn,
+  input  logic             TIMECLK,
   input  logic [31:0]      HADDR,
   input  logic [`AHBW-1:0] HWDATAIN,
   input  logic             HWRITE,
@@ -59,7 +60,7 @@ module uncore (
   input  logic             SDCCmdIn,
   input  logic [3:0]       SDCDatIn,
   output logic             SDCCLK,
-  output logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT
+  output logic [63:0]      MTIME_CLINT
 );
   
   logic [`XLEN-1:0] HWDATA;
@@ -115,16 +116,16 @@ module uncore (
     // memory-mapped I/O peripherals
     if (`CLINT_SUPPORTED == 1) begin : clint
       clint clint(
-        .HCLK, .HRESETn,
+        .HCLK, .HRESETn, .TIMECLK,
         .HSELCLINT, .HADDR(HADDR[15:0]), .HWRITE,
         .HWDATA, .HREADY, .HTRANS,
         .HREADCLINT,
         .HRESPCLINT, .HREADYCLINT,
-        .MTIME(MTIME_CLINT), .MTIMECMP(MTIMECMP_CLINT),
+        .MTIME(MTIME_CLINT), 
         .TimerIntM, .SwIntM);
 
     end else begin : clint
-      assign MTIME_CLINT = 0; assign MTIMECMP_CLINT = 0;
+      assign MTIME_CLINT = 0;
       assign TimerIntM = 0; assign SwIntM = 0;
     end
     if (`PLIC_SUPPORTED == 1) begin : plic
