@@ -240,10 +240,13 @@ module ifu (
 
   generate
 	if(`MEM_ICACHE) begin : icache
+	  logic [1:0] IfuRWF;
+	  assign IfuRWF = CacheableF ? 2'b10 : 2'b00;
+	  
 	  icache icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
 					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF,
 					.ICacheFetchLine,
-					.CacheableF,
+					.IfuRWF(IfuRWF), //aways read
 					.PCNextF(PCNextFMux),
 					.PCPF(PCPF),
 					.PCF(PCFMux),
