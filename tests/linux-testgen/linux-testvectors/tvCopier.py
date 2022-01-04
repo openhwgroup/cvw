@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# Copies Linux testvector files from Tera to ./ (which ought to be /riscv-wally/wally-pipelined/linux-testgen/linux-testvectors/)
+# Copies Linux testvector files from Tera to ./ (which ought to be /riscv-wally/pipelined/linux-testgen/linux-testvectors/)
 import os
 from datetime import datetime
 

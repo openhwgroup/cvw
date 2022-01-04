@@ -14,10 +14,10 @@ read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/x
 read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 
 
-read_verilog -sv [glob -type f ../../wally-pipelined/src/*/*.sv ../../wally-pipelined/src/*/*/*.sv]
+read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
 read_verilog  {../src/fpgaTop.v}
 
-set_property include_dirs {../../wally-pipelined/config/fpga ../../wally-pipelined/config/shared} [current_fileset]
+set_property include_dirs {../../pipelined/config/fpga ../../pipelined/config/shared} [current_fileset]
 
 add_files -fileset constrs_1 -norecurse ../constraints/constraints.xdc
 set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints.xdc]

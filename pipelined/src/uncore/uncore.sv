@@ -91,7 +91,7 @@ module uncore (
     .HADDRD, .HSIZED, 
     .HWDATAIN, .HWDATA);
 
-  generate
+//  generate
     // on-chip RAM outside hart
     if (`RAM_SUPPORTED) begin : ram
       ram #(
@@ -181,7 +181,7 @@ module uncore (
       assign SDCCmdOut = 0;
       assign SDCCmdOE = 0;
     end
-  endgenerate
+//  endgenerate
 
   // mux could also include external memory  
   // AHB Read Multiplexer
