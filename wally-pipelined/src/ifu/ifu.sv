@@ -153,8 +153,10 @@ module ifu (
 	  STATE_SPILL_SPILL: begin
 		SelSpill = 1;
 		if(ICacheStallF | BusStall) begin
-		  NextState = STATE_SPILL_SPILL;
 		  SelNextSpill = 1;
+		end
+		if(ICacheStallF | BusStall | StallF) begin
+		  NextState = STATE_SPILL_SPILL;
 		end else begin
 		  NextState = STATE_SPILL_READY;
 		end
