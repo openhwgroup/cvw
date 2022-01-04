@@ -27,31 +27,31 @@
 
 module icachefsm
   (// Inputs from pipeline
-   input logic 		  clk, reset,
+   input logic 		 clk, reset,
 
-   input logic 		  CPUBusy,
+   input logic 		 CPUBusy,
 
-   input logic 		  IgnoreRequest,
-   input logic 		  CacheableF,
+   input logic 		 IgnoreRequest,
+   input logic [1:0] IfuRWF,
 
    // BUS interface
-   input logic 		  ICacheBusAck,
+   input logic 		 ICacheBusAck,
 
    // icache internal inputs
-   input logic 		  hit,
+   input logic 		 hit,
 
    // Load data into the cache
-   output logic 	  ICacheMemWriteEnable,
+   output logic 	 ICacheMemWriteEnable,
 
    // Outputs to pipeline control stuff
-   output logic 	  ICacheStallF,
+   output logic 	 ICacheStallF,
 
    // Bus interface outputs
-   output logic 	  ICacheFetchLine,
+   output logic 	 ICacheFetchLine,
 
    // icache internal outputs
-   output logic       SelAdr,
-   output logic 	  LRUWriteEn
+   output logic 	 SelAdr,
+   output logic 	 LRUWriteEn
    );
 
   // FSM states
@@ -88,7 +88,7 @@ module icachefsm
 		  NextState = STATE_READY;
 		  ICacheStallF = 1'b0;
 		end
-		else if (CacheableF & hit) begin
+		else if (IfuRWF[1] & hit) begin
           ICacheStallF = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin
@@ -97,7 +97,7 @@ module icachefsm
 		  end else begin
             NextState = STATE_READY;
 		  end
-        end else if (CacheableF & ~hit) begin
+        end else if (IfuRWF[1] & ~hit) begin
 		  SelAdr = 1'b1;                                         /// *********(
           NextState = STATE_MISS_FETCH_WDV;
         end else begin
