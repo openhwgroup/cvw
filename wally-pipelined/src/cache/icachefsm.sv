@@ -33,7 +33,6 @@ module icachefsm
 
    // inputs from mmu
    input logic 		  ITLBMissF,
-   input logic 		  ITLBWriteF,
 
    input logic 		  IgnoreRequest,
    input logic 		  CacheableF,
@@ -44,8 +43,6 @@ module icachefsm
    // icache internal inputs
    input logic 		  hit,
 
-   // icache internal outputs
-   output logic 	  ICacheReadEn,
    // Load data into the cache
    output logic 	  ICacheMemWriteEnable,
 
@@ -56,7 +53,7 @@ module icachefsm
    output logic 	  ICacheFetchLine,
 
    // icache internal outputs
-   output logic [1:0] SelAdr,
+   output logic       SelAdr,
    output logic 	  LRUWriteEn
    );
 
@@ -83,21 +80,19 @@ module icachefsm
   always_comb begin
     //IfuBusFetch = 1'b0;
     ICacheMemWriteEnable = 1'b0;
-    SelAdr = 2'b00;
-    ICacheReadEn = 1'b0;
+    SelAdr = 1'b0;
     ICacheStallF = 1'b1;
     LRUWriteEn = 1'b0;
     case (CurrState)
       STATE_READY: begin
-        SelAdr = 2'b00;
-        ICacheReadEn = 1'b1;
+        SelAdr = 1'b0;
 		if(IgnoreRequest) begin
-		  SelAdr = 2'b01;
+		  SelAdr = 1'b1;
 		  NextState = STATE_READY;
 		end else 
 		if(ITLBMissF) begin
 		  NextState = STATE_READY;
-		  SelAdr = 2'b01;
+		  SelAdr = 1'b1;
 		  ICacheStallF = 1'b0;
 		end
 		else if (CacheableF & hit) begin
@@ -105,17 +100,17 @@ module icachefsm
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-			SelAdr = 2'b01;
+			SelAdr = 1'b1;
 		  end else begin
             NextState = STATE_READY;
 		  end
         end else if (CacheableF & ~hit) begin
-		  SelAdr = 2'b01;                                         /// *********(
+		  SelAdr = 1'b1;                                         /// *********(
           NextState = STATE_MISS_FETCH_WDV;
         end else begin
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-			SelAdr = 2'b01;
+			SelAdr = 1'b1;
 		  end else begin
             NextState = STATE_READY;
 		  end
@@ -123,7 +118,7 @@ module icachefsm
       end
       // branch 3 miss no spill
       STATE_MISS_FETCH_WDV: begin
-        SelAdr = 2'b01;
+        SelAdr = 1'b1;
         //IfuBusFetch = 1'b1;
         if (ICacheBusAck) begin
           NextState = STATE_MISS_FETCH_DONE;	  
@@ -132,24 +127,21 @@ module icachefsm
         end
       end
       STATE_MISS_FETCH_DONE: begin
-        SelAdr = 2'b01;
+        SelAdr = 1'b1;
         ICacheMemWriteEnable = 1'b1;
         NextState = STATE_MISS_READ;
       end
       STATE_MISS_READ: begin
-        SelAdr = 2'b01;
-        ICacheReadEn = 1'b1;
+        SelAdr = 1'b1;
         NextState = STATE_MISS_READ_DELAY;
       end
       STATE_MISS_READ_DELAY: begin
-        //SelAdr = 2'b01;
-        ICacheReadEn = 1'b1;
 		ICacheStallF = 1'b0;
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin
-		  SelAdr = 2'b01;
+		  SelAdr = 1'b1;
 		  NextState = STATE_CPU_BUSY;
-		  SelAdr = 2'b01;
+		  SelAdr = 1'b1;
 		end else begin
           NextState = STATE_READY;
 		end
@@ -158,17 +150,16 @@ module icachefsm
 		ICacheStallF = 1'b0;
         if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
-		  SelAdr = 2'b01;
+		  SelAdr = 1'b1;
 		end
 		else begin
 		  NextState = STATE_READY;
 		end
       end
       default: begin
-        SelAdr = 2'b01;
+        SelAdr = 1'b1;
         NextState = STATE_READY;
       end
-      // *** add in error handling and invalidate/evict
     endcase
   end
 

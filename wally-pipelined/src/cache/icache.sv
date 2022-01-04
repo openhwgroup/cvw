@@ -49,7 +49,6 @@ module icache
    output logic 							ICacheStallF,
    input logic 								CacheableF,
    input logic 								ITLBMissF,
-   input logic 								ITLBWriteF,
    input logic 								InvalidateICacheM,
   
    // The raw (not decompressed) instruction that was requested
@@ -66,23 +65,18 @@ module icache
   localparam integer 		  INDEXLEN = $clog2(NUMLINES);
   localparam integer 		  TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
 
+  // *** not used?
   localparam WORDSPERLINE = BLOCKLEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
-  localparam integer 		  PA_WIDTH = `PA_BITS - 2;
   localparam integer 		  NUMWAYS = `ICACHE_NUMWAYS;
   
 
   // Input signals to cache memory
   logic 					  ICacheMemWriteEnable;
-  logic [`PA_BITS-1:0] 		  FinalPCPF;  
   // Output signals from cache memory
-  logic 					  ICacheReadEn;
   logic [BLOCKLEN-1:0] 		  ReadLineF;
-  
-
-
-  logic [1:0] 				  SelAdr;
+  logic       				  SelAdr;
   logic [INDEXLEN-1:0] 		  RAdr;
   logic [NUMWAYS-1:0] 		  VictimWay;
   logic 					  LRUWriteEn;
@@ -94,24 +88,20 @@ module icache
 
   logic [31:0] 				  ReadLineSetsF [`ICACHE_BLOCKLENINBITS/16-1:0];
   
-  logic [`PA_BITS-1:0] 		  BasePAdrMaskedF;
-  logic [OFFSETLEN-1:0] 	  BasePAdrOffsetF;
-  
-  
   logic [NUMWAYS-1:0] 		  SRAMWayWriteEnable;
 
 
   mux2 #(INDEXLEN)
   AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d1(PCF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.s(SelAdr[0]),
+			.s(SelAdr),
 			.y(RAdr));
 
 
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN), .DIRTY_BITS(0))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
-					  .PAdr(FinalPCPF),
+					  .PAdr(PCPF),
 					  .WriteEnable(SRAMWayWriteEnable),
 					  .VDWriteEnable(1'b0),
 					  .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
@@ -131,7 +121,7 @@ module icache
       cachereplacementpolicy(.clk, .reset,
 							 .WayHit,
 							 .VictimWay,
-							 .LsuPAdrM(FinalPCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+							 .LsuPAdrM(PCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 							 .RAdr,
 							 .LRUWriteEn);
     end else begin:vict
@@ -154,19 +144,9 @@ module icache
 	assign ReadLineSetsF[BLOCKLEN/16-1] = {16'b0, ReadLineF[BLOCKLEN-1:BLOCKLEN-16]};
   endgenerate
 
-  assign FinalInstrRawF = ReadLineSetsF[FinalPCPF[$clog2(BLOCKLEN / 32) + 1 : 1]];
-  
-  
-  assign FinalPCPF = PCPF;
+  assign FinalInstrRawF = ReadLineSetsF[PCPF[$clog2(BLOCKLEN / 32) + 1 : 1]];
 
-  // *** CHANGE ME
-  // if not cacheable the offset bits needs to be sent to the EBU.
-  // if cacheable the offset bits are discarded.  $ FSM will fetch the whole block.
-  //assign BasePAdrOffsetF = CacheableF ? {{OFFSETLEN}{1'b0}} : FinalPCPF[OFFSETLEN-1:0];
-  //assign BasePAdrMaskedF = {FinalPCPF[`PA_BITS-1:OFFSETLEN], BasePAdrOffsetF};
-  
-  //assign ICacheBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, FetchCount} << $clog2(`XLEN/8)) + BasePAdrMaskedF;
-  assign ICacheBusAdr = {FinalPCPF[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
+  assign ICacheBusAdr = {PCPF[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
   
   
   // truncate the offset from PCPF for memory address generation
@@ -177,11 +157,9 @@ module icache
   icachefsm  icachefsm(.clk,
 					   .reset,
 					   .CPUBusy,
-					   .ICacheReadEn,
 					   .ICacheMemWriteEnable,
 					   .ICacheStallF,
 					   .ITLBMissF,
-					   .ITLBWriteF,
 					   .IgnoreRequest,
 					   .ICacheBusAck,
 					   .ICacheFetchLine,
