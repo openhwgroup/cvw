@@ -143,6 +143,7 @@ module dcachefsm
 		  // PTW ready the CPU will stall.
 		  // The page table walker asserts it's control 1 cycle
 		  // after the TLBs miss.
+		  SelAdrM = 2'b01;
 		  NextState = STATE_READY;
 		end
 
