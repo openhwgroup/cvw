@@ -71,7 +71,6 @@ logic [3:0] dummy;
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
-  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
 
   // pick tests based on modes supported
   initial begin
@@ -88,7 +87,7 @@ logic [3:0] dummy;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
         "imperas64p":                     tests = imperas64p;
-        "imperas64mmu": if (`MEM_VIRTMEM) tests = imperas64mmu;
+//        "imperas64mmu": if (`MEM_VIRTMEM) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
@@ -111,7 +110,7 @@ logic [3:0] dummy;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
         "imperas32p":                     tests = imperas32p;
-        "imperas32mmu": if (`MEM_VIRTMEM) tests = imperas32mmu;
+//        "imperas32mmu": if (`MEM_VIRTMEM) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "imperas32a":   if (`A_SUPPORTED) tests = imperas32a;
