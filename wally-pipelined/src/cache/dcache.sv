@@ -123,7 +123,7 @@ module dcache
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(LsuAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d1(PreLsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]), // *** optimize change to virtual address.
+			.d1(PreLsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d2(FlushAdr),
 			.s(SelAdrM),
 			.y(RAdr));
