@@ -77,18 +77,10 @@ module icache
   logic 					  ICacheMemWriteEnable;
   logic [`PA_BITS-1:0] 		  FinalPCPF;  
   // Output signals from cache memory
-  logic [31:0] 				  ICacheMemReadData;
   logic 					  ICacheReadEn;
   logic [BLOCKLEN-1:0] 		  ReadLineF;
   
 
-  logic [15:0] 				  SpillDataBlock0;
-  logic 					  spill;
-  logic 					  spillSave;
-  
-  logic [1:1] 				  SelAdr_q;
-
-  logic [`PA_BITS-1:0] 		  PCPSpillF;
 
   logic [1:0] 				  SelAdr;
   logic [INDEXLEN-1:0] 		  RAdr;
@@ -109,16 +101,10 @@ module icache
   logic [NUMWAYS-1:0] 		  SRAMWayWriteEnable;
 
 
-  // on spill we want to get the first 2 bytes of the next cache block.
-  // the spill only occurs if the PCPF mod BlockByteLength == -2.  Therefore we can
-  // simply add 2 to land on the next cache block.
-  assign PCPSpillF = PCPF + {{{PA_WIDTH}{1'b0}}, 2'b10}; 
-
-  mux3 #(INDEXLEN)
+  mux2 #(INDEXLEN)
   AdrSelMux(.d0(PCNextF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d1(PCF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d2(PCPSpillF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.s(SelAdr),
+			.s(SelAdr[0]),
 			.y(RAdr));
 
 
@@ -168,37 +154,10 @@ module icache
 	assign ReadLineSetsF[BLOCKLEN/16-1] = {16'b0, ReadLineF[BLOCKLEN-1:BLOCKLEN-16]};
   endgenerate
 
-  assign ICacheMemReadData = ReadLineSetsF[FinalPCPF[$clog2(BLOCKLEN / 32) + 1 : 1]];
+  assign FinalInstrRawF = ReadLineSetsF[FinalPCPF[$clog2(BLOCKLEN / 32) + 1 : 1]];
   
-  // spills require storing the first cache block so it can merged
-  // with the second
-  // can optimize size, for now just make it the size of the data
-  // leaving the cache memory. 
-  flopenr #(16) SpillInstrReg(.clk(clk),
-							  .en(spillSave),
-							  .reset(reset),
-							  .d(ICacheMemReadData[15:0]),
-							  .q(SpillDataBlock0));
-
-  assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
-
-  // Detect if the instruction is compressed
-  //assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-  //assign spill = &PCF[$clog2(BLOCKLEN/32)+1:1];
-  assign spill = 0;
-
-
-
-  // this mux needs to be delayed 1 cycle as it occurs 1 pipeline stage later.
-  // *** read enable may not be necessary.
-  flopenr #(1) SelAdrReg(.clk(clk),
-						 .reset(reset),
-						 .en(ICacheReadEn),
-						 .d(SelAdr[1]),
-						 .q(SelAdr_q[1]));
   
-  assign FinalPCPF = SelAdr_q[1] ? PCPSpillF : PCPF;
-
+  assign FinalPCPF = PCPF;
 
   // *** CHANGE ME
   // if not cacheable the offset bits needs to be sent to the EBU.
@@ -228,8 +187,6 @@ module icache
 					   .ICacheFetchLine,
 					   .CacheableF,
 					   .hit,
-					   .spill,
-					   .spillSave,
 					   .SelAdr,
 					   .LRUWriteEn);
 
