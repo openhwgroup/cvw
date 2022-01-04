@@ -35,7 +35,7 @@ module dcachefsm
    // hazard inputs
    input logic 		  CPUBusy,
    input logic 		  CacheableM,
-   // hptw inputs
+   // interlock fsm
    input logic 		  IgnoreRequest,
    // Bus inputs
    input logic 		  DCacheBusAck,
