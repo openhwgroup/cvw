@@ -350,8 +350,6 @@ module ifu (
   // branch and jump predictor
   generate
     if (`BPRED_ENABLED == 1) begin : bpred
-      // I am making the port connection explicit for now as I want to see them and they will be changing.
-    
       bpred bpred(.clk, .reset,
 				  .StallF, .StallD, .StallE,
 				  .FlushF, .FlushD, .FlushE,
