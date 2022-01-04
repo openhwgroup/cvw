@@ -13,7 +13,7 @@ addins/riscv-arch-test/Makefile.include
 #vsim work files to ignore
 transcript
 vsim.wlf
-wally-pipelined/wlft*
+pipelined/wlft*
 wlft*
 /imperas-riscv-tests/FunctionRadix_32.addr
 /imperas-riscv-tests/FunctionRadix_64.addr
@@ -35,8 +35,8 @@ tests/linux-testgen/buildroot-image-output
 tests/linux-testgen/buildroot-config-src/main.config.old
 tests/linux-testgen/buildroot-config-src/linux.config.old
 tests/linux-testgen/buildroot-config-src/busybox.config.old
-wally-pipelined/regression/slack-notifier/slack-webhook-url.txt
-wally-pipelined/regression/logs
+pipelined/regression/slack-notifier/slack-webhook-url.txt
+pipelined/regression/logs
 fpga/generator/IP
 fpga/generator/vivado.*
 fpga/generator/.Xil/*

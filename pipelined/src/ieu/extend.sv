@@ -32,7 +32,7 @@ module extend (
 
   localparam [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
  
-  generate
+//  generate
     always_comb
       case(ImmSrcD) 
                 // I-type 
@@ -50,5 +50,5 @@ module extend (
                  else              ExtImmD = undefined;
         default: ExtImmD = undefined; // undefined
       endcase  
-  endgenerate           
+//  endgenerate           
 endmodule

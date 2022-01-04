@@ -1,3 +1,0 @@
-vsim -c <<!
-do wally-pipelined-batch-muldiv.do ../config/rv64imc rv64imc
-!

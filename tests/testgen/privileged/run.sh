@@ -11,7 +11,7 @@ printf "\n\n#####\nStarting tests for $1\n#####\n\n"
 
 if [[ "$2" != "-simonly" ]]
 then
-	cd ~/riscv-wally/wally-pipelined/testgen/privileged
+	cd ~/riscv-wally/pipelined/testgen/privileged
 	python3 "testgen-$1.py"
 	printf "\n\n#####\nRan testgen-$1.py Making...\n#####\n\n\n"
 
@@ -48,11 +48,11 @@ fi
 if [[ "$2" == "-sim" || "$2" == "-simonly" ]]
 then
 	printf "\n\n\n#####\nSimulating!\n#####\n\n"
-	cd ~/riscv-wally/wally-pipelined/regression
+	cd ~/riscv-wally/pipelined/regression
 	vsim -do wally-privileged.do -c
 fi
 
-cd ~/riscv-wally/wally-pipelined
+cd ~/riscv-wally/pipelined
 printf "\n\n\n#####\nDone!\n#####\n\n"
 
 cd ~/riscv-wally/imperas-riscv-tests/work
@@ -71,4 +71,4 @@ for isa in "rv64p" "rv32p"; do
 	printf "\n};\n\n"
 done
 
-cd ~/riscv-wally/wally-pipelined
+cd ~/riscv-wally/pipelined
