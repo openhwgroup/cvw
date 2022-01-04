@@ -29,26 +29,26 @@ module icache
   (
    // Basic pipeline stuff
    input logic 								clk, reset,
-   input logic 								CPUBusy, 
+   input logic 								CPUBusy,
+
+   // mmu
+   input logic 								CacheableF,
+
+   // cpu side 
+   input logic 								InvalidateICacheM,
    input logic [11:0] 						PCNextF,
    input logic [`PA_BITS-1:0] 				PCPF,
    input logic [`XLEN-1:0] 					PCF,
 
+   // bus fsm interface
    input logic 								IgnoreRequest,
-  
-   // Data read in from the ebu unit
    input logic [`ICACHE_BLOCKLENINBITS-1:0] ICacheMemWriteData,
    output logic 							ICacheFetchLine,
 
    (* mark_debug = "true" *) input logic 	ICacheBusAck,
-   // Read requested from the ebu unit
    (* mark_debug = "true" *) output logic [`PA_BITS-1:0] ICacheBusAdr,
-   // High if the instruction currently in the fetch stage is compressed
-   //output logic 							CompressedF,
    // High if the icache is requesting a stall
    output logic 							ICacheStallF,
-   input logic 								CacheableF,
-   input logic 								InvalidateICacheM,
   
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
