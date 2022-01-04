@@ -30,34 +30,35 @@ module dcache
    input logic 								reset,
    input logic 								CPUBusy,
 
+   // mmu
+   input logic 								CacheableM,
    // cpu side
    input logic [1:0] 						LsuRWM,
    input logic [1:0] 						LsuAtomicM,
    input logic 								FlushDCacheM,
    input logic [11:0] 						LsuAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0] 				LsuPAdrM, // physical address
-  
    input logic [`XLEN-1:0] 					FinalWriteDataM,
    output logic [`XLEN-1:0] 				ReadDataWordM,
-   output logic 							DCacheStall,
-   output logic 							DCacheMiss,
-   output logic 							DCacheAccess,
-   output logic 							DCacheCommittedM,
-   output logic 							DCacheWriteLine,
-   output logic 							DCacheFetchLine,
-   input logic 								DCacheBusAck,
-  
+   output logic 							DCacheCommittedM,   
 
+   // Bus fsm interface
+   input logic 								IgnoreRequest,
+   output logic 							DCacheFetchLine,
+   output logic 							DCacheWriteLine,
+
+   input logic 								DCacheBusAck,
    output logic [`PA_BITS-1:0] 				DCacheBusAdr,
-   output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
+
 
    input logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData,
+   output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
 
+   output logic 							DCacheStall,
 
-   // inputs from TLB and PMA/P
-   input logic 								CacheableM,
-   // from ptw
-   input logic 								IgnoreRequest
+   // to performance counters
+   output logic 							DCacheMiss,
+   output logic 							DCacheAccess
    );
 
   localparam integer 						BLOCKLEN = `DCACHE_BLOCKLENINBITS;
