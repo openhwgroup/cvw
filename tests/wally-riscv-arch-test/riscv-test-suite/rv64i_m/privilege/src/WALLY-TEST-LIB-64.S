@@ -31,26 +31,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 
-/*
-#include "riscv_test_macros.h"
-#include "compliance_test.h"
-#include "compliance_io.h"
-
-RV_COMPLIANCE_RV64M
-
-RV_COMPLIANCE_CODE_BEGIN
-
-
-	RVTEST_IO_INIT
-	RVTEST_IO_ASSERT_GPR_EQ(x31, x0, 0x00000000)
-	RVTEST_IO_WRITE_STR(x31, "Test Begin\n")
-
-	# ---------------------------------------------------------------------------------------------
-
-	RVTEST_IO_WRITE_STR(x31, "# Test group 1\n")
-*/
-
-	# ---------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------
     # Initialization Overview:
     #   
     #   Initialize x6 as a virtual pointer to the test results
@@ -68,9 +49,14 @@ RV_COMPLIANCE_CODE_BEGIN
     # address for stack
     la sp, top_of_stack
 
-    # address for trap handler
+    # trap handler setup
     la x1, machine_trap_handler
     csrrw x4, mtvec, x1  # x4 reserved for "default" trap handler address that needs to be restored before halting this test.
+    li a0, 0
+    li a1, 0 
+    li a2, 0 # reset trap handler inputs to zero
+
+    # go to first test!
     j test_setup
 
 
@@ -92,23 +78,19 @@ RV_COMPLIANCE_CODE_BEGIN
     #       4: go to user mode
     #       others: do nothing
     #
-    #   a1 (x11): Upper bits of change of return address after trap
-    #             Put it in the bottom bits of a1. *** soon to be changed to just the base address of the return page. 
-    #             Default : 0x0 (defaults to the next instruction in the same location as the return address)
-    #             Terapage: returnAddr[END-1:39]
-    #             Gigapage: returnAddr[END-1:30]
-    #             Megapage: returnAddr[END-1:21]  
-    #             Kilopage: returnAddr[END-1:12] (this value also works for baremetal)
-
-    #   a2 (x12): Pagetype for change of return address after trap
-    #             Put the Source page in a2[7:4] and Dest page in a2[3:0]
-    #               Ex: giga -> mega a2=0x21
+    #   a1 (x11): 
+    #       VPN for return address after changing privilege mode.
+    #       This should be the base VPN with no offset.
+    #       0x0 : defaults to next instruction on the same page the trap was called on.
     #
-    #             Default : Ignored if a1 == 0x0
-    #             Terapage: 3
-    #             Gigapage: 2
-    #             Megapage: 1  
-    #             Kilopage: 0
+    #   a2 (x12): 
+    #       Pagetype of the current address VPN before changing privilge mode
+    #       Used so that we can know how many bits of the adress are the offset.
+    #       Ignored if a1 == 0x0
+    #       0: Kilopage
+    #       1: Megapage
+    #       2: Gigapage
+    #       3: Terapage
     #     
     # --------------------------------------------------------------------------------------------
 
@@ -174,51 +156,37 @@ trapreturn_specified:
 
     beqz a1, trapreturn_finished # either update values, of go to default return address.
 
-    # Get Mask Bits
     la x5, trap_return_pagetype_table
-    mv x7, a2
-    li x28, 0xF0 # mask bits for current pagetype 
-    and x7, x28, x7
-    srli x7, x7, 1
-    add x5, x5, x7
-    ld x7, 0(x5) # x7 = number of offset bits in current page type
-
-    la x5, trap_return_pagetype_table
-    li x28, 0xF # mask bits for new pagetype
-    and a2, x28, a2
     slli a2, a2, 3
     add x5, x5, a2
-    ld a2, 0(x5) # a2 = number of offset bits in new page type
+    ld a2, 0(x5) # a2 = number of offset bits in current page type
     
     li x5, 1
-    sll x5, x5, x7
+    sll x5, x5, a2
     addi x5, x5, -1 # x5 = mask bits for offset into current pagetype
 
-    # *** This shoulf be removed 
-    sll a1, a1, a2 # a1 = the VPN of the new return page.
-
-    # set x1, the stack pointer, to the new virtual address
-    ld x7, -8(sp)
+    # reset the top of the stack, x1
+    ld x7, -8(sp) 
     and x7, x5, x7 # x7 = offset for x1
     add x7, x7, a1 # x7 = new address for x1
     sd x7, -8(sp)
 
-    # set x5, the pointer for where we are in the test cases, to the new virtual address
+    # reset the second spot in the stack, x5
     ld x7, -16(sp)
     and x7, x5, x7 # x7 = offset for x5
     add x7, x7, a1 # x7 = new address for x5
     sd x7, -16(sp)
 
-    # set x6, the pointer for the virtual address of the output of the tests, to the new virtual address
+    # reset x6, the pointer for the virtual address of the output of the tests
     and x7, x5, x6 # x7 = offset for x6
     add x6, x7, a1 # x6 = new address for the result pointer
     
-    # set return address to the next instruction, but in the new virtual page.
+    # set return address, stored temporarily in x1, to the next instruction, but in the new virtual page.
     and x1, x5, x1 # x1 = offset for the return address
     add x1, x1, a1 # x1 = new return address.
 
     li a1, 0 
-    li a2, 0 # reset inputs to the trap handler
+    li a2, 0 # reset trapreturn inputs to the trap handler
 
 trapreturn_finished:
     csrw mepc, x1       # update the mepc with address of next instruction
@@ -640,14 +608,14 @@ RVTEST_DATA_END
 
 .align 3 # align stack to 8 byte boundary
 bottom_of_stack:
-    .fill 1024, 4, -1 
+    .fill 1024, 4, 0xdeadbeef 
 top_of_stack:
 
 
 RVMODEL_DATA_BEGIN
 
 test_1_res:
-    .fill 1024, 4, -1 
+    .fill 1024, 4, 0xdeadbeef
 
 RVMODEL_DATA_END
 
