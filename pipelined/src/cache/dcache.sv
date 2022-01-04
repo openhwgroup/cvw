@@ -38,9 +38,10 @@ module dcache
    input logic 								FlushDCacheM,
    input logic [11:0] 						LsuAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0] 				LsuPAdrM, // physical address
+   input logic [11:0] 						PreLsuPAdrM, // physical or virtual address   
    input logic [`XLEN-1:0] 					FinalWriteDataM,
    output logic [`XLEN-1:0] 				ReadDataWordM,
-   output logic 							DCacheCommittedM,   
+   output logic 							DCacheCommittedM, 
 
    // Bus fsm interface
    input logic 								IgnoreRequest,
@@ -122,7 +123,7 @@ module dcache
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(LsuAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d1(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]), // *** optimize change to virtual address.
+			.d1(PreLsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d2(FlushAdr),
 			.s(SelAdrM),
 			.y(RAdr));

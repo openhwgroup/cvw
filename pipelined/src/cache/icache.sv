@@ -32,7 +32,8 @@ module icache
    input logic 								CPUBusy,
 
    // mmu
-   input logic 								CacheableF,
+   //input logic 								CacheableF,
+   input logic [1:0] 						IfuRWF,
 
    // cpu side 
    input logic 								InvalidateICacheM,
@@ -161,7 +162,7 @@ module icache
 					   .IgnoreRequest,
 					   .ICacheBusAck,
 					   .ICacheFetchLine,
-					   .CacheableF,
+					   .IfuRWF,
 					   .hit,
 					   .SelAdr,
 					   .LRUWriteEn);
