@@ -31,10 +31,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 
-	# ---------------------------------------------------------------------------------------------
-
-
-	# ---------------------------------------------------------------------------------------------
+		# ---------------------------------------------------------------------------------------------
     # Initialization Overview:
     #   
     #   Initialize x6 as a virtual pointer to the test results
@@ -52,9 +49,14 @@ RVTEST_CODE_BEGIN
     # address for stack
     la sp, top_of_stack
 
-    # address for trap handler
+    # trap handler setup
     la x1, machine_trap_handler
     csrrw x4, mtvec, x1  # x4 reserved for "default" trap handler address that needs to be restored before halting this test.
+    li a0, 0
+    li a1, 0 
+    li a2, 0 # reset trap handler inputs to zero
+
+    # go to first test!
     j test_setup
 
 
@@ -76,21 +78,18 @@ RVTEST_CODE_BEGIN
     #       4: go to user mode
     #       others: do nothing
     #
-    #   a1 (x11): Upper bits of change of return address after trap
-    #             Put it in the bottom bits of a1.
-    #               
-    #             Default : 0x0 (defaults to the next instruction in the same location as the return address)
-    #             Megapage: returnAddr[END-1:22]  
-    #             Kilopage: returnAddr[END-1:12] (this value also works for baremetal)
+    #   a1 (x11): 
+    #       VPN for return address after changing privilege mode.
+    #       This should be the base VPN with no offset.
+    #       0x0 : defaults to next instruction on the same page the trap was called on.
     #
-    #   a2 (x12): Pagetype for change of return address after trap
-    #             Put the Source page in a2[7:4] and Dest page in a2[3:0]
-    #               Ex: giga -> mega a2=0x21
-    #
-    #             Default : Ignored if a1 == 0x0
-    #             Megapage: 1  
-    #             Kilopage: 0
-    #     
+    #   a2 (x12): 
+    #       Pagetype of the current address VPN before changing privilge mode
+    #       Used so that we can know how many bits of the adress are the offset.
+    #       Ignored if a1 == 0x0
+    #       0: Kilopage
+    #       1: Megapage
+    #      
     # --------------------------------------------------------------------------------------------
 
 
@@ -150,53 +149,42 @@ trapreturn:
 #     addi x1, x1, 4      # add 4 to find the next instruction
 
 trapreturn_specified:
-    # update mepc and stack (x1 and x5) to have new virtual addresses.
+    # reset the necessary pointers and registers (x1, x5, x6, and the return address going to mepc)
+    # so that when we return to a new virtual address, they're all in the right spot as well.
+
     beqz a1, trapreturn_finished # either update values, of go to default return address.
 
-    # Get Mask Bits
     la x5, trap_return_pagetype_table
-    mv x7, a2
-    li x28, 0xF0 # mask bits for current pagetype 
-    and x7, x28, x7
-    srli x7, x7, 2
-    add x5, x5, x7
-    lw x7, 0(x5) # x7 = number of offset bits in current page type
-
-    la x5, trap_return_pagetype_table
-    li x28, 0xF # mask bits for new pagetype
-    and a2, x28, a2
     slli a2, a2, 2
     add x5, x5, a2
-    lw a2, 0(x5) # a2 = number of offset bits in new page type
+    lw a2, 0(x5) # a2 = number of offset bits in current page type
     
     li x5, 1
-    sll x5, x5, x7
+    sll x5, x5, a2
     addi x5, x5, -1 # x5 = mask bits for offset into current pagetype
 
-    sll a1, a1, a2 # a1 = the VPN of the new return page.
-
-    # set x1 stack spot
-    lw x7, -4(sp)
+    # reset the top of the stack, x1
+    lw x7, -4(sp) 
     and x7, x5, x7 # x7 = offset for x1
     add x7, x7, a1 # x7 = new address for x1
     sw x7, -4(sp)
 
-    # set x5 stack spot
+    # reset the second spot in the stack, x5
     lw x7, -8(sp)
     and x7, x5, x7 # x7 = offset for x5
     add x7, x7, a1 # x7 = new address for x5
     sw x7, -8(sp)
 
-    # set x6
-    and x7, x5, x6 # x7 = offset for the result pointer (x6)
+    # reset x6, the pointer for the virtual address of the output of the tests
+    and x7, x5, x6 # x7 = offset for x6
     add x6, x7, a1 # x6 = new address for the result pointer
     
-    # set return address
+    # set return address, stored temporarily in x1, to the next instruction, but in the new virtual page.
     and x1, x5, x1 # x1 = offset for the return address
     add x1, x1, a1 # x1 = new return address.
 
     li a1, 0 
-    li a2, 0 # reset inputs
+    li a2, 0 # reset trapreturn inputs to the trap handler
 
 trapreturn_finished:
     csrw mepc, x1   # update the mepc with address of next instruction
@@ -310,18 +298,10 @@ test_loop:
     beq x30, x7, write_test         #         0x0 : Write to address                      : 0xf                    : None
     li x7, 0x1                      #             :                                       :                        :
     beq x30, x7, read_test          #         0x1 : Read from address                     : 0xd, 0xbad             : readvalue in hex
-    li x7, 0xB                      #             :                                       :                        :
-    beq x30, x7, access_test        #         0xB : Mem access at any width (see table)   : 0x1, 0x5, or 0x7       : 0x32001608, 0x32001608, 0x1608, 0x08, // *** Execute, cahceable, etc values
-    li x7, 0xC                      #             :                                       :                        :
-    beq x30, x7, access_denied_test #         0xC : Access memory regions with no device  : 0x7, 0x5, 0x1, 0x600d  : 0xbad, 0x3
     li x7, 0x2                      #             :                                       :                        :
-    beq x30, x7, executable_test    #         0x2 : test executable at address            : 0xc, 0xbad             : leading 12 bits of the li instr written to address. (be sure to also write a return instruction)
+    beq x30, x7, executable_test    #         0x2 : test executable at address            : 0xc, 0xbad             : leading 12 bits of the li instr written to address. In general this is 0x111. (be sure to also write a return instruction)
     li x7, 0x3                      #             :                                       :                        :
     beq x30, x7, terminate_test     #         0x3 : terminate tests                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
-    li x7, 0xF                      #             :                                       :                        :
-    beq x30, x7, edit_pte           #         0xF : edit an already instantiated pte      : None                   : None
-    li x7, 0x10                     #             :                                       :                        :
-    beq x30, x7, push_to_stack      #        0x10 : put a value onto the top of the stack : None                   : None
     li x7, 0x4                      #             :                                       :                        :
     beq x30, x7, goto_baremetal     #         0x4 : satp.MODE = bare metal                : None                   : None 
     li x7, 0x5                      #             :                                       :                        :
@@ -436,184 +416,120 @@ write_pmpcfg_end:
 
 write_pmpaddr_0:
     # writes the value in x29 to the pmpaddr register specified in x28.
+    # then writes the final value of pmpaddrX to the output.
     li x7, 0x0
     bne x7, x28, write_pmpaddr_1
     csrw pmpaddr0, x29
+    csrr x30, pmpaddr0
+    j write_pmpaddr_end
 write_pmpaddr_1:
     li x7, 0x1
     bne x7, x28, write_pmpaddr_2
     csrw pmpaddr1, x29
+    csrr x30, pmpaddr1
+    j write_pmpaddr_end
 write_pmpaddr_2:
     li x7, 0x2
     bne x7, x28, write_pmpaddr_3
     csrw pmpaddr2, x29
+    csrr x30, pmpaddr2
+    j write_pmpaddr_end
 write_pmpaddr_3:
     li x7, 0x3
     bne x7, x28, write_pmpaddr_4
     csrw pmpaddr3, x29
+    csrr x30, pmpaddr3
+    j write_pmpaddr_end
 write_pmpaddr_4:
     li x7, 0x4
     bne x7, x28, write_pmpaddr_5
     csrw pmpaddr4, x29
+    csrr x30, pmpaddr4
+    j write_pmpaddr_end
 write_pmpaddr_5:
     li x7, 0x5
     bne x7, x28, write_pmpaddr_6
     csrw pmpaddr5, x29
+    csrr x30, pmpaddr5
+    j write_pmpaddr_end
 write_pmpaddr_6:
     li x7, 0x6
     bne x7, x28, write_pmpaddr_7
     csrw pmpaddr6, x29
+    csrr x30, pmpaddr6
+    j write_pmpaddr_end
 write_pmpaddr_7:
     li x7, 0x7
     bne x7, x28, write_pmpaddr_8
     csrw pmpaddr7, x29
+    csrr x30, pmpaddr7
+    j write_pmpaddr_end
 write_pmpaddr_8:
     li x7, 0x8
     bne x7, x28, write_pmpaddr_9
     csrw pmpaddr8, x29
+    csrr x30, pmpaddr8
+    j write_pmpaddr_end
 write_pmpaddr_9:
     li x7, 0x9
     bne x7, x28, write_pmpaddr_10
     csrw pmpaddr9, x29
+    csrr x30, pmpaddr9
+    j write_pmpaddr_end
 write_pmpaddr_10:
     li x7, 0xA
     bne x7, x28, write_pmpaddr_11
     csrw pmpaddr10, x29
+    csrr x30, pmpaddr10
+    j write_pmpaddr_end
 write_pmpaddr_11:
     li x7, 0xB
     bne x7, x28, write_pmpaddr_12
     csrw pmpaddr11, x29
+    csrr x30, pmpaddr11
+    j write_pmpaddr_end
 write_pmpaddr_12:
     li x7, 0xC
     bne x7, x28, write_pmpaddr_13
     csrw pmpaddr12, x29
+    csrr x30, pmpaddr12
+    j write_pmpaddr_end
 write_pmpaddr_13:
     li x7, 0xD
     bne x7, x28, write_pmpaddr_14
     csrw pmpaddr13, x29
+    csrr x30, pmpaddr13
+    j write_pmpaddr_end
 write_pmpaddr_14:
     li x7, 0xE
     bne x7, x28, write_pmpaddr_15
     csrw pmpaddr14, x29
+    csrr x30, pmpaddr14
+    j write_pmpaddr_end
 write_pmpaddr_15:
     li x7, 0xF
     bne x7, x28, write_pmpaddr_end
     csrw pmpaddr15, x29
+    csrr x30, pmpaddr15
+    j write_pmpaddr_end
 write_pmpaddr_end:
-    j test_loop
-
-executable_test:
-    # using a virtual page number in x28, and the page type in x29, test execution on that virtual page  
-    # note: that x28 page must point to program and data memory
-    #       Another unfortunate case of not being able to use a little table like above, again because of the virtual addressing problem
-    
-    li x7, 0x0
-    beq x7, x29, exe_kilopage
-    li x7, 0x1
-    beq x7, x29, exe_megapage
-    li x7, 0xF
-    beq x7, x29, exe_physical
-
-exe_kilopage:    
-    li x7, 0xFFFFF000
-    and x28, x28, x7 # x28 = virtual page number
-    li x29, 0xFFF
-    j exe_combine_and_test
-
-exe_megapage:    
-    li x7, 0xFFE00000
-    and x28, x28, x7 # x28 = virtual page number
-    li x29, 0x1FFFFF
-    j exe_combine_and_test
-
-exe_combine_and_test: # at this point x28 is the VPN and x29 physical offset mask bits
-    la x7, exe_code
-    and x7, x7, x29
-    or x28, x28, x7 # x28 = full virtual address for executable_code
-
-exe_physical:
-    li x7, 0xBAD # load a bad value into x7 in case this fetch doesnt work.
-    jalr x28 # jump to executable code virtual address
-    sw x7, 0(x6)
+    sw x30, 0(x6)
     addi x6, x6, 4
     addi x16, x16, 4
     j test_loop
 
-exe_code:
-    li x7, 0xE600D
-    ret #jumps back to the original virtual PC and continues with this program.
-
-access_test:
-    # test write, read, and *** Execute permissions on the region of memory beginning at the address in x28
-    
-
-    # Load output: (None) if pass, (0x7) if fail
-    # Store output: (0x600DXX) if pass, (0x5, 0xBAD) if fail
-    # execute output: *** N/A
-    # *** idempotent, atomic, etc...  
-    
-    # *** unfortunately, there's no guarantee that this write will work since the access width applies to writes and reads
-    #           So I'm sorry, but I'm going to have to do loads and stores at all widths. its either that or have a test for every width
-    li x7, 0x32001608
-    sw x7, 0(x28) # test 32 bit write
-    sh x7, 4(x28) # test 16 bit write
-    sb x7, 12(x28) # test 8 bit write
-
-    # *** Double unfortunately, there are cases where we aren't allowed to write a known value to the range of addresses
-    # so instead I have to do all this work to check if ANY value get read out of memory, but I can't verfy the value in the output necessarily.
+executable_test:
+    # Execute the code at the address in x28, returning the value in x7.
+    # Assumes the code modifies x7, to become the value stored in x29 for this test.  
+    fence.i # forces cache and main memory to sync so execution code written by the program can run.
     li x7, 0xBAD
-access_32:
-    li x29, 0xBAD
-    lw x29, 0(x28)
-    beq x29, x7, access_16 
-    li x29, 0x600D32
-access_16:
-    sw x29, 0(x6)
-
-    li x29, 0xBAD
-    lh x29, 4(x28)
-    beq x29, x7, access_08 
-    li x29, 0x600D16
-access_08:
-    sw x29, 4(x6)
-
-    li x29, 0xBAD
-    lb x29, 8(x28)
-    beq x29, x7, access_end 
-    li x29, 0x600D08
-access_end:
-    sw x29, 8(x6)
-
-    /* *** EXECUTE, idempotent atomic, etc tests. how do we do it? */
-
-    addi x6, x6, 12
-    addi x16, x16, 12
+    jalr x28 
+    sw x7, 0(x6) 
+    addi x6, x6, 4
+    addi x16, x16, 4 
     j test_loop
 
-access_denied_test:
-    # check that lw, sw and jalr all cause faults in a memory region (beginning at x28 address) where no device is intantiated.
-    lw x7, 0(x28) # cause a load access fault
 
-    li x7, 0xBADBAD // *** Necessary?
-    sw x7, 0(x28) # cause a store access fault
-    jalr x7, 0(x28) # cause an instruction access fault 
-    j test_loop
-
-edit_pte:
-    # write the PTE (value in x29) to address x28. This is different from a normal write since it includes an sfence.vma
-    sw x29, 0(x28)
-    lw x30, 0(sp) # the sfence.vma requires a virtual address within the page, it needs to be loaded into the stack.
-    addi sp, sp, 4 # put the stack pointer one value down, effectively popping this value by allowing it to be overwritten.
-    sfence.vma x0, x30
-    j test_loop
-
-push_to_stack:
-    # write the value in x29 to the stack address pointed to by sp. update sp.
-    # this for those handy times when address, value, test type isn't enough info and you need more so you put it on the stack.
-    # any test that uses this info is also respnsible for removing the value or moving the stack pointer back.
-    sw x29, -4(sp)
-    addi sp, sp, -4
-    j test_loop
 
 terminate_test:
 
@@ -633,7 +549,7 @@ RVTEST_DATA_END
 
 .align 2 # align stack to 4 byte boundary
 bottom_of_stack:
-    .fill 1024, 4, -1 
+    .fill 1024, 4, 0xdeadbeef
 top_of_stack:
 
 
@@ -642,7 +558,7 @@ RVMODEL_DATA_BEGIN
 
 // next lines through test cases copied over from old framework
 test_1_res:
-    .fill 1024, 4, -1 
+    .fill 1024, 4, 0xdeadbeef
 
 RVMODEL_DATA_END
 

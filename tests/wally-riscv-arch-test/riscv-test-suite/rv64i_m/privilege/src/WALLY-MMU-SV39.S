@@ -22,9 +22,6 @@
 ///////////////////////////////////////////
 
 #include "WALLY-TEST-LIB-64.S" 
-
-// *** new line
-test_contents:  
 // Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
 // Ideally this should mean that a test can be written by simply adding .8byte statements as below.
 
@@ -48,12 +45,14 @@ test_contents:
 # sv39 page table (See Figure 12.12***):
 # Level 2 page table, situated at 0x8000D000
 .8byte 0x000000008000D000, 0x0000000020004C01, 0x0 # points to level 1 page table A
-.8byte 0x000000008000D008, 0x0000000020005001, 0x0 # points to level 1 page table B
+.8byte 0x000000008000D008, 0x0000000020005001, 0x0 # points to level 1 page table B #*** replacing all the pointers DAU bits with 0.
 .8byte 0x000000008000D010, 0x00000000200000CF, 0x0 # Vaddr 0x8000_0000, Paddr 0x80000000: aligned gigapage (program and data memory)
 .8byte 0x000000008000D018, 0x00004000004000C7, 0x0 # Vaddr 0xC000_0000: misaligned gigapage
-.8byte 0x000000008000DFF8, 0x0000000020005421, 0x0 # points to level 1 page table C
+.8byte 0x000000008000DFF8, 0x0000000020005401, 0x0 # points to level 1 page table C
+
 # Level 1 page table A
 .8byte 0x0000000080013000, 0x0000000020006001, 0x0 # points to level 0 page table A
+
 # Level 1 page table B
 .8byte 0x0000000080014000, 0x00000000200000CB, 0x0 # Vaddr 0x4000_0000, Paddr 0x80000000: aligned megapage, W=0, used for execution tests
 .8byte 0x0000000080014008, 0x00000400000080C3, 0x0 # Vaddr 0x4020_0000: misaligned megapage
@@ -61,8 +60,9 @@ test_contents:
 .8byte 0x0000000080014018, 0x00000000210800C9, 0x0 # Vaddr 0x4060_0000, Paddr 0x84200000: R=0, reads should fault
 # Level 1 page table C
 .8byte 0x0000000080015FF8, 0x0000000020005801, 0x0 # points to level 0 page table B
+
 # Level 0 page table A
-.8byte 0x0000000080018000, 0x0000000020007001, 0x0 # Vaddr 0x0000: bad PTE points to level -1 table
+.8byte 0x0000000080018000, 0x00000000200070D1, 0x0 # Vaddr 0x0000: bad PTE points to level -1 table
 .8byte 0x0000000080018008, 0x00000000200800DF, 0x0 # Vaddr 0x1000, Paddr = 0x80200000: aligned kilopage
 .8byte 0x0000000080018010, 0x00000000200810D5, 0x0 # Vaddr 0x2000: bad PTE has W but not R
 .8byte 0x0000000080018018, 0x0000000020080817, 0x0 # Vaddr 0x3000 Paddr 0x80202000: A=0, should cause read fault
@@ -97,7 +97,7 @@ test_contents:
 .8byte 0x80203AA0, 0x0440DEADBEEF0BB0, 0x1
 
 # test 12.3.1.1.4 check translation works in sv39, read the same values from previous tests, this time with Vaddrs
-.8byte 0x0, 0x0, 0x5 # satp.MODE = sv39, Nothing written to output
+.8byte 0x0, 0x0, 0x5 # satp.MODE = sv39, current VPN: gigapage at 0x80000000. Nothing written to output
 .8byte 0x80200AB0, 0x0000DEADBEEF0000, 0x1          # gigapage at Vaddr 0x80000000, Paddr 0x80000000
 .8byte 0x400FFAB8, 0x0880DEADBEEF0055, 0x1          # megapage at Vaddr 0x40400000, Paddr 0x80000000
 .8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, 0x1  # kilopage at Vaddr 0xFFFFFFFFFFFFF000, Paddr 0x80201000
@@ -127,13 +127,13 @@ test_contents:
 # test 12.3.1.3.1 User flag == 0
 # *** reads on pages with U=0 already tested in 12.3.1.1.4
 .8byte 0x40099000, 0x111, 0x2                       # execute success when U=0, priv=S
-.8byte 0x202, 0x21, 0xA                        # go to U mode, return to megapgage at 0x40400000 where U = 1. 0x9 written to output
+.8byte 0x40400000, 0x2, 0xA                         # go to U mode, return to megapage at 0x40400000 where U = 1. 0x9 written to output
 .8byte 0xFFFFFFFFFFFFFC80, 0x0880DEADBEEF0550, 0x1  # load page fault when U=0, priv=U
 .8byte 0x40099000, 0xbad, 0x2                       # execute fault when U=0, priv=U
 
 # test 12.3.1.3.2 User flag == 1
 .8byte 0x1AC0, 0x0990DEADBEEF0033, 0x1  # read success when U=1, priv=U
-.8byte 0x2, 0x12, 0x9            # go back to S mode, return to gigapage at 0x80000000 where U = 0. 0x8 written to output
+.8byte 0x80000000, 0x1, 0x9                   # go back to S mode, return to gigapage at 0x80000000 where U = 0. 0x8 written to output
 .8byte 0x0, 0x3, 0x7                    # set sstatus.[MXR, SUM] = 11
 .8byte 0x4130, 0x0110DEADBEEF0077, 0x1  # read success when U=1, priv=S, sstatus.SUM=1
 .8byte 0x40499000, 0xbad, 0x2           # instr page fault when U=1, priv=S (with any sstatus.SUM)

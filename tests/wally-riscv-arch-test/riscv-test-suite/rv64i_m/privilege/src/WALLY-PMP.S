@@ -60,7 +60,6 @@
 .8byte 0x0, 0x0018900C0009001F, 0xD # write pmpcfg0, output 0x0018900C0009001F
 .8byte 0x2, 0x1F00000000000000, 0xD # write pmpcfg2, output 0x1F00000000000000
 
-
 # write known values to memory where W=0. This should be possible since we're in machine mode.
 .8byte 0x80100010, 0x600DAA, 0x0 # write to pmpaddr 1-2 range
 .8byte 0x80100400, 0x600DBB, 0x0 # write to pmpaddr 6 range
@@ -101,12 +100,10 @@
 .8byte 0x80100208, 0x600D15, 0x0 # Write fault on no-access range (PMP6)
 .8byte 0x80100208, 0x600D15, 0x1 # read fault on no-access range (PMP6)
 
-############## *********** Test works up to here. Adding in these tests somehow exes out the regions of memory where we wrote the original pmpaddr values to it.
+# test jalr to region with X=0 causes access fault
+.8byte 0x80100020, 0xbad, 0x2 # execute fault on no-execute range (PMP2)
 
-# # test jalr to region with X=0 causes access fault
-# .8byte 0x80100020, 0xbad, 0x2 # execute fault on no-execute range (PMP2)
-
-# # test jalr to region with X=1 returns successfully
-# .8byte 0x80100200, 0x111, 0x2 # execute success when X=1
+# test jalr to region with X=1 returns successfully
+.8byte 0x80100200, 0x111, 0x2 # execute success when X=1
 
 .8byte 0x0, 0x0, 0x3 // terminate tests

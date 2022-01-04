@@ -30,7 +30,7 @@
 rv64i_sc_tests = \
     WALLY-MMU-SV39 \
     WALLY-MMU-SV48 \
-#    WALLY-PMP 
+    WALLY-PMP 
 #    WALLY-PMA \
 
 
