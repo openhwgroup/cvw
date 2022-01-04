@@ -48,7 +48,6 @@ module icache
    // High if the icache is requesting a stall
    output logic 							ICacheStallF,
    input logic 								CacheableF,
-   input logic 								ITLBMissF,
    input logic 								InvalidateICacheM,
   
    // The raw (not decompressed) instruction that was requested
@@ -159,7 +158,6 @@ module icache
 					   .CPUBusy,
 					   .ICacheMemWriteEnable,
 					   .ICacheStallF,
-					   .ITLBMissF,
 					   .IgnoreRequest,
 					   .ICacheBusAck,
 					   .ICacheFetchLine,

@@ -31,9 +31,6 @@ module icachefsm
 
    input logic 		  CPUBusy,
 
-   // inputs from mmu
-   input logic 		  ITLBMissF,
-
    input logic 		  IgnoreRequest,
    input logic 		  CacheableF,
 
@@ -89,11 +86,6 @@ module icachefsm
 		if(IgnoreRequest) begin
 		  SelAdr = 1'b1;
 		  NextState = STATE_READY;
-		end else 
-		if(ITLBMissF) begin
-		  NextState = STATE_READY;
-		  SelAdr = 1'b1;
-		  ICacheStallF = 1'b0;
 		end
 		else if (CacheableF & hit) begin
           ICacheStallF = 1'b0;

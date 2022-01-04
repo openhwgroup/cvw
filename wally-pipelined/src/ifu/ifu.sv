@@ -247,7 +247,7 @@ module ifu (
   generate
 	if(`MEM_ICACHE) begin : icache
 	  icache icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-					.ICacheBusAdr, .ICacheStallF, .ITLBMissF, .FinalInstrRawF, 
+					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF, 
 					.ICacheFetchLine,
 					.CacheableF,
 					.PCNextF(PCNextFMux),
