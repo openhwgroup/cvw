@@ -86,6 +86,7 @@ module icachefsm
 		if(IgnoreRequest) begin
 		  SelAdr = 1'b1;
 		  NextState = STATE_READY;
+		  ICacheStallF = 1'b0;
 		end
 		else if (CacheableF & hit) begin
           ICacheStallF = 1'b0;
@@ -103,7 +104,9 @@ module icachefsm
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
 			SelAdr = 1'b1;
+			ICacheStallF = 1'b0;
 		  end else begin
+			ICacheStallF = 1'b0;
             NextState = STATE_READY;
 		  end
         end
