@@ -27,61 +27,54 @@
 `include "wally-config.vh"
 
 module ifu (
-  input logic 		      clk, reset,
-  input logic 		      StallF, StallD, StallE, StallM, StallW,
-  input logic 		      FlushF, FlushD, FlushE, FlushM, FlushW,
-  // Fetch
-  input logic [`XLEN-1:0]     IfuBusHRDATA,
-  input logic 		      IfuBusAck,
-  (* mark_debug = "true" *) output logic [`XLEN-1:0]    PCF, 
-  output logic [`PA_BITS-1:0] IfuBusAdr,
-  output logic 		      IfuBusRead,
-  output logic 		      IfuStallF,
-  // Execute
-  output logic [`XLEN-1:0]    PCLinkE,
-  input logic 		      PCSrcE, 
-  input logic [`XLEN-1:0]     IEUAdrE,
-  output logic [`XLEN-1:0]    PCE,
-  output logic 		      BPPredWrongE, 
-  // Mem
-  input logic 		      RetM, TrapM, 
-  input logic [`XLEN-1:0]     PrivilegedNextPCM, 
-  input logic 		      InvalidateICacheM,
-  output logic [31:0] 	      InstrD, InstrM, 
-  output logic [`XLEN-1:0]    PCM, 
-  output logic [4:0] 	      InstrClassM,
-  output logic 		      BPPredDirWrongM,
-  output logic 		      BTBPredPCWrongM,
-  output logic 		      RASPredPCWrongM,
-  output logic 		      BPPredClassNonCFIWrongM,
-  // Writeback
-  // output logic [`XLEN-1:0] PCLinkW,
-  // Faults
-  input logic 		      IllegalBaseInstrFaultD,
-  output logic 		      ITLBInstrPageFaultF,
-  output logic 		      IllegalIEUInstrFaultD,
-  output logic 		      InstrMisalignedFaultM,
-  output logic [`XLEN-1:0]    InstrMisalignedAdrM,
-  input logic 		      ExceptionM, PendingInterruptM,
-	    
-
-  
-  // mmu management
-  input logic [1:0] 	      PrivilegeModeW,
-  input logic [`XLEN-1:0]     PTE,
-  input logic [1:0] 	      PageType,
-  input logic [`XLEN-1:0]     SATP_REGW,
-  input logic 		      STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic [1:0] 	      STATUS_MPP,
-  input logic 		      ITLBWriteF, ITLBFlushF,
-
-  output logic 		      ITLBMissF,
-
+	input logic 				clk, reset,
+	input logic 				StallF, StallD, StallE, StallM, StallW,
+	input logic 				FlushF, FlushD, FlushE, FlushM, FlushW,
+	// Bus interface
+	input logic [`XLEN-1:0] 	IfuBusHRDATA,
+	input logic 				IfuBusAck,
+	output logic [`PA_BITS-1:0] IfuBusAdr,
+	output logic 				IfuBusRead,
+	output logic 				IfuStallF,
+	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
+	// Execute
+	output logic [`XLEN-1:0] 	PCLinkE,
+	input logic 				PCSrcE, 
+	input logic [`XLEN-1:0] 	IEUAdrE,
+	output logic [`XLEN-1:0] 	PCE,
+	output logic 				BPPredWrongE, 
+	// Mem
+	input logic 				RetM, TrapM, 
+	input logic [`XLEN-1:0] 	PrivilegedNextPCM, 
+	input logic 				InvalidateICacheM,
+	output logic [31:0] 		InstrD, InstrM, 
+	output logic [`XLEN-1:0] 	PCM, 
+	// branch predictor
+	output logic [4:0] 			InstrClassM,
+	output logic 				BPPredDirWrongM,
+	output logic 				BTBPredPCWrongM,
+	output logic 				RASPredPCWrongM,
+	output logic 				BPPredClassNonCFIWrongM,
+	// Faults
+	input logic 				IllegalBaseInstrFaultD,
+	output logic 				ITLBInstrPageFaultF,
+	output logic 				IllegalIEUInstrFaultD,
+	output logic 				InstrMisalignedFaultM,
+	output logic [`XLEN-1:0] 	InstrMisalignedAdrM,
+	input logic 				ExceptionM, PendingInterruptM,
+	// mmu management
+	input logic [1:0] 			PrivilegeModeW,
+	input logic [`XLEN-1:0] 	PTE,
+	input logic [1:0] 			PageType,
+	input logic [`XLEN-1:0] 	SATP_REGW,
+	input logic 				STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+	input logic [1:0] 			STATUS_MPP,
+	input logic 				ITLBWriteF, ITLBFlushF,
+	output logic 				ITLBMissF,
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-  input 		      var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input 		      var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
-
-  output logic 		      InstrAccessFaultF
+	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
+	output logic 				InstrAccessFaultF
 );
 
   logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
@@ -95,73 +88,85 @@ module ifu (
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
 
-  localparam [31:0]      nop = 32'h00000013; // instruction for NOP
+  localparam [31:0]            nop = 32'h00000013; // instruction for NOP
   logic                        reset_q; // *** look at this later.
 
   logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+  logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
+  logic 					   BPPredWrongM;
+
   
 (* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
-  logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
-  logic 					   BPPredWrongM;
+
   logic 					   CacheableF;
   logic [11:0] 				   PCNextFMux;
   logic [`XLEN-1:0] 		   PCFMux;
-
-  logic [`XLEN-1:0] 		   PCFp2;
-  logic 					   SelNextSpill, SelSpill, SpillSave;
-  logic 			   Spill;
-  
+  logic 					   SelNextSpill;
   logic 					   ICacheFetchLine;
   logic 					   BusStall;
   logic 					   ICacheStallF;
   logic 					   IgnoreRequest;
   logic 					   CPUBusy;
+  logic [31:0] 				   PostSpillInstrRawF;
+
+
+  generate
+	if(`C_SUPPORTED) begin : SpillSupport
+	  logic [`XLEN-1:0] 		   PCFp2;
+	  logic 					   Spill;
+	  logic 					   SelSpill, SpillSave;
+	  logic [15:0] 				   SpillDataBlock0;
+
+	  // this exists only if there are compressed instructions.
+	  assign PCFp2 = PCF + `XLEN'b10;
   
-  logic [15:0] 		   SpillDataBlock0;
-  logic [31:0] 		   PostSpillInstrRawF;
-
-  assign PCFp2 = PCF + `XLEN'b10;
+	  assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
+	  assign PCFMux = SelSpill ? PCFp2 : PCF;
   
-  assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
-  assign PCFMux = SelSpill ? PCFp2 : PCF;
-  
+	  assign Spill = &PCF[$clog2(`ICACHE_BLOCKLENINBITS/32)+1:1];
 
-  assign Spill = &PCF[$clog2(`ICACHE_BLOCKLENINBITS/32)+1:1];
-
-  typedef enum 		   {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
-  (* mark_debug = "true" *)  statetype CurrState, NextState;
+	  typedef enum 		   {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
+	  (* mark_debug = "true" *)  statetype CurrState, NextState;
 
 
-  always_ff @(posedge clk)
-    if (reset)    CurrState <= #1 STATE_SPILL_READY;
-    else CurrState <= #1 NextState;
+	  always_ff @(posedge clk)
+		if (reset)    CurrState <= #1 STATE_SPILL_READY;
+		else CurrState <= #1 NextState;
 
-  always_comb begin
-	case(CurrState)
-	  STATE_SPILL_READY: if (Spill & ~(ICacheStallF | BusStall)) NextState = STATE_SPILL_SPILL;
-                         else                                    NextState = STATE_SPILL_READY;
-	  STATE_SPILL_SPILL: if(ICacheStallF | BusStall | StallF)    NextState = STATE_SPILL_SPILL;
-	                     else                                    NextState = STATE_SPILL_READY;
-	  default:                                                   NextState = STATE_SPILL_READY;
-	endcase
-  end
+	  always_comb begin
+		case(CurrState)
+		  STATE_SPILL_READY: if (Spill & ~(ICacheStallF | BusStall)) NextState = STATE_SPILL_SPILL;
+          else                                    NextState = STATE_SPILL_READY;
+		  STATE_SPILL_SPILL: if(ICacheStallF | BusStall | StallF)    NextState = STATE_SPILL_SPILL;
+	      else                                    NextState = STATE_SPILL_READY;
+		  default:                                                   NextState = STATE_SPILL_READY;
+		endcase
+	  end
 
-  assign SelSpill = CurrState == STATE_SPILL_SPILL;
-  assign SelNextSpill = (CurrState == STATE_SPILL_READY & (Spill & ~(ICacheStallF | BusStall))) |
-						 (CurrState == STATE_SPILL_SPILL & (ICacheStallF | BusStall));
-  assign SpillSave = CurrState == STATE_SPILL_READY & (Spill & ~(ICacheStallF | BusStall));
-  
+	  assign SelSpill = CurrState == STATE_SPILL_SPILL;
+	  assign SelNextSpill = (CurrState == STATE_SPILL_READY & (Spill & ~(ICacheStallF | BusStall))) |
+							(CurrState == STATE_SPILL_SPILL & (ICacheStallF | BusStall));
+	  assign SpillSave = CurrState == STATE_SPILL_READY & (Spill & ~(ICacheStallF | BusStall));
+	  
 
-  flopenr #(16) SpillInstrReg(.clk(clk),
-							  .en(SpillSave),
-							  .reset(reset),
-							  .d(InstrRawF[15:0]),
-							  .q(SpillDataBlock0));
+	  flopenr #(16) SpillInstrReg(.clk(clk),
+								  .en(SpillSave),
+								  .reset(reset),
+								  .d(InstrRawF[15:0]),
+								  .q(SpillDataBlock0));
 
-  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataBlock0} : InstrRawF;
-  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
+	  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataBlock0} : InstrRawF;
+	  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
 
+	  // end of spill support
+	end else begin : NoSpillSupport // block: SpillSupport
+	  assign PCNextFMux = PCNextF[11:0];
+	  assign PCFMux = PCF;
+	  assign SelNextSpill = 0;
+	  assign PostSpillInstrRawF = InstrRawF;
+	end
+  endgenerate
   
 
   assign PCFExt = {2'b00, PCFMux};
@@ -254,15 +259,13 @@ module ifu (
   endgenerate
 	
   // select between dcache and direct from the BUS. Always selected if no dcache.
+  // handled in the busfsm.
   mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF),
 				.d1(ICacheMemWriteData[31:0]),
 				.s(SelUncachedAdr),
 				.y(InstrRawF));
 
-  
-  
-
-  
+  // always present
   genvar 			   index;
   generate
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
@@ -291,9 +294,6 @@ module ifu (
   // this is a difference with the dcache.
   // uses interlock fsm.
   assign IgnoreRequest = ITLBMissF;
-
-
-
 
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
