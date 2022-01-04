@@ -24,9 +24,6 @@ export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verila
 export PATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin:$PATH    # Change this for your path to Modelsim
 export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu # Change this to your Siemens license server
 
-# Imperas; *** remove if not using
-export PATH=/cad/riscv/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:/cad/riscv/imperas-riscv-tests/riscv-ovpsim/bin/Liux64:$PATH  # *** maybe take this out based on Imperas
-export LD_LIBRARY_PATH=/cad/imperas/Imperas.20200630/bin/Linux64:$LD_LIBRARY_PATH # remove if no imperas
-export IMPERAS_HOME=/cad/imperas/Imperas.20200630
-source $IMPERAS_HOME/bin/setup.sh
-setupImperas $IMPERAS_HOME
+# Imperas; *** remove if not using; *** fix paths
+export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  # *** maybe take this out based on Imperas
+export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH # remove if no imperas

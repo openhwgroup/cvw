@@ -11,7 +11,7 @@ install:
 	echo export RISCV_PREFIX = riscv64-unknown-elf- >> addins/riscv-arch-test/Makefile.include
 
 regression:
-	make -C wally-pipelined/regression
+	make -C pipelined/regression
 
 
 

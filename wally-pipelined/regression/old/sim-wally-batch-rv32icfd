@@ -1,3 +1,0 @@
-vsim -c <<!
-do wally-pipelined-batch-rv32icfd.do ../config/rv32icfd rv32icfd
-!

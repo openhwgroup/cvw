@@ -1,3 +1,0 @@
-vsim -c <<!
-do wally-arch.do ../config/rv64ic rv64ic
-!

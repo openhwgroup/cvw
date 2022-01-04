@@ -16,7 +16,7 @@ a large number of debuging signals.
 
 * Programming the flash card
 You'll need to write the linux image to the flash card.  Use the convert2bin.py 
-script in wally-pipelined/linux-testgen/linux-testvectors/ to convert the ram.txt
+script in pipelined/linux-testgen/linux-testvectors/ to convert the ram.txt
 file from QEMU's preload to generate the binary.  Then to copy
  sudo dd if=ram.bin of=<path to flash card>.
 

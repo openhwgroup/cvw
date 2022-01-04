@@ -1,1 +1,0 @@
-vsim -do wally-pipelined-rv32icfd.do
