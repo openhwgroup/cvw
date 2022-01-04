@@ -112,6 +112,12 @@ module ifu (
   logic 					   SelNextSpill, SelSpill, SpillSave;
   logic 			   Spill;
   
+  logic 					   ICacheFetchLine;
+  logic 					   BusStall;
+  logic 					   ICacheStallF;
+  logic 					   IgnoreRequest;
+  logic 					   CPUBusy;
+  
 
   assign PCFp2 = PCF + `XLEN'b10;
   
@@ -119,11 +125,44 @@ module ifu (
   assign PCFMux = SelSpill ? PCFp2 : PCF;  
   
 
-  // temp
-  assign SelSpill = 0;
-  assign SelNextSpill = 0;
-  assign Spill = 0;
-  assign SpillSave = 0;
+  assign Spill = &PCF[$clog2(`ICACHE_BLOCKLENINBITS/32)+1:1];
+
+  typedef enum 		   {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
+  (* mark_debug = "true" *)  statetype CurrState, NextState;
+
+
+  always_ff @(posedge clk)
+    if (reset)    CurrState <= #1 STATE_SPILL_READY;
+    else CurrState <= #1 NextState;
+
+  always_comb begin
+	NextState = STATE_SPILL_READY;
+	SelSpill = 0;
+	SelNextSpill = 0;
+	SpillSave = 0;
+	case(CurrState)
+	  STATE_SPILL_READY: begin
+		if (Spill & ~(ICacheStallF | BusStall)) begin
+		  NextState = STATE_SPILL_SPILL;
+		  SpillSave = 1;
+		  SelNextSpill = 1;
+		end else begin
+		  NextState = STATE_SPILL_READY;
+		end
+	  end
+	  STATE_SPILL_SPILL: begin
+		SelSpill = 1;
+		if(ICacheStallF | BusStall) begin
+		  NextState = STATE_SPILL_SPILL;
+		  SelNextSpill = 1;
+		end else begin
+		  NextState = STATE_SPILL_READY;
+		end
+	  end
+	  default: NextState = STATE_SPILL_READY;
+	endcase
+  end
+
   
   
 
@@ -166,11 +205,6 @@ module ifu (
   logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
   logic [4:0]                  InstrClassD, InstrClassE;
 
-  logic 					   ICacheFetchLine;
-  logic 					   BusStall;
-  logic 					   ICacheStallF;
-  logic 					   IgnoreRequest;
-  
   
 
   // *** put memory interface on here, InstrF becomes output
@@ -201,6 +235,7 @@ module ifu (
   logic [31:0] 		   PostSpillInstrRawF;
   
   
+  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
   
 
   // *** bug: on spill the second memory request does not go through the mmu(skips tlb, pmp, and pma checkers)
@@ -209,8 +244,8 @@ module ifu (
   // the mmu sees the spilled address.
   generate
 	if(`MEM_ICACHE) begin : icache
-	  icache icache(.clk, .reset, .CPUBusy(StallF), .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-					.ICacheBusAdr, .CompressedF, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, 
+	  icache icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
+					.ICacheBusAdr, .ICacheStallF, .ITLBMissF, .ITLBWriteF, .FinalInstrRawF, 
 					.ICacheFetchLine,
 					.CacheableF,
 					.PCNextF(PCNextFMux),
@@ -221,7 +256,7 @@ module ifu (
 	end else begin : passthrough
 	  assign ICacheFetchLine = 0;
 	  assign ICacheBusAdr = 0;
-	  assign CompressedF = 0; //?
+	  //assign CompressedF = 0; //?
 	  assign ICacheStallF = 0;
 	  assign FinalInstrRawF = 0;
 	end
@@ -261,11 +296,12 @@ module ifu (
   busfsm(.clk, .reset, .IgnoreRequest,
 		.LsuRWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
 		.LsuBusAck(IfuBusAck),
-		.CPUBusy(StallF), .CacheableM(CacheableF),
+		.CPUBusy, .CacheableM(CacheableF),
 		.BusStall, .LsuBusWrite(), .LsuBusRead(IfuBusRead), .DCacheBusAck(ICacheBusAck),
 		.BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
 
-  assign IfuStallF = ICacheStallF | BusStall;
+  assign IfuStallF = ICacheStallF | BusStall | SelNextSpill;
+  assign CPUBusy = StallF & ~SelNextSpill;
 
   //assign IgnoreRequest = ITLBMissF | ExceptionM | PendingInterruptM;
   assign IgnoreRequest = ITLBMissF;

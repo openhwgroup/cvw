@@ -44,7 +44,7 @@ module icache
    // Read requested from the ebu unit
    (* mark_debug = "true" *) output logic [`PA_BITS-1:0] ICacheBusAdr,
    // High if the instruction currently in the fetch stage is compressed
-   output logic 							CompressedF,
+   //output logic 							CompressedF,
    // High if the icache is requesting a stall
    output logic 							ICacheStallF,
    input logic 								CacheableF,
@@ -183,8 +183,9 @@ module icache
   assign FinalInstrRawF = spill ? {ICacheMemReadData[15:0], SpillDataBlock0} : ICacheMemReadData;
 
   // Detect if the instruction is compressed
-  assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
-  assign spill = &PCF[$clog2(BLOCKLEN/32)+1:1];
+  //assign CompressedF = FinalInstrRawF[1:0] != 2'b11;
+  //assign spill = &PCF[$clog2(BLOCKLEN/32)+1:1];
+  assign spill = 0;
 
 
 
