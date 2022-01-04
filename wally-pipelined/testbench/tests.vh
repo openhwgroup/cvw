@@ -50,8 +50,8 @@ string tvpaths[] = '{
 
   string imperas32mmu[] = '{
     `MYIMPERASTEST, 
-    "rv32mmu/WALLY-MMU-SV32", "3000"
-    //"rv32mmu/WALLY-PMP", "3000",
+    "rv32mmu/WALLY-MMU-SV32", "3000",
+    "rv32mmu/WALLY-PMP", "3000"
     //"rv32mmu/WALLY-PMA", "3000"
     };
 
@@ -1488,9 +1488,9 @@ string imperas32f[] = '{
  string wally64priv[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/WALLY-MMU-SV39", "30A0",
-    "rv64i_m/privilege/WALLY-MMU-SV48", "30A0",
-    "rv64i_m/privilege/WALLY-PMA", "30A0",
-    "rv64i_m/privilege/WALLY-PMP", "30A0"
+    "rv64i_m/privilege/WALLY-MMU-SV48", "30A0"
+//    "rv64i_m/privilege/WALLY-PMA", "30A0",
+//    "rv64i_m/privilege/WALLY-PMP", "30A0"
  };
 
  string wally64periph[] = '{
