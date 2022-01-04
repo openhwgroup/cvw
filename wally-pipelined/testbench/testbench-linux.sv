@@ -82,7 +82,7 @@ module testbench();
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
-			.GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+			.TIMECLK(0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
@@ -174,7 +174,7 @@ module testbench();
   `define RF          dut.hart.ieu.dp.regf.rf
   `define PC          dut.hart.ifu.pcreg.q
   `define CSR_BASE    dut.hart.priv.priv.csr
-  `define HPMCOUNTER  `CSR_BASE.counters.genblk1.HPMCOUNTER_REGW
+  `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
   `define PMP_BASE    `CSR_BASE.csrm.pmp
   `define PMPCFG      genblk2.PMPCFGreg.q
   `define PMPADDR     PMPADDRreg.q
@@ -183,16 +183,16 @@ module testbench();
   `define MIE         `CSR_BASE.csri.MIE_REGW
   `define MIP         `CSR_BASE.csri.MIP_REGW
   `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
-  `define SCAUSE      `CSR_BASE.csrs.genblk1.SCAUSEreg.q
+  `define SCAUSE      `CSR_BASE.csrs.csrs.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
-  `define SEPC        `CSR_BASE.csrs.genblk1.SEPCreg.q
+  `define SEPC        `CSR_BASE.csrs.csrs.SEPCreg.q
   `define MCOUNTEREN  `CSR_BASE.csrm.counters.MCOUNTERENreg.q
-  `define SCOUNTEREN  `CSR_BASE.csrs.genblk1.genblk2.SCOUNTERENreg.q
+  `define SCOUNTEREN  `CSR_BASE.csrs.csrs.scounteren.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
-  `define SSCRATCH    `CSR_BASE.csrs.genblk1.SSCRATCHreg.q
+  `define SSCRATCH    `CSR_BASE.csrs.csrs.SSCRATCHreg.q
   `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
-  `define STVEC       `CSR_BASE.csrs.genblk1.STVECreg.q
-  `define SATP        `CSR_BASE.csrs.genblk1.genblk1.SATPreg.q
+  `define STVEC       `CSR_BASE.csrs.csrs.STVECreg.q
+  `define SATP        `CSR_BASE.csrs.csrs.genblk1.SATPreg.q
   `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
   `define STATUS_TSR  `CSR_BASE.csrsr.STATUS_TSR_INT
   `define STATUS_TW   `CSR_BASE.csrsr.STATUS_TW_INT
@@ -210,7 +210,7 @@ module testbench();
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
   `define PRIV        dut.hart.priv.priv.privmodereg.q
-  `define INSTRET     dut.hart.priv.priv.csr.counters.genblk1.genblk2.INSTRETreg.q
+  `define INSTRET     dut.hart.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]
   // Common Macros
   `define checkCSR(CSR) \
     begin \
@@ -222,7 +222,7 @@ module testbench();
   `define checkEQ(NAME, VAL, EXPECTED) \
     if(VAL != EXPECTED) begin \
       $display("%tns, %d instrs: %s %x differs from expected %x", $time, InstrCountW, NAME, VAL, EXPECTED); \
-      if ((NAME == "PCW") || (`DEBUG_TRACE >= 2)) fault = 1; \
+      if ((NAME == "PCW") | (`DEBUG_TRACE >= 2)) fault = 1; \
     end
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -571,13 +571,13 @@ module testbench();
       // turn on waves
       if (InstrCountW == INSTR_WAVEON) $stop;
       // end sim
-      if ((InstrCountW == INSTR_LIMIT) && (INSTR_LIMIT!=0)) $stop;
+      if ((InstrCountW == INSTR_LIMIT) & (INSTR_LIMIT!=0)) $stop;
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
-        `checkEQ("Instr Count",dut.hart.priv.priv.csr.counters.genblk1.INSTRET_REGW,InstrCountW)
+        `checkEQ("Instr Count",dut.hart.priv.priv.csr.counters.counters.INSTRET_REGW,InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
           $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, InstrCountW, dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
@@ -612,9 +612,9 @@ module testbench();
             "mepc":    `checkCSR(dut.hart.priv.priv.csr.csrm.MEPC_REGW)
             "mtval":   `checkCSR(dut.hart.priv.priv.csr.csrm.MTVAL_REGW)
             "sepc":    `checkCSR(dut.hart.priv.priv.csr.csrs.SEPC_REGW)
-            "scause":  `checkCSR(dut.hart.priv.priv.csr.csrs.genblk1.SCAUSE_REGW)
+            "scause":  `checkCSR(dut.hart.priv.priv.csr.csrs.csrs.SCAUSE_REGW)
             "stvec":   `checkCSR(dut.hart.priv.priv.csr.csrs.STVEC_REGW)
-            "stval":   `checkCSR(dut.hart.priv.priv.csr.csrs.genblk1.STVAL_REGW)
+            "stval":   `checkCSR(dut.hart.priv.priv.csr.csrs.csrs.STVAL_REGW)
           endcase
         end
         if (fault == 1) begin
@@ -643,7 +643,7 @@ module testbench();
   //   For waveview convenience
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.FinalInstrRawF,
+                dut.hart.ifu.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
@@ -678,7 +678,7 @@ module testbench();
       SvMode = SATP[63];
       // Only perform translation if translation is on and the processor is not
       // in machine mode
-      if (SvMode && (dut.hart.priv.priv.PrivilegeModeW != `M_MODE)) begin
+      if (SvMode & (dut.hart.priv.priv.PrivilegeModeW != `M_MODE)) begin
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);

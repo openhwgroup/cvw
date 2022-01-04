@@ -387,7 +387,7 @@ module    sdModel
 	next_datastate  = 0;   
 	case(dataState)  
 	  DATA_IDLE: begin
-	     if ((CardStatus[12:9]==`RCV) ||  (mult_write == 1'b1) )  
+	     if ((CardStatus[12:9]==`RCV) |  (mult_write == 1'b1) )  
 	       next_datastate = READ_WAITS;
 	     else if ((CardStatus[12:9]==`DATAS )||  (mult_read == 1'b1) ) 
 	       next_datastate = WRITE_DATA;

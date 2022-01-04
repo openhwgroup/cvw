@@ -128,18 +128,18 @@ module csrm #(parameter
   assign MHARTID_REGW = 0;
 
   // Write machine Mode CSRs 
-  assign WriteMSTATUSM = CSRMWriteM && (CSRAdrM == MSTATUS) && ~StallW;
-  assign WriteMTVECM = CSRMWriteM && (CSRAdrM == MTVEC) && ~StallW;
-  assign WriteMEDELEGM = CSRMWriteM && (CSRAdrM == MEDELEG) && ~StallW;
-  assign WriteMIDELEGM = CSRMWriteM && (CSRAdrM == MIDELEG) && ~StallW;
-  assign WriteMSCRATCHM = CSRMWriteM && (CSRAdrM == MSCRATCH) && ~StallW;
-  assign WriteMEPCM = MTrapM | (CSRMWriteM && (CSRAdrM == MEPC)) && ~StallW;
-  assign WriteMCAUSEM = MTrapM | (CSRMWriteM && (CSRAdrM == MCAUSE)) && ~StallW;
-  assign WriteMTVALM = MTrapM | (CSRMWriteM && (CSRAdrM == MTVAL)) && ~StallW;
-  assign WriteMCOUNTERENM = CSRMWriteM && (CSRAdrM == MCOUNTEREN) && ~StallW;
-  assign WriteMCOUNTINHIBITM = CSRMWriteM && (CSRAdrM == MCOUNTINHIBIT) && ~StallW;
+  assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS) & ~StallW;
+  assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC) & ~StallW;
+  assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG) & ~StallW;
+  assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG) & ~StallW;
+  assign WriteMSCRATCHM = CSRMWriteM & (CSRAdrM == MSCRATCH) & ~StallW;
+  assign WriteMEPCM = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC)) & ~StallW;
+  assign WriteMCAUSEM = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE)) & ~StallW;
+  assign WriteMTVALM = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL)) & ~StallW;
+  assign WriteMCOUNTERENM = CSRMWriteM & (CSRAdrM == MCOUNTEREN) & ~StallW;
+  assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT) & ~StallW;
 
-  assign IllegalCSRMWriteReadonlyM = CSRMWriteM && (CSRAdrM == MVENDORID || CSRAdrM == MARCHID || CSRAdrM == MIMPID || CSRAdrM == MHARTID);
+  assign IllegalCSRMWriteReadonlyM = CSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
 
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); //busybear: changed reset value to 0
@@ -173,11 +173,11 @@ module csrm #(parameter
   logic [5:0] entry;
   always_comb begin
     entry = '0;
-    IllegalCSRMAccessM = !(`S_SUPPORTED | `U_SUPPORTED & `N_SUPPORTED) && 
-                          (CSRAdrM == MEDELEG || CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
-    if (CSRAdrM >= PMPADDR0 && CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry
+    IllegalCSRMAccessM = !(`S_SUPPORTED | `U_SUPPORTED & `N_SUPPORTED) & 
+                          (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
+    if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry
       CSRMReadValM = PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0];
-    else if (CSRAdrM >= PMPCFG0 && CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4) begin
+    else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4) begin
       if (`XLEN==64) begin
         entry = ({CSRAdrM[11:1], 1'b0} - PMPCFG0)*4; // disregard odd entries in RV64
         CSRMReadValM = {PMPCFG_ARRAY_REGW[entry+7],PMPCFG_ARRAY_REGW[entry+6],PMPCFG_ARRAY_REGW[entry+5],PMPCFG_ARRAY_REGW[entry+4],

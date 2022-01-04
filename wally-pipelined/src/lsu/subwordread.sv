@@ -39,7 +39,7 @@ module subwordread
   // Funct3M[1:0] is the size of the memory access.
 
   generate
-    if (`XLEN == 64) begin
+    if (`XLEN == 64) begin:swrmux
       // ByteMe mux
       always_comb
       case(LsuPAdrM[2:0])
@@ -82,7 +82,7 @@ module subwordread
         3'b110:  ReadDataM = {32'b0, WordM[31:0]};                     // lwu
         default: ReadDataM = ReadDataWordMuxM; // Shouldn't happen
       endcase
-    end else begin // 32-bit
+    end else begin :swrmux // 32-bit
       // byte mux
       always_comb
       case(LsuPAdrM[1:0])

@@ -62,8 +62,8 @@ module trap (
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
   // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
-  assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) || STATUS_MIE; // if M ints enabled or lower priv 3.1.9
-  assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) || ((PrivilegeModeW == `S_MODE) && STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
+  assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
+  assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) | ((PrivilegeModeW == `S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
   assign InterruptM = PendingInterruptM & ~CommittedM; 
@@ -104,9 +104,9 @@ module trap (
   // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
   // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
   generate
-    if(`VECTORED_INTERRUPTS_SUPPORTED) begin
+    if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
         always_comb
-          if (PrivilegedTrapVector[1:0] == 2'b01 && CauseM[`XLEN-1] == 1)
+          if (PrivilegedTrapVector[1:0] == 2'b01 & CauseM[`XLEN-1] == 1)
             PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {CauseM[`XLEN-5:0], 2'b00}, 2'b00};
           else
             PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};

@@ -121,73 +121,73 @@ module lsu
   assign IEUAdrExtM = {2'b00, IEUAdrM};
 
   generate
-	if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
-	  logic 					   AnyCPUReqM;
-	  logic [`PA_BITS-1:0] 		   HPTWAdr;
-	  logic 					   HPTWRead;
-	  logic [2:0] 				   HPTWSize;
-	  logic 					   SelReplayCPURequest;
+    if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
+      logic 					   AnyCPUReqM;
+      logic [`PA_BITS-1:0] 		   HPTWAdr;
+      logic 					   HPTWRead;
+      logic [2:0] 				   HPTWSize;
+      logic 					   SelReplayCPURequest;
 
-	  assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
+      assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
 
-	  interlockfsm interlockfsm (.clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
-		 .DTLBMissM, .DTLBWriteM, .ExceptionM, .PendingInterruptM, .DCacheStall,
-		 .InterlockStall, .SelReplayCPURequest, .SelHPTW,
-		 .IgnoreRequest);
-	  
-	  hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
-				.ITLBMissF(ITLBMissF & ~PendingInterruptM),
-				.DTLBMissM(DTLBMissM & ~PendingInterruptM),
-				.MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
-				.HPTWReadPTE(ReadDataM),
-				.DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
+      interlockfsm interlockfsm (.clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
+      .DTLBMissM, .DTLBWriteM, .ExceptionM, .PendingInterruptM, .DCacheStall,
+      .InterlockStall, .SelReplayCPURequest, .SelHPTW,
+      .IgnoreRequest);
+      
+      hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
+          .ITLBMissF(ITLBMissF & ~PendingInterruptM),
+          .DTLBMissM(DTLBMissM & ~PendingInterruptM),
+          .MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
+          .HPTWReadPTE(ReadDataM),
+          .DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
 
-	  // arbiter between IEU and hptw
-	  
-	  // multiplex the outputs to LSU
-	  mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLsuRWM);
-	  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
-	  mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
-	  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLsuAdrE);
-	  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLsuPAdrM);
+      // arbiter between IEU and hptw
+      
+      // multiplex the outputs to LSU
+      mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLsuRWM);
+      mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
+      mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
+      mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLsuAdrE);
+      mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLsuPAdrM);
 
-	  // always block interrupts when using the hardware page table walker.
-	  assign CPUBusy = StallW & ~SelHPTW;
-	  
-	  // It is not possible to pipeline hptw as the following load will depend on the previous load's
-	  // data. Therefore we don't need a pipeline register
-	  //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
+      // always block interrupts when using the hardware page table walker.
+      assign CPUBusy = StallW & ~SelHPTW;
+      
+      // It is not possible to pipeline hptw as the following load will depend on the previous load's
+      // data. Therefore we don't need a pipeline register
+      //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
 
-	  // Specify which type of page fault is occurring
-	  assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLsuRWM[1];
-	  assign DTLBStorePageFaultM = DTLBPageFaultM & PreLsuRWM[0];
+      // Specify which type of page fault is occurring
+      assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLsuRWM[1];
+      assign DTLBStorePageFaultM = DTLBPageFaultM & PreLsuRWM[0];
 
-	  // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-	  assign LsuAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLsuAdrE;
+      // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
+      assign LsuAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLsuAdrE;
 
-	end // if (`MEM_VIRTMEM)
-	else begin
-	  assign InterlockStall = 1'b0;
-	  
-	  assign LsuAdrE = PreLsuAdrE;
-	  assign SelHPTW = 1'b0;
-	  assign IgnoreRequest = 1'b0;
+    end // if (`MEM_VIRTMEM)
+    else begin
+      assign InterlockStall = 1'b0;
+      
+      assign LsuAdrE = PreLsuAdrE;
+      assign SelHPTW = 1'b0;
+      assign IgnoreRequest = 1'b0;
 
-	  assign PTE = '0;
-	  assign PageType = '0;
-	  assign DTLBWriteM = 1'b0;
-	  assign ITLBWriteF = 1'b0;	  
-	  
-	  assign PreLsuRWM = MemRWM;
-	  assign LsuFunct3M = Funct3M;
-	  assign LsuAtomicM = AtomicM;
-	  assign PreLsuAdrE = IEUAdrE[11:0];
-	  assign PreLsuPAdrM = IEUAdrExtM;
-	  assign CPUBusy = StallW;
-	  
-	  assign DTLBLoadPageFaultM = 1'b0;
-	  assign DTLBStorePageFaultM = 1'b0;
-	end
+      assign PTE = '0;
+      assign PageType = '0;
+      assign DTLBWriteM = 1'b0;
+      assign ITLBWriteF = 1'b0;	  
+      
+      assign PreLsuRWM = MemRWM;
+      assign LsuFunct3M = Funct3M;
+      assign LsuAtomicM = AtomicM;
+      assign PreLsuAdrE = IEUAdrE[11:0];
+      assign PreLsuPAdrM = IEUAdrExtM;
+      assign CPUBusy = StallW;
+      
+      assign DTLBLoadPageFaultM = 1'b0;
+      assign DTLBStorePageFaultM = 1'b0;
+    end
   endgenerate
 
   // **** look into this confusing signal.
@@ -201,54 +201,54 @@ module lsu
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
   generate
-	if(`ZICSR_SUPPORTED == 1) begin : dmmu
-	  logic 					   DataMisalignedM;
+    if(`ZICSR_SUPPORTED == 1) begin : dmmu
+      logic 					   DataMisalignedM;
 
-	  mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
-	  dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-		   .PrivilegeModeW, .DisableTranslation(SelHPTW),
-		   .PAdr(PreLsuPAdrM),
-		   .VAdr(IEUAdrM),
-		   .Size(LsuFunct3M[1:0]),
-		   .PTE,
-		   .PageTypeWriteVal(PageType),
-		   .TLBWrite(DTLBWriteM),
-		   .TLBFlush(DTLBFlushM),
-		   .PhysicalAddress(LsuPAdrM),
-		   .TLBMiss(DTLBMissM),
-		   .Cacheable(CacheableM),
-		   .Idempotent(), .AtomicAllowed(),
-		   .TLBPageFault(DTLBPageFaultM),
-		   .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
-		   .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0),  ///  atomicaccessm is probably a bug
-		   .WriteAccessM(PreLsuRWM[0]), .ReadAccessM(PreLsuRWM[1]),
-		   .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
-		   ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
+      mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
+      dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+        .PrivilegeModeW, .DisableTranslation(SelHPTW),
+        .PAdr(PreLsuPAdrM),
+        .VAdr(IEUAdrM),
+        .Size(LsuFunct3M[1:0]),
+        .PTE,
+        .PageTypeWriteVal(PageType),
+        .TLBWrite(DTLBWriteM),
+        .TLBFlush(DTLBFlushM),
+        .PhysicalAddress(LsuPAdrM),
+        .TLBMiss(DTLBMissM),
+        .Cacheable(CacheableM),
+        .Idempotent(), .AtomicAllowed(),
+        .TLBPageFault(DTLBPageFaultM),
+        .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
+        .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0),  ///  atomicaccessm is probably a bug
+        .WriteAccessM(PreLsuRWM[0]), .ReadAccessM(PreLsuRWM[1]),
+        .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
+        ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
-	  // Determine if an Unaligned access is taking place
-	  // hptw guarantees alignment, only check inputs from IEU.
-	  always_comb
-		case(Funct3M[1:0]) 
-		  2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-		  2'b01:  DataMisalignedM = IEUAdrM[0];              // lh, sh, lhu
-		  2'b10:  DataMisalignedM = IEUAdrM[1] | IEUAdrM[0]; // lw, sw, flw, fsw, lwu
-		  2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
-		endcase 
+      // Determine if an Unaligned access is taking place
+      // hptw guarantees alignment, only check inputs from IEU.
+      always_comb
+      case(Funct3M[1:0]) 
+        2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
+        2'b01:  DataMisalignedM = IEUAdrM[0];              // lh, sh, lhu
+        2'b10:  DataMisalignedM = IEUAdrM[1] | IEUAdrM[0]; // lw, sw, flw, fsw, lwu
+        2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
+      endcase 
 
-	  // If the CPU's (not HPTW's) request is a page fault.
-	  assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-	  assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
-	  
-	end else begin
-	  assign LsuPAdrM = PreLsuPAdrM;
-	  assign DTLBMissM = 0;
-	  assign CacheableM = 1;
-	  assign DTLBPageFaultM = 0;
-	  assign LoadAccessFaultM = 0;
-	  assign StoreAccessFaultM = 0;
-	  assign LoadMisalignedFaultM = 0;
-	  assign StoreMisalignedFaultM = 0;
-	end
+      // If the CPU's (not HPTW's) request is a page fault.
+      assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
+      assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
+      
+    end else begin
+      assign LsuPAdrM = PreLsuPAdrM;
+      assign DTLBMissM = 0;
+      assign CacheableM = 1;
+      assign DTLBPageFaultM = 0;
+      assign LoadAccessFaultM = 0;
+      assign StoreAccessFaultM = 0;
+      assign LoadMisalignedFaultM = 0;
+      assign StoreMisalignedFaultM = 0;
+    end
   endgenerate
   assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
@@ -257,16 +257,15 @@ module lsu
   // Move generate from lrsc to outside this module.
   // use PreLsu as prefix for lrsc 
   generate
-	if (`A_SUPPORTED) begin
-	  assign MemReadM = PreLsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
-	  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLsuRWM, .LsuAtomicM, .LsuPAdrM,
-				.SquashSCW, .LsuRWM);
-	end else begin
-      assign SquashSCW = 0;
-      assign LsuRWM = PreLsuRWM;
-	end
+    if (`A_SUPPORTED) begin:lrsc
+      assign MemReadM = PreLsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
+      lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLsuRWM, .LsuAtomicM, .LsuPAdrM,
+          .SquashSCW, .LsuRWM);
+    end else begin:lrsc
+        assign SquashSCW = 0;
+        assign LsuRWM = PreLsuRWM;
+    end
   endgenerate
-
 
 
   // conditional
@@ -274,8 +273,8 @@ module lsu
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : `XLEN/8;
-  localparam integer   LOGWPL = $clog2(WORDSPERLINE);
+  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   BLOCKLEN = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
 
@@ -306,25 +305,25 @@ module lsu
   logic 			   SelUncachedAdr;
 
   generate
-	if(`MEM_DCACHE) begin : dcache
-	  dcache dcache(.clk, .reset, .CPUBusy,
-					.LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM,
-					.FinalWriteDataM, .ReadDataWordM, .DCacheStall,
-					.DCacheMiss, .DCacheAccess, 
-					.IgnoreRequest, .CacheableM, .DCacheCommittedM,
-					.DCacheBusAdr, .ReadDataBlockSetsM, .DCacheMemWriteData,
-					.DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
-	end else begin : passthrough
-	  assign ReadDataWordM = 0;
-	  assign DCacheStall = 0;
-	  assign DCacheMiss = 1;
-	  assign DCacheAccess = CacheableM;
-	  assign DCacheCommittedM = 0;
-	  assign DCacheWriteLine = 0;
-	  assign DCacheFetchLine = 0;
-	  assign DCacheBusAdr = 0;
-	  assign ReadDataBlockSetsM[0] = 0;
-	end
+    if(`MEM_DCACHE) begin : dcache
+      dcache dcache(.clk, .reset, .CPUBusy,
+            .LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM,
+            .FinalWriteDataM, .ReadDataWordM, .DCacheStall,
+            .DCacheMiss, .DCacheAccess, 
+            .IgnoreRequest, .CacheableM, .DCacheCommittedM,
+            .DCacheBusAdr, .ReadDataBlockSetsM, .DCacheMemWriteData,
+            .DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
+    end else begin : passthrough
+      assign ReadDataWordM = 0;
+      assign DCacheStall = 0;
+      assign DCacheMiss = 1;
+      assign DCacheAccess = CacheableM;
+      assign DCacheCommittedM = 0;
+      assign DCacheWriteLine = 0;
+      assign DCacheFetchLine = 0;
+      assign DCacheBusAdr = 0;
+      assign ReadDataBlockSetsM[0] = 0;
+    end
   endgenerate
 
 
@@ -385,7 +384,7 @@ module lsu
     else assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b011;
   endgenerate;
 
-  busfsm #(WordCountThreshold, LOGWPL)
+  busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
   busfsm(.clk, .reset, .IgnoreRequest, .LsuRWM, .DCacheFetchLine, .DCacheWriteLine,
 		 .LsuBusAck, .CPUBusy, .CacheableM, .BusStall, .LsuBusWrite, .LsuBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);

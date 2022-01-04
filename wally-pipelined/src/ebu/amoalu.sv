@@ -57,11 +57,11 @@ module amoalu (
 
   // sign extend if necessary
   generate
-    if (`XLEN == 32) begin
+    if (`XLEN == 32) begin:sext
       assign a = srca;
       assign b = srcb;
       assign result = y;
-    end else begin // `XLEN = 64
+    end else begin:sext // `XLEN = 64
       always_comb 
         if (width == 2'b10) begin // sign-extend word-length operations
           // *** it would be more efficient to look at carry out of bit 31 to determine comparisons than do this big mux on and b

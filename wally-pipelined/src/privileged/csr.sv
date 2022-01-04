@@ -39,7 +39,7 @@ module csr #(parameter
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
-  input  logic [63:0]      MTIME_CLINT, MTIMECMP_CLINT,
+  input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
@@ -108,26 +108,62 @@ module csr #(parameter
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
-  assign CSRMWriteM = CSRWriteM && (PrivilegeModeW == `M_MODE);
-  assign CSRSWriteM = CSRWriteM && (|PrivilegeModeW);
+  assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
+  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
   assign CSRUWriteM = CSRWriteM;  
 
-  csri  csri(.*);
-  csrsr csrsr(.*);
-  csrc  counters(.*);
-  csrm  csrm(.*); // Machine Mode CSRs
-  csrs  csrs(.*);
-  csrn  csrn(.CSRNWriteM(CSRUWriteM), .*);  // User Mode Exception Registers
-  csru  csru(.*); // Floating Point Flags are part of User MOde
+  csri  csri(.clk, .reset, .StallW, .CSRMWriteM, .CSRSWriteM,
+             .CSRAdrM, .ExtIntM, .TimerIntM, .SwIntM,
+             .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .CSRWriteValM);
+  csrsr csrsr(.clk, .reset, .StallW,
+              .WriteMSTATUSM, .WriteSSTATUSM, .WriteUSTATUSM, 
+              .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
+              .mretM, .sretM, .uretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
+              .MSTATUS_REGW, .SSTATUS_REGW, .USTATUS_REGW,
+              .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
+              .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM);
+  csrc  counters(.clk, .reset,
+              .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,   
+              .InstrValidM, .LoadStallD, .CSRMWriteM,
+              .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
+              .InstrClassM, .DCacheMiss, .DCacheAccess,
+              .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
+              .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
+              .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
+  csrm  csrm(.clk, .reset, .StallW,
+              .CSRMWriteM, .MTrapM, .CSRAdrM,
+              .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, 
+              .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
+              .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
+              .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+              .MIP_REGW, .MIE_REGW, .WriteMSTATUSM,
+              .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
+  csrs  csrs(.clk, .reset,  .StallW,
+              .CSRSWriteM, .STrapM, .CSRAdrM,
+              .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
+              .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
+              .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
+              .SCOUNTEREN_REGW, .SEDELEG_REGW, .SIDELEG_REGW, 
+              .SATP_REGW, .SIP_REGW, .SIE_REGW,
+              .WriteSSTATUSM, .IllegalCSRSAccessM);
+  csrn  csrn(.clk, .reset, .StallW,
+              .CSRNWriteM(CSRUWriteM), .UTrapM, .CSRAdrM,
+              .NextEPCM, .NextCauseM, .NextMtvalM, .USTATUS_REGW, 
+              .CSRWriteValM, .CSRNReadValM, .UEPC_REGW, .UTVEC_REGW, 
+              .UIP_REGW, .UIE_REGW, .WriteUSTATUSM, .IllegalCSRNAccessM);
+  csru  csru(.clk, .reset, .StallW,
+              .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .CSRUReadValM,  
+              .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
+              .IllegalCSRUAccessM);
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 
   flopenrc #(`XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
-  assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 && PrivilegeModeW != `M_MODE) ||
-                                    (CSRAdrM[9:8] == 2'b01 && PrivilegeModeW == `U_MODE);
-  assign IllegalCSRAccessM = ((IllegalCSRCAccessM && IllegalCSRMAccessM && 
-    IllegalCSRSAccessM && IllegalCSRUAccessM  && IllegalCSRNAccessM ||
-    InsufficientCSRPrivilegeM) && CSRReadM) || IllegalCSRMWriteReadonlyM;
+  assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != `M_MODE) |
+                                    (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == `U_MODE);
+  assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM & 
+    IllegalCSRSAccessM & IllegalCSRUAccessM  & IllegalCSRNAccessM |
+    InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
 endmodule

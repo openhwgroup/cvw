@@ -75,7 +75,7 @@ module fsm_fpdiv (
 		    sel_muxr = 1'b0;
 		    next_state = S0;
 		 end 
-	       else if (start==1'b1 && op_type==1'b0) 
+	       else if (start==1'b1 & op_type==1'b0) 
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;	
@@ -89,8 +89,8 @@ module fsm_fpdiv (
 		    sel_muxb = 3'b001;		    
 		    sel_muxr = 1'b0;
 		    next_state = S1;
-		 end // if (start==1'b1 && op_type==1'b0)
-	       else if (start==1'b1 && op_type==1'b1) 
+		 end // if (start==1'b1 & op_type==1'b0)
+	       else if (start==1'b1 & op_type==1'b1) 
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;

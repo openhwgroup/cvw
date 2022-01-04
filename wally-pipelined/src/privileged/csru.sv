@@ -45,15 +45,15 @@ module csru #(parameter
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
   generate
-    if (`F_SUPPORTED | `D_SUPPORTED) begin
+    if (`F_SUPPORTED | `D_SUPPORTED) begin:csru
       logic [4:0] FFLAGS_REGW;
       logic [2:0] NextFRMM;
       logic [4:0] NextFFLAGSM;
         
       // Write enables
-      //assign WriteFCSRM = CSRUWriteM && (CSRAdrM == FCSR)  && ~StallW;
-      assign WriteFRMM = (CSRUWriteM && (CSRAdrM == FRM | CSRAdrM == FCSR))  && ~StallW;
-      assign WriteFFLAGSM = (CSRUWriteM && (CSRAdrM == FFLAGS | CSRAdrM == FCSR))  && ~StallW;
+      //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & ~StallW;
+      assign WriteFRMM = (CSRUWriteM & (CSRAdrM == FRM | CSRAdrM == FCSR))  & ~StallW;
+      assign WriteFFLAGSM = (CSRUWriteM & (CSRAdrM == FFLAGS | CSRAdrM == FCSR))  & ~StallW;
     
       // Write Values
       assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
