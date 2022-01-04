@@ -9,5 +9,7 @@ make all:
 	make -C ../../tests/wally-riscv-arch-test/ XLEN=32 
 	exe2memfile.pl ../../tests/wally-riscv-arch-test/work/*/*/*.elf
 
+	# *** add optional imperas tests
+
 	# Link Linux test vectors (fix this later***)
 	#cd ../../tests/linux-testgen/linux-testvectors/;./tvLinker.sh
