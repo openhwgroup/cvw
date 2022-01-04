@@ -180,7 +180,7 @@ always @(posedge clk)
   always @(negedge clk) begin
  
 	if((FmtE==1'b1) & (FMAFlgM != flags[4:0] || (!wnan && (FMAResM != ans)) || (wnan && ansnan && ~((XNaNE && (FMAResM[`FLEN-2:0] == {XExpE,1'b1,X[`NF-2:0]})) || (YNaNE && (FMAResM[`FLEN-2:0] == {YExpE,1'b1,Y[`NF-2:0]}))  || (ZNaNE && (FMAResM[`FLEN-2:0] == {ZExpE,1'b1,Z[`NF-2:0]})) || (FMAResM[`FLEN-2:0] == ans[`FLEN-2:0]))))) begin
-  //  fp = $fopen("/home/kparry/riscv-wally/wally-pipelined/src/fpu/FMA/tbgen/results.dat","w");
+  //  fp = $fopen("/home/kparry/riscv-wally/pipelined/src/fpu/FMA/tbgen/results.dat","w");
 	// if((FmtE==1'b1) & (FMAFlgM != flags[4:0] || (FMAResM != ans))) begin
         $display( "%h %h %h %h %h %h %h  Wrong ",X,Y, Z, FMAResM, ans, FMAFlgM, flags);
 		if(FMAResM == 64'h8000000000000000) $display( "FMAResM=-zero ");

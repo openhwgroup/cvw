@@ -1,3 +1,0 @@
-vsim -c <<!
-do wally-pipelined-batch.do rv32ic imperas-32i
-!

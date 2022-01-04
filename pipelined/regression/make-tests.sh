@@ -11,4 +11,4 @@ make XLEN=32
 exe2memfile.pl work/*/*/*.elf
 cd ../linux-testgen/linux-testvectors
 ./tvLinker.sh
-cd ../../../wally-pipelined/regression
+cd ../../../pipelined/regression
