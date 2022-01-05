@@ -111,7 +111,6 @@ module ifu (
   logic [31:0] 				   PostSpillInstrRawF;
 
 
-  generate
 	if(`C_SUPPORTED) begin : SpillSupport
 	  logic [`XLEN-1:0] 		   PCFp2;
 	  logic 					   Spill;
@@ -166,7 +165,6 @@ module ifu (
 	  assign SelNextSpill = 0;
 	  assign PostSpillInstrRawF = InstrRawF;
 	end
-  endgenerate
   
 
   assign PCFExt = {2'b00, PCFMux};
@@ -235,10 +233,6 @@ module ifu (
   logic [`PA_BITS-1:0] ICacheBusAdr;
   logic 			   SelUncachedAdr;
   
-  
-  
-
-  generate
 	if(`MEM_ICACHE) begin : icache
 	  logic [1:0] IfuRWF;
 	  assign IfuRWF = CacheableF ? 2'b10 : 2'b00;
@@ -280,17 +274,13 @@ module ifu (
 			 .InvalidateCacheM(InvalidateICacheM));
 
 	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
-
-
-	  
-	end else begin : passthrough
+	end else begin
 	  assign ICacheFetchLine = 0;
 	  assign ICacheBusAdr = 0;
 	  //assign CompressedF = 0; //?
 	  assign ICacheStallF = 0;
 	  assign FinalInstrRawF = 0;
 	end
-  endgenerate
 	
   // select between dcache and direct from the BUS. Always selected if no dcache.
   // handled in the busfsm.
@@ -301,14 +291,12 @@ module ifu (
 
   // always present
   genvar 			   index;
-  generate
-    for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-      flopen #(`XLEN) fb(.clk(clk),
-			 .en(IfuBusAck & IfuBusRead & (index == WordCount)),
-			 .d(IfuBusHRDATA),
-			 .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
-    end
-  endgenerate
+  for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
+    flopen #(`XLEN) fb(.clk(clk),
+      .en(IfuBusAck & IfuBusRead & (index == WordCount)),
+      .d(IfuBusHRDATA),
+      .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+  end
 
   assign LocalIfuBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
   assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
@@ -382,25 +370,23 @@ module ifu (
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
-  generate
-    if (`BPRED_ENABLED == 1) begin : bpred
-      bpred bpred(.clk, .reset,
-				  .StallF, .StallD, .StallE,
-				  .FlushF, .FlushD, .FlushE,
-				  .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
-				  .PCD, .PCLinkE, .InstrClassE, .BPPredWrongE, .BPPredDirWrongE,
-				  .BTBPredPCWrongE, .RASPredPCWrongE, .BPPredClassNonCFIWrongE);
-	  
-    end else begin : bpred
-      assign BPPredPCF = {`XLEN{1'b0}};
-      assign SelBPPredF = 1'b0;
-      assign BPPredWrongE = PCSrcE;
-      assign BPPredDirWrongE = 1'b0;
-      assign BTBPredPCWrongE = 1'b0;
-      assign RASPredPCWrongE = 1'b0;
-      assign BPPredClassNonCFIWrongE = 1'b0;
-    end      
-  endgenerate
+  if (`BPRED_ENABLED == 1) begin : bpred
+    bpred bpred(.clk, .reset,
+        .StallF, .StallD, .StallE,
+        .FlushF, .FlushD, .FlushE,
+        .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
+        .PCD, .PCLinkE, .InstrClassE, .BPPredWrongE, .BPPredDirWrongE,
+        .BTBPredPCWrongE, .RASPredPCWrongE, .BPPredClassNonCFIWrongE);
+  
+  end else begin : bpred
+    assign BPPredPCF = {`XLEN{1'b0}};
+    assign SelBPPredF = 1'b0;
+    assign BPPredWrongE = PCSrcE;
+    assign BPPredDirWrongE = 1'b0;
+    assign BTBPredPCWrongE = 1'b0;
+    assign RASPredPCWrongE = 1'b0;
+    assign BPPredClassNonCFIWrongE = 1'b0;
+  end      
   // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
   assign PCCorrectE =  PCSrcE ? IEUAdrE : PCLinkE;
 

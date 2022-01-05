@@ -157,7 +157,7 @@ module cvtfp (
     // Result Selection
     ///////////////////////////////////////////////////////////////////////////////
 
-    generate if(`IEEE754) begin
+    if(`IEEE754) begin
         // select the double to single precision result
         assign DSRes = XNaNE ? {XSgnE, {8{1'b1}}, 1'b1, XManE[50:29]} : 
                 Underflow & ~Denorm ? {XSgnE, 30'b0, CalcPlus1&(|FrmE[1:0]|Shift)} : 
@@ -178,8 +178,6 @@ module cvtfp (
         // select the final result based on the opperation
         assign CvtFpResE = FmtE ? {{32{1'b1}},DSRes} : {XSgnE&~XNaNE, SDExp, SDFrac[51]|XNaNE, SDFrac[50:0]&{51{~XNaNE}}};
     end
-    endgenerate
-
 endmodule // fpadd
 
 

@@ -763,17 +763,12 @@ string tests32f[] = '{
 				.done(DCacheFlushDone));
   
 
-  generate
-    // initialize the branch predictor
-    if (`BPRED_ENABLED == 1) begin : bpred
-      
-      initial begin
-	$readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-	$readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
-      end
+  // initialize the branch predictor
+  if (`BPRED_ENABLED == 1)
+    initial begin
+      $readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
     end
-  endgenerate
-  
 endmodule
 
 module riscvassertions();
@@ -830,29 +825,26 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
-  generate
-    for(index = 0; index < numlines; index++) begin
-      for(way = 0; way < numways; way++) begin
-	for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-	  copyShadow #(.tagstart(tagstart),
-		       .loglinebytelen(loglinebytelen))
-	  copyShadow(.clk,
-		     .start,
-		     .tag(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-		     .valid(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].ValidBits[index]),
-		     .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
-		     .data(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
-		     .index(index),
-		     .cacheWord(cacheWord),
-		     .CacheData(CacheData[way][index][cacheWord]),
-		     .CacheAdr(CacheAdr[way][index][cacheWord]),
-		     .CacheTag(CacheTag[way][index][cacheWord]),
-		     .CacheValid(CacheValid[way][index][cacheWord]),
-		     .CacheDirty(CacheDirty[way][index][cacheWord]));
-	end
+  for(index = 0; index < numlines; index++) begin
+    for(way = 0; way < numways; way++) begin
+      for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+        copyShadow #(.tagstart(tagstart), .loglinebytelen(loglinebytelen))
+        copyShadow(.clk,
+            .start,
+            .tag(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+            .valid(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].ValidBits[index]),
+            .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
+            .data(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+            .index(index),
+            .cacheWord(cacheWord),
+            .CacheData(CacheData[way][index][cacheWord]),
+            .CacheAdr(CacheAdr[way][index][cacheWord]),
+            .CacheTag(CacheTag[way][index][cacheWord]),
+            .CacheValid(CacheValid[way][index][cacheWord]),
+            .CacheDirty(CacheDirty[way][index][cacheWord]));
       end
     end
-  endgenerate
+  end
 
   integer i, j, k;
   

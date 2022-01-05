@@ -66,58 +66,54 @@ module csri #(parameter
   assign WriteSIPM = CSRSWriteM & (CSRAdrM == SIP) & ~StallW;
   assign WriteSIEM = CSRSWriteM & (CSRAdrM == SIE) & ~StallW;
 
-  // Interrupt Pending and Enable Registers
-  // MEIP, MTIP, MSIP are read-only
-  // SEIP, STIP, SSIP is writable in MIP if S mode exists
-  // SSIP is writable in SIP if S mode exists
-  generate
-    if (`S_SUPPORTED) begin:mask
-      assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writable in MIP (20210108-draft 3.1.9)
-      assign SIP_WRITE_MASK = 12'h002; // SSIP is writable in SIP (privileged 20210108-draft 4.1.3)
-    end else begin:mask
-      assign MIP_WRITE_MASK = 12'h000;
-      assign SIP_WRITE_MASK = 12'h000;
-    end
-    always @(posedge clk) //, posedge reset) begin // *** I strongly feel that IntInM should go directly to IP_REGW -- Ben 9/7/21
-      if (reset)          IP_REGW_writeable <= 10'b0;
-      else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
-      else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
+// Interrupt Pending and Enable Registers
+// MEIP, MTIP, MSIP are read-only
+// SEIP, STIP, SSIP is writable in MIP if S mode exists
+// SSIP is writable in SIP if S mode exists
+  if (`S_SUPPORTED) begin:mask
+    assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writable in MIP (20210108-draft 3.1.9)
+    assign SIP_WRITE_MASK = 12'h002; // SSIP is writable in SIP (privileged 20210108-draft 4.1.3)
+  end else begin:mask
+    assign MIP_WRITE_MASK = 12'h000;
+    assign SIP_WRITE_MASK = 12'h000;
+  end
+  always @(posedge clk) //, posedge reset) begin // *** I strongly feel that IntInM should go directly to IP_REGW -- Ben 9/7/21
+    if (reset)          IP_REGW_writeable <= 10'b0;
+    else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
+    else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
 //      else if (WriteUIPM) IP_REGW = (CSRWriteValM & 12'hBBB) | (NextIPM & 12'h080); // MTIP unclearable
-      else                IP_REGW_writeable <= IP_REGW_writeable | IntInM[9:0]; // *** check this turns off interrupts properly even when MIDELEG changes
-    always @(posedge clk) //, posedge reset) begin
-      if (reset)          IE_REGW <= 12'b0;
-      else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'hAAA); // MIE controls M and S fields
-      else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
+    else                IP_REGW_writeable <= IP_REGW_writeable | IntInM[9:0]; // *** check this turns off interrupts properly even when MIDELEG changes
+  always @(posedge clk) //, posedge reset) begin
+    if (reset)          IE_REGW <= 12'b0;
+    else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'hAAA); // MIE controls M and S fields
+    else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
 //      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field
-  endgenerate
 
   // restricted views of registers
-  generate
-    always_comb begin:regs
-      // Add MEIP read-only signal
-      IP_REGW = {IntInM[11],1'b0,IP_REGW_writeable};
+  always_comb begin:regs
+    // Add MEIP read-only signal
+    IP_REGW = {IntInM[11],1'b0,IP_REGW_writeable};
 
-      // Machine Mode
-      MIP_REGW = IP_REGW;
-      MIE_REGW = IE_REGW;
+    // Machine Mode
+    MIP_REGW = IP_REGW;
+    MIE_REGW = IE_REGW;
 
-      // Supervisor mode
-      if (`S_SUPPORTED) begin
-        SIP_REGW = IP_REGW & MIDELEG_REGW[11:0] & 'h222; // only delegated interrupts visible
-        SIE_REGW = IE_REGW & MIDELEG_REGW[11:0] & 'h222;
-      end else begin
-        SIP_REGW = 12'b0;
-        SIE_REGW = 12'b0;
-      end
-
-      // User Modes iterrupts depricated
-      /*if (`U_SUPPORTED & `N_SUPPORTED) begin
-        UIP_REGW = IP_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
-        UIE_REGW = IE_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
-      end else begin
-        UIP_REGW = 12'b0;
-        UIE_REGW = 12'b0;
-      end */
+    // Supervisor mode
+    if (`S_SUPPORTED) begin
+      SIP_REGW = IP_REGW & MIDELEG_REGW[11:0] & 'h222; // only delegated interrupts visible
+      SIE_REGW = IE_REGW & MIDELEG_REGW[11:0] & 'h222;
+    end else begin
+      SIP_REGW = 12'b0;
+      SIE_REGW = 12'b0;
     end
-  endgenerate
+
+    // User Modes iterrupts depricated
+    /*if (`U_SUPPORTED & `N_SUPPORTED) begin
+      UIP_REGW = IP_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
+      UIE_REGW = IE_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
+    end else begin
+      UIP_REGW = 12'b0;
+      UIE_REGW = 12'b0;
+    end */
+  end
 endmodule

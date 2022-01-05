@@ -49,8 +49,8 @@ module mul (
     // Signed * Unsigned   = P' + ( PA - PB)*2^(XLEN-1) - PP*2^(2XLEN-2)
     // Unsigned * Unsigned = P' + ( PA + PB)*2^(XLEN-1) + PP*2^(2XLEN-2)
 
-    logic [`XLEN*2-1:0] PP0E, PP1E, PP2E, PP3E, PP4E;
-    logic [`XLEN*2-1:0] PP0M, PP1M, PP2M, PP3M, PP4M;
+    logic [`XLEN*2-1:0] PP1E, PP2E, PP3E, PP4E;
+    logic [`XLEN*2-1:0] PP1M, PP2M, PP3M, PP4M;
     logic [`XLEN-2:0]   PA, PB;
     logic               PP;
     logic               MULH, MULHSU;
@@ -62,7 +62,7 @@ module mul (
 
     assign Aprime = {1'b0, ForwardedSrcAE[`XLEN-2:0]};
     assign Bprime = {1'b0, ForwardedSrcBE[`XLEN-2:0]};
-    redundantmul #(`XLEN) bigmul(.a(Aprime), .b(Bprime), .out0(PP0E), .out1(PP1E));
+    assign PP1E = Aprime * Bprime;
     assign PA = {(`XLEN-1){ForwardedSrcAE[`XLEN-1]}} & ForwardedSrcBE[`XLEN-2:0];  
     assign PB = {(`XLEN-1){ForwardedSrcBE[`XLEN-1]}} & ForwardedSrcAE[`XLEN-2:0];
     assign PP = ForwardedSrcAE[`XLEN-1] & ForwardedSrcBE[`XLEN-1];
@@ -83,12 +83,11 @@ module mul (
   // Memory Stage: Sum partial proudcts
   //////////////////////////////
 
-	 flopenrc #(`XLEN*2) PP0Reg(clk, reset, FlushM, ~StallM, PP0E, PP0M); 
 	 flopenrc #(`XLEN*2) PP1Reg(clk, reset, FlushM, ~StallM, PP1E, PP1M); 
 	 flopenrc #(`XLEN*2) PP2Reg(clk, reset, FlushM, ~StallM, PP2E, PP2M); 
 	 flopenrc #(`XLEN*2) PP3Reg(clk, reset, FlushM, ~StallM, PP3E, PP3M); 
 	 flopenrc #(`XLEN*2) PP4Reg(clk, reset, FlushM, ~StallM, PP4E, PP4M); 
 
-    assign ProdM = PP0M + PP1M + PP2M + PP3M + PP4M; //ForwardedSrcAE * ForwardedSrcBE;
+    assign ProdM = PP1M + PP2M + PP3M + PP4M; //ForwardedSrcAE * ForwardedSrcBE;
  endmodule
 

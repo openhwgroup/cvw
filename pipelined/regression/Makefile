@@ -3,11 +3,14 @@ make all:
 	make -C ../../addins/riscv-arch-test
 	make -C ../../addins/riscv-arch-test XLEN=32
 	exe2memfile.pl ../../addins/riscv-arch-test/work/*/*/*.elf
+	# extractFunctionRadix. ***
 
 	# Build wally-riscv-arch-test
 	make -C ../../tests/wally-riscv-arch-test/
 	make -C ../../tests/wally-riscv-arch-test/ XLEN=32 
 	exe2memfile.pl ../../tests/wally-riscv-arch-test/work/*/*/*.elf
+	# ***extractFunctionRadix
+	# *** use elf2hex
 
 	# *** add optional imperas tests
 
