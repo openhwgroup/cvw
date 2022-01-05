@@ -306,7 +306,9 @@ module lsu
 
   generate
     if(`MEM_DCACHE) begin : dcache
-      dcache dcache(.clk, .reset, .CPUBusy,
+      dcache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
+			   .NUMWAYS(`DCACHE_NUMWAYS)) 
+	  dcache(.clk, .reset, .CPUBusy,
             .LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM, .PreLsuPAdrM(PreLsuPAdrM[11:0]), // still don't like this name PreLsuPAdrM, not always physical
             .FinalWriteDataM, .ReadDataWordM, .DCacheStall,
             .DCacheMiss, .DCacheAccess, 
