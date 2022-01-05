@@ -71,15 +71,14 @@ module fcmp (
    //    - return 0 if comparison with NaN (unordered)
 
    logic [`FLEN-1:0] QNaNX, QNaNY;
-    generate if(`IEEE754) begin
+    if(`IEEE754) begin
         assign QNaNX = FmtE ? {XSgnE, XExpE, 1'b1, XManE[`NF-2:0]} : {{32{1'b1}}, XSgnE, XExpE[7:0], 1'b1, XManE[50:29]};
         assign QNaNY = FmtE ? {YSgnE, YExpE, 1'b1, YManE[`NF-2:0]} : {{32{1'b1}}, YSgnE, YExpE[7:0], 1'b1, YManE[50:29]};
     end else begin
         assign QNaNX = FmtE ? {1'b0, XExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpE[7:0], 1'b1, 22'b0};
         assign QNaNY = FmtE ? {1'b0, YExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, YExpE[7:0], 1'b1, 22'b0};
     end
-    endgenerate
-
+ 
    always_comb begin
       case (FOpCtrlE[2:0])
          3'b111: CmpResE = XNaNE ? YNaNE ? QNaNX : FSrcYE // Min

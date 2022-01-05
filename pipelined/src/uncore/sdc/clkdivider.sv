@@ -88,17 +88,6 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
 
   assign w_fd_D = ~ r_fd_Q;
 
-
-  generate
-    if(`FPGA) begin
-      BUFGMUX
-      clkMux(.I1(r_fd_Q),
-	     .I0(i_CLK),
-	     .S(i_EN),
-	     .O(o_CLK));
-      
-    end else begin
-      assign o_CLK = i_EN ? r_fd_Q : i_CLK;
-    end
-  endgenerate
+  if(`FPGA) BUFGMUX clkMux(.I1(r_fd_Q), .I0(i_CLK), .S(i_EN), .O(o_CLK)); 
+  else  assign o_CLK = i_EN ? r_fd_Q : i_CLK;
 endmodule

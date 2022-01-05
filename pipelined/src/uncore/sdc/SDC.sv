@@ -156,17 +156,15 @@ module SDC
   flopenl #(3) CommandReg(HCLK, ~HRESETn, (HADDRDelay == 'h8 & RegWrite) | (CommandCompleted), 
 			   CommandCompleted ? '0 : HWDATA[2:0], '0, Command);
 
-  generate
-    if (`XLEN == 64) begin  
-      flopenr #(64-9) AddressReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
-				 HWDATA[`XLEN-1:9], Address);
-    end else begin
-      flopenr #(32-9) AddressLowReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
-				    HWDATA[`XLEN-1:9], Address[31:9]);
-      flopenr #(32) AddressHighReg(HCLK, ~HRESETn, (HADDRDelay == 'h14 & RegWrite),
-				   HWDATA, Address[63:32]);
-    end
-  endgenerate
+  if (`XLEN == 64) begin  
+    flopenr #(64-9) AddressReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
+        HWDATA[`XLEN-1:9], Address);
+  end else begin
+    flopenr #(32-9) AddressLowReg(HCLK, ~HRESETn, (HADDRDelay == 'h10 & RegWrite),
+          HWDATA[`XLEN-1:9], Address[31:9]);
+    flopenr #(32) AddressHighReg(HCLK, ~HRESETn, (HADDRDelay == 'h14 & RegWrite),
+          HWDATA, Address[63:32]);
+  end
   
   flopen #(`XLEN) DataReg(HCLK, (HADDRDelay == 'h18 & RegWrite),
 			  HWDATA, SDCWriteData);
@@ -175,7 +173,6 @@ module SDC
   
   assign Status = {ErrorCode, InvalidCommand, SDCBusy, SDCInitialized};
   
-  generate
     if(`XLEN == 64) begin
       always_comb
 	case(HADDRDelay[4:0]) 
@@ -200,16 +197,14 @@ module SDC
 	  default: HREADSDC = {24'b0, CLKDiv};
 	endcase
     end
-  endgenerate
-
+ 
   
   for(index = 0; index < 4096/`XLEN; index++) begin
     assign ReadData512ByteWords[index] = ReadData512Byte[(index+1)*`XLEN-1:index*`XLEN];
   end
 
   assign SDCReadDataPreNibbleSwap = ReadData512ByteWords[WordCount];
-  generate
-	if(`XLEN == 64) begin
+ 	if(`XLEN == 64) begin
 	  assign SDCReadData = {SDCReadDataPreNibbleSwap[59:56], SDCReadDataPreNibbleSwap[63:60],
 							SDCReadDataPreNibbleSwap[51:48], SDCReadDataPreNibbleSwap[55:52],
 							SDCReadDataPreNibbleSwap[43:40], SDCReadDataPreNibbleSwap[47:44],
@@ -224,7 +219,6 @@ module SDC
 							SDCReadDataPreNibbleSwap[11:8], SDCReadDataPreNibbleSwap[15:12],
 							SDCReadDataPreNibbleSwap[3:0], SDCReadDataPreNibbleSwap[7:4]};
 	end
-  endgenerate
 
   flopenr #($clog2(4096/`XLEN)) WordCountReg
     (.clk(HCLK),

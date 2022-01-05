@@ -121,11 +121,9 @@ module    sdModel
    integer sdModel_file_desc;
 
    genvar 	  i;
-   generate
-      for(i=0; i<4; i=i+1) begin:CRC_16_gen
-	 sd_crc_16 CRC_16_i (crcDat_in[i],crcDat_en, sdClk, crcDat_rst, crcDat_out[i]);
-      end
-   endgenerate 
+    for(i=0; i<4; i=i+1) begin:CRC_16_gen
+	  sd_crc_16 CRC_16_i (crcDat_in[i],crcDat_en, sdClk, crcDat_rst, crcDat_out[i]);
+    end
    
    sd_crc_7 crc_7
      ( 

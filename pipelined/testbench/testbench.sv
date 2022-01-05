@@ -296,13 +296,8 @@ logic [3:0] dummy;
   // or sw gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  generate
-    if (`ZICSR_SUPPORTED) begin
-      assign ecf = dut.hart.priv.priv.EcallFaultM;
-    end else begin
-      assign ecf = 0;
-    end
-  endgenerate
+  if (`ZICSR_SUPPORTED) assign ecf = dut.hart.priv.priv.EcallFaultM;
+  else                  assign ecf = 0;
   assign DCacheFlushStart = ecf & 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 | 
 			     (dut.hart.ieu.dp.regf.we3 & 
@@ -310,24 +305,17 @@ logic [3:0] dummy;
 			      dut.hart.ieu.dp.regf.wd3 == 1)) |
           (dut.hart.ifu.InstrM == 32'h6f | dut.hart.ifu.InstrM == 32'hfc32a423 | dut.hart.ifu.InstrM == 32'hfc32a823) & dut.hart.ieu.c.InstrValidM;
 
-  // **** Fix when the check in the shadow ram is fixed.
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
     			.reset(reset),
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
-  
 
-  generate
-    // initialize the branch predictor
-    if (`BPRED_ENABLED == 1) begin : bpred
-      
-      initial begin
-	$readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-	$readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
-      end
-    end
-  endgenerate
-  
+  // initialize the branch predictor
+  if (`BPRED_ENABLED == 1) 
+    initial begin
+      $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
+    end 
 endmodule
 
 module riscvassertions;
@@ -370,7 +358,6 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
-  generate
 	if(`MEM_DCACHE) begin
 	  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
@@ -430,15 +417,7 @@ module DCacheFlushFSM
 
 	  
 	end
-  endgenerate
-
-
-  
-
-  flop #(1) doneReg(.clk(clk),
-		    .d(start),
-		    .q(done));
-		    
+  flop #(1) doneReg(.clk, .d(start), .q(done));
 endmodule
 
 module copyShadow
