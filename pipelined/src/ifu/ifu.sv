@@ -116,7 +116,7 @@ module ifu (
 	  logic [`XLEN-1:0] 		   PCFp2;
 	  logic 					   Spill;
 	  logic 					   SelSpill, SpillSave;
-	  logic [15:0] 				   SpillDataBlock0;
+	  logic [15:0] 				   SpillDataLine0;
 
 	  // this exists only if there are compressed instructions.
 	  assign PCFp2 = PCF + `XLEN'b10;
@@ -124,7 +124,7 @@ module ifu (
 	  assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
 	  assign PCFMux = SelSpill ? PCFp2 : PCF;
   
-	  assign Spill = &PCF[$clog2(`ICACHE_BLOCKLENINBITS/32)+1:1];
+	  assign Spill = &PCF[$clog2(`ICACHE_LINELENINBITS/32)+1:1];
 
 	  typedef enum 		   {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
 	  (* mark_debug = "true" *)  statetype CurrState, NextState;
@@ -154,13 +154,13 @@ module ifu (
 								  .en(SpillSave),
 								  .reset(reset),
 								  .d(InstrRawF[15:0]),
-								  .q(SpillDataBlock0));
+								  .q(SpillDataLine0));
 
-	  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataBlock0} : InstrRawF;
+	  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
 	  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
 
 	  // end of spill support
-	end else begin : NoSpillSupport // block: SpillSupport
+	end else begin : NoSpillSupport // line: SpillSupport
 	  assign PCNextFMux = PCNextF[11:0];
 	  assign PCFMux = PCF;
 	  assign SelNextSpill = 0;
@@ -220,16 +220,16 @@ module ifu (
   // 2. cache // `MEM_ICACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
   localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
-  localparam integer   BLOCKLEN = `MEM_ICACHE ? `ICACHE_BLOCKLENINBITS : `XLEN;
+  localparam integer   LINELEN = `MEM_ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
 
-  localparam integer   BLOCKBYTELEN = BLOCKLEN/8;
-  localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
+  localparam integer   LINEBYTELEN = LINELEN/8;
+  localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
 
   logic [LOGWPL-1:0]   WordCount;
-  logic [BLOCKLEN-1:0] ICacheMemWriteData;
+  logic [LINELEN-1:0] ICacheMemWriteData;
   logic 			   ICacheBusAck;
   logic [`PA_BITS-1:0] LocalIfuBusAdr;
   logic [`PA_BITS-1:0] ICacheBusAdr;

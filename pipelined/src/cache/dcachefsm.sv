@@ -61,7 +61,7 @@ module dcachefsm
    output logic 	  SetDirty,
    output logic 	  ClearDirty,
    output logic 	  SRAMWordWriteEnableM,
-   output logic 	  SRAMBlockWriteEnableM,
+   output logic 	  SRAMLineWriteEnableM,
    output logic 	  SelEvict,
    output logic 	  LRUWriteEn,
    output logic 	  SelFlush,
@@ -80,7 +80,7 @@ module dcachefsm
 					   STATE_MISS_FETCH_WDV,
 					   STATE_MISS_FETCH_DONE,
 					   STATE_MISS_EVICT_DIRTY,
-					   STATE_MISS_WRITE_CACHE_BLOCK,
+					   STATE_MISS_WRITE_CACHE_LINE,
 					   STATE_MISS_READ_WORD,
 					   STATE_MISS_READ_WORD_DELAY,
 					   STATE_MISS_WRITE_WORD,
@@ -113,7 +113,7 @@ module dcachefsm
     SetDirty = 1'b0;    
     ClearDirty = 1'b0;
     SRAMWordWriteEnableM = 1'b0;
-    SRAMBlockWriteEnableM = 1'b0;
+    SRAMLineWriteEnableM = 1'b0;
     SelEvict = 1'b0;
     LRUWriteEn = 1'b0;
     SelFlush = 1'b0;
@@ -228,12 +228,12 @@ module dcachefsm
 		  NextState = STATE_MISS_EVICT_DIRTY;
 		  DCacheWriteLine = 1'b1;
 		end else begin
-		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
+		  NextState = STATE_MISS_WRITE_CACHE_LINE;
 		end
       end
 
-      STATE_MISS_WRITE_CACHE_BLOCK: begin
-		SRAMBlockWriteEnableM = 1'b1;
+      STATE_MISS_WRITE_CACHE_LINE: begin
+		SRAMLineWriteEnableM = 1'b1;
 		DCacheStall = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
 		SelAdrM = 2'b01;
@@ -301,7 +301,7 @@ module dcachefsm
 		SelAdrM = 2'b01;
 		SelEvict = 1'b1;
 		if(DCacheBusAck) begin
-		  NextState = STATE_MISS_WRITE_CACHE_BLOCK;
+		  NextState = STATE_MISS_WRITE_CACHE_LINE;
 		end else begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
 		end	  

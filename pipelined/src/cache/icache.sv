@@ -43,7 +43,7 @@ module icache
 
    // bus fsm interface
    input logic 								IgnoreRequest,
-   input logic [`ICACHE_BLOCKLENINBITS-1:0] ICacheMemWriteData,
+   input logic [`ICACHE_LINELENINBITS-1:0] ICacheMemWriteData,
    output logic 							ICacheFetchLine,
 
    (* mark_debug = "true" *) input logic 	ICacheBusAck,
@@ -57,16 +57,16 @@ module icache
    );
 
   // Configuration parameters
-  localparam integer 		  BLOCKLEN = `ICACHE_BLOCKLENINBITS;
-  localparam integer 		  NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_BLOCKLENINBITS;
-  localparam integer 		  BLOCKBYTELEN = BLOCKLEN/8;
+  localparam integer 		  LINELEN = `ICACHE_LINELENINBITS;
+  localparam integer 		  NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS;
+  localparam integer 		  LINEBYTELEN = LINELEN/8;
 
-  localparam integer 		  OFFSETLEN = $clog2(BLOCKBYTELEN);
+  localparam integer 		  OFFSETLEN = $clog2(LINEBYTELEN);
   localparam integer 		  INDEXLEN = $clog2(NUMLINES);
   localparam integer 		  TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
 
   // *** not used?
-  localparam WORDSPERLINE = BLOCKLEN/`XLEN;
+  localparam WORDSPERLINE = LINELEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
   localparam integer 		  NUMWAYS = `ICACHE_NUMWAYS;
@@ -75,7 +75,7 @@ module icache
   // Input signals to cache memory
   logic 					  ICacheMemWriteEnable;
   // Output signals from cache memory
-  logic [BLOCKLEN-1:0] 		  ReadLineF;
+  logic [LINELEN-1:0] 		  ReadLineF;
   logic       				  SelAdr;
   logic [INDEXLEN-1:0] 		  RAdr;
   logic [NUMWAYS-1:0] 		  VictimWay;
@@ -84,9 +84,9 @@ module icache
   logic 					  hit;
   
   
-  logic [BLOCKLEN-1:0] 		  ReadDataLineWayMasked [NUMWAYS-1:0];
+  logic [LINELEN-1:0] 		  ReadDataLineWayMasked [NUMWAYS-1:0];
 
-  logic [31:0] 				  ReadLineSetsF [`ICACHE_BLOCKLENINBITS/16-1:0];
+  logic [31:0] 				  ReadLineSetsF [`ICACHE_LINELENINBITS/16-1:0];
   
   logic [NUMWAYS-1:0] 		  SRAMWayWriteEnable;
 
@@ -98,13 +98,13 @@ module icache
 			.y(RAdr));
 
 
-  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
+  cacheway #(.NUMLINES(NUMLINES), .LINELEN(LINELEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN), .DIRTY_BITS(0))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
 					  .PAdr(PCPF),
 					  .WriteEnable(SRAMWayWriteEnable),
 					  .VDWriteEnable(1'b0),
-					  .WriteWordEnable({{(BLOCKLEN/`XLEN){1'b1}}}),
+					  .WriteWordEnable({{(LINELEN/`XLEN){1'b1}}}),
 					  .TagWriteEnable(SRAMWayWriteEnable),
 					  .WriteData(ICacheMemWriteData),
 					  .SetValid(ICacheMemWriteEnable),
@@ -131,20 +131,20 @@ module icache
 
   assign hit = | WayHit;
 
-  // ReadDataLineWayMasked is a 2d array of cache block len by number of ways.
+  // ReadDataLineWayMasked is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadLineF));
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadLineF));
 
   genvar index;
   generate
-	for(index = 0; index < BLOCKLEN / 16 - 1; index++) begin:readlinesetsmux
+	for(index = 0; index < LINELEN / 16 - 1; index++) begin:readlinesetsmux
 	  assign ReadLineSetsF[index] = ReadLineF[((index+1)*16)+16-1 : (index*16)];
 	end
-	assign ReadLineSetsF[BLOCKLEN/16-1] = {16'b0, ReadLineF[BLOCKLEN-1:BLOCKLEN-16]};
+	assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadLineF[LINELEN-1:LINELEN-16]};
   endgenerate
 
-  assign FinalInstrRawF = ReadLineSetsF[PCPF[$clog2(BLOCKLEN / 32) + 1 : 1]];
+  assign FinalInstrRawF = ReadLineSetsF[PCPF[$clog2(LINELEN / 32) + 1 : 1]];
 
   assign ICacheBusAdr = {PCPF[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}};
   
