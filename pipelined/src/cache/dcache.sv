@@ -74,7 +74,7 @@ module dcache
   localparam integer 						LOGWPL = $clog2(WORDSPERLINE);
   localparam integer 						LOGXLENBYTES = $clog2(`XLEN/8);
 
-  localparam integer 						FlushAdrThreshold   = NUMLINES - 1;
+  localparam integer 						FlushAdrThreshold   = NUMLINES;
 
   logic [1:0] 								SelAdrM;
   logic [INDEXLEN-1:0] 						RAdr;
