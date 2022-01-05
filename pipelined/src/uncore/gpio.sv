@@ -61,12 +61,12 @@ module gpio (
   // account for subword read/write circuitry
   // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
   //    (At least that's what I think when FE310 spec says "only naturally aligned 32-bit accesses are supported")
-  if (`XLEN == 64) begin:gpio
+  if (`XLEN == 64) begin
     assign Din =       entryd[2] ? HWDATA[63:32] : HWDATA[31:0];
     assign HREADGPIO = entryd[2] ? {Dout,32'b0}  : {32'b0,Dout};
-  end else begin:gpio // 32-bit
+  end else begin // 32-bit
     assign Din = HWDATA[31:0];
-    assign  HREADGPIO = Dout;
+    assign HREADGPIO = Dout;
   end
 
   // register access
@@ -140,12 +140,9 @@ module gpio (
   end
 
   // chip i/o
-  generate
-    if (`GPIO_LOOPBACK_TEST) // connect OUT to IN for loopback testing
-      assign input0d = GPIOPinsOut & input_en & output_en;
-    else
-      assign input0d = GPIOPinsIn & input_en;
-  endgenerate
+  // connect OUT to IN for loopback testing
+  if (`GPIO_LOOPBACK_TEST) assign input0d = GPIOPinsOut & input_en & output_en;
+  else                     assign input0d = GPIOPinsIn  & input_en;
   flop #(32) sync1(HCLK,input0d,input1d);
   flop #(32) sync2(HCLK,input1d,input2d);
   flop #(32) sync3(HCLK,input2d,input3d);
