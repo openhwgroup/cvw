@@ -306,15 +306,16 @@ module lsu
 
   generate
     if(`MEM_DCACHE) begin : dcache
-      dcache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-			   .NUMWAYS(`DCACHE_NUMWAYS)) 
+      cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
+			  .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
 	  dcache(.clk, .reset, .CPUBusy,
-            .LsuRWM, .FlushDCacheM, .LsuAtomicM, .LsuAdrE, .LsuPAdrM, .PreLsuPAdrM(PreLsuPAdrM[11:0]), // still don't like this name PreLsuPAdrM, not always physical
+            .LsuRWM(CacheableM ? LsuRWM : 2'b00), .FlushDCacheM, .LsuAtomicM(CacheableM ? LsuAtomicM : 2'b00), 
+			 .LsuAdrE, .LsuPAdrM, .PreLsuPAdrM(PreLsuPAdrM[11:0]), // still don't like this name PreLsuPAdrM, not always physical
             .FinalWriteDataM, .ReadDataWordM, .DCacheStall,
             .DCacheMiss, .DCacheAccess, 
-            .IgnoreRequest, .CacheableM, .DCacheCommittedM,
+            .IgnoreRequest, .DCacheCommittedM,
             .DCacheBusAdr, .ReadDataLineSetsM, .DCacheMemWriteData,
-            .DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
+            .DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck, .InvalidateICacheM(1'b0));
     end else begin : passthrough
       assign ReadDataWordM = 0;
       assign DCacheStall = 0;
