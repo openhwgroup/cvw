@@ -153,7 +153,7 @@ fma2 UUT2(.XSgnM(XSgnE), .YSgnM(YSgnE), .XExpM(XExpE), .YExpM(YExpE), .ZExpM(ZEx
                .FmtM(FmtE), .FrmM(FrmE), .FMAFlgM, .FMAResM);
 
 
- // generate clock
+ // produce clock
  always
  begin
  clk = 1; #5; clk = 0; #5;

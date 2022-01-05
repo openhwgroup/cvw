@@ -173,7 +173,7 @@ module fcvt (
     //      - only set invalid flag for out-of-range vales
     //      - set inexact if in representable range and not exact
 
-    generate if(`IEEE754) begin // checks before rounding
+    if(`IEEE754) begin // checks before rounding
         assign Invalid = (Of | Uf)&FOpCtrlE[0];
         assign Inexact = (Guard|Round|Sticky)&~(&FOpCtrlE[1:0]&(XSgnE|Of))&~((Of|Uf)&~FOpCtrlE[1]&FOpCtrlE[0]);
         assign CvtFlgE = {Invalid&~Inexact, 3'b0, Inexact};
@@ -182,10 +182,6 @@ module fcvt (
         assign Inexact = (Guard|Round|Sticky)&~(&FOpCtrlE[1:0]&((XSgnE&~(ShiftCnt[12]&~Plus1))|Of))&~((Of|Uf)&~FOpCtrlE[1]&FOpCtrlE[0]);
         assign CvtFlgE = {Invalid&~Inexact, 3'b0, Inexact};
     end
-    endgenerate
-
-
-
 endmodule // fpadd
 
 

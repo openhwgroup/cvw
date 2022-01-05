@@ -39,30 +39,28 @@ module shifter (
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-//  generate
-    if (`XLEN==32) begin:shifter // RV32
-      always_comb  // funnel mux
-        if (Right) 
-          if (Arith) z = {{31{A[31]}}, A};
-          else       z = {31'b0, A};
-        else         z = {A, 31'b0};
-      assign amttrunc = Amt; // shift amount
-    end else begin:shifter  // RV64
-      always_comb  // funnel mux
-        if (W64) begin // 32-bit shifts
-          if (Right)
-            if (Arith) z = {64'b0, {31{A[31]}}, A[31:0]};
-            else       z = {95'b0, A[31:0]};
-          else         z = {32'b0, A[31:0], 63'b0};
-        end else begin
-          if (Right)
-            if (Arith) z = {{63{A[63]}}, A};
-            else       z = {63'b0, A};
-          else         z = {A, 63'b0};         
-        end
-      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
-    end
-//  endgenerate
+  if (`XLEN==32) begin:shifter // RV32
+    always_comb  // funnel mux
+      if (Right) 
+        if (Arith) z = {{31{A[31]}}, A};
+        else       z = {31'b0, A};
+      else         z = {A, 31'b0};
+    assign amttrunc = Amt; // shift amount
+  end else begin:shifter  // RV64
+    always_comb  // funnel mux
+      if (W64) begin // 32-bit shifts
+        if (Right)
+          if (Arith) z = {64'b0, {31{A[31]}}, A[31:0]};
+          else       z = {95'b0, A[31:0]};
+        else         z = {32'b0, A[31:0], 63'b0};
+      end else begin
+        if (Right)
+          if (Arith) z = {{63{A[63]}}, A};
+          else       z = {63'b0, A};
+        else         z = {A, 63'b0};         
+      end
+    assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
+  end
 
   // opposite offset for right shfits
   assign offset = Right ? amttrunc : ~amttrunc;

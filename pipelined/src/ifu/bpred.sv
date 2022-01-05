@@ -70,74 +70,72 @@ module bpred
 
   // Part 1 branch direction prediction
 
-  generate
-    if (`BPTYPE == "BPTWOBIT") begin:Predictor
-      twoBitPredictor DirPredictor(.clk(clk),
-       .reset(reset),
-       .StallF(StallF),
-       .LookUpPC(PCNextF),
-       .Prediction(BPPredF),
-       // update
-       .UpdatePC(PCE),
-       .UpdateEN(InstrClassE[0] & ~StallE),
-       .UpdatePrediction(UpdateBPPredE));
+  if (`BPTYPE == "BPTWOBIT") begin:Predictor
+    twoBitPredictor DirPredictor(.clk(clk),
+      .reset(reset),
+      .StallF(StallF),
+      .LookUpPC(PCNextF),
+      .Prediction(BPPredF),
+      // update
+      .UpdatePC(PCE),
+      .UpdateEN(InstrClassE[0] & ~StallE),
+      .UpdatePrediction(UpdateBPPredE));
 
-    end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
+  end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
 
-      globalHistoryPredictor DirPredictor(.clk(clk),
-       .reset(reset),
-       .*, // Stalls and flushes
-       .PCNextF(PCNextF),
-       .BPPredF(BPPredF),
-       // update
-       .InstrClassE(InstrClassE),
-       .BPInstrClassE(BPInstrClassE),
-       .BPPredDirWrongE(BPPredDirWrongE),
-       .PCE(PCE),
-       .PCSrcE(PCSrcE),
-       .UpdateBPPredE(UpdateBPPredE));
-    end else if (`BPTYPE == "BPGSHARE") begin:Predictor
+    globalHistoryPredictor DirPredictor(.clk(clk),
+      .reset(reset),
+      .*, // Stalls and flushes
+      .PCNextF(PCNextF),
+      .BPPredF(BPPredF),
+      // update
+      .InstrClassE(InstrClassE),
+      .BPInstrClassE(BPInstrClassE),
+      .BPPredDirWrongE(BPPredDirWrongE),
+      .PCE(PCE),
+      .PCSrcE(PCSrcE),
+      .UpdateBPPredE(UpdateBPPredE));
+  end else if (`BPTYPE == "BPGSHARE") begin:Predictor
 
-      gsharePredictor DirPredictor(.clk(clk),
-       .reset(reset),
-       .*, // Stalls and flushes
-       .PCNextF(PCNextF),
-       .BPPredF(BPPredF),
-       // update
-       .InstrClassE(InstrClassE),
-       .BPInstrClassE(BPInstrClassE),
-       .BPPredDirWrongE(BPPredDirWrongE),
-       .PCE(PCE),
-       .PCSrcE(PCSrcE),
-       .UpdateBPPredE(UpdateBPPredE));
-    end 
-    else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
+    gsharePredictor DirPredictor(.clk(clk),
+      .reset(reset),
+      .*, // Stalls and flushes
+      .PCNextF(PCNextF),
+      .BPPredF(BPPredF),
+      // update
+      .InstrClassE(InstrClassE),
+      .BPInstrClassE(BPInstrClassE),
+      .BPPredDirWrongE(BPPredDirWrongE),
+      .PCE(PCE),
+      .PCSrcE(PCSrcE),
+      .UpdateBPPredE(UpdateBPPredE));
+  end 
+  else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
-      localHistoryPredictor DirPredictor(.clk(clk),
-       .reset(reset),
-       .*, // Stalls and flushes
-       .LookUpPC(PCNextF),
-       .Prediction(BPPredF),
-       // update
-       .UpdatePC(PCE),
-       .UpdateEN(InstrClassE[0] & ~StallE),
-       .PCSrcE(PCSrcE),
-       .UpdatePrediction(UpdateBPPredE));
-    end 
-    else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
+    localHistoryPredictor DirPredictor(.clk(clk),
+      .reset(reset),
+      .*, // Stalls and flushes
+      .LookUpPC(PCNextF),
+      .Prediction(BPPredF),
+      // update
+      .UpdatePC(PCE),
+      .UpdateEN(InstrClassE[0] & ~StallE),
+      .PCSrcE(PCSrcE),
+      .UpdatePrediction(UpdateBPPredE));
+  end 
+  else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
-      localHistoryPredictor DirPredictor(.clk(clk),
-       .reset(reset),
-       .*, // Stalls and flushes
-       .LookUpPC(PCNextF),
-       .Prediction(BPPredF),
-       // update
-       .UpdatePC(PCE),
-       .UpdateEN(InstrClassE[0] & ~StallE),
-       .PCSrcE(PCSrcE),
-       .UpdatePrediction(UpdateBPPredE));
-    end 
-  endgenerate
+    localHistoryPredictor DirPredictor(.clk(clk),
+      .reset(reset),
+      .*, // Stalls and flushes
+      .LookUpPC(PCNextF),
+      .Prediction(BPPredF),
+      // update
+      .UpdatePC(PCE),
+      .UpdateEN(InstrClassE[0] & ~StallE),
+      .PCSrcE(PCSrcE),
+      .UpdatePrediction(UpdateBPPredE));
+  end 
 
 
   // this predictor will have two pieces of data,
