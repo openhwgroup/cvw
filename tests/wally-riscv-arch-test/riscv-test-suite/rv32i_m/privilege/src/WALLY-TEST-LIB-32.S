@@ -349,8 +349,8 @@ read32_test:
     li x7, 0xBAD # bad value that will be overwritten on good reads.
     lw x7, 0(x28)
     sw x7, 0(x6)
-    addi x6, x6, 8
-    addi x16, x16, 8
+    addi x6, x6, 4
+    addi x16, x16, 4
     j test_loop # go to next test case
 
 read16_test:
@@ -358,8 +358,8 @@ read16_test:
     li x7, 0xBAD # bad value that will be overwritten on good reads.
     lh x7, 0(x28)
     sw x7, 0(x6)
-    addi x6, x6, 8
-    addi x16, x16, 8
+    addi x6, x6, 4
+    addi x16, x16, 4
     j test_loop # go to next test case
 
 read08_test:
@@ -367,8 +367,8 @@ read08_test:
     li x7, 0xBAD # bad value that will be overwritten on good reads.
     lb x7, 0(x28)
     sw x7, 0(x6)
-    addi x6, x6, 8
-    addi x16, x16, 8
+    addi x6, x6, 4
+    addi x16, x16, 4
     j test_loop # go to next test case
 
 
