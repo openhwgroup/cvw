@@ -243,6 +243,7 @@ module ifu (
 	  logic [1:0] IfuRWF;
 	  assign IfuRWF = CacheableF ? 2'b10 : 2'b00;
 	  
+/* -----\/----- EXCLUDED -----\/-----
 	  icache #(.LINELEN(`ICACHE_LINELENINBITS),
 			   .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
 			   .NUMWAYS(`ICACHE_NUMWAYS))
@@ -254,7 +255,34 @@ module ifu (
 					.PCPF(PCPF),
 					.PCF(PCFMux),
 					.InvalidateICacheM);
+ -----/\----- EXCLUDED -----/\----- */
 
+	  logic [`XLEN-1:0] FinalInstrRawF_FIXME;
+	  
+	  cache #(.LINELEN(`ICACHE_LINELENINBITS),
+			  .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
+			  .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
+	  icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .DCacheMemWriteData(ICacheMemWriteData) , .DCacheBusAck(ICacheBusAck),
+			 .DCacheBusAdr(ICacheBusAdr), .DCacheStall(ICacheStallF), .ReadDataWordM(FinalInstrRawF_FIXME),
+			 .DCacheFetchLine(ICacheFetchLine),
+			 .DCacheWriteLine(),
+			 .ReadDataLineSetsM(),
+			 .DCacheMiss(),
+			 .DCacheAccess(),
+			 .FinalWriteDataM('0),
+			 .LsuRWM(IfuRWF), //aways read
+			 .LsuAtomicM(2'b00),
+			 .FlushDCacheM(1'b0),
+			 .LsuAdrE(PCNextFMux),
+			 .LsuPAdrM(PCPF),
+			 .PreLsuPAdrM(PCFMux[11:0]),
+			 .DCacheCommittedM(),
+			 .InvalidateICacheM);
+
+	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
+
+
+	  
 	end else begin : passthrough
 	  assign ICacheFetchLine = 0;
 	  assign ICacheBusAdr = 0;
