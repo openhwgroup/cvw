@@ -60,15 +60,13 @@ module intdivrestoring (
   assign DivBusyE = (state == BUSY) | DivStartE;
 
   // Handle sign extension for W-type instructions
-  generate
-    if (`XLEN == 64) begin:rv64 // RV64 has W-type instructions
-      mux2 #(`XLEN) xinmux(ForwardedSrcAE, {ForwardedSrcAE[31:0], 32'b0}, W64E, XinE);
-      mux2 #(`XLEN) dinmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31]&DivSignedE}}, ForwardedSrcBE[31:0]}, W64E, DinE);
-	  end else begin // RV32 has no W-type instructions
-      assign XinE = ForwardedSrcAE;
-      assign DinE = ForwardedSrcBE;	    
+  if (`XLEN == 64) begin:rv64 // RV64 has W-type instructions
+    mux2 #(`XLEN) xinmux(ForwardedSrcAE, {ForwardedSrcAE[31:0], 32'b0}, W64E, XinE);
+    mux2 #(`XLEN) dinmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31]&DivSignedE}}, ForwardedSrcBE[31:0]}, W64E, DinE);
+  end else begin // RV32 has no W-type instructions
+    assign XinE = ForwardedSrcAE;
+    assign DinE = ForwardedSrcBE;	    
     end   
-  endgenerate 
 
   // Extract sign bits and check fo division by zero
   assign SignDE = DivSignedE & DinE[`XLEN-1]; 
@@ -97,11 +95,9 @@ module intdivrestoring (
   flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, NegQE, SignXE}, {Div0M, NegQM, NegWM});
   
   // one copy of divstep for each bit produced per cycle
-  generate
-      genvar i;
-      for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
-        intdivrestoringstep divstep(WM[i], XQM[i], DAbsBM, WM[i+1], XQM[i+1]);
-  endgenerate
+  genvar i;
+  for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
+    intdivrestoringstep divstep(WM[i], XQM[i], DAbsBM, WM[i+1], XQM[i+1]);
 
   // On final setp of signed operations, negate outputs as needed to get correct sign
   neg #(`XLEN) qneg(XQM[0], XQnM);

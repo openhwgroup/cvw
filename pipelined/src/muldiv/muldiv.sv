@@ -74,13 +74,11 @@ module muldiv (
 
 	// Handle sign extension for W-type instructions
 	flopenrc #(1) W64MReg(clk, reset, FlushM, ~StallM, W64E, W64M);
-	generate
-		if (`XLEN == 64) begin:resmux // RV64 has W-type instructions
-			assign MulDivResultM = W64M ? {{32{PrelimResultM[31]}}, PrelimResultM[31:0]} : PrelimResultM;
-		end else begin:resmux // RV32 has no W-type instructions
-			assign MulDivResultM = PrelimResultM;
-		end
-	endgenerate
+	if (`XLEN == 64) begin:resmux // RV64 has W-type instructions
+		assign MulDivResultM = W64M ? {{32{PrelimResultM[31]}}, PrelimResultM[31:0]} : PrelimResultM;
+	end else begin:resmux // RV32 has no W-type instructions
+		assign MulDivResultM = PrelimResultM;
+	end
 
 	// Writeback stage pipeline register
 	flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);	 

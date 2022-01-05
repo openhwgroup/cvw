@@ -149,19 +149,17 @@ module cache #(parameter integer LINELEN,
 					  .WayHit, .VictimDirtyWay, .VictimTagWay,
 					  .InvalidateAll(InvalidateCacheM));
 
-  generate
-    if(NUMWAYS > 1) begin:vict
-      cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
-      cachereplacementpolicy(.clk, .reset,
-							 .WayHit,
-							 .VictimWay,
-							 .LsuPAdrM(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-							 .RAdr,
-							 .LRUWriteEn);
-    end else begin:vict
-      assign VictimWay = 1'b1; // one hot.
-    end
-  endgenerate
+  if(NUMWAYS > 1) begin:vict
+    cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+    cachereplacementpolicy(.clk, .reset,
+              .WayHit,
+              .VictimWay,
+              .LsuPAdrM(LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+              .RAdr,
+              .LRUWriteEn);
+  end else begin:vict
+    assign VictimWay = 1'b1; // one hot.
+  end
 
   assign CacheHit = | WayHit;
   assign VictimDirty = | VictimDirtyWay;
@@ -178,32 +176,22 @@ module cache #(parameter integer LINELEN,
   // easily build a variable input mux.
   // *** consider using a limited range shift to do this final muxing.
   genvar index;
-  generate
-	if(DCACHE == 1) begin
-      for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-		assign ReadDataLineSets[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
-      end
+	if(DCACHE == 1) begin: readdata
+    for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
+		  assign ReadDataLineSets[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
+    end
 	  // variable input mux
 	  assign ReadDataWord = ReadDataLineSets[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
-
-	end else begin
+	end else begin: readdata
 	  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
 	  logic [31:0] 				  FinalInstrRawF;
-	  for(index = 0; index < LINELEN / 16 - 1; index++) begin:readlinesetsmux
-		assign ReadLineSetsF[index] = ReadDataLineM[((index+1)*16)+16-1 : (index*16)];
-	  end
+	  for(index = 0; index < LINELEN / 16 - 1; index++) 
+		  assign ReadLineSetsF[index] = ReadDataLineM[((index+1)*16)+16-1 : (index*16)];
 	  assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadDataLineM[LINELEN-1:LINELEN-16]};
-
 	  assign FinalInstrRawF = ReadLineSetsF[LsuPAdrM[$clog2(LINELEN / 32) + 1 : 1]];
-	  if (`XLEN == 64) begin
-		assign ReadDataWord = {32'b0, FinalInstrRawF};		
-	  end else begin
-	  assign ReadDataWord = FinalInstrRawF;				
-	  end
-
+	  if (`XLEN == 64) assign ReadDataWord = {32'b0, FinalInstrRawF};		
+	  else             assign ReadDataWord = FinalInstrRawF;				
 	end
-  endgenerate
-
 
   // Write Path CPU (IEU) side
 

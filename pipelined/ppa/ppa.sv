@@ -45,14 +45,12 @@ endmodule
 
 
 module INVX2(input logic a, output logic y);
-    generate
-        if (LIB == SKY130)
-            sky130_osu_sc_12T_ms__inv_2 inv(a, y);
-        else if (LIB == SKL90)
-            scc9gena_inv_2 inv(a, y)
-        else if (LIB == GF14)
-             INV_X2N_A10P5PP84TSL_C14(a, y)
-    endgenerate
+  if (LIB == SKY130)
+      sky130_osu_sc_12T_ms__inv_2 inv(a, y);
+  else if (LIB == SKL90)
+      scc9gena_inv_2 inv(a, y)
+  else if (LIB == GF14)
+        INV_X2N_A10P5PP84TSL_C14(a, y)
 endmodule
 
 module driver #(parameter WDITH=1) (

@@ -114,19 +114,17 @@ module icache #(parameter integer LINELEN,
 					  .VictimDirtyWay(), .VictimTagWay(),
 					  .InvalidateAll(InvalidateICacheM));
   
-  generate
-    if(NUMWAYS > 1) begin:vict
-      cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
-      cachereplacementpolicy(.clk, .reset,
-							 .WayHit,
-							 .VictimWay,
-							 .LsuPAdrM(PCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-							 .RAdr,
-							 .LRUWriteEn);
-    end else begin:vict
-      assign VictimWay = 1'b1; // one hot.
-    end
-  endgenerate
+  if(NUMWAYS > 1) begin:vict
+    cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
+    cachereplacementpolicy(.clk, .reset,
+              .WayHit,
+              .VictimWay,
+              .LsuPAdrM(PCPF[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+              .RAdr,
+              .LRUWriteEn);
+  end else begin:vict
+    assign VictimWay = 1'b1; // one hot.
+  end
 
   assign hit = | WayHit;
 
@@ -136,12 +134,9 @@ module icache #(parameter integer LINELEN,
   or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadLineF));
 
   genvar index;
-  generate
-	for(index = 0; index < LINELEN / 16 - 1; index++) begin:readlinesetsmux
+	for(index = 0; index < LINELEN / 16 - 1; index++) 
 	  assign ReadLineSetsF[index] = ReadLineF[((index+1)*16)+16-1 : (index*16)];
-	end
 	assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadLineF[LINELEN-1:LINELEN-16]};
-  endgenerate
 
   assign FinalInstrRawF = ReadLineSetsF[PCPF[$clog2(LINELEN / 32) + 1 : 1]];
 
