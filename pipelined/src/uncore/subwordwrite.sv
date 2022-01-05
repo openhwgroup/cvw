@@ -35,75 +35,72 @@ module subwordwrite (
                   
   logic [`XLEN-1:0] WriteDataSubwordDuplicated;
   
-  generate
-    if (`XLEN == 64) begin:sww
-      logic [7:0]      ByteMaskM;
-      // Compute write mask
-      always_comb 
-        case(HSIZED[1:0])
-          2'b00:  begin ByteMaskM = 8'b00000000; ByteMaskM[HADDRD[2:0]] = 1; end // sb
-          2'b01:  case (HADDRD[2:1])
-                    2'b00: ByteMaskM = 8'b00000011;
-                    2'b01: ByteMaskM = 8'b00001100;
-                    2'b10: ByteMaskM = 8'b00110000;
-                    2'b11: ByteMaskM = 8'b11000000;
-                  endcase
-          2'b10:  if (HADDRD[2]) ByteMaskM = 8'b11110000;
-                   else        ByteMaskM = 8'b00001111;
-          2'b11:  ByteMaskM = 8'b11111111;
-        endcase
+  if (`XLEN == 64) begin:sww
+    logic [7:0]      ByteMaskM;
+    // Compute write mask
+    always_comb 
+      case(HSIZED[1:0])
+        2'b00:  begin ByteMaskM = 8'b00000000; ByteMaskM[HADDRD[2:0]] = 1; end // sb
+        2'b01:  case (HADDRD[2:1])
+                  2'b00: ByteMaskM = 8'b00000011;
+                  2'b01: ByteMaskM = 8'b00001100;
+                  2'b10: ByteMaskM = 8'b00110000;
+                  2'b11: ByteMaskM = 8'b11000000;
+                endcase
+        2'b10:  if (HADDRD[2]) ByteMaskM = 8'b11110000;
+                  else        ByteMaskM = 8'b00001111;
+        2'b11:  ByteMaskM = 8'b11111111;
+      endcase
 
-      // Handle subword writes
-      always_comb 
-        case(HSIZED[1:0])
-          2'b00:  WriteDataSubwordDuplicated = {8{HWDATAIN[7:0]}};  // sb
-          2'b01:  WriteDataSubwordDuplicated = {4{HWDATAIN[15:0]}}; // sh
-          2'b10:  WriteDataSubwordDuplicated = {2{HWDATAIN[31:0]}}; // sw
-          2'b11:  WriteDataSubwordDuplicated = HWDATAIN;            // sw
-        endcase
+    // Handle subword writes
+    always_comb 
+      case(HSIZED[1:0])
+        2'b00:  WriteDataSubwordDuplicated = {8{HWDATAIN[7:0]}};  // sb
+        2'b01:  WriteDataSubwordDuplicated = {4{HWDATAIN[15:0]}}; // sh
+        2'b10:  WriteDataSubwordDuplicated = {2{HWDATAIN[31:0]}}; // sw
+        2'b11:  WriteDataSubwordDuplicated = HWDATAIN;            // sw
+      endcase
 
-      always_comb begin
-        HWDATA=HRDATA;
-        if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
-        if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
-        if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
-        if (ByteMaskM[3]) HWDATA[31:24] = WriteDataSubwordDuplicated[31:24];
-	      if (ByteMaskM[4]) HWDATA[39:32] = WriteDataSubwordDuplicated[39:32];
-	      if (ByteMaskM[5]) HWDATA[47:40] = WriteDataSubwordDuplicated[47:40];
-      	if (ByteMaskM[6]) HWDATA[55:48] = WriteDataSubwordDuplicated[55:48];
-	      if (ByteMaskM[7]) HWDATA[63:56] = WriteDataSubwordDuplicated[63:56];
-      end 
+    always_comb begin
+      HWDATA=HRDATA;
+      if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
+      if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
+      if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
+      if (ByteMaskM[3]) HWDATA[31:24] = WriteDataSubwordDuplicated[31:24];
+      if (ByteMaskM[4]) HWDATA[39:32] = WriteDataSubwordDuplicated[39:32];
+      if (ByteMaskM[5]) HWDATA[47:40] = WriteDataSubwordDuplicated[47:40];
+      if (ByteMaskM[6]) HWDATA[55:48] = WriteDataSubwordDuplicated[55:48];
+      if (ByteMaskM[7]) HWDATA[63:56] = WriteDataSubwordDuplicated[63:56];
+    end 
 
-    end else begin:sww // 32-bit
-      logic [3:0]      ByteMaskM;
-      // Compute write mask
-      always_comb 
-        case(HSIZED[1:0])
-          2'b00:  begin ByteMaskM = 4'b0000; ByteMaskM[HADDRD[1:0]] = 1; end // sb
-          2'b01:  if (HADDRD[1]) ByteMaskM = 4'b1100;
-                   else         ByteMaskM = 4'b0011;
-          2'b10:  ByteMaskM = 4'b1111;
-          default: ByteMaskM = 4'b111; // shouldn't happen
-        endcase
+  end else begin:sww // 32-bit
+    logic [3:0]      ByteMaskM;
+    // Compute write mask
+    always_comb 
+      case(HSIZED[1:0])
+        2'b00:  begin ByteMaskM = 4'b0000; ByteMaskM[HADDRD[1:0]] = 1; end // sb
+        2'b01:  if (HADDRD[1]) ByteMaskM = 4'b1100;
+                  else         ByteMaskM = 4'b0011;
+        2'b10:  ByteMaskM = 4'b1111;
+        default: ByteMaskM = 4'b111; // shouldn't happen
+      endcase
 
-      // Handle subword writes
-      always_comb 
-        case(HSIZED[1:0])
-          2'b00:  WriteDataSubwordDuplicated = {4{HWDATAIN[7:0]}};  // sb
-          2'b01:  WriteDataSubwordDuplicated = {2{HWDATAIN[15:0]}}; // sh
-          2'b10:  WriteDataSubwordDuplicated = HWDATAIN;            // sw
-          default: WriteDataSubwordDuplicated = HWDATAIN; // shouldn't happen
-        endcase
+    // Handle subword writes
+    always_comb 
+      case(HSIZED[1:0])
+        2'b00:  WriteDataSubwordDuplicated = {4{HWDATAIN[7:0]}};  // sb
+        2'b01:  WriteDataSubwordDuplicated = {2{HWDATAIN[15:0]}}; // sh
+        2'b10:  WriteDataSubwordDuplicated = HWDATAIN;            // sw
+        default: WriteDataSubwordDuplicated = HWDATAIN; // shouldn't happen
+      endcase
 
-      always_comb begin
-        HWDATA=HRDATA;
-        if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
-        if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
-        if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
-        if (ByteMaskM[3]) HWDATA[31:24] = WriteDataSubwordDuplicated[31:24];
-      end 
+    always_comb begin
+      HWDATA=HRDATA;
+      if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
+      if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
+      if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
+      if (ByteMaskM[3]) HWDATA[31:24] = WriteDataSubwordDuplicated[31:24];
+    end 
 
-    end
-  endgenerate
-
+  end
 endmodule
