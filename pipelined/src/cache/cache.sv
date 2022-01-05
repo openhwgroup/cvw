@@ -34,34 +34,34 @@ module cache #(parameter integer LINELEN,
    input logic 				   CPUBusy,
 
    // cpu side
-   input logic [1:0] 		   LsuRWM,
-   input logic [1:0] 		   LsuAtomicM,
-   input logic 				   FlushDCacheM,
+   input logic [1:0] 		   RW,
+   input logic [1:0] 		   Atomic,
+   input logic 				   FlushCache,
    input logic [11:0] 		   LsuAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  LsuPAdrM, // physical address
    input logic [11:0] 		   PreLsuPAdrM, // physical or virtual address   
-   input logic [`XLEN-1:0] 	   FinalWriteDataM,
-   output logic [`XLEN-1:0]    ReadDataWordM,
-   output logic 			   DCacheCommittedM, 
+   input logic [`XLEN-1:0] 	   FinalWriteData,
+   output logic [`XLEN-1:0]    ReadDataWord,
+   output logic 			   CacheCommitted, 
 
    // Bus fsm interface
    input logic 				   IgnoreRequest,
-   output logic 			   DCacheFetchLine,
-   output logic 			   DCacheWriteLine,
+   output logic 			   CacheFetchLine,
+   output logic 			   CacheWriteLine,
 
-   input logic 				   DCacheBusAck,
-   output logic [`PA_BITS-1:0] DCacheBusAdr,
+   input logic 				   CacheBusAck,
+   output logic [`PA_BITS-1:0] CacheBusAdr,
 
 
-   input logic [LINELEN-1:0]   DCacheMemWriteData,
-   output logic [`XLEN-1:0]    ReadDataLineSetsM [(LINELEN/`XLEN)-1:0],
+   input logic [LINELEN-1:0]   CacheMemWriteData,
+   output logic [`XLEN-1:0]    ReadDataLineSets [(LINELEN/`XLEN)-1:0],
 
-   output logic 			   DCacheStall,
+   output logic 			   CacheStall,
 
    // to performance counters
-   output logic 			   DCacheMiss,
-   output logic 			   DCacheAccess,
-   input logic 				   InvalidateICacheM
+   output logic 			   CacheMiss,
+   output logic 			   CacheAccess,
+   input logic 				   InvalidateCacheM
    );
 
 
@@ -141,7 +141,7 @@ module cache #(parameter integer LINELEN,
 					  .VictimWay, .FlushWay, .SelFlush,
 					  .ReadDataLineWayMasked,
 					  .WayHit, .VictimDirtyWay, .VictimTagWay,
-					  .InvalidateAll(InvalidateICacheM));
+					  .InvalidateAll(InvalidateCacheM));
 
   generate
     if(NUMWAYS > 1) begin:vict
@@ -175,10 +175,10 @@ module cache #(parameter integer LINELEN,
   generate
 	if(DCACHE == 1) begin
       for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-		assign ReadDataLineSetsM[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
+		assign ReadDataLineSets[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
       end
 	  // variable input mux
-	  assign ReadDataWordM = ReadDataLineSetsM[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
+	  assign ReadDataWord = ReadDataLineSets[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
 
 	end else begin
 	  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
@@ -190,9 +190,9 @@ module cache #(parameter integer LINELEN,
 
 	  assign FinalInstrRawF = ReadLineSetsF[LsuPAdrM[$clog2(LINELEN / 32) + 1 : 1]];
 	  if (`XLEN == 64) begin
-		assign ReadDataWordM = {32'b0, FinalInstrRawF};		
+		assign ReadDataWord = {32'b0, FinalInstrRawF};		
 	  end else begin
-	  assign ReadDataWordM = FinalInstrRawF;				
+	  assign ReadDataWord = FinalInstrRawF;				
 	  end
 
 	end
@@ -216,8 +216,8 @@ module cache #(parameter integer LINELEN,
 
 
 
-  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
-								.d1(DCacheMemWriteData),
+  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
+								.d1(CacheMemWriteData),
 								.s(SRAMLineWriteEnableM),
 								.y(SRAMWriteData));
 
@@ -226,7 +226,7 @@ module cache #(parameter integer LINELEN,
 							  .d1({VictimTag, LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 							  .d2({VictimTag, FlushAdrQ, {{OFFSETLEN}{1'b0}}}),
 							  .s({SelFlush, SelEvict}),
-							  .y(DCacheBusAdr));
+							  .y(CacheBusAdr));
 
 
   // flush address and way generation.
@@ -261,20 +261,21 @@ module cache #(parameter integer LINELEN,
   assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
 
   // controller
+  // *** fixme
   logic CacheableM;
   
   assign CacheableM = 1;
 
-  // *** fixme
-  dcachefsm dcachefsm(.clk, .reset, .DCacheFetchLine, .DCacheWriteLine, .DCacheBusAck, 
-					  .LsuRWM, .LsuAtomicM, .CPUBusy, .CacheableM, .IgnoreRequest,
- 					  .CacheHit, .VictimDirty, .DCacheStall, .DCacheCommittedM, 
-					  .DCacheMiss, .DCacheAccess, .SelAdrM, .SetValid, 
-					  .ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
-					  .SRAMLineWriteEnableM, .SelEvict, .SelFlush,
-					  .FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-					  .FlushWayCntRst, .FlushAdrFlag, .FlushDCacheM, 
-					  .VDWriteEnable, .LRUWriteEn);
+
+  cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
+					.RW, .Atomic, .CPUBusy, .CacheableM, .IgnoreRequest,
+ 					.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
+					.CacheMiss, .CacheAccess, .SelAdrM, .SetValid, 
+					.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
+					.SRAMLineWriteEnableM, .SelEvict, .SelFlush,
+					.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
+					.FlushWayCntRst, .FlushAdrFlag, .FlushCache, 
+					.VDWriteEnable, .LRUWriteEn);
   
 
 endmodule // dcache

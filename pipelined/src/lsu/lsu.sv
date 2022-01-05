@@ -309,13 +309,13 @@ module lsu
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
 			  .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
 	  dcache(.clk, .reset, .CPUBusy,
-            .LsuRWM(CacheableM ? LsuRWM : 2'b00), .FlushDCacheM, .LsuAtomicM(CacheableM ? LsuAtomicM : 2'b00), 
+            .RW(CacheableM ? LsuRWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LsuAtomicM : 2'b00), 
 			 .LsuAdrE, .LsuPAdrM, .PreLsuPAdrM(PreLsuPAdrM[11:0]), // still don't like this name PreLsuPAdrM, not always physical
-            .FinalWriteDataM, .ReadDataWordM, .DCacheStall,
-            .DCacheMiss, .DCacheAccess, 
-            .IgnoreRequest, .DCacheCommittedM,
-            .DCacheBusAdr, .ReadDataLineSetsM, .DCacheMemWriteData,
-            .DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck, .InvalidateICacheM(1'b0));
+            .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStall),
+            .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
+            .IgnoreRequest, .CacheCommitted(DCacheCommittedM),
+            .CacheBusAdr(DCacheBusAdr), .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
+            .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
     end else begin : passthrough
       assign ReadDataWordM = 0;
       assign DCacheStall = 0;
