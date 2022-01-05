@@ -39,7 +39,7 @@ module shifter (
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-  generate
+//  generate
     if (`XLEN==32) begin:shifter // RV32
       always_comb  // funnel mux
         if (Right) 
@@ -62,7 +62,7 @@ module shifter (
         end
       assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
     end
-  endgenerate
+//  endgenerate
 
   // opposite offset for right shfits
   assign offset = Right ? amttrunc : ~amttrunc;

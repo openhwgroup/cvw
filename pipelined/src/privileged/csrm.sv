@@ -92,32 +92,30 @@ module csrm #(parameter
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
-  generate
-    if (`PMP_ENTRIES > 0) begin:pmp
-      logic [`PMP_ENTRIES-1:0] WritePMPCFGM;
-      logic [`PMP_ENTRIES-1:0] WritePMPADDRM ; 
-      logic [`PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
-      for(i=0; i<`PMP_ENTRIES; i++) begin
-        // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
-        // also, when the lock bit of the next entry is set and the next entry is TOR, don't allow writes to this entry PMPADDR
-        assign CFGLocked[i] = PMPCFG_ARRAY_REGW[i][7];
-        if (i == `PMP_ENTRIES-1) 
-          assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7];
-        else
-          assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
-        
-        assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~StallW & ~ADDRLocked[i];
-        flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
-        if (`XLEN==64) begin
-          assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~StallW & ~CFGLocked[i];
-          flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
-        end else begin
-          assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~StallW & ~CFGLocked[i];
-          flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
-        end
+  if (`PMP_ENTRIES > 0) begin:pmp
+    logic [`PMP_ENTRIES-1:0] WritePMPCFGM;
+    logic [`PMP_ENTRIES-1:0] WritePMPADDRM ; 
+    logic [`PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
+    for(i=0; i<`PMP_ENTRIES; i++) begin
+      // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
+      // also, when the lock bit of the next entry is set and the next entry is TOR, don't allow writes to this entry PMPADDR
+      assign CFGLocked[i] = PMPCFG_ARRAY_REGW[i][7];
+      if (i == `PMP_ENTRIES-1) 
+        assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7];
+      else
+        assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
+      
+      assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~StallW & ~ADDRLocked[i];
+      flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
+      if (`XLEN==64) begin
+        assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~StallW & ~CFGLocked[i];
+        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
+      end else begin
+        assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~StallW & ~CFGLocked[i];
+        flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
       end
     end
-  endgenerate
+  end
 
   localparam MISA_26 = (`MISA) & 32'h03ffffff;
 
@@ -143,28 +141,24 @@ module csrm #(parameter
 
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); //busybear: changed reset value to 0
-  generate
-    if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin:deleg // DELEG registers should exist
-      flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, MEDELEG_REGW);
-      flopenr #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, MIDELEG_REGW);
-    end else begin
-      assign MEDELEG_REGW = 0;
-      assign MIDELEG_REGW = 0;
-    end
-  endgenerate
+  if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin:deleg // DELEG registers should exist
+    flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, MEDELEG_REGW);
+    flopenr #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, MIDELEG_REGW);
+  end else begin
+    assign MEDELEG_REGW = 0;
+    assign MIDELEG_REGW = 0;
+  end
 
   flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
   flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
   if(`QEMU) assign MTVAL_REGW = `XLEN'b0;
   else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
-  generate // *** needs comment about bit 1
-    if (`BUSYBEAR == 1) begin:counters
+    if (`BUSYBEAR == 1) begin:counters // counter 1 (TIME) enable tied to 0 to match simulator***
       flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, MCOUNTEREN_REGW);
     end else  begin:counters
       flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
     end
-  endgenerate
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
 
 

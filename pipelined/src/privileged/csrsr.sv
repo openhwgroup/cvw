@@ -50,54 +50,50 @@ module csrsr (
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
   // *** consider adding MBE, SBE, UBE fields later from 20210108 draft spec
-  generate
-    if (`XLEN==64) begin: csrsr64 // RV64
-      assign MSTATUS_REGW = {STATUS_SD, 27'b0, STATUS_SXL, STATUS_UXL, 9'b0,
-                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-                            STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
-                            STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, 
-                            STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
-      assign SSTATUS_REGW = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ STATUS_UXL, /*9'b0, */ 12'b0,
-                            /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
-                            STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
-                            STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
-                            /*STATUS_MIE, 1'b0*/ 2'b0, STATUS_SIE, STATUS_UIE};
-      assign USTATUS_REGW = {/*STATUS_SD, */ 59'b0, /*STATUS_SXL, STATUS_UXL, 9'b0, */
-                            /*STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM,  STATUS_MPRV, , 1'b0,*/
-                            /* STATUS_XS, STATUS_FS, /*STATUS_MPP,  8'b0, */
-                            /*STATUS_SPP, STATUS_MPIE, 1'b0 2'b0, STATUS_SPIE,*/ STATUS_UPIE, 
-                            /*STATUS_MIE, 1'b0*/ 3'b0, /*STATUS_SIE, */STATUS_UIE};
-    end else begin: csrsr32 // RV32
-      assign MSTATUS_REGW = {STATUS_SD, 8'b0,
-                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-                            STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
-                            STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
-      assign SSTATUS_REGW = {STATUS_SD, 11'b0,
-                            /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
-                            STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
-                            STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
-                            /*STATUS_MIE, 1'b0*/ 2'b0, STATUS_SIE, STATUS_UIE};
-      assign USTATUS_REGW = {/*STATUS_SD, */ 27'b0, /*STATUS_SXL, STATUS_UXL, 9'b0, */
-                            /*STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM,  STATUS_MPRV, , 1'b0,*/
-                            /*STATUS_XS, STATUS_FS, STATUS_MPP,  8'b0, */
-                            /*STATUS_SPP, STATUS_MPIE, 1'b0 2'b0, STATUS_SPIE,*/ STATUS_UPIE, 
-                            /*STATUS_MIE, 1'b0*/ 3'b0, /*STATUS_SIE, */STATUS_UIE};
-    end
-  endgenerate
+  if (`XLEN==64) begin: csrsr64 // RV64
+    assign MSTATUS_REGW = {STATUS_SD, 27'b0, STATUS_SXL, STATUS_UXL, 9'b0,
+                          STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+                          STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
+                          STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, 
+                          STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
+    assign SSTATUS_REGW = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ STATUS_UXL, /*9'b0, */ 12'b0,
+                          /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
+                          STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
+                          STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
+                          /*STATUS_MIE, 1'b0*/ 2'b0, STATUS_SIE, STATUS_UIE};
+    assign USTATUS_REGW = {/*STATUS_SD, */ 59'b0, /*STATUS_SXL, STATUS_UXL, 9'b0, */
+                          /*STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM,  STATUS_MPRV, , 1'b0,*/
+                          /* STATUS_XS, STATUS_FS, /*STATUS_MPP,  8'b0, */
+                          /*STATUS_SPP, STATUS_MPIE, 1'b0 2'b0, STATUS_SPIE,*/ STATUS_UPIE, 
+                          /*STATUS_MIE, 1'b0*/ 3'b0, /*STATUS_SIE, */STATUS_UIE};
+  end else begin: csrsr32 // RV32
+    assign MSTATUS_REGW = {STATUS_SD, 8'b0,
+                          STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+                          STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
+                          STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
+    assign SSTATUS_REGW = {STATUS_SD, 11'b0,
+                          /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
+                          STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
+                          STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
+                          /*STATUS_MIE, 1'b0*/ 2'b0, STATUS_SIE, STATUS_UIE};
+    assign USTATUS_REGW = {/*STATUS_SD, */ 27'b0, /*STATUS_SXL, STATUS_UXL, 9'b0, */
+                          /*STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM,  STATUS_MPRV, , 1'b0,*/
+                          /*STATUS_XS, STATUS_FS, STATUS_MPP,  8'b0, */
+                          /*STATUS_SPP, STATUS_MPIE, 1'b0 2'b0, STATUS_SPIE,*/ STATUS_UPIE, 
+                          /*STATUS_MIE, 1'b0*/ 3'b0, /*STATUS_SIE, */STATUS_UIE};
+  end
 
   // harwired STATUS bits
-  generate
-    assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
-    assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
-    assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
-    assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
-    // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
-    assign STATUS_SXL = `S_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if supervisor mode supported
-    assign STATUS_UXL = `U_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if user mode supported
-    assign STATUS_SUM = `S_SUPPORTED & `MEM_VIRTMEM & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
-    assign STATUS_MPRV = `U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
-    assign STATUS_FS = (`S_SUPPORTED & (`F_SUPPORTED | `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP
-  endgenerate
+  assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
+  assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
+  // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
+  assign STATUS_SXL = `S_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if supervisor mode supported
+  assign STATUS_UXL = `U_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if user mode supported
+  assign STATUS_SUM = `S_SUPPORTED & `MEM_VIRTMEM & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_MPRV = `U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
+  assign STATUS_FS = (`S_SUPPORTED & (`F_SUPPORTED | `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP  
   assign STATUS_SD = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
   assign STATUS_XS = 2'b00; // No additional user-mode state to be dirty
 
