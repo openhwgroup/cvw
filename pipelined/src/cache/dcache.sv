@@ -25,46 +25,45 @@
 
 `include "wally-config.vh"
 
-module dcache
+module dcache #(parameter integer LINELEN, 
+				parameter integer NUMLINES, 
+				parameter integer NUMWAYS)
   (input logic clk,
-   input logic 								reset,
-   input logic 								CPUBusy,
+   input logic 				   reset,
+   input logic 				   CPUBusy,
 
    // mmu
-   input logic 								CacheableM,
+   input logic 				   CacheableM,
    // cpu side
-   input logic [1:0] 						LsuRWM,
-   input logic [1:0] 						LsuAtomicM,
-   input logic 								FlushDCacheM,
-   input logic [11:0] 						LsuAdrE, // virtual address, but we only use the lower 12 bits.
-   input logic [`PA_BITS-1:0] 				LsuPAdrM, // physical address
-   input logic [11:0] 						PreLsuPAdrM, // physical or virtual address   
-   input logic [`XLEN-1:0] 					FinalWriteDataM,
-   output logic [`XLEN-1:0] 				ReadDataWordM,
-   output logic 							DCacheCommittedM, 
+   input logic [1:0] 		   LsuRWM,
+   input logic [1:0] 		   LsuAtomicM,
+   input logic 				   FlushDCacheM,
+   input logic [11:0] 		   LsuAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [`PA_BITS-1:0]  LsuPAdrM, // physical address
+   input logic [11:0] 		   PreLsuPAdrM, // physical or virtual address   
+   input logic [`XLEN-1:0] 	   FinalWriteDataM,
+   output logic [`XLEN-1:0]    ReadDataWordM,
+   output logic 			   DCacheCommittedM, 
 
    // Bus fsm interface
-   input logic 								IgnoreRequest,
-   output logic 							DCacheFetchLine,
-   output logic 							DCacheWriteLine,
+   input logic 				   IgnoreRequest,
+   output logic 			   DCacheFetchLine,
+   output logic 			   DCacheWriteLine,
 
-   input logic 								DCacheBusAck,
-   output logic [`PA_BITS-1:0] 				DCacheBusAdr,
+   input logic 				   DCacheBusAck,
+   output logic [`PA_BITS-1:0] DCacheBusAdr,
 
 
-   input logic [`DCACHE_LINELENINBITS-1:0] DCacheMemWriteData,
-   output logic [`XLEN-1:0] 				ReadDataLineSetsM [(`DCACHE_LINELENINBITS/`XLEN)-1:0],
+   input logic [LINELEN-1:0]   DCacheMemWriteData,
+   output logic [`XLEN-1:0]    ReadDataLineSetsM [(LINELEN/`XLEN)-1:0],
 
-   output logic 							DCacheStall,
+   output logic 			   DCacheStall,
 
    // to performance counters
-   output logic 							DCacheMiss,
-   output logic 							DCacheAccess
+   output logic 			   DCacheMiss,
+   output logic 			   DCacheAccess
    );
 
-  localparam integer 						LINELEN = `DCACHE_LINELENINBITS;
-  localparam integer 						NUMLINES = `DCACHE_WAYSIZEINBYTES*8/LINELEN;
-  localparam integer 						NUMWAYS = `DCACHE_NUMWAYS;
 
   localparam integer 						LINEBYTELEN = LINELEN/8;
   localparam integer 						OFFSETLEN = $clog2(LINEBYTELEN);

@@ -25,31 +25,32 @@
 
 `include "wally-config.vh"
 
-module icache
+module icache #(parameter integer LINELEN, 
+				parameter integer NUMLINES,
+				parameter integer NUMWAYS)
   (
    // Basic pipeline stuff
-   input logic 								clk, reset,
-   input logic 								CPUBusy,
+   input logic 				  clk, reset,
+   input logic 				  CPUBusy,
 
    // mmu
-   //input logic 								CacheableF,
-   input logic [1:0] 						IfuRWF,
+   input logic [1:0] 		  IfuRWF,
 
    // cpu side 
-   input logic 								InvalidateICacheM,
-   input logic [11:0] 						PCNextF,
-   input logic [`PA_BITS-1:0] 				PCPF,
-   input logic [`XLEN-1:0] 					PCF,
+   input logic 				  InvalidateICacheM,
+   input logic [11:0] 		  PCNextF,
+   input logic [`PA_BITS-1:0] PCPF,
+   input logic [`XLEN-1:0] 	  PCF,
 
    // bus fsm interface
-   input logic 								IgnoreRequest,
-   input logic [`ICACHE_LINELENINBITS-1:0] ICacheMemWriteData,
-   output logic 							ICacheFetchLine,
+   input logic 				  IgnoreRequest,
+   input logic [LINELEN-1:0]  ICacheMemWriteData,
+   output logic 			  ICacheFetchLine,
 
-   (* mark_debug = "true" *) input logic 	ICacheBusAck,
+   (* mark_debug = "true" *) input logic ICacheBusAck,
    (* mark_debug = "true" *) output logic [`PA_BITS-1:0] ICacheBusAdr,
    // High if the icache is requesting a stall
-   output logic 							ICacheStallF,
+   output logic 			  ICacheStallF,
   
    // The raw (not decompressed) instruction that was requested
    // If this instruction is compressed, upper 16 bits may be the next 16 bits or may be zeros
@@ -57,8 +58,6 @@ module icache
    );
 
   // Configuration parameters
-  localparam integer 		  LINELEN = `ICACHE_LINELENINBITS;
-  localparam integer 		  NUMLINES = `ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS;
   localparam integer 		  LINEBYTELEN = LINELEN/8;
 
   localparam integer 		  OFFSETLEN = $clog2(LINEBYTELEN);
@@ -69,7 +68,7 @@ module icache
   localparam WORDSPERLINE = LINELEN/`XLEN;
   localparam LOGWPL = $clog2(WORDSPERLINE);
 
-  localparam integer 		  NUMWAYS = `ICACHE_NUMWAYS;
+
   
 
   // Input signals to cache memory
@@ -86,7 +85,7 @@ module icache
   
   logic [LINELEN-1:0] 		  ReadDataLineWayMasked [NUMWAYS-1:0];
 
-  logic [31:0] 				  ReadLineSetsF [`ICACHE_LINELENINBITS/16-1:0];
+  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
   
   logic [NUMWAYS-1:0] 		  SRAMWayWriteEnable;
 

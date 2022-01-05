@@ -243,7 +243,10 @@ module ifu (
 	  logic [1:0] IfuRWF;
 	  assign IfuRWF = CacheableF ? 2'b10 : 2'b00;
 	  
-	  icache icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
+	  icache #(.LINELEN(`ICACHE_LINELENINBITS),
+			   .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
+			   .NUMWAYS(`ICACHE_NUMWAYS))
+	  icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
 					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF,
 					.ICacheFetchLine,
 					.IfuRWF(IfuRWF), //aways read
