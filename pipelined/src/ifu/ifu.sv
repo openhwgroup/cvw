@@ -262,22 +262,22 @@ module ifu (
 	  cache #(.LINELEN(`ICACHE_LINELENINBITS),
 			  .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
 			  .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
-	  icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .DCacheMemWriteData(ICacheMemWriteData) , .DCacheBusAck(ICacheBusAck),
-			 .DCacheBusAdr(ICacheBusAdr), .DCacheStall(ICacheStallF), .ReadDataWordM(FinalInstrRawF_FIXME),
-			 .DCacheFetchLine(ICacheFetchLine),
-			 .DCacheWriteLine(),
-			 .ReadDataLineSetsM(),
-			 .DCacheMiss(),
-			 .DCacheAccess(),
-			 .FinalWriteDataM('0),
-			 .LsuRWM(IfuRWF), //aways read
-			 .LsuAtomicM(2'b00),
-			 .FlushDCacheM(1'b0),
-			 .LsuAdrE(PCNextFMux),
-			 .LsuPAdrM(PCPF),
-			 .PreLsuPAdrM(PCFMux[11:0]),
-			 .DCacheCommittedM(),
-			 .InvalidateICacheM);
+	  icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .CacheMemWriteData(ICacheMemWriteData) , .CacheBusAck(ICacheBusAck),
+			 .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), .ReadDataWord(FinalInstrRawF_FIXME),
+			 .CacheFetchLine(ICacheFetchLine),
+			 .CacheWriteLine(),
+			 .ReadDataLineSets(),
+			 .CacheMiss(),
+			 .CacheAccess(),
+			 .FinalWriteData('0),
+			 .RW(IfuRWF), //aways read
+			 .Atomic(2'b00),
+			 .FlushCache(1'b0),
+			 .LsuAdrE(PCNextFMux), // fixme
+			 .LsuPAdrM(PCPF), // fixme
+			 .PreLsuPAdrM(PCFMux[11:0]), //fixme
+			 .CacheCommitted(),
+			 .InvalidateCacheM(InvalidateICacheM));
 
 	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
 
