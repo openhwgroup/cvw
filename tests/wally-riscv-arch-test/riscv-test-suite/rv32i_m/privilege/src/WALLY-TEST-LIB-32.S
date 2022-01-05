@@ -295,9 +295,17 @@ test_loop:
                                     #   x30 Value : Function                              : Fault output value     : Normal output values
                                     #   ----------:---------------------------------------:------------------------:------------------------------------------------------
     li x7, 0x0                      #             :                                       :                        : 
-    beq x30, x7, write_test         #         0x0 : Write to address                      : 0xf                    : None
+    beq x30, x7, write32_test       #         0x0 : Write 32 bits to address              : 0xf                    : None
+    li x7, 0x12                     #             :                                       :                        : 
+    beq x30, x7, write16_test       #        0x12 : Write 16 bits to address              : 0xf                    : None
+    li x7, 0x13                     #             :                                       :                        : 
+    beq x30, x7, write08_test       #        0x13 : Write 8 bits to address               : 0xf                    : None
     li x7, 0x1                      #             :                                       :                        :
-    beq x30, x7, read_test          #         0x1 : Read from address                     : 0xd, 0xbad             : readvalue in hex
+    beq x30, x7, read32_test        #         0x1 : Read 32 bits from address             : 0xd, 0xbad             : readvalue in hex
+    li x7, 0x15                     #             :                                       :                        :
+    beq x30, x7, read16_test        #        0x15 : Read 16 bitsfrom address              : 0xd, 0xbad             : readvalue in hex
+    li x7, 0x16                     #             :                                       :                        :
+    beq x30, x7, read08_test        #        0x16 : Read 8 bitsfrom address               : 0xd, 0xbad             : readvalue in hex
     li x7, 0x2                      #             :                                       :                        :
     beq x30, x7, executable_test    #         0x2 : test executable at address            : 0xc, 0xbad             : leading 12 bits of the li instr written to address. In general this is 0x111. (be sure to also write a return instruction)
     li x7, 0x3                      #             :                                       :                        :
@@ -311,7 +319,7 @@ test_loop:
     li x7, 0xD                      #             :                                       :                        :
     beq x30, x7, write_pmpcfg_0     #         0xD : Write one of the pmpcfg csr's         : mstatuses?, 0xD        : readback of pmpcfg value
     li x7, 0xE                      #             :                                       :                        :
-    beq x30, x7, write_pmpaddr_0    #         0xE : Write one of the pmpaddr csr's        : None                   : None
+    beq x30, x7, write_pmpaddr_0    #         0xE : Write one of the pmpaddr csr's        : None                   : readback of pmpaddr value
     li x7, 0x8                      #             :                                       :                        :
     beq x30, x7, goto_m_mode        #         0x8 : go to mahcine mode                    : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
     li x7, 0x9                      #             :                                       :                        :
@@ -321,19 +329,48 @@ test_loop:
                                     # ------------------------------------------------------------------------------------------------------------------------------------
     j terminate_test # default case: break
 
-write_test:
-    # address to write in x28, value in x29
+write32_test:
+    # address to write in x28, word value in x29
     sw x29, 0(x28)
     j test_loop # go to next test case
 
-read_test:
-    # address to read in x28, expected value in x29 (unused, but there for your perusal).
+write16_test:
+    # address to write in x28, halfword value in x29
+    sh x29, 0(x28)
+    j test_loop # go to next test case
+
+write08_test:
+    # address to write in x28, value in x29
+    sb x29, 0(x28)
+    j test_loop # go to next test case
+
+read32_test:
+    # address to read in x28, expected 32 bit value in x29 (unused, but there for your perusal).
     li x7, 0xBAD # bad value that will be overwritten on good reads.
     lw x7, 0(x28)
     sw x7, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    addi x6, x6, 8
+    addi x16, x16, 8
     j test_loop # go to next test case
+
+read16_test:
+    # address to read in x28, expected 16 bit value in x29 (unused, but there for your perusal).
+    li x7, 0xBAD # bad value that will be overwritten on good reads.
+    lh x7, 0(x28)
+    sw x7, 0(x6)
+    addi x6, x6, 8
+    addi x16, x16, 8
+    j test_loop # go to next test case
+
+read08_test:
+    # address to read in x28, expected 8 bit value in x29 (unused, but there for your perusal).
+    li x7, 0xBAD # bad value that will be overwritten on good reads.
+    lb x7, 0(x28)
+    sw x7, 0(x6)
+    addi x6, x6, 8
+    addi x16, x16, 8
+    j test_loop # go to next test case
+
 
 goto_s_mode:
     li a0, 3 # Trap handler behavior (go to machine mode)

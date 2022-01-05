@@ -44,7 +44,7 @@
 
 # Test 12.3.2.2.1 Config: Write known values and set PMP config according to table 12.4 in the *** riscv book, copied below
 
-# write pmpaddr regs. These should produce no outputs. *** consider replacing if a test needs to see the outputs of this.
+# write pmpaddr regs
                             # | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |
 .4byte 0x0, 0x0FFFFFFF, 0xE # | 0     | 0x0FFFFFFF  | 1F        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
 .4byte 0x1, 0x20040000, 0xE # | 1     | 0x20040000  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
@@ -59,7 +59,7 @@
 # write pmpcfg regs with the information in the table above. this should also write the value of these registers to the output.
 .4byte 0x0, 0x0009001F, 0xD # write pmpcfg0, output 0x0009001F
 .4byte 0x1, 0x0018900C, 0xD # write pmpcfg1, output 0x0018900C
-# .4byte 0x2, 0x00000000, 0xD # write pmpcfg2, output 0x00000000
+# pmpcfg2 is zeroed out, so it doesn't need a write
 .4byte 0x3, 0x1F000000, 0xD # write pmpcfg3, output 0x1F000000
 
 # write known values to memory where W=0. This should be possible since we're in machine mode.

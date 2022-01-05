@@ -1049,7 +1049,7 @@ string imperas32f[] = '{
     `RISCVARCHTEST,
     "rv64i_m/D/d_fadd_b10-01", "8690",
     "rv64i_m/D/d_fadd_b1-01", "8430",
-  //  "rv64i_m/D/d_fadd_b11-01", "74da0", //memfile
+    "rv64i_m/D/d_fadd_b11-01", "74da0", 
     "rv64i_m/D/d_fadd_b12-01", "2350",
     "rv64i_m/D/d_fadd_b13-01", "3cb0",
     "rv64i_m/D/d_fadd_b2-01", "5160",
@@ -1073,11 +1073,11 @@ string imperas32f[] = '{
     "rv64i_m/D/d_fcvt.d.w_b25-01", "2120",
     "rv64i_m/D/d_fcvt.d.w_b26-01", "2220",
     "rv64i_m/D/d_fcvt.d.wu_b25-01", "2110",
-    // "rv64i_m/D/d_fcvt.d.wu_b26-01", "2220", //memfile
+    "rv64i_m/D/d_fcvt.d.wu_b26-01", "2220", 
     "rv64i_m/D/d_fcvt.l.d_b1-01", "2120",
     "rv64i_m/D/d_fcvt.l.d_b22-01", "2260",
     "rv64i_m/D/d_fcvt.l.d_b23-01", "2180",
-    // "rv64i_m/D/d_fcvt.l.d_b24-01", "2360", // memfile
+    "rv64i_m/D/d_fcvt.l.d_b24-01", "2360", 
     "rv64i_m/D/d_fcvt.l.d_b27-01", "2110",
     "rv64i_m/D/d_fcvt.l.d_b28-01", "2120",
     "rv64i_m/D/d_fcvt.l.d_b29-01", "22a0",
@@ -1095,17 +1095,17 @@ string imperas32f[] = '{
     "rv64i_m/D/d_fcvt.s.d_b27-01", "2110",
     "rv64i_m/D/d_fcvt.s.d_b28-01", "2110",
     "rv64i_m/D/d_fcvt.s.d_b29-01", "22a0",
-    // "rv64i_m/D/d_fcvt.w.d_b1-01", "2120", // memfile
-    // "rv64i_m/D/d_fcvt.w.d_b22-01", "2160", // memfile
+    "rv64i_m/D/d_fcvt.w.d_b1-01", "2120", 
+    "rv64i_m/D/d_fcvt.w.d_b22-01", "2160", 
     "rv64i_m/D/d_fcvt.w.d_b23-01", "2180",
     "rv64i_m/D/d_fcvt.w.d_b24-01", "2360",
     "rv64i_m/D/d_fcvt.w.d_b27-01", "2120",
     "rv64i_m/D/d_fcvt.w.d_b28-01", "2120",
     "rv64i_m/D/d_fcvt.w.d_b29-01", "22a0",
-    // "rv64i_m/D/d_fcvt.wu.d_b1-01", "2120", // memfile
+    "rv64i_m/D/d_fcvt.wu.d_b1-01", "2120", 
     "rv64i_m/D/d_fcvt.wu.d_b22-01", "2160",
     "rv64i_m/D/d_fcvt.wu.d_b23-01", "2180",
-    // "rv64i_m/D/d_fcvt.wu.d_b24-01", "2360", // memfile
+    "rv64i_m/D/d_fcvt.wu.d_b24-01", "2360", 
     "rv64i_m/D/d_fcvt.wu.d_b27-01", "2120",
     "rv64i_m/D/d_fcvt.wu.d_b28-01", "2120",
     "rv64i_m/D/d_fcvt.wu.d_b29-01", "22a0",
@@ -1119,7 +1119,7 @@ string imperas32f[] = '{
     // "rv64i_m/D/d_fdiv_b6-01", "38f0", // flags
     "rv64i_m/D/d_fdiv_b7-01", "5530",
     // "rv64i_m/D/d_fdiv_b8-01", "11c10", // flags
-    // "rv64i_m/D/d_fdiv_b9-01", "1b0f0", // memfile might be a flag too
+    // "rv64i_m/D/d_fdiv_b9-01", "1b0f0",  might be a flag too
     "rv64i_m/D/d_feq_b1-01", "7430",
     "rv64i_m/D/d_feq_b19-01", "c4c0",
     "rv64i_m/D/d_fld-align-01", "2010",
@@ -1129,8 +1129,8 @@ string imperas32f[] = '{
     "rv64i_m/D/d_flt_b19-01", "d800",
     "rv64i_m/D/d_fmadd_b14-01", "3fd0",
     "rv64i_m/D/d_fmadd_b16-01", "43b0",
-    // "rv64i_m/D/d_fmadd_b17-01", "43b0", //memfile
-    // "rv64i_m/D/d_fmadd_b18-01", "5a20", // memfile
+    "rv64i_m/D/d_fmadd_b17-01", "43b0", 
+    "rv64i_m/D/d_fmadd_b18-01", "5a20", 
     "rv64i_m/D/d_fmadd_b2-01", "5ab0",
     "rv64i_m/D/d_fmadd_b3-01", "119d0",
     "rv64i_m/D/d_fmadd_b4-01", "3df0",
@@ -1143,9 +1143,9 @@ string imperas32f[] = '{
     "rv64i_m/D/d_fmin_b1-01", "8430",
     "rv64i_m/D/d_fmin_b19-01", "d4b0",
     "rv64i_m/D/d_fmsub_b14-01", "3fd0",
-    // "rv64i_m/D/d_fmsub_b16-01", "43b0", // memfile
-    // "rv64i_m/D/d_fmsub_b17-01", "43b0",
-    // "rv64i_m/D/d_fmsub_b18-01", "5a20", // memfile
+    "rv64i_m/D/d_fmsub_b16-01", "43b0", 
+    "rv64i_m/D/d_fmsub_b17-01", "43b0",
+    "rv64i_m/D/d_fmsub_b18-01", "5a20", 
     "rv64i_m/D/d_fmsub_b2-01", "5ab0",
     "rv64i_m/D/d_fmsub_b3-01", "119f0",
     "rv64i_m/D/d_fmsub_b4-01", "3df0",
@@ -1174,9 +1174,9 @@ string imperas32f[] = '{
     "rv64i_m/D/d_fnmadd_b14-01", "3fd0",
     "rv64i_m/D/d_fnmadd_b16-01", "4390",
     "rv64i_m/D/d_fnmadd_b17-01", "4390",
-    // "rv64i_m/D/d_fnmadd_b18-01", "5a20", // memfile
+    "rv64i_m/D/d_fnmadd_b18-01", "5a20", 
     "rv64i_m/D/d_fnmadd_b2-01", "5ab0",
-    // "rv64i_m/D/d_fnmadd_b3-01", "119d0", // memfile
+    "rv64i_m/D/d_fnmadd_b3-01", "119d0", 
     "rv64i_m/D/d_fnmadd_b4-01", "3df0",
     "rv64i_m/D/d_fnmadd_b5-01", "4480",
     "rv64i_m/D/d_fnmadd_b6-01", "3df0",
@@ -1184,15 +1184,15 @@ string imperas32f[] = '{
     "rv64i_m/D/d_fnmadd_b8-01", "15aa0",
     "rv64i_m/D/d_fnmsub_b14-01", "3fd0",
     "rv64i_m/D/d_fnmsub_b16-01", "4390",
-    // "rv64i_m/D/d_fnmsub_b17-01", "4390", // memfile - there's a "it" in the file
-    // "rv64i_m/D/d_fnmsub_b18-01", "5a20", // memfile
+    "rv64i_m/D/d_fnmsub_b17-01", "4390", 
+    "rv64i_m/D/d_fnmsub_b18-01", "5a20",
     "rv64i_m/D/d_fnmsub_b2-01", "5aa0",
     "rv64i_m/D/d_fnmsub_b3-01", "119d0",
     "rv64i_m/D/d_fnmsub_b4-01", "3e20",
     "rv64i_m/D/d_fnmsub_b5-01", "4480",
     "rv64i_m/D/d_fnmsub_b6-01", "3e10",
     "rv64i_m/D/d_fnmsub_b7-01", "6050",
-    // "rv64i_m/D/d_fnmsub_b8-01", "15aa0", // memfile - not obvious have to check with .elf.debug
+    "rv64i_m/D/d_fnmsub_b8-01", "15aa0", 
     "rv64i_m/D/d_fsd-align-01", "2010",
     "rv64i_m/D/d_fsgnj_b1-01", "8430",
     "rv64i_m/D/d_fsgnjn_b1-01", "8430",
@@ -1299,21 +1299,21 @@ string imperas32f[] = '{
     "rv32i_m/F/fle_b1-01", "6220",
     // "rv32i_m/F/fle_b19-01", "a190", // looks fine to me is the actual input value supposed to be infinity?
     "rv32i_m/F/flt_b1-01", "6220",
-    // "rv32i_m/F/flt_b19-01", "8ee0", // memfile
+    "rv32i_m/F/flt_b19-01", "8ee0", 
     "rv32i_m/F/flw-align-01", "2010",
     "rv32i_m/F/fmadd_b1-01", "96860",
     "rv32i_m/F/fmadd_b14-01", "23d0",
 // --passes but is timeconsuming    "rv32i_m/F/fmadd_b15-01", "19bb30",
     "rv32i_m/F/fmadd_b16-01", "39d0",
     "rv32i_m/F/fmadd_b17-01", "39d0",
-    // "rv32i_m/F/fmadd_b18-01", "4d10", // memfile - incorrect last value - ln 4931 supposed to be 71bffff8
+    "rv32i_m/F/fmadd_b18-01", "4d10", 
     "rv32i_m/F/fmadd_b2-01", "4d60",
     "rv32i_m/F/fmadd_b3-01", "d4f0",
     "rv32i_m/F/fmadd_b4-01", "3700",
     "rv32i_m/F/fmadd_b5-01", "3ac0",
     "rv32i_m/F/fmadd_b6-01", "3700",
-  //  "rv32i_m/F/fmadd_b7-01", "d7f0", // input values aren't even in the memfile are being used in the test
-  //  "rv32i_m/F/fmadd_b8-01", "13f30", // memfile incorrect input - last test input Z
+    //"rv32i_m/F/fmadd_b7-01", "d7f0", // input values aren't even in the memfile are being used in the test; didn't run even with fixed memfile
+    "rv32i_m/F/fmadd_b8-01", "13f30", 
     "rv32i_m/F/fmax_b1-01", "7220",
     "rv32i_m/F/fmax_b19-01", "9e00",
     "rv32i_m/F/fmin_b1-01", "7220",
@@ -1328,7 +1328,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fmsub_b3-01", "d4f0",
     "rv32i_m/F/fmsub_b4-01", "3700",
     "rv32i_m/F/fmsub_b5-01", "3ac0",
-    // "rv32i_m/F/fmsub_b6-01", "3700", // memfile
+    "rv32i_m/F/fmsub_b6-01", "3700", 
     "rv32i_m/F/fmsub_b7-01", "37f0",
     "rv32i_m/F/fmsub_b8-01", "13f30",
     "rv32i_m/F/fmul_b1-01", "7220",
@@ -1336,7 +1336,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fmul_b3-01", "b320",
     "rv32i_m/F/fmul_b4-01", "3480",
     "rv32i_m/F/fmul_b5-01", "3700",
-    // "rv32i_m/F/fmul_b6-01", "3480", // memfile
+    "rv32i_m/F/fmul_b6-01", "3480", 
     "rv32i_m/F/fmul_b7-01", "3520",
     "rv32i_m/F/fmul_b8-01", "104a0",
     "rv32i_m/F/fmul_b9-01", "d960",
@@ -1354,7 +1354,7 @@ string imperas32f[] = '{
 // timeconsuming    "rv32i_m/F/fnmadd_b15-01", "19bb40",
     "rv32i_m/F/fnmadd_b16-01", "39d0",
     "rv32i_m/F/fnmadd_b17-01", "39d0",
-    // "rv32i_m/F/fnmadd_b18-01", "4d10", // memfile
+    "rv32i_m/F/fnmadd_b18-01", "4d10", 
     "rv32i_m/F/fnmadd_b2-01", "4d60",
     "rv32i_m/F/fnmadd_b3-01", "d4f0",
     "rv32i_m/F/fnmadd_b4-01", "3700",
@@ -1363,17 +1363,17 @@ string imperas32f[] = '{
     "rv32i_m/F/fnmadd_b7-01", "37f0",
     "rv32i_m/F/fnmadd_b8-01", "13f30",
     "rv32i_m/F/fnmsub_b1-01", "96870",
-    // "rv32i_m/F/fnmsub_b14-01", "23d0", // memfile
+    "rv32i_m/F/fnmsub_b14-01", "23d0", 
 // timeconsuming    "rv32i_m/F/fnmsub_b15-01", "19bb30",
     "rv32i_m/F/fnmsub_b16-01", "39d0",
     "rv32i_m/F/fnmsub_b17-01", "39d0",
-    // "rv32i_m/F/fnmsub_b18-01", "4d10", // memfile
+    "rv32i_m/F/fnmsub_b18-01", "4d10", 
     "rv32i_m/F/fnmsub_b2-01", "4d60",
-    // "rv32i_m/F/fnmsub_b3-01", "4df0", // inputs that don't exist in memfile
+    //"rv32i_m/F/fnmsub_b3-01", "4df0", // inputs that don't exist in memfile
     "rv32i_m/F/fnmsub_b4-01", "3700",
     "rv32i_m/F/fnmsub_b5-01", "3ac0",
     "rv32i_m/F/fnmsub_b6-01", "3700",
-    // "rv32i_m/F/fnmsub_b7-01", "37f0", // memfile last input merged with a deadbeef
+    "rv32i_m/F/fnmsub_b7-01", "37f0", 
     "rv32i_m/F/fnmsub_b8-01", "13f30",
     "rv32i_m/F/fsgnj_b1-01", "7220",
     "rv32i_m/F/fsgnjn_b1-01", "7220",
@@ -1396,7 +1396,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fsub_b3-01", "b320",
     "rv32i_m/F/fsub_b4-01", "3480",
     "rv32i_m/F/fsub_b5-01", "3700",
-    // "rv32i_m/F/fsub_b7-01", "3520", // memfile
+    "rv32i_m/F/fsub_b7-01", "3520", 
     "rv32i_m/F/fsub_b8-01", "104a0",
     "rv32i_m/F/fsw-align-01", "2010"
 };
