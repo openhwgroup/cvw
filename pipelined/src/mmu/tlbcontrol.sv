@@ -60,65 +60,59 @@ module tlbcontrol #(parameter ITLB = 0) (
   logic                  UpperBitsUnequalPageFault;
   logic                  DAPageFault;
   logic                  TLBAccess;
+  logic ImproperPrivilege;
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
   assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~DisableTranslation; 
-  generate
-      if (`XLEN==64) begin:rv64
-          assign SV39Mode = (SATP_MODE == `SV39);
-          // generate page fault if upper bits aren't all the same
-          logic UpperEqual39, UpperEqual48;
-          assign UpperEqual39 = &(VAdr[63:38]) | ~|(VAdr[63:38]);
-          assign UpperEqual48 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
-          assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
-      end else begin
-          assign SV39Mode = 0;
-          assign UpperBitsUnequalPageFault = 0;
-      end           
-  endgenerate
+  if (`XLEN==64) begin:rv64
+      assign SV39Mode = (SATP_MODE == `SV39);
+      // page fault if upper bits aren't all the same
+      logic UpperEqual39, UpperEqual48;
+      assign UpperEqual39 = &(VAdr[63:38]) | ~|(VAdr[63:38]);
+      assign UpperEqual48 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
+      assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
+  end else begin
+      assign SV39Mode = 0;
+      assign UpperBitsUnequalPageFault = 0;
+  end           
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess;
 
   // Check whether upper bits of virtual addresss are all equal
 
-
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
   assign {PTE_U, PTE_X, PTE_W, PTE_R, PTE_V} = PTEAccessBits[4:0];
  
   // Check whether the access is allowed, page faulting if not.
-  generate
-    if (ITLB == 1) begin:itlb // Instruction TLB fault checking
-      logic ImproperPrivilege;
+  if (ITLB == 1) begin:itlb // Instruction TLB fault checking
+    // User mode may only execute user mode pages, and supervisor mode may
+    // only execute non-user mode pages.
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
+    // fault for software handling if access bit is off
+    assign DAPageFault = ~PTE_A;
+    assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+  end else begin:dtlb // Data TLB fault checking
+    logic InvalidRead, InvalidWrite;
 
-      // User mode may only execute user mode pages, and supervisor mode may
-      // only execute non-user mode pages.
-      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
-        ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
-      // fault for software handling if access bit is off
-      assign DAPageFault = ~PTE_A;
-      assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
-    end else begin:dtlb // Data TLB fault checking
-      logic ImproperPrivilege, InvalidRead, InvalidWrite;
-
-      // User mode may only load/store from user mode pages, and supervisor mode
-      // may only access user mode pages when STATUS_SUM is low.
-      assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
-        ((EffectivePrivilegeMode == `S_MODE) & PTE_U & ~STATUS_SUM);
-      // Check for read error. Reads are invalid when the page is not readable
-      // (and executable pages are not readable) or when the page is neither
-      // readable nor executable (and executable pages are readable).
-      assign InvalidRead = ReadAccess & ~PTE_R & (~STATUS_MXR | ~PTE_X);
-      // Check for write error. Writes are invalid when the page's write bit is
-      // low.
-      assign InvalidWrite = WriteAccess & ~PTE_W;
-      // Fault for software handling if access bit is off or writing a page with dirty bit off
-      assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
-    end
-  endgenerate
+    // User mode may only load/store from user mode pages, and supervisor mode
+    // may only access user mode pages when STATUS_SUM is low.
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == `S_MODE) & PTE_U & ~STATUS_SUM);
+    // Check for read error. Reads are invalid when the page is not readable
+    // (and executable pages are not readable) or when the page is neither
+    // readable nor executable (and executable pages are readable).
+    assign InvalidRead = ReadAccess & ~PTE_R & (~STATUS_MXR | ~PTE_X);
+    // Check for write error. Writes are invalid when the page's write bit is
+    // low.
+    assign InvalidWrite = WriteAccess & ~PTE_W;
+    // Fault for software handling if access bit is off or writing a page with dirty bit off
+    assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
+    assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+  end
 
   assign TLBHit = CAMHit & TLBAccess;
   assign TLBMiss = (~CAMHit | TLBFlush) & Translate & TLBAccess;

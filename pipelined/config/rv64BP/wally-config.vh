@@ -63,14 +63,14 @@
 `define DTLB_ENTRIES 32
 
 // Cache configuration.  Sizes should be a power of two
-// typical configuration 4 ways, 4096 bytes per way, 256 bit or more blocks
+// typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
-`define DCACHE_BLOCKLENINBITS 256
+`define DCACHE_LINELENINBITS 256
 `define DCACHE_REPLBITS 3
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
-`define ICACHE_BLOCKLENINBITS 256
+`define ICACHE_LINELENINBITS 256
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64

@@ -77,23 +77,13 @@ module plic (
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-  generate
-    if (`XLEN == 64) begin:plic
-      always_comb
-        if (entryd[2]) begin
-          Din = HWDATA[63:32];
-          HREADPLIC = {Dout,32'b0};
-        end else begin
-          Din = HWDATA[31:0];
-          HREADPLIC = {32'b0,Dout};
-        end
-    end else begin:plic // 32-bit
-      always_comb begin
-        Din = HWDATA[31:0];
-        HREADPLIC = Dout;
-      end
-    end
-  endgenerate
+    if (`XLEN == 64) begin
+    assign Din       = entryd[2] ? HWDATA[63:32] : HWDATA[31:0];
+    assign HREADPLIC = entryd[2] ? {Dout,32'b0}  : {32'b0,Dout};
+  end else begin // 32-bit
+    assign Din       = HWDATA[31:0];
+    assign HREADPLIC = Dout;
+  end
 
   // ==================
   // Register Interface
@@ -165,14 +155,11 @@ module plic (
 
   // pending array - indexed by priority_lvl x source_ID
   genvar i, j;
-  generate
-    for (j=1; j<=7; j++) begin: pending
-      for (i=1; i<=N; i=i+1) begin: pendingbit
-        // *** make sure that this synthesizes into N decoders, not 7*N 3-bit equality comparators (right?)
-        assign pendingArray[j][i] = (intPriority[i]==j) & intEn[i] & intPending[i];
-      end
+  for (j=1; j<=7; j++) begin: pending
+    for (i=1; i<=N; i=i+1) begin: pendingbit
+      assign pendingArray[j][i] = (intPriority[i]==j) & intEn[i] & intPending[i];
     end
-  endgenerate
+  end
   // pending array, except grouped by priority
   assign pendingPGrouped[7:1] = {|pendingArray[7],
                                  |pendingArray[6],
@@ -200,8 +187,7 @@ module plic (
                                     | ({N{pendingMaxP[2]}} & pendingArray[2])
                                     | ({N{pendingMaxP[1]}} & pendingArray[1]);
   // find the lowest ID amongst active interrupts at the highest priority
-  int k;
-  // *** verify that this synthesizes to a reasonable priority encoder and that k doesn't actually exist in hardware
+  int k; // *** rewrite as priority encoder
   always_comb begin
     intClaim = 6'b0;
     for(k=N; k>0; k=k-1) begin

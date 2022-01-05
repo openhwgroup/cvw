@@ -124,19 +124,15 @@ module datapath (
   mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
 
   // floating point interactions: fcvt, fp stores
-  generate
-    if (`F_SUPPORTED) begin:fpmux
-      mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
-      mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
-    end else begin:fpmux
-      assign ResultM = IEUResultM;
-      assign WriteDataE = ForwardedSrcBE;
-    end
-  endgenerate
+  if (`F_SUPPORTED) begin:fpmux
+    mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
+    mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+  end else begin:fpmux
+    assign ResultM = IEUResultM;
+    assign WriteDataE = ForwardedSrcBE;
+  end
 
   // handle Store Conditional result if atomic extension supported
-  generate
-    if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
-    else              assign SCResultW = 0;
-  endgenerate
+  if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
+  else              assign SCResultW = 0;
 endmodule

@@ -59,8 +59,8 @@ module icachefsm
 
 					   STATE_MISS_FETCH_WDV, // aligned miss, issue read to AHB and wait for data.
 					   STATE_MISS_FETCH_DONE, // write data into SRAM/LUT
-					   STATE_MISS_READ, // read block 1 from SRAM/LUT
-					   STATE_MISS_READ_DELAY, // read block 1 from SRAM/LUT  		
+					   STATE_MISS_READ, // read line 1 from SRAM/LUT
+					   STATE_MISS_READ_DELAY, // read line 1 from SRAM/LUT  		
 
 					   STATE_CPU_BUSY
 					   } statetype;
