@@ -273,20 +273,20 @@ module lsu
   // 2. cache `MEM_DCACHE
   // 3. wire pass-through
 
-  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS/`XLEN : 1;
+  localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
   localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
-  localparam integer   BLOCKLEN = `MEM_DCACHE ? `DCACHE_BLOCKLENINBITS : `XLEN;
+  localparam integer   LINELEN = `MEM_DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
 
-  localparam integer   BLOCKBYTELEN = BLOCKLEN/8;
-  localparam integer   OFFSETLEN = $clog2(BLOCKBYTELEN);
+  localparam integer   LINEBYTELEN = LINELEN/8;
+  localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
 
   // temp
   
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLsuBusHWDATA;
   logic [`XLEN-1:0]    ReadDataWordM;
-  logic [BLOCKLEN-1:0] DCacheMemWriteData;
+  logic [LINELEN-1:0] DCacheMemWriteData;
 
   // keep
   logic [`XLEN-1:0]    ReadDataWordMuxM;
@@ -294,7 +294,7 @@ module lsu
 
 
   logic [`PA_BITS-1:0] DCacheBusAdr;
-  logic [`XLEN-1:0]    ReadDataBlockSetsM [WORDSPERLINE-1:0];
+  logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
   
 
 
@@ -311,7 +311,7 @@ module lsu
             .FinalWriteDataM, .ReadDataWordM, .DCacheStall,
             .DCacheMiss, .DCacheAccess, 
             .IgnoreRequest, .CacheableM, .DCacheCommittedM,
-            .DCacheBusAdr, .ReadDataBlockSetsM, .DCacheMemWriteData,
+            .DCacheBusAdr, .ReadDataLineSetsM, .DCacheMemWriteData,
             .DCacheFetchLine, .DCacheWriteLine,.DCacheBusAck);
     end else begin : passthrough
       assign ReadDataWordM = 0;
@@ -322,7 +322,7 @@ module lsu
       assign DCacheWriteLine = 0;
       assign DCacheFetchLine = 0;
       assign DCacheBusAdr = 0;
-      assign ReadDataBlockSetsM[0] = 0;
+      assign ReadDataLineSetsM[0] = 0;
     end
   endgenerate
 
@@ -376,7 +376,7 @@ module lsu
 
   assign LocalLsuBusAdr = SelUncachedAdr ? LsuPAdrM : DCacheBusAdr ;
   assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLsuBusAdr;
-  assign PreLsuBusHWDATA = ReadDataBlockSetsM[WordCount];
+  assign PreLsuBusHWDATA = ReadDataLineSetsM[WordCount];
   assign LsuBusHWDATA = SelUncachedAdr ? WriteDataM : PreLsuBusHWDATA;  // *** why is this not FinalWriteDataM? which does not work.
 
   generate

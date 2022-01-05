@@ -40,7 +40,7 @@ module cachereplacementpolicy
   logic [NUMWAYS-2:0] 				LRUEn, LRUMask;
   logic [$clog2(NUMWAYS)-1:0] 			EncVicWay;
   logic [NUMWAYS-2:0] 				ReplacementBits [NUMLINES-1:0];
-  logic [NUMWAYS-2:0] 				BlockReplacementBits;
+  logic [NUMWAYS-2:0] 				LineReplacementBits;
   logic [NUMWAYS-2:0] 				NewReplacement;
   logic [NUMWAYS-2:0] 				NewReplacementD;  
 
@@ -69,7 +69,7 @@ module cachereplacementpolicy
   end
   /* verilator lint_on BLKLOOPINIT */
 
-  assign BlockReplacementBits = ReplacementBits[RAdrD];
+  assign LineReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;
   generate
@@ -79,16 +79,16 @@ module cachereplacementpolicy
 
       assign NewReplacement[0] = WayHit[1];
 
-      assign VictimWay[1] = ~BlockReplacementBits[0];
-      assign VictimWay[0] = BlockReplacementBits[0];
+      assign VictimWay[1] = ~LineReplacementBits[0];
+      assign VictimWay[0] = LineReplacementBits[0];
       
     end else if (NUMWAYS == 4) begin : FourWay
 
 
       // VictimWay is a function only of the current value of the LRU.
       // binary encoding
-      //assign VictimWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[1] : BlockReplacementBits[0];
-      //assign VictimWay[1] = BlockReplacementBits[2];
+      //assign VictimWay[0] = LineReplacementBits[2] ? LineReplacementBits[1] : LineReplacementBits[0];
+      //assign VictimWay[1] = LineReplacementBits[2];
 
       // 1 hot encoding
       //| WayHit | LRU 2 | LRU 1 | LRU 0 |
@@ -99,10 +99,10 @@ module cachereplacementpolicy
       //|   0100 |     0 | 1     | -     |
       //|   1000 |     0 | 0     | -     |
 
-      assign VictimWay[0] = ~BlockReplacementBits[2] & ~BlockReplacementBits[0];
-      assign VictimWay[1] = ~BlockReplacementBits[2] & BlockReplacementBits[0];
-      assign VictimWay[2] = BlockReplacementBits[2] & ~BlockReplacementBits[1];
-      assign VictimWay[3] = BlockReplacementBits[2] & BlockReplacementBits[1];      
+      assign VictimWay[0] = ~LineReplacementBits[2] & ~LineReplacementBits[0];
+      assign VictimWay[1] = ~LineReplacementBits[2] & LineReplacementBits[0];
+      assign VictimWay[2] = LineReplacementBits[2] & ~LineReplacementBits[1];
+      assign VictimWay[3] = LineReplacementBits[2] & LineReplacementBits[1];      
 
       // New LRU bits which are updated is function only of the WayHit.
       // However the not updated bits come from the old LRU.
@@ -128,11 +128,11 @@ module cachereplacementpolicy
  -----/\----- EXCLUDED -----/\----- */
 
       for(index = 0; index < NUMWAYS-1; index++)
-	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
+	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : LineReplacementBits[index];
 
 /* -----\/----- EXCLUDED -----\/-----
-      assign EncVicWay[1] = BlockReplacementBits[2];
-      assign EncVicWay[0] = BlockReplacementBits[2] ? BlockReplacementBits[0] : BlockReplacementBits[1];
+      assign EncVicWay[1] = LineReplacementBits[2];
+      assign EncVicWay[0] = LineReplacementBits[2] ? LineReplacementBits[0] : LineReplacementBits[1];
 
       onehotdecoder #(2) 
       waydec(.bin(EncVicWay),
@@ -160,12 +160,12 @@ module cachereplacementpolicy
       assign LRUMask[0] = WayHit[0];
 
       for(index = 0; index < NUMWAYS-1; index++)
-	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : BlockReplacementBits[index];
+	assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : LineReplacementBits[index];
 
-      assign EncVicWay[2] = BlockReplacementBits[6];
-      assign EncVicWay[1] = BlockReplacementBits[6] ? BlockReplacementBits[5] : BlockReplacementBits[2];
-      assign EncVicWay[0] = BlockReplacementBits[6] ? BlockReplacementBits[5] ? BlockReplacementBits[4] : BlockReplacementBits[3] :
-			    BlockReplacementBits[2] ? BlockReplacementBits[1] : BlockReplacementBits[0];
+      assign EncVicWay[2] = LineReplacementBits[6];
+      assign EncVicWay[1] = LineReplacementBits[6] ? LineReplacementBits[5] : LineReplacementBits[2];
+      assign EncVicWay[0] = LineReplacementBits[6] ? LineReplacementBits[5] ? LineReplacementBits[4] : LineReplacementBits[3] :
+			    LineReplacementBits[2] ? LineReplacementBits[1] : LineReplacementBits[0];
       
 
       onehotdecoder #(3) 

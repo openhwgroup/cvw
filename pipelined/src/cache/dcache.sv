@@ -52,8 +52,8 @@ module dcache
    output logic [`PA_BITS-1:0] 				DCacheBusAdr,
 
 
-   input logic [`DCACHE_BLOCKLENINBITS-1:0] DCacheMemWriteData,
-   output logic [`XLEN-1:0] 				ReadDataBlockSetsM [(`DCACHE_BLOCKLENINBITS/`XLEN)-1:0],
+   input logic [`DCACHE_LINELENINBITS-1:0] DCacheMemWriteData,
+   output logic [`XLEN-1:0] 				ReadDataLineSetsM [(`DCACHE_LINELENINBITS/`XLEN)-1:0],
 
    output logic 							DCacheStall,
 
@@ -62,15 +62,15 @@ module dcache
    output logic 							DCacheAccess
    );
 
-  localparam integer 						BLOCKLEN = `DCACHE_BLOCKLENINBITS;
-  localparam integer 						NUMLINES = `DCACHE_WAYSIZEINBYTES*8/BLOCKLEN;
+  localparam integer 						LINELEN = `DCACHE_LINELENINBITS;
+  localparam integer 						NUMLINES = `DCACHE_WAYSIZEINBYTES*8/LINELEN;
   localparam integer 						NUMWAYS = `DCACHE_NUMWAYS;
 
-  localparam integer 						BLOCKBYTELEN = BLOCKLEN/8;
-  localparam integer 						OFFSETLEN = $clog2(BLOCKBYTELEN);
+  localparam integer 						LINEBYTELEN = LINELEN/8;
+  localparam integer 						OFFSETLEN = $clog2(LINEBYTELEN);
   localparam integer 						INDEXLEN = $clog2(NUMLINES);
   localparam integer 						TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
-  localparam integer 						WORDSPERLINE = BLOCKLEN/`XLEN;
+  localparam integer 						WORDSPERLINE = LINELEN/`XLEN;
   localparam integer 						LOGWPL = $clog2(WORDSPERLINE);
   localparam integer 						LOGXLENBYTES = $clog2(`XLEN/8);
 
@@ -78,18 +78,18 @@ module dcache
 
   logic [1:0] 								SelAdrM;
   logic [INDEXLEN-1:0] 						RAdr;
-  logic [BLOCKLEN-1:0] 						SRAMWriteData;
+  logic [LINELEN-1:0] 						SRAMWriteData;
   logic 									SetValid, ClearValid;
   logic 									SetDirty, ClearDirty;
-  logic [BLOCKLEN-1:0] 						ReadDataLineWayMasked [NUMWAYS-1:0];
+  logic [LINELEN-1:0] 						ReadDataLineWayMasked [NUMWAYS-1:0];
   logic [NUMWAYS-1:0] 						WayHit;
   logic 									CacheHit;
-  logic [BLOCKLEN-1:0] 						ReadDataLineM;
+  logic [LINELEN-1:0] 						ReadDataLineM;
   logic [WORDSPERLINE-1:0] 					SRAMWordEnable;
 
   logic 									SRAMWordWriteEnableM;
-  logic 									SRAMBlockWriteEnableM;
-  logic [NUMWAYS-1:0] 						SRAMBlockWayWriteEnableM;
+  logic 									SRAMLineWriteEnableM;
+  logic [NUMWAYS-1:0] 						SRAMLineWayWriteEnableM;
   logic [NUMWAYS-1:0] 						SRAMWayWriteEnable;
   
 
@@ -129,14 +129,14 @@ module dcache
 			.s(SelAdrM),
 			.y(RAdr));
   
-  cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
+  cacheway #(.NUMLINES(NUMLINES), .LINELEN(LINELEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
 					  .PAdr(LsuPAdrM),
 					  .WriteEnable(SRAMWayWriteEnable),
 					  .VDWriteEnable(VDWriteEnableWay),
 					  .WriteWordEnable(SRAMWordEnable),
-					  .TagWriteEnable(SRAMBlockWayWriteEnableM), 
+					  .TagWriteEnable(SRAMLineWayWriteEnableM), 
 					  .WriteData(SRAMWriteData),
 					  .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict,
 					  .VictimWay, .FlushWay, .SelFlush,
@@ -162,10 +162,10 @@ module dcache
   assign VictimDirty = | VictimDirtyWay;
 
   
-  // ReadDataLineWayMaskedM is a 2d array of cache block len by number of ways.
+  // ReadDataLineWayMaskedM is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, BLOCKLEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadDataLineM));
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadDataLineM));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
 
 
@@ -174,14 +174,14 @@ module dcache
   // *** consider using a limited range shift to do this final muxing.
   genvar index;
   generate
-    for (index = 0; index < WORDSPERLINE; index++) begin:readdatablocksetsmux
-      assign ReadDataBlockSetsM[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
+    for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
+      assign ReadDataLineSetsM[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
     end
   endgenerate
 
   // variable input mux
   
-  assign ReadDataWordM = ReadDataBlockSetsM[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
+  assign ReadDataWordM = ReadDataLineSetsM[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
 
   // Write Path CPU (IEU) side
 
@@ -189,20 +189,20 @@ module dcache
   adrdec(.bin(LsuPAdrM[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
 		 .decoded(MemPAdrDecodedW));
 
-  assign SRAMWordEnable = SRAMBlockWriteEnableM ? '1 : MemPAdrDecodedW;
+  assign SRAMWordEnable = SRAMLineWriteEnableM ? '1 : MemPAdrDecodedW;
   
-  assign SRAMBlockWayWriteEnableM = SRAMBlockWriteEnableM ? VictimWay : '0;
+  assign SRAMLineWayWriteEnableM = SRAMLineWriteEnableM ? VictimWay : '0;
   
   mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnableM ? WayHit : '0),
-								 .d1(SRAMBlockWayWriteEnableM),
-								 .s(SRAMBlockWriteEnableM),
+								 .d1(SRAMLineWayWriteEnableM),
+								 .s(SRAMLineWriteEnableM),
 								 .y(SRAMWayWriteEnable));
 
 
 
-  mux2 #(BLOCKLEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
+  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
 								.d1(DCacheMemWriteData),
-								.s(SRAMBlockWriteEnableM),
+								.s(SRAMLineWriteEnableM),
 								.y(SRAMWriteData));
 
   
@@ -251,7 +251,7 @@ module dcache
  					  .CacheHit, .VictimDirty, .DCacheStall, .DCacheCommittedM, 
 					  .DCacheMiss, .DCacheAccess, .SelAdrM, .SetValid, 
 					  .ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
-					  .SRAMBlockWriteEnableM, .SelEvict, .SelFlush,
+					  .SRAMLineWriteEnableM, .SelEvict, .SelFlush,
 					  .FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 					  .FlushWayCntRst, .FlushAdrFlag, .FlushDCacheM, 
 					  .VDWriteEnable, .LRUWriteEn);
