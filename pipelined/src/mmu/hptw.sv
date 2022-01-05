@@ -52,7 +52,7 @@ module hptw
 					L1_ADR, L1_RD, 
 					L2_ADR, L2_RD, 
 					L3_ADR, L3_RD, 
-					LEAF, IDLE} statetype; // *** placed outside generate statement to remove synthesis errors
+					LEAF, IDLE} statetype;
 
 	logic			    DTLBWalk; // register TLBs translation miss requests
 	logic [`PPN_BITS-1:0]	    BasePageTablePPN;

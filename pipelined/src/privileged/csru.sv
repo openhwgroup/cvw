@@ -44,42 +44,40 @@ module csru #(parameter
   );
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
-  generate
-    if (`F_SUPPORTED | `D_SUPPORTED) begin:csru
-      logic [4:0] FFLAGS_REGW;
-      logic [2:0] NextFRMM;
-      logic [4:0] NextFFLAGSM;
-        
-      // Write enables
-      //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & ~StallW;
-      assign WriteFRMM = (CSRUWriteM & (CSRAdrM == FRM | CSRAdrM == FCSR))  & ~StallW;
-      assign WriteFFLAGSM = (CSRUWriteM & (CSRAdrM == FFLAGS | CSRAdrM == FCSR))  & ~StallW;
-    
-      // Write Values
-      assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
-      assign NextFFLAGSM = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
+  if (`F_SUPPORTED | `D_SUPPORTED) begin:csru
+    logic [4:0] FFLAGS_REGW;
+    logic [2:0] NextFRMM;
+    logic [4:0] NextFFLAGSM;
+      
+    // Write enables
+    //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & ~StallW;
+    assign WriteFRMM = (CSRUWriteM & (CSRAdrM == FRM | CSRAdrM == FCSR))  & ~StallW;
+    assign WriteFFLAGSM = (CSRUWriteM & (CSRAdrM == FFLAGS | CSRAdrM == FCSR))  & ~StallW;
+  
+    // Write Values
+    assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
+    assign NextFFLAGSM = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
 
-      // CSRs
-      flopenr #(3) FRMreg(clk, reset, WriteFRMM, NextFRMM, FRM_REGW);
-      flopr   #(5) FFLAGSreg(clk, reset, NextFFLAGSM, FFLAGS_REGW); 
+    // CSRs
+    flopenr #(3) FRMreg(clk, reset, WriteFRMM, NextFRMM, FRM_REGW);
+    flopr   #(5) FFLAGSreg(clk, reset, NextFFLAGSM, FFLAGS_REGW); 
 
-      // CSR Reads
-      always_comb begin
-        IllegalCSRUAccessM = 0;
-        case (CSRAdrM) 
-          FFLAGS:    CSRUReadValM = {{(`XLEN-5){1'b0}}, FFLAGS_REGW};
-          FRM:       CSRUReadValM = {{(`XLEN-3){1'b0}}, FRM_REGW};
-          FCSR:      CSRUReadValM = {{(`XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
-          default: begin
-                     CSRUReadValM = 0; 
-                     IllegalCSRUAccessM = 1;
-          end         
-        endcase
-      end
-    end else begin // if not supported
-      assign FRM_REGW = 0;
-      assign CSRUReadValM = 0;
-      assign IllegalCSRUAccessM = 1;
+    // CSR Reads
+    always_comb begin
+      IllegalCSRUAccessM = 0;
+      case (CSRAdrM) 
+        FFLAGS:    CSRUReadValM = {{(`XLEN-5){1'b0}}, FFLAGS_REGW};
+        FRM:       CSRUReadValM = {{(`XLEN-3){1'b0}}, FRM_REGW};
+        FCSR:      CSRUReadValM = {{(`XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
+        default: begin
+                    CSRUReadValM = 0; 
+                    IllegalCSRUAccessM = 1;
+        end         
+      endcase
     end
-  endgenerate
+  end else begin // if not supported
+    assign FRM_REGW = 0;
+    assign CSRUReadValM = 0;
+    assign IllegalCSRUAccessM = 1;
+  end
 endmodule

@@ -174,3 +174,22 @@ module divconv_pipe (q1, qm1, qp1, q0, qm0, qp0, rega_out, regb_out, regc_out, r
    flopenr #(60) regk (clk, reset, regs_pipe2, {qp_out0[59:35], (qp_out0[34:6] & {29{~P_pipe}}), 6'h0}, qp0);
    
 endmodule // divconv
+
+// *** rewrote behaviorally dh 5 Jan 2021 for speed
+module csa #(parameter WIDTH=8) (
+   input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+/*
+   logic [WIDTH:0] 					  carry_temp;   
+   genvar 						  i;
+   generate
+      for (i=0;i<WIDTH;i=i+1) begin : genbit
+	    fa fa_inst (a[i], b[i], c[i], sum[i], carry_temp[i+1]);
+	  end
+   endgenerate
+   assign carry = {carry_temp[WIDTH-1:1], 1'b0};     
+*/
+endmodule // csa
