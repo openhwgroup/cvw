@@ -187,11 +187,11 @@ module plic (
                                     | ({N{pendingMaxP[2]}} & pendingArray[2])
                                     | ({N{pendingMaxP[1]}} & pendingArray[1]);
   // find the lowest ID amongst active interrupts at the highest priority
-  int k; // *** rewrite as priority encoder
+  logic [5:0] k;
   always_comb begin
     intClaim = 6'b0;
-    for(k=N; k>0; k=k-1) begin
-      if(pendingRequestsAtMaxP[k]) intClaim = k[5:0];
+    for (k=N; k>0; k=k-1) begin
+      if (pendingRequestsAtMaxP[k]) intClaim = k;
     end
   end
   
