@@ -49,7 +49,9 @@ module extend (
                 else              ExtImmD = undefined;
       default: begin
         ExtImmD = undefined; // undefined
+		// synthesis translate_off
         $error("Invalid ImmSrcD in extend");
+		// synthesis translate_on
       end
     endcase  
 endmodule
