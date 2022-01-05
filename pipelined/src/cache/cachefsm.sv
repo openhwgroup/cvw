@@ -50,12 +50,12 @@ module cachefsm
    output logic 	  CacheMiss,
    output logic 	  CacheAccess,
    // Bus outputs
-   output logic       CacheCommitted,
+   output logic 	  CacheCommitted,
    output logic 	  CacheWriteLine,
    output logic 	  CacheFetchLine,
 
    // dcache internals
-   output logic [1:0] SelAdrM,
+   output logic [1:0] SelAdr,
    output logic 	  SetValid,
    output logic 	  ClearValid,
    output logic 	  SetDirty,
@@ -65,6 +65,7 @@ module cachefsm
    output logic 	  SelEvict,
    output logic 	  LRUWriteEn,
    output logic 	  SelFlush,
+   output logic 	  SelLastFlushAdr,
    output logic 	  FlushAdrCntEn,
    output logic 	  FlushWayCntEn, 
    output logic 	  FlushAdrCntRst,
@@ -107,7 +108,7 @@ module cachefsm
   // next state logic and some state ouputs.
   always_comb begin
     CacheStall = 1'b0;
-    SelAdrM = 2'b00;
+    SelAdr = 2'b00;
     SetValid = 1'b0;
     ClearValid = 1'b0;
     SetDirty = 1'b0;    
@@ -125,12 +126,13 @@ module cachefsm
     NextState = STATE_READY;
 	CacheFetchLine = 1'b0;
 	CacheWriteLine = 1'b0;
+	SelLastFlushAdr = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
 
 		CacheStall = 1'b0;
-		SelAdrM = 2'b00;
+		SelAdr = 2'b00;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
@@ -143,7 +145,7 @@ module cachefsm
 		  // PTW ready the CPU will stall.
 		  // The page table walker asserts it's control 1 cycle
 		  // after the TLBs miss.
-		  SelAdrM = 2'b01;
+		  SelAdr = 2'b01;
 		  NextState = STATE_READY;
 		end
 
@@ -151,19 +153,19 @@ module cachefsm
 		else if(FlushCache) begin
 		  NextState = STATE_FLUSH;
 		  CacheStall = 1'b1;
-		  SelAdrM = 2'b10;
+		  SelAdr = 2'b10;
 		  FlushAdrCntRst = 1'b1;
 		  FlushWayCntRst = 1'b1;	
 		end
 		
 		// amo hit
 		else if(Atomic[1] & (&RW) & CacheableM & CacheHit) begin
-		  SelAdrM = 2'b01;
+		  SelAdr = 2'b01;
 		  CacheStall = 1'b0;
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
-			SelAdrM = 2'b01;
+			SelAdr = 2'b01;
 		  end
 		  else begin
 			SRAMWordWriteEnableM = 1'b1;
@@ -179,7 +181,7 @@ module cachefsm
 		  
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-            SelAdrM = 2'b01;
+            SelAdr = 2'b01;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -187,7 +189,7 @@ module cachefsm
 		end
 		// write hit valid cached
 		else if (RW[0] & CacheableM & CacheHit) begin
-		  SelAdrM = 2'b01;
+		  SelAdr = 2'b01;
 		  CacheStall = 1'b0;
 		  SRAMWordWriteEnableM = 1'b1;
 		  SetDirty = 1'b1;
@@ -195,7 +197,7 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			SelAdrM = 2'b01;
+			SelAdr = 2'b01;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -212,7 +214,7 @@ module cachefsm
       
       STATE_MISS_FETCH_WDV: begin
 		CacheStall = 1'b1;
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		
 		if (CacheBusAck) begin
           NextState = STATE_MISS_FETCH_DONE;
@@ -223,7 +225,7 @@ module cachefsm
 
       STATE_MISS_FETCH_DONE: begin
 		CacheStall = 1'b1;
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
 		  CacheWriteLine = 1'b1;
@@ -236,14 +238,14 @@ module cachefsm
 		SRAMLineWriteEnableM = 1'b1;
 		CacheStall = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		SetValid = 1'b1;
 		ClearDirty = 1'b1;
 		//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
 
       STATE_MISS_READ_WORD: begin
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		CacheStall = 1'b1;
 		if (RW[0] & ~Atomic[1]) begin // handles stores and amo write.
 		  NextState = STATE_MISS_WRITE_WORD;
@@ -255,12 +257,12 @@ module cachefsm
       end
 
       STATE_MISS_READ_WORD_DELAY: begin
-		//SelAdrM = 2'b01;
+		//SelAdr = 2'b01;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 		if(&RW & Atomic[1]) begin // amo write
-		  SelAdrM = 2'b01;
+		  SelAdr = 2'b01;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
 		  end
@@ -274,7 +276,7 @@ module cachefsm
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			SelAdrM = 2'b01;
+			SelAdr = 2'b01;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -285,11 +287,11 @@ module cachefsm
       STATE_MISS_WRITE_WORD: begin
 		SRAMWordWriteEnableM = 1'b1;
 		SetDirty = 1'b1;
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
-		  SelAdrM = 2'b01;
+		  SelAdr = 2'b01;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -298,7 +300,7 @@ module cachefsm
 
       STATE_MISS_EVICT_DIRTY: begin
 		CacheStall = 1'b1;
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		SelEvict = 1'b1;
 		if(CacheBusAck) begin
 		  NextState = STATE_MISS_WRITE_CACHE_LINE;
@@ -309,10 +311,10 @@ module cachefsm
 
 
       STATE_CPU_BUSY: begin
-		SelAdrM = 2'b00;
+		SelAdr = 2'b00;
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
-		  SelAdrM = 2'b01;
+		  SelAdr = 2'b01;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -320,7 +322,7 @@ module cachefsm
       end
 
       STATE_CPU_BUSY_FINISH_AMO: begin
-		SelAdrM = 2'b01;
+		SelAdr = 2'b01;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
@@ -337,15 +339,17 @@ module cachefsm
 
       STATE_FLUSH: begin
 		CacheStall = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdr = 2'b10;
 		SelFlush = 1'b1;
 		FlushAdrCntEn = 1'b1;
 		FlushWayCntEn = 1'b1;
+		SelLastFlushAdr = 1'b0;
 		if(VictimDirty) begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
 		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;
 		  CacheWriteLine = 1'b1;
+		  SelLastFlushAdr = 1'b1;
 		end else if (FlushAdrFlag) begin
 		  NextState = STATE_READY;
 		  CacheStall = 1'b0;
@@ -358,8 +362,9 @@ module cachefsm
 
       STATE_FLUSH_WRITE_BACK: begin
 		CacheStall = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdr = 2'b10;
 		SelFlush = 1'b1;
+		SelLastFlushAdr = 1'b1;
 		if(CacheBusAck) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
@@ -372,13 +377,14 @@ module cachefsm
 		ClearDirty = 1'b1;
 		VDWriteEnable = 1'b1;
 		SelFlush = 1'b1;
-		SelAdrM = 2'b10;
+		SelAdr = 2'b10;
 		FlushAdrCntEn = 1'b0;
-		FlushWayCntEn = 1'b0;	
+		FlushWayCntEn = 1'b0;
+		SelLastFlushAdr = 1'b0;
 		if(FlushAdrFlag) begin
 		  NextState = STATE_READY;
 		  CacheStall = 1'b0;
-		  SelAdrM = 2'b00;
+		  SelAdr = 2'b00;
 		end else begin
 		  NextState = STATE_FLUSH;
 		  FlushAdrCntEn = 1'b1;

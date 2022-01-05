@@ -75,7 +75,7 @@ module cache #(parameter integer LINELEN,
 
   localparam integer 						FlushAdrThreshold   = NUMLINES;
 
-  logic [1:0] 								SelAdrM;
+  logic [1:0] 								SelAdr;
   logic [INDEXLEN-1:0] 						RAdr;
   logic [LINELEN-1:0] 						SRAMWriteData;
   logic 									SetValid, ClearValid;
@@ -104,6 +104,8 @@ module cache #(parameter integer LINELEN,
   logic [INDEXLEN-1:0] 						FlushAdr;
   logic [INDEXLEN-1:0] 						FlushAdrP1;
   logic [INDEXLEN-1:0] 						FlushAdrQ;
+  logic [INDEXLEN-1:0] 						FlushAdrMux;
+  logic 									SelLastFlushAdr;
   logic 									FlushAdrCntEn;
   logic 									FlushAdrCntRst;
   logic 									FlushAdrFlag;
@@ -124,9 +126,13 @@ module cache #(parameter integer LINELEN,
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(LsuAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d1(PreLsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d2(FlushAdr),
-			.s(SelAdrM),
+			.d2(FlushAdrMux),
+			.s(SelAdr),
 			.y(RAdr));
+
+  mux2 #(INDEXLEN)
+  FlushAdrSelMux(.d0(FlushAdr), .d1(FlushAdrQ), .s(SelLastFlushAdr), 
+				 .y(FlushAdrMux));
   
   cacheway #(.NUMLINES(NUMLINES), .LINELEN(LINELEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
@@ -270,11 +276,11 @@ module cache #(parameter integer LINELEN,
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
 					.RW, .Atomic, .CPUBusy, .CacheableM, .IgnoreRequest,
  					.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
-					.CacheMiss, .CacheAccess, .SelAdrM, .SetValid, 
+					.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
 					.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
 					.SRAMLineWriteEnableM, .SelEvict, .SelFlush,
 					.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-					.FlushWayCntRst, .FlushAdrFlag, .FlushCache, 
+					.FlushWayCntRst, .FlushAdrFlag, .FlushCache, .SelLastFlushAdr,
 					.VDWriteEnable, .LRUWriteEn);
   
 
