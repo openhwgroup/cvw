@@ -104,6 +104,7 @@ module dcache
 
   logic [INDEXLEN-1:0] 						FlushAdr;
   logic [INDEXLEN-1:0] 						FlushAdrP1;
+  logic [INDEXLEN-1:0] 						FlushAdrQ;
   logic 									FlushAdrCntEn;
   logic 									FlushAdrCntRst;
   logic 									FlushAdrFlag;
@@ -127,7 +128,7 @@ module dcache
 			.d2(FlushAdr),
 			.s(SelAdrM),
 			.y(RAdr));
-
+  
   cacheway #(.NUMLINES(NUMLINES), .BLOCKLEN(BLOCKLEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
@@ -207,20 +208,27 @@ module dcache
   
   mux3 #(`PA_BITS) BaseAdrMux(.d0({LsuPAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 							  .d1({VictimTag, LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-							  .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
+							  .d2({VictimTag, FlushAdrQ, {{OFFSETLEN}{1'b0}}}),
 							  .s({SelFlush, SelEvict}),
 							  .y(DCacheBusAdr));
 
 
   // flush address and way generation.
+  // increment on 2nd to last way
   flopenr #(INDEXLEN)
   FlushAdrReg(.clk,
 			  .reset(reset | FlushAdrCntRst),
-			  .en(FlushAdrCntEn & FlushWay[NUMWAYS-1]),
+			  .en(FlushAdrCntEn & FlushWay[NUMWAYS-2]),
 			  .d(FlushAdrP1),
 			  .q(FlushAdr));
   assign FlushAdrP1 = FlushAdr + 1'b1;
 
+  flopenr #(INDEXLEN)
+  FlushAdrQReg(.clk,
+			  .reset(reset | FlushAdrCntRst),
+			  .en(FlushAdrCntEn),
+			  .d(FlushAdr),
+			  .q(FlushAdrQ));
 
   flopenl #(NUMWAYS)
   FlushWayReg(.clk,
