@@ -73,8 +73,6 @@
 .4byte 0x80803AA0, 0xBEEF0BB0, 0x0 # 12.3.1.3.7
 .4byte 0x8000FFA0, 0x11100393, 0x0 # write executable code for "li x7, 0x111; ret" to executable region.
 .4byte 0x8000FFA4, 0x00008067, 0x0 # Used for 12.3.1.3.1, 12.3.1.3.2
-.4byte 0x80801DE0, 0x11100393, 0x0 # write executable code for "li x7, 0x111; ret" to NON-executable region.
-.4byte 0x80801DE4, 0x00008067, 0x0 # Used for 12.3.1.3.5
 
 # test 12.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
 .4byte 0x0, 0x0, 0x4 # satp.MODE = baremetal / no translation.
@@ -87,8 +85,6 @@
 .4byte 0x80803AA0, 0xBEEF0BB0, 0x1
 .4byte 0x8000FFA0, 0x11100393, 0x1
 .4byte 0x8000FFA4, 0x00008067, 0x1
-.4byte 0x80801DE0, 0x11100393, 0x1
-.4byte 0x80801DE4, 0x00008067, 0x1
 
 # test 12.3.1.1.4 check translation works in sv48, read the same values from previous tests, this time with Vaddrs
 .4byte 0x0, 0x0, 0x5 # satp.MODE = sv32, Nothing written to output

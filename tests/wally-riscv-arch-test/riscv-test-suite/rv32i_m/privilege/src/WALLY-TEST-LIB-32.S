@@ -311,7 +311,7 @@ test_loop:
     li x7, 0xD                      #             :                                       :                        :
     beq x30, x7, write_pmpcfg_0     #         0xD : Write one of the pmpcfg csr's         : mstatuses?, 0xD        : readback of pmpcfg value
     li x7, 0xE                      #             :                                       :                        :
-    beq x30, x7, write_pmpaddr_0    #         0xE : Write one of the pmpaddr csr's        : None                   : None
+    beq x30, x7, write_pmpaddr_0    #         0xE : Write one of the pmpaddr csr's        : None                   : readback of pmpaddr value
     li x7, 0x8                      #             :                                       :                        :
     beq x30, x7, goto_m_mode        #         0x8 : go to mahcine mode                    : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
     li x7, 0x9                      #             :                                       :                        :
