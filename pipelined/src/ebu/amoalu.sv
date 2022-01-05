@@ -56,25 +56,22 @@ module amoalu (
     endcase
 
   // sign extend if necessary
-  generate
-    if (`XLEN == 32) begin:sext
-      assign a = srca;
-      assign b = srcb;
-      assign result = y;
-    end else begin:sext // `XLEN = 64
-      always_comb 
-        if (width == 2'b10) begin // sign-extend word-length operations
-          // *** it would be more efficient to look at carry out of bit 31 to determine comparisons than do this big mux on and b
-          a = {{32{srca[31]}}, srca[31:0]};
-          b = {{32{srcb[31]}}, srcb[31:0]};
-          result = {{32{y[31]}}, y[31:0]};
-        end else begin
-          a = srca;
-          b = srcb;
-          result = y;
-        end
-    end
-  endgenerate
-
+  if (`XLEN == 32) begin:sext
+    assign a = srca;
+    assign b = srcb;
+    assign result = y;
+  end else begin:sext // `XLEN = 64
+    always_comb 
+      if (width == 2'b10) begin // sign-extend word-length operations
+        // *** it would be more efficient to look at carry out of bit 31 to determine comparisons than do this big mux on and b
+        a = {{32{srca[31]}}, srca[31:0]};
+        b = {{32{srcb[31]}}, srcb[31:0]};
+        result = {{32{y[31]}}, y[31:0]};
+      end else begin
+        a = srca;
+        b = srcb;
+        result = y;
+      end
+  end
 endmodule
 

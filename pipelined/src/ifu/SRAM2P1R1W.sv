@@ -92,20 +92,17 @@ module SRAM2P1R1W
      .q(WD1Q));
   // read port
   assign RD1 = mem[RA1Q];
-
-  genvar       index;
   
   // write port
-  generate
-    for (index = 0; index < WIDTH; index = index + 1) begin:bitwrite
-      always_ff @ (posedge clk) begin
-       if (WEN1Q & BitWEN1[index]) begin
-         mem[WA1Q][index] <= WD1Q[index];
-       end
+  genvar       index;
+  for (index = 0; index < WIDTH; index = index + 1) begin:bitwrite
+    always_ff @(posedge clk) begin
+      if (WEN1Q & BitWEN1[index]) begin
+        mem[WA1Q][index] <= WD1Q[index];
       end
     end
-  endgenerate
-
+  end
+ 
 endmodule  
 
 

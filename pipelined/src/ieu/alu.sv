@@ -78,9 +78,7 @@ module alu #(parameter WIDTH=32) (
     endcase
 
   // support W-type RV64I ADDW/SUBW/ADDIW/Shifts that sign-extend 32-bit result to 64 bits
-  generate
-    if (WIDTH==64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-    else            assign Result = FullResult;
-  endgenerate
+  if (WIDTH==64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else            assign Result = FullResult;
 endmodule
 

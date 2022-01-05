@@ -54,33 +54,31 @@ module uart (
   assign HRESPUART = 0; // OK
   assign HREADYUART = 1; // should idle high during address phase and respond high when done; will need to be modified if UART ever needs more than 1 cycle to do something
 
-  generate
-    if (`XLEN == 64) begin:uart
-      always_comb begin
-        HREADUART = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
-        case (A)
-          3'b000: Din = HWDATA[7:0];
-          3'b001: Din = HWDATA[15:8];
-          3'b010: Din = HWDATA[23:16];
-          3'b011: Din = HWDATA[31:24];
-          3'b100: Din = HWDATA[39:32];
-          3'b101: Din = HWDATA[47:40];
-          3'b110: Din = HWDATA[55:48];
-          3'b111: Din = HWDATA[63:56];
-        endcase 
-      end 
-    end else begin:uart // 32-bit
-      always_comb begin
-        HREADUART = {Dout, Dout, Dout, Dout};
-        case (A[1:0])
-          2'b00: Din = HWDATA[7:0];
-          2'b01: Din = HWDATA[15:8];
-          2'b10: Din = HWDATA[23:16];
-          2'b11: Din = HWDATA[31:24];
-        endcase
-      end
+  if (`XLEN == 64) begin:uart
+    always_comb begin
+      HREADUART = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
+      case (A)
+        3'b000: Din = HWDATA[7:0];
+        3'b001: Din = HWDATA[15:8];
+        3'b010: Din = HWDATA[23:16];
+        3'b011: Din = HWDATA[31:24];
+        3'b100: Din = HWDATA[39:32];
+        3'b101: Din = HWDATA[47:40];
+        3'b110: Din = HWDATA[55:48];
+        3'b111: Din = HWDATA[63:56];
+      endcase 
+    end 
+  end else begin:uart // 32-bit
+    always_comb begin
+      HREADUART = {Dout, Dout, Dout, Dout};
+      case (A[1:0])
+        2'b00: Din = HWDATA[7:0];
+        2'b01: Din = HWDATA[15:8];
+        2'b10: Din = HWDATA[23:16];
+        2'b11: Din = HWDATA[31:24];
+      endcase
     end
-  endgenerate
+  end
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
   // *** make sure reads don't occur on UART unless fully selected because they could change state.  This applies to all peripherals

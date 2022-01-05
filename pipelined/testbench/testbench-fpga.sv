@@ -763,17 +763,12 @@ string tests32f[] = '{
 				.done(DCacheFlushDone));
   
 
-  generate
-    // initialize the branch predictor
-    if (`BPRED_ENABLED == 1) begin : bpred
-      
-      initial begin
-	$readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-	$readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
-      end
+  // initialize the branch predictor
+  if (`BPRED_ENABLED == 1)
+    initial begin
+      $readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
     end
-  endgenerate
-  
 endmodule
 
 module riscvassertions();
@@ -783,14 +778,14 @@ module riscvassertions();
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double without supporting float");
     assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | `MEM_DCACHE == 0 | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_BLOCKLENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
-    assert (`DCACHE_BLOCKLENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_BLOCKLENINBITS must be smaller than way size");
+    assert (`DCACHE_LINELENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
+    assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
     assert (`ICACHE_WAYSIZEINBYTES <= 4096 | `MEM_ICACHE == 0 | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`ICACHE_BLOCKLENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
-    assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
+    assert (`ICACHE_LINELENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
+    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS) else $error("DCACHE_LINELENINBITS must be a power of 2");
     assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS) else $error("ICACHE_LINELENINBITS must be a power of 2");
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (`ICACHE_NUMWAYS == 1 | `MEM_ICACHE == 0) else $warning("Multiple Instruction Cache ways not yet implemented");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
@@ -811,12 +806,12 @@ module DCacheFlushFSM
 
   localparam integer numlines = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.NUMLINES;
   localparam integer numways = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.NUMWAYS;
-  localparam integer blockbytelen = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.BLOCKBYTELEN;
-  localparam integer numwords = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.BLOCKLEN/`XLEN;  
+  localparam integer linebytelen = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.LINEBYTELEN;
+  localparam integer numwords = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.LINELEN/`XLEN;  
   localparam integer lognumlines = $clog2(numlines);
-  localparam integer logblockbytelen = $clog2(blockbytelen);
+  localparam integer loglinebytelen = $clog2(linebytelen);
   localparam integer lognumways = $clog2(numways);
-  localparam integer tagstart = lognumlines + logblockbytelen;
+  localparam integer tagstart = lognumlines + loglinebytelen;
 
 
 
@@ -830,29 +825,26 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
-  generate
-    for(index = 0; index < numlines; index++) begin
-      for(way = 0; way < numways; way++) begin
-	for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-	  copyShadow #(.tagstart(tagstart),
-		       .logblockbytelen(logblockbytelen))
-	  copyShadow(.clk,
-		     .start,
-		     .tag(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-		     .valid(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].ValidBits[index]),
-		     .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
-		     .data(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
-		     .index(index),
-		     .cacheWord(cacheWord),
-		     .CacheData(CacheData[way][index][cacheWord]),
-		     .CacheAdr(CacheAdr[way][index][cacheWord]),
-		     .CacheTag(CacheTag[way][index][cacheWord]),
-		     .CacheValid(CacheValid[way][index][cacheWord]),
-		     .CacheDirty(CacheDirty[way][index][cacheWord]));
-	end
+  for(index = 0; index < numlines; index++) begin
+    for(way = 0; way < numways; way++) begin
+      for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+        copyShadow #(.tagstart(tagstart), .loglinebytelen(loglinebytelen))
+        copyShadow(.clk,
+            .start,
+            .tag(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+            .valid(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].ValidBits[index]),
+            .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
+            .data(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+            .index(index),
+            .cacheWord(cacheWord),
+            .CacheData(CacheData[way][index][cacheWord]),
+            .CacheAdr(CacheAdr[way][index][cacheWord]),
+            .CacheTag(CacheTag[way][index][cacheWord]),
+            .CacheValid(CacheValid[way][index][cacheWord]),
+            .CacheDirty(CacheDirty[way][index][cacheWord]));
       end
     end
-  endgenerate
+  end
 
   integer i, j, k;
   
@@ -879,7 +871,7 @@ module DCacheFlushFSM
 endmodule
 
 module copyShadow
-  #(parameter tagstart, logblockbytelen)
+  #(parameter tagstart, loglinebytelen)
   (input logic clk,
    input logic 			     start,
    input logic [`PA_BITS-1:tagstart] tag,
@@ -900,7 +892,7 @@ module copyShadow
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8));
+      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(`XLEN/8));
     end
   end
   

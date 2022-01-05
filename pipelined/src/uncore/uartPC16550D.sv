@@ -257,13 +257,10 @@ module uartPC16550D(
       else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // *** not right
     end
 
-  generate
-    if(`QEMU)
-      assign rxcentered = rxbaudpulse & (rxoversampledcnt[1:0] == 2'b10);  // implies rxstate = UART_ACTIVE
-    else
-      assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);  // implies rxstate = UART_ACTIVE      
-  endgenerate
-
+  // ***explain why
+  if(`QEMU) assign rxcentered = rxbaudpulse & (rxoversampledcnt[1:0] == 2'b10);  // implies rxstate = UART_ACTIVE
+  else      assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE      
+ 
   assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
   ///////////////////////////////////////////
@@ -325,22 +322,20 @@ module uartPC16550D(
   // detect any errors in rx fifo
   // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
   // tail is normally higher than head, but might wrap around.  unwrapped variable adds 16 to eliminate wrapping
-  generate
-    assign rxfifotailunwrapped = rxfifotail < rxfifohead ? {1'b1, rxfifotail} : {1'b0, rxfifotail};
-    genvar i;
-    for (i=0; i<32; i++) begin:rxfull
-      if (i == 0) assign rxfullbitunwrapped[i] = (rxfifohead==0) & (rxfifotail != 0);
-      else        assign rxfullbitunwrapped[i] = ({1'b0,rxfifohead}==i | rxfullbitunwrapped[i-1]) & (rxfifotailunwrapped != i);
-    end
-    for (i=0; i<16; i++) begin:rx
-      assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
-      assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
-	  /*      if (i > 0)
-       assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
-       else
-       assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
-    end
-  endgenerate
+  assign rxfifotailunwrapped = rxfifotail < rxfifohead ? {1'b1, rxfifotail} : {1'b0, rxfifotail};
+  genvar i;
+  for (i=0; i<32; i++) begin:rxfull
+    if (i == 0) assign rxfullbitunwrapped[i] = (rxfifohead==0) & (rxfifotail != 0);
+    else        assign rxfullbitunwrapped[i] = ({1'b0,rxfifohead}==i | rxfullbitunwrapped[i-1]) & (rxfifotailunwrapped != i);
+  end
+  for (i=0; i<16; i++) begin:rx
+    assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
+    assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
+  /*      if (i > 0)
+      assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
+      else
+      assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
+  end
   assign rxfifohaserr = |(RXerrbit & rxfullbit);
 
   // receive buffer register and ready bit
@@ -383,13 +378,9 @@ module uartPC16550D(
     end
 
   assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s)
-  generate
-    if (`QEMU)
-      assign txnextbit = txbaudpulse & (txoversampledcnt[1:0] == 2'b00);  // implies txstate = UART_ACTIVE
-    else
-      assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
-  endgenerate
-
+  // *** explain; is this necessary?
+  if (`QEMU) assign txnextbit = txbaudpulse & (txoversampledcnt[1:0] == 2'b00);  // implies txstate = UART_ACTIVE
+  else       assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
 
   ///////////////////////////////////////////
   // transmit holding register, shift register, FIFO

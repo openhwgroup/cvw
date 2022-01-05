@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// dcache (data cache)
+// cache (data cache)
 //
 // Written: ross1728@gmail.com July 07, 2021
 //          Implements the L1 data cache
@@ -25,43 +25,43 @@
 
 `include "wally-config.vh"
 
-module dcache #(parameter integer LINELEN, 
+module cache #(parameter integer LINELEN, 
 				parameter integer NUMLINES, 
-				parameter integer NUMWAYS)
+				parameter integer NUMWAYS,
+			   parameter integer DCACHE = 1)
   (input logic clk,
    input logic 				   reset,
    input logic 				   CPUBusy,
 
-   // mmu
-   input logic 				   CacheableM,
    // cpu side
-   input logic [1:0] 		   LsuRWM,
-   input logic [1:0] 		   LsuAtomicM,
-   input logic 				   FlushDCacheM,
+   input logic [1:0] 		   RW,
+   input logic [1:0] 		   Atomic,
+   input logic 				   FlushCache,
    input logic [11:0] 		   LsuAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  LsuPAdrM, // physical address
    input logic [11:0] 		   PreLsuPAdrM, // physical or virtual address   
-   input logic [`XLEN-1:0] 	   FinalWriteDataM,
-   output logic [`XLEN-1:0]    ReadDataWordM,
-   output logic 			   DCacheCommittedM, 
+   input logic [`XLEN-1:0] 	   FinalWriteData,
+   output logic [`XLEN-1:0]    ReadDataWord,
+   output logic 			   CacheCommitted, 
 
    // Bus fsm interface
    input logic 				   IgnoreRequest,
-   output logic 			   DCacheFetchLine,
-   output logic 			   DCacheWriteLine,
+   output logic 			   CacheFetchLine,
+   output logic 			   CacheWriteLine,
 
-   input logic 				   DCacheBusAck,
-   output logic [`PA_BITS-1:0] DCacheBusAdr,
+   input logic 				   CacheBusAck,
+   output logic [`PA_BITS-1:0] CacheBusAdr,
 
 
-   input logic [LINELEN-1:0]   DCacheMemWriteData,
-   output logic [`XLEN-1:0]    ReadDataLineSetsM [(LINELEN/`XLEN)-1:0],
+   input logic [LINELEN-1:0]   CacheMemWriteData,
+   output logic [`XLEN-1:0]    ReadDataLineSets [(LINELEN/`XLEN)-1:0],
 
-   output logic 			   DCacheStall,
+   output logic 			   CacheStall,
 
    // to performance counters
-   output logic 			   DCacheMiss,
-   output logic 			   DCacheAccess
+   output logic 			   CacheMiss,
+   output logic 			   CacheAccess,
+   input logic 				   InvalidateCacheM
    );
 
 
@@ -141,7 +141,7 @@ module dcache #(parameter integer LINELEN,
 					  .VictimWay, .FlushWay, .SelFlush,
 					  .ReadDataLineWayMasked,
 					  .WayHit, .VictimDirtyWay, .VictimTagWay,
-					  .InvalidateAll(1'b0));
+					  .InvalidateAll(InvalidateCacheM));
 
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
@@ -170,12 +170,22 @@ module dcache #(parameter integer LINELEN,
   // easily build a variable input mux.
   // *** consider using a limited range shift to do this final muxing.
   genvar index;
-  for (index = 0; index < WORDSPERLINE; index++)
-    assign ReadDataLineSetsM[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
- 
-  // variable input mux
-  
-  assign ReadDataWordM = ReadDataLineSetsM[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
+	if(DCACHE == 1) begin: readdata
+    for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
+		  assign ReadDataLineSets[index] = ReadDataLineM[((index+1)*`XLEN)-1: (index*`XLEN)];
+    end
+	  // variable input mux
+	  assign ReadDataWord = ReadDataLineSets[LsuPAdrM[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
+	end else begin: readdata
+	  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
+	  logic [31:0] 				  FinalInstrRawF;
+	  for(index = 0; index < LINELEN / 16 - 1; index++) 
+		  assign ReadLineSetsF[index] = ReadDataLineM[((index+1)*16)+16-1 : (index*16)];
+	  assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadDataLineM[LINELEN-1:LINELEN-16]};
+	  assign FinalInstrRawF = ReadLineSetsF[LsuPAdrM[$clog2(LINELEN / 32) + 1 : 1]];
+	  if (`XLEN == 64) assign ReadDataWord = {32'b0, FinalInstrRawF};		
+	  else             assign ReadDataWord = FinalInstrRawF;				
+	end
 
   // Write Path CPU (IEU) side
 
@@ -194,8 +204,8 @@ module dcache #(parameter integer LINELEN,
 
 
 
-  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteDataM}}),
-								.d1(DCacheMemWriteData),
+  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
+								.d1(CacheMemWriteData),
 								.s(SRAMLineWriteEnableM),
 								.y(SRAMWriteData));
 
@@ -204,7 +214,7 @@ module dcache #(parameter integer LINELEN,
 							  .d1({VictimTag, LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 							  .d2({VictimTag, FlushAdrQ, {{OFFSETLEN}{1'b0}}}),
 							  .s({SelFlush, SelEvict}),
-							  .y(DCacheBusAdr));
+							  .y(CacheBusAdr));
 
 
   // flush address and way generation.
@@ -239,16 +249,21 @@ module dcache #(parameter integer LINELEN,
   assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
 
   // controller
+  // *** fixme
+  logic CacheableM;
+  
+  assign CacheableM = 1;
 
-  dcachefsm dcachefsm(.clk, .reset, .DCacheFetchLine, .DCacheWriteLine, .DCacheBusAck, 
-					  .LsuRWM, .LsuAtomicM, .CPUBusy, .CacheableM, .IgnoreRequest,
- 					  .CacheHit, .VictimDirty, .DCacheStall, .DCacheCommittedM, 
-					  .DCacheMiss, .DCacheAccess, .SelAdrM, .SetValid, 
-					  .ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
-					  .SRAMLineWriteEnableM, .SelEvict, .SelFlush,
-					  .FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-					  .FlushWayCntRst, .FlushAdrFlag, .FlushDCacheM, 
-					  .VDWriteEnable, .LRUWriteEn);
+
+  cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
+					.RW, .Atomic, .CPUBusy, .CacheableM, .IgnoreRequest,
+ 					.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
+					.CacheMiss, .CacheAccess, .SelAdrM, .SetValid, 
+					.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
+					.SRAMLineWriteEnableM, .SelEvict, .SelFlush,
+					.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
+					.FlushWayCntRst, .FlushAdrFlag, .FlushCache, 
+					.VDWriteEnable, .LRUWriteEn);
   
 
 endmodule // dcache

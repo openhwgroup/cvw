@@ -25,34 +25,34 @@
 
 `include "wally-config.vh"
 
-module dcachefsm
+module cachefsm
   (input logic clk,
    input logic 		  reset,
    // inputs from IEU
-   input logic [1:0]  LsuRWM,
-   input logic [1:0]  LsuAtomicM,
-   input logic 		  FlushDCacheM,
+   input logic [1:0]  RW,
+   input logic [1:0]  Atomic,
+   input logic 		  FlushCache,
    // hazard inputs
    input logic 		  CPUBusy,
    input logic 		  CacheableM,
    // interlock fsm
    input logic 		  IgnoreRequest,
    // Bus inputs
-   input logic 		  DCacheBusAck,
+   input logic 		  CacheBusAck,
    // dcache internals
    input logic 		  CacheHit,
    input logic 		  VictimDirty,
    input logic 		  FlushAdrFlag,
   
    // hazard outputs
-   output logic 	  DCacheStall,
+   output logic 	  CacheStall,
    // counter outputs
-   output logic 	  DCacheMiss,
-   output logic 	  DCacheAccess,
+   output logic 	  CacheMiss,
+   output logic 	  CacheAccess,
    // Bus outputs
-   output logic       DCacheCommittedM,
-   output logic 	  DCacheWriteLine,
-   output logic 	  DCacheFetchLine,
+   output logic       CacheCommitted,
+   output logic 	  CacheWriteLine,
+   output logic 	  CacheFetchLine,
 
    // dcache internals
    output logic [1:0] SelAdrM,
@@ -94,11 +94,11 @@ module dcachefsm
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
 
-  assign AnyCPUReqM = |LsuRWM | (|LsuAtomicM);
+  assign AnyCPUReqM = |RW | (|Atomic);
 
   // outputs for the performance counters.
-  assign DCacheAccess = AnyCPUReqM & CacheableM & CurrState == STATE_READY;
-  assign DCacheMiss = DCacheAccess & CacheableM & ~CacheHit;
+  assign CacheAccess = AnyCPUReqM & CacheableM & CurrState == STATE_READY;
+  assign CacheMiss = CacheAccess & CacheableM & ~CacheHit;
 
   always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_READY;
@@ -106,7 +106,7 @@ module dcachefsm
   
   // next state logic and some state ouputs.
   always_comb begin
-    DCacheStall = 1'b0;
+    CacheStall = 1'b0;
     SelAdrM = 2'b00;
     SetValid = 1'b0;
     ClearValid = 1'b0;
@@ -123,13 +123,13 @@ module dcachefsm
     FlushWayCntRst = 1'b0;	
     VDWriteEnable = 1'b0;
     NextState = STATE_READY;
-	DCacheFetchLine = 1'b0;
-	DCacheWriteLine = 1'b0;
+	CacheFetchLine = 1'b0;
+	CacheWriteLine = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
 
-		DCacheStall = 1'b0;
+		CacheStall = 1'b0;
 		SelAdrM = 2'b00;
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
@@ -139,7 +139,7 @@ module dcachefsm
 		if(IgnoreRequest) begin
 		  // the LSU arbiter has not yet selected the PTW.
 		  // The CPU needs to be stalled until that happens.
-		  // If we set DCacheStall for 1 cycle before going to
+		  // If we set CacheStall for 1 cycle before going to
 		  // PTW ready the CPU will stall.
 		  // The page table walker asserts it's control 1 cycle
 		  // after the TLBs miss.
@@ -148,18 +148,18 @@ module dcachefsm
 		end
 
 		// Flush dcache to next level of memory
-		else if(FlushDCacheM) begin
+		else if(FlushCache) begin
 		  NextState = STATE_FLUSH;
-		  DCacheStall = 1'b1;
+		  CacheStall = 1'b1;
 		  SelAdrM = 2'b10;
 		  FlushAdrCntRst = 1'b1;
 		  FlushWayCntRst = 1'b1;	
 		end
 		
 		// amo hit
-		else if(LsuAtomicM[1] & (&LsuRWM) & CacheableM & CacheHit) begin
+		else if(Atomic[1] & (&RW) & CacheableM & CacheHit) begin
 		  SelAdrM = 2'b01;
-		  DCacheStall = 1'b0;
+		  CacheStall = 1'b0;
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
@@ -173,8 +173,8 @@ module dcachefsm
 		  end
 		end
 		// read hit valid cached
-		else if(LsuRWM[1] & CacheableM & CacheHit) begin
-		  DCacheStall = 1'b0;
+		else if(RW[1] & CacheableM & CacheHit) begin
+		  CacheStall = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  
 		  if(CPUBusy) begin
@@ -186,9 +186,9 @@ module dcachefsm
 	      end
 		end
 		// write hit valid cached
-		else if (LsuRWM[0] & CacheableM & CacheHit) begin
+		else if (RW[0] & CacheableM & CacheHit) begin
 		  SelAdrM = 2'b01;
-		  DCacheStall = 1'b0;
+		  CacheStall = 1'b0;
 		  SRAMWordWriteEnableM = 1'b1;
 		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
@@ -202,19 +202,19 @@ module dcachefsm
 		  end
 		end
 		// read or write miss valid cached
-		else if((|LsuRWM) & CacheableM & ~CacheHit) begin
+		else if((|RW) & CacheableM & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
-		  DCacheStall = 1'b1;
-		  DCacheFetchLine = 1'b1;
+		  CacheStall = 1'b1;
+		  CacheFetchLine = 1'b1;
 		end
 		else NextState = STATE_READY;
       end
       
       STATE_MISS_FETCH_WDV: begin
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		SelAdrM = 2'b01;
 		
-		if (DCacheBusAck) begin
+		if (CacheBusAck) begin
           NextState = STATE_MISS_FETCH_DONE;
         end else begin
           NextState = STATE_MISS_FETCH_WDV;
@@ -222,11 +222,11 @@ module dcachefsm
       end
 
       STATE_MISS_FETCH_DONE: begin
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		SelAdrM = 2'b01;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
-		  DCacheWriteLine = 1'b1;
+		  CacheWriteLine = 1'b1;
 		end else begin
 		  NextState = STATE_MISS_WRITE_CACHE_LINE;
 		end
@@ -234,7 +234,7 @@ module dcachefsm
 
       STATE_MISS_WRITE_CACHE_LINE: begin
 		SRAMLineWriteEnableM = 1'b1;
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
 		SelAdrM = 2'b01;
 		SetValid = 1'b1;
@@ -244,12 +244,12 @@ module dcachefsm
 
       STATE_MISS_READ_WORD: begin
 		SelAdrM = 2'b01;
-		DCacheStall = 1'b1;
-		if (LsuRWM[0] & ~LsuAtomicM[1]) begin // handles stores and amo write.
+		CacheStall = 1'b1;
+		if (RW[0] & ~Atomic[1]) begin // handles stores and amo write.
 		  NextState = STATE_MISS_WRITE_WORD;
 		end else begin
 		  NextState = STATE_MISS_READ_WORD_DELAY;
-		  // delay state is required as the read signal LsuRWM[1] is still high when we
+		  // delay state is required as the read signal RW[1] is still high when we
 		  // return to the ready state because the cache is stalling the cpu.
 		end
       end
@@ -259,7 +259,7 @@ module dcachefsm
 		SRAMWordWriteEnableM = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
-		if(&LsuRWM & LsuAtomicM[1]) begin // amo write
+		if(&RW & Atomic[1]) begin // amo write
 		  SelAdrM = 2'b01;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
@@ -297,10 +297,10 @@ module dcachefsm
       end
 
       STATE_MISS_EVICT_DIRTY: begin
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		SelAdrM = 2'b01;
 		SelEvict = 1'b1;
-		if(DCacheBusAck) begin
+		if(CacheBusAck) begin
 		  NextState = STATE_MISS_WRITE_CACHE_LINE;
 		end else begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
@@ -336,7 +336,7 @@ module dcachefsm
       end
 
       STATE_FLUSH: begin
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		SelAdrM = 2'b10;
 		SelFlush = 1'b1;
 		FlushAdrCntEn = 1'b1;
@@ -345,10 +345,10 @@ module dcachefsm
 		  NextState = STATE_FLUSH_WRITE_BACK;
 		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;
-		  DCacheWriteLine = 1'b1;
+		  CacheWriteLine = 1'b1;
 		end else if (FlushAdrFlag) begin
 		  NextState = STATE_READY;
-		  DCacheStall = 1'b0;
+		  CacheStall = 1'b0;
 		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;	
 		end else begin
@@ -357,10 +357,10 @@ module dcachefsm
       end
 
       STATE_FLUSH_WRITE_BACK: begin
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		SelAdrM = 2'b10;
 		SelFlush = 1'b1;
-		if(DCacheBusAck) begin
+		if(CacheBusAck) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
@@ -368,7 +368,7 @@ module dcachefsm
       end
 
       STATE_FLUSH_CLEAR_DIRTY: begin
-		DCacheStall = 1'b1;
+		CacheStall = 1'b1;
 		ClearDirty = 1'b1;
 		VDWriteEnable = 1'b1;
 		SelFlush = 1'b1;
@@ -377,7 +377,7 @@ module dcachefsm
 		FlushWayCntEn = 1'b0;	
 		if(FlushAdrFlag) begin
 		  NextState = STATE_READY;
-		  DCacheStall = 1'b0;
+		  CacheStall = 1'b0;
 		  SelAdrM = 2'b00;
 		end else begin
 		  NextState = STATE_FLUSH;
@@ -392,7 +392,7 @@ module dcachefsm
     endcase
   end
 
-  assign DCacheCommittedM = CurrState != STATE_READY;
+  assign CacheCommitted = CurrState != STATE_READY;
 
-endmodule // dcachefsm
+endmodule // cachefsm
 

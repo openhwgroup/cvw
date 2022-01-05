@@ -71,7 +71,6 @@ logic [3:0] dummy;
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
-  logging logging(clk, reset, dut.uncore.HADDR, dut.uncore.HTRANS);
 
   // pick tests based on modes supported
   initial begin
@@ -88,7 +87,7 @@ logic [3:0] dummy;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
         "imperas64p":                     tests = imperas64p;
-        "imperas64mmu": if (`MEM_VIRTMEM) tests = imperas64mmu;
+//        "imperas64mmu": if (`MEM_VIRTMEM) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
@@ -111,7 +110,7 @@ logic [3:0] dummy;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
         "imperas32p":                     tests = imperas32p;
-        "imperas32mmu": if (`MEM_VIRTMEM) tests = imperas32mmu;
+//        "imperas32mmu": if (`MEM_VIRTMEM) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "imperas32a":   if (`A_SUPPORTED) tests = imperas32a;
@@ -297,13 +296,8 @@ logic [3:0] dummy;
   // or sw gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  generate
-    if (`ZICSR_SUPPORTED) begin
-      assign ecf = dut.hart.priv.priv.EcallFaultM;
-    end else begin
-      assign ecf = 0;
-    end
-  endgenerate
+  if (`ZICSR_SUPPORTED) assign ecf = dut.hart.priv.priv.EcallFaultM;
+  else                  assign ecf = 0;
   assign DCacheFlushStart = ecf & 
 			    (dut.hart.ieu.dp.regf.rf[3] == 1 | 
 			     (dut.hart.ieu.dp.regf.we3 & 
@@ -311,24 +305,17 @@ logic [3:0] dummy;
 			      dut.hart.ieu.dp.regf.wd3 == 1)) |
           (dut.hart.ifu.InstrM == 32'h6f | dut.hart.ifu.InstrM == 32'hfc32a423 | dut.hart.ifu.InstrM == 32'hfc32a823) & dut.hart.ieu.c.InstrValidM;
 
-  // **** Fix when the check in the shadow ram is fixed.
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
     			.reset(reset),
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
-  
 
-  generate
-    // initialize the branch predictor
-    if (`BPRED_ENABLED == 1) begin : bpred
-      
-      initial begin
-	$readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-	$readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
-      end
-    end
-  endgenerate
-  
+  // initialize the branch predictor
+  if (`BPRED_ENABLED == 1) 
+    initial begin
+      $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
+    end 
 endmodule
 
 module riscvassertions;
@@ -339,14 +326,14 @@ module riscvassertions;
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | `MEM_DCACHE == 0 | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_BLOCKLENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_BLOCKLENINBITS must be at least 128 when caches are enabled");
-    assert (`DCACHE_BLOCKLENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_BLOCKLENINBITS must be smaller than way size");
+    assert (`DCACHE_LINELENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
+    assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
     assert (`ICACHE_WAYSIZEINBYTES <= 4096 | `MEM_ICACHE == 0 | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`ICACHE_BLOCKLENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_BLOCKLENINBITS must be at least 32 when caches are enabled");
-    assert (`ICACHE_BLOCKLENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_BLOCKLENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_BLOCKLENINBITS) == `DCACHE_BLOCKLENINBITS | `MEM_DCACHE==0) else $error("DCACHE_BLOCKLENINBITS must be a power of 2");
+    assert (`ICACHE_LINELENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
+    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | `MEM_DCACHE==0) else $error("DCACHE_LINELENINBITS must be a power of 2");
     assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | `MEM_DCACHE==0) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_BLOCKLENINBITS) == `ICACHE_BLOCKLENINBITS | `MEM_ICACHE==0) else $error("ICACHE_BLOCKLENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | `MEM_ICACHE==0) else $error("ICACHE_LINELENINBITS must be a power of 2");
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | `MEM_ICACHE==0) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
@@ -371,16 +358,15 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
-  generate
 	if(`MEM_DCACHE) begin
 	  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
-	  localparam integer blockbytelen = testbench.dut.hart.lsu.dcache.dcache.BLOCKBYTELEN;
-	  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.BLOCKLEN/`XLEN;  
+	  localparam integer linebytelen = testbench.dut.hart.lsu.dcache.dcache.LINEBYTELEN;
+	  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.LINELEN/`XLEN;  
 	  localparam integer lognumlines = $clog2(numlines);
-	  localparam integer logblockbytelen = $clog2(blockbytelen);
+	  localparam integer loglinebytelen = $clog2(linebytelen);
 	  localparam integer lognumways = $clog2(numways);
-	  localparam integer tagstart = lognumlines + logblockbytelen;
+	  localparam integer tagstart = lognumlines + loglinebytelen;
 
 
 
@@ -394,7 +380,7 @@ module DCacheFlushFSM
 		for(way = 0; way < numways; way++) begin
 		  for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
 			copyShadow #(.tagstart(tagstart),
-						 .logblockbytelen(logblockbytelen))
+						 .loglinebytelen(loglinebytelen))
 			copyShadow(.clk,
 					   .start,
 					   .tag(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
@@ -431,19 +417,11 @@ module DCacheFlushFSM
 
 	  
 	end
-  endgenerate
-
-
-  
-
-  flop #(1) doneReg(.clk(clk),
-		    .d(start),
-		    .q(done));
-		    
+  flop #(1) doneReg(.clk, .d(start), .q(done));
 endmodule
 
 module copyShadow
-  #(parameter tagstart, logblockbytelen)
+  #(parameter tagstart, loglinebytelen)
   (input logic clk,
    input logic 			     start,
    input logic [`PA_BITS-1:tagstart] tag,
@@ -464,7 +442,7 @@ module copyShadow
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << logblockbytelen) + (cacheWord << $clog2(`XLEN/8));
+      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(`XLEN/8));
     end
   end
   
