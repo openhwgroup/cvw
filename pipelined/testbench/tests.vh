@@ -36,6 +36,7 @@ string tvpaths[] = '{
     "../../tests/imperas-riscv-tests/work/"
 };
 
+  // *** make sure these are somewhere
   string imperas64a[] = '{
     `MYIMPERASTEST,
     "rv64a/WALLY-AMO", "2110",
@@ -48,7 +49,7 @@ string tvpaths[] = '{
     "rv32a/WALLY-LRSC", "2110"
   };
 
-  string imperas32mmu[] = '{
+/*  string imperas32mmu[] = '{
     `MYIMPERASTEST, 
     "rv32mmu/WALLY-MMU-SV32", "3000",
     "rv32mmu/WALLY-PMP", "3000"
@@ -61,7 +62,7 @@ string tvpaths[] = '{
     "rv64mmu/WALLY-MMU-SV39", "3000",
     "rv64mmu/WALLY-PMP", "3000"
     //"rv64mmu/WALLY-PMA", "3000"
-  };
+  }; */
 
   // *** restore CSR tests from Imperas old
 
