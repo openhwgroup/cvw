@@ -66,16 +66,10 @@ module localHistoryPredictor
   //                 .BitWEN1(2'b11));  
 
   genvar      index;
-  generate
-    for (index = 0; index < 2**m; index = index +1) begin:localhist
-      
-      flopenr #(k) LocalHistoryRegister(.clk(clk),
-     .reset(reset),
-     .en(UpdateEN & (index == UpdatePCIndex)),
-     .d(LHRFNext),
-     .q(LHRNextF[index]));
-    end 
-  endgenerate
+  for (index = 0; index < 2**m; index = index +1) begin:localhist
+    flopenr #(k) LocalHistoryRegister(.clk, .reset, .en(UpdateEN & (index == UpdatePCIndex)),
+                                      .d(LHRFNext), .q(LHRNextF[index]));
+  end 
 
   // need to forward when updating to the same address as reading.
   // first we compare to see if the update and lookup addreses are the same

@@ -814,21 +814,18 @@ module resultselect(
 );
     logic [`FLEN-1:0]   XNaNResult, YNaNResult, ZNaNResult, InvalidResult, OverflowResult, KillProdResult, UnderflowResult; // possible results
 
-    generate 
-      if(`IEEE754) begin:nan
+    if(`IEEE754) begin
         assign XNaNResult = FmtM ? {XSgnM, XExpM, 1'b1, XManM[`NF-2:0]} : {{32{1'b1}}, XSgnM, XExpM[7:0], 1'b1, XManM[50:29]};
         assign YNaNResult = FmtM ? {YSgnM, YExpM, 1'b1, YManM[`NF-2:0]} : {{32{1'b1}}, YSgnM, YExpM[7:0], 1'b1, YManM[50:29]};
         assign ZNaNResult = FmtM ? {ZSgnEffM, ZExpM, 1'b1, ZManM[`NF-2:0]} : {{32{1'b1}}, ZSgnEffM, ZExpM[7:0], 1'b1, ZManM[50:29]};
         assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, ResultSgn, 8'hff, 1'b1, 22'b0};
-      end else begin:nan
+      end else begin
         assign XNaNResult = FmtM ? {1'b0, XExpM, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpM[7:0], 1'b1, 22'b0};
         assign YNaNResult = FmtM ? {1'b0, YExpM, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, YExpM[7:0], 1'b1, 22'b0};
         assign ZNaNResult = FmtM ? {1'b0, ZExpM, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, ZExpM[7:0], 1'b1, 22'b0};
         assign InvalidResult = FmtM ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{32{1'b1}}, 1'b0, 8'hff, 1'b1, 22'b0};
     end
-    endgenerate
-    
-    
+     
     assign OverflowResult =  FmtM ? ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                           {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                     ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{32{1'b1}}, ResultSgn, 8'hfe, {23{1'b1}}} :

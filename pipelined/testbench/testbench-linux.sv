@@ -22,7 +22,7 @@
 // BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// When letting Wally go for it, let wally generate own interrupts
+// When letting Wally go for it, let wally make own interrupts
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -36,7 +36,7 @@
 // 4: print memory accesses whenever they happen
 // 5: print everything
 
-module testbench();
+module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////// CONFIG ////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
@@ -280,13 +280,6 @@ module testbench();
 
   `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,3);
-  generate
-    genvar i;
-/* -----\/----- EXCLUDED -----\/-----
-    `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPCFG,  [7:0],`PMP_ENTRIES-1,0);
-    `INIT_CHECKPOINT_GENBLK_ARRAY(PMP_BASE, PMPADDR, [`XLEN-1:0],`PMP_ENTRIES-1,0);
- -----/\----- EXCLUDED -----/\----- */
-  endgenerate
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
