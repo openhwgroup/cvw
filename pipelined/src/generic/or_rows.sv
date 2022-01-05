@@ -33,18 +33,16 @@ module or_rows #(parameter ROWS = 8, COLS=2) (
   input  var logic [COLS-1:0] a[ROWS-1:0],
   output logic [COLS-1:0] y); 
 
-  logic [COLS-1:0] mid[ROWS-1:1];
-  genvar row, col;
-  generate
-    if(ROWS == 1)
-      assign y = a[0];
-    else begin
-      assign mid[1] = a[0] | a[1];
-      for (row=2; row < ROWS; row++)
-	assign mid[row] = mid[row-1] | a[row];
-      assign y = mid[ROWS-1];
-    end
-   endgenerate
+  genvar row;
+  if(ROWS == 1)
+    assign y = a[0];
+  else begin
+    logic [COLS-1:0] mid[ROWS-1:1];
+    assign mid[1] = a[0] | a[1];
+    for (row=2; row < ROWS; row++)
+      assign mid[row] = mid[row-1] | a[row];
+    assign y = mid[ROWS-1];
+  end
 endmodule
 
 /* verilator lint_on UNOPTFLAT */

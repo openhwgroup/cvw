@@ -72,16 +72,13 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
 
   genvar 							  words;
-
-  generate
-    for(words = 0; words < LINELEN/`XLEN; words++) begin : word
-      sram1rw #(.DEPTH(`XLEN), .WIDTH(NUMLINES))
-      CacheDataMem(.clk(clk), .Addr(RAdr),
-				   .ReadData(ReadDataLineWay[(words+1)*`XLEN-1:words*`XLEN] ),
-				   .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-				   .WriteEnable(WriteEnable & WriteWordEnable[words]));
-    end
-  endgenerate
+  for(words = 0; words < LINELEN/`XLEN; words++) begin: word
+    sram1rw #(.DEPTH(`XLEN), .WIDTH(NUMLINES))
+    CacheDataMem(.clk(clk), .Addr(RAdr),
+          .ReadData(ReadDataLineWay[(words+1)*`XLEN-1:words*`XLEN] ),
+          .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
+          .WriteEnable(WriteEnable & WriteWordEnable[words]));
+  end
 
   sram1rw #(.DEPTH(TAGLEN), .WIDTH(NUMLINES))
   CacheTagMem(.clk(clk),
@@ -123,27 +120,21 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   assign Valid = ValidBits[RAdrD];
 
-  generate
-    if(DIRTY_BITS) begin:dirty
-      always_ff @(posedge clk) begin
-		if (reset) 
-  		  DirtyBits <= {NUMLINES{1'b0}};
-		else if (SetDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b1;
-		else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b0;
-      end
-
-      always_ff @(posedge clk) begin
-		SetDirtyD <= SetDirty;
-		ClearDirtyD <= ClearDirty;
-      end
-
-      assign Dirty = DirtyBits[RAdrD];
-
-    end else begin:dirty
-      assign Dirty = 1'b0;
+  // Dirty bits
+  if(DIRTY_BITS) begin:dirty
+    always_ff @(posedge clk) begin
+      if (reset)                                              DirtyBits <= {NUMLINES{1'b0}};
+      else if (SetDirtyD & (WriteEnableD | VDWriteEnableD))   DirtyBits[RAdrD] <= 1'b1;
+      else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b0;
     end
-  endgenerate
-  
+    always_ff @(posedge clk) begin
+      SetDirtyD <= SetDirty;
+      ClearDirtyD <= ClearDirty;
+    end
+    assign Dirty = DirtyBits[RAdrD];
+  end else begin:dirty
+    assign Dirty = 1'b0;
+  end
 endmodule // DCacheMemWay
 
 

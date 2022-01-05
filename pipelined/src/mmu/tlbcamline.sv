@@ -60,38 +60,36 @@ module tlbcamline #(parameter KEY_BITS = 20,
 
   assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G; 
 
-  generate
-    if (`XLEN == 32) begin:match
+  if (`XLEN == 32) begin: match
 
-      assign {Key_ASID, Key1, Key0} = Key;
-      assign {Query1, Query0} = VPN;
+    assign {Key_ASID, Key1, Key0} = Key;
+    assign {Query1, Query0} = VPN;
 
-      // Calculate the actual match value based on the input vpn and the page type.
-      // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
-      // should automatically match.
-      assign Match0 = (Query0 == Key0) | (PageType[0]); // least signifcant section
-      assign Match1 = (Query1 == Key1);
+    // Calculate the actual match value based on the input vpn and the page type.
+    // For example, a megapage in SV32 only cares about VPN[1], so VPN[0]
+    // should automatically match.
+    assign Match0 = (Query0 == Key0) | (PageType[0]); // least signifcant section
+    assign Match1 = (Query1 == Key1);
 
-      assign Match = Match0 & Match1 & MatchASID & Valid;
-    end else begin:match
+    assign Match = Match0 & Match1 & MatchASID & Valid;
+  end else begin: match
 
-      logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
-      logic Match2, Match3;
+    logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
+    logic Match2, Match3;
 
-      assign {Query3, Query2, Query1, Query0} = VPN;
-      assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
+    assign {Query3, Query2, Query1, Query0} = VPN;
+    assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
 
-      // Calculate the actual match value based on the input vpn and the page type.
-      // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
-      // should automatically match.
-      assign Match0 = (Query0 == Key0) | (PageType > 2'd0); // least signifcant section
-      assign Match1 = (Query1 == Key1) | (PageType > 2'd1);
-      assign Match2 = (Query2 == Key2) | (PageType > 2'd2);
-      assign Match3 = (Query3 == Key3) | SV39Mode; // this should always match in sv39 because they aren't used
-      
-      assign Match = Match0 & Match1 & Match2 & Match3 & MatchASID & Valid;
-    end
-  endgenerate
+    // Calculate the actual match value based on the input vpn and the page type.
+    // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
+    // should automatically match.
+    assign Match0 = (Query0 == Key0) | (PageType > 2'd0); // least signifcant section
+    assign Match1 = (Query1 == Key1) | (PageType > 2'd1);
+    assign Match2 = (Query2 == Key2) | (PageType > 2'd2);
+    assign Match3 = (Query3 == Key3) | SV39Mode; // this should always match in sv39 because they aren't used
+    
+    assign Match = Match0 & Match1 & Match2 & Match3 & MatchASID & Valid;
+  end
 
   // On a write, update the type of the page referred to by this line.
   flopenr #(2) pagetypeflop(clk, reset, WriteEnable, PageTypeWriteVal, PageType);

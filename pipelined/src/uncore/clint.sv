@@ -55,12 +55,8 @@ module clint (
   assign HREADYCLINT = 1'b1; // *** needs to depend on DONE during accesses 
   
   // word aligned reads
-  generate
-    if (`XLEN==64)
-      assign #2 entry = {HADDR[15:3], 3'b000};
-    else
-      assign #2 entry = {HADDR[15:2], 2'b00}; 
-  endgenerate
+  if (`XLEN==64) assign #2 entry = {HADDR[15:3], 3'b000};
+  else           assign #2 entry = {HADDR[15:2], 2'b00}; 
   
   // DH 2/20/21: Eventually allow MTIME to run off a separate clock
   // This will require synchronizing MTIME to the system clock
@@ -69,74 +65,72 @@ module clint (
   // Use req and ack signals synchronized across the clock domains.
 
   // register access
-  generate
-    if (`XLEN==64) begin:clint // 64-bit
-      always @(posedge HCLK) begin
-        case(entry)
-          16'h0000: HREADCLINT <= {63'b0, MSIP};
-          16'h4000: HREADCLINT <= MTIMECMP;
-          16'hBFF8: HREADCLINT <= MTIME;
-          default:  HREADCLINT <= 0;
-        endcase
-      end 
-      always_ff @(posedge HCLK or negedge HRESETn) 
-        if (~HRESETn) begin
-          MSIP <= 0;
-          MTIMECMP <= 0;
-          // MTIMECMP is not reset
-        end else if (memwrite) begin
-          if (entryd == 16'h0000) MSIP <= HWDATA[0];
-          if (entryd == 16'h4000) MTIMECMP <= HWDATA;
-        end
-
- // eventually replace MTIME logic below with timereg
- //    timereg tr(HCLK, HRESETn, TIMECLK, memwrite & (entryd==16'hBFF8), 1'b0, HWDATA, MTIME, done);
-
-      always_ff @(posedge HCLK or negedge HRESETn) 
-        if (~HRESETn) begin
-          MTIME <= 0;
-          // MTIMECMP is not reset
-        end else if (memwrite & entryd == 16'hBFF8) begin
-          // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-	        MTIME <= HWDATA;
-        end else MTIME <= MTIME + 1; 
-    end else begin:clint // 32-bit
-      always @(posedge HCLK) begin
-        case(entry)
-          16'h0000: HREADCLINT <= {31'b0, MSIP};
-          16'h4000: HREADCLINT <= MTIMECMP[31:0];
-          16'h4004: HREADCLINT <= MTIMECMP[63:32];
-          16'hBFF8: HREADCLINT <= MTIME[31:0];
-          16'hBFFC: HREADCLINT <= MTIME[63:32];
-          default:  HREADCLINT <= 0;
-        endcase
-      end 
-      always_ff @(posedge HCLK or negedge HRESETn) 
-        if (~HRESETn) begin
-          MSIP <= 0;
-          MTIMECMP <= 0;
-          // MTIMECMP is not reset ***?
-        end else if (memwrite) begin
-          if (entryd == 16'h0000) MSIP <= HWDATA[0];
-          if (entryd == 16'h4000) MTIMECMP[31:0] <= HWDATA;
-          if (entryd == 16'h4004) MTIMECMP[63:32] <= HWDATA;
-          // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-	      end
+  if (`XLEN==64) begin:clint // 64-bit
+    always @(posedge HCLK) begin
+      case(entry)
+        16'h0000: HREADCLINT <= {63'b0, MSIP};
+        16'h4000: HREADCLINT <= MTIMECMP;
+        16'hBFF8: HREADCLINT <= MTIME;
+        default:  HREADCLINT <= 0;
+      endcase
+    end 
+    always_ff @(posedge HCLK or negedge HRESETn) 
+      if (~HRESETn) begin
+        MSIP <= 0;
+        MTIMECMP <= 0;
+        // MTIMECMP is not reset
+      end else if (memwrite) begin
+        if (entryd == 16'h0000) MSIP <= HWDATA[0];
+        if (entryd == 16'h4000) MTIMECMP <= HWDATA;
+      end
 
 // eventually replace MTIME logic below with timereg
- //     timereg tr(HCLK, HRESETn, TIMECLK, memwrite & (entryd==16'hBFF8), memwrite & (entryd == 16'hBFFC), HWDATA, MTIME, done);
-      always_ff @(posedge HCLK or negedge HRESETn) 
-        if (~HRESETn) begin
-          MTIME <= 0;
-          // MTIMECMP is not reset
-	      end else if (memwrite & (entryd == 16'hBFF8)) begin
-	        MTIME[31:0] <= HWDATA;
-	      end else if (memwrite & (entryd == 16'hBFFC)) begin
-          // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-	        MTIME[63:32]<= HWDATA;
-	      end else MTIME <= MTIME + 1;
+//    timereg tr(HCLK, HRESETn, TIMECLK, memwrite & (entryd==16'hBFF8), 1'b0, HWDATA, MTIME, done);
+
+    always_ff @(posedge HCLK or negedge HRESETn) 
+      if (~HRESETn) begin
+        MTIME <= 0;
+        // MTIMECMP is not reset
+      end else if (memwrite & entryd == 16'hBFF8) begin
+        // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
+        MTIME <= HWDATA;
+      end else MTIME <= MTIME + 1; 
+  end else begin:clint // 32-bit
+    always @(posedge HCLK) begin
+      case(entry)
+        16'h0000: HREADCLINT <= {31'b0, MSIP};
+        16'h4000: HREADCLINT <= MTIMECMP[31:0];
+        16'h4004: HREADCLINT <= MTIMECMP[63:32];
+        16'hBFF8: HREADCLINT <= MTIME[31:0];
+        16'hBFFC: HREADCLINT <= MTIME[63:32];
+        default:  HREADCLINT <= 0;
+      endcase
     end 
-  endgenerate
+    always_ff @(posedge HCLK or negedge HRESETn) 
+      if (~HRESETn) begin
+        MSIP <= 0;
+        MTIMECMP <= 0;
+        // MTIMECMP is not reset ***?
+      end else if (memwrite) begin
+        if (entryd == 16'h0000) MSIP <= HWDATA[0];
+        if (entryd == 16'h4000) MTIMECMP[31:0] <= HWDATA;
+        if (entryd == 16'h4004) MTIMECMP[63:32] <= HWDATA;
+        // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
+      end
+
+// eventually replace MTIME logic below with timereg
+//     timereg tr(HCLK, HRESETn, TIMECLK, memwrite & (entryd==16'hBFF8), memwrite & (entryd == 16'hBFFC), HWDATA, MTIME, done);
+    always_ff @(posedge HCLK or negedge HRESETn) 
+      if (~HRESETn) begin
+        MTIME <= 0;
+        // MTIMECMP is not reset
+      end else if (memwrite & (entryd == 16'hBFF8)) begin
+        MTIME[31:0] <= HWDATA;
+      end else if (memwrite & (entryd == 16'hBFFC)) begin
+        // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
+        MTIME[63:32]<= HWDATA;
+      end else MTIME <= MTIME + 1;
+  end 
 
   // Software interrupt when MSIP is set
   assign SwIntM = MSIP;
@@ -234,13 +228,9 @@ module graytobinary #(parameter N = `XLEN) (
 
   // B[N-1] = G[N-1]; B[i] = G[i] ^ B[i+1] for 0 <= i < N-1
   // requires rippling through N-1 XOR gates
-  generate 
-    begin
-      genvar i;
-      assign b[N-1] = g[N-1];
-      for (i=N-2; i >= 0; i--) begin:g2b
-        assign b[i] = g[i] ^ b[i+1];
-      end
+    genvar i;
+    assign b[N-1] = g[N-1];
+    for (i=N-2; i >= 0; i--) begin:g2b
+      assign b[i] = g[i] ^ b[i+1];
     end
-  endgenerate
 endmodule

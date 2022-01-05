@@ -103,18 +103,16 @@ module trap (
   // > implemented without a hardware adder circuit.
   // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
   // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
-  generate
-    if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
-        always_comb
-          if (PrivilegedTrapVector[1:0] == 2'b01 & CauseM[`XLEN-1] == 1)
-            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {CauseM[`XLEN-5:0], 2'b00}, 2'b00};
-          else
-            PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
-    end
-    else begin
-      assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
-    end
-  endgenerate
+  if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
+      always_comb
+        if (PrivilegedTrapVector[1:0] == 2'b01 & CauseM[`XLEN-1] == 1)
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {CauseM[`XLEN-5:0], 2'b00}, 2'b00};
+        else
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+  end
+  else begin
+    assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+  end
 
   always_comb 
     if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
