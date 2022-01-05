@@ -30,38 +30,37 @@ module cache #(parameter integer LINELEN,
 				parameter integer NUMWAYS,
 			   parameter integer DCACHE = 1)
   (input logic clk,
-   input logic 				   reset,
-   input logic 				   CPUBusy,
-
+   input logic				   reset,
+   input logic				   CPUBusy,
    // cpu side
-   input logic [1:0] 		   RW,
-   input logic [1:0] 		   Atomic,
-   input logic 				   FlushCache,
-   input logic [11:0] 		   LsuAdrE, // virtual address, but we only use the lower 12 bits.
+   input logic [1:0]		   RW,
+   input logic [1:0]		   Atomic,
+   input logic				   FlushCache,
+   input logic [11:0]		   LsuAdrE, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  LsuPAdrM, // physical address
-   input logic [11:0] 		   PreLsuPAdrM, // physical or virtual address   
-   input logic [`XLEN-1:0] 	   FinalWriteData,
-   output logic [`XLEN-1:0]    ReadDataWord,
-   output logic 			   CacheCommitted, 
+   input logic [11:0]		   PreLsuPAdrM, // physical or virtual address   
+   input logic [`XLEN-1:0]	   FinalWriteData,
+   output logic [`XLEN-1:0]	   ReadDataWord,
+   output logic				   CacheCommitted, 
 
    // Bus fsm interface
-   input logic 				   IgnoreRequest,
-   output logic 			   CacheFetchLine,
-   output logic 			   CacheWriteLine,
+   input logic				   IgnoreRequest,
+   output logic				   CacheFetchLine,
+   output logic				   CacheWriteLine,
 
-   input logic 				   CacheBusAck,
+   input logic				   CacheBusAck,
    output logic [`PA_BITS-1:0] CacheBusAdr,
 
 
    input logic [LINELEN-1:0]   CacheMemWriteData,
-   output logic [`XLEN-1:0]    ReadDataLineSets [(LINELEN/`XLEN)-1:0],
+   output logic [`XLEN-1:0]	   ReadDataLineSets [(LINELEN/`XLEN)-1:0],
 
-   output logic 			   CacheStall,
+   output logic				   CacheStall,
 
    // to performance counters
-   output logic 			   CacheMiss,
-   output logic 			   CacheAccess,
-   input logic 				   InvalidateCacheM
+   output logic				   CacheMiss,
+   output logic				   CacheAccess,
+   input logic				   InvalidateCacheM
    );
 
 
@@ -73,7 +72,7 @@ module cache #(parameter integer LINELEN,
   localparam integer 						LOGWPL = $clog2(WORDSPERLINE);
   localparam integer 						LOGXLENBYTES = $clog2(`XLEN/8);
 
-  localparam integer 						FlushAdrThreshold   = NUMLINES;
+  localparam integer 						FlushAdrThreshold   = NUMLINES - 1;
 
   logic [1:0] 								SelAdr;
   logic [INDEXLEN-1:0] 						RAdr;
@@ -103,12 +102,10 @@ module cache #(parameter integer LINELEN,
 
   logic [INDEXLEN-1:0] 						FlushAdr;
   logic [INDEXLEN-1:0] 						FlushAdrP1;
-  logic [INDEXLEN-1:0] 						FlushAdrQ;
-  logic [INDEXLEN-1:0] 						FlushAdrMux;
-  logic 									SelLastFlushAdr;
   logic 									FlushAdrCntEn;
   logic 									FlushAdrCntRst;
   logic 									FlushAdrFlag;
+    logic 									FlushWayFlag;
   
   logic [NUMWAYS-1:0] 						FlushWay;
   logic [NUMWAYS-1:0] 						NextFlushWay;
@@ -126,14 +123,12 @@ module cache #(parameter integer LINELEN,
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(LsuAdrE[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d1(PreLsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d2(FlushAdrMux),
+			.d2(FlushAdr),
 			.s(SelAdr),
 			.y(RAdr));
 
-  mux2 #(INDEXLEN)
-  FlushAdrSelMux(.d0(FlushAdr), .d1(FlushAdrQ), .s(SelLastFlushAdr), 
-				 .y(FlushAdrMux));
-  
+   
+
   cacheway #(.NUMLINES(NUMLINES), .LINELEN(LINELEN), .TAGLEN(TAGLEN), 
 			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
   MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
@@ -218,7 +213,7 @@ module cache #(parameter integer LINELEN,
   
   mux3 #(`PA_BITS) BaseAdrMux(.d0({LsuPAdrM[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 							  .d1({VictimTag, LsuPAdrM[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-							  .d2({VictimTag, FlushAdrQ, {{OFFSETLEN}{1'b0}}}),
+							  .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
 							  .s({SelFlush, SelEvict}),
 							  .y(CacheBusAdr));
 
@@ -228,17 +223,11 @@ module cache #(parameter integer LINELEN,
   flopenr #(INDEXLEN)
   FlushAdrReg(.clk,
 			  .reset(reset | FlushAdrCntRst),
-			  .en(FlushAdrCntEn & FlushWay[NUMWAYS-2]),
+			  .en(FlushAdrCntEn),
 			  .d(FlushAdrP1),
 			  .q(FlushAdr));
   assign FlushAdrP1 = FlushAdr + 1'b1;
 
-  flopenr #(INDEXLEN)
-  FlushAdrQReg(.clk,
-			  .reset(reset | FlushAdrCntRst),
-			  .en(FlushAdrCntEn),
-			  .d(FlushAdr),
-			  .q(FlushAdrQ));
 
   flopenl #(NUMWAYS)
   FlushWayReg(.clk,
@@ -252,7 +241,9 @@ module cache #(parameter integer LINELEN,
 
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
-  assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
+  //assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
+  assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0];
+  assign FlushWayFlag = FlushWay[NUMWAYS-1];
 
   // controller
   // *** fixme
@@ -268,7 +259,7 @@ module cache #(parameter integer LINELEN,
 					.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnableM,
 					.SRAMLineWriteEnableM, .SelEvict, .SelFlush,
 					.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-					.FlushWayCntRst, .FlushAdrFlag, .FlushCache, .SelLastFlushAdr,
+					.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
 					.VDWriteEnable, .LRUWriteEn);
   
 

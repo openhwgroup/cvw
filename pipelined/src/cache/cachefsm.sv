@@ -43,6 +43,7 @@ module cachefsm
    input logic 		  CacheHit,
    input logic 		  VictimDirty,
    input logic 		  FlushAdrFlag,
+   input logic 		  FlushWayFlag,   
   
    // hazard outputs
    output logic 	  CacheStall,
@@ -65,7 +66,6 @@ module cachefsm
    output logic 	  SelEvict,
    output logic 	  LRUWriteEn,
    output logic 	  SelFlush,
-   output logic 	  SelLastFlushAdr,
    output logic 	  FlushAdrCntEn,
    output logic 	  FlushWayCntEn, 
    output logic 	  FlushAdrCntRst,
@@ -90,6 +90,8 @@ module cachefsm
 					   STATE_CPU_BUSY_FINISH_AMO,
   
 					   STATE_FLUSH,
+					   STATE_FLUSH_CHECK,
+					   STATE_FLUSH_INCR,
 					   STATE_FLUSH_WRITE_BACK,
 					   STATE_FLUSH_CLEAR_DIRTY} statetype;
 
@@ -126,7 +128,6 @@ module cachefsm
     NextState = STATE_READY;
 	CacheFetchLine = 1'b0;
 	CacheWriteLine = 1'b0;
-	SelLastFlushAdr = 1'b0;
 
     case (CurrState)
       STATE_READY: begin
@@ -152,10 +153,9 @@ module cachefsm
 		// Flush dcache to next level of memory
 		else if(FlushCache) begin
 		  NextState = STATE_FLUSH;
-		  CacheStall = 1'b1;
-		  SelAdr = 2'b10;
 		  FlushAdrCntRst = 1'b1;
 		  FlushWayCntRst = 1'b1;	
+		  CacheStall = 1'b1;
 		end
 		
 		// amo hit
@@ -337,34 +337,50 @@ module cachefsm
 		end
       end
 
-      STATE_FLUSH: begin
+	  STATE_FLUSH: begin
+		// intialize flush counters
+		SelFlush = 1'b1;
+		CacheStall = 1'b1;
+		SelAdr = 2'b10;
+		NextState = STATE_FLUSH_CHECK;
+	  end		
+
+      STATE_FLUSH_CHECK: begin
 		CacheStall = 1'b1;
 		SelAdr = 2'b10;
 		SelFlush = 1'b1;
-		FlushAdrCntEn = 1'b1;
-		FlushWayCntEn = 1'b1;
-		SelLastFlushAdr = 1'b0;
 		if(VictimDirty) begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
-		  FlushAdrCntEn = 1'b0;
 		  FlushWayCntEn = 1'b0;
 		  CacheWriteLine = 1'b1;
-		  SelLastFlushAdr = 1'b1;
-		end else if (FlushAdrFlag) begin
+		end else if (FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
 		  CacheStall = 1'b0;
-		  FlushAdrCntEn = 1'b0;
+		  SelAdr = 2'b00;
 		  FlushWayCntEn = 1'b0;	
+		end else if(FlushWayFlag) begin
+		  NextState = STATE_FLUSH_INCR;
+		  FlushAdrCntEn = 1'b1;
+		  
+		  FlushWayCntEn = 1'b1;
 		end else begin
-		  NextState = STATE_FLUSH;
+		  FlushWayCntEn = 1'b1;
+		  NextState = STATE_FLUSH_CHECK;
 		end
       end
+	  
+	  STATE_FLUSH_INCR: begin
+		CacheStall = 1'b1;
+		SelAdr = 2'b10;
+		SelFlush = 1'b1;
+		FlushWayCntRst = 1'b1;
+		NextState = STATE_FLUSH_CHECK;
+	  end
 
       STATE_FLUSH_WRITE_BACK: begin
 		CacheStall = 1'b1;
 		SelAdr = 2'b10;
 		SelFlush = 1'b1;
-		SelLastFlushAdr = 1'b1;
 		if(CacheBusAck) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
@@ -378,16 +394,18 @@ module cachefsm
 		VDWriteEnable = 1'b1;
 		SelFlush = 1'b1;
 		SelAdr = 2'b10;
-		FlushAdrCntEn = 1'b0;
 		FlushWayCntEn = 1'b0;
-		SelLastFlushAdr = 1'b0;
-		if(FlushAdrFlag) begin
+		if(FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
 		  CacheStall = 1'b0;
 		  SelAdr = 2'b00;
-		end else begin
-		  NextState = STATE_FLUSH;
+		end else if (FlushWayFlag) begin
+		  NextState = STATE_FLUSH_INCR;
 		  FlushAdrCntEn = 1'b1;
+		  
+		  FlushWayCntEn = 1'b1;	
+		end else begin
+		  NextState = STATE_FLUSH_CHECK;
 		  FlushWayCntEn = 1'b1;	
 		end
       end

@@ -34,7 +34,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
    input logic [`PA_BITS-1:0] 		  PAdr,
    input logic 						  WriteEnable,
    input logic 						  VDWriteEnable, 
-   input logic [LINELEN/`XLEN-1:0]   WriteWordEnable,
+   input logic [LINELEN/`XLEN-1:0] 	  WriteWordEnable,
    input logic 						  TagWriteEnable,
    input logic [LINELEN-1:0] 		  WriteData,
    input logic 						  SetValid,
@@ -135,6 +135,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end else begin:dirty
     assign Dirty = 1'b0;
   end
+
+  
 endmodule // DCacheMemWay
 
 
