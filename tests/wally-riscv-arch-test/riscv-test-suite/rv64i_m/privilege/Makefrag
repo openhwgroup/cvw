@@ -31,8 +31,8 @@ rv64i_sc_tests = \
     WALLY-MMU-SV39 \
     WALLY-MMU-SV48 \
     WALLY-PMP 
-#    WALLY-PMA \
 
+target_tests_nosim = WALLY-PMA \
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))
 
