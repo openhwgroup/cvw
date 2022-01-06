@@ -73,14 +73,14 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1rw #(.DEPTH(`XLEN), .WIDTH(NUMLINES))
+    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN))
     CacheDataMem(.clk(clk), .Addr(RAdr),
           .ReadData(ReadDataLineWay[(words+1)*`XLEN-1:words*`XLEN] ),
           .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
           .WriteEnable(WriteEnable & WriteWordEnable[words]));
   end
 
-  sram1rw #(.DEPTH(TAGLEN), .WIDTH(NUMLINES))
+  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN))
   CacheTagMem(.clk(clk),
 			  .Addr(RAdr),
 			  .ReadData(ReadTag),
