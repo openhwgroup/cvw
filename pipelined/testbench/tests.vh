@@ -240,6 +240,7 @@ string imperas32f[] = '{
 
   string imperas64f[] = '{
     `IMPERASTEST,
+		"rv64i_m/F/FMUL-S-DYN-RDN-01", "002010",  // ***extra
 		"rv64i_m/F/FADD-S-DYN-RDN-01", "002010",
 		"rv64i_m/F/FADD-S-DYN-RMM-01", "002010",
 		"rv64i_m/F/FADD-S-DYN-RNE-01", "002010",
@@ -1354,7 +1355,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fnmsub_b17-01", "39d0",
     "rv32i_m/F/fnmsub_b18-01", "4d10", 
     "rv32i_m/F/fnmsub_b2-01", "4d60",
-    "rv32i_m/F/fnmsub_b3-01", "4df0", // inputs that don't exist in memfile
+    //"rv32i_m/F/fnmsub_b3-01", "4df0", // inputs that don't exist in memfile
     "rv32i_m/F/fnmsub_b4-01", "3700",
     "rv32i_m/F/fnmsub_b5-01", "3ac0",
     "rv32i_m/F/fnmsub_b6-01", "3700",
