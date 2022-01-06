@@ -22,11 +22,10 @@ module unpacking (
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
     logic           YExpMaxE, ZExpMaxE;  // input exponent all 1s
-    logic           XDoubleNaN, YDoubleNaN, ZDoubleNaN;
     logic  [31:0]   XFloat, YFloat, ZFloat; // Bottom half or NaN, if RV64 and not properly NaN boxed
 
     // Determine if number is NaN as double precision to check single precision NaN boxing
-    if (`XLEN==32) begin  // eventually this should change to FLEN when RV32f has FLEN=32
+    if (`F_SUPPORTED & ~`D_SUPPORTED) begin  // eventually this should change to FLEN when FLEN isn't hardwared to 64
         assign XFloat = X[31:0]; 
         assign YFloat = Y[31:0];  
         assign ZFloat = Z[31:0]; 

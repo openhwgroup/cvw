@@ -125,7 +125,8 @@ module fpu (
    logic [63:0] 	  DivInput1E, DivInput2E;             // inputs to divide/squareroot unit
    logic 		  load_preload;                       // enable for FF on fpdivsqrt     
    logic [63:0] 	  AlignedSrcAE;                       // align SrcA to the floating point format
-
+   logic [63:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
+   
    // DECODE STAGE
 
    // calculate FP control signals
@@ -163,8 +164,9 @@ module fpu (
             {2'b0, {10{1'b1}}, 52'b0}, 
             {FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01), ~FmtE&FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01)}, 
             FSrcYE); // Force Z to be 0 for multiply instructions
-   // Force Z to be 0 for multiply instructions     
-   mux3  #(64)  fzmulmux (FPreSrcZE, 64'b0, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE);
+   // Force Z to be 0 for multiply instructions 
+   mux2 #(64) fmulzeromux (64'hFFFFFFFF00000000, 64'b0, FmtE, BoxedZeroE); // NaN boxing for 32-bit zero
+   mux3  #(64)  fzmulmux (FPreSrcZE, BoxedZeroE, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE);
       
    // unpacking unit
    //    - splits FP inputs into their various parts
