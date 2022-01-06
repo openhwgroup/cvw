@@ -47,11 +47,6 @@ module extend (
       // Store Conditional: zero offset
       3'b101:  if (`A_SUPPORTED) ExtImmD = 0;
                 else              ExtImmD = undefined;
-      default: begin
-        ExtImmD = undefined; // undefined
-		// synthesis translate_off
-        $error("Invalid ImmSrcD in extend");
-		// synthesis translate_on
-      end
+      default: ExtImmD = undefined; // undefined
     endcase  
 endmodule

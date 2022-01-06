@@ -23,33 +23,34 @@ module unpacking (
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
     logic           YExpMaxE, ZExpMaxE;  // input exponent all 1s
     logic           XDoubleNaN, YDoubleNaN, ZDoubleNaN;
+    logic  [31:0]   XFloat, YFloat, ZFloat; // Bottom half or NaN, if RV64 and not properly NaN boxed
 
     // Determine if number is NaN as double precision to check single precision NaN boxing
-    if (`XLEN==32) begin
-        assign XDoubleNaN = 1; 
-        assign YDoubleNaN = 1; 
-        assign ZDoubleNaN = 1; 
+    if (`FLEN==32) begin
+        assign XFloat = X[31:0]; 
+        assign XFloat = Y[31:0];  
+        assign XFloat = Z[31:0]; 
     end else begin
-        assign XDoubleNaN = &X[62:52] & |X[51:0]; 
-        assign YDoubleNaN = &Y[62:52] & |Y[51:0]; 
-        assign ZDoubleNaN = &Z[62:52] & |Z[51:0]; 
+        assign XFloat = &X[`FLEN-1:32] ? X[31:0] : 32'h7fc00000;
+        assign YFloat = &Y[`FLEN-1:32] ? Y[31:0] : 32'h7fc00000;
+        assign ZFloat = &Z[`FLEN-1:32] ? Z[31:0] : 32'h7fc00000;
     end   
 
-    assign XSgnE = FmtE ? X[63] : X[31];
-    assign YSgnE = FmtE ? Y[63] : Y[31];
-    assign ZSgnE = FmtE ? Z[63] : Z[31];
+    assign XSgnE = FmtE ? X[63] : XFloat[31];
+    assign YSgnE = FmtE ? Y[63] : YFloat[31];
+    assign ZSgnE = FmtE ? Z[63] : ZFloat[31];
 
-    assign XExpE = FmtE ? X[62:52] : {X[30], {3{~X[30]&~XExpZero|XExpMaxE}}, X[29:23]}; 
-    assign YExpE = FmtE ? Y[62:52] : {Y[30], {3{~Y[30]&~YExpZero|YExpMaxE}}, Y[29:23]}; 
-    assign ZExpE = FmtE ? Z[62:52] : {Z[30], {3{~Z[30]&~ZExpZero|ZExpMaxE}}, Z[29:23]}; 
+    assign XExpE = FmtE ? X[62:52] : {XFloat[30], {3{~XFloat[30]&~XExpZero|XExpMaxE}}, XFloat[29:23]}; 
+    assign YExpE = FmtE ? Y[62:52] : {YFloat[30], {3{~YFloat[30]&~YExpZero|YExpMaxE}}, YFloat[29:23]}; 
+    assign ZExpE = FmtE ? Z[62:52] : {ZFloat[30], {3{~ZFloat[30]&~ZExpZero|ZExpMaxE}}, ZFloat[29:23]}; 
 
-    assign XFracE = FmtE ? X[51:0] : {X[22:0], 29'b0};
-    assign YFracE = FmtE ? Y[51:0] : {Y[22:0], 29'b0};
-    assign ZFracE = FmtE ? Z[51:0] : {Z[22:0], 29'b0};
+    assign XFracE = FmtE ? X[51:0] : {XFloat[22:0], 29'b0};
+    assign YFracE = FmtE ? Y[51:0] : {YFloat[22:0], 29'b0};
+    assign ZFracE = FmtE ? Z[51:0] : {ZFloat[22:0], 29'b0};
 
-    assign XExpNonzero = FmtE ? |X[62:52] : |X[30:23]; 
-    assign YExpNonzero = FmtE ? |Y[62:52] : |Y[30:23];
-    assign ZExpNonzero = FmtE ? |Z[62:52] : |Z[30:23];
+    assign XExpNonzero = FmtE ? |X[62:52] : |XFloat[30:23]; 
+    assign YExpNonzero = FmtE ? |Y[62:52] : |YFloat[30:23];
+    assign ZExpNonzero = FmtE ? |Z[62:52] : |ZFloat[30:23];
 
     assign XExpZero = ~XExpNonzero;
     assign YExpZero = ~YExpNonzero;
@@ -63,16 +64,16 @@ module unpacking (
     assign YManE = {YExpNonzero, YFracE};
     assign ZManE = {ZExpNonzero, ZFracE};
 
-    assign XExpMaxE = FmtE ? &X[62:52] : &X[30:23];
-    assign YExpMaxE = FmtE ? &Y[62:52] : &Y[30:23];
-    assign ZExpMaxE = FmtE ? &Z[62:52] : &Z[30:23];
+    assign XExpMaxE = FmtE ? &X[62:52] : &XFloat[30:23];
+    assign YExpMaxE = FmtE ? &Y[62:52] : &YFloat[30:23];
+    assign ZExpMaxE = FmtE ? &Z[62:52] : &ZFloat[30:23];
   
     assign XNormE = ~(XExpMaxE|XExpZero);
     
     // force single precision input to be a NaN if it isn't properly Nan Boxed
-    assign XNaNE = XExpMaxE & ~XFracZero | ~FmtE & ~XDoubleNaN;
-    assign YNaNE = YExpMaxE & ~YFracZero | ~FmtE & ~YDoubleNaN;
-    assign ZNaNE = ZExpMaxE & ~ZFracZero | ~FmtE & ~ZDoubleNaN;
+    assign XNaNE = XExpMaxE & ~XFracZero;
+    assign YNaNE = YExpMaxE & ~YFracZero;
+    assign ZNaNE = ZExpMaxE & ~ZFracZero;
 
     assign XSNaNE = XNaNE&~XFracE[51];
     assign YSNaNE = YNaNE&~YFracE[51];
