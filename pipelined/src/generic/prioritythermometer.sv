@@ -1,15 +1,16 @@
 ///////////////////////////////////////////
-// priritythermometer.sv
+// prioritythermometer.sv
 //
 // Written: tfleming@hmc.edu & jtorrey@hmc.edu 7 April 2021
-// Modified: Teo Ene 15 Apr 2021:
-//              Temporarily removed paramterized priority encoder for non-parameterized one
-//              To get synthesis working quickly
-//           Kmacsaigoren@hmc.edu 28 May 2021:
-//              Added working version of parameterized priority encoder. 
 //           David_Harris@Hmc.edu switched to one-hot output
 //
-// Purpose: Priority circuit to choose most significant one-hot output
+// Purpose: Priority circuit producing a thermometer code output.
+//          with 1's in all the least signficant bits of the output
+//          until the column where the least significant 1 occurs in the input.
+//
+//  Example:  msb           lsb
+//        in  01011101010100000
+//        out 00000000000011111
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -42,7 +43,7 @@ module prioritythermometer #(parameter N = 8) (
 
   // create thermometer code mask
   genvar i;
-  assign y[0] = a[0];
+  assign y[0] = ~a[0];
   for (i=1; i<N; i++) begin:therm
     assign y[i] = y[i-1] & ~a[i];
   end

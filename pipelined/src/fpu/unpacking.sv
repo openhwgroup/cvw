@@ -1,3 +1,5 @@
+`include "wally-config.vh"
+
 module unpacking ( 
     input logic  [63:0] X, Y, Z,
     input logic         FmtE,
@@ -20,6 +22,18 @@ module unpacking (
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
     logic           YExpMaxE, ZExpMaxE;  // input exponent all 1s
+    logic           XDoubleNaN, YDoubleNaN, ZDoubleNaN;
+
+    // Determine if number is NaN as double precision to check single precision NaN boxing
+    if (`XLEN==32) begin
+        assign XDoubleNaN = 1; 
+        assign YDoubleNaN = 1; 
+        assign ZDoubleNaN = 1; 
+    end else begin
+        assign XDoubleNaN = &X[62:52] & |X[51:0]; 
+        assign YDoubleNaN = &Y[62:52] & |Y[51:0]; 
+        assign ZDoubleNaN = &Z[62:52] & |Z[51:0]; 
+    end   
 
     assign XSgnE = FmtE ? X[63] : X[31];
     assign YSgnE = FmtE ? Y[63] : Y[31];
@@ -55,9 +69,10 @@ module unpacking (
   
     assign XNormE = ~(XExpMaxE|XExpZero);
     
-    assign XNaNE = XExpMaxE & ~XFracZero;
-    assign YNaNE = YExpMaxE & ~YFracZero;
-    assign ZNaNE = ZExpMaxE & ~ZFracZero;
+    // force single precision input to be a NaN if it isn't properly Nan Boxed
+    assign XNaNE = XExpMaxE & ~XFracZero | ~FmtE & ~XDoubleNaN;
+    assign YNaNE = YExpMaxE & ~YFracZero | ~FmtE & ~YDoubleNaN;
+    assign ZNaNE = ZExpMaxE & ~ZFracZero | ~FmtE & ~ZDoubleNaN;
 
     assign XSNaNE = XNaNE&~XFracE[51];
     assign YSNaNE = YNaNE&~YFracE[51];

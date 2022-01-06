@@ -9,7 +9,12 @@
 //              Added working version of parameterized priority encoder. 
 //           David_Harris@Hmc.edu switched to one-hot output
 //
-// Purpose: Priority circuit to choose most significant one-hot output
+// Purpose: Priority circuit producing a 1 in the output in the column where
+//          the least significant 1 appears in the input.
+//
+//  Example:  msb           lsb
+//        in  01011101010100000
+//        out 00000000000100000
 //
 // A component of the Wally configurable RISC-V project.
 //
@@ -30,13 +35,13 @@
 
 `include "wally-config.vh"
 
-module priorityonehot #(parameter ENTRIES = 8) (
-  input  logic  [ENTRIES-1:0] a,
-  output logic  [ENTRIES-1:0] y
+module priorityonehot #(parameter N = 8) (
+  input  logic  [N-1:0] a,
+  output logic  [N-1:0] y
 );
-  logic [ENTRIES-1:0] nolower;
+  logic [N-1:0] nolower;
 
   // create thermometer code mask
-  prioritythermometer #(ENTRIES) maskgen(.a({a[ENTRIES-2:0], 1'b1}), .y(nolower));
+  prioritythermometer #(N) maskgen(.a({a[N-2:0], 1'b0}), .y(nolower));
   assign y = a & nolower;
 endmodule
