@@ -20,6 +20,12 @@ module unpacking (
     logic           XFracZero, YFracZero, ZFracZero; // input fraction zero
     logic           XExpZero, YExpZero, ZExpZero; // input exponent zero
     logic           YExpMaxE, ZExpMaxE;  // input exponent all 1s
+    logic           XDoubleNaN, YDoubleNaN, ZDoubleNaN;
+
+    // Determine if number is NaN as double precision to check single precision NaN boxing
+    assign XDoubleNaN = &X[62:52] & |X[51:0]; 
+    assign YDoubleNaN = &Y[62:52] & |Y[51:0]; 
+    assign ZDoubleNaN = &Z[62:52] & |Z[51:0]; 
 
     assign XSgnE = FmtE ? X[63] : X[31];
     assign YSgnE = FmtE ? Y[63] : Y[31];
@@ -55,9 +61,10 @@ module unpacking (
   
     assign XNormE = ~(XExpMaxE|XExpZero);
     
-    assign XNaNE = XExpMaxE & ~XFracZero;
-    assign YNaNE = YExpMaxE & ~YFracZero;
-    assign ZNaNE = ZExpMaxE & ~ZFracZero;
+    // force single precision input to be a NaN if it isn't properly Nan Boxed
+    assign XNaNE = XExpMaxE & ~XFracZero | ~FmtE & ~XDoubleNan;
+    assign YNaNE = YExpMaxE & ~YFracZero | ~FmtE & ~YDoubleNan;
+    assign ZNaNE = ZExpMaxE & ~ZFracZero | ~FmtE & ~ZDoubleNan;
 
     assign XSNaNE = XNaNE&~XFracE[51];
     assign YSNaNE = YNaNE&~YFracE[51];
