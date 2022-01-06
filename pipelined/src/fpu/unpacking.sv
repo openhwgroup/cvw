@@ -26,12 +26,12 @@ module unpacking (
     logic  [31:0]   XFloat, YFloat, ZFloat; // Bottom half or NaN, if RV64 and not properly NaN boxed
 
     // Determine if number is NaN as double precision to check single precision NaN boxing
-    if (`FLEN==32) begin
+    if (`XLEN==32) begin  // eventually this should change to FLEN when RV32f has FLEN=32
         assign XFloat = X[31:0]; 
-        assign XFloat = Y[31:0];  
-        assign XFloat = Z[31:0]; 
+        assign YFloat = Y[31:0];  
+        assign ZFloat = Z[31:0]; 
     end else begin
-        assign XFloat = &X[`FLEN-1:32] ? X[31:0] : 32'h7fc00000;
+        assign XFloat = &X[`FLEN-1:32] ? X[31:0] : 32'h7fc00000; 
         assign YFloat = &Y[`FLEN-1:32] ? Y[31:0] : 32'h7fc00000;
         assign ZFloat = &Z[`FLEN-1:32] ? Z[31:0] : 32'h7fc00000;
     end   
