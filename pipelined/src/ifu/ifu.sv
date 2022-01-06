@@ -264,12 +264,12 @@ module ifu (
 			 .CacheMiss(),
 			 .CacheAccess(),
 			 .FinalWriteData('0),
-			 .RW(IfuRWF), //aways read
+			 .RW(IfuRWF), 
 			 .Atomic(2'b00),
 			 .FlushCache(1'b0),
-			 .LsuAdrE(PCNextFMux), // fixme
-			 .LsuPAdrM(PCPF), // fixme
-			 .PreLsuPAdrM(PCFMux[11:0]), //fixme
+			 .NextAdr(PCNextFMux),
+			 .PAdr(PCPF),
+			 .NoTranAdr(PCFMux[11:0]),
 			 .CacheCommitted(),
 			 .InvalidateCacheM(InvalidateICacheM));
 

@@ -298,15 +298,16 @@ module lsu
 
   if(`MEM_DCACHE) begin : dcache
     cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-      .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
-  dcache(.clk, .reset, .CPUBusy,
-          .RW(CacheableM ? LsuRWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LsuAtomicM : 2'b00), 
-      .LsuAdrE, .LsuPAdrM, .PreLsuPAdrM(PreLsuPAdrM[11:0]), // still don't like this name PreLsuPAdrM, not always physical
-          .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStall),
-          .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
-          .IgnoreRequest, .CacheCommitted(DCacheCommittedM),
-          .CacheBusAdr(DCacheBusAdr), .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
-          .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+			.NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
+	 dcache(.clk, .reset, .CPUBusy,
+			.RW(CacheableM ? LsuRWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LsuAtomicM : 2'b00), 
+			.NextAdr(LsuAdrE), .PAdr(LsuPAdrM), .NoTranAdr(PreLsuPAdrM[11:0]),
+			.FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStall),
+			.CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
+			.IgnoreRequest, .CacheCommitted(DCacheCommittedM),
+			.CacheBusAdr(DCacheBusAdr), .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
+			.CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+
   end else begin : passthrough
     assign ReadDataWordM = 0;
     assign DCacheStall = 0;

@@ -61,8 +61,8 @@ module cachefsm
    output logic 	  ClearValid,
    output logic 	  SetDirty,
    output logic 	  ClearDirty,
-   output logic 	  SRAMWordWriteEnableM,
-   output logic 	  SRAMLineWriteEnableM,
+   output logic 	  SRAMWordWriteEnable,
+   output logic 	  SRAMLineWriteEnable,
    output logic 	  SelEvict,
    output logic 	  LRUWriteEn,
    output logic 	  SelFlush,
@@ -115,8 +115,8 @@ module cachefsm
     ClearValid = 1'b0;
     SetDirty = 1'b0;    
     ClearDirty = 1'b0;
-    SRAMWordWriteEnableM = 1'b0;
-    SRAMLineWriteEnableM = 1'b0;
+    SRAMWordWriteEnable = 1'b0;
+    SRAMLineWriteEnable = 1'b0;
     SelEvict = 1'b0;
     LRUWriteEn = 1'b0;
     SelFlush = 1'b0;
@@ -134,7 +134,7 @@ module cachefsm
 
 		CacheStall = 1'b0;
 		SelAdr = 2'b00;
-		SRAMWordWriteEnableM = 1'b0;
+		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 
@@ -168,7 +168,7 @@ module cachefsm
 			SelAdr = 2'b01;
 		  end
 		  else begin
-			SRAMWordWriteEnableM = 1'b1;
+			SRAMWordWriteEnable = 1'b1;
 			SetDirty = 1'b1;
 			LRUWriteEn = 1'b1;
 			NextState = STATE_READY;
@@ -191,7 +191,7 @@ module cachefsm
 		else if (RW[0] & CacheableM & CacheHit) begin
 		  SelAdr = 2'b01;
 		  CacheStall = 1'b0;
-		  SRAMWordWriteEnableM = 1'b1;
+		  SRAMWordWriteEnable = 1'b1;
 		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
 		  
@@ -235,7 +235,7 @@ module cachefsm
       end
 
       STATE_MISS_WRITE_CACHE_LINE: begin
-		SRAMLineWriteEnableM = 1'b1;
+		SRAMLineWriteEnable = 1'b1;
 		CacheStall = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
 		SelAdr = 2'b01;
@@ -258,7 +258,7 @@ module cachefsm
 
       STATE_MISS_READ_WORD_DELAY: begin
 		//SelAdr = 2'b01;
-		SRAMWordWriteEnableM = 1'b0;
+		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 		if(&RW & Atomic[1]) begin // amo write
@@ -267,7 +267,7 @@ module cachefsm
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
 		  end
 		  else begin
-			SRAMWordWriteEnableM = 1'b1;
+			SRAMWordWriteEnable = 1'b1;
 			SetDirty = 1'b1;
 			LRUWriteEn = 1'b1;
 			NextState = STATE_READY;
@@ -285,7 +285,7 @@ module cachefsm
       end
 
       STATE_MISS_WRITE_WORD: begin
-		SRAMWordWriteEnableM = 1'b1;
+		SRAMWordWriteEnable = 1'b1;
 		SetDirty = 1'b1;
 		SelAdr = 2'b01;
 		LRUWriteEn = 1'b1;
@@ -323,14 +323,14 @@ module cachefsm
 
       STATE_CPU_BUSY_FINISH_AMO: begin
 		SelAdr = 2'b01;
-		SRAMWordWriteEnableM = 1'b0;
+		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY_FINISH_AMO;
 		end
 		else begin
-		  SRAMWordWriteEnableM = 1'b1;
+		  SRAMWordWriteEnable = 1'b1;
 		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
 		  NextState = STATE_READY;
