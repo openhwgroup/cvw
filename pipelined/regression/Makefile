@@ -1,3 +1,7 @@
+make allclean:
+	make clean
+	make all
+
 make clean:
 	make clean -C ../../addins/riscv-arch-test
 	make clean -C ../../tests/wally-riscv-arch-test
@@ -15,7 +19,9 @@ make all:
 	cd ../../tests/wally-riscv-arch-test; elf2hex.sh
 	# ***extractFunctionRadix
 
-	# Only compile Imperas tests if they are installed
+	# Only compile Imperas tests if they are installed locally.  
+	# They are usually a symlink to $RISCV/imperas-riscv-tests and only 
+	# get compiled there manually during installation
 	# make -C ../../addins/imperas-riscv-tests
 	# make -C ../../addins/imperas-riscv-tests XLEN=64
 	# cd ../../addins/imperas-riscv-tests; elf2hex.sh
