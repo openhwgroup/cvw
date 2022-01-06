@@ -557,7 +557,6 @@ module normalize(
     output logic [`NE+1:0]      SumExp,         // exponent of the normalized sum
     output logic                ResultDenorm    // is the result denormalized
 );
-    logic [`NE+1:0]     FracLen;            // length of the fraction
     logic [`NE+1:0]     SumExpTmp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic [8:0]         DenormShift;        // right shift if the result is denormalized //***change this later
     logic [3*`NF+5:0]   CorrSumShifted;     // the shifted sum after LZA correction
@@ -573,9 +572,6 @@ module normalize(
 
     // Determine if the sum is zero
     assign SumZero = ~(|SumM);
-
-    // determine the length of the fraction based on precision
-    assign FracLen = FmtM ? `NF+1 : 13'd24;
 
     // calculate the sum's exponent
     assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
@@ -752,6 +748,7 @@ module fmaflags(
     output logic [4:0]          FMAFlgM // FMA flags
 );
     logic               SigNaN;     // is an input a signaling NaN
+    logic               GtMaxExp;   // is exponent greater than the maximum
     logic               UnderflowFlag, Inexact; // flags
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -770,9 +767,8 @@ module fmaflags(
    
     // Set Overflow flag if the number is too big to be represented
     //      - Don't set the overflow flag if an overflowed result isn't outputed
-    logic LtMaxExp;
-    assign LtMaxExp = FmtM ? &FullResultExp[`NE-1:0] | FullResultExp[`NE] : &FullResultExp[7:0] | FullResultExp[8];
-    assign Overflow = LtMaxExp & ~FullResultExp[`NE+1]&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign GtMaxExp = FmtM ? &FullResultExp[`NE-1:0] | FullResultExp[`NE] : &FullResultExp[7:0] | FullResultExp[8];
+    assign Overflow = GtMaxExp & ~FullResultExp[`NE+1]&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
     // Set Underflow flag if the number is too small to be represented in normal numbers
     //      - Don't set the underflow flag if the result is exact
