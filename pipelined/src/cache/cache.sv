@@ -147,7 +147,7 @@ module cache #(parameter integer LINELEN,
     cachereplacementpolicy(.clk, .reset,
               .WayHit,
               .VictimWay,
-              .PAdr(PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+              .PAdr(NoTranAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
               .RAdr,
               .LRUWriteEn);
   end else begin:vict
@@ -197,7 +197,7 @@ module cache #(parameter integer LINELEN,
   assign SRAMLineWayWriteEnable = SRAMLineWriteEnable ? VictimWay : '0;
   
   mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnable ? WayHit : '0),
-								 .d1(SRAMLineWayWriteEnable),
+								 .d1(VictimWay),
 								 .s(SRAMLineWriteEnable),
 								 .y(SRAMWayWriteEnable));
 
