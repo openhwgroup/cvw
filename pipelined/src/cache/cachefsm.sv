@@ -34,7 +34,6 @@ module cachefsm
    input logic 		  FlushCache,
    // hazard inputs
    input logic 		  CPUBusy,
-   input logic 		  CacheableM,
    // interlock fsm
    input logic 		  IgnoreRequest,
    // Bus inputs
@@ -100,8 +99,8 @@ module cachefsm
   assign AnyCPUReqM = |RW | (|Atomic);
 
   // outputs for the performance counters.
-  assign CacheAccess = AnyCPUReqM & CacheableM & CurrState == STATE_READY;
-  assign CacheMiss = CacheAccess & CacheableM & ~CacheHit;
+  assign CacheAccess = AnyCPUReqM & CurrState == STATE_READY;
+  assign CacheMiss = CacheAccess &  ~CacheHit;
 
   always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_READY;
@@ -159,7 +158,7 @@ module cachefsm
 		end
 		
 		// amo hit
-		else if(Atomic[1] & (&RW) & CacheableM & CacheHit) begin
+		else if(Atomic[1] & (&RW) & CacheHit) begin
 		  SelAdr = 2'b01;
 		  CacheStall = 1'b0;
 		  
@@ -175,7 +174,7 @@ module cachefsm
 		  end
 		end
 		// read hit valid cached
-		else if(RW[1] & CacheableM & CacheHit) begin
+		else if(RW[1] & CacheHit) begin
 		  CacheStall = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  
@@ -188,7 +187,7 @@ module cachefsm
 	      end
 		end
 		// write hit valid cached
-		else if (RW[0] & CacheableM & CacheHit) begin
+		else if (RW[0] & CacheHit) begin
 		  SelAdr = 2'b01;
 		  CacheStall = 1'b0;
 		  SRAMWordWriteEnable = 1'b1;
@@ -204,7 +203,7 @@ module cachefsm
 		  end
 		end
 		// read or write miss valid cached
-		else if((|RW) & CacheableM & ~CacheHit) begin
+		else if((|RW) & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
 		  CacheStall = 1'b1;
 		  CacheFetchLine = 1'b1;
