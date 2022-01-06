@@ -34,7 +34,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
    input logic [`PA_BITS-1:0] 		  PAdr,
    input logic 						  WriteEnable,
    input logic 						  VDWriteEnable, 
-   input logic [LINELEN/`XLEN-1:0]   WriteWordEnable,
+   input logic [LINELEN/`XLEN-1:0] 	  WriteWordEnable,
    input logic 						  TagWriteEnable,
    input logic [LINELEN-1:0] 		  WriteData,
    input logic 						  SetValid,
@@ -73,14 +73,14 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1rw #(.DEPTH(`XLEN), .WIDTH(NUMLINES))
+    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN))
     CacheDataMem(.clk(clk), .Addr(RAdr),
           .ReadData(ReadDataLineWay[(words+1)*`XLEN-1:words*`XLEN] ),
           .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
           .WriteEnable(WriteEnable & WriteWordEnable[words]));
   end
 
-  sram1rw #(.DEPTH(TAGLEN), .WIDTH(NUMLINES))
+  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN))
   CacheTagMem(.clk(clk),
 			  .Addr(RAdr),
 			  .ReadData(ReadTag),
@@ -135,6 +135,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end else begin:dirty
     assign Dirty = 1'b0;
   end
+
+  
 endmodule // DCacheMemWay
 
 
