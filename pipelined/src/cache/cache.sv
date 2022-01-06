@@ -243,15 +243,8 @@ module cache #(parameter integer LINELEN,
   assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0];
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
 
-  // controller
-  // *** fixme
-  logic CacheableM;
-  
-  assign CacheableM = 1;
-
-
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
-					.RW, .Atomic, .CPUBusy, .CacheableM, .IgnoreRequest,
+					.RW, .Atomic, .CPUBusy, .IgnoreRequest,
  					.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 					.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
 					.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnable,
