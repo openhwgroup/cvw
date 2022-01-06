@@ -40,8 +40,9 @@ module tlbram #(parameter TLB_ENTRIES = 8) (
   logic [`PPN_BITS+9:0] PageTableEntry;
 
   // RAM implemented with array of flops and AND/OR read logic
-  tlbramline #(`PPN_BITS+10) tlblineram[TLB_ENTRIES-1:0](clk, reset, Matches, WriteEnables, PTE[`PPN_BITS+9:0], RamRead, PTE_Gs);
-  //assign PageTableEntry = RamRead.or; // OR each column of RAM read to read PTE
+  tlbramline #(`PPN_BITS+10) tlbramline[TLB_ENTRIES-1:0]
+     (.clk, .reset, .re(Matches), .we(WriteEnables), 
+      .d(PTE[`PPN_BITS+9:0]), .q(RamRead), .PTE_G(PTE_Gs));
   or_rows #(TLB_ENTRIES, `PPN_BITS+10) PTEOr(RamRead, PageTableEntry);
 
   // Rename the bits read from the TLB RAM
