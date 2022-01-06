@@ -68,8 +68,8 @@ module wallypipelinedhart (
   (* mark_debug = "true" *) logic [31:0] 		    InstrM;
   logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    PCM;
-  logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
-  logic [`XLEN-1:0] 	    PrivilegedNextPCM;
+ logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
+   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
   (* mark_debug = "true" *) logic [1:0] 		    MemRWM;
   (* mark_debug = "true" *) logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
