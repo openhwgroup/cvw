@@ -240,7 +240,6 @@ string imperas32f[] = '{
 
   string imperas64f[] = '{
     `IMPERASTEST,
-		"rv64i_m/F/FMUL-S-DYN-RDN-01", "002010",  // ***extra
 		"rv64i_m/F/FADD-S-DYN-RDN-01", "002010",
 		"rv64i_m/F/FADD-S-DYN-RMM-01", "002010",
 		"rv64i_m/F/FADD-S-DYN-RNE-01", "002010",
@@ -1283,7 +1282,7 @@ string imperas32f[] = '{
     "rv32i_m/F/feq_b1-01", "6220",
     "rv32i_m/F/feq_b19-01", "a190",
     "rv32i_m/F/fle_b1-01", "6220",
-    "rv32i_m/F/fle_b19-01", "a190", // looks fine to me is the actual input value supposed to be infinity?
+    "rv32i_m/F/fle_b19-01", "a190",
     "rv32i_m/F/flt_b1-01", "6220",
     "rv32i_m/F/flt_b19-01", "8ee0", 
     "rv32i_m/F/flw-align-01", "2010",
@@ -1298,7 +1297,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fmadd_b4-01", "3700",
     "rv32i_m/F/fmadd_b5-01", "3ac0",
     "rv32i_m/F/fmadd_b6-01", "3700",
-    //"rv32i_m/F/fmadd_b7-01", "d7f0", // input values aren't even in the memfile are being used in the test; didn't run even with fixed memfile
+    "rv32i_m/F/fmadd_b7-01", "37f0",
     "rv32i_m/F/fmadd_b8-01", "13f30", 
     "rv32i_m/F/fmax_b1-01", "7220",
     "rv32i_m/F/fmax_b19-01", "9e00",
@@ -1355,7 +1354,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fnmsub_b17-01", "39d0",
     "rv32i_m/F/fnmsub_b18-01", "4d10", 
     "rv32i_m/F/fnmsub_b2-01", "4d60",
-    //"rv32i_m/F/fnmsub_b3-01", "4df0", // inputs that don't exist in memfile
+    "rv32i_m/F/fnmsub_b3-01", "d4f0",
     "rv32i_m/F/fnmsub_b4-01", "3700",
     "rv32i_m/F/fnmsub_b5-01", "3ac0",
     "rv32i_m/F/fnmsub_b6-01", "3700",
