@@ -1297,7 +1297,7 @@ string imperas32f[] = '{
     "rv32i_m/F/feq_b1-01", "6220",
     "rv32i_m/F/feq_b19-01", "a190",
     "rv32i_m/F/fle_b1-01", "6220",
-    // "rv32i_m/F/fle_b19-01", "a190", // looks fine to me is the actual input value supposed to be infinity?
+    "rv32i_m/F/fle_b19-01", "a190", // looks fine to me is the actual input value supposed to be infinity?
     "rv32i_m/F/flt_b1-01", "6220",
     "rv32i_m/F/flt_b19-01", "8ee0", 
     "rv32i_m/F/flw-align-01", "2010",
@@ -1323,7 +1323,7 @@ string imperas32f[] = '{
     "rv32i_m/F/fmsub_b15-01", "19bb30",
     "rv32i_m/F/fmsub_b16-01", "39d0",
     "rv32i_m/F/fmsub_b17-01", "39d0",
-    "rv32i_m/F/fmsub_b18-01", "4d20", // test looks fine to me: 7e9db2ee (large number) * -0 - f1bffff8 = f1bffff8 but wants 7f800000 (NaN)
+    "rv32i_m/F/fmsub_b18-01", "4d20", 
     "rv32i_m/F/fmsub_b2-01", "4d60",
     "rv32i_m/F/fmsub_b3-01", "d4f0",
     "rv32i_m/F/fmsub_b4-01", "3700",
