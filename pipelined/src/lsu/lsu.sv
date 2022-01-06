@@ -64,12 +64,12 @@ module lsu
 
    // connect to ahb
 (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LsuBusAdr,
-   output logic 			   LsuBusRead, 
-   output logic 			   LsuBusWrite,
-   input logic 				   LsuBusAck,
+(* mark_debug = "true" *)   output logic 			   LsuBusRead, 
+(* mark_debug = "true" *)   output logic 			   LsuBusWrite,
+(* mark_debug = "true" *)   input logic 				   LsuBusAck,
 (* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   LsuBusHRDATA,
-   output logic [`XLEN-1:0]    LsuBusHWDATA,
-   output logic [2:0] 		   LsuBusSize, 
+(* mark_debug = "true" *)   output logic [`XLEN-1:0]    LsuBusHWDATA,
+(* mark_debug = "true" *)   output logic [2:0] 		   LsuBusSize, 
 
    // mmu management
 
@@ -99,7 +99,7 @@ module lsu
   logic [1:0] 				   PreLsuRWM;
   logic [2:0] 				   LsuFunct3M;
   logic [1:0] 				   LsuAtomicM;
-  logic [`PA_BITS-1:0] 		   PreLsuPAdrM, LocalLsuBusAdr;
+(* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLsuPAdrM, LocalLsuBusAdr;
   logic [11:0] 				   PreLsuAdrE, LsuAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;

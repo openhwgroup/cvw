@@ -31,11 +31,11 @@ module ifu (
 	input logic 				StallF, StallD, StallE, StallM, StallW,
 	input logic 				FlushF, FlushD, FlushE, FlushM, FlushW,
 	// Bus interface
-	input logic [`XLEN-1:0] 	IfuBusHRDATA,
-	input logic 				IfuBusAck,
-	output logic [`PA_BITS-1:0] IfuBusAdr,
-	output logic 				IfuBusRead,
-	output logic 				IfuStallF,
+(* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IfuBusHRDATA,
+(* mark_debug = "true" *)	input logic 				IfuBusAck,
+(* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IfuBusAdr,
+(* mark_debug = "true" *)	output logic 				IfuBusRead,
+(* mark_debug = "true" *)	output logic 				IfuStallF,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
