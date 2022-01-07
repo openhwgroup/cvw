@@ -39,7 +39,6 @@ module cache #(parameter integer LINELEN,
    input logic				   InvalidateCacheM,
    input logic [11:0]		   NextAdr, // virtual address, but we only use the lower 12 bits.
    input logic [`PA_BITS-1:0]  PAdr, // physical address
-   input logic [11:0]		   NoTranAdr, // physical or virtual address   
    input logic [`XLEN-1:0]	   FinalWriteData,
    output logic [`XLEN-1:0]	   ReadDataWord,
    output logic				   CacheCommitted,
@@ -120,7 +119,7 @@ module cache #(parameter integer LINELEN,
 
   mux3 #(INDEXLEN)
   AdrSelMux(.d0(NextAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d1(NoTranAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+			.d1(PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
 			.d2(FlushAdr),
 			.s(SelAdr),
 			.y(RAdr));
@@ -147,7 +146,7 @@ module cache #(parameter integer LINELEN,
     cachereplacementpolicy(.clk, .reset,
               .WayHit,
               .VictimWay,
-              .PAdr(NoTranAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
+              .PAdr(PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
               .RAdr,
               .LRUWriteEn);
   end else begin:vict
