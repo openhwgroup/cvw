@@ -44,7 +44,7 @@ module controller(
   output logic       ALUResultSrcE,
   output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
-  output logic       MulDivE, W64E,
+  output logic       MDUE, W64E,
   output logic       JumpE,	
   // Memory stage control signals
   input  logic       StallM, FlushM,
@@ -83,7 +83,7 @@ module controller(
   logic	      ALUOpD;
   logic [2:0] ALUControlD;
   logic 	    ALUSrcAD, ALUSrcBD;
-  logic       ALUResultSrcD, W64D, MulDivD;
+  logic       ALUResultSrcD, W64D, MDUD;
   logic       CSRZeroSrcD;
   logic       CSRReadD;
   logic [1:0] AtomicD;
@@ -111,7 +111,7 @@ module controller(
   // Main Instruction Decoder
   always_comb
     case(OpD)
-    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MulDiv_Atomic_Illegal
+    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
       7'b0000000:   ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // illegal instruction
       7'b0000011:   ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // lw
       7'b0000111:   ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // flw
@@ -162,7 +162,7 @@ module controller(
   assign IllegalBaseInstrFaultD = ControlsD[0];
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, W64D, CSRReadD, 
-          PrivilegedD, FenceD, MulDivD, AtomicD, unused} = IllegalIEUInstrFaultD ? `CTRLW'b0 : ControlsD;
+          PrivilegedD, FenceD, MDUD, AtomicD, unused} = IllegalIEUInstrFaultD ? `CTRLW'b0 : ControlsD;
           // *** move Privileged, CSRwrite??  Or move controller out of IEU into datapath and handle all instructions
 
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
@@ -194,8 +194,8 @@ module controller(
 
   // Execute stage pipeline control register and logic
   flopenrc #(27) controlregE(clk, reset, FlushE, ~StallE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MulDivD, AtomicD, InvalidateICacheD, FlushDCacheD, InstrValidD},
-                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MulDivE, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE});
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, InstrValidD},
+                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, InstrValidE});
 
   // Branch Logic
   assign {eqE, ltE, ltuE} = FlagsE;

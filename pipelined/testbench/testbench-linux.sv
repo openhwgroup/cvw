@@ -438,7 +438,7 @@ module testbench;
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (dut.hart.lsu.LsuPAdrM == 'h10000005) \
+        if (dut.hart.lsu.LSUPAdrM == 'h10000005) \
           //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
           force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \

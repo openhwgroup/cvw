@@ -38,7 +38,7 @@ module ieu (
   input logic 		   IllegalFPUInstrE,
   input logic [`XLEN-1:0]  FWriteDataE,
   output logic [`XLEN-1:0] IEUAdrE,
-  output logic 		   MulDivE, W64E,
+  output logic 		   MDUE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
@@ -56,7 +56,7 @@ module ieu (
   output logic       InvalidateICacheM, FlushDCacheM,
 
   // Writeback stage
-  input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MulDivResultW,
+  input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MDUResultW,
   output logic [4:0]       RdW,
   output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
@@ -64,7 +64,7 @@ module ieu (
   // hazards
   input logic 		   StallD, StallE, StallM, StallW,
   input logic 		   FlushD, FlushE, FlushM, FlushW,
-  output logic 		   FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD,
+  output logic 		   FPUStallD, LoadStallD, MDUStallD, CSRRdStallD,
   output logic 		   PCSrcE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
   output logic 		   CSRWritePendingDEM,
@@ -92,7 +92,7 @@ module ieu (
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
-    .Funct3E, .MulDivE, .W64E, .JumpE, .StallM, .FlushM, .MemRWM,
+    .Funct3E, .MDUE, .W64E, .JumpE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .SCE, .AtomicE, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .ResultSrcW, .CSRWritePendingDEM, .StoreStallD);
@@ -103,12 +103,12 @@ module ieu (
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM,
     .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW,
-    .CSRReadValW, .ReadDataM, .MulDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
+    .CSRReadValW, .ReadDataM, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
-    .MemReadE, .MulDivE, .CSRReadE, .RegWriteM, .RegWriteW,
+    .MemReadE, .MDUE, .CSRReadE, .RegWriteM, .RegWriteW,
     .FWriteIntE, .SCE, .ForwardAE, .ForwardBE,
-    .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD);
+    .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
 endmodule
 
