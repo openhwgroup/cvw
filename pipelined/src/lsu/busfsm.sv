@@ -32,16 +32,16 @@ module busfsm #(parameter integer   WordCountThreshold,
    input logic 				 reset,
 
    input logic 				 IgnoreRequest,
-   input logic [1:0] 		 LsuRWM,
+   input logic [1:0] 		 LSURWM,
    input logic 				 DCacheFetchLine,
    input logic 				 DCacheWriteLine,
-   input logic 				 LsuBusAck,
+   input logic 				 LSUBusAck,
    input logic 				 CPUBusy,
    input logic 				 CacheableM,
 
    output logic 			 BusStall,
-   output logic 			 LsuBusWrite,
-   output logic 			 LsuBusRead,
+   output logic 			 LSUBusWrite,
+   output logic 			 LSUBusRead,
    output logic 			 DCacheBusAck,
    output logic 			 BusCommittedM,
    output logic 			 SelUncachedAdr,
@@ -49,8 +49,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   
 
   
-  logic 			   UnCachedLsuBusRead;
-  logic 			   UnCachedLsuBusWrite;
+  logic 			   UnCachedLSUBusRead;
+  logic 			   UnCachedLSUBusWrite;
   logic 			   CntEn, PreCntEn;
   logic 			   CntReset;
   logic 			   WordCountFlag;
@@ -80,7 +80,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign NextWordCount = WordCount + 1'b1;
 
   assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
-  assign CntEn = PreCntEn & LsuBusAck;
+  assign CntEn = PreCntEn & LSUBusAck;
 
   assign UnCachedAccess = ~CacheEnabled | ~CacheableM;
 
@@ -91,14 +91,14 @@ module busfsm #(parameter integer   WordCountThreshold,
   always_comb begin
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)               BusNextState = STATE_BUS_READY;
-	                             else if(LsuRWM[0] & (UnCachedAccess)) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(LsuRWM[1] & (UnCachedAccess)) BusNextState = STATE_BUS_UNCACHED_READ;
+	                             else if(LSURWM[0] & (UnCachedAccess)) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(LSURWM[1] & (UnCachedAccess)) BusNextState = STATE_BUS_UNCACHED_READ;
 		                         else if(DCacheFetchLine)            BusNextState = STATE_BUS_FETCH;
 		                         else if(DCacheWriteLine)            BusNextState = STATE_BUS_WRITE;
                                  else                             BusNextState = STATE_BUS_READY;
-      STATE_BUS_UNCACHED_WRITE:  if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
+      STATE_BUS_UNCACHED_WRITE:  if(LSUBusAck)                   BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		                         else                            BusNextState = STATE_BUS_UNCACHED_WRITE;
-      STATE_BUS_UNCACHED_READ:   if(LsuBusAck)                   BusNextState = STATE_BUS_UNCACHED_READ_DONE;
+      STATE_BUS_UNCACHED_READ:   if(LSUBusAck)                   BusNextState = STATE_BUS_UNCACHED_READ_DONE;
 		                         else                            BusNextState = STATE_BUS_UNCACHED_READ;
       STATE_BUS_UNCACHED_WRITE_DONE: if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
                                      else                        BusNextState = STATE_BUS_READY;
@@ -106,9 +106,9 @@ module busfsm #(parameter integer   WordCountThreshold,
                                      else                        BusNextState = STATE_BUS_READY;
 	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                 BusNextState = STATE_BUS_CPU_BUSY;
                                      else                        BusNextState = STATE_BUS_READY;
-      STATE_BUS_FETCH:           if (WordCountFlag & LsuBusAck)  BusNextState = STATE_BUS_READY;
+      STATE_BUS_FETCH:           if (WordCountFlag & LSUBusAck)  BusNextState = STATE_BUS_READY;
 	                             else                            BusNextState = STATE_BUS_FETCH;
-      STATE_BUS_WRITE:           if(WordCountFlag & LsuBusAck)   BusNextState = STATE_BUS_READY;
+      STATE_BUS_WRITE:           if(WordCountFlag & LSUBusAck)   BusNextState = STATE_BUS_READY;
 	                             else                            BusNextState = STATE_BUS_WRITE;
 	  default:                                                   BusNextState = STATE_BUS_READY;
 	endcase
@@ -116,24 +116,24 @@ module busfsm #(parameter integer   WordCountThreshold,
 
 
   assign CntReset = BusCurrState == STATE_BUS_READY;
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LsuRWM)) | DCacheFetchLine | DCacheWriteLine)) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
   assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
-  assign UnCachedLsuBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (LsuRWM[0])) |
+  assign UnCachedLSUBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (LSURWM[0])) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
-  assign LsuBusWrite = UnCachedLsuBusWrite | (BusCurrState == STATE_BUS_WRITE);
+  assign LSUBusWrite = UnCachedLSUBusWrite | (BusCurrState == STATE_BUS_WRITE);
 
-  assign UnCachedLsuBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (|LsuRWM[1])) |
+  assign UnCachedLSUBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (|LSURWM[1])) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign LsuBusRead = UnCachedLsuBusRead | (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
+  assign LSUBusRead = UnCachedLSUBusRead | (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
 
-  assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LsuBusAck) |
-						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LsuBusAck);
+  assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LSUBusAck) |
+						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LSUBusAck);
   assign BusCommittedM = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|LsuRWM & UnCachedAccess)) |
+  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|LSURWM & UnCachedAccess)) |
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
