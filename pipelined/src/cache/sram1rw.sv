@@ -39,7 +39,7 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
     input logic 		    WriteEnable
 );
 
-    logic [DEPTH-1:0][WIDTH-1:0] StoredData;
+    logic [DEPTH-1:0][WIDTH-1:0] StoredData; // *** inconsistency in packed vs. unpacked
     logic [$clog2(DEPTH)-1:0] 	 AddrD;
     logic [WIDTH-1:0] 		 WriteDataD;
     logic 			 WriteEnableD;

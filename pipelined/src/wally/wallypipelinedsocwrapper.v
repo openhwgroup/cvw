@@ -63,60 +63,12 @@ module wallypipelinedsocwrapper (
   output             SDCCmdOE
 );
 
-  wire [31:0] 	     GPIOPinsEn;
   wire [31:0] 	     GPIOPinsIn;
   wire [31:0] 	     GPIOPinsOut;
-    
-  // to instruction memory *** remove later
-  wire [`XLEN-1:0] PCF;
-
-  // Uncore signals
-  wire [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
-  wire             HRESP;
-  wire [5:0]       HSELRegions;
-  wire             InstrAccessFaultF, DataAccessFaultM;
-  wire             TimerIntM, SwIntM; // from CLINT
-  wire [63:0]      MTIME_CLINT, MTIMECMP_CLINT; // from CLINT to CSRs
-  wire             ExtIntM; // from PLIC
-  wire [2:0]       HADDRD;
-  wire [3:0]       HSIZED;
-  wire             HWRITED;
-  wire [15:0]      rd2; // bogus, delete when real multicycle fetch works
-  wire [31:0]      InstrF;
-
 
   assign GPIOPinsOut_IO = GPIOPinsOut[4:0];
   assign GPIOPinsIn = {28'b0, GPIOPinsIn_IO};
 
   // wrapper for fpga
-  wallypipelinedsoc wallypipelinedsoc
-    (.clk,
-     .reset_ext(reset),
-     .HRDATAEXT,
-     .HREADYEXT,
-     .HRESPEXT,
-     .HSELEXT,     
-     .HCLK,
-     .HRESETn,
-     .HADDR,
-     .HWDATA,
-     .HWRITE,
-     .HSIZE,
-     .HBURST,
-     .HPROT,
-     .HTRANS,
-     .HMASTLOCK,
-     .HREADY,    
-     .TIMECLK, 
-     .GPIOPinsIn,
-     .GPIOPinsOut,
-     .GPIOPinsEn,
-     .UARTSin,
-     .UARTSout,
-     .SDCDatIn,
-     .SDCCLK,
-     .SDCCmdIn,
-     .SDCCmdOut,
-     .SDCCmdOE);
-  
+  wallypipelinedsoc wallypipelinedsoc(.*);
 endmodule
