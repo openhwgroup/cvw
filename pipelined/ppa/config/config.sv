@@ -1,1 +1,0 @@
-`define LIB SKY130
