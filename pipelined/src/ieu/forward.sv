@@ -57,5 +57,4 @@ module forward(
   assign LoadStallD = (MemReadE|SCE) & MatchDE;  
   assign MulDivStallD = MulDivE & MatchDE; 
   assign CSRRdStallD = CSRReadE & MatchDE;
-
 endmodule

@@ -11,11 +11,11 @@ export RISCV=/opt/riscv   # change this if you installed the tools in a differen
 
 # Tools
 # GCCZ
-export LD_LIBRARY_PATH=$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib:$LD_LIBRARY_PATH
-export PATH=$RISCV/riscv-gnu-toolchain/bin:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin:$PATH       # GCC tools
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
+export PATH=$PATH:$RISCV/riscv-gnu-toolchain/bin:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin      # GCC tools
 # Spike
 export LD_LIBRARY_PATH=$RISCV/lib:$LD_LIBRARY_PATH
-export PATH=$RISCV/bin:$PATH
+export PATH=$PATH:$RISCV/bin
 # exe2memfile
 export PATH=~/riscv-wally/bin:$PATH    # exe2memfile; change this if riscv-wally isn't at your home directory
 # Verilator

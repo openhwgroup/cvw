@@ -89,68 +89,26 @@ module ieu (
   logic             JumpE;
            
   controller c(
-    .clk, .reset,
-    // Decode stage control signals
-    .StallD, .FlushD, .InstrD, .ImmSrcD,
-    .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
-    // Execute stage control signals
-    .StallE, .FlushE, .FlagsE, .FWriteIntE,
-    .PCSrcE,        // for datapath and Hazard Unit
-    .ALUControlE, .ALUSrcAE, .ALUSrcBE,
-    .ALUResultSrcE,
-    .MemReadE, .CSRReadE, // for Hazard Unit
-    .Funct3E, .MulDivE, .W64E,
-    .JumpE,	
-    // Memory stage control signals
-    .StallM, .FlushM, .MemRWM,
-    .CSRReadM, .CSRWriteM, .PrivilegedM,
-    .SCE, .AtomicE, .AtomicM, .Funct3M,
-    .RegWriteM,     // for Hazard Unit
-    .InvalidateICacheM, .FlushDCacheM, .InstrValidM, 
-    .FWriteIntM,
-    // Writeback stage control signals
-    .StallW, .FlushW,
-    .RegWriteW,     // for datapath and Hazard Unit
-    .ResultSrcW,
-    // Stall during CSRs
-    .CSRWritePendingDEM,
-    .StoreStallD
-  );
+    .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
+    .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
+    .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
+    .Funct3E, .MulDivE, .W64E, .JumpE, .StallM, .FlushM, .MemRWM,
+    .CSRReadM, .CSRWriteM, .PrivilegedM, .SCE, .AtomicE, .AtomicM, .Funct3M,
+    .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
+    .StallW, .FlushW, .RegWriteW, .ResultSrcW, .CSRWritePendingDEM, .StoreStallD);
 
   datapath   dp(
-    .clk, .reset,
-    // Decode stage signals
-    .ImmSrcD, .InstrD,
-    // Execute stage signals
-    .StallE, .FlushE, .ForwardAE, .ForwardBE,
-    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE,
-    .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
-    .FWriteDataE, .PCE, .PCLinkE, .FlagsE,
-    .IEUAdrE,
-    .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-    // Memory stage signals
-    .StallM, .FlushM, .FWriteIntM, .FIntResM, 
-    .SrcAM, .WriteDataM,
-    // Writeback stage signals
-    .StallW, .FlushW, .RegWriteW, 
-    .SquashSCW, .ResultSrcW, .ReadDataW,
-    // input  logic [`XLEN-1:0] PCLinkW,
-    .CSRReadValW, .ReadDataM, .MulDivResultW, 
-    // Hazard Unit signals 
-    .Rs1D, .Rs2D, .Rs1E, .Rs2E,
-    .RdE, .RdM, .RdW 
-  );             
+    .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
+    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
+    .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
+    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM,
+    .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW,
+    .CSRReadValW, .ReadDataM, .MulDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
-    .MemReadE, .MulDivE, .CSRReadE,
-    .RegWriteM, .RegWriteW,
-    .FWriteIntE,
-    .SCE,
-    // Forwarding controls
-    .ForwardAE, .ForwardBE,
-    .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD
-    );
-
+    .MemReadE, .MulDivE, .CSRReadE, .RegWriteM, .RegWriteW,
+    .FWriteIntE, .SCE, .ForwardAE, .ForwardBE,
+    .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD);
 endmodule
 
