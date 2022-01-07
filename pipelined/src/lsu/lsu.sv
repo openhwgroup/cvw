@@ -98,6 +98,7 @@ module lsu
   logic [1:0] 				   LSURWM;
   logic [1:0] 				   PreLSURWM;
   logic [2:0] 				   LSUFunct3M;
+  logic [6:0] 				   LSUFunct7M;
   logic [1:0] 				   LSUAtomicM;
 (* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLSUPAdrM, LocalLSUBusAdr;
   logic [11:0] 				   PreLSUAdrE, LSUAdrE;  
@@ -146,6 +147,7 @@ module lsu
     // multiplex the outputs to LSU
     mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLSURWM);
     mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
+    mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
     mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
     mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
     mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
@@ -179,6 +181,7 @@ module lsu
     
     assign PreLSURWM = MemRWM;
     assign LSUFunct3M = Funct3M;
+    assign LSUFunct7M = Funct7M;
     assign LSUAtomicM = AtomicM;
     assign PreLSUAdrE = IEUAdrE[11:0];
     assign PreLSUPAdrM = IEUAdrExtM;
@@ -301,7 +304,7 @@ module lsu
 			.NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
 	 dcache(.clk, .reset, .CPUBusy,
 			.RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LSUAtomicM : 2'b00), 
-			.NextAdr(LSUAdrE), .PAdr(LSUPAdrM), .NoTranAdr(PreLSUPAdrM[11:0]),
+			.NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
 			.FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStall),
 			.CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
 			.IgnoreRequest, .CacheCommitted(DCacheCommittedM),
@@ -336,7 +339,7 @@ module lsu
 
   if (`A_SUPPORTED) begin : amo
     logic [`XLEN-1:0] AMOResult;
-    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(Funct7M), .width(LSUFunct3M[1:0]), 
+    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
                   .result(AMOResult));
     mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
   end else
