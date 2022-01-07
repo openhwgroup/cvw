@@ -28,13 +28,13 @@
 module forward(
   // Detect hazards
   input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input logic        MemReadE, MulDivE, CSRReadE,
+  input logic        MemReadE, MDUE, CSRReadE,
   input logic        RegWriteM, RegWriteW,
   input logic	       FWriteIntE, 
   input logic        SCE,
   // Forwarding controls
   output logic [1:0] ForwardAE, ForwardBE,
-  output logic       FPUStallD, LoadStallD, MulDivStallD, CSRRdStallD
+  output logic       FPUStallD, LoadStallD, MDUStallD, CSRRdStallD
 );
 
   logic MatchDE;
@@ -55,6 +55,6 @@ module forward(
   assign MatchDE = (Rs1D == RdE) | (Rs2D == RdE); // Decode-stage instruction source depends on result from execute stage instruction
   assign FPUStallD = FWriteIntE & MatchDE; 
   assign LoadStallD = (MemReadE|SCE) & MatchDE;  
-  assign MulDivStallD = MulDivE & MatchDE; 
+  assign MDUStallD = MDUE & MatchDE; 
   assign CSRRdStallD = CSRReadE & MatchDE;
 endmodule

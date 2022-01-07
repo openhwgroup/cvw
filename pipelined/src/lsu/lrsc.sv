@@ -31,10 +31,10 @@ module lrsc
     input  logic                clk, reset,
     input  logic                FlushW, CPUBusy,
     input  logic                MemReadM,
-    input  logic [1:0]          PreLsuRWM,
-    output logic [1:0]          LsuRWM,
-    input  logic [1:0] 	        LsuAtomicM,
-    input  logic [`PA_BITS-1:0] LsuPAdrM,  // from mmu to dcache
+    input  logic [1:0]          PreLSURWM,
+    output logic [1:0]          LSURWM,
+    input  logic [1:0] 	        LSUAtomicM,
+    input  logic [`PA_BITS-1:0] LSUPAdrM,  // from mmu to dcache
     output logic                SquashSCW
 );
   // Handle atomic load reserved / store conditional
@@ -43,17 +43,17 @@ module lrsc
   logic 						lrM, scM, WriteAdrMatchM;
   logic 						SquashSCM;
 
-  assign lrM = MemReadM & LsuAtomicM[0];
-  assign scM = PreLsuRWM[0] & LsuAtomicM[0]; 
-  assign WriteAdrMatchM = PreLsuRWM[0] & (LsuPAdrM[`PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
+  assign lrM = MemReadM & LSUAtomicM[0];
+  assign scM = PreLSURWM[0] & LSUAtomicM[0]; 
+  assign WriteAdrMatchM = PreLSURWM[0] & (LSUPAdrM[`PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
   assign SquashSCM = scM & ~WriteAdrMatchM;
-  assign LsuRWM = SquashSCM ? 2'b00 : PreLsuRWM;
+  assign LSURWM = SquashSCM ? 2'b00 : PreLSURWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
     if (lrM) ReservationValidM = 1;  // set valid on load reserve
     else if (scM | WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
-  flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, LsuPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+  flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, LSUPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
   flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
   flopenrc #(1) squashreg(clk, reset, FlushW, ~CPUBusy, SquashSCM, SquashSCW);
 endmodule

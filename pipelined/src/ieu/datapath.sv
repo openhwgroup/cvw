@@ -58,7 +58,7 @@ module datapath (
   input  logic [2:0]       ResultSrcW,
   output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  input  logic [`XLEN-1:0] CSRReadValW, ReadDataM, MulDivResultW, 
+  input  logic [`XLEN-1:0] CSRReadValW, ReadDataM, MDUResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -121,7 +121,7 @@ module datapath (
   flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
   flopen #(`XLEN)   ReadDataWReg(.clk, .en(~StallW), .d(ReadDataM), .q(ReadDataW));
-  mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, WriteDataW);	 
+  mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, WriteDataW);	 
 
   // floating point interactions: fcvt, fp stores
   if (`F_SUPPORTED) begin:fpmux

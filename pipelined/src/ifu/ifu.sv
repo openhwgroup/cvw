@@ -31,11 +31,11 @@ module ifu (
 	input logic 				StallF, StallD, StallE, StallM, StallW,
 	input logic 				FlushF, FlushD, FlushE, FlushM, FlushW,
 	// Bus interface
-(* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IfuBusHRDATA,
-(* mark_debug = "true" *)	input logic 				IfuBusAck,
-(* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IfuBusAdr,
-(* mark_debug = "true" *)	output logic 				IfuBusRead,
-(* mark_debug = "true" *)	output logic 				IfuStallF,
+(* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
+(* mark_debug = "true" *)	input logic 				IFUBusAck,
+(* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUBusAdr,
+(* mark_debug = "true" *)	output logic 				IFUBusRead,
+(* mark_debug = "true" *)	output logic 				IFUStallF,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
@@ -210,8 +210,8 @@ module ifu (
 
   // *** put memory interface on here, InstrF becomes output
   //assign ICacheBusAdr = PCF; // *** no MMU
-  //assign IfuBusFetch = ~StallD; // *** & ICacheMissF; add later
-  // assign IfuBusFetch = 1; // *** & ICacheMissF; add later
+  //assign IFUBusFetch = ~StallD; // *** & ICacheMissF; add later
+  // assign IFUBusFetch = 1; // *** & ICacheMissF; add later
 
   // conditional
   // 1. ram // controlled by `MEM_IROM
@@ -229,13 +229,13 @@ module ifu (
   logic [LOGWPL-1:0]   WordCount;
   logic [LINELEN-1:0] ICacheMemWriteData;
   logic 			   ICacheBusAck;
-  logic [`PA_BITS-1:0] LocalIfuBusAdr;
+  logic [`PA_BITS-1:0] LocalIFUBusAdr;
   logic [`PA_BITS-1:0] ICacheBusAdr;
   logic 			   SelUncachedAdr;
   
 	if(`MEM_ICACHE) begin : icache
-	  logic [1:0] IfuRWF;
-	  assign IfuRWF = CacheableF ? 2'b10 : 2'b00;
+	  logic [1:0] IFURWF;
+	  assign IFURWF = CacheableF ? 2'b10 : 2'b00;
 	  
 /* -----\/----- EXCLUDED -----\/-----
 	  icache #(.LINELEN(`ICACHE_LINELENINBITS),
@@ -244,7 +244,7 @@ module ifu (
 	  icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
 					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF,
 					.ICacheFetchLine,
-					.IfuRWF(IfuRWF), //aways read
+					.IFURWF(IFURWF), //aways read
 					.PCNextF(PCNextFMux),
 					.PCPF(PCPF),
 					.PCF(PCFMux),
@@ -264,7 +264,7 @@ module ifu (
 			 .CacheMiss(),
 			 .CacheAccess(),
 			 .FinalWriteData('0),
-			 .RW(IfuRWF), 
+			 .RW(IFURWF), 
 			 .Atomic(2'b00),
 			 .FlushCache(1'b0),
 			 .NextAdr(PCNextFMux),
@@ -293,23 +293,23 @@ module ifu (
   genvar 			   index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     flopen #(`XLEN) fb(.clk(clk),
-      .en(IfuBusAck & IfuBusRead & (index == WordCount)),
-      .d(IfuBusHRDATA),
+      .en(IFUBusAck & IFUBusRead & (index == WordCount)),
+      .d(IFUBusHRDATA),
       .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
 
-  assign LocalIfuBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
-  assign IfuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIfuBusAdr;
+  assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
+  assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
 
   busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
   busfsm(.clk, .reset, .IgnoreRequest,
-		.LsuRWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
-		.LsuBusAck(IfuBusAck),
+		.LSURWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
+		.LSUBusAck(IFUBusAck),
 		.CPUBusy, .CacheableM(CacheableF),
-		.BusStall, .LsuBusWrite(), .LsuBusRead(IfuBusRead), .DCacheBusAck(ICacheBusAck),
+		.BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead), .DCacheBusAck(ICacheBusAck),
 		.BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
 
-  assign IfuStallF = ICacheStallF | BusStall | SelNextSpill;
+  assign IFUStallF = ICacheStallF | BusStall | SelNextSpill;
   assign CPUBusy = StallF & ~SelNextSpill;
 
   //assign IgnoreRequest = ITLBMissF | ExceptionM | PendingInterruptM;
