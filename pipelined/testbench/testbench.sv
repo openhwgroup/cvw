@@ -206,7 +206,7 @@ logic [3:0] dummy;
   always
     begin
       clk = 1; # 5; clk = 0; # 5;
-      if ($time % 100000 == 0) $display("Time is %0t", $time);
+      // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
   // check results
@@ -296,9 +296,9 @@ logic [3:0] dummy;
   end
 
   // Termination condition
-  // terminate on a specific ECALL after li x3,1 for old Imperas tests, 
+  // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
   // or sw	gp,-56(t0) for new Imperas tests
-  // or sw gp, -56(t0) 
+  // or sd gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
   if (`ZICSR_SUPPORTED) assign ecf = dut.hart.priv.priv.EcallFaultM;
