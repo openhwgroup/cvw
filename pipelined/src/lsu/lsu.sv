@@ -44,8 +44,7 @@ module lsu
    input logic [2:0] 		   Funct3M,
    input logic [6:0] 		   Funct7M, 
    input logic [1:0] 		   AtomicM,
-   input logic 				   ExceptionM,
-   input logic 				   PendingInterruptM,
+   input logic                 TrapM,
    input logic 				   FlushDCacheM,
    output logic 			   CommittedM, 
    output logic 			   SquashSCW,
@@ -136,13 +135,13 @@ module lsu
     assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
 
     interlockfsm interlockfsm (.clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
-    .DTLBMissM, .DTLBWriteM, .ExceptionM, .PendingInterruptM, .DCacheStall,
+    .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStall,
     .InterlockStall, .SelReplayCPURequest, .SelHPTW,
     .IgnoreRequest);
     
     hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
-        .ITLBMissF(ITLBMissF & ~PendingInterruptM),
-        .DTLBMissM(DTLBMissM & ~PendingInterruptM),
+        .ITLBMissF(ITLBMissF & ~TrapM),
+        .DTLBMissM(DTLBMissM & ~TrapM),
         .MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
         .HPTWReadPTE(ReadDataM),
         .DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
