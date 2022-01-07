@@ -56,7 +56,7 @@ module wallypipelinedhart (
   (* mark_debug = "true" *) logic TrapM;
 
   // new signals that must connect through DP
-  logic 		    MulDivE, W64E;
+  logic 		    MDUE, W64E;
   logic 		    CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0] 		    AtomicE;
   logic [1:0] 		    AtomicM;
@@ -68,7 +68,7 @@ module wallypipelinedhart (
   (* mark_debug = "true" *) logic [31:0] 		    InstrM;
   logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    PCM;
- logic [`XLEN-1:0] 	    CSRReadValW, MulDivResultW;
+ logic [`XLEN-1:0] 	    CSRReadValW, MDUResultW;
    logic [`XLEN-1:0] 	    PrivilegedNextPCM;
   (* mark_debug = "true" *) logic [1:0] 		    MemRWM;
   (* mark_debug = "true" *) logic 		    InstrValidM;
@@ -82,7 +82,7 @@ module wallypipelinedhart (
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
   logic 		    DivBusyE;
-  logic 		    LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD;
+  logic 		    LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic 		    SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
@@ -113,7 +113,7 @@ module wallypipelinedhart (
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
-  logic 		    IfuStallF;
+  logic 		    IFUStallF;
   logic 		    LSUStall;
 
   
@@ -128,18 +128,18 @@ module wallypipelinedhart (
   logic 		    CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0] 	    IfuBusAdr;
-  logic [`XLEN-1:0] 	    IfuBusHRDATA;
-  logic 		    IfuBusRead;
-  logic 		    IfuBusAck;
+  logic [`PA_BITS-1:0] 	    IFUBusAdr;
+  logic [`XLEN-1:0] 	    IFUBusHRDATA;
+  logic 		    IFUBusRead;
+  logic 		    IFUBusAck;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0] 	    LsuBusAdr;
-  logic 		    LsuBusRead;
-  logic 		    LsuBusWrite;
-  logic 		    LsuBusAck;
-  logic [`XLEN-1:0] 	    LsuBusHRDATA;
-  logic [`XLEN-1:0] 	    LsuBusHWDATA;
+  logic [`PA_BITS-1:0] 	    LSUBusAdr;
+  logic 		    LSUBusRead;
+  logic 		    LSUBusWrite;
+  logic 		    LSUBusAck;
+  logic [`XLEN-1:0] 	    LSUBusHRDATA;
+  logic [`XLEN-1:0] 	    LSUBusHWDATA;
   
   logic 		    BPPredWrongE;
   logic 		    BPPredDirWrongM;
@@ -148,7 +148,7 @@ module wallypipelinedhart (
   logic 		    BPPredClassNonCFIWrongM;
   logic [4:0] 		    InstrClassM;
   logic 		    InstrAccessFaultF;
-  logic [2:0] 		    LsuBusSize;
+  logic [2:0] 		    LSUBusSize;
   
   logic 		    ExceptionM;
   logic 		    PendingInterruptM;
@@ -164,8 +164,8 @@ module wallypipelinedhart (
 
     .ExceptionM, .PendingInterruptM,
     // Fetch
-    .IfuBusHRDATA, .IfuBusAck, .PCF, .IfuBusAdr,
-    .IfuBusRead, .IfuStallF,
+    .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
+    .IFUBusRead, .IFUStallF,
 
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .PCE,
@@ -206,7 +206,7 @@ module wallypipelinedhart (
 
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
-     .FWriteDataE, .IEUAdrE, .MulDivE, .W64E,
+     .FWriteDataE, .IEUAdrE, .MDUE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
      // Memory stage interface
@@ -220,14 +220,14 @@ module wallypipelinedhart (
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
-     .CSRReadValW, .ReadDataM, .MulDivResultW,
+     .CSRReadValW, .ReadDataM, .MDUResultW,
      .RdW, .ReadDataW,
      .InstrValidM, 
 
      // hazards
      .StallD, .StallE, .StallM, .StallW,
      .FlushD, .FlushE, .FlushM, .FlushW,
-     .FPUStallD, .LoadStallD, .MulDivStallD, .CSRRdStallD,
+     .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
      .CSRWritePendingDEM, .StoreStallD
@@ -246,8 +246,8 @@ module wallypipelinedhart (
 	.IEUAdrE, .IEUAdrM, .WriteDataM,
 	.ReadDataM, .FlushDCacheM,
 	// connected to ahb (all stay the same)
-	.LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusAck,
-	.LsuBusHRDATA, .LsuBusHWDATA, .LsuBusSize,
+	.LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
+	.LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize,
 
 	// connect to csr or privilege and stay the same.
 	.PrivilegeModeW,           // connects to csr
@@ -277,13 +277,13 @@ module wallypipelinedhart (
   ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .IfuBusAdr,
-     .IfuBusRead, .IfuBusHRDATA, .IfuBusAck,
+     .IFUBusAdr,
+     .IFUBusRead, .IFUBusHRDATA, .IFUBusAck,
      // Signals from Data Cache
-     .LsuBusAdr, .LsuBusRead, .LsuBusWrite, .LsuBusHWDATA,
-     .LsuBusHRDATA,
-     .LsuBusSize,
-     .LsuBusAck,
+     .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
+     .LSUBusHRDATA,
+     .LSUBusSize,
+     .LSUBusAck,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
@@ -293,8 +293,8 @@ module wallypipelinedhart (
   
    hazard     hzu(
      .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
-     .LoadStallD, .StoreStallD, .MulDivStallD, .CSRRdStallD,
-     .LSUStall, .IfuStallF,
+     .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
+     .LSUStall, .IFUStallF,
      .FPUStallD, .FStallD,
 	.DivBusyE, .FDivBusyE,
 	.EcallFaultM, .BreakpointFaultM,
@@ -347,12 +347,12 @@ module wallypipelinedhart (
       muldiv mdu(
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
-         .Funct3E, .Funct3M, .MulDivE, .W64E,
-         .MulDivResultW, .DivBusyE, 
+         .Funct3E, .Funct3M, .MDUE, .W64E,
+         .MDUResultW, .DivBusyE, 
          .StallM, .StallW, .FlushM, .FlushW 
       ); 
    end else begin // no M instructions supported
-      assign MulDivResultW = 0; 
+      assign MDUResultW = 0; 
       assign DivBusyE = 0;
    end
 

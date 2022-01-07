@@ -40,18 +40,18 @@ module ahblite (
   input logic 				 UnsignedLoadM,
   input logic [1:0] 		 AtomicMaskedM,
   // Signals from Instruction Cache
-  input logic [`PA_BITS-1:0] IfuBusAdr, 
-  input logic 				 IfuBusRead,
-  output logic [`XLEN-1:0] 	 IfuBusHRDATA,
-  output logic 				 IfuBusAck,
+  input logic [`PA_BITS-1:0] IFUBusAdr, 
+  input logic 				 IFUBusRead,
+  output logic [`XLEN-1:0] 	 IFUBusHRDATA,
+  output logic 				 IFUBusAck,
   // Signals from Data Cache
-  input logic [`PA_BITS-1:0] LsuBusAdr,
-  input logic 				 LsuBusRead, 
-  input logic 				 LsuBusWrite,
-  input logic [`XLEN-1:0] 	 LsuBusHWDATA,
-  output logic [`XLEN-1:0] 	 LsuBusHRDATA,
-  input logic [2:0] 		 LsuBusSize,
-  output logic 				 LsuBusAck,
+  input logic [`PA_BITS-1:0] LSUBusAdr,
+  input logic 				 LSUBusRead, 
+  input logic 				 LSUBusWrite,
+  input logic [`XLEN-1:0] 	 LSUBusHWDATA,
+  output logic [`XLEN-1:0] 	 LSUBusHRDATA,
+  input logic [2:0] 		 LSUBusSize,
+  output logic 				 LSUBusAck,
   // AHB-Lite external signals
   (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,
   (* mark_debug = "true" *) input logic HREADY, HRESP,
@@ -98,35 +98,35 @@ module ahblite (
   // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
-      IDLE: if (LsuBusRead)      NextBusState = MEMREAD;  // Memory has priority over instructions
-            else if (LsuBusWrite)NextBusState = MEMWRITE;
-            else if (IfuBusRead)   NextBusState = INSTRREAD;
+      IDLE: if (LSUBusRead)      NextBusState = MEMREAD;  // Memory has priority over instructions
+            else if (LSUBusWrite)NextBusState = MEMWRITE;
+            else if (IFUBusRead)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
-            else if (IfuBusRead)   NextBusState = INSTRREAD;
+            else if (IFUBusRead)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
-            else if (IfuBusRead)   NextBusState = INSTRREAD;
+            else if (IFUBusRead)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       INSTRREAD: if (~HREADY)      NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;  // if (IfuBusRead still high)
+            else                   NextBusState = IDLE;  // if (IFUBusRead still high)
       default:                     NextBusState = IDLE;
     endcase
 
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign #1 AccessAddress = (GrantData) ? LsuBusAdr[31:0] : IfuBusAdr[31:0];
+  assign #1 AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
-  assign HSIZE = (GrantData) ? {1'b0, LsuBusSize[1:0]} : ISize;
+  assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = NextBusState == MEMWRITE;
   // delay write data by one cycle for
-  flop #(`XLEN) wdreg(HCLK, LsuBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flop #(`XLEN) wdreg(HCLK, LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
@@ -136,9 +136,9 @@ module ahblite (
   // *** assumes AHBW = XLEN
 
  
-  assign IfuBusHRDATA = HRDATA;
-  assign LsuBusHRDATA = HRDATA;
-  assign IfuBusAck = (BusState == INSTRREAD) & (NextBusState != INSTRREAD);
-  assign LsuBusAck = (BusState == MEMREAD) & (NextBusState != MEMREAD) | (BusState == MEMWRITE) & (NextBusState != MEMWRITE);
+  assign IFUBusHRDATA = HRDATA;
+  assign LSUBusHRDATA = HRDATA;
+  assign IFUBusAck = (BusState == INSTRREAD) & (NextBusState != INSTRREAD);
+  assign LSUBusAck = (BusState == MEMREAD) & (NextBusState != MEMREAD) | (BusState == MEMWRITE) & (NextBusState != MEMWRITE);
 
 endmodule

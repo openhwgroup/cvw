@@ -57,7 +57,5 @@ module tlbcam #(parameter TLB_ENTRIES = 8,
     .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;
   or_rows #(TLB_ENTRIES,2) PageTypeOr(PageTypeRead, HitPageType);
-  //assign HitPageType = PageTypeRead.or; // applies OR to elements of the (TLB_ENTRIES x 2) array to get 2-bit result
-
 endmodule
 

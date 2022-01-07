@@ -28,8 +28,8 @@
 module hazard(
   // Detect hazards
 (* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
-(* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MulDivStallD, CSRRdStallD,
-(* mark_debug = "true" *)	      input logic  LSUStall, IfuStallF,
+(* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
+(* mark_debug = "true" *)	      input logic  LSUStall, IFUStallF,
 (* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
@@ -56,10 +56,10 @@ module hazard(
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
   assign StallFCause = CSRWritePendingDEM & ~(TrapM | RetM | BPPredWrongE);
-  assign StallDCause = (LoadStallD | StoreStallD | MulDivStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
+  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallECause = DivBusyE | FDivBusyE;
   assign StallMCause = 0; 
-  assign StallWCause = LSUStall | IfuStallF;
+  assign StallWCause = LSUStall | IFUStallF;
 
   assign StallF = StallFCause | StallD;
   assign StallD = StallDCause | StallE;

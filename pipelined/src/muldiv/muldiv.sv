@@ -31,16 +31,16 @@ module muldiv (
 	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
 		   input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	       input logic [2:0] 	Funct3E, Funct3M,
-	       input logic 		MulDivE, W64E,
+	       input logic 		MDUE, W64E,
 	       // Writeback stage
-	       output logic [`XLEN-1:0] MulDivResultW,
+	       output logic [`XLEN-1:0] MDUResultW,
 	       // Divide Done
 	       output logic 		DivBusyE, 
 	       // hazards
 	       input logic 		StallM, StallW, FlushM, FlushW 
 	       );
 
-	logic [`XLEN-1:0] MulDivResultM;
+	logic [`XLEN-1:0] MDUResultM;
 	logic [`XLEN-1:0] PrelimResultM;
 	logic [`XLEN-1:0] QuotM, RemM;
 	logic [`XLEN*2-1:0] ProdM; 
@@ -54,7 +54,7 @@ module muldiv (
 
 	// Divide
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
-	assign DivE = MulDivE & Funct3E[2];
+	assign DivE = MDUE & Funct3E[2];
 	assign DivSignedE = ~Funct3E[0];
 	intdivrestoring div(.clk, .reset, .StallM, .DivSignedE, .W64E, .DivE, 
 	                    .ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
@@ -75,13 +75,13 @@ module muldiv (
 	// Handle sign extension for W-type instructions
 	flopenrc #(1) W64MReg(clk, reset, FlushM, ~StallM, W64E, W64M);
 	if (`XLEN == 64) begin:resmux // RV64 has W-type instructions
-		assign MulDivResultM = W64M ? {{32{PrelimResultM[31]}}, PrelimResultM[31:0]} : PrelimResultM;
+		assign MDUResultM = W64M ? {{32{PrelimResultM[31]}}, PrelimResultM[31:0]} : PrelimResultM;
 	end else begin:resmux // RV32 has no W-type instructions
-		assign MulDivResultM = PrelimResultM;
+		assign MDUResultM = PrelimResultM;
 	end
 
 	// Writeback stage pipeline register
-	flopenrc #(`XLEN) MulDivResultWReg(clk, reset, FlushW, ~StallW, MulDivResultM, MulDivResultW);	 
+	flopenrc #(`XLEN) MDUResultWReg(clk, reset, FlushW, ~StallW, MDUResultM, MDUResultW);	 
 endmodule // muldiv
 
 

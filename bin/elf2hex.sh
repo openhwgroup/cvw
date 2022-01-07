@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # james.stine@okstate.edu 4 Jan 2022
 # Script to run elf2hex for memfile for

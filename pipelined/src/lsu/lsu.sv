@@ -63,13 +63,13 @@ module lsu
    output logic 			   StoreMisalignedFaultM, StoreAccessFaultM,
 
    // connect to ahb
-(* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LsuBusAdr,
-(* mark_debug = "true" *)   output logic 			   LsuBusRead, 
-(* mark_debug = "true" *)   output logic 			   LsuBusWrite,
-(* mark_debug = "true" *)   input logic 				   LsuBusAck,
-(* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   LsuBusHRDATA,
-(* mark_debug = "true" *)   output logic [`XLEN-1:0]    LsuBusHWDATA,
-(* mark_debug = "true" *)   output logic [2:0] 		   LsuBusSize, 
+(* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
+(* mark_debug = "true" *)   output logic 			   LSUBusRead, 
+(* mark_debug = "true" *)   output logic 			   LSUBusWrite,
+(* mark_debug = "true" *)   input logic 				   LSUBusAck,
+(* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   LSUBusHRDATA,
+(* mark_debug = "true" *)   output logic [`XLEN-1:0]    LSUBusHWDATA,
+(* mark_debug = "true" *)   output logic [2:0] 		   LSUBusSize, 
 
    // mmu management
 
@@ -90,18 +90,18 @@ module lsu
 
   logic 					   DTLBPageFaultM;
   
-  logic [`PA_BITS-1:0] 		   LsuPAdrM;  // from mmu to dcache
+  logic [`PA_BITS-1:0] 		   LSUPAdrM;  // from mmu to dcache
   logic [`XLEN+1:0] 		   IEUAdrExtM;
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
 
-  logic [1:0] 				   LsuRWM;
-  logic [1:0] 				   PreLsuRWM;
-  logic [2:0] 				   LsuFunct3M;
-  logic [7:0] 				   LsuFunct7M;
-  logic [1:0] 				   LsuAtomicM;
-(* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLsuPAdrM, LocalLsuBusAdr;
-  logic [11:0] 				   PreLsuAdrE, LsuAdrE;  
+  logic [1:0] 				   LSURWM;
+  logic [1:0] 				   PreLSURWM;
+  logic [2:0] 				   LSUFunct3M;
+  logic [6:0] 				   LSUFunct7M;
+  logic [1:0] 				   LSUAtomicM;
+(* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLSUPAdrM, LocalLSUBusAdr;
+  logic [11:0] 				   PreLSUAdrE, LSUAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
   logic 					   DCacheStall;
@@ -145,12 +145,12 @@ module lsu
     // arbiter between IEU and hptw
     
     // multiplex the outputs to LSU
-    mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLsuRWM);
-    mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LsuFunct3M);
-    mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LsuFunct7M);    
-    mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LsuAtomicM);
-    mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLsuAdrE);
-    mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLsuPAdrM);
+    mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLSURWM);
+    mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
+    mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
+    mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
+    mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
+    mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
 
     // always block interrupts when using the hardware page table walker.
     assign CPUBusy = StallW & ~SelHPTW;
@@ -160,17 +160,17 @@ module lsu
     //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
 
     // Specify which type of page fault is occurring
-    assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLsuRWM[1];
-    assign DTLBStorePageFaultM = DTLBPageFaultM & PreLsuRWM[0];
+    assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLSURWM[1];
+    assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
 
     // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-    assign LsuAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLsuAdrE;
+    assign LSUAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLSUAdrE;
 
   end // if (`MEM_VIRTMEM)
   else begin
     assign InterlockStall = 1'b0;
     
-    assign LsuAdrE = PreLsuAdrE;
+    assign LSUAdrE = PreLSUAdrE;
     assign SelHPTW = 1'b0;
     assign IgnoreRequest = 1'b0;
 
@@ -179,12 +179,12 @@ module lsu
     assign DTLBWriteM = 1'b0;
     assign ITLBWriteF = 1'b0;	  
     
-    assign PreLsuRWM = MemRWM;
-    assign LsuFunct3M = Funct3M;
-    assign LsuFunct7M = Funct7M;
-    assign LsuAtomicM = AtomicM;
-    assign PreLsuAdrE = IEUAdrE[11:0];
-    assign PreLsuPAdrM = IEUAdrExtM;
+    assign PreLSURWM = MemRWM;
+    assign LSUFunct3M = Funct3M;
+    assign LSUFunct7M = Funct7M;
+    assign LSUAtomicM = AtomicM;
+    assign PreLSUAdrE = IEUAdrE[11:0];
+    assign PreLSUPAdrM = IEUAdrExtM;
     assign CPUBusy = StallW;
     
     assign DTLBLoadPageFaultM = 1'b0;
@@ -207,21 +207,21 @@ module lsu
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
       .PrivilegeModeW, .DisableTranslation(SelHPTW),
-      .PAdr(PreLsuPAdrM),
+      .PAdr(PreLSUPAdrM),
       .VAdr(IEUAdrM),
-      .Size(LsuFunct3M[1:0]),
+      .Size(LSUFunct3M[1:0]),
       .PTE,
       .PageTypeWriteVal(PageType),
       .TLBWrite(DTLBWriteM),
       .TLBFlush(DTLBFlushM),
-      .PhysicalAddress(LsuPAdrM),
+      .PhysicalAddress(LSUPAdrM),
       .TLBMiss(DTLBMissM),
       .Cacheable(CacheableM),
       .Idempotent(), .AtomicAllowed(),
       .TLBPageFault(DTLBPageFaultM),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
       .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0),  ///  atomicaccessm is probably a bug
-      .WriteAccessM(PreLsuRWM[0]), .ReadAccessM(PreLsuRWM[1]),
+      .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
       ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
@@ -240,7 +240,7 @@ module lsu
     assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
     
   end else begin
-    assign LsuPAdrM = PreLsuPAdrM;
+    assign LSUPAdrM = PreLSUPAdrM;
     assign DTLBMissM = 0;
     assign CacheableM = 1;
     assign DTLBPageFaultM = 0;
@@ -252,14 +252,14 @@ module lsu
   assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
 
-  // use PreLsu as prefix for lrsc 
+  // use PreLSU as prefix for lrsc 
   if (`A_SUPPORTED) begin:lrsc
-    assign MemReadM = PreLsuRWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
-    lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLsuRWM, .LsuAtomicM, .LsuPAdrM,
-        .SquashSCW, .LsuRWM);
+    assign MemReadM = PreLSURWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
+    lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
+        .SquashSCW, .LSURWM);
   end else begin:lrsc
       assign SquashSCW = 0;
-      assign LsuRWM = PreLsuRWM;
+      assign LSURWM = PreLSURWM;
   end
 
 
@@ -279,7 +279,7 @@ module lsu
   // temp
   
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
-  (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLsuBusHWDATA;
+  (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLSUBusHWDATA;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [LINELEN-1:0] DCacheMemWriteData;
 
@@ -303,8 +303,8 @@ module lsu
     cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
 			.NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
 	 dcache(.clk, .reset, .CPUBusy,
-			.RW(CacheableM ? LsuRWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LsuAtomicM : 2'b00), 
-			.NextAdr(LsuAdrE), .PAdr(LsuPAdrM), 
+			.RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LSUAtomicM : 2'b00), 
+			.NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
 			.FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStall),
 			.CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
 			.IgnoreRequest, .CacheCommitted(DCacheCommittedM),
@@ -333,23 +333,23 @@ module lsu
   // sub word selection for read and writes and optional amo alu.
   // finally swr
   subwordread subwordread(.ReadDataWordMuxM,
-			  .LsuPAdrM(LsuPAdrM[2:0]),
-			  .Funct3M(LsuFunct3M),
+			  .LSUPAdrM(LSUPAdrM[2:0]),
+			  .Funct3M(LSUFunct3M),
 			  .ReadDataM);
 
   if (`A_SUPPORTED) begin : amo
     logic [`XLEN-1:0] AMOResult;
-    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LsuFunct7M), .width(LsuFunct3M[1:0]), 
+    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
                   .result(AMOResult));
-    mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LsuAtomicM[1], FinalAMOWriteDataM);
+    mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
   end else
     assign FinalAMOWriteDataM = WriteDataM;
 
   // this might only get instantiated if there is a dcache or dtim.
   // There is a copy in the ebu.
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
-			    .HADDRD(LsuPAdrM[2:0]),
-			    .HSIZED({LsuFunct3M[2], 1'b0, LsuFunct3M[1:0]}),
+			    .HADDRD(LSUPAdrM[2:0]),
+			    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
@@ -362,22 +362,22 @@ module lsu
   genvar index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     flopen #(`XLEN) fb(.clk,
-      .en(LsuBusAck & LsuBusRead & (index == WordCount)),
-      .d(LsuBusHRDATA),
+      .en(LSUBusAck & LSUBusRead & (index == WordCount)),
+      .d(LSUBusHRDATA),
       .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
 
-  assign LocalLsuBusAdr = SelUncachedAdr ? LsuPAdrM : DCacheBusAdr ;
-  assign LsuBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLsuBusAdr;
-  assign PreLsuBusHWDATA = ReadDataLineSetsM[WordCount];
-  assign LsuBusHWDATA = SelUncachedAdr ? WriteDataM : PreLsuBusHWDATA;  // *** why is this not FinalWriteDataM? which does not work.
+  assign LocalLSUBusAdr = SelUncachedAdr ? LSUPAdrM : DCacheBusAdr ;
+  assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
+  assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount];
+  assign LSUBusHWDATA = SelUncachedAdr ? WriteDataM : PreLSUBusHWDATA;  // *** why is this not FinalWriteDataM? which does not work.
 
-  if (`XLEN == 32) assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b010;
-  else             assign LsuBusSize = SelUncachedAdr ? LsuFunct3M : 3'b011;
+  if (`XLEN == 32) assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b010;
+  else             assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b011;
 
   busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
-  busfsm(.clk, .reset, .IgnoreRequest, .LsuRWM, .DCacheFetchLine, .DCacheWriteLine,
-		 .LsuBusAck, .CPUBusy, .CacheableM, .BusStall, .LsuBusWrite, .LsuBusRead,
+  busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
+		 .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
     
 endmodule

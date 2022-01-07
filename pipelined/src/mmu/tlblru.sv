@@ -47,6 +47,7 @@ module tlblru #(parameter TLB_ENTRIES = 8) (
   assign RUBitsAccessed = AccessLines | RUBits;
   assign AllUsed = &RUBitsAccessed; // if all recently used, then clear to none
   assign RUBitsNext = AllUsed ? 0 : RUBitsAccessed; 
+
+  // enable must be ORd with TLBFlush to ensure flop fires on a flush.  DH 7/8/21
   flopenrc #(TLB_ENTRIES) lrustate(clk, reset, TLBFlush, (CAMHit | TLBWrite), RUBitsNext, RUBits);
-  // *** seems like enable must be ORd with TLBFlush to ensure flop fires on a flush.  DH 7/8/21
 endmodule
