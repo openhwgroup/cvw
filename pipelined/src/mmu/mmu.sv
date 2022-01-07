@@ -111,7 +111,12 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   end
 
   // If translation is occuring, select translated physical address from TLB
-  mux2 #(`PA_BITS) addressmux(PAdr, TLBPAdr, Translate, PhysicalAddress);
+  // the lower 12 bits are the page offset. These are never changed from the orginal
+  // non translated address.
+  //mux2 #(`PA_BITS) addressmux(PAdr, TLBPAdr, Translate, PhysicalAddress);
+  mux2 #(`PA_BITS-12) addressmux(PAdr[`PA_BITS-1:12], TLBPAdr[`PA_BITS-1:12], Translate, PhysicalAddress[`PA_BITS-1:12]);
+  assign PhysicalAddress[11:0] = PAdr[11:0];
+  
   
   ///////////////////////////////////////////
   // Check physical memory accesses
