@@ -269,7 +269,6 @@ module ifu (
 			 .FlushCache(1'b0),
 			 .NextAdr(PCNextFMux),
 			 .PAdr(PCPF),
-			 .NoTranAdr(PCFMux[11:0]),
 			 .CacheCommitted(),
 			 .InvalidateCacheM(InvalidateICacheM));
 
