@@ -33,15 +33,14 @@
 
 module interlockfsm
   (input logic clk,
-   input logic 	reset,
-   input logic 	AnyCPUReqM,
-   input logic 	ITLBMissF,
-   input logic 	ITLBWriteF,
-   input logic 	DTLBMissM,
-   input logic 	DTLBWriteM,
-   input logic 	ExceptionM,
-   input logic 	PendingInterruptM,
-   input logic 	DCacheStall,
+   input logic  reset,
+   input logic  AnyCPUReqM,
+   input logic  ITLBMissF,
+   input logic  ITLBWriteF,
+   input logic  DTLBMissM,
+   input logic  DTLBWriteM,
+   input logic  TrapM,
+   input logic  DCacheStall,
 
    output logic InterlockStall,
    output logic SelReplayCPURequest,
@@ -111,8 +110,8 @@ module interlockfsm
 	  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
 	  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 					   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-	  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | ExceptionM | PendingInterruptM)) |
+	  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | TrapM)) |
 							 ((InterlockCurrState == STATE_T0_REPLAY)
-							  & (ExceptionM | PendingInterruptM));
+							  & (TrapM));
 
 endmodule

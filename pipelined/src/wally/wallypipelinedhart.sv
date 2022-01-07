@@ -244,7 +244,7 @@ module wallypipelinedhart (
 	.FlushW,
 	// CPU interface
 	.MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
-	.AtomicM, .ExceptionM, .PendingInterruptM,		
+	.AtomicM, .TrapM,
 	.CommittedM, .DCacheMiss, .DCacheAccess,
 	.SquashSCW,            
 	//.DataMisalignedM(DataMisalignedM),
