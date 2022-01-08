@@ -71,7 +71,7 @@ module trap (
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) | ((PrivilegeModeW == `S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
   assign PendingIntsM = ((MIP_REGW & MIE_REGW) & ({12{MIntGlobalEnM}} & 12'h888)) | ((SIP_REGW & SIE_REGW) & ({12{SIntGlobalEnM}} & 12'h222));
   assign PendingInterruptM = (|PendingIntsM) & InstrValidM;  
-  assign InterruptM = PendingInterruptM & (~CommittedM | ~DivE);  // *** RT. temporary hack to prevent integer division from having an interrupt during divide.
+  assign InterruptM = PendingInterruptM & ~(CommittedM | DivE);  // *** RT. temporary hack to prevent integer division from having an interrupt during divide.
   // ideally this should be disabled for all but the first cycle. However I'm not familar with the internals of the integer divider.  This should (could) be an issue for
   // floating point and integer multiply.
   //assign ExceptionM = TrapM;
