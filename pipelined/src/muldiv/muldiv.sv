@@ -41,6 +41,7 @@ module muldiv (
 	       output logic [`XLEN-1:0] MDUResultW,
 	       // Divide Done
 	       output logic 		DivBusyE, 
+           output logic         DivE,
 	       // hazards
 	       input logic 		StallM, StallW, FlushM, FlushW 
 	       );
@@ -50,7 +51,6 @@ module muldiv (
 	logic [`XLEN-1:0] QuotM, RemM;
 	logic [`XLEN*2-1:0] ProdM; 
 
-	logic 		     DivE;
 	logic 		     DivSignedE;	
 	logic           W64M; 
 
