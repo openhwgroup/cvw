@@ -64,7 +64,8 @@ module interlockfsm
 
 	  always_comb begin
 		case(InterlockCurrState)
-		  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          InterlockNextState = STATE_T3_DTLB_MISS;
+		  STATE_T0_READY: if (TrapM)                       InterlockNextState = STATE_T0_READY;
+		  else if(~ITLBMissF & DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
 	      else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
           else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
 		  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
