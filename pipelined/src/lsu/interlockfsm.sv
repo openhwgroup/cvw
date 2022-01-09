@@ -55,7 +55,7 @@ module interlockfsm
 									STATE_T5_ITLB_MISS,
 									STATE_T7_DITLB_MISS} statetype;
 
-	  statetype InterlockCurrState, InterlockNextState;
+(* mark_debug = "true" *)	  statetype InterlockCurrState, InterlockNextState;
 
 
 	  always_ff @(posedge clk)
