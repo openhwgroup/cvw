@@ -293,53 +293,38 @@ test_loop:
     ld x30, 16(x5) # fetch test case flag
     addi x5, x5, 24 # set x5 to next test case
 
-    # case statements for which test behavior to perform. 
-    # *** We would use the same table method as the test types and trap handler,
-    #     but using the la command to load the base of the table loads only the physical address
-    #     So it doesn't work with virtual memory.
-                                    #   x30 Value : Function                              : Fault output value     : Normal output values
-                                    #   ----------:---------------------------------------:------------------------:------------------------------------------------------
-    li x7, 0x0                      #             :                                       :                        : 
-    beq x30, x7, write64_test       #         0x0 : Write 64 bits to address              : 0xf                    : None
-    li x7, 0x11                     #             :                                       :                        : 
-    beq x30, x7, write32_test       #        0x11 : Write 32 bits to address              : 0xf                    : None
-    li x7, 0x12                     #             :                                       :                        : 
-    beq x30, x7, write16_test       #        0x12 : Write 16 bits to address              : 0xf                    : None
-    li x7, 0x13                     #             :                                       :                        : 
-    beq x30, x7, write08_test       #        0x13 : Write 8 bits to address               : 0xf                    : None
-    li x7, 0x1                      #             :                                       :                        :
-    beq x30, x7, read64_test        #         0x1 : Read 64 bits from address             : 0xd, 0xbad             : readvalue in hex
-    li x7, 0x14                     #             :                                       :                        :
-    beq x30, x7, read32_test        #        0x14 : Read 32 bitsfrom address              : 0xd, 0xbad             : readvalue in hex
-    li x7, 0x15                     #             :                                       :                        :
-    beq x30, x7, read16_test        #        0x15 : Read 16 bitsfrom address              : 0xd, 0xbad             : readvalue in hex
-    li x7, 0x16                     #             :                                       :                        :
-    beq x30, x7, read08_test        #        0x16 : Read 8 bitsfrom address               : 0xd, 0xbad             : readvalue in hex
-    li x7, 0x2                      #             :                                       :                        :
-    beq x30, x7, executable_test    #         0x2 : test executable on virtual page       : 0xc, 0xbad             : value of x7 modified by exectuion code (usually 0x111)
-    li x7, 0x3                      #             :                                       :                        :
-    beq x30, x7, terminate_test     #         0x3 : terminate tests                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
-    li x7, 0x4                      #             :                                       :                        :
-    beq x30, x7, goto_baremetal     #         0x4 : satp.MODE = bare metal                : None                   : None 
-    li x7, 0x5                      #             :                                       :                        :
-    beq x30, x7, goto_sv39          #         0x5 : satp.MODE = sv39                      : None                   : None 
-    li x7, 0x6                      #             :                                       :                        :
-    beq x30, x7, goto_sv48          #         0x6 : satp.MODE = sv48                      : None                   : None
-    li x7, 0x7                      #             :                                       :                        :
-    beq x30, x7, write_mxr_sum      #         0x7 : write sstatus.[19:18] = MXR, SUM bits : None                   : None
-    li x7, 0xD                      #             :                                       :                        :
-    beq x30, x7, write_pmpcfg_0     #         0xD : Write one of the pmpcfg csr's         : mstatuses?, 0xD        : readback of pmpcfg value
-    li x7, 0xE                      #             :                                       :                        :
-    beq x30, x7, write_pmpaddr_0    #         0xE : Write one of the pmpaddr csr's        : None                   : None
-    li x7, 0x8                      #             :                                       :                        :
-    beq x30, x7, goto_m_mode        #         0x8 : go to mahcine mode                    : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
-    li x7, 0x9                      #             :                                       :                        :
-    beq x30, x7, goto_s_mode        #         0x9 : go to supervisor mode                 : mcause value for fault : from M 0xb, from S 0x9, from U 0x8
-    li x7, 0xA                      #             :                                       :                        :
-    beq x30, x7, goto_u_mode        #         0xA : go to user mode                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8 
-                                    # ------------------------------------------------------------------------------------------------------------------------------------
-    j terminate_test # default case: break
+    slli x30, x30, 2 # multiply test type by 4 to index into jump table
+    la x7, test_jump_table # load base address of jump table
+    add x7, x7, x30 # get address of jump table entry
+    jr x7 # jump to relevant test
 
+test_jump_table:
+                        #   x30 Value : Function                              : Fault output value     : Normal output values
+                        #   ----------:---------------------------------------:------------------------:------------------------------------------------------
+    j write64_test      #         0x0 : Write 64 bits to address              : 0xf                    : None
+    j read64_test       #         0x1 : Read 64 bits from address             : 0xd, 0xbad             : readvalue in hex
+    j executable_test   #         0x2 : test executable on virtual page       : 0xc, 0xbad             : value of x7 modified by exectuion code (usually 0x111)
+    j terminate_test    #         0x3 : terminate tests                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
+    j goto_baremetal    #         0x4 : satp.MODE = bare metal                : None                   : None 
+    j goto_sv39         #         0x5 : satp.MODE = sv39                      : None                   : None 
+    j goto_sv48         #         0x6 : satp.MODE = sv48                      : None                   : None
+    j write_mxr_sum     #         0x7 : write sstatus.[19:18] = MXR, SUM bits : None                   : None
+    j goto_m_mode       #         0x8 : go to mahcine mode                    : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
+    j goto_s_mode       #         0x9 : go to supervisor mode                 : mcause value for fault : from M 0xb, from S 0x9, from U 0x8
+    j goto_u_mode       #         0xA : go to user mode                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8 
+    j segfault          #         0xB : Segfault, undefined test 
+    j segfault          #         0xC : Segfault, undefined test 
+    j write_pmpcfg_0    #         0xD : Write one of the pmpcfg csr's         : mstatuses?, 0xD        : readback of pmpcfg value
+    j write_pmpaddr_0   #         0xE : Write one of the pmpaddr csr's        : None                   : None 
+    j segfault          #         0xF : Segfault, undefined test 
+    j segfault          #        0x10 : Segfault, undefined test     
+    j write32_test      #        0x11 : Write 32 bits to address              : 0xf                    : None 
+    j write16_test      #        0x12 : Write 16 bits to address              : 0xf                    : None 
+    j write08_test      #        0x13 : Write 8 bits to address               : 0xf                    : None
+    j read32_test       #        0x14 : Read 32 bitsfrom address              : 0xd, 0xbad             : readvalue in hex
+    j read16_test       #        0x15 : Read 16 bitsfrom address              : 0xd, 0xbad             : readvalue in hex
+    j read08_test       #        0x16 : Read 8 bitsfrom address               : 0xd, 0xbad             : readvalue in hex
+    
 write64_test:
     # address to write in x28, double value in x29
     sd x29, 0(x28)
