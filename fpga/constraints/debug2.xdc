@@ -84,9 +84,9 @@ set_property port_width 4 [get_debug_ports u_ila_0/probe16]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe16]
 connect_debug_port u_ila_0/probe16 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[3]} ]]
 create_debug_port u_ila_0 probe
-set_property port_width 32 [get_debug_ports u_ila_0/probe17]
+set_property port_width 4 [get_debug_ports u_ila_0/probe17]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
-connect_debug_port u_ila_0/probe17 [get_nets [list {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[0]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[1]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[2]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[3]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[4]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[5]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[6]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[7]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[8]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[9]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[10]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[11]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[12]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[13]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[14]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[15]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[16]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[17]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[18]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[19]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[20]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[21]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[22]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[23]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[24]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[25]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[26]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[27]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[28]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[29]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[30]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[31]} ]]
+connect_debug_port u_ila_0/probe17 [get_nets [list {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[0]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[1]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[2]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe18]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe18]
@@ -444,9 +444,9 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe98]
 connect_debug_port u_ila_0/probe98 [get_nets [list wallypipelinedsoc/hart/hzu/FlushW ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 24 [get_debug_ports u_ila_0/probe99]
+set_property port_width 4 [get_debug_ports u_ila_0/probe99]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe99]
-connect_debug_port u_ila_0/probe99 [get_nets [list {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[0]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[1]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[2]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[3]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[4]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[5]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[6]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[7]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[8]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[9]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[10]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[11]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[12]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[13]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[14]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[15]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[16]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[17]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[18]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[19]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[20]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[21]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[22]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[23]}]]
+connect_debug_port u_ila_0/probe99 [get_nets [list {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[0]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[1]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[2]} {wallypipelinedsoc/hart/ifu/icache.icache/cachefsm/CurrState[3]}]]
 
 
 create_debug_port u_ila_0 probe
@@ -570,3 +570,30 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe122]
 connect_debug_port u_ila_0/probe122 [get_nets [list {wallypipelinedsoc/hart/ifu/PCPF[0]} {wallypipelinedsoc/hart/ifu/PCPF[1]} {wallypipelinedsoc/hart/ifu/PCPF[2]} {wallypipelinedsoc/hart/ifu/PCPF[3]} {wallypipelinedsoc/hart/ifu/PCPF[4]} {wallypipelinedsoc/hart/ifu/PCPF[5]} {wallypipelinedsoc/hart/ifu/PCPF[6]} {wallypipelinedsoc/hart/ifu/PCPF[7]} {wallypipelinedsoc/hart/ifu/PCPF[8]} {wallypipelinedsoc/hart/ifu/PCPF[9]} {wallypipelinedsoc/hart/ifu/PCPF[10]} {wallypipelinedsoc/hart/ifu/PCPF[11]} {wallypipelinedsoc/hart/ifu/PCPF[12]} {wallypipelinedsoc/hart/ifu/PCPF[13]} {wallypipelinedsoc/hart/ifu/PCPF[14]} {wallypipelinedsoc/hart/ifu/PCPF[15]} {wallypipelinedsoc/hart/ifu/PCPF[16]} {wallypipelinedsoc/hart/ifu/PCPF[17]} {wallypipelinedsoc/hart/ifu/PCPF[18]} {wallypipelinedsoc/hart/ifu/PCPF[19]} {wallypipelinedsoc/hart/ifu/PCPF[20]} {wallypipelinedsoc/hart/ifu/PCPF[21]} {wallypipelinedsoc/hart/ifu/PCPF[22]} {wallypipelinedsoc/hart/ifu/PCPF[23]} {wallypipelinedsoc/hart/ifu/PCPF[24]} {wallypipelinedsoc/hart/ifu/PCPF[25]} {wallypipelinedsoc/hart/ifu/PCPF[26]} {wallypipelinedsoc/hart/ifu/PCPF[27]} {wallypipelinedsoc/hart/ifu/PCPF[28]} {wallypipelinedsoc/hart/ifu/PCPF[29]} {wallypipelinedsoc/hart/ifu/PCPF[30]} {wallypipelinedsoc/hart/ifu/PCPF[31]} {wallypipelinedsoc/hart/ifu/PCPF[32]} {wallypipelinedsoc/hart/ifu/PCPF[33]} {wallypipelinedsoc/hart/ifu/PCPF[34]} {wallypipelinedsoc/hart/ifu/PCPF[35]} {wallypipelinedsoc/hart/ifu/PCPF[36]} {wallypipelinedsoc/hart/ifu/PCPF[37]} {wallypipelinedsoc/hart/ifu/PCPF[38]} {wallypipelinedsoc/hart/ifu/PCPF[39]} {wallypipelinedsoc/hart/ifu/PCPF[40]} {wallypipelinedsoc/hart/ifu/PCPF[41]} {wallypipelinedsoc/hart/ifu/PCPF[42]} {wallypipelinedsoc/hart/ifu/PCPF[43]} {wallypipelinedsoc/hart/ifu/PCPF[44]} {wallypipelinedsoc/hart/ifu/PCPF[45]} {wallypipelinedsoc/hart/ifu/PCPF[46]} {wallypipelinedsoc/hart/ifu/PCPF[47]} {wallypipelinedsoc/hart/ifu/PCPF[48]} {wallypipelinedsoc/hart/ifu/PCPF[49]} {wallypipelinedsoc/hart/ifu/PCPF[50]} {wallypipelinedsoc/hart/ifu/PCPF[51]} {wallypipelinedsoc/hart/ifu/PCPF[52]} {wallypipelinedsoc/hart/ifu/PCPF[53]} {wallypipelinedsoc/hart/ifu/PCPF[54]} {wallypipelinedsoc/hart/ifu/PCPF[55]} ]]
 
 
+
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe123]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe123]
+connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/hart/ifu/busfsm/BusCurrState[0]}
+{wallypipelinedsoc/hart/ifu/busfsm/BusCurrState[1]}
+{wallypipelinedsoc/hart/ifu/busfsm/BusCurrState[2]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe124]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe124]
+connect_debug_port u_ila_0/probe124 [get_nets [list wallypipelinedsoc/hart/ifu/CurrState ]]
+
+
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe125]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe125]
+connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/hart/lsu/busfsm/BusCurrState[0]}
+{wallypipelinedsoc/hart/lsu/busfsm/BusCurrState[1]}
+{wallypipelinedsoc/hart/lsu/busfsm/BusCurrState[2]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe126]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe126]
+connect_debug_port u_ila_0/probe126 [get_nets [list {wallypipelinedsoc/hart/lsu/MEM_VIRTMEM.interlockfsm/InterlockCurrState[0]}
+{wallypipelinedsoc/hart/lsu/MEM_VIRTMEM.interlockfsm/InterlockCurrState[1]}
+{wallypipelinedsoc/hart/lsu/MEM_VIRTMEM.interlockfsm/InterlockCurrState[2]} ]]
