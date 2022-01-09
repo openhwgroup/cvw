@@ -6,15 +6,14 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 		$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
 		$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 
-work/coremark.bare.riscv.memfile: work/coremark.bare.riscv.objdump
-	exe2memfile.pl work/coremark.bare.riscv
+work/coremark.bare.riscv.memfile: work/coremark.bare.riscv work/coremark.bare.riscv.objdump
+	riscv64-unknown-elf-elf2hex --bit-width 64 --input "work/coremark.bare.riscv" --output "work/coremark.bare.riscv.memfile"
 
 work/coremark.bare.riscv.objdump: work/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D work/coremark.bare.riscv > work/coremark.bare.riscv.objdump 
 
 work/coremark.bare.riscv: $(sources)
-#	make -C $(cmbase) PORT_DIR=/home/harris/riscv-wally/benchmarks/riscv-coremark/riscv64-baremetal compile RISCV=/courses/e190ax/riscvcompiler XCFLAGS="-march=rv64g"
-	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=/opt/riscv XCFLAGS="-march=rv64imd"
+	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=/opt/riscv/riscv-gnu-toolchain XCFLAGS="-march=rv64imd"
 	mkdir -p work/
 	mv $(cmbase)/coremark.bare.riscv work/
 
