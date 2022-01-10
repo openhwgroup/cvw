@@ -53,6 +53,8 @@ module csr #(parameter
   input  logic [4:0]       InstrClassM,
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
+  input  logic             ICacheMiss,
+  input  logic             ICacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
   output logic [1:0]       STATUS_MPP,
@@ -131,7 +133,7 @@ module csr #(parameter
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,   
               .InstrValidM, .LoadStallD, .CSRMWriteM,
               .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
-              .InstrClassM, .DCacheMiss, .DCacheAccess,
+              .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
               .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
               .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
               .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
