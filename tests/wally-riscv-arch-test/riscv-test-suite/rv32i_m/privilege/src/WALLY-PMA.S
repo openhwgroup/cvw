@@ -21,6 +21,19 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
+#define BOOTROM_BASE   0x00001000
+#define BOOTROM_RANGE  0x00000FFF
+#define RAM_BASE       0x80000000
+#define RAM_RANGE      0x7FFFFFFF
+#define CLINT_BASE     0x02000000
+#define CLINT_RANGE    0x0000FFFF
+#define GPIO_BASE      0x10012000
+#define GPIO_RANGE     0x000000FF
+#define UART_BASE      0x10000000
+#define UART_RANGE     0x00000007
+#define PLIC_BASE      0x0C000000
+#define PLIC_RANGE     0x03FFFFFF
+
 #include "WALLY-TEST-LIB-32.S" 
 // Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
 // Ideally this should mean that a test can be written by simply adding .4byte statements as below.
@@ -48,92 +61,92 @@
 # | PLIC   | 0xC000000    | 32-bit      | YES | YES | NO  | NO        | NO         | NO     |
 # | UART0  | 0x10000000   | 8-bit       | YES | YES | NO  | NO        | NO         | NO     |
 # | GPIO   | 0x1012000    | 32-bit      | YES | YES | NO  | NO        | NO         | NO     |
-# | DRAM   | 0x80000000   | Any         | YES | YES | YES | YES       | YES        | YES    |
 
 # ************** Cacheable, Idempotent, Atomic tests are not implemented yet.
 
 #  ----------------- ROM --------------------- 
-# *** the rom is read only and these read tests depend on reading a known value out of memory.
-#        Is there some guaranteed value that I can read out of the ROM
-#        otherwise the read test can be modified to just check that the read happened, 
-#       not necessarily that it got a known value out of memory. This feels hacky and Id be interested in other options.
+# ROM goes untested because it isn't writeable and these tests rely on writing a known value to memory. 
 
-# .4byte 0x1000, 0xBEEF0001, 0x0 # 32-bit write:  store access fault
-# .4byte 0x1000, 0xBEEF0001, 0x1 # 32-bit read:   success
-# .4byte 0x1000, 0xBEEF0002, 0x12 # 16-bit write:  store access fault
-# .4byte 0x1000, 0xBEEF0002, 0x15 # 16-bit read:   success
-# .4byte 0x1000, 0xBEEF0003, 0x13 # 08-bit write:  store access fault
-# .4byte 0x1000, 0xBEEF0003, 0x16 # 08-bit read:   success
-
-# # *** similar problem with the execute tests. Impossible to write the needed executable code into rom once the program's running
-# .4byte 0x1000, 0x111, 0x2 # execute:    success
 
 #  ----------------- CLINT --------------------- 
 
-.4byte 0x2000000, 0xBEEF00B5, 0x0 # 32-bit write:  success
-.4byte 0x2000000, 0xBEEF00B5, 0x1 # 32-bit read:   success
-.4byte 0x2000000, 0xBEEF00B6, 0x12 # 16-bit write:  success
-.4byte 0x2000000, 0xBEEF00B6, 0x15 # 16-bit read:   success
-.4byte 0x2000000, 0xBEEF00B7, 0x13 # 08-bit write:  success
-.4byte 0x2000000, 0xBEEF00B7, 0x16 # 08-bit read:   success
+# Use timecmp register as readable and writable section of the CLINT
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B5, 0x0  # 32-bit write:  success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B5, 0x1  # 32-bit read:   success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B6, 0x12 # 16-bit write:  success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B6, 0x15 # 16-bit read:   success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B7, 0x13 # 08-bit write:  success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B7, 0x16 # 08-bit read:   success
 
-.4byte 0x2000000, 0xbad, 0x2 # execute:    instruction access fault
+.4byte CLINT_BASE, 0xbad, 0x2 # execute: instruction access fault
 
 #  ----------------- PLIC --------------------- 
 
-.4byte 0xC000000, 0xBEEF00B9, 0x0 # 32-bit write:  success
-.4byte 0xC000000, 0xBEEF00B9, 0x1 # 32-bit read:   success
-.4byte 0xC000000, 0xBEEF00BA, 0x12 # 16-bit write:  store access fault
-.4byte 0xC000000, 0xBEEF00BA, 0x15 # 16-bit read:   load access fault
-.4byte 0xC000000, 0xBEEF00BB, 0x13 # 08-bit write:  store access fault
-.4byte 0xC000000, 0xBEEF00BB, 0x16 # 08-bit read:   load access fault
+# Write 0x2 instead of wider value to plic address because the register width might change.
+.4byte PLIC_BASE + 0x2000, 0x2, 0x0 # 32-bit write:  success
+.4byte PLIC_BASE + 0x2000, 0x2, 0x1 # 32-bit read:   success
+.4byte PLIC_BASE, 0xBEEF00BA, 0x12  # 16-bit write:  store access fault
+.4byte PLIC_BASE, 0xBEEF00BA, 0x15  # 16-bit read:   load access fault
+.4byte PLIC_BASE, 0xBEEF00BB, 0x13  # 08-bit write:  store access fault
+.4byte PLIC_BASE, 0xBEEF00BB, 0x16  # 08-bit read:   load access fault
 
-.4byte 0xC000000, 0xbad, 0x2 # execute:    instruction access fault
+.4byte PLIC_BASE, 0xbad, 0x2 # execute:    instruction access fault
 
 #  ----------------- UART0 --------------------- 
 
-.4byte 0x10000000, 0xBEEF00BD, 0x0 # 32-bit write:  store access fault
-.4byte 0x10000000, 0xBEEF00BD, 0x1 # 32-bit read:   load access fault
-.4byte 0x10000000, 0xBEEF00BE, 0x12 # 16-bit write:  store access fault
-.4byte 0x10000000, 0xBEEF00BE, 0x15 # 16-bit read:   load access fault
-.4byte 0x10000000, 0xBEEF00BF, 0x13 # 08-bit write:  success
-.4byte 0x10000000, 0xBEEF00BF, 0x16 # 08-bit read:   success
+.4byte UART_BASE, 0xBEEF00BD, 0x0 # 32-bit write:  store access fault
+.4byte UART_BASE, 0xBEEF00BD, 0x1 # 32-bit read:   load access fault
+.4byte UART_BASE, 0xBEEF00BE, 0x12 # 16-bit write:  store access fault
+.4byte UART_BASE, 0xBEEF00BE, 0x15 # 16-bit read:   load access fault
+# Different address for this test so that we write into a writable register in the uart.
+.4byte UART_BASE + 0x3, 0xBEEF00BF, 0x13 # 08-bit write:  success
+.4byte UART_BASE + 0x3, 0xBEEF00BF, 0x16 # 08-bit read:   success
 
-.4byte 0x10000000, 0xbad, 0x2 # execute:    instruction access fault
+.4byte UART_BASE, 0xbad, 0x2 # execute:    instruction access fault
 
 #  ----------------- GPIO --------------------- 
 
-.4byte 0x1012000, 0xBEEF00C1, 0x0 # 32-bit write:  success
-.4byte 0x1012000, 0xBEEF00C1, 0x1 # 32-bit read:   success
-.4byte 0x1012000, 0xBEEF00C2, 0x12 # 16-bit write:  store access fault
-.4byte 0x1012000, 0xBEEF00C2, 0x15 # 16-bit read:   load access fault
-.4byte 0x1012000, 0xBEEF00C3, 0x13 # 08-bit write:  store access fault
-.4byte 0x1012000, 0xBEEF00C3, 0x16 # 08-bit read:   load access fault
+.4byte GPIO_BASE + 0x8, 0xBEEF00C1, 0x0 # 32-bit write:  success
+.4byte GPIO_BASE + 0x8, 0xBEEF00C1, 0x1 # 32-bit read:   success
+.4byte GPIO_BASE, 0xBEEF00C2, 0x12      # 16-bit write:  store access fault
+.4byte GPIO_BASE, 0xBEEF00C2, 0x15      # 16-bit read:   load access fault
+.4byte GPIO_BASE, 0xBEEF00C3, 0x13      # 08-bit write:  store access fault
+.4byte GPIO_BASE, 0xBEEF00C3, 0x16      # 08-bit read:   load access fault
 
-.4byte 0x1012000, 0xbad, 0x2 # execute:    instruction access fault
+.4byte GPIO_BASE, 0xbad, 0x2 # execute:    instruction access fault
 
-#  ----------------- DRAM --------------------- 
-
-# the following is already tested by the fact that this test runs without error:
-#   32 bit reads and writes into DRAM, 
-#   Execution in DRAM
-# offset by 0xf000 to avoid overwriting the program
-.4byte 0x8000F000, 0xBEEF00C5, 0x12 # 16-bit write:  success
-.4byte 0x8000F000, 0xBEEF00C5, 0x15 # 16-bit read:   success
-.4byte 0x8000F000, 0xBEEF00C6, 0x13 # 08-bit write:  success
-.4byte 0x8000F000, 0xBEEF00C6, 0x16 # 08-bit read:   success
 
 #  ----------------- Inaccessible --------------------- 
 
 # show that load, store, and jalr cause faults in a region not defined by PMAs.  
-# *** should I go through every possible inaccessible region of memory or is one just fine?
 
-.4byte 0xD000000, 0xBEEF00C7, 0x0  # 32-bit write:  store access fault
-.4byte 0xD000000, 0xBEEF00C7, 0x1  # 32-bit read:   load access fault
-.4byte 0x1000, 0x111, 0x2 # execute:    instruction access fault
+# Tests 'random' place in unimplemented memory
+.4byte 0x40000000, 0xBEEF00C7, 0x0  # 32-bit write:  store access fault
+.4byte 0x40000000, 0xBEEF00C7, 0x1  # 32-bit read:   load access fault
+.4byte 0x40000000, 0x111, 0x2               # execute:       instruction access fault
 
-.4byte 0x0, 0x0, 0x3 // terminate tests
+# Tests just past the end of each peripheral
+.4byte (BOOTROM_BASE+BOOTROM_RANGE+1), 0xBEEF00C8, 0x0  # 32-bit write:  store access fault
+.4byte (BOOTROM_BASE+BOOTROM_RANGE+1), 0xBEEF00C8, 0x1  # 32-bit read:   load access fault
+.4byte (BOOTROM_BASE+BOOTROM_RANGE+1), 0x111, 0x2               # execute:       instruction access fault
 
+.4byte (CLINT_BASE+CLINT_RANGE+1), 0xBEEF00C9, 0x0  # 32-bit write:  store access fault
+.4byte (CLINT_BASE+CLINT_RANGE+1), 0xBEEF00C9, 0x1  # 32-bit read:   load access fault
+.4byte (CLINT_BASE+CLINT_RANGE+1), 0x111, 0x2               # execute:       instruction access fault
+
+.4byte (PLIC_BASE+PLIC_RANGE+1), 0xBEEF00CA, 0x0   # 32-bit write:  store access fault
+.4byte (PLIC_BASE+PLIC_RANGE+1), 0xBEEF00CA, 0x1   # 32-bit read:   load access fault
+.4byte (PLIC_BASE+PLIC_RANGE+1), 0x111, 0x2                # execute:       instruction access fault
+
+.4byte (UART_BASE+UART_RANGE+1), 0xBEEF00CB, 0x13  # 08-bit write:  store access fault
+.4byte (UART_BASE+UART_RANGE+1), 0xBEEF00CB, 0x16  # 08-bit read:   load access fault
+.4byte (UART_BASE+UART_RANGE+1), 0x111, 0x2                # execute:       instruction access fault
+
+.4byte (GPIO_BASE+GPIO_RANGE+1), 0xBEEF00CC, 0x0   # 32-bit write:  store access fault
+.4byte (GPIO_BASE+GPIO_RANGE+1), 0xBEEF00CC, 0x1   # 32-bit read:   load access fault
+.4byte (GPIO_BASE+GPIO_RANGE+1), 0x111, 0x2                # execute:       instruction access fault
+
+.4byte 0x0, 0x0, 0x3 # terminate tests
 
 
 
