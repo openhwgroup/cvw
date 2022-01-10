@@ -12,7 +12,7 @@ add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/LoadStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/StoreStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/LSUStall
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/MulDivStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/MDUStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/hart/hzu/DivBusyE
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/priv/trap/PendingInterruptM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/hart/priv/priv/trap/InterruptM
@@ -159,7 +159,7 @@ add wave -noupdate -group {alu execution stage} /testbench/dut/hart/ieu/dp/SrcBE
 add wave -noupdate -group AHB -color Gold /testbench/dut/hart/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/AtomicMaskedM
-add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/LsuBusSize
+add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/hart/ebu/LSUBusSize
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HCLK
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRESETn
 add wave -noupdate -group AHB /testbench/dut/hart/ebu/HRDATA
@@ -186,19 +186,19 @@ add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/WriteDataM
 add wave -noupdate -expand -group lsu /testbench/dut/hart/lsu/SelUncachedAdr
 add wave -noupdate -expand -group lsu -expand -group bus -color Gold /testbench/dut/hart/lsu/busfsm/BusCurrState
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/BusStall
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusRead
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusWrite
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusAdr
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusAck
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusHRDATA
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LsuBusHWDATA
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LSUBusRead
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LSUBusWrite
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LSUBusAdr
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LSUBusAck
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LSUBusHRDATA
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/hart/lsu/LSUBusHWDATA
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/hart/lsu/dcache/dcache/cachefsm/CurrState
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/WayHit
-add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMLineWriteEnableM
-add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMWordWriteEnableM
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMLineWriteEnable
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMWordWriteEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMWayWriteEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMWordEnable
-add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMLineWayWriteEnableM
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SRAMLineWayWriteEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SelAdr
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/MEM_VIRTMEM/SelReplayCPURequest
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/IEUAdrE
@@ -208,13 +208,11 @@ add wave -noupdate -expand -group lsu -expand -group dcache {/testbench/dut/hart
 add wave -noupdate -expand -group lsu -expand -group dcache {/testbench/dut/hart/lsu/dcache/dcache/MemWay[0]/ClearDirty}
 add wave -noupdate -expand -group lsu -expand -group dcache {/testbench/dut/hart/lsu/dcache/dcache/MemWay[0]/ClearDirtyD}
 add wave -noupdate -expand -group lsu -expand -group dcache {/testbench/dut/hart/lsu/dcache/dcache/MemWay[0]/Dirty}
-add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/SelLastFlushAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush -radix unsigned /testbench/dut/hart/lsu/dcache/dcache/FlushAdr
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush -radix unsigned /testbench/dut/hart/lsu/dcache/dcache/FlushAdrQ
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/hart/lsu/dcache/dcache/FlushWay
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/hart/lsu/dcache/dcache/VictimDirtyWay
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/hart/lsu/dcache/dcache/VictimTag
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/hart/lsu/dcache/dcache/CacheableM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/hart/lsu/CacheableM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/hart/lsu/dcache/dcache/CacheMemWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} /testbench/dut/hart/lsu/dcache/dcache/ClearDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/hart/lsu/dcache/dcache/MemWay[0]/WriteEnable}
@@ -303,10 +301,9 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group Victim /testb
 add wave -noupdate -expand -group lsu -expand -group dcache -group Victim /testbench/dut/hart/lsu/dcache/dcache/VictimDirtyWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group Victim /testbench/dut/hart/lsu/dcache/dcache/VictimDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/RW
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/LsuAdrE
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/LsuPAdrM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/NextAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/PAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/Atomic
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/CacheableM
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/FlushCache
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/dcache/dcache/CacheStall
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/hart/lsu/ReadDataWordM
@@ -436,15 +433,15 @@ add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/hart/ifu/PrivilegedChangePCM
 add wave -noupdate /testbench/dut/hart/priv/priv/csr/MEPC_REGW
-add wave -noupdate /testbench/dut/hart/lsu/LocalLsuBusAdr
+add wave -noupdate /testbench/dut/hart/lsu/LocalLSUBusAdr
 add wave -noupdate /testbench/dut/hart/lsu/busfsm/BusNextState
 add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheFetchLine
 add wave -noupdate /testbench/dut/hart/lsu/busfsm/DCacheWriteLine
 add wave -noupdate -expand -group ifu -color Gold /testbench/dut/hart/ifu/busfsm/BusCurrState
-add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/IfuBusRead
-add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/IfuBusAdr
-add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/busfsm/LsuBusAck
-add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/IfuBusHRDATA
+add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/IFUBusRead
+add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/IFUBusAdr
+add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/busfsm/LSUBusAck
+add wave -noupdate -expand -group ifu /testbench/dut/hart/ifu/IFUBusHRDATA
 add wave -noupdate -expand -group ifu -expand -group icache -color Gold /testbench/dut/hart/ifu/icache/icache/cachefsm/CurrState
 add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/hart/ifu/icache/icache/SelAdr
@@ -459,10 +456,10 @@ add wave -noupdate -expand -group ifu -expand -group icache -expand -group memor
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/immu/TLBWrite
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/ITLBMissF
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/hart/ifu/immu/PhysicalAddress
-add wave -noupdate /testbench/dut/hart/ifu/IfuBusRead
+add wave -noupdate /testbench/dut/hart/ifu/IFUBusRead
 add wave -noupdate /testbench/dut/hart/ifu/icache/icache/CacheFetchLine
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {228876 ns} 0} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
+WaveRestoreCursors {{Cursor 7} {15806991 ns} 0} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -478,4 +475,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {228748 ns} {229004 ns}
+WaveRestoreZoom {272352 ns} {16917530 ns}

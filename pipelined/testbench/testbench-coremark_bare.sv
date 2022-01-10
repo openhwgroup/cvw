@@ -87,7 +87,7 @@ module testbench();
 
   // Track names of instructions
     instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.FinalInstrRawF,
+                dut.hart.ifu.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
@@ -123,7 +123,7 @@ module testbench();
     end
   always @(negedge clk)
     begin
-      if (dut.hart.priv.ecallM) begin
+      if (dut.hart.priv.priv.ecallM) begin
         #20;
         $display("Code ended with ebreakM");
         $stop;
