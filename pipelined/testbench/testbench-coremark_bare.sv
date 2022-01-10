@@ -77,9 +77,9 @@ module testbench();
   assign HREADYEXT = 1;
   assign HRESPEXT = 0;
   assign HRDATAEXT = 0;
-  wallypipelinedsoc dut(.clk, .reset_ext, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc dut(.clk, .reset_ext, .reset(), .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   logic [31:0] InstrW;
@@ -87,7 +87,7 @@ module testbench();
 
   // Track names of instructions
     instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.FinalInstrRawF,
+                dut.hart.ifu.icache.icache.readdata.FinalInstrRawF, // *** is there a better name
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
@@ -123,7 +123,7 @@ module testbench();
     end
   always @(negedge clk)
     begin
-      if (dut.hart.priv.ecallM) begin
+      if (dut.hart.priv.priv.ecallM) begin
         #20;
         $display("Code ended with ebreakM");
         $stop;
