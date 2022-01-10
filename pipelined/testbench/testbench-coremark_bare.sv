@@ -87,7 +87,7 @@ module testbench();
 
   // Track names of instructions
     instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.icache.readdata.FinalInstrRawF, // *** is there a better name
+                dut.hart.ifu.FinalInstrRawF,
                 dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
                 dut.hart.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);

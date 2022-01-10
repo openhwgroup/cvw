@@ -79,7 +79,9 @@ module ifu (
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
 	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
 	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
-	output logic 				InstrAccessFaultF
+	output logic 				InstrAccessFaultF,
+    output logic                ICacheAccess,
+    output logic                ICacheMiss
 );
 
   logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
@@ -242,20 +244,6 @@ module ifu (
 	  logic [1:0] IFURWF;
 	  assign IFURWF = CacheableF ? 2'b10 : 2'b00;
 	  
-/* -----\/----- EXCLUDED -----\/-----
-	  icache #(.LINELEN(`ICACHE_LINELENINBITS),
-			   .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-			   .NUMWAYS(`ICACHE_NUMWAYS))
-	  icache(.clk, .reset, .CPUBusy, .IgnoreRequest, .ICacheMemWriteData , .ICacheBusAck,
-					.ICacheBusAdr, .ICacheStallF, .FinalInstrRawF,
-					.ICacheFetchLine,
-					.IFURWF(IFURWF), //aways read
-					.PCNextF(PCNextFMux),
-					.PCPF(PCPF),
-					.PCF(PCFMux),
-					.InvalidateICacheM);
- -----/\----- EXCLUDED -----/\----- */
-
 	  logic [`XLEN-1:0] FinalInstrRawF_FIXME;
 	  
 	  cache #(.LINELEN(`ICACHE_LINELENINBITS),
@@ -266,8 +254,8 @@ module ifu (
 			 .CacheFetchLine(ICacheFetchLine),
 			 .CacheWriteLine(),
 			 .ReadDataLineSets(),
-			 .CacheMiss(),
-			 .CacheAccess(),
+			 .CacheMiss(ICacheMiss),
+			 .CacheAccess(ICacheAccess),
 			 .FinalWriteData('0),
 			 .RW(IFURWF), 
 			 .Atomic(2'b00),
@@ -281,9 +269,10 @@ module ifu (
 	end else begin
 	  assign ICacheFetchLine = 0;
 	  assign ICacheBusAdr = 0;
-	  //assign CompressedF = 0; //?
 	  assign ICacheStallF = 0;
 	  assign FinalInstrRawF = 0;
+      assign ICacheAccess = CacheableF;
+      assign ICacheMiss = CacheableF;
 	end
 	
   // select between dcache and direct from the BUS. Always selected if no dcache.
