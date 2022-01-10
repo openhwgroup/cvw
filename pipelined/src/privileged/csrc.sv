@@ -52,6 +52,8 @@ module csrc #(parameter
     input logic [4:0] 	     InstrClassM,
     input logic 	     DCacheMiss,
     input logic 	     DCacheAccess,
+    input logic 	     ICacheMiss,
+    input logic 	     ICacheAccess,
     input logic [11:0] 	     CSRAdrM,
     input logic [1:0] 	     PrivilegeModeW,
     input logic [`XLEN-1:0]  CSRWriteValM,
@@ -98,8 +100,10 @@ module csrc #(parameter
       assign CounterEvent[9] = InstrClassM[3] & InstrValidNotFlushedM;
       assign CounterEvent[10] = BPPredClassNonCFIWrongM & InstrValidNotFlushedM;
       assign CounterEvent[11] = DCacheAccess;
-      assign CounterEvent[12] = DCacheMiss;      
-      assign CounterEvent[`COUNTERS-1:13] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+      assign CounterEvent[12] = DCacheMiss;
+      assign CounterEvent[13] = ICacheAccess;
+      assign CounterEvent[14] = ICacheMiss;
+      assign CounterEvent[`COUNTERS-1:15] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
     end
     
     // Counter update and write logic

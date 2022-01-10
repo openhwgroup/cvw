@@ -159,6 +159,8 @@ module wallypipelinedhart (
   logic 		    PendingInterruptM;
   logic 		    DCacheMiss;
   logic 		    DCacheAccess;
+  logic 		    ICacheMiss;
+  logic 		    ICacheAccess;
   logic 		    BreakpointFaultM, EcallFaultM;
 
   
@@ -171,6 +173,7 @@ module wallypipelinedhart (
     // Fetch
     .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
     .IFUBusRead, .IFUStallF,
+    .ICacheAccess, .ICacheMiss,
 
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .PCE,
@@ -322,7 +325,7 @@ module wallypipelinedhart (
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
-         .InstrClassM, .DCacheMiss, .DCacheAccess, .PrivilegedM,
+         .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
          .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
          .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
          .LoadMisalignedFaultM, .StoreMisalignedFaultM,
