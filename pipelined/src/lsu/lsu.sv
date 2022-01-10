@@ -318,7 +318,7 @@ module lsu
   end else begin : passthrough
     assign ReadDataWordM = 0;
     assign DCacheStall = 0;
-    assign DCacheMiss = 1;
+    assign DCacheMiss = CacheableM;
     assign DCacheAccess = CacheableM;
     assign DCacheCommittedM = 0;
     assign DCacheWriteLine = 0;
