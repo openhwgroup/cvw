@@ -1,4 +1,4 @@
-TARGET = simple
+TARGET = mm
 
 $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -S -D $(TARGET) > $(TARGET).objdump
@@ -9,7 +9,7 @@ $(TARGET): $(TARGET).c Makefile
 	  -fno-builtin-printf -fno-tree-loop-distribute-patterns \
 	  -static -nostdlib -nostartfiles -lm -lgcc -T../common/test.ld \
 	  -I../common \
-	  -O $(TARGET).c \
+	  -O *.c \
 	  ../common/crt.S ../common/syscalls.c
 
 clean:
