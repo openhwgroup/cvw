@@ -10,7 +10,7 @@ $(TARGET): $(TARGET).c Makefile
 	  -static -nostdlib -nostartfiles -lm -lgcc -T../common/test.ld \
 	  -I../common \
 	  -O0 $(TARGET).c \
-	  ../common/crt.S ../common/syscalls.c
+	  ../common/crt.S ../common/syscalls.c comp1.s
 
 clean:
 	rm -f $(TARGET) $(TARGET).objdump
