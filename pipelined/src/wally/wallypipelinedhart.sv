@@ -358,7 +358,7 @@ module wallypipelinedhart (
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
          .MDUResultW, .DivBusyE,  .DivE,
-         .StallM, .StallW, .FlushM, .FlushW 
+         .StallM, .StallW, .FlushM, .FlushW, .TrapM 
       ); 
    end else begin // no M instructions supported
       assign MDUResultW = 0; 
