@@ -191,7 +191,7 @@ module uncore (
   // mux could also include external memory  
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
-		  ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
+		          ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
                   ({`XLEN{HSELCLINTD}} & HREADCLINT) |
                   ({`XLEN{HSELPLICD}} & HREADPLIC) | 
                   ({`XLEN{HSELGPIOD}} & HREADGPIO) |

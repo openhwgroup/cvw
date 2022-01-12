@@ -374,7 +374,10 @@ module lsu
   assign LocalLSUBusAdr = SelUncachedAdr ? LSUPAdrM : DCacheBusAdr ;
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
   assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount];
-  assign LSUBusHWDATA = SelUncachedAdr ? WriteDataM : PreLSUBusHWDATA;  // *** why is this not FinalWriteDataM? which does not work.
+  // exclude the subword write for uncached.  We don't read the data first so we cannot
+  // select the subword by masking.  Subword write also exists inside the uncore to
+  // suport subword masking for i/o.  I'm not sure if this is necessary.
+  assign LSUBusHWDATA = SelUncachedAdr ? FinalAMOWriteDataM : PreLSUBusHWDATA; 
 
   if (`XLEN == 32) assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b010;
   else             assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b011;
