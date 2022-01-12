@@ -8,3 +8,6 @@
 [submodule "addins/imperas-riscv-tests"]
 	path = addins/imperas-riscv-tests
 	url = https://github.com/riscv-ovpsim/imperas-riscv-tests
+[submodule "addins/riscv-tests"]
+	path = addins/riscv-tests
+	url = https://github.com/riscv-software-src/riscv-tests
