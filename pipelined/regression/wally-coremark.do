@@ -38,7 +38,7 @@ vsim workopt
 
 mem load -startaddress 268435456 -endaddress 268566527 -filltype value -fillradix hex -filldata 0 /testbench/dut/uncore/ram/ram/RAM
 
-
+#add log -recursive /*
 do wave.do
 run -all
 #run 21400
