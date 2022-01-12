@@ -43,7 +43,7 @@ module muldiv (
 	       output logic 		DivBusyE, 
            output logic         DivE,
 	       // hazards
-	       input logic 		StallM, StallW, FlushM, FlushW 
+	       input logic 		StallM, StallW, FlushM, FlushW, TrapM 
 	       );
 
 	logic [`XLEN-1:0] MDUResultM;
@@ -61,7 +61,7 @@ module muldiv (
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	assign DivE = MDUE & Funct3E[2];
 	assign DivSignedE = ~Funct3E[0];
-	intdivrestoring div(.clk, .reset, .StallM, .DivSignedE, .W64E, .DivE, 
+	intdivrestoring div(.clk, .reset, .StallM, .TrapM, .DivSignedE, .W64E, .DivE, 
 	                    .ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 		
 	// Result multiplexer
