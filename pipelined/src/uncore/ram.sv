@@ -56,6 +56,8 @@ module ram #(parameter BASE=0, RANGE = 65535) (
 
   if(`FPGA) begin:ram
     initial begin
+      // *** need to address this preload for fpga.  It should work as a preload file
+      // but for some reason vivado is not synthesizing the preload.
       //$readmemh(PRELOAD, RAM);
       RAM[0] =  64'h94e1819300002197;
       RAM[1] =  64'h4281420141014081;
