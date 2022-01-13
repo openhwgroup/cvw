@@ -130,7 +130,7 @@ module ifu (
 	  assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
 	  assign PCFMux = SelSpill ? PCFp2 : PCF;
   
-	  assign Spill = &PCF[$clog2(`ICACHE_LINELENINBITS/32)+1:1];
+	  assign Spill = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
 
 	  typedef enum 		   {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
 	  (* mark_debug = "true" *)  statetype CurrState, NextState;
@@ -159,7 +159,7 @@ module ifu (
 	  flopenr #(16) SpillInstrReg(.clk(clk),
 								  .en(SpillSave),
 								  .reset(reset),
-								  .d(InstrRawF[15:0]),
+								  .d(`MEM_ICACHE ? InstrRawF[15:0] : InstrRawF[31:16]),
 								  .q(SpillDataLine0));
 
 	  assign PostSpillInstrRawF = Spill ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
@@ -226,6 +226,7 @@ module ifu (
   // 3. wire pass-through
 
   localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
+  localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
   localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   LINELEN = `MEM_ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
@@ -360,6 +361,7 @@ module ifu (
   
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
+  // *** double check this enable.  It cannot be correct.
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
