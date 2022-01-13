@@ -1,112 +1,64 @@
-///////////////////////////////////////////
-// srt.sv
-//
-// Written: David_Harris@hmc.edu 13 January 2022
-// Modified: 
-//
-// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
-// 
-// A component of the Wally configurable RISC-V project.
-// 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
-//
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
-//
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
-//
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
-////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////
+// srt.sv                                            //
+//                                                   //
+// Written 10/31/96 by David Harris harrisd@leland   //
+// Updated 10/19/21 David_Harris@hmc.edu             //
+//                                                   //
+// This file models a simple Radix 2 SRT divider.    //
+//                                                   //
+///////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module srt #(parameter Nf=52) (
-  input  logic clk,
-  input  logic Start, 
-  input  logic Stall, // *** multiple pipe stages
-  input  logic Flush, // *** multiple pipe stages
-  // Floating Point Inputs
-  // later add exponents, signs, special cases
-  input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
-  input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
-  input  logic       W64, // 32-bit ints on XLEN=64
-  input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputss
-  input  logic       Sqrt, // perform square root, not divide
-  output logic [Nf-1:0] Quot, Rem, // *** later handle integers
-  output logic [3:0] Flags
-);
-
-  logic          qp, qz, qm; // quotient is +1, 0, or -1
-  logic [Nf-1:0] X, Dpreproc;
-  logic [Nf+3:0] WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [Nf+2:0] rp, rm;
+// This Verilog file models a radix 2 SRT divider which
+// produces one quotient digit per cycle.  The divider
+// keeps the partial remainder in carry-save form.
  
-  srtpreproc #(Nf) preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc);
+/////////
+// srt //
+/////////
+module srt(input  logic clk, 
+           input  logic req, 
+           input  logic sqrt,  // 1 to compute sqrt(a), 0 to compute a/b
+           input  logic [51:0] a, b, 
+           output logic [54:0] rp, rm);
+ 
+  // A simple Radix 2 SRT divider/sqrt
 
+  
+  // Internal signals
+
+  logic   [55:0] ps, pc;     // partial remainder in carry-save form
+  logic   [55:0] d;          // divisor
+  logic   [55:0] psa, pca;   // partial remainder result of csa
+  logic   [55:0] psn, pcn;   // partial remainder for next cycle
+  logic   [55:0] dn;         // divisor for next cycle
+  logic   [55:0] dsel;       // selected divisor multiple
+  logic          qp, qz, qm; // quotient is +1, 0, or -1
+  logic   [55:0] d_b;        // inverse of divisor
+ 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  mux2   #(Nf+4) wsmux({WSA[54:0], 1'b0}, {4'b0001, X}, Start, WSN);
-  flop   #(Nf+4) wsflop(clk, WSN, WS);
-  mux2   #(Nf+4) wcmux({WCA[54:0], 1'b0}, 56'b0, Start, WCN);
-  flop   #(Nf+4) wcflop(clk, WCN, WC);
-  flopen #(Nf+4) dflop(clk, Start, {4'b0001, Dpreproc}, D);
+  mux2 psmux({psa[54:0], 1'b0}, {4'b0001, a}, req, psn);
+  flop psflop(clk, psn, ps);
+  mux2 pcmux({pca[54:0], 1'b0}, 56'b0, req, pcn);
+  flop pcflop(clk, pcn, pc);
+  mux2 dmux(d, {4'b0001, b}, req, dn);
+  flop dflop(clk, dn, d);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
   // Accumulate quotient digits in a shift register
-  qsel #(Nf) qsel(WS[55:52], WC[55:52], qp, qz, qm);
-  qacc #(Nf+3) qacc(clk, Start, qp, qz, qm, rp, rm);
+  qsel qsel(ps[55:52], pc[55:52], qp, qz, qm);
+  qacc qacc(clk, req, qp, qz, qm, rp, rm);
 
   // Divisor Selection logic
-  inv dinv(D, Db);
-  mux3onehot divisorsel(Db, 56'b0, D, qp, qz, qm, Dsel);
+  inv dinv(d, d_b);
+  mux3 divisorsel(d_b, 56'b0, d, qp, qz, qm, dsel);
 
   // Partial Product Generation
-  csa csa(WS, WC, Dsel, qp, WSA, WCA);
-
-  srtpostproc postproc(rp, rm, Quot);
+  csa csa(ps, pc, dsel, qp, psa, pca);
 endmodule
-
-module srtpostproc #(parameter N=52) (
-  input [N+2:0] rp, rm,
-  output [N-1:0] Quot
-);
-
-  //assign Quot = rp - rm;
-  finaladd finaladd(rp, rm, Quot);
-endmodule
-
-module srtpreproc #(parameter Nf=52) (
-  input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
-  input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
-  input  logic       W64, // 32-bit ints on XLEN=64
-  input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputss
-  input  logic       Sqrt, // perform square root, not divide
-  output logic [Nf-1:0] X, D
-);
-
-  // Initial: just pass X and Y through for simple fp division
-  assign X = SrcXFrac;
-  assign D = SrcYFrac;
-endmodule
-
-/*
 
 //////////
 // mux2 //
@@ -134,17 +86,13 @@ module flop(clk, in, out);
   assign #1 out = state;
 endmodule
 
-*/
-
 //////////
 // qsel //
 //////////
-module qsel #(parameter Nf=52) ( // *** eventually just change to 4 bits
-  input  logic [Nf+3:Nf] ps, pc, 
-  output logic         qp, qz, qm
-);
+module qsel(input  logic [55:52] ps, pc, 
+            output logic         qp, qz, qm);
  
-  logic [Nf+3:Nf]  p, g;
+  logic [55:52]  p, g;
   logic          magnitude, sign, cout;
 
   // The quotient selection logic is presented for simplicity, not
@@ -174,16 +122,19 @@ endmodule
 //////////
 // qacc //
 //////////
-module qacc #(parameter N=55) (
-  input  logic         clk, 
-  input  logic         req, 
-  input  logic         qp, qz, qm, 
-  output logic [N-1:0] rp, rm
-);
+module qacc(clk, req, qp, qz, qm, rp, rm);
+  input 	clk;
+  input         req;
+  input 	qp;
+  input 	qz;
+  input 	qm;
+  output [54:0] rp;
+  output [54:0] rm;
 
-  flopr #(N) rmreg(clk, req, {rm[53:0], qm}, rm);
-  flopr #(N) rpreg(clk, req, {rp[53:0], qp}, rp);
-/*  always @(posedge clk)
+  logic    [54:0] rp, rm; // quotient bit is +/- 1;
+  logic    [7:0]  count;
+
+  always @(posedge clk)
     begin
       if (req) 
 	begin
@@ -192,10 +143,10 @@ module qacc #(parameter N=55) (
 	end
       else 
 	begin
-	  rm <= #1 {rm[54:0], qm};
 	  rp <= #1 {rp[54:0], qp};
+	  rm <= #1 {rm[54:0], qm};
 	end
-    end */
+    end
 endmodule
 
 /////////
@@ -210,7 +161,7 @@ endmodule
 //////////
 // mux3 //
 //////////
-module mux3onehot(in0, in1, in2, sel0, sel1, sel2, out);
+module mux3(in0, in1, in2, sel0, sel1, sel2, out);
   input  [55:0] in0;
   input  [55:0] in1;
   input  [55:0] in2;
@@ -224,15 +175,16 @@ module mux3onehot(in0, in1, in2, sel0, sel1, sel2, out);
   assign #1 out = sel0 ? in0 : (sel1 ? in1 : in2);
 endmodule
 
-
 /////////
 // csa //
 /////////
-module csa #(parameter N=56) (
-  input  logic [N-1:0] in1, in2, in3, 
-  input  logic         cin, 
-  output logic [N-1:0] out1, out2
-);
+module csa(in1, in2, in3, cin, out1, out2);
+  input  [55:0] in1;
+  input  [55:0] in2;
+  input  [55:0] in3;
+  input         cin;
+  output [55:0] out1;
+  output [55:0] out2;
 
   // This block adds in1, in2, in3, and cin to produce 
   // a result out1 / out2 in carry-save redundant form.
@@ -250,10 +202,10 @@ endmodule
 //////////////
 // finaladd //
 //////////////
-module finaladd(
-  input  logic [54:0] rp, rm, 
-  output logic [51:0] r
-);
+module finaladd(rp, rm, r);
+  input  [54:0] rp;
+  input  [54:0] rm;
+  output [51:0] r;
 
   logic   [54:0] diff;
 
@@ -332,16 +284,14 @@ module testbench;
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
   logic [MEM_WIDTH-1:0] Vec;  // Verilog doesn't allow direct access to a
                             // bit field of an array 
-  logic    [51:0] correctr, nextr, diffn, diffp;
+  logic    [51:0] correctr, nextr;
   integer testnum, errors;
 
   // Divider
-  srt  #(52) srt(.clk, .Start(req), 
-                .Stall(1'b0), .Flush(1'b0), 
-                .SrcXFrac(a), .SrcYFrac(b), 
-                .SrcA('0), .SrcB('0), .Fmt(2'b00), 
-                .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
-                .Quot(r), .Rem(), .Flags());
+  srt  srt(clk, req, a, b, rp, rm);
+
+  // Final adder converts quotient digits to 2's complement & normalizes
+  finaladd finaladd(rp, rm, r);
 
   // Counter
   counter counter(clk, req, done);
@@ -375,18 +325,16 @@ module testbench;
       if (done) 
 	begin
 	  req <= #5 1;
-    diffp = correctr - r;
-    diffn = r - correctr;
-	  if (($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
+	  $display("result was %h, should be %h\n", r, correctr);
+	  if ((correctr - r) > 1) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
-	      $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
 	      $display("failed\n");
 	      $stop;
 	    end
 	  if (a === 52'hxxxxxxxxxxxxx)
 	    begin
- 	      $display("%d Tests completed successfully", testnum);
+	      $display("Tests completed successfully");
 	      $stop;
 	    end
 	end

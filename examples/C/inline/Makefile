@@ -1,4 +1,4 @@
-TARGET = sum
+TARGET = inline
 
 $(TARGET).objdump: $(TARGET)
 	riscv64-unknown-elf-objdump -S -D $(TARGET) > $(TARGET).objdump
