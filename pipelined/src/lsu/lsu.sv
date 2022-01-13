@@ -142,9 +142,9 @@ module lsu
     hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
         .ITLBMissF(ITLBMissF & ~TrapM),
         .DTLBMissM(DTLBMissM & ~TrapM),
-        .MemRWM, .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
+        .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
         .HPTWReadPTE(ReadDataM),
-        .DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize, .AnyCPUReqM);
+        .DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize);
 
     // arbiter between IEU and hptw
     

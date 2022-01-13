@@ -36,10 +36,8 @@ module hptw
    input logic [`XLEN-1:0] 	   SATP_REGW, // includes SATP.MODE to determine number of levels in page table
    input logic [`XLEN-1:0] 	   PCF, IEUAdrM, // addresses to translate
    (* mark_debug = "true" *) input logic 				   ITLBMissF, DTLBMissM, // TLB Miss
-   input logic [1:0] 		   MemRWM, // 10 = read, 01 = write
    input logic [`XLEN-1:0] 	   HPTWReadPTE, // page table entry from LSU
    input logic 				   DCacheStall, // stall from LSU
-   input logic 				   AnyCPUReqM,
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 		   PageType, // page type to TLBs
    (* mark_debug = "true" *) output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
@@ -73,7 +71,6 @@ module hptw
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 	assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-	assign MemWrite = MemRWM[0];
 	assign TLBMiss = (DTLBMissM | ITLBMissF);
 
 	// Determine which address to translate
