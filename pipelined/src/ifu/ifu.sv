@@ -271,7 +271,7 @@ module ifu (
 	  assign ICacheFetchLine = 0;
 	  assign ICacheBusAdr = 0;
 	  assign ICacheStallF = 0;
-	  assign FinalInstrRawF = 0;
+	  if(!`MEM_IROM) assign FinalInstrRawF = 0;
       assign ICacheAccess = CacheableF;
       assign ICacheMiss = CacheableF;
 	end
@@ -283,26 +283,42 @@ module ifu (
 				.s(SelUncachedAdr),
 				.y(InstrRawF));
 
-  // always present
-  genvar 			   index;
-  for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-    flopen #(`XLEN) fb(.clk(clk),
-      .en(IFUBusAck & IFUBusRead & (index == WordCount)),
-      .d(IFUBusHRDATA),
-      .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
-  end
 
-  assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
-  assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
+  if (`MEM_IROM == 1) begin : irom
+    ram #(
+        .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+        .HCLK(clk), .HRESETn(~reset), 
+        .HSELRam(1'b1), .HADDR(PCPF[31:0]),
+        .HWRITE(1'b0), .HREADY(1'b1),
+        .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF),
+        .HRESPRam(), .HREADYRam());
 
-  busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
-  busfsm(.clk, .reset, .IgnoreRequest,
-		.LSURWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
-		.LSUBusAck(IFUBusAck),
-		.CPUBusy, .CacheableM(CacheableF),
-		.BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead), .DCacheBusAck(ICacheBusAck),
-		.BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
+    assign BusStall = 0;
+    assign IFUBusRead = 0;
+    assign ICacheBusAck = 0;
+    assign SelUncachedAdr = 0;
+    
+  end else begin : bus
+      genvar 			   index;
+      for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
+        flopen #(`XLEN) fb(.clk(clk),
+                           .en(IFUBusAck & IFUBusRead & (index == WordCount)),
+                           .d(IFUBusHRDATA),
+                           .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+      end
 
+      assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
+      assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
+
+      busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
+      busfsm(.clk, .reset, .IgnoreRequest,
+		     .LSURWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
+		     .LSUBusAck(IFUBusAck),
+		     .CPUBusy, .CacheableM(CacheableF),
+		     .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead), .DCacheBusAck(ICacheBusAck),
+		     .BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
+
+    end
   assign IFUStallF = ICacheStallF | BusStall | SelNextSpill;
   assign CPUBusy = StallF & ~SelNextSpill;
 

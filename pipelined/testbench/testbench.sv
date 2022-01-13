@@ -185,9 +185,9 @@ logic [3:0] dummy;
       else meminit = 64'hFEDCBA9876543210;
       // *** broken because DTIM also drives RAM
       if (`TESTSBP) begin
-	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  dut.uncore.ram.ram.RAM[i] = meminit;
-	end
+    	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
+    	  dut.uncore.ram.ram.RAM[i] = meminit;
+    	end
       end
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
@@ -196,6 +196,7 @@ logic [3:0] dummy;
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+      //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -249,6 +250,7 @@ logic [3:0] dummy;
           //$display("signature[%h] = %h", i, signature[i]);
 		  // *** have to figure out how to exclude shadowram when not using a dcache.
           if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &
+          //if (signature[i] !== dut.hart.lsu.dtim.ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
@@ -256,6 +258,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
+                    //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.hart.lsu.dtim.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -279,6 +282,7 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+            //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);

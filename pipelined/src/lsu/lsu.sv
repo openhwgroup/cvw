@@ -316,7 +316,7 @@ module lsu
 			.CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
 
   end else begin : passthrough
-    assign ReadDataWordM = 0;
+    if(!`MEM_DTIM) assign ReadDataWordM = 0;
     assign DCacheStall = 0;
     assign DCacheMiss = CacheableM;
     assign DCacheAccess = CacheableM;
@@ -357,35 +357,56 @@ module lsu
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
-  // Bus Side logic
-  // register the fetch data from the next level of memory.
-  // This register should be necessary for timing.  There is no register in the uncore or
-  // ahblite controller between the memories and this cache.
-  logic [LOGWPL-1:0]   WordCount;
 
-  genvar index;
-  for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-    flopen #(`XLEN) fb(.clk,
-      .en(LSUBusAck & LSUBusRead & (index == WordCount)),
-      .d(LSUBusHRDATA),
-      .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+  if (`MEM_DTIM == 1) begin : dtim
+    ram #(
+        .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+        .HCLK(clk), .HRESETn(~reset), 
+        .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
+        .HWRITE(LSURWM[0]), .HREADY(1'b1),
+        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
+        .HRESPRam(), .HREADYRam());
+
+    // since we have a local memory the bus connections are all disabled.
+    // There are no peripherals supported.
+    assign BusStall = 0;
+    assign LSUBusWrite = 0;
+    assign LSUBusRead = 0;
+    assign DCacheBusAck = 0;
+    assign BusCommittedM = 0;
+    assign SelUncachedAdr = 0;
+    
+  end else begin : bus
+    // Bus Side logic
+    // register the fetch data from the next level of memory.
+    // This register should be necessary for timing.  There is no register in the uncore or
+    // ahblite controller between the memories and this cache.
+    logic [LOGWPL-1:0]   WordCount;
+
+    genvar               index;
+    for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
+      flopen #(`XLEN) fb(.clk,
+                         .en(LSUBusAck & LSUBusRead & (index == WordCount)),
+                         .d(LSUBusHRDATA),
+                         .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+    end
+
+    assign LocalLSUBusAdr = SelUncachedAdr ? LSUPAdrM : DCacheBusAdr ;
+    assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
+    assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount];
+    // exclude the subword write for uncached.  We don't read the data first so we cannot
+    // select the subword by masking.  Subword write also exists inside the uncore to
+    // suport subword masking for i/o.  I'm not sure if this is necessary.
+    assign LSUBusHWDATA = SelUncachedAdr ? FinalAMOWriteDataM : PreLSUBusHWDATA; 
+
+    if (`XLEN == 32) assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b010;
+    else             assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b011;
+
+    busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
+    busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
+		   .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
+		   .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
   end
-
-  assign LocalLSUBusAdr = SelUncachedAdr ? LSUPAdrM : DCacheBusAdr ;
-  assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount];
-  // exclude the subword write for uncached.  We don't read the data first so we cannot
-  // select the subword by masking.  Subword write also exists inside the uncore to
-  // suport subword masking for i/o.  I'm not sure if this is necessary.
-  assign LSUBusHWDATA = SelUncachedAdr ? FinalAMOWriteDataM : PreLSUBusHWDATA; 
-
-  if (`XLEN == 32) assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b010;
-  else             assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b011;
-
-  busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
-  busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
-		 .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
-		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
     
 endmodule
 
