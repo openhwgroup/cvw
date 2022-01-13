@@ -17,7 +17,7 @@ if [file exists work] {
 }
 vlib work
 
-vlog srt.sv
+vlog +incdir+../config/rv64gc +incdir+../config/shared srt.sv ../src/generic/flop/flop*.sv ../src/generic/mux.sv 
 vopt +acc work.testbench -o workopt 
 vsim workopt
 
