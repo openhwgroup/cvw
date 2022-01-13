@@ -55,7 +55,7 @@ module interlockfsm
 									STATE_T5_ITLB_MISS,
 									STATE_T7_DITLB_MISS} statetype;
 
-	  statetype InterlockCurrState, InterlockNextState;
+(* mark_debug = "true" *)	  statetype InterlockCurrState, InterlockNextState;
 
 
 	  always_ff @(posedge clk)
@@ -64,7 +64,8 @@ module interlockfsm
 
 	  always_comb begin
 		case(InterlockCurrState)
-		  STATE_T0_READY:        if(~ITLBMissF & DTLBMissM & AnyCPUReqM)          InterlockNextState = STATE_T3_DTLB_MISS;
+		  STATE_T0_READY: if (TrapM)                       InterlockNextState = STATE_T0_READY;
+		  else if(~ITLBMissF & DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
 	      else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
           else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
 		  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
@@ -97,7 +98,7 @@ module interlockfsm
 	  always_comb begin
 		InterlockStall = 1'b0;
 		case(InterlockCurrState) 
-		  STATE_T0_READY: if(DTLBMissM | ITLBMissF) InterlockStall = 1'b1;
+		  STATE_T0_READY: if((DTLBMissM | ITLBMissF) & ~TrapM) InterlockStall = 1'b1;
 		  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
 		  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
 		  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;

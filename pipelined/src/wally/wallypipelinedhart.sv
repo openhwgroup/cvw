@@ -87,11 +87,12 @@ module wallypipelinedhart (
   logic 		    PCSrcE;
   logic 		    CSRWritePendingDEM;
   logic 		    DivBusyE;
+  logic             DivE;
   logic 		    LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic 		    SquashSCW;
   // floating point unit signals
   logic [2:0] 		    FRM_REGW;
-   logic [4:0]        RdM, RdW;
+  logic [4:0]        RdM, RdW;
   logic 		    FStallD;
   logic 		    FWriteIntE;
   logic [`XLEN-1:0] 	    FWriteDataE;
@@ -321,7 +322,7 @@ module wallypipelinedhart (
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
          .ITLBFlushF, .DTLBFlushM,
-         .InstrValidM, .CommittedM,
+         .InstrValidM, .CommittedM, .DivE,
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
@@ -356,8 +357,8 @@ module wallypipelinedhart (
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
-         .MDUResultW, .DivBusyE, 
-         .StallM, .StallW, .FlushM, .FlushW 
+         .MDUResultW, .DivBusyE,  .DivE,
+         .StallM, .StallW, .FlushM, .FlushW, .TrapM 
       ); 
    end else begin // no M instructions supported
       assign MDUResultW = 0; 
