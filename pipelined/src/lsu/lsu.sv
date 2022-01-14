@@ -133,7 +133,11 @@ module lsu
 
   assign IEUAdrExtM = {2'b00, IEUAdrM};
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW and Interlock FSM (only needed if VM supported)
+  // MMU include PMP and is needed if any privileged supported
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+
   if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
     logic 					   AnyCPUReqM;
     logic [`PA_BITS-1:0] 		   HPTWAdr;
@@ -163,6 +167,8 @@ module lsu
     mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
     mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
     mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
+    // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
+    assign LSUAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLSUAdrE;
     mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
 
     // always block interrupts when using the hardware page table walker.
@@ -175,10 +181,6 @@ module lsu
     // Specify which type of page fault is occurring
     assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLSURWM[1];
     assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
-
-    // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-    assign LSUAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLSUAdrE;
-
   end // if (`MEM_VIRTMEM)
   else begin
     assign InterlockStall = 1'b0;
@@ -267,20 +269,16 @@ module lsu
     assign LoadMisalignedFaultM = 0;
     assign StoreMisalignedFaultM = 0;
   end
+  // *** rename these to LSUStallM
   assign LSUStall = DCacheStall | InterlockStall | BusStall;
   
-
-  // use PreLSU as prefix for lrsc 
-  if (`A_SUPPORTED) begin:lrsc
-    assign MemReadM = PreLSURWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
-    lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
-        .SquashSCW, .LSURWM);
-  end else begin:lrsc
-      assign SquashSCW = 0;
-      assign LSURWM = PreLSURWM;
-  end
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Hart Memory System
+  //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
+  ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+  // *** move to top
   // conditional
   // 1. ram // controlled by `MEM_DTIM
   // 2. cache `MEM_DCACHE
@@ -342,55 +340,19 @@ module lsu
   end
 
 
-  // select between dcache and direct from the BUS. Always selected if no dcache.
-  mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
-				.d1(DCacheMemWriteData[`XLEN-1:0]),
-				.s(SelUncachedAdr),
-				.y(ReadDataWordMuxM));
-  
-  // sub word selection for read and writes and optional amo alu.
-  // finally swr
-  subwordread subwordread(.ReadDataWordMuxM,
-			  .LSUPAdrM(LSUPAdrM[2:0]),
-			  .Funct3M(LSUFunct3M),
-			  .ReadDataM);
-
-  if (`A_SUPPORTED) begin : amo
-    logic [`XLEN-1:0] AMOResult;
-    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
-                  .result(AMOResult));
-    mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
-  end else
-    assign FinalAMOWriteDataM = WriteDataM;
-
-  // this might only get instantiated if there is a dcache or dtim.
-  // There is a copy in the ebu.
-  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
-			    .HADDRD(LSUPAdrM[2:0]),
-			    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-			    .HWDATAIN(FinalAMOWriteDataM),
-			    .HWDATA(FinalWriteDataM));
-
-
-  if (`MEM_DTIM == 1) begin : dtim
+  if (`MEM_DTIM) begin : dtim
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK(clk), .HRESETn(~reset), 
         .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
         .HWRITE(LSURWM[0]), .HREADY(1'b1),
-        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
+        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordMuxM),
         .HRESPRam(), .HREADYRam());
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
-    assign BusStall = 0;
-    assign LSUBusWrite = 0;
-    assign LSUBusRead = 0;
-    assign DCacheBusAck = 0;
-    assign BusCommittedM = 0;
-    assign SelUncachedAdr = 0;
-    
-  end else begin : bus
+    assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM, SelUncachedAdr} = '0;   
+  end else begin : bus  // *** lsubusdp
     // Bus Side logic
     // register the fetch data from the next level of memory.
     // This register should be necessary for timing.  There is no register in the uncore or
@@ -416,11 +378,53 @@ module lsu
     if (`XLEN == 32) assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b010;
     else             assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b011;
 
+    // *** move into lsubusdp
+    // select between dcache and direct from the BUS. Always selected if no dcache.
+    mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
+          .d1(DCacheMemWriteData[`XLEN-1:0]),
+          .s(SelUncachedAdr),
+          .y(ReadDataWordMuxM));
+
     busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
     busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
 		   .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
 		   .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
   end
+
+  // sub word selection for read and writes and optional amo alu.
+  // finally swr
+  subwordread subwordread(.ReadDataWordMuxM,
+			  .LSUPAdrM(LSUPAdrM[2:0]),
+			  .Funct3M(LSUFunct3M),
+			  .ReadDataM);
+
+  // this might only get instantiated if there is a dcache or dtim.
+  // There is a copy in the ebu.
+  subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
+			    .HADDRD(LSUPAdrM[2:0]),
+			    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
+			    .HWDATAIN(FinalAMOWriteDataM),
+			    .HWDATA(FinalWriteDataM));
+
     
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Atomic operations
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // use PreLSU as prefix for lrsc ***
+  if (`A_SUPPORTED) begin:lrsc
+    logic [`XLEN-1:0] AMOResult;
+    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
+                  .result(AMOResult));
+    mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
+    assign MemReadM = PreLSURWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
+    lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
+        .SquashSCW, .LSURWM);
+  end else begin:lrsc
+      assign SquashSCW = 0;
+      assign LSURWM = PreLSURWM;
+    assign FinalAMOWriteDataM = WriteDataM;
+  end
+
 endmodule
 
