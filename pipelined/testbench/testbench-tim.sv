@@ -195,8 +195,17 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.uncore.ram.ram.RAM);
-      //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
+      //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
+      $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);      
+//      if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
+//`ifdef `MEM_IROM
+//          $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+//      $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+//`endif
+//      if(`MEM_IROM == 1) begin
+//        $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+//      end
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -249,16 +258,15 @@ logic [3:0] dummy;
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
 		  // *** have to figure out how to exclude shadowram when not using a dcache.
-          if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &
-          //if (signature[i] !== dut.hart.lsu.dtim.ram.RAM[testadr+i] &
+          if (signature[i] !== dut.hart.lsu.dtim.ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
-                    //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.hart.lsu.dtim.ram.RAM[testadr+i], signature[i]);
+                    //tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
+                       tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.hart.lsu.dtim.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -281,8 +289,17 @@ logic [3:0] dummy;
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
-            $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+            //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
+            $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
             //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
+/* -----\/----- EXCLUDED -----\/-----
+`ifdef `MEM_IROM
+          $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+`endif
+ -----/\----- EXCLUDED -----/\----- */
+          $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+          //if(`MEM_IROM == 1) $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);      
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);

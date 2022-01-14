@@ -27,39 +27,38 @@
 // include shared configuration
 `include "wally-shared.vh"
 
-`define FPGA 1
-`define QEMU 1
-`define BUILDROOT 1
+`define FPGA 0
+`define QEMU 0
+`define BUILDROOT 0
 `define BUSYBEAR 0
-`define LINUX_FIX_READ {'h10000005}
-`define LINUX_TEST_VECTORS "../../tests/linux-testgen/linux-testvectors/"
+`define DESIGN_COMPILER 0
+
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 64
+`define XLEN 32
 
 // IEEE 754 compliance
 `define IEEE754 0
 
-`define MISA (32'h0014112D)
+`define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 1
-`define ZICOUNTERS_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 0
 `define COUNTERS 32
-`define DESIGN_COMPILER 0
+`define ZICOUNTERS_SUPPORTED 0
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DTIM 0
-`define MEM_DCACHE 1
-`define MEM_IROM 0
-`define MEM_ICACHE 1
-`define MEM_VIRTMEM 1
+`define MEM_DTIM 1
+`define MEM_DCACHE 0
+`define MEM_IROM 1
+`define MEM_ICACHE 0
+`define MEM_VIRTMEM 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
-`define ITLB_ENTRIES 32
-`define DTLB_ENTRIES 32
+`define ITLB_ENTRIES 0
+`define DTLB_ENTRIES 0
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
@@ -76,56 +75,59 @@
 `define DIV_BITSPERCYCLE 4
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 16
+`define PMP_ENTRIES 0
 
 // Address space
-`define RESET_VECTOR 64'h0000000000001000
+`define RESET_VECTOR 32'h80000000
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 `define BOOTROM_SUPPORTED 1'b1
-`define BOOTROM_BASE   56'h00001000 
-`define BOOTROM_RANGE  56'h00000FFF
+`define BOOTROM_BASE   34'h00001000 
+`define BOOTROM_RANGE  34'h00000FFF
 `define RAM_SUPPORTED 1'b1
-`define RAM_BASE       56'h80000000
-`define RAM_RANGE      56'h07FFFFFF
+`define RAM_BASE       34'h80000000
+`define RAM_RANGE      34'h07FFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
-`define EXT_MEM_BASE       56'h80000000
-`define EXT_MEM_RANGE      56'h07FFFFFF
+`define EXT_MEM_BASE       34'h80000000
+`define EXT_MEM_RANGE      34'h07FFFFFF
 `define CLINT_SUPPORTED 1'b1
-`define CLINT_BASE  56'h02000000
-`define CLINT_RANGE 56'h0000FFFF
+`define CLINT_BASE  34'h02000000
+`define CLINT_RANGE 34'h0000FFFF
 `define GPIO_SUPPORTED 1'b1
-`define GPIO_BASE   56'h10012000
-`define GPIO_RANGE  56'h000000FF
+`define GPIO_BASE   34'h10012000
+`define GPIO_RANGE  34'h000000FF
 `define UART_SUPPORTED 1'b1
-`define UART_BASE   56'h10000000
-`define UART_RANGE  56'h00000007
+`define UART_BASE   34'h10000000
+`define UART_RANGE  34'h00000007
 `define PLIC_SUPPORTED 1'b1
-`define PLIC_BASE   56'h0C000000
-`define PLIC_RANGE  56'h03FFFFFF
+`define PLIC_BASE   34'h0C000000
+`define PLIC_RANGE  34'h03FFFFFF
 `define SDC_SUPPORTED 1'b0
-`define SDC_BASE   56'h00012100
-`define SDC_RANGE  56'h0000001F
+`define SDC_BASE   34'h00012100
+`define SDC_RANGE  34'h0000001F
 
 // Bus Interface width
-`define AHBW 64
+`define AHBW 32
 
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 0
+`define GPIO_LOOPBACK_TEST 1
 
 // Hardware configuration
-`define UART_PRESCALE 0
+`define UART_PRESCALE 1
 
 // Interrupt configuration
-`define PLIC_NUM_SRC 53
+`define PLIC_NUM_SRC 4
+// comment out the following if >=32 sources
+`define PLIC_NUM_SRC_LT_32
+`define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 4
 
-`define TWO_BIT_PRELOAD "../config/buildroot/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/buildroot/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0

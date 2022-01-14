@@ -1,4 +1,5 @@
 #!/bin/sh
+
 ./create_vectors16.sh
 ./create_vectors32_64.sh
 ./create_vectors32cmp.sh
