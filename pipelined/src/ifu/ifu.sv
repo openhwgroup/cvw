@@ -206,10 +206,6 @@ module ifu (
        .PMPADDR_ARRAY_REGW      
        );
 
-
-
-
-  
   // conditional
   // 1. ram // controlled by `MEM_IROM
   // 2. cache // `MEM_ICACHE
@@ -380,10 +376,10 @@ module ifu (
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   // *** double check this enable.  It cannot be correct.
-  flopenl #(`XLEN) pcreg(clk, reset, ~StallF & ~ICacheStallF, PCNextF, `RESET_VECTOR, PCF);
+  flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
-  if (`BPRED_ENABLED == 1) begin : bpred
+  if (`BPRED_ENABLED) begin : bpred
     bpred bpred(.clk, .reset,
         .StallF, .StallD, .StallE,
         .FlushF, .FlushD, .FlushE,
