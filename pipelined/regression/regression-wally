@@ -77,6 +77,15 @@ for test in tests32ic:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
+tests32tim = ["arch32i", "arch32c"] 
+for test in tests32tim:
+  tc = TestCase(
+        name=test,
+        variant="rv32tim",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-tim-batch.do rv32tim "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
 
 import os
 from multiprocessing import Pool, TimeoutError

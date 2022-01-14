@@ -1,3 +1,5 @@
+james.stine@okstate.edu 14 Jan 2022
+
 These are the testvectors (TV) to test the floating-point units using
 Berkeley TestFloat written originally by John Hauser.  TestFloat
 requires both TestFloat and SoftFloat.
@@ -12,6 +14,12 @@ createX.sh (e.g., create_vectors32.sh) has been included that create
 the TV for each rounding mode  and operation.  These scripts must be
 run in the build directory of TestFloat.
 
+A set of scripts is also include that runs everything from the
+baseline directory.  Please change the BUILD and OUTPUT variable to
+change your baseline program where its compiled and where you want to
+output the vectors.  By default, the vectors are output into the
+vectors subdirectory.
+
 After each TV has been created a script (included) is run called
 undy.sh that puts an underscore between vector to allow SystemVerilog
 readmemh to read correctly.
@@ -21,15 +29,15 @@ readmemh to read correctly.
 To remove all the underscores from all the TV files, one can run the
 command that will add underscores appropriately to all the files.
 
-sed -i 's/ /_/g' *.tv
+cd vectors
+../undy.sh \*
 
 Note: due to size, the fxx_fma_xx.tv vectors are not included.
 However, they can easily be created with the create scripts.
 
-James Stine
-10/7/2021
-
-List of TestVectors (TV) and sizes
+Although not needed, a case.sh script is included to change the case
+of the hex output.  This is for those that do not like to see
+hexadecimal capitalized :P. 
 
    46464   185856   836352 f16_add_rd.tv
    46464   185856   836352 f16_add_rne.tv
@@ -39,6 +47,10 @@ List of TestVectors (TV) and sizes
    46464   185856   836352 f16_div_rne.tv
    46464   185856   836352 f16_div_ru.tv
    46464   185856   836352 f16_div_rz.tv
+   46464   185856   836352 f16_mul_rd.tv
+   46464   185856   836352 f16_mul_rne.tv
+   46464   185856   836352 f16_mul_ru.tv
+   46464   185856   836352 f16_mul_rz.tv
      408     1224     5304 f16_sqrt_rd.tv
      408     1224     5304 f16_sqrt_rne.tv
      408     1224     5304 f16_sqrt_ru.tv
@@ -73,10 +85,10 @@ List of TestVectors (TV) and sizes
      600     1800    17400 f32_i64_rne.tv
      600     1800    17400 f32_i64_ru.tv
      600     1800    17400 f32_i64_rz.tv
-   46464    46464  1393920 f32_mul_rd.tv
-   46464    46464  1393920 f32_mul_rne.tv
-   46464    46464  1393920 f32_mul_ru.tv
-   46464    46464  1393920 f32_mul_rz.tv
+   46464   185856  1393920 f32_mul_rd.tv
+   46464   185856  1393920 f32_mul_rne.tv
+   46464   185856  1393920 f32_mul_ru.tv
+   46464   185856  1393920 f32_mul_rz.tv
      600     1800    12600 f32_sqrt_rd.tv
      600     1800    12600 f32_sqrt_rne.tv
      600     1800    12600 f32_sqrt_ru.tv
@@ -171,4 +183,5 @@ List of TestVectors (TV) and sizes
      756     2268    27972 ui64_f64_rne.tv
      756     2268    27972 ui64_f64_ru.tv
      756     2268    27972 ui64_f64_rz.tv
- 2654496 10007904 91305888 total
+ 2840352 11308896 94651296 total
+
