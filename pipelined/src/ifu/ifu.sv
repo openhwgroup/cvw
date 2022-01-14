@@ -96,7 +96,7 @@ module ifu (
   logic [`XLEN-1:0]            PCD;
 
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
-  logic                        reset_q; // *** look at this later.
+  //logic                        reset_q; // see comment below about PCNextF and icache.
 
   logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
@@ -327,7 +327,7 @@ module ifu (
   // uses interlock fsm.
   assign IgnoreRequest = ITLBMissF;
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset | reset_q, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
@@ -354,16 +354,26 @@ module ifu (
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
          .d1(PrivilegedNextPCM),
          .s(PrivilegedChangePCM),
-         .y(PCNext3F));
+         .y(UnalignedPCNextF));
 
-  mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
-         .d1(`RESET_VECTOR),
-         .s(reset_q),
-         .y(UnalignedPCNextF)); 
- 
-  flop #(1) resetReg (.clk(clk),
-        .d(reset),
-        .q(reset_q));
+         //.y(PCNext3F));
+  // This mux is not strictly speaking required.  Because the icache takes in
+  // PCNextF rather than PCPF, PCNextF should stay in reset while the cache
+  // looks up the addresses.  Without this mux PCNextF will increment + 2/4.
+  // When the icache fsm is out of reset then it will report on the status
+  // of PCF + 2/4.  It will be a miss since this is the very first access.
+  // On the next cycle the cache will start using PCPF to finish the read.
+  // Because the granularity of a cache line +2/4 will always fit in the same
+  // cache line so the mux is not required.  I am leaving this comment and mux
+  // a a reminder as to what is happening in case keep PCNextF at RESET_VECTOR
+  // during reset becomes a requirement.
+  //mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
+  //       .d1(`RESET_VECTOR),
+  //       .s(reset_q),
+  //       .y(UnalignedPCNextF)); 
+  //flop #(1) resetReg (.clk(clk),
+  //      .d(reset),
+  //      .q(reset_q));
 
 
   flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM),
