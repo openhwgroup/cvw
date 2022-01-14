@@ -52,7 +52,7 @@
 `define MEM_DTIM 0
 `define MEM_DCACHE 0
 `define MEM_IROM 0
-`define MEM_ICACHE 1
+`define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 

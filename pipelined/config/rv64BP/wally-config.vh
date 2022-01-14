@@ -51,9 +51,9 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DTIM 1
+`define MEM_DTIM 0
 `define MEM_DCACHE 1
-`define MEM_IROM 1
+`define MEM_IROM 0
 `define MEM_ICACHE 1
 `define MEM_VIRTMEM 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 

@@ -285,18 +285,23 @@ module ifu (
 
 
   if (`MEM_IROM == 1) begin : irom
-    ram #(
+	logic [`XLEN-1:0] FinalInstrRawF_FIXME;
+
+    simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK(clk), .HRESETn(~reset), 
         .HSELRam(1'b1), .HADDR(PCPF[31:0]),
         .HWRITE(1'b0), .HREADY(1'b1),
-        .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF),
+        .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF_FIXME),
         .HRESPRam(), .HREADYRam());
 
+	assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
     assign BusStall = 0;
     assign IFUBusRead = 0;
     assign ICacheBusAck = 0;
     assign SelUncachedAdr = 0;
+    assign IFUBusAdr = 0;
+    
     
   end else begin : bus
       genvar 			   index;

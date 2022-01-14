@@ -359,7 +359,7 @@ module lsu
 
 
   if (`MEM_DTIM == 1) begin : dtim
-    ram #(
+    simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK(clk), .HRESETn(~reset), 
         .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
