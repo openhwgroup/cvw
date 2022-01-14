@@ -122,9 +122,18 @@ module lsu
   logic 					   BusCommittedM, DCacheCommittedM;
   
 
+  // Execute Stage Logic
+
+
+  // Execute-Memory Stage Registers (and Cache fires on this edge)
+
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+
+  // Memory Stage Logic
+
   assign IEUAdrExtM = {2'b00, IEUAdrM};
 
+  // HPTW and Interlock FSM (only needed if VM supported)
   if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
     logic 					   AnyCPUReqM;
     logic [`PA_BITS-1:0] 		   HPTWAdr;
@@ -195,6 +204,7 @@ module lsu
     assign DTLBStorePageFaultM = 1'b0;
   end
 
+
   // **** look into this confusing signal.
   // This signal is confusing.  CommittedM tells the CPU's trap unit the current instruction
   // in the memory stage is a memory operaton and that memory operation is either completed
@@ -205,6 +215,9 @@ module lsu
   // to flush the memory operation at that time.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
+  // Outside Pipeline Logic
+
+  // MMU and Misalignment fault logic required if privileged unit exists
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
     logic 					   DataMisalignedM;
 
@@ -229,6 +242,7 @@ module lsu
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
       ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
 
+    // *** lump into lsumislaigned module
     // Determine if an Unaligned access is taking place
     // hptw guarantees alignment, only check inputs from IEU.
     always_comb
