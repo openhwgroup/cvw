@@ -117,6 +117,7 @@ module ifu (
   logic 					   CPUBusy;
   logic [31:0] 				   PostSpillInstrRawF;
 
+  localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
 
   if(`C_SUPPORTED) begin : SpillSupport
 	logic [`XLEN-1:0] 		   PCFp2;
@@ -215,7 +216,6 @@ module ifu (
   // otherwise we have the bus controller and either a cache or a passthrough.
 
   localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
-  localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
   localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   LINELEN = `MEM_ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
   localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
