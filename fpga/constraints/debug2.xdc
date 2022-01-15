@@ -350,7 +350,7 @@ connect_debug_port u_ila_0/probe79 [get_nets [list wallypipelinedsoc/hart/hzu/CS
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe80]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe80]
-connect_debug_port u_ila_0/probe80 [get_nets [list wallypipelinedsoc/hart/hzu/LSUStall ]]
+connect_debug_port u_ila_0/probe80 [get_nets [list wallypipelinedsoc/hart/hzu/LSUStallM ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe81]

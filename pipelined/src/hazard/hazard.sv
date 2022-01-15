@@ -34,7 +34,7 @@ module hazard(
   // Detect hazards
 (* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
-(* mark_debug = "true" *)	      input logic  LSUStall, IFUStallF,
+(* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
 (* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
@@ -64,7 +64,7 @@ module hazard(
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);
   assign StallMCause = 0; 
-  assign StallWCause = LSUStall | IFUStallF;
+  assign StallWCause = LSUStallM | IFUStallF;
 
   assign StallF = StallFCause | StallD;
   assign StallD = StallDCause | StallE;

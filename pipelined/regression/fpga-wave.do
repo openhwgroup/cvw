@@ -38,7 +38,7 @@ add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/ha
 add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/hart/hzu/LoadStallD
 add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/hart/hzu/StoreStallD
 add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/hart/hzu/ICacheStallF
-add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/hart/hzu/LSUStall
+add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/hart/hzu/LSUStallM
 add wave -noupdate -group HDU -group hazards /testbench/dut/wallypipelinedsoc/hart/MulDivStallD
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/wallypipelinedsoc/hart/hzu/FlushF
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/wallypipelinedsoc/hart/FlushD

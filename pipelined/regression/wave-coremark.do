@@ -38,7 +38,7 @@ add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/LoadStallD
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/StoreStallD
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/ICacheStallF
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/LSUStall
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/hzu/LSUStallM
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/hart/MulDivStallD
 add wave -noupdate -expand -group HDU -group Flush -color Yellow /testbench/dut/hart/hzu/FlushF
 add wave -noupdate -expand -group HDU -group Flush -color Yellow /testbench/dut/hart/FlushD
