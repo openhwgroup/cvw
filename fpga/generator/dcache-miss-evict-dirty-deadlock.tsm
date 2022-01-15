@@ -15,7 +15,7 @@
 #
 ##################################################
 state state_reset:
-    if(wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState == 32'h00000003) then
+    if(wallypipelinedsoc/hart/lsu.bus.dcache.dcache/cachefsm/CurrState == 32'h00000003) then
         reset_counter $counter0;
         goto state_begin_count;
         #goto state_trigger;
@@ -26,7 +26,7 @@ state state_reset:
 state state_begin_count:
     if($counter0 == 16'h0164) then
         goto state_trigger;
-    elseif(wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState == 32'h00000003) then
+    elseif(wallypipelinedsoc/hart/lsu.bus.dcache.dcache/cachefsm/CurrState == 32'h00000003) then
         increment_counter $counter0;
         goto state_begin_count;
     else

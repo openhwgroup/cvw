@@ -47,9 +47,9 @@ add wave -hex /testbench/dut/hart/ieu/c/InstrValidM
 add wave /testbench/InstrMName
 add wave /testbench/dut/uncore/ram/memwrite
 add wave -hex /testbench/dut/hart/WriteDataM
-add wave -hex /testbench/dut/hart/lsu/dcache/MemPAdrM
-add wave -hex /testbench/dut/hart/lsu/dcache/WriteDataM
-add wave -hex /testbench/dut/hart/lsu/dcache/ReadDataM
+add wave -hex /testbench/dut/hart/lsu.bus.dcache/MemPAdrM
+add wave -hex /testbench/dut/hart/lsu.bus.dcache/WriteDataM
+add wave -hex /testbench/dut/hart/lsu.bus.dcache/ReadDataM
 add wave -divider
 add wave -hex /testbench/PCW
 #add wave -hex /testbench/InstrW

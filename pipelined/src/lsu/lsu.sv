@@ -108,7 +108,7 @@ module lsu
   logic [11:0] 				   PreLSUAdrE, LSUAdrE;  
   logic 					   CPUBusy;
   logic 					   MemReadM;
-  logic 					   DCacheStall;
+  logic 					   DCacheStallM;
 
   logic 					   CacheableM;
   logic 					   SelHPTW;
@@ -140,7 +140,7 @@ module lsu
     assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
 
     interlockfsm interlockfsm (.clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
-    .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStall,
+    .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM,
     .InterlockStall, .SelReplayCPURequest, .SelHPTW,
     .IgnoreRequest);
     
@@ -149,7 +149,7 @@ module lsu
         .DTLBMissM(DTLBMissM & ~TrapM),
         .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
         .HPTWReadPTE(ReadDataM),
-        .DCacheStall, .HPTWAdr, .HPTWRead, .HPTWSize);
+        .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWSize);
 
     // arbiter between IEU and hptw
     
@@ -236,7 +236,7 @@ module lsu
     assign LSUPAdrM = PreLSUPAdrM;
     assign CacheableM = 1;
   end
-  assign LSUStallM = DCacheStall | InterlockStall | BusStall;
+  assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
   
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Hart Memory System
@@ -281,31 +281,6 @@ module lsu
 
   logic 			   SelUncachedAdr;
 
-  if(`MEM_DCACHE) begin : dcache
-    cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-			.NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
-	 dcache(.clk, .reset, .CPUBusy,
-			.RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LSUAtomicM : 2'b00), 
-			.NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
-			.FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStall),
-			.CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
-			.IgnoreRequest, .CacheCommitted(DCacheCommittedM),
-			.CacheBusAdr(DCacheBusAdr), .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
-			.CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
-
-  end else begin : passthrough
-    if(!`MEM_DTIM) assign ReadDataWordM = 0;
-    assign DCacheStall = 0;
-    assign DCacheMiss = CacheableM;
-    assign DCacheAccess = CacheableM;
-    assign DCacheCommittedM = 0;
-    assign DCacheWriteLine = 0;
-    assign DCacheFetchLine = 0;
-    assign DCacheBusAdr = 0;
-    assign ReadDataLineSetsM[0] = 0;
-  end
-
-
   if (`MEM_DTIM) begin : dtim
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
@@ -342,10 +317,8 @@ module lsu
     // suport subword masking for i/o.  I'm not sure if this is necessary.
     assign LSUBusHWDATA = SelUncachedAdr ? FinalAMOWriteDataM : PreLSUBusHWDATA; 
 
-    if (`XLEN == 32) assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b010;
-    else             assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : 3'b011;
+    assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : (`XLEN == 32 ? 3'b010 : 3'b011);
 
-    // *** move into lsubusdp
     // select between dcache and direct from the BUS. Always selected if no dcache.
     mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
           .d1(DCacheMemWriteData[`XLEN-1:0]),
@@ -356,29 +329,44 @@ module lsu
     busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
 		   .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
 		   .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
+
+    if(`MEM_DCACHE) begin : dcache
+      cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
+        .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
+        dcache(.clk, .reset, .CPUBusy,
+            .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LSUAtomicM : 2'b00), 
+            .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
+            .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStallM),
+            .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
+            .IgnoreRequest, .CacheCommitted(DCacheCommittedM),
+            .CacheBusAdr(DCacheBusAdr), .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
+            .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+
+    end else begin : passthrough
+      assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
+      assign ReadDataLineSetsM[0] = 0;
+      assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
+    end
   end
 
   // sub word selection for read and writes and optional amo alu.
-  // finally swr
   subwordread subwordread(.ReadDataWordMuxM,
 			  .LSUPAdrM(LSUPAdrM[2:0]),
 			  .Funct3M(LSUFunct3M),
 			  .ReadDataM);
 
   // this might only get instantiated if there is a dcache or dtim.
-  // There is a copy in the ebu.
+  // There is a copy in the ebu. *** is it needed there, or can data come in from ebu, get muxed here and sent back out
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(LSUPAdrM[2:0]),
 			    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
-    
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // use PreLSU as prefix for lrsc ***
   if (`A_SUPPORTED) begin:lrsc
     logic [`XLEN-1:0] AMOResult;
     amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
@@ -388,10 +376,9 @@ module lsu
     lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
         .SquashSCW, .LSURWM);
   end else begin:lrsc
-      assign SquashSCW = 0;
-      assign LSURWM = PreLSURWM;
+    assign SquashSCW = 0;
+    assign LSURWM = PreLSURWM;
     assign FinalAMOWriteDataM = WriteDataM;
   end
-
 endmodule
 

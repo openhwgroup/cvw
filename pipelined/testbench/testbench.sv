@@ -369,10 +369,10 @@ module DCacheFlushFSM
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
 	if(`MEM_DCACHE) begin
-	  localparam integer numlines = testbench.dut.hart.lsu.dcache.dcache.NUMLINES;
-	  localparam integer numways = testbench.dut.hart.lsu.dcache.dcache.NUMWAYS;
-	  localparam integer linebytelen = testbench.dut.hart.lsu.dcache.dcache.LINEBYTELEN;
-	  localparam integer numwords = testbench.dut.hart.lsu.dcache.dcache.LINELEN/`XLEN;  
+	  localparam integer numlines = testbench.dut.hart.lsu.bus.dcache.dcache.NUMLINES;
+	  localparam integer numways = testbench.dut.hart.lsu.bus.dcache.dcache.NUMWAYS;
+	  localparam integer linebytelen = testbench.dut.hart.lsu.bus.dcache.dcache.LINEBYTELEN;
+	  localparam integer numwords = testbench.dut.hart.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
 	  localparam integer lognumlines = $clog2(numlines);
 	  localparam integer loglinebytelen = $clog2(linebytelen);
 	  localparam integer lognumways = $clog2(numways);
@@ -393,10 +393,10 @@ module DCacheFlushFSM
 						 .loglinebytelen(loglinebytelen))
 			copyShadow(.clk,
 					   .start,
-					   .tag(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-					   .valid(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].ValidBits[index]),
-					   .dirty(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].DirtyBits[index]),
-					   .data(testbench.dut.hart.lsu.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+					   .tag(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+					   .valid(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].ValidBits[index]),
+					   .dirty(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].DirtyBits[index]),
+					   .data(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
 					   .index(index),
 					   .cacheWord(cacheWord),
 					   .CacheData(CacheData[way][index][cacheWord]),

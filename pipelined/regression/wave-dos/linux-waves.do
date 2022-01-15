@@ -36,10 +36,10 @@ add wave -noupdate /testbench/InstrMName
 add wave -noupdate /testbench/textM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ifu/InstrM
 add wave -noupdate -radix hexadecimal /testbench/dut/hart/ieu/c/InstrValidM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/dcache/MemPAdrM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/dcache/MemRWM
-add wave -noupdate /testbench/dut/hart/lsu/dcache/WriteDataM
-add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu/dcache/ReadDataM
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu.bus.dcache/MemPAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu.bus.dcache/MemRWM
+add wave -noupdate /testbench/dut/hart/lsu.bus.dcache/WriteDataM
+add wave -noupdate -radix hexadecimal /testbench/dut/hart/lsu.bus.dcache/ReadDataM
 add wave -noupdate -group Walker /testbench/dut/hart/lsu/hptw/genblk1/DTLBWalk
 add wave -noupdate -group Walker /testbench/dut/hart/lsu/hptw/genblk1/BasePageTablePPN
 add wave -noupdate -group Walker /testbench/dut/hart/lsu/hptw/genblk1/CurrentPPN
@@ -64,7 +64,7 @@ add wave -noupdate -group Walker /testbench/dut/hart/lsu/hptw/genblk1/WalkerStat
 add wave -noupdate -group Walker /testbench/dut/hart/lsu/hptw/genblk1/NextWalkerState
 add wave -noupdate -group Walker /testbench/dut/hart/lsu/hptw/genblk1/InitialWalkerState
 add wave -noupdate -group LSU -r /testbench/dut/hart/lsu/*
-add wave -noupdate -group DCache -r /testbench/dut/hart/lsu/dcache/*
+add wave -noupdate -group DCache -r /testbench/dut/hart/lsu.bus.dcache/*
 add wave -noupdate -group EBU /testbench/dut/hart/ebu/clk
 add wave -noupdate -group EBU /testbench/dut/hart/ebu/reset
 add wave -noupdate -group EBU /testbench/dut/hart/ebu/StallW

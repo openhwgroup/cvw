@@ -86,7 +86,7 @@ connect_debug_port u_ila_0/probe16 [get_nets [list {wallypipelinedsoc/uncore/sdc
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe17]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
-connect_debug_port u_ila_0/probe17 [get_nets [list {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[0]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[1]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[2]} {wallypipelinedsoc/hart/lsu/dcache.dcache/cachefsm/CurrState[3]} ]]
+connect_debug_port u_ila_0/probe17 [get_nets [list {wallypipelinedsoc/hart/lsu.bus.dcache.dcache/cachefsm/CurrState[0]} {wallypipelinedsoc/hart/lsu.bus.dcache.dcache/cachefsm/CurrState[1]} {wallypipelinedsoc/hart/lsu.bus.dcache.dcache/cachefsm/CurrState[2]} {wallypipelinedsoc/hart/lsu.bus.dcache.dcache/cachefsm/CurrState[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe18]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe18]
