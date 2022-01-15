@@ -36,7 +36,7 @@ module lsu
   (
    input logic 				   clk, reset,
    input logic 				   StallM, FlushM, StallW, FlushW,
-   output logic 			   LSUStall,
+   output logic 			   LSUStallM,
    // Memory Stage
 
    // connected to cpu (controls)
@@ -122,14 +122,14 @@ module lsu
   logic 					   BusCommittedM, DCacheCommittedM;
   
 
-  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
-  assign IEUAdrExtM = {2'b00, IEUAdrM}; // *** probably needs to connect to external bus too, make external bus PADDRBITS
- 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW and Interlock FSM (only needed if VM supported)
   // MMU include PMP and is needed if any privileged supported
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
+  flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  assign IEUAdrExtM = {2'b00, IEUAdrM}; 
+ 
   if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
     logic 					   AnyCPUReqM;
     logic [`PA_BITS-1:0] 		   HPTWAdr;
@@ -167,37 +167,17 @@ module lsu
     // always block interrupts when using the hardware page table walker.
     assign CPUBusy = StallW & ~SelHPTW;
     
-    // It is not possible to pipeline hptw as the following load will depend on the previous load's
-    // data. Therefore we don't need a pipeline register
-    //flop #(`PA_BITS) HPTWAdrMReg(clk, HPTWAdr, HPTWAdrM);   // delay HPTWAdrM by a cycle
-
     // Specify which type of page fault is occurring
     assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLSURWM[1];
     assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
   end // if (`MEM_VIRTMEM)
   else begin
-    assign InterlockStall = 1'b0;
-    
-    assign LSUAdrE = PreLSUAdrE;
-    assign SelHPTW = 1'b0;
-    assign IgnoreRequest = 1'b0;
-
-    assign PTE = '0;
-    assign PageType = '0;
-    assign DTLBWriteM = 1'b0;
-    assign ITLBWriteF = 1'b0;	  
-    
-    assign PreLSURWM = MemRWM;
-    assign LSUFunct3M = Funct3M;
-    assign LSUFunct7M = Funct7M;
-    assign LSUAtomicM = AtomicM;
-    assign PreLSUAdrE = IEUAdrE[11:0];
-    assign PreLSUPAdrM = IEUAdrExtM;
+    assign {InterlockStall, SelHPTW, IgnoreRequest, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
+    assign {DTLBLoadPageFaultM, DTLBStorePageFaultM} = '0;
     assign CPUBusy = StallW;
-    
-    assign DTLBLoadPageFaultM = 1'b0;
-    assign DTLBStorePageFaultM = 1'b0;
-  end
+    assign LSUAdrE = PreLSUAdrE; assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
+    assign PreLSURWM = MemRWM; assign PreLSUAdrE = IEUAdrE[11:0]; assign PreLSUPAdrM = IEUAdrExtM;
+   end
 
 
   // **** look into this confusing signal.
@@ -209,8 +189,6 @@ module lsu
   // set this bit in the first cycle.  It is not strickly wrong, but it may be better
   // to flush the memory operation at that time.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
-
-  // Outside Pipeline Logic
 
   // MMU and Misalignment fault logic required if privileged unit exists
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
@@ -235,8 +213,9 @@ module lsu
       .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0),  ///  atomicaccessm is probably a bug
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
-      ); // *** the pma/pmp instruction access faults don't really matter here. is it possible to parameterize which outputs exist?
+      );
 
+    // *** lsumisaligned lsumisaligned(Funct3M, IEUAdrM, MemRW, LoadMisalignedFaultM, StoreMisalignedFaultM);
     // *** lump into lsumislaigned module
     // Determine if an Unaligned access is taking place
     // hptw guarantees alignment, only check inputs from IEU.
@@ -253,17 +232,11 @@ module lsu
     assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
     
   end else begin
+    assign {DTLBMissM, DTLBPageFaultM, LoadAccessFaultM, StoreAccessFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM} = '0;
     assign LSUPAdrM = PreLSUPAdrM;
-    assign DTLBMissM = 0;
     assign CacheableM = 1;
-    assign DTLBPageFaultM = 0;
-    assign LoadAccessFaultM = 0;
-    assign StoreAccessFaultM = 0;
-    assign LoadMisalignedFaultM = 0;
-    assign StoreMisalignedFaultM = 0;
   end
-  // *** rename these to LSUStallM
-  assign LSUStall = DCacheStall | InterlockStall | BusStall;
+  assign LSUStallM = DCacheStall | InterlockStall | BusStall;
   
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Hart Memory System

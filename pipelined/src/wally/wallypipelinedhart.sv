@@ -120,7 +120,7 @@ module wallypipelinedhart (
 
   // IMem stalls
   logic 		    IFUStallF;
-  logic 		    LSUStall;
+  logic 		    LSUStallM;
 
   
 
@@ -278,7 +278,7 @@ module wallypipelinedhart (
 	.StoreAccessFaultM,     // connects to privilege
     
 	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
-	.LSUStall);                     // change to LSUStall
+	.LSUStallM);                     // change to LSUStallM
 
 
    // *** Ross: please make EBU conditional when only supporting internal memories
@@ -303,7 +303,7 @@ module wallypipelinedhart (
    hazard     hzu(
      .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
-     .LSUStall, .IFUStallF,
+     .LSUStallM, .IFUStallF,
      .FPUStallD, .FStallD,
 	.DivBusyE, .FDivBusyE,
 	.EcallFaultM, .BreakpointFaultM,
