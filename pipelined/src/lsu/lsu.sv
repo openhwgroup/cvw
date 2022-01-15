@@ -346,12 +346,13 @@ module lsu
         .HCLK(clk), .HRESETn(~reset), 
         .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
         .HWRITE(LSURWM[0]), .HREADY(1'b1),
-        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordMuxM),
+        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
         .HRESPRam(), .HREADYRam());
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
     assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM, SelUncachedAdr} = '0;   
+    assign ReadDataWordMuxM = ReadDataWordM;
   end else begin : bus  // *** lsubusdp
     // Bus Side logic
     // register the fetch data from the next level of memory.
