@@ -32,13 +32,10 @@
 
 `include "wally-config.vh"
 
-module lsu 
-  (
+module lsu (
    input logic 				   clk, reset,
    input logic 				   StallM, FlushM, StallW, FlushW,
    output logic 			   LSUStallM,
-   // Memory Stage
-
    // connected to cpu (controls)
    input logic [1:0] 		   MemRWM,
    input logic [2:0] 		   Funct3M,
@@ -50,13 +47,11 @@ module lsu
    output logic 			   SquashSCW,
    output logic 			   DCacheMiss,
    output logic 			   DCacheAccess,
-
    // address and write data
    input logic [`XLEN-1:0] 	   IEUAdrE,
    (* mark_debug = "true" *)output logic [`XLEN-1:0]    IEUAdrM,
    input logic [`XLEN-1:0] 	   WriteDataM, 
    output logic [`XLEN-1:0]    ReadDataM,
-
    // cpu privilege
    input logic [1:0] 		   PrivilegeModeW,
    input logic 				   DTLBFlushM,
@@ -65,7 +60,6 @@ module lsu
    output logic 			   LoadMisalignedFaultM, LoadAccessFaultM,
    // cpu hazard unit (trap)
    output logic 			   StoreMisalignedFaultM, StoreAccessFaultM,
-
    // connect to ahb
 (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
 (* mark_debug = "true" *)   output logic 			   LSUBusRead, 
@@ -74,31 +68,24 @@ module lsu
 (* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   LSUBusHRDATA,
 (* mark_debug = "true" *)   output logic [`XLEN-1:0]    LSUBusHWDATA,
 (* mark_debug = "true" *)   output logic [2:0] 		   LSUBusSize, 
-
-   // mmu management
-
    // page table walker
    input logic [`XLEN-1:0] 	   SATP_REGW, // from csr
    input logic 				   STATUS_MXR, STATUS_SUM, STATUS_MPRV,
    input logic [1:0] 		   STATUS_MPP,
-
    input logic [`XLEN-1:0] 	   PCF,
    input logic 				   ITLBMissF,
    output logic [`XLEN-1:0]    PTE,
    output logic [1:0] 		   PageType,
    output logic 			   ITLBWriteF,
-
    input 					   var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input 					   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
-   );
+  );
 
   logic 					   DTLBPageFaultM;
-  
   logic [`PA_BITS-1:0] 		   LSUPAdrM;  // from mmu to dcache
   logic [`XLEN+1:0] 		   IEUAdrExtM;
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
-
   logic [1:0] 				   LSURWM;
   logic [1:0] 				   PreLSURWM;
   logic [2:0] 				   LSUFunct3M;
@@ -109,18 +96,12 @@ module lsu
   logic 					   CPUBusy;
   logic 					   MemReadM;
   logic 					   DCacheStallM;
-
   logic 					   CacheableM;
   logic 					   SelHPTW;
-
-
   logic 					   BusStall;
-  
-
   logic 					   InterlockStall;
   logic 					   IgnoreRequest;
   logic 					   BusCommittedM, DCacheCommittedM;
-  
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW and Interlock FSM (only needed if VM supported)
@@ -243,13 +224,6 @@ module lsu
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-  // *** move to top
-  // conditional
-  // 1. ram // controlled by `MEM_DTIM
-  // 2. cache `MEM_DCACHE
-  // 3. wire pass-through
-
   localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
   localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   LINELEN = `MEM_DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
@@ -258,32 +232,20 @@ module lsu
   localparam integer   LINEBYTELEN = LINELEN/8;
   localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
 
-  // temp
-  
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLSUBusHWDATA;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [LINELEN-1:0] DCacheMemWriteData;
-
-  // keep
   logic [`XLEN-1:0]    ReadDataWordMuxM;
-
-
-
   logic [`PA_BITS-1:0] DCacheBusAdr;
   logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
-  
-
-
   logic 			   DCacheWriteLine;
   logic 			   DCacheFetchLine;
   logic 			   DCacheBusAck;
-
   logic 			   SelUncachedAdr;
 
   if (`MEM_DTIM) begin : dtim
-    simpleram #(
-        .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+    simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK(clk), .HRESETn(~reset), 
         .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
         .HWRITE(LSURWM[0]), .HREADY(1'b1),
@@ -306,10 +268,8 @@ end else begin : bus  // *** lsubusdp
 
     genvar               index;
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-      flopen #(`XLEN) fb(.clk,
-                         .en(LSUBusAck & LSUBusRead & (index == WordCount)),
-                         .d(LSUBusHRDATA),
-                         .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+      flopen #(`XLEN) fb(.clk, .en(LSUBusAck & LSUBusRead & (index == WordCount)),
+                         .d(LSUBusHRDATA), .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
 
     assign LocalLSUBusAdr = SelUncachedAdr ? LSUPAdrM : DCacheBusAdr ;

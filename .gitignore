@@ -9,6 +9,7 @@ __pycache__/
 #External repos
 addins
 addins/riscv-arch-test/Makefile.include
+addins/riscv-tests/target
 
 #vsim work files to ignore
 transcript
@@ -47,4 +48,5 @@ fpga/generator/*.jou
 *.objdump*
 *.signature.output
 examples/asm/sumtest/sumtest
+examples/asm/example/example
 
