@@ -809,10 +809,10 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.NUMWAYS;
-  localparam integer linebytelen = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.LINEBYTELEN;
-  localparam integer numwords = testbench.dut.wallypipelinedsoc.hart.lsu.dcache.LINELEN/`XLEN;  
+  localparam integer numlines = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.NUMWAYS;
+  localparam integer linebytelen = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.LINEBYTELEN;
+  localparam integer numwords = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.LINELEN/`XLEN;  
   localparam integer lognumlines = $clog2(numlines);
   localparam integer loglinebytelen = $clog2(linebytelen);
   localparam integer lognumways = $clog2(numways);
@@ -836,10 +836,10 @@ module DCacheFlushFSM
         copyShadow #(.tagstart(tagstart), .loglinebytelen(loglinebytelen))
         copyShadow(.clk,
             .start,
-            .tag(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-            .valid(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].ValidBits[index]),
-            .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].DirtyBits[index]),
-            .data(testbench.dut.wallypipelinedsoc.hart.lsu.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+            .tag(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+            .valid(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].ValidBits[index]),
+            .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].DirtyBits[index]),
+            .data(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
             .index(index),
             .cacheWord(cacheWord),
             .CacheData(CacheData[way][index][cacheWord]),

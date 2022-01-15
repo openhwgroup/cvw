@@ -40,7 +40,7 @@ module interlockfsm
    input logic  DTLBMissM,
    input logic  DTLBWriteM,
    input logic  TrapM,
-   input logic  DCacheStall,
+   input logic  DCacheStallM,
 
    output logic InterlockStall,
    output logic SelReplayCPURequest,
@@ -70,7 +70,7 @@ module interlockfsm
           else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
 		  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
 		  else                                             InterlockNextState = STATE_T0_READY;
-		  STATE_T0_REPLAY:       if(DCacheStall)                                  InterlockNextState = STATE_T0_REPLAY;
+		  STATE_T0_REPLAY:       if(DCacheStallM)                                  InterlockNextState = STATE_T0_REPLAY;
 	      else                                             InterlockNextState = STATE_T0_READY;
 		  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
 		  else                                             InterlockNextState = STATE_T3_DTLB_MISS;

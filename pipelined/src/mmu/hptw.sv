@@ -37,7 +37,7 @@ module hptw
    input logic [`XLEN-1:0] 	   PCF, IEUAdrM, // addresses to translate
    (* mark_debug = "true" *) input logic 				   ITLBMissF, DTLBMissM, // TLB Miss
    input logic [`XLEN-1:0] 	   HPTWReadPTE, // page table entry from LSU
-   input logic 				   DCacheStall, // stall from LSU
+   input logic 				   DCacheStallM, // stall from LSU
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0] 		   PageType, // page type to TLBs
    (* mark_debug = "true" *) output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
@@ -79,7 +79,7 @@ module hptw
 
 	// State flops
 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	assign PRegEn = HPTWRead & ~DCacheStall;
+	assign PRegEn = HPTWRead & ~DCacheStallM;
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
 
 	// Assign PTE descriptors common across all XLEN values
@@ -157,7 +157,7 @@ module hptw
 	IDLE: if (TLBMiss)	 		NextWalkerState = InitialWalkerState;
 			else 					NextWalkerState = IDLE;
 	L3_ADR: 			NextWalkerState = L3_RD; // first access in SV48
-	L3_RD: if (DCacheStall) NextWalkerState = L3_RD;
+	L3_RD: if (DCacheStallM) NextWalkerState = L3_RD;
 				else 			NextWalkerState = L2_ADR;
 	//	    LEVEL3: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
 	//		  		else if (ValidNonLeafPTE) NextWalkerState = L2_ADR;
@@ -166,7 +166,7 @@ module hptw
 			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
 			else 				NextWalkerState = LEAF;
-	L2_RD: if (DCacheStall) NextWalkerState = L2_RD;
+	L2_RD: if (DCacheStallM) NextWalkerState = L2_RD;
 				else 			NextWalkerState = L1_ADR;
 	//	    LEVEL2: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
 	//				else if (ValidNonLeafPTE) NextWalkerState = L1_ADR;
@@ -175,7 +175,7 @@ module hptw
 			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
 			else 				NextWalkerState = LEAF;	
-	L1_RD: if (DCacheStall) NextWalkerState = L1_RD;
+	L1_RD: if (DCacheStallM) NextWalkerState = L1_RD;
 				else 			NextWalkerState = L0_ADR;
 	//	    LEVEL1: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
 	//	      		else if (ValidNonLeafPTE) NextWalkerState = L0_ADR;
@@ -183,7 +183,7 @@ module hptw
 	L0_ADR: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
 			else 				NextWalkerState = LEAF;
-	L0_RD: if (DCacheStall) NextWalkerState = L0_RD;
+	L0_RD: if (DCacheStallM) NextWalkerState = L0_RD;
 				else 			NextWalkerState = LEAF;
 	//	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
 	//				else 				NextWalkerState = FAULT;
