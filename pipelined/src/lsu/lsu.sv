@@ -210,7 +210,7 @@ module lsu
       .Idempotent(), .AtomicAllowed(),
       .TLBPageFault(DTLBPageFaultM),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
-      .AtomicAccessM(1'b0), .ExecuteAccessF(1'b0),  ///  atomicaccessm is probably a bug
+      .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
       );
@@ -294,7 +294,10 @@ module lsu
     // There are no peripherals supported.
     assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM, SelUncachedAdr} = '0;   
     assign ReadDataWordMuxM = ReadDataWordM;
-  end else begin : bus  // *** lsubusdp
+    assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
+    assign ReadDataLineSetsM[0] = 0;
+    assign DCacheMiss = 1'b0; assign DCacheAccess = 1'b0;
+end else begin : bus  // *** lsubusdp
     // Bus Side logic
     // register the fetch data from the next level of memory.
     // This register should be necessary for timing.  There is no register in the uncore or

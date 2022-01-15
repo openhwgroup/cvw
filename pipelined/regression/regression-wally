@@ -145,7 +145,7 @@ def main():
              num_fail+=result.get(timeout=TIMEOUT_DUR)
            except TimeoutError:
              num_fail+=1
-             print("%s: Timeout - runtime exceeded %d seconds" % (config.name, TIMEOUT_DUR))
+             print("%s_%s: Timeout - runtime exceeded %d seconds" % (config.variant, config.name, TIMEOUT_DUR))
 
     # Count the number of failures
     if num_fail:

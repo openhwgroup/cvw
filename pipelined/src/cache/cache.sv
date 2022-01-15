@@ -172,7 +172,6 @@ module cache #(parameter integer LINELEN,
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
-  // *** consider using a limited range shift to do this final muxing.
   genvar index;
 	if(DCACHE == 1) begin: readdata
     for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
