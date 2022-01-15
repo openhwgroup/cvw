@@ -61,7 +61,7 @@ module ahblite (
   (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,
   (* mark_debug = "true" *) input logic HREADY, HRESP,
   (* mark_debug = "true" *) output logic HCLK, HRESETn,
-  (* mark_debug = "true" *) output logic [31:0] HADDR, 
+  (* mark_debug = "true" *) output logic [31:0] HADDR, // *** one day switch to a different bus that supports the full physical address
   (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
   (* mark_debug = "true" *) output logic HWRITE, 
   (* mark_debug = "true" *) output logic [2:0] HSIZE,

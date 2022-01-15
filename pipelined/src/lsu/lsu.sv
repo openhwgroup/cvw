@@ -122,17 +122,9 @@ module lsu
   logic 					   BusCommittedM, DCacheCommittedM;
   
 
-  // Execute Stage Logic
-
-
-  // Execute-Memory Stage Registers (and Cache fires on this edge)
-
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
-
-  // Memory Stage Logic
-
-  assign IEUAdrExtM = {2'b00, IEUAdrM};
-
+  assign IEUAdrExtM = {2'b00, IEUAdrM}; // *** probably needs to connect to external bus too, make external bus PADDRBITS
+ 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW and Interlock FSM (only needed if VM supported)
   // MMU include PMP and is needed if any privileged supported
@@ -169,6 +161,7 @@ module lsu
     mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
     // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
     assign LSUAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLSUAdrE;
+   
     mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
 
     // always block interrupts when using the hardware page table walker.
