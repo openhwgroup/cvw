@@ -7,6 +7,14 @@ make clean:
 	make clean -C ../../tests/wally-riscv-arch-test
 
 make all:
+	# *** Build old tests/imperas-riscv-tests for now;
+	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
+	# Also delete exe2memfile at that point
+	make -C ../../tests/imperas-riscv-tests
+	make -C ../../tests/imperas-riscv-tests XLEN=64
+	cd ../../tests/imperas-riscv-tests; exe2memfile.pl work/*/*.elf
+	
+
 	# Build riscv-arch-test 64 and 32-bit versions
 	make -C ../../addins/riscv-arch-test
 	make -C ../../addins/riscv-arch-test XLEN=32
@@ -25,7 +33,7 @@ make all:
 	# make -C ../../addins/imperas-riscv-tests
 	# make -C ../../addins/imperas-riscv-tests XLEN=64
 	# cd ../../addins/imperas-riscv-tests; elf2hex.sh
-	
+
 	# Link Linux test vectors (fix this later***)
 	#cd ../../tests/linux-testgen/linux-testvectors/;./tvLinker.sh
 

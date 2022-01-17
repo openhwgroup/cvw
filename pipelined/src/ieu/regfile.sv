@@ -37,7 +37,9 @@ module regfile (
   input  logic [`XLEN-1:0] wd3, 
   output logic [`XLEN-1:0] rd1, rd2);
 
-  logic [`XLEN-1:0] rf[31:1];
+  localparam NUMREGS = `E_SUPPORTED ? 16 : 32;  // only 16 registers in E mode
+
+  logic [`XLEN-1:0] rf[NUMREGS-1:1];
   integer i;
 
   // three ported register file
@@ -49,7 +51,7 @@ module regfile (
   // reset is intended for simulation only, not synthesis
     
   always_ff @(negedge clk) // or posedge reset)
-    if (reset) for(i=1; i<32; i++) rf[i] <= 0;
+    if (reset) for(i=1; i<NUMREGS; i++) rf[i] <= 0;
     else       if (we3)            rf[a3] <= wd3;	
 
   assign #2 rd1 = (a1 != 0) ? rf[a1] : 0;
