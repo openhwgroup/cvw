@@ -9,7 +9,7 @@ make clean:
 make all:
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
-	# Also delete exe2memfile at that point
+	# Also delete bin/exe2memfile at that point
 	make -C ../../tests/imperas-riscv-tests
 	make -C ../../tests/imperas-riscv-tests XLEN=64
 	cd ../../tests/imperas-riscv-tests; exe2memfile.pl work/*/*.elf
