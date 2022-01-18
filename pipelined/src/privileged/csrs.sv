@@ -52,7 +52,7 @@ module csrs #(parameter
 
   ) (
     input logic 	     clk, reset, 
-    input logic 	     StallW,
+    input logic 	     FlushW, StallW,
     input logic 	     CSRSWriteM, STrapM,
     input logic [11:0] 	     CSRAdrM,
     input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
@@ -81,14 +81,17 @@ module csrs #(parameter
     logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
     (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
     
-    assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & ~StallW;
-    assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC) & ~StallW;
-    assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH) & ~StallW;
-    assign WriteSEPCM = STrapM | (CSRSWriteM & (CSRAdrM == SEPC)) & ~StallW;
-    assign WriteSCAUSEM = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE)) & ~StallW;
-    assign WriteSTVALM = STrapM | (CSRSWriteM & (CSRAdrM == STVAL)) & ~StallW;
-    assign WriteSATPM = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == `M_MODE | ~STATUS_TVM) & ~StallW;
-    assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN) & ~StallW;
+    logic             InstrValidNotFlushedM;
+    assign InstrValidNotFlushedM = ~StallW & ~FlushW;
+
+    assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & InstrValidNotFlushedM;
+    assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC) & InstrValidNotFlushedM;
+    assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH) & InstrValidNotFlushedM;
+    assign WriteSEPCM = STrapM | (CSRSWriteM & (CSRAdrM == SEPC)) & InstrValidNotFlushedM;
+    assign WriteSCAUSEM = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE)) & InstrValidNotFlushedM;
+    assign WriteSTVALM = STrapM | (CSRSWriteM & (CSRAdrM == STVAL)) & InstrValidNotFlushedM;
+    assign WriteSATPM = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == `M_MODE | ~STATUS_TVM) & InstrValidNotFlushedM;
+    assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN) & InstrValidNotFlushedM;
 
     // CSRs
     flopenr #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); //busybear: change reset to 0

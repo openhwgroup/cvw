@@ -38,7 +38,7 @@ module csri #(parameter
   SIE = 12'h104,
   SIP = 12'h144) (
     input  logic             clk, reset, 
-    input  logic             StallW,
+    input  logic             FlushW, StallW,
     input  logic             CSRMWriteM, CSRSWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic             ExtIntM, TimerIntM, SwIntM,
@@ -51,6 +51,9 @@ module csri #(parameter
   logic [11:0]     IntInM, IP_REGW, IE_REGW;
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
+
+  logic            InstrValidNotFlushedM;
+  assign InstrValidNotFlushedM = ~StallW & ~FlushW;
 
   // Determine which interrupts need to be set
   // assumes no N-mode user interrupts
@@ -66,10 +69,10 @@ module csri #(parameter
    end
 
   // Interrupt Write Enables
-  assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP) & ~StallW;
-  assign WriteMIEM = CSRMWriteM & (CSRAdrM == MIE) & ~StallW;
-  assign WriteSIPM = CSRSWriteM & (CSRAdrM == SIP) & ~StallW;
-  assign WriteSIEM = CSRSWriteM & (CSRAdrM == SIE) & ~StallW;
+  assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP) & InstrValidNotFlushedM;
+  assign WriteMIEM = CSRMWriteM & (CSRAdrM == MIE) & InstrValidNotFlushedM;
+  assign WriteSIPM = CSRSWriteM & (CSRAdrM == SIP) & InstrValidNotFlushedM;
+  assign WriteSIEM = CSRSWriteM & (CSRAdrM == SIE) & InstrValidNotFlushedM;
 
 // Interrupt Pending and Enable Registers
 // MEIP, MTIP, MSIP are read-only

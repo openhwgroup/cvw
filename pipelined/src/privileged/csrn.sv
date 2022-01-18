@@ -42,7 +42,7 @@ module csrn #(parameter
   UTVAL = 12'h043,
   UIP = 12'h044) (
     input  logic             clk, reset, 
-    input  logic             StallW,
+    input  logic             FlushW, StallW,
     input  logic             CSRNWriteM, UTrapM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
@@ -61,12 +61,15 @@ module csrn #(parameter
     logic [`XLEN-1:0] UEDELEG_REGW, UIDELEG_REGW;
     logic [`XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
     
+    logic             InstrValidNotFlushedM;
+    assign InstrValidNotFlushedM = ~StallW & ~FlushW;
+
     // Write enables
-    assign WriteUSTATUSM = CSRNWriteM & (CSRAdrM == USTATUS) & ~StallW;
-    assign WriteUTVECM = CSRNWriteM & (CSRAdrM == UTVEC) & ~StallW;
-    assign WriteUEPCM = UTrapM | (CSRNWriteM & (CSRAdrM == UEPC)) & ~StallW;
-    assign WriteUCAUSEM = UTrapM | (CSRNWriteM & (CSRAdrM == UCAUSE)) & ~StallW;
-    assign WriteUTVALM = UTrapM | (CSRNWriteM & (CSRAdrM == UTVAL)) & ~StallW;
+    assign WriteUSTATUSM = CSRNWriteM & (CSRAdrM == USTATUS) & InstrValidNotFlushedM;
+    assign WriteUTVECM = CSRNWriteM & (CSRAdrM == UTVEC) & InstrValidNotFlushedM;
+    assign WriteUEPCM = UTrapM | (CSRNWriteM & (CSRAdrM == UEPC)) & InstrValidNotFlushedM;
+    assign WriteUCAUSEM = UTrapM | (CSRNWriteM & (CSRAdrM == UCAUSE)) & InstrValidNotFlushedM;
+    assign WriteUTVALM = UTrapM | (CSRNWriteM & (CSRAdrM == UTVAL)) & InstrValidNotFlushedM;
 
     // CSRs
     flopenl #(`XLEN) UTVECreg(clk, reset, WriteUTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, `RESET_VECTOR, UTVEC_REGW);
