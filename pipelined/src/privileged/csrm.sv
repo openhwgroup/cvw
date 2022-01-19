@@ -70,7 +70,7 @@ module csrm #(parameter
    MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}
 ) (
     input logic 	     clk, reset, 
-    input logic 	     StallW,
+    input logic 	     FlushW, StallW,
     input logic 	     CSRMWriteM, MTrapM,
     input logic [11:0] 	     CSRAdrM,
     input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
@@ -95,6 +95,9 @@ module csrm #(parameter
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
 
+  logic            InstrValidNotFlushedM;
+  assign InstrValidNotFlushedM = ~StallW & ~FlushW;
+  
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
   if (`PMP_ENTRIES > 0) begin:pmp
@@ -110,13 +113,13 @@ module csrm #(parameter
       else
         assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
       
-      assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~StallW & ~ADDRLocked[i];
+      assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & InstrValidNotFlushedM & ~ADDRLocked[i];
       flopenr #(`XLEN) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM, PMPADDR_ARRAY_REGW[i]);
       if (`XLEN==64) begin
-        assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~StallW & ~CFGLocked[i];
+        assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & InstrValidNotFlushedM & ~CFGLocked[i];
         flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
       end else begin
-        assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~StallW & ~CFGLocked[i];
+        assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & InstrValidNotFlushedM & ~CFGLocked[i];
         flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
       end
     end
@@ -131,16 +134,16 @@ module csrm #(parameter
   assign MHARTID_REGW = 0;
 
   // Write machine Mode CSRs 
-  assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS) & ~StallW;
-  assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC) & ~StallW;
-  assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG) & ~StallW;
-  assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG) & ~StallW;
-  assign WriteMSCRATCHM = CSRMWriteM & (CSRAdrM == MSCRATCH) & ~StallW;
-  assign WriteMEPCM = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC)) & ~StallW;
-  assign WriteMCAUSEM = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE)) & ~StallW;
-  assign WriteMTVALM = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL)) & ~StallW;
-  assign WriteMCOUNTERENM = CSRMWriteM & (CSRAdrM == MCOUNTEREN) & ~StallW;
-  assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT) & ~StallW;
+  assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS) & InstrValidNotFlushedM;
+  assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC) & InstrValidNotFlushedM;
+  assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG) & InstrValidNotFlushedM;
+  assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG) & InstrValidNotFlushedM;
+  assign WriteMSCRATCHM = CSRMWriteM & (CSRAdrM == MSCRATCH) & InstrValidNotFlushedM;
+  assign WriteMEPCM = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC)) & InstrValidNotFlushedM;
+  assign WriteMCAUSEM = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE)) & InstrValidNotFlushedM;
+  assign WriteMTVALM = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL)) & InstrValidNotFlushedM;
+  assign WriteMCOUNTERENM = CSRMWriteM & (CSRAdrM == MCOUNTEREN) & InstrValidNotFlushedM;
+  assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT) & InstrValidNotFlushedM;
 
   assign IllegalCSRMWriteReadonlyM = CSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
 
