@@ -3,7 +3,6 @@
 // Finite Impulse Response Filter
 
 #include <stdio.h>  // supports printf
-#include <math.h>
 #include "util.h"   // supports verify
 
 void fir(int N, int M, double X[], double c[], double Y[]) {
@@ -28,6 +27,7 @@ int main(void) {
     setStats(1);
     fir(15, 5, X, c, Y);
     setStats(0);
+    // library linked doesn't support printing doubles, so convert to integers to print
     for (int i=0; i<15; i++)  {
         int tmp = Y[i];
         printf("Y[%d] = %d\n", i, tmp);
@@ -35,7 +35,6 @@ int main(void) {
     // verifyDouble doesn't work exaclty because of rounding, so check for almost equal
     for (int i=0; i<15; i++) {
         if (fabs(Y[i] - Yexpected[i]) > 1e-10) {
-            //printf("bad case %d\n", i);
             return 1;
         }
     }
