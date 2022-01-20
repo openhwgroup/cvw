@@ -9,7 +9,7 @@ install:
 	cp ${RISCV}/riscv-isa-sim/arch_test_target/spike/Makefile.include addins/riscv-arch-test/
 	sed -i '/export TARGETDIR ?=/c\export TARGETDIR ?= ${RISCV}/riscv-isa-sim/arch_test_target' addins/riscv-arch-test/Makefile.include
 	echo export RISCV_PREFIX = riscv64-unknown-elf- >> addins/riscv-arch-test/Makefile.include
-	tests/linux-testgen/linux-testvectors/tvLinker.sh
+	# tests/linux-testgen/linux-testvectors/tvLinker.sh # needs to be run in local directory
 
 regression:
 	make -C pipelined/regression
