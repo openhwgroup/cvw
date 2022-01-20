@@ -31,7 +31,7 @@
 module privileged (
   input  logic             clk, reset,
   input  logic             FlushD, FlushE, FlushM, FlushW, StallD, StallE, StallM, StallW,
-  input  logic             CSRReadM, CSRWriteM,
+(* mark_debug = "true" *)  input  logic             CSRReadM, CSRWriteM,
   input  logic [`XLEN-1:0] SrcAM,
   input  logic [`XLEN-1:0] PCM,
   input  logic [31:0]      InstrM,

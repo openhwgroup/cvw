@@ -39,7 +39,7 @@ module regfile (
 
   localparam NUMREGS = `E_SUPPORTED ? 16 : 32;  // only 16 registers in E mode
 
-  logic [`XLEN-1:0] rf[NUMREGS-1:1];
+(* mark_debug = "true" *)  logic [`XLEN-1:0] rf[NUMREGS-1:1];
   integer i;
 
   // three ported register file
