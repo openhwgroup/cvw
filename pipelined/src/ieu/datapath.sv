@@ -58,7 +58,7 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
-  input  logic             RegWriteW, 
+(* mark_debug = "true" *)  input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
   output logic [`XLEN-1:0] ReadDataW,

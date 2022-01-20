@@ -78,7 +78,7 @@ module csrs #(parameter
     logic WriteSTVECM;
     logic WriteSSCRATCHM, WriteSEPCM;
     logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
-    logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
+(* mark_debug = "true" *)    logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
     (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
     
     logic             InstrValidNotFlushedM;

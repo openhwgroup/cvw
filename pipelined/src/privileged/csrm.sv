@@ -89,7 +89,7 @@ module csrm #(parameter
   );
 
   logic [`XLEN-1:0] MISA_REGW, MHARTID_REGW;
-  logic [`XLEN-1:0] MSCRATCH_REGW;
+(* mark_debug = "true" *)  logic [`XLEN-1:0] MSCRATCH_REGW;
   (* mark_debug = "true" *)   logic [`XLEN-1:0] MCAUSE_REGW, MTVAL_REGW;
   logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
