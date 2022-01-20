@@ -71,8 +71,8 @@ logic [3:0] dummy;
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.hart.ieu.dp.StallW, dut.hart.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
@@ -160,10 +160,10 @@ logic [3:0] dummy;
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
-  instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.FinalInstrRawF,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.FinalInstrRawF,
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -196,15 +196,15 @@ logic [3:0] dummy;
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
       //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
-      $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);      
-//      if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
+      $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);      
+//      if(`MEM_DTIM == 1) $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
 //`ifdef `MEM_IROM
 //          $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-//      $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+//      $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
 //`endif
 //      if(`MEM_IROM == 1) begin
 //        $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+        $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
 //      end
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -258,7 +258,7 @@ logic [3:0] dummy;
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
 		  // *** have to figure out how to exclude shadowram when not using a dcache.
-          if (signature[i] !== dut.hart.lsu.dtim.ram.RAM[testadr+i] &
+          if (signature[i] !== dut.core.lsu.dtim.ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
@@ -266,7 +266,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
                     //tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
-                       tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.hart.lsu.dtim.ram.RAM[testadr+i], signature[i]);
+                       tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -290,16 +290,16 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
-            $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
-            //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.hart.lsu.dtim.ram.RAM);
+            $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
+            //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
 /* -----\/----- EXCLUDED -----\/-----
 `ifdef `MEM_IROM
           $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
+            $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
 `endif
  -----/\----- EXCLUDED -----/\----- */
-          $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);
-          //if(`MEM_IROM == 1) $readmemh(memfilename, dut.hart.ifu.irom.ram.RAM);      
+          $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
+          //if(`MEM_IROM == 1) $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);      
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);
@@ -322,14 +322,14 @@ logic [3:0] dummy;
   // or sd gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (`ZICSR_SUPPORTED) assign ecf = dut.hart.priv.priv.EcallFaultM;
+  if (`ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
   assign DCacheFlushStart = ecf & 
-			    (dut.hart.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.hart.ieu.dp.regf.we3 & 
-			      dut.hart.ieu.dp.regf.a3 == 3 & 
-			      dut.hart.ieu.dp.regf.wd3 == 1)) |
-          (dut.hart.ifu.InstrM == 32'h6f | dut.hart.ifu.InstrM == 32'hfc32a423 | dut.hart.ifu.InstrM == 32'hfc32a823) & dut.hart.ieu.c.InstrValidM;
+			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.core.ieu.dp.regf.we3 & 
+			      dut.core.ieu.dp.regf.a3 == 3 & 
+			      dut.core.ieu.dp.regf.wd3 == 1)) |
+          (dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM;
 
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
     			.reset(reset),
@@ -339,8 +339,8 @@ logic [3:0] dummy;
   // initialize the branch predictor
   if (`BPRED_ENABLED == 1) 
     initial begin
-      $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-      $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
+      $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);    
     end 
 endmodule
 
@@ -385,10 +385,10 @@ module DCacheFlushFSM
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
 	if(`MEM_DCACHE) begin
-	  localparam integer numlines = testbench.dut.hart.lsu.bus.dcache.dcache.NUMLINES;
-	  localparam integer numways = testbench.dut.hart.lsu.bus.dcache.dcache.NUMWAYS;
-	  localparam integer linebytelen = testbench.dut.hart.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer numwords = testbench.dut.hart.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
+	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
+	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
+	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+	  localparam integer numwords = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
 	  localparam integer lognumlines = $clog2(numlines);
 	  localparam integer loglinebytelen = $clog2(linebytelen);
 	  localparam integer lognumways = $clog2(numways);
@@ -409,10 +409,10 @@ module DCacheFlushFSM
 						 .loglinebytelen(loglinebytelen))
 			copyShadow(.clk,
 					   .start,
-					   .tag(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-					   .valid(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].ValidBits[index]),
-					   .dirty(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].DirtyBits[index]),
-					   .data(testbench.dut.hart.lsu.bus.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+					   .tag(testbench.dut.core.lsu.bus.dcache.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+					   .valid(testbench.dut.core.lsu.bus.dcache.dcache.MemWay[way].ValidBits[index]),
+					   .dirty(testbench.dut.core.lsu.bus.dcache.dcache.MemWay[way].DirtyBits[index]),
+					   .data(testbench.dut.core.lsu.bus.dcache.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
 					   .index(index),
 					   .cacheWord(cacheWord),
 					   .CacheData(CacheData[way][index][cacheWord]),

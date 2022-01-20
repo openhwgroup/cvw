@@ -48,11 +48,11 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   logic 	    StallD, StallE, FlushD, FlushE;
   integer 	    ProgramAddrIndex;
 
-  assign PCF = testbench.dut.hart.PCF;
-  assign StallD = testbench.dut.hart.StallD;
-  assign StallE = testbench.dut.hart.StallE;  
-  assign FlushD = testbench.dut.hart.FlushD;
-  assign FlushE = testbench.dut.hart.FlushE;
+  assign PCF = testbench.dut.core.PCF;
+  assign StallD = testbench.dut.core.StallD;
+  assign StallE = testbench.dut.core.StallE;  
+  assign FlushD = testbench.dut.core.FlushD;
+  assign FlushE = testbench.dut.core.FlushE;
 
   // copy from ifu
   // when the F and D stages are flushed we need to ensure the PCE is held so that the function name does not

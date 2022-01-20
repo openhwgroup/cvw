@@ -5,7 +5,7 @@
 // Modified: 
 //
 // Purpose: Load/Store Unit 
-//          Top level of the memory-stage hart logic
+//          Top level of the memory-stage core logic
 //          Contains data cache, DTLB, subword read/write datapath, interface to external bus
 // 
 // A component of the Wally configurable RISC-V project.
