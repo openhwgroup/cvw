@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: On-chip SIMPLERAM, external to hart
+// Purpose: On-chip SIMPLERAM, external to core
 // 
 // A component of the Wally configurable RISC-V project.
 // 
