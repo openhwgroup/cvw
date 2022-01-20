@@ -13,5 +13,7 @@ install:
 regression:
 	make -C pipelined/regression
 
-
+clean:
+	make clean -C pipelined/regression
+	
 
