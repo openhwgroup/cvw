@@ -107,7 +107,7 @@ module ifu (
   logic [`XLEN+1:0]            PCFExt;
 
   logic 					   CacheableF;
-  logic [11:0] 				   PCNextFMux;
+  logic [`XLEN-1:0]			   PCNextFMux;
   logic [`XLEN-1:0] 		   PCFMux;
   logic 					   SelNextSpill;
   logic 					   ICacheFetchLine;
@@ -128,7 +128,7 @@ module ifu (
 	// this exists only if there are compressed instructions.
 	assign PCFp2 = PCF + `XLEN'b10;
     
-	assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
+	assign PCNextFMux = SelNextSpill ? PCFp2 : PCNextF;
 	assign PCFMux = SelSpill ? PCFp2 : PCF;
     
 	assign Spill = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
@@ -168,7 +168,7 @@ module ifu (
 
 	// end of spill support
   end else begin : NoSpillSupport // line: SpillSupport
-	assign PCNextFMux = PCNextF[11:0];
+	assign PCNextFMux = PCNextF;
 	assign PCFMux = PCF;
 	assign SelNextSpill = 0;
 	assign PostSpillInstrRawF = InstrRawF;
@@ -236,7 +236,7 @@ module ifu (
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK(clk), .HRESETn(~reset), 
-        .HSELRam(1'b1), .HADDR(CPUBusy ? PCPF[31:0] : PCNextF[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
+        .HSELRam(1'b1), .HADDR(CPUBusy ? PCPF[31:0] : PCNextFMux[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
         .HWRITE(1'b0), .HREADY(1'b1),
         .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF_FIXME),
         .HRESPRam(), .HREADYRam());
@@ -300,7 +300,7 @@ module ifu (
 		   .RW(IFURWF), 
 		   .Atomic(2'b00),
 		   .FlushCache(1'b0),
-		   .NextAdr(PCNextFMux),
+		   .NextAdr(PCNextFMux[11:0]),
 		   .PAdr(PCPF),
 		   .CacheCommitted(),
 		   .InvalidateCacheM(InvalidateICacheM));
