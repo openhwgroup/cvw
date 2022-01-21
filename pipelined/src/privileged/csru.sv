@@ -37,7 +37,7 @@ module csru #(parameter
   FRM = 12'h002,
   FCSR = 12'h003) (
     input  logic             clk, reset, 
-    input  logic             FlushW, StallW,
+    input  logic             InstrValidNotFlushedM, StallW,
     input  logic             CSRUWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] CSRWriteValM,
@@ -54,9 +54,6 @@ module csru #(parameter
     logic [2:0] NextFRMM;
     logic [4:0] NextFFLAGSM;
       
-    logic       InstrValidNotFlushedM;
-    assign InstrValidNotFlushedM = ~StallW & ~FlushW;
-
     // Write enables
     //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & InstrValidNotFlushedM;
     assign WriteFRMM = (CSRUWriteM & (CSRAdrM == FRM | CSRAdrM == FCSR))  & InstrValidNotFlushedM;

@@ -42,7 +42,7 @@ module csrn #(parameter
   UTVAL = 12'h043,
   UIP = 12'h044) (
     input  logic             clk, reset, 
-    input  logic             FlushW, StallW,
+    input  logic             InstrValidNotFlushedM, StallW,
     input  logic             CSRNWriteM, UTrapM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] NextEPCM, NextCauseM, NextMtvalM, USTATUS_REGW, 
@@ -60,9 +60,6 @@ module csrn #(parameter
     logic WriteUCAUSEM, WriteUTVALM;
     logic [`XLEN-1:0] UEDELEG_REGW, UIDELEG_REGW;
     logic [`XLEN-1:0] USCRATCH_REGW, UCAUSE_REGW, UTVAL_REGW;
-    
-    logic             InstrValidNotFlushedM;
-    assign InstrValidNotFlushedM = ~StallW & ~FlushW;
 
     // Write enables
     assign WriteUSTATUSM = CSRNWriteM & (CSRAdrM == USTATUS) & InstrValidNotFlushedM;
