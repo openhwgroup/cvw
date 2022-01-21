@@ -38,7 +38,7 @@ module csri #(parameter
   SIE = 12'h104,
   SIP = 12'h144) (
     input  logic             clk, reset, 
-    input  logic             FlushW, StallW,
+    input  logic             InstrValidNotFlushedM, StallW,
     input  logic             CSRMWriteM, CSRSWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic             ExtIntM, TimerIntM, SwIntM,
@@ -51,9 +51,6 @@ module csri #(parameter
   logic [11:0]     IntInM, IP_REGW, IE_REGW;
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
-
-  logic            InstrValidNotFlushedM;
-  assign InstrValidNotFlushedM = ~StallW & ~FlushW;
 
   // Determine which interrupts need to be set
   // assumes no N-mode user interrupts

@@ -52,7 +52,7 @@ module csrs #(parameter
 
   ) (
     input logic 	     clk, reset, 
-    input logic 	     FlushW, StallW,
+    input logic 	     InstrValidNotFlushedM, StallW,
     input logic 	     CSRSWriteM, STrapM,
     input logic [11:0] 	     CSRAdrM,
     input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
@@ -81,9 +81,6 @@ module csrs #(parameter
 (* mark_debug = "true" *)    logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
     (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
     
-    logic             InstrValidNotFlushedM;
-    assign InstrValidNotFlushedM = ~StallW & ~FlushW;
-
     assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & InstrValidNotFlushedM;
     assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC) & InstrValidNotFlushedM;
     assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH) & InstrValidNotFlushedM;
