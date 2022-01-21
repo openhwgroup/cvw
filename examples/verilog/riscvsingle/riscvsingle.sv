@@ -117,7 +117,7 @@ module testbench();
   logic        MemWrite;
 
   // instantiate device to be tested
-  riscvsinglehart dut(clk, reset, WriteData, IEUAdr, MemWrite);
+  riscvsinglecore dut(clk, reset, WriteData, IEUAdr, MemWrite);
   
   // initialize test
   initial begin
@@ -143,7 +143,7 @@ module testbench();
   end
 endmodule
 
-module riscvsinglehart(
+module riscvsinglecore(
   input  logic        clk, reset, 
   output logic [31:0] WriteData, IEUAdr, 
   output logic        MemWrite);
