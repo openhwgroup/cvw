@@ -1,0 +1,7 @@
+# Makefile added 1/20/22 David_Harris@hmc.edu
+# Compile Embench for Wally
+
+all: Makefile
+	./build_all.py --arch riscv32 --chip generic --board ri5cyverilator --cc riscv64-unknown-elf-gcc 
+	./benchmark_size.py 
+	./benchmark_speed.py
