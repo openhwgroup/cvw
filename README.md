@@ -17,17 +17,17 @@ See Chapter 2 of draft book of how to install and compile tests.
 
 Then follow Section 2.2.2 to clone the repo, source setup,  make the tests and run regression
 
-$ cd
-$ export RISCV=/opt/riscv
-$ git clone --recurse-submodules https://github.com/davidharrishmc/riscv-wally
-$ cd riscv-wally
-$ source ./setup.sh
-$ make
-$ cd pipelined/regression
-$ ./regression-wally       (depends on having Questa installed)
+	$ cd
+	$ export RISCV=/opt/riscv
+	$ git clone --recurse-submodules https://github.com/davidharrishmc/riscv-wally
+	$ cd riscv-wally
+	$ source ./setup.sh
+	$ make
+	$ cd pipelined/regression
+	$ ./regression-wally       (depends on having Questa installed)
 
 Add the following lines to your .bashrc or .bash_profile
 
-if [ -f ~/riscv-wally/setup.sh ]; then
-	source ~/riscv-wally/setup.sh
-fi
+	if [ -f ~/riscv-wally/setup.sh ]; then
+		source ~/riscv-wally/setup.sh
+	fi
