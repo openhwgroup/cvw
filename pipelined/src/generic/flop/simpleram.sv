@@ -54,23 +54,26 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   logic        memwrite;
   logic [3:0]  busycount;
 
+  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
+
+  flopenr #(32)   haddrreg(HCLK, 1'b0, 1'b1, HADDR, A);
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
     always_ff @(posedge HCLK) begin
-      if (HWRITE & |HTRANS) RAM[HADDR[31:3]] <= #1 HWDATA;
+      if (HWRITE & |HTRANS) RAM[A[31:3]] <= #1 HWDATA;
     end
   end else begin 
     always_ff @(posedge HCLK) begin:ramrw
-      if (HWRITE & |HTRANS) RAM[HADDR[31:2]] <= #1 HWDATA;
+      if (HWRITE & |HTRANS) RAM[A[31:2]] <= #1 HWDATA;
     end
   end
 
   // read
   if(`XLEN == 64) begin: ramr
-    assign HREADRam0 = RAM[HADDR[31:3]];
+    assign HREADRam0 = RAM[A[31:3]];
   end else begin
-    assign HREADRam0 = RAM[HADDR[31:2]];
+    assign HREADRam0 = RAM[A[31:2]];
   end
 
   /* verilator lint_on WIDTH */

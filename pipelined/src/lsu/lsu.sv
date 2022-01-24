@@ -247,7 +247,7 @@ module lsu (
   if (`MEM_DTIM) begin : dtim
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK(clk), .HRESETn(~reset), 
-        .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
+        .HSELRam(1'b1), .HADDR(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
         .HWRITE(LSURWM[0]), .HREADY(1'b1),
         .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
         .HRESPRam(), .HREADYRam());
@@ -259,7 +259,7 @@ module lsu (
     assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
     assign ReadDataLineSetsM[0] = 0;
     assign DCacheMiss = 1'b0; assign DCacheAccess = 1'b0;
-end else begin : bus  // *** lsubusdp
+  end else begin : bus  // *** lsubusdp
     // Bus Side logic
     // register the fetch data from the next level of memory.
     // This register should be necessary for timing.  There is no register in the uncore or
