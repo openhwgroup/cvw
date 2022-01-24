@@ -4,7 +4,7 @@
 # David_Harris@hmc.edu and kekim@hmc.edu 1 December 2021
 # Set up tools for riscv-wally
 
-echo "Executing wally-setup.sh"
+echo "Executing Wally setup.sh"
 
 # Path to RISC-V Tools
 export RISCV=/opt/riscv   # change this if you installed the tools in a different location
