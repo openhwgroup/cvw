@@ -1,0 +1,2 @@
+replace /qemu/target/riscv/cpu.c with the provided cpu.c
+replace /qemu/hw/riscv/virt.c with the provided virt.c
