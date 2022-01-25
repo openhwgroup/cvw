@@ -247,10 +247,9 @@ module lsu (
   if (`MEM_DTIM) begin : dtim
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
-        .HSELRam(1'b1), .Adr(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
-        .HWRITE(LSURWM[0]), .HREADY(1'b1),
-        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
-        .HRESPRam(), .HREADYRam());
+        .a(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
+        .we(LSURWM[0]), 
+        .wd(FinalWriteDataM), .rd(ReadDataWordM));
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
