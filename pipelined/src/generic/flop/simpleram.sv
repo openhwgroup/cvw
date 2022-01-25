@@ -46,7 +46,7 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   localparam MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
   
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
-  logic [31:0] HWADDR, A;
+  logic [31:0] AD;
   logic [`XLEN-1:0] HREADRam0;
 
   logic        prevHREADYRam, risingHREADYRam;
@@ -56,28 +56,26 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
 
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
-  flopenr #(32)   Adrreg(clk, 1'b0, 1'b1, Adr, A);
+  flop #(32)   Adrreg(clk, Adr, AD);
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
     always_ff @(posedge clk) begin
-      if (HWRITE & |HTRANS) RAM[A[31:3]] <= #1 HWDATA;
+      if (HWRITE & |HTRANS) RAM[AD[31:3]] <= #1 HWDATA;
     end
   end else begin 
     always_ff @(posedge clk) begin:ramrw
-      if (HWRITE & |HTRANS) RAM[A[31:2]] <= #1 HWDATA;
+      if (HWRITE & |HTRANS) RAM[AD[31:2]] <= #1 HWDATA;
     end
   end
 
   // read
   if(`XLEN == 64) begin: ramr
-    assign HREADRam0 = RAM[A[31:3]];
+    assign HREADRam = RAM[AD[31:3]];
   end else begin
-    assign HREADRam0 = RAM[A[31:2]];
+    assign HREADRam = RAM[AD[31:2]];
   end
 
   /* verilator lint_on WIDTH */
-
-  assign HREADRam = HREADRam0;
 endmodule
 
