@@ -245,6 +245,7 @@ module lsu (
   logic 			   SelUncachedAdr;
 
   if (`MEM_DTIM) begin : dtim
+    // *** adjust interface so write address doesn't need delaying; switch to standard RAM?
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
         .a(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
