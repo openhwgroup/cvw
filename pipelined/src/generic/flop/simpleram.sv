@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 module simpleram #(parameter BASE=0, RANGE = 65535) (
-  input  logic             HCLK, HRESETn, 
+  input  logic             clk, 
   input  logic             HSELRam,
   input  logic [31:0]      HADDR,
   input  logic             HWRITE,
@@ -56,15 +56,15 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
 
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
-  flopenr #(32)   haddrreg(HCLK, 1'b0, 1'b1, HADDR, A);
+  flopenr #(32)   haddrreg(clk, 1'b0, 1'b1, HADDR, A);
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
-    always_ff @(posedge HCLK) begin
+    always_ff @(posedge clk) begin
       if (HWRITE & |HTRANS) RAM[A[31:3]] <= #1 HWDATA;
     end
   end else begin 
-    always_ff @(posedge HCLK) begin:ramrw
+    always_ff @(posedge clk) begin:ramrw
       if (HWRITE & |HTRANS) RAM[A[31:2]] <= #1 HWDATA;
     end
   end

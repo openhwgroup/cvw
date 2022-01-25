@@ -246,7 +246,7 @@ module lsu (
 
   if (`MEM_DTIM) begin : dtim
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .HCLK(clk), .HRESETn(~reset), 
+        .clk, 
         .HSELRam(1'b1), .HADDR(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
         .HWRITE(LSURWM[0]), .HREADY(1'b1),
         .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
