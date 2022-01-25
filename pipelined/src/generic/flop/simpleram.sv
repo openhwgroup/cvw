@@ -33,7 +33,7 @@
 module simpleram #(parameter BASE=0, RANGE = 65535) (
   input  logic             clk, 
   input  logic             HSELRam,
-  input  logic [31:0]      HADDR,
+  input  logic [31:0]      Adr,
   input  logic             HWRITE,
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
@@ -56,7 +56,7 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
 
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
-  flopenr #(32)   haddrreg(clk, 1'b0, 1'b1, HADDR, A);
+  flopenr #(32)   Adrreg(clk, 1'b0, 1'b1, Adr, A);
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
