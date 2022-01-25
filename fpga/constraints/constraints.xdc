@@ -57,6 +57,8 @@ set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_port
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports reset]
 set_max_delay -from [get_ports reset] 15.000
 set_false_path -from [get_ports reset]
+set_property PACKAGE_PIN L19 [get_ports {reset}]
+set_property IOSTANDARD LVCMOS12 [get_ports {reset}]
 
 
 
