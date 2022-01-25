@@ -250,14 +250,12 @@ module ifu (
         .HRESPRam(), .HREADYRam());
  -----/\----- EXCLUDED -----/\----- */
 
-	assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
+	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
     assign BusStall = 0;
     assign IFUBusRead = 0;
     assign ICacheBusAck = 0;
     assign SelUncachedAdr = 0;
     assign IFUBusAdr = 0;
-    
-    
   end else begin : bus
       genvar 			   index;
       for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
@@ -381,10 +379,7 @@ module ifu (
                        .s(`MEM_IROM ? reset : reset_q),
                        .y(UnalignedPCNextF));
 
-  flop #(1) resetReg (.clk(clk),
-        .d(reset),
-        .q(reset_q));
-
+  flop #(1) resetReg (.clk(clk), .d(reset),.q(reset_q)); // delay reset
 
   flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM),
 								.d(BPPredWrongE), .q(BPPredWrongM));
