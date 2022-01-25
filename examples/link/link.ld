@@ -4,7 +4,7 @@ ENTRY(rvtest_entry_point)
 SECTIONS
 {
   . = 0x80000000;
-  .text : { *(.text) }
+  .text : { *(.text.init) }
   . = ALIGN(0x1000);
   .tohost : { *(.tohost) }
   . = ALIGN(0x1000);
