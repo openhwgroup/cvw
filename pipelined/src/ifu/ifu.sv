@@ -235,21 +235,11 @@ module ifu (
 
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .HCLK(clk), .HRESETn(~reset), 
+        .clk, 
         .HSELRam(1'b1), .HADDR(CPUBusy ? PCPF[31:0] : PCNextFMux[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
         .HWRITE(1'b0), .HREADY(1'b1),
         .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF_FIXME),
         .HRESPRam(), .HREADYRam());
-
-/* -----\/----- EXCLUDED -----\/-----
-    ram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .HCLK(clk), .HRESETn(~reset), 
-        .HSELRam(1'b1), .HADDR(PCNextF[31:0]),
-        .HWRITE(1'b0), .HREADY(1'b1),
-        .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF_FIXME),
-        .HRESPRam(), .HREADYRam());
- -----/\----- EXCLUDED -----/\----- */
-
 	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
     assign BusStall = 0;
     assign IFUBusRead = 0;
