@@ -38,32 +38,23 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   output logic [`XLEN-1:0] rd
 );
 
-  localparam MemStartAddr = BASE>>(1+`XLEN/32);
-  localparam MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
-  
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   logic [31:0] ad;
 
-  flop #(32)   areg(clk, a, ad);
+  flop #(32)   areg(clk, a, ad); // *** redesign external interface so this delay isn't needed
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
     always_ff @(posedge clk) begin
+      rd <= RAM[a[31:3]];
       if (we) RAM[ad[31:3]] <= #1 wd;
     end
   end else begin 
     always_ff @(posedge clk) begin:ramrw
+      rd <= RAM[a[31:2]];
       if (we) RAM[ad[31:2]] <= #1 wd;
     end
   end
-
-  // read
-  if(`XLEN == 64) begin: ramr
-    assign rd = RAM[ad[31:3]];
-  end else begin
-    assign rd = RAM[ad[31:2]];
-  end
-
   /* verilator lint_on WIDTH */
 endmodule
 
