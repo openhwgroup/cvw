@@ -32,48 +32,36 @@
 
 module simpleram #(parameter BASE=0, RANGE = 65535) (
   input  logic             clk, 
-  input  logic             HSELRam,
-  input  logic [31:0]      Adr,
-  input  logic             HWRITE,
-  input  logic             HREADY,
-  input  logic [1:0]       HTRANS,
-  input  logic [`XLEN-1:0] HWDATA,
-  output logic [`XLEN-1:0] HREADRam,
-  output logic             HRESPRam, HREADYRam
+  input  logic [31:0]      a,
+  input  logic             we,
+  input  logic [`XLEN-1:0] wd,
+  output logic [`XLEN-1:0] rd
 );
 
   localparam MemStartAddr = BASE>>(1+`XLEN/32);
   localparam MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
   
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
-  logic [31:0] AD;
-  logic [`XLEN-1:0] HREADRam0;
+  logic [31:0] ad;
 
-  logic        prevHREADYRam, risingHREADYRam;
-  logic        initTrans;
-  logic        memwrite;
-  logic [3:0]  busycount;
-
-  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
-
-  flop #(32)   Adrreg(clk, Adr, AD);
+  flop #(32)   areg(clk, a, ad);
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
     always_ff @(posedge clk) begin
-      if (HWRITE & |HTRANS) RAM[AD[31:3]] <= #1 HWDATA;
+      if (we) RAM[ad[31:3]] <= #1 wd;
     end
   end else begin 
     always_ff @(posedge clk) begin:ramrw
-      if (HWRITE & |HTRANS) RAM[AD[31:2]] <= #1 HWDATA;
+      if (we) RAM[ad[31:2]] <= #1 wd;
     end
   end
 
   // read
   if(`XLEN == 64) begin: ramr
-    assign HREADRam = RAM[AD[31:3]];
+    assign rd = RAM[ad[31:3]];
   end else begin
-    assign HREADRam = RAM[AD[31:2]];
+    assign rd = RAM[ad[31:2]];
   end
 
   /* verilator lint_on WIDTH */
