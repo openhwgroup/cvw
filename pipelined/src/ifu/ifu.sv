@@ -233,6 +233,8 @@ module ifu (
   if (`MEM_IROM) begin : irom
 	logic [`XLEN-1:0] FinalInstrRawF_FIXME;
 
+    // *** adjust interface so write address doesn't need delaying
+    // *** modify to be a ROM rather than RAM
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
