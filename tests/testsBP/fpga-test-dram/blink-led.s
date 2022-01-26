@@ -47,7 +47,7 @@ _start:
 
 	# write to gpio
 	li	x2, 0xFF
-	la	x3, 0x10012000
+	la	x3, 0x10060000
 
 	# +8 is output enable
 	# +C is output value

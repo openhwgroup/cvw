@@ -27,7 +27,7 @@
 #define RAM_RANGE      0x7FFFFFFF
 #define CLINT_BASE     0x02000000
 #define CLINT_RANGE    0x0000FFFF
-#define GPIO_BASE      0x10012000
+#define GPIO_BASE      0x10060000
 #define GPIO_RANGE     0x000000FF
 #define UART_BASE      0x10000000
 #define UART_RANGE     0x00000007
