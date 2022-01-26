@@ -84,7 +84,7 @@ module ifu (
     output logic                ICacheMiss
 );
 
-  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
+(* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
   logic                        misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
   logic                        PrivilegedChangePCM;
   logic                        IllegalCompInstrD;
@@ -115,7 +115,7 @@ module ifu (
   logic 					   ICacheStallF;
   logic 					   IgnoreRequest;
   logic 					   CPUBusy;
-  logic [31:0] 				   PostSpillInstrRawF;
+(* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
 
   localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
 
