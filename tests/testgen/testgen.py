@@ -74,7 +74,7 @@ def writeVector(a, b, storecmd, xlen):
   lines = lines + "li x" + str(reg2) + ", MASK_XLEN(" + formatstr.format(b) + ")\n"
   lines = lines + test + " x" + str(reg3) + ", x" + str(reg1) + ", x" + str(reg2) + "\n"
   lines = lines + storecmd + " x" + str(reg3) + ", " + str(wordsize*testnum) + "(x6)\n"
-  lines = lines + "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg3) +", "+formatstr.format(expected)+")\n"
+#  lines = lines + "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg3) +", "+formatstr.format(expected)+")\n"
   f.write(lines)
   if (xlen == 32):
     line = formatrefstr.format(expected)+"\n"
@@ -143,6 +143,8 @@ for xlen in xlens:
 
 
     # print footer
+    line = "\n.EQU NUMTESTS," + str(testnum) + "\n\n"
+    f.write(line)
     h = open("testgen_footer.S", "r")
     for line in h:  
       f.write(line)

@@ -23,4 +23,4 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 
-RVTEST_SIGBASE( x8,signature_x8_1)
+RVTEST_SIGBASE( x6, wally_signature)

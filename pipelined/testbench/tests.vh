@@ -36,7 +36,7 @@ string tvpaths[] = '{
     "../../tests/imperas-riscv-tests/work/"
 };
 
-  // *** make sure these are somewhere
+   // *** make sure these are somewhere
   string imperas64a[] = '{
     `MYIMPERASTEST,
     "rv64a/WALLY-AMO", "2110",
@@ -1467,8 +1467,11 @@ string imperas32f[] = '{
 
  string wally64i[] = '{
     `WALLYTEST,
-    "rv64i_m/I/add-01", "9010",
-    "rv64i_m/I/PIPELINE", "3010"
+    "rv64i_m/I/WALLY-ADD", "002010",
+		"rv64i_m/I/WALLY-SLT", "002010",
+		"rv64i_m/I/WALLY-SLTU", "002010",
+		"rv64i_m/I/WALLY-SUB", "002010",
+		"rv64i_m/I/WALLY-XOR", "002010"
  };
 
  string wally64priv[] = '{
@@ -1485,7 +1488,11 @@ string imperas32f[] = '{
 
 string wally32i[] = '{
     `WALLYTEST,
-    "rv32i_m/I/PIPELINE", "3010"
+    "rv32i_m/I/WALLY-ADD", "002010",
+		"rv32i_m/I/WALLY-SLT", "002010",
+		"rv32i_m/I/WALLY-SLTU", "002010",
+		"rv32i_m/I/WALLY-SUB", "002010",
+		"rv32i_m/I/WALLY-XOR", "002010"
  };
 
  string wally32priv[] = '{
