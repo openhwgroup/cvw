@@ -153,7 +153,8 @@ module lsu (
     assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
   end // if (`MEM_VIRTMEM)
   else begin
-    assign {InterlockStall, SelHPTW, IgnoreRequest, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
+    assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
+    assign IgnoreRequest = TrapM;
     assign {DTLBLoadPageFaultM, DTLBStorePageFaultM} = '0;
     assign CPUBusy = StallW;
     assign LSUAdrE = PreLSUAdrE; assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
@@ -248,8 +249,8 @@ module lsu (
     // *** adjust interface so write address doesn't need delaying; switch to standard RAM?
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
-        .a(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
-        .we(LSURWM[0]), 
+        .a(CPUBusy | LSURWM[0] ? IEUAdrM[31:0] : IEUAdrE[31:0]),
+        .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
         .wd(FinalWriteDataM), .rd(ReadDataWordM));
 
     // since we have a local memory the bus connections are all disabled.
