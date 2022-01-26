@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// wallypipelinedhart.sv
+// wallypipelinedcore.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 /* verilator lint_on UNUSED */
 
-module wallypipelinedhart (
+module wallypipelinedcore (
    input logic 		    clk, reset,
    // Privileged
    input logic 		    TimerIntM, ExtIntM, SwIntM,

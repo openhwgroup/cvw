@@ -94,14 +94,14 @@ module testbench;
   logic             InstrValidW;
   logic [`XLEN-1:0] IEUAdrW, WriteDataW;
   logic             TrapW;
-  `define FLUSHW dut.hart.FlushW
-  `define STALLW dut.hart.StallW
-  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ifu.PCM, PCW);
-  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.hart.ifu.InstrM, InstrW);
-  flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.hart.ieu.c.InstrValidM, InstrValidW);
-  flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.IEUAdrM, IEUAdrW);
-  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.hart.WriteDataM, WriteDataW);  
-  flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.hart.hzu.TrapM, TrapW);
+  `define FLUSHW dut.core.FlushW
+  `define STALLW dut.core.StallW
+  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.ifu.PCM, PCW);
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
+  flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
+  flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.WriteDataM, WriteDataW);  
+  flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.core.hzu.TrapM, TrapW);
 
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////// Signals & Macro DECLARATIONS /////////////////////////
@@ -171,9 +171,9 @@ module testbench;
   integer           CheckMIPFutureE;
   integer           CheckMIPFutureM;
   // Useful Aliases
-  `define RF          dut.hart.ieu.dp.regf.rf
-  `define PC          dut.hart.ifu.pcreg.q
-  `define CSR_BASE    dut.hart.priv.priv.csr
+  `define RF          dut.core.ieu.dp.regf.rf
+  `define PC          dut.core.ifu.pcreg.q
+  `define CSR_BASE    dut.core.priv.priv.csr
   `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
   `define PMP_BASE    `CSR_BASE.csrm.pmp
   `define PMPCFG      genblk2.PMPCFGreg.q
@@ -209,8 +209,8 @@ module testbench;
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
-  `define PRIV        dut.hart.priv.priv.privmodereg.q
-  `define INSTRET     dut.hart.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]
+  `define PRIV        dut.core.priv.priv.privmodereg.q
+  `define INSTRET     dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]
   // Common Macros
   `define checkCSR(CSR) \
     begin \
@@ -302,12 +302,12 @@ module testbench;
   integer ramFile;
   integer readResult;
   initial begin
-    force dut.hart.priv.priv.SwIntM = 0;
-    force dut.hart.priv.priv.TimerIntM = 0;
-    force dut.hart.priv.priv.ExtIntM = 0;    
+    force dut.core.priv.priv.SwIntM = 0;
+    force dut.core.priv.priv.TimerIntM = 0;
+    force dut.core.priv.priv.ExtIntM = 0;    
     $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootrom.bootrom.RAM, 'h1000 >> 3);
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
+    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+    $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
     ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
     if (CHECKPOINT==0) begin // normal
@@ -359,7 +359,7 @@ module testbench;
   // on the next falling edge the expected state is compared to the wally state.
 
   // step 0: read the expected state
-  assign checkInstrM = dut.hart.ieu.InstrValidM & ~dut.hart.priv.priv.trap.InstrPageFaultM & ~dut.hart.priv.priv.trap.InterruptM & ~dut.hart.StallM;
+  assign checkInstrM = dut.core.ieu.InstrValidM & ~dut.core.priv.priv.trap.InstrPageFaultM & ~dut.core.priv.priv.trap.InterruptM & ~dut.core.StallM;
   `define SCAN_NEW_INSTR_FROM_TRACE(STAGE) \
     // always check PC, instruction bits \
     if (checkInstrM) begin \
@@ -438,11 +438,11 @@ module testbench;
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (dut.hart.lsu.LSUPAdrM == 'h10000005) \
+        if (dut.core.lsu.LSUPAdrM == 'h10000005) \
           //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
-          force dut.hart.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
+          force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
-          release dut.hart.ieu.dp.ReadDataM; \
+          release dut.core.ieu.dp.ReadDataM; \
         if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
           force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
@@ -467,13 +467,13 @@ module testbench;
       // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
       // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
       // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
-      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) || ~dut.hart.ieu.c.InstrValidM) begin
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) || ~dut.core.ieu.c.InstrValidM) begin
         RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
         $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
         MIPexpected = NextMIPexpected;
-        force dut.hart.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+        force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
       end
       // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
       // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
@@ -485,11 +485,11 @@ module testbench;
       // $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
     end
     if(RequestDelayedMIP & checkInstrM) begin
-      $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.priv.csr.csrm.MEPC_REGW);
+      $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
       $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
       MIPexpected = NextMIPexpected;
-      force dut.hart.priv.priv.csr.csri.MIP_REGW = MIPexpected;
-      $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.hart.priv.priv.csr.csrm.MEPC_REGW);
+      force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+      $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
       RequestDelayedMIP = 0;
     end
   end
@@ -508,8 +508,8 @@ module testbench;
       ExpectedMemWriteDataW <= '0;
       ExpectedMemReadDataW <= '0;
       NumCSRW <= '0;
-    end else if(~dut.hart.StallW) begin
-      if(dut.hart.FlushW) begin
+    end else if(~dut.core.StallW) begin
+      if(dut.core.FlushW) begin
         ExpectedPCW <= '0;
         ExpectedInstrW <= '0;
         textW <= "";
@@ -521,7 +521,7 @@ module testbench;
         ExpectedMemWriteDataW <= '0;
         ExpectedMemReadDataW <= '0;
         NumCSRW <= '0;
-      end else if (dut.hart.ieu.c.InstrValidM) begin 
+      end else if (dut.core.ieu.c.InstrValidM) begin 
         ExpectedPCW <= ExpectedPCM;
         ExpectedInstrW <= ExpectedInstrM;
         textW <= textM;
@@ -540,21 +540,21 @@ module testbench;
       end
       #1;
       // override on special conditions
-      if(~dut.hart.StallW) begin
+      if(~dut.core.StallW) begin
         if(textW.substr(0,5) == "rdtime") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
           release dut.uncore.clint.clint.MTIME;
         end 
         //if (ExpectedIEUAdrM == 'h10000005) begin
           //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, InstrCountW);
-          //release dut.hart.ieu.dp.ReadDataM;
+          //release dut.core.ieu.dp.ReadDataM;
         //end
       end
     end
   end
   
   // step2: make all checks in the write back stage.
-  assign checkInstrW =              InstrValidW & ~dut.hart.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
+  assign checkInstrW =              InstrValidW & ~dut.core.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
   always @(negedge clk) begin
     // always check PC, instruction bits
     if (checkInstrW) begin
@@ -570,23 +570,23 @@ module testbench;
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
-        `checkEQ("Instr Count",dut.hart.priv.priv.csr.counters.counters.INSTRET_REGW,InstrCountW)
+        `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.INSTRET_REGW,InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
-          $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, InstrCountW, dut.hart.ieu.dp.regf.a3, ExpectedRegAdrW);
-          $display("%tns, %d instrs: RF[%02d] %016x ? expected value: %016x", $time, InstrCountW, ExpectedRegAdrW, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
+          $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, InstrCountW, dut.core.ieu.dp.regf.a3, ExpectedRegAdrW);
+          $display("%tns, %d instrs: RF[%02d] %016x ? expected value: %016x", $time, InstrCountW, ExpectedRegAdrW, dut.core.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
         end
         if (RegWriteW == "GPR") begin
-          `checkEQ("Reg Write Address",dut.hart.ieu.dp.regf.a3,ExpectedRegAdrW)
+          `checkEQ("Reg Write Address",dut.core.ieu.dp.regf.a3,ExpectedRegAdrW)
           $sformat(name,"RF[%02d]",ExpectedRegAdrW);
-          `checkEQ(name, dut.hart.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
+          `checkEQ(name, dut.core.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
           if(`DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
           `checkEQ("IEUAdrW",IEUAdrW,ExpectedIEUAdrW)
           if(MemOpW == "MemR" || MemOpW == "MemRW") begin
-            if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.hart.ieu.dp.ReadDataW, ExpectedMemReadDataW);
-            `checkEQ("ReadDataW",dut.hart.ieu.dp.ReadDataW,ExpectedMemReadDataW)
+            if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.core.ieu.dp.ReadDataW, ExpectedMemReadDataW);
+            `checkEQ("ReadDataW",dut.core.ieu.dp.ReadDataW,ExpectedMemReadDataW)
           end else if(MemOpW == "MemW" || MemOpW == "MemRW") begin
             if(`DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
             `checkEQ("WriteDataW",ExpectedMemWriteDataW,ExpectedMemWriteDataW)
@@ -595,19 +595,19 @@ module testbench;
         // check csr
         for(NumCSRPostWIndex = 0; NumCSRPostWIndex < NumCSRW; NumCSRPostWIndex++) begin
           case(ExpectedCSRArrayW[NumCSRPostWIndex])
-            "mhartid": `checkCSR(dut.hart.priv.priv.csr.csrm.MHARTID_REGW)
-            "mstatus": `checkCSR(dut.hart.priv.priv.csr.csrm.MSTATUS_REGW)
-            "mtvec":   `checkCSR(dut.hart.priv.priv.csr.csrm.MTVEC_REGW)
-            "mip":     `checkCSR(dut.hart.priv.priv.csr.csrm.MIP_REGW)
-            "mie":     `checkCSR(dut.hart.priv.priv.csr.csrm.MIE_REGW)
-            "mideleg": `checkCSR(dut.hart.priv.priv.csr.csrm.MIDELEG_REGW)
-            "medeleg": `checkCSR(dut.hart.priv.priv.csr.csrm.MEDELEG_REGW)
-            "mepc":    `checkCSR(dut.hart.priv.priv.csr.csrm.MEPC_REGW)
-            "mtval":   `checkCSR(dut.hart.priv.priv.csr.csrm.MTVAL_REGW)
-            "sepc":    `checkCSR(dut.hart.priv.priv.csr.csrs.SEPC_REGW)
-            "scause":  `checkCSR(dut.hart.priv.priv.csr.csrs.csrs.SCAUSE_REGW)
-            "stvec":   `checkCSR(dut.hart.priv.priv.csr.csrs.STVEC_REGW)
-            "stval":   `checkCSR(dut.hart.priv.priv.csr.csrs.csrs.STVAL_REGW)
+            "mhartid": `checkCSR(dut.core.priv.priv.csr.csrm.MHARTID_REGW)
+            "mstatus": `checkCSR(dut.core.priv.priv.csr.csrm.MSTATUS_REGW)
+            "mtvec":   `checkCSR(dut.core.priv.priv.csr.csrm.MTVEC_REGW)
+            "mip":     `checkCSR(dut.core.priv.priv.csr.csrm.MIP_REGW)
+            "mie":     `checkCSR(dut.core.priv.priv.csr.csrm.MIE_REGW)
+            "mideleg": `checkCSR(dut.core.priv.priv.csr.csrm.MIDELEG_REGW)
+            "medeleg": `checkCSR(dut.core.priv.priv.csr.csrm.MEDELEG_REGW)
+            "mepc":    `checkCSR(dut.core.priv.priv.csr.csrm.MEPC_REGW)
+            "mtval":   `checkCSR(dut.core.priv.priv.csr.csrm.MTVAL_REGW)
+            "sepc":    `checkCSR(dut.core.priv.priv.csr.csrs.SEPC_REGW)
+            "scause":  `checkCSR(dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW)
+            "stvec":   `checkCSR(dut.core.priv.priv.csr.csrs.STVEC_REGW)
+            "stval":   `checkCSR(dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW)
           endcase
         end
         if (fault == 1) begin
@@ -635,10 +635,10 @@ module testbench;
   // Instr Opcode Tracking
   //   For waveview convenience
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.FinalInstrRawF,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.FinalInstrRawF,
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // ------------------
@@ -661,7 +661,7 @@ module testbench;
     begin
       int i;
       // Grab the SATP register from privileged unit
-      SATP = dut.hart.priv.priv.csr.SATP_REGW;
+      SATP = dut.core.priv.priv.csr.SATP_REGW;
       // Split the virtual address into page number segments and offset
       VPN[2] = adrIn[38:30];
       VPN[1] = adrIn[29:21];
@@ -671,7 +671,7 @@ module testbench;
       SvMode = SATP[63];
       // Only perform translation if translation is on and the processor is not
       // in machine mode
-      if (SvMode & (dut.hart.priv.priv.PrivilegeModeW != `M_MODE)) begin
+      if (SvMode & (dut.core.priv.priv.PrivilegeModeW != `M_MODE)) begin
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);

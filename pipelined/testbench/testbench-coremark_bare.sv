@@ -83,23 +83,23 @@ module testbench();
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   logic [31:0] InstrW;
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.hart.ieu.dp.StallW,  dut.hart.ifu.InstrM, InstrW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // Track names of instructions
-    instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.FinalInstrRawF,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM,  InstrW,
+    instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.FinalInstrRawF,
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 /*
-  instrTrackerTB it(clk, reset, dut.hart.ieu.dp.FlushE,
-                dut.hart.ifu.icache.controller.FinalInstrRawF,
-                dut.hart.ifu.InstrD, dut.hart.ifu.InstrE,
-                dut.hart.ifu.InstrM, InstrW,
+  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.icache.controller.FinalInstrRawF,
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                dut.core.ifu.InstrM, InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 */
   logic [`XLEN-1:0] PCW;
-  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.hart.ifu.PCM, PCW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, dut.core.ifu.PCM, PCW);
   
   // initialize tests
   integer j;
@@ -123,7 +123,7 @@ module testbench();
     end
   always @(negedge clk)
     begin
-      if (dut.hart.priv.priv.ecallM) begin
+      if (dut.core.priv.priv.ecallM) begin
         #20;
         $display("Code ended with ebreakM");
         $stop;
@@ -131,10 +131,10 @@ module testbench();
     end
 
   initial begin
-//    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
-//    $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.memory);
-    $readmemb(`TWO_BIT_PRELOAD, dut.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-	  $readmemb(`BTB_PRELOAD, dut.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);    
+//    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.memory);
+//    $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.memory);
+    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+	  $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);    
 
   end
    

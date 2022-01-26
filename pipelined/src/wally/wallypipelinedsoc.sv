@@ -83,7 +83,7 @@ module wallypipelinedsoc (
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
    
   // instantiate processor and memories
-  wallypipelinedhart hart(.clk, .reset,
+  wallypipelinedcore core(.clk, .reset,
     .TimerIntM, .ExtIntM, .SwIntM, 
     .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,

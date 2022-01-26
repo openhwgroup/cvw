@@ -7,79 +7,79 @@ add wave /testbench/reset
 add wave -divider
 
 # new
-#add wave /testbench/dut/hart/ebu/IReadF
-add wave /testbench/dut/hart/DataStall
-add wave /testbench/dut/hart/ICacheStallF
-add wave /testbench/dut/hart/StallF
-add wave /testbench/dut/hart/StallD
+#add wave /testbench/dut/core/ebu/IReadF
+add wave /testbench/dut/core/DataStall
+add wave /testbench/dut/core/ICacheStallF
+add wave /testbench/dut/core/StallF
+add wave /testbench/dut/core/StallD
 
-add wave /testbench/dut/hart/StallE
-add wave /testbench/dut/hart/StallM
-add wave /testbench/dut/hart/StallW
-add wave /testbench/dut/hart/FlushD
-add wave /testbench/dut/hart/FlushE
-add wave /testbench/dut/hart/FlushM
-add wave /testbench/dut/hart/FlushW
+add wave /testbench/dut/core/StallE
+add wave /testbench/dut/core/StallM
+add wave /testbench/dut/core/StallW
+add wave /testbench/dut/core/FlushD
+add wave /testbench/dut/core/FlushE
+add wave /testbench/dut/core/FlushM
+add wave /testbench/dut/core/FlushW
 
 add wave -noupdate -divider -height 32 "MulDiv"
-add wave -hex /testbench/dut/hart/mdu/*
+add wave -hex /testbench/dut/core/mdu/*
 
 add wave -noupdate -divider -height 32 "Integer Divider"
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/fsm1/CURRENT_STATE
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/fsm1/NEXT_STATE
-add wave -hex /testbench/dut/hart/mdu/genblk1/div/*
+add wave -hex /testbench/dut/core/mdu/genblk1/div/fsm1/CURRENT_STATE
+add wave -hex /testbench/dut/core/mdu/genblk1/div/fsm1/NEXT_STATE
+add wave -hex /testbench/dut/core/mdu/genblk1/div/*
 
 add wave -noupdate -divider -height 32 "RF"
-add wave -hex /testbench/dut/hart/ieu/dp/regf/*
-add wave -hex /testbench/dut/hart/ieu/dp/regf/rf
+add wave -hex /testbench/dut/core/ieu/dp/regf/*
+add wave -hex /testbench/dut/core/ieu/dp/regf/rf
 
 add wave -divider
-add wave -hex /testbench/dut/hart/ifu/PCF
-add wave -hex /testbench/dut/hart/ifu/PCD
-add wave -hex /testbench/dut/hart/ifu/InstrD
+add wave -hex /testbench/dut/core/ifu/PCF
+add wave -hex /testbench/dut/core/ifu/PCD
+add wave -hex /testbench/dut/core/ifu/InstrD
 add wave /testbench/InstrDName
 add wave -divider
 
-add wave -hex /testbench/dut/hart/ifu/PCE
-add wave -hex /testbench/dut/hart/ifu/InstrE
+add wave -hex /testbench/dut/core/ifu/PCE
+add wave -hex /testbench/dut/core/ifu/InstrE
 add wave /testbench/InstrEName
-add wave -hex /testbench/dut/hart/ieu/dp/SrcAE
-add wave -hex /testbench/dut/hart/ieu/dp/SrcBE
-add wave -hex /testbench/dut/hart/ieu/dp/ALUResultE
-#add wave /testbench/dut/hart/ieu/dp/PCSrcE
+add wave -hex /testbench/dut/core/ieu/dp/SrcAE
+add wave -hex /testbench/dut/core/ieu/dp/SrcBE
+add wave -hex /testbench/dut/core/ieu/dp/ALUResultE
+#add wave /testbench/dut/core/ieu/dp/PCSrcE
 add wave -divider
 
-add wave -hex /testbench/dut/hart/ifu/PCM
-add wave -hex /testbench/dut/hart/ifu/InstrM
+add wave -hex /testbench/dut/core/ifu/PCM
+add wave -hex /testbench/dut/core/ifu/InstrM
 add wave /testbench/InstrMName
 add wave /testbench/dut/uncore/ram/memwrite
 add wave -hex /testbench/dut/uncore/HADDR
 add wave -hex /testbench/dut/uncore/HWDATA
 add wave -divider
 
-add wave -hex /testbench/dut/hart/ebu/MemReadM
-add wave -hex /testbench/dut/hart/ebu/InstrReadF
-add wave -hex /testbench/dut/hart/ebu/BusState
-add wave -hex /testbench/dut/hart/ebu/NextBusState
-add wave -hex /testbench/dut/hart/ebu/HADDR
-add wave -hex /testbench/dut/hart/ebu/HREADY
-add wave -hex /testbench/dut/hart/ebu/HTRANS
-add wave -hex /testbench/dut/hart/ebu/HRDATA
-add wave -hex /testbench/dut/hart/ebu/HWRITE
-add wave -hex /testbench/dut/hart/ebu/HWDATA
-add wave -hex /testbench/dut/hart/ebu/CaptureDataM
+add wave -hex /testbench/dut/core/ebu/MemReadM
+add wave -hex /testbench/dut/core/ebu/InstrReadF
+add wave -hex /testbench/dut/core/ebu/BusState
+add wave -hex /testbench/dut/core/ebu/NextBusState
+add wave -hex /testbench/dut/core/ebu/HADDR
+add wave -hex /testbench/dut/core/ebu/HREADY
+add wave -hex /testbench/dut/core/ebu/HTRANS
+add wave -hex /testbench/dut/core/ebu/HRDATA
+add wave -hex /testbench/dut/core/ebu/HWRITE
+add wave -hex /testbench/dut/core/ebu/HWDATA
+add wave -hex /testbench/dut/core/ebu/CaptureDataM
 add wave -divider
 
 add wave -hex /testbench/dut/uncore/ram/*
 add wave -divider
 
-add wave -hex /testbench/dut/hart/ifu/PCW
-add wave -hex /testbench/dut/hart/ifu/InstrW
+add wave -hex /testbench/dut/core/ifu/PCW
+add wave -hex /testbench/dut/core/ifu/InstrW
 add wave /testbench/InstrWName
-add wave /testbench/dut/hart/ieu/dp/RegWriteW
-add wave -hex /testbench/dut/hart/ebu/ReadDataW
-add wave -hex /testbench/dut/hart/ieu/dp/ResultW
-add wave -hex /testbench/dut/hart/ieu/dp/RdW
+add wave /testbench/dut/core/ieu/dp/RegWriteW
+add wave -hex /testbench/dut/core/ebu/ReadDataW
+add wave -hex /testbench/dut/core/ieu/dp/ResultW
+add wave -hex /testbench/dut/core/ieu/dp/RdW
 add wave -divider
 
 add wave -hex /testbench/dut/uncore/ram/*

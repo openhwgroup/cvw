@@ -524,8 +524,8 @@ string tests32f[] = '{
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.wallypipelinedsoc.hart.ieu.dp.StallW, dut.wallypipelinedsoc.hart.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.wallypipelinedsoc.hart.ieu.dp.StallW,  dut.wallypipelinedsoc.hart.ifu.InstrM, InstrW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.wallypipelinedsoc.core.ieu.dp.StallW, dut.wallypipelinedsoc.core.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.wallypipelinedsoc.core.ieu.dp.StallW,  dut.wallypipelinedsoc.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
@@ -611,10 +611,10 @@ string tests32f[] = '{
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
-  instrTrackerTB it(clk, reset, dut.wallypipelinedsoc.hart.ieu.dp.FlushE,
-                dut.wallypipelinedsoc.hart.ifu.icache.FinalInstrRawF,
-                dut.wallypipelinedsoc.hart.ifu.InstrD, dut.wallypipelinedsoc.hart.ifu.InstrE,
-                dut.wallypipelinedsoc.hart.ifu.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.wallypipelinedsoc.core.ieu.dp.FlushE,
+                dut.wallypipelinedsoc.core.ifu.icache.FinalInstrRawF,
+                dut.wallypipelinedsoc.core.ifu.InstrD, dut.wallypipelinedsoc.core.ifu.InstrE,
+                dut.wallypipelinedsoc.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -666,11 +666,11 @@ string tests32f[] = '{
   always @(negedge clk)
     begin    
 /* -----\/----- EXCLUDED -----\/-----
-      if (dut.wallypipelinedsoc.hart.priv.EcallFaultM & 
-			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 & 
-			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 & 
-			      dut.wallypipelinedsoc.hart.ieu.dp.regf.wd3 == 1))) begin
+      if (dut.wallypipelinedsoc.core.priv.EcallFaultM & 
+			    (dut.wallypipelinedsoc.core.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.wallypipelinedsoc.core.ieu.dp.regf.we3 & 
+			      dut.wallypipelinedsoc.core.ieu.dp.regf.a3 == 3 & 
+			      dut.wallypipelinedsoc.core.ieu.dp.regf.wd3 == 1))) begin
  -----/\----- EXCLUDED -----/\----- */
       if (DCacheFlushDone) begin
         //$display("Code ended with ecall with gp = 1");
@@ -756,11 +756,11 @@ string tests32f[] = '{
   end
  -----/\----- EXCLUDED -----/\----- */
 
-  assign DCacheFlushStart = dut.wallypipelinedsoc.hart.priv.EcallFaultM & 
-			    (dut.wallypipelinedsoc.hart.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.wallypipelinedsoc.hart.ieu.dp.regf.we3 & 
-			      dut.wallypipelinedsoc.hart.ieu.dp.regf.a3 == 3 & 
-			      dut.wallypipelinedsoc.hart.ieu.dp.regf.wd3 == 1));
+  assign DCacheFlushStart = dut.wallypipelinedsoc.core.priv.EcallFaultM & 
+			    (dut.wallypipelinedsoc.core.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.wallypipelinedsoc.core.ieu.dp.regf.we3 & 
+			      dut.wallypipelinedsoc.core.ieu.dp.regf.a3 == 3 & 
+			      dut.wallypipelinedsoc.core.ieu.dp.regf.wd3 == 1));
   
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
 				.reset(reset),
@@ -771,8 +771,8 @@ string tests32f[] = '{
   // initialize the branch predictor
   if (`BPRED_ENABLED == 1)
     initial begin
-      $readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-      $readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.hart.ifu.bpred.bpred.TargetPredictor.memory.mem);
+      $readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     end
 endmodule
 
@@ -809,10 +809,10 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.NUMWAYS;
-  localparam integer linebytelen = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.LINEBYTELEN;
-  localparam integer numwords = testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.LINELEN/`XLEN;  
+  localparam integer numlines = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.NUMLINES;
+  localparam integer numways = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.NUMWAYS;
+  localparam integer linebytelen = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.LINEBYTELEN;
+  localparam integer numwords = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.LINELEN/`XLEN;  
   localparam integer lognumlines = $clog2(numlines);
   localparam integer loglinebytelen = $clog2(linebytelen);
   localparam integer lognumways = $clog2(numways);
@@ -836,10 +836,10 @@ module DCacheFlushFSM
         copyShadow #(.tagstart(tagstart), .loglinebytelen(loglinebytelen))
         copyShadow(.clk,
             .start,
-            .tag(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].CacheTagMem.StoredData[index]),
-            .valid(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].ValidBits[index]),
-            .dirty(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].DirtyBits[index]),
-            .data(testbench.dut.wallypipelinedsoc.hart.lsu.bus.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
+            .tag(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.MemWay[way].CacheTagMem.StoredData[index]),
+            .valid(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.MemWay[way].ValidBits[index]),
+            .dirty(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.MemWay[way].DirtyBits[index]),
+            .data(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.MemWay[way].word[cacheWord].CacheDataMem.StoredData[index]),
             .index(index),
             .cacheWord(cacheWord),
             .CacheData(CacheData[way][index][cacheWord]),

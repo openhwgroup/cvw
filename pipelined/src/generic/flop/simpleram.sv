@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: On-chip SIMPLERAM, external to hart
+// Purpose: On-chip SIMPLERAM, external to core
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -31,50 +31,30 @@
 `include "wally-config.vh"
 
 module simpleram #(parameter BASE=0, RANGE = 65535) (
-  input  logic             HCLK, HRESETn, 
-  input  logic             HSELRam,
-  input  logic [31:0]      HADDR,
-  input  logic             HWRITE,
-  input  logic             HREADY,
-  input  logic [1:0]       HTRANS,
-  input  logic [`XLEN-1:0] HWDATA,
-  output logic [`XLEN-1:0] HREADRam,
-  output logic             HRESPRam, HREADYRam
+  input  logic             clk, 
+  input  logic [31:0]      a,
+  input  logic             we,
+  input  logic [`XLEN-1:0] wd,
+  output logic [`XLEN-1:0] rd
 );
 
-  localparam MemStartAddr = BASE>>(1+`XLEN/32);
-  localparam MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
-  
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
-  logic [31:0] HWADDR, A;
-  logic [`XLEN-1:0] HREADRam0;
+  logic [31:0] ad;
 
-  logic        prevHREADYRam, risingHREADYRam;
-  logic        initTrans;
-  logic        memwrite;
-  logic [3:0]  busycount;
-
+  flop #(32)   areg(clk, a, ad); // *** redesign external interface so this delay isn't needed
   
   /* verilator lint_off WIDTH */
   if (`XLEN == 64)  begin:ramrw
-    always_ff @(posedge HCLK) begin
-      if (HWRITE & |HTRANS) RAM[HADDR[31:3]] <= #1 HWDATA;
+    always_ff @(posedge clk) begin
+      rd <= RAM[a[31:3]];
+      if (we) RAM[ad[31:3]] <= #1 wd;
     end
   end else begin 
-    always_ff @(posedge HCLK) begin:ramrw
-      if (HWRITE & |HTRANS) RAM[HADDR[31:2]] <= #1 HWDATA;
+    always_ff @(posedge clk) begin:ramrw
+      rd <= RAM[a[31:2]];
+      if (we) RAM[ad[31:2]] <= #1 wd;
     end
   end
-
-  // read
-  if(`XLEN == 64) begin: ramr
-    assign HREADRam0 = RAM[HADDR[31:3]];
-  end else begin
-    assign HREADRam0 = RAM[HADDR[31:2]];
-  end
-
   /* verilator lint_on WIDTH */
-
-  assign HREADRam = HREADRam0;
 endmodule
 

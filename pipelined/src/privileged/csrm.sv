@@ -70,7 +70,7 @@ module csrm #(parameter
    MIDELEG_MASK = {{(`XLEN-12){1'b0}}, 12'h222}
 ) (
     input logic 	     clk, reset, 
-    input logic 	     FlushW, StallW,
+    input logic 	     InstrValidNotFlushedM, StallW,
     input logic 	     CSRMWriteM, MTrapM,
     input logic [11:0] 	     CSRAdrM,
     input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
@@ -95,9 +95,6 @@ module csrm #(parameter
   logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
 
-  logic            InstrValidNotFlushedM;
-  assign InstrValidNotFlushedM = ~StallW & ~FlushW;
-  
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
   if (`PMP_ENTRIES > 0) begin:pmp
