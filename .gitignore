@@ -27,6 +27,7 @@ wlft*
 testsBP/*/*/*.elf*
 testsBP/*/OBJ/*
 testsBP/*/*.a
+tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/*
 tests/linux-testgen/linux-testvectors/*
 !tests/linux-testgen/linux-testvectors/tvCopier.py
 !tests/linux-testgen/linux-testvectors/tvLinker.sh
@@ -49,4 +50,5 @@ fpga/generator/*.jou
 *.signature.output
 examples/asm/sumtest/sumtest
 examples/asm/example/example
+examples/C/sum/sum
 
