@@ -98,7 +98,6 @@ module ifu (
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
   logic                        reset_q; // see comment below about PCNextF and icache.
 
-  logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   logic 					   BPPredWrongM;
 
@@ -355,16 +354,8 @@ module ifu (
          //.y(UnalignedPCNextF));
          .y(PCNext3F));
 
-  // This mux is not strictly speaking required.  Because the icache takes in
-  // PCNextF rather than PCPF, PCNextF should stay in reset while the cache
-  // looks up the addresses.  Without this mux PCNextF will increment + 2/4.
-  // When the icache fsm is out of reset then it will report on the status
-  // of PCF + 2/4.  It will be a miss since this is the very first access.
-  // On the next cycle the cache will start using PCPF to finish the read.
-  // Because the granularity of a cache line +2/4 will always fit in the same
-  // cache line so the mux is not required.  I am leaving this comment and mux
-  // a a reminder as to what is happening in case keep PCNextF at RESET_VECTOR
-  // during reset becomes a requirement.
+  // This mux is required as PCNextF needs to be the valid reset vector during reset.
+  // Reseting PCF does not accomplish this as PCNextF will be +2/4 more than PCF.
   mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
                        .d1(`RESET_VECTOR),
                        .s(`MEM_IROM ? reset : reset_q),
@@ -376,8 +367,10 @@ module ifu (
 								.d(BPPredWrongE), .q(BPPredWrongM));
 
   mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
-											.s(BPPredWrongM & InvalidateICacheM), 
+											.s(BPPredWrongM),  //  & InvalidateICacheM *** check with linux.
 											.y(PCBPWrongInvalidate));
+  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
+  assign PCCorrectE =  PCSrcE ? IEUAdrE : PCLinkE;
   
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
@@ -385,24 +378,35 @@ module ifu (
 
   // branch and jump predictor
   if (`BPRED_ENABLED) begin : bpred
+    logic BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+
     bpred bpred(.clk, .reset,
         .StallF, .StallD, .StallE,
         .FlushF, .FlushD, .FlushE,
         .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
         .PCD, .PCLinkE, .InstrClassE, .BPPredWrongE, .BPPredDirWrongE,
         .BTBPredPCWrongE, .RASPredPCWrongE, .BPPredClassNonCFIWrongE);
+
+    // the branch predictor needs a compact decoding of the instruction class.
+    // *** consider adding in the alternate return address x5 for returns.
+    assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
+    assign InstrClassD[3] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
+    assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01; // jump register, but not return
+    assign InstrClassD[1] = InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01; // jump, RD != x1 or x5
+    assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
+
+    // branch predictor
+    flopenrc #(5) InstrClassRegE(.clk, .reset, .en(~StallE), .clear(FlushE), .d(InstrClassD), .q(InstrClassE));
+    flopenrc #(5) InstrClassRegM(.clk, .reset, .en(~StallM), .clear(FlushM), .d(InstrClassE), .q(InstrClassM));
+    flopenrc #(4) BPPredWrongRegM(.clk, .reset, .en(~StallM), .clear(FlushM),
+                 .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
+                 .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
   
   end else begin : bpred
-    assign BPPredPCF = {`XLEN{1'b0}};
-    assign SelBPPredF = 1'b0;
-    assign BPPredWrongE = PCSrcE;
-    assign BPPredDirWrongE = 1'b0;
-    assign BTBPredPCWrongE = 1'b0;
-    assign RASPredPCWrongE = 1'b0;
-    assign BPPredClassNonCFIWrongE = 1'b0;
+    assign BPPredPCF = '0;
+    assign BPPredWrongM = PCSrcE;
+    assign {SelBPPredF, BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
   end      
-  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
-  assign PCCorrectE =  PCSrcE ? IEUAdrE : PCLinkE;
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -424,13 +428,6 @@ module ifu (
   // *** combine these with others in better way, including M, F
 
 
-  // the branch predictor needs a compact decoding of the instruction class.
-  // *** consider adding in the alternate return address x5 for returns.
-  assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
-  assign InstrClassD[3] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
-  assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01; // jump register, but not return
-  assign InstrClassD[1] = InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01; // jump, RD != x1 or x5
-  assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
 
   // Misaligned PC logic
   // instruction address misalignment is generated by the target of control flow instructions, not
@@ -452,26 +449,6 @@ module ifu (
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
 
-  flopenrc #(5) InstrClassRegE(.clk(clk),
-          .reset(reset),
-          .en(~StallE),
-          .clear(FlushE),
-          .d(InstrClassD),
-          .q(InstrClassE));
-
-  flopenrc #(5) InstrClassRegM(.clk(clk),
-          .reset(reset),
-          .en(~StallM),
-          .clear(FlushM),
-          .d(InstrClassE),
-          .q(InstrClassM));
-
-  flopenrc #(4) BPPredWrongRegM(.clk(clk),
-          .reset(reset),
-          .en(~StallM),
-          .clear(FlushM),
-          .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
-          .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
 
   // seems like there should be a lower-cost way of doing this PC+2 or PC+4 for JAL.  
   // either have ALU compute PC+2/4 and feed into ALUResult input of ResultMux or
