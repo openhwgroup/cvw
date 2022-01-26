@@ -1,0 +1,645 @@
+From 61696744ed1197c9435b85a4ac5610090faa3179 Mon Sep 17 00:00:00 2001
+From: bbracker <bbracker@hmc.edu>
+Date: Wed, 26 Jan 2022 14:43:11 +0000
+Subject: [PATCH] add Wally model to QEMU
+
+---
+ configs/devices/riscv64-softmmu/default.mak |   1 +
+ hw/riscv/Kconfig                            |   7 +
+ hw/riscv/meson.build                        |   1 +
+ hw/riscv/wally.c                            | 501 ++++++++++++++++++++
+ include/hw/riscv/wally.h                    |  79 +++
+ 5 files changed, 589 insertions(+)
+ create mode 100644 hw/riscv/wally.c
+ create mode 100644 include/hw/riscv/wally.h
+
+diff --git a/configs/devices/riscv64-softmmu/default.mak b/configs/devices/riscv64-softmmu/default.mak
+index bc69301fa4..396ebb82a1 100644
+--- a/configs/devices/riscv64-softmmu/default.mak
++++ b/configs/devices/riscv64-softmmu/default.mak
+@@ -14,3 +14,4 @@ CONFIG_SIFIVE_U=y
+ CONFIG_RISCV_VIRT=y
+ CONFIG_MICROCHIP_PFSOC=y
+ CONFIG_SHAKTI_C=y
++CONFIG_WALLY=y
+diff --git a/hw/riscv/Kconfig b/hw/riscv/Kconfig
+index d2d869aaad..a7ed6ae06f 100644
+--- a/hw/riscv/Kconfig
++++ b/hw/riscv/Kconfig
+@@ -81,3 +81,10 @@ config SPIKE
+     select MSI_NONBROKEN
+     select RISCV_ACLINT
+     select SIFIVE_PLIC
++
++config WALLY
++    bool
++    select SERIAL
++    select RISCV_ACLINT
++    select SIFIVE_PLIC
++    select SIFIVE_TEST
+diff --git a/hw/riscv/meson.build b/hw/riscv/meson.build
+index ab6cae57ea..b468f2c87c 100644
+--- a/hw/riscv/meson.build
++++ b/hw/riscv/meson.build
+@@ -9,5 +9,6 @@ riscv_ss.add(when: 'CONFIG_SIFIVE_E', if_true: files('sifive_e.c'))
+ riscv_ss.add(when: 'CONFIG_SIFIVE_U', if_true: files('sifive_u.c'))
+ riscv_ss.add(when: 'CONFIG_SPIKE', if_true: files('spike.c'))
+ riscv_ss.add(when: 'CONFIG_MICROCHIP_PFSOC', if_true: files('microchip_pfsoc.c'))
++riscv_ss.add(when: 'CONFIG_WALLY', if_true: files('wally.c'))
+ 
+ hw_arch += {'riscv': riscv_ss}
+diff --git a/hw/riscv/wally.c b/hw/riscv/wally.c
+new file mode 100644
+index 0000000000..25792dd04c
+--- /dev/null
++++ b/hw/riscv/wally.c
+@@ -0,0 +1,501 @@
++/*
++ * QEMU RISC-V Wally Board
++ * Modified from Virt Board
++ *
++ * Copyright (c) 2017 SiFive, Inc.
++ * *** What should we say for copyright?
++ *
++ * RISC-V machine with 16550a UART and VirtIO MMIO
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2 or later, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ *
++ * You should have received a copy of the GNU General Public License along with
++ * this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#include "qemu/osdep.h"
++#include "qemu/units.h"
++#include "qemu/error-report.h"
++#include "qapi/error.h"
++#include "hw/boards.h"
++#include "hw/loader.h"
++#include "hw/sysbus.h"
++#include "hw/qdev-properties.h"
++#include "hw/char/serial.h"
++#include "target/riscv/cpu.h"
++#include "hw/riscv/riscv_hart.h"
++#include "hw/riscv/wally.h"
++#include "hw/riscv/boot.h"
++#include "hw/riscv/numa.h"
++#include "hw/intc/riscv_aclint.h"
++#include "hw/intc/sifive_plic.h"
++#include "hw/misc/sifive_test.h"
++#include "chardev/char.h"
++#include "sysemu/device_tree.h"
++#include "sysemu/sysemu.h"
++#include "hw/pci/pci.h"
++#include "hw/pci-host/gpex.h"
++#include "hw/display/ramfb.h"
++
++static const MemMapEntry wally_memmap[] = {
++    [WALLY_MROM] =        {     0x1000,        0xf000 },
++    [WALLY_CLINT] =       {  0x2000000,       0x10000 },
++    [WALLY_PLIC] =        {  0xc000000, WALLY_PLIC_SIZE(WALLY_CPUS_MAX * 2) },
++    [WALLY_UART0] =       { 0x10000000,         0x100 },
++    [WALLY_DRAM] =        { 0x80000000,           0x0 },
++};
++
++static void create_fdt_socket_cpus(WallyState *s, int socket,
++                                   char *clust_name, uint32_t *phandle,
++                                   bool is_32_bit, uint32_t *intc_phandles)
++{
++    int cpu;
++    uint32_t cpu_phandle;
++    MachineState *mc = MACHINE(s);
++    char *name, *cpu_name, *core_name, *intc_name;
++
++    for (cpu = s->soc[socket].num_harts - 1; cpu >= 0; cpu--) {
++        cpu_phandle = (*phandle)++;
++
++        cpu_name = g_strdup_printf("/cpus/cpu@%d",
++            s->soc[socket].hartid_base + cpu);
++        qemu_fdt_add_subnode(mc->fdt, cpu_name);
++        qemu_fdt_setprop_string(mc->fdt, cpu_name, "mmu-type",
++            (is_32_bit) ? "riscv,sv32" : "riscv,sv48");
++        name = riscv_isa_string(&s->soc[socket].harts[cpu]);
++        qemu_fdt_setprop_string(mc->fdt, cpu_name, "riscv,isa", name);
++        g_free(name);
++        qemu_fdt_setprop_string(mc->fdt, cpu_name, "compatible", "riscv");
++        qemu_fdt_setprop_string(mc->fdt, cpu_name, "status", "okay");
++        qemu_fdt_setprop_cell(mc->fdt, cpu_name, "reg",
++            s->soc[socket].hartid_base + cpu);
++        qemu_fdt_setprop_string(mc->fdt, cpu_name, "device_type", "cpu");
++        riscv_socket_fdt_write_id(mc, mc->fdt, cpu_name, socket);
++        qemu_fdt_setprop_cell(mc->fdt, cpu_name, "phandle", cpu_phandle);
++
++        intc_phandles[cpu] = (*phandle)++;
++
++        intc_name = g_strdup_printf("%s/interrupt-controller", cpu_name);
++        qemu_fdt_add_subnode(mc->fdt, intc_name);
++        qemu_fdt_setprop_cell(mc->fdt, intc_name, "phandle",
++            intc_phandles[cpu]);
++        qemu_fdt_setprop_string(mc->fdt, intc_name, "compatible",
++            "riscv,cpu-intc");
++        qemu_fdt_setprop(mc->fdt, intc_name, "interrupt-controller", NULL, 0);
++        qemu_fdt_setprop_cell(mc->fdt, intc_name, "#interrupt-cells", 1);
++
++        core_name = g_strdup_printf("%s/core%d", clust_name, cpu);
++        qemu_fdt_add_subnode(mc->fdt, core_name);
++        qemu_fdt_setprop_cell(mc->fdt, core_name, "cpu", cpu_phandle);
++
++        g_free(core_name);
++        g_free(intc_name);
++        g_free(cpu_name);
++    }
++}
++
++static void create_fdt_socket_memory(WallyState *s,
++                                     const MemMapEntry *memmap, int socket)
++{
++    char *mem_name;
++    uint64_t addr, size;
++    MachineState *mc = MACHINE(s);
++
++    addr = memmap[WALLY_DRAM].base + riscv_socket_mem_offset(mc, socket);
++    size = riscv_socket_mem_size(mc, socket);
++    mem_name = g_strdup_printf("/memory@%lx", (long)addr);
++    qemu_fdt_add_subnode(mc->fdt, mem_name);
++    qemu_fdt_setprop_cells(mc->fdt, mem_name, "reg",
++        addr >> 32, addr, size >> 32, size);
++    qemu_fdt_setprop_string(mc->fdt, mem_name, "device_type", "memory");
++    riscv_socket_fdt_write_id(mc, mc->fdt, mem_name, socket);
++    g_free(mem_name);
++}
++
++static void create_fdt_socket_clint(WallyState *s,
++                                    const MemMapEntry *memmap, int socket,
++                                    uint32_t *intc_phandles)
++{
++    int cpu;
++    char *clint_name;
++    uint32_t *clint_cells;
++    unsigned long clint_addr;
++    MachineState *mc = MACHINE(s);
++    static const char * const clint_compat[2] = {
++        "sifive,clint0", "riscv,clint0"
++    };
++
++    clint_cells = g_new0(uint32_t, s->soc[socket].num_harts * 4);
++
++    for (cpu = 0; cpu < s->soc[socket].num_harts; cpu++) {
++        clint_cells[cpu * 4 + 0] = cpu_to_be32(intc_phandles[cpu]);
++        clint_cells[cpu * 4 + 1] = cpu_to_be32(IRQ_M_SOFT);
++        clint_cells[cpu * 4 + 2] = cpu_to_be32(intc_phandles[cpu]);
++        clint_cells[cpu * 4 + 3] = cpu_to_be32(IRQ_M_TIMER);
++    }
++
++    clint_addr = memmap[WALLY_CLINT].base + (memmap[WALLY_CLINT].size * socket);
++    clint_name = g_strdup_printf("/soc/clint@%lx", clint_addr);
++    qemu_fdt_add_subnode(mc->fdt, clint_name);
++    qemu_fdt_setprop_string_array(mc->fdt, clint_name, "compatible",
++                                  (char **)&clint_compat,
++                                  ARRAY_SIZE(clint_compat));
++    qemu_fdt_setprop_cells(mc->fdt, clint_name, "reg",
++        0x0, clint_addr, 0x0, memmap[WALLY_CLINT].size);
++    qemu_fdt_setprop(mc->fdt, clint_name, "interrupts-extended",
++        clint_cells, s->soc[socket].num_harts * sizeof(uint32_t) * 4);
++    riscv_socket_fdt_write_id(mc, mc->fdt, clint_name, socket);
++    g_free(clint_name);
++
++    g_free(clint_cells);
++}
++
++
++static void create_fdt_socket_plic(WallyState *s,
++                                   const MemMapEntry *memmap, int socket,
++                                   uint32_t *phandle, uint32_t *intc_phandles,
++                                   uint32_t *plic_phandles)
++{
++    int cpu;
++    char *plic_name;
++    uint32_t *plic_cells;
++    unsigned long plic_addr;
++    MachineState *mc = MACHINE(s);
++    static const char * const plic_compat[2] = {
++        "sifive,plic-1.0.0", "riscv,plic0"
++    };
++
++    plic_cells = g_new0(uint32_t, s->soc[socket].num_harts * 4);
++
++    for (cpu = 0; cpu < s->soc[socket].num_harts; cpu++) {
++        plic_cells[cpu * 4 + 0] = cpu_to_be32(intc_phandles[cpu]);
++        plic_cells[cpu * 4 + 1] = cpu_to_be32(IRQ_M_EXT);
++        plic_cells[cpu * 4 + 2] = cpu_to_be32(intc_phandles[cpu]);
++        plic_cells[cpu * 4 + 3] = cpu_to_be32(IRQ_S_EXT);
++    }
++
++    plic_phandles[socket] = (*phandle)++;
++    plic_addr = memmap[WALLY_PLIC].base + (memmap[WALLY_PLIC].size * socket);
++    plic_name = g_strdup_printf("/soc/plic@%lx", plic_addr);
++    qemu_fdt_add_subnode(mc->fdt, plic_name);
++    qemu_fdt_setprop_cell(mc->fdt, plic_name,
++        "#address-cells", FDT_PLIC_ADDR_CELLS);
++    qemu_fdt_setprop_cell(mc->fdt, plic_name,
++        "#interrupt-cells", FDT_PLIC_INT_CELLS);
++    qemu_fdt_setprop_string_array(mc->fdt, plic_name, "compatible",
++                                  (char **)&plic_compat,
++                                  ARRAY_SIZE(plic_compat));
++    qemu_fdt_setprop(mc->fdt, plic_name, "interrupt-controller", NULL, 0);
++    qemu_fdt_setprop(mc->fdt, plic_name, "interrupts-extended",
++        plic_cells, s->soc[socket].num_harts * sizeof(uint32_t) * 4);
++    qemu_fdt_setprop_cells(mc->fdt, plic_name, "reg",
++        0x0, plic_addr, 0x0, memmap[WALLY_PLIC].size);
++    qemu_fdt_setprop_cell(mc->fdt, plic_name, "riscv,ndev", WALLYIO_NDEV);
++    riscv_socket_fdt_write_id(mc, mc->fdt, plic_name, socket);
++    qemu_fdt_setprop_cell(mc->fdt, plic_name, "phandle",
++        plic_phandles[socket]);
++    g_free(plic_name);
++
++    g_free(plic_cells);
++}
++
++static void create_fdt_sockets(WallyState *s, const MemMapEntry *memmap,
++                               bool is_32_bit, uint32_t *phandle)
++{
++    int socket;
++    char *clust_name;
++    uint32_t *intc_phandles;
++    MachineState *mc = MACHINE(s);
++    uint32_t xplic_phandles[MAX_NODES];
++
++    qemu_fdt_add_subnode(mc->fdt, "/cpus");
++    qemu_fdt_setprop_cell(mc->fdt, "/cpus", "timebase-frequency",
++                          RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ);
++    qemu_fdt_setprop_cell(mc->fdt, "/cpus", "#size-cells", 0x0);
++    qemu_fdt_setprop_cell(mc->fdt, "/cpus", "#address-cells", 0x1);
++    qemu_fdt_add_subnode(mc->fdt, "/cpus/cpu-map");
++
++    for (socket = (riscv_socket_count(mc) - 1); socket >= 0; socket--) {
++        clust_name = g_strdup_printf("/cpus/cpu-map/cluster%d", socket);
++        qemu_fdt_add_subnode(mc->fdt, clust_name);
++
++        intc_phandles = g_new0(uint32_t, s->soc[socket].num_harts);
++
++        create_fdt_socket_cpus(s, socket, clust_name, phandle,
++            is_32_bit, intc_phandles);
++
++        create_fdt_socket_memory(s, memmap, socket);
++
++        create_fdt_socket_clint(s, memmap, socket, intc_phandles);
++
++        create_fdt_socket_plic(s, memmap, socket, phandle,
++            intc_phandles, xplic_phandles);
++
++        g_free(intc_phandles);
++        g_free(clust_name);
++    }
++    riscv_socket_fdt_write_distance_matrix(mc, mc->fdt);
++}
++
++static void create_fdt_uart(WallyState *s, const MemMapEntry *memmap)
++{
++    char *name;
++    MachineState *mc = MACHINE(s);
++
++    name = g_strdup_printf("/soc/uart@%lx", (long)memmap[WALLY_UART0].base);
++    qemu_fdt_add_subnode(mc->fdt, name);
++    qemu_fdt_setprop_string(mc->fdt, name, "compatible", "ns16550a");
++    qemu_fdt_setprop_cells(mc->fdt, name, "reg",
++        0x0, memmap[WALLY_UART0].base,
++        0x0, memmap[WALLY_UART0].size);
++    qemu_fdt_setprop_cell(mc->fdt, name, "clock-frequency", 3686400);
++    qemu_fdt_setprop_cell(mc->fdt, name, "interrupts", UART0_IRQ);
++
++    qemu_fdt_add_subnode(mc->fdt, "/chosen");
++    qemu_fdt_setprop_string(mc->fdt, "/chosen", "stdout-path", name);
++    g_free(name);
++}
++
++static void create_fdt(WallyState *s, const MemMapEntry *memmap,
++                       uint64_t mem_size, const char *cmdline, bool is_32_bit)
++{
++    MachineState *mc = MACHINE(s);
++    uint32_t phandle = 1;
++
++    if (mc->dtb) {
++        mc->fdt = load_device_tree(mc->dtb, &s->fdt_size);
++        if (!mc->fdt) {
++            error_report("load_device_tree() failed");
++            exit(1);
++        }
++        goto update_bootargs;
++    } else {
++        mc->fdt = create_device_tree(&s->fdt_size);
++        if (!mc->fdt) {
++            error_report("create_device_tree() failed");
++            exit(1);
++        }
++    }
++
++    qemu_fdt_setprop_string(mc->fdt, "/", "model", "riscv-wally,qemu");
++    qemu_fdt_setprop_string(mc->fdt, "/", "compatible", "riscv-wally");
++    qemu_fdt_setprop_cell(mc->fdt, "/", "#size-cells", 0x2);
++    qemu_fdt_setprop_cell(mc->fdt, "/", "#address-cells", 0x2);
++
++    qemu_fdt_add_subnode(mc->fdt, "/soc");
++    qemu_fdt_setprop(mc->fdt, "/soc", "ranges", NULL, 0);
++    qemu_fdt_setprop_string(mc->fdt, "/soc", "compatible", "simple-bus");
++    qemu_fdt_setprop_cell(mc->fdt, "/soc", "#size-cells", 0x2);
++    qemu_fdt_setprop_cell(mc->fdt, "/soc", "#address-cells", 0x2);
++
++    create_fdt_sockets(s, memmap, is_32_bit, &phandle);
++    create_fdt_uart(s, memmap);
++
++update_bootargs:
++    if (cmdline) {
++        qemu_fdt_setprop_string(mc->fdt, "/chosen", "bootargs", cmdline);
++    }
++}
++
++static void wally_machine_init(MachineState *machine)
++{
++    const MemMapEntry *memmap = wally_memmap;
++    WallyState *s = RISCV_WALLY_MACHINE(machine);
++    MemoryRegion *system_memory = get_system_memory();
++    MemoryRegion *mask_rom = g_new(MemoryRegion, 1);
++    char *plic_hart_config, *soc_name;
++    target_ulong start_addr = memmap[WALLY_DRAM].base;
++    target_ulong firmware_end_addr, kernel_start_addr;
++    uint32_t fdt_load_addr;
++    uint64_t kernel_entry;
++    DeviceState *mmio_plic, *wallyio_plic, *pcie_plic;
++    int i, base_hartid, hart_count;
++
++    /* Check socket count limit */
++    if (WALLY_SOCKETS_MAX < riscv_socket_count(machine)) {
++        error_report("number of sockets/nodes should be less than %d",
++            WALLY_SOCKETS_MAX);
++        exit(1);
++    }
++
++    /* Initialize sockets */
++    mmio_plic = wallyio_plic = pcie_plic = NULL;
++    for (i = 0; i < riscv_socket_count(machine); i++) {
++        if (!riscv_socket_check_hartids(machine, i)) {
++            error_report("discontinuous hartids in socket%d", i);
++            exit(1);
++        }
++
++        base_hartid = riscv_socket_first_hartid(machine, i);
++        if (base_hartid < 0) {
++            error_report("can't find hartid base for socket%d", i);
++            exit(1);
++        }
++
++        hart_count = riscv_socket_hart_count(machine, i);
++        if (hart_count < 0) {
++            error_report("can't find hart count for socket%d", i);
++            exit(1);
++        }
++
++        soc_name = g_strdup_printf("soc%d", i);
++        object_initialize_child(OBJECT(machine), soc_name, &s->soc[i],
++                                TYPE_RISCV_HART_ARRAY);
++        g_free(soc_name);
++        object_property_set_str(OBJECT(&s->soc[i]), "cpu-type",
++                                machine->cpu_type, &error_abort);
++        object_property_set_int(OBJECT(&s->soc[i]), "hartid-base",
++                                base_hartid, &error_abort);
++        object_property_set_int(OBJECT(&s->soc[i]), "num-harts",
++                                hart_count, &error_abort);
++        sysbus_realize(SYS_BUS_DEVICE(&s->soc[i]), &error_abort);
++
++        /* Per-socket CLINT */
++        riscv_aclint_swi_create(
++            memmap[WALLY_CLINT].base + i * memmap[WALLY_CLINT].size,
++            base_hartid, hart_count, false);
++        riscv_aclint_mtimer_create(
++            memmap[WALLY_CLINT].base + i * memmap[WALLY_CLINT].size +
++                RISCV_ACLINT_SWI_SIZE,
++            RISCV_ACLINT_DEFAULT_MTIMER_SIZE, base_hartid, hart_count,
++            RISCV_ACLINT_DEFAULT_MTIMECMP, RISCV_ACLINT_DEFAULT_MTIME,
++            RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
++
++        /* Per-socket PLIC hart topology configuration string */
++        plic_hart_config = riscv_plic_hart_config_string(hart_count);
++
++        /* Per-socket PLIC */
++        s->plic[i] = sifive_plic_create(
++            memmap[WALLY_PLIC].base + i * memmap[WALLY_PLIC].size,
++            plic_hart_config, hart_count, base_hartid,
++            WALLY_PLIC_NUM_SOURCES,
++            WALLY_PLIC_NUM_PRIORITIES,
++            WALLY_PLIC_PRIORITY_BASE,
++            WALLY_PLIC_PENDING_BASE,
++            WALLY_PLIC_ENABLE_BASE,
++            WALLY_PLIC_ENABLE_STRIDE,
++            WALLY_PLIC_CONTEXT_BASE,
++            WALLY_PLIC_CONTEXT_STRIDE,
++            memmap[WALLY_PLIC].size);
++        g_free(plic_hart_config);
++
++        /* Try to use different PLIC instance based device type */
++        if (i == 0) {
++            mmio_plic = s->plic[i];
++        }
++    }
++
++    if (riscv_is_32bit(&s->soc[0])) {
++#if HOST_LONG_BITS == 64
++        /* limit RAM size in a 32-bit system */
++        if (machine->ram_size > 10 * GiB) {
++            machine->ram_size = 10 * GiB;
++            error_report("Limiting RAM size to 10 GiB");
++        }
++#endif
++    }
++
++    /* register system main memory (actual RAM) */
++    memory_region_add_subregion(system_memory, memmap[WALLY_DRAM].base,
++        machine->ram);
++
++    /* create device tree */
++    create_fdt(s, memmap, machine->ram_size, machine->kernel_cmdline,
++               riscv_is_32bit(&s->soc[0]));
++
++    /* boot rom */
++    memory_region_init_rom(mask_rom, NULL, "wally_board.mrom",
++                           memmap[WALLY_MROM].size, &error_fatal);
++    memory_region_add_subregion(system_memory, memmap[WALLY_MROM].base,
++                                mask_rom);
++
++    if (riscv_is_32bit(&s->soc[0])) {
++        firmware_end_addr = riscv_find_and_load_firmware(machine,
++                                    RISCV32_BIOS_BIN, start_addr, NULL);
++    } else {
++        firmware_end_addr = riscv_find_and_load_firmware(machine,
++                                    RISCV64_BIOS_BIN, start_addr, NULL);
++    }
++
++    if (machine->kernel_filename) {
++        kernel_start_addr = riscv_calc_kernel_start_addr(&s->soc[0],
++                                                         firmware_end_addr);
++
++        kernel_entry = riscv_load_kernel(machine->kernel_filename,
++                                         kernel_start_addr, NULL);
++
++        if (machine->initrd_filename) {
++            hwaddr start;
++            hwaddr end = riscv_load_initrd(machine->initrd_filename,
++                                           machine->ram_size, kernel_entry,
++                                           &start);
++            qemu_fdt_setprop_cell(machine->fdt, "/chosen",
++                                  "linux,initrd-start", start);
++            qemu_fdt_setprop_cell(machine->fdt, "/chosen", "linux,initrd-end",
++                                  end);
++        }
++    } else {
++       /*
++        * If dynamic firmware is used, it doesn't know where is the next mode
++        * if kernel argument is not set.
++        */
++        kernel_entry = 0;
++    }
++
++    /* Compute the fdt load address in dram */
++    fdt_load_addr = riscv_load_fdt(memmap[WALLY_DRAM].base,
++                                   machine->ram_size, machine->fdt);
++    /* load the reset vector */
++    riscv_setup_rom_reset_vec(machine, &s->soc[0], start_addr,
++                              wally_memmap[WALLY_MROM].base,
++                              wally_memmap[WALLY_MROM].size, kernel_entry,
++                              fdt_load_addr, machine->fdt);
++
++    serial_mm_init(system_memory, memmap[WALLY_UART0].base,
++        0, qdev_get_gpio_in(DEVICE(mmio_plic), UART0_IRQ), 399193,
++        serial_hd(0), DEVICE_LITTLE_ENDIAN);
++}
++
++static void wally_machine_instance_init(Object *obj)
++{
++}
++
++static void wally_machine_class_init(ObjectClass *oc, void *data)
++{
++    MachineClass *mc = MACHINE_CLASS(oc);
++
++    mc->desc = "Wally SoC";
++    mc->init = wally_machine_init;
++    mc->max_cpus = WALLY_CPUS_MAX;
++    mc->default_cpu_type = TYPE_RISCV_CPU_BASE;
++    mc->pci_allow_0_address = true;
++    mc->possible_cpu_arch_ids = riscv_numa_possible_cpu_arch_ids;
++    mc->cpu_index_to_instance_props = riscv_numa_cpu_index_to_props;
++    mc->get_default_cpu_node_id = riscv_numa_get_default_cpu_node_id;
++    mc->numa_mem_supported = false;
++    mc->default_ram_id = "wally_board.ram";
++
++    machine_class_allow_dynamic_sysbus_dev(mc, TYPE_RAMFB_DEVICE);
++}
++
++static const TypeInfo wally_machine_typeinfo = {
++    .name       = MACHINE_TYPE_NAME("wally"),
++    .parent     = TYPE_MACHINE,
++    .class_init = wally_machine_class_init,
++    .instance_init = wally_machine_instance_init,
++    .instance_size = sizeof(WallyState),
++};
++
++static void wally_machine_init_register_types(void)
++{
++    type_register_static(&wally_machine_typeinfo);
++}
++
++type_init(wally_machine_init_register_types)
+diff --git a/include/hw/riscv/wally.h b/include/hw/riscv/wally.h
+new file mode 100644
+index 0000000000..80f2cc15dc
+--- /dev/null
++++ b/include/hw/riscv/wally.h
+@@ -0,0 +1,79 @@
++/*
++ * QEMU RISC-V Wally machine interface
++ * Modified from VirtIO model
++ *
++ * Copyright (c) 2017 SiFive, Inc.
++ * *** What should we say for copyright?
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms and conditions of the GNU General Public License,
++ * version 2 or later, as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
++ * more details.
++ *
++ * You should have received a copy of the GNU General Public License along with
++ * this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++
++#ifndef HW_RISCV_WALLY_H
++#define HW_RISCV_WALLY_H
++
++#include "hw/riscv/riscv_hart.h"
++#include "hw/sysbus.h"
++#include "qom/object.h"
++
++#define WALLY_CPUS_MAX 8
++#define WALLY_SOCKETS_MAX 8
++
++#define TYPE_RISCV_WALLY_MACHINE MACHINE_TYPE_NAME("wally")
++typedef struct WallyState WallyState;
++DECLARE_INSTANCE_CHECKER(WallyState, RISCV_WALLY_MACHINE,
++                         TYPE_RISCV_WALLY_MACHINE)
++
++struct WallyState {
++    /*< private >*/
++    MachineState parent;
++
++    /*< public >*/
++    RISCVHartArrayState soc[WALLY_SOCKETS_MAX];
++    DeviceState *plic[WALLY_SOCKETS_MAX];
++
++    int fdt_size;
++    bool have_aclint;
++};
++
++enum {
++    WALLY_MROM,
++    WALLY_CLINT,
++    WALLY_PLIC,
++    WALLY_UART0,
++    WALLY_DRAM,
++};
++
++enum {
++    UART0_IRQ = 10,
++    WALLYIO_NDEV = 0x35 /* Arbitrary maximum number of interrupts */
++};
++
++#define WALLY_PLIC_NUM_SOURCES 127
++#define WALLY_PLIC_NUM_PRIORITIES 7
++#define WALLY_PLIC_PRIORITY_BASE 0x04
++#define WALLY_PLIC_PENDING_BASE 0x1000
++#define WALLY_PLIC_ENABLE_BASE 0x2000
++#define WALLY_PLIC_ENABLE_STRIDE 0x80
++#define WALLY_PLIC_CONTEXT_BASE 0x200000
++#define WALLY_PLIC_CONTEXT_STRIDE 0x1000
++#define WALLY_PLIC_SIZE(__num_context) \
++    (WALLY_PLIC_CONTEXT_BASE + (__num_context) * WALLY_PLIC_CONTEXT_STRIDE)
++
++#define FDT_PCI_ADDR_CELLS    3
++#define FDT_PCI_INT_CELLS     1
++#define FDT_PLIC_ADDR_CELLS   0
++#define FDT_PLIC_INT_CELLS    1
++#define FDT_INT_MAP_WIDTH     (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + 1 + \
++                               FDT_PLIC_ADDR_CELLS + FDT_PLIC_INT_CELLS)
++
++#endif
+-- 
+2.27.0
+
