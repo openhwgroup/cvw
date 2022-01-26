@@ -232,12 +232,10 @@ module ifu (
   if (`MEM_IROM) begin : irom
 	logic [`XLEN-1:0] FinalInstrRawF_FIXME;
 
-    // *** adjust interface so write address doesn't need delaying
-    // *** modify to be a ROM rather than RAM
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
-        .a(CPUBusy ? PCPF[31:0] : PCNextFMux[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
+        .a(CPUBusy | reset ? PCPF[31:0] : PCNextFMux[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
         .we(1'b0),
         .wd(0), .rd(FinalInstrRawF_FIXME));
 	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
@@ -328,50 +326,23 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F),
-         .d1(BPPredPCF),
-         .s(SelBPPredF),
-         .y(PCNext0F));
-
-  mux2 #(`XLEN) pcmux1(.d0(PCNext0F),
-         .d1(PCCorrectE),
-         .s(BPPredWrongE),
-         .y(PCNext1F));
-
-  // December 20, 2021 Ross Thompson, If instructions in ID and IF are already invalid we don't pick PCE on icache invalidate.
-  // this only happens because of branch class miss prediction.  The Fence instruction was incorrectly predicted as a branch
-  // this means on the previous cycle the BPPredWrongE updated PCNextF to the correct fall through address.
-  // to fix we need to select the correct address PCF as the next PCNextF. Unforunately we must still flush the instruction in IF
-  // as we are deliberately invalidating the icache.  This address has to be refetched by the icache.
-  mux2 #(`XLEN) pcmux2(.d0(PCNext1F),
-         .d1(PCBPWrongInvalidate),
-         .s(InvalidateICacheM),
-         .y(PCNext2F));
-  
-  mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
-         .d1(PrivilegedNextPCM),
-         .s(PrivilegedChangePCM),
-         //.y(UnalignedPCNextF));
-         .y(PCNext3F));
-
+  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
+  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
+  mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+  mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
+  // Mux only required on instruction class miss prediction.
+  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(PCBPWrongInvalidate));
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(PCNext3F));
   // This mux is required as PCNextF needs to be the valid reset vector during reset.
   // Reseting PCF does not accomplish this as PCNextF will be +2/4 more than PCF.
-  mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
-                       .d1(`RESET_VECTOR),
-                       .s(`MEM_IROM ? reset : reset_q),
-                       .y(UnalignedPCNextF));
-
-  flop #(1) resetReg (.clk(clk), .d(reset),.q(reset_q)); // delay reset
-
-  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM),
-								.d(BPPredWrongE), .q(BPPredWrongM));
-
-  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
-											.s(BPPredWrongM),  //  & InvalidateICacheM *** check with linux.
-											.y(PCBPWrongInvalidate));
-  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
-  assign PCCorrectE =  PCSrcE ? IEUAdrE : PCLinkE;
+  //mux2 #(`XLEN) pcmux4(.d0(PCNext3F), .d1(`RESET_VECTOR), .s(`MEM_IROM ? reset : reset_q), .y(UnalignedPCNextF));
+ // mux2 #(`XLEN) pcmux4(.d0(PCNext3F), .d1(`RESET_VECTOR), .s(reset), .y(UnalignedPCNextF));  // ******* probably can get rid of by making reset SelAdr = 01
+  assign UnalignedPCNextF = PCNext3F;
   
+
+  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
+
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
@@ -404,7 +375,7 @@ module ifu (
   
   end else begin : bpred
     assign BPPredPCF = '0;
-    assign BPPredWrongM = PCSrcE;
+    assign BPPredWrongE = PCSrcE;
     assign {SelBPPredF, BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
   end      
 
@@ -426,7 +397,6 @@ module ifu (
   decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD);
   assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   // *** combine these with others in better way, including M, F
-
 
 
   // Misaligned PC logic
