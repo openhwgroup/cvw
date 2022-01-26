@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: Ben Bracker 6 Mar 2021 to better fit AMBA 3 AHB-Lite spec
 //
-// Purpose: System-on-Chip components outside the core (hart)
+// Purpose: System-on-Chip components outside the core
 //          Memories, peripherals, external bus control
 // 
 // A component of the Wally configurable RISC-V project.
@@ -97,7 +97,7 @@ module uncore (
     .HWDATAIN, .HWDATA);
 
 //  generate
-    // on-chip RAM outside hart
+    // on-chip RAM
     if (`RAM_SUPPORTED) begin : ram
       ram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (

@@ -5,7 +5,7 @@
 // Modified: 
 //
 // Purpose: Load/Store Unit 
-//          Top level of the memory-stage hart logic
+//          Top level of the memory-stage core logic
 //          Contains data cache, DTLB, subword read/write datapath, interface to external bus
 // 
 // A component of the Wally configurable RISC-V project.
@@ -245,12 +245,12 @@ module lsu (
   logic 			   SelUncachedAdr;
 
   if (`MEM_DTIM) begin : dtim
+    // *** adjust interface so write address doesn't need delaying; switch to standard RAM?
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .HCLK(clk), .HRESETn(~reset), 
-        .HSELRam(1'b1), .HADDR(LSUPAdrM[31:0]),
-        .HWRITE(LSURWM[0]), .HREADY(1'b1),
-        .HTRANS(|LSURWM ? 2'b10 : 2'b00), .HWDATA(FinalWriteDataM), .HREADRam(ReadDataWordM),
-        .HRESPRam(), .HREADYRam());
+        .clk, 
+        .a(CPUBusy ? IEUAdrM[31:0] : IEUAdrE[31:0]),
+        .we(LSURWM[0]), 
+        .wd(FinalWriteDataM), .rd(ReadDataWordM));
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
@@ -259,7 +259,7 @@ module lsu (
     assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
     assign ReadDataLineSetsM[0] = 0;
     assign DCacheMiss = 1'b0; assign DCacheAccess = 1'b0;
-end else begin : bus  // *** lsubusdp
+  end else begin : bus  // *** lsubusdp
     // Bus Side logic
     // register the fetch data from the next level of memory.
     // This register should be necessary for timing.  There is no register in the uncore or

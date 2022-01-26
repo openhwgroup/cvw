@@ -12,12 +12,12 @@ add wave /testbench/reset
 add wave -divider "Main Datapath"
 add wave /testbench/dut/PC
 add wave /testbench/dut/Instr
-add wave /testbench/dut/rvsingle/dp/SrcA
-add wave /testbench/dut/rvsingle/dp/SrcB
-add wave /testbench/dut/rvsingle/dp/Result
+add wave /testbench/dut/ieu/dp/SrcA
+add wave /testbench/dut/ieu/dp/SrcB
+add wave /testbench/dut/ieu/dp/Result
 add wave -divider "Memory Bus"
 add wave /testbench/MemWrite
-add wave /testbench/DataAdr
+add wave /testbench/IEUAdr
 add wave /testbench/WriteData
-run -all
+run 210
 view wave

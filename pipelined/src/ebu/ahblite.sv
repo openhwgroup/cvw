@@ -7,7 +7,7 @@
 // Purpose: AHB Lite External Bus Unit
 //          See ARM_HIH0033A_AMBA_AHB-Lite_SPEC 1.0
 //          Arbitrates requests from instruction and data streams
-//          Connects hart to peripherals and I/O pins on SOC
+//          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
 //          Anticipate replacing this with an AXI bus interface to communicate with FPGA DRAM/Flash controllers
 // 

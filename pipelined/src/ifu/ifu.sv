@@ -96,7 +96,7 @@ module ifu (
   logic [`XLEN-1:0]            PCD;
 
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
-  //logic                        reset_q; // see comment below about PCNextF and icache.
+  logic                        reset_q; // see comment below about PCNextF and icache.
 
   logic                        BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
@@ -107,7 +107,7 @@ module ifu (
   logic [`XLEN+1:0]            PCFExt;
 
   logic 					   CacheableF;
-  logic [11:0] 				   PCNextFMux;
+  logic [`XLEN-1:0]			   PCNextFMux;
   logic [`XLEN-1:0] 		   PCFMux;
   logic 					   SelNextSpill;
   logic 					   ICacheFetchLine;
@@ -128,7 +128,7 @@ module ifu (
 	// this exists only if there are compressed instructions.
 	assign PCFp2 = PCF + `XLEN'b10;
     
-	assign PCNextFMux = SelNextSpill ? PCFp2[11:0] : PCNextF[11:0];
+	assign PCNextFMux = SelNextSpill ? PCFp2 : PCNextF;
 	assign PCFMux = SelSpill ? PCFp2 : PCF;
     
 	assign Spill = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
@@ -168,7 +168,7 @@ module ifu (
 
 	// end of spill support
   end else begin : NoSpillSupport // line: SpillSupport
-	assign PCNextFMux = PCNextF[11:0];
+	assign PCNextFMux = PCNextF;
 	assign PCFMux = PCF;
 	assign SelNextSpill = 0;
 	assign PostSpillInstrRawF = InstrRawF;
@@ -233,22 +233,20 @@ module ifu (
   if (`MEM_IROM) begin : irom
 	logic [`XLEN-1:0] FinalInstrRawF_FIXME;
 
+    // *** adjust interface so write address doesn't need delaying
+    // *** modify to be a ROM rather than RAM
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .HCLK(clk), .HRESETn(~reset), 
-        .HSELRam(1'b1), .HADDR(PCPF[31:0]),
-        .HWRITE(1'b0), .HREADY(1'b1),
-        .HTRANS(2'b10), .HWDATA(0), .HREADRam(FinalInstrRawF_FIXME),
-        .HRESPRam(), .HREADYRam());
-
-	assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
+        .clk, 
+        .a(CPUBusy ? PCPF[31:0] : PCNextFMux[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
+        .we(1'b0),
+        .wd(0), .rd(FinalInstrRawF_FIXME));
+	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
     assign BusStall = 0;
     assign IFUBusRead = 0;
     assign ICacheBusAck = 0;
     assign SelUncachedAdr = 0;
     assign IFUBusAdr = 0;
-    
-    
   end else begin : bus
       genvar 			   index;
       for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
@@ -291,7 +289,7 @@ module ifu (
 		   .RW(IFURWF), 
 		   .Atomic(2'b00),
 		   .FlushCache(1'b0),
-		   .NextAdr(PCNextFMux),
+		   .NextAdr(PCNextFMux[11:0]),
 		   .PAdr(PCPF),
 		   .CacheCommitted(),
 		   .InvalidateCacheM(InvalidateICacheM));
@@ -354,9 +352,9 @@ module ifu (
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F),
          .d1(PrivilegedNextPCM),
          .s(PrivilegedChangePCM),
-         .y(UnalignedPCNextF));
+         //.y(UnalignedPCNextF));
+         .y(PCNext3F));
 
-         //.y(PCNext3F));
   // This mux is not strictly speaking required.  Because the icache takes in
   // PCNextF rather than PCPF, PCNextF should stay in reset while the cache
   // looks up the addresses.  Without this mux PCNextF will increment + 2/4.
@@ -367,14 +365,12 @@ module ifu (
   // cache line so the mux is not required.  I am leaving this comment and mux
   // a a reminder as to what is happening in case keep PCNextF at RESET_VECTOR
   // during reset becomes a requirement.
-  //mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
-  //       .d1(`RESET_VECTOR),
-  //       .s(reset_q),
-  //       .y(UnalignedPCNextF)); 
-  //flop #(1) resetReg (.clk(clk),
-  //      .d(reset),
-  //      .q(reset_q));
+  mux2 #(`XLEN) pcmux4(.d0(PCNext3F),
+                       .d1(`RESET_VECTOR),
+                       .s(`MEM_IROM ? reset : reset_q),
+                       .y(UnalignedPCNextF));
 
+  flop #(1) resetReg (.clk(clk), .d(reset),.q(reset_q)); // delay reset
 
   flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM),
 								.d(BPPredWrongE), .q(BPPredWrongM));
