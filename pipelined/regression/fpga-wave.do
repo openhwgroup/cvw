@@ -20,9 +20,9 @@ add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/IllegalInstrFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/BreakpointFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/StoreMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/StoreAmoMisalignedFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/LoadAccessFaultM
-add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/StoreAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/StoreAmoAccessFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/EcallFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/InstrPageFaultM
 add wave -noupdate -group HDU -group traps /testbench/dut/wallypipelinedsoc/core/priv/trap/LoadPageFaultM
@@ -403,7 +403,7 @@ add wave -noupdate -group lsu -group dtlb /testbench/dut/wallypipelinedsoc/core/
 add wave -noupdate -group lsu -group dtlb /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PhysicalAddress
 add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/TLBPageFault
 add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/LoadAccessFaultM
-add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/StoreAccessFaultM
+add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/StoreAmoAccessFaultM
 add wave -noupdate -group lsu -group dtlb /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/genblk1/tlb/TLBPAdr
 add wave -noupdate -group lsu -group dtlb -expand -group write /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/genblk1/tlb/PTE
 add wave -noupdate -group lsu -group dtlb -expand -group write /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/genblk1/tlb/TLBWrite
@@ -415,10 +415,10 @@ add wave -noupdate -group lsu -group pma /testbench/dut/wallypipelinedsoc/core/l
 add wave -noupdate -group lsu -group pma /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/pmachecker/PMAAccessFault
 add wave -noupdate -group lsu -group pma /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMAInstrAccessFaultF
 add wave -noupdate -group lsu -group pma /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMALoadAccessFaultM
-add wave -noupdate -group lsu -group pma /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMAStoreAccessFaultM
+add wave -noupdate -group lsu -group pma /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMAStoreAmoAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -group pmp /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMPLoadAccessFaultM
-add wave -noupdate -group lsu -group pmp /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMPStoreAccessFaultM
+add wave -noupdate -group lsu -group pmp /testbench/dut/wallypipelinedsoc/core/lsu/dmmu/PMPStoreAmoAccessFaultM
 add wave -noupdate -group lsu -group ptwalker -color Gold /testbench/dut/wallypipelinedsoc/core/lsu/hptw/genblk1/WalkerState
 add wave -noupdate -group lsu -group ptwalker /testbench/dut/wallypipelinedsoc/core/lsu/hptw/PCF
 add wave -noupdate -group lsu -group ptwalker /testbench/dut/wallypipelinedsoc/core/lsu/hptw/genblk1/TranslationVAdr

@@ -35,9 +35,9 @@ module trap (
   input logic 		   clk,
   input logic 		   reset, 
   (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
-  (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM,
-  (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAccessFaultM, EcallFaultM, InstrPageFaultM,
-  (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StorePageFaultM,
+  (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
+  (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
+  (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
   (* mark_debug = "true" *) input logic 		   mretM, sretM, uretM,
   input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
   (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
@@ -86,10 +86,10 @@ module trap (
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
   assign Exception1M = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
-                      LoadMisalignedFaultM | StoreMisalignedFaultM |
-                      InstrPageFaultM | LoadPageFaultM | StorePageFaultM |
+                      LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
+                      InstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
                       BreakpointFaultM | EcallFaultM |
-                      LoadAccessFaultM | StoreAccessFaultM;
+                      LoadAccessFaultM | StoreAmoAccessFaultM;
   assign TrapM = Exception1M | InterruptM; // *** clean this up later DH
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
@@ -144,11 +144,11 @@ module trap (
     else if (BreakpointFaultM)      CauseM = 3;
     else if (EcallFaultM)           CauseM = {{(`XLEN-2){1'b0}}, PrivilegeModeW} + 8;
     else if (LoadMisalignedFaultM)  CauseM = 4;
-    else if (StoreMisalignedFaultM) CauseM = 6;
+    else if (StoreAmoMisalignedFaultM) CauseM = 6;
     else if (LoadPageFaultM)        CauseM = 13;
-    else if (StorePageFaultM)       CauseM = 15;
+    else if (StoreAmoPageFaultM)    CauseM = 15;
     else if (LoadAccessFaultM)      CauseM = 5;
-    else if (StoreAccessFaultM)     CauseM = 7;
+    else if (StoreAmoAccessFaultM)  CauseM = 7;
     else                            CauseM = 0;
 
   // MTVAL
@@ -163,11 +163,11 @@ module trap (
   always_comb 
     if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = IEUAdrM;
-    else if (StoreMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
+    else if (StoreAmoMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
     else if (BreakpointFaultM)      NextFaultMtvalM = PCM;
     else if (InstrPageFaultM)       NextFaultMtvalM = PCM;
     else if (LoadPageFaultM)        NextFaultMtvalM = IEUAdrM;
-    else if (StorePageFaultM)       NextFaultMtvalM = IEUAdrM;
+    else if (StoreAmoPageFaultM)    NextFaultMtvalM = IEUAdrM;
     else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
     else                            NextFaultMtvalM = 0;
 endmodule

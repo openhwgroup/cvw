@@ -56,10 +56,10 @@ module lsu (
    input logic [1:0] 		   PrivilegeModeW,
    input logic 				   DTLBFlushM,
    // faults
-   output logic 			   DTLBLoadPageFaultM, DTLBStorePageFaultM,
+   output logic 			   LoadPageFaultM, StoreAmoPageFaultM,
    output logic 			   LoadMisalignedFaultM, LoadAccessFaultM,
    // cpu hazard unit (trap)
-   output logic 			   StoreMisalignedFaultM, StoreAccessFaultM,
+   output logic 			   StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
    // connect to ahb
 (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
 (* mark_debug = "true" *)   output logic 			   LSUBusRead, 
@@ -81,7 +81,6 @@ module lsu (
    input 					   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
   );
 
-  logic 					   DTLBPageFaultM;
   logic [`PA_BITS-1:0] 		   LSUPAdrM;  // from mmu to dcache
   logic [`XLEN+1:0] 		   IEUAdrExtM;
   logic 					   DTLBMissM;
@@ -169,7 +168,6 @@ module lsu (
 
   // MMU and Misalignment fault logic required if privileged unit exists
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
-    logic 					   DataMisalignedM;
 
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
@@ -185,39 +183,27 @@ module lsu (
       .TLBMiss(DTLBMissM),
       .Cacheable(CacheableM),
       .Idempotent(), .AtomicAllowed(),
-      .TLBPageFault(DTLBPageFaultM),
-      .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAccessFaultM,
-      .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
+      .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
+      .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
+      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,         
+      .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), // **** change this to just use PreLSURWM
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
       );
 
-    // *** lsumisaligned lsumisaligned(Funct3M, IEUAdrM, MemRW, LoadMisalignedFaultM, StoreMisalignedFaultM);
+    // *** lsumisaligned lsumisaligned(Funct3M, IEUAdrM, MemRW, LoadMisalignedFaultM, StoreAmoMisalignedFaultM);
     // *** lump into lsumislaigned module
     // Determine if an Unaligned access is taking place
     // hptw guarantees alignment, only check inputs from IEU.
 
     // *** modify MMU to put out LoadMisalignedFault and StoreMisalignedFault rather than DataMisalignedM
-    always_comb
-    case(Funct3M[1:0]) 
-      2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
-      2'b01:  DataMisalignedM = IEUAdrM[0];              // lh, sh, lhu
-      2'b10:  DataMisalignedM = IEUAdrM[1] | IEUAdrM[0]; // lw, sw, flw, fsw, lwu
-      2'b11:  DataMisalignedM = |IEUAdrM[2:0];           // ld, sd, fld, fsd
-    endcase 
-
-    // If the CPU's (not HPTW's) request is a page fault.
-    assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
-    assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
-    // Specify which type of page fault is occurring
-    assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLSURWM[1];
-    assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
     
+
   end else begin
-    assign {DTLBMissM, DTLBPageFaultM, LoadAccessFaultM, StoreAccessFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM} = '0;
+    assign {DTLBMissM, LoadAccessFaultM, StoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign LSUPAdrM = PreLSUPAdrM;
     assign CacheableM = 1;
-    assign {DTLBLoadPageFaultM, DTLBStorePageFaultM} = '0;
+    assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
   end
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
   

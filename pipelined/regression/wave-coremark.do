@@ -20,9 +20,9 @@ add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/IllegalInstrFaultM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/BreakpointFaultM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/StoreMisalignedFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/StoreAmoMisalignedFaultM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/LoadAccessFaultM
-add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/StoreAccessFaultM
+add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/StoreAmoAccessFaultM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/EcallFaultM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/InstrPageFaultM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/trap/LoadPageFaultM
@@ -358,7 +358,7 @@ add wave -noupdate -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/TLBHit
 add wave -noupdate -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/PhysicalAddress
 add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/core/lsu/dmmu/TLBPageFault
 add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/core/lsu/dmmu/LoadAccessFaultM
-add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/core/lsu/dmmu/StoreAccessFaultM
+add wave -noupdate -group lsu -group dtlb -expand -group faults /testbench/dut/core/lsu/dmmu/StoreAmoAccessFaultM
 add wave -noupdate -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/genblk1/tlb/TLBPAdr
 add wave -noupdate -group lsu -group dtlb -expand -group write /testbench/dut/core/lsu/dmmu/genblk1/tlb/PTE
 add wave -noupdate -group lsu -group dtlb -expand -group write /testbench/dut/core/lsu/dmmu/genblk1/tlb/TLBWrite
@@ -370,10 +370,10 @@ add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/AtomicAllo
 add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/pmachecker/PMAAccessFault
 add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/PMAInstrAccessFaultF
 add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/PMALoadAccessFaultM
-add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/PMAStoreAccessFaultM
+add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/PMAStoreAmoAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/PMPLoadAccessFaultM
-add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/PMPStoreAccessFaultM
+add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/PMPStoreAmoAccessFaultM
 add wave -noupdate -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/hptw/genblk1/WalkerState
 add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/PCF
 add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/hptw/genblk1/TranslationVAdr

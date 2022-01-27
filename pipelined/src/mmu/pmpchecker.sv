@@ -49,7 +49,7 @@ module pmpchecker (
   input  logic             ExecuteAccessF, WriteAccessM, ReadAccessM,
   output logic             PMPInstrAccessFaultF,
   output logic             PMPLoadAccessFaultM,
-  output logic             PMPStoreAccessFaultM
+  output logic             PMPStoreAmoAccessFaultM
 );
 
   if (`PMP_ENTRIES > 0) begin: pmpchecker
@@ -75,11 +75,11 @@ module pmpchecker (
     assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 
 
     assign PMPInstrAccessFaultF = EnforcePMP & ExecuteAccessF & ~|X;
-    assign PMPStoreAccessFaultM = EnforcePMP & WriteAccessM   & ~|W;
+    assign PMPStoreAmoAccessFaultM = EnforcePMP & WriteAccessM   & ~|W;
     assign PMPLoadAccessFaultM  = EnforcePMP & ReadAccessM    & ~|R;
   end else begin: pmpchecker  // no checker
     assign PMPInstrAccessFaultF = 0;
     assign PMPLoadAccessFaultM = 0;
-    assign PMPStoreAccessFaultM = 0;
+    assign PMPStoreAmoAccessFaultM = 0;
   end
 endmodule

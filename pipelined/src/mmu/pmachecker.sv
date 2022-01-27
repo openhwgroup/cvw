@@ -41,7 +41,7 @@ module pmachecker (
   output logic        Cacheable, Idempotent, AtomicAllowed,
   output logic        PMAInstrAccessFaultF,
   output logic        PMALoadAccessFaultM,
-  output logic        PMAStoreAccessFaultM
+  output logic        PMAStoreAmoAccessFaultM
 );
 
   logic PMAAccessFault;
@@ -66,6 +66,6 @@ module pmachecker (
   assign PMAAccessFault = SelRegions[8] & AccessRWX;  
   assign PMAInstrAccessFaultF = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    & PMAAccessFault;
-  assign PMAStoreAccessFaultM = WriteAccessM   & PMAAccessFault;
+  assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;
 endmodule
 

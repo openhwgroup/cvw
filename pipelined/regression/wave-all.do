@@ -159,8 +159,8 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/IllegalBaseInstrFaultD
 add wave -noupdate -radix hexadecimal /testbench/dut/core/IllegalIEUInstrFaultD
 add wave -noupdate -radix hexadecimal /testbench/dut/core/LoadMisalignedFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/LoadAccessFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/StoreMisalignedFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/StoreAccessFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/StoreAmoMisalignedFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/StoreAmoAccessFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/InstrMisalignedAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/zero
 add wave -noupdate -radix hexadecimal /testbench/dut/core/PCSrcE
@@ -649,8 +649,8 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataW
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/DataAccessFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/LoadMisalignedFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/LoadAccessFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/StoreMisalignedFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/StoreAccessFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/StoreAmoMisalignedFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/StoreAmoAccessFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/clk
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/clear
@@ -733,8 +733,8 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/InstrAccessFaultF
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/IllegalIEUInstrFaultD
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/LoadMisalignedFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/LoadAccessFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/StoreMisalignedFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/StoreAccessFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/StoreAmoMisalignedFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/StoreAmoAccessFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/TimerIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/ExtIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/SwIntM
@@ -1252,9 +1252,9 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/InstrAccessF
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/IllegalInstrFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/BreakpointFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/StoreMisalignedFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/StoreAmoMisalignedFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/LoadAccessFaultM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/StoreAccessFaultM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/StoreAmoAccessFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/EcallFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/InstrPageFaultM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/trap/LoadPageFaultM
