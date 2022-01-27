@@ -96,7 +96,6 @@ module ifu (
   logic [`XLEN-1:0]            PCD;
 
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
-  logic                        reset_q; // see comment below about PCNextF and icache.
 
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   logic 					   BPPredWrongM;
@@ -106,8 +105,8 @@ module ifu (
   logic [`XLEN+1:0]            PCFExt;
 
   logic 					   CacheableF;
-  logic [`XLEN-1:0]			   PCNextFMux;
-  logic [`XLEN-1:0] 		   PCFMux;
+  logic [`XLEN-1:0]			   PCNextFSpill;
+  logic [`XLEN-1:0] 		   PCFSpill;
   logic 					   SelNextSpill;
   logic 					   ICacheFetchLine;
   logic 					   BusStall;
@@ -127,8 +126,8 @@ module ifu (
 	// this exists only if there are compressed instructions.
 	assign PCFp2 = PCF + `XLEN'b10;
     
-	assign PCNextFMux = SelNextSpill ? PCFp2 : PCNextF;
-	assign PCFMux = SelSpill ? PCFp2 : PCF;
+	assign PCNextFSpill = SelNextSpill ? PCFp2 : PCNextF;
+	assign PCFSpill = SelSpill ? PCFp2 : PCF;
     
 	assign Spill = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
 
@@ -167,18 +166,18 @@ module ifu (
 
 	// end of spill support
   end else begin : NoSpillSupport // line: SpillSupport
-	assign PCNextFMux = PCNextF;
-	assign PCFMux = PCF;
+	assign PCNextFSpill = PCNextF;
+	assign PCFSpill = PCF;
 	assign SelNextSpill = 0;
 	assign PostSpillInstrRawF = InstrRawF;
   end
   
 
-  assign PCFExt = {2'b00, PCFMux};
+  assign PCFExt = {2'b00, PCFSpill};
 
   mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
   immu(.PAdr(PCFExt[`PA_BITS-1:0]),
-       .VAdr(PCFMux),
+       .VAdr(PCFSpill),
        .Size(2'b10),
        .PTE(PTE),
        .PageTypeWriteVal(PageType),
@@ -235,7 +234,7 @@ module ifu (
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
-        .a(CPUBusy | reset ? PCPF[31:0] : PCNextFMux[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
+        .a(CPUBusy | reset ? PCPF[31:0] : PCNextFSpill[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
         .we(1'b0),
         .wd(0), .rd(FinalInstrRawF_FIXME));
 	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
@@ -286,7 +285,7 @@ module ifu (
 		   .RW(IFURWF), 
 		   .Atomic(2'b00),
 		   .FlushCache(1'b0),
-		   .NextAdr(PCNextFMux[11:0]),
+		   .NextAdr(PCNextFSpill[11:0]),
 		   .PAdr(PCPF),
 		   .CacheCommitted(),
 		   .InvalidateCacheM(InvalidateICacheM));
@@ -303,7 +302,7 @@ module ifu (
   
   // branch predictor signal
   logic                        SelBPPredF;
-  logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F, PCNext3F;
+  logic [`XLEN-1:0]            BPPredPCF, PCNext0F, PCNext1F, PCNext2F;
   logic [4:0]                  InstrClassD, InstrClassE;
 
 
@@ -333,15 +332,8 @@ module ifu (
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
   // Mux only required on instruction class miss prediction.
   mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(PCBPWrongInvalidate));
-  mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(PCNext3F));
-  // This mux is required as PCNextF needs to be the valid reset vector during reset.
-  // Reseting PCF does not accomplish this as PCNextF will be +2/4 more than PCF.
-  //mux2 #(`XLEN) pcmux4(.d0(PCNext3F), .d1(`RESET_VECTOR), .s(`MEM_IROM ? reset : reset_q), .y(UnalignedPCNextF));
- // mux2 #(`XLEN) pcmux4(.d0(PCNext3F), .d1(`RESET_VECTOR), .s(reset), .y(UnalignedPCNextF));  // ******* probably can get rid of by making reset SelAdr = 01
-  assign UnalignedPCNextF = PCNext3F;
-  
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
 
-  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
 
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
@@ -350,6 +342,8 @@ module ifu (
   // branch and jump predictor
   if (`BPRED_ENABLED) begin : bpred
     logic BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+
+  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
 
     bpred bpred(.clk, .reset,
         .StallF, .StallD, .StallE,
@@ -376,6 +370,7 @@ module ifu (
   end else begin : bpred
     assign BPPredPCF = '0;
     assign BPPredWrongE = PCSrcE;
+    assign BPPredWrongM = '0;
     assign {SelBPPredF, BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
   end      
 
