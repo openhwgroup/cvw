@@ -50,9 +50,9 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DTIM 0
+`define MEM_DTIM 1
 `define MEM_DCACHE 0
-`define MEM_IROM 0
+`define MEM_IROM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
@@ -73,7 +73,7 @@
 
 // Integer Divider Configuration
 // DIV_BITSPERCYCLE must be 1, 2, or 4
-`define DIV_BITSPERCYCLE 4
+`define DIV_BITSPERCYCLE 1
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 0
@@ -89,7 +89,7 @@
 `define BOOTROM_RANGE  34'h00000FFF
 `define RAM_SUPPORTED 1'b1
 `define RAM_BASE       34'h80000000
-`define RAM_RANGE      34'h07FFFFFF
+`define RAM_RANGE      34'h0000FFFF
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       34'h80000000
 `define EXT_MEM_RANGE      34'h07FFFFFF
