@@ -334,7 +334,6 @@ module ifu (
   mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(PCBPWrongInvalidate));
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
 
-  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
 
   
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
@@ -343,6 +342,8 @@ module ifu (
   // branch and jump predictor
   if (`BPRED_ENABLED) begin : bpred
     logic BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+
+  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
 
     bpred bpred(.clk, .reset,
         .StallF, .StallD, .StallE,
@@ -369,6 +370,7 @@ module ifu (
   end else begin : bpred
     assign BPPredPCF = '0;
     assign BPPredWrongE = PCSrcE;
+    assign BPPredWrongM = '0;
     assign {SelBPPredF, BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
   end      
 
