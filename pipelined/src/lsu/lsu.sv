@@ -141,22 +141,16 @@ module lsu (
     mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
     mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
     mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
-    // When replaying CPU memory request after PTW select the IEUAdrM for correct address.
-    assign LSUAdrE = SelReplayCPURequest ? IEUAdrM[11:0] : PreLSUAdrE;
-   
+    mux2 #(12) replaymux(PreLSUAdrE, IEUAdrM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.
     mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
 
     // always block interrupts when using the hardware page table walker.
     assign CPUBusy = StallW & ~SelHPTW;
     
-    // Specify which type of page fault is occurring
-    assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLSURWM[1];
-    assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
   end // if (`MEM_VIRTMEM)
   else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
     assign IgnoreRequest = TrapM;
-    assign {DTLBLoadPageFaultM, DTLBStorePageFaultM} = '0;
     assign CPUBusy = StallW;
     assign LSUAdrE = PreLSUAdrE; assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign PreLSURWM = MemRWM; assign PreLSUAdrE = IEUAdrE[11:0]; assign PreLSUPAdrM = IEUAdrExtM;
@@ -215,11 +209,15 @@ module lsu (
     // If the CPU's (not HPTW's) request is a page fault.
     assign LoadMisalignedFaultM = DataMisalignedM & MemRWM[1];
     assign StoreMisalignedFaultM = DataMisalignedM & MemRWM[0];
+    // Specify which type of page fault is occurring
+    assign DTLBLoadPageFaultM = DTLBPageFaultM & PreLSURWM[1];
+    assign DTLBStorePageFaultM = DTLBPageFaultM & PreLSURWM[0];
     
   end else begin
     assign {DTLBMissM, DTLBPageFaultM, LoadAccessFaultM, StoreAccessFaultM, LoadMisalignedFaultM, StoreMisalignedFaultM} = '0;
     assign LSUPAdrM = PreLSUPAdrM;
     assign CacheableM = 1;
+    assign {DTLBLoadPageFaultM, DTLBStorePageFaultM} = '0;
   end
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
   
