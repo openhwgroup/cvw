@@ -352,6 +352,8 @@ module riscvassertions;
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
     assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
+    assert (`MEM_DTIM == 0 | `MEM_VIRTMEM ==0) else $error("DTIM doesn't play nicely with virtual memory");
+    assert (`MEM_IROM == 0 | `MEM_VIRTMEM ==0) else $error("IROM doesn't play nicely with virtual memory");
   end
 endmodule
 
