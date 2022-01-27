@@ -51,10 +51,10 @@ module privileged (
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic             PrivilegedM,
-  input  logic             ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM,
+  input  logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
   input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrD,
   input  logic             LoadMisalignedFaultM,
-  input  logic             StoreMisalignedFaultM,
+  input  logic             StoreAmoMisalignedFaultM,
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, IEUAdrM,
@@ -66,7 +66,7 @@ module privileged (
   
   input logic InstrAccessFaultF,
   input logic LoadAccessFaultM,
-  input logic StoreAccessFaultM,
+  input logic StoreAmoAccessFaultM,
 
   output logic 		   ExceptionM,
   output logic 		   PendingInterruptM,
@@ -93,8 +93,7 @@ module privileged (
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
-  logic LoadPageFaultM, StorePageFaultM; 
-  logic InstrPageFaultF, InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
+  logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic IllegalInstrFaultM, TrappedSRETM;
 
@@ -201,11 +200,6 @@ module privileged (
   // A page fault might occur because of insufficient privilege during a TLB
   // lookup or a improperly formatted page table during walking
 
-  // *** merge these at the lsu level.
-  assign InstrPageFaultF = ITLBInstrPageFaultF;
-  assign LoadPageFaultM = DTLBLoadPageFaultM;
-  assign StorePageFaultM = DTLBStorePageFaultM;
-
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
                   {InstrPageFaultF, InstrAccessFaultF},
@@ -219,9 +213,9 @@ module privileged (
   // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
   trap trap(.clk, .reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
-            .BreakpointFaultM, .LoadMisalignedFaultM, .StoreMisalignedFaultM,
-            .LoadAccessFaultM, .StoreAccessFaultM, .EcallFaultM, .InstrPageFaultM,
-            .LoadPageFaultM, .StorePageFaultM,
+            .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
+            .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
+            .LoadPageFaultM, .StoreAmoPageFaultM,
             .mretM, .sretM, .uretM,
             .PrivilegeModeW, .NextPrivilegeModeM,
             .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,

@@ -274,11 +274,11 @@ connect_debug_port u_ila_0/probe63 [get_nets [list wallypipelinedsoc/core/priv.p
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe64]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe64]
-connect_debug_port u_ila_0/probe64 [get_nets [list wallypipelinedsoc/core/priv.priv/trap/StoreAccessFaultM ]]
+connect_debug_port u_ila_0/probe64 [get_nets [list wallypipelinedsoc/core/priv.priv/trap/StoreAmoAccessFaultM ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe65]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe65]
-connect_debug_port u_ila_0/probe65 [get_nets [list wallypipelinedsoc/core/priv.priv/trap/StoreMisalignedFaultM ]]
+connect_debug_port u_ila_0/probe65 [get_nets [list wallypipelinedsoc/core/priv.priv/trap/StoreAmoMisalignedFaultM ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe66]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe66]

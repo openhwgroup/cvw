@@ -75,8 +75,9 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   output logic             Cacheable, Idempotent, AtomicAllowed,
 
   // Faults
-  output logic             TLBPageFault,
-  output logic             InstrAccessFaultF, LoadAccessFaultM, StoreAccessFaultM,
+  output logic             InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,
+  output logic 			   InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
+  output logic 			   LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
 
   // PMA checker signals
   input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
@@ -89,11 +90,12 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 
   logic PMAInstrAccessFaultF, PMPInstrAccessFaultF;
   logic PMALoadAccessFaultM, PMPLoadAccessFaultM;
-  logic PMAStoreAccessFaultM, PMPStoreAccessFaultM;
+  logic PMAStoreAmoAccessFaultM, PMPStoreAmoAccessFaultM;
+  logic DataMisalignedM;
   logic Translate;
   logic TLBHit;
-
-
+  logic TLBPageFault;
+  
   // only instantiate TLB if Virtual Memory is supported
   if (`MEM_VIRTMEM) begin:tlb
     logic ReadAccess, WriteAccess;
@@ -130,17 +132,35 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   pmachecker pmachecker(.PhysicalAddress, .Size,
                         .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
                         .Cacheable, .Idempotent, .AtomicAllowed,
-                        .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAccessFaultM);
+                        .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
 
   pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
                         .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
                         .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-                        .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAccessFaultM);
+                        .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
 
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
 //  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;
   assign InstrAccessFaultF = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
   assign LoadAccessFaultM = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
-  assign StoreAccessFaultM = (PMAStoreAccessFaultM | PMPStoreAccessFaultM) & ~(Translate & ~TLBHit);  
+  assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~(Translate & ~TLBHit);
+
+  always_comb
+    case(Size[1:0]) 
+      2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
+      2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
+      2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
+      2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
+    endcase 
+
+  // If the CPU's (not HPTW's) request is a page fault.
+  assign LoadMisalignedFaultM = DataMisalignedM & ReadAccessM;
+  assign StoreAmoMisalignedFaultM = DataMisalignedM & (WriteAccessM | AtomicAccessM);
+  // Specify which type of page fault is occurring
+  assign InstrPageFaultF = TLBPageFault & ExecuteAccessF;
+  
+  assign LoadPageFaultM = TLBPageFault & ReadAccessM;
+  assign StoreAmoPageFaultM = TLBPageFault & (WriteAccessM | AtomicAccessM);
+  
 
 endmodule

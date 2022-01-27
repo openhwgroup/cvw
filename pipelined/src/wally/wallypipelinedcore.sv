@@ -79,9 +79,9 @@ module wallypipelinedcore (
   (* mark_debug = "true" *) logic 		    InstrValidM;
   logic 		    InstrMisalignedFaultM;
   logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
-  logic 		    ITLBInstrPageFaultF, DTLBLoadPageFaultM, DTLBStorePageFaultM;
+  logic 		    InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
   logic 		    LoadMisalignedFaultM, LoadAccessFaultM;
-  logic 		    StoreMisalignedFaultM, StoreAccessFaultM;
+  logic 		    StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
   logic [`XLEN-1:0] 	    InstrMisalignedAdrM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic 		    PCSrcE;
@@ -189,7 +189,7 @@ module wallypipelinedcore (
 
     // output logic
     // Faults
-    .IllegalBaseInstrFaultD, .ITLBInstrPageFaultF,
+    .IllegalBaseInstrFaultD, .InstrPageFaultF,
     .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
     .InstrMisalignedAdrM,
 
@@ -270,12 +270,12 @@ module wallypipelinedcore (
 	.STATUS_MPP,  // from csr	  
 
 	.DTLBFlushM,                   // connects to privilege
-	.DTLBLoadPageFaultM,   // connects to privilege
-	.DTLBStorePageFaultM, // connects to privilege
+	.LoadPageFaultM,   // connects to privilege
+	.StoreAmoPageFaultM, // connects to privilege
 	.LoadMisalignedFaultM, // connects to privilege
 	.LoadAccessFaultM,         // connects to privilege
-	.StoreMisalignedFaultM, // connects to privilege
-	.StoreAccessFaultM,     // connects to privilege
+	.StoreAmoMisalignedFaultM, // connects to privilege
+	.StoreAmoAccessFaultM,     // connects to privilege
     
 	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
 	.LSUStallM);                     // change to LSUStallM
@@ -327,9 +327,9 @@ module wallypipelinedcore (
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
          .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
-         .ITLBInstrPageFaultF, .DTLBLoadPageFaultM, .DTLBStorePageFaultM,
+         .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
          .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
-         .LoadMisalignedFaultM, .StoreMisalignedFaultM,
+         .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
          .TimerIntM, .ExtIntM, .SwIntM,
          .MTIME_CLINT, 
          .InstrMisalignedAdrM, .IEUAdrM,
@@ -337,7 +337,7 @@ module wallypipelinedcore (
          // Trap signals from pmp/pma in mmu
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
-         .InstrAccessFaultF, .LoadAccessFaultM, .StoreAccessFaultM,
+         .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM,
          .ExceptionM, .PendingInterruptM, .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,

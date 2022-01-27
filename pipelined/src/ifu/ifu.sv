@@ -62,7 +62,7 @@ module ifu (
 	output logic 				BPPredClassNonCFIWrongM,
 	// Faults
 	input logic 				IllegalBaseInstrFaultD,
-	output logic 				ITLBInstrPageFaultF,
+	output logic 				InstrPageFaultF,
 	output logic 				IllegalIEUInstrFaultD,
 	output logic 				InstrMisalignedFaultM,
 	output logic [`XLEN-1:0] 	InstrMisalignedAdrM,
@@ -190,13 +190,15 @@ module ifu (
        .TLBFlush(ITLBFlushF),
        .PhysicalAddress(PCPF),
        .TLBMiss(ITLBMissF),
-       .TLBPageFault(ITLBInstrPageFaultF),
+       .InstrPageFaultF,
        .ExecuteAccessF(1'b1),
        .AtomicAccessM(1'b0),
        .ReadAccessM(1'b0),
        .WriteAccessM(1'b0),
        .LoadAccessFaultM(),
-       .StoreAccessFaultM(),
+       .StoreAmoAccessFaultM(),
+       .LoadPageFaultM(), .StoreAmoPageFaultM(),
+       .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
        .DisableTranslation(1'b0), // *** is there a better name
        .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
 
