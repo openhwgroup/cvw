@@ -112,6 +112,7 @@ module lsu (
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
  
   if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
+  // *** encapsulate as lsuvirtmem
     logic 					   AnyCPUReqM;
     logic [`PA_BITS-1:0] 		   HPTWAdr;
     logic 					   HPTWRead;
@@ -201,6 +202,8 @@ module lsu (
     // *** lump into lsumislaigned module
     // Determine if an Unaligned access is taking place
     // hptw guarantees alignment, only check inputs from IEU.
+
+    // *** modify MMU to put out LoadMisalignedFault and StoreMisalignedFault rather than DataMisalignedM
     always_comb
     case(Funct3M[1:0]) 
       2'b00:  DataMisalignedM = 0;                       // lb, sb, lbu
@@ -246,6 +249,15 @@ module lsu (
   logic 			   SelUncachedAdr;
 
   if (`MEM_DTIM) begin : dtim
+/*    Consider restructuring with higher level blocks.  Try drawing block diagrams with several pages of schematics,
+  one for top level, one for each sublevel, alternate with either dtim or bus.  If this looks more satisfactory,
+  restructure code accordingly.
+
+  dtim dtim (.clk, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, .ReadDataWordM,
+               .BusStallM, .LSUBusWrite, .LSUBusRead, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr,
+               .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .DCacheWriteLine, .DCacheFetchLine, .DCacheBusAdr,
+               .ReadDataLineSetsM, .DCacheMiss, .DCacheAccess); */
+
     // *** adjust interface so write address doesn't need delaying; switch to standard RAM?
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
@@ -260,7 +272,8 @@ module lsu (
     assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
     assign ReadDataLineSetsM[0] = 0;
     assign DCacheMiss = 1'b0; assign DCacheAccess = 1'b0;
-  end else begin : bus  // *** lsubusdp
+  end else begin : bus  
+  // replace from here up to if (`MEM_DCACHE) with busdp ***
     // Bus Side logic
     // register the fetch data from the next level of memory.
     // This register should be necessary for timing.  There is no register in the uncore or
@@ -321,6 +334,7 @@ module lsu (
 
   // this might only get instantiated if there is a dcache or dtim.
   // There is a copy in the ebu. *** is it needed there, or can data come in from ebu, get muxed here and sent back out
+  // Explore changing feedback path from output of AMOALU to subword write ***
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM),
 			    .HADDRD(LSUPAdrM[2:0]),
 			    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
@@ -332,6 +346,8 @@ module lsu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if (`A_SUPPORTED) begin:lrsc
+    /*atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .MemRead, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
+                    .SquashSCM, .LSURWM, ... ); *** */
     logic [`XLEN-1:0] AMOResult;
     amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
                   .result(AMOResult));

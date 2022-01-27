@@ -91,6 +91,7 @@ module uncore (
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // subword accesses: converts HWDATAIN to HWDATA
+  // *** can this be merged into LSU instead of replicated?
   subwordwrite sww(
     .HRDATA, 
     .HADDRD, .HSIZED, 
