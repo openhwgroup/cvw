@@ -146,7 +146,7 @@ def main():
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system
-    with Pool(processes=min(len(configs),25)) as pool:
+    with Pool(processes=min(len(configs),40)) as pool:
        num_fail = 0
        results = {}
        for config in configs:
