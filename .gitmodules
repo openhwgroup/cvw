@@ -17,3 +17,9 @@
 [submodule "addins/embench-iot"]
 	path = addins/embench-iot
 	url = https://github.com/embench/embench-iot
+[submodule "addins/book_flow"]
+	path = addins/book_flow
+	url = https://github.com/stineje/book_flow
+[submodule "addins/sky130_osu_sc_t18"]
+	path = addins/sky130_osu_sc_t18
+	url = https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t18
