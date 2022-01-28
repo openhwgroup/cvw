@@ -270,13 +270,13 @@ module lsu (
 
     assign LocalLSUBusAdr = SelUncachedAdr ? LSUPAdrM : DCacheBusAdr ;
     assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-    assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount];
+    assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount]; // only in lsu, not ifu
     // exclude the subword write for uncached.  We don't read the data first so we cannot
     // select the subword by masking.  Subword write also exists inside the uncore to
     // suport subword masking for i/o.  I'm not sure if this is necessary.
-    assign LSUBusHWDATA = SelUncachedAdr ? FinalAMOWriteDataM : PreLSUBusHWDATA; 
+    assign LSUBusHWDATA = SelUncachedAdr ? FinalAMOWriteDataM : PreLSUBusHWDATA;  // only in lsu, not ifu
 
-    assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : (`XLEN == 32 ? 3'b010 : 3'b011);
+    assign LSUBusSize = SelUncachedAdr ? LSUFunct3M : (`XLEN == 32 ? 3'b010 : 3'b011); // ifu: always the XLEN value.
 
     // select between dcache and direct from the BUS. Always selected if no dcache.
     mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM),
