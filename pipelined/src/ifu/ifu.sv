@@ -130,41 +130,38 @@ module ifu (
     assign {SelNextSpillF, CompressedF} = 0;
   end
   
-
   assign PCFExt = {2'b00, PCFSpill};
 
-  mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
-  immu(.PAdr(PCFExt[`PA_BITS-1:0]),
-       .VAdr(PCFSpill),
-       .Size(2'b10),
-       .PTE(PTE),
-       .PageTypeWriteVal(PageType),
-       .TLBWrite(ITLBWriteF),
-       .TLBFlush(ITLBFlushF),
-       .PhysicalAddress(PCPF),
-       .TLBMiss(ITLBMissF),
-       .InstrPageFaultF,
-       .ExecuteAccessF(1'b1),
-       .AtomicAccessM(1'b0),
-       .ReadAccessM(1'b0),
-       .WriteAccessM(1'b0),
-       .LoadAccessFaultM(),
-       .StoreAmoAccessFaultM(),
-       .LoadPageFaultM(), .StoreAmoPageFaultM(),
-       .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
-       .DisableTranslation(1'b0), // *** is there a better name
-       .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Memory management
+  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-       .clk, .reset,
-       .SATP_REGW,
-       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-       .STATUS_MPP,
-       .PrivilegeModeW,
-       .InstrAccessFaultF,
-       .PMPCFG_ARRAY_REGW,
-       .PMPADDR_ARRAY_REGW      
-       );
+  if(`ZICSR_SUPPORTED == 1) begin : immu
+    mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
+    immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+         .PrivilegeModeW, .DisableTranslation(1'b0),
+         .PAdr(PCFExt[`PA_BITS-1:0]),
+         .VAdr(PCFSpill),
+         .Size(2'b10),
+         .PTE(PTE),
+         .PageTypeWriteVal(PageType),
+         .TLBWrite(ITLBWriteF),
+         .TLBFlush(ITLBFlushF),
+         .PhysicalAddress(PCPF),
+         .TLBMiss(ITLBMissF),
+         .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
+         .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
+         .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
+         .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
+         .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
+         .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
+  end else begin
+    assign {ITLBMissF, InstrAccessFaultF} = '0;
+    assign InstrPageFaultF = '0;
+    assign PCPF = PCF;
+    assign CacheableF = '1;
+  end
   // conditional
   // 1. ram // controlled by `MEM_IROM
   // 2. cache // `MEM_ICACHE

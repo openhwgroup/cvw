@@ -181,15 +181,13 @@ module lsu (
       .TLBFlush(DTLBFlushM),
       .PhysicalAddress(LSUPAdrM),
       .TLBMiss(DTLBMissM),
-      .Cacheable(CacheableM),
-      .Idempotent(), .AtomicAllowed(),
+      .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,         
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), // **** change this to just use PreLSURWM
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
-      .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW
-      );
+      .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
     // *** lsumisaligned lsumisaligned(Funct3M, IEUAdrM, MemRW, LoadMisalignedFaultM, StoreAmoMisalignedFaultM);
     // *** lump into lsumislaigned module
@@ -201,9 +199,9 @@ module lsu (
 
   end else begin
     assign {DTLBMissM, LoadAccessFaultM, StoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
-    assign LSUPAdrM = PreLSUPAdrM;
-    assign CacheableM = 1;
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
+    assign LSUPAdrM = PreLSUPAdrM;
+    assign CacheableM = '1;
   end
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
   
