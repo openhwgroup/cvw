@@ -168,14 +168,14 @@ add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/Write
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
-add wave -noupdate -group icache -color Gold /testbench/dut/core/ifu/icache/icache/cachefsm/CurrState
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/icache/ReadDataWord
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/icache/SelAdr
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/icache/RAdr
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/CacheHit
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/CacheStall
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/ReadDataLineSets
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/icache/CacheMemWriteData
+add wave -noupdate -group icache -color Gold /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CurrState
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/icache/ReadDataWord
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/icache/SelAdr
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/icache/RAdr
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/CacheHit
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/CacheStall
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/ReadDataLineSets
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheMemWriteData
 add wave -noupdate -group icache /testbench/dut/core/ifu/SpillSupport/SpillDataLine0
 add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/core/ebu/NextBusState
