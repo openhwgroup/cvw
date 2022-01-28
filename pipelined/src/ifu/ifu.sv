@@ -114,67 +114,20 @@ module ifu (
   logic 					   CPUBusy;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
 
-  localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
-
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Spill Support  *** add other banners
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : SpillSupport
-    logic [`XLEN-1:0] 		   PCPlus2F;
-    logic                      TakeSpillF;
-    logic                      SpillF;
-    logic                      SelSpillF, SpillSaveF;
-    logic [15:0]               SpillDataLine0;
 
-    // *** PLACE ALL THIS IN A MODULE
-    // this exists only if there are compressed instructions.
-    // reuse PC+2/4 circuitry to avoid needing a second CPA to add 2
-    mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
-    mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF), .y(PCNextFSpill));
-    mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
-      
-    assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-
-    typedef enum               {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
-    (* mark_debug = "true" *)  statetype CurrState, NextState;
-
-    always_ff @(posedge clk)
-      if (reset)    CurrState <= #1 STATE_SPILL_READY;
-      else CurrState <= #1 NextState;
-
-    assign TakeSpillF = SpillF & ~IFUCacheBusStallF;
-    
-    always_comb begin
-      case (CurrState)
-        STATE_SPILL_READY: if (TakeSpillF) NextState = STATE_SPILL_SPILL;
-          else                                    NextState = STATE_SPILL_READY;
-        STATE_SPILL_SPILL: if(IFUCacheBusStallF | StallF)    NextState = STATE_SPILL_SPILL;
-          else                                    NextState = STATE_SPILL_READY;
-        default:                                                   NextState = STATE_SPILL_READY;
-      endcase
-    end
-
-    assign SelSpillF = (CurrState == STATE_SPILL_SPILL);
-    assign SelNextSpillF = (CurrState == STATE_SPILL_READY & TakeSpillF) |
-                (CurrState == STATE_SPILL_SPILL & IFUCacheBusStallF);
-    assign SpillSaveF = (CurrState == STATE_SPILL_READY) & TakeSpillF;
-
-    flopenr #(16) SpillInstrReg(.clk(clk),
-                  .en(SpillSaveF),
-                  .reset(reset),
-                  .d(`MEM_ICACHE ? InstrRawF[15:0] : InstrRawF[31:16]),
-                  .q(SpillDataLine0));
-
-    assign PostSpillInstrRawF = SpillF ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
-    assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
-
+    spillsupport spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF, .IFUCacheBusStallF, .PCNextFSpill, .PCFSpill,
+                              .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
 	// end of spill support
   end else begin : NoSpillSupport // line: SpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
-    assign SelNextSpillF = 0;
     assign PostSpillInstrRawF = InstrRawF;
+    assign {SelNextSpillF, CompressedF} = 0;
   end
   
 
