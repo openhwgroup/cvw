@@ -288,37 +288,35 @@ test_loop:
     lw x30, 8(x5) # fetch test case flag
     addi x5, x5, 12 # set x5 to next test case
 
-    slli x30, x30, 2 # multiply test type by 4 to index into jump table
-    la x7, test_jump_table # load base address of jump table
-    add x7, x7, x30 # get address of jump table entry
-    jr x7 # jump to relevant test
+    # x5 has the symbol for a test's location in the assembly
+    li x7, 0x3FFFFF 
+    and x30, x30, x7 # This program is always on at least a megapage, so this masks out the megapage offset.
+    auipc x7, 0x0
+    srli x7, x7, 22
+    slli x7, x7, 22 # zero out the bottom 22 bits so the megapage offset of the symbol can be placed there
+    or x30, x7, x30 # x30 = virtual address of the symbol for this type of test.
 
-test_jump_table:
-                        #   x30 Value : Function                              : Fault output value     : Normal output values
-                        #   ----------:---------------------------------------:------------------------:------------------------------------------------------ 
-    j write32_test      #         0x0 : Write 32 bits to address              : 0xf                    : None 
-    j read32_test       #         0x1 : Read 32 bits from address             : 0xd, 0xbad             : readvalue in hex
-    j executable_test   #         0x2 : test executable at address            : 0xc, 0xbad             : leading 12 bits of the li instr written to address. In general this is 0x111. (be sure to also write a return instruction)
-    j terminate_test    #         0x3 : terminate tests                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
-    j goto_baremetal    #         0x4 : satp.MODE = bare metal                : None                   : None 
-    j goto_sv32         #         0x5 : satp.MODE = sv32                      : None                   : None
-    j segfault          #         0x6 : Segfault, undefined test 
-    j write_mxr_sum     #         0x7 : write sstatus.[19:18] = MXR, SUM bits : None                   : None 
-    j goto_m_mode       #         0x8 : go to mahcine mode                    : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
-    j goto_s_mode       #         0x9 : go to supervisor mode                 : mcause value for fault : from M 0xb, from S 0x9, from U 0x8
-    j goto_u_mode       #         0xA : go to user mode                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8 
-    j segfault          #         0xB : Segfault, undefined test 
-    j segfault          #         0xC : Segfault, undefined test 
-    j write_pmpcfg_0    #         0xD : Write one of the pmpcfg csr's         : mstatuses?, 0xD        : readback of pmpcfg value
-    j write_pmpaddr_0   #         0xE : Write one of the pmpaddr csr's        : None                   : readback of pmpaddr value
-    j segfault          #         0xF : Segfault, undefined test 
-    j segfault          #        0x10 : Segfault, undefined test     
-    j segfault          #        0x11 : Segfault, undefined test 
-    j write16_test      #        0x12 : Write 16 bits to address              : 0xf                    : None 
-    j write08_test      #        0x13 : Write 8 bits to address               : 0xf                    : None
-    j segfault          #        0x14 : Segfault, undefined test 
-    j read16_test       #        0x15 : Read 16 bits from address             : 0xd, 0xbad             : readvalue in hex
-    j read08_test       #        0x16 : Read 8 bits from address              : 0xd, 0xbad             : readvalue in hex
+    jr x30
+
+# Test Name             : Description                           : Fault output value     : Normal output values
+# ----------------------:---------------------------------------:------------------------:------------------------------------------------------ 
+# write32_test          : Write 32 bits to address              : 0xf                    : None 
+# write16_test          : Write 16 bits to address              : 0xf                    : None 
+# write08_test          : Write 8 bits to address               : 0xf                    : None
+# read32_test           : Read 32 bits from address             : 0xd, 0xbad             : readvalue in hex
+# read16_test           : Read 16 bits from address             : 0xd, 0xbad             : readvalue in hex
+# read08_test           : Read 8 bits from address              : 0xd, 0xbad             : readvalue in hex
+# executable_test       : test executable at address            : 0xc, 0xbad             : leading 12 bits of the li instr written to address. In general this is 0x111. (be sure to also write a return instruction)
+# terminate_test        : terminate tests                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
+# goto_baremetal        : satp.MODE = bare metal                : None                   : None 
+# goto_sv32             : satp.MODE = sv32                      : None                   : None
+# write_mxr_sum         : write sstatus.[19:18] = MXR, SUM bits : None                   : None 
+# goto_m_mode           : go to mahcine mode                    : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
+# goto_s_mode           : go to supervisor mode                 : mcause value for fault : from M 0xb, from S 0x9, from U 0x8
+# goto_u_mode           : go to user mode                       : mcause value for fault : from M 0xb, from S 0x9, from U 0x8 
+# write_pmpcfg_x        : Write one of the pmpcfg csr's         : mstatuses?, 0xD        : readback of pmpcfg value
+# write_pmpaddr_x       : Write one of the pmpaddr csr's        : None                   : readback of pmpaddr value
+
 
 write32_test:
     # address to write in x28, word value in x29
