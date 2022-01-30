@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.S" 
+#include "WALLY-TEST-LIB-32.h" 
 // Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
 // Ideally this should mean that a test can be written by simply adding .8byte statements as below.
 

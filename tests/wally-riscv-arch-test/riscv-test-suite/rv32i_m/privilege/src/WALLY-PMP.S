@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.S" 
+#include "WALLY-TEST-LIB-32.h" 
 // Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
 // Ideally this should mean that a test can be written by simply adding .4byte statements as below.
 
@@ -45,7 +45,7 @@
 # Test 12.3.2.2.1 Config: Write known values and set PMP config according to table 12.4 in the *** riscv book, copied below
 
 # write pmpaddr regs
-                            # | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |
+                                        # | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |
 .4byte 0x0, 0x0FFFFFFF, write_pmpaddr_0 # | 0     | 0x0FFFFFFF  | 1F        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
 .4byte 0x1, 0x20040000, write_pmpaddr_0 # | 1     | 0x20040000  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
 .4byte 0x2, 0x2004003F, write_pmpaddr_0 # | 2     | 0x2004003F  | 09        | 0 | TOR   | 0 | 0 | 1 | 80100000-801000FF R 		    |
