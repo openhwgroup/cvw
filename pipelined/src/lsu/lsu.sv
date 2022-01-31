@@ -82,7 +82,6 @@ module lsu (
   );
 
   logic [`PA_BITS-1:0] 		   LSUPAdrM;  // from mmu to dcache
-  logic [`XLEN+1:0] 		   IEUAdrExtM;
   logic 					   DTLBMissM;
   logic 					   DTLBWriteM;
   logic [1:0] 				   LSURWM;
@@ -107,53 +106,26 @@ module lsu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
-  assign IEUAdrExtM = {2'b00, IEUAdrM}; 
  
+  logic [`XLEN+1:0]            IEUAdrExtM;
+  assign IEUAdrExtM = {2'b00, IEUAdrM}; 
+
   if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
-  // *** encapsulate as lsuvirtmem
-    logic 					   AnyCPUReqM;
-    logic [`PA_BITS-1:0] 		   HPTWAdr;
-    logic 					   HPTWRead;
-    logic [2:0] 				   HPTWSize;
-    logic 					   SelReplayCPURequest;
+    lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
+                          .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
+                          .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
+                          .IEUAdrExtM, .PTE, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
+                          .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
+                          .IgnoreRequest);
 
-    assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
-
-    interlockfsm interlockfsm (.clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
-    .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM,
-    .InterlockStall, .SelReplayCPURequest, .SelHPTW,
-    .IgnoreRequest);
-    
-    hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
-        .ITLBMissF(ITLBMissF & ~TrapM),
-        .DTLBMissM(DTLBMissM & ~TrapM),
-        .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
-        .HPTWReadPTE(ReadDataM),
-        .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWSize);
-
-    // arbiter between IEU and hptw
-    
-    // multiplex the outputs to LSU
-    mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLSURWM);
-    mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
-    mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
-    mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
-    mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
-    mux2 #(12) replaymux(PreLSUAdrE, IEUAdrM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.
-    mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
-
-    // always block interrupts when using the hardware page table walker.
-    assign CPUBusy = StallW & ~SelHPTW;
-    
   end // if (`MEM_VIRTMEM)
   else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
     assign IgnoreRequest = TrapM;
     assign CPUBusy = StallW;
     assign LSUAdrE = PreLSUAdrE; assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
-    assign PreLSURWM = MemRWM; assign PreLSUAdrE = IEUAdrE[11:0]; assign PreLSUPAdrM = IEUAdrExtM;
+    assign PreLSURWM = MemRWM; assign PreLSUAdrE = IEUAdrE[11:0]; assign PreLSUPAdrM = IEUAdrExtM[`PA_BITS-1:0];
    end
-
 
   // **** look into this confusing signal.
   // This signal is confusing.  CommittedM tells the CPU's trap unit the current instruction
