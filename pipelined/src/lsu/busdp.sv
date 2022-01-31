@@ -49,7 +49,7 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN)
 
   // cache interface.
   input logic [`PA_BITS-1:0]  DCacheBusAdr,
-  input logic [`XLEN-1:0]     ReadDataLineSetsM [WORDSPERLINE-1:0],
+  input var logic [`XLEN-1:0] ReadDataLineSetsM [WORDSPERLINE-1:0],
   input logic                 DCacheFetchLine,
   input logic                 DCacheWriteLine,
   output logic                DCacheBusAck,
