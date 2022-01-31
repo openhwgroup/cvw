@@ -187,12 +187,12 @@ module fpuaddcvt1 (
    logic [8:0] j;
     always_comb begin
             i = 0;
-            while (~mantissaA[52-i] && $unsigned(i) <= $unsigned(52)) i = i+1;  // search for leading one
+            while (~mantissaA[52-i] & $unsigned(i) <= $unsigned(52)) i = i+1;  // search for leading one
             ZP_mantissaA = i;
     end
     always_comb begin
             j = 0;
-            while (~mantissaB[52-j] && $unsigned(j) <= $unsigned(52)) j = j+1;  // search for leading one
+            while (~mantissaB[52-j] & $unsigned(j) <= $unsigned(52)) j = j+1;  // search for leading one
             ZP_mantissaB = j;
     end
 

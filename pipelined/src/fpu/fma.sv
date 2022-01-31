@@ -396,7 +396,7 @@ module lzc(
     logic [8:0] i;
     always_comb begin
         i = 0;
-        while (~f[3*`NF+6-i] && $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
+        while (~f[3*`NF+6-i] & $unsigned(i) <= $unsigned(9'd3*9'd`NF+9'd6)) i = i+1;  // search for leading one
         NormCntE = i;
     end
 endmodule
@@ -768,7 +768,7 @@ module fmaflags(
     //   3) 0 * Inf
 
     assign SigNaN = XSNaNM | YSNaNM | ZSNaNM;
-    assign Invalid = SigNaN | ((XInfM || YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
+    assign Invalid = SigNaN | ((XInfM | YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);  
    
     // Set Overflow flag if the number is too big to be represented
     //      - Don't set the overflow flag if an overflowed result isn't outputed

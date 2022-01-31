@@ -129,7 +129,7 @@ module fsm_fpdiv_pipe (
 	    end // if (start==1'b0)
 	  S65:
 	    begin
-	       if (op_type==1'b0 && P==1'b0) 
+	       if (op_type==1'b0 & P==1'b0) 
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
@@ -146,7 +146,7 @@ module fsm_fpdiv_pipe (
 		    sel_muxr = 1'b0;
 		    next_state = S1;
 		 end 
-	       else if (op_type==1'b0 && P==1'b1) 
+	       else if (op_type==1'b0 & P==1'b1) 
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
@@ -163,7 +163,7 @@ module fsm_fpdiv_pipe (
 		    sel_muxr = 1'b0;
 		    next_state = S36;
 		 end 
-	       else if (op_type==1'b1 && P==1'b0) 
+	       else if (op_type==1'b1 & P==1'b0) 
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
@@ -180,7 +180,7 @@ module fsm_fpdiv_pipe (
 		    sel_muxr = 1'b0;
 		    next_state = S15;
 		 end 
-	       else if (op_type==1'b1 && P==1'b1) 
+	       else if (op_type==1'b1 & P==1'b1) 
 		 begin
 		    done = 1'b0;
 		    divBusy = 1'b1;
