@@ -3,6 +3,7 @@
 // Finite Impulse Response Filter
 
 #include <stdio.h>  // supports printf
+#include <math.h>   // supports fabs
 #include "util.h"   // supports verify
 
 void fir(int N, int M, double X[], double c[], double Y[]) {

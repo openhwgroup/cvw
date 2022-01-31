@@ -86,7 +86,7 @@ module csrc #(parameter
     
     // Determine when to increment each counter
     assign CounterEvent[0] = 1'b1;  // MCYCLE always increments
-    assign CounterEvent[1] = 1'b0;  // Counter 0 doesn't exist
+    assign CounterEvent[1] = 1'b0;  // Counter 1 doesn't exist
     assign CounterEvent[2] = InstrValidNotFlushedM;
     if(`QEMU) begin: cevent // No other performance counters in QEMU
       assign CounterEvent[`COUNTERS-1:3] = 0;
