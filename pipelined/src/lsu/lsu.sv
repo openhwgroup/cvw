@@ -33,79 +33,79 @@
 `include "wally-config.vh"
 
 module lsu (
-   input logic 				   clk, reset,
-   input logic 				   StallM, FlushM, StallW, FlushW,
-   output logic 			   LSUStallM,
+   input logic              clk, reset,
+   input logic              StallM, FlushM, StallW, FlushW,
+   output logic             LSUStallM,
    // connected to cpu (controls)
-   input logic [1:0] 		   MemRWM,
-   input logic [2:0] 		   Funct3M,
-   input logic [6:0] 		   Funct7M, 
-   input logic [1:0] 		   AtomicM,
-   input logic                 TrapM,
-   input logic 				   FlushDCacheM,
-   output logic 			   CommittedM, 
-   output logic 			   SquashSCW,
-   output logic 			   DCacheMiss,
-   output logic 			   DCacheAccess,
+   input logic [1:0]        MemRWM,
+   input logic [2:0]        Funct3M,
+   input logic [6:0]        Funct7M, 
+   input logic [1:0]        AtomicM,
+   input logic              TrapM,
+   input logic              FlushDCacheM,
+   output logic             CommittedM, 
+   output logic             SquashSCW,
+   output logic             DCacheMiss,
+   output logic             DCacheAccess,
    // address and write data
-   input logic [`XLEN-1:0] 	   IEUAdrE,
-   (* mark_debug = "true" *)output logic [`XLEN-1:0]    IEUAdrM,
-   input logic [`XLEN-1:0] 	   WriteDataM, 
-   output logic [`XLEN-1:0]    ReadDataM,
+   input logic [`XLEN-1:0]  IEUAdrE,
+   (* mark_debug = "true" *)output logic [`XLEN-1:0] IEUAdrM,
+   input logic [`XLEN-1:0]  WriteDataM, 
+   output logic [`XLEN-1:0] ReadDataM,
    // cpu privilege
-   input logic [1:0] 		   PrivilegeModeW,
-   input logic 				   DTLBFlushM,
+   input logic [1:0]        PrivilegeModeW,
+   input logic              DTLBFlushM,
    // faults
-   output logic 			   LoadPageFaultM, StoreAmoPageFaultM,
-   output logic 			   LoadMisalignedFaultM, LoadAccessFaultM,
+   output logic             LoadPageFaultM, StoreAmoPageFaultM,
+   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
    // cpu hazard unit (trap)
-   output logic 			   StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
-   // connect to ahb
-(* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
-(* mark_debug = "true" *)   output logic 			   LSUBusRead, 
-(* mark_debug = "true" *)   output logic 			   LSUBusWrite,
-(* mark_debug = "true" *)   input logic 				   LSUBusAck,
-(* mark_debug = "true" *)   input logic [`XLEN-1:0] 	   LSUBusHRDATA,
-(* mark_debug = "true" *)   output logic [`XLEN-1:0]    LSUBusHWDATA,
-(* mark_debug = "true" *)   output logic [2:0] 		   LSUBusSize, 
-   // page table walker
-   input logic [`XLEN-1:0] 	   SATP_REGW, // from csr
-   input logic 				   STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-   input logic [1:0] 		   STATUS_MPP,
-   input logic [`XLEN-1:0] 	   PCF,
-   input logic 				   ITLBMissF,
-   output logic [`XLEN-1:0]    PTE,
-   output logic [1:0] 		   PageType,
-   output logic 			   ITLBWriteF,
-   input 					   var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-   input 					   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
+   output logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
+            // connect to ahb
+   (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
+   (* mark_debug = "true" *)   output logic LSUBusRead, 
+   (* mark_debug = "true" *)   output logic LSUBusWrite,
+   (* mark_debug = "true" *)   input logic LSUBusAck,
+   (* mark_debug = "true" *)   input logic [`XLEN-1:0] LSUBusHRDATA,
+   (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUBusHWDATA,
+   (* mark_debug = "true" *)   output logic [2:0] LSUBusSize, 
+            // page table walker
+   input logic [`XLEN-1:0]  SATP_REGW, // from csr
+   input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+   input logic [1:0]        STATUS_MPP,
+   input logic [`XLEN-1:0]  PCF,
+   input logic              ITLBMissF,
+   output logic [`XLEN-1:0] PTE,
+   output logic [1:0]       PageType,
+   output logic             ITLBWriteF,
+   input var                logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+   input var                logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
   );
 
-  logic [`PA_BITS-1:0] 		   LSUPAdrM;  // from mmu to dcache
-  logic 					   DTLBMissM;
-  logic 					   DTLBWriteM;
-  logic [1:0] 				   LSURWM;
-  logic [1:0] 				   PreLSURWM;
-  logic [2:0] 				   LSUFunct3M;
-  logic [6:0] 				   LSUFunct7M;
-  logic [1:0] 				   LSUAtomicM;
-(* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLSUPAdrM, LocalLSUBusAdr;
-  logic [11:0] 				   PreLSUAdrE, LSUAdrE;  
-  logic 					   CPUBusy;
-  logic 					   DCacheStallM;
-  logic 					   CacheableM;
-  logic 					   SelHPTW;
-  logic 					   BusStall;
-  logic 					   InterlockStall;
-  logic 					   IgnoreRequest;
-  logic 					   BusCommittedM, DCacheCommittedM;
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  // HPTW and Interlock FSM (only needed if VM supported)
-  // MMU include PMP and is needed if any privileged supported
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  logic [`PA_BITS-1:0]      LSUPAdrM;  // from mmu to dcache
+  logic                     DTLBMissM;
+  logic                     DTLBWriteM;
+  logic [1:0]               LSURWM;
+  logic [1:0]               PreLSURWM;
+  logic [2:0]               LSUFunct3M;
+  logic [6:0]               LSUFunct7M;
+  logic [1:0]               LSUAtomicM;
+  (* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLSUPAdrM;
+  logic [11:0]              PreLSUAdrE, LSUAdrE;  
+  logic                     CPUBusy;
+  logic                     DCacheStallM;
+  logic                     CacheableM;
+  logic                     SelHPTW;
+  logic                     BusStall;
+  logic                     InterlockStall;
+  logic                     IgnoreRequest;
+  logic                     BusCommittedM, DCacheCommittedM;
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // HPTW and Interlock FSM (only needed if VM supported)
+  // MMU include PMP and is needed if any privileged supported
+  /////////////////////////////////////////////////////////////////////////////////////////////
  
   logic [`XLEN+1:0]            IEUAdrExtM;
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
@@ -118,8 +118,7 @@ module lsu (
                           .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
                           .IgnoreRequest);
 
-  end // if (`MEM_VIRTMEM)
-  else begin
+  end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
     assign IgnoreRequest = TrapM;
     assign CPUBusy = StallW;
@@ -168,10 +167,10 @@ module lsu (
   end
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
   
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////
   // Hart Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
   localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
   localparam integer   LINELEN = `MEM_DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
@@ -207,13 +206,14 @@ module lsu (
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
         .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
         dcache(.clk, .reset, .CPUBusy,
-            .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), .Atomic(CacheableM ? LSUAtomicM : 2'b00), 
-            .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
-            .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), .CacheStall(DCacheStallM),
-            .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess), 
-            .IgnoreRequest, .CacheCommitted(DCacheCommittedM),
-            .CacheBusAdr(DCacheBusAdr), .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
-            .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+               .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), 
+               .Atomic(CacheableM ? LSUAtomicM : 2'b00), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
+               .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), 
+               .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
+               .IgnoreRequest, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
+               .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
+               .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
+               .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
@@ -237,19 +237,16 @@ module lsu (
 			    .HWDATAIN(FinalAMOWriteDataM),
 			    .HWDATA(FinalWriteDataM));
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
   if (`A_SUPPORTED) begin:lrsc
-    /*atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .MemRead, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
-                    .SquashSCM, .LSURWM, ... ); *** */
-    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, .LSUFunct7M,
-                  .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, .DTLBMissM, 
-                  .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, 
+                  .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
+                  .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
 
   end else begin:lrsc
     assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = WriteDataM;
   end
 endmodule
-
