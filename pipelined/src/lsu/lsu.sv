@@ -216,35 +216,13 @@ module lsu (
   
 
   if (`MEM_DTIM) begin : dtim
-/*    Consider restructuring with higher level blocks.  Try drawing block diagrams with several pages of schematics,
-  one for top level, one for each sublevel, alternate with either dtim or bus.  If this looks more satisfactory,
-  restructure code accordingly.
+    dtim #(WORDSPERLINE) 
+    dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
+         .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .DCacheBusAck, .BusCommittedM,
+         .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .DCacheWriteLine, 
+         .DCacheFetchLine, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheMiss, .DCacheAccess);
 
-  dtim dtim (.clk, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, .ReadDataWordM,
-               .BusStallM, .LSUBusWrite, .LSUBusRead, .DCacheBusAck, .BusCommittedM,
-               .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .DCacheWriteLine, .DCacheFetchLine, .DCacheBusAdr,
-               .ReadDataLineSetsM, .DCacheMiss, .DCacheAccess); */
-
-    // *** adjust interface so write address doesn't need delaying; switch to standard RAM?
-    simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .clk, 
-        .a(CPUBusy | LSURWM[0] ? IEUAdrM[31:0] : IEUAdrE[31:0]),
-        .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
-        .wd(FinalWriteDataM), .rd(ReadDataWordM));
-
-    // since we have a local memory the bus connections are all disabled.
-    // There are no peripherals supported.
-    assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM} = '0;   
-    assign ReadDataWordMuxM = ReadDataWordM;
-    assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
-    assign ReadDataLineSetsM[0] = 0;
-    assign DCacheMiss = 1'b0; assign DCacheAccess = 1'b0;
   end else begin : bus  
-    // Bus Side logic
-    // register the fetch data from the next level of memory.
-    // This register should be necessary for timing.  There is no register in the uncore or
-    // ahblite controller between the memories and this cache.
-
     busdp #(WORDSPERLINE, LINELEN) 
     busdp(.clk, .reset,
           .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusHWDATA, .LSUBusSize, 
