@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "NEW-LIB.h"
+#include "WALLY-TEST-MACROS-64.h"
 
 INIT_TESTS
 
