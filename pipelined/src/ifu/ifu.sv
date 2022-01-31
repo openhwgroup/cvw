@@ -169,16 +169,16 @@ module ifu (
   // Memory 
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
+  logic [`XLEN-1:0] AllInstrRawF;
+  assign InstrRawF = AllInstrRawF[31:0];
 
   
   if (`MEM_IROM) begin : irom
-    logic [`XLEN-1:0] AllInstrRawF;
     dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF), .IEUAdrE(PCNextFSpill),
               .TrapM(1'b0), .FinalWriteDataM(), 
               .ReadDataWordM(AllInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
               .BusCommittedM(), .ReadDataWordMuxM(), .DCacheStallM(ICacheStallF), 
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
-    assign InstrRawF = AllInstrRawF[31:0];
     
   end else begin : bus
     localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
@@ -192,32 +192,25 @@ module ifu (
     logic [LOGWPL-1:0]   WordCount;
     logic                SelUncachedAdr;
     logic [LINELEN-1:0]  ICacheMemWriteData;
-    logic                ICacheBusAck;
     logic [`PA_BITS-1:0] LocalIFUBusAdr;
     logic [`PA_BITS-1:0] ICacheBusAdr;
+    logic                ICacheBusAck;
 
     genvar 			   index;
-    for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-      flopen #(`XLEN) fb(.clk(clk),
-                         .en(IFUBusAck & IFUBusRead & (index == WordCount)),
-                         .d(IFUBusHRDATA),
-                         .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
-    end
 
-    // select between dcache and direct from the BUS. Always selected if no dcache.
-    // handled in the busfsm.
-    mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF[31:0]), .d1(ICacheMemWriteData[31:0]), .s(SelUncachedAdr), .y(InstrRawF));
-    assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
-    assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
 
-    busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
-    busfsm(.clk, .reset, .IgnoreRequest(ITLBMissF),
-		   .LSURWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
-		   .LSUBusAck(IFUBusAck),
-		   .CPUBusy, .CacheableM(CacheableF),
-		   .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead), .DCacheBusAck(ICacheBusAck),
-		   .BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
-
+    busdp #(WORDSPERLINE, LINELEN) 
+    busdp(.clk, .reset,
+          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), 
+          .LSUBusRead(IFUBusRead), .LSUBusHWDATA(), .LSUBusSize(), 
+          .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
+          .ReadDataLineSetsM(), .DCacheFetchLine(ICacheFetchLine),
+          .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
+          .DCacheMemWriteData(ICacheMemWriteData), .LSUPAdrM(PCPF),
+          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF), 
+          .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
+          .BusStall, .BusCommittedM());
+    
     if(`MEM_ICACHE) begin : icache
       logic [1:0] IFURWF;
       assign IFURWF = CacheableF ? 2'b10 : 2'b00;
@@ -225,29 +218,22 @@ module ifu (
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
-      icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), .CacheMemWriteData(ICacheMemWriteData) , .CacheBusAck(ICacheBusAck),
-             .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), .ReadDataWord(FinalInstrRawF),
-             .CacheFetchLine(ICacheFetchLine),
-             .CacheWriteLine(),
-             .ReadDataLineSets(),
-             .CacheMiss(ICacheMiss),
-             .CacheAccess(ICacheAccess),
+      icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), 
+             .CacheMemWriteData(ICacheMemWriteData), .CacheBusAck(ICacheBusAck),
+             .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
+             .ReadDataWord(FinalInstrRawF), .CacheFetchLine(ICacheFetchLine),
+             .CacheWriteLine(), .ReadDataLineSets(),
+             .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .FinalWriteData('0),
              .RW(IFURWF), 
-             .Atomic(2'b00),
-             .FlushCache(1'b0),
+             .Atomic(2'b00), .FlushCache(1'b0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
-             .CacheCommitted(),
-             .InvalidateCacheM(InvalidateICacheM));
+             .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
 
     end else begin : passthrough
-      assign ICacheFetchLine = '0;
-      assign ICacheBusAdr = '0;
-      assign ICacheStallF = '0;
-	  assign FinalInstrRawF = '0;
-      assign ICacheAccess = CacheableF;
-      assign ICacheMiss = CacheableF;
+      assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;
+      assign ICacheAccess = CacheableF; assign ICacheMiss = CacheableF;
     end
   end
   
