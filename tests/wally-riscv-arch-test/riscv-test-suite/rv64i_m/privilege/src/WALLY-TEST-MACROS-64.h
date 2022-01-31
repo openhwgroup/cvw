@@ -470,18 +470,18 @@ begin_test: // label here to jump to so we dont go through the trap handler befo
 .macro csr_r_access CSR
     // verify that a csr is accessible to read but not to write
     // Success outputs:
+    //      0x2, then
     //      0x11 *** consider changing to something more meaningful
     // Fault outputs:
-    //      0x2, then
     //      0xBAD *** consider changing this one as well. in general, do we need the branching if it hould cause an illegal instruction fault? 
     csrr x29, \CSR
     csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
     csrr x30, \CSR
-    bne x30, x29, 1f // 1f represents r_access_success
-    li x30, 0xBAD // Write succeeded, violating read only permissions.
+    bne x30, x29, 1f // 1f represents write_access
+    li x30, 0x11 // Write succeeded, violating read only permissions.
     j 2f // j r_access_end
-1: // r_access_success
-    li x30, 0x11
+1: // w_access (test failed)
+    li x30, 0xBAD
 2: // r_access end
     sd x30, 0(x6)
     addi x6, x6, 8

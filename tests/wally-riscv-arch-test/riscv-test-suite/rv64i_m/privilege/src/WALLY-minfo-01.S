@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "NEW-LIB.h"
+#include "WALLY-TEST-MACROS-64.h"
 
 INIT_TESTS
 
@@ -31,7 +31,7 @@ csr_r_access mvendorid
 csr_r_access marchid 
 csr_r_access mimpid 
 csr_r_access mhartid 
-# csr_r_access mconfigptr # *** unrecognized by make-compile?? may be unimplemented??
+# csr_r_access mconfigptr # Unimplemented in spike as of 31 Jan 22
 
 
 END_TESTS
