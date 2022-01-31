@@ -379,7 +379,7 @@ module testbench;
       //$display("len = %d", line``STAGE.len()); \
       for(index``STAGE = 0; index``STAGE < line``STAGE.len(); index``STAGE++) begin \
         //$display("char = %s", line``STAGE[index]); \
-        if (line``STAGE[index``STAGE] == " " || line``STAGE[index``STAGE] == "\n") begin \
+        if (line``STAGE[index``STAGE] == " " | line``STAGE[index``STAGE] == "\n") begin \
           EndIndex``STAGE = index``STAGE; \
           ExpectedTokens``STAGE[TokenIndex``STAGE] = line``STAGE.substr(StartIndex``STAGE, EndIndex``STAGE-1); \
           //$display("In Tokenizer %s", line``STAGE.substr(StartIndex, EndIndex-1)); \
@@ -412,7 +412,7 @@ module testbench;
         // parse CSRs, because there are 1 or more CSRs after the CSR token \
         // we check if the CSR token or the number of CSRs is greater than 0. \
         // if so then we want to parse for a CSR. \
-        end else if(ExpectedTokens``STAGE[MarkerIndex``STAGE] == "CSR" || NumCSR``STAGE > 0) begin \
+        end else if(ExpectedTokens``STAGE[MarkerIndex``STAGE] == "CSR" | NumCSR``STAGE > 0) begin \
           if(ExpectedTokens``STAGE[MarkerIndex``STAGE] == "CSR") begin \
             // all additional CSR's won't have this token. \
             MarkerIndex``STAGE++; \
@@ -467,7 +467,7 @@ module testbench;
       // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
       // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
       // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
-      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) || ~dut.core.ieu.c.InstrValidM) begin
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) | ~dut.core.ieu.c.InstrValidM) begin
         RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
@@ -584,10 +584,10 @@ module testbench;
         if (MemOpW.substr(0,2) == "Mem") begin
           if(`DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
           `checkEQ("IEUAdrW",IEUAdrW,ExpectedIEUAdrW)
-          if(MemOpW == "MemR" || MemOpW == "MemRW") begin
+          if(MemOpW == "MemR" | MemOpW == "MemRW") begin
             if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.core.ieu.dp.ReadDataW, ExpectedMemReadDataW);
             `checkEQ("ReadDataW",dut.core.ieu.dp.ReadDataW,ExpectedMemReadDataW)
-          end else if(MemOpW == "MemW" || MemOpW == "MemRW") begin
+          end else if(MemOpW == "MemW" | MemOpW == "MemRW") begin
             if(`DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
             `checkEQ("WriteDataW",ExpectedMemWriteDataW,ExpectedMemWriteDataW)
           end
@@ -680,7 +680,7 @@ module testbench;
           PTE = dut.uncore.ram.ram.RAM[PAdr >> 3];
           PTE_R = PTE[1];
           PTE_X = PTE[3];
-          if (PTE_R || PTE_X) begin
+          if (PTE_R | PTE_X) begin
             // Leaf page found
             break;
           end else begin
