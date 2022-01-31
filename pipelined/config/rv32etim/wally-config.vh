@@ -86,10 +86,10 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   34'h00001000 
-`define BOOTROM_RANGE  34'h00000FFF
+`define BOOTROM_RANGE  34'h000000FF
 `define RAM_SUPPORTED 1'b1
 `define RAM_BASE       34'h80000000
-`define RAM_RANGE      34'h0000FFFF
+`define RAM_RANGE      34'h000003FF
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       34'h80000000
 `define EXT_MEM_RANGE      34'h07FFFFFF
@@ -129,6 +129,6 @@
 
 `define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"
-`define BPRED_ENABLED 1
+`define BPRED_ENABLED 0
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0

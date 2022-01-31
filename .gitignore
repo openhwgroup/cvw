@@ -51,4 +51,5 @@ fpga/generator/*.jou
 examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/C/sum/sum
+examples/C/fir/fir
 
