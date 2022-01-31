@@ -5,6 +5,10 @@
 // Modified: 
 //
 // Purpose: Bus data path.
+// Bus Side logic
+// register the fetch data from the next level of memory.
+// This register should be necessary for timing.  There is no register in the uncore or
+// ahblite controller between the memories and this cache.
 // 
 // A component of the Wally configurable RISC-V project.
 // 
