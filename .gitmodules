@@ -20,3 +20,6 @@
 [submodule "addins/sky130_osu_sc_t18"]
 	path = addins/sky130_osu_sc_t18
 	url = https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t18
+[submodule "addins/soc_flow"]
+	path = addins/soc_flow
+	url = https://github.com/stineje/soc_flow
