@@ -116,23 +116,23 @@ module ifu (
   logic 					   CPUBusy;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  assign PCFExt = {2'b00, PCFSpill};
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
   // Spill Support  *** add other banners
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : SpillSupport
 
-    spillsupport spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF, .IFUCacheBusStallF, .PCNextFSpill, .PCFSpill,
-                              .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
-	// end of spill support
-  end else begin : NoSpillSupport // line: SpillSupport
+    spillsupport spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF,
+                              .IFUCacheBusStallF, .PCNextFSpill, .PCFSpill, .SelNextSpillF,
+                              .PostSpillInstrRawF, .CompressedF);
+  end else begin : NoSpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
     assign PostSpillInstrRawF = InstrRawF;
     assign {SelNextSpillF, CompressedF} = 0;
   end
-  
-  assign PCFExt = {2'b00, PCFSpill};
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory management
