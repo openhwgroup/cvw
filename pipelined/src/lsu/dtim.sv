@@ -50,7 +50,7 @@ module dtim(
 
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
-        .a(CPUBusy | LSURWM[0] ? IEUAdrM[31:0] : IEUAdrE[31:0]),
+        .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]),
         .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
         .wd(FinalWriteDataM), .rd(ReadDataWordM));
 

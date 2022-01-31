@@ -169,36 +169,32 @@ module ifu (
   // Memory 
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
-  localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
-  localparam integer   LINELEN = `MEM_ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
-  localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
 
-  localparam integer   LINEBYTELEN = LINELEN/8;
-  localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
-
-  logic [LINELEN-1:0]  ICacheMemWriteData; /// used outside bus
-  logic 			   ICacheBusAck;
-  logic [`PA_BITS-1:0] LocalIFUBusAdr;
-  logic [`PA_BITS-1:0] ICacheBusAdr;
-  logic 			   SelUncachedAdr; // used outside bus
   
   if (`MEM_IROM) begin : irom
-
-    simpleram #(
-        .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .clk, 
-        .a(CPUBusy | reset ? PCPF[31:0] : PCNextFSpill[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
-        .we(1'b0),
-        .wd(0), .rd(FinalInstrRawF));
-    assign BusStall = 0;
-    assign IFUBusRead = 0;
-    assign ICacheBusAck = 0;
-    assign SelUncachedAdr = 0;
-    assign IFUBusAdr = 0;
-    assign ICacheStallF = '0;
+    logic [`XLEN-1:0] AllInstrRawF;
+    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF), .IEUAdrE(PCNextFSpill),
+              .TrapM(1'b0), .FinalWriteDataM(), 
+              .ReadDataWordM(AllInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
+              .BusCommittedM(), .ReadDataWordMuxM(), .DCacheStallM(ICacheStallF), 
+              .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
+    assign InstrRawF = AllInstrRawF[31:0];
+    
   end else begin : bus
+    localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   LINELEN = `MEM_ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam integer   WordCountThreshold = `MEM_ICACHE ? WORDSPERLINE - 1 : 0;
+
+    localparam integer   LINEBYTELEN = LINELEN/8;
+    localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
+
     logic [LOGWPL-1:0]   WordCount;
+    logic                SelUncachedAdr;
+    logic [LINELEN-1:0]  ICacheMemWriteData;
+    logic                ICacheBusAck;
+    logic [`PA_BITS-1:0] LocalIFUBusAdr;
+    logic [`PA_BITS-1:0] ICacheBusAdr;
 
     genvar 			   index;
     for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
@@ -208,6 +204,9 @@ module ifu (
                          .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
     end
 
+    // select between dcache and direct from the BUS. Always selected if no dcache.
+    // handled in the busfsm.
+    mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF[31:0]), .d1(ICacheMemWriteData[31:0]), .s(SelUncachedAdr), .y(InstrRawF));
     assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
     assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
 
@@ -259,9 +258,6 @@ module ifu (
   logic [4:0]                  InstrClassD, InstrClassE;
 
 
-  // select between dcache and direct from the BUS. Always selected if no dcache.
-  // handled in the busfsm.
-  mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF[31:0]), .d1(ICacheMemWriteData[31:0]), .s(SelUncachedAdr), .y(InstrRawF));
 
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;

@@ -204,7 +204,7 @@ logic [3:0] dummy;
 //`endif
 //      if(`MEM_IROM == 1) begin
 //        $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
+        $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
 //      end
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -298,7 +298,7 @@ logic [3:0] dummy;
             $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
 `endif
  -----/\----- EXCLUDED -----/\----- */
-          $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);
+          $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
           //if(`MEM_IROM == 1) $readmemh(memfilename, dut.core.ifu.irom.ram.RAM);      
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
