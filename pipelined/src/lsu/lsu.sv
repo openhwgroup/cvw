@@ -93,7 +93,6 @@ module lsu (
 (* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLSUPAdrM, LocalLSUBusAdr;
   logic [11:0] 				   PreLSUAdrE, LSUAdrE;  
   logic 					   CPUBusy;
-  logic 					   MemReadM;
   logic 					   DCacheStallM;
   logic 					   CacheableM;
   logic 					   SelHPTW;
@@ -301,13 +300,10 @@ module lsu (
   if (`A_SUPPORTED) begin:lrsc
     /*atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .MemRead, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
                     .SquashSCM, .LSURWM, ... ); *** */
-    logic [`XLEN-1:0] AMOResult;
-    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
-                  .result(AMOResult));
-    mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
-    assign MemReadM = PreLSURWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
-    lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
-        .SquashSCW, .LSURWM);
+    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, .LSUFunct7M,
+                  .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, .DTLBMissM, 
+                  .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+
   end else begin:lrsc
     assign SquashSCW = 0;
     assign LSURWM = PreLSURWM;
