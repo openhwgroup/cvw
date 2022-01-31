@@ -85,13 +85,15 @@ module ifu (
 );
 
 (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
-  logic                        misaligned, BranchMisalignedFaultE, BranchMisalignedFaultM, TrapMisalignedFaultM;
+  logic                        BranchMisalignedFaultE;
   logic                        PrivilegedChangePCM;
   logic                        IllegalCompInstrD;
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
   logic [`XLEN-3:0]            PCPlusUpperF;
   logic                        CompressedF;
-  logic [31:0]                 InstrRawD, FinalInstrRawF, InstrRawF;
+  logic [31:0]                 InstrRawD, InstrRawF;
+  logic [`XLEN-1:0]            FinalInstrRawF;
+  
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
 
@@ -114,114 +116,58 @@ module ifu (
   logic 					   CPUBusy;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
 
-  localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
-
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Spill Support  *** add other banners
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : SpillSupport
-    logic [`XLEN-1:0] 		   PCPlus2F;
-    logic                      TakeSpillF;
-    logic                      SpillF;
-    logic                      SelSpillF, SpillSaveF;
-    logic [15:0]               SpillDataLine0;
 
-    // *** PLACE ALL THIS IN A MODULE
-    // this exists only if there are compressed instructions.
-    // reuse PC+2/4 circuitry to avoid needing a second CPA to add 2
-    mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
-    mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF), .y(PCNextFSpill));
-    mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
-      
-    assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-
-    typedef enum               {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
-    (* mark_debug = "true" *)  statetype CurrState, NextState;
-
-    always_ff @(posedge clk)
-      if (reset)    CurrState <= #1 STATE_SPILL_READY;
-      else CurrState <= #1 NextState;
-
-    assign TakeSpillF = SpillF & ~IFUCacheBusStallF;
-    
-    always_comb begin
-      case (CurrState)
-        STATE_SPILL_READY: if (TakeSpillF) NextState = STATE_SPILL_SPILL;
-          else                                    NextState = STATE_SPILL_READY;
-        STATE_SPILL_SPILL: if(IFUCacheBusStallF | StallF)    NextState = STATE_SPILL_SPILL;
-          else                                    NextState = STATE_SPILL_READY;
-        default:                                                   NextState = STATE_SPILL_READY;
-      endcase
-    end
-
-    assign SelSpillF = (CurrState == STATE_SPILL_SPILL);
-    assign SelNextSpillF = (CurrState == STATE_SPILL_READY & TakeSpillF) |
-                (CurrState == STATE_SPILL_SPILL & IFUCacheBusStallF);
-    assign SpillSaveF = (CurrState == STATE_SPILL_READY) & TakeSpillF;
-
-    flopenr #(16) SpillInstrReg(.clk(clk),
-                  .en(SpillSaveF),
-                  .reset(reset),
-                  .d(`MEM_ICACHE ? InstrRawF[15:0] : InstrRawF[31:16]),
-                  .q(SpillDataLine0));
-
-    assign PostSpillInstrRawF = SpillF ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
-    assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
-
+    spillsupport spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF, .IFUCacheBusStallF, .PCNextFSpill, .PCFSpill,
+                              .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
 	// end of spill support
   end else begin : NoSpillSupport // line: SpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
-    assign SelNextSpillF = 0;
     assign PostSpillInstrRawF = InstrRawF;
+    assign {SelNextSpillF, CompressedF} = 0;
   end
   
-
   assign PCFExt = {2'b00, PCFSpill};
 
-  mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
-  immu(.PAdr(PCFExt[`PA_BITS-1:0]),
-       .VAdr(PCFSpill),
-       .Size(2'b10),
-       .PTE(PTE),
-       .PageTypeWriteVal(PageType),
-       .TLBWrite(ITLBWriteF),
-       .TLBFlush(ITLBFlushF),
-       .PhysicalAddress(PCPF),
-       .TLBMiss(ITLBMissF),
-       .InstrPageFaultF,
-       .ExecuteAccessF(1'b1),
-       .AtomicAccessM(1'b0),
-       .ReadAccessM(1'b0),
-       .WriteAccessM(1'b0),
-       .LoadAccessFaultM(),
-       .StoreAmoAccessFaultM(),
-       .LoadPageFaultM(), .StoreAmoPageFaultM(),
-       .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
-       .DisableTranslation(1'b0), // *** is there a better name
-       .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Memory management
+  ////////////////////////////////////////////////////////////////////////////////////////////////
 
-       .clk, .reset,
-       .SATP_REGW,
-       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-       .STATUS_MPP,
-       .PrivilegeModeW,
-       .InstrAccessFaultF,
-       .PMPCFG_ARRAY_REGW,
-       .PMPADDR_ARRAY_REGW      
-       );
+  if(`ZICSR_SUPPORTED == 1) begin : immu
+    mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
+    immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+         .PrivilegeModeW, .DisableTranslation(1'b0),
+         .PAdr(PCFExt[`PA_BITS-1:0]),
+         .VAdr(PCFSpill),
+         .Size(2'b10),
+         .PTE(PTE),
+         .PageTypeWriteVal(PageType),
+         .TLBWrite(ITLBWriteF),
+         .TLBFlush(ITLBFlushF),
+         .PhysicalAddress(PCPF),
+         .TLBMiss(ITLBMissF),
+         .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
+         .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
+         .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
+         .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
+         .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
+         .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
-  // conditional
-  // 1. ram // controlled by `MEM_IROM
-  // 2. cache // `MEM_ICACHE
-  // 3. wire pass-through
+  end else begin
+    assign {ITLBMissF, InstrAccessFaultF} = '0;
+    assign InstrPageFaultF = '0;
+    assign PCPF = PCF;
+    assign CacheableF = '1;
+  end
 
-  // If we have `MEM_IROM we don't have the bus controller
-  // otherwise we have the bus controller and either a cache or a passthrough.
-
-
-  // *** make this area look like LSU, including moving I$.  Hide localparams in submodules when feasible
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Memory 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
 
   localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
   localparam integer   LOGWPL = `MEM_ICACHE ? $clog2(WORDSPERLINE) : 1;
@@ -231,85 +177,81 @@ module ifu (
   localparam integer   LINEBYTELEN = LINELEN/8;
   localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
 
-  logic [LOGWPL-1:0]   WordCount;
-  logic [LINELEN-1:0]  ICacheMemWriteData;
+  logic [LINELEN-1:0]  ICacheMemWriteData; /// used outside bus
   logic 			   ICacheBusAck;
   logic [`PA_BITS-1:0] LocalIFUBusAdr;
   logic [`PA_BITS-1:0] ICacheBusAdr;
-  logic 			   SelUncachedAdr;
+  logic 			   SelUncachedAdr; // used outside bus
   
   if (`MEM_IROM) begin : irom
-	logic [`XLEN-1:0] FinalInstrRawF_FIXME;
 
     simpleram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
         .a(CPUBusy | reset ? PCPF[31:0] : PCNextFSpill[31:0]), // mux is also inside $, have to replay address if CPU is stalled.
         .we(1'b0),
-        .wd(0), .rd(FinalInstrRawF_FIXME));
-	  assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
+        .wd(0), .rd(FinalInstrRawF));
     assign BusStall = 0;
     assign IFUBusRead = 0;
     assign ICacheBusAck = 0;
     assign SelUncachedAdr = 0;
     assign IFUBusAdr = 0;
+    assign ICacheStallF = '0;
   end else begin : bus
-      genvar 			   index;
-      for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-        flopen #(`XLEN) fb(.clk(clk),
-                           .en(IFUBusAck & IFUBusRead & (index == WordCount)),
-                           .d(IFUBusHRDATA),
-                           .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
-      end
+    logic [LOGWPL-1:0]   WordCount;
 
-      assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
-      assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
+    genvar 			   index;
+    for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
+      flopen #(`XLEN) fb(.clk(clk),
+                         .en(IFUBusAck & IFUBusRead & (index == WordCount)),
+                         .d(IFUBusHRDATA),
+                         .q(ICacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+    end
 
-      busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
-      busfsm(.clk, .reset, .IgnoreRequest(ITLBMissF),
-		     .LSURWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
-		     .LSUBusAck(IFUBusAck),
-		     .CPUBusy, .CacheableM(CacheableF),
-		     .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead), .DCacheBusAck(ICacheBusAck),
-		     .BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
+    assign LocalIFUBusAdr = SelUncachedAdr ? PCPF : ICacheBusAdr;
+    assign IFUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalIFUBusAdr;
 
+    busfsm #(WordCountThreshold, LOGWPL, `MEM_ICACHE)
+    busfsm(.clk, .reset, .IgnoreRequest(ITLBMissF),
+		   .LSURWM(2'b10), .DCacheFetchLine(ICacheFetchLine), .DCacheWriteLine(1'b0), 
+		   .LSUBusAck(IFUBusAck),
+		   .CPUBusy, .CacheableM(CacheableF),
+		   .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead), .DCacheBusAck(ICacheBusAck),
+		   .BusCommittedM(), .SelUncachedAdr(SelUncachedAdr), .WordCount);
+
+    if(`MEM_ICACHE) begin : icache
+      logic [1:0] IFURWF;
+      assign IFURWF = CacheableF ? 2'b10 : 2'b00;
+      
+      cache #(.LINELEN(`ICACHE_LINELENINBITS),
+              .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
+              .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
+      icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), .CacheMemWriteData(ICacheMemWriteData) , .CacheBusAck(ICacheBusAck),
+             .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), .ReadDataWord(FinalInstrRawF),
+             .CacheFetchLine(ICacheFetchLine),
+             .CacheWriteLine(),
+             .ReadDataLineSets(),
+             .CacheMiss(ICacheMiss),
+             .CacheAccess(ICacheAccess),
+             .FinalWriteData('0),
+             .RW(IFURWF), 
+             .Atomic(2'b00),
+             .FlushCache(1'b0),
+             .NextAdr(PCNextFSpill[11:0]),
+             .PAdr(PCPF),
+             .CacheCommitted(),
+             .InvalidateCacheM(InvalidateICacheM));
+
+    end else begin : passthrough
+      assign ICacheFetchLine = '0;
+      assign ICacheBusAdr = '0;
+      assign ICacheStallF = '0;
+	  assign FinalInstrRawF = '0;
+      assign ICacheAccess = CacheableF;
+      assign ICacheMiss = CacheableF;
+    end
   end
   
-  // *** in same generate with bus
-  if(`MEM_ICACHE) begin : icache
-    logic [1:0] IFURWF;
-    assign IFURWF = CacheableF ? 2'b10 : 2'b00;
-    
-    logic [`XLEN-1:0] FinalInstrRawF_FIXME;
-    
-    cache #(.LINELEN(`ICACHE_LINELENINBITS),
-        .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-        .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
-    icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), .CacheMemWriteData(ICacheMemWriteData) , .CacheBusAck(ICacheBusAck),
-        .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), .ReadDataWord(FinalInstrRawF_FIXME),
-        .CacheFetchLine(ICacheFetchLine),
-        .CacheWriteLine(),
-        .ReadDataLineSets(),
-        .CacheMiss(ICacheMiss),
-        .CacheAccess(ICacheAccess),
-        .FinalWriteData('0),
-        .RW(IFURWF), 
-        .Atomic(2'b00),
-        .FlushCache(1'b0),
-        .NextAdr(PCNextFSpill[11:0]),
-        .PAdr(PCPF),
-        .CacheCommitted(),
-        .InvalidateCacheM(InvalidateICacheM));
-
-    assign FinalInstrRawF = FinalInstrRawF_FIXME[31:0];
-  end else begin
-    assign ICacheFetchLine = 0;
-    assign ICacheBusAdr = 0;
-    assign ICacheStallF = 0;
-	  if(!`MEM_IROM) assign FinalInstrRawF = 0; // *** move
-    assign ICacheAccess = CacheableF;
-    assign ICacheMiss = CacheableF;
-  end
   
   // branch predictor signal
   logic                        SelBPPredF;
@@ -319,7 +261,7 @@ module ifu (
 
   // select between dcache and direct from the BUS. Always selected if no dcache.
   // handled in the busfsm.
-  mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF), .d1(ICacheMemWriteData[31:0]), .s(SelUncachedAdr), .y(InstrRawF));
+  mux2 #(32) UnCachedInstrMux(.d0(FinalInstrRawF[31:0]), .d1(ICacheMemWriteData[31:0]), .s(SelUncachedAdr), .y(InstrRawF));
 
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
@@ -401,22 +343,19 @@ module ifu (
 
 
   // Misaligned PC logic
+  // Instruction address misalignement only from br/jal(r) instructions.
   // instruction address misalignment is generated by the target of control flow instructions, not
   // the fetch itself.
-  assign misaligned = PCNextF[0] | (PCNextF[1] & ~`C_SUPPORTED);
-  // do we really need to have check if the instruction is control flow? Yes
-  // Branches are updated in the execution stage but traps are updated in the memory stage.
-
-  // pipeline misaligned faults to M stage
-  assign BranchMisalignedFaultE = misaligned & PCSrcE; // E-stage (Branch/Jump) misaligned
-  flopenr #(1) InstrMisalginedReg(clk, reset, ~StallM, BranchMisalignedFaultE, BranchMisalignedFaultM);
+  // xret and Traps both cannot produce instruction misaligned.
+  // xret: mepc is an MXLEN-bit read/write register formatted as shown in Figure 3.21. 
+  // The low bit of mepc (mepc[0]) is always zero. On implementations that support
+  // only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
+  // Spec 3.1.14
+  // Traps: Can’t happen.  The bottom two bits of MTVEC are ignored so the trap always is to a multiple of 4.  See 3.1.7 of the privileged spec.
+  assign BranchMisalignedFaultE = (IEUAdrE[1] & ~`C_SUPPORTED) & PCSrcE;
+  flopenr #(1) InstrMisalginedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
   // *** Ross Thompson. Check InstrMisalignedAdrM as I believe it is the same as PCF.  Should be able to remove.
   flopenr #(`XLEN) InstrMisalignedAdrReg(clk, reset, ~StallM, PCNextF, InstrMisalignedAdrM);
-  assign TrapMisalignedFaultM = misaligned & PrivilegedChangePCM;
-  assign InstrMisalignedFaultM = BranchMisalignedFaultM; // | TrapMisalignedFaultM; *** put this back in without causing a cyclic path
-  // *** likely leave TrapMisalignedFaultM out of here.  Don't implement full spec because
-  // *** it seems silly to have a misaligned trap handler and it adds to the critical path.
-  // ***later revisit more detail
 
   // Instruction and PC/PCLink pipeline registers
   flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);

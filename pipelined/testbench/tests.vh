@@ -1479,7 +1479,8 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-MMU-SV39", "30A0",
     "rv64i_m/privilege/WALLY-MMU-SV48", "30A0",
     "rv64i_m/privilege/WALLY-PMP", "30A0",
-    "rv64i_m/privilege/WALLY-PMA", "30A0"
+    "rv64i_m/privilege/WALLY-PMA", "30A0",
+    "rv64i_m/privilege/WALLY-minfo-01", "30A0"
  };
 
  string wally64periph[] = '{

@@ -82,7 +82,7 @@ module testbench;
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
-			.TIMECLK(0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+			.TIMECLK('0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
@@ -636,7 +636,7 @@ module testbench;
   //   For waveview convenience
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.FinalInstrRawF,
+                dut.core.ifu.FinalInstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);

@@ -23,7 +23,7 @@ add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StorePageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
@@ -168,15 +168,15 @@ add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/Write
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
-add wave -noupdate -group icache -color Gold /testbench/dut/core/ifu/icache/icache/cachefsm/CurrState
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/icache/ReadDataWord
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/icache/SelAdr
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/icache/RAdr
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/CacheHit
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/CacheStall
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/ReadDataLineSets
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/icache/CacheMemWriteData
-add wave -noupdate -group icache /testbench/dut/core/ifu/SpillSupport/SpillDataLine0
+add wave -noupdate -group icache -color Gold /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CurrState
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/icache/ReadDataWord
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/icache/SelAdr
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/icache/RAdr
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/CacheHit
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/CacheStall
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/ReadDataLineSets
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheMemWriteData
+add wave -noupdate -group icache /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillDataLine0
 add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/core/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/core/ebu/AtomicMaskedM
@@ -196,12 +196,12 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/HMASTLOCK
 add wave -noupdate -group AHB /testbench/dut/core/ebu/HADDRD
 add wave -noupdate -group AHB /testbench/dut/core/ebu/HSIZED
 add wave -noupdate -group AHB /testbench/dut/core/ebu/HWRITED
-add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/amo/amoalu/funct
-add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/amo/amoalu/result
-add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/amo/amoalu/srca
-add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/amo/amoalu/srcb
-add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/amo/amoalu/width
-add wave -noupdate -expand -group lsu -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/interlockfsm/InterlockCurrState
+add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/atomic/atomic/amoalu/funct
+add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/atomic/atomic/amoalu/result
+add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/atomic/atomic/amoalu/srca
+add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/atomic/atomic/amoalu/srcb
+add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/atomic/atomic/amoalu/width
+add wave -noupdate -expand -group lsu -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/interlockfsm/InterlockCurrState
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/SelHPTW
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/InterlockStall
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUStallM
@@ -212,7 +212,7 @@ add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/SRAMWayWriteEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/SRAMWordEnable
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/SelAdr
-add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/MEM_VIRTMEM/SelReplayCPURequest
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/SelReplayCPURequest
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrE
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrM
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/RAdr
@@ -220,8 +220,8 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu.bus.dcache/dcache/VictimDirtyWay
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu.bus.dcache/dcache/VictimTag
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu.bus.dcache/dcache/CacheBusAdr
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/WordCount
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu.bus.dcache/dcache/FlushAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/busdp/WordCount
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdr 
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu.bus.dcache/dcache/FlushWay
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/CacheMemWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/WayHit
@@ -319,7 +319,7 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU 
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu.bus.dcache/dcache/CacheStall
 add wave -noupdate -expand -group lsu -expand -group dcache -group status /testbench/dut/core/lsu.bus.dcache/dcache/WayHit
 add wave -noupdate -expand -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu.bus.dcache/dcache/CacheHit
-add wave -noupdate -expand -group lsu -expand -group dcache -group status /testbench/dut/core/lsu/WordCount
+add wave -noupdate -expand -group lsu -expand -group dcache -group status /testbench/dut/core/lsu/bus/busdp/WordCount
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Memory Side} /testbench/dut/core/lsu.bus.dcache/dcache/CacheBusAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Memory Side} /testbench/dut/core/lsu.bus.dcache/dcache/CacheFetchLine
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Memory Side} /testbench/dut/core/lsu.bus.dcache/dcache/CacheWriteLine
@@ -360,20 +360,20 @@ add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dm
 add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/pmpchecker/W
 add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/pmpchecker/X
 add wave -noupdate -expand -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/pmpchecker/L
-add wave -noupdate -expand -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/WalkerState
-add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/PCF
-add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/HPTWAdr
-add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/HPTWReadPTE
-add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/HPTWAdr
-add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/PTE
-add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/ITLBMissF
-add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/DTLBMissM
-add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/ITLBWriteF
-add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/DTLBWriteM
-add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/TLBWrite
+add wave -noupdate -expand -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/WalkerState
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/PCF
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/HPTWAdr
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/HPTWReadPTE
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/HPTWAdr
+add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/PTE
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/ITLBMissF
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/DTLBMissM
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/ITLBWriteF
+add wave -noupdate -expand -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/DTLBWriteM
+add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu//TLBWrite
 add wave -noupdate -group itlb /testbench/dut/core/ifu/ITLBMissF
-add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/PhysicalAddress
-add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/PMAInstrAccessFaultF
+add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
+add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/PMAInstrAccessFaultF
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HCLK
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HSELPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HADDR
@@ -470,10 +470,10 @@ add wave -noupdate /testbench/dut/core/ifu/BPPredWrongM
 add wave -noupdate /testbench/dut/core/ifu/InvalidateICacheM
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/PCF
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/PostSpillInstrRawF
-add wave -noupdate -expand -group ifu -expand -group {Bus FSM} -color Gold /testbench/dut/core/ifu/busfsm/BusCurrState
+add wave -noupdate -expand -group ifu -expand -group {Bus FSM} -color Gold /testbench/dut/core/ifu/bus/busfsm/BusCurrState
 add wave -noupdate -expand -group ifu -expand -group {Bus FSM} /testbench/dut/core/ifu/BusStall
-add wave -noupdate -expand -group ifu -expand -group Spills /testbench/dut/core/ifu/SpillSupport/Spill
-add wave -noupdate -expand -group ifu -expand -group Spills -color Gold /testbench/dut/core/ifu/SpillSupport/CurrState
+add wave -noupdate -expand -group ifu -expand -group Spills /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillF
+add wave -noupdate -expand -group ifu -expand -group Spills -color Gold /testbench/dut/core/ifu/SpillSupport/spillsupport/CurrState
 add wave -noupdate /testbench/dut/core/lsu.bus.dcache/dcache/VictimTag
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 6} {5187387 ns} 1} {{Cursor 5} {88705641 ns} 0}
