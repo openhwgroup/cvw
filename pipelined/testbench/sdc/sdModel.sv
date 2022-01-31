@@ -361,7 +361,7 @@ module    sdModel
 	       next_state =  READ_CMD; 
 	  end
 	  ANALYZE_CMD: begin
-	     if ((ValidCmd  )   && (outDelayCnt >= `outDelay )) // outDelayCnt >= 4 (NCR)
+	     if ((ValidCmd  )   & (outDelayCnt >= `outDelay )) // outDelayCnt >= 4 (NCR)
 	       next_state = SEND_CMD;
 	     else if (inValidCmd)
 	       next_state =  IDLE; 
@@ -387,7 +387,7 @@ module    sdModel
 	  DATA_IDLE: begin
 	     if ((CardStatus[12:9]==`RCV) |  (mult_write == 1'b1) )  
 	       next_datastate = READ_WAITS;
-	     else if ((CardStatus[12:9]==`DATAS )||  (mult_read == 1'b1) ) 
+	     else if ((CardStatus[12:9]==`DATAS )|  (mult_read == 1'b1) ) 
 	       next_datastate = WRITE_DATA;
 	     else
 	       next_datastate = DATA_IDLE; 
@@ -551,7 +551,7 @@ module    sdModel
 		   ResetCard;
 		end    
 		2 : begin //ALL_SEND_CARD_ID (CID)
-		   if (lastCMD != 41 && outDelayCnt==0) begin
+		   if (lastCMD != 41 & outDelayCnt==0) begin
 		      $fdisplay(sdModel_file_desc, "**Error in sequence, ACMD 41 should precede 2 in Start-up state") ;
 		      //$display(sdModel_file_desc, "**Error in sequence, ACMD 41 should precede 2 in Start-up state") ;
 		      CardStatus[3]<=1; // AKE_SEQ_ERROR = ERROR in sequence of authentication process
@@ -561,7 +561,7 @@ module    sdModel
 		   CardStatus[12:9] <=2;
 		end
 		3 :  begin //SEND_RELATIVE_CARD_ADDRESS (RCA)
-		   if (lastCMD != 2 && outDelayCnt==0 ) begin
+		   if (lastCMD != 2 & outDelayCnt==0 ) begin
 		      $fdisplay(sdModel_file_desc, "**Error in sequence, CMD 2 should precede 3 in Start-up state") ;
 		      //$display(sdModel_file_desc, "**Error in sequence, CMD 2 should precede 3 in Start-up state") ;
 		      CardStatus[3]<=1; // AKE_SEQ_ERROR = ERROR in sequence of authentication process
@@ -573,7 +573,7 @@ module    sdModel
 		   cardIdentificationState<=0;
 		end
 		6 : begin         
-		   if (lastCMD == 55 && outDelayCnt==0) begin //ACMD6 - SET_BUS_WIDTH
+		   if (lastCMD == 55 & outDelayCnt==0) begin //ACMD6 - SET_BUS_WIDTH
 		      if (inCmd[9:8] == 2'b10) begin
 			 BusWidth <=4;      
 			 $display(sdModel_file_desc, "**BUS WIDTH 4 ") ;
@@ -627,7 +627,7 @@ module    sdModel
 		end
 		
 		9 : begin // SEND_CARD_SPECIFIC_DATA (CSD)
-		   if (lastCMD != 41 && outDelayCnt==0) begin
+		   if (lastCMD != 41 & outDelayCnt==0) begin
 		      $fdisplay(sdModel_file_desc, "**Error in sequence, ACMD 41 should precede 9 in Start-up state") ;
 		      //$display(sdModel_file_desc, "**Error in sequence, ACMD 41 should precede 9 in Start-up state") ;
 		      CardStatus[3]<=1; // AKE_SEQ_ERROR = ERROR in sequence of authentication process
@@ -743,7 +743,7 @@ module    sdModel
 		41 : // CMD41 - SD_SEND_OCR
 		  begin  
 		     if (cardIdentificationState) begin
-			if (lastCMD != 55 && outDelayCnt==0) begin // CMD41 - Reserved/Invalid
+			if (lastCMD != 55 & outDelayCnt==0) begin // CMD41 - Reserved/Invalid
 			   $fdisplay(sdModel_file_desc, "**Error in sequence, CMD 55 should precede 41 in Start-up state") ;
 			   $display( "**Error in sequence, CMD 55 should precede 41 in Start-up state") ;
 			   CardStatus[3]<=1; // AKE_SEQ_ERROR = ERROR in sequence of authentication process
@@ -755,7 +755,7 @@ module    sdModel
 			   CardStatus[5] <=0;  // not expecting next command to be ACMD
 			   if (Busy==1)
 			     CardStatus[12:9] <=1; // READY
-			end // else: !if(lastCMD != 55 && outDelayCnt==0)
+			end // else: !if(lastCMD != 55 & outDelayCnt==0)
 		     end // if (cardIdentificationState)
 		  end // case: 41
 	      endcase // case (inCmd[45:40])
@@ -799,7 +799,7 @@ module    sdModel
 	   else
 	     cmdOut<=1;  
 	   
-	   if ((cmdWrite>0) &&  (cmdWrite < response_S-8)) begin
+	   if ((cmdWrite>0) &  (cmdWrite < response_S-8)) begin
 	      cmdOut<=response_CMD[135-cmdWrite];
 	      crcIn<=response_CMD[134-cmdWrite];
 	      if (cmdWrite >= response_S-9)
@@ -948,7 +948,7 @@ module    sdModel
               data_send_index<=1; // Next nibble is lower nibble
            end
 	   
-           else if ( (transf_cnt>=2) && (transf_cnt<=BLOCK_WIDTH -`CRC_OFF )) begin  // if (2 <= transf_cnt <= 1025)
+           else if ( (transf_cnt>=2) & (transf_cnt<=BLOCK_WIDTH -`CRC_OFF )) begin  // if (2 <= transf_cnt <= 1025)
               data_send_index<=~data_send_index; //toggle
               if (!data_send_index) begin //upper nibble
 		 if (BLOCK_WIDTH == 11'd1044) begin
@@ -987,7 +987,7 @@ module    sdModel
               if ( transf_cnt >=BLOCK_WIDTH-`CRC_OFF ) begin // if (trans_cnt >= 1025)
 		 crcDat_en<=0;                              // Disable CRC16 Generators     
               end   
-	   end // if ( (transf_cnt>=2) && (transf_cnt<=`BIT_BLOCK-`CRC_OFF ))
+	   end // if ( (transf_cnt>=2) & (transf_cnt<=`BIT_BLOCK-`CRC_OFF ))
 	   
 	   else if (transf_cnt>BLOCK_WIDTH-`CRC_OFF & crc_c!=0) begin // if ((transf_cnt > 1025) and (crc_c /= 0))
               datOut<= last_din; // if sent all data bitsbut not crc16 bits yet
@@ -1004,7 +1004,7 @@ module    sdModel
 	   else if (transf_cnt==BLOCK_WIDTH-2) begin     // if (transf_cnt = 1042) Last CRC16 bit is 1041
               datOut<=4'b1111;          // send end bits
 	   end
-	   else if ((transf_cnt !=0) && (crc_c == 0 ))begin // if sent data bits and crc_c points past last bit of CRC
+	   else if ((transf_cnt !=0) & (crc_c == 0 ))begin // if sent data bits and crc_c points past last bit of CRC
               oeDat<=0; // disable output on DAT bus
               CardStatus[12:9] <= `TRAN; // put card in transfer state
            end
@@ -1026,14 +1026,14 @@ module    sdModel
 	   else if(flash_write_cnt == 2)
 	     datOut[0]<=0;
 	   
-	   else if ((flash_write_cnt > 2) && (flash_write_cnt < 7)) begin
+	   else if ((flash_write_cnt > 2) & (flash_write_cnt < 7)) begin
 	      if (crc_ok) 
 		datOut[0] <=okcrctoken[6-flash_write_cnt];
 	      else
 		datOut[0] <= invalidcrctoken[6-flash_write_cnt];
 	      
 	   end
-	   else if  ((flash_write_cnt >= 7) && (flash_write_cnt < 264)) begin
+	   else if  ((flash_write_cnt >= 7) & (flash_write_cnt < 264)) begin
 	      datOut[0]<=0;
 	      
 	      flash_blockwrite_cnt<=flash_blockwrite_cnt+2;
@@ -1045,7 +1045,7 @@ module    sdModel
 	      datOut<=1;      
 	      InbuffStatus<=0;
 	      CardStatus[12:9] <= `TRAN;
-	   end // else: !if((flash_write_cnt >= 7) && (flash_write_cnt < 264))   
+	   end // else: !if((flash_write_cnt >= 7) & (flash_write_cnt < 264))   
 	end // case: WRITE_FLASH
       endcase // case (dataState)
    end // always @ (negedge sdClk)
