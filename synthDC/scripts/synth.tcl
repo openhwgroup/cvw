@@ -110,7 +110,7 @@ set filename [format "%s%s%s"  "unmapped/" $my_toplevel ".ddc"]
 write_file -format ddc -hierarchy -o $filename
 
 # Compile statements - either compile or compile_ultra
-compile -scan -incr -map_effort low
+# compile -scan -incr -map_effort low
 # compile_ultra -no_seq_output_inversion -no_boundary_optimization
 
 # Eliminate need for assign statements (yuck!)
