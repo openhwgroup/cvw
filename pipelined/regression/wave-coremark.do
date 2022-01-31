@@ -98,7 +98,7 @@ add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/if
 add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/icache/FinalInstrRawF
+add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/bus/icache/FinalInstrRawF
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
@@ -174,44 +174,44 @@ add wave -noupdate -group muldiv /testbench/dut/core/mdu/FlushM
 add wave -noupdate -group muldiv /testbench/dut/core/mdu/FlushW
 add wave -noupdate -group muldiv /testbench/dut/core/mdu/MulDivResultW
 add wave -noupdate -group muldiv /testbench/dut/core/mdu/DivBusyE
-add wave -noupdate -group icache -color Gold /testbench/dut/core/ifu/icache/controller/CurrState
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/BasePAdrF
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/WayHit
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/VictimWay
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/core/ifu/icache/MemWay[0]/WriteEnable}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/core/ifu/icache/MemWay[0]/SetValid}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -label TAG {/testbench/dut/core/ifu/icache/MemWay[0]/CacheTagMem/StoredData}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/core/ifu/icache/MemWay[0]/ValidBits}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/core/ifu/icache/MemWay[0]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/core/ifu/icache/MemWay[0]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/core/ifu/icache/MemWay[0]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/core/ifu/icache/MemWay[0]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/core/ifu/icache/MemWay[0]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/core/ifu/icache/MemWay[0]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/core/ifu/icache/MemWay[0]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/core/ifu/icache/MemWay[0]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/controller/NextState
+add wave -noupdate -group icache -color Gold /testbench/dut/core/ifu/bus/icache/controller/CurrState
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/BasePAdrF
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/WayHit
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/VictimWay
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/WriteEnable}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/SetValid}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -label TAG {/testbench/dut/core/ifu/bus/icache/MemWay[0]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/ValidBits}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -expand -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/core/ifu/bus/icache/MemWay[0]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/controller/NextState
 add wave -noupdate -group icache /testbench/dut/core/ifu/ITLBMissF
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/ITLBWriteF
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/ReadLineF
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/ReadLineF
-add wave -noupdate -group icache /testbench/dut/core/ifu/icache/BasePAdrF
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/hit
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/spill
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/ICacheStallF
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/spillSave
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/spillSave
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/CntReset
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/PreCntEn
-add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/controller/CntEn
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/InstrPAdrF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/InstrInF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/controller/FetchCountFlag
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/FetchCount
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/controller/InstrReadF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/controller/InstrAckF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/icache/ICacheMemWriteData
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/ITLBWriteF
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/ReadLineF
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/ReadLineF
+add wave -noupdate -group icache /testbench/dut/core/ifu/bus/icache/BasePAdrF
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/hit
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/spill
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/ICacheStallF
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/spillSave
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/spillSave
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/CntReset
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/PreCntEn
+add wave -noupdate -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/controller/CntEn
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/InstrPAdrF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/InstrInF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/FetchCountFlag
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/FetchCount
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/InstrReadF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/InstrAckF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/ICacheMemWriteEnable
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/ICacheMemWriteData
 add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/core/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/core/ebu/AtomicMaskedM

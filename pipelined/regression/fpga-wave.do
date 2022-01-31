@@ -98,7 +98,7 @@ add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/wallypi
 add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/wallypipelinedsoc/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group Bpred /testbench/dut/wallypipelinedsoc/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
-add wave -noupdate -group {instruction pipeline} /testbench/dut/wallypipelinedsoc/core/ifu/icache/FinalInstrRawF
+add wave -noupdate -group {instruction pipeline} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/FinalInstrRawF
 add wave -noupdate -group {instruction pipeline} /testbench/dut/wallypipelinedsoc/core/ifu/InstrD
 add wave -noupdate -group {instruction pipeline} /testbench/dut/wallypipelinedsoc/core/ifu/InstrE
 add wave -noupdate -group {instruction pipeline} /testbench/dut/wallypipelinedsoc/core/ifu/InstrM
@@ -172,86 +172,86 @@ add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/core/mdu/Flush
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/core/mdu/FlushW
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/core/mdu/MulDivResultW
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/core/mdu/DivBusyE
-add wave -noupdate -group icache -color Gold /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/CurrState
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/BasePAdrF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/WayHit
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/genblk1/cachereplacementpolicy/BlockReplacementBits
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/genblk1/cachereplacementpolicy/EncVicWay
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/VictimWay
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/SetValid}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/CacheTagMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/ValidBits}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[0]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/WriteWordEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/CacheTagMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/ValidBits}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[1]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/SetValid}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/CacheTagMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/ValidBits}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[2]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/SetValid}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/CacheTagMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/DirtyBits}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/ValidBits}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[0]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[0]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[1]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[1]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[2]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[2]/CacheDataMem/StoredData}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[3]/CacheDataMem/WriteEnable}
-add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/icache/MemWay[3]/word[3]/CacheDataMem/StoredData}
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/NextState
+add wave -noupdate -group icache -color Gold /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/CurrState
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/BasePAdrF
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/WayHit
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/genblk1/cachereplacementpolicy/BlockReplacementBits
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/genblk1/cachereplacementpolicy/EncVicWay
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/VictimWay
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/SetValid}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -expand -group Way0Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way0 -group Way0Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[0]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/WriteWordEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -expand -group Way1Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way1 -group Way1Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[1]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/SetValid}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -expand -group Way2Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -group way2 -group Way2Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[2]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/SetValid}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -label TAG {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/CacheTagMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/DirtyBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/ValidBits}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[0]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -expand -group Way3Word0 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[0]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[1]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[1]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[2]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[2]/CacheDataMem/StoredData}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[3]/CacheDataMem/WriteEnable}
+add wave -noupdate -group icache -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/MemWay[3]/word[3]/CacheDataMem/StoredData}
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/NextState
 add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/ITLBMissF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/ITLBWriteF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/ReadLineF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/PCNextIndexF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/ReadLineF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/icache/BasePAdrF
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/hit
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/spill
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/ICacheStallF
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/SavePC
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/spillSave
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/UnalignedSelect
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/spillSave
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/CntReset
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/PreCntEn
-add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/CntEn
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/InstrPAdrF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/InstrInF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/FetchCountFlag
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/FetchCount
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/InstrReadF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/InstrAckF
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/icache/ICacheMemWriteData
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/ITLBWriteF
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/ReadLineF
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/PCNextIndexF
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/ReadLineF
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/BasePAdrF
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/hit
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/spill
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/ICacheStallF
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/SavePC
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/spillSave
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/UnalignedSelect
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/spillSave
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/CntReset
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/PreCntEn
+add wave -noupdate -group icache -group {fsm out and control} /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/CntEn
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/InstrPAdrF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/InstrInF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/FetchCountFlag
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/FetchCount
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/InstrReadF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/InstrAckF
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/ICacheMemWriteEnable
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/ICacheMemWriteData
 add wave -noupdate -group AHB -color Gold /testbench/dut/wallypipelinedsoc/core/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/wallypipelinedsoc/core/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/wallypipelinedsoc/core/ebu/AtomicMaskedM

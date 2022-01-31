@@ -196,7 +196,7 @@ logic [3:0] dummy;
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
       //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
-      $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);      
+      $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);      
 //      if(`MEM_DTIM == 1) $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
 //`ifdef `MEM_IROM
 //          $display("here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -258,7 +258,7 @@ logic [3:0] dummy;
         while (signature[i] !== 'bx) begin
           //$display("signature[%h] = %h", i, signature[i]);
 		  // *** have to figure out how to exclude shadowram when not using a dcache.
-          if (signature[i] !== dut.core.lsu.dtim.ram.RAM[testadr+i] &
+          if (signature[i] !== dut.core.lsu.dtim.dtim.ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
             if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
               // report errors unless they are garbage at the end of the sim
@@ -266,7 +266,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
                     //tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
-                       tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.RAM[testadr+i], signature[i]);
+                       tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.dtim.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -290,7 +290,7 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
-            $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
+            $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
             //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
 /* -----\/----- EXCLUDED -----\/-----
 `ifdef `MEM_IROM
