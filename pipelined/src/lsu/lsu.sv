@@ -202,24 +202,18 @@ module lsu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
-  localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
   localparam integer   LINELEN = `MEM_DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
-  localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
-
-  localparam integer   LINEBYTELEN = LINELEN/8;
-  localparam integer   OFFSETLEN = $clog2(LINEBYTELEN);
 
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
-  (* mark_debug = "true" *) logic [`XLEN-1:0]    PreLSUBusHWDATA;
   logic [`XLEN-1:0]    ReadDataWordM;
-  logic [LINELEN-1:0] DCacheMemWriteData;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
   logic [`PA_BITS-1:0] DCacheBusAdr;
   logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
   logic 			   DCacheWriteLine;
   logic 			   DCacheFetchLine;
   logic 			   DCacheBusAck;
-  logic 			   SelUncachedAdr;
+  logic [LINELEN-1:0]  DCacheMemWriteData;
+  
 
   if (`MEM_DTIM) begin : dtim
 /*    Consider restructuring with higher level blocks.  Try drawing block diagrams with several pages of schematics,
@@ -227,7 +221,7 @@ module lsu (
   restructure code accordingly.
 
   dtim dtim (.clk, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, .ReadDataWordM,
-               .BusStallM, .LSUBusWrite, .LSUBusRead, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr,
+               .BusStallM, .LSUBusWrite, .LSUBusRead, .DCacheBusAck, .BusCommittedM,
                .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .DCacheWriteLine, .DCacheFetchLine, .DCacheBusAdr,
                .ReadDataLineSetsM, .DCacheMiss, .DCacheAccess); */
 
@@ -240,7 +234,7 @@ module lsu (
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
-    assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM, SelUncachedAdr} = '0;   
+    assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM} = '0;   
     assign ReadDataWordMuxM = ReadDataWordM;
     assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
     assign ReadDataLineSetsM[0] = 0;
@@ -251,7 +245,7 @@ module lsu (
     // This register should be necessary for timing.  There is no register in the uncore or
     // ahblite controller between the memories and this cache.
 
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, WordCountThreshold) 
+    busdp #(WORDSPERLINE, LINELEN) 
     busdp(.clk, .reset,
           .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusHWDATA, .LSUBusSize, 
           .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheFetchLine,
@@ -305,9 +299,7 @@ module lsu (
                   .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
 
   end else begin:lrsc
-    assign SquashSCW = 0;
-    assign LSURWM = PreLSURWM;
-    assign FinalAMOWriteDataM = WriteDataM;
+    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = WriteDataM;
   end
 endmodule
 

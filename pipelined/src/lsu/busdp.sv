@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module busdp #(parameter WORDSPERLINE, parameter LINELEN, parameter LOGWPL, parameter WordCountThreshold)
+module busdp #(parameter WORDSPERLINE, parameter LINELEN)
   (
   input logic                 clk, reset,
   // bus interface
@@ -63,6 +63,9 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN, parameter LOGWPL, para
   output logic                BusStall,
   output logic                BusCommittedM);
   
+
+  localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
+  localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
 
   logic                       SelUncachedAdr;
   logic [`XLEN-1:0]           PreLSUBusHWDATA;
