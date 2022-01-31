@@ -29,8 +29,7 @@
 
 `include "wally-config.vh"
 
-module dtim #(parameter WORDSPERLINE)
-  (
+module dtim(
   input logic                 clk, reset,
   input logic                 CPUBusy,
   input logic [1:0]           LSURWM,
@@ -42,19 +41,13 @@ module dtim #(parameter WORDSPERLINE)
   output logic                BusStall,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
-  output logic                DCacheBusAck,
   output logic                BusCommittedM,
   output logic [`XLEN-1:0]    ReadDataWordMuxM,
   output logic                DCacheStallM,
   output logic                DCacheCommittedM,
-  output logic                DCacheWriteLine,
-  output logic                DCacheFetchLine,
-  output logic [`PA_BITS-1:0] DCacheBusAdr,
-  output logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0],
   output logic                DCacheMiss,
   output logic                DCacheAccess);
 
-    // *** adjust interface so write address doesn't need delaying; switch to standard RAM?
     simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .clk, 
         .a(CPUBusy | LSURWM[0] ? IEUAdrM[31:0] : IEUAdrE[31:0]),
@@ -63,10 +56,9 @@ module dtim #(parameter WORDSPERLINE)
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
-    assign {BusStall, LSUBusWrite, LSUBusRead, DCacheBusAck, BusCommittedM} = '0;   
+    assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
     assign ReadDataWordMuxM = ReadDataWordM;
-    assign {DCacheStallM, DCacheCommittedM, DCacheWriteLine, DCacheFetchLine, DCacheBusAdr} = '0;
-    assign ReadDataLineSetsM[0] = '0;
+    assign {DCacheStallM, DCacheCommittedM} = '0;
     assign {DCacheMiss, DCacheAccess} = '0;
 
 endmodule  
