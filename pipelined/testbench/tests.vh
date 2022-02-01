@@ -26,17 +26,24 @@
 `define IMPERASTEST   "0"
 `define RISCVARCHTEST "1"
 `define WALLYTEST "2"
-`define MYIMPERASTEST   "3" 
+`define MYIMPERASTEST   "3"
+`define COREMARK "4"
 // *** remove MYIMPERASTEST cases when ported 
 
 string tvpaths[] = '{
     "../../addins/imperas-riscv-tests/work/",
     "../../addins/riscv-arch-test/work/",
     "../../tests/wally-riscv-arch-test/work/",
-    "../../tests/imperas-riscv-tests/work/"
+    "../../tests/imperas-riscv-tests/work/",
+    "../../benchmarks/riscv-coremark/work/"
 };
 
    // *** make sure these are somewhere
+  string coremark[] = '{
+    `COREMARK,
+    "coremark.bare.riscv", "100000"
+  };
+
   string imperas64a[] = '{
     `MYIMPERASTEST,
     "rv64a/WALLY-AMO", "2110",

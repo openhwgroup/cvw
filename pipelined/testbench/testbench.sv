@@ -102,7 +102,8 @@ logic [3:0] dummy;
         "testsBP64":                      tests = testsBP64;
         "wally64i":                       tests = wally64i; // *** redo
         "wally64priv":                    tests = wally64priv;// *** redo
-        "imperas64periph":                  tests = imperas64periph;
+        "imperas64periph":                tests = imperas64periph;
+        "coremark":                       tests = coremark;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -161,7 +162,7 @@ logic [3:0] dummy;
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.FinalInstrRawF,
+                dut.core.ifu.FinalInstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
@@ -181,12 +182,13 @@ logic [3:0] dummy;
       //  strings, but uses a load double to read them in.  If the last 2 bytes are
       //  not initialized the compare results in an 'x' which propagates through 
       // the design.
-      if (`XLEN == 32) meminit = 32'hFEDC0123;
-      else meminit = 64'hFEDCBA9876543210;
+      //if (`XLEN == 32) meminit = 32'hFEDC0123;
+      //else meminit = 64'hFEDCBA9876543210;
       // *** broken because DTIM also drives RAM
-      if (`TESTSBP) begin
+      if (TEST == "coremark") begin
     	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-    	  dut.uncore.ram.ram.RAM[i] = meminit;
+          // *** why does coremark need these extra addresses zeroed?
+    	  dut.uncore.ram.ram.RAM[i] = 64'h0;//meminit;
     	end
       end
       // read test vectors into memory
