@@ -35,10 +35,11 @@
 
 module bpred 
   (input logic              clk, reset,
-   input logic              StallF, StallD, StallE, 
-   input logic              FlushF, FlushD, FlushE,
+   input logic              StallF, StallD, StallE, StallM,
+   input logic              FlushF, FlushD, FlushE, FlushM,
    // Fetch stage
    // the prediction
+   input logic [31:0]       InstrD, 
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
    output logic [`XLEN-1:0] BPPredPCF,
    output logic             SelBPPredF,
@@ -53,13 +54,14 @@ module bpred
    input logic [`XLEN-1:0]  IEUAdrE, // The branch destination if the branch is taken.
    input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
    input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
-   input logic [4:0]        InstrClassE,
+   output logic [4:0]       InstrClassM,
    // Report branch prediction status
    output logic             BPPredWrongE,
-   output logic             BPPredDirWrongE,
-   output logic             BTBPredPCWrongE,
-   output logic             RASPredPCWrongE,
-   output logic             BPPredClassNonCFIWrongE
+   output logic             BPPredWrongM,   
+   output logic             BPPredDirWrongM,
+   output logic             BTBPredPCWrongM,
+   output logic             RASPredPCWrongM,
+   output logic             BPPredClassNonCFIWrongM
    );
 
   logic                     BTBValidF;
@@ -71,14 +73,14 @@ module bpred
   logic                     FallThroughWrongE;
   logic                     PredictionPCWrongE;
   logic                     PredictionInstrClassWrongE;
+  logic [4:0]               InstrClassD, InstrClassE;
+  logic                     BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
 
   // Part 1 branch direction prediction
 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
-    twoBitPredictor DirPredictor(.clk(clk),
-      .reset(reset),
-      .StallF(StallF),
+    twoBitPredictor DirPredictor(.clk, .reset, .StallF,
       .LookUpPC(PCNextF),
       .Prediction(BPPredF),
       // update
@@ -87,58 +89,27 @@ module bpred
       .UpdatePrediction(UpdateBPPredE));
 
   end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
+    globalHistoryPredictor DirPredictor(.clk, .reset, .StallF, .StallE,
+      .PCNextF, .BPPredF, 
+      .InstrClassE, .BPInstrClassF, .BPInstrClassD, .BPInstrClassE, .BPPredDirWrongE,
+      .PCE, .PCSrcE, .UpdateBPPredE);
 
-    globalHistoryPredictor DirPredictor(.clk(clk),
-      .reset(reset),
-      .*, // Stalls and flushes
-      .PCNextF(PCNextF),
-      .BPPredF(BPPredF),
-      // update
-      .InstrClassE(InstrClassE),
-      .BPInstrClassE(BPInstrClassE),
-      .BPPredDirWrongE(BPPredDirWrongE),
-      .PCE(PCE),
-      .PCSrcE(PCSrcE),
-      .UpdateBPPredE(UpdateBPPredE));
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
-
-    gsharePredictor DirPredictor(.clk(clk),
-      .reset(reset),
-      .*, // Stalls and flushes
-      .PCNextF(PCNextF),
-      .BPPredF(BPPredF),
-      // update
-      .InstrClassE(InstrClassE),
-      .BPInstrClassE(BPInstrClassE),
-      .BPPredDirWrongE(BPPredDirWrongE),
-      .PCE(PCE),
-      .PCSrcE(PCSrcE),
-      .UpdateBPPredE(UpdateBPPredE));
+    gsharePredictor DirPredictor(.clk, .reset, .StallF, .StallE,
+      .PCNextF, .BPPredF,
+      .InstrClassE, .BPInstrClassF, .BPInstrClassD, .BPInstrClassE, .BPPredDirWrongE,
+      .PCE, .PCSrcE, .UpdateBPPredE);
   end 
   else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
-    localHistoryPredictor DirPredictor(.clk(clk),
-      .reset(reset),
-      .*, // Stalls and flushes
+    localHistoryPredictor DirPredictor(.clk,
+      .reset, .StallF, .StallE, .FlushF,
       .LookUpPC(PCNextF),
       .Prediction(BPPredF),
       // update
       .UpdatePC(PCE),
       .UpdateEN(InstrClassE[0] & ~StallE),
-      .PCSrcE(PCSrcE),
-      .UpdatePrediction(UpdateBPPredE));
-  end 
-  else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
-
-    localHistoryPredictor DirPredictor(.clk(clk),
-      .reset(reset),
-      .*, // Stalls and flushes
-      .LookUpPC(PCNextF),
-      .Prediction(BPPredF),
-      // update
-      .UpdatePC(PCE),
-      .UpdateEN(InstrClassE[0] & ~StallE),
-      .PCSrcE(PCSrcE),
+      .PCSrcE,
       .UpdatePrediction(UpdateBPPredE));
   end 
 
@@ -201,15 +172,35 @@ module bpred
       .d(BPPredD),
       .q(BPPredE));
 
+
+  // the branch predictor needs a compact decoding of the instruction class.
+  // *** consider adding in the alternate return address x5 for returns.
+  assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
+  assign InstrClassD[3] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01; // jump register, but not return
+  assign InstrClassD[1] = InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01; // jump, RD != x1 or x5
+  assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
+  flopenrc #(5) InstrClassRegE(.clk, .reset, .en(~StallE), .clear(FlushE), .d(InstrClassD), .q(InstrClassE));
+  flopenrc #(5) InstrClassRegM(.clk, .reset, .en(~StallM), .clear(FlushM), .d(InstrClassE), .q(InstrClassM));
+  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
+
+
+  // branch predictor
+  flopenrc #(4) BPPredWrongRegM(.clk, .reset, .en(~StallM), .clear(FlushM),
+                                .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
+                                .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
+  
+
+
   // pipeline the class
-  flopenrc #(5) InstrClassRegD(.clk(clk),
+  flopenrc #(5) BPInstrClassRegD(.clk(clk),
           .reset(reset),
           .en(~StallD),
           .clear(FlushD),
           .d(BPInstrClassF),
           .q(BPInstrClassD));
 
-  flopenrc #(5) InstrClassRegE(.clk(clk),
+  flopenrc #(5) BPInstrClassRegE(.clk(clk),
           .reset(reset),
           .en(~StallE),
           .clear(FlushE),
