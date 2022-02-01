@@ -25,7 +25,7 @@ add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StorePageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/PendingInterruptM
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/hzu/FlushF
@@ -177,15 +177,15 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/HMASTLOCK
 add wave -noupdate -group AHB /testbench/dut/core/ebu/HADDRD
 add wave -noupdate -group AHB /testbench/dut/core/ebu/HSIZED
 add wave -noupdate -group AHB /testbench/dut/core/ebu/HWRITED
-add wave -noupdate -group lsu -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/interlockfsm/InterlockCurrState
+add wave -noupdate -group lsu -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/interlockfsm/InterlockCurrState
 add wave -noupdate -group lsu /testbench/dut/core/lsu/SelHPTW
 add wave -noupdate -group lsu /testbench/dut/core/lsu/InterlockStall
 add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/WriteDataM
-add wave -noupdate -group lsu /testbench/dut/core/lsu/SelUncachedAdr
-add wave -noupdate -group lsu -group bus -color Gold /testbench/dut/core/lsu/busfsm/BusCurrState
+add wave -noupdate -group lsu /testbench/dut/core/lsu/bus/busdp/SelUncachedAdr
+add wave -noupdate -group lsu -group bus -color Gold /testbench/dut/core/lsu/bus/busdp/busfsm/BusCurrState
 add wave -noupdate -group lsu -group bus /testbench/dut/core/lsu/BusStall
 add wave -noupdate -group lsu -group bus /testbench/dut/core/lsu/LSUBusRead
 add wave -noupdate -group lsu -group bus /testbench/dut/core/lsu/LSUBusWrite
@@ -201,7 +201,7 @@ add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/SRAMWordEnable
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/SRAMLineWayWriteEnable
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/SelAdr
-add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/MEM_VIRTMEM/SelReplayCPURequest
+add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/SelReplayCPURequest
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrE
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/dcache/RAdr
@@ -349,15 +349,15 @@ add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpch
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPStoreAmoAccessFaultM
-add wave -noupdate -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/WalkerState
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/PCF
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/HPTWReadPTE
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/HPTWAdr
-add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/PTE
-add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/ITLBMissF
-add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/DTLBMissM
-add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/ITLBWriteF
-add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/hptw/DTLBWriteM
+add wave -noupdate -group lsu -group ptwalker -color Gold /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/WalkerState
+add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/PCF
+add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/HPTWReadPTE
+add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/HPTWAdr
+add wave -noupdate -group lsu -group ptwalker /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/PTE
+add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/ITLBMissF
+add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/DTLBMissM
+add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/ITLBWriteF
+add wave -noupdate -group lsu -group ptwalker -group types /testbench/dut/core/lsu/MEM_VIRTMEM/lsuvirtmem/hptw/DTLBWriteM
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HCLK
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HSELPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HADDR
@@ -434,35 +434,34 @@ add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM
 add wave -noupdate /testbench/dut/core/priv/priv/csr/MEPC_REGW
-add wave -noupdate /testbench/dut/core/lsu/LocalLSUBusAdr
-add wave -noupdate /testbench/dut/core/lsu/busfsm/BusNextState
-add wave -noupdate /testbench/dut/core/lsu/busfsm/DCacheFetchLine
-add wave -noupdate /testbench/dut/core/lsu/busfsm/DCacheWriteLine
-add wave -noupdate -expand -group ifu -color Gold /testbench/dut/core/ifu/busfsm/BusCurrState
+add wave -noupdate /testbench/dut/core/lsu/bus/busdp/LocalLSUBusAdr
+add wave -noupdate /testbench/dut/core/lsu/bus/busdp/busfsm/DCacheFetchLine
+add wave -noupdate /testbench/dut/core/lsu/bus/busdp/busfsm/DCacheWriteLine
+add wave -noupdate -expand -group ifu -color Gold /testbench/dut/core/lsu/bus/busdp/busfsm/BusCurrState 
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/IFUBusRead
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/IFUBusAdr
-add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/busfsm/LSUBusAck
+add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/IFUBusAck
 add wave -noupdate -expand -group ifu /testbench/dut/core/ifu/IFUBusHRDATA
-add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/Spill
-add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/CurrState
-add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/SpillDataLine0
-add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/SelSpill
-add wave -noupdate -expand -group ifu -expand -group icache -color Gold /testbench/dut/core/ifu/icache/icache/cachefsm/CurrState
+add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillF
+add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/CurrState
+add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillDataLine0
+add wave -noupdate -expand -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SelSpillF
+add wave -noupdate -expand -group ifu -expand -group icache -color Gold /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CurrState
 add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/core/ifu/ITLBMissF
-add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/core/ifu/icache/icache/SelAdr
+add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/SelAdr
 add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -expand -group ifu -expand -group icache /testbench/dut/core/ifu/PCPF
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/icache/icache/WayHit
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/WayHit
 add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/ICacheStallF
 add wave -noupdate -expand -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/FinalInstrRawF
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/icache/icache/CacheBusAdr
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/icache/icache/cachefsm/CacheBusAck
-add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/icache/icache/CacheMemWriteData
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/TLBWrite
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheBusAdr
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CacheBusAck
+add wave -noupdate -expand -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheMemWriteData
+add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/TLBWrite
 add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/ITLBMissF
-add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/PhysicalAddress
+add wave -noupdate -expand -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
 add wave -noupdate /testbench/dut/core/ifu/IFUBusRead
-add wave -noupdate /testbench/dut/core/ifu/icache/icache/CacheFetchLine
+add wave -noupdate /testbench/dut/core/ifu/bus/icache/icache/CacheFetchLine
 add wave -noupdate -radix unsigned -childformat {{{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[31]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[30]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[29]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[28]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[27]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[26]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[25]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[1]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]} -radix unsigned}} -subitemconfig {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[31]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[30]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[29]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[28]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[27]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[26]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[25]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[1]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]} {-height 16 -radix unsigned}} /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
 add wave -noupdate -expand -group {Performance Counters} -label MCYCLE -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]}
 add wave -noupdate -expand -group {Performance Counters} -label MINSTRET -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]}
