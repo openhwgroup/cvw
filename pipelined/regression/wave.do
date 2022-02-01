@@ -1,6 +1,4 @@
 onerror {resume}
-quietly virtual function -install /testbench/dut/core/ifu -env /testbench/dut/core/ifu { &{/testbench/dut/core/ifu/BPPredWrongM, /testbench/dut/core/ifu/InvalidateICacheM }} temp
-quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
