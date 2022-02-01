@@ -61,7 +61,7 @@ _start:
 
 	# write to gpio
 	li	t2, 0xFF
-	la	t3, 0x1001200C
+	la	t3, 0x1006000C
 	li	t4, 5
 
 loop:

@@ -106,7 +106,7 @@ $(TARGET).memfile: $(TARGET)
 	@echo 'Making object dump file.'
 	@riscv64-unknown-elf-objdump -D $< > $<.objdump
 	@echo 'Making memory file'
-	exe2memfile0.pl $<
+	riscv64-unknown-elf-elf2hex --bit-width 64 --input $^ --output $@
 	extractFunctionRadix.sh $<.objdump
 	mkdir -p ../../imperas-riscv-tests/work/rv64BP/
 	cp -f $(TARGETDIR)/* ../../imperas-riscv-tests/work/rv64BP/
