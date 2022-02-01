@@ -129,11 +129,11 @@ assign FmtE = 1'b1;
 
     assign BiasE = 13'h3ff;
 
-assign	wnan = FmtE ? &FMAResM[`FLEN-2:`NF] && |FMAResM[`NF-1:0] : &FMAResM[30:23] && |FMAResM[22:0]; 
-// assign	XNaNE = FmtE ? &X[62:52] && |X[51:0] : &X[62:55] && |X[54:32]; 
-// assign	YNaNE = FmtE ? &Y[62:52] && |Y[51:0] : &Y[62:55] && |Y[54:32]; 
-// assign	ZNaNE = FmtE ? &Z[62:52] && |Z[51:0] : &Z[62:55] && |Z[54:32]; 
-assign	ansnan = FmtE ? &ans[`FLEN-2:`NF] && |ans[`NF-1:0] : &ans[30:23] && |ans[22:0]; 
+assign	wnan = FmtE ? &FMAResM[`FLEN-2:`NF] & |FMAResM[`NF-1:0] : &FMAResM[30:23] & |FMAResM[22:0]; 
+// assign	XNaNE = FmtE ? &X[62:52] & |X[51:0] : &X[62:55] & |X[54:32]; 
+// assign	YNaNE = FmtE ? &Y[62:52] & |Y[51:0] : &Y[62:55] & |Y[54:32]; 
+// assign	ZNaNE = FmtE ? &Z[62:52] & |Z[51:0] : &Z[62:55] & |Z[54:32]; 
+assign	ansnan = FmtE ? &ans[`FLEN-2:`NF] & |ans[`NF-1:0] : &ans[30:23] & |ans[22:0]; 
  // instantiate device under test
 
     logic [3*`NF+5:0]	SumE, SumM;       
@@ -179,9 +179,9 @@ always @(posedge clk)
  // check results on falling edge of clk
   always @(negedge clk) begin
  
-	if((FmtE==1'b1) & (FMAFlgM != flags[4:0] || (!wnan && (FMAResM != ans)) || (wnan && ansnan && ~((XNaNE && (FMAResM[`FLEN-2:0] == {XExpE,1'b1,X[`NF-2:0]})) || (YNaNE && (FMAResM[`FLEN-2:0] == {YExpE,1'b1,Y[`NF-2:0]}))  || (ZNaNE && (FMAResM[`FLEN-2:0] == {ZExpE,1'b1,Z[`NF-2:0]})) || (FMAResM[`FLEN-2:0] == ans[`FLEN-2:0]))))) begin
+	if((FmtE==1'b1) & (FMAFlgM != flags[4:0] | (!wnan & (FMAResM != ans)) | (wnan & ansnan & ~((XNaNE & (FMAResM[`FLEN-2:0] == {XExpE,1'b1,X[`NF-2:0]})) | (YNaNE & (FMAResM[`FLEN-2:0] == {YExpE,1'b1,Y[`NF-2:0]}))  | (ZNaNE & (FMAResM[`FLEN-2:0] == {ZExpE,1'b1,Z[`NF-2:0]})) | (FMAResM[`FLEN-2:0] == ans[`FLEN-2:0]))))) begin
   //  fp = $fopen("/home/kparry/riscv-wally/pipelined/src/fpu/FMA/tbgen/results.dat","w");
-	// if((FmtE==1'b1) & (FMAFlgM != flags[4:0] || (FMAResM != ans))) begin
+	// if((FmtE==1'b1) & (FMAFlgM != flags[4:0] | (FMAResM != ans))) begin
         $display( "%h %h %h %h %h %h %h  Wrong ",X,Y, Z, FMAResM, ans, FMAFlgM, flags);
 		if(FMAResM == 64'h8000000000000000) $display( "FMAResM=-zero ");
 		if(XDenormE) $display( "xdenorm ");
@@ -190,35 +190,35 @@ always @(posedge clk)
 		if(FMAFlgM[4] != 0) $display( "invld ");
 		if(FMAFlgM[2] != 0) $display( "ovrflw ");
 		if(FMAFlgM[1] != 0) $display( "unflw ");
-		if(FMAResM[`FLEN] && FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} && FMAResM[`NF-1:0] == 0) $display( "FMAResM=-inf ");
-		if(~FMAResM[`FLEN] && FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} && FMAResM[`NF-1:0] == 0) $display( "FMAResM=+inf ");
-		if(FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} && FMAResM[`NF-1:0] != 0 && ~FMAResM[`NF-1]) $display( "FMAResM=sigNaN ");
-		if(FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} && FMAResM[`NF-1:0] != 0 && FMAResM[`NF-1]) $display( "FMAResM=qutNaN ");
-		if(ans[`FLEN] && ans[`FLEN-2:`NF] == {`NE{1'b1}} && ans[`NF-1:0] == 0) $display( "ans=-inf ");
-		if(~ans[`FLEN] && ans[`FLEN-2:`NF] == {`NE{1'b1}} && ans[`NF-1:0] == 0) $display( "ans=+inf ");
-		if(ans[`FLEN-2:`NF] == {`NE{1'b1}} && ans[`NF-1:0] != 0 && ~ans[`NF-1]) $display( "ans=sigNaN ");
-		if(ans[`FLEN-2:`NF] == {`NE{1'b1}} && ans[`NF-1:0] != 0 && ans[`NF-1]) $display( "ans=qutNaN ");
+		if(FMAResM[`FLEN] & FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} & FMAResM[`NF-1:0] == 0) $display( "FMAResM=-inf ");
+		if(~FMAResM[`FLEN] & FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} & FMAResM[`NF-1:0] == 0) $display( "FMAResM=+inf ");
+		if(FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} & FMAResM[`NF-1:0] != 0 & ~FMAResM[`NF-1]) $display( "FMAResM=sigNaN ");
+		if(FMAResM[`FLEN-2:`NF] == {`NE{1'b1}} & FMAResM[`NF-1:0] != 0 & FMAResM[`NF-1]) $display( "FMAResM=qutNaN ");
+		if(ans[`FLEN] & ans[`FLEN-2:`NF] == {`NE{1'b1}} & ans[`NF-1:0] == 0) $display( "ans=-inf ");
+		if(~ans[`FLEN] & ans[`FLEN-2:`NF] == {`NE{1'b1}} & ans[`NF-1:0] == 0) $display( "ans=+inf ");
+		if(ans[`FLEN-2:`NF] == {`NE{1'b1}} & ans[`NF-1:0] != 0 & ~ans[`NF-1]) $display( "ans=sigNaN ");
+		if(ans[`FLEN-2:`NF] == {`NE{1'b1}} & ans[`NF-1:0] != 0 & ans[`NF-1]) $display( "ans=qutNaN ");
         errors = errors + 1;
 	  //if (errors == 10)
 		$stop;
     end
-    if((FmtE==1'b0)&(FMAFlgM != flags[4:0] || (!wnan && (FMAResM != ans)) || (wnan && ansnan && ~(((XNaNE && (FMAResM[30:0] == {X[30:23],1'b1,X[21:0]})) || (YNaNE && (FMAResM[30:0] == {Y[30:23],1'b1,Y[21:0]}))  || (ZNaNE && (FMAResM[30:0] == {Z[30:23],1'b1,Z[21:0]})) || (FMAResM[30:0] == ans[30:0]))) ))) begin
+    if((FmtE==1'b0)&(FMAFlgM != flags[4:0] | (!wnan & (FMAResM != ans)) | (wnan & ansnan & ~(((XNaNE & (FMAResM[30:0] == {X[30:23],1'b1,X[21:0]})) | (YNaNE & (FMAResM[30:0] == {Y[30:23],1'b1,Y[21:0]}))  | (ZNaNE & (FMAResM[30:0] == {Z[30:23],1'b1,Z[21:0]})) | (FMAResM[30:0] == ans[30:0]))) ))) begin
         $display( "%h %h %h %h %h %h %h  Wrong ",X,Y, Z, FMAResM, ans, FMAFlgM, flags);
 		if(FMAResM == 64'h8000000000000000) $display( "FMAResM=-zero ");
-		if(~(|X[30:23]) && |X[22:0]) $display( "xdenorm ");
-		if(~(|Y[30:23]) && |Y[22:0]) $display( "ydenorm ");
-		if(~(|Z[30:23]) && |Z[22:0]) $display( "zdenorm ");
+		if(~(|X[30:23]) & |X[22:0]) $display( "xdenorm ");
+		if(~(|Y[30:23]) & |Y[22:0]) $display( "ydenorm ");
+		if(~(|Z[30:23]) & |Z[22:0]) $display( "zdenorm ");
 		if(FMAFlgM[4] != 0) $display( "invld ");
 		if(FMAFlgM[2] != 0) $display( "ovrflw ");
 		if(FMAFlgM[1] != 0) $display( "unflw ");
 		if(FMAResM == 64'hFF80000000000000) $display( "FMAResM=-inf ");
 		if(FMAResM == 64'h7F80000000000000) $display( "FMAResM=+inf ");
-		if(&FMAResM[30:23] && |FMAResM[22:0] && ~FMAResM[22]) $display( "FMAResM=sigNaN ");
-		if(&FMAResM[30:23] && |FMAResM[22:0] && FMAResM[22] ) $display( "FMAResM=qutNaN ");
+		if(&FMAResM[30:23] & |FMAResM[22:0] & ~FMAResM[22]) $display( "FMAResM=sigNaN ");
+		if(&FMAResM[30:23] & |FMAResM[22:0] & FMAResM[22] ) $display( "FMAResM=qutNaN ");
 		if(ans == 64'hFF80000000000000) $display( "ans=-inf ");
 		if(ans == 64'h7F80000000000000) $display( "ans=+inf ");
-		if(&ans[30:23] && |ans[22:0] && ~ans[22] ) $display( "ans=sigNaN ");
-		if(&ans[30:23] && |ans[22:0] && ans[22]) $display( "ans=qutNaN ");
+		if(&ans[30:23] & |ans[22:0] & ~ans[22] ) $display( "ans=sigNaN ");
+		if(&ans[30:23] & |ans[22:0] & ans[22]) $display( "ans=qutNaN ");
         errors = errors + 1;
 	  if (errors == 10)
 		$stop;

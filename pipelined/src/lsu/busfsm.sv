@@ -33,23 +33,23 @@
 
 module busfsm #(parameter integer   WordCountThreshold,
 				parameter integer LOGWPL, parameter logic CacheEnabled )
-  (input logic clk,
-   input logic 				 reset,
+  (input logic               clk,
+   input logic               reset,
 
-   input logic 				 IgnoreRequest,
-   input logic [1:0] 		 LSURWM,
-   input logic 				 DCacheFetchLine,
-   input logic 				 DCacheWriteLine,
-   input logic 				 LSUBusAck,
-   input logic 				 CPUBusy,
-   input logic 				 CacheableM,
+   input logic               IgnoreRequest,
+   input logic [1:0]         LSURWM,
+   input logic               DCacheFetchLine,
+   input logic               DCacheWriteLine,
+   input logic               LSUBusAck,
+   input logic               CPUBusy,
+   input logic               CacheableM,
 
-   output logic 			 BusStall,
-   output logic 			 LSUBusWrite,
-   output logic 			 LSUBusRead,
-   output logic 			 DCacheBusAck,
-   output logic 			 BusCommittedM,
-   output logic 			 SelUncachedAdr,
+   output logic              BusStall,
+   output logic              LSUBusWrite,
+   output logic              LSUBusRead,
+   output logic              DCacheBusAck,
+   output logic              BusCommittedM,
+   output logic              SelUncachedAdr,
    output logic [LOGWPL-1:0] WordCount);
   
 

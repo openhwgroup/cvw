@@ -40,7 +40,7 @@ module cvtfp (
 	logic [8:0]	i,NormCnt;
 	always_comb begin
 			i = 0;
-			while (~XManE[52-i] && i <= 52) i = i+1;  // search for leading one 
+			while (~XManE[52-i] & i <= 52) i = i+1;  // search for leading one 
 			NormCnt = i;
 	end
 
