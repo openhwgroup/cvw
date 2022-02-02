@@ -280,6 +280,10 @@ logic [3:0] dummy;
           else $display("FAIL: %d test programs had errors", totalerrors);
           $stop;
         end
+        if (TEST == "coremark" & dut.core.priv.priv.ecallM) begin
+          $display("Benchmark: coremark is done.");
+          $stop;
+        end
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
