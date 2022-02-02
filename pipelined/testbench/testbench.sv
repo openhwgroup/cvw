@@ -215,6 +215,10 @@ logic [3:0] dummy;
   // check results
   always @(negedge clk)
     begin    
+      if (TEST == "coremark" & dut.core.priv.priv.ecallM) begin
+        $display("Benchmark: coremark is done.");
+        $stop;
+      end
       if (DCacheFlushDone) begin
  
         #600; // give time for instructions in pipeline to finish
@@ -278,10 +282,6 @@ logic [3:0] dummy;
         if (test == tests.size()) begin
           if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
           else $display("FAIL: %d test programs had errors", totalerrors);
-          $stop;
-        end
-        if (TEST == "coremark" & dut.core.priv.priv.ecallM) begin
-          $display("Benchmark: coremark is done.");
           $stop;
         end
         else begin
