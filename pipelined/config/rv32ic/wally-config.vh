@@ -29,8 +29,6 @@
 
 `define FPGA 0
 `define QEMU 0
-`define BUILDROOT 0
-`define BUSYBEAR 0
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
