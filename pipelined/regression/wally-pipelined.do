@@ -38,8 +38,8 @@ vlib work
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
 vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-vopt +acc work.testbench -G TEST=$2 -o workopt 
-vsim workopt
+vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
+vsim workopt +nowarn3829
 
 view wave
 -- display input and output signals as hexidecimal values

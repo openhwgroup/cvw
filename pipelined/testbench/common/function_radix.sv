@@ -46,7 +46,7 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
 
   logic [`XLEN-1:0] PCF, PCD, PCE, FunctionAddr;
   logic 	    StallD, StallE, FlushD, FlushE;
-  integer 	    ProgramAddrIndex;
+  integer 	    ProgramAddrIndex, ProgramAddrIndexQ;
 
   assign PCF = testbench.dut.core.PCF;
   assign StallD = testbench.dut.core.StallD;
@@ -163,8 +163,21 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
     bin_search_min(PCE, ProgramAddrMapLineCount, ProgramAddrMapMemory, FunctionAddr, ProgramAddrIndex);
   end
 
+  logic OrReducedAdr, AnyUnknown;
 
-  assign FunctionName = ProgramLabelMapMemory[ProgramAddrIndex];
+  
+  assign OrReducedAdr = |ProgramAddrIndex;
+  assign AnyUnknown = (OrReducedAdr === 1'bx) ? 1'b1 : 1'b0;
+  initial ProgramAddrIndexQ = '0;
+  initial ProgramAddrIndex = '0;
+  always @(posedge clk) begin
+    if(reset)
+      ProgramAddrIndexQ <= '0;
+    if(AnyUnknown == 1'b0)
+      ProgramAddrIndexQ <= ProgramAddrIndex;
+  end
+
+  assign FunctionName = ProgramLabelMapMemory[AnyUnknown ? ProgramAddrIndexQ : ProgramAddrIndex];
   
 
 endmodule // function_radix
