@@ -6,8 +6,10 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 		$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
 		$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 
-work/coremark.bare.riscv.memfile: work/coremark.bare.riscv
+work/coremark.bare.riscv.elf.memfile: work/coremark.bare.riscv
+	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
 	riscv64-unknown-elf-elf2hex --bit-width 64 --input $< --output $@
+	extractFunctionRadix.sh $<.elf.objdump
 
 work/coremark.bare.riscv.objdump: work/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D work/coremark.bare.riscv > work/coremark.bare.riscv.objdump 

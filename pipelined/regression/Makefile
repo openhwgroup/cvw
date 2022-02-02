@@ -14,18 +14,21 @@ make all:
 	make -C ../../tests/imperas-riscv-tests
 	make -C ../../tests/imperas-riscv-tests XLEN=64
 	cd ../../tests/imperas-riscv-tests; exe2memfile.pl work/*/*.elf
+	cd ../../tests/imperas-riscv-tests; extractFunctionRadix.sh work/*/*.elf
 	
 
 	# Build riscv-arch-test 64 and 32-bit versions
 	make -C ../../addins/riscv-arch-test
 	make -C ../../addins/riscv-arch-test XLEN=32
 	cd ../../addins/riscv-arch-test; elf2hex.sh
+	cd ../../addins/riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf
 	# extractFunctionRadix. ***
 
 	# Build wally-riscv-arch-test
 	make -C ../../tests/wally-riscv-arch-test/
 	make -C ../../tests/wally-riscv-arch-test/ XLEN=32 
 	cd ../../tests/wally-riscv-arch-test; elf2hex.sh
+	cd ../../tests/wally-riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf
 	# ***extractFunctionRadix
 
 	# Only compile Imperas tests if they are installed locally.  
