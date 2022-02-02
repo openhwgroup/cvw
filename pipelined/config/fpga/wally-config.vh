@@ -29,11 +29,8 @@
 
 `define FPGA 1
 `define QEMU 0
-`define BUILDROOT 0
-`define BUSYBEAR 0
 `define DESIGN_COMPILER 0
 
-//`define LINUX_TEST_VECTORS "/courses/e190ax/buildroot_boot/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
