@@ -164,20 +164,11 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   end
 
   logic OrReducedAdr, AnyUnknown;
-
-  
   assign OrReducedAdr = |ProgramAddrIndex;
   assign AnyUnknown = (OrReducedAdr === 1'bx) ? 1'b1 : 1'b0;
-  initial ProgramAddrIndexQ = '0;
   initial ProgramAddrIndex = '0;
-  always @(posedge clk) begin
-    if(reset)
-      ProgramAddrIndexQ <= '0;
-    if(AnyUnknown == 1'b0)
-      ProgramAddrIndexQ <= ProgramAddrIndex;
-  end
 
-  assign FunctionName = ProgramLabelMapMemory[AnyUnknown ? ProgramAddrIndexQ : ProgramAddrIndex];
+  assign FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
   
 
 endmodule // function_radix
