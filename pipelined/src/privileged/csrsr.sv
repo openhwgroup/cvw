@@ -117,7 +117,7 @@ module csrsr (
       STATUS_MXR_INT <= #1 0;
       STATUS_SUM_INT <= #1 0;
       STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
-      STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
+      STATUS_FS_INT <= #1 0;
       STATUS_MPP <= #1 0; //`M_MODE;
       STATUS_SPP <= #1 0; //1'b1;
       STATUS_MPIE <= #1 0; //1;
