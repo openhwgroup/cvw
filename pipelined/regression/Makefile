@@ -14,29 +14,30 @@ make all:
 	make -C ../../tests/imperas-riscv-tests
 	make -C ../../tests/imperas-riscv-tests XLEN=64
 	cd ../../tests/imperas-riscv-tests; exe2memfile.pl work/*/*.elf
-	cd ../../tests/imperas-riscv-tests; extractFunctionRadix.sh work/*/*.elf
+	cd ../../tests/imperas-riscv-tests; extractFunctionRadix.sh work/*/*.elf.objdump
 	
 
 	# Build riscv-arch-test 64 and 32-bit versions
 	make -C ../../addins/riscv-arch-test
 	make -C ../../addins/riscv-arch-test XLEN=32
 	cd ../../addins/riscv-arch-test; elf2hex.sh
-	cd ../../addins/riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf
+	cd ../../addins/riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf.objdump
 	# extractFunctionRadix. ***
 
 	# Build wally-riscv-arch-test
 	make -C ../../tests/wally-riscv-arch-test/
 	make -C ../../tests/wally-riscv-arch-test/ XLEN=32 
 	cd ../../tests/wally-riscv-arch-test; elf2hex.sh
-	cd ../../tests/wally-riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf
+	cd ../../tests/wally-riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf.objdump
 	# ***extractFunctionRadix
 
 	# Only compile Imperas tests if they are installed locally.  
 	# They are usually a symlink to $RISCV/imperas-riscv-tests and only 
 	# get compiled there manually during installation
-	# make -C ../../addins/imperas-riscv-tests
-	# make -C ../../addins/imperas-riscv-tests XLEN=64
-	# cd ../../addins/imperas-riscv-tests; elf2hex.sh
+	#make -C ../../addins/imperas-riscv-tests
+	#make -C ../../addins/imperas-riscv-tests XLEN=64
+	#cd ../../addins/imperas-riscv-tests; elf2hex.sh
+	#cd ../../addins/imperas-riscv-tests; extractFunctionRadix.sh work/*/*/*.elf.objdump
 
 	# Link Linux test vectors (fix this later***)
 	#cd ../../tests/linux-testgen/linux-testvectors/;./tvLinker.sh

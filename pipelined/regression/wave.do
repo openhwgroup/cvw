@@ -3,6 +3,7 @@ quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
+add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPPredWrongE
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/CSRWritePendingDEM
@@ -474,11 +475,8 @@ add wave -noupdate -expand -group {Performance Counters} -expand -group ICACHE -
 add wave -noupdate -expand -group {Performance Counters} -expand -group ICACHE -label {ICACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
-add wave -noupdate /testbench/FunctionName/FunctionName/AnyUnknown
-add wave -noupdate /testbench/FunctionName/FunctionName/OrReducedAdr
-add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrIndex
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {3051 ns} 0} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
+WaveRestoreCursors {{Cursor 7} {6451242 ns} 0} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -494,4 +492,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {111637 ns}
+WaveRestoreZoom {593782 ns} {7438712 ns}
