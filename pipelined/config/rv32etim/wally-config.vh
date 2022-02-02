@@ -39,11 +39,11 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-// E, M, C
-`define MISA (32'h00001014) 
-`define ZICSR_SUPPORTED 1
+// E
+`define MISA (32'h00000010) 
+`define ZICSR_SUPPORTED 0
 `define ZIFENCEI_SUPPORTED 0
-`define COUNTERS 32
+`define COUNTERS 0
 `define ZICOUNTERS_SUPPORTED 0
 
 // Microarchitectural Features
@@ -55,7 +55,7 @@
 `define MEM_IROM 1
 `define MEM_ICACHE 0
 `define MEM_VIRTMEM 0
-`define VECTORED_INTERRUPTS_SUPPORTED 1 
+`define VECTORED_INTERRUPTS_SUPPORTED 0 
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 0
@@ -93,16 +93,16 @@
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       34'h80000000
 `define EXT_MEM_RANGE      34'h07FFFFFF
-`define CLINT_SUPPORTED 1'b1
+`define CLINT_SUPPORTED 1'b0
 `define CLINT_BASE  34'h02000000
 `define CLINT_RANGE 34'h0000FFFF
-`define GPIO_SUPPORTED 1'b1
+`define GPIO_SUPPORTED 1'b0
 `define GPIO_BASE   34'h10060000
 `define GPIO_RANGE  34'h000000FF
-`define UART_SUPPORTED 1'b1
+`define UART_SUPPORTED 1'b0
 `define UART_BASE   34'h10000000
 `define UART_RANGE  34'h00000007
-`define PLIC_SUPPORTED 1'b1
+`define PLIC_SUPPORTED 1'b0
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
 `define SDC_SUPPORTED 1'b0

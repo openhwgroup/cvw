@@ -57,7 +57,7 @@ def getBuildrootTC(short):
 
 tc = TestCase(
       name="buildroot-checkpoint",
-      variant="rv6gc",
+      variant="rv64gc",
       cmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 400100000 400000001 400000000\n!",
       grepstr="400100000 instructions")
 configs.append(tc)
