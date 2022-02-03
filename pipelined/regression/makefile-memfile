@@ -3,13 +3,7 @@ SUFFIX	:= work
 ARCHDIR	:= $(ROOT)/addins/riscv-arch-test
 WALLYDIR:= $(ROOT)/tests/wally-riscv-arch-test
 IMPERASDIR	:= $(ROOT)/tests/imperas-riscv-tests
-DIR1	:= $(ROOT)/addins/riscv-arch-test/$(SUFFIX)
-DIR2	:= $(ROOT)/tests/wally-riscv-arch-test/$(SUFFIX)
-DIR3	:= $(ROOT)/tests/imperas-riscv-tests/$(SUFFIX)
-ALLDIRS := $(DIR1) $(DIR2) $(DIR3)
-
-
-#ALLDIRS	:= .
+ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) $(IMPERASDIR)/$(SUFFIX)
 
 ELFFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf")
 MEMFILES ?= $(ELFFILES:.elf=.elf.memfile)
@@ -19,21 +13,11 @@ print:
 	echo "files in $(ALLDIRS) are $(ELFFILES)."
 	echo "memfiles are $(MEMFILES)"
 
-.PHONY: all
-#.NOTPARALLEL: all
-all: elfs wally-sim-files
+.PHONY: all wally-sim-files
+all: wally-sim-files
 
 wally-sim-files: $(MEMFILES) $(ADDRFILES)
 	echo "$@"
-
-.PHONY: elfs
-elfs:
-	make -C $(ARCHDIR) --jobs
-	make -C $(ARCHDIR) XLEN=32 --jobs
-	make -C $(WALLYDIR) --jobs
-	make -C $(WALLYDIR) XLEN=32 --jobs
-	make -C $(IMPERASDIR) --jobs
-	make -C $(IMPERASDIR) XLEN=64 --jobs
 
 # notes to self on how this works.
 # The find command locates all of the *.elf files in directory DIR1.  A list of .memfiles and
@@ -49,4 +33,5 @@ elfs:
 %.elf.objdump.addr: %.elf.objdump
 	extractFunctionRadix.sh $<
 
-#riscv64-unknown-elf-elf2hex --bit-width $(shell echo $* | head -c 4 | tail -c 2) --input $< --output $@
+.PHONY: clean
+clean:

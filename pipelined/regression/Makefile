@@ -27,7 +27,9 @@ make all:
 	# Build wally-riscv-arch-test
 	make -C ../../tests/wally-riscv-arch-test/ --jobs
 	make -C ../../tests/wally-riscv-arch-test/ XLEN=32  --jobs
-	make -f makefile wally-sim-files
+
+# build the memfiles and address files.
+	make -f makefile-memfile wally-sim-files --jobs
 	#cd ../../tests/wally-riscv-arch-test; elf2hex.sh
 	#cd ../../tests/wally-riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf.objdump
 	# ***extractFunctionRadix
