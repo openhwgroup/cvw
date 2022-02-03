@@ -125,7 +125,7 @@ module datapath (
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
-  flopen #(`XLEN)   ReadDataWReg(.clk, .en(~StallW), .d(ReadDataM), .q(ReadDataW));
+  flopen #(`XLEN)   ReadDataWReg(clk, ~StallW, ReadDataM, ReadDataW);
   mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, WriteDataW);	 
 
   // floating point interactions: fcvt, fp stores
@@ -133,8 +133,7 @@ module datapath (
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
     mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   end else begin:fpmux
-    assign ResultM = IEUResultM;
-    assign WriteDataE = ForwardedSrcBE;
+    assign ResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
   end
 
   // handle Store Conditional result if atomic extension supported

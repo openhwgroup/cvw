@@ -117,14 +117,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     else if (SetValidD   & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b1;
     else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b0;
 	end
-
-/*  always_ff @(posedge clk) begin // pipeline register; helps timing ***Ross consider further
-    RAdrD          <= #1 RAdr;
-    SetValidD      <= #1 SetValid;
-    ClearValidD    <= #1 ClearValid;    
-    WriteEnableD   <= #1 WriteEnable;
-    VDWriteEnableD <= #1 VDWriteEnable;
-  end */
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
   flop #(4) ValidCtrlDelayReg(clk, {SetValid, ClearValid, WriteEnable, VDWriteEnable},
     {SetValidD, ClearValidD, WriteEnableD, VDWriteEnableD});
@@ -142,16 +134,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
       else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= #1 1'b0;
     end
     flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
-/*    always_ff @(posedge clk) begin
-      SetDirtyD <= SetDirty;
-      ClearDirtyD <= ClearDirty;
-    end */
     assign Dirty = DirtyBits[RAdrD];
-  end else begin:dirty
-    assign Dirty = 1'b0;
-  end
-
-  
+  end else assign Dirty = 1'b0;
 endmodule // DCacheCacheWays
 
 
