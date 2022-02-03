@@ -39,9 +39,6 @@ module cachereplacementpolicy
    input logic 					LRUWriteEn
    );
 
-  //  *** Only implements 2, 4, and 8 way
-  // I would like parametersize this in the future.
-
   logic [NUMWAYS-2:0] 				LRUEn, LRUMask;
   logic [$clog2(NUMWAYS)-1:0] 			EncVicWay;
   logic [NUMWAYS-2:0] 				ReplacementBits [NUMLINES-1:0];
