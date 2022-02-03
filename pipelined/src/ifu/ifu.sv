@@ -170,16 +170,16 @@ module ifu (
   assign InstrRawF = AllInstrRawF[31:0];
 
   
-  if (`MEM_IROM) begin : irom
-    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF), .IEUAdrE(PCNextFSpill),
+  if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN
+    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF[31:0]), .IEUAdrE(PCNextFSpill),
               .TrapM(1'b0), .FinalWriteDataM(), 
               .ReadDataWordM(AllInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
               .BusCommittedM(), .ReadDataWordMuxM(), .DCacheStallM(ICacheStallF), 
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
     
   end else begin : bus
-    localparam integer   WORDSPERLINE = `MEM_ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = `MEM_ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam integer   WORDSPERLINE = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS : `XLEN;
     logic [LINELEN-1:0]  ICacheMemWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
@@ -197,7 +197,7 @@ module ifu (
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
     
-    if(`MEM_ICACHE) begin : icache
+    if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;
       assign IFURWF = CacheableF ? 2'b10 : 2'b00;
       

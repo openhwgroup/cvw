@@ -174,15 +174,15 @@ module lsu (
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
 
-  if (`MEM_DTIM) begin : dtim
+  if (`DMEM == `MEM_TIM) begin : dtim
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM,
               .DCacheMiss, .DCacheAccess);
 
   end else begin : bus  
-    localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = `MEM_DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
+    localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
     logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
     logic [LINELEN-1:0]  DCacheMemWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
@@ -198,7 +198,7 @@ module lsu (
           .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
           .BusStall, .BusCommittedM);
     
-    if(`MEM_DCACHE) begin : dcache
+    if(`DMEM == `MEM_CACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
         dcache(.clk, .reset, .CPUBusy,

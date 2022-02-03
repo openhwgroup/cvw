@@ -198,7 +198,6 @@ logic [3:0] dummy;
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
       $readmemh(memfilename, dut.uncore.ram.ram.RAM);
-      //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -288,7 +287,6 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             $readmemh(memfilename, dut.uncore.ram.ram.RAM);
-            //if(`MEM_DTIM == 1) $readmemh(memfilename, dut.core.lsu.dtim.ram.RAM);
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);
@@ -341,25 +339,25 @@ module riscvassertions;
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
     assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
-    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | `MEM_DCACHE == 0 | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_LINELENINBITS >= 128 | `MEM_DCACHE == 0) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
+    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`DCACHE_LINELENINBITS >= 128 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
-    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | `MEM_ICACHE == 0 | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`ICACHE_LINELENINBITS >= 32 | `MEM_ICACHE == 0) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (`IMEM != `MEM_CACHE) | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`ICACHE_LINELENINBITS >= 32 | (`IMEM != `MEM_CACHE)) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | `MEM_DCACHE==0) else $error("DCACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | `MEM_DCACHE==0) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | `MEM_ICACHE==0) else $error("ICACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | `MEM_ICACHE==0) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | (`DMEM != `MEM_CACHE)) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | (`IMEM != `MEM_CACHE)) else $error("ICACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (`IMEM != `MEM_CACHE)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `MEM_VIRTMEM==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `MEM_VIRTMEM==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `MEM_VIRTMEM == 0)) else $error("PMP_ENTRIES and MEM_VIRTMEM must be zero if ZICSR not supported.");
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
-    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
-    assert (`MEM_DTIM == 0 | `MEM_VIRTMEM ==0) else $error("DTIM doesn't play nicely with virtual memory");
-    assert (`MEM_IROM == 0 | `MEM_VIRTMEM ==0) else $error("IROM doesn't play nicely with virtual memory");
+//    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
+    assert (`DMEM == `MEM_CACHE | `MEM_VIRTMEM ==0) else $error("Virtual memory needs dcache");
+    assert (`IMEM == `MEM_CACHE | `MEM_VIRTMEM ==0) else $error("Virtual memory needs icache");
   end
 endmodule
 
@@ -377,7 +375,7 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
-	if(`MEM_DCACHE) begin
+	if(`DMEM == `MEM_CACHE) begin
 	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
 	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
