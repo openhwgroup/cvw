@@ -73,8 +73,15 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic 							  SetDirtyD, ClearDirtyD;
   logic 							  WriteEnableD, VDWriteEnableD;
   
-  
-  
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Data and Tag Arrays
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Potential optimization: if byte write enables are available, could remove subwordwrites
+/*  sram1rw #(.DEPTH(NUMLINES), .WIDTH(LINELEN)) CacheDataMem(
+    .clk(clk), .Addr(RAdr),
+    .ReadData(ReadDataLineWay), .WriteData(WriteData),
+          .WriteEnable(WriteEnable & WriteWordEnable[words])); // *** */
 
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
@@ -85,12 +92,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
           .WriteEnable(WriteEnable & WriteWordEnable[words]));
   end
 
-  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN))
-  CacheTagMem(.clk(clk),
-			  .Addr(RAdr),
-			  .ReadData(ReadTag),
-			  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-			  .WriteEnable(TagWriteEnable));
+  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
+		.Addr(RAdr), .ReadData(ReadTag),
+	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
   assign SelectedWay = SelFlush ? FlushWay : 
@@ -104,38 +108,44 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   assign FlushThisWay = FlushWay ? ReadTag : '0;
   assign VictimTagWay = SelFlush ? FlushThisWay : VicDirtyWay;
   
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Valid Bits
+  /////////////////////////////////////////////////////////////////////////////////////////////
   
-  always_ff @(posedge clk) begin
-    if (reset) 
-  	  ValidBits <= {NUMLINES{1'b0}};
-    else if (InvalidateAll) 
-  	  ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b1;
-    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b0;
-	   end
+  always_ff @(posedge clk) begin // Valid bit array, 
+    if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
+    else if (SetValidD   & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b1;
+    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b0;
+	end
 
-  always_ff @(posedge clk) begin
-    RAdrD <= RAdr;
-    SetValidD <= SetValid;
-    ClearValidD <= ClearValid;    
-    WriteEnableD <= WriteEnable;
-    VDWriteEnableD <= VDWriteEnable;
-  end
-
-  
+/*  always_ff @(posedge clk) begin // pipeline register; helps timing ***Ross consider further
+    RAdrD          <= #1 RAdr;
+    SetValidD      <= #1 SetValid;
+    ClearValidD    <= #1 ClearValid;    
+    WriteEnableD   <= #1 WriteEnable;
+    VDWriteEnableD <= #1 VDWriteEnable;
+  end */
+  flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
+  flop #(4) ValidCtrlDelayReg(clk, {SetValid, ClearValid, WriteEnable, VDWriteEnable},
+    {SetValidD, ClearValidD, WriteEnableD, VDWriteEnableD});
   assign Valid = ValidBits[RAdrD];
 
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Dirty Bits
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
   // Dirty bits
-  if(DIRTY_BITS) begin:dirty
+  if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
-      if (reset)                                              DirtyBits <= {NUMLINES{1'b0}};
-      else if (SetDirtyD & (WriteEnableD | VDWriteEnableD))   DirtyBits[RAdrD] <= 1'b1;
-      else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b0;
+      if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
+      else if (SetDirtyD   & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= #1 1'b1;
+      else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= #1 1'b0;
     end
-    always_ff @(posedge clk) begin
+    flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
+/*    always_ff @(posedge clk) begin
       SetDirtyD <= SetDirty;
       ClearDirtyD <= ClearDirty;
-    end
+    end */
     assign Dirty = DirtyBits[RAdrD];
   end else begin:dirty
     assign Dirty = 1'b0;
