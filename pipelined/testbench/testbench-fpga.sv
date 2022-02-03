@@ -549,7 +549,7 @@ string tests32f[] = '{
         if (`M_SUPPORTED) tests = {tests, tests64m};
         if (`F_SUPPORTED) tests = {tests64f, tests};
         if (`D_SUPPORTED) tests = {tests64d, tests};
-        if (`MEM_VIRTMEM) tests = {tests64mmu, tests};
+        if (`VIRTMEM_SUPPORTED) tests = {tests64mmu, tests};
         if (`A_SUPPORTED) tests = {tests64a, tests};
       end
       //tests = {tests64a, tests};
@@ -565,7 +565,7 @@ string tests32f[] = '{
           else                       tests = {tests, tests32iNOc};
           if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
           if (`F_SUPPORTED) tests = {tests32f, tests};
-          if (`MEM_VIRTMEM) tests = {tests32mmu, tests};
+          if (`VIRTMEM_SUPPORTED) tests = {tests32mmu, tests};
           if (`A_SUPPORTED) tests = {tests32a, tests};
      end
     end
@@ -782,10 +782,10 @@ module riscvassertions();
     assert (`PMP_ENTRIES == 0 | `PMP_ENTRIES==16 | `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double without supporting float");
     assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
-    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `MEM_VIRTMEM == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_LINELENINBITS >= 128 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
-    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (`IMEM != `MEM_CACHE) | `MEM_VIRTMEM == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (`IMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`ICACHE_LINELENINBITS >= 32 | (`IMEM != `MEM_CACHE)) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
     assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS) else $error("DCACHE_LINELENINBITS must be a power of 2");

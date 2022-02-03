@@ -96,7 +96,7 @@ module csrs #(parameter
     flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
     flopenr #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, SCAUSE_REGW);
     flopenr #(`XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
-    if (`MEM_VIRTMEM)
+    if (`VIRTMEM_SUPPORTED)
       flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
     else
       assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
@@ -129,7 +129,7 @@ module csrs #(parameter
         SEPC:      CSRSReadValM = SEPC_REGW;
         SCAUSE:    CSRSReadValM = SCAUSE_REGW;
         STVAL:     CSRSReadValM = STVAL_REGW;
-        SATP:      if (`MEM_VIRTMEM & (PrivilegeModeW == `M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
+        SATP:      if (`VIRTMEM_SUPPORTED & (PrivilegeModeW == `M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
                     else begin
                       CSRSReadValM = 0;
                       if (PrivilegeModeW == `S_MODE & STATUS_TVM) IllegalCSRSAccessM = 1;

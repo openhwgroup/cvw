@@ -110,7 +110,7 @@ module lsu (
   // MMU include PMP and is needed if any privileged supported
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
+  if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
                           .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
                           .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
