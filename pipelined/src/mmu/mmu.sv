@@ -97,7 +97,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   logic TLBPageFault;
   
   // only instantiate TLB if Virtual Memory is supported
-  if (`MEM_VIRTMEM) begin:tlb
+  if (`VIRTMEM_SUPPORTED) begin:tlb
     logic ReadAccess, WriteAccess;
     assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
     assign WriteAccess = WriteAccessM;
