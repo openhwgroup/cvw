@@ -88,14 +88,14 @@ for test in tests32ic:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32tim = ["arch32i", "arch32c", "imperas32i", "imperas32c"] 
-for test in tests32tim:
+tests32e = ["arch32e"] 
+for test in tests32e:
   tc = TestCase(
         name=test,
-        variant="rv32tim",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-tim-batch.do rv32tim "+test+"\n!",
+        variant="rv32e",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32e "+test+"\n!",
         grepstr="All tests ran without failures")
-  configs.append(tc)
+#  configs.append(tc)
 
 
 import os

@@ -6,8 +6,8 @@
 # Config
 set hdl_src "../pipelined/src"
 
-eval file copy ${hdl_src}/../config/rv64gc/wally-config.vh {hdl/}
-eval file copy ${hdl_src}/../config/rv64gc/wally-config.vh {reports/}
+eval file copy ${hdl_src}/../config/rv32e/wally-config.vh {hdl/}
+eval file copy ${hdl_src}/../config/rv32e/wally-config.vh {reports/}
 eval file copy [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
 eval file copy [glob ${hdl_src}/*/*.sv] {hdl/}
 eval file copy [glob ${hdl_src}/*/flop/*.sv] {hdl/}
