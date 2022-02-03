@@ -28,14 +28,10 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 `include "wally-config.vh"
 
-module cache #(parameter integer LINELEN, 
-			   parameter integer NUMLINES, 
-			   parameter integer NUMWAYS,
-			   parameter integer DCACHE = 1)
-  (input logic clk,
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
+  input logic clk,
    input logic				   reset,
    // cpu side
    input logic				   CPUBusy,
@@ -49,36 +45,32 @@ module cache #(parameter integer LINELEN,
    output logic [`XLEN-1:0]	   ReadDataWord,
    output logic				   CacheCommitted,
    output logic				   CacheStall,
-
    // to performance counters to cpu
    output logic				   CacheMiss,
    output logic				   CacheAccess,
-
    // lsu control
    input logic				   IgnoreRequest,
-
    // Bus fsm interface
    output logic				   CacheFetchLine,
    output logic				   CacheWriteLine,
    input logic				   CacheBusAck,
-
    output logic [`PA_BITS-1:0] CacheBusAdr,
    input logic [LINELEN-1:0]   CacheMemWriteData,
    output logic [`XLEN-1:0]	   ReadDataLineSets [(LINELEN/`XLEN)-1:0]);
 
-
-  localparam integer 						LINEBYTELEN = LINELEN/8;
-  localparam integer 						OFFSETLEN = $clog2(LINEBYTELEN);
-  localparam integer 						INDEXLEN = $clog2(NUMLINES);
-  localparam integer 						TAGLEN = `PA_BITS - OFFSETLEN - INDEXLEN;
-  localparam integer 						WORDSPERLINE = LINELEN/`XLEN;
-  localparam integer 						LOGWPL = $clog2(WORDSPERLINE);
-  localparam integer 						LOGXLENBYTES = $clog2(`XLEN/8);
-
-  localparam integer 						FlushAdrThreshold   = NUMLINES - 1;
+  // Cache parameters
+  localparam  						LINEBYTELEN = LINELEN/8;
+  localparam  						OFFSETLEN = $clog2(LINEBYTELEN);
+  localparam  						SETLEN = $clog2(NUMLINES);
+  localparam              SETTOP = SETLEN+OFFSETLEN;
+  localparam  						TAGLEN = `PA_BITS - SETTOP;
+  localparam  						WORDSPERLINE = LINELEN/`XLEN;
+  localparam  						LOGWPL = $clog2(WORDSPERLINE);
+  localparam  						LOGXLENBYTES = $clog2(`XLEN/8);
+  localparam  						FlushAdrThreshold   = NUMLINES - 1;
 
   logic [1:0] 								SelAdr;
-  logic [INDEXLEN-1:0] 						RAdr;
+  logic [SETLEN-1:0] 						RAdr;
   logic [LINELEN-1:0] 						SRAMWriteData;
   logic 									SetValid, ClearValid;
   logic 									SetDirty, ClearDirty;
@@ -87,82 +79,61 @@ module cache #(parameter integer LINELEN,
   logic 									CacheHit;
   logic [LINELEN-1:0] 						ReadDataLine;
   logic [WORDSPERLINE-1:0] 					SRAMWordEnable;
-
   logic 									SRAMWordWriteEnable;
   logic 									SRAMLineWriteEnable;
   logic [NUMWAYS-1:0] 						SRAMLineWayWriteEnable;
   logic [NUMWAYS-1:0] 						SRAMWayWriteEnable;
-  
-
+  logic [NUMWAYS-1:0]             SRAMWordWayWriteEnable;
   logic [NUMWAYS-1:0] 						VictimWay;
   logic [NUMWAYS-1:0] 						VictimDirtyWay;
   logic 									VictimDirty;
-
   logic [2**LOGWPL-1:0] 					MemPAdrDecoded;
-
   logic [TAGLEN-1:0] 						VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0] 						VictimTag;
-
-  logic [INDEXLEN-1:0] 						FlushAdr;
-  logic [INDEXLEN-1:0] 						FlushAdrP1;
+  logic [SETLEN-1:0] 						FlushAdr;
+  logic [SETLEN-1:0] 						FlushAdrP1;
   logic 									FlushAdrCntEn;
   logic 									FlushAdrCntRst;
   logic 									FlushAdrFlag;
-    logic 									FlushWayFlag;
-  
+  logic 									FlushWayFlag;
   logic [NUMWAYS-1:0] 						FlushWay;
   logic [NUMWAYS-1:0] 						NextFlushWay;
   logic 									FlushWayCntEn;
   logic 									FlushWayCntRst;  
-
   logic 									VDWriteEnable;
   logic 									SelEvict;
   logic 									LRUWriteEn;
   logic [NUMWAYS-1:0] 						VDWriteEnableWay;
   logic 									SelFlush;
+  logic                   ResetOrFlushAdr, ResetOrFlushWay;
 
-  // Read Path CPU (IEU) side
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Read Path
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
-  mux3 #(INDEXLEN)
-  AdrSelMux(.d0(NextAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d1(PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-			.d2(FlushAdr),
-			.s(SelAdr),
-			.y(RAdr));
+  // Choose read address (RAdr).  Normally use NextAdr, but use PAdr during stalls
+  // and FlushAdr when handling D$ flushes  
+  mux3 #(SETLEN) AdrSelMux(
+    .d0(NextAdr[SETTOP-1:OFFSETLEN]), .d1(PAdr[SETTOP-1:OFFSETLEN]), .d2(FlushAdr),
+		.s(SelAdr), .y(RAdr));
 
-   
-
-  cacheway #(.NUMLINES(NUMLINES), .LINELEN(LINELEN), .TAGLEN(TAGLEN), 
-			 .OFFSETLEN(OFFSETLEN), .INDEXLEN(INDEXLEN))
-  MemWay[NUMWAYS-1:0](.clk, .reset, .RAdr,
-					  .PAdr(PAdr),
-					  .WriteEnable(SRAMWayWriteEnable),
-					  .VDWriteEnable(VDWriteEnableWay),
-					  .WriteWordEnable(SRAMWordEnable),
-					  .TagWriteEnable(SRAMLineWayWriteEnable), 
-					  .WriteData(SRAMWriteData),
-					  .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict,
-					  .VictimWay, .FlushWay, .SelFlush,
-					  .ReadDataLineWayMasked,
-					  .WayHit, .VictimDirtyWay, .VictimTagWay,
-					  .InvalidateAll(InvalidateCacheM));
-
+  // Array of cache ways, along with victim, hit, dirty, and read merging logic
+  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
+    .clk, .reset, .RAdr, .PAdr,
+		.WriteEnable(SRAMWayWriteEnable),
+		.VDWriteEnable(VDWriteEnableWay),
+		.WriteWordEnable(SRAMWordEnable),
+		.TagWriteEnable(SRAMLineWayWriteEnable), 
+		.WriteData(SRAMWriteData),
+		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .VictimWay, .FlushWay, .SelFlush,
+		.ReadDataLineWayMasked, .WayHit, .VictimDirtyWay, .VictimTagWay,
+		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
-    cachereplacementpolicy #(NUMWAYS, INDEXLEN, OFFSETLEN, NUMLINES)
-    cachereplacementpolicy(.clk, .reset,
-              .WayHit,
-              .VictimWay,
-              .PAdr(PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN]),
-              .RAdr,
-              .LRUWriteEn);
-  end else begin:vict
-    assign VictimWay = 1'b1; // one hot.
-  end
-
+    cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
+      .clk, .reset, .WayHit, .VictimWay, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .RAdr, .LRUWriteEn);
+  end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | WayHit;
   assign VictimDirty = | VictimDirtyWay;
-
-  
   // ReadDataLineWayMaskedM is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
@@ -172,6 +143,8 @@ module cache #(parameter integer LINELEN,
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
+  // *** move this to LSU and IFU, also remove mux from busdp into LSU. 
+  // *** give this a module name to match block diagram
   genvar index;
 	if(DCACHE == 1) begin: readdata
     for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
@@ -190,72 +163,55 @@ module cache #(parameter integer LINELEN,
 	  else             assign ReadDataWord = FinalInstrRawF;				
 	end
 
-  // Write Path CPU (IEU) side
-
-  onehotdecoder #(LOGWPL)
-  adrdec(.bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]),
-		 .decoded(MemPAdrDecoded));
-
-  assign SRAMWordEnable = SRAMLineWriteEnable ? '1 : MemPAdrDecoded;
-  
-  assign SRAMLineWayWriteEnable = SRAMLineWriteEnable ? VictimWay : '0;
-  
-  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWriteEnable ? WayHit : '0),
-								 .d1(VictimWay),
-								 .s(SRAMLineWriteEnable),
-								 .y(SRAMWayWriteEnable));
-
-
-
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Write Path: Write Enables
+  /////////////////////////////////////////////////////////////////////////////////////////////
+ 
+  // *** Ross considering restructuring
+  onehotdecoder #(LOGWPL) adrdec(
+    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
+  assign SRAMWordEnable = SRAMLineWriteEnable ? '1 : MemPAdrDecoded; // OR
+  assign SRAMLineWayWriteEnable = SRAMLineWriteEnable ? VictimWay : '0; // AND
+  assign SRAMWordWayWriteEnable = SRAMWordWriteEnable ? WayHit : '0; // AND
+  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWayWriteEnable), .d1(VictimWay), 
+    .s(SRAMLineWriteEnable), .y(SRAMWayWriteEnable));
   mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-								.d1(CacheMemWriteData),
-								.s(SRAMLineWriteEnable),
-								.y(SRAMWriteData));
+		.d1(CacheMemWriteData),	.s(SRAMLineWriteEnable), .y(SRAMWriteData));
+  mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
+		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
+		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
+		.s({SelFlush, SelEvict}),
+		.y(CacheBusAdr));
 
-  
-  mux3 #(`PA_BITS) BaseAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-							  .d1({VictimTag, PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-							  .d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
-							  .s({SelFlush, SelEvict}),
-							  .y(CacheBusAdr));
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Flush address and way generation during flush
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
-
-  // flush address and way generation.
-  // increment on 2nd to last way
-  flopenr #(INDEXLEN)
-  FlushAdrReg(.clk,
-			  .reset(reset | FlushAdrCntRst),
-			  .en(FlushAdrCntEn),
-			  .d(FlushAdrP1),
-			  .q(FlushAdr));
+  assign ResetOrFlushAdr = reset | FlushAdrCntRst;
+  flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushAdr),
+			  .en(FlushAdrCntEn), .d(FlushAdrP1), .q(FlushAdr));
   assign FlushAdrP1 = FlushAdr + 1'b1;
+  assign FlushAdrFlag = (FlushAdr == FlushAdrThreshold[SETLEN-1:0]);
 
-
-  flopenl #(NUMWAYS)
-  FlushWayReg(.clk,
-			  .load(reset | FlushWayCntRst),
-			  .en(FlushWayCntEn),
-			  .val({{NUMWAYS-1{1'b0}}, 1'b1}),
-			  .d(NextFlushWay),
-			  .q(FlushWay));
-
+  assign ResetOrFlushWay = reset | FlushWayCntRst;
+  flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay),
+			  .en(FlushWayCntEn), .val({{NUMWAYS-1{1'b0}}, 1'b1}),
+			  .d(NextFlushWay), .q(FlushWay));
+  assign FlushWayFlag = FlushWay[NUMWAYS-1];
   assign VDWriteEnableWay = FlushWay & {NUMWAYS{VDWriteEnable}};
-
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
-  //assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0] & FlushWay[NUMWAYS-1];
-  assign FlushAdrFlag = FlushAdr == FlushAdrThreshold[INDEXLEN-1:0];
-  assign FlushWayFlag = FlushWay[NUMWAYS-1];
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Cache FSM
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
-					.RW, .Atomic, .CPUBusy, .IgnoreRequest,
- 					.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
-					.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
-					.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnable,
-					.SRAMLineWriteEnable, .SelEvict, .SelFlush,
-					.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-					.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
-					.VDWriteEnable, .LRUWriteEn);
-  
-
-endmodule // dcache
+		.RW, .Atomic, .CPUBusy, .IgnoreRequest,
+ 		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
+		.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
+		.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnable,
+		.SRAMLineWriteEnable, .SelEvict, .SelFlush,
+		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
+		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
+		.VDWriteEnable, .LRUWriteEn);
+endmodule 

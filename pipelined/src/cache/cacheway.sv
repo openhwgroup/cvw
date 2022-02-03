@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// DCacheMem (Memory for the Data Cache)
+// cacheway
 //
 // Written: ross1728@gmail.com July 07, 2021
 //          Implements the data, tag, valid, dirty, and replacement bits.
@@ -142,6 +142,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   
-endmodule // DCacheMemWay
+endmodule // DCacheCacheWays
 
 

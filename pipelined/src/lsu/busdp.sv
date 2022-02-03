@@ -86,12 +86,12 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN)
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
   assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount]; // only in lsu, not ifu
-  mux2 #(`XLEN) lsubushwdatamux(.d0(PreLSUBusHWDATA), .d1(FinalAMOWriteDataM), 
-                                .s(SelUncachedAdr), .y(LSUBusHWDATA));
-  mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
-                          .s(SelUncachedAdr), .y(LSUBusSize));
-  mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheMemWriteData[`XLEN-1:0]),
-                                .s(SelUncachedAdr), .y(ReadDataWordMuxM));
+  mux2 #(`XLEN) lsubushwdatamux(
+    .d0(PreLSUBusHWDATA), .d1(FinalAMOWriteDataM), .s(SelUncachedAdr), .y(LSUBusHWDATA));
+  mux2 #(3) lsubussizemux(
+    .d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), .s(SelUncachedAdr), .y(LSUBusSize));
+  mux2 #(`XLEN) UnCachedDataMux(
+    .d0(ReadDataWordM), .d1(DCacheMemWriteData[`XLEN-1:0]), .s(SelUncachedAdr), .y(ReadDataWordMuxM));
 
   busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup
   busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
