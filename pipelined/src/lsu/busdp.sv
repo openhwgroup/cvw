@@ -68,8 +68,8 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN)
   output logic                BusCommittedM);
   
 
-  localparam integer   WordCountThreshold = `MEM_DCACHE ? WORDSPERLINE - 1 : 0;
-  localparam integer   LOGWPL = `MEM_DCACHE ? $clog2(WORDSPERLINE) : 1;
+  localparam integer   WordCountThreshold = (`DMEM == `MEM_CACHE) ? WORDSPERLINE - 1 : 0;
+  localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
 
   logic                       SelUncachedAdr;
   logic [`XLEN-1:0]           PreLSUBusHWDATA;
@@ -93,7 +93,7 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN)
   mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheMemWriteData[`XLEN-1:0]),
                                 .s(SelUncachedAdr), .y(ReadDataWordMuxM));
 
-  busfsm #(WordCountThreshold, LOGWPL, `MEM_DCACHE)
+  busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup
   busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
 		 .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
