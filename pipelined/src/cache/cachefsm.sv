@@ -92,8 +92,8 @@ module cachefsm
 					   STATE_MISS_READ_WORD_DELAY,
 					   STATE_MISS_WRITE_WORD,
 
-					   STATE_CPU_BUSY,
-					   STATE_CPU_BUSY_FINISH_AMO,
+					   STATE_CPU_BUSY, // *** Ross will change
+					   STATE_CPU_BUSY_FINISH_AMO, // *** Ross will change
   
 					   STATE_FLUSH,
 					   STATE_FLUSH_CHECK,
@@ -120,6 +120,7 @@ module cachefsm
     else CurrState <= #1 NextState;  
   
   // next state logic and some state ouputs.
+  // *** Ross simplify: factor out next state and output logic
   always_comb begin
     CacheStall = 1'b0;
     PreSelAdr = 2'b00;
