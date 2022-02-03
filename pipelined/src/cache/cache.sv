@@ -125,8 +125,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.WriteWordEnable(SRAMWordEnable),
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
-		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .VictimWay, .FlushWay, .SelFlush,
-		.ReadDataLineWayMasked, .WayHit, .VictimDirtyWay, .VictimTagWay,
+		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .Victim(VictimWay), .Flush(FlushWay), .SelFlush,
+		.ReadDataLineWayMasked, .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(

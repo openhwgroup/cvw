@@ -31,9 +31,9 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
-				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) 
-  (input logic 		       clk,
-   input logic 						  reset,
+				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
+  input logic 		       clk,
+  input logic 						  reset,
 
    input logic [$clog2(NUMLINES)-1:0] RAdr,
    input logic [`PA_BITS-1:0] 		  PAdr,
@@ -47,16 +47,15 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
    input logic 						  SetDirty,
    input logic 						  ClearDirty,
    input logic 						  SelEvict,
-   input logic 						  VictimWay,
+   input logic 						  Victim,
    input logic 						  InvalidateAll,
    input logic 						  SelFlush,
-   input logic 						  FlushWay,
+   input logic 						  Flush,
 
    output logic [LINELEN-1:0] 		  ReadDataLineWayMasked,
    output logic 					  WayHit,
-   output logic 					  VictimDirtyWay,
-   output logic [TAGLEN-1:0] 		  VictimTagWay
-   );
+   output logic 					  VictimDirty,
+   output logic [TAGLEN-1:0] 		  VictimTag);
 
   logic [NUMLINES-1:0] 				  ValidBits;
   logic [NUMLINES-1:0] 				  DirtyBits;
@@ -65,8 +64,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic 							  Valid;
   logic 							  Dirty;
   logic 							  SelectedWay;
-  logic [TAGLEN-1:0] 				  VicDirtyWay;
-  logic [TAGLEN-1:0] 				  FlushThisWay;
+//  logic [TAGLEN-1:0] 				  VicDirtyWay;
+//  logic [TAGLEN-1:0] 				  FlushThisWay;
+  logic                 SelTag;
 
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
   logic 							  SetValidD, ClearValidD;
@@ -97,17 +97,19 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
 
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  assign SelectedWay = SelFlush ? FlushWay : 
-					   SelEvict ? VictimWay : WayHit;  
-  assign ReadDataLineWayMasked = SelectedWay ? ReadDataLineWay : '0;  // first part of AO mux.
+  assign SelectedWay = SelFlush ? Flush : (SelEvict ? Victim : WayHit);  
+  assign ReadDataLineWayMasked = SelectedWay ? ReadDataLineWay : '0;  // AND part of AO mux.
 
-  assign VictimDirtyWay = SelFlush ? FlushWay & Dirty & Valid :
-						  VictimWay & Dirty & Valid;
-
-  assign VicDirtyWay = VictimWay ? ReadTag : '0;
-  assign FlushThisWay = FlushWay ? ReadTag : '0;
-  assign VictimTagWay = SelFlush ? FlushThisWay : VicDirtyWay;
-  
+  assign VictimDirty = SelFlush ? Flush & Dirty & Valid :
+						  Victim & Dirty & Valid;
+/*
+  assign VicDirtyWay = Victim ? ReadTag : '0;
+  assign FlushThisWay = Flush ? ReadTag : '0;
+  assign VictimTag = SelFlush ? FlushThisWay : VicDirtyWay; 
+*/
+  assign SelTag = SelFlush ? Flush : Victim;
+  assign VictimTag = SelTag ? ReadTag : '0; // AND part of AOMux
+ 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,6 +119,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     else if (SetValidD   & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b1;
     else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b0;
 	end
+  // *** consider revisiting whether these delays are the best option? 
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
   flop #(4) ValidCtrlDelayReg(clk, {SetValid, ClearValid, WriteEnable, VDWriteEnable},
     {SetValidD, ClearValidD, WriteEnableD, VDWriteEnableD});
@@ -136,6 +139,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
     assign Dirty = DirtyBits[RAdrD];
   end else assign Dirty = 1'b0;
-endmodule // DCacheCacheWays
+endmodule
 
 
