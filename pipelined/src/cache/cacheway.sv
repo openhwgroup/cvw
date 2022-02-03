@@ -76,7 +76,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
-		.Addr(RAdr), .ReadData(ReadTag),
+		.Adr(RAdr), .ReadData(ReadTag),
 	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
 
   // AND portion of distributed tag multiplexer
@@ -91,7 +91,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // *** Potential optimization: if byte write enables are available, could remove subwordwrites
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Addr(RAdr),
+    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Adr(RAdr),
       .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
       .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
       .WriteEnable(WriteEnable & WriteWordEnable[words]));

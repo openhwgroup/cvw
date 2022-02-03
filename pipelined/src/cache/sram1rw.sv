@@ -34,25 +34,21 @@
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
 module sram1rw #(parameter DEPTH=128, WIDTH=256) (
-    input logic 		    clk,
-    // port 1 is read only
-    input logic [$clog2(DEPTH)-1:0] Addr,
-    output logic [WIDTH-1:0] 	    ReadData,
-  
-    // port 2 is write only
-    input logic [WIDTH-1:0] 	    WriteData,
-    input logic 		    WriteEnable
-);
+  input  logic 		                 clk,
+  input  logic [$clog2(DEPTH)-1:0] Adr,
+  input  logic [WIDTH-1:0] 	       WriteData,
+  input  logic 		                 WriteEnable,
+  output logic [WIDTH-1:0] 	       ReadData);
 
-    logic [DEPTH-1:0][WIDTH-1:0] StoredData; // *** inconsistency in packed vs. unpacked
-    logic [$clog2(DEPTH)-1:0] 	 AddrD;
-    logic [WIDTH-1:0] 		 WriteDataD;
-    logic 			 WriteEnableD;
-  
+  logic [WIDTH-1:0] StoredData[DEPTH-1:0];
+  logic [$clog2(DEPTH)-1:0] 	 AddrD;
+  logic [WIDTH-1:0] 		 WriteDataD;
+  logic 			 WriteEnableD;
 
+    //*** model as single port
     always_ff @(posedge clk) begin
-      AddrD <= Addr;
-      WriteDataD <= WriteData;    /// ****** this is not right. there should not need to be a delay.
+      AddrD <= Adr;
+      WriteDataD <= WriteData;    /// ****** this is not right. there should not need to be a delay.  Implement alternative cache stall to avoid this.  Eliminates a bunch of delay flops elsewhere
       WriteEnableD <= WriteEnable;
         if (WriteEnableD) begin
             StoredData[AddrD] <= #1 WriteDataD;
@@ -60,7 +56,12 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
     end
 
   assign ReadData = StoredData[AddrD];
-  
+/*
+  always_ff @(posedge clk) begin
+    ReadData <= RAM[Adr];
+    if (WriteEnable) RAM[Adr] <= WriteData;
+  end
+  */
 endmodule
 
 
