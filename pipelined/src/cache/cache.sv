@@ -74,7 +74,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [LINELEN-1:0] 						SRAMWriteData;
   logic 									SetValid, ClearValid;
   logic 									SetDirty, ClearDirty;
-  logic [LINELEN-1:0] 						ReadDataLineWayMasked [NUMWAYS-1:0];
+  logic [LINELEN-1:0] 						ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0] 						WayHit;
   logic 									CacheHit;
   logic [LINELEN-1:0] 						ReadDataLine;
@@ -126,7 +126,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
 		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .Victim(VictimWay), .Flush(FlushWay), .SelFlush,
-		.ReadDataLineWayMasked, .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
+		.SelectedReadDataLine(ReadDataLineWay), .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
@@ -134,10 +134,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | WayHit;
   assign VictimDirty = | VictimDirtyWay;
-  // ReadDataLineWayMaskedM is a 2d array of cache line len by number of ways.
+  // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWayMasked), .y(ReadDataLine));
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
 
 

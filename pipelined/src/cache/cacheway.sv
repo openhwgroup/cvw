@@ -52,20 +52,18 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
    input logic 						  SelFlush,
    input logic 						  Flush,
 
-   output logic [LINELEN-1:0] 		  ReadDataLineWayMasked,
+   output logic [LINELEN-1:0] 		  SelectedReadDataLine,
    output logic 					  WayHit,
    output logic 					  VictimDirty,
    output logic [TAGLEN-1:0] 		  VictimTag);
 
   logic [NUMLINES-1:0] 				  ValidBits;
   logic [NUMLINES-1:0] 				  DirtyBits;
-  logic [LINELEN-1:0] 				  ReadDataLineWay;
+  logic [LINELEN-1:0] 				  ReadDataLine;
   logic [TAGLEN-1:0] 				  ReadTag;
   logic 							  Valid;
   logic 							  Dirty;
-  logic 							  SelectedWay;
-//  logic [TAGLEN-1:0] 				  VicDirtyWay;
-//  logic [TAGLEN-1:0] 				  FlushThisWay;
+  logic 							  SelData;
   logic                 SelTag;
 
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
@@ -74,42 +72,36 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic 							  WriteEnableD, VDWriteEnableD;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // Data and Tag Arrays
+  // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // Potential optimization: if byte write enables are available, could remove subwordwrites
-/*  sram1rw #(.DEPTH(NUMLINES), .WIDTH(LINELEN)) CacheDataMem(
-    .clk(clk), .Addr(RAdr),
-    .ReadData(ReadDataLineWay), .WriteData(WriteData),
-          .WriteEnable(WriteEnable & WriteWordEnable[words])); // *** */
-
-  genvar 							  words;
-  for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN))
-    CacheDataMem(.clk(clk), .Addr(RAdr),
-          .ReadData(ReadDataLineWay[(words+1)*`XLEN-1:words*`XLEN] ),
-          .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-          .WriteEnable(WriteEnable & WriteWordEnable[words]));
-  end
 
   sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
 		.Addr(RAdr), .ReadData(ReadTag),
 	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
 
-  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  assign SelectedWay = SelFlush ? Flush : (SelEvict ? Victim : WayHit);  
-  assign ReadDataLineWayMasked = SelectedWay ? ReadDataLineWay : '0;  // AND part of AO mux.
-
-  assign VictimDirty = SelFlush ? Flush & Dirty & Valid :
-						  Victim & Dirty & Valid;
-/*
-  assign VicDirtyWay = Victim ? ReadTag : '0;
-  assign FlushThisWay = Flush ? ReadTag : '0;
-  assign VictimTag = SelFlush ? FlushThisWay : VicDirtyWay; 
-*/
+  // AND portion of distributed tag multiplexer
   assign SelTag = SelFlush ? Flush : Victim;
   assign VictimTag = SelTag ? ReadTag : '0; // AND part of AOMux
- 
+  assign VictimDirty = SelTag & Dirty & Valid;
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Data Array
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  // *** Potential optimization: if byte write enables are available, could remove subwordwrites
+  genvar 							  words;
+  for(words = 0; words < LINELEN/`XLEN; words++) begin: word
+    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Addr(RAdr),
+      .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
+      .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
+      .WriteEnable(WriteEnable & WriteWordEnable[words]));
+  end
+
+  // AND portion of distributed read multiplexers
+  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign SelData = SelFlush ? Flush : (SelEvict ? Victim : WayHit);  
+  assign SelectedReadDataLine = SelData ? ReadDataLine : '0;  // AND part of AO mux.
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
   /////////////////////////////////////////////////////////////////////////////////////////////
