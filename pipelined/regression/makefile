@@ -29,9 +29,9 @@ wally-sim-files: $(MEMFILES) $(ADDRFILES)
 .PHONY: elfs
 elfs:
 	make -C $(ARCHDIR) --jobs
-	make -C $(ARCHDIR) XLEN=64 --jobs
+	make -C $(ARCHDIR) XLEN=32 --jobs
 	make -C $(WALLYDIR) --jobs
-	make -C $(WALLYDIR) XLEN=64 --jobs
+	make -C $(WALLYDIR) XLEN=32 --jobs
 	make -C $(IMPERASDIR) --jobs
 	make -C $(IMPERASDIR) XLEN=64 --jobs
 
@@ -44,21 +44,7 @@ elfs:
 # is XLEN=64 or 32. This is hacky and will likely break in the future.
 # the .addr is a separate target so make can split into more jobs and more parallism.
 %.elf.memfile: %.elf
-	echo $(shell echo $(strip $(subst rv,,$(findstring rv64,$*))) | head -c 2)
-#ifeq (64,$(subst rv,,$(findstring rv64,$*)))
-#ifeq (64,$(shell echo $(strip $(subst rv,,$(findstring rv64,$*))) | head -c 2))
-#ifeq (64,$(subst rv,,$(findstring rv64,$*)))
-#ifneq (,$(shell echo $(strip $(subst rv,,$(findstring rv64,$*))) | head -c 2))
-	echo $(findstring rv64,$*)
-	echo hello $* $(shell echo $(findstring rv64,$*) | head -c 4)
-#ifneq (,$(findstring rv64,$*))
-ifneq ('',$(shell echo $(findstring rv64,$*) | head -c 4))
-	@echo got 64
-#	echo riscv64-unknown-elf-elf2hex --bit-width 64 --input $< --output $@
-else
-	@echo got 32
-#	echo riscv64-unknown-elf-elf2hex --bit-width 32 --input $< --output $@
-endif
+	riscv64-unknown-elf-elf2hex --bit-width $(if $(findstring rv64,$*),64,32) --input $< --output $@
 
 %.elf.objdump.addr: %.elf.objdump
 	extractFunctionRadix.sh $<
