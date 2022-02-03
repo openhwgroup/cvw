@@ -84,7 +84,7 @@ for test in tests32ic:
   tc = TestCase(
         name=test,
         variant="rv32ic",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ic "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-tim-batch.do rv32ic "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
