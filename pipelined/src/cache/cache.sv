@@ -107,6 +107,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic 									SelFlush;
   logic                                     ResetOrFlushAdr, ResetOrFlushWay;
   logic                                     save, restore;
+  logic [NUMWAYS-1:0]                       WayHitSaved, WayHitRaw;
+  logic [LINELEN-1:0]                       ReadDataLineRaw, ReadDataLineSaved;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -127,8 +129,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
 		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
-        .save, .restore, .SelFlush,
-		.SelectedReadDataLine(ReadDataLineWay), .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
+        .SelFlush,
+		.SelectedReadDataLine(ReadDataLineWay), .WayHit(WayHitRaw), .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
@@ -139,9 +141,19 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
-  or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineRaw));
+  or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
 
+
+  // Because of the sram clocked read when the ieu is stalled the read data maybe lost.
+  // There are two ways to resolve. 1. We can replay the read of the sram or we can save
+  // the data.  Replay is eaiser but creates a longer critical path.
+  // save/restore only wayhit and readdata.
+  flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
+  flopen #(LINELEN) cachereadsavereg(clk, save, ReadDataLineRaw, ReadDataLineSaved);
+  mux2 #(NUMWAYS+LINELEN) saverestoremux({WayHitRaw, ReadDataLineRaw}, {WayHitSaved, ReadDataLineSaved},
+                                         restore, {WayHit, ReadDataLine});
+  
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
