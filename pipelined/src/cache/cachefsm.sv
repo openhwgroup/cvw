@@ -181,7 +181,7 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
-			//PreSelAdr = 2'b01;
+			//PreSelAdr = 2'b01; `REPLAY
             save = 1'b1;
 		  end
 		  else begin
@@ -198,7 +198,7 @@ module cachefsm
 		  
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-            //PreSelAdr = 2'b01;
+            //PreSelAdr = 2'b01; `REPLAY
             save = 1'b1;            
 		  end
 		  else begin
@@ -215,7 +215,7 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			//PreSelAdr = 2'b01;
+			//PreSelAdr = 2'b01; `REPLAY
             save = 1'b1;
 		  end
 		  else begin
@@ -276,7 +276,7 @@ module cachefsm
       end
 
       STATE_MISS_READ_WORD_DELAY: begin
-		//PreSelAdr = 2'b01;
+		//PreSelAdr = 2'b01; `REPLAY
 		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
@@ -296,7 +296,7 @@ module cachefsm
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			//PreSelAdr = 2'b01;
+			//PreSelAdr = 2'b01; `REPLAY
             save = 1'b1;
 		  end
 		  else begin
@@ -312,7 +312,7 @@ module cachefsm
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
-		  //PreSelAdr = 2'b01;
+		  //PreSelAdr = 2'b01; `REPLAY
           save = 1'b1;
 		end
 		else begin
@@ -337,7 +337,7 @@ module cachefsm
         restore = 1'b1;      
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
-		  //PreSelAdr = 2'b01;
+		  //PreSelAdr = 2'b01; `REPLAY
 		end
 		else begin
 		  NextState = STATE_READY;

@@ -157,27 +157,23 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // easily build a variable input mux.
   // *** move this to LSU and IFU, also remove mux from busdp into LSU. 
   // *** give this a module name to match block diagram
-  logic [`XLEN-1:0] ReadDataWordRaw, ReadDataWordSaved;
   genvar index;
   if(DCACHE == 1) begin: readdata
+    subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
+      .clk, .reset, .PAdr, .save, .restore,
+      .ReadDataLine, .ReadDataWord);
+    // *** only here temporary
     for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
 		  assign ReadDataLineSets[index] = ReadDataLine[((index+1)*`XLEN)-1: (index*`XLEN)];
     end
-	  // variable input mux
-	  assign ReadDataWordRaw = ReadDataLineSets[PAdr[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
-	end else begin: readdata
-	  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
-	  logic [31:0] 				  FinalInstrRawF;
-	  for(index = 0; index < LINELEN / 16 - 1; index++) 
-		  assign ReadLineSetsF[index] = ReadDataLine[((index+1)*16)+16-1 : (index*16)];
-	  assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadDataLine[LINELEN-1:LINELEN-16]};
-	  assign FinalInstrRawF = ReadLineSetsF[PAdr[$clog2(LINELEN / 32) + 1 : 1]];
-	  if (`XLEN == 64) assign ReadDataWordRaw = {32'b0, FinalInstrRawF};		
-	  else             assign ReadDataWordRaw = FinalInstrRawF;				
+  end else begin: readdata
+	logic [31:0] 				  FinalInstrRawF;
+    subcachelineread #(LINELEN, 32, 16) subcachelineread(
+    .clk, .reset, .PAdr, .save, .restore,
+    .ReadDataLine, .ReadDataWord(FinalInstrRawF));
+	if (`XLEN == 64) assign ReadDataWord = {32'b0, FinalInstrRawF};
+	else             assign ReadDataWord = FinalInstrRawF;
 	end
-  flopen #(`XLEN) cachereaddatasavereg(clk, save, ReadDataWordRaw, ReadDataWordSaved);
-  mux2 #(`XLEN) readdatasaverestoremux(ReadDataWordRaw, ReadDataWordSaved,
-                                         restore, ReadDataWord);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
