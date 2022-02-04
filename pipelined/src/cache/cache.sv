@@ -141,7 +141,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineRaw));
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
 
 
@@ -150,22 +150,21 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // the data.  Replay is eaiser but creates a longer critical path.
   // save/restore only wayhit and readdata.
   flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
-  flopen #(LINELEN) cachereadsavereg(clk, save, ReadDataLineRaw, ReadDataLineSaved);
-  mux2 #(NUMWAYS+LINELEN) saverestoremux({WayHitRaw, ReadDataLineRaw}, {WayHitSaved, ReadDataLineSaved},
-                                         restore, {WayHit, ReadDataLine});
+  mux2 #(NUMWAYS) saverestoremux(WayHitRaw, WayHitSaved, restore, WayHit);
   
 
   // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
   // easily build a variable input mux.
   // *** move this to LSU and IFU, also remove mux from busdp into LSU. 
   // *** give this a module name to match block diagram
+  logic [`XLEN-1:0] ReadDataWordRaw, ReadDataWordSaved;
   genvar index;
-	if(DCACHE == 1) begin: readdata
+  if(DCACHE == 1) begin: readdata
     for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
 		  assign ReadDataLineSets[index] = ReadDataLine[((index+1)*`XLEN)-1: (index*`XLEN)];
     end
 	  // variable input mux
-	  assign ReadDataWord = ReadDataLineSets[PAdr[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
+	  assign ReadDataWordRaw = ReadDataLineSets[PAdr[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
 	end else begin: readdata
 	  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
 	  logic [31:0] 				  FinalInstrRawF;
@@ -173,9 +172,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		  assign ReadLineSetsF[index] = ReadDataLine[((index+1)*16)+16-1 : (index*16)];
 	  assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadDataLine[LINELEN-1:LINELEN-16]};
 	  assign FinalInstrRawF = ReadLineSetsF[PAdr[$clog2(LINELEN / 32) + 1 : 1]];
-	  if (`XLEN == 64) assign ReadDataWord = {32'b0, FinalInstrRawF};		
-	  else             assign ReadDataWord = FinalInstrRawF;				
+	  if (`XLEN == 64) assign ReadDataWordRaw = {32'b0, FinalInstrRawF};		
+	  else             assign ReadDataWordRaw = FinalInstrRawF;				
 	end
+  flopen #(`XLEN) cachereaddatasavereg(clk, save, ReadDataWordRaw, ReadDataWordSaved);
+  mux2 #(`XLEN) readdatasaverestoremux(ReadDataWordRaw, ReadDataWordSaved,
+                                         restore, ReadDataWord);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
