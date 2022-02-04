@@ -1,6 +1,0 @@
-This file is copied from riscv-arch-test/riscv-test-suite/rv32e_unratified/E 2/3/22.
-
-Add RVTEST_E macro to start of each .S file to avoid initializing registers x16-x31
-#define RVTEST_E
-
-*** write_tohost

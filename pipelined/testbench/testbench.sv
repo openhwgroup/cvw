@@ -123,6 +123,7 @@ logic [3:0] dummy;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
         "wally32i":                       tests = wally32i; // *** redo
+        "wally32e":                       tests = wally32e; // *** redo
         "wally32priv":                    tests = wally32priv; // *** redo
         "imperas32periph":                  tests = imperas32periph;
       endcase
@@ -214,10 +215,11 @@ logic [3:0] dummy;
   // check results
   always @(negedge clk)
     begin    
-      if (TEST == "coremark" & dut.core.priv.priv.ecallM) begin
-        $display("Benchmark: coremark is done.");
-        $stop;
-      end
+      if (TEST == "coremark")
+        if (dut.core.priv.priv.ecallM) begin
+          $display("Benchmark: coremark is done.");
+          $stop;
+        end
       if (DCacheFlushDone) begin
  
         #600; // give time for instructions in pipeline to finish
