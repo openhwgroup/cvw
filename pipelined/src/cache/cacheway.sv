@@ -32,51 +32,52 @@
 
 module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
-  input logic 		       clk,
-  input logic 						  reset,
+  input logic                        clk,
+  input logic                        reset,
 
-   input logic [$clog2(NUMLINES)-1:0] RAdr,
-   input logic [`PA_BITS-1:0] 		  PAdr,
-   input logic 						  WriteEnable,
-   input logic 						  VDWriteEnable, 
-   input logic [LINELEN/`XLEN-1:0] 	  WriteWordEnable,
-   input logic 						  TagWriteEnable,
-   input logic [LINELEN-1:0] 		  WriteData,
-   input logic 						  SetValid,
-   input logic 						  ClearValid,
-   input logic 						  SetDirty,
-   input logic 						  ClearDirty,
-   input logic 						  SelEvict,
-   input logic 						  Victim,
-   input logic 						  InvalidateAll,
-   input logic 						  SelFlush,
-   input logic 						  Flush,
+  input logic [$clog2(NUMLINES)-1:0] RAdr,
+  input logic [`PA_BITS-1:0]         PAdr,
+  input logic                        WriteEnable,
+  input logic                        VDWriteEnable, 
+  input logic [LINELEN/`XLEN-1:0]    WriteWordEnable,
+  input logic                        TagWriteEnable,
+  input logic [LINELEN-1:0]          WriteData,
+  input logic                        SetValid,
+  input logic                        ClearValid,
+  input logic                        SetDirty,
+  input logic                        ClearDirty,
+  input logic                        SelEvict,
+  input logic                        Victim,
+  input logic                        InvalidateAll,
+  input logic                        SelFlush,
+  input logic                        Flush,
+  input logic                        save, restore,
 
-   output logic [LINELEN-1:0] 		  SelectedReadDataLine,
-   output logic 					  WayHit,
-   output logic 					  VictimDirty,
-   output logic [TAGLEN-1:0] 		  VictimTag);
+  output logic [LINELEN-1:0]         SelectedReadDataLine,
+  output logic                       WayHit,
+  output logic                       VictimDirty,
+  output logic [TAGLEN-1:0]          VictimTag);
 
   logic [NUMLINES-1:0] 				  ValidBits;
   logic [NUMLINES-1:0] 				  DirtyBits;
-  logic [LINELEN-1:0] 				  ReadDataLine;
-  logic [TAGLEN-1:0] 				  ReadTag;
-  logic 							  Valid;
-  logic 							  Dirty;
+  logic [LINELEN-1:0] 				  ReadDataLine, ReadDataLineRaw, ReadDataLineSaved;
+  logic [TAGLEN-1:0] 				  ReadTag, ReadTagRaw, ReadTagSaved;
+  logic 							  Valid, ValidRaw, ValidSaved;
+  logic 							  Dirty, DirtyRaw, DirtySaved;
   logic 							  SelData;
-  logic                 SelTag;
+  logic                               SelTag;
 
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
   logic 							  SetValidD, ClearValidD;
   logic 							  SetDirtyD, ClearDirtyD;
   logic 							  WriteEnableD, VDWriteEnableD;
-  
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
-		.Adr(RAdr), .ReadData(ReadTag),
+		.Adr(RAdr), .ReadData(ReadTagRaw),
 	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
 
   // AND portion of distributed tag multiplexer
@@ -92,7 +93,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
     sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Adr(RAdr),
-      .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
+      .ReadData(ReadDataLineRaw[(words+1)*`XLEN-1:words*`XLEN] ),
       .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
       .WriteEnable(WriteEnable & WriteWordEnable[words]));
   end
@@ -115,7 +116,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
   flop #(4) ValidCtrlDelayReg(clk, {SetValid, ClearValid, WriteEnable, VDWriteEnable},
     {SetValidD, ClearValidD, WriteEnableD, VDWriteEnableD});
-  assign Valid = ValidBits[RAdrD];
+  assign ValidRaw = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Dirty Bits
@@ -129,8 +130,18 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
       else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= #1 1'b0;
     end
     flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
-    assign Dirty = DirtyBits[RAdrD];
+    assign DirtyRaw = DirtyBits[RAdrD];
+    flopenr #(1) cachedirtysavereg(clk, reset, save, DirtyRaw, DirtySaved);
+    mux2 #(1) saverestoredirtymux(DirtyRaw, DirtySaved, restore, Dirty);
   end else assign Dirty = 1'b0;
+
+  // save restore option of handling cpu busy
+  flopen #(TAGLEN+LINELEN) cachereadsavereg(clk, save, {ReadTagRaw, ReadDataLineRaw}, {ReadTagSaved, ReadDataLineSaved});
+  flopenr #(1) cachevalidsavereg(clk, reset, save, ValidRaw, ValidSaved);
+  mux2 #(1+TAGLEN+LINELEN) saverestoremux({ValidRaw, ReadTagRaw, ReadDataLineRaw}, {ValidSaved, ReadTagSaved, ReadDataLineSaved},
+                                          restore, {Valid, ReadTag, ReadDataLine});
+  
+
 endmodule
 
 

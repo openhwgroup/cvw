@@ -32,49 +32,51 @@
 
 module cachefsm
   (input logic clk,
-   input logic 		  reset,
+   input logic        reset,
    // inputs from IEU
    input logic [1:0]  RW,
    input logic [1:0]  Atomic,
-   input logic 		  FlushCache,
+   input logic        FlushCache,
    // hazard inputs
-   input logic 		  CPUBusy,
+   input logic        CPUBusy,
    // interlock fsm
-   input logic 		  IgnoreRequest,
+   input logic        IgnoreRequest,
    // Bus inputs
-   input logic 		  CacheBusAck,
+   input logic        CacheBusAck,
    // dcache internals
-   input logic 		  CacheHit,
-   input logic 		  VictimDirty,
-   input logic 		  FlushAdrFlag,
-   input logic 		  FlushWayFlag,   
+   input logic        CacheHit,
+   input logic        VictimDirty,
+   input logic        FlushAdrFlag,
+   input logic        FlushWayFlag, 
   
    // hazard outputs
-   output logic 	  CacheStall,
+   output logic       CacheStall,
    // counter outputs
-   output logic 	  CacheMiss,
-   output logic 	  CacheAccess,
+   output logic       CacheMiss,
+   output logic       CacheAccess,
    // Bus outputs
-   output logic 	  CacheCommitted,
-   output logic 	  CacheWriteLine,
-   output logic 	  CacheFetchLine,
+   output logic       CacheCommitted,
+   output logic       CacheWriteLine,
+   output logic       CacheFetchLine,
 
    // dcache internals
    output logic [1:0] SelAdr,
-   output logic 	  SetValid,
-   output logic 	  ClearValid,
-   output logic 	  SetDirty,
-   output logic 	  ClearDirty,
-   output logic 	  SRAMWordWriteEnable,
-   output logic 	  SRAMLineWriteEnable,
-   output logic 	  SelEvict,
-   output logic 	  LRUWriteEn,
-   output logic 	  SelFlush,
-   output logic 	  FlushAdrCntEn,
-   output logic 	  FlushWayCntEn, 
-   output logic 	  FlushAdrCntRst,
-   output logic 	  FlushWayCntRst,
-   output logic 	  VDWriteEnable
+   output logic       SetValid,
+   output logic       ClearValid,
+   output logic       SetDirty,
+   output logic       ClearDirty,
+   output logic       SRAMWordWriteEnable,
+   output logic       SRAMLineWriteEnable,
+   output logic       SelEvict,
+   output logic       LRUWriteEn,
+   output logic       SelFlush,
+   output logic       FlushAdrCntEn,
+   output logic       FlushWayCntEn, 
+   output logic       FlushAdrCntRst,
+   output logic       FlushWayCntRst,
+   output logic       save,
+   output logic       restore,
+   output logic       VDWriteEnable
 
    );
   
@@ -141,7 +143,8 @@ module cachefsm
     NextState = STATE_READY;
 	CacheFetchLine = 1'b0;
 	CacheWriteLine = 1'b0;
-
+    save = 1'b0;
+    restore = 1'b0;
     case (CurrState)
       STATE_READY: begin
 
@@ -178,7 +181,8 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
-			PreSelAdr = 2'b01;
+			//PreSelAdr = 2'b01;
+            save = 1'b1;
 		  end
 		  else begin
 			SRAMWordWriteEnable = 1'b1;
@@ -194,7 +198,8 @@ module cachefsm
 		  
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-            PreSelAdr = 2'b01;
+            //PreSelAdr = 2'b01;
+            save = 1'b1;            
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -210,7 +215,8 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			PreSelAdr = 2'b01;
+			//PreSelAdr = 2'b01;
+            save = 1'b1;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -278,6 +284,7 @@ module cachefsm
 		  PreSelAdr = 2'b01;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
+            save = 1'b1;            
 		  end
 		  else begin
 			SRAMWordWriteEnable = 1'b1;
@@ -289,7 +296,8 @@ module cachefsm
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			PreSelAdr = 2'b01;
+			//PreSelAdr = 2'b01;
+            save = 1'b1;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -304,7 +312,8 @@ module cachefsm
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
-		  PreSelAdr = 2'b01;
+		  //PreSelAdr = 2'b01;
+          save = 1'b1;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -325,9 +334,10 @@ module cachefsm
 
       STATE_CPU_BUSY: begin
 		PreSelAdr = 2'b00;
+        restore = 1'b1;      
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
-		  PreSelAdr = 2'b01;
+		  //PreSelAdr = 2'b01;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -339,6 +349,7 @@ module cachefsm
 		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
+        restore = 1'b1;
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY_FINISH_AMO;
 		end
