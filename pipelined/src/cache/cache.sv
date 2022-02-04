@@ -105,8 +105,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic 									LRUWriteEn;
   logic [NUMWAYS-1:0] 						VDWriteEnableWay;
   logic 									SelFlush;
-  logic                   ResetOrFlushAdr, ResetOrFlushWay;
-
+  logic                                     ResetOrFlushAdr, ResetOrFlushWay;
+  logic                                     save, restore;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +126,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.WriteWordEnable(SRAMWordEnable),
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
-		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .Victim(VictimWay), .Flush(FlushWay), .SelFlush,
+		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
+        .save, .restore, .SelFlush,
 		.SelectedReadDataLine(ReadDataLineWay), .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
@@ -213,5 +215,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.SRAMLineWriteEnable, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
+        .save, .restore,
 		.VDWriteEnable, .LRUWriteEn);
 endmodule 
