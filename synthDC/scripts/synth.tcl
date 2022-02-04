@@ -47,7 +47,7 @@ reset_design
 
 # Set Frequency in [MHz] or [ps]
 set my_clock_pin clk
-set my_clk_freq_MHz 10
+set my_clk_freq_MHz 500
 set my_period [expr 1000 / $my_clk_freq_MHz]
 set my_uncertainty [expr .1 * $my_period]
 
