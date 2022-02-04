@@ -6,11 +6,11 @@
 # Config
 set hdl_src "../pipelined/src"
 
-eval file copy ${hdl_src}/../config/rv32e/wally-config.vh {hdl/}
-eval file copy ${hdl_src}/../config/rv32e/wally-config.vh {reports/}
-eval file copy [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
-eval file copy [glob ${hdl_src}/*/*.sv] {hdl/}
-eval file copy [glob ${hdl_src}/*/flop/*.sv] {hdl/}
+eval file copy -force ${hdl_src}/../config/rv32e/wally-config.vh {hdl/}
+eval file copy -force ${hdl_src}/../config/rv32e/wally-config.vh {reports/}
+eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
+eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
+eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
 
 # Verilog files
 set my_verilog_files [glob hdl/*]
