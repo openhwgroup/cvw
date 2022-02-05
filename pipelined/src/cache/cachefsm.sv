@@ -181,8 +181,8 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
-			//PreSelAdr = 2'b01; `REPLAY
-            save = 1'b1;
+			if (`REPLAY) PreSelAdr = 2'b01; 
+            else save = 1'b1;
 		  end
 		  else begin
 			SRAMWordWriteEnable = 1'b1;
@@ -198,8 +198,8 @@ module cachefsm
 		  
 		  if(CPUBusy) begin
 			NextState = STATE_CPU_BUSY;
-            //PreSelAdr = 2'b01; `REPLAY
-            save = 1'b1;            
+            if(`REPLAY) PreSelAdr = 2'b01;
+            else save = 1'b1;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -215,8 +215,8 @@ module cachefsm
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			//PreSelAdr = 2'b01; `REPLAY
-            save = 1'b1;
+			if(`REPLAY) PreSelAdr = 2'b01;
+            else save = 1'b1;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -276,7 +276,6 @@ module cachefsm
       end
 
       STATE_MISS_READ_WORD_DELAY: begin
-		//PreSelAdr = 2'b01; `REPLAY
 		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
@@ -284,7 +283,7 @@ module cachefsm
 		  PreSelAdr = 2'b01;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
-            save = 1'b1;            
+            if(~`REPLAY) save = 1'b1;
 		  end
 		  else begin
 			SRAMWordWriteEnable = 1'b1;
@@ -296,8 +295,8 @@ module cachefsm
 		  LRUWriteEn = 1'b1;
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY;
-			//PreSelAdr = 2'b01; `REPLAY
-            save = 1'b1;
+			if(`REPLAY) PreSelAdr = 2'b01;
+            else save = 1'b1;
 		  end
 		  else begin
 			NextState = STATE_READY;
@@ -312,8 +311,8 @@ module cachefsm
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
 		  NextState = STATE_CPU_BUSY;
-		  //PreSelAdr = 2'b01; `REPLAY
-          save = 1'b1;
+		  if(`REPLAY) PreSelAdr = 2'b01;
+          else save = 1'b1;
 		end
 		else begin
 		  NextState = STATE_READY;
@@ -337,7 +336,7 @@ module cachefsm
         restore = 1'b1;      
 		if(CPUBusy) begin
 		  NextState = STATE_CPU_BUSY;
-		  //PreSelAdr = 2'b01; `REPLAY
+		  if(`REPLAY) PreSelAdr = 2'b01;
 		end
 		else begin
 		  NextState = STATE_READY;
