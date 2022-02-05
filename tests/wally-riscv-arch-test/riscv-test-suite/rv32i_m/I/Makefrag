@@ -28,48 +28,11 @@
 # Description: Makefrag for RV32I architectural tests
 
 rv32i_sc_tests = \
-  E-add-01 \
-  E-addi-01 \
-  E-and-01 \
-  E-andi-01 \
-  E-auipc-01 \
-  E-beq-01 \
-  E-bge-01 \
-  E-bgeu-01 \
-  E-blt-01 \
-  E-bltu-01 \
-  E-bne-01 \
-  E-jal-01 \
-  E-jalr-01 \
-  E-lb-align-01 \
-  E-lbu-align-01 \
-  E-lh-align-01 \
-  E-lhu-align-01 \
-  E-lui-01 \
-  E-lw-align-01 \
-  E-or-01 \
-  E-ori-01 \
-  E-sb-align-01 \
-  E-sh-align-01 \
-  E-sll-01 \
-  E-slli-01 \
-  E-slt-01 \
-  E-slti-01 \
-  E-sltiu-01 \
-  E-sltu-01 \
-  E-sra-01 \
-  E-srai-01 \
-  E-srl-01 \
-  E-srli-01 \
-  E-sub-01 \
-  E-sw-align-01 \
-  E-xor-01 \
-  E-xori-01 \
 	WALLY-ADD \
-    WALLY-SUB \
-    WALLY-SLT \
+	WALLY-SLT \
 	WALLY-SLTU \
-	WALLY-XOR 
+	WALLY-SUB \
+	WALLY-XOR
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 
