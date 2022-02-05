@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module busdp #(parameter WORDSPERLINE, parameter LINELEN, WORDLEN)
+module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL)
   (
   input logic                 clk, reset,
   // bus interface
@@ -42,14 +42,15 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN, WORDLEN)
   input logic                 LSUBusAck,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
-  output logic [`XLEN-1:0]    LSUBusHWDATA,
+//  output logic [`XLEN-1:0]    LSUBusHWDATA,
   output logic [2:0]          LSUBusSize, 
   input logic [2:0]           LSUFunct3M,
   output logic [`PA_BITS-1:0] LSUBusAdr,
-
+  output logic [LOGWPL-1:0]   WordCount,
+  output logic                SelUncachedAdr,
   // cache interface.
   input logic [`PA_BITS-1:0]  DCacheBusAdr,
-  input var logic [`XLEN-1:0] ReadDataLineSetsM [WORDSPERLINE-1:0],
+  input var                   logic [`XLEN-1:0] ReadDataLineSetsM [WORDSPERLINE-1:0],
   input logic                 DCacheFetchLine,
   input logic                 DCacheWriteLine,
   output logic                DCacheBusAck,
@@ -69,12 +70,10 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN, WORDLEN)
   
 
   localparam integer   WordCountThreshold = (`DMEM == `MEM_CACHE) ? WORDSPERLINE - 1 : 0;
-  localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
 
-  logic                       SelUncachedAdr;
   logic [`XLEN-1:0]           PreLSUBusHWDATA;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
-  logic [LOGWPL-1:0]          WordCount;
+
   genvar                      index;
 
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
@@ -85,9 +84,7 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN, WORDLEN)
 
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  assign PreLSUBusHWDATA = ReadDataLineSetsM[WordCount]; // only in lsu, not ifu
-  mux2 #(`XLEN) lsubushwdatamux(
-    .d0(PreLSUBusHWDATA), .d1(FinalAMOWriteDataM), .s(SelUncachedAdr), .y(LSUBusHWDATA));
+  //assign PreLSUBusHWDATA = ReadDataWordM;// ReadDataLineSetsM[WordCount]; // only in lsu, not ifu
   mux2 #(3) lsubussizemux(
     .d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), .s(SelUncachedAdr), .y(LSUBusSize));
   mux2 #(WORDLEN) UnCachedDataMux(

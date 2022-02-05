@@ -180,6 +180,7 @@ module ifu (
   end else begin : bus
     localparam integer   WORDSPERLINE = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLine;
     logic [LINELEN-1:0]  ICacheMemWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
@@ -187,11 +188,12 @@ module ifu (
     logic                save,restore;
     logic [31:0]         temp;
     
-    busdp #(WORDSPERLINE, LINELEN, 32) 
+    busdp #(WORDSPERLINE, LINELEN, 32, LOGWPL) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), 
-          .LSUBusRead(IFUBusRead), .LSUBusHWDATA(), .LSUBusSize(), 
+          .LSUBusRead(IFUBusRead), .LSUBusSize(), 
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
+          .WordCount(), .SelUncachedAdr(),
           .ReadDataLineSetsM(), .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheMemWriteData(ICacheMemWriteData), .LSUPAdrM(PCPF),
