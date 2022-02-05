@@ -173,6 +173,8 @@ module lsu (
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
+  logic                SelUncachedAdr;
+  
 
   if (`DMEM == `MEM_TIM) begin : dtim
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
@@ -183,25 +185,37 @@ module lsu (
   end else begin : bus  
     localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
-    logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
+    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheMemWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic                save,restore;
-
-    busdp #(WORDSPERLINE, LINELEN, `XLEN) busdp(
+    logic                save, restore;
+    logic [`PA_BITS-1:0] WordOffsetAddr;
+    logic                SelBus;
+    logic [LOGWPL-1:0]   WordCount;
+    logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
+    logic [`PA_BITS-1-`XLEN/8-LOGWPL:0] Pad;
+            
+    busdp #(WORDSPERLINE, LINELEN, `XLEN, LOGWPL) busdp(
       .clk, .reset,
-      .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusHWDATA, .LSUBusSize, 
+      .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
+                                                        .WordCount, .SelUncachedAdr,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
+    assign Pad = '0;
+    assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
+      mux2 #(`XLEN) lsubushwdatamux(
+    .d0(ReadDataWordM), .d1(FinalAMOWriteDataM), .s(SelUncachedAdr), .y(LSUBusHWDATA));
+
+
     subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
-      .clk, .reset, .PAdr(LSUPAdrM), .save, .restore,
+      .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
       .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
     
     if(`DMEM == `MEM_CACHE) begin : dcache
