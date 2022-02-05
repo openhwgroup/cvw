@@ -202,7 +202,7 @@ module lsu (
     busdp #(WORDSPERLINE, LINELEN, `XLEN, LOGWPL, 1) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
-      .WordCount, .SelUncachedAdr,
+      .WordCount,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
@@ -210,7 +210,6 @@ module lsu (
 
     assign Pad = '0;
     assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
-
 
     subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
       .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
