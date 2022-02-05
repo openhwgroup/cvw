@@ -56,8 +56,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   input logic                 CacheBusAck,
   output logic [`PA_BITS-1:0] CacheBusAdr,
   input logic [LINELEN-1:0]   CacheMemWriteData,
-  output logic [LINELEN-1:0]  ReadDataLine,
-  output logic [`XLEN-1:0]    ReadDataLineSets [(LINELEN/`XLEN)-1:0]);
+  output logic [LINELEN-1:0]  ReadDataLine);
 
   // Cache parameters
   localparam  						LINEBYTELEN = LINELEN/8;
@@ -151,20 +150,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
   mux2 #(NUMWAYS) saverestoremux(WayHitRaw, WayHitSaved, restore, WayHit);
   
-
-  // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
-  // easily build a variable input mux.
-  // *** move this to LSU and IFU, also remove mux from busdp into LSU. 
-  // *** give this a module name to match block diagram
-  genvar index;
-  if(DCACHE == 1) begin: readdata
-    // *** only here temporary
-    for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-		  assign ReadDataLineSets[index] = ReadDataLine[((index+1)*`XLEN)-1: (index*`XLEN)];
-    end
-  end else begin: readdata
-  end
-
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////

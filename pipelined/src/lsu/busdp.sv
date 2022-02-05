@@ -49,7 +49,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   output logic [LOGWPL-1:0]   WordCount,
   // cache interface.
   input logic [`PA_BITS-1:0]  DCacheBusAdr,
-  input var                   logic [`XLEN-1:0] ReadDataLineSetsM [WORDSPERLINE-1:0],
   input logic                 DCacheFetchLine,
   input logic                 DCacheWriteLine,
   output logic                DCacheBusAck,
@@ -83,18 +82,15 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
 
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  //assign PreLSUBusHWDATA = ReadDataWordM;// ReadDataLineSetsM[WordCount]; // only in lsu, not ifu
-  // this  mux is only used in the LSU's bus.
   if(LSU == 1) mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalAMOWriteDataM),
-                                                 .s(SelUncachedAdr), .y(LSUBusHWDATA));
+                 .s(SelUncachedAdr), .y(LSUBusHWDATA));
   else assign LSUBusHWDATA = '0;
-  
-  mux2 #(3) lsubussizemux(
-    .d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), .s(SelUncachedAdr), .y(LSUBusSize));
-  mux2 #(WORDLEN) UnCachedDataMux(
-    .d0(ReadDataWordM), .d1(DCacheMemWriteData[WORDLEN-1:0]), .s(SelUncachedAdr), .y(ReadDataWordMuxM));
+   mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
+    .s(SelUncachedAdr), .y(LSUBusSize));
+  mux2 #(WORDLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheMemWriteData[WORDLEN-1:0]),
+    .s(SelUncachedAdr), .y(ReadDataWordMuxM));
 
-  busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup
+  busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup  Icache? must fix.
   busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
 		 .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
