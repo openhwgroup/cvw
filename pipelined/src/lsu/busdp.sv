@@ -47,7 +47,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   input logic [2:0]           LSUFunct3M,
   output logic [`PA_BITS-1:0] LSUBusAdr,
   output logic [LOGWPL-1:0]   WordCount,
-  output logic                SelUncachedAdr,
   // cache interface.
   input logic [`PA_BITS-1:0]  DCacheBusAdr,
   input var                   logic [`XLEN-1:0] ReadDataLineSetsM [WORDSPERLINE-1:0],
@@ -73,7 +72,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
 
   logic [`XLEN-1:0]           PreLSUBusHWDATA;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
-
+  logic                       SelUncachedAdr;
   genvar                      index;
 
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
