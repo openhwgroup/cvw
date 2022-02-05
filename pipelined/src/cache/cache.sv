@@ -147,8 +147,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // There are two ways to resolve. 1. We can replay the read of the sram or we can save
   // the data.  Replay is eaiser but creates a longer critical path.
   // save/restore only wayhit and readdata.
-  flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
-  mux2 #(NUMWAYS) saverestoremux(WayHitRaw, WayHitSaved, restore, WayHit);
+  if(!`REPLAY) begin
+    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
+    mux2 #(NUMWAYS) saverestoremux(WayHitRaw, WayHitSaved, restore, WayHit);
+  end else assign WayHit = WayHitRaw;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables

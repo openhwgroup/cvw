@@ -61,8 +61,9 @@ module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
   end
   // variable input mux
   assign ReadDataWordRaw = ReadDataLineSets[PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]];
-  flopen #(WORDLEN) cachereaddatasavereg(clk, save, ReadDataWordRaw, ReadDataWordSaved);
-  mux2 #(WORDLEN) readdatasaverestoremux(ReadDataWordRaw, ReadDataWordSaved,
-                                         restore, ReadDataWord);
-
+  if(!`REPLAY) begin
+    flopen #(WORDLEN) cachereaddatasavereg(clk, save, ReadDataWordRaw, ReadDataWordSaved);
+    mux2 #(WORDLEN) readdatasaverestoremux(ReadDataWordRaw, ReadDataWordSaved,
+                                           restore, ReadDataWord);
+  end else assign ReadDataWord = ReadDataWordRaw;
 endmodule
