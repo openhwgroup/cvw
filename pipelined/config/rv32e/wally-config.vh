@@ -48,8 +48,8 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define DMEM `MEM_BUS
-`define IMEM `MEM_BUS
+`define DMEM `MEM_TIM
+`define IMEM `MEM_TIM
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 0 
 
@@ -81,10 +81,10 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   34'h00001000 
-`define BOOTROM_RANGE  34'h000000FF
+`define BOOTROM_RANGE  34'h00000FFF
 `define RAM_SUPPORTED 1'b1
 `define RAM_BASE       34'h80000000
-`define RAM_RANGE      34'h000003FF
+`define RAM_RANGE      34'h07FFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       34'h80000000
 `define EXT_MEM_RANGE      34'h07FFFFFF

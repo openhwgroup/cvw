@@ -122,6 +122,7 @@ logic [3:0] dummy;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
         "wally32i":                       tests = wally32i; // *** redo
+        "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv; // *** redo
         "imperas32periph":                  tests = imperas32periph;
       endcase
