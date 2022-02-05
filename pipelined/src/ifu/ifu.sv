@@ -193,7 +193,7 @@ module ifu (
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), 
           .LSUBusRead(IFUBusRead), .LSUBusSize(), 
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
-          .WordCount(), .SelUncachedAdr(),
+          .WordCount(), .SelUncachedAdr(), .LSUBusHWDATA(),
           .ReadDataLineSetsM(), .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheMemWriteData(ICacheMemWriteData), .LSUPAdrM(PCPF),
