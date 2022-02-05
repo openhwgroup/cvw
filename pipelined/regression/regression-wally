@@ -88,7 +88,7 @@ for test in tests32ic:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32e = ["arch32e"] 
+tests32e = ["wally32e"] 
 for test in tests32e:
   tc = TestCase(
         name=test,
