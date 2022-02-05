@@ -184,19 +184,25 @@ module lsu (
     localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
     logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
+    logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheMemWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
+    logic                save,restore;
 
-    busdp #(WORDSPERLINE, LINELEN) busdp(
+    busdp #(WORDSPERLINE, LINELEN, `XLEN) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusHWDATA, .LSUBusSize, 
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
+
+    subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
+      .clk, .reset, .PAdr(LSUPAdrM), .save, .restore,
+      .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
     
     if(`DMEM == `MEM_CACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
@@ -204,10 +210,11 @@ module lsu (
         .clk, .reset, .CPUBusy,
         .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), 
         .Atomic(CacheableM ? LSUAtomicM : 2'b00), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
-        .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), 
+        .save, .restore,
+        .FinalWriteData(FinalWriteDataM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequest, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
-        .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
+        .ReadDataLineSets(ReadDataLineSetsM), .ReadDataLine(ReadDataLineM), .CacheMemWriteData(DCacheMemWriteData),
         .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
         .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
 

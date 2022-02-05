@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module busdp #(parameter WORDSPERLINE, parameter LINELEN)
+module busdp #(parameter WORDSPERLINE, parameter LINELEN, WORDLEN)
   (
   input logic                 clk, reset,
   // bus interface
@@ -58,8 +58,8 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN)
   // lsu interface
   input logic [`PA_BITS-1:0]  LSUPAdrM,
   input logic [`XLEN-1:0]     FinalAMOWriteDataM,
-  input logic [`XLEN-1:0]     ReadDataWordM,
-  output logic [`XLEN-1:0]    ReadDataWordMuxM,
+  input logic [WORDLEN-1:0]   ReadDataWordM,
+  output logic [WORDLEN-1:0]  ReadDataWordMuxM,
   input logic                 IgnoreRequest,
   input logic [1:0]           LSURWM,
   input logic                 CPUBusy,
@@ -90,8 +90,8 @@ module busdp #(parameter WORDSPERLINE, parameter LINELEN)
     .d0(PreLSUBusHWDATA), .d1(FinalAMOWriteDataM), .s(SelUncachedAdr), .y(LSUBusHWDATA));
   mux2 #(3) lsubussizemux(
     .d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), .s(SelUncachedAdr), .y(LSUBusSize));
-  mux2 #(`XLEN) UnCachedDataMux(
-    .d0(ReadDataWordM), .d1(DCacheMemWriteData[`XLEN-1:0]), .s(SelUncachedAdr), .y(ReadDataWordMuxM));
+  mux2 #(WORDLEN) UnCachedDataMux(
+    .d0(ReadDataWordM), .d1(DCacheMemWriteData[WORDLEN-1:0]), .s(SelUncachedAdr), .y(ReadDataWordMuxM));
 
   busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup
   busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
