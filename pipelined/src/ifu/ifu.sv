@@ -92,7 +92,7 @@ module ifu (
   logic [`XLEN-3:0]            PCPlusUpperF;
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF;
-  logic [`XLEN-1:0]            FinalInstrRawF;
+  logic [31:0]                 FinalInstrRawF;
   
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
@@ -180,12 +180,14 @@ module ifu (
   end else begin : bus
     localparam integer   WORDSPERLINE = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS : `XLEN;
+    logic [LINELEN-1:0]  ReadDataLine;
     logic [LINELEN-1:0]  ICacheMemWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
-
-
-    busdp #(WORDSPERLINE, LINELEN) 
+    logic                save,restore;
+    logic [31:0]         temp;
+    
+    busdp #(WORDSPERLINE, LINELEN, 32) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), 
           .LSUBusRead(IFUBusRead), .LSUBusHWDATA(), .LSUBusSize(), 
@@ -193,10 +195,14 @@ module ifu (
           .ReadDataLineSetsM(), .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheMemWriteData(ICacheMemWriteData), .LSUPAdrM(PCPF),
-          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF), 
+          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
     
+    subcachelineread #(LINELEN, 32, 16) subcachelineread(
+    .clk, .reset, .PAdr(PCPF), .save, .restore,
+    .ReadDataLine, .ReadDataWord(FinalInstrRawF));
+
     if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;
       assign IFURWF = CacheableF ? 2'b10 : 2'b00;
@@ -207,8 +213,9 @@ module ifu (
       icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), 
              .CacheMemWriteData(ICacheMemWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
-             .ReadDataWord(FinalInstrRawF), .CacheFetchLine(ICacheFetchLine),
-             .CacheWriteLine(), .ReadDataLineSets(),
+             .CacheFetchLine(ICacheFetchLine),
+             .CacheWriteLine(), .ReadDataLineSets(), .ReadDataLine(ReadDataLine),
+             .save, .restore,
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .FinalWriteData('0),
              .RW(IFURWF), 

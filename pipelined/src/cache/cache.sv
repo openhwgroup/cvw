@@ -31,32 +31,33 @@
 `include "wally-config.vh"
 
 module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
-  input logic clk,
-   input logic				   reset,
+  input logic                 clk,
+  input logic                 reset,
    // cpu side
-   input logic				   CPUBusy,
-   input logic [1:0]		   RW,
-   input logic [1:0]		   Atomic,
-   input logic				   FlushCache,
-   input logic				   InvalidateCacheM,
-   input logic [11:0]		   NextAdr, // virtual address, but we only use the lower 12 bits.
-   input logic [`PA_BITS-1:0]  PAdr, // physical address
-   input logic [`XLEN-1:0]	   FinalWriteData,
-   output logic [`XLEN-1:0]	   ReadDataWord,
-   output logic				   CacheCommitted,
-   output logic				   CacheStall,
+  input logic                 CPUBusy,
+  input logic [1:0]           RW,
+  input logic [1:0]           Atomic,
+  input logic                 FlushCache,
+  input logic                 InvalidateCacheM,
+  input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
+  input logic [`PA_BITS-1:0]  PAdr, // physical address
+  input logic [`XLEN-1:0]     FinalWriteData,
+  output logic                CacheCommitted,
+  output logic                CacheStall,
    // to performance counters to cpu
-   output logic				   CacheMiss,
-   output logic				   CacheAccess,
+  output logic                CacheMiss,
+  output logic                CacheAccess,
+  output logic                save, restore,
    // lsu control
-   input logic				   IgnoreRequest,
+  input logic                 IgnoreRequest,
    // Bus fsm interface
-   output logic				   CacheFetchLine,
-   output logic				   CacheWriteLine,
-   input logic				   CacheBusAck,
-   output logic [`PA_BITS-1:0] CacheBusAdr,
-   input logic [LINELEN-1:0]   CacheMemWriteData,
-   output logic [`XLEN-1:0]	   ReadDataLineSets [(LINELEN/`XLEN)-1:0]);
+  output logic                CacheFetchLine,
+  output logic                CacheWriteLine,
+  input logic                 CacheBusAck,
+  output logic [`PA_BITS-1:0] CacheBusAdr,
+  input logic [LINELEN-1:0]   CacheMemWriteData,
+  output logic [LINELEN-1:0]  ReadDataLine,
+  output logic [`XLEN-1:0]    ReadDataLineSets [(LINELEN/`XLEN)-1:0]);
 
   // Cache parameters
   localparam  						LINEBYTELEN = LINELEN/8;
@@ -77,7 +78,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [LINELEN-1:0] 						ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0] 						WayHit;
   logic 									CacheHit;
-  logic [LINELEN-1:0] 						ReadDataLine;
   logic [WORDSPERLINE-1:0] 					SRAMWordEnable;
   logic 									SRAMWordWriteEnable;
   logic 									SRAMLineWriteEnable;
@@ -106,7 +106,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [NUMWAYS-1:0] 						VDWriteEnableWay;
   logic 									SelFlush;
   logic                                     ResetOrFlushAdr, ResetOrFlushWay;
-  logic                                     save, restore;
   logic [NUMWAYS-1:0]                       WayHitSaved, WayHitRaw;
   logic [LINELEN-1:0]                       ReadDataLineRaw, ReadDataLineSaved;
   
@@ -159,21 +158,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // *** give this a module name to match block diagram
   genvar index;
   if(DCACHE == 1) begin: readdata
-    subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
-      .clk, .reset, .PAdr, .save, .restore,
-      .ReadDataLine, .ReadDataWord);
     // *** only here temporary
     for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
 		  assign ReadDataLineSets[index] = ReadDataLine[((index+1)*`XLEN)-1: (index*`XLEN)];
     end
   end else begin: readdata
-	logic [31:0] 				  FinalInstrRawF;
-    subcachelineread #(LINELEN, 32, 16) subcachelineread(
-    .clk, .reset, .PAdr, .save, .restore,
-    .ReadDataLine, .ReadDataWord(FinalInstrRawF));
-	if (`XLEN == 64) assign ReadDataWord = {32'b0, FinalInstrRawF};
-	else             assign ReadDataWord = FinalInstrRawF;
-	end
+  end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
