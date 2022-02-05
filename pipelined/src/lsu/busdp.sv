@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL)
+module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   (
   input logic                 clk, reset,
   // bus interface
@@ -42,7 +42,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL)
   input logic                 LSUBusAck,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
-//  output logic [`XLEN-1:0]    LSUBusHWDATA,
+  output logic [`XLEN-1:0]    LSUBusHWDATA,
   output logic [2:0]          LSUBusSize, 
   input logic [2:0]           LSUFunct3M,
   output logic [`PA_BITS-1:0] LSUBusAdr,
@@ -85,6 +85,11 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL)
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
   //assign PreLSUBusHWDATA = ReadDataWordM;// ReadDataLineSetsM[WordCount]; // only in lsu, not ifu
+  // this  mux is only used in the LSU's bus.
+  if(LSU == 1) mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalAMOWriteDataM),
+                                                 .s(SelUncachedAdr), .y(LSUBusHWDATA));
+  else assign LSUBusHWDATA = '0;
+  
   mux2 #(3) lsubussizemux(
     .d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), .s(SelUncachedAdr), .y(LSUBusSize));
   mux2 #(WORDLEN) UnCachedDataMux(
