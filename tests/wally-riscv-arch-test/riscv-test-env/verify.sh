@@ -28,8 +28,8 @@ do
         echo -e  "Check $(printf %-24s ${stub}) \e[33m ... IGNORE \e[39m"
         continue
     fi
-    # KMG: added snippet to ignore comments in reference file
-    diff -I '#*' -I '//*' --ignore-case --strip-trailing-cr ${ref} ${sig} &> /dev/null
+    # KMG: changed diff snippet to a grep that will strip comments with '//' and '#' out of the reference file
+    diff --ignore-case --ignore-trailing-space --strip-trailing-cr <(grep -o '^[^//#]*' ${ref}) ${sig} &> /dev/null
     if [ $? == 0 ]
     then
         echo -e "\e[32m ... OK \e[39m"
