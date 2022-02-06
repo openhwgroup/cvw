@@ -64,7 +64,7 @@ copy:
 	$(info <<<<<<<<<<<<<<<<<<<<<<<<<<<< COPYING REFERENCES WITHOUT SIMULATING >>>>>>>>>>>>>>>>>>>>>>>>>>>>)
 	$(info !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!)
 	$(V) echo "Copying References without simulating"
-	$(V) for test in $(target_tests_nosim); do cp $(ref_dir)/$$test.reference_output $(work_dir_isa)/$$test.signature.output; done
+	$(V) for test in $(target_tests_nosim); do grep -o '^[^//#]*' $(ref_dir)/$$test.reference_output > $(work_dir_isa)/$$test.signature.output; done
 
 compile: $(combined_elf)
 run: $(target_log) 
