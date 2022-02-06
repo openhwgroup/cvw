@@ -279,29 +279,28 @@ begin_test: // label here to jump to so we dont go through the trap handler befo
 
 // Test Summary table!
 
-// Test Name            : Description                               : Fault output value            : Normal output values
-// ---------------------:-------------------------------------------:-------------------------------:------------------------------------------------------
-//   write64_test       : Write 64 bits to address                  : 0x6, 0x7, or 0xf              : None
-//   write32_test       : Write 32 bits to address                  : 0x6, 0x7, or 0xf              : None 
-//   write16_test       : Write 16 bits to address                  : 0x6, 0x7, or 0xf              : None 
-//   write08_test       : Write 8 bits to address                   : 0x6, 0x7, or 0xf              : None
-//   read64_test        : Read 64 bits from address                 : 0x4, 0x5, or 0xd, then 0xbad  : readvalue in hex
-//   read32_test        : Read 32 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad  : readvalue in hex
-//   read16_test        : Read 16 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad  : readvalue in hex
-//   read08_test        : Read 8 bitsfrom address                   : 0x4, 0x5, or 0xd, then 0xbad  : readvalue in hex
-//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad  : value of x7 modified by exectuion code (usually 0x111)
-//   terminate_test     : terminate tests                           : mcause value for fault        : from M 0xb, from S 0x9, from U 0x8  
-//   goto_baremetal     : satp.MODE = bare metal                    : None                          : None 
-//   goto_sv39          : satp.MODE = sv39                          : None                          : None 
-//   goto_sv48          : satp.MODE = sv48                          : None                          : None
-//   goto_m_mode        : go to mahcine mode                        : mcause value for fault        : from M 0xb, from S 0x9, from U 0x8  
-//   goto_s_mode        : go to supervisor mode                     : mcause value for fault        : from M 0xb, from S 0x9, from U 0x8
-//   goto_u_mode        : go to user mode                           : mcause value for fault        : from M 0xb, from S 0x9, from U 0x8 
-//   write_csr          : write to specified CSR                    : CSR value before test attempt : value written to CSR
-//   read_csr           : read from specified CSR                   : *** None? Mcause or fault?    : value read back from CSR
+// Test Name            : Description                               : Fault output value                        : Normal output values
+// ---------------------:-------------------------------------------:-------------------------------------------:------------------------------------------------------
+//   write64_test       : Write 64 bits to address                  : 0x6, 0x7, or 0xf                          : None
+//   write32_test       : Write 32 bits to address                  : 0x6, 0x7, or 0xf                          : None 
+//   write16_test       : Write 16 bits to address                  : 0x6, 0x7, or 0xf                          : None 
+//   write08_test       : Write 8 bits to address                   : 0x6, 0x7, or 0xf                          : None
+//   read64_test        : Read 64 bits from address                 : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read32_test        : Read 32 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read16_test        : Read 16 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read08_test        : Read 8 bitsfrom address                   : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of x7 modified by exectuion code (usually 0x111)
+//   terminate_test     : terminate tests                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
+//   goto_baremetal     : satp.MODE = bare metal                    : None                                      : None 
+//   goto_sv39          : satp.MODE = sv39                          : None                                      : None 
+//   goto_sv48          : satp.MODE = sv48                          : None                                      : None
+//   goto_m_mode        : go to mahcine mode                        : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
+//   goto_s_mode        : go to supervisor mode                     : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8
+//   goto_u_mode        : go to user mode                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8 
+//   write_read_csr     : write to specified CSR                    : old CSR value, 0x2, depending on perms    : value written to CSR
+//   csr_r_access       : test read-only permissions on CSR         : 0xbad                                     : 0x2, then 0x11
 
-
-// *** TESTS TO ADD: execute inline, read unknown value out, read CSR unknown value
+// *** TESTS TO ADD: execute inline, read unknown value out, read CSR unknown value, just read CSR value
 
 .macro write64_test ADDR VAL
     // attempt to write VAL to ADDR
@@ -452,13 +451,14 @@ begin_test: // label here to jump to so we dont go through the trap handler befo
     sfence.vma x0, x0 // *** flushes global pte's as well
 .endm
 
-.macro write_csr CSR VAL
-    // attempt to write CSR with VAL *** ASSUMES RW access to CSR in whatever privilege mode is running
+.macro write_read_csr CSR VAL
+    // attempt to write CSR with VAL. Note: this also tests read access to CSR
     // Success outputs:
     //      value read back out from CSR after writing
     // Fault outputs:
     //      The previous CSR value before write attempt
-    //      *** Is there an associated mstatus? maybe 0x2???
+    //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
+    li x30, 0xbad // load bad value to be overwritten by csrr
     li x29, \VAL
     csrw \CSR\(), x29
     csrr x30, \CSR
