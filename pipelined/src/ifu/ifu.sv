@@ -158,7 +158,7 @@ module ifu (
 
   end else begin
     assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF} = '0;
-    assign PCPF = PCF;
+    assign PCPF = PCFExt[`PA_BITS-1:0];
     assign CacheableF = '1;
   end
 
