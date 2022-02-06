@@ -478,9 +478,9 @@ begin_test: // label here to jump to so we dont go through the trap handler befo
     csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
     csrr x30, \CSR
     bne x30, x29, 1f // 1f represents write_access
-    li x30, 0x11 // Write succeeded, violating read only permissions.
+    li x30, 0x11 // Write failed, confirming read only permissions.
     j 2f // j r_access_end
-1: // w_access (test failed)
+1: // w_access (write succeeded, violating read-only)
     li x30, 0xBAD
 2: // r_access end
     sd x30, 0(x6)
