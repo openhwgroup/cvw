@@ -108,8 +108,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
-    else if (SetValidD   & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b1;
-    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b0;
+    else if (SetValidD)                                     ValidBits[RAdrD] <= #1 1'b1;
+    else if (ClearValidD) ValidBits[RAdrD] <= #1 1'b0;
 	end
   // *** consider revisiting whether these delays are the best option? 
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
