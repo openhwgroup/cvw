@@ -25,7 +25,7 @@
 
 INIT_TESTS
 
-// Test 5.2.3.1: tersting Read-only access to Machine info CSRs 
+// Test 5.2.3.1: testing Read-only access to Machine info CSRs 
 
 csr_r_access mvendorid
 csr_r_access marchid 
