@@ -129,7 +129,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
 		//.SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
-        .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty, .ClearDirty,
+        .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
         .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
         .SelFlush,
 		.SelectedReadDataLine(ReadDataLineWay), .WayHit(WayHitRaw), .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
@@ -194,7 +194,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   assign VDWriteEnableWay = FlushWay & {NUMWAYS{VDWriteEnable}};
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
-  assign SelectedWay = SelFlush ? FlushWay : VictimWay;
+  assign SelectedWay = SelFlush ? FlushWay : (SRAMLineWriteEnable ? VictimWay : WayHit);
+  //assign SelectedWay = SelFlush ? FlushWay : VictimWay;
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
