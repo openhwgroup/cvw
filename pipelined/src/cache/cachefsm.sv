@@ -140,10 +140,7 @@ module cachefsm
   // *** Ross simplify: factor out next state and output logic
   always_comb begin
     PreSelAdr = 2'b00;
-    //VDWriteEnable = 1'b0;
     NextState = STATE_READY;
-	CacheFetchLine = 1'b0;
-	CacheWriteLine = 1'b0;
     save = 1'b0;
     restore = 1'b0;
     case (CurrState)
@@ -209,7 +206,6 @@ module cachefsm
 		// read or write miss valid cached
 		else if((|RW) & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
-		  CacheFetchLine = 1'b1;
 		end
 		else NextState = STATE_READY;
       end
@@ -228,7 +224,6 @@ module cachefsm
 		PreSelAdr = 2'b01;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
-		  CacheWriteLine = 1'b1;
 		end else begin
 		  NextState = STATE_MISS_WRITE_CACHE_LINE;
 		end
@@ -328,7 +323,6 @@ module cachefsm
 		PreSelAdr = 2'b10;
 		if(VictimDirty) begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
-		  CacheWriteLine = 1'b1;
 		end else if (FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
 		  PreSelAdr = 2'b00;
@@ -354,7 +348,6 @@ module cachefsm
       end
 
       STATE_FLUSH_CLEAR_DIRTY: begin
-		//VDWriteEnable = 1'b1;
 		PreSelAdr = 2'b10;
 		if(FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
@@ -413,7 +406,11 @@ module cachefsm
   assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
   assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
   assign VDWriteEnable = (CurrState == STATE_FLUSH_CLEAR_DIRTY);
+  assign CacheFetchLine = (CurrState == STATE_READY & (DoAMOMiss | DoWriteMiss | DoReadMiss));
+  assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_DONE & VictimDirty) |
+                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   
+                                                                                
                        
 endmodule // cachefsm
 
