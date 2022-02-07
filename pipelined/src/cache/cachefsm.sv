@@ -406,9 +406,9 @@ module cachefsm
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK) |
                     (CurrState == STATE_FLUSH_CLEAR_DIRTY);
-  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & VictimDirty & FlushWayFlag & ~FlushAdrFlag) |
+  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & FlushWayFlag & ~FlushAdrFlag) |
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayFlag & ~FlushAdrFlag);
-  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & VictimDirty & ~(FlushAdrFlag & FlushWayFlag)) |
+  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushAdrFlag & FlushWayFlag)) |
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
   assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
   assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
