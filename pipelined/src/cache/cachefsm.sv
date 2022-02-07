@@ -136,229 +136,45 @@ module cachefsm
     if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;  
   
-  // next state logic and some state ouputs.
-  // *** Ross simplify: factor out next state and output logic
   always_comb begin
-    //PreSelAdr = 2'b00;
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: begin
-
-		//PreSelAdr = 2'b00;
-
-		// TLB Miss	
-		if(IgnoreRequest) begin
-		  // the LSU arbiter has not yet selected the PTW.
-		  // The CPU needs to be stalled until that happens.
-		  // If we set CacheStall for 1 cycle before going to
-		  // PTW ready the CPU will stall.
-		  // The page table walker asserts it's control 1 cycle
-		  // after the TLBs miss.
-		  //PreSelAdr = 2'b01;
-		  NextState = STATE_READY;
-		end
-
-		// Flush dcache to next level of memory
-		else if(FlushCache) begin
-		  NextState = STATE_FLUSH;
-		end
-		
-		// amo hit
-		else if(Atomic[1] & (&RW) & CacheHit) begin
-		  //PreSelAdr = 2'b01;
-		  
-		  if(CPUBusy) begin 
-			NextState = STATE_CPU_BUSY_FINISH_AMO;
-			//if (`REPLAY) PreSelAdr = 2'b01; 
-            //else save = 1'b1;
-		  end
-		  else begin
-			NextState = STATE_READY;
-		  end
-		end
-		// read hit valid cached
-		else if(RW[1] & CacheHit) begin
-		  
-		  if(CPUBusy) begin
-			NextState = STATE_CPU_BUSY;
-            //if(`REPLAY) PreSelAdr = 2'b01;
-            //else save = 1'b1;
-		  end
-		  else begin
-			NextState = STATE_READY;
-	      end
-		end
-		// write hit valid cached
-		else if (RW[0] & CacheHit) begin
-		  //PreSelAdr = 2'b01;
-		  
-		  if(CPUBusy) begin 
-			NextState = STATE_CPU_BUSY;
-			//if(`REPLAY) PreSelAdr = 2'b01;
-            //else save = 1'b1;
-		  end
-		  else begin
-			NextState = STATE_READY;
-		  end
-		end
-		// read or write miss valid cached
-		else if((|RW) & ~CacheHit) begin
-		  NextState = STATE_MISS_FETCH_WDV;
-		end
-		else NextState = STATE_READY;
-      end
-      
-      STATE_MISS_FETCH_WDV: begin
-		//PreSelAdr = 2'b01;
-		
-		if (CacheBusAck) begin
-          NextState = STATE_MISS_FETCH_DONE;
-        end else begin
-          NextState = STATE_MISS_FETCH_WDV;
-        end
-      end
-
-      STATE_MISS_FETCH_DONE: begin
-		//PreSelAdr = 2'b01;
-		if(VictimDirty) begin
-		  NextState = STATE_MISS_EVICT_DIRTY;
-		end else begin
-		  NextState = STATE_MISS_WRITE_CACHE_LINE;
-		end
-      end
-
-      STATE_MISS_WRITE_CACHE_LINE: begin
-		NextState = STATE_MISS_READ_WORD;
-		//PreSelAdr = 2'b01;
-		//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
-      end
-
-      STATE_MISS_READ_WORD: begin
-		//PreSelAdr = 2'b01;
-		if (RW[0] & ~Atomic[1]) begin // handles stores and amo write.
-		  NextState = STATE_MISS_WRITE_WORD;
-		end else begin
-		  NextState = STATE_MISS_READ_WORD_DELAY;
-		  // delay state is required as the read signal RW[1] is still high when we
-		  // return to the ready state because the cache is stalling the cpu.
-		end
-      end
-
-      STATE_MISS_READ_WORD_DELAY: begin
-		if(&RW & Atomic[1]) begin // amo write
-		  //PreSelAdr = 2'b01;
-		  if(CPUBusy) begin 
-			NextState = STATE_CPU_BUSY_FINISH_AMO;
-            //if(~`REPLAY) save = 1'b1;
-		  end
-		  else begin
-			NextState = STATE_READY;
-		  end
-		end else begin
-		  if(CPUBusy) begin 
-			NextState = STATE_CPU_BUSY;
-			//if(`REPLAY) PreSelAdr = 2'b01;
-            //else save = 1'b1;
-		  end
-		  else begin
-			NextState = STATE_READY;
-		  end
-		end
-      end
-
-      STATE_MISS_WRITE_WORD: begin
-		//PreSelAdr = 2'b01;
-		if(CPUBusy) begin 
-		  NextState = STATE_CPU_BUSY;
-		  //if(`REPLAY) PreSelAdr = 2'b01;
-          //else save = 1'b1;
-		end
-		else begin
-		  NextState = STATE_READY;
-		end
-      end
-
-      STATE_MISS_EVICT_DIRTY: begin
-		//PreSelAdr = 2'b01;
-		if(CacheBusAck) begin
-		  NextState = STATE_MISS_WRITE_CACHE_LINE;
-		end else begin
-		  NextState = STATE_MISS_EVICT_DIRTY;
-		end	  
-      end
-
-
-      STATE_CPU_BUSY: begin
-		//PreSelAdr = 2'b00;
-		if(CPUBusy) begin
-		  NextState = STATE_CPU_BUSY;
-		  //if(`REPLAY) PreSelAdr = 2'b01;
-		end
-		else begin
-		  NextState = STATE_READY;
-		end
-      end
-
-      STATE_CPU_BUSY_FINISH_AMO: begin
-		//PreSelAdr = 2'b01;
-		if(CPUBusy) begin
-		  NextState = STATE_CPU_BUSY_FINISH_AMO;
-		end
-		else begin
-		  NextState = STATE_READY;
-		end
-      end
-
-	  STATE_FLUSH: begin
-		// intialize flush counters
-		//PreSelAdr = 2'b10;
-		NextState = STATE_FLUSH_CHECK;
-	  end		
-
-      STATE_FLUSH_CHECK: begin
-		//PreSelAdr = 2'b10;
-		if(VictimDirty) begin
-		  NextState = STATE_FLUSH_WRITE_BACK;
-		end else if (FlushAdrFlag & FlushWayFlag) begin
-		  NextState = STATE_READY;
-		  //PreSelAdr = 2'b00;
-		end else if(FlushWayFlag) begin
-		  NextState = STATE_FLUSH_INCR;
-		end else begin
-		  NextState = STATE_FLUSH_CHECK;
-		end
-      end
-	  
-	  STATE_FLUSH_INCR: begin
-		//PreSelAdr = 2'b10;
-		NextState = STATE_FLUSH_CHECK;
-	  end
-
-      STATE_FLUSH_WRITE_BACK: begin
-		//PreSelAdr = 2'b10;
-		if(CacheBusAck) begin
-		  NextState = STATE_FLUSH_CLEAR_DIRTY;
-		end else begin
-		  NextState = STATE_FLUSH_WRITE_BACK;
-		end	  
-      end
-
-      STATE_FLUSH_CLEAR_DIRTY: begin
-		//PreSelAdr = 2'b10;
-		if(FlushAdrFlag & FlushWayFlag) begin
-		  NextState = STATE_READY;
-		  //PreSelAdr = 2'b00;
-		end else if (FlushWayFlag) begin
-		  NextState = STATE_FLUSH_INCR;
-		  
-		end else begin
-		  NextState = STATE_FLUSH_CHECK;
-		end
-      end
-
-      default: begin
-		NextState = STATE_READY;
-      end
+      STATE_READY: if(DoFlush)                                      NextState = STATE_FLUSH;
+                   else if(DoAMOHit & CPUBusy)                      NextState = STATE_CPU_BUSY_FINISH_AMO;
+                   else if(DoReadHit & CPUBusy)                     NextState = STATE_CPU_BUSY;
+                   else if (DoWriteHit & CPUBusy)                   NextState = STATE_CPU_BUSY;
+                   else if(DoReadMiss | DoWriteMiss | DoAMOMiss)    NextState = STATE_MISS_FETCH_WDV;
+                   else                                             NextState = STATE_READY;
+      STATE_MISS_FETCH_WDV: if (CacheBusAck)                        NextState = STATE_MISS_FETCH_DONE;
+                            else                                    NextState = STATE_MISS_FETCH_WDV;
+      STATE_MISS_FETCH_DONE: if(VictimDirty)                        NextState = STATE_MISS_EVICT_DIRTY;
+                             else                                   NextState = STATE_MISS_WRITE_CACHE_LINE;
+      STATE_MISS_WRITE_CACHE_LINE:                                  NextState = STATE_MISS_READ_WORD;
+      STATE_MISS_READ_WORD: if (DoWrite & ~DoAMO)                   NextState = STATE_MISS_WRITE_WORD;
+                            else                                    NextState = STATE_MISS_READ_WORD_DELAY;
+      STATE_MISS_READ_WORD_DELAY: if(DoAMO & CPUBusy)               NextState = STATE_CPU_BUSY_FINISH_AMO;
+                                  else if(CPUBusy)                  NextState = STATE_CPU_BUSY;
+                                  else                              NextState = STATE_READY;
+      STATE_MISS_WRITE_WORD: if(CPUBusy)                            NextState = STATE_CPU_BUSY;
+                             else                                   NextState = STATE_READY;
+      STATE_MISS_EVICT_DIRTY: if(CacheBusAck)                       NextState = STATE_MISS_WRITE_CACHE_LINE;
+                              else                                  NextState = STATE_MISS_EVICT_DIRTY;
+      STATE_CPU_BUSY: if(CPUBusy)                                   NextState = STATE_CPU_BUSY;
+                      else                                          NextState = STATE_READY;
+      STATE_CPU_BUSY_FINISH_AMO: if(CPUBusy)                        NextState = STATE_CPU_BUSY_FINISH_AMO;
+                                 else                               NextState = STATE_READY;
+	  STATE_FLUSH:                                                  NextState = STATE_FLUSH_CHECK;
+      STATE_FLUSH_CHECK: if(VictimDirty)                            NextState = STATE_FLUSH_WRITE_BACK;
+                         else if (FlushAdrFlag & FlushWayFlag)      NextState = STATE_READY;
+                         else if(FlushWayFlag)                      NextState = STATE_FLUSH_INCR;
+                         else                                       NextState = STATE_FLUSH_CHECK;
+	  STATE_FLUSH_INCR:                                             NextState = STATE_FLUSH_CHECK;
+      STATE_FLUSH_WRITE_BACK: if(CacheBusAck)                       NextState = STATE_FLUSH_CLEAR_DIRTY;
+                              else                                  NextState = STATE_FLUSH_WRITE_BACK;
+      STATE_FLUSH_CLEAR_DIRTY: if(FlushAdrFlag & FlushWayFlag)      NextState = STATE_READY;
+                               else if (FlushWayFlag)               NextState = STATE_FLUSH_INCR;
+                               else                                 NextState = STATE_FLUSH_CHECK;
+      default:                                                      NextState = STATE_READY;
     endcase
   end
 
@@ -377,7 +193,6 @@ module cachefsm
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign ClearValid = '0;
-  // *** setdirty can probably be simplified by not caring about cpubusy
   assign SetDirty = (CurrState == STATE_READY & DoAMO) |
                     (CurrState == STATE_READY & DoWrite) |
                     (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
@@ -388,6 +203,7 @@ module cachefsm
                                (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
                                (CurrState == STATE_MISS_WRITE_WORD);
   assign SRAMLineWriteEnable = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
+  assign VDWriteEnable = (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY);
   assign LRUWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit)) |
                       (CurrState == STATE_MISS_READ_WORD_DELAY) |
@@ -401,7 +217,6 @@ module cachefsm
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
   assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
   assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
-  assign VDWriteEnable = (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   assign CacheFetchLine = (CurrState == STATE_READY & (DoAMOMiss | DoWriteMiss | DoReadMiss));
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_DONE & VictimDirty) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
@@ -409,7 +224,8 @@ module cachefsm
   assign save = ((CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit) & CPUBusy) |
                  (CurrState == STATE_MISS_READ_WORD_DELAY & (DoAMO | DoRead) & CPUBusy) |
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
-  
+
+  // **** can this be simplified?
   assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequest) | 
                       (CurrState == STATE_READY & DoAMOHit) |
                       (CurrState == STATE_READY & DoReadHit & (CPUBusy & `REPLAY)) |
