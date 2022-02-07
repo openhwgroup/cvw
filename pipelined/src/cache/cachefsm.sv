@@ -80,14 +80,13 @@ module cachefsm
 
    );
   
-  logic 			  AnyCPUReqM;
   logic [1:0]         PreSelAdr;
   logic               resetDelay;
   logic               DoAMO, DoRead, DoWrite, DoFlush;
   logic               DoAMOHit, DoReadHit, DoWriteHit;
   logic               DoAMOMiss, DoReadMiss, DoWriteMiss;
-  
-  
+  logic               FlushFlag;
+    
   typedef enum 		  {STATE_READY,
 
 					   STATE_MISS_FETCH_WDV,
@@ -119,8 +118,8 @@ module cachefsm
   assign DoWrite = RW[0] & ~IgnoreRequest;
   assign DoWriteHit = DoWrite & CacheHit;
   assign DoWriteMiss = DoWrite & ~CacheHit;
-  
-  //assign AnyCPUReqM = |RW | (|Atomic); **** remove
+
+  assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
   assign CacheAccess = (DoAMO | DoRead | DoWrite) & CurrState == STATE_READY;
@@ -165,7 +164,7 @@ module cachefsm
                                  else                               NextState = STATE_READY;
 	  STATE_FLUSH:                                                  NextState = STATE_FLUSH_CHECK;
       STATE_FLUSH_CHECK: if(VictimDirty)                            NextState = STATE_FLUSH_WRITE_BACK;
-                         else if (FlushAdrFlag & FlushWayFlag)      NextState = STATE_READY;
+                         else if (FlushFlag)                        NextState = STATE_READY;
                          else if(FlushWayFlag)                      NextState = STATE_FLUSH_INCR;
                          else                                       NextState = STATE_FLUSH_CHECK;
 	  STATE_FLUSH_INCR:                                             NextState = STATE_FLUSH_CHECK;
@@ -179,7 +178,6 @@ module cachefsm
   end
 
   assign CacheCommitted = CurrState != STATE_READY;
-  // *** stall missing check on amo miss?
   assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAMOMiss | DoReadMiss | DoWriteMiss)) |
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) |
@@ -187,10 +185,10 @@ module cachefsm
                       (CurrState == STATE_MISS_READ_WORD) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_FLUSH) |
-                      (CurrState == STATE_FLUSH_CHECK & ~(FlushAdrFlag & FlushWayFlag)) |
+                      (CurrState == STATE_FLUSH_CHECK & ~(FlushFlag)) |
                       (CurrState == STATE_FLUSH_INCR) |
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
-                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
+                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign ClearValid = '0;
   assign SetDirty = (CurrState == STATE_READY & DoAMO) |
@@ -213,8 +211,8 @@ module cachefsm
                     (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & FlushWayFlag & ~FlushAdrFlag) |
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayFlag & ~FlushAdrFlag);
-  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushAdrFlag & FlushWayFlag)) |
-                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
+  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushFlag)) |
+                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
   assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
   assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
   assign CacheFetchLine = (CurrState == STATE_READY & (DoAMOMiss | DoWriteMiss | DoReadMiss));
@@ -240,12 +238,11 @@ module cachefsm
                       (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY)) |
                       (CurrState == STATE_CPU_BUSY_FINISH_AMO)) ? 2'b01 :
                      ((CurrState == STATE_FLUSH) | 
-                      (CurrState == STATE_FLUSH_CHECK & ~(VictimDirty & FlushAdrFlag & FlushWayFlag)) |
+                      (CurrState == STATE_FLUSH_CHECK & ~(VictimDirty & FlushFlag)) |
                       (CurrState == STATE_FLUSH_INCR) |
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
-                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag))) ? 2'b10 : 
+                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag))) ? 2'b10 : 
                      2'b00;
                                                                                 
                        
 endmodule // cachefsm
-
