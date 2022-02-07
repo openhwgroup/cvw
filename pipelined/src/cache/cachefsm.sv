@@ -140,11 +140,7 @@ module cachefsm
   // *** Ross simplify: factor out next state and output logic
   always_comb begin
     PreSelAdr = 2'b00;
-    //SelFlush = 1'b0;
-    FlushWayCntEn = 1'b0;
-    FlushAdrCntRst = 1'b0;
-    FlushWayCntRst = 1'b0;	
-    VDWriteEnable = 1'b0;
+    //VDWriteEnable = 1'b0;
     NextState = STATE_READY;
 	CacheFetchLine = 1'b0;
 	CacheWriteLine = 1'b0;
@@ -170,8 +166,6 @@ module cachefsm
 		// Flush dcache to next level of memory
 		else if(FlushCache) begin
 		  NextState = STATE_FLUSH;
-		  FlushAdrCntRst = 1'b1;
-		  FlushWayCntRst = 1'b1;	
 		end
 		
 		// amo hit
@@ -326,41 +320,32 @@ module cachefsm
 
 	  STATE_FLUSH: begin
 		// intialize flush counters
-		//SelFlush = 1'b1;
 		PreSelAdr = 2'b10;
 		NextState = STATE_FLUSH_CHECK;
 	  end		
 
       STATE_FLUSH_CHECK: begin
 		PreSelAdr = 2'b10;
-		//SelFlush = 1'b1;
 		if(VictimDirty) begin
 		  NextState = STATE_FLUSH_WRITE_BACK;
-		  FlushWayCntEn = 1'b0;
 		  CacheWriteLine = 1'b1;
 		end else if (FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
 		  PreSelAdr = 2'b00;
-		  FlushWayCntEn = 1'b0;	
 		end else if(FlushWayFlag) begin
 		  NextState = STATE_FLUSH_INCR;
-		  FlushWayCntEn = 1'b1;
 		end else begin
-		  FlushWayCntEn = 1'b1;
 		  NextState = STATE_FLUSH_CHECK;
 		end
       end
 	  
 	  STATE_FLUSH_INCR: begin
 		PreSelAdr = 2'b10;
-		//SelFlush = 1'b1;
-		FlushWayCntRst = 1'b1;
 		NextState = STATE_FLUSH_CHECK;
 	  end
 
       STATE_FLUSH_WRITE_BACK: begin
 		PreSelAdr = 2'b10;
-		//SelFlush = 1'b1;
 		if(CacheBusAck) begin
 		  NextState = STATE_FLUSH_CLEAR_DIRTY;
 		end else begin
@@ -369,20 +354,16 @@ module cachefsm
       end
 
       STATE_FLUSH_CLEAR_DIRTY: begin
-		VDWriteEnable = 1'b1;
-		//SelFlush = 1'b1;
+		//VDWriteEnable = 1'b1;
 		PreSelAdr = 2'b10;
-		FlushWayCntEn = 1'b0;
 		if(FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
 		  PreSelAdr = 2'b00;
 		end else if (FlushWayFlag) begin
 		  NextState = STATE_FLUSH_INCR;
 		  
-		  FlushWayCntEn = 1'b1;	
 		end else begin
 		  NextState = STATE_FLUSH_CHECK;
-		  FlushWayCntEn = 1'b1;	
 		end
       end
 
@@ -427,6 +408,11 @@ module cachefsm
                     (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & VictimDirty & FlushWayFlag & ~FlushAdrFlag) |
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayFlag & ~FlushAdrFlag);
+  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & VictimDirty & ~(FlushAdrFlag & FlushWayFlag)) |
+                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
+  assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
+  assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
+  assign VDWriteEnable = (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   
                        
 endmodule // cachefsm
