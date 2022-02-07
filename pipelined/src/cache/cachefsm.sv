@@ -125,10 +125,6 @@ module cachefsm
   // *** Ross simplify: factor out next state and output logic
   always_comb begin
     PreSelAdr = 2'b00;
-    SetValid = 1'b0;
-    ClearValid = 1'b0;
-    SetDirty = 1'b0;    
-    ClearDirty = 1'b0;
     SRAMWordWriteEnable = 1'b0;
     SRAMLineWriteEnable = 1'b0;
     SelEvict = 1'b0;
@@ -149,7 +145,6 @@ module cachefsm
 
 		PreSelAdr = 2'b00;
 		SRAMWordWriteEnable = 1'b0;
-		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 
 		// TLB Miss	
@@ -182,7 +177,6 @@ module cachefsm
 		  end
 		  else begin
 			SRAMWordWriteEnable = 1'b1;
-			SetDirty = 1'b1;
 			LRUWriteEn = 1'b1;
 			NextState = STATE_READY;
 		  end
@@ -204,7 +198,6 @@ module cachefsm
 		else if (RW[0] & CacheHit) begin
 		  PreSelAdr = 2'b01;
 		  SRAMWordWriteEnable = 1'b1;
-		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
 		  
 		  if(CPUBusy) begin 
@@ -248,8 +241,6 @@ module cachefsm
 		SRAMLineWriteEnable = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
 		PreSelAdr = 2'b01;
-		SetValid = 1'b1;
-		ClearDirty = 1'b1;
 		//LRUWriteEn = 1'b1;  // DO not update LRU on SRAM fetch update.  Wait for subsequent read/write
       end
 
@@ -266,7 +257,6 @@ module cachefsm
 
       STATE_MISS_READ_WORD_DELAY: begin
 		SRAMWordWriteEnable = 1'b0;
-		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
 		if(&RW & Atomic[1]) begin // amo write
 		  PreSelAdr = 2'b01;
@@ -276,7 +266,6 @@ module cachefsm
 		  end
 		  else begin
 			SRAMWordWriteEnable = 1'b1;
-			SetDirty = 1'b1;
 			LRUWriteEn = 1'b1;
 			NextState = STATE_READY;
 		  end
@@ -295,7 +284,6 @@ module cachefsm
 
       STATE_MISS_WRITE_WORD: begin
 		SRAMWordWriteEnable = 1'b1;
-		SetDirty = 1'b1;
 		PreSelAdr = 2'b01;
 		LRUWriteEn = 1'b1;
 		if(CPUBusy) begin 
@@ -334,7 +322,6 @@ module cachefsm
       STATE_CPU_BUSY_FINISH_AMO: begin
 		PreSelAdr = 2'b01;
 		SRAMWordWriteEnable = 1'b0;
-		SetDirty = 1'b0;
 		LRUWriteEn = 1'b0;
         restore = 1'b1;
 		if(CPUBusy) begin
@@ -342,7 +329,6 @@ module cachefsm
 		end
 		else begin
 		  SRAMWordWriteEnable = 1'b1;
-		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
 		  NextState = STATE_READY;
 		end
@@ -395,7 +381,6 @@ module cachefsm
       end
 
       STATE_FLUSH_CLEAR_DIRTY: begin
-		ClearDirty = 1'b1;
 		VDWriteEnable = 1'b1;
 		SelFlush = 1'b1;
 		PreSelAdr = 2'b10;
@@ -421,8 +406,8 @@ module cachefsm
   end
 
   assign CacheCommitted = CurrState != STATE_READY;
+  // *** stall missing check on amo miss?
   assign CacheStall = (CurrState == STATE_READY & (FlushCache | (|RW & ~CacheHit)) & ~IgnoreRequest) |
-
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
@@ -433,6 +418,17 @@ module cachefsm
                       (CurrState == STATE_FLUSH_INCR) |
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
+  assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
+  assign ClearValid = '0;
+  // *** setdirty can probably be simplified by not caring about cpubusy
+  assign SetDirty = (CurrState == STATE_READY & Atomic[1] & (&RW) & CacheHit & ~CPUBusy & ~IgnoreRequest) |
+                    (CurrState == STATE_READY & RW[0] & CacheHit & ~IgnoreRequest) |
+                    (CurrState == STATE_MISS_READ_WORD_DELAY & &RW & Atomic[1] & ~CPUBusy) |
+                    (CurrState == STATE_MISS_WRITE_WORD) | 
+                    (CurrState == STATE_CPU_BUSY_FINISH_AMO & ~CPUBusy);
+  assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
+                      (CurrState == STATE_FLUSH_CLEAR_DIRTY);
+  
 
 
 endmodule // cachefsm
