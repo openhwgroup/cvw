@@ -124,7 +124,6 @@ module cachefsm
   // next state logic and some state ouputs.
   // *** Ross simplify: factor out next state and output logic
   always_comb begin
-    CacheStall = 1'b0;
     PreSelAdr = 2'b00;
     SetValid = 1'b0;
     ClearValid = 1'b0;
@@ -148,7 +147,6 @@ module cachefsm
     case (CurrState)
       STATE_READY: begin
 
-		CacheStall = 1'b0;
 		PreSelAdr = 2'b00;
 		SRAMWordWriteEnable = 1'b0;
 		SetDirty = 1'b0;
@@ -171,13 +169,11 @@ module cachefsm
 		  NextState = STATE_FLUSH;
 		  FlushAdrCntRst = 1'b1;
 		  FlushWayCntRst = 1'b1;	
-		  CacheStall = 1'b1;
 		end
 		
 		// amo hit
 		else if(Atomic[1] & (&RW) & CacheHit) begin
 		  PreSelAdr = 2'b01;
-		  CacheStall = 1'b0;
 		  
 		  if(CPUBusy) begin 
 			NextState = STATE_CPU_BUSY_FINISH_AMO;
@@ -193,7 +189,6 @@ module cachefsm
 		end
 		// read hit valid cached
 		else if(RW[1] & CacheHit) begin
-		  CacheStall = 1'b0;
 		  LRUWriteEn = 1'b1;
 		  
 		  if(CPUBusy) begin
@@ -208,7 +203,6 @@ module cachefsm
 		// write hit valid cached
 		else if (RW[0] & CacheHit) begin
 		  PreSelAdr = 2'b01;
-		  CacheStall = 1'b0;
 		  SRAMWordWriteEnable = 1'b1;
 		  SetDirty = 1'b1;
 		  LRUWriteEn = 1'b1;
@@ -225,14 +219,12 @@ module cachefsm
 		// read or write miss valid cached
 		else if((|RW) & ~CacheHit) begin
 		  NextState = STATE_MISS_FETCH_WDV;
-		  CacheStall = 1'b1;
 		  CacheFetchLine = 1'b1;
 		end
 		else NextState = STATE_READY;
       end
       
       STATE_MISS_FETCH_WDV: begin
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b01;
 		
 		if (CacheBusAck) begin
@@ -243,7 +235,6 @@ module cachefsm
       end
 
       STATE_MISS_FETCH_DONE: begin
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b01;
 		if(VictimDirty) begin
 		  NextState = STATE_MISS_EVICT_DIRTY;
@@ -255,7 +246,6 @@ module cachefsm
 
       STATE_MISS_WRITE_CACHE_LINE: begin
 		SRAMLineWriteEnable = 1'b1;
-		CacheStall = 1'b1;
 		NextState = STATE_MISS_READ_WORD;
 		PreSelAdr = 2'b01;
 		SetValid = 1'b1;
@@ -265,7 +255,6 @@ module cachefsm
 
       STATE_MISS_READ_WORD: begin
 		PreSelAdr = 2'b01;
-		CacheStall = 1'b1;
 		if (RW[0] & ~Atomic[1]) begin // handles stores and amo write.
 		  NextState = STATE_MISS_WRITE_WORD;
 		end else begin
@@ -320,7 +309,6 @@ module cachefsm
       end
 
       STATE_MISS_EVICT_DIRTY: begin
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b01;
 		SelEvict = 1'b1;
 		if(CacheBusAck) begin
@@ -363,13 +351,11 @@ module cachefsm
 	  STATE_FLUSH: begin
 		// intialize flush counters
 		SelFlush = 1'b1;
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b10;
 		NextState = STATE_FLUSH_CHECK;
 	  end		
 
       STATE_FLUSH_CHECK: begin
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b10;
 		SelFlush = 1'b1;
 		if(VictimDirty) begin
@@ -378,7 +364,6 @@ module cachefsm
 		  CacheWriteLine = 1'b1;
 		end else if (FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
-		  CacheStall = 1'b0;
 		  PreSelAdr = 2'b00;
 		  FlushWayCntEn = 1'b0;	
 		end else if(FlushWayFlag) begin
@@ -393,7 +378,6 @@ module cachefsm
       end
 	  
 	  STATE_FLUSH_INCR: begin
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b10;
 		SelFlush = 1'b1;
 		FlushWayCntRst = 1'b1;
@@ -401,7 +385,6 @@ module cachefsm
 	  end
 
       STATE_FLUSH_WRITE_BACK: begin
-		CacheStall = 1'b1;
 		PreSelAdr = 2'b10;
 		SelFlush = 1'b1;
 		if(CacheBusAck) begin
@@ -412,7 +395,6 @@ module cachefsm
       end
 
       STATE_FLUSH_CLEAR_DIRTY: begin
-		CacheStall = 1'b1;
 		ClearDirty = 1'b1;
 		VDWriteEnable = 1'b1;
 		SelFlush = 1'b1;
@@ -420,7 +402,6 @@ module cachefsm
 		FlushWayCntEn = 1'b0;
 		if(FlushAdrFlag & FlushWayFlag) begin
 		  NextState = STATE_READY;
-		  CacheStall = 1'b0;
 		  PreSelAdr = 2'b00;
 		end else if (FlushWayFlag) begin
 		  NextState = STATE_FLUSH_INCR;
@@ -440,6 +421,19 @@ module cachefsm
   end
 
   assign CacheCommitted = CurrState != STATE_READY;
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | (|RW & ~CacheHit)) & ~IgnoreRequest) |
+
+                      (CurrState == STATE_MISS_FETCH_WDV) |
+                      (CurrState == STATE_MISS_FETCH_DONE) |
+                      (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
+                      (CurrState == STATE_MISS_READ_WORD) |
+                      (CurrState == STATE_MISS_EVICT_DIRTY) |
+                      (CurrState == STATE_FLUSH) |
+                      (CurrState == STATE_FLUSH_CHECK & ~(FlushAdrFlag & FlushWayFlag)) |
+                      (CurrState == STATE_FLUSH_INCR) |
+                      (CurrState == STATE_FLUSH_WRITE_BACK) |
+                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushAdrFlag & FlushWayFlag));
+
 
 endmodule // cachefsm
 
