@@ -97,8 +97,8 @@ module cachefsm
 					   STATE_MISS_READ_WORD_DELAY,
 					   STATE_MISS_WRITE_WORD,
 
-					   STATE_CPU_BUSY, // *** Ross will change
-					   STATE_CPU_BUSY_FINISH_AMO, // *** Ross will change
+					   STATE_CPU_BUSY,
+					   STATE_CPU_BUSY_FINISH_AMO,
   
 					   STATE_FLUSH,
 					   STATE_FLUSH_CHECK,
