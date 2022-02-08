@@ -207,9 +207,6 @@ module lsu (
 
     assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
 
-    subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
-      .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
-      .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
     
     if(`DMEM == `MEM_CACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
@@ -224,6 +221,10 @@ module lsu (
         .ReadDataLine(ReadDataLineM), .CacheMemWriteData(DCacheMemWriteData),
         .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
         .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+
+      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
+        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+        .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;

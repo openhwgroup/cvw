@@ -166,7 +166,7 @@ module controller(
   // unswizzle control bits
   // squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
-  assign IllegalERegAdrD = `E_SUPPORTED & RegWriteD & InstrD[11]; 
+  assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
   assign IllegalBaseInstrFaultD = ControlsD[0] | IllegalERegAdrD;
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, W64D, CSRReadD, 

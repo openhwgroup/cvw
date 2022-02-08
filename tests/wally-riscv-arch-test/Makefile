@@ -87,7 +87,7 @@ simulate:
 		run -C $(SUITEDIR)
 
 verify: simulate
-	riscv-test-env/verify.sh # dmh 1 November 2021 removed because these tests don't have expected values
+	riscv-test-env/verify.sh
 
 postverify:
 ifeq ($(wildcard $(TARGETDIR)/$(RISCV_TARGET)/postverify.sh),)

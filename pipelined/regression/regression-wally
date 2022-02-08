@@ -48,17 +48,17 @@ def getBuildrootTC(short):
     INSTR_LIMIT = 100000 # multiple of 100000
     MAX_EXPECTED = 246000000
     if short:
-        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do "+str(INSTR_LIMIT)+" 1 0\n!"
+        BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     else:
-        BRcmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 0 1 0\n!"
+        BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot 0 1 0\n!"
         BRgrepstr=str(MAX_EXPECTED)+" instructions"
     return  TestCase(name="buildroot",variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
 tc = TestCase(
       name="buildroot-checkpoint",
       variant="rv64gc",
-      cmd="vsim > {} -c <<!\ndo wally-buildroot-batch.do 400100000 400000001 400000000\n!",
+      cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot-checkpoint 400100000 400000001 400000000\n!", # *** will this work with rv64gc rather than buildroot config?
       grepstr="400100000 instructions")
 configs.append(tc)
 
@@ -84,16 +84,16 @@ for test in tests32ic:
   tc = TestCase(
         name=test,
         variant="rv32ic",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-tim-batch.do rv32ic "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ic "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32tim = ["arch32i", "arch32c", "imperas32i", "imperas32c"] 
-for test in tests32tim:
+tests32e = ["wally32e"] 
+for test in tests32e:
   tc = TestCase(
         name=test,
-        variant="rv32tim",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-tim-batch.do rv32tim "+test+"\n!",
+        variant="rv32e",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32e "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 

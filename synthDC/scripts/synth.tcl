@@ -6,11 +6,11 @@
 # Config
 set hdl_src "../pipelined/src"
 
-eval file copy ${hdl_src}/../config/rv64gc/wally-config.vh {hdl/}
-eval file copy ${hdl_src}/../config/rv64gc/wally-config.vh {reports/}
-eval file copy [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
-eval file copy [glob ${hdl_src}/*/*.sv] {hdl/}
-eval file copy [glob ${hdl_src}/*/flop/*.sv] {hdl/}
+eval file copy -force ${hdl_src}/../config/rv32e/wally-config.vh {hdl/}
+eval file copy -force ${hdl_src}/../config/rv32e/wally-config.vh {reports/}
+eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
+eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
+eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
 
 # Verilog files
 set my_verilog_files [glob hdl/*]
@@ -47,7 +47,7 @@ reset_design
 
 # Set Frequency in [MHz] or [ps]
 set my_clock_pin clk
-set my_clk_freq_MHz 10
+set my_clk_freq_MHz 500
 set my_period [expr 1000 / $my_clk_freq_MHz]
 set my_uncertainty [expr .1 * $my_period]
 
@@ -76,14 +76,14 @@ set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 set_propagated_clock [get_clocks $my_clk]
 
 # Setting constraints on input ports 
-set_driving_cell  -lib_cell sky130_osu_sc_18T_ms__dff_1 -pin Q $all_in_ex_clk
+set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
 
 # Set input/output delay
 set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
 set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 
 # Setting load constraint on output ports 
-set_load [expr [load_of sky130_osu_sc_18T_ms_TT_1P8_25C.ccs/sky130_osu_sc_18T_ms__dff_1/D] * 1] [all_outputs]
+set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
 
 # Set the wire load model 
 set_wire_load_mode "top"
@@ -111,7 +111,7 @@ write_file -format ddc -hierarchy -o $filename
 
 # Compile statements - either compile or compile_ultra
 # compile -scan -incr -map_effort low
-# compile_ultra -no_seq_output_inversion -no_boundary_optimization
+compile_ultra -no_seq_output_inversion -no_boundary_optimization
 
 # Eliminate need for assign statements (yuck!)
 set verilogout_no_tri true

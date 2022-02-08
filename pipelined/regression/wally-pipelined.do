@@ -29,28 +29,41 @@ vlib work
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined.do ../config/rv32ic
-#switch $argc {
-#    0 {vlog +incdir+../config/rv64ic +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
-#    1 {vlog +incdir+$1  +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
-#}
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
-vsim workopt +nowarn3829
+if {$2 eq "buildroot"} {
+    vlog +incdir+../config/buildroot +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
 
-view wave
--- display input and output signals as hexidecimal values
-#do ./wave-dos/peripheral-waves.do
-add log -recursive /*
-do wave.do
 
--- Run the Simulation 
-#run 3600 
-run -all
-#quit
-#noview ../testbench/testbench-imperas.sv
-noview ../testbench/testbench.sv
-view wave
+    # start and run simulation
+    # remove +acc flag for faster sim during regressions if there is no need to access internal signals
+    vopt +acc work.testbench -G INSTR_LIMIT=$3 -G INSTR_WAVEON=$4 -G CHECKPOINT=$5 -o workopt 
+
+    vsim workopt -suppress 8852,12070
+
+    #-- Run the Simulation 
+    run -all
+    do linux-wave.do
+    add log -recursive /*
+    run -all
+
+    exec ./slack-notifier/slack-notifier.py
+  } else {
+    vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
+    vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
+
+    vsim workopt +nowarn3829
+
+    view wave
+    #-- display input and output signals as hexidecimal values
+    #do ./wave-dos/peripheral-waves.do
+    add log -recursive /*
+    do wave.do
+
+    #-- Run the Simulation 
+    #run 3600 
+    run -all
+    noview ../testbench/testbench.sv
+    view wave
+}
+

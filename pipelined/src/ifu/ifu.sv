@@ -158,7 +158,7 @@ module ifu (
 
   end else begin
     assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF} = '0;
-    assign PCPF = PCF;
+    assign PCPF = PCFExt[`PA_BITS-1:0];
     assign CacheableF = '1;
   end
 
@@ -170,7 +170,7 @@ module ifu (
   assign InstrRawF = AllInstrRawF[31:0];
 
   
-  if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN
+  if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
     dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF[31:0]), .IEUAdrE(PCNextFSpill),
               .TrapM(1'b0), .FinalWriteDataM(), 
               .ReadDataWordM(AllInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
@@ -200,10 +200,6 @@ module ifu (
           .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
-    
-    subcachelineread #(LINELEN, 32, 16) subcachelineread(
-    .clk, .reset, .PAdr(PCPF), .save, .restore,
-    .ReadDataLine, .ReadDataWord(FinalInstrRawF));
 
     if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;
@@ -225,6 +221,10 @@ module ifu (
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
+
+      subcachelineread #(LINELEN, 32, 16) subcachelineread(
+        .clk, .reset, .PAdr(PCPF), .save, .restore,
+        .ReadDataLine, .ReadDataWord(FinalInstrRawF));
 
     end else begin : passthrough
       assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;
