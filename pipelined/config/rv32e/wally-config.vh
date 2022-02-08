@@ -49,8 +49,8 @@
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 // *** replace with MEM_BUS
-`define DMEM `MEM_CACHE
-`define IMEM `MEM_CACHE
+`define DMEM `MEM_BUS
+`define IMEM `MEM_BUS
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 0 
 
