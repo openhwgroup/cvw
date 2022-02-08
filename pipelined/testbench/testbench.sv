@@ -49,8 +49,6 @@ module testbench;
   logic [`XLEN-1:0] testadr;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  logic [`XLEN-1:0] meminit;
-
 
 string tests[];
 logic [3:0] dummy;
@@ -183,22 +181,19 @@ logic [3:0] dummy;
       //  strings, but uses a load double to read them in.  If the last 2 bytes are
       //  not initialized the compare results in an 'x' which propagates through 
       // the design.
-      //if (`XLEN == 32) meminit = 32'hFEDC0123;
-      //else meminit = 64'hFEDCBA9876543210;
-      // *** broken because DTIM also drives RAM
-      if (TEST == "coremark") begin
-    	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-          // *** why does coremark need these extra addresses zeroed?
-    	  dut.uncore.ram.ram.RAM[i] = 64'h0;//meminit;
-    	end
-      end
+      if (TEST == "coremark") 
+        for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
+          dut.uncore.ram.ram.RAM[i] = 64'h0; 
+
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
 /*      if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
+      else              $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
@@ -240,8 +235,8 @@ logic [3:0] dummy;
             signature[i/2] = {sig32[i+1], sig32[i]};
             i = i + 2;
           end
-          if (sig32[i-1] === 'bx) begin
-            if (i == 1) begin
+          if (i >= 4 & sig32[i-4] === 'bx) begin
+            if (i == 4) begin
               i = SIGNATURESIZE+1; // flag empty file
               $display("  Error: empty test file");
             end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
@@ -254,17 +249,21 @@ logic [3:0] dummy;
         testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
-          //$display("signature[%h] = %h", i, signature[i]);
-		  // *** have to figure out how to exclude shadowram when not using a dcache.
-          if (signature[i] !== dut.uncore.ram.ram.RAM[testadr+i] &
+          logic [`XLEN-1:0] sig;
+          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadr+i];
+          else                   sig = dut.uncore.ram.ram.RAM[testadr+i];
+//          $display("signature[%h] = %h sig = %h", i, signature[i], sig);
+          if (signature[i] !== sig &
           //if (signature[i] !== dut.core.lsu.dtim.ram.RAM[testadr+i] &
-	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
-            if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
+	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
+            if ((signature[i] !== '0 & signature[i+4] != 'x)) begin
+//            if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
+              $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
               errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.uncore.ram.ram.RAM[testadr+i], signature[i]);
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
                     //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
@@ -288,7 +287,10 @@ logic [3:0] dummy;
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
-            $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+            //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
+            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
+            else                   $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);

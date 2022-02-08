@@ -1,3 +1,1 @@
-vsim -c <<!
-do wally-pipelined-batch.do rv32ic arch32i
-!
+vsim -c -do "do wally-pipelined-batch.do rv32e wally32e"
