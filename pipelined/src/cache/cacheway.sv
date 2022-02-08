@@ -37,8 +37,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
-  input logic                        WriteEnable,
-  input logic [LINELEN/`XLEN-1:0]    WriteWordEnable,
+  input logic                        SRAMWayWriteEnable,
+  input logic [LINELEN/`XLEN-1:0]    SRAMWordEnable,
   input logic                        TagWriteEnable,
   input logic [LINELEN-1:0]          WriteData,
   input logic                        SetValid,
@@ -68,7 +68,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
   logic 							  SetValidD, ClearValidD;
   logic 							  SetDirtyD, ClearDirtyD;
-  logic 							  WriteEnableD;
+  logic 							  SRAMWayWriteEnableD;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
@@ -93,7 +93,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Adr(RAdr),
       .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
       .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-      .WriteEnable(WriteEnable & WriteWordEnable[words]));
+      .WriteEnable(SRAMWayWriteEnable & SRAMWordEnable[words]));
   end
 
   // AND portion of distributed read multiplexers
@@ -112,8 +112,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 	end
   // *** consider revisiting whether these delays are the best option? 
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
-  flop #(3) ValidCtrlDelayReg(clk, {SetValid, ClearValid, WriteEnable},
-    {SetValidD, ClearValidD, WriteEnableD});
+  flop #(3) ValidCtrlDelayReg(clk, {SetValid, ClearValid, SRAMWayWriteEnable},
+    {SetValidD, ClearValidD, SRAMWayWriteEnableD});
   assign Valid = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
