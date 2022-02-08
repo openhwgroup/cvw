@@ -65,8 +65,8 @@ module cachefsm
    output logic       ClearValid,
    output logic       SetDirty,
    output logic       ClearDirty,
-   output logic       SRAMWordWriteEnable,
-   output logic       SRAMLineWriteEnable,
+   output logic       FSMWordWriteEn,
+   output logic       FSMLineWriteEn,
    output logic       SelEvict,
    output logic       LRUWriteEn,
    output logic       SelFlush,
@@ -174,6 +174,7 @@ module cachefsm
     endcase
   end
 
+  // com back to CPU
   assign CacheCommitted = CurrState != STATE_READY;
   assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAMOMiss | DoReadMiss | DoWriteMiss)) |
                       (CurrState == STATE_MISS_FETCH_WDV) |
@@ -186,6 +187,7 @@ module cachefsm
                       (CurrState == STATE_FLUSH_INCR) |
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
+  // write enables internal to cache
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign ClearValid = '0;
   assign SetDirty = (CurrState == STATE_READY & DoAMO) |
@@ -194,14 +196,15 @@ module cachefsm
                     (CurrState == STATE_MISS_WRITE_WORD);
   assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY);
-  assign SRAMWordWriteEnable = (CurrState == STATE_READY & (DoAMOHit | DoWriteHit)) |
-                               (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
-                               (CurrState == STATE_MISS_WRITE_WORD);
-  assign SRAMLineWriteEnable = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
-  assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY);
+  assign FSMWordWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoWriteHit)) |
+                          (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
+                          (CurrState == STATE_MISS_WRITE_WORD);
+  assign FSMLineWriteEn = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   assign LRUWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit)) |
                       (CurrState == STATE_MISS_READ_WORD_DELAY) |
                       (CurrState == STATE_MISS_WRITE_WORD);
+  // Flush and eviction controls
+  assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY);
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK) |
                     (CurrState == STATE_FLUSH_CLEAR_DIRTY);
@@ -211,9 +214,11 @@ module cachefsm
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
   assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
   assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
+  // Bus interface controls
   assign CacheFetchLine = (CurrState == STATE_READY & (DoAMOMiss | DoWriteMiss | DoReadMiss));
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_DONE & VictimDirty) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
+  // handle cpu stall.
   assign restore = ((CurrState == STATE_CPU_BUSY) | (CurrState == STATE_CPU_BUSY_FINISH_AMO)) & ~`REPLAY;
   assign save = ((CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit) & CPUBusy) |
                  (CurrState == STATE_MISS_READ_WORD_DELAY & (DoAMO | DoRead) & CPUBusy) |

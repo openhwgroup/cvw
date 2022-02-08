@@ -62,7 +62,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   localparam  						LINEBYTELEN = LINELEN/8;
   localparam  						OFFSETLEN = $clog2(LINEBYTELEN);
   localparam  						SETLEN = $clog2(NUMLINES);
-  localparam              SETTOP = SETLEN+OFFSETLEN;
+  localparam                        SETTOP = SETLEN+OFFSETLEN;
   localparam  						TAGLEN = `PA_BITS - SETTOP;
   localparam  						WORDSPERLINE = LINELEN/`XLEN;
   localparam  						LOGWPL = $clog2(WORDSPERLINE);
@@ -77,12 +77,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [LINELEN-1:0] 						ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0] 						WayHit;
   logic 									CacheHit;
-  logic [WORDSPERLINE-1:0] 					SRAMWordEnable;
-  logic 									SRAMWordWriteEnable;
-  logic 									SRAMLineWriteEnable;
+  logic 									FSMWordWriteEn;
+  logic 									FSMLineWriteEn;
   logic [NUMWAYS-1:0] 						SRAMLineWayWriteEnable;
-  logic [NUMWAYS-1:0] 						SRAMWayWriteEnable;
-  logic [NUMWAYS-1:0]             SRAMWordWayWriteEnable;
   logic [NUMWAYS-1:0] 						VictimWay;
   logic [NUMWAYS-1:0] 						VictimDirtyWay;
   logic 									VictimDirty;
@@ -106,7 +103,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [NUMWAYS-1:0]                       WayHitSaved, WayHitRaw;
   logic [LINELEN-1:0]                       ReadDataLineRaw, ReadDataLineSaved;
   logic [NUMWAYS-1:0]                       SelectedWay;
-  logic [NUMWAYS-1:0]                       SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;  
+  logic [NUMWAYS-1:0]                       SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
+  logic [NUMWAYS-1:0]                       WriteWordWayEn, WriteLineWayEn;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -121,9 +119,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .RAdr, .PAdr,
-		.SRAMWayWriteEnable,
-		.SRAMWordEnable,
-		.TagWriteEnable(SRAMLineWayWriteEnable), 
+        .WriteWordEn(WriteWordWayEn),
+        .WriteLineEn(WriteLineWayEn),
 		.WriteData(SRAMWriteData),
         .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
         .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
@@ -153,22 +150,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   end else assign WayHit = WayHitRaw;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // Write Path: Write Enables
+  // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
- 
-  // *** Ross considering restructuring
-  // move decoder and wordwritenable into cacheway.
-  onehotdecoder #(LOGWPL) adrdec(
-    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
-  assign SRAMWordEnable = SRAMLineWriteEnable ? '1 : MemPAdrDecoded; // OR
 
-  
-  assign SRAMLineWayWriteEnable = SRAMLineWriteEnable ? VictimWay : '0; // AND
-  assign SRAMWordWayWriteEnable = SRAMWordWriteEnable ? WayHit : '0; // AND
-  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWayWriteEnable), .d1(VictimWay), 
-    .s(SRAMLineWriteEnable), .y(SRAMWayWriteEnable));
   mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-		.d1(CacheMemWriteData),	.s(SRAMLineWriteEnable), .y(SRAMWriteData));
+		.d1(CacheMemWriteData),	.s(FSMLineWriteEn), .y(SRAMWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
@@ -192,11 +178,17 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
-  assign SelectedWay = SelFlush ? FlushWay : (SRAMLineWriteEnable ? VictimWay : WayHit);
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Write Path: Write Enables
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  assign SelectedWay = SelFlush ? FlushWay : (FSMLineWriteEn ? VictimWay : WayHit);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
-  assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;  
+  assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
+  assign WriteWordWayEn = FSMWordWriteEn ? SelectedWay : '0;
+  assign WriteLineWayEn = FSMLineWriteEn ? SelectedWay : '0;  
   
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -207,8 +199,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.RW, .Atomic, .CPUBusy, .IgnoreRequest,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
-		.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnable,
-		.SRAMLineWriteEnable, .SelEvict, .SelFlush,
+		.ClearValid, .SetDirty, .ClearDirty, .FSMWordWriteEn,
+		.FSMLineWriteEn, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
         .save, .restore,
