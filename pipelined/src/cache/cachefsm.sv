@@ -75,10 +75,7 @@ module cachefsm
    output logic       FlushAdrCntRst,
    output logic       FlushWayCntRst,
    output logic       save,
-   output logic       restore,
-   output logic       VDWriteEnable
-
-   );
+   output logic       restore);
   
   logic [1:0]         PreSelAdr;
   logic               resetDelay;
@@ -201,7 +198,6 @@ module cachefsm
                                (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
                                (CurrState == STATE_MISS_WRITE_WORD);
   assign SRAMLineWriteEnable = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
-  assign VDWriteEnable = (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY);
   assign LRUWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit)) |
                       (CurrState == STATE_MISS_READ_WORD_DELAY) |

@@ -99,10 +99,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [NUMWAYS-1:0] 						NextFlushWay;
   logic 									FlushWayCntEn;
   logic 									FlushWayCntRst;  
-  logic 									VDWriteEnable;
   logic 									SelEvict;
   logic 									LRUWriteEn;
-  logic [NUMWAYS-1:0] 						VDWriteEnableWay;
   logic 									SelFlush;
   logic                                     ResetOrFlushAdr, ResetOrFlushWay;
   logic [NUMWAYS-1:0]                       WayHitSaved, WayHitRaw;
@@ -124,7 +122,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .RAdr, .PAdr,
 		.WriteEnable(SRAMWayWriteEnable),
-		.VDWriteEnable(VDWriteEnableWay),
 		.WriteWordEnable(SRAMWordEnable),
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
@@ -191,7 +188,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 			  .en(FlushWayCntEn), .val({{NUMWAYS-1{1'b0}}, 1'b1}),
 			  .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
-  assign VDWriteEnableWay = FlushWay & {NUMWAYS{VDWriteEnable}};
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
   assign SelectedWay = SelFlush ? FlushWay : (SRAMLineWriteEnable ? VictimWay : WayHit);
@@ -215,5 +211,5 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
         .save, .restore,
-		.VDWriteEnable, .LRUWriteEn);
+        .LRUWriteEn);
 endmodule 
