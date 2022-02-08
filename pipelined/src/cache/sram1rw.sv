@@ -46,6 +46,7 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
   logic 			 WriteEnableD;
 
     //*** model as single port
+    // *** merge with simpleram
     always_ff @(posedge clk) begin
       AddrD <= Adr;
       WriteDataD <= WriteData;    /// ****** this is not right. there should not need to be a delay.  Implement alternative cache stall to avoid this.  Eliminates a bunch of delay flops elsewhere
