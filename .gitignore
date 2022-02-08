@@ -55,3 +55,4 @@ examples/C/fir/fir
 synthDC/hdl/*.sv
 linux/devicetree/debug/*
 !linux/devicetree/debug/dumpdts.sh
+*.dtb
