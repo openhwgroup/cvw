@@ -256,7 +256,7 @@ logic [3:0] dummy;
           if (signature[i] !== sig &
           //if (signature[i] !== dut.core.lsu.dtim.ram.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
-            if ((signature[i] !== '0 & signature[i+4] != 'x)) begin
+            if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
 //            if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
