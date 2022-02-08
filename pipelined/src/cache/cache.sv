@@ -121,8 +121,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .RAdr, .PAdr,
-		.WriteEnable(SRAMWayWriteEnable),
-		.WriteWordEnable(SRAMWordEnable),
+		.SRAMWayWriteEnable,
+		.SRAMWordEnable,
 		.TagWriteEnable(SRAMLineWayWriteEnable), 
 		.WriteData(SRAMWriteData),
         .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
@@ -157,9 +157,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
  
   // *** Ross considering restructuring
+  // move decoder and wordwritenable into cacheway.
   onehotdecoder #(LOGWPL) adrdec(
     .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   assign SRAMWordEnable = SRAMLineWriteEnable ? '1 : MemPAdrDecoded; // OR
+
+  
   assign SRAMLineWayWriteEnable = SRAMLineWriteEnable ? VictimWay : '0; // AND
   assign SRAMWordWayWriteEnable = SRAMWordWriteEnable ? WayHit : '0; // AND
   mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWayWriteEnable), .d1(VictimWay), 
