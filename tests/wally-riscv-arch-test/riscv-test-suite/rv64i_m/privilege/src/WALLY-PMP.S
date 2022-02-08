@@ -72,7 +72,7 @@
 .8byte 0x0, 0x0018FF0C0009001F, write_pmpcfg_0 # attempt to edit only pmp5cfg (pmpcfg0[47:40]) after lockout. 
 # instruction ignored, output is 0x0018900C0009001F, NOT 0x0018FF0C0009001F
 .8byte 0x5, 0xFFFFFFFF, write_pmpaddr_5 # attempt to edit pmpaddr5 after lockout.
-# instruction ignored, output is 0x80100300, NOT 0xFFFFFFFF
+# instruction ignored, output is 0x200400c0, NOT 0xFFFFFFFF
 
 # Test 12.3.2.2.2 Machine mode access
 

@@ -29,10 +29,10 @@
 
 rv32i_sc_tests = \
 	WALLY-ADD \
-    WALLY-SUB \
-    WALLY-SLT \
+	WALLY-SLT \
 	WALLY-SLTU \
-	WALLY-XOR 
+	WALLY-SUB \
+	WALLY-XOR
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 
