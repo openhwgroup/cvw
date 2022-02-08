@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// DCacheMem (Memory for the Data Cache)
+// cacheway
 //
 // Written: ross1728@gmail.com July 07, 2021
 //          Implements the data, tag, valid, dirty, and replacement bits.
@@ -31,117 +31,106 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
-				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) 
-  (input logic 		       clk,
-   input logic 						  reset,
+				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
+  input logic                        clk,
+  input logic                        reset,
 
-   input logic [$clog2(NUMLINES)-1:0] RAdr,
-   input logic [`PA_BITS-1:0] 		  PAdr,
-   input logic 						  WriteEnable,
-   input logic 						  VDWriteEnable, 
-   input logic [LINELEN/`XLEN-1:0] 	  WriteWordEnable,
-   input logic 						  TagWriteEnable,
-   input logic [LINELEN-1:0] 		  WriteData,
-   input logic 						  SetValid,
-   input logic 						  ClearValid,
-   input logic 						  SetDirty,
-   input logic 						  ClearDirty,
-   input logic 						  SelEvict,
-   input logic 						  VictimWay,
-   input logic 						  InvalidateAll,
-   input logic 						  SelFlush,
-   input logic 						  FlushWay,
+  input logic [$clog2(NUMLINES)-1:0] RAdr,
+  input logic [`PA_BITS-1:0]         PAdr,
+  input logic                        SRAMWayWriteEnable,
+  input logic [LINELEN/`XLEN-1:0]    SRAMWordEnable,
+  input logic                        TagWriteEnable,
+  input logic [LINELEN-1:0]          WriteData,
+  input logic                        SetValid,
+  input logic                        ClearValid,
+  input logic                        SetDirty,
+  input logic                        ClearDirty,
+  input logic                        SelEvict,
+  input logic                        Victim,
+  input logic                        InvalidateAll,
+  input logic                        SelFlush,
+  input logic                        Flush,
 
-   output logic [LINELEN-1:0] 		  ReadDataLineWayMasked,
-   output logic 					  WayHit,
-   output logic 					  VictimDirtyWay,
-   output logic [TAGLEN-1:0] 		  VictimTagWay
-   );
+  output logic [LINELEN-1:0]         SelectedReadDataLine,
+  output logic                       WayHit,
+  output logic                       VictimDirty,
+  output logic [TAGLEN-1:0]          VictimTag);
 
   logic [NUMLINES-1:0] 				  ValidBits;
   logic [NUMLINES-1:0] 				  DirtyBits;
-  logic [LINELEN-1:0] 				  ReadDataLineWay;
+  logic [LINELEN-1:0] 				  ReadDataLine;
   logic [TAGLEN-1:0] 				  ReadTag;
   logic 							  Valid;
   logic 							  Dirty;
-  logic 							  SelectedWay;
-  logic [TAGLEN-1:0] 				  VicDirtyWay;
-  logic [TAGLEN-1:0] 				  FlushThisWay;
+  logic 							  SelData;
+  logic                               SelTag;
 
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
   logic 							  SetValidD, ClearValidD;
   logic 							  SetDirtyD, ClearDirtyD;
-  logic 							  WriteEnableD, VDWriteEnableD;
-  
-  
-  
+  logic 							  SRAMWayWriteEnableD;
 
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Tag Array
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
+		.Adr(RAdr), .ReadData(ReadTag),
+	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
+
+  // AND portion of distributed tag multiplexer
+  assign SelTag = SelFlush ? Flush : Victim;
+  assign VictimTag = SelTag ? ReadTag : '0; // AND part of AOMux
+  assign VictimDirty = SelTag & Dirty & Valid;
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Data Array
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  // *** Potential optimization: if byte write enables are available, could remove subwordwrites
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN))
-    CacheDataMem(.clk(clk), .Addr(RAdr),
-          .ReadData(ReadDataLineWay[(words+1)*`XLEN-1:words*`XLEN] ),
-          .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-          .WriteEnable(WriteEnable & WriteWordEnable[words]));
+    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Adr(RAdr),
+      .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
+      .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
+      .WriteEnable(SRAMWayWriteEnable & SRAMWordEnable[words]));
   end
 
-  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN))
-  CacheTagMem(.clk(clk),
-			  .Addr(RAdr),
-			  .ReadData(ReadTag),
-			  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]),
-			  .WriteEnable(TagWriteEnable));
-
+  // AND portion of distributed read multiplexers
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  assign SelectedWay = SelFlush ? FlushWay : 
-					   SelEvict ? VictimWay : WayHit;  
-  assign ReadDataLineWayMasked = SelectedWay ? ReadDataLineWay : '0;  // first part of AO mux.
+  assign SelData = SelFlush ? Flush : (SelEvict ? Victim : WayHit);  
+  assign SelectedReadDataLine = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
-  assign VictimDirtyWay = SelFlush ? FlushWay & Dirty & Valid :
-						  VictimWay & Dirty & Valid;
-
-  assign VicDirtyWay = VictimWay ? ReadTag : '0;
-  assign FlushThisWay = FlushWay ? ReadTag : '0;
-  assign VictimTagWay = SelFlush ? FlushThisWay : VicDirtyWay;
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Valid Bits
+  /////////////////////////////////////////////////////////////////////////////////////////////
   
-  
-  always_ff @(posedge clk) begin
-    if (reset) 
-  	  ValidBits <= {NUMLINES{1'b0}};
-    else if (InvalidateAll) 
-  	  ValidBits <= {NUMLINES{1'b0}};
-    else if (SetValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b1;
-    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= 1'b0;
-	   end
-
-  always_ff @(posedge clk) begin
-    RAdrD <= RAdr;
-    SetValidD <= SetValid;
-    ClearValidD <= ClearValid;    
-    WriteEnableD <= WriteEnable;
-    VDWriteEnableD <= VDWriteEnable;
-  end
-
-  
+  always_ff @(posedge clk) begin // Valid bit array, 
+    if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
+    else if (SetValidD)                                     ValidBits[RAdrD] <= #1 1'b1;
+    else if (ClearValidD) ValidBits[RAdrD] <= #1 1'b0;
+	end
+  // *** consider revisiting whether these delays are the best option? 
+  flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
+  flop #(3) ValidCtrlDelayReg(clk, {SetValid, ClearValid, SRAMWayWriteEnable},
+    {SetValidD, ClearValidD, SRAMWayWriteEnableD});
   assign Valid = ValidBits[RAdrD];
 
-  // Dirty bits
-  if(DIRTY_BITS) begin:dirty
-    always_ff @(posedge clk) begin
-      if (reset)                                              DirtyBits <= {NUMLINES{1'b0}};
-      else if (SetDirtyD & (WriteEnableD | VDWriteEnableD))   DirtyBits[RAdrD] <= 1'b1;
-      else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= 1'b0;
-    end
-    always_ff @(posedge clk) begin
-      SetDirtyD <= SetDirty;
-      ClearDirtyD <= ClearDirty;
-    end
-    assign Dirty = DirtyBits[RAdrD];
-  end else begin:dirty
-    assign Dirty = 1'b0;
-  end
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Dirty Bits
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
-  
-endmodule // DCacheMemWay
+  // Dirty bits
+  if (DIRTY_BITS) begin:dirty
+    always_ff @(posedge clk) begin
+      if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
+      else if (SetDirtyD) DirtyBits[RAdrD] <= #1 1'b1;
+      else if (ClearDirtyD) DirtyBits[RAdrD] <= #1 1'b0;
+    end
+    flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
+    assign Dirty = DirtyBits[RAdrD];
+  end else assign Dirty = 1'b0;
+
+endmodule
 
 

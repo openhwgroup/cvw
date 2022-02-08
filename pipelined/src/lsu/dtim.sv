@@ -48,18 +48,18 @@ module dtim(
   output logic                DCacheMiss,
   output logic                DCacheAccess);
 
-    simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-        .clk, 
-        .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]),
-        .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
-        .wd(FinalWriteDataM), .rd(ReadDataWordM));
+  simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+      .clk, 
+      .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
+      .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
+      .wd(FinalWriteDataM), .rd(ReadDataWordM));
 
-    // since we have a local memory the bus connections are all disabled.
-    // There are no peripherals supported.
-    assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
-    assign ReadDataWordMuxM = ReadDataWordM;
-    assign {DCacheStallM, DCacheCommittedM} = '0;
-    assign {DCacheMiss, DCacheAccess} = '0;
+  // since we have a local memory the bus connections are all disabled.
+  // There are no peripherals supported.
+  assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
+  assign ReadDataWordMuxM = ReadDataWordM;
+  assign {DCacheStallM, DCacheCommittedM} = '0;
+  assign {DCacheMiss, DCacheAccess} = '0;
 
 endmodule  
   

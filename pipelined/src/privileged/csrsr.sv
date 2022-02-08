@@ -96,7 +96,7 @@ module csrsr (
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
   assign STATUS_SXL = `S_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if supervisor mode supported
   assign STATUS_UXL = `U_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if user mode supported
-  assign STATUS_SUM = `S_SUPPORTED & `MEM_VIRTMEM & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_SUM = `S_SUPPORTED & `VIRTMEM_SUPPORTED & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MPRV = `U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
   assign STATUS_FS = (`S_SUPPORTED & (`F_SUPPORTED | `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP  
   assign STATUS_SD = (STATUS_FS == 2'b11) | (STATUS_XS == 2'b11); // dirty state logic
@@ -117,7 +117,7 @@ module csrsr (
       STATUS_MXR_INT <= #1 0;
       STATUS_SUM_INT <= #1 0;
       STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
-      STATUS_FS_INT <= #1 0; //2'b01; // busybear: change all these reset values to 0
+      STATUS_FS_INT <= #1 0;
       STATUS_MPP <= #1 0; //`M_MODE;
       STATUS_SPP <= #1 0; //1'b1;
       STATUS_MPIE <= #1 0; //1;

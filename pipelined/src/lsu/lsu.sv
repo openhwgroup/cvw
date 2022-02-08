@@ -110,7 +110,7 @@ module lsu (
   // MMU include PMP and is needed if any privileged supported
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`MEM_VIRTMEM) begin : MEM_VIRTMEM
+  if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
                           .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
                           .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
@@ -167,49 +167,64 @@ module lsu (
   end
   
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // Hart Memory System
+  //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
-
-  if (`MEM_DTIM) begin : dtim
+  logic                SelUncachedAdr;
+  
+  if (`DMEM == `MEM_TIM) begin : dtim
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM,
               .DCacheMiss, .DCacheAccess);
 
   end else begin : bus  
-    localparam integer   WORDSPERLINE = `MEM_DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = `MEM_DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
-    logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
+    localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+    logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheMemWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
+    logic                save, restore;
+    logic [`PA_BITS-1:0] WordOffsetAddr;
+    logic                SelBus;
+    logic [LOGWPL-1:0]   WordCount;
+            
+    busdp #(WORDSPERLINE, LINELEN, `XLEN, LOGWPL, 1) busdp(
+      .clk, .reset,
+      .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
+      .WordCount,
+      .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
+      .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
+      .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
+      .BusStall, .BusCommittedM);
 
-    busdp #(WORDSPERLINE, LINELEN) 
-    busdp(.clk, .reset,
-          .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusHWDATA, .LSUBusSize, 
-          .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheFetchLine,
-          .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
-          .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
-          .BusStall, .BusCommittedM);
+    assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
+
     
-    if(`MEM_DCACHE) begin : dcache
+    if(`DMEM == `MEM_CACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) 
-        dcache(.clk, .reset, .CPUBusy,
-               .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), 
-               .Atomic(CacheableM ? LSUAtomicM : 2'b00), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
-               .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), 
-               .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
-               .IgnoreRequest, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
-               .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
-               .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
-               .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+              .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
+        .clk, .reset, .CPUBusy,
+        .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), 
+        .Atomic(CacheableM ? LSUAtomicM : 2'b00), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
+        .save, .restore,
+        .FinalWriteData(FinalWriteDataM),
+        .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
+        .IgnoreRequest, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
+        .ReadDataLine(ReadDataLineM), .CacheMemWriteData(DCacheMemWriteData),
+        .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
+        .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+
+      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
+        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+        .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
@@ -218,14 +233,14 @@ module lsu (
   end
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
-			              .Funct3M(LSUFunct3M), .ReadDataM);
+		.Funct3M(LSUFunct3M), .ReadDataM);
 
   // this might only get instantiated if there is a dcache or dtim.
   // There is a copy in the ebu. *** is it needed there, or can data come in from ebu, get muxed here and sent back out
   // Explore changing feedback path from output of AMOALU to subword write ***
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM), .HADDRD(LSUPAdrM[2:0]),
-			    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-			    .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
+		.HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
+		.HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
@@ -233,8 +248,8 @@ module lsu (
 
   if (`A_SUPPORTED) begin:atomic
     atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, 
-                  .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
-                  .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+      .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
+      .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
     assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = WriteDataM;
   end

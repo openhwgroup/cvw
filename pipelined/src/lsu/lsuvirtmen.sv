@@ -73,20 +73,16 @@ module lsuvirtmem(
 
   assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
 
-  interlockfsm interlockfsm (.clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
-                             .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM,
-                             .InterlockStall, .SelReplayCPURequest, .SelHPTW,
-                             .IgnoreRequest);
-  
-  hptw hptw(.clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
-            .ITLBMissF(ITLBMissF & ~TrapM),
-            .DTLBMissM(DTLBMissM & ~TrapM),
-            .PTE, .PageType, .ITLBWriteF, .DTLBWriteM,
-            .HPTWReadPTE(ReadDataM),
-            .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWSize);
+  interlockfsm interlockfsm (
+    .clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
+    .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM,
+    .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequest);
+  hptw hptw( // *** remove logic from (), mention this in style guide CH3
+    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
+    .ITLBMissF(ITLBMissF & ~TrapM), .DTLBMissM(DTLBMissM & ~TrapM),
+    .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
+    .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWSize);
 
-  // arbiter between IEU and hptw
-  
   // multiplex the outputs to LSU
   mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
@@ -98,5 +94,4 @@ module lsuvirtmem(
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;
-
-endmodule; // lsuvirtmem
+endmodule

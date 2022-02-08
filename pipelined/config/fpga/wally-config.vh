@@ -29,11 +29,8 @@
 
 `define FPGA 1
 `define QEMU 0
-`define BUILDROOT 0
-`define BUSYBEAR 0
 `define DESIGN_COMPILER 0
 
-//`define LINUX_TEST_VECTORS "/courses/e190ax/buildroot_boot/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -50,11 +47,9 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DTIM 0
-`define MEM_DCACHE 1
-`define MEM_IROM 0
-`define MEM_ICACHE 1
-`define MEM_VIRTMEM 1
+`define DMEM `MEM_CACHE
+`define IMEM `MEM_CACHE
+`define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
@@ -66,7 +61,6 @@
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
 `define DCACHE_LINELENINBITS 256
-`define DCACHE_REPLBITS 3
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_LINELENINBITS 256
@@ -136,3 +130,5 @@
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 1
+
+`define REPLAY 0

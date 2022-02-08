@@ -145,25 +145,18 @@ module csrm #(parameter
   assign IllegalCSRMWriteReadonlyM = CSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
 
   // CSRs
-  flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); //busybear: changed reset value to 0
+  flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
   if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin:deleg // DELEG registers should exist
     flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, MEDELEG_REGW);
     flopenr #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, MIDELEG_REGW);
-  end else begin
-    assign MEDELEG_REGW = 0;
-    assign MIDELEG_REGW = 0;
-  end
+  end else assign {MEDELEG_REGW, MIDELEG_REGW} = 0;
 
   flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
   flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
   if(`QEMU) assign MTVAL_REGW = `XLEN'b0;
   else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
-    if (`BUSYBEAR == 1) begin:counters // counter 1 (TIME) enable tied to 0 to match simulator***
-      flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, {CSRWriteValM[31:2],1'b0,CSRWriteValM[0]}, MCOUNTEREN_REGW);
-    end else  begin:counters
-      flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
-    end
+  flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
 
 
