@@ -243,19 +243,29 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
+    logic                        SelBPPredF;
+    logic [`XLEN-1:0]            BPPredPCF, PCNext0F;
+    logic                        BPPredWrongM;
+
   // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
   mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
+
+    mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+    mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
+    // Mux only required on instruction class miss prediction.
+    mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
+                                              .s(BPPredWrongM), .y(PCBPWrongInvalidate));
+
+
+
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
 
   // branch and jump predictor
   if (`BPRED_ENABLED) begin : bpred
-    logic                        SelBPPredF;
-    logic [`XLEN-1:0]            BPPredPCF, PCNext0F;
-    logic                        BPPredWrongM;
 
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
@@ -264,17 +274,12 @@ module ifu (
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .BPPredWrongM, 
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
     
-    mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
-    mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
-    // Mux only required on instruction class miss prediction.
-    mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
-                                              .s(BPPredWrongM), .y(PCBPWrongInvalidate));
-
   end else begin : bpred
     assign BPPredWrongE = PCSrcE;
     assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
-    assign PCNext1F = PCPlus2or4F;
-    assign PCBPWrongInvalidate = PCE;
+    assign SelBPPredF = 1'b0;
+    //assign PCNext1F = PCPlus2or4F;
+    //assign PCBPWrongInvalidate = PCE;
   end      
 
   // pcadder
