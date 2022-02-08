@@ -193,6 +193,7 @@ logic [3:0] dummy;
       memfilename = {pathname, tests[test], ".elf.memfile"};
       if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
       else              $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -290,6 +291,7 @@ logic [3:0] dummy;
             //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
             if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
             else                   $readmemh(memfilename, dut.uncore.ram.ram.RAM);
+            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
