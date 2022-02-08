@@ -29,8 +29,6 @@
 
 `define FPGA 0
 `define QEMU 0
-`define BUILDROOT 0
-`define BUSYBEAR 0
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
@@ -42,31 +40,28 @@
 // MISA RISC-V configuration per specification
 `define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 0
 `define COUNTERS 32
-`define ZICOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 0
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DTIM 0
-`define MEM_DCACHE 1
-`define MEM_IROM 0
-`define MEM_ICACHE 1
-`define MEM_VIRTMEM 1
+`define DMEM `MEM_TIM
+`define IMEM `MEM_TIM
+`define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
 // TLB configuration.  Entries should be a power of 2
-`define ITLB_ENTRIES 32
-`define DTLB_ENTRIES 32
+`define ITLB_ENTRIES 0
+`define DTLB_ENTRIES 0
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
 `define DCACHE_LINELENINBITS 256
-`define DCACHE_REPLBITS 3
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_LINELENINBITS 256
@@ -76,7 +71,7 @@
 `define DIV_BITSPERCYCLE 4
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 64
+`define PMP_ENTRIES 0
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
@@ -135,3 +130,4 @@
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
 
+`define REPLAY 0

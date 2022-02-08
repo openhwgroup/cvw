@@ -30,6 +30,10 @@ echo "INSTR_LIMIT  = ${INSTR_LIMIT}"
 echo "INSTR_WAVEON = ${INSTR_WAVEON}"
 echo "CHECKPOINT   = ${CHECKPOINT}"
 
+#vsim -c <<!
+#do wally-buildroot-batch.do $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
+#!
+# *** change config from buildroot to rv64gc
 vsim -c <<!
-do wally-buildroot-batch.do $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
+do wally-pipelined-batch.do buildroot buildroot $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
 !

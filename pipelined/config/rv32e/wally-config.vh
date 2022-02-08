@@ -29,8 +29,6 @@
 
 `define FPGA 0
 `define QEMU 0
-`define BUILDROOT 0
-`define BUSYBEAR 0
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
@@ -41,21 +39,20 @@
 
 // E
 `define MISA (32'h00000010) 
-`define ZICSR_SUPPORTED 1
+`define ZICSR_SUPPORTED 0
 `define ZIFENCEI_SUPPORTED 0
-`define COUNTERS 32
+`define COUNTERS 0
 `define ZICOUNTERS_SUPPORTED 0
 
 // Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define MEM_DTIM 0
-`define MEM_DCACHE 0
-`define MEM_IROM 0
-`define MEM_ICACHE 0
-`define MEM_VIRTMEM 0
-`define VECTORED_INTERRUPTS_SUPPORTED 1 
+// *** replace with MEM_BUS
+`define DMEM `MEM_BUS
+`define IMEM `MEM_BUS
+`define VIRTMEM_SUPPORTED 0
+`define VECTORED_INTERRUPTS_SUPPORTED 0 
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 0
@@ -66,14 +63,13 @@
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
 `define DCACHE_LINELENINBITS 256
-`define DCACHE_REPLBITS 3
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
 `define ICACHE_LINELENINBITS 256
 
 // Integer Divider Configuration
 // DIV_BITSPERCYCLE must be 1, 2, or 4
-`define DIV_BITSPERCYCLE 4
+`define DIV_BITSPERCYCLE 1
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 0
@@ -93,16 +89,16 @@
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       34'h80000000
 `define EXT_MEM_RANGE      34'h07FFFFFF
-`define CLINT_SUPPORTED 1'b1
+`define CLINT_SUPPORTED 1'b0
 `define CLINT_BASE  34'h02000000
 `define CLINT_RANGE 34'h0000FFFF
-`define GPIO_SUPPORTED 1'b1
+`define GPIO_SUPPORTED 1'b0
 `define GPIO_BASE   34'h10060000
 `define GPIO_RANGE  34'h000000FF
-`define UART_SUPPORTED 1'b1
+`define UART_SUPPORTED 1'b0
 `define UART_BASE   34'h10000000
 `define UART_RANGE  34'h00000007
-`define PLIC_SUPPORTED 1'b1
+`define PLIC_SUPPORTED 1'b0
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
 `define SDC_SUPPORTED 1'b0
@@ -129,6 +125,8 @@
 
 `define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"
-`define BPRED_ENABLED 1
+`define BPRED_ENABLED 0
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
+
+`define REPLAY 0

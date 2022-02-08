@@ -48,7 +48,7 @@ module spillsupport (
   output logic             CompressedF);
 
 
-  localparam integer   SPILLTHRESHOLD = `MEM_ICACHE ? `ICACHE_LINELENINBITS/32 : 1;
+  localparam integer   SPILLTHRESHOLD = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/32 : 1;
   logic [`XLEN-1:0] PCPlus2F;
   logic             TakeSpillF;
   logic             SpillF;
@@ -91,7 +91,7 @@ module spillsupport (
   flopenr #(16) SpillInstrReg(.clk(clk),
                               .en(SpillSaveF),
                               .reset(reset),
-                              .d(`MEM_ICACHE ? InstrRawF[15:0] : InstrRawF[31:16]),
+                              .d((`IMEM == `MEM_CACHE) ? InstrRawF[15:0] : InstrRawF[31:16]),
                               .q(SpillDataLine0));
 
   assign PostSpillInstrRawF = SpillF ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
