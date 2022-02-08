@@ -1432,6 +1432,7 @@ string imperas32f[] = '{
 
   string arch32i[] = '{
     `RISCVARCHTEST,
+    "rv32i_m/I/or-01", "5010",
     "rv32i_m/I/add-01", "5010",
     "rv32i_m/I/addi-01", "4010",
     "rv32i_m/I/and-01", "5010",
