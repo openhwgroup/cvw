@@ -58,7 +58,7 @@ def getBuildrootTC(short):
 tc = TestCase(
       name="buildroot-checkpoint",
       variant="rv64gc",
-      cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot-checkpoint 400100000 400000001 400000000\n!",
+      cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot-checkpoint 400100000 400000001 400000000\n!", # *** will this work with rv64gc rather than buildroot config?
       grepstr="400100000 instructions")
 configs.append(tc)
 
@@ -84,18 +84,18 @@ for test in tests32ic:
   tc = TestCase(
         name=test,
         variant="rv32ic",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-tim-batch.do rv32ic "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ic "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-#tests32e = ["wally32e"] 
-#for test in tests32e:
-#  tc = TestCase(
-#        name=test,
-#        variant="rv32e",
-#        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32e "+test+"\n!",
-#        grepstr="All tests ran without failures")
-#  configs.append(tc)
+tests32e = ["wally32e"] 
+for test in tests32e:
+  tc = TestCase(
+        name=test,
+        variant="rv32e",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32e "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
 
 
 import os
