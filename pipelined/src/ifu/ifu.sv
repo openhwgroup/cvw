@@ -113,6 +113,8 @@ module ifu (
   logic 					   ICacheStallF, IFUCacheBusStallF;
   logic 					   CPUBusy;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
+  // branch predictor signal
+  logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
 
   assign PCFExt = {2'b00, PCFSpill};
 
@@ -232,9 +234,6 @@ module ifu (
     end
   end  
   
-  // branch predictor signal
-  logic [`XLEN-1:0]            PCNext1F, PCNext2F;
-
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
   assign CPUBusy = StallF & ~SelNextSpillF;
@@ -243,16 +242,9 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-    logic [`XLEN-1:0]            BPPredPCF, PCNext0F;
-
-
-  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
-  mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
-
-  // *** moved outside the bp.  clean up.  Should not be able to remove without bp.
-  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
@@ -261,6 +253,7 @@ module ifu (
   if (`BPRED_ENABLED) begin : bpred
     logic                        BPPredWrongM;
     logic                        SelBPPredF;
+    logic [`XLEN-1:0]            BPPredPCF;
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushF, .FlushD, .FlushE, .FlushM,
@@ -272,13 +265,15 @@ module ifu (
     // Mux only required on instruction class miss prediction.
     mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
                                               .s(BPPredWrongM), .y(PCBPWrongInvalidate));
+  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
+    mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
     
   end else begin : bpred
     assign BPPredWrongE = PCSrcE;
     assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
     assign PCNext0F = PCPlus2or4F;
-    //assign PCNext1F = PCPlus2or4F;
-    //assign PCBPWrongInvalidate = PCE;
+    assign PCCorrectE = IEUAdrE;
+    assign PCBPWrongInvalidate = PCE;
   end      
 
   // pcadder
