@@ -333,4 +333,4 @@ set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"
 redirect $filename { report_hierarchy }
 
 #Quit
-quit 
+#quit 
