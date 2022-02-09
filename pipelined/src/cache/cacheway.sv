@@ -121,13 +121,12 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
-    else if (SetValidD)                                     ValidBits[RAdrD] <= #1 1'b1;
-    else if (ClearValidD) ValidBits[RAdrD] <= #1 1'b0;
+    else if (SetValid)                                     ValidBits[RAdr] <= #1 1'b1;
+    else if (ClearValid) ValidBits[RAdr] <= #1 1'b0;
 	end
   // *** consider revisiting whether these delays are the best option? 
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
-  flop #(2) ValidCtrlDelayReg(clk, {SetValid, ClearValid},
-    {SetValidD, ClearValidD});
+  //flop #(2) ValidCtrlDelayReg(clk, {SetValid, ClearValid}, {SetValidD, ClearValidD});
   assign Valid = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,8 +137,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
       if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      else if (SetDirtyD) DirtyBits[RAdrD] <= #1 1'b1;
-      else if (ClearDirtyD) DirtyBits[RAdrD] <= #1 1'b0;
+      else if (SetDirty) DirtyBits[RAdr] <= #1 1'b1;
+      else if (ClearDirty) DirtyBits[RAdr] <= #1 1'b0;
     end
     flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
     assign Dirty = DirtyBits[RAdrD];
