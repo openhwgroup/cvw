@@ -105,14 +105,14 @@ module cachefsm
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
 
-  assign DoFlush = FlushCache & ~IgnoreRequest;
-  assign DoAMO = Atomic[1] & (&RW) & ~IgnoreRequest;
+  assign DoFlush = FlushCache & ~IgnoreRequest; // *** have to fix ignorerequest timing path
+  assign DoAMO = Atomic[1] & (&RW) & ~IgnoreRequest; // ***
   assign DoAMOHit = DoAMO & CacheHit;
-  assign DoAMOMiss = DoAMOHit & ~CacheHit;  
-  assign DoRead = RW[1] & ~IgnoreRequest;
+  assign DoAMOMiss = DoAMO & ~CacheHit;  
+  assign DoRead = RW[1] & ~IgnoreRequest; // ***
   assign DoReadHit = DoRead & CacheHit;
   assign DoReadMiss = DoRead & ~CacheHit;
-  assign DoWrite = RW[0] & ~IgnoreRequest;
+  assign DoWrite = RW[0] & ~IgnoreRequest; // ***
   assign DoWriteHit = DoWrite & CacheHit;
   assign DoWriteMiss = DoWrite & ~CacheHit;
 
@@ -225,15 +225,15 @@ module cachefsm
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
 
   // **** can this be simplified?
-  assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequest) | 
-                      (CurrState == STATE_READY & DoAMOHit) |
+  assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequest) | // *** ignorerequest comes from TrapM. Have to fix.  why is ignorerequest here anyway?
+                      (CurrState == STATE_READY & DoAMOHit) |  //<opHit> also depends on ignorerequest
                       (CurrState == STATE_READY & DoReadHit & (CPUBusy & `REPLAY)) |
                       (CurrState == STATE_READY & DoWriteHit) |
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) | 
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) | 
                       (CurrState == STATE_MISS_READ_WORD) |
-                      (CurrState == STATE_MISS_READ_WORD_DELAY & (DoAMO | (CPUBusy & `REPLAY))) |
+                      (CurrState == STATE_MISS_READ_WORD_DELAY & (DoAMO | (CPUBusy & `REPLAY))) | // ***
                       (CurrState == STATE_MISS_WRITE_WORD) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY)) |
