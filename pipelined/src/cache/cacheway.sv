@@ -32,30 +32,32 @@
 
 module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
-  input logic 		       clk,
-  input logic 						  reset,
+  input logic                        clk,
+  input logic                        reset,
 
-   input logic [$clog2(NUMLINES)-1:0] RAdr,
-   input logic [`PA_BITS-1:0] 		  PAdr,
-   input logic 						  WriteEnable,
-   input logic 						  VDWriteEnable, 
-   input logic [LINELEN/`XLEN-1:0] 	  WriteWordEnable,
-   input logic 						  TagWriteEnable,
-   input logic [LINELEN-1:0] 		  WriteData,
-   input logic 						  SetValid,
-   input logic 						  ClearValid,
-   input logic 						  SetDirty,
-   input logic 						  ClearDirty,
-   input logic 						  SelEvict,
-   input logic 						  Victim,
-   input logic 						  InvalidateAll,
-   input logic 						  SelFlush,
-   input logic 						  Flush,
+  input logic [$clog2(NUMLINES)-1:0] RAdr,
+  input logic [`PA_BITS-1:0]         PAdr,
+  input logic                        WriteWordEn,
+  input logic                        WriteLineEn,
+  input logic [LINELEN-1:0]          WriteData,
+  input logic                        SetValid,
+  input logic                        ClearValid,
+  input logic                        SetDirty,
+  input logic                        ClearDirty,
+  input logic                        SelEvict,
+  input logic                        Victim,
+  input logic                        InvalidateAll,
+  input logic                        SelFlush,
+  input logic                        Flush,
 
-   output logic [LINELEN-1:0] 		  SelectedReadDataLine,
-   output logic 					  WayHit,
-   output logic 					  VictimDirty,
-   output logic [TAGLEN-1:0] 		  VictimTag);
+  output logic [LINELEN-1:0]         SelectedReadDataLine,
+  output logic                       WayHit,
+  output logic                       VictimDirty,
+  output logic [TAGLEN-1:0]          VictimTag);
+
+  localparam                         WORDSPERLINE = LINELEN/`XLEN;
+  localparam                         LOGWPL = $clog2(WORDSPERLINE);
+  localparam                         LOGXLENBYTES = $clog2(`XLEN/8);
 
   logic [NUMLINES-1:0] 				  ValidBits;
   logic [NUMLINES-1:0] 				  DirtyBits;
@@ -64,20 +66,31 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic 							  Valid;
   logic 							  Dirty;
   logic 							  SelData;
-  logic                 SelTag;
+  logic                               SelTag;
 
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
   logic 							  SetValidD, ClearValidD;
   logic 							  SetDirtyD, ClearDirtyD;
-  logic 							  WriteEnableD, VDWriteEnableD;
+
+  logic [2**LOGWPL-1:0]               MemPAdrDecoded;
+  logic [LINELEN/`XLEN-1:0]           SelectedWriteWordEn;
   
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Write Enable demux
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  onehotdecoder #(LOGWPL) adrdec(
+    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
+  // If writing the whole line set all write enables to 1, else only set the correct word.
+  assign SelectedWriteWordEn = WriteLineEn ? '1 : WriteWordEn ? MemPAdrDecoded : '0; // OR-AND
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
 		.Adr(RAdr), .ReadData(ReadTag),
-	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(TagWriteEnable));
+	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineEn));
 
   // AND portion of distributed tag multiplexer
   assign SelTag = SelFlush ? Flush : Victim;
@@ -94,7 +107,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Adr(RAdr),
       .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
       .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
-      .WriteEnable(WriteEnable & WriteWordEnable[words]));
+      .WriteEnable(SelectedWriteWordEn[words]));
   end
 
   // AND portion of distributed read multiplexers
@@ -108,13 +121,12 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
-    else if (SetValidD   & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b1;
-    else if (ClearValidD & (WriteEnableD | VDWriteEnableD)) ValidBits[RAdrD] <= #1 1'b0;
+    else if (SetValid)                                     ValidBits[RAdr] <= #1 1'b1;
+    else if (ClearValid) ValidBits[RAdr] <= #1 1'b0;
 	end
   // *** consider revisiting whether these delays are the best option? 
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
-  flop #(4) ValidCtrlDelayReg(clk, {SetValid, ClearValid, WriteEnable, VDWriteEnable},
-    {SetValidD, ClearValidD, WriteEnableD, VDWriteEnableD});
+  //flop #(2) ValidCtrlDelayReg(clk, {SetValid, ClearValid}, {SetValidD, ClearValidD});
   assign Valid = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,12 +137,13 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
       if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      else if (SetDirtyD   & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= #1 1'b1;
-      else if (ClearDirtyD & (WriteEnableD | VDWriteEnableD)) DirtyBits[RAdrD] <= #1 1'b0;
+      else if (SetDirty) DirtyBits[RAdr] <= #1 1'b1;
+      else if (ClearDirty) DirtyBits[RAdr] <= #1 1'b0;
     end
     flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
     assign Dirty = DirtyBits[RAdrD];
   end else assign Dirty = 1'b0;
+
 endmodule
 
 

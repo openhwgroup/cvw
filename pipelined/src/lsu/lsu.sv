@@ -173,7 +173,8 @@ module lsu (
   logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
-
+  logic                SelUncachedAdr;
+  
   if (`DMEM == `MEM_TIM) begin : dtim
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
@@ -183,20 +184,29 @@ module lsu (
   end else begin : bus  
     localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
-    logic [`XLEN-1:0]    ReadDataLineSetsM [WORDSPERLINE-1:0];
+    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+    logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheMemWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-
-    busdp #(WORDSPERLINE, LINELEN) busdp(
+    logic                save, restore;
+    logic [`PA_BITS-1:0] WordOffsetAddr;
+    logic                SelBus;
+    logic [LOGWPL-1:0]   WordCount;
+            
+    busdp #(WORDSPERLINE, LINELEN, `XLEN, LOGWPL, 1) busdp(
       .clk, .reset,
-      .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusHWDATA, .LSUBusSize, 
-      .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .ReadDataLineSetsM, .DCacheFetchLine,
+      .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
+      .WordCount,
+      .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
+
+    assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
+
     
     if(`DMEM == `MEM_CACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
@@ -204,12 +214,17 @@ module lsu (
         .clk, .reset, .CPUBusy,
         .RW(CacheableM ? LSURWM : 2'b00), .FlushCache(FlushDCacheM), 
         .Atomic(CacheableM ? LSUAtomicM : 2'b00), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM),
-        .FinalWriteData(FinalWriteDataM), .ReadDataWord(ReadDataWordM), 
+        .save, .restore,
+        .FinalWriteData(FinalWriteDataM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequest, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
-        .ReadDataLineSets(ReadDataLineSetsM), .CacheMemWriteData(DCacheMemWriteData),
+        .ReadDataLine(ReadDataLineM), .CacheMemWriteData(DCacheMemWriteData),
         .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
         .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+
+      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
+        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+        .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;

@@ -1498,12 +1498,12 @@ string imperas32f[] = '{
 
  string wally32e[] = '{
     `WALLYTEST,
+    "rv32i_m/I/E-beq-01", "03b010",
     "rv32i_m/I/E-add-01", "005010",
     "rv32i_m/I/E-addi-01", "004010",
     "rv32i_m/I/E-and-01", "005010",
     "rv32i_m/I/E-andi-01", "004010",
     "rv32i_m/I/E-auipc-01", "002010",
-    "rv32i_m/I/E-beq-01", "03b010",
     "rv32i_m/I/E-bge-01", "034010",
     "rv32i_m/I/E-bgeu-01", "047010",
     "rv32i_m/I/E-blt-01", "038010",

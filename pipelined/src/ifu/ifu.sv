@@ -92,7 +92,7 @@ module ifu (
   logic [`XLEN-3:0]            PCPlusUpperF;
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF;
-  logic [`XLEN-1:0]            FinalInstrRawF;
+  logic [31:0]                 FinalInstrRawF;
   
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
@@ -113,6 +113,8 @@ module ifu (
   logic 					   ICacheStallF, IFUCacheBusStallF;
   logic 					   CPUBusy;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
+  // branch predictor signal
+  logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
 
   assign PCFExt = {2'b00, PCFSpill};
 
@@ -180,23 +182,27 @@ module ifu (
   end else begin : bus
     localparam integer   WORDSPERLINE = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+    logic [LINELEN-1:0]  ReadDataLine;
     logic [LINELEN-1:0]  ICacheMemWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
-
-
-    busdp #(WORDSPERLINE, LINELEN) 
+    logic                save,restore;
+    logic [31:0]         temp;
+    
+    busdp #(WORDSPERLINE, LINELEN, 32, LOGWPL) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), 
-          .LSUBusRead(IFUBusRead), .LSUBusHWDATA(), .LSUBusSize(), 
+          .LSUBusRead(IFUBusRead), .LSUBusSize(), 
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
-          .ReadDataLineSetsM(), .DCacheFetchLine(ICacheFetchLine),
+          .WordCount(), .LSUBusHWDATA(),
+          .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheMemWriteData(ICacheMemWriteData), .LSUPAdrM(PCPF),
-          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF), 
+          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
-    
+
     if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;
       assign IFURWF = CacheableF ? 2'b10 : 2'b00;
@@ -207,8 +213,9 @@ module ifu (
       icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), 
              .CacheMemWriteData(ICacheMemWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
-             .ReadDataWord(FinalInstrRawF), .CacheFetchLine(ICacheFetchLine),
-             .CacheWriteLine(), .ReadDataLineSets(),
+             .CacheFetchLine(ICacheFetchLine),
+             .CacheWriteLine(), .ReadDataLine(ReadDataLine),
+             .save, .restore,
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .FinalWriteData('0),
              .RW(IFURWF), 
@@ -217,15 +224,16 @@ module ifu (
              .PAdr(PCPF),
              .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
 
+      subcachelineread #(LINELEN, 32, 16) subcachelineread(
+        .clk, .reset, .PAdr(PCPF), .save, .restore,
+        .ReadDataLine, .ReadDataWord(FinalInstrRawF));
+
     end else begin : passthrough
       assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;
       assign ICacheAccess = CacheableF; assign ICacheMiss = CacheableF;
     end
   end  
   
-  // branch predictor signal
-  logic [`XLEN-1:0]            PCNext1F, PCNext2F;
-
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
   assign CPUBusy = StallF & ~SelNextSpillF;
@@ -234,8 +242,7 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
-  mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
 
@@ -244,27 +251,28 @@ module ifu (
 
   // branch and jump predictor
   if (`BPRED_ENABLED) begin : bpred
-    logic                        SelBPPredF;
-    logic [`XLEN-1:0]            BPPredPCF, PCNext0F;
     logic                        BPPredWrongM;
-
+    logic                        SelBPPredF;
+    logic [`XLEN-1:0]            BPPredPCF;
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushF, .FlushD, .FlushE, .FlushM,
                 .InstrD, .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .BPPredWrongM, 
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
-    
+
     mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
-    mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
     // Mux only required on instruction class miss prediction.
     mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
                                               .s(BPPredWrongM), .y(PCBPWrongInvalidate));
-
+  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
+    mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+    
   end else begin : bpred
     assign BPPredWrongE = PCSrcE;
     assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
-    assign PCNext1F = PCPlus2or4F;
+    assign PCNext0F = PCPlus2or4F;
+    assign PCCorrectE = IEUAdrE;
     assign PCBPWrongInvalidate = PCE;
   end      
 

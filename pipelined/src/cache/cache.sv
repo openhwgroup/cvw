@@ -31,38 +31,38 @@
 `include "wally-config.vh"
 
 module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
-  input logic clk,
-   input logic				   reset,
+  input logic                 clk,
+  input logic                 reset,
    // cpu side
-   input logic				   CPUBusy,
-   input logic [1:0]		   RW,
-   input logic [1:0]		   Atomic,
-   input logic				   FlushCache,
-   input logic				   InvalidateCacheM,
-   input logic [11:0]		   NextAdr, // virtual address, but we only use the lower 12 bits.
-   input logic [`PA_BITS-1:0]  PAdr, // physical address
-   input logic [`XLEN-1:0]	   FinalWriteData,
-   output logic [`XLEN-1:0]	   ReadDataWord,
-   output logic				   CacheCommitted,
-   output logic				   CacheStall,
+  input logic                 CPUBusy,
+  input logic [1:0]           RW,
+  input logic [1:0]           Atomic,
+  input logic                 FlushCache,
+  input logic                 InvalidateCacheM,
+  input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
+  input logic [`PA_BITS-1:0]  PAdr, // physical address
+  input logic [`XLEN-1:0]     FinalWriteData,
+  output logic                CacheCommitted,
+  output logic                CacheStall,
    // to performance counters to cpu
-   output logic				   CacheMiss,
-   output logic				   CacheAccess,
+  output logic                CacheMiss,
+  output logic                CacheAccess,
+  output logic                save, restore,
    // lsu control
-   input logic				   IgnoreRequest,
+  input logic                 IgnoreRequest,
    // Bus fsm interface
-   output logic				   CacheFetchLine,
-   output logic				   CacheWriteLine,
-   input logic				   CacheBusAck,
-   output logic [`PA_BITS-1:0] CacheBusAdr,
-   input logic [LINELEN-1:0]   CacheMemWriteData,
-   output logic [`XLEN-1:0]	   ReadDataLineSets [(LINELEN/`XLEN)-1:0]);
+  output logic                CacheFetchLine,
+  output logic                CacheWriteLine,
+  input logic                 CacheBusAck,
+  output logic [`PA_BITS-1:0] CacheBusAdr,
+  input logic [LINELEN-1:0]   CacheMemWriteData,
+  output logic [LINELEN-1:0]  ReadDataLine);
 
   // Cache parameters
   localparam  						LINEBYTELEN = LINELEN/8;
   localparam  						OFFSETLEN = $clog2(LINEBYTELEN);
   localparam  						SETLEN = $clog2(NUMLINES);
-  localparam              SETTOP = SETLEN+OFFSETLEN;
+  localparam                        SETTOP = SETLEN+OFFSETLEN;
   localparam  						TAGLEN = `PA_BITS - SETTOP;
   localparam  						WORDSPERLINE = LINELEN/`XLEN;
   localparam  						LOGWPL = $clog2(WORDSPERLINE);
@@ -77,13 +77,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [LINELEN-1:0] 						ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0] 						WayHit;
   logic 									CacheHit;
-  logic [LINELEN-1:0] 						ReadDataLine;
-  logic [WORDSPERLINE-1:0] 					SRAMWordEnable;
-  logic 									SRAMWordWriteEnable;
-  logic 									SRAMLineWriteEnable;
+  logic 									FSMWordWriteEn;
+  logic 									FSMLineWriteEn;
   logic [NUMWAYS-1:0] 						SRAMLineWayWriteEnable;
-  logic [NUMWAYS-1:0] 						SRAMWayWriteEnable;
-  logic [NUMWAYS-1:0]             SRAMWordWayWriteEnable;
   logic [NUMWAYS-1:0] 						VictimWay;
   logic [NUMWAYS-1:0] 						VictimDirtyWay;
   logic 									VictimDirty;
@@ -100,13 +96,16 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [NUMWAYS-1:0] 						NextFlushWay;
   logic 									FlushWayCntEn;
   logic 									FlushWayCntRst;  
-  logic 									VDWriteEnable;
   logic 									SelEvict;
   logic 									LRUWriteEn;
-  logic [NUMWAYS-1:0] 						VDWriteEnableWay;
   logic 									SelFlush;
-  logic                   ResetOrFlushAdr, ResetOrFlushWay;
-
+  logic                                     ResetOrFlushAdr, ResetOrFlushWay;
+  logic [NUMWAYS-1:0]                       WayHitSaved, WayHitRaw;
+  logic [LINELEN-1:0]                       ReadDataLineRaw, ReadDataLineSaved;
+  logic [NUMWAYS-1:0]                       SelectedWay;
+  logic [NUMWAYS-1:0]                       SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
+  logic [NUMWAYS-1:0]                       WriteWordWayEn, WriteLineWayEn;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,13 +119,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .RAdr, .PAdr,
-		.WriteEnable(SRAMWayWriteEnable),
-		.VDWriteEnable(VDWriteEnableWay),
-		.WriteWordEnable(SRAMWordEnable),
-		.TagWriteEnable(SRAMLineWayWriteEnable), 
+        .WriteWordEn(WriteWordWayEn),
+        .WriteLineEn(WriteLineWayEn),
 		.WriteData(SRAMWriteData),
-		.SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .Victim(VictimWay), .Flush(FlushWay), .SelFlush,
-		.SelectedReadDataLine(ReadDataLineWay), .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
+        .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
+        .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
+        .SelFlush,
+		.SelectedReadDataLine(ReadDataLineWay), .WayHit(WayHitRaw), .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
@@ -138,45 +137,24 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
   or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
-  or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));  
+  or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
 
 
-  // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
-  // easily build a variable input mux.
-  // *** move this to LSU and IFU, also remove mux from busdp into LSU. 
-  // *** give this a module name to match block diagram
-  genvar index;
-	if(DCACHE == 1) begin: readdata
-    for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-		  assign ReadDataLineSets[index] = ReadDataLine[((index+1)*`XLEN)-1: (index*`XLEN)];
-    end
-	  // variable input mux
-	  assign ReadDataWord = ReadDataLineSets[PAdr[LOGWPL + LOGXLENBYTES - 1 : LOGXLENBYTES]];
-	end else begin: readdata
-	  logic [31:0] 				  ReadLineSetsF [LINELEN/16-1:0];
-	  logic [31:0] 				  FinalInstrRawF;
-	  for(index = 0; index < LINELEN / 16 - 1; index++) 
-		  assign ReadLineSetsF[index] = ReadDataLine[((index+1)*16)+16-1 : (index*16)];
-	  assign ReadLineSetsF[LINELEN/16-1] = {16'b0, ReadDataLine[LINELEN-1:LINELEN-16]};
-	  assign FinalInstrRawF = ReadLineSetsF[PAdr[$clog2(LINELEN / 32) + 1 : 1]];
-	  if (`XLEN == 64) assign ReadDataWord = {32'b0, FinalInstrRawF};		
-	  else             assign ReadDataWord = FinalInstrRawF;				
-	end
-
+  // Because of the sram clocked read when the ieu is stalled the read data maybe lost.
+  // There are two ways to resolve. 1. We can replay the read of the sram or we can save
+  // the data.  Replay is eaiser but creates a longer critical path.
+  // save/restore only wayhit and readdata.
+  if(!`REPLAY) begin
+    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
+    mux2 #(NUMWAYS) saverestoremux(WayHitRaw, WayHitSaved, restore, WayHit);
+  end else assign WayHit = WayHitRaw;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // Write Path: Write Enables
+  // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
- 
-  // *** Ross considering restructuring
-  onehotdecoder #(LOGWPL) adrdec(
-    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
-  assign SRAMWordEnable = SRAMLineWriteEnable ? '1 : MemPAdrDecoded; // OR
-  assign SRAMLineWayWriteEnable = SRAMLineWriteEnable ? VictimWay : '0; // AND
-  assign SRAMWordWayWriteEnable = SRAMWordWriteEnable ? WayHit : '0; // AND
-  mux2 #(NUMWAYS) WriteEnableMux(.d0(SRAMWordWayWriteEnable), .d1(VictimWay), 
-    .s(SRAMLineWriteEnable), .y(SRAMWayWriteEnable));
+
   mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-		.d1(CacheMemWriteData),	.s(SRAMLineWriteEnable), .y(SRAMWriteData));
+		.d1(CacheMemWriteData),	.s(FSMLineWriteEn), .y(SRAMWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
@@ -198,8 +176,20 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 			  .en(FlushWayCntEn), .val({{NUMWAYS-1{1'b0}}, 1'b1}),
 			  .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
-  assign VDWriteEnableWay = FlushWay & {NUMWAYS{VDWriteEnable}};
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Write Path: Write Enables
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  assign SelectedWay = SelFlush ? FlushWay : (FSMLineWriteEn ? VictimWay : WayHit);
+  assign SetValidWay = SetValid ? SelectedWay : '0;
+  assign ClearValidWay = ClearValid ? SelectedWay : '0;
+  assign SetDirtyWay = SetDirty ? SelectedWay : '0;
+  assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
+  assign WriteWordWayEn = FSMWordWriteEn ? SelectedWay : '0;
+  assign WriteLineWayEn = FSMLineWriteEn ? SelectedWay : '0;  
+  
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
@@ -209,9 +199,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.RW, .Atomic, .CPUBusy, .IgnoreRequest,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
-		.ClearValid, .SetDirty, .ClearDirty, .SRAMWordWriteEnable,
-		.SRAMLineWriteEnable, .SelEvict, .SelFlush,
+		.ClearValid, .SetDirty, .ClearDirty, .FSMWordWriteEn,
+		.FSMLineWriteEn, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
-		.VDWriteEnable, .LRUWriteEn);
+        .save, .restore,
+        .LRUWriteEn);
 endmodule 

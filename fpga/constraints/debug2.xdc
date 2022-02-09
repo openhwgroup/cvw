@@ -282,7 +282,7 @@ connect_debug_port u_ila_0/probe65 [get_nets [list wallypipelinedsoc/core/priv.p
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe66]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe66]
-connect_debug_port u_ila_0/probe66 [get_nets [list wallypipelinedsoc/core/priv.priv/trap/StorePageFaultM ]]
+connect_debug_port u_ila_0/probe66 [get_nets [list wallypipelinedsoc/core/priv.priv/trap/StoreAmoPageFaultM ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe67]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe67]
@@ -446,7 +446,7 @@ connect_debug_port u_ila_0/probe98 [get_nets [list wallypipelinedsoc/core/hzu/Fl
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe99]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe99]
-connect_debug_port u_ila_0/probe99 [get_nets [list {wallypipelinedsoc/core/ifu/icache.icache/cachefsm/CurrState[0]} {wallypipelinedsoc/core/ifu/icache.icache/cachefsm/CurrState[1]} {wallypipelinedsoc/core/ifu/icache.icache/cachefsm/CurrState[2]} {wallypipelinedsoc/core/ifu/icache.icache/cachefsm/CurrState[3]}]]
+connect_debug_port u_ila_0/probe99 [get_nets [list {wallypipelinedsoc/core/ifu/bus.icache.icache/cachefsm/CurrState[0]} {wallypipelinedsoc/core/ifu/bus.icache.icache/cachefsm/CurrState[1]} {wallypipelinedsoc/core/ifu/bus.icache.icache/cachefsm/CurrState[2]} {wallypipelinedsoc/core/ifu/bus.icache.icache/cachefsm/CurrState[3]}]]
 
 
 create_debug_port u_ila_0 probe
@@ -555,7 +555,7 @@ connect_debug_port u_ila_0/probe119 [get_nets [list wallypipelinedsoc/core/lsu/D
 create_debug_port u_ila_0 probe
 set_property port_width 11 [get_debug_ports u_ila_0/probe120]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe120]
-connect_debug_port u_ila_0/probe120 [get_nets [list {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[0]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[1]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[2]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[3]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[4]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[5]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[6]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[7]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[8]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[9]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.hptw/WalkerState[10]}]]
+connect_debug_port u_ila_0/probe120 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[2]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[3]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[4]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[5]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[6]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[7]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[8]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[9]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[10]}]]
 
 
 create_debug_port u_ila_0 probe
@@ -574,23 +574,23 @@ connect_debug_port u_ila_0/probe122 [get_nets [list {wallypipelinedsoc/core/ifu/
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe123]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe123]
-connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/core/ifu/bus.busfsm/BusCurrState[0]} {wallypipelinedsoc/core/ifu/bus.busfsm/BusCurrState[1]} {wallypipelinedsoc/core/ifu/bus.busfsm/BusCurrState[2]} ]]
+connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/core/ifu/bus.busdp/busfsm/BusCurrState[0]} {wallypipelinedsoc/core/ifu/bus.busdp/busfsm/BusCurrState[1]} {wallypipelinedsoc/core/ifu/bus.busdp/busfsm/BusCurrState[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe124]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe124]
-connect_debug_port u_ila_0/probe124 [get_nets [list wallypipelinedsoc/core/ifu/SpillSupport.CurrState[0] ]]
+connect_debug_port u_ila_0/probe124 [get_nets [list wallypipelinedsoc/core/ifu/SpillSupport.spillsupport/CurrState[0] ]]
 
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe125]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe125]
-connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/bus.busfsm/BusCurrState[0]} {wallypipelinedsoc/core/lsu/bus.busfsm/BusCurrState[1]} {wallypipelinedsoc/core/lsu/bus.busfsm/BusCurrState[2]} ]]
+connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/bus.busdp/busfsm/BusCurrState[0]} {wallypipelinedsoc/core/lsu/bus.busdp/busfsm/BusCurrState[1]} {wallypipelinedsoc/core/lsu/bus.busdp/busfsm/BusCurrState[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe126]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe126]
-connect_debug_port u_ila_0/probe126 [get_nets [list {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.interlockfsm/InterlockCurrState[0]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.interlockfsm/InterlockCurrState[1]} {wallypipelinedsoc/core/lsu/MEM_VIRTMEM.interlockfsm/InterlockCurrState[2]} ]]
+connect_debug_port u_ila_0/probe126 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState[2]} ]]
 
 
 create_debug_port u_ila_0 probe

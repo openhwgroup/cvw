@@ -41,21 +41,25 @@ module sram1rw #(parameter DEPTH=128, WIDTH=256) (
   output logic [WIDTH-1:0] 	       ReadData);
 
   logic [WIDTH-1:0] StoredData[DEPTH-1:0];
-  logic [$clog2(DEPTH)-1:0] 	 AddrD;
+  logic [$clog2(DEPTH)-1:0] 	 AdrD;
   logic [WIDTH-1:0] 		 WriteDataD;
   logic 			 WriteEnableD;
 
     //*** model as single port
+    // *** merge with simpleram
     always_ff @(posedge clk) begin
-      AddrD <= Adr;
-      WriteDataD <= WriteData;    /// ****** this is not right. there should not need to be a delay.  Implement alternative cache stall to avoid this.  Eliminates a bunch of delay flops elsewhere
-      WriteEnableD <= WriteEnable;
-        if (WriteEnableD) begin
-            StoredData[AddrD] <= #1 WriteDataD;
-        end
+      AdrD <= Adr;
+      //WriteDataD <= WriteData;    /// ****** this is not right. there should not need to be a delay.  Implement alternative cache stall to avoid this.  Eliminates a bunch of delay flops elsewhere
+      //WriteEnableD <= WriteEnable;
+      //if (WriteEnableD) begin
+        //StoredData[AddrD] <= #1 WriteDataD;
+      //end
+      if (WriteEnable) begin
+        StoredData[Adr] <= #1 WriteData;
+      end
     end
 
-  assign ReadData = StoredData[AddrD];
+  assign ReadData = StoredData[AdrD];
 /*
   always_ff @(posedge clk) begin
     ReadData <= RAM[Adr];
