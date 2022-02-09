@@ -81,7 +81,11 @@ set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 
 # Setting constraints on input ports 
 #set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
-set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
+if {$tech == "130"} {
+    set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
+} elseif {$tech == "90"} {
+    set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+}
 
 # Set input/output delay
 set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
@@ -89,7 +93,12 @@ set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 
 # Setting load constraint on output ports 
 #set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
-set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
+if {$tech == "130"} {
+    set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
+} elseif {$tech == "90"} {
+    set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+}
+
 
 # Set the wire load model 
 set_wire_load_mode "top"
@@ -216,7 +225,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 # redirect -append $filename { echo "\n\n\n//////////////// Critical paths through faddcvt ////////////////\n\n\n" }
 # redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.faddcvt/*} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "reports/" $my_toplevel "_ifu_timing.rep"]
+set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_ifu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//////////////// Critical path through PCF ////////////////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/PCF} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//////////////// Critical path through PCNextF ////////////////\n\n\n" }
@@ -316,4 +325,4 @@ set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"
 redirect $filename { report_hierarchy }
 
 #Quit
-#quit # *** commented out so we can stay in the synopsis terminal after synthesis is done.
+quit 

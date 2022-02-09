@@ -9,10 +9,11 @@ VARIANT := 18T_ms
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 500
 export CONFIG ?= rv32e
+export TECH ?= 130
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(FREQ)_MHz_$(time)_$(hash)
+export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(hash)
 
 default:
 	@echo "Basic synthesis procedure for OSU/HMC/UNLV:"
