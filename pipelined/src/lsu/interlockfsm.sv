@@ -112,7 +112,6 @@ module interlockfsm
 	  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 					   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
 	  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | TrapM)) |
-							 ((InterlockCurrState == STATE_T0_REPLAY)
-							  & (TrapM));
+							 ((InterlockCurrState == STATE_T0_REPLAY) & (TrapM));
 
 endmodule
