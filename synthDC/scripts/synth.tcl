@@ -1,7 +1,11 @@
 #
-# OKSTATE Main Synopsys Flow
-# Updated Sep 27, 2015 jes
+# Synthesis Synopsys Flow
+# james.stine@okstate.edu 27 Sep 2015
 #
+
+# Enables name mapping
+saif_map -start
+
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
@@ -14,7 +18,6 @@ eval file copy -force ${cfg} $outputDir
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
-
 
 # Verilog files
 set my_verilog_files [glob hdl/*]
@@ -48,6 +51,12 @@ link
 # Reset all constraints 
 reset_design
 
+# SAIF power prediction (optional)
+# set_power_prediction 
+
+# Power Dissipation Analysis
+# read_saif -input vcd/mult.saif -instance_name stimulus/dut -auto_map_names -verbose
+
 # Set reset false path
 set_false_path -from [get_ports reset]
 
@@ -71,16 +80,16 @@ if {  $find_clock != [list] } {
 }
 
 # Partitioning - flatten or hierarchically synthesize
-#ungroup -all -flatten -simple_names
+# ungroup -all -flatten -simple_names
 
 # Set input pins except clock
 set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 
 # Specifies delays be propagated through the clock network
-#set_propagated_clock [get_clocks $my_clk]
+# set_propagated_clock [get_clocks $my_clk]
 
 # Setting constraints on input ports 
-#set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+# set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
 set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
 
 # Set input/output delay
@@ -88,7 +97,7 @@ set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
 set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 
 # Setting load constraint on output ports 
-#set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+# set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
 set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
 
 # Set the wire load model 
@@ -107,9 +116,9 @@ set_max_fanout 6 $all_in_ex_clk
 set_fix_multiple_port_nets -all -buffer_constants
 
 # setting up the group paths to find out the required timings
-#group_path -name OUTPUTS -to [all_outputs]
-#group_path -name INPUTS -from [all_inputs] 
-#group_path -name COMBO -from [all_inputs] -to [all_outputs]
+# group_path -name OUTPUTS -to [all_outputs]
+# group_path -name INPUTS -from [all_inputs] 
+# group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
 # Save Unmapped Design
 set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
