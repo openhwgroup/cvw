@@ -115,7 +115,6 @@ for l in fileinput.input():
     if l.startswith('riscv_cpu_do_interrupt'):
         sys.stderr.write(l)
         interrupt_line = l.strip('\n')
-        continue
     elif l.startswith('qemu-system-riscv64: QEMU: Terminated via GDBstub'):
         break
     elif l.startswith('IN:'):

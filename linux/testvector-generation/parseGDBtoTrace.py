@@ -130,6 +130,13 @@ def PrintInstr(instr, fp):
             fp.write(' CSR {}'.format(CSRStr))
     fp.write('\n')
 
+# =========
+# Main Code
+# =========
+# Parse argument for interrupt file
+if len(sys.argv) != 2:
+    sys.exit('Error parseGDBtoTrace.py expects 1 arg:\n <interrupt filename>>')
+interruptFname = sys.argv[1]
 # reg number
 RegNumber = {'zero': 0, 'ra': 1, 'sp': 2, 'gp': 3, 'tp': 4, 't0': 5, 't1': 6, 't2': 7, 's0': 8, 's1': 9, 'a0': 10, 'a1': 11, 'a2': 12, 'a3': 13, 'a4': 14, 'a5': 15, 'a6': 16, 'a7': 17, 's2': 18, 's3': 19, 's4': 20, 's5': 21, 's6': 22, 's7': 23, 's8': 24, 's9': 25, 's10': 26, 's11': 27, 't3': 28, 't4': 29, 't5': 30, 't6': 31, 'mhartid': 32, 'mstatus': 33, 'mip': 34, 'mie': 35, 'mideleg': 36, 'medeleg': 37, 'mtvec': 38, 'stvec': 39, 'mepc': 40, 'sepc': 41, 'mcause': 42, 'scause': 43, 'mtval': 44, 'stval': 45}
 # initial state
@@ -144,14 +151,23 @@ numInstrs = 0
 #instructions = []
 MemAdr = 0
 lines = []
-interrupts=open('interrupts.txt','w')
+interrupts=open(interruptFname,'w')
 interrupts.close()
 
 for line in fileinput.input('-'):
     if line.startswith('riscv_cpu_do_interrupt'):
-        with open('interrupts.txt','a') as interrupts:
-            interrupts.write(str(numInstrs)+': '+line.strip('riscv_cpu_do_interrupt'))
-        break
+        with open(interruptFname,'a') as interrupts:
+            # Write line
+            # Example line: hart:0, async:0, cause:0000000000000002, epc:0x0000000080008548, tval:0x0000000000000000, desc=illegal_instruction
+            interrupts.write(line)
+            # Write instruction count
+            interrupts.write(str(numInstrs)+'\n')
+            # Convert line to rows of info for easier Verilog parsing
+            vals=line.strip('riscv_cpu_do_interrupt: ').strip('\n').split(',')
+            vals=[val.split(':')[-1].strip(' ').strip('desc=') for val in vals]
+            for val in vals:
+                interrupts.write(val+'\n')
+        continue
     lines.insert(lineNum, line)
     if InstrStartDelim in line:
         lineNum = 0
@@ -204,8 +220,8 @@ for line in fileinput.input('-'):
         #instructions.append(MoveInstrToRegWriteLst)
         PrintInstr(MoveInstrToRegWriteLst, sys.stdout)
         numInstrs +=1
-        if (numInstrs % 1e4 == 0):
-            sys.stderr.write('Trace parser reached '+str(numInstrs/1.0e6)+' million instrs.\n')
+        if (numInstrs % 1e5 == 0):
+            sys.stderr.write('GDB trace parser reached '+str(numInstrs/1.0e6)+' million instrs.\n')
             sys.stderr.flush()
     lineNum += 1
 
