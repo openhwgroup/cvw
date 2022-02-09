@@ -104,7 +104,7 @@ module datapath (
   flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);
   flopenrc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ~StallE, ExtImmD, ExtImmE);
   flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
-  flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs1E);
   flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
   mux3  #(`XLEN)  faemux(R1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);

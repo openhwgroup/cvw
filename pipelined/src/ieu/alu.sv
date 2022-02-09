@@ -67,7 +67,7 @@ module alu #(parameter WIDTH=32) (
  
   // SLT
   assign SLT = {{(WIDTH-1){1'b0}}, LT};
-  assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
+  assign SLTU = {{(WIDTH-1){1'b0}}, LT};
  
   // Select appropriate ALU Result
   assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0

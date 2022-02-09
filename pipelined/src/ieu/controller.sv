@@ -98,7 +98,7 @@ module controller(
   logic       InstrValidD, InstrValidE;
   logic       PrivilegedD, PrivilegedE;
   logic       InvalidateICacheE, FlushDCacheE;
-  logic [`CTRLW-1:0] ControlsD;
+  logic       ControlsD;
   logic        SubArithD;
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;

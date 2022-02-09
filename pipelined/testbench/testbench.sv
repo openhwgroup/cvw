@@ -296,7 +296,7 @@ logic [3:0] dummy;
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             $display("Read memfile %s", memfilename);
-            reset_ext = 1; # 47; reset_ext = 0;
+            reset_ext = 1; # 47; //reset_ext = 0;
         end
       end
     end // always @ (negedge clk)
