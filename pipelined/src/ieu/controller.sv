@@ -101,7 +101,7 @@ module controller(
   logic       ControlsD;
   logic        SubArithD;
   logic        subD, sraD, sltD, sltuD;
-  logic        BranchTakenE;
+  logic        BranchTakenE; 
   logic        eqE, ltE, ltuE;
   logic        unused;
 	logic        BranchFlagE;
