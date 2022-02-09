@@ -164,7 +164,8 @@ for line in fileinput.input('-'):
             interrupts.write(str(numInstrs)+'\n')
             # Convert line to rows of info for easier Verilog parsing
             vals=line.strip('riscv_cpu_do_interrupt: ').strip('\n').split(',')
-            vals=[val.split(':')[-1].strip(' ').strip('desc=') for val in vals]
+            vals=[val.split(':')[-1].strip(' ') for val in vals]
+            vals=[val.split('=')[-1].strip(' ') for val in vals]
             for val in vals:
                 interrupts.write(val+'\n')
         continue
