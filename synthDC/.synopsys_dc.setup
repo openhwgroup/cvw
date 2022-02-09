@@ -3,8 +3,12 @@
 set CURRENT_DIR  [exec pwd]
 set search_path [list "./" ]
 
-set s8lib ../addins/sky130_osu_sc_t12/12T_ms/lib
-lappend search_path $s8lib
+#set timing_lib "$::env(RISCV)/cad/lib"
+set timing_lib "/opt/riscv/cad/lib"
+lappend search_path $timing_lib
+#set s8lib ../addins/sky130_osu_sc_t12/12T_ms/lib
+#lappend search_path $s8lib
+
 
 # Synthetic libraries
 set synthetic_library   [list dw_foundation.sldb]
@@ -12,7 +16,8 @@ set synthetic_library   [list dw_foundation.sldb]
 # Set OKSTATE standard cell libraries
 set target_library [list]
 
-lappend target_library sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
+lappend target_library scc9gena_tt_1.2v_25C.db
+#lappend target_library sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
 
 # Set Link Library
 set link_library "$target_library $synthetic_library"
