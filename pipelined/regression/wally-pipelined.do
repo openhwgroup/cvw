@@ -60,9 +60,13 @@ if {$2 eq "buildroot"} {
     add log -recursive /*
     do wave.do
 
+    # power add generates the logging necessary for saif generation.
+    #power add -r /dut/core/*
     #-- Run the Simulation 
-    #run 3600 
+
     run -all
+    #power off -r /dut/core/*
+    #power report -all -bsaif power.saif
     noview ../testbench/testbench.sv
     view wave
 }
