@@ -30,21 +30,19 @@
 `include "wally-config.vh"
 
 module cachereplacementpolicy
-  #(parameter NUMWAYS = 4, INDEXLEN = 9, OFFSETLEN = 5, NUMLINES = 128)
-  (input logic clk, reset,
-   input logic [NUMWAYS-1:0] 			WayHit,
-   output logic [NUMWAYS-1:0] 			VictimWay,
-   input logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] PAdr,
-   input logic [INDEXLEN-1:0] 			RAdr,
-   input logic 					LRUWriteEn
-   );
+  #(parameter NUMWAYS = 4, INDEXLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
+   input logic                clk, reset,
+   input logic [NUMWAYS-1:0]  WayHit,
+   output logic [NUMWAYS-1:0] VictimWay,
+   input logic [`PA_BITS-1:0] PAdr,
+   input logic [INDEXLEN-1:0] RAdr,
+   input logic                LRUWriteEn);
 
-  logic [NUMWAYS-2:0] 				LRUEn, LRUMask;
-  logic [$clog2(NUMWAYS)-1:0] 			EncVicWay;
-  logic [NUMWAYS-2:0] 				ReplacementBits [NUMLINES-1:0];
-  logic [NUMWAYS-2:0] 				LineReplacementBits;
-  logic [NUMWAYS-2:0] 				NewReplacement;
-  logic [NUMWAYS-2:0] 				NewReplacementD;  
+  logic [NUMWAYS-2:0]         LRUEn, LRUMask;
+  logic [NUMWAYS-2:0]         ReplacementBits [NUMLINES-1:0];
+  logic [NUMWAYS-2:0]         LineReplacementBits;
+  logic [NUMWAYS-2:0]         NewReplacement;
+  logic [NUMWAYS-2:0]         NewReplacementD;  
 
   logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] 	PAdrD;
   logic [INDEXLEN-1:0] 				RAdrD;
@@ -56,7 +54,7 @@ module cachereplacementpolicy
   
   // Pipeline Delay Registers
   flopr #(INDEXLEN) RAdrDelayReg(clk, reset, RAdr, RAdrD);
-  flopr #(INDEXLEN) PAdrDelayReg(clk, reset, PAdr, PAdrD);
+  flopr #(INDEXLEN) PAdrDelayReg(clk, reset, PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN], PAdrD);
   flopr #(1) LRUWriteEnDelayReg(clk, reset, LRUWriteEn, LRUWriteEnD);
   flopr #(NUMWAYS-1) NewReplacementDelayReg(clk, reset, NewReplacement, NewReplacementD);
 
