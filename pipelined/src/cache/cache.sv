@@ -70,7 +70,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 
   logic [1:0]                 SelAdr;
   logic [SETLEN-1:0]          RAdr;
-  logic [LINELEN-1:0]         SRAMWriteData;
+  logic [LINELEN-1:0]         CacheWriteData;
   logic                       SetValid, ClearValid;
   logic                       SetDirty, ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
@@ -115,9 +115,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .RAdr, .PAdr,
-        .WriteWordEn(WriteWordWayEn),
-        .WriteLineEn(WriteLineWayEn),
-		.WriteData(SRAMWriteData),
+        .WriteWordWayEn,
+        .WriteLineWayEn,
+		.CacheWriteData,
         .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
         .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
         .SelFlush,
@@ -150,7 +150,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-		.d1(CacheMemWriteData),	.s(FSMLineWriteEn), .y(SRAMWriteData));
+		.d1(CacheMemWriteData),	.s(FSMLineWriteEn), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),

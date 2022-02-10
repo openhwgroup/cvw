@@ -37,9 +37,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
-  input logic                        WriteWordEn,
-  input logic                        WriteLineEn,
-  input logic [LINELEN-1:0]          WriteData,
+  input logic                        WriteWordWayEn,
+  input logic                        WriteLineWayEn,
+  input logic [LINELEN-1:0]          CacheWriteData,
   input logic                        SetValid,
   input logic                        ClearValid,
   input logic                        SetDirty,
@@ -82,15 +82,15 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   onehotdecoder #(LOGWPL) adrdec(
     .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = WriteLineEn ? '1 : WriteWordEn ? MemPAdrDecoded : '0; // OR-AND
+  assign SelectedWriteWordEn = WriteLineWayEn ? '1 : WriteWordWayEn ? MemPAdrDecoded : '0; // OR-AND
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  sram1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk(clk),
-		.Adr(RAdr), .ReadData(ReadTag),
-	  .WriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineEn));
+  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk,
+    .Adr(RAdr), .ReadData(ReadTag),
+    .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineWayEn));
 
   // AND portion of distributed tag multiplexer
   assign SelTag = SelFlush ? Flush : Victim;
@@ -104,9 +104,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // *** Potential optimization: if byte write enables are available, could remove subwordwrites
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk(clk), .Adr(RAdr),
+    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk, .Adr(RAdr),
       .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
-      .WriteData(WriteData[(words+1)*`XLEN-1:words*`XLEN]),
+      .CacheWriteData(CacheWriteData[(words+1)*`XLEN-1:words*`XLEN]),
       .WriteEnable(SelectedWriteWordEn[words]));
   end
 
