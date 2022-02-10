@@ -210,7 +210,7 @@ module ifu (
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
-      icache(.clk, .reset, .CPUBusy, .IgnoreRequest(ITLBMissF), 
+      icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .IgnoreRequestTrapM('0),
              .CacheMemWriteData(ICacheMemWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),

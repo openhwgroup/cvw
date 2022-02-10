@@ -98,7 +98,7 @@ module lsu (
   logic                     SelHPTW;
   logic                     BusStall;
   logic                     InterlockStall;
-  logic                     IgnoreRequest;
+  logic                     IgnoreRequestTLB, IgnoreRequestTrapM;
   logic                     BusCommittedM, DCacheCommittedM;
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -116,11 +116,11 @@ module lsu (
                           .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
                           .IEUAdrExtM, .PTE, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
                           .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
-                          .IgnoreRequest);
+                          .IgnoreRequestTLB, .IgnoreRequestTrapM);
 
   end else begin
-    assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF} = '0;
-    assign IgnoreRequest = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
+    assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
+    assign IgnoreRequestTrapM = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign LSUAdrE = PreLSUAdrE; assign PreLSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM[`PA_BITS-1:0];
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
@@ -202,7 +202,7 @@ module lsu (
       .WordCount,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
-      .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
+      .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest(IgnoreRequestTLB | IgnoreRequestTrapM), .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
     assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
@@ -217,7 +217,7 @@ module lsu (
         .save, .restore,
         .FinalWriteData(FinalWriteDataM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
-        .IgnoreRequest, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
+        .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), .CacheBusAdr(DCacheBusAdr),
         .ReadDataLine(ReadDataLineM), .CacheMemWriteData(DCacheMemWriteData),
         .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine), 
         .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
@@ -248,7 +248,7 @@ module lsu (
 
   if (`A_SUPPORTED) begin:atomic
     atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, 
-      .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
+      .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest(IgnoreRequestTLB | IgnoreRequestTrapM), 
       .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
     assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = WriteDataM;
