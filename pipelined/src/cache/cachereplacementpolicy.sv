@@ -30,31 +30,30 @@
 `include "wally-config.vh"
 
 module cachereplacementpolicy
-  #(parameter NUMWAYS = 4, INDEXLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
+  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
    input logic                clk, reset,
    input logic [NUMWAYS-1:0]  WayHit,
    output logic [NUMWAYS-1:0] VictimWay,
    input logic [`PA_BITS-1:0] PAdr,
-   input logic [INDEXLEN-1:0] RAdr,
+   input logic [SETLEN-1:0]   RAdr,
    input logic                LRUWriteEn);
 
-  logic [NUMWAYS-2:0]         LRUEn, LRUMask;
-  logic [NUMWAYS-2:0]         ReplacementBits [NUMLINES-1:0];
-  logic [NUMWAYS-2:0]         LineReplacementBits;
-  logic [NUMWAYS-2:0]         NewReplacement;
-  logic [NUMWAYS-2:0]         NewReplacementD;  
-
-  logic [INDEXLEN+OFFSETLEN-1:OFFSETLEN] 	PAdrD;
-  logic [INDEXLEN-1:0] 				RAdrD;
-  logic 					LRUWriteEnD;
+  logic [NUMWAYS-2:0]                  LRUEn, LRUMask;
+  logic [NUMWAYS-2:0]                  ReplacementBits [NUMLINES-1:0];
+  logic [NUMWAYS-2:0]                  LineReplacementBits;
+  logic [NUMWAYS-2:0]                  NewReplacement;
+  logic [NUMWAYS-2:0]                  NewReplacementD;  
+  logic [SETLEN+OFFSETLEN-1:OFFSETLEN] PAdrD;
+  logic [SETLEN-1:0]                   RAdrD;
+  logic                                LRUWriteEnD;
 
   initial begin
       assert (NUMWAYS == 2 || NUMWAYS == 4) else $error("Only 2 or 4 ways supported");
   end
   
   // Pipeline Delay Registers
-  flopr #(INDEXLEN) RAdrDelayReg(clk, reset, RAdr, RAdrD);
-  flopr #(INDEXLEN) PAdrDelayReg(clk, reset, PAdr[INDEXLEN+OFFSETLEN-1:OFFSETLEN], PAdrD);
+  flopr #(SETLEN) RAdrDelayReg(clk, reset, RAdr, RAdrD);
+  flopr #(SETLEN) PAdrDelayReg(clk, reset, PAdr[SETLEN+OFFSETLEN-1:OFFSETLEN], PAdrD);
   flopr #(1) LRUWriteEnDelayReg(clk, reset, LRUWriteEn, LRUWriteEnD);
   flopr #(NUMWAYS-1) NewReplacementDelayReg(clk, reset, NewReplacement, NewReplacementD);
 
@@ -62,7 +61,7 @@ module cachereplacementpolicy
   // Needs to be resettable for simulation, but could omit reset for synthesis ***
   always_ff @(posedge clk) 
     if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] = '0;
-    else if (LRUWriteEnD) ReplacementBits[PAdrD[INDEXLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacementD;
+    else if (LRUWriteEnD) ReplacementBits[PAdrD[SETLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacementD;
   assign LineReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;
