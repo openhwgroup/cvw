@@ -112,7 +112,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   // AND portion of distributed read multiplexers
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  assign SelData = SelFlush ? Flush : (SelEvict ? Victim : WayHit);  
+  mux3 #(1) selecteddatamux(WayHit, Victim, Flush, {SelFlush, SelEvict}, SelData);
   assign SelectedReadDataLine = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,9 +124,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     else if (SetValid)                                     ValidBits[RAdr] <= #1 1'b1;
     else if (ClearValid) ValidBits[RAdr] <= #1 1'b0;
 	end
-  // *** consider revisiting whether these delays are the best option? 
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
-  //flop #(2) ValidCtrlDelayReg(clk, {SetValid, ClearValid}, {SetValidD, ClearValidD});
   assign Valid = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
