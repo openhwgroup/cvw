@@ -3,18 +3,13 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
-if { [info exists ::env(SAIFPOWER)] } {
-   set saifpower $::env(SAIFPOWER)
-} else {
-   set saifpower 0   
-}
-
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
 # Config
 set hdl_src "../pipelined/src"
 set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
+set saifpower $::env(SAIFPOWER)
 
 eval file copy -force ${cfg} {hdl/}
 eval file copy -force ${cfg} $outputDir
