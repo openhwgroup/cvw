@@ -3,8 +3,8 @@
 / {
 	#address-cells = <0x02>;
 	#size-cells = <0x02>;
-	compatible = "riscv-virtio-trimmed";
-	model = "riscv-virtio-trimmed,qemu";
+	compatible = "wally-virt";
+	model = "wally-virt,qemu";
 
 	chosen {
 		linux,initrd-end = <0x85c43a00>;
