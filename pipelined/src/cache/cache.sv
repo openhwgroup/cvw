@@ -60,52 +60,47 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   output logic [LINELEN-1:0]  ReadDataLine);
 
   // Cache parameters
-  localparam  						LINEBYTELEN = LINELEN/8;
-  localparam  						OFFSETLEN = $clog2(LINEBYTELEN);
-  localparam  						SETLEN = $clog2(NUMLINES);
-  localparam                        SETTOP = SETLEN+OFFSETLEN;
-  localparam  						TAGLEN = `PA_BITS - SETTOP;
-  localparam  						WORDSPERLINE = LINELEN/`XLEN;
-  localparam  						LOGWPL = $clog2(WORDSPERLINE);
-  localparam  						LOGXLENBYTES = $clog2(`XLEN/8);
-  localparam  						FlushAdrThreshold   = NUMLINES - 1;
+  localparam                  LINEBYTELEN = LINELEN/8;
+  localparam                  OFFSETLEN = $clog2(LINEBYTELEN);
+  localparam                  SETLEN = $clog2(NUMLINES);
+  localparam                  SETTOP = SETLEN+OFFSETLEN;
+  localparam                  TAGLEN = `PA_BITS - SETTOP;
+  localparam                  WORDSPERLINE = LINELEN/`XLEN;
+  localparam                  FlushAdrThreshold   = NUMLINES - 1;
 
-  logic [1:0] 								SelAdr;
-  logic [SETLEN-1:0] 						RAdr;
-  logic [LINELEN-1:0] 						SRAMWriteData;
-  logic 									SetValid, ClearValid;
-  logic 									SetDirty, ClearDirty;
-  logic [LINELEN-1:0] 						ReadDataLineWay [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0] 						WayHit;
-  logic 									CacheHit;
-  logic 									FSMWordWriteEn;
-  logic 									FSMLineWriteEn;
-  logic [NUMWAYS-1:0] 						SRAMLineWayWriteEnable;
-  logic [NUMWAYS-1:0] 						VictimWay;
-  logic [NUMWAYS-1:0] 						VictimDirtyWay;
-  logic 									VictimDirty;
-  logic [2**LOGWPL-1:0] 					MemPAdrDecoded;
-  logic [TAGLEN-1:0] 						VictimTagWay [NUMWAYS-1:0];
-  logic [TAGLEN-1:0] 						VictimTag;
-  logic [SETLEN-1:0] 						FlushAdr;
-  logic [SETLEN-1:0] 						FlushAdrP1;
-  logic 									FlushAdrCntEn;
-  logic 									FlushAdrCntRst;
-  logic 									FlushAdrFlag;
-  logic 									FlushWayFlag;
-  logic [NUMWAYS-1:0] 						FlushWay;
-  logic [NUMWAYS-1:0] 						NextFlushWay;
-  logic 									FlushWayCntEn;
-  logic 									FlushWayCntRst;  
-  logic 									SelEvict;
-  logic 									LRUWriteEn;
-  logic 									SelFlush;
-  logic                                     ResetOrFlushAdr, ResetOrFlushWay;
-  logic [NUMWAYS-1:0]                       WayHitSaved, WayHitRaw;
-  logic [LINELEN-1:0]                       ReadDataLineRaw, ReadDataLineSaved;
-  logic [NUMWAYS-1:0]                       SelectedWay;
-  logic [NUMWAYS-1:0]                       SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
-  logic [NUMWAYS-1:0]                       WriteWordWayEn, WriteLineWayEn;
+  logic [1:0]                 SelAdr;
+  logic [SETLEN-1:0]          RAdr;
+  logic [LINELEN-1:0]         SRAMWriteData;
+  logic                       SetValid, ClearValid;
+  logic                       SetDirty, ClearDirty;
+  logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
+  logic [NUMWAYS-1:0]         WayHit;
+  logic                       CacheHit;
+  logic                       FSMWordWriteEn;
+  logic                       FSMLineWriteEn;
+  logic [NUMWAYS-1:0]         VictimWay;
+  logic [NUMWAYS-1:0]         VictimDirtyWay;
+  logic                       VictimDirty;
+  logic [TAGLEN-1:0]          VictimTagWay [NUMWAYS-1:0];
+  logic [TAGLEN-1:0]          VictimTag;
+  logic [SETLEN-1:0]          FlushAdr;
+  logic [SETLEN-1:0]          FlushAdrP1;
+  logic                       FlushAdrCntEn;
+  logic                       FlushAdrCntRst;
+  logic                       FlushAdrFlag;
+  logic                       FlushWayFlag;
+  logic [NUMWAYS-1:0]         FlushWay;
+  logic [NUMWAYS-1:0]         NextFlushWay;
+  logic                       FlushWayCntEn;
+  logic                       FlushWayCntRst;  
+  logic                       SelEvict;
+  logic                       LRUWriteEn;
+  logic                       SelFlush;
+  logic                       ResetOrFlushAdr, ResetOrFlushWay;
+  logic [NUMWAYS-1:0]         WayHitSaved, WayHitRaw;
+  logic [NUMWAYS-1:0]         SelectedWay;
+  logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
+  logic [NUMWAYS-1:0]         WriteWordWayEn, WriteLineWayEn;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -184,7 +179,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   // *** change to structural
-  assign SelectedWay = SelFlush ? FlushWay : (FSMLineWriteEn ? VictimWay : WayHit);
+  mux3 #(NUMWAYS) selectwaymux(WayHit, VictimWay, FlushWay, {SelFlush, FSMLineWriteEn}, SelectedWay);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
