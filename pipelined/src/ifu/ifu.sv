@@ -265,7 +265,6 @@ module ifu (
     // Mux only required on instruction class miss prediction.
     mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
                                               .s(BPPredWrongM), .y(PCBPWrongInvalidate));
-  // The true correct target is IEUAdrE if PCSrcE is 1 else it is the fall through PCLinkE.
     mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
     
   end else begin : bpred
