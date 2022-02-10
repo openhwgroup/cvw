@@ -5,28 +5,31 @@ set search_path [list "./" ]
 
 set tech $::env(TECH)
 
-set  timing_lib $::env(RISCV)/cad/lib
-lappend search_path $timing_lib
+if { [info exists ::env(RISCV)] } {
+  set timing_lib $::env(RISCV)/cad/lib
+} else {
+  set timing_lib ../addins   
+}
 
-if {$tech == 130} {
-    set s8lib $timing_lib/sky130_osu_sc_t12/12T_ms/lib
+if {$tech == "sky130"} {
+    set s8lib ../addins/sky130_osu_sc_t12/12T_ms/lib/
     lappend search_path $s8lib
-} elseif {$tech == 90} {
-    set s9lib $timing_lib/sky90/tech_files
+} elseif {$tech == "sky90"} {
+    set s9lib $timing_lib/sky90/tech_files/
     lappend search_path $s9lib
 }
 
 # Synthetic libraries
 set synthetic_library   [list dw_foundation.sldb]
 
-# Set OKSTATE standard cell libraries
+# Set standard cell libraries
 set target_library [list]
 
 #lappend target_library scc9gena_tt_1.2v_25C.db
-if {$tech == 130} {
-    lappend target_library sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
-} elseif {$tech == 90} {
-    lappend target_library scc9gena_tt_1.2v_25C.db
+if {$tech == "sky130"} {
+    lappend target_library ../addins/sky130_osu_sc_t12/12T_ms/lib/sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
+} elseif {$tech == "sky90"} {
+    lappend target_library $s9lib/scc9gena_tt_1.2v_25C.db
 }
 
 # Set Link Library
