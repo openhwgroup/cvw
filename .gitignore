@@ -52,7 +52,12 @@ examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/C/sum/sum
 examples/C/fir/fir
-synthDC/hdl/*.sv
 linux/devicetree/debug/*
-!linux/devicetree/debug/dumpdts.sh
+!linux/devicetree/debug/dump-dts.sh
 *.dtb
+synthDC/WORK
+synthDC/alib-52
+synthDC/*.log
+synthDC/*.svf
+synthDC/runs/
+synthDC/hdl
