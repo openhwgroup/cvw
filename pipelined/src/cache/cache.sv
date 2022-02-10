@@ -118,10 +118,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
         .WriteWordWayEn,
         .WriteLineWayEn,
 		.CacheWriteData,
-        .SetValid(SetValidWay), .ClearValid(ClearValidWay), .SetDirty(SetDirtyWay), .ClearDirty(ClearDirtyWay),
-        .SelEvict, .Victim(VictimWay), .Flush(FlushWay), 
+        .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay,
+        .SelEvict, .VictimWay, .FlushWay, 
         .SelFlush,
-		.SelectedReadDataLine(ReadDataLineWay), .WayHit(WayHitRaw), .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
+		.ReadDataLineWay, .WayHit(WayHitRaw), .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(

@@ -40,17 +40,17 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        WriteWordWayEn,
   input logic                        WriteLineWayEn,
   input logic [LINELEN-1:0]          CacheWriteData,
-  input logic                        SetValid,
-  input logic                        ClearValid,
-  input logic                        SetDirty,
-  input logic                        ClearDirty,
+  input logic                        SetValidWay,
+  input logic                        ClearValidWay,
+  input logic                        SetDirtyWay,
+  input logic                        ClearDirtyWay,
   input logic                        SelEvict,
-  input logic                        Victim,
+  input logic                        VictimWay,
   input logic                        InvalidateAll,
   input logic                        SelFlush,
-  input logic                        Flush,
+  input logic                        FlushWay,
 
-  output logic [LINELEN-1:0]         SelectedReadDataLine,
+  output logic [LINELEN-1:0]         ReadDataLineWay,
   output logic                       WayHit,
   output logic                       VictimDirty,
   output logic [TAGLEN-1:0]          VictimTag);
@@ -69,8 +69,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                               SelTag;
 
   logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
-  logic 							  SetValidD, ClearValidD;
-  logic 							  SetDirtyD, ClearDirtyD;
 
   logic [2**LOGWPL-1:0]               MemPAdrDecoded;
   logic [LINELEN/`XLEN-1:0]           SelectedWriteWordEn;
@@ -93,7 +91,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineWayEn));
 
   // AND portion of distributed tag multiplexer
-  assign SelTag = SelFlush ? Flush : Victim;
+  assign SelTag = SelFlush ? FlushWay : VictimWay;
   assign VictimTag = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirty = SelTag & Dirty & Valid;
 
@@ -112,8 +110,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   // AND portion of distributed read multiplexers
   assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  mux3 #(1) selecteddatamux(WayHit, Victim, Flush, {SelFlush, SelEvict}, SelData);
-  assign SelectedReadDataLine = SelData ? ReadDataLine : '0;  // AND part of AO mux.
+  mux3 #(1) selecteddatamux(WayHit, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
+  assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
@@ -121,8 +119,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
-    else if (SetValid)                                     ValidBits[RAdr] <= #1 1'b1;
-    else if (ClearValid) ValidBits[RAdr] <= #1 1'b0;
+    else if (SetValidWay)                                     ValidBits[RAdr] <= #1 1'b1;
+    else if (ClearValidWay) ValidBits[RAdr] <= #1 1'b0;
 	end
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
   assign Valid = ValidBits[RAdrD];
@@ -135,10 +133,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
       if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      else if (SetDirty) DirtyBits[RAdr] <= #1 1'b1;
-      else if (ClearDirty) DirtyBits[RAdr] <= #1 1'b0;
+      else if (SetDirtyWay) DirtyBits[RAdr] <= #1 1'b1;
+      else if (ClearDirtyWay) DirtyBits[RAdr] <= #1 1'b0;
     end
-    flop #(2) DirtyCtlDelayReg(clk, {SetDirty, ClearDirty}, {SetDirtyD, ClearDirtyD});
     assign Dirty = DirtyBits[RAdrD];
   end else assign Dirty = 1'b0;
 
