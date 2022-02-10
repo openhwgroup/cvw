@@ -12,7 +12,7 @@ if { [info exists ::env(RISCV)] } {
 }
 
 if {$tech == "sky130"} {
-    set s8lib ../addins/sky130_osu_sc_t12/12T_ms/lib/
+    set s8lib $timing_lib/sky130_osu_sc_t12/12T_ms/lib/
     lappend search_path $s8lib
 } elseif {$tech == "sky90"} {
     set s9lib $timing_lib/sky90/tech_files/
