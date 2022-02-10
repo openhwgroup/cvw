@@ -63,6 +63,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   input logic [1:0]           LSURWM,
   input logic                 CPUBusy,
   input logic                 CacheableM,
+  output logic                LSUBusWriteCrit,
   output logic                BusStall,
   output logic                BusCommittedM);
   
@@ -92,7 +93,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
 
   busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup  Icache? must fix.
   busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
-		 .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusRead,
+		 .LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusWriteCrit, .LSUBusRead,
 		 .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
 
 endmodule

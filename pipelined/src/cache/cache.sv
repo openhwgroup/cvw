@@ -97,7 +97,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic                       LRUWriteEn;
   logic                       SelFlush;
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
-  logic [NUMWAYS-1:0]         WayHitSaved, WayHitRaw;
+  logic [NUMWAYS-1:0]         WayHitSaved, WayHitFinal;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [NUMWAYS-1:0]         WriteWordWayEn, WriteLineWayEn;
@@ -121,11 +121,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
         .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay,
         .SelEvict, .VictimWay, .FlushWay, 
         .SelFlush,
-		.ReadDataLineWay, .WayHit(WayHitRaw), .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
+		.ReadDataLineWay, .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
 		.InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .WayHit, .VictimWay, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .RAdr, .LRUWriteEn);
+      .clk, .reset, .WayHit(WayHitFinal), .VictimWay, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .RAdr, .LRUWriteEn);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | WayHit;
   assign VictimDirty = | VictimDirtyWay;
@@ -141,9 +141,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // the data.  Replay is eaiser but creates a longer critical path.
   // save/restore only wayhit and readdata.
   if(!`REPLAY) begin
-    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHitRaw, WayHitSaved);
-    mux2 #(NUMWAYS) saverestoremux(WayHitRaw, WayHitSaved, restore, WayHit);
-  end else assign WayHit = WayHitRaw;
+    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHit, WayHitSaved);
+    mux2 #(NUMWAYS) saverestoremux(WayHit, WayHitSaved, restore, WayHitFinal);
+  end else assign WayHitFinal = WayHit;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
@@ -179,7 +179,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   // *** change to structural
-  mux3 #(NUMWAYS) selectwaymux(WayHit, VictimWay, FlushWay, {SelFlush, FSMLineWriteEn}, SelectedWay);
+  mux3 #(NUMWAYS) selectwaymux(WayHitFinal, VictimWay, FlushWay, {SelFlush, FSMLineWriteEn}, SelectedWay);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
