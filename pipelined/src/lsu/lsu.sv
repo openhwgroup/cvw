@@ -100,6 +100,7 @@ module lsu (
   logic                     InterlockStall;
   logic                     IgnoreRequestTLB, IgnoreRequestTrapM;
   logic                     BusCommittedM, DCacheCommittedM;
+  logic                     LSUBusWriteCrit;
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
@@ -199,13 +200,13 @@ module lsu (
     busdp #(WORDSPERLINE, LINELEN, `XLEN, LOGWPL, 1) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
-      .WordCount,
+      .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest(IgnoreRequestTLB | IgnoreRequestTrapM), .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
-    assign WordOffsetAddr = LSUBusWrite ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
+    assign WordOffsetAddr = LSUBusWriteCrit ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
 
     
     if(`DMEM == `MEM_CACHE) begin : dcache

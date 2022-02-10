@@ -46,6 +46,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
    output logic              BusStall,
    output logic              LSUBusWrite,
+   output logic              LSUBusWriteCrit,
    output logic              LSUBusRead,
    output logic              DCacheBusAck,
    output logic              BusCommittedM,
@@ -130,6 +131,9 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign UnCachedLSUBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (LSURWM[0] & ~IgnoreRequest)) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign LSUBusWrite = UnCachedLSUBusWrite | (BusCurrState == STATE_BUS_WRITE);
+  assign LSUBusWriteCrit = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (LSURWM[0])) |
+						   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
+                           (BusCurrState == STATE_BUS_WRITE);
 
   assign UnCachedLSUBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & (|LSURWM[1] & IgnoreRequest)) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
