@@ -40,7 +40,8 @@ module cachefsm
    // hazard inputs
    input logic        CPUBusy,
    // interlock fsm
-   input logic        IgnoreRequest,
+   input logic        IgnoreRequestTLB,
+   input logic        IgnoreRequestTrapM,   
    // Bus inputs
    input logic        CacheBusAck,
    // dcache internals
@@ -79,6 +80,7 @@ module cachefsm
   
   logic [1:0]         PreSelAdr;
   logic               resetDelay;
+  logic               Read, Write, AMO;
   logic               DoAMO, DoRead, DoWrite, DoFlush;
   logic               DoAMOHit, DoReadHit, DoWriteHit;
   logic               DoAMOMiss, DoReadMiss, DoWriteMiss;
@@ -104,15 +106,23 @@ module cachefsm
 					   STATE_FLUSH_CLEAR_DIRTY} statetype;
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
+  logic               IgnoreRequest;
+  assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
 
-  assign DoFlush = FlushCache & ~IgnoreRequest; // *** have to fix ignorerequest timing path
-  assign DoAMO = Atomic[1] & (&RW) & ~IgnoreRequest; // ***
+  // if the command is used in the READY state then the cache needs to be able to supress
+  // using both IgnoreRequestTLB and IgnoreRequestTrapM.  Otherwise we can just use IgnoreRequestTLB.
+
+  assign DoFlush = FlushCache & ~IgnoreRequest;
+  assign AMO = Atomic[1] & (&RW);  
+  assign DoAMO = AMO & ~IgnoreRequest; // ***
   assign DoAMOHit = DoAMO & CacheHit;
-  assign DoAMOMiss = DoAMO & ~CacheHit;  
-  assign DoRead = RW[1] & ~IgnoreRequest; // ***
+  assign DoAMOMiss = DoAMO & ~CacheHit;
+  assign Read = RW[1];
+  assign DoRead = Read & ~IgnoreRequest; // ***
   assign DoReadHit = DoRead & CacheHit;
   assign DoReadMiss = DoRead & ~CacheHit;
-  assign DoWrite = RW[0] & ~IgnoreRequest; // ***
+  assign Write = RW[0];
+  assign DoWrite = Write & ~IgnoreRequest; // ***
   assign DoWriteHit = DoWrite & CacheHit;
   assign DoWriteMiss = DoWrite & ~CacheHit;
 
@@ -135,20 +145,21 @@ module cachefsm
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: if(DoFlush)                                      NextState = STATE_FLUSH;
-                   else if(DoAMOHit & CPUBusy)                      NextState = STATE_CPU_BUSY_FINISH_AMO;
+      STATE_READY: if(IgnoreRequest)                                NextState = STATE_READY;
+                   else if(DoFlush)                                 NextState = STATE_FLUSH;
+                   else if(DoAMOHit & CPUBusy)                      NextState = STATE_CPU_BUSY_FINISH_AMO; // change
                    else if(DoReadHit & CPUBusy)                     NextState = STATE_CPU_BUSY;
-                   else if (DoWriteHit & CPUBusy)                   NextState = STATE_CPU_BUSY;
-                   else if(DoReadMiss | DoWriteMiss | DoAMOMiss)    NextState = STATE_MISS_FETCH_WDV;
+                   else if(DoWriteHit & CPUBusy)                    NextState = STATE_CPU_BUSY;
+                   else if(DoReadMiss | DoWriteMiss | DoAMOMiss)    NextState = STATE_MISS_FETCH_WDV; // change
                    else                                             NextState = STATE_READY;
       STATE_MISS_FETCH_WDV: if (CacheBusAck)                        NextState = STATE_MISS_FETCH_DONE;
                             else                                    NextState = STATE_MISS_FETCH_WDV;
       STATE_MISS_FETCH_DONE: if(VictimDirty)                        NextState = STATE_MISS_EVICT_DIRTY;
                              else                                   NextState = STATE_MISS_WRITE_CACHE_LINE;
       STATE_MISS_WRITE_CACHE_LINE:                                  NextState = STATE_MISS_READ_WORD;
-      STATE_MISS_READ_WORD: if (DoWrite & ~DoAMO)                   NextState = STATE_MISS_WRITE_WORD;
+      STATE_MISS_READ_WORD: if (Write & ~AMO)                       NextState = STATE_MISS_WRITE_WORD;
                             else                                    NextState = STATE_MISS_READ_WORD_DELAY;
-      STATE_MISS_READ_WORD_DELAY: if(DoAMO & CPUBusy)               NextState = STATE_CPU_BUSY_FINISH_AMO;
+      STATE_MISS_READ_WORD_DELAY: if(AMO & CPUBusy)                 NextState = STATE_CPU_BUSY_FINISH_AMO;
                                   else if(CPUBusy)                  NextState = STATE_CPU_BUSY;
                                   else                              NextState = STATE_READY;
       STATE_MISS_WRITE_WORD: if(CPUBusy)                            NextState = STATE_CPU_BUSY;
@@ -192,12 +203,12 @@ module cachefsm
   assign ClearValid = '0;
   assign SetDirty = (CurrState == STATE_READY & DoAMO) |
                     (CurrState == STATE_READY & DoWrite) |
-                    (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
+                    (CurrState == STATE_MISS_READ_WORD_DELAY & AMO) |
                     (CurrState == STATE_MISS_WRITE_WORD);
   assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY);
   assign FSMWordWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoWriteHit)) |
-                          (CurrState == STATE_MISS_READ_WORD_DELAY & DoAMO) |
+                          (CurrState == STATE_MISS_READ_WORD_DELAY & AMO) |
                           (CurrState == STATE_MISS_WRITE_WORD);
   assign FSMLineWriteEn = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   assign LRUWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit)) |
@@ -221,19 +232,19 @@ module cachefsm
   // handle cpu stall.
   assign restore = ((CurrState == STATE_CPU_BUSY) | (CurrState == STATE_CPU_BUSY_FINISH_AMO)) & ~`REPLAY;
   assign save = ((CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit) & CPUBusy) |
-                 (CurrState == STATE_MISS_READ_WORD_DELAY & (DoAMO | DoRead) & CPUBusy) |
+                 (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | Read) & CPUBusy) |
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
 
   // **** can this be simplified?
-  assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequest) | // *** ignorerequest comes from TrapM. Have to fix.  why is ignorerequest here anyway?
-                      (CurrState == STATE_READY & DoAMOHit) |  //<opHit> also depends on ignorerequest
-                      (CurrState == STATE_READY & DoReadHit & (CPUBusy & `REPLAY)) |
-                      (CurrState == STATE_READY & DoWriteHit) |
+  assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequestTLB) | // Ignore Request is needed on TLB miss.
+                      (CurrState == STATE_READY & (AMO & CacheHit)) |  // change
+                      (CurrState == STATE_READY & (Read & CacheHit) & (CPUBusy & `REPLAY)) |
+                      (CurrState == STATE_READY & (Write & CacheHit)) |
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) | 
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) | 
                       (CurrState == STATE_MISS_READ_WORD) |
-                      (CurrState == STATE_MISS_READ_WORD_DELAY & (DoAMO | (CPUBusy & `REPLAY))) | // ***
+                      (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | (CPUBusy & `REPLAY))) | // ***
                       (CurrState == STATE_MISS_WRITE_WORD) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY)) |

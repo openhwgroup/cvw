@@ -45,73 +45,75 @@ module interlockfsm
    output logic InterlockStall,
    output logic SelReplayCPURequest,
    output logic SelHPTW,
-   output logic IgnoreRequest);
+   output logic IgnoreRequestTLB,
+   output logic IgnoreRequestTrapM);
 
 
-  	  typedef enum 				   {STATE_T0_READY,
-									STATE_T0_REPLAY,
-									STATE_T3_DTLB_MISS,
-									STATE_T4_ITLB_MISS,
-									STATE_T5_ITLB_MISS,
-									STATE_T7_DITLB_MISS} statetype;
+  typedef enum  {STATE_T0_READY,
+				 STATE_T0_REPLAY,
+				 STATE_T3_DTLB_MISS,
+				 STATE_T4_ITLB_MISS,
+				 STATE_T5_ITLB_MISS,
+				 STATE_T7_DITLB_MISS} statetype;
 
-(* mark_debug = "true" *)	  statetype InterlockCurrState, InterlockNextState;
+  (* mark_debug = "true" *)	  statetype InterlockCurrState, InterlockNextState;
 
 
-	  always_ff @(posedge clk)
-		if (reset)    InterlockCurrState <= #1 STATE_T0_READY;
-		else InterlockCurrState <= #1 InterlockNextState;
+  always_ff @(posedge clk)
+	if (reset)    InterlockCurrState <= #1 STATE_T0_READY;
+	else InterlockCurrState <= #1 InterlockNextState;
 
-	  always_comb begin
-		case(InterlockCurrState)
-		  STATE_T0_READY: if (TrapM)                       InterlockNextState = STATE_T0_READY;
-		  else if(~ITLBMissF & DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
-	      else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
-          else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
-		  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
-		  else                                             InterlockNextState = STATE_T0_READY;
-		  STATE_T0_REPLAY:       if(DCacheStallM)                                  InterlockNextState = STATE_T0_REPLAY;
-	      else                                             InterlockNextState = STATE_T0_READY;
-		  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
-		  else                                             InterlockNextState = STATE_T3_DTLB_MISS;
-		  STATE_T4_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_READY;
-	      else                                             InterlockNextState = STATE_T4_ITLB_MISS;
-		  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
-		  else                                             InterlockNextState = STATE_T5_ITLB_MISS;
-		  STATE_T7_DITLB_MISS:   if(DTLBWriteM)                                   InterlockNextState = STATE_T5_ITLB_MISS;
-		  else                                             InterlockNextState = STATE_T7_DITLB_MISS;
-		  default: InterlockNextState = STATE_T0_READY;
-		endcase
-	  end // always_comb
+  always_comb begin
+	case(InterlockCurrState)
+	  STATE_T0_READY: if (TrapM)                       InterlockNextState = STATE_T0_READY;
+	  else if(~ITLBMissF & DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
+	  else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
+      else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
+	  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
+	  else                                             InterlockNextState = STATE_T0_READY;
+	  STATE_T0_REPLAY:       if(DCacheStallM)                                  InterlockNextState = STATE_T0_REPLAY;
+	  else                                             InterlockNextState = STATE_T0_READY;
+	  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
+	  else                                             InterlockNextState = STATE_T3_DTLB_MISS;
+	  STATE_T4_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_READY;
+	  else                                             InterlockNextState = STATE_T4_ITLB_MISS;
+	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
+	  else                                             InterlockNextState = STATE_T5_ITLB_MISS;
+	  STATE_T7_DITLB_MISS:   if(DTLBWriteM)                                   InterlockNextState = STATE_T5_ITLB_MISS;
+	  else                                             InterlockNextState = STATE_T7_DITLB_MISS;
+	  default: InterlockNextState = STATE_T0_READY;
+	endcase
+  end // always_comb
 	  
-	  // signal to CPU it needs to wait on HPTW.
-	  /* -----\/----- EXCLUDED -----\/-----
-	   // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
-	   // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
-	   // Note this will cause a problem for post synthesis gate simulation.
-	   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
-	   (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
-	   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
+  // signal to CPU it needs to wait on HPTW.
+  /* -----\/----- EXCLUDED -----\/-----
+   // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
+   // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
+   // Note this will cause a problem for post synthesis gate simulation.
+   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+   (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
 
-	   -----/\----- EXCLUDED -----/\----- */
+   -----/\----- EXCLUDED -----/\----- */
 
-	  always_comb begin
-		InterlockStall = 1'b0;
-		case(InterlockCurrState) 
-		  STATE_T0_READY: if((DTLBMissM | ITLBMissF) & ~TrapM) InterlockStall = 1'b1;
-		  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
-		  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
-		  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
-		  STATE_T7_DITLB_MISS: InterlockStall = 1'b1;
-		  default: InterlockStall = 1'b0;
-		endcase
-	  end
+  always_comb begin
+	InterlockStall = 1'b0;
+	case(InterlockCurrState) 
+	  STATE_T0_READY: if((DTLBMissM | ITLBMissF) & ~TrapM) InterlockStall = 1'b1;
+	  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
+	  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
+	  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
+	  STATE_T7_DITLB_MISS: InterlockStall = 1'b1;
+	  default: InterlockStall = 1'b0;
+	endcase
+  end
   
   
-	  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
-	  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
-					   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-	  assign IgnoreRequest = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM | TrapM)) |
-							 ((InterlockCurrState == STATE_T0_REPLAY) & (TrapM));
+  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
+  assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+				   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
+  assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM));
+  assign IgnoreRequestTrapM = (InterlockCurrState == STATE_T0_READY & (TrapM)) |
+							  ((InterlockCurrState == STATE_T0_REPLAY) & (TrapM));
 
 endmodule

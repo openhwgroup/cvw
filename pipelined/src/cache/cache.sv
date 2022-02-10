@@ -49,7 +49,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   output logic                CacheAccess,
   output logic                save, restore,
    // lsu control
-  input logic                 IgnoreRequest,
+  input logic                 IgnoreRequestTLB,
+  input logic                 IgnoreRequestTrapM,                                                                    
    // Bus fsm interface
   output logic                CacheFetchLine,
   output logic                CacheWriteLine,
@@ -182,6 +183,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////
 
+  // *** change to structural
   assign SelectedWay = SelFlush ? FlushWay : (FSMLineWriteEn ? VictimWay : WayHit);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
@@ -196,7 +198,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
-		.RW, .Atomic, .CPUBusy, .IgnoreRequest,
+		.RW, .Atomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
 		.ClearValid, .SetDirty, .ClearDirty, .FSMWordWriteEn,
