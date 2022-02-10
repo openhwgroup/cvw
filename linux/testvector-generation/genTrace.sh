@@ -25,11 +25,11 @@ then
     sudo chmod a+rw $interruptsFile
 
     # Compile Devicetree from Source
-    dtc -I dts -O dtb ../devicetree/virt-trimmed.dts > ../devicetree/virt-trimmed.dtb
+    dtc -I dts -O dtb ../devicetree/wally-virt.dts > ../devicetree/wally-virt.dtb
 
     # QEMU Simulation
     (qemu-system-riscv64 \
-    -M virt -dtb ../devicetree/virt-trimmed.dtb \
+    -M virt -dtb ../devicetree/wally-virt.dtb \
     -nographic -serial /dev/null \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=record,rrfile=$recordFile \
