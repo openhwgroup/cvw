@@ -112,17 +112,18 @@ module cachefsm
   // if the command is used in the READY state then the cache needs to be able to supress
   // using both IgnoreRequestTLB and IgnoreRequestTrapM.  Otherwise we can just use IgnoreRequestTLB.
 
+  // need to re organize all of these.  Low priority though.
   assign DoFlush = FlushCache & ~IgnoreRequest;
   assign AMO = Atomic[1] & (&RW);  
-  assign DoAMO = AMO & ~IgnoreRequest; // ***
+  assign DoAMO = AMO & ~IgnoreRequest; 
   assign DoAMOHit = DoAMO & CacheHit;
   assign DoAMOMiss = DoAMO & ~CacheHit;
   assign Read = RW[1];
-  assign DoRead = Read & ~IgnoreRequest; // ***
+  assign DoRead = Read & ~IgnoreRequest; 
   assign DoReadHit = DoRead & CacheHit;
   assign DoReadMiss = DoRead & ~CacheHit;
   assign Write = RW[0];
-  assign DoWrite = Write & ~IgnoreRequest; // ***
+  assign DoWrite = Write & ~IgnoreRequest; 
   assign DoWriteHit = DoWrite & CacheHit;
   assign DoWriteMiss = DoWrite & ~CacheHit;
 
@@ -237,14 +238,14 @@ module cachefsm
 
   // **** can this be simplified?
   assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequestTLB) | // Ignore Request is needed on TLB miss.
-                      (CurrState == STATE_READY & (AMO & CacheHit)) |  // change
+                      (CurrState == STATE_READY & (AMO & CacheHit)) | 
                       (CurrState == STATE_READY & (Read & CacheHit) & (CPUBusy & `REPLAY)) |
                       (CurrState == STATE_READY & (Write & CacheHit)) |
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) | 
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) | 
                       (CurrState == STATE_MISS_READ_WORD) |
-                      (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | (CPUBusy & `REPLAY))) | // ***
+                      (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | (CPUBusy & `REPLAY))) |
                       (CurrState == STATE_MISS_WRITE_WORD) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY)) |
