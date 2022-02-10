@@ -27,7 +27,7 @@ set target_library [list]
 
 #lappend target_library scc9gena_tt_1.2v_25C.db
 if {$tech == "sky130"} {
-    lappend target_library ../addins/sky130_osu_sc_t12/12T_ms/lib/sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
+    lappend target_library $s8lib/sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
 } elseif {$tech == "sky90"} {
     lappend target_library $s9lib/scc9gena_tt_1.2v_25C.db
 }
