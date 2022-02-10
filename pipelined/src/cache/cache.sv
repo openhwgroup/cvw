@@ -114,18 +114,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .RAdr, .PAdr,
-        .WriteWordWayEn,
-        .WriteLineWayEn,
-		.CacheWriteData,
-        .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay,
-        .SelEvict, .VictimWay, .FlushWay, 
-        .SelFlush,
-		.ReadDataLineWay, .WayHit, .VictimDirty(VictimDirtyWay), .VictimTag(VictimTagWay),
-		.InvalidateAll(InvalidateCacheM));
+    .clk, .reset, .RAdr, .PAdr, .WriteWordWayEn, .WriteLineWayEn, .CacheWriteData, 
+    .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
+    .FlushWay, .SelFlush, .ReadDataLineWay, .WayHit, .VictimDirtyWay, .VictimTagWay, 
+    .InvalidateAll(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .WayHit(WayHitFinal), .VictimWay, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .RAdr, .LRUWriteEn);
+      .clk, .reset, .WayHit(WayHitFinal), .VictimWay, .PAdr, .RAdr, .LRUWriteEn);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | WayHit;
   assign VictimDirty = | VictimDirtyWay;

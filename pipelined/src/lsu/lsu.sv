@@ -127,14 +127,11 @@ module lsu (
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
    end
 
-  // **** look into this confusing signal.
-  // This signal is confusing.  CommittedM tells the CPU's trap unit the current instruction
+  // CommittedM tells the CPU's privilege unit the current instruction
   // in the memory stage is a memory operaton and that memory operation is either completed
-  // or is partially executed.  This signal is only low for the first cycle of a memory
-  // operation.
-  // **** I think there is also a bug here.  Data cache misses and TLB misses both
-  // set this bit in the first cycle.  It is not strickly wrong, but it may be better
-  // to flush the memory operation at that time.
+  // or is partially executed. Partially completed memory operations need to prevent an interrupts.
+  // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
+  // delay the interrupt until the LSU is in a clean state.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
   // MMU and Misalignment fault logic required if privileged unit exists
@@ -238,7 +235,8 @@ module lsu (
 		.Funct3M(LSUFunct3M), .ReadDataM);
 
   // this might only get instantiated if there is a dcache or dtim.
-  // There is a copy in the ebu. *** is it needed there, or can data come in from ebu, get muxed here and sent back out
+  // There is a copy in the ebu. *** is it needed there, or can data come in from ebu, get 
+  // muxed here and sent back out.
   // Explore changing feedback path from output of AMOALU to subword write ***
   subwordwrite subwordwrite(.HRDATA(ReadDataWordM), .HADDRD(LSUPAdrM[2:0]),
 		.HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
