@@ -3,8 +3,6 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
-# Enables name mapping
-saif_map -start
 
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
@@ -12,12 +10,18 @@ set cfgName $::env(CONFIG)
 # Config
 set hdl_src "../pipelined/src"
 set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
+set saifpower $::env(SAIFPOWER)
 
 eval file copy -force ${cfg} {hdl/}
 eval file copy -force ${cfg} $outputDir
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
+
+# Enables name mapping
+if { $saifpower == 1 } {
+    saif_map -start
+}
 
 # Verilog files
 set my_verilog_files [glob hdl/*]
@@ -51,11 +55,11 @@ link
 # Reset all constraints 
 reset_design
 
-# SAIF power prediction (optional)
-# set_power_prediction 
-
 # Power Dissipation Analysis
-# read_saif -input vcd/mult.saif -instance_name stimulus/dut -auto_map_names -verbose
+######### OPTIONAL !!!!!!!!!!!!!!!!
+if { $saifpower == 1 } {
+    read_saif -input power.saif -instance_name testbench/dut/core -auto_map_names -verbose
+}
 
 # Set reset false path
 set_false_path -from [get_ports reset]
