@@ -65,7 +65,7 @@ module spillsupport (
   
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
 
-  typedef enum      {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
+  typedef enum logic [1:0]     {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
   (* mark_debug = "true" *)  statetype CurrState, NextState;
 
   always_ff @(posedge clk)

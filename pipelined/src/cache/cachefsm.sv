@@ -86,7 +86,7 @@ module cachefsm
   logic               DoAMOMiss, DoReadMiss, DoWriteMiss;
   logic               FlushFlag;
     
-  typedef enum 		  {STATE_READY,
+  typedef enum logic [3:0]		  {STATE_READY,
 
 					   STATE_MISS_FETCH_WDV,
 					   STATE_MISS_FETCH_DONE,
