@@ -46,7 +46,7 @@ module hptw
    output logic [2:0] 		   HPTWSize // 32 or 64 bit access.
 );
 
-	typedef enum  {L0_ADR, L0_RD, 
+	typedef enum logic [3:0] {L0_ADR, L0_RD, 
 					L1_ADR, L1_RD, 
 					L2_ADR, L2_RD, 
 					L3_ADR, L3_RD, 

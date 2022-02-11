@@ -55,7 +55,7 @@ module uartPC16550D(
 	);
 
   // transmit and receive states // *** neeed to work on synth warning -- it wants to make enums 32 bits by default
-  typedef enum {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
+  typedef enum logic [1:0] {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
 
   // Registers
   logic [10:0] RBR;

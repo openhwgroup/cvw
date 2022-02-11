@@ -49,7 +49,7 @@ module interlockfsm
    output logic IgnoreRequestTrapM);
 
 
-  typedef enum  {STATE_T0_READY,
+  typedef enum logic[2:0]  {STATE_T0_READY,
 				 STATE_T0_REPLAY,
 				 STATE_T3_DTLB_MISS,
 				 STATE_T4_ITLB_MISS,

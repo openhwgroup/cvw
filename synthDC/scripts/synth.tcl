@@ -3,7 +3,6 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
-<<<<<<< HEAD
 # Ignore unnecessary warnings:
 # intraassignment delays for nonblocking assignments are ignored
 suppress_message {VER-130} 
@@ -11,8 +10,6 @@ suppress_message {VER-130}
 suppress_message {VER-281} 
 suppress_message {VER-173} 
 
-=======
->>>>>>> 524ba78808f28905d48c866eec9f8e7badd42ea8
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
