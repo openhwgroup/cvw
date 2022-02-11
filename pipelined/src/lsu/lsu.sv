@@ -139,7 +139,7 @@ module lsu (
 
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-      .PrivilegeModeW, .DisableTranslation(SelHPTW),
+      .PrivilegeModeW, .DisableTranslation(SelHPTW | FlushDCacheM),
       .PAdr(PreLSUPAdrM),
       .VAdr(IEUAdrM),
       .Size(LSUFunct3M[1:0]),
