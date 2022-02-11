@@ -76,7 +76,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   genvar                      index;
 
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-    flopen #(`XLEN) fb(.clk, .en(LSUBusAck & LSUBusRead & (index == WordCount)),
+    flopenr #(`XLEN) fb(.clk, .reset, .en(LSUBusAck & LSUBusRead & (index == WordCount)),
                        .d(LSUBusHRDATA), .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
 

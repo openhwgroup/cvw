@@ -39,7 +39,7 @@ module spillsupport (
   input logic [`XLEN-1:0]  PCF,
   input logic [`XLEN-3:0]  PCPlusUpperF,
   input logic [`XLEN-1:0]  PCNextF,
-  logic [31:0]             InstrRawF,
+  input logic [31:0]       InstrRawF,
   input logic              IFUCacheBusStallF,
   output logic [`XLEN-1:0] PCNextFSpill,
   output logic [`XLEN-1:0] PCFSpill,
