@@ -3,6 +3,13 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
+# Ignore unnecessary warnings:
+# intraassignment delays for nonblocking assignments are ignored
+suppress_message {VER-130} 
+# statements in initial blocks are ignored
+suppress_message {VER-281} 
+suppress_message {VER-173} 
+
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)

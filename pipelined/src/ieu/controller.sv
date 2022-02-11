@@ -228,5 +228,5 @@ module controller(
 
   assign CSRWritePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM;
 
-  assign StoreStallD = MemRWE[0] & (|MemRWD | |AtomicD);
+  assign StoreStallD = MemRWE[0] & ((|MemRWD) | (|AtomicD));
 endmodule
