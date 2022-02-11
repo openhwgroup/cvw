@@ -553,9 +553,9 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe119]
 connect_debug_port u_ila_0/probe119 [get_nets [list wallypipelinedsoc/core/lsu/DTLBWriteM]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 11 [get_debug_ports u_ila_0/probe120]
+set_property port_width 4 [get_debug_ports u_ila_0/probe120]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe120]
-connect_debug_port u_ila_0/probe120 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[2]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[3]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[4]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[5]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[6]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[7]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[8]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[9]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[10]}]]
+connect_debug_port u_ila_0/probe120 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[2]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[3]}]]
 
 
 create_debug_port u_ila_0 probe
