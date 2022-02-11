@@ -113,8 +113,8 @@ module cachefsm
   // using both IgnoreRequestTLB and IgnoreRequestTrapM.  Otherwise we can just use IgnoreRequestTLB.
 
   // need to re organize all of these.  Low priority though.
-  assign DoFlush = FlushCache & ~IgnoreRequest;
-  assign AMO = Atomic[1] & (&RW);  
+  assign DoFlush = FlushCache & ~IgnoreRequestTrapM; // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
+  assign AMO = Atomic[1] & (&RW);
   assign DoAMO = AMO & ~IgnoreRequest; 
   assign DoAMOHit = DoAMO & CacheHit;
   assign DoAMOMiss = DoAMO & ~CacheHit;
@@ -188,7 +188,7 @@ module cachefsm
 
   // com back to CPU
   assign CacheCommitted = CurrState != STATE_READY;
-  assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAMOMiss | DoReadMiss | DoWriteMiss)) |
+  assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAMOMiss | DoReadMiss | DoWriteMiss)) | 
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
@@ -224,8 +224,8 @@ module cachefsm
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayFlag & ~FlushAdrFlag);
   assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushFlag)) |
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
-  assign FlushAdrCntRst = (CurrState == STATE_READY & DoFlush);
-  assign FlushWayCntRst = (CurrState == STATE_READY & DoFlush) | (CurrState == STATE_FLUSH_INCR);
+  assign FlushAdrCntRst = (CurrState == STATE_READY);
+  assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
   assign CacheFetchLine = (CurrState == STATE_READY & (DoAMOMiss | DoWriteMiss | DoReadMiss));
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_DONE & VictimDirty) |
