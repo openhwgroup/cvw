@@ -82,7 +82,7 @@ module cachefsm
   logic               resetDelay;
   logic               AMO;
   logic               DoAMO, DoRead, DoWrite, DoFlush;
-  logic               DoAMOHit, DoReadHit, DoWriteHit, DoAnyHit;
+  logic               DoAMOHit, DoReadHit, DoWriteHit, DoAnyUpdateHit, DoAnyHit;
   logic               DoAMOMiss, DoReadMiss, DoWriteMiss, DoAnyMiss;
   logic               FlushFlag, FlushWayAndNotAdrFlag;
     
@@ -124,8 +124,9 @@ module cachefsm
   assign DoWriteHit = DoWrite & CacheHit;
   assign DoWriteMiss = DoWrite & ~CacheHit;
 
-  assign DoAnyMiss = DoAMOMiss | DoReadMiss | DoWriteMiss;
-  assign DoAnyHit = DoAMOHit | DoReadHit | DoWriteHit;  
+  assign DoAnyMiss = (DoAMO | DoRead | DoWrite) & ~CacheHit;
+  assign DoAnyUpdateHit = DoAMOHit | DoWriteHit;
+  assign DoAnyHit = DoAnyUpdateHit | DoReadHit;  
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
@@ -147,10 +148,8 @@ module cachefsm
     case (CurrState)
       STATE_READY: if(IgnoreRequest)                                NextState = STATE_READY;
                    else if(DoFlush)                                 NextState = STATE_FLUSH;
-                   else if(DoAMOHit & CPUBusy)                      NextState = STATE_CPU_BUSY; // change
-                   else if(DoReadHit & CPUBusy)                     NextState = STATE_CPU_BUSY;
-                   else if(DoWriteHit & CPUBusy)                    NextState = STATE_CPU_BUSY;
-                   else if(DoReadMiss | DoWriteMiss | DoAMOMiss)    NextState = STATE_MISS_FETCH_WDV; // change
+                   else if(DoAnyHit & CPUBusy)                      NextState = STATE_CPU_BUSY;
+                   else if(DoAnyMiss)                               NextState = STATE_MISS_FETCH_WDV; // change
                    else                                             NextState = STATE_READY;
       STATE_MISS_FETCH_WDV: if (CacheBusAck)                        NextState = STATE_MISS_FETCH_DONE;
                             else                                    NextState = STATE_MISS_FETCH_WDV;
@@ -205,7 +204,7 @@ module cachefsm
                     (CurrState == STATE_MISS_WRITE_WORD);
   assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY);
-  assign FSMWordWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoWriteHit)) |
+  assign FSMWordWriteEn = (CurrState == STATE_READY & (DoAnyUpdateHit)) |
                           (CurrState == STATE_MISS_READ_WORD_DELAY & AMO) |
                           (CurrState == STATE_MISS_WRITE_WORD);
   assign FSMLineWriteEn = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
