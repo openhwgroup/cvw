@@ -64,7 +64,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   logic 			   UnCachedAccess;
   
 
-  typedef enum {STATE_BUS_READY,
+  typedef enum logic [2:0] {STATE_BUS_READY,
 				STATE_BUS_FETCH,
 				STATE_BUS_WRITE,
 				STATE_BUS_UNCACHED_WRITE,

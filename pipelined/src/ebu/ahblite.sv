@@ -35,10 +35,6 @@
 
 `include "wally-config.vh"
 
-package ahbliteState;
-  typedef enum logic [3:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
-endpackage
-
 module ahblite (
   input logic 				 clk, reset,
   // Load control
@@ -75,6 +71,9 @@ module ahblite (
   (* mark_debug = "true" *) output logic HWRITED
 );
 
+  typedef enum logic [1:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
+  statetype BusState, NextBusState;
+
   logic GrantData;
   logic [31:0] AccessAddress;
   logic [2:0] ISize;
@@ -88,8 +87,6 @@ module ahblite (
   // Data accesses have priority over instructions.  However, if a data access comes
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
-  import ahbliteState::*;
-  statetype BusState, NextBusState;
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
