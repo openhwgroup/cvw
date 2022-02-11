@@ -80,11 +80,11 @@ module cachefsm
   
   logic [1:0]         PreSelAdr;
   logic               resetDelay;
-  logic               Read, Write, AMO;
+  logic               AMO;
   logic               DoAMO, DoRead, DoWrite, DoFlush;
-  logic               DoAMOHit, DoReadHit, DoWriteHit;
-  logic               DoAMOMiss, DoReadMiss, DoWriteMiss;
-  logic               FlushFlag;
+  logic               DoAMOHit, DoReadHit, DoWriteHit, DoAnyHit;
+  logic               DoAMOMiss, DoReadMiss, DoWriteMiss, DoAnyMiss;
+  logic               FlushFlag, FlushWayAndNotAdrFlag;
     
   typedef enum logic [3:0]		  {STATE_READY,
 
@@ -118,15 +118,15 @@ module cachefsm
   assign DoAMO = AMO & ~IgnoreRequest; 
   assign DoAMOHit = DoAMO & CacheHit;
   assign DoAMOMiss = DoAMO & ~CacheHit;
-  assign Read = RW[1];
-  assign DoRead = Read & ~IgnoreRequest; 
+  assign DoRead = RW[1] & ~IgnoreRequest; 
   assign DoReadHit = DoRead & CacheHit;
   assign DoReadMiss = DoRead & ~CacheHit;
-  assign Write = RW[0];
-  assign DoWrite = Write & ~IgnoreRequest; 
+  assign DoWrite = RW[0] & ~IgnoreRequest; 
   assign DoWriteHit = DoWrite & CacheHit;
   assign DoWriteMiss = DoWrite & ~CacheHit;
 
+  assign DoAnyMiss = DoAMOMiss | DoReadMiss | DoWriteMiss;
+  assign DoAnyHit = DoAMOHit | DoReadHit | DoWriteHit;  
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
@@ -158,7 +158,7 @@ module cachefsm
       STATE_MISS_FETCH_DONE: if(VictimDirty)                        NextState = STATE_MISS_EVICT_DIRTY;
                              else                                   NextState = STATE_MISS_WRITE_CACHE_LINE;
       STATE_MISS_WRITE_CACHE_LINE:                                  NextState = STATE_MISS_READ_WORD;
-      STATE_MISS_READ_WORD: if (Write & ~AMO)                       NextState = STATE_MISS_WRITE_WORD;
+      STATE_MISS_READ_WORD: if (RW[0] & ~AMO)                       NextState = STATE_MISS_WRITE_WORD;
                             else                                    NextState = STATE_MISS_READ_WORD_DELAY;
       STATE_MISS_READ_WORD_DELAY: if(AMO & CPUBusy)                 NextState = STATE_CPU_BUSY_FINISH_AMO;
                                   else if(CPUBusy)                  NextState = STATE_CPU_BUSY;
@@ -188,7 +188,7 @@ module cachefsm
 
   // com back to CPU
   assign CacheCommitted = CurrState != STATE_READY;
-  assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAMOMiss | DoReadMiss | DoWriteMiss)) | 
+  assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAnyMiss)) | 
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
@@ -212,7 +212,7 @@ module cachefsm
                           (CurrState == STATE_MISS_READ_WORD_DELAY & AMO) |
                           (CurrState == STATE_MISS_WRITE_WORD);
   assign FSMLineWriteEn = (CurrState == STATE_MISS_WRITE_CACHE_LINE);
-  assign LRUWriteEn = (CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit)) |
+  assign LRUWriteEn = (CurrState == STATE_READY & DoAnyHit) |
                       (CurrState == STATE_MISS_READ_WORD_DELAY) |
                       (CurrState == STATE_MISS_WRITE_WORD);
   // Flush and eviction controls
@@ -220,27 +220,28 @@ module cachefsm
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK) |
                     (CurrState == STATE_FLUSH_CLEAR_DIRTY);
-  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & FlushWayFlag & ~FlushAdrFlag) |
-                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayFlag & ~FlushAdrFlag);
+  assign FlushWayAndNotAdrFlag = FlushWayFlag & ~FlushAdrFlag;
+  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & FlushWayAndNotAdrFlag) |
+                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayAndNotAdrFlag);
   assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushFlag)) |
                          (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
-  assign CacheFetchLine = (CurrState == STATE_READY & (DoAMOMiss | DoWriteMiss | DoReadMiss));
+  assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss);
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_DONE & VictimDirty) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // handle cpu stall.
   assign restore = ((CurrState == STATE_CPU_BUSY) | (CurrState == STATE_CPU_BUSY_FINISH_AMO)) & ~`REPLAY;
-  assign save = ((CurrState == STATE_READY & (DoAMOHit | DoReadHit | DoWriteHit) & CPUBusy) |
-                 (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | Read) & CPUBusy) |
+  assign save = ((CurrState == STATE_READY & DoAnyHit & CPUBusy) |
+                 (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | RW[1]) & CPUBusy) |
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
 
   // **** can this be simplified?
   assign PreSelAdr = ((CurrState == STATE_READY & IgnoreRequestTLB) | // Ignore Request is needed on TLB miss.
                       (CurrState == STATE_READY & (AMO & CacheHit)) | 
-                      (CurrState == STATE_READY & (Read & CacheHit) & (CPUBusy & `REPLAY)) |
-                      (CurrState == STATE_READY & (Write & CacheHit)) |
+                      (CurrState == STATE_READY & (RW[1] & CacheHit) & (CPUBusy & `REPLAY)) |
+                      (CurrState == STATE_READY & (RW[0] & CacheHit)) |
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) | 
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) | 
