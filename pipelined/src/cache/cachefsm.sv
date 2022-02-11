@@ -97,7 +97,6 @@ module cachefsm
 					   STATE_MISS_WRITE_WORD,
 
 					   STATE_CPU_BUSY,
-					   STATE_CPU_BUSY_FINISH_AMO,
   
 					   STATE_FLUSH,
 					   STATE_FLUSH_CHECK,
@@ -148,7 +147,7 @@ module cachefsm
     case (CurrState)
       STATE_READY: if(IgnoreRequest)                                NextState = STATE_READY;
                    else if(DoFlush)                                 NextState = STATE_FLUSH;
-                   else if(DoAMOHit & CPUBusy)                      NextState = STATE_CPU_BUSY_FINISH_AMO; // change
+                   else if(DoAMOHit & CPUBusy)                      NextState = STATE_CPU_BUSY; // change
                    else if(DoReadHit & CPUBusy)                     NextState = STATE_CPU_BUSY;
                    else if(DoWriteHit & CPUBusy)                    NextState = STATE_CPU_BUSY;
                    else if(DoReadMiss | DoWriteMiss | DoAMOMiss)    NextState = STATE_MISS_FETCH_WDV; // change
@@ -160,7 +159,7 @@ module cachefsm
       STATE_MISS_WRITE_CACHE_LINE:                                  NextState = STATE_MISS_READ_WORD;
       STATE_MISS_READ_WORD: if (RW[0] & ~AMO)                       NextState = STATE_MISS_WRITE_WORD;
                             else                                    NextState = STATE_MISS_READ_WORD_DELAY;
-      STATE_MISS_READ_WORD_DELAY: if(AMO & CPUBusy)                 NextState = STATE_CPU_BUSY_FINISH_AMO;
+      STATE_MISS_READ_WORD_DELAY: if(AMO & CPUBusy)                 NextState = STATE_CPU_BUSY;
                                   else if(CPUBusy)                  NextState = STATE_CPU_BUSY;
                                   else                              NextState = STATE_READY;
       STATE_MISS_WRITE_WORD: if(CPUBusy)                            NextState = STATE_CPU_BUSY;
@@ -169,8 +168,6 @@ module cachefsm
                               else                                  NextState = STATE_MISS_EVICT_DIRTY;
       STATE_CPU_BUSY: if(CPUBusy)                                   NextState = STATE_CPU_BUSY;
                       else                                          NextState = STATE_READY;
-      STATE_CPU_BUSY_FINISH_AMO: if(CPUBusy)                        NextState = STATE_CPU_BUSY_FINISH_AMO;
-                                 else                               NextState = STATE_READY;
 	  STATE_FLUSH:                                                  NextState = STATE_FLUSH_CHECK;
       STATE_FLUSH_CHECK: if(VictimDirty)                            NextState = STATE_FLUSH_WRITE_BACK;
                          else if (FlushFlag)                        NextState = STATE_READY;
@@ -232,7 +229,7 @@ module cachefsm
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_DONE & VictimDirty) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // handle cpu stall.
-  assign restore = ((CurrState == STATE_CPU_BUSY) | (CurrState == STATE_CPU_BUSY_FINISH_AMO)) & ~`REPLAY;
+  assign restore = ((CurrState == STATE_CPU_BUSY)) & ~`REPLAY;
   assign save = ((CurrState == STATE_READY & DoAnyHit & CPUBusy) |
                  (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | RW[1]) & CPUBusy) |
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
@@ -249,8 +246,7 @@ module cachefsm
                       (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | (CPUBusy & `REPLAY))) |
                       (CurrState == STATE_MISS_WRITE_WORD) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
-                      (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY)) |
-                      (CurrState == STATE_CPU_BUSY_FINISH_AMO)) ? 2'b01 :
+                      (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY))) ? 2'b01 :
                      ((CurrState == STATE_FLUSH) | 
                       (CurrState == STATE_FLUSH_CHECK & ~(VictimDirty & FlushFlag)) |
                       (CurrState == STATE_FLUSH_INCR) |
