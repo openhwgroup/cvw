@@ -41,6 +41,7 @@ module spillsupport (
   input logic [`XLEN-1:0]  PCNextF,
   input logic [31:0]       InstrRawF,
   input logic              IFUCacheBusStallF,
+  input logic              ITLBMissF, 
   output logic [`XLEN-1:0] PCNextFSpill,
   output logic [`XLEN-1:0] PCFSpill,
   output logic             SelNextSpillF,
@@ -71,15 +72,15 @@ module spillsupport (
     if (reset)    CurrState <= #1 STATE_SPILL_READY;
     else CurrState <= #1 NextState;
 
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF;
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~ITLBMissF;
   
   always_comb begin
     case (CurrState)
-      STATE_SPILL_READY: if (TakeSpillF) NextState = STATE_SPILL_SPILL;
-      else                                    NextState = STATE_SPILL_READY;
+      STATE_SPILL_READY: if (TakeSpillF)                   NextState = STATE_SPILL_SPILL;
+      else                                                 NextState = STATE_SPILL_READY;
       STATE_SPILL_SPILL: if(IFUCacheBusStallF | StallF)    NextState = STATE_SPILL_SPILL;
-      else                                    NextState = STATE_SPILL_READY;
-      default:                                                   NextState = STATE_SPILL_READY;
+      else                                                 NextState = STATE_SPILL_READY;
+      default:                                             NextState = STATE_SPILL_READY;
     endcase
   end
 

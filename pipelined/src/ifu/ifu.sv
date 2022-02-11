@@ -125,8 +125,8 @@ module ifu (
   if(`C_SUPPORTED) begin : SpillSupport
 
     spillsupport spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF,
-                              .IFUCacheBusStallF, .PCNextFSpill, .PCFSpill, .SelNextSpillF,
-                              .PostSpillInstrRawF, .CompressedF);
+                              .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
+                              .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
