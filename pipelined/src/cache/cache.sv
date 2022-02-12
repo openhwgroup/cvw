@@ -68,7 +68,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   localparam                  WORDSPERLINE = LINELEN/`XLEN;
   localparam                  FlushAdrThreshold   = NUMLINES - 1;
 
-  logic [1:0]                 SelAdr;
+  logic                       SelAdr;
   logic [SETLEN-1:0]          RAdr;
   logic [LINELEN-1:0]         CacheWriteData;
   logic                       ClearValid;
@@ -110,7 +110,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // and FlushAdr when handling D$ flushes  
   mux3 #(SETLEN) AdrSelMux(
     .d0(NextAdr[SETTOP-1:OFFSETLEN]), .d1(PAdr[SETTOP-1:OFFSETLEN]), .d2(FlushAdr),
-		.s(SelAdr), .y(RAdr));
+		.s({SelFlush, SelAdr}), .y(RAdr));
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
