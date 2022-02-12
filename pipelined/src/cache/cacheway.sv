@@ -59,21 +59,18 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   localparam                         LOGWPL = $clog2(WORDSPERLINE);
   localparam                         LOGXLENBYTES = $clog2(`XLEN/8);
 
-  logic [NUMLINES-1:0] 				  ValidBits;
-  logic [NUMLINES-1:0] 				  DirtyBits;
-  logic [LINELEN-1:0] 				  ReadDataLine;
-  logic [TAGLEN-1:0] 				  ReadTag;
-  logic 							  Valid;
-  logic 							  Dirty;
-  logic 							  SelData;
-  logic                               SelTag;
-
-  logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
-
-  logic [2**LOGWPL-1:0]               MemPAdrDecoded;
-  logic [LINELEN/`XLEN-1:0]           SelectedWriteWordEn;
+  logic [NUMLINES-1:0]               ValidBits;
+  logic [NUMLINES-1:0]               DirtyBits;
+  logic [LINELEN-1:0]                ReadDataLine;
+  logic [TAGLEN-1:0]                 ReadTag;
+  logic                              Valid;
+  logic                              Dirty;
+  logic                              SelData;
+  logic                              SelTag;
+  logic [$clog2(NUMLINES)-1:0]       RAdrD;
+  logic [2**LOGWPL-1:0]              MemPAdrDecoded;
+  logic [LINELEN/`XLEN-1:0]          SelectedWriteWordEn;
   
-
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,9 +115,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   always_ff @(posedge clk) begin // Valid bit array, 
-    if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
-    else if (SetValidWay)                                     ValidBits[RAdr] <= #1 1'b1;
-    else if (ClearValidWay) ValidBits[RAdr] <= #1 1'b0;
+    if (reset | InvalidateAll) ValidBits        <= #1 '0;
+    else if (SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
+    else if (ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
 	end
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
   assign Valid = ValidBits[RAdrD];
@@ -132,8 +129,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Dirty bits
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
-      if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      else if (SetDirtyWay) DirtyBits[RAdr] <= #1 1'b1;
+      if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
+      else if (SetDirtyWay)   DirtyBits[RAdr] <= #1 1'b1;
       else if (ClearDirtyWay) DirtyBits[RAdr] <= #1 1'b0;
     end
     assign Dirty = DirtyBits[RAdrD];
