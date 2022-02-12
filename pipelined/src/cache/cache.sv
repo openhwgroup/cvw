@@ -71,8 +71,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [1:0]                 SelAdr;
   logic [SETLEN-1:0]          RAdr;
   logic [LINELEN-1:0]         CacheWriteData;
-  logic                       SetValid, ClearValid;
-  logic                       SetDirty, ClearDirty;
+  logic                       ClearValid;
+  logic                       ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]         WayHit;
   logic                       CacheHit;
