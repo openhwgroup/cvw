@@ -10,6 +10,9 @@ suppress_message {VER-130}
 suppress_message {VER-281} 
 suppress_message {VER-173} 
 
+# Enable Multicore
+set_host_options -max_cores 8
+
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
@@ -178,10 +181,10 @@ redirect $filename { report_qor }
 
 # Report Timing
 set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_reportpath.rep"]
-redirect $filename { report_path_group }
+#redirect $filename { report_path_group }
 
 set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_report_clock.rep"]
-redirect $filename { report_clock }
+# redirect $filename { report_clock }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_timing.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -nworst 1 }
