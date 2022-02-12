@@ -175,9 +175,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 
   // *** change to structural
   mux3 #(NUMWAYS) selectwaymux(WayHitFinal, VictimWay, FlushWay, {SelFlush, FSMLineWriteEn}, SelectedWay);
-  assign SetValidWay = SetValid ? SelectedWay : '0;
+  assign SetValidWay = FSMLineWriteEn ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
-  assign SetDirtyWay = SetDirty ? SelectedWay : '0;
+  assign SetDirtyWay = FSMWordWriteEn ? SelectedWay : '0;
   assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
   assign WriteWordWayEn = FSMWordWriteEn ? SelectedWay : '0;
   assign WriteLineWayEn = FSMLineWriteEn ? SelectedWay : '0;  
@@ -190,8 +190,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
 		.RW, .Atomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
-		.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
-		.ClearValid, .SetDirty, .ClearDirty, .FSMWordWriteEn,
+		.CacheMiss, .CacheAccess, .SelAdr, 
+		.ClearValid, .ClearDirty, .FSMWordWriteEn,
 		.FSMLineWriteEn, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
