@@ -7,7 +7,7 @@ NAME := synth
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 500
 export CONFIG ?= rv32e
-export TECH ?= 130
+export TECH ?= sky130
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
