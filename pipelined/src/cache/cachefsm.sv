@@ -236,10 +236,10 @@ module cachefsm
                       (CurrState == STATE_CPU_BUSY & (CPUBusy & `REPLAY)) |
                       resetDelay) ? 2'b01 :
                      ((CurrState == STATE_FLUSH) | 
-                      (CurrState == STATE_FLUSH_CHECK & ~(VictimDirty & FlushFlag)) |
+                      (CurrState == STATE_FLUSH_CHECK) |
                       (CurrState == STATE_FLUSH_INCR) |
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
-                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag))) ? 2'b10 : 
+                      (CurrState == STATE_FLUSH_CLEAR_DIRTY)) ? 2'b10 : 
                      2'b00;
                                                                                 
                        
