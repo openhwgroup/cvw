@@ -224,9 +224,9 @@ module cachefsm
                   (CurrState == STATE_READY & (RW[1] & CacheHit) & (CPUBusy & `REPLAY)) |
 
                   (CurrState == STATE_MISS_FETCH_WDV) |
-                  (CurrState == STATE_MISS_FETCH_DONE) | 
+                  (CurrState == STATE_MISS_FETCH_DONE) |
                   (CurrState == STATE_MISS_EVICT_DIRTY) |
-                  (CurrState == STATE_MISS_WRITE_CACHE_LINE) | 
+                  (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                   (CurrState == STATE_MISS_READ_WORD) |
                   (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | (CPUBusy & `REPLAY))) |
                   (CurrState == STATE_MISS_WRITE_WORD) |
