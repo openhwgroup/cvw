@@ -11,7 +11,9 @@
 // This Verilog file models a radix 2 SRT divider which
 // produces one quotient digit per cycle.  The divider
 // keeps the partial remainder in carry-save form.
- 
+
+`include "wally-config.vh"
+
 /////////
 // srt //
 /////////
@@ -271,6 +273,24 @@ module testbench;
   logic [51:0] b;
   logic  [51:0] r;
   logic [54:0] rp, rm;   // positive quotient digits
+
+  //input logic  [63:0] X, Y, Z,  - numbers
+  //input logic         FmtE,  ---- format, 1 is for double precision, 0 is single
+  //input logic  [2:0]  FOpCtrlE, ---- controling operations for FPU, 1 is sqrt, 0 is divide
+ // all variables are commented in fpu.sv
+
+  // output logic from Unpackers
+  logic        XSgnE, YSgnE, ZSgnE;
+  logic [10:0] XExpE, YExpE, ZExpE; // exponent
+  logic [52:0] XManE, YManE, ZManE;
+  logic XNormE;
+  logic XNaNE, YNaNE, ZNaNE;
+  logic XSNaNE, YSNaNE, ZSNaNE;
+  logic XDenormE, YDenormE, ZDenormE; // denormals
+  logic XZeroE, YZeroE, ZZeroE;
+  logic [10:0] BiasE; // currrently hardcoded, will probs be removed
+  logic XInfE, YInfE, ZInfE;
+  logic XExpMaxE; // says exponent is all ones, can ignore
  
   // Test parameters
   parameter MEM_SIZE = 40000;
@@ -287,8 +307,11 @@ module testbench;
   logic    [51:0] correctr, nextr;
   integer testnum, errors;
 
+  // Unpackers
+  unpack unpacking(.X({(1+`NE)'(0),a}), .Y({(1+`NE)'(0)}), .Z(0), .FmtE(1'b1), FOpCtrlE.(0), .*)
+
   // Divider
-  srt  srt(clk, req, a, b, rp, rm);
+  srt  srt(clk, req, .a(XManE[51:0]), .b(YManE[51:0]), rp, rm);
 
   // Final adder converts quotient digits to 2's complement & normalizes
   finaladd finaladd(rp, rm, r);
@@ -326,7 +349,7 @@ module testbench;
 	begin
 	  req <= #5 1;
 	  $display("result was %h, should be %h\n", r, correctr);
-	  if ((correctr - r) > 1) // check if accurate to 1 ulp
+	  if (abs(correctr - r) > 1) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
 	      $display("failed\n");
