@@ -83,23 +83,23 @@ module cachefsm
   logic               DoAnyMiss;
   logic               FlushFlag, FlushWayAndNotAdrFlag;
     
-  typedef enum logic [3:0]		  {STATE_READY,
-
-					   STATE_MISS_FETCH_WDV,
-					   STATE_MISS_FETCH_DONE,
-					   STATE_MISS_EVICT_DIRTY,
-					   STATE_MISS_WRITE_CACHE_LINE,
-					   STATE_MISS_READ_WORD,
-					   STATE_MISS_READ_WORD_DELAY,
-					   STATE_MISS_WRITE_WORD,
-
-					   STATE_CPU_BUSY,
-  
-					   STATE_FLUSH,
-					   STATE_FLUSH_CHECK,
-					   STATE_FLUSH_INCR,
-					   STATE_FLUSH_WRITE_BACK,
-					   STATE_FLUSH_CLEAR_DIRTY} statetype;
+  typedef enum logic [3:0]		  {STATE_READY, // hit states
+                                   // miss states
+					               STATE_MISS_FETCH_WDV,
+					               STATE_MISS_FETCH_DONE,
+					               STATE_MISS_EVICT_DIRTY,
+					               STATE_MISS_WRITE_CACHE_LINE,
+					               STATE_MISS_READ_WORD,
+					               STATE_MISS_READ_WORD_DELAY,
+					               STATE_MISS_WRITE_WORD,
+                                   // cpu stalled replay/restore state
+					               STATE_CPU_BUSY,
+                                   // flush cache 
+					               STATE_FLUSH,
+					               STATE_FLUSH_CHECK,
+					               STATE_FLUSH_INCR,
+					               STATE_FLUSH_WRITE_BACK,
+					               STATE_FLUSH_CLEAR_DIRTY} statetype;
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
   logic               IgnoreRequest;
@@ -176,9 +176,9 @@ module cachefsm
   assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAnyMiss)) | 
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_FETCH_DONE) |
+                      (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                       (CurrState == STATE_MISS_READ_WORD) |
-                      (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_CHECK & ~(FlushFlag)) |
                       (CurrState == STATE_FLUSH_INCR) |
