@@ -147,8 +147,7 @@ module cachefsm
       STATE_MISS_WRITE_CACHE_LINE:                   NextState = STATE_MISS_READ_WORD;
       STATE_MISS_READ_WORD: if(RW[0] & ~AMO)         NextState = STATE_MISS_WRITE_WORD;
                             else                     NextState = STATE_MISS_READ_WORD_DELAY;
-      STATE_MISS_READ_WORD_DELAY: if(AMO & CPUBusy)  NextState = STATE_CPU_BUSY;
-                                  else if(CPUBusy)   NextState = STATE_CPU_BUSY;
+      STATE_MISS_READ_WORD_DELAY: if(CPUBusy)        NextState = STATE_CPU_BUSY;
                                   else               NextState = STATE_READY;
       STATE_MISS_WRITE_WORD: if(CPUBusy)             NextState = STATE_CPU_BUSY;
                              else                    NextState = STATE_READY;
