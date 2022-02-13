@@ -37,8 +37,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
-  input logic                        WriteWordWayEn,
-  input logic                        WriteLineWayEn,
   input logic [LINELEN-1:0]          CacheWriteData,
   input logic                        SetValidWay,
   input logic                        ClearValidWay,
@@ -78,7 +76,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   onehotdecoder #(LOGWPL) adrdec(
     .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = WriteLineWayEn ? '1 : WriteWordWayEn ? MemPAdrDecoded : '0; // OR-AND
+  assign SelectedWriteWordEn = SetValidWay ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
@@ -86,7 +84,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk,
     .Adr(RAdr), .ReadData(ReadTag),
-    .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineWayEn));
+    .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(SetValidWay));
 
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);

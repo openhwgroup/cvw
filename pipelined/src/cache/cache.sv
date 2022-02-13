@@ -99,7 +99,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
-  logic [NUMWAYS-1:0]         WriteWordWayEn, WriteLineWayEn;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -113,7 +112,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .RAdr, .PAdr, .WriteWordWayEn, .WriteLineWayEn, .CacheWriteData, 
+    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, 
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
@@ -171,8 +170,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
   assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
-  assign WriteWordWayEn = SetDirty ? SelectedWay : '0;
-  assign WriteLineWayEn = SetValid ? SelectedWay : '0;  
   
 
   /////////////////////////////////////////////////////////////////////////////////////////////
