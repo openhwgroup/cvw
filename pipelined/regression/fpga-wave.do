@@ -174,7 +174,7 @@ add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/core/mdu/MulDi
 add wave -noupdate -group muldiv /testbench/dut/wallypipelinedsoc/core/mdu/DivBusyE
 add wave -noupdate -group icache -color Gold /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/CurrState
 add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/BasePAdrF
-add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/WayHit
+add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/HitWay
 add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/genblk1/cachereplacementpolicy/BlockReplacementBits
 add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/genblk1/cachereplacementpolicy/EncVicWay
 add wave -noupdate -group icache /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/VictimWay
@@ -349,23 +349,23 @@ add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -group valid/dirty /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ClearValid
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -group valid/dirty /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/SetDirty
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -group valid/dirty /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ClearDirty
-add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[0]/WayHit}
+add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[0]/HitWay}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[0]/Valid}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[0]/Dirty}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[0]/ReadTag}
-add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[1]/WayHit}
+add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[1]/HitWay}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[1]/Valid}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[1]/Dirty}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[1]/ReadTag}
-add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way2 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[2]/WayHit}
+add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way2 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[2]/HitWay}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way2 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[2]/Valid}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way2 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[2]/Dirty}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way2 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[2]/ReadTag}
-add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[3]/WayHit}
+add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[3]/HitWay}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[3]/Valid}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[3]/Dirty}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way3 {/testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheWays[3]/ReadTag}
-add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/WayHit
+add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/HitWay
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ReadDataBlockWayMaskedM
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ReadDataWordM
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ReadDataWordMuxM
@@ -385,7 +385,7 @@ add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /t
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ReadDataM
 add wave -noupdate -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/DCacheStallM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/FlushAdrFlag
-add wave -noupdate -group lsu -expand -group dcache -group status /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/WayHit
+add wave -noupdate -group lsu -expand -group dcache -group status /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/HitWay
 add wave -noupdate -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/CacheHit
 add wave -noupdate -group lsu -expand -group dcache -group status /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/FetchCount
 add wave -noupdate -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/FetchCountFlag
