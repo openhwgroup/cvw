@@ -185,7 +185,7 @@ module lsu (
     localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLineM;
-    logic [LINELEN-1:0]  DCacheMemWriteData;
+    logic [LINELEN-1:0]  DCacheBusWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
@@ -200,7 +200,7 @@ module lsu (
       .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
       .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DCacheMemWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
+      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
@@ -218,7 +218,7 @@ module lsu (
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataLine(ReadDataLineM), 
-        .CacheMemWriteData(DCacheMemWriteData), .CacheFetchLine(DCacheFetchLine), 
+        .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
 
       subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(

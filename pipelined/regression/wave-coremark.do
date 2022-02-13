@@ -211,7 +211,7 @@ add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/b
 add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/InstrReadF
 add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/InstrAckF
 add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/ICacheMemWriteData
+add wave -noupdate -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/ICacheBusWriteData
 add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/core/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/core/ebu/AtomicMaskedM
@@ -244,7 +244,7 @@ add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/SRAMBlockWayWriteEnableM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/SelAdrM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/ReadDataBlockM
-add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/DCacheMemWriteData
+add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu.bus.dcache/DCacheBusWriteData
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu.bus.dcache/CacheWays[0]/WriteEnable}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu.bus.dcache/CacheWays[0]/SetValid}
 add wave -noupdate -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu.bus.dcache/CacheWays[0]/SetDirty}
