@@ -251,7 +251,7 @@ add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipel
 add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/InstrReadF
 add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/InstrAckF
 add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/controller/ICacheMemWriteEnable
-add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/ICacheMemWriteData
+add wave -noupdate -group icache -expand -group memory /testbench/dut/wallypipelinedsoc/core/ifu/bus/icache/ICacheBusWriteData
 add wave -noupdate -group AHB -color Gold /testbench/dut/wallypipelinedsoc/core/ebu/BusState
 add wave -noupdate -group AHB /testbench/dut/wallypipelinedsoc/core/ebu/NextBusState
 add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/wallypipelinedsoc/core/ebu/AtomicMaskedM
@@ -285,7 +285,7 @@ add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipeline
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/SRAMBlockWayWriteEnableM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/SelAdrM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/ReadDataBlockM
-add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/DCacheMemWriteData
+add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/DCacheBusWriteData
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/FlushWay
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/VictimDirty
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/wallypipelinedsoc/core/lsu.bus.dcache/VDWriteEnableWay

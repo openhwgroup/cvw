@@ -64,8 +64,8 @@ module cachefsm
    output logic      SelAdr,
    output logic      ClearValid,
    output logic      ClearDirty,
-   output logic      FSMWordWriteEn,
-   output logic      FSMLineWriteEn,
+   output logic      SetDirty,
+   output logic      SetValid,
    output logic      SelEvict,
    output logic      LRUWriteEn,
    output logic      SelFlush,
@@ -184,8 +184,8 @@ module cachefsm
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
                       (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
   // write enables internal to cache
-  assign FSMLineWriteEn = CurrState == STATE_MISS_WRITE_CACHE_LINE;
-  assign FSMWordWriteEn = (CurrState == STATE_READY & DoAnyUpdateHit) |
+  assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
+  assign SetDirty = (CurrState == STATE_READY & DoAnyUpdateHit) |
                           (CurrState == STATE_MISS_READ_WORD_DELAY & AMO) |
                           (CurrState == STATE_MISS_WRITE_WORD);
   assign ClearValid = '0;

@@ -56,7 +56,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   output logic                CacheWriteLine,
   input logic                 CacheBusAck,
   output logic [`PA_BITS-1:0] CacheBusAdr,
-  input logic [LINELEN-1:0]   CacheMemWriteData,
+  input logic [LINELEN-1:0]   CacheBusWriteData,
   output logic [LINELEN-1:0]  ReadDataLine);
 
   // Cache parameters
@@ -76,8 +76,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]         WayHit, WayHitSaved, WayHitFinal;
   logic                       CacheHit;
-  logic                       FSMWordWriteEn;
-  logic                       FSMLineWriteEn;
+  logic                       SetDirty;
+  logic                       SetValid;
   logic [NUMWAYS-1:0]         VictimWay;
   logic [NUMWAYS-1:0]         VictimDirtyWay;
   logic                       VictimDirty;
@@ -142,7 +142,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
   mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-		.d1(CacheMemWriteData),	.s(FSMLineWriteEn), .y(CacheWriteData));
+		.d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
@@ -166,13 +166,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////
   mux3 #(NUMWAYS) selectwaymux(WayHitFinal, VictimWay, FlushWay, 
-    {SelFlush, FSMLineWriteEn}, SelectedWay);
-  assign SetValidWay = FSMLineWriteEn ? SelectedWay : '0;
+    {SelFlush, SetValid}, SelectedWay);
+  assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
-  assign SetDirtyWay = FSMWordWriteEn ? SelectedWay : '0;
+  assign SetDirtyWay = SetDirty ? SelectedWay : '0;
   assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
-  assign WriteWordWayEn = FSMWordWriteEn ? SelectedWay : '0;
-  assign WriteLineWayEn = FSMLineWriteEn ? SelectedWay : '0;  
+  assign WriteWordWayEn = SetDirty ? SelectedWay : '0;
+  assign WriteLineWayEn = SetValid ? SelectedWay : '0;  
   
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,8 +182,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 		.RW, .Atomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
-		.ClearValid, .ClearDirty, .FSMWordWriteEn,
-		.FSMLineWriteEn, .SelEvict, .SelFlush,
+		.ClearValid, .ClearDirty, .SetDirty,
+		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
         .save, .restore,

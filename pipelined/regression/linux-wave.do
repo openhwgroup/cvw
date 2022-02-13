@@ -188,7 +188,7 @@ add wave -noupdate -group ifu -expand -group icache -expand -group {fsm out and 
 add wave -noupdate -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/FinalInstrRawF
 add wave -noupdate -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheBusAdr
 add wave -noupdate -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CacheBusAck
-add wave -noupdate -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheMemWriteData
+add wave -noupdate -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheBusWriteData
 add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/immu/immu/TLBWrite
 add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/ITLBMissF
 add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
@@ -212,8 +212,8 @@ add wave -noupdate -group lsu -group bus /testbench/dut/core/lsu/LSUBusHRDATA
 add wave -noupdate -group lsu -group bus /testbench/dut/core/lsu/LSUBusHWDATA
 add wave -noupdate -group lsu -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
 add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/WayHit
-add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/FSMLineWriteEn
-add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/FSMWordWriteEn
+add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
+add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
 add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SelAdr
 add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/SelReplayCPURequest
 add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/IEUAdrE
@@ -227,7 +227,7 @@ add wave -noupdate -group lsu -group dcache -expand -group flush /testbench/dut/
 add wave -noupdate -group lsu -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirtyWay
 add wave -noupdate -group lsu -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/VictimTag
 add wave -noupdate -group lsu -group dcache -expand -group flush /testbench/dut/core/lsu/CacheableM
-add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CacheMemWriteData
+add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusWriteData
 add wave -noupdate -group lsu -group dcache -expand -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
 add wave -noupdate -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelectedWriteWordEn}
 add wave -noupdate -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetValidWay}
@@ -331,7 +331,7 @@ add wave -noupdate -group lsu -group dcache -group status /testbench/dut/core/ls
 add wave -noupdate -group lsu -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
 add wave -noupdate -group lsu -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheFetchLine
 add wave -noupdate -group lsu -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheWriteLine
-add wave -noupdate -group lsu -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheMemWriteData
+add wave -noupdate -group lsu -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusWriteData
 add wave -noupdate -group lsu -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAck
 add wave -noupdate -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
 add wave -noupdate -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/VAdr
