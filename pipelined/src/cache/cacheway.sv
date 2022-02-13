@@ -88,9 +88,10 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineWayEn));
 
   // AND portion of distributed tag multiplexer
-  assign SelTag = SelFlush ? FlushWay : VictimWay;
+  mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirtyWay = SelTag & Dirty & Valid;
+  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -106,7 +107,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   // AND portion of distributed read multiplexers
-  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
   mux3 #(1) selecteddatamux(WayHit, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
   assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 

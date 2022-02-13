@@ -151,13 +151,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush address and way generation during flush
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // *** this could be improved. reduce to a single adder of size $clog2(numway+numlines)
   assign ResetOrFlushAdr = reset | FlushAdrCntRst;
   flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushAdr), .en(FlushAdrCntEn), 
     .d(FlushAdrP1), .q(FlushAdr));
   assign FlushAdrP1 = FlushAdr + 1'b1;
   assign FlushAdrFlag = (FlushAdr == FlushAdrThreshold[SETLEN-1:0]);
-
   assign ResetOrFlushWay = reset | FlushWayCntRst;
   flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay), .en(FlushWayCntEn), 
     .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
