@@ -45,13 +45,14 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        SetDirtyWay,
   input logic                        ClearDirtyWay,
   input logic                        SelEvict,
-  input logic                        VictimWay,
-  input logic                        InvalidateAll,
   input logic                        SelFlush,
+  input logic                        VictimWay,
   input logic                        FlushWay,
+  input logic                        Invalidate,
+
 
   output logic [LINELEN-1:0]         ReadDataLineWay,
-  output logic                       WayHit,
+  output logic                       HitWay,
   output logic                       VictimDirtyWay,
   output logic [TAGLEN-1:0]          VictimTagWay);
 
@@ -91,7 +92,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirtyWay = SelTag & Dirty & Valid;
-  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign HitWay = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -107,7 +108,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   // AND portion of distributed read multiplexers
-  mux3 #(1) selecteddatamux(WayHit, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
+  mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
   assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,7 +116,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   always_ff @(posedge clk) begin // Valid bit array, 
-    if (reset | InvalidateAll) ValidBits        <= #1 '0;
+    if (reset | Invalidate) ValidBits        <= #1 '0;
     else if (SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
     else if (ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
 	end
