@@ -7,7 +7,14 @@ NAME := synth
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 500
 export CONFIG ?= rv32e
+# sky130 and sky90 presently supported
 export TECH ?= sky130
+# MAXCORES allows parallel compilation, which is faster but less CPU-efficient
+# Avoid when doing sweeps of many optimization points in parallel
+export MAXCORES ?= 4
+# MAXOPT turns on flattening, boundary optimization, and retiming
+# The output netlist is hard to interpret, but significantly better PPA
+export MAXOPT ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
