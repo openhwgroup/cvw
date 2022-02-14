@@ -11,7 +11,7 @@ suppress_message {VER-281}
 suppress_message {VER-173} 
 
 # Enable Multicore
-set_host_options -max_cores 8
+set_host_options -max_cores $::env(MAXCORES)
 
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
@@ -20,6 +20,7 @@ set cfgName $::env(CONFIG)
 set hdl_src "../pipelined/src"
 set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
+set maxopt $::env(MAXOPT)
 
 eval file copy -force ${cfg} {hdl/}
 eval file copy -force ${cfg} $outputDir
@@ -87,13 +88,20 @@ if {  $find_clock != [list] } {
     create_clock -period $my_period -name $my_clk
 }
 
+# Optimize paths that are close to critical
+set_critical_range [expr $my_period*0.05] $current_design
+
 # Partitioning - flatten or hierarchically synthesize
-# ungroup -all -flatten -simple_names
+if { $maxopt == 1 } {
+    ungroup -all -flatten -simple_names
+}
 
 # Set input pins except clock
 set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 
 # Specifies delays be propagated through the clock network
+# This is getting optimized poorly in the current flow, causing a lot of clock skew 
+# and unrealistic bad timing results.
 # set_propagated_clock [get_clocks $my_clk]
 
 # Setting constraints on input ports 
@@ -104,8 +112,8 @@ if {$tech == "sky130"} {
 }
 
 # Set input/output delay
-set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
-set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
+set_output_delay 0.1 -max -clock $my_clk [all_outputs]
 
 # Setting load constraint on output ports 
 if {$tech == "sky130"} {
@@ -135,11 +143,16 @@ set_fix_multiple_port_nets -all -buffer_constants
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
 # Save Unmapped Design
-set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
-write_file -format ddc -hierarchy -o $filename
+#set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
+#write_file -format ddc -hierarchy -o $filename
 
 # Compile statements
-compile_ultra -no_seq_output_inversion -no_boundary_optimization
+if { $maxopt == 1 } {
+    compile_ultra -retime
+    optimize_registers
+} else {
+    compile_ultra -no_seq_output_inversion -no_boundary_optimization
+}
 
 # Eliminate need for assign statements (yuck!)
 set verilogout_no_tri true
@@ -187,7 +200,7 @@ set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_report_clo
 # redirect $filename { report_clock }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_timing.rep"]
-redirect $filename { report_timing -capacitance -transition_time -nets -nworst 1 }
+redirect $filename { report_timing -capacitance -transition_time -nets -nworst 10 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_per_module_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
