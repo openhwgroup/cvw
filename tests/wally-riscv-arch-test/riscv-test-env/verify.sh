@@ -28,15 +28,15 @@ do
         echo -e  "Check $(printf %-24s ${stub}) \e[33m ... IGNORE \e[39m"
         continue
     fi
-    # KMG: changed diff snippet to a grep that will strip comments with '//' and '#' out of the reference file
-    diff --ignore-case --ignore-trailing-space --strip-trailing-cr <(grep -o '^[^//#]*' ${ref}) ${sig} &> /dev/null
+    # KMG: changed diff snippet to a grep that will strip comments with '#' out of the reference file
+    diff --ignore-case --ignore-trailing-space --strip-trailing-cr <(grep -o '^[^#]*' ${ref}) ${sig} &> /dev/null
     if [ $? == 0 ]
     then
         echo -e "\e[32m ... OK \e[39m"
     else
         echo -e "\e[31m ... FAIL \e[39m"
         FAIL=$((${FAIL} + 1))
-        sdiff ${ref} ${sig} > ${dif}
+        sdiff <(grep -o '^[^#]*' ${ref}) ${sig} > ${dif}
     fi
 done
 
