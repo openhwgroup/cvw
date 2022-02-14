@@ -23,6 +23,9 @@
 
 #include "model_test.h"
 #include "arch_test.h"
+
+.macro INIT_TESTS
+
 RVTEST_ISA("RV64I")
 
 .section .text.init
@@ -56,9 +59,9 @@ RVTEST_CODE_BEGIN
     li a1, 0 
     li a2, 0 // reset trap handler inputs to zero
 
-    // go to first test!
-    j test_setup
-
+    // go to beginning of S file where we can decide between using the test data loop
+    // or using the macro inline code insertion
+    j s_file_begin
 
 	// ---------------------------------------------------------------------------------------------
     // General traps Handler
@@ -230,6 +233,9 @@ instrfault:
     ld x1, -8(sp) // load return address int x1 (the address AFTER the jal into faulting page)
     j trapreturn_finished // puts x1 into mepc, restores stack and returns to program (outside of faulting page)
 
+illegalinstr:
+    j trapreturn // return to the code after recording the mcause
+
 accessfault:
     // *** What do I have to do here?
     j trapreturn
@@ -243,7 +249,7 @@ accessfault:
 trap_handler_vector_table:
     .8byte segfault      // 0: instruction address misaligned
     .8byte instrfault    // 1: instruction access fault
-    .8byte segfault      // 2: illegal instruction
+    .8byte illegalinstr  // 2: illegal instruction
     .8byte segfault      // 3: breakpoint
     .8byte segfault      // 4: load address misaligned
     .8byte accessfault   // 5: load access fault
@@ -265,6 +271,249 @@ trap_return_pagetype_table:
     .8byte 0x1E // 2: gigapage has 30 offset bits
     .8byte 0x27 // 3: terapage has 39 offset bits
 
+.endm
+
+// Test Summary table!
+
+// Test Name            : Description                               : Fault output value                        : Normal output values
+// ---------------------:-------------------------------------------:-------------------------------------------:------------------------------------------------------
+//   write64_test       : Write 64 bits to address                  : 0x6, 0x7, or 0xf                          : None
+//   write32_test       : Write 32 bits to address                  : 0x6, 0x7, or 0xf                          : None 
+//   write16_test       : Write 16 bits to address                  : 0x6, 0x7, or 0xf                          : None 
+//   write08_test       : Write 8 bits to address                   : 0x6, 0x7, or 0xf                          : None
+//   read64_test        : Read 64 bits from address                 : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read32_test        : Read 32 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read16_test        : Read 16 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read08_test        : Read 8 bitsfrom address                   : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of x7 modified by exectuion code (usually 0x111)
+//   terminate_test     : terminate tests                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
+//   goto_baremetal     : satp.MODE = bare metal                    : None                                      : None 
+//   goto_sv39          : satp.MODE = sv39                          : None                                      : None 
+//   goto_sv48          : satp.MODE = sv48                          : None                                      : None
+//   goto_m_mode        : go to mahcine mode                        : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
+//   goto_s_mode        : go to supervisor mode                     : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8
+//   goto_u_mode        : go to user mode                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8 
+//   write_read_csr     : write to specified CSR                    : old CSR value, 0x2, depending on perms    : value written to CSR
+//   csr_r_access       : test read-only permissions on CSR         : 0xbad                                     : 0x2, then 0x11
+
+// *** TESTS TO ADD: execute inline, read unknown value out, read CSR unknown value, just read CSR value
+
+.macro WRITE64 ADDR VAL
+    // attempt to write VAL to ADDR
+    // Success outputs:
+    //      None
+    // Fault outputs:
+    //      0x6: misaligned address
+    //      0x7: access fault
+    //      0xf: page fault     
+    li x29, \VAL
+    li x30, \ADDR
+    sd x29, 0(x30)
+.endm
+
+.macro WRITE32 ADDR VAL
+    // all write tests have the same description/outputs as write64
+    li x29, \VAL
+    li x30, \ADDR
+    sw x29, 0(x30)
+.endm
+
+.macro WRITE16 ADDR VAL
+    // all write tests have the same description/outputs as write64
+    li x29, \VAL
+    li x30, \ADDR
+    sh x29, 0(x30)
+.endm
+
+.macro WRITE08 ADDR VAL
+    // all write tests have the same description/outputs as write64
+    li x29, \VAL
+    li x30, \ADDR
+    sb x29, 0(x30)
+.endm
+
+.macro READ64 ADDR
+    // Attempt read at ADDR. Write the value read out to the output *** Consider adding specific test for reading a non known value
+    // Success outputs:
+    //      value read out from ADDR
+    // Fault outputs:
+    //      One of the following followed by 0xBAD
+    //      0x4: misaligned address
+    //      0x5: access fault
+    //      0xD: page fault
+    li x7, 0xBAD // bad value that will be overwritten on good reads.
+    li x29, \ADDR 
+    ld x7, 0(x29) 
+    sd x7, 0(x6)
+    addi x6, x6, 8 
+    addi x16, x16, 8
+.endm
+
+.macro READ32 ADDR
+    // All reads have the same description/outputs as read64. 
+    // They will store the sign extended value of what was read out at ADDR
+    li x7, 0xBAD // bad value that will be overwritten on good reads.
+    li x29, \ADDR 
+    lw x7, 0(x29) 
+    sd x7, 0(x6)
+    addi x6, x6, 8 
+    addi x16, x16, 8
+.endm
+
+.macro READ16 ADDR
+    // All reads have the same description/outputs as read64. 
+    // They will store the sign extended value of what was read out at ADDR
+    li x7, 0xBAD // bad value that will be overwritten on good reads.
+    li x29, \ADDR 
+    lh x7, 0(x29) 
+    sd x7, 0(x6)
+    addi x6, x6, 8 
+    addi x16, x16, 8
+.endm
+
+.macro READ08 ADDR
+    // All reads have the same description/outputs as read64. 
+    // They will store the sign extended value of what was read out at ADDR
+    li x7, 0xBAD // bad value that will be overwritten on good reads.
+    li x29, \ADDR 
+    lb x7, 0(x29) 
+    sd x7, 0(x6)
+    addi x6, x6, 8 
+    addi x16, x16, 8
+.endm
+
+// These goto_x_mode tests all involve invoking the trap handler,
+// So their outputs are inevitably:
+//      0x8: test called from U mode
+//      0x9: test called from S mode
+//      0xB: test called from M mode
+// they generally do not fault or cause issues as long as these modes are enabled 
+// *** add functionality to check if modes are enabled before jumping? maybe cause a fault if not?
+
+.macro GOTO_M_MODE RETURN_VPN RETURN_PAGETYPE
+    li a0, 2 // determine trap handler behavior (go to machine mode)
+    li a1, \RETURN_VPN // return VPN
+    li a2, \RETURN_PAGETYPE // return page types
+    ecall // writes mcause to the output.
+    // now in S mode
+.endm
+
+.macro GOTO_S_MODE RETURN_VPN RETURN_PAGETYPE
+    li a0, 3 // determine trap handler behavior (go to supervisor mode)
+    li a1, \RETURN_VPN // return VPN
+    li a2, \RETURN_PAGETYPE // return page types
+    ecall // writes mcause to the output.
+    // now in S mode
+.endm
+
+.macro GOTO_U_MODE RETURN_VPN RETURN_PAGETYPE
+    li a0, 4 // determine trap handler behavior (go to user mode)
+    li a1, \RETURN_VPN // return VPN
+    li a2, \RETURN_PAGETYPE // return page types
+    ecall // writes mcause to the output.
+    // now in S mode
+.endm
+
+// These tests change virtual memory settings, turning it on/off and changing between types.
+// They don't have outputs as any error with turning on virtual memory should reveal itself in the tests *** Consider changing this policy?
+
+.macro GOTO_BAREMETAL
+    // Turn translation off
+    li x7, 0 // satp.MODE value for bare metal (0)
+    slli x7, x7, 60
+    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field. *** add option for different pagetable location
+    add x7, x7, x28
+    csrw satp, x7
+    sfence.vma x0, x0 // *** flushes global pte's as well
+.endm
+
+.macro GOTO_SV39
+    // Turn on sv39 virtual memory
+    li x7, 8 // satp.MODE value for Sv39 (8)
+    slli x7, x7, 60
+    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field. *** add option for different pagetable location
+    add x7, x7, x28
+    csrw satp, x7
+    sfence.vma x0, x0 // *** flushes global pte's as well
+.endm
+
+.macro GOTO_SV48
+    // Turn on sv48 virtual memory
+    li x7, 9 // satp.MODE value for Sv39 (8)
+    slli x7, x7, 60
+    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field. *** add option for different pagetable location
+    add x7, x7, x28
+    csrw satp, x7
+    sfence.vma x0, x0 // *** flushes global pte's as well
+.endm
+
+.macro WRITE_READ_CSR CSR VAL
+    // attempt to write CSR with VAL. Note: this also tests read access to CSR
+    // Success outputs:
+    //      value read back out from CSR after writing
+    // Fault outputs:
+    //      The previous CSR value before write attempt
+    //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
+    li x30, 0xbad // load bad value to be overwritten by csrr
+    li x29, \VAL
+    csrw \CSR\(), x29
+    csrr x30, \CSR
+    sd x30, 0(x6)
+    addi x6, x6, 8
+    addi x16, x16, 8
+.endm
+
+.macro CSR_R_ACCESS CSR
+    // verify that a csr is accessible to read but not to write
+    // Success outputs:
+    //      0x2, then
+    //      0x11 *** consider changing to something more meaningful
+    // Fault outputs:
+    //      0xBAD *** consider changing this one as well. in general, do we need the branching if it hould cause an illegal instruction fault? 
+    csrr x29, \CSR
+    csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
+    csrr x30, \CSR
+    bne x30, x29, 1f // 1f represents write_access
+    li x30, 0x11 // Write failed, confirming read only permissions.
+    j 2f // j r_access_end
+1: // w_access (write succeeded, violating read-only)
+    li x30, 0xBAD
+2: // r_access end
+    sd x30, 0(x6)
+    addi x6, x6, 8
+    addi x16, x16, 8
+.endm
+
+.macro EXECUTE_AT_ADDRESS ADDR
+    // Execute the code already written to ADDR, returning the value in x7. 
+    // *** Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
+    // Assumes the code modifies x7, usually to become 0x111. 
+    // Sample code:  0x11100393 (li x7, 0x111), 0x00008067 (ret)
+    // Success outputs:
+    //      modified value of x7. (0x111 if you use the sample code)
+    // Fault outputs:
+    //      One of the following followed by 0xBAD
+    //      0x0: misaligned address
+    //      0x1: access fault
+    //      0xC: page fault
+    fence.i // forces caches and main memory to sync so execution code written to ADDR can run.
+    li x7, 0xBAD
+    li x28, \ADDR
+    jalr x28 // jump to executable test code 
+    sd x7, 0(x6)
+    addi x6, x6, 8
+    addi x16, x16, 8 
+.endm
+
+.macro END_TESTS
+    // invokes one final ecall to return to machine mode then terminates this program, so the output is
+    //      0x8: termination called from U mode
+    //      0x9: termination called from S mode
+    //      0xB: termination called from M mode
+    j terminate_test
+
+.endm
+
 	// ---------------------------------------------------------------------------------------------
     // Test Handler
     //
@@ -284,7 +533,9 @@ trap_return_pagetype_table:
     //
     // ------------------------------------------------------------------------------------------------------------------------------------
 
-test_setup:
+.macro INIT_TEST_TABLE // *** Consider renaming this test. to what???
+
+test_loop_setup:
     la x5, test_cases
 
 test_loop:
@@ -463,6 +714,7 @@ write_pmpcfg_end:
     j test_loop
 
 write_pmpaddr_0:
+    // write_read_csr pmpaddr0, x29
     // writes the value in x29 to the pmpaddr register specified in x28.
     // then writes the final value of pmpaddrX to the output.
     li x7, 0x0
@@ -577,6 +829,10 @@ executable_test:
     addi x16, x16, 8 
     j test_loop
 
+.endm 
+
+// notably, terminate_test is not a part of the test table macro because it needs to be defined 
+// in any type of test, macro or test table, for the trap handler to work
 terminate_test:
 
     li a0, 2 // Trap handler behavior (go to machine mode)
@@ -585,6 +841,8 @@ terminate_test:
 
 RVTEST_CODE_END
 RVMODEL_HALT
+
+.macro TEST_STACK_AND_DATA
 
 RVTEST_DATA_BEGIN
 .align 4
@@ -619,6 +877,4 @@ gpr_save:
 
 #endif
 
-.align 3
-test_cases:
-
+.endm
