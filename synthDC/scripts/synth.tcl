@@ -160,7 +160,7 @@ redirect $filename {report_constraint -all_violators}
 redirect $outputDir/reports/check_design.rpt { check_design }
 
 # Report Final Netlist (Hierarchical)
-set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".vh"]
+set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".sv"]
 write_file -f verilog -hierarchy -output $filename
 
 set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".sdc"]
