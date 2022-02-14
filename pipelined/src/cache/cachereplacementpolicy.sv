@@ -34,7 +34,6 @@ module cachereplacementpolicy
    input logic                clk, reset,
    input logic [NUMWAYS-1:0]  HitWay,
    output logic [NUMWAYS-1:0] VictimWay,
-   input logic [`PA_BITS-1:0] PAdr,
    input logic [SETLEN-1:0]   RAdr,
    input logic                LRUWriteEn);
 
@@ -53,7 +52,6 @@ module cachereplacementpolicy
   
   // Pipeline Delay Registers
   flopr #(SETLEN) RAdrDelayReg(clk, reset, RAdr, RAdrD);
-  flopr #(SETLEN) PAdrDelayReg(clk, reset, PAdr[SETLEN+OFFSETLEN-1:OFFSETLEN], PAdrD);
   flopr #(1) LRUWriteEnDelayReg(clk, reset, LRUWriteEn, LRUWriteEnD);
   flopr #(NUMWAYS-1) NewReplacementDelayReg(clk, reset, NewReplacement, NewReplacementD);
 
@@ -61,7 +59,7 @@ module cachereplacementpolicy
   // Needs to be resettable for simulation, but could omit reset for synthesis ***
   always_ff @(posedge clk) 
     if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] = '0;
-    else if (LRUWriteEnD) ReplacementBits[PAdrD[SETLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacementD;
+    else if (LRUWriteEnD) ReplacementBits[RAdrD] = NewReplacementD;
   assign LineReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;
