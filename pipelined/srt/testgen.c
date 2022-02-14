@@ -28,7 +28,7 @@ double random_input(void);
 void main(void)
 {
   FILE *fptr;
-  double a, b, r;
+  double x1, x2, a, b, r;
   double list[ENTRIES] = {1, 1.5, 1.25, 1.125, 1.0625,
 			  1.75, 1.875, 1.99999,
 			  1.1, 1.2, 1.01, 1.001, 1.0001,
@@ -63,6 +63,7 @@ void main(void)
 
 void output(FILE *fptr, double a, double b, double r)
 {
+
   printhex(fptr, a);
   fprintf(fptr, "_");
   printhex(fptr, b);
