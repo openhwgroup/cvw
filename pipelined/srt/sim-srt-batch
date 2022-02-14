@@ -1,1 +1,1 @@
-vsim -c -do srt.do
+vsim -c -do "do srt.do"
