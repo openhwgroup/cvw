@@ -14,6 +14,49 @@
 
 `include "wally-config.vh"
 
+// will also be used for integer division so keep in mind when naming modules/signals
+
+/////////////////
+// srt_divide //
+////////////////
+module srt_divide(input  logic clk, 
+           input  logic req, 
+           input  logic sqrt,  // 1 to compute sqrt(a), 0 to compute a/b
+           input  logic [63:0] a, b, // input numbers
+           output logic [54:0] rp, rm,
+           output logic [10:0] expE);
+
+          // output logic from Unpackers
+          logic        XSgnE, YSgnE, ZSgnE;
+          logic [10:0] XExpE, YExpE, ZExpE; // exponent
+          logic [52:0] XManE, YManE, ZManE;
+          logic XNormE;
+          logic XNaNE, YNaNE, ZNaNE;
+          logic XSNaNE, YSNaNE, ZSNaNE;
+          logic XDenormE, YDenormE, ZDenormE; // denormals
+          logic XZeroE, YZeroE, ZZeroE;
+          logic [10:0] BiasE; // currrently hardcoded, will probs be removed
+          logic XInfE, YInfE, ZInfE;
+          logic XExpMaxE; // says exponent is all ones, can ignore
+
+           // have Unpackers
+           // have mantissa divider
+           // exponent divider
+
+          // hopefully having the .* here works for unpacker --- nope it doesn't
+          unpack unpacking(a, b, 0, 1'b1, 0, XSgnE, YSgnE, ZSgnE, XExpE, YExpE, ZExpE, XManE, YManE, ZManE, XNormE,XNaNE, YNaNE, ZNaNE,XSNaNE, YSNaNE, ZSNaNE,XDenormE, YDenormE, ZDenormE,XZeroE, YZeroE, ZZeroE,BiasE,XInfE, YInfE, ZInfE,XExpMaxE);
+          srt  srt(clk, req, XManE[51:0], YManE[51:0], rp, rm);
+          exp exp(XexpE, YExpE, expE);
+endmodule
+
+// exponent module
+// first iteration
+module exp(input [10:0] e1, e2,
+           output [10:0] e); // for a 64 bit number, exponent section is 11 bits
+  assign e = (e1 - e2) + 11'd1023; // bias is hardcoded
+endmodule
+
+
 /////////
 // srt //
 /////////
@@ -41,12 +84,12 @@ module srt(input  logic clk,
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  mux2 psmux({psa[54:0], 1'b0}, {4'b0001, a}, req, psn);
-  flop psflop(clk, psn, ps);
-  mux2 pcmux({pca[54:0], 1'b0}, 56'b0, req, pcn);
-  flop pcflop(clk, pcn, pc);
-  mux2 dmux(d, {4'b0001, b}, req, dn);
-  flop dflop(clk, dn, d);
+  mux2_special psmux({psa[54:0], 1'b0}, {4'b0001, a}, req, psn);
+  flop_special psflop(clk, psn, ps);
+  mux2_special pcmux({pca[54:0], 1'b0}, 56'b0, req, pcn);
+  flop_special pcflop(clk, pcn, pc);
+  mux2_special dmux(d, {4'b0001, b}, req, dn);
+  flop_special dflop(clk, dn, d);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -56,7 +99,7 @@ module srt(input  logic clk,
 
   // Divisor Selection logic
   inv dinv(d, d_b);
-  mux3 divisorsel(d_b, 56'b0, d, qp, qz, qm, dsel);
+  mux3_special divisorsel(d_b, 56'b0, d, qp, qz, qm, dsel);
 
   // Partial Product Generation
   csa csa(ps, pc, dsel, qp, psa, pca);
@@ -65,7 +108,7 @@ endmodule
 //////////
 // mux2 //
 //////////
-module mux2(input  logic [55:0] in0, in1, 
+module mux2_special(input  logic [55:0] in0, in1, 
             input  logic        sel, 
             output logic [55:0] out);
  
@@ -75,7 +118,7 @@ endmodule
 //////////
 // flop //
 //////////
-module flop(clk, in, out);
+module flop_special(clk, in, out);
   input 	clk;
   input  [55:0] in;
   output [55:0] out;
@@ -161,9 +204,9 @@ module inv(input  logic [55:0] in,
 endmodule
 
 //////////
-// mux3 //
+// mux3_special //
 //////////
-module mux3(in0, in1, in2, sel0, sel1, sel2, out);
+module mux3_special(in0, in1, in2, sel0, sel1, sel2, out);
   input  [55:0] in0;
   input  [55:0] in1;
   input  [55:0] in2;
@@ -308,10 +351,14 @@ module testbench;
   integer testnum, errors;
 
   // Unpackers
-  unpack unpacking(.X({(1+`NE)'(0),a}), .Y({(1+`NE)'(0)}), .Z(0), .FmtE(1'b1), FOpCtrlE.(0), .*)
+  unpacking unpack(.X({12'b100010000010,a}), .Y({12'b100010000001,b}), .Z(0), .FmtE(1'b1), .FOpCtrlE(0), .*);
 
   // Divider
-  srt  srt(clk, req, .a(XManE[51:0]), .b(YManE[51:0]), rp, rm);
+  srt  srt(.clk(clk), .req(req), .sqrt(1'b0), .a(XManE[51:0]), .b(YManE[51:0]), .rp(rp),.rm(rm));
+
+  //srt  srt(.clk(clk), .req(req), .sqrt(1'b0), .a(a), .b(b), .rp(rp),.rm(rm));
+
+  // Divider + unpacker
 
   // Final adder converts quotient digits to 2's complement & normalizes
   finaladd finaladd(rp, rm, r);
@@ -349,7 +396,9 @@ module testbench;
 	begin
 	  req <= #5 1;
 	  $display("result was %h, should be %h\n", r, correctr);
-	  if (abs(correctr - r) > 1) // check if accurate to 1 ulp
+	  //if (abs(correctr - r) > 1) // check if accurate to 1 ulp
+    // giving error "srt_stanford.sv(395): (vopt-7063) Failed to find 'abs' in hierarchical name 'abs'."
+    if (correctr - r > 1) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
 	      $display("failed\n");
