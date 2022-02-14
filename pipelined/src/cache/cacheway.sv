@@ -37,21 +37,20 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
-  input logic                        WriteWordWayEn,
-  input logic                        WriteLineWayEn,
   input logic [LINELEN-1:0]          CacheWriteData,
   input logic                        SetValidWay,
   input logic                        ClearValidWay,
   input logic                        SetDirtyWay,
   input logic                        ClearDirtyWay,
   input logic                        SelEvict,
-  input logic                        VictimWay,
-  input logic                        InvalidateAll,
   input logic                        SelFlush,
+  input logic                        VictimWay,
   input logic                        FlushWay,
+  input logic                        Invalidate,
+
 
   output logic [LINELEN-1:0]         ReadDataLineWay,
-  output logic                       WayHit,
+  output logic                       HitWay,
   output logic                       VictimDirtyWay,
   output logic [TAGLEN-1:0]          VictimTagWay);
 
@@ -59,28 +58,25 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   localparam                         LOGWPL = $clog2(WORDSPERLINE);
   localparam                         LOGXLENBYTES = $clog2(`XLEN/8);
 
-  logic [NUMLINES-1:0] 				  ValidBits;
-  logic [NUMLINES-1:0] 				  DirtyBits;
-  logic [LINELEN-1:0] 				  ReadDataLine;
-  logic [TAGLEN-1:0] 				  ReadTag;
-  logic 							  Valid;
-  logic 							  Dirty;
-  logic 							  SelData;
-  logic                               SelTag;
-
-  logic [$clog2(NUMLINES)-1:0] 		  RAdrD;
-
-  logic [2**LOGWPL-1:0]               MemPAdrDecoded;
-  logic [LINELEN/`XLEN-1:0]           SelectedWriteWordEn;
+  logic [NUMLINES-1:0]               ValidBits;
+  logic [NUMLINES-1:0]               DirtyBits;
+  logic [LINELEN-1:0]                ReadDataLine;
+  logic [TAGLEN-1:0]                 ReadTag;
+  logic                              Valid;
+  logic                              Dirty;
+  logic                              SelData;
+  logic                              SelTag;
+  logic [$clog2(NUMLINES)-1:0]       RAdrD;
+  logic [2**LOGWPL-1:0]              MemPAdrDecoded;
+  logic [LINELEN/`XLEN-1:0]          SelectedWriteWordEn;
   
-
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
   onehotdecoder #(LOGWPL) adrdec(
     .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = WriteLineWayEn ? '1 : WriteWordWayEn ? MemPAdrDecoded : '0; // OR-AND
+  assign SelectedWriteWordEn = SetValidWay ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
@@ -88,12 +84,13 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk,
     .Adr(RAdr), .ReadData(ReadTag),
-    .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(WriteLineWayEn));
+    .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(SetValidWay));
 
   // AND portion of distributed tag multiplexer
-  assign SelTag = SelFlush ? FlushWay : VictimWay;
+  mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirtyWay = SelTag & Dirty & Valid;
+  assign HitWay = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -109,8 +106,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   // AND portion of distributed read multiplexers
-  assign WayHit = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
-  mux3 #(1) selecteddatamux(WayHit, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
+  mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
   assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,9 +114,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   always_ff @(posedge clk) begin // Valid bit array, 
-    if (reset | InvalidateAll)                              ValidBits        <= #1 '0;
-    else if (SetValidWay)                                     ValidBits[RAdr] <= #1 1'b1;
-    else if (ClearValidWay) ValidBits[RAdr] <= #1 1'b0;
+    if (reset | Invalidate) ValidBits        <= #1 '0;
+    else if (SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
+    else if (ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
 	end
   flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
   assign Valid = ValidBits[RAdrD];
@@ -132,8 +128,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Dirty bits
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
-      if (reset)                                              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      else if (SetDirtyWay) DirtyBits[RAdr] <= #1 1'b1;
+      if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
+      else if (SetDirtyWay)   DirtyBits[RAdr] <= #1 1'b1;
       else if (ClearDirtyWay) DirtyBits[RAdr] <= #1 1'b0;
     end
     assign Dirty = DirtyBits[RAdrD];
