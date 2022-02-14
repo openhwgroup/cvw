@@ -21,149 +21,153 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-MACROS-64.h"
+#include "WALLY-TEST-LIB-64.h" 
 
 INIT_TESTS
 
+s_file_begin:
+
 # Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in R mode.
 
-goto_u_mode 0x0, 0x0
+GOTO_U_MODE 0x0, 0x0
 
 # Attempt to write 0xbad to each of these CSRs and read the value back
 # should result in an illegal instruction for the write and read, respectively
 
 # Supervisor Trap Setup
-write_read_csr sstatus, 0xbad
-write_read_csr sie, 0xbad
-write_read_csr stvec, 0xbad
-write_read_csr scounteren, 0xbad
+WRITE_READ_CSR sstatus, 0xbad
+WRITE_READ_CSR sie, 0xbad
+WRITE_READ_CSR stvec, 0xbad
+WRITE_READ_CSR scounteren, 0xbad
 
 # Supervisor Configuration
-# write_read_csr senvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
+# WRITE_READ_CSR senvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
 
 # Supervisor Trap Handling
-write_read_csr sscratch, 0xbad
-write_read_csr sepc, 0xbad
-write_read_csr scause, 0xbad
-write_read_csr stval, 0xbad
-write_read_csr sip, 0xbad
+WRITE_READ_CSR sscratch, 0xbad
+WRITE_READ_CSR sepc, 0xbad
+WRITE_READ_CSR scause, 0xbad
+WRITE_READ_CSR stval, 0xbad
+WRITE_READ_CSR sip, 0xbad
 
 # Supervisor Protection and Translation
-write_read_csr satp, 0xbad
+WRITE_READ_CSR satp, 0xbad
 
 # Machine information Registers
-write_read_csr mvendorid, 0xbad
-write_read_csr marchid, 0xbad
-write_read_csr mimpid, 0xbad
-write_read_csr mhartid, 0xbad
-# write_read_csr mconfigptr, 0xbad # mconfigptr unimplemented in spike as of 31 Jan 22
+WRITE_READ_CSR mvendorid, 0xbad
+WRITE_READ_CSR marchid, 0xbad
+WRITE_READ_CSR mimpid, 0xbad
+WRITE_READ_CSR mhartid, 0xbad
+# WRITE_READ_CSR mconfigptr, 0xbad # mconfigptr unimplemented in spike as of 31 Jan 22
 
 # Machine Trap Setup
-write_read_csr mstatus, 0xbad
-write_read_csr misa, 0xbad
-write_read_csr medeleg, 0xbad
-write_read_csr mideleg, 0xbad
-write_read_csr mie, 0xbad
-write_read_csr mtvec, 0xbad
-write_read_csr mcounteren, 0xbad
+WRITE_READ_CSR mstatus, 0xbad
+WRITE_READ_CSR misa, 0xbad
+WRITE_READ_CSR medeleg, 0xbad
+WRITE_READ_CSR mideleg, 0xbad
+WRITE_READ_CSR mie, 0xbad
+WRITE_READ_CSR mtvec, 0xbad
+WRITE_READ_CSR mcounteren, 0xbad
 
 # Machine Trap Handling
-write_read_csr mscratch, 0xbad
-write_read_csr mepc, 0xbad
-write_read_csr mcause, 0xbad
-write_read_csr mtval, 0xbad
-write_read_csr mip, 0xbad
-# write_read_csr mtinst, 0xbad # *** these appear not to be implemented in the compile step of make???
-# write_read_csr mtval2, 0xbad
+WRITE_READ_CSR mscratch, 0xbad
+WRITE_READ_CSR mepc, 0xbad
+WRITE_READ_CSR mcause, 0xbad
+WRITE_READ_CSR mtval, 0xbad
+WRITE_READ_CSR mip, 0xbad
+# WRITE_READ_CSR mtinst, 0xbad # *** these appear not to be implemented in the compile step of make???
+# WRITE_READ_CSR mtval2, 0xbad
 
 # Machine Configuration
-# write_read_csr menvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
-# write_read_csr mseccgf, 0xbad
+# WRITE_READ_CSR menvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
+# WRITE_READ_CSR mseccgf, 0xbad
 
 # Machine Memory Protection
-write_read_csr pmpcfg0, 0xbad
-write_read_csr pmpcfg2, 0xbad # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs 
+WRITE_READ_CSR pmpcfg0, 0xbad
+WRITE_READ_CSR pmpcfg2, 0xbad # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs 
 
-write_read_csr pmpaddr0, 0xbad
-write_read_csr pmpaddr1, 0xbad
-write_read_csr pmpaddr2, 0xbad
-write_read_csr pmpaddr3, 0xbad
-write_read_csr pmpaddr4, 0xbad
-write_read_csr pmpaddr5, 0xbad
-write_read_csr pmpaddr6, 0xbad
-write_read_csr pmpaddr7, 0xbad
-write_read_csr pmpaddr8, 0xbad
-write_read_csr pmpaddr9, 0xbad
-write_read_csr pmpaddr10, 0xbad
-write_read_csr pmpaddr11, 0xbad
-write_read_csr pmpaddr12, 0xbad
-write_read_csr pmpaddr13, 0xbad
-write_read_csr pmpaddr14, 0xbad
-write_read_csr pmpaddr15, 0xbad # only pmpcfg0...15 are enabled in our config
+WRITE_READ_CSR pmpaddr0, 0xbad
+WRITE_READ_CSR pmpaddr1, 0xbad
+WRITE_READ_CSR pmpaddr2, 0xbad
+WRITE_READ_CSR pmpaddr3, 0xbad
+WRITE_READ_CSR pmpaddr4, 0xbad
+WRITE_READ_CSR pmpaddr5, 0xbad
+WRITE_READ_CSR pmpaddr6, 0xbad
+WRITE_READ_CSR pmpaddr7, 0xbad
+WRITE_READ_CSR pmpaddr8, 0xbad
+WRITE_READ_CSR pmpaddr9, 0xbad
+WRITE_READ_CSR pmpaddr10, 0xbad
+WRITE_READ_CSR pmpaddr11, 0xbad
+WRITE_READ_CSR pmpaddr12, 0xbad
+WRITE_READ_CSR pmpaddr13, 0xbad
+WRITE_READ_CSR pmpaddr14, 0xbad
+WRITE_READ_CSR pmpaddr15, 0xbad # only pmpcfg0...15 are enabled in our config
 
 # Machine Counter/Timers
-write_read_csr mcycle, 0xbad
-write_read_csr minstret, 0xbad
-write_read_csr mhpmcounter3, 0xbad
-write_read_csr mhpmcounter4, 0xbad
-write_read_csr mhpmcounter5, 0xbad
-write_read_csr mhpmcounter6, 0xbad
-write_read_csr mhpmcounter7, 0xbad
-write_read_csr mhpmcounter8, 0xbad
-write_read_csr mhpmcounter9, 0xbad
-write_read_csr mhpmcounter10, 0xbad
-write_read_csr mhpmcounter11, 0xbad
-write_read_csr mhpmcounter12, 0xbad
-write_read_csr mhpmcounter13, 0xbad
-write_read_csr mhpmcounter14, 0xbad
-write_read_csr mhpmcounter15, 0xbad
-write_read_csr mhpmcounter16, 0xbad
-write_read_csr mhpmcounter17, 0xbad
-write_read_csr mhpmcounter18, 0xbad
-write_read_csr mhpmcounter19, 0xbad
-write_read_csr mhpmcounter20, 0xbad
-write_read_csr mhpmcounter21, 0xbad
-write_read_csr mhpmcounter22, 0xbad
-write_read_csr mhpmcounter23, 0xbad
-write_read_csr mhpmcounter24, 0xbad
-write_read_csr mhpmcounter25, 0xbad
-write_read_csr mhpmcounter26, 0xbad
-write_read_csr mhpmcounter27, 0xbad
-write_read_csr mhpmcounter28, 0xbad
-write_read_csr mhpmcounter29, 0xbad
-write_read_csr mhpmcounter30, 0xbad
-write_read_csr mhpmcounter31, 0xbad
+WRITE_READ_CSR mcycle, 0xbad
+WRITE_READ_CSR minstret, 0xbad
+WRITE_READ_CSR mhpmcounter3, 0xbad
+WRITE_READ_CSR mhpmcounter4, 0xbad
+WRITE_READ_CSR mhpmcounter5, 0xbad
+WRITE_READ_CSR mhpmcounter6, 0xbad
+WRITE_READ_CSR mhpmcounter7, 0xbad
+WRITE_READ_CSR mhpmcounter8, 0xbad
+WRITE_READ_CSR mhpmcounter9, 0xbad
+WRITE_READ_CSR mhpmcounter10, 0xbad
+WRITE_READ_CSR mhpmcounter11, 0xbad
+WRITE_READ_CSR mhpmcounter12, 0xbad
+WRITE_READ_CSR mhpmcounter13, 0xbad
+WRITE_READ_CSR mhpmcounter14, 0xbad
+WRITE_READ_CSR mhpmcounter15, 0xbad
+WRITE_READ_CSR mhpmcounter16, 0xbad
+WRITE_READ_CSR mhpmcounter17, 0xbad
+WRITE_READ_CSR mhpmcounter18, 0xbad
+WRITE_READ_CSR mhpmcounter19, 0xbad
+WRITE_READ_CSR mhpmcounter20, 0xbad
+WRITE_READ_CSR mhpmcounter21, 0xbad
+WRITE_READ_CSR mhpmcounter22, 0xbad
+WRITE_READ_CSR mhpmcounter23, 0xbad
+WRITE_READ_CSR mhpmcounter24, 0xbad
+WRITE_READ_CSR mhpmcounter25, 0xbad
+WRITE_READ_CSR mhpmcounter26, 0xbad
+WRITE_READ_CSR mhpmcounter27, 0xbad
+WRITE_READ_CSR mhpmcounter28, 0xbad
+WRITE_READ_CSR mhpmcounter29, 0xbad
+WRITE_READ_CSR mhpmcounter30, 0xbad
+WRITE_READ_CSR mhpmcounter31, 0xbad
 
 # Machine Counter Setup
-write_read_csr mcountinhibit, 0xbad
-write_read_csr mhpmevent3, 0xbad
-write_read_csr mhpmevent4, 0xbad
-write_read_csr mhpmevent5, 0xbad
-write_read_csr mhpmevent6, 0xbad
-write_read_csr mhpmevent7, 0xbad
-write_read_csr mhpmevent8, 0xbad
-write_read_csr mhpmevent9, 0xbad
-write_read_csr mhpmevent10, 0xbad
-write_read_csr mhpmevent11, 0xbad
-write_read_csr mhpmevent12, 0xbad
-write_read_csr mhpmevent13, 0xbad
-write_read_csr mhpmevent14, 0xbad
-write_read_csr mhpmevent15, 0xbad
-write_read_csr mhpmevent16, 0xbad
-write_read_csr mhpmevent17, 0xbad
-write_read_csr mhpmevent18, 0xbad
-write_read_csr mhpmevent19, 0xbad
-write_read_csr mhpmevent20, 0xbad
-write_read_csr mhpmevent21, 0xbad
-write_read_csr mhpmevent22, 0xbad
-write_read_csr mhpmevent23, 0xbad
-write_read_csr mhpmevent24, 0xbad
-write_read_csr mhpmevent25, 0xbad
-write_read_csr mhpmevent26, 0xbad
-write_read_csr mhpmevent27, 0xbad
-write_read_csr mhpmevent28, 0xbad
-write_read_csr mhpmevent29, 0xbad
-write_read_csr mhpmevent30, 0xbad
-write_read_csr mhpmevent31, 0xbad
+WRITE_READ_CSR mcountinhibit, 0xbad
+WRITE_READ_CSR mhpmevent3, 0xbad
+WRITE_READ_CSR mhpmevent4, 0xbad
+WRITE_READ_CSR mhpmevent5, 0xbad
+WRITE_READ_CSR mhpmevent6, 0xbad
+WRITE_READ_CSR mhpmevent7, 0xbad
+WRITE_READ_CSR mhpmevent8, 0xbad
+WRITE_READ_CSR mhpmevent9, 0xbad
+WRITE_READ_CSR mhpmevent10, 0xbad
+WRITE_READ_CSR mhpmevent11, 0xbad
+WRITE_READ_CSR mhpmevent12, 0xbad
+WRITE_READ_CSR mhpmevent13, 0xbad
+WRITE_READ_CSR mhpmevent14, 0xbad
+WRITE_READ_CSR mhpmevent15, 0xbad
+WRITE_READ_CSR mhpmevent16, 0xbad
+WRITE_READ_CSR mhpmevent17, 0xbad
+WRITE_READ_CSR mhpmevent18, 0xbad
+WRITE_READ_CSR mhpmevent19, 0xbad
+WRITE_READ_CSR mhpmevent20, 0xbad
+WRITE_READ_CSR mhpmevent21, 0xbad
+WRITE_READ_CSR mhpmevent22, 0xbad
+WRITE_READ_CSR mhpmevent23, 0xbad
+WRITE_READ_CSR mhpmevent24, 0xbad
+WRITE_READ_CSR mhpmevent25, 0xbad
+WRITE_READ_CSR mhpmevent26, 0xbad
+WRITE_READ_CSR mhpmevent27, 0xbad
+WRITE_READ_CSR mhpmevent28, 0xbad
+WRITE_READ_CSR mhpmevent29, 0xbad
+WRITE_READ_CSR mhpmevent30, 0xbad
+WRITE_READ_CSR mhpmevent31, 0xbad
 
 END_TESTS
+
+TEST_STACK_AND_DATA
