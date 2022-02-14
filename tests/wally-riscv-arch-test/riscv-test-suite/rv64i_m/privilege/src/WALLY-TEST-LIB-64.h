@@ -523,14 +523,13 @@ trap_return_pagetype_table:
     // Input parameters: 
     //
     // x28:
-    //     Address input for the test taking place (think address to read/write, new address to return to, etc...)
+    //     Address input for the test taking place (think: address to read/write, new address to return to, etc...)
     //
     // x29:
-    //     Value input for the test taking place (think value to write, any other extra info needed)
+    //     Value input for the test taking place (think: value to write, any other extra info needed)
     //
     // x30:
-    //     Test type input that determines which kind of test will take place. Encoding for this input is in the table/case statements below
-    //
+    //     Label for the location of the test that's about to take place
     // ------------------------------------------------------------------------------------------------------------------------------------
 
 .macro INIT_TEST_TABLE // *** Consider renaming this test. to what???
@@ -658,30 +657,15 @@ goto_u_mode:
 
 goto_baremetal:
     // Turn translation off
-    li x7, 0 // satp.MODE value for bare metal (0)
-    slli x7, x7, 60
-    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field.
-    add x7, x7, x28
-    csrw satp, x7
-    sfence.vma x0, x0 // *** flushes global pte's as well
+    GOTO_BAREMETAL
     j test_loop // go to next test case
 
 goto_sv39:
-    li x7, 8 // satp.MODE value for Sv39 (8)
-    slli x7, x7, 60
-    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field.
-    add x7, x7, x28
-    csrw satp, x7
-    sfence.vma x0, x0 // *** flushes global pte's as well
+    GOTO_SV39
     j test_loop // go to next test case
 
 goto_sv48:
-    li x7, 9 // satp.MODE value for Sv48
-    slli x7, x7, 60
-    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field.
-    add x7, x7, x28
-    csrw satp, x7
-    sfence.vma x0, x0 // *** flushes global pte's as well
+    GOTO_SV48
     j test_loop // go to next test case
 
 write_mxr_sum:
@@ -699,14 +683,16 @@ write_pmpcfg_0:
     // writes the value in x29 to the pmpcfg register specified in x28.
     // then writes the final value of pmpcfgX to the output.
     li x7, 0x0
-    bne x7, x28, write_pmpcfg_2
     csrw pmpcfg0, x29
     csrr x30, pmpcfg0
+    j write_pmpcfg_end
+
 write_pmpcfg_2:
     li x7, 0x2
-    bne x7, x28, write_pmpcfg_end
     csrw pmpcfg2, x29
     csrr x30, pmpcfg2 // I would use csrrw but we need the value AFTER the csr has been written
+    j write_pmpcfg_end
+
 write_pmpcfg_end:
     sd x30, 0(x6)
     addi x6, x6, 8
@@ -718,100 +704,100 @@ write_pmpaddr_0:
     // writes the value in x29 to the pmpaddr register specified in x28.
     // then writes the final value of pmpaddrX to the output.
     li x7, 0x0
-    bne x7, x28, write_pmpaddr_1
     csrw pmpaddr0, x29
     csrr x30, pmpaddr0
     j write_pmpaddr_end
+
 write_pmpaddr_1:
     li x7, 0x1
-    bne x7, x28, write_pmpaddr_2
     csrw pmpaddr1, x29
     csrr x30, pmpaddr1
     j write_pmpaddr_end
+
 write_pmpaddr_2:
     li x7, 0x2
-    bne x7, x28, write_pmpaddr_3
     csrw pmpaddr2, x29
     csrr x30, pmpaddr2
     j write_pmpaddr_end
+
 write_pmpaddr_3:
     li x7, 0x3
-    bne x7, x28, write_pmpaddr_4
     csrw pmpaddr3, x29
     csrr x30, pmpaddr3
     j write_pmpaddr_end
+
 write_pmpaddr_4:
     li x7, 0x4
-    bne x7, x28, write_pmpaddr_5
     csrw pmpaddr4, x29
     csrr x30, pmpaddr4
     j write_pmpaddr_end
+
 write_pmpaddr_5:
     li x7, 0x5
-    bne x7, x28, write_pmpaddr_6
     csrw pmpaddr5, x29
     csrr x30, pmpaddr5
     j write_pmpaddr_end
+
 write_pmpaddr_6:
     li x7, 0x6
-    bne x7, x28, write_pmpaddr_7
     csrw pmpaddr6, x29
     csrr x30, pmpaddr6
     j write_pmpaddr_end
+
 write_pmpaddr_7:
     li x7, 0x7
-    bne x7, x28, write_pmpaddr_8
     csrw pmpaddr7, x29
     csrr x30, pmpaddr7
     j write_pmpaddr_end
+
 write_pmpaddr_8:
     li x7, 0x8
-    bne x7, x28, write_pmpaddr_9
     csrw pmpaddr8, x29
     csrr x30, pmpaddr8
     j write_pmpaddr_end
+
 write_pmpaddr_9:
     li x7, 0x9
-    bne x7, x28, write_pmpaddr_10
     csrw pmpaddr9, x29
     csrr x30, pmpaddr9
     j write_pmpaddr_end
+
 write_pmpaddr_10:
     li x7, 0xA
-    bne x7, x28, write_pmpaddr_11
     csrw pmpaddr10, x29
     csrr x30, pmpaddr10
     j write_pmpaddr_end
+
 write_pmpaddr_11:
     li x7, 0xB
-    bne x7, x28, write_pmpaddr_12
     csrw pmpaddr11, x29
     csrr x30, pmpaddr11
     j write_pmpaddr_end
+
 write_pmpaddr_12:
     li x7, 0xC
-    bne x7, x28, write_pmpaddr_13
     csrw pmpaddr12, x29
     csrr x30, pmpaddr12
     j write_pmpaddr_end
+
 write_pmpaddr_13:
     li x7, 0xD
-    bne x7, x28, write_pmpaddr_14
     csrw pmpaddr13, x29
     csrr x30, pmpaddr13
     j write_pmpaddr_end
+
 write_pmpaddr_14:
     li x7, 0xE
-    bne x7, x28, write_pmpaddr_15
     csrw pmpaddr14, x29
     csrr x30, pmpaddr14
     j write_pmpaddr_end
+
 write_pmpaddr_15:
     li x7, 0xF
-    bne x7, x28, write_pmpaddr_end
     csrw pmpaddr15, x29
     csrr x30, pmpaddr15
     j write_pmpaddr_end
+
 write_pmpaddr_end:
     sd x30, 0(x6)
     addi x6, x6, 8
