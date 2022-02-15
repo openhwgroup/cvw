@@ -38,7 +38,7 @@ module trap (
   (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
-  (* mark_debug = "true" *) input logic 		   mretM, sretM, uretM,
+  (* mark_debug = "true" *) input logic 		   mretM, sretM, 
   input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
   (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
@@ -85,7 +85,7 @@ module trap (
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
   assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
-  assign RetM = mretM | sretM | uretM;
+  assign RetM = mretM | sretM;
 
   always_comb
       if      (NextPrivilegeModeM == `U_MODE) PrivilegedTrapVector = UTVEC_REGW; 
@@ -115,7 +115,6 @@ module trap (
   always_comb 
     if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else if (sretM)                         PrivilegedNextPCM = SEPC_REGW;
-    else if (uretM)                         PrivilegedNextPCM = UEPC_REGW;
     else                                    PrivilegedNextPCM = PrivilegedVectoredTrapVector;
 
   // Cause priority defined in table 3.7 of 20190608 privileged spec

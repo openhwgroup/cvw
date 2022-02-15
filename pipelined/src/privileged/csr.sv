@@ -42,7 +42,7 @@ module csr #(parameter
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, 
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
@@ -128,7 +128,7 @@ module csr #(parameter
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteSSTATUSM, .WriteUSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-              .mretM, .sretM, .uretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
+              .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
               .MSTATUS_REGW, .SSTATUS_REGW, .USTATUS_REGW,
               .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM);

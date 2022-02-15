@@ -88,7 +88,7 @@ module privileged (
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW;
 
-  logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
+  logic sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
@@ -122,7 +122,6 @@ module privileged (
         TrappedSRETM = 1;
                     NextPrivilegeModeM = PrivilegeModeW;
       end else      NextPrivilegeModeM = {1'b0, STATUS_SPP};
-    else if (uretM) NextPrivilegeModeM = `U_MODE; // *** can this happen without N mode?
     else if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
       if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
                     NextPrivilegeModeM = `S_MODE;
@@ -141,7 +140,7 @@ module privileged (
    privdec pmd(.InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM,
               .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
-              .uretM, .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
+              .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
   // Control and Status Registers
@@ -150,7 +149,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .uretM,
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, 
           .TimerIntM, .ExtIntM, .SwIntM,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
@@ -208,7 +207,7 @@ module privileged (
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
             .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
             .LoadPageFaultM, .StoreAmoPageFaultM,
-            .mretM, .sretM, .uretM,
+            .mretM, .sretM, 
             .PrivilegeModeW, .NextPrivilegeModeM,
             .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
