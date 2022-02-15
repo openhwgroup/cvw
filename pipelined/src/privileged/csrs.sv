@@ -35,8 +35,6 @@
 module csrs #(parameter 
   // Supervisor CSRs
   SSTATUS = 12'h100,
-  SEDELEG = 12'h102,
-  SIDELEG = 12'h103,
   SIE = 12'h104,
   STVEC = 12'h105,
   SCOUNTEREN = 12'h106,
@@ -62,7 +60,6 @@ module csrs #(parameter
     output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
     (* mark_debug = "true" *) output logic [`XLEN-1:0] SEPC_REGW,      
     output logic [31:0]      SCOUNTEREN_REGW, 
-    output logic [`XLEN-1:0] SEDELEG_REGW, SIDELEG_REGW, 
     output logic [`XLEN-1:0] SATP_REGW,
     (* mark_debug = "true" *) input logic [11:0] SIP_REGW, SIE_REGW,
     output logic 	     WriteSSTATUSM,
@@ -102,27 +99,12 @@ module csrs #(parameter
       assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
     flopens #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
 
-    if (`N_SUPPORTED) begin:nregs
-      logic WriteSEDELEGM, WriteSIDELEGM;
-      assign WriteSEDELEGM = CSRSWriteM & (CSRAdrM == SEDELEG);
-      assign WriteSIDELEGM = CSRSWriteM & (CSRAdrM == SIDELEG);
-      flopenr #(`XLEN) SEDELEGreg(clk, reset, WriteSEDELEGM, CSRWriteValM & SEDELEG_MASK, SEDELEG_REGW);
-      flopenr #(`XLEN) SIDELEGreg(clk, reset, WriteSIDELEGM, CSRWriteValM, SIDELEG_REGW);
-    end else begin
-      assign SEDELEG_REGW = 0;
-      assign SIDELEG_REGW = 0;
-    end
-
     // CSR Reads
     always_comb begin:csrr
-      IllegalCSRSAccessM = !(`N_SUPPORTED)  & (CSRAdrM == SEDELEG | CSRAdrM == SIDELEG); // trap on DELEG register access when no N-mode
+      IllegalCSRSAccessM = 0;
       case (CSRAdrM) 
         SSTATUS:   CSRSReadValM = SSTATUS_REGW;
         STVEC:     CSRSReadValM = STVEC_REGW;
-//          SIDELEG:   CSRSReadValM = {{(`XLEN-12){1'b0}}, SIDELEG_REGW};
-//          SEDELEG:   CSRSReadValM = {{(`XLEN-12){1'b0}}, SEDELEG_REGW};
-        SIDELEG:   CSRSReadValM = SIDELEG_REGW;
-        SEDELEG:   CSRSReadValM = SEDELEG_REGW;
         SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, SIP_REGW};
         SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, SIE_REGW};
         SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
@@ -146,8 +128,6 @@ module csrs #(parameter
     assign CSRSReadValM = 0;
     assign SEPC_REGW = 0;
     assign STVEC_REGW = 0;
-    assign SEDELEG_REGW = 0;
-    assign SIDELEG_REGW = 0;
     assign SCOUNTEREN_REGW = 0;
     assign SATP_REGW = 0;
     assign IllegalCSRSAccessM = 1;
