@@ -1,4 +1,103 @@
 0000000b # Test 5.2.3.6: ecall from going to S mode from M mode
+00000002 # S mode write to pmpcfg1 with illegal instruction
+00000002 # S mode read from pmpcfg1 with illegal instruction
+00000bad
+00000002 # S mode write to pmpcfg3 with illegal instruction
+00000002 # S mode read from pmpcfg3 with illegal instruction
+00000bad
+00000002 # S mode write to mcycleh with illegal instruction
+00000002 # S mode read from mcycleh with illegal instruction
+00000bad
+00000002 # S mode write to minstreth with illegal instruction
+00000002 # S mode read from minstreth with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter3h with illegal instruction
+00000002 # S mode read from mhpmcounter3h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter4h with illegal instruction
+00000002 # S mode read from mhpmcounter4h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter5h with illegal instruction
+00000002 # S mode read from mhpmcounter5h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter6h with illegal instruction
+00000002 # S mode read from mhpmcounter6h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter7h with illegal instruction
+00000002 # S mode read from mhpmcounter7h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter8h with illegal instruction
+00000002 # S mode read from mhpmcounter8h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter9h with illegal instruction
+00000002 # S mode read from mhpmcounter9h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter10h with illegal instruction
+00000002 # S mode read from mhpmcounter10h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter11h with illegal instruction
+00000002 # S mode read from mhpmcounter11h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter12h with illegal instruction
+00000002 # S mode read from mhpmcounter12h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter13h with illegal instruction
+00000002 # S mode read from mhpmcounter13h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter14h with illegal instruction
+00000002 # S mode read from mhpmcounter14h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter15h with illegal instruction
+00000002 # S mode read from mhpmcounter15h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter16h with illegal instruction
+00000002 # S mode read from mhpmcounter16h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter17h with illegal instruction
+00000002 # S mode read from mhpmcounter17h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter18h with illegal instruction
+00000002 # S mode read from mhpmcounter18h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter19h with illegal instruction
+00000002 # S mode read from mhpmcounter19h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter20h with illegal instruction
+00000002 # S mode read from mhpmcounter20h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter21h with illegal instruction
+00000002 # S mode read from mhpmcounter21h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter22h with illegal instruction
+00000002 # S mode read from mhpmcounter22h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter23h with illegal instruction
+00000002 # S mode read from mhpmcounter23h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter24h with illegal instruction
+00000002 # S mode read from mhpmcounter24h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter25h with illegal instruction
+00000002 # S mode read from mhpmcounter25h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter26h with illegal instruction
+00000002 # S mode read from mhpmcounter26h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter27h with illegal instruction
+00000002 # S mode read from mhpmcounter27h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter28h with illegal instruction
+00000002 # S mode read from mhpmcounter28h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter29h with illegal instruction
+00000002 # S mode read from mhpmcounter29h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter30h with illegal instruction
+00000002 # S mode read from mhpmcounter30h with illegal instruction
+00000bad
+00000002 # S mode write to mhpmcounter31h with illegal instruction
+00000002 # S mode read from mhpmcounter31h with illegal instruction
+00000bad
 00000002 # S mode write to mvendorid with illegal instruction
 00000002 # S mode read from mvendorid with illegal instruction
 00000bad
@@ -285,105 +384,6 @@
 00000002 # S mode read from mhpmevent31 with illegal instruction
 00000bad
 00000009 # ecall from terminating tess from S mode
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
 deadbeef
 deadbeef
 deadbeef
