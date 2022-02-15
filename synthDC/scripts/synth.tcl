@@ -69,7 +69,7 @@ if { $saifpower == 1 } {
 # Set reset false path
 set_false_path -from [get_ports reset]
 
-# Set Frequency in [MHz] or [ps]
+# Set Frequency in [MHz] or period in [ns]
 set my_clock_pin clk
 set my_uncertainty 0.0
 set my_clk_freq_MHz $::env(FREQ)
@@ -131,7 +131,7 @@ set_wire_load_mode "top"
 # Set fanout
 set_max_fanout 6 $all_in_ex_clk
 
-# Fix hold time violations
+# Fix hold time violations (DH: this doesn't seem to be working right now)
 #set_fix_hold [all_clocks]
 
 # Deal with constants and buffers to isolate ports
@@ -200,7 +200,10 @@ set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_report_clo
 # redirect $filename { report_clock }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_timing.rep"]
-redirect $filename { report_timing -capacitance -transition_time -nets -nworst 10 }
+redirect $filename { report_timing -capacitance -transition_time -nets -nworst 1 }
+
+set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mindelay.rep"]
+redirect $filename { report_timing -capacitance -transition_time -nets -delay_type min -nworst 1 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_per_module_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
