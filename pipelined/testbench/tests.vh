@@ -1548,9 +1548,9 @@ string wally32i[] = '{
 
  string wally32priv[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/WALLY-MMU-SV32", "3080",
-    "rv32i_m/privilege/WALLY-PMP", "3080",
-    "rv32i_m/privilege/WALLY-PMA", "3080"
+    "rv32i_m/privilege/WALLY-MMU-SV32", "4080",
+    "rv32i_m/privilege/WALLY-PMP", "4080",
+    "rv32i_m/privilege/WALLY-PMA", "4080"
  };
 
  string wally32periph[] = '{
