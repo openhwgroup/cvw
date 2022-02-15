@@ -21,17 +21,19 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-MACROS-64.h"
+#include "WALLY-TEST-LIB-64.h"
 
 INIT_TESTS
 
+s_file_begin:
+
 // Test 5.2.3.1: testing Read-only access to Machine info CSRs 
-
-csr_r_access mvendorid
-csr_r_access marchid 
-csr_r_access mimpid 
-csr_r_access mhartid 
-# csr_r_access mconfigptr # Unimplemented in spike as of 31 Jan 22
-
+CSR_R_ACCESS mvendorid
+CSR_R_ACCESS marchid 
+CSR_R_ACCESS mimpid 
+CSR_R_ACCESS mhartid 
+# CSR_R_ACCESS mconfigptr # Unimplemented in spike as of 31 Jan 22
 
 END_TESTS
+
+TEST_STACK_AND_DATA
