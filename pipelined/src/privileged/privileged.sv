@@ -85,7 +85,7 @@ module privileged (
   logic [1:0] NextPrivilegeModeM;
 
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
-  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
+  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW;
 
   logic sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
@@ -158,7 +158,7 @@ module privileged (
           .NextPrivilegeModeM, .PrivilegeModeW,
           .CauseM, .NextFaultMtvalM, .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR,
-          .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
+          .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
           .MEDELEG_REGW, .MIDELEG_REGW, 
           .SATP_REGW,
           .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
@@ -209,7 +209,7 @@ module privileged (
             .LoadPageFaultM, .StoreAmoPageFaultM,
             .mretM, .sretM, 
             .PrivilegeModeW, .NextPrivilegeModeM,
-            .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
+            .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,

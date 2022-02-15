@@ -40,7 +40,7 @@ module trap (
   (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
   (* mark_debug = "true" *) input logic 		   mretM, sretM, 
   input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
-  (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
+  (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic [`XLEN-1:0]  PCM,
@@ -87,11 +87,10 @@ module trap (
   assign RetM = mretM | sretM;
 
   always_comb
-      if      (NextPrivilegeModeM == `U_MODE) PrivilegedTrapVector = UTVEC_REGW; 
-      else if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
-      else                                    PrivilegedTrapVector = MTVEC_REGW; 
+      if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
+      else                               PrivilegedTrapVector = MTVEC_REGW; 
 
-  // Handle vectored traps (when mtvec/stvec/utvec csr value has bits [1:0] == 01)
+  // Handle vectored traps (when mtvec/stvec csr value has bits [1:0] == 01)
   // For vectored traps, set program counter to _tvec value + 4 times the cause code
   //
   // POSSIBLE OPTIMIZATION: 
