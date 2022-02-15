@@ -282,9 +282,9 @@ trap_return_pagetype_table:
 //   write16_test       : Write 16 bits to address                  : 0x6, 0x7, or 0xf                          : None 
 //   write08_test       : Write 8 bits to address                   : 0x6, 0x7, or 0xf                          : None
 //   read64_test        : Read 64 bits from address                 : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
-//   read32_test        : Read 32 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
-//   read16_test        : Read 16 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
-//   read08_test        : Read 8 bitsfrom address                   : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read32_test        : Read 32 bits from address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read16_test        : Read 16 bits from address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
+//   read08_test        : Read 8 bits from address                   : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
 //   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of x7 modified by exectuion code (usually 0x111)
 //   terminate_test     : terminate tests                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
 //   goto_baremetal     : satp.MODE = bare metal                    : None                                      : None 
@@ -682,13 +682,11 @@ write_mxr_sum:
 write_pmpcfg_0:
     // writes the value in x29 to the pmpcfg register specified in x28.
     // then writes the final value of pmpcfgX to the output.
-    li x7, 0x0
     csrw pmpcfg0, x29
     csrr x30, pmpcfg0
     j write_pmpcfg_end
 
 write_pmpcfg_2:
-    li x7, 0x2
     csrw pmpcfg2, x29
     csrr x30, pmpcfg2 // I would use csrrw but we need the value AFTER the csr has been written
     j write_pmpcfg_end
@@ -703,97 +701,81 @@ write_pmpaddr_0:
     // write_read_csr pmpaddr0, x29
     // writes the value in x29 to the pmpaddr register specified in x28.
     // then writes the final value of pmpaddrX to the output.
-    li x7, 0x0
     csrw pmpaddr0, x29
     csrr x30, pmpaddr0
     j write_pmpaddr_end
 
 write_pmpaddr_1:
-    li x7, 0x1
     csrw pmpaddr1, x29
     csrr x30, pmpaddr1
     j write_pmpaddr_end
 
 write_pmpaddr_2:
-    li x7, 0x2
     csrw pmpaddr2, x29
     csrr x30, pmpaddr2
     j write_pmpaddr_end
 
 write_pmpaddr_3:
-    li x7, 0x3
     csrw pmpaddr3, x29
     csrr x30, pmpaddr3
     j write_pmpaddr_end
 
 write_pmpaddr_4:
-    li x7, 0x4
     csrw pmpaddr4, x29
     csrr x30, pmpaddr4
     j write_pmpaddr_end
 
 write_pmpaddr_5:
-    li x7, 0x5
     csrw pmpaddr5, x29
     csrr x30, pmpaddr5
     j write_pmpaddr_end
 
 write_pmpaddr_6:
-    li x7, 0x6
     csrw pmpaddr6, x29
     csrr x30, pmpaddr6
     j write_pmpaddr_end
 
 write_pmpaddr_7:
-    li x7, 0x7
     csrw pmpaddr7, x29
     csrr x30, pmpaddr7
     j write_pmpaddr_end
 
 write_pmpaddr_8:
-    li x7, 0x8
     csrw pmpaddr8, x29
     csrr x30, pmpaddr8
     j write_pmpaddr_end
 
 write_pmpaddr_9:
-    li x7, 0x9
     csrw pmpaddr9, x29
     csrr x30, pmpaddr9
     j write_pmpaddr_end
 
 write_pmpaddr_10:
-    li x7, 0xA
     csrw pmpaddr10, x29
     csrr x30, pmpaddr10
     j write_pmpaddr_end
 
 write_pmpaddr_11:
-    li x7, 0xB
     csrw pmpaddr11, x29
     csrr x30, pmpaddr11
     j write_pmpaddr_end
 
 write_pmpaddr_12:
-    li x7, 0xC
     csrw pmpaddr12, x29
     csrr x30, pmpaddr12
     j write_pmpaddr_end
 
 write_pmpaddr_13:
-    li x7, 0xD
     csrw pmpaddr13, x29
     csrr x30, pmpaddr13
     j write_pmpaddr_end
 
 write_pmpaddr_14:
-    li x7, 0xE
     csrw pmpaddr14, x29
     csrr x30, pmpaddr14
     j write_pmpaddr_end
 
 write_pmpaddr_15:
-    li x7, 0xF
     csrw pmpaddr15, x29
     csrr x30, pmpaddr15
     j write_pmpaddr_end
