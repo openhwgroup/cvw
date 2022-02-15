@@ -37,6 +37,44 @@ GOTO_S_MODE 0x0, 0x0
 # Attempt to write 0xbad to each of these CSRs and read the value back
 # should result in an illegal instruction for the write and read, respectively
 
+# High-bit versions storing the upper 32 bits of some CSRs for RV32
+# WRITE_READ_CSR mstatush 0xbad # *** these appear not to be implemented in GCC
+# WRITE_READ_CSR menvcfgh 0xbad
+# WRITE_READ_CSR mseccfgh 0xbad
+WRITE_READ_CSR pmpcfg1 0xbad
+WRITE_READ_CSR pmpcfg3 0xbad
+WRITE_READ_CSR mcycleh 0xbad
+WRITE_READ_CSR minstreth 0xbad
+WRITE_READ_CSR mhpmcounter3h 0xbad
+WRITE_READ_CSR mhpmcounter4h 0xbad
+WRITE_READ_CSR mhpmcounter5h 0xbad
+WRITE_READ_CSR mhpmcounter6h 0xbad
+WRITE_READ_CSR mhpmcounter7h 0xbad
+WRITE_READ_CSR mhpmcounter8h 0xbad
+WRITE_READ_CSR mhpmcounter9h 0xbad
+WRITE_READ_CSR mhpmcounter10h 0xbad
+WRITE_READ_CSR mhpmcounter11h 0xbad
+WRITE_READ_CSR mhpmcounter12h 0xbad
+WRITE_READ_CSR mhpmcounter13h 0xbad
+WRITE_READ_CSR mhpmcounter14h 0xbad
+WRITE_READ_CSR mhpmcounter15h 0xbad
+WRITE_READ_CSR mhpmcounter16h 0xbad
+WRITE_READ_CSR mhpmcounter17h 0xbad
+WRITE_READ_CSR mhpmcounter18h 0xbad
+WRITE_READ_CSR mhpmcounter19h 0xbad
+WRITE_READ_CSR mhpmcounter20h 0xbad
+WRITE_READ_CSR mhpmcounter21h 0xbad
+WRITE_READ_CSR mhpmcounter22h 0xbad
+WRITE_READ_CSR mhpmcounter23h 0xbad
+WRITE_READ_CSR mhpmcounter24h 0xbad
+WRITE_READ_CSR mhpmcounter25h 0xbad
+WRITE_READ_CSR mhpmcounter26h 0xbad
+WRITE_READ_CSR mhpmcounter27h 0xbad
+WRITE_READ_CSR mhpmcounter28h 0xbad
+WRITE_READ_CSR mhpmcounter29h 0xbad
+WRITE_READ_CSR mhpmcounter30h 0xbad
+WRITE_READ_CSR mhpmcounter31h 0xbad
+
 # Machine information Registers
 WRITE_READ_CSR mvendorid, 0xbad
 WRITE_READ_CSR marchid, 0xbad
@@ -68,7 +106,7 @@ WRITE_READ_CSR mip, 0xbad
 
 # Machine Memory Protection
 WRITE_READ_CSR pmpcfg0, 0xbad
-WRITE_READ_CSR pmpcfg2, 0xbad # pmpcfg 1 and 3 dont exist in rv64. there's 1 pmpcfg reg per 8 pmpaddr regs 
+WRITE_READ_CSR pmpcfg2, 0xbad # there's 1 pmpcfg reg per 8 pmpaddr regs 
 
 WRITE_READ_CSR pmpaddr0, 0xbad
 WRITE_READ_CSR pmpaddr1, 0xbad
