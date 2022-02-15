@@ -41,7 +41,7 @@ WRITE_READ_CSR stvec, 0xbad
 WRITE_READ_CSR scounteren, 0xbad
 
 # Supervisor Configuration
-# WRITE_READ_CSR senvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
+# WRITE_READ_CSR senvcfg, 0xbad # *** these appear not to be implemented in GCC
 
 # Supervisor Trap Handling
 WRITE_READ_CSR sscratch, 0xbad
@@ -75,11 +75,11 @@ WRITE_READ_CSR mepc, 0xbad
 WRITE_READ_CSR mcause, 0xbad
 WRITE_READ_CSR mtval, 0xbad
 WRITE_READ_CSR mip, 0xbad
-# WRITE_READ_CSR mtinst, 0xbad # *** these appear not to be implemented in the compile step of make???
+# WRITE_READ_CSR mtinst, 0xbad # *** these appear not to be implemented in GCC
 # WRITE_READ_CSR mtval2, 0xbad
 
 # Machine Configuration
-# WRITE_READ_CSR menvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
+# WRITE_READ_CSR menvcfg, 0xbad # *** these appear not to be implemented in GCC
 # WRITE_READ_CSR mseccgf, 0xbad
 
 # Machine Memory Protection
