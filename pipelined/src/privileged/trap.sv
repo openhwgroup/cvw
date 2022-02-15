@@ -84,7 +84,6 @@ module trap (
   assign TrapM = ExceptionM | InterruptM; // *** clean this up later DH
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
-  assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
   assign RetM = mretM | sretM;
 
   always_comb
