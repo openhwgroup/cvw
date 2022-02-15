@@ -36,7 +36,7 @@ module csrsr (
   input  logic             WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM, 
   input  logic             TrapM, FRegWriteM,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
-  input  logic             mretM, sretM, uretM,
+  input  logic             mretM, sretM, 
   input  logic             WriteFRMM, WriteFFLAGSM,
   input  logic [`XLEN-1:0] CSRWriteValM,
   output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW,
@@ -156,9 +156,6 @@ module csrsr (
         STATUS_SPIE <= #1 `S_SUPPORTED;
         STATUS_SPP <= #1 0; // Privileged 4.1.1
         STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
-      end else if (uretM) begin
-        STATUS_UIE <= #1 STATUS_UPIE;
-        STATUS_UPIE <= #1 `U_SUPPORTED;
       end else if (WriteMSTATUSM) begin
         STATUS_TSR_INT <= #1 CSRWriteValM[22];
         STATUS_TW_INT <= #1 CSRWriteValM[21];
