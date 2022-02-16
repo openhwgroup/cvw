@@ -194,16 +194,21 @@ module lsu (
     logic [`PA_BITS-1:0] WordOffsetAddr;
     logic                SelBus;
     logic [LOGWPL-1:0]   WordCount;
+    logic                SelUncachedAdr;
             
-    busdp #(WORDSPERLINE, LINELEN, `XLEN, LOGWPL, 1) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL, 1) busdp(
       .clk, .reset,
-      .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
+      .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
       .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalWriteDataM,
-      .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
+      .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
+    mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheBusWriteData[`XLEN-1:0]),
+      .s(SelUncachedAdr), .y(ReadDataWordMuxM));
+    mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalWriteDataM),
+      .s(SelUncachedAdr), .y(LSUBusHWDATA));
     assign WordOffsetAddr = LSUBusWriteCrit ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
     
     if(`DMEM == `MEM_CACHE) begin : dcache
@@ -236,7 +241,7 @@ module lsu (
 
   if(`DMEM != `MEM_BUS) begin
     logic [`XLEN-1:0] ReadDataWordMaskedM;
-    assign ReadDataWordMaskedM = CacheableM ? ReadDataWordM : '0;
+    assign ReadDataWordMaskedM = CacheableM ? ReadDataWordM : '0; // AND-gate
     subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
       .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
 	  .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
