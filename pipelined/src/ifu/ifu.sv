@@ -200,7 +200,7 @@ module ifu (
           .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheBusWriteData(ICacheBusWriteData), .LSUPAdrM(PCPF),
-          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
+          .FinalWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
 
