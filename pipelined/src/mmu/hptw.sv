@@ -151,6 +151,7 @@ module hptw
 	// to decrease the latency of the HPTW.  However, if the D$ is a cycle limiter, it's better to leave the
 	// HPTW as shown below to keep the D$ setup time out of the critical path.
 	// *** Is this really true.  Talk with Ross.  Seems like it's the next state logic on critical path instead.
+	// *** address TYPE(statetype)
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 	case (WalkerState)
@@ -190,7 +191,8 @@ module hptw
 	LEAF:                       NextWalkerState = IDLE; // updates TLB
 	default: begin
 		// synthesis translate_off
-		$error("Default state in HPTW should be unreachable; was %d", WalkerState);
+		if (WalkerState !== 'x) 
+			$error("Default state in HPTW should be unreachable; was %d", WalkerState);
 		// synthesis translate_on
 		NextWalkerState = IDLE; // should never be reached
 	end
