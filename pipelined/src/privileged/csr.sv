@@ -42,7 +42,7 @@ module csr #(parameter
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, uretM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, 
   input  logic             TimerIntM, ExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
@@ -59,8 +59,8 @@ module csr #(parameter
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR,
-  output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
-  output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW, 
+  output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
+  output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
@@ -76,12 +76,12 @@ module csr #(parameter
 );
 
   localparam NOP = 32'h13;
-  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRNReadValM, CSRCReadValM, CSRReadValM;
+  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM, CSRReadValM;
   logic [`XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
  
-(* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, USTATUS_REGW;
+(* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW;
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
-  logic            WriteMSTATUSM, WriteSSTATUSM, WriteUSTATUSM;
+  logic            WriteMSTATUSM, WriteSSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic            STATUS_TVM;
   logic            WriteFRMM, WriteFFLAGSM;
@@ -90,7 +90,7 @@ module csr #(parameter
 
   logic [11:0] CSRAdrM;
   //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
-  logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, IllegalCSRNAccessM, InsufficientCSRPrivilegeM;
+  logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;
   
   logic InstrValidNotFlushedM;
@@ -126,10 +126,10 @@ module csr #(parameter
              .CSRAdrM, .ExtIntM, .TimerIntM, .SwIntM,
              .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .CSRWriteValM);
   csrsr csrsr(.clk, .reset, .StallW,
-              .WriteMSTATUSM, .WriteSSTATUSM, .WriteUSTATUSM, 
+              .WriteMSTATUSM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-              .mretM, .sretM, .uretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
-              .MSTATUS_REGW, .SSTATUS_REGW, .USTATUS_REGW,
+              .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
+              .MSTATUS_REGW, .SSTATUS_REGW, 
               .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM);
   csrc  counters(.clk, .reset,
@@ -153,27 +153,22 @@ module csr #(parameter
               .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
               .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
               .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
-              .SCOUNTEREN_REGW, .SEDELEG_REGW, .SIDELEG_REGW, 
+              .SCOUNTEREN_REGW,
               .SATP_REGW, .SIP_REGW, .SIE_REGW,
               .WriteSSTATUSM, .IllegalCSRSAccessM);
-  csrn  csrn(.clk, .reset, .InstrValidNotFlushedM, .StallW,
-              .CSRNWriteM(CSRUWriteM), .UTrapM, .CSRAdrM,
-              .NextEPCM, .NextCauseM, .NextMtvalM, .USTATUS_REGW, 
-              .CSRWriteValM, .CSRNReadValM, .UEPC_REGW, .UTVEC_REGW, 
-              .UIP_REGW, .UIE_REGW, .WriteUSTATUSM, .IllegalCSRNAccessM);
   csru  csru(.clk, .reset, .InstrValidNotFlushedM, .StallW,
               .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .CSRUReadValM,  
               .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
               .IllegalCSRUAccessM);
 
   // merge CSR Reads
-  assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM | CSRNReadValM; 
+  assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM; 
   flopenrc #(`XLEN) CSRValWReg(clk, reset, FlushW, ~StallW, CSRReadValM, CSRReadValW);
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
   assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != `M_MODE) |
                                     (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == `U_MODE);
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM & 
-    IllegalCSRSAccessM & IllegalCSRUAccessM  & IllegalCSRNAccessM |
+    IllegalCSRSAccessM & IllegalCSRUAccessM |
     InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;
 endmodule

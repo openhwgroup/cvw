@@ -35,9 +35,18 @@
 #define PLIC_RANGE     0x03FFFFFF
 
 #include "WALLY-TEST-LIB-32.h" 
-// Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
-// Ideally this should mean that a test can be written by simply adding .4byte statements as below.
 
+INIT_TESTS
+
+s_file_begin:
+j test_loop_setup // begin test loop/table tests instead of executing inline code.
+
+INIT_TEST_TABLE
+
+TEST_STACK_AND_DATA
+
+.align 2
+test_cases:
 # ---------------------------------------------------------------------------------------------
 # Test Contents
 #
