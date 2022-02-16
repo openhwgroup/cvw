@@ -200,7 +200,7 @@ module lsu (
       .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
       .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalAMOWriteDataM(FinalWriteDataM),
+      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalWriteDataM,
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
@@ -234,11 +234,13 @@ module lsu (
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);
 
-  if(`DMEM != `MEM_BUS)
-    subwordwrite subwordwrite(.HRDATA(CacheableM ? ReadDataWordM : '0), .HADDRD(LSUPAdrM[2:0]),
+  if(`DMEM != `MEM_BUS) begin
+    logic [`XLEN-1:0] ReadDataWordMaskedM;
+    assign ReadDataWordMaskedM = CacheableM ? ReadDataWordM : '0;
+    subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
       .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
 	  .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
-  else 
+  end else 
     assign FinalWriteDataM = FinalAMOWriteDataM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////

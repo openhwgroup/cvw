@@ -56,7 +56,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
  
   // lsu interface
   input logic [`PA_BITS-1:0]  LSUPAdrM,
-  input logic [`XLEN-1:0]     FinalAMOWriteDataM,
+  input logic [`XLEN-1:0]     FinalWriteDataM,
   input logic [WORDLEN-1:0]   ReadDataWordM,
   output logic [WORDLEN-1:0]  ReadDataWordMuxM,
   input logic                 IgnoreRequest,
@@ -83,7 +83,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
 
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  if(LSU == 1) mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalAMOWriteDataM),
+  if(LSU == 1) mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalWriteDataM),
                  .s(SelUncachedAdr), .y(LSUBusHWDATA));
   else assign LSUBusHWDATA = '0;
    mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
