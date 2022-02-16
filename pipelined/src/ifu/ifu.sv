@@ -98,6 +98,7 @@ module ifu (
   logic [`XLEN-1:0]            PCD;
 
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
+  logic [31:0] NextInstrD, NextInstrE;
 
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   
@@ -308,8 +309,10 @@ module ifu (
   flopenr #(`XLEN) InstrMisalignedAdrReg(clk, reset, ~StallM, PCNextF, InstrMisalignedAdrM);
 
   // Instruction and PC/PCLink pipeline registers
-  flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);
-  flopenr  #(32)   InstrMReg(clk, reset, ~StallM, FlushM ? nop : InstrE, InstrM);
+  mux2    #(32)    FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
+  mux2    #(32)    FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
+  flopenr #(32)    InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
+  flopenr #(32)    InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);

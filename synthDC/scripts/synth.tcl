@@ -10,6 +10,9 @@ suppress_message {VER-130}
 suppress_message {VER-281} 
 suppress_message {VER-173} 
 
+# Enable Multicore
+set_host_options -max_cores $::env(MAXCORES)
+
 # get outputDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
@@ -17,6 +20,7 @@ set cfgName $::env(CONFIG)
 set hdl_src "../pipelined/src"
 set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
+set maxopt $::env(MAXOPT)
 
 eval file copy -force ${cfg} {hdl/}
 eval file copy -force ${cfg} $outputDir
@@ -65,7 +69,7 @@ if { $saifpower == 1 } {
 # Set reset false path
 set_false_path -from [get_ports reset]
 
-# Set Frequency in [MHz] or [ps]
+# Set Frequency in [MHz] or period in [ns]
 set my_clock_pin clk
 set my_uncertainty 0.0
 set my_clk_freq_MHz $::env(FREQ)
@@ -84,13 +88,20 @@ if {  $find_clock != [list] } {
     create_clock -period $my_period -name $my_clk
 }
 
+# Optimize paths that are close to critical
+set_critical_range [expr $my_period*0.05] $current_design
+
 # Partitioning - flatten or hierarchically synthesize
-# ungroup -all -flatten -simple_names
+if { $maxopt == 1 } {
+    ungroup -all -flatten -simple_names
+}
 
 # Set input pins except clock
 set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 
 # Specifies delays be propagated through the clock network
+# This is getting optimized poorly in the current flow, causing a lot of clock skew 
+# and unrealistic bad timing results.
 # set_propagated_clock [get_clocks $my_clk]
 
 # Setting constraints on input ports 
@@ -101,8 +112,8 @@ if {$tech == "sky130"} {
 }
 
 # Set input/output delay
-set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
-set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
+set_output_delay 0.1 -max -clock $my_clk [all_outputs]
 
 # Setting load constraint on output ports 
 if {$tech == "sky130"} {
@@ -120,7 +131,7 @@ set_wire_load_mode "top"
 # Set fanout
 set_max_fanout 6 $all_in_ex_clk
 
-# Fix hold time violations
+# Fix hold time violations (DH: this doesn't seem to be working right now)
 #set_fix_hold [all_clocks]
 
 # Deal with constants and buffers to isolate ports
@@ -132,11 +143,16 @@ set_fix_multiple_port_nets -all -buffer_constants
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
 # Save Unmapped Design
-set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
-write_file -format ddc -hierarchy -o $filename
+#set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
+#write_file -format ddc -hierarchy -o $filename
 
 # Compile statements
-compile_ultra -no_seq_output_inversion -no_boundary_optimization
+if { $maxopt == 1 } {
+    compile_ultra -retime
+    optimize_registers
+} else {
+    compile_ultra -no_seq_output_inversion -no_boundary_optimization
+}
 
 # Eliminate need for assign statements (yuck!)
 set verilogout_no_tri true
@@ -178,13 +194,16 @@ redirect $filename { report_qor }
 
 # Report Timing
 set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_reportpath.rep"]
-redirect $filename { report_path_group }
+#redirect $filename { report_path_group }
 
 set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_report_clock.rep"]
-redirect $filename { report_clock }
+# redirect $filename { report_clock }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_timing.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -nworst 1 }
+
+set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mindelay.rep"]
+redirect $filename { report_timing -capacitance -transition_time -nets -delay_type min -nworst 1 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_per_module_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
@@ -265,20 +284,14 @@ redirect -append $filename { echo "\n\n\n//// Critical path through FlushW ////\
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushW} -nworst 1 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_ieu_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/RD1D ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/RD1D} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/RD2D ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/RD2D} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/PreSrcAE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/PreSrcAE} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical path through datapath/R1D ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/R1D} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical path through datapath/R2D ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/R2D} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through datapath/SrcAE ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/SrcAE} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through datapath/ALUResultE ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/ALUResultE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/WriteDataE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/WriteDataE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through dataphath/ResultM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/ResultM} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through datapath/WriteDataW ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/WriteDataW} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical path through datapath/ReadDataM ////\n\n\n" }
@@ -323,7 +336,7 @@ set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_area.rep"
 redirect $filename { report_area -hierarchy -nosplit -physical -designware}
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_cell.rep"]
-redirect $filename { report_cell [get_cells -hier *] }
+# redirect $filename { report_cell [get_cells -hier *] }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_power.rep"]
 redirect $filename { report_power -hierarchy -levels 1 }
@@ -332,6 +345,6 @@ set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_constrain
 redirect $filename { report_constraint }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
-redirect $filename { report_hierarchy }
+# redirect $filename { report_hierarchy }
 
 quit 

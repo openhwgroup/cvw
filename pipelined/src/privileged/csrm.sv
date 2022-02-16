@@ -146,7 +146,7 @@ module csrm #(parameter
 
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
-  if (`S_SUPPORTED | (`U_SUPPORTED & `N_SUPPORTED)) begin:deleg // DELEG registers should exist
+  if (`S_SUPPORTED) begin:deleg // DELEG registers should exist
     flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, MEDELEG_REGW);
     flopenr #(`XLEN) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM & MIDELEG_MASK /*12'h222*/, MIDELEG_REGW);
   end else assign {MEDELEG_REGW, MIDELEG_REGW} = 0;
@@ -165,8 +165,7 @@ module csrm #(parameter
   logic [5:0] entry;
   always_comb begin
     entry = '0;
-    IllegalCSRMAccessM = !(`S_SUPPORTED | `U_SUPPORTED & `N_SUPPORTED) & 
-                          (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
+    IllegalCSRMAccessM = !(`S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
     if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry
       CSRMReadValM = PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0];
     else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4) begin

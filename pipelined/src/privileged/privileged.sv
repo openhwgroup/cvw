@@ -85,11 +85,10 @@ module privileged (
   logic [1:0] NextPrivilegeModeM;
 
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
-  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW;
-  //  logic [11:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
-  logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW, SEDELEG_REGW, SIDELEG_REGW;
+  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
+  logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW;
 
-  logic uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
+  logic sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
@@ -103,7 +102,7 @@ module privileged (
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW; 
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
-  logic md, sd;
+  logic md;
   logic       StallMQ;
 
 
@@ -112,35 +111,27 @@ module privileged (
   ///////////////////////////////////////////
 
   // get bits of DELEG registers based on CAUSE
-  //  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[3:0]];
-  //  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[3:0]] : SEDELEG_REGW[CauseM[3:0]]; // depricated
   assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
-  assign sd = CauseM[`XLEN-1] ? SIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : SEDELEG_REGW[CauseM[`LOG_XLEN-1:0]]; // depricated
   
   // PrivilegeMode FSM
   always_comb begin
     TrappedSRETM = 0;
-    if (mretM) NextPrivilegeModeM = STATUS_MPP;
+    if (mretM)      NextPrivilegeModeM = STATUS_MPP;
     else if (sretM) 
       if (STATUS_TSR & PrivilegeModeW == `S_MODE) begin
         TrappedSRETM = 1;
-        NextPrivilegeModeM = PrivilegeModeW;
-      end else NextPrivilegeModeM = {1'b0, STATUS_SPP};
-    else if (uretM) NextPrivilegeModeM = `U_MODE;
+                    NextPrivilegeModeM = PrivilegeModeW;
+      end else      NextPrivilegeModeM = {1'b0, STATUS_SPP};
     else if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-      if (PrivilegeModeW == `U_MODE)
-        if (`N_SUPPORTED & `U_SUPPORTED & md & sd) NextPrivilegeModeM = `U_MODE;
-        else if (`S_SUPPORTED & md)                NextPrivilegeModeM = `S_MODE;
-        else                                       NextPrivilegeModeM = `M_MODE;
-      else if (PrivilegeModeW == `S_MODE) 
-        if (`S_SUPPORTED & md)                     NextPrivilegeModeM = `S_MODE;
-        else                                       NextPrivilegeModeM = `M_MODE;
-      else                                         NextPrivilegeModeM = `M_MODE;
-    end else                                       NextPrivilegeModeM = PrivilegeModeW;
+      if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
+                    NextPrivilegeModeM = `S_MODE;
+      else          NextPrivilegeModeM = `M_MODE;
+    end else        NextPrivilegeModeM = PrivilegeModeW;
   end
-  // *** WFI could be implemented here and depends on TW
 
   flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
+
+  // *** WFI could be implemented here and depends on TW
 
   ///////////////////////////////////////////
   // decode privileged instructions
@@ -149,7 +140,7 @@ module privileged (
    privdec pmd(.InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM,
               .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
-              .uretM, .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
+              .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
   // Control and Status Registers
@@ -158,7 +149,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .uretM,
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, 
           .TimerIntM, .ExtIntM, .SwIntM,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
@@ -167,8 +158,8 @@ module privileged (
           .NextPrivilegeModeM, .PrivilegeModeW,
           .CauseM, .NextFaultMtvalM, .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR,
-          .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
-          .MEDELEG_REGW, .MIDELEG_REGW, .SEDELEG_REGW, .SIDELEG_REGW, 
+          .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
+          .MEDELEG_REGW, .MIDELEG_REGW, 
           .SATP_REGW,
           .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
           .STATUS_MIE, .STATUS_SIE,
@@ -216,9 +207,9 @@ module privileged (
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
             .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
             .LoadPageFaultM, .StoreAmoPageFaultM,
-            .mretM, .sretM, .uretM,
+            .mretM, .sretM, 
             .PrivilegeModeW, .NextPrivilegeModeM,
-            .MEPC_REGW, .SEPC_REGW, .UEPC_REGW, .UTVEC_REGW, .STVEC_REGW, .MTVEC_REGW,
+            .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,

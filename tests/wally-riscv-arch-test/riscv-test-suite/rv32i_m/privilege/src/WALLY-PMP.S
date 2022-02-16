@@ -22,9 +22,18 @@
 ///////////////////////////////////////////
 
 #include "WALLY-TEST-LIB-32.h" 
-// Test library includes and handler for each type of test, a trap handler, imperas compliance instructions
-// Ideally this should mean that a test can be written by simply adding .4byte statements as below.
 
+INIT_TESTS
+
+s_file_begin:
+j test_loop_setup // begin test loop/table tests instead of executing inline code.
+
+INIT_TEST_TABLE
+
+TEST_STACK_AND_DATA
+
+.align 2
+test_cases:
 # ---------------------------------------------------------------------------------------------
 # Test Contents
 #
@@ -45,22 +54,22 @@
 # Test 12.3.2.2.1 Config: Write known values and set PMP config according to table 12.4 in the *** riscv book, copied below
 
 # write pmpaddr regs
-                                        # | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |
-.4byte 0x0, 0x0FFFFFFF, write_pmpaddr_0 # | 0     | 0x0FFFFFFF  | 1F        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
-.4byte 0x1, 0x20040000, write_pmpaddr_0 # | 1     | 0x20040000  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
-.4byte 0x2, 0x2004003F, write_pmpaddr_0 # | 2     | 0x2004003F  | 09        | 0 | TOR   | 0 | 0 | 1 | 80100000-801000FF R 		    |
-.4byte 0x3, 0x20040080, write_pmpaddr_0 # | 3     | 0x20040080  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
-.4byte 0x4, 0x20040084, write_pmpaddr_0 # | 4     | 0x20040084  | 0C        | 0 | TOR   | 1 | 0 | 0 | 80100200-80100210 X 		    |
-.4byte 0x5, 0x200400C0, write_pmpaddr_0 # | 5     | 0x200400C0  | 90        | 1 | NA4   | 0 | 0 | 0 | 80100300-80100303 locked out 	|
-.4byte 0x6, 0x2004013F, write_pmpaddr_0 # | 6     | 0x2004013F  | 18        | 0 | NAPOT | 0 | 0 | 0 | 80100400-801004FF no access 	|
+                                         # | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |
+.4byte 0x0, 0x0FFFFFFF, write_pmpaddr_0  # | 0     | 0x0FFFFFFF  | 1F        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
+.4byte 0x1, 0x20040000, write_pmpaddr_1  # | 1     | 0x20040000  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
+.4byte 0x2, 0x2004003F, write_pmpaddr_2  # | 2     | 0x2004003F  | 09        | 0 | TOR   | 0 | 0 | 1 | 80100000-801000FF R 		    |
+.4byte 0x3, 0x20040080, write_pmpaddr_3  # | 3     | 0x20040080  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
+.4byte 0x4, 0x20040084, write_pmpaddr_4  # | 4     | 0x20040084  | 0C        | 0 | TOR   | 1 | 0 | 0 | 80100200-80100210 X 		    |
+.4byte 0x5, 0x200400C0, write_pmpaddr_5  # | 5     | 0x200400C0  | 90        | 1 | NA4   | 0 | 0 | 0 | 80100300-80100303 locked out 	|
+.4byte 0x6, 0x2004013F, write_pmpaddr_6  # | 6     | 0x2004013F  | 18        | 0 | NAPOT | 0 | 0 | 0 | 80100400-801004FF no access 	|
 # Pmpaddr 7-14 are all zeroed out in this test, so they don't need writes.
-.4byte 0xF, 0x2FFFFFFF, write_pmpaddr_0 # | 15    | 0x2FFFFFFF  | 1F        | 0 | NAPOT | 1 | 1 | 1 | Main mem 80000000-FFFFFFFF RWX|
+.4byte 0xF, 0x2FFFFFFF, write_pmpaddr_15 # | 15    | 0x2FFFFFFF  | 1F        | 0 | NAPOT | 1 | 1 | 1 | Main mem 80000000-FFFFFFFF RWX|
 
 # write pmpcfg regs with the information in the table above. this should also write the value of these registers to the output.
 .4byte 0x0, 0x0009001F, write_pmpcfg_0 # write pmpcfg0, output 0x0009001F
-.4byte 0x1, 0x0018900C, write_pmpcfg_0 # write pmpcfg1, output 0x0018900C
+.4byte 0x1, 0x0018900C, write_pmpcfg_1 # write pmpcfg1, output 0x0018900C
 # pmpcfg2 is zeroed out, so it doesn't need a write
-.4byte 0x3, 0x1F000000, write_pmpcfg_0 # write pmpcfg3, output 0x1F000000
+.4byte 0x3, 0x1F000000, write_pmpcfg_3 # write pmpcfg3, output 0x1F000000
 
 # write known values to memory where W=0. This should be possible since we're in machine mode.
 .4byte 0x80100010, 0x600DAA, write32_test # write to pmpaddr 1-2 range
@@ -74,9 +83,9 @@
 
 
 # attempt to write to pmpaddr5 and pmp5cfg after lockout
-.4byte 0x1, 0x0018FF0C, write_pmpcfg_0 # attempt to edit only pmp5cfg (pmpcfg1[8:15]) after lockout. 
+.4byte 0x1, 0x0018FF0C, write_pmpcfg_1 # attempt to edit only pmp5cfg (pmpcfg1[8:15]) after lockout. 
 # instruction ignored, output is 0x0018900C, NOT 0x0018FF0C
-.4byte 0x5, 0xFFFFFFFF, write_pmpaddr_0 # attempt to edit pmpaddr5 after lockout.
+.4byte 0x5, 0xFFFFFFFF, write_pmpaddr_5 # attempt to edit pmpaddr5 after lockout.
 # instruction ignored, output is 0x200400C0, NOT 0xFFFFFFFF
 
 # Test 12.3.2.2.2 Machine mode access
