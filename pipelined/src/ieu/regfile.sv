@@ -49,6 +49,7 @@ module regfile (
   // register 0 hardwired to 0
   
   // reset is intended for simulation only, not synthesis
+  // can logic be adjusted to not need resettable registers?
     
   always_ff @(negedge clk) // or posedge reset) // *** make this a preload in testbench rather than reset
     if (reset) for(i=1; i<NUMREGS; i++) rf[i] <= 0;
