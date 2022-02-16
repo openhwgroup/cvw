@@ -200,7 +200,7 @@ module lsu (
       .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
       .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalAMOWriteDataM,
+      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalAMOWriteDataM(FinalWriteDataM),
       .ReadDataWordM, .ReadDataWordMuxM, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
@@ -234,13 +234,12 @@ module lsu (
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);
 
-  // this might only get instantiated if there is a dcache or dtim.
-  // There is a copy in the ebu. *** is it needed there, or can data come in from ebu, get 
-  // muxed here and sent back out.
-  // Explore changing feedback path from output of AMOALU to subword write ***
-  subwordwrite subwordwrite(.HRDATA(ReadDataWordM), .HADDRD(LSUPAdrM[2:0]),
-		.HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-		.HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
+  if(`DMEM != `MEM_BUS)
+    subwordwrite subwordwrite(.HRDATA(CacheableM ? ReadDataWordM : '0), .HADDRD(LSUPAdrM[2:0]),
+      .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
+	  .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
+  else 
+    assign FinalWriteDataM = FinalAMOWriteDataM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
