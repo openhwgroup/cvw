@@ -190,19 +190,24 @@ module ifu (
     logic                ICacheBusAck;
     logic                save,restore;
     logic [31:0]         temp;
+    logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, 32, LOGWPL) 
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), 
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
-          .WordCount(), .LSUBusHWDATA(),
+          .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheBusWriteData(ICacheBusWriteData), .LSUPAdrM(PCPF),
-          .FinalWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
+          .FinalWriteDataM(), .SelUncachedAdr,
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
+
+    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ICacheBusWriteData[32-1:0]),
+      .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
+    
 
     if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;
