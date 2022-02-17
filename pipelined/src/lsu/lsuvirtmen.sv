@@ -42,6 +42,9 @@ module lsuvirtmem(
   input logic                 TrapM,
   input logic                 DCacheStallM,
   input logic [`XLEN-1:0]     SATP_REGW, // from csr
+  input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic [1:0]           STATUS_MPP,
+  input logic [1:0]           PrivilegeModeW,
   input logic [`XLEN-1:0]     PCF,
   input logic [`XLEN-1:0]     ReadDataM,
   input logic [2:0]           Funct3M,
@@ -84,6 +87,7 @@ module lsuvirtmem(
     .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
   hptw hptw( // *** remove logic from (), mention this in style guide CH3
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM, .MemRWM, .AtomicM,
+    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
     .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
     .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWWrite, .HPTWSize);
