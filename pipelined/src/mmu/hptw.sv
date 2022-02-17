@@ -29,7 +29,7 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-`define HTPW_DA_WRITES_SUPPORTED 1
+
 module hptw
   (
    input logic                 clk, reset,
@@ -71,21 +71,10 @@ module hptw
 	logic [1:0]       NextPageType;
 	logic [`SVMODE_BITS-1:0]	    SvMode;
 	logic [`XLEN-1:0] 	    TranslationVAdr;
-    logic                   Dirty, Accessed;
   logic [`XLEN-1:0]         NextPTE;
   logic                     UpdatePTE;
-  logic                     SetDirty;
   logic                     DAPageFault;
-  logic                     SaveHPTWAdr, SelHPTWWriteAdr;
-  logic [`PA_BITS-1:0]      HPTWWriteAdr, HPTWReadAdr;
-  logic                     SV39Mode;
-  logic                     ReadAccess, WriteAccess;
-  logic                     InvalidRead, InvalidWrite;
-  logic                     UpperBitsUnequalPageFault; 
-  logic                     ImproperPrivilege;
-  logic [1:0]               EffectivePrivilegeMode;
-  logic                     OtherPageFault;
-  
+  logic [`PA_BITS-1:0]      HPTWReadAdr;
                        
 	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
@@ -101,59 +90,88 @@ module hptw
 	// State flops
 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	assign PRegEn = HPTWRead & ~DCacheStallM;
-    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE;
   
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
 
-    flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
-    assign SaveHPTWAdr = WalkerState == L0_ADR;
-  
-    assign SelHPTWWriteAdr = UpdatePTE | HPTWWrite;
-    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);
     
 	// Assign PTE descriptors common across all XLEN values
 	// For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
 	assign {PTE_U, Executable, Writable, Readable, Valid} = PTE[4:0];
-    assign {Dirty, Accessed} = PTE[7:6];
 	assign LeafPTE = Executable | Writable | Readable; 
 	assign ValidPTE = Valid & ~(Writable & ~Readable);
 	assign ValidLeafPTE = ValidPTE & LeafPTE;
 	assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
-  assign WriteAccess = (MemRWM[0] | |AtomicM);
-  assign SetDirty = ~Dirty & & DTLBWalk & WriteAccess;
-  assign ReadAccess = MemRWM[1];
 
-  assign EffectivePrivilegeMode = (DTLBWalk == 0) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
+  if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
 
+    logic                     SV39Mode;
+    logic                     ReadAccess, WriteAccess;
+    logic                     InvalidRead, InvalidWrite;
+    logic                     UpperBitsUnequalPageFault; 
+    logic                     OtherPageFault;
+    logic [1:0]               EffectivePrivilegeMode;
+    logic                     ImproperPrivilege;
+    logic                     SaveHPTWAdr, SelHPTWWriteAdr;
+    logic [`PA_BITS-1:0]      HPTWWriteAdr;  
+    logic                     SetDirty;
+    logic                     Dirty, Accessed;
 
-  if (`XLEN==64) begin:rv64
+    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE;  // This will be  HPTWReadPTE if not handling DAPageFault.
+    flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
+    assign SaveHPTWAdr = WalkerState == L0_ADR;
+    assign SelHPTWWriteAdr = UpdatePTE | HPTWWrite;
+    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);  // HPTWAdr = HPTWReadAdr if not handling DAPageFault.
+    
+
+    assign {Dirty, Accessed} = PTE[7:6];
+    assign WriteAccess = (MemRWM[0] | |AtomicM);
+    assign SetDirty = ~Dirty & & DTLBWalk & WriteAccess;
+    assign ReadAccess = MemRWM[1];
+
+    assign EffectivePrivilegeMode = (DTLBWalk == 0) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
+                               ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
+
+    // *** turn into module
+    if (`XLEN==64) begin:rv64
       assign SV39Mode = (SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS] == `SV39);
       // page fault if upper bits aren't all the same
       logic UpperEqual39, UpperEqual48;
       assign UpperEqual39 = &(TranslationVAdr[63:38]) | ~|(TranslationVAdr[63:38]);
       assign UpperEqual48 = &(TranslationVAdr[63:47]) | ~|(TranslationVAdr[63:47]); 
       assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
-  end else begin
+    end else begin
       assign SV39Mode = 0;
       assign UpperBitsUnequalPageFault = 0;
-  end           
+    end           
 
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
     assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
                             ImproperPrivilege | ~Executable | UpperBitsUnequalPageFault | Misaligned | ~Valid;
-  
-    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
-  
+
+
+    // hptw needs to know if there is a Dirty or Access fault occuring on this
+    // memory access.  If there is the PTE needs to be updated seting Access
+    // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
+    // However any other fault should not cause the update.
+    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault; // set to 0 if not handling DAPageFault.
+
+    assign HPTWWrite = (WalkerState == UPDATE_PTE);
+    assign UpdatePTE = WalkerState == LEAF & DAPageFault;
+  end else begin // block: hptwwrites
+    assign NextPTE = HPTWReadPTE;
+    assign HPTWAdr = HPTWReadAdr;
+    assign DAPageFault = '0;
+    assign UpdatePTE = '0;
+    assign HPTWWrite = '0;
+  end
+
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
 	assign DTLBWriteM = (WalkerState == LEAF & ~DAPageFault) & DTLBWalk;
 	assign ITLBWriteF = (WalkerState == LEAF & ~DAPageFault) & ~DTLBWalk;
-    assign HPTWWrite = (WalkerState == UPDATE_PTE);
-    assign UpdatePTE = WalkerState == LEAF & DAPageFault;
   
 
 	// FSM to track PageType based on the levels of the page table traversed
@@ -241,7 +259,7 @@ module hptw
           else NextWalkerState = IDLE;
       // *** TODO update PTE with dirty/access.  write to TLB and update memory.
       // probably want to write the PTE in UPDATE_PTE then go to leaf and update TLB.
-    UPDATE_PTE: if(DCacheStallM) NextWalkerState = UPDATE_PTE;
+    UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) NextWalkerState = UPDATE_PTE;
                 else NextWalkerState = LEAF;
 	default: begin
 		// synthesis translate_off

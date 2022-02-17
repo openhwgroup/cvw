@@ -79,8 +79,8 @@ module lsuvirtmem(
   logic                       HPTWWrite;
 
   assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
-  assign ITLBMissOrDAFaultF = ITLBMissF | InstrDAPageFaultF;
-  assign DTLBMissOrDAFaultM = DTLBMissM | DataDAPageFaultM;  
+  assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
+  assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
   interlockfsm interlockfsm (
     .clk, .reset, .AnyCPUReqM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
@@ -88,7 +88,7 @@ module lsuvirtmem(
   hptw hptw( // *** remove logic from (), mention this in style guide CH3
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-    .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.
+    .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.  *** I'm not sure ITLBMiss should be suppressed on TrapM.
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
     .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWWrite, .HPTWSize);
 
