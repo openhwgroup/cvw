@@ -97,9 +97,14 @@ module tlbcontrol #(parameter ITLB = 0) (
     // only execute non-user mode pages.
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
       ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
+    if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
+      assign DAPageFault = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
+      assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+    end else begin
     // fault for software handling if access bit is off
-    assign DAPageFault = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
-    assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+      assign DAPageFault = ~PTE_A;
+      assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+    end
   end else begin:dtlb // Data TLB fault checking
     logic InvalidRead, InvalidWrite;
 
@@ -114,9 +119,14 @@ module tlbcontrol #(parameter ITLB = 0) (
     // Check for write error. Writes are invalid when the page's write bit is
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    // Fault for software handling if access bit is off or writing a page with dirty bit off
-    assign DAPageFault = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
-    assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+    if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
+      assign DAPageFault = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
+      assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+    end else begin
+      // Fault for software handling if access bit is off or writing a page with dirty bit off
+      assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
+      assign TLBPageFault = (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
+    end
   end
 
   assign TLBHit = CAMHit & TLBAccess;
