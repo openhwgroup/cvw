@@ -410,6 +410,8 @@ add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/DSRb
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/DCDb
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/CTSb
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/RIb
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/Din
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/LCR
 add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/SOUT
 add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/RTSb
 add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/DTRb
@@ -431,9 +433,6 @@ add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM
 add wave -noupdate /testbench/dut/core/priv/priv/csr/MEPC_REGW
-add wave -noupdate /testbench/dut/core/lsu/bus/busdp/LocalLSUBusAdr
-add wave -noupdate /testbench/dut/core/lsu/bus/busdp/busfsm/DCacheFetchLine
-add wave -noupdate /testbench/dut/core/lsu/bus/busdp/busfsm/DCacheWriteLine
 add wave -noupdate -group ifu -color Gold /testbench/dut/core/lsu/bus/busdp/busfsm/BusCurrState
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusRead
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusAdr
@@ -457,9 +456,6 @@ add wave -noupdate -group ifu -expand -group icache -expand -group memory /testb
 add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/TLBWrite
 add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/ITLBMissF
 add wave -noupdate -group ifu -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
-add wave -noupdate /testbench/dut/core/ifu/IFUBusRead
-add wave -noupdate /testbench/dut/core/ifu/bus/icache/icache/CacheFetchLine
-add wave -noupdate -radix unsigned -childformat {{{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[31]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[30]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[29]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[28]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[27]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[26]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[25]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[1]} -radix unsigned} {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]} -radix unsigned}} -subitemconfig {{/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[31]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[30]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[29]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[28]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[27]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[26]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[25]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[1]} {-height 16 -radix unsigned} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]} {-height 16 -radix unsigned}} /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
 add wave -noupdate -group {Performance Counters} -label MCYCLE -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]}
 add wave -noupdate -group {Performance Counters} -label MINSTRET -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]}
 add wave -noupdate -group {Performance Counters} -label {LOAD STORE HAZARD} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]}
@@ -474,17 +470,9 @@ add wave -noupdate -group {Performance Counters} -expand -group ICACHE -label {I
 add wave -noupdate -group {Performance Counters} -expand -group ICACHE -label {ICACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
 add wave -noupdate -group {Performance Counters} -expand -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
 add wave -noupdate -group {Performance Counters} -expand -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdrAllThreshold
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/CacheStall
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdrAll
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdrAllP1
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdrAllFlag
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushSetAdrAll
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushWayEncAll
-add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushWayAll
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {34475 ns} 0} {{Cursor 5} {49445 ns} 1} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
-quietly wave cursor active 1
+WaveRestoreCursors {{Cursor 7} {283655 ns} 1} {{Cursor 5} {25122 ns} 0} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
+quietly wave cursor active 2
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
 configure wave -justifyvalue left
@@ -499,4 +487,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {34303 ns} {34653 ns}
+WaveRestoreZoom {24516 ns} {25586 ns}
