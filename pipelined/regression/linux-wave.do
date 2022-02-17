@@ -351,7 +351,7 @@ add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testben
 add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_W
 add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_R
 add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_V
-add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/DAPageFault
+add wave -noupdate -expand -group lsu -group dtlb -expand -group Status -color Maroon /testbench/dut/core/lsu/dmmu/dmmu/DAPageFault
 add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/ImproperPrivilege
 add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/UpperBitsUnequalPageFault
 add wave -noupdate -expand -group lsu -group dtlb -expand -group Status /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/Misaligned
@@ -361,19 +361,9 @@ add wave -noupdate -expand -group lsu -group dtlb -group faults /testbench/dut/c
 add wave -noupdate -expand -group lsu -group dtlb -group faults /testbench/dut/core/lsu/dmmu/dmmu/LoadAccessFaultM
 add wave -noupdate -expand -group lsu -group dtlb -group faults /testbench/dut/core/lsu/dmmu/dmmu/StoreAmoAccessFaultM
 add wave -noupdate -expand -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/TLBPAdr
-add wave -noupdate -expand -group lsu -group dtlb -expand -group write /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/PTE
-add wave -noupdate -expand -group lsu -group dtlb -expand -group write /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/PageTypeWriteVal
-add wave -noupdate -expand -group lsu -group dtlb -expand -group write /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/TLBWrite
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/ImproperPrivilege
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_D
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_A
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_U
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_X
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_W
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_R
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/PTE_V
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/UpperBitsUnequalPageFault
-add wave -noupdate -expand -group lsu -group dtlb -group {dtlb stats} /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/Misaligned
+add wave -noupdate -expand -group lsu -group dtlb -group write /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/PTE
+add wave -noupdate -expand -group lsu -group dtlb -group write /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/PageTypeWriteVal
+add wave -noupdate -expand -group lsu -group dtlb -group write /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/TLBWrite
 add wave -noupdate -expand -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/pmachecker/PhysicalAddress
 add wave -noupdate -expand -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/pmachecker/SelRegions
 add wave -noupdate -expand -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/Cacheable
@@ -535,12 +525,15 @@ add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/CurrState
 add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/TakeSpillF
 add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillF
 add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/IFUCacheBusStallF
-add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DAPageFault
+add wave -noupdate -color Yellow /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DAPageFault
 add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/OtherPageFault
 add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/ITLBMissF
+add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/Accessed
+add wave -noupdate /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/WriteAccess
+add wave -noupdate /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/TLBPageFault
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 7} {58737 ns} 1} {{Cursor 5} {153166 ns} 0} {{Cursor 3} {235459 ns} 1} {{Cursor 4} {217231 ns} 1}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 7} {62997113 ns} 1} {{Cursor 5} {65676608 ns} 1} {{Cursor 3} {65665947 ns} 1} {{Cursor 4} {65431218 ns} 0}
+quietly wave cursor active 4
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
 configure wave -justifyvalue left
@@ -555,4 +548,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {152985 ns} {153357 ns}
+WaveRestoreZoom {65430777 ns} {65431305 ns}
