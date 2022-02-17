@@ -76,8 +76,8 @@ module lsuvirtmem(
   logic                       HPTWWrite;
 
   assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
-  assign ITLBMissOrDAFaultF = ITLBWriteF | InstrDAPageFaultF;
-  assign DTLBMissOrDAFaultM = DTLBWriteM | DataDAPageFaultM;  
+  assign ITLBMissOrDAFaultF = ITLBMissF | InstrDAPageFaultF;
+  assign DTLBMissOrDAFaultM = DTLBMissM | DataDAPageFaultM;  
   interlockfsm interlockfsm (
     .clk, .reset, .AnyCPUReqM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,

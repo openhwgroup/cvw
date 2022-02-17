@@ -72,6 +72,9 @@ module hptw
   logic                     UpdatePTE;
   logic                     SetDirty;
   logic                     DAPageFault;
+  logic                     SaveHPTWAdr, SelHPTWWriteAdr;
+  logic [`PA_BITS-1:0]      HPTWWriteAdr, HPTWReadAdr;
+  
                      
 	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
@@ -89,8 +92,14 @@ module hptw
 	assign PRegEn = HPTWRead & ~DCacheStallM;
     assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], SetDirty , 1'b1, PTE[5:0]} : HPTWReadPTE;
   
-	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | HPTWWrite, NextPTE, PTE); // Capture page table entry from data cache
+	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
 
+    flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
+    assign SaveHPTWAdr = WalkerState == L0_ADR;
+  
+    assign SelHPTWWriteAdr = UpdatePTE | HPTWWrite;
+    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);
+    
 	// Assign PTE descriptors common across all XLEN values
 	// For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
 	assign {Executable, Writable, Readable, Valid} = PTE[3:0];
@@ -105,11 +114,10 @@ module hptw
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
-	assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
-	assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
+	assign DTLBWriteM = (WalkerState == LEAF & ~DAPageFault) & DTLBWalk;
+	assign ITLBWriteF = (WalkerState == LEAF & ~DAPageFault) & ~DTLBWalk;
     assign HPTWWrite = (WalkerState == UPDATE_PTE);
-  assign UpdatePTE = ((WalkerState == L2_ADR | WalkerState == L1_ADR | WalkerState == L0_ADR)
-                      & ValidLeafPTE & ~Misaligned & DAPageFault);
+    assign UpdatePTE = WalkerState == LEAF & DAPageFault;
   
 
 	// FSM to track PageType based on the levels of the page table traversed
@@ -129,7 +137,7 @@ module hptw
 	logic [`PPN_BITS-1:0] PPN;
 	assign VPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
 	assign PPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? BasePageTablePPN : CurrentPPN; 
-	assign HPTWAdr = {PPN, VPN, 2'b00};
+	assign HPTWReadAdr = {PPN, VPN, 2'b00};
 	assign HPTWSize = 3'b010;
 	end else begin // RV64
 	logic [8:0] VPN;
@@ -143,7 +151,7 @@ module hptw
 		endcase
 	assign PPN = ((WalkerState == L3_ADR) | (WalkerState == L3_RD) | 
 					(SvMode != `SV48 & ((WalkerState == L2_ADR) | (WalkerState == L2_RD)))) ? BasePageTablePPN : CurrentPPN;
-	assign HPTWAdr = {PPN, VPN, 3'b000};
+	assign HPTWReadAdr = {PPN, VPN, 3'b000};
 	assign HPTWSize = 3'b011;
 	end
 
@@ -177,26 +185,24 @@ module hptw
 	L3_RD: if (DCacheStallM)    NextWalkerState = L3_RD;
            else     			NextWalkerState = L2_ADR;
 	L2_ADR: if (InitialWalkerState == L2_ADR)    NextWalkerState = L2_RD; // first access in SV39
-			else if (ValidLeafPTE & ~Misaligned & ~DAPageFault) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-            else if (ValidLeafPTE & ~Misaligned & DAPageFault) NextWalkerState = UPDATE_PTE;
+			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE)            NextWalkerState = L2_RD;
 			else 				                 NextWalkerState = LEAF;
 	L2_RD: if (DCacheStallM)                     NextWalkerState = L2_RD;
            else                                  NextWalkerState = L1_ADR;
 	L1_ADR: if (InitialWalkerState == L1_ADR)    NextWalkerState = L1_RD; // first access in SV32
-			else if (ValidLeafPTE & ~Misaligned & ~DAPageFault) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-            else if (ValidLeafPTE & ~Misaligned & DAPageFault) NextWalkerState = UPDATE_PTE;
+			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE)            NextWalkerState = L1_RD;
 			else 				                 NextWalkerState = LEAF;	
 	L1_RD: if (DCacheStallM)                     NextWalkerState = L1_RD;
            else                                  NextWalkerState = L0_ADR;
-	L0_ADR: if (ValidLeafPTE & ~Misaligned & ~DAPageFault)      NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-    else if (ValidLeafPTE & ~Misaligned & DAPageFault) NextWalkerState = UPDATE_PTE;
+	L0_ADR: if (ValidLeafPTE & ~Misaligned)      NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
 			else if (ValidNonLeafPTE)            NextWalkerState = L0_RD;
 			else                                 NextWalkerState = LEAF;
 	L0_RD: if (DCacheStallM)                     NextWalkerState = L0_RD;
            else                                  NextWalkerState = LEAF;
-    LEAF: NextWalkerState = IDLE;
+    LEAF: if (DAPageFault) NextWalkerState = UPDATE_PTE;
+          else NextWalkerState = IDLE;
       // *** TODO update PTE with dirty/access.  write to TLB and update memory.
       // probably want to write the PTE in UPDATE_PTE then go to leaf and update TLB.
     UPDATE_PTE: if(DCacheStallM) NextWalkerState = UPDATE_PTE;
