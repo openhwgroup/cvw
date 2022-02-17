@@ -32,20 +32,24 @@
 `define HTPW_DA_WRITES_SUPPORTED 1
 module hptw
   (
-   input logic 				   clk, reset,
-   input logic [`XLEN-1:0] 	   SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0] 	   PCF, IEUAdrM, // addresses to translate
+   input logic                 clk, reset,
+   input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
+   input logic [`XLEN-1:0]     PCF, IEUAdrM, // addresses to translate
    input logic [1:0]           MemRWM, AtomicM,
-   (* mark_debug = "true" *) input logic 				   ITLBMissF, DTLBMissM, // TLB Miss
-   input logic [`XLEN-1:0] 	   HPTWReadPTE, // page table entry from LSU
-   input logic 				   DCacheStallM, // stall from LSU
+   // system status
+   input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+   input logic [1:0]           STATUS_MPP,
+   input logic [1:0]           PrivilegeModeW,
+   (* mark_debug = "true" *) input logic ITLBMissF, DTLBMissM, // TLB Miss
+   input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
+   input logic                 DCacheStallM, // stall from LSU
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
-   output logic [1:0] 		   PageType, // page type to TLBs
-   (* mark_debug = "true" *) output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
+   output logic [1:0]          PageType, // page type to TLBs
+   (* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
-   output logic 			   HPTWRead, // HPTW requesting to read memory
+   output logic                HPTWRead, // HPTW requesting to read memory
    output logic                HPTWWrite,
-   output logic [2:0] 		   HPTWSize // 32 or 64 bit access.
+   output logic [2:0]          HPTWSize // 32 or 64 bit access.
 );
 
 	typedef enum logic [3:0] {L0_ADR, L0_RD, 
@@ -58,7 +62,7 @@ module hptw
 	logic [`PPN_BITS-1:0]	    BasePageTablePPN;
 	logic [`PPN_BITS-1:0]	    CurrentPPN;
 	logic			    MemWrite;
-	logic			    Executable, Writable, Readable, Valid;
+	logic			    Executable, Writable, Readable, Valid, PTE_U;
 	logic 			Misaligned, MegapageMisaligned;
 	logic			    ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
 	logic			    StartWalk;
@@ -74,8 +78,15 @@ module hptw
   logic                     DAPageFault;
   logic                     SaveHPTWAdr, SelHPTWWriteAdr;
   logic [`PA_BITS-1:0]      HPTWWriteAdr, HPTWReadAdr;
+  logic                     SV39Mode;
+  logic                     ReadAccess, WriteAccess;
+  logic                     InvalidRead, InvalidWrite;
+  logic                     UpperBitsUnequalPageFault; 
+  logic                     ImproperPrivilege;
+  logic [1:0]               EffectivePrivilegeMode;
+  logic                     OtherPageFault;
   
-                     
+                       
 	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 	// Extract bits from CSRs and inputs
@@ -102,14 +113,39 @@ module hptw
     
 	// Assign PTE descriptors common across all XLEN values
 	// For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
-	assign {Executable, Writable, Readable, Valid} = PTE[3:0];
+	assign {PTE_U, Executable, Writable, Readable, Valid} = PTE[4:0];
     assign {Dirty, Accessed} = PTE[7:6];
 	assign LeafPTE = Executable | Writable | Readable; 
 	assign ValidPTE = Valid & ~(Writable & ~Readable);
 	assign ValidLeafPTE = ValidPTE & LeafPTE;
 	assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
-    assign SetDirty = ~Dirty & & DTLBWalk & (MemRWM[0] | |AtomicM);
-    assign DAPageFault = ValidLeafPTE & (~Accessed) | (SetDirty);
+  assign WriteAccess = (MemRWM[0] | |AtomicM);
+  assign SetDirty = ~Dirty & & DTLBWalk & WriteAccess;
+  assign ReadAccess = MemRWM[1];
+
+  assign EffectivePrivilegeMode = (DTLBWalk == 0) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
+  assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
+
+
+  if (`XLEN==64) begin:rv64
+      assign SV39Mode = (SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS] == `SV39);
+      // page fault if upper bits aren't all the same
+      logic UpperEqual39, UpperEqual48;
+      assign UpperEqual39 = &(TranslationVAdr[63:38]) | ~|(TranslationVAdr[63:38]);
+      assign UpperEqual48 = &(TranslationVAdr[63:47]) | ~|(TranslationVAdr[63:47]); 
+      assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
+  end else begin
+      assign SV39Mode = 0;
+      assign UpperBitsUnequalPageFault = 0;
+  end           
+
+    assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
+    assign InvalidWrite = WriteAccess & ~Writable;
+    assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
+                            ImproperPrivilege | ~Executable | UpperBitsUnequalPageFault | Misaligned | ~Valid;
+  
+    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
   
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;

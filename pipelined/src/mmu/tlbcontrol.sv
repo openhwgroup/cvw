@@ -98,7 +98,7 @@ module tlbcontrol #(parameter ITLB = 0) (
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
       ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
     // fault for software handling if access bit is off
-    assign DAPageFault = Translate & TLBHit & ~PTE_A;
+    assign DAPageFault = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
     assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
   end else begin:dtlb // Data TLB fault checking
     logic InvalidRead, InvalidWrite;
@@ -115,7 +115,7 @@ module tlbcontrol #(parameter ITLB = 0) (
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
     // Fault for software handling if access bit is off or writing a page with dirty bit off
-    assign DAPageFault = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D); 
+    assign DAPageFault = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
     assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
   end
 
