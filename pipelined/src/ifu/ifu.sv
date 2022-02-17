@@ -75,7 +75,7 @@ module ifu (
 	input logic 				STATUS_MXR, STATUS_SUM, STATUS_MPRV,
 	input logic [1:0] 			STATUS_MPP,
 	input logic 				ITLBWriteF, ITLBFlushF,
-	output logic 				ITLBMissF,
+	output logic 				ITLBMissF, InstrDAPageFaultF,
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
 	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
 	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
@@ -98,6 +98,7 @@ module ifu (
   logic [`XLEN-1:0]            PCD;
 
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
+  logic [31:0] NextInstrD, NextInstrE;
 
   logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
   
@@ -155,6 +156,7 @@ module ifu (
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
+         .DAPageFault(InstrDAPageFaultF),
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
@@ -184,24 +186,29 @@ module ifu (
     localparam integer   LINELEN = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLine;
-    logic [LINELEN-1:0]  ICacheMemWriteData;
+    logic [LINELEN-1:0]  ICacheBusWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
     logic                save,restore;
     logic [31:0]         temp;
+    logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, 32, LOGWPL) 
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), 
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
-          .WordCount(), .LSUBusHWDATA(),
+          .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
-          .DCacheMemWriteData(ICacheMemWriteData), .LSUPAdrM(PCPF),
-          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
+          .DCacheBusWriteData(ICacheBusWriteData), .LSUPAdrM(PCPF),
+          .FinalWriteDataM(), .SelUncachedAdr,
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
+
+    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ICacheBusWriteData[32-1:0]),
+      .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
+    
 
     if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;
@@ -211,7 +218,7 @@ module ifu (
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .IgnoreRequestTrapM('0),
-             .CacheMemWriteData(ICacheMemWriteData), .CacheBusAck(ICacheBusAck),
+             .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),
              .CacheWriteLine(), .ReadDataLine(ReadDataLine),
@@ -308,8 +315,10 @@ module ifu (
   flopenr #(`XLEN) InstrMisalignedAdrReg(clk, reset, ~StallM, PCNextF, InstrMisalignedAdrM);
 
   // Instruction and PC/PCLink pipeline registers
-  flopenr  #(32)   InstrEReg(clk, reset, ~StallE, FlushE ? nop : InstrD, InstrE);
-  flopenr  #(32)   InstrMReg(clk, reset, ~StallM, FlushM ? nop : InstrE, InstrM);
+  mux2    #(32)    FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
+  mux2    #(32)    FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
+  flopenr #(32)    InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
+  flopenr #(32)    InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);

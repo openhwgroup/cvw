@@ -38,9 +38,9 @@ module trap (
   (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
-  (* mark_debug = "true" *) input logic 		   mretM, sretM, uretM,
+  (* mark_debug = "true" *) input logic 		   mretM, sretM, 
   input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
-  (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, UEPC_REGW, UTVEC_REGW, STVEC_REGW, MTVEC_REGW,
+  (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic [`XLEN-1:0]  PCM,
@@ -84,15 +84,13 @@ module trap (
   assign TrapM = ExceptionM | InterruptM; // *** clean this up later DH
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
-  assign UTrapM = TrapM & (NextPrivilegeModeM == `U_MODE) & `N_SUPPORTED;
-  assign RetM = mretM | sretM | uretM;
+  assign RetM = mretM | sretM;
 
   always_comb
-      if      (NextPrivilegeModeM == `U_MODE) PrivilegedTrapVector = UTVEC_REGW; 
-      else if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
-      else                                    PrivilegedTrapVector = MTVEC_REGW; 
+      if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
+      else                               PrivilegedTrapVector = MTVEC_REGW; 
 
-  // Handle vectored traps (when mtvec/stvec/utvec csr value has bits [1:0] == 01)
+  // Handle vectored traps (when mtvec/stvec csr value has bits [1:0] == 01)
   // For vectored traps, set program counter to _tvec value + 4 times the cause code
   //
   // POSSIBLE OPTIMIZATION: 
@@ -115,7 +113,6 @@ module trap (
   always_comb 
     if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else if (sretM)                         PrivilegedNextPCM = SEPC_REGW;
-    else if (uretM)                         PrivilegedNextPCM = UEPC_REGW;
     else                                    PrivilegedNextPCM = PrivilegedVectoredTrapVector;
 
   // Cause priority defined in table 3.7 of 20190608 privileged spec

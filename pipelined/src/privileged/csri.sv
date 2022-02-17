@@ -111,14 +111,5 @@ module csri #(parameter
       SIP_REGW = 12'b0;
       SIE_REGW = 12'b0;
     end
-
-    // User Modes iterrupts depricated
-    /*if (`U_SUPPORTED & `N_SUPPORTED) begin
-      UIP_REGW = IP_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
-      UIE_REGW = IE_REGW & MIDELEG_REGW & SIDELEG_REGW & 'h111; // only delegated interrupts visible
-    end else begin
-      UIP_REGW = 12'b0;
-      UIE_REGW = 12'b0;
-    end */
   end
 endmodule

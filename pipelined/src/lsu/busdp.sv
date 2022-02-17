@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
+module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, LSU=0)
   (
   input logic                 clk, reset,
   // bus interface
@@ -42,7 +42,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   input logic                 LSUBusAck,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
-  output logic [`XLEN-1:0]    LSUBusHWDATA,
   output logic [2:0]          LSUBusSize, 
   input logic [2:0]           LSUFunct3M,
   output logic [`PA_BITS-1:0] LSUBusAdr,
@@ -52,13 +51,12 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
   input logic                 DCacheFetchLine,
   input logic                 DCacheWriteLine,
   output logic                DCacheBusAck,
-  output logic [LINELEN-1:0]  DCacheMemWriteData,
+  output logic [LINELEN-1:0]  DCacheBusWriteData,
+  output logic                SelUncachedAdr,
  
   // lsu interface
   input logic [`PA_BITS-1:0]  LSUPAdrM,
-  input logic [`XLEN-1:0]     FinalAMOWriteDataM,
-  input logic [WORDLEN-1:0]   ReadDataWordM,
-  output logic [WORDLEN-1:0]  ReadDataWordMuxM,
+  input logic [`XLEN-1:0]     FinalWriteDataM,
   input logic                 IgnoreRequest,
   input logic [1:0]           LSURWM,
   input logic                 CPUBusy,
@@ -70,26 +68,17 @@ module busdp #(parameter WORDSPERLINE, LINELEN, WORDLEN, LOGWPL, LSU=0)
 
   localparam integer   WordCountThreshold = (`DMEM == `MEM_CACHE) ? WORDSPERLINE - 1 : 0;
 
-  logic [`XLEN-1:0]           PreLSUBusHWDATA;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
-  logic                       SelUncachedAdr;
   genvar                      index;
 
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     flopen #(`XLEN) fb(.clk, .en(LSUBusAck & LSUBusRead & (index == WordCount)),
-                       .d(LSUBusHRDATA), .q(DCacheMemWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+                       .d(LSUBusHRDATA), .q(DCacheBusWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
-
-
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  if(LSU == 1) mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalAMOWriteDataM),
-                 .s(SelUncachedAdr), .y(LSUBusHWDATA));
-  else assign LSUBusHWDATA = '0;
    mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
     .s(SelUncachedAdr), .y(LSUBusSize));
-  mux2 #(WORDLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheMemWriteData[WORDLEN-1:0]),
-    .s(SelUncachedAdr), .y(ReadDataWordMuxM));
 
   busfsm #(WordCountThreshold, LOGWPL, (`DMEM == `MEM_CACHE)) // *** cleanup  Icache? must fix.
   busfsm(.clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
