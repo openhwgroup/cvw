@@ -29,12 +29,13 @@
 ///////////////////////////////////////////
 
 `include "wally-config.vh"
-
+`define HTPW_DA_WRITES_SUPPORTED 1
 module hptw
   (
    input logic 				   clk, reset,
    input logic [`XLEN-1:0] 	   SATP_REGW, // includes SATP.MODE to determine number of levels in page table
    input logic [`XLEN-1:0] 	   PCF, IEUAdrM, // addresses to translate
+   input logic [1:0]           MemRWM, AtomicM,
    (* mark_debug = "true" *) input logic 				   ITLBMissF, DTLBMissM, // TLB Miss
    input logic [`XLEN-1:0] 	   HPTWReadPTE, // page table entry from LSU
    input logic 				   DCacheStallM, // stall from LSU
@@ -43,6 +44,7 @@ module hptw
    (* mark_debug = "true" *) output logic 			   ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
    output logic 			   HPTWRead, // HPTW requesting to read memory
+   output logic                HPTWWrite,
    output logic [2:0] 		   HPTWSize // 32 or 64 bit access.
 );
 
@@ -50,7 +52,7 @@ module hptw
 					L1_ADR, L1_RD, 
 					L2_ADR, L2_RD, 
 					L3_ADR, L3_RD, 
-					LEAF, IDLE} statetype;
+					LEAF, IDLE, UPDATE_PTE} statetype;
 
 	logic			    DTLBWalk; // register TLBs translation miss requests
 	logic [`PPN_BITS-1:0]	    BasePageTablePPN;
@@ -65,7 +67,12 @@ module hptw
 	logic [1:0]       NextPageType;
 	logic [`SVMODE_BITS-1:0]	    SvMode;
 	logic [`XLEN-1:0] 	    TranslationVAdr;
-
+    logic                   Dirty, Accessed;
+  logic [`XLEN-1:0]         NextPTE;
+  logic                     UpdatePTE;
+  logic                     SetDirty;
+  logic                     DAPageFault;
+                     
 	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 	// Extract bits from CSRs and inputs
@@ -80,21 +87,30 @@ module hptw
 	// State flops
 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	assign PRegEn = HPTWRead & ~DCacheStallM;
-	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, HPTWReadPTE, PTE); // Capture page table entry from data cache
+    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], SetDirty , 1'b1, PTE[5:0]} : HPTWReadPTE;
+  
+	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | HPTWWrite, NextPTE, PTE); // Capture page table entry from data cache
 
 	// Assign PTE descriptors common across all XLEN values
 	// For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
-	assign {Executable, Writable, Readable, Valid} = PTE[3:0]; 
+	assign {Executable, Writable, Readable, Valid} = PTE[3:0];
+    assign {Dirty, Accessed} = PTE[7:6];
 	assign LeafPTE = Executable | Writable | Readable; 
 	assign ValidPTE = Valid & ~(Writable & ~Readable);
 	assign ValidLeafPTE = ValidPTE & LeafPTE;
 	assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
-
+    assign SetDirty = ~Dirty & & DTLBWalk & (MemRWM[0] | |AtomicM);
+    assign DAPageFault = ValidLeafPTE & (~Accessed) | (SetDirty);
+  
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
 	assign DTLBWriteM = (WalkerState == LEAF) & DTLBWalk;
 	assign ITLBWriteF = (WalkerState == LEAF) & ~DTLBWalk;
+    assign HPTWWrite = (WalkerState == UPDATE_PTE);
+  assign UpdatePTE = ((WalkerState == L2_ADR | WalkerState == L1_ADR | WalkerState == L0_ADR)
+                      & ValidLeafPTE & ~Misaligned & DAPageFault);
+  
 
 	// FSM to track PageType based on the levels of the page table traversed
 	flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
@@ -156,39 +172,35 @@ module hptw
 	always_comb 
 	case (WalkerState)
 	IDLE: if (TLBMiss)	 		NextWalkerState = InitialWalkerState;
-			else 					NextWalkerState = IDLE;
-	L3_ADR: 			NextWalkerState = L3_RD; // first access in SV48
-	L3_RD: if (DCacheStallM) NextWalkerState = L3_RD;
-				else 			NextWalkerState = L2_ADR;
-	//	    LEVEL3: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
-	//		  		else if (ValidNonLeafPTE) NextWalkerState = L2_ADR;
-	//		 		else 				NextWalkerState = FAULT;
-	L2_ADR: if (InitialWalkerState == L2_ADR) NextWalkerState = L2_RD; // first access in SV39
-			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-			else if (ValidNonLeafPTE) NextWalkerState = L2_RD;
-			else 				NextWalkerState = LEAF;
-	L2_RD: if (DCacheStallM) NextWalkerState = L2_RD;
-				else 			NextWalkerState = L1_ADR;
-	//	    LEVEL2: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
-	//				else if (ValidNonLeafPTE) NextWalkerState = L1_ADR;
-	//				else 				NextWalkerState = FAULT;
-	L1_ADR: if (InitialWalkerState == L1_ADR) NextWalkerState = L1_RD; // first access in SV32
-			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-			else if (ValidNonLeafPTE) NextWalkerState = L1_RD;
-			else 				NextWalkerState = LEAF;	
-	L1_RD: if (DCacheStallM) NextWalkerState = L1_RD;
-				else 			NextWalkerState = L0_ADR;
-	//	    LEVEL1: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF;
-	//	      		else if (ValidNonLeafPTE) NextWalkerState = L0_ADR;
-	//				else 				NextWalkerState = FAULT;
-	L0_ADR: if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-			else if (ValidNonLeafPTE) NextWalkerState = L0_RD;
-			else 				NextWalkerState = LEAF;
-	L0_RD: if (DCacheStallM) NextWalkerState = L0_RD;
-				else 			NextWalkerState = LEAF;
-	//	    LEVEL0: if (ValidLeafPTE) 	NextWalkerState = LEAF;
-	//				else 				NextWalkerState = FAULT;
-	LEAF:                       NextWalkerState = IDLE; // updates TLB
+		  else 					NextWalkerState = IDLE;
+	L3_ADR:                     NextWalkerState = L3_RD; // first access in SV48
+	L3_RD: if (DCacheStallM)    NextWalkerState = L3_RD;
+           else     			NextWalkerState = L2_ADR;
+	L2_ADR: if (InitialWalkerState == L2_ADR)    NextWalkerState = L2_RD; // first access in SV39
+			else if (ValidLeafPTE & ~Misaligned & ~DAPageFault) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+            else if (ValidLeafPTE & ~Misaligned & DAPageFault) NextWalkerState = UPDATE_PTE;
+			else if (ValidNonLeafPTE)            NextWalkerState = L2_RD;
+			else 				                 NextWalkerState = LEAF;
+	L2_RD: if (DCacheStallM)                     NextWalkerState = L2_RD;
+           else                                  NextWalkerState = L1_ADR;
+	L1_ADR: if (InitialWalkerState == L1_ADR)    NextWalkerState = L1_RD; // first access in SV32
+			else if (ValidLeafPTE & ~Misaligned & ~DAPageFault) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+            else if (ValidLeafPTE & ~Misaligned & DAPageFault) NextWalkerState = UPDATE_PTE;
+			else if (ValidNonLeafPTE)            NextWalkerState = L1_RD;
+			else 				                 NextWalkerState = LEAF;	
+	L1_RD: if (DCacheStallM)                     NextWalkerState = L1_RD;
+           else                                  NextWalkerState = L0_ADR;
+	L0_ADR: if (ValidLeafPTE & ~Misaligned & ~DAPageFault)      NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
+    else if (ValidLeafPTE & ~Misaligned & DAPageFault) NextWalkerState = UPDATE_PTE;
+			else if (ValidNonLeafPTE)            NextWalkerState = L0_RD;
+			else                                 NextWalkerState = LEAF;
+	L0_RD: if (DCacheStallM)                     NextWalkerState = L0_RD;
+           else                                  NextWalkerState = LEAF;
+    LEAF: NextWalkerState = IDLE;
+      // *** TODO update PTE with dirty/access.  write to TLB and update memory.
+      // probably want to write the PTE in UPDATE_PTE then go to leaf and update TLB.
+    UPDATE_PTE: if(DCacheStallM) NextWalkerState = UPDATE_PTE;
+                else NextWalkerState = LEAF;
 	default: begin
 		// synthesis translate_off
 		if (WalkerState !== 'x) 
