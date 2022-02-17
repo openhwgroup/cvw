@@ -90,12 +90,14 @@ module uncore (
   // unswizzle HSEL signals
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
-  // subword accesses: converts HWDATAIN to HWDATA
-  // *** can this be merged into LSU instead of replicated?
-  subwordwrite sww(
-    .HRDATA, 
-    .HADDRD, .HSIZED, 
-    .HWDATAIN, .HWDATA);
+  // subword accesses: converts HWDATAIN to HWDATA only if no dtim or cache.
+  if(`DMEM == `MEM_BUS)
+    subwordwrite sww(
+      .HRDATA,
+      .HADDRD, .HSIZED, 
+      .HWDATAIN, .HWDATA);
+  else assign HWDATA = HWDATAIN;
+  
 
 //  generate
     // on-chip RAM

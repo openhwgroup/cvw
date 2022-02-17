@@ -56,43 +56,44 @@
 // The TLB will have 2**ENTRY_BITS total entries
 module tlb #(parameter TLB_ENTRIES = 8,
              parameter ITLB = 0) (
-  input logic              clk, reset,
+  input logic                    clk, reset,
 
   // Current value of satp CSR (from privileged unit)
-  input logic  [`SVMODE_BITS-1:0] SATP_MODE,
-  input logic  [`ASID_BITS-1:0] SATP_ASID,
-  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic  [1:0]       STATUS_MPP,
+  input logic [`SVMODE_BITS-1:0] SATP_MODE,
+  input logic [`ASID_BITS-1:0]   SATP_ASID,
+  input logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic [1:0]              STATUS_MPP,
 
   // Current privilege level of the processeor
-  input logic  [1:0]       PrivilegeModeW,
+  input logic [1:0]              PrivilegeModeW,
 
   // 00 - TLB is not being accessed
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input logic              ReadAccess, WriteAccess,
-  input logic              DisableTranslation,
+  input logic                    ReadAccess, WriteAccess,
+  input logic                    DisableTranslation,
 
   // address input before translation (could be physical or virtual)
-  input logic  [`XLEN-1:0] VAdr,
+  input logic [`XLEN-1:0]        VAdr,
 
   // Controls for writing a new entry to the TLB
-  input logic  [`XLEN-1:0] PTE,
-  input logic  [1:0]       PageTypeWriteVal,
-  input logic              TLBWrite,
+  input logic [`XLEN-1:0]        PTE,
+  input logic [1:0]              PageTypeWriteVal,
+  input logic                    TLBWrite,
 
   // Invalidate all TLB entries
-  input logic              TLBFlush,
+  input logic                    TLBFlush,
 
   // Physical address outputs
-  output logic [`PA_BITS-1:0] TLBPAdr,
-  output logic             TLBMiss,
-  output logic             TLBHit,
-  output logic             Translate,
+  output logic [`PA_BITS-1:0]    TLBPAdr,
+  output logic                   TLBMiss,
+  output logic                   TLBHit,
+  output logic                   Translate,
 
   // Faults
-  output logic             TLBPageFault
+  output logic                   TLBPageFault,
+  output logic                   DAPageFault
 );
 
   logic [TLB_ENTRIES-1:0] Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
@@ -132,7 +133,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
   tlbcontrol #(ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
                         .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
                         .PTEAccessBits, .CAMHit, .Misaligned, .TLBMiss, .TLBHit, .TLBPageFault, 
-                        .SV39Mode, .Translate);
+                        .DAPageFault, .SV39Mode, .Translate);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 

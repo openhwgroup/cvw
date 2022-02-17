@@ -21,21 +21,37 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h" 
+#include "WALLY-TEST-LIB-32.h" 
 
 INIT_TESTS
 
 s_file_begin:
 
-# Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in S mode.
+# Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in R mode.
 
-# *** several of these appear not to be implemented in the assembler? 
-# I get "assembler messages: error: unkown CSR" with many of them.
-
-GOTO_S_MODE 0x0, 0x0
+GOTO_U_MODE 0x0, 0x0
 
 # Attempt to write 0xbad to each of these CSRs and read the value back
 # should result in an illegal instruction for the write and read, respectively
+
+# Supervisor Trap Setup
+WRITE_READ_CSR sstatus, 0xbad
+WRITE_READ_CSR sie, 0xbad
+WRITE_READ_CSR stvec, 0xbad
+WRITE_READ_CSR scounteren, 0xbad
+
+# Supervisor Configuration
+# WRITE_READ_CSR senvcfg, 0xbad # *** these appear not to be implemented in the compile step of make???
+
+# Supervisor Trap Handling
+WRITE_READ_CSR sscratch, 0xbad
+WRITE_READ_CSR sepc, 0xbad
+WRITE_READ_CSR scause, 0xbad
+WRITE_READ_CSR stval, 0xbad
+WRITE_READ_CSR sip, 0xbad
+
+# Supervisor Protection and Translation
+WRITE_READ_CSR satp, 0xbad
 
 # Machine information Registers
 WRITE_READ_CSR mvendorid, 0xbad

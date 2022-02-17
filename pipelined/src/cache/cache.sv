@@ -56,7 +56,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   output logic                CacheWriteLine,
   input logic                 CacheBusAck,
   output logic [`PA_BITS-1:0] CacheBusAdr,
-  input logic [LINELEN-1:0]   CacheMemWriteData,
+  input logic [LINELEN-1:0]   CacheBusWriteData,
   output logic [LINELEN-1:0]  ReadDataLine);
 
   // Cache parameters
@@ -68,16 +68,16 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   localparam                  WORDSPERLINE = LINELEN/`XLEN;
   localparam                  FlushAdrThreshold   = NUMLINES - 1;
 
-  logic [1:0]                 SelAdr;
+  logic                       SelAdr;
   logic [SETLEN-1:0]          RAdr;
   logic [LINELEN-1:0]         CacheWriteData;
-  logic                       SetValid, ClearValid;
-  logic                       SetDirty, ClearDirty;
+  logic                       ClearValid;
+  logic                       ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0]         WayHit;
+  logic [NUMWAYS-1:0]         HitWay, HitWaySaved, HitWayFinal;
   logic                       CacheHit;
-  logic                       FSMWordWriteEn;
-  logic                       FSMLineWriteEn;
+  logic                       SetDirty;
+  logic                       SetValid;
   logic [NUMWAYS-1:0]         VictimWay;
   logic [NUMWAYS-1:0]         VictimDirtyWay;
   logic                       VictimDirty;
@@ -97,10 +97,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic                       LRUWriteEn;
   logic                       SelFlush;
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
-  logic [NUMWAYS-1:0]         WayHitSaved, WayHitFinal;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
-  logic [NUMWAYS-1:0]         WriteWordWayEn, WriteLineWayEn;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -110,19 +108,19 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   // and FlushAdr when handling D$ flushes  
   mux3 #(SETLEN) AdrSelMux(
     .d0(NextAdr[SETTOP-1:OFFSETLEN]), .d1(PAdr[SETTOP-1:OFFSETLEN]), .d2(FlushAdr),
-		.s(SelAdr), .y(RAdr));
+    .s({SelFlush, SelAdr}), .y(RAdr));
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .RAdr, .PAdr, .WriteWordWayEn, .WriteLineWayEn, .CacheWriteData, 
+    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, 
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .WayHit, .VictimDirtyWay, .VictimTagWay, 
-    .InvalidateAll(InvalidateCacheM));
+    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
+    .Invalidate(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .WayHit(WayHitFinal), .VictimWay, .PAdr, .RAdr, .LRUWriteEn);
+      .clk, .reset, .HitWay(HitWayFinal), .VictimWay, .RAdr, .LRUWriteEn);
   end else assign VictimWay = 1'b1; // one hot.
-  assign CacheHit = | WayHit;
+  assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
@@ -130,69 +128,59 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
 
-
   // Because of the sram clocked read when the ieu is stalled the read data maybe lost.
   // There are two ways to resolve. 1. We can replay the read of the sram or we can save
   // the data.  Replay is eaiser but creates a longer critical path.
   // save/restore only wayhit and readdata.
   if(!`REPLAY) begin
-    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, WayHit, WayHitSaved);
-    mux2 #(NUMWAYS) saverestoremux(WayHit, WayHitSaved, restore, WayHitFinal);
-  end else assign WayHitFinal = WayHit;
+    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, HitWay, HitWaySaved);
+    mux2 #(NUMWAYS) saverestoremux(HitWay, HitWaySaved, restore, HitWayFinal);
+  end else assign HitWayFinal = HitWay;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-
   mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-		.d1(CacheMemWriteData),	.s(FSMLineWriteEn), .y(CacheWriteData));
+		.d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
-		.s({SelFlush, SelEvict}),
-		.y(CacheBusAdr));
+		.s({SelFlush, SelEvict}), .y(CacheBusAdr));
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush address and way generation during flush
   /////////////////////////////////////////////////////////////////////////////////////////////
-
   assign ResetOrFlushAdr = reset | FlushAdrCntRst;
-  flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushAdr),
-			  .en(FlushAdrCntEn), .d(FlushAdrP1), .q(FlushAdr));
+  flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushAdr), .en(FlushAdrCntEn), 
+    .d(FlushAdrP1), .q(FlushAdr));
   assign FlushAdrP1 = FlushAdr + 1'b1;
   assign FlushAdrFlag = (FlushAdr == FlushAdrThreshold[SETLEN-1:0]);
-
   assign ResetOrFlushWay = reset | FlushWayCntRst;
-  flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay),
-			  .en(FlushWayCntEn), .val({{NUMWAYS-1{1'b0}}, 1'b1}),
-			  .d(NextFlushWay), .q(FlushWay));
+  flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay), .en(FlushWayCntEn), 
+    .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
   assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // *** change to structural
-  mux3 #(NUMWAYS) selectwaymux(WayHitFinal, VictimWay, FlushWay, {SelFlush, FSMLineWriteEn}, SelectedWay);
+  mux3 #(NUMWAYS) selectwaymux(HitWayFinal, VictimWay, FlushWay, 
+    {SelFlush, SetValid}, SelectedWay);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
   assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
-  assign WriteWordWayEn = FSMWordWriteEn ? SelectedWay : '0;
-  assign WriteLineWayEn = FSMLineWriteEn ? SelectedWay : '0;  
   
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
-
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
 		.RW, .Atomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
-		.CacheMiss, .CacheAccess, .SelAdr, .SetValid, 
-		.ClearValid, .SetDirty, .ClearDirty, .FSMWordWriteEn,
-		.FSMLineWriteEn, .SelEvict, .SelFlush,
+		.CacheMiss, .CacheAccess, .SelAdr, 
+		.ClearValid, .ClearDirty, .SetDirty,
+		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
         .save, .restore,

@@ -102,7 +102,6 @@ module instrNameDecTB(
       10'b1101111_???: name = "JAL";
       10'b1110011_000: if      (imm == 0) name = "ECALL";
                        else if (imm == 1) name = "EBREAK";
-                       else if (imm == 2) name = "URET";
                        else if (imm == 258) name = "SRET";
                        else if (imm == 770) name = "MRET";
                        else if (funct7 == 9) name = "SFENCE.VMA";

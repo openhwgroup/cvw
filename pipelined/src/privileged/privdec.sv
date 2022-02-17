@@ -37,12 +37,11 @@ module privdec (
   input  logic [1:0]   PrivilegeModeW, 
   input  logic         STATUS_TSR,
   output logic         IllegalInstrFaultM,
-  output logic         uretM, sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
+  output logic         sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
 
   logic IllegalPrivilegedInstrM;
 
   // xRET defined in Privileged Spect 3.2.2
-  assign uretM =      PrivilegedM & (InstrM[31:20] == 12'b000000000010) & `N_SUPPORTED; 
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
                       PrivilegeModeW[0] & ~STATUS_TSR; 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
@@ -50,8 +49,8 @@ module privdec (
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
-  assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001);
-  assign IllegalPrivilegedInstrM = PrivilegedM & ~(uretM|sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
+  assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001); // *** & (PrivilegedModeW == `M_MODE | ~STATUS_TVM); // *** does this work in U mode?
+  assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
   assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | TrappedSRETM; // *** generalize this for other instructions
 
   // *** initially, wfi is nop

@@ -32,9 +32,8 @@
 module cachereplacementpolicy
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
    input logic                clk, reset,
-   input logic [NUMWAYS-1:0]  WayHit,
+   input logic [NUMWAYS-1:0]  HitWay,
    output logic [NUMWAYS-1:0] VictimWay,
-   input logic [`PA_BITS-1:0] PAdr,
    input logic [SETLEN-1:0]   RAdr,
    input logic                LRUWriteEn);
 
@@ -53,7 +52,6 @@ module cachereplacementpolicy
   
   // Pipeline Delay Registers
   flopr #(SETLEN) RAdrDelayReg(clk, reset, RAdr, RAdrD);
-  flopr #(SETLEN) PAdrDelayReg(clk, reset, PAdr[SETLEN+OFFSETLEN-1:OFFSETLEN], PAdrD);
   flopr #(1) LRUWriteEnDelayReg(clk, reset, LRUWriteEn, LRUWriteEnD);
   flopr #(NUMWAYS-1) NewReplacementDelayReg(clk, reset, NewReplacement, NewReplacementD);
 
@@ -61,13 +59,13 @@ module cachereplacementpolicy
   // Needs to be resettable for simulation, but could omit reset for synthesis ***
   always_ff @(posedge clk) 
     if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] = '0;
-    else if (LRUWriteEnD) ReplacementBits[PAdrD[SETLEN+OFFSETLEN-1:OFFSETLEN]] = NewReplacementD;
+    else if (LRUWriteEnD) ReplacementBits[RAdrD] = NewReplacementD;
   assign LineReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;
   if(NUMWAYS == 2) begin : PseudoLRU
     assign LRUEn[0] = 1'b0;
-    assign NewReplacement[0] = WayHit[1];
+    assign NewReplacement[0] = HitWay[1];
     assign VictimWay[1] = ~LineReplacementBits[0];
     assign VictimWay[0] = LineReplacementBits[0];
   end else if (NUMWAYS == 4) begin : PseudoLRU
@@ -84,15 +82,15 @@ module cachereplacementpolicy
     assign VictimWay[2] = LineReplacementBits[2] & ~LineReplacementBits[1];
     assign VictimWay[3] = LineReplacementBits[2] & LineReplacementBits[1];      
 
-    // New LRU bits which are updated is function only of the WayHit.
+    // New LRU bits which are updated is function only of the HitWay.
     // However the not updated bits come from the old LRU.
-    assign LRUEn[2] = |WayHit;
-    assign LRUEn[1] = WayHit[3] | WayHit[2];
-    assign LRUEn[0] = WayHit[1] | WayHit[0];
+    assign LRUEn[2] = |HitWay;
+    assign LRUEn[1] = HitWay[3] | HitWay[2];
+    assign LRUEn[0] = HitWay[1] | HitWay[0];
 
-    assign LRUMask[2] = WayHit[1] | WayHit[0];
-    assign LRUMask[1] = WayHit[2];
-    assign LRUMask[0] = WayHit[0];
+    assign LRUMask[2] = HitWay[1] | HitWay[0];
+    assign LRUMask[1] = HitWay[2];
+    assign LRUMask[0] = HitWay[0];
 
     mux2 #(1) LRUMuxes[NUMWAYS-2:0](LineReplacementBits, LRUMask, LRUEn, NewReplacement);
   end 
@@ -101,21 +99,21 @@ module cachereplacementpolicy
 
     // selects
     assign LRUEn[6] = 1'b1;
-    assign LRUEn[5] = WayHit[7] | WayHit[6] | WayHit[5] | WayHit[4];
-    assign LRUEn[4] = WayHit[7] | WayHit[6];
-    assign LRUEn[3] = WayHit[5] | WayHit[4];
-    assign LRUEn[2] = WayHit[3] | WayHit[2] | WayHit[1] | WayHit[0];
-    assign LRUEn[1] = WayHit[3] | WayHit[2];
-    assign LRUEn[0] = WayHit[1] | WayHit[0];
+    assign LRUEn[5] = HitWay[7] | HitWay[6] | HitWay[5] | HitWay[4];
+    assign LRUEn[4] = HitWay[7] | HitWay[6];
+    assign LRUEn[3] = HitWay[5] | HitWay[4];
+    assign LRUEn[2] = HitWay[3] | HitWay[2] | HitWay[1] | HitWay[0];
+    assign LRUEn[1] = HitWay[3] | HitWay[2];
+    assign LRUEn[0] = HitWay[1] | HitWay[0];
 
     // mask
-    assign LRUMask[6] = WayHit[7] | WayHit[6] | WayHit[5] | WayHit[4];
-    assign LRUMask[5] = WayHit[7] | WayHit[6];
-    assign LRUMask[4] = WayHit[7];
-    assign LRUMask[3] = WayHit[5];
-    assign LRUMask[2] = WayHit[3] | WayHit[2];
-    assign LRUMask[1] = WayHit[2];
-    assign LRUMask[0] = WayHit[0];
+    assign LRUMask[6] = HitWay[7] | HitWay[6] | HitWay[5] | HitWay[4];
+    assign LRUMask[5] = HitWay[7] | HitWay[6];
+    assign LRUMask[4] = HitWay[7];
+    assign LRUMask[3] = HitWay[5];
+    assign LRUMask[2] = HitWay[3] | HitWay[2];
+    assign LRUMask[1] = HitWay[2];
+    assign LRUMask[0] = HitWay[0];
 
     for(index = 0; index < NUMWAYS-1; index++)
       assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : LineReplacementBits[index];

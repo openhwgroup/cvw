@@ -35,9 +35,9 @@ module interlockfsm
   (input logic clk,
    input logic  reset,
    input logic  AnyCPUReqM,
-   input logic  ITLBMissF,
+   input logic  ITLBMissOrDAFaultF,
    input logic  ITLBWriteF,
-   input logic  DTLBMissM,
+   input logic  DTLBMissOrDAFaultM,
    input logic  DTLBWriteM,
    input logic  TrapM,
    input logic  DCacheStallM,
@@ -66,10 +66,10 @@ module interlockfsm
   always_comb begin
 	case(InterlockCurrState)
 	  STATE_T0_READY: if (TrapM)                       InterlockNextState = STATE_T0_READY;
-	  else if(~ITLBMissF & DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
-	  else if(ITLBMissF & ~DTLBMissM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
-      else if(ITLBMissF & ~DTLBMissM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
-	  else if(ITLBMissF & DTLBMissM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
+	  else if(~ITLBMissOrDAFaultF & DTLBMissOrDAFaultM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
+	  else if(ITLBMissOrDAFaultF & ~DTLBMissOrDAFaultM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
+      else if(ITLBMissOrDAFaultF & ~DTLBMissOrDAFaultM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
+	  else if(ITLBMissOrDAFaultF & DTLBMissOrDAFaultM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
 	  else                                             InterlockNextState = STATE_T0_READY;
 	  STATE_T0_REPLAY:       if(DCacheStallM)                                  InterlockNextState = STATE_T0_REPLAY;
 	  else                                             InterlockNextState = STATE_T0_READY;
@@ -90,7 +90,7 @@ module interlockfsm
    // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
    // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
    // Note this will cause a problem for post synthesis gate simulation.
-   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissM | ITLBMissF)) | 
+   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF)) | 
    (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
    (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
 
@@ -99,7 +99,7 @@ module interlockfsm
   always_comb begin
 	InterlockStall = 1'b0;
 	case(InterlockCurrState) 
-	  STATE_T0_READY: if((DTLBMissM | ITLBMissF) & ~TrapM) InterlockStall = 1'b1;
+	  STATE_T0_READY: if((DTLBMissOrDAFaultM | ITLBMissOrDAFaultF) & ~TrapM) InterlockStall = 1'b1;
 	  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
 	  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
 	  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
@@ -112,7 +112,7 @@ module interlockfsm
   assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 				   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-  assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissF | DTLBMissM));
+  assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissOrDAFaultF | DTLBMissOrDAFaultM));
   assign IgnoreRequestTrapM = (InterlockCurrState == STATE_T0_READY & (TrapM)) |
 							  ((InterlockCurrState == STATE_T0_REPLAY) & (TrapM));
 

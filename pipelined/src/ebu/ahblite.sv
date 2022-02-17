@@ -111,7 +111,7 @@ module ahblite (
             else if (IFUBusRead)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
       INSTRREAD: if (~HREADY)      NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;  // if (IFUBusRead still high)
+            else                   NextBusState = IDLE;  // if (IFUBusRead still high) *** need to wait?
       default:                     NextBusState = IDLE;
     endcase
 
