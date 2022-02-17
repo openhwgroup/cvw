@@ -101,7 +101,7 @@ module hptw
 	// State flops
 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	assign PRegEn = HPTWRead & ~DCacheStallM;
-    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], SetDirty , 1'b1, PTE[5:0]} : HPTWReadPTE;
+    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE;
   
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
 
