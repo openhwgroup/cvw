@@ -37,9 +37,14 @@ module lsuvirtmem(
   output logic                ITLBWriteF,
   input logic                 DTLBMissM,
   output logic                DTLBWriteM,
+  input logic                 InstrDAPageFaultF,
+  input logic                 DataDAPageFaultM,
   input logic                 TrapM,
   input logic                 DCacheStallM,
   input logic [`XLEN-1:0]     SATP_REGW, // from csr
+  input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic [1:0]           STATUS_MPP,
+  input logic [1:0]           PrivilegeModeW,
   input logic [`XLEN-1:0]     PCF,
   input logic [`XLEN-1:0]     ReadDataM,
   input logic [2:0]           Funct3M,
@@ -69,23 +74,26 @@ module lsuvirtmem(
   logic [2:0]                 HPTWSize;
   logic                       SelReplayCPURequest;
   logic [11:0]                PreLSUAdrE;  
-
-
+  logic                       ITLBMissOrDAFaultF;
+  logic                       DTLBMissOrDAFaultM;  
+  logic                       HPTWWrite;
 
   assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
-
+  assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
+  assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
   interlockfsm interlockfsm (
-    .clk, .reset, .AnyCPUReqM, .ITLBMissF, .ITLBWriteF,
-    .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM,
+    .clk, .reset, .AnyCPUReqM, .ITLBMissOrDAFaultF, .ITLBWriteF,
+    .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
     .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
   hptw hptw( // *** remove logic from (), mention this in style guide CH3
-    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM,
-    .ITLBMissF(ITLBMissF & ~TrapM), .DTLBMissM(DTLBMissM & ~TrapM),
+    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM, .MemRWM, .AtomicM,
+    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
+    .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.  *** I'm not sure ITLBMiss should be suppressed on TrapM.
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
-    .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWSize);
+    .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWWrite, .HPTWSize);
 
   // multiplex the outputs to LSU
-  mux2 #(2) rwmux(MemRWM, {HPTWRead, 1'b0}, SelHPTW, PreLSURWM);
+  mux2 #(2) rwmux(MemRWM, {HPTWRead, HPTWWrite}, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);

@@ -126,3 +126,4 @@
 `define TESTSBP 0
 
 `define REPLAY 0
+`define HPTW_WRITES_SUPPORTED 1

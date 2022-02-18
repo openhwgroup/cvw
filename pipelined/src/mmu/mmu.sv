@@ -34,20 +34,20 @@
 module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
              parameter IMMU = 0) (
 
-  input logic              clk, reset,
+  input logic                 clk, reset,
   // Current value of satp CSR (from privileged unit)
-  input logic  [`XLEN-1:0] SATP_REGW,
-  input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic  [1:0]       STATUS_MPP,
+  input logic [`XLEN-1:0]     SATP_REGW,
+  input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input logic [1:0]           STATUS_MPP,
 
   // Current privilege level of the processeor
-  input logic  [1:0]       PrivilegeModeW,
+  input logic [1:0]           PrivilegeModeW,
 
   // 00 - TLB is not being accessed
   // 1x - TLB is accessed for a read (or an instruction)
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
-  input logic              DisableTranslation,
+  input logic                 DisableTranslation,
 
   // VAdr goes to the TLB only. Virtual if the TLB is active.
   // PAdr goes to address mux bypassing the TLB.  PAdr used when there is no translation.
@@ -57,32 +57,33 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // performed.  
   // PhysicalAddress is selected to be PAdr when no translation or the translated VAdr (TLBPAdr)
   // when there is translation.
-  input logic  [`PA_BITS-1:0] PAdr,  // *** consider renaming this.
-  input logic  [`XLEN-1:0] VAdr,
-  input logic  [1:0]       Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
+  input logic [`PA_BITS-1:0]  PAdr, // *** consider renaming this.
+  input logic [`XLEN-1:0]     VAdr,
+  input logic [1:0]           Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
 
   // Controls for writing a new entry to the TLB
-  input logic  [`XLEN-1:0] PTE,
-  input logic  [1:0]       PageTypeWriteVal,
-  input logic              TLBWrite,
+  input logic [`XLEN-1:0]     PTE,
+  input logic [1:0]           PageTypeWriteVal,
+  input logic                 TLBWrite,
 
   // Invalidate all TLB entries
-  input logic              TLBFlush,
+  input logic                 TLBFlush,
 
   // Physical address outputs
   output logic [`PA_BITS-1:0] PhysicalAddress,
-  output logic             TLBMiss,
-  output logic             Cacheable, Idempotent, AtomicAllowed,
+  output logic                TLBMiss,
+  output logic                Cacheable, Idempotent, AtomicAllowed,
 
   // Faults
-  output logic             InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,
-  output logic 			   InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
-  output logic 			   LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
+  output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,
+  output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
+  output logic                DAPageFault,
+  output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
 
   // PMA checker signals
-  input  logic             AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
-  input  var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0]
+  input logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
+  input var                   logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input var                   logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0]
 );
 
   logic [`PA_BITS-1:0] TLBPAdr;
@@ -109,7 +110,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
           .PrivilegeModeW, .ReadAccess, .WriteAccess,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
-          .Translate, .TLBPageFault);
+          .Translate, .TLBPageFault, .DAPageFault);
   end else begin:tlb// just pass address through as physical
     assign Translate = 0;
     assign TLBMiss = 0;
