@@ -74,6 +74,7 @@ module lsu (
    input logic [1:0]        STATUS_MPP,
    input logic [`XLEN-1:0]  PCF,
    input logic              ITLBMissF,
+   input logic              InstrDAPageFaultF,
    output logic [`XLEN-1:0] PTE,
    output logic [1:0]       PageType,
    output logic             ITLBWriteF,
@@ -101,7 +102,8 @@ module lsu (
   logic                     IgnoreRequestTLB, IgnoreRequestTrapM;
   logic                     BusCommittedM, DCacheCommittedM;
   logic                     LSUBusWriteCrit;
-
+  logic                     DataDAPageFaultM;
+  
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
@@ -113,7 +115,9 @@ module lsu (
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
-                          .DTLBMissM, .DTLBWriteM, .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
+                          .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
+                          .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
+                          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
                           .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
                           .IEUAdrExtM, .PTE, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
                           .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
@@ -152,7 +156,8 @@ module lsu (
       .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
-      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,         
+      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,  
+      .DAPageFault(DataDAPageFaultM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), // **** change this to just use PreLSURWM
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
@@ -168,7 +173,7 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
+  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM, PostSWWWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
@@ -244,9 +249,11 @@ module lsu (
     assign ReadDataWordMaskedM = CacheableM ? ReadDataWordM : '0; // AND-gate
     subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
       .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-	  .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
+	  .HWDATAIN(FinalAMOWriteDataM), .HWDATA(PostSWWWriteDataM));
   end else 
-    assign FinalWriteDataM = FinalAMOWriteDataM;
+    assign PostSWWWriteDataM = FinalAMOWriteDataM;
+
+  assign FinalWriteDataM = SelHPTW ? PTE : PostSWWWriteDataM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
