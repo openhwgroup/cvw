@@ -75,7 +75,7 @@ module ifu (
 	input logic 				STATUS_MXR, STATUS_SUM, STATUS_MPRV,
 	input logic [1:0] 			STATUS_MPP,
 	input logic 				ITLBWriteF, ITLBFlushF,
-	output logic 				ITLBMissF,
+	output logic 				ITLBMissF, InstrDAPageFaultF,
   // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
 	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
 	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
@@ -156,6 +156,7 @@ module ifu (
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
+         .DAPageFault(InstrDAPageFaultF),
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
@@ -190,19 +191,24 @@ module ifu (
     logic                ICacheBusAck;
     logic                save,restore;
     logic [31:0]         temp;
+    logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, 32, LOGWPL) 
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), 
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
-          .WordCount(), .LSUBusHWDATA(),
+          .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheBusWriteData(ICacheBusWriteData), .LSUPAdrM(PCPF),
-          .FinalAMOWriteDataM(), .ReadDataWordM(FinalInstrRawF), .ReadDataWordMuxM(AllInstrRawF[31:0]), 
+          .FinalWriteDataM(), .SelUncachedAdr,
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
+
+    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ICacheBusWriteData[32-1:0]),
+      .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
+    
 
     if(`IMEM == `MEM_CACHE) begin : icache
       logic [1:0] IFURWF;

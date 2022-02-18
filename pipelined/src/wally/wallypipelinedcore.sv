@@ -163,7 +163,7 @@ module wallypipelinedcore (
   logic 		    ICacheMiss;
   logic 		    ICacheAccess;
   logic 		    BreakpointFaultM, EcallFaultM;
-
+  logic             InstrDAPageFaultF;
   
   ifu ifu(
     .clk, .reset,
@@ -201,8 +201,8 @@ module wallypipelinedcore (
 
     // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
-    .InstrAccessFaultF
-
+    .InstrAccessFaultF,
+    .InstrDAPageFaultF
 	  
 	  ); // instruction fetch unit: PC, branch prediction, instruction cache
     
@@ -276,6 +276,7 @@ module wallypipelinedcore (
 	.LoadAccessFaultM,         // connects to privilege
 	.StoreAmoMisalignedFaultM, // connects to privilege
 	.StoreAmoAccessFaultM,     // connects to privilege
+    .InstrDAPageFaultF,
     
 	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
 	.LSUStallM);                     // change to LSUStallM

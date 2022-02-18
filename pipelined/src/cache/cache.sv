@@ -118,7 +118,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
     .Invalidate(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .HitWay(HitWayFinal), .VictimWay, .PAdr, .RAdr, .LRUWriteEn);
+      .clk, .reset, .HitWay(HitWayFinal), .VictimWay, .RAdr, .LRUWriteEn);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
