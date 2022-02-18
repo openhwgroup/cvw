@@ -32,7 +32,8 @@ rv32i_sc_tests = \
     WALLY-PMP \
     WALLY-CSR-permission-s-01 \
     WALLY-CSR-permission-u-01 \
-    WALLY-minfo-01
+    WALLY-minfo-01 \
+    WALLY-misa-01 
 
 target_tests_nosim = WALLY-PMA \
 
