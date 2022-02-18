@@ -190,10 +190,6 @@ module hptw
 	//				else 				NextWalkerState = FAULT;
 	LEAF:                       NextWalkerState = IDLE; // updates TLB
 	default: begin
-		// synthesis translate_off
-		if (WalkerState !== 'x) 
-			$error("Default state in HPTW should be unreachable; was %d", WalkerState);
-		// synthesis translate_on
 		NextWalkerState = IDLE; // should never be reached
 	end
 	endcase
