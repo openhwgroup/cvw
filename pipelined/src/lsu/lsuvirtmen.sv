@@ -59,7 +59,7 @@ module lsuvirtmem(
   output logic [1:0]          LSUAtomicM,
   output logic [11:0]         LSUAdrE,
   output logic [`PA_BITS-1:0] PreLSUPAdrM,
-  input logic [`XLEN+1:0]     IEUAdrExtM,
+  input logic [`XLEN+1:0]     IEUAdrExtM, // *** can move internally.
                   
   output logic                InterlockStall,
   output logic                CPUBusy,
