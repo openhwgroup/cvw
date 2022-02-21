@@ -41,7 +41,7 @@ module hptw
    input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
    input logic [1:0]           STATUS_MPP,
    input logic [1:0]           PrivilegeModeW,
-   (* mark_debug = "true" *) input logic ITLBMissF, DTLBMissM, // TLB Miss
+   (* mark_debug = "true" *) input logic ITLBMissOrDAFaultNoTrapF, DTLBMissOrDAFaultNoTrapM, // TLB Miss
    input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
    input logic                 DCacheStallM, // stall from LSU
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
@@ -82,14 +82,14 @@ module hptw
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 	assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-	assign TLBMiss = (DTLBMissM | ITLBMissF);
+	assign TLBMiss = (DTLBMissOrDAFaultNoTrapM | ITLBMissOrDAFaultNoTrapF);
 
 	// Determine which address to translate
 	assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
-	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
+	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoTrapM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	assign PRegEn = HPTWRead & ~DCacheStallM;
   
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
