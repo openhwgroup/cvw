@@ -48,8 +48,7 @@ module hptw
    output logic [1:0]          PageType, // page type to TLBs
    (* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
-   output logic                HPTWRead, // HPTW requesting to read memory
-   output logic                HPTWWrite,
+   output logic [1:0]          HPTWRW, // HPTW requesting to read memory
    output logic [2:0]          HPTWSize // 32 or 64 bit access.
 );
 
@@ -90,7 +89,7 @@ module hptw
 
 	// State flops
 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoTrapM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	assign PRegEn = HPTWRead & ~DCacheStallM;
+	assign PRegEn = HPTWRW[1] & ~DCacheStallM;
   
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
 
@@ -120,7 +119,7 @@ module hptw
     assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE; 
     flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     assign SaveHPTWAdr = WalkerState == L0_ADR;
-    assign SelHPTWWriteAdr = UpdatePTE | HPTWWrite;
+    assign SelHPTWWriteAdr = UpdatePTE | HPTWRW[0];
     mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
     
 
@@ -157,19 +156,19 @@ module hptw
     // However any other fault should not cause the update.
     assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
 
-    assign HPTWWrite = (WalkerState == UPDATE_PTE);
+    assign HPTWRW[0] = (WalkerState == UPDATE_PTE);
     assign UpdatePTE = WalkerState == LEAF & DAPageFault;
   end else begin // block: hptwwrites
     assign NextPTE = HPTWReadPTE;
     assign HPTWAdr = HPTWReadAdr;
     assign DAPageFault = '0;
     assign UpdatePTE = '0;
-    assign HPTWWrite = '0;
+    assign HPTWRW[0] = '0;
   end
 
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
-	assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
+	assign HPTWRW[1] = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
 	assign DTLBWriteM = (WalkerState == LEAF & ~DAPageFault) & DTLBWalk;
 	assign ITLBWriteF = (WalkerState == LEAF & ~DAPageFault) & ~DTLBWalk;
   

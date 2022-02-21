@@ -71,13 +71,12 @@ module lsuvirtmem(
 
   logic                       AnyCPUReqM;
   logic [`PA_BITS-1:0]        HPTWAdr;
-  logic                       HPTWRead;
+  logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize;
   logic                       SelReplayCPURequest;
   logic [11:0]                PreLSUAdrE;  
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
   logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;  
-  logic                       HPTWWrite;
 
   assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
@@ -93,10 +92,10 @@ module lsuvirtmem(
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
     .ITLBMissOrDAFaultNoTrapF, .DTLBMissOrDAFaultNoTrapM,
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
-    .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWWrite, .HPTWSize);
+    .DCacheStallM, .HPTWAdr, .HPTWRW, .HPTWSize);
 
   // multiplex the outputs to LSU
-  mux2 #(2) rwmux(MemRWM, {HPTWRead, HPTWWrite}, SelHPTW, PreLSURWM);
+  mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
