@@ -100,11 +100,11 @@ module lsuvirtmem(
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
-  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
   mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
   if(`HPTW_WRITES_SUPPORTED)
     mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
   else assign LSUWriteDataM = WriteDataM;
+  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;
