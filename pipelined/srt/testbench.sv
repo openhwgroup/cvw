@@ -138,9 +138,10 @@ module testbench;
 	  if (($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
+        $display("a = %h  b = %h result = %h",a,b,correctr);
 	      $display("result was %h, should be %h %h %h\n", result, correctr, diffn, diffp);
+        $display("at fail");
 	      $display("failed\n");
-        $display(testnum);
 	      $stop;
 	    end
 	  if (a === 64'hxxxxxxxxxxxxxxxx)
@@ -153,12 +154,14 @@ module testbench;
 	begin
 	  req <= #5 0;
 	  correctr = nextr;
+    $display("pre increment");
 	  testnum = testnum+1;
+    a = Vec[`mema];
+	  b = Vec[`memb];
 	  Vec = Tests[testnum];
 	  $display("a = %h  b = %h result = %h",a,b,nextr);
-	  a = Vec[`mema];
-	  b = Vec[`memb];
 	  nextr = Vec[`memr];
+    $display("after increment");
 	end
     end
  
