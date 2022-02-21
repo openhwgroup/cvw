@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// WALLY-MMU
+// WALLY-misa
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
