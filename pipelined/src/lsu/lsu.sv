@@ -119,7 +119,7 @@ module lsu (
                           .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
                           .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
                           .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-                          .ReadDataM, .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
+                          .ReadDataM, .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
                           .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
                           .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
                           .IgnoreRequestTLB, .IgnoreRequestTrapM);
@@ -221,7 +221,7 @@ module lsu (
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     mux2 #(`PA_BITS) WordAdrrMux(.d0(LSUPAdrM), 
       .d1({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)), .s(LSUBusWriteCrit),
-      .y(WordOffsetAddr));
+      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.
     
 
     if(`DMEM == `MEM_CACHE) begin : dcache
