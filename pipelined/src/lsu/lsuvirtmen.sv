@@ -75,13 +75,15 @@ module lsuvirtmem(
   logic [2:0]                 HPTWSize;
   logic                       SelReplayCPURequest;
   logic [11:0]                PreLSUAdrE;  
-  logic                       ITLBMissOrDAFaultF;
-  logic                       DTLBMissOrDAFaultM;  
+  logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
+  logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;  
   logic                       HPTWWrite;
 
   assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
+  assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
+  assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
   interlockfsm interlockfsm (
     .clk, .reset, .AnyCPUReqM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
@@ -89,7 +91,7 @@ module lsuvirtmem(
   hptw hptw( // *** remove logic from (), mention this in style guide CH3
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-    .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.  *** I'm not sure ITLBMiss should be suppressed on TrapM.
+    .ITLBMissOrDAFaultNoTrapF, .DTLBMissOrDAFaultNoTrapM,
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
     .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWWrite, .HPTWSize);
 
