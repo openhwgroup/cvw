@@ -34,7 +34,9 @@ rv64i_sc_tests = \
     WALLY-minfo-01 \
     WALLY-CSR-permission-s-01 \
     WALLY-CSR-permission-u-01 \
-    WALLY-misa-01
+    WALLY-misa-01 \
+    WALLY-scratch-01 \
+    WALLY-sscratch-s-01
 
 target_tests_nosim = WALLY-PMA \
 
