@@ -103,7 +103,8 @@ module lsu (
   logic                     BusCommittedM, DCacheCommittedM;
   logic                     LSUBusWriteCrit;
   logic                     DataDAPageFaultM;
-  
+  logic [`XLEN-1:0]         LSUWriteDataM;
+    
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
@@ -118,8 +119,8 @@ module lsu (
                           .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
                           .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
                           .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-                          .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
-                          .IEUAdrExtM, .PTE, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
+                          .ReadDataM, .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
+                          .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
                           .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
                           .IgnoreRequestTLB, .IgnoreRequestTrapM);
 
@@ -129,6 +130,7 @@ module lsu (
     assign LSUAdrE = PreLSUAdrE; assign PreLSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM[`PA_BITS-1:0];
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
+    assign LSUWriteDataM = WriteDataM;
    end
 
   // CommittedM tells the CPU's privilege unit the current instruction
@@ -176,7 +178,7 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM, PostSWWWriteDataM;
+  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
@@ -252,15 +254,12 @@ module lsu (
     assign ReadDataWordMaskedM = SelUncachedAdr ? '0 : ReadDataWordM; // AND-gate
     subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
       .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-         .HWDATAIN(FinalAMOWriteDataM), .HWDATA(PostSWWWriteDataM));
+         .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
   end else 
-    assign PostSWWWriteDataM = FinalAMOWriteDataM;
+    assign FinalWriteDataM = FinalAMOWriteDataM;
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);
-
-
-  assign FinalWriteDataM = SelHPTW ? PTE : PostSWWWriteDataM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
@@ -268,10 +267,10 @@ module lsu (
 
   // *** why does this need DTLBMissM?
   if (`A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, 
+    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
       .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
-    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = WriteDataM;
+    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = LSUWriteDataM;
   end
 endmodule

@@ -47,6 +47,7 @@ module lsuvirtmem(
   input logic [1:0]           PrivilegeModeW,
   input logic [`XLEN-1:0]     PCF,
   input logic [`XLEN-1:0]     ReadDataM,
+  input logic [`XLEN-1:0]     WriteDataM,
   input logic [2:0]           Funct3M,
   output logic [2:0]          LSUFunct3M,
   input logic [6:0]           Funct7M,
@@ -54,6 +55,7 @@ module lsuvirtmem(
   input logic [`XLEN-1:0]     IEUAdrE,
   input logic [`XLEN-1:0]     IEUAdrM,
   output logic [`XLEN-1:0]    PTE,
+  output logic [`XLEN-1:0]    LSUWriteDataM,
   output logic [1:0]          PageType,
   output logic [1:0]          PreLSURWM,
   output logic [1:0]          LSUAtomicM,
@@ -100,6 +102,7 @@ module lsuvirtmem(
   mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
   mux2 #(12) replaymux(PreLSUAdrE, IEUAdrM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.
   mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
+  mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;
