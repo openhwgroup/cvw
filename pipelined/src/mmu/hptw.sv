@@ -34,7 +34,8 @@ module hptw
   (
    input logic                 clk, reset,
    input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0]     PCF, IEUAdrM, // addresses to translate
+   input logic [`XLEN-1:0]     PCF,  // addresses to translate
+   input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
    input logic [1:0]           MemRWM, AtomicM,
    // system status
    input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -84,7 +85,7 @@ module hptw
 	assign TLBMiss = (DTLBMissM | ITLBMissF);
 
 	// Determine which address to translate
-	assign TranslationVAdr = DTLBWalk ? IEUAdrM : PCF;
+	assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
@@ -116,11 +117,11 @@ module hptw
     logic                     SetDirty;
     logic                     Dirty, Accessed;
 
-    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE;  // This will be  HPTWReadPTE if not handling DAPageFault.
+    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE; 
     flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     assign SaveHPTWAdr = WalkerState == L0_ADR;
     assign SelHPTWWriteAdr = UpdatePTE | HPTWWrite;
-    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);  // HPTWAdr = HPTWReadAdr if not handling DAPageFault.
+    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
     
 
     assign {Dirty, Accessed} = PTE[7:6];
@@ -132,7 +133,7 @@ module hptw
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
                                ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
 
-    // *** turn into module
+    // *** turn into module common with code in tlbcontrol.
     if (`XLEN==64) begin:rv64
       assign SV39Mode = (SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS] == `SV39);
       // page fault if upper bits aren't all the same
@@ -150,12 +151,11 @@ module hptw
     assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
                             ImproperPrivilege | ~Executable | UpperBitsUnequalPageFault | Misaligned | ~Valid;
 
-
     // hptw needs to know if there is a Dirty or Access fault occuring on this
     // memory access.  If there is the PTE needs to be updated seting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
     // However any other fault should not cause the update.
-    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault; // set to 0 if not handling DAPageFault.
+    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
 
     assign HPTWWrite = (WalkerState == UPDATE_PTE);
     assign UpdatePTE = WalkerState == LEAF & DAPageFault;

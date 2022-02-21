@@ -53,7 +53,6 @@ module lsuvirtmem(
   input logic [6:0]           Funct7M,
   output logic [6:0]          LSUFunct7M,
   input logic [`XLEN-1:0]     IEUAdrE,
-  input logic [`XLEN-1:0]     IEUAdrM,
   output logic [`XLEN-1:0]    PTE,
   output logic [`XLEN-1:0]    LSUWriteDataM,
   output logic [1:0]          PageType,
@@ -88,7 +87,7 @@ module lsuvirtmem(
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
     .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
   hptw hptw( // *** remove logic from (), mention this in style guide CH3
-    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM, .MemRWM, .AtomicM,
+    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
     .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.  *** I'm not sure ITLBMiss should be suppressed on TrapM.
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
@@ -100,9 +99,11 @@ module lsuvirtmem(
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
-  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.
+  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
   mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
-  mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
+  if(`HPTW_WRITES_SUPPORTED)
+    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
+  else assign LSUWriteDataM = WriteDataM;
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;
