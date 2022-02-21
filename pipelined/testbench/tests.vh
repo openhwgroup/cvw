@@ -1489,7 +1489,10 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-PMA", "40A0",
     "rv64i_m/privilege/WALLY-minfo-01", "40A0",
     "rv64i_m/privilege/WALLY-CSR-permission-s-01", "50A0",
-    "rv64i_m/privilege/WALLY-CSR-permission-u-01", "50A0"
+    "rv64i_m/privilege/WALLY-CSR-permission-u-01", "50A0",
+    "rv64i_m/privilege/WALLY-misa-01", "40A0",
+    "rv64i_m/privilege/WALLY-scratch-01", "40A0",
+    "rv64i_m/privilege/WALLY-sscratch-s-01", "40A0"
  };
 
  string wally64periph[] = '{
@@ -1550,9 +1553,13 @@ string wally32i[] = '{
     `WALLYTEST,
     "rv32i_m/privilege/WALLY-MMU-SV32", "4080",
     "rv32i_m/privilege/WALLY-PMP", "4080",
+    "rv32i_m/privilege/WALLY-PMA", "4080",
     "rv32i_m/privilege/WALLY-CSR-permission-s-01", "5080",
     "rv32i_m/privilege/WALLY-CSR-permission-u-01", "5080",
-    "rv32i_m/privilege/WALLY-minfo-01", "4080"
+    "rv32i_m/privilege/WALLY-minfo-01", "4080",
+    "rv32i_m/privilege/WALLY-misa-01", "4080",
+    "rv32i_m/privilege/WALLY-scratch-01", "4080",
+    "rv32i_m/privilege/WALLY-sscratch-s-01", "4080"
  };
 
  string wally32periph[] = '{

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-minfo
+// WALLY-scratch
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-01-25
+// Created 2022-02-20
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -21,18 +21,14 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h"
+#include "WALLY-TEST-LIB-32.h"
 
 INIT_TESTS
 
 s_file_begin:
+// Test 5.3.2.3: Scratch registers test
 
-// Test 5.2.3.1: testing Read-only access to Machine info CSRs 
-CSR_R_ACCESS mvendorid
-CSR_R_ACCESS marchid 
-CSR_R_ACCESS mimpid 
-CSR_R_ACCESS mhartid 
-# CSR_R_ACCESS mconfigptr # Unimplemented in spike as of 31 Jan 22
+WRITE_READ_CSR mscratch, 0x111 // check that mscratch is readable and writeable in machine mode
 
 END_TESTS
 

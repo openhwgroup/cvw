@@ -262,10 +262,6 @@ module hptw
     UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) NextWalkerState = UPDATE_PTE;
                 else NextWalkerState = LEAF;
 	default: begin
-		// synthesis translate_off
-		if (WalkerState !== 'x) 
-			$error("Default state in HPTW should be unreachable; was %d", WalkerState);
-		// synthesis translate_on
 		NextWalkerState = IDLE; // should never be reached
 	end
 	endcase
