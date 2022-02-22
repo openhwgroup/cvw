@@ -890,17 +890,6 @@ string imperas32f[] = '{
     "rv32p/WALLY-CSR-PERMISSIONS-S", "3000"
   };
 
-  string imperas64periph[] = '{
-    `MYIMPERASTEST,
-    "rv64i-periph/WALLY-PERIPH", "2000"
-  };
-
-  string imperas32periph[] = '{
-    `MYIMPERASTEST,
-    "rv32i-periph/WALLY-PLIC", "2080"
-  };
-
-
   string arch64priv[] = '{
     `RISCVARCHTEST,
     "rv64i_m/privilege/ebreak", "2090",
@@ -1493,7 +1482,8 @@ string imperas32f[] = '{
  };
 
  string wally64periph[] = '{
-    `WALLYTEST
+    `WALLYTEST,
+    "rv64i_m/privilege/WALLY-PERIPH", "3110"
  };
 
  string wally32e[] = '{

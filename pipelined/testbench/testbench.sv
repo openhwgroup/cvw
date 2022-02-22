@@ -100,7 +100,7 @@ logic [3:0] dummy;
         "testsBP64":                      tests = testsBP64;
         "wally64i":                       tests = wally64i; // *** redo
         "wally64priv":                    tests = wally64priv;// *** redo
-        "imperas64periph":                tests = imperas64periph;
+        "wally64periph":                  tests = wally64periph;
         "coremark":                       tests = coremark;
       endcase 
     end else begin // RV32
@@ -123,7 +123,6 @@ logic [3:0] dummy;
         "wally32i":                       tests = wally32i; // *** redo
         "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv; // *** redo
-        "imperas32periph":                  tests = imperas32periph;
       endcase
     end
     if (tests.size() == 0) begin
