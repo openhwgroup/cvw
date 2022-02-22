@@ -34,21 +34,21 @@ module hptw
   (
    input logic                 clk, reset,
    input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0]     PCF, IEUAdrM, // addresses to translate
+   input logic [`XLEN-1:0]     PCF,  // addresses to translate
+   input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
    input logic [1:0]           MemRWM, AtomicM,
    // system status
    input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
    input logic [1:0]           STATUS_MPP,
    input logic [1:0]           PrivilegeModeW,
-   (* mark_debug = "true" *) input logic ITLBMissF, DTLBMissM, // TLB Miss
+   (* mark_debug = "true" *) input logic ITLBMissOrDAFaultNoTrapF, DTLBMissOrDAFaultNoTrapM, // TLB Miss
    input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
    input logic                 DCacheStallM, // stall from LSU
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0]          PageType, // page type to TLBs
    (* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
-   output logic                HPTWRead, // HPTW requesting to read memory
-   output logic                HPTWWrite,
+   output logic [1:0]          HPTWRW, // HPTW requesting to read memory
    output logic [2:0]          HPTWSize // 32 or 64 bit access.
 );
 
@@ -81,15 +81,15 @@ module hptw
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 	assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-	assign TLBMiss = (DTLBMissM | ITLBMissF);
+	assign TLBMiss = (DTLBMissOrDAFaultNoTrapM | ITLBMissOrDAFaultNoTrapF);
 
 	// Determine which address to translate
-	assign TranslationVAdr = DTLBWalk ? IEUAdrM : PCF;
+	assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
-	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	assign PRegEn = HPTWRead & ~DCacheStallM;
+	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoTrapM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
+	assign PRegEn = HPTWRW[1] & ~DCacheStallM;
   
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
 
@@ -116,11 +116,11 @@ module hptw
     logic                     SetDirty;
     logic                     Dirty, Accessed;
 
-    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE;  // This will be  HPTWReadPTE if not handling DAPageFault.
+    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE; 
     flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
     assign SaveHPTWAdr = WalkerState == L0_ADR;
-    assign SelHPTWWriteAdr = UpdatePTE | HPTWWrite;
-    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr);  // HPTWAdr = HPTWReadAdr if not handling DAPageFault.
+    assign SelHPTWWriteAdr = UpdatePTE | HPTWRW[0];
+    mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
     
 
     assign {Dirty, Accessed} = PTE[7:6];
@@ -132,7 +132,7 @@ module hptw
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
                                ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
 
-    // *** turn into module
+    // *** turn into module common with code in tlbcontrol.
     if (`XLEN==64) begin:rv64
       assign SV39Mode = (SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS] == `SV39);
       // page fault if upper bits aren't all the same
@@ -150,26 +150,25 @@ module hptw
     assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
                             ImproperPrivilege | ~Executable | UpperBitsUnequalPageFault | Misaligned | ~Valid;
 
-
     // hptw needs to know if there is a Dirty or Access fault occuring on this
     // memory access.  If there is the PTE needs to be updated seting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
     // However any other fault should not cause the update.
-    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault; // set to 0 if not handling DAPageFault.
+    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
 
-    assign HPTWWrite = (WalkerState == UPDATE_PTE);
+    assign HPTWRW[0] = (WalkerState == UPDATE_PTE);
     assign UpdatePTE = WalkerState == LEAF & DAPageFault;
   end else begin // block: hptwwrites
     assign NextPTE = HPTWReadPTE;
     assign HPTWAdr = HPTWReadAdr;
     assign DAPageFault = '0;
     assign UpdatePTE = '0;
-    assign HPTWWrite = '0;
+    assign HPTWRW[0] = '0;
   end
 
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
-	assign HPTWRead = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
+	assign HPTWRW[1] = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
 	assign DTLBWriteM = (WalkerState == LEAF & ~DAPageFault) & DTLBWalk;
 	assign ITLBWriteF = (WalkerState == LEAF & ~DAPageFault) & ~DTLBWalk;
   

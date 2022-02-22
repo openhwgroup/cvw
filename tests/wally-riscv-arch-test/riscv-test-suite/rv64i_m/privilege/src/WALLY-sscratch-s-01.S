@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-minfo
+// WALLY-sscratch
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-01-25
+// Created 2022-02-20
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -27,12 +27,12 @@ INIT_TESTS
 
 s_file_begin:
 
-// Test 5.2.3.1: testing Read-only access to Machine info CSRs 
-CSR_R_ACCESS mvendorid
-CSR_R_ACCESS marchid 
-CSR_R_ACCESS mimpid 
-CSR_R_ACCESS mhartid 
-# CSR_R_ACCESS mconfigptr # Unimplemented in spike as of 31 Jan 22
+// Test 5.3.2.3: Scratch registers test
+WRITE_READ_CSR sscratch, 0x111 // check that sscratch is readable and writeable in machine mode
+
+GOTO_S_MODE 0x0, 0x0
+
+WRITE_READ_CSR sscratch, 0xAAA // check that sscratch is readable and writeable in supervisor mode
 
 END_TESTS
 
