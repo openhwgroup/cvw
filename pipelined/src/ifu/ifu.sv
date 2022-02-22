@@ -83,8 +83,8 @@ module ifu (
     output logic                ICacheAccess,
     output logic                ICacheMiss
 );
-
-(* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
+  localparam                    CACHE_ENABLED = `IMEM == `MEM_CACHE;
+  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
   logic                        BranchMisalignedFaultE;
   logic                        PrivilegedChangePCM;
   logic                        IllegalCompInstrD;
@@ -182,8 +182,8 @@ module ifu (
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
     
   end else begin : bus
-    localparam integer   WORDSPERLINE = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLine;
     logic [LINELEN-1:0]  ICacheBusWriteData;
@@ -193,7 +193,7 @@ module ifu (
     logic [31:0]         temp;
     logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL) 
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), 
@@ -210,7 +210,7 @@ module ifu (
       .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
     
 
-    if(`IMEM == `MEM_CACHE) begin : icache
+    if(CACHE_ENABLED) begin : icache
       logic [1:0] IFURWF;
       assign IFURWF = CacheableF ? 2'b10 : 2'b00;
       
