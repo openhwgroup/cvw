@@ -283,7 +283,7 @@ module uartPC16550D(
       2'b10: rxdata9 = {1'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7], rxshiftreg[8]}; // 7-bit
       2'b11: rxdata9 = {      rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7], rxshiftreg[8], rxshiftreg[9]}; // 8-bit
     endcase
-  assign rxdata = LCR[3] ? rxdata9[8:0] : rxdata9[8:1]; // discard parity bit
+  assign rxdata = LCR[3] ? rxdata9[7:0] : rxdata9[8:1]; // discard parity bit
 
   // ERROR CONDITIONS
   assign rxparity = ^rxdata;
