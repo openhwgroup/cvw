@@ -113,7 +113,7 @@ module plic (
           24'h002004: intEn[N:32] <= #1 Din[31:0];
           `endif
           24'h200000: intThreshold[2:0] <= #1 Din[2:0];       
-          24'h200004: intInProgress <= #1 intInProgress & ~(4'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h200004: intInProgress <= #1 intInProgress & ~(`PLIC_NUM_SRC'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // reading
       if (memread)
@@ -132,7 +132,7 @@ module plic (
           24'h200000: Dout <= #1 {29'b0,intThreshold[2:0]};
           24'h200004: begin
             Dout <= #1 {26'b0,intClaim};
-            intInProgress <= #1 intInProgress | (4'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | (`PLIC_NUM_SRC'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           default: Dout <= #1 32'h0; // invalid access
         endcase
@@ -155,7 +155,7 @@ module plic (
   // pending updates
   // *** verify that this matches the expectations of the things that make requests (in terms of timing, edge-triggered vs level-triggered)
   assign nextIntPending = (intPending | (requests & ~intInProgress)) & // requests should raise intPending except when their service routine is already in progress
-                          ~({4{((entry == 24'h200004) & memread)}} << (intClaim-1)); // clear pending bit when claim register is read
+                          ~({N{((entry == 24'h200004) & memread)}} << (intClaim-1)); // clear pending bit when claim register is read
   flopr #(N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // pending array - indexed by priority_lvl x source_ID
