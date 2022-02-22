@@ -14,49 +14,6 @@
 
 `include "wally-config.vh"
 
-// will also be used for integer division so keep in mind when naming modules/signals
-
-/////////////////
-// srt_divide //
-////////////////
-module srt_divide(input  logic clk, 
-           input  logic req, 
-           input  logic sqrt,  // 1 to compute sqrt(a), 0 to compute a/b
-           input  logic [63:0] a, b, // input numbers
-           output logic [54:0] rp, rm,
-           output logic [10:0] expE);
-
-          // output logic from Unpackers
-          logic        XSgnE, YSgnE, ZSgnE;
-          logic [10:0] XExpE, YExpE, ZExpE; // exponent
-          logic [52:0] XManE, YManE, ZManE;
-          logic XNormE;
-          logic XNaNE, YNaNE, ZNaNE;
-          logic XSNaNE, YSNaNE, ZSNaNE;
-          logic XDenormE, YDenormE, ZDenormE; // denormals
-          logic XZeroE, YZeroE, ZZeroE;
-          logic [10:0] BiasE; // currrently hardcoded, will probs be removed
-          logic XInfE, YInfE, ZInfE;
-          logic XExpMaxE; // says exponent is all ones, can ignore
-
-           // have Unpackers
-           // have mantissa divider
-           // exponent divider
-
-          // hopefully having the .* here works for unpacker --- nope it doesn't
-          unpack unpacking(a, b, 0, 1'b1, 0, XSgnE, YSgnE, ZSgnE, XExpE, YExpE, ZExpE, XManE, YManE, ZManE, XNormE,XNaNE, YNaNE, ZNaNE,XSNaNE, YSNaNE, ZSNaNE,XDenormE, YDenormE, ZDenormE,XZeroE, YZeroE, ZZeroE,BiasE,XInfE, YInfE, ZInfE,XExpMaxE);
-          srt  srt(clk, req, XManE[51:0], YManE[51:0], rp, rm);
-          exp exp(XexpE, YExpE, expE);
-endmodule
-
-// exponent module
-// first iteration
-module exp(input [10:0] e1, e2,
-           output [10:0] e); // for a 64 bit number, exponent section is 11 bits
-  assign e = (e1 - e2) + 11'd1023; // bias is hardcoded
-endmodule
-
-
 /////////
 // srt //
 /////////
@@ -84,12 +41,12 @@ module srt(input  logic clk,
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  mux2_special psmux({psa[54:0], 1'b0}, {4'b0001, a}, req, psn);
-  flop_special psflop(clk, psn, ps);
-  mux2_special pcmux({pca[54:0], 1'b0}, 56'b0, req, pcn);
-  flop_special pcflop(clk, pcn, pc);
-  mux2_special dmux(d, {4'b0001, b}, req, dn);
-  flop_special dflop(clk, dn, d);
+  mux2 psmux({psa[54:0], 1'b0}, {4'b0001, a}, req, psn);
+  flop psflop(clk, psn, ps);
+  mux2 pcmux({pca[54:0], 1'b0}, 56'b0, req, pcn);
+  flop pcflop(clk, pcn, pc);
+  mux2 dmux(d, {4'b0001, b}, req, dn);
+  flop dflop(clk, dn, d);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -99,7 +56,7 @@ module srt(input  logic clk,
 
   // Divisor Selection logic
   inv dinv(d, d_b);
-  mux3_special divisorsel(d_b, 56'b0, d, qp, qz, qm, dsel);
+  mux3 divisorsel(d_b, 56'b0, d, qp, qz, qm, dsel);
 
   // Partial Product Generation
   csa csa(ps, pc, dsel, qp, psa, pca);
@@ -108,7 +65,7 @@ endmodule
 //////////
 // mux2 //
 //////////
-module mux2_special(input  logic [55:0] in0, in1, 
+module mux2(input  logic [55:0] in0, in1, 
             input  logic        sel, 
             output logic [55:0] out);
  
@@ -118,7 +75,7 @@ endmodule
 //////////
 // flop //
 //////////
-module flop_special(clk, in, out);
+module flop(clk, in, out);
   input 	clk;
   input  [55:0] in;
   output [55:0] out;
@@ -204,9 +161,9 @@ module inv(input  logic [55:0] in,
 endmodule
 
 //////////
-// mux3_special //
+// mux3 //
 //////////
-module mux3_special(in0, in1, in2, sel0, sel1, sel2, out);
+module mux3(in0, in1, in2, sel0, sel1, sel2, out);
   input  [55:0] in0;
   input  [55:0] in1;
   input  [55:0] in2;
@@ -316,24 +273,6 @@ module testbench;
   logic [51:0] b;
   logic  [51:0] r;
   logic [54:0] rp, rm;   // positive quotient digits
-
-  //input logic  [63:0] X, Y, Z,  - numbers
-  //input logic         FmtE,  ---- format, 1 is for double precision, 0 is single
-  //input logic  [2:0]  FOpCtrlE, ---- controling operations for FPU, 1 is sqrt, 0 is divide
- // all variables are commented in fpu.sv
-
-  // output logic from Unpackers
-  logic        XSgnE, YSgnE, ZSgnE;
-  logic [10:0] XExpE, YExpE, ZExpE; // exponent
-  logic [52:0] XManE, YManE, ZManE;
-  logic XNormE;
-  logic XNaNE, YNaNE, ZNaNE;
-  logic XSNaNE, YSNaNE, ZSNaNE;
-  logic XDenormE, YDenormE, ZDenormE; // denormals
-  logic XZeroE, YZeroE, ZZeroE;
-  logic [10:0] BiasE; // currrently hardcoded, will probs be removed
-  logic XInfE, YInfE, ZInfE;
-  logic XExpMaxE; // says exponent is all ones, can ignore
  
   // Test parameters
   parameter MEM_SIZE = 40000;
@@ -350,15 +289,8 @@ module testbench;
   logic    [51:0] correctr, nextr;
   integer testnum, errors;
 
-  // Unpackers
-  unpacking unpack(.X({12'b100010000010,a}), .Y({12'b100010000001,b}), .Z(0), .FmtE(1'b1), .FOpCtrlE(0), .*);
-
   // Divider
-  srt  srt(.clk(clk), .req(req), .sqrt(1'b0), .a(XManE[51:0]), .b(YManE[51:0]), .rp(rp),.rm(rm));
-
-  //srt  srt(.clk(clk), .req(req), .sqrt(1'b0), .a(a), .b(b), .rp(rp),.rm(rm));
-
-  // Divider + unpacker
+  srt  srt(clk, req, a, b, rp, rm);
 
   // Final adder converts quotient digits to 2's complement & normalizes
   finaladd finaladd(rp, rm, r);

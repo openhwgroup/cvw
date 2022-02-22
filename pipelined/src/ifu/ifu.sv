@@ -249,6 +249,8 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
+  // *** look at moves pcmux2 and pcmux3 to generates as they are needed only on supporting caches and
+  // privilege instructions respectively.
   mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
   mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
   mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
