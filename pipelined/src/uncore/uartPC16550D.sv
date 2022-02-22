@@ -278,12 +278,12 @@ module uartPC16550D(
   assign rxstopbit = rxshiftreg[0];
   always_comb
     case(LCR[1:0]) // check how many bits used.  Grab all bits including possible parity
-      2'b00: rxdata9 = {3'b0, rxshiftreg[6:1]}; // 5-bit character
-      2'b01: rxdata9 = {2'b0, rxshiftreg[7:1]}; // 6-bit 
-      2'b10: rxdata9 = {1'b0, rxshiftreg[8:1]}; // 7-bit
-      2'b11: rxdata9 = rxshiftreg[9:1];
+      2'b00: rxdata9 = {3'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6]}; // 5-bit character
+      2'b01: rxdata9 = {2'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7]}; // 6-bit 
+      2'b10: rxdata9 = {1'b0, rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7], rxshiftreg[8]}; // 7-bit
+      2'b11: rxdata9 = {      rxshiftreg[1], rxshiftreg[2], rxshiftreg[3], rxshiftreg[4], rxshiftreg[5], rxshiftreg[6], rxshiftreg[7], rxshiftreg[8], rxshiftreg[9]}; // 8-bit
     endcase
-  assign rxdata = LCR[3] ? rxdata9[8:1] : rxdata9[7:0]; // discard parity bit
+  assign rxdata = LCR[3] ? rxdata9[7:0] : rxdata9[8:1]; // discard parity bit
 
   // ERROR CONDITIONS
   assign rxparity = ^rxdata;
