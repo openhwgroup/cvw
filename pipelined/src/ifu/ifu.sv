@@ -125,8 +125,8 @@ module ifu (
   if(`C_SUPPORTED) begin : SpillSupport
 
     spillsupport spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF,
-                              .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
-                              .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
+      .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
+      .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
@@ -160,7 +160,7 @@ module ifu (
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin
-    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF} = '0;
+    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrDAPageFaultF} = '0;
     assign PCPF = PCFExt[`PA_BITS-1:0];
     assign CacheableF = '1;
   end
