@@ -93,7 +93,8 @@ module spillsupport (
                               .d((`IMEM == `MEM_CACHE) ? InstrRawF[15:0] : InstrRawF[31:16]),
                               .q(SpillDataLine0));
 
-  assign PostSpillInstrRawF = SpillF ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
+  mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], SpillDataLine0}), .s(SpillF),
+    .y(PostSpillInstrRawF));
   assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
 
 endmodule
