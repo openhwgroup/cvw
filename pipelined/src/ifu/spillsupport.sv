@@ -66,7 +66,7 @@ module spillsupport (
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | InstrDAPageFaultF);
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
   
   always_ff @(posedge clk)
     if (reset)    CurrState <= #1 STATE_READY;
