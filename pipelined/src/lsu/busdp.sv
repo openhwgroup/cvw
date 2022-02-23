@@ -67,17 +67,17 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   
 
   localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
-
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
   genvar                      index;
-
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-    flopen #(`XLEN) fb(.clk, .en(LSUBusAck & LSUBusRead & (index == WordCount)),
-                       .d(LSUBusHRDATA), .q(DCacheBusWriteData[(index+1)*`XLEN-1:index*`XLEN]));
+    logic [WORDSPERLINE-1:0] CaptureWord;
+    assign CaptureWord[index] = LSUBusAck & LSUBusRead & (index == WordCount);
+    flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(LSUBusHRDATA),
+      .q(DCacheBusWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
   mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
   assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-   mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
+  mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
     .s(SelUncachedAdr), .y(LSUBusSize));
 
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) 
