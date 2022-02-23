@@ -76,7 +76,6 @@ module ifu (
 	input logic [1:0] 			STATUS_MPP,
 	input logic 				ITLBWriteF, ITLBFlushF,
 	output logic 				ITLBMissF, InstrDAPageFaultF,
-  // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
 	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
 	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
 	output logic 				InstrAccessFaultF,
@@ -120,7 +119,7 @@ module ifu (
   assign PCFExt = {2'b00, PCFSpill};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // Spill Support  *** add other banners
+  // Spill Support
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : SpillSupport
@@ -247,18 +246,28 @@ module ifu (
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // PCNextF logic
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  // *** look at moves pcmux2 and pcmux3 to generates as they are needed only on supporting caches and
-  // privilege instructions respectively.
   mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
-  mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), .y(PCNext2F));
-  mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
+  if(CACHE_ENABLED)
+    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), 
+      .y(PCNext2F));
+  else assign PCNext2F = PCNext1F;
+  if(`ZICSR_SUPPORTED)
+    mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), 
+      .y(UnalignedPCNextF));
+  else assign UnalignedPCNextF = PCNext2F;
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
 
-  // branch and jump predictor
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Branch and Jump Predictor
+  ////////////////////////////////////////////////////////////////////////////////////////////////
   if (`BPRED_ENABLED) begin : bpred
     logic                        BPPredWrongM;
     logic                        SelBPPredF;
@@ -295,6 +304,9 @@ module ifu (
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Decode stage pipeline register and compressed instruction decoding.
+  ////////////////////////////////////////////////////////////////////////////////////////////////
   // Decode stage pipeline register and logic
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
