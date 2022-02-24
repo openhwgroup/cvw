@@ -11,16 +11,26 @@ generate:
 
 disassemble:
 	mkdir -p ${DIS}
-	make -j ${DIS}/fw_jump.objdump ${DIS}/vmlinux.objdump
+	# disassemblies
+	make -j ${DIS}/fw_jump.objdump ${DIS}/vmlinux.objdump ${DIS}/busybox.objdump
 	# filesystem
-	mkdir ${RISCV}/buildroot/output/images/disassembly/rootfs
-	-cd ${RISCV}/buildroot/output/images/disassembly/rootfs; cpio -id --nonmatching 'dev/console' < ../../rootfs.cpio
-	riscv64-unknown-elf-objdump -D ${RISCV}/buildroot/output/images/disassembly/rootfs/bin/busybox >> ${RISCV}/buildroot/output/images/disassembly/busybox.objdump
+	make ${DIS}/rootfs/bin/busybox
+	# mkdir -p ${DIS}/rootfs
+	# -cd ${DIS}/rootfs; cpio -id --nonmatching 'dev/console' < ../../rootfs.cpio
 
 ${DIS}/fw_jump.objdump: ${IMAGES}/fw_jump.elf
-	riscv64-unknown-elf-objdump -D ${RISCV}/buildroot/output/images/fw_jump.elf >> ${RISCV}/buildroot/output/images/disassembly/fw_jump.objdump
+	riscv64-unknown-elf-objdump -D ${IMAGES}/fw_jump.elf >> ${DIS}/fw_jump.objdump
+
 ${DIS}/vmlinux.objdump: ${IMAGES}/vmlinux
-	riscv64-unknown-elf-objdump -D ${RISCV}/buildroot/output/images/vmlinux >> ${RISCV}/buildroot/output/images/disassembly/vmlinux.objdump
+	riscv64-unknown-elf-objdump -D ${IMAGES}/vmlinux >> ${DIS}/vmlinux.objdump
+
+${DIS}/busybox.objdump: ${DIS}/rootfs/bin/busybox
+	riscv64-unknown-elf-objdump -D ${DIS}/rootfs/bin/busybox >> ${DIS}/busybox.objdump
+
+${DIS}/rootfs/bin/busybox:
+	mkdir -p ${DIS}/rootfs
+	-cd ${DIS}/rootfs; cpio -id --nonmatching 'dev/console' < ../../rootfs.cpio
+
 
 clean:
 	rm -f ${IMAGES}/wally-virt.dtb
