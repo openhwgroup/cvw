@@ -14,7 +14,7 @@ disassemble:
 	make -j ${DIS}/fw_jump.objdump ${DIS}/vmlinux.objdump
 	# filesystem
 	mkdir ${RISCV}/buildroot/output/images/disassembly/rootfs
-	-cd ${RISCV}/buildroot/output/images/disassembly/rootfs; cpio -idv < ../../rootfs.cpio
+	-cd ${RISCV}/buildroot/output/images/disassembly/rootfs; cpio -id --nonmatching 'dev/console' < ../../rootfs.cpio
 	riscv64-unknown-elf-objdump -D ${RISCV}/buildroot/output/images/disassembly/rootfs/bin/busybox >> ${RISCV}/buildroot/output/images/disassembly/busybox.objdump
 
 ${DIS}/fw_jump.objdump: ${IMAGES}/fw_jump.elf
