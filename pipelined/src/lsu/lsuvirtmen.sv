@@ -78,13 +78,12 @@ module lsuvirtmem(
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
   logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;  
 
-  assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
   assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
   assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
   interlockfsm interlockfsm (
-    .clk, .reset, .AnyCPUReqM, .ITLBMissOrDAFaultF, .ITLBWriteF,
+    .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
     .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
   hptw hptw( // *** remove logic from (), mention this in style guide CH3

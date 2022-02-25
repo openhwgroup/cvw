@@ -31,33 +31,44 @@
 
 `include "wally-config.vh"
 
-module interlockfsm
-  (input logic clk,
-   input logic  reset,
-   input logic  AnyCPUReqM,
-   input logic  ITLBMissOrDAFaultF,
-   input logic  ITLBWriteF,
-   input logic  DTLBMissOrDAFaultM,
-   input logic  DTLBWriteM,
-   input logic  TrapM,
-   input logic  DCacheStallM,
+module interlockfsm(
+  input logic       clk,
+  input logic       reset,
+  input logic [1:0] MemRWM,
+  input logic [1:0] AtomicM,
+  input logic       ITLBMissOrDAFaultF,
+  input logic       ITLBWriteF,
+  input logic       DTLBMissOrDAFaultM,
+  input logic       DTLBWriteM,
+  input logic       TrapM,
+  input logic       DCacheStallM,
 
-   output logic InterlockStall,
-   output logic SelReplayCPURequest,
-   output logic SelHPTW,
-   output logic IgnoreRequestTLB,
-   output logic IgnoreRequestTrapM);
+  output logic      InterlockStall,
+  output logic      SelReplayCPURequest,
+  output logic      SelHPTW,
+  output logic      IgnoreRequestTLB,
+  output logic      IgnoreRequestTrapM);
 
+  logic             ToITLBMiss;
+  logic             ToITLBMissNoReplay;
+  logic             ToDTLBMiss;
+  logic             ToBoth;
+  logic             AnyCPUReqM;
 
-  typedef enum logic[2:0]  {STATE_T0_READY,
-				 STATE_T0_REPLAY,
-				 STATE_T3_DTLB_MISS,
-				 STATE_T4_ITLB_MISS,
-				 STATE_T5_ITLB_MISS,
-				 STATE_T7_DITLB_MISS} statetype;
+  typedef enum      logic[2:0]  {STATE_T0_READY,
+				                 STATE_T0_REPLAY,
+				                 STATE_T3_DTLB_MISS,
+				                 STATE_T4_ITLB_MISS,
+				                 STATE_T5_ITLB_MISS,
+				                 STATE_T7_DITLB_MISS} statetype;
 
   (* mark_debug = "true" *)	  statetype InterlockCurrState, InterlockNextState;
 
+  assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
+  assign ToITLBMiss = ITLBMissOrDAFaultF & ~DTLBMissOrDAFaultM & AnyCPUReqM;
+  assign ToITLBMissNoReplay = ITLBMissOrDAFaultF & ~DTLBMissOrDAFaultM & ~AnyCPUReqM;
+  assign ToDTLBMiss = ~ITLBMissOrDAFaultF & DTLBMissOrDAFaultM & AnyCPUReqM;
+  assign ToBoth = ITLBMissOrDAFaultF & DTLBMissOrDAFaultM & AnyCPUReqM;
 
   always_ff @(posedge clk)
 	if (reset)    InterlockCurrState <= #1 STATE_T0_READY;
@@ -65,23 +76,23 @@ module interlockfsm
 
   always_comb begin
 	case(InterlockCurrState)
-	  STATE_T0_READY: if (TrapM)                       InterlockNextState = STATE_T0_READY;
-	  else if(~ITLBMissOrDAFaultF & DTLBMissOrDAFaultM & AnyCPUReqM)     InterlockNextState = STATE_T3_DTLB_MISS;
-	  else if(ITLBMissOrDAFaultF & ~DTLBMissOrDAFaultM & ~AnyCPUReqM)    InterlockNextState = STATE_T4_ITLB_MISS;
-      else if(ITLBMissOrDAFaultF & ~DTLBMissOrDAFaultM & AnyCPUReqM)     InterlockNextState = STATE_T5_ITLB_MISS;
-	  else if(ITLBMissOrDAFaultF & DTLBMissOrDAFaultM & AnyCPUReqM)      InterlockNextState = STATE_T7_DITLB_MISS;
-	  else                                             InterlockNextState = STATE_T0_READY;
-	  STATE_T0_REPLAY:       if(DCacheStallM)                                  InterlockNextState = STATE_T0_REPLAY;
-	  else                                             InterlockNextState = STATE_T0_READY;
-	  STATE_T3_DTLB_MISS:    if(DTLBWriteM)                                   InterlockNextState = STATE_T0_REPLAY;
-	  else                                             InterlockNextState = STATE_T3_DTLB_MISS;
-	  STATE_T4_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_READY;
-	  else                                             InterlockNextState = STATE_T4_ITLB_MISS;
-	  STATE_T5_ITLB_MISS:    if(ITLBWriteF)                                   InterlockNextState = STATE_T0_REPLAY;
-	  else                                             InterlockNextState = STATE_T5_ITLB_MISS;
-	  STATE_T7_DITLB_MISS:   if(DTLBWriteM)                                   InterlockNextState = STATE_T5_ITLB_MISS;
-	  else                                             InterlockNextState = STATE_T7_DITLB_MISS;
-	  default: InterlockNextState = STATE_T0_READY;
+	  STATE_T0_READY: if (TrapM)                  InterlockNextState = STATE_T0_READY;
+	                  else if(ToDTLBMiss)         InterlockNextState = STATE_T3_DTLB_MISS;
+	                  else if(ToITLBMissNoReplay) InterlockNextState = STATE_T4_ITLB_MISS;
+                      else if(ToITLBMiss)         InterlockNextState = STATE_T5_ITLB_MISS;
+	                  else if(ToBoth)             InterlockNextState = STATE_T7_DITLB_MISS;
+	                  else                        InterlockNextState = STATE_T0_READY;
+	  STATE_T0_REPLAY:     if(DCacheStallM)       InterlockNextState = STATE_T0_REPLAY;
+	                       else                   InterlockNextState = STATE_T0_READY;
+	  STATE_T3_DTLB_MISS:  if(DTLBWriteM)         InterlockNextState = STATE_T0_REPLAY;
+	                       else                   InterlockNextState = STATE_T3_DTLB_MISS;
+	  STATE_T4_ITLB_MISS:  if(ITLBWriteF)         InterlockNextState = STATE_T0_READY;
+	                       else                   InterlockNextState = STATE_T4_ITLB_MISS;
+	  STATE_T5_ITLB_MISS:  if(ITLBWriteF)         InterlockNextState = STATE_T0_REPLAY;
+	                       else                   InterlockNextState = STATE_T5_ITLB_MISS;
+	  STATE_T7_DITLB_MISS: if(DTLBWriteM)         InterlockNextState = STATE_T5_ITLB_MISS;
+	                       else                   InterlockNextState = STATE_T7_DITLB_MISS;
+	  default:                                    InterlockNextState = STATE_T0_READY;
 	endcase
   end // always_comb
 	  

@@ -82,6 +82,7 @@ module lsu (
    input var                logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
   );
 
+  localparam                CACHE_ENABLED = `DMEM == `MEM_CACHE;
   logic [`XLEN+1:0]         IEUAdrExtM;
   logic [`PA_BITS-1:0]      LSUPAdrM;
   logic                     DTLBMissM;
@@ -192,9 +193,9 @@ module lsu (
               .DCacheMiss, .DCacheAccess);
     assign SelUncachedAdr = '0; // value does not matter.
   end else begin : bus  
-    localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheBusWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
@@ -206,7 +207,7 @@ module lsu (
     logic                SelBus;
     logic [LOGWPL-1:0]   WordCount;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, 1) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
       .WordCount, .LSUBusWriteCrit,
@@ -224,7 +225,7 @@ module lsu (
       .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.
     
 
-    if(`DMEM == `MEM_CACHE) begin : dcache
+    if(CACHE_ENABLED) begin : dcache
       logic [1:0] RW, Atomic;
       assign RW = CacheableM ? LSURWM : 2'b00;        // AND gate
       assign Atomic = CacheableM ? LSUAtomicM : 2'b00; // AND gate
