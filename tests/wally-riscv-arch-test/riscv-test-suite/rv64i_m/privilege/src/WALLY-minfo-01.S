@@ -25,7 +25,7 @@
 
 INIT_TESTS
 
-s_file_begin:
+TRAP_HANDLER m
 
 // Test 5.2.3.1: testing Read-only access to Machine info CSRs 
 CSR_R_ACCESS mvendorid

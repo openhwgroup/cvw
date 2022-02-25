@@ -25,7 +25,7 @@
 
 INIT_TESTS
 
-s_file_begin:
+TRAP_HANDLER m
 
 # Test 5.2.3.6: Test that all the machine mode CSR's are innaccessible for reads and writes in R mode.
 
