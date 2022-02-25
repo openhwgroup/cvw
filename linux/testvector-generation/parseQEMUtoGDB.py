@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 import fileinput, sys
 
-sys.stderr.write("reminder: parse_qemu.py takes input from stdin\n")
 parseState = "idle"
 beginPageFault = 0
 inPageFault = 0
@@ -13,6 +12,7 @@ pageFaultRegs = {}
 instrs = {}
 instrCount = 0
 returnAdr = 0
+sys.stderr.write("reminder: parse_qemu.py takes input from stdin\n")
 
 def printPC(l):
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs, instrCount

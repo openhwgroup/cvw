@@ -31,4 +31,3 @@ then
     sudo chown cad $recordFile
     sudo chmod o-w $recordFile
 fi
-

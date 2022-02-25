@@ -33,7 +33,7 @@ then
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
     -d nochain,cpu,in_asm,int \
-    2>&1 >/dev/null | ./parseQemuToGDB.py | ./parseGDBtoTrace.py $interruptsFile | ./remove_dup.awk > $traceFile)
+    2>&1 >/dev/null | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $interruptsFile | ./remove_dup.awk > $traceFile)
 
     # Cleanup
     echo "Elevating permissions to restrict write access to $traceFile, $interruptsFile"
@@ -42,4 +42,3 @@ then
     sudo chmod o-w $traceFile
     sudo chmod o-w $interruptsFile
 fi
-
