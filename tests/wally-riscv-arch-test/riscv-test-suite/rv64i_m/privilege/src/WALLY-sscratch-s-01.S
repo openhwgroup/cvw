@@ -25,7 +25,7 @@
 
 INIT_TESTS
 
-s_file_begin:
+TRAP_HANDLER m
 
 // Test 5.3.2.3: Scratch registers test
 WRITE_READ_CSR sscratch, 0x111 // check that sscratch is readable and writeable in machine mode

@@ -25,7 +25,8 @@
 
 INIT_TESTS
 
-s_file_begin:
+TRAP_HANDLER m
+
 // Test 5.3.2.2: Machine ISA register test
 
 // Misa is a specific case *** so I don't want to add a whole test case for reading nonzero but unkown value CSRs.
