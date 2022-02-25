@@ -42,6 +42,7 @@ module spillsupport (
   input logic [31:0]       InstrRawF,
   input logic              IFUCacheBusStallF,
   input logic              ITLBMissF, 
+  input logic              InstrDAPageFaultF, 
   output logic [`XLEN-1:0] PCNextFSpill,
   output logic [`XLEN-1:0] PCFSpill,
   output logic             SelNextSpillF,
@@ -50,44 +51,41 @@ module spillsupport (
 
 
   localparam integer   SPILLTHRESHOLD = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/32 : 1;
-  logic [`XLEN-1:0] PCPlus2F;
-  logic             TakeSpillF;
-  logic             SpillF;
-  logic             SelSpillF, SpillSaveF;
-  logic [15:0]      SpillDataLine0;
+  logic [`XLEN-1:0]    PCPlus2F;
+  logic                TakeSpillF;
+  logic                SpillF;
+  logic                SelSpillF, SpillSaveF;
+  logic [15:0]         SpillDataLine0;
+  typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
+  (* mark_debug = "true" *)  statetype CurrState, NextState;
 
-  // *** PLACE ALL THIS IN A MODULE
-  // this exists only if there are compressed instructions.
-  // reuse PC+2/4 circuitry to avoid needing a second CPA to add 2
-  mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
-  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF), .y(PCNextFSpill));
+  mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), 
+    .s(PCF[1]), .y(PCPlus2F));
+  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF),
+    .y(PCNextFSpill));
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-
-  typedef enum logic [1:0]     {STATE_SPILL_READY, STATE_SPILL_SPILL} statetype;
-  (* mark_debug = "true" *)  statetype CurrState, NextState;
-
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
+  
   always_ff @(posedge clk)
-    if (reset)    CurrState <= #1 STATE_SPILL_READY;
+    if (reset)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
 
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~ITLBMissF;
-  
   always_comb begin
     case (CurrState)
-      STATE_SPILL_READY: if (TakeSpillF)                   NextState = STATE_SPILL_SPILL;
-      else                                                 NextState = STATE_SPILL_READY;
-      STATE_SPILL_SPILL: if(IFUCacheBusStallF | StallF)    NextState = STATE_SPILL_SPILL;
-      else                                                 NextState = STATE_SPILL_READY;
-      default:                                             NextState = STATE_SPILL_READY;
+      STATE_READY: if (TakeSpillF)                NextState = STATE_SPILL;
+                   else                           NextState = STATE_READY;
+      STATE_SPILL: if(IFUCacheBusStallF | StallF) NextState = STATE_SPILL;
+                   else                           NextState = STATE_READY;
+      default:                                    NextState = STATE_READY;
     endcase
   end
 
-  assign SelSpillF = (CurrState == STATE_SPILL_SPILL);
-  assign SelNextSpillF = (CurrState == STATE_SPILL_READY & TakeSpillF) |
-                         (CurrState == STATE_SPILL_SPILL & IFUCacheBusStallF);
-  assign SpillSaveF = (CurrState == STATE_SPILL_READY) & TakeSpillF;
+  assign SelSpillF = (CurrState == STATE_SPILL);
+  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
+                         (CurrState == STATE_SPILL & IFUCacheBusStallF);
+  assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
 
   flopenr #(16) SpillInstrReg(.clk(clk),
                               .en(SpillSaveF),
@@ -95,7 +93,8 @@ module spillsupport (
                               .d((`IMEM == `MEM_CACHE) ? InstrRawF[15:0] : InstrRawF[31:16]),
                               .q(SpillDataLine0));
 
-  assign PostSpillInstrRawF = SpillF ? {InstrRawF[15:0], SpillDataLine0} : InstrRawF;
+  mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], SpillDataLine0}), .s(SpillF),
+    .y(PostSpillInstrRawF));
   assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
 
 endmodule
