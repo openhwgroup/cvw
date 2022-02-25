@@ -55,12 +55,15 @@ RVTEST_CODE_BEGIN
 
 .endm
 
-.macro TRAP_HANDLER MODE // default to vectored tests
+.macro TRAP_HANDLER MODE, VECTORED=1 // default to vectored tests
     //   Set up the exception Handler, keeping the original handler in x4.
 
     // trap handler setup
-    
     la x1, trap_handler_\MODE\()
+.if (\VECTORED == 1)
+    ori x1, x1, 0x1 // set mode field of tvec to 1, forcing vectored interrupts
+.endif
+
 .if (\MODE\() == m)
     csrrw x4, \MODE\()tvec, x1  // x4 reserved for "default" trap handler address that needs to be restored before halting this test.
 .else
@@ -71,7 +74,8 @@ RVTEST_CODE_BEGIN
     li a1, 0 
     li a2, 0 // reset trap handler inputs to zero
 
-    j trap_handler_end_\MODE\()
+    j trap_handler_end_\MODE\() // skip the trap handler when it is being defined.
+
 	// ---------------------------------------------------------------------------------------------
     // General traps Handler
     // 
@@ -106,9 +110,25 @@ RVTEST_CODE_BEGIN
     //     
     // --------------------------------------------------------------------------------------------
 
-
+.align 2
 trap_handler_\MODE\():
-    // The processor is always in machine mode when a trap takes us here
+    j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
+    // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
+    // otherwise, a vectored interrupt handler should jump to trap_handler_\MODE\() + 4 * Interrupt cause code
+    .4byte s_soft_interrupt_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
+    .4byte segfault_\MODE\()            // 2: reserved
+    .4byte m_soft_interrupt_\MODE\()    // 3: breakpoint
+    .4byte segfault_\MODE\()            // 4: reserved
+    .4byte s_time_interrupt_\MODE\()    // 5: load access fault
+    .4byte segfault_\MODE\()            // 6: reserved
+    .4byte m_time_interrupt_\MODE\()    // 7: store access fault
+    .4byte segfault_\MODE\()            // 8: reserved
+    .4byte s_ext_interrupt_\MODE\()     // 9: ecall from S-mode
+    .4byte segfault_\MODE\()            // 10: reserved
+    .4byte m_ext_interrupt_\MODE\()     // 11: ecall from M-mode
+    // 12 through >=16 are reserved or designated for platform use
+
+trap_unvectored_\MODE\():
     // save registers on stack before using
     sd x1, -8(sp)       
     sd x5, -16(sp)      
@@ -126,7 +146,7 @@ trap_handler_\MODE\():
     bnez x5, trapreturn_\MODE\()   // return from interrupt
     // Other trap handling is specified in the vector Table
     slli x1, x1, 3      // multiply cause by 8 to get offset in vector Table
-    la x5, trap_handler_vector_table_\MODE\()
+    la x5, exception_vector_table_\MODE\()
     add x5, x5, x1      // compute address of vector in Table
     ld x5, 0(x5)        // fectch address of handler from vector Table
     jr x5               // and jump to the handler
@@ -248,13 +268,32 @@ accessfault_\MODE\():
     // *** What do I have to do here?
     j trapreturn_\MODE\()
 
+s_soft_interrupt_\MODE\(): // these labels are here to make sure the code compiles, but don't actually do anything yet
+    j trapreturn_\MODE\()
+
+m_soft_interrupt_\MODE\():
+    j trapreturn_\MODE\()
+
+s_time_interrupt_\MODE\():
+    j trapreturn_\MODE\()
+
+m_time_interrupt_\MODE\():
+    j trapreturn_\MODE\()
+
+s_ext_interrupt_\MODE\():
+    j trapreturn_\MODE\()
+
+m_ext_interrupt_\MODE\():
+    j trapreturn_\MODE\()
+
+
     // Table of trap behavior
     // lists what to do on each exception (not interrupts)
     // unexpected exceptions should cause segfaults for easy detection
     // Expected exceptions should increment the EPC to the next instruction and return
 
     .align 3 // aligns this data table to an 8 byte boundary
-trap_handler_vector_table_\MODE\():
+exception_vector_table_\MODE\():
     .8byte segfault_\MODE\()      // 0: instruction address misaligned
     .8byte instrfault_\MODE\()    // 1: instruction access fault
     .8byte illegalinstr_\MODE\()  // 2: illegal instruction
