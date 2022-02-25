@@ -54,6 +54,10 @@ examples/C/sum/sum
 examples/C/fir/fir
 linux/devicetree/debug/*
 !linux/devicetree/debug/dump-dts.sh
+linux/testvector-generation/genCheckpoint.gdb
+linux/testvector-generation/silencePipe
+linux/testvector-generation/silencePipe.control
+linux/testvector-generation/fixBinMem
 *.dtb
 synthDC/WORK
 synthDC/alib-52
