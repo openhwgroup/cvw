@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BUILD="./TestFloat-3e/build/Linux-x86_64-GCC"
+BUILD="../../addins/TestFloat-3e/build/Linux-x86_64-GCC"
 OUTPUT="./vectors"
 
 $BUILD/testfloat_gen f32_eq > $OUTPUT/f32_cmp_eq.tv

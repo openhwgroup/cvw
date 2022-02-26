@@ -1,6 +1,6 @@
 #!/bin/sh
 
-BUILD="./TestFloat-3e/build/Linux-x86_64-GCC"
+BUILD="../../addins/TestFloat-3e/build/Linux-x86_64-GCC"
 OUTPUT="./vectors"
 
 $BUILD/testfloat_gen -rnear_even f64_to_f32 > $OUTPUT/f64_f32_rne.tv
