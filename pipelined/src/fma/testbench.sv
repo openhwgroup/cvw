@@ -1,5 +1,5 @@
 /* verilator lint_off STMTDLY */
-module testbench;
+module testbench_fma16;
   logic        clk, reset;
   logic [15:0] x, y, z, rexpected, result;
   logic [7:0]  ctrl;
