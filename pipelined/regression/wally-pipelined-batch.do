@@ -20,10 +20,10 @@
 onbreak {resume}
 
 # create library
-if [file exists work_${1}_${2}] {
-    vdel -lib work_${1}_${2} -all
+if [file exists wkdir/work_${1}_${2}] {
+    vdel -lib wkdir/work_${1}_${2} -all
 }
-vlib work_${1}_${2}
+vlib wkdir/work_${1}_${2}
 
 # compile source files
 # suppress spurious warnngs about 
@@ -33,21 +33,21 @@ vlib work_${1}_${2}
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined-batch.do ../config/rv32ic rv32ic
 if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
-    vopt work_${1}_${2}.testbench -work work_${1}_${2} -G INSTR_LIMIT=$3 -G INSTR_WAVEON=$4 -G CHECKPOINT=$5 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084
+    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G INSTR_LIMIT=$3 -G INSTR_WAVEON=$4 -G CHECKPOINT=$5 -o testbenchopt 
+    vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084
 
     run -all
     run -all
     exec ./slack-notifier/slack-notifier.py
     quit 
 } else {
-    vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    vopt work_${1}_${2}.testbench -work work_${1}_${2} -G TEST=$2 -o testbenchopt
-    vsim -lib work_${1}_${2} testbenchopt 
+    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
+    vsim -lib wkdir/work_${1}_${2} testbenchopt 
     # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
     #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
     #vsim -coverage -lib work_$2 workopt_$2
