@@ -36,7 +36,8 @@ do
     else
         echo -e "\e[31m ... FAIL \e[39m"
         FAIL=$((${FAIL} + 1))
-        sdiff <(grep -o '^[^#]*' ${ref}) ${sig} > ${dif}
+        # KMG: changed sdiff similar to above
+        sdiff --ignore-case --ignore-trailing-space --strip-trailing-cr <(grep -o '^[^#]*' ${ref}) ${sig} > ${dif}
     fi
 done
 
