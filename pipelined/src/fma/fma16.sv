@@ -13,20 +13,25 @@
 
 module fma16(
   input  logic [15:0] x, y, z,
-  input  logic        add, mul, negp, negz,
+  input  logic        mul, add, negp, negz,
   input  logic [1:0]  roundmode,  // 00: rz, 01: rne, 10: rp, 11: rn
   output logic [15:0] result);
  
   logic [10:0] xm, ym, zm;
-  logic [4:0] xe, ye, ze;
-  logic       xs, ys, zs;
-  logic       zs1; // sign before optional negation
-  logic       ps;  // sign of product
+  logic [4:0]  xe, ye, ze;
+  logic        xs, ys, zs;
+  logic        zs1; // sign before optional negation
+  logic [21:0] pm;
+  logic [5:0]  pe;
+  logic        ps;  // sign of product
+  logic [22:0] rm;
+  logic [6:0]  re;
+  logic        rs;
 
   unpack unpack(x, y, z, xm, ym, zm, xe, ye, ze, xs, ys, zs1);  // unpack inputs
   signadj signadj(negp, negz, xs, ys, zs1, ps, zs);             // handle negations
-  mult mult(mul, xm, ym, xe, ye, pm, pe);                       // p = x * y
-  add add(add, pm, zm, pe, ze, ps, zs, rm, re, rs);             // r = z + p
+  mult m(mul, xm, ym, xe, ye, pm, pe);                       // p = x * y
+  add a(add, pm, zm, pe, ze, ps, zs, rm, re, rs);             // r = z + p
   postproc post(roundmode, rm, re, rs, result);                 // normalize, round, pack
 endmodule
 
@@ -34,13 +39,12 @@ module mult(
   input  logic        mul,
   input  logic [10:0] xm, ym,
   input  logic [4:0]  xe, ye,
-  input  logic        xs, ys,
   output logic [21:0] pm,
   output logic [5:0]  pe);
 
   // only multiply if mul = 1
-  assign pm = mul ? xm * ym : xm;       // multiply mantiassas 
-  assign pe = mul ? xe + ye : xe;  
+  assign pm = mul ? xm * ym : {1'b0, xm, 10'b0};       // multiply mantiassas 
+  assign pe = mul ? xe + ye : {1'b0, xe};  
 endmodule
 
 module add(
@@ -58,15 +62,18 @@ module add(
   logic [6:0]  are;
   logic        ars;
 
+  /*
   alignshift as(pe, ze, zm, zmaligned);
   condneg cnp(pm, ps, pmn);
   condneg cnz(zm, zs, zmn);
+  assign 
+  */
   
   // add or pass product through
-  assign rm = add ? arm : pm;
-  assign re = add ? are : pe;
+  assign rm = add ? arm : {1'b0, pm};
+  assign re = add ? are : {1'b0, pe};
   assign rs = add ? ars : ps;
-);
+endmodule
 
 module postproc(
   input  logic [1:0] roundmode,
@@ -74,6 +81,33 @@ module postproc(
   input  logic [6:0]  re,
   input  logic        rs,
   output logic [15:0] result);
+
+  logic [9:0] uf, uff;
+  logic [6:0] ue;
+  logic [6:0] ueb, uebiased;
+  
+  always_comb 
+    if (rm[21]) begin // normalization right shift by 1 and bump up exponent;
+        ue = re + 7'b1;
+        uf = rm[20:11];
+    end else begin // no normalization shift needed
+        ue = re;
+        uf = rm[19:10];
+    end
+
+  // overflow
+  always_comb begin
+    ueb = ue-7'd15;
+    if (ue >= 7'd46) begin // overflow
+      uebiased = 5'd30;
+      uff = 10'h3ff;
+    end else begin
+      uebiased = ue-7'd15;
+      uff = uf;
+    end
+  end
+  
+  assign result = {rs, uebiased[4:0], uff};
 
   // add special case handling for zeros, NaN, Infinity
 endmodule
@@ -107,15 +141,9 @@ module unpacknum(
   logic [9:0] f;  // fraction without leading 1
   logic [4:0] eb; // biased exponent
 
-  assign {f, eb, s} = num; // pull bit fields out of floating-point number
+  assign {s, eb, f} = num; // pull bit fields out of floating-point number
   assign m = {1'b1, f}; // prepend leading 1 to fraction
-  assign e = eb - 15;   // remove bias from exponent
+  assign e = eb;   // leave bias in exponent ***
 endmodule
 
 
-// Tests:
-// Every permutation for x, y, z of 
-//    mantissa = {1.0, 1.0000000001, 1.1, 1.1111111110, 1.1111111111}
-//    biased exponent = {1, 2, 14, 15, 16, 21, 29, 30}
-//    sign = {0, 1}
-//    special case: [normal, 0, INF, NaN]

@@ -1,10 +1,19 @@
-TARGET ?= fma
+# Makefile
 
-# for some reason, softfloat.a needs to be symlinked to the local directory.  -L isn't working
-$(TARGET): $(TARGET).c Makefile
-	gcc -O2 -o $(TARGET) $(TARGET).c softfloat.a  \
-		 -I../../../addins/SoftFloat-3e/source/include  \
-		 -L../../../addins/SoftFloat-3e/build/Linux-x86_64-GCC 
+CC     = gcc
+CFLAGS = -O3
+LIBS   = -lm
+LFLAGS = -L. 
+IFLAGS = -I../../../addins/SoftFloat-3e/source/include/
+LIBS   = ../../../addins/SoftFloat-3e/build/Linux-x86_64-GCC/softfloat.a
+SRCS   = $(wildcard *.c)
+
+PROGS = $(patsubst %.c,%,$(SRCS))
+
+all:	$(PROGS)
+
+%: %.c
+	$(CC) $(CFLAGS) $(IFLAGS) $(LFLAGS) -o $@ $< $(LIBS)
 
 clean: 
-	rm $(TARGET)
+	rm -f $(PROGS)
