@@ -65,7 +65,7 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     resultmag.v &= 0x7FFF; // take absolute value
     if (f16_lt(resultmag, smallest) && (resultmag.v != 0x0000)) fprintf (fptr, "// skip denorm: ");
     if (resultmag.v == 0x0000 && !zeroAllowed) fprintf(fptr, "// skip zero: ");
-    if (resultmag.v == 0x7C00 && !infAllowed)  fprintf(fptr, "// Skip inf: ");
+    if ((resultmag.v == 0x7C00 || resultmag.v == 0x7BFF) && !infAllowed)  fprintf(fptr, "// Skip inf: ");
     if (resultmag.v >  0x7C00 && !nanAllowed)  fprintf(fptr, "// Skip NaN: ");
     fprintf(fptr, "%04x_%04x_%04x_%02x_%04x // %s\n", x.v, y.v, z.v, op, result.v, calc);
 }
