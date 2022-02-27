@@ -4,8 +4,12 @@ CC     = gcc
 CFLAGS = -O3
 LIBS   = -lm
 LFLAGS = -L. 
-IFLAGS = -I../../../addins/SoftFloat-3e/source/include/
-LIBS   = ../../../addins/SoftFloat-3e/build/Linux-x86_64-GCC/softfloat.a
+# Link against the riscv-isa-sim version of SoftFloat rather than 
+# the regular version to get RISC-V NaN behavior
+IFLAGS   = -I$(RISCV)/riscv-isa-sim/softfloat
+LIBS   = $(RISCV)/riscv-isa-sim/build/libsoftfloat.a
+#IFLAGS = -I../../../addins/SoftFloat-3e/source/include/
+#LIBS   = ../../../addins/SoftFloat-3e/build/Linux-x86_64-GCC/softfloat.a
 SRCS   = $(wildcard *.c)
 
 PROGS = $(patsubst %.c,%,$(SRCS))
