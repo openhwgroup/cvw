@@ -28,14 +28,14 @@ module fma16(
   logic [6:0]  re;
   logic        rs;
 
-  unpack unpack(x, y, z, xm, ym, zm, xe, ye, ze, xs, ys, zs1);  // unpack inputs
-  signadj signadj(negp, negz, xs, ys, zs1, ps, zs);             // handle negations
-  mult m(mul, xm, ym, xe, ye, pm, pe);                       // p = x * y
-  add a(add, pm, zm, pe, ze, ps, zs, rm, re, rs);             // r = z + p
-  postproc post(roundmode, rm, re, rs, result);                 // normalize, round, pack
+  unpack16 unpack(x, y, z, xm, ym, zm, xe, ye, ze, xs, ys, zs1);  // unpack inputs
+  signadj16 signadj(negp, negz, xs, ys, zs1, ps, zs);             // handle negations
+  mult16 m(mul, xm, ym, xe, ye, pm, pe);                       // p = x * y
+  add16 a(add, pm, zm, pe, ze, ps, zs, rm, re, rs);             // r = z + p
+  postproc16 post(roundmode, rm, re, rs, result);                 // normalize, round, pack
 endmodule
 
-module mult(
+module mult16(
   input  logic        mul,
   input  logic [10:0] xm, ym,
   input  logic [4:0]  xe, ye,
@@ -47,7 +47,7 @@ module mult(
   assign pe = mul ? xe + ye : {1'b0, xe};  
 endmodule
 
-module add(
+module add16(
   input  logic        add,
   input  logic [21:0] pm, 
   input  logic [10:0] zm,
@@ -75,7 +75,7 @@ module add(
   assign rs = add ? ars : ps;
 endmodule
 
-module postproc(
+module postproc16(
   input  logic [1:0] roundmode,
   input  logic [22:0] rm,
   input  logic [6:0]  re,
@@ -112,7 +112,7 @@ module postproc(
   // add special case handling for zeros, NaN, Infinity
 endmodule
 
-module signadj(
+module signadj16(
   input  logic negx, negz,
   input  logic xs, ys, zs1,
   output logic ps, zs);
@@ -121,18 +121,18 @@ module signadj(
   assign zs = zs1 ^ negz; // 
 endmodule
 
-module unpack(
+module unpack16(
   input  logic [15:0] x, y, z,
   output logic [10:0] xm, ym, zm,
   output logic [4:0]  xe, ye, ze,
   output logic        xs, ys, zs);
 
-  unpacknum upx(x, xm, xe, xs);
-  unpacknum upy(y, ym, ye, ys);
-  unpacknum upz(z, zm, ze, zs);
+  unpacknum16 upx(x, xm, xe, xs);
+  unpacknum16 upy(y, ym, ye, ys);
+  unpacknum16 upz(z, zm, ze, zs);
 endmodule
 
-module unpacknum(
+module unpacknum16(
   input logic  [15:0] num,
   output logic [10:0] m,
   output logic [4:0]  e,

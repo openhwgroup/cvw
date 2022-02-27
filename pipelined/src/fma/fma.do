@@ -9,7 +9,7 @@ onbreak {resume}
 vlib worklib
 
 vlog -lint -work worklib fma16.sv testbench.sv
-vopt +acc worklib.testbench -work worklib -o testbenchopt
+vopt +acc worklib.testbench_fma16 -work worklib -o testbenchopt
 vsim -lib worklib testbenchopt
 
 add wave sim:/testbench/clk
