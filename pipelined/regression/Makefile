@@ -10,9 +10,9 @@ make clean:
 make all:
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
-	# Also delete bin/exe2memfile at that point
-	make -C ../../tests/imperas-riscv-tests --jobs
-	make -C ../../tests/imperas-riscv-tests XLEN=64 --jobs
+	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
+	#make -C ../../tests/imperas-riscv-tests --jobs
+	#make -C ../../tests/imperas-riscv-tests XLEN=64 --jobs
 	
 	# Build riscv-arch-test 64 and 32-bit versions
 	make -C ../../addins/riscv-arch-test --jobs

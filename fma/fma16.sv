@@ -99,8 +99,8 @@ module postproc(
   always_comb begin
     ueb = ue-7'd15;
     if (ue >= 7'd46) begin // overflow
-      uebiased = 7'd30;
-      uff = 10'h3ff;
+/*      uebiased = 7'd30;
+      uff = 10'h3ff; */
     end else begin
       uebiased = ue-7'd15;
       uff = uf;
