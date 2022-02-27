@@ -469,30 +469,31 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     // Turn translation off
     li x7, 0 // satp.MODE value for bare metal (0)
     slli x7, x7, 60
-    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field. *** add option for different pagetable location
-    add x7, x7, x28
     csrw satp, x7
-    sfence.vma x0, x0 // *** flushes global pte's as well
 .endm
 
-.macro GOTO_SV39
+.macro GOTO_SV39 ASID BASE_PPN
     // Turn on sv39 virtual memory
     li x7, 8 // satp.MODE value for Sv39 (8)
     slli x7, x7, 60
-    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field. *** add option for different pagetable location
+    li x29, \ASID
+    slli x29, x29, 44
+    or x7, x7, x29 // put ASID into the correct field of SATP
+    li x28, \BASE_PPN // Base Pagetable physical page number, satp.PPN field.
     add x7, x7, x28
     csrw satp, x7
-    sfence.vma x0, x0 // *** flushes global pte's as well
 .endm
 
-.macro GOTO_SV48
+.macro GOTO_SV48 ASID BASE_PPN
     // Turn on sv48 virtual memory
     li x7, 9 // satp.MODE value for Sv39 (8)
     slli x7, x7, 60
-    li x28, 0x8000D // Base Pagetable physical page number, satp.PPN field. *** add option for different pagetable location
+    li x29, \ASID
+    slli x29, x29, 44
+    or x7, x7, x29 // put ASID into the correct field of SATP
+    li x28, \BASE_PPN // Base Pagetable physical page number, satp.PPN field.
     add x7, x7, x28
     csrw satp, x7
-    sfence.vma x0, x0 // *** flushes global pte's as well
 .endm
 
 .macro WRITE_READ_CSR CSR VAL
@@ -709,15 +710,31 @@ goto_baremetal:
     j test_loop // go to next test case
 
 goto_sv39:
-    GOTO_SV39
+    // Turn sv39 translation on
+    // Base PPN in x28, ASID in x29
+    li x7, 8 // satp.MODE value for sv39 (8)
+    slli x7, x7, 60
+    slli x29, x29, 44
+    or x7, x7, x29 // put ASID into the correct field of SATP
+    or x7, x7, x28 // Base Pagetable physical page number, satp.PPN field.
+    csrw satp, x7
+    li x29, 0xFFFFFFFFFFFFF888
+    sfence.vma x0, x29 // just an attempt ***
     j test_loop // go to next test case
 
 goto_sv48:
-    GOTO_SV48
+    // Turn sv48 translation on
+    // Base PPN in x28, ASID in x29
+    li x7, 9 // satp.MODE value for sv48 (9)
+    slli x7, x7, 60
+    slli x29, x29, 44
+    or x7, x7, x29 // put ASID into the correct field of SATP
+    or x7, x7, x28 // Base Pagetable physical page number, satp.PPN field.
+    csrw satp, x7
     j test_loop // go to next test case
 
 write_mxr_sum:
-    // writes sstatus.[mxr, sum] with the (assumed to be) 2 bit value in x29. also assumes we're in S. M mode
+    // writes sstatus.[mxr, sum] with the (assumed to be) 2 bit value in x29. also assumes we're in S or M mode
     li x30, 0xC0000 // mask bits for MXR, SUM
     not x7, x29
     slli x7, x7, 18
@@ -726,6 +743,29 @@ write_mxr_sum:
     csrc sstatus, x7
     csrs sstatus, x29
     j test_loop
+
+read_write_mprv:
+    // reads old mstatus.mprv value to output, then
+    // Writes mstatus.mprv with the 1 bit value in x29. assumes we're in m mode
+    li x30, 0x20000 // mask bits for mprv
+    csrr x7, mstatus
+    and x7, x7, x30
+    srli x7, x7, 17
+    sd x7, 0(x6) // store old mprv to output
+    addi x6, x6, 8
+    addi x16, x16, 8 
+
+    not x7, x29
+    slli x7, x7, 17
+    slli x29, x29, 17
+    csrc mstatus, x7
+    csrs mstatus, x29 // clear or set mprv bit
+    li x7, 0x1800  
+    csrc mstatus, x7
+    li x7, 0x800
+    csrs mstatus, x7 // set mpp to supervisor mode to see if mprv=1 really executes in the mpp mode
+    j test_loop
+
 
 write_pmpcfg_0:
     // writes the value in x29 to the pmpcfg register specified in x28.
