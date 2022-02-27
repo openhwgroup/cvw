@@ -24,9 +24,10 @@ export SAIFPOWER ?= 0
 CONFIGDIR ?= ~/riscv-wally/pipelined/config
 #CONFIGS	?= $(shell find $(CONFIGDIR) -name "rv*")
 CONFIGS ?= ("rv32e", "rv32ic")
-
+CONFIGFILES	?= $(shell find $(CONFIGDIR) -name *_*)
+CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
 print:
-	echo "files in $(CONFIGDIR) are $(CONFIGS)."
+	echo $(CONFIGFILESTRIM)
 
 default:
 	@echo "Basic synthesis procedure for Wally:"
@@ -38,22 +39,57 @@ test: rv%
 rv%.log: rv%
 	echo $<
 
-flavors:
-	rm -rf $(CONFIGDIR)/rv32em
-	cp -r $(CONFIGDIR)/rv32e $(CONFIGDIR)/rv32em
-	sed -i 's/h00000010/h00001010/' $(CONFIGDIR)/rv32em/wally-config.vh
-	# rv32e, 32ic, 32gc 64ic, 64gc
-	# 64gc - FPU
-	# PMP16
-	# PMP0
-	# No virtual memory
-	# Muldiv
-	
 
-allsynth: 
-	make flavors
-	make synth DESIGN=wallypipelinedcore CONFIG=rv32e TECH=sky90 FREQ=500 MAXCORES=1
-	make synth DESIGN=wallypipelinedcore CONFIG=rv32em TECH=sky90 FREQ=500 MAXCORES=1
+DIRS = rv32e #rv32gc rv64ic rv64gc rv32ic
+CONFIGSUBDIRS = _FPUoff _noMulDiv _noVirtMem _PMP0 _PMP16 _orig
+CONFIGFILES	?= $(shell find $(CONFIGDIR) -type d -regex "*_*")
+del:
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_FPUoff;)
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_PMP16;)
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_PMP0;)
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_noVirtMem;)
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_noMulDiv;)
+
+configs:
+	# @$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
+	# @$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
+	# turn off FPU 
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_FPUoff;)
+	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_FPUoff;)
+	@$(foreach dir, $(DIRS), sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$(dir)_FPUoff/wally-config.vh;)
+	@$(foreach dir, $(DIRS), sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$(dir)_FPUoff/wally-config.vh;)
+
+	# PMP 16 
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_PMP16;)
+	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_PMP16;)
+	@$(foreach dir, $(DIRS), sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 16/' $(CONFIGDIR)/$(dir)_PMP16/wally-config.vh;)
+	
+	# PMP 0
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_PMP0;)
+	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_PMP0;)
+	@$(foreach dir, $(DIRS), sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/$(dir)_PMP0/wally-config.vh;)
+	
+	# No Virtual Memory 
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_noVirtMem;)
+	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_noVirtMem;)
+	@$(foreach dir, $(DIRS), sed -i 's/VIRTMEM_SUPPORTED 1/VIRTMEM_SUPPORTED 0/' $(CONFIGDIR)/$(dir)_noVirtMem/wally-config.vh;)
+
+	#no muldiv
+	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_noMulDiv;)
+	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_noMulDiv;)
+	@$(foreach dir, $(DIRS), sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/$(dir)_noMulDiv/wally-config.vh;)
+
+
+# allsynth:
+# 	make configs
+# 	$(foreach dir, $(CONFIGFILESTRIM), \
+# 	make synth DESIGN=wallypipelinedcore CONFIG=$(dir) TECH=sky90 FREQ=500 --jobs;)
+
+allsynth: $(CONFIGFILESTRIM)
+
+$(CONFIGFILESTRIM):
+	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=500 --jobs
 
 synth:
 	@echo "DC Synthesis"
