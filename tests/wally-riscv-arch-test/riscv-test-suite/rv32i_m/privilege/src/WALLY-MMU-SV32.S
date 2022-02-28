@@ -40,9 +40,9 @@ test_cases:
 #   Here is where the actual tests are held, or rather, what the actual tests do.
 #   each entry consists of 3 values that will be read in as follows:
 #   
-#   '.8byte [x28 Value], [x29 Value], [x30 value]'
+#   '.4byte [x28 Value], [x29 Value], [x30 value]'
 #                     or
-#   '.8byte [address], [value], [test type]'
+#   '.4byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
 # 
@@ -70,6 +70,9 @@ test_cases:
 # Level 0 page table B
 .4byte 0x80015FFC, 0x202004C7, write32_test  # Vaddr 0xBFF000 Paddr 0x80801000: aligned kilopage with X=0, U=0
 
+# second page table to check context switches with satp
+.4byte 0x8000F000, 0x200000CF, write32_test # Vaddr 0x0 Paddr 0x80000000: aligned megapage
+.4byte 0x8000F800, 0x200000CF, write32_test # Vaddr 0x80000000 Paddr 0x80000000: aligned megapage (program and data memory)
 
 # test 12.3.1.1.2 write values to Paddrs in each page
 # each of these values is used for 12.3.1.1.3 and some other tests, specified in the comments.
@@ -96,7 +99,7 @@ test_cases:
 .4byte 0x8000FFA4, 0x00008067, read32_test
 
 # test 12.3.1.1.4 check translation works in sv48, read the same values from previous tests, this time with Vaddrs
-.4byte 0x0, 0x0, goto_sv32 # satp.MODE = sv32, Nothing written to output
+.4byte 0x8000D, 0x0, goto_sv32 # satp.MODE = sv32, Nothing written to output
 .4byte 0x4AAAA8, 0xBEEF0055, read32_test    # megapage at Vaddr 0x400000, Paddr 0x80000000
 .4byte 0xBFF7E0, 0xBEEF0099, read32_test    # kilopage at Vaddr 0xBFF000, Paddr 0x80201000
 
@@ -158,6 +161,35 @@ test_cases:
 # test 12.3.1.3.7 Dirty flag == 0
 .4byte 0x4658, 0xBEEF0AA0, write32_test # store page fault when D=0
 .4byte 0x4AA0, 0xBEEF0BB0, read32_test # read success when D=0
+
+# =========== test 12.3.1.4 SATP Register ===========
+
+# test 12.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
+// *** .4byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write32_test # write identical value to global PTE to make sure it's still in the TLB
+.4byte 0x8000F, 0x11, goto_sv32 # go to SV39 on a second, very minimal page table
+.4byte 0xE3130, 0xBEEF0077, read32_test # Read success of old written value from a new page table mapping 
+
+# test 12.3.1.4.2 Test Global mapping
+// ***.4byte 0x7FFFFFF888, 0x0220DEADBEEF0099, read32_test # read success of global PTE undefined in current mapping.
+
+
+# =========== test 12.3.1.5 STATUS Registers ===========
+
+# test 12.3.1.5.1 mstatus.mprv translation
+# *** mstatus.mprv = 0 tested on every one of the translated reads and writes before this.
+.4byte 0x8000D, 0x0, goto_sv32 // go back to old, extensive page table
+.4byte 0x80000000, 0x1, goto_m_mode // go to m mode to be able to write mstatus
+.4byte 0x1, 0x1, read_write_mprv // write 1 to mstatus.mprv and set mstatus.mpp to be 01=S
+.4byte 0xBFF7E0, 0xBEEF0099, read32_test // read test succeeds with translation even though we're in M mode since MPP=S and MPRV=1
+
+# test 12.3.1.5.2 mstatus.mprv clearing
+# mstatus.mprv is already 1 from the last test so going to S mode should clear it with the mret
+.4byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to 
+.4byte 0x80000000, 0x1, goto_m_mode // go back to m mode to allow us to reread mstatus.
+.4byte 0x0, 0x0, read_write_mprv // read what should be a zeroed out mprv value and then force it back to zero.
+
+# test 12.3.1.5.3 sstatus.mxr read
+# this bitfield already tested in 12.3.1.3.3
 
 # terminate tests
 .4byte 0x0, 0x0, terminate_test # brings us back into machine mode with a final ecall, writing 0x9 to the output.

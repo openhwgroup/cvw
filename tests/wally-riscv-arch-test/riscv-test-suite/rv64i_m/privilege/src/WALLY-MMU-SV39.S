@@ -83,10 +83,14 @@ test_cases:
 # Level 0 page table B
 .8byte 0x0000000080016FF8, 0x00000000200804CF, write64_test# Vaddr 0xFFFFFFFFFFFFF000, Paddr 0x80201000 aligned kilopage
 
+# second page table to check context switches with satp
+.8byte 0x8FFFF000, 0x200000CF, write64_test# Vaddr 0x0, Paddr 0x80000000 aligned gigapage
+.8byte 0x8FFFF010, 0x200000CF, write64_test# Vaddr 0x8000_0000, Paddr 0x80000000: aligned gigapage (program and data memory so we can execute without jumping around)
+
 # test 12.3.1.1.2 write values to Paddrs in each page
 # each of these values is used for 12.3.1.1.3 and some other tests, specified in the comments.
 # when a test is supposed to fault, nothing is written into where it'll be reading/executing since it shuold fault before getting there.
-.8byte 0x80200AB0, 0x0000DEADBEEF0000, write64_test# 12.3.1.1.4 
+.8byte 0x80200AB0, 0x0000DEADBEEF0000, write64_test# 12.3.1.1.4 and 12.3.1.4.1
 .8byte 0x800FFAB8, 0x0880DEADBEEF0055, write64_test# 12.3.1.1.4
 .8byte 0x80200AC0, 0x0990DEADBEEF0033, write64_test# 12.3.1.3.2
 .8byte 0x80203130, 0x0110DEADBEEF0077, write64_test# 12.3.1.3.2
@@ -108,7 +112,7 @@ test_cases:
 .8byte 0x80203AA0, 0x0440DEADBEEF0BB0, read64_test
 
 # test 12.3.1.1.4 check translation works in sv39, read the same values from previous tests, this time with Vaddrs
-.8byte 0x0, 0x0, goto_sv39 # satp.MODE = sv39, current VPN: gigapage at 0x80000000. Nothing written to output
+.8byte 0x8000D, 0x0, goto_sv39 # satp.MODE = sv39, with base page table PPN = 0x8000D and ASID = 0. current VPN: gigapage at 0x80000000.
 .8byte 0x80200AB0, 0x0000DEADBEEF0000, read64_test         # gigapage at Vaddr 0x80000000, Paddr 0x80000000
 .8byte 0x400FFAB8, 0x0880DEADBEEF0055, read64_test         # megapage at Vaddr 0x40400000, Paddr 0x80000000
 .8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, read64_test # kilopage at Vaddr 0xFFFFFFFFFFFFF000, Paddr 0x80201000
@@ -174,6 +178,35 @@ test_cases:
 # test 12.3.1.3.7 Dirty flag == 0
 .8byte 0x4658, 0x0440DEADBEEF0AA0, write64_test# store page fault when D=0
 .8byte 0x4AA0, 0x0440DEADBEEF0BB0, read64_test# read success when D=0
+
+# =========== test 12.3.1.4 SATP Register ===========
+
+# test 12.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
+// *** .8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write64_test # write identical value to global PTE to make sure it's still in the TLB
+.8byte 0x8FFFF, 0x11, goto_sv39 # go to SV39 on a second, very minimal page table
+.8byte 0x200AB0, 0x0000DEADBEEF0000, read64_test # Read success of old written value from a new page table mapping 
+
+# test 12.3.1.4.2 Test Global mapping
+// ***.8byte 0x7FFFFFF888, 0x0220DEADBEEF0099, read64_test # read success of global PTE undefined in current mapping.
+
+
+# =========== test 12.3.1.5 STATUS Registers ===========
+
+# test 12.3.1.5.1 mstatus.mprv translation
+# *** mstatus.mprv = 0 tested on every one of the translated reads and writes before this.
+.8byte 0x8000D, 0x0, goto_sv39 // go back to old, extensive page table
+.8byte 0x80000000, 0x1, goto_m_mode // go to m mode to be able to write mstatus
+.8byte 0x1, 0x1, read_write_mprv // write 1 to mstatus.mprv and set mstatus.mpp to be 01=S
+.8byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, read64_test // read test succeeds with translation even though we're in M mode since MPP=S and MPRV=1
+
+# test 12.3.1.5.2 mstatus.mprv clearing
+# mstatus.mprv is already 1 from the last test so going to S mode should clear it with the mret
+.8byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to 
+.8byte 0x80000000, 0x1, goto_m_mode // go back to m mode to allow us to reread mstatus.
+.8byte 0x0, 0x0, read_write_mprv // read what should be a zeroed out mprv value and then force it back to zero.
+
+# test 12.3.1.5.3 sstatus.mxr read
+# this bitfield already tested in 12.3.1.3.3
 
 # terminate tests
 .8byte 0x0, 0x0, terminate_test # brings us back into machine mode with a final ecall, writing 0x9 to the output.
