@@ -6,8 +6,8 @@ field_names = [ 'Name', 'Critical Path Length', 'Cell Area']
 data = []
 for name in glob.glob("/home/ssanghai/riscv-wally/synthDC/runs/*/reports/wallypipelinedcore_qor.rep"):   
     f = open(name, 'r')
-    trimName = re.search("runs\/(.*?)\/reports", name).group(1)
-    # trimName = re.search("wallypipelinedcore_(.*?)_sky9",name).group(1)
+    # trimName = re.search("runs\/(.*?)\/reports", name).group(1)
+    trimName = re.search("wallypipelinedcore_(.*?)_sky9",name).group(1)
     for line in f:
         if "Critical Path Length" in line:
             pathLen = re.search("Length: *(.*?)\\n", line).group(1) 
