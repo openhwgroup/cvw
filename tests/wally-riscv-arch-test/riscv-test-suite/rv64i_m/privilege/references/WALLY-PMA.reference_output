@@ -1,11 +1,23 @@
 beef00b4 # Test 12.3.2.1: read 64 bits success in CLINT 
 0000dead # all of these read successes are also confirming successful writes
-beef00b5 # read 32 bits success in CLINT (sign extended)
-ffffffff
-000000b6 # read 16 bits success in CLINT
+00000007 # write 32 bits with access fault in CLINT
 00000000
-ffffffb7 # read 8 bits success in CLINT (sign extended)
-ffffffff
+00000005 # read 32 bits with access fault in CLINT
+00000000
+00000bad
+00000000
+00000007 # write 16 bits with access fault in CLINT
+00000000
+00000005 # read 16 bits with access fault in CLINT
+00000000
+00000bad
+00000000
+00000007 # write 8 bits with access fault in CLINT
+00000000
+00000005 # read 8 bits with access fault in CLINT
+00000000
+00000bad
+00000000
 00000001 # execute test with access fault in CLINT
 00000000
 00000bad
@@ -144,18 +156,6 @@ ffffffff
 00000000
 0000000b # ecall from terminating tests in M mode
 00000000
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
 deadbeef
 deadbeef
 deadbeef
