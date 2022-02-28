@@ -53,7 +53,7 @@ examples/asm/example/example
 examples/C/sum/sum
 examples/C/fir/fir
 examples/fp/softfloat_demo/softfloat_demo
-examples/fp/softfloat_calc/softfloat_calc
+examples/fp/fpcalc/fpcalc
 pipelined/src/fma/fma16_testgen
 linux/devicetree/debug/*
 !linux/devicetree/debug/dump-dts.sh

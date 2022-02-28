@@ -29,26 +29,97 @@ typedef union dp {
 
 int opSize = 0;
 
+void long2binstr(long  val, char *str, int bits) {
+  int i;
+  long masked;
+
+  if (val == 0) { // just return zero
+    str[0] = '0';
+    str[1] = 0; 
+  } else {
+    for (i=0; i<bits && val != 0; i++) {
+      masked = val & ~(1 << (bits-i-1)); // mask off the bit
+      if (masked != val) str[i] = '1';
+      else str[i] = '0';
+      //printf("  Considering %d masked %d str[%d] %c\n", val, masked, i, str[i]);
+      val = masked;
+      if (!val) str[i+1] = 0; // terminate when out of nonzero digits
+    }
+  } 
+}
+
 void printF16(char *msg, float16_t f) {
   hp convh;
   sp convf;
+  long exp, fract;
+  char sign;
+  char sci[80], fractstr[80];
   float32_t temp;
+
   convh.v = f.v; // use union to convert between hexadecimal and floating-point views
   temp = f16_to_f32(convh.h);
   convf.ft = temp;
-  printf ("%s: 0x%04x = %g\n", msg, convh.v, convf.f);  // no easy way to print half prec.
+
+  fract = f.v & ((1<<10) - 1); long2binstr(fract, fractstr, 10);
+  exp = (f.v >> 10) & ((1<<5) -1);
+  sign = f.v >> 15 ? '-' : '+';
+  //printf("%c %d %d  ", sign, exp, fract);
+  if (exp == 0 && fract == 0) sprintf(sci, "%czero", sign);
+  else if (exp == 0 && fract != 0) sprintf(sci, "Denorm: %c0.%s x 2^-14", sign, fractstr);
+  else if (exp == 31 && fract == 0) sprintf(sci, "%cinf", sign);
+  else if (exp == 31 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
+  else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-15);
+
+  printf ("%s: 0x%04x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
+    msg, convh.v, convf.f, sci, exp, fract);  // no easy way to print half prec.
 }
 
 void printF32(char *msg, float32_t f) {
   sp conv;
+  long exp, fract;
+  char sign;
+  char sci[80], fractstr[80];
+
   conv.v = f.v; // use union to convert between hexadecimal and floating-point views
-  printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
+
+  fract = f.v & ((1<<23) - 1); long2binstr(fract, fractstr, 23);
+  exp = (f.v >> 23) & ((1<<8) -1);
+  sign = f.v >> 31 ? '-' : '+';
+  //printf("%c %d %d  ", sign, exp, fract);
+  if (exp == 0 && fract == 0) sprintf(sci, "%czero", sign);
+  else if (exp == 0 && fract != 0) sprintf(sci, "Denorm: %c0.%s x 2^-126", sign, fractstr);
+  else if (exp == 255 && fract == 0) sprintf(sci, "%cinf", sign);
+  else if (exp == 255 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
+  else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-127);
+
+  //printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
+  printf ("%s: 0x%08x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
+    msg, conv.v, conv.f, sci, exp, fract);  
 }
 
 void printF64(char *msg, float64_t f) {
   dp conv;
+  long exp, fract;
+  long mask;
+  char sign;
+  char sci[80], fractstr[80];
+
   conv.v = f.v; // use union to convert between hexadecimal and floating-point views
-  printf ("%s: 0x%016lx = %lg\n", msg, conv.v, conv.d);
+
+  mask = 1; mask = (mask << 52) - 1;
+  fract = f.v & mask; long2binstr(fract, fractstr, 52);
+  exp = (f.v >> 52) & ((1<<11) -1);
+  sign = f.v >> 63 ? '-' : '+';
+  //printf("%c %d %d  ", sign, exp, fract);
+  if (exp == 0 && fract == 0) sprintf(sci, "%czero", sign);
+  else if (exp == 0 && fract != 0) sprintf(sci, "Denorm: %c0.%s x 2^-1022", sign, fractstr);
+  else if (exp == 2047 && fract == 0) sprintf(sci, "%cinf", sign);
+  else if (exp == 2047 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
+  else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-1023);
+
+  //printf ("%s: 0x%016lx = %lg\n", msg, conv.v, conv.d);
+  printf ("%s: 0x%016x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
+    msg, conv.v, conv.d, sci, exp, fract); 
 }
 
 void printFlags(void) {
