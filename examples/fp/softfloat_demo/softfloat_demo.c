@@ -12,10 +12,17 @@ typedef union sp {
   float f;
 } sp;
 
-void printF32(char *msg, float32_t f) {
+void printF32 (char *msg, float32_t f) {
   sp conv;
+  int i, j;
   conv.v = f.v; // use union to convert between hexadecimal and floating-point views
-  printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
+  // Print out nicely
+  printf("%s: ", msg);
+  printf("0x%04x", (conv.v >> 16));
+  printf("_");
+  printf("%04x", (conv.v & 0xFFFF));
+  printf(" = %g\n", conv.f);  
+  //printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
 }
 
 void printFlags(void) {

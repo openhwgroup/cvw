@@ -173,10 +173,10 @@ module fpu (
    mux2 #(64) fmulzeromux (64'hFFFFFFFF00000000, 64'b0, FmtE, BoxedZeroE); // NaN boxing for 32-bit zero
    mux3  #(64)  fzmulmux (FPreSrcZE, BoxedZeroE, FPreSrcYE, {FOpCtrlE[2]&FOpCtrlE[1], FOpCtrlE[2]&~FOpCtrlE[1]}, FSrcZE);
       
-   // unpacking unit
+   // unpack unit
    //    - splits FP inputs into their various parts
    //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-   unpacking unpacking (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE, .FmtE, 
+   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE, .FmtE, 
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
