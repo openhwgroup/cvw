@@ -35,9 +35,6 @@ maintenance packet Qqemu.PhyMemMode:1
 # Symbol file
 file {vmlinux}
 
-# Silence Trace Generation
-shell echo 1 > ./silencePipe.control
-
 # Step over reset vector into actual code
 stepi 100
 # Proceed to checkpoint 
@@ -56,11 +53,11 @@ set logging off
 
 # Log main memory to a file
 print "GDB storing RAM to {ramPath}\\n"
-#dump binary memory {ramPath} 0x80000000 0xffffffff
-#dump binary memory {ramPath} 0x80000000 0x80ffffff
+dump binary memory {ramPath} 0x80000000 0xffffffff
+dump binary memory {ramPath} 0x80000000 0x80ffffff
 
 # Generate Trace Until End
-shell echo 0 > ./silencePipe.control
+maintenance packet Qqemu.Logging:1
 # Do this by setting an impossible breakpoint
 b *0x1000
 del 1

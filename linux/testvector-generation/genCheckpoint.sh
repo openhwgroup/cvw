@@ -1,9 +1,9 @@
 #!/bin/bash
-tcpPort=1237
+tcpPort=1238
 imageDir=$RISCV/buildroot/output/images
 tvDir=$RISCV/linux-testvectors
 recordFile="$tvDir/all.qemu"
-traceFile="$tvDir/all_up_to_498.txt"
+traceFile="$tvDir/all.txt"
 
 # Parse Commandline Arg
 if [ "$#" -ne 1 ]; then
@@ -30,7 +30,6 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     echo "Creating checkpoint at $instrs instructions!"
-    make silencePipe
 
     # Create Output Directory
     echo "Elevating permissions to create $checkPtDir and stuff inside it"
@@ -66,9 +65,8 @@ then
     -nographic \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
-    -d nochain,cpu,in_asm,int \
     -gdb tcp::$tcpPort -S \
-    2>&1 >/dev/null | ./silencePipe | ./parseQEMUtoGDB/parseQEMUtoGDB_run.py | ./parseGDBtoTrace/parseGDBtoTrace_run.py $interruptsFile | ./remove_dup.awk > $outTraceFile) \
+    2>&1 1>./qemu-serial | ./parseQEMUtoGDB/parseQEMUtoGDB_run.py | ./parseGDBtoTrace/parseGDBtoTrace_run.py $interruptsFile | ./remove_dup.awk > $outTraceFile) \
     & riscv64-unknown-elf-gdb --quiet -ex "source genCheckpoint.gdb"
     echo "Completed GDB script at $(date +%H:%M:%S)"
 

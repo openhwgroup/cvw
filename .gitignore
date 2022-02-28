@@ -61,6 +61,7 @@ linux/testvector-generation/genCheckpoint.gdb
 linux/testvector-generation/silencePipe
 linux/testvector-generation/silencePipe.control
 linux/testvector-generation/fixBinMem
+linux/testvector-generation/qemu-serial
 *.dtb
 synthDC/WORK
 synthDC/alib-52
