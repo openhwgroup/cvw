@@ -118,7 +118,7 @@ void printF64(char *msg, float64_t f) {
   else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-1023);
 
   //printf ("%s: 0x%016lx = %lg\n", msg, conv.v, conv.d);
-  printf ("%s: 0x%016x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
+  printf ("%s: 0x%016lx = %lg = %s: Biased Exp %d Fract 0x%lx\n", 
     msg, conv.v, conv.d, sci, exp, fract); 
 }
 
