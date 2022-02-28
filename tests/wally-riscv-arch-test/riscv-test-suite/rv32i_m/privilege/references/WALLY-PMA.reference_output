@@ -1,6 +1,10 @@
 beef00b5
-000000b6
-ffffffb7
+00000007 # write access fault with 16 bit write to CLINT
+00000005 # read access fault with 16 bit write to CLINT
+00000bad
+00000007 # write access fault with 8 bit write to CLINT
+00000005 # read access fault with 8 bit write to CLINT
+00000bad
 00000001
 00000bad
 00000002
@@ -61,10 +65,6 @@ beef00c1
 00000001
 00000bad
 0000000b
-deadbeef
-deadbeef
-deadbeef
-deadbeef
 deadbeef
 deadbeef
 deadbeef
