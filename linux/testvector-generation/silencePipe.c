@@ -12,6 +12,8 @@ int main(void)
       ssize_t lineSize = getline(&line, &len, stdin);
       if (silenceChar!='1') {
           printf("%s",line);
+      } else {
+        fprintf(stderr,"%s",line);
       }
   }
   free(line);
