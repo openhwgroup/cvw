@@ -1,6 +1,6 @@
 `include "wally-config.vh"
 
-module unpacking ( 
+module unpack ( 
     input logic  [63:0] X, Y, Z,
     input logic         FmtE,
     input logic  [2:0]  FOpCtrlE,
