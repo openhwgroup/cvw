@@ -124,11 +124,11 @@ module hptw
     
 
     assign {Dirty, Accessed} = PTE[7:6];
-    assign WriteAccess = (MemRWM[0] | |AtomicM);
-    assign SetDirty = ~Dirty & & DTLBWalk & WriteAccess;
+    assign WriteAccess = MemRWM[0] | (|AtomicM);
+    assign SetDirty = ~Dirty & DTLBWalk & WriteAccess;
     assign ReadAccess = MemRWM[1];
 
-    assign EffectivePrivilegeMode = (DTLBWalk == 0) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
+    assign EffectivePrivilegeMode = DTLBWalk ? (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW) : PrivilegeModeW; // DTLB uses MPP mode when MPRV is 1
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
                                ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
 
