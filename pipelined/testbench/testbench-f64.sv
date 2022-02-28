@@ -51,7 +51,7 @@ module testbench ();
    integer 	desc3;  
    
    // instantiate device under test
-   unpacking unpacking(.X(op1), .Y(op2), .Z(64'h0), .FOpCtrlE, .FmtE, 
+   unpack unpack(.X(op1), .Y(op2), .Z(64'h0), .FOpCtrlE, .FmtE, 
 		       .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
 		       .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
 		       .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);

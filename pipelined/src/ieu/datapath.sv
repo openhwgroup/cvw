@@ -86,17 +86,17 @@ module datapath (
   logic [`XLEN-1:0] WriteDataE;
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;
-  logic [`XLEN-1:0] ResultM;
+  logic [`XLEN-1:0] IFResultM;
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
-  logic [`XLEN-1:0] WriteDataW;
   logic [`XLEN-1:0] ResultW;
+  logic [`XLEN-1:0] IFResultW;
   
   // Decode stage
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, WriteDataW, R1D, R2D);
+  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
   extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
  
   // Execute stage pipeline register and logic
@@ -107,8 +107,8 @@ module datapath (
   flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
 	
-  mux3  #(`XLEN)  faemux(R1E, WriteDataW, ResultM, ForwardAE, ForwardedSrcAE);
-  mux3  #(`XLEN)  fbemux(R2E, WriteDataW, ResultM, ForwardBE, ForwardedSrcBE);
+  mux3  #(`XLEN)  faemux(R1E, ResultW, IFResultM, ForwardAE, ForwardedSrcAE);
+  mux3  #(`XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
@@ -123,17 +123,17 @@ module datapath (
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
   
   // Writeback stage pipeline register and logic
-  flopenrc #(`XLEN) ResultWReg(clk, reset, FlushW, ~StallW, ResultM, ResultW);
+  flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
   flopen #(`XLEN)   ReadDataWReg(clk, ~StallW, ReadDataM, ReadDataW);
-  mux5  #(`XLEN)    resultmuxW(ResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, WriteDataW);	 
+  mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
 
   // floating point interactions: fcvt, fp stores
   if (`F_SUPPORTED) begin:fpmux
-    mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, ResultM);
+    mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
   end else begin:fpmux
-    assign ResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
+    assign IFResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
   end
 
   // handle Store Conditional result if atomic extension supported

@@ -83,7 +83,7 @@ module testbench;
 
   // Unpacker
   // Note: BiasE will probably get taken out eventually
-  unpacking unpack(.X({1'b1,a[62:0]}), .Y({1'b1,b[62:0]}), .Z(64'b0), .FmtE(1'b1), .FOpCtrlE(3'b0),
+  unpack unpack(.X({1'b1,a[62:0]}), .Y({1'b1,b[62:0]}), .Z(64'b0), .FmtE(1'b1), .FOpCtrlE(3'b0),
                   .XSgnE(XSgnE), .YSgnE(YSgnE), .ZSgnE(ZSgnE), .XExpE(XExpE), .YExpE(YExpE), .ZExpE(ZExpE),
                   .XManE(XManE), .YManE(YManE), .ZManE(ZManE), .XNormE(XNormE), .XNaNE(XNaNE), .YNaNE(YNaNE), .ZNaNE(ZNaNE),
                   .XSNaNE(XSNaNE), .YSNaNE(YSNaNE), .ZSNaNE(ZSNaNE), .XDenormE(XDenormE), .YDenormE(YDenormE), .ZDenormE(ZDenormE),

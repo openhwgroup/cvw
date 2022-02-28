@@ -93,8 +93,13 @@ void printF32(char *msg, float32_t f) {
   else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-127);
 
   //printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
-  printf ("%s: 0x%08x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
-    msg, conv.v, conv.f, sci, exp, fract);  
+  printf("%s: ", msg);
+  printf("0x%04x", (conv.v >> 16));
+  printf("_");
+  printf("%04x", (conv.v & 0xFF));
+  printf(" = %g = %s: Biased Exp %d Fract 0x%lx\n", conv.f, sci, exp, fract);
+  //printf ("%s: 0x%08x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
+  //  msg, conv.v, conv.f, sci, exp, fract);  
 }
 
 void printF64(char *msg, float64_t f) {
@@ -118,8 +123,17 @@ void printF64(char *msg, float64_t f) {
   else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-1023);
 
   //printf ("%s: 0x%016lx = %lg\n", msg, conv.v, conv.d);
-  printf ("%s: 0x%016lx = %lg = %s: Biased Exp %d Fract 0x%lx\n", 
-    msg, conv.v, conv.d, sci, exp, fract); 
+  printf("%s: ", msg);
+  printf("0x%04x", (conv.v >> 48));
+  printf("_");
+  printf("%04x", (conv.v >> 32) & 0xFFFF);
+  printf("_");
+  printf("%04x", (conv.v >> 16));
+  printf("_");  
+  printf("%04x", (conv.v & 0xFFFF));
+  printf(" = %lg = %s: Biased Exp %d Fract 0x%lx\n", conv.d, sci, exp, fract);
+  //printf ("%s: 0x%016lx = %lg = %s: Biased Exp %d Fract 0x%lx\n", 
+  //  msg, conv.v, conv.d, sci, exp, fract); 
 }
 
 void printFlags(void) {
