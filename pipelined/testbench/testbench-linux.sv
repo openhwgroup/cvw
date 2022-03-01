@@ -44,6 +44,7 @@ module testbench;
   parameter INSTR_LIMIT  = 0; // # of instructions at which to stop
   parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
   parameter CHECKPOINT   = 0;
+  parameter RISCV_DIR = "/opt/riscv";
 
   ///////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// HARDWARE ///////////////////////////////////
@@ -111,6 +112,8 @@ module testbench;
   integer errorCount = 0;
   integer fault;
   string  ProgramAddrMapFile, ProgramLabelMapFile;
+  string  testvectorDir;
+  string  linuxImageDir;
   // Checkpointing
   string checkpointDir;
   logic [1:0] initPriv;
@@ -299,29 +302,34 @@ module testbench;
   `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
   `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
 
-  integer ramFile;
+  integer memFile;
   integer readResult;
   initial begin
     force dut.core.priv.priv.SwIntM = 0;
     force dut.core.priv.priv.TimerIntM = 0;
     force dut.core.priv.priv.ExtIntM = 0;    
-    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootrom.bootrom.RAM, 'h1000 >> 3);
+    $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
+    $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
-    ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
-    ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
+    ProgramAddrMapFile = {linuxImageDir,"vmlinux.objdump.addr"};
+    ProgramLabelMapFile = {linuxImageDir,"vmlinux.objdump.lab"};
+    // initialize bootrom
+    memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
+    readResult = $fread(dut.uncore.bootrom.bootrom.RAM,memFile);
+    $fclose(memFile);
+    // initialize RAM
+    memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
+    readResult = $fread(dut.uncore.ram.ram.RAM,memFile);
+    $fclose(memFile);
     if (CHECKPOINT==0) begin // normal
-      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.ram.ram.RAM);
-      traceFileM = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
-      traceFileE = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+      traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
+      traceFileE = $fopen({testvectorDir,"all.txt"}, "r");
       InstrCountW = '0;
     end else begin // checkpoint
       $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
-      checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
+      checkpointDir = {testvectorDir,checkpointDir};
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
-      ramFile = $fopen({checkpointDir,"ram.bin"}, "rb");
-      readResult = $fread(dut.uncore.ram.ram.RAM,ramFile);
-      $fclose(ramFile);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
