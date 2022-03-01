@@ -33,8 +33,6 @@
 `include "tests.vh"
 
 module testbench;
-  parameter TESTSPERIPH = 0; // set to 0 for regression
-  parameter TESTSPRIV = 0; // set to 0 for regression
   parameter DEBUG=0;
   parameter TEST="none";
  
@@ -89,7 +87,6 @@ logic [3:0] dummy;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
-        "imperas64p":                     tests = imperas64p;
 //        "imperas64mmu": if (`VIRTMEM_SUPPORTED) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
