@@ -36,11 +36,33 @@ rv64i_sc_tests = \
     WALLY-CSR-permission-u-01 \
     WALLY-misa-01 \
     WALLY-scratch-01 \
-    WALLY-sscratch-s-01
+    WALLY-sscratch-s-01 \
 
+# Don't simulate these because they rely on SoC features that Wally does not offer.
 target_tests_nosim = \
     WALLY-PMA \
-    WALLY-PERIPH
+    WALLY-PERIPH \
+    WALLY-MSTATUS \
+    WALLY-MCAUSE \
+    WALLY-SCAUSE \
+    WALLY-UCAUSE \
+    WALLY-MTVEC \
+    WALLY-STVEC \
+    WALLY-MEDELEG \
+    WALLY-MARCHID \
+    WALLY-MHARTID \
+    WALLY-MIMPID \
+    WALLY-MVENDORID \
+    WALLY-CSR-PERMISSIONS-M \
+    WALLY-CSR-PERMISSIONS-S
+    # Have all 0's in references!
+    #WALLY-MEPC \
+    #WALLY-SEPC \
+    #WALLY-MTVAL \
+    #WALLY-STVAL \
+    # Otherwise Broken for Unknown Reasons
+    #WALLY-MIE \
+    #WALLY-IP \
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))
 

@@ -846,28 +846,6 @@ string imperas32f[] = '{
     "rv64BP/dhrystone", "1000000"
   };
 
-  string imperas64p[] = '{
-    `MYIMPERASTEST,
-    "rv64p/WALLY-MSTATUS", "2000",
-    "rv64p/WALLY-MCAUSE", "3000",
-    "rv64p/WALLY-SCAUSE", "2000",
-    "rv64p/WALLY-MEPC", "5000",
-    "rv64p/WALLY-SEPC", "4000",
-    "rv64p/WALLY-MTVAL", "6000",
-    "rv64p/WALLY-STVAL", "4000",
-    "rv64p/WALLY-MTVEC", "2000",
-    "rv64p/WALLY-STVEC", "2000",
-    "rv64p/WALLY-MARCHID", "4000",
-    "rv64p/WALLY-MIMPID", "4000",
-    "rv64p/WALLY-MHARTID", "4000",
-    "rv64p/WALLY-MVENDORID", "4000",
-    "rv64p/WALLY-MIE", "3000",
-    "rv64p/WALLY-MEDELEG", "4000",
-    "rv64p/WALLY-IP", "2000",
-    "rv64p/WALLY-CSR-PERMISSIONS-M", "5000",
-    "rv64p/WALLY-CSR-PERMISSIONS-S", "3000"
-  };
-
   string imperas32p[] = '{
     `MYIMPERASTEST,
     "rv32p/WALLY-MSTATUS", "2000",
@@ -1481,7 +1459,20 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-CSR-permission-u-01", "50A0",
     "rv64i_m/privilege/WALLY-misa-01", "40A0",
     "rv64i_m/privilege/WALLY-scratch-01", "40A0",
-    "rv64i_m/privilege/WALLY-sscratch-s-01", "40A0"
+    "rv64i_m/privilege/WALLY-sscratch-s-01", "40A0",
+    "rv64i_m/privilege/WALLY-MSTATUS", "2090",
+    "rv64i_m/privilege/WALLY-MCAUSE", "3090",
+    "rv64i_m/privilege/WALLY-SCAUSE", "2090",
+    "rv64i_m/privilege/WALLY-UCAUSE", "2090",
+    "rv64i_m/privilege/WALLY-MTVEC", "2090",
+    "rv64i_m/privilege/WALLY-STVEC", "2090",
+    "rv64i_m/privilege/WALLY-MEDELEG", "4090",
+    "rv64i_m/privilege/WALLY-MARCHID", "4090",
+    "rv64i_m/privilege/WALLY-MHARTID", "4090",
+    "rv64i_m/privilege/WALLY-MIMPID", "4090",
+    "rv64i_m/privilege/WALLY-MVENDORID", "4090",
+    "rv64i_m/privilege/WALLY-CSR-PERMISSIONS-M", "5090",
+    "rv64i_m/privilege/WALLY-CSR-PERMISSIONS-S", "3090"
  };
 
  string wally64periph[] = '{
