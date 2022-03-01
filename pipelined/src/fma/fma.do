@@ -12,12 +12,12 @@ vlog -lint -work worklib fma16.sv testbench.sv
 vopt +acc worklib.testbench_fma16 -work worklib -o testbenchopt
 vsim -lib worklib testbenchopt
 
-add wave sim:/testbench/clk
-add wave sim:/testbench/reset
-add wave sim:/testbench/x
-add wave sim:/testbench/y
-add wave sim:/testbench/z
-add wave sim:/testbench/result
-add wave sim:/testbench/rexpected
+add wave sim:/testbench_fma16/clk
+add wave sim:/testbench_fma16/reset
+add wave sim:/testbench_fma16/x
+add wave sim:/testbench_fma16/y
+add wave sim:/testbench_fma16/z
+add wave sim:/testbench_fma16/result
+add wave sim:/testbench_fma16/rexpected
 
 run -all
