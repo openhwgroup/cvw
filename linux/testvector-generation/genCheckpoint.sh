@@ -6,11 +6,12 @@ recordFile="$tvDir/all.qemu"
 traceFile="$tvDir/all.txt"
 
 # Parse Commandline Arg
-if [ "$#" -ne 1 ]; then
-    echo "genCheckpoint requires 1 argument: <num instrs>" >&2
+if [ "$#" -ne 2 ]; then
+    echo "genCheckpoint requires 2 arguments: <num instrs> <whether to genTrace>" >&2
     exit 1
 fi
 instrs=$1
+genTrace=$2
 if ! [ "$instrs" -eq "$instrs" ] 2> /dev/null
 then
     echo "Error expected integer number of instructions, got $instrs" >&2
@@ -24,8 +25,14 @@ rawStateFile="$checkPtDir/stateGDB.txt"
 rawRamFile="$checkPtDir/ramGDB.bin"
 ramFile="$checkPtDir/ram.bin"
 
-read -p "This scripts is going to create a checkpoint at $instrs instrs.
-Is that what you wanted? (y/n) " -n 1 -r
+if [ $genTrace -eq "1" ]; then
+    read -p "This scripts is going to create a checkpoint at $instrs instrs.
+    AND it's going to start generating a trace at that checkpoint.
+    Is that what you wanted? (y/n) " -n 1 -r
+else 
+    read -p "This scripts is going to create a checkpoint at $instrs instrs.
+    Is that what you wanted? (y/n) " -n 1 -r
+fi
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -36,8 +43,10 @@ then
     sudo mkdir -p $checkPtDir
     sudo chown -R cad:users $checkPtDir
     sudo chmod -R a+rw $checkPtDir
-    sudo touch $outTraceFile
-    sudo chmod a+rw $outTraceFile
+    if [ $genTrace -eq "1" ]; then
+        sudo touch $outTraceFile
+        sudo chmod a+rw $outTraceFile
+    fi
     sudo touch $interruptsFile
     sudo chmod a+rw $interruptsFile
     sudo touch $rawStateFile
@@ -56,8 +65,7 @@ then
     echo "It occurs ${occurences} times before the ${instrs}th instr." 
 
     # Create GDB script because GDB is terrible at handling arguments / variables
-    ./createGenCheckpointScript.py $tcpPort $imageDir/vmlinux $instrs $rawStateFile $rawRamFile $pc $occurences
-
+    ./createGenCheckpointScript.py $tcpPort $imageDir/vmlinux $instrs $rawStateFile $rawRamFile $pc $occurences $genTrace
     # GDB+QEMU
     echo "Starting QEMU in replay mode with attached GDB script at $(date +%H:%M:%S)"
     (qemu-system-riscv64 \
@@ -77,7 +85,7 @@ then
     ./fixBinMem "$rawRamFile" "$ramFile"
     #echo "Creating truncated trace at $(date +%H:%M:%S)"
     #tail -n+$instrs "$tvDir/$traceFile" > "$checkPtDir/$traceFile"
-    echo "Checkpoint completed at $(date +%H:%M:%S)"
+    read -p "Checkpoint completed at $(date +%H:%M:%S)" -n 1 -r
 
     # Cleanup
     echo "Elevating permissions to restrict write access to $checkPtDir"
