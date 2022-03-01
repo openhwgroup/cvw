@@ -43,10 +43,8 @@ then
     sudo mkdir -p $checkPtDir
     sudo chown -R cad:users $checkPtDir
     sudo chmod -R a+rw $checkPtDir
-    if [ $genTrace -eq "1" ]; then
-        sudo touch $outTraceFile
-        sudo chmod a+rw $outTraceFile
-    fi
+    sudo touch $outTraceFile
+    sudo chmod a+rw $outTraceFile
     sudo touch $interruptsFile
     sudo chmod a+rw $interruptsFile
     sudo touch $rawStateFile
@@ -83,8 +81,10 @@ then
     echo "Changing Endianness at $(date +%H:%M:%S)"
     make fixBinMem
     ./fixBinMem "$rawRamFile" "$ramFile"
-    #echo "Creating truncated trace at $(date +%H:%M:%S)"
-    #tail -n+$instrs "$tvDir/$traceFile" > "$checkPtDir/$traceFile"
+    if [ $genTrace -ne "1" ]; then
+        echo "Copying over a truncated trace"
+        tail -n+$instrs $traceFile > $outTraceFile
+    fi
     read -p "Checkpoint completed at $(date +%H:%M:%S)" -n 1 -r
 
     # Cleanup
