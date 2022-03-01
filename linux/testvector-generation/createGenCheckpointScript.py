@@ -54,7 +54,6 @@ set logging off
 # Log main memory to a file
 print "GDB storing RAM to {ramPath}\\n"
 dump binary memory {ramPath} 0x80000000 0xffffffff
-dump binary memory {ramPath} 0x80000000 0x80ffffff
 
 # Generate Trace Until End
 maintenance packet Qqemu.Logging:1
