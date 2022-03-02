@@ -60,7 +60,7 @@ tc = TestCase(
       variant="rv64gc",
       cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot-checkpoint $RISCV 400100000 400000001 400000000\n!", # *** will this work with rv64gc rather than buildroot config?
       grepstr="400100000 instructions")
-#configs.append(tc) #temporarily removed until I make this checkpoint
+configs.append(tc)
 
 tests64gc = ["arch64i", "arch64priv", "arch64c",  "arch64m", "arch64d", "imperas64i", "imperas64f", "imperas64d", "imperas64m", "wally64a",  "imperas64c", "wally64priv"] # , "imperas64mmu" "wally64i", #,  "testsBP64"] 
 for test in tests64gc:

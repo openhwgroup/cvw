@@ -310,6 +310,8 @@ module testbench;
     force dut.core.priv.priv.ExtIntM = 0;    
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
+    if (CHECKPOINT!=0)
+      $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
     $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {linuxImageDir,"vmlinux.objdump.addr"};
@@ -319,7 +321,10 @@ module testbench;
     readResult = $fread(dut.uncore.bootrom.bootrom.RAM,memFile);
     $fclose(memFile);
     // initialize RAM
-    memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
+    if (CHECKPOINT==0) 
+      memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
+    else
+      memFile = $fopen({checkpointDir,"ram.bin"}, "rb");
     readResult = $fread(dut.uncore.ram.ram.RAM,memFile);
     $fclose(memFile);
     if (CHECKPOINT==0) begin // normal
@@ -327,8 +332,6 @@ module testbench;
       traceFileE = $fopen({testvectorDir,"all.txt"}, "r");
       InstrCountW = '0;
     end else begin // checkpoint
-      $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
-      checkpointDir = {testvectorDir,checkpointDir};
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
