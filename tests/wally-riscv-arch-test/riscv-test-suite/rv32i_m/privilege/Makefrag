@@ -35,7 +35,9 @@ rv32i_sc_tests = \
     WALLY-minfo-01 \
     WALLY-misa-01 \
     WALLY-scratch-01 \
-    WALLY-sscratch-s-01
+    WALLY-sscratch-s-01 \
+    WALLY-AMO \
+    WALLY-LRSC
 
 target_tests_nosim = WALLY-PMA \
 
