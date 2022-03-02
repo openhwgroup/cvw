@@ -38,6 +38,7 @@ rv64i_sc_tests = \
     WALLY-scratch-01 \
     WALLY-sscratch-s-01 \
     WALLY-AMO \
+    WALLY-LRSC \
 
 # Don't simulate these because they rely on SoC features that Wally does not offer.
 target_tests_nosim = \

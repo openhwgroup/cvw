@@ -44,10 +44,10 @@ string tvpaths[] = '{
     "coremark.bare.riscv", "100000"
   };
 
-  string imperas64a[] = '{
-    `MYIMPERASTEST,
-    "rv64a/WALLY-AMO", "2110",
-    "rv64a/WALLY-LRSC", "2110"
+  string wally64a[] = '{
+    `WALLYTEST,
+    "rv64i_m/privilege/WALLY-AMO", "2210",
+    "rv64i_m/privilege/WALLY-LRSC", "2410"
   };
 
     string imperas32a[] = '{
