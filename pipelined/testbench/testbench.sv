@@ -91,7 +91,7 @@ logic [3:0] dummy;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
-        "imperas64a":   if (`A_SUPPORTED) tests = imperas64a;
+        "wally64a":     if (`A_SUPPORTED) tests = wally64a;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
         "testsBP64":                      tests = testsBP64;
