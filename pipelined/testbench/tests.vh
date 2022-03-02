@@ -1466,7 +1466,6 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-MSTATUS", "002070",
     "rv64i_m/privilege/WALLY-MTVEC", "002070",
     "rv64i_m/privilege/WALLY-MVENDORID", "003070",
-    "rv64i_m/privilege/WALLY-PERIPH", "0020f0",
     "rv64i_m/privilege/WALLY-PMA", "004080",
     "rv64i_m/privilege/WALLY-PMP", "004080",
     "rv64i_m/privilege/WALLY-SCAUSE", "002070",
@@ -1478,7 +1477,7 @@ string imperas32f[] = '{
 
  string wally64periph[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/WALLY-PERIPH", "3110"
+    "rv64i_m/privilege/WALLY-PERIPH", "22f0"
  };
 
  string wally32e[] = '{
