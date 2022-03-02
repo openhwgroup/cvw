@@ -114,7 +114,7 @@ logic [3:0] dummy;
 //        "imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
-        "imperas32a":   if (`A_SUPPORTED) tests = imperas32a;
+        "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
         "wally32i":                       tests = wally32i; // *** redo
