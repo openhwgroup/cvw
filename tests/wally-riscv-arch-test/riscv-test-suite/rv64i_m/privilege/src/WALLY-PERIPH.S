@@ -33,7 +33,8 @@ RVTEST_CODE_BEGIN
 
     # ---------------------------------------------------------------------------------------------
     j main_code
-
+# Thanks to MTVEC[1:0], trap handler addresses need to be aligned to a 4-byte boundary
+.align 2
 ###################
 ###################
 trap_handler: #####
@@ -801,13 +802,6 @@ RVTEST_DATA_BEGIN
 .align 3
 stack:
 .fill 16, 8, 0xdeadbeef
-RVTEST_DATA_END
-
-RVMODEL_DATA_BEGIN
-# signature output
-wally_signature:
-.fill 0x200, 8, 0x00000000
-
 #ifdef rvtest_mtrap_routine
 mtrap_sigptr:
     .fill 64*(XLEN/32),4,0xdeadbeef
@@ -817,4 +811,10 @@ mtrap_sigptr:
 gpr_save:
     .fill 32*(XLEN/32),4,0xdeadbeef
 #endif
+RVTEST_DATA_END
+
+RVMODEL_DATA_BEGIN
+# signature output
+wally_signature:
+.fill 0x200, 8, 0x00000000
 RVMODEL_DATA_END
