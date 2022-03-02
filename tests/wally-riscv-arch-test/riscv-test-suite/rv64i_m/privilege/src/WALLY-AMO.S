@@ -243,15 +243,15 @@ RVTEST_DATA_END
 RVMODEL_DATA_BEGIN
 # signature output
 wally_signature:
-.fill 6, 8, -1
+.fill 36, 8, -1
 
 #ifdef rvtest_mtrap_routine
-mtrap_sigptr:
-    .fill 64*(XLEN/32),4,0xdeadbeef
+#mtrap_sigptr:
+#    .fill 64*(XLEN/32),4,0xdeadbeef
 #endif
 
 #ifdef rvtest_gpr_save
-gpr_save:
-    .fill 32*(XLEN/32),4,0xdeadbeef
+#gpr_save:
+#    .fill 32*(XLEN/32),4,0xdeadbeef
 #endif
 RVMODEL_DATA_END
