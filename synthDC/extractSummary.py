@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+# Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
 import glob 
 import re
 import csv
