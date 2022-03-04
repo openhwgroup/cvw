@@ -1,7 +1,7 @@
 # Makefile
 
 CC     = gcc
-CFLAGS = -O3
+CFLAGS = -O3 -Wno-format-overflow
 LIBS   = -lm
 LFLAGS = -L. 
 # Link against the riscv-isa-sim version of SoftFloat rather than 
