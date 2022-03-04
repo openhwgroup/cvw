@@ -86,12 +86,13 @@ module lsuvirtmem(
     .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
     .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
-  hptw hptw( // *** remove logic from (), mention this in style guide CH3
+  hptw hptw( 
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
     .ITLBMissOrDAFaultNoTrapF, .DTLBMissOrDAFaultNoTrapM,
-    .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
+    .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),  // *** should it be HPTWReadDataM
     .DCacheStallM, .HPTWAdr, .HPTWRW, .HPTWSize);
+  // *** possible future optimization of simplifying page table entry with precomputed misalignment (Ross) low priority
 
   // multiplex the outputs to LSU
   mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
