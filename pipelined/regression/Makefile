@@ -5,7 +5,7 @@ make allclean:
 make clean:
 	make clean -C ../../addins/riscv-arch-test
 	make clean -C ../../tests/wally-riscv-arch-test
-	make allclean -C ../../tests/imperas-riscv-tests
+#	make allclean -C ../../tests/imperas-riscv-tests
 
 make all:
 	# *** Build old tests/imperas-riscv-tests for now;
