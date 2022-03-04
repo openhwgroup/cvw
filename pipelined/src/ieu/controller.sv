@@ -51,12 +51,12 @@ module controller(
   output logic [2:0] Funct3E,
   output logic       MDUE, W64E,
   output logic       JumpE,	
+  output logic       SCE,
+  output logic [1:0] AtomicE,
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
   output logic       CSRReadM, CSRWriteM, PrivilegedM,
-  output logic       SCE,
-  output logic [1:0] AtomicE,
   output logic [1:0] AtomicM,
   output logic [2:0] Funct3M,
   output logic       RegWriteM,     // for Hazard Unit

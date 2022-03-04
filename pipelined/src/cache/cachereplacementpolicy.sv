@@ -46,6 +46,7 @@ module cachereplacementpolicy
   logic [SETLEN-1:0]                   RAdrD;
   logic                                LRUWriteEnD;
 
+  // *** high priority to clean up
   initial begin
       assert (NUMWAYS == 2 || NUMWAYS == 4) else $error("Only 2 or 4 ways supported");
   end

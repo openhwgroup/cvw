@@ -54,12 +54,12 @@ module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
     assign ReadDataLinePad = {Pad, ReadDataLine};    
   end else assign ReadDataLinePad = ReadDataLine;
 
-
   genvar index;
   for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-	assign ReadDataLineSets[index] = ReadDataLinePad[(index*MUXINTERVAL)+WORDLEN-1: (index*MUXINTERVAL)];
+	  assign ReadDataLineSets[index] = ReadDataLinePad[(index*MUXINTERVAL)+WORDLEN-1: (index*MUXINTERVAL)];
   end
   // variable input mux
+  // *** maybe remove REPLAY config later after deciding which way is best
   assign ReadDataWordRaw = ReadDataLineSets[PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]];
   if(!`REPLAY) begin
     flopen #(WORDLEN) cachereaddatasavereg(clk, save, ReadDataWordRaw, ReadDataWordSaved);

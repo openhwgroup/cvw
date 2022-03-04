@@ -106,6 +106,8 @@ module lsu (
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
     
+  // *** TO DO: Burst mode, byte write enables to DTIM, cache, exeternal memory, remove subword write from uncore, 
+
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
@@ -117,14 +119,13 @@ module lsu (
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
-                          .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
-                          .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
-                          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-                          .ReadDataM, .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
-                          .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
-                          .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
-                          .IgnoreRequestTLB, .IgnoreRequestTrapM);
-
+      .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
+      .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
+      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
+      .ReadDataM, .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
+      .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
+      .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
+      .IgnoreRequestTLB, .IgnoreRequestTrapM);
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign IgnoreRequestTrapM = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
@@ -186,7 +187,10 @@ module lsu (
   logic                SelUncachedAdr;
   assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
   
+  // *** change to allow TIM and BUS.  seaparate parameter for having bus (but have to have bus if have cache - check in testbench)
   if (`DMEM == `MEM_TIM) begin : dtim
+    // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
+    // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM,
@@ -222,12 +226,12 @@ module lsu (
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     mux2 #(`PA_BITS) WordAdrrMux(.d0(LSUPAdrM), 
       .d1({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)), .s(LSUBusWriteCrit),
-      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.
+      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.  
     
 
     if(CACHE_ENABLED) begin : dcache
       logic [1:0] RW, Atomic;
-      assign RW = CacheableM ? LSURWM : 2'b00;        // AND gate
+      assign RW = CacheableM ? LSURWM : 2'b00;        // AND gate  // *** move and gates into cache
       assign Atomic = CacheableM ? LSUAtomicM : 2'b00; // AND gate
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
@@ -240,7 +244,7 @@ module lsu (
         .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
 
-      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
+      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(  // *** merge into cache
         .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
         .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
@@ -250,7 +254,7 @@ module lsu (
     end
   end
 
-  if(`DMEM != `MEM_BUS) begin
+  if(`DMEM != `MEM_BUS) begin // *** always, not just with no MEM_BUS.  Only produces byte write enable
     logic [`XLEN-1:0] ReadDataWordMaskedM;
     assign ReadDataWordMaskedM = SelUncachedAdr ? '0 : ReadDataWordM; // AND-gate
     subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
