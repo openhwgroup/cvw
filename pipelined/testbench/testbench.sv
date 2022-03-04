@@ -110,7 +110,6 @@ logic [3:0] dummy;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
-        "imperas32p":                     tests = imperas32p;
 //        "imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
