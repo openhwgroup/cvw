@@ -21,7 +21,7 @@ hash := $(shell git rev-parse --short HEAD)
 export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(hash)
 export SAIFPOWER ?= 0
 
-CONFIGDIR ?= ~/riscv-wally/pipelined/config
+CONFIGDIR ?= ${WALLY}/pipelined/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
 print:

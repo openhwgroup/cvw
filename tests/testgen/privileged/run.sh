@@ -11,21 +11,21 @@ printf "\n\n#####\nStarting tests for $1\n#####\n\n"
 
 if [[ "$2" != "-simonly" ]]
 then
-	cd ~/riscv-wally/pipelined/testgen/privileged
+	cd $WALLY/pipelined/testgen/privileged
 	python3 "testgen-$1.py"
 	printf "\n\n#####\nRan testgen-$1.py Making...\n#####\n\n\n"
 
 	if [[ "$2" == "-c" ]]
 	then
 		printf "\n\n###\nWARNING\nThis seems to not be outputting begin_signature at the moment... Probably won't work in modelsim...\n###\n\n\n"
-		cd ~/riscv-wally/imperas-riscv-tests/riscv-test-suite/rv64p/src
+		cd $WALLY/imperas-riscv-tests/riscv-test-suite/rv64p/src
 		riscv64-unknown-elf-gcc -nostdlib -nostartfiles -march=rv64g "WALLY-$1".S -I../../../riscv-test-env -I../../../riscv-test-env/p -I../../../riscv-target/riscvOVPsimPlus -T../../../riscv-test-env/p/link.ld -o "../../../work/rv64p/WALLY-$1.elf"
-		cd ~/riscv-wally/imperas-riscv-tests/work/rv64p
+		cd $WALLY/imperas-riscv-tests/work/rv64p
 		riscv64-unknown-elf-objdump -d "WALLY-$1".elf > "WALLY-$1".elf.objdump
  
 	elif [[ "$2" != "-nosim" ]]
 	then
-		cd ~/riscv-wally/imperas-riscv-tests
+		cd $WALLY/imperas-riscv-tests
 		make privileged
 
 		exe2memfile.pl work/*/*.elf
@@ -36,9 +36,9 @@ fi
 if [[ "$2" == "-simonly" ]]
 then
 	printf "\n\n###\nWARNING\nThis seems to not be outputting begin_signature at the moment... Probably won't work in modelsim...\n###\n\n\n"
-	cd ~/riscv-wally/imperas-riscv-tests/riscv-test-suite/rv64p/src
+	cd $WALLY/imperas-riscv-tests/riscv-test-suite/rv64p/src
 	riscv64-unknown-elf-gcc -nostdlib -nostartfiles -march=rv64g "WALLY-$1".S -I../../../riscv-test-env -I../../../riscv-test-env/p -I../../../riscv-target/riscvOVPsimPlus -T../../../riscv-test-env/p/link.ld -o "../../../work/rv64p/WALLY-$1.elf"
-	cd ~/riscv-wally/imperas-riscv-tests/work/rv64p
+	cd $WALLY/imperas-riscv-tests/work/rv64p
 	riscv64-unknown-elf-objdump -d "WALLY-$1".elf > "WALLY-$1".elf.objdump
 
 	# 	riscv64-unknown-elf-gcc -nostdlib -nostartfiles -march=rv64g "WALLY-CAUSE".S -I../../../riscv-test-env -I../../../riscv-test-env/p -I../../../riscv-target/riscvOVPsimPlus -T../../../riscv-test-env/p/link.ld -o "../../../work/rv64p/WALLY-CAUSE.elf"
@@ -48,14 +48,14 @@ fi
 if [[ "$2" == "-sim" || "$2" == "-simonly" ]]
 then
 	printf "\n\n\n#####\nSimulating!\n#####\n\n"
-	cd ~/riscv-wally/pipelined/regression
+	cd $WALLY/pipelined/regression
 	vsim -do wally-privileged.do -c
 fi
 
-cd ~/riscv-wally/pipelined
+cd $WALLY/pipelined
 printf "\n\n\n#####\nDone!\n#####\n\n"
 
-cd ~/riscv-wally/imperas-riscv-tests/work
+cd $WALLY/imperas-riscv-tests/work
 for isa in "rv64p" "rv32p"; do
 	printf "$isa = '{"
 	COMMA=""
@@ -71,4 +71,4 @@ for isa in "rv64p" "rv32p"; do
 	printf "\n};\n\n"
 done
 
-cd ~/riscv-wally/pipelined
+cd $WALLY/pipelined
