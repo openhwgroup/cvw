@@ -9,7 +9,7 @@ use warnings;
 import os;
 
 if ($#ARGV != 0) {
-    die("Usage: $0 workpath [e.g. $0 ~/riscv-wally/addins/riscv-arch-test/work")
+    die("Usage: $0 workpath [e.g. $0 $WALLY/addins/riscv-arch-test/work")
 }
 my $mypath = $ARGV[0];
 my @dirs = glob($mypath.'/*/*');
