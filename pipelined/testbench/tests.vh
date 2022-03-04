@@ -1452,27 +1452,27 @@ string imperas32f[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/WALLY-CSR-permission-s-01", "004080",
     //"rv64i_m/privilege/WALLY-CSR-PERMISSIONS-M", "005070",
-    "rv64i_m/privilege/WALLY-CSR-PERMISSIONS-S", "003070",
+    //"rv64i_m/privilege/WALLY-CSR-PERMISSIONS-S", "003070",
     "rv64i_m/privilege/WALLY-CSR-permission-u-01", "005080",
-    "rv64i_m/privilege/WALLY-MARCHID", "003070",
-    "rv64i_m/privilege/WALLY-MCAUSE", "003070",
+   // "rv64i_m/privilege/WALLY-MARCHID", "003070",
+/*    "rv64i_m/privilege/WALLY-MCAUSE", "003070",
     "rv64i_m/privilege/WALLY-MEDELEG", "003070",
     "rv64i_m/privilege/WALLY-MHARTID", "003070",
-    "rv64i_m/privilege/WALLY-MIMPID", "003070",
+    "rv64i_m/privilege/WALLY-MIMPID", "003070",*/
     "rv64i_m/privilege/WALLY-minfo-01", "004080",
     "rv64i_m/privilege/WALLY-misa-01", "004080",
     "rv64i_m/privilege/WALLY-MMU-SV39", "004080",
     "rv64i_m/privilege/WALLY-MMU-SV48", "004080",
-    "rv64i_m/privilege/WALLY-MSTATUS", "002070",
+/*    "rv64i_m/privilege/WALLY-MSTATUS", "002070",
     "rv64i_m/privilege/WALLY-MTVEC", "002070",
-    "rv64i_m/privilege/WALLY-MVENDORID", "003070",
+    "rv64i_m/privilege/WALLY-MVENDORID", "003070", */
     "rv64i_m/privilege/WALLY-PMA", "004080",
     "rv64i_m/privilege/WALLY-PMP", "004080",
-    "rv64i_m/privilege/WALLY-SCAUSE", "002070",
+//    "rv64i_m/privilege/WALLY-SCAUSE", "002070",
     "rv64i_m/privilege/WALLY-scratch-01", "004080",
-    "rv64i_m/privilege/WALLY-sscratch-s-01", "004080",
-    "rv64i_m/privilege/WALLY-STVEC", "002070",
-    "rv64i_m/privilege/WALLY-UCAUSE", "002070"
+    "rv64i_m/privilege/WALLY-sscratch-s-01", "004080"
+//    "rv64i_m/privilege/WALLY-STVEC", "002070",
+//    "rv64i_m/privilege/WALLY-UCAUSE", "002070"
  };
 
  string wally64periph[] = '{
