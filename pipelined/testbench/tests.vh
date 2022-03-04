@@ -1451,7 +1451,7 @@ string imperas32f[] = '{
  string wally64priv[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/WALLY-CSR-permission-s-01", "004080",
-    "rv64i_m/privilege/WALLY-CSR-PERMISSIONS-M", "005070",
+    //"rv64i_m/privilege/WALLY-CSR-PERMISSIONS-M", "005070",
     "rv64i_m/privilege/WALLY-CSR-PERMISSIONS-S", "003070",
     "rv64i_m/privilege/WALLY-CSR-permission-u-01", "005080",
     "rv64i_m/privilege/WALLY-MARCHID", "003070",
