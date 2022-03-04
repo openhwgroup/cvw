@@ -96,6 +96,9 @@ module interlockfsm(
 	endcase
   end // always_comb
 	  
+  // *** change test to not propagate xs  so that we can return to excluded code
+  // might have changed name to WALLY-MMU-SV39?
+
   // signal to CPU it needs to wait on HPTW.
   /* -----\/----- EXCLUDED -----\/-----
    // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
@@ -119,12 +122,10 @@ module interlockfsm(
 	endcase
   end
   
-  
   assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 				   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissOrDAFaultF | DTLBMissOrDAFaultM));
   assign IgnoreRequestTrapM = (InterlockCurrState == STATE_T0_READY & (TrapM)) |
 							  ((InterlockCurrState == STATE_T0_REPLAY) & (TrapM));
-
 endmodule
