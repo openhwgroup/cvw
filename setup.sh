@@ -24,7 +24,7 @@ export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verila
 export PATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin:$PATH    # Change this for your path to Modelsim
 export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu # Change this to your Siemens license server
 export PATH=/cad/synopsys/SYN/bin:$PATH  # Change this for your path to Design Compiler
-# *** license
+export SNPSLMD_LICENSE_FILE=27020@134.173.38.214
 
 # Imperas; *** remove if not using; *** fix paths
 export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  # *** maybe take this out based on Imperas
