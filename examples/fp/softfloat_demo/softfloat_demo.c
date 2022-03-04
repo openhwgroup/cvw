@@ -16,13 +16,8 @@ void printF32 (char *msg, float32_t f) {
   sp conv;
   int i, j;
   conv.v = f.v; // use union to convert between hexadecimal and floating-point views
-  // Print out nicely
-  printf("%s: ", msg);
-  printf("0x%04x", (conv.v >> 16));
-  printf("_");
-  printf("%04x", (conv.v & 0xFFFF));
-  printf(" = %g\n", conv.f);  
-  //printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
+  printf("%s: ", msg);  // print out nicely
+  printf("0x%04x_%04x = %g\n", (conv.v >> 16),(conv.v & 0xFFFF), conv.f);
 }
 
 void printFlags(void) {
@@ -31,7 +26,7 @@ void printFlags(void) {
   int OF = (softfloat_exceptionFlags >> 2) % 2;
   int DZ = (softfloat_exceptionFlags >> 3) % 2;
   int NV = (softfloat_exceptionFlags >> 4) % 2;
-  printf ("exceptions: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n", 
+  printf ("Flags: Inexact %d Underflow %d Overflow %d DivideZero %d Invalid %d\n", 
           NX, UF, OF, DZ, NV);
 }
 
