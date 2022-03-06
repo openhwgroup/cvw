@@ -19,7 +19,7 @@ then
         echo "    sudo mkdir -p $tvDir">&2
         exit 1
     fi
-    test -w $RISCV/linux-testvectors
+    test -w $tvDir
     if [ ! $? -eq 0 ]; then
         echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
         echo "Please chmod it. For example:">&2
