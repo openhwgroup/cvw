@@ -7,7 +7,7 @@
 echo "Executing Wally setup.sh"
 
 # Path to Wally repository
-WALLY=$(dirname ${BASH_SOURCE})
+WALLY=$(dirname $0)
 export WALLY=$(cd "$WALLY" && pwd)
 echo \$WALLY set to ${WALLY}
 
