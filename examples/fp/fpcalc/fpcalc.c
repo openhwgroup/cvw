@@ -29,19 +29,23 @@ typedef union dp {
 
 int opSize = 0;
 
-void long2binstr(long  val, char *str, int bits) {
-  int i;
-  long masked;
+void long2binstr(unsigned long  val, char *str, int bits) {
+  int i, shamt;
+  unsigned long mask, masked;
 
   if (val == 0) { // just return zero
     str[0] = '0';
     str[1] = 0; 
   } else {
-    for (i=0; i<bits && val != 0; i++) {
-      masked = val & ~(1 << (bits-i-1)); // mask off the bit
+    //    printf("long2binstr %lx %s %d\n", val, str, bits);
+    for (i=0; (i<bits) && (val != 0); i++) {
+      shamt = bits - i - 1;
+      mask = 1;
+      mask = (mask << shamt); 
+      masked = val & ~mask; // mask off the bit
       if (masked != val) str[i] = '1';
       else str[i] = '0';
-      //printf("  Considering %d masked %d str[%d] %c\n", val, masked, i, str[i]);
+      //      printf("  Considering %016lx mask %016lx (%d) masked %016lx str[%d] %c\n", val, mask, shamt, masked, i, str[i]);
       val = masked;
       if (!val) str[i+1] = 0; // terminate when out of nonzero digits
     }
@@ -53,7 +57,7 @@ void printF16(char *msg, float16_t f) {
   sp convf;
   long exp, fract;
   char sign;
-  char sci[80], fractstr[80];
+  char sci[300], fractstr[200];
   float32_t temp;
 
   convh.v = f.v; // use union to convert between hexadecimal and floating-point views
@@ -68,9 +72,9 @@ void printF16(char *msg, float16_t f) {
   else if (exp == 0 && fract != 0) sprintf(sci, "Denorm: %c0.%s x 2^-14", sign, fractstr);
   else if (exp == 31 && fract == 0) sprintf(sci, "%cinf", sign);
   else if (exp == 31 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
-  else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-15);
+  else sprintf(sci, "%c1.%s x 2^%ld", sign, fractstr, exp-15);
 
-  printf ("%s: 0x%04x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
+  printf ("%s: 0x%04x = %g = %s: Biased Exp %ld Fract 0x%lx\n", 
     msg, convh.v, convf.f, sci, exp, fract);  // no easy way to print half prec.
 }
 
@@ -78,7 +82,7 @@ void printF32(char *msg, float32_t f) {
   sp conv;
   long exp, fract;
   char sign;
-  char sci[80], fractstr[80];
+  char sci[200], fractstr[200];
 
   conv.v = f.v; // use union to convert between hexadecimal and floating-point views
 
@@ -90,14 +94,14 @@ void printF32(char *msg, float32_t f) {
   else if (exp == 0 && fract != 0) sprintf(sci, "Denorm: %c0.%s x 2^-126", sign, fractstr);
   else if (exp == 255 && fract == 0) sprintf(sci, "%cinf", sign);
   else if (exp == 255 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
-  else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-127);
+  else sprintf(sci, "%c1.%s x 2^%ld", sign, fractstr, exp-127);
 
   //printf ("%s: 0x%08x = %g\n", msg, conv.v, conv.f);
   printf("%s: ", msg);
   printf("0x%04x", (conv.v >> 16));
   printf("_");
   printf("%04x", (conv.v & 0xFF));
-  printf(" = %g = %s: Biased Exp %d Fract 0x%lx\n", conv.f, sci, exp, fract);
+  printf(" = %g = %s: Biased Exp %ld Fract 0x%lx\n", conv.f, sci, exp, fract);
   //printf ("%s: 0x%08x = %g = %s: Biased Exp %d Fract 0x%lx\n", 
   //  msg, conv.v, conv.f, sci, exp, fract);  
 }
@@ -107,7 +111,7 @@ void printF64(char *msg, float64_t f) {
   long exp, fract;
   long mask;
   char sign;
-  char sci[80], fractstr[80];
+  char sci[200], fractstr[200];
 
   conv.v = f.v; // use union to convert between hexadecimal and floating-point views
 
@@ -120,18 +124,18 @@ void printF64(char *msg, float64_t f) {
   else if (exp == 0 && fract != 0) sprintf(sci, "Denorm: %c0.%s x 2^-1022", sign, fractstr);
   else if (exp == 2047 && fract == 0) sprintf(sci, "%cinf", sign);
   else if (exp == 2047 && fract != 0) sprintf(sci, "NaN Payload: %c%s", sign, fractstr);
-  else sprintf(sci, "%c1.%s x 2^%d", sign, fractstr, exp-1023);
+  else sprintf(sci, "%c1.%s x 2^%ld", sign, fractstr, exp-1023);
 
   //printf ("%s: 0x%016lx = %lg\n", msg, conv.v, conv.d);
   printf("%s: ", msg);
-  printf("0x%04x", (conv.v >> 48));
+  printf("0x%04lx", (conv.v >> 48));
   printf("_");
-  printf("%04x", (conv.v >> 32) & 0xFFFF);
+  printf("%04lx", (conv.v >> 32) & 0xFFFF);
   printf("_");
-  printf("%04x", (conv.v >> 16) & 0xFFFF);
+  printf("%04lx", (conv.v >> 16) & 0xFFFF);
   printf("_");  
-  printf("%04x", (conv.v & 0xFFFF));
-  printf(" = %lg = %s: Biased Exp %d Fract 0x%lx\n", conv.d, sci, exp, fract);
+  printf("%04lx", (conv.v & 0xFFFF));
+  printf(" = %lg = %s: Biased Exp %ld Fract 0x%lx\n", conv.d, sci, exp, fract);
   //printf ("%s: 0x%016lx = %lg = %s: Biased Exp %d Fract 0x%lx\n", 
   //  msg, conv.v, conv.d, sci, exp, fract); 
 }
@@ -204,7 +208,7 @@ int main(int argc, char *argv[])
 {
     uint64_t xn, yn, zn;
     char op1, op2;
-    char cmd[80];
+    char cmd[200];
 
     softfloatInit(); 
 
