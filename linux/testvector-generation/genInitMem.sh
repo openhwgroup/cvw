@@ -20,24 +20,18 @@ Would you like to proceed? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    # Create Output Directory
-    echo "Elevating permissions to create memory files"
-    sudo mkdir -p $tvDir
-    sudo chown cad $tvDir
-    sudo touch $rawRamFile 
-    sudo touch $ramFile 
-    sudo touch $rawBootmemFile
-    sudo touch $bootmemFile
-    sudo touch $rawUntrimmedBootmemFile
-    sudo touch $untrimmedBootmemFile
-    sudo chmod a+rw $rawRamFile
-    sudo chmod a+rw $ramFile
-    sudo chmod a+rw $rawBootmemFile
-    sudo chmod a+rw $bootmemFile
-    sudo chmod a+rw $rawUntrimmedBootmemFile
-    sudo chmod a+rw $untrimmedBootmemFile
+    if [ ! -d "$tvDir" ]; then
+        echo "Error: linux testvector directory $tvDir not found!">&2
+        echo "Please create it.">&2
+        exit 1
+    fi
+    test -w $RISCV/linux-testvectors
+    if [ ! $? -eq 0 ]; then
+        echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
+        echo "Please chmod it.">&2
+        exit 1
+    fi
 
-    # QEMU Simulation
     echo "Launching QEMU in replay mode!"
     (qemu-system-riscv64 \
     -M virt -dtb $RISCV/buildroot/output/images/wally-virt.dtb \
@@ -67,18 +61,6 @@ then
     ./fixBinMem "$rawBootmemFile" "$bootmemFile"
     ./fixBinMem "$rawUntrimmedBootmemFile" "$untrimmedBootmemFile"
 
-    # Cleanup
-    echo "Elevating permissions to restrict write access to memory files"
-    sudo chown cad $rawRamFile
-    sudo chown cad $ramFile
-    sudo chown cad $rawBootmemFile
-    sudo chown cad $bootmemFile
-    sudo chown cad $rawUntrimmedBootmemFile
-    sudo chown cad $untrimmedBootmemFile
-    sudo chmod o-w $rawRamFile
-    sudo chmod o-w $ramFile
-    sudo chmod o-w $rawBootmemFile
-    sudo chmod o-w $bootmemFile
-    sudo chmod o-w $rawUntrimmedBootmemFile
-    sudo chmod o-w $untrimmedBootmemFile
+    echo "genInitMem.sh completed!"
+    echo "You may consider restricting write access to $tvDir now."
 fi
