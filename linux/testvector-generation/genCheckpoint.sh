@@ -44,6 +44,8 @@ then
         exit 1
     fi
 
+    mkdir -p $checkPtDir
+
     # Identify instruction in trace
     instr=$(sed "${instrs}q;d" "$traceFile")
     echo "Found ${instrs}th instr: ${instr}"
