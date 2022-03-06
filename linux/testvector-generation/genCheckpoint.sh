@@ -62,7 +62,7 @@ then
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
     -gdb tcp::$tcpPort -S \
-    2>&1 1>./qemu-serial | ./parseQEMUtoGDB/parseQEMUtoGDB_run.py | ./parseGDBtoTrace/parseGDBtoTrace_run.py $interruptsFile | ./remove_dup.awk > $outTraceFile) \
+    2>&1 1>./qemu-serial | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $interruptsFile | ./remove_dup.awk > $outTraceFile) \
     & riscv64-unknown-elf-gdb --quiet -ex "source genCheckpoint.gdb"
     echo "Completed GDB script at $(date +%H:%M:%S)"
 
