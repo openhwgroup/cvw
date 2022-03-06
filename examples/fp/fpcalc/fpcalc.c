@@ -128,7 +128,7 @@ void printF64(char *msg, float64_t f) {
   printf("_");
   printf("%04x", (conv.v >> 32) & 0xFFFF);
   printf("_");
-  printf("%04x", (conv.v >> 16));
+  printf("%04x", (conv.v >> 16) & 0xFFFF);
   printf("_");  
   printf("%04x", (conv.v & 0xFFFF));
   printf(" = %lg = %s: Biased Exp %d Fract 0x%lx\n", conv.d, sci, exp, fract);
