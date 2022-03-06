@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 
 CFLAG = -Wall -g
-CC = clang
+CC = gcc
 
 all: fixBinMem silencePipe
 
