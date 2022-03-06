@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 import sys
 
-if len(sys.argv) != 9:
+if len(sys.argv) != 8:
     sys.exit("""Error createGenCheckpointScript.py expects 7 args:
     <TCP port number>
     <path to vmlinux>
@@ -9,8 +9,7 @@ if len(sys.argv) != 9:
     <path to GDB checkpoint state dump>
     <path to GDB ram dump>
     <checkpoint pc address>
-    <number of times pc has already been hit before checkpoint>
-    <whether to generate a trace after hitting checkpoint>""")
+    <number of times pc has already been hit before checkpoint>""")
 
 tcpPort=sys.argv[1]
 vmlinux=sys.argv[2]
@@ -19,7 +18,6 @@ statePath=sys.argv[4]
 ramPath=sys.argv[5]
 checkPC=sys.argv[6]
 checkPCoccurences=sys.argv[7]
-genTrace=sys.argv[8]
 
 GDBscript = f"""
 # GDB config
@@ -56,20 +54,7 @@ set logging off
 # Log main memory to a file
 print "GDB storing RAM to {ramPath}\\n"
 dump binary memory {ramPath} 0x80000000 0xffffffff
-"""
-if (genTrace=="1"):
-    GDBscript+=\
-"""
-# Generate Trace Until End
-maintenance packet Qqemu.Logging:1
-# Do this by setting an impossible breakpoint
-b *0x1000
-del 1
-c
-"""
-else:
-    GDBscript+=\
-"""
+
 kill
 q
 """

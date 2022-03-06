@@ -6,12 +6,11 @@ recordFile="$tvDir/all.qemu"
 traceFile="$tvDir/all.txt"
 
 # Parse Commandline Arg
-if [ "$#" -ne 2 ]; then
-    echo "genCheckpoint requires 2 arguments: <num instrs> <whether to genTrace>" >&2
+if [ "$#" -ne 1 ]; then
+    echo "genCheckpoint requires 1 argument: <num instrs>" >&2
     exit 1
 fi
 instrs=$1
-genTrace=$2
 if ! [ "$instrs" -eq "$instrs" ] 2> /dev/null
 then
     echo "Error expected integer number of instructions, got $instrs" >&2
@@ -25,14 +24,8 @@ rawStateFile="$checkPtDir/stateGDB.txt"
 rawRamFile="$checkPtDir/ramGDB.bin"
 ramFile="$checkPtDir/ram.bin"
 
-if [ $genTrace -eq "1" ]; then
-    read -p "This scripts is going to create a checkpoint at $instrs instrs.
-    AND it's going to start generating a trace at that checkpoint.
-    Is that what you wanted? (y/n) " -n 1 -r
-else 
-    read -p "This scripts is going to create a checkpoint at $instrs instrs.
-    Is that what you wanted? (y/n) " -n 1 -r
-fi
+read -p "This scripts is going to create a checkpoint at $instrs instrs.
+Is that what you wanted? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -63,7 +56,7 @@ then
     echo "It occurs ${occurences} times before the ${instrs}th instr." 
 
     # Create GDB script because GDB is terrible at handling arguments / variables
-    ./createGenCheckpointScript.py $tcpPort $imageDir/vmlinux $instrs $rawStateFile $rawRamFile $pc $occurences $genTrace
+    ./createGenCheckpointScript.py $tcpPort $imageDir/vmlinux $instrs $rawStateFile $rawRamFile $pc $occurences
     # GDB+QEMU
     echo "Starting QEMU in replay mode with attached GDB script at $(date +%H:%M:%S)"
     (qemu-system-riscv64 \
@@ -81,10 +74,8 @@ then
     echo "Changing Endianness at $(date +%H:%M:%S)"
     make fixBinMem
     ./fixBinMem "$rawRamFile" "$ramFile"
-    if [ $genTrace -ne "1" ]; then
-        echo "Copying over a truncated trace"
-        tail -n+$instrs $traceFile > $outTraceFile
-    fi
+    echo "Copying over a truncated trace"
+    tail -n+$instrs $traceFile > $outTraceFile
     read -p "Checkpoint completed at $(date +%H:%M:%S)" -n 1 -r
 
     # Cleanup
