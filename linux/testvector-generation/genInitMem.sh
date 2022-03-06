@@ -30,7 +30,7 @@ then
     if [ ! $? -eq 0 ]; then
         echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
         echo "Please chmod it. For example:">&2
-        echo "    sudo chmod a+rw $tvDir">&2
+        echo "    sudo chmod -R a+rw $tvDir">&2
         exit 1
     fi
 
