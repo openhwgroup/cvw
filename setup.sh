@@ -27,6 +27,7 @@ export PATH=$WALLY/bin:$PATH
 export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verilator
 # ModelSim/Questa (vsim)
 export PATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin:$PATH    # Change this for your path to Modelsim
+export PATH=/cad/mentor/questa_sim-2022.1_1/questasim/bin:$PATH    # Change this for your path to Modelsim
 export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu # Change this to your Siemens license server
 export PATH=/cad/synopsys/SYN/bin:$PATH  # Change this for your path to Design Compiler
 export SNPSLMD_LICENSE_FILE=27020@134.173.38.214
