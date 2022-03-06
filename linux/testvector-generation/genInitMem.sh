@@ -22,13 +22,15 @@ if [[ $REPLY =~ ^[Yy]$ ]]
 then
     if [ ! -d "$tvDir" ]; then
         echo "Error: linux testvector directory $tvDir not found!">&2
-        echo "Please create it.">&2
+        echo "Please create it. For example:">&2
+        echo "    sudo mkdir -p $tvDir">&2
         exit 1
     fi
     test -w $RISCV/linux-testvectors
     if [ ! $? -eq 0 ]; then
         echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
-        echo "Please chmod it.">&2
+        echo "Please chmod it. For example:">&2
+        echo "    sudo chmod a+rw $tvDir">&2
         exit 1
     fi
 
@@ -62,5 +64,8 @@ then
     ./fixBinMem "$rawUntrimmedBootmemFile" "$untrimmedBootmemFile"
 
     echo "genInitMem.sh completed!"
-    echo "You may consider restricting write access to $tvDir now."
+    echo "You may want to restrict write access to $tvDir now and give cad ownership of it."
+    echo "Run the following:"
+    echo "    sudo chown -R cad:cad $tvDir"
+    echo "    sudo chmod -R go-w $tvDir"
 fi
