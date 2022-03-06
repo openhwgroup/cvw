@@ -30,23 +30,20 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     echo "Creating checkpoint at $instrs instructions!"
+    if [ ! -d "$tvDir" ]; then
+        echo "Error: linux testvector directory $tvDir not found!">&2
+        echo "Please create it. For example:">&2
+        echo "    sudo mkdir -p $tvDir">&2
+        exit 1
+    fi
+    test -w $tvDir
+    if [ ! $? -eq 0 ]; then
+        echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
+        echo "Please chmod it. For example:">&2
+        echo "    sudo chmod -R a+rw $tvDir">&2
+        exit 1
+    fi
 
-    # Create Output Directory
-    echo "Elevating permissions to create $checkPtDir and stuff inside it"
-    sudo mkdir -p $checkPtDir
-    sudo chown -R cad:users $checkPtDir
-    sudo chmod -R a+rw $checkPtDir
-    sudo touch $outTraceFile
-    sudo chmod a+rw $outTraceFile
-    sudo touch $interruptsFile
-    sudo chmod a+rw $interruptsFile
-    sudo touch $rawStateFile
-    sudo chmod a+rw $rawStateFile
-    sudo touch $rawRamFile
-    sudo chmod a+rw $rawRamFile
-    sudo touch $ramFile
-    sudo chmod a+rw $ramFile
-    
     # Identify instruction in trace
     instr=$(sed "${instrs}q;d" "$traceFile")
     echo "Found ${instrs}th instr: ${instr}"
@@ -76,11 +73,11 @@ then
     ./fixBinMem "$rawRamFile" "$ramFile"
     echo "Copying over a truncated trace"
     tail -n+$instrs $traceFile > $outTraceFile
-    read -p "Checkpoint completed at $(date +%H:%M:%S)" -n 1 -r
 
-    # Cleanup
-    echo "Elevating permissions to restrict write access to $checkPtDir"
-    sudo chown -R cad:users $checkPtDir
-    sudo chmod -R go-w $checkPtDir
+    echo "Checkpoint completed at $(date +%H:%M:%S)"
+    echo "You may want to restrict write access to $tvDir now and give cad ownership of it."
+    echo "Run the following:"
+    echo "    sudo chown -R cad:cad $tvDir"
+    echo "    sudo chmod -R go-w $tvDir"
 fi
 
