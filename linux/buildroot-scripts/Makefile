@@ -12,7 +12,7 @@ generate:
 disassemble:
 	mkdir -p ${DIS}
 	# disassemblies
-	make -j ${DIS}/fw_jump.objdump ${DIS}/vmlinux.objdump ${DIS}/busybox.objdump
+	make -j ${DIS}/fw_jump.objdump ${DIS}/vmlinux.objdump ${DIS}/busybox.objdump ${DIS}/vmlinux.objdump.addr
 	# filesystem
 	make ${DIS}/rootfs/bin/busybox
 	# mkdir -p ${DIS}/rootfs
@@ -23,6 +23,9 @@ ${DIS}/fw_jump.objdump: ${IMAGES}/fw_jump.elf
 
 ${DIS}/vmlinux.objdump: ${IMAGES}/vmlinux
 	riscv64-unknown-elf-objdump -D ${IMAGES}/vmlinux >> ${DIS}/vmlinux.objdump
+
+${DIS}/vmlinux.objdump.addr: ${DIS}/vmlinux.objdump
+	-cd ${DIS}; extractFunctionRadix.sh vmlinux.objdump
 
 ${DIS}/busybox.objdump: ${DIS}/rootfs/bin/busybox
 	riscv64-unknown-elf-objdump -D ${DIS}/rootfs/bin/busybox >> ${DIS}/busybox.objdump
