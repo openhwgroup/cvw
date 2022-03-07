@@ -4,7 +4,7 @@ import glob
 import re
 import csv
 
-field_names = [ 'Name', 'Critical Path Length', 'Cell Area']
+field_names = [ 'Name', 'Critical Path Length', 'Cell Area', 'Synth Time']
 data = []
 for name in glob.glob("/home/ssanghai/riscv-wally/synthDC/runs/*/reports/wallypipelinedcore_qor.rep"):   
     f = open(name, 'r')
@@ -15,7 +15,9 @@ for name in glob.glob("/home/ssanghai/riscv-wally/synthDC/runs/*/reports/wallypi
             pathLen = re.search("Length: *(.*?)\\n", line).group(1) 
         if "Cell Area" in line:
             area = re.search("Area: *(.*?)\\n", line).group(1) 
-    data += [{'Name' : trimName, 'Critical Path Length': pathLen, 'Cell Area' : area}]
+        if "Overall Compile Time" in line:
+            time = re.search("Time: *(.*?)\\n", line).group(1)
+    data += [{'Name' : trimName, 'Critical Path Length': pathLen, 'Cell Area' : area, 'Synth Time' :time}]
 
 with open('Summary.csv', 'w') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=field_names)

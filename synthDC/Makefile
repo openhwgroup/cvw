@@ -39,13 +39,16 @@ rv%.log: rv%
 	echo $<
 
 
-DIRS = rv64gc #rv32e rv32gc rv64ic rv64gc rv32ic
+DIRS = rv32e rv32gc rv64ic rv64gc rv32ic
 # DELDIRS = rv32e rv32gc rv64ic rv64gc rv32ic
 # CONFIGSUBDIRS = _FPUoff _noMulDiv _noVirtMem _PMP0 _PMP16 _orig
 
 copy: 
 	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
 	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
+	@$(foreach dir, $(DIRS), sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
+	@$(foreach dir, $(DIRS), sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
+	@$(foreach dir, $(DIRS), sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
 
 del:
 	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
@@ -59,39 +62,28 @@ configs: $(DIRS)
 $(DIRS): 
 	#turn off FPU 
 	rm -rf $(CONFIGDIR)/$@_FPUoff
-	cp -r $(CONFIGDIR)/$@ $(CONFIGDIR)/$@_FPUoff
+	cp -r $(CONFIGDIR)/$@_orig $(CONFIGDIR)/$@_FPUoff
 	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$@_FPUoff/wally-config.vh
 	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$@_FPUoff/wally-config.vh
 
 	# PMP 16 
 	rm -rf $(CONFIGDIR)/$@_PMP16
 	cp -r $(CONFIGDIR)/$@_FPUoff $(CONFIGDIR)/$@_PMP16
-	# sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$@_PMP16/wally-config.vh
-	# sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$@_PMP16/wally-config.vh
 	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 16/' $(CONFIGDIR)/$@_PMP16/wally-config.vh
 	
 	# PMP 0
 	rm -rf $(CONFIGDIR)/$@_PMP0
 	cp -r $(CONFIGDIR)/$@_FPUoff $(CONFIGDIR)/$@_PMP0
-	# sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$@_PMP0/wally-config.vh
-	# sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$@_PMP0/wally-config.vh
 	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/$@_PMP0/wally-config.vh
 	
 	# No Virtual Memory 
 	rm -rf $(CONFIGDIR)/$@_noVirtMem
-	# cp -r $(CONFIGDIR)/$@ $(CONFIGDIR)/$@_noVirtMem
-	# sed -i 's/1 *<< *3/0 <_PMP0< 3/' $(CONFIGDIR)/$@_noVirtMem/wally-config.vh
-	# sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$@_noVirtMem/wally-config.vh
-	# sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/$@_noVirtMem/wally-config.vh
+	cp -r $(CONFIGDIR)/$@_PMP0 $(CONFIGDIR)/$@_noVirtMem
 	sed -i 's/VIRTMEM_SUPPORTED 1/VIRTMEM_SUPPORTED 0/' $(CONFIGDIR)/$@_noVirtMem/wally-config.vh
 
 	#no muldiv
 	rm -rf $(CONFIGDIR)/$@_noMulDiv
 	cp -r $(CONFIGDIR)/$@_noVirtMem $(CONFIGDIR)/$@_noMulDiv
-	# sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
-	# sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
-	# sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
-	# sed -i 's/VIRTMEM_SUPPORTED 1/VIRTMEM_SUPPORTED 0/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
 
 
