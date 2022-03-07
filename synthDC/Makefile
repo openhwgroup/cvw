@@ -90,8 +90,9 @@ $(DIRS):
 allsynth: $(CONFIGFILESTRIM)
 
 $(CONFIGFILESTRIM):
-	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=500 MAXCORES=1 --jobs
+	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=500 MAXCORES=1
 
+	
 synth:
 	@echo "DC Synthesis"
 	@mkdir -p hdl/
