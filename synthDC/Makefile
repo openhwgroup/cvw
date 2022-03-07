@@ -39,7 +39,7 @@ rv%.log: rv%
 	echo $<
 
 
-DIRS = rv32e rv32gc rv64ic rv64gc rv32ic
+DIRS = rv32e #rv32gc rv64ic rv64gc rv32ic
 # DELDIRS = rv32e rv32gc rv64ic rv64gc rv32ic
 # CONFIGSUBDIRS = _FPUoff _noMulDiv _noVirtMem _PMP0 _PMP16 _orig
 

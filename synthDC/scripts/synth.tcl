@@ -22,7 +22,7 @@ set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 
-eval file copy -force ${cfg} {hdl/}
+# eval file copy -force ${cfg} {hdl/}
 eval file copy -force ${cfg} $outputDir
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
@@ -34,7 +34,7 @@ if { $saifpower == 1 } {
 }
 
 # Verilog files
-set my_verilog_files [glob hdl/*]
+set my_verilog_files [glob hdl/* outputDir/wally-config.vh]
 
 # Set toplevel
 set my_toplevel $::env(DESIGN)
