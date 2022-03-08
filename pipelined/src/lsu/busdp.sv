@@ -44,14 +44,14 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   output logic                LSUBusRead,
   output logic [2:0]          LSUBusSize, 
   input logic [2:0]           LSUFunct3M,
-  output logic [`PA_BITS-1:0] LSUBusAdr,
+  output logic [`PA_BITS-1:0] LSUBusAdr, // ** change name to HADDR to make ahb lite.
   output logic [LOGWPL-1:0]   WordCount,
   // cache interface.
   input logic [`PA_BITS-1:0]  DCacheBusAdr,
   input logic                 DCacheFetchLine,
   input logic                 DCacheWriteLine,
   output logic                DCacheBusAck,
-  output logic [LINELEN-1:0]  DCacheBusWriteData,
+  output logic [LINELEN-1:0]  DCacheBusWriteData, //*** change name.
   output logic                SelUncachedAdr,
  
   // lsu interface
