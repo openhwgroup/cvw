@@ -38,7 +38,7 @@ float convFloat(float16_t f16) {
 void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add, int negp, int negz, int zeroAllowed, int infAllowed, int nanAllowed) {
     float16_t result;
     int op;
-    char calc[80];
+    char calc[80], flags[80];
     float32_t x32, y32, z32, r32;
     float xf, yf, zf, rf;
     float16_t smallest;
@@ -48,7 +48,14 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     if (negp) x.v ^= 0x8000; // flip sign of x to negate p
     if (negz) z.v ^= 0x8000; // flip sign of z to negate z
     op = mul<<3 | add<<2 | negp<<1 | negz;
+    softfloat_exceptionFlags = 0; // clear exceptions
     result = f16_mulAdd(x, y, z);
+
+    sprintf(flags, "NV: %d OF: %d UF: %d NX: %d", 
+        (softfloat_exceptionFlags >> 4) % 2,
+        (softfloat_exceptionFlags >> 2) % 2,
+        (softfloat_exceptionFlags >> 1) % 2,
+        (softfloat_exceptionFlags) % 2);
 
     // convert to floats for printing
     xf = convFloat(x);
@@ -68,7 +75,7 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     if (resultmag.v == 0x0000 && !zeroAllowed) fprintf(fptr, "// skip zero: ");
     if ((resultmag.v == 0x7C00 || resultmag.v == 0x7BFF) && !infAllowed)  fprintf(fptr, "// Skip inf: ");
     if (resultmag.v >  0x7C00 && !nanAllowed)  fprintf(fptr, "// Skip NaN: ");
-    fprintf(fptr, "%04x_%04x_%04x_%02x_%04x // %s\n", x.v, y.v, z.v, op, result.v, calc);
+    fprintf(fptr, "%04x_%04x_%04x_%02x_%04x_%02x // %s %s\n", x.v, y.v, z.v, op, result.v, softfloat_exceptionFlags, calc, flags);
 }
 
 void prepTests(uint16_t *e, uint16_t *f, char *testName, char *desc, float16_t *cases, 
