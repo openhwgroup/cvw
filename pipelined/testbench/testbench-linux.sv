@@ -314,8 +314,8 @@ module testbench;
       $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
     $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
-    ProgramAddrMapFile = {linuxImageDir,"vmlinux.objdump.addr"};
-    ProgramLabelMapFile = {linuxImageDir,"vmlinux.objdump.lab"};
+    ProgramAddrMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.addr"};
+    ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
     // initialize bootrom
     memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
     readResult = $fread(dut.uncore.bootrom.bootrom.RAM,memFile);
