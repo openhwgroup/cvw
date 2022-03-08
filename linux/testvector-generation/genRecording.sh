@@ -8,26 +8,30 @@ Would you like to proceed? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-    # Create Output Directory
-    echo "Elevating permissions to create $recordFile"
-    sudo mkdir -p $tvDir
-    sudo chown cad $tvDir
-    sudo touch $recordFile 
-    sudo chmod a+rw $recordFile
+    if [ ! -d "$tvDir" ]; then
+        echo "Error: linux testvector directory $tvDir not found!">&2
+        echo "Please create it. For example:">&2
+        echo "    sudo mkdir -p $tvDir">&2
+        exit 1
+    fi
+    test -w $tvDir
+    if [ ! $? -eq 0 ]; then
+        echo "Error: insuffcient write privileges for linux testvector directory $tvDir !">&2
+        echo "Please chmod it. For example:">&2
+        echo "    sudo chmod -R a+rw $tvDir">&2
+        exit 1
+    fi
 
-    # Compile Devicetree from Source
-    dtc -I dts -O dtb ../devicetree/wally-virt.dts > ../devicetree/wally-virt.dtb
-
-    # QEMU Simulation
-    echo "Launching QEMU!"
+    echo "Launching QEMU in record mode!"
     qemu-system-riscv64 \
-    -M virt -dtb ../devicetree/wally-virt.dtb \
+    -M virt -dtb $imageDir/wally-virt.dtb \
     -nographic \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=record,rrfile=$recordFile
 
-    # Cleanup
-    echo "Elevating permissions to restrict write access to $recordFile"
-    sudo chown cad $recordFile
-    sudo chmod o-w $recordFile
+    echo "genRecording.sh completed!"
+    echo "You may want to restrict write access to $tvDir now and give cad ownership of it."
+    echo "Run the following:"
+    echo "    sudo chown -R cad:cad $tvDir"
+    echo "    sudo chmod -R go-w $tvDir"
 fi
