@@ -79,9 +79,21 @@ then
     info all-registers
     set logging off
     shell echo \"GDB storing UART state to $rawUartStateFile\"
+    # Save value of LCR
+    set \$LCR=*0x10000003 & 0xff
     set logging file $rawUartStateFile
     set logging on
-    x/8xb 0x10000000
+    # Change LCR to set DLAB=0 to be able to read RBR and IER
+    set {char}0x10000003 &= ~0x80
+    x/1xb 0x10000000
+    x/1xb 0x10000001
+    x/1xb 0x10000002
+    # But log original value of LCR
+    printf "0x10000003:\t0x%02x\n", \$LCR
+    x/1xb 0x10000004
+    x/1xb 0x10000005
+    x/1xb 0x10000006
+    x/1xb 0x10000007
     set logging off
     shell echo \"GDB storing PLIC state to $rawPlicStateFile\"
     shell echo \"Note: this dumping assumes a maximum of 63 PLIC sources\"
@@ -115,8 +127,8 @@ end_of_script
 
     # Post-Process GDB outputs
     ./parseState.py "$checkPtDir"
-    ./parseUartState.py "$rawUartStateFile" "$uartStateFile"
-    ./parsePlicState.py "$rawPlicStateFile" "$plicStateFile"
+    ./parseUartState.py "$checkPtDir"
+    ./parsePlicState.py "$checkPtDir"
     echo "Changing Endianness at $(date +%H:%M:%S)"
     make fixBinMem
     ./fixBinMem "$rawRamFile" "$ramFile"
