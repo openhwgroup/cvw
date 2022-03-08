@@ -32,30 +32,30 @@
 
 `include "wally-config.vh"
 
-module spillsupport (
-  input logic              clk,
-  input logic              reset,
-  input logic              StallF,
-  input logic [`XLEN-1:0]  PCF,
-  input logic [`XLEN-3:0]  PCPlusUpperF,
-  input logic [`XLEN-1:0]  PCNextF,
-  input logic [31:0]       InstrRawF,
-  input logic              IFUCacheBusStallF,
-  input logic              ITLBMissF, 
-  input logic              InstrDAPageFaultF, 
-  output logic [`XLEN-1:0] PCNextFSpill,
-  output logic [`XLEN-1:0] PCFSpill,
-  output logic             SelNextSpillF,
-  output logic [31:0]      PostSpillInstrRawF,
-  output logic             CompressedF);
+module spillsupport #(parameter CACHE_ENABLED)
+  (input logic              clk,
+   input logic              reset,
+   input logic              StallF,
+   input logic [`XLEN-1:0]  PCF,
+   input logic [`XLEN-3:0]  PCPlusUpperF,
+   input logic [`XLEN-1:0]  PCNextF,
+   input logic [31:0]       InstrRawF,
+   input logic              IFUCacheBusStallF,
+   input logic              ITLBMissF, 
+   input logic              InstrDAPageFaultF, 
+   output logic [`XLEN-1:0] PCNextFSpill,
+   output logic [`XLEN-1:0] PCFSpill,
+   output logic             SelNextSpillF,
+   output logic [31:0]      PostSpillInstrRawF,
+   output logic             CompressedF);
 
 
-  localparam integer   SPILLTHRESHOLD = (`IMEM == `MEM_CACHE) ? `ICACHE_LINELENINBITS/32 : 1;
+  localparam integer   SPILLTHRESHOLD = CACHE_ENABLED ? `ICACHE_LINELENINBITS/32 : 1;
   logic [`XLEN-1:0]    PCPlus2F;
   logic                TakeSpillF;
   logic                SpillF;
   logic                SelSpillF, SpillSaveF;
-  logic [15:0]         SpillDataLine0;
+  logic [15:0]         SpillDataLine0, SavedInstr;
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
   (* mark_debug = "true" *)  statetype CurrState, NextState;
 
@@ -86,11 +86,12 @@ module spillsupport (
   assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
                          (CurrState == STATE_SPILL & IFUCacheBusStallF);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
-
+  assign SavedInstr = CACHE_ENABLED ? InstrRawF[15:0] : InstrRawF[31:16];
+  
   flopenr #(16) SpillInstrReg(.clk(clk),
                               .en(SpillSaveF),
                               .reset(reset),
-                              .d((`IMEM == `MEM_CACHE) ? InstrRawF[15:0] : InstrRawF[31:16]),
+                              .d(SavedInstr),
                               .q(SpillDataLine0));
 
   mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], SpillDataLine0}), .s(SpillF),
