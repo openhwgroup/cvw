@@ -21,20 +21,26 @@ def tokenize(string):
             token = token + char
     return tokens
 
+def stripZeroes(num):
+    num = num.strip('0')
+    if num=='':
+        return '0'
+    else:
+        return num
+
 #############
 # Main Code #
 #############
 print("Begin parsing PLIC state.")
 
 # Parse Args
-if len(sys.argv) != 3:
-    sys.exit('Error parsePlicState.py expects 2 args: <raw GDB state dump> <output state file>')
-rawPlicStateFile=sys.argv[1]
-outPlicStateFile=sys.argv[2]
+if len(sys.argv) != 2:
+    sys.exit('Error parsePlicState.py expects 1 arg: <path_to_checkpoint_dir>')
+outDir = sys.argv[1]+'/'
+rawPlicStateFile = outDir+'plicStateGDB.txt'
 if not os.path.exists(rawPlicStateFile):
     sys.exit('Error input file '+rawPlicStateFile+'not found')
 
-# Main Loop
 with open(rawPlicStateFile, 'r') as rawPlicStateFile:
     plicIntPriorityArray=[]
     # 0x0C000004 thru 0x0C000010
@@ -76,12 +82,14 @@ with open(rawPlicStateFile, 'r') as rawPlicStateFile:
     # 0x0C200000
     plicIntPriorityThreshold = tokenize(rawPlicStateFile.readline())[1:]
 
-with open(outPlicStateFile, 'w') as outPlicStateFile:
+with open(outDir+'checkpoint-PLIC_INT_PRIORITY', 'w') as outFile:
     for word in plicIntPriorityArray:
-        outPlicStateFile.write(word[2:]+'\n')
+        outFile.write(stripZeroes(word[2:])+'\n')
+with open(outDir+'checkpoint-PLIC_INT_ENABLE', 'w') as outFile:
     for word in plicIntEnable:
-        outPlicStateFile.write(word[2:]+'\n')
+        outFile.write(stripZeroes(word[2:]))
+with open(outDir+'checkpoint-PLIC_THRESHOLD', 'w') as outFile:
     for word in plicIntPriorityThreshold:
-        outPlicStateFile.write(word[2:]+'\n')
+        outFile.write(stripZeroes(word[2:])+'\n')
 
 print("Finished parsing PLIC state!")
