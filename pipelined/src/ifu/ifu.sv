@@ -201,7 +201,7 @@ module ifu (
           .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
           .DCacheBusWriteData(ICacheBusWriteData), .LSUPAdrM(PCPF),
-          .FinalWriteDataM(), .SelUncachedAdr,
+          .SelUncachedAdr,
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
 
