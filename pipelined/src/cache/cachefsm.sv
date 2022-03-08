@@ -34,8 +34,8 @@ module cachefsm
   (input logic clk,
    input logic       reset,
    // inputs from IEU
-   input logic [1:0] RW,
-   input logic [1:0] Atomic,
+   input logic [1:0] CacheRW,
+   input logic [1:0] CacheAtomic,
    input logic       FlushCache,
    // hazard inputs
    input logic       CPUBusy,
@@ -109,10 +109,10 @@ module cachefsm
   // using both IgnoreRequestTLB and IgnoreRequestTrapM.  Otherwise we can just use IgnoreRequestTLB.
 
   assign DoFlush = FlushCache & ~IgnoreRequestTrapM; // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
-  assign AMO = Atomic[1] & (&RW);
+  assign AMO = CacheAtomic[1] & (&CacheRW);
   assign DoAMO = AMO & ~IgnoreRequest; 
-  assign DoRead = RW[1] & ~IgnoreRequest; 
-  assign DoWrite = RW[0] & ~IgnoreRequest; 
+  assign DoRead = CacheRW[1] & ~IgnoreRequest; 
+  assign DoWrite = CacheRW[0] & ~IgnoreRequest; 
 
   assign DoAnyMiss = (DoAMO | DoRead | DoWrite) & ~CacheHit;
   assign DoAnyUpdateHit = (DoAMO | DoWrite) & CacheHit;
@@ -145,7 +145,7 @@ module cachefsm
       STATE_MISS_FETCH_DONE: if(VictimDirty)         NextState = STATE_MISS_EVICT_DIRTY;
                              else                    NextState = STATE_MISS_WRITE_CACHE_LINE;
       STATE_MISS_WRITE_CACHE_LINE:                   NextState = STATE_MISS_READ_WORD;
-      STATE_MISS_READ_WORD: if(RW[0] & ~AMO)         NextState = STATE_MISS_WRITE_WORD;
+      STATE_MISS_READ_WORD: if(CacheRW[0] & ~AMO)         NextState = STATE_MISS_WRITE_WORD;
                             else                     NextState = STATE_MISS_READ_WORD_DELAY;
       STATE_MISS_READ_WORD_DELAY: if(CPUBusy)        NextState = STATE_CPU_BUSY;
                                   else               NextState = STATE_READY;
@@ -213,14 +213,14 @@ module cachefsm
   // handle cpu stall.
   assign restore = ((CurrState == STATE_CPU_BUSY)) & ~`REPLAY;
   assign save = ((CurrState == STATE_READY & DoAnyHit & CPUBusy) |
-                 (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | RW[1]) & CPUBusy) |
+                 (CurrState == STATE_MISS_READ_WORD_DELAY & (AMO | CacheRW[1]) & CPUBusy) |
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
 
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & IgnoreRequestTLB) | // Ignore Request is needed on TLB miss.
                   // use the raw requests as we don't want IgnoreRequestTrapM in the critical path
-                  (CurrState == STATE_READY & ((AMO | RW[0]) & CacheHit)) | // changes if store delay hazard removed
-                  (CurrState == STATE_READY & (RW[1] & CacheHit) & (CPUBusy & `REPLAY)) |
+                  (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
+                  (CurrState == STATE_READY & (CacheRW[1] & CacheHit) & (CPUBusy & `REPLAY)) |
 
                   (CurrState == STATE_MISS_FETCH_WDV) |
                   (CurrState == STATE_MISS_FETCH_DONE) |

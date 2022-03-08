@@ -230,14 +230,11 @@ module lsu (
     
 
     if(CACHE_ENABLED) begin : dcache
-      logic [1:0] RW, Atomic;
-      assign RW = CacheableM ? LSURWM : 2'b00;        // AND gate  // *** move and gates into cache
-      assign Atomic = CacheableM ? LSUAtomicM : 2'b00; // AND gate
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .save, .restore, .RW, .Atomic,
+        .clk, .reset, .CPUBusy, .save, .restore, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .FinalWriteData(FinalWriteDataM),
+        .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataLine(ReadDataLineM), 
