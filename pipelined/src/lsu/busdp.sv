@@ -56,7 +56,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
  
   // lsu interface
   input logic [`PA_BITS-1:0]  LSUPAdrM,
-  input logic [`XLEN-1:0]     FinalWriteDataM,
   input logic                 IgnoreRequest,
   input logic [1:0]           LSURWM,
   input logic                 CPUBusy,
