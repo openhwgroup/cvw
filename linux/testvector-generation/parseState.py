@@ -24,7 +24,7 @@ def tokenize(string):
 #############
 # Main Code #
 #############
-print("Begin parsing state.")
+print("Begin parsing CPU state.")
 
 # Parse Args
 if len(sys.argv) != 2:
@@ -96,4 +96,4 @@ with open(stateGDBpath, 'r') as stateGDB:
                     outFile.write(hex(byte)[2:]+'\n')
                 outFile.close()
 
-print("Finished parsing state!")
+print("Finished parsing CPU state!")

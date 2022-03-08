@@ -19,8 +19,11 @@ fi
 
 checkPtDir="$tvDir/checkpoint$instrs"
 outTraceFile="$checkPtDir/all.txt"
-interruptsFile="$checkPtDir/interrupts.txt"
 rawStateFile="$checkPtDir/stateGDB.txt"
+rawUartStateFile="$checkPtDir/uartStateGDB.txt"
+uartStateFile="$checkPtDir/checkpoint-UART"
+rawPlicStateFile="$checkPtDir/plicStateGDB.txt"
+plicStateFile="$checkPtDir/checkpoint-PLIC"
 rawRamFile="$checkPtDir/ramGDB.bin"
 ramFile="$checkPtDir/ram.bin"
 
@@ -55,7 +58,48 @@ then
     echo "It occurs ${occurences} times before the ${instrs}th instr." 
 
     # Create GDB script because GDB is terrible at handling arguments / variables
-    ./createGenCheckpointScript.py $tcpPort $imageDir/vmlinux $instrs $rawStateFile $rawRamFile $pc $occurences
+    cat > genCheckpoint.gdb <<- end_of_script 
+    set pagination off
+    set logging overwrite on
+    set logging redirect on
+    set confirm off
+    target extended-remote :$tcpPort
+    maintenance packet Qqemu.PhyMemMode:1
+    file $imageDir/vmlinux
+    # Step over reset vector into actual code
+    stepi 100
+    shell echo \"GDB proceeding to checkpoint at $instrs instrs, pc $pc\"
+    b *0x$pc
+    ignore 1 $occurences
+    c
+    shell echo \"Reached checkpoint at $instrs instrs\"
+    shell echo \"GDB storing CPU state to $rawStateFile\"
+    set logging file $rawStateFile
+    set logging on
+    info all-registers
+    set logging off
+    shell echo \"GDB storing UART state to $rawUartStateFile\"
+    set logging file $rawUartStateFile
+    set logging on
+    x/8xb 0x10000000
+    set logging off
+    shell echo \"GDB storing PLIC state to $rawPlicStateFile\"
+    shell echo \"Note: this dumping assumes a maximum of 63 PLIC sources\"
+    set logging file $rawPlicStateFile
+    set logging on
+    # Priority Levels for sources 1 thru 63
+    x/63xw 0x0C000004
+    # Interrupt Enables
+    x/2xw 0x0C020000
+    # Global Priority Threshold
+    x/1xw 0x0C200000
+    set logging off
+    shell echo \"GDB storing RAM to $rawRamFile\"
+    dump binary memory $rawRamFile 0x80000000 0xffffffff
+    kill
+    q
+end_of_script
+
     # GDB+QEMU
     echo "Starting QEMU in replay mode with attached GDB script at $(date +%H:%M:%S)"
     (qemu-system-riscv64 \
@@ -64,12 +108,15 @@ then
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
     -gdb tcp::$tcpPort -S \
-    2>&1 1>./qemu-serial | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $interruptsFile | ./remove_dup.awk > $outTraceFile) \
-    & riscv64-unknown-elf-gdb --quiet -ex "source genCheckpoint.gdb"
+     1>./qemu-serial) \
+    & riscv64-unknown-elf-gdb --quiet -x genCheckpoint.gdb
+
     echo "Completed GDB script at $(date +%H:%M:%S)"
 
     # Post-Process GDB outputs
     ./parseState.py "$checkPtDir"
+    ./parseUartState.py "$rawUartStateFile" "$uartStateFile"
+    ./parsePlicState.py "$rawPlicStateFile" "$plicStateFile"
     echo "Changing Endianness at $(date +%H:%M:%S)"
     make fixBinMem
     ./fixBinMem "$rawRamFile" "$ramFile"
