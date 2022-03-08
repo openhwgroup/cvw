@@ -210,9 +210,6 @@ module ifu (
     
 
     if(CACHE_ENABLED) begin : icache
-      logic [1:0] IFURWF;
-      assign IFURWF = CacheableF ? 2'b10 : 2'b00;
-      
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
@@ -221,10 +218,10 @@ module ifu (
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),
              .CacheWriteLine(), .ReadDataLine(ReadDataLine),
-             .save, .restore,
+             .save, .restore, .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .FinalWriteData('0),
-             .RW(IFURWF), 
+             .RW(2'b10), 
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),

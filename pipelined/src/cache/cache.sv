@@ -51,6 +51,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
    // lsu control
   input logic                 IgnoreRequestTLB,
   input logic                 IgnoreRequestTrapM,                                                                    
+  input logic                 Cacheable,
    // Bus fsm interface
   output logic                CacheFetchLine,
   output logic                CacheWriteLine,
@@ -99,6 +100,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
+  logic [1:0]                 CacheRW, CacheAtomic;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -174,8 +176,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
+  assign CacheRW = Cacheable ? RW : 2'b00;
+  assign CacheAtomic = Cacheable ? Atomic : 2'b00;
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
-		.RW, .Atomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
+		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
