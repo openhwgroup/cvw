@@ -44,7 +44,7 @@ module interlockfsm(
   input logic       DCacheStallM,
 
   output logic      InterlockStall,
-  output logic      SelReplayCPURequest,
+  output logic      SelReplayMemE,
   output logic      SelHPTW,
   output logic      IgnoreRequestTLB,
   output logic      IgnoreRequestTrapM);
@@ -122,7 +122,9 @@ module interlockfsm(
 	endcase
   end
   
-  assign SelReplayCPURequest = (InterlockNextState == STATE_T0_REPLAY);
+  assign SelReplayMemE = (InterlockCurrState == STATE_T0_REPLAY & DCacheStallM) |
+                         (InterlockCurrState == STATE_T3_DTLB_MISS & DTLBWriteM) | 
+                         (InterlockCurrState == STATE_T5_ITLB_MISS & ITLBWriteF);
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 				   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissOrDAFaultF | DTLBMissOrDAFaultM));

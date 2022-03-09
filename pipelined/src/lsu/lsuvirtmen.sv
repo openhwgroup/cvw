@@ -73,7 +73,7 @@ module lsuvirtmem(
   logic [`PA_BITS-1:0]        HPTWAdr;
   logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize;
-  logic                       SelReplayCPURequest;
+  logic                       SelReplayMemE;
   logic [11:0]                PreLSUAdrE;  
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
   logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;  
@@ -85,7 +85,7 @@ module lsuvirtmem(
   interlockfsm interlockfsm (
     .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
-    .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
+    .InterlockStall, .SelReplayMemE, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
   hptw hptw( 
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
@@ -104,7 +104,7 @@ module lsuvirtmem(
   if(`HPTW_WRITES_SUPPORTED)
     mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
   else assign LSUWriteDataM = WriteDataM;
-  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
+  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayMemE, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;
