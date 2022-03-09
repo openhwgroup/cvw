@@ -35,7 +35,7 @@ float convFloat(float16_t f16) {
     return res;
 }
 
-void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add, int negp, int negz, int zeroAllowed, int infAllowed, int nanAllowed) {
+void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add, int negp, int negz, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
     float16_t result;
     int op, flagVals;
     char calc[80], flags[80];
@@ -47,7 +47,8 @@ void genCase(FILE *fptr, float16_t x, float16_t y, float16_t z, int mul, int add
     if (!add) z.v = 0x0000; // force z to 0 to avoid add
     if (negp) x.v ^= 0x8000; // flip sign of x to negate p
     if (negz) z.v ^= 0x8000; // flip sign of z to negate z
-    op = mul<<3 | add<<2 | negp<<1 | negz;
+    op = roundingMode << 4 | mul<<3 | add<<2 | negp<<1 | negz;
+//    printf("op = %02x rm %d mul %d add %d negp %d negz %d\n", op, roundingMode, mul, add, negp, negz);
     softfloat_exceptionFlags = 0; // clear exceptions
     result = f16_mulAdd(x, y, z);
 
@@ -94,7 +95,7 @@ void prepTests(uint16_t *e, uint16_t *f, char *testName, char *desc, float16_t *
         }
 }
 
-void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int zeroAllowed, int infAllowed, int nanAllowed) {
+void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
     int i, j, k, numCases;
     float16_t x, y, z;
     float16_t cases[100000];
@@ -111,14 +112,14 @@ void genMulTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
             y.v = cases[j].v;
             for (k=0; k<=sgn; k++) {
                 y.v ^= (k<<15);
-                genCase(fptr, x, y, z, 1, 0, 0, 0, zeroAllowed, infAllowed, nanAllowed);
+                genCase(fptr, x, y, z, 1, 0, 0, 0, roundingMode, zeroAllowed, infAllowed, nanAllowed);
             }
         }
     }
     fclose(fptr);
 }
 
-void genAddTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int zeroAllowed, int infAllowed, int nanAllowed) {
+void genAddTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
     int i, j, k, numCases;
     float16_t x, y, z;
     float16_t cases[100000];
@@ -135,7 +136,7 @@ void genAddTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
             z.v = cases[j].v;
             for (k=0; k<=sgn; k++) {
                 z.v ^= (k<<15);
-                genCase(fptr, x, y, z, 0, 1, 0, 0, zeroAllowed, infAllowed, nanAllowed);
+                genCase(fptr, x, y, z, 0, 1, 0, 0, roundingMode, zeroAllowed, infAllowed, nanAllowed);
             }
         }
     }
@@ -143,7 +144,7 @@ void genAddTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
 }
 
 
-void genFMATests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int zeroAllowed, int infAllowed, int nanAllowed) {
+void genFMATests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
     int i, j, k, l, numCases;
     float16_t x, y, z;
     float16_t cases[100000];
@@ -161,7 +162,7 @@ void genFMATests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
                 z.v = cases[k].v;
                 for (l=0; l<=sgn; l++) {
                     z.v ^= (l<<15);
-                    genCase(fptr, x, y, z, 1, 1, 0, 0, zeroAllowed, infAllowed, nanAllowed);
+                    genCase(fptr, x, y, z, 1, 1, 0, 0, roundingMode, zeroAllowed, infAllowed, nanAllowed);
                 }
             }
         }
@@ -169,7 +170,7 @@ void genFMATests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, 
     fclose(fptr);
 }
 
-void genSpecialTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int zeroAllowed, int infAllowed, int nanAllowed) {
+void genSpecialTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *desc, int roundingMode, int zeroAllowed, int infAllowed, int nanAllowed) {
     int i, j, k, sx, sy, sz, numCases;
     float16_t x, y, z;
     float16_t cases[100000];
@@ -194,7 +195,7 @@ void genSpecialTests(uint16_t *e, uint16_t *f, int sgn, char *testName, char *de
                         y.v ^= (sy<<15);
                         for (sz=0; sz<=sgn; sz++) {
                             z.v ^= (sz<<15);
-                            genCase(fptr, x, y, z, 1, 1, 0, 0, zeroAllowed, infAllowed, nanAllowed);
+                            genCase(fptr, x, y, z, 1, 1, 0, 0, roundingMode, zeroAllowed, infAllowed, nanAllowed);
                         }
                     }
                 }
@@ -210,30 +211,30 @@ int main()
     softfloatInit(); // configure softfloat modes
  
     // Test cases: multiplication
-    genMulTests(easyExponents, easyFracts, 0, "fmul_0", "// Multiply with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0);
-    genMulTests(medExponents, medFracts, 0, "fmul_1", "// Multiply with various exponents and unsigned fractions, RZ", 0, 0, 0);
-    genMulTests(medExponents, medFracts, 1, "fmul_2", "// Multiply with various exponents and signed fractions, RZ", 0, 0, 0);
+    genMulTests(easyExponents, easyFracts, 0, "fmul_0", "// Multiply with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0, 0);
+    genMulTests(medExponents, medFracts, 0, "fmul_1", "// Multiply with various exponents and unsigned fractions, RZ", 0, 0, 0, 0);
+    genMulTests(medExponents, medFracts, 1, "fmul_2", "// Multiply with various exponents and signed fractions, RZ", 0, 0, 0, 0);
 
     // Test cases: addition
-    genAddTests(easyExponents, easyFracts, 0, "fadd_0", "// Add with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0);
-    genAddTests(medExponents, medFracts, 0, "fadd_1", "// Add with various exponents and unsigned fractions, RZ", 0, 0, 0);
-    genAddTests(medExponents, medFracts, 1, "fadd_2", "// Add with various exponents and signed fractions, RZ", 0, 0, 0);
+    genAddTests(easyExponents, easyFracts, 0, "fadd_0", "// Add with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0, 0);
+    genAddTests(medExponents, medFracts, 0, "fadd_1", "// Add with various exponents and unsigned fractions, RZ", 0, 0, 0, 0);
+    genAddTests(medExponents, medFracts, 1, "fadd_2", "// Add with various exponents and signed fractions, RZ", 0, 0, 0, 0);
 
     // Test cases: FMA
-    genFMATests(easyExponents, easyFracts, 0, "fma_0", "// FMA with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0);
-    genFMATests(medExponents, medFracts, 0, "fma_1", "// FMA with various exponents and unsigned fractions, RZ", 0, 0, 0);
-    genFMATests(medExponents, medFracts, 1, "fma_2", "// FMA with various exponents and signed fractions, RZ", 0, 0, 0);
+    genFMATests(easyExponents, easyFracts, 0, "fma_0", "// FMA with exponent of 0, significand of 1.0 and 1.1, RZ", 0, 0, 0, 0);
+    genFMATests(medExponents, medFracts, 0, "fma_1", "// FMA with various exponents and unsigned fractions, RZ", 0, 0, 0, 0);
+    genFMATests(medExponents, medFracts, 1, "fma_2", "// FMA with various exponents and signed fractions, RZ", 0, 0, 0, 0);
 
     // Test cases: Zero, Infinity, NaN
-    genSpecialTests(allExponents, medFracts, 1, "fma_special_rz", "// FMA with special cases, RZ", 1, 1, 1);
+    genSpecialTests(allExponents, medFracts, 1, "fma_special_rz", "// FMA with special cases, RZ", 0, 1, 1, 1);
  
     // Full test cases with other rounding modes
     softfloat_roundingMode = softfloat_round_near_even; 
-    genSpecialTests(allExponents, medFracts, 1, "fma_special_rne", "// FMA with special cases, RNE", 1, 1, 1);
+    genSpecialTests(allExponents, medFracts, 1, "fma_special_rne", "// FMA with special cases, RNE", 1, 1, 1, 1);
     softfloat_roundingMode = softfloat_round_min; 
-    genSpecialTests(allExponents, medFracts, 1, "fma_special_rm", "// FMA with special cases, RM", 1, 1, 1);
+    genSpecialTests(allExponents, medFracts, 1, "fma_special_rm", "// FMA with special cases, RM", 2, 1, 1, 1);
     softfloat_roundingMode = softfloat_round_max; 
-    genSpecialTests(allExponents, medFracts, 1, "fma_special_rp", "// FMA with special cases, RP", 1, 1, 1);
+    genSpecialTests(allExponents, medFracts, 1, "fma_special_rp", "// FMA with special cases, RP", 3, 1, 1, 1);
   
     return 0;
 }

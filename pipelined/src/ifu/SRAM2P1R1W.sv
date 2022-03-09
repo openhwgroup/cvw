@@ -67,6 +67,7 @@ module SRAM2P1R1W
   logic [WIDTH-1:0]         WD1Q;
 
   logic [WIDTH-1:0]         mem[2**DEPTH-1:0];
+  logic [WIDTH-1:0]         bwe;
 
   
   // SRAMs address busses are always registered first.
@@ -99,13 +100,17 @@ module SRAM2P1R1W
   assign RD1 = mem[RA1Q];
   
   // write port
+  assign bwe = {WIDTH{WEN1Q}} & BitWEN1;
+  always_ff @(posedge clk) begin
+    mem[WA1Q] <= WD1Q & bwe | mem[WA1Q] & ~bwe;
+/*    
   genvar       index;
-  for (index = 0; index < WIDTH; index = index + 1) begin:bitwrite
+   for (index = 0; index < WIDTH; index = index + 1) begin:bitwrite
     always_ff @(posedge clk) begin
       if (WEN1Q & BitWEN1[index]) begin
         mem[WA1Q][index] <= WD1Q[index];
       end
-    end
+    end*/
   end
  
 endmodule  
