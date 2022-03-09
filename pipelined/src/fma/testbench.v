@@ -1,12 +1,14 @@
 /* verilator lint_off STMTDLY */
 module testbench_fma16;
-  logic        clk, reset;
-  logic [15:0] x, y, z, rexpected, result;
-  logic [7:0]  ctrl;
-  logic        mul, add, negp, negz;
-  logic [1:0]  roundmode;
-  logic [31:0] vectornum, errors;
-  logic [71:0] testvectors[10000:0];
+  reg        clk, reset;
+  reg [15:0] x, y, z, rexpected;
+  wire [15:0] result;
+  reg [7:0]  ctrl;
+  reg [3:0]  flagsexpected;
+  reg        mul, add, negp, negz;
+  reg [1:0]  roundmode;
+  reg [31:0] vectornum, errors;
+  reg [75:0] testvectors[10000:0];
 
   // instantiate device under test
   fma16 dut(x, y, z, mul, add, negp, negz, roundmode, result);
@@ -20,7 +22,7 @@ module testbench_fma16;
   // at start of test, load vectors and pulse reset
   initial
     begin
-      $readmemh("work/fmul_2.tv", testvectors);
+      $readmemh("work/fmul_0.tv", testvectors);
       vectornum = 0; errors = 0;
       reset = 1; #22; reset = 0;
     end
@@ -28,14 +30,14 @@ module testbench_fma16;
   // apply test vectors on rising edge of clk
   always @(posedge clk)
     begin
-      #1; {x, y, z, ctrl, rexpected} = testvectors[vectornum];
+      #1; {x, y, z, ctrl, rexpected, flagsexpected} = testvectors[vectornum];
       {roundmode, mul, add, negp, negz} = ctrl[5:0];
     end
 
   // check results on falling edge of clk
   always @(negedge clk)
     if (~reset) begin // skip during reset
-      if (result !== rexpected) begin  // check result
+      if (result !== rexpected) begin  // check result     // *** should also add tests on flags eventually
         $display("Error: inputs %h * %h + %h", x, y, z);
         $display("  result = %h (%h expected)", result, rexpected);
         errors = errors + 1;
