@@ -106,32 +106,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end // initial begin
   end // if (FPGA)
 
-  if(`XLEN == 64) begin
-    always_comb begin
-      case(HSIZED[1:0])
-        2'b00: begin ByteMaskM = 8'b00000000; ByteMaskM[A[2:0]] = 1; end // sb
-        2'b01: case (A[2:1])
-                  2'b00: ByteMaskM = 8'b0000_0011;
-                  2'b01: ByteMaskM = 8'b0000_1100;
-                  2'b10: ByteMaskM = 8'b0011_0000;
-                  2'b11: ByteMaskM = 8'b1100_0000;
-                endcase
-        2'b10: if (A[2]) ByteMaskM = 8'b11110000;
-               else      ByteMaskM = 8'b00001111;
-        2'b11: ByteMaskM = 8'b1111_1111;
-      endcase
-    end
-  end else begin
-    always_comb begin
-      case(HSIZED[1:0])
-        2'b00: begin ByteMaskM = 4'b0000; ByteMaskM[A[1:0]] = 1; end // sb
-        2'b01: if (A[1]) ByteMaskM = 4'b1100;
-               else      ByteMaskM = 4'b0011;
-        2'b10: ByteMaskM = 4'b1111;
-        default: ByteMaskM =  4'b1111;
-      endcase
-    end
-  end
+  swbytemask swbytemask(.HSIZED, .HADDRD(A), .ByteMask(ByteMaskM));
   
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 

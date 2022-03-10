@@ -31,7 +31,6 @@
 `include "wally-config.vh"
 
 module subwordwrite (
-  input  logic [`XLEN-1:0] HRDATA,
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
   input  logic [`XLEN-1:0] HWDATAIN,
@@ -70,7 +69,7 @@ module subwordwrite (
       endcase
 
     always_comb begin
-      HWDATA=HRDATA;
+      HWDATA='0;
       if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
       if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
       if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
@@ -104,7 +103,7 @@ module subwordwrite (
       endcase
 
     always_comb begin
-      HWDATA=HRDATA;
+      HWDATA='0;
       if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
       if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
       if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];

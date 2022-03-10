@@ -194,7 +194,7 @@ module lsu (
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM,
+              .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .FinalByteWENM,
               .DCacheMiss, .DCacheAccess);
     assign SelUncachedAdr = '0; // value does not matter.
   end else begin : bus  
@@ -253,11 +253,9 @@ module lsu (
     end
   end
 
-  if(1) begin
-    subwordwrite subwordwrite(.HRDATA('0), .HADDRD(LSUPAdrM[2:0]),
-      .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-         .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM), .ByteWEN(FinalByteWENM));
-  end
+  subwordwrite subwordwrite(.HADDRD(LSUPAdrM[2:0]),
+    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
+    .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM), .ByteWEN(FinalByteWENM));
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);

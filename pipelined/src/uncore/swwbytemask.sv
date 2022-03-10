@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// simpleram.sv
+// ram.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: On-chip SIMPLERAM, external to core
+// Purpose: On-chip RAM, external to core
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,30 +30,37 @@
 
 `include "wally-config.vh"
 
-module simpleram #(parameter BASE=0, RANGE = 65535) (
-  input  logic             clk, 
-  input  logic [31:0]      a,
-  input  logic             we,
-  input  logic [`XLEN/8-1:0] FinalByteWENM,
-  input  logic [`XLEN-1:0] wd,
-  output logic [`XLEN-1:0] rd
-);
-
-  logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
+module swbytemask (
+  input logic [3:0]          HSIZED,
+  input logic [31:0]         HADDRD,
+  output logic [`XLEN/8-1:0] ByteMask);
   
-  // discard bottom 2 or 3 bits of address offset within word or doubleword
-  localparam adrlsb = (`XLEN==64) ? 3 : 2;
-  logic [31:adrlsb] adrmsbs;
-  assign adrmsbs = a[31:adrlsb];
 
-  always_ff @(posedge clk)
-    rd <= RAM[adrmsbs];
-
-  genvar            index;
-  for(index = 0; index < `XLEN/8; index++) begin
-    always_ff @(posedge clk) begin
-      if (we & FinalByteWENM[index]) RAM[adrmsbs][8*(index+1)-1:8*index] <= #1 wd[8*(index+1)-1:8*index];
+  if(`XLEN == 64) begin
+    always_comb begin
+      case(HSIZED[1:0])
+        2'b00: begin ByteMask = 8'b00000000; ByteMask[HADDRD[2:0]] = 1; end // sb
+        2'b01: case (HADDRD[2:1])
+                  2'b00: ByteMask = 8'b0000_0011;
+                  2'b01: ByteMask = 8'b0000_1100;
+                  2'b10: ByteMask = 8'b0011_0000;
+                  2'b11: ByteMask = 8'b1100_0000;
+                endcase
+        2'b10: if (HADDRD[2]) ByteMask = 8'b11110000;
+               else           ByteMask = 8'b00001111;
+        2'b11: ByteMask = 8'b1111_1111;
+      endcase
+    end
+  end else begin
+    always_comb begin
+      case(HSIZED[1:0])
+        2'b00: begin ByteMask = 4'b0000; ByteMask[HADDRD[1:0]] = 1; end // sb
+        2'b01: if (HADDRD[1]) ByteMask = 4'b1100;
+               else           ByteMask = 4'b0011;
+        2'b10: ByteMask = 4'b1111;
+        default: ByteMask =  4'b1111;
+      endcase
     end
   end
-endmodule
 
+endmodule
