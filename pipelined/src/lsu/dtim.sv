@@ -37,6 +37,7 @@ module dtim(
   input logic [`XLEN-1:0]     IEUAdrE,
   input logic                 TrapM, 
   input logic [`XLEN-1:0]     FinalWriteDataM,
+  input logic [`XLEN/8-1:0]   FinalByteWENM,
   output logic [`XLEN-1:0]    ReadDataWordM,
   output logic                BusStall,
   output logic                LSUBusWrite,
@@ -49,7 +50,7 @@ module dtim(
   output logic                DCacheAccess);
 
   simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-      .clk, 
+      .clk, .FinalByteWENM,
       .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
       .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
       .wd(FinalWriteDataM), .rd(ReadDataWordM));
