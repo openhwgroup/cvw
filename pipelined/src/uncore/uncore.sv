@@ -95,7 +95,7 @@ module uncore (
     subwordwrite sww(
       .HRDATA,
       .HADDRD, .HSIZED, 
-      .HWDATAIN, .HWDATA);
+      .HWDATAIN, .HWDATA, .ByteWEN());
   else assign HWDATA = HWDATAIN;
   
 

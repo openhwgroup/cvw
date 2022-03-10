@@ -105,7 +105,8 @@ module lsu (
   logic                     LSUBusWriteCrit;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
-    
+  logic [(`XLEN-1)/8:0]     FinalByteWENM;
+  
   // *** TO DO: Burst mode, byte write enables to DTIM, cache, exeternal memory, remove subword write from uncore, 
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -234,6 +235,7 @@ module lsu (
               .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .save, .restore, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
+        .ByteWEN(FinalByteWENM),
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
@@ -259,7 +261,7 @@ module lsu (
     //assign ReadDataWordMaskedM = ReadDataWordM; // *** this change only works because the i/o devices dont' write bytes other than the ones specific to their address.
     subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
       .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-         .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
+         .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM), .ByteWEN(FinalByteWENM));
   end else 
     assign FinalWriteDataM = FinalAMOWriteDataM;
 
