@@ -41,6 +41,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   input logic                 InvalidateCacheM,
   input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]  PAdr, // physical address
+  input logic [(`XLEN-1)/8:0] ByteWEN,
   input logic [`XLEN-1:0]     FinalWriteData,
   output logic                CacheCommitted,
   output logic                CacheStall,
@@ -50,7 +51,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   output logic                save, restore,
    // lsu control
   input logic                 IgnoreRequestTLB,
-  input logic                 IgnoreRequestTrapM,                                                                    
+  input logic                 IgnoreRequestTrapM, 
   input logic                 Cacheable,
    // Bus fsm interface
   output logic                CacheFetchLine,
@@ -114,7 +115,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, 
+    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteWEN,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));

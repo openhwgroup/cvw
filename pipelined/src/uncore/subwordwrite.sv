@@ -35,14 +35,17 @@ module subwordwrite (
   input  logic [2:0]       HADDRD,
   input  logic [3:0]       HSIZED,
   input  logic [`XLEN-1:0] HWDATAIN,
-  output logic [`XLEN-1:0] HWDATA
+  output logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN/8-1:0] ByteWEN
 );
                   
   logic [`XLEN-1:0] WriteDataSubwordDuplicated;
+
   
   if (`XLEN == 64) begin:sww
     logic [7:0]      ByteMaskM;
     // Compute write mask
+    assign ByteWEN = ByteMaskM;
     always_comb 
       case(HSIZED[1:0])
         2'b00:  begin ByteMaskM = 8'b00000000; ByteMaskM[HADDRD[2:0]] = 1; end // sb
@@ -81,6 +84,7 @@ module subwordwrite (
   end else begin:sww // 32-bit
     logic [3:0]      ByteMaskM;
     // Compute write mask
+    assign ByteWEN = ByteMaskM;
     always_comb 
       case(HSIZED[1:0])
         2'b00:  begin ByteMaskM = 4'b0000; ByteMaskM[HADDRD[1:0]] = 1; end // sb

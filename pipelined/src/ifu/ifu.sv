@@ -220,6 +220,7 @@ module ifu (
              .CacheWriteLine(), .ReadDataLine(ReadDataLine),
              .save, .restore, .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
+             .ByteWEN('0),
              .FinalWriteData('0),
              .RW(2'b10), 
              .Atomic('0), .FlushCache('0),
