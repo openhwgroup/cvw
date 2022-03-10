@@ -253,10 +253,11 @@ module lsu (
     end
   end
 
-  if(`DMEM != `MEM_BUS) begin // *** always, not just with no MEM_BUS.  Only produces byte write enable
+  if(1) begin // *** always, not just with no MEM_BUS.  Only produces byte write enable
     logic [`XLEN-1:0] ReadDataWordMaskedM;
     // ** there is definitely a sww bug with memory mapped i/o. check wally64priv.    
-    assign ReadDataWordMaskedM = SelUncachedAdr ? '0 : ReadDataWordM; // AND-gate
+    //assign ReadDataWordMaskedM = SelUncachedAdr ? '0 : ReadDataWordM; // AND-gate
+    assign ReadDataWordMaskedM = '0; // AND-gate
     // *** consider moving this AND gate into the sww.
     //assign ReadDataWordMaskedM = ReadDataWordM; // *** this change only works because the i/o devices dont' write bytes other than the ones specific to their address.
     subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),

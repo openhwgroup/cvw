@@ -91,7 +91,7 @@ module uncore (
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // subword accesses: converts HWDATAIN to HWDATA only if no dtim or cache.
-  if(`DMEM == `MEM_BUS)
+  if(0)
     subwordwrite sww(
       .HRDATA,
       .HADDRD, .HSIZED, 
