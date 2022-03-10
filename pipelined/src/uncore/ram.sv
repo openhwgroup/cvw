@@ -38,6 +38,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
+  input  logic [3:0]       HSIZED,
   output logic [`XLEN-1:0] HREADRam,
   output logic             HRESPRam, HREADYRam
 );
@@ -53,6 +54,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   logic        initTrans;
   logic        memwrite;
   logic [3:0]  busycount;
+  logic [`XLEN/8-1:0] ByteMaskM;
 
   if(`FPGA) begin:ram
     initial begin
@@ -104,6 +106,33 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end // initial begin
   end // if (FPGA)
 
+  if(`XLEN == 64) begin
+    always_comb begin
+      case(HSIZED[1:0])
+        2'b00: begin ByteMaskM = 8'b00000000; ByteMaskM[A[2:0]] = 1; end // sb
+        2'b01: case (A[2:1])
+                  2'b00: ByteMaskM = 8'b0000_0011;
+                  2'b01: ByteMaskM = 8'b0000_1100;
+                  2'b10: ByteMaskM = 8'b0011_0000;
+                  2'b11: ByteMaskM = 8'b1100_0000;
+                endcase
+        2'b10: if (A[2]) ByteMaskM = 8'b11110000;
+               else      ByteMaskM = 8'b00001111;
+        2'b11: ByteMaskM = 8'b1111_1111;
+      endcase
+    end
+  end else begin
+    always_comb begin
+      case(HSIZED[1:0])
+        2'b00: begin ByteMaskM = 4'b0000; ByteMaskM[A[1:0]] = 1; end // sb
+        2'b01: if (A[1]) ByteMaskM = 4'b1100;
+               else      ByteMaskM = 4'b0011;
+        2'b10: ByteMaskM = 4'b1111;
+        default: ByteMaskM =  4'b1111;
+      endcase
+    end
+  end
+  
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
   // *** this seems like a weird way to use reset
@@ -148,17 +177,24 @@ module ram #(parameter BASE=0, RANGE = 65535) (
  -----/\----- EXCLUDED -----/\----- */
   
   /* verilator lint_off WIDTH */
+  genvar index;
+  always_ff @(posedge HCLK)
+    HWADDR <= #1 A;
   if (`XLEN == 64)  begin:ramrw
-    always_ff @(posedge HCLK) begin
-      HWADDR <= #1 A;
+    always_ff @(posedge HCLK) 
       HREADRam0 <= #1 RAM[A[31:3]];
-      if (memwrite & risingHREADYRam) RAM[HWADDR[31:3]] <= #1 HWDATA;
+    for(index = 0; index < `XLEN/8; index++) begin
+      always_ff @(posedge HCLK) begin
+        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:3]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
+      end
     end
   end else begin 
-    always_ff @(posedge HCLK) begin:ramrw
-      HWADDR <= #1 A;  
+    always_ff @(posedge HCLK) 
       HREADRam0 <= #1 RAM[A[31:2]];
-      if (memwrite & risingHREADYRam) RAM[HWADDR[31:2]] <= #1 HWDATA;
+    for(index = 0; index < `XLEN/8; index++) begin
+      always_ff @(posedge HCLK) begin:ramrw
+        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:2]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
+      end
     end
   end
   /* verilator lint_on WIDTH */
