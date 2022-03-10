@@ -78,8 +78,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign SelectedWriteWordEn = SetValidWay ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
-  //assign FinalByteWEN = SetValidWay ? '1 : ByteWEN; // OR
-  assign FinalByteWEN = '1;//SetValidWay ? '1 : ByteWEN; // OR  
+  assign FinalByteWEN = SetValidWay ? '1 : ByteWEN; // OR
+  //assign FinalByteWEN = '1;//SetValidWay ? '1 : ByteWEN; // OR  
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
