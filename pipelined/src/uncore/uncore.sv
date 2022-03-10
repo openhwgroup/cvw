@@ -91,12 +91,7 @@ module uncore (
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // subword accesses: converts HWDATAIN to HWDATA only if no dtim or cache.
-  if(0)
-    subwordwrite sww(
-      .HRDATA,
-      .HADDRD, .HSIZED, 
-      .HWDATAIN, .HWDATA, .ByteWEN());
-  else assign HWDATA = HWDATAIN;
+  assign HWDATA = HWDATAIN;
   
 
 //  generate
@@ -106,7 +101,7 @@ module uncore (
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK, .HRESETn, 
         .HSELRam, .HADDR,
-        .HWRITE, .HREADY,
+        .HWRITE, .HREADY, .HSIZED,
         .HTRANS, .HWDATA, .HREADRam,
         .HRESPRam, .HREADYRam);
     end
@@ -116,7 +111,7 @@ module uncore (
       bootrom(
         .HCLK, .HRESETn, 
         .HSELRam(HSELBootRom), .HADDR,
-        .HWRITE, .HREADY, .HTRANS,
+        .HWRITE, .HREADY, .HTRANS, .HSIZED,
         .HWDATA,
         .HREADRam(HREADBootRom), .HRESPRam(HRESPBootRom), .HREADYRam(HREADYBootRom));
     end
