@@ -270,8 +270,7 @@ module lsu (
   end
 
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-    .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM), .ByteMaskM);
+    .LSUFunct3M, .FinalAMOWriteDataM, .FinalWriteDataM, .ByteMaskM);
 
   
 endmodule

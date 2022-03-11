@@ -32,54 +32,55 @@
 
 module subwordwrite (
   input logic [2:0]          LSUPAdrM,
-  input logic [3:0]          HSIZED,
-  input logic [`XLEN-1:0]    HWDATAIN,
-  output logic [`XLEN-1:0]   HWDATA,
+  input logic [2:0]          LSUFunct3M,
+  input logic [`XLEN-1:0]    FinalAMOWriteDataM,
+  output logic [`XLEN-1:0]   FinalWriteDataM,
   output logic [`XLEN/8-1:0] ByteMaskM
                      );
                   
   logic [`XLEN-1:0]          WriteDataSubwordDuplicated;
 
-  swbytemask swbytemask(.HSIZED, .HADDRD(LSUPAdrM), .ByteMask(ByteMaskM));
+  swbytemask swbytemask(.HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}), .HADDRD(LSUPAdrM),
+    .ByteMask(ByteMaskM));
   
   if (`XLEN == 64) begin:sww
     // Handle subword writes
     always_comb 
-      case(HSIZED[1:0])
-        2'b00:  WriteDataSubwordDuplicated = {8{HWDATAIN[7:0]}};  // sb
-        2'b01:  WriteDataSubwordDuplicated = {4{HWDATAIN[15:0]}}; // sh
-        2'b10:  WriteDataSubwordDuplicated = {2{HWDATAIN[31:0]}}; // sw
-        2'b11:  WriteDataSubwordDuplicated = HWDATAIN;            // sw
+      case(LSUFunct3M[1:0])
+        2'b00:  WriteDataSubwordDuplicated = {8{FinalAMOWriteDataM[7:0]}};  // sb
+        2'b01:  WriteDataSubwordDuplicated = {4{FinalAMOWriteDataM[15:0]}}; // sh
+        2'b10:  WriteDataSubwordDuplicated = {2{FinalAMOWriteDataM[31:0]}}; // sw
+        2'b11:  WriteDataSubwordDuplicated = FinalAMOWriteDataM;            // sw
       endcase
 
     always_comb begin
-      HWDATA='0;
-      if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
-      if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
-      if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
-      if (ByteMaskM[3]) HWDATA[31:24] = WriteDataSubwordDuplicated[31:24];
-      if (ByteMaskM[4]) HWDATA[39:32] = WriteDataSubwordDuplicated[39:32];
-      if (ByteMaskM[5]) HWDATA[47:40] = WriteDataSubwordDuplicated[47:40];
-      if (ByteMaskM[6]) HWDATA[55:48] = WriteDataSubwordDuplicated[55:48];
-      if (ByteMaskM[7]) HWDATA[63:56] = WriteDataSubwordDuplicated[63:56];
+      FinalWriteDataM='0;
+      if (ByteMaskM[0]) FinalWriteDataM[7:0]   = WriteDataSubwordDuplicated[7:0];
+      if (ByteMaskM[1]) FinalWriteDataM[15:8]  = WriteDataSubwordDuplicated[15:8];
+      if (ByteMaskM[2]) FinalWriteDataM[23:16] = WriteDataSubwordDuplicated[23:16];
+      if (ByteMaskM[3]) FinalWriteDataM[31:24] = WriteDataSubwordDuplicated[31:24];
+      if (ByteMaskM[4]) FinalWriteDataM[39:32] = WriteDataSubwordDuplicated[39:32];
+      if (ByteMaskM[5]) FinalWriteDataM[47:40] = WriteDataSubwordDuplicated[47:40];
+      if (ByteMaskM[6]) FinalWriteDataM[55:48] = WriteDataSubwordDuplicated[55:48];
+      if (ByteMaskM[7]) FinalWriteDataM[63:56] = WriteDataSubwordDuplicated[63:56];
     end 
 
   end else begin:sww // 32-bit
     // Handle subword writes
     always_comb 
-      case(HSIZED[1:0])
-        2'b00:  WriteDataSubwordDuplicated = {4{HWDATAIN[7:0]}};  // sb
-        2'b01:  WriteDataSubwordDuplicated = {2{HWDATAIN[15:0]}}; // sh
-        2'b10:  WriteDataSubwordDuplicated = HWDATAIN;            // sw
-        default: WriteDataSubwordDuplicated = HWDATAIN; // shouldn't happen
+      case(LSUFunct3M[1:0])
+        2'b00:  WriteDataSubwordDuplicated = {4{FinalAMOWriteDataM[7:0]}};  // sb
+        2'b01:  WriteDataSubwordDuplicated = {2{FinalAMOWriteDataM[15:0]}}; // sh
+        2'b10:  WriteDataSubwordDuplicated = FinalAMOWriteDataM;            // sw
+        default: WriteDataSubwordDuplicated = FinalAMOWriteDataM; // shouldn't happen
       endcase
 
     always_comb begin
-      HWDATA='0;
-      if (ByteMaskM[0]) HWDATA[7:0]   = WriteDataSubwordDuplicated[7:0];
-      if (ByteMaskM[1]) HWDATA[15:8]  = WriteDataSubwordDuplicated[15:8];
-      if (ByteMaskM[2]) HWDATA[23:16] = WriteDataSubwordDuplicated[23:16];
-      if (ByteMaskM[3]) HWDATA[31:24] = WriteDataSubwordDuplicated[31:24];
+      FinalWriteDataM='0;
+      if (ByteMaskM[0]) FinalWriteDataM[7:0]   = WriteDataSubwordDuplicated[7:0];
+      if (ByteMaskM[1]) FinalWriteDataM[15:8]  = WriteDataSubwordDuplicated[15:8];
+      if (ByteMaskM[2]) FinalWriteDataM[23:16] = WriteDataSubwordDuplicated[23:16];
+      if (ByteMaskM[3]) FinalWriteDataM[31:24] = WriteDataSubwordDuplicated[31:24];
     end 
 
   end
