@@ -39,11 +39,8 @@ module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL, LOGWPL)(
   output logic [WORDLEN-1:0] ReadDataWord);
 
   localparam WORDSPERLINE = LINELEN/MUXINTERVAL;
+  // pad is for icache. Muxing extends over the cacheline boundary.
   localparam PADLEN = WORDLEN-MUXINTERVAL;
-  // Convert the Read data bus ReadDataSelectWay into sets of XLEN so we can
-  // easily build a variable input mux.
-  // *** move this to LSU and IFU, also remove mux from busdp into LSU. 
-  // *** give this a module name to match block diagram
   logic [LINELEN+(WORDLEN-MUXINTERVAL)-1:0] ReadDataLinePad;
   logic [WORDLEN-1:0]          ReadDataLineSets [(LINELEN/MUXINTERVAL)-1:0];
   logic [WORDLEN-1:0] ReadDataWordRaw, ReadDataWordSaved;
