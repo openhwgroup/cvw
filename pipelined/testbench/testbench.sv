@@ -359,6 +359,8 @@ module riscvassertions;
 //    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
     assert (`DMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`IMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
+    assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
+    assert (`IMEM == `MEM_CACHE | `IBUS ==0) else $error("Icache rquires IBUS.");    
   end
 endmodule
 
