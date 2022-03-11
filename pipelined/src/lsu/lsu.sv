@@ -82,7 +82,6 @@ module lsu (
    input var                logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
   );
 
-  localparam                CACHE_ENABLED = `DMEM == `MEM_CACHE;
   logic [`XLEN+1:0]         IEUAdrExtM;
   logic [`PA_BITS-1:0]      LSUPAdrM;
   logic                     DTLBMissM;
@@ -196,9 +195,9 @@ module lsu (
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .DCacheStallM, .DCacheCommittedM, .ByteMaskM,
               .DCacheMiss, .DCacheAccess);
-    assign SelUncachedAdr = '0; // value does not matter.
-    assign ReadDataWordMuxM = ReadDataWordM;
-  end else begin : bus  
+  end 
+  if (`DBUS) begin : bus  
+    localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
@@ -225,7 +224,6 @@ module lsu (
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM), .d1(FinalWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     
-
     if(CACHE_ENABLED) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`XLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -243,6 +241,9 @@ module lsu (
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
+  end else begin: nobus // block: bus
+    assign {LSUBusHWDATA, SelUncachedAdr} = '0; 
+    assign ReadDataWordMuxM = ReadDataWordM;
   end
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
