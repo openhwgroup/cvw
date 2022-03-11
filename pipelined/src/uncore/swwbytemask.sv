@@ -32,7 +32,7 @@
 
 module swbytemask (
   input logic [3:0]          HSIZED,
-  input logic [31:0]         HADDRD,
+  input logic [2:0]         HADDRD,
   output logic [`XLEN/8-1:0] ByteMask);
   
 
