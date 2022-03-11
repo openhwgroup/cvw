@@ -41,7 +41,6 @@ module atomic (
   input logic [1:0]          LSUAtomicM,
   input logic [1:0]          PreLSURWM,
   input logic                IgnoreRequest,
-  input logic                DTLBMissM,
   output logic [`XLEN-1:0]   FinalAMOWriteDataM,
   output logic               SquashSCW,
   output logic [1:0]         LSURWM);
@@ -52,7 +51,7 @@ module atomic (
   amoalu amoalu(.srca(ReadDataM), .srcb(LSUWriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
                 .result(AMOResult));
   mux2 #(`XLEN) wdmux(LSUWriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
-  assign MemReadM = PreLSURWM[1] & ~(IgnoreRequest) & ~DTLBMissM; // *** is DTLBMiss needed; might be par tof ignorerequest
+  assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
   lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
     .SquashSCW, .LSURWM);
 

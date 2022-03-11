@@ -259,12 +259,10 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // *** why does this need DTLBMissM?
   if (`A_SUPPORTED) begin:atomic
     atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
-      .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+      .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
     assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = LSUWriteDataM;
   end
