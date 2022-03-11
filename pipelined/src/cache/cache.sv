@@ -152,11 +152,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
       .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
-
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
     .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
     .ReadDataLine, .ReadDataWord);
-  
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
