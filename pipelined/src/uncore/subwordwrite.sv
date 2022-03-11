@@ -31,34 +31,20 @@
 `include "wally-config.vh"
 
 module subwordwrite (
-  input  logic [2:0]       HADDRD,
-  input  logic [3:0]       HSIZED,
-  input  logic [`XLEN-1:0] HWDATAIN,
-  output logic [`XLEN-1:0] HWDATA,
+  input logic [2:0]          HADDRD,
+  input logic [3:0]          HSIZED,
+  input logic [`XLEN-1:0]    HWDATAIN,
+  output logic [`XLEN-1:0]   HWDATA,
   output logic [`XLEN/8-1:0] ByteWEN
-);
+                     );
                   
-  logic [`XLEN-1:0] WriteDataSubwordDuplicated;
+  logic [`XLEN-1:0]          WriteDataSubwordDuplicated;
+  logic [(`XLEN/8)-1:0]      ByteMaskM;
 
+  swbytemask swbytemask(.HSIZED, .HADDRD, .ByteMask(ByteMaskM));
+  assign ByteWEN = ByteMaskM;  
   
   if (`XLEN == 64) begin:sww
-    logic [7:0]      ByteMaskM;
-    // Compute write mask
-    assign ByteWEN = ByteMaskM;
-    always_comb 
-      case(HSIZED[1:0])
-        2'b00:  begin ByteMaskM = 8'b00000000; ByteMaskM[HADDRD[2:0]] = 1; end // sb
-        2'b01:  case (HADDRD[2:1])
-                  2'b00: ByteMaskM = 8'b00000011;
-                  2'b01: ByteMaskM = 8'b00001100;
-                  2'b10: ByteMaskM = 8'b00110000;
-                  2'b11: ByteMaskM = 8'b11000000;
-                endcase
-        2'b10:  if (HADDRD[2]) ByteMaskM = 8'b11110000;
-                  else        ByteMaskM = 8'b00001111;
-        2'b11:  ByteMaskM = 8'b11111111;
-      endcase
-
     // Handle subword writes
     always_comb 
       case(HSIZED[1:0])
@@ -81,18 +67,6 @@ module subwordwrite (
     end 
 
   end else begin:sww // 32-bit
-    logic [3:0]      ByteMaskM;
-    // Compute write mask
-    assign ByteWEN = ByteMaskM;
-    always_comb 
-      case(HSIZED[1:0])
-        2'b00:  begin ByteMaskM = 4'b0000; ByteMaskM[HADDRD[1:0]] = 1; end // sb
-        2'b01:  if (HADDRD[1]) ByteMaskM = 4'b1100;
-                  else         ByteMaskM = 4'b0011;
-        2'b10:  ByteMaskM = 4'b1111;
-        default: ByteMaskM = 4'b111; // shouldn't happen
-      endcase
-
     // Handle subword writes
     always_comb 
       case(HSIZED[1:0])

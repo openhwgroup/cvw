@@ -106,7 +106,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end // initial begin
   end // if (FPGA)
 
-  swbytemask swbytemask(.HSIZED, .HADDRD(A), .ByteMask(ByteMaskM));
+  swbytemask swbytemask(.HSIZED, .HADDRD(A[2:0]), .ByteMask(ByteMaskM));
   
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
