@@ -30,10 +30,10 @@
 
 `include "wally-config.vh"
 
-module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
+module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL, LOGWPL)(
   input logic                clk,
   input logic                reset,
-  input logic [`PA_BITS-1:0] PAdr,
+  input logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0]   PAdr,
   input logic                save, restore,
   input logic [LINELEN-1:0]  ReadDataLine,
   output logic [WORDLEN-1:0] ReadDataWord);
@@ -60,7 +60,7 @@ module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
   end
   // variable input mux
   // *** maybe remove REPLAY config later after deciding which way is best
-  assign ReadDataWordRaw = ReadDataLineSets[PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]];
+  assign ReadDataWordRaw = ReadDataLineSets[PAdr];
   if(!`REPLAY) begin
     flopen #(WORDLEN) cachereaddatasavereg(clk, save, ReadDataWordRaw, ReadDataWordSaved);
     mux2 #(WORDLEN) readdatasaverestoremux(ReadDataWordRaw, ReadDataWordSaved,
