@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTERVAL) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTERVAL, DCACHE) (
   input logic                 clk,
   input logic                 reset,
    // cpu side
@@ -104,7 +104,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [1:0]                 CacheRW, CacheAtomic;
   logic [LINELEN-1:0]         ReadDataLine;
-  logic [`PA_BITS-1:0]        WordOffsetAddr;
+  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       save, restore;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,13 +145,17 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   end else assign HitWayFinal = HitWay;
 
 
-    mux2 #(`PA_BITS) WordAdrrMux(.d0(PAdr), 
-      .d1({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)), .s(LSUBusWriteCrit),
-      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.  
+  // like to fix this.
+  if(DCACHE) 
+    mux2 #(LOGWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
+      .d1(WordCount), .s(LSUBusWriteCrit),
+      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.
+  else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
+  
 
-      subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(  // *** merge into cache
-        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
-        .ReadDataLine, .ReadDataWord);
+  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
+    .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+    .ReadDataLine, .ReadDataWord);
   
   
   /////////////////////////////////////////////////////////////////////////////////////////////

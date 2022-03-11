@@ -227,7 +227,7 @@ module lsu (
 
     if(CACHE_ENABLED) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`XLEN), .MUXINTERVAL(`XLEN)) dcache(
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`XLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
         .ByteMask(ByteMaskM), .WordCount,
@@ -237,7 +237,6 @@ module lsu (
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
-
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
