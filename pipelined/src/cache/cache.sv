@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS) (
   input logic                 clk,
   input logic                 reset,
    // cpu side
