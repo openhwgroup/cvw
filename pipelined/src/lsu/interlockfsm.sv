@@ -56,7 +56,7 @@ module interlockfsm(
   logic             AnyCPUReqM;
 
   typedef enum      logic[2:0]  {STATE_T0_READY,
-				                 STATE_T0_REPLAY,
+				                 STATE_T1_REPLAY,
 				                 STATE_T3_DTLB_MISS,
 				                 STATE_T4_ITLB_MISS,
 				                 STATE_T5_ITLB_MISS,
@@ -82,13 +82,13 @@ module interlockfsm(
                       else if(ToITLBMiss)         InterlockNextState = STATE_T5_ITLB_MISS;
 	                  else if(ToBoth)             InterlockNextState = STATE_T7_DITLB_MISS;
 	                  else                        InterlockNextState = STATE_T0_READY;
-	  STATE_T0_REPLAY:     if(DCacheStallM)       InterlockNextState = STATE_T0_REPLAY;
+	  STATE_T1_REPLAY:     if(DCacheStallM)       InterlockNextState = STATE_T1_REPLAY;
 	                       else                   InterlockNextState = STATE_T0_READY;
-	  STATE_T3_DTLB_MISS:  if(DTLBWriteM)         InterlockNextState = STATE_T0_REPLAY;
+	  STATE_T3_DTLB_MISS:  if(DTLBWriteM)         InterlockNextState = STATE_T1_REPLAY;
 	                       else                   InterlockNextState = STATE_T3_DTLB_MISS;
 	  STATE_T4_ITLB_MISS:  if(ITLBWriteF)         InterlockNextState = STATE_T0_READY;
 	                       else                   InterlockNextState = STATE_T4_ITLB_MISS;
-	  STATE_T5_ITLB_MISS:  if(ITLBWriteF)         InterlockNextState = STATE_T0_REPLAY;
+	  STATE_T5_ITLB_MISS:  if(ITLBWriteF)         InterlockNextState = STATE_T1_REPLAY;
 	                       else                   InterlockNextState = STATE_T5_ITLB_MISS;
 	  STATE_T7_DITLB_MISS: if(DTLBWriteM)         InterlockNextState = STATE_T5_ITLB_MISS;
 	                       else                   InterlockNextState = STATE_T7_DITLB_MISS;
@@ -122,12 +122,12 @@ module interlockfsm(
 	endcase
   end
   
-  assign SelReplayMemE = (InterlockCurrState == STATE_T0_REPLAY & DCacheStallM) |
+  assign SelReplayMemE = (InterlockCurrState == STATE_T1_REPLAY & DCacheStallM) |
                          (InterlockCurrState == STATE_T3_DTLB_MISS & DTLBWriteM) | 
                          (InterlockCurrState == STATE_T5_ITLB_MISS & ITLBWriteF);
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 				   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissOrDAFaultF | DTLBMissOrDAFaultM));
   assign IgnoreRequestTrapM = (InterlockCurrState == STATE_T0_READY & (TrapM)) |
-							  ((InterlockCurrState == STATE_T0_REPLAY) & (TrapM));
+							  ((InterlockCurrState == STATE_T1_REPLAY) & (TrapM));
 endmodule
