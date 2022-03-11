@@ -38,7 +38,7 @@ module uncore (
   input  logic             HCLK, HRESETn,
   input  logic             TIMECLK,
   input  logic [31:0]      HADDR,
-  input  logic [`AHBW-1:0] HWDATAIN,
+  input  logic [`AHBW-1:0] HWDATA,
   input  logic             HWRITE,
   input  logic [2:0]       HSIZE,
   input  logic [2:0]       HBURST,
@@ -68,7 +68,6 @@ module uncore (
   output logic [63:0]      MTIME_CLINT
 );
   
-  logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADRam, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART, HREADSDC;
 
   logic [8:0]      HSELRegions;
@@ -89,10 +88,6 @@ module uncore (
 
   // unswizzle HSEL signals
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
-
-  // subword accesses: converts HWDATAIN to HWDATA only if no dtim or cache.
-  assign HWDATA = HWDATAIN;
-  
 
 //  generate
     // on-chip RAM
