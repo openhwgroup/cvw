@@ -105,7 +105,7 @@ module lsu (
   logic                     LSUBusWriteCrit;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
-  logic [(`XLEN-1)/8:0]     FinalByteWENM;
+  logic [(`XLEN-1)/8:0]     ByteWeM;
   
   // *** TO DO: Burst mode, byte write enables to DTIM, cache, exeternal memory, remove subword write from uncore, 
 
@@ -194,7 +194,7 @@ module lsu (
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .FinalByteWENM,
+              .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM, .ByteWeM,
               .DCacheMiss, .DCacheAccess);
     assign SelUncachedAdr = '0; // value does not matter.
   end else begin : bus  
@@ -235,7 +235,7 @@ module lsu (
               .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .save, .restore, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteWEN(FinalByteWENM),
+        .ByteWe(ByteWeM),
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
@@ -255,7 +255,7 @@ module lsu (
 
   subwordwrite subwordwrite(.HADDRD(LSUPAdrM[2:0]),
     .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-    .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM), .ByteWEN(FinalByteWENM));
+    .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM), .ByteWeM);
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);
