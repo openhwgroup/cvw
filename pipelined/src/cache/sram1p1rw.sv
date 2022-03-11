@@ -38,7 +38,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   input logic [$clog2(DEPTH)-1:0] Adr,
   input logic [WIDTH-1:0]         CacheWriteData,
   input logic                     WriteEnable,
-  input logic [(WIDTH-1)/8:0]     ByteWEN,
+  input logic [(WIDTH-1)/8:0]     ByteWe,
   output logic [WIDTH-1:0]        ReadData);
 
   logic [WIDTH-1:0]               StoredData[DEPTH-1:0];
@@ -50,7 +50,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   genvar                          index;
   for(index = 0; index < WIDTH/8; index++) begin
     always_ff @(posedge clk) begin
-      if (WriteEnable & ByteWEN[index]) begin
+      if (WriteEnable & ByteWe[index]) begin
         StoredData[Adr][8*(index+1)-1:8*index] <= #1 CacheWriteData[8*(index+1)-1:8*index];
       end
     end
@@ -58,7 +58,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   // if not a multiple of 8, MSByte is not 8 bits long.
   if(WIDTH%8 != 0) begin
     always_ff @(posedge clk) begin
-      if (WriteEnable & ByteWEN[WIDTH/8]) begin
+      if (WriteEnable & ByteWe[WIDTH/8]) begin
         StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
       end
     end

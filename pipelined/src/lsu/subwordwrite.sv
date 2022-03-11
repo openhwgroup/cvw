@@ -35,14 +35,14 @@ module subwordwrite (
   input logic [3:0]          HSIZED,
   input logic [`XLEN-1:0]    HWDATAIN,
   output logic [`XLEN-1:0]   HWDATA,
-  output logic [`XLEN/8-1:0] ByteWEN
+  output logic [`XLEN/8-1:0] ByteWeM
                      );
                   
   logic [`XLEN-1:0]          WriteDataSubwordDuplicated;
   logic [(`XLEN/8)-1:0]      ByteMaskM;
 
   swbytemask swbytemask(.HSIZED, .HADDRD, .ByteMask(ByteMaskM));
-  assign ByteWEN = ByteMaskM;  
+  assign ByteWeM = ByteMaskM;  
   
   if (`XLEN == 64) begin:sww
     // Handle subword writes
