@@ -43,7 +43,6 @@ module dtim(
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
   output logic                BusCommittedM,
-  output logic [`XLEN-1:0]    ReadDataWordMuxM,
   output logic                DCacheStallM,
   output logic                DCacheCommittedM,
   output logic                DCacheMiss,
@@ -58,7 +57,6 @@ module dtim(
   // since we have a local memory the bus connections are all disabled.
   // There are no peripherals supported.
   assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
-  assign ReadDataWordMuxM = ReadDataWordM;
   assign {DCacheStallM, DCacheCommittedM} = '0;
   assign {DCacheMiss, DCacheAccess} = '0;
 
