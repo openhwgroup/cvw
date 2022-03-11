@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTERVAL) (
   input logic                 clk,
   input logic                 reset,
    // cpu side
@@ -48,7 +48,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS) (
    // to performance counters to cpu
   output logic                CacheMiss,
   output logic                CacheAccess,
-  output logic                save, restore,
    // lsu control
   input logic                 IgnoreRequestTLB,
   input logic                 IgnoreRequestTrapM, 
@@ -57,9 +56,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS) (
   output logic                CacheFetchLine,
   output logic                CacheWriteLine,
   input logic                 CacheBusAck,
+  input logic [LOGWPL-1:0]    WordCount,
+  input logic                 LSUBusWriteCrit, 
   output logic [`PA_BITS-1:0] CacheBusAdr,
   input logic [LINELEN-1:0]   CacheBusWriteData,
-  output logic [LINELEN-1:0]  ReadDataLine);
+  output logic [WORDLEN-1:0]  ReadDataWord);
 
   // Cache parameters
   localparam                  LINEBYTELEN = LINELEN/8;
@@ -102,6 +103,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS) (
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [1:0]                 CacheRW, CacheAtomic;
+  logic [LINELEN-1:0]         ReadDataLine;
+  logic [`PA_BITS-1:0]        WordOffsetAddr;
+  logic                       save, restore;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -139,6 +143,16 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS) (
     flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, HitWay, HitWaySaved);
     mux2 #(NUMWAYS) saverestoremux(HitWay, HitWaySaved, restore, HitWayFinal);
   end else assign HitWayFinal = HitWay;
+
+
+    mux2 #(`PA_BITS) WordAdrrMux(.d0(PAdr), 
+      .d1({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)), .s(LSUBusWriteCrit),
+      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.  
+
+      subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(  // *** merge into cache
+        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+        .ReadDataLine, .ReadDataWord);
+  
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.

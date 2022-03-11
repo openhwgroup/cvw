@@ -207,8 +207,6 @@ module lsu (
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic                save, restore;
-    logic [`PA_BITS-1:0] WordOffsetAddr;
     logic                SelBus;
     logic [LOGWPL-1:0]   WordCount;
             
@@ -229,24 +227,17 @@ module lsu (
 
     if(CACHE_ENABLED) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS)) dcache(
-        .clk, .reset, .CPUBusy, .save, .restore, .RW(LSURWM), .Atomic(LSUAtomicM),
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`XLEN), .MUXINTERVAL(`XLEN)) dcache(
+        .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM),
+        .ByteMask(ByteMaskM), .WordCount,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
-        .CacheBusAdr(DCacheBusAdr), .ReadDataLine(ReadDataLineM), 
+        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
 
-    mux2 #(`PA_BITS) WordAdrrMux(.d0(LSUPAdrM), 
-      .d1({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)), .s(LSUBusWriteCrit),
-      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.  
-
-      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(  // *** merge into cache
-        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
-        .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;

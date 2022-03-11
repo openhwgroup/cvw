@@ -188,7 +188,6 @@ module ifu (
     logic [LINELEN-1:0]  ICacheBusWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
-    logic                save,restore;
     logic [31:0]         temp;
     logic                SelUncachedAdr;
     
@@ -212,25 +211,21 @@ module ifu (
     if(CACHE_ENABLED) begin : icache
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-              .NUMWAYS(`ICACHE_NUMWAYS))
+              .NUMWAYS(`ICACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(32), .MUXINTERVAL(16))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .IgnoreRequestTrapM('0),
              .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),
-             .CacheWriteLine(), .ReadDataLine(ReadDataLine),
-             .save, .restore, .Cacheable(CacheableF),
+             .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
+             .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
-             .ByteMask('0),
+             .ByteMask('0), .WordCount('0), .LSUBusWriteCrit('0),
              .FinalWriteData('0),
              .RW(2'b10), 
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
-
-      subcachelineread #(LINELEN, 32, 16) subcachelineread(
-        .clk, .reset, .PAdr(PCPF), .save, .restore,
-        .ReadDataLine, .ReadDataWord(FinalInstrRawF));
 
     end else begin : passthrough
       assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;
