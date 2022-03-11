@@ -34,7 +34,7 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   input  logic             clk, 
   input  logic [31:0]      a,
   input  logic             we,
-  input  logic [`XLEN/8-1:0] ByteWe,
+  input  logic [`XLEN/8-1:0] ByteMask,
   input  logic [`XLEN-1:0] wd,
   output logic [`XLEN-1:0] rd
 );
@@ -52,7 +52,7 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   genvar            index;
   for(index = 0; index < `XLEN/8; index++) begin
     always_ff @(posedge clk) begin
-      if (we & ByteWe[index]) RAM[adrmsbs][8*(index+1)-1:8*index] <= #1 wd[8*(index+1)-1:8*index];
+      if (we & ByteMask[index]) RAM[adrmsbs][8*(index+1)-1:8*index] <= #1 wd[8*(index+1)-1:8*index];
     end
   end
 endmodule
