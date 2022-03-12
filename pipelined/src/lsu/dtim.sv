@@ -30,28 +30,29 @@
 `include "wally-config.vh"
 
 module dtim(
-  input logic                 clk, reset,
-  input logic                 CPUBusy,
-  input logic [1:0]           LSURWM,
-  input logic [`XLEN-1:0]     IEUAdrM,
-  input logic [`XLEN-1:0]     IEUAdrE,
-  input logic                 TrapM, 
-  input logic [`XLEN-1:0]     FinalWriteDataM,
-  input logic [`XLEN/8-1:0]   ByteMaskM,
-  output logic [`XLEN-1:0]    ReadDataWordM,
-  output logic                BusStall,
-  output logic                LSUBusWrite,
-  output logic                LSUBusRead,
-  output logic                BusCommittedM,
-  output logic                DCacheStallM,
-  output logic                DCacheCommittedM,
-  output logic                DCacheMiss,
-  output logic                DCacheAccess);
+  input logic               clk, reset,
+  input logic               CPUBusy,
+  input logic [1:0]         LSURWM,
+  input logic [`XLEN-1:0]   IEUAdrM,
+  input logic [`XLEN-1:0]   IEUAdrE,
+  input logic               TrapM, 
+  input logic [`XLEN-1:0]   FinalWriteDataM,
+  input logic [`XLEN/8-1:0] ByteMaskM,
+  input logic               Cacheable,
+  output logic [`XLEN-1:0]  ReadDataWordM,
+  output logic              BusStall,
+  output logic              LSUBusWrite,
+  output logic              LSUBusRead,
+  output logic              BusCommittedM,
+  output logic              DCacheStallM,
+  output logic              DCacheCommittedM,
+  output logic              DCacheMiss,
+  output logic              DCacheAccess);
 
   simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
       .clk, .ByteMask(ByteMaskM),
       .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
-      .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
+      .we(LSURWM[0] & Cacheable & ~TrapM),  // have to ignore write if Trap.
       .wd(FinalWriteDataM), .rd(ReadDataWordM));
 
   // since we have a local memory the bus connections are all disabled.

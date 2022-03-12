@@ -192,7 +192,7 @@ module lsu (
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .DCacheStallM, .DCacheCommittedM, .ByteMaskM,
+              .DCacheStallM, .DCacheCommittedM, .ByteMaskM, .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
   end 
   if (`DBUS) begin : bus  
