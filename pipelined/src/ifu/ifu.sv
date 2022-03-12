@@ -177,7 +177,7 @@ module ifu (
     dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF[31:0]), .IEUAdrE(PCNextFSpill),
               .TrapM(1'b0), .FinalWriteDataM(), .ByteMaskM('0),
               .ReadDataWordM(FinalInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
-              .BusCommittedM(), .DCacheStallM(ICacheStallF), 
+              .BusCommittedM(), .DCacheStallM(ICacheStallF), .Cacheable(CacheableF),
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
     
   end 
