@@ -8,3 +8,7 @@
 ./create_vectors64cmp.sh
 ./create_vectors64.sh
 ./create_vectorsi.sh
+./create_vectors16fma.sh
+./create_vectors32fma.sh
+./create_vectors64fma.sh
+./create_vectors128fma.sh
