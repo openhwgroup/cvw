@@ -89,7 +89,6 @@ module fpu (
    logic [10:0] 	  XExpM, YExpM, ZExpM;                // input's exponent - memory stage
    logic [52:0] 	  XManE, YManE, ZManE;                // input's fraction - execute stage
    logic [52:0] 	  XManM, YManM, ZManM;                // input's fraction - memory stage
-   logic [10:0] 	  BiasE;                              // bias based on precision (single=7f double=3ff)
    logic 		  XNaNE, YNaNE, ZNaNE;                // is the input a NaN - execute stage
    logic 		  XNaNM, YNaNM, ZNaNM;                // is the input a NaN - memory stage
    logic 		  XNaNQ, YNaNQ;                       // is the input a NaN - divide
@@ -179,7 +178,7 @@ module fpu (
    unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FOpCtrlE, .FmtE, 
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
-         .XZeroE, .YZeroE, .ZZeroE, .BiasE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
+         .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
 
    // FMA
    //   - two stage FMA
@@ -231,7 +230,7 @@ module fpu (
          .XSNaNE, .ClassResE);
 
    // Convert
-   fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .BiasE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
+   fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
    .CvtResE, .CvtFlgE);
 
    // data to be stored in memory - to IEU
