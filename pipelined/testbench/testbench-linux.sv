@@ -475,7 +475,7 @@ module testbench;
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (dut.core.lsu.LSUPAdrM == 'h10000005) \
+        if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) \
           //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
           force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
