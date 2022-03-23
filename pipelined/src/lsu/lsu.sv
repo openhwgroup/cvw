@@ -161,7 +161,7 @@ module lsu (
       .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
-      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,  
+      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .DAPageFault(DataDAPageFaultM),
          // *** should use LSURWM as this is includes the lr/sc squash. However this introduces a combo loop
          // from squash, depends on LSUPAdrM, depends on TLBHit, depends on these *AccessM inputs.
