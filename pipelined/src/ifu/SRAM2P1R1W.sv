@@ -101,17 +101,8 @@ module SRAM2P1R1W
   
   // write port
   assign bwe = {WIDTH{WEN1Q}} & BitWEN1;
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk)
     mem[WA1Q] <= WD1Q & bwe | mem[WA1Q] & ~bwe;
-/*    
-  genvar       index;
-   for (index = 0; index < WIDTH; index = index + 1) begin:bitwrite
-    always_ff @(posedge clk) begin
-      if (WEN1Q & BitWEN1[index]) begin
-        mem[WA1Q][index] <= WD1Q[index];
-      end
-    end*/
-  end
  
 endmodule  
 

@@ -38,7 +38,7 @@ module uncore (
   input  logic             HCLK, HRESETn,
   input  logic             TIMECLK,
   input  logic [31:0]      HADDR,
-  input  logic [`AHBW-1:0] HWDATAIN,
+  input  logic [`AHBW-1:0] HWDATA,
   input  logic             HWRITE,
   input  logic [2:0]       HSIZE,
   input  logic [2:0]       HBURST,
@@ -68,7 +68,6 @@ module uncore (
   output logic [63:0]      MTIME_CLINT
 );
   
-  logic [`XLEN-1:0] HWDATA;
   logic [`XLEN-1:0] HREADRam, HREADCLINT, HREADPLIC, HREADGPIO, HREADUART, HREADSDC;
 
   logic [8:0]      HSELRegions;
@@ -90,15 +89,6 @@ module uncore (
   // unswizzle HSEL signals
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
-  // subword accesses: converts HWDATAIN to HWDATA only if no dtim or cache.
-  if(`DMEM == `MEM_BUS)
-    subwordwrite sww(
-      .HRDATA,
-      .HADDRD, .HSIZED, 
-      .HWDATAIN, .HWDATA);
-  else assign HWDATA = HWDATAIN;
-  
-
 //  generate
     // on-chip RAM
     if (`RAM_SUPPORTED) begin : ram
@@ -106,7 +96,7 @@ module uncore (
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK, .HRESETn, 
         .HSELRam, .HADDR,
-        .HWRITE, .HREADY,
+        .HWRITE, .HREADY, .HSIZED,
         .HTRANS, .HWDATA, .HREADRam,
         .HRESPRam, .HREADYRam);
     end
@@ -116,7 +106,7 @@ module uncore (
       bootrom(
         .HCLK, .HRESETn, 
         .HSELRam(HSELBootRom), .HADDR,
-        .HWRITE, .HREADY, .HTRANS,
+        .HWRITE, .HREADY, .HTRANS, .HSIZED,
         .HWDATA,
         .HREADRam(HREADBootRom), .HRESPRam(HRESPBootRom), .HREADYRam(HREADYBootRom));
     end

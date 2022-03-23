@@ -50,6 +50,8 @@
 `define UARCH_SINGLECYCLE 0
 `define DMEM `MEM_TIM
 `define IMEM `MEM_TIM
+`define DBUS 0
+`define IBUS 0
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 

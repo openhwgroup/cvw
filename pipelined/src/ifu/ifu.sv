@@ -175,12 +175,13 @@ module ifu (
   
   if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
     dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF[31:0]), .IEUAdrE(PCNextFSpill),
-              .TrapM(1'b0), .FinalWriteDataM(), 
-              .ReadDataWordM(AllInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
-              .BusCommittedM(), .ReadDataWordMuxM(), .DCacheStallM(ICacheStallF), 
+              .TrapM(1'b0), .FinalWriteDataM(), .ByteMaskM('0),
+              .ReadDataWordM(FinalInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
+              .BusCommittedM(), .DCacheStallM(ICacheStallF), 
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
     
-  end else begin : bus
+  end 
+  if (`IBUS) begin : bus
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
@@ -188,7 +189,6 @@ module ifu (
     logic [LINELEN-1:0]  ICacheBusWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
-    logic                save,restore;
     logic [31:0]         temp;
     logic                SelUncachedAdr;
     
@@ -212,14 +212,15 @@ module ifu (
     if(CACHE_ENABLED) begin : icache
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-              .NUMWAYS(`ICACHE_NUMWAYS), .DCACHE(0))
+              .NUMWAYS(`ICACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .IgnoreRequestTrapM('0),
              .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),
-             .CacheWriteLine(), .ReadDataLine(ReadDataLine),
-             .save, .restore, .Cacheable(CacheableF),
+             .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
+             .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
+             .ByteMask('0), .WordCount('0), .LSUBusWriteCrit('0),
              .FinalWriteData('0),
              .RW(2'b10), 
              .Atomic('0), .FlushCache('0),
@@ -227,15 +228,13 @@ module ifu (
              .PAdr(PCPF),
              .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
 
-      subcachelineread #(LINELEN, 32, 16) subcachelineread(
-        .clk, .reset, .PAdr(PCPF), .save, .restore,
-        .ReadDataLine, .ReadDataWord(FinalInstrRawF));
-
     end else begin : passthrough
       assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;
       assign ICacheAccess = CacheableF; assign ICacheMiss = CacheableF;
     end
-  end  
+  end else begin : nobus // block: bus
+    assign AllInstrRawF = FinalInstrRawF;
+  end
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;

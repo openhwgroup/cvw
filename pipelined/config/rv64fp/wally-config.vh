@@ -32,25 +32,24 @@
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 32
+`define XLEN 64
 
 // IEEE 754 compliance
-`define IEEE754 0
+`define IEEE754 1
 
-`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0 | 1 <<3 | 1 << 5)
+// MISA RISC-V configuration per specification
+`define MISA (32'h00000104 | 1 << 5 | 0 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 )
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
 
-// Microarchitectural Features
+/// Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 `define DMEM `MEM_CACHE
 `define IMEM `MEM_CACHE
-`define DBUS 1
-`define IBUS 1
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
@@ -75,38 +74,40 @@
 `define PMP_ENTRIES 64
 
 // Address space
-`define RESET_VECTOR 32'h80000000
-
-// Peripheral Addresses
-// Peripheral memory space extends from BASE to BASE+RANGE
-// Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-`define BOOTROM_SUPPORTED 1'b1
-`define BOOTROM_BASE   34'h00001000 
-`define BOOTROM_RANGE  34'h00000FFF
-`define RAM_SUPPORTED 1'b1
-`define RAM_BASE       34'h80000000
-`define RAM_RANGE      34'h07FFFFFF
-`define EXT_MEM_SUPPORTED 1'b0
-`define EXT_MEM_BASE       34'h80000000
-`define EXT_MEM_RANGE      34'h07FFFFFF
-`define CLINT_SUPPORTED 1'b1
-`define CLINT_BASE  34'h02000000
-`define CLINT_RANGE 34'h0000FFFF
-`define GPIO_SUPPORTED 1'b1
-`define GPIO_BASE   34'h10060000
-`define GPIO_RANGE  34'h000000FF
-`define UART_SUPPORTED 1'b1
-`define UART_BASE   34'h10000000
-`define UART_RANGE  34'h00000007
-`define PLIC_SUPPORTED 1'b1
-`define PLIC_BASE   34'h0C000000
-`define PLIC_RANGE  34'h03FFFFFF
-`define SDC_SUPPORTED 1'b0
-`define SDC_BASE   34'h00012100
-`define SDC_RANGE  34'h0000001F
+`define RESET_VECTOR 64'h0000000080000000
 
 // Bus Interface width
-`define AHBW 32
+`define AHBW 64
+
+// Peripheral Physiccal Addresses
+// Peripheral memory space extends from BASE to BASE+RANGE
+// Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
+
+// *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
+`define BOOTROM_SUPPORTED 1'b1
+`define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
+`define BOOTROM_RANGE  56'h00000FFF
+`define RAM_SUPPORTED 1'b1
+`define RAM_BASE       56'h80000000
+`define RAM_RANGE      56'h7FFFFFFF
+`define EXT_MEM_SUPPORTED 1'b0
+`define EXT_MEM_BASE       56'h80000000
+`define EXT_MEM_RANGE      56'h07FFFFFF
+`define CLINT_SUPPORTED 1'b1
+`define CLINT_BASE  56'h02000000
+`define CLINT_RANGE 56'h0000FFFF
+`define GPIO_SUPPORTED 1'b1
+`define GPIO_BASE   56'h10060000
+`define GPIO_RANGE  56'h000000FF
+`define UART_SUPPORTED 1'b1
+`define UART_BASE   56'h10000000
+`define UART_RANGE  56'h00000007
+`define PLIC_SUPPORTED 1'b1
+`define PLIC_BASE   56'h0C000000
+`define PLIC_RANGE  56'h03FFFFFF
+`define SDC_SUPPORTED 1'b0
+`define SDC_BASE   56'h00012100
+`define SDC_RANGE  56'h0000001F
 
 // Test modes
 
@@ -123,8 +124,8 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/rv32ic/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv32ic/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv64ic/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64ic/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0

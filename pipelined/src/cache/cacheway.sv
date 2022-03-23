@@ -47,7 +47,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        VictimWay,
   input logic                        FlushWay,
   input logic                        Invalidate,
-
+  input logic [(`XLEN-1)/8:0]        ByteMask,
 
   output logic [LINELEN-1:0]         ReadDataLineWay,
   output logic                       HitWay,
@@ -69,6 +69,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic [$clog2(NUMLINES)-1:0]       RAdrD;
   logic [2**LOGWPL-1:0]              MemPAdrDecoded;
   logic [LINELEN/`XLEN-1:0]          SelectedWriteWordEn;
+  logic [(`XLEN-1)/8:0]              FinalByteMask;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
@@ -77,13 +78,14 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign SelectedWriteWordEn = SetValidWay ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
+  assign FinalByteMask = SetValidWay ? '1 : ByteMask; // OR
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk,
-    .Adr(RAdr), .ReadData(ReadTag),
+    .Adr(RAdr), .ReadData(ReadTag), .ByteMask('1),
     .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(SetValidWay));
 
   // AND portion of distributed tag multiplexer
@@ -102,7 +104,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk, .Adr(RAdr),
       .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
       .CacheWriteData(CacheWriteData[(words+1)*`XLEN-1:words*`XLEN]),
-      .WriteEnable(SelectedWriteWordEn[words]));
+      .WriteEnable(SelectedWriteWordEn[words]), .ByteMask(FinalByteMask));
   end
 
   // AND portion of distributed read multiplexers

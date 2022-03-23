@@ -103,7 +103,7 @@ module cvtfp (
     assign LSBFrac = DSFrac[3];
 
 
-    always_comb begin
+    always_comb begin // ***remove guard bit
         // Determine if you add 1
         case (FrmE)
             3'b000: CalcPlus1 = Guard & (Round | (Sticky) | (~Round&~Sticky&LSBFrac));//round to nearest even
@@ -166,6 +166,7 @@ module cvtfp (
                 {XSgnE, DSResExp, DSResFrac};
 
         // select the final result based on the opperation
+        //*** in al units before putting into : ? put in a seperate signal
         assign CvtFpResE = FmtE ? {{32{1'b1}},DSRes} : {XSgnE, SDExp, SDFrac[51]|XNaNE, SDFrac[50:0]};
     end else begin
         // select the double to single precision result

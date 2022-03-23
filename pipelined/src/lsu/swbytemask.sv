@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// atomic.sv
+// ram.sv
 //
-// Written: Ross Thompson ross1728@gmail.com January 31, 2022
-// Modified:
+// Written: David_Harris@hmc.edu 9 January 2021
+// Modified: 
 //
-// Purpose: atomic data path.
+// Purpose: On-chip RAM, external to core
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,29 +30,37 @@
 
 `include "wally-config.vh"
 
-module atomic (
-  input logic                clk,
-  input logic                reset, FlushW, CPUBusy,
-  input logic [`XLEN-1:0]    ReadDataM,
-  input logic [`XLEN-1:0]    LSUWriteDataM, 
-  input logic [`PA_BITS-1:0] LSUPAdrM,
-  input logic [6:0]          LSUFunct7M,
-  input logic [2:0]          LSUFunct3M,
-  input logic [1:0]          LSUAtomicM,
-  input logic [1:0]          PreLSURWM,
-  input logic                IgnoreRequest,
-  output logic [`XLEN-1:0]   FinalAMOWriteDataM,
-  output logic               SquashSCW,
-  output logic [1:0]         LSURWM);
+module swbytemask (
+  input logic [3:0]          HSIZED,
+  input logic [2:0]         HADDRD,
+  output logic [`XLEN/8-1:0] ByteMask);
+  
 
-  logic [`XLEN-1:0] AMOResult;
-  logic               MemReadM;
+  if(`XLEN == 64) begin
+    always_comb begin
+      case(HSIZED[1:0])
+        2'b00: begin ByteMask = 8'b00000000; ByteMask[HADDRD[2:0]] = 1; end // sb
+        2'b01: case (HADDRD[2:1])
+                  2'b00: ByteMask = 8'b0000_0011;
+                  2'b01: ByteMask = 8'b0000_1100;
+                  2'b10: ByteMask = 8'b0011_0000;
+                  2'b11: ByteMask = 8'b1100_0000;
+                endcase
+        2'b10: if (HADDRD[2]) ByteMask = 8'b11110000;
+               else           ByteMask = 8'b00001111;
+        2'b11: ByteMask = 8'b1111_1111;
+      endcase
+    end
+  end else begin
+    always_comb begin
+      case(HSIZED[1:0])
+        2'b00: begin ByteMask = 4'b0000; ByteMask[HADDRD[1:0]] = 1; end // sb
+        2'b01: if (HADDRD[1]) ByteMask = 4'b1100;
+               else           ByteMask = 4'b0011;
+        2'b10: ByteMask = 4'b1111;
+        default: ByteMask =  4'b1111;
+      endcase
+    end
+  end
 
-  amoalu amoalu(.srca(ReadDataM), .srcb(LSUWriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
-                .result(AMOResult));
-  mux2 #(`XLEN) wdmux(LSUWriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
-  assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
-  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
-    .SquashSCW, .LSURWM);
-
-endmodule  
+endmodule
