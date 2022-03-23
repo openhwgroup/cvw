@@ -514,15 +514,14 @@ module testbench;
     if(CheckMIPFutureE) CheckMIPFutureE <= 0;
     CheckMIPFutureM <= CheckMIPFutureE;
     if(CheckMIPFutureM) begin
-      $display("DEBUG DEBUG DEBUG DEBUG");
       // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
       // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
       // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
+      // *** this is probably not right anymore since either MIP or SIP can be forced.
       if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) | ~dut.core.ieu.c.InstrValidM) begin
         RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
-        $display("One One One One");
         $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
         MIPexpected = NextMIPexpected;
         //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
@@ -541,7 +540,6 @@ module testbench;
     if(RequestDelayedMIP & checkInstrM) begin
       $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
       $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
-      $display("Two Two Two Two");
       MIPexpected = NextMIPexpected;
       //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
       //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
