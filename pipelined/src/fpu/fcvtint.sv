@@ -10,7 +10,6 @@ module fcvt (
     input logic             XNaNE,      // is X NaN 
     input logic             XInfE,      // is X infinity
     input logic             XDenormE,   // is X denormalized
-    input logic [10:0]      BiasE,      // bias - depends on precision (max exponent/2)
     input logic [`XLEN-1:0] ForwardedSrcAE,      // integer input
     input logic [2:0]       FOpCtrlE,   // chooses which instruction is done (full list below)
     input logic [2:0]       FrmE,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
@@ -70,7 +69,7 @@ module fcvt (
     assign Bits = Res64 ? 8'd64 : 8'd32;
 
     // calulate the unbiased exponent
-    assign ExpVal = {1'b0,XExpE} - {1'b0,BiasE} + {12'b0, XDenormE};
+    assign ExpVal = {1'b0,XExpE} - {1'b0, (11)'(`BIAS)} + {12'b0, XDenormE};
 
 ////////////////////////////////////////////////////////
 
@@ -121,7 +120,7 @@ module fcvt (
     assign Round = FOpCtrlE[0] ? ShiftedMan[0] : FmtE ? ShiftedMan[12] : ShiftedMan[41];
     assign LSB = FOpCtrlE[0] ? ShiftedMan[2] : FmtE ? ShiftedMan[14] : ShiftedMan[43];
 
-    always_comb begin
+    always_comb begin//*** remove guard bit
         // Determine if you add 1
         case (FrmE)
             3'b000: CalcPlus1 = Guard & (Round | Sticky | (~Round&~Sticky&LSB));//round to nearest even
