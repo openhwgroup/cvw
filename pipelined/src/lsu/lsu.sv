@@ -50,7 +50,7 @@ module lsu (
    // address and write data
    input logic [`XLEN-1:0]  IEUAdrE,
    (* mark_debug = "true" *)output logic [`XLEN-1:0] IEUAdrM,
-   input logic [`XLEN-1:0]  WriteDataM, 
+   input logic [`XLEN-1:0]  WriteDataE, 
    output logic [`XLEN-1:0] ReadDataM,
    // cpu privilege
    input logic [1:0]        PrivilegeModeW,
@@ -105,10 +105,12 @@ module lsu (
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [(`XLEN-1)/8:0]     ByteMaskM;
+  logic [`XLEN-1:0]         WriteDataM;
   
   // *** TO DO: Burst mode
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
 

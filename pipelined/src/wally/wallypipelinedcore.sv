@@ -127,7 +127,7 @@ module wallypipelinedcore (
   // cpu lsu interface
   logic [2:0] 		    Funct3M;
   logic [`XLEN-1:0] 	    IEUAdrE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    IEUAdrM;  
   (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
   logic [`XLEN-1:0] 	    ReadDataW;  
@@ -223,7 +223,7 @@ module wallypipelinedcore (
      .MemRWM, // read/write control goes to LSU
      .AtomicE, // atomic control goes to LSU	    
      .AtomicM, // atomic control goes to LSU
-     .WriteDataM, // Write data to LSU
+     .WriteDataE, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
@@ -252,7 +252,7 @@ module wallypipelinedcore (
 	.CommittedM, .DCacheMiss, .DCacheAccess,
 	.SquashSCW,            
 	//.DataMisalignedM(DataMisalignedM),
-	.IEUAdrE, .IEUAdrM, .WriteDataM,
+	.IEUAdrE, .IEUAdrM, .WriteDataE,
 	.ReadDataM, .FlushDCacheM,
 	// connected to ahb (all stay the same)
 	.LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
