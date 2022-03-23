@@ -95,20 +95,22 @@ module csri #(parameter
 //      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field
 
   // restricted views of registers
-  // Add MEIP read-only signal
-  assign IP_REGW = {IntInM[11],1'b0,IP_REGW_writeable};
+  assign     IP_REGW = {IntInM[11],1'b0,IP_REGW_writeable};
+
+  always_comb begin:regs
+    // Add MEIP read-only signal
 
     // Machine Mode
-  assign MIP_REGW = IP_REGW;
-  assign MIE_REGW = IE_REGW;
+    MIP_REGW = IP_REGW;
+    MIE_REGW = IE_REGW;
 
-  // Supervisor mode
-  if (`S_SUPPORTED) begin
-    assign SIP_REGW = IP_REGW & MIDELEG_REGW[11:0] & 'h222; // only delegated interrupts visible
-    assign SIE_REGW = IE_REGW & MIDELEG_REGW[11:0] & 'h222;
-  end else begin
-    assign SIP_REGW = 12'b0;
-    assign SIE_REGW = 12'b0;
+    // Supervisor mode
+    if (`S_SUPPORTED) begin
+      SIP_REGW = IP_REGW & MIDELEG_REGW[11:0] & 'h222; // only delegated interrupts visible
+      SIE_REGW = IE_REGW & MIDELEG_REGW[11:0] & 'h222;
+    end else begin
+      SIP_REGW = 12'b0;
+      SIE_REGW = 12'b0;
+    end
   end
-
 endmodule
