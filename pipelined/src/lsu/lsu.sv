@@ -82,7 +82,6 @@ module lsu (
    input var                logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
   );
 
-  localparam                CACHE_ENABLED = `DMEM == `MEM_CACHE;
   logic [`XLEN+1:0]         IEUAdrExtM;
   logic [`PA_BITS-1:0]      LSUPAdrM;
   logic                     DTLBMissM;
@@ -105,7 +104,8 @@ module lsu (
   logic                     LSUBusWriteCrit;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
-    
+  logic [(`XLEN-1)/8:0]     ByteMaskM;
+  
   // *** TO DO: Burst mode, byte write enables to DTIM, cache, exeternal memory, remove subword write from uncore, 
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
@@ -193,10 +193,11 @@ module lsu (
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM,
+              .DCacheStallM, .DCacheCommittedM, .ByteMaskM,
               .DCacheMiss, .DCacheAccess);
-    assign SelUncachedAdr = '0; // value does not matter.
-  end else begin : bus  
+  end 
+  if (`DBUS) begin : bus  
+    localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
@@ -206,8 +207,6 @@ module lsu (
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic                save, restore;
-    logic [`PA_BITS-1:0] WordOffsetAddr;
     logic                SelBus;
     logic [LOGWPL-1:0]   WordCount;
             
@@ -224,44 +223,28 @@ module lsu (
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM), .d1(FinalWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
-    mux2 #(`PA_BITS) WordAdrrMux(.d0(LSUPAdrM), 
-      .d1({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)), .s(LSUBusWriteCrit),
-      .y(WordOffsetAddr)); // *** can reduce width of mux. only need the offset.  
     
-
     if(CACHE_ENABLED) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .save, .restore, .RW(LSURWM), .Atomic(LSUAtomicM),
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`XLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
+        .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
+        .ByteMask(ByteMaskM), .WordCount,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
-        .CacheBusAdr(DCacheBusAdr), .ReadDataLine(ReadDataLineM), 
+        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
-
-      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(  // *** merge into cache
-        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
-        .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
+  end else begin: nobus // block: bus
+    assign {LSUBusHWDATA, SelUncachedAdr} = '0; 
+    assign ReadDataWordMuxM = ReadDataWordM;
   end
-
-  if(`DMEM != `MEM_BUS) begin // *** always, not just with no MEM_BUS.  Only produces byte write enable
-    logic [`XLEN-1:0] ReadDataWordMaskedM;
-    // ** there is definitely a sww bug with memory mapped i/o. check wally64priv.    
-    assign ReadDataWordMaskedM = SelUncachedAdr ? '0 : ReadDataWordM; // AND-gate
-    // *** consider moving this AND gate into the sww.
-    //assign ReadDataWordMaskedM = ReadDataWordM; // *** this change only works because the i/o devices dont' write bytes other than the ones specific to their address.
-    subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
-      .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-         .HWDATAIN(FinalAMOWriteDataM), .HWDATA(FinalWriteDataM));
-  end else 
-    assign FinalWriteDataM = FinalAMOWriteDataM;
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);
@@ -269,13 +252,16 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // *** why does this need DTLBMissM?
   if (`A_SUPPORTED) begin:atomic
     atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
-      .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+      .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
     assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = LSUWriteDataM;
   end
+
+  subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
+    .LSUFunct3M, .FinalAMOWriteDataM, .FinalWriteDataM, .ByteMaskM);
+
+  
 endmodule

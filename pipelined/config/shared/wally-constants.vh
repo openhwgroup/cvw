@@ -50,7 +50,7 @@
 `define SV39 8
 `define SV48 9
 
-`define MEM_BUS 1
+`define MEM_NONE 1
 `define MEM_TIM 2
 `define MEM_CACHE 3
 

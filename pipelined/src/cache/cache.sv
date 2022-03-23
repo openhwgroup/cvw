@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTERVAL, DCACHE) (
   input logic                 clk,
   input logic                 reset,
    // cpu side
@@ -41,24 +41,26 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   input logic                 InvalidateCacheM,
   input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]  PAdr, // physical address
+  input logic [(`XLEN-1)/8:0] ByteMask,
   input logic [`XLEN-1:0]     FinalWriteData,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu
   output logic                CacheMiss,
   output logic                CacheAccess,
-  output logic                save, restore,
    // lsu control
   input logic                 IgnoreRequestTLB,
-  input logic                 IgnoreRequestTrapM,                                                                    
+  input logic                 IgnoreRequestTrapM, 
   input logic                 Cacheable,
    // Bus fsm interface
   output logic                CacheFetchLine,
   output logic                CacheWriteLine,
   input logic                 CacheBusAck,
+  input logic [LOGWPL-1:0]    WordCount,
+  input logic                 LSUBusWriteCrit, 
   output logic [`PA_BITS-1:0] CacheBusAdr,
   input logic [LINELEN-1:0]   CacheBusWriteData,
-  output logic [LINELEN-1:0]  ReadDataLine);
+  output logic [WORDLEN-1:0]  ReadDataWord);
 
   // Cache parameters
   localparam                  LINEBYTELEN = LINELEN/8;
@@ -101,6 +103,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [1:0]                 CacheRW, CacheAtomic;
+  logic [LINELEN-1:0]         ReadDataLine;
+  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
+  logic                       save, restore;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -114,7 +119,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, 
+    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
@@ -138,6 +143,17 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, DCACHE = 1) (
     flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, HitWay, HitWaySaved);
     mux2 #(NUMWAYS) saverestoremux(HitWay, HitWaySaved, restore, HitWayFinal);
   end else assign HitWayFinal = HitWay;
+
+  // like to fix this.
+  if(DCACHE) 
+    mux2 #(LOGWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
+      .d1(WordCount), .s(LSUBusWriteCrit),
+      .y(WordOffsetAddr)); 
+  else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
+  
+  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
+    .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+    .ReadDataLine, .ReadDataWord);
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.

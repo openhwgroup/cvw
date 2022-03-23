@@ -38,6 +38,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
+  input  logic [3:0]       HSIZED,
   output logic [`XLEN-1:0] HREADRam,
   output logic             HRESPRam, HREADYRam
 );
@@ -53,6 +54,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   logic        initTrans;
   logic        memwrite;
   logic [3:0]  busycount;
+  logic [`XLEN/8-1:0] ByteMaskM;
 
   if(`FPGA) begin:ram
     initial begin
@@ -104,6 +106,8 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end // initial begin
   end // if (FPGA)
 
+  swbytemask swbytemask(.HSIZED, .HADDRD(A[2:0]), .ByteMask(ByteMaskM));
+  
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
   // *** this seems like a weird way to use reset
@@ -148,17 +152,24 @@ module ram #(parameter BASE=0, RANGE = 65535) (
  -----/\----- EXCLUDED -----/\----- */
   
   /* verilator lint_off WIDTH */
+  genvar index;
+  always_ff @(posedge HCLK)
+    HWADDR <= #1 A;
   if (`XLEN == 64)  begin:ramrw
-    always_ff @(posedge HCLK) begin
-      HWADDR <= #1 A;
+    always_ff @(posedge HCLK) 
       HREADRam0 <= #1 RAM[A[31:3]];
-      if (memwrite & risingHREADYRam) RAM[HWADDR[31:3]] <= #1 HWDATA;
+    for(index = 0; index < `XLEN/8; index++) begin
+      always_ff @(posedge HCLK) begin
+        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:3]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
+      end
     end
   end else begin 
-    always_ff @(posedge HCLK) begin:ramrw
-      HWADDR <= #1 A;  
+    always_ff @(posedge HCLK) 
       HREADRam0 <= #1 RAM[A[31:2]];
-      if (memwrite & risingHREADYRam) RAM[HWADDR[31:2]] <= #1 HWDATA;
+    for(index = 0; index < `XLEN/8; index++) begin
+      always_ff @(posedge HCLK) begin:ramrw
+        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:2]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
+      end
     end
   end
   /* verilator lint_on WIDTH */

@@ -42,6 +42,7 @@ module fcmp (
    //             - if negitive - no
    //             - if positive - yes
    // note: LT does -0 < 0
+   //*** compare Exp and Man together
    assign LT = XSgnE^YSgnE ? XSgnE : XExpE==YExpE ? ((XManE<YManE)^XSgnE)&~EQ : (XExpE<YExpE)^XSgnE;
    assign EQ = (FSrcXE == FSrcYE);
 

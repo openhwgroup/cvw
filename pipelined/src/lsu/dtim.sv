@@ -37,19 +37,19 @@ module dtim(
   input logic [`XLEN-1:0]     IEUAdrE,
   input logic                 TrapM, 
   input logic [`XLEN-1:0]     FinalWriteDataM,
+  input logic [`XLEN/8-1:0]   ByteMaskM,
   output logic [`XLEN-1:0]    ReadDataWordM,
   output logic                BusStall,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
   output logic                BusCommittedM,
-  output logic [`XLEN-1:0]    ReadDataWordMuxM,
   output logic                DCacheStallM,
   output logic                DCacheCommittedM,
   output logic                DCacheMiss,
   output logic                DCacheAccess);
 
   simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
-      .clk, 
+      .clk, .ByteMask(ByteMaskM),
       .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
       .we(LSURWM[0] & ~TrapM),  // have to ignore write if Trap.
       .wd(FinalWriteDataM), .rd(ReadDataWordM));
@@ -57,7 +57,6 @@ module dtim(
   // since we have a local memory the bus connections are all disabled.
   // There are no peripherals supported.
   assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
-  assign ReadDataWordMuxM = ReadDataWordM;
   assign {DCacheStallM, DCacheCommittedM} = '0;
   assign {DCacheMiss, DCacheAccess} = '0;
 
