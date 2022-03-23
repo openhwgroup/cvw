@@ -34,7 +34,7 @@ stateGDBpath = outDir+'stateGDB.txt'
 if not os.path.exists(stateGDBpath):
     sys.exit('Error input file '+stateGDBpath+'not found')
 
-singleCSRs = ['pc','mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus','priv']
+singleCSRs = ['pc','mip','mie','mscratch','mcause','mepc','mtvec','medeleg','mideleg','sscratch','scause','sepc','stvec','sedeleg','sideleg','satp','mstatus','priv','sie','sip','sstatus']
 # priv (current privilege mode) isn't technically a CSR but we can log it with the same machinery
 thirtyTwoBitCSRs = ['mcounteren','scounteren']
 listCSRs = ['hpmcounter','pmpaddr']
