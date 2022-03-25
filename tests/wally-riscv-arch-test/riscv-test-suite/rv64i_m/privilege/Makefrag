@@ -56,7 +56,8 @@ target_tests_nosim = \
     WALLY-MIMPID \
     WALLY-MVENDORID \
     WALLY-CSR-PERMISSIONS-M \
-    WALLY-CSR-PERMISSIONS-S
+    WALLY-CSR-PERMISSIONS-S \
+    WALLY-trap-01 \
     # Have all 0's in references!
     #WALLY-MEPC \
     #WALLY-SEPC \
