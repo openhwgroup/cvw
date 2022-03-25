@@ -50,7 +50,7 @@ module lsu (
    // address and write data
    input logic [`XLEN-1:0]  IEUAdrE,
    (* mark_debug = "true" *)output logic [`XLEN-1:0] IEUAdrM,
-   input logic [`XLEN-1:0]  WriteDataM, 
+   input logic [`XLEN-1:0]  WriteDataE, 
    output logic [`XLEN-1:0] ReadDataM,
    // cpu privilege
    input logic [1:0]        PrivilegeModeW,
@@ -105,10 +105,12 @@ module lsu (
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [(`XLEN-1)/8:0]     ByteMaskM;
+  logic [`XLEN-1:0]         WriteDataM;
   
-  // *** TO DO: Burst mode, byte write enables to DTIM, cache, exeternal memory, remove subword write from uncore, 
+  // *** TO DO: Burst mode
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
 
@@ -187,13 +189,12 @@ module lsu (
   logic                SelUncachedAdr;
   assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
   
-  // *** change to allow TIM and BUS.  seaparate parameter for having bus (but have to have bus if have cache - check in testbench)
   if (`DMEM == `MEM_TIM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .DCacheStallM, .DCacheCommittedM, .ByteMaskM,
+              .DCacheStallM, .DCacheCommittedM, .ByteMaskM, .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
   end 
   if (`DBUS) begin : bus  

@@ -55,7 +55,7 @@ module datapath (
   input  logic             FWriteIntM,
   input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataM, 
+  output logic [`XLEN-1:0] WriteDataE, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
 (* mark_debug = "true" *)  input  logic             RegWriteW, 
@@ -83,7 +83,6 @@ module datapath (
   logic [`XLEN-1:0] SrcAE2, SrcBE2;
 
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE;
-  logic [`XLEN-1:0] WriteDataE;
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;
   logic [`XLEN-1:0] IFResultM;
@@ -119,7 +118,6 @@ module datapath (
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
-  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
   
   // Writeback stage pipeline register and logic

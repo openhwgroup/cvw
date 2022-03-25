@@ -101,7 +101,7 @@ module testbench;
   flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
   flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
   flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
-  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.WriteDataM, WriteDataW);  
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
   flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.core.hzu.TrapM, TrapW);
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -266,6 +266,19 @@ module testbench;
       end \
     end
 
+  `define INIT_CHECKPOINT_PACKED_ARRAY(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    for (i=ARRAY_MIN; i<ARRAY_MAX+1; i=i+1) begin \
+      initial begin \
+        if (CHECKPOINT!=0) begin \
+          force `SIGNAL[i] = init``SIGNAL[i]; \
+          while (reset!==1) #1; \
+          while (reset!==0) #1; \
+          #1; \
+          release `SIGNAL[i]; \
+        end \
+      end \
+    end
   // For the annoying case where the pathname to the array elements includes
   // a "genblk<i>" in the signal name
   `define INIT_CHECKPOINT_GENBLK_ARRAY(SIGNAL_BASE,SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
@@ -296,6 +309,7 @@ module testbench;
       end \
     end
 
+  genvar i;
   `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,0);
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
@@ -333,9 +347,9 @@ module testbench;
   //`INIT_CHECKPOINT_VAL(UART_LSR,   [7:0]);
   //`INIT_CHECKPOINT_VAL(UART_MSR,   [7:0]);
   `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
-  `INIT_CHECKPOINT_SIMPLE_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
-  `INIT_CHECKPOINT_VAL(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1]);
-  `INIT_CHECKPOINT_VAL(PLIC_THRESHOLD, [2:0]);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
 
   integer memFile;
   integer readResult;

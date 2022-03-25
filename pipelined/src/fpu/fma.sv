@@ -186,20 +186,20 @@ module expadd(
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (FmtE)
-                `FMT: assign Denorm = 1;
-                `FMT1: assign Denorm = `BIAS-`BIAS1+1;
-                `FMT2: assign Denorm = `BIAS-`BIAS2+1;
-                default: assign Denorm = 1'bx;
+                `FMT: Denorm = 1;
+                `FMT1: Denorm = `BIAS-`BIAS1+1;
+                `FMT2: Denorm = `BIAS-`BIAS2+1;
+                default: Denorm = 1'bx;
             endcase
         end
 
     end else begin
         always_comb begin
             case (FmtE)
-                2'h3: assign Denorm = 1;
-                2'h1: assign Denorm = `BIAS-`D_BIAS+1;
-                2'h0: assign Denorm = `BIAS-`S_BIAS+1;
-                2'h2: assign Denorm = `BIAS-`H_BIAS+1;
+                2'h3: Denorm = 1;
+                2'h1: Denorm = `BIAS-`D_BIAS+1;
+                2'h0: Denorm = `BIAS-`S_BIAS+1;
+                2'h2: Denorm = `BIAS-`H_BIAS+1;
             endcase
         end
 
@@ -612,20 +612,20 @@ module normalize(
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (FmtM)
-                `FMT: assign SumExpTmp = SumExpTmpTmp;
-                `FMT1: assign SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS1)&{`NE+2{|SumExpTmpTmp}};
-                `FMT2: assign SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS2)&{`NE+2{|SumExpTmpTmp}};
-                default: assign SumExpTmp = `NE+2'bx;
+                `FMT: SumExpTmp = SumExpTmpTmp;
+                `FMT1: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS1)&{`NE+2{|SumExpTmpTmp}};
+                `FMT2: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS2)&{`NE+2{|SumExpTmpTmp}};
+                default: SumExpTmp = `NE+2'bx;
             endcase
         end
 
     end else begin
         always_comb begin
             case (FmtM)
-                2'h3: assign SumExpTmp = SumExpTmpTmp;
-                2'h1: assign SumExpTmp = (SumExpTmpTmp-`BIAS+`D_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h0: assign SumExpTmp = (SumExpTmpTmp-`BIAS+`S_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h2: assign SumExpTmp = (SumExpTmpTmp-`BIAS+`H_BIAS)&{`NE+2{|SumExpTmpTmp}};
+                2'h3: SumExpTmp = SumExpTmpTmp;
+                2'h1: SumExpTmp = (SumExpTmpTmp-`BIAS+`D_BIAS)&{`NE+2{|SumExpTmpTmp}};
+                2'h0: SumExpTmp = (SumExpTmpTmp-`BIAS+`S_BIAS)&{`NE+2{|SumExpTmpTmp}};
+                2'h2: SumExpTmp = (SumExpTmpTmp-`BIAS+`H_BIAS)&{`NE+2{|SumExpTmpTmp}};
             endcase
         end
 
@@ -657,10 +657,10 @@ module normalize(
         assign Sum2GEFL = $signed(SumExpTmpTmp) >= $signed(-(`NE+2)'(`NF2+2)+(`NE+2)'(`BIAS)-(`NE+2)'(`BIAS2)) | ~|SumExpTmpTmp;
         always_comb begin
             case (FmtM)
-                `FMT: assign PreResultDenorm = Sum0LEZ & Sum0GEFL & ~SumZero;
-                `FMT1: assign PreResultDenorm = Sum1LEZ & Sum1GEFL & ~SumZero;
-                `FMT2: assign PreResultDenorm = Sum2LEZ & Sum2GEFL & ~SumZero;
-                default: assign PreResultDenorm = 1'bx;
+                `FMT: PreResultDenorm = Sum0LEZ & Sum0GEFL & ~SumZero;
+                `FMT1: PreResultDenorm = Sum1LEZ & Sum1GEFL & ~SumZero;
+                `FMT2: PreResultDenorm = Sum2LEZ & Sum2GEFL & ~SumZero;
+                default: PreResultDenorm = 1'bx;
             endcase
         end
 
@@ -676,10 +676,10 @@ module normalize(
         assign Sum3GEFL = $signed(SumExpTmpTmp) >= $signed(-(`NE+2)'(`H_NF+2)+(`NE+2)'(`BIAS)-(`NE+2)'(`H_BIAS)) | ~|SumExpTmpTmp;
         always_comb begin
             case (FmtM)
-                2'h3: assign PreResultDenorm = Sum0LEZ & Sum0GEFL & ~SumZero;
-                2'h1: assign PreResultDenorm = Sum1LEZ & Sum1GEFL & ~SumZero;
-                2'h0: assign PreResultDenorm = Sum2LEZ & Sum2GEFL & ~SumZero;
-                2'h2: assign PreResultDenorm = Sum3LEZ & Sum3GEFL & ~SumZero;
+                2'h3: PreResultDenorm = Sum0LEZ & Sum0GEFL & ~SumZero;
+                2'h1: PreResultDenorm = Sum1LEZ & Sum1GEFL & ~SumZero;
+                2'h0: PreResultDenorm = Sum2LEZ & Sum2GEFL & ~SumZero;
+                2'h2: PreResultDenorm = Sum3LEZ & Sum3GEFL & ~SumZero;
             endcase
         end
 
@@ -830,48 +830,48 @@ module fmaround(
             case (FmtM)
                 `FMT: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[2];
-                    assign Round = NormSum[1];
-                    assign LSBNormSum = NormSum[3];
+                    Guard = NormSum[2];
+                    Round = NormSum[1];
+                    LSBNormSum = NormSum[3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[1];
-                    assign UfRound = NormSum[0];
-                    assign UfLSBNormSum = NormSum[2];
+                    UfGuard = NormSum[1];
+                    UfRound = NormSum[0];
+                    UfLSBNormSum = NormSum[2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[0];
+                    Sticky = UfSticky | NormSum[0];
                 end
                 `FMT1: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[`NF-`NF1+2];
-                    assign Round = NormSum[`NF-`NF1+1];
-                    assign LSBNormSum = NormSum[`NF-`NF1+3];
+                    Guard = NormSum[`NF-`NF1+2];
+                    Round = NormSum[`NF-`NF1+1];
+                    LSBNormSum = NormSum[`NF-`NF1+3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[`NF-`NF1+1];
-                    assign UfRound = NormSum[`NF-`NF1];
-                    assign UfLSBNormSum = NormSum[`NF-`NF1+2];
+                    UfGuard = NormSum[`NF-`NF1+1];
+                    UfRound = NormSum[`NF-`NF1];
+                    UfLSBNormSum = NormSum[`NF-`NF1+2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[`NF-`NF1];
+                    Sticky = UfSticky | NormSum[`NF-`NF1];
                 end
                 `FMT2: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[`NF-`NF2+2];
-                    assign Round = NormSum[`NF-`NF2+1];
-                    assign LSBNormSum = NormSum[`NF-`NF2+3];
+                    Guard = NormSum[`NF-`NF2+2];
+                    Round = NormSum[`NF-`NF2+1];
+                    LSBNormSum = NormSum[`NF-`NF2+3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[`NF-`NF2+1];
-                    assign UfRound = NormSum[`NF-`NF2];
-                    assign UfLSBNormSum = NormSum[`NF-`NF2+2];
+                    UfGuard = NormSum[`NF-`NF2+1];
+                    UfRound = NormSum[`NF-`NF2];
+                    UfLSBNormSum = NormSum[`NF-`NF2+2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[`NF-`NF2];
+                    Sticky = UfSticky | NormSum[`NF-`NF2];
                 end
                 default: begin
-                    assign Guard = 1'bx;
-                    assign Round = 1'bx;
-                    assign LSBNormSum = 1'bx;
-                    assign UfGuard = 1'bx;
-                    assign UfRound = 1'bx;
-                    assign UfLSBNormSum = 1'bx;
-                    assign Sticky = 1'bx;
+                    Guard = 1'bx;
+                    Round = 1'bx;
+                    LSBNormSum = 1'bx;
+                    UfGuard = 1'bx;
+                    UfRound = 1'bx;
+                    UfLSBNormSum = 1'bx;
+                    Sticky = 1'bx;
                 end
             endcase
         end
@@ -881,51 +881,51 @@ module fmaround(
             case (FmtM)
                 2'h3: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[2];
-                    assign Round = NormSum[1];
-                    assign LSBNormSum = NormSum[3];
+                    Guard = NormSum[2];
+                    Round = NormSum[1];
+                    LSBNormSum = NormSum[3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[1];
-                    assign UfRound = NormSum[0];
-                    assign UfLSBNormSum = NormSum[2];
+                    UfGuard = NormSum[1];
+                    UfRound = NormSum[0];
+                    UfLSBNormSum = NormSum[2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[0];
+                    Sticky = UfSticky | NormSum[0];
                 end
                 2'h1: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[`NF-`D_NF+2];
-                    assign Round = NormSum[`NF-`D_NF+1];
-                    assign LSBNormSum = NormSum[`NF-`D_NF+3];
+                    Guard = NormSum[`NF-`D_NF+2];
+                    Round = NormSum[`NF-`D_NF+1];
+                    LSBNormSum = NormSum[`NF-`D_NF+3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[`NF-`D_NF+1];
-                    assign UfRound = NormSum[`NF-`D_NF];
-                    assign UfLSBNormSum = NormSum[`NF-`D_NF+2];
+                    UfGuard = NormSum[`NF-`D_NF+1];
+                    UfRound = NormSum[`NF-`D_NF];
+                    UfLSBNormSum = NormSum[`NF-`D_NF+2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[`NF-`D_NF];
+                    Sticky = UfSticky | NormSum[`NF-`D_NF];
                 end
                 2'h0: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[`NF-`S_NF+2];
-                    assign Round = NormSum[`NF-`S_NF+1];
-                    assign LSBNormSum = NormSum[`NF-`S_NF+3];
+                    Guard = NormSum[`NF-`S_NF+2];
+                    Round = NormSum[`NF-`S_NF+1];
+                    LSBNormSum = NormSum[`NF-`S_NF+3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[`NF-`S_NF+1];
-                    assign UfRound = NormSum[`NF-`S_NF];
-                    assign UfLSBNormSum = NormSum[`NF-`S_NF+2];
+                    UfGuard = NormSum[`NF-`S_NF+1];
+                    UfRound = NormSum[`NF-`S_NF];
+                    UfLSBNormSum = NormSum[`NF-`S_NF+2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[`NF-`S_NF];
+                    Sticky = UfSticky | NormSum[`NF-`S_NF];
                 end
                 2'h2: begin
                     // determine guard, round, and least significant bit of the result
-                    assign Guard = NormSum[`NF-`H_NF+2];
-                    assign Round = NormSum[`NF-`H_NF+1];
-                    assign LSBNormSum = NormSum[`NF-`H_NF+3];
+                    Guard = NormSum[`NF-`H_NF+2];
+                    Round = NormSum[`NF-`H_NF+1];
+                    LSBNormSum = NormSum[`NF-`H_NF+3];
                     // used to determine underflow flag
-                    assign UfGuard = NormSum[`NF-`H_NF+1];
-                    assign UfRound = NormSum[`NF-`H_NF];
-                    assign UfLSBNormSum = NormSum[`NF-`H_NF+2];
+                    UfGuard = NormSum[`NF-`H_NF+1];
+                    UfRound = NormSum[`NF-`H_NF];
+                    UfLSBNormSum = NormSum[`NF-`H_NF+2];
                     // determine sticky
-                    assign Sticky = UfSticky | NormSum[`NF-`H_NF];
+                    Sticky = UfSticky | NormSum[`NF-`H_NF];
                 end
             endcase
         end
@@ -988,20 +988,20 @@ module fmaround(
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (FmtM)
-                `FMT: assign RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, Plus1};
-                `FMT1: assign RoundAdd = Minus1 ? {{`NE+2+`NF1{1'b1}}, (`FLEN-1-`NE-`NF1)'(0)} : {(`NE+1+`NF1)'(0), Plus1, (`FLEN-1-`NE-`NF1)'(0)};
-                `FMT2: assign RoundAdd = Minus1 ? {{`NE+2+`NF2{1'b1}}, (`FLEN-1-`NE-`NF2)'(0)} : {(`NE+1+`NF2)'(0), Plus1, (`FLEN-1-`NE-`NF2)'(0)};
-                default: assign RoundAdd = (`FLEN+1)'(0);
+                `FMT: RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, Plus1};
+                `FMT1: RoundAdd = Minus1 ? {{`NE+2+`NF1{1'b1}}, (`FLEN-1-`NE-`NF1)'(0)} : {(`NE+1+`NF1)'(0), Plus1, (`FLEN-1-`NE-`NF1)'(0)};
+                `FMT2: RoundAdd = Minus1 ? {{`NE+2+`NF2{1'b1}}, (`FLEN-1-`NE-`NF2)'(0)} : {(`NE+1+`NF2)'(0), Plus1, (`FLEN-1-`NE-`NF2)'(0)};
+                default: RoundAdd = (`FLEN+1)'(0);
             endcase
         end
 
     end else begin        
         always_comb begin
             case (FmtM)
-                2'h3: assign RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, Plus1};
-                2'h1: assign RoundAdd = Minus1 ? {{`NE+2+`D_NF{1'b1}}, (`FLEN-1-`NE-`D_NF)'(0)} : {(`NE+1+`D_NF)'(0), Plus1, (`FLEN-1-`NE-`D_NF)'(0)};
-                2'h0: assign RoundAdd = Minus1 ? {{`NE+2+`S_NF{1'b1}}, (`FLEN-1-`NE-`S_NF)'(0)} : {(`NE+1+`S_NF)'(0), Plus1, (`FLEN-1-`NE-`S_NF)'(0)};
-                2'h2: assign RoundAdd = Minus1 ? {{`NE+2+`H_NF{1'b1}}, (`FLEN-1-`NE-`H_NF)'(0)} : {(`NE+1+`H_NF)'(0), Plus1, (`FLEN-1-`NE-`H_NF)'(0)};
+                2'h3: RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, Plus1};
+                2'h1: RoundAdd = Minus1 ? {{`NE+2+`D_NF{1'b1}}, (`FLEN-1-`NE-`D_NF)'(0)} : {(`NE+1+`D_NF)'(0), Plus1, (`FLEN-1-`NE-`D_NF)'(0)};
+                2'h0: RoundAdd = Minus1 ? {{`NE+2+`S_NF{1'b1}}, (`FLEN-1-`NE-`S_NF)'(0)} : {(`NE+1+`S_NF)'(0), Plus1, (`FLEN-1-`NE-`S_NF)'(0)};
+                2'h2: RoundAdd = Minus1 ? {{`NE+2+`H_NF{1'b1}}, (`FLEN-1-`NE-`H_NF)'(0)} : {(`NE+1+`H_NF)'(0), Plus1, (`FLEN-1-`NE-`H_NF)'(0)};
             endcase
         end
 
@@ -1056,20 +1056,20 @@ module fmaflags(
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (FmtM)
-                `FMT: assign GtMaxExp =  &FullResultExp[`NE-1:0] | FullResultExp[`NE];
-                `FMT1: assign GtMaxExp = &FullResultExp[`NE1-1:0] | FullResultExp[`NE1];
-                `FMT2: assign GtMaxExp = &FullResultExp[`NE2-1:0] | FullResultExp[`NE2];
-                default: assign GtMaxExp = 1'bx;
+                `FMT: GtMaxExp =  &FullResultExp[`NE-1:0] | FullResultExp[`NE];
+                `FMT1: GtMaxExp = &FullResultExp[`NE1-1:0] | FullResultExp[`NE1];
+                `FMT2: GtMaxExp = &FullResultExp[`NE2-1:0] | FullResultExp[`NE2];
+                default: GtMaxExp = 1'bx;
             endcase
         end
 
     end else begin        
         always_comb begin
             case (FmtM)
-                2'h3: assign GtMaxExp =  &FullResultExp[`NE-1:0] | FullResultExp[`NE];
-                2'h1: assign GtMaxExp = &FullResultExp[`D_NE-1:0] | FullResultExp[`D_NE];
-                2'h0: assign GtMaxExp = &FullResultExp[`S_NE-1:0] | FullResultExp[`S_NE];
-                2'h2: assign GtMaxExp = &FullResultExp[`H_NE-1:0] | FullResultExp[`H_NE];
+                2'h3: GtMaxExp =  &FullResultExp[`NE-1:0] | FullResultExp[`NE];
+                2'h1: GtMaxExp = &FullResultExp[`D_NE-1:0] | FullResultExp[`D_NE];
+                2'h0: GtMaxExp = &FullResultExp[`S_NE-1:0] | FullResultExp[`S_NE];
+                2'h2: GtMaxExp = &FullResultExp[`H_NE-1:0] | FullResultExp[`H_NE];
             endcase
         end
 
@@ -1157,68 +1157,68 @@ module resultselect(
             case (FmtM)
                 `FMT: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
-                        assign YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
-                        assign ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
-                        assign InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+                        XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
+                        YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
+                        ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
+                        InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end else begin 
-                        assign XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+                        XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end
                     
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                                         {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    assign KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
-                    assign UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
-                    assign InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
-                    assign NormResult = {ResultSgn, ResultExp, ResultFrac};
+                    KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+                    UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
+                    InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
+                    NormResult = {ResultSgn, ResultExp, ResultFrac};
                 end
                 `FMT1: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {{`FLEN-`LEN1{1'b1}}, XSgnM, {`NE1{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF1]};
-                        assign YNaNResult = {{`FLEN-`LEN1{1'b1}}, YSgnM, {`NE1{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF1]};
-                        assign ZNaNResult = {{`FLEN-`LEN1{1'b1}}, ZSgnEffM, {`NE1{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF1]};
-                        assign InvalidResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
+                        XNaNResult = {{`FLEN-`LEN1{1'b1}}, XSgnM, {`NE1{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF1]};
+                        YNaNResult = {{`FLEN-`LEN1{1'b1}}, YSgnM, {`NE1{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF1]};
+                        ZNaNResult = {{`FLEN-`LEN1{1'b1}}, ZSgnEffM, {`NE1{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF1]};
+                        InvalidResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end else begin 
-                        assign XNaNResult = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
+                        XNaNResult = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} :
                                                                                                                                   {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-                    assign KillProdResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:0], ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
-                    assign UnderflowResult = {{`FLEN-`LEN1{1'b1}}, {ResultSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
-                    assign InfResult = {{`FLEN-`LEN1{1'b1}}, InfSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-                    assign NormResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, ResultExp[`NE1-1:0], ResultFrac[`NF-1:`NF-`NF1]};
+                    KillProdResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:0], ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+                    UnderflowResult = {{`FLEN-`LEN1{1'b1}}, {ResultSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
+                    InfResult = {{`FLEN-`LEN1{1'b1}}, InfSgn, {`NE1{1'b1}}, (`NF1)'(0)};
+                    NormResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, ResultExp[`NE1-1:0], ResultFrac[`NF-1:`NF-`NF1]};
                 end
                 `FMT2: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {{`FLEN-`LEN2{1'b1}}, XSgnM, {`NE2{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF2]};
-                        assign YNaNResult = {{`FLEN-`LEN2{1'b1}}, YSgnM, {`NE2{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF2]};
-                        assign ZNaNResult = {{`FLEN-`LEN2{1'b1}}, ZSgnEffM, {`NE2{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF2]};
-                        assign InvalidResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
+                        XNaNResult = {{`FLEN-`LEN2{1'b1}}, XSgnM, {`NE2{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF2]};
+                        YNaNResult = {{`FLEN-`LEN2{1'b1}}, YSgnM, {`NE2{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF2]};
+                        ZNaNResult = {{`FLEN-`LEN2{1'b1}}, ZSgnEffM, {`NE2{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF2]};
+                        InvalidResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
                     end else begin 
-                        assign XNaNResult = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
+                        XNaNResult = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
                     end
                     
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} :
                                                                                                                                   {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2{1'b1}}, (`NF2)'(0)};
-                    assign KillProdResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:0], ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
-                    assign UnderflowResult = {{`FLEN-`LEN2{1'b1}}, {ResultSgn, (`LEN2-1)'(0)} + {(`LEN2-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
-                    assign InfResult = {{`FLEN-`LEN2{1'b1}}, InfSgn, {`NE2{1'b1}}, (`NF2)'(0)};
-                    assign NormResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, ResultExp[`NE2-1:0], ResultFrac[`NF-1:`NF-`NF2]};
+                    KillProdResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:0], ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
+                    UnderflowResult = {{`FLEN-`LEN2{1'b1}}, {ResultSgn, (`LEN2-1)'(0)} + {(`LEN2-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
+                    InfResult = {{`FLEN-`LEN2{1'b1}}, InfSgn, {`NE2{1'b1}}, (`NF2)'(0)};
+                    NormResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, ResultExp[`NE2-1:0], ResultFrac[`NF-1:`NF-`NF2]};
                 end
                 default: begin
                     if(`IEEE754) begin
-                        assign XNaNResult = (`FLEN)'(0);
-                        assign YNaNResult = (`FLEN)'(0);
-                        assign ZNaNResult = (`FLEN)'(0);
-                        assign InvalidResult = (`FLEN)'(0);
+                        XNaNResult = (`FLEN)'(0);
+                        YNaNResult = (`FLEN)'(0);
+                        ZNaNResult = (`FLEN)'(0);
+                        InvalidResult = (`FLEN)'(0);
                     end else begin 
-                        assign XNaNResult = (`FLEN)'(0);
+                        XNaNResult = (`FLEN)'(0);
                     end
-                    assign OverflowResult = (`FLEN)'(0);
-                    assign KillProdResult = (`FLEN)'(0);
-                    assign UnderflowResult = (`FLEN)'(0);
-                    assign InfResult = (`FLEN)'(0);
-                    assign NormResult = (`FLEN)'(0);
+                    OverflowResult = (`FLEN)'(0);
+                    KillProdResult = (`FLEN)'(0);
+                    UnderflowResult = (`FLEN)'(0);
+                    InfResult = (`FLEN)'(0);
+                    NormResult = (`FLEN)'(0);
                 end
             endcase
         end
@@ -1228,71 +1228,71 @@ module resultselect(
             case (FmtM)
                 2'h3: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
-                        assign YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
-                        assign ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
-                        assign InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+                        XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
+                        YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
+                        ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
+                        InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end else begin 
-                        assign XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+                        XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end
                     
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                                         {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    assign KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
-                    assign UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
-                    assign InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
-                    assign NormResult = {ResultSgn, ResultExp, ResultFrac};
+                    KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+                    UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
+                    InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
+                    NormResult = {ResultSgn, ResultExp, ResultFrac};
                 end
                 2'h1: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {{`FLEN-`D_LEN{1'b1}}, XSgnM, {`D_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`D_NF]};
-                        assign YNaNResult = {{`FLEN-`D_LEN{1'b1}}, YSgnM, {`D_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`D_NF]};
-                        assign ZNaNResult = {{`FLEN-`D_LEN{1'b1}}, ZSgnEffM, {`D_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`D_NF]};
-                        assign InvalidResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
+                        XNaNResult = {{`FLEN-`D_LEN{1'b1}}, XSgnM, {`D_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`D_NF]};
+                        YNaNResult = {{`FLEN-`D_LEN{1'b1}}, YSgnM, {`D_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`D_NF]};
+                        ZNaNResult = {{`FLEN-`D_LEN{1'b1}}, ZSgnEffM, {`D_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`D_NF]};
+                        InvalidResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end else begin 
-                        assign XNaNResult = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
+                        XNaNResult = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} :
                                                                                                                                   {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    assign KillProdResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:0], ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
-                    assign UnderflowResult = {{`FLEN-`D_LEN{1'b1}}, {ResultSgn, (`D_LEN-1)'(0)} + {(`D_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
-                    assign InfResult = {{`FLEN-`D_LEN{1'b1}}, InfSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    assign NormResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, ResultExp[`D_NE-1:0], ResultFrac[`NF-1:`NF-`D_NF]};
+                    KillProdResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:0], ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
+                    UnderflowResult = {{`FLEN-`D_LEN{1'b1}}, {ResultSgn, (`D_LEN-1)'(0)} + {(`D_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
+                    InfResult = {{`FLEN-`D_LEN{1'b1}}, InfSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
+                    NormResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, ResultExp[`D_NE-1:0], ResultFrac[`NF-1:`NF-`D_NF]};
                 end
                 2'h0: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {{`FLEN-`S_LEN{1'b1}}, XSgnM, {`S_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`S_NF]};
-                        assign YNaNResult = {{`FLEN-`S_LEN{1'b1}}, YSgnM, {`S_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`S_NF]};
-                        assign ZNaNResult = {{`FLEN-`S_LEN{1'b1}}, ZSgnEffM, {`S_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`S_NF]};
-                        assign InvalidResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
+                        XNaNResult = {{`FLEN-`S_LEN{1'b1}}, XSgnM, {`S_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`S_NF]};
+                        YNaNResult = {{`FLEN-`S_LEN{1'b1}}, YSgnM, {`S_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`S_NF]};
+                        ZNaNResult = {{`FLEN-`S_LEN{1'b1}}, ZSgnEffM, {`S_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`S_NF]};
+                        InvalidResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
                     end else begin 
-                        assign XNaNResult = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
+                        XNaNResult = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
                     end
                     
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} :
                                                                                                                                   {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    assign KillProdResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:0], ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
-                    assign UnderflowResult = {{`FLEN-`S_LEN{1'b1}}, {ResultSgn, (`S_LEN-1)'(0)} + {(`S_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
-                    assign InfResult = {{`FLEN-`S_LEN{1'b1}}, InfSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    assign NormResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, ResultExp[`S_NE-1:0], ResultFrac[`NF-1:`NF-`S_NF]};
+                    KillProdResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:0], ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
+                    UnderflowResult = {{`FLEN-`S_LEN{1'b1}}, {ResultSgn, (`S_LEN-1)'(0)} + {(`S_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
+                    InfResult = {{`FLEN-`S_LEN{1'b1}}, InfSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
+                    NormResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, ResultExp[`S_NE-1:0], ResultFrac[`NF-1:`NF-`S_NF]};
                 end
                 2'h2: begin  
                     if(`IEEE754) begin
-                        assign XNaNResult = {{`FLEN-`H_LEN{1'b1}}, XSgnM, {`H_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`H_NF]};
-                        assign YNaNResult = {{`FLEN-`H_LEN{1'b1}}, YSgnM, {`H_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`H_NF]};
-                        assign ZNaNResult = {{`FLEN-`H_LEN{1'b1}}, ZSgnEffM, {`H_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`H_NF]};
-                        assign InvalidResult = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
+                        XNaNResult = {{`FLEN-`H_LEN{1'b1}}, XSgnM, {`H_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`H_NF]};
+                        YNaNResult = {{`FLEN-`H_LEN{1'b1}}, YSgnM, {`H_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`H_NF]};
+                        ZNaNResult = {{`FLEN-`H_LEN{1'b1}}, ZSgnEffM, {`H_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`H_NF]};
+                        InvalidResult = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
                     end else begin 
-                        assign XNaNResult = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
+                        XNaNResult = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
                     end
                     
-                    assign OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} :
+                    OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} :
                                                                                                               {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};      
 
-                    assign KillProdResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:0], ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
-                    assign UnderflowResult = {{`FLEN-`H_LEN{1'b1}}, {ResultSgn, (`H_LEN-1)'(0)} + {(`H_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
-                    assign InfResult = {{`FLEN-`H_LEN{1'b1}}, InfSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};
-                    assign NormResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, ResultExp[`H_NE-1:0], ResultFrac[`NF-1:`NF-`H_NF]};
+                    KillProdResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:0], ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
+                    UnderflowResult = {{`FLEN-`H_LEN{1'b1}}, {ResultSgn, (`H_LEN-1)'(0)} + {(`H_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
+                    InfResult = {{`FLEN-`H_LEN{1'b1}}, InfSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};
+                    NormResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, ResultExp[`H_NE-1:0], ResultFrac[`NF-1:`NF-`H_NF]};
                 end
             endcase
         end

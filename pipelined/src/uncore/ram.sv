@@ -48,7 +48,6 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   logic [31:0] HWADDR, A;
-  logic [`XLEN-1:0] HREADRam0;
 
   logic        prevHREADYRam, risingHREADYRam;
   logic        initTrans;
@@ -157,7 +156,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     HWADDR <= #1 A;
   if (`XLEN == 64)  begin:ramrw
     always_ff @(posedge HCLK) 
-      HREADRam0 <= #1 RAM[A[31:3]];
+      HREADRam <= #1 RAM[A[31:3]];
     for(index = 0; index < `XLEN/8; index++) begin
       always_ff @(posedge HCLK) begin
         if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:3]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
@@ -165,7 +164,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end
   end else begin 
     always_ff @(posedge HCLK) 
-      HREADRam0 <= #1 RAM[A[31:2]];
+      HREADRam <= #1 RAM[A[31:2]];
     for(index = 0; index < `XLEN/8; index++) begin
       always_ff @(posedge HCLK) begin:ramrw
         if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:2]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
@@ -174,8 +173,5 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   end
   /* verilator lint_on WIDTH */
 
-  //assign HREADRam = HREADYRam ? HREADRam0 : `XLEN'bz;
-  // *** Ross Thompson: removed tristate as fpga synthesis removes.
-  assign HREADRam = HREADRam0;
 endmodule
 

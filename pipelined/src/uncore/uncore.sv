@@ -55,7 +55,7 @@ module uncore (
   input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
   // peripheral pins
-  output logic             TimerIntM, SwIntM, ExtIntM,
+  output logic             TimerIntM, SwIntM, ExtIntM, ExtIntS,
   input  logic [31:0]      GPIOPinsIn,
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
   input  logic             UARTSin,
@@ -133,9 +133,10 @@ module uncore (
         .HWRITE, .HREADY, .HTRANS, .HWDATA,
         .UARTIntr, .GPIOIntr,
         .HREADPLIC, .HRESPPLIC, .HREADYPLIC,
-        .ExtIntM);
+        .ExtIntM, .ExtIntS);
     end else begin : plic
       assign ExtIntM = 0;
+      assign ExtIntS = 0;
     end
     if (`GPIO_SUPPORTED == 1) begin : gpio
       gpio gpio(
