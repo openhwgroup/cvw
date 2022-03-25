@@ -25,50 +25,50 @@
 
 INIT_TESTS
 
+CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
+
 TRAP_HANDLER m, DEBUG=1 // turn on recording mtval and status bits on traps
 
 li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1
-// WRITE_READ_CSR mie, 0xFFFF *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
+WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources // *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
 
 // test 5.3.1.4 Basic trap tests 
 
-// CAUSE_INSTR_ADDR_MISALIGNED //skipped becuase this exception may be impossible when compressed instructions are enabled)
-CAUSE_INSTR_ACCESS
-CAUSE_ILLEGAL_INSTR
-CAUSE_BREAKPNT
-CAUSE_LOAD_ADDR_MISALIGNED
-CAUSE_LOAD_ACC
-CAUSE_STORE_ADDR_MISALIGNED
-CAUSE_STORE_ACC
+// jal cause_instr_addr_misaligned //skipped becuase this exception may be impossible when compressed instructions are enabled)
+jal cause_instr_access
+jal cause_illegal_instr
+jal cause_breakpnt
+jal cause_load_addr_misaligned
+jal cause_load_acc
+jal cause_store_addr_misaligned
+jal cause_store_acc
 GOTO_U_MODE // Causes M mode ecall
 GOTO_S_MODE // Causes U mode ecall
 GOTO_M_MODE // Causes S mode ecall
 
-// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
-// CAUSE_EXT_INTERRUPT
+jal cause_time_interrupt // *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
+jal cause_soft_interrupt // *** exiting out of the trap handler after these is current;y broken
+jal cause_ext_interrupt
 
 // try the traps again with mideleg = medeleg = all 1's to ensure traps still go to M mode from M mode
 
 WRITE_READ_CSR medeleg, 0xFFFFFFFFFFFFFFFF
 WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
-// CAUSE_INSTR_ADDR_MISALIGNED //skipped becuase this exception may be impossible when compressed instructions are enabled)
-CAUSE_INSTR_ACCESS
-CAUSE_ILLEGAL_INSTR
-CAUSE_BREAKPNT
-CAUSE_LOAD_ADDR_MISALIGNED
-CAUSE_LOAD_ACC
-CAUSE_STORE_ADDR_MISALIGNED
-CAUSE_STORE_ACC
-CAUSE_ECALL // M mode ecall
-// GOTO_U_MODE // leave these untested since we only need to ensure that from M mode are not delegated
-// GOTO_S_MODE 
+// jal cause_instr_addr_misaligned //skipped becuase this exception may be impossible when compressed instructions are enabled)
+jal cause_instr_access
+jal cause_illegal_instr
+jal cause_breakpnt
+jal cause_load_addr_misaligned
+jal cause_load_acc
+jal cause_store_addr_misaligned
+jal cause_store_acc
+jal cause_ecall // M mode ecall
 
-// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
-// CAUSE_EXT_INTERRUPT
+jal cause_time_interrupt // *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
+jal cause_soft_interrupt // *** exiting out of the trap handler after these is current;y broken
+jal cause_ext_interrupt
 
 END_TESTS
 
