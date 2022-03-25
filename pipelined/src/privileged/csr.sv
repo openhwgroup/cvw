@@ -43,13 +43,13 @@ module csr #(parameter
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, 
-  input  logic             TimerIntM, ExtIntM, SwIntM,
+  input  logic             TimerIntM, ExtIntM, ExtIntS, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
-  input  logic 		   BPPredDirWrongM,
-  input  logic 		   BTBPredPCWrongM,
-  input  logic 		   RASPredPCWrongM,
-  input  logic 		   BPPredClassNonCFIWrongM,
+  input  logic             BPPredDirWrongM,
+  input  logic             BTBPredPCWrongM,
+  input  logic             RASPredPCWrongM,
+  input  logic             BPPredClassNonCFIWrongM,
   input  logic [4:0]       InstrClassM,
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
@@ -123,7 +123,7 @@ module csr #(parameter
   assign CSRUWriteM = CSRWriteM;  
 
   csri  csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, .CSRMWriteM, .CSRSWriteM,
-             .CSRAdrM, .ExtIntM, .TimerIntM, .SwIntM,
+             .CSRAdrM, .ExtIntM, .ExtIntS, .TimerIntM, .SwIntM,
              .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .CSRWriteValM);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteSSTATUSM, 
@@ -167,7 +167,7 @@ module csr #(parameter
 
   // merge illegal accesses: illegal if none of the CSR addresses is legal or privilege is insufficient
   assign InsufficientCSRPrivilegeM = (CSRAdrM[9:8] == 2'b11 & PrivilegeModeW != `M_MODE) |
-                                    (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == `U_MODE);
+                                     (CSRAdrM[9:8] == 2'b01 & PrivilegeModeW == `U_MODE);
   assign IllegalCSRAccessM = ((IllegalCSRCAccessM & IllegalCSRMAccessM & 
     IllegalCSRSAccessM & IllegalCSRUAccessM |
     InsufficientCSRPrivilegeM) & CSRReadM) | IllegalCSRMWriteReadonlyM;

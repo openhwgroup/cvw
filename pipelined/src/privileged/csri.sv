@@ -41,7 +41,7 @@ module csri #(parameter
     input  logic             InstrValidNotFlushedM, StallW,
     input  logic             CSRMWriteM, CSRSWriteM,
     input  logic [11:0]      CSRAdrM,
-    input  logic             ExtIntM, TimerIntM, SwIntM,
+    input  logic             ExtIntM, ExtIntS, TimerIntM, SwIntM,
     input  logic [`XLEN-1:0]      MIDELEG_REGW,
     output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
     input  logic [`XLEN-1:0] CSRWriteValM
@@ -57,12 +57,12 @@ module csri #(parameter
 
   always_comb begin
     IntInM     = 0; 
-    IntInM[11] = ExtIntM;;                     // MEIP
-    IntInM[9]  = ExtIntM &  MIDELEG_REGW[9];   // SEIP
-    IntInM[7]  = TimerIntM;                    // MTIP
-    IntInM[5]  = TimerIntM &  MIDELEG_REGW[5]; // STIP
-    IntInM[3]  = SwIntM;                       // MSIP
-    IntInM[1]  = SwIntM &  MIDELEG_REGW[1];    // SSIP
+    IntInM[11] = ExtIntM;                               // MEIP
+    IntInM[9]  = ExtIntS | (ExtIntM & MIDELEG_REGW[9]); // SEIP
+    IntInM[7]  = TimerIntM;                             // MTIP
+    IntInM[5]  = TimerIntM &  MIDELEG_REGW[5];          // STIP
+    IntInM[3]  = SwIntM;                                // MSIP
+    IntInM[1]  = SwIntM &  MIDELEG_REGW[1];             // SSIP
    end
 
   // Interrupt Write Enables
@@ -82,21 +82,19 @@ module csri #(parameter
     assign MIP_WRITE_MASK = 12'h000;
     assign SIP_WRITE_MASK = 12'h000;
   end
-  always @(posedge clk) //, posedge reset) begin // *** I strongly feel that IntInM should go directly to IP_REGW -- Ben 9/7/21
+  always @(posedge clk)
     if (reset)          IP_REGW_writeable <= 10'b0;
-    else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
-    else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | IntInM[9:0]; // MTIP unclearable
-//      else if (WriteUIPM) IP_REGW = (CSRWriteValM & 12'hBBB) | (NextIPM & 12'h080); // MTIP unclearable
-    else                IP_REGW_writeable <= IP_REGW_writeable | IntInM[9:0]; // *** check this turns off interrupts properly even when MIDELEG changes
-  always @(posedge clk) //, posedge reset) begin
+    else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & MIP_WRITE_MASK[9:0]) | {1'b0,IntInM[8:0]}; // MTIP unclearable
+    else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[9:0] & SIP_WRITE_MASK[9:0]) | {1'b0,IntInM[8:0]}; // MTIP unclearable
+    else                IP_REGW_writeable <= IP_REGW_writeable | {1'b0, IntInM[8:0]}; // *** check this turns off interrupts properly even when MIDELEG changes
+  always @(posedge clk)
     if (reset)          IE_REGW <= 12'b0;
     else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'hAAA); // MIE controls M and S fields
     else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
-//      else if (WriteUIEM) IE_REGW = (CSRWriteValM & 12'h111) | (IE_REGW & 12'hAAA); // only U field
 
   // restricted views of registers
-  // Add MEIP read-only signal
-  assign IP_REGW = {IntInM[11],1'b0,IP_REGW_writeable};
+  // Add ExtIntM read-only signal
+  assign IP_REGW = {ExtIntM,1'b0,ExtIntS,9'b0} | {2'b0,IP_REGW_writeable};
 
     // Machine Mode
   assign MIP_REGW = IP_REGW;
