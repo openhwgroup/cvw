@@ -52,7 +52,7 @@ module ieu (
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
-  output logic [`XLEN-1:0] WriteDataM, // Address and write data to LSU
+  output logic [`XLEN-1:0] WriteDataE, // Address and write data to LSU
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
@@ -106,7 +106,7 @@ module ieu (
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
-    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM,
+    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE,
     .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW,
     .CSRReadValW, .ReadDataM, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   

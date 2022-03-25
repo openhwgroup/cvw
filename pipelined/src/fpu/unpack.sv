@@ -293,7 +293,7 @@ module unpack (
 
         always_comb begin
             case (FmtE)
-                `Q_BIAS: begin  // if input is quad percision
+                2'b11: begin  // if input is quad percision
                     // extract sign bit
                     XSgnE = X[`Q_LEN-1];
                     YSgnE = Y[`Q_LEN-1];
@@ -319,7 +319,7 @@ module unpack (
                     YExpMaxE = &Y[`Q_LEN-2:`Q_NF];
                     ZExpMaxE = &Z[`Q_LEN-2:`Q_NF];
                 end
-                `D_BIAS: begin  // if input is double percision
+                2'b01: begin  // if input is double percision
                     // extract sign bit
                     XSgnE = XLen1[`D_LEN-1];
                     YSgnE = YLen1[`D_LEN-1];
@@ -353,7 +353,7 @@ module unpack (
                     YExpMaxE = &YLen1[`D_LEN-2:`D_NE];
                     ZExpMaxE = &ZLen1[`D_LEN-2:`D_NE];
                 end
-                `S_BIAS: begin      // if input is single percision
+                2'b00: begin      // if input is single percision
                     // extract sign bit
                     XSgnE = XLen2[`S_LEN-1];
                     YSgnE = YLen2[`S_LEN-1];
@@ -387,7 +387,7 @@ module unpack (
                     YExpMaxE = &YLen2[`S_LEN-2:`S_NF];
                     ZExpMaxE = &ZLen2[`S_LEN-2:`S_NF];
                 end
-                `H_BIAS: begin      // if input is half percision
+                2'b10: begin      // if input is half percision
                     // extract sign bit
                     XSgnE = XLen3[`H_LEN-1];
                     YSgnE = YLen3[`H_LEN-1];
