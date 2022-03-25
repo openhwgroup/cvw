@@ -49,16 +49,10 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // 11 - TLB is accessed for both read and write
   input logic                 DisableTranslation,
 
-  // VAdr goes to the TLB only. Virtual if the TLB is active.
-  // PAdr goes to address mux bypassing the TLB.  PAdr used when there is no translation.
-  // Comes from either the program address (instruction address or load/store address)
-  // or from the hardware pagetable walker.
-  // PAdr is intended to used as a phsycial address.  Discarded by the address mux when translation is
-  // performed.  
+  // VAdr is the virtual/physical address from IEU or physical address from HPTW.
   // PhysicalAddress is selected to be PAdr when no translation or the translated VAdr (TLBPAdr)
   // when there is translation.
-  input logic [`PA_BITS-1:0]  PAdr, // *** consider renaming this.
-  input logic [`XLEN-1:0]     VAdr,
+  input logic [`XLEN+1:0]     VAdr,
   input logic [1:0]           Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
 
   // Controls for writing a new entry to the TLB
@@ -106,7 +100,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
       tlb(.clk, .reset,
           .SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]),
           .SATP_ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]),
-          .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+          .VAdr(VAdr[`XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
           .PrivilegeModeW, .ReadAccess, .WriteAccess,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
@@ -122,8 +116,8 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // the lower 12 bits are the page offset. These are never changed from the orginal
   // non translated address.
   //mux2 #(`PA_BITS) addressmux(PAdr, TLBPAdr, Translate, PhysicalAddress);
-  mux2 #(`PA_BITS-12) addressmux(PAdr[`PA_BITS-1:12], TLBPAdr[`PA_BITS-1:12], Translate, PhysicalAddress[`PA_BITS-1:12]);
-  assign PhysicalAddress[11:0] = PAdr[11:0];
+  mux2 #(`PA_BITS-12) addressmux(VAdr[`PA_BITS-1:12], TLBPAdr[`PA_BITS-1:12], Translate, PhysicalAddress[`PA_BITS-1:12]);
+  assign PhysicalAddress[11:0] = VAdr[11:0];
   
   
   ///////////////////////////////////////////
