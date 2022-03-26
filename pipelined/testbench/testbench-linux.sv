@@ -176,6 +176,7 @@ module testbench;
   integer           CheckMIPFutureM;
   integer           CheckSIPFutureE;
   integer           CheckSIPFutureM;
+  logic [`XLEN-1:0] AttemptedInstructionCount;
   // Useful Aliases
   `define RF          dut.core.ieu.dp.regf.rf
   `define PC          dut.core.ifu.pcreg.q
@@ -380,11 +381,13 @@ module testbench;
       traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
       traceFileE = $fopen({testvectorDir,"all.txt"}, "r");
       InstrCountW = '0;
+      AttemptedInstructionCount = '0;
     end else begin // checkpoint
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
+      AttemptedInstructionCount = CHECKPOINT;
       // manual checkpoint initializations that don't neatly fit into MACRO
       force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
       force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
@@ -440,6 +443,9 @@ module testbench;
       for(index``STAGE = 0; index``STAGE < line``STAGE.len(); index``STAGE++) begin \
         //$display("char = %s", line``STAGE[index]); \
         if (line``STAGE[index``STAGE] == " " | line``STAGE[index``STAGE] == "\n") begin \
+          if (line``STAGE[index``STAGE] == "\n" & `"STAGE`"=="M") begin \
+            AttemptedInstructionCount += 1; \
+          end \
           EndIndex``STAGE = index``STAGE; \
           ExpectedTokens``STAGE[TokenIndex``STAGE] = line``STAGE.substr(StartIndex``STAGE, EndIndex``STAGE-1); \
           //$display("In Tokenizer %s", line``STAGE.substr(StartIndex, EndIndex-1)); \
