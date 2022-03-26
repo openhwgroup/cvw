@@ -4,6 +4,7 @@ add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
 add wave -noupdate -radix unsigned /testbench/InstrCountW
+add wave -noupdate -radix unsigned /testbench/AttemptedInstructionCount
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate /testbench/dut/core/IllegalFPUInstrD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPPredWrongE
@@ -388,7 +389,6 @@ add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/cor
 add wave -noupdate -expand -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/PTE
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/ITLBMissF
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/ITLBMissOrDAFaultF
-add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DTLBMissM
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/ITLBWriteF
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DTLBWriteM
 add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/BusState
@@ -526,9 +526,7 @@ add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/TakeSpillF
 add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillF
 add wave -noupdate /testbench/dut/core/ifu/SpillSupport/spillsupport/IFUCacheBusStallF
 add wave -noupdate -color Yellow /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DAPageFault
-add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/OtherPageFault
 add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/ITLBMissF
-add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/Accessed
 add wave -noupdate /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/WriteAccess
 add wave -noupdate /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/TLBPageFault
 TreeUpdate [SetDefaultTree]
