@@ -176,6 +176,7 @@ module testbench;
   integer           CheckMIPFutureM;
   integer           CheckSIPFutureE;
   integer           CheckSIPFutureM;
+  logic [`XLEN-1:0] AttemptedInstructionCount;
   // Useful Aliases
   `define RF          dut.core.ieu.dp.regf.rf
   `define PC          dut.core.ifu.pcreg.q
@@ -266,6 +267,19 @@ module testbench;
       end \
     end
 
+  `define INIT_CHECKPOINT_PACKED_ARRAY(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    for (i=ARRAY_MIN; i<ARRAY_MAX+1; i=i+1) begin \
+      initial begin \
+        if (CHECKPOINT!=0) begin \
+          force `SIGNAL[i] = init``SIGNAL[i]; \
+          while (reset!==1) #1; \
+          while (reset!==0) #1; \
+          #1; \
+          release `SIGNAL[i]; \
+        end \
+      end \
+    end
   // For the annoying case where the pathname to the array elements includes
   // a "genblk<i>" in the signal name
   `define INIT_CHECKPOINT_GENBLK_ARRAY(SIGNAL_BASE,SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
@@ -296,6 +310,7 @@ module testbench;
       end \
     end
 
+  genvar i;
   `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,0);
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
@@ -333,9 +348,9 @@ module testbench;
   //`INIT_CHECKPOINT_VAL(UART_LSR,   [7:0]);
   //`INIT_CHECKPOINT_VAL(UART_MSR,   [7:0]);
   `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
-  `INIT_CHECKPOINT_SIMPLE_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
-  `INIT_CHECKPOINT_SIMPLE_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
-  `INIT_CHECKPOINT_SIMPLE_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
 
   integer memFile;
   integer readResult;
@@ -366,11 +381,13 @@ module testbench;
       traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
       traceFileE = $fopen({testvectorDir,"all.txt"}, "r");
       InstrCountW = '0;
+      AttemptedInstructionCount = '0;
     end else begin // checkpoint
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
+      AttemptedInstructionCount = CHECKPOINT;
       // manual checkpoint initializations that don't neatly fit into MACRO
       force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
       force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
@@ -426,6 +443,9 @@ module testbench;
       for(index``STAGE = 0; index``STAGE < line``STAGE.len(); index``STAGE++) begin \
         //$display("char = %s", line``STAGE[index]); \
         if (line``STAGE[index``STAGE] == " " | line``STAGE[index``STAGE] == "\n") begin \
+          if (line``STAGE[index``STAGE] == "\n" & `"STAGE`"=="M") begin \
+            AttemptedInstructionCount += 1; \
+          end \
           EndIndex``STAGE = index``STAGE; \
           ExpectedTokens``STAGE[TokenIndex``STAGE] = line``STAGE.substr(StartIndex``STAGE, EndIndex``STAGE-1); \
           //$display("In Tokenizer %s", line``STAGE.substr(StartIndex, EndIndex-1)); \

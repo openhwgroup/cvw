@@ -58,7 +58,7 @@ module csri #(parameter
   always_comb begin
     IntInM     = 0; 
     IntInM[11] = ExtIntM;                               // MEIP
-    IntInM[9]  = ExtIntS | (ExtIntM & MIDELEG_REGW[9]); // SEIP
+    IntInM[9]  = (ExtIntM & MIDELEG_REGW[9]);           // SEIP
     IntInM[7]  = TimerIntM;                             // MTIP
     IntInM[5]  = TimerIntM &  MIDELEG_REGW[5];          // STIP
     IntInM[3]  = SwIntM;                                // MSIP
