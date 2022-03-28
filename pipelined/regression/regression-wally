@@ -70,12 +70,31 @@ for test in tests64gc:
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64gc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
-tests32gc = ["arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32f", "imperas32m", "wally32a",  "imperas32c", "wally32priv"]  #, "imperas32mmu""wally32i", 
+tests32gc = ["arch32i", "arch32priv", "arch32c",  "arch32m", "arch32f", "imperas32i", "imperas32f", "imperas32m", "wally32a",  "imperas32c"]  #, "imperas32mmu""wally32i", 
 for test in tests32gc:
   tc = TestCase(
         name=test,
         variant="rv32gc",
         cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32gc "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
+tests64ia = ["wally64priv"]
+for test in tests64ia:
+  tc = TestCase(
+        name=test,
+        variant="rv64ia",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64ia "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+tests32ia = ["wally32priv"]
+for test in tests32ia:
+  tc = TestCase(
+        name=test,
+        variant="rv32ia",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ia "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
