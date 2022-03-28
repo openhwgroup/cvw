@@ -182,7 +182,7 @@ module wallypipelinedcore (
   
     // Mem
     .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
-    .InstrD, .InstrM, . PCM, .InstrClassM, .BPPredDirWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
     // Writeback
