@@ -33,8 +33,6 @@
 `include "tests.vh"
 
 module testbench;
-  parameter TESTSPERIPH = 0; // set to 0 for regression
-  parameter TESTSPRIV = 0; // set to 0 for regression
   parameter DEBUG=0;
   parameter TEST="none";
  
@@ -89,18 +87,17 @@ logic [3:0] dummy;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
-        "imperas64p":                     tests = imperas64p;
 //        "imperas64mmu": if (`VIRTMEM_SUPPORTED) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
-        "imperas64a":   if (`A_SUPPORTED) tests = imperas64a;
+        "wally64a":     if (`A_SUPPORTED) tests = wally64a;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
         "testsBP64":                      tests = testsBP64;
         "wally64i":                       tests = wally64i; // *** redo
         "wally64priv":                    tests = wally64priv;// *** redo
-        "imperas64periph":                tests = imperas64periph;
+        "wally64periph":                  tests = wally64periph;
         "coremark":                       tests = coremark;
       endcase 
     end else begin // RV32
@@ -113,17 +110,15 @@ logic [3:0] dummy;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
-        "imperas32p":                     tests = imperas32p;
 //        "imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
-        "imperas32a":   if (`A_SUPPORTED) tests = imperas32a;
+        "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
         "wally32i":                       tests = wally32i; // *** redo
         "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv; // *** redo
-        "imperas32periph":                  tests = imperas32periph;
       endcase
     end
     if (tests.size() == 0) begin
@@ -364,6 +359,8 @@ module riscvassertions;
 //    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
     assert (`DMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`IMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
+    assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
+    assert (`IMEM == `MEM_CACHE | `IBUS ==0) else $error("Icache rquires IBUS.");    
   end
 endmodule
 

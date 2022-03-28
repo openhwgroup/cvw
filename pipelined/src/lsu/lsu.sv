@@ -50,7 +50,7 @@ module lsu (
    // address and write data
    input logic [`XLEN-1:0]  IEUAdrE,
    (* mark_debug = "true" *)output logic [`XLEN-1:0] IEUAdrM,
-   input logic [`XLEN-1:0]  WriteDataM, 
+   input logic [`XLEN-1:0]  WriteDataE, 
    output logic [`XLEN-1:0] ReadDataM,
    // cpu privilege
    input logic [1:0]        PrivilegeModeW,
@@ -103,8 +103,14 @@ module lsu (
   logic                     BusCommittedM, DCacheCommittedM;
   logic                     LSUBusWriteCrit;
   logic                     DataDAPageFaultM;
+  logic [`XLEN-1:0]         LSUWriteDataM;
+  logic [(`XLEN-1)/8:0]     ByteMaskM;
+  logic [`XLEN-1:0]         WriteDataM;
   
+  // *** TO DO: Burst mode
+
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
 
@@ -115,20 +121,20 @@ module lsu (
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
-                          .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
-                          .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
-                          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-                          .ReadDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M, .IEUAdrM,
-                          .IEUAdrExtM, .PTE, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
-                          .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
-                          .IgnoreRequestTLB, .IgnoreRequestTrapM);
-
+      .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
+      .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
+      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
+      .ReadDataM, .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
+      .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
+      .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
+      .IgnoreRequestTLB, .IgnoreRequestTrapM);
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign IgnoreRequestTrapM = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign LSUAdrE = PreLSUAdrE; assign PreLSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM[`PA_BITS-1:0];
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
+    assign LSUWriteDataM = WriteDataM;
    end
 
   // CommittedM tells the CPU's privilege unit the current instruction
@@ -140,10 +146,11 @@ module lsu (
 
   // MMU and Misalignment fault logic required if privileged unit exists
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
-
+    logic DisableTranslation;
+    assign DisableTranslation = SelHPTW | FlushDCacheM;
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-      .PrivilegeModeW, .DisableTranslation(SelHPTW | FlushDCacheM),
+      .PrivilegeModeW, .DisableTranslation,
       .PAdr(PreLSUPAdrM),
       .VAdr(IEUAdrM),
       .Size(LSUFunct3M[1:0]),
@@ -156,9 +163,11 @@ module lsu (
       .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
-      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,  
+      .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .DAPageFault(DataDAPageFaultM),
-      .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), // **** change this to just use PreLSURWM
+         // *** should use LSURWM as this is includes the lr/sc squash. However this introduces a combo loop
+         // from squash, depends on LSUPAdrM, depends on TLBHit, depends on these *AccessM inputs.
+      .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
@@ -173,97 +182,87 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM, PostSWWWriteDataM;
+  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
+  logic                SelUncachedAdr;
   assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
   
   if (`DMEM == `MEM_TIM) begin : dtim
+    // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
+    // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
               .ReadDataWordM, .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .ReadDataWordMuxM, .DCacheStallM, .DCacheCommittedM,
+              .DCacheStallM, .DCacheCommittedM, .ByteMaskM, .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
-
-  end else begin : bus  
-    localparam integer   WORDSPERLINE = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = (`DMEM == `MEM_CACHE) ? `DCACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+  end 
+  if (`DBUS) begin : bus  
+    localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
+    localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheBusWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic                save, restore;
-    logic [`PA_BITS-1:0] WordOffsetAddr;
     logic                SelBus;
     logic [LOGWPL-1:0]   WordCount;
-    logic                SelUncachedAdr;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, 1) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize,
       .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM, .FinalWriteDataM,
+      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM,
       .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
     mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheBusWriteData[`XLEN-1:0]),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) lsubushwdatamux( .d0(ReadDataWordM), .d1(FinalWriteDataM),
+    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM), .d1(FinalWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
-    assign WordOffsetAddr = LSUBusWriteCrit ? ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) : LSUPAdrM;
     
-    if(`DMEM == `MEM_CACHE) begin : dcache
-      logic [1:0] RW, Atomic;
-      assign RW = CacheableM ? LSURWM : 2'b00;        // AND gate
-      assign Atomic = CacheableM ? LSUAtomicM : 2'b00; // AND gate
+    if(CACHE_ENABLED) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .save, .restore, .RW, .Atomic,
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`XLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
+        .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .FinalWriteData(FinalWriteDataM),
+        .ByteMask(ByteMaskM), .WordCount,
+        .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .CacheCommitted(DCacheCommittedM), 
-        .CacheBusAdr(DCacheBusAdr), .ReadDataLine(ReadDataLineM), 
+        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
-
-      subcachelineread #(LINELEN, `XLEN, `XLEN) subcachelineread(
-        .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
-        .ReadDataLine(ReadDataLineM), .ReadDataWord(ReadDataWordM));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
+  end else begin: nobus // block: bus
+    assign {LSUBusHWDATA, SelUncachedAdr} = '0; 
+    assign ReadDataWordMuxM = ReadDataWordM;
   end
 
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.Funct3M(LSUFunct3M), .ReadDataM);
 
-  if(`DMEM != `MEM_BUS) begin
-    logic [`XLEN-1:0] ReadDataWordMaskedM;
-    assign ReadDataWordMaskedM = CacheableM ? ReadDataWordM : '0; // AND-gate
-    subwordwrite subwordwrite(.HRDATA(ReadDataWordMaskedM), .HADDRD(LSUPAdrM[2:0]),
-      .HSIZED({LSUFunct3M[2], 1'b0, LSUFunct3M[1:0]}),
-	  .HWDATAIN(FinalAMOWriteDataM), .HWDATA(PostSWWWriteDataM));
-  end else 
-    assign PostSWWWriteDataM = FinalAMOWriteDataM;
-
-  assign FinalWriteDataM = SelHPTW ? PTE : PostSWWWriteDataM;
-
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
-
   if (`A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .WriteDataM, .LSUPAdrM, 
+    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
-      .DTLBMissM, .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+      .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
-    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = WriteDataM;
+    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = LSUWriteDataM;
   end
+
+  subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
+    .LSUFunct3M, .FinalAMOWriteDataM, .FinalWriteDataM, .ByteMaskM);
+
+  
 endmodule

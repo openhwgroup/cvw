@@ -34,6 +34,7 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   input  logic             clk, 
   input  logic [31:0]      a,
   input  logic             we,
+  input  logic [`XLEN/8-1:0] ByteMask,
   input  logic [`XLEN-1:0] wd,
   output logic [`XLEN-1:0] rd
 );
@@ -45,9 +46,14 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   logic [31:adrlsb] adrmsbs;
   assign adrmsbs = a[31:adrlsb];
 
-  always_ff @(posedge clk) begin
+  always_ff @(posedge clk)
     rd <= RAM[adrmsbs];
-    if (we) RAM[adrmsbs] <= #1 wd;
+
+  genvar            index;
+  for(index = 0; index < `XLEN/8; index++) begin
+    always_ff @(posedge clk) begin
+      if (we & ByteMask[index]) RAM[adrmsbs][8*(index+1)-1:8*index] <= #1 wd[8*(index+1)-1:8*index];
+    end
   end
 endmodule
 

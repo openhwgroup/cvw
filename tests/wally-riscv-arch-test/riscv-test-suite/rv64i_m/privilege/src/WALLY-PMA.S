@@ -38,7 +38,8 @@
 
 INIT_TESTS
 
-s_file_begin:
+TRAP_HANDLER m
+
 j test_loop_setup // begin test loop/table tests instead of executing inline code.
 
 INIT_TEST_TABLE
@@ -68,7 +69,7 @@ test_cases:
 
 # | Region | Base Address | Read widths | R   | W   | X   | Cacheable | Idempotent | Atomic |
 # | ROM    | 0x1000       | Any         | YES | NO  | YES | YES       | NO         | NO     |
-# | CLINT  | 0x2000000    | Any         | YES | YES | NO  | NO        | NO         | NO     |
+# | CLINT  | 0x2000000    | 64-bit      | YES | YES | NO  | NO        | NO         | NO     |
 # | PLIC   | 0xC000000    | 32-bit      | YES | YES | NO  | NO        | NO         | NO     |
 # | UART0  | 0x10000000   | 8-bit       | YES | YES | NO  | NO        | NO         | NO     |
 # | GPIO   | 0x1012000    | 32-bit      | YES | YES | NO  | NO        | NO         | NO     |
@@ -84,12 +85,12 @@ test_cases:
 # Use timecmp register as readable and writable section of the CLINT
 .8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B4, write64_test  # 64-bit write:  success
 .8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B4, read64_test # 64-bit read:   success
-.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B5, write32_test # 32-bit write:  success
-.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B5, read32_test # 32-bit read:   success
-.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B6, write16_test # 16-bit write:  success
-.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B6, read16_test # 16-bit read:   success
-.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B7, write08_test # 08-bit write:  success
-.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B7, read08_test # 08-bit read:   success
+.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B5, write32_test # 32-bit write:  failure *** due to non-native length access
+.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B5, read32_test # 32-bit read:   failure
+.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B6, write16_test # 16-bit write:  failure
+.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B6, read16_test # 16-bit read:   failure
+.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B7, write08_test # 08-bit write:  failure
+.8byte CLINT_BASE + 0x4000, 0x0000DEADBEEF00B7, read08_test # 08-bit read:   failure
 
 .8byte CLINT_BASE, 0xbad, executable_test# execute: instruction access fault
 

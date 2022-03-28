@@ -30,7 +30,6 @@
 `define FPGA 1
 `define QEMU 1
 `define LINUX_FIX_READ {'h10000005}
-`define LINUX_TEST_VECTORS "../../tests/linux-testgen/linux-testvectors/"
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -50,6 +49,8 @@
 `define UARCH_SINGLECYCLE 0
 `define DMEM `MEM_CACHE
 `define IMEM `MEM_CACHE
+`define DBUS 1
+`define IBUS 1
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
@@ -117,7 +118,7 @@
 
 // Interrupt configuration
 `define PLIC_NUM_SRC 53
-`define PLIC_UART_ID 4
+`define PLIC_UART_ID 10
 
 `define TWO_BIT_PRELOAD "../config/buildroot/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/buildroot/BTBPredictor.txt"

@@ -64,8 +64,8 @@ module fpudivsqrtrecur (
 
   always_comb begin 
       if (FSqrtE & XSgnE | FDivE & XZeroE & YZeroE | XNaNE | FDivE & YNaNE) FDivSqrtResM = 0; // ***replace with NAN; // *** which one
-      else if (FDivE & YZeroE | XInfE) FDivSqrtResM = {FDivSqrtResSgn, `NE'b1, `NF'b0}; // infinity
-      else if (FDivE & YInfE) FDivSqrtResM = {FDivSqrtResSgn, `NE'b0, `NF'b0}; // zero
+      else if (FDivE & YZeroE | XInfE) FDivSqrtResM = {FDivSqrtResSgn, (`NE)'(1), (`NF)'(0)}; // infinity
+      else if (FDivE & YInfE) FDivSqrtResM = {FDivSqrtResSgn, (`NE)'(0), (`NF)'(0)}; // zero
       else FDivSqrtResM = FDivSqrtRecurRes;
   end
 

@@ -44,6 +44,7 @@ module testbench;
   parameter INSTR_LIMIT  = 0; // # of instructions at which to stop
   parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
   parameter CHECKPOINT   = 0;
+  parameter RISCV_DIR = "/opt/riscv";
 
   ///////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// HARDWARE ///////////////////////////////////
@@ -100,7 +101,7 @@ module testbench;
   flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
   flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
   flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
-  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.WriteDataM, WriteDataW);  
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
   flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.core.hzu.TrapM, TrapW);
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -111,6 +112,8 @@ module testbench;
   integer errorCount = 0;
   integer fault;
   string  ProgramAddrMapFile, ProgramLabelMapFile;
+  string  testvectorDir;
+  string  linuxImageDir;
   // Checkpointing
   string checkpointDir;
   logic [1:0] initPriv;
@@ -138,11 +141,11 @@ module testbench;
       logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0];
   `DECLARE_TRACE_SCANNER_SIGNALS(E)
   `DECLARE_TRACE_SCANNER_SIGNALS(M)
-  integer           NextMIPexpected;
+  integer           NextMIPexpected, NextSIPexpected;
   integer           NextMepcExpected;
   // Memory stage expected values from trace
   logic             checkInstrM;
-  integer           MIPexpected;
+  integer           MIPexpected, SIPexpected;
   string            name;
   logic [`AHBW-1:0] readDataExpected;
   // Write back stage expected values from trace
@@ -165,11 +168,15 @@ module testbench;
   integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
   integer           RequestDelayedMIP;
+  integer           RequestDelayedSIP;  
   integer           ForceMIPFuture;
   integer           CSRIndex;
   longint           MepcExpected;
   integer           CheckMIPFutureE;
   integer           CheckMIPFutureM;
+  integer           CheckSIPFutureE;
+  integer           CheckSIPFutureM;
+  logic [`XLEN-1:0] AttemptedInstructionCount;
   // Useful Aliases
   `define RF          dut.core.ieu.dp.regf.rf
   `define PC          dut.core.ifu.pcreg.q
@@ -182,6 +189,8 @@ module testbench;
   `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q
   `define MIE         `CSR_BASE.csri.MIE_REGW
   `define MIP         `CSR_BASE.csri.MIP_REGW
+  `define SIE         `CSR_BASE.csri.SIE_REGW
+  `define SIP         `CSR_BASE.csri.SIP_REGW
   `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
   `define SCAUSE      `CSR_BASE.csrs.csrs.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
@@ -194,6 +203,7 @@ module testbench;
   `define STVEC       `CSR_BASE.csrs.csrs.STVECreg.q
   `define SATP        `CSR_BASE.csrs.csrs.genblk1.SATPreg.q
   `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
+  `define SSTATUS     `CSR_BASE.csrsr.SSTATUS_REGW  
   `define STATUS_TSR  `CSR_BASE.csrsr.STATUS_TSR_INT
   `define STATUS_TW   `CSR_BASE.csrsr.STATUS_TW_INT
   `define STATUS_TVM  `CSR_BASE.csrsr.STATUS_TVM_INT
@@ -211,6 +221,15 @@ module testbench;
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
   `define PRIV        dut.core.priv.priv.privmodereg.q
   `define INSTRET     dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]
+  `define UART        dut.uncore.uart.uart.u
+  `define UART_IER    `UART.IER
+  `define UART_LCR    `UART.LCR
+  `define UART_MCR    `UART.MCR
+  `define UART_SCR    `UART.SCR
+  `define PLIC        dut.uncore.plic.plic
+  `define PLIC_INT_PRIORITY `PLIC.intPriority
+  `define PLIC_INT_ENABLE   `PLIC.intEn
+  `define PLIC_THRESHOLD    `PLIC.intThreshold
   // Common Macros
   `define checkCSR(CSR) \
     begin \
@@ -248,6 +267,19 @@ module testbench;
       end \
     end
 
+  `define INIT_CHECKPOINT_PACKED_ARRAY(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
+    for (i=ARRAY_MIN; i<ARRAY_MAX+1; i=i+1) begin \
+      initial begin \
+        if (CHECKPOINT!=0) begin \
+          force `SIGNAL[i] = init``SIGNAL[i]; \
+          while (reset!==1) #1; \
+          while (reset!==0) #1; \
+          #1; \
+          release `SIGNAL[i]; \
+        end \
+      end \
+    end
   // For the annoying case where the pathname to the array elements includes
   // a "genblk<i>" in the signal name
   `define INIT_CHECKPOINT_GENBLK_ARRAY(SIGNAL_BASE,SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
@@ -278,6 +310,7 @@ module testbench;
       end \
     end
 
+  genvar i;
   `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,0);
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
@@ -285,6 +318,8 @@ module testbench;
   `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
   `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
+  `INIT_CHECKPOINT_VAL(SIE,        [11:0]);
+  `INIT_CHECKPOINT_VAL(SIP,        [11:0]);
   `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(SCAUSE,     [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEPC,       [`XLEN-1:0]);
@@ -298,33 +333,61 @@ module testbench;
   `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
   `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(SSTATUS, [`XLEN-1:0],0,0);  
+  // Many UART registers are difficult to initialize because under the hood
+  // they are not simple registers. Instead some are generated by interesting
+  // combinational blocks such that they depend upon a variety of different
+  // underlying flops. See for example how RBR might be the actual RXBR
+  // register, but it could also just as well be 0 or the tail of the fifo
+  // array.
+  //`INIT_CHECKPOINT_VAL(UART_RBR,   [7:0]);
+  `INIT_CHECKPOINT_VAL(UART_IER,   [7:0]);
+  //`INIT_CHECKPOINT_VAL(UART_IIR,   [7:0]);
+  `INIT_CHECKPOINT_VAL(UART_LCR,   [7:0]);
+  `INIT_CHECKPOINT_VAL(UART_MCR,   [4:0]);
+  //`INIT_CHECKPOINT_VAL(UART_LSR,   [7:0]);
+  //`INIT_CHECKPOINT_VAL(UART_MSR,   [7:0]);
+  `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
 
-  integer ramFile;
+  integer memFile;
   integer readResult;
   initial begin
     force dut.core.priv.priv.SwIntM = 0;
     force dut.core.priv.priv.TimerIntM = 0;
     force dut.core.priv.priv.ExtIntM = 0;    
-    $readmemh({`LINUX_TEST_VECTORS,"bootmem.txt"}, dut.uncore.bootrom.bootrom.RAM, 'h1000 >> 3);
+    $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
+    $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
+    if (CHECKPOINT!=0)
+      $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
     $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
     $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
-    ProgramAddrMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.addr"};
-    ProgramLabelMapFile = {`LINUX_TEST_VECTORS,"vmlinux.objdump.lab"};
+    ProgramAddrMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.addr"};
+    ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
+    // initialize bootrom
+    memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
+    readResult = $fread(dut.uncore.bootrom.bootrom.RAM,memFile);
+    $fclose(memFile);
+    // initialize RAM
+    if (CHECKPOINT==0) 
+      memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
+    else
+      memFile = $fopen({checkpointDir,"ram.bin"}, "rb");
+    readResult = $fread(dut.uncore.ram.ram.RAM,memFile);
+    $fclose(memFile);
     if (CHECKPOINT==0) begin // normal
-      $readmemh({`LINUX_TEST_VECTORS,"ram.txt"}, dut.uncore.ram.ram.RAM);
-      traceFileM = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
-      traceFileE = $fopen({`LINUX_TEST_VECTORS,"all.txt"}, "r");
+      traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
+      traceFileE = $fopen({testvectorDir,"all.txt"}, "r");
       InstrCountW = '0;
+      AttemptedInstructionCount = '0;
     end else begin // checkpoint
-      $sformat(checkpointDir,"checkpoint%0d/",CHECKPOINT);
-      checkpointDir = {`LINUX_TEST_VECTORS,checkpointDir};
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
-      ramFile = $fopen({checkpointDir,"ram.bin"}, "rb");
-      readResult = $fread(dut.uncore.ram.ram.RAM,ramFile);
-      $fclose(ramFile);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
+      AttemptedInstructionCount = CHECKPOINT;
       // manual checkpoint initializations that don't neatly fit into MACRO
       force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
       force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
@@ -380,6 +443,9 @@ module testbench;
       for(index``STAGE = 0; index``STAGE < line``STAGE.len(); index``STAGE++) begin \
         //$display("char = %s", line``STAGE[index]); \
         if (line``STAGE[index``STAGE] == " " | line``STAGE[index``STAGE] == "\n") begin \
+          if (line``STAGE[index``STAGE] == "\n" & `"STAGE`"=="M") begin \
+            AttemptedInstructionCount += 1; \
+          end \
           EndIndex``STAGE = index``STAGE; \
           ExpectedTokens``STAGE[TokenIndex``STAGE] = line``STAGE.substr(StartIndex``STAGE, EndIndex``STAGE-1); \
           //$display("In Tokenizer %s", line``STAGE.substr(StartIndex, EndIndex-1)); \
@@ -426,6 +492,10 @@ module testbench;
               CheckMIPFutureE = 1; \
               NextMIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
             end \
+            if(ExpectedCSRArrayE[NumCSRE].substr(0, 2) == "sip") begin \
+              CheckSIPFutureE = 1; \
+              NextSIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
+            end \
             if(ExpectedCSRArrayE[NumCSRE].substr(0,3) == "mepc") begin \
               // $display("hello! we are here."); \
               MepcExpected = ExpectedCSRArrayValueE[NumCSRE]; \
@@ -438,7 +508,7 @@ module testbench;
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if (dut.core.lsu.LSUPAdrM == 'h10000005) \
+        if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) \
           //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
           force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
         else \
@@ -467,13 +537,16 @@ module testbench;
       // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
       // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
       // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
+      // *** this is probably not right anymore since either MIP or SIP can be forced.
       if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) | ~dut.core.ieu.c.InstrValidM) begin
         RequestDelayedMIP <= 1;
         $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
       end else begin // update MIP immediately
         $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
         MIPexpected = NextMIPexpected;
-        force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+        //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+        //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
+        force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
       end
       // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
       // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
@@ -488,12 +561,52 @@ module testbench;
       $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
       $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
       MIPexpected = NextMIPexpected;
-      force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+      //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
+      //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
+      force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
       $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
       RequestDelayedMIP = 0;
     end
   end
 
+  // SIP spoofing
+/* -----\/----- EXCLUDED -----\/-----
+  always @(posedge clk) begin
+    #1;
+    if(CheckSIPFutureE) CheckSIPFutureE <= 0;
+    CheckSIPFutureM <= CheckSIPFutureE;
+    if(CheckSIPFutureM) begin
+      // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
+      // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
+      // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
+      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) | ~dut.core.ieu.c.InstrValidM) begin
+        RequestDelayedSIP <= 1;
+        $display("%tns: Requesting Delayed SIP. Current MEPC value is %x",$time,MepcExpected);
+      end else begin // update SIP immediately
+        $display("%tns: Updating SIP to %x",$time,NextSIPexpected);
+        SIPexpected = NextSIPexpected;
+        force dut.core.priv.priv.csr.csri.SIP_REGW = SIPexpected;
+      end
+      // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
+      // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
+      // $display("%tn: ExpectedTokens = %p",$time,ExpectedTokensM);
+      // $display("%tn: MepcExpected = %x",$time,MepcExpected);
+      // $display("%tn: ExpectedPCE = %x",$time,ExpectedPCE);
+      // $display("%tns: Difference/multiplication thing: %x",$time,(MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE));
+      // $display("%tn: ExpectedCSRArrayM[NumCSRM] %x",$time,ExpectedCSRArrayM[NumCSRM]);
+      // $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
+    end
+    if(RequestDelayedSIP & checkInstrM) begin
+      $display("%tns: Executing Delayed SIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
+      $display("%tns: Updating SIP to %x",$time,NextSIPexpected);
+      SIPexpected = NextSIPexpected;
+      force dut.core.priv.priv.csr.csri.SIP_REGW = SIPexpected;
+      $display("%tns: Finished Executing Delayed SIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
+      RequestDelayedSIP = 0;
+    end
+  end
+ -----/\----- EXCLUDED -----/\----- */
+  
   // step 1: register expected state into the write back stage.
   always @(posedge clk) begin
     if (reset) begin
@@ -597,9 +710,12 @@ module testbench;
           case(ExpectedCSRArrayW[NumCSRPostWIndex])
             "mhartid": `checkCSR(dut.core.priv.priv.csr.csrm.MHARTID_REGW)
             "mstatus": `checkCSR(dut.core.priv.priv.csr.csrm.MSTATUS_REGW)
+            "sstatus": `checkCSR(dut.core.priv.priv.csr.csrs.SSTATUS_REGW)
             "mtvec":   `checkCSR(dut.core.priv.priv.csr.csrm.MTVEC_REGW)
             "mip":     `checkCSR(dut.core.priv.priv.csr.csrm.MIP_REGW)
             "mie":     `checkCSR(dut.core.priv.priv.csr.csrm.MIE_REGW)
+            "sip":     `checkCSR(dut.core.priv.priv.csr.csrs.SIP_REGW)
+            "sie":     `checkCSR(dut.core.priv.priv.csr.csrs.SIE_REGW)
             "mideleg": `checkCSR(dut.core.priv.priv.csr.csrm.MIDELEG_REGW)
             "medeleg": `checkCSR(dut.core.priv.priv.csr.csrm.MEDELEG_REGW)
             "mepc":    `checkCSR(dut.core.priv.priv.csr.csrm.MEPC_REGW)

@@ -74,7 +74,7 @@ module wallypipelinedsoc (
   logic             HRESP;
   logic             TimerIntM, SwIntM; // from CLINT
   logic [63:0]      MTIME_CLINT; // from CLINT to CSRs
-  logic             ExtIntM; // from PLIC
+  logic             ExtIntM,ExtIntS; // from PLIC
   logic [2:0]       HADDRD;
   logic [3:0]       HSIZED;
   logic             HWRITED;
@@ -84,7 +84,7 @@ module wallypipelinedsoc (
    
   // instantiate processor and memories
   wallypipelinedcore core(.clk, .reset,
-    .TimerIntM, .ExtIntM, .SwIntM, 
+    .TimerIntM, .ExtIntM, .ExtIntS, .SwIntM, 
     .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
@@ -92,9 +92,9 @@ module wallypipelinedsoc (
    );
 
   uncore uncore(.HCLK, .HRESETn, .TIMECLK,
-    .HADDR, .HWDATAIN(HWDATA), .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
+    .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
     .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,
-    .TimerIntM, .SwIntM, .ExtIntM, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 
+    .TimerIntM, .SwIntM, .ExtIntM, .ExtIntS, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 
 		.HSELEXT,
 		.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK
 		

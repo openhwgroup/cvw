@@ -38,6 +38,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
+  input  logic [3:0]       HSIZED,
   output logic [`XLEN-1:0] HREADRam,
   output logic             HRESPRam, HREADYRam
 );
@@ -47,12 +48,12 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   logic [31:0] HWADDR, A;
-  logic [`XLEN-1:0] HREADRam0;
 
   logic        prevHREADYRam, risingHREADYRam;
   logic        initTrans;
   logic        memwrite;
   logic [3:0]  busycount;
+  logic [`XLEN/8-1:0] ByteMaskM;
 
   if(`FPGA) begin:ram
     initial begin
@@ -104,6 +105,8 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end // initial begin
   end // if (FPGA)
 
+  swbytemask swbytemask(.HSIZED, .HADDRD(A[2:0]), .ByteMask(ByteMaskM));
+  
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
   // *** this seems like a weird way to use reset
@@ -148,23 +151,27 @@ module ram #(parameter BASE=0, RANGE = 65535) (
  -----/\----- EXCLUDED -----/\----- */
   
   /* verilator lint_off WIDTH */
+  genvar index;
+  always_ff @(posedge HCLK)
+    HWADDR <= #1 A;
   if (`XLEN == 64)  begin:ramrw
-    always_ff @(posedge HCLK) begin
-      HWADDR <= #1 A;
-      HREADRam0 <= #1 RAM[A[31:3]];
-      if (memwrite & risingHREADYRam) RAM[HWADDR[31:3]] <= #1 HWDATA;
+    always_ff @(posedge HCLK) 
+      HREADRam <= #1 RAM[A[31:3]];
+    for(index = 0; index < `XLEN/8; index++) begin
+      always_ff @(posedge HCLK) begin
+        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:3]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
+      end
     end
   end else begin 
-    always_ff @(posedge HCLK) begin:ramrw
-      HWADDR <= #1 A;  
-      HREADRam0 <= #1 RAM[A[31:2]];
-      if (memwrite & risingHREADYRam) RAM[HWADDR[31:2]] <= #1 HWDATA;
+    always_ff @(posedge HCLK) 
+      HREADRam <= #1 RAM[A[31:2]];
+    for(index = 0; index < `XLEN/8; index++) begin
+      always_ff @(posedge HCLK) begin:ramrw
+        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:2]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
+      end
     end
   end
   /* verilator lint_on WIDTH */
 
-  //assign HREADRam = HREADYRam ? HREADRam0 : `XLEN'bz;
-  // *** Ross Thompson: removed tristate as fpga synthesis removes.
-  assign HREADRam = HREADRam0;
 endmodule
 

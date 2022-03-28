@@ -4,7 +4,7 @@ import sys, os, subprocess
 def main():
     maxGoodCount = 400e6 # num instrs that execute sucessfully starting from 0
     currInstrCount = maxGoodCount
-    linuxTestvectors = "../../tests/linux-testgen/linux-testvectors"
+    linuxTestvectors = "/opt/riscv/linux-testvectors"
     if not os.path.exists(linuxTestvectors):
         sys.stderr.write("Error: Linux testvectors not found at "+linuxTestvectors+"\n")
         exit(1)
@@ -22,7 +22,7 @@ def main():
             break
         checkpoint = checkpointList[0]
         logFile = logDir+"checkpoint"+str(checkpoint)+".log"
-        runCommand="{\nvsim -c <<!\ndo wally-pipelined-batch.do buildroot buildroot 0 "+str(checkpoint+1)+" "+str(checkpoint)+"\n!\n} | tee "+logFile 
+        runCommand="{\nvsim -c <<!\ndo wally-pipelined-batch.do buildroot buildroot /opt/riscv 0 "+str(checkpoint+1)+" "+str(checkpoint)+"\n!\n} | tee "+logFile 
         print(runCommand)
         os.system(runCommand)
         try:

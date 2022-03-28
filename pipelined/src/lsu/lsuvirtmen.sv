@@ -47,19 +47,20 @@ module lsuvirtmem(
   input logic [1:0]           PrivilegeModeW,
   input logic [`XLEN-1:0]     PCF,
   input logic [`XLEN-1:0]     ReadDataM,
+  input logic [`XLEN-1:0]     WriteDataM,
   input logic [2:0]           Funct3M,
   output logic [2:0]          LSUFunct3M,
   input logic [6:0]           Funct7M,
   output logic [6:0]          LSUFunct7M,
   input logic [`XLEN-1:0]     IEUAdrE,
-  input logic [`XLEN-1:0]     IEUAdrM,
   output logic [`XLEN-1:0]    PTE,
+  output logic [`XLEN-1:0]    LSUWriteDataM,
   output logic [1:0]          PageType,
   output logic [1:0]          PreLSURWM,
   output logic [1:0]          LSUAtomicM,
   output logic [11:0]         LSUAdrE,
   output logic [`PA_BITS-1:0] PreLSUPAdrM,
-  input logic [`XLEN+1:0]     IEUAdrExtM,
+  input logic [`XLEN+1:0]     IEUAdrExtM, // *** can move internally.
                   
   output logic                InterlockStall,
   output logic                CPUBusy,
@@ -70,36 +71,40 @@ module lsuvirtmem(
 
   logic                       AnyCPUReqM;
   logic [`PA_BITS-1:0]        HPTWAdr;
-  logic                       HPTWRead;
+  logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize;
-  logic                       SelReplayCPURequest;
+  logic                       SelReplayMemE;
   logic [11:0]                PreLSUAdrE;  
-  logic                       ITLBMissOrDAFaultF;
-  logic                       DTLBMissOrDAFaultM;  
-  logic                       HPTWWrite;
+  logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
+  logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;  
 
-  assign AnyCPUReqM = (|MemRWM) | (|AtomicM);
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
+  assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
+  assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
   interlockfsm interlockfsm (
-    .clk, .reset, .AnyCPUReqM, .ITLBMissOrDAFaultF, .ITLBWriteF,
+    .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
-    .InterlockStall, .SelReplayCPURequest, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
-  hptw hptw( // *** remove logic from (), mention this in style guide CH3
-    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrM, .MemRWM, .AtomicM,
+    .InterlockStall, .SelReplayMemE, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
+  hptw hptw( 
+    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
-    .ITLBMissF(ITLBMissOrDAFaultF & ~TrapM), .DTLBMissM(DTLBMissOrDAFaultM & ~TrapM), // *** Fix me.  *** I'm not sure ITLBMiss should be suppressed on TrapM.
-    .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),
-    .DCacheStallM, .HPTWAdr, .HPTWRead, .HPTWWrite, .HPTWSize);
+    .ITLBMissOrDAFaultNoTrapF, .DTLBMissOrDAFaultNoTrapM,
+    .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),  // *** should it be HPTWReadDataM
+    .DCacheStallM, .HPTWAdr, .HPTWRW, .HPTWSize);
+  // *** possible future optimization of simplifying page table entry with precomputed misalignment (Ross) low priority
 
   // multiplex the outputs to LSU
-  mux2 #(2) rwmux(MemRWM, {HPTWRead, HPTWWrite}, SelHPTW, PreLSURWM);
+  mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
-  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrM[11:0], SelReplayCPURequest, LSUAdrE); // replay cpu request after hptw.
   mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
+  if(`HPTW_WRITES_SUPPORTED)
+    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
+  else assign LSUWriteDataM = WriteDataM;
+  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayMemE, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;

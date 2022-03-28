@@ -61,7 +61,7 @@ module csrsr (
                           STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
                           STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, 
                           STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
-    assign SSTATUS_REGW = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ STATUS_UXL, /*9'b0, */ 12'b0,
+    assign SSTATUS_REGW = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ {`QEMU ? 2'b0 : STATUS_UXL}, /*9'b0, */ 12'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
                           STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
@@ -84,8 +84,8 @@ module csrsr (
   assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
-  assign STATUS_SXL = `S_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if supervisor mode supported
-  assign STATUS_UXL = `U_SUPPORTED & ~`QEMU ? 2'b10 : 2'b00; // 10 if user mode supported
+  assign STATUS_SXL = `S_SUPPORTED ? 2'b10 : 2'b00; // 10 if supervisor mode supported
+  assign STATUS_UXL = `U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
   assign STATUS_SUM = `S_SUPPORTED & `VIRTMEM_SUPPORTED & STATUS_SUM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MPRV = `U_SUPPORTED & STATUS_MPRV_INT; // override with 0 if user mode not supported
   assign STATUS_FS = (`S_SUPPORTED & (`F_SUPPORTED | `D_SUPPORTED)) ? STATUS_FS_INT : 2'b00; // off if no FP  
