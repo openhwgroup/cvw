@@ -109,7 +109,7 @@ then
     x/1xw 0x0C201000
     set logging off
     shell echo \"GDB storing RAM to $rawRamFile\"
-    dump binary memory $rawRamFile 0x80000000 0x07ffffff
+    dump binary memory $rawRamFile 0x80000000 0x87ffffff
     kill
     q
 end_of_script
