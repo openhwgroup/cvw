@@ -52,6 +52,9 @@ report_utilization -hierarchical                                        -file re
 report_cdc                                                              -file reports/cdc.rpt
 report_clock_interaction                                                -file reports/clock_interaction.rpt
 
+write_verilog -force -mode funcsim sim/syn-funcsim.v
+
+
 source ../constraints/debug2.xdc
 
 
