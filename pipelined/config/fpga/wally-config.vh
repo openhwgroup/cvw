@@ -123,7 +123,7 @@
 
 // Interrupt configuration
 `define PLIC_NUM_SRC 53
-`define PLIC_UART_ID 4
+`define PLIC_UART_ID 10
 
 `define TWO_BIT_PRELOAD "../config/fpga/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/fpga/BTBPredictor.txt"
