@@ -50,6 +50,8 @@
 `define UARCH_SINGLECYCLE 0
 `define DMEM `MEM_CACHE
 `define IMEM `MEM_CACHE
+`define DBUS 1
+`define IBUS 1
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 
@@ -118,11 +120,11 @@
 `define UART_PRESCALE 1
 
 // Interrupt configuration
-`define PLIC_NUM_SRC 4
+`define PLIC_NUM_SRC 10
 // comment out the following if >=32 sources
 `define PLIC_NUM_SRC_LT_32
 `define PLIC_GPIO_ID 3
-`define PLIC_UART_ID 4
+`define PLIC_UART_ID 10
 
 `define TWO_BIT_PRELOAD "../config/rv64ic/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/rv64ic/BTBPredictor.txt"

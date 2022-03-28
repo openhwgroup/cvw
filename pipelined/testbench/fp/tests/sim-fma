@@ -1,0 +1,1 @@
+vsim -do "do fma.do rv64fp"

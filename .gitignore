@@ -52,8 +52,16 @@ examples/asm/sumtest/sumtest
 examples/asm/example/example
 examples/C/sum/sum
 examples/C/fir/fir
+examples/fp/softfloat_demo/softfloat_demo
+examples/fp/fpcalc/fpcalc
+pipelined/src/fma/fma16_testgen
 linux/devicetree/debug/*
 !linux/devicetree/debug/dump-dts.sh
+linux/testvector-generation/genCheckpoint.gdb
+linux/testvector-generation/silencePipe
+linux/testvector-generation/silencePipe.control
+linux/testvector-generation/fixBinMem
+linux/testvector-generation/qemu-serial
 *.dtb
 synthDC/WORK
 synthDC/alib-52

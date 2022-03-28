@@ -41,14 +41,14 @@ beef0110
 00000bad
 0000000f
 beef0bb0
-00000009
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
+beef0077 # Test 12.3.1.4.1: successful read back of saved value with new memory mapping
+00000009 # Test 12.3.1.5.1: ecall from going to m mode from s mode
+00000000 # previous value of mprv before being set
+beef0099 # Read success from translated address when mprv=1, mpp=S and priv mode = m
+0000000b # Test 12.3.1.5.2: ecall from going to S mode from m mode
+00000009 # ecall from going straight back to m mode to access mstatus
+00000000 # previous zeroed out value of mprv
+0000000b # ecall from terminating tests in m mode
 deadbeef
 deadbeef
 deadbeef

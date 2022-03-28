@@ -34,26 +34,25 @@ module atomic (
   input logic                clk,
   input logic                reset, FlushW, CPUBusy,
   input logic [`XLEN-1:0]    ReadDataM,
-  input logic [`XLEN-1:0]    WriteDataM, 
+  input logic [`XLEN-1:0]    LSUWriteDataM, 
   input logic [`PA_BITS-1:0] LSUPAdrM,
   input logic [6:0]          LSUFunct7M,
   input logic [2:0]          LSUFunct3M,
   input logic [1:0]          LSUAtomicM,
   input logic [1:0]          PreLSURWM,
   input logic                IgnoreRequest,
-  input logic                DTLBMissM,
   output logic [`XLEN-1:0]   FinalAMOWriteDataM,
   output logic               SquashSCW,
   output logic [1:0]         LSURWM);
 
-    logic [`XLEN-1:0] AMOResult;
+  logic [`XLEN-1:0] AMOResult;
   logic               MemReadM;
 
-    amoalu amoalu(.srca(ReadDataM), .srcb(WriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
-                  .result(AMOResult));
-    mux2 #(`XLEN) wdmux(WriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
-    assign MemReadM = PreLSURWM[1] & ~(IgnoreRequest) & ~DTLBMissM;
-    lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
-        .SquashSCW, .LSURWM);
+  amoalu amoalu(.srca(ReadDataM), .srcb(LSUWriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
+                .result(AMOResult));
+  mux2 #(`XLEN) wdmux(LSUWriteDataM, AMOResult, LSUAtomicM[1], FinalAMOWriteDataM);
+  assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
+  lrsc lrsc(.clk, .reset, .FlushW, .CPUBusy, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
+    .SquashSCW, .LSURWM);
 
 endmodule  

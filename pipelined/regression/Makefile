@@ -5,24 +5,18 @@ make allclean:
 make clean:
 	make clean -C ../../addins/riscv-arch-test
 	make clean -C ../../tests/wally-riscv-arch-test
-	make allclean -C ../../tests/imperas-riscv-tests
+#	make allclean -C ../../tests/imperas-riscv-tests
 
 make all:
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
-	# Also delete bin/exe2memfile at that point
-	make -C ../../tests/imperas-riscv-tests --jobs
-	make -C ../../tests/imperas-riscv-tests XLEN=64 --jobs
-	#cd ../../tests/imperas-riscv-tests; exe2memfile.pl work/*/*.elf
-	#cd ../../tests/imperas-riscv-tests; extractFunctionRadix.sh work/*/*.elf.objdump
+	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
+	#make -C ../../tests/imperas-riscv-tests --jobs
+	#make -C ../../tests/imperas-riscv-tests XLEN=64 --jobs
 	
-
 	# Build riscv-arch-test 64 and 32-bit versions
 	make -C ../../addins/riscv-arch-test --jobs
 	make -C ../../addins/riscv-arch-test XLEN=32 --jobs
-	#cd ../../addins/riscv-arch-test; elf2hex.sh
-	#cd ../../addins/riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf.objdump
-	# extractFunctionRadix. ***
 
 	# Build wally-riscv-arch-test
 	make -C ../../tests/wally-riscv-arch-test/ --jobs
@@ -30,9 +24,6 @@ make all:
 
 # build the memfiles and address files.
 	make -f makefile-memfile wally-sim-files --jobs
-	#cd ../../tests/wally-riscv-arch-test; elf2hex.sh
-	#cd ../../tests/wally-riscv-arch-test; extractFunctionRadix.sh work/*/*/*.elf.objdump
-	# ***extractFunctionRadix
 
 	# Only compile Imperas tests if they are installed locally.  
 	# They are usually a symlink to $RISCV/imperas-riscv-tests and only 
