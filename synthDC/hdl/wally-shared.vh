@@ -50,10 +50,47 @@
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
 `define PMPCFG_ENTRIES (`PMP_ENTRIES/8)
 
+
+// Floating-point half-precision
+`define ZFH_SUPPORTED 0
+
+// Floating point constants for Quad, Double, Single, and Half precisions
+`define Q_LEN 128
+`define Q_NE 15
+`define Q_NF 112
+`define Q_BIAS 16383
+`define D_LEN 64
+`define D_NE 11
+`define D_NF 52
+`define D_BIAS 1023
+`define S_LEN 32
+`define S_NE 8
+`define S_NF 23
+`define S_BIAS 127
+`define H_LEN 16
+`define H_NE 5
+`define H_NF 10
+`define H_BIAS 15
+
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-`define FLEN 64//(`Q_SUPPORTED ? 128 : `D_SUPPORTED ? 64 : 32)
-`define NE   11//(`Q_SUPPORTED ? 15 : `D_SUPPORTED ? 11 : 8)
-`define NF   52//(`Q_SUPPORTED ? 112 : `D_SUPPORTED ? 52 : 23)
+`define FLEN (`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `F_SUPPORTED ? `S_LEN  : `H_LEN)
+`define NE   (`Q_SUPPORTED ? `Q_NE   : `D_SUPPORTED ? `D_NE   : `F_SUPPORTED ? `S_NE   : `H_NE)
+`define NF   (`Q_SUPPORTED ? `Q_NF   : `D_SUPPORTED ? `D_NF   : `F_SUPPORTED ? `S_NF   : `H_NF)
+`define FMT  (`Q_SUPPORTED ? 3       : `D_SUPPORTED ? 1       : `F_SUPPORTED ? 0       : 2)
+`define BIAS (`Q_SUPPORTED ? `Q_BIAS : `D_SUPPORTED ? `D_BIAS : `F_SUPPORTED ? `S_BIAS : `H_BIAS)
+
+// Floating point constants needed for FPU paramerterization
+`define FPSIZES (`Q_SUPPORTED+`D_SUPPORTED+`F_SUPPORTED+`ZFH_SUPPORTED)
+`define LEN1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_LEN   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_LEN  : `H_LEN)
+`define NE1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NE   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NE  : `H_NE)
+`define NF1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NF  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NF : `H_NF)
+`define FMT1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? 1        : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? 0       : 2)
+`define BIAS1 ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_BIAS  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_BIAS : `H_BIAS)
+`define LEN2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_LEN   : `H_LEN)
+`define NE2   ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NE   : `H_NE)
+`define NF2   ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NF  : `H_NF)
+`define FMT2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? 0        : 2)
+`define BIAS2 ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_BIAS  : `H_BIAS)
 
 // Disable spurious Verilator warnings
 
