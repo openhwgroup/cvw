@@ -1479,7 +1479,7 @@ string imperas32f[] = '{
 
  string wally64periph[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/WALLY-PERIPH", "22f0"
+    "rv64i_m/privilege/WALLY-PERIPH", "3310"
  };
 
  string wally32e[] = '{
