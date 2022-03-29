@@ -102,7 +102,7 @@ module trap (
   if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
       always_comb
         if (PrivilegedTrapVector[1:0] == 2'b01 & CauseM[`XLEN-1] == 1)
-          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-5:0], 2'b00};
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
         else
           PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
   end

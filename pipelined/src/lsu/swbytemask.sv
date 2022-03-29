@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// ram.sv
+// swbytemask.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
