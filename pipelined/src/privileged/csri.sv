@@ -94,8 +94,8 @@ module csri #(parameter
 
   // restricted views of registers
   // Add ExtIntM read-only signal
-  assign IP_REGW = {ExtIntM,1'b0,ExtIntS,9'b0} | {2'b0,IP_REGW_writeable};
-
+  assign IP_REGW = {ExtIntM,1'b0,ExtIntS,1'b0, IntInM[7], 7'b0} | {2'b0, IP_REGW_writeable[9], 3'b0, IP_REGW_writeable[5], 3'b0, IP_REGW_writeable[1], 1'b0}; // *** This is just to force the Machine level bits of IP to be unwriteable and to only come from intInM. PLEASE CHANGE ME!!!
+  
     // Machine Mode
   assign MIP_REGW = IP_REGW;
   assign MIE_REGW = IE_REGW;
