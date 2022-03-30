@@ -57,7 +57,7 @@ module plic (
   input  logic             UARTIntr,GPIOIntr,
   output logic [`XLEN-1:0] HREADPLIC,
   output logic             HRESPPLIC, HREADYPLIC,
-  output logic             ExtIntM, ExtIntS);
+  output logic             MExtIntM, SExtIntM);
 
   logic memwrite, memread, initTrans;
   logic [23:0] entry, entryd;
@@ -253,10 +253,10 @@ module plic (
       threshMask[ctx][2] = (intThreshold[ctx] != 2) & threshMask[ctx][3];
       threshMask[ctx][1] = (intThreshold[ctx] != 1) & threshMask[ctx][2];
     end
-    // is the max priority > threshold?
-    // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
-    end
-  assign ExtIntM = |(threshMask[0] & priorities_with_irqs[0]);
-  assign ExtIntS = |(threshMask[1] & priorities_with_irqs[1]);
+  end
+  // is the max priority > threshold?
+  // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
+  assign MExtIntM = |(threshMask[0] & priorities_with_irqs[0]);
+  assign SExtIntM = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
 

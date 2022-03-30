@@ -357,7 +357,7 @@ module testbench;
   initial begin
     force dut.core.priv.priv.SwIntM = 0;
     force dut.core.priv.priv.TimerIntM = 0;
-    force dut.core.priv.priv.ExtIntM = 0;    
+    force dut.core.priv.priv.MExtIntM = 0;    
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
