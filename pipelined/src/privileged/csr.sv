@@ -43,7 +43,7 @@ module csr #(parameter
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, 
-  input  logic             TimerIntM, ExtIntM, ExtIntS, SwIntM,
+  input  logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
   input  logic             BPPredDirWrongM,
@@ -60,9 +60,9 @@ module csr #(parameter
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
-  output logic [`XLEN-1:0]      MEDELEG_REGW, MIDELEG_REGW, 
+  output logic [`XLEN-1:0]      MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
-  output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW,
+  output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output var logic [7:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
@@ -122,9 +122,10 @@ module csr #(parameter
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
   assign CSRUWriteM = CSRWriteM;  
 
-  csri  csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, .CSRMWriteM, .CSRSWriteM,
-             .CSRAdrM, .ExtIntM, .ExtIntS, .TimerIntM, .SwIntM,
-             .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .CSRWriteValM);
+  csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
+              .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
+              .MExtIntM, .SExtIntM, .TimerIntM, .SwIntM,
+              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,

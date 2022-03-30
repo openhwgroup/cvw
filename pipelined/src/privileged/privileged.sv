@@ -55,7 +55,7 @@ module privileged (
   input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrD,
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreAmoMisalignedFaultM,
-  input  logic             TimerIntM, ExtIntM, ExtIntS, SwIntM,
+  input  logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic [`XLEN-1:0] InstrMisalignedAdrM, IEUAdrM,
   input  logic [4:0]       SetFflagsM,
@@ -69,7 +69,6 @@ module privileged (
   input logic StoreAmoAccessFaultM,
 
   output logic 		   ExceptionM,
-  output logic 		   PendingInterruptM,
   output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
@@ -86,7 +85,8 @@ module privileged (
 
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
-  logic [`XLEN-1:0] MEDELEG_REGW, MIDELEG_REGW;
+  logic [`XLEN-1:0] MEDELEG_REGW;
+  logic [11:0]      MIDELEG_REGW;
 
   logic sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
   logic IllegalCSRAccessM;
@@ -111,7 +111,7 @@ module privileged (
   ///////////////////////////////////////////
 
   // get bits of DELEG registers based on CAUSE
-  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[`LOG_XLEN-1:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
+  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
   
   // PrivilegeMode FSM
   always_comb begin
@@ -150,7 +150,7 @@ module privileged (
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
           .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, 
-          .TimerIntM, .ExtIntM, .ExtIntS, .SwIntM,
+          .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
           .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
@@ -159,9 +159,9 @@ module privileged (
           .CauseM, .NextFaultMtvalM, .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR,
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
-          .MEDELEG_REGW, .MIDELEG_REGW, 
+          .MEDELEG_REGW, 
           .SATP_REGW,
-          .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
+          .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
           .STATUS_MIE, .STATUS_SIE,
           .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW,
           .PMPCFG_ARRAY_REGW,
@@ -210,7 +210,7 @@ module privileged (
             .mretM, .sretM, 
             .PrivilegeModeW, .NextPrivilegeModeM,
             .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
-            .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW,
+            .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,
             .InstrMisalignedAdrM, .IEUAdrM, 
@@ -219,7 +219,6 @@ module privileged (
             .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,
             .InterruptM,
             .ExceptionM,
-            .PendingInterruptM,
             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
 endmodule
 

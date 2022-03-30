@@ -66,7 +66,7 @@ module ifu (
 	output logic 				IllegalIEUInstrFaultD,
 	output logic 				InstrMisalignedFaultM,
 	output logic [`XLEN-1:0] 	InstrMisalignedAdrM,
-	input logic 				ExceptionM, PendingInterruptM,
+	input logic 				ExceptionM,
 	// mmu management
 	input logic [1:0] 			PrivilegeModeW,
 	input logic [`XLEN-1:0] 	PTE,
