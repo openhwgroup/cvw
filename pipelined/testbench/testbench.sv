@@ -44,7 +44,7 @@ module testbench;
   int test, i, errors, totalerrors;
   logic [31:0] sig32[0:SIGNATURESIZE];
   logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
-  logic [`XLEN-1:0] testadr;
+  logic [`XLEN-1:0] testadr, testadrNoBase;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
 
@@ -170,6 +170,7 @@ logic [3:0] dummy;
       test = 1;
       totalerrors = 0;
       testadr = 0;
+      testadrNoBase = 0;
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
       //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
@@ -186,9 +187,9 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
       else              $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -243,12 +244,13 @@ logic [3:0] dummy;
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
         testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
+        testadrNoBase = (tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           logic [`XLEN-1:0] sig;
-          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadr+i];
-          else                   sig = dut.uncore.ram.ram.memory.RAM[testadr+i];
-//          $display("signature[%h] = %h sig = %h", i, signature[i], sig);
+          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadr+i];
+          else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+          //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
           if (signature[i] !== sig &
           //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
@@ -284,9 +286,9 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
             else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
