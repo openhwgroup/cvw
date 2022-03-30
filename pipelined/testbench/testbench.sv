@@ -178,7 +178,7 @@ logic [3:0] dummy;
       // the design.
       if (TEST == "coremark") 
         for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
-          dut.uncore.ram.ram.RAM[i] = 64'h0; 
+          dut.uncore.ram.ram.memory.RAM[i] = 64'h0; 
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
@@ -186,9 +186,9 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
-      else              $readmemh(memfilename, dut.uncore.ram.ram.RAM);
-      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+      else              $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -246,11 +246,11 @@ logic [3:0] dummy;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           logic [`XLEN-1:0] sig;
-          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadr+i];
-          else                   sig = dut.uncore.ram.ram.RAM[testadr+i];
+          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadr+i];
+          else                   sig = dut.uncore.ram.ram.memory.RAM[testadr+i];
 //          $display("signature[%h] = %h sig = %h", i, signature[i], sig);
           if (signature[i] !== sig &
-          //if (signature[i] !== dut.core.lsu.dtim.ram.RAM[testadr+i] &
+          //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
             if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
 //            if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
@@ -260,7 +260,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-                    //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.RAM[testadr+i], signature[i]);
+                    //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.memory.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -283,10 +283,10 @@ logic [3:0] dummy;
         else begin
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
-            //$readmemh(memfilename, dut.uncore.ram.ram.RAM);
-            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
-            else                   $readmemh(memfilename, dut.uncore.ram.ram.RAM);
-            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+            //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+            else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
