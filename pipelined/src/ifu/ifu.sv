@@ -142,8 +142,7 @@ module ifu (
     mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
          .PrivilegeModeW, .DisableTranslation(1'b0),
-         .PAdr(PCFExt[`PA_BITS-1:0]),
-         .VAdr(PCFSpill),
+         .VAdr(PCFExt),
          .Size(2'b10),
          .PTE(PTE),
          .PageTypeWriteVal(PageType),

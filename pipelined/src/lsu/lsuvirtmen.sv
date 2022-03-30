@@ -59,7 +59,7 @@ module lsuvirtmem(
   output logic [1:0]          PreLSURWM,
   output logic [1:0]          LSUAtomicM,
   output logic [11:0]         LSUAdrE,
-  output logic [`PA_BITS-1:0] PreLSUPAdrM,
+  output logic [`XLEN+1:0] PreLSUPAdrM,
   input logic [`XLEN+1:0]     IEUAdrExtM, // *** can move internally.
                   
   output logic                InterlockStall,
@@ -71,13 +71,15 @@ module lsuvirtmem(
 
   logic                       AnyCPUReqM;
   logic [`PA_BITS-1:0]        HPTWAdr;
+  logic [`XLEN+1:0]           HPTWAdrExt;
   logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize;
   logic                       SelReplayMemE;
   logic [11:0]                PreLSUAdrE;  
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
-  logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;  
-
+  logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;
+  logic                       SelHPTWAdr;
+  
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
   assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
@@ -94,13 +96,22 @@ module lsuvirtmem(
     .DCacheStallM, .HPTWAdr, .HPTWRW, .HPTWSize);
   // *** possible future optimization of simplifying page table entry with precomputed misalignment (Ross) low priority
 
+  // Once the walk is done and it is time to update the DTLB we need to switch back 
+  // to the orignal data virtual address.
+  assign SelHPTWAdr = SelHPTW & ~DTLBWriteM;
+  
   // multiplex the outputs to LSU
+  if(`XLEN+2-`PA_BITS > 0) begin
+    logic [(`XLEN+2-`PA_BITS)-1:0] zeros;
+    assign zeros = '0;
+    assign HPTWAdrExt = {zeros, HPTWAdr};
+  end else assign HPTWAdrExt = HPTWAdr;
   mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
-  mux2 #(`PA_BITS) lsupadrmux(IEUAdrExtM[`PA_BITS-1:0], HPTWAdr, SelHPTW, PreLSUPAdrM);
+  mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, PreLSUPAdrM);
   if(`HPTW_WRITES_SUPPORTED)
     mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
   else assign LSUWriteDataM = WriteDataM;
