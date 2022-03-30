@@ -23,28 +23,20 @@ module fcmp (
    output logic [`FLEN-1:0]   CmpResE         // compare resilt
    );
 
-   logic LT, EQ; // is X < or > or = Y
-
-   // X is less than Y:
-   //    Signs:
-   //       X      Y    answer
-   //      pos    pos    idk - keep checking
-   //      pos    neg    no
-   //      neg    pos    yes
-   //      neg    neg    idk - keep checking
-   //    Exponent 
-   //       - if XExp < YExp
-   //             - if negitive - no
-   //             - if positive - yes
-   //       - otherwise keep checking
-   //    Mantissa
-   //       - XMan < YMan then
-   //             - if negitive - no
-   //             - if positive - yes
-   // note: LT does -0 < 0
-   //*** compare Exp and Man together
-   assign LT = XSgnE^YSgnE ? XSgnE : XExpE==YExpE ? ((XManE<YManE)^XSgnE)&~EQ : (XExpE<YExpE)^XSgnE;
+   logic LTabs, LT, EQ; // is X < or > or = Y
+   logic BothZeroE, EitherNaNE, EitherSNaNE;
+   
+   assign LTabs= {1'b0, XExpE, XManE} < {1'b0, YExpE, YManE}; // unsigned comparison, treating FP as integers
+   assign LT = (XSgnE & ~YSgnE) | (XSgnE & YSgnE & ~LTabs & ~EQ) | (~XSgnE & ~YSgnE & LTabs);
+   //assign LT = $signed({XSgnE, XExpE, XManE[`NF-1:0]}) < $signed({YSgnE, YExpE, YManE[`NF-1:0]});
+   //assign LT = XInt < YInt;
+//   assign LT = XSgnE^YSgnE ? XSgnE : XExpE==YExpE ? ((XManE<YManE)^XSgnE)&~EQ : (XExpE<YExpE)^XSgnE;
    assign EQ = (FSrcXE == FSrcYE);
+
+   assign BothZeroE = XZeroE&YZeroE;
+   assign EitherNaNE = XNaNE|YNaNE;
+   assign EitherSNaNE = XSNaNE|YSNaNE;
+
 
    // flags
    //    Min/Max - if an input is a signaling NaN set invalid flag
@@ -52,11 +44,11 @@ module fcmp (
    //    EQ - quiet - sets invalid if signaling NaN input
    always_comb begin
       case (FOpCtrlE[2:0])
-         3'b111: CmpNVE = XSNaNE|YSNaNE;//min 
-         3'b101: CmpNVE = XSNaNE|YSNaNE;//max
-         3'b010: CmpNVE = XSNaNE|YSNaNE;//equal
-         3'b001: CmpNVE = XNaNE|YNaNE;//less than
-         3'b011: CmpNVE = XNaNE|YNaNE;//less than or equal
+         3'b111: CmpNVE = EitherSNaNE;//min 
+         3'b101: CmpNVE = EitherSNaNE;//max
+         3'b010: CmpNVE = EitherSNaNE;//equal
+         3'b001: CmpNVE = EitherNaNE;//less than
+         3'b011: CmpNVE = EitherNaNE;//less than or equal
          default: CmpNVE = 1'b0;
       endcase
    end 
@@ -71,24 +63,22 @@ module fcmp (
    //    - inf = inf and -inf = -inf
    //    - return 0 if comparison with NaN (unordered)
 
-   logic [`FLEN-1:0] QNaNX, QNaNY;
-    if(`IEEE754) begin
-        assign QNaNX = FmtE ? {XSgnE, XExpE, 1'b1, XManE[`NF-2:0]} : {{32{1'b1}}, XSgnE, XExpE[7:0], 1'b1, XManE[50:29]};
-        assign QNaNY = FmtE ? {YSgnE, YExpE, 1'b1, YManE[`NF-2:0]} : {{32{1'b1}}, YSgnE, YExpE[7:0], 1'b1, YManE[50:29]};
-    end else begin
-        assign QNaNX = FmtE ? {1'b0, XExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpE[7:0], 1'b1, 22'b0};
-        assign QNaNY = FmtE ? {1'b0, YExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, YExpE[7:0], 1'b1, 22'b0};
-    end
+   logic [`FLEN-1:0] QNaN;
+   // fmin/fmax of two NaNs returns a quiet NaN of the appropriate size
+   // for IEEE, return the payload of X
+   // for RISC-V, return the canonical NaN
+   if(`IEEE754) assign QNaN = FmtE ? {XSgnE, XExpE, 1'b1, XManE[`NF-2:0]} : {{32{1'b1}}, XSgnE, XExpE[7:0], 1'b1, XManE[50:29]};
+   else         assign QNaN = FmtE ? {1'b0, XExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpE[7:0], 1'b1, 22'b0};
  
    always_comb begin
       case (FOpCtrlE[2:0])
-         3'b111: CmpResE = XNaNE ? YNaNE ? QNaNX : FSrcYE // Min
+         3'b111: CmpResE = XNaNE ? YNaNE ? QNaN : FSrcYE // Min
                                  : YNaNE ? FSrcXE : LT ? FSrcXE : FSrcYE;
-         3'b101: CmpResE = XNaNE ? YNaNE ? QNaNX : FSrcYE // Max
+         3'b101: CmpResE = XNaNE ? YNaNE ? QNaN : FSrcYE // Max
                                  : YNaNE ? FSrcXE : LT ? FSrcYE : FSrcXE;
-         3'b010: CmpResE = {63'b0, (EQ|(XZeroE&YZeroE))&~(XNaNE|YNaNE)}; // Equal
-         3'b001: CmpResE = {63'b0, LT&~(XZeroE&YZeroE)&~(XNaNE|YNaNE)}; // Less than
-         3'b011: CmpResE = {63'b0, (LT|EQ|(XZeroE&YZeroE))&~(XNaNE|YNaNE)}; // Less than or equal
+         3'b010: CmpResE = {63'b0, (EQ|BothZeroE) & ~EitherNaNE}; // Equal
+         3'b001: CmpResE = {63'b0, LT & ~BothZeroE & ~EitherNaNE}; // Less than
+         3'b011: CmpResE = {63'b0, (LT|EQ|BothZeroE) & ~EitherNaNE}; // Less than or equal
          default: CmpResE = 64'b0;
       endcase
    end 

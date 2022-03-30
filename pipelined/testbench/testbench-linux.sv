@@ -357,7 +357,7 @@ module testbench;
   initial begin
     force dut.core.priv.priv.SwIntM = 0;
     force dut.core.priv.priv.TimerIntM = 0;
-    force dut.core.priv.priv.ExtIntM = 0;    
+    force dut.core.priv.priv.MExtIntM = 0;    
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
@@ -368,14 +368,14 @@ module testbench;
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
     // initialize bootrom
     memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
-    readResult = $fread(dut.uncore.bootrom.bootrom.RAM,memFile);
+    readResult = $fread(dut.uncore.bootrom.bootrom.memory.RAM,memFile);
     $fclose(memFile);
     // initialize RAM
     if (CHECKPOINT==0) 
       memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
     else
       memFile = $fopen({checkpointDir,"ram.bin"}, "rb");
-    readResult = $fread(dut.uncore.ram.ram.RAM,memFile);
+    readResult = $fread(dut.uncore.ram.ram.memory.RAM,memFile);
     $fclose(memFile);
     if (CHECKPOINT==0) begin // normal
       traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
@@ -383,7 +383,7 @@ module testbench;
       InstrCountW = '0;
       AttemptedInstructionCount = '0;
     end else begin // checkpoint
-      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.RAM);
+      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.memory.RAM);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       InstrCountW = CHECKPOINT;
@@ -791,9 +791,9 @@ module testbench;
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);
-          // ram.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
+          // ram.memory.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
           // by 3 (the PTE size) to get the requested 64-bit PTE.
-          PTE = dut.uncore.ram.ram.RAM[PAdr >> 3];
+          PTE = dut.uncore.ram.ram.memory.RAM[PAdr >> 3];
           PTE_R = PTE[1];
           PTE_X = PTE[3];
           if (PTE_R | PTE_X) begin

@@ -48,7 +48,7 @@ module dtim(
   output logic              DCacheCommittedM,
   output logic              DCacheMiss,
   output logic              DCacheAccess);
-
+  
   simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
       .clk, .ByteMask(ByteMaskM),
       .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
