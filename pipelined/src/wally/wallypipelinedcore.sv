@@ -32,137 +32,137 @@
 /* verilator lint_on UNUSED */
 
 module wallypipelinedcore (
-   input logic 		    clk, reset,
+   input logic             clk, reset,
    // Privileged
-   input logic 		    TimerIntM, ExtIntM, SwIntM,
-   input logic [63:0] 	    MTIME_CLINT, 
+   input logic             TimerIntM, ExtIntM, ExtIntS, SwIntM,
+   input logic [63:0]         MTIME_CLINT, 
    // Bus Interface
    input logic [`AHBW-1:0]  HRDATA,
-   input logic 		    HREADY, HRESP,
-   output logic 	    HCLK, HRESETn,
-   output logic [31:0] 	    HADDR,
+   input logic             HREADY, HRESP,
+   output logic         HCLK, HRESETn,
+   output logic [31:0]         HADDR,
    output logic [`AHBW-1:0] HWDATA,
-   output logic 	    HWRITE,
-   output logic [2:0] 	    HSIZE,
-   output logic [2:0] 	    HBURST,
-   output logic [3:0] 	    HPROT,
-   output logic [1:0] 	    HTRANS,
-   output logic 	    HMASTLOCK,
+   output logic         HWRITE,
+   output logic [2:0]         HSIZE,
+   output logic [2:0]         HBURST,
+   output logic [3:0]         HPROT,
+   output logic [1:0]         HTRANS,
+   output logic         HMASTLOCK,
    // Delayed signals for subword write
-   output logic [2:0] 	    HADDRD,
-   output logic [3:0] 	    HSIZED,
-   output logic 	    HWRITED
+   output logic [2:0]         HADDRD,
+   output logic [3:0]         HSIZED,
+   output logic         HWRITED
    );
 
   //  logic [1:0]  ForwardAE, ForwardBE;
-  logic 		    StallF, StallD, StallE, StallM, StallW;
-  logic 		    FlushF, FlushD, FlushE, FlushM, FlushW;
-  logic 		    RetM;
+  logic             StallF, StallD, StallE, StallM, StallW;
+  logic             FlushF, FlushD, FlushE, FlushM, FlushW;
+  logic             RetM;
   (* mark_debug = "true" *) logic TrapM;
 
   // new signals that must connect through DP
-  logic 		    MDUE, W64E;
-  logic 		    CSRReadM, CSRWriteM, PrivilegedM;
-  logic [1:0] 		    AtomicE;
-  logic [1:0] 		    AtomicM;
-  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
-  logic [`XLEN-1:0] 	    SrcAM;
-  logic [2:0] 		    Funct3E;
+  logic             MDUE, W64E;
+  logic             CSRReadM, CSRWriteM, PrivilegedM;
+  logic [1:0]             AtomicE;
+  logic [1:0]             AtomicM;
+  logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
+  logic [`XLEN-1:0]         SrcAM;
+  logic [2:0]             Funct3E;
   //  logic [31:0] InstrF;
-  logic [31:0] 		    InstrD, InstrW;
-  (* mark_debug = "true" *) logic [31:0] 		    InstrM;
-  logic [`XLEN-1:0] 	    PCF, PCD, PCE, PCLinkE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    PCM;
- logic [`XLEN-1:0] 	    CSRReadValW, MDUResultW;
-   logic [`XLEN-1:0] 	    PrivilegedNextPCM;
-  (* mark_debug = "true" *) logic [1:0] 		    MemRWM;
-  (* mark_debug = "true" *) logic 		    InstrValidM;
-  logic 		    InstrMisalignedFaultM;
-  logic 		    IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
-  logic 		    InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
-  logic 		    LoadMisalignedFaultM, LoadAccessFaultM;
-  logic 		    StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
-  logic [`XLEN-1:0] 	    InstrMisalignedAdrM;
+  logic [31:0]             InstrD, InstrW;
+  (* mark_debug = "true" *) logic [31:0]             InstrM;
+  logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
+  (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
+ logic [`XLEN-1:0]         CSRReadValW, MDUResultW;
+   logic [`XLEN-1:0]         PrivilegedNextPCM;
+  (* mark_debug = "true" *) logic [1:0]             MemRWM;
+  (* mark_debug = "true" *) logic             InstrValidM;
+  logic             InstrMisalignedFaultM;
+  logic             IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
+  logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
+  logic             LoadMisalignedFaultM, LoadAccessFaultM;
+  logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
+  logic [`XLEN-1:0]         InstrMisalignedAdrM;
   logic       InvalidateICacheM, FlushDCacheM;
-  logic 		    PCSrcE;
-  logic 		    CSRWritePendingDEM;
-  logic 		    DivBusyE;
+  logic             PCSrcE;
+  logic             CSRWritePendingDEM;
+  logic             DivBusyE;
   logic             DivE;
-  logic 		    LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
-  logic 		    SquashSCW;
+  logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
+  logic             SquashSCW;
   // floating point unit signals
-  logic [2:0] 		    FRM_REGW;
+  logic [2:0]             FRM_REGW;
   logic [4:0]        RdM, RdW;
-  logic 		    FStallD;
-  logic 		    FWriteIntE;
-  logic [`XLEN-1:0] 	    FWriteDataE;
-  logic [`XLEN-1:0] 	    FIntResM;  
-  logic 		    FDivBusyE;
-  logic 		    IllegalFPUInstrD, IllegalFPUInstrE;
-  logic 		    FRegWriteM;
-  logic 		    FPUStallD;
-  logic [4:0] 		    SetFflagsM;
+  logic             FStallD;
+  logic             FWriteIntE;
+  logic [`XLEN-1:0]         FWriteDataE;
+  logic [`XLEN-1:0]         FIntResM;  
+  logic             FDivBusyE;
+  logic             IllegalFPUInstrD, IllegalFPUInstrE;
+  logic             FRegWriteM;
+  logic             FPUStallD;
+  logic [4:0]             SetFflagsM;
 
   // memory management unit signals
-  logic 		    ITLBWriteF;
-  logic 		    ITLBFlushF, DTLBFlushM;
-  logic 		    ITLBMissF;
-  logic [`XLEN-1:0] 	    SATP_REGW;
+  logic             ITLBWriteF;
+  logic             ITLBFlushF, DTLBFlushM;
+  logic             ITLBMissF;
+  logic [`XLEN-1:0]         SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic  [1:0]       STATUS_MPP;
-  logic [1:0] 		    PrivilegeModeW;
-  logic [`XLEN-1:0] 	PTE;
-  logic [1:0] 		    PageType;
+  logic [1:0]             PrivilegeModeW;
+  logic [`XLEN-1:0]     PTE;
+  logic [1:0]             PageType;
 
   // PMA checker signals
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
-  logic 		    IFUStallF;
-  logic 		    LSUStallM;
+  logic             IFUStallF;
+  logic             LSUStallM;
 
   
 
   // cpu lsu interface
-  logic [2:0] 		    Funct3M;
-  logic [`XLEN-1:0] 	    IEUAdrE;
+  logic [2:0]       Funct3M;
+  logic [`XLEN-1:0] IEUAdrE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    IEUAdrM;  
-  (* mark_debug = "true" *) logic [`XLEN-1:0] 	    ReadDataM;
-  logic [`XLEN-1:0] 	    ReadDataW;  
-  logic 		    CommittedM;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
+  (* mark_debug = "true" *) logic [`XLEN-1:0] ReadDataM;
+  logic [`XLEN-1:0] ReadDataW;  
+  logic             CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0] 	    IFUBusAdr;
-  logic [`XLEN-1:0] 	    IFUBusHRDATA;
-  logic 		    IFUBusRead;
-  logic 		    IFUBusAck;
+  logic [`PA_BITS-1:0]         IFUBusAdr;
+  logic [`XLEN-1:0]         IFUBusHRDATA;
+  logic             IFUBusRead;
+  logic             IFUBusAck;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0] 	    LSUBusAdr;
-  logic 		    LSUBusRead;
-  logic 		    LSUBusWrite;
-  logic 		    LSUBusAck;
-  logic [`XLEN-1:0] 	    LSUBusHRDATA;
-  logic [`XLEN-1:0] 	    LSUBusHWDATA;
+  logic [`PA_BITS-1:0]         LSUBusAdr;
+  logic             LSUBusRead;
+  logic             LSUBusWrite;
+  logic             LSUBusAck;
+  logic [`XLEN-1:0]         LSUBusHRDATA;
+  logic [`XLEN-1:0]         LSUBusHWDATA;
   
-  logic 		    BPPredWrongE;
-  logic 		    BPPredDirWrongM;
-  logic 		    BTBPredPCWrongM;
-  logic 		    RASPredPCWrongM;
-  logic 		    BPPredClassNonCFIWrongM;
-  logic [4:0] 		    InstrClassM;
-  logic 		    InstrAccessFaultF;
-  logic [2:0] 		    LSUBusSize;
+  logic             BPPredWrongE;
+  logic             BPPredDirWrongM;
+  logic             BTBPredPCWrongM;
+  logic             RASPredPCWrongM;
+  logic             BPPredClassNonCFIWrongM;
+  logic [4:0]             InstrClassM;
+  logic             InstrAccessFaultF;
+  logic [2:0]             LSUBusSize;
   
-  logic 		    ExceptionM;
-  logic 		    PendingInterruptM;
-  logic 		    DCacheMiss;
-  logic 		    DCacheAccess;
-  logic 		    ICacheMiss;
-  logic 		    ICacheAccess;
-  logic 		    BreakpointFaultM, EcallFaultM;
+  logic             ExceptionM;
+  logic             PendingInterruptM;
+  logic             DCacheMiss;
+  logic             DCacheAccess;
+  logic             ICacheMiss;
+  logic             ICacheAccess;
+  logic             BreakpointFaultM, EcallFaultM;
   logic             InstrDAPageFaultF;
   
   ifu ifu(
@@ -182,7 +182,7 @@ module wallypipelinedcore (
   
     // Mem
     .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
-    .InstrD, .InstrM, . PCM, .InstrClassM, .BPPredDirWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
     // Writeback
@@ -203,8 +203,8 @@ module wallypipelinedcore (
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
     .InstrAccessFaultF,
     .InstrDAPageFaultF
-	  
-	  ); // instruction fetch unit: PC, branch prediction, instruction cache
+      
+      ); // instruction fetch unit: PC, branch prediction, instruction cache
     
   ieu ieu(
      .clk, .reset,
@@ -221,7 +221,7 @@ module wallypipelinedcore (
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
-     .AtomicE, // atomic control goes to LSU	    
+     .AtomicE, // atomic control goes to LSU        
      .AtomicM, // atomic control goes to LSU
      .WriteDataE, // Write data to LSU
      .Funct3M, // size and signedness to LSU
@@ -245,41 +245,41 @@ module wallypipelinedcore (
 
   lsu lsu(
      .clk, .reset, .StallM, .FlushM, .StallW,
-	.FlushW,
-	// CPU interface
-	.MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
-	.AtomicM, .TrapM,
-	.CommittedM, .DCacheMiss, .DCacheAccess,
-	.SquashSCW,            
-	//.DataMisalignedM(DataMisalignedM),
-	.IEUAdrE, .IEUAdrM, .WriteDataE,
-	.ReadDataM, .FlushDCacheM,
-	// connected to ahb (all stay the same)
-	.LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
-	.LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize,
+  .FlushW,
+  // CPU interface
+  .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
+  .AtomicM, .TrapM,
+  .CommittedM, .DCacheMiss, .DCacheAccess,
+  .SquashSCW,            
+  //.DataMisalignedM(DataMisalignedM),
+  .IEUAdrE, .IEUAdrM, .WriteDataE,
+  .ReadDataM, .FlushDCacheM,
+  // connected to ahb (all stay the same)
+  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
+  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize,
 
-	// connect to csr or privilege and stay the same.
-	.PrivilegeModeW,           // connects to csr
-	.PMPCFG_ARRAY_REGW,     // connects to csr
-	.PMPADDR_ARRAY_REGW,    // connects to csr
-	// hptw keep i/o
-	.SATP_REGW, // from csr
-	.STATUS_MXR, // from csr
-	.STATUS_SUM,  // from csr
-	.STATUS_MPRV,  // from csr	  	  
-	.STATUS_MPP,  // from csr	  
+    // connect to csr or privilege and stay the same.
+    .PrivilegeModeW,           // connects to csr
+    .PMPCFG_ARRAY_REGW,     // connects to csr
+    .PMPADDR_ARRAY_REGW,    // connects to csr
+    // hptw keep i/o
+    .SATP_REGW, // from csr
+    .STATUS_MXR, // from csr
+    .STATUS_SUM,  // from csr
+    .STATUS_MPRV,  // from csr            
+    .STATUS_MPP,  // from csr      
 
-	.DTLBFlushM,                   // connects to privilege
-	.LoadPageFaultM,   // connects to privilege
-	.StoreAmoPageFaultM, // connects to privilege
-	.LoadMisalignedFaultM, // connects to privilege
-	.LoadAccessFaultM,         // connects to privilege
-	.StoreAmoMisalignedFaultM, // connects to privilege
-	.StoreAmoAccessFaultM,     // connects to privilege
+    .DTLBFlushM,                   // connects to privilege
+    .LoadPageFaultM,   // connects to privilege
+    .StoreAmoPageFaultM, // connects to privilege
+    .LoadMisalignedFaultM, // connects to privilege
+    .LoadAccessFaultM,         // connects to privilege
+    .StoreAmoMisalignedFaultM, // connects to privilege
+    .StoreAmoAccessFaultM,     // connects to privilege
     .InstrDAPageFaultF,
     
-	.PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
-	.LSUStallM);                     // change to LSUStallM
+    .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
+    .LSUStallM);                     // change to LSUStallM
 
 
    // *** Ross: please make EBU conditional when only supporting internal memories
@@ -306,13 +306,13 @@ module wallypipelinedcore (
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
      .FPUStallD, .FStallD,
-	.DivBusyE, .FDivBusyE,
-	.EcallFaultM, .BreakpointFaultM,
+    .DivBusyE, .FDivBusyE,
+    .EcallFaultM, .BreakpointFaultM,
      .InvalidateICacheM,
      // Stall & flush outputs
-	.StallF, .StallD, .StallE, .StallM, .StallW,
-	.FlushF, .FlushD, .FlushE, .FlushM, .FlushW
-     );	// global stall and flush control
+    .StallF, .StallD, .StallE, .StallM, .StallW,
+    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW
+     );    // global stall and flush control
 
    if (`ZICSR_SUPPORTED) begin:priv
       privileged priv(
@@ -331,7 +331,7 @@ module wallypipelinedcore (
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
          .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-         .TimerIntM, .ExtIntM, .SwIntM,
+         .TimerIntM, .ExtIntM, .ExtIntS, .SwIntM,
          .MTIME_CLINT, 
          .InstrMisalignedAdrM, .IEUAdrM,
          .SetFflagsM,

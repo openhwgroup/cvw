@@ -102,6 +102,7 @@ module BTBPredictor
   // Another optimization may be using a PC relative address.
   // *** need to add forwarding.
 
+  // *** optimize for byte write enables
   SRAM2P1R1W #(Depth, `XLEN+5) memory(.clk(clk),
           .reset(reset),
           .RA1(LookUpPCIndex),

@@ -55,6 +55,99 @@ RVTEST_CODE_BEGIN
 
 .endm
 
+// Code to trigger traps goes here so we have consistent mtvals for instruction adresses
+// Even if more tests are added.  
+.macro CAUSE_TRAP_TRIGGERS
+j end_trap_triggers
+
+// The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
+//      This effectively includes everything that isn't to do with page faults (virtual memory)
+
+cause_instr_addr_misaligned:
+    // cause a misaligned address trap
+    auipc x28, 0      // get current PC, which is aligned
+    addi x28, x28, 0x3  // add 1 to pc to create misaligned address
+    jr x28 // cause instruction address midaligned trap
+    ret
+
+cause_instr_access:
+    la x28, 0x0 // address zero is an address with no memory
+    sd x1, -8(sp) // push the return adress ontot the stack
+    addi sp, sp, -8
+    jalr x28 // cause instruction access trap
+    ld x1, 0(sp) // pop return adress back from the stack
+    addi sp, sp, 8
+    ret
+
+cause_illegal_instr:
+    .word 0x00000000 // a 32 bit zros is an illegal instruction
+    ret
+
+cause_breakpnt: // ****
+    ebreak
+    ret
+
+cause_load_addr_misaligned:
+    auipc x28, 0      // get current PC, which is aligned
+    addi x28, x28, 1
+    lw x29, 0(x28)    // load from a misaligned address
+    ret
+
+cause_load_acc:
+    la x28, 0         // 0 is an address with no memory
+    lw x29, 0(x28)    // load from unimplemented address
+    ret
+
+cause_store_addr_misaligned:
+    auipc x28, 0      // get current PC, which is aligned
+    addi x28, x28, 1
+    sw x29, 0(x28)     // store to a misaligned address
+    ret
+
+cause_store_acc: 
+    la x28, 0         // 0 is an address with no memory
+    sw x29, 0(x28)     // store to unimplemented address
+    ret
+
+cause_ecall:
+    // *** ASSUMES you have already gone to the mode you need to call this from.
+    ecall
+    ret
+
+cause_time_interrupt:
+    // The following code works for both RV32 and RV64.  
+    // RV64 alone would be easier using double-word adds and stores
+    li x28, 0x100          // Desired offset from the present time
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    la x30, 0x0200BFF8    // MTIME register in CLINT
+    lw x7, 0(x30)         // low word of MTIME
+    lw x31, 4(x30)         // high word of MTIME
+    add x28, x7, x28       // add desired offset to the current time
+    bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
+    addi x31, x31, 1       // if wrap, increment most significant word
+    sw x31,4(x29)          // store into most significant word of MTIMECMP
+nowrap:
+    sw x28, 0(x29)         // store into least significant word of MTIMECMP
+    loop: j loop         // wait until interrupt occurs
+    ret
+
+cause_soft_interrupt:
+    la x28, 0x02000000      // MSIP register in CLINT
+    li x29, 1               // 1 in the lsb
+    sw x29, 0(x28)          // Write MSIP bit
+    ret
+
+cause_ext_interrupt:
+    li x28, 0x10060000 // load base GPIO memory location
+    li x29, 0x1
+    sw x29, 8(x28) // enable the first pin as an output
+    sw x29, 28(x28) // set first pin to high interrupt enable
+    sw x29, 40(x28) // write a 1 to the first output pin (cause interrupt)
+    ret
+
+end_trap_triggers:
+.endm
+
 .macro TRAP_HANDLER MODE, VECTORED=1, DEBUG=0
     // MODE decides which mode this trap handler will be taken in (M or S mode)
     // Vectored decides whether interrumpts are handled with the vector table at trap_handler_MODE (1)
@@ -577,7 +670,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      The previous CSR value before write attempt
     //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
     li x30, 0xbad // load bad value to be overwritten by csrr
-    li x29, \VAL
+    li x29, \VAL\()
     csrw \CSR\(), x29
     csrr x30, \CSR
     sd x30, 0(x6)
@@ -627,86 +720,86 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     addi x16, x16, 8 
 .endm
 
-// The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
-//      This effectively includes everything that isn't to do with page faults (virtual memory)
+// // The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
+// //      This effectively includes everything that isn't to do with page faults (virtual memory)
 
-.macro CAUSE_INSTR_ADDR_MISALIGNED
-    // cause a misaligned address trap
-    auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 0x1  // add 1 to pc to create misaligned address
-    jalr x28 // cause instruction address midaligned trap
-.endm
+// .macro CAUSE_INSTR_ADDR_MISALIGNED
+//     // cause a misaligned address trap
+//     auipc x28, 0      // get current PC, which is aligned
+//     addi x28, x28, 0x1  // add 1 to pc to create misaligned address
+//     jalr x28 // cause instruction address midaligned trap
+// .endm
 
-.macro CAUSE_INSTR_ACCESS
-    la x28, 0x0 // address zero is an address with no memory
-    jalr x28 // cause instruction access trap
-.endm
+// .macro CAUSE_INSTR_ACCESS
+//     la x28, 0x0 // address zero is an address with no memory
+//     jalr x28 // cause instruction access trap
+// .endm
 
-.macro CAUSE_ILLEGAL_INSTR
-    .word 0x00000000 // a 32 bit zros is an illegal instruction
-.endm
+// .macro CAUSE_ILLEGAL_INSTR
+//     .word 0x00000000 // a 32 bit zros is an illegal instruction
+// .endm
 
-.macro CAUSE_BREAKPNT // ****
-    ebreak
-.endm
+// .macro CAUSE_BREAKPNT // ****
+//     ebreak
+// .endm
 
-.macro CAUSE_LOAD_ADDR_MISALIGNED
-    auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 1
-    lw x29, 0(x28)    // load from a misaligned address
-.endm
+// .macro CAUSE_LOAD_ADDR_MISALIGNED
+//     auipc x28, 0      // get current PC, which is aligned
+//     addi x28, x28, 1
+//     lw x29, 0(x28)    // load from a misaligned address
+// .endm
 
-.macro CAUSE_LOAD_ACC
-    la x28, 0         // 0 is an address with no memory
-    lw x29, 0(x28)    // load from unimplemented address
-.endm
+// .macro CAUSE_LOAD_ACC
+//     la x28, 0         // 0 is an address with no memory
+//     lw x29, 0(x28)    // load from unimplemented address
+// .endm
 
-.macro CAUSE_STORE_ADDR_MISALIGNED
-    auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 1
-    sw x29, 0(x28)     // store to a misaligned address
-.endm
+// .macro CAUSE_STORE_ADDR_MISALIGNED
+//     auipc x28, 0      // get current PC, which is aligned
+//     addi x28, x28, 1
+//     sw x29, 0(x28)     // store to a misaligned address
+// .endm
 
-.macro CAUSE_STORE_ACC 
-    la x28, 0         // 0 is an address with no memory
-    sw x29, 0(x28)     // store to unimplemented address
-.endm
+// .macro CAUSE_STORE_ACC 
+//     la x28, 0         // 0 is an address with no memory
+//     sw x29, 0(x28)     // store to unimplemented address
+// .endm
 
-.macro CAUSE_ECALL
-    // *** ASSUMES you have already gone to the mode you need to call this from.
-    ecall
-.endm
+// .macro CAUSE_ECALL
+//     // *** ASSUMES you have already gone to the mode you need to call this from.
+//     ecall
+// .endm
 
-.macro CAUSE_TIME_INTERRUPT
-    // The following code works for both RV32 and RV64.  
-    // RV64 alone would be easier using double-word adds and stores
-    li x28, 0x100          // Desired offset from the present time
-    la x29, 0x02004000    // MTIMECMP register in CLINT
-    la x30, 0x0200BFF8    // MTIME register in CLINT
-    lw x7, 0(x30)         // low word of MTIME
-    lw x31, 4(x30)         // high word of MTIME
-    add x28, x7, x28       // add desired offset to the current time
-    bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
-    addi x31, x31, 1       // if wrap, increment most significant word
-    sw x31,4(x29)          // store into most significant word of MTIMECMP
-nowrap:
-    sw x28, 0(x29)         // store into least significant word of MTIMECMP
-    loop: j loop         // wait until interrupt occurs
-.endm
+// .macro CAUSE_TIME_INTERRUPT
+//     // The following code works for both RV32 and RV64.  
+//     // RV64 alone would be easier using double-word adds and stores
+//     li x28, 0x100          // Desired offset from the present time
+//     la x29, 0x02004000    // MTIMECMP register in CLINT
+//     la x30, 0x0200BFF8    // MTIME register in CLINT
+//     lw x7, 0(x30)         // low word of MTIME
+//     lw x31, 4(x30)         // high word of MTIME
+//     add x28, x7, x28       // add desired offset to the current time
+//     bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
+//     addi x31, x31, 1       // if wrap, increment most significant word
+//     sw x31,4(x29)          // store into most significant word of MTIMECMP
+// nowrap:
+//     sw x28, 0(x29)         // store into least significant word of MTIMECMP
+//     loop: j loop         // wait until interrupt occurs
+// .endm
 
-.macro CAUSE_SOFT_INTERRUPT
-    la x28, 0x02000000      // MSIP register in CLINT
-    li x29, 1               // 1 in the lsb
-    sw x29, 0(x28)          // Write MSIP bit
-.endm
+// .macro CAUSE_SOFT_INTERRUPT
+//     la x28, 0x02000000      // MSIP register in CLINT
+//     li x29, 1               // 1 in the lsb
+//     sw x29, 0(x28)          // Write MSIP bit
+// .endm
 
-.macro CAUSE_EXT_INTERRUPT
-    li x28, 0x10060000 // load base GPIO memory location
-    li x29, 0x1
-    sw x29, 8(x28) // enable the first pin as an output
-    sw x29, 28(x28) // set first pin to high interrupt enable
-    sw x29, 40(x28) // write a 1 to the first output pin (cause interrupt)
-.endm
+// .macro CAUSE_EXT_INTERRUPT
+//     li x28, 0x10060000 // load base GPIO memory location
+//     li x29, 0x1
+//     sw x29, 8(x28) // enable the first pin as an output
+//     sw x29, 28(x28) // set first pin to high interrupt enable
+//     sw x29, 40(x28) // write a 1 to the first output pin (cause interrupt)
+// .endm
 
 .macro END_TESTS
     // invokes one final ecall to return to machine mode then terminates this program, so the output is

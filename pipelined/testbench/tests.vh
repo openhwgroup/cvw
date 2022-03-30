@@ -959,7 +959,7 @@ string imperas32f[] = '{
     "rv64i_m/I/andi-01", "6010",
     "rv64i_m/I/auipc-01", "2010",
     "rv64i_m/I/beq-01", "47010",
-    "rv64i_m/I/bge-01", "47010",
+    "rv64i_m/I/bge-01", "46010",
     "rv64i_m/I/bgeu-01", "56010",
     "rv64i_m/I/blt-01", "4d010",
     "rv64i_m/I/bltu-01", "57010",
@@ -1450,34 +1450,36 @@ string imperas32f[] = '{
 
  string wally64priv[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/WALLY-CSR-permission-s-01", "004080",
+    "rv64i_m/privilege/WALLY-CSR-permission-s-01", "0050a0",
     //"rv64i_m/privilege/WALLY-CSR-PERMISSIONS-M", "005070",
     //"rv64i_m/privilege/WALLY-CSR-PERMISSIONS-S", "003070",
-    "rv64i_m/privilege/WALLY-CSR-permission-u-01", "005080",
+    "rv64i_m/privilege/WALLY-CSR-permission-u-01", "0050a0",
    // "rv64i_m/privilege/WALLY-MARCHID", "003070",
 /*    "rv64i_m/privilege/WALLY-MCAUSE", "003070",
     "rv64i_m/privilege/WALLY-MEDELEG", "003070",
     "rv64i_m/privilege/WALLY-MHARTID", "003070",
     "rv64i_m/privilege/WALLY-MIMPID", "003070",*/
-    "rv64i_m/privilege/WALLY-minfo-01", "004080",
-    "rv64i_m/privilege/WALLY-misa-01", "004080",
-    "rv64i_m/privilege/WALLY-MMU-SV39", "004080",
-    "rv64i_m/privilege/WALLY-MMU-SV48", "004080",
+    "rv64i_m/privilege/WALLY-minfo-01", "0040a0",
+    "rv64i_m/privilege/WALLY-misa-01", "0040a0",
+    "rv64i_m/privilege/WALLY-MMU-SV39", "0040a0",
+    "rv64i_m/privilege/WALLY-MMU-SV48", "0040a0",
 /*    "rv64i_m/privilege/WALLY-MSTATUS", "002070",
     "rv64i_m/privilege/WALLY-MTVEC", "002070",
     "rv64i_m/privilege/WALLY-MVENDORID", "003070", */
-    "rv64i_m/privilege/WALLY-PMA", "004080",
-    "rv64i_m/privilege/WALLY-PMP", "004080",
+    "rv64i_m/privilege/WALLY-PMA", "0040a0",
+    "rv64i_m/privilege/WALLY-PMP", "0040a0",
 //    "rv64i_m/privilege/WALLY-SCAUSE", "002070",
-    "rv64i_m/privilege/WALLY-scratch-01", "004080",
-    "rv64i_m/privilege/WALLY-sscratch-s-01", "004080"
+    "rv64i_m/privilege/WALLY-scratch-01", "0040a0",
+    "rv64i_m/privilege/WALLY-sscratch-s-01", "0040a0"
+//    "rv64i_m/privilege/WALLY-trap-01", "0040a0"
 //    "rv64i_m/privilege/WALLY-STVEC", "002070",
-//    "rv64i_m/privilege/WALLY-UCAUSE", "002070"
+//    "rv64i_m/privilege/WALLY-UCAUSE", "002070",
+
  };
 
  string wally64periph[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/WALLY-PERIPH", "22f0"
+    "rv64i_m/privilege/WALLY-PERIPH", "3310"
  };
 
  string wally32e[] = '{
