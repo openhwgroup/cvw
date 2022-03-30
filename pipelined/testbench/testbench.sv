@@ -187,9 +187,9 @@ logic [3:0] dummy;
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
+      if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
       else              $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+      if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
@@ -248,7 +248,7 @@ logic [3:0] dummy;
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
           logic [`XLEN-1:0] sig;
-          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadr+i];
+          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
           else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
           //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
           if (signature[i] !== sig &
@@ -286,9 +286,9 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.RAM);
+            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
             else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
