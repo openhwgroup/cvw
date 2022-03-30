@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module ram #(parameter BASE=0, RANGE = 65535) (
+module ramOld #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic             HSELRam,
   input  logic [31:0]      HADDR,
