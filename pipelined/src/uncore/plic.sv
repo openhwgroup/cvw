@@ -37,6 +37,15 @@
 
 `include "wally-config.vh"
 
+`define N `PLIC_NUM_SRC
+// number of interrupt sources
+// does not include source 0, which does not connect to anything according to spec
+// up to 63 sources supported; *** in the future, allow up to 1023 sources
+
+`define C 2
+// number of conexts
+// hardcoded to 2 contexts for now; *** later upgrade to arbitrary (up to 15872) contexts
+
 module plic (
   input  logic             HCLK, HRESETn,
   input  logic             HSELPLIC,
@@ -48,25 +57,26 @@ module plic (
   input  logic             UARTIntr,GPIOIntr,
   output logic [`XLEN-1:0] HREADPLIC,
   output logic             HRESPPLIC, HREADYPLIC,
-  output logic             ExtIntM);
-
-  localparam N=`PLIC_NUM_SRC; // should not exceed 63; does not inlcude source 0, which does not connect to anything according to spec
+  output logic             ExtIntM, ExtIntS);
 
   logic memwrite, memread, initTrans;
   logic [23:0] entry, entryd;
   logic [31:0] Din, Dout;
-  logic [N:1] requests;
 
-  logic [2:0] intPriority[N:1];
-  logic [2:0] intThreshold;
-  logic [N:1] intPending, nextIntPending, intEn, intInProgress;
-  logic [5:0] intClaim; // ID's are 6 bits if we stay within 63 sources
-
-  logic [N:1] pendingArray[7:1];
-  logic [7:1] pendingPGrouped;
-  logic [7:1] pendingMaxP;
-  logic [N:1] pendingRequestsAtMaxP;
-  logic [7:1] threshMask;
+  // context-independent signals
+  logic [`N:1]      requests;
+  logic [`N:1][2:0] intPriority;
+  logic [`N:1]      intInProgress, intPending, nextIntPending;
+  
+  // context-dependent signals
+  logic [`C-1:0][2:0]       intThreshold;
+  logic [`C-1:0][`N:1]      intEn;
+  logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
+  logic [`C-1:0][7:1][`N:1] irqMatrix;
+  logic [`C-1:0][7:1]       priorities_with_irqs;
+  logic [`C-1:0][7:1]       max_priority_with_irqs;
+  logic [`C-1:0][`N:1]      irqs_at_max_priority;
+  logic [`C-1:0][7:1]       threshMask;
 
   // =======
   // AHB I/O
@@ -82,12 +92,12 @@ module plic (
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-    if (`XLEN == 64) begin
+  if (`XLEN == 64) begin
     assign Din       = entryd[2] ? HWDATA[63:32] : HWDATA[31:0];
     assign HREADPLIC = entryd[2] ? {Dout,32'b0}  : {32'b0,Dout};
   end else begin // 32-bit
-    assign Din       = HWDATA[31:0];
     assign HREADPLIC = Dout;
+    assign Din       = HWDATA[31:0];
   end
 
   // ==================
@@ -96,43 +106,56 @@ module plic (
   always @(posedge HCLK,negedge HRESETn) begin
     // resetting
     if (~HRESETn) begin
-      intPriority <= #1 '{default:3'b0};
-      intEn <= #1 {N{1'b0}};
-      intThreshold <= #1 3'b0;
-      intInProgress <= #1 {N{1'b0}};
+      intPriority   <= #1 {`N{3'b0}};
+      intEn         <= #1 {2{`N'b0}};
+      intThreshold  <= #1 {2{3'b0}};
+      intInProgress <= #1 `N'b0;
     // writing
     end else begin
       if (memwrite)
         casez(entryd)
           24'h0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
-          `ifdef PLIC_NUM_SRC_LT_32
-          24'h002000: intEn[N:1] <= #1 Din[N:1];
+          `ifdef PLIC_NUM_SRC_LT_32 // *** switch to a generate for loop so as to deprecate PLIC_NUM_SRC_LT_32 and allow up to 1023 sources
+          24'h002000: intEn[0][`N:1] <= #1 Din[`N:1];
+          24'h002080: intEn[1][`N:1] <= #1 Din[`N:1];
           `endif
           `ifndef PLIC_NUM_SRC_LT_32
-          24'h002000: intEn[31:1] <= #1 Din[31:1];
-          24'h002004: intEn[N:32] <= #1 Din[31:0];
+          24'h002000: intEn[0][31:1] <= #1 Din[31:1];
+          24'h002004: intEn[0][`N:32] <= #1 Din[31:0];
+          24'h002080: intEn[1][31:1] <= #1 Din[31:1];
+          24'h002084: intEn[1][`N:32] <= #1 Din[31:0];
           `endif
-          24'h200000: intThreshold[2:0] <= #1 Din[2:0];       
-          24'h200004: intInProgress <= #1 intInProgress & ~(`PLIC_NUM_SRC'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h200000: intThreshold[0] <= #1 Din[2:0];
+          24'h200004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h201000: intThreshold[1] <= #1 Din[2:0];
+          24'h201004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // reading
       if (memread)
         casez(entry)
           24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};
           `ifdef PLIC_NUM_SRC_LT_32
-          24'h001000: Dout <= #1 {{(31-N){1'b0}},intPending[N:1],1'b0};
-          24'h002000: Dout <= #1 {{(31-N){1'b0}},intEn[N:1],1'b0};
+          24'h001000: Dout <= #1 {{(31-`N){1'b0}},intPending,1'b0};
+          24'h002000: Dout <= #1 {{(31-`N){1'b0}},intEn[0],1'b0};
+          24'h002080: Dout <= #1 {{(31-`N){1'b0}},intEn[1],1'b0};
           `endif
           `ifndef PLIC_NUM_SRC_LT_32
           24'h001000: Dout <= #1 {intPending[31:1],1'b0};
-          24'h001004: Dout <= #1 {{(63-N){1'b0}},intPending[N:32]};
-          24'h002000: Dout <= #1 {intEn[31:1],1'b0};
-          24'h002004: Dout <= #1 {{(63-N){1'b0}},intEn[N:32]};
+          24'h001004: Dout <= #1 {{(63-`N){1'b0}},intPending[`N:32]};
+          24'h002000: Dout <= #1 {intEn[0][31:1],1'b0};
+          24'h002004: Dout <= #1 {{(63-`N){1'b0}},intEn[0][`N:32]};
+          24'h002080: Dout <= #1 {intEn[0][31:1],1'b0};
+          24'h002084: Dout <= #1 {{(63-`N){1'b0}},intEn[1][`N:32]};
           `endif
-          24'h200000: Dout <= #1 {29'b0,intThreshold[2:0]};
+          24'h200000: Dout <= #1 {29'b0,intThreshold[0]};
           24'h200004: begin
-            Dout <= #1 {26'b0,intClaim};
-            intInProgress <= #1 intInProgress | (`PLIC_NUM_SRC'b1 << (intClaim-1)); // claimed requests are currently in progress of being serviced until they are completed
+            Dout <= #1 {26'b0,intClaim[0]};
+            intInProgress <= #1 intInProgress | (`N'b1 << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
+          end
+          24'h201000: Dout <= #1 {29'b0,intThreshold[1]};
+          24'h201004: begin
+            Dout <= #1 {26'b0,intClaim[1]};
+            intInProgress <= #1 intInProgress | (`N'b1 << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           default: Dout <= #1 32'h0; // invalid access
         endcase
@@ -143,7 +166,7 @@ module plic (
 
   // connect sources to requests
   always_comb begin
-    requests = {N{1'b0}};
+    requests = `N'b0;
     `ifdef PLIC_GPIO_ID
       requests[`PLIC_GPIO_ID] = GPIOIntr;
     `endif
@@ -152,66 +175,88 @@ module plic (
     `endif
   end
 
-  // pending updates
-  // *** verify that this matches the expectations of the things that make requests (in terms of timing, edge-triggered vs level-triggered)
-  assign nextIntPending = (intPending | (requests & ~intInProgress)) & // requests should raise intPending except when their service routine is already in progress
-                          ~({N{((entry == 24'h200004) & memread)}} << (intClaim-1)); // clear pending bit when claim register is read
-  flopr #(N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
+  // pending interrupt requests
+  assign nextIntPending = 
+    (intPending |                                                   // existing pending requests
+    (requests & ~intInProgress)) &                                  // assert new requests (if they aren't already being serviced)
+    ~({`N{((entry == 24'h200004) & memread)}} << (intClaim[0]-1)) & // deassert requests that just completed
+    ~({`N{((entry == 24'h201004) & memread)}} << (intClaim[1]-1));
+  flopr #(`N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
-  // pending array - indexed by priority_lvl x source_ID
-  genvar i, j;
-  for (j=1; j<=7; j++) begin: pending
-    for (i=1; i<=N; i=i+1) begin: pendingbit
-      assign pendingArray[j][i] = (intPriority[i]==j) & intEn[i] & intPending[i];
+  // context-dependent signals
+  genvar ctx;
+  for (ctx=0; ctx<`C; ctx++) begin
+    // request matrix 
+    //   priority level (rows) X source ID (columns)
+    //
+    //   irqMatrix[ctx][pri][src] is high if source <src>
+    //   has priority level <pri> and has an "active" interrupt request
+    //   ("active" meaning it is enabled in context <ctx> and is pending)
+    genvar src, pri;
+    for (pri=1; pri<=7; pri++) begin
+      for (src=1; src<=`N; src++) begin
+        assign irqMatrix[ctx][pri][src] = (intPriority[src]==pri) & intPending[src] & intEn[ctx][src];
+      end
     end
-  end
-  // pending array, except grouped by priority
-  assign pendingPGrouped[7:1] = {|pendingArray[7],
-                                 |pendingArray[6],
-                                 |pendingArray[5],
-                                 |pendingArray[4],
-                                 |pendingArray[3],
-                                 |pendingArray[2],
-                                 |pendingArray[1]}; 
-  //assign pendingPGrouped = pendingArray.or;
 
-  // pendingPGrouped, except only topmost priority is active
-  assign pendingMaxP[7:1] = {pendingPGrouped[7],
-                             pendingPGrouped[6] & ~|pendingPGrouped[7],
-                             pendingPGrouped[5] & ~|pendingPGrouped[7:6],
-                             pendingPGrouped[4] & ~|pendingPGrouped[7:5],
-                             pendingPGrouped[3] & ~|pendingPGrouped[7:4],
-                             pendingPGrouped[2] & ~|pendingPGrouped[7:3],
-                             pendingPGrouped[1] & ~|pendingPGrouped[7:2]};
-  // select the pending requests at that priority
-  assign pendingRequestsAtMaxP[N:1] = ({N{pendingMaxP[7]}} & pendingArray[7])
-                                    | ({N{pendingMaxP[6]}} & pendingArray[6])
-                                    | ({N{pendingMaxP[5]}} & pendingArray[5])
-                                    | ({N{pendingMaxP[4]}} & pendingArray[4])
-                                    | ({N{pendingMaxP[3]}} & pendingArray[3])
-                                    | ({N{pendingMaxP[2]}} & pendingArray[2])
-                                    | ({N{pendingMaxP[1]}} & pendingArray[1]);
-  // find the lowest ID amongst active interrupts at the highest priority
-  logic [5:0] k;
-  always_comb begin
-    intClaim = 6'b0;
-    for (k=N; k>0; k=k-1) begin
-      if (pendingRequestsAtMaxP[k]) intClaim = k;
+    // which prority levels have one or more active requests?
+    assign priorities_with_irqs[ctx][7:1] = {
+      |irqMatrix[ctx][7],
+      |irqMatrix[ctx][6],
+      |irqMatrix[ctx][5],
+      |irqMatrix[ctx][4],
+      |irqMatrix[ctx][3],
+      |irqMatrix[ctx][2],
+      |irqMatrix[ctx][1]
+    }; 
+
+    // get the highest priority level that has active requests
+    assign max_priority_with_irqs[ctx][7:1] = {
+      priorities_with_irqs[ctx][7],
+      priorities_with_irqs[ctx][6] & ~|priorities_with_irqs[ctx][7],
+      priorities_with_irqs[ctx][5] & ~|priorities_with_irqs[ctx][7:6],
+      priorities_with_irqs[ctx][4] & ~|priorities_with_irqs[ctx][7:5],
+      priorities_with_irqs[ctx][3] & ~|priorities_with_irqs[ctx][7:4],
+      priorities_with_irqs[ctx][2] & ~|priorities_with_irqs[ctx][7:3],
+      priorities_with_irqs[ctx][1] & ~|priorities_with_irqs[ctx][7:2]
+    };
+
+    // of the sources at the highest priority level that has active requests,
+    // which sources have active requests?
+    assign irqs_at_max_priority[ctx][`N:1] =
+      ({`N{max_priority_with_irqs[ctx][7]}} & irqMatrix[ctx][7]) |
+      ({`N{max_priority_with_irqs[ctx][6]}} & irqMatrix[ctx][6]) |
+      ({`N{max_priority_with_irqs[ctx][5]}} & irqMatrix[ctx][5]) |
+      ({`N{max_priority_with_irqs[ctx][4]}} & irqMatrix[ctx][4]) |
+      ({`N{max_priority_with_irqs[ctx][3]}} & irqMatrix[ctx][3]) |
+      ({`N{max_priority_with_irqs[ctx][2]}} & irqMatrix[ctx][2]) |
+      ({`N{max_priority_with_irqs[ctx][1]}} & irqMatrix[ctx][1]);
+
+    // of the sources at the highest priority level that has active requests,
+    // choose the source with the lowest source ID to be the most urgent
+    // and set intClaim to the source ID of the most urgent active request
+    integer k;
+    always_comb begin
+      intClaim[ctx] = 6'b0;
+      for (k=`N; k>0; k--) begin
+        if (irqs_at_max_priority[ctx][k]) intClaim[ctx] = k[5:0];
+      end
     end
-  end
-  
-  // create threshold mask
-   always_comb begin
-    threshMask[7] = (intThreshold != 7);
-    threshMask[6] = (intThreshold != 6) & threshMask[7];
-    threshMask[5] = (intThreshold != 5) & threshMask[6];
-    threshMask[4] = (intThreshold != 4) & threshMask[5];
-    threshMask[3] = (intThreshold != 3) & threshMask[4];
-    threshMask[2] = (intThreshold != 2) & threshMask[3];
-    threshMask[1] = (intThreshold != 1) & threshMask[2];
-  end
-  // is the max priority > threshold?
-  // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
-  assign ExtIntM = |(threshMask & pendingPGrouped);
+    
+    // create threshold mask
+    always_comb begin
+      threshMask[ctx][7] = (intThreshold[ctx] != 7);
+      threshMask[ctx][6] = (intThreshold[ctx] != 6) & threshMask[ctx][7];
+      threshMask[ctx][5] = (intThreshold[ctx] != 5) & threshMask[ctx][6];
+      threshMask[ctx][4] = (intThreshold[ctx] != 4) & threshMask[ctx][5];
+      threshMask[ctx][3] = (intThreshold[ctx] != 3) & threshMask[ctx][4];
+      threshMask[ctx][2] = (intThreshold[ctx] != 2) & threshMask[ctx][3];
+      threshMask[ctx][1] = (intThreshold[ctx] != 1) & threshMask[ctx][2];
+    end
+    // is the max priority > threshold?
+    // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
+    end
+  assign ExtIntM = |(threshMask[0] & priorities_with_irqs[0]);
+  assign ExtIntS = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
 

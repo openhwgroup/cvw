@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 import sys, os
+from functools import reduce
 
 ################
 # Helper Funcs #
@@ -20,6 +21,9 @@ def tokenize(string):
         else:
             token = token + char
     return tokens
+
+def strip0x(num):
+    return num[2:]
 
 def stripZeroes(num):
     num = num.strip('0')
@@ -42,7 +46,7 @@ if not os.path.exists(rawPlicStateFile):
     sys.exit('Error input file '+rawPlicStateFile+'not found')
 
 with open(rawPlicStateFile, 'r') as rawPlicStateFile:
-    plicIntPriorityArray=[]
+    plicIntPriorityArray = [] # iterates over number of different sources
     # 0x0C000004 thru 0x0C000010
     plicIntPriorityArray += tokenize(rawPlicStateFile.readline())[1:]
     # 0x0C000014 thru 0x0C000020
@@ -76,20 +80,30 @@ with open(rawPlicStateFile, 'r') as rawPlicStateFile:
     # 0x0C0000f4 thru 0x0C0000fc
     plicIntPriorityArray += tokenize(rawPlicStateFile.readline())[1:]
 
+    plicIntEnableArray = [] # iterates over number of different contexts
     # 0x0C020000 thru 0x0C020004
     plicIntEnable = tokenize(rawPlicStateFile.readline())[1:]
+    plicIntEnable = map(strip0x,plicIntEnable)
+    plicIntEnableArray.append(reduce(lambda x,y: x+y,plicIntEnable))
+    # 0x0C020080 thru 0x0C020084
+    plicIntEnable = tokenize(rawPlicStateFile.readline())[1:]
+    plicIntEnable = map(strip0x,plicIntEnable)
+    plicIntEnableArray.append(reduce(lambda x,y: x+y,plicIntEnable))
 
+    plicIntPriorityThresholdArray = [] # iterates over number of different contexts
     # 0x0C200000
-    plicIntPriorityThreshold = tokenize(rawPlicStateFile.readline())[1:]
+    plicIntPriorityThresholdArray += tokenize(rawPlicStateFile.readline())[1:]
+    # 0x0C201000
+    plicIntPriorityThresholdArray += tokenize(rawPlicStateFile.readline())[1:]
 
 with open(outDir+'checkpoint-PLIC_INT_PRIORITY', 'w') as outFile:
     for word in plicIntPriorityArray:
         outFile.write(stripZeroes(word[2:])+'\n')
 with open(outDir+'checkpoint-PLIC_INT_ENABLE', 'w') as outFile:
-    for word in plicIntEnable:
-        outFile.write(stripZeroes(word[2:]))
+    for word in plicIntEnableArray:
+        outFile.write(stripZeroes(word)+'\n')
 with open(outDir+'checkpoint-PLIC_THRESHOLD', 'w') as outFile:
-    for word in plicIntPriorityThreshold:
+    for word in plicIntPriorityThresholdArray:
         outFile.write(stripZeroes(word[2:])+'\n')
 
 print("Finished parsing PLIC state!")
