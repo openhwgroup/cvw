@@ -56,7 +56,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   logic				  memwrite;
   logic [3:0] 		  busycount;
   
-  swbytemask swbytemask(.HSIZED, .HADDRD(A[2:0]), .ByteMask(ByteMaskM));
+  swbytemask swbytemask(.HSIZED, .HADDRD(HWADDR[2:0]), .ByteMask(ByteMaskM));
 
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
@@ -83,6 +83,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   assign HRESPRam = 0; // OK
 
   localparam ADDR_WDITH = $clog2(RANGE/8);
+  localparam OFFSET = $clog2(`XLEN/8);
   
   // Rising HREADY edge detector
   //   Indicates when ram is finishing up
@@ -96,9 +97,9 @@ module ram #(parameter BASE=0, RANGE = 65535) (
 
   bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH)
   memory(.clk(HCLK), .enaA(1'b1),
-		 .addrA(A[ADDR_WDITH+2:3]), .doutA(HREADRam),
+		 .addrA(A[ADDR_WDITH+OFFSET-1:OFFSET]), .doutA(HREADRam),
 		 .enaB(memwrite & risingHREADYRam), .weB(ByteMaskM),
-		 .addrB(HWADDR[ADDR_WDITH+2:3]), .dinB(HWDATA));
+		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA));
 		 
   
 endmodule
