@@ -39,6 +39,14 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   output logic [`XLEN-1:0] rd
 );
 
+  localparam ADDR_WDITH = $clog2(RANGE/8);
+  localparam OFFSET = $clog2(`XLEN/8);
+
+
+  bram1p1rw #(`XLEN/8, 8, ADDR_WDITH) 
+  memory(.clk, .ena(we), .we(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
+  
+/* -----\/----- EXCLUDED -----\/-----
   logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
   
   // discard bottom 2 or 3 bits of address offset within word or doubleword
@@ -55,5 +63,6 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
       if (we & ByteMask[index]) RAM[adrmsbs][8*(index+1)-1:8*index] <= #1 wd[8*(index+1)-1:8*index];
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
 endmodule
 
