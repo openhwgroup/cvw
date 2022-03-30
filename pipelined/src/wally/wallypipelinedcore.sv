@@ -34,7 +34,7 @@
 module wallypipelinedcore (
    input logic             clk, reset,
    // Privileged
-   input logic             TimerIntM, ExtIntM, ExtIntS, SwIntM,
+   input logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
    input logic [63:0]         MTIME_CLINT, 
    // Bus Interface
    input logic [`AHBW-1:0]  HRDATA,
@@ -157,7 +157,6 @@ module wallypipelinedcore (
   logic [2:0]             LSUBusSize;
   
   logic             ExceptionM;
-  logic             PendingInterruptM;
   logic             DCacheMiss;
   logic             DCacheAccess;
   logic             ICacheMiss;
@@ -170,7 +169,7 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
 
-    .ExceptionM, .PendingInterruptM,
+    .ExceptionM,
     // Fetch
     .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
     .IFUBusRead, .IFUStallF,
@@ -182,7 +181,7 @@ module wallypipelinedcore (
   
     // Mem
     .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
-    .InstrD, .InstrM, . PCM, .InstrClassM, .BPPredDirWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
     // Writeback
@@ -331,7 +330,7 @@ module wallypipelinedcore (
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
          .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-         .TimerIntM, .ExtIntM, .ExtIntS, .SwIntM,
+         .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
          .MTIME_CLINT, 
          .InstrMisalignedAdrM, .IEUAdrM,
          .SetFflagsM,
@@ -339,7 +338,7 @@ module wallypipelinedcore (
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM,
-         .ExceptionM, .PendingInterruptM, .IllegalFPUInstrE,
+         .ExceptionM, .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 

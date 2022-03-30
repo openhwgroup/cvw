@@ -47,7 +47,8 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
 
   always_ff @(posedge clk)       AdrD <= Adr;
 
-  genvar                          index;
+  integer                          index;
+/* -----\/----- EXCLUDED -----\/-----
   for(index = 0; index < WIDTH/8; index++) begin
     always_ff @(posedge clk) begin
       if (WriteEnable & ByteMask[index]) begin
@@ -55,6 +56,18 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
       end
     end
   end
+ -----/\----- EXCLUDED -----/\----- */
+
+  always_ff @(posedge clk) begin
+    if (WriteEnable) begin
+      for(index = 0; index < WIDTH/8; index++) begin
+        if(ByteMask[index]) begin
+        StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
+        end
+      end
+    end
+  end
+  
   // if not a multiple of 8, MSByte is not 8 bits long.
   if(WIDTH%8 != 0) begin
     always_ff @(posedge clk) begin
