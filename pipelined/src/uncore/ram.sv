@@ -43,6 +43,13 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   output logic             HRESPRam, HREADYRam
 );
 
+
+  // Desired changes.
+  // 1. find a way to merge read and write address into 1 port.
+  // 2. remove all unnecessary latencies. (HREADY needs to be able to constant high.)
+  // 3. implement burst.
+  // 4. remove the configurable latency.
+
   localparam MemStartAddr = BASE>>(1+`XLEN/32);
   localparam MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
   
