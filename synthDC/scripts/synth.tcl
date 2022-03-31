@@ -28,6 +28,9 @@ eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
 
+# Only for FMA class project; comment out when done
+eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
+
 # Enables name mapping
 if { $saifpower == 1 } {
     saif_map -start

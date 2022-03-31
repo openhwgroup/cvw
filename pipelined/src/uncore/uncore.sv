@@ -116,7 +116,7 @@ module uncore (
       clint clint(
         .HCLK, .HRESETn, .TIMECLK,
         .HSELCLINT, .HADDR(HADDR[15:0]), .HWRITE,
-        .HWDATA, .HREADY, .HTRANS,
+        .HWDATA, .HREADY, .HTRANS, .HSIZED,
         .HREADCLINT,
         .HRESPCLINT, .HREADYCLINT,
         .MTIME(MTIME_CLINT), 

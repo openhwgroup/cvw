@@ -37,7 +37,6 @@ module adrdecs (
   input  logic [1:0]          Size,
   output logic [8:0]          SelRegions
 );
-  logic [3:0] clintaccesssize;
 
  // Determine which region of physical memory (if any) is being accessed
  // *** eventually uncomment Access signals
@@ -45,8 +44,7 @@ module adrdecs (
   adrdec boottimdec(PhysicalAddress, `BOOTROM_BASE, `BOOTROM_RANGE, `BOOTROM_SUPPORTED, /*1'b1*/AccessRX, Size, 4'b1111, SelRegions[6]);
   adrdec timdec(PhysicalAddress, `RAM_BASE, `RAM_RANGE, `RAM_SUPPORTED, /*1'b1*/AccessRWX, Size, 4'b1111, SelRegions[5]);
 
-  assign clintaccesssize = (`XLEN==64) ? 4'b1000 : 4'b0100;
-  adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, clintaccesssize, SelRegions[4]);
+  adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, 4'b1111, SelRegions[4]);
   adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[3]);
   adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[2]);
   adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[1]);
