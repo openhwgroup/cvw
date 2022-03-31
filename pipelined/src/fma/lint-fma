@@ -5,4 +5,4 @@ export PATH=$PATH:/usr/local/bin/
 verilator=`which verilator`
 
 basepath=$(dirname $0)/..
-$verilator --lint-only --top-module fma16 fma16.sv
+$verilator --lint-only --top-module fma16 fma16.v

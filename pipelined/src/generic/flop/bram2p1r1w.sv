@@ -54,9 +54,22 @@ module bram2p1r1w
 	   input logic [ADDR_WIDTH-1:0]  addrB,
 	   input logic [DATA_WIDTH-1:0]  dinB
 	   );
-  // Core Memory
+
+
+
+  // *** TODO.
+/* -----\/----- EXCLUDED -----\/-----
+  if(`SRAM) begin
+    // instanciate SRAM model
+    // need multiple SRAM instances to map into correct dimentions.
+    // also map the byte write enables onto bit write enables.
+  end else begin // FPGA or infered flip flop memory
+    // Core Memory
+  end
+ -----/\----- EXCLUDED -----/\----- */
+
   logic [DATA_WIDTH-1:0] 			 RAM [(2**ADDR_WIDTH)-1:0];
-  integer 							 i;
+  integer                            i;
 
 /* -----\/----- EXCLUDED -----\/-----
   initial begin
@@ -128,4 +141,5 @@ module bram2p1r1w
 	  end
 	end
   end
+  
 endmodule // bytewrite_tdp_ram_rf

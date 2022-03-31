@@ -35,6 +35,7 @@ module clint (
   input  logic             HCLK, HRESETn, TIMECLK,
   input  logic             HSELCLINT,
   input  logic [15:0]      HADDR,
+  input  logic [3:0]       HSIZED,
   input  logic             HWRITE,
   input  logic [`XLEN-1:0] HWDATA,
   input  logic             HREADY,
@@ -50,6 +51,8 @@ module clint (
   logic memwrite;
   logic initTrans;
   logic [63:0] MTIMECMP;
+  logic [`XLEN/8-1:0] ByteMaskM;
+  integer             i;
 
   assign initTrans = HREADY & HSELCLINT & (HTRANS != 2'b00);
   // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
@@ -63,6 +66,9 @@ module clint (
   if (`XLEN==64) assign #2 entry = {HADDR[15:3], 3'b000};
   else           assign #2 entry = {HADDR[15:2], 2'b00}; 
   
+  swbytemask swbytemask(.HSIZED, .HADDRD(entryd[2:0]), .ByteMask(ByteMaskM));
+
+
   // DH 2/20/21: Eventually allow MTIME to run off a separate clock
   // This will require synchronizing MTIME to the system clock
   // before it is read or compared to MTIMECMP.
@@ -86,7 +92,11 @@ module clint (
         // MTIMECMP is not reset
       end else if (memwrite) begin
         if (entryd == 16'h0000) MSIP <= HWDATA[0];
-        if (entryd == 16'h4000) MTIMECMP <= HWDATA;
+        if (entryd == 16'h4000) begin
+          for(i=0;i<`XLEN/8;i++)
+            if(ByteMaskM[i])
+              MTIMECMP[i*8 +: 8] <= HWDATA[i*8 +: 8];
+        end
       end
 
 // eventually replace MTIME logic below with timereg
@@ -98,7 +108,9 @@ module clint (
         // MTIMECMP is not reset
       end else if (memwrite & entryd == 16'hBFF8) begin
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-        MTIME <= HWDATA;
+        for(i=0;i<`XLEN/8;i++)
+          if(ByteMaskM[i])
+            MTIME[i*8 +: 8] <= HWDATA[i*8 +: 8];
       end else MTIME <= MTIME + 1; 
   end else begin:clint // 32-bit
     always @(posedge HCLK) begin
@@ -118,8 +130,14 @@ module clint (
         // MTIMECMP is not reset ***?
       end else if (memwrite) begin
         if (entryd == 16'h0000) MSIP <= HWDATA[0];
-        if (entryd == 16'h4000) MTIMECMP[31:0] <= HWDATA;
-        if (entryd == 16'h4004) MTIMECMP[63:32] <= HWDATA;
+        if (entryd == 16'h4000) 
+          for(i=0;i<`XLEN/8;i++)
+            if(ByteMaskM[i])
+              MTIMECMP[i*8 +: 8] <= HWDATA[i*8 +: 8];
+        if (entryd == 16'h4004) 
+          for(i=0;i<`XLEN/8;i++)
+            if(ByteMaskM[i])
+              MTIMECMP[32 + i*8 +: 8] <= HWDATA[i*8 +: 8];
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
       end
 
@@ -130,10 +148,14 @@ module clint (
         MTIME <= 0;
         // MTIMECMP is not reset
       end else if (memwrite & (entryd == 16'hBFF8)) begin
-        MTIME[31:0] <= HWDATA;
+        for(i=0;i<`XLEN/8;i++)
+          if(ByteMaskM[i])
+            MTIME[i*8 +: 8] <= HWDATA[i*8 +: 8];
       end else if (memwrite & (entryd == 16'hBFFC)) begin
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
-        MTIME[63:32]<= HWDATA;
+        for(i=0;i<`XLEN/8;i++)
+          if(ByteMaskM[i])
+            MTIME[32 + i*8 +: 8]<= HWDATA[i*8 +: 8];
       end else MTIME <= MTIME + 1;
   end 
 
