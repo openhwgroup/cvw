@@ -176,11 +176,7 @@ module plic (
   end
 
   // pending interrupt requests
-  assign nextIntPending = 
-    (intPending |                                                   // existing pending requests
-    (requests & ~intInProgress)) &                                  // assert new requests (if they aren't already being serviced)
-    ~({`N{((entry == 24'h200004) & memread)}} << (intClaim[0]-1)) & // deassert requests that just completed
-    ~({`N{((entry == 24'h201004) & memread)}} << (intClaim[1]-1));
+  assign nextIntPending = (intPending | requests) & ~intInProgress;
   flopr #(`N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // context-dependent signals
