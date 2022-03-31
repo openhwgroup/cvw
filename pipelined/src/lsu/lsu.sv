@@ -91,7 +91,7 @@ module lsu (
   logic [2:0]               LSUFunct3M;
   logic [6:0]               LSUFunct7M;
   logic [1:0]               LSUAtomicM;
-  (* mark_debug = "true" *)  logic [`PA_BITS-1:0] 		   PreLSUPAdrM;
+  (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   PreLSUPAdrM;
   logic [11:0]              PreLSUAdrE, LSUAdrE;  
   logic                     CPUBusy;
   logic                     DCacheStallM;
@@ -132,7 +132,7 @@ module lsu (
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign IgnoreRequestTrapM = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign LSUAdrE = PreLSUAdrE; assign PreLSUAdrE = IEUAdrE[11:0]; 
-    assign PreLSUPAdrM = IEUAdrExtM[`PA_BITS-1:0];
+    assign PreLSUPAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign LSUWriteDataM = WriteDataM;
    end
@@ -151,8 +151,7 @@ module lsu (
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
       .PrivilegeModeW, .DisableTranslation,
-      .PAdr(PreLSUPAdrM),
-      .VAdr(IEUAdrM),
+      .VAdr(PreLSUPAdrM),
       .Size(LSUFunct3M[1:0]),
       .PTE,
       .PageTypeWriteVal(PageType),

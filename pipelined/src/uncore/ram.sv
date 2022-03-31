@@ -43,85 +43,28 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   output logic             HRESPRam, HREADYRam
 );
 
-
   // Desired changes.
   // 1. find a way to merge read and write address into 1 port.
   // 2. remove all unnecessary latencies. (HREADY needs to be able to constant high.)
   // 3. implement burst.
   // 4. remove the configurable latency.
 
-  localparam MemStartAddr = BASE>>(1+`XLEN/32);
-  localparam MemEndAddr = (RANGE+BASE)>>1+(`XLEN/32);
+  logic [`XLEN/8-1:0] 		  ByteMaskM;
+  logic [31:0]        HWADDR, A;
+  logic				  prevHREADYRam, risingHREADYRam;
+  logic				  initTrans;
+  logic				  memwrite;
+  logic [3:0] 		  busycount;
   
-  logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
-  logic [31:0] HWADDR, A;
+  swbytemask swbytemask(.HSIZED, .HADDRD(HWADDR[2:0]), .ByteMask(ByteMaskM));
 
-  logic        prevHREADYRam, risingHREADYRam;
-  logic        initTrans;
-  logic        memwrite;
-  logic [3:0]  busycount;
-  logic [`XLEN/8-1:0] ByteMaskM;
-
-  if(`FPGA) begin:ram
-    initial begin
-      // *** need to address this preload for fpga.  It should work as a preload file
-      // but for some reason vivado is not synthesizing the preload.
-      //$readmemh(PRELOAD, RAM);
-      RAM[0] =  64'h94e1819300002197; 
-      RAM[1] =  64'h4281420141014081; 
-      RAM[2] =  64'h4481440143814301; 
-      RAM[3] =  64'h4681460145814501; 
-      RAM[4] =  64'h4881480147814701; 
-      RAM[5] =  64'h4a814a0149814901; 
-      RAM[6] =  64'h4c814c014b814b01; 
-      RAM[7] =  64'h4e814e014d814d01; 
-      RAM[8] =  64'h0110011b4f814f01; 
-      RAM[9] =  64'h059b45011161016e; 
-      RAM[10] = 64'h0004063705fe0010; 
-      RAM[11] = 64'h05a000ef8006061b; 
-      RAM[12] = 64'h0ff003930000100f; 
-      RAM[13] = 64'h4e952e3110060e37; 
-      RAM[14] = 64'hc602829b0053f2b7; 
-      RAM[15] = 64'h2023fe02dfe312fd; 
-      RAM[16] = 64'h829b0053f2b7007e; 
-      RAM[17] = 64'hfe02dfe312fdc602; 
-      RAM[18] = 64'h4de31efd000e2023; 
-      RAM[19] = 64'h059bf1402573fdd0; 
-      RAM[20] = 64'h0000061705e20870; 
-      RAM[21] = 64'h0010029b01260613; 
-      RAM[22] = 64'h11010002806702fe; 
-      RAM[23] = 64'h84b2842ae426e822; 
-      RAM[24] = 64'h892ee04aec064505; 
-      RAM[25] = 64'h06e000ef07e000ef; 
-      RAM[26] = 64'h979334fd02905563; 
-      RAM[27] = 64'h07930177d4930204; 
-      RAM[28] = 64'h4089093394be2004; 
-      RAM[29] = 64'h04138522008905b3; 
-      RAM[30] = 64'h19e3014000ef2004; 
-      RAM[31] = 64'h64a2644260e2fe94; 
-      RAM[32] = 64'h6749808261056902; 
-      RAM[33] = 64'hdfed8b8510472783; 
-      RAM[34] = 64'h2423479110a73823; 
-      RAM[35] = 64'h10472783674910f7; 
-      RAM[36] = 64'h20058693ffed8b89; 
-      RAM[37] = 64'h05a1118737836749; 
-      RAM[38] = 64'hfed59be3fef5bc23; 
-      RAM[39] = 64'h1047278367498082; 
-      RAM[40] = 64'h67c98082dfed8b85; 
-      RAM[41] = 64'h0000808210a7a023; 
-    end // initial begin
-  end // if (FPGA)
-
-  swbytemask swbytemask(.HSIZED, .HADDRD(A[2:0]), .ByteMask(ByteMaskM));
-  
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
   // *** this seems like a weird way to use reset
   flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELRam &  HWRITE, memwrite);
   flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
-
   // busy FSM to extend READY signal
-  always_ff @(posedge HCLK, negedge HRESETn) 
+  always @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       busycount <= 0;
       HREADYRam <= #1 0;
@@ -138,47 +81,26 @@ module ram #(parameter BASE=0, RANGE = 65535) (
       end
     end
   assign HRESPRam = 0; // OK
+
+  localparam ADDR_WDITH = $clog2(RANGE/8);
+  localparam OFFSET = $clog2(`XLEN/8);
   
   // Rising HREADY edge detector
   //   Indicates when ram is finishing up
   //   Needed because HREADY may go high for other reasons,
   //   and we only want to write data when finishing up.
-  flopr #(1) prevhreadyRamreg(HCLK,~HRESETn,HREADYRam,prevHREADYRam);
+  flopenr #(1) prevhreadyRamreg(HCLK,~HRESETn, 1'b1, HREADYRam,prevHREADYRam);
   assign risingHREADYRam = HREADYRam & ~prevHREADYRam;
 
-  // Model memory read and write
-/* -----\/----- EXCLUDED -----\/-----
-  integer       index;
-
-  initial begin
-    for(index = MemStartAddr; index < MemEndAddr; index = index + 1) begin
-      RAM[index] <= {`XLEN{1'b0}};
-    end
-  end
- -----/\----- EXCLUDED -----/\----- */
-  
-  /* verilator lint_off WIDTH */
-  genvar index;
-  always_ff @(posedge HCLK)
+  always @(posedge HCLK)
     HWADDR <= #1 A;
-  if (`XLEN == 64)  begin:ramrw
-    always_ff @(posedge HCLK) 
-      HREADRam <= #1 RAM[A[31:3]];
-    for(index = 0; index < `XLEN/8; index++) begin
-      always_ff @(posedge HCLK) begin
-        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:3]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
-      end
-    end
-  end else begin 
-    always_ff @(posedge HCLK) 
-      HREADRam <= #1 RAM[A[31:2]];
-    for(index = 0; index < `XLEN/8; index++) begin
-      always_ff @(posedge HCLK) begin:ramrw
-        if (memwrite & risingHREADYRam & ByteMaskM[index]) RAM[HWADDR[31:2]][8*(index+1)-1:8*index] <= #1 HWDATA[8*(index+1)-1:8*index];
-      end
-    end
-  end
-  /* verilator lint_on WIDTH */
 
+  bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH, `FPGA)
+  memory(.clk(HCLK), .enaA(1'b1),
+		 .addrA(A[ADDR_WDITH+OFFSET-1:OFFSET]), .doutA(HREADRam),
+		 .enaB(memwrite & risingHREADYRam), .weB(ByteMaskM),
+		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA));
+		 
+  
 endmodule
-
+  

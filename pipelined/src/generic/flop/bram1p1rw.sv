@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
-// simpleram.sv
+// block ram model should be equivalent to srsam.
 //
-// Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Written: Ross Thompson
+// March 29, 2022
+// Modified: Based on UG901 vivado documentation.
 //
 // Purpose: On-chip SIMPLERAM, external to core
 // 
@@ -28,41 +29,43 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// This model actually works correctly with vivado.
+
 `include "wally-config.vh"
 
-module simpleram #(parameter BASE=0, RANGE = 65535) (
-  input  logic             clk, 
-  input  logic [31:0]      a,
-  input  logic             we,
-  input  logic [`XLEN/8-1:0] ByteMask,
-  input  logic [`XLEN-1:0] wd,
-  output logic [`XLEN-1:0] rd
-);
+module bram1p1rw
+  #(
+	//--------------------------------------------------------------------------
+	parameter NUM_COL = 8,
+	parameter COL_WIDTH = 8,
+	parameter ADDR_WIDTH = 10,
+	// Addr Width in bits : 2 *ADDR_WIDTH = RAM Depth
+	parameter DATA_WIDTH = NUM_COL*COL_WIDTH // Data Width in bits
+	//----------------------------------------------------------------------
+	) (
+	   input logic 					 clk,
+	   input logic 					 ena,
+	   input logic [NUM_COL-1:0] 	 we,
+	   input logic [ADDR_WIDTH-1:0]  addr,
+	   output logic [DATA_WIDTH-1:0] dout,
+	   input logic [DATA_WIDTH-1:0]  din
+	   );
+  // Core Memory
+  logic [DATA_WIDTH-1:0] 			 RAM [(2**ADDR_WIDTH)-1:0];
+  integer 							 i;
 
-  localparam ADDR_WDITH = $clog2(RANGE/8);
-  localparam OFFSET = $clog2(`XLEN/8);
-
-
-  bram1p1rw #(`XLEN/8, 8, ADDR_WDITH) 
-  memory(.clk, .ena(we), .we(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
-  
-/* -----\/----- EXCLUDED -----\/-----
-  logic [`XLEN-1:0] RAM[BASE>>(1+`XLEN/32):(RANGE+BASE)>>1+(`XLEN/32)];
-  
-  // discard bottom 2 or 3 bits of address offset within word or doubleword
-  localparam adrlsb = (`XLEN==64) ? 3 : 2;
-  logic [31:adrlsb] adrmsbs;
-  assign adrmsbs = a[31:adrlsb];
-
-  always_ff @(posedge clk)
-    rd <= RAM[adrmsbs];
-
-  genvar            index;
-  for(index = 0; index < `XLEN/8; index++) begin
-    always_ff @(posedge clk) begin
-      if (we & ByteMask[index]) RAM[adrmsbs][8*(index+1)-1:8*index] <= #1 wd[8*(index+1)-1:8*index];
-    end
+  initial begin
+	$readmemh("big64.txt", RAM);
   end
- -----/\----- EXCLUDED -----/\----- */
-endmodule
 
+  always @ (posedge clk) begin
+	dout <= RAM[addr];    
+	if(ena) begin
+	  for(i=0;i<NUM_COL;i=i+1) begin
+		if(we[i]) begin
+		  RAM[addr][i*COL_WIDTH +: COL_WIDTH] <= din[i*COL_WIDTH +:COL_WIDTH];
+		end
+	  end
+	end
+  end
+endmodule // bytewrite_tdp_ram_rf
