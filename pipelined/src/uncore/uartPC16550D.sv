@@ -308,7 +308,10 @@ module uartPC16550D(
         if (fifoenabled) begin
           if (rxfifotail+1 < rxfifohead) rxfifotail <= #1 rxfifotail + 1;
           if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
-        end else rxdataready <= #1 0;
+        end else begin
+          rxdataready <= #1 0;
+          RXBR <= #1 {0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
+        end
       end else if (~MEMWb & A == 3'b010)  // writes to FIFO Control Register
         if (Din[1] | ~Din[0]) begin // rx FIFO reset or FIFO disable clears FIFO contents
           rxfifohead <= #1 0; rxfifotail <= #1 0;

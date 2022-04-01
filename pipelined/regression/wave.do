@@ -27,7 +27,6 @@ add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
 add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/PendingInterruptM
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/hzu/FlushF
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushD
 add wave -noupdate -group HDU -group Flush -color Yellow /testbench/dut/core/FlushE
@@ -92,7 +91,7 @@ add wave -noupdate -group Bpred -group {branch update selection inputs} /testben
 add wave -noupdate -group Bpred -group {branch update selection inputs} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BPClassWrongNonCFI
 add wave -noupdate -group Bpred -group {branch update selection inputs} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BPClassRightBPRight
 add wave -noupdate -group Bpred -group {branch update selection inputs} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BPClassRightBPWrong
-add wave -noupdate -group Bpred -radix hexadecimal -childformat {{{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[6]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[5]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[4]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[3]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[2]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[1]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[0]} -radix binary}} -subitemconfig {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[6]} {-height 16 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[5]} {-height 16 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[4]} {-height 16 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[3]} {-height 16 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[2]} {-height 16 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[1]} {-height 16 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[0]} {-height 16 -radix binary}} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel
+add wave -noupdate -group Bpred -radix hexadecimal -childformat {{{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[6]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[5]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[4]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[3]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[2]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[1]} -radix binary} {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[0]} -radix binary}} -subitemconfig {{/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[6]} {-height 17 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[5]} {-height 17 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[4]} {-height 17 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[3]} {-height 17 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[2]} {-height 17 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[1]} {-height 17 -radix binary} {/testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel[0]} {-height 17 -radix binary}} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRMuxSel
 add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNext
 add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRUpdateEN
 add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PHTUpdateAdr
@@ -214,7 +213,6 @@ add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SelAdr
-add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/SelReplayCPURequest
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrE
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrM
 add wave -noupdate -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/RAdr
@@ -383,7 +381,6 @@ add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/GPIOIntr
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HREADPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HRESPPLIC
 add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/HREADYPLIC
-add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/ExtIntM
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intClaim
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intEn
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intInProgress
@@ -391,11 +388,11 @@ add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/pl
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intPriority
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intThreshold
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/nextIntPending
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/pendingArray
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/pendingMaxP
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/pendingPGrouped
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/pendingRequestsAtMaxP
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/requests
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/irqMatrix
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/priorities_with_irqs
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/max_priority_with_irqs
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/irqs_at_max_priority
 add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/threshMask
 add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/HCLK
 add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/HSELGPIO
@@ -425,21 +422,21 @@ add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIME
 add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIMECMP
 add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/TimerIntM
 add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/SwIntM
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HCLK
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HRESETn
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HSELUART
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HADDR
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HWRITE
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HWDATA
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HREADUART
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HRESPUART
-add wave -noupdate -group uart -group {Bus Connection} /testbench/dut/uncore/uart/uart/HREADYUART
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/LSR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/MCR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/MSR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/RBR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/TXHR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/LCR
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HCLK
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HRESETn
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HSELUART
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HADDR
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HWRITE
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HWDATA
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HREADUART
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HRESPUART
+add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HREADYUART
+add wave -noupdate -group uart -expand -group Registers -expand /testbench/dut/uncore/uart/uart/u/LSR
+add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uart/uart/u/MCR
+add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uart/uart/u/MSR
+add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uart/uart/u/RBR
+add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uart/uart/u/TXHR
+add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uart/uart/u/LCR
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/INTR
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxstate
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/txstate
@@ -448,6 +445,11 @@ add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/txbitsexpected
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxbitsreceived
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxbitsexpected
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxdata
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxoverrunerr
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxdataready
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxdataavailintr
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/RXBR
+add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/squashRXerrIP
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxshiftreg
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/SOUTbit
 add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/SINsync
@@ -526,4 +528,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {496 ns}
+WaveRestoreZoom {0 ns} {208 ns}
