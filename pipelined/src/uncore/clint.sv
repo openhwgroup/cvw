@@ -32,25 +32,25 @@
 `include "wally-config.vh"
 
 module clint (
-  input  logic             HCLK, HRESETn, TIMECLK,
-  input  logic             HSELCLINT,
-  input  logic [15:0]      HADDR,
-  input  logic [3:0]       HSIZED,
-  input  logic             HWRITE,
-  input  logic [`XLEN-1:0] HWDATA,
-  input  logic             HREADY,
-  input  logic [1:0]       HTRANS,
+  input logic 			   HCLK, HRESETn, TIMECLK,
+  input logic 			   HSELCLINT,
+  input logic [15:0] 	   HADDR,
+  input logic [3:0] 	   HSIZED,
+  input logic 			   HWRITE,
+  input logic [`XLEN-1:0]  HWDATA,
+  input logic 			   HREADY,
+  input logic [1:0] 	   HTRANS,
   output logic [`XLEN-1:0] HREADCLINT,
-  output logic             HRESPCLINT, HREADYCLINT,
-  output logic [63:0]      MTIME, 
-  output logic             TimerIntM, SwIntM);
+  output logic 			   HRESPCLINT, HREADYCLINT,
+  (* mark_debug = "true" *) output logic [63:0] MTIME, 
+  output logic 			   TimerIntM, SwIntM);
 
   logic        MSIP;
 
   logic [15:0] entry, entryd;
   logic memwrite;
   logic initTrans;
-  logic [63:0] MTIMECMP;
+  (* mark_debug = "true" *)    logic [63:0] MTIMECMP;
   logic [`XLEN/8-1:0] ByteMaskM;
   integer             i;
 
