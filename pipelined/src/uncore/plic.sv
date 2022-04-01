@@ -57,16 +57,16 @@ module plic (
   input  logic             UARTIntr,GPIOIntr,
   output logic [`XLEN-1:0] HREADPLIC,
   output logic             HRESPPLIC, HREADYPLIC,
-  output logic             MExtIntM, SExtIntM);
+    (* mark_debug = "true" *)  output logic             MExtIntM, SExtIntM);
 
   logic memwrite, memread, initTrans;
   logic [23:0] entry, entryd;
   logic [31:0] Din, Dout;
 
   // context-independent signals
-  logic [`N:1]      requests;
-  logic [`N:1][2:0] intPriority;
-  logic [`N:1]      intInProgress, intPending, nextIntPending;
+    (* mark_debug = "true" *)  logic [`N:1]      requests;
+    (* mark_debug = "true" *)  logic [`N:1][2:0] intPriority;
+    (* mark_debug = "true" *)  logic [`N:1]      intInProgress, intPending, nextIntPending;
   
   // context-dependent signals
   logic [`C-1:0][2:0]       intThreshold;
@@ -176,11 +176,7 @@ module plic (
   end
 
   // pending interrupt requests
-  assign nextIntPending = 
-    (intPending |                                                   // existing pending requests
-    (requests & ~intInProgress)) &                                  // assert new requests (if they aren't already being serviced)
-    ~({`N{((entry == 24'h200004) & memread)}} << (intClaim[0]-1)) & // deassert requests that just completed
-    ~({`N{((entry == 24'h201004) & memread)}} << (intClaim[1]-1));
+  assign nextIntPending = (intPending | requests) & ~intInProgress;
   flopr #(`N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // context-dependent signals
