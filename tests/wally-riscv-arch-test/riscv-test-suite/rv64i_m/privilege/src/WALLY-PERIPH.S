@@ -41,11 +41,12 @@ trap_handler: #####
 ###################
 ###################
     # save registers
-    addi sp, sp, 0x20
+    addi sp, sp, 0x28
     sw t0, 0x00(sp)
     sw t1, 0x08(sp)
     sw t2, 0x10(sp)
     sw t3, 0x18(sp)
+    sw t4, 0x20(sp)
 
     # ===================================
     # ===== Signature Output Format =====
@@ -56,7 +57,7 @@ trap_handler: #####
     #
     # <offset>: <contents>
     # 0x00: test ID = 0x<group_num>BEEF<intr_num>
-    # 0x04: mcause (low)  = 0x0000000B
+    # 0x04: mcause (low)  = 0x0000000B (MEIP) or 0x00000009 (SEIP)
     # 0x08: mcause (high) = 0x80000000
     # ----- If GPIO -----
     # 0x0C: claim ID = 3
@@ -87,18 +88,26 @@ trap_handler: #####
     add t0, t0, a1
     sw t0, 0x00(s0)
 
-    # 0x04: mcause (low)  = 0x0000000B
+    # 0x04: mcause (low)  = 0x0000000B (MEIP) or 0x00000009 (SEIP)
     # 0x08: mcause (high) = 0x80000000
-    #    Expect interrupt from  src 11 (machine external interrupt)
-    csrrc t1, mcause, x0
-    sw t1, 0x04(s0)
-    srli t1,t1,32
-    sw t1, 0x08(s0)
+    csrrc t0, mcause, x0
+    andi t1, t0, 0x7FF
+    sw t0, 0x04(s0)
+    srli t0,t0,32
+    sw t0, 0x08(s0)
+    # MEIP or SEIP?
+    #     MEIP is on context 0   
+    li t4, 0x0C200004
+    li t0, 0xB 
+    beq t1, t0, meip
+    #     SEIP is on context 1   
+    li t4, 0x0C201004
+    meip:
 
-    # 0x: claim ID
+    # 0x0C: claim ID
     #    3: GPIO
     #    A: UART
-    li t0, 0x0C200004
+    mv t0, t4
     lw t1, 0(t0)
     sw t1, 0x0C(s0)
     li t2, 0xA
@@ -150,7 +159,7 @@ trap_handler: #####
         # signal to main code that gpio was serviced
         ori a0, a0, 0b00001000
         # signal to plic that gpio was serviced
-        li t0, 0x0C200004
+        mv t0, t4
         li t1, 3
         sw t1, 0(t0)
         j trap_handler_end
@@ -181,7 +190,7 @@ trap_handler: #####
         # signal to main code that uart was serviced
         ori a0, a0, 0b00010000
         # signal to plic that uart was serviced
-        li t0, 0x0C200004
+        mv t0, t4
         li t1, 0xA
         sw t1, 0(t0)
     
@@ -193,7 +202,8 @@ trap_handler: #####
     ld t1, 0x08(sp)
     ld t2, 0x10(sp)
     ld t3, 0x18(sp)
-    addi sp, sp, SEXT_IMM(-0x20)
+    ld t4, 0x20(sp)
+    addi sp, sp, SEXT_IMM(-0x28)
     mret
 
 ################
@@ -267,7 +277,7 @@ main_code: #####
     # set MEIE
     li t0, 0x800
     csrrs x0, mie, t0
-Intr01BEEF01:
+Intr01BEEF00:
     # UART TX 'h'
     li t0, 0x10000000
     li t1, 'h'
@@ -276,7 +286,7 @@ Intr01BEEF01:
     li t1, 0b00010000
     1: bne t1,a0,1b
     li a0, 0
-Intr01BEEF02:
+Intr01BEEF01:
     # GPIO raise pin 19
     li t0, 0x10060000
     li t1, 0x00080000
@@ -286,12 +296,12 @@ Intr01BEEF02:
     1: bne t1,a0,1b
     li a0, 0
     # Now let's go bonkers and trigger both!
-Intr01BEEF03:
+Intr01BEEF02:
     # TX 'e'
     li t0, 0x10000000
     li t1, 'e'
     sb t1, 0(t0)
-Intr01BEEF04:
+Intr01BEEF03:
     # GPIO lower pin 19 raise pin 0
     li t0, 0x10060000
     li t1, 0x00000001
@@ -785,6 +795,91 @@ Intr03BEEF1A:
     sb t1, 0(t0)
     # wait to finish
     li t1, 0b00010000
+    1: bne t1,a0,1b
+    li a0, 0
+
+    ####################################################
+    ##### Test 4 - Signs of Life on PLIC Context 1 #####
+    ####################################################
+    li a1, 0x04beef00 # group ID 
+    # clear MEIE (good to turn off while configuring peripherals)
+    li t0, 0x800
+    csrrc x0, mie, t0
+    # ========== Configure PLIC ==========
+    # priority threshold = 0
+    li t0, 0xC200000
+    li t1, 0
+    sw t1, 0(t0)
+    # source 3 (GPIO) priority = 6
+    li t0, 0xC000000
+    li t1, 6
+    sw t1, 0x0C(t0)
+    # source 0xA (UART) priority = 7
+    li t1, 7
+    sw t1, 0x28(t0)
+    # disable sources 3,0xA on context 0
+    li t0, 0x0C002000
+    li t1, 0 
+    sw t1, 0(t0)
+    # enable sources 3,0xA on context 1
+    li t0, 0x0C002080
+    li t1, 0b10000001000  
+    sw t1, 0(t0)
+    # ========== Configure UART ==========
+    # MCR: Loop = 1
+    li t0, 0x10000000
+    li t1, 0b10000
+    sb t1, 4(t0)
+    # LCR: Use 8 data bits plus odd parity bit
+    li t1, 0b00001011
+    sb t1, 3(t0)
+    # IER: Enable Received Data Available Interrupt
+    li t1, 0x01
+    sb t1, 1(t0)
+    # ========== Configure GPIO ==========
+    # raise all input_en
+    li t0, 0x10060000
+    li t1, 0xFFFFFFFF
+    sw t1, 0x04(t0)
+    # raise all output_en
+    sw t1, 0x08(t0)
+    # raise all input_en
+    sw t1, 0x18(t0)
+    # ========== Execute Test ==========
+    # set MEIE and SEIE
+    li t0, 0xA00
+    csrrs x0, mie, t0
+Intr04BEEF1B:
+    # UART TX 'e'
+    li t0, 0x10000000
+    li t1, 'e'
+    sb t1, 0(t0)
+    # wait to finish
+    li t1, 0b00010000
+    1: bne t1,a0,1b
+    li a0, 0
+Intr04BEEF1C:
+    # GPIO raise pin 19
+    li t0, 0x10060000
+    li t1, 0x00080000
+    sw t1, 0x0C(t0)
+    # wait to finish
+    li t1, 0b00001000
+    1: bne t1,a0,1b
+    li a0, 0
+    # Now let's go bonkers and trigger both!
+Intr04BEEF1D:
+    # TX 'n'
+    li t0, 0x10000000
+    li t1, 'n'
+    sb t1, 0(t0)
+Intr04BEEF1E:
+    # GPIO lower pin 19 raise pin 0
+    li t0, 0x10060000
+    li t1, 0x00000001
+    sw t1, 0x0C(t0)
+    # wait to finish
+    li t1, 0b00011000
     1: bne t1,a0,1b
     li a0, 0
     # ---------------------------------------------------------------------------------------------
