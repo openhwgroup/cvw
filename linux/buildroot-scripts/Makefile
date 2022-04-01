@@ -19,10 +19,10 @@ disassemble:
 	# -cd ${DIS}/rootfs; cpio -id --nonmatching 'dev/console' < ../../rootfs.cpio
 
 ${DIS}/fw_jump.objdump: ${IMAGES}/fw_jump.elf
-	riscv64-unknown-elf-objdump -D ${IMAGES}/fw_jump.elf >> ${DIS}/fw_jump.objdump
+	riscv64-unknown-elf-objdump -S ${IMAGES}/fw_jump.elf >> ${DIS}/fw_jump.objdump
 
 ${DIS}/vmlinux.objdump: ${IMAGES}/vmlinux
-	riscv64-unknown-elf-objdump -D ${IMAGES}/vmlinux >> ${DIS}/vmlinux.objdump
+	riscv64-unknown-elf-objdump -S ${IMAGES}/vmlinux >> ${DIS}/vmlinux.objdump
 
 ${DIS}/vmlinux.objdump.addr: ${DIS}/vmlinux.objdump
 	-cd ${DIS}; extractFunctionRadix.sh vmlinux.objdump
