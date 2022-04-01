@@ -78,8 +78,8 @@ module bram2p1r1w
   end
  -----/\----- EXCLUDED -----/\----- */
 
-  initial begin
-	if(PRELOAD_ENABLED) begin
+  if(PRELOAD_ENABLED) begin
+    initial begin
       RAM[0] =  64'h94e1819300002197; 
       RAM[1] =  64'h4281420141014081; 
       RAM[2] =  64'h4481440143814301; 
