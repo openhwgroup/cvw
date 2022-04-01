@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/ross/repos/riscv-wally/fpga/generator/WallyFPGA.hw/hw_1/wave/hw_ila_data_1/hw_ila_data_1.wdb" id="1">
+         <top_modules>
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="0fs"></ZoomStartTime>
+      <ZoomEndTime time="12980fs"></ZoomEndTime>
+      <Cursor1Time time="6221fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="452"></NameColumnWidth>
+      <ValueColumnWidth column_width="149"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="11" />
+   <wave_markers>
+   </wave_markers>
+   <wvobject type="array" fp_name="wallypipelinedsoc/core/PCM">
+      <obj_property name="DisplayName">FullPathName</obj_property>
+      <obj_property name="ElementShortName">wallypipelinedsoc/core/PCM[63:0]</obj_property>
+      <obj_property name="ObjectShortName">PCM[63:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="LABELRADIX">true</obj_property>
+      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+   </wvobject>
+   <wvobject type="array" fp_name="wallypipelinedsoc/core/InstrM">
+      <obj_property name="DisplayName">FullPathName</obj_property>
+      <obj_property name="ElementShortName">wallypipelinedsoc/core/InstrM[31:0]</obj_property>
+      <obj_property name="ObjectShortName">InstrM[31:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
+      <obj_property name="LABELRADIX">true</obj_property>
+      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="wallypipelinedsoc/core/InstrValidM">
+      <obj_property name="DisplayName">FullPathName</obj_property>
+      <obj_property name="ElementShortName">wallypipelinedsoc/core/InstrValidM</obj_property>
+      <obj_property name="ObjectShortName">InstrValidM</obj_property>
+      <obj_property name="LABELRADIX">true</obj_property>
+      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="wallypipelinedsoc/core/TrapM">
+      <obj_property name="DisplayName">FullPathName</obj_property>
+      <obj_property name="ElementShortName">wallypipelinedsoc/core/TrapM</obj_property>
+      <obj_property name="ObjectShortName">TrapM</obj_property>
+      <obj_property name="LABELRADIX">true</obj_property>
+      <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+   </wvobject>
+   <wvobject type="group" fp_name="group468">
+      <obj_property name="label">CPU to LSU</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/IEUAdrM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/IEUAdrM[63:0]</obj_property>
+         <obj_property name="ObjectShortName">IEUAdrM[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/MemRWM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/MemRWM[1:0]</obj_property>
+         <obj_property name="ObjectShortName">MemRWM[1:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/ReadDataM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/ReadDataM[63:0]</obj_property>
+         <obj_property name="ObjectShortName">ReadDataM[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/WriteDataM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/WriteDataM[63:0]</obj_property>
+         <obj_property name="ObjectShortName">WriteDataM[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group469">
+      <obj_property name="label">xIP</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIP_REGW_5">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIP_REGW_5[9:9]</obj_property>
+         <obj_property name="ObjectShortName">MIP_REGW_5[9:9]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIP_REGW">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIP_REGW[9:9]</obj_property>
+         <obj_property name="ObjectShortName">SIP_REGW[9:9]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group470">
+      <obj_property name="label">PLIC</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/uncore/plic.plic/requests">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/plic.plic/requests[12:1]</obj_property>
+         <obj_property name="ObjectShortName">requests[12:1]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/uncore/plic.plic/intPending">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/plic.plic/intPending[12:1]</obj_property>
+         <obj_property name="ObjectShortName">intPending[12:1]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/uncore/plic.plic/intInProgress">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/plic.plic/intInProgress[12:1]</obj_property>
+         <obj_property name="ObjectShortName">intInProgress[12:1]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group471">
+      <obj_property name="label">interrupts</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/MPendingIntsM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/MPendingIntsM[11:0]</obj_property>
+         <obj_property name="ObjectShortName">MPendingIntsM[11:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SPendingIntsM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SPendingIntsM[11:0]</obj_property>
+         <obj_property name="ObjectShortName">SPendingIntsM[11:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/core/priv.priv/InterruptM">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/InterruptM</obj_property>
+         <obj_property name="ObjectShortName">InterruptM</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group463">
+      <obj_property name="label">LSU to Bus</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/core/lsu/LSUBusRead">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusRead</obj_property>
+         <obj_property name="ObjectShortName">LSUBusRead</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/core/lsu/LSUBusWrite">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusWrite</obj_property>
+         <obj_property name="ObjectShortName">LSUBusWrite</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/LSUBusAdr">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusAdr[31:0]</obj_property>
+         <obj_property name="ObjectShortName">LSUBusAdr[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/LSUBusSize">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusSize[1:0]</obj_property>
+         <obj_property name="ObjectShortName">LSUBusSize[1:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/LSUBusHWDATA">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusHWDATA[63:0]</obj_property>
+         <obj_property name="ObjectShortName">LSUBusHWDATA[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/LSUBusHRDATA">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusHRDATA[63:0]</obj_property>
+         <obj_property name="ObjectShortName">LSUBusHRDATA[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/core/lsu/LSUBusAck">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUBusAck</obj_property>
+         <obj_property name="ObjectShortName">LSUBusAck</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group488">
+      <obj_property name="label">xIE</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_1">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_1[1:1]</obj_property>
+         <obj_property name="ObjectShortName">MIE_REGW_1[1:1]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_2">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_2[3:3]</obj_property>
+         <obj_property name="ObjectShortName">MIE_REGW_2[3:3]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_3">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_3[5:5]</obj_property>
+         <obj_property name="ObjectShortName">MIE_REGW_3[5:5]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_4">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_4[7:7]</obj_property>
+         <obj_property name="ObjectShortName">MIE_REGW_4[7:7]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_5">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW_5[9:9]</obj_property>
+         <obj_property name="ObjectShortName">MIE_REGW_5[9:9]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW[11:11]</obj_property>
+         <obj_property name="ObjectShortName">MIE_REGW[11:11]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIE_REGW">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIE_REGW[9:9]</obj_property>
+         <obj_property name="ObjectShortName">SIE_REGW[9:9]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_1">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_1[1:1]</obj_property>
+         <obj_property name="ObjectShortName">SIE_REGW_1[1:1]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_2">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_2[5:5]</obj_property>
+         <obj_property name="ObjectShortName">SIE_REGW_2[5:5]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group487">
+      <obj_property name="label">sdc</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_ERROR_Q">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_ERROR_Q</obj_property>
+         <obj_property name="ObjectShortName">r_DAT_ERROR_Q</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[4:0]</obj_property>
+         <obj_property name="ObjectShortName">r_curr_state[4:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[3:0]</obj_property>
+         <obj_property name="ObjectShortName">r_curr_state[3:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[3:0]</obj_property>
+         <obj_property name="ObjectShortName">r_curr_state[3:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/i_ERROR_CRC16">
+         <obj_property name="DisplayName">FullPathName</obj_property>
+         <obj_property name="ElementShortName">wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/i_ERROR_CRC16</obj_property>
+         <obj_property name="ObjectShortName">i_ERROR_CRC16</obj_property>
+         <obj_property name="LABELRADIX">true</obj_property>
+         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>
