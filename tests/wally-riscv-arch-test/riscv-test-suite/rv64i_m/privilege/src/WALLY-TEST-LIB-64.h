@@ -117,7 +117,7 @@ cause_ecall:
 cause_time_interrupt:
     // The following code works for both RV32 and RV64.  
     // RV64 alone would be easier using double-word adds and stores
-    li x28, 0x100          // Desired offset from the present time
+    li x28, 0x30          // Desired offset from the present time
     la x29, 0x02004000    // MTIMECMP register in CLINT
     la x30, 0x0200BFF8    // MTIME register in CLINT
     lw x7, 0(x30)         // low word of MTIME
@@ -158,9 +158,7 @@ end_trap_triggers:
 
     //   Set up the exception Handler, keeping the original handler in x4.
     la x1, trap_handler_\MODE\()
-.if (\VECTORED\() == 1)
-    ori x1, x1, 0x1 // set mode field of tvec to 1, forcing vectored interrupts
-.endif
+    ori x1, x1, \VECTORED // set mode field of tvec to VECTORED, which will force vectored interrupts if it's 1.
 
 .if (\MODE\() == m)
     csrrw x4, \MODE\()tvec, x1  // x4 reserved for "default" trap handler address that needs to be restored before halting this test.
@@ -171,6 +169,10 @@ end_trap_triggers:
     li a0, 0
     li a1, 0 
     li a2, 0 // reset trap handler inputs to zero
+
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    li x30, 0xFFFFFFFF
+    sd x30, 0(x29) // set mtimecmp to 0xFFFFFFFF to really make sure time interrupts don't go off immediately after being enabled
 
     j trap_handler_end_\MODE\() // skip the trap handler when it is being defined.
 
@@ -214,17 +216,17 @@ trap_handler_\MODE\():
     // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
     // otherwise, a vectored interrupt handler should jump to trap_handler_\MODE\() + 4 * Interrupt cause code
     // No matter the value of VECTORED, exceptions (not interrupts) are handled in an unvecotred way
-    j s_soft_interrupt_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
+    j soft_interrupt_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
     j segfault_\MODE\()            // 2: reserved
-    j m_soft_interrupt_\MODE\()    // 3: breakpoint
+    j soft_interrupt_\MODE\()    // 3: breakpoint
     j segfault_\MODE\()            // 4: reserved
-    j s_time_interrupt_\MODE\()    // 5: load access fault
+    j time_interrupt_\MODE\()    // 5: load access fault
     j segfault_\MODE\()            // 6: reserved
-    j m_time_interrupt_\MODE\()    // 7: store access fault
+    j time_interrupt_\MODE\()    // 7: store access fault
     j segfault_\MODE\()            // 8: reserved
-    j s_ext_interrupt_\MODE\()     // 9: ecall from S-mode
+    j ext_interrupt_\MODE\()     // 9: ecall from S-mode
     j segfault_\MODE\()            // 10: reserved
-    j m_ext_interrupt_\MODE\()     // 11: ecall from M-mode
+    j ext_interrupt_\MODE\()     // 11: ecall from M-mode
     // 12 through >=16 are reserved or designated for platform use
 
 trap_unvectored_\MODE\():
@@ -245,12 +247,11 @@ trap_unvectored_\MODE\():
     addi x16, x16, 8
 
     csrr x1, \MODE\()status
-.if (\MODE\() == m) // Taking traps in different modes means we want to get different bits from the status register.
-    li x5, 0x1888 // mask bits to select MPP, MPIE, and MIE.
-.else
-    li x5, 0x122 // mask bits to select SPP, SPIE, and SIE.
-.endif
-
+    .if (\MODE\() == m) // Taking traps in different modes means we want to get different bits from the status register.
+        li x5, 0x1888 // mask bits to select MPP, MPIE, and MIE.
+    .else
+        li x5, 0x122 // mask bits to select SPP, SPIE, and SIE.
+    .endif
     and x5, x5, x1
     sd x5, 0(x16) // store masked out status bits to the output
     addi x6, x6, 8
@@ -265,7 +266,6 @@ trap_unvectored_\MODE\():
     and x5, x5, x1
     bnez x5, trapreturn_\MODE\()   // return from interrupt
     // Other trap handling is specified in the vector Table
-    csrr x1, \MODE\()cause
     slli x1, x1, 3      // multiply cause by 8 to get offset in vector Table
     la x5, exception_vector_table_\MODE\()
     add x5, x5, x1      // compute address of vector in Table
@@ -345,7 +345,7 @@ trapreturn_finished_\MODE\():
     csrw \MODE\()epc, x1       // update the epc with address of next instruction
     ld x5, -16(sp)      // restore registers from stack before returning
     ld x1, -8(sp)
-    csrw \MODE\()ip, 0x0 // clear interrupt pending register to indicate interrupt has been handled
+    // *** this should be handled by indirectly clearing this bit csrw \MODE\()ip, 0x0 // clear interrupt pending register to indicate interrupt has been handled
     \MODE\()ret  // return from trap
 
 ecallhandler_\MODE\():
@@ -376,7 +376,7 @@ ecallhandler_changetosupervisormode_\MODE\():
 ecallhandler_changetousermode_\MODE\():
     // Force mstatus.MPP (bits 12:11) to 00 to enter user mode after mret
     li x1, 0b1100000000000  
-    csrc mstatus, x1
+    csrc \MODE\()status, x1
     j trapreturn_\MODE\()
 
 instrpagefault_\MODE\():
@@ -400,7 +400,7 @@ addr_misaligned_\MODE\():
 breakpt_\MODE\():
     j trapreturn_\MODE\()
 
-s_soft_interrupt_\MODE\(): // these labels are here to make sure the code compiles, but don't actually do anything yet
+soft_interrupt_\MODE\():
     li x5, 0x7EC // write 0x7EC (looks like VEC) to the output before the mcause and extras to indicate that this trap was handled with a vector table. 
     sd x5, 0(x16)
     addi x6, x6, 8
@@ -409,30 +409,19 @@ s_soft_interrupt_\MODE\(): // these labels are here to make sure the code compil
     sw x0, 0(x28)
     j trap_unvectored_\MODE\()
 
-m_soft_interrupt_\MODE\():
+time_interrupt_\MODE\():
     li x5, 0x7EC
     sd x5, 0(x16)
     addi x6, x6, 8
     addi x16, x16, 8
-    la x28, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
-    sw x0, 0(x28)
+
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    li x30, 0xFFFFFFFF
+    sd x30, 0(x29) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
+
     j trap_unvectored_\MODE\()
 
-s_time_interrupt_\MODE\():
-    li x5, 0x7EC
-    sd x5, 0(x16)
-    addi x6, x6, 8
-    addi x16, x16, 8
-    j trap_unvectored_\MODE\()
-
-m_time_interrupt_\MODE\():
-    li x5, 0x7EC
-    sd x5, 0(x16)
-    addi x6, x6, 8
-    addi x16, x16, 8
-    j trap_unvectored_\MODE\()
-
-s_ext_interrupt_\MODE\():
+ext_interrupt_\MODE\():
     li x5, 0x7EC
     sd x5, 0(x16)
     addi x6, x6, 8
@@ -441,17 +430,6 @@ s_ext_interrupt_\MODE\():
     sw x0, 8(x28) // disable the first pin as an output
     sw x0, 40(x28) // write a 0 to the first output pin (reset interrupt)
     j trap_unvectored_\MODE\()
-
-m_ext_interrupt_\MODE\():
-    li x5, 0x7EC
-    sd x5, 0(x16)
-    addi x6, x6, 8
-    addi x16, x16, 8
-    li x28, 0x10060000 // reset interrupt by clearing all the GPIO bits
-    sw x0, 8(x28) // disable the first pin as an output
-    sw x0, 40(x28) // write a 0 to the first output pin (reset interrupt)
-    j trap_unvectored_\MODE\()
-
 
     // Table of trap behavior
     // lists what to do on each exception (not interrupts)
@@ -719,87 +697,6 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     addi x6, x6, 8
     addi x16, x16, 8 
 .endm
-
-// // The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
-// //      This effectively includes everything that isn't to do with page faults (virtual memory)
-
-// .macro CAUSE_INSTR_ADDR_MISALIGNED
-//     // cause a misaligned address trap
-//     auipc x28, 0      // get current PC, which is aligned
-//     addi x28, x28, 0x1  // add 1 to pc to create misaligned address
-//     jalr x28 // cause instruction address midaligned trap
-// .endm
-
-// .macro CAUSE_INSTR_ACCESS
-//     la x28, 0x0 // address zero is an address with no memory
-//     jalr x28 // cause instruction access trap
-// .endm
-
-// .macro CAUSE_ILLEGAL_INSTR
-//     .word 0x00000000 // a 32 bit zros is an illegal instruction
-// .endm
-
-// .macro CAUSE_BREAKPNT // ****
-//     ebreak
-// .endm
-
-// .macro CAUSE_LOAD_ADDR_MISALIGNED
-//     auipc x28, 0      // get current PC, which is aligned
-//     addi x28, x28, 1
-//     lw x29, 0(x28)    // load from a misaligned address
-// .endm
-
-// .macro CAUSE_LOAD_ACC
-//     la x28, 0         // 0 is an address with no memory
-//     lw x29, 0(x28)    // load from unimplemented address
-// .endm
-
-// .macro CAUSE_STORE_ADDR_MISALIGNED
-//     auipc x28, 0      // get current PC, which is aligned
-//     addi x28, x28, 1
-//     sw x29, 0(x28)     // store to a misaligned address
-// .endm
-
-// .macro CAUSE_STORE_ACC 
-//     la x28, 0         // 0 is an address with no memory
-//     sw x29, 0(x28)     // store to unimplemented address
-// .endm
-
-// .macro CAUSE_ECALL
-//     // *** ASSUMES you have already gone to the mode you need to call this from.
-//     ecall
-// .endm
-
-// .macro CAUSE_TIME_INTERRUPT
-//     // The following code works for both RV32 and RV64.  
-//     // RV64 alone would be easier using double-word adds and stores
-//     li x28, 0x100          // Desired offset from the present time
-//     la x29, 0x02004000    // MTIMECMP register in CLINT
-//     la x30, 0x0200BFF8    // MTIME register in CLINT
-//     lw x7, 0(x30)         // low word of MTIME
-//     lw x31, 4(x30)         // high word of MTIME
-//     add x28, x7, x28       // add desired offset to the current time
-//     bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
-//     addi x31, x31, 1       // if wrap, increment most significant word
-//     sw x31,4(x29)          // store into most significant word of MTIMECMP
-// nowrap:
-//     sw x28, 0(x29)         // store into least significant word of MTIMECMP
-//     loop: j loop         // wait until interrupt occurs
-// .endm
-
-// .macro CAUSE_SOFT_INTERRUPT
-//     la x28, 0x02000000      // MSIP register in CLINT
-//     li x29, 1               // 1 in the lsb
-//     sw x29, 0(x28)          // Write MSIP bit
-// .endm
-
-// .macro CAUSE_EXT_INTERRUPT
-//     li x28, 0x10060000 // load base GPIO memory location
-//     li x29, 0x1
-//     sw x29, 8(x28) // enable the first pin as an output
-//     sw x29, 28(x28) // set first pin to high interrupt enable
-//     sw x29, 40(x28) // write a 1 to the first output pin (cause interrupt)
-// .endm
 
 .macro END_TESTS
     // invokes one final ecall to return to machine mode then terminates this program, so the output is

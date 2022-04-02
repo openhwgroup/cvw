@@ -27,7 +27,7 @@
 // include shared configuration
 `include "wally-shared.vh"
 
-`define FPGA 1
+`define FPGA 0
 `define QEMU 0
 `define DESIGN_COMPILER 0
 
@@ -37,14 +37,14 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-`define MISA (32'h0014112D)
+// MISA RISC-V configuration per specification IA
+`define MISA (32'h00000100 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0 | 1 << 3 | 1 << 5)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
-`define ZICOUNTERS_SUPPORTED 1
 `define COUNTERS 32
-`define DESIGN_COMPILER 0
+`define ZICOUNTERS_SUPPORTED 1
 
-// Microarchitectural Features
+/// Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
@@ -76,27 +76,25 @@
 `define PMP_ENTRIES 64
 
 // Address space
-`define RESET_VECTOR 64'h0000000000001000
+`define RESET_VECTOR 64'h0000000080000000
 
-// Peripheral Addresses
+// Bus Interface width
+`define AHBW 64
+
+// Peripheral Physiccal Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
+
+// *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTROM_SUPPORTED 1'b1
-`define BOOTROM_BASE   56'h00001000 
+`define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
 `define BOOTROM_RANGE  56'h00000FFF
-
-`define RAM_SUPPORTED 1'b0
-`define RAM_BASE       56'h100000000
-`define RAM_RANGE      56'h07FFFFFF
-
-`define EXT_MEM_SUPPORTED 1'b1
+`define RAM_SUPPORTED 1'b1
+`define RAM_BASE       56'h80000000
+`define RAM_RANGE      56'h7FFFFFFF
+`define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       56'h80000000
 `define EXT_MEM_RANGE      56'h07FFFFFF
-
-`define EXT_SUPPORTED 1'b0
-`define EXT_BASE       56'h80000000
-`define EXT_RANGE      56'h07FFFFFF
-
 `define CLINT_SUPPORTED 1'b1
 `define CLINT_BASE  56'h02000000
 `define CLINT_RANGE 56'h0000FFFF
@@ -109,30 +107,30 @@
 `define PLIC_SUPPORTED 1'b1
 `define PLIC_BASE   56'h0C000000
 `define PLIC_RANGE  56'h03FFFFFF
-`define SDC_SUPPORTED 1'b1
+`define SDC_SUPPORTED 1'b0
 `define SDC_BASE   56'h00012100
 `define SDC_RANGE  56'h0000001F
-
-// Bus Interface width
-`define AHBW 64
 
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 0
+`define GPIO_LOOPBACK_TEST 1
 
 // Hardware configuration
-`define UART_PRESCALE 0
+`define UART_PRESCALE 1
 
 // Interrupt configuration
-`define PLIC_NUM_SRC 53
+`define PLIC_NUM_SRC 10
+// comment out the following if >=32 sources
+`define PLIC_NUM_SRC_LT_32
+`define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/fpga/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/fpga/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv64ia/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv64ia/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
-`define TESTSBP 1
+`define TESTSBP 0
 
 `define REPLAY 0
-`define HPTW_WRITES_SUPPORTED 1
+`define HPTW_WRITES_SUPPORTED 0
