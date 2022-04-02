@@ -76,8 +76,11 @@ module csr #(parameter
 );
 
   localparam NOP = 32'h13;
-  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM, CSRReadValM;
-  logic [`XLEN-1:0] CSRSrcM, CSRRWM, CSRRSM, CSRRCM, CSRWriteValM;
+  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
+(* mark_debug = "true" *)  logic [`XLEN-1:0] CSRReadValM;  
+(* mark_debug = "true" *)  logic [`XLEN-1:0] CSRSrcM;
+  logic [`XLEN-1:0] CSRRWM, CSRRSM, CSRRCM;  
+(* mark_debug = "true" *)  logic [`XLEN-1:0] CSRWriteValM;
  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW;
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
