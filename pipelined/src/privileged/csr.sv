@@ -33,9 +33,8 @@
 `include "wally-config.vh"
 
 module csr #(parameter
-  // Constants
-  UIP_REGW = 12'b0, // N user-mode exceptions not supported
-  UIE_REGW = 12'b0
+    MIP = 12'h344,
+    SIP = 12'h144
   ) (
   input  logic             clk, reset,
   input  logic             FlushE, FlushM, FlushW,
@@ -95,6 +94,8 @@ module csr #(parameter
   //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;
+  logic [`XLEN-1:0] CSRReadVal2M;
+  logic [11:0] IP_REGW_writeable;
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
@@ -103,10 +104,15 @@ module csr #(parameter
   always_comb begin
     // Choose either rs1 or uimm[4:0] as source
     CSRSrcM = InstrM[14] ? {{(`XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
+
+    // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
+    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(`XLEN-12){1'b0}}, IP_REGW_writeable};
+    else                                 CSRReadVal2M = CSRReadValM;
+
     // Compute AND/OR modification
     CSRRWM = CSRSrcM;
-    CSRRSM = CSRReadValM | CSRSrcM;
-    CSRRCM = CSRReadValM & ~CSRSrcM;
+    CSRRSM = CSRReadVal2M | CSRSrcM;
+    CSRRCM = CSRReadVal2M & ~CSRSrcM;
     case (InstrM[13:12])
       2'b01:  CSRWriteValM = CSRRWM;
       2'b10:  CSRWriteValM = CSRRSM;
@@ -128,7 +134,7 @@ module csr #(parameter
   csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
               .MExtIntM, .SExtIntM, .TimerIntM, .SwIntM,
-              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW);
+              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW, .IP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,

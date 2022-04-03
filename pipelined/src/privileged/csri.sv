@@ -44,10 +44,10 @@ module csri #(parameter
     input logic [11:0] 		CSRAdrM,
     (* mark_debug = "true" *)    input logic MExtIntM, SExtIntM, TimerIntM, SwIntM,
     input logic [11:0] 		MIDELEG_REGW,
-    output logic [11:0] 	MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW
+    output logic [11:0] 	MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, 
+    (* mark_debug = "true" *) output logic [11:0]   IP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
   );
 
-  (* mark_debug = "true" *) logic [11:0]     IP_REGW_writeable; // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
   logic [11:0]     IP_REGW, IE_REGW;
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
