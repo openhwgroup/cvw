@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-scratch
+// WALLY-unvectored-interrupt
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-02-20
+// Created 2022-03-11
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -21,15 +21,34 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-32.h"
+#include "WALLY-TEST-LIB-64.h"
 
 INIT_TESTS
 
-TRAP_HANDLER m
+// test 5.3.1.5 Unvectored interrupt tests 
 
-// Test 5.3.2.3: Scratch registers test
+TRAP_HANDLER s, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 
-WRITE_READ_CSR mscratch, 0x111 // check that mscratch is readable and writeable in machine mode
+// li x28, 0x8
+// csrs sstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
+// WRITE_READ_CSR mie, 0xFFFF *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
+
+WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
+
+GOTO_S_MODE
+
+// cause traps, ensuring that we DONT go through the vectored part of the trap handler
+// *** this assumes that interrupt code 0 remains reserved
+
+// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
+// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
+// CAUSE_EXT_INTERRUPT
+
+GOTO_U_MODE 
+
+// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
+// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
+// CAUSE_EXT_INTERRUPT
 
 END_TESTS
 

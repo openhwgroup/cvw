@@ -66,7 +66,7 @@ module wallypipelinedcore (
   logic [1:0]             AtomicE;
   logic [1:0]             AtomicM;
   logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
-  logic [`XLEN-1:0]         SrcAM;
+(* mark_debug = "true" *)  logic [`XLEN-1:0]         SrcAM;
   logic [2:0]             Funct3E;
   //  logic [31:0] InstrF;
   logic [31:0]             InstrD, InstrW;
