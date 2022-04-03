@@ -52,16 +52,128 @@ RVTEST_CODE_BEGIN
     // address for stack
     la sp, top_of_stack
 
-    // trap handler setup
-    la x1, machine_trap_handler
-    csrrw x4, mtvec, x1  // x4 reserved for "default" trap handler address that needs to be restored before halting this test.
+.endm
+
+// Code to trigger traps goes here so we have consistent mtvals for instruction adresses
+// Even if more tests are added.  
+.macro CAUSE_TRAP_TRIGGERS
+j end_trap_triggers
+
+// The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
+//      This effectively includes everything that isn't to do with page faults (virtual memory)
+
+cause_instr_addr_misaligned:
+    // cause a misaligned address trap
+    auipc x28, 0      // get current PC, which is aligned
+    addi x28, x28, 0x3  // add 1 to pc to create misaligned address
+    jr x28 // cause instruction address midaligned trap
+    ret
+
+cause_instr_access:
+    la x28, 0x0 // address zero is an address with no memory
+    sw x1, -4(sp) // push the return adress ontot the stack
+    addi sp, sp, -4
+    jalr x28 // cause instruction access trap
+    lw x1, 0(sp) // pop return adress back from the stack
+    addi sp, sp, 4
+    ret
+
+cause_illegal_instr:
+    .word 0x00000000 // a 32 bit zros is an illegal instruction
+    ret
+
+cause_breakpnt: // ****
+    ebreak
+    ret
+
+cause_load_addr_misaligned:
+    auipc x28, 0      // get current PC, which is aligned
+    addi x28, x28, 1
+    lw x29, 0(x28)    // load from a misaligned address
+    ret
+
+cause_load_acc:
+    la x28, 0         // 0 is an address with no memory
+    lw x29, 0(x28)    // load from unimplemented address
+    ret
+
+cause_store_addr_misaligned:
+    auipc x28, 0      // get current PC, which is aligned
+    addi x28, x28, 1
+    sw x29, 0(x28)     // store to a misaligned address
+    ret
+
+cause_store_acc: 
+    la x28, 0         // 0 is an address with no memory
+    sw x29, 0(x28)     // store to unimplemented address
+    ret
+
+cause_ecall:
+    // *** ASSUMES you have already gone to the mode you need to call this from.
+    ecall
+    ret
+
+cause_time_interrupt:
+    // The following code works for both RV32 and RV64.  
+    // RV64 alone would be easier using double-word adds and stores
+    li x28, 0x30          // Desired offset from the present time
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    la x30, 0x0200BFF8    // MTIME register in CLINT
+    lw x7, 0(x30)         // low word of MTIME
+    lw x31, 4(x30)         // high word of MTIME
+    add x28, x7, x28       // add desired offset to the current time
+    bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
+    addi x31, x31, 1       // if wrap, increment most significant word
+    sw x31,4(x29)          // store into most significant word of MTIMECMP
+nowrap:
+    sw x28, 0(x29)         // store into least significant word of MTIMECMP
+    loop: j loop         // wait until interrupt occurs
+    ret
+
+cause_soft_interrupt:
+    la x28, 0x02000000      // MSIP register in CLINT
+    li x29, 1               // 1 in the lsb
+    sw x29, 0(x28)          // Write MSIP bit
+    ret
+
+cause_ext_interrupt:
+    li x28, 0x10060000 // load base GPIO memory location
+    li x29, 0x1
+    sw x29, 8(x28) // enable the first pin as an output
+    sw x29, 28(x28) // set first pin to high interrupt enable
+    sw x29, 40(x28) // write a 1 to the first output pin (cause interrupt)
+    ret
+
+end_trap_triggers:
+.endm
+
+.macro TRAP_HANDLER MODE, VECTORED=1, DEBUG=0
+    // MODE decides which mode this trap handler will be taken in (M or S mode)
+    // Vectored decides whether interrumpts are handled with the vector table at trap_handler_MODE (1)
+    //      vs Using the non-vector approach the rest of the trap handler takes (0)
+    // DEBUG decides whether we will print mtval a string with status.mpie, status.mie, and status.mpp to the signature (1)
+    //      vs not saving that info to the signature (0)
+
+
+    //   Set up the exception Handler, keeping the original handler in x4.
+    la x1, trap_handler_\MODE\()
+    ori x1, x1, \VECTORED // set mode field of tvec to VECTORED, which will force vectored interrupts if it's 1.
+
+.if (\MODE\() == m)
+    csrrw x4, \MODE\()tvec, x1  // x4 reserved for "default" trap handler address that needs to be restored before halting this test.
+.else
+    csrw \MODE\()tvec, x1 // we only neet save the machine trap handler and this if statement ensures it isn't overwritten
+.endif
+
     li a0, 0
     li a1, 0 
     li a2, 0 // reset trap handler inputs to zero
 
-    // go to beginning of S file where we can decide between using the test data loop
-    // or using the macro inline code insertion
-    j s_file_begin
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    li x30, 0xFFFFFFFF
+    sw x30, 0(x29) // set mtimecmp to 0xFFFFFFFF to really make sure time interrupts don't go off immediately after being enabled
+
+    j trap_handler_end_\MODE\() // skip the trap handler when it is being defined.
 
 	// ---------------------------------------------------------------------------------------------
     // General traps Handler
@@ -96,38 +208,77 @@ RVTEST_CODE_BEGIN
     // --------------------------------------------------------------------------------------------
 
 
-machine_trap_handler:
+.align 2
+trap_handler_\MODE\():
+    j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
+    // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
+    // otherwise, a vectored interrupt handler should jump to trap_handler_\MODE\() + 4 * Interrupt cause code
+    // No matter the value of VECTORED, exceptions (not interrupts) are handled in an unvecotred way
+    j soft_interrupt_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
+    j segfault_\MODE\()            // 2: reserved
+    j soft_interrupt_\MODE\()    // 3: breakpoint
+    j segfault_\MODE\()            // 4: reserved
+    j time_interrupt_\MODE\()    // 5: load access fault
+    j segfault_\MODE\()            // 6: reserved
+    j time_interrupt_\MODE\()    // 7: store access fault
+    j segfault_\MODE\()            // 8: reserved
+    j ext_interrupt_\MODE\()     // 9: ecall from S-mode
+    j segfault_\MODE\()            // 10: reserved
+    j ext_interrupt_\MODE\()     // 11: ecall from M-mode
+    // 12 through >=16 are reserved or designated for platform use
+
+trap_unvectored_\MODE\():
     // The processor is always in machine mode when a trap takes us here
     // save registers on stack before using
     sw x1, -4(sp)       
     sw x5, -8(sp)      
 
     // Record trap
-    csrr x1, mcause     // record the mcause
+    csrr x1, \MODE\()cause     // record the mcause
     sw x1, 0(x16)        
     addi x6, x6, 4     
     addi x16, x16, 4    // update pointers for logging results
 
+.if (\DEBUG\() == 1) // record extra information (MTVAL, some status bits) about traps
+    csrr x1, \MODE\()tval
+    sw x1, 0(x16)
+    addi x6, x6, 4     
+    addi x16, x16, 4
+
+    csrr x1, \MODE\()status
+    .if (\MODE\() == m) // Taking traps in different modes means we want to get different bits from the status register.
+        li x5, 0x1888 // mask bits to select MPP, MPIE, and MIE.
+    .else
+        li x5, 0x122 // mask bits to select SPP, SPIE, and SIE.
+    .endif
+    and x5, x5, x1
+    sw x5, 0(x16) // store masked out status bits to the output
+    addi x6, x6, 4
+    addi x16, x16, 4
+
+.endif
+
     // Respond to trap based on cause
     // All interrupts should return after being logged
+    csrr x1, \MODE\()cause
     li x5, 0x8000000000000000   // if msb is set, it is an interrupt
     and x5, x5, x1
-    bnez x5, trapreturn   // return from interrupt
+    bnez x5, trapreturn_\MODE\()   // return from interrupt
     // Other trap handling is specified in the vector Table
     slli x1, x1, 2      // multiply cause by 4 to get offset in vector Table
-    la x5, trap_handler_vector_table
+    la x5, exception_vector_table_\MODE\()
     add x5, x5, x1      // compute address of vector in Table
     lw x5, 0(x5)        // fectch address of handler from vector Table
     jr x5               // and jump to the handler
     
-segfault:
+segfault_\MODE\():
     lw x5, -8(sp)      // restore registers from stack before faulting
     lw x1, -4(sp)       
     j terminate_test          // halt program.
 
-trapreturn:
+trapreturn_\MODE\():
     // look at the instruction to figure out whether to add 2 or 4 bytes to PC, or go to address specified in a1
-    csrr x1, mepc       // get the mepc
+    csrr x1, \MODE\()epc       // get the mepc
     addi x1, x1, 4 // *** should be 2 for compressed instructions, see note.
 
 
@@ -151,13 +302,13 @@ trapreturn:
 //     csrr x1, mepc       // get the mepc again    
 //     addi x1, x1, 4      // add 4 to find the next instruction
 
-trapreturn_specified:
+trapreturn_specified_\MODE\():
     // reset the necessary pointers and registers (x1, x5, x6, and the return address going to mepc)
     // so that when we return to a new virtual address, they're all in the right spot as well.
 
-    beqz a1, trapreturn_finished // either update values, of go to default return address.
+    beqz a1, trapreturn_finished_\MODE\() // either update values, of go to default return address.
 
-    la x5, trap_return_pagetype_table
+    la x5, trap_return_pagetype_table_\MODE\()
     slli a2, a2, 2
     add x5, x5, a2
     lw a2, 0(x5) // a2 = number of offset bits in current page type
@@ -189,54 +340,93 @@ trapreturn_specified:
     li a1, 0 
     li a2, 0 // reset trapreturn inputs to the trap handler
 
-trapreturn_finished:
-    csrw mepc, x1   // update the mepc with address of next instruction
+trapreturn_finished_\MODE\():
+    csrw \MODE\()epc, x1   // update the mepc with address of next instruction
     lw x5, -8(sp)   // restore registers from stack before returning
     lw x1, -4(sp)
-    mret  // return from trap
+    \MODE\()ret  // return from trap
 
-ecallhandler:
+ecallhandler_\MODE\():
     // Check input parameter a0. encoding above. 
     // *** ASSUMES: that this trap is being handled in machine mode. in other words, that nothing odd has been written to the medeleg or mideleg csrs.
     li x5, 2            // case 2: change to machine mode
-    beq a0, x5, ecallhandler_changetomachinemode
+    beq a0, x5, ecallhandler_changetomachinemode_\MODE\()
     li x5, 3            // case 3: change to supervisor mode
-    beq a0, x5, ecallhandler_changetosupervisormode
+    beq a0, x5, ecallhandler_changetosupervisormode_\MODE\()
     li x5, 4            // case 4: change to user mode
-    beq a0, x5, ecallhandler_changetousermode
+    beq a0, x5, ecallhandler_changetousermode_\MODE\()
     // unsupported ecalls should segfault
-    j segfault
+    j segfault_\MODE\()
 
-ecallhandler_changetomachinemode:
+ecallhandler_changetomachinemode_\MODE\():
     // Force mstatus.MPP (bits 12:11) to 11 to enter machine mode after mret
     li x1, 0b1100000000000
-    csrs mstatus, x1
-    j trapreturn        
+    csrs \MODE\()status, x1
+    j trapreturn_\MODE\()       
 
-ecallhandler_changetosupervisormode:
+ecallhandler_changetosupervisormode_\MODE\():
     // Force mstatus.MPP (bits 12:11) to 01 to enter supervisor mode after mret
     li x1, 0b1100000000000  
-    csrc mstatus, x1
+    csrc \MODE\()status, x1
     li x1, 0b0100000000000
-    csrs mstatus, x1
-    j trapreturn
+    csrs \MODE\()status, x1
+    j trapreturn_\MODE\()
 
-ecallhandler_changetousermode:
+ecallhandler_changetousermode_\MODE\():
     // Force mstatus.MPP (bits 12:11) to 00 to enter user mode after mret
     li x1, 0b1100000000000  
-    csrc mstatus, x1
-    j trapreturn
+    csrc \MODE\()status, x1
+    j trapreturn_\MODE\()
 
-instrfault:
+instrpagefault_\MODE\():
     lw x1, -4(sp) // load return address int x1 (the address AFTER the jal into faulting page)
-    j trapreturn_finished // puts x1 into mepc, restores stack and returns to program (outside of faulting page)
+    j trapreturn_finished_\MODE\() // puts x1 into mepc, restores stack and returns to program (outside of faulting page)
 
-illegalinstr:
-    j trapreturn // return to the code after recording the mcause
+instrfault_\MODE\():
+    lw x1, -4(sp) // load return address int x1 (the address AFTER the jal to the faulting address)
+    j trapreturn_finished_\MODE\() // return to the code after recording the mcause
 
-accessfault:
+illegalinstr_\MODE\():
+    j trapreturn_\MODE\() // return to the code after recording the mcause
+
+accessfault_\MODE\():
     // *** What do I have to do here?
-    j trapreturn
+    j trapreturn_\MODE\()
+
+addr_misaligned_\MODE\():
+    j trapreturn_\MODE\()
+
+breakpt_\MODE\():
+    j trapreturn_\MODE\()
+
+soft_interrupt_\MODE\():
+    li x5, 0x7EC // write 0x7EC (looks like VEC) to the output before the mcause and extras to indicate that this trap was handled with a vector table. 
+    sw x5, 0(x16)
+    addi x6, x6, 4
+    addi x16, x16, 4
+    la x28, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
+    sw x0, 0(x28)
+    j trap_unvectored_\MODE\()
+
+time_interrupt_\MODE\():
+    li x5, 0x7EC
+    sw x5, 0(x16)
+    addi x6, x6, 4
+    addi x16, x16, 4
+    la x29, 0x02004000    // MTIMECMP register in CLINT
+    li x30, 0xFFFFFFFF
+    sw x30, 0(x29) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
+    j trap_unvectored_\MODE\()
+
+ext_interrupt_\MODE\():
+    li x5, 0x7EC
+    sw x5, 0(x16)
+    addi x6, x6, 4
+    addi x16, x16, 4
+    li x28, 0x10060000 // reset interrupt by clearing all the GPIO bits
+    sw x0, 8(x28) // disable the first pin as an output
+    sw x0, 40(x28) // write a 0 to the first output pin (reset interrupt)
+    j trap_unvectored_\MODE\()
 
     // Table of trap behavior
     // lists what to do on each exception (not interrupts)
@@ -244,29 +434,30 @@ accessfault:
     // Expected exceptions should increment the EPC to the next instruction and return
 
     .align 2 // aligns this data table to an 4 byte boundary
-trap_handler_vector_table:
-    .4byte segfault      // 0: instruction address misaligned
-    .4byte instrfault    // 1: instruction access fault
-    .4byte illegalinstr  // 2: illegal instruction
-    .4byte segfault      // 3: breakpoint
-    .4byte segfault      // 4: load address misaligned
-    .4byte accessfault   // 5: load access fault
-    .4byte segfault      // 6: store address misaligned
-    .4byte accessfault   // 7: store access fault
-    .4byte ecallhandler  // 8: ecall from U-mode
-    .4byte ecallhandler  // 9: ecall from S-mode
-    .4byte segfault      // 10: reserved
-    .4byte ecallhandler  // 11: ecall from M-mode
-    .4byte instrfault    // 12: instruction page fault
-    .4byte trapreturn    // 13: load page fault
-    .4byte segfault      // 14: reserved
-    .4byte trapreturn    // 15: store page fault
+exception_vector_table_\MODE\():
+    .4byte addr_misaligned_\MODE\()      // 0: instruction address misaligned
+    .4byte instrfault_\MODE\()    // 1: instruction access fault
+    .4byte illegalinstr_\MODE\()  // 2: illegal instruction
+    .4byte breakpt_\MODE\()      // 3: breakpoint
+    .4byte addr_misaligned_\MODE\()      // 4: load address misaligned
+    .4byte accessfault_\MODE\()   // 5: load access fault
+    .4byte addr_misaligned_\MODE\()      // 6: store address misaligned
+    .4byte accessfault_\MODE\()   // 7: store access fault
+    .4byte ecallhandler_\MODE\()  // 8: ecall from U-mode
+    .4byte ecallhandler_\MODE\()  // 9: ecall from S-mode
+    .4byte segfault_\MODE\()      // 10: reserved
+    .4byte ecallhandler_\MODE\()  // 11: ecall from M-mode
+    .4byte instrpagefault_\MODE\()    // 12: instruction page fault
+    .4byte trapreturn_\MODE\()    // 13: load page fault
+    .4byte segfault_\MODE\()      // 14: reserved
+    .4byte trapreturn_\MODE\()    // 15: store page fault
 
 .align 2
-trap_return_pagetype_table:
+trap_return_pagetype_table_\MODE\():
     .4byte 0xC  // 0: kilopage has 12 offset bits
     .4byte 0x16 // 1: megapage has 22 offset bits
 
+trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler and continue with the test
 .endm
 
 // Test Summary table!
@@ -367,7 +558,7 @@ trap_return_pagetype_table:
 // they generally do not fault or cause issues as long as these modes are enabled 
 // *** add functionality to check if modes are enabled before jumping? maybe cause a fault if not?
 
-.macro GOTO_M_MODE RETURN_VPN RETURN_PAGETYPE
+.macro GOTO_M_MODE RETURN_VPN=0x0 RETURN_PAGETYPE=0x0
     li a0, 2 // determine trap handler behavior (go to machine mode)
     li a1, \RETURN_VPN // return VPN
     li a2, \RETURN_PAGETYPE // return page types
@@ -375,7 +566,7 @@ trap_return_pagetype_table:
     // now in S mode
 .endm
 
-.macro GOTO_S_MODE RETURN_VPN RETURN_PAGETYPE
+.macro GOTO_S_MODE RETURN_VPN=0x0 RETURN_PAGETYPE=0x0
     li a0, 3 // determine trap handler behavior (go to supervisor mode)
     li a1, \RETURN_VPN // return VPN
     li a2, \RETURN_PAGETYPE // return page types
@@ -383,7 +574,7 @@ trap_return_pagetype_table:
     // now in S mode
 .endm
 
-.macro GOTO_U_MODE RETURN_VPN RETURN_PAGETYPE
+.macro GOTO_U_MODE RETURN_VPN=0x0 RETURN_PAGETYPE=0x0
     li a0, 4 // determine trap handler behavior (go to user mode)
     li a1, \RETURN_VPN // return VPN
     li a2, \RETURN_PAGETYPE // return page types

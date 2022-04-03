@@ -38,7 +38,8 @@
 
 INIT_TESTS
 
-s_file_begin:
+TRAP_HANDLER m
+
 j test_loop_setup // begin test loop/table tests instead of executing inline code.
 
 INIT_TEST_TABLE
