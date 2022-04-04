@@ -3,7 +3,7 @@
 # mmcm_clkout0 is the clock output of the DDR4 memory interface / 4.
 # This clock is not used by wally or the AHBLite Bus. However it is used by the AXI BUS on the DD4 IP.
 
-create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
+create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 2 [get_pins wallypipelinedsoc/uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
 
 ##### GPI ####
 set_property PACKAGE_PIN BB24 [get_ports {GPI[0]}]

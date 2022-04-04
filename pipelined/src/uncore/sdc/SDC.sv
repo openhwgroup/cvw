@@ -64,7 +64,7 @@ module SDC
 
 
   // Register outputs
-  logic [7:0] 		    CLKDiv;
+  logic signed [7:0] 		    CLKDiv;
   logic [2:0] 		    Command;
   logic [63:9] 		    Address;
   
@@ -331,8 +331,7 @@ module SDC
 
 
   clkdivider #(8) clkdivider(.i_COUNT_IN_MAX(CLKDiv),
-//			     .i_EN(CLKDiv != 'b1),
-			     .i_EN('1),							 
+			     .i_EN(CLKDiv <= 0), // enable if < 0 (msb is 1)
 			     .i_CLK(CLKGate),
 			     .i_RST(~HRESETn | CLKDivUpdateEn),
 			     .o_CLK(SDCCLKIn));
@@ -358,7 +357,7 @@ module SDC
 		.o_ERROR_CODE_Q(ErrorCode),
 		.o_FATAL_ERROR(FatalError),
 		.i_COUNT_IN_MAX(-8'd62),
-		.LIMIT_SD_TIMERS(1'b1)); // *** must change this to 0 for real hardware.
+		.LIMIT_SD_TIMERS(1'b0)); // *** must change this to 0 for real hardware.
 
   
 endmodule
