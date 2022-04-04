@@ -508,8 +508,17 @@ add wave -noupdate /testbench/dut/SDCCLK
 add wave -noupdate -color Gold -label {cmd fsm} /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/r_curr_state
 add wave -noupdate -color Gold -label {dat fsm} /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_dat_fsm/r_curr_state
 add wave -noupdate -color Gold -label {clk fsm} /testbench/dut/uncore/sdc/SDC/sd_top/my_clk_fsm/r_curr_state
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/sd_top/slow_clk_divider/i_CLK
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/sd_top/slow_clk_divider/o_CLK
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/sd_top/slow_clk_divider/i_RST
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_TIMER_OUT
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/TIMER_OUT_GT_ZERO
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/clkdivider/i_COUNT_IN_MAX
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/clkdivider/i_CLK
+add wave -noupdate /testbench/dut/uncore/sdc/SDC/clkdivider/o_CLK
+add wave -noupdate -radix decimal /testbench/dut/uncore/sdc/SDC/clkdivider/i_COUNT_IN_MAX
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {2125334 ns} 0}
+WaveRestoreCursors {{Cursor 5} {3081 ns} 0} {{Cursor 2} {3101 ns} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 177
@@ -525,4 +534,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2124499 ns} {2128105 ns}
+WaveRestoreZoom {3039 ns} {3123 ns}
