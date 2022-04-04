@@ -50,10 +50,6 @@
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
 `define PMPCFG_ENTRIES (`PMP_ENTRIES/8)
 
-
-// Floating-point half-precision
-`define ZFH_SUPPORTED 0
-
 // Floating point constants for Quad, Double, Single, and Half precisions
 `define Q_LEN 128
 `define Q_NE 15
