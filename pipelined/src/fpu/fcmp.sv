@@ -70,6 +70,7 @@ module fcmp (
    if(`IEEE754) assign QNaN = FmtE ? {XSgnE, XExpE, 1'b1, XManE[`NF-2:0]} : {{32{1'b1}}, XSgnE, XExpE[7:0], 1'b1, XManE[50:29]};
    else         assign QNaN = FmtE ? {1'b0, XExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpE[7:0], 1'b1, 22'b0};
  
+ // when one input is a NaN -output the non-NaN
    always_comb begin
       case (FOpCtrlE[2:0])
          3'b111: CmpResE = XNaNE ? YNaNE ? QNaN : FSrcYE // Min
