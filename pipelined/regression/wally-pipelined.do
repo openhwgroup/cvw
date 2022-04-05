@@ -57,12 +57,12 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     do wave.do
 
     # power add generates the logging necessary for saif generation.
-    #power add -r /dut/core/*
+    power add -r /dut/core/*
     #-- Run the Simulation 
 
     run -all
-    #power off -r /dut/core/*
-    #power report -all -bsaif power.saif
+    power off -r /dut/core/*
+    power report -all -bsaif power.saif
     noview ../testbench/testbench.sv
     view wave
 }
