@@ -62,6 +62,7 @@ volatile void waitInitSDC(){
 }
 
 void setSDCCLK(int divider){
+  divider = (1 - (divider >> 1));
   volatile int * mailBoxCLK;
   mailBoxCLK = (int *) (SDC_MAIL_BOX + 0x0);
   *mailBoxCLK = divider;

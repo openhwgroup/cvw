@@ -143,7 +143,7 @@ module uartPC16550D(
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
       if (`FPGA) begin
-		DLL <= #1 8'd11;
+		DLL <= #1 8'd38;
 		DLM <= #1 8'b0;
       end else begin
 		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
@@ -159,8 +159,9 @@ module uartPC16550D(
            3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
            3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
 		   -----/\----- EXCLUDED -----/\----- */
-		  // *** BUG FIX ME for now for the divider to be 11.  Our clock is 23 Mhz.  23Mhz /(25 * 16) = 57600 baud, which is close enough to 57600 baud
-          3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+		  // *** BUG FIX ME for now for the divider to be 38.  Our clock is 35 Mhz.  35Mhz /(38 * 16) ~= 57600 baud, which is close enough to 57600 baud
+		  // freq /baud / 16 = div
+          3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
 
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
@@ -310,7 +311,7 @@ module uartPC16550D(
           if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
         end else begin
           rxdataready <= #1 0;
-          RXBR <= #1 {0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
+          RXBR <= #1 {1'b0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
         end
       end else if (~MEMWb & A == 3'b010)  // writes to FIFO Control Register
         if (Din[1] | ~Din[0]) begin // rx FIFO reset or FIFO disable clears FIFO contents

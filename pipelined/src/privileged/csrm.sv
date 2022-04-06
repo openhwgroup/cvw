@@ -78,8 +78,8 @@ module csrm #(parameter
     output logic [`XLEN-1:0] CSRMReadValM, MTVEC_REGW,
     (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
     output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-    output logic [`XLEN-1:0] MEDELEG_REGW,
-    output logic [11:0]      MIDELEG_REGW,
+(* mark_debug = "true" *)      output logic [`XLEN-1:0] MEDELEG_REGW,
+(* mark_debug = "true" *)      output logic [11:0]      MIDELEG_REGW,
     // 64-bit registers in RV64, or two 32-bit registers in RV32
     //output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
     output 		     var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],

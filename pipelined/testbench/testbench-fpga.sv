@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// testbench-imperas.sv
+// testbench.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
 // Purpose: Wally Testbench and helper modules
-//          Applies test programs from the Imperas suite
+//          Applies test programs from the riscv-arch-test and Imperas suites
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,487 +30,30 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "tests.vh"
 
-module testbench();
-  parameter DEBUG = 0;
-  parameter TESTSPERIPH = 0; // set to 0 for regression
-  parameter TESTSPRIV = 0; // set to 0 for regression
-  
+module testbench;
+  parameter DEBUG=0;
+  parameter TEST="none";
+ 
   logic        clk;
-  logic        reset;
+  logic        reset_ext, reset;
 
   parameter SIGNATURESIZE = 5000000;
 
   int test, i, errors, totalerrors;
   logic [31:0] sig32[0:SIGNATURESIZE];
   logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
-  logic [`XLEN-1:0] testadr;
+  logic [`XLEN-1:0] testadr, testadrNoBase;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
-  logic [`XLEN-1:0] meminit;
 
-  string tests32mmu[] = '{
-    "rv32mmu/WALLY-MMU-SV32", "3000"
-    //"rv32mmu/WALLY-PMA", "3000",
-    //"rv32mmu/WALLY-PMA", "3000"
-    };
+string tests[];
+logic [3:0] dummy;
 
-  string tests64mmu[] = '{
-    "rv64mmu/WALLY-MMU-SV48", "3000",
-    "rv64mmu/WALLY-MMU-SV39", "3000"
-    //"rv64mmu/WALLY-PMA", "3000",
-    //"rv64mmu/WALLY-PMA", "3000"
-  };
-
-  
-string tests32f[] = '{
-    "rv32f/I-FADD-S-01", "2000",
-    "rv32f/I-FCLASS-S-01", "2000",
-    "rv32f/I-FCVT-S-W-01", "2000",
-    "rv32f/I-FCVT-S-WU-01", "2000",
-    "rv32f/I-FCVT-W-S-01", "2000",
-    "rv32f/I-FCVT-WU-S-01", "2000",
-    "rv32f/I-FDIV-S-01", "2000",
-    "rv32f/I-FEQ-S-01", "2000",
-    "rv32f/I-FLE-S-01", "2000",
-    "rv32f/I-FLT-S-01", "2000",
-    "rv32f/I-FMADD-S-01", "2000",
-    "rv32f/I-FMAX-S-01", "2000",
-    "rv32f/I-FMIN-S-01", "2000",
-    "rv32f/I-FMSUB-S-01", "2000",
-    "rv32f/I-FMUL-S-01", "2000",
-    "rv32f/I-FMV-W-X-01", "2000",
-    "rv32f/I-FMV-X-W-01", "2000",
-    "rv32f/I-FNMADD-S-01", "2000",
-    "rv32f/I-FNMSUB-S-01", "2000",
-    "rv32f/I-FSGNJ-S-01", "2000",
-    "rv32f/I-FSGNJN-S-01", "2000",
-    "rv32f/I-FSGNJX-S-01", "2000",
-    "rv32f/I-FSQRT-S-01", "2000",
-    "rv32f/I-FSW-01", "2000",
-    "rv32f/I-FLW-01", "2110",
-    "rv32f/I-FSUB-S-01", "2000"
-  };
-
-  string tests64f[] = '{
-    "rv64f/I-FLW-01", "2110",
-    "rv64f/I-FMV-W-X-01", "2000",
-    "rv64f/I-FMV-X-W-01", "2000",
-    "rv64f/I-FSW-01", "2000",
-    "rv64f/I-FCLASS-S-01", "2000",
-    "rv64f/I-FADD-S-01", "2000",
-//    "rv64f/I-FCVT-S-L-01", "2000",
-//    "rv64f/I-FCVT-S-LU-01", "2000",
-//    "rv64f/I-FCVT-S-W-01", "2000",
-//    "rv64f/I-FCVT-S-WU-01", "2000",
-    "rv64f/I-FCVT-L-S-01", "2000",
-    "rv64f/I-FCVT-LU-S-01", "2000",
-    "rv64f/I-FCVT-W-S-01", "2000",
-    "rv64f/I-FCVT-WU-S-01", "2000",
-    "rv64f/I-FDIV-S-01", "2000",
-    "rv64f/I-FEQ-S-01", "2000",
-    "rv64f/I-FLE-S-01", "2000",
-    "rv64f/I-FLT-S-01", "2000",
-    "rv64f/I-FMADD-S-01", "2000",
-    "rv64f/I-FMAX-S-01", "2000",
-    "rv64f/I-FMIN-S-01", "2000",
-    "rv64f/I-FMSUB-S-01", "2000",
-    "rv64f/I-FMUL-S-01", "2000",
-    "rv64f/I-FNMADD-S-01", "2000",
-    "rv64f/I-FNMSUB-S-01", "2000",
-    "rv64f/I-FSGNJ-S-01", "2000",
-    "rv64f/I-FSGNJN-S-01", "2000",
-    "rv64f/I-FSGNJX-S-01", "2000",
-    "rv64f/I-FSQRT-S-01", "2000",
-    "rv64f/I-FSUB-S-01", "2000"
-  };
-
-  string tests64d[] = '{
-    "rv64d/I-FSD-01", "2000",
-    "rv64d/I-FLD-01", "2420",
-    "rv64d/I-FMV-X-D-01", "2000",
-    "rv64d/I-FMV-D-X-01", "2000",
-    "rv64d/I-FDIV-D-01", "2000",
-    "rv64d/I-FNMADD-D-01", "2000",
-    "rv64d/I-FNMSUB-D-01", "2000",
-    "rv64d/I-FMSUB-D-01", "2000",
-    "rv64d/I-FMAX-D-01", "2000",
-    "rv64d/I-FMIN-D-01", "2000",
-    "rv64d/I-FLE-D-01", "2000",
-    "rv64d/I-FLT-D-01", "2000",
-    "rv64d/I-FEQ-D-01", "2000",
-    "rv64d/I-FADD-D-01", "2000",
-    "rv64d/I-FCLASS-D-01", "2000",
-    "rv64d/I-FMADD-D-01", "2000",
-    "rv64d/I-FMUL-D-01", "2000",
-    "rv64d/I-FSGNJ-D-01", "2000",
-    "rv64d/I-FSGNJN-D-01", "2000",
-    "rv64d/I-FSGNJX-D-01", "2000",
-    "rv64d/I-FSQRT-D-01", "2000",
-    "rv64d/I-FSUB-D-01", "2000",
-//    "rv64d/I-FCVT-D-L-01", "2000",
-//    "rv64d/I-FCVT-D-LU-01", "2000",
-    "rv64d/I-FCVT-D-S-01", "2000", 
-//    "rv64d/I-FCVT-D-W-01", "2000",
-//    "rv64d/I-FCVT-D-WU-01", "2000",
-    "rv64d/I-FCVT-L-D-01", "2000",
-    "rv64d/I-FCVT-LU-D-01", "2000",
-    "rv64d/I-FCVT-S-D-01", "2000", 
-    "rv64d/I-FCVT-W-D-01", "2000",
-    "rv64d/I-FCVT-WU-D-01", "2000"
-};
-
-  string tests64a[] = '{
-    "rv64a/WALLY-AMO", "2110",
-    "rv64a/WALLY-LRSC", "2110"
-  };
-
-  string tests64m[] = '{
-    "rv64m/I-MUL-01", "3000",
-    "rv64m/I-MULH-01", "3000",
-    "rv64m/I-MULHSU-01", "3000",
-    "rv64m/I-MULHU-01", "3000",
-    "rv64m/I-MULW-01", "3000",
-    "rv64m/I-DIV-01", "3000",
-    "rv64m/I-DIVU-01", "3000",
-    "rv64m/I-DIVUW-01", "3000",
-    "rv64m/I-DIVW-01", "3000",
-    "rv64m/I-REM-01", "3000",
-    "rv64m/I-REMU-01", "3000",
-    "rv64m/I-REMUW-01", "3000",
-    "rv64m/I-REMW-01", "3000"
-  };
-
-  string tests64ic[] = '{
-    "rv64ic/I-C-ADD-01", "3000",
-    "rv64ic/I-C-ADDI-01", "3000",
-    "rv64ic/I-C-ADDIW-01", "3000",
-    "rv64ic/I-C-ADDW-01", "3000",
-    "rv64ic/I-C-AND-01", "3000",
-    "rv64ic/I-C-ANDI-01", "3000",
-    "rv64ic/I-C-BEQZ-01", "3000",
-    "rv64ic/I-C-BNEZ-01", "3000",
-    "rv64ic/I-C-EBREAK-01", "2000",
-    "rv64ic/I-C-J-01", "3000",
-    "rv64ic/I-C-JALR-01", "4000",
-    "rv64ic/I-C-JR-01", "4000",
-    "rv64ic/I-C-LD-01", "3420",
-    "rv64ic/I-C-LDSP-01", "3420",
-    "rv64ic/I-C-LI-01", "3000",
-    "rv64ic/I-C-LUI-01", "2000",
-    "rv64ic/I-C-LW-01", "3110",
-    "rv64ic/I-C-LWSP-01", "3110",
-    "rv64ic/I-C-MV-01", "3000",
-    "rv64ic/I-C-NOP-01", "2000",
-    "rv64ic/I-C-OR-01", "3000",
-    "rv64ic/I-C-SD-01", "3000",
-    "rv64ic/I-C-SDSP-01", "3000",
-    "rv64ic/I-C-SLLI-01", "3000",
-    "rv64ic/I-C-SRAI-01", "3000",
-    "rv64ic/I-C-SRLI-01", "3000",
-    "rv64ic/I-C-SUB-01", "3000",
-    "rv64ic/I-C-SUBW-01", "3000",
-    "rv64ic/I-C-SW-01", "3000",
-    "rv64ic/I-C-SWSP-01", "3000",
-    "rv64ic/I-C-XOR-01", "3000"
-  };
-
-  string tests64iNOc[] = {
-    "rv64i/I-MISALIGN_JMP-01","2000"
-  };
-
-  string tests64i[] = '{
-    //"rv64i/WALLY-PIPELINE-100K", "f7ff0",
-    "rv64i/I-ADD-01", "3000",
-    "rv64i/I-ADDI-01", "3000",
-    "rv64i/I-ADDIW-01", "3000",
-    "rv64i/I-ADDW-01", "3000",
-    "rv64i/I-AND-01", "3000",
-    "rv64i/I-ANDI-01", "3000",
-    "rv64i/I-AUIPC-01", "3000",
-    "rv64i/I-BEQ-01", "4000",
-    "rv64i/I-BGE-01", "4000",
-    "rv64i/I-BGEU-01", "4000",
-    "rv64i/I-BLT-01", "4000",
-    "rv64i/I-BLTU-01", "4000",
-    "rv64i/I-BNE-01", "4000",
-    "rv64i/I-DELAY_SLOTS-01", "2000",
-    "rv64i/I-EBREAK-01", "2000",
-    "rv64i/I-ECALL-01", "2000",
-    "rv64i/I-ENDIANESS-01", "2010",
-    "rv64i/I-IO-01", "2050",
-    "rv64i/I-JAL-01", "3000",
-    "rv64i/I-JALR-01", "4000",
-    "rv64i/I-LB-01", "4020",
-    "rv64i/I-LBU-01", "4020",
-    "rv64i/I-LD-01", "4420",
-    "rv64i/I-LH-01", "4050",
-    "rv64i/I-LHU-01", "4050",
-    "rv64i/I-LUI-01", "2000",
-    "rv64i/I-LW-01", "4110",
-    "rv64i/I-LWU-01", "4110", 
-    "rv64i/I-MISALIGN_LDST-01", "2010",
-    "rv64i/I-NOP-01", "2000",
-    "rv64i/I-OR-01", "3000",
-    "rv64i/I-ORI-01", "3000",
-    "rv64i/I-RF_size-01", "2000",
-    "rv64i/I-RF_width-01", "2000",
-    "rv64i/I-RF_x0-01", "2010",
-    "rv64i/I-SB-01", "4000",
-    "rv64i/I-SD-01", "4000",
-    "rv64i/I-SH-01", "4000",
-    "rv64i/I-SLL-01", "3000",
-    "rv64i/I-SLLI-01", "3000",
-    "rv64i/I-SLLIW-01", "3000",
-    "rv64i/I-SLLW-01", "3000",
-    "rv64i/I-SLT-01", "3000",
-    "rv64i/I-SLTI-01", "3000",
-    "rv64i/I-SLTIU-01", "3000",
-    "rv64i/I-SLTU-01", "3000",
-    "rv64i/I-SRA-01", "3000",
-    "rv64i/I-SRAI-01", "3000",
-    "rv64i/I-SRAIW-01", "3000",
-    "rv64i/I-SRAW-01", "3000",
-    "rv64i/I-SRL-01", "3000",
-    "rv64i/I-SRLI-01", "3000",
-    "rv64i/I-SRLIW-01", "3000",
-    "rv64i/I-SRLW-01", "3000",
-    "rv64i/I-SUB-01", "3000",
-    "rv64i/I-SUBW-01", "3000",
-    "rv64i/I-SW-01", "4000",
-    "rv64i/I-XOR-01", "3000",
-    "rv64i/I-XORI-01", "3000",
-    "rv64i/WALLY-ADD", "4000",
-    "rv64i/WALLY-SUB", "4000",
-    "rv64i/WALLY-ADDI", "3000",
-    "rv64i/WALLY-ANDI", "3000",
-    "rv64i/WALLY-ORI", "3000",
-    "rv64i/WALLY-XORI", "3000",
-    "rv64i/WALLY-SLTI", "3000",
-    "rv64i/WALLY-SLTIU", "3000",
-    "rv64i/WALLY-SLLI", "3000",
-    "rv64i/WALLY-SRLI", "3000",
-    "rv64i/WALLY-SRAI", "3000",
-    "rv64i/WALLY-JAL", "4000",
-    "rv64i/WALLY-JALR", "3000",
-    "rv64i/WALLY-STORE", "3000",
-    "rv64i/WALLY-ADDIW", "3000",
-    "rv64i/WALLY-SLLIW", "3000",
-    "rv64i/WALLY-SRLIW", "3000",
-    "rv64i/WALLY-SRAIW", "3000",
-    "rv64i/WALLY-ADDW", "4000",
-    "rv64i/WALLY-SUBW", "4000",
-    "rv64i/WALLY-SLLW", "3000",
-    "rv64i/WALLY-SRLW", "3000",
-    "rv64i/WALLY-SRAW", "3000",
-    "rv64i/WALLY-BEQ" ,"5000",
-    "rv64i/WALLY-BNE", "5000 ",
-    "rv64i/WALLY-BLTU", "5000 ",
-    "rv64i/WALLY-BLT", "5000",
-    "rv64i/WALLY-BGE", "5000 ",
-    "rv64i/WALLY-BGEU", "5000 ",
-    "rv64i/WALLY-CSRRW", "4000",
-    "rv64i/WALLY-CSRRS", "4000",
-    "rv64i/WALLY-CSRRC", "5000",
-    "rv64i/WALLY-CSRRWI", "4000",
-    "rv64i/WALLY-CSRRSI", "4000",
-    "rv64i/WALLY-CSRRCI", "4000"
-  };
-
-  string tests32a[] = '{
-    "rv32a/WALLY-AMO", "2110",
-    "rv32a/WALLY-LRSC", "2110"
-  };
-
-  string tests32m[] = '{
-    "rv32m/I-MUL-01", "2000",
-    "rv32m/I-MULH-01", "2000",
-    "rv32m/I-MULHSU-01", "2000",
-    "rv32m/I-MULHU-01", "2000",
-    "rv32m/I-DIV-01", "2000",
-    "rv32m/I-DIVU-01", "2000",
-    "rv32m/I-REM-01", "2000",
-    "rv32m/I-REMU-01", "2000"
-  };
-
-  string tests32ic[] = '{
-    "rv32ic/I-C-ADD-01", "2000",
-    "rv32ic/I-C-ADDI-01", "2000",
-    "rv32ic/I-C-AND-01", "2000",
-    "rv32ic/I-C-ANDI-01", "2000",
-    "rv32ic/I-C-BEQZ-01", "2000",
-    "rv32ic/I-C-BNEZ-01", "2000",
-    "rv32ic/I-C-EBREAK-01", "2000",
-    "rv32ic/I-C-J-01", "2000",
-    "rv32ic/I-C-JALR-01", "3000",
-    "rv32ic/I-C-JR-01", "3000",
-    "rv32ic/I-C-LI-01", "2000",
-    "rv32ic/I-C-LUI-01", "2000",
-    "rv32ic/I-C-LW-01", "2110",
-    "rv32ic/I-C-LWSP-01", "2110",
-    "rv32ic/I-C-MV-01", "2000",
-    "rv32ic/I-C-NOP-01", "2000",
-    "rv32ic/I-C-OR-01", "2000",
-    "rv32ic/I-C-SLLI-01", "2000",
-    "rv32ic/I-C-SRAI-01", "2000",
-    "rv32ic/I-C-SRLI-01", "2000",
-    "rv32ic/I-C-SUB-01", "2000",
-    "rv32ic/I-C-SW-01", "2000",
-    "rv32ic/I-C-SWSP-01", "2000",
-    "rv32ic/I-C-XOR-01", "2000"
-  };
-
-  string tests32iNOc[] = {
-    "rv32i/I-MISALIGN_JMP-01","2000"
-  };
-
-  string tests32i[] = {
-    //"rv32i/WALLY-PIPELINE-100K", "10a800",
-    "rv32i/I-ADD-01", "2000",
-    "rv32i/I-ADDI-01","2000",
-    "rv32i/I-AND-01","2000",
-    "rv32i/I-ANDI-01","2000",
-    "rv32i/I-AUIPC-01","2000",
-    "rv32i/I-BEQ-01","3000",
-    "rv32i/I-BGE-01","3000",
-    "rv32i/I-BGEU-01","3000",
-    "rv32i/I-BLT-01","3000",
-    "rv32i/I-BLTU-01","3000",
-    "rv32i/I-BNE-01","3000",
-    "rv32i/I-DELAY_SLOTS-01","2000",
-    "rv32i/I-EBREAK-01","2000",
-    "rv32i/I-ECALL-01","2000",
-    "rv32i/I-ENDIANESS-01","2010",
-    "rv32i/I-IO-01","2030rv",
-    "rv32i/I-JAL-01","3000",
-    "rv32i/I-JALR-01","3000",
-    "rv32i/I-LB-01","3020",
-    "rv32i/I-LBU-01","3020",
-    "rv32i/I-LH-01","3050",
-    "rv32i/I-LHU-01","3050",
-    "rv32i/I-LUI-01","2000",
-    "rv32i/I-LW-01","3110",
-    "rv32i/I-MISALIGN_LDST-01","2010",
-    "rv32i/I-NOP-01","2000",
-    "rv32i/I-OR-01","2000",
-    "rv32i/I-ORI-01","2000",
-    "rv32i/I-RF_size-01","2000",
-    "rv32i/I-RF_width-01","2000",
-    "rv32i/I-RF_x0-01","2010",
-    "rv32i/I-SB-01","3000",
-    "rv32i/I-SH-01","3000",
-    "rv32i/I-SLL-01","2000",
-    "rv32i/I-SLLI-01","2000",
-    "rv32i/I-SLT-01","2000",
-    "rv32i/I-SLTI-01","2000",
-    "rv32i/I-SLTIU-01","2000",
-    "rv32i/I-SLTU-01","2000",
-    "rv32i/I-SRA-01","2000",
-    "rv32i/I-SRAI-01","2000",
-    "rv32i/I-SRL-01","2000",
-    "rv32i/I-SRLI-01","2000",
-    "rv32i/I-SUB-01","2000",
-    "rv32i/I-SW-01","3000",
-    "rv32i/I-XOR-01","2000",
-    "rv32i/I-XORI-01","2000",
-    "rv32i/WALLY-ADD", "3000",
-    "rv32i/WALLY-SUB", "3000",
-    "rv32i/WALLY-ADDI", "2000",
-    "rv32i/WALLY-ANDI", "2000",
-    "rv32i/WALLY-ORI", "2000",
-    "rv32i/WALLY-XORI", "2000",
-    "rv32i/WALLY-SLTI", "2000",
-    "rv32i/WALLY-SLTIU", "2000",
-    "rv32i/WALLY-SLLI", "2000",
-    "rv32i/WALLY-SRLI", "2000",
-    "rv32i/WALLY-SRAI", "2000",
-    "rv32i/WALLY-LOAD", "11c00",
-    "rv32i/WALLY-SUB", "3000",
-    "rv32i/WALLY-STORE", "2000",
-    "rv32i/WALLY-JAL", "3000",
-    "rv32i/WALLY-JALR", "2000",
-    "rv32i/WALLY-BEQ" ,"4000",
-    "rv32i/WALLY-BNE", "4000 ",
-    "rv32i/WALLY-BLTU", "4000 ",
-    "rv32i/WALLY-BLT", "4000",
-    "rv32i/WALLY-BGE", "4000 ",
-    "rv32i/WALLY-BGEU", "4000 ",
-    "rv32i/WALLY-CSRRW", "3000",
-    "rv32i/WALLY-CSRRS", "3000",
-    "rv32i/WALLY-CSRRC", "4000",
-    "rv32i/WALLY-CSRRWI", "3000",
-    "rv32i/WALLY-CSRRSI", "3000",
-    "rv32i/WALLY-CSRRCI", "3000"
-  };
-
-  string testsBP64[] = '{
-    "rv64BP/blink-led", "10000"
-/* -----\/----- EXCLUDED -----\/-----
-    "rv64BP/simple", "10000",
-    "rv64BP/mmm", "1000000",
-    "rv64BP/linpack_bench", "1000000",
-    "rv64BP/sieve", "1000000",
-    "rv64BP/qsort", "1000000",
-    "rv64BP/dhrystone", "1000000"
- -----/\----- EXCLUDED -----/\----- */
-  };
-
-  string tests64p[] = '{
-    "rv64p/WALLY-MSTATUS", "2000",
-    "rv64p/WALLY-MCAUSE", "3000",
-    "rv64p/WALLY-SCAUSE", "2000",
-    "rv64p/WALLY-MEPC", "5000",
-    "rv64p/WALLY-SEPC", "4000",
-    "rv64p/WALLY-MTVAL", "6000",
-    "rv64p/WALLY-STVAL", "4000",
-    "rv64p/WALLY-MTVEC", "2000",
-    "rv64p/WALLY-STVEC", "2000",
-    "rv64p/WALLY-MARCHID", "4000",
-    "rv64p/WALLY-MIMPID", "4000",
-    "rv64p/WALLY-MHARTID", "4000",
-    "rv64p/WALLY-MVENDORID", "4000",
-    "rv64p/WALLY-MIE", "3000",
-    "rv64p/WALLY-MEDELEG", "4000",
-    "rv64p/WALLY-IP", "2000",
-    "rv64p/WALLY-CSR-PERMISSIONS-M", "5000",
-    "rv64p/WALLY-CSR-PERMISSIONS-S", "3000"
-  };
-
-  string tests32p[] = '{
-    "rv32p/WALLY-MSTATUS", "2000",
-    "rv32p/WALLY-MCAUSE", "3000",
-    "rv32p/WALLY-SCAUSE", "2000",
-    "rv32p/WALLY-MEPC", "5000",
-    "rv32p/WALLY-SEPC", "4000",
-    "rv32p/WALLY-MTVAL", "5000",
-    "rv32p/WALLY-STVAL", "4000",
-    "rv32p/WALLY-MARCHID", "4000",
-    "rv32p/WALLY-MIMPID", "4000",
-    "rv32p/WALLY-MHARTID", "4000",
-    "rv32p/WALLY-MVENDORID", "4000",
-    "rv32p/WALLY-MTVEC", "2000",
-    "rv32p/WALLY-STVEC", "2000",
-    "rv32p/WALLY-MIE", "3000",
-    "rv32p/WALLY-MEDELEG", "4000",
-    "rv32p/WALLY-IP", "3000",
-    "rv32p/WALLY-CSR-PERMISSIONS-M", "5000",
-    "rv32p/WALLY-CSR-PERMISSIONS-S", "3000"
-  };
-
-  string tests64periph[] = '{
-    "rv64i-periph/WALLY-PERIPH", "2000"
-  };
-
-  string tests32periph[] = '{
-    "rv32i-periph/WALLY-PLIC", "2080"
-  };
-
-   string tests[];
   string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT, HREADY;
-  logic 	    HSELEXT;
-  
+  logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic             HWRITE;
@@ -524,97 +67,53 @@ string tests32f[] = '{
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.wallypipelinedsoc.core.ieu.dp.StallW, dut.wallypipelinedsoc.core.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.wallypipelinedsoc.core.ieu.dp.StallW,  dut.wallypipelinedsoc.core.ifu.InstrM, InstrW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
-  logging logging(clk, reset, dut.wallypipelinedsoc.uncore.HADDR, dut.wallypipelinedsoc.uncore.HTRANS);
 
-  // pick tests based on modes supported
-  initial begin
-    if (`XLEN == 64) begin // RV64
-      if (`TESTSBP) begin
-        tests = testsBP64;
-	// testsbp should not run the other tests. It starts at address 0 rather than
-	// 0x8000_0000, the next if must remain an else if.	
-      end else if (TESTSPERIPH)
-        tests = tests64periph;
-      else if (TESTSPRIV)
-        tests = tests64p;
-      else begin
-        tests = {tests64p,tests64i, tests64periph};
-        if (`C_SUPPORTED) tests = {tests, tests64ic};
-        else              tests = {tests, tests64iNOc};
-        if (`M_SUPPORTED) tests = {tests, tests64m};
-        if (`F_SUPPORTED) tests = {tests64f, tests};
-        if (`D_SUPPORTED) tests = {tests64d, tests};
-        if (`VIRTMEM_SUPPORTED) tests = {tests64mmu, tests};
-        if (`A_SUPPORTED) tests = {tests64a, tests};
-      end
-      //tests = {tests64a, tests};
-    end else begin // RV32
-      // *** add the 32 bit bp tests
-      if (TESTSPERIPH)
-        tests = tests32periph;
-      else if (TESTSPRIV)
-        tests = tests32p;
-      else begin
-          tests = {tests32i, tests32p};//,tests32periph}; *** broken at the moment
-          if (`C_SUPPORTED % 2 == 1) tests = {tests, tests32ic};    
-          else                       tests = {tests, tests32iNOc};
-          if (`M_SUPPORTED % 2 == 1) tests = {tests, tests32m};
-          if (`F_SUPPORTED) tests = {tests32f, tests};
-          if (`VIRTMEM_SUPPORTED) tests = {tests32mmu, tests};
-          if (`A_SUPPORTED) tests = {tests32a, tests};
-     end
-    end
-  end
+  string signame, memfilename, pathname, romfilename, sdcfilename;
 
-  string signame, memfilename, romfilename, sdcfilename;
-
-  logic [3:0] GPIOPinsIn_IO;
-  logic [4:0] GPIOPinsOut_IO;
+  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
-  logic ddr4_calib_complete;
+
   
 
   logic SDCCLK;
-  tri1 SDCCmd;
-  tri1 [3:0] SDCDat;
   logic      SDCCmdIn;
   logic      SDCCmdOut;
   logic      SDCCmdOE;
   logic [3:0] SDCDatIn;
+  tri1 [3:0] SDCDat;
+  tri1 SDCCmd;
 
-  assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
-  assign SDCCmdIn = SDCCmd;
-  assign SDCDatIn = SDCDat;
-    
+  logic             HREADY;
+  logic 	    HSELEXT;
+  
   sdModel sdcard
     (.sdClk(SDCCLK),
     .cmd(SDCCmd), 
     .dat(SDCDat));
 
+  assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+  assign SDCCmdIn = SDCCmd;
+  assign SDCDatIn = SDCDat;
+
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
- 
-  ram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) 
-  ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELTim(HSELEXT), 
-        .HREADTim(HRDATAEXT), .HREADYTim(HREADYEXT), .HRESPTim(HRESPEXT));
- 
 
-  wallypipelinedsocwrapper dut(.clk, .reset_ext, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
-  instrTrackerTB it(clk, reset, dut.wallypipelinedsoc.core.ieu.dp.FlushE,
-                dut.wallypipelinedsoc.core.ifu.icache.FinalInstrRawF,
-                dut.wallypipelinedsoc.core.ifu.InstrD, dut.wallypipelinedsoc.core.ifu.InstrE,
-                dut.wallypipelinedsoc.core.ifu.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.FinalInstrRawF[31:0],
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -623,58 +122,52 @@ string tests32f[] = '{
 
   initial
     begin
-      test = 0;
+      test = 1;
       totalerrors = 0;
       testadr = 0;
+      testadrNoBase = 0;
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
       //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
       //  strings, but uses a load double to read them in.  If the last 2 bytes are
       //  not initialized the compare results in an 'x' which propagates through 
       // the design.
-      if (`XLEN == 32) meminit = 32'hFEDC0123;
-      else meminit = 64'hFEDCBA9876543210;
-      // *** broken because DTIM also drives RAM
-/* -----\/----- EXCLUDED -----\/-----
-      if (`TESTSBP) begin
-	for (i=MemStartAddr; i<MemEndAddr; i = i+1) begin
-	  ram.RAM[i] = meminit;
-	end
-      end
- -----/\----- EXCLUDED -----/\----- */
+      if (TEST == "coremark") 
+
       // read test vectors into memory
-      memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-      //romfilename = {"../../testsBP/fpga-test-sdc/bin/fpga-test-sdc.hex"};
+      pathname = tvpaths[tests[0].atoi()];
+/*      if (tests[0] == `IMPERASTEST)
+        pathname = tvpaths[0];
+      else pathname = tvpaths[1]; */
+      memfilename = {pathname, tests[test], ".elf.memfile"};
       romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
-      sdcfilename = {"../src/sdc/tb/ramdisk2.hex"};      
-      $readmemh(memfilename, ram.RAM);
-      $readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootram.bootram.RAM);
+      sdcfilename = {"../testbench/sdc/ramdisk2.hex"};      
+      //$readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootrom.bootrom.memory.RAM);
       $readmemh(sdcfilename, sdcard.FLASHmem);
-      ProgramAddrMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.addr"};
-      ProgramLabelMapFile = {"../../imperas-riscv-tests/work/rv64BP/fpga-test-sdc.objdump.lab"};
+
+      ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+      ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       $display("Read memfile %s", memfilename);
-      reset = 0; #97; reset = 1; # 1000; reset = 0;
+      reset_ext = 0; #97 reset_ext = 1; # 1000; reset_ext = 0;
     end
 
   // generate clock to sequence tests
   always
     begin
       clk = 1; # 5; clk = 0; # 5;
+      // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
   // check results
   always @(negedge clk)
     begin    
-/* -----\/----- EXCLUDED -----\/-----
-      if (dut.wallypipelinedsoc.core.priv.EcallFaultM & 
-			    (dut.wallypipelinedsoc.core.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.wallypipelinedsoc.core.ieu.dp.regf.we3 & 
-			      dut.wallypipelinedsoc.core.ieu.dp.regf.a3 == 3 & 
-			      dut.wallypipelinedsoc.core.ieu.dp.regf.wd3 == 1))) begin
- -----/\----- EXCLUDED -----/\----- */
+      if (TEST == "coremark")
+        if (dut.core.priv.priv.ecallM) begin
+          $display("Benchmark: coremark is done.");
+          $stop;
+        end
       if (DCacheFlushDone) begin
-        //$display("Code ended with ecall with gp = 1");
-
+ 
         #600; // give time for instructions in pipeline to finish
         // clear signature to prevent contamination from previous tests
         for(i=0; i<SIGNATURESIZE; i=i+1) begin
@@ -682,7 +175,7 @@ string tests32f[] = '{
         end
 
         // read signature, reformat in 64 bits if necessary
-        signame = {"../../imperas-riscv-tests/work/", tests[test], ".signature.output"};
+        signame = {pathname, tests[test], ".signature.output"};
         $readmemh(signame, sig32);
         i = 0;
         while (i < SIGNATURESIZE) begin
@@ -693,8 +186,8 @@ string tests32f[] = '{
             signature[i/2] = {sig32[i+1], sig32[i]};
             i = i + 2;
           end
-          if (sig32[i-1] === 'bx) begin
-            if (i == 1) begin
+          if (i >= 4 & sig32[i-4] === 'bx) begin
+            if (i == 4) begin
               i = SIGNATURESIZE+1; // flag empty file
               $display("  Error: empty test file");
             end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
@@ -705,17 +198,27 @@ string tests32f[] = '{
         errors = (i == SIGNATURESIZE+1); // error if file is empty
         i = 0;
         testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
+        testadrNoBase = (tests[test+1].atohex())/(`XLEN/8);
         /* verilator lint_off INFINITELOOP */
         while (signature[i] !== 'bx) begin
-          //$display("signature[%h] = %h", i, signature[i]);
-          if (signature[i] !== ram.RAM[testadr+i] &
-	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin
-            if (signature[i+4] !== 'bx | signature[i] !== 32'hFFFFFFFF) begin
+          logic [`XLEN-1:0] sig;
+/* -----\/----- EXCLUDED -----\/-----
+          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
+          else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+ -----/\----- EXCLUDED -----/\----- */
+          //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
+          if (signature[i] !== sig &
+          //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
+	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
+            if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
+//            if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
+              $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
               errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (TIM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], ram.RAM[testadr+i], signature[i]);
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+                    //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.memory.RAM[testadr+i], signature[i]);
               $stop;//***debug
             end
           end
@@ -736,51 +239,66 @@ string tests32f[] = '{
           $stop;
         end
         else begin
-          memfilename = {"../../imperas-riscv-tests/work/", tests[test], ".elf.memfile"};
-          $readmemh(memfilename, ram.RAM);
-          $display("Read memfile %s", memfilename);
-	  ProgramAddrMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.addr"};
-	  ProgramLabelMapFile = {"../../imperas-riscv-tests/work/", tests[test], ".elf.objdump.lab"};
-	  reset = 0; #97; reset = 1; # 1000; reset = 0;
+            //pathname = tvpaths[tests[0]];
+            memfilename = {pathname, tests[test], ".elf.memfile"};
+            //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+/* -----\/----- EXCLUDED -----\/-----
+            if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+            else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+ -----/\----- EXCLUDED -----/\----- */
+
+            ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+            ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+            $display("Read memfile %s", memfilename);
+            reset_ext = 1; # 47; reset_ext = 0;
         end
       end
     end // always @ (negedge clk)
 
   // track the current function or global label
-/* -----\/----- EXCLUDED -----\/-----
   if (DEBUG == 1) begin : FunctionName
     FunctionName FunctionName(.reset(reset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
   end
- -----/\----- EXCLUDED -----/\----- */
 
-  assign DCacheFlushStart = dut.wallypipelinedsoc.core.priv.EcallFaultM & 
-			    (dut.wallypipelinedsoc.core.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.wallypipelinedsoc.core.ieu.dp.regf.we3 & 
-			      dut.wallypipelinedsoc.core.ieu.dp.regf.a3 == 3 & 
-			      dut.wallypipelinedsoc.core.ieu.dp.regf.wd3 == 1));
-  
+  // Termination condition
+  // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
+  // or sw	gp,-56(t0) for new Imperas tests
+  // or sd gp, -56(t0) 
+  // or on a jump to self infinite loop (6f) for RISC-V Arch tests
+  logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
+  if (`ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
+  else                  assign ecf = 0;
+  assign DCacheFlushStart = ecf & 
+			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.core.ieu.dp.regf.we3 & 
+			      dut.core.ieu.dp.regf.a3 == 3 & 
+			      dut.core.ieu.dp.regf.wd3 == 1)) |
+          (dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM;
+
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
-				.reset(reset),
-				.start(DCacheFlushStart),
-				.done(DCacheFlushDone));
-  
+    			.reset(reset),
+	    		.start(DCacheFlushStart),
+		    	.done(DCacheFlushDone));
 
   // initialize the branch predictor
-  if (`BPRED_ENABLED == 1)
+  if (`BPRED_ENABLED == 1) 
     initial begin
-      $readmemb(`TWO_BIT_PRELOAD, dut.wallypipelinedsoc.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-      $readmemb(`BTB_PRELOAD, dut.wallypipelinedsoc.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
-    end
+      $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+      $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);    
+    end 
 endmodule
 
-module riscvassertions();
-  // Legal number of PMP entries are 0, 16, or 64
+module riscvassertions;
   initial begin
     assert (`PMP_ENTRIES == 0 | `PMP_ENTRIES==16 | `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
-    assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double without supporting float");
+    assert (`S_SUPPORTED | `VIRTMEM_SUPPORTED == 0) else $error("Virtual memory requires S mode support");
+    assert (`DIV_BITSPERCYCLE == 1 | `DIV_BITSPERCYCLE==2 | `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
+    assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
+    assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
     assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_LINELENINBITS >= 128 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
@@ -788,14 +306,21 @@ module riscvassertions();
     assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (`IMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`ICACHE_LINELENINBITS >= 32 | (`IMEM != `MEM_CACHE)) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS) else $error("DCACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS) else $error("ICACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (`ICACHE_NUMWAYS == 1 | (`IMEM != `MEM_CACHE)) else $warning("Multiple Instruction Cache ways not yet implemented");
-    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES) else $error("ITLB_ENTRIES must be a power of 2");
-    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES) else $error("DTLB_ENTRIES must be a power of 2");
-    assert (`RAM_RANGE >= 56'h07FFFFFF) else $error("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
+    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | (`DMEM != `MEM_CACHE)) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | (`IMEM != `MEM_CACHE)) else $error("ICACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (`IMEM != `MEM_CACHE)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("ITLB_ENTRIES must be a power of 2");
+    assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("DTLB_ENTRIES must be a power of 2");
+    assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
+	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
+    assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
+    assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
+//    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
+    assert (`DMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
+    assert (`IMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
+    assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
+    assert (`IMEM == `MEM_CACHE | `IBUS ==0) else $error("Icache rquires IBUS.");    
   end
 endmodule
 
@@ -809,70 +334,70 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
-  localparam integer numlines = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.NUMLINES;
-  localparam integer numways = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.NUMWAYS;
-  localparam integer linebytelen = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.LINEBYTELEN;
-  localparam integer numwords = testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.LINELEN/`XLEN;  
-  localparam integer lognumlines = $clog2(numlines);
-  localparam integer loglinebytelen = $clog2(linebytelen);
-  localparam integer lognumways = $clog2(numways);
-  localparam integer tagstart = lognumlines + loglinebytelen;
-
-
-
-  genvar index, way, cacheWord;
-  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
-  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
   genvar adr;
 
   logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
   
-  for(index = 0; index < numlines; index++) begin
-    for(way = 0; way < numways; way++) begin
-      for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-        copyShadow #(.tagstart(tagstart), .loglinebytelen(loglinebytelen))
-        copyShadow(.clk,
-            .start,
-            .tag(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
-            .valid(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.CacheWays[way].ValidBits[index]),
-            .dirty(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.CacheWays[way].DirtyBits[index]),
-            .data(testbench.dut.wallypipelinedsoc.core.lsu.bus.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
-            .index(index),
-            .cacheWord(cacheWord),
-            .CacheData(CacheData[way][index][cacheWord]),
-            .CacheAdr(CacheAdr[way][index][cacheWord]),
-            .CacheTag(CacheTag[way][index][cacheWord]),
-            .CacheValid(CacheValid[way][index][cacheWord]),
-            .CacheDirty(CacheDirty[way][index][cacheWord]));
-      end
-    end
-  end
+	if(`DMEM == `MEM_CACHE) begin
+	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
+	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
+	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+	  localparam integer numwords = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
+	  localparam integer lognumlines = $clog2(numlines);
+	  localparam integer loglinebytelen = $clog2(linebytelen);
+	  localparam integer lognumways = $clog2(numways);
+	  localparam integer tagstart = lognumlines + loglinebytelen;
 
-  integer i, j, k;
-  
-  always @(posedge clk) begin
-    if (start) begin #1
-      #1
-      for(i = 0; i < numlines; i++) begin
-	for(j = 0; j < numways; j++) begin
-	  for(k = 0; k < numwords; k++) begin
-	  if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
-	    ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
-	    end
-	  end	
+
+
+	  genvar 			 index, way, cacheWord;
+	  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+      for(index = 0; index < numlines; index++) begin
+		for(way = 0; way < numways; way++) begin
+		  for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+			copyShadow #(.tagstart(tagstart),
+						 .loglinebytelen(loglinebytelen))
+			copyShadow(.clk,
+					   .start,
+					   .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
+					   .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
+					   .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
+					   .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
+					   .index(index),
+					   .cacheWord(cacheWord),
+					   .CacheData(CacheData[way][index][cacheWord]),
+					   .CacheAdr(CacheAdr[way][index][cacheWord]),
+					   .CacheTag(CacheTag[way][index][cacheWord]),
+					   .CacheValid(CacheValid[way][index][cacheWord]),
+					   .CacheDirty(CacheDirty[way][index][cacheWord]));
+		  end
+		end
+      end
+
+	  integer i, j, k;
+
+	  always @(posedge clk) begin
+		if (start) begin #1
+		  #1
+			for(i = 0; i < numlines; i++) begin
+			  for(j = 0; j < numways; j++) begin
+				for(k = 0; k < numwords; k++) begin
+				  if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
+					ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+				  end
+				end	
+			  end
+			end
+		end
+	  end
+
+	  
 	end
-      end
-    end
-  end
-
-
-  flop #(1) doneReg(.clk(clk),
-		    .d(start),
-		    .q(done));
-		    
+  flop #(1) doneReg(.clk, .d(start), .q(done));
 endmodule
 
 module copyShadow

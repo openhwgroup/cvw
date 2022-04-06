@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-`define SDCCLKDIV -8'd2
+`define SDCCLKDIV -8'd3
 
 module SDC 
   (input  logic             HCLK, 
@@ -64,7 +64,7 @@ module SDC
 
 
   // Register outputs
-  logic [7:0] 		    CLKDiv;
+  logic signed [7:0] 		    CLKDiv;
   logic [2:0] 		    Command;
   logic [63:9] 		    Address;
   
@@ -330,15 +330,13 @@ module SDC
 			.ECLK(CLKGate));
 
 
-/* -----\/----- EXCLUDED -----\/-----
   clkdivider #(8) clkdivider(.i_COUNT_IN_MAX(CLKDiv),
-			     .i_EN(CLKDiv != 'b1),
+			     .i_EN(CLKDiv <= 0), // enable if < 0 (msb is 1)
 			     .i_CLK(CLKGate),
 			     .i_RST(~HRESETn | CLKDivUpdateEn),
 			     .o_CLK(SDCCLKIn));
- -----/\----- EXCLUDED -----/\----- */
 
-  assign SDCCLKIn = CLKGate;
+//  assign SDCCLKIn = CLKGate;
   
 
   sd_top sd_top(.CLK(SDCCLKIn),
