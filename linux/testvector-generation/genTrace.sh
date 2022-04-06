@@ -4,10 +4,12 @@ imageDir=$RISCV/buildroot/output/images
 tvDir=$RISCV/linux-testvectors
 recordFile="$tvDir/all.qemu"
 traceFile="$tvDir/all.txt"
+trapsFile="$tvDir/traps.txt"
 interruptsFile="$tvDir/interrupts.txt"
 
 read -p "Warning: running this script will overwrite the contents of:
   * $traceFile
+  * $trapsFile
   * $interruptsFile
 Would you like to proceed? (y/n) " -n 1 -r
 echo
@@ -28,6 +30,7 @@ then
     fi
 
     touch $traceFile 
+    touch $trapsFile 
     touch $interruptsFile 
 
     # QEMU Simulation
@@ -38,7 +41,9 @@ then
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
     -d nochain,cpu,in_asm,int \
-    2>&1 >./qemu-serial | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $interruptsFile | ./remove_dup.awk > $traceFile)
+    2>&1 >./qemu-serial | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $trapsFile | ./remove_dup.awk > $traceFile)
+
+    ./filterTrapsToInterrupts.py $tvDir
 
     echo "genTrace.sh completed!"
     echo "You may want to restrict write access to $tvDir now and give cad ownership of it."
