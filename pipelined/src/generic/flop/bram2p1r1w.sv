@@ -78,9 +78,9 @@ module bram2p1r1w
   end
  -----/\----- EXCLUDED -----/\----- */
 
-  initial begin
-	if(PRELOAD_ENABLED) begin
-      RAM[0] =  64'h94e1819300002197; 
+  if(PRELOAD_ENABLED) begin
+    initial begin
+      RAM[0] =  64'h9581819300002197; 
       RAM[1] =  64'h4281420141014081; 
       RAM[2] =  64'h4481440143814301; 
       RAM[3] =  64'h4681460145814501; 
@@ -104,7 +104,7 @@ module bram2p1r1w
       RAM[21] = 64'h0010029b01260613; 
       RAM[22] = 64'h11010002806702fe; 
       RAM[23] = 64'h84b2842ae426e822; 
-      RAM[24] = 64'h892ee04aec064505; 
+      RAM[24] = 64'h892ee04aec064511; 
       RAM[25] = 64'h06e000ef07e000ef; 
       RAM[26] = 64'h979334fd02905563; 
       RAM[27] = 64'h07930177d4930204; 
@@ -120,9 +120,10 @@ module bram2p1r1w
       RAM[37] = 64'h05a1118737836749; 
       RAM[38] = 64'hfed59be3fef5bc23; 
       RAM[39] = 64'h1047278367498082; 
-      RAM[40] = 64'h67c98082dfed8b85; 
-      RAM[41] = 64'h0000808210a7a023;   
-	end
+      RAM[40] = 64'h47858082dfed8b85; 
+      RAM[41] = 64'h40a7853b4015551b;   
+	  RAM[42] = 64'h808210a7a02367c9;
+	end				
   end
 
   // Port-A Operation

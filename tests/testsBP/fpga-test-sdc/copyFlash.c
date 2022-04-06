@@ -27,7 +27,7 @@
 
 void copyFlash(long int blockAddr, long int * Dst, int numBlocks) {
 
-  setSDCCLK(1);
+  setSDCCLK(4); // must be even, 1 gives no division.
   waitInitSDC();
 
   int index;

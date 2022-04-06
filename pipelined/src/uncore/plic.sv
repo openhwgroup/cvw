@@ -70,9 +70,9 @@ module plic (
   
   // context-dependent signals
   logic [`C-1:0][2:0]       intThreshold;
-  logic [`C-1:0][`N:1]      intEn;
+    (* mark_debug = "true" *)  logic [`C-1:0][`N:1]      intEn;
   logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
-  logic [`C-1:0][7:1][`N:1] irqMatrix;
+    (* mark_debug = "true" *)  logic [`C-1:0][7:1][`N:1] irqMatrix;
   logic [`C-1:0][7:1]       priorities_with_irqs;
   logic [`C-1:0][7:1]       max_priority_with_irqs;
   logic [`C-1:0][`N:1]      irqs_at_max_priority;

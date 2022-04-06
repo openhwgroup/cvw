@@ -41,7 +41,6 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     run -all
     run -all
     exec ./slack-notifier/slack-notifier.py
-    quit 
 } else {
     vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
     # start and run simulation
@@ -52,11 +51,15 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
     #vsim -coverage -lib work_$2 workopt_$2
 
+    # power add generates the logging necessary for saif generation.
+    power add -r /dut/core/*
     run -all
-    quit
+    power off -r /dut/core/*
 } 
 
 #coverage report -file wally-pipelined-coverage.txt
 # These aren't doing anything helpful
 #coverage report -memory 
 #profile report -calltree -file wally-pipelined-calltree.rpt -cutoff 2
+power report -all -bsaif power.saif
+quit

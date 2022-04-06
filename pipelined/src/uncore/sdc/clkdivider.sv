@@ -52,6 +52,7 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
   logic 			   w_load;
 
   logic 			   resetD, resetDD, resetPulse;
+  logic 			   rstdd2, rstddn;
 
   assign  w_load = resetPulse | w_counter_overflowed;  // reload when zero occurs or when set by outside
 
@@ -82,7 +83,15 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
     .q(resetDD),
     .clk(i_CLK));
   
-  assign resetPulse = i_RST & ~resetDD;
+  //assign resetPulse = i_RST & ~resetDD;
+  assign resetPulse = ~i_RST & resetDD;
+
+  assign rstdd2 = i_RST | resetDD;
+  
+  flop #(1) fallingEdge
+	(.d(rstdd2),
+	 .q(rstddn),
+	 .clk(~i_CLK));
   
   flopenr #(1) toggle_flip_flop
     (.d(w_fd_D),
@@ -93,6 +102,11 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
 
   assign w_fd_D = ~ r_fd_Q;
 
+/* -----\/----- EXCLUDED -----\/-----
   if(`FPGA) BUFGMUX clkMux(.I1(r_fd_Q), .I0(i_CLK), .S(i_EN), .O(o_CLK)); 
   else  assign o_CLK = i_EN ? r_fd_Q : i_CLK;
+ -----/\----- EXCLUDED -----/\----- */
+
+  if(`FPGA) BUFGMUX clkMux(.I1(r_fd_Q), .I0(i_CLK), .S(i_EN & ~rstddn), .O(o_CLK)); 
+  else  assign o_CLK = i_EN & ~rstddn ? r_fd_Q : i_CLK;
 endmodule
