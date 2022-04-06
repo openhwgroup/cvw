@@ -53,7 +53,7 @@ then
     -ex "printf \"Warning - please verify that the second half of $rawUntrimmedBootmemFile is all 0s\n\"" \
     -ex "dump binary memory $rawUntrimmedBootmemFile 0x1000 0x2fff" \
     -ex "printf \"Creating $rawRamFile\n\"" \
-    -ex "dump binary memory $rawRamFile 0x80000000 0xffffffff" \
+    -ex "dump binary memory $rawRamFile 0x80000000 0x87ffffff" \
     -ex "kill" \
     -ex "q"
 
