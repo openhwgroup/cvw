@@ -28,7 +28,7 @@ ${DIS}/vmlinux.objdump.addr: ${DIS}/vmlinux.objdump
 	-cd ${DIS}; extractFunctionRadix.sh vmlinux.objdump
 
 ${DIS}/busybox.objdump: ${DIS}/rootfs/bin/busybox
-	riscv64-unknown-elf-objdump -D ${DIS}/rootfs/bin/busybox >> ${DIS}/busybox.objdump
+	riscv64-unknown-elf-objdump -S ${DIS}/rootfs/bin/busybox >> ${DIS}/busybox.objdump
 
 ${DIS}/rootfs/bin/busybox:
 	mkdir -p ${DIS}/rootfs
