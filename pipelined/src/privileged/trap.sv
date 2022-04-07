@@ -111,9 +111,9 @@ module trap (
   end
 
   always_comb 
-    if      (mretM)                         PrivilegedNextPCM = MEPC_REGW;
-    else if (sretM)                         PrivilegedNextPCM = SEPC_REGW;
-    else                                    PrivilegedNextPCM = PrivilegedVectoredTrapVector;
+    if      (TrapM)                         PrivilegedNextPCM = PrivilegedVectoredTrapVector;
+    else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
+    else                                    PrivilegedNextPCM = SEPC_REGW;
 
   // Cause priority defined in table 3.7 of 20190608 privileged spec
   // Exceptions are of lower priority than all interrupts (3.1.9)
