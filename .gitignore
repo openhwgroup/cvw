@@ -70,3 +70,4 @@ synthDC/*.svf
 synthDC/runs/
 synthDC/hdl
 /pipelined/regression/power.saif
+tests/fp/vectors/*.tv
