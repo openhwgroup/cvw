@@ -29,10 +29,14 @@ def printPC(l):
 
 def printCSRs():
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
+    global interrupt_line
     if not inPageFault:
         for (csr,val) in CSRs.items():
             print('{}{}{:#x}  {}'.format(csr, ' '*(15-len(csr)), val, val))
-        print('-----')
+        print('-----') # end of current instruction
+        if len(interrupt_line)>0: # squish interrupts in between instructions
+            print(interrupt_line)
+            interrupt_line=""
 
 def parseCSRs(l):
     global parseState, inPageFault, CSRs, pageFaultCSRs, regs, pageFaultCSRs, instrs
@@ -119,15 +123,9 @@ for l in fileinput.input():
         break
     elif l.startswith('IN:'):
         # New disassembled instr
-        if len(interrupt_line)>0:
-            print(interrupt_line)
-            interrupt_line=""
         parseState = "instr"
     elif (parseState == "instr") and l.startswith('0x'):
         # New instruction
-        if len(interrupt_line)>0:
-            print(interrupt_line)
-            interrupt_line=""
         if "out of bounds" in l:
             sys.stderr.write("Detected QEMU page fault error\n")
             beginPageFault = not inPageFault
