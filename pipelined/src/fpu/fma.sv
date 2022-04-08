@@ -193,7 +193,7 @@ module expadd(
             endcase
         end
 
-    end else begin
+    end else if (`FPSIZES == 4) begin
         always_comb begin
             case (FmtE)
                 2'h3: Denorm = 1;
@@ -619,7 +619,7 @@ module normalize(
             endcase
         end
 
-    end else begin
+    end else if (`FPSIZES == 4) begin
         always_comb begin
             case (FmtM)
                 2'h3: SumExpTmp = SumExpTmpTmp;
@@ -664,7 +664,7 @@ module normalize(
             endcase
         end
 
-    end else begin
+    end else if (`FPSIZES == 4) begin
         logic Sum0LEZ, Sum0GEFL, Sum1LEZ, Sum1GEFL, Sum2LEZ, Sum2GEFL, Sum3LEZ, Sum3GEFL;
         assign Sum0LEZ  = SumExpTmpTmp[`NE+1] | ~|SumExpTmpTmp;
         assign Sum0GEFL = $signed(SumExpTmpTmp) >= $signed(-(`NE+2)'(`NF  )-(`NE+2)'(2));
@@ -719,7 +719,7 @@ module normalize(
         (|CorrSumShifted[3*`NF+2-`NF1:2*`NF+3]&((FmtM==`FMT1)|(FmtM==`FMT2))) | 
         (|CorrSumShifted[3*`NF+2-`NF2:3*`NF+3-`NF1]&(FmtM==`FMT2));
 
-    end else begin        
+    end else if (`FPSIZES == 4) begin        
         assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
         (|CorrSumShifted[3*`NF+2-`D_NF:2*`NF+3]&((FmtM==1)|(FmtM==0)|(FmtM==2))) | 
         (|CorrSumShifted[3*`NF+2-`S_NF:3*`NF+3-`D_NF]&((FmtM==0)|(FmtM==2))) |
@@ -876,7 +876,7 @@ module fmaround(
             endcase
         end
 
-    end else begin
+    end else if (`FPSIZES == 4) begin
         always_comb begin
             case (FmtM)
                 2'h3: begin
@@ -995,7 +995,7 @@ module fmaround(
             endcase
         end
 
-    end else begin        
+    end else if (`FPSIZES == 4) begin        
         always_comb begin
             case (FmtM)
                 2'h3: RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, Plus1};
@@ -1063,7 +1063,7 @@ module fmaflags(
             endcase
         end
 
-    end else begin        
+    end else if (`FPSIZES == 4) begin        
         always_comb begin
             case (FmtM)
                 2'h3: GtMaxExp =  &FullResultExp[`NE-1:0] | FullResultExp[`NE];
@@ -1223,7 +1223,7 @@ module resultselect(
             endcase
         end
 
-    end else begin 
+    end else if (`FPSIZES == 4) begin 
         always_comb begin
             case (FmtM)
                 2'h3: begin  

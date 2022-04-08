@@ -114,6 +114,7 @@ module privileged (
   assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
   
   // PrivilegeMode FSM
+/* -----\/----- EXCLUDED -----\/-----
   always_comb begin
     TrappedSRETM = 0;
     if (mretM)      NextPrivilegeModeM = STATUS_MPP;
@@ -128,6 +129,23 @@ module privileged (
       else          NextPrivilegeModeM = `M_MODE;
     end else        NextPrivilegeModeM = PrivilegeModeW;
   end
+
+ -----/\----- EXCLUDED -----/\----- */
+  
+  always_comb begin
+    if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
+      if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
+                    NextPrivilegeModeM = `S_MODE;
+      else          NextPrivilegeModeM = `M_MODE;
+    end else if (mretM) NextPrivilegeModeM = STATUS_MPP;
+    else if (sretM) begin
+      if (STATUS_TSR & PrivilegeModeW == `S_MODE) begin
+        NextPrivilegeModeM = PrivilegeModeW;
+      end else      NextPrivilegeModeM = {1'b0, STATUS_SPP};
+    end else        NextPrivilegeModeM = PrivilegeModeW;
+  end
+
+  assign TrappedSRETM = sretM & STATUS_TSR & PrivilegeModeW == `S_MODE;
 
   flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
 

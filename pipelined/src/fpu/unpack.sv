@@ -261,7 +261,7 @@ module unpack (
             endcase
         end
 
-    end else begin      // if all precsisons are supported - quad, double, single, and half
+    end else if (`FPSIZES == 4) begin      // if all precsisons are supported - quad, double, single, and half
     
         //    quad   |  double  |  single  |  half    
         //-------------------------------------------------------------------
