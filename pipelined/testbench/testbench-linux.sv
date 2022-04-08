@@ -40,84 +40,40 @@ module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////// CONFIG ////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  // Recommend setting all of these in do script using -G option
+  // Recommend setting all of these in 'do' script using -G option
   parameter INSTR_LIMIT  = 0; // # of instructions at which to stop
   parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
   parameter CHECKPOINT   = 0;
   parameter RISCV_DIR = "/opt/riscv";
 
-  ///////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////// HARDWARE ///////////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-  logic clk, reset_ext; 
-  logic reset;
-  initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
-  always begin clk <= 1; # 5; clk <= 0; # 5; end
-
-  logic [`AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT;
-  logic             HCLK, HRESETn;
-  logic             HREADY;
-  logic 	    HSELEXT;
-  logic [31:0]      HADDR;
-  logic [`AHBW-1:0] HWDATA;
-  logic             HWRITE;
-  logic [2:0]       HSIZE;
-  logic [2:0]       HBURST;
-  logic [3:0]       HPROT;
-  logic [1:0]       HTRANS;
-  logic             HMASTLOCK;
-  logic [31:0]      GPIOPinsIn;
-  logic [31:0]      GPIOPinsOut, GPIOPinsEn;
-  logic             UARTSin, UARTSout;
-
-  logic SDCCLK;
-  logic      SDCCmdIn;
-  logic      SDCCmdOut;
-  logic      SDCCmdOE;
-  logic [3:0] SDCDatIn;
-  
-  assign GPIOPinsIn = 0;
-  assign UARTSin = 1;
-  wallypipelinedsoc dut(.clk, .reset, .reset_ext,
-                        .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
-			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
-			.HTRANS, .HMASTLOCK, 
-			.TIMECLK('0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
-                        .UARTSin, .UARTSout,
-			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
 
-  // Write Back stage signals not needed by Wally itself 
-  parameter nop = 'h13;
-  logic [`XLEN-1:0] PCW;
-  logic [31:0]      InstrW;
-  logic             InstrValidW;
-  logic [`XLEN-1:0] IEUAdrW, WriteDataW;
-  logic             TrapW;
-  `define FLUSHW dut.core.FlushW
-  `define STALLW dut.core.StallW
-  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.ifu.PCM, PCW);
-  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
-  flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
-  flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
-  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
-  flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.core.hzu.TrapM, TrapW);
 
-  ///////////////////////////////////////////////////////////////////////////////
-  //////////////////////// Signals & Macro DECLARATIONS /////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
-  // Testbench Core
+
+
+
+
+
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////// SIGNAL / VAR / MACRO DECLARATIONS /////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+  // ========== Testbench Core ==========
   integer warningCount = 0;
   integer errorCount = 0;
   integer fault;
   string  ProgramAddrMapFile, ProgramLabelMapFile;
+  // ========== Initialization ==========
   string  testvectorDir;
   string  linuxImageDir;
-  // Checkpointing
+  integer memFile;
+  integer readResult;
+  // ========== Checkpointing ==========
   string checkpointDir;
   logic [1:0] initPriv;
-  // Signals used to parse the trace file
+  // ========== Trace parsing & checking ==========
+  integer garbageInt;
+  string  garbageString;
   `define DECLARE_TRACE_SCANNER_SIGNALS(STAGE) \
       integer traceFile``STAGE; \
       integer matchCount``STAGE; \
@@ -141,14 +97,12 @@ module testbench;
       logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0];
   `DECLARE_TRACE_SCANNER_SIGNALS(E)
   `DECLARE_TRACE_SCANNER_SIGNALS(M)
-  integer           NextMIPexpected, NextSIPexpected;
-  integer           NextMepcExpected;
-  // Memory stage expected values from trace
+  //  M-stage expected values
   logic             checkInstrM;
   integer           MIPexpected, SIPexpected;
   string            name;
   logic [`AHBW-1:0] readDataExpected;
-  // Write back stage expected values from trace
+  // W-stage expected values
   logic             checkInstrW;
   logic [`XLEN-1:0] ExpectedPCW;
   logic [31:0]      ExpectedInstrW;
@@ -162,35 +116,33 @@ module testbench;
   string            ExpectedCSRArrayW[10:0];
   logic [`XLEN-1:0] ExpectedCSRArrayValueW[10:0];
   logic [`XLEN-1:0] ExpectedIntType;
-  logic             forcedInterrupt;
-  integer           NumCSRMIndex;
   integer           NumCSRWIndex;
   integer           NumCSRPostWIndex;
   logic [`XLEN-1:0] InstrCountW;
-  integer           RequestDelayedMIP;
-  integer           RequestDelayedSIP;  
-  integer           ForceMIPFuture;
-  integer           CSRIndex;
-  longint           MepcExpected;
-  integer           CheckMIPFutureE;
-  integer           CheckMIPFutureM;
-  integer           CheckSIPFutureE;
-  integer           CheckSIPFutureM;
+  // ========== Interrupt parsing & spoofing ==========
+  string  interrupt;
+  string  interruptLine;
+  integer interruptFile;
+  integer interruptInstrCount;
+  integer interruptHartVal;
+  integer interruptAsyncVal;
+  longint interruptCauseVal;
+  longint interruptEpcVal;
+  longint interruptTVal;
+  string  interruptDesc;
+  integer           NextMIPexpected, NextSIPexpected;
+  integer           NextMepcExpected;
   logic [`XLEN-1:0] AttemptedInstructionCount;
-  // Useful Aliases
-  `define RF          dut.core.ieu.dp.regf.rf
-  `define PC          dut.core.ifu.pcreg.q
+  // ========== Misc Aliases ==========
+  `define RF dut.core.ieu.dp.regf.rf
+  `define PC dut.core.ifu.pcreg.q
+  `define PRIV dut.core.priv.priv.privmodereg.q
   `define CSR_BASE    dut.core.priv.priv.csr
   `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
-  `define PMP_BASE    `CSR_BASE.csrm.pmp
-  `define PMPCFG      genblk2.PMPCFGreg.q
-  `define PMPADDR     PMPADDRreg.q
   `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
   `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q
-  `define MIE         `CSR_BASE.csri.MIE_REGW
-  `define MIP         `CSR_BASE.csri.MIP_REGW
-  `define SIE         `CSR_BASE.csri.SIE_REGW
-  `define SIP         `CSR_BASE.csri.SIP_REGW
+  `define MIE         `CSR_BASE.csri.IE_REGW
+  `define MIP         `CSR_BASE.csri.IP_REGW_writeable
   `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
   `define SCAUSE      `CSR_BASE.csrs.csrs.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
@@ -202,6 +154,7 @@ module testbench;
   `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
   `define STVEC       `CSR_BASE.csrs.csrs.STVECreg.q
   `define SATP        `CSR_BASE.csrs.csrs.genblk1.SATPreg.q
+  `define INSTRET     `CSR_BASE.counters.counters.HPMCOUNTER_REGW[2]
   `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
   `define SSTATUS     `CSR_BASE.csrsr.SSTATUS_REGW  
   `define STATUS_TSR  `CSR_BASE.csrsr.STATUS_TSR_INT
@@ -219,35 +172,123 @@ module testbench;
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
   `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
-  `define PRIV        dut.core.priv.priv.privmodereg.q
-  `define INSTRET     dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2]
-  `define UART        dut.uncore.uart.uart.u
-  `define UART_IER    `UART.IER
-  `define UART_LCR    `UART.LCR
-  `define UART_MCR    `UART.MCR
-  `define UART_SCR    `UART.SCR
-  `define PLIC        dut.uncore.plic.plic
+  `define UART dut.uncore.uart.uart.u
+  `define UART_IER `UART.IER
+  `define UART_LCR `UART.LCR
+  `define UART_MCR `UART.MCR
+  `define UART_SCR `UART.SCR
+  `define PLIC dut.uncore.plic.plic
   `define PLIC_INT_PRIORITY `PLIC.intPriority
   `define PLIC_INT_ENABLE   `PLIC.intEn
   `define PLIC_THRESHOLD    `PLIC.intThreshold
-  // Common Macros
-  `define checkCSR(CSR) \
+  `define PCM dut.core.ifu.PCM
+  // ========== COMMON MACROS ==========
+  // Needed for initialization and core
+  `define SCAN_NEW_INTERRUPT \
     begin \
-      if (CSR != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin \
-        $display("%tns, %d instrs: CSR %s = %016x, does not equal expected value %016x", $time, InstrCountW, ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
-        if(`DEBUG_TRACE >= 3) fault = 1; \
-      end \
-    end
-  `define checkEQ(NAME, VAL, EXPECTED) \
-    if(VAL != EXPECTED) begin \
-      $display("%tns, %d instrs: %s %x differs from expected %x", $time, InstrCountW, NAME, VAL, EXPECTED); \
-      if ((NAME == "PCW") | (`DEBUG_TRACE >= 2)) fault = 1; \
-    end
+      $fgets(interruptLine, interruptFile); \
+      //$display("Time %t, interruptLine %x", $time, interruptLine); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%d", interruptInstrCount); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%d", interruptHartVal); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%d", interruptAsyncVal); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%x", interruptCauseVal); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%x", interruptEpcVal); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%x", interruptTVal); \
+      $fgets(interruptLine, interruptFile); \
+      $sscanf(interruptLine, "%s", interruptDesc); \
+    end 
+
+
+
+
+
+
+
+
+
+
+
+  ///////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////// HARDWARE ///////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  // Clock and Reset
+  logic clk, reset_ext; 
+  logic reset;
+  initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
+  always begin clk <= 1; # 5; clk <= 0; # 5; end
+  // Wally Interface
+  logic [`AHBW-1:0] HRDATAEXT;
+  logic             HREADYEXT, HRESPEXT;
+  logic             HCLK, HRESETn;
+  logic             HREADY;
+  logic 	    HSELEXT;
+  logic [31:0]      HADDR;
+  logic [`AHBW-1:0] HWDATA;
+  logic             HWRITE;
+  logic [2:0]       HSIZE;
+  logic [2:0]       HBURST;
+  logic [3:0]       HPROT;
+  logic [1:0]       HTRANS;
+  logic             HMASTLOCK;
+  logic [31:0]      GPIOPinsIn;
+  logic [31:0]      GPIOPinsOut, GPIOPinsEn;
+  logic             UARTSin, UARTSout;
+
+  // FPGA-specific Stuff
+  logic SDCCLK;
+  logic SDCCmdIn;
+  logic SDCCmdOut;
+  logic SDCCmdOE;
+  logic [3:0] SDCDatIn;
+
+  // Hardwire UART, GPIO pins
+  assign GPIOPinsIn = 0;
+  assign UARTSin = 1;
+
+  // Wally
+  wallypipelinedsoc dut(.clk, .reset, .reset_ext,
+                        .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
+			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
+			.HTRANS, .HMASTLOCK, 
+			.TIMECLK('0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .UARTSin, .UARTSout,
+			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
+
+  // W-stage hardware not needed by Wally itself 
+  parameter nop = 'h13;
+  logic [`XLEN-1:0] PCW;
+  logic [31:0]      InstrW;
+  logic             InstrValidW;
+  logic [`XLEN-1:0] IEUAdrW, WriteDataW;
+  logic             TrapW;
+  `define FLUSHW dut.core.FlushW
+  `define STALLW dut.core.StallW
+  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, `PCM, PCW);
+  flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
+  flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
+  flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
+  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
+  flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.core.hzu.TrapM, TrapW);
+
+
+
+
+
+
+
+
+
 
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////// INITIALIZATION ////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
-  // Checkpoint initializations
+  // ========== CHECKPOINTING ==========
   `define MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
     logic DIM init``SIGNAL[ARRAY_MAX:ARRAY_MIN]; \
     initial begin \
@@ -280,21 +321,6 @@ module testbench;
         end \
       end \
     end
-  // For the annoying case where the pathname to the array elements includes
-  // a "genblk<i>" in the signal name
-  `define INIT_CHECKPOINT_GENBLK_ARRAY(SIGNAL_BASE,SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
-    `MAKE_CHECKPOINT_INIT_SIGNAL(SIGNAL,DIM,ARRAY_MAX,ARRAY_MIN) \
-    for (i=ARRAY_MIN; i<ARRAY_MAX+1; i=i+1) begin \
-      initial begin \
-        if (CHECKPOINT!=0) begin \
-          force `SIGNAL_BASE[i].`SIGNAL = init``SIGNAL[i]; \
-          while (reset!==1) #1; \
-          while (reset!==0) #1; \
-          #1; \
-          release `SIGNAL_BASE[i].`SIGNAL; \
-        end \
-      end \
-    end
 
   // Note that dimension usage is very intentional here.
   // We are dancing around (un)packed type requirements.
@@ -318,8 +344,6 @@ module testbench;
   `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
   `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
-  `INIT_CHECKPOINT_VAL(SIE,        [11:0]);
-  `INIT_CHECKPOINT_VAL(SIP,        [11:0]);
   `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(SCAUSE,     [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEPC,       [`XLEN-1:0]);
@@ -332,32 +356,31 @@ module testbench;
   `INIT_CHECKPOINT_VAL(STVEC,      [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
-  `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
-  `MAKE_CHECKPOINT_INIT_SIGNAL(SSTATUS, [`XLEN-1:0],0,0);  
-  // Many UART registers are difficult to initialize because under the hood
-  // they are not simple registers. Instead some are generated by interesting
-  // combinational blocks such that they depend upon a variety of different
-  // underlying flops. See for example how RBR might be the actual RXBR
-  // register, but it could also just as well be 0 or the tail of the fifo
-  // array.
-  //`INIT_CHECKPOINT_VAL(UART_RBR,   [7:0]);
-  `INIT_CHECKPOINT_VAL(UART_IER,   [7:0]);
-  //`INIT_CHECKPOINT_VAL(UART_IIR,   [7:0]);
-  `INIT_CHECKPOINT_VAL(UART_LCR,   [7:0]);
-  `INIT_CHECKPOINT_VAL(UART_MCR,   [4:0]);
-  //`INIT_CHECKPOINT_VAL(UART_LSR,   [7:0]);
-  //`INIT_CHECKPOINT_VAL(UART_MSR,   [7:0]);
-  `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
+  // UART checkpointing does not cover entire UART state
+  //     Many UART registers are difficult to initialize because under the hood
+  //     they are not simple registers. Instead some are generated by interesting
+  //     combinational blocks such that they depend upon a variety of different
+  //     underlying flops. See for example how RBR might be the actual RXBR
+  //     register, but it could also just as well be 0 or the tail of the fifo
+  //     array.
+  `INIT_CHECKPOINT_VAL(UART_IER,   [7:0]);
+  `INIT_CHECKPOINT_VAL(UART_LCR,   [7:0]);
+  `INIT_CHECKPOINT_VAL(UART_MCR,   [4:0]);
+  `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
+  // xSTATUS need to be handled manually because the most upstream signals
+  // are made of individual bits, not registers
+  `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(SSTATUS, [`XLEN-1:0],0,0);  
 
-  integer memFile;
-  integer readResult;
+  // ========== INITIALIZATION ==========
   initial begin
-    force dut.core.priv.priv.SwIntM = 0;
+    //force dut.core.priv.priv.SwIntM = 0;
     force dut.core.priv.priv.TimerIntM = 0;
     force dut.core.priv.priv.MExtIntM = 0;    
+    force dut.core.priv.priv.SExtIntM = 0;    
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
@@ -377,18 +400,27 @@ module testbench;
       memFile = $fopen({checkpointDir,"ram.bin"}, "rb");
     readResult = $fread(dut.uncore.ram.ram.memory.RAM,memFile);
     $fclose(memFile);
-    if (CHECKPOINT==0) begin // normal
+    // ---------- Ground-Zero -----------
+    if (CHECKPOINT==0) begin
       traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
       traceFileE = $fopen({testvectorDir,"all.txt"}, "r");
+      interruptFile = $fopen({testvectorDir,"interrupts.txt"}, "r");
+      `SCAN_NEW_INTERRUPT
       InstrCountW = '0;
       AttemptedInstructionCount = '0;
-    end else begin // checkpoint
+    // ---------- Checkpoint ----------
+    end else begin
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.memory.RAM);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
+      interruptFile = $fopen({testvectorDir,"interrupts.txt"}, "r");
+      `SCAN_NEW_INTERRUPT
+      while(interruptInstrCount < CHECKPOINT) begin
+        `SCAN_NEW_INTERRUPT
+      end
       InstrCountW = CHECKPOINT;
       AttemptedInstructionCount = CHECKPOINT;
-      // manual checkpoint initializations that don't neatly fit into MACRO
+      // manual checkpoint initializations
       force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
       force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
       force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
@@ -409,11 +441,10 @@ module testbench;
     matchCountE = $fgets(lineE,traceFileE);
   end
 
-
-
   ///////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////// CORE /////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
+  // =========== TRACE PARSING MACRO ==========
   // Because qemu does not match exactly to wally it is necessary to read the the
   // trace in the memory stage and detect if anything in wally must be overwritten.
   // This includes mtimer, interrupts, and various bits in mstatus and xtval.
@@ -422,7 +453,6 @@ module testbench;
   // on the next falling edge the expected state is compared to the wally state.
 
   // step 0: read the expected state
-  assign checkInstrM = dut.core.ieu.InstrValidM & ~dut.core.priv.priv.trap.InstrPageFaultM & ~dut.core.priv.priv.trap.InterruptM & ~dut.core.StallM;
   `define SCAN_NEW_INSTR_FROM_TRACE(STAGE) \
     // always check PC, instruction bits \
     if (checkInstrM) begin \
@@ -486,22 +516,6 @@ module testbench;
           matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE], "%s", ExpectedCSRArray``STAGE[NumCSR``STAGE]); \
           matchCount``STAGE = $sscanf(ExpectedTokens``STAGE[MarkerIndex``STAGE+1], "%x", ExpectedCSRArrayValue``STAGE[NumCSR``STAGE]); \
           MarkerIndex``STAGE += 2; \
-          if(`"STAGE`"=="E") begin \
-            // match MIP to QEMU's because interrupts are imprecise \
-            if(ExpectedCSRArrayE[NumCSRE].substr(0, 2) == "mip") begin \
-              CheckMIPFutureE = 1; \
-              NextMIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
-            end \
-            if(ExpectedCSRArrayE[NumCSRE].substr(0, 2) == "sip") begin \
-              CheckSIPFutureE = 1; \
-              NextSIPexpected = ExpectedCSRArrayValueE[NumCSRE]; \
-            end \
-            if(ExpectedCSRArrayE[NumCSRE].substr(0,3) == "mepc") begin \
-              // $display("hello! we are here."); \
-              MepcExpected = ExpectedCSRArrayValueE[NumCSRE]; \
-              $display("%tns: MepcExpected: %x",$time,MepcExpected); \
-            end \
-          end \
            \
           NumCSR``STAGE++; \
         end \
@@ -520,93 +534,28 @@ module testbench;
       end \
     end \
     
+  // ========== VALUE-CHECKING MACROS ==========
+  `define checkEQ(NAME, VAL, EXPECTED) \
+    if(VAL != EXPECTED) begin \
+      $display("%tns, %d instrs: %s %x differs from expected %x", $time, InstrCountW, NAME, VAL, EXPECTED); \
+      if ((NAME == "PCW") | (`DEBUG_TRACE >= 2)) fault = 1; \
+    end
+
+  `define checkCSR(CSR) \
+    begin \
+      if (CSR != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin \
+        $display("%tns, %d instrs: CSR %s = %016x, does not equal expected value %016x", $time, InstrCountW, ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
+        if(`DEBUG_TRACE >= 3) fault = 1; \
+      end \
+    end
+
+  // =========== CORE ===========
+  assign checkInstrM = dut.core.ieu.InstrValidM & ~dut.core.priv.priv.trap.InstrPageFaultM & ~dut.core.priv.priv.trap.InterruptM & ~dut.core.StallM;
   always @(negedge clk) begin
     `SCAN_NEW_INSTR_FROM_TRACE(E)
-  end
-
-  always @(negedge clk) begin
     `SCAN_NEW_INSTR_FROM_TRACE(M)
   end
-  
-  // MIP spoofing
-  always @(posedge clk) begin
-    #1;
-    if(CheckMIPFutureE) CheckMIPFutureE <= 0;
-    CheckMIPFutureM <= CheckMIPFutureE;
-    if(CheckMIPFutureM) begin
-      // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
-      // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
-      // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
-      // *** this is probably not right anymore since either MIP or SIP can be forced.
-      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) | ~dut.core.ieu.c.InstrValidM) begin
-        RequestDelayedMIP <= 1;
-        $display("%tns: Requesting Delayed MIP. Current MEPC value is %x",$time,MepcExpected);
-      end else begin // update MIP immediately
-        $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
-        MIPexpected = NextMIPexpected;
-        //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
-        //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
-        force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
-      end
-      // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
-      // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
-      // $display("%tn: ExpectedTokens = %p",$time,ExpectedTokensM);
-      // $display("%tn: MepcExpected = %x",$time,MepcExpected);
-      // $display("%tn: ExpectedPCE = %x",$time,ExpectedPCE);
-      // $display("%tns: Difference/multiplication thing: %x",$time,(MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE));
-      // $display("%tn: ExpectedCSRArrayM[NumCSRM] %x",$time,ExpectedCSRArrayM[NumCSRM]);
-      // $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
-    end
-    if(RequestDelayedMIP & checkInstrM) begin
-      $display("%tns: Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
-      $display("%tns: Updating MIP to %x",$time,NextMIPexpected);
-      MIPexpected = NextMIPexpected;
-      //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
-      //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
-      force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
-      $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
-      RequestDelayedMIP = 0;
-    end
-  end
 
-  // SIP spoofing
-/* -----\/----- EXCLUDED -----\/-----
-  always @(posedge clk) begin
-    #1;
-    if(CheckSIPFutureE) CheckSIPFutureE <= 0;
-    CheckSIPFutureM <= CheckSIPFutureE;
-    if(CheckSIPFutureM) begin
-      // $display("%tns: ExpectedPCM %x",$time,ExpectedPCM);
-      // $display("%tns: ExpectedPCE %x",$time,ExpectedPCE);
-      // $display("%tns: ExpectedPCW %x",$time,ExpectedPCW);
-      if((ExpectedPCE != MepcExpected) & ((MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE) <= 200) | ~dut.core.ieu.c.InstrValidM) begin
-        RequestDelayedSIP <= 1;
-        $display("%tns: Requesting Delayed SIP. Current MEPC value is %x",$time,MepcExpected);
-      end else begin // update SIP immediately
-        $display("%tns: Updating SIP to %x",$time,NextSIPexpected);
-        SIPexpected = NextSIPexpected;
-        force dut.core.priv.priv.csr.csri.SIP_REGW = SIPexpected;
-      end
-      // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
-      // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
-      // $display("%tn: ExpectedTokens = %p",$time,ExpectedTokensM);
-      // $display("%tn: MepcExpected = %x",$time,MepcExpected);
-      // $display("%tn: ExpectedPCE = %x",$time,ExpectedPCE);
-      // $display("%tns: Difference/multiplication thing: %x",$time,(MepcExpected - ExpectedPCE) * (MepcExpected - ExpectedPCE));
-      // $display("%tn: ExpectedCSRArrayM[NumCSRM] %x",$time,ExpectedCSRArrayM[NumCSRM]);
-      // $display("%tn: ExpectedCSRArrayValueM[NumCSRM] %x",$time,ExpectedCSRArrayValueM[NumCSRM]);
-    end
-    if(RequestDelayedSIP & checkInstrM) begin
-      $display("%tns: Executing Delayed SIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
-      $display("%tns: Updating SIP to %x",$time,NextSIPexpected);
-      SIPexpected = NextSIPexpected;
-      force dut.core.priv.priv.csr.csri.SIP_REGW = SIPexpected;
-      $display("%tns: Finished Executing Delayed SIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
-      RequestDelayedSIP = 0;
-    end
-  end
- -----/\----- EXCLUDED -----/\----- */
-  
   // step 1: register expected state into the write back stage.
   always @(posedge clk) begin
     if (reset) begin
@@ -667,7 +616,7 @@ module testbench;
   end
   
   // step2: make all checks in the write back stage.
-  assign checkInstrW =              InstrValidW & ~dut.core.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
+  assign checkInstrW = InstrValidW & ~dut.core.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
   always @(negedge clk) begin
     // always check PC, instruction bits
     if (checkInstrW) begin
@@ -736,18 +685,38 @@ module testbench;
   end // always @ (negedge clk)
 
 
-  // track the current function
+  // New IP spoofing
+  always @(posedge clk) begin
+    #1
+    if(checkInstrM) begin
+      if((interruptInstrCount+1) == AttemptedInstructionCount) begin
+        force dut.core.priv.priv.csr.csri.IP_REGW = 32'b1 << interruptCauseVal;
+        $display("Forcing interrupt.");
+        `SCAN_NEW_INTERRUPT
+        garbageInt = $fgets(garbageString,traceFileE);
+        garbageInt = $fgets(garbageString,traceFileM);
+      end
+    end
+  end
+  
+
+
+
+
+
+
+
+
+
+  ///////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////// Extra Features ///////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
+  // Function Tracking
   FunctionName FunctionName(.reset(reset),
                             .clk(clk),
                             .ProgramAddrMapFile(ProgramAddrMapFile),
                             .ProgramLabelMapFile(ProgramLabelMapFile));
   
-
-  
-
-  ///////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////// Extra Features ///////////////////////////////
-  ///////////////////////////////////////////////////////////////////////////////
   // Instr Opcode Tracking
   //   For waveview convenience
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
