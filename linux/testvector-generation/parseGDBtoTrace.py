@@ -81,7 +81,7 @@ def WhatAddrSC(text, Regs):
     Src = Src.strip(')').strip()
     return Regs[Src]
 
-def PrintInstr(instr, fp):
+def PrintInstr(instr):
     if instr[2] == None:
         return
     ChangedRegisters = instr[4]
@@ -107,28 +107,27 @@ def PrintInstr(instr, fp):
     #print(instr)
 
     if (HUMAN_READABLE == True):
-        fp.write('{:016x} {:08x} {:25s}'.format(instr[0], instr[1], instr[2]))
+        outString='{:016x} {:08x} {:25s}'.format(instr[0], instr[1], instr[2])
         if(len(GPR) != 0):
-            fp.write(' GPR {}'.format(GPR))
+            outString+=' GPR {}'.format(GPR)
         if(instr[3] == 'load' or instr[3] == 'lr'):
-            fp.write(' MemR {:016x} {:016x} {:016x}'.format(instr[5], 0, instr[7]))
+            outString+=' MemR {:016x} {:016x} {:016x}'.format(instr[5], 0, instr[7])
         if(instr[3] == 'store'):
-            fp.write('\t\t\t    MemW {:016x} {:016x} {:016x}'.format(instr[5], instr[6], 0))
-
+            outString+='\t\t\t    MemW {:016x} {:016x} {:016x}'.format(instr[5], instr[6], 0)
         if(len(CSR) != 0):
-            fp.write(' CSR {}'.format(CSRStr))
+            outString+=' CSR {}'.format(CSRStr)
     else:
-        fp.write('{:x} {:x} {:s}'.format(instr[0], instr[1], instr[2].replace(' ', '_')))
+        outString='{:x} {:x} {:s}'.format(instr[0], instr[1], instr[2].replace(' ', '_'))
         if(len(GPR) != 0):
-            fp.write(' GPR {}'.format(GPR))
+            outString+=' GPR {}'.format(GPR)
         if(instr[3] == 'load' or instr[3] == 'lr'):
-            fp.write(' MemR {:x} {:x} {:x}'.format(instr[5], 0, instr[7]))
+            outString+=' MemR {:x} {:x} {:x}'.format(instr[5], 0, instr[7])
         if(instr[3] == 'store'):
-            fp.write(' MemW {:x} {:x} {:x}'.format(instr[5], instr[6], 0))
-
+            outString+=' MemW {:x} {:x} {:x}'.format(instr[5], instr[6], 0)
         if(len(CSR) != 0):
-            fp.write(' CSR {}'.format(CSRStr))
-    fp.write('\n')
+            outString+=' CSR {}'.format(CSRStr)
+    outString+='\n'
+    return outString
 
 # =========
 # Main Code
@@ -154,6 +153,8 @@ lines = []
 interrupts=open(interruptFname,'w')
 interrupts.close()
 
+prevInstrOutString=''
+currInstrOutString=''
 for line in fileinput.input('-'):
     if line.startswith('riscv_cpu_do_interrupt'):
         with open(interruptFname,'a') as interrupts:
@@ -219,11 +220,16 @@ for line in fileinput.input('-'):
 
         lines.clear()
         #instructions.append(MoveInstrToRegWriteLst)
-        PrintInstr(MoveInstrToRegWriteLst, sys.stdout)
-        numInstrs +=1
-        if (numInstrs % 1e5 == 0):
-            sys.stderr.write('GDB trace parser reached '+str(numInstrs/1.0e6)+' million instrs.\n')
-            sys.stderr.flush()
+
+        prevInstrOutString = currInstrOutString
+        currInstrOutString = PrintInstr(MoveInstrToRegWriteLst)
+        # Remove duplicates
+        if (PreviousInstr[0] != CurrentInstr[0]) and (currInstrOutString != None):
+            sys.stdout.write(currInstrOutString)
+            numInstrs += 1
+            if (numInstrs % 1e5 == 0):
+                sys.stderr.write('GDB trace parser reached '+str(numInstrs/1.0e6)+' million instrs.\n')
+                sys.stderr.flush()
     lineNum += 1
 
 

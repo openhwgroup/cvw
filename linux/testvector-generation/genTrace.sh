@@ -41,7 +41,7 @@ then
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -singlestep -rtc clock=vm -icount shift=0,align=off,sleep=on,rr=replay,rrfile=$recordFile \
     -d nochain,cpu,in_asm,int \
-    2>&1 >./qemu-serial | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $trapsFile | ./remove_dup.awk > $traceFile)
+    2>&1 >./qemu-serial | ./parseQEMUtoGDB.py | ./parseGDBtoTrace.py $trapsFile > $traceFile)
 
     ./filterTrapsToInterrupts.py $tvDir
 
