@@ -136,8 +136,12 @@ module testbench;
   // ========== Misc Aliases ==========
   `define RF dut.core.ieu.dp.regf.rf
   `define PC dut.core.ifu.pcreg.q
-  `define PRIV dut.core.priv.priv.privmodereg.q
-  `define CSR_BASE    dut.core.priv.priv.csr
+  `define PRIV_BASE   dut.core.priv.priv
+  `define PRIV        `PRIV_BASE.privmodereg.q
+  `define CSR_BASE    `PRIV_BASE.csr
+  `define MEIP        `PRIV_BASE.MExtIntM
+  `define SEIP        `PRIV_BASE.SExtIntM
+  `define MTIP        `PRIV_BASE.TimerIntM
   `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
   `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
   `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q
@@ -377,10 +381,9 @@ module testbench;
 
   // ========== INITIALIZATION ==========
   initial begin
-    //force dut.core.priv.priv.SwIntM = 0;
-    force dut.core.priv.priv.TimerIntM = 0;
-    force dut.core.priv.priv.MExtIntM = 0;    
-    force dut.core.priv.priv.SExtIntM = 0;    
+    force `MEIP = 0;
+    force `SEIP = 0;
+    force `MTIP = 0;
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
@@ -657,22 +660,30 @@ module testbench;
         // check csr
         for(NumCSRPostWIndex = 0; NumCSRPostWIndex < NumCSRW; NumCSRPostWIndex++) begin
           case(ExpectedCSRArrayW[NumCSRPostWIndex])
-            "mhartid": `checkCSR(dut.core.priv.priv.csr.csrm.MHARTID_REGW)
-            "mstatus": `checkCSR(dut.core.priv.priv.csr.csrm.MSTATUS_REGW)
-            "sstatus": `checkCSR(dut.core.priv.priv.csr.csrs.SSTATUS_REGW)
-            "mtvec":   `checkCSR(dut.core.priv.priv.csr.csrm.MTVEC_REGW)
-            "mip":     `checkCSR(dut.core.priv.priv.csr.csrm.MIP_REGW)
-            "mie":     `checkCSR(dut.core.priv.priv.csr.csrm.MIE_REGW)
-            "sip":     `checkCSR(dut.core.priv.priv.csr.csrs.SIP_REGW)
-            "sie":     `checkCSR(dut.core.priv.priv.csr.csrs.SIE_REGW)
-            "mideleg": `checkCSR(dut.core.priv.priv.csr.csrm.MIDELEG_REGW)
-            "medeleg": `checkCSR(dut.core.priv.priv.csr.csrm.MEDELEG_REGW)
-            "mepc":    `checkCSR(dut.core.priv.priv.csr.csrm.MEPC_REGW)
-            "mtval":   `checkCSR(dut.core.priv.priv.csr.csrm.MTVAL_REGW)
-            "sepc":    `checkCSR(dut.core.priv.priv.csr.csrs.SEPC_REGW)
-            "scause":  `checkCSR(dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW)
-            "stvec":   `checkCSR(dut.core.priv.priv.csr.csrs.STVEC_REGW)
-            "stval":   `checkCSR(dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW)
+            "mhartid": `checkCSR(`CSR_BASE.csrm.MHARTID_REGW)
+            "mstatus": `checkCSR(`CSR_BASE.csrm.MSTATUS_REGW)
+            "sstatus": `checkCSR(`CSR_BASE.csrs.SSTATUS_REGW)
+            "mtvec":   `checkCSR(`CSR_BASE.csrm.MTVEC_REGW)
+            "mie":     `checkCSR(`CSR_BASE.csrm.MIE_REGW)
+            "sip":     `checkCSR(`CSR_BASE.csrs.SIP_REGW)
+            "sie":     `checkCSR(`CSR_BASE.csrs.SIE_REGW)
+            "mideleg": `checkCSR(`CSR_BASE.csrm.MIDELEG_REGW)
+            "medeleg": `checkCSR(`CSR_BASE.csrm.MEDELEG_REGW)
+            "mepc":    `checkCSR(`CSR_BASE.csrm.MEPC_REGW)
+            "mtval":   `checkCSR(`CSR_BASE.csrm.MTVAL_REGW)
+            "sepc":    `checkCSR(`CSR_BASE.csrs.SEPC_REGW)
+            "scause":  `checkCSR(`CSR_BASE.csrs.csrs.SCAUSE_REGW)
+            "stvec":   `checkCSR(`CSR_BASE.csrs.STVEC_REGW)
+            "stval":   `checkCSR(`CSR_BASE.csrs.csrs.STVAL_REGW)
+            "mip": begin
+                       `checkCSR(`CSR_BASE.csrm.MIP_REGW)
+                       if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<11) == 0)
+                           force `MEIP = 0;
+                       if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<09) == 0)
+                           force `SEIP = 0;
+                       if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<07) == 0)
+                           force `MTIP = 0;
+                   end
           endcase
         end
         if (fault == 1) begin
@@ -690,7 +701,12 @@ module testbench;
     #1
     if(checkInstrM) begin
       if((interruptInstrCount+1) == AttemptedInstructionCount) begin
-        force dut.core.priv.priv.csr.csri.IP_REGW = 32'b1 << interruptCauseVal;
+        case (interruptCauseVal)
+            11: force `MEIP = 1;
+            09: force `SEIP = 1;
+            07: force `MTIP = 1;
+            default: $display("Unsupported interrupt in interrupts.txt. cause = %0d",interruptCauseVal);
+        endcase
         $display("Forcing interrupt.");
         `SCAN_NEW_INTERRUPT
         garbageInt = $fgets(garbageString,traceFileE);
