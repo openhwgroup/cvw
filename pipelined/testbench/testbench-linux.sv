@@ -45,6 +45,7 @@ module testbench;
   parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
   parameter CHECKPOINT   = 0;
   parameter RISCV_DIR = "/opt/riscv";
+  parameter NO_IE_MTIME_CHECKPOINT = 0;
 
   ///////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////// HARDWARE ///////////////////////////////////
@@ -76,7 +77,16 @@ module testbench;
   logic      SDCCmdOut;
   logic      SDCCmdOE;
   logic [3:0] SDCDatIn;
+
+  logic       probe;
   
+
+  if (NO_IE_MTIME_CHECKPOINT)
+    assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
+                   & testbench.dut.core.InstrM != 32'h14021273
+                   & testbench.dut.core.InstrValidM;
+  else assign probe = 0;
+
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
   wallypipelinedsoc dut(.clk, .reset, .reset_ext,
@@ -316,10 +326,12 @@ module testbench;
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
-  `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
-  `INIT_CHECKPOINT_VAL(SIE,        [11:0]);
-  `INIT_CHECKPOINT_VAL(SIP,        [11:0]);
+  if(!NO_IE_MTIME_CHECKPOINT) begin
+    `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
+    `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
+    `INIT_CHECKPOINT_VAL(SIE,        [11:0]);
+    `INIT_CHECKPOINT_VAL(SIP,        [11:0]);
+  end
   `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(SCAUSE,     [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEPC,       [`XLEN-1:0]);
@@ -350,13 +362,13 @@ module testbench;
   `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
-  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD,[ 2:0],1,0);
 
   integer memFile;
   integer readResult;
   initial begin
     force dut.core.priv.priv.SwIntM = 0;
-    force dut.core.priv.priv.TimerIntM = 0;
+    if(!NO_IE_MTIME_CHECKPOINT) force dut.core.priv.priv.TimerIntM = 0;
     force dut.core.priv.priv.MExtIntM = 0;    
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
@@ -515,7 +527,8 @@ module testbench;
           release dut.core.ieu.dp.ReadDataM; \
         if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
-          force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
+          if(!NO_IE_MTIME_CHECKPOINT) \
+            force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
       end \
     end \
@@ -546,7 +559,8 @@ module testbench;
         MIPexpected = NextMIPexpected;
         //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
         //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
-        force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
+        if(!NO_IE_MTIME_CHECKPOINT) 
+          force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
       end
       // $display("%tn: ExpectedCSRArrayM = %p",$time,ExpectedCSRArrayM);
       // $display("%tn: ExpectedCSRArrayValueM = %p",$time,ExpectedCSRArrayValueM);
@@ -563,7 +577,8 @@ module testbench;
       MIPexpected = NextMIPexpected;
       //force dut.core.priv.priv.csr.csri.MIP_REGW = MIPexpected;
       //force dut.core.priv.priv.csr.csri.SIP_REGW = MIPexpected;
-      force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
+      if(!NO_IE_MTIME_CHECKPOINT)
+        force dut.core.priv.priv.csr.csri.IP_REGW = MIPexpected;
       $display("%tns: Finished Executing Delayed MIP. Current MEPC value is %x",$time,dut.core.priv.priv.csr.csrm.MEPC_REGW);
       RequestDelayedMIP = 0;
     end
@@ -656,7 +671,8 @@ module testbench;
       if(~dut.core.StallW) begin
         if(textW.substr(0,5) == "rdtime") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, InstrCountW);
-          release dut.uncore.clint.clint.MTIME;
+          if(!NO_IE_MTIME_CHECKPOINT)
+            release dut.uncore.clint.clint.MTIME;
         end 
         //if (ExpectedIEUAdrM == 'h10000005) begin
           //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, InstrCountW);
