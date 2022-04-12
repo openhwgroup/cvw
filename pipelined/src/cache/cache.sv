@@ -51,6 +51,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
    // lsu control
   input logic                 IgnoreRequestTLB,
   input logic                 IgnoreRequestTrapM, 
+  input logic                 TrapM,
   input logic                 Cacheable,
    // Bus fsm interface
   output logic                CacheFetchLine,
@@ -195,7 +196,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   assign CacheRW = Cacheable ? RW : 2'b00;
   assign CacheAtomic = Cacheable ? Atomic : 2'b00;
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
-		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM,
+		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
