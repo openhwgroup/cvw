@@ -644,6 +644,7 @@ module testbench;
   // step2: make all checks in the write back stage.
   assign checkInstrW = InstrValidW & ~dut.core.StallW; // trapW will already be invalid in there was an InstrPageFault in the previous instruction.
   always @(negedge clk) begin
+    #1; // small delay allows interrupt spoofing to happen first
     // always check PC, instruction bits
     if (checkInstrW) begin
       InstrCountW += 1;
@@ -724,8 +725,9 @@ module testbench;
 
 
   // New IP spoofing
-  always @(posedge clk) begin
-    #1
+  logic globalIntsBecomeEnabled;
+  assign globalIntsBecomeEnabled = (`CSR_BASE.csrm.WriteMSTATUSM || `CSR_BASE.csrs.WriteSSTATUSM) && (|(`CSR_BASE.CSRWriteValM & (~`CSR_BASE.csrm.MSTATUS_REGW) & 32'h22));
+  always @(negedge clk) begin
     if(checkInstrM) begin
       if((interruptInstrCount+1) == AttemptedInstructionCount) begin
         if(!NO_IE_MTIME_CHECKPOINT) begin
@@ -744,10 +746,14 @@ module testbench;
           $display("Forcing interrupt.");
         end
         `SCAN_NEW_INTERRUPT
-        #1;
-        if ((`CSR_BASE.csrm.WriteMSTATUSM || `CSR_BASE.csrs.WriteSSTATUSM) && |(`CSR_BASE.CSRWriteValM & ~`CSR_BASE.csrm.MSTATUS_REGW & 32'h22)) begin
+        if (globalIntsBecomeEnabled) begin
             $display("Enabled global interrupts");
+            // The idea here is if a CSR instruction causes an interrupt by
+            // enabling interrupts, that CSR instruction will commit.
         end else begin
+            // Other instructions, however, will get interrupted and not
+            // commit, so we don't want our W-stage checker to look for them
+            // and get confused when it doesn't find them.
             garbageInt = $fgets(garbageString,traceFileE);
             garbageInt = $fgets(garbageString,traceFileM);
             AttemptedInstructionCount += 1;
