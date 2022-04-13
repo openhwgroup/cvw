@@ -32,49 +32,50 @@
 
 module cachefsm
   (input logic clk,
-   input logic       reset,
+   input logic 		 reset,
    // inputs from IEU
    input logic [1:0] CacheRW,
    input logic [1:0] CacheAtomic,
-   input logic       FlushCache,
+   input logic 		 FlushCache,
    // hazard inputs
-   input logic       CPUBusy,
+   input logic 		 CPUBusy,
    // interlock fsm
-   input logic       IgnoreRequestTLB,
-   input logic       IgnoreRequestTrapM, 
+   input logic 		 IgnoreRequestTLB,
+   input logic 		 IgnoreRequestTrapM,
+   input logic       TrapM,
    // Bus inputs
-   input logic       CacheBusAck,
+   input logic 		 CacheBusAck,
    // dcache internals
-   input logic       CacheHit,
-   input logic       VictimDirty,
-   input logic       FlushAdrFlag,
-   input logic       FlushWayFlag, 
+   input logic 		 CacheHit,
+   input logic 		 VictimDirty,
+   input logic 		 FlushAdrFlag,
+   input logic 		 FlushWayFlag, 
   
    // hazard outputs
-   output logic      CacheStall,
+   output logic 	 CacheStall,
    // counter outputs
-   output logic      CacheMiss,
-   output logic      CacheAccess,
+   output logic 	 CacheMiss,
+   output logic 	 CacheAccess,
    // Bus outputs
-   output logic      CacheCommitted,
-   output logic      CacheWriteLine,
-   output logic      CacheFetchLine,
+   output logic 	 CacheCommitted,
+   output logic 	 CacheWriteLine,
+   output logic 	 CacheFetchLine,
 
    // dcache internals
-   output logic      SelAdr,
-   output logic      ClearValid,
-   output logic      ClearDirty,
-   output logic      SetDirty,
-   output logic      SetValid,
-   output logic      SelEvict,
-   output logic      LRUWriteEn,
-   output logic      SelFlush,
-   output logic      FlushAdrCntEn,
-   output logic      FlushWayCntEn, 
-   output logic      FlushAdrCntRst,
-   output logic      FlushWayCntRst,
-   output logic      save,
-   output logic      restore);
+   output logic 	 SelAdr,
+   output logic 	 ClearValid,
+   output logic 	 ClearDirty,
+   output logic 	 SetDirty,
+   output logic 	 SetValid,
+   output logic 	 SelEvict,
+   output logic 	 LRUWriteEn,
+   output logic 	 SelFlush,
+   output logic 	 FlushAdrCntEn,
+   output logic 	 FlushWayCntEn, 
+   output logic 	 FlushAdrCntRst,
+   output logic 	 FlushWayCntRst,
+   output logic 	 save,
+   output logic 	 restore);
   
   logic               resetDelay;
   logic               AMO;
@@ -217,7 +218,7 @@ module cachefsm
                  (CurrState == STATE_MISS_WRITE_WORD & DoWrite & CPUBusy)) & ~`REPLAY;
 
   // **** can this be simplified?
-  assign SelAdr = (CurrState == STATE_READY & IgnoreRequestTLB) | // Ignore Request is needed on TLB miss.
+  assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
                   // use the raw requests as we don't want IgnoreRequestTrapM in the critical path
                   (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
                   (CurrState == STATE_READY & (CacheRW[1] & CacheHit) & (CPUBusy & `REPLAY)) |
