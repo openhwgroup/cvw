@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 0
+`define DEBUG_TRACE 2
 // Debug Levels
 // 0: don't check against QEMU
 // 1: print disagreements with QEMU, but only halt on PCW disagreements
@@ -546,11 +546,11 @@ module testbench;
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) \
-          //$display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, InstrCountW-1); \
+        if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) begin \
+          $display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, AttemptedInstructionCount); \
           if(!NO_IE_MTIME_CHECKPOINT) \
             force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
-        else \
+        end else \
           if(!NO_IE_MTIME_CHECKPOINT) \
             release dut.core.ieu.dp.ReadDataM; \
         if(textM.substr(0,5) == "rdtime") begin \
