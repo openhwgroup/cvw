@@ -26,11 +26,8 @@ def strip0x(num):
     return num[2:]
 
 def stripZeroes(num):
-    num = num.strip('0')
-    if num=='':
-        return '0'
-    else:
-        return num
+    num = int(num,16)
+    return hex(num)[2:]
 
 #############
 # Main Code #
@@ -84,11 +81,11 @@ with open(rawPlicStateFile, 'r') as rawPlicStateFile:
     # 0x0C020000 thru 0x0C020004
     plicIntEnable = tokenize(rawPlicStateFile.readline())[1:]
     plicIntEnable = map(strip0x,plicIntEnable)
-    plicIntEnableArray.append(reduce(lambda x,y: x+y,plicIntEnable))
+    plicIntEnableArray.append(reduce(lambda x,y: y+x,plicIntEnable))
     # 0x0C020080 thru 0x0C020084
     plicIntEnable = tokenize(rawPlicStateFile.readline())[1:]
     plicIntEnable = map(strip0x,plicIntEnable)
-    plicIntEnableArray.append(reduce(lambda x,y: x+y,plicIntEnable))
+    plicIntEnableArray.append(reduce(lambda x,y: y+x,plicIntEnable))
 
     plicIntPriorityThresholdArray = [] # iterates over number of different contexts
     # 0x0C200000
