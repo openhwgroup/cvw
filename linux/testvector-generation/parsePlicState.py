@@ -26,11 +26,8 @@ def strip0x(num):
     return num[2:]
 
 def stripZeroes(num):
-    num = num.strip('0')
-    if num=='':
-        return '0'
-    else:
-        return num
+    num = int(num,16)
+    return hex(num)[2:]
 
 #############
 # Main Code #
@@ -84,11 +81,11 @@ with open(rawPlicStateFile, 'r') as rawPlicStateFile:
     # 0x0C020000 thru 0x0C020004
     plicIntEnable = tokenize(rawPlicStateFile.readline())[1:]
     plicIntEnable = map(strip0x,plicIntEnable)
-    plicIntEnableArray.append(reduce(lambda x,y: x+y,plicIntEnable))
+    plicIntEnableArray.append(reduce(lambda x,y: y+x,plicIntEnable))
     # 0x0C020080 thru 0x0C020084
     plicIntEnable = tokenize(rawPlicStateFile.readline())[1:]
     plicIntEnable = map(strip0x,plicIntEnable)
-    plicIntEnableArray.append(reduce(lambda x,y: x+y,plicIntEnable))
+    plicIntEnableArray.append(reduce(lambda x,y: y+x,plicIntEnable))
 
     plicIntPriorityThresholdArray = [] # iterates over number of different contexts
     # 0x0C200000
@@ -101,6 +98,7 @@ with open(outDir+'checkpoint-PLIC_INT_PRIORITY', 'w') as outFile:
         outFile.write(stripZeroes(word[2:])+'\n')
 with open(outDir+'checkpoint-PLIC_INT_ENABLE', 'w') as outFile:
     for word in plicIntEnableArray:
+        word = hex(int(word,16)>>1)[2:] # right shift by 1 because source 0 does not exist
         outFile.write(stripZeroes(word)+'\n')
 with open(outDir+'checkpoint-PLIC_THRESHOLD', 'w') as outFile:
     for word in plicIntPriorityThresholdArray:
