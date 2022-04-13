@@ -182,6 +182,7 @@ module testbench;
   `define UART_LCR `UART.LCR
   `define UART_MCR `UART.MCR
   `define UART_SCR `UART.SCR
+  `define UART_IP `UART.INTR
   `define PLIC dut.uncore.plic.plic
   `define PLIC_INT_PRIORITY `PLIC.intPriority
   `define PLIC_INT_ENABLE   `PLIC.intEn
@@ -376,7 +377,7 @@ module testbench;
   `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
-  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:1],1,0);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:0],1,0);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
   // UART checkpointing does not cover entire UART state
   //     Many UART registers are difficult to initialize because under the hood
@@ -399,6 +400,7 @@ module testbench;
     if(!NO_IE_MTIME_CHECKPOINT) begin
       force `MEIP = 0;
       force `SEIP = 0;
+      force `UART_IP = 0;
       force `MTIP = 0;
     end
     $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
@@ -446,6 +448,7 @@ module testbench;
       force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
       force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
       force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
+      force `PLIC_INT_ENABLE = {initPLIC_INT_ENABLE[1][`PLIC_NUM_SRC:1],initPLIC_INT_ENABLE[0][`PLIC_NUM_SRC:1]}; // would need to expand into a generate loop to cover an arbitrary number of contexts
       force `INSTRET = CHECKPOINT;
       while (reset!==1) #1;
       while (reset!==0) #1;
@@ -455,6 +458,7 @@ module testbench;
       release {`STATUS_SPP,`STATUS_MPIE};
       release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
       release {`STATUS_SIE,`STATUS_UIE};
+      release `PLIC_INT_ENABLE;
       release `INSTRET;
     end
     // Get the E-stage trace reader ahead of the M-stage trace reader
@@ -701,6 +705,8 @@ module testbench;
                            force `MEIP = 0;
                          if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<09) == 0)
                            force `SEIP = 0;
+                         if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & ((1<<11) | (1<<09))) == 0)
+                           force `UART_IP = 0;
                          if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<07) == 0)
                            force `MTIP = 0;
                        end
@@ -724,17 +730,28 @@ module testbench;
       if((interruptInstrCount+1) == AttemptedInstructionCount) begin
         if(!NO_IE_MTIME_CHECKPOINT) begin
           case (interruptCauseVal)
-            11: force `MEIP = 1;
-            09: force `SEIP = 1;
+            11: begin
+                  force `MEIP = 1;
+                  force `UART_IP = 1;
+                end
+            09: begin 
+                  force `SEIP = 1;
+                  force `UART_IP = 1;
+                end
             07: force `MTIP = 1;
             default: $display("Unsupported interrupt in interrupts.txt. cause = %0d",interruptCauseVal);
           endcase
           $display("Forcing interrupt.");
         end
         `SCAN_NEW_INTERRUPT
-        garbageInt = $fgets(garbageString,traceFileE);
-        garbageInt = $fgets(garbageString,traceFileM);
-        AttemptedInstructionCount += 1;
+        #1;
+        if ((`CSR_BASE.csrm.WriteMSTATUSM || `CSR_BASE.csrs.WriteSSTATUSM) && |(`CSR_BASE.CSRWriteValM & ~`CSR_BASE.csrm.MSTATUS_REGW & 32'h22)) begin
+            $display("Enabled global interrupts");
+        end else begin
+            garbageInt = $fgets(garbageString,traceFileE);
+            garbageInt = $fgets(garbageString,traceFileM);
+            AttemptedInstructionCount += 1;
+        end
       end
     end
   end
