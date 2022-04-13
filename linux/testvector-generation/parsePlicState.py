@@ -98,6 +98,7 @@ with open(outDir+'checkpoint-PLIC_INT_PRIORITY', 'w') as outFile:
         outFile.write(stripZeroes(word[2:])+'\n')
 with open(outDir+'checkpoint-PLIC_INT_ENABLE', 'w') as outFile:
     for word in plicIntEnableArray:
+        word = hex(int(word,16)>>1)[2:] # right shift by 1 because source 0 does not exist
         outFile.write(stripZeroes(word)+'\n')
 with open(outDir+'checkpoint-PLIC_THRESHOLD', 'w') as outFile:
     for word in plicIntPriorityThresholdArray:
