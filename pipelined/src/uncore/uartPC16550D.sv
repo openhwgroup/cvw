@@ -143,7 +143,9 @@ module uartPC16550D(
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
       if (`FPGA) begin
-		DLL <= #1 8'd38;
+		//DLL <= #1 8'd38; // 35Mhz
+		//DLL <= #1 8'd11; // 10 Mhz
+		DLL <= #1 8'd33; // 30 Mhz
 		DLM <= #1 8'b0;
       end else begin
 		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
@@ -161,7 +163,9 @@ module uartPC16550D(
 		   -----/\----- EXCLUDED -----/\----- */
 		  // *** BUG FIX ME for now for the divider to be 38.  Our clock is 35 Mhz.  35Mhz /(38 * 16) ~= 57600 baud, which is close enough to 57600 baud
 		  // freq /baud / 16 = div
-          3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+          //3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+		  //3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in
+		  3'b000: if (DLAB) DLL <= #1 8'd33; //else TXHR <= #1 Din; // TX handled in 		  
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
 
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
