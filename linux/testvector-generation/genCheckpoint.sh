@@ -102,8 +102,8 @@ then
     # Priority Levels for sources 1 thru 63
     x/63xw 0x0C000004
     # Interrupt Enables for sources 1 thru 63 for contexts 0 and 1
-    x/2xw 0x0C020000
-    x/2xw 0x0C020080
+    x/2xw 0x0C002000
+    x/2xw 0x0C002080
     # Global Priority Threshold for contexts 0 and 1
     x/1xw 0x0C200000
     x/1xw 0x0C201000
