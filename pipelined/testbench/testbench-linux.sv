@@ -481,6 +481,9 @@ module testbench;
       if(`DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line``STAGE); \
       // extract PC, Instr \
       matchCount``STAGE = $sscanf(line``STAGE, "%x %x %s", ExpectedPC``STAGE, ExpectedInstr``STAGE, text``STAGE); \
+      if (`"STAGE`"=="M") begin \
+        AttemptedInstructionCount += 1; \
+      end \
  \
       // for the life of me I cannot get any build in C or C++ string parsing functions/methods to work. \
       // strtok was the best idea but it cannot be used correctly as system verilog does not have null \
@@ -493,9 +496,6 @@ module testbench;
       for(index``STAGE = 0; index``STAGE < line``STAGE.len(); index``STAGE++) begin \
         //$display("char = %s", line``STAGE[index]); \
         if (line``STAGE[index``STAGE] == " " | line``STAGE[index``STAGE] == "\n") begin \
-          if (line``STAGE[index``STAGE] == "\n" & `"STAGE`"=="M") begin \
-            AttemptedInstructionCount += 1; \
-          end \
           EndIndex``STAGE = index``STAGE; \
           ExpectedTokens``STAGE[TokenIndex``STAGE] = line``STAGE.substr(StartIndex``STAGE, EndIndex``STAGE-1); \
           //$display("In Tokenizer %s", line``STAGE.substr(StartIndex, EndIndex-1)); \
@@ -734,6 +734,7 @@ module testbench;
         `SCAN_NEW_INTERRUPT
         garbageInt = $fgets(garbageString,traceFileE);
         garbageInt = $fgets(garbageString,traceFileM);
+        AttemptedInstructionCount += 1;
       end
     end
   end
