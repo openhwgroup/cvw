@@ -140,7 +140,7 @@ module csrsr (
         STATUS_MIE <= #1 STATUS_MPIE;
         STATUS_MPIE <= #1 1;
         STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // per spec, not sure why
-        STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
+        STATUS_MPRV_INT <= #1 (STATUS_MPP == `M_MODE & STATUS_MPRV_INT); //0; // per 20210108 draft spec
       end else if (sretM) begin
         STATUS_SIE <= #1 STATUS_SPIE;
         STATUS_SPIE <= #1 `S_SUPPORTED;
