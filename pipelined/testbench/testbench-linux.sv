@@ -729,8 +729,11 @@ module testbench;
   // New IP spoofing
   logic globalIntsBecomeEnabled;
   assign globalIntsBecomeEnabled = (`CSR_BASE.csrm.WriteMSTATUSM || `CSR_BASE.csrs.WriteSSTATUSM) && (|(`CSR_BASE.CSRWriteValM & (~`CSR_BASE.csrm.MSTATUS_REGW) & 32'h22));
+  logic checkInterruptM;
+  assign checkInterruptM = dut.core.ieu.InstrValidM & ~dut.core.priv.priv.trap.InstrPageFaultM & ~dut.core.priv.priv.trap.InterruptM;
+  
   always @(negedge clk) begin
-    if(checkInstrM) begin
+    if(checkInterruptM) begin
       if((interruptInstrCount+1) == AttemptedInstructionCount) begin
         if(!NO_IE_MTIME_CHECKPOINT) begin
           case (interruptCauseVal)
