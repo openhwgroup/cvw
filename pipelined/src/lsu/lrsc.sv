@@ -34,7 +34,7 @@
 module lrsc
   (
     input  logic                clk, reset,
-    input  logic                FlushW, CPUBusy,
+    input  logic                FlushW, StallW,
     input  logic                MemReadM,
     input  logic [1:0]          PreLSURWM,
     output logic [1:0]          LSURWM,
@@ -55,10 +55,11 @@ module lrsc
   assign LSURWM = SquashSCM ? 2'b00 : PreLSURWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
     if (lrM) ReservationValidM = 1;  // set valid on load reserve
-    else if (scM | WriteAdrMatchM) ReservationValidM = 0; // clear valid on store to same address or any sc
+	// if we implement multiple harts invalidate reservation if another hart stores to this reservation.
+    else if (scM) ReservationValidM = 0; // clear valid on store to same address or any sc
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
-  flopenrc #(`PA_BITS-2) resadrreg(clk, reset, FlushW, lrM, LSUPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
-  flopenrc #(1) resvldreg(clk, reset, FlushW, lrM, ReservationValidM, ReservationValidW);
-  flopenrc #(1) squashreg(clk, reset, FlushW, ~CPUBusy, SquashSCM, SquashSCW);
+  flopenr #(`PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, LSUPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+  flopenr #(1) resvldreg(clk, reset, ~StallW, ReservationValidM, ReservationValidW);
+  flopenr #(1) squashreg(clk, reset, ~StallW, SquashSCM, SquashSCW);
 endmodule
