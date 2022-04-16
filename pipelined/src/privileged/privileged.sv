@@ -167,7 +167,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, 
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .wfiM,
           .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
