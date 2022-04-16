@@ -253,7 +253,7 @@ module lsu (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .FlushW, .CPUBusy, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
+    atomic atomic(.clk, .reset, .FlushW, .StallW, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
       .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
