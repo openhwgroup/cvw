@@ -64,12 +64,8 @@ module csrc #(parameter
   );
 
   if (`ZICOUNTERS_SUPPORTED) begin:counters
-    (* mark_debug = "true" *) logic [63:0] CYCLE_REGW, INSTRET_REGW;
-    logic [63:0] CYCLEPlusM, INSTRETPlusM;
-    logic [`XLEN-1:0] NextCYCLEM, NextINSTRETM;
-    logic        WriteCYCLEM, WriteINSTRETM;
     logic [4:0]  CounterNumM;
-    logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
+    (* mark_debug = "true" *)     logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
     logic [`XLEN-1:0] HPMCOUNTERH_REGW[`COUNTERS-1:0];
     logic 			       InstrValidNotFlushedM;
     logic LoadStallE, LoadStallM;
