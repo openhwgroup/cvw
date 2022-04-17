@@ -40,9 +40,9 @@ module alu #(parameter WIDTH=32) (
   logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;
   logic        Carry, Neg;
   logic        LT, LTU;
-  logic        Overflow;
   logic        W64, SubArith, ALUOp;
   logic [2:0]  ALUFunct;
+  logic        Asign, Bsign;
 
   // Extract control signals
   // W64 indicates RV64 W-suffix instructions acting on lower 32-bit word
@@ -57,12 +57,13 @@ module alu #(parameter WIDTH=32) (
   // Shifts
   shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
 
-  // condition code flags based on subtract output
+  // condition code flags based on subtract output Sum = A-B
   // Overflow occurs when the numbers being subtracted have the opposite sign 
   // and the result has the opposite sign of A
-  assign Overflow = (A[WIDTH-1] ^ B[WIDTH-1]) & (A[WIDTH-1] ^ Sum[WIDTH-1]);
   assign Neg  = Sum[WIDTH-1];
-  assign LT = Neg ^ Overflow;
+  assign Asign = A[WIDTH-1];
+  assign Bsign = B[WIDTH-1];
+  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; // simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
   assign LTU = ~Carry;
  
   // SLT
