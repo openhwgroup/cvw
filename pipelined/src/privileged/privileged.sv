@@ -136,8 +136,9 @@ module privileged (
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
   if (`U_SUPPORTED) begin
-    logic [`WFI_TIMEOUT_BIT:0] WFICount;
-    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICount+1, WFICount);  // count while in WFI
+    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+    assign WFICountPlus1 = WFICount + 1;
+    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
     assign WFITimeoutM = STATUS_TW & PrivilegeModeW != `M_MODE & WFICount[`WFI_TIMEOUT_BIT]; 
   end else assign WFITimeoutM = 0;
 

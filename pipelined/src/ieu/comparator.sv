@@ -52,6 +52,47 @@ module comparator #(parameter WIDTH=32) (
   assign overflow = (a[WIDTH-1] ^ b[WIDTH-1]) & (a[WIDTH-1] ^ diff[WIDTH-1]);
   assign lt = neg ^ overflow;
   assign ltu = ~carry;
-  assign flags = {eq, lt, ltu};
+//  assign flags = {eq, lt, ltu};
+
+  /* verilator lint_off UNOPTFLAT */
+
+  // prefix implementation
+  localparam levels=$clog2(WIDTH);
+  genvar i;
+  genvar level;
+  logic [WIDTH-1:0] ee[levels:0];
+  logic [WIDTH-1:0] ll[levels:0];
+  logic eq2, lt2, ltu2;
+
+
+  // Bitwise logic
+  for (i=0; i<WIDTH; i++) begin
+    assign ee[0][i] = a[i] ~^ b[i]; // bitwise equality
+    assign ll[0][i] = ~a[i] & b[i]; // bitwise less than unsigned
+  end
+
+  // Recursion
+  for (level = 1; level<=levels; level++) begin
+    for (i=0; i<WIDTH/(2**level); i++) begin
+      assign ee[level][i] = ee[level-1][i*2+1] & ee[level-1][i*2];
+      assign ll[level][i] = ll[level-1][i*2+1] | ee[level-1][i*2+1] & ll[level-1][i*2];
+    end
+  end
+
+  // Output logic
+  assign eq2 = ee[levels][0];
+  assign ltu2 = ll[levels][0];
+  assign lt2 = ltu2 & ~ll[0][WIDTH-1] | a[WIDTH-1] & ~b[WIDTH-1];
+
+  always_comb begin 
+    assert (eq2 === eq) else $display("a %h b %h eq %b eq2 %b\n", a, b, eq, eq2);
+    assert (ltu2 === ltu) else $display("a %h b %h ltu %b ltu2 %b\n", a, b, ltu, ltu2);
+    assert (lt2 === lt) else $display("a %h b %h lt %b lt2 %b ltu2 %b L31 %b\n", a, b, lt, lt2, ltu2, ll[0][WIDTH-1]);
+  end
+
+  assign flags = {eq2, lt2, ltu2};
+
+  /* verilator lint_on UNOPTFLAT */
+
 endmodule
 
