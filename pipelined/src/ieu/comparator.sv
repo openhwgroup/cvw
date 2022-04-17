@@ -36,9 +36,8 @@ module comparator #(parameter WIDTH=32) (
 
   logic [WIDTH-1:0] bbar, diff;
   logic             carry, eq, neg, overflow, lt, ltu;
-
-  // NOTE: This can be replaced by some faster logic optimized
-  // to just compute flags and not the difference.
+/*
+  // Subtractor implementation
 
   // subtraction
   assign bbar = ~b;
@@ -52,47 +51,36 @@ module comparator #(parameter WIDTH=32) (
   assign overflow = (a[WIDTH-1] ^ b[WIDTH-1]) & (a[WIDTH-1] ^ diff[WIDTH-1]);
   assign lt = neg ^ overflow;
   assign ltu = ~carry;
-//  assign flags = {eq, lt, ltu};
+  assign flags = {eq, lt, ltu};
+*/
 
   /* verilator lint_off UNOPTFLAT */
-
   // prefix implementation
   localparam levels=$clog2(WIDTH);
   genvar i;
   genvar level;
-  logic [WIDTH-1:0] ee[levels:0];
-  logic [WIDTH-1:0] ll[levels:0];
+  logic [WIDTH-1:0] e[levels:0];
+  logic [WIDTH-1:0] l[levels:0];
   logic eq2, lt2, ltu2;
 
-
   // Bitwise logic
-  for (i=0; i<WIDTH; i++) begin
-    assign ee[0][i] = a[i] ~^ b[i]; // bitwise equality
-    assign ll[0][i] = ~a[i] & b[i]; // bitwise less than unsigned
-  end
+  assign e[0] = a ~^ b; // bitwise equality
+  assign l[0] = ~a & b; // bitwise less than unsigned: A=0 and B=1
 
   // Recursion
   for (level = 1; level<=levels; level++) begin
     for (i=0; i<WIDTH/(2**level); i++) begin
-      assign ee[level][i] = ee[level-1][i*2+1] & ee[level-1][i*2];
-      assign ll[level][i] = ll[level-1][i*2+1] | ee[level-1][i*2+1] & ll[level-1][i*2];
+      assign e[level][i] = e[level-1][i*2+1] & e[level-1][i*2];  // group equal if both parts equal
+      assign l[level][i] = l[level-1][i*2+1] | e[level-1][i*2+1] & l[level-1][i*2]; // group less if upper is les or upper equal and lower less
     end
   end
 
   // Output logic
-  assign eq2 = ee[levels][0];
-  assign ltu2 = ll[levels][0];
-  assign lt2 = ltu2 & ~ll[0][WIDTH-1] | a[WIDTH-1] & ~b[WIDTH-1];
-
-  always_comb begin 
-    assert (eq2 === eq) else $display("a %h b %h eq %b eq2 %b\n", a, b, eq, eq2);
-    assert (ltu2 === ltu) else $display("a %h b %h ltu %b ltu2 %b\n", a, b, ltu, ltu2);
-    assert (lt2 === lt) else $display("a %h b %h lt %b lt2 %b ltu2 %b L31 %b\n", a, b, lt, lt2, ltu2, ll[0][WIDTH-1]);
-  end
-
+  assign eq2 = e[levels][0];  // A = B if all bits are equal
+  assign ltu2 = l[levels][0]; // A < B if group is less (unsigned)
+  // A < B signed if less than unsigned and msb is not < unsigned, or if A negative and B positive
+  assign lt2 = ltu2 & ~l[0][WIDTH-1] | a[WIDTH-1] & ~b[WIDTH-1]; 
   assign flags = {eq2, lt2, ltu2};
-
   /* verilator lint_on UNOPTFLAT */
-
 endmodule
 
