@@ -46,7 +46,7 @@ module trap (
   input logic [`XLEN-1:0]  PCM,
   input logic [`XLEN-1:0]  InstrMisalignedAdrM, IEUAdrM, 
   input logic [31:0] 	   InstrM,
-  input logic 		   InstrValidM, CommittedM, DivE,
+  input logic 		   InstrValidM, CommittedM, DivE, 
   output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic 		   InterruptM,
   output logic 		   ExceptionM,

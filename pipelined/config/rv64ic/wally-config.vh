@@ -82,6 +82,9 @@
 // Bus Interface width
 `define AHBW 64
 
+// WFI Timeout Wait
+`define WFI_TIMEOUT_BIT 20
+
 // Peripheral Physiccal Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
