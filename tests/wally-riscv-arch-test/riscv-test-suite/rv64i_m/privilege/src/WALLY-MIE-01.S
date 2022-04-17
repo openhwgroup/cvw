@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-unvectored-interrupt
+// WALLY-MIE
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-03-11
+// Created 2022-04-10
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -27,18 +27,18 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-// test 5.3.1.5 Unvectored interrupt tests 
-
-TRAP_HANDLER m, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
+TRAP_HANDLER m, DEBUG=1 // turn on recording mtval and status bits on traps
 
 li x28, 0x8
-csrs mstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
-WRITE_READ_CSR mie, 0xFFF
+csrs mstatus, x28 // set mstatus.MIE bit to 1.
+WRITE_READ_CSR mie, 0x0 // force zeroing out mie CSR.
 
-// cause traps, ensuring that we DONT go through the vectored part of the trap handler
+// test 5.3.1.6 Interrupt enabling and priority tests 
+// note that none of these interrupts should be caught or handled.
 
-jal cause_m_time_interrupt
+jal cause_m_soft_interrupt
 
 END_TESTS
 
 TEST_STACK_AND_DATA
+
