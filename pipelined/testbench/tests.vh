@@ -1467,11 +1467,17 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-MTVEC", "002090",
     "rv64i_m/privilege/WALLY-MVENDORID", "004090", */
     "rv64i_m/privilege/WALLY-PMA", "0050a0",
-    "rv64i_m/privilege/WALLY-PMP", "0050a0"
+    "rv64i_m/privilege/WALLY-PMP", "0050a0",
 //    "rv64i_m/privilege/WALLY-SCAUSE", "002090",
 //    "rv64i_m/privilege/WALLY-scratch-01", "0040a0",
 //    "rv64i_m/privilege/WALLY-sscratch-s-01", "0040a0",
-//    "rv64i_m/privilege/WALLY-trap-01", "0050a0"
+//    "rv64i_m/privilege/WALLY-trap-01", "0050a0",
+    "rv64i_m/privilege/WALLY-MIE-01", "0050a0",
+    "rv64i_m/privilege/WALLY-mtvec-01", "0050a0",
+    "rv64i_m/privilege/WALLY-stvec-01", "0050a0",
+    "rv64i_m/privilege/WALLY-PIE-stack-01", "0050a0",
+    "rv64i_m/privilege/WALLY-PIE-stack-s-01", "0050a0",
+    "rv64i_m/privilege/WALLY-trap-sret-01", "0050a0"
 //    "rv64i_m/privilege/WALLY-STVEC", "002090",
 //    "rv64i_m/privilege/WALLY-UCAUSE", "002090",
 
