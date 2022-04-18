@@ -33,7 +33,7 @@
 module subwordwrite (
   input logic [2:0]          LSUPAdrM,
   input logic [2:0]          LSUFunct3M,
-  input logic [`XLEN-1:0]    FinalAMOWriteDataM,
+  input logic [`XLEN-1:0]    AMOWriteDataM,
   output logic [`XLEN-1:0]   FinalWriteDataM,
   output logic [`XLEN/8-1:0] ByteMaskM
 );
@@ -46,18 +46,18 @@ module subwordwrite (
   if (`XLEN == 64) begin:sww
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  FinalWriteDataM = {8{FinalAMOWriteDataM[7:0]}};  // sb
-        2'b01:  FinalWriteDataM = {4{FinalAMOWriteDataM[15:0]}}; // sh
-        2'b10:  FinalWriteDataM = {2{FinalAMOWriteDataM[31:0]}}; // sw
-        2'b11:  FinalWriteDataM = FinalAMOWriteDataM;            // sw
+        2'b00:  FinalWriteDataM = {8{AMOWriteDataM[7:0]}};  // sb
+        2'b01:  FinalWriteDataM = {4{AMOWriteDataM[15:0]}}; // sh
+        2'b10:  FinalWriteDataM = {2{AMOWriteDataM[31:0]}}; // sw
+        2'b11:  FinalWriteDataM = AMOWriteDataM;            // sw
       endcase
   end else begin:sww // 32-bit
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  FinalWriteDataM = {4{FinalAMOWriteDataM[7:0]}};  // sb
-        2'b01:  FinalWriteDataM = {2{FinalAMOWriteDataM[15:0]}}; // sh
-        2'b10:  FinalWriteDataM = FinalAMOWriteDataM;            // sw
-        default: FinalWriteDataM = FinalAMOWriteDataM; // shouldn't happen
+        2'b00:  FinalWriteDataM = {4{AMOWriteDataM[7:0]}};  // sb
+        2'b01:  FinalWriteDataM = {2{AMOWriteDataM[15:0]}}; // sh
+        2'b10:  FinalWriteDataM = AMOWriteDataM;            // sw
+        default: FinalWriteDataM = AMOWriteDataM; // shouldn't happen
       endcase
   end
 endmodule
