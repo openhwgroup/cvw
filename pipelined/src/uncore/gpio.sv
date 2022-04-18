@@ -146,7 +146,7 @@ module gpio (
 
   // chip i/o
   // connect OUT to IN for loopback testing
-  if (`GPIO_LOOPBACK_TEST) assign input0d = GPIOPinsOut & input_en & output_en;
+  if (`GPIO_LOOPBACK_TEST) assign input0d = GPIOPinsOut & output_en | (GPIOPinsIn  & input_en);
   else                     assign input0d = GPIOPinsIn  & input_en;
   flop #(32) sync1(HCLK,input0d,input1d);
   flop #(32) sync2(HCLK,input1d,input2d);
