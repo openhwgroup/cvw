@@ -157,17 +157,17 @@ cause_s_soft_interrupt:
 cause_m_ext_interrupt:
     # ========== Configure PLIC ==========
     # m priority threshold = 0
-    li t0, 0xC200000
-    li t1, 0
-    sw t1, 0(t0)
+    li x28, 0xC200000
+    li x29, 0
+    sw x29, 0(x28)
     # source 3 (GPIO) priority = 1
-    li t0, 0xC000000
-    li t1, 1
-    sw t1, 0x0C(t0)
-    # enable source 3
-    li t0, 0x0C002000
-    li t1, 0b1000 
-    sw t1, 0(t0)
+    li x28, 0xC000000
+    li x29, 1
+    sw x29, 0x0C(x28)
+    # enable source 3 in M Mode
+    li x28, 0x0C002000
+    li x29, 0b1000 
+    sw x29, 0(x28)
 
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
@@ -178,7 +178,7 @@ cause_m_ext_interrupt:
     sw x0, 0x2C(x28) // clear high_ip
     sw x0, 0x34(x28) // clear low_ip
 
-    sw x29, 0x28(x28)  // set first to interrupt on a rising value
+    sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
     sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
 m_ext_loop:
     wfi
@@ -189,21 +189,21 @@ m_ext_loop:
 cause_s_ext_interrupt_GPIO:
     # ========== Configure PLIC ==========
     # s priority threshold = 0
-    li t0, 0xC201000
-    li t1, 0
-    sw t1, 0(t0)
+    li x28, 0xC201000
+    li x29, 0
+    sw x29, 0(x28)
     # m priority threshold = 7
-    li t0, 0xC200000
-    li t1, 7
-    sw t1, 0(t0)
+    li x28, 0xC200000
+    li x29, 7
+    sw x29, 0(x28)
     # source 3 (GPIO) priority = 1
-    li t0, 0xC000000
-    li t1, 1
-    sw t1, 0x0C(t0)
-    # enable source 3
-    li t0, 0x0C002000
-    li t1, 0b1000 
-    sw t1, 0(t0)
+    li x28, 0xC000000
+    li x29, 1
+    sw x29, 0x0C(x28)
+    # enable source 3 in S mode
+    li x28, 0x0C002080
+    li x29, 0b1000 
+    sw x29, 0(x28)
 
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
@@ -214,7 +214,7 @@ cause_s_ext_interrupt_GPIO:
     sw x0, 0x2C(x28) // clear high_ip
     sw x0, 0x34(x28) // clear low_ip
 
-    sw x29, 0x28(x28)  // set first to interrupt on a rising value
+    sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
     sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
 s_ext_loop:
     wfi
@@ -224,7 +224,7 @@ s_ext_loop:
 
 cause_s_ext_interrupt_IP:
     li x28, 0x200
-    csrs mip, x28 // set supervisor external interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    csrs mip, x28 // set supervisor external interrupt pending.
     ret
 
 end_trap_triggers:
@@ -521,18 +521,19 @@ soft_interrupt_\MODE\():
     la x5, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
     sw x0, 0(x5)
 
-    csrci sip, 0x2 // clear supervisor software interrupt pending bit 
+    csrci \MODE\()ip, 0x2 // clear supervisor software interrupt pending bit 
     ld x1, -8(sp) // load return address from stack into ra (the address to return to after causing this interrupt)
     // Note: we do this because the mepc loads in the address of the instruction after the sw that causes the interrupt
     //  This means that this trap handler will return to the next address after that one, which might be unpredictable behavior.
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
-
 
 time_interrupt_\MODE\():
     la x5, 0x02004000    // MTIMECMP register in CLINT
     li x7, 0xFFFFFFFF
     sd x7, 0(x5) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
     
+    li x5, 0x20
+    csrc \MODE\()ip, x5
     ld x1, -8(sp) // load return address from stack into ra (the address to return to after the loop is complete)
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
 
@@ -543,18 +544,26 @@ ext_interrupt_\MODE\():
 
     # reset PLIC to turn off external interrupts
     # priority threshold = 7
-    li t0, 0xC200000
-    li t1, 0x7
-    sw t1, 0(t0)
+    li x28, 0xC200000
+    li x5, 0x7
+    sw x5, 0(x28)
     # source 3 (GPIO) priority = 0
-    li t0, 0xC000000
-    li t1, 0
-    sw t1, 0x0C(t0)
+    li x28, 0xC000000
+    li x5, 0
+    sw x5, 0x0C(x28)
     # disable source 3
-    li t0, 0x0C002000
-    li t1, 0b0000 
-    sw t1, 0(t0)
-    j trapreturn_\MODE\()
+    li x28, 0x0C002000
+    li x5, 0b0000
+    sw x5, 0(x28)
+
+    li x5, 0x200
+    csrc \MODE\()ip, x5
+
+    ld x1, -8(sp) // load return address from stack into ra (the address to return to after the loop is complete)
+    j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
+
+
+
 
     // Table of trap behavior
     // lists what to do on each exception (not interrupts)
