@@ -56,7 +56,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   logic				  memwrite;
   logic [3:0] 		  busycount;
   
-  swbytemask swbytemask(.HSIZED, .HADDRD(HWADDR[2:0]), .ByteMask(ByteMaskM));
+  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HWADDR[2:0]), .ByteMask(ByteMaskM));
 
   assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
 
