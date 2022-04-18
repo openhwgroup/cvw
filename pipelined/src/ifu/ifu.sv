@@ -140,7 +140,7 @@ module ifu (
   // WFI
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign wfiD = (InstrD[6:0] == 7'b111011 && InstrD[31:20] == 12'b000100000101); // WFI in decode stage
+  assign wfiD = (InstrD[6:0] == 7'b1110011 && InstrD[31:20] == 12'b000100000101); // WFI in decode stage
   assign InstrNextF = wfiD ? InstrD : PostSpillInstrRawF; // on WFI, keep replaying WFI
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
