@@ -1471,7 +1471,7 @@ string imperas32f[] = '{
 //    "rv64i_m/privilege/WALLY-SCAUSE", "002090",
 //    "rv64i_m/privilege/WALLY-scratch-01", "0040a0",
 //    "rv64i_m/privilege/WALLY-sscratch-s-01", "0040a0",
-//    "rv64i_m/privilege/WALLY-trap-01", "0050a0",
+    "rv64i_m/privilege/WALLY-trap-01", "0050a0",
     "rv64i_m/privilege/WALLY-MIE-01", "0050a0",
     "rv64i_m/privilege/WALLY-mtvec-01", "0050a0",
     "rv64i_m/privilege/WALLY-stvec-01", "0050a0",
