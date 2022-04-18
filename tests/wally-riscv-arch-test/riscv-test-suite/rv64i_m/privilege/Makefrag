@@ -65,7 +65,7 @@ target_tests_nosim = \
     WALLY-PIE-stack-01 \
     WALLY-PIE-stack-s-01 \
     WALLY-trap-sret-01 \
-    #WALLY-trap-01 \
+    WALLY-trap-01 \
     # Have all 0's in references!
     #WALLY-MEPC \
     #WALLY-SEPC \
