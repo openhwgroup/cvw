@@ -104,6 +104,7 @@ module privileged (
   logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
   logic md;
   logic       StallMQ;
+  logic WFITimeoutM; 
 
 
   ///////////////////////////////////////////
@@ -114,24 +115,6 @@ module privileged (
   assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
   
   // PrivilegeMode FSM
-/* -----\/----- EXCLUDED -----\/-----
-  always_comb begin
-    TrappedSRETM = 0;
-    if (mretM)      NextPrivilegeModeM = STATUS_MPP;
-    else if (sretM) 
-      if (STATUS_TSR & PrivilegeModeW == `S_MODE) begin
-        TrappedSRETM = 1;
-                    NextPrivilegeModeM = PrivilegeModeW;
-      end else      NextPrivilegeModeM = {1'b0, STATUS_SPP};
-    else if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-      if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
-                    NextPrivilegeModeM = `S_MODE;
-      else          NextPrivilegeModeM = `M_MODE;
-    end else        NextPrivilegeModeM = PrivilegeModeW;
-  end
-
- -----/\----- EXCLUDED -----/\----- */
-  
   always_comb begin
     if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
       if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
@@ -149,14 +132,22 @@ module privileged (
 
   flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
 
-  // *** WFI could be implemented here and depends on TW
+  ///////////////////////////////////////////
+  // WFI timeout Privileged Spec 3.1.6.5
+  ///////////////////////////////////////////
+  if (`U_SUPPORTED) begin
+    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+    assign WFICountPlus1 = WFICount + 1;
+    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+    assign WFITimeoutM = STATUS_TW & PrivilegeModeW != `M_MODE & WFICount[`WFI_TIMEOUT_BIT]; 
+  end else assign WFITimeoutM = 0;
 
   ///////////////////////////////////////////
   // decode privileged instructions
   ///////////////////////////////////////////
 
    privdec pmd(.InstrM(InstrM[31:20]), 
-              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM,
+              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM, .WFITimeoutM,
               .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
               .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
@@ -233,7 +224,7 @@ module privileged (
             .PCM,
             .InstrMisalignedAdrM, .IEUAdrM, 
             .InstrM,
-            .InstrValidM, .CommittedM, .DivE,
+            .InstrValidM, .CommittedM, .DivE, 
             .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,
             .InterruptM,
             .ExceptionM,

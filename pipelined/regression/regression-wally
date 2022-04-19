@@ -45,7 +45,7 @@ configs = [
     )
 ]
 def getBuildrootTC(short):
-    INSTR_LIMIT = 100000 # multiple of 100000
+    INSTR_LIMIT = 4000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000
     if short:
         BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"

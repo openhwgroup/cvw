@@ -61,6 +61,10 @@ module fcvt (
       //  fcvt.d.l  = 100
       //  fcvt.d.lu = 110
       //  {long, unsigned, to int}
+
+    // *** revisit this module, explain in more depth
+    // should the int to fp and fp to int paths be separated?
+    // add support for all formats
    
     // calculate signals based off the input and output's size
     assign Res64 = (FOpCtrlE[0]&FOpCtrlE[2]) | (FmtE&~FOpCtrlE[0]);

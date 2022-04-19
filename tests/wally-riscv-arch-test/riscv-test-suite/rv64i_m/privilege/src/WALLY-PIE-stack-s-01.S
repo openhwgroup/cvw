@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-unvectored-interrupt
+// WALLY-privilege-interrupt-enable-stack
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-03-11
+// Created 2022-04-10
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -27,17 +27,26 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-// test 5.3.1.5 Unvectored interrupt tests 
+TRAP_HANDLER m, DEBUG=1 // necessary so we can go to S mode
+TRAP_HANDLER s, DEBUG=1 // neccessary to handle s mode interrupts. 
 
-TRAP_HANDLER m, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
+li x28, 0x2
+csrs sstatus, x28 // set sstatus.SIE bit to 1
+WRITE_READ_CSR mie, 0xFFF // enable all interrupts, including supervisor ones
+WRITE_READ_CSR mideleg 0xFFFF // delegate all interrupts to S mode.
 
-li x28, 0x8
-csrs mstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
-WRITE_READ_CSR mie, 0xFFF
+// test 5.3.1.6 Interrupt enabling and priority tests 
 
-// cause traps, ensuring that we DONT go through the vectored part of the trap handler
+GOTO_S_MODE
 
-jal cause_m_time_interrupt
+// Cause interrupt, ensuring that status.sie = 0 , status.spie = 1, and status.spp = 1 during trap handling 
+jal cause_s_soft_interrupt
+
+li x28, 0x2
+csrc sstatus, x28 // set sstatus.SIE bit to 0. interrupts from S mode should not happen
+
+// attempt to cause interrupt, it should not go through
+jal cause_s_soft_interrupt
 
 END_TESTS
 
