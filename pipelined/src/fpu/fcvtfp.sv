@@ -30,11 +30,17 @@ module cvtfp (
     logic [31:0] DSRes; // double to single precision result
 
 
+    // add support for all formats
+    // consider reordering code blocks so upconverting is in one region of the file
+    // and downconverting is in the other region.
 
     ///////////////////////////////////////////////////////////////////////////////
-    // LZC
+    // LZC: Leading Zero Counter
     ///////////////////////////////////////////////////////////////////////////////
 
+    // *** consider sharing this with fcvtint
+    // *** emphasize parallel structure between the two
+    // *** add a priorityencoder module to generic (similar to priorityonehot) and use it
 
     // LZC - find the first 1 in the input's mantissa
 	logic [8:0]	i,NormCnt;

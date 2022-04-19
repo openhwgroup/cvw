@@ -662,7 +662,7 @@ module testbench;
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
-        `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.INSTRET_REGW,InstrCountW)
+        `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2],InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
           $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, AttemptedInstructionCount, dut.core.ieu.dp.regf.a3, ExpectedRegAdrW);

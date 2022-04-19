@@ -145,6 +145,7 @@ module lsu (
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
   // MMU and Misalignment fault logic required if privileged unit exists
+  // *** DH: This is too strong a requirement.  Separate MMU in `VIRTMEM_SUPPORTED from simpler faults in `ZICSR_SUPPORTED
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;
     assign DisableTranslation = SelHPTW | FlushDCacheM;
@@ -181,7 +182,7 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    FinalAMOWriteDataM, FinalWriteDataM;
+  logic [`XLEN-1:0]    AMOWriteDataM, FinalWriteDataM;
   logic [`XLEN-1:0]    ReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
@@ -255,13 +256,13 @@ module lsu (
   if (`A_SUPPORTED) begin:atomic
     atomic atomic(.clk, .reset, .FlushW, .StallW, .ReadDataM, .LSUWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
-      .FinalAMOWriteDataM, .SquashSCW, .LSURWM);
+      .AMOWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
-    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign FinalAMOWriteDataM = LSUWriteDataM;
+    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign AMOWriteDataM = LSUWriteDataM;
   end
 
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .FinalAMOWriteDataM, .FinalWriteDataM, .ByteMaskM);
+    .LSUFunct3M, .AMOWriteDataM, .FinalWriteDataM, .ByteMaskM);
 
   
 endmodule

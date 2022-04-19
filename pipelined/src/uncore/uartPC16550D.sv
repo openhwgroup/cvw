@@ -54,14 +54,22 @@ module uartPC16550D(
 	output logic 	   SOUT, RTSb, DTRb, OUT1b, OUT2b
 	);
 
+  // signal to watch
+  // rxparityerr, RXBR[upper 3 bits]
+  // LSR bits 1 to 4 are based on parity, overrun, and framing errors
+  // txstate, rxstate
+  // loop, fifoenabled
+  // IER, RCR, MCR, LSR, MSR, DLL, DLM, RBR
+  
+
   // transmit and receive states // *** neeed to work on synth warning -- it wants to make enums 32 bits by default
   typedef enum logic [1:0] {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
 
   // Registers
-  logic [10:0] RBR;
-  logic [7:0]  FCR, LCR, LSR, SCR, DLL, DLM;
-  logic [3:0]  IER, MSR;
-  logic [4:0]  MCR;
+   (* mark_debug = "true" *)  logic [10:0] RBR;
+   (* mark_debug = "true" *)  logic [7:0]  FCR, LCR, LSR, SCR, DLL, DLM;
+   (* mark_debug = "true" *)  logic [3:0]  IER, MSR;
+   (* mark_debug = "true" *)  logic [4:0]  MCR;
 
   // Syncrhonized and delayed UART signals
   logic 	   SINd, DSRbd, DCDbd, CTSbd, RIbd;
@@ -78,7 +86,7 @@ module uartPC16550D(
   logic [16+`UART_PRESCALE-1:0] baudcount;
   logic [3:0] 					rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
   logic [3:0] 					rxbitsreceived, txbitssent;
-  statetype rxstate, txstate;
+   (* mark_debug = "true" *)  statetype rxstate, txstate;
 
   // shift registrs and FIFOs
   logic [9:0] 					rxshiftreg;
@@ -90,11 +98,11 @@ module uartPC16550D(
   logic [3:0] 					rxbitsexpected, txbitsexpected;
 
   // receive data
-  logic [10:0] 					RXBR;
+   (* mark_debug = "true" *)  logic [10:0] 					RXBR;
   logic [6:0] 					rxtimeoutcnt;
   logic 						rxcentered;
   logic 						rxparity, rxparitybit, rxstopbit;
-  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
+   (* mark_debug = "true" *)  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
   logic 						rxdataready;
   logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
   logic 						rxfifodmaready;
@@ -145,7 +153,8 @@ module uartPC16550D(
       if (`FPGA) begin
 		//DLL <= #1 8'd38; // 35Mhz
 		//DLL <= #1 8'd11; // 10 Mhz
-		DLL <= #1 8'd33; // 30 Mhz
+		//DLL <= #1 8'd33; // 30 Mhz
+		DLL <= #1 8'd8; // 30 Mhz 230400
 		DLM <= #1 8'b0;
       end else begin
 		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
@@ -162,10 +171,13 @@ module uartPC16550D(
            3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
 		   -----/\----- EXCLUDED -----/\----- */
 		  // *** BUG FIX ME for now for the divider to be 38.  Our clock is 35 Mhz.  35Mhz /(38 * 16) ~= 57600 baud, which is close enough to 57600 baud
+		  // dll = freq / (baud * 16)
+		  // 30Mhz / (57600 * 16) = 32.5
+		  // 30Mhz / (230400 * 16) = 8.13
 		  // freq /baud / 16 = div
           //3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
 		  //3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in
-		  3'b000: if (DLAB) DLL <= #1 8'd33; //else TXHR <= #1 Din; // TX handled in 		  
+		  3'b000: if (DLAB) DLL <= #1 8'd8; //else TXHR <= #1 Din; // TX handled in 		  
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
 
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing

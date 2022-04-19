@@ -31,10 +31,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
-
 module gsharePredictor
-  #(parameter int k = 10
-    )
   (input logic             clk,
    input logic             reset,
    input logic             StallF, StallE,
@@ -52,8 +49,8 @@ module gsharePredictor
    input logic [1:0]       UpdateBPPredE
   
    );
-  logic [k+1:0]            GHR, GHRNext;
-  logic [k-1:0]            PHTUpdateAdr, PHTUpdateAdr0, PHTUpdateAdr1;
+  logic [`BPRED_SIZE+1:0]  GHR, GHRNext;
+  logic [`BPRED_SIZE-1:0]  PHTUpdateAdr, PHTUpdateAdr0, PHTUpdateAdr1;
   logic                    PHTUpdateEN;
   logic                    BPClassWrongNonCFI;
   logic                    BPClassWrongCFI;
@@ -63,7 +60,7 @@ module gsharePredictor
 
   logic [6:0]              GHRMuxSel;
   logic                    GHRUpdateEN;
-  logic [k-1:0]            GHRLookup;
+  logic [`BPRED_SIZE-1:0]            GHRLookup;
 
   assign BPClassRightNonCFI = ~BPInstrClassE[0] & ~InstrClassE[0];
   assign BPClassWrongCFI = ~BPInstrClassE[0] & InstrClassE[0];
@@ -85,18 +82,18 @@ module gsharePredictor
   // hoping this created a AND-OR mux.
   always_comb begin
     case (GHRMuxSel) 
-      7'b000_0001: GHRNext = GHR[k-1+2:0];  // no change
-      7'b000_0010: GHRNext = {GHR[k-2+2:0], PCSrcE}; // branch update
-      7'b000_0100: GHRNext = {1'b0, GHR[k+1:1]}; // repair 1
-      7'b000_1000: GHRNext = {GHR[k-1+2:1], PCSrcE}; // branch update with mis prediction correction
-      7'b001_0000: GHRNext = {2'b00, GHR[k+1:2]}; // repair 2
-      7'b010_0000: GHRNext = {1'b0, GHR[k+1:2], PCSrcE}; // branch update + repair 1
-      7'b100_0000: GHRNext = {GHR[k-2+2:0], BPPredF[1]}; // speculative update
-      default: GHRNext = GHR[k-1+2:0];
+      7'b000_0001: GHRNext = GHR[`BPRED_SIZE-1+2:0];  // no change
+      7'b000_0010: GHRNext = {GHR[`BPRED_SIZE-2+2:0], PCSrcE}; // branch update
+      7'b000_0100: GHRNext = {1'b0, GHR[`BPRED_SIZE+1:1]}; // repair 1
+      7'b000_1000: GHRNext = {GHR[`BPRED_SIZE-1+2:1], PCSrcE}; // branch update with mis prediction correction
+      7'b001_0000: GHRNext = {2'b00, GHR[`BPRED_SIZE+1:2]}; // repair 2
+      7'b010_0000: GHRNext = {1'b0, GHR[`BPRED_SIZE+1:2], PCSrcE}; // branch update + repair 1
+      7'b100_0000: GHRNext = {GHR[`BPRED_SIZE-2+2:0], BPPredF[1]}; // speculative update
+      default: GHRNext = GHR[`BPRED_SIZE-1+2:0];
     endcase
   end
 
-  flopenr #(k+2) GlobalHistoryRegister(.clk(clk),
+  flopenr #(`BPRED_SIZE+2) GlobalHistoryRegister(.clk(clk),
            .reset(reset),
            .en((GHRUpdateEN)),
            .d(GHRNext),
@@ -105,21 +102,21 @@ module gsharePredictor
   // if actively updating the GHR at the time of prediction we want to us
   // GHRNext as the lookup rather than GHR.
 
-  assign PHTUpdateAdr0 = InstrClassE[0] ? GHR[k:1] : GHR[k-1:0];
-  assign PHTUpdateAdr1 = InstrClassE[0] ? GHR[k+1:2] : GHR[k:1];  
+  assign PHTUpdateAdr0 = InstrClassE[0] ? GHR[`BPRED_SIZE:1] : GHR[`BPRED_SIZE-1:0];
+  assign PHTUpdateAdr1 = InstrClassE[0] ? GHR[`BPRED_SIZE+1:2] : GHR[`BPRED_SIZE:1];  
   assign PHTUpdateAdr = BPInstrClassD[0] ? PHTUpdateAdr1 : PHTUpdateAdr0;
   assign PHTUpdateEN = InstrClassE[0] & ~StallE;
 
-  assign GHRLookup = |GHRMuxSel[6:1] ? GHRNext[k-1:0] : GHR[k-1:0];
+  assign GHRLookup = |GHRMuxSel[6:1] ? GHRNext[`BPRED_SIZE-1:0] : GHR[`BPRED_SIZE-1:0];
   
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
-  SRAM2P1R1W #(k, 2) PHT(.clk(clk),
+  SRAM2P1R1W #(`BPRED_SIZE, 2) PHT(.clk(clk),
     .reset(reset),
-    //.RA1(GHR[k-1:0]),
-    .RA1(GHRLookup ^ PCNextF[k:1]),
+    //.RA1(GHR[`BPRED_SIZE-1:0]),
+    .RA1(GHRLookup ^ PCNextF[`BPRED_SIZE:1]),
     .RD1(BPPredF),
     .REN1(~StallF),
-    .WA1(PHTUpdateAdr ^ PCE[k:1]),
+    .WA1(PHTUpdateAdr ^ PCE[`BPRED_SIZE:1]),
     .WD1(UpdateBPPredE),
     .WEN1(PHTUpdateEN),
     .BitWEN1(2'b11));

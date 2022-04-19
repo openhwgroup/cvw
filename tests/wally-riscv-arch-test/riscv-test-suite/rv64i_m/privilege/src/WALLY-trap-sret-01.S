@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-unvectored-interrupt
+// WALLY-trap-sret
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-03-11
+// Created 2022-04-10
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -25,19 +25,17 @@
 
 INIT_TESTS
 
-CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
+TRAP_HANDLER m, DEBUG=1
 
-// test 5.3.1.5 Unvectored interrupt tests 
+// test 5.3.1.6 Interrupt enabling and priority tests 
 
-TRAP_HANDLER m, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
+li x28, 0x400000
+csrs mstatus, x28 // Set mstatus.tsr to 1.
 
-li x28, 0x8
-csrs mstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
-WRITE_READ_CSR mie, 0xFFF
+GOTO_S_MODE
 
-// cause traps, ensuring that we DONT go through the vectored part of the trap handler
-
-jal cause_m_time_interrupt
+sret // attempt to run sret instruction. 
+// should cause illegal instruction exception despite being in s mode
 
 END_TESTS
 

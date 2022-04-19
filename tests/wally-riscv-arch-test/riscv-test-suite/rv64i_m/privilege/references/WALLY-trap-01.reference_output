@@ -1,5 +1,11 @@
 00000aaa # Test 5.3.1.4: readback value from writing mie to enable interrupts
 00000000
+00000000 # mcause from instruction addr misaligned fault
+00000000
+800003d2 # mtval of faulting instruction adress (0x800003d3)
+00000000 
+00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+00000000
 00000001 # mcause from an instruction access fault
 00000000
 00000000 # mtval of faulting instruction address (0x0)
@@ -14,13 +20,13 @@
 00000000
 00000003 # mcause from Breakpoint
 00000000
-800003ec # mtval of breakpoint instruction adress (0x800003ec)
+80000404 # mtval of breakpoint instruction adress (0x80000404)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
 00000004 # mcause from load address misaligned
 00000000
-800003f5 # mtval of misaligned address (0x800003f5)
+8000040d # mtval of misaligned address (0x8000040d)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -32,7 +38,7 @@
 00000000
 00000006 # mcause from store misaligned
 00000000
-80000411 # mtval of address with misaligned store instr (0x80000410)
+80000429 # mtval of address with misaligned store instr (0x80000429)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -60,7 +66,31 @@
 00000000
 00000880 # masked out mstatus.MPP = 01 (from S mode), mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-000007ec # value to indicate a vectored interrupts
+0007ec01 # value to indicate successful vectoring on s soft interrupt 
+00000000
+00000001 # mcause value from s soft interrupt
+80000000
+00000000 # mtval for ssoft interrupt (0x0)
+00000000
+00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+00000000
+0007ec03 # value to indicate successful vectoring on m soft interrupt 
+00000000
+00000003 # mcause value from m soft interrupt
+80000000
+00000000 # mtval for msoft interrupt (0x0)
+00000000
+00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+00000000
+0007ec05 # value to indicate successful vectoring on s time interrupt 
+00000000
+00000005 # mcause value from s time interrupt
+80000000
+00000000 # mtval for stime interrupt (0x0)
+00000000
+00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+00000000
+0007ec07 # value to indicate successful vectoring on m time interrupt 
 00000000
 00000007 # mcause value from m time interrupt
 80000000
@@ -68,15 +98,15 @@
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-000007ec # value to indicate a vectored interrupts
+0007ec09 # value to indicate successful vectoring on s ext interrupt 
 00000000
-00000001 # mcause value from m soft interrupt
+00000009 # mcause value from s ext interrupt
 80000000
-00000000 # mtval for msoft interrupt (0x0)
+00000000 # mtval for sext interrupt (0x0)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-000007ec # value to indicate a vectored interrupts
+0007ec0b # value to indicate successful vectoring on m ext interrupt 
 00000000
 0000000b # mcause value from m ext interrupt
 80000000
@@ -84,11 +114,17 @@
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-0000b309 # medeleg after attempted write of all 1's (only some bits are writeable)
-00000000
+fffff7ff # medeleg after attempted write of all 1's (only some bits are writeable)
+ffffffff
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable)
 00000000
-00000001 # Test 5.3.1.4: mcause from an instruction access fault
+00000000 # mcause from instruction addr misaligned fault
+00000000
+800003d2 # mtval of faulting instruction adress (0x800003d3)
+00000000 
+00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+00000000
+00000001 # mcause from an instruction access fault
 00000000
 00000000 # mtval of faulting instruction address (0x0)
 00000000
@@ -102,13 +138,13 @@
 00000000
 00000003 # mcause from Breakpoint
 00000000
-800003ec # mtval of breakpoint instruction adress (0x800003ec)
+80000404 # mtval of breakpoint instruction adress (0x80000404)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
 00000004 # mcause from load address misaligned
 00000000
-800003f5 # mtval of misaligned address (0x800003f5)
+8000040d # mtval of misaligned address (0x8000040d)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -120,7 +156,7 @@
 00000000
 00000006 # mcause from store misaligned
 00000000
-80000411 # mtval of address with misaligned store instr (0x80000410)
+80000429 # mtval of address with misaligned store instr (0x80000429)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -136,23 +172,23 @@
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-000007ec # value to indicate a vectored interrupts
+0007ec03 # value to indicate successful vectoring on m soft interrupt 
 00000000
-00000007 # mcause value from  time interrupt
-80000000
-00000000 # mtval for mtime interrupt (0x0)
-00000000
-00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
-00000000
-000007ec # value to indicate a vectored interrupts
-00000000
-00000001 # mcause value from m soft interrupt
+00000003 # mcause value from m soft interrupt
 80000000
 00000000 # mtval for msoft interrupt (0x0)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-000007ec # value to indicate a vectored interrupts
+0007ec07 # value to indicate successful vectoring on m time interrupt 
+00000000
+00000007 # mcause value from m time interrupt
+80000000
+00000000 # mtval for mtime interrupt (0x0)
+00000000
+00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+00000000
+0007ec0b # value to indicate successful vectoring on m ext interrupt 
 00000000
 0000000b # mcause value from m ext interrupt
 80000000
@@ -166,100 +202,6 @@
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
 deadbeef
 deadbeef
 deadbeef

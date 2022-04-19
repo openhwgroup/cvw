@@ -84,6 +84,9 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
+// WFI Timeout Wait
+`define WFI_TIMEOUT_BIT 20
+
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
@@ -130,6 +133,8 @@
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
+`define BPRED_SIZE 10
+
 
 `define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 0
