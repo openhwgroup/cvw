@@ -1,11 +1,11 @@
 00000111 # Test 5.3.2.3: successful read of the 0x111 written to sscratch
+00000000
 0000000b # ecall from going to s mode from m mode
+00000000
 00000aaa # successful read of 0xAAA written to sscratch
+00000000
 00000009 # ecall from ending tests in supervisor mode
-deadbeef
-deadbeef
-deadbeef
-deadbeef
+00000000
 deadbeef
 deadbeef
 deadbeef

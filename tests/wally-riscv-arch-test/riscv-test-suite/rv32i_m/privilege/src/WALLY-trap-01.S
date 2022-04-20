@@ -21,7 +21,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h"
+#include "WALLY-TEST-LIB-32.h"
 
 INIT_TESTS
 
@@ -35,7 +35,7 @@ WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources // *** commented
 
 // test 5.3.1.4 Basic trap tests 
 
-// jal cause_instr_addr_misaligned //skipped becuase this exception may be impossible when compressed instructions are enabled)
+jal cause_instr_addr_misaligned
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt
@@ -47,16 +47,21 @@ GOTO_U_MODE // Causes M mode ecall
 GOTO_S_MODE // Causes U mode ecall
 GOTO_M_MODE // Causes S mode ecall
 
-jal cause_time_interrupt // *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-jal cause_soft_interrupt // *** exiting out of the trap handler after these is current;y broken
-jal cause_ext_interrupt
+
+jal cause_s_soft_interrupt 
+jal cause_m_soft_interrupt
+jal cause_s_time_interrupt
+jal cause_m_time_interrupt
+jal cause_s_ext_interrupt_GPIO
+jal cause_m_ext_interrupt
+
 
 // try the traps again with mideleg = medeleg = all 1's to ensure traps still go to M mode from M mode
 
 WRITE_READ_CSR medeleg, 0xFFFFFFFFFFFFFFFF
 WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
-// jal cause_instr_addr_misaligned //skipped becuase this exception may be impossible when compressed instructions are enabled)
+jal cause_instr_addr_misaligned
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt
@@ -66,9 +71,16 @@ jal cause_store_addr_misaligned
 jal cause_store_acc
 jal cause_ecall // M mode ecall
 
-jal cause_time_interrupt // *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-jal cause_soft_interrupt // *** exiting out of the trap handler after these is current;y broken
-jal cause_ext_interrupt
+jal cause_s_soft_interrupt // The delegated S mode interrupts should not fire since we're running in M mode.
+jal cause_m_soft_interrupt
+jal cause_s_time_interrupt 
+jal cause_m_time_interrupt
+li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
+// since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
+jal cause_s_ext_interrupt_GPIO
+li a3, 0x40
+jal cause_m_ext_interrupt
+
 
 END_TESTS
 
