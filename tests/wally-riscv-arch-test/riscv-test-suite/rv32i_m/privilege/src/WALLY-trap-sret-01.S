@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-scratch
+// WALLY-trap-sret
 //
 // Author: Kip Macsai-Goren <kmacsaigoren@g.hmc.edu>
 //
-// Created 2022-02-20
+// Created 2022-04-10
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -25,10 +25,17 @@
 
 INIT_TESTS
 
-TRAP_HANDLER m
-// Test 5.3.2.3: Scratch registers test
+TRAP_HANDLER m, DEBUG=1
 
-WRITE_READ_CSR mscratch, 0x111 // check that mscratch is readable and writeable in machine mode
+// test 5.3.1.6 Interrupt enabling and priority tests 
+
+li x28, 0x400000
+csrs mstatus, x28 // Set mstatus.tsr to 1.
+
+GOTO_S_MODE
+
+sret // attempt to run sret instruction. 
+// should cause illegal instruction exception despite being in s mode
 
 END_TESTS
 

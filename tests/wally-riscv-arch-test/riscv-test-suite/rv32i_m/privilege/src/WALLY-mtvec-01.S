@@ -21,24 +21,23 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h"
+#include "WALLY-TEST-LIB-32.h"
 
 INIT_TESTS
+
+CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
 // test 5.3.1.5 Unvectored interrupt tests 
 
 TRAP_HANDLER m, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 
 li x28, 0x8
-csrs sstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
-WRITE_READ_CSR mie, 0xFFF // *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
+csrs mstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
+WRITE_READ_CSR mie, 0xFFF
 
 // cause traps, ensuring that we DONT go through the vectored part of the trap handler
-// *** this assumes that interrupt code 0 remains reserved
 
-CAUSE_TIME_INTERRUPT // *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-CAUSE_SOFT_INTERRUPT // *** exiting out of the trap handler after these is current;y broken
-CAUSE_EXT_INTERRUPT
+jal cause_m_time_interrupt // *** only cause one interrupt because we just want to test the status stack
 
 END_TESTS
 
