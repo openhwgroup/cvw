@@ -41,7 +41,7 @@ WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
 GOTO_S_MODE
 
-jal cause_s_soft_interrupt
+jal cause_s_soft_interrupt // *** only cause one interrupt since we just want to test the tvec csr
 
 GOTO_M_MODE 
 

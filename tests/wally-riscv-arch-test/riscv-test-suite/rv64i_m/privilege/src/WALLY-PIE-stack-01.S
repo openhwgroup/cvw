@@ -36,7 +36,7 @@ WRITE_READ_CSR mie, 0xFFF
 // test 5.3.1.6 Interrupt enabling and priority tests 
 
 // Cause interrupt, ensuring that status.mie = 0 , status.mpie = 1, and status.mpp = 11 during trap handling 
-jal cause_m_soft_interrupt
+jal cause_m_soft_interrupt // *** only cause one interrupt because we just want to test the status stack
 
 li x28, 0x8
 csrc mstatus, x28 // set mstatus.MIE bit to 0. interrupts from M mode should not happen
