@@ -66,7 +66,9 @@ j end_trap_triggers
 
 // The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
 //      This effectively includes everything that isn't to do with page faults (virtual memory)
-
+//      
+//      INPUTS: a3 (x13): the number of times one of the infinitely looping interrupt causes should loop before giving up and continuing without the interrupt firing.
+//
 cause_instr_addr_misaligned:
     // cause a misaligned address trap
     auipc x28, 0      // get current PC, which is aligned
@@ -122,6 +124,7 @@ cause_m_time_interrupt:
     // The following code works for both RV32 and RV64.  
     // RV64 alone would be easier using double-word adds and stores
     li x28, 0x30          // Desired offset from the present time
+    mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
     la x29, 0x02004000    // MTIMECMP register in CLINT
     la x30, 0x0200BFF8    // MTIME register in CLINT
     lw x7, 0(x30)         // low word of MTIME
@@ -133,8 +136,9 @@ cause_m_time_interrupt:
 nowrap:
     sw x28, 0(x29)         // store into least significant word of MTIMECMP
 time_loop:
-    wfi
-    j time_loop             // wait until interrupt occurs
+    //wfi // *** this may now spin us forever in the loop???
+    addi a3, a3, -1
+    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 cause_s_time_interrupt:
@@ -160,6 +164,10 @@ cause_m_ext_interrupt:
     li x28, 0xC200000
     li x29, 0
     sw x29, 0(x28)
+    # s priority threshold = 7
+    li x28, 0xC201000
+    li x29, 7
+    sw x29, 0(x28)
     # source 3 (GPIO) priority = 1
     li x28, 0xC000000
     li x29, 1
@@ -181,9 +189,9 @@ cause_m_ext_interrupt:
     sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
     sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
 m_ext_loop:
-    wfi
-    lw x29, 0x8(x28)
-    bnez x28, m_ext_loop // go through this loop until the trap handler has disabled the GPIO output pins.
+    //wfi
+    addi a3, a3, -1
+    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 cause_s_ext_interrupt_GPIO:
@@ -217,14 +225,9 @@ cause_s_ext_interrupt_GPIO:
     sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
     sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
 s_ext_loop:
-    wfi
-    lw x29, 0x8(x28)
-    bnez x28, s_ext_loop // go through this loop until the trap handler has disabled the GPIO output pins.
-    ret
-
-cause_s_ext_interrupt_IP:
-    li x28, 0x200
-    csrs mip, x28 // set supervisor external interrupt pending.
+    //wfi
+    addi a3, a3, -1
+    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 end_trap_triggers:
@@ -436,21 +439,22 @@ ecallhandler_\MODE\():
 
 ecallhandler_changetomachinemode_\MODE\():
     // Force status.MPP (bits 12:11) to 11 to enter machine mode after mret
+    // note that it is impossible to return to M mode after a trap delegated to S mode
     li x1, 0b1100000000000
     csrs \MODE\()status, x1
     j trapreturn_\MODE\()        
 
 ecallhandler_changetosupervisormode_\MODE\():
-    // Force status.MPP (bits 12:11) to 01 to enter supervisor mode after mret
+    // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 01 to enter supervisor mode after (m/s)ret
     li x1, 0b1000000000000  
     csrc \MODE\()status, x1
-    li x1, 0b0100000000000
+    li x1, 0b0100100000000
     csrs \MODE\()status, x1
     j trapreturn_\MODE\()
 
 ecallhandler_changetousermode_\MODE\():
-    // Force mstatus.MPP (bits 12:11) to 00 to enter user mode after mret
-    li x1, 0b1100000000000  
+    // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 00 to enter user mode after (m/s)ret
+    li x1, 0b1100100000000  
     csrc \MODE\()status, x1
     j trapreturn_\MODE\()
 
@@ -543,18 +547,26 @@ ext_interrupt_\MODE\():
     sw x0, 40(x28) // write a 0 to the first output pin (reset interrupt)
 
     # reset PLIC to turn off external interrupts
-    # priority threshold = 7
+    # m priority threshold = 7
     li x28, 0xC200000
+    li x5, 0x7
+    sw x5, 0(x28)
+    # s priority threshold = 7
+    li x28, 0xC201000
     li x5, 0x7
     sw x5, 0(x28)
     # source 3 (GPIO) priority = 0
     li x28, 0xC000000
     li x5, 0
     sw x5, 0x0C(x28)
-    # disable source 3
+    # disable source 3 in M mode
     li x28, 0x0C002000
     li x5, 0b0000
     sw x5, 0(x28)
+    # enable source 3 in S mode
+    li x28, 0x0C002080
+    li x29, 0b0000
+    sw x29, 0(x28)
 
     li x5, 0x200
     csrc \MODE\()ip, x5

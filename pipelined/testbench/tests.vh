@@ -1472,6 +1472,8 @@ string imperas32f[] = '{
 //    "rv64i_m/privilege/WALLY-scratch-01", "0040a0",
 //    "rv64i_m/privilege/WALLY-sscratch-s-01", "0040a0",
     "rv64i_m/privilege/WALLY-trap-01", "0050a0",
+    "rv64i_m/privilege/WALLY-trap-s-01", "0050a0",
+    "rv64i_m/privilege/WALLY-trap-u-01", "0050a0",
     "rv64i_m/privilege/WALLY-MIE-01", "0050a0",
     "rv64i_m/privilege/WALLY-mtvec-01", "0050a0",
     "rv64i_m/privilege/WALLY-stvec-01", "0050a0",
@@ -1540,15 +1542,23 @@ string wally32i[] = '{
 
  string wally32priv[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/WALLY-CSR-permission-s-01", "004060",
-    "rv32i_m/privilege/WALLY-CSR-permission-u-01", "004060",
-    "rv32i_m/privilege/WALLY-minfo-01", "004060",
-    "rv32i_m/privilege/WALLY-misa-01", "004060",
-    "rv32i_m/privilege/WALLY-MMU-SV32", "004060",
-    "rv32i_m/privilege/WALLY-PMA", "004060",
-    "rv32i_m/privilege/WALLY-PMP", "004060",
-    "rv32i_m/privilege/WALLY-scratch-01", "004060",
-    "rv32i_m/privilege/WALLY-sscratch-s-01", "004060"
+    "rv32i_m/privilege/WALLY-CSR-permission-s-01", "006080",
+    "rv32i_m/privilege/WALLY-CSR-permission-u-01", "006080",
+    "rv32i_m/privilege/WALLY-minfo-01", "005080",
+    "rv32i_m/privilege/WALLY-misa-01", "005080",
+    "rv32i_m/privilege/WALLY-MMU-SV32", "005080",
+    "rv32i_m/privilege/WALLY-PMA", "005080",
+    "rv32i_m/privilege/WALLY-PMP", "005080",
+    "rv32i_m/privilege/WALLY-trap-01", "005080",
+    "rv32i_m/privilege/WALLY-trap-s-01", "005080",
+    "rv32i_m/privilege/WALLY-trap-u-01", "005080",
+    "rv32i_m/privilege/WALLY-MIE-01", "005080",
+    "rv32i_m/privilege/WALLY-mtvec-01", "005080",
+    "rv32i_m/privilege/WALLY-stvec-01", "005080",
+    "rv32i_m/privilege/WALLY-PIE-stack-01", "005080",
+    "rv32i_m/privilege/WALLY-PIE-stack-s-01", "005080",
+    "rv32i_m/privilege/WALLY-trap-sret-01", "005080"
+
  };
 
  string wally32periph[] = '{

@@ -21,32 +21,28 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-#include "WALLY-TEST-LIB-64.h"
+#include "WALLY-TEST-LIB-32.h"
 
 INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-TRAP_HANDLER m, DEBUG=1 // necessary so we can go to S mode
-TRAP_HANDLER s, DEBUG=1 // neccessary to handle s mode interrupts. 
+TRAP_HANDLER m, DEBUG=1
 
-li x28, 0x2
-csrs sstatus, x28 // set sstatus.SIE bit to 1
-WRITE_READ_CSR mie, 0xFFF // enable all interrupts, including supervisor ones
-WRITE_READ_CSR mideleg 0xFFFF // delegate all interrupts to S mode.
+li x28, 0x8
+csrs mstatus, x28 // set mstatus.MIE bit to 1 
+WRITE_READ_CSR mie, 0xFFF
 
 // test 5.3.1.6 Interrupt enabling and priority tests 
 
-GOTO_S_MODE
+// Cause interrupt, ensuring that status.mie = 0 , status.mpie = 1, and status.mpp = 11 during trap handling 
+jal cause_m_soft_interrupt // *** only cause one interrupt because we just want to test the status stack
 
-// Cause interrupt, ensuring that status.sie = 0 , status.spie = 1, and status.spp = 1 during trap handling 
-jal cause_s_soft_interrupt // *** only cause one interrupt because we just want to test the status stack
-
-li x28, 0x2
-csrc sstatus, x28 // set sstatus.SIE bit to 0. interrupts from S mode should not happen
+li x28, 0x8
+csrc mstatus, x28 // set mstatus.MIE bit to 0. interrupts from M mode should not happen
 
 // attempt to cause interrupt, it should not go through
-jal cause_s_soft_interrupt
+jal cause_m_soft_interrupt
 
 END_TESTS
 
