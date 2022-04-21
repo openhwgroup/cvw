@@ -34,12 +34,22 @@ rv32i_sc_tests = \
     WALLY-CSR-permission-u-01 \
     WALLY-minfo-01 \
     WALLY-misa-01 \
-    WALLY-scratch-01 \
-    WALLY-sscratch-s-01 \
     WALLY-AMO \
-    WALLY-LRSC
+    WALLY-LRSC \
+    # WALLY-scratch-01 \
+    # WALLY-sscratch-s-01 \
 
-target_tests_nosim = WALLY-PMA \
+target_tests_nosim = \
+    WALLY-PMA \
+    WALLY-mtvec-01 \
+    WALLY-stvec-01 \
+    WALLY-MIE-01 \
+    WALLY-PIE-stack-01 \
+    WALLY-PIE-stack-s-01 \
+    WALLY-trap-sret-01 \
+    WALLY-trap-01 \
+    WALLY-trap-s-01 \
+    WALLY-trap-u-01 \
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 

@@ -37,7 +37,7 @@ WRITE_READ_CSR mie, 0xFFF
 
 // cause traps, ensuring that we DONT go through the vectored part of the trap handler
 
-jal cause_m_time_interrupt
+jal cause_m_time_interrupt // *** only cause one interrupt because we just want to test the status stack
 
 END_TESTS
 
