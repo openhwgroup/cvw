@@ -44,7 +44,7 @@ module trap (
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic [`XLEN-1:0]  PCM,
-  input logic [`XLEN-1:0]  InstrMisalignedAdrM, IEUAdrM, 
+  input logic [`XLEN-1:0]  IEUAdrM, 
   input logic [31:0] 	   InstrM,
   input logic 		   InstrValidM, CommittedM, DivE, 
   output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
@@ -152,7 +152,7 @@ module trap (
     // Technically 
   
   always_comb 
-    if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
+    if      (InstrMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = IEUAdrM;
     else if (StoreAmoMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
     else if (BreakpointFaultM)      NextFaultMtvalM = PCM;
