@@ -29,7 +29,6 @@
 
 `define FPGA 1
 `define QEMU 1
-`define LINUX_FIX_READ {'h10000005}
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
