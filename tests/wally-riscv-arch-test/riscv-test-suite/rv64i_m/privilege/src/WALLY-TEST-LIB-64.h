@@ -72,7 +72,7 @@ j end_trap_triggers
 cause_instr_addr_misaligned:
     // cause a misaligned address trap
     auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 0x3  // add 1 to pc to create misaligned address
+    addi x28, x28, 0x2  // add 2 to pc to create misaligned address (Assumes compressed instructions are disabled)
     jr x28 // cause instruction address midaligned trap
     ret
 
@@ -138,7 +138,7 @@ nowrap:
 time_loop:
     //wfi // *** this may now spin us forever in the loop???
     addi a3, a3, -1
-    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
+    bnez a3, time_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 cause_s_time_interrupt:
@@ -180,6 +180,7 @@ cause_m_ext_interrupt:
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
     sw x29, 0x08(x28)  // enable the first pin as an output
+    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
 
     sw x0, 0x1C(x28) // clear rise_ip
     sw x0, 0x24(x28) // clear fall_ip
@@ -216,6 +217,7 @@ cause_s_ext_interrupt_GPIO:
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
     sw x29, 0x08(x28)  // enable the first pin as an output
+    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
 
     sw x0, 0x1C(x28) // clear rise_ip
     sw x0, 0x24(x28) // clear fall_ip
@@ -227,7 +229,7 @@ cause_s_ext_interrupt_GPIO:
 s_ext_loop:
     //wfi
     addi a3, a3, -1
-    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
+    bnez a3, s_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 end_trap_triggers:
@@ -354,7 +356,7 @@ trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since w
     csrr x1, \MODE\()cause
     li x5, 0x8000000000000000   // if msb is set, it is an interrupt
     and x5, x5, x1
-    bnez x5, interrupt_handler_\MODE\()  // return from interrupt
+    bnez x5, interrupt_handler_\MODE\()
     // Other trap handling is specified in the vector Table
     la x5, exception_vector_table_\MODE\()
     slli x1, x1, 3          // multiply cause by 8 to get offset in vector Table
@@ -370,7 +372,7 @@ interrupt_handler_\MODE\():
     jr x5               // and jump to the handler
 
 segfault_\MODE\():
-    sd x7, -24(sp)  // restore registers from stack before faulting 
+    ld x7, -24(sp)  // restore registers from stack before faulting 
     ld x5, -16(sp)
     ld x1, -8(sp)       
     j terminate_test          // halt program.
@@ -426,6 +428,8 @@ trapreturn_finished_\MODE\():
     csrrw sp, \MODE\()scratch, sp // switch sp and scratch stack back to restore the non-trap stack pointer
     \MODE\()ret  // return from trap
 
+// specific exception handlers
+
 ecallhandler_\MODE\():
     // Check input parameter a0. encoding above. 
     li x5, 2            // case 2: change to machine mode
@@ -442,7 +446,7 @@ ecallhandler_changetomachinemode_\MODE\():
     // note that it is impossible to return to M mode after a trap delegated to S mode
     li x1, 0b1100000000000
     csrs \MODE\()status, x1
-    j trapreturn_\MODE\()        
+    j trapreturn_\MODE\()
 
 ecallhandler_changetosupervisormode_\MODE\():
     // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 01 to enter supervisor mode after (m/s)ret
@@ -477,6 +481,9 @@ addr_misaligned_\MODE\():
 
 breakpt_\MODE\():
     j trapreturn_\MODE\()
+
+// Vectored interrupt handlers: record the fact that the handler went to the correct vector and then continue to handling
+// note: does not mess up any registers, saves and restores them to the stack instead.
 
 s_soft_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
@@ -520,6 +527,8 @@ vectored_int_end_\MODE\():
     addi x16, x16, 8
     ld x5, -8(sp) // restore x5 before continuing to handle trap in case its needed.
     j trap_stack_saved_\MODE\()
+
+// specific interrupt handlers
 
 soft_interrupt_\MODE\():
     la x5, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
@@ -573,8 +582,6 @@ ext_interrupt_\MODE\():
 
     ld x1, -8(sp) // load return address from stack into ra (the address to return to after the loop is complete)
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
-
-
 
 
     // Table of trap behavior
@@ -1023,8 +1030,6 @@ goto_sv39:
     or x7, x7, x29 // put ASID into the correct field of SATP
     or x7, x7, x28 // Base Pagetable physical page number, satp.PPN field.
     csrw satp, x7
-    li x29, 0xFFFFFFFFFFFFF888
-    sfence.vma x0, x29 // just an attempt ***
     j test_loop // go to next test case
 
 goto_sv48:
