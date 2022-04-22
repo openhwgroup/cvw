@@ -65,7 +65,6 @@ module ifu (
 	output logic 				InstrPageFaultF,
 	output logic 				IllegalIEUInstrFaultD,
 	output logic 				InstrMisalignedFaultM,
-	output logic [`XLEN-1:0] 	InstrMisalignedAdrM,
 	input logic 				ExceptionM,
 	// mmu management
 	input logic [1:0] 			PrivilegeModeW,
@@ -330,7 +329,6 @@ module ifu (
   // Traps: Can’t happen.  The bottom two bits of MTVEC are ignored so the trap always is to a multiple of 4.  See 3.1.7 of the privileged spec.
   assign BranchMisalignedFaultE = (IEUAdrE[1] & ~`C_SUPPORTED) & PCSrcE;
   flopenr #(1) InstrMisalginedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
-  flopenr #(`XLEN) InstrMisalignedAdrReg(clk, reset, ~StallM, PCNextF, InstrMisalignedAdrM);
 
   // Instruction and PC/PCLink pipeline registers
   mux2    #(32)    FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
