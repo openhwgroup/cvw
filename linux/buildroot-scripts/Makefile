@@ -7,7 +7,7 @@ all:
 
 generate:
 	# generating device tree binary
-	dtc -I dts -O dtb ../devicetree/wally-virt.dts > ${RISCV}/buildroot/output/images/wally-virt.dtb
+	dtc -I dts -O dtb ../devicetree/wally-virt.dts > ${IMAGES}/wally-virt.dtb
 
 disassemble:
 	mkdir -p ${DIS}
