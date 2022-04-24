@@ -155,7 +155,7 @@ module trap (
     if      (InstrPageFaultM)       NextFaultMtvalM = PCM;
     else if (InstrAccessFaultM)     NextFaultMtvalM = PCM;
     else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
-    else if (InstrMisalignedFaultM) NextFaultMtvalM = PCM;
+    else if (InstrMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
     else if (EcallFaultM)           NextFaultMtvalM = 0;
     else if (BreakpointFaultM)      NextFaultMtvalM = PCM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = IEUAdrM;
