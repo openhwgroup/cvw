@@ -79,8 +79,8 @@ module hazard(
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
   assign FlushF = BPPredWrongE | InvalidateICacheM;
-  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | InvalidateICacheM;
-  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | InvalidateICacheM;
+  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | InvalidateICacheM; // *** does RetM only need to flush if the privilege changes?
+  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | InvalidateICacheM; // *** why is BPPredWrongE here, but not needed in simple processor 
   assign FlushM = FirstUnstalledM | TrapM | RetM | InvalidateICacheM;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
