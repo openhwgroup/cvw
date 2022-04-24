@@ -52,6 +52,7 @@ module csrm #(parameter
     MCAUSE = 12'h342,
     MTVAL = 12'h343,
     MIP = 12'h344,
+    MTINST = 12'h34A,
     PMPCFG0 = 12'h3A0,
     // .. up to 15 more at consecutive addresses
     PMPADDR0 = 12'h3B0,
@@ -196,6 +197,7 @@ module csrm #(parameter
       MEPC:      CSRMReadValM = MEPC_REGW;
       MCAUSE:    CSRMReadValM = MCAUSE_REGW;
       MTVAL:     CSRMReadValM = MTVAL_REGW;
+      MTINST:    CSRMReadValM = 0; // implemented as trivial zero
       MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
       MCOUNTINHIBIT:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
 
