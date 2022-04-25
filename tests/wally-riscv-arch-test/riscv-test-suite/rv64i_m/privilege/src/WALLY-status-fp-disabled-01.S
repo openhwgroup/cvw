@@ -27,63 +27,9 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-// Misa.F is already 1 in this config, aking floating point enabled
-# li x29, 0x28
-# csrs misa, x29 // disable floating point and double floating point
+// Misa.F is already 0 in this config, making floating point diabled
 
 li x28, 0x8000000000006000 // mask bits for SD and FS bits of status csr
-
-li x29, 0x2000
-csrs mstatus, x29 // turn on FS for spike???
-
-csrr x29, mstatus
-and x29, x29, x28
-sd x29, 0(x6) // read initial FS, SD bits, which should be 01 and 0 respectively
-addi x6, x6, 8
-addi x16, x16, 8
-
-flw f1, 0(x6) // make FS dirty by loading random value in
-
-csrr x29, mstatus
-and x29, x29, x28
-sd x29, 0(x6) // read dirty FS, SD bits, which should be 11 and 1 respectively
-addi x6, x6, 8
-addi x16, x16, 8
-
-li x29, 0x4000
-csrs mstatus, x29
-li x29, 0x8000000000002000
-csrc mstatus, x29 // set SD to 0 and FS to 10 by writing mstatus
-
-csrr x29, mstatus
-and x29, x29, x28
-sd x29, 0(x6) // read written FS, SD bits to confirm previous write
-addi x6, x6, 8
-addi x16, x16, 8
-
-flw f1, 0(x6) // make FS dirty by loading random value in
-
-csrr x29, mstatus
-and x29, x29, x28
-sd x29, 0(x6) // read dirty FS, SD bits, which should be 11 and 1 respectively
-addi x6, x6, 8
-addi x16, x16, 8
-
-// fp_supported_success:
-//     sw x0, 0(x6) // write a zero to signature to indicate successful test
-//     addi x6, x6, 8
-//     addi x16, x16, 8
-//     j fp_unsupported
-
-// fp_supported_failure:
-//     li x29, 0x1
-//     sw x29, 0(x6)
-//     addi x6, x6, 8
-//     addi x16, x16, 8
-//     j fp_unsupported
-
-li x29, 0x28
-csrc misa, x29 // disable floating point and double floating point
 
 csrr x29, mstatus
 and x29, x29, x28

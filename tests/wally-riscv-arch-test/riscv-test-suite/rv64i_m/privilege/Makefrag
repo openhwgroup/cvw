@@ -70,7 +70,8 @@ target_tests_nosim = \
     WALLY-trap-u-01 \
     WALLY-status-tw-01 \
     WALLY-WFI-01 \
-    WALLY-status-fp-01 \
+    WALLY-status-fp-enabled-01 \
+    WALLY-status-fp-disabled-01 \
     # Have all 0's in references!
     #WALLY-MEPC \
     #WALLY-SEPC \
