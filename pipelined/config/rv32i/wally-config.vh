@@ -37,8 +37,8 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-// IA
-`define MISA (32'h00000100 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0 | 1 << 3 | 1 << 5)
+// I
+`define MISA (32'h00000100 | 1 << 20 | 1 << 18 )
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
@@ -129,8 +129,8 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/rv32ia/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv32ia/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/rv32i/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/rv32i/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
