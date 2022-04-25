@@ -85,7 +85,7 @@ for test in tests64i:
   tc = TestCase(
         name=test,
         variant="rv64i",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64ia "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64i "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -94,7 +94,7 @@ for test in tests32i:
   tc = TestCase(
         name=test,
         variant="rv32i",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ia "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32i "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
