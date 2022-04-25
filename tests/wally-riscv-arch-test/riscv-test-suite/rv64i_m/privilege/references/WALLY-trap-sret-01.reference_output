@@ -10,12 +10,12 @@
 00000000
 00000800 # masked out mstatus.MPP = 01, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
-deadbeef
+00000009 # mcause from S mode ecall from test termination
+00000000
+00000000 # mtval of ecall (*** defined to be zero for now)
+00000000
+00000800 # masked out mstatus.MPP = 01, mstatus.MPIE = 0, and mstatus.MIE = 0
+00000000
 deadbeef
 deadbeef
 deadbeef
