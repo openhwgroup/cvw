@@ -81,7 +81,7 @@ module csr #(parameter
   logic [`XLEN-1:0] CSRRWM, CSRRSM, CSRRCM;  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRWriteValM;
  
-(* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW;
+(* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteSSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
@@ -139,7 +139,7 @@ module csr #(parameter
               .WriteMSTATUSM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
               .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
-              .MSTATUS_REGW, .SSTATUS_REGW, 
+              .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
               .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM);
   csrc  counters(.clk, .reset,
@@ -152,7 +152,7 @@ module csr #(parameter
               .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
   csrm  csrm(.clk, .reset, .InstrValidNotFlushedM, .StallW,
               .CSRMWriteM, .MTrapM, .CSRAdrM,
-              .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, 
+              .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
               .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
               .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
               .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
