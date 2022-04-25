@@ -1,11 +1,3 @@
-00002000 # read SD = 0, FS = 01
-00000000
-00006000 # read SD = 1, FS = 11
-80000000
-00002000 # read written SD = 1, FS = 01
-00000000
-00006000 # read SD = 1, FS = 11
-80000000
 00000000 # read SD = 0, FS = 00 after diabling floating point
 00000000
 00000000 # read SD = 0, FS = 00 after attempting to write to diabled bits
