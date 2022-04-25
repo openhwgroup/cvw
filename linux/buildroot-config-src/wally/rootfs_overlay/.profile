@@ -17,7 +17,7 @@ cd myDir
 ln -s ../myScript.sh symLinkToMyScript.sh
 echo "Created symLinkToMyScript.sh. Running it yields:"
 ./symLinkToMyScript.sh
-echo "Now let\'s remove all these example files and scripts"
+echo "Now let's remove all these example files and scripts"
 cd /
 rm -r myDir
 rm myScript.sh

@@ -1,4 +1,5 @@
-IMAGES := ${RISCV}/buildroot/output/images
+BUILDROOT := ${RISCV}/buildroot
+IMAGES := ${BUILDROOT}/output/images
 DIS := ${IMAGES}/disassembly
 
 all:
@@ -20,6 +21,9 @@ disassemble:
 
 ${DIS}/fw_jump.objdump: ${IMAGES}/fw_jump.elf
 	riscv64-unknown-elf-objdump -S ${IMAGES}/fw_jump.elf >> ${DIS}/fw_jump.objdump
+
+${IMAGES}/vmlinux: ${BUILDROOT}/output/build/linux-5.10.7/vmlinux
+	cp ${BUILDROOT}/output/build/linux-5.10.7/vmlinux ${IMAGES}/vmlinux
 
 ${DIS}/vmlinux.objdump: ${IMAGES}/vmlinux
 	riscv64-unknown-elf-objdump -S ${IMAGES}/vmlinux >> ${DIS}/vmlinux.objdump
