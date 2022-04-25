@@ -139,8 +139,8 @@ module csrsr (
         STATUS_MIE <= #1 STATUS_MPIE; // restore global interrupt enable
         STATUS_MPIE <= #1 1; // 
         STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // set MPP to lowest supported privilege level
-        STATUS_MPRV_INT <= #1 0; // changed to this by Ross to solve Linux bug
-        //STATUS_MPRV_INT <= #1 STATUS_MPRV_INT & (STATUS_MPP == `M_MODE); // Seems to be given by page 21 of spec.
+        // STATUS_MPRV_INT <= #1 0; // changed to this by Ross to solve Linux bug; might have been s spurious disagreement with QEMU
+        STATUS_MPRV_INT <= #1 STATUS_MPRV_INT & (STATUS_MPP == `M_MODE); // Seems to be given by page 21 of spec.
       end else if (sretM) begin
         STATUS_SIE <= #1 STATUS_SPIE; // restore global interrupt enable
         STATUS_SPIE <= #1 `S_SUPPORTED; 
