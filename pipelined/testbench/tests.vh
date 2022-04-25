@@ -47,7 +47,8 @@ string tvpaths[] = '{
   string wally64a[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/WALLY-AMO", "2210",
-    "rv64i_m/privilege/WALLY-LRSC", "2410"
+    "rv64i_m/privilege/WALLY-LRSC", "2410",
+    "rv64i_m/privilege/WALLY-status-fp-enabled-01", "50a0"
   };
 
     string wally32a[] = '{
@@ -1479,10 +1480,10 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-stvec-01", "0050a0",
     "rv64i_m/privilege/WALLY-PIE-stack-01", "0050a0",
     "rv64i_m/privilege/WALLY-PIE-stack-s-01", "0050a0",
-    "rv64i_m/privilege/WALLY-trap-sret-01", "0050a0"
+    "rv64i_m/privilege/WALLY-trap-sret-01", "0050a0",
     // "rv64i_m/privilege/WALLY-status-tw-01", "0050a0",
-    // "rv64i_m/privilege/WALLY-WFI-01", "0050a0",
-    // "rv64i_m/privilege/WALLY-status-fp-01", "0050a0"
+    "rv64i_m/privilege/WALLY-WFI-01", "0050a0",
+    "rv64i_m/privilege/WALLY-status-fp-disabled-01", "50a0"
 //    "rv64i_m/privilege/WALLY-STVEC", "002090",
 //    "rv64i_m/privilege/WALLY-UCAUSE", "002090",
 
