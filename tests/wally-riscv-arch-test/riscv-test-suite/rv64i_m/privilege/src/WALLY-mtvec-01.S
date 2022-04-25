@@ -32,12 +32,12 @@ CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtva
 TRAP_HANDLER m, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 
 li x28, 0x8
-csrs mstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
+csrs mstatus, x28 // set sstatus.MIE bit to 1
 WRITE_READ_CSR mie, 0xFFF
 
 // cause traps, ensuring that we DONT go through the vectored part of the trap handler
 
-jal cause_m_time_interrupt // *** only cause one interrupt because we just want to test the status stack
+jal cause_m_time_interrupt // only cause one interrupt because we just want to test the status stack
 
 END_TESTS
 
