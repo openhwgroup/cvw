@@ -116,7 +116,7 @@ cause_store_acc:
     ret
 
 cause_ecall:
-    // *** ASSUMES you have already gone to the mode you need to call this from.
+    // ASSUMES you have already gone to the mode you need to call this from.
     ecall
     ret
 
@@ -656,8 +656,6 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //   write_read_csr     : write to specified CSR                    : old CSR value, 0x2, depending on perms    : value written to CSR
 //   csr_r_access       : test read-only permissions on CSR         : 0xbad                                     : 0x2, then 0x11
 
-// *** TESTS TO ADD: execute inline, read unknown value out, read CSR unknown value, just read CSR value
-
 .macro WRITE64 ADDR VAL
     // attempt to write VAL to ADDR
     // Success outputs:
@@ -748,7 +746,6 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //      0x9: test called from S mode
 //      0xB: test called from M mode
 // they generally do not fault or cause issues as long as these modes are enabled 
-// *** add functionality to check if modes are enabled before jumping? maybe cause a fault if not?
 
 .macro GOTO_M_MODE RETURN_VPN=0x0 RETURN_PAGETYPE=0x0
     li a0, 2 // determine trap handler behavior (go to machine mode)
@@ -775,7 +772,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 .endm
 
 // These tests change virtual memory settings, turning it on/off and changing between types.
-// They don't have outputs as any error with turning on virtual memory should reveal itself in the tests *** Consider changing this policy?
+// They don't have outputs as any error with turning on virtual memory should reveal itself in the tests
 
 .macro GOTO_BAREMETAL
     // Turn translation off
@@ -814,7 +811,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      value read back out from CSR after writing
     // Fault outputs:
     //      The previous CSR value before write attempt
-    //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
+    //      Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
     li x30, 0xbad // load bad value to be overwritten by csrr
     li x29, \VAL\()
     csrw \CSR\(), x29
@@ -828,9 +825,9 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     // verify that a csr is accessible to read but not to write
     // Success outputs:
     //      0x2, then
-    //      0x11 *** consider changing to something more meaningful
+    //      0x11
     // Fault outputs:
-    //      0xBAD *** consider changing this one as well. in general, do we need the branching if it hould cause an illegal instruction fault? 
+    //      0xBAD
     csrr x29, \CSR
     csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
     csrr x30, \CSR
@@ -847,7 +844,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .macro EXECUTE_AT_ADDRESS ADDR
     // Execute the code already written to ADDR, returning the value in x7. 
-    // *** Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
+    // Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
     // Assumes the code modifies x7, usually to become 0x111. 
     // Sample code:  0x11100393 (li x7, 0x111), 0x00008067 (ret)
     // Success outputs:
@@ -893,7 +890,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //     Label for the location of the test that's about to take place
     // ------------------------------------------------------------------------------------------------------------------------------------
 
-.macro INIT_TEST_TABLE // *** Consider renaming this test. to what???
+.macro INIT_TEST_TABLE
 
 test_loop_setup:
     la x5, test_cases

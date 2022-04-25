@@ -40,7 +40,7 @@ WRITE_READ_CSR mideleg 0xFFFF // delegate all interrupts to S mode.
 GOTO_S_MODE
 
 // Cause interrupt, ensuring that status.sie = 0 , status.spie = 1, and status.spp = 1 during trap handling 
-jal cause_s_soft_interrupt // *** only cause one interrupt because we just want to test the status stack
+jal cause_s_soft_interrupt // only cause one interrupt because we just want to test the status stack
 
 li x28, 0x2
 csrc sstatus, x28 // set sstatus.SIE bit to 0. interrupts from S mode should not happen
