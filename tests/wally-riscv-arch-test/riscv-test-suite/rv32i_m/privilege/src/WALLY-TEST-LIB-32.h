@@ -136,7 +136,7 @@ nowrap:
 time_loop:
     //wfi // *** this may now spin us forever in the loop???
     addi a3, a3, -1
-    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
+    bnez a3, time_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 cause_s_time_interrupt:
@@ -178,6 +178,7 @@ cause_m_ext_interrupt:
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
     sw x29, 0x08(x28)  // enable the first pin as an output
+    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
 
     sw x0, 0x1C(x28) // clear rise_ip
     sw x0, 0x24(x28) // clear fall_ip
@@ -214,6 +215,7 @@ cause_s_ext_interrupt_GPIO:
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
     sw x29, 0x08(x28)  // enable the first pin as an output
+    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
 
     sw x0, 0x1C(x28) // clear rise_ip
     sw x0, 0x24(x28) // clear fall_ip
@@ -225,7 +227,7 @@ cause_s_ext_interrupt_GPIO:
 s_ext_loop:
     //wfi
     addi a3, a3, -1
-    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
+    bnez a3, s_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 end_trap_triggers:

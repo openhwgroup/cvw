@@ -39,7 +39,7 @@ module csrsr (
   input  logic             mretM, sretM, 
   input  logic             WriteFRMM, WriteFFLAGSM,
   input  logic [`XLEN-1:0] CSRWriteValM,
-  output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, 
+  output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TW,
   output logic             STATUS_MIE, STATUS_SIE,
@@ -49,33 +49,34 @@ module csrsr (
   
   logic STATUS_SD, STATUS_TW_INT, STATUS_TSR_INT, STATUS_TVM_INT, STATUS_MXR_INT, STATUS_SUM_INT, STATUS_MPRV_INT;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS, STATUS_FS_INT, STATUS_MPP_NEXT;
-  logic STATUS_MPIE, STATUS_SPIE, STATUS_UPIE, STATUS_UIE;
+  logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
 
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
-  // *** consider adding MBE, SBE, UBE fields later from 20210108 draft spec
+  // *** consider adding MBE, SBE, UBE fields, parameterized to be fixed or adjustable
   if (`XLEN==64) begin: csrsr64 // RV64
-    assign MSTATUS_REGW = {STATUS_SD, 27'b0, STATUS_SXL, STATUS_UXL, 9'b0,
+    assign MSTATUS_REGW = {STATUS_SD, 25'b0, STATUS_MBE, STATUS_UBE, STATUS_SXL, STATUS_UXL, 9'b0,
                           STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                           STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
-                          STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, 
-                          STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
+                          STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0,
+                          STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
     assign SSTATUS_REGW = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ {`QEMU ? 2'b0 : STATUS_UXL}, /*9'b0, */ 12'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
-                          STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
-                          /*STATUS_MIE, 1'b0*/ 2'b0, STATUS_SIE, STATUS_UIE};
+                          STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
+                          /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
   end else begin: csrsr32 // RV32
     assign MSTATUS_REGW = {STATUS_SD, 8'b0,
                           STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                           STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
-                          STATUS_SPP, STATUS_MPIE, 1'b0, STATUS_SPIE, STATUS_UPIE, STATUS_MIE, 1'b0, STATUS_SIE, STATUS_UIE};
+                          STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0, STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
+    assign MSTATUSH_REGW = {26'b0, STATUS_MBE, STATUS_SBE, 4'b0}; 
     assign SSTATUS_REGW = {STATUS_SD, 11'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
-                          STATUS_SPP, /*STATUS_MPIE, 1'b0*/ 2'b0, STATUS_SPIE, STATUS_UPIE, 
-                          /*STATUS_MIE, 1'b0*/ 2'b0, STATUS_SIE, STATUS_UIE};
+                          STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
+                          /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
   end
 
   // harwired STATUS bits
@@ -83,6 +84,9 @@ module csrsr (
   assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
   assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
+  assign STATUS_UBE = 0; // little-endian
+  assign STATUS_SBE = 0; // little-endian
+  assign STATUS_MBE = 0; // little-endian
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
   assign STATUS_SXL = `S_SUPPORTED ? 2'b10 : 2'b00; // 10 if supervisor mode supported
   assign STATUS_UXL = `U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
@@ -112,10 +116,8 @@ module csrsr (
       STATUS_SPP <= #1 0; //1'b1;
       STATUS_MPIE <= #1 0; //1;
       STATUS_SPIE <= #1 0; //`S_SUPPORTED;
-      STATUS_UPIE <= #1 0; // `U_SUPPORTED;
       STATUS_MIE <= #1 0; // Per Priv 3.3
       STATUS_SIE <= #1 0; //`S_SUPPORTED;
-      STATUS_UIE <= #1 0; //`U_SUPPORTED;
     end else if (~StallW) begin
       if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #12'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else;
  
@@ -128,26 +130,22 @@ module csrsr (
           STATUS_MPIE <= #1 STATUS_MIE;
           STATUS_MIE <= #1 0;
           STATUS_MPP <= #1 PrivilegeModeW;
-        end else if (NextPrivilegeModeM == `S_MODE) begin
+        end else begin // supervisor mode
           STATUS_SPIE <= #1 STATUS_SIE;
           STATUS_SIE <= #1 0;
-          STATUS_SPP <= #1 PrivilegeModeW[0]; // *** seems to disagree with P. 56
-        end else begin // user mode
-          STATUS_UPIE <= #1 STATUS_UIE;
-          STATUS_UIE <= #1 0;
-        end
+          STATUS_SPP <= #1 PrivilegeModeW[0];
+       end
       end else if (mretM) begin // Privileged 3.1.6.1
-        STATUS_MIE <= #1 STATUS_MPIE;
-        STATUS_MPIE <= #1 1;
-        STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // per spec, not sure why
-        // possible bug *** Ross Thompson
-        //STATUS_MPRV_INT <= #1 (STATUS_MPP == `M_MODE & STATUS_MPRV_INT); //0; // per 20210108 draft spec
-        STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
+        STATUS_MIE <= #1 STATUS_MPIE; // restore global interrupt enable
+        STATUS_MPIE <= #1 1; // 
+        STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // set MPP to lowest supported privilege level
+        // STATUS_MPRV_INT <= #1 0; // changed to this by Ross to solve Linux bug; might have been s spurious disagreement with QEMU
+        STATUS_MPRV_INT <= #1 STATUS_MPRV_INT & (STATUS_MPP == `M_MODE); // Seems to be given by page 21 of spec.
       end else if (sretM) begin
-        STATUS_SIE <= #1 STATUS_SPIE;
-        STATUS_SPIE <= #1 `S_SUPPORTED;
-        STATUS_SPP <= #1 0; // Privileged 4.1.1
-        STATUS_MPRV_INT <= #1 0; // per 20210108 draft spec
+        STATUS_SIE <= #1 STATUS_SPIE; // restore global interrupt enable
+        STATUS_SPIE <= #1 `S_SUPPORTED; 
+        STATUS_SPP <= #1 0; // set SPP to lowest supported privilege level to catch bugs
+        STATUS_MPRV_INT <= #1 0; // always clear MPRV
       end else if (WriteMSTATUSM) begin
         STATUS_TSR_INT <= #1 CSRWriteValM[22];
         STATUS_TW_INT <= #1 CSRWriteValM[21];
@@ -160,19 +158,15 @@ module csrsr (
         STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
         STATUS_MPIE <= #1 CSRWriteValM[7];
         STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
-        STATUS_UPIE <= #1 `U_SUPPORTED & CSRWriteValM[4];
         STATUS_MIE <= #1 CSRWriteValM[3];
         STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];
         STATUS_FS_INT <= #1 CSRWriteValM[14:13];
         STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
         STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
-        STATUS_UPIE <= #1 `U_SUPPORTED & CSRWriteValM[4];
         STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
-        STATUS_UIE <= #1 `U_SUPPORTED & CSRWriteValM[0];      
      end 
     end
 endmodule
