@@ -12,14 +12,14 @@ def main():
     curr_dir = os.path.dirname(os.path.abspath(__file__))
     output_file = os.path.join(curr_dir,"..","Summary.csv")
     runs_dir = os.path.join(curr_dir,"..","runs/*/reports/wallypipelinedcore_qor.rep")
+    # cruns_dir = "/home/ssanghai/Desktop/cleanRun/*/reports/wallypipelinedcore_qor.rep"
     search_strings = [
         "Critical Path Length:", "Cell Area:", "Overall Compile Time:",
         "Critical Path Clk Period:", "Critical Path Slack:"
     ]
-
     for name in glob.glob(runs_dir):   
         f = open(name, 'r')
-        trimName = re.search("wallypipelinedcore_(.*?)_2022",name).group(1)
+        trimName = re.search("wallypipelinedcore_(.*?)_sky",name).group(1)
 
         output = {'Name':trimName}
         num_lines = len(f.readlines())

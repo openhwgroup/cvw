@@ -24,11 +24,19 @@ export SAIFPOWER ?= 0
 CONFIGDIR ?= ${WALLY}/pipelined/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
-FREQS = 25 50 100 150 200 250 300 350 400
+# FREQS = 25 50 100 150 200 250 300 350 400
 k = 3 6 
+
+ifeq ($(TECH), sky130)
+	FREQS = 25 50 100 150 200 250 300 350 400
+else 
+	FREQS = 500 550 600 650 700 750 800 850 900 950 1000
+endif
+
 print:
-	echo $(k)
-	echo $(CONFIGFILESTRIM)
+	@echo $(FREQS)
+	@echo $(CONFIGFILESTRIM)
+
 
 default:
 	@echo "Basic synthesis procedure for Wally:"
@@ -41,14 +49,14 @@ rv%.log: rv%
 	echo $<
 
 
-DIRS = rv32e rv32gc rv64ic rv32ic rv64gc
+DIRS = rv64gc rv32e rv32gc rv64ic rv32ic 
 # DELDIRS = rv32e rv32gc rv64ic rv64gc rv32ic
 # CONFIGSUBDIRS = _FPUoff _noMulDiv _noVirtMem _PMP0 _PMP16 _orig
-bpred:
-	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
-	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
-	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
-	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
+# bpred:
+# 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
+# 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
+# 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
+# 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
 copy: 
 	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
 	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
@@ -59,7 +67,7 @@ copy:
 
 
 del:
-	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_*;)
+	rm -rf $(CONFIGDIR)/*_*
 
 configs: $(DIRS)
 $(DIRS): 
@@ -90,12 +98,12 @@ $(DIRS):
 	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/$@_noPriv/wally-config.vh
 
 freqs: 
-	@$(foreach freq, $(FREQS), make synth DESIGN=wallypipelinedcore CONFIG=rv32e TECH=sky130 FREQ=$(freq) MAXCORES=1;)
+	@$(foreach freq, $(FREQS), make synth DESIGN=wallypipelinedcore CONFIG=rv32e FREQ=$(freq) MAXCORES=1;)
 
 allsynth: $(CONFIGFILESTRIM)
 
 $(CONFIGFILESTRIM):
-	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky130 FREQ=1000 MAXCORES=1
+	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=1000 MAXCORES=1
 
 
 synth:
