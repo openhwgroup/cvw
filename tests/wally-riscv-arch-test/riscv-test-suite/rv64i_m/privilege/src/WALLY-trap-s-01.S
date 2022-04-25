@@ -52,9 +52,9 @@ GOTO_U_MODE // Causes S mode ecall
 GOTO_S_MODE // Causes U mode ecall
 
 
+// some interrupts excluded becaus writing MIP is illegal from S mode
 jal cause_s_soft_interrupt 
 jal cause_m_soft_interrupt
-//jal cause_s_time_interrupt // *** S time interrupts cannot come from S mode as of 4/19/22.
 jal cause_m_time_interrupt
 li a3, 0x40 // this interrupt involves a time loop waiting for the interrupt to go off.
 // since interrupts are not always enabled,
@@ -84,14 +84,10 @@ jal cause_store_acc
 GOTO_U_MODE // Causes S mode ecall
 GOTO_S_MODE // Causes U mode ecall
 
-jal cause_s_soft_interrupt // *** M mode Interrupts cannot be delegated in this implementation
-//jal cause_m_soft_interrupt
-//jal cause_s_time_interrupt 
-//jal cause_m_time_interrupt
+// M mode interrupts cannot be delegated in this implementation, so they are excluded from tests
+jal cause_s_soft_interrupt
 li a3, 0x40
 jal cause_s_ext_interrupt_GPIO
-//jal cause_m_ext_interrupt
-
 
 END_TESTS
 

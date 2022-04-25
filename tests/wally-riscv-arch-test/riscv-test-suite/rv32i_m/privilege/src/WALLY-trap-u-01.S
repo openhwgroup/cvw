@@ -50,9 +50,8 @@ jal cause_store_addr_misaligned
 jal cause_store_acc
 jal cause_ecall
 
-//jal cause_s_soft_interrupt // *** writing SIP from u mode is illegal
+// some interrupts excluded becaus writing SIP/MIP is illegal from U mode
 jal cause_m_soft_interrupt
-//jal cause_s_time_interrupt // *** S time interrupts cannot come from U mode as of 4/19/22.
 jal cause_m_time_interrupt
 li a3, 0x40 // this interrupt involves a time loop waiting for the interrupt to go off.
 // since interrupts are not always enabled,
@@ -81,15 +80,9 @@ jal cause_store_addr_misaligned
 jal cause_store_acc
 jal cause_ecall
  
-//jal cause_s_soft_interrupt // *** S Soft interrupts cannot be caused from u mode since writing SIP is illegal
-// *** M mode Interrupts cannot be delegated in this implementation
-//jal cause_m_soft_interrupt
-//jal cause_s_time_interrupt 
-//jal cause_m_time_interrupt
+// M mode interrupts cannot be delegated in this implementation, so they are excluded from tests
 li a3, 0x40
 jal cause_s_ext_interrupt_GPIO
-//jal cause_m_ext_interrupt
-
 
 END_TESTS
 

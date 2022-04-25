@@ -57,7 +57,7 @@ module privileged (
   input  logic             StoreAmoMisalignedFaultM,
   input  logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
   input  logic [63:0]      MTIME_CLINT, 
-  input  logic [`XLEN-1:0] InstrMisalignedAdrM, IEUAdrM,
+  input  logic [`XLEN-1:0] IEUAdrM,
   input  logic [4:0]       SetFflagsM,
 
   // Trap signals from pmp/pma in mmu
@@ -139,7 +139,7 @@ module privileged (
     logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
     floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
-    assign WFITimeoutM = STATUS_TW & PrivilegeModeW != `M_MODE & WFICount[`WFI_TIMEOUT_BIT]; 
+    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
   end else assign WFITimeoutM = 0;
 
   ///////////////////////////////////////////
@@ -222,7 +222,7 @@ module privileged (
             .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,
-            .InstrMisalignedAdrM, .IEUAdrM, 
+            .IEUAdrM, 
             .InstrM,
             .InstrValidM, .CommittedM, .DivE, 
             .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,

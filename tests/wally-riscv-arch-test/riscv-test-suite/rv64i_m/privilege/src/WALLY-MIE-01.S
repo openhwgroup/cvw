@@ -34,9 +34,18 @@ csrs mstatus, x28 // set mstatus.MIE bit to 1.
 WRITE_READ_CSR mie, 0x0 // force zeroing out mie CSR.
 
 // test 5.3.1.6 Interrupt enabling and priority tests 
+// testing with MIE bits set already tested in WALLY-trap
 // note that none of these interrupts should be caught or handled.
 
+jal cause_s_soft_interrupt 
 jal cause_m_soft_interrupt
+jal cause_s_time_interrupt
+jal cause_m_time_interrupt
+li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
+// since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
+jal cause_s_ext_interrupt_GPIO
+li a3, 0x40
+jal cause_m_ext_interrupt
 
 END_TESTS
 
