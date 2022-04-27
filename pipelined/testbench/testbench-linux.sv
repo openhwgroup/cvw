@@ -429,7 +429,7 @@ module testbench;
       interruptFile = $fopen({testvectorDir,"interrupts.txt"}, "r");
       `SCAN_NEW_INTERRUPT
       InstrCountW = '0;
-      AttemptedInstructionCount = '0;
+      AttemptedInstructionCount = 1; // offset needed here when running from ground zero
     // ---------- Checkpoint ----------
     end else begin
       //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.memory.RAM);
