@@ -52,6 +52,7 @@ module csrm #(parameter
     MCAUSE = 12'h342,
     MTVAL = 12'h343,
     MIP = 12'h344,
+    MTINST = 12'h34A,
     PMPCFG0 = 12'h3A0,
     // .. up to 15 more at consecutive addresses
     PMPADDR0 = 12'h3B0,
@@ -73,7 +74,7 @@ module csrm #(parameter
     input logic 	     InstrValidNotFlushedM, StallW,
     input logic 	     CSRMWriteM, MTrapM,
     input logic [11:0] 	     CSRAdrM,
-    input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, 
+    input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
     input logic [`XLEN-1:0]  CSRWriteValM,
     output logic [`XLEN-1:0] CSRMReadValM, MTVEC_REGW,
     (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
@@ -133,6 +134,7 @@ module csrm #(parameter
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS) & InstrValidNotFlushedM;
+  // writes to MSTATUSH are not yet supported because the register is always 0
   assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC) & InstrValidNotFlushedM;
   assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG) & InstrValidNotFlushedM;
   assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG) & InstrValidNotFlushedM;
@@ -160,7 +162,6 @@ module csrm #(parameter
   flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
 
-
   // Read machine mode CSRs
   // verilator lint_off WIDTH
   logic [5:0] entry;
@@ -186,7 +187,7 @@ module csrm #(parameter
       MIMPID:    CSRMReadValM = `XLEN'h100; // pipelined implementation
       MHARTID:   CSRMReadValM = MHARTID_REGW; // hardwired to 0 
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
-      MSTATUSH:  CSRMReadValM = 0; // flush this out later if MBE and SBE fields are supported
+      MSTATUSH:  CSRMReadValM = MSTATUSH_REGW; 
       MTVEC:     CSRMReadValM = MTVEC_REGW;
       MEDELEG:   CSRMReadValM = MEDELEG_REGW;
       MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
@@ -196,6 +197,7 @@ module csrm #(parameter
       MEPC:      CSRMReadValM = MEPC_REGW;
       MCAUSE:    CSRMReadValM = MCAUSE_REGW;
       MTVAL:     CSRMReadValM = MTVAL_REGW;
+      MTINST:    CSRMReadValM = 0; // implemented as trivial zero
       MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
       MCOUNTINHIBIT:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
 

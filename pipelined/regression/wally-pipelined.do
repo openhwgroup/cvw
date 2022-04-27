@@ -48,17 +48,17 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 } elseif {$2 eq "buildroot-no-trace"} {
     vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
-    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=470350800 -G INSTR_WAVEON=470350800 -G CHECKPOINT=470350800 -G NO_IE_MTIME_CHECKPOINT=1 -o testbenchopt 
+    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=0 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_IE_MTIME_CHECKPOINT=1 -o testbenchopt 
     vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829
 
     #-- Run the Simulation
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "Don't forget to change DEBUG_LEVEL = 0."
-    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"    
-    run 100 ns
-    force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
-    force -deposit testbench/dut/uncore/clint/clint/MTIMECMP 64'h1000
-    run 1200 ms
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    #run 100 ns
+    #force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
+    #force -deposit testbench/dut/uncore/clint/clint/MTIMECMP 64'h1000
+    run 14000 ms
     #add log -recursive /*
     #do linux-wave.do
     #run -all

@@ -44,9 +44,9 @@ module trap (
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic [`XLEN-1:0]  PCM,
-  input logic [`XLEN-1:0]  InstrMisalignedAdrM, IEUAdrM, 
+  input logic [`XLEN-1:0]  IEUAdrM, 
   input logic [31:0] 	   InstrM,
-  input logic 		   InstrValidM, CommittedM, DivE,
+  input logic 		   InstrValidM, CommittedM, DivE, 
   output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
   output logic 		   InterruptM,
   output logic 		   ExceptionM,
@@ -130,8 +130,8 @@ module trap (
     else if (SPendingIntsM[5])      CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int    handled by S-mode
     else if (InstrPageFaultM)       CauseM = 12;
     else if (InstrAccessFaultM)     CauseM = 1;
-    else if (InstrMisalignedFaultM) CauseM = 0;
     else if (IllegalInstrFaultM)    CauseM = 2;
+    else if (InstrMisalignedFaultM) CauseM = 0;
     else if (BreakpointFaultM)      CauseM = 3;
     else if (EcallFaultM)           CauseM = {{(`XLEN-2){1'b0}}, PrivilegeModeW} + 8;
     else if (LoadMisalignedFaultM)  CauseM = 4;
@@ -152,13 +152,17 @@ module trap (
     // Technically 
   
   always_comb 
-    if      (InstrMisalignedFaultM) NextFaultMtvalM = InstrMisalignedAdrM;
+    if      (InstrPageFaultM)       NextFaultMtvalM = PCM;
+    else if (InstrAccessFaultM)     NextFaultMtvalM = PCM;
+    else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
+    else if (InstrMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
+    else if (EcallFaultM)           NextFaultMtvalM = 0;
+    else if (BreakpointFaultM)      NextFaultMtvalM = PCM;
     else if (LoadMisalignedFaultM)  NextFaultMtvalM = IEUAdrM;
     else if (StoreAmoMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
-    else if (BreakpointFaultM)      NextFaultMtvalM = PCM;
-    else if (InstrPageFaultM)       NextFaultMtvalM = PCM;
     else if (LoadPageFaultM)        NextFaultMtvalM = IEUAdrM;
     else if (StoreAmoPageFaultM)    NextFaultMtvalM = IEUAdrM;
-    else if (IllegalInstrFaultM)    NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
+    else if (LoadAccessFaultM)      NextFaultMtvalM = IEUAdrM;
+    else if (StoreAmoAccessFaultM)  NextFaultMtvalM = IEUAdrM;
     else                            NextFaultMtvalM = 0;
 endmodule

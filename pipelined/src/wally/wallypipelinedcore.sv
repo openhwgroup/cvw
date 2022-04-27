@@ -82,7 +82,6 @@ module wallypipelinedcore (
   logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
   logic             LoadMisalignedFaultM, LoadAccessFaultM;
   logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
-  logic [`XLEN-1:0]         InstrMisalignedAdrM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic             PCSrcE;
   logic             CSRWritePendingDEM;
@@ -190,7 +189,6 @@ module wallypipelinedcore (
     // Faults
     .IllegalBaseInstrFaultD, .InstrPageFaultF,
     .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
-    .InstrMisalignedAdrM,
 
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
@@ -332,7 +330,7 @@ module wallypipelinedcore (
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
          .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
          .MTIME_CLINT, 
-         .InstrMisalignedAdrM, .IEUAdrM,
+         .IEUAdrM,
          .SetFflagsM,
          // Trap signals from pmp/pma in mmu
          // *** do these need to be split up into one for dmem and one for ifu?

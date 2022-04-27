@@ -45,7 +45,7 @@ configs = [
     )
 ]
 def getBuildrootTC(short):
-    INSTR_LIMIT = 100000 # multiple of 100000
+    INSTR_LIMIT = 4000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000
     if short:
         BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
@@ -80,21 +80,21 @@ for test in tests32gc:
   configs.append(tc)
 
 
-tests64ia = ["wally64priv"]
-for test in tests64ia:
+tests64i = ["wally64priv"]
+for test in tests64i:
   tc = TestCase(
         name=test,
-        variant="rv64ia",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64ia "+test+"\n!",
+        variant="rv64i",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64i "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32ia = ["wally32priv"]
-for test in tests32ia:
+tests32i = ["wally32priv"]
+for test in tests32i:
   tc = TestCase(
         name=test,
-        variant="rv32ia",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ia "+test+"\n!",
+        variant="rv32i",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32i "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 

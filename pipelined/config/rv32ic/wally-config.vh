@@ -78,6 +78,9 @@
 // Address space
 `define RESET_VECTOR 32'h80000000
 
+// WFI Timeout Wait
+`define WFI_TIMEOUT_BIT 20
+
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
@@ -129,6 +132,8 @@
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
+`define BPRED_SIZE 10
+
 
 `define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 0

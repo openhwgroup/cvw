@@ -26,7 +26,6 @@
 INIT_TESTS
 
 TRAP_HANDLER m
-
 // Test 5.3.2.3: Scratch registers test
 
 WRITE_READ_CSR mscratch, 0x111 // check that mscratch is readable and writeable in machine mode
