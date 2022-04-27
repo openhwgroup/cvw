@@ -54,7 +54,9 @@ string tvpaths[] = '{
     string wally32a[] = '{
     `WALLYTEST,
     "rv32i_m/privilege/WALLY-AMO", "2310",
-    "rv32i_m/privilege/WALLY-LRSC", "2310"
+    "rv32i_m/privilege/WALLY-LRSC", "2310",
+    "rv32i_m/privilege/WALLY-status-fp-enabled-01", "5080"
+
   };
 
   // *** restore CSR tests from Imperas old
@@ -1546,22 +1548,25 @@ string wally32i[] = '{
 
  string wally32priv[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/WALLY-CSR-permission-s-01", "006080",
-    "rv32i_m/privilege/WALLY-CSR-permission-u-01", "006080",
-    "rv32i_m/privilege/WALLY-minfo-01", "005080",
-    "rv32i_m/privilege/WALLY-misa-01", "005080",
-    "rv32i_m/privilege/WALLY-MMU-SV32", "005080",
-    "rv32i_m/privilege/WALLY-PMA", "005080",
-    "rv32i_m/privilege/WALLY-PMP", "005080",
-    "rv32i_m/privilege/WALLY-trap-01", "005080",
-    "rv32i_m/privilege/WALLY-trap-s-01", "005080",
-    "rv32i_m/privilege/WALLY-trap-u-01", "005080",
-    "rv32i_m/privilege/WALLY-MIE-01", "005080",
-    "rv32i_m/privilege/WALLY-mtvec-01", "005080",
-    "rv32i_m/privilege/WALLY-stvec-01", "005080",
-    "rv32i_m/privilege/WALLY-PIE-stack-01", "005080",
-    "rv32i_m/privilege/WALLY-PIE-stack-s-01", "005080",
-    "rv32i_m/privilege/WALLY-trap-sret-01", "005080"
+    "rv32i_m/privilege/WALLY-CSR-permission-s-01", "6080",
+    "rv32i_m/privilege/WALLY-CSR-permission-u-01", "6080",
+    "rv32i_m/privilege/WALLY-minfo-01", "5080",
+    "rv32i_m/privilege/WALLY-misa-01", "5080",
+    "rv32i_m/privilege/WALLY-MMU-SV32", "5080",
+    "rv32i_m/privilege/WALLY-PMA", "5080",
+    "rv32i_m/privilege/WALLY-PMP", "5080",
+    "rv32i_m/privilege/WALLY-trap-01", "5080",
+    "rv32i_m/privilege/WALLY-trap-s-01", "5080",
+    "rv32i_m/privilege/WALLY-trap-u-01", "5080",
+    "rv32i_m/privilege/WALLY-MIE-01", "5080",
+    "rv32i_m/privilege/WALLY-mtvec-01", "5080",
+    "rv32i_m/privilege/WALLY-stvec-01", "5080",
+    "rv32i_m/privilege/WALLY-PIE-stack-01", "5080",
+    "rv32i_m/privilege/WALLY-PIE-stack-s-01", "5080",
+    "rv32i_m/privilege/WALLY-trap-sret-01", "5080",
+//    "rv32i_m/privilege/WALLY-status-tw-01", "5080",
+    "rv32i_m/privilege/WALLY-WFI-01", "5080",
+    "rv32i_m/privilege/WALLY-status-fp-disabled-01", "5080"
 
  };
 
