@@ -38,28 +38,11 @@ rv64i_sc_tests = \
     WALLY-AMO \
     WALLY-LRSC \
     WALLY-trap-sret-01 \
-#    WALLY-scratch-01 \
-#    WALLY-sscratch-s-01 \
 
-#    WALLY-scratch-01 \
-
-# Don't simulate these because they rely on SoC features that Wally does not offer.
+# Don't simulate these because they rely on SoC features that Spike does not offer.
 target_tests_nosim = \
     WALLY-PMA \
     WALLY-PERIPH \
-    WALLY-MSTATUS \
-    WALLY-MCAUSE \
-    WALLY-SCAUSE \
-    WALLY-UCAUSE \
-    WALLY-MTVEC \
-    WALLY-STVEC \
-    WALLY-MEDELEG \
-    WALLY-MARCHID \
-    WALLY-MHARTID \
-    WALLY-MIMPID \
-    WALLY-MVENDORID \
-    WALLY-CSR-PERMISSIONS-M \
-    WALLY-CSR-PERMISSIONS-S \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
     WALLY-MIE-01 \
@@ -72,14 +55,6 @@ target_tests_nosim = \
     WALLY-WFI-01 \
     WALLY-status-fp-enabled-01 \
     WALLY-status-fp-disabled-01 \
-    # Have all 0's in references!
-    #WALLY-MEPC \
-    #WALLY-SEPC \
-    #WALLY-MTVAL \
-    #WALLY-STVAL \
-    # Otherwise Broken for Unknown Reasons
-    #WALLY-MIE \
-    #WALLY-IP \
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))
 
