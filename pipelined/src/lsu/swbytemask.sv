@@ -31,32 +31,32 @@
 `include "wally-config.vh"
 
 module swbytemask (
-  input logic [3:0]          HSIZED,
-  input logic [2:0]         HADDRD,
+  input logic [1:0]         Size,
+  input logic [2:0]         Adr,
   output logic [`XLEN/8-1:0] ByteMask);
   
 
   if(`XLEN == 64) begin
     always_comb begin
-      case(HSIZED[1:0])
-        2'b00: begin ByteMask = 8'b00000000; ByteMask[HADDRD[2:0]] = 1; end // sb
-        2'b01: case (HADDRD[2:1])
+      case(Size[1:0])
+        2'b00: begin ByteMask = 8'b00000000; ByteMask[Adr[2:0]] = 1; end // sb
+        2'b01: case (Adr[2:1])
                   2'b00: ByteMask = 8'b0000_0011;
                   2'b01: ByteMask = 8'b0000_1100;
                   2'b10: ByteMask = 8'b0011_0000;
                   2'b11: ByteMask = 8'b1100_0000;
                 endcase
-        2'b10: if (HADDRD[2]) ByteMask = 8'b11110000;
-               else           ByteMask = 8'b00001111;
+        2'b10: if (Adr[2]) ByteMask = 8'b11110000;
+               else        ByteMask = 8'b00001111;
         2'b11: ByteMask = 8'b1111_1111;
       endcase
     end
   end else begin
     always_comb begin
-      case(HSIZED[1:0])
-        2'b00: begin ByteMask = 4'b0000; ByteMask[HADDRD[1:0]] = 1; end // sb
-        2'b01: if (HADDRD[1]) ByteMask = 4'b1100;
-               else           ByteMask = 4'b0011;
+      case(Size[1:0])
+        2'b00: begin ByteMask = 4'b0000; ByteMask[Adr[1:0]] = 1; end // sb
+        2'b01: if (Adr[1]) ByteMask = 4'b1100;
+               else        ByteMask = 4'b0011;
         2'b10: ByteMask = 4'b1111;
         default: ByteMask =  4'b1111;
       endcase

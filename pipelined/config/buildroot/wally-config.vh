@@ -29,7 +29,6 @@
 
 `define FPGA 1
 `define QEMU 1
-`define LINUX_FIX_READ {'h10000005}
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
 
@@ -77,6 +76,9 @@
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000
+
+// WFI Timeout Wait
+`define WFI_TIMEOUT_BIT 20
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -126,6 +128,8 @@
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
+`define BPRED_SIZE 10
+
 
 `define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 1

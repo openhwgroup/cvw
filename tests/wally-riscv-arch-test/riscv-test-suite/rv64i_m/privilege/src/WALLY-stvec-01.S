@@ -25,30 +25,29 @@
 
 INIT_TESTS
 
+CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
+
 // test 5.3.1.5 Unvectored interrupt tests 
 
+TRAP_HANDLER m, VECTORED=0, DEBUG=1 // necessary to handle changing modes
 TRAP_HANDLER s, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 
-// li x28, 0x8
-// csrs sstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
-// WRITE_READ_CSR mie, 0xFFFF *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
-
+li x28, 0x2
+csrs sstatus, x28 // set sstatus.SIE bit to 1
+WRITE_READ_CSR mie, 0xFFFF
 WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
+
+// cause traps, ensuring that we DONT go through the vectored part of the trap handler
 
 GOTO_S_MODE
 
-// cause traps, ensuring that we DONT go through the vectored part of the trap handler
-// *** this assumes that interrupt code 0 remains reserved
+jal cause_s_soft_interrupt // only cause one interrupt since we just want to test the tvec csr
 
-// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
-// CAUSE_EXT_INTERRUPT
+GOTO_M_MODE 
 
-GOTO_U_MODE 
+jal cause_s_soft_interrupt // set software interrupt pending without it firing so we can make it fire in U mode
 
-// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
-// CAUSE_EXT_INTERRUPT
+GOTO_U_MODE // Should cause software interrupt to fire off. 
 
 END_TESTS
 

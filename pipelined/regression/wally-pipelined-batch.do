@@ -52,14 +52,14 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #vsim -coverage -lib work_$2 workopt_$2
 
     # power add generates the logging necessary for saif generation.
-    power add -r /dut/core/*
+    # power add -r /dut/core/*
     run -all
-    power off -r /dut/core/*
+    # power off -r /dut/core/*
 } 
 
 #coverage report -file wally-pipelined-coverage.txt
 # These aren't doing anything helpful
 #coverage report -memory 
 #profile report -calltree -file wally-pipelined-calltree.rpt -cutoff 2
-power report -all -bsaif power.saif
+#power report -all -bsaif power.saif
 quit

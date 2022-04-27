@@ -1,4 +1,5 @@
-IMAGES := ${RISCV}/buildroot/output/images
+BUILDROOT := ${RISCV}/buildroot
+IMAGES := ${BUILDROOT}/output/images
 DIS := ${IMAGES}/disassembly
 
 all:
@@ -7,7 +8,7 @@ all:
 
 generate:
 	# generating device tree binary
-	dtc -I dts -O dtb ../devicetree/wally-virt.dts > ${RISCV}/buildroot/output/images/wally-virt.dtb
+	dtc -I dts -O dtb ../devicetree/wally-virt.dts > ${IMAGES}/wally-virt.dtb
 
 disassemble:
 	mkdir -p ${DIS}
@@ -20,6 +21,9 @@ disassemble:
 
 ${DIS}/fw_jump.objdump: ${IMAGES}/fw_jump.elf
 	riscv64-unknown-elf-objdump -S ${IMAGES}/fw_jump.elf >> ${DIS}/fw_jump.objdump
+
+${IMAGES}/vmlinux: ${BUILDROOT}/output/build/linux-5.10.7/vmlinux
+	cp ${BUILDROOT}/output/build/linux-5.10.7/vmlinux ${IMAGES}/vmlinux
 
 ${DIS}/vmlinux.objdump: ${IMAGES}/vmlinux
 	riscv64-unknown-elf-objdump -S ${IMAGES}/vmlinux >> ${DIS}/vmlinux.objdump

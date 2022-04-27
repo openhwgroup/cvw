@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 2
+`define DEBUG_TRACE 0
 // Debug Levels
 // 0: don't check against QEMU
 // 1: print disagreements with QEMU, but only halt on PCW disagreements
@@ -173,10 +173,8 @@ module testbench;
   `define STATUS_SPP  `CSR_BASE.csrsr.STATUS_SPP
   `define STATUS_MPIE `CSR_BASE.csrsr.STATUS_MPIE
   `define STATUS_SPIE `CSR_BASE.csrsr.STATUS_SPIE
-  `define STATUS_UPIE `CSR_BASE.csrsr.STATUS_UPIE
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
-  `define STATUS_UIE  `CSR_BASE.csrsr.STATUS_UIE
   `define UART dut.uncore.uart.uart.u
   `define UART_IER `UART.IER
   `define UART_LCR `UART.LCR
@@ -446,8 +444,10 @@ module testbench;
       force {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV} = initMSTATUS[0][22:17];
       force {`STATUS_FS,`STATUS_MPP} = initMSTATUS[0][14:11];
       force {`STATUS_SPP,`STATUS_MPIE} = initMSTATUS[0][8:7];
-      force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3];
-      force {`STATUS_SIE,`STATUS_UIE} = initMSTATUS[0][1:0];
+//      force {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE} = initMSTATUS[0][5:3]; // dh removed UPIE and UIE 4/25/22 from depricated n-mode
+      force {`STATUS_SPIE} = initMSTATUS[0][5];
+      force {`STATUS_MIE} = initMSTATUS[0][3];
+      force {`STATUS_SIE} = initMSTATUS[0][1];
       force `PLIC_INT_ENABLE = {initPLIC_INT_ENABLE[1][`PLIC_NUM_SRC:1],initPLIC_INT_ENABLE[0][`PLIC_NUM_SRC:1]}; // would need to expand into a generate loop to cover an arbitrary number of contexts
       force `INSTRET = CHECKPOINT;
       while (reset!==1) #1;
@@ -456,8 +456,8 @@ module testbench;
       release {`STATUS_TSR,`STATUS_TW,`STATUS_TVM,`STATUS_MXR,`STATUS_SUM,`STATUS_MPRV};
       release {`STATUS_FS,`STATUS_MPP};
       release {`STATUS_SPP,`STATUS_MPIE};
-      release {`STATUS_SPIE,`STATUS_UPIE,`STATUS_MIE};
-      release {`STATUS_SIE,`STATUS_UIE};
+      release {`STATUS_SPIE,`STATUS_MIE};
+      release {`STATUS_SIE};
       release `PLIC_INT_ENABLE;
       release `INSTRET;
     end
@@ -547,9 +547,10 @@ module testbench;
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
         if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) begin \
-          $display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, AttemptedInstructionCount); \
-          if(!NO_IE_MTIME_CHECKPOINT) \
+          if(!NO_IE_MTIME_CHECKPOINT) begin \
+            $display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, AttemptedInstructionCount); \
             force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
+          end \
         end else \
           if(!NO_IE_MTIME_CHECKPOINT) \
             release dut.core.ieu.dp.ReadDataM; \
@@ -661,7 +662,7 @@ module testbench;
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
-        `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.INSTRET_REGW,InstrCountW)
+        `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2],InstrCountW)
         #2; // delay 2 ns.
         if(`DEBUG_TRACE >= 5) begin
           $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, AttemptedInstructionCount, dut.core.ieu.dp.regf.a3, ExpectedRegAdrW);

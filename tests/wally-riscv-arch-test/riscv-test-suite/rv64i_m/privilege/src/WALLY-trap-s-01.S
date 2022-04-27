@@ -25,34 +25,42 @@
 
 INIT_TESTS
 
+CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
+
 // test 5.3.1.4 Basic trap tests 
 
-TRAP_HANDLER m, DEBUG=1 // turn on recording mtval and status bits on traps
+TRAP_HANDLER m, DEBUG=1 // necessary to handle switching privilege modes
 TRAP_HANDLER s, DEBUG=1 // have S mode trap handler as well
 
 // Like WALLY-trap, cause all the same traps from S mode and make sure they go to machine mode with zeroed mideleg, medeleg
 
+li x28, 0x2
+csrs sstatus, x28 // set sstatus.SIE bit to 1
+WRITE_READ_CSR mie, 0xFFFF // sie is a subset of mie, so writing this also enables sie.
+
 GOTO_S_MODE
 
-li x28, 0x8
-csrs sstatus, x28 // set sstatus.MIE bit to 1 // *** might be unneccessary for s mode
-// WRITE_READ_CSR mie, 0xFFFF *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
+jal cause_instr_addr_misaligned
+jal cause_instr_access
+jal cause_illegal_instr
+jal cause_breakpnt
+jal cause_load_addr_misaligned
+jal cause_load_acc
+jal cause_store_addr_misaligned
+jal cause_store_acc
+GOTO_U_MODE // Causes S mode ecall
+GOTO_S_MODE // Causes U mode ecall
 
 
-// CAUSE_INSTR_ADDR_MISALIGNED //skipped becuase this exception may be impossible when compressed instructions are enabled)
-CAUSE_INSTR_ACCESS
-CAUSE_ILLEGAL_INSTR
-CAUSE_BREAKPNT
-CAUSE_LOAD_ADDR_MISALIGNED
-CAUSE_LOAD_ACC
-CAUSE_STORE_ADDR_MISALIGNED
-CAUSE_STORE_ACC
-CAUSE_ECALL
-
-// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
-// CAUSE_EXT_INTERRUPT
-
+// some interrupts excluded becaus writing MIP is illegal from S mode
+jal cause_s_soft_interrupt 
+jal cause_m_soft_interrupt
+jal cause_m_time_interrupt
+li a3, 0x40 // this interrupt involves a time loop waiting for the interrupt to go off.
+// since interrupts are not always enabled,
+jal cause_s_ext_interrupt_GPIO
+li a3, 0x40
+jal cause_m_ext_interrupt
 
 // Now delegate all traps to S mode and attempt them again, ensuring they now go to the S mode trap handler
 // We can tell which one becuase the different trap handler modes write different bits of the status register 
@@ -63,21 +71,23 @@ GOTO_M_MODE // so we can write the delegate registers
 WRITE_READ_CSR medeleg, 0xFFFFFFFFFFFFFFFF
 WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
-GOTO_S_MODE
+GOTO_S_MODE // Since we're running in M mode, this ecall will NOT be delegated to S mode
 
-// CAUSE_INSTR_ADDR_MISALIGNED //skipped becuase this exception may be impossible when compressed instructions are enabled)
-CAUSE_INSTR_ACCESS
-CAUSE_ILLEGAL_INSTR
-CAUSE_BREAKPNT
-CAUSE_LOAD_ADDR_MISALIGNED
-CAUSE_LOAD_ACC
-CAUSE_STORE_ADDR_MISALIGNED
-CAUSE_STORE_ACC
-CAUSE_ECALL
+jal cause_instr_addr_misaligned
+jal cause_instr_access
+jal cause_illegal_instr
+jal cause_breakpnt
+jal cause_load_addr_misaligned
+jal cause_load_acc
+jal cause_store_addr_misaligned
+jal cause_store_acc
+GOTO_U_MODE // Causes S mode ecall
+GOTO_S_MODE // Causes U mode ecall
 
-// CAUSE_TIME_INTERRUPT *** intentionally causing this trap seems difficult in spike. although it is possible for it to accidentally happen. 
-// CAUSE_SOFT_INTERRUPT *** exiting out of the trap handler after these is current;y broken
-// CAUSE_EXT_INTERRUPT
+// M mode interrupts cannot be delegated in this implementation, so they are excluded from tests
+jal cause_s_soft_interrupt
+li a3, 0x40
+jal cause_s_ext_interrupt_GPIO
 
 END_TESTS
 

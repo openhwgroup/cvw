@@ -81,14 +81,14 @@ test_cases:
 #  ----------------- CLINT --------------------- 
 
 # Use timecmp register as readable and writable section of the CLINT
-.4byte CLINT_BASE + 0x4000, 0xBEEF00B5, write32_test  # 32-bit write:  success
-.4byte CLINT_BASE + 0x4000, 0xBEEF00B5, read32_test  # 32-bit read:   success
-.4byte CLINT_BASE + 0x4000, 0xBEEF00B6, write16_test# 16-bit write:  failure *** Due to non-native access length in CLINT
-.4byte CLINT_BASE + 0x4000, 0xBEEF00B6, read16_test# 16-bit read:   failure
-.4byte CLINT_BASE + 0x4000, 0xBEEF00B7, write08_test# 08-bit write:  failure
-.4byte CLINT_BASE + 0x4000, 0xBEEF00B7, read08_test# 08-bit read:   failure
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B5, write32_test    # 32-bit write:  success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B5, read32_test     # 32-bit read:   success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B6, write16_test    # 16-bit write: success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B6, read16_test     # 16-bit read:   success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B7, write08_test    # 08-bit write: success
+.4byte CLINT_BASE + 0x4000, 0xBEEF00B7, read08_test     # 08-bit read:   success
 
-.4byte CLINT_BASE, 0xbad, executable_test# execute: instruction access fault
+.4byte CLINT_BASE, 0xbad, executable_test # execute: instruction access fault
 
 #  ----------------- PLIC --------------------- 
 

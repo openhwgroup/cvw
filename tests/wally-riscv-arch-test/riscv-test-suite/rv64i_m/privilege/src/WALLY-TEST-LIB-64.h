@@ -66,11 +66,13 @@ j end_trap_triggers
 
 // The following tests involve causing many of the interrupts and exceptions that are easily done in a few lines
 //      This effectively includes everything that isn't to do with page faults (virtual memory)
-
+//      
+//      INPUTS: a3 (x13): the number of times one of the infinitely looping interrupt causes should loop before giving up and continuing without the interrupt firing.
+//
 cause_instr_addr_misaligned:
     // cause a misaligned address trap
     auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 0x3  // add 1 to pc to create misaligned address
+    addi x28, x28, 0x2  // add 2 to pc to create misaligned address (Assumes compressed instructions are disabled)
     jr x28 // cause instruction address midaligned trap
     ret
 
@@ -84,7 +86,7 @@ cause_instr_access:
     ret
 
 cause_illegal_instr:
-    .word 0x00000000 // a 32 bit zros is an illegal instruction
+    .word 0x00000000 // 32 bit zero is an illegal instruction
     ret
 
 cause_breakpnt:
@@ -114,14 +116,15 @@ cause_store_acc:
     ret
 
 cause_ecall:
-    // *** ASSUMES you have already gone to the mode you need to call this from.
+    // ASSUMES you have already gone to the mode you need to call this from.
     ecall
     ret
 
-cause_time_interrupt:
+cause_m_time_interrupt:
     // The following code works for both RV32 and RV64.  
     // RV64 alone would be easier using double-word adds and stores
     li x28, 0x30          // Desired offset from the present time
+    mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
     la x29, 0x02004000    // MTIMECMP register in CLINT
     la x30, 0x0200BFF8    // MTIME register in CLINT
     lw x7, 0(x30)         // low word of MTIME
@@ -132,23 +135,101 @@ cause_time_interrupt:
     sw x31,4(x29)          // store into most significant word of MTIMECMP
 nowrap:
     sw x28, 0(x29)         // store into least significant word of MTIMECMP
-loop:
-    wfi 
-    j loop         // wait until interrupt occurs
+time_loop:
+    //wfi // *** this may now spin us forever in the loop???
+    addi a3, a3, -1
+    bnez a3, time_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
-cause_soft_interrupt:
+cause_s_time_interrupt:
+    li x28, 0x20
+    csrs mip, x28 // set supervisor time interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    nop // added extra nops in so the csrs can get through the pipeline before returning.
+    ret
+
+cause_m_soft_interrupt:
     la x28, 0x02000000      // MSIP register in CLINT
     li x29, 1               // 1 in the lsb
     sw x29, 0(x28)          // Write MSIP bit
     ret
 
-cause_ext_interrupt:
+cause_s_soft_interrupt:
+    li x28, 0x2
+    csrs sip, x28 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    ret
+
+cause_m_ext_interrupt:
+    # ========== Configure PLIC ==========
+    # m priority threshold = 0
+    li x28, 0xC200000
+    li x29, 0
+    sw x29, 0(x28)
+    # s priority threshold = 7
+    li x28, 0xC201000
+    li x29, 7
+    sw x29, 0(x28)
+    # source 3 (GPIO) priority = 1
+    li x28, 0xC000000
+    li x29, 1
+    sw x29, 0x0C(x28)
+    # enable source 3 in M Mode
+    li x28, 0x0C002000
+    li x29, 0b1000 
+    sw x29, 0(x28)
+
     li x28, 0x10060000 // load base GPIO memory location
     li x29, 0x1
-    sw x29, 8(x28) // enable the first pin as an output
-    sw x29, 28(x28) // set first pin to high interrupt enable
-    sw x29, 40(x28) // write a 1 to the first output pin (cause interrupt)
+    sw x29, 0x08(x28)  // enable the first pin as an output
+    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
+
+    sw x0, 0x1C(x28) // clear rise_ip
+    sw x0, 0x24(x28) // clear fall_ip
+    sw x0, 0x2C(x28) // clear high_ip
+    sw x0, 0x34(x28) // clear low_ip
+
+    sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
+    sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
+m_ext_loop:
+    //wfi
+    addi a3, a3, -1
+    bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
+    ret
+
+cause_s_ext_interrupt_GPIO:
+    # ========== Configure PLIC ==========
+    # s priority threshold = 0
+    li x28, 0xC201000
+    li x29, 0
+    sw x29, 0(x28)
+    # m priority threshold = 7
+    li x28, 0xC200000
+    li x29, 7
+    sw x29, 0(x28)
+    # source 3 (GPIO) priority = 1
+    li x28, 0xC000000
+    li x29, 1
+    sw x29, 0x0C(x28)
+    # enable source 3 in S mode
+    li x28, 0x0C002080
+    li x29, 0b1000 
+    sw x29, 0(x28)
+
+    li x28, 0x10060000 // load base GPIO memory location
+    li x29, 0x1
+    sw x29, 0x08(x28)  // enable the first pin as an output
+    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
+
+    sw x0, 0x1C(x28) // clear rise_ip
+    sw x0, 0x24(x28) // clear fall_ip
+    sw x0, 0x2C(x28) // clear high_ip
+    sw x0, 0x34(x28) // clear low_ip
+
+    sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
+    sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
+s_ext_loop:
+    //wfi
+    addi a3, a3, -1
+    bnez a3, s_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 end_trap_triggers:
@@ -216,7 +297,7 @@ end_trap_triggers:
     //     
     // --------------------------------------------------------------------------------------------
 
-.align 2
+.align 3
 trap_handler_\MODE\():
     j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
     // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
@@ -273,24 +354,25 @@ trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since w
     // Respond to trap based on cause
     // All interrupts should return after being logged
     csrr x1, \MODE\()cause
-    slli x1, x1, 3          // multiply cause by 8 to get offset in vector Table
     li x5, 0x8000000000000000   // if msb is set, it is an interrupt
     and x5, x5, x1
-    bnez x5, interrupt_handler_\MODE\()  // return from interrupt
+    bnez x5, interrupt_handler_\MODE\()
     // Other trap handling is specified in the vector Table
     la x5, exception_vector_table_\MODE\()
+    slli x1, x1, 3          // multiply cause by 8 to get offset in vector Table
     add x5, x5, x1      // compute address of vector in Table
     ld x5, 0(x5)        // fectch address of handler from vector Table
     jr x5               // and jump to the handler
 
 interrupt_handler_\MODE\():
     la x5, interrupt_vector_table_\MODE\() // NOTE THIS IS NOT THE SAME AS VECTORED INTERRUPTS!!!
+    slli x1, x1, 3          // multiply cause by 8 to get offset in vector Table
     add x5, x5, x1      // compute address of vector in Table
     ld x5, 0(x5)        // fectch address of handler from vector Table
     jr x5               // and jump to the handler
 
 segfault_\MODE\():
-    sd x7, -24(sp)  // restore registers from stack before faulting 
+    ld x7, -24(sp)  // restore registers from stack before faulting 
     ld x5, -16(sp)
     ld x1, -8(sp)       
     j terminate_test          // halt program.
@@ -343,7 +425,10 @@ trapreturn_finished_\MODE\():
     ld x7, -24(sp)     // restore registers from stack before returning
     ld x5, -16(sp)
     ld x1, -8(sp)
+    csrrw sp, \MODE\()scratch, sp // switch sp and scratch stack back to restore the non-trap stack pointer
     \MODE\()ret  // return from trap
+
+// specific exception handlers
 
 ecallhandler_\MODE\():
     // Check input parameter a0. encoding above. 
@@ -358,21 +443,22 @@ ecallhandler_\MODE\():
 
 ecallhandler_changetomachinemode_\MODE\():
     // Force status.MPP (bits 12:11) to 11 to enter machine mode after mret
+    // note that it is impossible to return to M mode after a trap delegated to S mode
     li x1, 0b1100000000000
     csrs \MODE\()status, x1
-    j trapreturn_\MODE\()        
+    j trapreturn_\MODE\()
 
 ecallhandler_changetosupervisormode_\MODE\():
-    // Force status.MPP (bits 12:11) to 01 to enter supervisor mode after mret
-    li x1, 0b1100000000000  
+    // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 01 to enter supervisor mode after (m/s)ret
+    li x1, 0b1000000000000  
     csrc \MODE\()status, x1
-    li x1, 0b0100000000000
+    li x1, 0b0100100000000
     csrs \MODE\()status, x1
     j trapreturn_\MODE\()
 
 ecallhandler_changetousermode_\MODE\():
-    // Force mstatus.MPP (bits 12:11) to 00 to enter user mode after mret
-    li x1, 0b1100000000000  
+    // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 00 to enter user mode after (m/s)ret
+    li x1, 0b1100100000000  
     csrc \MODE\()status, x1
     j trapreturn_\MODE\()
 
@@ -395,6 +481,9 @@ addr_misaligned_\MODE\():
 
 breakpt_\MODE\():
     j trapreturn_\MODE\()
+
+// Vectored interrupt handlers: record the fact that the handler went to the correct vector and then continue to handling
+// note: does not mess up any registers, saves and restores them to the stack instead.
 
 s_soft_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
@@ -439,24 +528,61 @@ vectored_int_end_\MODE\():
     ld x5, -8(sp) // restore x5 before continuing to handle trap in case its needed.
     j trap_stack_saved_\MODE\()
 
+// specific interrupt handlers
+
 soft_interrupt_\MODE\():
-    la x28, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
-    sw x0, 0(x28)
-    j trapreturn_\MODE\()
+    la x5, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
+    sw x0, 0(x5)
+
+    csrci \MODE\()ip, 0x2 // clear supervisor software interrupt pending bit 
+    ld x1, -8(sp) // load return address from stack into ra (the address to return to after causing this interrupt)
+    // Note: we do this because the mepc loads in the address of the instruction after the sw that causes the interrupt
+    //  This means that this trap handler will return to the next address after that one, which might be unpredictable behavior.
+    j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
 
 time_interrupt_\MODE\():
-    la x29, 0x02004000    // MTIMECMP register in CLINT
-    li x30, 0xFFFFFFFF
-    sd x30, 0(x29) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
+    la x5, 0x02004000    // MTIMECMP register in CLINT
+    li x7, 0xFFFFFFFF
+    sd x7, 0(x5) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
     
-    ld x1, -8(sp) // load return address from stack into ra (the address AFTER the jal to the faulting address)
+    li x5, 0x20
+    csrc \MODE\()ip, x5
+    ld x1, -8(sp) // load return address from stack into ra (the address to return to after the loop is complete)
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
 
 ext_interrupt_\MODE\():
     li x28, 0x10060000 // reset interrupt by clearing all the GPIO bits
     sw x0, 8(x28) // disable the first pin as an output
     sw x0, 40(x28) // write a 0 to the first output pin (reset interrupt)
-    j trapreturn_\MODE\()
+
+    # reset PLIC to turn off external interrupts
+    # m priority threshold = 7
+    li x28, 0xC200000
+    li x5, 0x7
+    sw x5, 0(x28)
+    # s priority threshold = 7
+    li x28, 0xC201000
+    li x5, 0x7
+    sw x5, 0(x28)
+    # source 3 (GPIO) priority = 0
+    li x28, 0xC000000
+    li x5, 0
+    sw x5, 0x0C(x28)
+    # disable source 3 in M mode
+    li x28, 0x0C002000
+    li x5, 0b0000
+    sw x5, 0(x28)
+    # enable source 3 in S mode
+    li x28, 0x0C002080
+    li x29, 0b0000
+    sw x29, 0(x28)
+
+    li x5, 0x200
+    csrc \MODE\()ip, x5
+
+    ld x1, -8(sp) // load return address from stack into ra (the address to return to after the loop is complete)
+    j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
+
 
     // Table of trap behavior
     // lists what to do on each exception (not interrupts)
@@ -485,17 +611,17 @@ exception_vector_table_\MODE\():
     .align 3 // aligns this data table to an 8 byte boundary
 interrupt_vector_table_\MODE\():
     .8byte segfault_\MODE\()            // 0: reserved
-    .8byte s_soft_vector_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
+    .8byte soft_interrupt_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
     .8byte segfault_\MODE\()            // 2: reserved
-    .8byte m_soft_vector_\MODE\()    // 3: breakpoint
+    .8byte soft_interrupt_\MODE\()    // 3: breakpoint
     .8byte segfault_\MODE\()            // 4: reserved
-    .8byte s_time_vector_\MODE\()    // 5: load access fault
+    .8byte time_interrupt_\MODE\()    // 5: load access fault
     .8byte segfault_\MODE\()            // 6: reserved
-    .8byte m_time_vector_\MODE\()    // 7: store access fault
+    .8byte time_interrupt_\MODE\()    // 7: store access fault
     .8byte segfault_\MODE\()            // 8: reserved
-    .8byte s_ext_vector_\MODE\()     // 9: ecall from S-mode
+    .8byte ext_interrupt_\MODE\()     // 9: ecall from S-mode
     .8byte segfault_\MODE\()            // 10: reserved
-    .8byte m_ext_vector_\MODE\()     // 11: ecall from M-mode
+    .8byte ext_interrupt_\MODE\()     // 11: ecall from M-mode
 
 .align 3
 trap_return_pagetype_table_\MODE\():
@@ -529,8 +655,6 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //   goto_u_mode        : go to user mode                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8 
 //   write_read_csr     : write to specified CSR                    : old CSR value, 0x2, depending on perms    : value written to CSR
 //   csr_r_access       : test read-only permissions on CSR         : 0xbad                                     : 0x2, then 0x11
-
-// *** TESTS TO ADD: execute inline, read unknown value out, read CSR unknown value, just read CSR value
 
 .macro WRITE64 ADDR VAL
     // attempt to write VAL to ADDR
@@ -622,7 +746,6 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //      0x9: test called from S mode
 //      0xB: test called from M mode
 // they generally do not fault or cause issues as long as these modes are enabled 
-// *** add functionality to check if modes are enabled before jumping? maybe cause a fault if not?
 
 .macro GOTO_M_MODE RETURN_VPN=0x0 RETURN_PAGETYPE=0x0
     li a0, 2 // determine trap handler behavior (go to machine mode)
@@ -649,7 +772,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 .endm
 
 // These tests change virtual memory settings, turning it on/off and changing between types.
-// They don't have outputs as any error with turning on virtual memory should reveal itself in the tests *** Consider changing this policy?
+// They don't have outputs as any error with turning on virtual memory should reveal itself in the tests
 
 .macro GOTO_BAREMETAL
     // Turn translation off
@@ -688,7 +811,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      value read back out from CSR after writing
     // Fault outputs:
     //      The previous CSR value before write attempt
-    //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
+    //      Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
     li x30, 0xbad // load bad value to be overwritten by csrr
     li x29, \VAL\()
     csrw \CSR\(), x29
@@ -702,9 +825,9 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     // verify that a csr is accessible to read but not to write
     // Success outputs:
     //      0x2, then
-    //      0x11 *** consider changing to something more meaningful
+    //      0x11
     // Fault outputs:
-    //      0xBAD *** consider changing this one as well. in general, do we need the branching if it hould cause an illegal instruction fault? 
+    //      0xBAD
     csrr x29, \CSR
     csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
     csrr x30, \CSR
@@ -721,7 +844,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .macro EXECUTE_AT_ADDRESS ADDR
     // Execute the code already written to ADDR, returning the value in x7. 
-    // *** Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
+    // Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
     // Assumes the code modifies x7, usually to become 0x111. 
     // Sample code:  0x11100393 (li x7, 0x111), 0x00008067 (ret)
     // Success outputs:
@@ -767,7 +890,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //     Label for the location of the test that's about to take place
     // ------------------------------------------------------------------------------------------------------------------------------------
 
-.macro INIT_TEST_TABLE // *** Consider renaming this test. to what???
+.macro INIT_TEST_TABLE
 
 test_loop_setup:
     la x5, test_cases
@@ -904,8 +1027,6 @@ goto_sv39:
     or x7, x7, x29 // put ASID into the correct field of SATP
     or x7, x7, x28 // Base Pagetable physical page number, satp.PPN field.
     csrw satp, x7
-    li x29, 0xFFFFFFFFFFFFF888
-    sfence.vma x0, x29 // just an attempt ***
     j test_loop // go to next test case
 
 goto_sv48:

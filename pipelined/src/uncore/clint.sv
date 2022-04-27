@@ -66,8 +66,7 @@ module clint (
   if (`XLEN==64) assign #2 entry = {HADDR[15:3], 3'b000};
   else           assign #2 entry = {HADDR[15:2], 2'b00}; 
   
-  swbytemask swbytemask(.HSIZED, .HADDRD(entryd[2:0]), .ByteMask(ByteMaskM));
-
+  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(entryd[2:0]), .ByteMask(ByteMaskM));
 
   // DH 2/20/21: Eventually allow MTIME to run off a separate clock
   // This will require synchronizing MTIME to the system clock
