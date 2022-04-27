@@ -85,7 +85,7 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
 // WFI Timeout Wait
-`define WFI_TIMEOUT_BIT 20
+`define WFI_TIMEOUT_BIT 16
 
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTROM_SUPPORTED 1'b1
