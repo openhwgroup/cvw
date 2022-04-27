@@ -83,7 +83,7 @@
 `define AHBW 64
 
 // WFI Timeout Wait
-`define WFI_TIMEOUT_BIT 20
+`define WFI_TIMEOUT_BIT 16
 
 // Peripheral Physiccal Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE

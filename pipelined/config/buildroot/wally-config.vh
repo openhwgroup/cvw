@@ -78,7 +78,7 @@
 `define RESET_VECTOR 64'h0000000000001000
 
 // WFI Timeout Wait
-`define WFI_TIMEOUT_BIT 20
+`define WFI_TIMEOUT_BIT 16
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
