@@ -158,20 +158,20 @@ cause_s_soft_interrupt:
     ret
 
 cause_m_ext_interrupt:
-    # ========== Configure PLIC ==========
-    # m priority threshold = 0
+    // ========== Configure PLIC ==========
+    // m priority threshold = 0
     li t3, 0xC200000
     li t4, 0
     sw t4, 0(t3)
-    # s priority threshold = 7
+    // s priority threshold = 7
     li t3, 0xC201000
     li t4, 7
     sw t4, 0(t3)
-    # source 3 (GPIO) priority = 1
+    // source 3 (GPIO) priority = 1
     li t3, 0xC000000
     li t4, 1
     sw t4, 0x0C(t3)
-    # enable source 3 in M Mode
+    // enable source 3 in M Mode
     li t3, 0x0C002000
     li t4, 0b1000 
     sw t4, 0(t3)
@@ -194,20 +194,20 @@ m_ext_loop:
     ret
 
 cause_s_ext_interrupt_GPIO:
-    # ========== Configure PLIC ==========
-    # s priority threshold = 0
+    // ========== Configure PLIC ==========
+    // s priority threshold = 0
     li t3, 0xC201000
     li t4, 0
     sw t4, 0(t3)
-    # m priority threshold = 7
+    // m priority threshold = 7
     li t3, 0xC200000
     li t4, 7
     sw t4, 0(t3)
-    # source 3 (GPIO) priority = 1
+    // source 3 (GPIO) priority = 1
     li t3, 0xC000000
     li t4, 1
     sw t4, 0x0C(t3)
-    # enable source 3 in S mode
+    // enable source 3 in S mode
     li t3, 0x0C002080
     li t4, 0b1000 
     sw t4, 0(t3)
@@ -553,24 +553,24 @@ ext_interrupt_\MODE\():
     sw zero, 8(t3) // disable the first pin as an output
     sw zero, 40(t3) // write a 0 to the first output pin (reset interrupt)
 
-    # reset PLIC to turn off external interrupts
-    # m priority threshold = 7
+    // reset PLIC to turn off external interrupts
+    // m priority threshold = 7
     li t3, 0xC200000
     li t0, 0x7
     sw t0, 0(t3)
-    # s priority threshold = 7
+    // s priority threshold = 7
     li t3, 0xC201000
     li t0, 0x7
     sw t0, 0(t3)
-    # source 3 (GPIO) priority = 0
+    // source 3 (GPIO) priority = 0
     li t3, 0xC000000
     li t0, 0
     sw t0, 0x0C(t3)
-    # disable source 3 in M mode
+    // disable source 3 in M mode
     li t3, 0x0C002000
     li t0, 0b0000
     sw t0, 0(t3)
-    # enable source 3 in S mode
+    // enable source 3 in S mode
     li t3, 0x0C002080
     li t4, 0b0000
     sw t4, 0(t3)
