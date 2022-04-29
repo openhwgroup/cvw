@@ -1467,8 +1467,8 @@ string imperas32f[] = '{
     "rv64i_m/privilege/WALLY-MIE-01", "0050a0",
     "rv64i_m/privilege/WALLY-mtvec-01", "0050a0",
     "rv64i_m/privilege/WALLY-stvec-01", "0050a0",
-    "rv64i_m/privilege/WALLY-PIE-stack-01", "0050a0",
-    "rv64i_m/privilege/WALLY-PIE-stack-s-01", "0050a0",
+    "rv64i_m/privilege/WALLY-status-mie-01", "0050a0",
+    "rv64i_m/privilege/WALLY-status-mie-s-01", "0050a0",
     "rv64i_m/privilege/WALLY-trap-sret-01", "0050a0",
     // "rv64i_m/privilege/WALLY-status-tw-01", "0050a0",
     "rv64i_m/privilege/WALLY-WFI-01", "0050a0",
@@ -1546,10 +1546,10 @@ string wally32i[] = '{
     "rv32i_m/privilege/WALLY-MIE-01", "5080",
     "rv32i_m/privilege/WALLY-mtvec-01", "5080",
     "rv32i_m/privilege/WALLY-stvec-01", "5080",
-    "rv32i_m/privilege/WALLY-PIE-stack-01", "5080",
-    "rv32i_m/privilege/WALLY-PIE-stack-s-01", "5080",
+    "rv32i_m/privilege/WALLY-status-mie-01", "5080",
+    "rv32i_m/privilege/WALLY-status-mie-s-01", "5080",
     "rv32i_m/privilege/WALLY-trap-sret-01", "5080",
-//    "rv32i_m/privilege/WALLY-status-tw-01", "5080",
+//    "rv32i_m/privilege/WALLY-status-tw-01", "5080", *** this test doesn't pass yet because PC counts up while wfi is spinning
     "rv32i_m/privilege/WALLY-WFI-01", "5080",
     "rv32i_m/privilege/WALLY-status-fp-disabled-01", "5080"
 
