@@ -37,15 +37,15 @@ RVTEST_CODE_BEGIN
     // ---------------------------------------------------------------------------------------------
     // Initialization Overview:
     //   
-    //   Initialize x6 as a virtual pointer to the test results
-    //   Initialize x16 as a physical pointer to the test results
+    //   Initialize t1 as a virtual pointer to the test results
+    //   Initialize a6 as a physical pointer to the test results
     //   Set up stack pointer, mscratch, sscratch
     //   
 	// ---------------------------------------------------------------------------------------------
 
     // address for test results
-    la x6, test_1_res
-    la x16, test_1_res // x16 reserved for the physical address equivalent of x6 to be used in trap handlers
+    la t1, test_1_res
+    la a6, test_1_res // a6 reserved for the physical address equivalent of t1 to be used in trap handlers
                         // any time either is used, both must be updated.
 
     // address for normal user stack, mscratch stack, and sscratch stack
@@ -69,17 +69,17 @@ j end_trap_triggers
 //
 cause_instr_addr_misaligned:
     // cause a misaligned address trap
-    auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 0x2  // add 2 to pc to create misaligned address (Assumes compressed instructions are disabled)
-    jr x28 // cause instruction address midaligned trap
+    auipc t3, 0      // get current PC, which is aligned
+    addi t3, t3, 0x2  // add 2 to pc to create misaligned address (Assumes compressed instructions are disabled)
+    jr t3 // cause instruction address midaligned trap
     ret
 
 cause_instr_access:
-    la x28, 0x0 // address zero is an address with no memory
-    sw x1, -4(sp) // push the return adress ontot the stack
+    la t3, 0x0 // address zero is an address with no memory
+    sw ra, -4(sp) // push the return adress ontot the stack
     addi sp, sp, -4
-    jalr x28 // cause instruction access trap
-    lw x1, 0(sp) // pop return adress back from the stack
+    jalr t3 // cause instruction access trap
+    lw ra, 0(sp) // pop return adress back from the stack
     addi sp, sp, 4
     ret
 
@@ -92,25 +92,25 @@ cause_breakpnt:
     ret
 
 cause_load_addr_misaligned:
-    auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 1
-    lw x29, 0(x28)    // load from a misaligned address
+    auipc t3, 0      // get current PC, which is aligned
+    addi t3, t3, 1
+    lw t4, 0(t3)    // load from a misaligned address
     ret
 
 cause_load_acc:
-    la x28, 0         // 0 is an address with no memory
-    lw x29, 0(x28)    // load from unimplemented address
+    la t3, 0         // 0 is an address with no memory
+    lw t4, 0(t3)    // load from unimplemented address
     ret
 
 cause_store_addr_misaligned:
-    auipc x28, 0      // get current PC, which is aligned
-    addi x28, x28, 1
-    sw x29, 0(x28)     // store to a misaligned address
+    auipc t3, 0      // get current PC, which is aligned
+    addi t3, t3, 1
+    sw t4, 0(t3)     // store to a misaligned address
     ret
 
 cause_store_acc: 
-    la x28, 0         // 0 is an address with no memory
-    sw x29, 0(x28)     // store to unimplemented address
+    la t3, 0         // 0 is an address with no memory
+    sw t4, 0(t3)     // store to unimplemented address
     ret
 
 cause_ecall:
@@ -121,18 +121,18 @@ cause_ecall:
 cause_m_time_interrupt:
     // The following code works for both RV32 and RV64.  
     // RV64 alone would be easier using double-word adds and stores
-    li x28, 0x30          // Desired offset from the present time
-    mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
-    la x29, 0x02004000    // MTIMECMP register in CLINT
-    la x30, 0x0200BFF8    // MTIME register in CLINT
-    lw x7, 0(x30)         // low word of MTIME
-    lw x31, 4(x30)         // high word of MTIME
-    add x28, x7, x28       // add desired offset to the current time
-    bgtu x28, x7, nowrap  // check new time exceeds current time (no wraparound)
-    addi x31, x31, 1       // if wrap, increment most significant word
-    sw x31,4(x29)          // store into most significant word of MTIMECMP
+    li t3, 0x30          // Desired offset from the present time
+    mv a3, t3            // copy value in to know to stop waiting for interrupt after this many cycles
+    la t4, 0x02004000    // MTIMECMP register in CLINT
+    la t5, 0x0200BFF8    // MTIME register in CLINT
+    lw t2, 0(t5)         // low word of MTIME
+    lw t6, 4(t5)         // high word of MTIME
+    add t3, t2, t3       // add desired offset to the current time
+    bgtu t3, t2, nowrap  // check new time exceeds current time (no wraparound)
+    addi t6, t6, 1       // if wrap, increment most significant word
+    sw t6,4(t4)          // store into most significant word of MTIMECMP
 nowrap:
-    sw x28, 0(x29)         // store into least significant word of MTIMECMP
+    sw t3, 0(t4)         // store into least significant word of MTIMECMP
 time_loop:
     //wfi // *** this may now spin us forever in the loop???
     addi a3, a3, -1
@@ -140,53 +140,53 @@ time_loop:
     ret
 
 cause_s_time_interrupt:
-    li x28, 0x20
-    csrs mip, x28 // set supervisor time interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    li t3, 0x20
+    csrs mip, t3 // set supervisor time interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
     nop // added extra nops in so the csrs can get through the pipeline before returning.
     ret
 
 cause_m_soft_interrupt:
-    la x28, 0x02000000      // MSIP register in CLINT
-    li x29, 1               // 1 in the lsb
-    sw x29, 0(x28)          // Write MSIP bit
+    la t3, 0x02000000      // MSIP register in CLINT
+    li t4, 1               // 1 in the lsb
+    sw t4, 0(t3)          // Write MSIP bit
     ret
 
 cause_s_soft_interrupt:
-    li x28, 0x2
-    csrs sip, x28 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    li t3, 0x2
+    csrs sip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
     ret
 
 cause_m_ext_interrupt:
     # ========== Configure PLIC ==========
     # m priority threshold = 0
-    li x28, 0xC200000
-    li x29, 0
-    sw x29, 0(x28)
+    li t3, 0xC200000
+    li t4, 0
+    sw t4, 0(t3)
     # s priority threshold = 7
-    li x28, 0xC201000
-    li x29, 7
-    sw x29, 0(x28)
+    li t3, 0xC201000
+    li t4, 7
+    sw t4, 0(t3)
     # source 3 (GPIO) priority = 1
-    li x28, 0xC000000
-    li x29, 1
-    sw x29, 0x0C(x28)
+    li t3, 0xC000000
+    li t4, 1
+    sw t4, 0x0C(t3)
     # enable source 3 in M Mode
-    li x28, 0x0C002000
-    li x29, 0b1000 
-    sw x29, 0(x28)
+    li t3, 0x0C002000
+    li t4, 0b1000 
+    sw t4, 0(t3)
 
-    li x28, 0x10060000 // load base GPIO memory location
-    li x29, 0x1
-    sw x29, 0x08(x28)  // enable the first pin as an output
-    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
+    li t3, 0x10060000 // load base GPIO memory location
+    li t4, 0x1
+    sw t4, 0x08(t3)  // enable the first pin as an output
+    sw t4, 0x04(t3)  // enable the first pin as an input as well to cause the interrupt to fire
 
-    sw x0, 0x1C(x28) // clear rise_ip
-    sw x0, 0x24(x28) // clear fall_ip
-    sw x0, 0x2C(x28) // clear high_ip
-    sw x0, 0x34(x28) // clear low_ip
+    sw zero, 0x1C(t3) // clear rise_ip
+    sw zero, 0x24(t3) // clear fall_ip
+    sw zero, 0x2C(t3) // clear high_ip
+    sw zero, 0x34(t3) // clear low_ip
 
-    sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
-    sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
+    sw t4, 0x28(t3)  // set first pin to interrupt on a rising value
+    sw t4, 0x0C(t3)  // write a 1 to the first output pin (cause interrupt)
 m_ext_loop:
     //wfi
     addi a3, a3, -1
@@ -196,34 +196,34 @@ m_ext_loop:
 cause_s_ext_interrupt_GPIO:
     # ========== Configure PLIC ==========
     # s priority threshold = 0
-    li x28, 0xC201000
-    li x29, 0
-    sw x29, 0(x28)
+    li t3, 0xC201000
+    li t4, 0
+    sw t4, 0(t3)
     # m priority threshold = 7
-    li x28, 0xC200000
-    li x29, 7
-    sw x29, 0(x28)
+    li t3, 0xC200000
+    li t4, 7
+    sw t4, 0(t3)
     # source 3 (GPIO) priority = 1
-    li x28, 0xC000000
-    li x29, 1
-    sw x29, 0x0C(x28)
+    li t3, 0xC000000
+    li t4, 1
+    sw t4, 0x0C(t3)
     # enable source 3 in S mode
-    li x28, 0x0C002080
-    li x29, 0b1000 
-    sw x29, 0(x28)
+    li t3, 0x0C002080
+    li t4, 0b1000 
+    sw t4, 0(t3)
 
-    li x28, 0x10060000 // load base GPIO memory location
-    li x29, 0x1
-    sw x29, 0x08(x28)  // enable the first pin as an output
-    sw x29, 0x04(x28)  // enable the first pin as an input as well to cause the interrupt to fire
+    li t3, 0x10060000 // load base GPIO memory location
+    li t4, 0x1
+    sw t4, 0x08(t3)  // enable the first pin as an output
+    sw t4, 0x04(t3)  // enable the first pin as an input as well to cause the interrupt to fire
 
-    sw x0, 0x1C(x28) // clear rise_ip
-    sw x0, 0x24(x28) // clear fall_ip
-    sw x0, 0x2C(x28) // clear high_ip
-    sw x0, 0x34(x28) // clear low_ip
+    sw zero, 0x1C(t3) // clear rise_ip
+    sw zero, 0x24(t3) // clear fall_ip
+    sw zero, 0x2C(t3) // clear high_ip
+    sw zero, 0x34(t3) // clear low_ip
 
-    sw x29, 0x28(x28)  // set first pin to interrupt on a rising value
-    sw x29, 0x0C(x28)  // write a 1 to the first output pin (cause interrupt)
+    sw t4, 0x28(t3)  // set first pin to interrupt on a rising value
+    sw t4, 0x0C(t3)  // write a 1 to the first output pin (cause interrupt)
 s_ext_loop:
     //wfi
     addi a3, a3, -1
@@ -241,23 +241,23 @@ end_trap_triggers:
     //      vs not saving that info to the signature (0)
 
 
-    //   Set up the exception Handler, keeping the original handler in x4.
-    la x1, trap_handler_\MODE\()
-    ori x1, x1, \VECTORED // set mode field of tvec to VECTORED, which will force vectored interrupts if it's 1.
+    //   Set up the exception Handler, keeping the original handler in tp.
+    la ra, trap_handler_\MODE\()
+    ori ra, ra, \VECTORED // set mode field of tvec to VECTORED, which will force vectored interrupts if it's 1.
 
 .if (\MODE\() == m)
-    csrrw x4, \MODE\()tvec, x1  // x4 reserved for "default" trap handler address that needs to be restored before halting this test.
+    csrrw tp, \MODE\()tvec, ra  // tp reserved for "default" trap handler address that needs to be restored before halting this test.
 .else
-    csrw \MODE\()tvec, x1 // we only neet save the machine trap handler and this if statement ensures it isn't overwritten
+    csrw \MODE\()tvec, ra // we only neet save the machine trap handler and this if statement ensures it isn't overwritten
 .endif
 
     li a0, 0
     li a1, 0 
     li a2, 0 // reset trap handler inputs to zero
 
-    la x29, 0x02004000    // MTIMECMP register in CLINT
-    li x30, 0xFFFFFFFF
-    sw x30, 0(x29) // set mtimecmp to 0xFFFFFFFF to really make sure time interrupts don't go off immediately after being enabled
+    la t4, 0x02004000    // MTIMECMP register in CLINT
+    li t5, 0xFFFFFFFF
+    sw t5, 0(t4) // set mtimecmp to 0xFFFFFFFF to really make sure time interrupts don't go off immediately after being enabled
 
     j trap_handler_end_\MODE\() // skip the trap handler when it is being defined.
 
@@ -319,109 +319,109 @@ trap_unvectored_\MODE\():
 
 trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since we already switch sp and scratch there
     // save registers on stack before using
-    sw x1, -4(sp)       
-    sw x5, -8(sp)
-    sw x7, -12(sp)       
+    sw ra, -4(sp)       
+    sw t0, -8(sp)
+    sw t2, -12(sp)       
 
     // Record trap
-    csrr x1, \MODE\()cause     // record the mcause
-    sw x1, 0(x16)        
-    addi x6, x6, 4     
-    addi x16, x16, 4    // update pointers for logging results
+    csrr ra, \MODE\()cause     // record the mcause
+    sw ra, 0(a6)        
+    addi t1, t1, 4     
+    addi a6, a6, 4    // update pointers for logging results
 
 .if (\DEBUG\() == 1) // record extra information (MTVAL, some status bits) about traps
-    csrr x1, \MODE\()tval
-    sw x1, 0(x16)
-    addi x6, x6, 4     
-    addi x16, x16, 4
+    csrr ra, \MODE\()tval
+    sw ra, 0(a6)
+    addi t1, t1, 4     
+    addi a6, a6, 4
 
-    csrr x1, \MODE\()status
+    csrr ra, \MODE\()status
     .if (\MODE\() == m) // Taking traps in different modes means we want to get different bits from the status register.
-        li x5, 0x1888 // mask bits to select MPP, MPIE, and MIE.
+        li t0, 0x1888 // mask bits to select MPP, MPIE, and MIE.
     .else
-        li x5, 0x122 // mask bits to select SPP, SPIE, and SIE.
+        li t0, 0x122 // mask bits to select SPP, SPIE, and SIE.
     .endif
-    and x5, x5, x1
-    sw x5, 0(x16) // store masked out status bits to the output
-    addi x6, x6, 4
-    addi x16, x16, 4
+    and t0, t0, ra
+    sw t0, 0(a6) // store masked out status bits to the output
+    addi t1, t1, 4
+    addi a6, a6, 4
 
 .endif
 
     // Respond to trap based on cause
     // All interrupts should return after being logged
-    csrr x1, \MODE\()cause
-    li x5, 0x80000000   // if msb is set, it is an interrupt
-    and x5, x5, x1
-    bnez x5, interrupt_handler_\MODE\()
+    csrr ra, \MODE\()cause
+    li t0, 0x80000000   // if msb is set, it is an interrupt
+    and t0, t0, ra
+    bnez t0, interrupt_handler_\MODE\()
     // Other trap handling is specified in the vector Table
-    la x5, exception_vector_table_\MODE\()
-    slli x1, x1, 2          // multiply cause by 4 to get offset in vector Table
-    add x5, x5, x1      // compute address of vector in Table
-    lw x5, 0(x5)        // fectch address of handler from vector Table
-    jr x5               // and jump to the handler
+    la t0, exception_vector_table_\MODE\()
+    slli ra, ra, 2          // multiply cause by 4 to get offset in vector Table
+    add t0, t0, ra      // compute address of vector in Table
+    lw t0, 0(t0)        // fectch address of handler from vector Table
+    jr t0               // and jump to the handler
 
 interrupt_handler_\MODE\():
-    la x5, interrupt_vector_table_\MODE\() // NOTE THIS IS NOT THE SAME AS VECTORED INTERRUPTS!!!
-    slli x1, x1, 2          // multiply cause by 4 to get offset in vector Table
-    add x5, x5, x1      // compute address of vector in Table
-    lw x5, 0(x5)        // fectch address of handler from vector Table
-    jr x5               // and jump to the handler
+    la t0, interrupt_vector_table_\MODE\() // NOTE THIS IS NOT THE SAME AS VECTORED INTERRUPTS!!!
+    slli ra, ra, 2          // multiply cause by 4 to get offset in vector Table
+    add t0, t0, ra      // compute address of vector in Table
+    lw t0, 0(t0)        // fectch address of handler from vector Table
+    jr t0               // and jump to the handler
 
 segfault_\MODE\():
-    lw x7, -12(sp)  // restore registers from stack before faulting 
-    lw x5, -8(sp)
-    lw x1, -4(sp)       
+    lw t2, -12(sp)  // restore registers from stack before faulting 
+    lw t0, -8(sp)
+    lw ra, -4(sp)       
     j terminate_test          // halt program.
 
 trapreturn_\MODE\():
-    csrr x1, \MODE\()epc       // get the mepc
-    addi x1, x1, 4
+    csrr ra, \MODE\()epc       // get the mepc
+    addi ra, ra, 4
 
 trapreturn_specified_\MODE\():
-    // reset the necessary pointers and registers (x1, x5, x6, and the return address going to mepc)
-    // note that we don't need to change x7 since it was a temporary register with no important address in it.
+    // reset the necessary pointers and registers (ra, t0, t1, and the return address going to mepc)
+    // note that we don't need to change t2 since it was a temporary register with no important address in it.
     // so that when we return to a new virtual address, they're all in the right spot as well.
 
     beqz a1, trapreturn_finished_\MODE\() // either update values, of go to default return address.
 
-    la x5, trap_return_pagetype_table_\MODE\()
+    la t0, trap_return_pagetype_table_\MODE\()
     slli a2, a2, 2
-    add x5, x5, a2
-    lw a2, 0(x5) // a2 = number of offset bits in current page type
+    add t0, t0, a2
+    lw a2, 0(t0) // a2 = number of offset bits in current page type
     
-    li x5, 1
-    sll x5, x5, a2
-    addi x5, x5, -1 // x5 = mask bits for offset into current pagetype
+    li t0, 1
+    sll t0, t0, a2
+    addi t0, t0, -1 // t0 = mask bits for offset into current pagetype
 
-    // reset the top of the stack, x1
-    lw x7, -4(sp) 
-    and x7, x5, x7 // x7 = offset for x1
-    add x7, x7, a1 // x7 = new address for x1
-    sw x7, -4(sp)
+    // reset the top of the stack, ra
+    lw t2, -4(sp) 
+    and t2, t0, t2 // t2 = offset for ra
+    add t2, t2, a1 // t2 = new address for ra
+    sw t2, -4(sp)
 
-    // reset the second spot in the stack, x5
-    lw x7, -8(sp)
-    and x7, x5, x7 // x7 = offset for x5
-    add x7, x7, a1 // x7 = new address for x5
-    sw x7, -8(sp)
+    // reset the second spot in the stack, t0
+    lw t2, -8(sp)
+    and t2, t0, t2 // t2 = offset for t0
+    add t2, t2, a1 // t2 = new address for t0
+    sw t2, -8(sp)
 
-    // reset x6, the pointer for the virtual address of the output of the tests
-    and x7, x5, x6 // x7 = offset for x6
-    add x6, x7, a1 // x6 = new address for the result pointer
+    // reset t1, the pointer for the virtual address of the output of the tests
+    and t2, t0, t1 // t2 = offset for t1
+    add t1, t2, a1 // t1 = new address for the result pointer
     
-    // reset x1, which temporarily holds the return address that will be written to mepc.
-    and x1, x5, x1 // x1 = offset for the return address
-    add x1, x1, a1 // x1 = new return address.
+    // reset ra, which temporarily holds the return address that will be written to mepc.
+    and ra, t0, ra // ra = offset for the return address
+    add ra, ra, a1 // ra = new return address.
 
     li a1, 0 
     li a2, 0 // reset trapreturn inputs to the trap handler
 
 trapreturn_finished_\MODE\():
-    csrw \MODE\()epc, x1   // update the mepc with address of next instruction
-    lw x7, -12(sp)     // restore registers from stack before returning
-    lw x5, -8(sp)   
-    lw x1, -4(sp)
+    csrw \MODE\()epc, ra   // update the mepc with address of next instruction
+    lw t2, -12(sp)     // restore registers from stack before returning
+    lw t0, -8(sp)   
+    lw ra, -4(sp)
     csrrw sp, \MODE\()scratch, sp // switch sp and scratch stack back to restore the non-trap stack pointer
     \MODE\()ret  // return from trap
 
@@ -429,42 +429,42 @@ trapreturn_finished_\MODE\():
 
 ecallhandler_\MODE\():
     // Check input parameter a0. encoding above. 
-    li x5, 2            // case 2: change to machine mode
-    beq a0, x5, ecallhandler_changetomachinemode_\MODE\()
-    li x5, 3            // case 3: change to supervisor mode
-    beq a0, x5, ecallhandler_changetosupervisormode_\MODE\()
-    li x5, 4            // case 4: change to user mode
-    beq a0, x5, ecallhandler_changetousermode_\MODE\()
+    li t0, 2            // case 2: change to machine mode
+    beq a0, t0, ecallhandler_changetomachinemode_\MODE\()
+    li t0, 3            // case 3: change to supervisor mode
+    beq a0, t0, ecallhandler_changetosupervisormode_\MODE\()
+    li t0, 4            // case 4: change to user mode
+    beq a0, t0, ecallhandler_changetousermode_\MODE\()
     // unsupported ecalls should segfault
     j segfault_\MODE\()
 
 ecallhandler_changetomachinemode_\MODE\():
     // Force status.MPP (bits 12:11) to 11 to enter machine mode after mret
     // note that it is impossible to return to M mode after a trap delegated to S mode
-    li x1, 0b1100000000000
-    csrs \MODE\()status, x1
+    li ra, 0b1100000000000
+    csrs \MODE\()status, ra
     j trapreturn_\MODE\()
 
 ecallhandler_changetosupervisormode_\MODE\():
     // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 01 to enter supervisor mode after (m/s)ret
-    li x1, 0b1000000000000  
-    csrc \MODE\()status, x1
-    li x1, 0b0100100000000
-    csrs \MODE\()status, x1
+    li ra, 0b1000000000000  
+    csrc \MODE\()status, ra
+    li ra, 0b0100100000000
+    csrs \MODE\()status, ra
     j trapreturn_\MODE\()
 
 ecallhandler_changetousermode_\MODE\():
     // Force status.MPP (bits 12:11) and status.SPP (bit 8) to 00 to enter user mode after (m/s)ret
-    li x1, 0b1100100000000  
-    csrc \MODE\()status, x1
+    li ra, 0b1100100000000  
+    csrc \MODE\()status, ra
     j trapreturn_\MODE\()
 
 instrpagefault_\MODE\():
-    lw x1, -4(sp) // load return address int x1 (the address AFTER the jal into faulting page)
-    j trapreturn_finished_\MODE\() // puts x1 into mepc, restores stack and returns to program (outside of faulting page)
+    lw ra, -4(sp) // load return address int ra (the address AFTER the jal into faulting page)
+    j trapreturn_finished_\MODE\() // puts ra into mepc, restores stack and returns to program (outside of faulting page)
 
 instrfault_\MODE\():
-    lw x1, -4(sp) // load return address int x1 (the address AFTER the jal to the faulting address)
+    lw ra, -4(sp) // load return address int ra (the address AFTER the jal to the faulting address)
     j trapreturn_finished_\MODE\() // return to the code after recording the mcause
 
 illegalinstr_\MODE\():
@@ -484,100 +484,100 @@ breakpt_\MODE\():
 
 s_soft_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    sw x5, -4(sp) // put x5 on the scratch stack before messing with it
-    li x5, 0x7EC01 // write 0x7ec01 (for "VEC"tored and 01 for the interrupt code)
+    sw t0, -4(sp) // put t0 on the scratch stack before messing with it
+    li t0, 0x7EC01 // write 0x7ec01 (for "VEC"tored and 01 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 m_soft_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    sw x5, -4(sp) // put x5 on the scratch stack before messing with it
-    li x5, 0x7EC03 // write 0x7ec03 (for "VEC"tored and 03 for the interrupt code)
+    sw t0, -4(sp) // put t0 on the scratch stack before messing with it
+    li t0, 0x7EC03 // write 0x7ec03 (for "VEC"tored and 03 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 s_time_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    sw x5, -4(sp) // put x5 on the scratch stack before messing with it
-    li x5, 0x7EC05 // write 0x7ec05 (for "VEC"tored and 05 for the interrupt code)
+    sw t0, -4(sp) // put t0 on the scratch stack before messing with it
+    li t0, 0x7EC05 // write 0x7ec05 (for "VEC"tored and 05 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 m_time_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    sw x5, -4(sp) // put x5 on the scratch stack before messing with it
-    li x5, 0x7EC07 // write 0x7ec07 (for "VEC"tored and 07 for the interrupt code)
+    sw t0, -4(sp) // put t0 on the scratch stack before messing with it
+    li t0, 0x7EC07 // write 0x7ec07 (for "VEC"tored and 07 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 s_ext_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    sw x5, -4(sp) // put x5 on the scratch stack before messing with it
-    li x5, 0x7EC09 // write 0x7ec09 (for "VEC"tored and 08 for the interrupt code)
+    sw t0, -4(sp) // put t0 on the scratch stack before messing with it
+    li t0, 0x7EC09 // write 0x7ec09 (for "VEC"tored and 08 for the interrupt code)
     j vectored_int_end_\MODE\()
 
 m_ext_vector_\MODE\():
     csrrw sp, \MODE\()scratch, sp // swap sp and scratch so we can use the scratch stack in the trap hanler without messing up sp's value or the stack itself.
-    sw x5, -4(sp) // put x5 on the scratch stack before messing with it
-    li x5, 0x7EC0B // write 0x7ec0B (for "VEC"tored and 0B for the interrupt code)
+    sw t0, -4(sp) // put t0 on the scratch stack before messing with it
+    li t0, 0x7EC0B // write 0x7ec0B (for "VEC"tored and 0B for the interrupt code)
     j vectored_int_end_\MODE\()
 
 vectored_int_end_\MODE\():
-    sw x5, 0(x16) // store to signature to show vectored interrupts succeeded. 
-    addi x6, x6, 4
-    addi x16, x16, 4
-    lw x5, -4(sp) // restore x5 before continuing to handle trap in case its needed.
+    sw t0, 0(a6) // store to signature to show vectored interrupts succeeded. 
+    addi t1, t1, 4
+    addi a6, a6, 4
+    lw t0, -4(sp) // restore t0 before continuing to handle trap in case its needed.
     j trap_stack_saved_\MODE\()
 
 // specific interrupt handlers
 
 soft_interrupt_\MODE\():
-    la x5, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
-    sw x0, 0(x5)
+    la t0, 0x02000000 // Reset by clearing MSIP interrupt from CLINT
+    sw zero, 0(t0)
 
     csrci \MODE\()ip, 0x2 // clear supervisor software interrupt pending bit 
-    lw x1, -4(sp) // load return address from stack into ra (the address to return to after causing this interrupt)
+    lw ra, -4(sp) // load return address from stack into ra (the address to return to after causing this interrupt)
     // Note: we do this because the mepc loads in the address of the instruction after the sw that causes the interrupt
     //  This means that this trap handler will return to the next address after that one, which might be unpredictable behavior.
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
 
 time_interrupt_\MODE\():
-    la x5, 0x02004000    // MTIMECMP register in CLINT
-    li x7, 0xFFFFFFFF
-    sw x7, 0(x5) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
+    la t0, 0x02004000    // MTIMECMP register in CLINT
+    li t2, 0xFFFFFFFF
+    sw t2, 0(t0) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
     
-    li x5, 0x20
-    csrc \MODE\()ip, x5
-    lw x1, -4(sp) // load return address from stack into ra (the address to return to after the loop is complete)
+    li t0, 0x20
+    csrc \MODE\()ip, t0
+    lw ra, -4(sp) // load return address from stack into ra (the address to return to after the loop is complete)
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
 
 ext_interrupt_\MODE\():
-    li x28, 0x10060000 // reset interrupt by clearing all the GPIO bits
-    sw x0, 8(x28) // disable the first pin as an output
-    sw x0, 40(x28) // write a 0 to the first output pin (reset interrupt)
+    li t3, 0x10060000 // reset interrupt by clearing all the GPIO bits
+    sw zero, 8(t3) // disable the first pin as an output
+    sw zero, 40(t3) // write a 0 to the first output pin (reset interrupt)
 
     # reset PLIC to turn off external interrupts
     # m priority threshold = 7
-    li x28, 0xC200000
-    li x5, 0x7
-    sw x5, 0(x28)
+    li t3, 0xC200000
+    li t0, 0x7
+    sw t0, 0(t3)
     # s priority threshold = 7
-    li x28, 0xC201000
-    li x5, 0x7
-    sw x5, 0(x28)
+    li t3, 0xC201000
+    li t0, 0x7
+    sw t0, 0(t3)
     # source 3 (GPIO) priority = 0
-    li x28, 0xC000000
-    li x5, 0
-    sw x5, 0x0C(x28)
+    li t3, 0xC000000
+    li t0, 0
+    sw t0, 0x0C(t3)
     # disable source 3 in M mode
-    li x28, 0x0C002000
-    li x5, 0b0000
-    sw x5, 0(x28)
+    li t3, 0x0C002000
+    li t0, 0b0000
+    sw t0, 0(t3)
     # enable source 3 in S mode
-    li x28, 0x0C002080
-    li x29, 0b0000
-    sw x29, 0(x28)
+    li t3, 0x0C002080
+    li t4, 0b0000
+    sw t4, 0(t3)
 
-    li x5, 0x200
-    csrc \MODE\()ip, x5
+    li t0, 0x200
+    csrc \MODE\()ip, t0
 
-    lw x1, -4(sp) // load return address from stack into ra (the address to return to after the loop is complete)
+    lw ra, -4(sp) // load return address from stack into ra (the address to return to after the loop is complete)
     j trapreturn_finished_\MODE\() // return to the code at ra value from before trap
 
 
@@ -641,7 +641,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 //   read32_test        : Read 32 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
 //   read16_test        : Read 16 bitsfrom address                  : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
 //   read08_test        : Read 8 bitsfrom address                   : 0x4, 0x5, or 0xd, then 0xbad              : readvalue in hex
-//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of x7 modified by exectuion code (usually 0x111)
+//   executable_test    : test executable on virtual page           : 0x0, 0x1, or 0xc, then 0xbad              : value of t2 modified by exectuion code (usually 0x111)
 //   terminate_test     : terminate tests                           : mcause value for fault                    : from M 0xb, from S 0x9, from U 0x8  
 //   goto_baremetal     : satp.MODE = bare metal                    : None                                      : None 
 //   goto_sv32          : satp.MODE = sv32                          : None                                      : None 
@@ -661,23 +661,23 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      0x6: misaligned address
     //      0x7: access fault
     //      0xf: page fault
-    li x29, \VAL
-    li x30, \ADDR
-    sw x29, 0(x30)
+    li t4, \VAL
+    li t5, \ADDR
+    sw t4, 0(t5)
 .endm
 
 .macro WRITE16 ADDR VAL
     // all write tests have the same description/outputs as write64
-    li x29, \VAL
-    li x30, \ADDR
-    sh x29, 0(x30)
+    li t4, \VAL
+    li t5, \ADDR
+    sh t4, 0(t5)
 .endm
 
 .macro WRITE08 ADDR VAL
     // all write tests have the same description/outputs as write64
-    li x29, \VAL
-    li x30, \ADDR
-    sb x29, 0(x30)
+    li t4, \VAL
+    li t5, \ADDR
+    sb t4, 0(t5)
 .endm
 
 .macro READ32 ADDR
@@ -689,34 +689,34 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      0x4: misaligned address
     //      0x5: access fault
     //      0xD: page fault
-    li x7, 0xBAD // bad value that will be overwritten on good reads.
-    li x29, \ADDR 
-    lw x7, 0(x29) 
-    sw x7, 0(x6)
-    addi x6, x6, 4 
-    addi x16, x16, 4
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    li t4, \ADDR 
+    lw t2, 0(t4) 
+    sw t2, 0(t1)
+    addi t1, t1, 4 
+    addi a6, a6, 4
 .endm
 
 .macro READ16 ADDR
     // All reads have the same description/outputs as read32. 
     // They will store the sign extended value of what was read out at ADDR
-    li x7, 0xBAD // bad value that will be overwritten on good reads.
-    li x29, \ADDR 
-    lh x7, 0(x29) 
-    sw x7, 0(x6)
-    addi x6, x6, 4 
-    addi x16, x16, 4
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    li t4, \ADDR 
+    lh t2, 0(t4) 
+    sw t2, 0(t1)
+    addi t1, t1, 4 
+    addi a6, a6, 4
 .endm
 
 .macro READ08 ADDR
     // All reads have the same description/outputs as read64. 
     // They will store the sign extended value of what was read out at ADDR
-    li x7, 0xBAD // bad value that will be overwritten on good reads.
-    li x29, \ADDR 
-    lb x7, 0(x29) 
-    sw x7, 0(x6)
-    addi x6, x6, 4 
-    addi x16, x16, 4
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    li t4, \ADDR 
+    lb t2, 0(t4) 
+    sw t2, 0(t1)
+    addi t1, t1, 4 
+    addi a6, a6, 4
 .endm
 
 // These goto_x_mode tests all involve invoking the trap handler,
@@ -756,22 +756,22 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .macro GOTO_BAREMETAL
     // Turn translation off
-    li x7, 0 // satp.MODE value for bare metal (0)
-    slli x7, x7, 31
-    csrw satp, x7
+    li t2, 0 // satp.MODE value for bare metal (0)
+    slli t2, t2, 31
+    csrw satp, t2
     //sfence.vma x0, x0 // *** flushes global pte's as well
 .endm
 
 .macro GOTO_SV32 ASID BASE_PPN
     // Turn on sv39 virtual memory
-    li x7, 1 // satp.MODE value for Sv32 (1)
-    slli x7, x7, 31
-    li x29, \ASID
-    slli x29, x29, 22
-    or x7, x7, x29 // put ASID into the correct field of SATP
-    li x28, \BASE_PPN // Base Pagetable physical page number, satp.PPN field.
-    add x7, x7, x28
-    csrw satp, x7
+    li t2, 1 // satp.MODE value for Sv32 (1)
+    slli t2, t2, 31
+    li t4, \ASID
+    slli t4, t4, 22
+    or t2, t2, t4 // put ASID into the correct field of SATP
+    li t3, \BASE_PPN // Base Pagetable physical page number, satp.PPN field.
+    add t2, t2, t3
+    csrw satp, t2
     //sfence.vma x0, x0 // *** flushes global pte's as well
 .endm
 
@@ -782,13 +782,13 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     // Fault outputs:
     //      The previous CSR value before write attempt
     //      *** Most likely 0x2, the mcause for illegal instruction if we don't have write or read access
-    li x30, 0xbad // load bad value to be overwritten by csrr
-    li x29, \VAL
-    csrw \CSR\(), x29
-    csrr x30, \CSR
-    sw x30, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    li t5, 0xbad // load bad value to be overwritten by csrr
+    li t4, \VAL
+    csrw \CSR\(), t4
+    csrr t5, \CSR
+    sw t5, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
 .endm
 
 .macro CSR_R_ACCESS CSR
@@ -798,39 +798,39 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //      0x11 *** consider changing to something more meaningful
     // Fault outputs:
     //      0xBAD *** consider changing this one as well. in general, do we need the branching if it hould cause an illegal instruction fault? 
-    csrr x29, \CSR
+    csrr t4, \CSR
     csrwi \CSR\(), 0xA // Attempt to write a 'random' value to the CSR
-    csrr x30, \CSR
-    bne x30, x29, 1f // 1f represents write_access
-    li x30, 0x11 // Write failed, confirming read only permissions.
+    csrr t5, \CSR
+    bne t5, t4, 1f // 1f represents write_access
+    li t5, 0x11 // Write failed, confirming read only permissions.
     j 2f // j r_access_end
 1: // w_access (write succeeded, violating read-only)
-    li x30, 0xBAD
+    li t5, 0xBAD
 2: // r_access end
-    sw x30, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    sw t5, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
 .endm
 
 .macro EXECUTE_AT_ADDRESS ADDR
-    // Execute the code already written to ADDR, returning the value in x7. 
+    // Execute the code already written to ADDR, returning the value in t2. 
     // *** Note: this test itself doesn't write the code to ADDR because it might be callled at a point where we dont have write access to ADDR
-    // Assumes the code modifies x7, usually to become 0x111. 
-    // Sample code:  0x11100393 (li x7, 0x111), 0x00008067 (ret)
+    // Assumes the code modifies t2, usually to become 0x111. 
+    // Sample code:  0x11100393 (li t2, 0x111), 0x00008067 (ret)
     // Success outputs:
-    //      modified value of x7. (0x111 if you use the sample code)
+    //      modified value of t2. (0x111 if you use the sample code)
     // Fault outputs:
     //      One of the following followed by 0xBAD
     //      0x0: misaligned address
     //      0x1: access fault
     //      0xC: page fault
     fence.i // forces caches and main memory to sync so execution code written to ADDR can run.
-    li x7, 0xBAD
-    li x28, \ADDR
-    jalr x28 // jump to executable test code 
-    sw x7, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4 
+    li t2, 0xBAD
+    li t3, \ADDR
+    jalr t3 // jump to executable test code 
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4 
 .endm
 
 .macro END_TESTS
@@ -850,36 +850,36 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     //
     // Input parameters: 
     //
-    // x28:
+    // t3:
     //     Address input for the test taking place (think: address to read/write, new address to return to, etc...)
     //
-    // x29:
+    // t4:
     //     Value input for the test taking place (think: value to write, any other extra info needed)
     //
-    // x30:
+    // t5:
     //     Label for the location of the test that's about to take place
     // ------------------------------------------------------------------------------------------------------------------------------------
 
 .macro INIT_TEST_TABLE // *** Consider renaming this test. to what???
 
 test_loop_setup:
-    la x5, test_cases
+    la t0, test_cases
 
 test_loop:
-    lw x28, 0(x5) // fetch test case address
-    lw x29, 4(x5) // fetch test case value
-    lw x30, 8(x5) // fetch test case flag
-    addi x5, x5, 12 // set x5 to next test case
+    lw t3, 0(t0) // fetch test case address
+    lw t4, 4(t0) // fetch test case value
+    lw t5, 8(t0) // fetch test case flag
+    addi t0, t0, 12 // set t0 to next test case
 
-    // x5 has the symbol for a test's location in the assembly
-    li x7, 0x3FFFFF 
-    and x30, x30, x7 // This program is always on at least a megapage, so this masks out the megapage offset.
-    auipc x7, 0x0
-    srli x7, x7, 22
-    slli x7, x7, 22 // zero out the bottom 22 bits so the megapage offset of the symbol can be placed there
-    or x30, x7, x30 // x30 = virtual address of the symbol for this type of test.
+    // t0 has the symbol for a test's location in the assembly
+    li t2, 0x3FFFFF 
+    and t5, t5, t2 // This program is always on at least a megapage, so this masks out the megapage offset.
+    auipc t2, 0x0
+    srli t2, t2, 22
+    slli t2, t2, 22 // zero out the bottom 22 bits so the megapage offset of the symbol can be placed there
+    or t5, t2, t5 // t5 = virtual address of the symbol for this type of test.
 
-    jr x30
+    jr t5
 
 // Test Name             : Description                               : Fault output value     : Normal output values
 // ----------------------:-------------------------------------------:------------------------:------------------------------------------------------
@@ -889,7 +889,7 @@ test_loop:
 //   read32_test         : Read 32 bits from address                  : 0xd, 0xbad             : readvalue in hex
 //   read16_test         : Read 16 bits from address                  : 0xd, 0xbad             : readvalue in hex
 //   read08_test         : Read 8 bits from address                   : 0xd, 0xbad             : readvalue in hex
-//   executable_test     : test executable on virtual page           : 0xc, 0xbad             : value of x7 modified by exectuion code (usually 0x111)
+//   executable_test     : test executable on virtual page           : 0xc, 0xbad             : value of t2 modified by exectuion code (usually 0x111)
 //   terminate_test      : terminate tests                           : mcause value for fault : from M 0xb, from S 0x9, from U 0x8  
 //   goto_baremetal      : satp.MODE = bare metal                    : None                   : None 
 //   goto_sv39           : satp.MODE = sv39                          : None                   : None 
@@ -902,67 +902,67 @@ test_loop:
 //   write_pmpaddr_x     : Write one of the pmpaddr csr's            : None                   : readback of pmpaddr value
 
 write32_test:
-    // address to write in x28, word value in x29
-    sw x29, 0(x28)
+    // address to write in t3, word value in t4
+    sw t4, 0(t3)
     j test_loop // go to next test case
 
 write16_test:
-    // address to write in x28, halfword value in x29
-    sh x29, 0(x28)
+    // address to write in t3, halfword value in t4
+    sh t4, 0(t3)
     j test_loop // go to next test case
 
 write08_test:
-    // address to write in x28, value in x29
-    sb x29, 0(x28)
+    // address to write in t3, value in t4
+    sb t4, 0(t3)
     j test_loop // go to next test case
 
 read32_test:
-    // address to read in x28, expected 32 bit value in x29 (unused, but there for your perusal).
-    li x7, 0xBAD // bad value that will be overwritten on good reads.
-    lw x7, 0(x28)
-    sw x7, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    // address to read in t3, expected 32 bit value in t4 (unused, but there for your perusal).
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    lw t2, 0(t3)
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
     j test_loop // go to next test case
 
 read16_test:
-    // address to read in x28, expected 16 bit value in x29 (unused, but there for your perusal).
-    li x7, 0xBAD // bad value that will be overwritten on good reads.
-    lh x7, 0(x28)
-    sw x7, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    // address to read in t3, expected 16 bit value in t4 (unused, but there for your perusal).
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    lh t2, 0(t3)
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
     j test_loop // go to next test case
 
 read08_test:
-    // address to read in x28, expected 8 bit value in x29 (unused, but there for your perusal).
-    li x7, 0xBAD // bad value that will be overwritten on good reads.
-    lb x7, 0(x28)
-    sw x7, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    // address to read in t3, expected 8 bit value in t4 (unused, but there for your perusal).
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    lb t2, 0(t3)
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
     j test_loop // go to next test case
 
 goto_s_mode:
-    // return to address in x28, 
+    // return to address in t3, 
     li a0, 3 // Trap handler behavior (go to supervisor mode)
-    mv a1, x28 // return VPN
-    mv a2, x29 // return page types
+    mv a1, t3 // return VPN
+    mv a2, t4 // return page types
     ecall // writes mcause to the output.
     // now in S mode
     j test_loop
 
 goto_m_mode:
     li a0, 2 // Trap handler behavior (go to machine mode)
-    mv a1, x28 // return VPN
-    mv a2, x29 // return page types
+    mv a1, t3 // return VPN
+    mv a2, t4 // return page types
     ecall // writes mcause to the output.
     j test_loop
 
 goto_u_mode:
     li a0, 4 // Trap handler behavior (go to user mode)
-    mv a1, x28 // return VPN
-    mv a2, x29 // return page types
+    mv a1, t3 // return VPN
+    mv a2, t4 // return page types
     ecall // writes mcause to the output.
     j test_loop
 
@@ -973,175 +973,175 @@ goto_baremetal:
 
 goto_sv32:
     // Turn sv48 translation on
-    // Base PPN in x28, ASID in x29
-    li x7, 1 // satp.MODE value for sv32 (1)
-    slli x7, x7, 31
-    slli x29, x29, 22
-    or x7, x7, x29 // put ASID into the correct field of SATP
-    or x7, x7, x28 // Base Pagetable physical page number, satp.PPN field.
-    csrw satp, x7
+    // Base PPN in t3, ASID in t4
+    li t2, 1 // satp.MODE value for sv32 (1)
+    slli t2, t2, 31
+    slli t4, t4, 22
+    or t2, t2, t4 // put ASID into the correct field of SATP
+    or t2, t2, t3 // Base Pagetable physical page number, satp.PPN field.
+    csrw satp, t2
     j test_loop // go to next test case
 
 write_mxr_sum:
-    // writes sstatus.[mxr, sum] with the (assumed to be) 2 bit value in x29. also assumes we're in S. M mode
-    li x30, 0xC0000 // mask bits for MXR, SUM
-    not x7, x29
-    slli x7, x7, 18
-    and x7, x7, x30
-    slli x29, x29, 18
-    csrc sstatus, x7
-    csrs sstatus, x29
+    // writes sstatus.[mxr, sum] with the (assumed to be) 2 bit value in t4. also assumes we're in S. M mode
+    li t5, 0xC0000 // mask bits for MXR, SUM
+    not t2, t4
+    slli t2, t2, 18
+    and t2, t2, t5
+    slli t4, t4, 18
+    csrc sstatus, t2
+    csrs sstatus, t4
     j test_loop
 
 read_write_mprv:
     // reads old mstatus.mprv value to output, then
-    // Writes mstatus.mprv with the 1 bit value in x29. assumes we're in m mode
-    li x30, 0x20000 // mask bits for mprv
-    csrr x7, mstatus
-    and x7, x7, x30
-    srli x7, x7, 17
-    sw x7, 0(x6) // store old mprv to output
-    addi x6, x6, 4
-    addi x16, x16, 4 
+    // Writes mstatus.mprv with the 1 bit value in t4. assumes we're in m mode
+    li t5, 0x20000 // mask bits for mprv
+    csrr t2, mstatus
+    and t2, t2, t5
+    srli t2, t2, 17
+    sw t2, 0(t1) // store old mprv to output
+    addi t1, t1, 4
+    addi a6, a6, 4 
 
-    not x7, x29
-    slli x7, x7, 17
-    slli x29, x29, 17
-    csrc mstatus, x7
-    csrs mstatus, x29 // clear or set mprv bit
-    li x7, 0x1800  
-    csrc mstatus, x7
-    li x7, 0x800
-    csrs mstatus, x7 // set mpp to supervisor mode to see if mprv=1 really executes in the mpp mode
+    not t2, t4
+    slli t2, t2, 17
+    slli t4, t4, 17
+    csrc mstatus, t2
+    csrs mstatus, t4 // clear or set mprv bit
+    li t2, 0x1800  
+    csrc mstatus, t2
+    li t2, 0x800
+    csrs mstatus, t2 // set mpp to supervisor mode to see if mprv=1 really executes in the mpp mode
     j test_loop
 
 
 write_pmpcfg_0:
-    // writes the value in x29 to the pmpcfg register specified in x28.
+    // writes the value in t4 to the pmpcfg register specified in t3.
     // then writes the final value of pmpcfgX to the output.
-    csrw pmpcfg0, x29
-    csrr x30, pmpcfg0
+    csrw pmpcfg0, t4
+    csrr t5, pmpcfg0
     j write_pmpcfg_end
 
 write_pmpcfg_1:
-    csrw pmpcfg1, x29
-    csrr x30, pmpcfg1
+    csrw pmpcfg1, t4
+    csrr t5, pmpcfg1
     j write_pmpcfg_end
 
 write_pmpcfg_2:
-    csrw pmpcfg2, x29
-    csrr x30, pmpcfg2
+    csrw pmpcfg2, t4
+    csrr t5, pmpcfg2
     j write_pmpcfg_end
 
 write_pmpcfg_3:
-    csrw pmpcfg3, x29
-    csrr x30, pmpcfg3
+    csrw pmpcfg3, t4
+    csrr t5, pmpcfg3
     j write_pmpcfg_end
 
 write_pmpcfg_end:
-    sw x30, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    sw t5, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
     j test_loop
 
 write_pmpaddr_0:
-    // write_read_csr pmpaddr0, x29
-    // writes the value in x29 to the pmpaddr register specified in x28.
+    // write_read_csr pmpaddr0, t4
+    // writes the value in t4 to the pmpaddr register specified in t3.
     // then writes the final value of pmpaddrX to the output.
-    csrw pmpaddr0, x29
-    csrr x30, pmpaddr0
+    csrw pmpaddr0, t4
+    csrr t5, pmpaddr0
     j write_pmpaddr_end
 
 write_pmpaddr_1:
-    csrw pmpaddr1, x29
-    csrr x30, pmpaddr1
+    csrw pmpaddr1, t4
+    csrr t5, pmpaddr1
     j write_pmpaddr_end
 
 write_pmpaddr_2:
-    csrw pmpaddr2, x29
-    csrr x30, pmpaddr2
+    csrw pmpaddr2, t4
+    csrr t5, pmpaddr2
     j write_pmpaddr_end
 
 write_pmpaddr_3:
-    csrw pmpaddr3, x29
-    csrr x30, pmpaddr3
+    csrw pmpaddr3, t4
+    csrr t5, pmpaddr3
     j write_pmpaddr_end
 
 write_pmpaddr_4:
-    csrw pmpaddr4, x29
-    csrr x30, pmpaddr4
+    csrw pmpaddr4, t4
+    csrr t5, pmpaddr4
     j write_pmpaddr_end
 
 write_pmpaddr_5:
-    csrw pmpaddr5, x29
-    csrr x30, pmpaddr5
+    csrw pmpaddr5, t4
+    csrr t5, pmpaddr5
     j write_pmpaddr_end
 
 write_pmpaddr_6:
-    csrw pmpaddr6, x29
-    csrr x30, pmpaddr6
+    csrw pmpaddr6, t4
+    csrr t5, pmpaddr6
     j write_pmpaddr_end
 
 write_pmpaddr_7:
-    csrw pmpaddr7, x29
-    csrr x30, pmpaddr7
+    csrw pmpaddr7, t4
+    csrr t5, pmpaddr7
     j write_pmpaddr_end
 
 write_pmpaddr_8:
-    csrw pmpaddr8, x29
-    csrr x30, pmpaddr8
+    csrw pmpaddr8, t4
+    csrr t5, pmpaddr8
     j write_pmpaddr_end
 
 write_pmpaddr_9:
-    csrw pmpaddr9, x29
-    csrr x30, pmpaddr9
+    csrw pmpaddr9, t4
+    csrr t5, pmpaddr9
     j write_pmpaddr_end
 
 write_pmpaddr_10:
-    csrw pmpaddr10, x29
-    csrr x30, pmpaddr10
+    csrw pmpaddr10, t4
+    csrr t5, pmpaddr10
     j write_pmpaddr_end
 
 write_pmpaddr_11:
-    csrw pmpaddr11, x29
-    csrr x30, pmpaddr11
+    csrw pmpaddr11, t4
+    csrr t5, pmpaddr11
     j write_pmpaddr_end
 
 write_pmpaddr_12:
-    csrw pmpaddr12, x29
-    csrr x30, pmpaddr12
+    csrw pmpaddr12, t4
+    csrr t5, pmpaddr12
     j write_pmpaddr_end
 
 write_pmpaddr_13:
-    csrw pmpaddr13, x29
-    csrr x30, pmpaddr13
+    csrw pmpaddr13, t4
+    csrr t5, pmpaddr13
     j write_pmpaddr_end
 
 write_pmpaddr_14:
-    csrw pmpaddr14, x29
-    csrr x30, pmpaddr14
+    csrw pmpaddr14, t4
+    csrr t5, pmpaddr14
     j write_pmpaddr_end
 
 write_pmpaddr_15:
-    csrw pmpaddr15, x29
-    csrr x30, pmpaddr15
+    csrw pmpaddr15, t4
+    csrr t5, pmpaddr15
     j write_pmpaddr_end
 
 write_pmpaddr_end:
-    sw x30, 0(x6)
-    addi x6, x6, 4
-    addi x16, x16, 4
+    sw t5, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
     j test_loop
 
 executable_test:
-    // Execute the code at the address in x28, returning the value in x7.
-    // Assumes the code modifies x7, to become the value stored in x29 for this test.  
+    // Execute the code at the address in t3, returning the value in t2.
+    // Assumes the code modifies t2, to become the value stored in t4 for this test.  
     fence.i // forces cache and main memory to sync so execution code written by the program can run.
-    li x7, 0xBAD
-    jalr x28 
-    sw x7, 0(x6) 
-    addi x6, x6, 4
-    addi x16, x16, 4 
+    li t2, 0xBAD
+    jalr t3 
+    sw t2, 0(t1) 
+    addi t1, t1, 4
+    addi a6, a6, 4 
     j test_loop
 
 .endm 
@@ -1152,7 +1152,7 @@ terminate_test:
 
     li a0, 2 // Trap handler behavior (go to machine mode)
     ecall //  writes mcause to the output.
-    csrw mtvec, x4  // restore original trap handler to halt program
+    csrw mtvec, tp  // restore original trap handler to halt program
 
 RVTEST_CODE_END
 RVMODEL_HALT
