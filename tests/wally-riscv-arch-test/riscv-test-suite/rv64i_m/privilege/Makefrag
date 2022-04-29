@@ -46,8 +46,8 @@ target_tests_nosim = \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
     WALLY-MIE-01 \
-    WALLY-PIE-stack-01 \
-    WALLY-PIE-stack-s-01 \
+    WALLY-status-mie-01 \
+    WALLY-status-mie-s-01 \
     WALLY-trap-01 \
     WALLY-trap-s-01 \
     WALLY-trap-u-01 \
