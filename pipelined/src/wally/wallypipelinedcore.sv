@@ -108,7 +108,7 @@ module wallypipelinedcore (
   logic             ITLBMissF;
   logic [`XLEN-1:0]         SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
-  logic  [1:0]       STATUS_MPP;
+  logic  [1:0]       STATUS_MPP, STATUS_FS;
   logic [1:0]             PrivilegeModeW;
   logic [`XLEN-1:0]     PTE;
   logic [1:0]             PageType;
@@ -338,7 +338,7 @@ module wallypipelinedcore (
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM,
          .ExceptionM, .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
-         .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+         .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
          .FRM_REGW,.BreakpointFaultM, .EcallFaultM
       );
@@ -373,6 +373,7 @@ module wallypipelinedcore (
          .StallE, .StallM, .StallW, // stall signals from HZU
          .FlushE, .FlushM, .FlushW, // flush signals from HZU
          .RdM, .RdW, // which FP register to write to (from IEU)
+         .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
