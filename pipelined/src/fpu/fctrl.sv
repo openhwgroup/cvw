@@ -5,6 +5,7 @@ module fctrl (
   input  logic [4:0] Rs2D,      // bits 24:20 of instruction
   input  logic [2:0] Funct3D,   // bits 14:12 of instruction - may contain rounding mode
   input  logic [2:0] FRM_REGW,  // rounding mode from CSR
+  input  logic [1:0] STATUS_FS, // is FPU enabled?
   output logic       IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
   output logic       FRegWriteD,  // FP register write enable
   output logic       FDivStartD,  // Start division or squareroot
@@ -21,7 +22,9 @@ module fctrl (
   logic [`FCTRLW-1:0] ControlsD;
   // FPU Instruction Decoder
   always_comb
-    case(OpD)
+    if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
+      ControlsD = `FCTRLW'b0_0_00_000_000_00_0_1;
+    else case(OpD)
     // FRegWrite_FWriteInt_FResultSel_FOpCtrl_FResSel_FIntResSel_FDivStart_IllegalFPUInstr
       7'b0000111: case(Funct3D)
                     3'b010:  ControlsD = `FCTRLW'b1_0_00_000_000_00_0_0; // flw

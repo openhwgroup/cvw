@@ -154,13 +154,13 @@ def main():
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
     if '-all' in sys.argv:
-        TIMEOUT_DUR = 20*3600 # seconds
+        TIMEOUT_DUR = 30*3600 # seconds
         configs.append(getBuildrootTC(short=False))
     elif '-buildroot' in sys.argv:
-        TIMEOUT_DUR = 20*3600 # seconds
+        TIMEOUT_DUR = 30*3600 # seconds
         configs=[getBuildrootTC(short=False)]
     else:
-        TIMEOUT_DUR = 5*60 # seconds
+        TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(short=True))
 
     # Scale the number of concurrent processes to the number of test cases, but
