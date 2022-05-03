@@ -169,7 +169,7 @@ module csr #(parameter
               .SATP_REGW, .SIP_REGW, .SIE_REGW,
               .WriteSSTATUSM, .IllegalCSRSAccessM);
   csru  csru(.clk, .reset, .InstrValidNotFlushedM, .StallW,
-              .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .CSRUReadValM,  
+              .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
               .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
               .IllegalCSRUAccessM);
 

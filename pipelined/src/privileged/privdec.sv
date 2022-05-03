@@ -36,7 +36,8 @@ module privdec (
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
   input  logic         TrappedSRETM, WFITimeoutM,
   input  logic [1:0]   PrivilegeModeW, 
-  input  logic         STATUS_TSR,
+  input  logic         STATUS_TSR, 
+  input  logic [1:0]   STATUS_FS,
   output logic         IllegalInstrFaultM,
   output logic         sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
 
@@ -52,6 +53,6 @@ module privdec (
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001); // *** & (PrivilegedModeW == `M_MODE | ~STATUS_TVM); // *** does this work in U mode?
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
+  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & (IllegalFPUInstrM | (STATUS_FS == 2'b00))) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
                                TrappedSRETM | WFITimeoutM; // *** generalize this for other instructions
 endmodule
