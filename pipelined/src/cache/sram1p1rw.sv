@@ -45,12 +45,9 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   logic [$clog2(DEPTH)-1:0]       AdrD;
   logic                           WriteEnableD;
 
-  localparam WM8 = WIDTH%8;
-   
-
   always_ff @(posedge clk)       AdrD <= Adr;
 
-  integer                          index;
+  genvar                          index;
 /* -----\/----- EXCLUDED -----\/-----
   for(index = 0; index < WIDTH/8; index++) begin
     always_ff @(posedge clk) begin
@@ -61,22 +58,17 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   end
  -----/\----- EXCLUDED -----/\----- */
 
-  always_ff @(posedge clk) begin
-    if (WriteEnable) begin
-      for(index = 0; index < WIDTH/8; index++) begin
-        if(ByteMask[index]) begin
-           StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
-        end
-      end
-/*      if (WM8 > 0) begin  // handle msbs that aren't a multiple of 8
-	if (ByteMask[WIDTH/8]) begin
-	  StoredData[Adr][WIDTH-1:WIDTH-WM8] <= #1 
-	    CacheWriteData[WIDTH-1:WIDTH-WM8];
-	end
-      end */
-    end
-  end
+  if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
+    always_ff @(posedge clk) 
+      if (WriteEnable & ByteMask[WIDTH/8])
+        StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 
+	  CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
   
+  for(index = 0; index < WIDTH/8; index++) 
+    always_ff @(posedge clk)
+      if(WriteEnable & ByteMask[index])
+	StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
+/*  
   // if not a multiple of 8, MSByte is not 8 bits long.
   if(WIDTH%8 != 0) begin
     always_ff @(posedge clk) begin
@@ -85,7 +77,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
       end
     end
   end 
-
+*/
   assign ReadData = StoredData[AdrD];
 endmodule
 
