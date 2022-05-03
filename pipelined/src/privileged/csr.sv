@@ -64,6 +64,7 @@ module csr #(parameter
   output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
+  output logic [1:0]       STATUS_FS,
   output var logic [7:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],
   
@@ -141,7 +142,8 @@ module csr #(parameter
               .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
               .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
               .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
-              .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM);
+              .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
+              .STATUS_FS);
   csrc  counters(.clk, .reset,
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,   
               .InstrValidM, .LoadStallD, .CSRMWriteM,

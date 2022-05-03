@@ -39,6 +39,7 @@ module fpu (
   input logic 		   StallE, StallM, StallW, // stall signals from HZU
   input logic 		   FlushE, FlushM, FlushW, // flush signals from HZU
   input logic [4:0] 	   RdM, RdW, // which FP register to write to (from IEU)
+  input logic [1:0]        STATUS_FS, // Is floating-point enabled?
   output logic 		   FRegWriteM, // FP register write enable
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, // integer register write enables
@@ -134,7 +135,7 @@ module fpu (
    // DECODE STAGE
 
    // calculate FP control signals
-   fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .FRM_REGW,
+   fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .FRM_REGW, .STATUS_FS,
       .IllegalFPUInstrD, .FRegWriteD, .FDivStartD, .FResultSelD, .FOpCtrlD, .FResSelD, 
       .FIntResSelD, .FmtD, .FrmD, .FWriteIntD);
 
