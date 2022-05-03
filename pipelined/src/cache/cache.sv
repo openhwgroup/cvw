@@ -119,8 +119,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
     .s({SelFlush, SelAdr}), .y(RAdr));
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask,
+  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
