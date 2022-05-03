@@ -56,12 +56,14 @@ module comparator_sub #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-module comparator_dc #(parameter WIDTH=64) (
+// *** eventually substitute comparator_flip, which gives slightly better synthesis
+module comparator #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   output logic [2:0]       flags);
 
   logic eq, lt, ltu;
 
+  // Behavioral description gives best results
   assign eq = (a == b);
   assign ltu = (a < b);
   assign lt = ($signed(a) < $signed(b));
@@ -69,7 +71,8 @@ module comparator_dc #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-module comparator_dc_flip #(parameter WIDTH=16) (
+// This comaprator 
+module comparator_flip #(parameter WIDTH=16) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
   output logic [1:0]       flags);
@@ -81,6 +84,7 @@ module comparator_dc_flip #(parameter WIDTH=16) (
   assign af = {a[WIDTH-1] ^ sgnd, a[WIDTH-2:0]};
   assign bf = {b[WIDTH-1] ^ sgnd, b[WIDTH-2:0]};
 
+  // behavioral description gives best results
   assign eq = (af == bf);
   assign lt = (af < bf);
   assign flags = {eq, lt};
@@ -124,7 +128,7 @@ module comparator2 #(parameter WIDTH=64) (
 endmodule
 
 
-module comparator #(parameter WIDTH=64) (
+module comparator_prefix #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   output logic [2:0]       flags);
 
