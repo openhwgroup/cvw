@@ -28,6 +28,8 @@ module fcmp (
    
    assign LTabs= {1'b0, XExpE, XManE} < {1'b0, YExpE, YManE}; // unsigned comparison, treating FP as integers
    assign LT = (XSgnE & ~YSgnE) | (XSgnE & YSgnE & ~LTabs & ~EQ) | (~XSgnE & ~YSgnE & LTabs);
+   // assign LT = {~XSgnE, XExpE, XManE[`NF-1:0]} < {~YSgnE, YExpE, YManE[`NF-1:0]}; // *** James look at whether we can simplify to this, but it fails regression
+
    //assign LT = $signed({XSgnE, XExpE, XManE[`NF-1:0]}) < $signed({YSgnE, YExpE, YManE[`NF-1:0]});
    //assign LT = XInt < YInt;
 //   assign LT = XSgnE^YSgnE ? XSgnE : XExpE==YExpE ? ((XManE<YManE)^XSgnE)&~EQ : (XExpE<YExpE)^XSgnE;

@@ -149,7 +149,7 @@ module privileged (
 
    privdec pmd(.InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM, .WFITimeoutM,
-              .PrivilegeModeW, .STATUS_TSR, .IllegalInstrFaultM, 
+              .PrivilegeModeW, .STATUS_TSR, .STATUS_FS, .IllegalInstrFaultM, 
               .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
