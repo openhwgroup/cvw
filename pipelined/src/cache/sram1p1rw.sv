@@ -68,23 +68,23 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
            StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
         end
       end
-      if (WM8 > 0) begin
+/*      if (WM8 > 0) begin  // handle msbs that aren't a multiple of 8
 	if (ByteMask[WIDTH/8]) begin
 	  StoredData[Adr][WIDTH-1:WIDTH-WM8] <= #1 
 	    CacheWriteData[WIDTH-1:WIDTH-WM8];
 	end
-      end
+      end */
     end
   end
   
-/*  // if not a multiple of 8, MSByte is not 8 bits long.
+  // if not a multiple of 8, MSByte is not 8 bits long.
   if(WIDTH%8 != 0) begin
     always_ff @(posedge clk) begin
       if (WriteEnable & ByteMask[WIDTH/8]) begin
         StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
       end
     end
-  end */
+  end 
 
   assign ReadData = StoredData[AdrD];
 endmodule
