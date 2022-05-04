@@ -26,7 +26,7 @@
 
 INIT_TESTS
 
-TRAP_HANDLER m, DEBUG=1 // turn on recording mtval and status bits on traps
+TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on traps
 
 li x28, 0x200000
 csrs mstatus, x28 // set mstatus.TW bit to 1

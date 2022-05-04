@@ -29,7 +29,7 @@ CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtva
 
 // test 5.3.1.5 Unvectored interrupt tests 
 
-TRAP_HANDLER m, VECTORED=0, DEBUG=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
+TRAP_HANDLER m, VECTORED=0, EXT_SIGNATURE=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 
 li x28, 0x8
 csrs mstatus, x28 // set sstatus.MIE bit to 1

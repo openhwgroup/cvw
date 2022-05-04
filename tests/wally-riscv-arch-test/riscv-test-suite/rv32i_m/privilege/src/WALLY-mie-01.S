@@ -27,7 +27,7 @@ INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
 
-TRAP_HANDLER m, DEBUG=1 // turn on recording mtval and status bits on traps
+TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on traps
 
 li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1.
