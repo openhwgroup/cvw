@@ -28,34 +28,33 @@
 # Description: Makefrag for RV64I architectural tests
 
 rv64i_sc_tests = \
-    WALLY-MMU-SV39 \
-    WALLY-MMU-SV48 \
-    WALLY-PMP \
+    WALLY-mmu-sv39 \
+    WALLY-mmu-sv48 \
+    WALLY-pmp \
     WALLY-minfo-01 \
-    WALLY-CSR-permission-s-01 \
-    WALLY-CSR-permission-u-01 \
+    WALLY-csr-permission-s-01 \
+    WALLY-csr-permission-u-01 \
     WALLY-misa-01 \
-    WALLY-AMO \
-    WALLY-LRSC \
+    WALLY-amo \
+    WALLY-lrsc \
     WALLY-trap-sret-01 \
 
 # Don't simulate these because they rely on SoC features that Spike does not offer.
 target_tests_nosim = \
-    WALLY-PMA \
-    WALLY-PERIPH \
+    WALLY-pma \
+    WALLY-periph \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
-    WALLY-MIE-01 \
-    WALLY-SIE-01 \
+    WALLY-mie-01 \
+    WALLY-sie-01 \
     WALLY-status-mie-01 \
     WALLY-status-sie-01 \
     WALLY-trap-01 \
     WALLY-trap-s-01 \
     WALLY-trap-u-01 \
     WALLY-status-tw-01 \
-    WALLY-WFI-01 \
+    WALLY-wfi-01 \
     WALLY-status-fp-enabled-01 \
-    WALLY-status-fp-disabled-01 \
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))
 
