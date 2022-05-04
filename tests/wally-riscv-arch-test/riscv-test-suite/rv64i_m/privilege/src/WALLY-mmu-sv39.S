@@ -27,7 +27,7 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-j test_loop_setup // begin test loop/table tests instead of executing inline code.
+j run_test_loop // begin test loop/table tests instead of executing inline code.
 
 INIT_TEST_TABLE
 
