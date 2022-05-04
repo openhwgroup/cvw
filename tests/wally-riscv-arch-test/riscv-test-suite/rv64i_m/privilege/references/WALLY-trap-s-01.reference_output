@@ -5,13 +5,7 @@
 00000000 # mtval of ecall (*** defined to be zero for now)
 00000000
 00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0
-00000000
-00000000 # scause from instruction addr misaligned fault
-00000000
-800003d2 # stval of faulting instruction adress (0x800003d3)
-00000000 
-00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
-00000000
+00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # scause from an instruction access fault
 00000000
 00000000 # stval of faulting instruction address (0x0)
@@ -121,13 +115,7 @@ ffffffff
 00000000 # stval of ecall (*** defined to be zero for now)
 00000000
 00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0
-00000000
-00000000 # scause from instruction addr misaligned fault
-00000000
-800003d2 # stval of faulting instruction adress (0x800003d3)
-00000000 
-00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
-00000000
+00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # scause from an instruction access fault
 00000000
 00000000 # stval of faulting instruction address (0x0)

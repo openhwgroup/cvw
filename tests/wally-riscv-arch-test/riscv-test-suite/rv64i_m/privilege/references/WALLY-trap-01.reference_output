@@ -1,11 +1,5 @@
 00000aaa # Test 5.3.1.4: readback value from writing mie to enable interrupts
-00000000
-00000000 # mcause from instruction addr misaligned fault
-00000000
-800003d2 # mtval of faulting instruction adress (0x800003d3)
-00000000 
-00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
-00000000
+00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # mcause from an instruction access fault
 00000000
 00000000 # mtval of faulting instruction address (0x0)
@@ -117,13 +111,7 @@
 fffff7ff # medeleg after attempted write of all 1's (only some bits are writeable)
 ffffffff
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable)
-00000000
-00000000 # mcause from instruction addr misaligned fault
-00000000
-800003d2 # mtval of faulting instruction adress (0x800003d3)
-00000000 
-00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
-00000000
+00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # mcause from an instruction access fault
 00000000
 00000000 # mtval of faulting instruction address (0x0)

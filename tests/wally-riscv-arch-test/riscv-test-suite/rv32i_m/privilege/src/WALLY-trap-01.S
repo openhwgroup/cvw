@@ -35,7 +35,7 @@ WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources // *** commented
 
 // test 5.3.1.4 Basic trap tests 
 
-jal cause_instr_addr_misaligned
+// instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt
@@ -61,7 +61,6 @@ jal cause_m_ext_interrupt
 WRITE_READ_CSR medeleg, 0xFFFFFFFFFFFFFFFF
 WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
-jal cause_instr_addr_misaligned
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt

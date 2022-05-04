@@ -1,10 +1,7 @@
 00000aaa # readback value from writing mie to enable interrupts
 0000000b # Test 5.3.1.4: mcause from ecall going from M mode to S mode
 00000000 # mtval of ecall (*** defined to be zero for now)
-00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0
-00000000 # scause from instruction addr misaligned fault
-8000013a # stval of faulting instruction adress
-00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
+00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # scause from an instruction access fault
 00000000 # stval of faulting instruction address (0x0)
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
@@ -59,10 +56,7 @@ fffff7ff # medeleg after attempted write of all 1's (only some bits are writeabl
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable)
 0000000b # scause from M mode ecall
 00000000 # stval of ecall (*** defined to be zero for now)
-00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0
-00000000 # scause from instruction addr misaligned fault
-8000013a # stval of faulting instruction adress
-00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
+00001800 # masked out mstatus.MPP = 11, mstatus.MPIE = 0, and mstatus.MIE = 0 # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # scause from an instruction access fault
 00000000 # stval of faulting instruction address (0x0)
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
