@@ -233,11 +233,11 @@ s_ext_loop:
 end_trap_triggers:
 .endm
 
-.macro TRAP_HANDLER MODE, VECTORED=1, DEBUG=0
+.macro TRAP_HANDLER MODE, VECTORED=1, EXT_SIGNATURE=0
     // MODE decides which mode this trap handler will be taken in (M or S mode)
     // Vectored decides whether interrupts are handled with the vector table at trap_handler_MODE (1)
     //      vs Using the non-vector approach the rest of the trap handler takes (0)
-    // DEBUG decides whether we will print mtval a string with status.mpie, status.mie, and status.mpp to the signature (1)
+    // EXT_SIGNATURE decides whether we will print mtval a string with status.mpie, status.mie, and status.mpp to the signature (1)
     //      vs not saving that info to the signature (0)
 
 
@@ -329,7 +329,7 @@ trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since w
     addi t1, t1, 4     
     addi a6, a6, 4    // update pointers for logging results
 
-.if (\DEBUG\() == 1) // record extra information (MTVAL, some status bits) about traps
+.if (\EXT_SIGNATURE\() == 1) // record extra information (MTVAL, some status bits) about traps
     csrr ra, \MODE\()tval
     sw ra, 0(a6)
     addi t1, t1, 4     
@@ -862,7 +862,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .macro INIT_TEST_TABLE // *** Consider renaming this test. to what???
 
-test_loop_setup:
+run_test_loop:
     la t0, test_cases
 
 test_loop:

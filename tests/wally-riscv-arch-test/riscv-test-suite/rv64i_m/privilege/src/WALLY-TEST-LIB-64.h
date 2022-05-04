@@ -225,7 +225,6 @@ cause_s_ext_interrupt_GPIO:
     sw t4, 0x28(t3)  // set first pin to interrupt on a rising value
     sw t4, 0x0C(t3)  // write a 1 to the first output pin (cause interrupt)
 s_ext_loop:
-    //wfi
     addi a3, a3, -1
     bnez a3, s_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
@@ -233,11 +232,11 @@ s_ext_loop:
 end_trap_triggers:
 .endm
 
-.macro TRAP_HANDLER MODE, VECTORED=1, DEBUG=0
+.macro TRAP_HANDLER MODE, VECTORED=1, EXT_SIGNATURE=0
     // MODE decides which mode this trap handler will be taken in (M or S mode)
     // Vectored decides whether interrupts are handled with the vector table at trap_handler_MODE (1)
     //      vs Using the non-vector approach the rest of the trap handler takes (0)
-    // DEBUG decides whether we will print mtval a string with status.mpie, status.mie, and status.mpp to the signature (1)
+    // EXT_SIGNATURE decides whether we will print mtval a string with status.mpie, status.mie, and status.mpp to the signature (1)
     //      vs not saving that info to the signature (0)
 
 
@@ -330,7 +329,7 @@ trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since w
     addi t1, t1, 8     
     addi a6, a6, 8    // update pointers for logging results
 
-.if (\DEBUG\() == 1) // record extra information (MTVAL, some status bits) about traps
+.if (\EXT_SIGNATURE\() == 1) // record extra information (MTVAL, some status bits) about traps
     csrr ra, \MODE\()tval
     sd ra, 0(a6)
     addi t1, t1, 8     
@@ -890,7 +889,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
 
 .macro INIT_TEST_TABLE
 
-test_loop_setup:
+run_test_loop:
     la t0, test_cases
 
 test_loop:
