@@ -31,6 +31,8 @@ TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on tr
 
 li x28, 0x2
 csrs sstatus, x28 // set sstatus.SIE bit to 1
+li x28, 0x8
+csrc mstatus, x28 // clear mstatus.MIE bit
 WRITE_READ_CSR sie, 0x0 // force zeroing out mie CSR.
 
 

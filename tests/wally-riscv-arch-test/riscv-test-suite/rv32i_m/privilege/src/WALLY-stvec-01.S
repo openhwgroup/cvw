@@ -34,6 +34,8 @@ TRAP_HANDLER s, VECTORED=0, EXT_SIGNATURE=1 // turn off vectored interrupts, whi
 
 li x28, 0x2
 csrs sstatus, x28 // set sstatus.SIE bit to 1
+li x28, 0x8
+csrc mstatus, x28 // clear mstatus.MIE bit
 WRITE_READ_CSR mie, 0xFFFF
 WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
