@@ -40,7 +40,7 @@ WRITE_READ_CSR mie, 0xFFFF
 
 GOTO_U_MODE
 
-jal cause_instr_addr_misaligned
+// instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt
@@ -70,7 +70,6 @@ WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
 GOTO_U_MODE
 
-jal cause_instr_addr_misaligned
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt

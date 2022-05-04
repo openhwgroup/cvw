@@ -40,7 +40,7 @@ WRITE_READ_CSR mie, 0xFFFF // sie is a subset of mie, so writing this also enabl
 
 GOTO_S_MODE
 
-jal cause_instr_addr_misaligned
+// instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt
@@ -73,7 +73,6 @@ WRITE_READ_CSR mideleg, 0xFFFFFFFFFFFFFFFF
 
 GOTO_S_MODE // Since we're running in M mode, this ecall will NOT be delegated to S mode
 
-jal cause_instr_addr_misaligned
 jal cause_instr_access
 jal cause_illegal_instr
 jal cause_breakpnt
