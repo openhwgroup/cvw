@@ -14,13 +14,13 @@
 00000000
 00000003 # mcause from Breakpoint
 00000000
-80000404 # mtval of breakpoint instruction adress (0x80000404)
+80000400 # mtval of breakpoint instruction adress (0x80000400)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
 00000004 # mcause from load address misaligned
 00000000
-8000040d # mtval of misaligned address (0x8000040d)
+80000409 # mtval of misaligned address (0x80000409)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -32,7 +32,7 @@
 00000000
 00000006 # mcause from store misaligned
 00000000
-80000429 # mtval of address with misaligned store instr (0x80000429)
+80000421 # mtval of address with misaligned store instr (0x80000421)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -126,13 +126,13 @@ ffffffff
 00000000
 00000003 # mcause from Breakpoint
 00000000
-80000404 # mtval of breakpoint instruction adress (0x80000404)
+80000400 # mtval of breakpoint instruction adress (0x80000400)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
 00000004 # mcause from load address misaligned
 00000000
-8000040d # mtval of misaligned address (0x8000040d)
+80000409 # mtval of misaligned address (0x80000409)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000
@@ -144,7 +144,7 @@ ffffffff
 00000000
 00000006 # mcause from store misaligned
 00000000
-80000429 # mtval of address with misaligned store instr (0x80000429)
+80000421 # mtval of address with misaligned store instr (0x80000421)
 00000000
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000000

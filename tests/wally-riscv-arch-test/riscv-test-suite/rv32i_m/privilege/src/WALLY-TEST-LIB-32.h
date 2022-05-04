@@ -75,10 +75,9 @@ cause_instr_addr_misaligned:
     ret
 
 cause_instr_access:
-    la t3, 0x0 // address zero is an address with no memory
     sw ra, -4(sp) // push the return adress ontot the stack
     addi sp, sp, -4
-    jalr t3 // cause instruction access trap
+    jalr zero // cause instruction access trap (address zero is an address with no memory)
     lw ra, 0(sp) // pop return adress back from the stack
     addi sp, sp, 4
     ret
@@ -98,8 +97,7 @@ cause_load_addr_misaligned:
     ret
 
 cause_load_acc:
-    la t3, 0         // 0 is an address with no memory
-    lw t4, 0(t3)    // load from unimplemented address
+    lw t4, 0(zero)    // load from unimplemented address (zero)
     ret
 
 cause_store_addr_misaligned:
@@ -109,8 +107,7 @@ cause_store_addr_misaligned:
     ret
 
 cause_store_acc: 
-    la t3, 0         // 0 is an address with no memory
-    sw t4, 0(t3)     // store to unimplemented address
+    sw t4, 0(zero)     // store to unimplemented address (zero)
     ret
 
 cause_ecall:
@@ -134,7 +131,6 @@ cause_m_time_interrupt:
 nowrap:
     sw t3, 0(t4)         // store into least significant word of MTIMECMP
 time_loop:
-    //wfi // *** this may now spin us forever in the loop???
     addi a3, a3, -1
     bnez a3, time_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
@@ -188,7 +184,6 @@ cause_m_ext_interrupt:
     sw t4, 0x28(t3)  // set first pin to interrupt on a rising value
     sw t4, 0x0C(t3)  // write a 1 to the first output pin (cause interrupt)
 m_ext_loop:
-    //wfi
     addi a3, a3, -1
     bnez a3, m_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
@@ -225,7 +220,6 @@ cause_s_ext_interrupt_GPIO:
     sw t4, 0x28(t3)  // set first pin to interrupt on a rising value
     sw t4, 0x0C(t3)  // write a 1 to the first output pin (cause interrupt)
 s_ext_loop:
-    //wfi
     addi a3, a3, -1
     bnez a3, s_ext_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret

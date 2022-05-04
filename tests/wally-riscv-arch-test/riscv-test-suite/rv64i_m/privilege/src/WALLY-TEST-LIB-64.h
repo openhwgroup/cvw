@@ -77,10 +77,9 @@ cause_instr_addr_misaligned:
     ret
 
 cause_instr_access:
-    la t3, 0x0 // address zero is an address with no memory
     sd ra, -8(sp) // push the return adress onto the stack
     addi sp, sp, -8
-    jalr t3 // cause instruction access trap
+    jalr zero // cause instruction access trap (address zero is an address with no memory)
     ld ra, 0(sp) // pop return adress back from the stack
     addi sp, sp, 8
     ret
@@ -100,8 +99,7 @@ cause_load_addr_misaligned:
     ret
 
 cause_load_acc:
-    la t3, 0         // 0 is an address with no memory
-    lw t4, 0(t3)    // load from unimplemented address
+    lw t4, 0(zero)    // load from unimplemented address ( zero)
     ret
 
 cause_store_addr_misaligned:
@@ -111,8 +109,7 @@ cause_store_addr_misaligned:
     ret
 
 cause_store_acc: 
-    la t3, 0         // 0 is an address with no memory
-    sw t4, 0(t3)     // store to unimplemented address
+    sw t4, 0(zero)     // store to unimplemented address (zero)
     ret
 
 cause_ecall:
