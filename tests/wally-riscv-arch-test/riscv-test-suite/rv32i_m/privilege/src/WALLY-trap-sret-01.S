@@ -25,7 +25,7 @@
 
 INIT_TESTS
 
-TRAP_HANDLER m, DEBUG=1
+TRAP_HANDLER m, EXT_SIGNATURE=1
 
 // test 5.3.1.6 Interrupt enabling and priority tests 
 

@@ -29,8 +29,8 @@ CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtva
 
 // test 5.3.1.4 Basic trap tests 
 
-TRAP_HANDLER m, DEBUG=1 // turn on recording mtval and status bits on traps
-TRAP_HANDLER s, DEBUG=1 // have S mode trap handler as well
+TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on traps
+TRAP_HANDLER s, EXT_SIGNATURE=1 // have S mode trap handler as well
 
 // Like WALLY-trap, cause all the same traps from U mode and make sure they go to machine mode with zeroed mideleg, medeleg
 
@@ -61,7 +61,7 @@ jal cause_m_ext_interrupt
 
 // Now delegate all traps to S mode and attempt them again, ensuring they now go to the S mode trap handler
 // We can tell which one becuase the different trap handler modes write different bits of the status register 
-// to the output when debug is on.
+// to the output when EXT_SIGNATURE is on.
 
 GOTO_M_MODE // so we can write the delegate registers
 
