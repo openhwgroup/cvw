@@ -32,7 +32,7 @@ CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtva
 TRAP_HANDLER m, VECTORED=0, EXT_SIGNATURE=1 // turn off vectored interrupts, while turning on recording of mstatus bits.
 
 li x28, 0x8
-csrs mstatus, x28 // set sstatus.MIE bit to 1
+csrs mstatus, x28 // set mstatus.MIE bit to 1
 WRITE_READ_CSR mie, 0xFFF
 
 // cause traps, ensuring that we DONT go through the vectored part of the trap handler

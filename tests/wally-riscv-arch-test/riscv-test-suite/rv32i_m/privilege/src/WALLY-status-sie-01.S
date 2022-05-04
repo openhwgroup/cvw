@@ -32,6 +32,8 @@ TRAP_HANDLER s, EXT_SIGNATURE=1 // neccessary to handle s mode interrupts.
 
 li x28, 0x2
 csrs sstatus, x28 // set sstatus.SIE bit to 1
+li x28, 0x8
+csrc mstatus, x28 // clear mstatus.MIE bit
 WRITE_READ_CSR mie, 0xFFF // enable all interrupts, including supervisor ones
 WRITE_READ_CSR mideleg 0xFFFF // delegate all interrupts to S mode.
 

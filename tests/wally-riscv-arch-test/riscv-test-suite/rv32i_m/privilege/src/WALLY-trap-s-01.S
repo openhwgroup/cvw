@@ -36,6 +36,8 @@ TRAP_HANDLER s, EXT_SIGNATURE=1 // have S mode trap handler as well
 
 li x28, 0x2
 csrs sstatus, x28 // set sstatus.SIE bit to 1
+li x28, 0x8
+csrc mstatus, x28 // clear mstatus.MIE bit
 WRITE_READ_CSR mie, 0xFFFF // sie is a subset of mie, so writing this also enables sie.
 
 GOTO_S_MODE
