@@ -28,21 +28,21 @@
 # Description: Makefrag for RV32I architectural tests
 
 rv32i_sc_tests = \
-    WALLY-MMU-SV32 \
-    WALLY-PMP \
-    WALLY-CSR-permission-s-01 \
-    WALLY-CSR-permission-u-01 \
+    WALLY-mmu-sv32 \
+    WALLY-pmp \
+    WALLY-csr-permission-s-01 \
+    WALLY-csr-permission-u-01 \
     WALLY-minfo-01 \
     WALLY-misa-01 \
-    WALLY-AMO \
-    WALLY-LRSC \
+    WALLY-amo \
+    WALLY-lrsc \
 
 target_tests_nosim = \
-    WALLY-PMA \
+    WALLY-pma \
     WALLY-mtvec-01 \
     WALLY-stvec-01 \
-    WALLY-MIE-01 \
-    WALLY-SIE-01 \
+    WALLY-mie-01 \
+    WALLY-sie-01 \
     WALLY-status-mie-01 \
     WALLY-status-sie-01 \
     WALLY-trap-sret-01 \
@@ -50,9 +50,8 @@ target_tests_nosim = \
     WALLY-trap-s-01 \
     WALLY-trap-u-01 \
     WALLY-status-tw-01 \
-    WALLY-WFI-01 \
+    WALLY-wfi-01 \
     WALLY-status-fp-enabled-01 \
-    WALLY-status-fp-disabled-01 \
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 
