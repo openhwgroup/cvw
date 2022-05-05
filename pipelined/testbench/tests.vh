@@ -1550,7 +1550,7 @@ string wally32i[] = '{
     "rv32i_m/privilege/WALLY-status-mie-01", "5080",
     "rv32i_m/privilege/WALLY-status-sie-01", "5080",
     "rv32i_m/privilege/WALLY-trap-sret-01", "5080",
-//    "rv32i_m/privilege/WALLY-status-tw-01", "5080", *** this test doesn't pass yet because PC counts up while wfi is spinning
+    "rv32i_m/privilege/WALLY-status-tw-01", "5080", 
     "rv32i_m/privilege/WALLY-wfi-01", "5080"
  };
 

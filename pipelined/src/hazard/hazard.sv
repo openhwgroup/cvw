@@ -63,7 +63,7 @@ module hazard(
   assign StallFCause = CSRWritePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);
-  assign StallMCause = wfiM & ~TrapM; // 0; // *** dh for wfi
+  assign StallMCause = wfiM & ~TrapM; 
   assign StallWCause = LSUStallM | IFUStallF;
 
   assign StallF = StallFCause | StallD;
