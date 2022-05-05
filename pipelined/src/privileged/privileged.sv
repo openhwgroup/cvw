@@ -135,7 +135,7 @@ module privileged (
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
-  if (`U_SUPPORTED) begin
+  if (`U_SUPPORTED) begin:wfi
     logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
     floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
@@ -158,7 +158,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .wfiM,
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .wfiM, .InterruptM,
           .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
