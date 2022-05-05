@@ -38,7 +38,7 @@ module hazard(
 (* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)        input logic  InvalidateICacheM,
+(* mark_debug = "true" *)        input logic  InvalidateICacheM, wfiM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
 (* mark_debug = "true" *)	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
@@ -63,7 +63,7 @@ module hazard(
   assign StallFCause = CSRWritePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);
-  assign StallMCause = 0; 
+  assign StallMCause = wfiM & ~TrapM; // 0; // *** dh for wfi
   assign StallWCause = LSUStallM | IFUStallF;
 
   assign StallF = StallFCause | StallD;

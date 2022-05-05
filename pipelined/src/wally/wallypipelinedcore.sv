@@ -112,6 +112,7 @@ module wallypipelinedcore (
   logic [1:0]             PrivilegeModeW;
   logic [`XLEN-1:0]     PTE;
   logic [1:0]             PageType;
+  logic              wfiM;
 
   // PMA checker signals
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
@@ -305,7 +306,7 @@ module wallypipelinedcore (
      .FPUStallD, .FStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-     .InvalidateICacheM,
+     .InvalidateICacheM, .wfiM,
      // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW
@@ -340,7 +341,7 @@ module wallypipelinedcore (
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-         .FRM_REGW,.BreakpointFaultM, .EcallFaultM
+         .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM
       );
    end else begin
       assign CSRReadValW = 0;
