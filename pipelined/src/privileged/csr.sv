@@ -57,7 +57,7 @@ module csr #(parameter
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
   output logic [1:0]       STATUS_MPP,
-  output logic             STATUS_SPP, STATUS_TSR,
+  output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
   output logic [`XLEN-1:0]      MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
@@ -86,7 +86,6 @@ module csr #(parameter
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteSSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
-  logic            STATUS_TVM;
   logic            WriteFRMM, WriteFFLAGSM;
 
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
