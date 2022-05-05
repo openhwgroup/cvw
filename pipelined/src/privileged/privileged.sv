@@ -78,8 +78,7 @@ module privileged (
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
   output logic [2:0]       FRM_REGW,
-  output logic             BreakpointFaultM, EcallFaultM
-
+  output logic             BreakpointFaultM, EcallFaultM, wfiM
 );
 
   logic [1:0] NextPrivilegeModeM;
@@ -89,7 +88,7 @@ module privileged (
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
-  logic sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM;
+  logic sretM, mretM, ecallM, ebreakM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;

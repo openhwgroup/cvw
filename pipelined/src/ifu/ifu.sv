@@ -114,8 +114,6 @@ module ifu (
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
   logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
-  logic [31:0] InstrNextF;
-  logic         wfiD;
 
   assign PCFExt = {2'b00, PCFSpill};
 
@@ -134,13 +132,6 @@ module ifu (
     assign PostSpillInstrRawF = InstrRawF;
     assign {SelNextSpillF, CompressedF} = 0;
   end
-
-  /////////////////////////////////////////////////////////////////////////////////////////////
-  // WFI
-  /////////////////////////////////////////////////////////////////////////////////////////////
-
-  assign wfiD = (InstrD[6:0] == 7'b1110011 && InstrD[31:20] == 12'b000100000101); // WFI in decode stage
-  assign InstrNextF = wfiD ? InstrD : PostSpillInstrRawF; // on WFI, keep replaying WFI
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory management
@@ -247,7 +238,7 @@ module ifu (
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
   assign CPUBusy = StallF & ~SelNextSpillF;
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, FlushD ? nop : InstrNextF /*PostSpillInstrRawF*/, nop, InstrRawD);
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic
