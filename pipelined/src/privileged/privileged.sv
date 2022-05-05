@@ -99,7 +99,7 @@ module privileged (
   logic MTrapM, STrapM, UTrapM;
   (* mark_debug = "true" *)  logic InterruptM; 
 
-  logic       STATUS_SPP, STATUS_TSR, STATUS_TW; 
+  logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
   logic md;
@@ -148,7 +148,7 @@ module privileged (
 
    privdec pmd(.InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM, .WFITimeoutM,
-              .PrivilegeModeW, .STATUS_TSR, .STATUS_FS, .IllegalInstrFaultM, 
+              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_FS, .IllegalInstrFaultM, 
               .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
@@ -166,7 +166,7 @@ module privileged (
           .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
           .NextPrivilegeModeM, .PrivilegeModeW,
           .CauseM, .NextFaultMtvalM, .STATUS_MPP,
-          .STATUS_SPP, .STATUS_TSR,
+          .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
           .MEDELEG_REGW, 
           .SATP_REGW,
