@@ -348,6 +348,7 @@ module wallypipelinedcore (
       assign PrivilegedNextPCM = 0;
       assign RetM = 0;
       assign TrapM = 0;
+      assign wfiM = 0;
       assign ITLBFlushF = 0;
       assign DTLBFlushM = 0;
    end
