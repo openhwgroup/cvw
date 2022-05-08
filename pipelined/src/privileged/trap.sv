@@ -56,7 +56,7 @@ module trap (
 );
 
   logic MIntGlobalEnM, SIntGlobalEnM;
-  (* mark_debug = "true" *) logic [11:0] MPendingIntsM, SPendingIntsM, MValidIntsM, SValidIntsM; 
+  (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
   logic Exception1M;
@@ -65,16 +65,12 @@ module trap (
   // interrupt if any sources are pending
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
   // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
-  // MValidIntsM[i] = ((priv == M & mstatus.MIE) | (priv < M)) & mip[i] & mie[i] & ~mideleg[i]
-  // Sinterrupt[i] = ((priv == S & sstatus.SIE) | (priv < S)) & sip[i] & sie[i]
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) | ((PrivilegeModeW == `S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
-  assign MPendingIntsM = MIP_REGW & MIE_REGW;
-  assign SPendingIntsM = SIP_REGW & SIE_REGW;
-  assign IntPendingM = |MPendingIntsM;
-  assign MValidIntsM = {12{MIntGlobalEnM}} & MPendingIntsM & ~MIDELEG_REGW;
-  assign SValidIntsM = {12{SIntGlobalEnM}} & SPendingIntsM;
-  assign InterruptM = (|MValidIntsM || |SValidIntsM) && InstrValidM && ~(CommittedM);  // *** RT. CommittedM is a temporary hack to prevent integer division from having an interrupt during divide.
+  assign PendingIntsM = MIP_REGW & MIE_REGW;
+  assign IntPendingM = |PendingIntsM;
+  assign ValidIntsM = {12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW; 
+  assign InterruptM = (|ValidIntsM) && InstrValidM && ~(CommittedM);  // *** RT. CommittedM is a temporary hack to prevent integer division from having an interrupt during divide.
 
   // Trigger Traps and RET
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
@@ -122,15 +118,12 @@ module trap (
   // Exceptions are of lower priority than all interrupts (3.1.9)
   always_comb
     if      (reset)                 CauseM = 0; // hard reset 3.3
-    else if (MValidIntsM[11])     CauseM = (1 << (`XLEN-1)) + 11; // Machine External Int
-    else if (MValidIntsM[3])      CauseM = (1 << (`XLEN-1)) + 3;  // Machine Sw Int
-    else if (MValidIntsM[7])      CauseM = (1 << (`XLEN-1)) + 7;  // Machine Timer Int
-    else if (MValidIntsM[9])      CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int handled by M-mode
-    else if (MValidIntsM[1])      CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int       handled by M-mode
-    else if (MValidIntsM[5])      CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int    handled by M-mode
-    else if (SValidIntsM[9])      CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int handled by S-mode
-    else if (SValidIntsM[1])      CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int       handled by S-mode
-    else if (SValidIntsM[5])      CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int    handled by S-mode
+    else if (ValidIntsM[11])     CauseM = (1 << (`XLEN-1)) + 11; // Machine External Int
+    else if (ValidIntsM[3])      CauseM = (1 << (`XLEN-1)) + 3;  // Machine Sw Int
+    else if (ValidIntsM[7])      CauseM = (1 << (`XLEN-1)) + 7;  // Machine Timer Int
+    else if (ValidIntsM[9])      CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int 
+    else if (ValidIntsM[1])      CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int       
+    else if (ValidIntsM[5])      CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int    
     else if (InstrPageFaultM)       CauseM = 12;
     else if (InstrAccessFaultM)     CauseM = 1;
     else if (IllegalInstrFaultM)    CauseM = 2;
