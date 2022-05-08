@@ -86,7 +86,7 @@ module csrm #(parameter
     output 		     var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
     output 		     var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
     (* mark_debug = "true" *)  input logic [11:0] 	     MIP_REGW, MIE_REGW,
-    output logic 	     WriteMSTATUSM,
+    output logic 	     WriteMSTATUSM, WriteMSTATUSHM,
     output logic 	     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
   );
 
@@ -134,7 +134,7 @@ module csrm #(parameter
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS) & InstrValidNotFlushedM;
-  // writes to MSTATUSH are not yet supported because the register is always 0
+  assign WriteMSTATUSHM = CSRMWriteM & (CSRAdrM == MSTATUSH) & InstrValidNotFlushedM & (`XLEN==32);
   assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC) & InstrValidNotFlushedM;
   assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG) & InstrValidNotFlushedM;
   assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG) & InstrValidNotFlushedM;

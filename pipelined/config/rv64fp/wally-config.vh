@@ -53,6 +53,7 @@
 `define IMEM `MEM_CACHE
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
+`define BIGENDIAN_SUPPORTED 0
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32

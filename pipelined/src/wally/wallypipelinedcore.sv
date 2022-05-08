@@ -113,6 +113,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0]     PTE;
   logic [1:0]             PageType;
   logic              wfiM, IntPendingM;
+  logic             SelHPTW;
 
   // PMA checker signals
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
@@ -163,6 +164,7 @@ module wallypipelinedcore (
   logic             ICacheAccess;
   logic             BreakpointFaultM, EcallFaultM;
   logic             InstrDAPageFaultF;
+  logic             BigEndianM;
   
   ifu ifu(
     .clk, .reset,
@@ -257,7 +259,7 @@ module wallypipelinedcore (
   .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize,
 
     // connect to csr or privilege and stay the same.
-    .PrivilegeModeW,           // connects to csr
+    .PrivilegeModeW, .BigEndianM,          // connects to csr
     .PMPCFG_ARRAY_REGW,     // connects to csr
     .PMPADDR_ARRAY_REGW,    // connects to csr
     // hptw keep i/o
@@ -276,7 +278,7 @@ module wallypipelinedcore (
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrDAPageFaultF,
     
-    .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF,
+    .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                     // change to LSUStallM
 
 
@@ -336,12 +338,12 @@ module wallypipelinedcore (
          // Trap signals from pmp/pma in mmu
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
-         .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM,
+         .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
          .ExceptionM, .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-         .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM
+         .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM
       );
    end else begin
       assign CSRReadValW = 0;
@@ -351,6 +353,7 @@ module wallypipelinedcore (
       assign wfiM = 0;
       assign ITLBFlushF = 0;
       assign DTLBFlushM = 0;
+      assign BigEndianM = 0;
    end
    if (`M_SUPPORTED) begin:mdu
       muldiv mdu(

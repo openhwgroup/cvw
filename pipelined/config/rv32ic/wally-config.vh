@@ -54,6 +54,7 @@
 `define IBUS 0
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
+`define BIGENDIAN_SUPPORTED 0
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 0
