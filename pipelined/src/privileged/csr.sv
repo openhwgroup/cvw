@@ -56,6 +56,7 @@ module csr #(parameter
   input  logic             ICacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
+  input  logic             SelHPTW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
@@ -72,7 +73,7 @@ module csr #(parameter
   output logic [2:0]       FRM_REGW, 
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
   output logic [`XLEN-1:0] CSRReadValW,
-  output logic             IllegalCSRAccessM
+  output logic             IllegalCSRAccessM, BigEndianM
 );
 
   localparam NOP = 32'h13;
@@ -84,7 +85,7 @@ module csr #(parameter
  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
-  logic            WriteMSTATUSM, WriteSSTATUSM;
+  logic            WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic            WriteFRMM, WriteFFLAGSM;
 
@@ -136,13 +137,13 @@ module csr #(parameter
               .MExtIntM, .SExtIntM, .TimerIntM, .SwIntM,
               .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW, .IP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW,
-              .WriteMSTATUSM, .WriteSSTATUSM, 
+              .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-              .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM,
+              .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM, .SelHPTW,
               .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
               .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
-              .STATUS_FS);
+              .STATUS_FS, .BigEndianM);
   csrc  counters(.clk, .reset,
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,   
               .InstrValidM, .LoadStallD, .CSRMWriteM,
@@ -157,7 +158,7 @@ module csr #(parameter
               .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
               .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
               .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-              .MIP_REGW, .MIE_REGW, .WriteMSTATUSM,
+              .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
               .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
   csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM, .StallW,
               .CSRSWriteM, .STrapM, .CSRAdrM,

@@ -67,6 +67,7 @@ module privileged (
   input logic InstrAccessFaultF,
   input logic LoadAccessFaultM,
   input logic StoreAmoAccessFaultM,
+  input logic SelHPTW,
 
   output logic 		   ExceptionM,
   output logic		   IllegalFPUInstrE,
@@ -78,7 +79,7 @@ module privileged (
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
   output logic [2:0]       FRM_REGW,
-  output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM
+  output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
   logic [1:0] NextPrivilegeModeM;
@@ -142,6 +143,7 @@ module privileged (
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
   end else assign WFITimeoutM = 0;
 
+
   ///////////////////////////////////////////
   // decode privileged instructions
   ///////////////////////////////////////////
@@ -165,7 +167,8 @@ module privileged (
           .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
           .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
           .NextPrivilegeModeM, .PrivilegeModeW,
-          .CauseM, .NextFaultMtvalM, .STATUS_MPP,
+          .CauseM, .NextFaultMtvalM, .SelHPTW,
+          .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
           .MEDELEG_REGW, 
@@ -178,7 +181,7 @@ module privileged (
           .SetFflagsM,
           .FRM_REGW, 
           .CSRReadValW,
-          .IllegalCSRAccessM);
+          .IllegalCSRAccessM, .BigEndianM);
 
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 

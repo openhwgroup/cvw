@@ -33,31 +33,34 @@
 
 module csrsr (
   input  logic             clk, reset, StallW,
-  input  logic             WriteMSTATUSM, WriteSSTATUSM, 
+  input  logic             WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM, 
   input  logic             TrapM, FRegWriteM,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
   input  logic             mretM, sretM, 
   input  logic             WriteFRMM, WriteFFLAGSM,
   input  logic [`XLEN-1:0] CSRWriteValM,
+  input  logic             SelHPTW,
   output logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM,
   output logic             STATUS_MPRV, STATUS_TVM,
-  output logic [1:0]       STATUS_FS
+  output logic [1:0]       STATUS_FS,
+  output logic             BigEndianM
 );
   
   logic STATUS_SD, STATUS_TW_INT, STATUS_TSR_INT, STATUS_TVM_INT, STATUS_MXR_INT, STATUS_SUM_INT, STATUS_MPRV_INT;
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
+  logic nextMBE, nextSBE;
 
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
   // *** consider adding MBE, SBE, UBE fields, parameterized to be fixed or adjustable
   if (`XLEN==64) begin: csrsr64 // RV64
-    assign MSTATUS_REGW = {STATUS_SD, 25'b0, STATUS_MBE, STATUS_UBE, STATUS_SXL, STATUS_UXL, 9'b0,
+    assign MSTATUS_REGW = {STATUS_SD, 25'b0, STATUS_MBE, STATUS_SBE, STATUS_SXL, STATUS_UXL, 9'b0,
                           STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
                           STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
                           STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0,
@@ -80,14 +83,23 @@ module csrsr (
                           /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
   end
 
+  // extract values to write to upper status register on 64/32-bit access
+  if (`XLEN==64) begin:upperstatus
+    assign nextMBE = CSRWriteValM[37] & `BIGENDIAN_SUPPORTED;
+    assign nextSBE = CSRWriteValM[36] & `S_SUPPORTED & `BIGENDIAN_SUPPORTED;
+  end else begin:upperstatus
+    assign nextMBE = STATUS_MBE;
+    assign nextSBE = STATUS_SBE;
+  end
+
   // harwired STATUS bits
   assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
   assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
-  assign STATUS_UBE = 0; // little-endian
+/*  assign STATUS_UBE = 0; // little-endian
   assign STATUS_SBE = 0; // little-endian
-  assign STATUS_MBE = 0; // little-endian
+  assign STATUS_MBE = 0; // little-endian */
   // SXL and UXL bits only matter for RV64.  Set to 10 for RV64 if mode is supported, or 0 if not
   assign STATUS_SXL = `S_SUPPORTED ? 2'b10 : 2'b00; // 10 if supervisor mode supported
   assign STATUS_UXL = `U_SUPPORTED ? 2'b10 : 2'b00; // 10 if user mode supported
@@ -100,7 +112,29 @@ module csrsr (
   always_comb
     if      (CSRWriteValM[12:11] == `U_MODE & `U_SUPPORTED) STATUS_MPP_NEXT = `U_MODE;
     else if (CSRWriteValM[12:11] == `S_MODE & `S_SUPPORTED) STATUS_MPP_NEXT = `S_MODE;
-    else                                                     STATUS_MPP_NEXT = `M_MODE;
+    else                                                    STATUS_MPP_NEXT = `M_MODE;
+
+  ///////////////////////////////////////////
+  // Endianness logic Privileged Spec 3.1.6.4
+  ///////////////////////////////////////////
+
+  if (`BIGENDIAN_SUPPORTED) begin: endianmux
+    // determine whether bit endian accesses should be made
+    logic [1:0] EndiannessPrivMode;
+    always_comb begin
+      if      (SelHPTW)                                  EndiannessPrivMode = `S_MODE;
+      else if (PrivilegeModeW == `M_MODE & STATUS_MPRV)  EndiannessPrivMode = STATUS_MPP;
+      else                                               EndiannessPrivMode = PrivilegeModeW;
+
+      case (EndiannessPrivMode) 
+        `M_MODE: BigEndianM = STATUS_MBE;
+        `S_MODE: BigEndianM = STATUS_SBE;
+        default: BigEndianM = STATUS_UBE;
+      endcase
+    end
+  end else begin: endianmux
+    assign BigEndianM = 0;
+  end
 
   // registers for STATUS bits
   // complex register with reset, write enable, and the ability to update other bits in certain cases
@@ -113,12 +147,15 @@ module csrsr (
       STATUS_SUM_INT <= #1 0;
       STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
       STATUS_FS_INT <= #1 `F_SUPPORTED ? 2'b01 : 2'b00;
-      STATUS_MPP <= #1 0; //`M_MODE;
-      STATUS_SPP <= #1 0; //1'b1;
-      STATUS_MPIE <= #1 0; //1;
-      STATUS_SPIE <= #1 0; //`S_SUPPORTED;
-      STATUS_MIE <= #1 0; // Per Priv 3.3
-      STATUS_SIE <= #1 0; //`S_SUPPORTED;
+      STATUS_MPP <= #1 0; 
+      STATUS_SPP <= #1 0; 
+      STATUS_MPIE <= #1 0; 
+      STATUS_SPIE <= #1 0; 
+      STATUS_MIE <= #1 0; 
+      STATUS_SIE <= #1 0; 
+      STATUS_MBE <= #1 0;
+      STATUS_SBE <= #1 0;
+      STATUS_UBE <= #1 0;
     end else if (~StallW) begin
       if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #1 2'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else;
  
@@ -161,6 +198,12 @@ module csrsr (
         STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
         STATUS_MIE <= #1 CSRWriteValM[3];
         STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
+        STATUS_UBE <= #1 CSRWriteValM[6]  & `U_SUPPORTED & `BIGENDIAN_SUPPORTED;
+        STATUS_MBE <= #1 nextMBE;
+        STATUS_SBE <= #1 nextSBE;
+      end else if (WriteMSTATUSHM) begin
+        STATUS_MBE <= #1 CSRWriteValM[5] & `BIGENDIAN_SUPPORTED;
+        STATUS_SBE <= #1 CSRWriteValM[4] & `S_SUPPORTED & `BIGENDIAN_SUPPORTED;
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];
@@ -168,6 +211,7 @@ module csrsr (
         STATUS_SPP <= #1 `S_SUPPORTED & CSRWriteValM[8];
         STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
         STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
+        STATUS_UBE <= #1 CSRWriteValM[6] & `U_SUPPORTED & `BIGENDIAN_SUPPORTED;
      end 
     end
 endmodule

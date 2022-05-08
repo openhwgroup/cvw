@@ -210,17 +210,17 @@ module hptw
 
 	// Initial state and misalignment for RV32/64
 	if (`XLEN == 32) begin
-	assign InitialWalkerState = L1_ADR;
-	assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
-		// *** Possible bug - should be L1_ADR?
-	assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
+		assign InitialWalkerState = L1_ADR;
+		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
+			// *** Possible bug - should be L1_ADR?
+		assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
 	end else begin
-	logic  GigapageMisaligned, TerapageMisaligned;
-	assign InitialWalkerState = (SvMode == `SV48) ? L3_ADR : L2_ADR;
-	assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
-	assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
-	assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
-	assign Misaligned = ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned);
+		logic  GigapageMisaligned, TerapageMisaligned;
+		assign InitialWalkerState = (SvMode == `SV48) ? L3_ADR : L2_ADR;
+		assign TerapageMisaligned = |(CurrentPPN[26:0]); // must have zero PPN2, PPN1, PPN0
+		assign GigapageMisaligned = |(CurrentPPN[17:0]); // must have zero PPN1 and PPN0
+		assign MegapageMisaligned = |(CurrentPPN[8:0]); // must have zero PPN0		  
+		assign Misaligned = ((WalkerState == L2_ADR) & TerapageMisaligned) | ((WalkerState == L1_ADR) & GigapageMisaligned) | ((WalkerState == L0_ADR) & MegapageMisaligned);
 	end
 
 	// Page Table Walker FSM

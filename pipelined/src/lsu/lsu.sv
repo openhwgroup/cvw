@@ -53,7 +53,8 @@ module lsu (
    input logic [`XLEN-1:0]  WriteDataE, 
    output logic [`XLEN-1:0] ReadDataM,
    // cpu privilege
-   input logic [1:0]        PrivilegeModeW,
+   input logic [1:0]        PrivilegeModeW, 
+   input logic              BigEndianM,
    input logic              DTLBFlushM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
@@ -77,7 +78,7 @@ module lsu (
    input logic              InstrDAPageFaultF,
    output logic [`XLEN-1:0] PTE,
    output logic [1:0]       PageType,
-   output logic             ITLBWriteF,
+   output logic             ITLBWriteF, SelHPTW,
    input var                logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
    input var                logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0] // *** this one especially has a large note attached to it in pmpchecker.
   );
@@ -96,7 +97,6 @@ module lsu (
   logic                     CPUBusy;
   logic                     DCacheStallM;
   logic                     CacheableM;
-  logic                     SelHPTW;
   logic                     BusStall;
   logic                     InterlockStall;
   logic                     IgnoreRequestTLB, IgnoreRequestTrapM;
@@ -182,8 +182,8 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    AMOWriteDataM, FinalWriteDataM;
-  logic [`XLEN-1:0]    ReadDataWordM;
+  logic [`XLEN-1:0]    AMOWriteDataM, FinalWriteDataM, LittleEndianWriteDataM;
+  logic [`XLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
   logic [`XLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
   logic                SelUncachedAdr;
@@ -220,7 +220,7 @@ module lsu (
       .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
-    mux2 #(`XLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1(DCacheBusWriteData[`XLEN-1:0]),
+    mux2 #(`XLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1(DCacheBusWriteData[`XLEN-1:0]),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM), .d1(FinalWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
@@ -244,11 +244,8 @@ module lsu (
     end
   end else begin: nobus // block: bus
     assign {LSUBusHWDATA, SelUncachedAdr} = '0; 
-    assign ReadDataWordMuxM = ReadDataWordM;
+    assign ReadDataWordMuxM = LittleEndianReadDataWordM;
   end
-
-  subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
-		.Funct3M(LSUFunct3M), .ReadDataM);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Atomic operations
@@ -261,8 +258,25 @@ module lsu (
     assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign AMOWriteDataM = LSUWriteDataM;
   end
 
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Subword Accesses
+  /////////////////////////////////////////////////////////////////////////////////////////////
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .AMOWriteDataM, .FinalWriteDataM, .ByteMaskM);
+    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
+  subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
+		.Funct3M(LSUFunct3M), .ReadDataM);
 
-  
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Big Endian Byte Swapper
+  //  hart works little-endian internally
+  //  swap the bytes when read from big-endian memory
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  if (`BIGENDIAN_SUPPORTED) begin:endian
+    bigendianswap storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(FinalWriteDataM));
+    bigendianswap loadswap(.BigEndianM, .a(ReadDataWordM), .y(LittleEndianReadDataWordM));
+  end else begin
+    assign FinalWriteDataM = LittleEndianWriteDataM;
+    assign LittleEndianReadDataWordM = ReadDataWordM;
+  end
+
 endmodule

@@ -34,7 +34,7 @@ module subwordwrite (
   input logic [2:0]          LSUPAdrM,
   input logic [2:0]          LSUFunct3M,
   input logic [`XLEN-1:0]    AMOWriteDataM,
-  output logic [`XLEN-1:0]   FinalWriteDataM,
+  output logic [`XLEN-1:0]   LittleEndianWriteDataM,
   output logic [`XLEN/8-1:0] ByteMaskM
 );
 
@@ -45,18 +45,18 @@ module subwordwrite (
   if (`XLEN == 64) begin:sww
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  FinalWriteDataM = {8{AMOWriteDataM[7:0]}};  // sb
-        2'b01:  FinalWriteDataM = {4{AMOWriteDataM[15:0]}}; // sh
-        2'b10:  FinalWriteDataM = {2{AMOWriteDataM[31:0]}}; // sw
-        2'b11:  FinalWriteDataM = AMOWriteDataM;            // sw
+        2'b00:  LittleEndianWriteDataM = {8{AMOWriteDataM[7:0]}};  // sb
+        2'b01:  LittleEndianWriteDataM = {4{AMOWriteDataM[15:0]}}; // sh
+        2'b10:  LittleEndianWriteDataM = {2{AMOWriteDataM[31:0]}}; // sw
+        2'b11:  LittleEndianWriteDataM = AMOWriteDataM;            // sw
       endcase
   end else begin:sww // 32-bit
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  FinalWriteDataM = {4{AMOWriteDataM[7:0]}};  // sb
-        2'b01:  FinalWriteDataM = {2{AMOWriteDataM[15:0]}}; // sh
-        2'b10:  FinalWriteDataM = AMOWriteDataM;            // sw
-        default: FinalWriteDataM = AMOWriteDataM; // shouldn't happen
+        2'b00:  LittleEndianWriteDataM = {4{AMOWriteDataM[7:0]}};  // sb
+        2'b01:  LittleEndianWriteDataM = {2{AMOWriteDataM[15:0]}}; // sh
+        2'b10:  LittleEndianWriteDataM = AMOWriteDataM;            // sw
+        default: LittleEndianWriteDataM = AMOWriteDataM; // shouldn't happen
       endcase
   end
 endmodule
