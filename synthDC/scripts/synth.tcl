@@ -21,6 +21,7 @@ set hdl_src "../pipelined/src"
 set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
+set drive $::env(DRIVE)
 
 eval file copy -force ${cfg} {hdl/}
 eval file copy -force ${cfg} $outputDir
@@ -111,7 +112,11 @@ set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 if {$tech == "sky130"} {
     set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
 } elseif {$tech == "sky90"} {
-    set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+    if ($drive == "INV") {
+	set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
+    } else {
+	set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+    }
 }
 
 # Set input/output delay
@@ -122,7 +127,11 @@ set_output_delay 0.1 -max -clock $my_clk [all_outputs]
 if {$tech == "sky130"} {
     set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
 } elseif {$tech == "sky90"} {
-    set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+    if ($drive == "INV") {
+	set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
+    } else {
+        set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+    }
 }
 
 # Set the wire load model 
