@@ -25,11 +25,11 @@ module top(
   // mux2, mux3, mux4 of 1, 8, 16, 32, 64
   
 endmodule
- */
 
 module ppa_inv(input a, output y);
   assign out = ~in;
 endmodule
+ */
 
 module ppa_add #(parameter WIDTH=8) (
     input logic [7:0] a, b,
