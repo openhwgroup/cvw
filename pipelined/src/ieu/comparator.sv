@@ -71,7 +71,7 @@ module comparator #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-// This comaprator 
+// This comaprator is best
 module comparator_dc_flip #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
