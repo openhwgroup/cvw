@@ -55,7 +55,7 @@ module uncore (
   input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
   // peripheral pins
-  output logic             TimerInt, SwInt, MExtInt, SExtInt,
+  output logic             MTimerInt, MSwInt, MExtInt, SExtInt,
   input  logic [31:0]      GPIOPinsIn,
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
   input  logic             UARTSin,
@@ -120,11 +120,11 @@ module uncore (
         .HREADCLINT,
         .HRESPCLINT, .HREADYCLINT,
         .MTIME(MTIME_CLINT), 
-        .TimerInt, .SwInt);
+        .MTimerInt, .MSwInt);
 
     end else begin : clint
       assign MTIME_CLINT = 0;
-      assign TimerInt = 0; assign SwInt = 0;
+      assign MTimerInt = 0; assign MSwInt = 0;
     end
     if (`PLIC_SUPPORTED == 1) begin : plic
       plic plic(
