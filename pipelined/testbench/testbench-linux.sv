@@ -142,7 +142,7 @@ module testbench;
   `define CSR_BASE    `PRIV_BASE.csr
   `define MEIP        `PRIV_BASE.MExtInt
   `define SEIP        `PRIV_BASE.SExtInt
-  `define MTIP        `PRIV_BASE.TimerInt
+  `define MTIP        `PRIV_BASE.MTimerInt
   `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
   `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
   `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q

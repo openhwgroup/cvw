@@ -42,7 +42,7 @@ module csr #(parameter
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, wfiM, InterruptM,
-  input  logic             TimerInt, MExtInt, SExtInt, SwInt,
+  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
   input  logic             BPPredDirWrongM,
@@ -134,7 +134,7 @@ module csr #(parameter
 
   csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
-              .MExtInt, .SExtInt, .TimerInt, .SwInt,
+              .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
               .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW, .IP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
