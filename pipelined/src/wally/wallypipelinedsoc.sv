@@ -72,7 +72,7 @@ module wallypipelinedsoc (
 //  logic 		   reset;
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HRESP;
-  logic             TimerInt, SwInt; // from CLINT
+  logic             MTimerInt, MSwInt; // from CLINT
   logic [63:0]      MTIME_CLINT; // from CLINT to CSRs
   logic             MExtInt,SExtInt; // from PLIC
   logic [2:0]       HADDRD;
@@ -84,7 +84,7 @@ module wallypipelinedsoc (
    
   // instantiate processor and memories
   wallypipelinedcore core(.clk, .reset,
-    .TimerInt, .MExtInt, .SExtInt, .SwInt, 
+    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, 
     .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
@@ -94,7 +94,7 @@ module wallypipelinedsoc (
   uncore uncore(.HCLK, .HRESETn, .TIMECLK,
     .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
     .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HSIZED, .HWRITED,
-    .TimerInt, .SwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 
+    .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 
 		.HSELEXT,
 		.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK
 		
