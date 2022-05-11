@@ -42,7 +42,7 @@ module csri #(parameter
     input logic 			CSRMWriteM, CSRSWriteM,
     input logic [`XLEN-1:0] CSRWriteValM,
     input logic [11:0] 		CSRAdrM,
-    (* mark_debug = "true" *)    input logic MExtIntM, SExtIntM, TimerIntM, SwIntM,
+    (* mark_debug = "true" *)    input logic MExtInt, SExtInt, TimerInt, SwInt,
     input logic [11:0] 		MIDELEG_REGW,
     output logic [11:0] 	MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, 
     (* mark_debug = "true" *) output logic [11:0]   IP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
@@ -80,7 +80,7 @@ module csri #(parameter
     else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
     else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
 
-  assign IP_REGW = {MExtIntM,1'b0,SExtIntM|IP_REGW_writeable[9],1'b0,TimerIntM,1'b0,IP_REGW_writeable[5],1'b0,SwIntM,1'b0,IP_REGW_writeable[1],1'b0};
+  assign IP_REGW = {MExtInt,1'b0,SExtInt|IP_REGW_writeable[9],1'b0,TimerInt,1'b0,IP_REGW_writeable[5],1'b0,SwInt,1'b0,IP_REGW_writeable[1],1'b0};
 
   assign MIP_REGW = IP_REGW;
   assign MIE_REGW = IE_REGW;

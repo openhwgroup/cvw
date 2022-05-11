@@ -34,7 +34,7 @@
 module wallypipelinedcore (
    input logic             clk, reset,
    // Privileged
-   input logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
+   input logic             TimerInt, MExtInt, SExtInt, SwInt,
    input logic [63:0]         MTIME_CLINT, 
    // Bus Interface
    input logic [`AHBW-1:0]  HRDATA,
@@ -331,7 +331,7 @@ module wallypipelinedcore (
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
          .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-         .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
+         .TimerInt, .MExtInt, .SExtInt, .SwInt,
          .MTIME_CLINT, 
          .IEUAdrM,
          .SetFflagsM,
