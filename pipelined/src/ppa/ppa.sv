@@ -2,35 +2,6 @@
 // Teo Ene & David_Harris@hmc.edu 25 Feb 2021
 // Measure PPA of various building blocks
 
-/*
-module top(
-    input  logic       a1,
-    input  logic [7:0] a8, b8,
-    input  logic [15:0] a16, b16,
-    input  logic [31:0] a32, b32,
-    input  logic [63:0] a64, b64,
-    output logic        yinv,
-    output logic [63:0] y1, y2, y3, y4
-);
-
-  // fo4 inverter
-  myinv myinv(a1, yinv);)
-
-    // adders
-  add #(8) add8(a8, b8, yadd8);
-  add #(16) add16(a16, b16, yadd16);
-  add #(32) add32(a32, b32, yadd32);
-  add #(64) add64(a64, b64, yadd64);
-
-  // mux2, mux3, mux4 of 1, 8, 16, 32, 64
-  
-endmodule
-
-module ppa_inv(input a, output y);
-  assign out = ~in;
-endmodule
- */
-
 module ppa_comparator_16 #(parameter WIDTH=16) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
