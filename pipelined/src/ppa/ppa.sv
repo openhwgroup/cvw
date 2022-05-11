@@ -31,12 +31,12 @@ module ppa_inv(input a, output y);
 endmodule
  */
 
-module ppa_add #(parameter WIDTH=8) (
-    input logic [7:0] a, b,
-    output logic [7:0] y
+module ppa #(parameter WIDTH=8) (
+    input logic [WIDTH-1:0] a, b,
+    output logic [WIDTH-1:0] y
 );
 
-   assign out = a + b;
+   assign y = a + b;
 endmodule
 
 
