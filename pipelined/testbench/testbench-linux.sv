@@ -140,9 +140,9 @@ module testbench;
   `define PRIV_BASE   dut.core.priv.priv
   `define PRIV        `PRIV_BASE.privmodereg.q
   `define CSR_BASE    `PRIV_BASE.csr
-  `define MEIP        `PRIV_BASE.MExtIntM
-  `define SEIP        `PRIV_BASE.SExtIntM
-  `define MTIP        `PRIV_BASE.TimerIntM
+  `define MEIP        `PRIV_BASE.MExtInt
+  `define SEIP        `PRIV_BASE.SExtInt
+  `define MTIP        `PRIV_BASE.TimerInt
   `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
   `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
   `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q

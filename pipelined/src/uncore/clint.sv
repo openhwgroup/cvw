@@ -43,7 +43,7 @@ module clint (
   output logic [`XLEN-1:0] HREADCLINT,
   output logic 			   HRESPCLINT, HREADYCLINT,
   (* mark_debug = "true" *) output logic [63:0] MTIME, 
-  output logic 			   TimerIntM, SwIntM);
+  output logic 			   TimerInt, SwInt);
 
   logic        MSIP;
 
@@ -159,9 +159,9 @@ module clint (
   end 
 
   // Software interrupt when MSIP is set
-  assign SwIntM = MSIP;
+  assign SwInt = MSIP;
   // Timer interrupt when MTIME >= MTIMECMP
-  assign TimerIntM = ({1'b0, MTIME} >= {1'b0, MTIMECMP}); // unsigned comparison
+  assign TimerInt = ({1'b0, MTIME} >= {1'b0, MTIMECMP}); // unsigned comparison
 
 endmodule
 

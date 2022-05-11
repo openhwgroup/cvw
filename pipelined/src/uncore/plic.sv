@@ -57,7 +57,7 @@ module plic (
   input  logic             UARTIntr,GPIOIntr,
   output logic [`XLEN-1:0] HREADPLIC,
   output logic             HRESPPLIC, HREADYPLIC,
-    (* mark_debug = "true" *)  output logic             MExtIntM, SExtIntM);
+    (* mark_debug = "true" *)  output logic             MExtInt, SExtInt);
 
   logic memwrite, memread, initTrans;
   logic [23:0] entry, entryd;
@@ -252,7 +252,7 @@ module plic (
   end
   // is the max priority > threshold?
   // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
-  assign MExtIntM = |(threshMask[0] & priorities_with_irqs[0]);
-  assign SExtIntM = |(threshMask[1] & priorities_with_irqs[1]);
+  assign MExtInt = |(threshMask[0] & priorities_with_irqs[0]);
+  assign SExtInt = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
 
