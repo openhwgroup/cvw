@@ -81,7 +81,7 @@ module privileged (
   output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
-  logic [`XLEN-1:0] CauseM;
+  logic [`LOG_XLEN-1:0] CauseM;
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
