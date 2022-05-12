@@ -42,7 +42,7 @@ module trap (
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic 		   InstrValidM, CommittedM, 
-  output logic 		   TrapM, MTrapM, STrapM, RetM,
+  output logic 		   TrapM, RetM,
   output logic 		   InterruptM, IntPendingM,
   output logic [`XLEN-1:0] CauseM 
 );
