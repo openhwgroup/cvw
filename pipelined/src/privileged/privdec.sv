@@ -34,7 +34,7 @@
 module privdec (
   input  logic [31:20] InstrM,
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
-  input  logic         TrappedSRETM, WFITimeoutM,
+  input  logic         WFITimeoutM,
   input  logic [1:0]   PrivilegeModeW, 
   input  logic         STATUS_TSR, STATUS_TVM,
   input  logic [1:0]   STATUS_FS,
@@ -43,18 +43,19 @@ module privdec (
 
   logic IllegalPrivilegedInstrM, IllegalOrDisabledFPUInstrM;
 
-  // xRET defined in Privileged Spect 3.2.2
+  // Decode privileged instructions
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
-                      PrivilegeModeW[0] & ~STATUS_TSR; 
+                      (PrivilegeModeW == `M_MODE || PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
-
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001) & 
                       (PrivilegeModeW == `M_MODE | (PrivilegeModeW == `S_MODE & ~STATUS_TVM)); 
+
+  // Fault on illegal instructions
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
   assign IllegalOrDisabledFPUInstrM = IllegalFPUInstrM | (STATUS_FS == 2'b00);
   assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalOrDisabledFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
-                               TrappedSRETM | WFITimeoutM; 
+                               WFITimeoutM; 
 endmodule
