@@ -81,7 +81,7 @@ module privileged (
   output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
-  logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
+  logic [`XLEN-1:0] CauseM; //, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
@@ -125,7 +125,7 @@ module privileged (
   csr csr(.clk, .reset,
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
-          .InstrM, .PCM, .SrcAM,
+          .InstrM, .PCM, .SrcAM, .IEUAdrM,
           .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .mretM, .sretM, .wfiM, .InterruptM,
           .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
           .MTIME_CLINT, 
@@ -133,7 +133,7 @@ module privileged (
           .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
           .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
           .NextPrivilegeModeM, .PrivilegeModeW,
-          .CauseM, .NextFaultMtvalM, .SelHPTW,
+          .CauseM, /*.NextFaultMtvalM,*/ .SelHPTW,
           .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
@@ -146,7 +146,7 @@ module privileged (
           .PMPADDR_ARRAY_REGW,
           .SetFflagsM,
           .FRM_REGW, 
-          .CSRReadValW,
+          .CSRReadValW,.PrivilegedNextPCM,
           .IllegalCSRAccessM, .BigEndianM);
 
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -164,11 +164,11 @@ module privileged (
             .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
-            .PCM, .IEUAdrM, .InstrM,
+           /* .PCM, .IEUAdrM, .InstrM,*/
             .InstrValidM, .CommittedM,  
             .TrapM, .MTrapM, .STrapM, .RetM,
             .InterruptM, .IntPendingM,
-             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
+            /* .PrivilegedNextPCM, */.CauseM/*MtvalM*/);
 endmodule
 
 

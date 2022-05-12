@@ -42,13 +42,13 @@ module trap (
   (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
-  input logic [`XLEN-1:0]  PCM,
-  input logic [`XLEN-1:0]  IEUAdrM, 
-  input logic [31:0] 	   InstrM,
+/*  input logic [`XLEN-1:0]  PCM,
+  input logic [`XLEN-1:0]  IEUAdrM,  
+  input logic [31:0] 	   InstrM, */
   input logic 		   InstrValidM, CommittedM, 
   output logic 		   TrapM, MTrapM, STrapM, RetM,
   output logic 		   InterruptM, IntPendingM,
-  output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
+  output logic [`XLEN-1:0] /*PrivilegedNextPCM, */CauseM //NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
 );
@@ -57,7 +57,7 @@ module trap (
   logic ExceptionM;
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
   //logic InterruptM;
-  logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
+  //logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -87,6 +87,7 @@ module trap (
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
   assign RetM = mretM | sretM;
 
+/*
   always_comb
       if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
       else                               PrivilegedTrapVector = MTVEC_REGW; 
@@ -118,6 +119,7 @@ module trap (
     if      (TrapM)                         PrivilegedNextPCM = PrivilegedVectoredTrapVector;
     else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else                                    PrivilegedNextPCM = SEPC_REGW;
+    */
 
   ///////////////////////////////////////////
   // Cause priority defined in table 3.7 of 20190608 privileged spec
@@ -145,17 +147,6 @@ module trap (
     else if (StoreAmoAccessFaultM)     CauseM = 7;
     else                               CauseM = 0;
 
-  ///////////////////////////////////////////
-  // MTVAL
-  ///////////////////////////////////////////
-
-  always_comb
-    case (CauseM)
-      12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
-      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
-      0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
-      default:                NextFaultMtvalM = 0; // Ecall, interrupts
-    endcase
 /*  always_comb 
     if      (InstrPageFaultM)          NextFaultMtvalM = PCM;
     else if (InstrAccessFaultM)        NextFaultMtvalM = PCM;
