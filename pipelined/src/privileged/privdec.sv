@@ -33,16 +33,18 @@
 
 module privdec (
   input  logic         clk, reset,
+  input  logic         StallM,
   input  logic [31:20] InstrM,
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
   input  logic [1:0]   PrivilegeModeW, 
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
   input  logic [1:0]   STATUS_FS,
-  output logic         IllegalInstrFaultM,
+  output logic         IllegalInstrFaultM, ITLBFlushF, DTLBFlushM,
   output logic         sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
 
   logic IllegalPrivilegedInstrM, IllegalOrDisabledFPUInstrM;
   logic WFITimeoutM;
+  logic       StallMQ;
 
   ///////////////////////////////////////////
   // Decode privileged instructions
@@ -65,7 +67,19 @@ module privdec (
     floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
   end else assign WFITimeoutM = 0;
-  
+
+  ///////////////////////////////////////////
+  // sfence.vma causes TLB flushes
+  ///////////////////////////////////////////
+  // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
+  // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
+  // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
+  // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
+  // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
+  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
+  assign ITLBFlushF = sfencevmaM & ~StallMQ;
+  assign DTLBFlushM = sfencevmaM;
+
   ///////////////////////////////////////////
   // Fault on illegal instructions
   ///////////////////////////////////////////
