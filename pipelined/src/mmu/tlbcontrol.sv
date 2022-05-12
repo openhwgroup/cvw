@@ -58,8 +58,6 @@ module tlbcontrol #(parameter ITLB = 0) (
 );
 
   // Sections of the page table entry
-  logic [11:0]             PageOffset;
-  logic [`SVMODE_BITS-1:0] SVMode;
   logic [1:0]              EffectivePrivilegeMode;
 
   logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits

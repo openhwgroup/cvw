@@ -87,7 +87,7 @@ module fpu (
    logic 		  XSgnE, YSgnE, ZSgnE;                // input's sign - execute stage
    logic 		  XSgnM, YSgnM;                       // input's sign - memory stage
    logic [10:0] 	  XExpE, YExpE, ZExpE;                // input's exponent - execute stage
-   logic [10:0] 	  XExpM, YExpM, ZExpM;                // input's exponent - memory stage
+   logic [10:0] 	  ZExpM;                              // input's exponent - memory stage
    logic [52:0] 	  XManE, YManE, ZManE;                // input's fraction - execute stage
    logic [52:0] 	  XManM, YManM, ZManM;                // input's fraction - memory stage
    logic 		  XNaNE, YNaNE, ZNaNE;                // is the input a NaN - execute stage
@@ -189,7 +189,7 @@ module fpu (
    fma fma (.clk, .reset, .FlushM, .StallM, 
       .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
       .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE,
-      .XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
+      .XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
       .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
       .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
       .FOpCtrlE,

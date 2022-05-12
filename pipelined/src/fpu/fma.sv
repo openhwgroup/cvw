@@ -41,7 +41,7 @@ module fma(
     input logic [`NE-1:0]       XExpE, YExpE, ZExpE,    // input exponents - execute stage
     input logic [`NF:0]         XManE, YManE, ZManE,    // input mantissa - execute stage
     input logic                 XSgnM, YSgnM,           // input signs - memory stage
-    input logic [`NE-1:0]       XExpM, YExpM, ZExpM,    // input exponents - memory stage
+    input logic [`NE-1:0]       ZExpM,    // input exponents - memory stage
     input logic [`NF:0]         XManM, YManM, ZManM,    // input mantissa - memory stage
     input logic                 XDenormE, YDenormE, ZDenormE, // is denorm
     input logic                 XZeroE, YZeroE, ZZeroE,     // is zero - execute stage
@@ -85,7 +85,7 @@ module fma(
                             {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0]},
                             {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult});
 
-    fma2 fma2(.XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
+    fma2 fma2(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
             .FrmM, .FmtM,  .ProdExpM, .AddendStickyM, .KillProdM, .SumM, .NegSumM, .InvZM, .NormCntM, .ZSgnEffM, .PSgnM,
             .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .Mult,
             .FMAResM, .FMAFlgM);
@@ -283,6 +283,7 @@ module align(
     //      - Denormal numbers have a diffrent exponent value depending on the precision
     assign ZExpVal = ZDenormE ? Denorm : ZExpE;
     // assign AlignCnt = ProdExpE - {2'b0, ZExpVal} + (`NF+3);
+    // *** can we use ProdExpE instead of XExp/YExp to save an adder? DH 5/12/22
     assign AlignCnt = XZeroE|YZeroE ? -1 : {2'b0, XExpVal} + {2'b0, YExpVal} - {2'b0, (`NE)'(`BIAS)} + `NF+3 - {2'b0, ZExpVal};
 
     // Defualt Addition without shifting
@@ -433,7 +434,7 @@ endmodule
 module fma2(
     
     input logic                             XSgnM, YSgnM,        // input signs
-    input logic     [`NE-1:0]               XExpM, YExpM, ZExpM, // input exponents
+    input logic     [`NE-1:0]               ZExpM, // input exponents
     input logic     [`NF:0]                 XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]                   FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [`FPSIZES/3:0]          FmtM,       // precision 1 = double 0 = single
@@ -481,7 +482,7 @@ module fma2(
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
 
-    normalize normalize(.SumM, .ZExpM, .ProdExpM, .NormCntM, .FmtM, .KillProdM, .AddendStickyM, .NormSum, .NegSumM,
+    normalize normalize(.SumM, .ZExpM, .ProdExpM, .NormCntM, .FmtM, .KillProdM, .AddendStickyM, .NormSum, 
             .SumZero, .NormSumSticky, .UfSticky, .SumExp, .ResultDenorm);
 
 
@@ -529,7 +530,7 @@ module fma2(
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultselect resultselect(.XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
+    resultselect resultselect(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
         .FrmM, .FmtM, .AddendStickyM, .KillProdM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd,
         .ZSgnEffM, .PSgnM, .ResultSgn, .CalcPlus1, .Invalid, .Overflow, .Underflow, 
         .ResultDenorm, .ResultExp, .ResultFrac, .FMAResM);
@@ -577,7 +578,6 @@ module normalize(
     input logic  [`FPSIZES/3:0]         FmtM,       // precision 1 = double 0 = single
     input logic                         KillProdM,  // is the product set to zero
     input logic                         AddendStickyM,  // the sticky bit caclulated from the aligned addend
-    input logic                         NegSumM,    // was the sum negitive
     output logic [`NF+2:0]              NormSum,        // normalized sum
     output logic                        SumZero,        // is the sum zero
     output logic                        NormSumSticky, UfSticky,    // sticky bits
@@ -1095,7 +1095,7 @@ endmodule
 
 module resultselect(
     input logic                     XSgnM, YSgnM,        // input signs
-    input logic     [`NE-1:0]       XExpM, YExpM, ZExpM, // input exponents
+    input logic     [`NE-1:0]       ZExpM, // input exponents
     input logic     [`NF:0]         XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [`FPSIZES/3:0]  FmtM,       // precision 1 = double 0 = single
