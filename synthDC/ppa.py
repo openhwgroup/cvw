@@ -4,7 +4,8 @@ import subprocess
 from multiprocessing import Pool
 import csv
 import re
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def run_command(module, width, freq):

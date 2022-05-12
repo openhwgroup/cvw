@@ -257,13 +257,14 @@ module ppa_prioriyencoder #(parameter N = 8) (
   //  Rather than linear.
 
   // create thermometer code mask
-  genvar i;
-  for (i=0; i<N; i++) begin:pri
-    if (a[i]) y= i;
-  end
+  int i;
+  always_comb
+    for (i=0; i<N; i++) begin:pri
+      if (a[i]) y= i;
+    end
 endmodule
 
-module decoder (
+module ppa_decoder (
   input  logic  [$clog2(N)-1:0] a,
   output logic  [N-1:0] y);
   always_comb begin 
@@ -272,7 +273,7 @@ module decoder (
   end
 endmodule
 
-module mux2 #(parameter WIDTH = 8) (
+module ppa_mux2 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, 
   input  logic             s, 
   output logic [WIDTH-1:0] y);
@@ -280,7 +281,7 @@ module mux2 #(parameter WIDTH = 8) (
   assign y = s ? d1 : d0; 
 endmodule
 
-module mux3 #(parameter WIDTH = 8) (
+module ppa_mux3 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, d2,
   input  logic [1:0]       s, 
   output logic [WIDTH-1:0] y);
@@ -288,7 +289,7 @@ module mux3 #(parameter WIDTH = 8) (
   assign y = s[1] ? d2 : (s[0] ? d1 : d0); 
 endmodule
 
-module mux4 #(parameter WIDTH = 8) (
+module ppa_mux4 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3,
   input  logic [1:0]       s, 
   output logic [WIDTH-1:0] y);
@@ -296,7 +297,7 @@ module mux4 #(parameter WIDTH = 8) (
   assign y = s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0); 
 endmodule
 
-module mux6 #(parameter WIDTH = 8) (
+module ppa_mux6 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5,
   input  logic [2:0]       s, 
   output logic [WIDTH-1:0] y);
@@ -304,7 +305,7 @@ module mux6 #(parameter WIDTH = 8) (
   assign y = s[2] ? (s[0] ? d5 : d4) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
 endmodule
 
-module mux8 #(parameter WIDTH = 8) (
+module ppa_mux8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
   input  logic [2:0]       s, 
   output logic [WIDTH-1:0] y);
@@ -314,7 +315,7 @@ endmodule
 
 // *** some way to express data-critical inputs
 
-module flop #(parameter WIDTH = 8) ( 
+module ppa_flop #(parameter WIDTH = 8) ( 
   input  logic             clk,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -323,7 +324,7 @@ module flop #(parameter WIDTH = 8) (
     q <= #1 d;
 endmodule
 
-module flopr #(parameter WIDTH = 8) ( 
+module ppa_flopr #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -333,7 +334,7 @@ module flopr #(parameter WIDTH = 8) (
     else       q <= #1 d;
 endmodule
 
-module floprasynnc #(parameter WIDTH = 8) ( 
+module ppa_floprasynnc #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -343,7 +344,7 @@ module floprasynnc #(parameter WIDTH = 8) (
     else       q <= #1 d;
 endmodule
 
-module flopenr #(parameter WIDTH = 8) (
+module ppa_flopenr #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
