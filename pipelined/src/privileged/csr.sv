@@ -55,7 +55,7 @@ module csr #(parameter
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
-  input  logic [`XLEN-1:0] CauseM, //NextFaultMtvalM,
+  input  logic [`XLEN-1:0] CauseM, 
   input  logic             SelHPTW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
