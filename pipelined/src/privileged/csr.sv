@@ -114,7 +114,6 @@ module csr #(parameter
       default:                NextFaultMtvalM = 0; // Ecall, interrupts
     endcase
 
-
   ///////////////////////////////////////////
   // Trap Vectoring
   ///////////////////////////////////////////
@@ -147,7 +146,9 @@ module csr #(parameter
     else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else                                    PrivilegedNextPCM = SEPC_REGW;
 
-  // modify CSRs
+  ///////////////////////////////////////////
+  // CSRWriteValM
+  ///////////////////////////////////////////
   always_comb begin
     // Choose either rs1 or uimm[4:0] as source
     CSRSrcM = InstrM[14] ? {{(`XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
@@ -168,7 +169,9 @@ module csr #(parameter
     endcase
   end
 
-  // write CSRs
+  ///////////////////////////////////////////
+  // CSR Write values
+  ///////////////////////////////////////////
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? ((wfiM & InterruptM) ? PCM+4 : PCM) : CSRWriteValM;
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
@@ -177,6 +180,10 @@ module csr #(parameter
   assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
   assign CSRUWriteM = CSRWriteM;  
+
+  ///////////////////////////////////////////
+  // CSRs
+  ///////////////////////////////////////////
 
   csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
