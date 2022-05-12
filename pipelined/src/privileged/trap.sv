@@ -94,7 +94,7 @@ module trap (
     else if (IllegalInstrFaultM)       CauseM = 2;
     else if (InstrMisalignedFaultM)    CauseM = 0;
     else if (BreakpointFaultM)         CauseM = 3;
-    else if (EcallFaultM)              CauseM = {{(`XLEN-2){1'b0}}, PrivilegeModeW} + 8;
+    else if (EcallFaultM)              CauseM = {{(`XLEN-4){1'b0}}, {2'b10}, PrivilegeModeW};
     else if (LoadMisalignedFaultM)     CauseM = 4;
     else if (StoreAmoMisalignedFaultM) CauseM = 6;
     else if (LoadPageFaultM)           CauseM = 13;
