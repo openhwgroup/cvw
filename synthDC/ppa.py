@@ -4,14 +4,15 @@ import subprocess
 from multiprocessing import Pool
 import csv
 import re
+# import matplotlib.pyplot as plt
 
 
 def run_command(module, width, freq):
     command = "make synth DESIGN=ppa_{}_{} TECH=sky90 DRIVE=INV FREQ={} MAXOPT=1".format(module, width, freq)
     subprocess.Popen(command, shell=True)
 
-widths = ['16', '32', '64']
-modules = ['mult']
+widths = ['32']
+modules = ['shifter']
 freqs = ['10', '4000', '5000', '6000']
 
 LoT = []
