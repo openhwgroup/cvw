@@ -55,7 +55,7 @@ module csr #(parameter
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
-  input  logic [`XLEN-1:0] CauseM, 
+  input  logic [`LOG_XLEN-1:0] CauseM, 
   input  logic             SelHPTW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -136,7 +136,7 @@ module csr #(parameter
   if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
       always_comb
         if (PrivilegedTrapVector[1:0] == 2'b01 & InterruptM)
-          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM}, 2'b00};
         else
           PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
   end
@@ -178,7 +178,7 @@ module csr #(parameter
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? ((wfiM & InterruptM) ? PCM+4 : PCM) : CSRWriteValM;
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, CauseM[`XLEN-2:0]}: CSRWriteValM;
+  assign NextCauseM = TrapM ? {InterruptM, {(`XLEN-`LOG_XLEN-1){1'b0}}, CauseM}: CSRWriteValM;
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);

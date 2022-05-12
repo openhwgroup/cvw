@@ -34,7 +34,8 @@
 module privmode (
   input  logic             clk, reset,
   input  logic             StallW, TrapM, mretM, sretM, InterruptM,
-  input  logic [`XLEN-1:0] CauseM, MEDELEG_REGW,
+  input  logic [`LOG_XLEN-1:0] CauseM, 
+  input  logic [`XLEN-1:0] MEDELEG_REGW,
   input  logic [11:0]      MIDELEG_REGW,
   input  logic [1:0]       STATUS_MPP,
   input  logic             STATUS_SPP,
@@ -45,7 +46,7 @@ module privmode (
     logic       md;
 
     // get bits of DELEG registers based on CAUSE
-    assign md = InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
+    assign md = InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM];
     
     // PrivilegeMode FSM
     always_comb begin
