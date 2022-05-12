@@ -41,7 +41,7 @@ module csr #(parameter
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM,
-  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, mretM, sretM, wfiM, InterruptM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, InterruptM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
@@ -98,6 +98,7 @@ module csr #(parameter
   logic [`XLEN-1:0] CSRReadVal2M;
   logic [11:0] MIP_REGW_writeable;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector, NextFaultMtvalM;
+  logic MTrapM, STrapM;
 
   
   logic InstrValidNotFlushedM;
@@ -181,6 +182,8 @@ module csr #(parameter
   assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
   assign CSRUWriteM = CSRWriteM;  
+  assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
+  assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
 
   ///////////////////////////////////////////
   // CSRs

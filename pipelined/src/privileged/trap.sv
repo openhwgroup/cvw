@@ -75,8 +75,6 @@ module trap (
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   assign TrapM = ExceptionM | InterruptM; 
-  assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
-  assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
   assign RetM = mretM | sretM;
 
   ///////////////////////////////////////////

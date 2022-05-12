@@ -93,7 +93,6 @@ module privileged (
   logic InstrAccessFaultM;
   logic IllegalInstrFaultM;
 
-  logic MTrapM, STrapM;
   (* mark_debug = "true" *)  logic InterruptM; 
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
@@ -125,7 +124,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM, .IEUAdrM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .mretM, .sretM, .wfiM, .InterruptM,
+          .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .InterruptM,
           .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
@@ -162,7 +161,7 @@ module privileged (
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .InstrValidM, .CommittedM,  
-            .TrapM, .MTrapM, .STrapM, .RetM,
+            .TrapM, .RetM,
             .InterruptM, .IntPendingM,
             .CauseM);
 endmodule
