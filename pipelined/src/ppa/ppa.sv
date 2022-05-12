@@ -1,5 +1,6 @@
 // ppa.sv
-// Teo Ene & David_Harris@hmc.edu 25 Feb 2021
+// Teo Ene & David_Harris@hmc.edu 11 May 2022
+// & mmasserfrye@hmc.edu
 // Measure PPA of various building blocks
 
 module ppa_comparator_16 #(parameter WIDTH=16) (
@@ -26,8 +27,7 @@ module ppa_comparator_64 #(parameter WIDTH=64) (
   ppa_comparator #(WIDTH) comp (.*);
 endmodule
 
-
- module ppa_comparator #(parameter WIDTH=16) (
+module ppa_comparator #(parameter WIDTH=16) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
   output logic [1:0]       flags);
@@ -45,39 +45,44 @@ endmodule
   assign flags = {eq, lt};
 endmodule
 
+module ppa_add_16 #(parameter WIDTH=16) (
+    input logic [WIDTH-1:0] a, b,
+    output logic [WIDTH-1:0] y);
+
+   assign y = a + b;
+endmodule
 
 module ppa_add_32 #(parameter WIDTH=32) (
     input logic [WIDTH-1:0] a, b,
-    output logic [WIDTH-1:0] y
-);
+    output logic [WIDTH-1:0] y);
 
    assign y = a + b;
 endmodule
 
 module ppa_add_64 #(parameter WIDTH=64) (
     input logic [WIDTH-1:0] a, b,
-    output logic [WIDTH-1:0] y
-);
+    output logic [WIDTH-1:0] y);
 
    assign y = a + b;
 endmodule
 
-
-module ppa_add_16 #(parameter WIDTH=16) (
-    input logic [WIDTH-1:0] a, b,
-    output logic [WIDTH-1:0] y
-);
-
-   assign y = a + b;
-endmodule
-
-module ppa_shiftleft(
-  assign y = a << amt;
-)
-
-module ppa_mult(
+module ppa_mult_16 #(parameter WIDTH=16) (
+  input logic [WIDTH-1:0] a, b,
+  output logic [WIDTH*2-1:0] y); //is this right width
   assign y = a * b;
-)
+endmodule
+
+module ppa_mult_32 #(parameter WIDTH=32) (
+  input logic [WIDTH-1:0] a, b,
+  output logic [WIDTH*2-1:0] y); //is this right width
+  assign y = a * b;
+endmodule
+
+module ppa_mult_64 #(parameter WIDTH=64) (
+  input logic [WIDTH-1:0] a, b,
+  output logic [WIDTH*2-1:0] y); //is this right width
+  assign y = a * b;
+endmodule
 
 module ppa_alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,
@@ -137,7 +142,13 @@ module ppa_alu #(parameter WIDTH=32) (
   else            assign Result = FullResult;
 endmodule
 
+module ppa_shiftleft #(parameter WIDTH=32) (
+  input logic [WIDTH-1:0] a,
+  input logic [$clog2(WIDTH)-1:0] amt,
+  output logic [WIDTH-1:0] y);
 
+  assign y = a << amt;
+endmodule
 
 module ppa_shifter (
   input  logic [`XLEN-1:0]     A,
@@ -186,11 +197,10 @@ endmodule
 
 module ppa_prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
-  output logic  [N-1:0] y
-);
+  output logic  [N-1:0] y);
 
-// Carefully crafted so design compiler will synthesize into a fast tree structure
-//  Rather than linear.
+  // Carefully crafted so design compiler will synthesize into a fast tree structure
+  //  Rather than linear.
 
   // create thermometer code mask
   genvar i;
@@ -200,12 +210,9 @@ module ppa_prioritythermometer #(parameter N = 8) (
   end
 endmodule
 
-
-
 module ppa_priorityonehot #(parameter N = 8) (
   input  logic  [N-1:0] a,
-  output logic  [N-1:0] y
-);
+  output logic  [N-1:0] y);
   logic [N-1:0] nolower;
 
   // create thermometer code mask
@@ -215,10 +222,9 @@ endmodule
 
 module ppa_prioriyencoder #(parameter N = 8) (
   input  logic  [N-1:0] a,
-  output logic  [$clog2(N)-1:0] y
-);
-// Carefully crafted so design compiler will synthesize into a fast tree structure
-//  Rather than linear.
+  output logic  [$clog2(N)-1:0] y);
+  // Carefully crafted so design compiler will synthesize into a fast tree structure
+  //  Rather than linear.
 
   // create thermometer code mask
   genvar i;
@@ -227,13 +233,14 @@ module ppa_prioriyencoder #(parameter N = 8) (
   end
 endmodule
 
-module decoder
+module decoder (
   input  logic  [$clog2(N)-1:0] a,
-  output logic  [N-1:0] y
+  output logic  [N-1:0] y);
   always_comb begin 
     y = 0;
     y[a] = 1;
   end
+endmodule
 
 module mux2 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, 
@@ -267,12 +274,12 @@ module mux6 #(parameter WIDTH = 8) (
   assign y = s[2] ? (s[0] ? d5 : d4) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
 endmodule
 
-module mux8 #(parameter WIDTH = 8) ( *** add inputs
-  input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, 
+module mux8 #(parameter WIDTH = 8) (
+  input  logic [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
   input  logic [2:0]       s, 
   output logic [WIDTH-1:0] y);
 
-  assign y = s[2] ? (s[0] ? d5 : d4) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
+  assign y = s[2] ? (s[1] ? (s[0] ? d5 : d4) : (s[0] ? d6 : d7)) : (s[1] ? (s[0] ? d3 : d2) : (s[0] ? d1 : d0)); 
 endmodule
 
 // *** some way to express data-critical inputs
@@ -315,5 +322,3 @@ module flopenr #(parameter WIDTH = 8) (
     if (reset)   q <= #1 0;
     else if (en) q <= #1 d;
 endmodule
-
-

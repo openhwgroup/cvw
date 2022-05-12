@@ -3,7 +3,7 @@
 # Run PPA experiments on different modules
 rm -rf runs/ppa*
 make synth DESIGN=ppa_add_16 TECH=sky90 DRIVE=INV FREQ=10 MAXOPT=1 &
-make synth DESIGN=ppa_add_32 TECH=sky90 DRIVE=INV FREQ=1 MAXOPT=10 &
+make synth DESIGN=ppa_add_32 TECH=sky90 DRIVE=INV FREQ=1 MAXOPT=1 &
 make synth DESIGN=ppa_add_64 TECH=sky90 DRIVE=INV FREQ=10 MAXOPT=1 &
 make synth DESIGN=ppa_add_16 TECH=sky90 DRIVE=INV FREQ=4000 MAXOPT=1 &
 make synth DESIGN=ppa_add_32 TECH=sky90 DRIVE=INV FREQ=4000 MAXOPT=1 &

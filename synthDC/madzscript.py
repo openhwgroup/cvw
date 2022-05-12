@@ -1,36 +1,59 @@
 #!/usr/bin/python3
 # from msilib.schema import File
 import subprocess
+from multiprocessing import Pool
+import csv
+import re
 
 
+def run_command(module, width, freq):
+    command = "make synth DESIGN=ppa_{}_{} TECH=sky90 DRIVE=INV FREQ={} MAXOPT=1".format(module, width, freq)
+    subprocess.Popen(command, shell=True)
 
-bashCommand = "find . | grep ppa_timing.rep"
-output = subprocess.check_output(['bash','-c', bashCommand])
-files = output.decode("utf-8").split('\n')
-print(files)
+widths = ['16', '32', '64']
+modules = ['mult']
+freqs = ['10', '4000', '5000', '6000']
 
-widths = []
-areas = []
-delays = []
+LoT = []
+for module in modules:
+    for width in widths:
+        for freq in freqs:
+            LoT += [[module, width, freq]]
 
-for file in files:
-    widths += [pullNum('ports', file)/3]
-    areas += [pullNum('Total cell area', file)]
-    delays += [pullNum('delay', file)]
+pool = Pool()
+pool.starmap(run_command, LoT)
 
+bashCommand = "grep 'Critical Path Length' runs/ppa_*/reports/*qor*"
+outputCPL = subprocess.check_output(['bash','-c', bashCommand])
+linesCPL = outputCPL.decode("utf-8").split('\n')[:-1]
 
-def pullNum(keyText, file):
-    return
+bashCommand = "grep 'Design Area' runs/ppa_*/reports/*qor*"
+outputDA = subprocess.check_output(['bash','-c', bashCommand])
+linesDA = outputDA.decode("utf-8").split('\n')[:-1]
 
-# File_object = open("greppedareas","r")
-# content = File_object.readlines()
-# File_object.close()
+cpl = re.compile('\d{1}\.\d{6}')
+f = re.compile('_\d*_MHz')
+wm = re.compile('ppa_\w*_\d*_qor')
+da = re.compile('\d*\.\d{6}')
 
-# LoT = []
-# for line in content:
-#     l = line.split(':')
-#     LoT += [float(l[2])]
+allSynths = []
 
-# avg = sum(LoT)/len(LoT)
+for i in range(len(linesCPL)):
+    line = linesCPL[i]
+    oneSynth = []
+    mwm = wm.findall(line)[0][4:-4].split('_')
+    oneSynth += [mwm[0]]
+    oneSynth += [mwm[1]]
+    oneSynth += [f.findall(line)[0][1:-4]]
+    oneSynth += cpl.findall(line)
+    oneSynth += da.findall(linesDA[i])
+    allSynths += [oneSynth]
 
-# print(avg)
+file = open("ppaData.csv", "w")
+writer = csv.writer(file)
+writer.writerow(['Module', 'Width', 'Target Freq', 'Delay', 'Area'])
+
+for one in allSynths:
+    writer.writerow(one)
+
+file.close()
