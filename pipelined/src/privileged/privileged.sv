@@ -157,7 +157,7 @@ module privileged (
             .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
             .LoadPageFaultM, .StoreAmoPageFaultM,
             .mretM, .sretM, 
-            .PrivilegeModeW, .NextPrivilegeModeM,
+            .PrivilegeModeW, 
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .InstrValidM, .CommittedM,  

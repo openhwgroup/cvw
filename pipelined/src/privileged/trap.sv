@@ -38,7 +38,7 @@ module trap (
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
   (* mark_debug = "true" *) input logic 		   mretM, sretM, 
-  input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
+  input logic [1:0] 	   PrivilegeModeW, 
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic 		   InstrValidM, CommittedM, 
