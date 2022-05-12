@@ -95,7 +95,7 @@ module privileged (
   logic IllegalFPUInstrM;
   logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
-  logic IllegalInstrFaultM, TrappedSRETM;
+  logic IllegalInstrFaultM;
 
   logic MTrapM, STrapM, UTrapM;
   (* mark_debug = "true" *)  logic InterruptM; 
@@ -129,8 +129,6 @@ module privileged (
     end else        NextPrivilegeModeM = PrivilegeModeW;
   end
 
-  assign TrappedSRETM = sretM & STATUS_TSR & PrivilegeModeW == `S_MODE;
-
   flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
 
   ///////////////////////////////////////////
@@ -149,7 +147,7 @@ module privileged (
   ///////////////////////////////////////////
 
    privdec pmd(.InstrM(InstrM[31:20]), 
-              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM, .WFITimeoutM,
+              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .WFITimeoutM,
               .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_FS, .IllegalInstrFaultM, 
               .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
