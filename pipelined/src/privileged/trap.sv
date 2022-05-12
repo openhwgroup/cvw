@@ -149,7 +149,14 @@ module trap (
   // MTVAL
   ///////////////////////////////////////////
 
-  always_comb 
+  always_comb
+    case (CauseM)
+      12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
+      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
+      0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
+      default:                NextFaultMtvalM = 0; // Ecall, interrupts
+    endcase
+/*  always_comb 
     if      (InstrPageFaultM)          NextFaultMtvalM = PCM;
     else if (InstrAccessFaultM)        NextFaultMtvalM = PCM;
     else if (IllegalInstrFaultM)       NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
@@ -162,5 +169,5 @@ module trap (
     else if (StoreAmoPageFaultM)       NextFaultMtvalM = IEUAdrM;
     else if (LoadAccessFaultM)         NextFaultMtvalM = IEUAdrM;
     else if (StoreAmoAccessFaultM)     NextFaultMtvalM = IEUAdrM;
-    else                               NextFaultMtvalM = 0;
+    else                               NextFaultMtvalM = 0; */
 endmodule
