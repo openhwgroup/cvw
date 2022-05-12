@@ -104,7 +104,7 @@ module privileged (
   // track the current privilege level
   ///////////////////////////////////////////
 
-  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .CauseM, 
+  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .InterruptM, .CauseM, 
                     .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   ///////////////////////////////////////////
