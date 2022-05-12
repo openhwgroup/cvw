@@ -50,7 +50,6 @@ module ieu (
   // Memory stage interface
   input logic 		   SquashSCW, // from LSU
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
-  output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
   output logic [`XLEN-1:0] WriteDataE, // Address and write data to LSU
 
@@ -98,7 +97,7 @@ module ieu (
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
     .Funct3E, .MDUE, .W64E, .JumpE, .StallM, .FlushM, .MemRWM,
-    .CSRReadM, .CSRWriteM, .PrivilegedM, .SCE, .AtomicE, .AtomicM, .Funct3M,
+    .CSRReadM, .CSRWriteM, .PrivilegedM, .SCE, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .ResultSrcW, .CSRWritePendingDEM, .StoreStallD);
 
