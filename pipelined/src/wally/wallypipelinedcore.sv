@@ -63,13 +63,11 @@ module wallypipelinedcore (
   // new signals that must connect through DP
   logic             MDUE, W64E;
   logic             CSRReadM, CSRWriteM, PrivilegedM;
-  logic [1:0]             AtomicE;
   logic [1:0]             AtomicM;
   logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
 (* mark_debug = "true" *)  logic [`XLEN-1:0]         SrcAM;
   logic [2:0]             Funct3E;
-  //  logic [31:0] InstrF;
-  logic [31:0]             InstrD, InstrW;
+  logic [31:0]             InstrD;
   (* mark_debug = "true" *) logic [31:0]             InstrM;
   logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
@@ -86,7 +84,6 @@ module wallypipelinedcore (
   logic             PCSrcE;
   logic             CSRWritePendingDEM;
   logic             DivBusyE;
-  logic             DivE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
   // floating point unit signals
@@ -157,7 +154,6 @@ module wallypipelinedcore (
   logic             InstrAccessFaultF;
   logic [2:0]             LSUBusSize;
   
-  logic             ExceptionM;
   logic             DCacheMiss;
   logic             DCacheAccess;
   logic             ICacheMiss;
@@ -168,10 +164,8 @@ module wallypipelinedcore (
   
   ifu ifu(
     .clk, .reset,
-    .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
-
-    .ExceptionM,
+    .StallF, .StallD, .StallE, .StallM, 
+    .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
     .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
     .IFUBusRead, .IFUStallF,
@@ -221,7 +215,6 @@ module wallypipelinedcore (
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
-     .AtomicE, // atomic control goes to LSU        
      .AtomicM, // atomic control goes to LSU
      .WriteDataE, // Write data to LSU
      .Funct3M, // size and signedness to LSU
@@ -323,7 +316,7 @@ module wallypipelinedcore (
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
          .ITLBFlushF, .DTLBFlushM,
-         .InstrValidM, .CommittedM, .DivE,
+         .InstrValidM, .CommittedM, 
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
@@ -339,7 +332,7 @@ module wallypipelinedcore (
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-         .ExceptionM, .IllegalFPUInstrE,
+         .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
@@ -360,7 +353,7 @@ module wallypipelinedcore (
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
-         .MDUResultW, .DivBusyE,  .DivE,
+         .MDUResultW, .DivBusyE,  
          .StallM, .StallW, .FlushM, .FlushW, .TrapM 
       ); 
    end else begin // no M instructions supported

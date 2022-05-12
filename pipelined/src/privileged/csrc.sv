@@ -43,7 +43,7 @@ module csrc #(parameter
 ) (
     input logic 	     clk, reset,
     input logic 	     StallE, StallM, StallW,
-    input  logic       FlushE, FlushM, FlushW,   
+    input logic        FlushM, FlushW,   
     input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
     input logic 	     BPPredDirWrongM,
     input logic 	     BTBPredPCWrongM,

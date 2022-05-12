@@ -61,7 +61,6 @@ module hptw
 	logic			    DTLBWalk; // register TLBs translation miss requests
 	logic [`PPN_BITS-1:0]	    BasePageTablePPN;
 	logic [`PPN_BITS-1:0]	    CurrentPPN;
-	logic			    MemWrite;
 	logic			    Executable, Writable, Readable, Valid, PTE_U;
 	logic 			Misaligned, MegapageMisaligned;
 	logic			    ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;

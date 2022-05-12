@@ -3,7 +3,6 @@
 module fsgn (  
 	input logic        	XSgnE, YSgnE,	// X and Y sign bits
 	input logic [63:0] 	FSrcXE,			// X
-	input logic			XExpMaxE,		// max possible exponent (all ones)
 	input logic 		FmtE,			// precision 1 = double 0 = single
 	input  logic [1:0]  SgnOpCodeE,		// operation control
 	output logic [63:0] SgnResE		// result

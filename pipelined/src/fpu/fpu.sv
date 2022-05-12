@@ -87,7 +87,7 @@ module fpu (
    logic 		  XSgnE, YSgnE, ZSgnE;                // input's sign - execute stage
    logic 		  XSgnM, YSgnM;                       // input's sign - memory stage
    logic [10:0] 	  XExpE, YExpE, ZExpE;                // input's exponent - execute stage
-   logic [10:0] 	  XExpM, YExpM, ZExpM;                // input's exponent - memory stage
+   logic [10:0] 	  ZExpM;                              // input's exponent - memory stage
    logic [52:0] 	  XManE, YManE, ZManE;                // input's fraction - execute stage
    logic [52:0] 	  XManM, YManM, ZManM;                // input's fraction - memory stage
    logic 		  XNaNE, YNaNE, ZNaNE;                // is the input a NaN - execute stage
@@ -189,7 +189,7 @@ module fpu (
    fma fma (.clk, .reset, .FlushM, .StallM, 
       .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
       .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE,
-      .XSgnM, .YSgnM, .XExpM, .YExpM, .ZExpM, .XManM, .YManM, .ZManM, 
+      .XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
       .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
       .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
       .FOpCtrlE,
@@ -212,25 +212,12 @@ module fpu (
          .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
          .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 
-   // convert from signle to double and vice versa
+   // other FP execution units
    cvtfp cvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
-
-   // compare unit
-   //    - computation is done in one stage
-   //    - writes to FP file durring min/max instructions
-   //    - other comparisons write a 1 or 0 to the integer register
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
-
-   // sign injection unit
-   fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .XExpMaxE,
-    .SgnResE);
-
-   // classify
-   fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, 
-         .XSNaNE, .ClassResE);
-
-   // Convert
+   fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
+   fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
    fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
    .CvtResE, .CvtFlgE);
 
@@ -253,8 +240,8 @@ module fpu (
    // E/M pipe registers
 
    // flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
-   flopenrc #(65) EMFpReg2 (clk, reset, FlushM, ~StallM, {XSgnE,XExpE,XManE}, {XSgnM,XExpM,XManM});
-   flopenrc #(65) EMFpReg3 (clk, reset, FlushM, ~StallM, {YSgnE,YExpE,YManE}, {YSgnM,YExpM,YManM});
+   flopenrc #(54) EMFpReg2 (clk, reset, FlushM, ~StallM, {XSgnE,XManE}, {XSgnM,XManM});
+   flopenrc #(54) EMFpReg3 (clk, reset, FlushM, ~StallM, {YSgnE,YManE}, {YSgnM,YManM});
    flopenrc #(64) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZExpE,ZManE}, {ZExpM,ZManM});
    flopenrc #(12) EMFpReg5 (clk, reset, FlushM, ~StallM, 
             {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
