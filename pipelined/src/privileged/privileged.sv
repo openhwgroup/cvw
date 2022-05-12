@@ -81,7 +81,7 @@ module privileged (
   output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
-  logic [`XLEN-1:0] CauseM; //, NextFaultMtvalM;
+  logic [`XLEN-1:0] CauseM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
@@ -133,7 +133,7 @@ module privileged (
           .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
           .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
           .NextPrivilegeModeM, .PrivilegeModeW,
-          .CauseM, /*.NextFaultMtvalM,*/ .SelHPTW,
+          .CauseM, .SelHPTW,
           .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
@@ -164,11 +164,10 @@ module privileged (
             .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
-           /* .PCM, .IEUAdrM, .InstrM,*/
             .InstrValidM, .CommittedM,  
             .TrapM, .MTrapM, .STrapM, .RetM,
             .InterruptM, .IntPendingM,
-            /* .PrivilegedNextPCM, */.CauseM/*MtvalM*/);
+            .CauseM);
 endmodule
 
 
