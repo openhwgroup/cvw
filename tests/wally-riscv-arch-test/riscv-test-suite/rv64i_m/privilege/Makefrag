@@ -38,6 +38,10 @@ rv64i_sc_tests = \
     WALLY-amo \
     WALLY-lrsc \
     WALLY-trap-sret-01 \
+    WALLY-status-mie-01 \
+    WALLY-status-sie-01 \
+    WALLY-status-tw-01 \
+
 
 # Don't simulate these because they rely on SoC features that Spike does not offer.
 target_tests_nosim = \
@@ -47,14 +51,13 @@ target_tests_nosim = \
     WALLY-stvec-01 \
     WALLY-mie-01 \
     WALLY-sie-01 \
-    WALLY-status-mie-01 \
-    WALLY-status-sie-01 \
     WALLY-trap-01 \
     WALLY-trap-s-01 \
     WALLY-trap-u-01 \
-    WALLY-status-tw-01 \
-    WALLY-wfi-01 \
     WALLY-status-fp-enabled-01 \
+    WALLY-wfi-01 \
+
+# unclear why status-fp-enabled and wfi aren't simulating ok
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))
 
