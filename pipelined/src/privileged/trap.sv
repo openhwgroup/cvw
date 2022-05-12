@@ -48,13 +48,13 @@ module trap (
   input logic 		   InstrValidM, CommittedM, 
   output logic 		   TrapM, MTrapM, STrapM, RetM,
   output logic 		   InterruptM, IntPendingM,
-  output logic 		   ExceptionM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
 );
 
   logic MIntGlobalEnM, SIntGlobalEnM;
+  logic ExceptionM;
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
