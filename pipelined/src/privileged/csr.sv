@@ -93,7 +93,6 @@ module csr #(parameter
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
   logic [11:0] CSRAdrM;
-  //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
@@ -110,7 +109,8 @@ module csr #(parameter
   ///////////////////////////////////////////
 
   always_comb
-    case (CauseM)
+    if (InterruptM) NextFaultMtvalM = 0;
+    else case (CauseM)
       12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
       2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
       0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
