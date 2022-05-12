@@ -111,45 +111,14 @@ module privileged (
 
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .CauseM, 
                     .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
-  /*
-  // get bits of DELEG registers based on CAUSE
-  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
-  
-  // PrivilegeMode FSM
-  always_comb begin
-    if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-      if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
-                    NextPrivilegeModeM = `S_MODE;
-      else          NextPrivilegeModeM = `M_MODE;
-    end else if (mretM) NextPrivilegeModeM = STATUS_MPP;
-    else if (sretM) begin
-      if (STATUS_TSR & PrivilegeModeW == `S_MODE) begin
-        NextPrivilegeModeM = PrivilegeModeW;
-      end else      NextPrivilegeModeM = {1'b0, STATUS_SPP};
-    end else        NextPrivilegeModeM = PrivilegeModeW;
-  end
-
-  flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
-*/
-
-  ///////////////////////////////////////////
-  // WFI timeout Privileged Spec 3.1.6.5
-  ///////////////////////////////////////////
-  if (`U_SUPPORTED) begin:wfi
-    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
-    assign WFICountPlus1 = WFICount + 1;
-    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
-    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
-  end else assign WFITimeoutM = 0;
-
 
   ///////////////////////////////////////////
   // decode privileged instructions
   ///////////////////////////////////////////
 
-   privdec pmd(.InstrM(InstrM[31:20]), 
-              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .WFITimeoutM,
-              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_FS, .IllegalInstrFaultM, 
+   privdec pmd(.clk, .reset, .InstrM(InstrM[31:20]), 
+              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
+              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
               .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////

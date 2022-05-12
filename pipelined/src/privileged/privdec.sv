@@ -32,18 +32,21 @@
 `include "wally-config.vh"
 
 module privdec (
+  input  logic         clk, reset,
   input  logic [31:20] InstrM,
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
-  input  logic         WFITimeoutM,
   input  logic [1:0]   PrivilegeModeW, 
-  input  logic         STATUS_TSR, STATUS_TVM,
+  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
   input  logic [1:0]   STATUS_FS,
   output logic         IllegalInstrFaultM,
   output logic         sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
 
   logic IllegalPrivilegedInstrM, IllegalOrDisabledFPUInstrM;
+  logic WFITimeoutM;
 
+  ///////////////////////////////////////////
   // Decode privileged instructions
+  ///////////////////////////////////////////
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
                       (PrivilegeModeW == `M_MODE || PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
@@ -53,7 +56,19 @@ module privdec (
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001) & 
                       (PrivilegeModeW == `M_MODE | (PrivilegeModeW == `S_MODE & ~STATUS_TVM)); 
 
+  ///////////////////////////////////////////
+  // WFI timeout Privileged Spec 3.1.6.5
+  ///////////////////////////////////////////
+  if (`U_SUPPORTED) begin:wfi
+    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+    assign WFICountPlus1 = WFICount + 1;
+    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
+  end else assign WFITimeoutM = 0;
+  
+  ///////////////////////////////////////////
   // Fault on illegal instructions
+  ///////////////////////////////////////////
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
   assign IllegalOrDisabledFPUInstrM = IllegalFPUInstrM | (STATUS_FS == 2'b00);
   assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalOrDisabledFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
