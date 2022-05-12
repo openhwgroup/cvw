@@ -40,7 +40,7 @@ module csr #(parameter
   input  logic             FlushE, FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
-  input  logic [`XLEN-1:0] PCM, SrcAM,
+  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM,
   input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, mretM, sretM, wfiM, InterruptM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
@@ -55,7 +55,7 @@ module csr #(parameter
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
-  input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
+  input  logic [`XLEN-1:0] CauseM, //NextFaultMtvalM,
   input  logic             SelHPTW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -71,7 +71,7 @@ module csr #(parameter
   
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
-  output logic [`XLEN-1:0] CSRReadValW,
+  output logic [`XLEN-1:0] CSRReadValW, PrivilegedNextPCM,
   output logic             IllegalCSRAccessM, BigEndianM
 );
 
@@ -96,9 +96,56 @@ module csr #(parameter
   logic IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
   logic [11:0] MIP_REGW_writeable;
+  logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector, NextFaultMtvalM;
+
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
+
+  ///////////////////////////////////////////
+  // MTVAL
+  ///////////////////////////////////////////
+
+  always_comb
+    case (CauseM)
+      12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
+      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
+      0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
+      default:                NextFaultMtvalM = 0; // Ecall, interrupts
+    endcase
+
+
+  ///////////////////////////////////////////
+  // Trap Vectoring
+  ///////////////////////////////////////////
+  //
+  // POSSIBLE OPTIMIZATION: 
+  // From 20190608 privielegd spec page 27 (3.1.7)
+  // > Allowing coarser alignments in Vectored mode enables vectoring to be
+  // > implemented without a hardware adder circuit.
+  // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
+  // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
+  // However, this is program dependent, so not implemented at this time.
+
+  always_comb
+    if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
+    else                               PrivilegedTrapVector = MTVEC_REGW; 
+
+  if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
+      always_comb
+        if (PrivilegedTrapVector[1:0] == 2'b01 & CauseM[`XLEN-1] == 1)
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
+        else
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+  end
+  else begin
+    assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+  end
+
+  always_comb 
+    if      (TrapM)                         PrivilegedNextPCM = PrivilegedVectoredTrapVector;
+    else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
+    else                                    PrivilegedNextPCM = SEPC_REGW;
 
   // modify CSRs
   always_comb begin
