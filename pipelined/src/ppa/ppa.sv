@@ -84,6 +84,36 @@ module ppa_mult_64 #(parameter WIDTH=64) (
   assign y = a * b;
 endmodule
 
+module ppa_alu_16 #(parameter WIDTH=16) (
+  input  logic [WIDTH-1:0] A, B,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
+
+  ppa_alu #(WIDTH) alu_16 (.*);
+endmodule
+
+module ppa_alu_32 #(parameter WIDTH=32) (
+  input  logic [WIDTH-1:0] A, B,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
+
+  ppa_alu #(WIDTH) alu_32 (.*);
+endmodule
+
+module ppa_alu_64 #(parameter WIDTH=64) (
+  input  logic [WIDTH-1:0] A, B,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
+
+  ppa_alu #(WIDTH) alu_64 (.*);
+endmodule
+
 module ppa_alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,
   input  logic [2:0]       ALUControl,
@@ -109,7 +139,7 @@ module ppa_alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
+  ppa_shifter #(WIDTH) sh(.A, .Amt(B[$clog2(WIDTH)-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
 
   // condition code flags based on subtract output Sum = A-B
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -150,21 +180,21 @@ module ppa_shiftleft #(parameter WIDTH=32) (
   assign y = a << amt;
 endmodule
 
-module ppa_shifter (
-  input  logic [`XLEN-1:0]     A,
-  input  logic [`LOG_XLEN-1:0] Amt,
+module ppa_shifter_32 #(parameter WIDTH=32) (
+  input  logic [WIDTH-1:0]     A,
+  input  logic [$clog2(WIDTH)-1:0] Amt,
   input  logic                 Right, Arith, W64,
-  output logic [`XLEN-1:0]     Y);
+  output logic [WIDTH-1:0]     Y);
 
-  logic [2*`XLEN-2:0]      z, zshift;
-  logic [`LOG_XLEN-1:0]    amttrunc, offset;
+  logic [2*WIDTH-2:0]      z, zshift;
+  logic [$clog2(WIDTH)-1:0]    amttrunc, offset;
 
   // Handle left and right shifts with a funnel shifter.
   // For RV32, only 32-bit shifts are needed.   
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-  if (`XLEN==32) begin:shifter // RV32
+  if (WIDTH==32) begin:shifter // RV32
     always_comb  // funnel mux
       if (Right) 
         if (Arith) z = {{31{A[31]}}, A};
@@ -192,7 +222,7 @@ module ppa_shifter (
   
   // funnel operation
   assign zshift = z >> offset;
-  assign Y = zshift[`XLEN-1:0];    
+  assign Y = zshift[WIDTH-1:0];    
 endmodule
 
 module ppa_prioritythermometer #(parameter N = 8) (
