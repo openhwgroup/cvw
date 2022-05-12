@@ -40,11 +40,13 @@ module privdec (
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
   input  logic [1:0]   STATUS_FS,
   output logic         IllegalInstrFaultM, ITLBFlushF, DTLBFlushM,
-  output logic         sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
+  output logic         EcallFaultM, BreakpointFaultM,
+  output logic         sretM, mretM, wfiM, sfencevmaM);
 
   logic IllegalPrivilegedInstrM, IllegalOrDisabledFPUInstrM;
   logic WFITimeoutM;
   logic       StallMQ;
+  logic       ebreakM, ecallM;
 
   ///////////////////////////////////////////
   // Decode privileged instructions
@@ -67,6 +69,12 @@ module privdec (
     floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
   end else assign WFITimeoutM = 0;
+
+  ///////////////////////////////////////////
+  // Extract exceptions by name and handle them 
+  ///////////////////////////////////////////
+  assign BreakpointFaultM = ebreakM; // could have other causes from a debugger
+  assign EcallFaultM = ecallM;
 
   ///////////////////////////////////////////
   // sfence.vma causes TLB flushes

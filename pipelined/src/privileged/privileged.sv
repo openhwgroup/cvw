@@ -86,7 +86,7 @@ module privileged (
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
-  logic sretM, mretM, ecallM, ebreakM, sfencevmaM;
+  logic sretM, mretM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
@@ -116,8 +116,8 @@ module privileged (
    privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
               .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
-              .ITLBFlushF, .DTLBFlushM,
-              .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
+              .ITLBFlushF, .DTLBFlushM, .EcallFaultM, .BreakpointFaultM,
+              .sretM, .mretM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
   // Control and Status Registers
@@ -149,12 +149,6 @@ module privileged (
           .CSRReadValW,
           .IllegalCSRAccessM, .BigEndianM);
 
-  ///////////////////////////////////////////
-  // Extract exceptions by name and handle them 
-  ///////////////////////////////////////////
-
-  assign BreakpointFaultM = ebreakM; // could have other causes too
-  assign EcallFaultM = ecallM;
 
 
   // A page fault might occur because of insufficient privilege during a TLB
