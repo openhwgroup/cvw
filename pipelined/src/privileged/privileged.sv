@@ -39,7 +39,7 @@ module privileged (
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, 
   output logic             ITLBFlushF, DTLBFlushM,
-  input  logic             InstrValidM, CommittedM, DivE,
+  input  logic             InstrValidM, CommittedM, 
   input  logic             FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
@@ -69,7 +69,6 @@ module privileged (
   input logic StoreAmoAccessFaultM,
   input logic SelHPTW,
 
-  output logic 		   ExceptionM,
   output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
@@ -82,76 +81,43 @@ module privileged (
   output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
-  logic [1:0] NextPrivilegeModeM;
-
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
-  logic sretM, mretM, ecallM, ebreakM, sfencevmaM;
+  logic sretM, mretM, sfencevmaM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
   logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
   logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
-  logic IllegalInstrFaultM, TrappedSRETM;
+  logic IllegalInstrFaultM;
 
-  logic MTrapM, STrapM, UTrapM;
+  logic MTrapM, STrapM;
   (* mark_debug = "true" *)  logic InterruptM; 
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
   logic       STATUS_MIE, STATUS_SIE;
-  logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
-  logic md;
-  logic       StallMQ;
-  logic WFITimeoutM; 
-
+  logic [11:0] MIP_REGW, MIE_REGW;
+  logic [1:0] NextPrivilegeModeM;
 
   ///////////////////////////////////////////
   // track the current privilege level
   ///////////////////////////////////////////
 
-  // get bits of DELEG registers based on CAUSE
-  assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
-  
-  // PrivilegeMode FSM
-  always_comb begin
-    if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-      if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
-                    NextPrivilegeModeM = `S_MODE;
-      else          NextPrivilegeModeM = `M_MODE;
-    end else if (mretM) NextPrivilegeModeM = STATUS_MPP;
-    else if (sretM) begin
-      if (STATUS_TSR & PrivilegeModeW == `S_MODE) begin
-        NextPrivilegeModeM = PrivilegeModeW;
-      end else      NextPrivilegeModeM = {1'b0, STATUS_SPP};
-    end else        NextPrivilegeModeM = PrivilegeModeW;
-  end
-
-  assign TrappedSRETM = sretM & STATUS_TSR & PrivilegeModeW == `S_MODE;
-
-  flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
-
-  ///////////////////////////////////////////
-  // WFI timeout Privileged Spec 3.1.6.5
-  ///////////////////////////////////////////
-  if (`U_SUPPORTED) begin:wfi
-    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
-    assign WFICountPlus1 = WFICount + 1;
-    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
-    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
-  end else assign WFITimeoutM = 0;
-
+  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .CauseM, 
+                    .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   ///////////////////////////////////////////
   // decode privileged instructions
   ///////////////////////////////////////////
 
-   privdec pmd(.InstrM(InstrM[31:20]), 
-              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, .TrappedSRETM, .WFITimeoutM,
-              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_FS, .IllegalInstrFaultM, 
-              .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
+   privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
+              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
+              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
+              .ITLBFlushF, .DTLBFlushM, .EcallFaultM, .BreakpointFaultM,
+              .sretM, .mretM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
   // Control and Status Registers
@@ -160,7 +126,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .wfiM, .InterruptM,
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .mretM, .sretM, .wfiM, .InterruptM,
           .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
@@ -173,7 +139,7 @@ module privileged (
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
           .MEDELEG_REGW, 
           .SATP_REGW,
-          .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
+          .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
           .STATUS_MIE, .STATUS_SIE,
           .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
           .PMPCFG_ARRAY_REGW,
@@ -183,21 +149,6 @@ module privileged (
           .CSRReadValW,
           .IllegalCSRAccessM, .BigEndianM);
 
-  ///////////////////////////////////////////
-  // Extract exceptions by name and handle them 
-  ///////////////////////////////////////////
-
-  assign BreakpointFaultM = ebreakM; // could have other causes too
-  assign EcallFaultM = ecallM;
-
-  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
-  assign ITLBFlushF = sfencevmaM & ~StallMQ;
-  assign DTLBFlushM = sfencevmaM;
-  // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
-  // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
-  // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
-  // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
-  // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
 
 
   // A page fault might occur because of insufficient privilege during a TLB
@@ -214,7 +165,7 @@ module privileged (
                   {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
                   {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
   // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
-  trap trap(.clk, .reset,
+  trap trap(.reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
             .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
@@ -222,16 +173,15 @@ module privileged (
             .mretM, .sretM, 
             .PrivilegeModeW, .NextPrivilegeModeM,
             .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
-            .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
+            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,
             .IEUAdrM, 
             .InstrM,
-            .InstrValidM, .CommittedM, .DivE, 
-            .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,
+            .InstrValidM, .CommittedM,  
+            .TrapM, .MTrapM, .STrapM, .RetM,
             .InterruptM, .IntPendingM,
-            .ExceptionM,
-            .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
+             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
 endmodule
 
 

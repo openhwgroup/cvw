@@ -32,8 +32,7 @@
 `include "wally-config.vh"
 
 module trap (
-  input logic 		   clk,
-  input logic 		   reset, 
+   input logic 		   reset, 
   (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
   (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
@@ -41,25 +40,24 @@ module trap (
   (* mark_debug = "true" *) input logic 		   mretM, sretM, 
   input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
   (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
-  (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
+  (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
   input logic [`XLEN-1:0]  PCM,
   input logic [`XLEN-1:0]  IEUAdrM, 
   input logic [31:0] 	   InstrM,
-  input logic 		   InstrValidM, CommittedM, DivE, 
-  output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
+  input logic 		   InstrValidM, CommittedM, 
+  output logic 		   TrapM, MTrapM, STrapM, RetM,
   output logic 		   InterruptM, IntPendingM,
-  output logic 		   ExceptionM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
 //  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
 //  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
 );
 
   logic MIntGlobalEnM, SIntGlobalEnM;
+  logic ExceptionM;
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
-  logic Exception1M;
 
   // Determine pending enabled interrupts
   // interrupt if any sources are pending

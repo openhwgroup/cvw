@@ -187,7 +187,7 @@ module csrm #(parameter
       MARCHID:   CSRMReadValM = 0;
       MIMPID:    CSRMReadValM = `XLEN'h100; // pipelined implementation
       MHARTID:   CSRMReadValM = MHARTID_REGW; // hardwired to 0 
-      MCONFIGPTR: CSRReadValM = 0; // hardwired to 0
+      MCONFIGPTR: CSRMReadValM = 0; // hardwired to 0
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = MSTATUSH_REGW; 
       MTVEC:     CSRMReadValM = MTVEC_REGW;

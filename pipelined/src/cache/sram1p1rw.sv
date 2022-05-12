@@ -43,7 +43,6 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
 
   logic [WIDTH-1:0]               StoredData[DEPTH-1:0];
   logic [$clog2(DEPTH)-1:0]       AdrD;
-  logic                           WriteEnableD;
 
   always_ff @(posedge clk)       AdrD <= Adr;
 

@@ -77,11 +77,7 @@ module datapath (
   // Execute stage signals
   logic [`XLEN-1:0] R1E, R2E;
   logic [`XLEN-1:0] ExtImmE;
-
-  // logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, SrcAE2, SrcBE2; // *** MAde forwardedsrcae an output to get rid of a mux in the critical path.
   logic [`XLEN-1:0] SrcAE, SrcBE;
-  logic [`XLEN-1:0] SrcAE2, SrcBE2;
-
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE;
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;

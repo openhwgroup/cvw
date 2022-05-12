@@ -34,7 +34,7 @@
 module lrsc
   (
     input  logic                clk, reset,
-    input  logic                FlushW, StallW,
+    input  logic                StallW,
     input  logic                MemReadM,
     input  logic [1:0]          PreLSURWM,
     output logic [1:0]          LSURWM,

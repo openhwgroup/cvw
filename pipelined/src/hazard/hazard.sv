@@ -60,6 +60,8 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
+  // *** can stalls be pushed into earlier stages (e.g. no stall after Decode?)
+
   assign StallFCause = CSRWritePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    

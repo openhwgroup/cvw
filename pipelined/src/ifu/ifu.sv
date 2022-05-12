@@ -33,8 +33,8 @@
 
 module ifu (
 	input logic 				clk, reset,
-	input logic 				StallF, StallD, StallE, StallM, StallW,
-	input logic 				FlushF, FlushD, FlushE, FlushM, FlushW,
+	input logic 				StallF, StallD, StallE, StallM, 
+	input logic 				FlushF, FlushD, FlushE, FlushM, 
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
 (* mark_debug = "true" *)	input logic 				IFUBusAck,
@@ -65,7 +65,6 @@ module ifu (
 	output logic 				InstrPageFaultF,
 	output logic 				IllegalIEUInstrFaultD,
 	output logic 				InstrMisalignedFaultM,
-	input logic 				ExceptionM,
 	// mmu management
 	input logic [1:0] 			PrivilegeModeW,
 	input logic [`XLEN-1:0] 	PTE,
@@ -183,11 +182,9 @@ module ifu (
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  ReadDataLine;
     logic [LINELEN-1:0]  ICacheBusWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
-    logic [31:0]         temp;
     logic                SelUncachedAdr;
     
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
