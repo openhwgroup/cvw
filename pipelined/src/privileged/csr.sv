@@ -59,7 +59,7 @@ module csr #(parameter
   input  logic             SelHPTW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
-  output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
+  output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, 
   output logic [`XLEN-1:0]      MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [11:0]      MIP_REGW, MIE_REGW, MIDELEG_REGW,
@@ -83,6 +83,7 @@ module csr #(parameter
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRWriteValM;
  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
+  logic [`XLEN-1:0] STVEC_REGW, MTVEC_REGW;
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
