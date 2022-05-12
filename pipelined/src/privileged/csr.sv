@@ -62,7 +62,7 @@ module csr #(parameter
   output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
   output logic [`XLEN-1:0]      MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
-  output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
+  output logic [11:0]      MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]       STATUS_FS,
@@ -71,7 +71,6 @@ module csr #(parameter
   
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
-//  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
   output logic [`XLEN-1:0] CSRReadValW,
   output logic             IllegalCSRAccessM, BigEndianM
 );
@@ -96,7 +95,7 @@ module csr #(parameter
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
-  logic [11:0] IP_REGW_writeable;
+  logic [11:0] MIP_REGW_writeable;
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
@@ -107,7 +106,7 @@ module csr #(parameter
     CSRSrcM = InstrM[14] ? {{(`XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
 
     // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
-    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(`XLEN-12){1'b0}}, IP_REGW_writeable};
+    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(`XLEN-12){1'b0}}, MIP_REGW_writeable};
     else                                 CSRReadVal2M = CSRReadValM;
 
     // Compute AND/OR modification
@@ -135,7 +134,7 @@ module csr #(parameter
   csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
               .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
-              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .IP_REGW_writeable);
+              .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
@@ -166,7 +165,7 @@ module csr #(parameter
               .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
               .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
               .SCOUNTEREN_REGW,
-              .SATP_REGW, .SIP_REGW, .SIE_REGW,
+              .SATP_REGW, .MIP_REGW, .MIE_REGW,
               .WriteSSTATUSM, .IllegalCSRSAccessM);
   csru  csru(.clk, .reset, .InstrValidNotFlushedM, .StallW,
               .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  

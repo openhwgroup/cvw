@@ -102,7 +102,7 @@ module privileged (
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
   logic       STATUS_MIE, STATUS_SIE;
-  logic [11:0] MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW;
+  logic [11:0] MIP_REGW, MIE_REGW;
   logic md;
   logic       StallMQ;
   logic WFITimeoutM; 
@@ -171,7 +171,7 @@ module privileged (
           .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
           .MEDELEG_REGW, 
           .SATP_REGW,
-          .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
+          .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
           .STATUS_MIE, .STATUS_SIE,
           .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
           .PMPCFG_ARRAY_REGW,
@@ -220,7 +220,7 @@ module privileged (
             .mretM, .sretM, 
             .PrivilegeModeW, .NextPrivilegeModeM,
             .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
-            .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW,
+            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .PCM,
             .IEUAdrM, 

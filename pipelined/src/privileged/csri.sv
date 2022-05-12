@@ -43,11 +43,10 @@ module csri #(parameter
     input logic [`XLEN-1:0] CSRWriteValM,
     input logic [11:0] 		CSRAdrM,
     (* mark_debug = "true" *)    input logic MExtInt, SExtInt, MTimerInt, MSwInt,
-    output logic [11:0] 	MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, 
-    (* mark_debug = "true" *) output logic [11:0]   IP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
+    output logic [11:0] 	MIP_REGW, MIE_REGW,
+    (* mark_debug = "true" *) output logic [11:0]   MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
   );
 
-  logic [11:0]     IP_REGW, IE_REGW;
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
 
@@ -62,8 +61,8 @@ module csri #(parameter
   // SEIP, STIP, SSIP is writable in MIP if S mode exists
   // SSIP is writable in SIP if S mode exists
   if (`S_SUPPORTED) begin:mask
-    assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writable in MIP (20210108-draft 3.1.9)
-    assign SIP_WRITE_MASK = 12'h002; // SSIP is writable in SIP (privileged 20210108-draft 4.1.3)
+    assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writeable in MIP (20210108-draft 3.1.9)
+    assign SIP_WRITE_MASK = 12'h002; // SSIP is writeable in SIP (privileged 20210108-draft 4.1.3)
     assign MIE_WRITE_MASK = 12'hAAA;
   end else begin:mask
     assign MIP_WRITE_MASK = 12'h000;
@@ -71,25 +70,13 @@ module csri #(parameter
     assign MIE_WRITE_MASK = 12'h888;
   end
   always @(posedge clk)
-    if (reset)          IP_REGW_writeable <= 12'b0;
-    else if (WriteMIPM) IP_REGW_writeable <= (CSRWriteValM[11:0] & MIP_WRITE_MASK);
-    else if (WriteSIPM) IP_REGW_writeable <= (CSRWriteValM[11:0] & SIP_WRITE_MASK);
+    if (reset)          MIP_REGW_writeable <= 12'b0;
+    else if (WriteMIPM) MIP_REGW_writeable <= (CSRWriteValM[11:0] & MIP_WRITE_MASK);
+    else if (WriteSIPM) MIP_REGW_writeable <= (CSRWriteValM[11:0] & SIP_WRITE_MASK) | (MIP_REGW_writeable & ~SIP_WRITE_MASK);
   always @(posedge clk)
-    if (reset)          IE_REGW <= 12'b0;
-    else if (WriteMIEM) IE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
-    else if (WriteSIEM) IE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (IE_REGW & 12'h888); // only S fields
+    if (reset)          MIE_REGW <= 12'b0;
+    else if (WriteMIEM) MIE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
+    else if (WriteSIEM) MIE_REGW <= (CSRWriteValM[11:0] & 12'h222) | (MIE_REGW & 12'h888); // only S fields
 
-  assign IP_REGW = {MExtInt,1'b0,SExtInt|IP_REGW_writeable[9],1'b0,MTimerInt,1'b0,IP_REGW_writeable[5],1'b0,MSwInt,1'b0,IP_REGW_writeable[1],1'b0};
-
-  assign MIP_REGW = IP_REGW;
-  assign MIE_REGW = IE_REGW;
-
-  if (`S_SUPPORTED) begin
-    assign SIP_REGW = IP_REGW & 12'h222;
-    assign SIE_REGW = IE_REGW & 12'h222;
-  end else begin
-    assign SIP_REGW = 12'b0;
-    assign SIE_REGW = 12'b0;
-  end
-
+  assign MIP_REGW = {MExtInt,1'b0,SExtInt|MIP_REGW_writeable[9],1'b0,MTimerInt,1'b0,MIP_REGW_writeable[5],1'b0,MSwInt,1'b0,MIP_REGW_writeable[1],1'b0};
 endmodule
