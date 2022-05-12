@@ -146,8 +146,8 @@ module testbench;
   `define HPMCOUNTER  `CSR_BASE.counters.counters.HPMCOUNTER_REGW
   `define MEDELEG     `CSR_BASE.csrm.deleg.MEDELEGreg.q
   `define MIDELEG     `CSR_BASE.csrm.deleg.MIDELEGreg.q
-  `define MIE         `CSR_BASE.csri.IE_REGW
-  `define MIP         `CSR_BASE.csri.IP_REGW_writeable
+  `define MIE         `CSR_BASE.csri.MIE_REGW
+  `define MIP         `CSR_BASE.csri.MIP_REGW_writeable
   `define MCAUSE      `CSR_BASE.csrm.MCAUSEreg.q
   `define SCAUSE      `CSR_BASE.csrs.csrs.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
@@ -692,8 +692,6 @@ module testbench;
             "sstatus": `checkCSR(`CSR_BASE.csrs.SSTATUS_REGW)
             "mtvec":   `checkCSR(`CSR_BASE.csrm.MTVEC_REGW)
             "mie":     `checkCSR(`CSR_BASE.csrm.MIE_REGW)
-            "sip":     `checkCSR(`CSR_BASE.csrs.SIP_REGW)
-            "sie":     `checkCSR(`CSR_BASE.csrs.SIE_REGW)
             "mideleg": `checkCSR(`CSR_BASE.csrm.MIDELEG_REGW)
             "medeleg": `checkCSR(`CSR_BASE.csrm.MEDELEG_REGW)
             "mepc":    `checkCSR(`CSR_BASE.csrm.MEPC_REGW)
