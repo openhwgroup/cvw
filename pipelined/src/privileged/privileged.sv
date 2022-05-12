@@ -149,11 +149,6 @@ module privileged (
           .CSRReadValW,
           .IllegalCSRAccessM, .BigEndianM);
 
-
-
-  // A page fault might occur because of insufficient privilege during a TLB
-  // lookup or a improperly formatted page table during walking
-
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
                   {InstrPageFaultF, InstrAccessFaultF},
