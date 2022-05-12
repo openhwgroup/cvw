@@ -93,7 +93,7 @@ module lsu (
   logic [6:0]               LSUFunct7M;
   logic [1:0]               LSUAtomicM;
   (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   PreLSUPAdrM;
-  logic [11:0]              PreLSUAdrE, LSUAdrE;  
+  logic [11:0]              LSUAdrE;  
   logic                     CPUBusy;
   logic                     DCacheStallM;
   logic                     CacheableM;
@@ -131,7 +131,7 @@ module lsu (
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign IgnoreRequestTrapM = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
-    assign LSUAdrE = PreLSUAdrE; assign PreLSUAdrE = IEUAdrE[11:0]; 
+    assign LSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign LSUWriteDataM = WriteDataM;
@@ -202,13 +202,11 @@ module lsu (
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  ReadDataLineM;
     logic [LINELEN-1:0]  DCacheBusWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic                SelBus;
     logic [LOGWPL-1:0]   WordCount;
             
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) busdp(

@@ -156,7 +156,6 @@ module wallypipelinedcore (
   logic             InstrAccessFaultF;
   logic [2:0]             LSUBusSize;
   
-  logic             ExceptionM;
   logic             DCacheMiss;
   logic             DCacheAccess;
   logic             ICacheMiss;
@@ -169,8 +168,6 @@ module wallypipelinedcore (
     .clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
-
-    .ExceptionM,
     // Fetch
     .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
     .IFUBusRead, .IFUStallF,
@@ -338,7 +335,7 @@ module wallypipelinedcore (
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-         .ExceptionM, .IllegalFPUInstrE,
+         .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 

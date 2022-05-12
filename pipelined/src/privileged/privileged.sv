@@ -69,7 +69,6 @@ module privileged (
   input logic StoreAmoAccessFaultM,
   input logic SelHPTW,
 
-  output logic 		   ExceptionM,
   output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
@@ -228,8 +227,7 @@ module privileged (
             .InstrValidM, .CommittedM,  
             .TrapM, .MTrapM, .STrapM, .RetM,
             .InterruptM, .IntPendingM,
-            .ExceptionM,
-            .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
+             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
 endmodule
 
 
