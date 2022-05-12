@@ -86,7 +86,6 @@ module wallypipelinedcore (
   logic             PCSrcE;
   logic             CSRWritePendingDEM;
   logic             DivBusyE;
-  logic             DivE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
   // floating point unit signals
@@ -323,7 +322,7 @@ module wallypipelinedcore (
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
          .ITLBFlushF, .DTLBFlushM,
-         .InstrValidM, .CommittedM, .DivE,
+         .InstrValidM, .CommittedM, 
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
@@ -360,7 +359,7 @@ module wallypipelinedcore (
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
-         .MDUResultW, .DivBusyE,  .DivE,
+         .MDUResultW, .DivBusyE,  
          .StallM, .StallW, .FlushM, .FlushW, .TrapM 
       ); 
    end else begin // no M instructions supported

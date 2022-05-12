@@ -46,8 +46,8 @@ module trap (
   input logic [`XLEN-1:0]  PCM,
   input logic [`XLEN-1:0]  IEUAdrM, 
   input logic [31:0] 	   InstrM,
-  input logic 		   InstrValidM, CommittedM, DivE, 
-  output logic 		   TrapM, MTrapM, STrapM, UTrapM, RetM,
+  input logic 		   InstrValidM, CommittedM, 
+  output logic 		   TrapM, MTrapM, STrapM, RetM,
   output logic 		   InterruptM, IntPendingM,
   output logic 		   ExceptionM,
   output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
@@ -59,7 +59,6 @@ module trap (
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
   //logic InterruptM;
   logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
-  logic Exception1M;
 
   // Determine pending enabled interrupts
   // interrupt if any sources are pending
