@@ -88,10 +88,10 @@ module privileged (
 
   logic sretM, mretM, sfencevmaM;
   logic IllegalCSRAccessM;
-  logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
+  logic IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
-  logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
-  logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
+  logic InstrPageFaultM;
+  logic InstrAccessFaultM;
   logic IllegalInstrFaultM;
 
   logic MTrapM, STrapM;
@@ -149,16 +149,11 @@ module privileged (
           .CSRReadValW,
           .IllegalCSRAccessM, .BigEndianM);
 
-  // pipeline fault signals
-  flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
-                  {InstrPageFaultF, InstrAccessFaultF},
-                  {InstrPageFaultD, InstrAccessFaultD});
-  flopenrc #(4) faultregE(clk, reset, FlushE, ~StallE,
-                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD, IllegalFPUInstrD}, // ** vs IllegalInstrFaultInD
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE});
-  flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
-                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
+  privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+                  .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+                  .IllegalFPUInstrE,
+                  .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM, .IllegalFPUInstrM);
+
   trap trap(.reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
@@ -169,9 +164,7 @@ module privileged (
             .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
-            .PCM,
-            .IEUAdrM, 
-            .InstrM,
+            .PCM, .IEUAdrM, .InstrM,
             .InstrValidM, .CommittedM,  
             .TrapM, .MTrapM, .STrapM, .RetM,
             .InterruptM, .IntPendingM,

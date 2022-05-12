@@ -208,7 +208,7 @@ logic [3:0] dummy;
   always @(negedge clk)
     begin    
       if (TEST == "coremark")
-        if (dut.core.priv.priv.ecallM) begin
+        if (dut.core.priv.priv.EcallFaultM) begin
           $display("Benchmark: coremark is done.");
           $stop;
         end
