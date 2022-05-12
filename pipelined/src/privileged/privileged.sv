@@ -100,10 +100,7 @@ module privileged (
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW;
-  logic       StallMQ;
-  logic WFITimeoutM; 
   logic [1:0] NextPrivilegeModeM;
-
 
   ///////////////////////////////////////////
   // track the current privilege level
@@ -116,9 +113,10 @@ module privileged (
   // decode privileged instructions
   ///////////////////////////////////////////
 
-   privdec pmd(.clk, .reset, .InstrM(InstrM[31:20]), 
+   privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
               .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
+              .ITLBFlushF, .DTLBFlushM,
               .sretM, .mretM, .ecallM, .ebreakM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
@@ -157,15 +155,6 @@ module privileged (
 
   assign BreakpointFaultM = ebreakM; // could have other causes too
   assign EcallFaultM = ecallM;
-
-  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
-  assign ITLBFlushF = sfencevmaM & ~StallMQ;
-  assign DTLBFlushM = sfencevmaM;
-  // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
-  // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
-  // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
-  // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
-  // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
 
 
   // A page fault might occur because of insufficient privilege during a TLB
