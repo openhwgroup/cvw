@@ -83,12 +83,12 @@ module trap (
   ///////////////////////////////////////////
   always_comb
     if      (reset)                    CauseM = 0; // hard reset 3.3
-    else if (ValidIntsM[11])           CauseM = (1 << (`XLEN-1)) + 11; // Machine External Int
-    else if (ValidIntsM[3])            CauseM = (1 << (`XLEN-1)) + 3;  // Machine Sw Int
-    else if (ValidIntsM[7])            CauseM = (1 << (`XLEN-1)) + 7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int 
-    else if (ValidIntsM[1])            CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int       
-    else if (ValidIntsM[5])            CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int    
+    else if (ValidIntsM[11])           CauseM = 11; // Machine External Int
+    else if (ValidIntsM[3])            CauseM = 3;  // Machine Sw Int
+    else if (ValidIntsM[7])            CauseM = 7;  // Machine Timer Int
+    else if (ValidIntsM[9])            CauseM = 9;  // Supervisor External Int 
+    else if (ValidIntsM[1])            CauseM = 1;  // Supervisor Sw Int       
+    else if (ValidIntsM[5])            CauseM = 5;  // Supervisor Timer Int    
     else if (InstrPageFaultM)          CauseM = 12;
     else if (InstrAccessFaultM)        CauseM = 1;
     else if (IllegalInstrFaultM)       CauseM = 2;
