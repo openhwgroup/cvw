@@ -41,7 +41,7 @@ module csr #(parameter
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, wfiM, InterruptM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, mretM, sretM, wfiM, InterruptM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
@@ -135,7 +135,7 @@ module csr #(parameter
   csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
               .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
-              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW, .IP_REGW_writeable);
+              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .IP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
@@ -145,7 +145,7 @@ module csr #(parameter
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
               .STATUS_FS, .BigEndianM);
   csrc  counters(.clk, .reset,
-              .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,   
+              .StallE, .StallM, .StallW, .FlushM, .FlushW,   
               .InstrValidM, .LoadStallD, .CSRMWriteM,
               .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
               .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,

@@ -39,7 +39,7 @@ module privileged (
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, 
   output logic             ITLBFlushF, DTLBFlushM,
-  input  logic             InstrValidM, CommittedM, DivE,
+  input  logic             InstrValidM, CommittedM, 
   input  logic             FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
@@ -97,7 +97,7 @@ module privileged (
   logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
   logic IllegalInstrFaultM;
 
-  logic MTrapM, STrapM, UTrapM;
+  logic MTrapM, STrapM;
   (* mark_debug = "true" *)  logic InterruptM; 
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
@@ -158,7 +158,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .UTrapM, .mretM, .sretM, .wfiM, .InterruptM,
+          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .mretM, .sretM, .wfiM, .InterruptM,
           .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
@@ -225,8 +225,8 @@ module privileged (
             .PCM,
             .IEUAdrM, 
             .InstrM,
-            .InstrValidM, .CommittedM, .DivE, 
-            .TrapM, .MTrapM, .STrapM, .UTrapM, .RetM,
+            .InstrValidM, .CommittedM,  
+            .TrapM, .MTrapM, .STrapM, .RetM,
             .InterruptM, .IntPendingM,
             .ExceptionM,
             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
