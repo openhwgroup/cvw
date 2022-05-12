@@ -138,7 +138,7 @@ module testbench;
   `define RF dut.core.ieu.dp.regf.rf
   `define PC dut.core.ifu.pcreg.q
   `define PRIV_BASE   dut.core.priv.priv
-  `define PRIV        `PRIV_BASE.privmodereg.q
+  `define PRIV        `PRIV_BASE.privmode.privmode.privmodereg.q
   `define CSR_BASE    `PRIV_BASE.csr
   `define MEIP        `PRIV_BASE.MExtInt
   `define SEIP        `PRIV_BASE.SExtInt
