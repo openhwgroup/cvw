@@ -81,8 +81,6 @@ module privileged (
   output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
-  logic [1:0] NextPrivilegeModeM;
-
   logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEDELEG_REGW;
@@ -102,15 +100,18 @@ module privileged (
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW;
-  logic md;
   logic       StallMQ;
   logic WFITimeoutM; 
+  logic [1:0] NextPrivilegeModeM;
 
 
   ///////////////////////////////////////////
   // track the current privilege level
   ///////////////////////////////////////////
 
+  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .CauseM, 
+                    .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+  /*
   // get bits of DELEG registers based on CAUSE
   assign md = CauseM[`XLEN-1] ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM[`LOG_XLEN-1:0]];
   
@@ -129,6 +130,7 @@ module privileged (
   end
 
   flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
+*/
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
