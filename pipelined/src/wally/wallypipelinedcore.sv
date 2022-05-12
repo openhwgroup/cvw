@@ -63,13 +63,11 @@ module wallypipelinedcore (
   // new signals that must connect through DP
   logic             MDUE, W64E;
   logic             CSRReadM, CSRWriteM, PrivilegedM;
-  logic [1:0]             AtomicE;
   logic [1:0]             AtomicM;
   logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
 (* mark_debug = "true" *)  logic [`XLEN-1:0]         SrcAM;
   logic [2:0]             Funct3E;
-  //  logic [31:0] InstrF;
-  logic [31:0]             InstrD, InstrW;
+  logic [31:0]             InstrD;
   (* mark_debug = "true" *) logic [31:0]             InstrM;
   logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
@@ -166,8 +164,8 @@ module wallypipelinedcore (
   
   ifu ifu(
     .clk, .reset,
-    .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
+    .StallF, .StallD, .StallE, .StallM, 
+    .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
     .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
     .IFUBusRead, .IFUStallF,
@@ -217,7 +215,6 @@ module wallypipelinedcore (
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
-     .AtomicE, // atomic control goes to LSU        
      .AtomicM, // atomic control goes to LSU
      .WriteDataE, // Write data to LSU
      .Funct3M, // size and signedness to LSU

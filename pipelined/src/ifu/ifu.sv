@@ -33,8 +33,8 @@
 
 module ifu (
 	input logic 				clk, reset,
-	input logic 				StallF, StallD, StallE, StallM, StallW,
-	input logic 				FlushF, FlushD, FlushE, FlushM, FlushW,
+	input logic 				StallF, StallD, StallE, StallM, 
+	input logic 				FlushF, FlushD, FlushE, FlushM, 
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
 (* mark_debug = "true" *)	input logic 				IFUBusAck,
