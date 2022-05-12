@@ -52,7 +52,6 @@ module controller(
   output logic       MDUE, W64E,
   output logic       JumpE,	
   output logic       SCE,
-  output logic [1:0] AtomicE,
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
@@ -107,6 +106,7 @@ module controller(
 	logic        BranchFlagE;
   logic        IEURegWriteE;
   logic        IllegalERegAdrD;
+  logic [1:0]  AtomicE;
 
   // Extract fields
   assign OpD = InstrD[6:0];
