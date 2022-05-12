@@ -159,7 +159,6 @@ module privileged (
   flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
                   {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
                   {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
-  // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
   trap trap(.reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
