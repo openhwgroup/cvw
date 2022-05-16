@@ -291,9 +291,9 @@ module ppa_prioriyencoder #(parameter N = 8) (
     end
 endmodule
 
-module ppa_decoder #(parameter N = 8) (
-  input  logic  [$clog2(N)-1:0] a,
-  output logic  [N-1:0] y);
+module ppa_decoder #(parameter WIDTH = 8) (
+  input  logic  [$clog2(WIDTH)-1:0] a,
+  output logic  [WIDTH-1:0] y);
   always_comb begin 
     y = 0;
     y[a] = 1;

@@ -1,11 +1,10 @@
 ///////////////////////////////////////////
-// privmode.sv
+// privpiperegs.sv
 //
 // Written: David_Harris@hmc.edu 12 May 2022
 // Modified: 
 //
-// Purpose: Track privilege mode
-//          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
+// Purpose: Pipeline registers for early exceptions
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -31,37 +30,29 @@
 
 `include "wally-config.vh"
 
-module privmode (
-  input  logic             clk, reset,
-  input  logic             StallW, TrapM, mretM, sretM, InterruptM,
-  input  logic [`LOG_XLEN-1:0] CauseM, 
-  input  logic [`XLEN-1:0] MEDELEG_REGW,
-  input  logic [11:0]      MIDELEG_REGW,
-  input  logic [1:0]       STATUS_MPP,
-  input  logic             STATUS_SPP,
-  output logic [1:0]       NextPrivilegeModeM, PrivilegeModeW
-); 
-  
-  if (`U_SUPPORTED) begin:privmode
-    logic       md;
+module privpiperegs (
+  input  logic         clk, reset,
+  input  logic         StallD, StallE, StallM,
+  input  logic         FlushD, FlushE, FlushM,
+  input  logic         InstrPageFaultF, InstrAccessFaultF,
+  input  logic         IllegalIEUInstrFaultD, IllegalFPUInstrD,
+  output logic         IllegalFPUInstrE,
+  output logic         InstrPageFaultM, InstrAccessFaultM,
+  output logic         IllegalIEUInstrFaultM, IllegalFPUInstrM
+);
 
-    // get bits of DELEG registers based on CAUSE
-    assign md = InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM];
-    
-    // PrivilegeMode FSM
-    always_comb begin
-      if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-        if (`S_SUPPORTED & md & (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE))
-                          NextPrivilegeModeM = `S_MODE;
-        else              NextPrivilegeModeM = `M_MODE;
-      end else if (mretM) NextPrivilegeModeM = STATUS_MPP;
-      else if (sretM)     NextPrivilegeModeM = {1'b0, STATUS_SPP};
-      else                NextPrivilegeModeM = PrivilegeModeW;
-    end
+  logic InstrPageFaultD, InstrAccessFaultD;
+  logic InstrPageFaultE, InstrAccessFaultE;
+  logic IllegalIEUInstrFaultE; 
 
-    flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
-  end else begin  // only machine mode supported
-    assign NextPrivilegeModeM = `M_MODE;
-    assign PrivilegeModeW = `M_MODE;
-  end
+  // pipeline fault signals
+  flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
+                  {InstrPageFaultF, InstrAccessFaultF},
+                  {InstrPageFaultD, InstrAccessFaultD});
+  flopenrc #(4) faultregE(clk, reset, FlushE, ~StallE,
+                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD, IllegalFPUInstrD}, 
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE});
+  flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
+                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
 endmodule
