@@ -4,17 +4,19 @@ import subprocess
 from multiprocessing import Pool
 import csv
 import re
-import matplotlib.pyplot as plt
-import numpy as np
+# import matplotlib.pyplot as plt
+# import numpy as np
 
+print("hi")
 
 def run_command(module, width, freq):
     command = "make synth DESIGN=ppa_{}_{} TECH=sky90 DRIVE=INV FREQ={} MAXOPT=1".format(module, width, freq)
     subprocess.Popen(command, shell=True)
 
-widths = ['32']
+widths = ['16']
 modules = ['shifter']
-freqs = ['10', '4000', '5000', '6000']
+freqs = ['10']
+
 
 LoT = []
 for module in modules:
@@ -24,6 +26,7 @@ for module in modules:
 
 pool = Pool()
 pool.starmap(run_command, LoT)
+pool.close()
 
 bashCommand = "grep 'Critical Path Length' runs/ppa_*/reports/*qor*"
 outputCPL = subprocess.check_output(['bash','-c', bashCommand])
