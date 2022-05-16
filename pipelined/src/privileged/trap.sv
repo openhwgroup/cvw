@@ -38,26 +38,18 @@ module trap (
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
   (* mark_debug = "true" *) input logic 		   mretM, sretM, 
-  input logic [1:0] 	   PrivilegeModeW, NextPrivilegeModeM,
-  (* mark_debug = "true" *) input logic [`XLEN-1:0]  MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
+  input logic [1:0] 	   PrivilegeModeW, 
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
-  input logic [`XLEN-1:0]  PCM,
-  input logic [`XLEN-1:0]  IEUAdrM, 
-  input logic [31:0] 	   InstrM,
   input logic 		   InstrValidM, CommittedM, 
-  output logic 		   TrapM, MTrapM, STrapM, RetM,
+  output logic 		   TrapM, RetM,
   output logic 		   InterruptM, IntPendingM,
-  output logic [`XLEN-1:0] PrivilegedNextPCM, CauseM, NextFaultMtvalM
-//  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-//  input  logic            WriteMIPM, WriteSIPM, WriteUIPM, WriteMIEM, WriteSIEM, WriteUIEM
+  output logic [`LOG_XLEN-1:0] CauseM 
 );
 
   logic MIntGlobalEnM, SIntGlobalEnM;
   logic ExceptionM;
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
-  //logic InterruptM;
-  logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector;
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -82,42 +74,8 @@ module trap (
                       InstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
-  assign TrapM = ExceptionM | InterruptM; // *** clean this up later DH
-  assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
-  assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
+  assign TrapM = ExceptionM | InterruptM; 
   assign RetM = mretM | sretM;
-
-  always_comb
-      if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
-      else                               PrivilegedTrapVector = MTVEC_REGW; 
-
-  ///////////////////////////////////////////
-  // Handle vectored traps (when mtvec/stvec csr value has bits [1:0] == 01)
-  // For vectored traps, set program counter to _tvec value + 4 times the cause code
-  ///////////////////////////////////////////
-  //
-  // POSSIBLE OPTIMIZATION: 
-  // From 20190608 privielegd spec page 27 (3.1.7)
-  // > Allowing coarser alignments in Vectored mode enables vectoring to be
-  // > implemented without a hardware adder circuit.
-  // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
-  // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
-  // However, this is program dependent, so not implemented at this time.
-  if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
-      always_comb
-        if (PrivilegedTrapVector[1:0] == 2'b01 & CauseM[`XLEN-1] == 1)
-          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + CauseM[`XLEN-3:0], 2'b00};
-        else
-          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
-  end
-  else begin
-    assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
-  end
-
-  always_comb 
-    if      (TrapM)                         PrivilegedNextPCM = PrivilegedVectoredTrapVector;
-    else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
-    else                                    PrivilegedNextPCM = SEPC_REGW;
 
   ///////////////////////////////////////////
   // Cause priority defined in table 3.7 of 20190608 privileged spec
@@ -125,18 +83,18 @@ module trap (
   ///////////////////////////////////////////
   always_comb
     if      (reset)                    CauseM = 0; // hard reset 3.3
-    else if (ValidIntsM[11])           CauseM = (1 << (`XLEN-1)) + 11; // Machine External Int
-    else if (ValidIntsM[3])            CauseM = (1 << (`XLEN-1)) + 3;  // Machine Sw Int
-    else if (ValidIntsM[7])            CauseM = (1 << (`XLEN-1)) + 7;  // Machine Timer Int
-    else if (ValidIntsM[9])            CauseM = (1 << (`XLEN-1)) + 9;  // Supervisor External Int 
-    else if (ValidIntsM[1])            CauseM = (1 << (`XLEN-1)) + 1;  // Supervisor Sw Int       
-    else if (ValidIntsM[5])            CauseM = (1 << (`XLEN-1)) + 5;  // Supervisor Timer Int    
+    else if (ValidIntsM[11])           CauseM = 11; // Machine External Int
+    else if (ValidIntsM[3])            CauseM = 3;  // Machine Sw Int
+    else if (ValidIntsM[7])            CauseM = 7;  // Machine Timer Int
+    else if (ValidIntsM[9])            CauseM = 9;  // Supervisor External Int 
+    else if (ValidIntsM[1])            CauseM = 1;  // Supervisor Sw Int       
+    else if (ValidIntsM[5])            CauseM = 5;  // Supervisor Timer Int    
     else if (InstrPageFaultM)          CauseM = 12;
     else if (InstrAccessFaultM)        CauseM = 1;
     else if (IllegalInstrFaultM)       CauseM = 2;
     else if (InstrMisalignedFaultM)    CauseM = 0;
     else if (BreakpointFaultM)         CauseM = 3;
-    else if (EcallFaultM)              CauseM = {{(`XLEN-2){1'b0}}, PrivilegeModeW} + 8;
+    else if (EcallFaultM)              CauseM = {{(`LOG_XLEN-4){1'b0}}, {2'b10}, PrivilegeModeW};
     else if (LoadMisalignedFaultM)     CauseM = 4;
     else if (StoreAmoMisalignedFaultM) CauseM = 6;
     else if (LoadPageFaultM)           CauseM = 13;
@@ -144,23 +102,4 @@ module trap (
     else if (LoadAccessFaultM)         CauseM = 5;
     else if (StoreAmoAccessFaultM)     CauseM = 7;
     else                               CauseM = 0;
-
-  ///////////////////////////////////////////
-  // MTVAL
-  ///////////////////////////////////////////
-
-  always_comb 
-    if      (InstrPageFaultM)          NextFaultMtvalM = PCM;
-    else if (InstrAccessFaultM)        NextFaultMtvalM = PCM;
-    else if (IllegalInstrFaultM)       NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM};
-    else if (InstrMisalignedFaultM)    NextFaultMtvalM = IEUAdrM;
-    else if (EcallFaultM)              NextFaultMtvalM = 0;
-    else if (BreakpointFaultM)         NextFaultMtvalM = PCM;
-    else if (LoadMisalignedFaultM)     NextFaultMtvalM = IEUAdrM;
-    else if (StoreAmoMisalignedFaultM) NextFaultMtvalM = IEUAdrM;
-    else if (LoadPageFaultM)           NextFaultMtvalM = IEUAdrM;
-    else if (StoreAmoPageFaultM)       NextFaultMtvalM = IEUAdrM;
-    else if (LoadAccessFaultM)         NextFaultMtvalM = IEUAdrM;
-    else if (StoreAmoAccessFaultM)     NextFaultMtvalM = IEUAdrM;
-    else                               NextFaultMtvalM = 0;
 endmodule

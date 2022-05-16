@@ -81,20 +81,18 @@ module privileged (
   output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
 );
 
-  logic [`XLEN-1:0] CauseM, NextFaultMtvalM;
-  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW;
+  logic [`LOG_XLEN-1:0] CauseM;
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
   logic sretM, mretM, sfencevmaM;
   logic IllegalCSRAccessM;
-  logic IllegalIEUInstrFaultE, IllegalIEUInstrFaultM;
+  logic IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
-  logic InstrPageFaultD, InstrPageFaultE, InstrPageFaultM;
-  logic InstrAccessFaultD, InstrAccessFaultE, InstrAccessFaultM;
+  logic InstrPageFaultM;
+  logic InstrAccessFaultM;
   logic IllegalInstrFaultM;
 
-  logic MTrapM, STrapM;
   (* mark_debug = "true" *)  logic InterruptM; 
 
   logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
@@ -106,7 +104,7 @@ module privileged (
   // track the current privilege level
   ///////////////////////////////////////////
 
-  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .CauseM, 
+  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .InterruptM, .CauseM, 
                     .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   ///////////////////////////////////////////
@@ -125,18 +123,17 @@ module privileged (
   csr csr(.clk, .reset,
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
-          .InstrM, .PCM, .SrcAM,
-          .CSRReadM, .CSRWriteM, .TrapM, .MTrapM, .STrapM, .mretM, .sretM, .wfiM, .InterruptM,
+          .InstrM, .PCM, .SrcAM, .IEUAdrM,
+          .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .InterruptM,
           .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
           .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
           .BPPredClassNonCFIWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
           .NextPrivilegeModeM, .PrivilegeModeW,
-          .CauseM, .NextFaultMtvalM, .SelHPTW,
+          .CauseM, .SelHPTW,
           .STATUS_MPP,
           .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
-          .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
           .MEDELEG_REGW, 
           .SATP_REGW,
           .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
@@ -146,37 +143,27 @@ module privileged (
           .PMPADDR_ARRAY_REGW,
           .SetFflagsM,
           .FRM_REGW, 
-          .CSRReadValW,
+          .CSRReadValW,.PrivilegedNextPCM,
           .IllegalCSRAccessM, .BigEndianM);
 
-  // pipeline fault signals
-  flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
-                  {InstrPageFaultF, InstrAccessFaultF},
-                  {InstrPageFaultD, InstrAccessFaultD});
-  flopenrc #(4) faultregE(clk, reset, FlushE, ~StallE,
-                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD, IllegalFPUInstrD}, // ** vs IllegalInstrFaultInD
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE});
-  flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
-                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
-  // *** it should be possible to combine some of these faults earlier to reduce module boundary crossings and save flops dh 5 july 2021
+  privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+                  .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+                  .IllegalFPUInstrE,
+                  .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM, .IllegalFPUInstrM);
+
   trap trap(.reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
             .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
             .LoadPageFaultM, .StoreAmoPageFaultM,
             .mretM, .sretM, 
-            .PrivilegeModeW, .NextPrivilegeModeM,
-            .MEPC_REGW, .SEPC_REGW, .STVEC_REGW, .MTVEC_REGW,
+            .PrivilegeModeW, 
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
-            .PCM,
-            .IEUAdrM, 
-            .InstrM,
             .InstrValidM, .CommittedM,  
-            .TrapM, .MTrapM, .STrapM, .RetM,
+            .TrapM, .RetM,
             .InterruptM, .IntPendingM,
-             .PrivilegedNextPCM, .CauseM, .NextFaultMtvalM);
+            .CauseM);
 endmodule
 
 
