@@ -103,3 +103,4 @@ pipelined/config/rv64ic_noMulDiv
 pipelined/config/rv64ic_noPriv
 pipelined/config/rv64ic_orig
 synthDC/Summary.csv
+pipelined/srt/exptestgen

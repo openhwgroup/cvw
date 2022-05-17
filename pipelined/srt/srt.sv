@@ -92,8 +92,9 @@ module srtpostproc #(parameter N=52) (
   output [N-1:0] Quot
 );
 
+  // replace with on-the-fly conversion
   //assign Quot = rp - rm;
-  finaladd finaladd(rp, rm, Quot);
+  finaladd finaladd(rp, rm, Quot); 
 endmodule
 
 module srtpreproc #(parameter Nf=52) (
