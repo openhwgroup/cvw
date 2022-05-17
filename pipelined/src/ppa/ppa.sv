@@ -180,7 +180,34 @@ module ppa_shiftleft #(parameter WIDTH=32) (
   assign y = a << amt;
 endmodule
 
+module ppa_shifter_16 #(parameter WIDTH=16) (
+  input  logic [WIDTH-1:0]     A,
+  input  logic [$clog2(WIDTH)-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [WIDTH-1:0]     Y);
+
+  ppa_shifter #(WIDTH) sh (.*);
+endmodule
+
 module ppa_shifter_32 #(parameter WIDTH=32) (
+  input  logic [WIDTH-1:0]     A,
+  input  logic [$clog2(WIDTH)-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [WIDTH-1:0]     Y);
+
+  ppa_shifter #(WIDTH) sh (.*);
+endmodule
+
+module ppa_shifter_64 #(parameter WIDTH=64) (
+  input  logic [WIDTH-1:0]     A,
+  input  logic [$clog2(WIDTH)-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [WIDTH-1:0]     Y);
+
+  ppa_shifter #(WIDTH) sh (.*);
+endmodule
+
+module ppa_shifter #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0]     A,
   input  logic [$clog2(WIDTH)-1:0] Amt,
   input  logic                 Right, Arith, W64,
