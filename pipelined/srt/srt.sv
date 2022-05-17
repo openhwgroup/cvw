@@ -37,8 +37,6 @@ module srt #(parameter Nf=52) (
   input  logic Flush, // *** multiple pipe stages
   // Floating Point Inputs
   // later add exponents, signs, special cases
-  input  logic [10:0] SrcXExpE, SrcYExpE, // exponents, for double precision exponents are 11 bits
-  // end of floating point inputs
   input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
   input  logic [`XLEN-1:0] SrcA, SrcB,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
@@ -47,7 +45,6 @@ module srt #(parameter Nf=52) (
   input  logic       Int, // Choose integer inputss
   input  logic       Sqrt, // perform square root, not divide
   output logic [Nf-1:0] Quot, Rem, // *** later handle integers
-  output logic [10:0] Exp,  // output exponent is hardcoded for 11 bits for double precision
   output logic [3:0] Flags
 );
 
@@ -81,9 +78,6 @@ module srt #(parameter Nf=52) (
   // Partial Product Generation
   csa csa(WS, WC, Dsel, qp, WSA, WCA);
 
-  // Exponent division 
-  exp exp(SrcXExpE, SrcYExpE, Exp);
-
   srtpostproc postproc(rp, rm, Quot);
 endmodule
 
@@ -92,9 +86,8 @@ module srtpostproc #(parameter N=52) (
   output [N-1:0] Quot
 );
 
-  // replace with on-the-fly conversion
   //assign Quot = rp - rm;
-  finaladd finaladd(rp, rm, Quot); 
+  finaladd finaladd(rp, rm, Quot);
 endmodule
 
 module srtpreproc #(parameter Nf=52) (
@@ -252,14 +245,6 @@ module csa #(parameter N=56) (
   assign #1 out1 = in1 ^ in2 ^ in3;
   assign #1 out2 = {in1[54:0] & (in2[54:0] | in3[54:0]) | 
 		    (in2[54:0] & in3[54:0]), cin};
-endmodule
-
-//////////////
-// exponent //
-//////////////
-module exp(input [10:0] e1, e2,
-           output [10:0] e);       // for double precision, exponent is 11 bits
-  assign e = (e1 - e2) + 11'd1023; // bias is hardcoded
 endmodule
 
 //////////////
