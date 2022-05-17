@@ -341,8 +341,6 @@ logic [3:0] dummy;
         release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
         release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
       end
-      // $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-      // $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);    
     end
 endmodule
 
