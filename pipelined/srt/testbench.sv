@@ -1,7 +1,7 @@
 /////////////
-// counter //
+// divcounter //
 /////////////
-module counter(input  logic clk, 
+module divcounter(input  logic clk, 
                input  logic req, 
                output logic done);
  
@@ -36,6 +36,9 @@ endmodule
 //////////
 // testbench //
 //////////
+
+/* verilator lint_off STMTDLY */
+/* verilator lint_off INFINITELOOP */
 module testbench;
   logic         clk;
   logic        req;
@@ -83,11 +86,11 @@ module testbench;
 
   // Unpacker
   // Note: BiasE will probably get taken out eventually
-  unpack unpack(.X({1'b1,a[62:0]}), .Y({1'b1,b[62:0]}), .Z(64'b0), .FmtE(1'b1), .FOpCtrlE(3'b0),
+  unpack unpack(.X({1'b1,a[62:0]}), .Y({1'b1,b[62:0]}), .Z(64'b0), .FmtE(1'b1), 
                   .XSgnE(XSgnE), .YSgnE(YSgnE), .ZSgnE(ZSgnE), .XExpE(XExpE), .YExpE(YExpE), .ZExpE(ZExpE),
                   .XManE(XManE), .YManE(YManE), .ZManE(ZManE), .XNormE(XNormE), .XNaNE(XNaNE), .YNaNE(YNaNE), .ZNaNE(ZNaNE),
                   .XSNaNE(XSNaNE), .YSNaNE(YSNaNE), .ZSNaNE(ZSNaNE), .XDenormE(XDenormE), .YDenormE(YDenormE), .ZDenormE(ZDenormE),
-                  .XZeroE(XZeroE), .YZeroE(YZeroE), .ZZeroE(ZZeroE), .BiasE(BiasE),
+                  .XZeroE(XZeroE), .YZeroE(YZeroE), .ZZeroE(ZZeroE), 
                   .XInfE(XInfE), .YInfE(YInfE), .ZInfE(ZInfE), .XExpMaxE(XExpMaxE));
 
   // Divider
@@ -101,8 +104,8 @@ module testbench;
 
   assign result = {1'b0, e, r};
 
-  // Counter
-  counter counter(clk, req, done);
+  // Divcounter
+  divcounter divcounter(clk, req, done);
 
 
     initial
@@ -123,7 +126,7 @@ module testbench;
       a = Vec[`mema];
       b = Vec[`memb];
       nextr = Vec[`memr];
-      req <= #5 1;
+      req = #5 1;
     end
   
   // Apply directed test vectors read from file.
@@ -132,7 +135,7 @@ module testbench;
     begin
       if (done) 
 	begin
-	  req <= #5 1;
+	  req = #5 1;
     diffp = correctr - result;
     diffn = result - correctr;
 	  if (($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
@@ -152,7 +155,7 @@ module testbench;
 	end
       if (req) 
 	begin
-	  req <= #5 0;
+	  req = #5 0;
 	  correctr = nextr;
     $display("pre increment");
 	  testnum = testnum+1;
@@ -167,3 +170,5 @@ module testbench;
  
 endmodule
  
+/* verilator lint_on STMTDLY  */
+/* verilator lint_on INFINITELOOP  */
