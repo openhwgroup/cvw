@@ -88,7 +88,7 @@ module datapath (
   logic [`XLEN-1:0] IFResultW;
   
   // Decode stage
-  assign Rs1D      = InstrD[19:15];
+  assign Rs1D      = InstrD[18:14]; // Broke this, it should be 19 to 15.
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
   regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
