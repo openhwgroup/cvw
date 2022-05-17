@@ -116,7 +116,7 @@ module bpred
 
   // this predictor will have two pieces of data,
   // 1) A direction (1 = Taken, 0 = Not Taken)
-  // 2) Any information which is necessary for the predictor to built it's next state.
+  // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
 
   assign SelBPPredF = ((BPInstrClassF[0] & BPPredF[1] & BTBValidF) | 
