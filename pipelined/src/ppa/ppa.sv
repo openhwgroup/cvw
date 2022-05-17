@@ -3,6 +3,14 @@
 // & mmasserfrye@hmc.edu
 // Measure PPA of various building blocks
 
+module ppa_comparator_8 #(parameter WIDTH=8) (
+  input  logic [WIDTH-1:0] a, b,
+  input  logic             sgnd,
+  output logic [1:0]       flags);
+
+  ppa_comparator #(WIDTH) comp (.*);
+endmodule
+
 module ppa_comparator_16 #(parameter WIDTH=16) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
@@ -20,6 +28,14 @@ module ppa_comparator_32 #(parameter WIDTH=32) (
 endmodule
 
 module ppa_comparator_64 #(parameter WIDTH=64) (
+  input  logic [WIDTH-1:0] a, b,
+  input  logic             sgnd,
+  output logic [1:0]       flags);
+
+  ppa_comparator #(WIDTH) comp (.*);
+endmodule
+
+module ppa_comparator_128 #(parameter WIDTH=128) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
   output logic [1:0]       flags);
@@ -45,6 +61,13 @@ module ppa_comparator #(parameter WIDTH=16) (
   assign flags = {eq, lt};
 endmodule
 
+module ppa_add_8 #(parameter WIDTH=8) (
+    input logic [WIDTH-1:0] a, b,
+    output logic [WIDTH-1:0] y);
+
+   assign y = a + b;
+endmodule
+
 module ppa_add_16 #(parameter WIDTH=16) (
     input logic [WIDTH-1:0] a, b,
     output logic [WIDTH-1:0] y);
@@ -66,6 +89,19 @@ module ppa_add_64 #(parameter WIDTH=64) (
    assign y = a + b;
 endmodule
 
+module ppa_add_128 #(parameter WIDTH=128) (
+    input logic [WIDTH-1:0] a, b,
+    output logic [WIDTH-1:0] y);
+
+   assign y = a + b;
+endmodule
+
+module ppa_mult_8 #(parameter WIDTH=8) (
+  input logic [WIDTH-1:0] a, b,
+  output logic [WIDTH*2-1:0] y); //is this right width
+  assign y = a * b;
+endmodule
+
 module ppa_mult_16 #(parameter WIDTH=16) (
   input logic [WIDTH-1:0] a, b,
   output logic [WIDTH*2-1:0] y); //is this right width
@@ -79,6 +115,12 @@ module ppa_mult_32 #(parameter WIDTH=32) (
 endmodule
 
 module ppa_mult_64 #(parameter WIDTH=64) (
+  input logic [WIDTH-1:0] a, b,
+  output logic [WIDTH*2-1:0] y); //is this right width
+  assign y = a * b;
+endmodule
+
+module ppa_mult_128 #(parameter WIDTH=128) (
   input logic [WIDTH-1:0] a, b,
   output logic [WIDTH*2-1:0] y); //is this right width
   assign y = a * b;
@@ -180,6 +222,15 @@ module ppa_shiftleft #(parameter WIDTH=32) (
   assign y = a << amt;
 endmodule
 
+module ppa_shifter_8 #(parameter WIDTH=8) (
+  input  logic [WIDTH-1:0]     A,
+  input  logic [$clog2(WIDTH)-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [WIDTH-1:0]     Y);
+
+  ppa_shifter #(WIDTH) sh (.*);
+endmodule
+
 module ppa_shifter_16 #(parameter WIDTH=16) (
   input  logic [WIDTH-1:0]     A,
   input  logic [$clog2(WIDTH)-1:0] Amt,
@@ -207,6 +258,15 @@ module ppa_shifter_64 #(parameter WIDTH=64) (
   ppa_shifter #(WIDTH) sh (.*);
 endmodule
 
+module ppa_shifter_128 #(parameter WIDTH=128) (
+  input  logic [WIDTH-1:0]     A,
+  input  logic [$clog2(WIDTH)-1:0] Amt,
+  input  logic                 Right, Arith, W64,
+  output logic [WIDTH-1:0]     Y);
+
+  ppa_shifter #(WIDTH) sh (.*);
+endmodule
+
 module ppa_shifter #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0]     A,
   input  logic [$clog2(WIDTH)-1:0] Amt,
@@ -221,14 +281,7 @@ module ppa_shifter #(parameter WIDTH=32) (
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-  if (WIDTH==32) begin:shifter // RV32
-    always_comb  // funnel mux
-      if (Right) 
-        if (Arith) z = {{31{A[31]}}, A};
-        else       z = {31'b0, A};
-      else         z = {A, 31'b0};
-    assign amttrunc = Amt; // shift amount
-  end else begin:shifter  // RV64
+  if (WIDTH == 64) begin:shifter  // RV64 fix what about 128
     always_comb  // funnel mux
       if (W64) begin // 32-bit shifts
         if (Right)
@@ -241,8 +294,15 @@ module ppa_shifter #(parameter WIDTH=32) (
           else       z = {63'b0, A};
         else         z = {A, 63'b0};         
       end
-    assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
-  end
+  end else begin:shifter // RV32, 
+    always_comb  // funnel mux
+      if (Right) 
+        if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
+        else       z = {{WIDTH-1{1'b0}}, A};
+      else         z = {A, {WIDTH-1{1'b0}}};
+    assign amttrunc = Amt; // shift amount
+  end 
+    assign amttrunc = (W64 & WIDTH==64) ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift fix
 
   // opposite offset for right shfits
   assign offset = Right ? amttrunc : ~amttrunc;
