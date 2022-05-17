@@ -137,10 +137,6 @@ if {$tech == "sky130"} {
 # Set the wire load model 
 set_wire_load_mode "top"
 
-# Set switching activities
-# default activity factors are 1 for clocks, 0.1 for others
-# static probability of 0.5 is used for leakage
-
 # Attempt Area Recovery - if looking for minimal area
 # set_max_area 2000
 
@@ -363,4 +359,4 @@ redirect $filename { report_constraint }
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
 # redirect $filename { report_hierarchy }
 
-#quit 
+quit 
