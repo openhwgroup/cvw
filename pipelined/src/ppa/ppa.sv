@@ -361,7 +361,7 @@ module ppa_decoder #(parameter WIDTH = 8) (
   end
 endmodule
 
-module ppa_mux2 #(parameter WIDTH = 8) (
+module ppa_mux2_1 #(parameter WIDTH = 1) (
   input  logic [WIDTH-1:0] d0, d1, 
   input  logic             s, 
   output logic [WIDTH-1:0] y);

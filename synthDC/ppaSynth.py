@@ -14,9 +14,9 @@ def deleteRedundant(LoT):
         bashCommand = synthStr.format(*synth)
         outputCPL = subprocess.check_output(['bash','-c', bashCommand])
 
-widths = ['8', '16', '32', '64', '128']
-modules = ['shifter']
-freqs = ['10', '5000']
+widths = ['1']
+modules = ['mux2']
+freqs = ['10']
 tech = 'sky90'
 
 
