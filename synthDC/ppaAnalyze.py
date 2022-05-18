@@ -1,10 +1,12 @@
 #!/usr/bin/python3
+from distutils.log import error
 import subprocess
 import csv
 import re
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import numpy as np
+
 
 def getData():
     bashCommand = "grep 'Critical Path Length' runs/ppa_*/reports/*qor*"
@@ -15,20 +17,28 @@ def getData():
     outputDA = subprocess.check_output(['bash','-c', bashCommand])
     linesDA = outputDA.decode("utf-8").split('\n')[:-1]
 
+    bashCommand = "grep '100' runs/ppa_*/reports/*power*"
+    outputP = subprocess.check_output(['bash','-c', bashCommand])
+    linesP = outputP.decode("utf-8").split('\n')[:-1]
+
     cpl = re.compile('\d{1}\.\d{6}')
     f = re.compile('_\d*_MHz')
     wm = re.compile('ppa_\w*_\d*_qor')
     da = re.compile('\d*\.\d{6}')
+    p = re.compile('\d+\.\d+[e-]*\d+')
 
     allSynths = []
 
     for i in range(len(linesCPL)):
         line = linesCPL[i]
         mwm = wm.findall(line)[0][4:-4].split('_')
+        power = p.findall(linesP[i])
         oneSynth = [mwm[0], int(mwm[1])]
         oneSynth += [int(f.findall(line)[0][1:-4])]
         oneSynth += [float(cpl.findall(line)[0])]
         oneSynth += [float(da.findall(linesDA[i])[0])]
+        oneSynth += [float(power[1])]
+        oneSynth += [float(power[2])]
         allSynths += [oneSynth]
 
     return allSynths
@@ -38,9 +48,17 @@ def getVals(module, freq, var):
     if (var == 'delay'):
         ind = 3 
         units = " (ps)"
-    else:
+    elif (var == 'area'):
         ind = 4
-        units = " (square microns)"
+        units = " (sq microns)"
+    elif (var == 'dpower'):
+        ind = 5
+        units = " (mW)"
+    elif (var == 'lpower'):
+        ind = 6
+        units = " (nW)"
+    else:
+        error
 
     widths = []
     ivar = []
@@ -53,7 +71,7 @@ def getVals(module, freq, var):
 def writeCSV(allSynths):
     file = open("ppaData.csv", "w")
     writer = csv.writer(file)
-    writer.writerow(['Module', 'Width', 'Target Freq', 'Delay', 'Area'])
+    writer.writerow(['Module', 'Width', 'Target Freq', 'Delay', 'Area', 'D Power (mW)', 'L Power (nW)'])
 
     for one in allSynths:
         writer.writerow(one)
@@ -118,6 +136,8 @@ def makePlots(mod):
     plotPPA(mod, 5000, 'delay')
     plotPPA(mod, 5000, 'area')
     plotPPA(mod, 10, 'area')
+    plotPPA(mod, 5000, 'lpower')
+    plotPPA(mod, 5000, 'dpower')
 
 def regress(widths, var):
 
@@ -136,9 +156,9 @@ def regress(widths, var):
 def makeCoefTable():
     file = open("ppaFitting.csv", "w")
     writer = csv.writer(file)
-    writer.writerow(['Module', 'Variable', 'Freq', '1', 'N', 'log(N)', 'Nlog(N)', 'R^2'])
+    writer.writerow(['Module', 'Metric', 'Freq', '1', 'N', 'log(N)', 'Nlog(N)', 'R^2'])
 
-    for mod in ['add', 'mult', 'comparator']:
+    for mod in ['add', 'mult', 'comparator', 'shifter']:
         for comb in [['delay', 5000], ['area', 5000], ['area', 10]]:
             var = comb[0]
             freq = comb[1]
@@ -155,5 +175,5 @@ writeCSV(allSynths)
 
 makePlots('shifter')
 
-# makeCoefTable()
+makeCoefTable()
 
