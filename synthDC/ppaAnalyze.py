@@ -3,6 +3,7 @@ import subprocess
 import csv
 import re
 import matplotlib.pyplot as plt
+import matplotlib.lines as lines
 import numpy as np
 
 def getData():
@@ -32,6 +33,23 @@ def getData():
 
     return allSynths
 
+def getVals(module, freq, var):
+    global allSynths
+    if (var == 'delay'):
+        ind = 3 
+        units = " (ps)"
+    else:
+        ind = 4
+        units = " (square microns)"
+
+    widths = []
+    ivar = []
+    for oneSynth in allSynths:
+        if (oneSynth[0] == module) & (oneSynth[2] == freq):
+            widths += [oneSynth[1]]
+            ivar += [oneSynth[ind]]
+    return widths, ivar, units
+
 def writeCSV(allSynths):
     file = open("ppaData.csv", "w")
     writer = csv.writer(file)
@@ -42,6 +60,17 @@ def writeCSV(allSynths):
 
     file.close()
 
+def polyfitR2(x, y, deg):
+    ''' from internet, check math'''
+    z = np.polyfit(x, y, deg)
+    p = np.poly1d(z)
+    yhat = p(x)                         # or [p(z) for z in x]    
+    ybar = np.sum(y)/len(y)          # or sum(y)/len(y)    
+    ssreg = np.sum((yhat-ybar)**2)   # or sum([ (yihat - ybar)**2 for yihat in yhat])    
+    sstot = np.sum((y - ybar)**2)    # or sum([ (yi - ybar)**2 for yi in y])    
+    r2 = ssreg / sstot    
+    return p, r2
+
 def plotPPA(module, freq, var):
     '''
     module: string module name
@@ -49,47 +78,82 @@ def plotPPA(module, freq, var):
     var: string 'delay' or 'area'
     plots chosen variable vs width for all matching syntheses with regression
     '''
-    global allSynths
-    ind = 3 if (var == 'delay') else 4
-    widths = []
-    ivar = []
-    for oneSynth in allSynths:
-        if (oneSynth[0] == module) & (oneSynth[2] == freq):
-            
-            widths += [oneSynth[1]]
-            ivar += [oneSynth[ind]]
 
-    x = np.array(widths, dtype=np.int)
-    y = np.array(ivar, dtype=np.float)
+    # A = np.vstack([x, np.ones(len(x))]).T
+    # mcresid = np.linalg.lstsq(A, y, rcond=None)
+    # m, c = mcresid[0]
+    # resid = mcresid[1]
+    # r2 = 1 - resid / (y.size * y.var())
+    # p, r2p = polyfitR2(x, y, 2)
+    # zlog = np.polyfit(np.log(x), y, 1)
+    # plog = np.poly1d(zlog)
+    # xplog = np.log(xp)
+    # _ = plt.plot(x, m*x + c, 'r', label='Linear fit R^2='+ str(r2)[1:7])
+    # _ = plt.plot(xp, p(xp), label='Quadratic fit R^2='+ str(r2p)[:6])
+    # _ = plt.plot(xp, plog(xplog), label = 'Log fit')
 
-    A = np.vstack([x, np.ones(len(x))]).T
-    m, c = np.linalg.lstsq(A, y, rcond=None)[0]
+    widths, ivar, units = getVals(module, freq, var)
+    coefs, r2 = regress(widths, ivar)
 
-    z = np.polyfit(x, y, 2)
-    p = np.poly1d(z)
+    xp = np.linspace(8, 140, 200)
+    pred = [coefs[0] + x*coefs[1] + np.log(x)*coefs[2] + x*np.log(x)*coefs[3] for x in xp]
 
-    zlog = np.polyfit(np.log(x), y, 1)
-    plog = np.poly1d(zlog)
+    r2p = round(r2[0], 4)
+    rcoefs = [round(c, 3) for c in coefs]
 
-    xp = np.linspace(0, 140, 200)
-    xplog = np.log(xp)
+    l = "{} + {}*N + {}*log(N) + {}*Nlog(N)".format(*rcoefs) 
+    legend_elements = [lines.Line2D([0], [0], color='steelblue', label=module),
+                       lines.Line2D([0], [0], color='orange', label=l),
+                       lines.Line2D([0], [0], ls='', label=' R^2='+ str(r2p))]
 
-    _ = plt.plot(x, y, 'o', label=module, markersize=10)
-    _ = plt.plot(x, m*x + c, 'r', label='Linear fit')
-    _ = plt.plot(xp, p(xp), label='Quadratic fit')
-    _ = plt.plot(xp, plog(xplog), label = 'Log fit')
-    _ = plt.legend()
+    _ = plt.plot(widths, ivar, 'o', label=module, markersize=10)
+    _ = plt.plot(xp, pred)
+    _ = plt.legend(handles=legend_elements)
     _ = plt.xlabel("Width (bits)")
-    _ = plt.ylabel(str.title(var))
-    _ = plt.title("Target frequency " + str(freq))
+    _ = plt.ylabel(str.title(var) + units)
+    _ = plt.title("Target frequency " + str(freq) + "MHz")
     plt.show()
-#fix square microns, picosec, end plots at 8 to stop negs, add equation to plots and R2
-# try linear term with delay as well (w and wo)
+
+def makePlots(mod):
+    plotPPA(mod, 5000, 'delay')
+    plotPPA(mod, 5000, 'area')
+    plotPPA(mod, 10, 'area')
+
+def regress(widths, var):
+
+    mat = []
+    for w in widths:
+        row = [1, w, np.log(w), w*np.log(w)]
+        mat += [row]
+    
+    y = np.array(var, dtype=np.float)
+    coefsResid = np.linalg.lstsq(mat, y, rcond=None)
+    coefs = coefsResid[0]
+    resid = coefsResid[1] 
+    r2 = 1 - resid / (y.size * y.var())
+    return coefs, r2
+
+def makeCoefTable():
+    file = open("ppaFitting.csv", "w")
+    writer = csv.writer(file)
+    writer.writerow(['Module', 'Variable', 'Freq', '1', 'N', 'log(N)', 'Nlog(N)', 'R^2'])
+
+    for mod in ['add', 'mult', 'comparator']:
+        for comb in [['delay', 5000], ['area', 5000], ['area', 10]]:
+            var = comb[0]
+            freq = comb[1]
+            widths, ivar, units = getVals(mod, freq, var)
+            coefs, r2 = regress(widths, ivar)
+            row = [mod] + comb + np.ndarray.tolist(coefs) + [r2[0]]
+            writer.writerow(row)
+
+    file.close()
 
 allSynths = getData()
 
 writeCSV(allSynths)
 
-plotPPA('mult', 5000, 'delay')
-plotPPA('mult', 5000, 'area')
-plotPPA('mult', 10, 'area')
+makePlots('shifter')
+
+# makeCoefTable()
+

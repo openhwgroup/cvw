@@ -281,20 +281,21 @@ module ppa_shifter #(parameter WIDTH=32) (
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-  if (WIDTH == 64) begin:shifter  // RV64 fix what about 128
+  if (WIDTH == 64 | WIDTH ==128) begin:shifter  // RV64 or 128
     always_comb  // funnel mux
       if (W64) begin // 32-bit shifts
         if (Right)
-          if (Arith) z = {64'b0, {31{A[31]}}, A[31:0]};
-          else       z = {95'b0, A[31:0]};
-        else         z = {32'b0, A[31:0], 63'b0};
+          if (Arith) z = {{WIDTH{1'b0}}, {WIDTH/2 -1{A[WIDTH/2 -1]}}, A[WIDTH/2 -1:0]};
+          else       z = {{WIDTH*3/2-1{1'b0}}, A[WIDTH/2 -1:0]};
+        else         z = {{WIDTH/2{1'b0}}, A[WIDTH/2 -1:0], {WIDTH-1{1'b0}}};
       end else begin
         if (Right)
-          if (Arith) z = {{63{A[63]}}, A};
-          else       z = {63'b0, A};
-        else         z = {A, 63'b0};         
+          if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
+          else       z = {{WIDTH-1{1'b0}}, A};
+        else         z = {A, {WIDTH-1{1'b0}}};         
       end
-  end else begin:shifter // RV32, 
+      assign amttrunc = W64  ? {1'b0, Amt[$clog2(WIDTH)-2:0]} : Amt; // 32 or 64-bit shift 
+  end else begin:shifter // RV32 or less
     always_comb  // funnel mux
       if (Right) 
         if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
@@ -302,7 +303,7 @@ module ppa_shifter #(parameter WIDTH=32) (
       else         z = {A, {WIDTH-1{1'b0}}};
     assign amttrunc = Amt; // shift amount
   end 
-    assign amttrunc = (W64 & WIDTH==64) ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift fix
+    
 
   // opposite offset for right shfits
   assign offset = Right ? amttrunc : ~amttrunc;
