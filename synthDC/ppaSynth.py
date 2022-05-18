@@ -14,12 +14,11 @@ def deleteRedundant(LoT):
         bashCommand = synthStr.format(*synth)
         outputCPL = subprocess.check_output(['bash','-c', bashCommand])
 
-widths = ['128']
-modules = ['mult']
-freqs = ['5000']
+widths = ['8', '16', '32', '64', '128']
+modules = ['shifter']
+freqs = ['10', '5000']
 tech = 'sky90'
 
-#to run: add 8 10, shifter 8 16 (check .sv!)
 
 LoT = []
 for module in modules:
