@@ -8,7 +8,7 @@ if not os.path.isfile(sys.path[0]+'/slack-webhook-url.txt'):
     print('slack-notifier.py can help let you know when your sim is done.')
     print('To make it work, please supply your Slack bot webhook URL in:')
     print(sys.path[0]+'/slack-webhook-url.txt')
-    print('Ask Ben for the Tera Slack Notifier Tutorial for more details.')
+    print('Tutorial for slack webhook urls: https://bit.ly/BenSlackNotifier')
     print('==============================================================')
 else:
     urlFile = open(sys.path[0]+'/slack-webhook-url.txt','r')
