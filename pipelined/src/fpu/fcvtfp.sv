@@ -1,6 +1,6 @@
 
 `include "wally-config.vh"
-module cvtfp (
+module fcvtfp (
     input logic [10:0] XExpE,   // input's exponent
     input logic [52:0] XManE,   // input's mantissa
     input logic XSgnE,          // input's sign

@@ -2,7 +2,7 @@
 `include "wally-config.vh"
 // `include "../../config/rv64icfd/wally-config.vh"
 //  `define XLEN 64
-module fcvt (
+module fcvtint (
 	input logic             XSgnE,      // X's sign
     input logic [10:0]      XExpE,      // X's exponent
     input logic [52:0]      XManE,     // X's fraction
