@@ -104,6 +104,7 @@ module fpu (
    logic 		  XInfQ, YInfQ;                       // is the input infinity - divide
    logic 		  XExpMaxE;                           // is the exponent all ones (max value)
    logic 		  XNormE;                             // is normal
+   logic         ZOrigDenormE;
    logic 		  FmtQ;
    logic 		  FOpCtrlQ;     
 
@@ -176,7 +177,7 @@ module fpu (
    // unpack unit
    //    - splits FP inputs into their various parts
    //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, 
+   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, .ZOrigDenormE,
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
