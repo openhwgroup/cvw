@@ -313,6 +313,7 @@ module ppa_shifter #(parameter WIDTH=32) (
   assign Y = zshift[WIDTH-1:0];    
 endmodule
 
+// just report one hot
 module ppa_prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y);
@@ -338,7 +339,7 @@ module ppa_priorityonehot #(parameter N = 8) (
   assign y = a & nolower;
 endmodule
 
-module ppa_prioriyencoder #(parameter N = 8) (
+module ppa_priorityencoder #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [$clog2(N)-1:0] y);
   // Carefully crafted so design compiler will synthesize into a fast tree structure
