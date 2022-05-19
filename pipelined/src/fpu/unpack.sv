@@ -49,7 +49,7 @@ module unpack (
         assign YExpMaxE = &YExpE;
         assign ZExpMaxE = &ZExpE;
 
-        assign OrigDenormE = 1'b0;
+        assign ZOrigDenormE = 1'b0;
     
 
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported

@@ -193,7 +193,7 @@ module fpu (
       .XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
       .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
       .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
-      .FOpCtrlE,
+      .FOpCtrlE, .ZOrigDenormE,
       .FmtE, .FmtM, .FrmM, 
       .FMAFlgM, .FMAResM);
 
