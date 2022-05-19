@@ -43,6 +43,7 @@ module fma(
     input logic                 XSgnM, YSgnM,           // input signs - memory stage
     input logic [`NE-1:0]       ZExpM,    // input exponents - memory stage
     input logic [`NF:0]         XManM, YManM, ZManM,    // input mantissa - memory stage
+    input logic                 ZOrigDenormE, // is the original precision denormalized
     input logic                 XDenormE, YDenormE, ZDenormE, // is denorm
     input logic                 XZeroE, YZeroE, ZZeroE,     // is zero - execute stage
     input logic                 XNaNM, YNaNM, ZNaNM,        // is NaN
@@ -72,6 +73,7 @@ module fma(
     logic 			    PSgnE, PSgnM;
     logic [$clog2(3*`NF+7)-1:0]			NormCntE, NormCntM;
     logic               Mult;
+    logic               ZOrigDenormM;
     
     fma1 fma1 (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
                 .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
@@ -81,11 +83,11 @@ module fma(
     // E/M pipeline registers
     flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
     flopenrc #(13) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
-    flopenrc #($clog2(3*`NF+7)+7) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                            {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0]},
-                            {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult});
+    flopenrc #($clog2(3*`NF+7)+8) EMRegFma4(clk, reset, FlushM, ~StallM, 
+                            {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0], ZOrigDenormE},
+                            {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult, ZOrigDenormM});
 
-    fma2 fma2(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
+    fma2 fma2(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZOrigDenormM,
             .FrmM, .FmtM,  .ProdExpM, .AddendStickyM, .KillProdM, .SumM, .NegSumM, .InvZM, .NormCntM, .ZSgnEffM, .PSgnM,
             .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .Mult,
             .FMAResM, .FMAFlgM);
@@ -448,6 +450,7 @@ module fma2(
     input logic     [3*`NF+5:0]             SumM,       // the positive sum
     input logic                             NegSumM,    // was the sum negitive
     input logic                             InvZM,      // do you invert Z
+    input logic                             ZOrigDenormM, // is the original precision denormalized
     input logic                             ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                             PSgnM,      // the product's sign
     input logic                             Mult,       // multiply opperation
@@ -530,7 +533,7 @@ module fma2(
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultselect resultselect(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
+    resultselect resultselect(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZOrigDenormM,
         .FrmM, .FmtM, .AddendStickyM, .KillProdM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd,
         .ZSgnEffM, .PSgnM, .ResultSgn, .CalcPlus1, .Invalid, .Overflow, .Underflow, 
         .ResultDenorm, .ResultExp, .ResultFrac, .FMAResM);
@@ -1103,6 +1106,7 @@ module resultselect(
     input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
     input logic                     XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                     XNaNM, YNaNM, ZNaNM,    // inputs are NaN
+    input logic                     ZOrigDenormM, // is the original precision denormalized
     input logic                     ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                     PSgnM,      // the product's sign
     input logic                     ResultSgn,  // the result's sign
@@ -1122,7 +1126,7 @@ module resultselect(
             assign XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
             assign YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
             assign ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
-            assign InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+            assign InvalidResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
         end else begin
             assign XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
         end
@@ -1138,7 +1142,7 @@ module resultselect(
             assign XNaNResult = FmtM ? {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, XSgnM, {`NE1{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF1]};
             assign YNaNResult = FmtM ? {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, YSgnM, {`NE1{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF1]};
             assign ZNaNResult = FmtM ? {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, ZSgnEffM, {`NE1{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF1]};
-            assign InvalidResult = FmtM ? {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
+            assign InvalidResult = FmtM ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
         end else begin 
             assign XNaNResult = FmtM ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
         end
@@ -1147,7 +1151,7 @@ module resultselect(
                                                                                                                             {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                         ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} :
                                                                                                                             {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-        assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:0], ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+        assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
         assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))} : {{`FLEN-`LEN1{1'b1}}, {ResultSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
         assign InfResult = FmtM ? {InfSgn, {`NE{1'b1}}, (`NF)'(0)} : {{`FLEN-`LEN1{1'b1}}, InfSgn, {`NE1{1'b1}}, (`NF1)'(0)};
         assign NormResult = FmtM ? {ResultSgn, ResultExp, ResultFrac} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, ResultExp[`NE1-1:0], ResultFrac[`NF-1:`NF-`NF1]};
@@ -1160,7 +1164,7 @@ module resultselect(
                         XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
                         YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
                         ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
-                        InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+                        InvalidResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end else begin 
                         XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end
@@ -1177,13 +1181,13 @@ module resultselect(
                         XNaNResult = {{`FLEN-`LEN1{1'b1}}, XSgnM, {`NE1{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF1]};
                         YNaNResult = {{`FLEN-`LEN1{1'b1}}, YSgnM, {`NE1{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF1]};
                         ZNaNResult = {{`FLEN-`LEN1{1'b1}}, ZSgnEffM, {`NE1{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF1]};
-                        InvalidResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
+                        InvalidResult = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end else begin 
                         XNaNResult = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} :
                                                                                                                                   {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-                    KillProdResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:0], ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`LEN1{1'b1}}, {ResultSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`LEN1{1'b1}}, InfSgn, {`NE1{1'b1}}, (`NF1)'(0)};
                     NormResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, ResultExp[`NE1-1:0], ResultFrac[`NF-1:`NF-`NF1]};
@@ -1193,14 +1197,14 @@ module resultselect(
                         XNaNResult = {{`FLEN-`LEN2{1'b1}}, XSgnM, {`NE2{1'b1}}, 1'b1, XManM[`NF-2:`NF-`NF2]};
                         YNaNResult = {{`FLEN-`LEN2{1'b1}}, YSgnM, {`NE2{1'b1}}, 1'b1, YManM[`NF-2:`NF-`NF2]};
                         ZNaNResult = {{`FLEN-`LEN2{1'b1}}, ZSgnEffM, {`NE2{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`NF2]};
-                        InvalidResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
+                        InvalidResult = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
                     end else begin 
                         XNaNResult = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
                     end
                     
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} :
                                                                                                                                   {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2{1'b1}}, (`NF2)'(0)};
-                    KillProdResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:0], ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`LEN2{1'b1}}, {ResultSgn, (`LEN2-1)'(0)} + {(`LEN2-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`LEN2{1'b1}}, InfSgn, {`NE2{1'b1}}, (`NF2)'(0)};
                     NormResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, ResultExp[`NE2-1:0], ResultFrac[`NF-1:`NF-`NF2]};
@@ -1231,7 +1235,7 @@ module resultselect(
                         XNaNResult = {XSgnM, {`NE{1'b1}}, 1'b1, XManM[`NF-2:0]};
                         YNaNResult = {YSgnM, {`NE{1'b1}}, 1'b1, YManM[`NF-2:0]};
                         ZNaNResult = {ZSgnEffM, {`NE{1'b1}}, 1'b1, ZManM[`NF-2:0]};
-                        InvalidResult = {ResultSgn, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+                        InvalidResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end else begin 
                         XNaNResult = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end
@@ -1248,13 +1252,13 @@ module resultselect(
                         XNaNResult = {{`FLEN-`D_LEN{1'b1}}, XSgnM, {`D_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`D_NF]};
                         YNaNResult = {{`FLEN-`D_LEN{1'b1}}, YSgnM, {`D_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`D_NF]};
                         ZNaNResult = {{`FLEN-`D_LEN{1'b1}}, ZSgnEffM, {`D_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`D_NF]};
-                        InvalidResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
+                        InvalidResult = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end else begin 
                         XNaNResult = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} :
                                                                                                                                   {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    KillProdResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:0], ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`D_LEN{1'b1}}, {ResultSgn, (`D_LEN-1)'(0)} + {(`D_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`D_LEN{1'b1}}, InfSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
                     NormResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, ResultExp[`D_NE-1:0], ResultFrac[`NF-1:`NF-`D_NF]};
@@ -1264,14 +1268,14 @@ module resultselect(
                         XNaNResult = {{`FLEN-`S_LEN{1'b1}}, XSgnM, {`S_NE{1'b1}}, 1'b1, XManM[`NF-2:`NF-`S_NF]};
                         YNaNResult = {{`FLEN-`S_LEN{1'b1}}, YSgnM, {`S_NE{1'b1}}, 1'b1, YManM[`NF-2:`NF-`S_NF]};
                         ZNaNResult = {{`FLEN-`S_LEN{1'b1}}, ZSgnEffM, {`S_NE{1'b1}}, 1'b1, ZManM[`NF-2:`NF-`S_NF]};
-                        InvalidResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
+                        InvalidResult = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
                     end else begin 
                         XNaNResult = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
                     end
                     
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} :
                                                                                                                                   {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    KillProdResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:0], ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`S_NE-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`S_LEN{1'b1}}, {ResultSgn, (`S_LEN-1)'(0)} + {(`S_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`S_LEN{1'b1}}, InfSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
                     NormResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, ResultExp[`S_NE-1:0], ResultFrac[`NF-1:`NF-`S_NF]};
@@ -1289,7 +1293,7 @@ module resultselect(
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} :
                                                                                                               {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};      
 
-                    KillProdResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:0], ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:1],ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`H_LEN{1'b1}}, {ResultSgn, (`H_LEN-1)'(0)} + {(`H_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`H_LEN{1'b1}}, InfSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};
                     NormResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, ResultExp[`H_NE-1:0], ResultFrac[`NF-1:`NF-`H_NF]};
