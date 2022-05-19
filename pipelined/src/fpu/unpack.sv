@@ -2,7 +2,7 @@
 
 module unpack ( 
     input logic  [`FLEN-1:0]        X, Y, Z,    // inputs from register file
-    input logic  [`FPSIZES/3:0]     FmtE,       // format signal 00 - single 10 - double 11 - quad 10 - half
+    input logic  [`FPSIZES/3:0]     FmtE,       // format signal 00 - single 01 - double 11 - quad 10 - half
     output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
     output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
     output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
@@ -50,7 +50,6 @@ module unpack (
     
 
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
-
         //***need better names for these constants
         // largest format | smaller format
         //----------------------------------
@@ -339,9 +338,9 @@ module unpack (
                     ZExpE = {ZLen1[`D_LEN-2], {`Q_NE-`D_NE{~ZLen1[`D_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`D_LEN-3:`D_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
-                    XFracE = {XLen1[`D_NE-1:0], (`Q_NF-`D_NE)'(0)};
-                    YFracE = {YLen1[`D_NE-1:0], (`Q_NF-`D_NE)'(0)};
-                    ZFracE = {ZLen1[`D_NE-1:0], (`Q_NF-`D_NE)'(0)};
+                    XFracE = {XLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
+                    YFracE = {YLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
+                    ZFracE = {ZLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
 
                     // is the exponent non-zero
                     XExpNonzero = |XLen1[`D_LEN-2:`D_NE]; 
