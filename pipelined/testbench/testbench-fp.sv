@@ -1,0 +1,1543 @@
+
+`include "wally-config.vh"
+`include "tests-fp.vh"
+
+// steps to run FMA Tests
+//    1) create test vectors in riscv-wally/Tests/fp with: ./run-all.sh
+//    2) go to riscv-wally/pipelined/testbench/fp/Tests
+//    3) run ./sim-fma-batch
+//*** drop the any constants in each file and figure out a way to do them without the code
+module testbenchfp;
+  parameter TEST="none";
+
+  string Tests[];
+  logic [2:0] OpCtrl[];
+  logic [2:0] Unit[];
+  string FmaRneTests[];
+  string FmaRuTests[];
+  string FmaRdTests[];
+  string FmaRzTests[];
+  string FmaRnmTests[];
+  logic [2:0] Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rne, rz, ru, rd, rnm
+  logic [1:0] Fmt[];
+  logic [1:0] FmaFmt[];
+  
+
+  logic clk=0;
+  logic [31:0] TestNum=0;
+  logic [31:0] OpCtrlNum=0;
+  logic [31:0] errors=0;
+  logic [31:0] VectorNum=0;
+  logic [31:0] FrmNum=0;
+  logic [31:0] FmaNum=0;
+  logic [`FLEN*4+7:0] TestVectors[46464:0];
+  logic [`FLEN*4+7:0] FmaRneVectors[6133248:0];
+  logic [`FLEN*4+7:0] FmaRuVectors[6133248:0];
+  logic [`FLEN*4+7:0] FmaRdVectors[6133248:0];
+  logic [`FLEN*4+7:0] FmaRzVectors[6133248:0];
+  logic [`FLEN*4+7:0] FmaRnmVectors[6133248:0];
+
+  logic [1:0] FmaFmtVal, FmtVal;
+  logic [2:0] UnitVal, OpCtrlVal, FrmVal;
+  logic                 NaNGood;
+  logic ZOrigDenorm, FmaRneZOrigDenorm, FmaRzZOrigDenorm, FmaRuZOrigDenorm, FmaRdZOrigDenorm, FmaRnmZOrigDenorm;
+  logic                 FmaRneNaNGood, FmaRzNaNGood, FmaRuNaNGood, FmaRdNaNGood, FmaRnmNaNGood;
+  logic [`FLEN-1:0]     X, Y, Z;  // inputs read from TestFloat
+  logic [`FLEN-1:0]     FmaRneX, FmaRneY, FmaRneZ;  // inputs read from TestFloat
+  logic [`FLEN-1:0]     FmaRzX, FmaRzY, FmaRzZ;  // inputs read from TestFloat
+  logic [`FLEN-1:0]     FmaRuX, FmaRuY, FmaRuZ;  // inputs read from TestFloat
+  logic [`FLEN-1:0]     FmaRdX, FmaRdY, FmaRdZ;  // inputs read from TestFloat
+  logic [`FLEN-1:0]     FmaRnmX, FmaRnmY, FmaRnmZ;  // inputs read from TestFloat
+  logic [`XLEN-1:0]     SrcA; // integer input
+  logic [`FLEN-1:0]	    Ans;      // result from TestFloat
+  logic [`FLEN-1:0]           FmaRneAns, FmaRzAns, FmaRuAns, FmaRdAns, FmaRnmAns; // flags read form testfloat
+  logic [`FLEN-1:0]	    Res;
+  logic [`FLEN-1:0]	    FmaRneRes, FmaRzRes, FmaRuRes, FmaRdRes, FmaRnmRes;      // result from Units
+  logic [4:0]	 	        AnsFlags; // flags read form testfloat
+  logic [4:0]           FmaRneAnsFlags, FmaRzAnsFlags, FmaRuAnsFlags, FmaRdAnsFlags, FmaRnmAnsFlags; // flags read form testfloat
+  logic [4:0]	 	        ResFlags;    // Res's flags
+  logic [4:0]           FmaRneResFlags, FmaRzResFlags, FmaRuResFlags, FmaRdResFlags, FmaRnmResFlags; // flags read form testfloat
+  logic [2:0]		        FrmE;     // rounding mode
+  logic	[`FPSIZES/3:0]  ModFmt, FmaModFmt;     // format - 10 = half, 00 = single, 01 = double, 11 = quad
+  logic	[3:0]			      FpuUnit;  // Which unit is being tested
+  logic [`FLEN-1:0]     FMAResM, DivResM, CmpResE, CvtResE, CvtFpResE;  // Ress
+  logic [4:0]           FMAFlgM, CvtFpFlgM, DivFlgM, CvtIntFlgM, CmpFlgM;  // FMA's outputed flags
+  logic                 CmpNVE;
+  logic                 ResNaN, FmaRneResNaN, FmaRzResNaN, FmaRuResNaN, FmaRdResNaN, FmaRnmResNaN;     // is the outputed result NaN
+  logic                 AnsNaN, FmaRneAnsNaN, FmaRzAnsNaN, FmaRuAnsNaN, FmaRdAnsNaN, FmaRnmAnsNaN;   // is the correct answer NaN
+  logic [`NE+1:0]	  ProdExpE, FmaRneProdExp, FmaRzProdExp, FmaRuProdExp, FmaRdProdExp, FmaRnmProdExp;
+  logic 				    AddendStickyE, FmaRneAddendSticky, FmaRzAddendSticky, FmaRuAddendSticky, FmaRdAddendSticky, FmaRnmAddendSticky;
+  logic 					  KillProdE, FmaRneKillProd, FmaRzKillProd, FmaRuKillProd, FmaRdKillProd, FmaRnmKillProd; 
+  logic             XSgn, YSgn, ZSgn;
+  logic             FmaRneXSgn, FmaRneYSgn, FmaRneZSgn;
+  logic             FmaRzXSgn, FmaRzYSgn, FmaRzZSgn;
+  logic             FmaRuXSgn, FmaRuYSgn, FmaRuZSgn;
+  logic             FmaRdXSgn, FmaRdYSgn, FmaRdZSgn;
+  logic             FmaRnmXSgn, FmaRnmYSgn, FmaRnmZSgn;
+  logic [`NE-1:0]   XExp, YExp, ZExp;
+  logic [`NE-1:0]   FmaRneXExp, FmaRneYExp, FmaRneZExp;
+  logic [`NE-1:0]   FmaRzXExp, FmaRzYExp, FmaRzZExp;
+  logic [`NE-1:0]   FmaRuXExp, FmaRuYExp, FmaRuZExp;
+  logic [`NE-1:0]   FmaRdXExp, FmaRdYExp, FmaRdZExp;
+  logic [`NE-1:0]   FmaRnmXExp, FmaRnmYExp, FmaRnmZExp;
+  logic [`NF:0]     XMan, YMan, ZMan;
+  logic [`NF:0]     FmaRneXMan, FmaRneYMan, FmaRneZMan;
+  logic [`NF:0]     FmaRzXMan, FmaRzYMan, FmaRzZMan;
+  logic [`NF:0]     FmaRuXMan, FmaRuYMan, FmaRuZMan;
+  logic [`NF:0]     FmaRdXMan, FmaRdYMan, FmaRdZMan;
+  logic [`NF:0]     FmaRnmXMan, FmaRnmYMan, FmaRnmZMan;
+  logic             XNorm;
+  logic             XExpMaxE;
+  logic             XNaN, YNaN, ZNaN;
+  logic             FmaRneXNaN, FmaRneYNaN, FmaRneZNaN;
+  logic             FmaRzXNaN, FmaRzYNaN, FmaRzZNaN;
+  logic             FmaRuXNaN, FmaRuYNaN, FmaRuZNaN;
+  logic             FmaRdXNaN, FmaRdYNaN, FmaRdZNaN;
+  logic             FmaRnmXNaN, FmaRnmYNaN, FmaRnmZNaN;
+  logic             XSNaN, YSNaN, ZSNaN;
+  logic             FmaRneXSNaN, FmaRneYSNaN, FmaRneZSNaN;
+  logic             FmaRzXSNaN, FmaRzYSNaN, FmaRzZSNaN;
+  logic             FmaRuXSNaN, FmaRuYSNaN, FmaRuZSNaN;
+  logic             FmaRdXSNaN, FmaRdYSNaN, FmaRdZSNaN;
+  logic             FmaRnmXSNaN, FmaRnmYSNaN, FmaRnmZSNaN;
+  logic             XDenorm, YDenorm, ZDenorm;
+  logic             FmaRneXDenorm, FmaRneYDenorm, FmaRneZDenorm;
+  logic             FmaRzXDenorm, FmaRzYDenorm, FmaRzZDenorm;
+  logic             FmaRuXDenorm, FmaRuYDenorm, FmaRuZDenorm;
+  logic             FmaRdXDenorm, FmaRdYDenorm, FmaRdZDenorm;
+  logic             FmaRnmXDenorm, FmaRnmYDenorm, FmaRnmZDenorm;
+  logic             XInf, YInf, ZInf;
+  logic             FmaRneXInf, FmaRneYInf, FmaRneZInf;
+  logic             FmaRzXInf, FmaRzYInf, FmaRzZInf;
+  logic             FmaRuXInf, FmaRuYInf, FmaRuZInf;
+  logic             FmaRdXInf, FmaRdYInf, FmaRdZInf;
+  logic             FmaRnmXInf, FmaRnmYInf, FmaRnmZInf;
+  logic             XZero, YZero, ZZero;
+  logic             FmaRneXZero, FmaRneYZero, FmaRneZZero;
+  logic             FmaRzXZero, FmaRzYZero, FmaRzZZero;
+  logic             FmaRuXZero, FmaRuYZero, FmaRuZZero;
+  logic             FmaRdXZero, FmaRdYZero, FmaRdZZero;
+  logic             FmaRnmXZero, FmaRnmYZero, FmaRnmZZero;
+  logic             XExpMax, YExpMax, ZExpMax, Mult;
+  logic [3*`NF+5:0]	SumE, FmaRneSum, FmaRzSum, FmaRuSum, FmaRdSum, FmaRnmSum;       
+  logic 			      InvZE, FmaRneInvZ, FmaRzInvZ, FmaRuInvZ, FmaRdInvZ, FmaRnmInvZ;
+  logic 			      NegSumE, FmaRneNegSum, FmaRzNegSum, FmaRuNegSum, FmaRdNegSum, FmaRnmNegSum;
+  logic 			      ZSgnEffE, FmaRneZSgnEff, FmaRzZSgnEff, FmaRuZSgnEff, FmaRdZSgnEff, FmaRnmZSgnEff;
+  logic 			      PSgnE, FmaRnePSgn, FmaRzPSgn, FmaRuPSgn, FmaRdPSgn, FmaRnmPSgn;
+  logic [$clog2(3*`NF+7)-1:0]	NormCntE, FmaRneNormCnt, FmaRzNormCnt, FmaRuNormCnt, FmaRdNormCnt, FmaRnmNormCnt;
+
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //     ||||||||| |||||||| ||||||| |||||||||   ||||||| |||||||| |||
+  //        |||    |||      |||        |||      |||     |||      |||
+  //        |||    |||||||| |||||||    |||      ||||||| |||||||| |||
+  //        |||    |||          |||    |||          ||| |||      |||
+  //        |||    |||||||| |||||||    |||      ||||||| |||||||| |||||||||
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  // select tests relevent to the specified configuration
+  //    cvtint - test integer conversion unit (fcvtint)
+  //    cvtfp  - test floating-point conversion unit (fcvtfp)
+  //    cmp    - test comparison unit's LT, LE, EQ opperations (fcmp)
+  //    add    - test addition
+  //    sub    - test subtraction
+  //    div    - test division
+  //    sqrt   - test square root
+  //    all    - test all of the above
+  initial begin
+    $display("TEST is %s", TEST);
+    if (`Q_SUPPORTED) begin // if Quad percision is supported
+      if (TEST === "cvtint"| TEST === "all") begin  // if testing integer conversion
+                                              // add the 128-bit cvtint tests to the to-be-tested list
+                                              Tests = {Tests, f128rv32cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b11};
+                                              end
+                                              if (`XLEN == 64) begin // if 64-bit integers are supported add their conversions
+                                                Tests = {Tests, f128rv64cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b11};
+                                              end
+                                              end
+                                            end
+      if (TEST === "cvtfp" | TEST === "all") begin  // if the floating-point conversions are being tested
+        if(`D_SUPPORTED) begin // if double precision is supported
+          // add the 128 <-> 64 bit conversions to the to-be-tested list
+          Tests = {Tests, f128f64cvt};
+          // add the op-ctrls (i.e. the format of the result)
+          OpCtrl = {OpCtrl, 3'b01, 3'b11};
+          // add the unit being tested and fmt (input format)
+          for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+        end
+        if(`F_SUPPORTED) begin // if single precision is supported
+          // add the 128 <-> 32 bit conversions to the to-be-tested list
+          Tests = {Tests, f128f32cvt};
+          // add the op-ctrls (i.e. the format of the result)
+          OpCtrl = {OpCtrl, 3'b00, 3'b11};
+          // add the unit being tested and fmt (input format)
+          for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+        end
+        if(`ZFH_SUPPORTED) begin // if half precision is supported
+          // add the 128 <-> 16 bit conversions to the to-be-tested list
+          Tests = {Tests, f128f16cvt};
+          // add the op-ctrls (i.e. the format of the result)
+          OpCtrl = {OpCtrl, 3'b10, 3'b11};
+          // add the unit being tested and fmt (input format)
+          for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+        end
+      end
+      if (TEST === "cmp"   | TEST === "all") begin// if comparisons are being tested
+        // add the compare tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128cmp};
+        OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+          for(int i = 0; i<15; i++) begin
+            Unit = {Unit, `CMPUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
+      if (TEST === "add"   | TEST === "all") begin // if addition is being tested
+        // add the addition tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128add};
+        OpCtrl = {OpCtrl, `ADD_OPCTRL};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `FMAUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
+      if (TEST === "sub"   | TEST === "all") begin // if subtraction is being tested
+        // add the subtraction tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128sub};
+        OpCtrl = {OpCtrl, `SUB_OPCTRL};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `FMAUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
+      if (TEST === "mul"   | TEST === "all") begin // if multiplication is being tested
+        // add the multiply tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128mul};
+        OpCtrl = {OpCtrl, `MUL_OPCTRL};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `FMAUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the divide tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
+      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
+        // add the square-root tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
+      if (TEST === "fma"   | TEST === "all") begin  // if fused-mutliply-add is being tested
+        // add each rounding mode to it's own list of tests
+        //    - fma tests are very long, so run all rounding modes in parallel
+        FmaRneTests = {FmaRneTests, "f128_mulAdd_rne.tv"};
+        FmaRzTests  = {FmaRzTests,  "f128_mulAdd_rz.tv"};
+        FmaRuTests  = {FmaRuTests,  "f128_mulAdd_ru.tv"};
+        FmaRdTests  = {FmaRdTests,  "f128_mulAdd_rd.tv"};
+        FmaRnmTests = {FmaRnmTests, "f128_mulAdd_rnm.tv"};
+        // add the format for the Fma
+        for(int i = 0; i<5; i++) begin
+          FmaFmt = {FmaFmt, 2'b11};
+        end
+      end
+    end
+    if (`D_SUPPORTED) begin // if double precision is supported
+      if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
+                                              Tests = {Tests, f64rv32cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b01};
+                                              end
+                                              if (`XLEN == 64) begin // if 64-bit integers are being supported
+                                                Tests = {Tests, f64rv64cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                                for(int i = 0; i<20; i++) begin
+                                                  Unit = {Unit, `CVTINTUNIT};
+                                                  Fmt = {Fmt, 2'b01};
+                                                end
+                                              end
+                                            end
+      if (TEST === "cvtfp" | TEST === "all") begin // if floating point conversions are being tested
+        if(`F_SUPPORTED) begin // if single precision is supported
+          // add the 64 <-> 32 bit conversions to the to-be-tested list
+          Tests = {Tests, f64f32cvt};
+          // add the op-ctrls (i.e. the format of the result)
+          OpCtrl = {OpCtrl, 3'b00, 3'b01};
+          // add the unit being tested and fmt (input format)
+          for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b01};
+          end
+        end
+        if(`ZFH_SUPPORTED) begin // if half precision is supported
+          // add the 64 <-> 16 bit conversions to the to-be-tested list
+          Tests = {Tests, f64f16cvt};
+          // add the op-ctrls (i.e. the format of the result)
+          OpCtrl = {OpCtrl, 3'b10, 3'b01};
+          // add the unit being tested and fmt (input format)
+          for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b01};
+          end
+        end
+      end
+      if (TEST === "cmp"   | TEST === "all") begin // if comparisions are being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64cmp};
+        OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+        for(int i = 0; i<15; i++) begin
+          Unit = {Unit, `CMPUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
+      if (TEST === "add"   | TEST === "all") begin // if addition is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64add};
+        OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
+      if (TEST === "sub"   | TEST === "all") begin // if subtration is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64sub};
+        OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
+      if (TEST === "mul"   | TEST === "all") begin // if multiplication is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64mul};
+        OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
+      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
+      if (TEST === "fma"   | TEST === "all") begin // if the fused multiply add is being tested
+        // add each rounding mode to it's own list of tests
+        //    - fma tests are very long, so run all rounding modes in parallel
+        FmaRneTests = {FmaRneTests, "f64_mulAdd_rne.tv"};
+        FmaRzTests  = {FmaRzTests,  "f64_mulAdd_rz.tv"};
+        FmaRuTests  = {FmaRuTests,  "f64_mulAdd_ru.tv"};
+        FmaRdTests  = {FmaRdTests,  "f64_mulAdd_rd.tv"};
+        FmaRnmTests = {FmaRnmTests, "f64_mulAdd_rnm.tv"};
+        for(int i = 0; i<5; i++) begin
+          FmaFmt = {FmaFmt, 2'b01};
+        end
+      end
+    end
+    if (`F_SUPPORTED) begin // if single precision being supported
+      if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
+                                              Tests = {Tests, f32rv32cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b00};
+                                              end
+                                              if (`XLEN == 64) begin // if 64-bit integers are supported
+                                                Tests = {Tests, f32rv64cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b00};
+                                              end
+                                              end
+                                            end
+      if (TEST === "cvtfp" | TEST === "all") begin  // if floating point conversion is being tested
+        if(`ZFH_SUPPORTED) begin 
+          // add the 32 <-> 16 bit conversions to the to-be-tested list
+          Tests = {Tests, f32f16cvt};
+          // add the op-ctrls (i.e. the format of the result)
+          OpCtrl = {OpCtrl, 3'b10, 3'b00};
+          // add the unit being tested and fmt (input format)
+          for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b00};
+          end
+        end
+      end
+      if (TEST === "cmp"   | TEST === "all") begin // if comparision is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32cmp};
+        OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+        for(int i = 0; i<15; i++) begin
+          Unit = {Unit, `CMPUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
+      if (TEST === "add"   | TEST === "all") begin // if addition is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32add};
+        OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
+      if (TEST === "sub"   | TEST === "all") begin // if subtration is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32sub};
+        OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
+      if (TEST === "mul"   | TEST === "all") begin // if multiply is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32mul};
+        OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
+      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
+      if (TEST === "fma"   | TEST === "all")  begin // if fma is being tested
+        // add each rounding mode to it's own list of tests
+        //    - fma tests are very long, so run all rounding modes in parallel
+        FmaRneTests = {FmaRneTests, "f32_mulAdd_rne.tv"};
+        FmaRzTests  = {FmaRzTests,  "f32_mulAdd_rz.tv"};
+        FmaRuTests  = {FmaRuTests,  "f32_mulAdd_ru.tv"};
+        FmaRdTests  = {FmaRdTests,  "f32_mulAdd_rd.tv"};
+        FmaRnmTests = {FmaRnmTests, "f32_mulAdd_rnm.tv"};
+        for(int i = 0; i<5; i++) begin
+          FmaFmt = {FmaFmt, 2'b00};
+        end
+      end
+    end
+    if (`ZFH_SUPPORTED) begin // if half precision supported
+      if (TEST === "cvtint"| TEST === "all") begin // if in conversions are being tested
+                                              Tests = {Tests, f16rv32cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b10};
+                                              end
+                                              if (`XLEN == 64) begin // if 64-bit integers are supported
+                                              Tests = {Tests, f16rv64cvtint, f16rv32cvtint};
+                                              // add the op-codes for these tests to the op-code list
+                                              OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                              // add what unit is used and the fmt to their lists (one for each test)
+                                              for(int i = 0; i<20; i++) begin
+                                                Unit = {Unit, `CVTINTUNIT};
+                                                Fmt = {Fmt, 2'b10};
+                                              end
+                                              end
+                                            end
+      if (TEST === "cmp"   | TEST === "all") begin // if comparisions are being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16cmp};
+        OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+        for(int i = 0; i<15; i++) begin
+          Unit = {Unit, `CMPUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "add"   | TEST === "all") begin //  if addition is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16add};
+        OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "sub"   | TEST === "all") begin // if subtraction is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16sub};
+        OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "mul"   | TEST === "all") begin // if multiplication is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16mul};
+        OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `FMAUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "fma"   | TEST === "all") begin // if fma is being tested
+        // add each rounding mode to it's own list of tests
+        //    - fma tests are very long, so run all rounding modes in parallel
+        FmaRneTests = {FmaRneTests, "f16_mulAdd_rne.tv"};
+        FmaRzTests  = {FmaRzTests,  "f16_mulAdd_rz.tv"};
+        FmaRuTests  = {FmaRuTests,  "f16_mulAdd_ru.tv"};
+        FmaRdTests  = {FmaRdTests,  "f16_mulAdd_rd.tv"};
+        FmaRnmTests = {FmaRnmTests, "f16_mulAdd_rnm.tv"};
+        for(int i = 0; i<5; i++) begin
+          FmaFmt = {FmaFmt, 2'b10};
+        end
+      end
+    end
+
+    // check if nothing is being tested
+    if (Tests.size() == 0 & FmaRneTests.size() == 0 & FmaRuTests.size() == 0 & FmaRdTests.size() == 0 & FmaRzTests.size() == 0 & FmaRnmTests.size() == 0) begin
+      $display("TEST %s not supported in this configuration", TEST);
+      $stop;
+    end
+  end
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //     ||||||||| |||||||| ||||||||| |||||||     ||||||||| |||||||| ||||||| |||||||||   
+  //     |||   ||| |||      |||   ||| ||   ||        |||    |||      |||        |||      
+  //     ||||||||  |||||||| ||||||||| ||   ||        |||    |||||||| |||||||    |||      
+  //     |||  ||   |||      |||   ||| ||   ||        |||    |||          |||    |||      
+  //     |||   ||| |||||||| |||   ||| |||||||        |||    |||||||| |||||||    |||      
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Read the first test
+  initial begin
+    $display("\n\nRunning %s vectors", Tests[TestNum]);
+    $readmemh({`PATH, Tests[TestNum]}, TestVectors);
+    $readmemh({`PATH, FmaRneTests[TestNum]}, FmaRneVectors);
+    $readmemh({`PATH, FmaRuTests[TestNum]}, FmaRuVectors);
+    $readmemh({`PATH, FmaRdTests[TestNum]}, FmaRdVectors);
+    $readmemh({`PATH, FmaRzTests[TestNum]}, FmaRzVectors);
+    $readmemh({`PATH, FmaRnmTests[TestNum]}, FmaRnmVectors);
+    // set the test index to 0
+    TestNum = 0;
+  end
+
+  // set a the signals for all tests
+  always_comb FmaFmtVal = FmaFmt[FmaNum];
+  always_comb UnitVal = Unit[TestNum];
+  always_comb FmtVal = Fmt[TestNum];
+  always_comb OpCtrlVal = OpCtrl[OpCtrlNum];
+  always_comb FrmVal = Frm[FrmNum];
+  assign Mult = OpCtrlVal === 3'b100;
+
+  // modify the format signal if only 2 percisions supported
+  //    - 1 for the larger precision
+  //    - 0 for the smaller precision
+  always_comb begin
+    if(`FPSIZES/3 === 1) ModFmt = FmtVal;
+    else ModFmt = FmtVal === `FMT;
+    if(`FPSIZES/3 === 1) FmaModFmt = FmaFmtVal;
+    else FmaModFmt = FmaFmtVal === `FMT;
+  end
+
+  // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlags) from the current test vector
+  readfmavectors readfmarnevectors (.clk, .Frm(`RNE), .TestVector(FmaRneVectors[VectorNum]), .VectorNum, .Ans(FmaRneAns), .AnsFlags(FmaRneAnsFlags), 
+                                    .XSgnE(FmaRneXSgn), .YSgnE(FmaRneYSgn), .ZSgnE(FmaRneZSgn), .FmaNum,
+                                    .XExpE(FmaRneXExp), .YExpE(FmaRneYExp), .ZExpE(FmaRneZExp), 
+                                    .XManE(FmaRneXMan), .YManE(FmaRneYMan), .ZManE(FmaRneZMan), 
+                                    .XNaNE(FmaRneXNaN), .YNaNE(FmaRneYNaN), .ZNaNE(FmaRneZNaN), .ZOrigDenormE(FmaRneZOrigDenorm),
+                                    .XSNaNE(FmaRneXSNaN), .YSNaNE(FmaRneYSNaN), .ZSNaNE(FmaRneZSNaN), 
+                                    .XDenormE(FmaRneXDenorm), .YDenormE(FmaRneYDenorm), .ZDenormE(FmaRneZDenorm), 
+                                    .XZeroE(FmaRneXZero), .YZeroE(FmaRneYZero), .ZZeroE(FmaRneZZero),
+                                    .XInfE(FmaRneXInf), .YInfE(FmaRneYInf), .ZInfE(FmaRneZInf), .FmaModFmt, .FmaFmt(FmaFmtVal),
+                                    .X(FmaRneX), .Y(FmaRneY), .Z(FmaRneZ));
+  readfmavectors readfmarzvectors (.clk, .Frm(`RZ), .TestVector(FmaRzVectors[VectorNum]), .VectorNum, .Ans(FmaRzAns), .AnsFlags(FmaRzAnsFlags), 
+                                    .XSgnE(FmaRzXSgn), .YSgnE(FmaRzYSgn), .ZSgnE(FmaRzZSgn), .FmaNum, .FmaModFmt,
+                                    .XExpE(FmaRzXExp), .YExpE(FmaRzYExp), .ZExpE(FmaRzZExp), 
+                                    .XManE(FmaRzXMan), .YManE(FmaRzYMan), .ZManE(FmaRzZMan), 
+                                    .XNaNE(FmaRzXNaN), .YNaNE(FmaRzYNaN), .ZNaNE(FmaRzZNaN), .ZOrigDenormE(FmaRzZOrigDenorm),
+                                    .XSNaNE(FmaRzXSNaN), .YSNaNE(FmaRzYSNaN), .ZSNaNE(FmaRzZSNaN), 
+                                    .XDenormE(FmaRzXDenorm), .YDenormE(FmaRzYDenorm), .ZDenormE(FmaRzZDenorm), 
+                                    .XZeroE(FmaRzXZero), .YZeroE(FmaRzYZero), .ZZeroE(FmaRzZZero),
+                                    .XInfE(FmaRzXInf), .YInfE(FmaRzYInf), .ZInfE(FmaRzZInf), .FmaFmt(FmaFmtVal),
+                                    .X(FmaRzX), .Y(FmaRzY), .Z(FmaRzZ));
+  readfmavectors readfmaruvectors (.clk, .Frm(`RU), .TestVector(FmaRuVectors[VectorNum]), .VectorNum, .Ans(FmaRuAns), .AnsFlags(FmaRuAnsFlags), 
+                                    .XSgnE(FmaRuXSgn), .YSgnE(FmaRuYSgn), .ZSgnE(FmaRuZSgn), .FmaNum, .FmaModFmt,
+                                    .XExpE(FmaRuXExp), .YExpE(FmaRuYExp), .ZExpE(FmaRuZExp), 
+                                    .XManE(FmaRuXMan), .YManE(FmaRuYMan), .ZManE(FmaRuZMan), 
+                                    .XNaNE(FmaRuXNaN), .YNaNE(FmaRuYNaN), .ZNaNE(FmaRuZNaN), .ZOrigDenormE(FmaRuZOrigDenorm),
+                                    .XSNaNE(FmaRuXSNaN), .YSNaNE(FmaRuYSNaN), .ZSNaNE(FmaRuZSNaN), 
+                                    .XDenormE(FmaRuXDenorm), .YDenormE(FmaRuYDenorm), .ZDenormE(FmaRuZDenorm), 
+                                    .XZeroE(FmaRuXZero), .YZeroE(FmaRuYZero), .ZZeroE(FmaRuZZero),
+                                    .XInfE(FmaRuXInf), .YInfE(FmaRuYInf), .ZInfE(FmaRuZInf), .FmaFmt(FmaFmtVal),
+                                    .X(FmaRuX), .Y(FmaRuY), .Z(FmaRuZ));
+  readfmavectors readfmardvectors (.clk, .Frm(`RD), .TestVector(FmaRdVectors[VectorNum]), .VectorNum, .Ans(FmaRdAns), .AnsFlags(FmaRdAnsFlags), 
+                                    .XSgnE(FmaRdXSgn), .YSgnE(FmaRdYSgn), .ZSgnE(FmaRdZSgn), .FmaNum, .FmaModFmt,
+                                    .XExpE(FmaRdXExp), .YExpE(FmaRdYExp), .ZExpE(FmaRdZExp), 
+                                    .XManE(FmaRdXMan), .YManE(FmaRdYMan), .ZManE(FmaRdZMan), 
+                                    .XNaNE(FmaRdXNaN), .YNaNE(FmaRdYNaN), .ZNaNE(FmaRdZNaN), .ZOrigDenormE(FmaRdZOrigDenorm),
+                                    .XSNaNE(FmaRdXSNaN), .YSNaNE(FmaRdYSNaN), .ZSNaNE(FmaRdZSNaN), 
+                                    .XDenormE(FmaRdXDenorm), .YDenormE(FmaRdYDenorm), .ZDenormE(FmaRdZDenorm), 
+                                    .XZeroE(FmaRdXZero), .YZeroE(FmaRdYZero), .ZZeroE(FmaRdZZero),
+                                    .XInfE(FmaRdXInf), .YInfE(FmaRdYInf), .ZInfE(FmaRdZInf), .FmaFmt(FmaFmtVal),
+                                    .X(FmaRdX), .Y(FmaRdY), .Z(FmaRdZ));
+  readfmavectors readfmarnmvectors (.clk, .Frm(`RNM), .TestVector(FmaRnmVectors[VectorNum]), .VectorNum, .Ans(FmaRnmAns), .AnsFlags(FmaRnmAnsFlags), 
+                                    .XSgnE(FmaRnmXSgn), .YSgnE(FmaRnmYSgn), .ZSgnE(FmaRnmZSgn), .FmaNum, .FmaModFmt,
+                                    .XExpE(FmaRnmXExp), .YExpE(FmaRnmYExp), .ZExpE(FmaRnmZExp), 
+                                    .XManE(FmaRnmXMan), .YManE(FmaRnmYMan), .ZManE(FmaRnmZMan),  .ZOrigDenormE(FmaRnmZOrigDenorm),
+                                    .XNaNE(FmaRnmXNaN), .YNaNE(FmaRnmYNaN), .ZNaNE(FmaRnmZNaN),
+                                    .XSNaNE(FmaRnmXSNaN), .YSNaNE(FmaRnmYSNaN), .ZSNaNE(FmaRnmZSNaN), 
+                                    .XDenormE(FmaRnmXDenorm), .YDenormE(FmaRnmYDenorm), .ZDenormE(FmaRnmZDenorm), 
+                                    .XZeroE(FmaRnmXZero), .YZeroE(FmaRnmYZero), .ZZeroE(FmaRnmZZero),
+                                    .XInfE(FmaRnmXInf), .YInfE(FmaRnmYInf), .ZInfE(FmaRnmZInf), .FmaFmt(FmaFmtVal),
+                                    .X(FmaRnmX), .Y(FmaRnmY), .Z(FmaRnmZ));
+  readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlags(AnsFlags), .SrcA, 
+                                    .XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), .Unit (UnitVal),
+                                    .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), .TestNum, .OpCtrl(OpCtrlVal),
+                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .ZOrigDenormE(ZOrigDenorm),
+                                    .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
+                                    .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
+                                    .XDenormE(XDenorm), .YDenormE(YDenorm), .ZDenormE(ZDenorm), 
+                                    .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
+                                    .XInfE(XInf), .YInfE(YInf), .ZInfE(ZInf),.XNormE(XNorm), .XExpMaxE(XExpMax),
+                                    .X, .Y, .Z);
+
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //     |||||||   |||   ||| ||||||||| 
+  //     |||   ||| |||   |||    |||    
+  //     |||   ||| |||   |||    |||    
+  //     |||   ||| |||   |||    |||         
+  //     |||||||   |||||||||    |||    
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  // instantiate devices under test
+  //    - one fma for each precison
+  //    - all the units for the other tests (including fma for add/sub/mul)
+  fma1 fma1rne(.XSgnE(FmaRneXSgn), .YSgnE(FmaRneYSgn), .ZSgnE(FmaRneZSgn), 
+              .XExpE(FmaRneXExp), .YExpE(FmaRneYExp), .ZExpE(FmaRneZExp), 
+              .XManE(FmaRneXMan), .YManE(FmaRneYMan), .ZManE(FmaRneZMan),
+              .XDenormE(FmaRneXDenorm), .YDenormE(FmaRneYDenorm), .ZDenormE(FmaRneZDenorm),  
+              .XZeroE(FmaRneXZero), .YZeroE(FmaRneYZero), .ZZeroE(FmaRneZZero),
+              .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRneSum), .NegSumE(FmaRneNegSum), .InvZE(FmaRneInvZ), 
+              .NormCntE(FmaRneNormCnt), .ZSgnEffE(FmaRneZSgnEff), .PSgnE(FmaRnePSgn),
+              .ProdExpE(FmaRneProdExp), .AddendStickyE(FmaRneAddendSticky), .KillProdE(FmaRneSumKillProd)); 
+  fma2 fma2rne(.XSgnM(FmaRneXSgn), .YSgnM(FmaRneYSgn), 
+              .ZExpM(FmaRneZExp), .ZOrigDenormM(FmaRneZOrigDenorm),
+              .XManM(FmaRneXMan), .YManM(FmaRneYMan), .ZManM(FmaRneZMan), 
+              .XNaNM(FmaRneXNaN), .YNaNM(FmaRneYNaN), .ZNaNM(FmaRneZNaN), 
+              .XZeroM(FmaRneXZero), .YZeroM(FmaRneYZero), .ZZeroM(FmaRneZZero), 
+              .XInfM(FmaRneXInf), .YInfM(FmaRneYInf), .ZInfM(FmaRneZInf), 
+              .XSNaNM(FmaRneXSNaN), .YSNaNM(FmaRneYSNaN), .ZSNaNM(FmaRneZSNaN), 
+              .KillProdM(FmaRneSumKillProd), .AddendStickyM(FmaRneAddendSticky), .ProdExpM(FmaRneProdExp), 
+              .SumM((FmaRneSum)), .NegSumM(FmaRneNegSum), .InvZM(FmaRneInvZ), .NormCntM(FmaRneNormCnt), .ZSgnEffM(FmaRneZSgnEff), 
+              .PSgnM(FmaRnePSgn), .FmtM(FmaModFmt), .FrmM(`RNE), 
+              .FMAFlgM(FmaRneResFlags), .FMAResM(FmaRneRes), .Mult(1'b0));
+  fma1 fma1rz(.XSgnE(FmaRzXSgn), .YSgnE(FmaRzYSgn), .ZSgnE(FmaRzZSgn), 
+              .XExpE(FmaRzXExp), .YExpE(FmaRzYExp), .ZExpE(FmaRzZExp), 
+              .XManE(FmaRzXMan), .YManE(FmaRzYMan), .ZManE(FmaRzZMan),
+              .XDenormE(FmaRzXDenorm), .YDenormE(FmaRzYDenorm), .ZDenormE(FmaRzZDenorm),  
+              .XZeroE(FmaRzXZero), .YZeroE(FmaRzYZero), .ZZeroE(FmaRzZZero),
+              .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRzSum), .NegSumE(FmaRzNegSum), .InvZE(FmaRzInvZ), 
+              .NormCntE(FmaRzNormCnt), .ZSgnEffE(FmaRzZSgnEff), .PSgnE(FmaRzPSgn),
+              .ProdExpE(FmaRzProdExp), .AddendStickyE(FmaRzAddendSticky), .KillProdE(FmaRzSumKillProd)); 
+  fma2 fma2rz(.XSgnM(FmaRzXSgn), .YSgnM(FmaRzYSgn), 
+              .ZExpM(FmaRzZExp),  .ZOrigDenormM(FmaRzZOrigDenorm),
+              .XManM(FmaRzXMan), .YManM(FmaRzYMan), .ZManM(FmaRzZMan), 
+              .XNaNM(FmaRzXNaN), .YNaNM(FmaRzYNaN), .ZNaNM(FmaRzZNaN), 
+              .XZeroM(FmaRzXZero), .YZeroM(FmaRzYZero), .ZZeroM(FmaRzZZero), 
+              .XInfM(FmaRzXInf), .YInfM(FmaRzYInf), .ZInfM(FmaRzZInf), 
+              .XSNaNM(FmaRzXSNaN), .YSNaNM(FmaRzYSNaN), .ZSNaNM(FmaRzZSNaN), 
+              .KillProdM(FmaRzSumKillProd), .AddendStickyM(FmaRzAddendSticky), .ProdExpM(FmaRzProdExp), 
+              .SumM((FmaRzSum)), .NegSumM(FmaRzNegSum), .InvZM(FmaRzInvZ), .NormCntM(FmaRzNormCnt), .ZSgnEffM(FmaRzZSgnEff), 
+              .PSgnM(FmaRzPSgn), .FmtM(FmaModFmt), .FrmM(`RZ), 
+              .FMAFlgM(FmaRzResFlags), .FMAResM(FmaRzRes), .Mult(1'b0));
+  fma1 fma1ru(.XSgnE(FmaRuXSgn), .YSgnE(FmaRuYSgn), .ZSgnE(FmaRuZSgn), 
+              .XExpE(FmaRuXExp), .YExpE(FmaRuYExp), .ZExpE(FmaRuZExp), 
+              .XManE(FmaRuXMan), .YManE(FmaRuYMan), .ZManE(FmaRuZMan),
+              .XDenormE(FmaRuXDenorm), .YDenormE(FmaRuYDenorm), .ZDenormE(FmaRuZDenorm),  
+              .XZeroE(FmaRuXZero), .YZeroE(FmaRuYZero), .ZZeroE(FmaRuZZero),
+              .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRuSum), .NegSumE(FmaRuNegSum), .InvZE(FmaRuInvZ), 
+              .NormCntE(FmaRuNormCnt), .ZSgnEffE(FmaRuZSgnEff), .PSgnE(FmaRuPSgn),
+              .ProdExpE(FmaRuProdExp), .AddendStickyE(FmaRuAddendSticky), .KillProdE(FmaRuSumKillProd)); 
+  fma2 fma2ru(.XSgnM(FmaRuXSgn), .YSgnM(FmaRuYSgn), 
+              .ZExpM(FmaRuZExp),  .ZOrigDenormM(FmaRuZOrigDenorm),
+              .XManM(FmaRuXMan), .YManM(FmaRuYMan), .ZManM(FmaRuZMan), 
+              .XNaNM(FmaRuXNaN), .YNaNM(FmaRuYNaN), .ZNaNM(FmaRuZNaN), 
+              .XZeroM(FmaRuXZero), .YZeroM(FmaRuYZero), .ZZeroM(FmaRuZZero), 
+              .XInfM(FmaRuXInf), .YInfM(FmaRuYInf), .ZInfM(FmaRuZInf), 
+              .XSNaNM(FmaRuXSNaN), .YSNaNM(FmaRuYSNaN), .ZSNaNM(FmaRuZSNaN), 
+              .KillProdM(FmaRuSumKillProd), .AddendStickyM(FmaRuAddendSticky), .ProdExpM(FmaRuProdExp), 
+              .SumM((FmaRuSum)), .NegSumM(FmaRuNegSum), .InvZM(FmaRuInvZ), .NormCntM(FmaRuNormCnt), .ZSgnEffM(FmaRuZSgnEff), 
+              .PSgnM(FmaRuPSgn), .FmtM(FmaModFmt), .FrmM(`RU), 
+              .FMAFlgM(FmaRuResFlags), .FMAResM(FmaRuRes), .Mult(1'b0));
+  fma1 fma1rd(.XSgnE(FmaRdXSgn), .YSgnE(FmaRdYSgn), .ZSgnE(FmaRdZSgn), 
+              .XExpE(FmaRdXExp), .YExpE(FmaRdYExp), .ZExpE(FmaRdZExp), 
+              .XManE(FmaRdXMan), .YManE(FmaRdYMan), .ZManE(FmaRdZMan),
+              .XDenormE(FmaRdXDenorm), .YDenormE(FmaRdYDenorm), .ZDenormE(FmaRdZDenorm),  
+              .XZeroE(FmaRdXZero), .YZeroE(FmaRdYZero), .ZZeroE(FmaRdZZero),
+              .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRdSum), .NegSumE(FmaRdNegSum), .InvZE(FmaRdInvZ), 
+              .NormCntE(FmaRdNormCnt), .ZSgnEffE(FmaRdZSgnEff), .PSgnE(FmaRdPSgn),
+              .ProdExpE(FmaRdProdExp), .AddendStickyE(FmaRdAddendSticky), .KillProdE(FmaRdSumKillProd)); 
+  fma2 fma2rd(.XSgnM(FmaRdXSgn), .YSgnM(FmaRdYSgn), 
+              .ZExpM(FmaRdZExp),  .ZOrigDenormM(FmaRdZOrigDenorm),
+              .XManM(FmaRdXMan), .YManM(FmaRdYMan), .ZManM(FmaRdZMan), 
+              .XNaNM(FmaRdXNaN), .YNaNM(FmaRdYNaN), .ZNaNM(FmaRdZNaN), 
+              .XZeroM(FmaRdXZero), .YZeroM(FmaRdYZero), .ZZeroM(FmaRdZZero), 
+              .XInfM(FmaRdXInf), .YInfM(FmaRdYInf), .ZInfM(FmaRdZInf), 
+              .XSNaNM(FmaRdXSNaN), .YSNaNM(FmaRdYSNaN), .ZSNaNM(FmaRdZSNaN), 
+              .KillProdM(FmaRdSumKillProd), .AddendStickyM(FmaRdAddendSticky), .ProdExpM(FmaRdProdExp), 
+              .SumM((FmaRdSum)), .NegSumM(FmaRdNegSum), .InvZM(FmaRdInvZ), .NormCntM(FmaRdNormCnt), .ZSgnEffM(FmaRdZSgnEff), 
+              .PSgnM(FmaRdPSgn), .FmtM(FmaModFmt), .FrmM(`RD), 
+              .FMAFlgM(FmaRdResFlags), .FMAResM(FmaRdRes), .Mult(1'b0));
+  fma1 fma1rnm(.XSgnE(FmaRnmXSgn), .YSgnE(FmaRnmYSgn), .ZSgnE(FmaRnmZSgn), 
+              .XExpE(FmaRnmXExp), .YExpE(FmaRnmYExp), .ZExpE(FmaRnmZExp), 
+              .XManE(FmaRnmXMan), .YManE(FmaRnmYMan), .ZManE(FmaRnmZMan),
+              .XDenormE(FmaRnmXDenorm), .YDenormE(FmaRnmYDenorm), .ZDenormE(FmaRnmZDenorm),  
+              .XZeroE(FmaRnmXZero), .YZeroE(FmaRnmYZero), .ZZeroE(FmaRnmZZero),
+              .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRnmSum), .NegSumE(FmaRnmNegSum), .InvZE(FmaRnmInvZ), 
+              .NormCntE(FmaRnmNormCnt), .ZSgnEffE(FmaRnmZSgnEff), .PSgnE(FmaRnmPSgn),
+              .ProdExpE(FmaRnmProdExp), .AddendStickyE(FmaRnmAddendSticky), .KillProdE(FmaRnmSumKillProd)); 
+  fma2 fma2rnm(.XSgnM(FmaRnmXSgn), .YSgnM(FmaRnmYSgn), 
+              .ZExpM(FmaRnmZExp),  .ZOrigDenormM(FmaRmeZOrigDenorm),
+              .XManM(FmaRnmXMan), .YManM(FmaRnmYMan), .ZManM(FmaRnmZMan), 
+              .XNaNM(FmaRnmXNaN), .YNaNM(FmaRnmYNaN), .ZNaNM(FmaRnmZNaN), 
+              .XZeroM(FmaRnmXZero), .YZeroM(FmaRnmYZero), .ZZeroM(FmaRnmZZero), 
+              .XInfM(FmaRnmXInf), .YInfM(FmaRnmYInf), .ZInfM(FmaRnmZInf), 
+              .XSNaNM(FmaRnmXSNaN), .YSNaNM(FmaRnmYSNaN), .ZSNaNM(FmaRnmZSNaN), 
+              .KillProdM(FmaRnmSumKillProd), .AddendStickyM(FmaRnmAddendSticky), .ProdExpM(FmaRnmProdExp), 
+              .SumM((FmaRnmSum)), .NegSumM(FmaRnmNegSum), .InvZM(FmaRnmInvZ), .NormCntM(FmaRnmNormCnt), .ZSgnEffM(FmaRnmZSgnEff), 
+              .PSgnM(FmaRnmPSgn), .FmtM(FmaModFmt), .FrmM(`RNM), 
+              .FMAFlgM(FmaRnmResFlags), .FMAResM(FmaRnmRes), .Mult(1'b0));  
+  fma1 fma1(.XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), 
+              .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), 
+              .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
+              .XDenormE(XDenorm), .YDenormE(YDenorm), .ZDenormE(ZDenorm),  
+              .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
+              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .SumE, .NegSumE, .InvZE, .NormCntE, .ZSgnEffE, .PSgnE,
+              .ProdExpE, .AddendStickyE, .KillProdE); 
+  fma2 fma2(.XSgnM(XSgn), .YSgnM(YSgn), 
+              .ZExpM(ZExp),  .ZOrigDenormM(ZOrigDenorm),
+              .XManM(XMan), .YManM(YMan), .ZManM(ZMan), 
+              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), 
+              .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), 
+              .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), 
+              .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), 
+              .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), 
+              .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .NormCntM(NormCntE), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
+              .FMAFlgM, .FMAResM, .Mult);
+  // fcvtfp fcvtfp (.XExpE(XExp), .XManE(XMan), .XSgnE(XSgn), .XZeroE(XZero), .XDenormE(XDenorm), .XInfE(XInf), 
+  //             .XNaNE(XNaN), .XSNaNE(XSNaN), .FrmE(Frmal), .FmtE(ModFmt), .CvtFpResE, .CvtFpFlgE);
+  // fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE, .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
+  //             .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), 
+  //             .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE, .CmpResE);
+  // fcvtint fcvtint (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .XZeroE(XZero), .XNaNE(XNaN), .XInfE(XInf), 
+  //                 .XDenormE(XDenorm), .ForwardedSrcAE(SrcA), .FOpCtrlE, .FmtE(ModFmt), .FrmE(Frmal),
+  //                 .CvtResE, .CvtFlgE);
+  // *** integrade divide and squareroot
+  //  fpdiv_pipe fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmVal[1:0]), .op_type(FOpCtrlQ), 
+  //        .reset, .clk(clk), .start(FDivStartE), .P(~FmtQ), .OvEn(1'b1), .UnEn(1'b1),
+  //        .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
+  //        .FDivBusyE, .done(FDivSqrtDoneE), .AS_Res(FDivResM), .Flags(FDivFlgM));
+
+  // produce clock
+  always begin
+    clk = 1; #5; clk = 0; #5;
+  end
+  
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+//          |||||      |||  ||||||||||  |||||      |||
+//          |||||||    |||  |||    |||  |||||||    |||
+//          |||| |||   |||  ||||||||||  |||| |||   |||
+//          ||||  |||  |||  |||    |||  ||||  |||  |||
+//          ||||   ||| |||  |||    |||  ||||   ||| |||
+//          ||||    ||||||  |||    |||  ||||    ||||||
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //Check if answer is a NaN
+  always_comb begin
+    case (FmaFmtVal)
+        4'b11: begin // quad             
+          FmaRneAnsNaN = &FmaRneAns[`Q_LEN-2:`Q_NF]&(|FmaRneAns[`Q_NF-1:0]);
+          FmaRneResNaN = &FmaRneRes[`Q_LEN-2:`Q_NF]&(|FmaRneRes[`Q_NF-1:0]);
+          FmaRzAnsNaN = &FmaRzAns[`Q_LEN-2:`Q_NF]&(|FmaRzAns[`Q_NF-1:0]);
+          FmaRzResNaN = &FmaRzRes[`Q_LEN-2:`Q_NF]&(|FmaRzRes[`Q_NF-1:0]);
+          FmaRuAnsNaN = &FmaRuAns[`Q_LEN-2:`Q_NF]&(|FmaRuAns[`Q_NF-1:0]);
+          FmaRuResNaN = &FmaRuRes[`Q_LEN-2:`Q_NF]&(|FmaRuRes[`Q_NF-1:0]);
+          FmaRdAnsNaN = &FmaRdAns[`Q_LEN-2:`Q_NF]&(|FmaRdAns[`Q_NF-1:0]);
+          FmaRdResNaN = &FmaRdRes[`Q_LEN-2:`Q_NF]&(|FmaRdRes[`Q_NF-1:0]);
+          FmaRnmAnsNaN = &FmaRnmAns[`Q_LEN-2:`Q_NF]&(|FmaRnmAns[`Q_NF-1:0]);
+          FmaRnmResNaN = &FmaRnmRes[`Q_LEN-2:`Q_NF]&(|FmaRnmRes[`Q_NF-1:0]);
+        end
+        4'b01: begin // double                 
+          FmaRneAnsNaN = &FmaRneAns[`D_LEN-2:`D_NF]&(|FmaRneAns[`D_NF-1:0]);
+          FmaRneResNaN = &FmaRneRes[`D_LEN-2:`D_NF]&(|FmaRneRes[`D_NF-1:0]);
+          FmaRzAnsNaN = &FmaRzAns[`D_LEN-2:`D_NF]&(|FmaRzAns[`D_NF-1:0]);
+          FmaRzResNaN = &FmaRzRes[`D_LEN-2:`D_NF]&(|FmaRzRes[`D_NF-1:0]);
+          FmaRuAnsNaN = &FmaRuAns[`D_LEN-2:`D_NF]&(|FmaRuAns[`D_NF-1:0]);
+          FmaRuResNaN = &FmaRuRes[`D_LEN-2:`D_NF]&(|FmaRuRes[`D_NF-1:0]);
+          FmaRdAnsNaN = &FmaRdAns[`D_LEN-2:`D_NF]&(|FmaRdAns[`D_NF-1:0]);
+          FmaRdResNaN = &FmaRdRes[`D_LEN-2:`D_NF]&(|FmaRdRes[`D_NF-1:0]);
+          FmaRnmAnsNaN = &FmaRnmAns[`D_LEN-2:`D_NF]&(|FmaRnmAns[`D_NF-1:0]);
+          FmaRnmResNaN = &FmaRnmRes[`D_LEN-2:`D_NF]&(|FmaRnmRes[`D_NF-1:0]);
+        end
+        4'b00: begin // single
+          FmaRneAnsNaN = &FmaRneAns[`S_LEN-2:`S_NF]&(|FmaRneAns[`S_NF-1:0]);
+          FmaRneResNaN = &FmaRneRes[`S_LEN-2:`S_NF]&(|FmaRneRes[`S_NF-1:0]);
+          FmaRzAnsNaN = &FmaRzAns[`S_LEN-2:`S_NF]&(|FmaRzAns[`S_NF-1:0]);
+          FmaRzResNaN = &FmaRzRes[`S_LEN-2:`S_NF]&(|FmaRzRes[`S_NF-1:0]);
+          FmaRuAnsNaN = &FmaRuAns[`S_LEN-2:`S_NF]&(|FmaRuAns[`S_NF-1:0]);
+          FmaRuResNaN = &FmaRuRes[`S_LEN-2:`S_NF]&(|FmaRuRes[`S_NF-1:0]);
+          FmaRdAnsNaN = &FmaRdAns[`S_LEN-2:`S_NF]&(|FmaRdAns[`S_NF-1:0]);
+          FmaRdResNaN = &FmaRdRes[`S_LEN-2:`S_NF]&(|FmaRdRes[`S_NF-1:0]);
+          FmaRnmAnsNaN = &FmaRnmAns[`S_LEN-2:`S_NF]&(|FmaRnmAns[`S_NF-1:0]);
+          FmaRnmResNaN = &FmaRnmRes[`S_LEN-2:`S_NF]&(|FmaRnmRes[`S_NF-1:0]);
+        end
+        4'b10: begin // half
+          FmaRneAnsNaN = &FmaRneAns[`H_LEN-2:`H_NF]&(|FmaRneAns[`H_NF-1:0]);
+          FmaRneResNaN = &FmaRneRes[`H_LEN-2:`H_NF]&(|FmaRneRes[`H_NF-1:0]);
+          FmaRzAnsNaN = &FmaRzAns[`H_LEN-2:`H_NF]&(|FmaRzAns[`H_NF-1:0]);
+          FmaRzResNaN = &FmaRzRes[`H_LEN-2:`H_NF]&(|FmaRzRes[`H_NF-1:0]);
+          FmaRuAnsNaN = &FmaRuAns[`H_LEN-2:`H_NF]&(|FmaRuAns[`H_NF-1:0]);
+          FmaRuResNaN = &FmaRuRes[`H_LEN-2:`H_NF]&(|FmaRuRes[`H_NF-1:0]);
+          FmaRdAnsNaN = &FmaRdAns[`H_LEN-2:`H_NF]&(|FmaRdAns[`H_NF-1:0]);
+          FmaRdResNaN = &FmaRdRes[`H_LEN-2:`H_NF]&(|FmaRdRes[`H_NF-1:0]);
+          FmaRnmAnsNaN = &FmaRnmAns[`H_LEN-2:`H_NF]&(|FmaRnmAns[`H_NF-1:0]);
+          FmaRnmResNaN = &FmaRnmRes[`H_LEN-2:`H_NF]&(|FmaRnmRes[`H_NF-1:0]);
+        end
+    endcase
+  end
+  always_comb begin //***need for other units???
+    if(UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
+      AnsNaN = 1'b0;
+      ResNaN = 1'b0;
+    end
+    else begin
+      case (FmtVal)
+          4'b11: begin // quad             
+            AnsNaN = &Ans[`FLEN-2:`NF]&(|Ans[`NF-1:0]);
+            ResNaN = &FMAResM[`FLEN-2:`NF]&(|FMAResM[`NF-1:0]);
+          end
+          4'b01: begin // double                 
+            AnsNaN = &Ans[`LEN1-2:`NF1]&(|Ans[`NF1-1:0]);
+            ResNaN = &FMAResM[`LEN1-2:`NF1]&(|FMAResM[`NF1-1:0]);
+          end
+          4'b00: begin // single
+            AnsNaN = &Ans[`LEN2-2:`NF2]&(|Ans[`NF2-1:0]);
+            ResNaN = &FMAResM[`LEN2-2:`NF2]&(|FMAResM[`NF2-1:0]);
+          end
+          4'b10: begin // half
+            AnsNaN = &Ans[`H_LEN-2:`H_NF]&(|Ans[`H_NF-1:0]);
+            ResNaN = &FMAResM[`H_LEN-2:`H_NF]&(|FMAResM[`H_NF-1:0]);
+          end
+      endcase
+    end
+  end
+
+  // check results on falling edge of clk
+  always @(negedge clk) begin
+    case (UnitVal)
+      `FMAUNIT: Res = FMAResM;
+      `DIVUNIT: Res = DivResM;
+      `CMPUNIT: Res = CmpResE;
+      `CVTINTUNIT: Res = CvtResE;
+      `CVTFPUNIT: Res = CvtFpResE;
+    endcase
+    case (UnitVal)
+      `FMAUNIT: ResFlags = FMAFlgM;
+      `DIVUNIT: ResFlags = DivFlgM;
+      `CMPUNIT: ResFlags = CmpFlgM;
+      `CVTINTUNIT: ResFlags = CvtIntFlgM;
+      `CVTFPUNIT: ResFlags = CvtFpFlgM;
+    endcase
+
+    // check if the NaN value is good. IEEE754-2019 sections 6.3 and 6.2.3 specify:
+    //    - the sign of the NaN does not matter for the opperations being tested
+    //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
+    case (FmaFmtVal)
+      4'b11: FmaRneNaNGood =((FmaRneAnsFlags[4]&(FmaRneRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                            (FmaRneXNaN&(FmaRneRes[`Q_LEN-2:0] === {FmaRneX[`Q_LEN-2:`Q_NF],1'b1,FmaRneX[`Q_NF-2:0]})) | 
+                            (FmaRneYNaN&(FmaRneRes[`Q_LEN-2:0] === {FmaRneY[`Q_LEN-2:`Q_NF],1'b1,FmaRneY[`Q_NF-2:0]})) | 
+                            (FmaRneZNaN&(FmaRneRes[`Q_LEN-2:0] === {FmaRneZ[`Q_LEN-2:`Q_NF],1'b1,FmaRneZ[`Q_NF-2:0]})));
+      4'b01: FmaRneNaNGood =((FmaRneAnsFlags[4]&(FmaRneRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                            (FmaRneXNaN&(FmaRneRes[`D_LEN-2:0] === {FmaRneX[`D_LEN-2:`D_NF],1'b1,FmaRneX[`D_NF-2:0]})) | 
+                            (FmaRneYNaN&(FmaRneRes[`D_LEN-2:0] === {FmaRneY[`D_LEN-2:`D_NF],1'b1,FmaRneY[`D_NF-2:0]})) | 
+                            (FmaRneZNaN&(FmaRneRes[`D_LEN-2:0] === {FmaRneZ[`D_LEN-2:`D_NF],1'b1,FmaRneZ[`D_NF-2:0]})));
+      4'b00: FmaRneNaNGood =((FmaRneAnsFlags[4]&(FmaRneRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                            (FmaRneXNaN&(FmaRneRes[`S_LEN-2:0] === {FmaRneX[`S_LEN-2:`S_NF],1'b1,FmaRneX[`S_NF-2:0]})) | 
+                            (FmaRneYNaN&(FmaRneRes[`S_LEN-2:0] === {FmaRneY[`S_LEN-2:`S_NF],1'b1,FmaRneY[`S_NF-2:0]})) | 
+                            (FmaRneZNaN&(FmaRneRes[`S_LEN-2:0] === {FmaRneZ[`S_LEN-2:`S_NF],1'b1,FmaRneZ[`S_NF-2:0]})));
+      4'b10: FmaRneNaNGood =((FmaRneAnsFlags[4]&(FmaRneRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                            (FmaRneXNaN&(FmaRneRes[`H_LEN-2:0] === {FmaRneX[`H_LEN-2:`H_NF],1'b1,FmaRneX[`H_NF-2:0]})) | 
+                            (FmaRneYNaN&(FmaRneRes[`H_LEN-2:0] === {FmaRneY[`H_LEN-2:`H_NF],1'b1,FmaRneY[`H_NF-2:0]})) | 
+                            (FmaRneZNaN&(FmaRneRes[`H_LEN-2:0] === {FmaRneZ[`H_LEN-2:`H_NF],1'b1,FmaRneZ[`H_NF-2:0]})));
+    endcase
+    case (FmaFmtVal)
+      4'b11: FmaRzNaNGood = ((FmaRzAnsFlags[4]&(FmaRzRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                            (FmaRzXNaN&(FmaRzRes[`Q_LEN-2:0] === {FmaRzX[`Q_LEN-2:`Q_NF],1'b1,FmaRzX[`Q_NF-2:0]})) | 
+                            (FmaRzYNaN&(FmaRzRes[`Q_LEN-2:0] === {FmaRzY[`Q_LEN-2:`Q_NF],1'b1,FmaRzY[`Q_NF-2:0]})) | 
+                            (FmaRzZNaN&(FmaRzRes[`Q_LEN-2:0] === {FmaRzZ[`Q_LEN-2:`Q_NF],1'b1,FmaRzZ[`Q_NF-2:0]})));
+      4'b01: FmaRzNaNGood = ((FmaRzAnsFlags[4]&(FmaRzRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                            (FmaRzXNaN&(FmaRzRes[`D_LEN-2:0] === {FmaRzX[`D_LEN-2:`D_NF],1'b1,FmaRzX[`D_NF-2:0]})) | 
+                            (FmaRzYNaN&(FmaRzRes[`D_LEN-2:0] === {FmaRzY[`D_LEN-2:`D_NF],1'b1,FmaRzY[`D_NF-2:0]})) | 
+                            (FmaRzZNaN&(FmaRzRes[`D_LEN-2:0] === {FmaRzZ[`D_LEN-2:`D_NF],1'b1,FmaRzZ[`D_NF-2:0]})));
+      4'b00: FmaRzNaNGood = ((FmaRzAnsFlags[4]&(FmaRzRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                            (FmaRzXNaN&(FmaRzRes[`S_LEN-2:0] === {FmaRzX[`S_LEN-2:`S_NF],1'b1,FmaRzX[`S_NF-2:0]})) | 
+                            (FmaRzYNaN&(FmaRzRes[`S_LEN-2:0] === {FmaRzY[`S_LEN-2:`S_NF],1'b1,FmaRzY[`S_NF-2:0]})) | 
+                            (FmaRzZNaN&(FmaRzRes[`S_LEN-2:0] === {FmaRzZ[`S_LEN-2:`S_NF],1'b1,FmaRzZ[`S_NF-2:0]})));
+      4'b10: FmaRzNaNGood = ((FmaRzAnsFlags[4]&(FmaRzRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                            (FmaRzXNaN&(FmaRzRes[`H_LEN-2:0] === {FmaRzX[`H_LEN-2:`H_NF],1'b1,FmaRzX[`H_NF-2:0]})) | 
+                            (FmaRzYNaN&(FmaRzRes[`H_LEN-2:0] === {FmaRzY[`H_LEN-2:`H_NF],1'b1,FmaRzY[`H_NF-2:0]})) | 
+                            (FmaRzZNaN&(FmaRzRes[`H_LEN-2:0] === {FmaRzZ[`H_LEN-2:`H_NF],1'b1,FmaRzZ[`H_NF-2:0]})));
+    endcase
+    case (FmaFmtVal)
+      4'b11: FmaRuNaNGood = ((FmaRuAnsFlags[4]&(FmaRuRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                            (FmaRuXNaN&(FmaRuRes[`Q_LEN-2:0] === {FmaRuX[`Q_LEN-2:`Q_NF],1'b1,FmaRuX[`Q_NF-2:0]})) | 
+                            (FmaRuYNaN&(FmaRuRes[`Q_LEN-2:0] === {FmaRuY[`Q_LEN-2:`Q_NF],1'b1,FmaRuY[`Q_NF-2:0]})) | 
+                            (FmaRuZNaN&(FmaRuRes[`Q_LEN-2:0] === {FmaRuZ[`Q_LEN-2:`Q_NF],1'b1,FmaRuZ[`Q_NF-2:0]})));
+      4'b01: FmaRuNaNGood = ((FmaRuAnsFlags[4]&(FmaRuRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                            (FmaRuAnsFlags[4]&(FmaRuRes[`Q_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF{1'b0}}})) |
+                            (FmaRuXNaN&(FmaRuRes[`D_LEN-2:0] === {FmaRuX[`D_LEN-2:`D_NF],1'b1,FmaRuX[`D_NF-2:0]})) | 
+                            (FmaRuYNaN&(FmaRuRes[`D_LEN-2:0] === {FmaRuY[`D_LEN-2:`D_NF],1'b1,FmaRuY[`D_NF-2:0]})) | 
+                            (FmaRuZNaN&(FmaRuRes[`D_LEN-2:0] === {FmaRuZ[`D_LEN-2:`D_NF],1'b1,FmaRuZ[`D_NF-2:0]})));
+      4'b00: FmaRuNaNGood = ((FmaRuAnsFlags[4]&(FmaRuRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                            (FmaRuXNaN&(FmaRuRes[`S_LEN-2:0] === {FmaRuX[`S_LEN-2:`S_NF],1'b1,FmaRuX[`S_NF-2:0]})) | 
+                            (FmaRuYNaN&(FmaRuRes[`S_LEN-2:0] === {FmaRuY[`S_LEN-2:`S_NF],1'b1,FmaRuY[`S_NF-2:0]})) | 
+                            (FmaRuZNaN&(FmaRuRes[`S_LEN-2:0] === {FmaRuZ[`S_LEN-2:`S_NF],1'b1,FmaRuZ[`S_NF-2:0]})));
+      4'b10: FmaRuNaNGood = ((FmaRuAnsFlags[4]&(FmaRuRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                            (FmaRuXNaN&(FmaRuRes[`H_LEN-2:0] === {FmaRuX[`H_LEN-2:`H_NF],1'b1,FmaRuX[`H_NF-2:0]})) | 
+                            (FmaRuYNaN&(FmaRuRes[`H_LEN-2:0] === {FmaRuY[`H_LEN-2:`H_NF],1'b1,FmaRuY[`H_NF-2:0]})) | 
+                            (FmaRuZNaN&(FmaRuRes[`H_LEN-2:0] === {FmaRuZ[`H_LEN-2:`H_NF],1'b1,FmaRuZ[`H_NF-2:0]})));
+    endcase
+    case (FmaFmtVal)
+      4'b11: FmaRdNaNGood = ((FmaRdAnsFlags[4]&(FmaRdRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                            (FmaRdXNaN&(FmaRdRes[`Q_LEN-2:0] === {FmaRdX[`Q_LEN-2:`Q_NF],1'b1,FmaRdX[`Q_NF-2:0]})) | 
+                            (FmaRdYNaN&(FmaRdRes[`Q_LEN-2:0] === {FmaRdY[`Q_LEN-2:`Q_NF],1'b1,FmaRdY[`Q_NF-2:0]})) | 
+                            (FmaRdZNaN&(FmaRdRes[`Q_LEN-2:0] === {FmaRdZ[`Q_LEN-2:`Q_NF],1'b1,FmaRdZ[`Q_NF-2:0]})));
+      4'b01: FmaRdNaNGood = ((FmaRdAnsFlags[4]&(FmaRdRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                            (FmaRdXNaN&(FmaRdRes[`D_LEN-2:0] === {FmaRdX[`D_LEN-2:`D_NF],1'b1,FmaRdX[`D_NF-2:0]})) | 
+                            (FmaRdYNaN&(FmaRdRes[`D_LEN-2:0] === {FmaRdY[`D_LEN-2:`D_NF],1'b1,FmaRdY[`D_NF-2:0]})) | 
+                            (FmaRdZNaN&(FmaRdRes[`D_LEN-2:0] === {FmaRdZ[`D_LEN-2:`D_NF],1'b1,FmaRdZ[`D_NF-2:0]})));
+      4'b00: FmaRdNaNGood = ((FmaRdAnsFlags[4]&(FmaRdRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                            (FmaRdXNaN&(FmaRdRes[`S_LEN-2:0] === {FmaRdX[`S_LEN-2:`S_NF],1'b1,FmaRdX[`S_NF-2:0]})) | 
+                            (FmaRdYNaN&(FmaRdRes[`S_LEN-2:0] === {FmaRdY[`S_LEN-2:`S_NF],1'b1,FmaRdY[`S_NF-2:0]})) | 
+                            (FmaRdZNaN&(FmaRdRes[`S_LEN-2:0] === {FmaRdZ[`S_LEN-2:`S_NF],1'b1,FmaRdZ[`S_NF-2:0]})));
+      4'b10: FmaRdNaNGood = ((FmaRdAnsFlags[4]&(FmaRdRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                            (FmaRdXNaN&(FmaRdRes[`H_LEN-2:0] === {FmaRdX[`H_LEN-2:`H_NF],1'b1,FmaRdX[`H_NF-2:0]})) | 
+                            (FmaRdYNaN&(FmaRdRes[`H_LEN-2:0] === {FmaRdY[`H_LEN-2:`H_NF],1'b1,FmaRdY[`H_NF-2:0]})) | 
+                            (FmaRdZNaN&(FmaRdRes[`H_LEN-2:0] === {FmaRdZ[`H_LEN-2:`H_NF],1'b1,FmaRdZ[`H_NF-2:0]})));
+    endcase
+    case (FmaFmtVal)
+      4'b11: FmaRnmNaNGood =((FmaRnmAnsFlags[4]&(FmaRnmRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                            (FmaRnmXNaN&(FmaRnmRes[`Q_LEN-2:0] === {FmaRnmX[`Q_LEN-2:`Q_NF],1'b1,FmaRnmX[`Q_NF-2:0]})) | 
+                            (FmaRnmYNaN&(FmaRnmRes[`Q_LEN-2:0] === {FmaRnmY[`Q_LEN-2:`Q_NF],1'b1,FmaRnmY[`Q_NF-2:0]})) | 
+                            (FmaRnmZNaN&(FmaRnmRes[`Q_LEN-2:0] === {FmaRnmZ[`Q_LEN-2:`Q_NF],1'b1,FmaRnmZ[`Q_NF-2:0]})));
+      4'b01: FmaRnmNaNGood =((FmaRnmAnsFlags[4]&(FmaRnmRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                            (FmaRnmXNaN&(FmaRnmRes[`D_LEN-2:0] === {FmaRnmX[`D_LEN-2:`D_NF],1'b1,FmaRnmX[`D_NF-2:0]})) | 
+                            (FmaRnmYNaN&(FmaRnmRes[`D_LEN-2:0] === {FmaRnmY[`D_LEN-2:`D_NF],1'b1,FmaRnmY[`D_NF-2:0]})) | 
+                            (FmaRnmZNaN&(FmaRnmRes[`D_LEN-2:0] === {FmaRnmZ[`D_LEN-2:`D_NF],1'b1,FmaRnmZ[`D_NF-2:0]})));
+      4'b00: FmaRnmNaNGood =((FmaRnmAnsFlags[4]&(FmaRnmRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                            (FmaRnmXNaN&(FmaRnmRes[`S_LEN-2:0] === {FmaRnmX[`S_LEN-2:`S_NF],1'b1,FmaRnmX[`S_NF-2:0]})) | 
+                            (FmaRnmYNaN&(FmaRnmRes[`S_LEN-2:0] === {FmaRnmY[`S_LEN-2:`S_NF],1'b1,FmaRnmY[`S_NF-2:0]})) | 
+                            (FmaRnmZNaN&(FmaRnmRes[`S_LEN-2:0] === {FmaRnmZ[`S_LEN-2:`S_NF],1'b1,FmaRnmZ[`S_NF-2:0]})));
+      4'b10: FmaRnmNaNGood =((FmaRnmAnsFlags[4]&(FmaRnmRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                            (FmaRnmXNaN&(FmaRnmRes[`H_LEN-2:0] === {FmaRnmX[`H_LEN-2:`H_NF],1'b1,FmaRnmX[`H_NF-2:0]})) | 
+                            (FmaRnmYNaN&(FmaRnmRes[`H_LEN-2:0] === {FmaRnmY[`H_LEN-2:`H_NF],1'b1,FmaRnmY[`H_NF-2:0]})) | 
+                            (FmaRnmZNaN&(FmaRnmRes[`H_LEN-2:0] === {FmaRnmZ[`H_LEN-2:`H_NF],1'b1,FmaRnmZ[`H_NF-2:0]})));
+    endcase
+    if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
+      case (FmtVal)
+        4'b11: NaNGood =  ((AnsFlags[4]&(Res[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`Q_LEN-2:0] === {X[`Q_LEN-2:`Q_NF],1'b1,X[`Q_NF-2:0]})) | 
+                          (YNaN&(Res[`Q_LEN-2:0] === {Y[`Q_LEN-2:`Q_NF],1'b1,Y[`Q_NF-2:0]})) |
+                          (ZNaN&(Res[`Q_LEN-2:0] === {Z[`Q_LEN-2:`Q_NF],1'b1,Z[`Q_NF-2:0]})));
+        4'b01: NaNGood =  ((AnsFlags[4]&(Res[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`D_LEN-2:0] === {X[`D_LEN-2:`D_NF],1'b1,X[`D_NF-2:0]})) | 
+                          (YNaN&(Res[`D_LEN-2:0] === {Y[`D_LEN-2:`D_NF],1'b1,Y[`D_NF-2:0]})) |
+                          (ZNaN&(Res[`D_LEN-2:0] === {Z[`D_LEN-2:`D_NF],1'b1,Z[`D_NF-2:0]})));
+        4'b00: NaNGood =  ((AnsFlags[4]&(Res[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`S_LEN-2:0] === {X[`S_LEN-2:`S_NF],1'b1,X[`S_NF-2:0]})) | 
+                          (YNaN&(Res[`S_LEN-2:0] === {Y[`S_LEN-2:`S_NF],1'b1,Y[`S_NF-2:0]})) |
+                          (ZNaN&(Res[`S_LEN-2:0] === {Z[`S_LEN-2:`S_NF],1'b1,Z[`S_NF-2:0]})));
+        4'b10: NaNGood =  ((AnsFlags[4]&(Res[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`H_LEN-2:0] === {X[`H_LEN-2:`H_NF],1'b1,X[`H_NF-2:0]})) | 
+                          (YNaN&(Res[`H_LEN-2:0] === {Y[`H_LEN-2:`H_NF],1'b1,Y[`H_NF-2:0]})) |
+                          (ZNaN&(Res[`H_LEN-2:0] === {Z[`H_LEN-2:`H_NF],1'b1,Z[`H_NF-2:0]})));
+      endcase
+    else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
+      case (OpCtrlVal[1:0]) 
+        2'b11: NaNGood = ((AnsFlags[4]&(Res[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`Q_LEN-2:0] === {X[`Q_LEN-2:`Q_NF],1'b1,X[`Q_NF-2:0]})) | 
+                          (YNaN&(Res[`Q_LEN-2:0] === {Y[`Q_LEN-2:`Q_NF],1'b1,Y[`Q_NF-2:0]})));
+        2'b01: NaNGood = ((AnsFlags[4]&(Res[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`D_LEN-2:0] === {X[`D_LEN-2:`D_NF],1'b1,X[`D_NF-2:0]})) | 
+                          (YNaN&(Res[`D_LEN-2:0] === {Y[`D_LEN-2:`D_NF],1'b1,Y[`D_NF-2:0]})));
+        2'b00: NaNGood = ((AnsFlags[4]&(Res[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`S_LEN-2:0] === {X[`S_LEN-2:`S_NF],1'b1,X[`S_NF-2:0]})) | 
+                          (YNaN&(Res[`S_LEN-2:0] === {Y[`S_LEN-2:`S_NF],1'b1,Y[`S_NF-2:0]})));
+        2'b10: NaNGood = ((AnsFlags[4]&(Res[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                          (XNaN&(Res[`H_LEN-2:0] === {X[`H_LEN-2:`H_NF],1'b1,X[`H_NF-2:0]})) | 
+                          (YNaN&(Res[`H_LEN-2:0] === {Y[`H_LEN-2:`H_NF],1'b1,Y[`H_NF-2:0]})));
+      endcase
+    else NaNGood = 1'b0;
+
+    
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+  //     ||||||| |||    ||| ||||||| ||||||| |||   |||
+  //     |||     |||    ||| |||     |||     |||  |||
+  //     |||     |||||||||| ||||||| |||     ||||||
+  //     |||     |||    ||| |||     |||     |||  |||
+  //     ||||||| |||    ||| ||||||| ||||||| |||    |||
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlags === AnsFlags | AnsFlags === 5'bx))) begin
+      errors += 1;
+      $display("There is an error in %s", Tests[TestNum]);
+      $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlags, Ans, AnsFlags);
+      $stop;
+    end
+    if(~((FmaRneRes === FmaRneAns | FmaRneNaNGood | FmaRneNaNGood === 1'bx)  & (FmaRneResFlags === FmaRneAnsFlags | FmaRneAnsFlags === 5'bx))) begin
+      errors += 1;
+      $display("There is an error in FMA - RNE");
+      $display("inputs: %h %h %h\n Res: %h %h\n Ans: %h %h", FmaRneX, FmaRneY, FmaRneZ, FmaRneRes, FmaRneResFlags, FmaRneAns, FmaRneAnsFlags);
+      $stop;
+    end
+    if(~((FmaRzRes === FmaRzAns | FmaRzNaNGood | FmaRzNaNGood === 1'bx) & (FmaRzResFlags === FmaRzAnsFlags | FmaRzAnsFlags === 5'bx))) begin
+      errors += 1;
+      $display("There is an error in FMA - RZ");
+      $display("inputs: %h %h %h\n Res: %h %h\n Ans: %h %h", FmaRzX, FmaRzY, FmaRzZ, FmaRzRes, FmaRzResFlags, FmaRzAns, FmaRzAnsFlags);
+      $stop;
+    end
+    if(~((FmaRuRes === FmaRuAns | FmaRuNaNGood | FmaRuNaNGood === 1'bx) & (FmaRuResFlags === FmaRuAnsFlags | FmaRuAnsFlags === 5'bx))) begin
+      errors += 1;
+      $display("There is an error in FMA - RU");
+      $display("inputs: %h %h %h\n Res: %h %h\n Ans: %h %h", FmaRuX, FmaRuY, FmaRuZ, FmaRuRes, FmaRuResFlags, FmaRuAns, FmaRuAnsFlags);
+      $stop;
+    end
+    if(~((FmaRdRes === FmaRdAns | FmaRdNaNGood | FmaRdNaNGood === 1'bx) & (FmaRdResFlags === FmaRdAnsFlags | FmaRdAnsFlags === 5'bx))) begin
+      errors += 1;
+      $display("There is an error in FMA - RD");
+      $display("inputs: %h %h %h\n Res: %h %h\n Ans: %h %h", FmaRdX, FmaRdY, FmaRdZ, FmaRdRes, FmaRdResFlags, FmaRdAns, FmaRdAnsFlags);
+      $stop;
+    end
+    if(~((FmaRnmRes === FmaRnmAns | FmaRnmNaNGood | FmaRnmNaNGood === 1'bx) & (FmaRnmResFlags === FmaRnmAnsFlags | FmaRnmAnsFlags === 5'bx))) begin
+      errors += 1;
+      $display("There is an error in FMA - RNM");
+      $display("inputs: %h %h %h\n Res: %h %h\n Ans: %h %h", FmaRnmX, FmaRnmY, FmaRnmZ, FmaRnmRes, FmaRnmResFlags, FmaRnmAns, FmaRnmAnsFlags);
+      $stop;
+    end
+    VectorNum += 1; // increment test
+    if (TestVectors[VectorNum][0] === 1'bx & 
+        FmaRneVectors[VectorNum][0] === 1'bx & 
+        FmaRzVectors[VectorNum][0] === 1'bx & 
+        FmaRuVectors[VectorNum][0] === 1'bx & 
+        FmaRdVectors[VectorNum][0] === 1'bx & 
+        FmaRnmVectors[VectorNum][0] === 1'bx) begin // if reached the end of file
+      if (errors) begin // if there were errors
+        $display("%s completed with %d Tests and %d errors", Tests[VectorNum], VectorNum, errors);
+        $stop;
+      end
+
+      TestNum += 1;
+      // read next files
+      $readmemh({`PATH, Tests[TestNum]}, TestVectors);
+      $readmemh({`PATH, FmaRneTests[TestNum]}, FmaRneVectors);
+      $readmemh({`PATH, FmaRuTests[TestNum]}, FmaRuVectors);
+      $readmemh({`PATH, FmaRdTests[TestNum]}, FmaRdVectors);
+      $readmemh({`PATH, FmaRzTests[TestNum]}, FmaRzVectors);
+      $readmemh({`PATH, FmaRnmTests[TestNum]}, FmaRnmVectors);
+      FmaNum += 1;
+      VectorNum = 0;
+      if(FrmNum === 4) OpCtrlNum += 1;
+      if(FrmNum < 4) FrmNum += 1;
+      else FrmNum = 0; 
+      // if no more Tests - finish
+      if(Tests[TestNum] === "" & 
+        FmaRneTests[TestNum] === "" & 
+        FmaRzTests[TestNum] === "" & 
+        FmaRuTests[TestNum] === "" & 
+        FmaRdTests[TestNum] === "" & 
+        FmaRnmTests[TestNum] === "") begin
+        $display("\nAll Tests completed with %d errors\n", errors);
+        $stop;
+      end 
+
+      $display("Running %s vectors", Tests[TestNum]);
+    end
+  end
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+module readfmavectors (
+  input logic clk,
+  input logic [2:0] Frm,
+  input logic [`FPSIZES/3:0] FmaModFmt,
+  input logic [1:0] FmaFmt,
+  input logic [`FLEN*4+7:0] TestVector,
+  input logic [31:0] VectorNum,
+  input logic [31:0] FmaNum,
+  output logic [`FLEN-1:0] Ans,
+  output logic ZOrigDenormE,
+  output logic [4:0] AnsFlags,
+  output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
+  output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
+  output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
+  output logic                    XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
+  output logic                    XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
+  output logic                    XDenormE, YDenormE, ZDenormE,   // is XYZ denormalized
+  output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
+  output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
+  output logic [`FLEN-1:0]        X, Y, Z
+);
+
+  logic XNormE, XExpMaxE; // signals the unpacker outputs but isn't used in FMA
+  // apply test vectors on rising edge of clk
+  // Format of vectors Inputs(1/2/3)_AnsFlags
+  always @(posedge clk) begin
+    #1; 
+    AnsFlags = TestVector[4:0];
+    case (FmaFmt)
+      2'b11: begin       // quad
+        X = TestVector[8+4*(`Q_LEN)-1:8+3*(`Q_LEN)];
+        Y = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
+        Z = TestVector[8+2*(`Q_LEN)-1:8+`Q_LEN];
+        Ans = TestVector[8+(`Q_LEN-1):8];
+      end
+      2'b01:	begin	  // double
+          X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+4*(`D_LEN)-1:8+3*(`D_LEN)]};
+          Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
+          Z = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+`D_LEN]};
+          Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+      end
+      2'b00:	begin	  // single
+          X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+4*(`S_LEN)-1:8+3*(`S_LEN)]};
+          Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
+          Z = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+`S_LEN]};
+          Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+      end
+      2'b10:	begin	  // half
+          X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+4*(`H_LEN)-1:8+3*(`H_LEN)]};
+          Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
+          Z = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+`H_LEN]};
+          Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+      end
+    endcase
+  end
+  
+  unpack unpack(.X, .Y, .Z, .FmtE(FmaModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
+                .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
+                .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
+                .XExpMaxE, .ZOrigDenormE);
+endmodule
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+module readvectors (
+  input logic clk,
+  input logic [`FLEN*4+7:0] TestVector,
+  input logic [`FPSIZES/3:0] ModFmt,
+  input logic [1:0] Fmt,
+  input logic [2:0] Unit,
+  input logic [31:0] VectorNum,
+  input logic [31:0] TestNum,
+  input logic [2:0] OpCtrl,
+  output logic [`FLEN-1:0] Ans,
+  output logic [`XLEN-1:0] SrcA,
+  output logic [4:0] AnsFlags,
+  output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
+  output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
+  output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
+  output logic                    XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
+  output logic                    XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
+  output logic                    XDenormE, YDenormE, ZDenormE,   // is XYZ denormalized
+  output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
+  output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
+  output logic XNormE, XExpMaxE,
+  output logic ZOrigDenormE,
+  output logic [`FLEN-1:0] X, Y, Z
+);
+
+  // apply test vectors on rising edge of clk
+  // Format of vectors Inputs(1/2/3)_AnsFlags
+  always @(posedge clk) begin
+    #1; 
+    AnsFlags = TestVector[4:0];
+    case (Unit)
+      `FMAUNIT:
+        case (Fmt)
+          2'b11: begin       // quad
+            X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
+            if(OpCtrl === `MUL_OPCTRL) Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)]; else Y = {2'b0, {`Q_NE-1{1'b1}}, `Q_NF'h0};
+            if(OpCtrl === `MUL_OPCTRL) Z = 0; else Z = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+            Ans = TestVector[8+(`Q_LEN-1):8];
+          end
+          2'b01:	begin	  // double
+            X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
+            if(OpCtrl === `MUL_OPCTRL) Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]}; 
+            else Y = {{`FLEN-`D_LEN{1'b1}}, 2'b0, {`D_NE-1{1'b1}}, `D_NF'h0};
+            if(OpCtrl === `MUL_OPCTRL) Z = {{`FLEN-`D_LEN{1'b1}}, {`D_LEN{1'b0}}}; 
+            else Z = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+            Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+          end
+          2'b00:	begin	  // single
+            X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
+            if(OpCtrl === `MUL_OPCTRL) Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+(`S_LEN)]}; 
+            else Y = {{`FLEN-`S_LEN{1'b1}}, 2'b0, {`S_NE-1{1'b1}}, `S_NF'h0};
+            if(OpCtrl === `MUL_OPCTRL) Z = {{`FLEN-`S_LEN{1'b1}}, {`S_LEN{1'b0}}}; 
+            else Z = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+(`S_LEN)]};
+            Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+          end
+          2'b10:	begin	  // half
+            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
+            if(OpCtrl === `MUL_OPCTRL) Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]}; 
+            else Y = {{`FLEN-`H_LEN{1'b1}}, 2'b0, {`H_NE-1{1'b1}}, `H_NF'h0};
+            if(OpCtrl === `MUL_OPCTRL) Z = {{`FLEN-`H_LEN{1'b1}}, {`H_LEN{1'b0}}}; 
+            else Z = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
+            Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+          end
+        endcase
+      `DIVUNIT:
+        case (Fmt)
+          2'b11: begin       // quad
+            X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
+            Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+            Ans = TestVector[8+(`Q_LEN-1):8];
+          end
+          2'b01:	begin	  // double
+            X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
+            Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+            Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+          end
+          2'b00:	begin	  // single
+            X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
+            Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
+            Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+          end
+          2'b10:	begin	  // half
+            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
+            Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
+            Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+          end
+        endcase
+      `CMPUNIT:
+        case (Fmt)
+          2'b11: begin       // quad
+            X = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+            Y = TestVector[8+(`Q_LEN)-1:9];
+            Ans = TestVector[8];
+          end
+          2'b01:	begin	  // double
+            X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+            Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN)-1:9]};
+            Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8]};
+          end
+          2'b00:	begin	  // single
+            X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+(`S_LEN)]};
+            Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN)-1:9]};
+            Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8]};
+          end
+          2'b10:	begin	  // half
+            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+(`H_LEN)]};
+            Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN)-1:9]};
+            Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8]};
+          end
+        endcase
+      `CVTFPUNIT:
+        case (Fmt)
+          2'b11: begin       // quad
+          case (OpCtrl[1:0])
+            2'b11: begin       // quad
+              X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`Q_LEN+`Q_LEN-1:8+(`Q_LEN)]};
+              Ans = TestVector[8+(`Q_LEN-1):8];
+            end
+            2'b01:	begin	  // double
+              X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`Q_LEN+`D_LEN-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+            end
+            2'b00:	begin	  // single
+              X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`Q_LEN+`S_LEN-1:8+(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`Q_LEN+`H_LEN-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+            end
+          endcase
+          end
+          2'b01:	begin	  // double
+          case (OpCtrl[1:0])
+            2'b11: begin       // quad
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`D_LEN+`Q_LEN-1:8+(`Q_LEN)]};
+              Ans = TestVector[8+(`Q_LEN-1):8];
+            end
+            2'b01:	begin	  // double
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`D_LEN+`D_LEN-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+            end
+            2'b00:	begin	  // single
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`D_LEN+`S_LEN-1:8+(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`D_LEN+`H_LEN-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+            end
+          endcase
+          end
+          2'b00:	begin	  // single
+          case (OpCtrl[1:0])
+            2'b11: begin       // quad
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`S_LEN+`Q_LEN-1:8+(`Q_LEN)]};
+              Ans = TestVector[8+(`Q_LEN-1):8];
+            end
+            2'b01:	begin	  // double
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`S_LEN+`D_LEN-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+            end
+            2'b00:	begin	  // single
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`S_LEN+`S_LEN-1:8+(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`S_LEN+`H_LEN-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+            end
+          endcase
+          end
+          2'b10:	begin	  // half
+          case (OpCtrl[1:0])
+            2'b11: begin       // quad
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`Q_LEN-1:8+(`Q_LEN)]};
+              Ans = TestVector[8+(`Q_LEN-1):8];
+            end
+            2'b01:	begin	  // double
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`D_LEN-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+            end
+            2'b00:	begin	  // single
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`S_LEN-1:8+(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`H_LEN-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+            end
+          endcase
+          end
+        endcase
+        
+      `CVTINTUNIT:
+        case (Fmt)
+          2'b11: begin       // quad
+            //     {is the integer a long,     is the opperation to an integer}
+            casex ({OpCtrl[2], OpCtrl[0]})
+              2'b11: begin       // long -> quad
+                SrcA = TestVector[8+`Q_LEN+`XLEN-1:8+(`Q_LEN)];
+                Ans = TestVector[8+(`Q_LEN-1):8];
+              end
+              2'b01:	begin	  // int -> quad
+                // correctly sign extend the integer depending on if it's a signed/unsigned test
+                SrcA = {{`XLEN-32{TestVector[8+`Q_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`Q_LEN+`XLEN-1:8+(`Q_LEN)]};
+                Ans = TestVector[8+(`Q_LEN-1):8];
+              end
+              2'b10:	begin	  // quad -> long
+                X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`XLEN+`Q_LEN-1:8+(`XLEN)]};
+                Ans = {TestVector[8+(`XLEN-1):8]};
+              end
+              2'b00:	begin	  // double -> long
+                X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`XLEN+`Q_LEN-1:8+(`XLEN)]};
+                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}},TestVector[8+(`XLEN-1):8]};
+              end
+            endcase
+          end
+          2'b01:	begin	  // double
+            //     {is the integer a long,     is the opperation to an integer}
+            casex ({OpCtrl[2], OpCtrl[0]})
+              2'b11: begin       // long -> double
+                SrcA = TestVector[8+`D_LEN+`XLEN-1:8+(`D_LEN)];
+                Ans = TestVector[8+(`D_LEN-1):8];
+              end
+              2'b01:	begin	  // int -> double
+                // correctly sign extend the integer depending on if it's a signed/unsigned test
+                SrcA = {{`XLEN-32{TestVector[8+`D_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`D_LEN+`XLEN-1:8+(`D_LEN)]};
+                Ans = TestVector[8+(`D_LEN-1):8];
+              end
+              2'b10:	begin	  // double -> long
+                X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`XLEN+`D_LEN-1:8+(`XLEN)]};
+                Ans = {TestVector[8+(`XLEN-1):8]};
+              end
+              2'b00:	begin	  // double -> int
+                X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`XLEN+`D_LEN-1:8+(`XLEN)]};
+                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}},TestVector[8+(`XLEN-1):8]};
+              end
+            endcase
+          end
+          2'b00:	begin	  // single
+            //     {is the integer a long,     is the opperation to an integer}
+            casex ({OpCtrl[2], OpCtrl[0]})
+              2'b11: begin       // long -> single
+                SrcA = TestVector[8+`S_LEN+`XLEN-1:8+(`S_LEN)];
+                Ans = TestVector[8+(`S_LEN-1):8];
+              end
+              2'b01:	begin	  // int -> single
+                // correctly sign extend the integer depending on if it's a signed/unsigned test
+                SrcA = {{`XLEN-32{TestVector[8+`S_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`S_LEN+`XLEN-1:8+(`S_LEN)]};
+                Ans = TestVector[8+(`S_LEN-1):8];
+              end
+              2'b10:	begin	  // single -> long
+                X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`XLEN+`S_LEN-1:8+(`XLEN)]};
+                Ans = {TestVector[8+(`XLEN-1):8]};
+              end
+              2'b00:	begin	  // single -> int
+                X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`XLEN+`S_LEN-1:8+(`XLEN)]};
+                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}},TestVector[8+(`XLEN-1):8]};
+              end
+            endcase
+          end
+          2'b10:	begin	  // half
+            //     {is the integer a long,     is the opperation to an integer}
+            casex ({OpCtrl[2], OpCtrl[0]})
+              2'b11: begin       // long -> half
+                SrcA = TestVector[8+`H_LEN+`XLEN-1:8+(`H_LEN)];
+                Ans = TestVector[8+(`H_LEN-1):8];
+              end
+              2'b01:	begin	  // int -> half
+                // correctly sign extend the integer depending on if it's a signed/unsigned test
+                SrcA = {{`XLEN-32{TestVector[8+`H_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`H_LEN+`XLEN-1:8+(`H_LEN)]};
+                Ans = TestVector[8+(`H_LEN-1):8];
+              end
+              2'b10:	begin	  // half -> long
+                X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`XLEN+`H_LEN-1:8+(`XLEN)]};
+                Ans = {TestVector[8+(`XLEN-1):8]};
+              end
+              2'b00:	begin	  // half -> int
+                X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`XLEN+`H_LEN-1:8+(`XLEN)]};
+                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}}, TestVector[8+(`XLEN-1):8]};
+              end
+            endcase
+          end
+        endcase
+    endcase  
+  end
+  
+  unpack unpack(.X, .Y, .Z, .FmtE(ModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
+                .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
+                .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
+                .XExpMaxE, .ZOrigDenormE);
+endmodule
