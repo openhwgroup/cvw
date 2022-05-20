@@ -5,7 +5,7 @@
 # add    - test addition
 # sub    - test subtraction
 # div    - test division
-# sqrt   - test square root
+# sqrt   - test square ro
 # all    - test everything
 
-vsim -do "do fp.do rv64fp mul"
+vsim -do "do fp.do rv64fp cmp"
