@@ -27,15 +27,6 @@
 
 `include "wally-config.vh"
 
-// `define DEBUG_TRACE 0 // *** move this info down below and remove this line if parametrization works
-// Debug Levels
-// 0: don't check against QEMU
-// 1: print disagreements with QEMU, but only halt on PCW disagreements
-// 2: halt on any disagreement with QEMU except CSRs
-// 3: halt on all disagreements with QEMU
-// 4: print memory accesses whenever they happen
-// 5: print everything
-
 module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////// CONFIG ////////////////////////////////////
@@ -46,8 +37,14 @@ module testbench;
   parameter CHECKPOINT   = 0;
   parameter RISCV_DIR = "/opt/riscv";
   parameter NO_IE_MTIME_CHECKPOINT = 0;
-  parameter DEBUG_TRACE = 32;
-
+  parameter DEBUG_TRACE = 0;
+  // Debug Levels
+  // 0: don't check against QEMU
+  // 1: print disagreements with QEMU, but only halt on PCW disagreements
+  // 2: halt on any disagreement with QEMU except CSRs
+  // 3: halt on all disagreements with QEMU
+  // 4: print memory accesses whenever they happen
+  // 5: print everything
 
 
 
@@ -238,7 +235,6 @@ module testbench;
   logic clk, reset_ext; 
   logic reset;
   initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
-  initial begin $display(DEBUG_TRACE); #1; end // *** remove this once debug trace is parametrized
   always begin clk <= 1; # 5; clk <= 0; # 5; end
   // Wally Interface
   logic [`AHBW-1:0] HRDATAEXT;
@@ -658,7 +654,7 @@ module testbench;
       // turn on waves
       if (AttemptedInstructionCount == INSTR_WAVEON) $stop;
       // end sim
-      if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) $stop;
+      if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
       fault = 0;
       if (DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
